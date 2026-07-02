@@ -215,14 +215,11 @@ export function getPhaseDisplayName(currentStep: string): string {
   return WORKFLOW_STEP_LABELS[step] || currentStep
 }
 
-// Helper to get step number from step name
 export function getStepNumber(currentStep: string): number {
-  const stepOrder = ['blueprint', 'vision', 'creation', 'polish', 'launch']
-  const index = stepOrder.indexOf(currentStep)
-  return index === -1 ? 1 : index + 1
+  const normalized = currentStep === 'blueprint' || currentStep === 'ideation' ? 'blueprint' : 'production'
+  return normalized === 'blueprint' ? 1 : 2
 }
 
-// Helper to get total steps
 export function getTotalSteps(): number {
-  return 5
+  return 2
 }

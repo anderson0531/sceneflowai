@@ -41,6 +41,9 @@ interface ScreeningRoomV2Props {
   onAudienceFeedback?: (event: AudienceFeedbackEvent) => void
   /** Top bar back affordance (same as close); e.g. "Back" when a return URL was provided */
   backButtonLabel?: string
+  /** Prefer stitched video streams over Ken Burns animatic when available */
+  playbackMode?: 'animatic' | 'video' | 'auto'
+  onPlaybackModeChange?: (mode: 'animatic' | 'video' | 'auto') => void
 }
 
 // Helper function to normalize scenes from various data paths
@@ -86,6 +89,8 @@ export function ScreeningRoomV2({
   sessionId,
   onAudienceFeedback,
   backButtonLabel,
+  playbackMode = 'auto',
+  onPlaybackModeChange,
 }: ScreeningRoomV2Props) {
   // ============================================================================
   // Scene State
@@ -100,6 +105,21 @@ export function ScreeningRoomV2({
   const currentScene = scenes[currentSceneIndex]
   const currentSceneId = currentScene?.id || currentScene?.sceneId || `scene-${currentSceneIndex}`
   const currentProductionData = sceneProductionState?.[currentSceneId]
+
+  const sceneVideoUrl = useMemo(() => {
+    const streams = currentProductionData?.productionStreams || []
+    const match = streams.find(
+      (s) =>
+        s.streamType === 'video' &&
+        s.language === selectedLanguage &&
+        s.status === 'complete' &&
+        !!s.mp4Url
+    )
+    return match?.mp4Url || null
+  }, [currentProductionData, selectedLanguage])
+
+  const useVideoPlayback =
+    playbackMode === 'video' || (playbackMode === 'auto' && !!sceneVideoUrl)
   
   // Get segments for current scene
   const segments = useMemo(() => {
@@ -165,7 +185,7 @@ export function ScreeningRoomV2({
   }
   
   // If no production data for current scene, show message
-  if (!currentProductionData || segments.length === 0) {
+  if ((!currentProductionData || segments.length === 0) && !useVideoPlayback) {
     return (
       <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
         <div className="text-center text-white">
@@ -203,6 +223,66 @@ export function ScreeningRoomV2({
     )
   }
   
+  if (useVideoPlayback && sceneVideoUrl) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black flex flex-col">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+          <div className="text-white text-sm font-medium">
+            Video Pre-viz — Scene {currentSceneIndex + 1} / {scenes.length}
+          </div>
+          <div className="flex items-center gap-2">
+            {onPlaybackModeChange ? (
+              <select
+                value={playbackMode}
+                onChange={(e) =>
+                  onPlaybackModeChange(e.target.value as 'animatic' | 'video' | 'auto')
+                }
+                className="bg-white/10 text-white text-xs rounded px-2 py-1 border border-white/20"
+              >
+                <option value="auto">Auto</option>
+                <option value="video">Video</option>
+                <option value="animatic">Animatic</option>
+              </select>
+            ) : null}
+            <button
+              onClick={onClose}
+              className="px-3 py-1.5 text-xs bg-white/10 hover:bg-white/20 rounded text-white"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+        <div className="flex-1 flex items-center justify-center p-4">
+          <video
+            key={sceneVideoUrl}
+            src={sceneVideoUrl}
+            controls
+            autoPlay
+            className="max-h-full max-w-full rounded-lg shadow-2xl"
+          />
+        </div>
+        <div className="flex justify-center gap-2 py-3 border-t border-white/10">
+          {currentSceneIndex > 0 ? (
+            <button
+              onClick={goToPreviousScene}
+              className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white text-sm"
+            >
+              Previous
+            </button>
+          ) : null}
+          {currentSceneIndex < scenes.length - 1 ? (
+            <button
+              onClick={goToNextScene}
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-sm"
+            >
+              Next
+            </button>
+          ) : null}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <FullscreenPlayer
       segments={segments}

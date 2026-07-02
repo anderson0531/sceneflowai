@@ -114,6 +114,12 @@ const ProductionScreeningRoomShell = dynamic(
   () => import('@/components/screening-room/ProductionScreeningRoomShell').then(mod => ({ default: mod.ProductionScreeningRoomShell })),
   { ssr: false }
 )
+const ProductionWorkspaceSheet = dynamic(
+  () => import('@/components/production/ProductionWorkspaceSheet').then(mod => ({ default: mod.ProductionWorkspaceSheet })),
+  { ssr: false }
+)
+import { NotificationCenter } from '@/components/notifications/NotificationCenter'
+import type { ProductionWorkspaceTab } from '@/components/production/ProductionWorkspaceSheet'
 import { ImageQualitySelector } from '@/components/vision/ImageQualitySelector'
 import { VoiceSelector } from '@/components/tts/VoiceSelector'
 import { Button, buttonVariants } from '@/components/ui/Button'
@@ -561,8 +567,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     dismissed?: boolean
   }>>({})
   const [isPlayerOpen, setIsPlayerOpen] = useState(false)
-  /** When set, closing Screening Room navigates here (from `returnTo` query when opening from Premiere / Screening Room) */
   const [screeningRoomReturnTo, setScreeningRoomReturnTo] = useState<string | null>(null)
+  const [productionWorkspaceOpen, setProductionWorkspaceOpen] = useState(false)
+  const [productionWorkspaceTab, setProductionWorkspaceTab] = useState<ProductionWorkspaceTab>('render')
+  const [screeningPlaybackMode, setScreeningPlaybackMode] = useState<'animatic' | 'video' | 'auto'>('auto')
   const [showSceneGallery, setShowSceneGallery] = useState(false)
   const [isGenVideoRunning, setIsGenVideoRunning] = useState(false)
   const [showDashboard, setShowDashboard] = useState(false)
@@ -1067,17 +1075,34 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Handle openPlayer (+ optional returnTo) from Screening Room / Premiere
   const searchParams = useSearchParams()
   useEffect(() => {
-    if (searchParams.get('openPlayer') !== 'true') return
-    setIsPlayerOpen(true)
-    const safeReturn = sanitizeReturnTo(searchParams.get('returnTo'))
-    setScreeningRoomReturnTo(safeReturn)
-    const newParams = new URLSearchParams(searchParams.toString())
-    newParams.delete('openPlayer')
-    newParams.delete('returnTo')
-    const newUrl = newParams.toString()
-      ? `${window.location.pathname}?${newParams}`
-      : window.location.pathname
-    window.history.replaceState({}, '', newUrl)
+    const panel = searchParams.get('panel')
+    if (panel === 'render' || panel === 'publish') {
+      setProductionWorkspaceTab(panel)
+      setProductionWorkspaceOpen(true)
+      const newParams = new URLSearchParams(searchParams.toString())
+      newParams.delete('panel')
+      const newUrl = newParams.toString()
+        ? `${window.location.pathname}?${newParams}`
+        : window.location.pathname
+      window.history.replaceState({}, '', newUrl)
+    }
+    if (searchParams.get('openPlayer') === 'true') {
+      setIsPlayerOpen(true)
+      const safeReturn = sanitizeReturnTo(searchParams.get('returnTo'))
+      setScreeningRoomReturnTo(safeReturn)
+      const newParams = new URLSearchParams(searchParams.toString())
+      newParams.delete('openPlayer')
+      newParams.delete('returnTo')
+      const newUrl = newParams.toString()
+        ? `${window.location.pathname}?${newParams}`
+        : window.location.pathname
+      window.history.replaceState({}, '', newUrl)
+    }
+    if (searchParams.get('youtube') === 'connected') {
+      toast.success('YouTube account connected')
+      setProductionWorkspaceTab('publish')
+      setProductionWorkspaceOpen(true)
+    }
   }, [searchParams])
 
   useEffect(() => {
@@ -6118,6 +6143,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       'production:goto-bookmark': () => handlersRef.current.jumpToBookmark(),
       'production:scene-gallery': () => setShowSceneGallery(prev => !prev),
       'production:screening-room': () => openScreeningRoomFromVisionUi(),
+      'production:render-all': () => {
+        setProductionWorkspaceTab('render')
+        setProductionWorkspaceOpen(true)
+      },
+      'production:publish': () => {
+        setProductionWorkspaceTab('publish')
+        setProductionWorkspaceOpen(true)
+      },
       'production:update-reviews': () => handlersRef.current.generateReviews(),
       'production:review-analysis': () => setShowReviewModal(true),
       'production:review-treatment': () => setShowTreatmentReview(true),
@@ -8690,27 +8723,34 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
     
     setIsGeneratingAllSceneReferences(true)
-    overlayStore.show(`Generating ${scenesNeedingRefs.length} Scene References`, scenesNeedingRefs.length * 15, 'storyboard-production')
-    
+    const userId = getUserId()
     try {
-      for (let i = 0; i < scenesNeedingRefs.length; i++) {
-        const { idx } = scenesNeedingRefs[i]
-        overlayStore.setStatus(`Generating Scene ${idx + 1}... (${i + 1}/${scenesNeedingRefs.length})`)
-        
-        await handleGenerateSceneReferenceImage(idx)
-        
-        // Small delay between generations to avoid rate limiting
-        if (i < scenesNeedingRefs.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 1000))
-        }
+      const res = await fetch('/api/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          projectId,
+          jobType: 'reference_library',
+          batch: scenesNeedingRefs.map(({ idx }: { idx: number }) => ({
+            projectId,
+            sceneIndex: idx,
+            excludeCharacters: true,
+          })),
+        }),
+      })
+      if (!res.ok) {
+        throw new Error('Failed to queue reference generation')
       }
-      
-      try { const { toast } = require('sonner'); toast.success(`Generated ${scenesNeedingRefs.length} scene references!`) } catch {}
+      toast.info(
+        `Queued ${scenesNeedingRefs.length} reference images. You'll be notified when complete.`,
+        { duration: 5000 }
+      )
     } catch (error) {
       console.error('[handleGenerateAllSceneReferences] Error:', error)
+      toast.error('Failed to queue reference generation')
     } finally {
       setIsGeneratingAllSceneReferences(false)
-      overlayStore.hide()
     }
   }
 
@@ -13021,16 +13061,38 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         </div>
         
         <div className="flex items-center gap-2">
-          <Link href={`/dashboard/workflow/final-cut?projectId=${projectId}`}>
-            <Button
-              size="sm"
-              className="bg-sf-primary hover:bg-sf-accent text-white"
-            >
-              <span className="hidden sm:inline">Continue to Final Cut</span>
-              <span className="sm:hidden">Final Cut</span>
-              <ArrowRight className="w-4 h-4 ml-1.5" />
-            </Button>
-          </Link>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-zinc-600"
+            onClick={() => setIsPlayerOpen(true)}
+          >
+            <span className="hidden sm:inline">Screening Room</span>
+            <span className="sm:hidden">Screen</span>
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-zinc-600"
+            onClick={() => {
+              setProductionWorkspaceTab('render')
+              setProductionWorkspaceOpen(true)
+            }}
+          >
+            Production Render
+          </Button>
+          <Button
+            size="sm"
+            className="bg-sf-primary hover:bg-sf-accent text-white"
+            onClick={() => {
+              setProductionWorkspaceTab('publish')
+              setProductionWorkspaceOpen(true)
+            }}
+          >
+            Publish
+          </Button>
+
+          <NotificationCenter userId={getUserId()} />
           
           <div className="h-5 w-px bg-gray-300 dark:bg-gray-700 ml-2 mr-1" />
           
@@ -13446,8 +13508,25 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           sceneProductionState={sceneProductionState}
           projectId={projectId}
           storedTranslations={storedTranslations}
+          playbackMode={screeningPlaybackMode}
+          onPlaybackModeChange={setScreeningPlaybackMode}
         />
       )}
+
+      <ProductionWorkspaceSheet
+        open={productionWorkspaceOpen}
+        tab={productionWorkspaceTab}
+        onTabChange={setProductionWorkspaceTab}
+        onClose={() => setProductionWorkspaceOpen(false)}
+        projectId={projectId}
+        userId={getUserId()}
+        projectTitle={project?.title || script?.title}
+        metadata={project?.metadata}
+        exportedVideoUrl={
+          (project?.metadata as { exportedVideoUrl?: string } | undefined)?.exportedVideoUrl ?? null
+        }
+        onOpenScreeningRoom={() => setIsPlayerOpen(true)}
+      />
 
       {/* Navigation Warning Dialog */}
       <NavigationWarningDialog

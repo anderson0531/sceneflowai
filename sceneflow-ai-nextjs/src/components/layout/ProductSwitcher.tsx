@@ -51,7 +51,7 @@ export const products: Product[] = [
     color: 'text-amber-400',
     hoverColor: 'hover:bg-amber-500/10 hover:text-amber-300',
     activeColor: 'bg-amber-500/15 text-amber-300 border-amber-400',
-    matchPaths: ['/dashboard/studio', '/dashboard/workflow/ideation']
+    matchPaths: ['/dashboard/studio', '/dashboard/workflow/ideation'],
   },
   {
     id: 'visualizer',
@@ -62,29 +62,25 @@ export const products: Product[] = [
     color: 'text-blue-400',
     hoverColor: 'hover:bg-blue-500/10 hover:text-blue-300',
     activeColor: 'bg-blue-500/15 text-blue-300 border-blue-400',
-    matchPaths: ['/dashboard/workflow/pre-vis', '/dashboard/workflow/storyboard', '/dashboard/workflow/vision', '/dashboard/workflow/direction']
-  },
-  {
-    id: 'smart-editor',
-    name: 'Smart Editor',
-    tagline: 'Edit & Export',
-    icon: <Scissors className="w-5 h-5" />,
-    href: '/dashboard/workflow/final-cut',
-    color: 'text-purple-400',
-    hoverColor: 'hover:bg-purple-500/10 hover:text-purple-300',
-    activeColor: 'bg-purple-500/15 text-purple-300 border-purple-400',
-    matchPaths: ['/dashboard/workflow/final-cut', '/dashboard/workflow/generation', '/dashboard/workflow/video-generation']
+    matchPaths: ['/dashboard/workflow/pre-vis', '/dashboard/workflow/storyboard', '/dashboard/workflow/vision', '/dashboard/workflow/direction'],
   },
   {
     id: 'screening-room',
     name: 'Screening Room',
-    tagline: 'Test & Feedback',
+    tagline: 'Assemble & Publish',
     icon: <BarChart2 className="w-5 h-5" />,
-    href: '/dashboard/workflow/premiere',
+    href: '/dashboard/workflow/screening-room',
     color: 'text-emerald-400',
     hoverColor: 'hover:bg-emerald-500/10 hover:text-emerald-300',
     activeColor: 'bg-emerald-500/15 text-emerald-300 border-emerald-400',
-    matchPaths: ['/screening-room', '/dashboard/workflow/premiere', '/s/', '/share/screening-room']
+    matchPaths: [
+      '/dashboard/workflow/screening-room',
+      '/screening-room',
+      '/dashboard/workflow/premiere',
+      '/dashboard/workflow/final-cut',
+      '/s/',
+      '/share/screening-room',
+    ],
   },
 ]
 
@@ -112,8 +108,11 @@ export function ProductSwitcher({
   
   // Build dynamic href for products that need project context
   const getProductHref = (product: Product): string => {
+    if (product.id === 'visualizer' && currentProject?.id) {
+      return `/dashboard/workflow/vision/${currentProject.id}`
+    }
     if (product.id === 'screening-room' && currentProject?.id) {
-      return `/dashboard/workflow/premiere?projectId=${currentProject.id}&returnTo=${encodeURIComponent(pathname || '/')}`
+      return `/dashboard/workflow/screening-room?projectId=${currentProject.id}`
     }
     return product.href
   }

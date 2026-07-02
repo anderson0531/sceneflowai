@@ -13,53 +13,17 @@ const workflowSteps = [
     icon: Lightbulb,
     color: 'from-blue-500 to-blue-600',
     bgColor: 'bg-blue-500',
-    borderColor: 'border-blue-500'
+    borderColor: 'border-blue-500',
   },
   {
     id: 'storyboard' as WorkflowStep,
     title: 'Production',
-    description: 'Pre-vis & Planning',
+    description: 'Produce, render & publish',
     icon: Layout,
     color: 'from-purple-500 to-purple-600',
     bgColor: 'bg-purple-500',
-    borderColor: 'border-purple-500'
+    borderColor: 'border-purple-500',
   },
-  {
-    id: 'scene-direction' as WorkflowStep,
-    title: 'Final Cut',
-    description: 'Scene Direction & Control',
-    icon: Video,
-    color: 'from-orange-500 to-orange-600',
-    bgColor: 'bg-orange-500',
-    borderColor: 'border-orange-500'
-  },
-  {
-    id: 'video-generation' as WorkflowStep,
-    title: 'Premiere',
-    description: 'Video Generation',
-    icon: Film,
-    color: 'from-green-500 to-green-600',
-    bgColor: 'bg-green-500',
-    borderColor: 'border-green-500'
-  },
-  {
-    id: 'review' as WorkflowStep,
-    title: 'Quality Review',
-    description: 'Assess & validate quality',
-    icon: CheckCircle2,
-    color: 'from-teal-500 to-teal-600',
-    bgColor: 'bg-teal-500',
-    borderColor: 'border-teal-500'
-  },
-  {
-    id: 'optimization' as WorkflowStep,
-    title: 'Optimization',
-    description: 'Improve & finalize',
-    icon: Wrench,
-    color: 'from-pink-500 to-pink-600',
-    bgColor: 'bg-pink-500',
-    borderColor: 'border-pink-500'
-  }
 ]
 
 export function WorkflowNavigator() {

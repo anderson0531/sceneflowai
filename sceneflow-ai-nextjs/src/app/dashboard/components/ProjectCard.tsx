@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { getResumeRouteForStep } from '@/constants/workflowRoutes'
 import { motion } from 'framer-motion'
 import {
   Play,
@@ -448,27 +449,7 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
 
   // Helper function to get correct route for resume action
   const getResumeRoute = (): string => {
-    const { currentStep, id } = project
-    
-    // Map workflow steps to current routes (plus legacy aliases)
-    const routeMap: Record<string, string> = {
-      // Canonical enhanced steps
-      blueprint: `/dashboard/studio/${id}`,
-      vision: `/dashboard/workflow/vision/${id}`,
-      creation: `/dashboard/workflow/final-cut?projectId=${id}`,
-      polish: `/dashboard/workflow/premiere?projectId=${id}`,
-      launch: `/dashboard/workflow/premiere?projectId=${id}`,
-      // Legacy aliases
-      ideation: `/dashboard/studio/${id}`,
-      start: `/dashboard/studio/${id}`,
-      storyboard: `/dashboard/workflow/vision/${id}`,
-      'scene-direction': `/dashboard/workflow/final-cut?projectId=${id}`,
-      'video-generation': `/dashboard/workflow/final-cut?projectId=${id}`,
-      review: `/dashboard/workflow/premiere?projectId=${id}`,
-      optimization: `/dashboard/workflow/premiere?projectId=${id}`,
-    }
-    
-    return routeMap[currentStep] || `/dashboard/studio/${id}`
+    return getResumeRouteForStep(project.id, project.currentStep)
   }
 
   return (

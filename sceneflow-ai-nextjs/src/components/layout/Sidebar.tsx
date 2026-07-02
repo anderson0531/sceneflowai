@@ -66,28 +66,10 @@ const workflowNav = [
     name: 'Production', 
     href: '/dashboard/workflow/vision', 
     icon: DirectorChairIcon,
-    description: 'Script & Visual Development',
+    description: 'Script, video, render & publish',
     step: 'vision',
-    phase: 1,
+    phase: 2,
     credits: 'Uses Analysis Credits'
-  },
-  { 
-    name: 'Final Cut', 
-    href: '/dashboard/workflow/generation', 
-    icon: CheckCircle,
-    description: 'Screening & Editing',
-    step: 'review',
-    phase: 2,
-    credits: '🔑 BYOK Required'
-  },
-  { 
-    name: 'The Premiere', 
-    href: '/dashboard', 
-    icon: Wrench,
-    description: 'Optimization & Publishing',
-    step: 'optimization',
-    phase: 2,
-    credits: '🔑 BYOK Required'
   },
 ]
 

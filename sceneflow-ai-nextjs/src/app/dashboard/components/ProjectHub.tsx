@@ -6,6 +6,7 @@ import { useEnhancedStore } from '@/store/enhancedStore'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { ProjectCard } from './ProjectCard'
+import { getResumeRouteForStep } from '@/constants/workflowRoutes'
 import {
   WORKFLOW_STEP_LABELS,
   WORKFLOW_STEPS,
@@ -21,27 +22,7 @@ export function ProjectHub() {
     WORKFLOW_STEP_LABELS[normalizeWorkflowStep(step)]
 
   const getResumeRoute = (project: any): string => {
-    const { currentStep, id } = project
-    
-    // Map workflow steps to current routes (plus legacy aliases)
-    const routeMap: Record<string, string> = {
-      // Canonical enhanced steps
-      blueprint: `/dashboard/studio/${id}`,
-      vision: `/dashboard/workflow/vision/${id}`,
-      creation: `/dashboard/workflow/final-cut?projectId=${id}`,
-      polish: `/dashboard/workflow/premiere?projectId=${id}`,
-      launch: `/dashboard/workflow/premiere?projectId=${id}`,
-      // Legacy aliases
-      ideation: `/dashboard/studio/${id}`,
-      start: `/dashboard/studio/${id}`,
-      storyboard: `/dashboard/workflow/vision/${id}`,
-      'scene-direction': `/dashboard/workflow/final-cut?projectId=${id}`,
-      'video-generation': `/dashboard/workflow/final-cut?projectId=${id}`,
-      review: `/dashboard/workflow/premiere?projectId=${id}`,
-      optimization: `/dashboard/workflow/premiere?projectId=${id}`,
-    }
-    
-    return routeMap[currentStep] || `/dashboard/studio/${id}`
+    return getResumeRouteForStep(project.id, project.currentStep)
   }
 
   if (projects.length === 0) {

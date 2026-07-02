@@ -8,7 +8,7 @@ import {
   Settings,
   PenTool,
   Wand2,
-  Scissors,
+  Film,
   BarChart2,
   Upload,
   Telescope
@@ -38,19 +38,19 @@ const productActions = [
     color: 'bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 border border-blue-500/20'
   },
   { 
-    label: 'Smart Editor', 
-    tagline: 'Edit & Export',
-    icon: <Scissors className="w-5 h-5" />, 
-    href: '/dashboard/workflow/final-cut',
+    label: 'Production', 
+    tagline: 'Render & Publish',
+    icon: <Film className="w-5 h-5" />, 
+    href: '/dashboard/workflow/storyboard',
     color: 'bg-purple-500/15 text-purple-400 hover:bg-purple-500/25 border border-purple-500/20'
   },
-    { 
-      label: 'Screening Room', 
-      tagline: 'Test & Feedback',
-      icon: <BarChart2 className="w-5 h-5" />, 
-      href: '/dashboard/workflow/premiere',
-      color: 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/20'
-    },
+  { 
+    label: 'Screening Room', 
+    tagline: 'Test & Feedback',
+    icon: <BarChart2 className="w-5 h-5" />, 
+    href: '/screening-room',
+    color: 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/20'
+  },
   ]
 
 const coreActions = [

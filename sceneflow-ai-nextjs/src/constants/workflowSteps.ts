@@ -11,9 +11,9 @@ export const WORKFLOW_STEPS: WorkflowStep[] = [
 export const WORKFLOW_STEP_LABELS: Record<WorkflowStep, string> = {
   blueprint: 'Blueprint',
   vision: 'Production',
-  creation: 'The Creation Hub',
-  polish: 'Final Cut',
-  launch: 'The Premiere',
+  creation: 'Production',
+  polish: 'Production',
+  launch: 'Production',
 }
 
 const LEGACY_STEP_ALIASES: Record<string, WorkflowStep> = {
@@ -28,17 +28,19 @@ const LEGACY_STEP_ALIASES: Record<string, WorkflowStep> = {
   direction: 'vision',
   'action-plan': 'vision',
   'director-chair': 'vision',
-  creation: 'creation',
-  'creation-hub': 'creation',
-  'video-generation': 'creation',
-  generation: 'polish',
-  review: 'polish',
-  polish: 'polish',
-  refinement: 'polish',
-  optimization: 'launch',
-  launch: 'launch',
-  launchpad: 'launch',
-  golive: 'launch',
+  creation: 'vision',
+  'creation-hub': 'vision',
+  'video-generation': 'vision',
+  generation: 'vision',
+  review: 'vision',
+  polish: 'vision',
+  refinement: 'vision',
+  optimization: 'vision',
+  launch: 'vision',
+  launchpad: 'vision',
+  golive: 'vision',
+  'final-cut': 'vision',
+  premiere: 'vision',
 }
 
 export const normalizeWorkflowStep = (step?: string | null): WorkflowStep => {

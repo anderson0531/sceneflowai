@@ -26,6 +26,9 @@ import UserVoiceClone from './UserVoiceClone'
 import AssetProvenanceLog from './AssetProvenanceLog'
 import ModerationEvent from './ModerationEvent'
 import PaymentWebhookEvent from './PaymentWebhookEvent'
+import UserIntegration from './UserIntegration'
+import GenerationJob from './GenerationJob'
+import Notification from './Notification'
 
 // Define model associations
 User.hasMany(Project, {
@@ -187,7 +190,10 @@ export {
   UserVoiceClone,
   ModerationEvent,
   AssetProvenanceLog,
-  PaymentWebhookEvent
+  PaymentWebhookEvent,
+  UserIntegration,
+  GenerationJob,
+  Notification,
 }
 
 // Export default for convenience
@@ -219,5 +225,8 @@ export default {
   UserVoiceClone,
   ModerationEvent,
   AssetProvenanceLog,
-  PaymentWebhookEvent
+  PaymentWebhookEvent,
+  UserIntegration,
+  GenerationJob,
+  Notification,
 }

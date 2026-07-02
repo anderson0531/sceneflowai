@@ -54,7 +54,7 @@ function getNextStep(state: WorkflowState): NextStepAction | null {
   if (state.hasRender) {
     return {
       label: 'Scene Complete — Move to Next Scene',
-      description: 'This scene is fully rendered. Navigate to the next scene or continue to Final Cut.',
+      description: 'This scene is fully rendered. Navigate to the next scene or open Production Render.',
       icon: <CheckCircle2 className="w-4 h-4" />,
       accentColor: 'emerald',
     }

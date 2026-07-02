@@ -181,7 +181,8 @@ export const productionSidebarConfig: WorkflowSidebarConfig = {
     { id: 'screening-room', label: 'Screening Room', icon: 'Play', iconColor: 'text-green-500', action: 'event', eventName: 'production:screening-room' },
     { id: 'update-reviews', label: 'Audience Resonance', icon: 'BarChart3', iconColor: 'text-purple-500', action: 'event', eventName: 'production:update-reviews' },
     { id: 'review-analysis', label: 'Script Review', icon: 'FileText', iconColor: 'text-blue-500', action: 'event', eventName: 'production:review-analysis' },
-    { id: 'settings', label: 'Settings', icon: 'Settings', iconColor: 'text-gray-400', action: 'navigate', href: '/dashboard/settings/profile' },
+    { id: 'production-render', label: 'Production Render', icon: 'Film', iconColor: 'text-purple-400', action: 'event', eventName: 'production:render-all' },
+    { id: 'publish', label: 'Publish', icon: 'Upload', iconColor: 'text-emerald-400', action: 'event', eventName: 'production:publish' },
   ],
   sectionVisibility: {
     workflow: true,
@@ -250,6 +251,9 @@ export const screeningRoomSidebarConfig: WorkflowSidebarConfig = {
     credits: false,
   },
 }
+
+export const finalCutSidebarConfig: WorkflowSidebarConfig = screeningRoomSidebarConfig
+export const premiereSidebarConfig: WorkflowSidebarConfig = screeningRoomSidebarConfig
 
 // ============================================================================
 // DASHBOARD CONFIG (default when not in a workflow)

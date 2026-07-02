@@ -1,10 +1,7 @@
 const WorkflowNavigator = ({ activeStepIndex = 0 }: { activeStepIndex?: number }) => {
-  // Updated phase names: Blueprint → Production → Final Cut → Premiere
   const steps = [
-    { name: "1. Blueprint" },
-    { name: "2. Production" },
-    { name: "3. Final Cut" },
-    { name: "4. Premiere" }
+    { name: '1. Blueprint' },
+    { name: '2. Production' },
   ];
 
   return (

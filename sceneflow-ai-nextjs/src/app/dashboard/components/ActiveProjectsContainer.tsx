@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 import { formatRelativeTime, getPhaseDisplayName, getStepNumber, getTotalSteps } from '@/hooks/useDashboardData'
 import { getProjectCreditsUsed } from '@/lib/credits/projectBudgetShared'
+import { getProductionRoute } from '@/constants/workflowRoutes'
 
 // Types for project data from API
 interface DashboardProject {
@@ -64,62 +65,63 @@ function transformProject(project: DashboardProject, index: number) {
 
   // Determine next step based on current step
   const getNextStep = () => {
+    const productionUrl = getProductionRoute(project.id)
+    const screeningRoomUrl = `/dashboard/workflow/screening-room?projectId=${project.id}`
     const stepConfig: Record<string, { name: string; description: string; url: string }> = {
-      blueprint: { 
-        name: 'Production', 
-        description: 'Create visual pre-vis for each scene',
-        url: `/dashboard/workflow/vision/${project.id}`
+      blueprint: {
+        name: 'Production',
+        description: 'Script, audio, frames, and video production',
+        url: productionUrl,
       },
-      vision: { 
-        name: 'Final Cut', 
-        description: 'Edit scenes, timing, and mix in Final Cut',
-        url: `/dashboard/workflow/final-cut?projectId=${project.id}`
+      vision: {
+        name: 'Production',
+        description: 'Render, screen, and publish your production',
+        url: `${screeningRoomUrl}&tab=assemble`,
       },
-      creation: { 
-        name: 'Premiere', 
-        description: 'Finalize review in Screening Room',
-        url: `/dashboard/workflow/premiere?projectId=${project.id}`
+      creation: {
+        name: 'Production',
+        description: 'Render, screen, and publish your production',
+        url: `${screeningRoomUrl}&tab=assemble`,
       },
-      polish: { 
-        name: 'Premiere', 
-        description: 'Finalize review in Screening Room',
-        url: `/dashboard/workflow/premiere?projectId=${project.id}`
+      polish: {
+        name: 'Production',
+        description: 'Screen and publish your production',
+        url: `${screeningRoomUrl}&tab=publish`,
       },
-      launch: { 
-        name: 'Complete', 
+      launch: {
+        name: 'Complete',
         description: 'Project is ready for distribution',
-        url: `/dashboard/projects/${project.id}`
+        url: `/dashboard/projects/${project.id}`,
       },
-      // Backward-compat aliases for older step keys
       ideation: {
         name: 'Production',
-        description: 'Create visual pre-vis for each scene',
-        url: `/dashboard/workflow/vision/${project.id}`,
+        description: 'Script, audio, frames, and video production',
+        url: productionUrl,
       },
       storyboard: {
         name: 'Production',
-        description: 'Create visual pre-vis for each scene',
-        url: `/dashboard/workflow/vision/${project.id}`,
+        description: 'Script, audio, frames, and video production',
+        url: productionUrl,
       },
       'scene-direction': {
-        name: 'Final Cut',
-        description: 'Edit scenes, timing, and mix in Final Cut',
-        url: `/dashboard/workflow/final-cut?projectId=${project.id}`,
+        name: 'Production',
+        description: 'Continue video and render workflow',
+        url: productionUrl,
       },
       'video-generation': {
-        name: 'Final Cut',
-        description: 'Edit scenes, timing, and mix in Final Cut',
-        url: `/dashboard/workflow/final-cut?projectId=${project.id}`,
+        name: 'Production',
+        description: 'Continue video and render workflow',
+        url: productionUrl,
       },
       review: {
-        name: 'Premiere',
-        description: 'Finalize review in Screening Room',
-        url: `/dashboard/workflow/premiere?projectId=${project.id}`,
+        name: 'Production',
+        description: 'Screen and publish your production',
+        url: `${screeningRoomUrl}&tab=publish`,
       },
       optimization: {
-        name: 'Premiere',
-        description: 'Finalize review in Screening Room',
-        url: `/dashboard/workflow/premiere?projectId=${project.id}`,
+        name: 'Production',
+        description: 'Screen and publish your production',
+        url: `${screeningRoomUrl}&tab=publish`,
       },
     }
     

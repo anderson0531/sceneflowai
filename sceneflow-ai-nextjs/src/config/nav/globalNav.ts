@@ -8,19 +8,12 @@ export const mainNav: GlobalNavItem[] = [
 ]
 
 /**
- * Product Navigation - 4 Standalone Products
- * 
- * SceneFlow unbundles into four standalone products:
- * - Writer's Room: Script & Story development (Blueprint Phase)
- * - Visualizer: Pre-vis & Scene generation (Production Phase)
- * - Smart Editor: Video editing & export (Final Cut)
- * - Screening Room: Analytics & Review (Premiere)
+ * Product Navigation — Blueprint + Production + Screening Room
  */
 export const productNav: GlobalNavItem[] = [
   { key: 'writers-room', label: "Writer's Room", href: '/dashboard/studio/new-project' },
   { key: 'visualizer', label: 'Visualizer', href: '/dashboard/workflow/pre-vis' },
-  { key: 'smart-editor', label: 'Smart Editor', href: '/dashboard/workflow/final-cut' },
-  { key: 'screening-room', label: 'Screening Room', href: '/dashboard/workflow/premiere' },
+  { key: 'screening-room', label: 'Screening Room', href: '/dashboard/workflow/screening-room' },
 ]
 
 export const settingsNav: GlobalNavItem[] = [

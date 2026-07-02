@@ -87,7 +87,7 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
     description:
       'The dashboard tracks Script, Audio, Direction, Beat Frames, Video, and Render using beat-first rules. Click any scene to jump to it.',
     icon: <CheckCircle2 className="w-6 h-6" />,
-    tip: 'Share pre-vis links early — approval converts to faster video production.',
+    tip: 'Share pre-vis links early — when scenes are complete, use Screening Room to assemble and publish.',
   },
 ]
 
