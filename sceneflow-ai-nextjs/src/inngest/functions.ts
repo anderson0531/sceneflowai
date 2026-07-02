@@ -37,8 +37,7 @@ async function callInternalApi(path: string, body: Record<string, unknown>) {
 }
 
 export const processGenerationJob = inngest.createFunction(
-  { id: 'process-generation-job', retries: 5 },
-  { event: 'generation/job.queued' },
+  { id: 'process-generation-job', retries: 5, triggers: [{ event: 'generation/job.queued' }] },
   async ({ event, step }) => {
     const { jobId, userId, projectId, jobType, payload } = event.data as {
       jobId: string
@@ -106,8 +105,7 @@ export const processGenerationJob = inngest.createFunction(
 )
 
 export const processBatchGenerationJob = inngest.createFunction(
-  { id: 'process-batch-generation-job', retries: 3 },
-  { event: 'generation/batch.queued' },
+  { id: 'process-batch-generation-job', retries: 3, triggers: [{ event: 'generation/batch.queued' }] },
   async ({ event, step }) => {
     const { jobId, userId, projectId, jobType, items } = event.data as {
       jobId: string
