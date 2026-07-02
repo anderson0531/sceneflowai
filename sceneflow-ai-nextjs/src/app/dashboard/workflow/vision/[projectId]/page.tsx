@@ -13357,6 +13357,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             sceneTranslationsByLanguage={storedTranslations}
                             playerLabelsByLanguage={playerLabelsByLanguage}
                             onGenerateLanguage={handleGenerateLanguageStream}
+                            sceneProductionState={sceneProductionState}
                           />
                         </div>
                       )}

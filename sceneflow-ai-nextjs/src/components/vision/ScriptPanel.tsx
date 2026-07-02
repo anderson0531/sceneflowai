@@ -2720,46 +2720,16 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           
           {/* Action Buttons - Right Justified */}
           <div className="flex items-center gap-2">
-            {onToggleStoryboard && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onToggleStoryboard}
-                className={`flex items-center gap-2 ${
-                  showStoryboard
-                    ? 'border-cyan-500/50 bg-cyan-500/10 hover:bg-cyan-500/20'
-                    : 'border-cyan-500/30 hover:border-cyan-500/50 hover:bg-cyan-500/10'
-                }`}
-                title={showStoryboard ? 'Close Pre-Visualization' : 'Open Pre-Visualization'}
-              >
-                <Film className="w-4 h-4 text-cyan-400" />
-                <span className="text-sm hidden sm:inline">{showStoryboard ? 'Close' : 'Pre-Vis'}</span>
-              </Button>
-            )}
-
-            {onPlayScript && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onPlayScript}
-                className="flex items-center gap-2 border-green-500/30 hover:border-green-500/50 hover:bg-green-500/10"
-                title="Open Screening Room — preview scene videos, assemble master, and publish"
-              >
-                <Play className="w-4 h-4 text-green-400" />
-                <span className="text-sm hidden sm:inline">Screening Room</span>
-              </Button>
-            )}
-
             {onShowReviews && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={onShowReviews}
                 className="flex items-center gap-2 border-purple-500/30 hover:border-purple-500/50 hover:bg-purple-500/10"
-                title="Edit script with audience resonance analysis and insights"
+                title="Audience resonance analysis and script insights"
               >
                 <FileText className="w-4 h-4 text-purple-400" />
-                <span className="text-sm hidden sm:inline">Script</span>
+                <span className="text-sm hidden sm:inline">Audience</span>
               </Button>
             )}
 
@@ -2768,15 +2738,15 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 variant="outline"
                 size="sm"
                 onClick={() => setShowProductionProgress((prev) => !prev)}
-                className={`flex items-center gap-2 ${
+                className={`h-8 w-8 p-0 ${
                   showProductionProgress
                     ? 'border-cyan-500/50 bg-cyan-500/10 hover:bg-cyan-500/20'
                     : 'border-cyan-500/30 hover:border-cyan-500/50 hover:bg-cyan-500/10'
                 }`}
                 title={showProductionProgress ? 'Close Production Progress panel' : 'Toggle Production Progress panel'}
+                aria-label={showProductionProgress ? 'Close Production Progress panel' : 'Toggle Production Progress panel'}
               >
                 <BarChart3 className="w-4 h-4 text-cyan-400" />
-                <span className="text-sm hidden sm:inline">{showProductionProgress ? 'Close' : 'Progress'}</span>
               </Button>
             )}
 
@@ -2785,11 +2755,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               variant="outline"
               size="sm"
               onClick={() => setCostCalculatorOpen(true)}
-              className="flex items-center gap-2 border-cyan-500/30 hover:border-cyan-500/50 hover:bg-cyan-500/10"
+              className="h-8 w-8 p-0 border-cyan-500/30 hover:border-cyan-500/50 hover:bg-cyan-500/10"
               title="Open budget calculator to estimate costs"
+              aria-label="Open budget calculator"
             >
               <Calculator className="w-4 h-4 text-cyan-400" />
-              <span className="text-sm hidden sm:inline">Budget</span>
             </Button>
 
             {/* Resume (Go to Bookmark) Button */}
@@ -2812,11 +2782,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 variant="outline"
                 size="sm"
                 onClick={onShowTreatmentReview}
-                className="flex items-center gap-2 border-purple-500/30 hover:border-purple-500/50 hover:bg-purple-500/10"
+                className="h-8 w-8 p-0 border-purple-500/30 hover:border-purple-500/50 hover:bg-purple-500/10"
                 title="Review film treatment for script alignment"
+                aria-label="Review film treatment"
               >
                 <FileCheck className="w-4 h-4 text-purple-400" />
-                <span className="text-sm hidden sm:inline">Treatment</span>
               </Button>
             )}
 
@@ -2825,11 +2795,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 variant="outline"
                 size="sm"
                 onClick={onRefactorFoundation}
-                className="flex items-center gap-2 border-amber-500/30 hover:border-amber-500/50 hover:bg-amber-500/10"
+                className="h-8 w-8 p-0 border-amber-500/30 hover:border-amber-500/50 hover:bg-amber-500/10"
                 title="Change art style or aspect ratio in Blueprint"
+                aria-label="Refactor foundation in Blueprint"
               >
                 <RefreshCw className="w-4 h-4 text-amber-400" />
-                <span className="text-sm hidden sm:inline">Refactor</span>
               </Button>
             )}
 
@@ -2941,6 +2911,25 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 {projectLogline}
               </p>
             )}
+          </div>
+        )}
+
+        {onToggleStoryboard && (
+          <div className="mt-3 flex items-center">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onToggleStoryboard}
+              className={`flex items-center gap-2 ${
+                showStoryboard
+                  ? 'border-cyan-500/50 bg-cyan-500/10 hover:bg-cyan-500/20'
+                  : 'border-cyan-500/30 hover:border-cyan-500/50 hover:bg-cyan-500/10'
+              }`}
+              title={showStoryboard ? 'Close Pre-Visualization' : 'Open Pre-Visualization'}
+            >
+              <Film className="w-4 h-4 text-cyan-400" />
+              <span className="text-sm">{showStoryboard ? 'Close Pre-Vis' : 'Pre-Vis'}</span>
+            </Button>
           </div>
         )}
         
@@ -5283,72 +5272,6 @@ function SceneCard({
                   </button>
                 )}
                 
-                {/* Mark Complete / Unmark button */}
-                {onMarkWorkflowComplete && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            const currentlyComplete = stepCompletion[activeStep as keyof typeof stepCompletion]
-                            onMarkWorkflowComplete(sceneIdx, activeStep, !currentlyComplete)
-                            
-                            // Auto-switch to Call Action when Script is marked complete
-                            if (activeStep === 'dialogueAction' && !currentlyComplete) {
-                              setActiveWorkflowTab('callAction')
-                            }
-                          }}
-                          className={`px-2 py-1 text-xs rounded-lg transition flex items-center gap-1 ${
-                            stepCompletion[activeStep as keyof typeof stepCompletion]
-                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
-                              : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700'
-                          }`}
-                        >
-                          {stepCompletion[activeStep as keyof typeof stepCompletion] ? (
-                            <>
-                              <CheckCircle className="w-3 h-3" />
-                              <span>Script Complete</span>
-                            </>
-                          ) : (
-                            <>
-                              <Circle className="w-3 h-3" />
-                              <span>Mark Script Complete</span>
-                            </>
-                          )}
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700 max-w-[200px]">
-                        {stepCompletion[activeStep as keyof typeof stepCompletion]
-                          ? 'Click to unmark — auto-detection will resume'
-                          : 'Override auto-detection and mark this step as manually complete'}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-
-                {/* Reset Beats button */}
-                {onResetSegments && sceneProductionData?.isSegmented && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setResetSegmentsDialogOpen(true)
-                          }}
-                          className="px-2 py-1 text-xs rounded-lg transition flex items-center gap-1 bg-red-500/20 text-red-300 border border-red-500/40 hover:bg-red-500/30"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                          <span>Reset Beats</span>
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700 max-w-[240px]">
-                        Clear beat timeline, keyframes, and generated video for this scene
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
             </div>
           )}
         </div>

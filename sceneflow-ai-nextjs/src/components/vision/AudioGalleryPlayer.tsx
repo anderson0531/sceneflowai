@@ -52,6 +52,27 @@ import {
   type GalleryImageEffectPrefs,
 } from '@/lib/storyboard/storyboardImageEffects'
 import { StoryboardImageEffectControl } from '@/components/vision/StoryboardImageEffectControl'
+import type { SceneProductionData } from '@/components/vision/scene-production/types'
+
+type PreVisPlaybackMode = 'animatic' | 'video'
+
+function resolveSceneVideoUrl(
+  scene: any,
+  sceneIndex: number,
+  language: string,
+  sceneProductionState?: Record<string, SceneProductionData>
+): string | null {
+  const sceneId = scene?.id || scene?.sceneId || `scene-${sceneIndex}`
+  const streams = sceneProductionState?.[sceneId]?.productionStreams || []
+  const match = streams.find(
+    (s) =>
+      s.streamType === 'video' &&
+      s.language === language &&
+      s.status === 'complete' &&
+      !!s.mp4Url
+  )
+  return match?.mp4Url || null
+}
 
 interface AudioGalleryPlayerProps {
   scenes: any[]
@@ -75,6 +96,8 @@ interface AudioGalleryPlayerProps {
   /** Per-scene translated script text for the active language. */
   sceneTranslations?: Record<number, SceneTranslation>
   playerLabels?: PlayerLabelMap
+  /** Per-scene production data for resolving completed video streams. */
+  sceneProductionState?: Record<string, SceneProductionData>
 }
 
 function formatTime(seconds: number) {
@@ -127,8 +150,10 @@ export function AudioGalleryPlayer({
   exportedAnimaticUrl,
   sceneTranslations,
   playerLabels,
+  sceneProductionState,
 }: AudioGalleryPlayerProps) {
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0)
+  const [playbackMode, setPlaybackMode] = useState<PreVisPlaybackMode>('animatic')
   const [volume, setVolume] = useState(0.8)
   const [musicVolume, setMusicVolume] = useState(loadGalleryMusicVolume)
   const [musicIntroFade, setMusicIntroFade] = useState<MusicIntroFadeConfig>(loadGalleryMusicIntroFade)
@@ -145,6 +170,11 @@ export function AudioGalleryPlayer({
     loadGalleryImageEffectPrefs()
   )
   const [crossfadeFromUrl, setCrossfadeFromUrl] = useState<string | null>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [videoPlaying, setVideoPlaying] = useState(false)
+  const [videoCurrentTime, setVideoCurrentTime] = useState(0)
+  const [videoDuration, setVideoDuration] = useState(0)
+  const shouldAutoPlayVideoRef = useRef(false)
 
   const updateImageEffectPrefs = useCallback((prefs: GalleryImageEffectPrefs) => {
     setImageEffectPrefs(prefs)
@@ -152,6 +182,21 @@ export function AudioGalleryPlayer({
   }, [])
 
   const currentScene = scenes[currentSceneIndex]
+
+  const currentSceneVideoUrl = useMemo(
+    () => resolveSceneVideoUrl(currentScene, currentSceneIndex, selectedLanguage, sceneProductionState),
+    [currentScene, currentSceneIndex, selectedLanguage, sceneProductionState]
+  )
+
+  const hasAnySceneVideo = useMemo(
+    () =>
+      scenes.some((scene, idx) =>
+        !!resolveSceneVideoUrl(scene, idx, selectedLanguage, sceneProductionState)
+      ),
+    [scenes, selectedLanguage, sceneProductionState]
+  )
+
+  const useVideoForCurrentScene = playbackMode === 'video' && !!currentSceneVideoUrl
 
   const playAfterSceneChangeRef = useRef<() => void>(() => {})
 
@@ -313,6 +358,12 @@ export function AudioGalleryPlayer({
       if (index >= 0 && index < scenes.length) {
         pause()
         reset()
+        if (videoRef.current) {
+          videoRef.current.pause()
+        }
+        setVideoPlaying(false)
+        setVideoCurrentTime(0)
+        setVideoDuration(0)
         setCurrentSceneIndex(index)
         onSceneChange?.(index)
       }
@@ -339,6 +390,77 @@ export function AudioGalleryPlayer({
     !!currentScene?.musicAudio ||
     !!(currentScene?.music as { url?: string } | undefined)?.url ||
     (Array.isArray(currentScene?.sfxAudio) && currentScene!.sfxAudio.length > 0)
+
+  useEffect(() => {
+    if (playbackMode === 'video' && !hasAnySceneVideo) {
+      setPlaybackMode('animatic')
+    }
+  }, [playbackMode, hasAnySceneVideo])
+
+  useEffect(() => {
+    if (useVideoForCurrentScene) {
+      pause()
+      reset()
+    } else if (videoRef.current) {
+      videoRef.current.pause()
+      setVideoPlaying(false)
+    }
+  }, [useVideoForCurrentScene, currentSceneIndex, currentSceneVideoUrl, pause, reset])
+
+  useEffect(() => {
+    if (!shouldAutoPlayVideoRef.current || !useVideoForCurrentScene) return
+    shouldAutoPlayVideoRef.current = false
+    const el = videoRef.current
+    if (!el) return
+    void el.play().then(() => setVideoPlaying(true)).catch(() => setVideoPlaying(false))
+  }, [useVideoForCurrentScene, currentSceneIndex, currentSceneVideoUrl])
+
+  const handleVideoEnded = useCallback(() => {
+    setVideoPlaying(false)
+    if (autoAdvanceRef.current && currentSceneIndex < scenes.length - 1) {
+      setTimeout(() => {
+        shouldAutoPlayVideoRef.current = playbackMode === 'video'
+        goToNextScene()
+      }, 100)
+    }
+  }, [currentSceneIndex, scenes.length, goToNextScene, playbackMode])
+
+  const toggleVideoPlayback = useCallback(() => {
+    const el = videoRef.current
+    if (!el) return
+    if (el.paused) {
+      void el.play().then(() => setVideoPlaying(true)).catch(() => setVideoPlaying(false))
+    } else {
+      el.pause()
+      setVideoPlaying(false)
+    }
+  }, [])
+
+  const effectiveIsPlaying = useVideoForCurrentScene ? videoPlaying : isPlaying
+  const effectiveCurrentTime = useVideoForCurrentScene ? videoCurrentTime : currentTime
+  const effectiveDuration = useVideoForCurrentScene
+    ? Math.max(videoDuration, 0.1)
+    : sceneDuration
+
+  const toggleEffectivePlayback = useCallback(() => {
+    if (useVideoForCurrentScene) {
+      toggleVideoPlayback()
+    } else {
+      togglePlayback()
+    }
+  }, [useVideoForCurrentScene, toggleVideoPlayback, togglePlayback])
+
+  const seekEffective = useCallback(
+    (time: number) => {
+      if (useVideoForCurrentScene && videoRef.current) {
+        videoRef.current.currentTime = time
+        setVideoCurrentTime(time)
+      } else {
+        seekTo(time)
+      }
+    },
+    [useVideoForCurrentScene, seekTo]
+  )
 
   // Image motion transform — one Ken Burns cycle per storyboard cut
   const kenBurnsProgress = useMemo(() => {
@@ -451,6 +573,48 @@ export function AudioGalleryPlayer({
           <div className="flex items-center gap-3">
             <Volume2 className="w-5 h-5 text-emerald-400" />
             <span className="font-semibold text-white">Pre-vis Player</span>
+            <div className="flex items-center rounded-md border border-white/10 bg-gray-800/80 p-0.5">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => setPlaybackMode('animatic')}
+                    className={cn(
+                      'px-2 py-0.5 rounded text-[11px] font-medium transition-colors',
+                      playbackMode === 'animatic'
+                        ? 'bg-emerald-600 text-white'
+                        : 'text-gray-400 hover:text-white'
+                    )}
+                  >
+                    Animatic
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Storyboard frames with synced audio</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => hasAnySceneVideo && setPlaybackMode('video')}
+                    disabled={!hasAnySceneVideo}
+                    className={cn(
+                      'px-2 py-0.5 rounded text-[11px] font-medium transition-colors',
+                      playbackMode === 'video'
+                        ? 'bg-indigo-600 text-white'
+                        : 'text-gray-400 hover:text-white',
+                      !hasAnySceneVideo && 'opacity-40 cursor-not-allowed hover:text-gray-400'
+                    )}
+                  >
+                    Video
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {hasAnySceneVideo
+                    ? 'Play completed scene videos back-to-back'
+                    : 'Render at least one scene video to enable Video mode'}
+                </TooltipContent>
+              </Tooltip>
+            </div>
             <span className="text-xs text-gray-400 bg-gray-800 px-2 py-0.5 rounded">
               Scene {currentSceneIndex + 1} of {scenes.length}
             </span>
@@ -578,7 +742,19 @@ export function AudioGalleryPlayer({
                   ? "max-w-3xl sm:max-w-4xl aspect-video shadow-lg"
                   : "max-w-[500px] aspect-video shadow-xl"
           )}>
-            {inBeatVisual.primaryUrl ? (
+            {useVideoForCurrentScene ? (
+              <video
+                ref={videoRef}
+                key={currentSceneVideoUrl || `scene-${currentSceneIndex}`}
+                src={currentSceneVideoUrl || undefined}
+                className="w-full h-full object-contain"
+                onLoadedMetadata={(e) => setVideoDuration(e.currentTarget.duration || 0)}
+                onTimeUpdate={(e) => setVideoCurrentTime(e.currentTarget.currentTime)}
+                onPlay={() => setVideoPlaying(true)}
+                onPause={() => setVideoPlaying(false)}
+                onEnded={handleVideoEnded}
+              />
+            ) : inBeatVisual.primaryUrl ? (
               <>
                 {crossfadeFromUrl && imageEffectPrefs.mode === 'crossfade' && !inBeatVisual.overlayUrl && (
                   renderSceneImage(crossfadeFromUrl, 'previous')
@@ -668,8 +844,11 @@ export function AudioGalleryPlayer({
                   totalScenes={scenes.length}
                   playerLabels={playerLabels}
                 />
-                {!hasAudio && (
+                {!hasAudio && !useVideoForCurrentScene && (
                   <p className="text-xs text-amber-400 mt-2">No audio generated for this scene</p>
+                )}
+                {playbackMode === 'video' && !currentSceneVideoUrl && (
+                  <p className="text-xs text-indigo-300 mt-2">No scene video yet — showing animatic fallback</p>
                 )}
               </div>
             )}
@@ -677,22 +856,22 @@ export function AudioGalleryPlayer({
             {/* Progress bar */}
             <div className={cn("mt-3", (isFullscreen || sharedCompact) && "mt-0")}>
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs text-gray-400 w-10">{formatTime(currentTime)}</span>
+                <span className="text-xs text-gray-400 w-10">{formatTime(effectiveCurrentTime)}</span>
                 <div 
                   className="flex-1 h-2 bg-gray-700 rounded-full cursor-pointer overflow-hidden"
                   onClick={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect()
                     const x = e.clientX - rect.left
                     const percent = x / rect.width
-                    seekTo(percent * sceneDuration)
+                    seekEffective(percent * effectiveDuration)
                   }}
                 >
                   <div 
                     className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-100"
-                    style={{ width: `${(currentTime / sceneDuration) * 100}%` }}
+                    style={{ width: `${(effectiveCurrentTime / effectiveDuration) * 100}%` }}
                   />
                 </div>
-                <span className="text-xs text-gray-400 w-10">{formatTime(sceneDuration)}</span>
+                <span className="text-xs text-gray-400 w-10">{formatTime(effectiveDuration)}</span>
               </div>
               
               {/* Controls row */}
@@ -717,13 +896,13 @@ export function AudioGalleryPlayer({
                   
                   {/* Play/Pause */}
                   <button
-                    onClick={togglePlayback}
+                    onClick={toggleEffectivePlayback}
                     className={cn(
                       "rounded-full bg-emerald-600 hover:bg-emerald-500 transition-colors",
                       isFullscreen ? "p-4" : "p-3"
                     )}
                   >
-                    {isPlaying ? (
+                    {effectiveIsPlaying ? (
                       <Pause className={cn("text-white", isFullscreen ? "w-6 h-6" : "w-5 h-5")} />
                     ) : (
                       <Play className={cn("text-white ml-0.5", isFullscreen ? "w-6 h-6" : "w-5 h-5")} />

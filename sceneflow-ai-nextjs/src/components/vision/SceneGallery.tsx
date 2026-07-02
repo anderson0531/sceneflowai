@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/Button'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { getLanguageName, FLAG_EMOJIS } from '@/constants/languages'
 import type { PlayerLabelMap, SceneTranslation } from '@/lib/storyboard/playerTranslations'
+import type { SceneProductionData } from '@/components/vision/scene-production/types'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType, StoryboardData } from '@/lib/types/reports'
@@ -94,6 +95,8 @@ interface SceneGalleryProps {
   playerLabelsByLanguage?: Record<string, PlayerLabelMap>
   /** Generate dialogue/narration for a new language stream (Express dialogue-only). */
   onGenerateLanguage?: (language: string) => Promise<void> | void
+  /** Per-scene production data for all-scene video playback. */
+  sceneProductionState?: Record<string, SceneProductionData>
 }
 
 export function SceneGallery({
@@ -116,6 +119,7 @@ export function SceneGallery({
   sceneTranslationsByLanguage,
   playerLabelsByLanguage,
   onGenerateLanguage,
+  sceneProductionState,
 }: SceneGalleryProps) {
   const preVisBannerRef = React.useRef<HTMLDivElement>(null)
 
@@ -646,6 +650,7 @@ export function SceneGallery({
             onGenVideo={onGenVideo}
             isGenVideoRunning={isGenVideoRunning}
             exportedAnimaticUrl={exportedAnimaticUrl}
+            sceneProductionState={sceneProductionState}
           />
         </div>
       )}

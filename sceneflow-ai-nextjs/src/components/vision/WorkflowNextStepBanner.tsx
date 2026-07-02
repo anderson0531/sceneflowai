@@ -8,7 +8,6 @@ import {
   Volume2,
   Compass,
   Frame,
-  Film,
   Clapperboard,
   Sparkles,
   CheckCircle2,
@@ -103,17 +102,6 @@ function getNextStep(state: WorkflowState): NextStepAction | null {
       targetTab: 'callAction',
       actionId: 'generate-beat-frames',
       accentColor: 'purple',
-    }
-  }
-
-  if (!state.hasVideoSegments) {
-    return {
-      label: 'Generate Video Beats',
-      description: 'Generate AI video for each segment using Frame-to-Video (FTV) mode for best results.',
-      icon: <Film className="w-4 h-4" />,
-      targetTab: 'callAction',
-      actionId: 'generate-video',
-      accentColor: 'amber',
     }
   }
 
