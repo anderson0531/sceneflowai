@@ -13455,7 +13455,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             </div>
           </div>
         </div>
-      </div>
       
       <ReferenceLibraryDialog
         open={referenceLibraryOpen}
@@ -13555,7 +13554,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         onExpressGenerateReferences={handleExpressGenerateReferences}
         isExpressGeneratingReferences={isExpressGeneratingReferences}
       />
-      </div>
       
       {/* Generation Progress Indicator */}
       <div suppressHydrationWarning>
