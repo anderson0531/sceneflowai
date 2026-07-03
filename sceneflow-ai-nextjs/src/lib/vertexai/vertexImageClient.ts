@@ -44,6 +44,24 @@ function getVertexImageConfig() {
   return { projectId, location }
 }
 
+/** Resolve Vertex location + endpoint for Gemini image models (Gemini 3 preview -> global only). */
+export function resolveVertexGeminiImageEndpoint(args: {
+  model: string
+  projectId: string
+  regionalLocation: string
+}): { endpoint: string; effectiveLocation: string; apiVersion: string } {
+  const isGemini3 = args.model.includes('gemini-3')
+  const effectiveLocation = isGemini3 ? 'global' : args.regionalLocation
+  const isPreview = args.model.includes('preview')
+  const apiVersion = isPreview ? 'v1beta1' : 'v1'
+  const baseUrl =
+    effectiveLocation === 'global'
+      ? 'https://aiplatform.googleapis.com'
+      : `https://${effectiveLocation}-aiplatform.googleapis.com`
+  const endpoint = `${baseUrl}/${apiVersion}/projects/${args.projectId}/locations/${effectiveLocation}/publishers/google/models/${args.model}:generateContent`
+  return { endpoint, effectiveLocation, apiVersion }
+}
+
 export interface VertexReferenceImage {
   imageUrl?: string
   base64Image?: string
@@ -120,13 +138,17 @@ export async function generateVertexGeminiImage(
   }
 
   const { projectId, location } = getVertexImageConfig()
-  const isPreview = model.includes('preview')
-  const apiVersion = isPreview ? 'v1beta1' : 'v1'
-  const baseUrl =
-    location === 'global'
-      ? 'https://aiplatform.googleapis.com'
-      : `https://${location}-aiplatform.googleapis.com`
-  const endpoint = `${baseUrl}/${apiVersion}/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
+  const { endpoint, effectiveLocation } = resolveVertexGeminiImageEndpoint({
+    model,
+    projectId,
+    regionalLocation: location,
+  })
+
+  if (model.includes('gemini-3') && effectiveLocation === 'global') {
+    console.log(
+      `[Vertex Gemini Image] Using global endpoint for ${model} (Gemini 3 image models are not regional)`
+    )
+  }
 
   let fullPrompt = options.prompt
   if (options.negativePrompt) {
