@@ -19,6 +19,7 @@ export interface GenerateMusicTrackResult {
   url: string
   size?: number
   duration?: number
+  requestedDuration?: number
 }
 
 export class LyriaRecitationError extends Error {
@@ -71,6 +72,7 @@ export async function generateMusicTrack(
     url: data.url,
     size: data.size,
     duration: data.duration,
+    requestedDuration: data.requestedDuration,
   }
 }
 

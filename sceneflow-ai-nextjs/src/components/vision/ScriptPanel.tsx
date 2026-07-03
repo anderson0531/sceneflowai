@@ -1400,7 +1400,14 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             } : prev)
 
             try {
-              await generateMusic(sceneIdx)
+              const sceneForMusic = scenes[sceneIdx]
+              const musicDuration =
+                typeof sceneForMusic?.musicDuration === 'number' && sceneForMusic.musicDuration > 0
+                  ? sceneForMusic.musicDuration
+                  : typeof sceneForMusic?.duration === 'number' && sceneForMusic.duration > 0
+                    ? sceneForMusic.duration
+                    : 30
+              await generateMusic(sceneIdx, true, musicDuration)
             } catch (error) {
               console.error(`[Music Generation] Error for scene ${sceneIdx}:`, error)
             }
@@ -1984,18 +1991,27 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   }
 
   // Audio generation functions
-  const generateMusic = async (sceneIdx: number, skipOverlay?: boolean) => {
+  const generateMusic = async (
+    sceneIdx: number,
+    skipOverlay?: boolean,
+    durationSeconds?: number
+  ) => {
     const scene = scenes[sceneIdx]
     const music = scene?.music
     if (!music) return
+
+    const duration =
+      durationSeconds ??
+      (typeof scene.musicDuration === 'number' && scene.musicDuration > 0
+        ? scene.musicDuration
+        : undefined) ??
+      (typeof scene.duration === 'number' && scene.duration > 0 ? scene.duration : 30)
 
     setGeneratingMusic(sceneIdx)
     if (!skipOverlay) {
       overlayStore?.show(`Generating music for Scene ${sceneIdx + 1}...`, 45, 'audio-generation')
     }
     try {
-      const duration = scene.duration || 30
-      // Use saveToBlob to have the server upload directly - avoids 4.5MB payload limit
       const { generateMusicTrack } = await import('@/lib/audio/musicClient')
       const data = await generateMusicTrack({
         text: typeof music === 'string' ? music : music.description,
@@ -2005,9 +2021,17 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         sceneId: `scene-${sceneIdx}`,
       })
       const audioUrl = data.url
-      
-      // Update scene with persistent audio URL
-      await saveSceneAudio(sceneIdx, 'music', audioUrl)
+
+      await saveSceneAudio(
+        sceneIdx,
+        'music',
+        audioUrl,
+        undefined,
+        undefined,
+        undefined,
+        duration,
+        typeof data.duration === 'number' && data.duration > 0 ? data.duration : undefined
+      )
       if (!skipOverlay) {
         overlayStore?.hide()
       }
@@ -2134,7 +2158,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     audioUrl: string,
     sfxIdx?: number,
     sfxAttribution?: Record<string, unknown> | null,
-    beatContext?: { beatId: string; beatDescription: string }
+    beatContext?: { beatId: string; beatDescription: string },
+    musicDuration?: number,
+    musicFileDuration?: number
   ) => {
     // CRITICAL FIX: Use atomic server update instead of stale client state
     // The old approach used local `scenes` state which was stale and overwrote server-saved dialogue audio
@@ -2160,6 +2186,12 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       if (audioType === 'sfx' && beatContext?.beatId) {
         atomicAudioUpdate.beatId = beatContext.beatId
         atomicAudioUpdate.beatDescription = beatContext.beatDescription
+      }
+      if (audioType === 'music' && typeof musicDuration === 'number' && musicDuration > 0) {
+        atomicAudioUpdate.musicDuration = musicDuration
+      }
+      if (audioType === 'music' && typeof musicFileDuration === 'number' && musicFileDuration > 0) {
+        atomicAudioUpdate.musicFileDuration = musicFileDuration
       }
 
       // Make atomic update to database via PATCH endpoint
@@ -3719,7 +3751,7 @@ interface SceneCardProps {
   generatingMusic?: number | null
   setGeneratingMusic?: (state: number | null) => void
   // Functions for generating and saving audio
-  generateMusic?: (sceneIdx: number, skipOverlay?: boolean) => Promise<void>
+  generateMusic?: (sceneIdx: number, skipOverlay?: boolean, durationSeconds?: number) => Promise<void>
   /** Persist a generated SFX URL through the project PATCH path. */
   onSaveSfxAudio?: (
     sceneIdx: number,
@@ -4140,6 +4172,30 @@ function SceneCard({
   const hasPreVisTab = frameSlotsForTabs.length > 0 || sceneBeatsForTabs.length > 0
   const hasBeatsTab = sceneBeatsForTabs.length > 0
   const hasMusicTab = !!scene.music
+
+  const defaultMusicPlayDuration = useMemo(() => {
+    if (typeof scene.musicDuration === 'number' && scene.musicDuration > 0) {
+      return scene.musicDuration
+    }
+    if (typeof scene.duration === 'number' && scene.duration > 0) {
+      return scene.duration
+    }
+    const segs = sceneProductionData?.segments
+    if (segs?.length) {
+      const total = segs.reduce(
+        (sum, s) => sum + Math.max(0, (s.endTime ?? 0) - (s.startTime ?? 0)),
+        0
+      )
+      if (total > 0) return Math.ceil(total)
+    }
+    return 30
+  }, [scene.musicDuration, scene.duration, sceneProductionData?.segments])
+
+  const [musicPlayDuration, setMusicPlayDuration] = useState(defaultMusicPlayDuration)
+
+  useEffect(() => {
+    setMusicPlayDuration(defaultMusicPlayDuration)
+  }, [defaultMusicPlayDuration, sceneIdx])
 
   const availableSceneTabs = useMemo(() => {
     const tabs: SceneScriptTab[] = []
@@ -6758,7 +6814,7 @@ function SceneCard({
                                 e.stopPropagation()
                                 setGeneratingMusic?.(sceneIdx)
                                 try {
-                                  await generateMusic?.(sceneIdx)
+                                  await generateMusic?.(sceneIdx, false, musicPlayDuration)
                                 } catch (error) {
                                   console.error('[ScriptPanel] Music regeneration failed:', error)
                                 } finally {
@@ -6818,7 +6874,7 @@ function SceneCard({
                                 e.stopPropagation()
                                 setGeneratingMusic?.(sceneIdx)
                                 try {
-                                  await generateMusic?.(sceneIdx)
+                                  await generateMusic?.(sceneIdx, false, musicPlayDuration)
                                 } catch (error) {
                                   console.error('[ScriptPanel] Music generation failed:', error)
                                 } finally {
@@ -6848,6 +6904,34 @@ function SceneCard({
                               <Upload className="w-4 h-4" />
                             </button>
                           </div>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3 mb-2">
+                        <label className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                          <span className="whitespace-nowrap">Play duration (s)</span>
+                          <input
+                            type="number"
+                            min={5}
+                            max={600}
+                            step={1}
+                            value={musicPlayDuration}
+                            onChange={(e) => {
+                              const next = parseInt(e.target.value, 10)
+                              if (Number.isFinite(next) && next >= 5) {
+                                setMusicPlayDuration(Math.min(600, next))
+                              }
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-16 px-2 py-1 text-xs rounded border border-purple-300 dark:border-purple-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200"
+                          />
+                        </label>
+                        <span className="text-[10px] text-gray-500 dark:text-gray-500">
+                          Lyria generates ~30s clips; longer durations loop in the Mixer.
+                        </span>
+                        {typeof scene.musicFileDuration === 'number' && scene.musicFileDuration > 0 && (
+                          <span className="text-[10px] text-gray-500">
+                            Clip length: ~{Math.round(scene.musicFileDuration)}s
+                          </span>
                         )}
                       </div>
                       <div className="text-sm text-gray-700 dark:text-gray-300 italic">

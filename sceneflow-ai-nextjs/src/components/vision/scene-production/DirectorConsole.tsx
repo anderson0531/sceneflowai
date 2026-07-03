@@ -948,6 +948,8 @@ function DirectorConsoleRoot({
           dialogue: scene?.dialogue,
           musicAudio: scene?.musicAudio,
           music: scene?.music,
+          musicDuration: (scene as { musicDuration?: number })?.musicDuration,
+          musicFileDuration: (scene as { musicFileDuration?: number })?.musicFileDuration,
           sfx: normalizedSceneSfx,
         }}
         textOverlays={textOverlays}
@@ -1599,7 +1601,10 @@ function DirectorConsoleRoot({
             }))
           })(),
           musicUrl: scene?.musicAudio,
-          musicDuration: 30,
+          musicDuration:
+            (scene as { musicDuration?: number })?.musicDuration ??
+            (scene as { musicFileDuration?: number })?.musicFileDuration ??
+            30,
           sfxUrl: scene?.sfx?.find(s => s.audioUrl)?.audioUrl,
           sfxDuration: 5,
         }}

@@ -21,6 +21,10 @@ import {
   computeMusicIntroFadeMultiplier,
   type MusicIntroFadeConfig,
 } from '@/lib/storyboard/musicIntroFade'
+import {
+  computeClipAudioTime,
+  loopingDrift,
+} from '@/lib/audio/loopingAudioSync'
 
 // ============================================================================
 // Types
@@ -98,26 +102,6 @@ export interface UseTimelinePlaybackReturn {
 // ============================================================================
 
 const DRIFT_THRESHOLD = 0.2 // Resync audio if drifts more than 200ms
-
-function computeClipAudioTime(
-  clip: AudioClip,
-  elapsed: number,
-  audioDuration: number
-): number {
-  const rawTime = elapsed - clip.startTime + (clip.trimStart || 0)
-  if (clip.loop && audioDuration > 0 && Number.isFinite(audioDuration)) {
-    return ((rawTime % audioDuration) + audioDuration) % audioDuration
-  }
-  return rawTime
-}
-
-function loopingDrift(audioTime: number, currentTime: number, audioDuration: number): number {
-  if (audioDuration <= 0) return Math.abs(currentTime - audioTime)
-  const direct = Math.abs(currentTime - audioTime)
-  const wrappedForward = Math.abs(currentTime - (audioTime + audioDuration))
-  const wrappedBackward = Math.abs(currentTime - (audioTime - audioDuration))
-  return Math.min(direct, wrappedForward, wrappedBackward)
-}
 
 function computeEffectiveClipVolume(
   clip: AudioClip,

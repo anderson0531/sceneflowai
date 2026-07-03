@@ -17,6 +17,8 @@
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { coerceSceneSfxFlatArray } from '@/lib/script/segmentScript'
+import { computeClipAudioTime, loopingDrift } from '@/lib/audio/loopingAudioSync'
+import { DEFAULT_MUSIC_FILE_DURATION_SEC } from '@/lib/storyboard/musicPlayback'
 import { toast } from 'sonner'
 import { 
   Play, 
@@ -345,6 +347,10 @@ export interface SceneAudioAssets {
   dialogue?: Array<{ character?: string; line?: string; text?: string }>
   /** Music audio URL (global, not language-specific) */
   musicAudio?: string
+  /** Target play duration for scene music (loops clip) */
+  musicDuration?: number
+  /** Probed/generated clip file length in seconds */
+  musicFileDuration?: number
   /** Music description */
   music?: string | { description?: string }
   /** SFX entries (global, not language-specific) */
@@ -587,6 +593,7 @@ function ScenePreviewPlayer({
   measuredSegmentDurations,
   onMeasuredDurationsChange,
   onPlaybackTimeChange,
+  musicFileDuration = DEFAULT_MUSIC_FILE_DURATION_SEC,
 }: {
   segments: SceneSegment[]
   audioTracks: MixerAudioTracks
@@ -615,6 +622,8 @@ function ScenePreviewPlayer({
   measuredSegmentDurations: Record<string, number>
   onMeasuredDurationsChange: (durations: Record<string, number>) => void
   onPlaybackTimeChange?: (time: number) => void
+  /** Probed WAV length for modulo loop sync */
+  musicFileDuration?: number
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -943,8 +952,18 @@ function ScenePreviewPlayer({
       
       if (isPlaying && currentTime >= musicStartTime) {
         const musicLocalTime = currentTime - musicStartTime
-        if (Math.abs(musicRef.current.currentTime - musicLocalTime) > 0.85) {
-          musicRef.current.currentTime = musicLocalTime
+        const expectedAudioTime = computeClipAudioTime(
+          { startTime: 0, trimStart: 0, loop: true },
+          musicStartTime + musicLocalTime,
+          musicFileDuration
+        )
+        const drift = loopingDrift(
+          expectedAudioTime,
+          musicRef.current.currentTime,
+          musicFileDuration
+        )
+        if (drift > 0.85) {
+          musicRef.current.currentTime = expectedAudioTime
         }
         if (musicRef.current.paused) {
           musicRef.current.play().catch(() => {})
@@ -1006,7 +1025,7 @@ function ScenePreviewPlayer({
     } else {
       dialogueRefsById.current.forEach(el => el?.pause())
     }
-  }, [isPlaying, currentTime, audioTracks, currentAudioUrls, dialogueClipConfigs, isMuted, getSegmentStartTime])
+  }, [isPlaying, currentTime, audioTracks, currentAudioUrls, dialogueClipConfigs, isMuted, getSegmentStartTime, musicFileDuration])
   
   // Load new segment video when segment index changes
   useEffect(() => {
@@ -1567,7 +1586,7 @@ function ScenePreviewPlayer({
         <audio ref={narrationRef} src={currentAudioUrls.narration} preload="auto" />
       )}
       {currentAudioUrls.music && (
-        <audio ref={musicRef} src={currentAudioUrls.music} preload="auto" loop />
+        <audio ref={musicRef} src={currentAudioUrls.music} preload="auto" />
       )}
       {/* Dialogue audio elements - one per clip */}
       {currentAudioUrls.dialogue.map((clip, idx) => {
@@ -2874,6 +2893,36 @@ export function SceneProductionMixer({
   }, [dialogueAudioProbeKey])
 
   useEffect(() => {
+    const musicUrl = currentAudioUrls.music
+    if (!musicUrl) return
+    const audio = document.createElement('audio')
+    audio.preload = 'metadata'
+    audio.src = musicUrl
+    const onMeta = () => {
+      const decoded = audio.duration
+      if (!Number.isFinite(decoded) || decoded <= 0) return
+      setProbedDurations((prev) => {
+        if (prev.music === decoded) return prev
+        return { ...prev, music: decoded }
+      })
+    }
+    audio.addEventListener('loadedmetadata', onMeta)
+    return () => {
+      audio.removeEventListener('loadedmetadata', onMeta)
+      audio.removeAttribute('src')
+      audio.load()
+    }
+  }, [currentAudioUrls.music])
+
+  const musicFileDuration = useMemo(
+    () =>
+      probedDurations.music ??
+      audioAssets.musicFileDuration ??
+      DEFAULT_MUSIC_FILE_DURATION_SEC,
+    [probedDurations.music, audioAssets.musicFileDuration]
+  )
+
+  useEffect(() => {
     if (!currentAudioUrls.dialogue?.length) return
     setDialogueClipConfigs(prev => {
       const next = { ...prev }
@@ -4178,6 +4227,7 @@ export function SceneProductionMixer({
                   setShowOverlayPanel(true)
                 }}
                 onDeleteOverlay={deleteOverlay}
+                musicFileDuration={musicFileDuration}
               />
               
               {/* Timeline Overview - directly under video for spatial continuity */}
@@ -5127,12 +5177,21 @@ export function SceneProductionMixer({
                 onConfigChange={(c) => updateTrackConfig('music', c)}
                 audioUrl={playbackAudioUrls.music}
                 videoTotalDuration={videoTotalDuration}
-                audioDuration={30}
+                audioDuration={musicFileDuration}
                 segmentCount={previewSegments.length}
-                subtitle={typeof audioAssets.music === 'string' 
-                  ? audioAssets.music.slice(0, 50) 
-                  : audioAssets.music?.description?.slice(0, 50)
-                }
+                subtitle={(() => {
+                  const desc =
+                    typeof audioAssets.music === 'string'
+                      ? audioAssets.music.slice(0, 50)
+                      : audioAssets.music?.description?.slice(0, 50)
+                  const clipInfo =
+                    musicFileDuration > 0 && videoTotalDuration > 0
+                      ? `~${Math.round(musicFileDuration)}s clip · plays for ${Math.round(videoTotalDuration)}s`
+                      : musicFileDuration > 0
+                        ? `~${Math.round(musicFileDuration)}s clip`
+                        : ''
+                  return [desc, clipInfo].filter(Boolean).join(' · ').slice(0, 80) || undefined
+                })()}
                 hasAudio={!!playbackAudioUrls.music}
                 disabled={isRendering}
                 isCollapsed={collapsedSections.music}

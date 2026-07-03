@@ -596,6 +596,8 @@ export async function PATCH(
         sfxAttribution,
         beatId,
         beatDescription,
+        musicDuration,
+        musicFileDuration,
       } = body.atomicAudioUpdate
 
       let sfxIndex = rawSfxIndex
@@ -641,6 +643,12 @@ export async function PATCH(
       
       if (audioType === 'music') {
         scene.musicAudio = audioUrl
+        if (typeof musicDuration === 'number' && musicDuration > 0) {
+          scene.musicDuration = musicDuration
+        }
+        if (typeof musicFileDuration === 'number' && musicFileDuration > 0) {
+          scene.musicFileDuration = musicFileDuration
+        }
         if (scenePath === 'nested') {
           metadata.visionPhase.script.script.scenes = scenes
         } else {

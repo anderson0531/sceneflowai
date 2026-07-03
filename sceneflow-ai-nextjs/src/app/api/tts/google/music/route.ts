@@ -13,6 +13,7 @@ import {
   LYRIA_RECITATION_ERROR_CODE,
   LYRIA_RECITATION_USER_MESSAGE,
 } from '@/lib/audio/lyriaPromptAdapter'
+import { getWavDurationSeconds } from '@/lib/audio/loopingAudioSync'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60 // Allow up to 60 seconds for music generation
@@ -101,7 +102,13 @@ export async function POST(request: NextRequest) {
       }, { status: 402 })
     }
 
-    const { text, projectId, sceneId, saveToBlob = false } = await request.json()
+    const { text, projectId, sceneId, saveToBlob = false, duration: requestedDuration } =
+      await request.json()
+
+    const requestedDurationSeconds =
+      typeof requestedDuration === 'number' && requestedDuration > 0
+        ? Math.min(Math.round(requestedDuration), 600)
+        : 30
 
     if (!text || typeof text !== 'string') {
       return NextResponse.json({ error: 'Missing text parameter' }, { status: 400 })
@@ -178,10 +185,13 @@ export async function POST(request: NextRequest) {
     }
 
     const arrayBuffer = Buffer.from(successResult.base64Data, 'base64')
+    const actualDurationSeconds = getWavDurationSeconds(arrayBuffer)
 
     console.log('[Google Music] Music generated successfully:', {
       variant: winningVariant,
       size: arrayBuffer.byteLength,
+      actualDurationSeconds,
+      requestedDurationSeconds,
     })
 
     try {
@@ -190,7 +200,7 @@ export async function POST(request: NextRequest) {
         MUSIC_CREDIT_COST,
         'ai_usage',
         null,
-        { operation: 'google_music', duration: 30, prompt: adaptedPrompt.substring(0, 100) }
+        { operation: 'google_music', duration: actualDurationSeconds, prompt: adaptedPrompt.substring(0, 100) }
       )
       console.log(`[Google Music] Charged ${MUSIC_CREDIT_COST} credits to user ${userId}`)
 
@@ -216,7 +226,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         url: blob.url,
         size: arrayBuffer.byteLength,
-        duration: 30,
+        duration: actualDurationSeconds,
+        requestedDuration: requestedDurationSeconds,
       })
     }
 

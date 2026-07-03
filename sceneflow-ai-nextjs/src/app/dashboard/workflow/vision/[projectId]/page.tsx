@@ -11267,11 +11267,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     if (!music) return
     
     const description = typeof music === 'string' ? music : music.description
-    const duration = scene.duration || 30
+    const duration =
+      typeof scene.musicDuration === 'number' && scene.musicDuration > 0
+        ? scene.musicDuration
+        : typeof scene.duration === 'number' && scene.duration > 0
+          ? scene.duration
+          : 30
     
     console.log(`[Update Scene Audio] Generating music for Scene ${sceneIndex + 1}...`)
     
-    // Use saveToBlob to have the server upload directly - avoids 4.5MB payload limit
     const { generateMusicTrack } = await import('@/lib/audio/musicClient')
     const data = await generateMusicTrack({
       text: description,
@@ -11282,13 +11286,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     })
     const audioUrl = data.url
     
-    // Update state with music URL
     setScript((prevScript: any) => {
       const updatedScenes = [...(prevScript?.script?.scenes || [])]
       if (updatedScenes[sceneIndex]) {
         updatedScenes[sceneIndex] = {
           ...updatedScenes[sceneIndex],
-          musicAudio: audioUrl
+          musicAudio: audioUrl,
+          musicDuration: duration,
+          ...(typeof data.duration === 'number' && data.duration > 0
+            ? { musicFileDuration: data.duration }
+            : {}),
         }
       }
       
