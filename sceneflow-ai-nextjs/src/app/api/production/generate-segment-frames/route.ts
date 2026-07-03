@@ -690,6 +690,26 @@ export async function POST(req: NextRequest) {
 
       for (const c of charPool) {
         const sceneHeadshotUrl = sceneHeadshotByName.get(c.name)
+
+        if (
+          c.hasDualReferences &&
+          c.referenceUrl &&
+          c.wardrobeReferenceUrl &&
+          allReferenceImages.length < MAX_GEMINI_REFERENCE_IMAGES
+        ) {
+          allReferenceImages.push({
+            imageUrl: c.referenceUrl,
+            name: buildIdentityReferenceLabel(c.name),
+          })
+          if (allReferenceImages.length < MAX_GEMINI_REFERENCE_IMAGES) {
+            allReferenceImages.push({
+              imageUrl: c.wardrobeReferenceUrl,
+              name: buildWardrobeReferenceLabel(c.name),
+            })
+          }
+          continue
+        }
+
         if (sceneHeadshotUrl && allReferenceImages.length < MAX_GEMINI_REFERENCE_IMAGES) {
           allReferenceImages.push({
             imageUrl: sceneHeadshotUrl,

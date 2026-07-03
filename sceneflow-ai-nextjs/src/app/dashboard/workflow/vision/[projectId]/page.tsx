@@ -7435,6 +7435,69 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  const handleApplyEnhancedReference = async (
+    characterId: string,
+    payload: {
+      referenceImageUrl: string
+      visionDescription?: string | null
+      enhanceIterationCount?: number
+    }
+  ) => {
+    try {
+      const updatedCharacters = characters.map(char => {
+        const charId = char.id || characters.indexOf(char).toString()
+        if (charId !== characterId) return char
+        return {
+          ...char,
+          referenceImage: payload.referenceImageUrl,
+          ...(payload.visionDescription
+            ? {
+                visionDescription: payload.visionDescription,
+                appearanceDescription: payload.visionDescription,
+              }
+            : {}),
+          ...(payload.enhanceIterationCount != null
+            ? { enhanceIterationCount: payload.enhanceIterationCount }
+            : {}),
+        }
+      })
+
+      setCharacters(updatedCharacters)
+
+      const existingMetadata = (projectRef.current || project)?.metadata || {}
+      const existingVisionPhase = existingMetadata.visionPhase || {}
+
+      const saveResponse = await serializedProjectSave(
+        {
+          metadata: {
+            ...existingMetadata,
+            visionPhase: {
+              ...existingVisionPhase,
+              script: scriptRef.current || script,
+              scenes: scenes,
+              characters: updatedCharacters,
+            },
+          },
+        },
+        'handleApplyEnhancedReference'
+      )
+
+      if (!saveResponse.ok) {
+        const errorText = await saveResponse.text()
+        throw new Error(`Save failed: ${saveResponse.status} ${errorText}`)
+      }
+
+      try {
+        toast.success('Enhanced reference applied')
+      } catch {}
+    } catch (error) {
+      console.error('[Apply Enhanced Reference] Error:', error)
+      try {
+        toast.error('Failed to save enhanced reference')
+      } catch {}
+    }
+  }
+
   const handleGenerateCharacter = async (characterId: string, promptOrPayload: any) => {
     const isObjectPayload = promptOrPayload && typeof promptOrPayload === 'object'
     const prompt: string = isObjectPayload ? (promptOrPayload.characterPrompt || '') : (promptOrPayload || '')
@@ -7459,11 +7522,23 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const json = await res.json()
       
       if (json?.imageUrl) {
+        const visionDescription =
+          typeof json.visionDescription === 'string' ? json.visionDescription : undefined
         // Update character with generated image and prompt
         const updatedCharacters = characters.map(char => {
           const charId = char.id || characters.indexOf(char).toString()
-          return charId === characterId 
-            ? { ...char, referenceImage: json.imageUrl, imagePrompt: prompt } 
+          return charId === characterId
+            ? {
+                ...char,
+                referenceImage: json.imageUrl,
+                imagePrompt: prompt,
+                ...(visionDescription
+                  ? {
+                      visionDescription,
+                      appearanceDescription: visionDescription,
+                    }
+                  : {}),
+              }
             : char
         })
         
@@ -13445,6 +13520,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onRemoveReference={(type, referenceId) => handleRemoveReference(type, referenceId)}
                 onUpdateReferenceImage={handleUpdateReferenceImage}
                 onEditCharacterImage={handleEditCharacterImage}
+                onApplyEnhancedReference={handleApplyEnhancedReference}
                 scenes={script?.script?.scenes || []}
                 allScenes={script?.script?.scenes || []}
                 showProductionReadiness={true}

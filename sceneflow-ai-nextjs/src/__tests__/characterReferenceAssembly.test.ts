@@ -29,18 +29,18 @@ describe('characterReferenceAssembly', () => {
     ],
   }
 
-  it('returns identity only and never attaches wardrobe image URLs', () => {
+  it('returns face-first dual references when identity and fullBodyUrl exist', () => {
     const pair = resolveCharacterReferencePair({ character: characterWithPortrait })
     expect(pair.identityUrl).toBe('https://example.com/portrait.jpg')
-    expect(pair.wardrobeUrl).toBeUndefined()
+    expect(pair.wardrobeUrl).toBe('https://example.com/turnaround.jpg')
     expect(pair.wardrobeDiptychUrl).toBeUndefined()
     expect(pair.hasWardrobeDiptych).toBe(false)
-    expect(pair.hasDualReferences).toBe(false)
+    expect(pair.hasDualReferences).toBe(true)
     expect(pair.hasWardrobeOnlyReference).toBe(false)
     expect(pair.resolvedWardrobe?.description).toBe('Navy suit')
   })
 
-  it('returns scene-matched wardrobe diptych when includeWardrobeDiptych is set', () => {
+  it('returns scene-matched wardrobe diptych when includeWardrobeDiptych is set and no fullBodyUrl', () => {
     const pair = resolveCharacterReferencePair({
       character: {
         id: 'char-1',
@@ -53,7 +53,6 @@ describe('characterReferenceAssembly', () => {
             description: 'Hospital gown',
             sceneNumbers: [4],
             headshotUrl: 'https://example.com/elara-diptych-scene4.jpg',
-            fullBodyUrl: 'https://example.com/elara-turnaround.jpg',
             isDefault: false,
           },
           {
@@ -70,7 +69,30 @@ describe('characterReferenceAssembly', () => {
     })
     expect(pair.wardrobeDiptychUrl).toBe('https://example.com/elara-diptych-scene4.jpg')
     expect(pair.hasWardrobeDiptych).toBe(true)
+    expect(pair.hasDualReferences).toBe(false)
     expect(pair.resolvedWardrobe?.id).toBe('w-scene')
+  })
+
+  it('prefers fullBodyUrl over diptych when both exist', () => {
+    const pair = resolveCharacterReferencePair({
+      character: {
+        id: 'char-1',
+        name: 'Elara',
+        referenceImage: 'https://example.com/portrait.jpg',
+        wardrobes: [
+          {
+            id: 'w1',
+            isDefault: true,
+            headshotUrl: 'https://example.com/diptych.jpg',
+            fullBodyUrl: 'https://example.com/full-body.jpg',
+          },
+        ],
+      },
+      includeWardrobeDiptych: true,
+    })
+    expect(pair.wardrobeUrl).toBe('https://example.com/full-body.jpg')
+    expect(pair.hasDualReferences).toBe(true)
+    expect(pair.wardrobeDiptychUrl).toBeUndefined()
   })
 
   it('does not attach diptych for wrong scene when sceneNumbers do not match', () => {
@@ -139,7 +161,7 @@ describe('characterReferenceAssembly', () => {
     expect(id).toBe('w1')
   })
 
-  it('returns portrait-only when no wardrobe turnaround', () => {
+  it('returns portrait-only when no wardrobe image URLs', () => {
     const pair = resolveCharacterReferencePair({
       character: {
         name: 'Sarah',
@@ -171,7 +193,7 @@ describe('characterReferenceAssembly', () => {
     expect(pair.hasDualReferences).toBe(false)
   })
 
-  it('resolves wardrobe text via characterWardrobes without attaching image', () => {
+  it('resolves wardrobe text via characterWardrobes and attaches fullBodyUrl', () => {
     const pair = resolveCharacterReferencePair({
       character: {
         id: 'char-1',
@@ -184,8 +206,8 @@ describe('characterReferenceAssembly', () => {
       },
       characterWardrobes: [{ characterId: 'char-1', wardrobeId: 'w2' }],
     })
-    expect(pair.wardrobeUrl).toBeUndefined()
-    expect(pair.hasDualReferences).toBe(false)
+    expect(pair.wardrobeUrl).toBe('https://example.com/scene-outfit.jpg')
+    expect(pair.hasDualReferences).toBe(true)
     expect(pair.resolvedWardrobe?.id).toBe('w2')
   })
 
@@ -210,14 +232,13 @@ describe('characterReferenceAssembly', () => {
     expect(wardrobeLine).toContain(WARDROBE_ONLY_REFERENCE_INSTRUCTION)
     expect(identityLine).not.toContain('BOTTOM ROW')
     expect(wardrobeLine).not.toContain('2-row')
-    expect(wardrobeLine.toLowerCase()).toContain('mannequin')
+    expect(wardrobeLine.toLowerCase()).toContain('full-body')
   })
 
   it('DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK establishes identity PRIMARY and wardrobe SECONDARY', () => {
     expect(DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK).toContain('PRIMARY')
     expect(DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK).toContain('SECONDARY')
     expect(DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK).toContain('photorealistic')
-    expect(DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK.toLowerCase()).toContain('mannequin')
   })
 
   it('buildFramingAwareIdentityBlock adds wide-shot reinforcement', () => {

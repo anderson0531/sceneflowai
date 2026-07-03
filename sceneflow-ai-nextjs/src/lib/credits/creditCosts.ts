@@ -116,6 +116,9 @@ export const IMAGE_CREDITS = {
   /** Scene/wardrobe character reference headshot (Gemini Pro Image 4K) */
   SCENE_CHARACTER_HEADSHOT: 15,
 
+  /** Identity headshot generation (designer 2K) + auto-enhance pass */
+  CHARACTER_IDENTITY_WITH_ENHANCE: 15,
+
   /** Fal-hosted Kling image fallback after Vertex policy block (~$0.04–0.06) */
   FAL_KLING_IMAGE: 12,
   /** @deprecated Use FAL_KLING_IMAGE */

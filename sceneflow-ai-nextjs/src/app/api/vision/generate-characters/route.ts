@@ -2,9 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import UserProviderConfig from '@/models/UserProviderConfig'
 import { sequelize } from '@/config/database'
-import { generateImageWithGemini } from '@/lib/gemini/imageClient'
+import { generateImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
 import { uploadReferenceLibraryBase64Image } from '@/lib/storage/referenceLibraryStorage'
 import { buildCharacterIdentityReferencePromptFromCharacter } from '@/lib/character/characterReferencePrompts'
+import {
+  ENHANCE_IDENTITY_ASPECT_RATIO,
+  ENHANCE_IDENTITY_IMAGE_SIZE,
+  ENHANCE_IDENTITY_MODEL_TIER,
+  enhanceIdentityImage,
+} from '@/lib/character/enhanceIdentityImage'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -48,6 +54,8 @@ export async function POST(request: NextRequest) {
             apiKey: provider.apiKey,
             prompt,
             projectId,
+            characterName: char.name,
+            characterId: char.id,
           })
           
           return {
@@ -145,23 +153,37 @@ async function generateCharacterImage(params: {
   apiKey: string
   prompt: string
   projectId: string
+  characterName?: string
+  characterId?: string
 }): Promise<string> {
-  // Use Gemini API for character generation (platform API key)
-  console.log('[Character Gen] Using Gemini 3 Pro Image (platform API key)')
-  
-  const base64Image = await generateImageWithGemini(params.prompt, {
-    aspectRatio: '1:1', // Portrait aspect ratio
-    numberOfImages: 1,
-    imageSize: '2K' // Higher quality for character references
+  console.log('[Character Gen] Using designer-tier identity headshot (2K) + auto-enhance')
+
+  const draftResult = await generateImageWithGeminiStudio({
+    prompt: params.prompt,
+    aspectRatio: ENHANCE_IDENTITY_ASPECT_RATIO,
+    imageSize: ENHANCE_IDENTITY_IMAGE_SIZE,
+    modelTier: ENHANCE_IDENTITY_MODEL_TIER,
   })
-  
-  const blobUrl = await uploadReferenceLibraryBase64Image(
-    base64Image,
+
+  const draftBase64 = `data:${draftResult.mimeType};base64,${draftResult.imageBase64}`
+  const draftUrl = await uploadReferenceLibraryBase64Image(
+    draftBase64,
     `characters/char-${Date.now()}.png`,
     params.projectId
   )
 
-  return blobUrl
+  const enhanced = await enhanceIdentityImage({
+    sourceImageUrl: draftUrl,
+    characterName: params.characterName || 'Character',
+    appearanceDescription: params.prompt,
+    characterId: params.characterId,
+    projectId: params.projectId,
+    iterationCount: 0,
+    skipIterationGuard: true,
+    skipPreAnalysis: true,
+  })
+
+  return enhanced.enhancedImageUrl
 }
 
 // Old provider functions removed - now using Gemini API for all character images

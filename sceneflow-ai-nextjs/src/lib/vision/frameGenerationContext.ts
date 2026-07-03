@@ -287,20 +287,25 @@ export function resolveFrameGenerationContext(args: ResolveFrameGenerationContex
   })
 
   const charactersPayload: FrameGenerationCharacterPayload[] = sorted.map((c) => {
-    const refPair = resolveCharacterReferencePair({ character: c, scene })
+    const refPair = resolveCharacterReferencePair({
+      character: c,
+      scene,
+      includeWardrobeReferenceImages: true,
+      includeWardrobeDiptych: true,
+    })
     const resolvedWardrobe = resolveWardrobeForCharacter(c, scene)
     const wardrobeHeadshotUrl =
       typeof resolvedWardrobe?.headshotUrl === 'string' && resolvedWardrobe.headshotUrl.trim()
         ? resolvedWardrobe.headshotUrl.trim()
         : undefined
-    const hasSceneHeadshot = !!wardrobeHeadshotUrl
-    const hasDualReferences = refPair.hasDualReferences && !hasSceneHeadshot
-    const hasCostumeReference = !!refPair.wardrobeUrl && !hasSceneHeadshot
+    const hasDualReferences = refPair.hasDualReferences
+    const hasSceneHeadshot = refPair.hasWardrobeDiptych && !hasDualReferences
+    const hasCostumeReference = !!refPair.wardrobeUrl || hasSceneHeadshot
     return {
       name: c.name,
       appearance: c.appearanceDescription || c.description,
       referenceUrl: refPair.identityUrl,
-      sceneHeadshotUrl: wardrobeHeadshotUrl,
+      sceneHeadshotUrl: hasSceneHeadshot ? wardrobeHeadshotUrl : undefined,
       wardrobeReferenceUrl: hasSceneHeadshot ? undefined : refPair.wardrobeUrl,
       ethnicity: c.ethnicity,
       age: c.age,

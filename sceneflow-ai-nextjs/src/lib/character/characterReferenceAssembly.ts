@@ -7,6 +7,12 @@ export const CHARACTER_IDENTITY_REFERENCE_INSTRUCTION =
   'This image owns identity and realism — ignore clothing in this image if it differs from the scene wardrobe; outfit comes from the wardrobe reference or text.'
 
 export const WARDROBE_ONLY_REFERENCE_INSTRUCTION =
+  'WARDROBE REFERENCE (SECONDARY): Full-body front-facing wardrobe reference — use for outfit colors, fabric, cut, fit, footwear, and accessories ONLY. ' +
+  'Do NOT derive face, hair, skin tone, body type, ethnicity, age, or rendering style from this image — identity and photorealism come from the separate identity headshot reference. ' +
+  'Do NOT reproduce the neutral gray studio background or reference-sheet layout in the scene.'
+
+/** Legacy mannequin turnaround sheet instruction (back-compat). */
+export const LEGACY_MANNEQUIN_WARDROBE_REFERENCE_INSTRUCTION =
   'WARDROBE REFERENCE (SECONDARY): This is a 1-row mannequin outfit turnaround sheet. Use the FRONT full-body view for outfit, fabric, color, and accessories ONLY. ' +
   'Do NOT derive face, hair, skin tone, body type, ethnicity, age, or rendering style from this sheet — identity and photorealism come from the separate identity reference. ' +
   'Do NOT reproduce the turnaround layout, mannequin form, multi-view sheet, or neutral gray studio background in the scene.'
@@ -68,7 +74,7 @@ export interface ResolveCharacterReferencePairArgs {
   scene?: Record<string, unknown> | null
   sceneIndex?: number
   characterWardrobes?: Array<{ characterId: string; wardrobeId: string }>
-  /** Deprecated/inert: legacy turnaround images are never attached. Kept for API compatibility. */
+  /** When true (default), attach full-body wardrobe URL alongside identity when available. */
   includeWardrobeReferenceImages?: boolean
   /** Attach scene-matched wardrobe diptych (headshotUrl) when available */
   includeWardrobeDiptych?: boolean
@@ -264,6 +270,7 @@ export function resolveCharacterReferencePair(
     scene,
     sceneIndex,
     characterWardrobes,
+    includeWardrobeReferenceImages = true,
     includeWardrobeDiptych = false,
   } = args
   const identityUrl = trimUrl(character.referenceImage)
@@ -273,14 +280,22 @@ export function resolveCharacterReferencePair(
     characterWardrobes,
     sceneIndex
   )
-  // Legacy turnaround/mannequin sheets are never attached.
-  const wardrobeUrl: string | undefined = undefined
-  const wardrobeDiptychUrl = includeWardrobeDiptych
-    ? trimUrl(resolvedWardrobe?.headshotUrl)
-    : undefined
+  const fullBodyUrl = trimUrl(resolvedWardrobe?.fullBodyUrl)
+
+  // Face-first dual ref: dedicated identity headshot + full-body wardrobe image.
+  const wardrobeUrl =
+    includeWardrobeReferenceImages && identityUrl && fullBodyUrl
+      ? fullBodyUrl
+      : undefined
+
+  // Diptych fallback when no dedicated full-body wardrobe image exists.
+  const wardrobeDiptychUrl =
+    includeWardrobeDiptych && identityUrl && !fullBodyUrl
+      ? trimUrl(resolvedWardrobe?.headshotUrl)
+      : undefined
   const hasWardrobeDiptych = !!wardrobeDiptychUrl
 
-  const hasDualReferences = false
+  const hasDualReferences = !!(identityUrl && wardrobeUrl)
   const hasWardrobeOnlyReference = false
 
   return {
@@ -314,7 +329,7 @@ export function buildWardrobeReferenceLabel(
   referenceIndex?: number
 ): string {
   const idx = referenceIndex != null ? ` ${referenceIndex}` : ''
-  return `Wardrobe reference${idx}: ${characterName} (1-row mannequin outfit sheet)`
+  return `Wardrobe reference${idx}: ${characterName} (full-body outfit)`
 }
 
 export function buildDualReferenceLabels(

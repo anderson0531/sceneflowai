@@ -305,7 +305,7 @@ export async function POST(req: NextRequest) {
       skipLikenessValidation = false,
       generationMode = 'default',
       includeWardrobeReferenceImages = true,
-      includeWardrobeDiptych = false,
+      includeWardrobeDiptych = true,
       fromDialog = false,
       negativePrompt,
       thinkingLevel,

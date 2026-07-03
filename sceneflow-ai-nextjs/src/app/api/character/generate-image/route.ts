@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generateImageWithGemini } from '@/lib/gemini/imageClient'
-import { artStylePresets } from '@/constants/artStylePresets'
+import { generateImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
 import { uploadReferenceLibraryBase64Image } from '@/lib/storage/referenceLibraryStorage'
-import { getCharacterAttributes } from '../../../../lib/character/persistence'
-import { analyzeCharacterImage } from '@/lib/imagen/visionAnalyzer'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { CreditService } from '@/services/CreditService'
@@ -12,18 +9,24 @@ import {
   buildCharacterIdentityReferencePrompt,
   promptHasIdentityReferenceAnchor,
 } from '@/lib/character/characterReferencePrompts'
+import {
+  ENHANCE_IDENTITY_ASPECT_RATIO,
+  ENHANCE_IDENTITY_IMAGE_SIZE,
+  ENHANCE_IDENTITY_MODEL,
+  ENHANCE_IDENTITY_MODEL_TIER,
+  enhanceIdentityImage,
+} from '@/lib/character/enhanceIdentityImage'
 
 export const runtime = 'nodejs'
-export const maxDuration = 120  // Increased for new AI image models
+export const maxDuration = 120
 
-const CREDIT_COST = IMAGE_CREDITS.IMAGEN_3 // 5 credits per image
+const CREDIT_COST = IMAGE_CREDITS.CHARACTER_IDENTITY_WITH_ENHANCE
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Authenticate user
     const session = await getServerSession(authOptions)
     const userId = session?.user?.id || session?.user?.email
-    
+
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required', code: 'AUTH_REQUIRED' },
@@ -31,31 +34,33 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // 2. Pre-check credit balance
     const hasEnoughCredits = await CreditService.ensureCredits(userId, CREDIT_COST)
     if (!hasEnoughCredits) {
       const breakdown = await CreditService.getCreditBreakdown(userId)
-      return NextResponse.json({
-        error: 'Insufficient credits',
-        code: 'INSUFFICIENT_CREDITS',
-        required: CREDIT_COST,
-        balance: breakdown.total_credits,
-        suggestedTopUp: { pack: 'quick_fix', name: 'Quick Fix', price: 25, credits: 2000 }
-      }, { status: 402 })
+      return NextResponse.json(
+        {
+          error: 'Insufficient credits',
+          code: 'INSUFFICIENT_CREDITS',
+          required: CREDIT_COST,
+          balance: breakdown.total_credits,
+          suggestedTopUp: { pack: 'quick_fix', name: 'Quick Fix', price: 25, credits: 2000 },
+        },
+        { status: 402 }
+      )
     }
 
     const body = await req.json()
-    
-    // DEBUG: Log the ENTIRE request body to see exactly what the client sent
-    console.log('[Character Image] ========== FULL REQUEST BODY ==========')
-    console.log(JSON.stringify(body, null, 2))
-    console.log('[Character Image] ========================================')
-    
-    const { prompt, projectId, characterId, quality = 'auto', artStyle, rawMode } = body
-    
-    // Use user prompt directly unless we should normalize to identity headshot format
-    let finalPrompt = prompt?.trim() || ''
+    const {
+      prompt,
+      projectId,
+      characterId,
+      characterName,
+      quality = 'auto',
+      rawMode,
+      skipAutoEnhance = false,
+    } = body
 
+    let finalPrompt = prompt?.trim() || ''
     if (!finalPrompt) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
     }
@@ -66,75 +71,87 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    const enhancedPrompt = finalPrompt
+    const resolvedCharacterName =
+      (typeof characterName === 'string' && characterName.trim()) ||
+      finalPrompt.split(/[,\n]/)[0]?.trim() ||
+      'Character'
 
-    console.log('[Character Image] ========== PROMPT COMPARISON ==========')
-    console.log('[Character Image] Received prompt length:', prompt?.length || 0)
-    console.log('[Character Image] Final prompt length:', enhancedPrompt.length)
-    console.log('[Character Image] Prompts identical:', prompt === enhancedPrompt)
-    console.log('[Character Image] FULL PROMPT SENT TO MODEL:')
-    console.log(enhancedPrompt)
-    console.log('[Character Image] =======================================')
-
-    // Generate with Gemini API (1:1 for portrait)
-    const base64Image = await generateImageWithGemini(enhancedPrompt, {
-      aspectRatio: '1:1',
-      numberOfImages: 1,
-      imageSize: quality === 'max' ? '2K' : '1K' // Map quality to image size
+    console.log('[Character Image] Generating identity headshot (designer 2K)...')
+    const draftResult = await generateImageWithGeminiStudio({
+      prompt: finalPrompt,
+      aspectRatio: ENHANCE_IDENTITY_ASPECT_RATIO,
+      imageSize: quality === 'max' ? '4K' : ENHANCE_IDENTITY_IMAGE_SIZE,
+      modelTier: ENHANCE_IDENTITY_MODEL_TIER,
     })
-    
-    // Upload to Vercel Blob
-    const imageUrl = await uploadReferenceLibraryBase64Image(
-      base64Image,
-      `characters/char-${Date.now()}.png`,
+
+    const draftBase64 = `data:${draftResult.mimeType};base64,${draftResult.imageBase64}`
+    const draftImageUrl = await uploadReferenceLibraryBase64Image(
+      draftBase64,
+      `characters/char-draft-${Date.now()}.png`,
       projectId || 'default'
     )
 
-    // AUTO-ANALYZE: Extract detailed description using Gemini Vision
-    let visionDescription = null
-    try {
-      const characterName = prompt?.split(',')[0]?.trim() || 'Character'
-      visionDescription = await analyzeCharacterImage(imageUrl, characterName)
-      console.log(`[Character Image] Auto-analyzed with Gemini Vision`)
-    } catch (error) {
-      console.error('[Character Image] Vision analysis failed:', error)
-      // Continue without analysis - not critical
+    let imageUrl = draftImageUrl
+    let visionDescription: string | null = null
+    let autoEnhanced = false
+
+    if (!skipAutoEnhance) {
+      console.log('[Character Image] Auto-enhancing identity reference...')
+      const enhanced = await enhanceIdentityImage({
+        sourceImageUrl: draftImageUrl,
+        characterName: resolvedCharacterName,
+        appearanceDescription: finalPrompt,
+        characterId,
+        projectId,
+        iterationCount: 0,
+        skipIterationGuard: true,
+        skipPreAnalysis: true,
+      })
+      imageUrl = enhanced.enhancedImageUrl
+      visionDescription = enhanced.visionDescription
+      autoEnhanced = true
     }
 
-    // 3. Charge credits after successful generation
+    if (!visionDescription) {
+      try {
+        const { analyzeCharacterImage } = await import('@/lib/imagen/visionAnalyzer')
+        visionDescription = await analyzeCharacterImage(imageUrl, resolvedCharacterName)
+      } catch (error) {
+        console.error('[Character Image] Vision analysis failed:', error)
+      }
+    }
+
     let newBalance: number | undefined
     try {
-      await CreditService.charge(
-        userId,
-        CREDIT_COST,
-        'ai_usage',
-        projectId || null,
-        { operation: 'imagen_generate', characterId, model: 'gemini-3-pro-image-preview' }
-      )
-      console.log(`[Character Image] Charged ${CREDIT_COST} credits to user ${userId}`)
+      await CreditService.charge(userId, CREDIT_COST, 'ai_usage', projectId || null, {
+        operation: 'character_identity_with_enhance',
+        characterId,
+        model: ENHANCE_IDENTITY_MODEL,
+        autoEnhanced,
+      })
       const breakdown = await CreditService.getCreditBreakdown(userId)
       newBalance = breakdown.total_credits
-    } catch (chargeError: any) {
+    } catch (chargeError: unknown) {
       console.error('[Character Image] Failed to charge credits:', chargeError)
     }
-    
-    return NextResponse.json({ 
-      success: true, 
+
+    return NextResponse.json({
+      success: true,
       imageUrl,
-      visionDescription, // Include in response for client to save
-      model: 'gemini-3-pro-image-preview',
-      quality: quality,
-      provider: 'gemini-api',
+      visionDescription,
+      model: ENHANCE_IDENTITY_MODEL,
+      quality,
+      provider: 'vertex-gemini-image',
       storage: 'vercel-blob',
+      autoEnhanced,
       creditsCharged: CREDIT_COST,
       creditsBalance: newBalance,
     })
-
   } catch (error) {
-    console.error('[Character Image] Gemini API generation error:', error)
-    return NextResponse.json({ 
-      error: error instanceof Error ? error.message : 'Image generation failed' 
-    }, { status: 500 })
+    console.error('[Character Image] Generation error:', error)
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Image generation failed' },
+      { status: 500 }
+    )
   }
 }
-

@@ -10,7 +10,12 @@ import {
   buildCharacterHairDescription,
   resolveWardrobeForCharacter,
 } from '@/lib/character/characterReferenceAssembly'
+import { buildFullBodyWardrobePrompt } from '@/lib/character/characterReferencePrompts'
 import { stripDialoguePrompt } from '@/lib/vision/framePromptBaseline'
+
+export const FULL_BODY_WARDROBE_ASPECT_RATIO = '3:4' as const
+export const FULL_BODY_WARDROBE_IMAGE_SIZE = '4K' as const
+export const FULL_BODY_WARDROBE_MODEL_TIER = 'designer' as const
 
 export const SCENE_CHARACTER_HEADSHOT_ASPECT_RATIO = '16:9' as const
 export const SCENE_CHARACTER_HEADSHOT_IMAGE_SIZE = '4K' as const
@@ -60,6 +65,19 @@ export interface SceneAppearanceDirectives {
   injuries?: string
   hairNotes?: string
   hasSceneSpecificChanges: boolean
+}
+
+export interface FullBodyWardrobeInput {
+  characterName: string
+  identityReferenceUrl: string
+  wardrobeDescription?: string
+  wardrobeAccessories?: string
+  hairStyle?: string
+  hairColor?: string
+  appearanceDescription?: string
+  /** Existing full-body wardrobe URL — reused unless forceRegenerate */
+  existingFullBodyUrl?: string
+  forceRegenerate?: boolean
 }
 
 export interface SceneCharacterHeadshotInput {
@@ -325,6 +343,67 @@ export function pickSceneHeadshotUrl(input: SceneCharacterHeadshotInput): string
     return input.existingWardrobeHeadshotUrl
   }
   return undefined
+}
+
+export function pickFullBodyWardrobeUrl(input: FullBodyWardrobeInput): string | undefined {
+  if (input.forceRegenerate) return undefined
+  const existing = input.existingFullBodyUrl?.trim()
+  return existing || undefined
+}
+
+export async function generateFullBodyWardrobeImage(
+  input: FullBodyWardrobeInput
+): Promise<{ imageBase64: string; prompt: string }> {
+  const hairAnchor =
+    buildCharacterHairAnchor({
+      hairStyle: input.hairStyle,
+      hairColor: input.hairColor,
+      appearanceDescription: input.appearanceDescription,
+    }) ??
+    buildCharacterHairDescription({
+      hairStyle: input.hairStyle,
+      hairColor: input.hairColor,
+    })
+
+  const prompt = buildFullBodyWardrobePrompt({
+    characterName: input.characterName,
+    appearanceDescription: input.appearanceDescription,
+    wardrobeDescription: input.wardrobeDescription,
+    wardrobeAccessories: input.wardrobeAccessories,
+    hairAnchor,
+  })
+
+  const result = await generateImageWithGeminiStudio({
+    prompt,
+    aspectRatio: FULL_BODY_WARDROBE_ASPECT_RATIO,
+    imageSize: FULL_BODY_WARDROBE_IMAGE_SIZE,
+    modelTier: FULL_BODY_WARDROBE_MODEL_TIER,
+    referenceImages: [
+      {
+        imageUrl: input.identityReferenceUrl,
+        name: `Identity: ${input.characterName}`,
+      },
+    ],
+    negativePrompt: mergePhysicsNegativePrompt(
+      'mannequin, faceless figure, turnaround sheet, diptych, split panel, illustration, cartoon'
+    ),
+  })
+
+  return { imageBase64: result.imageBase64, prompt }
+}
+
+export async function generateAndUploadFullBodyWardrobe(
+  input: FullBodyWardrobeInput,
+  uploadPath: string
+): Promise<{ imageUrl: string; prompt: string; generated: boolean }> {
+  const cached = pickFullBodyWardrobeUrl(input)
+  if (cached) {
+    return { imageUrl: cached, prompt: 'Reused full-body wardrobe reference', generated: false }
+  }
+
+  const { imageBase64, prompt } = await generateFullBodyWardrobeImage(input)
+  const imageUrl = await uploadImageToBlob(imageBase64, uploadPath)
+  return { imageUrl, prompt, generated: true }
 }
 
 export async function generateSceneCharacterHeadshotImage(

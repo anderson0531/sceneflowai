@@ -136,8 +136,15 @@ export interface CharacterLibraryProps {
   ) => void;
   onAddCharacter?: (characterData: any) => void;
   onRemoveCharacter?: (characterName: string) => void;
-  /** Callback to edit a character's reference image */
-  onEditCharacterImage?: (characterId: string, imageUrl: string) => void;
+  /** Apply enhanced reference directly (URL + vision description) without re-upload */
+  onApplyEnhancedReference?: (
+    characterId: string,
+    payload: {
+      referenceImageUrl: string
+      visionDescription?: string | null
+      enhanceIterationCount?: number
+    },
+  ) => void;
   ttsProvider: "google" | "elevenlabs";
   /**
    * When set (e.g. `"google"` in the Vision Reference Library), voice picker and Auto voice
@@ -239,6 +246,14 @@ interface CharacterCardProps {
   onRemove?: () => void;
   /** Callback to edit the character's reference image */
   onEditImage?: () => void;
+  onApplyEnhancedReference?: (
+    characterId: string,
+    payload: {
+      referenceImageUrl: string
+      visionDescription?: string | null
+      enhanceIterationCount?: number
+    },
+  ) => void;
   ttsProvider: "google" | "elevenlabs";
   voiceAssignmentProvider?: "google" | "elevenlabs";
   voiceSectionExpanded?: boolean;
@@ -275,6 +290,7 @@ export function CharacterLibrary({
   onAddCharacter,
   onRemoveCharacter,
   onEditCharacterImage,
+  onApplyEnhancedReference,
   ttsProvider,
   voiceAssignmentProvider,
   compact = false,
@@ -607,6 +623,7 @@ export function CharacterLibrary({
                       ? () => onEditCharacterImage(charId, char.referenceImage)
                       : undefined
                   }
+                  onApplyEnhancedReference={onApplyEnhancedReference}
                   ttsProvider={effectiveVoiceProvider}
                   voiceAssignmentProvider={voiceAssignmentProvider}
                   voiceSectionExpanded={voiceSectionExpanded[charId] || false}
@@ -773,6 +790,7 @@ const CharacterCard = ({
   scenes = [],
   onRemove,
   onEditImage,
+  onApplyEnhancedReference,
   ttsProvider,
   voiceAssignmentProvider,
   voiceSectionExpanded,
@@ -863,6 +881,9 @@ const CharacterCard = ({
   const [enhancedPreviewUrl, setEnhancedPreviewUrl] = useState<string | null>(
     null,
   );
+  const [enhancedVisionDescription, setEnhancedVisionDescription] = useState<
+    string | null
+  >(null);
   const [enhanceQualityFeedback, setEnhanceQualityFeedback] = useState<{
     originalScore: number;
     issuesFixed: string[];
@@ -1693,7 +1714,7 @@ const CharacterCard = ({
         .filter(Boolean)
         .join(" ")
         .trim();
-      const uploadPath = `characters/${projectId || "default"}/${characterId}/wardrobes/${wardrobe.id}/headshot-${Date.now()}.png`;
+      const uploadPath = `characters/${projectId || "default"}/${characterId}/wardrobes/${wardrobe.id}/full-body-${Date.now()}.png`;
 
       const response = await fetch("/api/character/generate-scene-headshot", {
         method: "POST",
@@ -1711,8 +1732,9 @@ const CharacterCard = ({
           hairStyle: character.hairStyle,
           hairColor: character.hairColor,
           sceneAction,
-          existingWardrobeHeadshotUrl: wardrobe.headshotUrl,
-          forceRegenerate: !!wardrobe.headshotUrl,
+          referenceMode: "fullBody",
+          existingFullBodyUrl: wardrobe.fullBodyUrl,
+          forceRegenerate: !!wardrobe.fullBodyUrl,
           uploadPath,
         }),
       });
@@ -1726,25 +1748,26 @@ const CharacterCard = ({
         throw new Error(error.error || "Failed to generate wardrobe image");
       }
 
-      const { imageUrl } = await response.json();
-      if (!imageUrl) {
+      const { imageUrl, fullBodyUrl } = await response.json();
+      const resolvedUrl = fullBodyUrl || imageUrl;
+      if (!resolvedUrl) {
         throw new Error("No image URL returned");
       }
 
       onUpdateWardrobe?.(characterId, {
         wardrobeId: wardrobe.id,
-        headshotUrl: imageUrl,
+        fullBodyUrl: resolvedUrl,
         action: "update",
       });
 
       if (expandedWardrobe?.id === wardrobe.id) {
-        setExpandedWardrobe({ ...expandedWardrobe, headshotUrl: imageUrl });
+        setExpandedWardrobe({ ...expandedWardrobe, fullBodyUrl: resolvedUrl });
       }
 
       toast.success(
-        wardrobe.headshotUrl
-          ? "Wardrobe reference image regenerated"
-          : "Wardrobe reference image generated",
+        wardrobe.fullBodyUrl
+          ? "Full-body wardrobe reference regenerated"
+          : "Full-body wardrobe reference generated",
       );
     } catch (error) {
       console.error("[Wardrobe Image] Error:", error);
@@ -1820,6 +1843,7 @@ const CharacterCard = ({
 
       // Show preview for confirmation with quality feedback
       setEnhancedPreviewUrl(result.enhancedImageUrl);
+      setEnhancedVisionDescription(result.visionDescription || null);
       setEnhanceQualityFeedback(result.qualityFeedback || null);
       setShowEnhanceConfirm(true);
       setEnhanceIterationCount(result.iterationCount);
@@ -1842,9 +1866,13 @@ const CharacterCard = ({
   // Accept the enhanced image
   const handleAcceptEnhanced = () => {
     if (enhancedPreviewUrl) {
-      // Update the character's reference image via upload handler
-      // The parent component should handle updating the character
-      onUpload &&
+      if (onApplyEnhancedReference) {
+        onApplyEnhancedReference(characterId, {
+          referenceImageUrl: enhancedPreviewUrl,
+          visionDescription: enhancedVisionDescription,
+          enhanceIterationCount,
+        });
+      } else if (onUpload) {
         fetch(enhancedPreviewUrl)
           .then((res) => res.blob())
           .then((blob) => {
@@ -1853,8 +1881,10 @@ const CharacterCard = ({
             });
             onUpload(file);
           });
+      }
       setShowEnhanceConfirm(false);
       setEnhancedPreviewUrl(null);
+      setEnhancedVisionDescription(null);
       setEnhanceQualityFeedback(null);
       toast.success("Professional headshot reference applied!");
     }
