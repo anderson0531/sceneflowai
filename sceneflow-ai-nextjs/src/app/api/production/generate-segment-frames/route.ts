@@ -650,6 +650,7 @@ export async function POST(req: NextRequest) {
                 scene: sceneRecord,
                 sceneIndex,
                 selectedWardrobeId: c.selectedWardrobeId,
+                hasDualReferences: c.hasDualReferences,
               })),
               beatAction: effectivePrompt,
               sceneAction: sceneContext?.heading || sceneContext?.location,
@@ -724,9 +725,10 @@ export async function POST(req: NextRequest) {
         })
       }
 
-      // Legacy wardrobe turnaround refs only when no scene headshot was resolved
+      // Legacy wardrobe turnaround refs only when no scene headshot or dual refs were resolved
       for (const c of charPool) {
         if (sceneHeadshotByName.get(c.name)) continue
+        if (c.hasDualReferences) continue
         if (!c.wardrobeReferenceUrl || allReferenceImages.length >= MAX_GEMINI_REFERENCE_IMAGES) {
           if (c.wardrobeReferenceUrl && allReferenceImages.length >= MAX_GEMINI_REFERENCE_IMAGES) {
             console.warn(`[Generate Frames] Wardrobe ref dropped for ${c.name} — reference budget full`)

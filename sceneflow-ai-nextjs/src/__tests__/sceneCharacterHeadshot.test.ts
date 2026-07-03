@@ -147,6 +147,17 @@ describe('scene headshot reuse vs generation', () => {
     expect(pickSceneHeadshotUrl(input)).toBeUndefined()
   })
 
+  it('skips diptych generation when a dedicated full-body wardrobe ref exists', () => {
+    const input = {
+      characterName: 'Sarah',
+      identityReferenceUrl: 'https://example.com/sarah.jpg',
+      wardrobeDescription: 'Navy suit',
+      existingFullBodyWardrobeUrl: 'https://example.com/full-body.jpg',
+      beatAction: 'Bruise visible on her left temple.',
+    }
+    expect(shouldGenerateSceneHeadshot(input)).toBe(false)
+  })
+
   it('forceRegenerate bypasses cached wardrobe headshot', () => {
     const input = {
       characterName: 'Sarah',

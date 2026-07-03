@@ -95,6 +95,8 @@ export interface SceneCharacterHeadshotInput {
   appearanceNotes?: string
   /** Existing wardrobe headshot — reused when no beat-specific appearance changes */
   existingWardrobeHeadshotUrl?: string
+  /** When set, skip legacy diptych generation (face-first full-body wardrobe ref exists). */
+  existingFullBodyWardrobeUrl?: string
   /** When true, always generate a fresh image (skip cache reuse) */
   forceRegenerate?: boolean
 }
@@ -121,6 +123,8 @@ export interface ResolveSceneHeadshotCharacterInput {
   scene?: Record<string, unknown> | null
   sceneIndex?: number
   selectedWardrobeId?: string
+  /** When true, skip legacy diptych generation (identity + fullBodyUrl dual refs). */
+  hasDualReferences?: boolean
 }
 
 /** Extract makeup, injury, and hair notes from beat/scene text for headshot generation. */
@@ -300,7 +304,7 @@ export function resolveWardrobeTextForCharacter(
   scene?: Record<string, unknown> | null,
   sceneIndex?: number,
   selectedWardrobeId?: string
-): { description?: string; accessories?: string; headshotUrl?: string; appearanceNotes?: string } {
+): { description?: string; accessories?: string; headshotUrl?: string; fullBodyUrl?: string; appearanceNotes?: string } {
   let resolved = resolveWardrobeForCharacter(character, scene, undefined, sceneIndex)
 
   if (selectedWardrobeId && Array.isArray(character.wardrobes)) {
@@ -319,6 +323,7 @@ export function resolveWardrobeTextForCharacter(
     description: resolved.description as string | undefined,
     accessories: resolved.accessories as string | undefined,
     headshotUrl: resolved.headshotUrl as string | undefined,
+    fullBodyUrl: resolved.fullBodyUrl as string | undefined,
     appearanceNotes: resolved.appearanceNotes as string | undefined,
   }
 }
@@ -328,6 +333,8 @@ export function shouldGenerateSceneHeadshot(
   input: SceneCharacterHeadshotInput
 ): boolean {
   if (!input.identityReferenceUrl?.trim()) return false
+  // Face-first model: dedicated full-body wardrobe ref replaces diptych generation.
+  if (input.existingFullBodyWardrobeUrl?.trim()) return false
   const appearanceContext = mergeAppearanceContext(input)
   const directives = extractSceneAppearanceDirectives(input.beatAction, appearanceContext)
   if (directives.hasSceneSpecificChanges) return true
@@ -467,6 +474,11 @@ export async function resolveSceneHeadshotsForBeatCharacters(args: {
       continue
     }
 
+    if (char.hasDualReferences) {
+      results.push({ name: char.name, generated: false })
+      continue
+    }
+
     const record = char.characterRecord ?? {}
     const wardrobe = resolveWardrobeTextForCharacter(
       record,
@@ -474,6 +486,12 @@ export async function resolveSceneHeadshotsForBeatCharacters(args: {
       char.sceneIndex,
       char.selectedWardrobeId
     )
+
+    if (wardrobe.fullBodyUrl?.trim() && !wardrobe.headshotUrl?.trim()) {
+      results.push({ name: char.name, generated: false })
+      continue
+    }
+
     const sceneMatchedHeadshotUrl = wardrobe.headshotUrl?.trim()
 
     if (char.sceneHeadshotUrl?.trim()) {
@@ -506,6 +524,7 @@ export async function resolveSceneHeadshotsForBeatCharacters(args: {
       appearanceDescription: char.appearance,
       appearanceNotes: wardrobe.appearanceNotes,
       existingWardrobeHeadshotUrl: wardrobe.headshotUrl,
+      existingFullBodyWardrobeUrl: wardrobe.fullBodyUrl,
     }
 
     const cached = pickSceneHeadshotUrl(headshotInput)
