@@ -17,7 +17,13 @@
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { coerceSceneSfxFlatArray } from '@/lib/script/segmentScript'
-import { computeClipAudioTime, loopingDrift } from '@/lib/audio/loopingAudioSync'
+import {
+  computeClipAudioTime,
+  loopingDrift,
+  clampAudioPlaybackRate,
+  computeMusicVolumeMultiplier,
+  MUSIC_FADE_MAX_SEC,
+} from '@/lib/audio/loopingAudioSync'
 import { DEFAULT_MUSIC_FILE_DURATION_SEC } from '@/lib/storyboard/musicPlayback'
 import { toast } from 'sonner'
 import { 
@@ -57,6 +63,7 @@ import {
   Clapperboard,
   Mic,
   Gauge,
+  Repeat,
 } from 'lucide-react'
 import { upload } from '@vercel/blob/client'
 import { Button } from '@/components/ui/Button'
@@ -149,6 +156,46 @@ function clampDialoguePlaybackRate(r: number | undefined): number {
 function dialogueClipWallDuration(sourceSeconds: number | undefined, playbackRate: number | undefined): number {
   const src = sourceSeconds ?? 3
   return src / clampDialoguePlaybackRate(playbackRate)
+}
+
+/** Wall-clock span for music over selected beat range. */
+function getMusicTrackTiming(
+  musicConfig: AudioTrackConfig,
+  segments: SceneSegment[],
+  getPlaybackSegmentDuration: (segment: SceneSegment) => number
+): { startTime: number; duration: number } {
+  if (segments.length === 0) {
+    return { startTime: musicConfig.startOffset, duration: 0 }
+  }
+  let startTime = 0
+  for (let i = 0; i < musicConfig.startSegment && i < segments.length; i++) {
+    startTime += getPlaybackSegmentDuration(segments[i])
+  }
+  const effectiveEnd =
+    musicConfig.endSegment === -1
+      ? segments.length - 1
+      : Math.min(musicConfig.endSegment, segments.length - 1)
+  let endTime = startTime
+  for (let i = musicConfig.startSegment; i <= effectiveEnd; i++) {
+    endTime += getPlaybackSegmentDuration(segments[i])
+  }
+  return { startTime, duration: Math.max(0, endTime - startTime) }
+}
+
+function musicClipRenderOptions(
+  musicConfig: AudioTrackConfig
+): {
+  loop?: boolean
+  fadeInSec?: number
+  fadeOutSec?: number
+  playbackRate?: number
+} {
+  return {
+    loop: musicConfig.loop !== false,
+    fadeInSec: musicConfig.fadeInSec ?? 0,
+    fadeOutSec: musicConfig.fadeOutSec ?? 0,
+    playbackRate: clampAudioPlaybackRate(musicConfig.playbackRate),
+  }
 }
 
 // Duplicate constant to avoid module-level import (keep in sync with LocalRenderService.ts)
@@ -947,24 +994,52 @@ function ScenePreviewPlayer({
     
     // Music sync - uses segment range
     if (musicRef.current && audioTracks.music.enabled) {
-      musicRef.current.volume = isMuted ? 0 : audioTracks.music.volume
-      const musicStartTime = getSegmentStartTime(audioTracks.music.startSegment)
-      
-      if (isPlaying && currentTime >= musicStartTime) {
-        const musicLocalTime = currentTime - musicStartTime
-        const expectedAudioTime = computeClipAudioTime(
-          { startTime: 0, trimStart: 0, loop: true },
-          musicStartTime + musicLocalTime,
-          musicFileDuration
-        )
-        const drift = loopingDrift(
-          expectedAudioTime,
-          musicRef.current.currentTime,
-          musicFileDuration
-        )
+      const musicCfg = audioTracks.music
+      const loop = musicCfg.loop !== false
+      const rate = clampAudioPlaybackRate(musicCfg.playbackRate)
+      if (Math.abs(musicRef.current.playbackRate - rate) > 0.01) {
+        musicRef.current.playbackRate = rate
+      }
+
+      const musicStartTime = getSegmentStartTime(musicCfg.startSegment)
+      const effectiveEndSegment =
+        musicCfg.endSegment === -1
+          ? segments.length - 1
+          : Math.min(musicCfg.endSegment, segments.length - 1)
+      const musicEndTime =
+        getSegmentStartTime(effectiveEndSegment) +
+        getPlaybackSegmentDuration(segments[effectiveEndSegment])
+      const musicPlayDuration = Math.max(0, musicEndTime - musicStartTime)
+      const fadeIn = musicCfg.fadeInSec ?? 0
+      const fadeOut = musicCfg.fadeOutSec ?? 0
+
+      const musicLocalTime = currentTime - musicStartTime
+      const withinWindow =
+        isPlaying &&
+        currentTime >= musicStartTime &&
+        (loop || musicLocalTime < musicPlayDuration)
+
+      if (withinWindow) {
+        const expectedAudioTime = loop
+          ? computeClipAudioTime(
+              { startTime: 0, trimStart: 0, loop: true },
+              musicLocalTime * rate,
+              musicFileDuration
+            )
+          : Math.min(musicLocalTime * rate, musicFileDuration)
+        const drift = loop
+          ? loopingDrift(expectedAudioTime, musicRef.current.currentTime, musicFileDuration)
+          : Math.abs(musicRef.current.currentTime - expectedAudioTime)
         if (drift > 0.85) {
           musicRef.current.currentTime = expectedAudioTime
         }
+        const volMult = computeMusicVolumeMultiplier(
+          musicLocalTime,
+          musicPlayDuration,
+          fadeIn,
+          fadeOut
+        )
+        musicRef.current.volume = isMuted ? 0 : musicCfg.volume * volMult
         if (musicRef.current.paused) {
           musicRef.current.play().catch(() => {})
         }
@@ -1025,7 +1100,7 @@ function ScenePreviewPlayer({
     } else {
       dialogueRefsById.current.forEach(el => el?.pause())
     }
-  }, [isPlaying, currentTime, audioTracks, currentAudioUrls, dialogueClipConfigs, isMuted, getSegmentStartTime, musicFileDuration])
+  }, [isPlaying, currentTime, audioTracks, currentAudioUrls, dialogueClipConfigs, isMuted, getSegmentStartTime, musicFileDuration, segments, getPlaybackSegmentDuration])
   
   // Load new segment video when segment index changes
   useEffect(() => {
@@ -1684,6 +1759,10 @@ function AudioTrackRow({
       setIsPreviewPlaying(false)
     } else {
       audioRef.current.currentTime = config.startOffset
+      if (type === 'music') {
+        audioRef.current.playbackRate = clampAudioPlaybackRate(config.playbackRate)
+        audioRef.current.loop = config.loop !== false
+      }
       audioRef.current.volume = config.volume
       audioRef.current.play().catch(() => {})
       setIsPreviewPlaying(true)
@@ -1875,6 +1954,118 @@ function AudioTrackRow({
               {Math.round(config.volume * 100)}%
             </span>
           </div>
+
+          {/* Music: repeat, fade, speed */}
+          {type === 'music' && (
+            <>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 text-gray-500 w-16 shrink-0">
+                  <Repeat className="w-3 h-3" />
+                  <span className="text-[10px] uppercase">Repeat</span>
+                </div>
+                <Switch
+                  checked={config.loop !== false}
+                  onCheckedChange={(loop) => onConfigChange({ ...config, loop })}
+                  disabled={disabled}
+                  className="scale-90"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-gray-500 uppercase w-16 shrink-0">Fade In</span>
+                <Slider
+                  value={[Math.round((config.fadeInSec ?? 0) * 10) / 10]}
+                  onValueChange={([v]) =>
+                    onConfigChange({
+                      ...config,
+                      fadeInSec: Math.max(0, Math.min(MUSIC_FADE_MAX_SEC, v)),
+                    })
+                  }
+                  max={Math.min(MUSIC_FADE_MAX_SEC, Math.max(1, videoTotalDuration ?? MUSIC_FADE_MAX_SEC))}
+                  step={0.5}
+                  className="flex-1"
+                  disabled={disabled}
+                />
+                <span className="text-xs text-gray-400 w-10 text-right font-mono tabular-nums">
+                  {(config.fadeInSec ?? 0).toFixed(1)}s
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-gray-500 uppercase w-16 shrink-0">Fade Out</span>
+                <Slider
+                  value={[Math.round((config.fadeOutSec ?? 0) * 10) / 10]}
+                  onValueChange={([v]) =>
+                    onConfigChange({
+                      ...config,
+                      fadeOutSec: Math.max(0, Math.min(MUSIC_FADE_MAX_SEC, v)),
+                    })
+                  }
+                  max={Math.min(MUSIC_FADE_MAX_SEC, Math.max(1, videoTotalDuration ?? MUSIC_FADE_MAX_SEC))}
+                  step={0.5}
+                  className="flex-1"
+                  disabled={disabled}
+                />
+                <span className="text-xs text-gray-400 w-10 text-right font-mono tabular-nums">
+                  {(config.fadeOutSec ?? 0).toFixed(1)}s
+                </span>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 text-gray-500 w-16 shrink-0">
+                    <Gauge className="w-3 h-3" />
+                    <span className="text-[10px] uppercase">Speed</span>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-end gap-1 max-w-[220px] sm:max-w-none">
+                    {DIALOGUE_SPEED_PRESETS.map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => onConfigChange({ ...config, playbackRate: preset })}
+                        className={cn(
+                          'px-1.5 py-0.5 rounded text-[9px] font-medium transition-colors tabular-nums',
+                          Math.abs((config.playbackRate ?? 1) - preset) < 0.02
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-gray-700/80 text-gray-300 hover:bg-gray-600'
+                        )}
+                      >
+                        {preset}×
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      disabled={disabled || Math.abs((config.playbackRate ?? 1) - 1) < 0.02}
+                      onClick={() => onConfigChange({ ...config, playbackRate: 1 })}
+                      className="text-[9px] text-gray-500 hover:text-gray-300 px-1 disabled:opacity-40"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Slider
+                    value={[Math.round((config.playbackRate ?? 1) * 100)]}
+                    onValueChange={([v]) =>
+                      onConfigChange({
+                        ...config,
+                        playbackRate: clampAudioPlaybackRate(v / 100),
+                      })
+                    }
+                    min={50}
+                    max={150}
+                    step={5}
+                    className="flex-1"
+                    disabled={disabled}
+                  />
+                  <span className="text-[10px] text-gray-400 w-11 text-right tabular-nums">
+                    {Math.round((config.playbackRate ?? 1) * 100)}%
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
           
           {/* Individual Dialogue Line Controls */}
           {type === 'dialogue' && dialogueClips && dialogueClips.length > 1 && dialogueClipConfigs && onDialogueClipConfigChange && (
@@ -2372,7 +2563,17 @@ export function SceneProductionMixer({
   const [audioTracks, setAudioTracks] = useState<MixerAudioTracks>({
     narration: { enabled: false, volume: 0.8, startOffset: 0, startSegment: 0, endSegment: -1 },
     dialogue: { enabled: true, volume: 0.9, startOffset: 0, startSegment: 0, endSegment: -1 },
-    music: { enabled: false, volume: 0.4, startOffset: 0, startSegment: 0, endSegment: -1 },
+    music: {
+      enabled: false,
+      volume: 0.4,
+      startOffset: 0,
+      startSegment: 0,
+      endSegment: -1,
+      loop: true,
+      fadeInSec: 0,
+      fadeOutSec: 0,
+      playbackRate: 1,
+    },
     sfx: { enabled: false, volume: 0.6, startOffset: 0, startSegment: 0, endSegment: -1 },
   })
   
@@ -3227,6 +3428,9 @@ export function SceneProductionMixer({
           volume: number
           character?: string
           playbackRate?: number
+          loop?: boolean
+          fadeInSec?: number
+          fadeOutSec?: number
         }>
       > = {}
       
@@ -3259,11 +3463,17 @@ export function SceneProductionMixer({
       }
       
       if (audioTracks.music.enabled && playbackAudioUrls.music) {
+        const musicTiming = getMusicTrackTiming(
+          audioTracks.music,
+          previewSegments,
+          getPlaybackSegmentDuration
+        )
         audioTracksPayload.music = [{
           url: playbackAudioUrls.music,
-          startTime: audioTracks.music.startOffset,
-          duration: totalDuration,
+          startTime: musicTiming.startTime,
+          duration: musicTiming.duration || totalDuration,
           volume: audioTracks.music.volume,
+          ...musicClipRenderOptions(audioTracks.music),
         }]
       }
       
@@ -3614,12 +3824,18 @@ export function SceneProductionMixer({
       }
       
       if (audioTracks.music.enabled && playbackAudioUrls.music) {
+        const musicTiming = getMusicTrackTiming(
+          audioTracks.music,
+          previewSegments,
+          getPlaybackSegmentDuration
+        )
         audioClips.push({
           url: playbackAudioUrls.music,
-          startTime: audioTracks.music.startOffset,
-          duration: Math.max(0, totalDuration - audioTracks.music.startOffset),
+          startTime: musicTiming.startTime,
+          duration: musicTiming.duration || Math.max(0, totalDuration - musicTiming.startTime),
           volume: audioTracks.music.volume,
           type: 'music',
+          ...musicClipRenderOptions(audioTracks.music),
         })
       }
       
@@ -3871,6 +4087,9 @@ export function SceneProductionMixer({
         volume: number
         type: 'narration' | 'dialogue' | 'music' | 'sfx'
         playbackRate?: number
+        loop?: boolean
+        fadeInSec?: number
+        fadeOutSec?: number
       }> = []
       
       if (audioTracks.narration.enabled && playbackAudioUrls.narration) {
@@ -3902,12 +4121,18 @@ export function SceneProductionMixer({
       }
       
       if (audioTracks.music.enabled && playbackAudioUrls.music) {
+        const musicTiming = getMusicTrackTiming(
+          audioTracks.music,
+          previewSegments,
+          getPlaybackSegmentDuration
+        )
         audioClips.push({
           url: playbackAudioUrls.music,
-          startTime: audioTracks.music.startOffset,
-          duration: Math.max(0, totalDuration - audioTracks.music.startOffset),
+          startTime: musicTiming.startTime,
+          duration: musicTiming.duration || Math.max(0, totalDuration - musicTiming.startTime),
           volume: audioTracks.music.volume,
           type: 'music',
+          ...musicClipRenderOptions(audioTracks.music),
         })
       }
       

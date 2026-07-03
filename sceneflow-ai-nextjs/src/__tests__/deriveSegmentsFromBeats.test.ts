@@ -167,4 +167,30 @@ describe('deriveSegmentsFromBeats', () => {
     expect(updatedBeat?.needsSplit).toBe(true)
     expect(updatedBeat?.splitRecommendation?.partCount).toBeGreaterThan(1)
   })
+
+  it('uses TTS duration for active language when planning extensions', () => {
+    const line = 'Hello there.'
+    const scene = approvedScene([
+      {
+        beatId: 'bt_lang',
+        sequenceIndex: 0,
+        kind: 'dialogue',
+        character: 'Sarah',
+        line,
+        lineId: 'ln_lang',
+        durationSeconds: 4,
+      },
+    ])
+    ;(scene as Record<string, unknown>).dialogueAudio = {
+      en: [{ lineId: 'ln_lang', duration: 5 }],
+      es: [{ lineId: 'ln_lang', duration: 14 }],
+    }
+
+    const enResult = deriveSegmentsFromBeats(scene, { language: 'en' })
+    const esResult = deriveSegmentsFromBeats(scene, { language: 'es' })
+
+    expect(enResult.segments).toHaveLength(1)
+    expect(esResult.segments.length).toBeGreaterThan(1)
+    expect(esResult.segments.some((s) => s.generationMethod === 'EXT')).toBe(true)
+  })
 })

@@ -149,6 +149,9 @@ interface HeadlessRenderRequest {
     volume: number
     type: 'narration' | 'dialogue' | 'music' | 'sfx'
     playbackRate?: number
+    loop?: boolean
+    fadeInSec?: number
+    fadeOutSec?: number
   }[]
   textOverlays?: {
     id: string

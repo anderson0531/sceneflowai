@@ -36,6 +36,10 @@ export interface HeadlessRenderAudioClip {
   duration: number
   volume: number
   type: 'narration' | 'dialogue' | 'music' | 'sfx'
+  playbackRate?: number
+  loop?: boolean
+  fadeInSec?: number
+  fadeOutSec?: number
 }
 
 export interface HeadlessRenderTextOverlay {

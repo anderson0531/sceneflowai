@@ -344,6 +344,12 @@ export interface SceneRenderAudioClip {
    * wall-clock span is duration / playbackRate.
    */
   playbackRate?: number
+  /** Music: loop clip for duration */
+  loop?: boolean
+  /** Music: fade-in seconds */
+  fadeInSec?: number
+  /** Music: fade-out seconds */
+  fadeOutSec?: number
 }
 
 /**
@@ -492,7 +498,15 @@ export interface CreateSceneRenderJobRequest {
       character?: string
       playbackRate?: number
     }>
-    music?: Array<{ url: string; startTime: number; duration: number }>
+    music?: Array<{
+      url: string
+      startTime: number
+      duration: number
+      loop?: boolean
+      fadeInSec?: number
+      fadeOutSec?: number
+      playbackRate?: number
+    }>
     sfx?: Array<{ url: string; startTime: number; duration: number }>
   }
   /** Text overlays to burn into video */

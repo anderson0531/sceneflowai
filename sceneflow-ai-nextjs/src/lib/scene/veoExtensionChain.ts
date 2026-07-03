@@ -19,6 +19,12 @@ export const VEO_EXTENSION_DELTA_SEC = 7
 /** Max initial generation length for extension-first dialogue chains. */
 export const VEO_INITIAL_CLIP_MAX_SEC = 8
 
+/**
+ * Spoken dialogue budget per initial clip before chaining EXT steps.
+ * Split/planning uses 6s; Gemini EXT API still sends 8s per call (+7s timeline each).
+ */
+export const VEO_SPOKEN_CHUNK_SEC = 6
+
 /** Max chained extensions per beat (Gemini API limit ~20). */
 export const VEO_MAX_EXTENSIONS_PER_BEAT = 20
 
@@ -48,10 +54,10 @@ export interface VeoExtensionChainPlan {
 
 export function extensionCountForSpokenSeconds(spokenSeconds: number): number {
   const spoken = Math.max(0, spokenSeconds)
-  if (spoken <= VEO_INITIAL_CLIP_MAX_SEC) return 0
+  if (spoken <= VEO_SPOKEN_CHUNK_SEC) return 0
   return Math.min(
     VEO_MAX_EXTENSIONS_PER_BEAT,
-    Math.ceil((spoken - VEO_INITIAL_CLIP_MAX_SEC) / VEO_EXTENSION_DELTA_SEC)
+    Math.ceil((spoken - VEO_SPOKEN_CHUNK_SEC) / VEO_EXTENSION_DELTA_SEC)
   )
 }
 
@@ -59,7 +65,7 @@ export function totalVideoSecondsForChain(
   initialSeconds: number,
   extensionCount: number
 ): number {
-  const initial = snapToVeoDuration(Math.min(initialSeconds, VEO_INITIAL_CLIP_MAX_SEC))
+  const initial = snapToVeoDuration(Math.min(initialSeconds, VEO_SPOKEN_CHUNK_SEC))
   return initial + extensionCount * VEO_EXTENSION_DELTA_SEC
 }
 
@@ -76,7 +82,7 @@ export function planVeoExtensionChain(
   const usesExtensionChain = extCount > 0
 
   const initialTimeline = snapToVeoDuration(
-    Math.min(totalSpoken, VEO_INITIAL_CLIP_MAX_SEC)
+    Math.min(totalSpoken, VEO_SPOKEN_CHUNK_SEC)
   ) as 4 | 6 | 8
   const initialMethod: VeoChainPartMethod = options?.preferFtv ? 'FTV' : 'I2V'
 
@@ -151,13 +157,20 @@ export function planVeoExtensionChain(
  */
 export function planContinuousDialogueBeat(
   fullText: string,
-  options?: { preferFtv?: boolean; maxSecondsPerExcerpt?: number }
+  options?: {
+    preferFtv?: boolean
+    maxSecondsPerExcerpt?: number
+    spokenSeconds?: number
+  }
 ): VeoExtensionChainPlan {
-  const maxSec = options?.maxSecondsPerExcerpt ?? VEO_DIALOGUE_CLIP_MAX_SEC
-  const spoken = estimateSpokenDurationSeconds(fullText)
+  const maxSec = options?.maxSecondsPerExcerpt ?? VEO_SPOKEN_CHUNK_SEC
+  const spoken =
+    typeof options?.spokenSeconds === 'number' && options.spokenSeconds > 0
+      ? options.spokenSeconds
+      : estimateSpokenDurationSeconds(fullText)
   const splitParts = planDialogueLineSplits(fullText, maxSec)
 
-  if (spoken <= VEO_INITIAL_CLIP_MAX_SEC && splitParts.length <= 1) {
+  if (spoken <= VEO_SPOKEN_CHUNK_SEC && splitParts.length <= 1) {
     return planVeoExtensionChain(spoken, [splitParts[0]?.excerpt ?? fullText], options)
   }
 
@@ -193,5 +206,5 @@ export function shouldAutoSplitForExtensionChain(
     typeof durationSeconds === 'number' && durationSeconds > 0
       ? durationSeconds
       : estimateSpokenDurationSeconds(line)
-  return spoken > VEO_DIALOGUE_CLIP_MAX_SEC || spoken > VEO_INITIAL_CLIP_MAX_SEC
+  return spoken > VEO_DIALOGUE_CLIP_MAX_SEC || spoken > VEO_SPOKEN_CHUNK_SEC
 }

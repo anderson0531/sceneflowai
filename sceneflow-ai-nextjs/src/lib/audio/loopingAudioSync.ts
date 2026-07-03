@@ -1,5 +1,39 @@
 /** Shared helpers for looping background music sync in timeline playback. */
 
+export const AUDIO_PLAYBACK_RATE_MIN = 0.5
+export const AUDIO_PLAYBACK_RATE_MAX = 1.5
+export const MUSIC_FADE_MAX_SEC = 15
+
+export function clampAudioPlaybackRate(rate: number | undefined): number {
+  if (rate == null || !Number.isFinite(rate)) return 1
+  return Math.min(AUDIO_PLAYBACK_RATE_MAX, Math.max(AUDIO_PLAYBACK_RATE_MIN, rate))
+}
+
+/** Volume multiplier (0–1) from fade-in / fade-out envelope relative to clip play window. */
+export function computeMusicVolumeMultiplier(
+  localTimeSec: number,
+  playDurationSec: number,
+  fadeInSec: number,
+  fadeOutSec: number
+): number {
+  if (playDurationSec <= 0) return 0
+  const t = Math.max(0, localTimeSec)
+  const fi = Math.max(0, Math.min(fadeInSec, playDurationSec / 2))
+  const fo = Math.max(0, Math.min(fadeOutSec, playDurationSec / 2))
+
+  let mult = 1
+  if (fi > 0 && t < fi) {
+    mult *= t / fi
+  }
+  if (fo > 0) {
+    const timeUntilEnd = playDurationSec - t
+    if (timeUntilEnd < fo) {
+      mult *= Math.max(0, timeUntilEnd / fo)
+    }
+  }
+  return mult
+}
+
 export interface LoopingClipTiming {
   startTime: number
   trimStart?: number

@@ -60,8 +60,14 @@ export interface LocalRenderAudioClip {
   volume: number
   /** Type for debugging */
   type: 'narration' | 'dialogue' | 'music' | 'sfx'
-  /** 1 = normal; dialogue time-stretch for dub alignment */
+  /** 1 = normal; dialogue / music time-stretch */
   playbackRate?: number
+  /** Music: repeat clip for clip duration */
+  loop?: boolean
+  /** Music: fade-in seconds */
+  fadeInSec?: number
+  /** Music: fade-out seconds */
+  fadeOutSec?: number
 }
 
 export interface LocalRenderTextOverlay {
@@ -440,6 +446,84 @@ function waitForVideoPreload(
 }
 
 // =============================================================================
+// Music clip scheduling (loop + fade + speed)
+// =============================================================================
+
+function clampRenderPlaybackRate(rate: number | undefined): number {
+  if (rate == null || !Number.isFinite(rate) || rate <= 0) return 1
+  return Math.min(1.5, Math.max(0.5, rate))
+}
+
+function applyMusicGainEnvelope(
+  gain: GainNode,
+  clipStart: number,
+  clipDuration: number,
+  volume: number,
+  fadeInSec: number,
+  fadeOutSec: number
+): void {
+  const t0 = clipStart
+  const tEnd = clipStart + clipDuration
+  const fi = Math.max(0, Math.min(fadeInSec, clipDuration / 2))
+  const fo = Math.max(0, Math.min(fadeOutSec, clipDuration / 2))
+
+  if (fi > 0) {
+    gain.gain.setValueAtTime(0, t0)
+    gain.gain.linearRampToValueAtTime(volume, t0 + fi)
+  } else {
+    gain.gain.setValueAtTime(volume, t0)
+  }
+
+  if (fo > 0 && clipDuration > fo) {
+    gain.gain.setValueAtTime(volume, tEnd - fo)
+    gain.gain.linearRampToValueAtTime(0, tEnd)
+  } else if (fo > 0) {
+    gain.gain.linearRampToValueAtTime(0, tEnd)
+  }
+}
+
+function scheduleMusicClipInContext(
+  ctx: BaseAudioContext,
+  clip: LocalRenderAudioClip,
+  buffer: AudioBuffer,
+  destination: AudioNode,
+  compositionDuration: number
+): void {
+  const rate = clampRenderPlaybackRate(clip.playbackRate)
+  const loop = clip.loop !== false
+  const fadeIn = Math.max(0, clip.fadeInSec ?? 0)
+  const fadeOut = Math.max(0, clip.fadeOutSec ?? 0)
+  const clipStart = Math.max(0, clip.startTime)
+  const clipDuration = Math.min(clip.duration, Math.max(0, compositionDuration - clipStart))
+  if (clipDuration <= 0) return
+
+  const bufferWallDuration = buffer.duration / rate
+  const masterGain = ctx.createGain()
+  applyMusicGainEnvelope(masterGain, clipStart, clipDuration, clip.volume, fadeIn, fadeOut)
+  masterGain.connect(destination)
+
+  let cursor = 0
+  do {
+    const remaining = clipDuration - cursor
+    const playWall = loop
+      ? Math.min(bufferWallDuration, remaining)
+      : Math.min(bufferWallDuration, remaining)
+    if (playWall <= 0) break
+
+    const source = ctx.createBufferSource()
+    source.buffer = buffer
+    source.playbackRate.value = rate
+    source.connect(masterGain)
+
+    const when = clipStart + cursor
+    const srcDuration = Math.min(buffer.duration, playWall * rate)
+    source.start(when, 0, srcDuration)
+
+    cursor += playWall
+  } while (loop && cursor < clipDuration)
+}
+
+// =============================================================================
 // Local Render Service
 // =============================================================================
 
@@ -708,6 +792,17 @@ export class LocalRenderService {
           adjustedConfig.audioClips.forEach((clip, index) => {
             const buffer = audioBuffers.get(`${clip.type}-${index}`)
             if (!buffer) return
+
+            if (clip.type === 'music') {
+              scheduleMusicClipInContext(
+                offlineCtx,
+                clip,
+                buffer,
+                offlineCtx.destination,
+                adjustedConfig.totalDuration
+              )
+              return
+            }
             
             const source = offlineCtx.createBufferSource()
             source.buffer = buffer
@@ -1136,6 +1231,20 @@ export class LocalRenderService {
     clips.forEach((clip, index) => {
       const buffer = buffers.get(`${clip.type}-${index}`)
       if (!buffer) return
+
+      if (clip.type === 'music') {
+        scheduleMusicClipInContext(
+          this.audioContext!,
+          clip,
+          buffer,
+          destination,
+          Math.max(
+            ...clips.map((c) => c.startTime + c.duration),
+            clip.startTime + clip.duration
+          )
+        )
+        return
+      }
       
       const source = this.audioContext!.createBufferSource()
       source.buffer = buffer

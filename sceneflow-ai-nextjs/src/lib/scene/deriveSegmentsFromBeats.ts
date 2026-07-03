@@ -5,12 +5,14 @@
 import {
   estimateSpokenDurationSeconds,
   planDialogueLineSplits,
+  resolveBeatSpokenDuration,
   VEO_DIALOGUE_CLIP_MAX_SEC,
 } from '@/lib/scene/dialogueSegmentSplit'
 import { snapToVeoDuration } from '@/lib/scene/veoDuration'
 import {
   planContinuousDialogueBeat,
   shouldAutoSplitForExtensionChain,
+  VEO_SPOKEN_CHUNK_SEC,
   type VeoChainPartPlan,
 } from '@/lib/scene/veoExtensionChain'
 import {
@@ -176,16 +178,24 @@ function beatToSegment(
   return { segment, duration }
 }
 
-function resolveSplitExcerpts(beat: SceneBeat): string[] | null {
+function resolveSplitExcerpts(
+  beat: SceneBeat,
+  scene: Record<string, unknown>,
+  language: string
+): string[] | null {
   if (beat.splitRecommendation && beat.splitRecommendation.excerpts.length > 1) {
     return beat.splitRecommendation.excerpts
   }
   const line = beat.line?.trim()
   if (!line) return null
-  if (!shouldAutoSplitForExtensionChain(line, beat.durationSeconds)) {
+  const spokenDuration = resolveBeatSpokenDuration(beat, scene, language)
+  if (!shouldAutoSplitForExtensionChain(line, spokenDuration)) {
     return null
   }
-  const chain = planContinuousDialogueBeat(line)
+  const chain = planContinuousDialogueBeat(line, {
+    spokenSeconds: spokenDuration,
+    maxSecondsPerExcerpt: VEO_SPOKEN_CHUNK_SEC,
+  })
   if (chain.parts.length <= 1) return null
   return chain.parts.map((p) => p.excerpt)
 }
@@ -194,13 +204,19 @@ function appendSegmentsFromBeat(
   beat: SceneBeat,
   segments: SceneSegment[],
   startTime: number,
-  sequenceIndex: number
+  sequenceIndex: number,
+  scene: Record<string, unknown>,
+  language: string
 ): { startTime: number; sequenceIndex: number } {
   const isSpoken = beat.kind === 'dialogue' || beat.kind === 'narration'
   const line = beat.line?.trim() ?? ''
+  const spokenDuration = resolveBeatSpokenDuration(beat, scene, language)
 
-  if (isSpoken && line && shouldAutoSplitForExtensionChain(line, beat.durationSeconds)) {
-    const chain = planContinuousDialogueBeat(line)
+  if (isSpoken && line && shouldAutoSplitForExtensionChain(line, spokenDuration)) {
+    const chain = planContinuousDialogueBeat(line, {
+      spokenSeconds: spokenDuration,
+      maxSecondsPerExcerpt: VEO_SPOKEN_CHUNK_SEC,
+    })
     for (const part of chain.parts) {
       const { segment, duration } = beatToSegment(beat, sequenceIndex, startTime, {
         partIndex: part.partIndex,
@@ -221,10 +237,13 @@ function appendSegmentsFromBeat(
   const manualExcerpts =
     beat.needsSplit && beat.splitRecommendation
       ? beat.splitRecommendation.excerpts
-      : resolveSplitExcerpts(beat)
+      : resolveSplitExcerpts(beat, scene, language)
 
   if (manualExcerpts && manualExcerpts.length > 1) {
-    const chain = planContinuousDialogueBeat(line)
+    const chain = planContinuousDialogueBeat(line, {
+      spokenSeconds: spokenDuration,
+      maxSecondsPerExcerpt: VEO_SPOKEN_CHUNK_SEC,
+    })
     const parts =
       chain.parts.length === manualExcerpts.length
         ? chain.parts
@@ -262,9 +281,52 @@ export interface DeriveSegmentsResult {
   updatedScene?: Record<string, unknown>
 }
 
+export interface DeriveSegmentsOptions {
+  requireApproved?: boolean
+  language?: string
+  existingSegments?: SceneSegment[]
+}
+
+/** Preserve generated/uploaded assets when re-deriving extension timing. */
+export function mergeDerivedSegmentsWithExisting(
+  newSegments: SceneSegment[],
+  existing: SceneSegment[]
+): SceneSegment[] {
+  if (existing.length === 0) return newSegments
+
+  return newSegments.map((seg) => {
+    const partIndex = seg.dialoguePortion?.partIndex ?? 0
+    const match = existing.find(
+      (existingSeg) =>
+        existingSeg.beatId === seg.beatId &&
+        (existingSeg.dialoguePortion?.partIndex ?? 0) === partIndex
+    )
+    if (!match) return seg
+
+    return {
+      ...seg,
+      segmentId: match.segmentId,
+      status: match.status ?? seg.status,
+      assetType: match.assetType ?? seg.assetType,
+      activeAssetUrl: match.activeAssetUrl ?? seg.activeAssetUrl,
+      takes: match.takes?.length ? match.takes : seg.takes,
+      isUserUpload: match.isUserUpload,
+      actualVideoDuration: match.actualVideoDuration ?? seg.actualVideoDuration,
+      userEditedPrompt: match.userEditedPrompt ?? seg.userEditedPrompt,
+      references: {
+        ...seg.references,
+        ...(match.references?.endFrameUrl
+          ? { endFrameUrl: match.references.endFrameUrl }
+          : {}),
+      },
+      endFrameUrl: match.endFrameUrl ?? seg.endFrameUrl,
+    }
+  })
+}
+
 export function deriveSegmentsFromBeats(
   scene: Record<string, unknown>,
-  options?: { requireApproved?: boolean }
+  options?: DeriveSegmentsOptions
 ): DeriveSegmentsResult {
   const errors: string[] = []
 
@@ -287,25 +349,42 @@ export function deriveSegmentsFromBeats(
     return { segments: [], errors }
   }
 
+  const language = options?.language ?? 'en'
   const segments: SceneSegment[] = []
   let startTime = 0
   let sequenceIndex = 0
 
   for (const beat of beats) {
-    const next = appendSegmentsFromBeat(beat, segments, startTime, sequenceIndex)
+    const next = appendSegmentsFromBeat(
+      beat,
+      segments,
+      startTime,
+      sequenceIndex,
+      scene,
+      language
+    )
     startTime = next.startTime
     sequenceIndex = next.sequenceIndex
   }
 
+  const mergedSegments = options?.existingSegments?.length
+    ? mergeDerivedSegmentsWithExisting(segments, options.existingSegments)
+    : segments
+
   const warnings = collectDraftStoryboardFrameWarnings(scene)
 
-  return { segments, errors, ...(warnings.length ? { warnings } : {}) }
+  return {
+    segments: mergedSegments,
+    errors,
+    ...(warnings.length ? { warnings } : {}),
+  }
 }
 
 /** Apply a dialogue split to beats and re-derive segments. */
 export function applyBeatSplitAndDerive(
   scene: Record<string, unknown>,
-  beatId: string
+  beatId: string,
+  options?: Pick<DeriveSegmentsOptions, 'language' | 'existingSegments'>
 ): DeriveSegmentsResult {
   const beats = getSceneBeats(scene)
   const beat = beats.find((b) => b.beatId === beatId)
@@ -314,7 +393,7 @@ export function applyBeatSplitAndDerive(
   }
   const parts = planDialogueLineSplits(beat.line, VEO_DIALOGUE_CLIP_MAX_SEC)
   if (parts.length <= 1) {
-    return deriveSegmentsFromBeats(scene)
+    return deriveSegmentsFromBeats(scene, options)
   }
   const updatedBeats = beats.map((b) =>
     b.beatId === beatId
@@ -329,6 +408,6 @@ export function applyBeatSplitAndDerive(
       : b
   )
   const updatedScene = applyBeatsToScene(scene, updatedBeats)
-  const result = deriveSegmentsFromBeats(updatedScene)
+  const result = deriveSegmentsFromBeats(updatedScene, options)
   return { ...result, updatedScene }
 }

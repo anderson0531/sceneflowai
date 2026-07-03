@@ -4,6 +4,7 @@
  */
 import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
 import { snapToVeoDuration, allocateVeoSplitDurations } from '@/lib/scene/veoDuration'
+import type { SceneBeat } from '@/lib/script/segmentTypes'
 
 /** Effective max for on-screen dialogue in a single Veo clip (user-facing ~10s). */
 export const VEO_DIALOGUE_CLIP_MAX_SEC = 10
@@ -18,6 +19,80 @@ export function estimateSpokenDurationSeconds(text: string): number {
   const words = spoken.split(/\s+/).filter(Boolean).length
   if (words === 0) return 0
   return Math.max(1, Math.round((words / SPOKEN_WORDS_PER_SECOND) * 10) / 10)
+}
+
+function getDialogueAudioEntriesForLanguage(
+  scene: Record<string, unknown>,
+  language: string
+): Array<{ lineId?: string; dialogueIndex?: number; duration?: number }> {
+  const da = scene.dialogueAudio
+  if (!da) return []
+  if (Array.isArray(da)) {
+    return language === 'en' ? da : []
+  }
+  if (typeof da === 'object') {
+    const arr = (da as Record<string, unknown>)[language]
+    return Array.isArray(arr) ? arr : []
+  }
+  return []
+}
+
+function resolveDialogueIndexForBeat(
+  beat: SceneBeat,
+  scene: Record<string, unknown>
+): number {
+  const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
+  if (beat.lineId?.trim()) {
+    const idx = dialogue.findIndex(
+      (entry: { lineId?: string }) => entry?.lineId === beat.lineId
+    )
+    if (idx >= 0) return idx
+  }
+  return -1
+}
+
+/**
+ * Resolve spoken duration for a beat: prefer TTS duration for the active language,
+ * then beat.durationSeconds, then word-count estimate.
+ */
+export function resolveBeatSpokenDuration(
+  beat: SceneBeat,
+  scene: Record<string, unknown>,
+  language: string = 'en'
+): number {
+  const entries = getDialogueAudioEntriesForLanguage(scene, language)
+
+  if (beat.lineId?.trim()) {
+    const byLineId = entries.find((entry) => entry.lineId === beat.lineId)
+    if (typeof byLineId?.duration === 'number' && byLineId.duration > 0) {
+      return byLineId.duration
+    }
+  }
+
+  const dialogueIdx = resolveDialogueIndexForBeat(beat, scene)
+  if (dialogueIdx >= 0) {
+    const byIdx = entries.find((entry) => entry.dialogueIndex === dialogueIdx)
+    if (typeof byIdx?.duration === 'number' && byIdx.duration > 0) {
+      return byIdx.duration
+    }
+  }
+
+  if (beat.kind === 'narration') {
+    const narrationAudio = scene.narrationAudio as
+      | Record<string, { duration?: number }>
+      | undefined
+    const langNarration = narrationAudio?.[language]
+    if (typeof langNarration?.duration === 'number' && langNarration.duration > 0) {
+      return langNarration.duration
+    }
+  }
+
+  if (typeof beat.durationSeconds === 'number' && beat.durationSeconds > 0) {
+    return beat.durationSeconds
+  }
+
+  const line = beat.line?.trim() ?? ''
+  return line ? estimateSpokenDurationSeconds(line) : 0
 }
 
 function packUnitsIntoChunks(

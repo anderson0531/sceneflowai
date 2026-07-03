@@ -4200,11 +4200,11 @@ function SceneCard({
   const availableSceneTabs = useMemo(() => {
     const tabs: SceneScriptTab[] = []
     if (hasDirectionTab) tabs.push('direction')
-    if (hasNarrationTab) tabs.push('narration')
-    if (hasWardrobeTab) tabs.push('wardrobe')
-    if (hasPreVisTab) tabs.push('previs')
     if (hasBeatsTab) tabs.push('beats')
     if (hasMusicTab) tabs.push('music')
+    if (hasPreVisTab) tabs.push('previs')
+    if (hasNarrationTab) tabs.push('narration')
+    if (hasWardrobeTab) tabs.push('wardrobe')
     return tabs
   }, [hasDirectionTab, hasNarrationTab, hasWardrobeTab, hasPreVisTab, hasBeatsTab, hasMusicTab])
 
@@ -5807,30 +5807,6 @@ function SceneCard({
                               Direction
                             </TabsTrigger>
                           )}
-                          {hasNarrationTab && (
-                            <TabsTrigger value="narration" className="text-xs gap-1.5 px-2.5 py-1.5">
-                              <Volume2 className="w-3.5 h-3.5 shrink-0" />
-                              Narration
-                            </TabsTrigger>
-                          )}
-                          {hasWardrobeTab && (
-                            <TabsTrigger value="wardrobe" className="text-xs gap-1.5 px-2.5 py-1.5">
-                              <Users className="w-3.5 h-3.5 shrink-0" />
-                              Wardrobe
-                              <span className="text-[10px] opacity-60">({sceneWardrobeCharacters.length})</span>
-                            </TabsTrigger>
-                          )}
-                          {hasPreVisTab && (
-                            <TabsTrigger value="previs" className="text-xs gap-1.5 px-2.5 py-1.5">
-                              <Clapperboard className="w-3.5 h-3.5 shrink-0" />
-                              Pre-Vis
-                              {preVisFrameStats.total > 0 && (
-                                <span className="text-[10px] opacity-60">
-                                  ({preVisFrameStats.withImage}/{preVisFrameStats.total})
-                                </span>
-                              )}
-                            </TabsTrigger>
-                          )}
                           {hasBeatsTab && (
                             <TabsTrigger value="beats" className="text-xs gap-1.5 px-2.5 py-1.5">
                               <List className="w-3.5 h-3.5 shrink-0" />
@@ -5842,6 +5818,30 @@ function SceneCard({
                             <TabsTrigger value="music" className="text-xs gap-1.5 px-2.5 py-1.5">
                               <Music className="w-3.5 h-3.5 shrink-0" />
                               Music
+                            </TabsTrigger>
+                          )}
+                          {hasPreVisTab && (
+                            <TabsTrigger value="previs" className="text-xs gap-1.5 px-2.5 py-1.5">
+                              <Clapperboard className="w-3.5 h-3.5 shrink-0" />
+                              Visualization
+                              {preVisFrameStats.total > 0 && (
+                                <span className="text-[10px] opacity-60">
+                                  ({preVisFrameStats.withImage}/{preVisFrameStats.total})
+                                </span>
+                              )}
+                            </TabsTrigger>
+                          )}
+                          {hasNarrationTab && (
+                            <TabsTrigger value="narration" className="text-xs gap-1.5 px-2.5 py-1.5">
+                              <Volume2 className="w-3.5 h-3.5 shrink-0" />
+                              Narration
+                            </TabsTrigger>
+                          )}
+                          {hasWardrobeTab && (
+                            <TabsTrigger value="wardrobe" className="text-xs gap-1.5 px-2.5 py-1.5">
+                              <Users className="w-3.5 h-3.5 shrink-0" />
+                              Wardrobe
+                              <span className="text-[10px] opacity-60">({sceneWardrobeCharacters.length})</span>
                             </TabsTrigger>
                           )}
                         </TabsList>

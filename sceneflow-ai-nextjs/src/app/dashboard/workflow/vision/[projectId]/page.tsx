@@ -2605,7 +2605,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ projectId: project.id }),
+            body: JSON.stringify({ projectId: project.id, language: 'en' }),
           }
         )
         const data = await response.json()

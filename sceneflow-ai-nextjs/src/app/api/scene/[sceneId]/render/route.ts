@@ -280,12 +280,19 @@ export async function POST(
     // Add music
     if (body.audioConfig.includeMusic && body.audioTracks.music) {
       for (const track of body.audioTracks.music) {
+        const pr = track.playbackRate
+        const playbackRate =
+          pr != null && Number.isFinite(pr) && pr > 0 ? Math.min(1.5, Math.max(0.5, pr)) : undefined
         audioClips.push({
           url: track.url,
           startTime: track.startTime,
           duration: track.duration,
           volume: musicVolume,
           type: 'music',
+          ...(playbackRate != null && Math.abs(playbackRate - 1) > 1e-4 ? { playbackRate } : {}),
+          ...(track.loop != null ? { loop: track.loop } : {}),
+          ...(track.fadeInSec != null && track.fadeInSec > 0 ? { fadeInSec: track.fadeInSec } : {}),
+          ...(track.fadeOutSec != null && track.fadeOutSec > 0 ? { fadeOutSec: track.fadeOutSec } : {}),
         })
       }
     }

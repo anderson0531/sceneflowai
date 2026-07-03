@@ -24,6 +24,10 @@ interface DeriveSegmentsBody {
   extendBeatId?: string
   /** Skip storyboard approval check (legacy / admin). */
   skipApprovalCheck?: boolean
+  /** Active production language for TTS duration–aware extension planning. */
+  language?: string
+  /** Existing segments to merge generated assets into after re-derive. */
+  existingSegments?: import('@/components/vision/scene-production/types').SceneSegment[]
 }
 
 export async function POST(
@@ -33,7 +37,7 @@ export async function POST(
   try {
     const { sceneId } = await context.params
     const body = (await req.json()) as DeriveSegmentsBody
-    const { projectId, extendBeatId, skipApprovalCheck } = body
+    const { projectId, extendBeatId, skipApprovalCheck, language, existingSegments } = body
 
     if (!projectId) {
       return NextResponse.json({ error: 'projectId is required' }, { status: 400 })
@@ -66,11 +70,15 @@ export async function POST(
     const scene = matchedScene
     const artStyleId = resolveProjectArtStyle(metadata)
 
+    const deriveOptions = {
+      requireApproved: !skipApprovalCheck,
+      language: language ?? 'en',
+      existingSegments,
+    }
+
     const result = extendBeatId
-      ? applyBeatSplitAndDerive(scene, extendBeatId)
-      : deriveSegmentsFromBeats(scene, {
-          requireApproved: !skipApprovalCheck,
-        })
+      ? applyBeatSplitAndDerive(scene, extendBeatId, deriveOptions)
+      : deriveSegmentsFromBeats(scene, deriveOptions)
 
     if (result.errors.length > 0) {
       return NextResponse.json(

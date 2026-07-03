@@ -1531,6 +1531,14 @@ export interface AudioTrackConfig {
   startSegment: number // Segment index where audio starts (0-based)
   endSegment: number   // Segment index where audio ends (0-based, -1 = all remaining)
   duration?: number    // Optional duration override (for music)
+  /** Music: loop clip for the active beat range */
+  loop?: boolean
+  /** Music: fade-in duration in seconds */
+  fadeInSec?: number
+  /** Music: fade-out duration in seconds */
+  fadeOutSec?: number
+  /** Music: playback speed (0.5–1.5) */
+  playbackRate?: number
 }
 
 /**

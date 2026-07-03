@@ -51,8 +51,6 @@ import {
   ChevronUp,
   ChevronDown,
   ChevronRight,
-  ArrowRight,
-  Copy,
   Wand2,
   Shield,
   ShieldCheck,
@@ -90,7 +88,6 @@ const SceneRenderDialog = dynamic(
   { ssr: false }
 )
 import { AddSpecialSegmentDialog, type FilmContext, type AdjacentSceneContext } from './AddSpecialSegmentDialog'
-import { AddSegmentTypeDialog } from './AddSegmentTypeDialog'
 import { ProductionStreamsPanel } from './ProductionStreamsPanel'
 import { ProductionSectionHeader } from './ProductionSectionHeader'
 // Dynamic import for SceneProductionMixer to avoid TDZ with LocalRenderService chain
@@ -102,7 +99,7 @@ import { useVideoQueue } from '@/hooks/useVideoQueue'
 import { forceDownload } from '@/lib/utils'
 import type { SceneAudioData } from './GuidePromptEditor'
 import type { GuideCharacterDemographic } from '@/lib/scene/segmentGuidePrompt'
-import { isBeatFirstPipelineEnabled } from '@/lib/script/beatMigration'
+import { isBeatFirstPipelineEnabled, isStoryboardApproved } from '@/lib/script/beatMigration'
 import type { SegmentGuideContext } from '@/hooks/useSegmentConfig'
 
 function normalizeGuideCharacters(raw: unknown): GuideCharacterDemographic[] {
@@ -195,8 +192,6 @@ interface DirectorConsoleProps {
   onModerationReport?: (report: import('@/lib/moderation/moderationPipeline').ModerationReport) => void
   /** Character demographics for auto guide / Director dialog (falls back to scene.characters) */
   guideCharacters?: GuideCharacterDemographic[]
-  /** Triggered when the user clicks 'Continue Shot' on a video production card */
-  onAddContinueShot?: (segmentIndex: number) => void
   /** Locked project aspect ratio from Blueprint */
   projectAspectRatio?: BlueprintAspectRatio
 }
@@ -389,6 +384,7 @@ function DirectorConsoleRoot({
   const [isUploadingStream, setIsUploadingStream] = useState(false)
   const [streamUploadError, setStreamUploadError] = useState<string | null>(null)
   const [productionTarget, setProductionTarget] = useState<ProductionTarget>({ streamType: 'video', language: 'en' })
+  const prevProductionLanguageRef = useRef(productionTarget.language)
   const [renderDialogMode, setRenderDialogMode] = useState<'video' | 'animatic'>('video')
   const [renderDialogAnimaticSettings, setRenderDialogAnimaticSettings] = useState<
     Partial<Omit<AnimaticRenderSettings, 'type'>> | undefined
@@ -411,9 +407,6 @@ function DirectorConsoleRoot({
   
   // Cinematic Elements dialog state - opens for inserting new cinematic segment
   const [cinematicDialogSegmentIndex, setCinematicDialogSegmentIndex] = useState<number | null>(null)
-  
-  // Continue Shot dialog state
-  const [continueShotSegmentIndex, setContinueShotSegmentIndex] = useState<number | null>(null)
   
   // Audio track selection for video playback overlay
   const [selectedAudioTracks, setSelectedAudioTracks] = useState<SelectedAudioTracks>(DEFAULT_AUDIO_TRACKS)
@@ -463,6 +456,81 @@ function DirectorConsoleRoot({
       }
     }
   }, [productionData])
+
+  const sceneHasDialogueAudioForLanguage = useCallback(
+    (language: string): boolean => {
+      const da = scene?.dialogueAudio
+      if (!da) return false
+      if (Array.isArray(da)) {
+        return language === 'en' && da.some((entry) => !!entry?.audioUrl || (entry?.duration ?? 0) > 0)
+      }
+      const langEntries = da[language]
+      return (
+        Array.isArray(langEntries) &&
+        langEntries.some((entry) => !!entry?.audioUrl || (entry?.duration ?? 0) > 0)
+      )
+    },
+    [scene?.dialogueAudio]
+  )
+
+  useEffect(() => {
+    const language = productionTarget.language
+    if (prevProductionLanguageRef.current === language) return
+    prevProductionLanguageRef.current = language
+
+    if (!onProductionDataChange || !productionData?.isSegmented || !productionData.segments?.length) {
+      return
+    }
+    if (!isBeatFirstPipelineEnabled()) return
+
+    const sceneRecord = scene as Record<string, unknown> | undefined
+    if (!sceneRecord || !isStoryboardApproved(sceneRecord)) return
+    if (!sceneHasDialogueAudioForLanguage(language)) return
+
+    const timeout = window.setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `/api/scenes/${encodeURIComponent(sceneId)}/derive-segments`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              projectId,
+              language,
+              existingSegments: productionData.segments,
+            }),
+          }
+        )
+        const data = await response.json()
+        if (!response.ok || !data.success) {
+          console.warn('[DirectorConsole] Language re-derive failed:', data.errors || data.error)
+          return
+        }
+        onProductionDataChange({
+          ...productionData,
+          segments: data.segments || productionData.segments,
+          lastGeneratedAt: new Date().toISOString(),
+        })
+        const languageInfo = SUPPORTED_LANGUAGES.find((l) => l.code === language)
+        const { toast } = await import('sonner')
+        toast.success(
+          `Updated extension timing for ${languageInfo?.name ?? language}`
+        )
+      } catch (err) {
+        console.warn('[DirectorConsole] Language re-derive error:', err)
+      }
+    }, 500)
+
+    return () => window.clearTimeout(timeout)
+  }, [
+    productionTarget.language,
+    onProductionDataChange,
+    productionData,
+    scene,
+    sceneId,
+    projectId,
+    sceneHasDialogueAudioForLanguage,
+  ])
 
   // Get previous segment's last frame for Extend mode (prefer actual video frame over keyframe)
   const previousSegmentLastFrame = useMemo(() => {
@@ -1205,6 +1273,12 @@ function DirectorConsoleRoot({
                           </p>
                         )}
                         <div className="flex items-center gap-2 mt-2 text-xs text-slate-500">
+                          {segment.veoTimelineContinuation && (
+                            <>
+                              <span className="text-cyan-400/90">Auto Veo extension</span>
+                              <span>•</span>
+                            </>
+                          )}
                           {segment.isUserUpload ? (
                             <>
                               <span className="text-sky-400 font-medium">
@@ -1276,46 +1350,32 @@ function DirectorConsoleRoot({
                             </Tooltip>
                           </>
                         )}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-slate-500 hover:text-amber-400"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                const prompt = item.config.prompt || segment.userEditedPrompt || segment.generatedPrompt || ''
-                                if (prompt) {
-                                  navigator.clipboard.writeText(prompt)
-                                  import('sonner').then(({ toast }) => {
-                                    toast.success('Prompt copied to clipboard!', {
-                                      description: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''),
-                                    })
-                                  })
-                                } else {
-                                  import('sonner').then(({ toast }) => {
-                                    toast.error('No prompt available for this segment')
-                                  })
-                                }
-                              }}
-                            >
-                              <Copy className="w-4 h-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Copy Prompt for External Generation</TooltipContent>
-                        </Tooltip>
-                        {onModerationReport && projectId && segment.activeAssetUrl && item.status === 'complete' && (
-                          <ModerationValidateButton
-                            projectId={projectId}
-                            stage={segment.assetType === 'video' ? 'fal_video' : 'storyboard'}
-                            source="segment_asset"
-                            resourceId={item.segmentId}
-                            label="Validate"
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 px-2 text-slate-500 hover:text-indigo-300"
-                            onReport={onModerationReport}
-                          />
+                        {onModerationReport &&
+                          projectId &&
+                          segment.isUserUpload &&
+                          segment.assetType === 'video' &&
+                          segment.activeAssetUrl &&
+                          item.status === 'complete' && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span>
+                                <ModerationValidateButton
+                                  projectId={projectId}
+                                  stage="fal_video"
+                                  source="segment_asset"
+                                  resourceId={item.segmentId}
+                                  label="Validate"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 px-2 text-slate-500 hover:text-indigo-300"
+                                  onReport={onModerationReport}
+                                />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              Validate uploaded video with Hive (credit charge)
+                            </TooltipContent>
+                          </Tooltip>
                         )}
                         <Button
                           variant="outline"
@@ -1325,20 +1385,6 @@ function DirectorConsoleRoot({
                         >
                           <Settings2 className="w-3.5 h-3.5 mr-1" />
                           Take ({segment.takes?.length || 1})
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-xs bg-slate-800 border-slate-600 text-cyan-400 hover:bg-slate-700 px-2 hover:border-cyan-500/50 hover:text-cyan-300"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            const idx = segments.findIndex(s => s.segmentId === item.segmentId)
-                            if (idx >= 0) setContinueShotSegmentIndex(idx)
-                          }}
-                          title="Continue from this beat's end frame"
-                        >
-                          <ArrowRight className="w-3.5 h-3.5 mr-1" />
-                          Continue
                         </Button>
                       </div>
                     </div>
@@ -1710,86 +1756,6 @@ function DirectorConsoleRoot({
         }}
       />
       
-      {/* Continue Shot Dialog via AddSegmentTypeDialog */}
-      <AddSegmentTypeDialog
-        open={continueShotSegmentIndex !== null}
-        onOpenChange={(open) => {
-          if (!open) setContinueShotSegmentIndex(null)
-        }}
-        sceneId={sceneId}
-        sceneNumber={sceneNumber}
-        existingSegments={segments}
-        adjacentContext={continueShotSegmentIndex !== null ? {
-          previousScene: {
-            lastSegment: segments[continueShotSegmentIndex]
-          },
-          currentScene: {
-            heading: scene?.sceneHeading,
-            action: scene?.action,
-            narration: scene?.narration,
-            dialogue: scene?.dialogue?.map(d => ({ character: d.character, text: d.line })),
-          }
-        } : undefined}
-        onAddSegment={(segmentData) => {
-          // Add the segment directly via onProductionDataChange if provided
-          if (onProductionDataChange && productionData) {
-            const idx = segmentData.insertIndex ?? segments.length
-            const newSegments = [...segments]
-            
-            // "Auto generate start and end frame images with the start image matching the end frame image"
-            // The continue shot should inherently take the previous segment's end frame as its start frame.
-            // We set it up here:
-            const prevSeg = segments[continueShotSegmentIndex!]
-            const startFrameUrl = prevSeg?.endFrameUrl || prevSeg?.references?.endFrameUrl
-            
-            newSegments.splice(idx, 0, {
-              ...segmentData,
-              segmentId: segmentData.segmentId || `segment-${Date.now()}`,
-              startFrameUrl: startFrameUrl,
-              references: {
-                ...segmentData.references,
-                startFrameUrl: startFrameUrl
-              }
-            } as SceneSegment)
-            
-            // Recalculate sequenceIndex and timing for all segments to fix critical mismatch
-            let currentTime = 0
-            const renumberedSegments = newSegments.map((seg, i) => {
-              const duration = seg.endTime - seg.startTime
-              const updated = {
-                ...seg,
-                sequenceIndex: i,
-                startTime: currentTime,
-                endTime: currentTime + duration,
-              }
-              currentTime += duration
-              return updated
-            })
-            
-            onProductionDataChange({
-              ...productionData,
-              segments: renumberedSegments
-            })
-            
-            import('sonner').then(({ toast }) => {
-              toast.success('Continue Shot added!', {
-                description: 'Start frame copied. Configure dialogue and generate the end frame in the Beat Builder.',
-              })
-            })
-          }
-          setContinueShotSegmentIndex(null)
-        }}
-        filmContext={{
-          title: scene?.filmTitle,
-          genre: scene?.genre ? [scene.genre] : undefined,
-          tone: scene?.tone,
-        }}
-        // Force the dialog to "extend" (Continue Shot) mode implicitly if needed,
-        // but the user can also select it. To make it seamless, we can pre-select 'extend'.
-        initialSelectedType="extend"
-        initialInsertPosition="after"
-        initialSegmentIndex={continueShotSegmentIndex !== null ? continueShotSegmentIndex : undefined}
-      />
     </TooltipProvider>
   )
 }
