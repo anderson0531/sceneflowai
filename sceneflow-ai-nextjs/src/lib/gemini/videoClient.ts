@@ -1,5 +1,5 @@
 import { JWT } from 'google-auth-library';
-import { getVeoModel, DEFAULT_VIDEO_QUALITY, type VeoQualityTier } from '@/lib/config/modelConfig';
+import { getVeoModel, DEFAULT_VIDEO_QUALITY, DEFAULT_VEO_CLIP_DURATION, isOmniVideoModel, type VeoQualityTier, type VeoClipDuration } from '@/lib/config/modelConfig';
 import {
   getVeoSafetySetting,
   getVeoIncludeRaiReason,
@@ -159,7 +159,7 @@ interface ReferenceImage {
 interface VideoGenerationOptions {
   aspectRatio?: '16:9' | '9:16'
   resolution?: '720p' | '1080p'
-  durationSeconds?: 4 | 6 | 8
+  durationSeconds?: VeoClipDuration
   negativePrompt?: string
   personGeneration?: 'allow_adult' | 'allow_all' | 'dont_allow'
   safetySetting?: 'block_most' | 'block_some' | 'block_few' | 'block_only_high' | 'block_none' // Vertex safetySetting
@@ -211,6 +211,8 @@ export async function generateVideoWithVeo(
   // Select model based on quality tier (default: fast for cost efficiency)
   const quality = options.quality || DEFAULT_VIDEO_QUALITY
   const model = getVeoModel(quality)
+  const usingOmni = isOmniVideoModel(model)
+  const stabilityDuration: VeoClipDuration = usingOmni ? 10 : 8
   if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
   // Vertex endpoint: https://LOCATION-aiplatform.googleapis.com/v1/projects/PROJECT_ID/locations/LOCATION/publishers/google/models/MODEL:predictLongRunning
   const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:predictLongRunning`
@@ -229,7 +231,7 @@ export async function generateVideoWithVeo(
   console.log('[Veo Video] Options:', JSON.stringify({
     aspectRatio: options.aspectRatio || '16:9',
     resolution: options.resolution || '720p',
-    duration: options.durationSeconds || 8,
+    duration: options.durationSeconds || DEFAULT_VEO_CLIP_DURATION,
     hasStartFrame: !!options.startFrame,
     hasLastFrame: !!options.lastFrame,
     hasSourceVideo: !!options.sourceVideo,
@@ -287,18 +289,17 @@ export async function generateVideoWithVeo(
   const isEXT = !!options.sourceVideo && !options.startFrame
   const isFTV = !!options.startFrame && !!options.lastFrame
   
-  // FTV Stability Constraints (March 2026):
-  // - Duration MUST be 8s (temporal bridge calculation is hardcoded for 8s)
-  // - Resolution MUST be 720p (reduces VRAM load by ~55% vs 1080p)
-  // - Fast tier recommended (handles bidirectional constraints better)
+  // FTV/EXT Stability Constraints:
+  // - Legacy Veo 3.1: duration MUST be 8s, resolution MUST be 720p
+  // - Gemini Omni Flash: duration MAY be 10s, resolution MUST be 720p
   if (isFTV) {
-    if (options.durationSeconds && options.durationSeconds !== 8) {
-      console.warn(`[Veo Video] FTV mode: Overriding duration ${options.durationSeconds}s → 8s (required for stability)`)
+    if (options.durationSeconds && options.durationSeconds !== stabilityDuration) {
+      console.warn(`[Veo Video] FTV mode: Overriding duration ${options.durationSeconds}s → ${stabilityDuration}s (required for stability)`)
     }
     if (options.resolution && options.resolution !== '720p') {
       console.warn(`[Veo Video] FTV mode: Overriding resolution ${options.resolution} → 720p (required for stability)`)
     }
-    console.log('[Veo Video] FTV MODE: Enforcing stability constraints (8s duration, 720p resolution)')
+    console.log(`[Veo Video] FTV MODE: Enforcing stability constraints (${stabilityDuration}s duration, 720p resolution)`)
   }
   
   // Safety setting: Use configurable setting from environment (default: 'block_only_high')
@@ -309,8 +310,8 @@ export async function generateVideoWithVeo(
   
   const parameters: Record<string, any> = {
     aspectRatio: options.aspectRatio || '16:9',
-    // FTV requires exactly 8s duration for stability
-    durationSeconds: isFTV ? 8 : (options.durationSeconds || 8),
+    // FTV/EXT require fixed stability duration; otherwise default to 10s (Omni) or requested value
+    durationSeconds: isFTV || isEXT ? stabilityDuration : (options.durationSeconds || DEFAULT_VEO_CLIP_DURATION),
     personGeneration: personGeneration,
     safetySetting: safetySetting,
     // Return RAI categories / support codes in errors and operations (Vertex VideoGenerationModelParams)
@@ -328,7 +329,7 @@ export async function generateVideoWithVeo(
   // Add resolution - FTV/EXT require 720p for stability
   if (isFTV || isEXT) {
     parameters.resolution = '720p'
-    parameters.durationSeconds = 8
+    parameters.durationSeconds = stabilityDuration
   } else if (options.resolution === '1080p') {
     parameters.resolution = '1080p'
   }

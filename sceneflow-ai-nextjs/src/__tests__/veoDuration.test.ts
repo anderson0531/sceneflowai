@@ -6,12 +6,13 @@ describe('veoDuration helpers', () => {
     expect(snapToVeoDuration(4.2)).toBe(4)
     expect(snapToVeoDuration(6.4)).toBe(6)
     expect(snapToVeoDuration(7.9)).toBe(8)
+    expect(snapToVeoDuration(9.5)).toBe(10)
   })
 
   it('uses minimum split count while staying within duration limits', () => {
     const out = allocateVeoSplitDurations(16.2, 8)
     expect(out.length).toBe(3)
-    expect(out.every((d) => [4, 6, 8].includes(d))).toBe(true)
+    expect(out.every((d) => [4, 6, 8, 10, 12].includes(d))).toBe(true)
     expect(out.reduce((a, b) => a + b, 0)).toBeGreaterThanOrEqual(16.2)
   })
 

@@ -130,7 +130,8 @@ export function getEstimatedProviderCost(
       return (metrics?.imageCount ?? 1) * PROVIDER_COSTS_USD.imagen_4
     
     case 'veo_fast':
-      return Math.ceil((metrics?.videoDurationSec ?? 8) / 8) * PROVIDER_COSTS_USD.veo_fast_8s
+    case 'veo_omni':
+      return ((metrics?.videoDurationSec ?? 10) / 8) * PROVIDER_COSTS_USD.veo_fast_8s
 
     case 'veo_lite':
     case 'veo_sfx':
@@ -373,7 +374,7 @@ function mapOperationToProvider(operation: string): string {
 
 function mapOperationToModel(operation: string): string {
   if (operation.includes('imagen')) return 'imagen-3.0-generate-001'
-  if (operation.includes('veo_fast')) return 'veo-3.1-fast'
+  if (operation.includes('veo_omni') || operation.includes('veo_fast')) return 'gemini-omni-flash-preview'
   if (operation.includes('veo_quality')) return 'veo-3.1-quality'
   if (operation.includes('gemini_flash')) return 'gemini-3.0-flash'
   if (operation.includes('gemini_pro')) return 'gemini-3.1-pro-preview'

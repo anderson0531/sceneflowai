@@ -20,7 +20,7 @@
  * @see https://ai.google.dev/gemini-api/docs/video
  */
 
-import { getVeoModel, DEFAULT_VIDEO_QUALITY } from '@/lib/config/modelConfig'
+import { getVeoModel, DEFAULT_VIDEO_QUALITY, DEFAULT_VEO_CLIP_DURATION, isOmniVideoModel, type VeoClipDuration } from '@/lib/config/modelConfig'
 import {
   getVeoSafetySetting,
   getVeoIncludeRaiReason,
@@ -43,7 +43,7 @@ interface ReferenceImage {
 export interface GeminiVideoOptions {
   aspectRatio?: '16:9' | '9:16'
   resolution?: '720p' | '1080p'
-  durationSeconds?: 4 | 6 | 8
+  durationSeconds?: VeoClipDuration
   negativePrompt?: string
   personGeneration?: 'allow_adult' | 'allow_all' | 'dont_allow'
   startFrame?: string // Base64 or URL for I2V
@@ -192,6 +192,8 @@ export async function generateVideoWithGeminiStudio(
   // Select model based on quality tier (default: fast for cost efficiency)
   const quality = options.quality || DEFAULT_VIDEO_QUALITY
   const model = getVeoModel(quality)
+  const usingOmni = isOmniVideoModel(model)
+  const stabilityDuration: VeoClipDuration = usingOmni ? 10 : 8
   // Use the Gemini API predictLongRunning endpoint for video generation
   // Based on Python SDK: google/genai/models.py _generate_videos method
   // The endpoint is :predictLongRunning, same as Vertex but with different auth
@@ -202,7 +204,7 @@ export async function generateVideoWithGeminiStudio(
   console.log(`[Gemini Studio Video] Options:`, JSON.stringify({
     aspectRatio: options.aspectRatio || '16:9',
     resolution: options.resolution || '720p',
-    duration: options.durationSeconds || 8,
+    duration: options.durationSeconds || DEFAULT_VEO_CLIP_DURATION,
     hasStartFrame: !!options.startFrame,
     hasLastFrame: !!options.lastFrame,
     hasSourceVideo: !!options.sourceVideo,
@@ -228,13 +230,13 @@ export async function generateVideoWithGeminiStudio(
   }
   
   if (options.durationSeconds) {
-    // Defensive validation: ensure duration is exactly 4, 6, or 8
+    // Defensive validation: ensure duration is exactly 4, 6, 8, or 10
     // Snap to nearest valid value if needed
     let duration = options.durationSeconds
-    if (![4, 6, 8].includes(duration)) {
-      const snapped = duration <= 5 ? 4 : duration <= 7 ? 6 : 8
+    if (![4, 6, 8, 10].includes(duration)) {
+      const snapped = duration <= 5 ? 4 : duration <= 7 ? 6 : duration <= 9 ? 8 : 10
       console.warn(`[Gemini Studio Video] Invalid duration ${duration}, snapping to ${snapped}`)
-      duration = snapped as 4 | 6 | 8
+      duration = snapped as VeoClipDuration
     }
     parameters.durationSeconds = duration
   }
@@ -333,20 +335,20 @@ export async function generateVideoWithGeminiStudio(
       mimeType: mimeType
     }
     
-    // FTV Stability Constraints (March 2026):
-    // - Duration MUST be 8s (temporal bridge calculation hardcoded)
-    // - Resolution MUST be 720p (prevents VRAM overflow)
-    if (parameters.durationSeconds && parameters.durationSeconds !== 8) {
-      console.warn(`[Gemini Studio Video] FTV mode: Overriding duration ${parameters.durationSeconds}s → 8s (required for stability)`)
+    // FTV/EXT Stability Constraints:
+    // - Legacy Veo 3.1: duration MUST be 8s, resolution MUST be 720p
+    // - Gemini Omni Flash: duration MAY be 10s, resolution MUST be 720p
+    if (parameters.durationSeconds && parameters.durationSeconds !== stabilityDuration) {
+      console.warn(`[Gemini Studio Video] FTV mode: Overriding duration ${parameters.durationSeconds}s → ${stabilityDuration}s (required for stability)`)
     }
     if (parameters.resolution && parameters.resolution !== '720p') {
       console.warn(`[Gemini Studio Video] FTV mode: Overriding resolution ${parameters.resolution} → 720p (required for stability)`)
     }
-    parameters.durationSeconds = 8
+    parameters.durationSeconds = stabilityDuration
     parameters.resolution = '720p'
     
     console.log('[Gemini Studio Video] FTV MODE: last_frame added to parameters (snake_case)')
-    console.log('[Gemini Studio Video] FTV MODE: Enforcing stability constraints (8s duration, 720p resolution)')
+    console.log(`[Gemini Studio Video] FTV MODE: Enforcing stability constraints (${stabilityDuration}s duration, 720p resolution)`)
   }
   
   // Add reference images (REF mode) - T2V only, not compatible with I2V
@@ -405,7 +407,7 @@ export async function generateVideoWithGeminiStudio(
     console.log('[Gemini Studio Video] FTV MODE CONFIRMED (Gemini API schema):')
     console.log('[Gemini Studio Video]   - image (start frame): Present at instance level ✓')
     console.log('[Gemini Studio Video]   - last_frame (end frame): Present at parameters level (snake_case) ✓')
-    console.log('[Gemini Studio Video]   - durationSeconds:', parameters.durationSeconds, '(should be 8)')
+    console.log('[Gemini Studio Video]   - durationSeconds:', parameters.durationSeconds, `(should be ${stabilityDuration})`)
     console.log('[Gemini Studio Video]   - resolution:', parameters.resolution, '(should be 720p)')
     console.log('[Gemini Studio Video]   - referenceImages: ', instance.referenceImages ? 'PRESENT (may conflict!)' : 'Not present ✓')
   } else if (instance.image) {

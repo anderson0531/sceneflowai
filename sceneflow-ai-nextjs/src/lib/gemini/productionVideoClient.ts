@@ -35,6 +35,8 @@ import {
   type GeminiVideoResult
 } from './geminiStudioVideoClient'
 
+import type { VeoClipDuration } from '@/lib/config/modelConfig'
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -472,7 +474,7 @@ async function generateWithGemini(
   const geminiOptions: GeminiVideoOptions = {
     aspectRatio: options.aspectRatio,
     resolution: options.resolution,
-    durationSeconds: options.durationSeconds as 4 | 6 | 8,
+    durationSeconds: options.durationSeconds as VeoClipDuration,
     negativePrompt: options.negativePrompt,
     personGeneration: options.startFrame ? 'allow_adult' : 'allow_all',
     startFrame: options.startFrame,

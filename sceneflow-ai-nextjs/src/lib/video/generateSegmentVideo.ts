@@ -19,7 +19,7 @@ import {
   type VideoGenerationMethod,
   type MethodSelectionResult,
 } from '@/lib/vision/intelligentMethodSelection'
-import { getQualityForMethod } from '@/lib/config/modelConfig'
+import { getQualityForMethod, DEFAULT_VEO_CLIP_DURATION, type VeoClipDuration } from '@/lib/config/modelConfig'
 import { appendFtvTransitionStabilityTokens } from '@/lib/vision/ftvTransitionStability'
 import {
   FTV_MINIMAL_NATIVE_AUDIO_HINT,
@@ -181,20 +181,21 @@ export async function generateSegmentVideoCore(
     method === 'EXT' ||
     (method === 'REF' && referenceImages && referenceImages.length > 0)
 
-  let effectiveDuration: 4 | 6 | 8 = 8
+  let effectiveDuration: VeoClipDuration = DEFAULT_VEO_CLIP_DURATION
   if (method === 'EXT') {
-    effectiveDuration = 8
+    effectiveDuration = DEFAULT_VEO_CLIP_DURATION
   } else {
-    const requiresDuration8 =
+    const requiresStabilityDuration =
       method === 'FTV' ||
       (method === 'REF' && referenceImages && referenceImages.length > 0) ||
       resolution === '1080p'
-    if (requiresDuration8) {
-      effectiveDuration = 8
+    if (requiresStabilityDuration) {
+      effectiveDuration = DEFAULT_VEO_CLIP_DURATION
     } else if (duration) {
       if (duration <= 5) effectiveDuration = 4
       else if (duration <= 7) effectiveDuration = 6
-      else effectiveDuration = 8
+      else if (duration <= 9) effectiveDuration = 8
+      else effectiveDuration = 10
     }
   }
 

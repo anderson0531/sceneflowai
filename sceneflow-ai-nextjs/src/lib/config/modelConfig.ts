@@ -8,8 +8,9 @@
  * 
  * Veo Video Generation:
  * - veo-3.1-lite-generate-001: ~$0.05/sec (Lite, 720p + audio, high-volume)
- * - veo-3.1-fast-generate-001: ~$0.10/sec (Fast, 1080p)
- * - veo-3.1-generate-001: ~$0.40/sec (Premium, 4K capable)
+ * - gemini-omni-flash-preview: ~$0.10/sec (Omni Flash, primary fast/premium tier, up to 10s)
+ * - veo-3.1-fast-generate-001: ~$0.10/sec (Fast, legacy 1080p)
+ * - veo-3.1-generate-001: ~$0.40/sec (Premium, legacy 4K capable)
  * 
  * Imagen Image Generation:
  * - imagen-3.0-fast-generate-001: ~$0.02/image (Fast)
@@ -34,12 +35,26 @@ export const VEO_MODELS = {
   /** Veo 3.1 Lite - ~$0.05/sec, 720p, native audio; best for SFX / high-volume T2V */
   lite: 'veo-3.1-lite-generate-001',
 
-  /** Veo 3.1 Fast - ~$0.10/sec, 1080p, faster generation, supports FTV (lastFrame) */
+  /** Gemini Omni Flash - ~$0.10/sec, primary fast/premium tier, up to 10s clips */
+  omni: 'gemini-omni-flash-preview',
+
+  /** Veo 3.1 Fast - ~$0.10/sec, 1080p, legacy fallback */
   fast: 'veo-3.1-fast-generate-001',
   
-  /** Veo 3.1 Premium - ~$0.40/sec, 4K capable, best quality, supports FTV (lastFrame) */
+  /** Veo 3.1 Premium - ~$0.40/sec, 4K capable, legacy fallback */
   premium: 'veo-3.1-generate-001',
 } as const;
+
+/** Supported clip durations for standard Veo/Omni segment generation */
+export type VeoClipDuration = 4 | 6 | 8 | 10;
+
+/** Default segment clip duration (Omni Flash supports up to 10s) */
+export const DEFAULT_VEO_CLIP_DURATION: VeoClipDuration = 10;
+
+/** Returns true when the model id is Gemini Omni Flash (supports 10s FTV/EXT) */
+export function isOmniVideoModel(model: string): boolean {
+  return model.includes('omni')
+}
 
 /** Default tier for Veo SFX (audio extracted from black-frame T2V) */
 export const DEFAULT_VEO_SFX_QUALITY: VeoQualityTier = 'lite';
@@ -60,7 +75,10 @@ export const DEFAULT_FTV_QUALITY: VeoQualityTier =
 export function getVeoModel(quality: VeoQualityTier | ModelQuality = DEFAULT_VEO_QUALITY): string {
   // Map 'standard' to 'premium' for backward compatibility
   const tier = quality === 'standard' ? 'premium' : (quality as VeoQualityTier);
-  return VEO_MODELS[tier] || VEO_MODELS.fast;
+  if (tier === 'lite') return VEO_MODELS.lite;
+  // Fast and premium tiers use Gemini Omni Flash (10s capable)
+  if (tier === 'fast' || tier === 'premium') return VEO_MODELS.omni;
+  return VEO_MODELS.omni;
 }
 
 /**
@@ -87,9 +105,13 @@ export const VEO_COST_PER_SECOND = {
   premium: 0.40,  // ~$0.40/sec (720p/1080p + audio)
 } as const;
 
-/** Estimated cost for 8-second video */
-export function getVeoCostEstimate(quality: VeoQualityTier = DEFAULT_VEO_QUALITY, durationSeconds: number = 8): number {
-  return VEO_COST_PER_SECOND[quality] * durationSeconds;
+/** Estimated cost for a video clip */
+export function getVeoCostEstimate(
+  quality: VeoQualityTier = DEFAULT_VEO_QUALITY,
+  durationSeconds: number = DEFAULT_VEO_CLIP_DURATION
+): number {
+  const tier = quality === 'lite' ? 'lite' : 'fast';
+  return VEO_COST_PER_SECOND[tier] * durationSeconds;
 }
 
 // =============================================================================
