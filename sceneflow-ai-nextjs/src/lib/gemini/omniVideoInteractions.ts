@@ -156,7 +156,6 @@ export async function buildOmniInteractionRequestBody(
     model,
     input,
     generation_config: {
-      response_modalities: ['video'],
       video_config: { task },
     },
     response_format: {

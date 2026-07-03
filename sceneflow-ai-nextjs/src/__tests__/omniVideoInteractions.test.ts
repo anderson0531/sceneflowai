@@ -50,7 +50,6 @@ describe('omniVideoInteractions helpers', () => {
     expect(body.background).toBe(true)
     expect(body.input).toBe('A cinematic sunset over the ocean.')
     expect(body.generation_config).toEqual({
-      response_modalities: ['video'],
       video_config: { task: 'text_to_video' },
     })
     expect(body.response_format).toEqual({
