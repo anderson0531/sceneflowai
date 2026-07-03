@@ -550,16 +550,6 @@ function animaticKeyframeUrl(segment: SceneSegment): string | null {
   return u && String(u).trim() ? String(u) : null
 }
 
-function animaticEndFrameUrl(segment: SceneSegment): string | null {
-  const ext = segment as SceneSegment & { endFrameUrl?: string | null }
-  const u =
-    segment.endFrameUrl ||
-    segment.references?.endFrameUrl ||
-    ext.endFrameUrl ||
-    null
-  return u && String(u).trim() ? String(u) : null
-}
-
 /**
  * Stream type tabs for mixer/streams navigation.
  */
@@ -782,20 +772,8 @@ function ScenePreviewPlayer({
     return Math.max(0, Math.min(1, local / activeSegmentDuration))
   }, [playbackKind, currentTime, segmentStartTime, activeSegmentDuration])
 
-  const animaticIsSecondHalf = useMemo(() => {
-    if (playbackKind !== 'image-sequence') return false
-    const local = currentTime - segmentStartTime
-    const baseDuration = currentSegment.segment ? getSegmentDuration(currentSegment.segment) : 0
-    // Switch frames at the halfway point of the base duration (e.g. 6s mark for 12s audio)
-    return local >= (baseDuration / 2)
-  }, [playbackKind, currentTime, segmentStartTime, currentSegment.segment, getSegmentDuration])
-
   const animaticStartFrameSrc = useMemo(
     () => (currentSegment.segment ? animaticKeyframeUrl(currentSegment.segment) : null),
-    [currentSegment.segment]
-  )
-  const animaticEndFrameSrc = useMemo(
-    () => (currentSegment.segment ? animaticEndFrameUrl(currentSegment.segment) : null),
     [currentSegment.segment]
   )
 
@@ -1310,36 +1288,17 @@ function ScenePreviewPlayer({
         {currentSegment.segment?.activeAssetUrl ? (
           playbackKind === 'image-sequence' ? (
             <div className="relative w-full h-full">
-              {/* Start frame displays for the first half of base duration */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={animaticStartFrameSrc || currentSegment.segment.activeAssetUrl || ''}
                 alt=""
-                className={`absolute inset-0 w-full h-full object-contain select-none transition-opacity duration-150 ${
-                  !animaticIsSecondHalf ? 'opacity-100' : 'opacity-0'
-                }`}
+                className="absolute inset-0 w-full h-full object-contain select-none opacity-100"
                 draggable={false}
                 style={{
                   transform: `scale(${1 + animaticFrameProgress * 0.02})`,
                   transformOrigin: 'center center',
                 }}
               />
-              {/* End frame displays for the second half + buffer */}
-              {animaticEndFrameSrc && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={animaticEndFrameSrc}
-                  alt=""
-                  className={`absolute inset-0 w-full h-full object-contain select-none transition-opacity duration-150 ${
-                    animaticIsSecondHalf ? 'opacity-100' : 'opacity-0'
-                  }`}
-                  draggable={false}
-                  style={{
-                    transform: `scale(${1 + animaticFrameProgress * 0.02})`,
-                    transformOrigin: 'center center',
-                  }}
-                />
-              )}
             </div>
           ) : (
           <video

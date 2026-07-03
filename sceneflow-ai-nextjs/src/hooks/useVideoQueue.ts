@@ -391,16 +391,12 @@ export function useVideoQueue(
           }
 
           let startUrl = config.startFrameUrl?.trim() ? config.startFrameUrl : undefined
-          let endUrl = config.endFrameUrl?.trim() ? config.endFrameUrl : undefined
-          if (batchMethod === 'FTV' && (!startUrl || !endUrl)) {
+          if (batchMethod === 'FTV') {
             batchMethod = startUrl ? 'I2V' : 'T2V'
-            console.warn(
-              `[VideoQueue] FTV batch item missing frames; coerced to ${batchMethod} for segment ${item.segmentId}`
-            )
           }
 
           const genType: 'T2V' | 'I2V' =
-            batchMethod === 'FTV' || batchMethod === 'I2V' || batchMethod === 'EXT'
+            batchMethod === 'I2V' || batchMethod === 'EXT'
               ? 'I2V'
               : 'T2V'
 
@@ -415,7 +411,6 @@ export function useVideoQueue(
             genType,
             {
               startFrameUrl: startUrl,
-              endFrameUrl: endUrl,
               sourceVideoUrl: previousSegmentVeoRef || config.sourceVideoUrl || undefined,
               prompt: config.prompt,
               negativePrompt: config.negativePrompt || undefined,

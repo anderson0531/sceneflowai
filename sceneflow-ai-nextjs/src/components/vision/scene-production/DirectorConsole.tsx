@@ -612,7 +612,7 @@ function DirectorConsoleRoot({
     })
   }, [processQueue])
   
-  // Handle batch render — Express queues **only** fully anchored segments (start + end) for F2V
+  // Handle batch render — Express queues segments with a start frame for I2V
   const handleExpress = useCallback(() => {
     const expressIds = queue
       .filter((item) => {
@@ -627,24 +627,19 @@ function DirectorConsoleRoot({
           segment.startFrameUrl?.trim() ||
           segment.references?.startFrameUrl?.trim() ||
           (segment.sequenceIndex === 0 && sceneImageUrl?.trim() ? sceneImageUrl.trim() : '')
-        const resolvedEnd =
-          (cfg.endFrameUrl && String(cfg.endFrameUrl).trim()) ||
-          segment.endFrameUrl?.trim() ||
-          segment.references?.endFrameUrl?.trim() ||
-          ''
 
-        const fullyAnchored = !!resolvedStart && !!resolvedEnd
+        const hasStartFrame = !!resolvedStart
         const isCompleteOrRendering =
           item.status === 'complete' || item.status === 'rendering'
 
-        return fullyAnchored && !isCompleteOrRendering
+        return hasStartFrame && !isCompleteOrRendering
       })
       .map((item) => item.segmentId)
 
     if (expressIds.length === 0) {
       import('sonner').then(({ toast }) => {
         toast.info(
-          'No eligible segments for Express — need both start and end Beat Frames (fully anchored for F2V), unlocked, and not already rendering.'
+          'No eligible segments for Express — need a start Beat Frame, unlocked, and not already rendering.'
         )
       })
       return
@@ -1126,7 +1121,7 @@ function DirectorConsoleRoot({
             onClick={handleExpress}
             disabled={queue.length === 0}
             className="border-indigo-500/50 text-indigo-300 hover:bg-indigo-500/10 hover:border-indigo-400 shadow-md hover:shadow-lg transition-all"
-            title="Express F2V: batch-generate video for unlocked segments that have both start and end Beat Frames"
+            title="Express: batch-generate video for unlocked segments that have a start Beat Frame"
           >
             <Wand2 className="w-4 h-4 mr-2" />
             Express

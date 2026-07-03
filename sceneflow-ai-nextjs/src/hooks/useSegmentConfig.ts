@@ -5,14 +5,11 @@
  * before the user opens the DirectorDialog.
  * 
  * Detection Rules:
- * - startFrame + endFrame exist → Default Mode: FRAME_TO_VIDEO (Interpolation)
- * - only startFrame exists → Default Mode: IMAGE_TO_VIDEO
+ * - startFrame exists → Default Mode: IMAGE_TO_VIDEO (I2V)
  * - no frames (rare) → Default Mode: TEXT_TO_VIDEO
  * 
  * Prompt Strategy:
- * - Interpolation Mode (FTV): Motion instructions derived from script action
- *   WITH intelligent filtering to avoid end-frame conflicts
- * - Generation Mode (I2V/T2V): Visual descriptions from Frame step's visual prompt
+ * - I2V/T2V: Visual descriptions from Frame step's visual prompt
  * 
  * @see /SCENEFLOW_AI_DESIGN_DOCUMENT.md for architecture decisions
  */
@@ -190,14 +187,7 @@ function generateMotionPrompt(segment: SceneSegment, sceneImageUrl?: string): st
     segment.references?.startFrameUrl ||
     masterSceneStart
   )
-  const hasEndFrame = !!(segment.endFrameUrl || segment.references?.endFrameUrl)
-  
-  // For FTV mode: use the intelligent prompt generator with end-frame anchoring
-  if (hasStartFrame && hasEndFrame) {
-    return generateFTVMotionPrompt(segment)
-  }
-  
-  // For non-FTV modes (I2V, T2V): use original logic without modification
+  // I2V/T2V: use visual prompt logic (start frame only; no end-frame interpolation)
   // Priority 1: User instruction override
   if (segment.userInstruction && segment.userInstruction.trim()) {
     return segment.userInstruction.trim()
@@ -306,16 +296,14 @@ function generateVisualPrompt(segment: SceneSegment, sceneImageUrl?: string): st
 /**
  * Determines the recommended generation method based on available assets
  * 
- * FRAME-FIRST WORKFLOW: Prioritizes frame-based methods (FTV > I2V > T2V)
- * because character consistency is best achieved by "baking" character
- * references into keyframes via Imagen 3, then using those frames to
- * anchor Veo video generation.
+ * FRAME-FIRST WORKFLOW: Prioritizes I2V when a start frame exists because
+ * character consistency is best achieved by "baking" references into
+ * keyframes, then animating from the start frame only.
  * 
  * Priority:
- * 1. FTV (Frame-to-Video): Both start+end frames = best character lock
- * 2. I2V (Image-to-Video): Start frame only = good character anchor
- * 3. EXT (Extend): Extend existing video
- * 4. T2V (Text-to-Video): No frames = risk of character drift
+ * 1. I2V (Image-to-Video): Start frame anchors character appearance
+ * 2. EXT (Extend): Extend existing video
+ * 3. T2V (Text-to-Video): No frames = risk of character drift
  */
 function detectRecommendedMethod(
   segment: SceneSegment,
@@ -353,16 +341,9 @@ function detectRecommendedMethod(
     segment.references?.startFrameUrl ||
     masterSceneFrame
   )
-  const hasEndFrame = !!(segment.endFrameUrl || segment.references?.endFrameUrl)
   const hasExistingVideo = !!(segment.activeAssetUrl && segment.assetType === 'video')
   
-  // Frame-to-Video: Best quality with both keyframes (RECOMMENDED)
-  // Character faces baked into frames provide visual anchors
-  if (hasStartFrame && hasEndFrame) {
-    return 'FTV'
-  }
-  
-  // Image-to-Video: Good quality with just start frame
+  // Image-to-Video: start frame anchors generation (end frames ignored on active path)
   if (hasStartFrame) {
     return 'I2V'
   }
@@ -573,10 +554,9 @@ export function useSegmentConfig(
     const motionPrompt = generateMotionPrompt(segment, sceneImageUrl)
     const visualPrompt = generateVisualPrompt(segment, sceneImageUrl)
     
-    // Choose primary prompt based on method
-    const prompt = method === 'FTV' ? motionPrompt : visualPrompt
+    const prompt = visualPrompt
 
-    const { startFrameUrl: resolvedStart, endFrameUrl: resolvedEnd } =
+    const { startFrameUrl: resolvedStart } =
       resolveSegmentFrameUrls(segment, sceneImageUrl)
 
     const guidePrompt =
@@ -585,10 +565,6 @@ export function useSegmentConfig(
             segment,
             guideContext.scene,
             guideContext.characters ?? [],
-            {
-              omitDialogue:
-                method === 'FTV' && segmentHasBatchGuideDialogue(segment),
-            }
           )
         : ''
     
@@ -614,7 +590,7 @@ export function useSegmentConfig(
       guidePrompt: guidePrompt || undefined,
       // Asset URLs for generation
       startFrameUrl: resolvedStart,
-      endFrameUrl: resolvedEnd,
+      endFrameUrl: null,
       sourceVideoUrl:
         extVeoRef ??
         (segment.activeAssetUrl && segment.assetType === 'video'
@@ -633,8 +609,8 @@ export function useSegmentConfig(
     
     // FRAME-FIRST: Enhanced method reasons with guidance
     const methodReasons: Record<VideoGenerationMethod, string> = {
-      FTV: 'Best quality: Both keyframes anchor character appearance',
-      I2V: 'Good quality: Start frame anchors character appearance',
+      FTV: 'Legacy interpolation mode (not used on production path)',
+      I2V: 'Start frame anchors character appearance',
       T2V: '⚠️ Lower quality: Generate frames first for better consistency',
       EXT: 'Extends existing video seamlessly',
       REF: 'Character references guide generation',
@@ -696,9 +672,9 @@ export function useSegmentConfigs(
       
       const motionPrompt = generateMotionPrompt(segment, sceneImageUrl)
       const visualPrompt = generateVisualPrompt(segment, sceneImageUrl)
-      const prompt = method === 'FTV' ? motionPrompt : visualPrompt
+      const prompt = visualPrompt
 
-      const { startFrameUrl: resolvedStart, endFrameUrl: resolvedEnd } =
+      const { startFrameUrl: resolvedStart } =
         resolveSegmentFrameUrls(segment, sceneImageUrl)
 
       const guidePrompt =
@@ -707,10 +683,6 @@ export function useSegmentConfigs(
               segment,
               guideContext.scene,
               guideContext.characters ?? [],
-              {
-                omitDialogue:
-                  method === 'FTV' && segmentHasBatchGuideDialogue(segment),
-              }
             )
           : ''
       
@@ -735,7 +707,7 @@ export function useSegmentConfigs(
         confidence,
         guidePrompt: guidePrompt || undefined,
         startFrameUrl: resolvedStart,
-        endFrameUrl: resolvedEnd,
+        endFrameUrl: null,
         sourceVideoUrl:
           extVeoRef ??
           (segment.activeAssetUrl && segment.assetType === 'video'
@@ -752,7 +724,7 @@ export function useSegmentConfigs(
       }
       
       const methodReasons: Record<VideoGenerationMethod, string> = {
-        FTV: 'Both start and end frames available',
+        FTV: 'Legacy interpolation mode',
         I2V: 'Start frame available',
         T2V: 'No frames available',
         EXT: 'Existing video can be extended',

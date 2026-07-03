@@ -6,8 +6,8 @@
  * before batch rendering.
  * 
  * Features:
- * - 4-tab interface: Text-to-Video | Image-to-Video | Frame-to-Video | Extend
- * - Visual preview area showing Start → End frames for FTV mode
+ * - 3-tab interface: Text-to-Video | Image-to-Video | Extend | Reference
+ * - Visual preview area showing start frame for I2V mode
  * - Prompt editing with contextual tips
  * - Advanced settings accordion (aspect ratio, resolution, negative prompts)
  * 
@@ -45,12 +45,10 @@ import { Badge } from '@/components/ui/badge'
 import { Slider } from '@/components/ui/slider'
 import { Input } from '@/components/ui/Input'
 import { 
-  ArrowRight, 
   CheckCircle, 
   Info,
   Wand2,
   ImageIcon,
-  Film,
   FastForward,
   Type,
   AlertCircle,
@@ -82,11 +80,6 @@ import { ImageEditModal } from '@/components/vision/ImageEditModal'
 import { AnalyzeKeyframeRiskPanel } from './AnalyzeKeyframeRiskPanel'
 import { moderatePrompt, type ModerationResult } from '@/utils/promptModerator'
 import { shouldInitializeDirectorDialogState } from '@/lib/vision/directorDialogState'
-import {
-  narrowPromptForFtvFrameLock,
-  neutralizeFtvGuidePrompt,
-  extractSpeaksQuotedPerformCue,
-} from '@/lib/vision/ftvPromptNormalize'
 import type { BlueprintAspectRatio } from '@/lib/treatment/blueprintFoundation'
 import { toVideoAspectRatio } from '@/lib/vision/artStyle'
 
@@ -130,10 +123,15 @@ const modeToMethod: Record<string, VideoGenerationMethod> = {
 const methodToMode: Record<VideoGenerationMethod, string> = {
   'T2V': 'TEXT_TO_VIDEO',
   'I2V': 'IMAGE_TO_VIDEO',
-  'FTV': 'FRAME_TO_VIDEO',
+  'FTV': 'IMAGE_TO_VIDEO',
   'EXT': 'EXTEND',
   'REF': 'REFERENCE_IMAGES',
   'CIN': 'CINEMATIC',
+}
+
+/** Map generation method to UI tab (FTV coerced to I2V on active production path). */
+function uiModeForMethod(method: VideoGenerationMethod): string {
+  return methodToMode[method] ?? 'TEXT_TO_VIDEO'
 }
 
 export const DirectorDialog: React.FC<DirectorDialogProps> = ({ 
@@ -170,12 +168,9 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const batchGuideSeed = useMemo(
     () =>
       scene && segmentHasBatchGuideDialogue(segment)
-        ? buildDefaultBatchGuidePrompt(segment, scene, guideCharacters, {
-            omitDialogue:
-              autoConfig.mode === 'FTV' && segmentHasBatchGuideDialogue(segment),
-          })
+        ? buildDefaultBatchGuidePrompt(segment, scene, guideCharacters)
         : '',
-    [scene, segment, guideCharacters, autoConfig.mode]
+    [scene, segment, guideCharacters]
   )
   
   // Local state initialized with auto-drafted values
@@ -206,9 +201,6 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const [promptFixApplied, setPromptFixApplied] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
   const [imageTriggered, setImageTriggered] = useState(false)
-  
-  // FTV prompt options
-  const [skipAnchoringPhrase, setSkipAnchoringPhrase] = useState(false)
 
   // Force GuidePromptEditor remount on reset
   const [editorResetKey, setEditorResetKey] = useState(0)
@@ -224,7 +216,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const handleModifyPrompt = useCallback(async () => {
     if (!promptInstruction.trim()) return
     
-    const currentPrompt = mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt
+    const currentPrompt = visualPrompt
     if (!currentPrompt) return
     
     setIsModifyingPrompt(true)
@@ -250,12 +242,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       if (response.ok) {
         const data = await response.json()
         if (data.modifiedPrompt) {
-          if (mode === 'FRAME_TO_VIDEO') {
-            setMotionPrompt(data.modifiedPrompt)
-          } else {
-            setVisualPrompt(data.modifiedPrompt)
-          }
-          setPromptInstruction('') // Clear instruction after successful modification
+          setVisualPrompt(data.modifiedPrompt)
+          setPromptInstruction('')
         }
       } else {
         console.error('[DirectorDialog] Failed to modify prompt')
@@ -274,16 +262,12 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     const previousPrompt = promptHistory[promptHistory.length - 1]
     setPromptHistory(prev => prev.slice(0, -1))
     
-    if (mode === 'FRAME_TO_VIDEO') {
-      setMotionPrompt(previousPrompt)
-    } else {
-      setVisualPrompt(previousPrompt)
-    }
-  }, [mode, promptHistory])
+    setVisualPrompt(previousPrompt)
+  }, [promptHistory])
   
   // Optimize prompt for the currently selected mode
   const handleOptimizeForMode = useCallback(async () => {
-    const currentPrompt = mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt
+    const currentPrompt = visualPrompt
     if (!currentPrompt?.trim()) return
     
     setIsOptimizingForMode(true)
@@ -319,11 +303,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       if (response.ok) {
         const data = await response.json()
         if (data.modifiedPrompt) {
-          if (mode === 'FRAME_TO_VIDEO') {
-            setMotionPrompt(data.modifiedPrompt)
-          } else {
-            setVisualPrompt(data.modifiedPrompt)
-          }
+          setVisualPrompt(data.modifiedPrompt)
         }
       } else {
         console.error('[DirectorDialog] Failed to optimize prompt for mode')
@@ -341,16 +321,12 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   
   // Calculate dynamic Visual Fidelity based on currently selected mode
   const visualFidelity = useMemo(() => {
-    const hasStartFrame = !!(segment.startFrameUrl || segment.references?.startFrameUrl)
-    const hasEndFrame = !!(segment.endFrameUrl || segment.references?.endFrameUrl)
-    const activePrompt = mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt
+    const activePrompt = visualPrompt
     
-    // Base scores by method (reflects retake risk)
     const baseScores: Record<string, number> = {
-      'FRAME_TO_VIDEO': 92,   // Best: both frames constrain output
-      'IMAGE_TO_VIDEO': 75,   // Good: start frame anchors generation
-      'EXTEND': 68,           // Moderate: uses existing video context
-      'TEXT_TO_VIDEO': 35,    // Lowest: no visual reference
+      'IMAGE_TO_VIDEO': 75,
+      'EXTEND': 68,
+      'TEXT_TO_VIDEO': 35,
     }
     
     let score = baseScores[mode] || 50
@@ -366,32 +342,21 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     if (promptLower.includes('slowly') || promptLower.includes('smoothly')) score += 1
     if (promptLower.includes('cinematic') || promptLower.includes('photorealistic')) score += 1
     
-    // Frame availability bonuses - suggest better method
-    if (mode === 'IMAGE_TO_VIDEO' && hasEndFrame) score += 5
-    if (mode === 'TEXT_TO_VIDEO' && hasStartFrame) score += 10
+    if (mode === 'TEXT_TO_VIDEO' && (segment.startFrameUrl || segment.references?.startFrameUrl)) score += 10
     
     return Math.min(100, Math.max(10, Math.round(score)))
-  }, [mode, segment, motionPrompt, visualPrompt])
+  }, [mode, segment, visualPrompt])
   
-  // Sync prompt based on mode
   useEffect(() => {
-    const method = modeToMethod[mode]
-    if (method === 'FTV') {
-      setPrompt(motionPrompt)
-    } else {
-      setPrompt(visualPrompt)
-    }
-  }, [mode, motionPrompt, visualPrompt])
-  
-  // Note: FTV no longer auto-switches to premium for cost optimization.
-  // The UI shows "Premium recommended for FTV" hint to let users choose.
+    setPrompt(visualPrompt)
+  }, [visualPrompt])
   
   // Auto-optimize prompt when mode changes
   const handleModeChange = useCallback((newMode: string) => {
     setMode(newMode)
     // Trigger auto-optimization for the new mode (after state updates)
     setTimeout(() => {
-      const currentPrompt = newMode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt
+      const currentPrompt = visualPrompt
       if (currentPrompt?.trim()) {
         handleOptimizeForModeWithValue(newMode, currentPrompt)
       }
@@ -435,11 +400,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       if (response.ok) {
         const data = await response.json()
         if (data.modifiedPrompt) {
-          if (targetMode === 'FRAME_TO_VIDEO') {
-            setMotionPrompt(data.modifiedPrompt)
-          } else {
-            setVisualPrompt(data.modifiedPrompt)
-          }
+          setVisualPrompt(data.modifiedPrompt)
         }
       } else {
         console.error('[DirectorDialog] Failed to optimize prompt for mode')
@@ -454,7 +415,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   }, [segment])
   
   const initializeDialogState = useCallback(() => {
-    setMode(methodToMode[autoConfig.mode])
+    setMode(uiModeForMethod(autoConfig.mode))
     setPrompt(autoConfig.prompt)
     setMotionPrompt(autoConfig.motionPrompt)
     setVisualPrompt(autoConfig.visualPrompt)
@@ -504,8 +465,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
         errMsg.includes('usage guidelines')
 
       if (isContentPolicy) {
-        const currentPrompt = mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt
-        const isImageBasedMethod = mode === 'FRAME_TO_VIDEO' || mode === 'IMAGE_TO_VIDEO' || mode === 'REFERENCE_IMAGES'
+        const currentPrompt = visualPrompt
+        const isImageBasedMethod = mode === 'IMAGE_TO_VIDEO' || mode === 'REFERENCE_IMAGES'
         const fromServer = segment.lastContentPolicyFailure
         const hintLines = fromServer?.hints?.length
           ? fromServer.hints
@@ -582,13 +543,12 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   
   const handleSave = () => {
     const method = modeToMethod[mode]
-    // Use directly resolved frame URLs (not from autoConfig which may be stale)
+    const effectiveMethod = method === 'FTV' ? 'I2V' : method
     const resolvedStartFrameUrl = segment.startFrameUrl || segment.references?.startFrameUrl || null
-    const resolvedEndFrameUrl = segment.endFrameUrl || segment.references?.endFrameUrl || null
     
     const savedConfig: VideoGenerationConfig = {
-      mode: method,
-      prompt: method === 'FTV' ? motionPrompt : visualPrompt,
+      mode: effectiveMethod,
+      prompt: visualPrompt,
       motionPrompt,
       visualPrompt,
       negativePrompt,
@@ -597,15 +557,11 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       resolution,
       duration,
       startFrameUrl: resolvedStartFrameUrl,
-      endFrameUrl: resolvedEndFrameUrl,
+      endFrameUrl: null,
       sourceVideoUrl: autoConfig.sourceVideoUrl,
       approvalStatus: 'auto-ready',
       confidence: autoConfig.confidence,
-      // FTV options
-      skipAnchoringPhrase: method === 'FTV' ? skipAnchoringPhrase : undefined,
-      // Quality tier
       qualityTier: qualityTier,
-      // Reference images (for REF mode)
       referenceImages: method === 'REF' ? referenceImages : undefined,
     }
     onSaveConfig(savedConfig)
@@ -628,11 +584,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
 
   // Apply content policy fix — updates the active prompt
   const handleApplyContentFix = useCallback((fixedPrompt: string) => {
-    if (mode === 'FRAME_TO_VIDEO') {
-      setMotionPrompt(fixedPrompt)
-    } else {
-      setVisualPrompt(fixedPrompt)
-    }
+    setVisualPrompt(fixedPrompt)
     const g = segment.lastContentPolicyFailure?.optionalSanitized?.guidePrompt
     if (g) {
       setGuidePrompt(g)
@@ -642,7 +594,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     setImageTriggered(false)
     setPromptFixApplied(true)
     setTimeout(() => setPromptFixApplied(false), 5000)
-  }, [mode, segment.lastContentPolicyFailure])
+  }, [segment.lastContentPolicyFailure])
 
   // Retry as T2V — fallback when reference image triggers content policy
   const handleRetryAsT2V = useCallback(() => {
@@ -652,7 +604,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     setImageTriggered(false)
     setPromptFixApplied(false)
     
-    const currentPrompt = mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt
+    const currentPrompt = visualPrompt
     if (currentPrompt) {
       setVisualPrompt(currentPrompt)
     }
@@ -686,69 +638,26 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   // Handle generate - saves config AND triggers generation
   const handleGenerate = () => {
     const method = modeToMethod[mode]
-    const finalPrompt = method === 'FTV' ? motionPrompt : visualPrompt
-
-    // Use directly resolved frame URLs (not from autoConfig which may be stale)
+    const effectiveMethod = method === 'FTV' ? 'I2V' : method
     const resolvedStartFrameUrl = segment.startFrameUrl || segment.references?.startFrameUrl || null
-    const resolvedEndFrameUrl = segment.endFrameUrl || segment.references?.endFrameUrl || null
-    
-    // When using FTV, Veo 3.1 often triggers false-positive content policy flags if the prompt contains
-    // rich cinematography, camera movements, or lighting directions that conflict with the hard visual constraints
-    // of the start/end frames. We optimize the prompt by stripping out those directions if the user hasn't explicitly
-    // checked "skip motion transition guidance", meaning we are auto-generating the FTV prompt.
-    // AND if scene direction was manually injected by the GuidePromptEditor
-    let optimizedFtvPrompt = motionPrompt
-    let optimizedGuidePrompt = guidePrompt
-    if (method === 'FTV' && !skipAnchoringPhrase && motionPrompt) {
-      const extracted = extractSpeaksQuotedPerformCue(motionPrompt)
-      let narrowed = extracted ?? narrowPromptForFtvFrameLock(motionPrompt)
-      if (!narrowed.trim()) narrowed = motionPrompt.trim()
-      optimizedFtvPrompt = narrowed
-
-      if (guidePrompt?.trim()) {
-        let g = guidePrompt
-        if (g.includes('---')) {
-          g = g
-            .split('---')
-            .map((part) => (part.toLowerCase().includes('scene direction') ? '' : part))
-            .filter(Boolean)
-            .join('---')
-        }
-        optimizedGuidePrompt = neutralizeFtvGuidePrompt(g)
-      }
-    }
     
     const savedConfig: VideoGenerationConfig = {
-      mode: method,
-      prompt: method === 'FTV' ? optimizedFtvPrompt : finalPrompt,
-      motionPrompt: optimizedFtvPrompt,
-      visualPrompt: visualPrompt,
+      mode: effectiveMethod,
+      prompt: visualPrompt,
+      motionPrompt,
+      visualPrompt,
       negativePrompt,
-      guidePrompt: method === 'FTV' ? (optimizedGuidePrompt || undefined) : (guidePrompt || undefined),
+      guidePrompt: guidePrompt || undefined,
       aspectRatio,
       resolution,
       duration,
       startFrameUrl: resolvedStartFrameUrl,
-      endFrameUrl: resolvedEndFrameUrl,
+      endFrameUrl: null,
       sourceVideoUrl: autoConfig.sourceVideoUrl,
       approvalStatus: 'auto-ready',
       confidence: autoConfig.confidence,
-      // FTV options
-      skipAnchoringPhrase: method === 'FTV' ? skipAnchoringPhrase : undefined,
-      // Quality tier - FTV can use premium for better interpolation
       qualityTier: qualityTier,
-      // Reference images (for REF mode)
       referenceImages: method === 'REF' ? referenceImages : undefined,
-    }
-    
-    // Debug: Log FTV config to verify frame URLs are passed
-    if (method === 'FTV') {
-      console.log('[DirectorDialog] FTV generation config:', {
-        method,
-        startFrameUrl: resolvedStartFrameUrl,
-        endFrameUrl: resolvedEndFrameUrl,
-        prompt: savedConfig.prompt?.substring(0, 50) + '...'
-      })
     }
     
     onSaveConfig(savedConfig)
@@ -759,26 +668,18 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   }
   
   const startFrameUrl = segment.startFrameUrl || segment.references?.startFrameUrl
-  const endFrameUrl = segment.endFrameUrl || segment.references?.endFrameUrl
   const hasExistingVideo = segment.activeAssetUrl && segment.assetType === 'video'
   
-  // FRAME-FIRST WORKFLOW: Determine which tabs should be enabled
-  // I2V requires a start frame, FTV requires both frames
-  // These prerequisites ensure character consistency via frame anchoring
+  // FRAME-FIRST WORKFLOW: I2V requires a start frame
   const tabStates = {
-    TEXT_TO_VIDEO: true, // Always available (but not recommended if frames exist)
+    TEXT_TO_VIDEO: true,
     IMAGE_TO_VIDEO: !!startFrameUrl || !!sceneImageUrl,
-    FRAME_TO_VIDEO: !!startFrameUrl && !!endFrameUrl,
     EXTEND: !!hasExistingVideo,
-    REFERENCE_IMAGES: true, // Always available - uses character reference images
+    REFERENCE_IMAGES: true,
   }
   
-  // Messaging for disabled tabs
   const tabDisabledReasons: Record<string, string> = {
     IMAGE_TO_VIDEO: !tabStates.IMAGE_TO_VIDEO ? 'Generate a Start Frame first (Frame step)' : '',
-    FRAME_TO_VIDEO: !tabStates.FRAME_TO_VIDEO 
-      ? (!startFrameUrl ? 'Generate Start Frame first' : 'Generate End Frame to enable interpolation')
-      : '',
     EXTEND: !tabStates.EXTEND ? 'Render a video first' : '',
   }
 
@@ -834,17 +735,6 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
           
           {/* Mode Selection Tabs */}
           <div className="col-span-12">
-            {/* Frame-First Recommendation Banner */}
-            {tabStates.FRAME_TO_VIDEO && mode !== 'FRAME_TO_VIDEO' && (
-              <div className="mb-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 text-sm">
-                <Film className="w-4 h-4 flex-shrink-0" />
-                <span>
-                  <strong>Recommended:</strong> Frame-to-Video mode uses both keyframes for best character consistency.
-                </span>
-              </div>
-            )}
-            
-            {/* Missing Frame Warning */}
             {!tabStates.IMAGE_TO_VIDEO && (
               <div className="mb-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -856,7 +746,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
             )}
             
             <Tabs value={mode} onValueChange={handleModeChange}>
-              <TabsList className="bg-slate-800/80 w-full grid grid-cols-3 md:grid-cols-5 gap-1 p-1">
+              <TabsList className="bg-slate-800/80 w-full grid grid-cols-2 md:grid-cols-4 gap-1 p-1">
                 <TabsTrigger 
                   value="TEXT_TO_VIDEO" 
                   className="gap-2 data-[state=active]:bg-indigo-600"
@@ -875,16 +765,6 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                   <ImageIcon className="w-4 h-4" />
                   <span className="hidden sm:inline">Image-to-Video</span>
                   <span className="sm:hidden">I2V</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="FRAME_TO_VIDEO" 
-                  className="gap-2 data-[state=active]:bg-purple-600 disabled:opacity-50"
-                  disabled={!tabStates.FRAME_TO_VIDEO}
-                  title={tabDisabledReasons.FRAME_TO_VIDEO}
-                >
-                  <Film className="w-4 h-4" />
-                  <span className="hidden sm:inline">Frame-to-Video</span>
-                  <span className="sm:hidden">FTV</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="REFERENCE_IMAGES" 
@@ -910,58 +790,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
 
           {/* Preview Area */}
           <div className="col-span-7 bg-black rounded-lg flex items-center justify-center relative overflow-hidden">
-            {/* Visual Logic based on Mode */}
-            {mode === 'FRAME_TO_VIDEO' && startFrameUrl && endFrameUrl ? (
-              <div className="flex items-center gap-4 p-4 w-full">
-                <div className="flex-1 relative space-y-1.5">
-                  <div className="aspect-video w-full bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
-                    <img 
-                      src={startFrameUrl} 
-                      alt="Start Frame"
-                      className="w-full h-full object-cover" 
-                    />
-                  </div>
-                  <Badge className="absolute top-2 left-2 bg-slate-800">Start</Badge>
-                  {onSaveEditedKeyframe && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="w-full text-[10px] h-7 border-purple-500/40 text-purple-200 hover:bg-purple-950/40"
-                      onClick={() => setKeyframeEdit({ frameType: 'start', url: startFrameUrl })}
-                    >
-                      <Wand2 className="w-3 h-3 mr-1" />
-                      AI edit start
-                    </Button>
-                  )}
-                </div>
-                <div className="flex items-center justify-center flex-shrink-0">
-                  <ArrowRight className="w-6 h-6 text-indigo-400" />
-                </div>
-                <div className="flex-1 relative space-y-1.5">
-                  <div className="aspect-video w-full bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
-                    <img 
-                      src={endFrameUrl} 
-                      alt="End Frame"
-                      className="w-full h-full object-cover" 
-                    />
-                  </div>
-                  <Badge className="absolute top-2 left-2 bg-slate-800">End</Badge>
-                  {onSaveEditedKeyframe && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="w-full text-[10px] h-7 border-purple-500/40 text-purple-200 hover:bg-purple-950/40"
-                      onClick={() => setKeyframeEdit({ frameType: 'end', url: endFrameUrl })}
-                    >
-                      <Wand2 className="w-3 h-3 mr-1" />
-                      AI edit end
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ) : mode === 'REFERENCE_IMAGES' ? (
+            {mode === 'REFERENCE_IMAGES' ? (
               /* Reference Images Preview - Shows uploaded character/style references */
               <div className="p-4 w-full">
                 <div className="flex flex-col items-center justify-center min-h-[200px]">
@@ -1068,14 +897,13 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 <Badge 
                   variant="outline" 
                   className={`
-                    ${mode === 'FRAME_TO_VIDEO' ? 'bg-purple-500/20 text-purple-300 border-purple-500/50' : ''}
                     ${mode === 'IMAGE_TO_VIDEO' ? 'bg-blue-500/20 text-blue-300 border-blue-500/50' : ''}
                     ${mode === 'TEXT_TO_VIDEO' ? 'bg-green-500/20 text-green-300 border-green-500/50' : ''}
                     ${mode === 'EXTEND' ? 'bg-amber-500/20 text-amber-300 border-amber-500/50' : ''}
                     ${mode === 'REFERENCE_IMAGES' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50' : ''}
                   `}
                 >
-                  {mode === 'FRAME_TO_VIDEO' ? 'Interpolation Mode' : mode === 'REFERENCE_IMAGES' ? 'Reference Mode' : 'Generation Mode'}
+                  {mode === 'REFERENCE_IMAGES' ? 'Reference Mode' : 'Generation Mode'}
                 </Badge>
             </div>
             
@@ -1121,14 +949,10 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 </p>
               )}
               <Textarea 
-                value={mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt}
+                value={visualPrompt}
                 onChange={(e) => {
                   if (readOnlyPrompts) return
-                  if (mode === 'FRAME_TO_VIDEO') {
-                    setMotionPrompt(e.target.value)
-                  } else {
-                    setVisualPrompt(e.target.value)
-                  }
+                  setVisualPrompt(e.target.value)
                 }}
                 readOnly={readOnlyPrompts}
                 className="min-h-[120px] bg-slate-800/80 border-slate-700 text-slate-200 text-sm focus:border-indigo-500/50 transition-colors read-only:opacity-80 read-only:cursor-default"
@@ -1137,7 +961,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
               {isOptimizingForMode && (
                 <div className="flex items-center gap-2 mt-1 text-xs text-indigo-400">
                   <Loader2 className="w-3 h-3 animate-spin" />
-                  <span>Optimizing for {mode === 'FRAME_TO_VIDEO' ? 'Frame-to-Video' : mode === 'IMAGE_TO_VIDEO' ? 'Image-to-Video' : 'Text-to-Video'}...</span>
+                  <span>Optimizing for {mode === 'IMAGE_TO_VIDEO' ? 'Image-to-Video' : 'Text-to-Video'}...</span>
                 </div>
               )}
             </div>
@@ -1168,28 +992,6 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-4 pt-2">
-                    {/* FTV Anchoring Option - Only show for FTV mode */}
-                    {mode === 'FRAME_TO_VIDEO' && (
-                      <div className="flex items-start gap-3 p-3 bg-purple-900/20 border border-purple-500/30 rounded-lg">
-                        <input
-                          type="checkbox"
-                          id="skipAnchoringPhrase"
-                          checked={skipAnchoringPhrase}
-                          onChange={(e) => setSkipAnchoringPhrase(e.target.checked)}
-                          className="mt-1 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500"
-                        />
-                        <div className="flex-1">
-                          <label htmlFor="skipAnchoringPhrase" className="text-sm text-slate-300 cursor-pointer">
-                            Skip motion transition guidance
-                          </label>
-                          <p className="text-xs text-slate-400 mt-1">
-                            By default, we prepend motion instructions like &quot;A smooth, continuous transition...&quot; to FTV prompts. 
-                            Enable this if your prompt already describes the transition to avoid duplicate guidance.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    
                     {/* Aspect Ratio */}
                     <div className="flex flex-col gap-2">
                       <Label className="text-slate-400 text-xs">Aspect Ratio</Label>
@@ -1222,11 +1024,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                       </Select>
                     </div>
                     
-                    {/* Quality Tier - Show cost difference, FTV benefits from premium */}
                     <div className="flex flex-col gap-2">
-                      <Label className="text-slate-400 text-xs">
-                        Quality Tier {mode === 'FRAME_TO_VIDEO' && <span className="text-purple-400">(Premium recommended for FTV)</span>}
-                      </Label>
+                      <Label className="text-slate-400 text-xs">Quality Tier</Label>
                       <Select value={qualityTier} onValueChange={(v) => setQualityTier(v as 'fast' | 'premium')}>
                         <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
                           <SelectValue />
@@ -1236,11 +1035,6 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                           <SelectItem value="premium">Premium (~$6.00/8s) - Better motion reasoning</SelectItem>
                         </SelectContent>
                       </Select>
-                      {mode === 'FRAME_TO_VIDEO' && qualityTier === 'fast' && (
-                        <p className="text-xs text-amber-400/80 mt-1">
-                          ⚠️ FTV interpolation quality is significantly better with Premium tier
-                        </p>
-                      )}
                     </div>
                     
                     {/* Negative Prompt */}
@@ -1295,12 +1089,11 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                         <button onClick={() => { setLocalError(null); setPostFailureModerationResult(null); setImageTriggered(false) }} className={imageTriggered ? 'text-amber-400 hover:text-amber-300' : 'text-red-400 hover:text-red-300'}><X className="w-4 h-4" /></button>
                       </div>
                     </div>
-                    {(startFrameUrl || endFrameUrl) && (
+                    {startFrameUrl && (
                       <AnalyzeKeyframeRiskPanel
                         startFrameUrl={startFrameUrl}
-                        endFrameUrl={endFrameUrl}
-                        promptExcerpt={mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt}
-                        emphasizeImageHypothesis={imageTriggered || mode === 'FRAME_TO_VIDEO'}
+                        promptExcerpt={visualPrompt}
+                        emphasizeImageHypothesis={imageTriggered}
                       />
                     )}
                     {imageTriggered ? (
@@ -1363,17 +1156,13 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
         <DirectionDialog
           isOpen={isDirectionDialogOpen}
           onClose={() => setIsDirectionDialogOpen(false)}
-          currentPrompt={mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt}
+          currentPrompt={visualPrompt}
           onPromptChange={(newPrompt) => {
-            if (mode === 'FRAME_TO_VIDEO') {
-              setMotionPrompt(newPrompt)
-            } else {
-              setVisualPrompt(newPrompt)
-            }
+            setVisualPrompt(newPrompt)
           }}
           mode={mode}
           hasStartFrame={!!(segment.startFrameUrl || segment.references?.startFrameUrl)}
-          hasEndFrame={!!(segment.endFrameUrl || segment.references?.endFrameUrl)}
+          hasEndFrame={false}
         />
       </DialogContent>
     </Dialog>

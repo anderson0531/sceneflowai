@@ -2990,22 +2990,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
         const autoExtContinuation =
           segment.veoTimelineContinuation && previousSegmentVeoRef && !options?.generationMethod
-        const effectiveGenerationMethod =
+        const rawGenerationMethod =
           options?.generationMethod ||
           (autoExtContinuation ? 'EXT' : undefined) ||
           mode
+        const effectiveGenerationMethod =
+          rawGenerationMethod === 'FTV' ? 'I2V' : rawGenerationMethod
 
         const resolvedStartFrameUrl =
           options?.startFrameUrl?.trim() ||
           segment.startFrameUrl ||
           segment.references?.startFrameUrl ||
           (segment.sequenceIndex === 0 && sceneImageUrlForApi ? sceneImageUrlForApi : undefined)
-
-        const resolvedEndFrameUrl =
-          options?.endFrameUrl?.trim() ||
-          segment.endFrameUrl ||
-          segment.references?.endFrameUrl ||
-          undefined
 
         // Use prompt from options (from prompt builder) or fall back to segment prompt
         const prompt = options?.prompt || segment.userEditedPrompt || segment.generatedPrompt || ''
@@ -3033,7 +3029,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             genType: mode,
             startFrameUrl: resolvedStartFrameUrl,
             sourceVideoUrl: options?.sourceVideoUrl,  // For EXT mode: Veo extends video directly
-            endFrameUrl: resolvedEndFrameUrl,
             referenceImages: options?.referenceImages,
             generationMethod: effectiveGenerationMethod,
             sceneId,
@@ -3546,9 +3541,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         genType: mode,
                         startFrameUrl: options?.startFrameUrl,
                         sourceVideoUrl: options?.sourceVideoUrl,
-                        endFrameUrl: options?.endFrameUrl,
                         referenceImages: options?.referenceImages,
-                        generationMethod: options?.generationMethod,
+                        generationMethod:
+                          options?.generationMethod === 'FTV'
+                            ? 'I2V'
+                            : options?.generationMethod,
                         sceneId,
                         projectId: project?.id,
                         negativePrompt: options?.negativePrompt,
