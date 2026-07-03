@@ -61,6 +61,10 @@ import {
   X,
   Plus,
   ImageOff,
+  Library,
+  MapPin,
+  Box,
+  Shirt,
 } from 'lucide-react'
 import type { 
   SceneSegment, 
@@ -83,6 +87,16 @@ import { shouldInitializeDirectorDialogState } from '@/lib/vision/directorDialog
 import type { BlueprintAspectRatio } from '@/lib/treatment/blueprintFoundation'
 import { toVideoAspectRatio } from '@/lib/vision/artStyle'
 
+type DirectorReferenceType = 'scene' | 'character' | 'object' | 'location' | 'wardrobe'
+
+interface DirectorLibraryReference {
+  id: string
+  type: DirectorReferenceType
+  name: string
+  imageUrl: string
+  description?: string
+}
+
 interface DirectorDialogProps {
   segment: SceneSegment
   sceneId: string
@@ -103,10 +117,25 @@ interface DirectorDialogProps {
   guideCharacters?: GuideCharacterDemographic[]
   /** When true, video prompt is read-only (beat-first: edit script or Pre-Vis instead) */
   readOnlyPrompts?: boolean
-  /** Object/prop references for keyframe AI edit modal */
-  objectReferences?: Array<{ id: string; name: string; imageUrl: string; description?: string }>
-  /** Character references for optional identity preservation during keyframe edit */
-  characterReferences?: Array<{ name: string; referenceImage?: string; description?: string }>
+  /** Object/prop references for keyframe AI edit modal and REF library */
+  objectReferences?: Array<{ id: string; name: string; imageUrl?: string; description?: string }>
+  /** Character references for optional identity preservation during keyframe edit and REF library */
+  characterReferences?: Array<{
+    name: string
+    referenceImage?: string
+    description?: string
+    wardrobes?: Array<{ id: string; name: string; headshotUrl?: string; fullBodyUrl?: string }>
+  }>
+  /** Scene references for REF library */
+  sceneReferences?: Array<{ id: string; name: string; imageUrl?: string; description?: string }>
+  /** Location references for REF library */
+  locationReferences?: Array<{
+    id: string
+    location: string
+    locationDisplay: string
+    imageUrl: string
+    description?: string
+  }>
   /** Locked project aspect ratio from Blueprint */
   projectAspectRatio?: BlueprintAspectRatio
 }
@@ -148,6 +177,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   readOnlyPrompts = false,
   objectReferences = [],
   characterReferences = [],
+  sceneReferences = [],
+  locationReferences = [],
   projectAspectRatio = '16:9',
 }) => {
   const segmentGuideContext = useMemo<SegmentGuideContext | undefined>(() => {
@@ -192,6 +223,85 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   
   // Reference images state (for REF mode - up to 3 character/style references)
   const [referenceImages, setReferenceImages] = useState<string[]>([])
+
+  const combinedReferenceLibrary = useMemo((): DirectorLibraryReference[] => {
+    const library: DirectorLibraryReference[] = []
+
+    sceneReferences.forEach(ref => {
+      if (ref.imageUrl) {
+        library.push({
+          id: ref.id,
+          type: 'scene',
+          name: ref.name,
+          imageUrl: ref.imageUrl,
+          description: ref.description,
+        })
+      }
+    })
+
+    characterReferences.forEach(char => {
+      if (char.referenceImage) {
+        library.push({
+          id: `char-${char.name}`,
+          type: 'character',
+          name: char.name,
+          imageUrl: char.referenceImage,
+          description: char.description,
+        })
+      }
+      char.wardrobes?.forEach(wardrobe => {
+        const wardrobeWithPreview = wardrobe as {
+          fullBodyUrl?: string
+          headshotUrl?: string
+          previewImageUrl?: string
+        }
+        const imageUrl =
+          wardrobeWithPreview.fullBodyUrl ??
+          wardrobeWithPreview.headshotUrl ??
+          wardrobeWithPreview.previewImageUrl
+        if (!imageUrl) return
+        library.push({
+          id: `wardrobe-${char.name}-${wardrobe.id}`,
+          type: 'wardrobe',
+          name: `${char.name} — ${wardrobe.name}`,
+          imageUrl,
+        })
+      })
+    })
+
+    objectReferences.forEach(ref => {
+      if (ref.imageUrl) {
+        library.push({
+          id: ref.id,
+          type: 'object',
+          name: ref.name,
+          imageUrl: ref.imageUrl,
+          description: ref.description,
+        })
+      }
+    })
+
+    locationReferences.forEach(ref => {
+      if (ref.imageUrl) {
+        library.push({
+          id: ref.id,
+          type: 'location',
+          name: ref.locationDisplay || ref.location,
+          imageUrl: ref.imageUrl,
+          description: ref.description,
+        })
+      }
+    })
+
+    return library
+  }, [sceneReferences, characterReferences, objectReferences, locationReferences])
+
+  const handleSelectLibraryReference = useCallback((ref: DirectorLibraryReference) => {
+    setReferenceImages(prev => {
+      if (prev.length >= 3 || prev.includes(ref.imageUrl)) return prev
+      return [...prev, ref.imageUrl]
+    })
+  }, [])
   
   // Direction Dialog state
   const [isDirectionDialogOpen, setIsDirectionDialogOpen] = useState(false)
@@ -792,7 +902,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
           <div className="col-span-7 bg-black rounded-lg flex items-center justify-center relative overflow-hidden">
             {mode === 'REFERENCE_IMAGES' ? (
               /* Reference Images Preview - Shows uploaded character/style references */
-              <div className="p-4 w-full">
+              <div className="p-4 w-full max-h-full overflow-y-auto">
                 <div className="flex flex-col items-center justify-center min-h-[200px]">
                   <div className="flex items-center gap-3 mb-4">
                     {referenceImages.length > 0 ? (
@@ -844,9 +954,165 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                       : `${referenceImages.length}/3 reference images added`
                     }
                   </p>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-xs text-slate-500 mt-1 mb-4">
                     Use character headshots or style references from your project
                   </p>
+
+                  {/* Reference Library Picker */}
+                  <div className="w-full border-t border-slate-700 pt-4 mt-2">
+                    <h3 className="text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
+                      <Library className="w-4 h-4" />
+                      Select from Reference Library
+                    </h3>
+                    {combinedReferenceLibrary.length === 0 ? (
+                      <div className="text-center py-6 text-slate-500">
+                        <Library className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                        <p className="text-xs">No reference images available in your project</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4 max-h-[280px] overflow-y-auto pr-1">
+                        {combinedReferenceLibrary.filter(r => r.type === 'character').length > 0 && (
+                          <div>
+                            <h4 className="text-xs font-semibold text-purple-400 mb-2 flex items-center gap-1">
+                              <Users className="w-3.5 h-3.5" /> Characters
+                            </h4>
+                            <div className="grid grid-cols-4 gap-2">
+                              {combinedReferenceLibrary.filter(r => r.type === 'character').map(ref => (
+                                <button
+                                  key={ref.id}
+                                  type="button"
+                                  disabled={referenceImages.length >= 3 || referenceImages.includes(ref.imageUrl)}
+                                  onClick={() => handleSelectLibraryReference(ref)}
+                                  className="group relative aspect-square rounded-lg border border-slate-700 overflow-hidden hover:border-purple-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  <img src={ref.imageUrl} alt={ref.name} className="w-full h-full object-cover" />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  <div className="absolute bottom-0 left-0 right-0 p-1.5 text-left">
+                                    <div className="text-[10px] text-white font-medium truncate">{ref.name}</div>
+                                  </div>
+                                  <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Plus className="w-5 h-5 text-white bg-purple-500 rounded-full p-1" />
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {combinedReferenceLibrary.filter(r => r.type === 'wardrobe').length > 0 && (
+                          <div>
+                            <h4 className="text-xs font-semibold text-rose-400 mb-2 flex items-center gap-1">
+                              <Shirt className="w-3.5 h-3.5" /> Wardrobe
+                            </h4>
+                            <div className="grid grid-cols-4 gap-2">
+                              {combinedReferenceLibrary.filter(r => r.type === 'wardrobe').map(ref => (
+                                <button
+                                  key={ref.id}
+                                  type="button"
+                                  disabled={referenceImages.length >= 3 || referenceImages.includes(ref.imageUrl)}
+                                  onClick={() => handleSelectLibraryReference(ref)}
+                                  className="group relative aspect-square rounded-lg border border-slate-700 overflow-hidden hover:border-rose-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  <img src={ref.imageUrl} alt={ref.name} className="w-full h-full object-cover" />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  <div className="absolute bottom-0 left-0 right-0 p-1.5 text-left">
+                                    <div className="text-[10px] text-white font-medium truncate">{ref.name}</div>
+                                  </div>
+                                  <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Plus className="w-5 h-5 text-white bg-rose-500 rounded-full p-1" />
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {combinedReferenceLibrary.filter(r => r.type === 'scene').length > 0 && (
+                          <div>
+                            <h4 className="text-xs font-semibold text-blue-400 mb-2 flex items-center gap-1">
+                              <ImageIcon className="w-3.5 h-3.5" /> Scene References
+                            </h4>
+                            <div className="grid grid-cols-3 gap-2">
+                              {combinedReferenceLibrary.filter(r => r.type === 'scene').map(ref => (
+                                <button
+                                  key={ref.id}
+                                  type="button"
+                                  disabled={referenceImages.length >= 3 || referenceImages.includes(ref.imageUrl)}
+                                  onClick={() => handleSelectLibraryReference(ref)}
+                                  className="group relative aspect-video rounded-lg border border-slate-700 overflow-hidden hover:border-blue-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  <img src={ref.imageUrl} alt={ref.name} className="w-full h-full object-cover" />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  <div className="absolute bottom-0 left-0 right-0 p-1.5 text-left">
+                                    <div className="text-[10px] text-white font-medium truncate">{ref.name}</div>
+                                  </div>
+                                  <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Plus className="w-5 h-5 text-white bg-blue-500 rounded-full p-1" />
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {combinedReferenceLibrary.filter(r => r.type === 'location').length > 0 && (
+                          <div>
+                            <h4 className="text-xs font-semibold text-emerald-400 mb-2 flex items-center gap-1">
+                              <MapPin className="w-3.5 h-3.5" /> Locations
+                            </h4>
+                            <div className="grid grid-cols-3 gap-2">
+                              {combinedReferenceLibrary.filter(r => r.type === 'location').map(ref => (
+                                <button
+                                  key={ref.id}
+                                  type="button"
+                                  disabled={referenceImages.length >= 3 || referenceImages.includes(ref.imageUrl)}
+                                  onClick={() => handleSelectLibraryReference(ref)}
+                                  className="group relative aspect-video rounded-lg border border-slate-700 overflow-hidden hover:border-emerald-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  <img src={ref.imageUrl} alt={ref.name} className="w-full h-full object-cover" />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  <div className="absolute bottom-0 left-0 right-0 p-1.5 text-left">
+                                    <div className="text-[10px] text-white font-medium truncate">{ref.name}</div>
+                                  </div>
+                                  <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Plus className="w-5 h-5 text-white bg-emerald-500 rounded-full p-1" />
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {combinedReferenceLibrary.filter(r => r.type === 'object').length > 0 && (
+                          <div>
+                            <h4 className="text-xs font-semibold text-amber-400 mb-2 flex items-center gap-1">
+                              <Box className="w-3.5 h-3.5" /> Object References
+                            </h4>
+                            <div className="grid grid-cols-4 gap-2">
+                              {combinedReferenceLibrary.filter(r => r.type === 'object').map(ref => (
+                                <button
+                                  key={ref.id}
+                                  type="button"
+                                  disabled={referenceImages.length >= 3 || referenceImages.includes(ref.imageUrl)}
+                                  onClick={() => handleSelectLibraryReference(ref)}
+                                  className="group relative aspect-square rounded-lg border border-slate-700 overflow-hidden hover:border-amber-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  <img src={ref.imageUrl} alt={ref.name} className="w-full h-full object-cover" />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  <div className="absolute bottom-0 left-0 right-0 p-1.5 text-left">
+                                    <div className="text-[10px] text-white font-medium truncate">{ref.name}</div>
+                                  </div>
+                                  <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Plus className="w-5 h-5 text-white bg-amber-500 rounded-full p-1" />
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ) : mode === 'EXTEND' && hasExistingVideo ? (
@@ -970,7 +1236,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 <div className="flex flex-col gap-2">
                   <Label className="text-slate-300">Duration</Label>
                   <div className="flex gap-2">
-                    {[4, 6, 8].map((d) => (
+                    {[4, 6, 8, 10].map((d) => (
                       <Button
                         key={d}
                         variant={duration === d ? 'default' : 'outline'}
@@ -1177,7 +1443,10 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
         imageType="scene"
         aspectRatio="16:9"
         title={`Edit ${keyframeEdit.frameType === 'start' ? 'Start' : 'End'} Frame`}
-        objectReferences={objectReferences.filter((ref) => ref.imageUrl)}
+        objectReferences={objectReferences.filter(
+          (ref): ref is { id: string; name: string; imageUrl: string; description?: string } =>
+            !!ref.imageUrl
+        )}
         subjectReference={(() => {
           const firstLine = segment.dialogueLines?.find((d) => d.covered !== false)
           const charName = firstLine?.character

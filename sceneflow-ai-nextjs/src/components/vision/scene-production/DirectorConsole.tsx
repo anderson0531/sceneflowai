@@ -192,6 +192,25 @@ interface DirectorConsoleProps {
   onModerationReport?: (report: import('@/lib/moderation/moderationPipeline').ModerationReport) => void
   /** Character demographics for auto guide / Director dialog (falls back to scene.characters) */
   guideCharacters?: GuideCharacterDemographic[]
+  /** Character references for DirectorDialog REF library */
+  characters?: Array<{
+    name: string
+    referenceImage?: string
+    description?: string
+    wardrobes?: Array<{ id: string; name: string; headshotUrl?: string; fullBodyUrl?: string; previewImageUrl?: string }>
+  }>
+  /** Scene references for DirectorDialog REF library */
+  sceneReferences?: Array<{ id: string; name: string; imageUrl?: string; description?: string }>
+  /** Object/prop references for DirectorDialog REF library */
+  objectReferences?: Array<{ id: string; name: string; imageUrl?: string; description?: string }>
+  /** Location references for DirectorDialog REF library */
+  locationReferences?: Array<{
+    id: string
+    location: string
+    locationDisplay: string
+    imageUrl: string
+    description?: string
+  }>
   /** Locked project aspect ratio from Blueprint */
   projectAspectRatio?: BlueprintAspectRatio
 }
@@ -250,6 +269,10 @@ function DirectorConsoleRoot({
   onSaveEditedKeyframe,
   onModerationReport,
   guideCharacters,
+  characters = [],
+  sceneReferences = [],
+  objectReferences = [],
+  locationReferences = [],
   projectAspectRatio = '16:9',
   children,
 }: DirectorConsoleProps & {
@@ -1513,6 +1536,10 @@ function DirectorConsoleRoot({
           onSaveEditedKeyframe={onSaveEditedKeyframe}
           guideCharacters={effectiveGuideCharacters}
           readOnlyPrompts={beatFirstReadOnlyPrompts}
+          characterReferences={characters}
+          sceneReferences={sceneReferences}
+          objectReferences={objectReferences}
+          locationReferences={locationReferences}
           projectAspectRatio={projectAspectRatio}
         />
       )}

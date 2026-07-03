@@ -8,7 +8,6 @@ import {
   Volume2,
   Compass,
   Frame,
-  Clapperboard,
   Sparkles,
   CheckCircle2,
   Lightbulb,
@@ -102,17 +101,6 @@ function getNextStep(state: WorkflowState): NextStepAction | null {
       targetTab: 'callAction',
       actionId: 'generate-beat-frames',
       accentColor: 'purple',
-    }
-  }
-
-  if (!state.hasRender) {
-    return {
-      label: 'Render Scene',
-      description: 'Open the Scene Production Mixer to combine segments, add audio, and render your final scene.',
-      icon: <Clapperboard className="w-4 h-4" />,
-      targetTab: 'callAction',
-      actionId: 'render-scene',
-      accentColor: 'emerald',
     }
   }
 

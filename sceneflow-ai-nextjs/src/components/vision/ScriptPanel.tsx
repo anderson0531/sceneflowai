@@ -4838,6 +4838,12 @@ function SceneCard({
         ? (scene.heading as any)?.text
         : ''
   const formattedHeading = formatSceneHeading(headingText) || headingText || 'Untitled'
+  const sceneDescriptionText =
+    (scene.sceneDirection as { sceneDescription?: string } | undefined)?.sceneDescription ||
+    scene.visualDescription ||
+    scene.action ||
+    scene.summary ||
+    ''
 
   return (
     <div
@@ -5091,106 +5097,16 @@ function SceneCard({
           </div>
         </div>
 
-        {/* Production Section Navigation - Segmented Tab Control */}
-        {!isOutline && (
-          <div className="w-full py-2 mb-3">
-            {/* Segmented Control Container */}
-            <div className="inline-flex w-full bg-gray-800/60 rounded-xl p-1.5 border border-gray-700/50">
-              {workflowTabs.map((tab) => {
-                const isActive = activeWorkflowTab === tab.key
-                const status = getStepStatus(tab.key)
-                const tooltipText = tab.key === 'dialogueAction'
-                  ? 'Review script, generate narration, dialogue, music & SFX audio'
-                  : 'Build storyboard keyframes, generate video beats & render final scene'
-                
-                return (
-                  <TooltipProvider key={tab.key} delayDuration={400}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setActiveWorkflowTab(tab.key)
-                            if (!isWorkflowOpen && onWorkflowOpenChange) {
-                              onWorkflowOpenChange(true)
-                            }
-                          }}
-                          className={`
-                            flex-1 flex items-center justify-center gap-3 px-6 py-3 rounded-lg
-                            transition-all duration-200 ease-out relative
-                            ${isActive 
-                              ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25' 
-                              : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-                            }
-                          `}
-                        >
-                          {/* Icon - always visible */}
-                          {React.cloneElement(tab.icon as React.ReactElement, { 
-                            className: `w-5 h-5 ${isActive ? 'text-white' : ''}` 
-                          })}
-                          
-                          {/* Large Section Title */}
-                          <span className={`
-                            text-xl font-bold tracking-wide
-                            ${isActive ? 'text-white' : ''}
-                          `}>
-                            {tab.label}
-                          </span>
-
-                          {/* Completion indicator dot */}
-                          {status === 'complete' && (
-                            <span className="absolute top-1.5 right-2 w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" />
-                          )}
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700 max-w-xs">
-                        <p className="text-xs">{tooltipText}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Next Step CTA Banner — contextual workflow guidance */}
-        {!isOutline && isWorkflowOpen && (() => {
-          const wfState: WorkflowState = buildWorkflowState(
-            scene,
-            sceneProductionData,
-            { activeTab: activeWorkflowTab as WorkflowState['activeTab'], language: selectedLanguage }
-          )
-          return (
-            <WorkflowNextStepBanner
-              workflowState={wfState}
-              className="mt-2 mb-1"
-              onAction={(actionId, targetTab) => {
-                if (targetTab && targetTab !== activeWorkflowTab) {
-                  setActiveWorkflowTab(targetTab as WorkflowStep)
-                }
-                if (!isWorkflowOpen && onWorkflowOpenChange) {
-                  onWorkflowOpenChange(true)
-                }
-              }}
-              onNextScene={() => {
-                if (onNavigateScene && totalScenes && sceneIdx < totalScenes - 1) {
-                  onNavigateScene(sceneIdx + 1)
-                }
-              }}
-            />
-          )
-        })()}
-
-        {/* Line 2: Scene Title with Mark Done and Help controls */}
+        {/* Scene Title, Score, and Description */}
         <div 
-          className="mt-2 flex items-center justify-between cursor-pointer hover:bg-white/5 -mx-2 px-2 py-1 rounded-lg transition-colors"
+          className="mt-2 flex items-start justify-between cursor-pointer hover:bg-white/5 -mx-2 px-2 py-1 rounded-lg transition-colors"
           onClick={toggleOpen}
         >
-          <div className="flex items-center gap-2">
-            <p className="text-xl font-semibold text-white leading-tight">
-              SCENE {sceneNumber}: {formattedHeading}
-            </p>
+          <div className="flex flex-col gap-1 min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-xl font-semibold text-white leading-tight">
+                SCENE {sceneNumber}: {formattedHeading}
+              </p>
             
             {/* Audience Resonance Analysis Badge - Integrated from ScriptReviewModal */}
             {!isOutline && (
@@ -5334,11 +5250,17 @@ function SceneCard({
                 )}
               </div>
             )}
+            </div>
+            {sceneDescriptionText && (
+              <p className="text-sm text-slate-400 leading-relaxed pr-4">
+                {sceneDescriptionText}
+              </p>
+            )}
           </div>
           
           {/* Mark Done and Help controls */}
           {!isOutline && activeStep && (
-            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                 {/* Play Audio Button - Only visible in Script tab */}
                 {activeStep === 'dialogueAction' && onPlayScene && (
                   <button
@@ -5499,7 +5421,7 @@ function SceneCard({
                     </ul>
                   </div>
                 )}
-                
+
                 {/* Action Buttons */}
                 <div className="flex items-center gap-3 mt-4 pt-4 border-t border-gray-700/50">
                   {onEditSceneWithRecommendations && (scene.audienceAnalysis.recommendations?.length || 0) > 0 && (
@@ -5561,6 +5483,98 @@ function SceneCard({
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Production Section Navigation - Segmented Tab Control */}
+        {!isOutline && (
+          <div className="w-full py-2 mb-3">
+            {/* Segmented Control Container */}
+            <div className="inline-flex w-full bg-gray-800/60 rounded-xl p-1.5 border border-gray-700/50">
+              {workflowTabs.map((tab) => {
+                const isActive = activeWorkflowTab === tab.key
+                const status = getStepStatus(tab.key)
+                const tooltipText = tab.key === 'dialogueAction'
+                  ? 'Review script, generate narration, dialogue, music & SFX audio'
+                  : 'Build storyboard keyframes, generate video beats & render final scene'
+                
+                return (
+                  <TooltipProvider key={tab.key} delayDuration={400}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setActiveWorkflowTab(tab.key)
+                            if (!isWorkflowOpen && onWorkflowOpenChange) {
+                              onWorkflowOpenChange(true)
+                            }
+                          }}
+                          className={`
+                            flex-1 flex items-center justify-center gap-3 px-6 py-3 rounded-lg
+                            transition-all duration-200 ease-out relative
+                            ${isActive 
+                              ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25' 
+                              : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                            }
+                          `}
+                        >
+                          {/* Icon - always visible */}
+                          {React.cloneElement(tab.icon as React.ReactElement, { 
+                            className: `w-5 h-5 ${isActive ? 'text-white' : ''}` 
+                          })}
+                          
+                          {/* Large Section Title */}
+                          <span className={`
+                            text-xl font-bold tracking-wide
+                            ${isActive ? 'text-white' : ''}
+                          `}>
+                            {tab.label}
+                          </span>
+
+                          {/* Completion indicator dot */}
+                          {status === 'complete' && (
+                            <span className="absolute top-1.5 right-2 w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" />
+                          )}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700 max-w-xs">
+                        <p className="text-xs">{tooltipText}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Next Step CTA Banner — contextual workflow guidance */}
+        {!isOutline && isWorkflowOpen && (() => {
+          const wfState: WorkflowState = buildWorkflowState(
+            scene,
+            sceneProductionData,
+            { activeTab: activeWorkflowTab as WorkflowState['activeTab'], language: selectedLanguage }
+          )
+          return (
+            <WorkflowNextStepBanner
+              workflowState={wfState}
+              className="mt-2 mb-1"
+              onAction={(actionId, targetTab) => {
+                if (targetTab && targetTab !== activeWorkflowTab) {
+                  setActiveWorkflowTab(targetTab as WorkflowStep)
+                }
+                if (!isWorkflowOpen && onWorkflowOpenChange) {
+                  onWorkflowOpenChange(true)
+                }
+              }}
+              onNextScene={() => {
+                if (onNavigateScene && totalScenes && sceneIdx < totalScenes - 1) {
+                  onNavigateScene(sceneIdx + 1)
+                }
+              }}
+            />
+          )
+        })()}
+
       </div>
 
       {/* Collapsible Content */}
@@ -5736,7 +5750,7 @@ function SceneCard({
                                 className="px-3 py-1.5 text-xs font-medium rounded-md flex items-center gap-1.5 transition-all shadow-sm bg-blue-600 hover:bg-blue-500 text-white"
                               >
                                 <Edit className="w-3 h-3" />
-                                Edit Script
+                                Edit
                               </button>
                             </TooltipTrigger>
                             <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Edit and revise scene script</TooltipContent>
@@ -5894,7 +5908,7 @@ function SceneCard({
                             ) : (
                               <Sparkles className="w-3 h-3" />
                             )}
-                            {hasDirection ? 'Update' : 'Generate'}
+                            {hasDirection ? 'Enhance' : 'Generate'}
                           </button>
                         </div>
                         <div className="space-y-3">
@@ -7195,6 +7209,28 @@ function SceneCard({
                             gender: (c as { gender?: string }).gender,
                             ethnicity: (c as { ethnicity?: string }).ethnicity,
                           }))}
+                          characters={(characters || []).map((c) => ({
+                            name: c.name,
+                            referenceImage: (c as { referenceImage?: string }).referenceImage,
+                            description: c.description,
+                            wardrobes: (c as {
+                              wardrobes?: Array<{
+                                id: string
+                                name: string
+                                headshotUrl?: string
+                                fullBodyUrl?: string
+                                previewImageUrl?: string
+                              }>
+                            }).wardrobes?.map(w => ({
+                              id: w.id,
+                              name: w.name,
+                              headshotUrl: w.headshotUrl ?? w.previewImageUrl,
+                              fullBodyUrl: w.fullBodyUrl ?? w.previewImageUrl,
+                            })),
+                          }))}
+                          sceneReferences={sceneReferences}
+                          objectReferences={objectReferences}
+                          locationReferences={locationReferences}
                           onGenerate={onSegmentGenerate || (async () => {})}
                           onSegmentUpload={onSegmentUpload ? (segmentId, file) => onSegmentUpload(workflowSceneId, segmentId, file) : undefined}
                           onLockSegment={onLockSegment ? (segmentId, locked) => onLockSegment(workflowSceneId, segmentId, locked) : undefined}
