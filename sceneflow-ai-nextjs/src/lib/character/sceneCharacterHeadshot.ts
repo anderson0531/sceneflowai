@@ -408,8 +408,11 @@ export async function generateAndUploadFullBodyWardrobe(
     return { imageUrl: cached, prompt: 'Reused full-body wardrobe reference', generated: false }
   }
 
-  const { imageBase64, prompt } = await generateFullBodyWardrobeImage(input)
-  const imageUrl = await uploadImageToBlob(imageBase64, uploadPath)
+  const { imageUrl, prompt } = await (async () => {
+    const { imageBase64, prompt } = await generateFullBodyWardrobeImage(input)
+    const imageUrl = await uploadImageToBlob(imageBase64, uploadPath)
+    return { imageUrl, prompt }
+  })()
   return { imageUrl, prompt, generated: true }
 }
 
@@ -442,8 +445,11 @@ export async function generateAndUploadSceneCharacterHeadshot(
     return { imageUrl: cached, prompt: 'Reused wardrobe headshot reference', generated: false }
   }
 
-  const { imageBase64, prompt } = await generateSceneCharacterHeadshotImage(input)
-  const imageUrl = await uploadImageToBlob(imageBase64, uploadPath)
+  const { imageUrl, prompt } = await (async () => {
+    const { imageBase64, prompt } = await generateSceneCharacterHeadshotImage(input)
+    const imageUrl = await uploadImageToBlob(imageBase64, uploadPath)
+    return { imageUrl, prompt }
+  })()
   return { imageUrl, prompt, generated: true }
 }
 

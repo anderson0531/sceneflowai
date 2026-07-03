@@ -154,10 +154,6 @@ export async function uploadBase64ImageToGCS(
   base64Data: string,
   options: Omit<UploadOptions, 'contentType'>
 ): Promise<UploadResult> {
-  // Remove data URI prefix if present
-  const base64WithoutPrefix = base64Data.replace(/^data:image\/\w+;base64,/, '')
-  const buffer = Buffer.from(base64WithoutPrefix, 'base64')
-  
   // Detect image type from data URI or default to PNG
   let contentType = 'image/png'
   if (base64Data.startsWith('data:image/jpeg')) {
@@ -167,7 +163,10 @@ export async function uploadBase64ImageToGCS(
   } else if (base64Data.startsWith('data:image/gif')) {
     contentType = 'image/gif'
   }
-  
+
+  const base64WithoutPrefix = base64Data.replace(/^data:image\/\w+;base64,/, '')
+  const buffer = Buffer.from(base64WithoutPrefix, 'base64')
+
   return uploadToGCS(buffer, { ...options, contentType })
 }
 

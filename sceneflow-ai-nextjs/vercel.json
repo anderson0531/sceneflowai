@@ -38,13 +38,16 @@
       "maxDuration": 120
     },
     "src/app/api/character/generate-scene-headshot/route.ts": {
-      "maxDuration": 180
+      "maxDuration": 180,
+      "memory": 3009
     },
     "src/app/api/character/generate-image/route.ts": {
-      "maxDuration": 180
+      "maxDuration": 180,
+      "memory": 3009
     },
     "src/app/api/character/enhance-reference/route.ts": {
-      "maxDuration": 180
+      "maxDuration": 180,
+      "memory": 3009
     },
     "src/app/api/character/upload-reference/route.ts": {
       "maxDuration": 30
