@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { Copy, Check, Sparkles, Info, Loader2, Video, Image as ImageIcon, Clock, ArrowRight, Film, Link as LinkIcon, Upload, Camera, Wand2, Library, Users, Box, Clapperboard, X, Plus, MessageSquare, AlertCircle, RotateCcw, Eye, Type, Scissors, MapPin, Coffee, CreditCard, ShieldAlert, RefreshCw } from 'lucide-react'
+import { Copy, Check, Sparkles, Info, Loader2, Video, Image as ImageIcon, Clock, ArrowRight, Film, Link as LinkIcon, Upload, Camera, Wand2, Library, Users, Box, Clapperboard, X, Plus, MessageSquare, AlertCircle, RotateCcw, Eye, Type, Scissors, MapPin, Coffee, CreditCard, ShieldAlert, RefreshCw, Shirt } from 'lucide-react'
 import { GuidePromptEditor } from './GuidePromptEditor'
 import { visionSceneToGuideAudioData } from '@/lib/scene/visionSceneAudio'
 import { artStylePresets } from '@/constants/artStylePresets'
@@ -36,7 +36,7 @@ import {
 export type VideoGenerationMethod = 'T2V' | 'I2V' | 'FTV' | 'EXT' | 'REF' | 'CIN'
 
 // Reference selection types
-export type ReferenceType = 'scene' | 'character' | 'object'
+export type ReferenceType = 'scene' | 'character' | 'object' | 'location' | 'wardrobe'
 
 export interface SelectedReference {
   id: string
@@ -98,6 +98,13 @@ interface SegmentPromptBuilderProps {
     description?: string
     referenceImage?: string
     appearanceDescription?: string
+    wardrobes?: Array<{
+      id: string
+      name: string
+      description?: string
+      headshotUrl?: string
+      fullBodyUrl?: string
+    }>
   }>
   sceneImageUrl?: string
   previousSegmentLastFrame?: string | null
@@ -372,9 +379,37 @@ export function SegmentPromptBuilder({
         })
       }
     })
+
+    // Add character wardrobe images
+    availableCharacters.forEach(char => {
+      char.wardrobes?.forEach(wardrobe => {
+        const imageUrl = wardrobe.fullBodyUrl ?? wardrobe.headshotUrl
+        if (!imageUrl) return
+        library.push({
+          id: `wardrobe-${char.name}-${wardrobe.id}`,
+          type: 'wardrobe',
+          name: `${char.name} — ${wardrobe.name}`,
+          imageUrl,
+          description: wardrobe.description,
+        })
+      })
+    })
+
+    // Add location references
+    locationReferences.forEach(ref => {
+      if (ref.imageUrl) {
+        library.push({
+          id: ref.id,
+          type: 'location',
+          name: ref.locationDisplay || ref.location,
+          imageUrl: ref.imageUrl,
+          description: ref.description,
+        })
+      }
+    })
     
     return library
-  }, [sceneReferences, objectReferences, availableCharacters])
+  }, [sceneReferences, objectReferences, availableCharacters, locationReferences])
 
   // Handle reference selection from library
   const handleSelectReference = (ref: typeof combinedReferenceLibrary[0]) => {
@@ -945,7 +980,7 @@ export function SegmentPromptBuilder({
         if (selectedReferences.length > 0) {
           promptData.referenceImages = selectedReferences.map(ref => ({
             url: ref.imageUrl,
-            type: ref.type === 'character' ? 'character' : 'style',
+            type: ref.type === 'character' || ref.type === 'wardrobe' ? 'character' : 'style',
             name: ref.name,
             promptConnection: ref.promptConnection,
           }))
@@ -1536,9 +1571,17 @@ export function SegmentPromptBuilder({
                             </button>
                             <div className={cn(
                               "absolute bottom-0 left-0 right-0 text-[8px] text-center py-0.5 rounded-b",
-                              ref.type === 'character' ? 'bg-purple-500/80' : ref.type === 'scene' ? 'bg-blue-500/80' : 'bg-amber-500/80'
+                              ref.type === 'character' ? 'bg-purple-500/80'
+                                : ref.type === 'wardrobe' ? 'bg-rose-500/80'
+                                : ref.type === 'location' ? 'bg-emerald-500/80'
+                                : ref.type === 'scene' ? 'bg-blue-500/80'
+                                : 'bg-amber-500/80'
                             )}>
-                              {ref.type === 'character' ? <Users className="w-2 h-2 inline mr-0.5" /> : ref.type === 'scene' ? <ImageIcon className="w-2 h-2 inline mr-0.5" /> : <Box className="w-2 h-2 inline mr-0.5" />}
+                              {ref.type === 'character' ? <Users className="w-2 h-2 inline mr-0.5" />
+                                : ref.type === 'wardrobe' ? <Shirt className="w-2 h-2 inline mr-0.5" />
+                                : ref.type === 'location' ? <MapPin className="w-2 h-2 inline mr-0.5" />
+                                : ref.type === 'scene' ? <ImageIcon className="w-2 h-2 inline mr-0.5" />
+                                : <Box className="w-2 h-2 inline mr-0.5" />}
                               {ref.type}
                             </div>
                           </div>
@@ -1638,7 +1681,7 @@ export function SegmentPromptBuilder({
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="auto">Auto-detect from prompt</SelectItem>
-                                  {selectedReferences.filter(r => r.type === 'character').map(ref => (
+                                  {selectedReferences.filter(r => r.type === 'character' || r.type === 'wardrobe').map(ref => (
                                     <SelectItem key={ref.id} value={ref.id}>{ref.name}</SelectItem>
                                   ))}
                                 </SelectContent>
@@ -1723,6 +1766,7 @@ export function SegmentPromptBuilder({
                           <SelectItem value="5">5 seconds</SelectItem>
                           <SelectItem value="6">6 seconds</SelectItem>
                           <SelectItem value="8">8 seconds</SelectItem>
+                          <SelectItem value="10">10 seconds</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -2300,7 +2344,7 @@ export function SegmentPromptBuilder({
               <div className="text-center py-8 text-gray-400">
                 <Library className="w-12 h-12 mx-auto mb-3 opacity-50" />
                 <p className="text-sm">No reference images available</p>
-                <p className="text-xs mt-1">Add scene images, character references, or object references to your project</p>
+                <p className="text-xs mt-1">Add scene images, character references, wardrobe, location, or object references to your project</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -2359,6 +2403,62 @@ export function SegmentPromptBuilder({
                   </div>
                 )}
                 
+                {/* Wardrobe Section */}
+                {combinedReferenceLibrary.filter(r => r.type === 'wardrobe').length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold text-rose-400 mb-2 flex items-center gap-1">
+                      <Shirt className="w-3.5 h-3.5" /> Wardrobe
+                    </h3>
+                    <div className="grid grid-cols-4 gap-2">
+                      {combinedReferenceLibrary.filter(r => r.type === 'wardrobe').map(ref => (
+                        <button
+                          key={ref.id}
+                          onClick={() => handleSelectReference(ref)}
+                          className="group relative aspect-square rounded-lg border border-gray-700 overflow-hidden hover:border-rose-500 transition-all"
+                        >
+                          <img src={ref.imageUrl} alt={ref.name} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <div className="absolute bottom-0 left-0 right-0 p-1.5 text-left">
+                            <div className="text-[10px] text-white font-medium truncate">{ref.name}</div>
+                            {ref.description && <div className="text-[9px] text-gray-300 truncate">{ref.description}</div>}
+                          </div>
+                          <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Plus className="w-5 h-5 text-white bg-rose-500 rounded-full p-1" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Locations Section */}
+                {combinedReferenceLibrary.filter(r => r.type === 'location').length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold text-emerald-400 mb-2 flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5" /> Locations
+                    </h3>
+                    <div className="grid grid-cols-3 gap-2">
+                      {combinedReferenceLibrary.filter(r => r.type === 'location').map(ref => (
+                        <button
+                          key={ref.id}
+                          onClick={() => handleSelectReference(ref)}
+                          className="group relative aspect-video rounded-lg border border-gray-700 overflow-hidden hover:border-emerald-500 transition-all"
+                        >
+                          <img src={ref.imageUrl} alt={ref.name} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <div className="absolute bottom-0 left-0 right-0 p-1.5 text-left">
+                            <div className="text-[10px] text-white font-medium truncate">{ref.name}</div>
+                            {ref.description && <div className="text-[9px] text-gray-300 truncate">{ref.description}</div>}
+                          </div>
+                          <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Plus className="w-5 h-5 text-white bg-emerald-500 rounded-full p-1" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Objects Section */}
                 {combinedReferenceLibrary.filter(r => r.type === 'object').length > 0 && (
                   <div>
