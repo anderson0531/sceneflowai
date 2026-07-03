@@ -13,9 +13,17 @@ export async function GET(req: NextRequest) {
     if (!userIdParam) {
       return NextResponse.json({ error: 'userId required' }, { status: 400 })
     }
-    const userId = await resolveUserId(userIdParam)
-    const notifications = await listNotificationsForUser(userId, unreadOnly)
-    return NextResponse.json({ notifications })
+    
+    try {
+      const userId = await resolveUserId(userIdParam)
+      const notifications = await listNotificationsForUser(userId, unreadOnly)
+      return NextResponse.json({ notifications })
+    } catch (err: any) {
+      if (err?.message?.includes('User not found')) {
+         return NextResponse.json({ notifications: [] })
+      }
+      throw err
+    }
   } catch (err: any) {
     return NextResponse.json({ error: err?.message }, { status: 500 })
   }
@@ -28,21 +36,29 @@ export async function PATCH(req: NextRequest) {
     if (!userIdParam) {
       return NextResponse.json({ error: 'userId required' }, { status: 400 })
     }
-    const userId = await resolveUserId(userIdParam)
 
-    if (markAllRead) {
-      await Notification.update({ read: true }, { where: { user_id: userId, read: false } })
+    try {
+      const userId = await resolveUserId(userIdParam)
+
+      if (markAllRead) {
+        await Notification.update({ read: true }, { where: { user_id: userId, read: false } })
+        return NextResponse.json({ success: true })
+      }
+
+      if (Array.isArray(notificationIds) && notificationIds.length > 0) {
+        await Notification.update(
+          { read: true },
+          { where: { user_id: userId, id: notificationIds } }
+        )
+      }
+
       return NextResponse.json({ success: true })
+    } catch (err: any) {
+       if (err?.message?.includes('User not found')) {
+         return NextResponse.json({ success: true })
+       }
+       throw err
     }
-
-    if (Array.isArray(notificationIds) && notificationIds.length > 0) {
-      await Notification.update(
-        { read: true },
-        { where: { user_id: userId, id: notificationIds } }
-      )
-    }
-
-    return NextResponse.json({ success: true })
   } catch (err: any) {
     return NextResponse.json({ error: err?.message }, { status: 500 })
   }
