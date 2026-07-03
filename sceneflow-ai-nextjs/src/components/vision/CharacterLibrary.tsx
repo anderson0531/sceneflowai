@@ -847,6 +847,19 @@ const CharacterCard = ({
   const [aiPromptText, setAiPromptText] = useState("");
   const [isGeneratingWardrobe, setIsGeneratingWardrobe] = useState(false);
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
+  const [expandedWardrobeDescriptions, setExpandedWardrobeDescriptions] = useState<Set<string>>(new Set());
+
+  const toggleWardrobeDescription = (wardrobeId: string) => {
+    setExpandedWardrobeDescriptions(prev => {
+      const next = new Set(prev);
+      if (next.has(wardrobeId)) {
+        next.delete(wardrobeId);
+      } else {
+        next.add(wardrobeId);
+      }
+      return next;
+    });
+  };
   const [genderConfirmOpen, setGenderConfirmOpen] = useState(false);
   const [isAutoSelectingVoice, setIsAutoSelectingVoice] = useState(false);
   const [isPlayingVoice, setIsPlayingVoice] = useState(false);
@@ -2984,8 +2997,9 @@ const CharacterCard = ({
                           </div>
                         )}
                         <div className="p-3">
-                          <div className="flex items-start justify-between gap-2 mb-2">
-                            <div className="flex flex-wrap items-center gap-2 min-w-0">
+                          {/* Title and badges row */}
+                          <div className="mb-2">
+                            <div className="flex flex-wrap items-center gap-2 min-w-0 mb-2">
                               <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
                                 {w.name}
                               </span>
@@ -3000,89 +3014,115 @@ const CharacterCard = ({
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-1 shrink-0">
-                              {editingWardrobeId !== w.id && (
-                                <>
+
+                            {/* Controls and Toggle row */}
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-1">
+                                {editingWardrobeId !== w.id && (
+                                  <>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleGenerateWardrobeImage(w);
+                                      }}
+                                      disabled={
+                                        generatingWardrobeImageId === w.id ||
+                                        !hasCharacterReferenceForVoice
+                                      }
+                                      className="p-1.5 rounded-lg text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10 disabled:opacity-50"
+                                      title={
+                                        !hasCharacterReferenceForVoice
+                                          ? "Generate character identity reference first"
+                                          : (w.fullBodyUrl || w.headshotUrl)
+                                            ? "Regenerate wardrobe reference image"
+                                            : "Generate wardrobe reference image"
+                                      }
+                                    >
+                                      {generatingWardrobeImageId === w.id ? (
+                                        <Loader className="w-3.5 h-3.5 animate-spin" />
+                                      ) : (
+                                        <ImagePlus className="w-3.5 h-3.5" />
+                                      )}
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleEnhanceWardrobe(w.id);
+                                      }}
+                                      disabled={enhancingWardrobeId === w.id}
+                                      className="p-1.5 rounded-lg text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 disabled:opacity-50"
+                                      title="Enhance with AI"
+                                    >
+                                      {enhancingWardrobeId === w.id ? (
+                                        <Loader className="w-3.5 h-3.5 animate-spin" />
+                                      ) : (
+                                        <Wand2 className="w-3.5 h-3.5" />
+                                      )}
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        startEditingWardrobe(w);
+                                      }}
+                                      className="p-1.5 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                                      title="Edit wardrobe"
+                                    >
+                                      <Edit className="w-3.5 h-3.5" />
+                                    </button>
+                                    {wardrobes.length > 1 && (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDeleteWardrobe(w.id);
+                                        }}
+                                        className="p-1.5 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-500/10"
+                                        title="Delete wardrobe"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setExpandedWardrobe(w);
+                                      }}
+                                      className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-500/10"
+                                      title="Expand details"
+                                    >
+                                      <Maximize2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleGenerateWardrobeImage(w);
+                                  toggleWardrobeDescription(w.id);
                                 }}
-                                disabled={
-                                  generatingWardrobeImageId === w.id ||
-                                  !hasCharacterReferenceForVoice
-                                }
-                                className="p-1.5 rounded-lg text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10 disabled:opacity-50"
-                                title={
-                                  !hasCharacterReferenceForVoice
-                                    ? "Generate character identity reference first"
-                                    : (w.fullBodyUrl || w.headshotUrl)
-                                      ? "Regenerate wardrobe reference image"
-                                      : "Generate wardrobe reference image"
-                                }
+                                className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
                               >
-                                {generatingWardrobeImageId === w.id ? (
-                                  <Loader className="w-3.5 h-3.5 animate-spin" />
+                                {expandedWardrobeDescriptions.has(w.id) ? (
+                                  <>
+                                    <span>Hide Details</span>
+                                    <ChevronUp className="w-3 h-3" />
+                                  </>
                                 ) : (
-                                  <ImagePlus className="w-3.5 h-3.5" />
+                                  <>
+                                    <span>Show Details</span>
+                                    <ChevronDown className="w-3 h-3" />
+                                  </>
                                 )}
                               </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEnhanceWardrobe(w.id);
-                                }}
-                                disabled={enhancingWardrobeId === w.id}
-                                className="p-1.5 rounded-lg text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 disabled:opacity-50"
-                                title="Enhance with AI"
-                              >
-                                {enhancingWardrobeId === w.id ? (
-                                  <Loader className="w-3.5 h-3.5 animate-spin" />
-                                ) : (
-                                  <Wand2 className="w-3.5 h-3.5" />
-                                )}
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  startEditingWardrobe(w);
-                                }}
-                                className="p-1.5 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
-                                title="Edit wardrobe"
-                              >
-                                <Edit className="w-3.5 h-3.5" />
-                              </button>
-                              {wardrobes.length > 1 && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteWardrobe(w.id);
-                                  }}
-                                  className="p-1.5 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-500/10"
-                                  title="Delete wardrobe"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              )}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setExpandedWardrobe(w);
-                                }}
-                                className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-500/10"
-                                title="Expand details"
-                              >
-                                <Maximize2 className="w-3.5 h-3.5" />
-                              </button>
-                                </>
-                              )}
                             </div>
                           </div>
+
                           {editingWardrobeId === w.id ? (
                             <div
                               className="space-y-2 mt-1"
                               onClick={(e) => e.stopPropagation()}
                             >
+                              {/* ... editing fields ... */}
                               <div>
                                 <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">
                                   Outfit Description
@@ -3140,21 +3180,23 @@ const CharacterCard = ({
                               </div>
                             </div>
                           ) : (
-                            <>
-                          <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                            {w.description}
-                          </p>
-                          {w.accessories && (
-                            <p className="text-[11px] text-gray-500 dark:text-gray-500 mt-1.5">
-                              Accessories: {w.accessories}
-                            </p>
-                          )}
-                          {w.appearanceNotes && (
-                            <p className="text-[11px] text-purple-600 dark:text-purple-400 mt-1.5">
-                              Look: {w.appearanceNotes}
-                            </p>
-                          )}
-                            </>
+                            expandedWardrobeDescriptions.has(w.id) && (
+                              <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-800 animate-in fade-in slide-in-from-top-1 duration-200">
+                                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                                  {w.description}
+                                </p>
+                                {w.accessories && (
+                                  <p className="text-[11px] text-gray-500 dark:text-gray-500 mt-1.5">
+                                    <span className="font-medium text-gray-700 dark:text-gray-300">Accessories:</span> {w.accessories}
+                                  </p>
+                                )}
+                                {w.appearanceNotes && (
+                                  <p className="text-[11px] text-purple-600 dark:text-purple-400 mt-1.5">
+                                    <span className="font-medium">Look:</span> {w.appearanceNotes}
+                                  </p>
+                                )}
+                              </div>
+                            )
                           )}
                         </div>
                       </div>
