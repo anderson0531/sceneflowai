@@ -37,6 +37,15 @@
     "src/app/api/character/process-upload/route.ts": {
       "maxDuration": 120
     },
+    "src/app/api/character/generate-scene-headshot/route.ts": {
+      "maxDuration": 180
+    },
+    "src/app/api/character/generate-image/route.ts": {
+      "maxDuration": 180
+    },
+    "src/app/api/character/enhance-reference/route.ts": {
+      "maxDuration": 180
+    },
     "src/app/api/character/upload-reference/route.ts": {
       "maxDuration": 30
     },

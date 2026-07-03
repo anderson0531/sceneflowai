@@ -70,9 +70,9 @@ describe('buildSceneCharacterHeadshotPrompt', () => {
 })
 
 describe('scene character headshot generation settings', () => {
-  it('uses 16:9 4K designer tier for highest-quality reference images', () => {
+  it('uses 16:9 2K designer tier for high-quality reference images', () => {
     expect(SCENE_CHARACTER_HEADSHOT_ASPECT_RATIO).toBe('16:9')
-    expect(SCENE_CHARACTER_HEADSHOT_IMAGE_SIZE).toBe('4K')
+    expect(SCENE_CHARACTER_HEADSHOT_IMAGE_SIZE).toBe('2K')
     expect(SCENE_CHARACTER_HEADSHOT_MODEL_TIER).toBe('designer')
   })
 })

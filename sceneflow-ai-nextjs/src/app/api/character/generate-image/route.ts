@@ -18,7 +18,7 @@ import {
 } from '@/lib/character/enhanceIdentityImage'
 
 export const runtime = 'nodejs'
-export const maxDuration = 120
+export const maxDuration = 180
 
 const CREDIT_COST = IMAGE_CREDITS.CHARACTER_IDENTITY_WITH_ENHANCE
 

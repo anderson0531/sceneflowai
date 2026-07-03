@@ -14,11 +14,11 @@ import { buildFullBodyWardrobePrompt } from '@/lib/character/characterReferenceP
 import { stripDialoguePrompt } from '@/lib/vision/framePromptBaseline'
 
 export const FULL_BODY_WARDROBE_ASPECT_RATIO = '3:4' as const
-export const FULL_BODY_WARDROBE_IMAGE_SIZE = '4K' as const
+export const FULL_BODY_WARDROBE_IMAGE_SIZE = '2K' as const
 export const FULL_BODY_WARDROBE_MODEL_TIER = 'designer' as const
 
 export const SCENE_CHARACTER_HEADSHOT_ASPECT_RATIO = '16:9' as const
-export const SCENE_CHARACTER_HEADSHOT_IMAGE_SIZE = '4K' as const
+export const SCENE_CHARACTER_HEADSHOT_IMAGE_SIZE = '2K' as const
 export const SCENE_CHARACTER_HEADSHOT_MODEL_TIER = 'designer' as const
 
 export const SCENE_CHARACTER_HEADSHOT_ANCHOR =

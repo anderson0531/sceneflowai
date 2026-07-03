@@ -15,7 +15,7 @@ import {
 import { buildFullBodyWardrobePrompt } from '@/lib/character/characterReferencePrompts'
 
 export const runtime = 'nodejs'
-export const maxDuration = 120
+export const maxDuration = 180
 
 const CREDIT_COST = IMAGE_CREDITS.SCENE_CHARACTER_HEADSHOT
 
