@@ -19,6 +19,7 @@ import {
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { allocateVeoSplitDurations, snapToVeoDuration } from '@/lib/scene/veoDuration'
+import { MAX_VEO_VIDEO_CLIP_SECONDS } from '@/lib/config/modelConfig'
 import { VEO_ABSOLUTE_CLIP_MAX_SEC, maxVeoDurationForSegment } from '@/lib/scene/dialogueSegmentSplit'
 import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
 import { isLikelyNarration } from '@/lib/script/narration'
@@ -1427,7 +1428,7 @@ export function SegmentBuilder({
                             <input
                               type="range"
                               min={4}
-                              max={8}
+                              max={MAX_VEO_VIDEO_CLIP_SECONDS}
                               step={2}
                               value={segmentDurationTarget ?? segmentDurationHintSeconds}
                               onChange={e => setSegmentDurationTarget(parseInt(e.target.value, 10))}

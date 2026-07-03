@@ -260,7 +260,7 @@ export interface UnifiedGenerationConfig {
   // Video-specific settings (for video-clip mode)
   videoSettings?: {
     method: VideoGenerationMethod
-    duration: 4 | 6 | 8
+    duration: 4 | 6 | 8 | 10
     aspectRatio: '16:9' | '9:16'
     resolution: '720p' | '1080p'
     startFrameUrl?: string | null
@@ -334,7 +334,7 @@ export interface VideoGenerationConfig {
   // Video parameters
   aspectRatio: '16:9' | '9:16'
   resolution: '720p' | '1080p'
-  duration: number            // 4, 6, or 8 seconds
+  duration: number            // 4, 6, 8, or 10 seconds
   
   // Asset URLs for generation
   startFrameUrl: string | null

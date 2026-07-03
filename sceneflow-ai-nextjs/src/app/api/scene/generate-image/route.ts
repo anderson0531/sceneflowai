@@ -26,6 +26,7 @@ import { detectCharactersInText, resolveBeatSpeaker } from '@/lib/scene/characte
 import { isStoryboardNoCharacterScene } from '@/lib/script/sceneClassification'
 import { getSceneBeats, isNarratorBeat } from '@/lib/script/beatMigration'
 import { NARRATOR_CHARACTER, type BeatKind } from '@/lib/script/segmentTypes'
+import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
 import {
   buildCharacterHairAnchor,
   buildCharacterHairDescription,
@@ -473,7 +474,7 @@ export async function POST(req: NextRequest) {
           const durationSeconds =
             typeof beat.durationSeconds === 'number' && beat.durationSeconds > 0
               ? beat.durationSeconds
-              : 8
+              : DEFAULT_VEO_CLIP_DURATION
           const instruction = buildPreVisEndFrameEditInstruction({
             startFramePrompt: beat.storyboardImagePrompt?.trim() || endPrompt,
             durationSeconds,

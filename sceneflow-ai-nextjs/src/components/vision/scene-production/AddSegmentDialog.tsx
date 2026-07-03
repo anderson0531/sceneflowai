@@ -40,6 +40,7 @@ import {
   Mic,
 } from 'lucide-react'
 import { SceneSegment, VideoGenerationMethod } from './types'
+import { MAX_VEO_VIDEO_CLIP_SECONDS } from '@/lib/config/modelConfig'
 import { VoiceSelector } from '@/components/tts/VoiceSelector'
 
 // ============================================================================
@@ -276,7 +277,7 @@ function estimateDuration(
 
   // Estimate: words / 2.5 words per second, with minimum of 4s and max of 12s
   const estimated = Math.ceil(totalWords / WORDS_PER_SECOND)
-  return Math.max(4, Math.min(8, estimated || 6))
+  return Math.max(4, Math.min(MAX_VEO_VIDEO_CLIP_SECONDS, estimated || 6))
 }
 
 // ============================================================================
@@ -824,7 +825,7 @@ export function AddSegmentDialog({
                       setDuration(val)
                     }}
                     min={4}
-                    max={8}
+                    max={MAX_VEO_VIDEO_CLIP_SECONDS}
                     step={1}
                     className="flex-1"
                   />
@@ -833,7 +834,7 @@ export function AddSegmentDialog({
                   </Badge>
                 </div>
                 <p className="text-[10px] text-muted-foreground">
-                  Veo 3.1 max: 8 seconds per segment
+                  Omni Flash max: {MAX_VEO_VIDEO_CLIP_SECONDS} seconds per segment
                 </p>
               </div>
 

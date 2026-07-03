@@ -4,7 +4,7 @@
  * SegmentSyncStatusBar - Tri-color visual overlay for LML elastic segment status
  * 
  * Shows at-a-glance sync status for each segment in a language:
- * - Blue: Base duration (8s) — audio fits within video
+ * - Blue: Base duration (10s) — audio fits within video
  * - Gray: Smart Padding (≤0.3s overrun) — minor hold, no visual effect
  * - Yellow: Freeze Extension (>0.3s overrun) — freeze-frame + Ken Burns
  * 

@@ -50,6 +50,7 @@ import {
 import type { BeatReferenceSelection } from '@/lib/script/segmentTypes'
 import type { StoryboardFrameSlot } from '@/lib/storyboard/types'
 import { mapBeatReferenceSelectionForApi } from '@/lib/vision/beatFrameGenerationContext'
+import { DEFAULT_VEO_CLIP_DURATION, MAX_VEO_VIDEO_CLIP_SECONDS } from '@/lib/config/modelConfig'
 import {
   findPreviousChainSegment,
   resolveVeoRefForExtension,
@@ -2132,7 +2133,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           body: JSON.stringify({
             startFrameUrl,
             segmentPrompt,
-            segmentDuration: 8, // Standard Veo segment duration
+            segmentDuration: DEFAULT_VEO_CLIP_DURATION,
             aspectRatio: '16:9'
           })
         })
@@ -2712,7 +2713,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
         if (isBeatFirstPipelineEnabled()) {
           await handleInitializeSceneProduction(sceneId, {
-            targetDuration: 8,
+            targetDuration: DEFAULT_VEO_CLIP_DURATION,
             deriveFromBeats: true,
           })
         }
@@ -2750,7 +2751,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       backfillDeriveAttemptedRef.current.add(sceneId)
       void handleInitializeSceneProduction(sceneId, {
-        targetDuration: 8,
+        targetDuration: DEFAULT_VEO_CLIP_DURATION,
         deriveFromBeats: true,
       }).catch((err) => {
         console.warn('[VisionPage] Backfill derive-segments failed for', sceneId, err)
@@ -4115,10 +4116,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
         
         // For single-shot, use narration duration if available, else 5 seconds
-        // Cap at 8 seconds for video generation (Veo 3.1 model limit)
+        // Cap at Omni Flash max for video generation
         // This is intentional for video - images edited later can have longer durations
         const establishingDuration = type === 'single-shot' && narrationDuration > 0 
-          ? Math.min(narrationDuration, 8) // Veo 3.1 video limit
+          ? Math.min(narrationDuration, MAX_VEO_VIDEO_CLIP_SECONDS)
           : 5
         
         // Generate appropriate prompt based on type
@@ -4316,11 +4317,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         let newStartTime = changes.startTime ?? segment.startTime
         let newDuration = changes.duration ?? originalDuration
         
-        // Enforce maximum 8 seconds ONLY for video assets (Veo 3.1 model limit)
+        // Enforce maximum clip duration ONLY for video assets (Omni Flash limit)
         // Image-based keyframes have no upper duration limit
         const isVideoAsset = segment.assetType === 'video'
         newDuration = isVideoAsset 
-          ? Math.min(8, Math.max(0.5, newDuration))
+          ? Math.min(MAX_VEO_VIDEO_CLIP_SECONDS, Math.max(0.5, newDuration))
           : Math.max(0.5, newDuration)
         
         // Ensure start time is not negative and doesn't overlap with previous segment

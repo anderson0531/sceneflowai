@@ -46,9 +46,11 @@ export interface ValidationConfig {
 // Default Configuration
 // ============================================================================
 
+import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
+
 const DEFAULT_CONFIG: ValidationConfig = {
   minDuration: 2,
-  maxDuration: 8,
+  maxDuration: DEFAULT_VEO_CLIP_DURATION,
   optimalDuration: 6,
   enforceCharacterCheck: true,
   enforceLocationCheck: true,

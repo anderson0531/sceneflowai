@@ -73,15 +73,18 @@ describe('video prompt cue handling', () => {
 })
 
 describe('extension chain for long dialogue', () => {
-  it('triggers split/extension for the example corporate breach line', () => {
+  it('triggers split/extension for dialogue exceeding 10s spoken budget', () => {
+    const longLine =
+      `${EXAMPLE_LINE} We need to notify legal, patch every endpoint, and rebuild trust with customers before the press cycle starts.`
     const spoken = resolveBeatSpokenDuration(
-      { beatId: 'b1', kind: 'dialogue', line: EXAMPLE_LINE } as SceneBeat,
+      { beatId: 'b1', kind: 'dialogue', line: longLine } as SceneBeat,
       {},
       'en'
     )
-    expect(shouldAutoSplitForExtensionChain(EXAMPLE_LINE, spoken)).toBe(true)
+    expect(spoken).toBeGreaterThan(10)
+    expect(shouldAutoSplitForExtensionChain(longLine, spoken)).toBe(true)
 
-    const chain = planContinuousDialogueBeat(EXAMPLE_LINE, { spokenSeconds: spoken })
+    const chain = planContinuousDialogueBeat(longLine, { spokenSeconds: spoken })
     expect(chain.usesExtensionChain).toBe(true)
     expect(chain.parts.length).toBeGreaterThan(1)
     expect(chain.parts.some((p) => p.method === 'EXT')).toBe(true)

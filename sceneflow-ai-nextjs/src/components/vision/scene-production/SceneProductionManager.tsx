@@ -7,6 +7,7 @@ import { SceneTimeline, AudioTracksData } from './SceneTimeline'
 import { SceneTimelineV2 } from './SceneTimelineV2'
 import { SegmentStudio, GenerationType } from './SegmentStudio'
 import { VideoGenerationMethod } from './SegmentPromptBuilder'
+import { DEFAULT_VEO_CLIP_DURATION, MAX_VEO_VIDEO_CLIP_SECONDS } from '@/lib/config/modelConfig'
 import type {
   SceneProductionData,
   SceneProductionReferences,
@@ -276,7 +277,7 @@ export function SceneProductionManager({
     }))
   }, [characters])
   
-  const [targetDuration, setTargetDuration] = useState<number>(productionData?.targetSegmentDuration ?? 8)
+  const [targetDuration, setTargetDuration] = useState<number>(productionData?.targetSegmentDuration ?? DEFAULT_VEO_CLIP_DURATION)
   
   // Enhanced generation options state
   const [alignWithNarration, setAlignWithNarration] = useState(true)
@@ -1034,27 +1035,28 @@ export function SceneProductionManager({
     
     try {
       // Full scene length from audio or scene.duration (never cap at 12s — that forced one bogus 12s block).
+      const clipMax = MAX_VEO_VIDEO_CLIP_SECONDS
       const fullDuration = Math.max(
         totalAudioDurationSeconds || 0,
         typeof scene?.duration === 'number' ? scene.duration : 0,
-        8
+        clipMax
       )
       const chunkDurations: number[] = []
       let left = fullDuration
-      while (left > 8.01) {
-        chunkDurations.push(8)
-        left -= 8
+      while (left > clipMax + 0.01) {
+        chunkDurations.push(clipMax)
+        left -= clipMax
       }
       if (left > 0.25) {
         if (left < 4 && chunkDurations.length > 0) {
           const prev = chunkDurations[chunkDurations.length - 1]!
-          if (prev + left <= 8.01) chunkDurations[chunkDurations.length - 1] = prev + left
+          if (prev + left <= clipMax + 0.01) chunkDurations[chunkDurations.length - 1] = prev + left
           else chunkDurations.push(left)
         } else {
           chunkDurations.push(left)
         }
       }
-      if (chunkDurations.length === 0) chunkDurations.push(Math.min(8, fullDuration))
+      if (chunkDurations.length === 0) chunkDurations.push(Math.min(clipMax, fullDuration))
 
       let t = 0
       const bypassSegments: SceneSegment[] = chunkDurations.map((dur, i) => {
@@ -1078,7 +1080,7 @@ export function SceneProductionManager({
       })
 
       await onInitialize(sceneId, {
-        targetDuration: 8,
+        targetDuration: DEFAULT_VEO_CLIP_DURATION,
         segments: bypassSegments,
       })
       
@@ -1369,7 +1371,7 @@ export function SceneProductionManager({
                   <Input
                     type="number"
                     min={4}
-                    max={8}
+                    max={MAX_VEO_VIDEO_CLIP_SECONDS}
                     step={0.5}
                     value={targetDuration}
                     onChange={(e) => setTargetDuration(Number(e.target.value))}

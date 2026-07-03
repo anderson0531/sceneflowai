@@ -148,7 +148,7 @@ function calculateTTSCharacters(scenes: any[]): number {
 }
 
 function calculateVideoClips(scenes: any[]): number {
-  // Calculate based on scene duration (8 seconds per clip)
+  // Calculate based on scene duration (10 seconds per clip)
   const totalSeconds = scenes.reduce((sum, scene) => {
     const narrationLength = scene.narration?.length || 0
     const dialogueLength = scene.dialogue?.reduce((s: number, d: any) => s + (d.line?.length || 0), 0) || 0
@@ -162,8 +162,8 @@ function calculateVideoClips(scenes: any[]): number {
     return sum + estimatedSeconds
   }, 0)
   
-  // Return number of clips (each clip is 8 seconds)
-  return Math.ceil(totalSeconds / 8)
+  // Return number of clips (each clip is 10 seconds)
+  return Math.ceil(totalSeconds / 10)
 }
 
 function calculateServiceCost(
@@ -181,10 +181,10 @@ function calculateServiceCost(
     actualUnits = Math.ceil(units / 100)
   }
   
-  // For video, if rate is per second, convert clips to seconds (8 seconds per clip)
+  // For video, if rate is per second, convert clips to seconds (10 seconds per clip)
   // units here represents number of clips
   if (service === 'video_gen' && rate?.unit_description?.includes('second')) {
-    actualUnits = units * 8 // 8 seconds per clip
+    actualUnits = units * 10 // 10 seconds per clip
   }
   
   const totalCredits = useBYOK ? byokCreditsPerUnit * actualUnits : creditsPerUnit * actualUnits

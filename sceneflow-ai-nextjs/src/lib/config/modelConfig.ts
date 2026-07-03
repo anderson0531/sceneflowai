@@ -51,9 +51,50 @@ export type VeoClipDuration = 4 | 6 | 8 | 10;
 /** Default segment clip duration (Omni Flash supports up to 10s) */
 export const DEFAULT_VEO_CLIP_DURATION: VeoClipDuration = 10;
 
+/** Maximum video clip duration for standard segment generation (Omni Flash) */
+export const MAX_VEO_VIDEO_CLIP_SECONDS: VeoClipDuration = DEFAULT_VEO_CLIP_DURATION;
+
+/** Valid clip duration options for UI selects and sliders */
+export const VEO_CLIP_DURATION_OPTIONS: readonly VeoClipDuration[] = [4, 6, 8, 10];
+
+/** Snap a numeric duration to the nearest valid Veo/Omni clip length */
+export function clampToVeoClipDuration(seconds: number): VeoClipDuration {
+  if (seconds <= 5) return 4
+  if (seconds <= 7) return 6
+  if (seconds <= 9) return 8
+  return 10
+}
+
 /** Returns true when the model id is Gemini Omni Flash (supports 10s FTV/EXT) */
 export function isOmniVideoModel(model: string): boolean {
   return model.includes('omni')
+}
+
+/** Default regional location for legacy Veo predictLongRunning (overridable via VEO_LOCATION) */
+export const DEFAULT_VEO_REGION = 'us-central1'
+
+/**
+ * Resolve Vertex AI location for a model.
+ * Gemini Omni Flash (Interactions API) is only available on the global endpoint.
+ */
+export function getVertexLocation(model: string): string {
+  if (isOmniVideoModel(model)) return 'global'
+  return process.env.VEO_LOCATION || DEFAULT_VEO_REGION
+}
+
+/**
+ * Resolve Vertex AI API hostname for a location.
+ * Global uses aiplatform.googleapis.com; regional uses REGION-aiplatform.googleapis.com.
+ */
+export function getVertexHostname(location: string): string {
+  if (location === 'global') return 'aiplatform.googleapis.com'
+  return `${location}-aiplatform.googleapis.com`
+}
+
+/** Build base URL for Vertex AI REST calls: https://HOST/v1beta1/projects/... */
+export function getVertexApiBaseUrl(project: string, location: string, apiVersion = 'v1beta1'): string {
+  const host = getVertexHostname(location)
+  return `https://${host}/${apiVersion}/projects/${project}/locations/${location}`
 }
 
 /** Default tier for Veo SFX (audio extracted from black-frame T2V) */

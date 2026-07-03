@@ -32,6 +32,7 @@ import {
   Save,
 } from 'lucide-react'
 import { SceneSegment, VideoGenerationMethod } from './types'
+import { MAX_VEO_VIDEO_CLIP_SECONDS } from '@/lib/config/modelConfig'
 
 // ============================================================================
 // Types
@@ -253,7 +254,7 @@ export function EditSegmentDialog({
                   value={[duration]}
                   onValueChange={([val]) => setDuration(val)}
                   min={4}
-                  max={8}
+                  max={MAX_VEO_VIDEO_CLIP_SECONDS}
                   step={1}
                   className="flex-1"
                 />
@@ -262,7 +263,7 @@ export function EditSegmentDialog({
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground">
-                Veo 3.1 supports 4-8 second clips
+                Omni Flash supports 4-10 second clips
               </p>
             </div>
 

@@ -1,5 +1,5 @@
 /**
- * Veo 3.1 continuous beat planning: initial clip (4–10s) + chained extensions (+8s each).
+ * Veo 3.1 continuous beat planning: initial clip (4–10s) + chained extensions (+10s each).
  *
  * Gemini Omni Flash: extension uses 10s clips, 720p, Veo-generated sourceVideo ref.
  */
@@ -14,16 +14,16 @@ import { snapToVeoDuration } from '@/lib/scene/veoDuration'
 import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
 
 /** Seconds added to timeline per Veo extension API call (Omni 10s clips). */
-export const VEO_EXTENSION_DELTA_SEC = 8
+export const VEO_EXTENSION_DELTA_SEC = 10
 
 /** Max initial generation length for extension-first dialogue chains. */
 export const VEO_INITIAL_CLIP_MAX_SEC = 10
 
 /**
  * Spoken dialogue budget per initial clip before chaining EXT steps.
- * Split/planning uses 8s spoken budget; API sends 10s per Omni clip.
+ * Split/planning uses 10s spoken budget; API sends 10s per Omni clip.
  */
-export const VEO_SPOKEN_CHUNK_SEC = 8
+export const VEO_SPOKEN_CHUNK_SEC = 10
 
 /** Max chained extensions per beat (Gemini API limit ~20). */
 export const VEO_MAX_EXTENSIONS_PER_BEAT = 20
@@ -83,7 +83,7 @@ export function planVeoExtensionChain(
 
   const initialTimeline = snapToVeoDuration(
     Math.min(totalSpoken, VEO_SPOKEN_CHUNK_SEC)
-  ) as 4 | 6 | 8
+  ) as 4 | 6 | 8 | 10
   const initialMethod: VeoChainPartMethod = options?.preferFtv ? 'FTV' : 'I2V'
 
   if (!usesExtensionChain) {

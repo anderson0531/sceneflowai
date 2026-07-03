@@ -1,5 +1,5 @@
 import { JWT } from 'google-auth-library';
-import { getVeoModel, DEFAULT_VIDEO_QUALITY, DEFAULT_VEO_CLIP_DURATION, isOmniVideoModel, type VeoQualityTier, type VeoClipDuration } from '@/lib/config/modelConfig';
+import { getVeoModel, DEFAULT_VIDEO_QUALITY, DEFAULT_VEO_CLIP_DURATION, isOmniVideoModel, getVertexLocation, getVertexHostname, getVertexApiBaseUrl, VEO_MODELS, type VeoQualityTier, type VeoClipDuration } from '@/lib/config/modelConfig';
 import {
   getVeoSafetySetting,
   getVeoIncludeRaiReason,
@@ -217,8 +217,10 @@ async function generateVideoWithOmniInteractions(
   stabilityDuration: VeoClipDuration
 ): Promise<VideoGenerationResult> {
   const project = process.env.VERTEX_PROJECT_ID
-  const location = process.env.VEO_LOCATION || 'us-central1'
   if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
+
+  const location = getVertexLocation(model)
+  const apiBase = getVertexApiBaseUrl(project, location, 'v1beta1')
 
   const isFTV = !!options.startFrame && !!options.lastFrame
   const isEXT = !!options.sourceVideo && !options.startFrame
@@ -237,7 +239,7 @@ async function generateVideoWithOmniInteractions(
     )
   }
 
-  const endpoint = `https://${location}-aiplatform.googleapis.com/v1beta1/projects/${project}/locations/${location}/interactions`
+  const endpoint = `${apiBase}/interactions`
   const requestBody = await buildOmniInteractionRequestBody(model, prompt, {
     aspectRatio: options.aspectRatio,
     durationSeconds: effectiveDuration,
@@ -248,7 +250,7 @@ async function generateVideoWithOmniInteractions(
     previousInteractionId,
   })
 
-  console.log(`[Omni Video] Generating via Interactions API with ${model} (quality: ${quality})`)
+  console.log(`[Omni Video] Generating via Interactions API with ${model} (quality: ${quality}) at ${location}`)
   console.log('[Omni Video] Request summary:', JSON.stringify({
     aspectRatio: options.aspectRatio || '16:9',
     duration: formatOmniDuration(effectiveDuration),
@@ -343,13 +345,14 @@ async function checkOmniInteractionStatus(
   operationName: string
 ): Promise<VideoGenerationResult> {
   const project = process.env.VERTEX_PROJECT_ID
-  const location = process.env.VEO_LOCATION || 'us-central1'
   if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
 
+  const location = getVertexLocation(VEO_MODELS.omni)
+  const apiBase = getVertexApiBaseUrl(project, location, 'v1beta1')
   const interactionId = normalizeOmniInteractionId(operationName)
-  const endpoint = `https://${location}-aiplatform.googleapis.com/v1beta1/projects/${project}/locations/${location}/interactions/${encodeURIComponent(interactionId)}`
+  const endpoint = `${apiBase}/interactions/${encodeURIComponent(interactionId)}`
 
-  console.log('[Omni Video] Checking interaction status:', interactionId)
+  console.log('[Omni Video] Checking interaction status:', interactionId, 'at', location)
 
   try {
     const accessToken = await getVertexAccessToken()
@@ -418,13 +421,12 @@ export async function generateVideoWithVeo(
 ): Promise<VideoGenerationResult> {
   // Vertex AI endpoint config
   const project = process.env.VERTEX_PROJECT_ID
-  // Veo models are only available in us-central1 (not in us-east1 like Imagen)
-  const location = process.env.VEO_LOCATION || 'us-central1'
   // Select model based on quality tier (default: fast for cost efficiency)
   const quality = options.quality || DEFAULT_VIDEO_QUALITY
   const model = getVeoModel(quality)
   const usingOmni = isOmniVideoModel(model)
   const stabilityDuration: VeoClipDuration = usingOmni ? 10 : 8
+  const location = getVertexLocation(model)
   if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
 
   // Gemini Omni Flash requires the Interactions API (not predictLongRunning)
@@ -432,8 +434,9 @@ export async function generateVideoWithVeo(
     return generateVideoWithOmniInteractions(prompt, options, model, quality, stabilityDuration)
   }
 
-  // Vertex endpoint: https://LOCATION-aiplatform.googleapis.com/v1/projects/PROJECT_ID/locations/LOCATION/publishers/google/models/MODEL:predictLongRunning
-  const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:predictLongRunning`
+  // Vertex endpoint: https://HOST/v1/projects/PROJECT_ID/locations/LOCATION/publishers/google/models/MODEL:predictLongRunning
+  const host = getVertexHostname(location)
+  const endpoint = `https://${host}/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:predictLongRunning`
   console.log(`[Veo Video] Generating video with ${model} (quality: ${quality}) on Vertex AI...`)
   {
     const len = prompt.length
@@ -744,8 +747,8 @@ export async function checkVideoGenerationStatus(
     return checkOmniInteractionStatus(operationName)
   }
 
-  // Veo models are only available in us-central1
-  const location = process.env.VEO_LOCATION || 'us-central1'
+  // Veo predictLongRunning operations use regional endpoints (not global)
+  const location = getVertexLocation(model)
   const project = process.env.VERTEX_PROJECT_ID
   if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
   
@@ -773,7 +776,8 @@ export async function checkVideoGenerationStatus(
   }
   
   // Use the fetchPredictOperation endpoint for Veo
-  const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:fetchPredictOperation`
+  const host = getVertexHostname(location)
+  const endpoint = `https://${host}/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:fetchPredictOperation`
   
   console.log('[Veo Video] Checking status at:', endpoint)
   console.log('[Veo Video] Operation ID:', opId)
@@ -979,13 +983,13 @@ export async function downloadVideoFile(
   fileName: string
 ): Promise<Buffer | null> {
   const project = process.env.VERTEX_PROJECT_ID
-  // Veo models are only available in us-central1
-  const location = process.env.VEO_LOCATION || 'us-central1'
+  const location = getVertexLocation(VEO_MODELS.fast)
   if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
   // Extract file name from file: prefix if present
   const cleanName = fileName.startsWith('file:') ? fileName.substring(5) : fileName
-  // Vertex AI files endpoint: https://LOCATION-aiplatform.googleapis.com/v1/projects/PROJECT_ID/locations/LOCATION/files/FILE_ID:download
-  const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/files/${cleanName}:download`
+  const host = getVertexHostname(location)
+  // Vertex AI files endpoint: https://HOST/v1/projects/PROJECT_ID/locations/LOCATION/files/FILE_ID:download
+  const endpoint = `https://${host}/v1/projects/${project}/locations/${location}/files/${cleanName}:download`
 
   try {
     const accessToken = await getVertexAccessToken();

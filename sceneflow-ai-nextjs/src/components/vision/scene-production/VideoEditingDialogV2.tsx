@@ -469,6 +469,7 @@ function ExtendTab({
               <SelectItem value="4">4 seconds</SelectItem>
               <SelectItem value="6">6 seconds</SelectItem>
               <SelectItem value="8">8 seconds</SelectItem>
+              <SelectItem value="10">10 seconds</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -1690,6 +1691,7 @@ export function VideoEditingDialog({
                       <SelectItem value="4">4s</SelectItem>
                       <SelectItem value="6">6s</SelectItem>
                       <SelectItem value="8">8s</SelectItem>
+                      <SelectItem value="10">10s</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

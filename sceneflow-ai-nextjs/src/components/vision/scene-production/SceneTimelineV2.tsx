@@ -23,6 +23,7 @@ import {
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
+import { MAX_VEO_VIDEO_CLIP_SECONDS } from '@/lib/config/modelConfig'
 import { 
   SceneSegment, 
   SceneTimelineV2Props,
@@ -521,7 +522,7 @@ export function SceneTimelineV2({
         establishingShotType: seg.establishingShotType,
         shotNumber: seg.shotNumber,
         anchorStatus: seg.anchorStatus,
-        exceedsVideoLimit: baseDuration > 8,  // Use original duration for video limit check
+        exceedsVideoLimit: baseDuration > MAX_VEO_VIDEO_CLIP_SECONDS,  // Use original duration for video limit check
       }
       
       cumulativeStart += displayDuration

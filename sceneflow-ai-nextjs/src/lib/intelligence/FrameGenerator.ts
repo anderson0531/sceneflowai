@@ -13,6 +13,7 @@
 
 import { ActionType, getActionWeights, inferActionType } from './ActionWeights'
 import { enhancePrompt, buildEndFramePrompt, generateNegativePrompt } from './PromptEnhancer'
+import { MAX_VEO_VIDEO_CLIP_SECONDS } from '@/lib/config/modelConfig'
 
 // ============================================================================
 // Types
@@ -290,8 +291,8 @@ export function validateFTVReadiness(state: SegmentFrameState): {
     missing.push('Segment duration too short (minimum 2 seconds)')
   }
   
-  if (state.duration > 8) {
-    missing.push('Segment duration exceeds Veo 3.1 limit (maximum 8 seconds)')
+  if (state.duration > MAX_VEO_VIDEO_CLIP_SECONDS) {
+    missing.push(`Segment duration exceeds Omni Flash limit (maximum ${MAX_VEO_VIDEO_CLIP_SECONDS} seconds)`)
   }
   
   return {

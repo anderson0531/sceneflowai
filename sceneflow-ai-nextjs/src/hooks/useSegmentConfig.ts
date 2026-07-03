@@ -33,6 +33,7 @@ import {
   buildMinimalFtvPerformPrompt,
   FTV_SILENT_MOTION_HINT,
 } from '@/lib/vision/ftvPromptNormalize'
+import { MAX_VEO_VIDEO_CLIP_SECONDS } from '@/lib/config/modelConfig'
 
 /** Scene script + audio fields used to auto-build Veo guide text for batch generate */
 export type SegmentGuideContext = {
@@ -583,7 +584,7 @@ export function useSegmentConfig(
       duration:
         method === 'EXT'
           ? 8
-          : Math.max(4, Math.min(8, Math.round(segment.endTime - segment.startTime))),
+          : Math.max(4, Math.min(MAX_VEO_VIDEO_CLIP_SECONDS, Math.round(segment.endTime - segment.startTime))),
       negativePrompt: '',
       approvalStatus,
       confidence,
@@ -701,7 +702,7 @@ export function useSegmentConfigs(
         duration:
           method === 'EXT'
             ? 8
-            : Math.max(4, Math.min(8, Math.round(segment.endTime - segment.startTime))),
+            : Math.max(4, Math.min(MAX_VEO_VIDEO_CLIP_SECONDS, Math.round(segment.endTime - segment.startTime))),
         negativePrompt: '',
         approvalStatus,
         confidence,
