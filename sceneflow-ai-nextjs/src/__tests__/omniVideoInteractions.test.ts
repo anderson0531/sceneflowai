@@ -100,7 +100,7 @@ describe('omniVideoInteractions helpers', () => {
     expect(body.response_format).toEqual({
       type: 'video',
       aspect_ratio: '16:9',
-      delivery: 'uri',
+      delivery: 'inline',
     })
     expect((body.response_format as Record<string, unknown>).duration).toBeUndefined()
   })

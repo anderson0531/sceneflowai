@@ -269,7 +269,7 @@ export async function buildOmniInteractionRequestBody(
     response_format: {
       type: 'video',
       aspect_ratio: options.aspectRatio || '16:9',
-      delivery: 'uri',
+      delivery: 'inline',
     },
     background,
   }
