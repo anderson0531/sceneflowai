@@ -196,9 +196,18 @@ export async function generateVertexGeminiImage(
     })
   } catch (error) {
     clearTimeout(timeoutId)
-    if (error instanceof Error && error.name === 'AbortError' && retryCount < MAX_RETRIES) {
-      await sleepWithBackoff(retryCount)
-      return generateVertexGeminiImage(options, retryCount + 1)
+    if (error instanceof Error && error.name === 'AbortError') {
+      if (model.includes('pro-image')) {
+        console.warn(
+          `[Vertex Gemini Image] ${model} timed out after ${REQUEST_TIMEOUT_MS}ms, falling back to ${GEMINI_IMAGE_TIER_CONFIG.eco.model}`
+        )
+        proModelRateLimitedUntil = Date.now() + RATE_LIMIT_COOLDOWN_MS
+        return generateVertexGeminiImage({ ...options, modelTier: 'eco' }, 0)
+      }
+      if (retryCount < MAX_RETRIES) {
+        await sleepWithBackoff(retryCount)
+        return generateVertexGeminiImage(options, retryCount + 1)
+      }
     }
     throw error
   }

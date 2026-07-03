@@ -10,7 +10,7 @@ import { CreditService } from '@/services/CreditService'
 import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
 
 export const runtime = 'nodejs'
-export const maxDuration = 180
+export const maxDuration = 300
 
 const CREDIT_COST = IMAGE_CREDITS.GEMINI_EDIT
 

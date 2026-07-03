@@ -81,6 +81,21 @@ import {
 } from "@/components/vision/DeferredImageSkeleton";
 import { getSceneBeats } from "@/lib/script/beatMigration";
 
+/** Parse API response body without throwing on Vercel HTML/plain-text error pages (504, etc.). */
+async function readJsonSafe(res: Response): Promise<Record<string, unknown>> {
+  const text = await res.text();
+  try {
+    return text ? (JSON.parse(text) as Record<string, unknown>) : {};
+  } catch {
+    return {
+      error:
+        res.status === 504 || res.status === 408
+          ? "Generation timed out — please try again"
+          : text.slice(0, 200),
+    };
+  }
+}
+
 export interface CharacterLibraryProps {
   projectId?: string;
   characters: any[];
@@ -1424,12 +1439,15 @@ const CharacterCard = ({
         }),
       });
 
+      const body = await readJsonSafe(response);
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to analyze script");
+        throw new Error(
+          (body.error as string) || "Failed to analyze script",
+        );
       }
 
-      const { suggestions } = await response.json();
+      const { suggestions } = body;
       setWardrobeSuggestions(suggestions || []);
 
       if (suggestions?.length > 0) {
@@ -1522,12 +1540,15 @@ const CharacterCard = ({
         }),
       });
 
+      const body = await readJsonSafe(response);
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to generate wardrobe");
+        throw new Error(
+          (body.error as string) || "Failed to generate wardrobe",
+        );
       }
 
-      const { wardrobe } = await response.json();
+      const { wardrobe } = body as { wardrobe: Record<string, string> };
 
       // Populate the wardrobe fields with AI-generated content
       setWardrobeText(wardrobe.defaultWardrobe);
@@ -1661,12 +1682,17 @@ const CharacterCard = ({
         }),
       });
 
+      const body = await readJsonSafe(response);
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to enhance wardrobe");
+        throw new Error(
+          (body.error as string) || "Failed to enhance wardrobe",
+        );
       }
 
-      const { enhanced } = await response.json();
+      const { enhanced } = body as {
+        enhanced: { description: string; accessories?: string };
+      };
 
       // Save the enhanced description directly
       // The handler automatically syncs the legacy defaultWardrobe field
@@ -1739,16 +1765,28 @@ const CharacterCard = ({
         }),
       });
 
+      const body = await readJsonSafe(response);
+
       if (!response.ok) {
-        const error = await response.json();
-        if (error.code === "INSUFFICIENT_CREDITS") {
-          toast.error(`Insufficient credits. Need ${error.required} credits.`);
+        if (response.status === 504 || response.status === 408) {
+          toast.error("Generation timed out — please try again");
           return;
         }
-        throw new Error(error.error || "Failed to generate wardrobe image");
+        if (body.code === "INSUFFICIENT_CREDITS") {
+          toast.error(
+            `Insufficient credits. Need ${body.required as number} credits.`,
+          );
+          return;
+        }
+        throw new Error(
+          (body.error as string) || "Failed to generate wardrobe image",
+        );
       }
 
-      const { imageUrl, fullBodyUrl } = await response.json();
+      const { imageUrl, fullBodyUrl } = body as {
+        imageUrl?: string;
+        fullBodyUrl?: string;
+      };
       const resolvedUrl = fullBodyUrl || imageUrl;
       if (!resolvedUrl) {
         throw new Error("No image URL returned");
@@ -1819,27 +1857,36 @@ const CharacterCard = ({
         }),
       });
 
+      const body = await readJsonSafe(response);
+
       overlayStore.setProgress(70);
       overlayStore.setStatus("Generating enhanced portrait...");
 
       if (!response.ok) {
-        const error = await response.json();
-        if (error.code === "INSUFFICIENT_CREDITS") {
-          toast.error(`Insufficient credits. Need ${error.required} credits.`);
+        if (body.code === "INSUFFICIENT_CREDITS") {
+          toast.error(
+            `Insufficient credits. Need ${body.required as number} credits.`,
+          );
           return;
         }
-        if (error.code === "ALREADY_OPTIMIZED") {
+        if (body.code === "ALREADY_OPTIMIZED") {
           toast.info(
             "This image is already well-optimized. Try uploading a different source image.",
           );
           return;
         }
-        throw new Error(error.error || "Enhancement failed");
+        throw new Error((body.error as string) || "Enhancement failed");
       }
 
       overlayStore.setProgress(90);
       overlayStore.setStatus("Applying final retouching...");
-      const result = await response.json();
+      const result = body as {
+        enhancedImageUrl: string;
+        visionDescription?: string | null;
+        qualityFeedback?: string | null;
+        iterationCount: number;
+        remainingIterations: number;
+      };
 
       // Show preview for confirmation with quality feedback
       setEnhancedPreviewUrl(result.enhancedImageUrl);
