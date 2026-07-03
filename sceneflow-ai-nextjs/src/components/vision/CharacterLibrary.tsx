@@ -2947,11 +2947,32 @@ const CharacterCard = ({
                             : "bg-gray-50/50 dark:bg-gray-800/10 border-gray-200 dark:border-gray-700/50"
                         }`}
                       >
-                        {w.headshotUrl && (
+                        {/* 
+                           Notice that we check w.fullBodyUrl. The previous code
+                           was using w.headshotUrl (the diptych), which isn't populated
+                           for face-first wardrobes.
+                        */}
+                        {w.fullBodyUrl && (
+                          <div className="relative aspect-auto max-h-64 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                            <img
+                              src={w.fullBodyUrl}
+                              alt={`${character.name} — ${w.name} wardrobe reference`}
+                              className="w-full h-full object-contain"
+                              loading="lazy"
+                            />
+                            {generatingWardrobeImageId === w.id && (
+                              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                <Loader className="w-6 h-6 animate-spin text-white" />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {/* Fallback for legacy diptychs if fullBodyUrl doesn't exist but headshotUrl does */}
+                        {!w.fullBodyUrl && w.headshotUrl && (
                           <div className="relative aspect-video max-h-48 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                             <img
                               src={w.headshotUrl}
-                              alt={`${character.name} — ${w.name} wardrobe reference`}
+                              alt={`${character.name} — ${w.name} wardrobe reference (legacy)`}
                               className="w-full h-full object-cover object-top"
                               loading="lazy"
                             />
@@ -2995,7 +3016,7 @@ const CharacterCard = ({
                                 title={
                                   !hasCharacterReferenceForVoice
                                     ? "Generate character identity reference first"
-                                    : w.headshotUrl
+                                    : (w.fullBodyUrl || w.headshotUrl)
                                       ? "Regenerate wardrobe reference image"
                                       : "Generate wardrobe reference image"
                                 }
