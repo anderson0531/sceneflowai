@@ -17,7 +17,6 @@ Implement the fix * Do NOT create separate `scenes` state - this causes sync bug
 import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
-import { PanelGroup, Panel, PanelResizeHandle, ImperativePanelHandle } from 'react-resizable-panels'
 import { upload } from '@vercel/blob/client'
 import debounce from 'lodash/debounce'
 import {
@@ -131,7 +130,7 @@ import { Button, buttonVariants } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, ChevronRight, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User, Bookmark, FileText, Coins, ExternalLink, CheckCircle2, Circle, Music, Video, PanelRightClose, PanelRight, Loader2 } from 'lucide-react'
+import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, ChevronRight, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User, Bookmark, FileText, Coins, ExternalLink, CheckCircle2, Circle, Music, Video, Loader2 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { resolveProjectArtStyle, resolveProjectAspectRatio, toVideoAspectRatio } from '@/lib/vision/artStyle'
 import {
@@ -197,7 +196,7 @@ import { useSidebarData, useSidebarQuickActions } from '@/hooks/useSidebarData'
 import { DetailedSceneDirection } from '@/types/scene-direction'
 import { cn } from '@/lib/utils'
 import { sanitizeReturnTo } from '@/lib/navigation/sanitizeReturnTo'
-import { VisionReferencesSidebar } from '@/components/vision/VisionReferencesSidebar'
+import { ReferenceLibraryDialog, type ReferenceLibraryTab } from '@/components/vision/ReferenceLibraryDialog'
 import { VisualReference, VisualReferenceType, VisionReferencesPayload, LocationReference } from '@/types/visionReferences'
 import type { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from '@/components/vision/scene-production/types'
 import { applyIntelligentDefaults } from '@/lib/audio/anchoredTiming'
@@ -527,9 +526,13 @@ function scrollVisionPanel(
 export default function VisionPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = use(params)
   
-  // Right Sidebar State
-  const [rightSidebarVisible, setRightSidebarVisible] = useState(true)
-  const rightSidebarRef = useRef<ImperativePanelHandle>(null)
+  // Reference Library dialog
+  const [referenceLibraryOpen, setReferenceLibraryOpen] = useState(false)
+  const [referenceLibraryInitialTab, setReferenceLibraryInitialTab] = useState<ReferenceLibraryTab | undefined>()
+  const openReferenceLibrary = useCallback((tab?: ReferenceLibraryTab) => {
+    setReferenceLibraryInitialTab(tab)
+    setReferenceLibraryOpen(true)
+  }, [])
   const router = useRouter()
   const { execute } = useProcessWithOverlay()
   const overlayStore = useOverlayStore()
@@ -973,19 +976,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Wrapper for setScript that also updates the edit timestamp AND saves to database
   // This ensures ScreeningRoom clears audio caches when script is edited via ScriptEditorModal
   // and that changes are persisted to the database
-  // Toggle right sidebar visibility
-  const toggleRightSidebar = useCallback(() => {
-    const isCurrentlyVisible = rightSidebarVisible
-    setRightSidebarVisible(!isCurrentlyVisible)
-    
-    if (rightSidebarRef.current) {
-      if (isCurrentlyVisible) {
-        rightSidebarRef.current.collapse()
-      } else {
-        rightSidebarRef.current.expand()
-      }
-    }
-  }, [rightSidebarVisible])
+  // Reference Library opens in a dialog (see openReferenceLibrary below)
 
   const handleScriptChange = useCallback(async (updatedScript: any) => {
     const canonical = scriptRef.current
@@ -5863,6 +5854,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  const handleAudienceHeaderClick = useCallback(() => {
+    if (audienceReview?.overallScore == null) {
+      if (!isGeneratingReviews) {
+        void handleGenerateReviews()
+      }
+    } else {
+      setShowReviewModal(true)
+    }
+  }, [audienceReview?.overallScore, isGeneratingReviews])
+
   // Debounced save function for scene analysis persistence
   // Prevents rapid-fire API calls when multiple state updates occur
   const debouncedSaveSceneAnalysis = useMemo(
@@ -6169,6 +6170,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       },
       'production:update-reviews': () => handlersRef.current.generateReviews(),
       'production:review-analysis': () => setShowReviewModal(true),
+      'production:assign-voices': () => openReferenceLibrary('cast'),
       'production:review-treatment': () => setShowTreatmentReview(true),
       // Guide dropdown events
       'vision:scenes': () => {
@@ -6179,8 +6181,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       },
       'vision:characters': () => {
-        // Open Reference Library Cast tab by dispatching event
-        window.dispatchEvent(new CustomEvent('reference-library:open-tab', { detail: { tab: 'cast' } }))
+        openReferenceLibrary('cast')
       },
       'vision:script-preview': () => {
         // Toggle scene gallery as script preview
@@ -6209,7 +6210,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         window.removeEventListener(eventName, listener)
       })
     }
-  }, [openScreeningRoomFromVisionUi])
+  }, [openScreeningRoomFromVisionUi, openReferenceLibrary])
   // ============================================================================
 
   // Broadcast storyboard open/close state to sidebar
@@ -13191,27 +13192,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           </Button>
 
           <NotificationCenter userId={getUserId()} />
-          
-          <div className="h-5 w-px bg-gray-300 dark:bg-gray-700 ml-2 mr-1" />
-          
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={toggleRightSidebar}
-            className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-            title={rightSidebarVisible ? "Hide panel" : "Show panel"}
-          >
-            {rightSidebarVisible ? <PanelRightClose className="w-4 h-4" /> : <PanelRight className="w-4 h-4" />}
-          </Button>
         </div>
       </header>
       
       <div className="flex-1 min-h-0 overflow-hidden overflow-x-hidden px-4 py-1 max-w-full min-w-0">
-        <PanelGroup direction="horizontal" className="h-full max-w-full min-w-0 overflow-x-hidden">
-          {/* Main Content: Script with Scene Cards */}
-          <Panel defaultSize={65} minSize={40} maxSize={80} className="min-w-0 min-h-0 h-full overflow-hidden overflow-x-hidden flex flex-col">
-            <div className="flex-1 min-h-0 flex flex-col overflow-hidden px-4 pt-2 min-w-0 w-full overflow-x-hidden">
+        <div className="h-full max-w-full min-w-0 overflow-x-hidden flex flex-col">
+          <div className="flex-1 min-h-0 h-full flex flex-col overflow-hidden px-4 pt-2 min-w-0 w-full overflow-x-hidden">
               {showScriptImportOnboarding && (
                 <div className="shrink-0">
                 <ScriptImportOnboardingBanner
@@ -13285,7 +13271,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 audienceScore={audienceReview?.overallScore}
                 onGenerateReviews={handleGenerateReviews}
                 isGeneratingReviews={isGeneratingReviews}
-                onShowReviews={() => setShowReviewModal(true)}
+                onShowReviews={handleAudienceHeaderClick}
+                onOpenReferences={() => openReferenceLibrary()}
                 onShowTreatmentReview={() => setShowTreatmentReview(true)}
                 onRefactorFoundation={() => handleRefactorFoundation('artStyle')}
                 directorReview={directorReview}
@@ -13424,7 +13411,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onExpressGateBlocked={() => {
                   const { toast } = require('sonner')
                   toast.error(expressGate.reasons[0] || 'Complete the Pre-Vis ready checklist before Express.')
-                  setRightSidebarVisible(true)
+                  openReferenceLibrary()
                 }}
                 isExpressRunning={isExpressRunning}
                 narrationVoice={narrationVoice}
@@ -13442,7 +13429,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             onClose={() => setShowSceneGallery(false)}
                             onOpenGenerateAudio={openGenerateAudio}
                             productionReadyChecklist={productionReadyChecklist}
-                            onOpenReferences={() => setRightSidebarVisible(true)}
+                            onOpenReferences={() => openReferenceLibrary()}
                             onExpressGenerate={handleExpressGenerate}
                             onFinalizeStoryboard={handleFinalizeStoryboard}
                             isExpressRunning={isExpressRunning}
@@ -13466,128 +13453,108 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               />
               </div>
             </div>
-          </Panel>
-          
-          <PanelResizeHandle className={`w-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors cursor-col-resize ${!rightSidebarVisible ? 'hidden' : ''}`} />
-          
-          {/* Right Sidebar: Reference Library */}
-          <Panel 
-            ref={rightSidebarRef}
-            collapsible={true}
-            defaultSize={15} 
-            minSize={15} 
-            maxSize={40} 
-            className={`min-w-0 min-h-0 h-full overflow-hidden overflow-x-hidden transition-all duration-300 flex flex-col ${!rightSidebarVisible ? 'hidden' : ''}`}
-          >
-            <div className="flex-1 min-h-0 h-full overflow-hidden overflow-x-hidden pl-6 min-w-0 relative flex flex-col">
-              {/* Merge Duplicates Button */}
-              {findPotentialDuplicates(characters).length > 0 && (
-                <div className="mb-4 px-2 shrink-0">
-                  <Button
-                    onClick={() => {
-                      const duplicates = findPotentialDuplicates(characters)
-                      if (duplicates.length > 0) {
-                        // Auto-select first group for merge
-                        setMergePrimaryCharId(duplicates[0][0].id)
-                        setMergeDuplicateCharIds(duplicates[0].slice(1).map((c: any) => c.id))
-                        setMergeDialogOpen(true)
-                      }
-                    }}
-                    variant="outline"
-                    className="w-full text-amber-600 border-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20"
-                  >
-                    <Users className="w-4 h-4 mr-2" />
-                    Merge Duplicates ({findPotentialDuplicates(characters).reduce((sum, group) => sum + group.length - 1, 0)} duplicate{findPotentialDuplicates(characters).reduce((sum, group) => sum + group.length - 1, 0) !== 1 ? 's' : ''})
-                  </Button>
-                </div>
-              )}
-              
-              {/* Narration Voice Selector */}
-              
-              <VisionReferencesSidebar
-                projectId={projectId}
-                seriesId={project?.series_id}
-                seriesTitle={seriesInfo?.seriesTitle}
-                seriesBibleVersion={seriesInfo?.seriesBibleVersion}
-                projectBibleVersion={
-                  (project?.metadata as { seriesBibleRef?: { version?: string } } | undefined)
-                    ?.seriesBibleRef?.version
+          </div>
+        </div>
+      </div>
+      
+      <ReferenceLibraryDialog
+        open={referenceLibraryOpen}
+        onOpenChange={(open) => {
+          setReferenceLibraryOpen(open)
+          if (!open) setReferenceLibraryInitialTab(undefined)
+        }}
+        initialTab={referenceLibraryInitialTab}
+        topContent={
+          findPotentialDuplicates(characters).length > 0 ? (
+            <Button
+              onClick={() => {
+                const duplicates = findPotentialDuplicates(characters)
+                if (duplicates.length > 0) {
+                  setMergePrimaryCharId(duplicates[0][0].id)
+                  setMergeDuplicateCharIds(duplicates[0].slice(1).map((c: any) => c.id))
+                  setMergeDialogOpen(true)
                 }
-                onReferenceLibrarySynced={() => loadProject(true)}
-                characters={characters}
-                onRegenerateCharacter={handleRegenerateCharacter}
-                onGenerateCharacter={handleGenerateCharacter}
-                onUploadCharacter={handleUploadCharacter}
-                onApproveCharacter={handleApproveCharacter}
-                onUpdateCharacterAttributes={handleUpdateCharacterAttributes}
-                onUpdateCharacterVoice={handleUpdateCharacterVoice}
-                onUpdateCharacterEdgeVoice={handleUpdateCharacterEdgeVoice}
-                onUpdateCharacterAppearance={handleUpdateCharacterAppearance}
-                onUpdateCharacterName={handleUpdateCharacterName}
-                onUpdateCharacterRole={handleUpdateCharacterRole}
-                onUpdateCharacterWardrobe={handleUpdateCharacterWardrobe}
-                onBatchUpdateWardrobes={handleBatchUpdateWardrobes}
-                onAddCharacter={handleAddCharacter}
-                onRemoveCharacter={handleRemoveCharacter}
-                ttsProvider={ttsProvider}
-                uploadingRef={uploadingRef}
-                setUploadingRef={setUploadingRef}
-                sceneReferences={sceneReferences}
-                objectReferences={objectReferences}
-                onCreateReference={(type, payload) => handleCreateReference(type, payload)}
-                onRemoveReference={(type, referenceId) => handleRemoveReference(type, referenceId)}
-                onUpdateReferenceImage={handleUpdateReferenceImage}
-                onEditCharacterImage={handleEditCharacterImage}
-                onApplyEnhancedReference={handleApplyEnhancedReference}
-                scenes={script?.script?.scenes || []}
-                allScenes={script?.script?.scenes || []}
-                showProductionReadiness={true}
-                backdropCharacters={characters.map(c => ({ id: c.id, name: c.name, description: c.description, appearance: c.appearance }))}
-                onBackdropGenerated={handleBackdropGenerated}
-                onInsertBackdropSegment={handleInsertBackdropSegment}
-                onObjectGenerated={handleObjectGenerated}
-                screenplayContext={{
-                  genre: project?.genre,
-                  tone: project?.tone || project?.metadata?.filmTreatmentVariant?.tone_description || project?.metadata?.filmTreatmentVariant?.tone,
-                  setting: project?.metadata?.filmTreatmentVariant?.setting,
-                  logline: script?.logline || project?.description,
-                  visualStyle: project?.metadata?.filmTreatmentVariant?.visual_style || project?.metadata?.filmTreatmentVariant?.style,
-                }}
-                // New scene reference management props (intelligent prompt builder)
-                onGenerateSceneReferenceImage={handleGenerateSceneReferenceImage}
-                onUploadSceneReferenceImage={handleUploadSceneReferenceImage}
-                onAddSceneReferenceToLibrary={handleAddSceneReferenceToLibrary}
-                generatingReferenceForScene={generatingSceneReferenceIndex}
-                generatingDirectionForScene={generatingSceneDirectionIndex}
-                onGenerateSceneDirection={handleGenerateSceneDirection}
-                onGenerateAllSceneReferences={handleGenerateAllSceneReferences}
-                isGeneratingAllSceneReferences={isGeneratingAllSceneReferences}
-                // Legacy props for backward compatibility
-                onGenerateSceneImage={(sceneIdx) => handleGenerateSceneImage(sceneIdx, undefined, { excludeCharacters: true })}
-                onUploadSceneImage={handleUploadScene}
-                generatingImageForScene={generatingKeyframeSceneNumber !== null ? generatingKeyframeSceneNumber - 1 : null}
-                onGenerateAllSceneImages={handleGenerateAllImages}
-                isGeneratingAllSceneImages={isGeneratingAllImages}
-                onAddToReferenceLibrary={handleAddToReferenceLibrary}
-                // Location references for visual consistency
-                locationReferences={locationReferences}
-                onRemoveLocationReference={handleRemoveLocationReference}
-                onUpdateLocationReferences={handleUpdateLocationReferences}
-                onGenerateLocationImage={handleGenerateLocationImage}
-                onGenerateLocationImageWithPrompt={handleGenerateLocationImageWithPrompt}
-                onUploadLocationImage={handleUploadLocationImage}
-                generatingLocationId={generatingLocationId}
-                onExpressGenerateReferences={handleExpressGenerateReferences}
-                isExpressGeneratingReferences={isExpressGeneratingReferences}
-                audienceScores={sidebarReviewScores}
-                audienceReviewDetails={sidebarAudienceReviewDetails}
-                isGeneratingReviews={isGeneratingReviews}
-                onGenerateReviews={handleGenerateReviews}
-                onOpenReviewModal={() => setShowReviewModal(true)}
-              />
-            </div>
-          </Panel>
-        </PanelGroup>
+              }}
+              variant="outline"
+              className="w-full shrink-0 text-amber-600 border-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Merge Duplicates ({findPotentialDuplicates(characters).reduce((sum, group) => sum + group.length - 1, 0)} duplicate{findPotentialDuplicates(characters).reduce((sum, group) => sum + group.length - 1, 0) !== 1 ? 's' : ''})
+            </Button>
+          ) : null
+        }
+        projectId={projectId}
+        seriesId={project?.series_id}
+        seriesTitle={seriesInfo?.seriesTitle}
+        seriesBibleVersion={seriesInfo?.seriesBibleVersion}
+        projectBibleVersion={
+          (project?.metadata as { seriesBibleRef?: { version?: string } } | undefined)
+            ?.seriesBibleRef?.version
+        }
+        onReferenceLibrarySynced={() => loadProject(true)}
+        characters={characters}
+        onRegenerateCharacter={handleRegenerateCharacter}
+        onGenerateCharacter={handleGenerateCharacter}
+        onUploadCharacter={handleUploadCharacter}
+        onApproveCharacter={handleApproveCharacter}
+        onUpdateCharacterAttributes={handleUpdateCharacterAttributes}
+        onUpdateCharacterVoice={handleUpdateCharacterVoice}
+        onUpdateCharacterEdgeVoice={handleUpdateCharacterEdgeVoice}
+        onUpdateCharacterAppearance={handleUpdateCharacterAppearance}
+        onUpdateCharacterName={handleUpdateCharacterName}
+        onUpdateCharacterRole={handleUpdateCharacterRole}
+        onUpdateCharacterWardrobe={handleUpdateCharacterWardrobe}
+        onBatchUpdateWardrobes={handleBatchUpdateWardrobes}
+        onAddCharacter={handleAddCharacter}
+        onRemoveCharacter={handleRemoveCharacter}
+        ttsProvider={ttsProvider}
+        uploadingRef={uploadingRef}
+        setUploadingRef={setUploadingRef}
+        sceneReferences={sceneReferences}
+        objectReferences={objectReferences}
+        onCreateReference={(type, payload) => handleCreateReference(type, payload)}
+        onRemoveReference={(type, referenceId) => handleRemoveReference(type, referenceId)}
+        onUpdateReferenceImage={handleUpdateReferenceImage}
+        onEditCharacterImage={handleEditCharacterImage}
+        onApplyEnhancedReference={handleApplyEnhancedReference}
+        scenes={script?.script?.scenes || []}
+        allScenes={script?.script?.scenes || []}
+        showProductionReadiness={true}
+        backdropCharacters={characters.map(c => ({ id: c.id, name: c.name, description: c.description, appearance: c.appearance }))}
+        onBackdropGenerated={handleBackdropGenerated}
+        onInsertBackdropSegment={handleInsertBackdropSegment}
+        onObjectGenerated={handleObjectGenerated}
+        screenplayContext={{
+          genre: project?.genre,
+          tone: project?.tone || project?.metadata?.filmTreatmentVariant?.tone_description || project?.metadata?.filmTreatmentVariant?.tone,
+          setting: project?.metadata?.filmTreatmentVariant?.setting,
+          logline: script?.logline || project?.description,
+          visualStyle: project?.metadata?.filmTreatmentVariant?.visual_style || project?.metadata?.filmTreatmentVariant?.style,
+        }}
+        onGenerateSceneReferenceImage={handleGenerateSceneReferenceImage}
+        onUploadSceneReferenceImage={handleUploadSceneReferenceImage}
+        onAddSceneReferenceToLibrary={handleAddSceneReferenceToLibrary}
+        generatingReferenceForScene={generatingSceneReferenceIndex}
+        generatingDirectionForScene={generatingSceneDirectionIndex}
+        onGenerateSceneDirection={handleGenerateSceneDirection}
+        onGenerateAllSceneReferences={handleGenerateAllSceneReferences}
+        isGeneratingAllSceneReferences={isGeneratingAllSceneReferences}
+        onGenerateSceneImage={(sceneIdx) => handleGenerateSceneImage(sceneIdx, undefined, { excludeCharacters: true })}
+        onUploadSceneImage={handleUploadScene}
+        generatingImageForScene={generatingKeyframeSceneNumber !== null ? generatingKeyframeSceneNumber - 1 : null}
+        onGenerateAllSceneImages={handleGenerateAllImages}
+        isGeneratingAllSceneImages={isGeneratingAllImages}
+        onAddToReferenceLibrary={handleAddToReferenceLibrary}
+        locationReferences={locationReferences}
+        onRemoveLocationReference={handleRemoveLocationReference}
+        onUpdateLocationReferences={handleUpdateLocationReferences}
+        onGenerateLocationImage={handleGenerateLocationImage}
+        onGenerateLocationImageWithPrompt={handleGenerateLocationImageWithPrompt}
+        onUploadLocationImage={handleUploadLocationImage}
+        generatingLocationId={generatingLocationId}
+        onExpressGenerateReferences={handleExpressGenerateReferences}
+        isExpressGeneratingReferences={isExpressGeneratingReferences}
+      />
       </div>
       
       {/* Generation Progress Indicator */}
