@@ -35,6 +35,11 @@ import {
   resolveSceneHeadshotsForBeatCharacters,
   WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION,
 } from '@/lib/character/sceneCharacterHeadshot'
+import {
+  formatVisualExpressionCue,
+  parsePerformanceCue,
+  stripAllCues,
+} from '@/lib/scene/performanceCues'
 
 export const maxDuration = 120 // 2 minutes for potentially generating both frames
 export const runtime = 'nodejs'
@@ -71,13 +76,16 @@ export function resolveCharacterEmotionForBeat(
 ): string | undefined {
   if (!segmentContent) return undefined
 
-  const dialogueEmotions = (segmentContent.dialogueLines || [])
-    .filter((line) => line.character?.toLowerCase() === characterName.toLowerCase())
-    .map((line) => line.emotion?.trim())
-    .filter(Boolean) as string[]
+  const matchingLines = (segmentContent.dialogueLines || []).filter(
+    (line) => line.character?.toLowerCase() === characterName.toLowerCase()
+  )
 
-  if (dialogueEmotions.length) {
-    return dialogueEmotions[dialogueEmotions.length - 1]
+  for (let i = matchingLines.length - 1; i >= 0; i--) {
+    const line = matchingLines[i]
+    if (line.emotion?.trim()) return line.emotion.trim()
+    const lineText = ('text' in line ? line.text : (line as { line?: string }).line) || ''
+    const fromCue = parsePerformanceCue(lineText).visualExpression
+    if (fromCue) return fromCue
   }
 
   return segmentContent.emotionalArc?.end?.trim() || segmentContent.emotionalArc?.start?.trim()
@@ -404,7 +412,11 @@ export async function POST(req: NextRequest) {
     })
     
     // Use custom prompt if provided, otherwise fall back to action prompt
-    const effectivePrompt = customPrompt?.trim() || actionPrompt
+    const rawEffectivePrompt = customPrompt?.trim() || actionPrompt
+    const expressionCue = formatVisualExpressionCue(rawEffectivePrompt)
+    const effectivePrompt = expressionCue
+      ? `${stripAllCues(rawEffectivePrompt)}. ${expressionCue}`
+      : stripAllCues(rawEffectivePrompt)
 
     // Get user session for authentication
     const session = await getServerSession(authOptions)

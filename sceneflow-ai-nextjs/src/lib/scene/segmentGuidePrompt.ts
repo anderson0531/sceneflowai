@@ -1,4 +1,4 @@
-import { splitEmotionPrefix } from '@/lib/scene/translateGuideDialogue'
+import { parsePerformanceCue } from '@/lib/scene/performanceCues'
 
 /**
  * Shared Veo guide prompt composition for segment dialogue + direction.
@@ -355,50 +355,27 @@ export function composeGuidePromptFromElements(
     dialogues.forEach((d) => {
       const portion = textFor(d)
       const charName = d.character || 'The character'
-      const { emotion: leadingEmotionTag, body: afterEmotionTag } = splitEmotionPrefix(portion)
+      const parenthetical = (d as { parenthetical?: string }).parenthetical
+      const parsed = parsePerformanceCue(portion)
       const emotion =
-        extractDialoguePerformance(afterEmotionTag || portion, undefined) ||
-        (leadingEmotionTag ? leadingEmotionTag.toLowerCase() : '')
+        extractDialoguePerformance(parsed.spokenText || portion, parenthetical) ||
+        parsed.deliveryProse
 
-      let cleanDialogue = (afterEmotionTag || portion).replace(/\(.*?\)/g, '').trim()
+      let cleanDialogue = parsed.spokenText || (portion || '').replace(/\(.*?\)/g, '').trim()
       const words = cleanDialogue.split(/\s+/)
       const truncatedText =
         words.length > 60 ? words.slice(0, 60).join(' ') + '...' : cleanDialogue
-
-      let emotionPhrase = ''
-      if (emotion) {
-        const e = emotion.toLowerCase()
-        emotionPhrase = e.includes('whisper')
-          ? 'in a whisper'
-          : e.includes('shout')
-            ? 'loudly'
-            : e.includes('sad')
-              ? 'with sadness'
-              : e.includes('angry')
-                ? 'angrily'
-                : e.includes('happy')
-                  ? 'happily'
-                  : e.includes('fear')
-                    ? 'fearfully'
-                    : e.includes('tired')
-                      ? 'wearily'
-                      : emotion.toLowerCase()
-      }
 
       const voiceDesc =
         d.characterAge || d.characterGender
           ? `, ${getCharacterVoiceStyle(d.characterAge, d.characterGender)},`
           : ''
 
-      const speakPhrase = emotionPhrase
-        ? `${charName}${voiceDesc} speaks the following line ${emotionPhrase}:`
+      const speakPhrase = emotion
+        ? `${charName}${voiceDesc} speaks the following line (${emotion}):`
         : `${charName}${voiceDesc} speaks the following line:`
 
-      const quotedLine = leadingEmotionTag
-        ? `[${leadingEmotionTag}] ${truncatedText}`
-        : truncatedText
-
-      visualParts.push(`${speakPhrase} '${quotedLine}'`)
+      visualParts.push(`${speakPhrase} '${truncatedText}'`)
     })
   }
 

@@ -6,6 +6,7 @@
  */
 
 import type { SceneSegment } from '@/components/vision/scene-production/types'
+import { parsePerformanceCue } from '@/lib/scene/performanceCues'
 
 /**
  * Normalize ellipsis and repeated-dot patterns before sending text to Vertex Veo.
@@ -96,8 +97,11 @@ export function neutralizeFtvGuidePrompt(guide: string): string {
   if (!g) return ''
 
   g = g.replace(
-    /^[^\n]*?\bspeaks the following line\b[^:\n]*:/gim,
-    'Deliver with natural lip sync:'
+    /^([^\n]*?\bspeaks the following line\b)(\s*\([^)]+\))?\s*:/gim,
+    (_match, prefix: string, deliveryPart?: string) => {
+      const deliveryHint = deliveryPart?.trim() ? ` ${deliveryPart.trim()}` : ''
+      return `Deliver with natural lip sync${deliveryHint}:`
+    }
   )
   g = g.replace(/\n\[Scene Direction\][\s\S]*?(?=\n\[|$)/gi, '\n')
   g = stripFtvDelimitedSections(g)
@@ -149,9 +153,11 @@ export function buildMinimalFtvPerformPrompt(
       .filter((d) => d?.line?.trim())
       .map((d) => {
         const name = (d.character || 'Speaker').trim()
-        const stripped = d.line.trim().replace(/^["'\u201c\u201d]+|["'\u201c\u201d]+$/g, '')
-        const raw = normalizeVeoSuspiciousPunctuation(stripped)
-        return `${name} speaks, "${escapeDialogueForDoubleQuotes(raw)}"`
+        const parsed = parsePerformanceCue(d.line.trim())
+        const spoken = parsed.spokenText.replace(/^["'\u201c\u201d]+|["'\u201c\u201d]+$/g, '')
+        const raw = normalizeVeoSuspiciousPunctuation(spoken)
+        const delivery = parsed.deliveryProse ? ` Delivery: ${parsed.deliveryProse}.` : ''
+        return `${name} speaks, "${escapeDialogueForDoubleQuotes(raw)}".${delivery}`
       })
     if (parts.length > 0) return normalizeVeoSuspiciousPunctuation(parts.join('\n'))
   }

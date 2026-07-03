@@ -45,7 +45,9 @@ import {
   buildWardrobeDiptychReferenceLabel,
   DIPTYCH_REPRODUCTION_NEGATIVE_PROMPT,
   WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION,
+  mergeBeatFrameNegativePrompt,
 } from '@/lib/character/sceneCharacterHeadshot'
+import { formatVisualExpressionCue, stripAllCues } from '@/lib/scene/performanceCues'
 import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
 import {
   buildLocationReferencePromptLine,
@@ -484,6 +486,7 @@ export async function POST(req: NextRequest) {
             imageSize: '1K',
             editIntent: 'keyframeEnd',
             segmentDurationSeconds: durationSeconds,
+            negativePrompt: mergeBeatFrameNegativePrompt(),
           })
 
           const imageUrl = await uploadImageToBlob(
@@ -1155,6 +1158,7 @@ export async function POST(req: NextRequest) {
     
     let optimizedPrompt: string
     let usedAIIntelligence = false
+    let aiNegativePromptAdditions: string[] = []
     /** Subset of characterReferences whose refs are sent to the image model (may be filtered after AI prompt). */
     let characterReferencesForImages = characterReferences
     
@@ -1331,7 +1335,9 @@ export async function POST(req: NextRequest) {
         beatKind: beatKindForIntelligence,
         beatIndex: isBeatFrame ? effectiveBeatIndex : undefined,
         totalBeats: isBeatFrame ? getSceneBeats(sceneData as Record<string, unknown>).length : undefined,
-        beatAction: beatForIntelligence?.actionDescription || beatForIntelligence?.line,
+        beatAction: stripAllCues(
+          beatForIntelligence?.actionDescription || beatForIntelligence?.line || ''
+        ),
         beatRole: beatForIntelligence?.beatRole,
         directionMetadata,
         characters: characterContexts,
@@ -1340,6 +1346,10 @@ export async function POST(req: NextRequest) {
         artStyle: artStyle || 'photorealistic',
         referenceImageCount: totalAvailableRefImages,
       })
+
+      if (aiResult.negativePromptAdditions?.length) {
+        aiNegativePromptAdditions = aiResult.negativePromptAdditions
+      }
       
       // Apply AI selections if auto-detect was enabled
       if (aiResult.usedAI) {
@@ -1469,6 +1479,17 @@ export async function POST(req: NextRequest) {
 
     console.log('[Scene Image] Optimized prompt preview:', optimizedPrompt.substring(0, 150))
 
+    const beatLineForExpression =
+      isBeatFrame && sceneData
+        ? getSceneBeats(sceneData as Record<string, unknown>)[effectiveBeatIndex]?.line
+        : undefined
+    if (beatLineForExpression) {
+      const expressionCue = formatVisualExpressionCue(beatLineForExpression)
+      if (expressionCue && !optimizedPrompt.includes('Facial expression:')) {
+        optimizedPrompt = `${optimizedPrompt.trim()} ${expressionCue}`
+      }
+    }
+
     // Build character references using Blob URLs
     // Filter for characters that have reference images
     const charactersWithImages = characterObjects.filter((c: any) => c.referenceImage)
@@ -1587,7 +1608,10 @@ export async function POST(req: NextRequest) {
     if (hasAnyDiptychRef) {
       negativePromptParts.push(DIPTYCH_REPRODUCTION_NEGATIVE_PROMPT)
     }
-    const finalNegativePrompt = negativePromptParts.join(', ')
+    if (aiNegativePromptAdditions.length) {
+      negativePromptParts.push(...aiNegativePromptAdditions)
+    }
+    const finalNegativePrompt = mergeBeatFrameNegativePrompt(negativePromptParts.join(', '))
     
     console.log(`[Scene Image] Negative prompt includes ${characterSpecificNegatives.length} character-specific exclusions (facial features only)`)
 

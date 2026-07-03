@@ -51,6 +51,10 @@ import type { BeatReferenceSelection } from '@/lib/script/segmentTypes'
 import type { StoryboardFrameSlot } from '@/lib/storyboard/types'
 import { mapBeatReferenceSelectionForApi } from '@/lib/vision/beatFrameGenerationContext'
 import {
+  findPreviousChainSegment,
+  resolveVeoRefForExtension,
+} from '@/lib/video/veoChainQueue'
+import {
   GALLERY_DIRECT_GENERATE_OPTS,
   GALLERY_MANUAL_GENERATE_OPTS,
 } from '@/lib/vision/galleryImageGeneration'
@@ -2979,17 +2983,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             ? visionScene.imageUrl.trim()
             : undefined
 
+        const segmentsForChain = currentProduction?.segments ?? []
         const prevSeg =
-          segmentIndexForApi > 0 ? currentProduction?.segments[segmentIndexForApi - 1] : undefined
+          segmentIndexForApi > 0 ? segmentsForChain[segmentIndexForApi - 1] : undefined
+        const chainPrevSeg = findPreviousChainSegment(segmentsForChain, segment)
+        const chainRefSource = chainPrevSeg ?? prevSeg
         const previousSegmentAssetUrl =
-          prevSeg?.activeAssetUrl && prevSeg.assetType === 'video'
-            ? prevSeg.activeAssetUrl
+          chainRefSource?.activeAssetUrl && chainRefSource.assetType === 'video'
+            ? chainRefSource.activeAssetUrl
             : undefined
         const previousSegmentVeoRef =
-          options?.previousSegmentVeoRef ?? prevSeg?.takes?.[0]?.veoVideoRef
+          options?.previousSegmentVeoRef ??
+          resolveVeoRefForExtension(segmentsForChain, segment) ??
+          chainPrevSeg?.takes?.[0]?.veoVideoRef ??
+          prevSeg?.takes?.[0]?.veoVideoRef
+        const previousSegmentVeoRefExpiry =
+          chainPrevSeg?.takes?.[0]?.veoVideoRefExpiry ?? prevSeg?.takes?.[0]?.veoVideoRefExpiry
 
         const autoExtContinuation =
-          segment.veoTimelineContinuation && previousSegmentVeoRef && !options?.generationMethod
+          (segment.veoTimelineContinuation ||
+            segment.generationMethod === 'EXT') &&
+          previousSegmentVeoRef &&
+          !options?.generationMethod
         const rawGenerationMethod =
           options?.generationMethod ||
           (autoExtContinuation ? 'EXT' : undefined) ||
@@ -3036,6 +3051,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             sceneImageUrl: sceneImageUrlForApi,
             previousSegmentAssetUrl,
             previousSegmentVeoRef,
+            previousSegmentVeoRefExpiry,
             isEstablishingShot: segment.isEstablishingShot,
             beatId: segment.beatId,
             // Pass video-specific options from prompt builder
@@ -3156,6 +3172,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               durationSec: measuredDuration ?? segment.endTime - segment.startTime,
               // Store Veo video reference for future video extension
               veoVideoRef: data.veoVideoRef,
+              veoVideoRefExpiry: data.veoVideoRefExpiry,
               stemSeparation: data.stemSeparation
                 ? {
                     ...data.stemSeparation,

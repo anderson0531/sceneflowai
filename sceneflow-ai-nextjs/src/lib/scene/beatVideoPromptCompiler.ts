@@ -3,6 +3,7 @@
  */
 
 import { getArtStyleNegativeTerms, getArtStylePromptSuffix } from '@/lib/vision/artStyle'
+import { parsePerformanceCue } from '@/lib/scene/performanceCues'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type {
   DetailedSceneDirection,
@@ -99,8 +100,12 @@ export function compileBeatVideoPrompt(
     prompt = `Atmospheric visual scene supporting voiceover mood. Subtle environmental motion. No on-screen text. ${styleSuffix}`
   } else {
     const character = beat.character ?? 'Character'
-    const cleanLine = line.replace(/\[[^\]]*\]/g, '').trim()
-    prompt = `${character} speaks naturally: "${cleanLine.replace(/"/g, "'")}". Subtle facial expression and body language. ${styleSuffix}`
+    const parsed = parsePerformanceCue(line)
+    const cleanLine = parsed.spokenText.replace(/"/g, "'")
+    const deliverySuffix = parsed.deliveryProse
+      ? ` Delivery: ${parsed.deliveryProse}.`
+      : ''
+    prompt = `${character} speaks naturally: "${cleanLine}".${deliverySuffix} Subtle facial expression and body language. ${styleSuffix}`
   }
 
   const negativePrompt = `${BASE_NEGATIVES}, ${styleNegative}`

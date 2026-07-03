@@ -499,6 +499,8 @@ async function generateWithGemini(
     provider: 'gemini',
     wasFailover,
     wasContentPolicyFallback,
+    veoVideoRef: result.veoVideoRef,
+    veoVideoRefExpiry: result.veoVideoRefExpiry,
   }
 }
 

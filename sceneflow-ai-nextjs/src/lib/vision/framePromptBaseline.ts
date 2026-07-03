@@ -1,3 +1,5 @@
+import { stripAllCues } from '@/lib/scene/performanceCues'
+
 export type FramePromptType = 'start' | 'end' | 'both'
 
 export interface FramePromptSegmentLike {
@@ -28,13 +30,15 @@ function normalize(value?: string | null): string {
 
 export function stripDialoguePrompt(text: string): string {
   if (!text) return text
-  return text
+  let result = stripAllCues(text)
+  result = result
     // Replace " speaks, '...'" with a period to leave just the character name (e.g. "Sarah.")
     .replace(/\s+(?:speaks|says)[,:]?\s*(?:"[^"]+"|'[^']+')[.!?]?/gi, '.')
     // Clean up empty sentences or stray punctuation that might be left behind
     .replace(/\s*\.\s*\./g, '.')
     .replace(/\s{2,}/g, ' ')
     .trim()
+  return result
 }
 
 /**

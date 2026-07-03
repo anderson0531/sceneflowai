@@ -52,6 +52,7 @@ interface GenerateAssetRequest {
   sceneImageUrl?: string
   previousSegmentAssetUrl?: string
   previousSegmentVeoRef?: string
+  previousSegmentVeoRefExpiry?: string
   isEstablishingShot?: boolean
   // Audio context for atmospheric guidance (Veo 3.1 native dialogue / ambience)
   audioContext?: {
@@ -103,6 +104,7 @@ export async function POST(
       sceneImageUrl,
       previousSegmentAssetUrl,
       previousSegmentVeoRef,
+      previousSegmentVeoRefExpiry,
       isEstablishingShot = false,
       // Audio context for atmospheric guidance
       audioContext,
@@ -207,6 +209,7 @@ export async function POST(
         endFrameUrl,
         sourceVideoUrl,
         previousSegmentVeoRef,
+        previousSegmentVeoRefExpiry,
         previousSegmentAssetUrl,
         referenceImages,
         sceneImageUrl,

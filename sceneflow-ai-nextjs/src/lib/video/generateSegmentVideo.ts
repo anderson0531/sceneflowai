@@ -20,6 +20,7 @@ import {
   type MethodSelectionResult,
 } from '@/lib/vision/intelligentMethodSelection'
 import { getQualityForMethod, DEFAULT_VEO_CLIP_DURATION, type VeoClipDuration } from '@/lib/config/modelConfig'
+import { isVeoVideoRefValid } from '@/lib/gemini/geminiStudioVideoClient'
 import { appendFtvTransitionStabilityTokens } from '@/lib/vision/ftvTransitionStability'
 import {
   FTV_MINIMAL_NATIVE_AUDIO_HINT,
@@ -60,6 +61,7 @@ export interface GenerateSegmentVideoInput {
   endFrameUrl?: string
   sourceVideoUrl?: string
   previousSegmentVeoRef?: string
+  previousSegmentVeoRefExpiry?: string
   previousSegmentAssetUrl?: string
   referenceImages?: Array<{ url: string; type: 'style' | 'character' }>
   sceneImageUrl?: string
@@ -122,6 +124,7 @@ export async function generateSegmentVideoCore(
     endFrameUrl,
     sourceVideoUrl,
     previousSegmentVeoRef,
+    previousSegmentVeoRefExpiry,
     previousSegmentAssetUrl,
     referenceImages,
     sceneImageUrl,
@@ -216,7 +219,20 @@ export async function generateSegmentVideoCore(
   }
 
   if (method === 'EXT') {
-    const veoRefToUse = sourceVideoUrl || previousSegmentVeoRef
+    let veoRefToUse = sourceVideoUrl || previousSegmentVeoRef
+    if (
+      veoRefToUse &&
+      previousSegmentVeoRefExpiry &&
+      !isVeoVideoRefValid(previousSegmentVeoRefExpiry)
+    ) {
+      console.warn('[Segment Video] Veo extension ref expired (48h cache window)')
+      if (requireVeoRefForExt) {
+        throw new SegmentVideoExtRefRequiredError(
+          'Veo extension reference expired (~48h). Regenerate the previous part in the chain, then retry.'
+        )
+      }
+      veoRefToUse = undefined
+    }
     if (veoRefToUse) {
       videoOptions.sourceVideo = veoRefToUse
     } else if (requireVeoRefForExt) {

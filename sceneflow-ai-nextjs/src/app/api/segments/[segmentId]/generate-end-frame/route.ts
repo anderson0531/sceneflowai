@@ -7,6 +7,7 @@ import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
 import { CreditService } from '@/services/CreditService'
 import { trackCost } from '@/lib/credits/costTracking'
 import { buildPreVisEndFrameEditInstruction } from '@/lib/vision/framePromptBaseline'
+import { mergeBeatFrameNegativePrompt } from '@/lib/character/sceneCharacterHeadshot'
 
 export const maxDuration = 60 // 1 minute for image generation
 export const runtime = 'nodejs'
@@ -92,6 +93,7 @@ export async function POST(
       imageSize: '1K',
       editIntent: 'keyframeEnd',
       segmentDurationSeconds: segmentDuration,
+      negativePrompt: mergeBeatFrameNegativePrompt(),
     })
 
     const endFrameUrl = await uploadImageToBlob(

@@ -1,8 +1,7 @@
 /**
- * Veo 3.1 continuous beat planning: initial clip (4–8s) + chained extensions (+7s each).
+ * Veo 3.1 continuous beat planning: initial clip (4–10s) + chained extensions (+8s each).
  *
- * Gemini API: extension requires durationSeconds=8, 720p, Veo-generated sourceVideo ref.
- * Planning values 10/12 in veoDuration.ts are not used on the EXT path.
+ * Gemini Omni Flash: extension uses 10s clips, 720p, Veo-generated sourceVideo ref.
  */
 
 import {
@@ -12,18 +11,19 @@ import {
   VEO_DIALOGUE_CLIP_MAX_SEC,
 } from '@/lib/scene/dialogueSegmentSplit'
 import { snapToVeoDuration } from '@/lib/scene/veoDuration'
+import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
 
-/** Seconds added to timeline per Veo extension API call. */
-export const VEO_EXTENSION_DELTA_SEC = 7
+/** Seconds added to timeline per Veo extension API call (Omni 10s clips). */
+export const VEO_EXTENSION_DELTA_SEC = 8
 
 /** Max initial generation length for extension-first dialogue chains. */
-export const VEO_INITIAL_CLIP_MAX_SEC = 8
+export const VEO_INITIAL_CLIP_MAX_SEC = 10
 
 /**
  * Spoken dialogue budget per initial clip before chaining EXT steps.
- * Split/planning uses 6s; Gemini EXT API still sends 8s per call (+7s timeline each).
+ * Split/planning uses 8s spoken budget; API sends 10s per Omni clip.
  */
-export const VEO_SPOKEN_CHUNK_SEC = 6
+export const VEO_SPOKEN_CHUNK_SEC = 8
 
 /** Max chained extensions per beat (Gemini API limit ~20). */
 export const VEO_MAX_EXTENSIONS_PER_BEAT = 20
@@ -35,8 +35,8 @@ export interface VeoChainPartPlan {
   partCount: number
   excerpt: string
   method: VeoChainPartMethod
-  /** Requested duration for API (8 for EXT per Gemini requirement). */
-  requestedDurationSeconds: 4 | 6 | 8
+  /** Requested duration for API (10 for EXT on Omni). */
+  requestedDurationSeconds: 4 | 6 | 8 | 10
   /** Timeline contribution for segment startTime/endTime. */
   timelineSeconds: number
   chainMethod: 'initial' | 'extension'
@@ -121,7 +121,7 @@ export function planVeoExtensionChain(
     partCount,
     excerpt: excerpts[0] ?? '',
     method: initialMethod,
-    requestedDurationSeconds: 8,
+    requestedDurationSeconds: DEFAULT_VEO_CLIP_DURATION,
     timelineSeconds: initialTimeline,
     chainMethod: 'initial',
     estimatedSpokenSeconds: estimateSpokenDurationSeconds(excerpts[0] ?? ''),
@@ -135,7 +135,7 @@ export function planVeoExtensionChain(
       partCount,
       excerpt,
       method: 'EXT',
-      requestedDurationSeconds: 8,
+      requestedDurationSeconds: DEFAULT_VEO_CLIP_DURATION,
       timelineSeconds: VEO_EXTENSION_DELTA_SEC,
       chainMethod: 'extension',
       extensionStep: i + 1,

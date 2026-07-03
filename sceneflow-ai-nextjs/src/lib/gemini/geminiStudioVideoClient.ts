@@ -26,6 +26,15 @@ import {
   getVeoIncludeRaiReason,
   formatVeoRaiDetailsFromPayload,
 } from '@/lib/vertexai/safety'
+import {
+  buildOmniInteractionRequestBody,
+  extractVideoFromOmniInteraction,
+  formatOmniDuration,
+  isOmniInteractionOperation,
+  mapOmniInteractionStatus,
+  normalizeOmniInteractionId,
+  resolveOmniPreviousInteractionId,
+} from '@/lib/gemini/omniVideoInteractions'
 
 // ============================================================================
 // Types
@@ -159,6 +168,222 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
+/**
+ * Generate video using Gemini Omni Flash via Gemini API Interactions endpoint
+ */
+async function generateVideoWithOmniGeminiStudio(
+  prompt: string,
+  options: GeminiVideoOptions,
+  model: string,
+  quality: 'fast' | 'standard',
+  stabilityDuration: VeoClipDuration,
+  apiKey: string
+): Promise<GeminiVideoResult> {
+  const isFTV = !!options.startFrame && !!options.lastFrame
+  const isEXT = !!options.sourceVideo && !options.startFrame
+  let effectiveDuration: VeoClipDuration = options.durationSeconds ?? DEFAULT_VEO_CLIP_DURATION
+  if (isFTV || isEXT) {
+    effectiveDuration = stabilityDuration
+  } else if (options.durationSeconds) {
+    let duration = options.durationSeconds
+    if (![4, 6, 8, 10].includes(duration)) {
+      const snapped = duration <= 5 ? 4 : duration <= 7 ? 6 : duration <= 9 ? 8 : 10
+      duration = snapped as VeoClipDuration
+    }
+    effectiveDuration = duration
+  }
+
+  const previousInteractionId =
+    resolveOmniPreviousInteractionId(options.sourceVideo) ??
+    (isEXT ? options.sourceVideo : undefined)
+
+  if (isEXT && !previousInteractionId) {
+    console.warn(
+      '[Gemini Studio Omni] EXT requested but sourceVideo is not an interaction id — Omni uses previous_interaction_id'
+    )
+  }
+
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/interactions?key=${apiKey}`
+  const requestBody = await buildOmniInteractionRequestBody(model, prompt, {
+    aspectRatio: options.aspectRatio,
+    durationSeconds: effectiveDuration,
+    negativePrompt: options.negativePrompt,
+    startFrame: options.startFrame,
+    lastFrame: options.lastFrame,
+    referenceImages: options.referenceImages,
+    previousInteractionId,
+  })
+
+  console.log(`[Gemini Studio Omni] Generating via Interactions API with ${model} (quality: ${quality})`)
+  console.log('[Gemini Studio Omni] Request summary:', JSON.stringify({
+    aspectRatio: options.aspectRatio || '16:9',
+    duration: formatOmniDuration(effectiveDuration),
+    hasStartFrame: !!options.startFrame,
+    hasLastFrame: !!options.lastFrame,
+    hasPreviousInteraction: !!previousInteractionId,
+    referenceImagesCount: options.referenceImages?.length || 0,
+  }))
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('[Gemini Studio Omni] HTTP Status:', response.status)
+      console.error('[Gemini Studio Omni] Error response:', errorText)
+      let errOut = `Gemini Interactions API error ${response.status}: ${errorText}`
+      try {
+        const rai = formatVeoRaiDetailsFromPayload(JSON.parse(errorText))
+        if (rai) errOut += `\n\nResponsible AI / safety detail:\n${rai}`
+      } catch {
+        /* not json */
+      }
+      if (response.status === 429) {
+        setRateLimitCooldown(60000)
+        return {
+          status: 'FAILED',
+          error: 'Rate limit exceeded. Please wait 60 seconds and try again.',
+          estimatedWaitSeconds: 60,
+        }
+      }
+      return {
+        status: 'FAILED',
+        error: errOut.length > 1200 ? `${errOut.slice(0, 1200)}…` : errOut,
+      }
+    }
+
+    const data = (await response.json()) as Record<string, unknown>
+    console.log('[Gemini Studio Omni] Response:', JSON.stringify(data).substring(0, 500))
+
+    if (data.error) {
+      const errObj = data.error as Record<string, unknown>
+      let errMsg = String(errObj.message || 'Unknown Gemini Interactions error')
+      const rai = formatVeoRaiDetailsFromPayload(data)
+      if (rai) errMsg += `\n\nResponsible AI / safety detail:\n${rai}`
+      return { status: 'FAILED', error: errMsg }
+    }
+
+    const interactionId = typeof data.id === 'string' ? data.id : undefined
+    const status = mapOmniInteractionStatus(typeof data.status === 'string' ? data.status : undefined)
+
+    if (status === 'COMPLETED') {
+      const video = extractVideoFromOmniInteraction(data)
+      if (video?.videoUrl) {
+        return {
+          status: 'COMPLETED',
+          videoUrl: video.videoUrl,
+          videoBase64: video.videoBase64,
+          mimeType: video.mimeType,
+          veoVideoRef: video.veoVideoRef,
+          veoVideoRefExpiry: video.veoVideoRefExpiry,
+          operationName: interactionId ? `interaction:${interactionId}` : 'completed',
+        }
+      }
+      return { status: 'FAILED', error: 'Omni interaction completed but no video was returned' }
+    }
+
+    if (status === 'FAILED') {
+      return {
+        status: 'FAILED',
+        error: String((data as { error?: { message?: string } }).error?.message || 'Omni video generation failed'),
+      }
+    }
+
+    if (!interactionId) {
+      return { status: 'FAILED', error: 'No interaction ID returned from Gemini Interactions API' }
+    }
+
+    return {
+      status: 'QUEUED',
+      operationName: `interaction:${interactionId}`,
+      estimatedWaitSeconds: 120,
+    }
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to initiate Omni video generation'
+    console.error('[Gemini Studio Omni] Request error:', error)
+    return { status: 'FAILED', error: message }
+  }
+}
+
+/**
+ * Poll Gemini API Interactions endpoint for Omni video status
+ */
+async function checkOmniGeminiInteractionStatus(
+  operationName: string,
+  apiKey: string
+): Promise<GeminiVideoResult> {
+  const interactionId = normalizeOmniInteractionId(operationName)
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/interactions/${encodeURIComponent(interactionId)}?key=${apiKey}`
+
+  console.log('[Gemini Studio Omni] Checking interaction status:', interactionId)
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('[Gemini Studio Omni] Status check error:', errorText)
+      return {
+        status: 'FAILED',
+        error: `Omni interaction status check failed: ${response.status}`,
+      }
+    }
+
+    const data = (await response.json()) as Record<string, unknown>
+    console.log('[Gemini Studio Omni] Status response:', JSON.stringify(data).substring(0, 500))
+
+    if (data.error) {
+      const errObj = data.error as Record<string, unknown>
+      let errMsg = String(errObj.message || 'Generation failed')
+      const rai = formatVeoRaiDetailsFromPayload(data)
+      if (rai) errMsg += `\n\nResponsible AI / safety detail:\n${rai}`
+      return { status: 'FAILED', error: errMsg, operationName }
+    }
+
+    const mappedStatus = mapOmniInteractionStatus(typeof data.status === 'string' ? data.status : undefined)
+
+    if (mappedStatus === 'FAILED') {
+      return {
+        status: 'FAILED',
+        error: String((data as { error?: { message?: string } }).error?.message || 'Omni video generation failed'),
+        operationName,
+      }
+    }
+
+    if (mappedStatus === 'COMPLETED') {
+      const video = extractVideoFromOmniInteraction(data)
+      if (video?.videoUrl) {
+        return {
+          status: 'COMPLETED',
+          videoUrl: video.videoUrl,
+          videoBase64: video.videoBase64,
+          mimeType: video.mimeType,
+          veoVideoRef: video.veoVideoRef,
+          veoVideoRefExpiry: video.veoVideoRefExpiry,
+          operationName,
+        }
+      }
+      return { status: 'FAILED', error: 'Omni interaction completed but no video was returned', operationName }
+    }
+
+    return {
+      status: mappedStatus === 'QUEUED' ? 'QUEUED' : 'PROCESSING',
+      operationName,
+    }
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to check Omni interaction status'
+    console.error('[Gemini Studio Omni] Status check error:', error)
+    return { status: 'FAILED', error: message }
+  }
+}
+
 // ============================================================================
 // Main Video Generation Function
 // ============================================================================
@@ -194,7 +419,13 @@ export async function generateVideoWithGeminiStudio(
   const model = getVeoModel(quality)
   const usingOmni = isOmniVideoModel(model)
   const stabilityDuration: VeoClipDuration = usingOmni ? 10 : 8
-  // Use the Gemini API predictLongRunning endpoint for video generation
+
+  // Gemini Omni Flash requires the Interactions API (not predictLongRunning)
+  if (usingOmni) {
+    return generateVideoWithOmniGeminiStudio(prompt, options, model, quality, stabilityDuration, apiKey)
+  }
+
+  // Use the Gemini API predictLongRunning endpoint for legacy Veo video generation
   // Based on Python SDK: google/genai/models.py _generate_videos method
   // The endpoint is :predictLongRunning, same as Vertex but with different auth
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:predictLongRunning?key=${apiKey}`
@@ -558,8 +789,13 @@ export async function checkGeminiVideoStatus(
   if (!apiKey) {
     throw new Error('Missing GEMINI_API_KEY environment variable')
   }
+
+  // Omni Flash interactions are polled via GET /v1beta/interactions/{id}
+  if (isOmniInteractionOperation(operationName)) {
+    return checkOmniGeminiInteractionStatus(operationName, apiKey)
+  }
   
-  // Poll operation status using the operations endpoint
+  // Poll legacy Veo predictLongRunning operation status
   // Format: https://generativelanguage.googleapis.com/v1beta/{operationName}?key={apiKey}
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/${operationName}?key=${apiKey}`
   

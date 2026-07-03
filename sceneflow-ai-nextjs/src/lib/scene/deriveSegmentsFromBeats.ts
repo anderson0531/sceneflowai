@@ -8,6 +8,7 @@ import {
   resolveBeatSpokenDuration,
   VEO_DIALOGUE_CLIP_MAX_SEC,
 } from '@/lib/scene/dialogueSegmentSplit'
+import { parsePerformanceCue } from '@/lib/scene/performanceCues'
 import { snapToVeoDuration } from '@/lib/scene/veoDuration'
 import {
   planContinuousDialogueBeat,
@@ -67,8 +68,13 @@ function buildVideoPrompt(beat: SceneBeat, spokenText?: string): string {
     return `Visual backdrop for narration; atmospheric motion, no on-screen dialogue text`
   }
   const character = beat.character ?? 'Character'
-  const line = (spokenText ?? beat.line ?? '').replace(/"/g, "'")
-  return `${character} speaks with natural lip sync: "${line}"`
+  const rawLine = spokenText ?? beat.line ?? ''
+  const parsed = parsePerformanceCue(rawLine)
+  const line = parsed.spokenText.replace(/"/g, "'")
+  const deliverySuffix = parsed.deliveryProse
+    ? ` Delivery: ${parsed.deliveryProse}.`
+    : ''
+  return `${character} speaks with natural lip sync: "${line}".${deliverySuffix}`
 }
 
 function beatToSegment(

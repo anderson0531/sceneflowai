@@ -12,7 +12,15 @@ export const VEO_DIALOGUE_CLIP_MAX_SEC = 10
 /** Hard Veo 3.1 clip ceiling (action-only / narration backdrop). */
 export const VEO_ABSOLUTE_CLIP_MAX_SEC = 12
 
-export const SPOKEN_WORDS_PER_SECOND = 2.5
+export const SPOKEN_WORDS_PER_SECOND = 2.0
+
+/** Safety margin applied to spoken duration estimates (TTS + word-count). */
+export const SPOKEN_DURATION_SAFETY_MARGIN = 1.15
+
+export function applySpokenDurationMargin(seconds: number): number {
+  if (seconds <= 0) return 0
+  return Math.round(seconds * SPOKEN_DURATION_SAFETY_MARGIN * 10) / 10
+}
 
 export function estimateSpokenDurationSeconds(text: string): number {
   const spoken = stripDirectionBracketsForTiming(text || '')
@@ -65,7 +73,7 @@ export function resolveBeatSpokenDuration(
   if (beat.lineId?.trim()) {
     const byLineId = entries.find((entry) => entry.lineId === beat.lineId)
     if (typeof byLineId?.duration === 'number' && byLineId.duration > 0) {
-      return byLineId.duration
+      return applySpokenDurationMargin(byLineId.duration)
     }
   }
 
@@ -73,7 +81,7 @@ export function resolveBeatSpokenDuration(
   if (dialogueIdx >= 0) {
     const byIdx = entries.find((entry) => entry.dialogueIndex === dialogueIdx)
     if (typeof byIdx?.duration === 'number' && byIdx.duration > 0) {
-      return byIdx.duration
+      return applySpokenDurationMargin(byIdx.duration)
     }
   }
 
@@ -83,16 +91,16 @@ export function resolveBeatSpokenDuration(
       | undefined
     const langNarration = narrationAudio?.[language]
     if (typeof langNarration?.duration === 'number' && langNarration.duration > 0) {
-      return langNarration.duration
+      return applySpokenDurationMargin(langNarration.duration)
     }
   }
 
   if (typeof beat.durationSeconds === 'number' && beat.durationSeconds > 0) {
-    return beat.durationSeconds
+    return applySpokenDurationMargin(beat.durationSeconds)
   }
 
   const line = beat.line?.trim() ?? ''
-  return line ? estimateSpokenDurationSeconds(line) : 0
+  return line ? applySpokenDurationMargin(estimateSpokenDurationSeconds(line)) : 0
 }
 
 function packUnitsIntoChunks(

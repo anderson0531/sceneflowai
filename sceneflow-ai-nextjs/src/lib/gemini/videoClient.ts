@@ -11,6 +11,15 @@ import {
   logVeoPredictLongRunningSubmitDiagnostics,
   logVeoFetchPredictOperationResponseDiagnostics,
 } from '@/lib/gemini/veoRequestDiagnostics'
+import {
+  buildOmniInteractionRequestBody,
+  extractVideoFromOmniInteraction,
+  formatOmniDuration,
+  isOmniInteractionOperation,
+  mapOmniInteractionStatus,
+  normalizeOmniInteractionId,
+  resolveOmniPreviousInteractionId,
+} from '@/lib/gemini/omniVideoInteractions'
 
 /**
  * Get Google OAuth2 Bearer token for Vertex AI
@@ -175,7 +184,8 @@ interface VideoGenerationResult {
   status: 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED'
   operationName?: string
   videoUrl?: string
-  veoVideoRef?: string  // Gemini Files API reference (e.g., "files/xxx") for video extension
+  veoVideoRef?: string
+  veoVideoRefExpiry?: string
   error?: string
   estimatedWaitSeconds?: number
 }
@@ -197,6 +207,208 @@ async function urlToBase64(url: string): Promise<{ base64: string; mimeType: str
 }
 
 /**
+ * Generate video using Gemini Omni Flash via Vertex AI Interactions API
+ */
+async function generateVideoWithOmniInteractions(
+  prompt: string,
+  options: VideoGenerationOptions,
+  model: string,
+  quality: VeoQualityTier | 'standard',
+  stabilityDuration: VeoClipDuration
+): Promise<VideoGenerationResult> {
+  const project = process.env.VERTEX_PROJECT_ID
+  const location = process.env.VEO_LOCATION || 'us-central1'
+  if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
+
+  const isFTV = !!options.startFrame && !!options.lastFrame
+  const isEXT = !!options.sourceVideo && !options.startFrame
+  let effectiveDuration: VeoClipDuration = options.durationSeconds ?? DEFAULT_VEO_CLIP_DURATION
+  if (isFTV || isEXT) {
+    effectiveDuration = stabilityDuration
+  }
+
+  const previousInteractionId =
+    resolveOmniPreviousInteractionId(options.sourceVideo) ??
+    (isEXT ? options.sourceVideo : undefined)
+
+  if (isEXT && !previousInteractionId) {
+    console.warn(
+      '[Omni Video] EXT requested but sourceVideo is not an interaction id — Omni uses previous_interaction_id for continuation'
+    )
+  }
+
+  const endpoint = `https://${location}-aiplatform.googleapis.com/v1beta1/projects/${project}/locations/${location}/interactions`
+  const requestBody = await buildOmniInteractionRequestBody(model, prompt, {
+    aspectRatio: options.aspectRatio,
+    durationSeconds: effectiveDuration,
+    negativePrompt: options.negativePrompt,
+    startFrame: options.startFrame,
+    lastFrame: options.lastFrame,
+    referenceImages: options.referenceImages,
+    previousInteractionId,
+  })
+
+  console.log(`[Omni Video] Generating via Interactions API with ${model} (quality: ${quality})`)
+  console.log('[Omni Video] Request summary:', JSON.stringify({
+    aspectRatio: options.aspectRatio || '16:9',
+    duration: formatOmniDuration(effectiveDuration),
+    task: (requestBody.generation_config as Record<string, unknown>)?.video_config,
+    hasStartFrame: !!options.startFrame,
+    hasLastFrame: !!options.lastFrame,
+    hasPreviousInteraction: !!previousInteractionId,
+    referenceImagesCount: options.referenceImages?.length || 0,
+    background: requestBody.background,
+  }))
+
+  try {
+    const accessToken = await getVertexAccessToken()
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(requestBody),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('[Omni Video] Error response:', errorText)
+      let errorMsg = `Vertex AI Interactions error ${response.status}: ${errorText}`
+      try {
+        const parsed = JSON.parse(errorText) as unknown
+        const rai = formatVeoRaiDetailsFromPayload(parsed)
+        if (rai) errorMsg += `\n\nResponsible AI / safety detail:\n${rai}`
+      } catch {
+        /* not JSON */
+      }
+      return { status: 'FAILED', error: errorMsg }
+    }
+
+    const data = (await response.json()) as Record<string, unknown>
+    console.log('[Omni Video] Response:', JSON.stringify(data).substring(0, 500))
+
+    if (data.error) {
+      const errObj = data.error as Record<string, unknown>
+      let errMsg = String(errObj.message || 'Unknown Vertex AI Interactions error')
+      const rai = formatVeoRaiDetailsFromPayload(data)
+      if (rai) errMsg += `\n\nResponsible AI / safety detail:\n${rai}`
+      return { status: 'FAILED', error: errMsg }
+    }
+
+    const interactionId = typeof data.id === 'string' ? data.id : undefined
+    const status = mapOmniInteractionStatus(typeof data.status === 'string' ? data.status : undefined)
+
+    if (status === 'COMPLETED') {
+      const video = extractVideoFromOmniInteraction(data)
+      if (video?.videoUrl) {
+        return {
+          status: 'COMPLETED',
+          videoUrl: video.videoUrl,
+          veoVideoRef: video.veoVideoRef,
+          veoVideoRefExpiry: video.veoVideoRefExpiry,
+          operationName: interactionId ? `interaction:${interactionId}` : 'completed',
+        }
+      }
+      return { status: 'FAILED', error: 'Omni interaction completed but no video was returned' }
+    }
+
+    if (status === 'FAILED') {
+      return {
+        status: 'FAILED',
+        error: String((data as { error?: { message?: string } }).error?.message || 'Omni video generation failed'),
+      }
+    }
+
+    if (!interactionId) {
+      return { status: 'FAILED', error: 'No interaction ID returned from Vertex AI Interactions API' }
+    }
+
+    return {
+      status: 'QUEUED',
+      operationName: `interaction:${interactionId}`,
+      estimatedWaitSeconds: 120,
+    }
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to initiate Omni video generation'
+    console.error('[Omni Video] Request error:', error)
+    return { status: 'FAILED', error: message }
+  }
+}
+
+/**
+ * Poll Vertex AI Interactions API for Omni video generation status
+ */
+async function checkOmniInteractionStatus(
+  operationName: string
+): Promise<VideoGenerationResult> {
+  const project = process.env.VERTEX_PROJECT_ID
+  const location = process.env.VEO_LOCATION || 'us-central1'
+  if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
+
+  const interactionId = normalizeOmniInteractionId(operationName)
+  const endpoint = `https://${location}-aiplatform.googleapis.com/v1beta1/projects/${project}/locations/${location}/interactions/${encodeURIComponent(interactionId)}`
+
+  console.log('[Omni Video] Checking interaction status:', interactionId)
+
+  try {
+    const accessToken = await getVertexAccessToken()
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('[Omni Video] Status check error:', errorText)
+      return {
+        status: 'FAILED',
+        error: `Omni interaction status check failed: ${response.status}`,
+      }
+    }
+
+    const data = (await response.json()) as Record<string, unknown>
+    console.log('[Omni Video] Status response:', JSON.stringify(data).substring(0, 500))
+
+    const mappedStatus = mapOmniInteractionStatus(typeof data.status === 'string' ? data.status : undefined)
+
+    if (mappedStatus === 'FAILED') {
+      const errObj = data.error as Record<string, unknown> | undefined
+      let errMsg = String(errObj?.message || 'Omni video generation failed')
+      const rai = formatVeoRaiDetailsFromPayload(data)
+      if (rai) errMsg += `\n\nResponsible AI / safety detail:\n${rai}`
+      return { status: 'FAILED', error: errMsg, operationName }
+    }
+
+    if (mappedStatus === 'COMPLETED') {
+      const video = extractVideoFromOmniInteraction(data)
+      if (video?.videoUrl) {
+        return {
+          status: 'COMPLETED',
+          videoUrl: video.videoUrl,
+          veoVideoRef: video.veoVideoRef,
+          veoVideoRefExpiry: video.veoVideoRefExpiry,
+          operationName,
+        }
+      }
+      return { status: 'FAILED', error: 'Omni interaction completed but no video was returned', operationName }
+    }
+
+    return {
+      status: mappedStatus === 'QUEUED' ? 'QUEUED' : 'PROCESSING',
+      operationName,
+      estimatedWaitSeconds: 60,
+    }
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Omni status check failed'
+    console.error('[Omni Video] Status check error:', error)
+    return { status: 'FAILED', error: message }
+  }
+}
+
+/**
  * Trigger video generation using Veo
  * Returns an operation name for polling
  */
@@ -214,6 +426,12 @@ export async function generateVideoWithVeo(
   const usingOmni = isOmniVideoModel(model)
   const stabilityDuration: VeoClipDuration = usingOmni ? 10 : 8
   if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
+
+  // Gemini Omni Flash requires the Interactions API (not predictLongRunning)
+  if (usingOmni) {
+    return generateVideoWithOmniInteractions(prompt, options, model, quality, stabilityDuration)
+  }
+
   // Vertex endpoint: https://LOCATION-aiplatform.googleapis.com/v1/projects/PROJECT_ID/locations/LOCATION/publishers/google/models/MODEL:predictLongRunning
   const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:predictLongRunning`
   console.log(`[Veo Video] Generating video with ${model} (quality: ${quality}) on Vertex AI...`)
@@ -521,6 +739,11 @@ export async function generateVideoWithVeo(
 export async function checkVideoGenerationStatus(
   operationName: string
 ): Promise<VideoGenerationResult> {
+  // Omni Flash interactions are polled via GET .../interactions/{id}
+  if (isOmniInteractionOperation(operationName)) {
+    return checkOmniInteractionStatus(operationName)
+  }
+
   // Veo models are only available in us-central1
   const location = process.env.VEO_LOCATION || 'us-central1'
   const project = process.env.VERTEX_PROJECT_ID
@@ -679,6 +902,7 @@ export async function checkVideoGenerationStatus(
           return {
             status: 'COMPLETED',
             videoUrl: dataUrl,
+            veoVideoRef: video?.name || operationName,
             operationName: operationName
           }
         }
