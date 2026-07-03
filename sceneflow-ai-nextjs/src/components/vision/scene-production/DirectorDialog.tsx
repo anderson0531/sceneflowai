@@ -87,6 +87,8 @@ import {
   neutralizeFtvGuidePrompt,
   extractSpeaksQuotedPerformCue,
 } from '@/lib/vision/ftvPromptNormalize'
+import type { BlueprintAspectRatio } from '@/lib/treatment/blueprintFoundation'
+import { toVideoAspectRatio } from '@/lib/vision/artStyle'
 
 interface DirectorDialogProps {
   segment: SceneSegment
@@ -112,6 +114,8 @@ interface DirectorDialogProps {
   objectReferences?: Array<{ id: string; name: string; imageUrl: string; description?: string }>
   /** Character references for optional identity preservation during keyframe edit */
   characterReferences?: Array<{ name: string; referenceImage?: string; description?: string }>
+  /** Locked project aspect ratio from Blueprint */
+  projectAspectRatio?: BlueprintAspectRatio
 }
 
 // Map internal mode names to VideoGenerationMethod
@@ -146,17 +150,21 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   readOnlyPrompts = false,
   objectReferences = [],
   characterReferences = [],
+  projectAspectRatio = '16:9',
 }) => {
   const segmentGuideContext = useMemo<SegmentGuideContext | undefined>(() => {
     if (!scene) return undefined
     return { scene, characters: guideCharacters }
   }, [scene, guideCharacters])
 
+  const lockedVideoAspect = toVideoAspectRatio(projectAspectRatio)
+
   // Get auto-drafted config (includes batch guidePrompt when dialogue is assigned)
   const { config: autoConfig, methodLabel, methodReason } = useSegmentConfig(
     segment,
     sceneImageUrl,
-    segmentGuideContext
+    segmentGuideContext,
+    projectAspectRatio
   )
 
   const batchGuideSeed = useMemo(
@@ -176,7 +184,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const [motionPrompt, setMotionPrompt] = useState(autoConfig.motionPrompt)
   const [visualPrompt, setVisualPrompt] = useState(autoConfig.visualPrompt)
   const [negativePrompt, setNegativePrompt] = useState(autoConfig.negativePrompt)
-  const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16'>(autoConfig.aspectRatio)
+  const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16'>(lockedVideoAspect)
   const [resolution, setResolution] = useState<'720p' | '1080p'>(autoConfig.resolution)
   const [duration, setDuration] = useState(autoConfig.duration)
   const [guidePrompt, setGuidePrompt] = useState('')
@@ -451,7 +459,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     setMotionPrompt(autoConfig.motionPrompt)
     setVisualPrompt(autoConfig.visualPrompt)
     setNegativePrompt(autoConfig.negativePrompt)
-    setAspectRatio(autoConfig.aspectRatio)
+    setAspectRatio(lockedVideoAspect)
     setResolution(autoConfig.resolution)
     setDuration(autoConfig.duration)
     setGuidePrompt('')
@@ -461,7 +469,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     setLocalError(null)
     setImageTriggered(false)
     setKeyframeEdit(null)
-  }, [autoConfig])
+  }, [autoConfig, lockedVideoAspect])
 
   // Initialize state only on open transition or segment change while open.
   useEffect(() => {
@@ -1185,7 +1193,11 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                     {/* Aspect Ratio */}
                     <div className="flex flex-col gap-2">
                       <Label className="text-slate-400 text-xs">Aspect Ratio</Label>
-                      <Select value={aspectRatio} onValueChange={(v) => setAspectRatio(v as '16:9' | '9:16')}>
+                      <Select
+                        value={aspectRatio}
+                        onValueChange={(v) => setAspectRatio(v as '16:9' | '9:16')}
+                        disabled
+                      >
                         <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
                           <SelectValue />
                         </SelectTrigger>

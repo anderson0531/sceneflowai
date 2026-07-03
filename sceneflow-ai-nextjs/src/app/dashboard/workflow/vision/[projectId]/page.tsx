@@ -128,7 +128,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, ChevronRight, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User, Bookmark, FileText, Coins, ExternalLink, CheckCircle2, Circle, Music, Video, PanelRightClose, PanelRight, Loader2 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
-import { resolveProjectArtStyle, resolveProjectAspectRatio } from '@/lib/vision/artStyle'
+import { resolveProjectArtStyle, resolveProjectAspectRatio, toVideoAspectRatio } from '@/lib/vision/artStyle'
 import {
   ReimagineFoundationDialog,
   type ReimagineFoundationField,
@@ -2356,6 +2356,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             endFramePrompt:
               segment.endFramePrompt ?? segment.references?.endFrameDescription,
             beatId: segment.beatId,
+            aspectRatio: toVideoAspectRatio(lockedAspectRatio),
             // NEW: User customization options from FramePromptDialog
             customPrompt: options?.customPrompt,
             negativePrompt: options?.negativePrompt,
@@ -2545,7 +2546,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         setGeneratingFramePhase(null)
       }
     },
-    [script?.script?.scenes, sceneProductionState, characters, objectReferences, locationReferences, applySceneProductionUpdate]
+    [script?.script?.scenes, sceneProductionState, characters, objectReferences, locationReferences, applySceneProductionUpdate, lockedAspectRatio]
   )
 
   const handleInitializeSceneProduction = useCallback(
@@ -13134,7 +13135,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onGenerateSceneImage={handleGenerateSceneImage}
                 characters={characters}
                 projectId={projectId}
-                visualStyle={project?.tone || project?.metadata?.filmTreatmentVariant?.tone}                                                                        
+                visualStyle={project?.tone || project?.metadata?.filmTreatmentVariant?.tone}
+                projectAspectRatio={lockedAspectRatio}                                                                        
                 validationWarnings={validationWarnings}
                 validationInfo={validationInfo}
                 onDismissValidationWarning={handleDismissValidationWarning}

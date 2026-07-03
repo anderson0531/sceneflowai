@@ -39,6 +39,25 @@ export function resolveProjectArtStyle(metadata: unknown): string {
   return typeof artStyle === 'string' && artStyle.trim() ? artStyle.trim() : 'photorealistic'
 }
 
+export function getAspectRatioTailwindClass(ratio: BlueprintAspectRatio): string {
+  switch (ratio) {
+    case '16:9':
+      return 'aspect-video'
+    case '9:16':
+      return 'aspect-[9/16]'
+    case '1:1':
+      return 'aspect-square'
+    case '4:3':
+      return 'aspect-[4/3]'
+    default:
+      return 'aspect-video'
+  }
+}
+
+export function toVideoAspectRatio(ratio: BlueprintAspectRatio): '16:9' | '9:16' {
+  return ratio === '9:16' ? '9:16' : '16:9'
+}
+
 export function resolveProjectAspectRatio(metadata: unknown): BlueprintAspectRatio {
   if (!metadata || typeof metadata !== 'object') return DEFAULT_ASPECT_RATIO
   const meta = metadata as Record<string, unknown>

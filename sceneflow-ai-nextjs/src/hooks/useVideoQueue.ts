@@ -101,7 +101,8 @@ export function useVideoQueue(
   ) => Promise<void>,
   segmentGuideContext?: SegmentGuideContext,
   /** Fresh segment list after each generate (for EXT veoVideoRef handoff). */
-  getSegments?: () => SceneSegment[]
+  getSegments?: () => SceneSegment[],
+  defaultAspectRatio: '16:9' | '9:16' | '1:1' | '4:3' = '16:9'
 ): UseVideoQueueReturn {
   // QUARANTINE GUARD: Delay initialization by one frame to let module graph settle
   // This prevents TDZ errors from rapid re-renders during initial mount
@@ -118,7 +119,7 @@ export function useVideoQueue(
   
   // Get auto-drafted configs for all segments - skip processing until ready
   // This prevents heavy computation during the TDZ-vulnerable initialization phase
-  const configsMap = useSegmentConfigs(segments, sceneImageUrl, !isReady, segmentGuideContext)
+  const configsMap = useSegmentConfigs(segments, sceneImageUrl, !isReady, segmentGuideContext, defaultAspectRatio)
   
   // Local state for user-modified configs
   const [userConfigs, setUserConfigs] = useState<Map<string, VideoGenerationConfig>>(new Map())
@@ -182,6 +183,11 @@ export function useVideoQueue(
       const autoConfig = configsMap.get(segment.segmentId)
       const userConfig = userConfigs.get(segment.segmentId)
       
+      const videoAspect =
+        defaultAspectRatio === '1:1' || defaultAspectRatio === '4:3'
+          ? '16:9'
+          : defaultAspectRatio
+
       // Prefer user config over auto config
       let config = userConfig || autoConfig?.config || {
         mode: 'T2V' as VideoGenerationMethod,
@@ -189,7 +195,7 @@ export function useVideoQueue(
         motionPrompt: '',
         visualPrompt: '',
         negativePrompt: '',
-        aspectRatio: '16:9' as const,
+        aspectRatio: videoAspect,
         resolution: '720p' as const,
         duration: 6,
         startFrameUrl: null,
@@ -243,7 +249,7 @@ export function useVideoQueue(
     // Cache the result to return on subsequent render loop iterations
     lastQueueRef.current = result
     return result
-  }, [isReady, segments, configsMap, userConfigs, sceneImageUrl])
+  }, [isReady, segments, configsMap, userConfigs, sceneImageUrl, defaultAspectRatio])
   
   // Update config for a segment
   const updateConfig = useCallback((segmentId: string, config: VideoGenerationConfig) => {

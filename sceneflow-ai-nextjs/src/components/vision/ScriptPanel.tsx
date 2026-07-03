@@ -20,7 +20,6 @@ import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
 import { SceneProductionDirector } from './scene-production/SceneProductionDirector'
 import { SegmentFrameTimeline } from './scene-production/SegmentFrameTimeline'
-import { ProductionSectionHeader } from './scene-production/ProductionSectionHeader'
 import { AddSegmentDialog } from './scene-production/AddSegmentDialog'
 import { EditSegmentDialog } from './scene-production/EditSegmentDialog'
 import { ResetSegmentsConfirmDialog } from './scene-production/ResetSegmentsConfirmDialog'
@@ -63,6 +62,7 @@ const DirectorWorkflow = dynamic(
 )
 import { AUDIO_ALIGNMENT_BUFFERS, getLanguagePlaybackOffset, calculateSuggestedOffset, findDialogueAudioForLine } from './scene-production/audioTrackBuilder'
 import type { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings, SceneSegment } from './scene-production/types'
+import type { BlueprintAspectRatio } from '@/lib/treatment/blueprintFoundation'
 import { Button } from '@/components/ui/Button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -212,6 +212,8 @@ interface ScriptPanelProps {
   }>
   projectId?: string
   visualStyle?: string
+  /** Locked project aspect ratio from Blueprint */
+  projectAspectRatio?: BlueprintAspectRatio
   validationWarnings?: Record<number, string>
   validationInfo?: Record<number, {
     passed: boolean
@@ -688,7 +690,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onLockSegment, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onLockSegment, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice }: ScriptPanelProps) {
 
 
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
@@ -3171,6 +3173,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       projectTitle={projectTitle}
                       projectLogline={projectLogline}
                       visualStyle={visualStyle}
+                      projectAspectRatio={projectAspectRatio}
                       onApproveStoryboard={onApproveStoryboard}
                       approvingStoryboardFor={approvingStoryboardFor}
                       onGenerateBeatFrame={onGenerateBeatFrame}
@@ -3234,7 +3237,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           }}
           imageUrl={editingImageData.url}
           imageType="scene"
-          aspectRatio="16:9"
+          aspectRatio={projectAspectRatio}
           title={editingImageData.segmentId 
             ? `Edit ${editingImageData.frameType === 'start' ? 'Start' : 'End'} Frame`
             : undefined
@@ -3639,6 +3642,7 @@ interface SceneCardProps {
   projectTitle?: string
   projectLogline?: string
   visualStyle?: string
+  projectAspectRatio?: BlueprintAspectRatio
   onExpand?: (sceneNumber: number) => Promise<void>
   isExpanding?: boolean
   onPlayScene?: (sceneIdx: number) => Promise<void>
@@ -4054,6 +4058,7 @@ function SceneCard({
   projectTitle = '',
   projectLogline = '',
   visualStyle,
+  projectAspectRatio = '16:9',
   onModerationReport,
   onGenerateBeatFrame,
   onGenerateBeatEndFrame,
@@ -4100,6 +4105,9 @@ function SceneCard({
 
   type SceneScriptTab = 'direction' | 'narration' | 'wardrobe' | 'previs' | 'beats' | 'music'
   const [activeSceneTab, setActiveSceneTab] = useState<SceneScriptTab>('direction')
+
+  type ShootTab = 'review' | 'video' | 'mixer' | 'streams'
+  const [activeShootTab, setActiveShootTab] = useState<ShootTab>('review')
 
   const sceneBeatsForTabs = useMemo(() => getSceneBeats(scene), [scene])
   const frameSlotsForTabs = useMemo(() => enumerateStoryboardFrameSlots(scene), [scene])
@@ -4153,6 +4161,30 @@ function SceneCard({
     }
   }, [sceneIdx, availableSceneTabs, activeSceneTab])
 
+  const showShootReview = useMemo(
+    () => isBeatFirstPipelineEnabled() && getSceneBeats(scene).length > 0 && !!onApproveStoryboard,
+    [scene, onApproveStoryboard]
+  )
+  const hasShootSegments = !!(sceneProductionData?.segments && sceneProductionData.segments.length > 0)
+
+  const availableShootTabs = useMemo(() => {
+    const tabs: ShootTab[] = []
+    if (showShootReview) tabs.push('review')
+    if (hasShootSegments) {
+      tabs.push('video', 'mixer', 'streams')
+    }
+    return tabs
+  }, [showShootReview, hasShootSegments])
+
+  useEffect(() => {
+    if (availableShootTabs.length === 0) return
+    if (!availableShootTabs.includes(activeShootTab)) {
+      setActiveShootTab(
+        availableShootTabs.includes('review') ? 'review' : availableShootTabs[0]
+      )
+    }
+  }, [sceneIdx, availableShootTabs, activeShootTab])
+
   const [selectedExpressBeatIds, setSelectedExpressBeatIds] = useState<Set<string>>(() => new Set())
   const [expressSfxDialogOpen, setExpressSfxDialogOpen] = useState(false)
   const [isExpressSfxRunning, setIsExpressSfxRunning] = useState(false)
@@ -4185,7 +4217,6 @@ function SceneCard({
     return () => window.removeEventListener('production:open-action-tab', handler)
   }, [sceneIdx, scene, isWorkflowOpen, onWorkflowOpenChange])
   const [showKeyframes, setShowKeyframes] = useState(false)
-  const [videoProductionCollapsed, setVideoProductionCollapsed] = useState(true)
   
   // Determine active step for Co-Pilot
   const activeStep: WorkflowStep | null = activeWorkflowTab
@@ -6949,14 +6980,6 @@ function SceneCard({
                 {activeWorkflowTab === 'callAction' && (
                   <SceneDirectionProvider direction={scene.detailedDirection || scene.sceneDirection}>
                   <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
-                    {isBeatFirstPipelineEnabled() && getSceneBeats(scene).length > 0 && onApproveStoryboard && (
-                      <StoryboardReviewPanel
-                        scene={scene}
-                        sceneIndex={sceneIdx}
-                        onApprove={onApproveStoryboard}
-                        isApproving={approvingStoryboardFor === sceneIdx}
-                      />
-                    )}
                     {/* Audio Not Generated Warning — soft gate instead of tab lock */}
                     {!stepCompletion.dialogueAction && (() => {
                       // Build specific list of missing audio
@@ -7037,8 +7060,34 @@ function SceneCard({
                       </div>
                     )}
                     
-                    {/* ==================== VIDEO + MIXER + STREAMS (DirectorWorkflow) ==================== */}
-                    {sceneProductionData?.segments && sceneProductionData.segments.length > 0 && (() => {
+                    {/* ==================== SHOOT TABS: Review / Video / Mixer / Streams ==================== */}
+                    {availableShootTabs.length > 0 && !hasShootSegments && showShootReview && (
+                      <Tabs
+                        value={activeShootTab}
+                        onValueChange={(v) => setActiveShootTab(v as ShootTab)}
+                        className="w-full"
+                      >
+                        <div className="overflow-x-auto pb-1 -mx-1 px-1">
+                          <TabsList className="inline-flex h-auto w-max min-w-0 flex-nowrap gap-0.5 p-1">
+                            <TabsTrigger value="review" className="text-xs gap-1.5 px-2.5 py-1.5">
+                              <ImageIcon className="w-3.5 h-3.5 shrink-0" />
+                              Review
+                            </TabsTrigger>
+                          </TabsList>
+                        </div>
+                        <TabsContent value="review" className="mt-3 focus-visible:outline-none">
+                          <StoryboardReviewPanel
+                            scene={scene}
+                            sceneIndex={sceneIdx}
+                            onApprove={onApproveStoryboard!}
+                            isApproving={approvingStoryboardFor === sceneIdx}
+                            hideOuterChrome
+                          />
+                        </TabsContent>
+                      </Tabs>
+                    )}
+
+                    {hasShootSegments && (() => {
                       const workflowSceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
                       return (
                         <DirectorWorkflow
@@ -7073,87 +7122,70 @@ function SceneCard({
                           isGeneratingAudio={isGeneratingAudio}
                           onSaveEditedKeyframe={onEditFrame}
                           onModerationReport={onModerationReport}
+                          projectAspectRatio={projectAspectRatio}
                         >
                           {(slots) => (
-                            <div className="space-y-4">
-                              <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden">
-                                <ProductionSectionHeader
-                                  icon={Film}
-                                  title="Video Production"
-                                  rightHint="Generate AI videos and edit your final cut"
-                                  collapsible
-                                  expanded={!videoProductionCollapsed}
-                                  onToggle={() => setVideoProductionCollapsed(!videoProductionCollapsed)}
-                                />
-                                <AnimatePresence>
-                                  {!videoProductionCollapsed && (
-                                    <motion.div
-                                      initial={{ opacity: 0, height: 0 }}
-                                      animate={{ opacity: 1, height: 'auto' }}
-                                      exit={{ opacity: 0, height: 0 }}
-                                      transition={{ duration: 0.2 }}
-                                      className="border-t border-gray-700/50 px-4 pb-4 pt-2"
-                                    >
-                                      {slots.videoSection}
-                                    </motion.div>
+                            <Tabs
+                              value={activeShootTab}
+                              onValueChange={(v) => setActiveShootTab(v as ShootTab)}
+                              className="w-full"
+                            >
+                              <div className="overflow-x-auto pb-1 -mx-1 px-1">
+                                <TabsList className="inline-flex h-auto w-max min-w-0 flex-nowrap gap-0.5 p-1">
+                                  {showShootReview && (
+                                    <TabsTrigger value="review" className="text-xs gap-1.5 px-2.5 py-1.5">
+                                      <ImageIcon className="w-3.5 h-3.5 shrink-0" />
+                                      Review
+                                    </TabsTrigger>
                                   )}
-                                </AnimatePresence>
+                                  <TabsTrigger value="video" className="text-xs gap-1.5 px-2.5 py-1.5">
+                                    <Film className="w-3.5 h-3.5 shrink-0" />
+                                    Video
+                                  </TabsTrigger>
+                                  {slots.mixerBody != null && (
+                                    <TabsTrigger value="mixer" className="text-xs gap-1.5 px-2.5 py-1.5">
+                                      <Clapperboard className="w-3.5 h-3.5 shrink-0" />
+                                      Mixer
+                                    </TabsTrigger>
+                                  )}
+                                  <TabsTrigger value="streams" className="text-xs gap-1.5 px-2.5 py-1.5">
+                                    <ListVideo className="w-3.5 h-3.5 shrink-0" />
+                                    Streams
+                                    {slots.streamCount > 0 && (
+                                      <span className="text-[10px] opacity-60">({slots.streamCount})</span>
+                                    )}
+                                  </TabsTrigger>
+                                </TabsList>
                               </div>
 
-                              {slots.mixerBody != null && (
-                                <div
-                                  id={`production-mixer-${workflowSceneId}`}
-                                  className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden scroll-mt-4"
-                                >
-                                  <ProductionSectionHeader
-                                    icon={Clapperboard}
-                                    title="Mixer"
-                                    rightHint="Render final scene with audio"
-                                    collapsible
-                                    expanded={!slots.mixerCollapsed}
-                                    onToggle={() => slots.setMixerCollapsed((c) => !c)}
+                              {showShootReview && (
+                                <TabsContent value="review" className="mt-3 focus-visible:outline-none">
+                                  <StoryboardReviewPanel
+                                    scene={scene}
+                                    sceneIndex={sceneIdx}
+                                    onApprove={onApproveStoryboard!}
+                                    isApproving={approvingStoryboardFor === sceneIdx}
+                                    hideOuterChrome
                                   />
-                                  <AnimatePresence>
-                                    {!slots.mixerCollapsed && (
-                                      <motion.div
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: 'auto' }}
-                                        exit={{ opacity: 0, height: 0 }}
-                                        transition={{ duration: 0.2 }}
-                                        className="border-t border-gray-700/50"
-                                      >
-                                        {slots.mixerBody}
-                                      </motion.div>
-                                    )}
-                                  </AnimatePresence>
-                                </div>
+                                </TabsContent>
                               )}
 
-                              <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden">
-                                <ProductionSectionHeader
-                                  icon={ListVideo}
-                                  title="Streams"
-                                  badge={slots.streamCount}
-                                  rightHint="Animatic and stitched video exports"
-                                  collapsible
-                                  expanded={!slots.streamsCollapsed}
-                                  onToggle={() => slots.setStreamsCollapsed((c) => !c)}
-                                />
-                                <AnimatePresence>
-                                  {!slots.streamsCollapsed && (
-                                    <motion.div
-                                      initial={{ opacity: 0, height: 0 }}
-                                      animate={{ opacity: 1, height: 'auto' }}
-                                      exit={{ opacity: 0, height: 0 }}
-                                      transition={{ duration: 0.2 }}
-                                      className="border-t border-gray-700/50 px-3 pb-3 pt-2 overflow-hidden"
-                                    >
-                                      {slots.streamsBody}
-                                    </motion.div>
-                                  )}
-                                </AnimatePresence>
-                              </div>
-                            </div>
+                              <TabsContent value="video" className="mt-3 focus-visible:outline-none">
+                                {slots.videoSection}
+                              </TabsContent>
+
+                              {slots.mixerBody != null && (
+                                <TabsContent value="mixer" className="mt-3 focus-visible:outline-none">
+                                  <div id={`production-mixer-${workflowSceneId}`} className="scroll-mt-4">
+                                    {slots.mixerBody}
+                                  </div>
+                                </TabsContent>
+                              )}
+
+                              <TabsContent value="streams" className="mt-3 focus-visible:outline-none overflow-hidden">
+                                {slots.streamsBody}
+                              </TabsContent>
+                            </Tabs>
                           )}
                         </DirectorWorkflow>
                       )

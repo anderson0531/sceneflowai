@@ -1649,8 +1649,8 @@ function AudioTrackRow({
   const colors = TRACK_COLORS[type]
   
   // Calculate effective end segment (-1 means last segment)
-  const effectiveEndBeat = config.endBeat === -1 
-    ? (segmentCount || 1) - 1 
+  const effectiveEndSegment = config.endSegment === -1
+    ? (segmentCount || 1) - 1
     : Math.min(config.endSegment, (segmentCount || 1) - 1)
   
   // Calculate time delta for elastic timing warning
@@ -1792,7 +1792,7 @@ function AudioTrackRow({
               <span className="text-[10px] text-gray-500 uppercase w-16">Beats</span>
               <div className="flex items-center gap-1 flex-wrap">
                 {Array.from({ length: segmentCount }).map((_, i) => {
-                  const isInRange = i >= config.startBeat && i <= effectiveEndSegment
+                  const isInRange = i >= config.startSegment && i <= effectiveEndSegment
                   const isStart = i === config.startSegment
                   const isEnd = i === effectiveEndSegment
                   
@@ -1806,10 +1806,10 @@ function AudioTrackRow({
                         } else if (i > effectiveEndSegment) {
                           // Clicked after range - extend end forward
                           onConfigChange({ ...config, endSegment: i })
-                        } else if (isStart && config.startBeat < effectiveEndSegment) {
+                        } else if (isStart && config.startSegment < effectiveEndSegment) {
                           // Clicked start - shrink from start
                           onConfigChange({ ...config, startSegment: i + 1 })
-                        } else if (isEnd && effectiveEndBeat > config.startSegment) {
+                        } else if (isEnd && effectiveEndSegment > config.startSegment) {
                           // Clicked end - shrink from end  
                           onConfigChange({ ...config, endSegment: i - 1 })
                         } else if (isStart && isEnd) {
@@ -1835,7 +1835,7 @@ function AudioTrackRow({
               <span className="text-[10px] text-gray-500 ml-1">
                 {config.startSegment === 0 && effectiveEndSegment === (segmentCount - 1)
                   ? 'All'
-                  : `#${config.startBeat + 1}${config.startBeat !== effectiveEndBeat ? ` → #${effectiveEndBeat + 1}` : ''}`
+                  : `#${config.startSegment + 1}${config.startSegment !== effectiveEndSegment ? ` → #${effectiveEndSegment + 1}` : ''}`
                 }
               </span>
             </div>

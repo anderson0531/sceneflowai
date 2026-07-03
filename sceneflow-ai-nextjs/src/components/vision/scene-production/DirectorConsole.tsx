@@ -19,6 +19,8 @@
 
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { coerceSceneSfxFlatArray } from '@/lib/script/segmentScript'
+import type { BlueprintAspectRatio } from '@/lib/treatment/blueprintFoundation'
+import { getAspectRatioTailwindClass, toVideoAspectRatio } from '@/lib/vision/artStyle'
 import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
@@ -195,6 +197,8 @@ interface DirectorConsoleProps {
   guideCharacters?: GuideCharacterDemographic[]
   /** Triggered when the user clicks 'Continue Shot' on a video production card */
   onAddContinueShot?: (segmentIndex: number) => void
+  /** Locked project aspect ratio from Blueprint */
+  projectAspectRatio?: BlueprintAspectRatio
 }
 
 /** Slots for splitting Video / Mixer / Streams across parent section cards (ScriptPanel). */
@@ -251,6 +255,7 @@ function DirectorConsoleRoot({
   onSaveEditedKeyframe,
   onModerationReport,
   guideCharacters,
+  projectAspectRatio = '16:9',
   children,
 }: DirectorConsoleProps & {
   children?: (slots: DirectorWorkflowSlots) => React.ReactNode
@@ -259,6 +264,8 @@ function DirectorConsoleRoot({
   // productionData?.segments || [] creates a new array reference each render
   const segments = productionData?.segments ?? EMPTY_SEGMENTS
   const beatFirstReadOnlyPrompts = isBeatFirstPipelineEnabled()
+  const aspectClass = getAspectRatioTailwindClass(projectAspectRatio)
+  const videoAspectRatio = toVideoAspectRatio(projectAspectRatio)
 
   const effectiveGuideCharacters = useMemo(
     () =>
@@ -312,7 +319,8 @@ function DirectorConsoleRoot({
     sceneImageUrl,
     onGenerate,
     segmentGuideContext,
-    () => productionData?.segments ?? EMPTY_SEGMENTS
+    () => productionData?.segments ?? EMPTY_SEGMENTS,
+    videoAspectRatio
   )
   
   // Selected segment for DirectorDialog
@@ -1126,9 +1134,9 @@ function DirectorConsoleRoot({
                           className="border-slate-500"
                         />
                       </div>
-                      <div className="w-32 aspect-video bg-black rounded overflow-hidden relative flex-shrink-0">
+                      <div className={`w-32 ${aspectClass} bg-black rounded overflow-hidden relative flex-shrink-0`}>
                         {item.thumbnailUrl ? (
-                          <img src={item.thumbnailUrl} alt={`Beat ${item.sequenceIndex + 1}`} className="w-full h-full object-cover" />
+                          <img src={item.thumbnailUrl} alt={`Beat ${item.sequenceIndex + 1}`} className="w-full h-full object-contain" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-slate-800">
                             <Film className="w-8 h-8 text-slate-600" />
@@ -1462,6 +1470,7 @@ function DirectorConsoleRoot({
           onSaveEditedKeyframe={onSaveEditedKeyframe}
           guideCharacters={effectiveGuideCharacters}
           readOnlyPrompts={beatFirstReadOnlyPrompts}
+          projectAspectRatio={projectAspectRatio}
         />
       )}
       
@@ -1625,7 +1634,7 @@ function DirectorConsoleRoot({
                 src={renderedSceneUrl}
                 controls
                 autoPlay
-                className="w-full aspect-video bg-black"
+                className={`w-full ${aspectClass} bg-black`}
               />
             </div>
           </div>

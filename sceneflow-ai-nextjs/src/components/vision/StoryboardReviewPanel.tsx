@@ -15,6 +15,8 @@ interface StoryboardReviewPanelProps {
   onApprove: (sceneIndex: number) => void | Promise<void>
   onRegenerateBeat?: (sceneIndex: number, beatIndex: number) => void | Promise<void>
   isApproving?: boolean
+  /** When true, suppress the panel title — parent tab provides the label. */
+  hideOuterChrome?: boolean
 }
 
 function kindLabel(kind: SceneBeat['kind']): string {
@@ -35,6 +37,7 @@ export function StoryboardReviewPanel({
   onApprove,
   onRegenerateBeat,
   isApproving = false,
+  hideOuterChrome = false,
 }: StoryboardReviewPanelProps) {
   const beats = getSceneBeats(scene)
   const status: StoryboardStatus = getStoryboardStatus(scene)
@@ -43,30 +46,38 @@ export function StoryboardReviewPanel({
 
   if (beats.length === 0) return null
 
+  const statusBadge = (
+    <span
+      className={`text-xs px-2 py-1 rounded-full ${
+        status === 'approved'
+          ? 'bg-emerald-500/20 text-emerald-300'
+          : status === 'pending_review'
+            ? 'bg-amber-500/20 text-amber-300'
+            : 'bg-gray-700 text-gray-300'
+      }`}
+    >
+      {status === 'approved' ? 'Approved' : status === 'pending_review' ? 'Pending review' : 'Not started'}
+    </span>
+  )
+
   return (
-    <div className="rounded-lg border border-gray-700 bg-gray-900/60 p-4 space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <div>
-          <h3 className="text-sm font-semibold text-gray-100 flex items-center gap-2">
-            <ImageIcon className="w-4 h-4 text-indigo-400" />
-            Pre-Visualization Review
-          </h3>
-          <p className="text-xs text-gray-400 mt-0.5">
-            Approve Pre-Vis frames to unlock automated production.
-          </p>
+    <div className={hideOuterChrome ? 'space-y-4' : 'rounded-lg border border-gray-700 bg-gray-900/60 p-4 space-y-4'}>
+      {hideOuterChrome ? (
+        <div className="flex items-center justify-end">{statusBadge}</div>
+      ) : (
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-100 flex items-center gap-2">
+              <ImageIcon className="w-4 h-4 text-indigo-400" />
+              Review
+            </h3>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Approve Pre-Vis frames to unlock automated production.
+            </p>
+          </div>
+          {statusBadge}
         </div>
-        <span
-          className={`text-xs px-2 py-1 rounded-full ${
-            status === 'approved'
-              ? 'bg-emerald-500/20 text-emerald-300'
-              : status === 'pending_review'
-                ? 'bg-amber-500/20 text-amber-300'
-                : 'bg-gray-700 text-gray-300'
-          }`}
-        >
-          {status === 'approved' ? 'Approved' : status === 'pending_review' ? 'Pending review' : 'Not started'}
-        </span>
-      </div>
+      )}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
         {beats.map((beat, idx) => (
