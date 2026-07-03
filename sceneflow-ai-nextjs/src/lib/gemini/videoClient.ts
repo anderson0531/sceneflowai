@@ -15,8 +15,11 @@ import {
   buildOmniInteractionRequestBody,
   extractVideoFromOmniInteraction,
   formatOmniDuration,
+  formatOmniInteractionErrorMessage,
   isOmniInteractionOperation,
+  logOmniInteractionPayload,
   mapOmniInteractionStatus,
+  normalizeOmniInteractionBuildOptions,
   normalizeOmniInteractionId,
   resolveOmniPreviousInteractionId,
 } from '@/lib/gemini/omniVideoInteractions'
@@ -229,35 +232,44 @@ async function generateVideoWithOmniInteractions(
     effectiveDuration = stabilityDuration
   }
 
-  const previousInteractionId =
-    resolveOmniPreviousInteractionId(options.sourceVideo) ??
-    (isEXT ? options.sourceVideo : undefined)
+  const previousInteractionId = resolveOmniPreviousInteractionId(options.sourceVideo)
+  const hasValidPreviousInteraction = !!previousInteractionId
 
-  if (isEXT && !previousInteractionId) {
+  if (isFTV && options.lastFrame) {
     console.warn(
-      '[Omni Video] EXT requested but sourceVideo is not an interaction id — Omni uses previous_interaction_id for continuation'
+      '[Omni Video] FTV (start+end frame interpolation) is unsupported on Omni — using start frame only as I2V'
+    )
+  }
+  if (isEXT && !hasValidPreviousInteraction) {
+    console.warn(
+      '[Omni Video] EXT without valid previous_interaction_id — degrading to I2V/T2V (Omni does not support legacy video refs)'
     )
   }
 
+  const omniBuildOptions = normalizeOmniInteractionBuildOptions(
+    {
+      aspectRatio: options.aspectRatio,
+      durationSeconds: effectiveDuration,
+      negativePrompt: options.negativePrompt,
+      startFrame: options.startFrame,
+      lastFrame: options.lastFrame,
+      referenceImages: options.referenceImages,
+      previousInteractionId,
+    },
+    { isFTV, isEXT, hasValidPreviousInteraction }
+  )
+
   const endpoint = `${apiBase}/interactions`
-  const requestBody = await buildOmniInteractionRequestBody(model, prompt, {
-    aspectRatio: options.aspectRatio,
-    durationSeconds: effectiveDuration,
-    negativePrompt: options.negativePrompt,
-    startFrame: options.startFrame,
-    lastFrame: options.lastFrame,
-    referenceImages: options.referenceImages,
-    previousInteractionId,
-  })
+  const requestBody = await buildOmniInteractionRequestBody(model, prompt, omniBuildOptions)
 
   console.log(`[Omni Video] Generating via Interactions API with ${model} (quality: ${quality}) at ${location}`)
   console.log('[Omni Video] Request summary:', JSON.stringify({
     aspectRatio: options.aspectRatio || '16:9',
     duration: formatOmniDuration(effectiveDuration),
     task: (requestBody.generation_config as Record<string, unknown>)?.video_config,
-    hasStartFrame: !!options.startFrame,
-    hasLastFrame: !!options.lastFrame,
-    hasPreviousInteraction: !!previousInteractionId,
+    hasStartFrame: !!omniBuildOptions.startFrame,
+    hasLastFrame: !!omniBuildOptions.lastFrame,
+    hasPreviousInteraction: !!omniBuildOptions.previousInteractionId,
     referenceImagesCount: options.referenceImages?.length || 0,
     background: requestBody.background,
   }))
@@ -288,13 +300,14 @@ async function generateVideoWithOmniInteractions(
     }
 
     const data = (await response.json()) as Record<string, unknown>
-    console.log('[Omni Video] Response:', JSON.stringify(data).substring(0, 500))
+    logOmniInteractionPayload('[Omni Video] Response', data)
 
     if (data.error) {
-      const errObj = data.error as Record<string, unknown>
-      let errMsg = String(errObj.message || 'Unknown Vertex AI Interactions error')
-      const rai = formatVeoRaiDetailsFromPayload(data)
-      if (rai) errMsg += `\n\nResponsible AI / safety detail:\n${rai}`
+      const errMsg = formatOmniInteractionErrorMessage(
+        data,
+        'Unknown Vertex AI Interactions error',
+        formatVeoRaiDetailsFromPayload
+      )
       return { status: 'FAILED', error: errMsg }
     }
 
@@ -318,7 +331,7 @@ async function generateVideoWithOmniInteractions(
     if (status === 'FAILED') {
       return {
         status: 'FAILED',
-        error: String((data as { error?: { message?: string } }).error?.message || 'Omni video generation failed'),
+        error: formatOmniInteractionErrorMessage(data, 'Omni video generation failed', formatVeoRaiDetailsFromPayload),
       }
     }
 
@@ -373,15 +386,16 @@ async function checkOmniInteractionStatus(
     }
 
     const data = (await response.json()) as Record<string, unknown>
-    console.log('[Omni Video] Status response:', JSON.stringify(data).substring(0, 500))
+    logOmniInteractionPayload('[Omni Video] Status response', data)
 
     const mappedStatus = mapOmniInteractionStatus(typeof data.status === 'string' ? data.status : undefined)
 
     if (mappedStatus === 'FAILED') {
-      const errObj = data.error as Record<string, unknown> | undefined
-      let errMsg = String(errObj?.message || 'Omni video generation failed')
-      const rai = formatVeoRaiDetailsFromPayload(data)
-      if (rai) errMsg += `\n\nResponsible AI / safety detail:\n${rai}`
+      const errMsg = formatOmniInteractionErrorMessage(
+        data,
+        'Omni video generation failed',
+        formatVeoRaiDetailsFromPayload
+      )
       return { status: 'FAILED', error: errMsg, operationName }
     }
 

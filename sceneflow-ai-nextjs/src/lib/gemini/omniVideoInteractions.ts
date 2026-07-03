@@ -4,7 +4,6 @@
  */
 
 import {
-  DEFAULT_VEO_CLIP_DURATION,
   type VeoClipDuration,
 } from '@/lib/config/modelConfig'
 
@@ -31,9 +30,119 @@ export type OmniInteractionInput =
   | string
   | Array<{ type: string; text?: string; data?: string; mime_type?: string; uri?: string }>
 
-/** Format clip duration for Omni response_format (e.g. 10 -> "10s") */
+/** Format clip duration for request summaries (Omni max is fixed at 10s; not sent in response_format) */
 export function formatOmniDuration(seconds: VeoClipDuration): string {
   return `${seconds}s`
+}
+
+/** Minimum length before base64/uri blobs are redacted in logs */
+const OMNI_LOG_REDACT_MIN_CHARS = 80
+
+/** Deep-clone an interaction payload, replacing large base64/uri blobs for safe logging */
+export function redactOmniPayloadForLog(data: unknown): unknown {
+  if (data === null || data === undefined) return data
+  if (Array.isArray(data)) return data.map(redactOmniPayloadForLog)
+  if (typeof data !== 'object') return data
+
+  const out: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
+    if (
+      typeof value === 'string' &&
+      (key === 'data' || key === 'uri') &&
+      value.length > OMNI_LOG_REDACT_MIN_CHARS
+    ) {
+      out[key] = `[${key} omitted: ${value.length} chars]`
+    } else {
+      out[key] = redactOmniPayloadForLog(value)
+    }
+  }
+  return out
+}
+
+/** Log interaction response/status without truncating away error details behind base64 */
+export function logOmniInteractionPayload(prefix: string, data: Record<string, unknown>): void {
+  console.log(
+    `${prefix} id=${String(data.id ?? '')} status=${String(data.status ?? '')} error=${JSON.stringify(data.error ?? null)} status_message=${JSON.stringify(data.status_message ?? null)}`
+  )
+  console.log(`${prefix} payload:`, JSON.stringify(redactOmniPayloadForLog(data)))
+}
+
+/** Build a user-visible error from all signals in a failed interaction payload */
+export function formatOmniInteractionErrorMessage(
+  data: Record<string, unknown>,
+  fallback = 'Omni video generation failed',
+  formatRai?: (payload: unknown) => string | null
+): string {
+  const parts: string[] = []
+
+  const err = data.error
+  if (err && typeof err === 'object') {
+    const errObj = err as Record<string, unknown>
+    if (errObj.message) parts.push(String(errObj.message))
+    else parts.push(JSON.stringify(redactOmniPayloadForLog(err)))
+  } else if (typeof err === 'string' && err.trim()) {
+    parts.push(err)
+  }
+
+  if (typeof data.status_message === 'string' && data.status_message.trim()) {
+    parts.push(data.status_message)
+  }
+
+  const steps = Array.isArray(data.steps) ? data.steps : []
+  for (const step of steps) {
+    if (!step || typeof step !== 'object') continue
+    const stepObj = step as Record<string, unknown>
+    if (stepObj.type === 'error' || stepObj.error) {
+      parts.push(JSON.stringify(redactOmniPayloadForLog(stepObj)))
+    }
+  }
+
+  let errMsg = parts.length > 0 ? parts.join(' | ') : fallback
+
+  if (formatRai) {
+    const rai = formatRai(data)
+    if (rai) errMsg += `\n\nResponsible AI / safety detail:\n${rai}`
+  }
+
+  const lower = errMsg.toLowerCase()
+  if (
+    lower.includes('quota') ||
+    lower.includes('resource_exhausted') ||
+    lower.includes('fixed quota') ||
+    lower.includes('not entitled') ||
+    lower.includes('allowlist')
+  ) {
+    errMsg +=
+      '\n\nHint: Gemini Omni Flash on Vertex may require fixed-quota allocation and Agent Platform API enablement on your GCP project.'
+  }
+
+  if (parts.length === 0) {
+    errMsg += `: ${JSON.stringify(redactOmniPayloadForLog(data))}`
+  }
+
+  return errMsg
+}
+
+/**
+ * Normalize build options for Omni limitations:
+ * - FTV (start+end frame interpolation) is unsupported — use start frame only (I2V)
+ * - EXT without a valid previous_interaction_id is unsupported — omit continuation
+ */
+export function normalizeOmniInteractionBuildOptions(
+  options: OmniInteractionBuildOptions,
+  ctx: { isFTV?: boolean; isEXT?: boolean; hasValidPreviousInteraction?: boolean }
+): OmniInteractionBuildOptions {
+  const normalized = { ...options }
+
+  if (ctx.isFTV && normalized.lastFrame) {
+    normalized.lastFrame = undefined
+  }
+
+  if (ctx.isEXT && !ctx.hasValidPreviousInteraction) {
+    normalized.previousInteractionId = undefined
+  }
+
+  return normalized
 }
 
 /** Returns true when an operationName refers to an Interactions API resource (not Veo LRO) */
@@ -148,7 +257,6 @@ export async function buildOmniInteractionRequestBody(
   options: OmniInteractionBuildOptions = {},
   background = true
 ): Promise<Record<string, unknown>> {
-  const durationSeconds = options.durationSeconds ?? DEFAULT_VEO_CLIP_DURATION
   const task = inferOmniVideoTask(options)
   const input = await buildOmniInteractionInput(prompt, options)
 
@@ -161,7 +269,6 @@ export async function buildOmniInteractionRequestBody(
     response_format: {
       type: 'video',
       aspect_ratio: options.aspectRatio || '16:9',
-      duration: formatOmniDuration(durationSeconds),
       delivery: 'uri',
     },
     background,

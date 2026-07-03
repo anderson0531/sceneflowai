@@ -3,9 +3,12 @@ import {
   buildOmniInteractionRequestBody,
   extractVideoFromOmniInteraction,
   formatOmniDuration,
+  formatOmniInteractionErrorMessage,
   isOmniInteractionOperation,
   mapOmniInteractionStatus,
+  normalizeOmniInteractionBuildOptions,
   normalizeOmniInteractionId,
+  redactOmniPayloadForLog,
   resolveOmniPreviousInteractionId,
 } from '@/lib/gemini/omniVideoInteractions'
 
@@ -39,7 +42,49 @@ describe('omniVideoInteractions helpers', () => {
     expect(mapOmniInteractionStatus('failed')).toBe('FAILED')
   })
 
-  it('builds Interactions API body with 10s duration and video config', async () => {
+  it('redacts large base64 blobs in interaction payloads for logging', () => {
+    const redacted = redactOmniPayloadForLog({
+      id: 'video-1',
+      status: 'failed',
+      error: { message: 'quota exceeded' },
+      steps: [
+        {
+          type: 'user_input',
+          content: [{ type: 'image', mime_type: 'image/png', data: 'A'.repeat(200) }],
+        },
+      ],
+    }) as Record<string, unknown>
+
+    const steps = redacted.steps as Array<Record<string, unknown>>
+    const content = (steps[0].content as Array<Record<string, unknown>>)[0]
+    expect(content.data).toBe('[data omitted: 200 chars]')
+    expect(redacted.error).toEqual({ message: 'quota exceeded' })
+  })
+
+  it('formats error messages from interaction payload signals', () => {
+    const msg = formatOmniInteractionErrorMessage({
+      status: 'failed',
+      error: { message: 'RESOURCE_EXHAUSTED: fixed quota not allocated' },
+    })
+    expect(msg).toContain('RESOURCE_EXHAUSTED')
+    expect(msg).toContain('fixed-quota allocation')
+  })
+
+  it('strips unsupported FTV lastFrame and EXT without valid previous id', () => {
+    const normalized = normalizeOmniInteractionBuildOptions(
+      {
+        startFrame: 'https://example.com/start.png',
+        lastFrame: 'https://example.com/end.png',
+        previousInteractionId: 'v1_old',
+      },
+      { isFTV: true, isEXT: true, hasValidPreviousInteraction: false }
+    )
+    expect(normalized.lastFrame).toBeUndefined()
+    expect(normalized.previousInteractionId).toBeUndefined()
+    expect(normalized.startFrame).toBe('https://example.com/start.png')
+  })
+
+  it('builds Interactions API body without undocumented duration field', async () => {
     const body = await buildOmniInteractionRequestBody(
       'gemini-omni-flash-preview',
       'A cinematic sunset over the ocean.',
@@ -55,9 +100,9 @@ describe('omniVideoInteractions helpers', () => {
     expect(body.response_format).toEqual({
       type: 'video',
       aspect_ratio: '16:9',
-      duration: '10s',
       delivery: 'uri',
     })
+    expect((body.response_format as Record<string, unknown>).duration).toBeUndefined()
   })
 
   it('extracts base64 video from completed interaction steps', () => {
