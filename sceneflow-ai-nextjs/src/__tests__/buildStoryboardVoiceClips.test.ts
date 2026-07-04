@@ -2,11 +2,13 @@ import { describe, it, expect } from 'vitest'
 import { flatSceneToBeats, resolveRawBeatIndex } from '@/lib/script/beatMigration'
 import {
   buildBeatFirstPlaybackTimeline,
+  buildProjectAnimaticTimeline,
   buildStoryboardVoiceClips,
   buildStoryboardVisualTimeline,
   enumerateStoryboardFrameSlots,
   getCurrentStoryboardVisualFrame,
   getDialogueFrameUrl,
+  SCENE_FADE_TO_BLACK_SEC,
 } from '@/lib/storyboard/types'
 
 const NARRATION_URL = 'https://example.com/narration.mp3'
@@ -1357,6 +1359,105 @@ describe('buildBeatFirstPlaybackTimeline preVisAnimatic', () => {
 
     expect(voiceClips[0]?.duration).toBe(7.2)
     expect(visualFrames[0]?.duration).toBe(7.2)
+  })
+
+  it('sets isSceneStart only on the first frame', () => {
+    const scene = {
+      dialogue: [
+        { character: 'Alice', line: 'One' },
+        { character: 'Bob', line: 'Two' },
+      ],
+      beats: [
+        {
+          beatId: 'bt_1',
+          sequenceIndex: 0,
+          kind: 'dialogue',
+          character: 'Alice',
+          line: 'One',
+          storyboardImageUrl: 'https://example.com/one.jpg',
+          audioUrl: SARAH_URL,
+          durationSeconds: 4,
+        },
+        {
+          beatId: 'bt_2',
+          sequenceIndex: 1,
+          kind: 'dialogue',
+          character: 'Bob',
+          line: 'Two',
+          storyboardImageUrl: 'https://example.com/two.jpg',
+          audioUrl: BOB_URL,
+          durationSeconds: 2,
+        },
+      ],
+    }
+
+    const { visualFrames } = buildBeatFirstPlaybackTimeline(scene, 'en', {
+      [SARAH_URL]: 4,
+      [BOB_URL]: 2,
+    })
+
+    expect(visualFrames[0]?.isSceneStart).toBe(true)
+    expect(visualFrames[0]?.isSceneEnd).toBe(false)
+    expect(visualFrames[1]?.isSceneStart).toBe(false)
+    expect(visualFrames[1]?.isSceneEnd).toBe(true)
+  })
+})
+
+describe('buildProjectAnimaticTimeline', () => {
+  const beatScene = (beatId: string, imageUrl: string, endUrl?: string) => ({
+    dialogue: [{ character: 'Alice', line: 'Hello' }],
+    beats: [
+      {
+        beatId,
+        sequenceIndex: 0,
+        kind: 'dialogue',
+        character: 'Alice',
+        line: 'Hello',
+        storyboardImageUrl: imageUrl,
+        storyboardEndImageUrl: endUrl,
+        audioUrl: SARAH_URL,
+        durationSeconds: 4,
+      },
+    ],
+  })
+
+  it('preVisAnimatic produces no -end segments when end frame exists', () => {
+    const scenes = [
+      beatScene('bt_1', 'https://example.com/start.jpg', 'https://example.com/end.jpg'),
+    ]
+
+    const defaultTimeline = buildProjectAnimaticTimeline(scenes, 'en', { [SARAH_URL]: 4 })
+    expect(defaultTimeline.segments.some((s) => s.segmentId.endsWith('-end'))).toBe(true)
+
+    const preVisTimeline = buildProjectAnimaticTimeline(scenes, 'en', { [SARAH_URL]: 4 }, {
+      preVisAnimatic: true,
+    })
+    expect(preVisTimeline.segments.some((s) => s.segmentId.endsWith('-end'))).toBe(false)
+    expect(preVisTimeline.segments.every((s) => s.imageUrl !== 'https://example.com/end.jpg')).toBe(
+      true
+    )
+  })
+
+  it('inserts black segments between scenes when interSceneFadeUrl is set', () => {
+    const blackUrl = 'https://example.com/black-frame.png'
+    const scenes = [
+      beatScene('bt_1', 'https://example.com/s1.jpg'),
+      beatScene('bt_2', 'https://example.com/s2.jpg'),
+    ]
+
+    const withoutFade = buildProjectAnimaticTimeline(scenes, 'en', { [SARAH_URL]: 4 }, {
+      preVisAnimatic: true,
+    })
+    const withFade = buildProjectAnimaticTimeline(scenes, 'en', { [SARAH_URL]: 4 }, {
+      preVisAnimatic: true,
+      interSceneFadeUrl: blackUrl,
+    })
+
+    expect(withFade.segments.filter((s) => s.imageUrl === blackUrl)).toHaveLength(1)
+    expect(withFade.totalDuration).toBe(withoutFade.totalDuration + SCENE_FADE_TO_BLACK_SEC)
+    expect(withFade.segments.find((s) => s.segmentId === 's0-fade')?.duration).toBe(
+      SCENE_FADE_TO_BLACK_SEC
+    )
   })
 })
 

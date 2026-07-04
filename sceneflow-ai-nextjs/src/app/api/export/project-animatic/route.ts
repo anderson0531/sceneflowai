@@ -140,7 +140,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required field: scenes' }, { status: 400 })
     }
 
-    const timeline = buildProjectAnimaticTimeline(body.scenes, body.language || 'en')
+    const blackUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://sceneflowai.studio'}/render/black-frame.png`
+    const timeline = buildProjectAnimaticTimeline(body.scenes, body.language || 'en', {}, {
+      preVisAnimatic: true,
+      interSceneFadeUrl: blackUrl,
+    })
     if (timeline.segments.length === 0) {
       return NextResponse.json(
         { error: 'No storyboard frames with images found for animatic export' },

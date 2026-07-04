@@ -333,15 +333,31 @@ export function AudioGalleryPlayer({
     const primaryUrl = frame.imageUrl
 
     let fadeBlack = 0
+    if (frame.isSceneStart && t < SCENE_FADE_TO_BLACK_SEC) {
+      fadeBlack = Math.max(fadeBlack, 1 - t / SCENE_FADE_TO_BLACK_SEC)
+    }
     if (frame.isSceneEnd) {
       const fadeStart = Math.max(0, frameDuration - SCENE_FADE_TO_BLACK_SEC)
       if (t >= fadeStart) {
-        fadeBlack = Math.min(1, (t - fadeStart) / SCENE_FADE_TO_BLACK_SEC)
+        fadeBlack = Math.max(
+          fadeBlack,
+          Math.min(1, (t - fadeStart) / SCENE_FADE_TO_BLACK_SEC)
+        )
       }
     }
 
     return { primaryUrl, overlayUrl: null as string | null, blend: 0, fadeBlack }
   }, [currentVisualFrame, currentTime, displayImageUrl])
+
+  const videoFadeBlack = useMemo(() => {
+    if (!useVideoForCurrentScene || videoDuration <= 0) return 0
+    const fadeIn = Math.max(0, 1 - videoCurrentTime / SCENE_FADE_TO_BLACK_SEC)
+    const fadeOut = Math.max(
+      0,
+      1 - (videoDuration - videoCurrentTime) / SCENE_FADE_TO_BLACK_SEC
+    )
+    return Math.min(1, Math.max(fadeIn, fadeOut))
+  }, [useVideoForCurrentScene, videoCurrentTime, videoDuration])
 
   const rawSpeakerLabel = currentVisualFrame?.character ?? currentVisualFrame?.label
   const speakerLabel = translatePlayerLabel(rawSpeakerLabel, playerLabels)
@@ -808,17 +824,25 @@ export function AudioGalleryPlayer({
                   : "max-w-[500px] aspect-video shadow-xl"
           )}>
             {useVideoForCurrentScene ? (
-              <video
-                ref={videoRef}
-                key={currentSceneVideoUrl || `scene-${currentSceneIndex}`}
-                src={currentSceneVideoUrl || undefined}
-                className="w-full h-full object-contain"
-                onLoadedMetadata={(e) => setVideoDuration(e.currentTarget.duration || 0)}
-                onTimeUpdate={(e) => setVideoCurrentTime(e.currentTarget.currentTime)}
-                onPlay={() => setVideoPlaying(true)}
-                onPause={() => setVideoPlaying(false)}
-                onEnded={handleVideoEnded}
-              />
+              <>
+                <video
+                  ref={videoRef}
+                  key={currentSceneVideoUrl || `scene-${currentSceneIndex}`}
+                  src={currentSceneVideoUrl || undefined}
+                  className="w-full h-full object-contain"
+                  onLoadedMetadata={(e) => setVideoDuration(e.currentTarget.duration || 0)}
+                  onTimeUpdate={(e) => setVideoCurrentTime(e.currentTarget.currentTime)}
+                  onPlay={() => setVideoPlaying(true)}
+                  onPause={() => setVideoPlaying(false)}
+                  onEnded={handleVideoEnded}
+                />
+                {videoFadeBlack > 0 && (
+                  <div
+                    className="absolute inset-0 bg-black z-[2] pointer-events-none"
+                    style={{ opacity: videoFadeBlack }}
+                  />
+                )}
+              </>
             ) : inBeatVisual.primaryUrl ? (
               <>
                 {crossfadeFromUrl && imageEffectPrefs.mode === 'crossfade' && (

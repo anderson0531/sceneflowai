@@ -98,6 +98,8 @@ export interface StoryboardVisualFrame {
   line?: string
   /** True when this is the last beat in a scene (triggers fade-to-black after). */
   isSceneEnd?: boolean
+  /** True when this is the first beat in a scene (triggers fade-from-black at start). */
+  isSceneStart?: boolean
 }
 
 function createStoryboardFrameId(): string {
@@ -1426,6 +1428,7 @@ export function buildBeatFirstPlaybackTimeline(
     character: win.character,
     line: win.line,
     isSceneEnd: win.isSceneEnd,
+    isSceneStart: index === 0,
   }))
 
   return {
@@ -1690,15 +1693,29 @@ export interface ProjectAnimaticTimeline {
   audioClips: ProjectAnimaticAudioClip[]
 }
 
+export interface ProjectAnimaticTimelineOptions {
+  /** Pre-Vis animatic: start frame only, 10s hold when no voice audio. */
+  preVisAnimatic?: boolean
+  /** URL of a solid black image inserted between scenes for fade-to-black. */
+  interSceneFadeUrl?: string
+  /** Duration of each inter-scene black segment (default SCENE_FADE_TO_BLACK_SEC). */
+  interSceneFadeSec?: number
+}
+
 /**
  * Full-project animatic timeline — mirrors Pre-Vis player ordering, durations,
- * in-beat start/end pairs, and per-scene fade-to-black extension on the last beat.
+ * and per-scene fade-to-black extension on the last beat.
  */
 export function buildProjectAnimaticTimeline(
   scenes: Record<string, unknown>[],
   language: string,
-  dynamicDurations: Record<string, number> = {}
+  dynamicDurations: Record<string, number> = {},
+  options?: ProjectAnimaticTimelineOptions
 ): ProjectAnimaticTimeline {
+  const preVisAnimatic = options?.preVisAnimatic === true
+  const interSceneFadeUrl = options?.interSceneFadeUrl
+  const interSceneFadeSec = options?.interSceneFadeSec ?? SCENE_FADE_TO_BLACK_SEC
+
   let globalOffset = 0
   const segments: ProjectAnimaticRenderSegment[] = []
   const audioClips: ProjectAnimaticAudioClip[] = []
@@ -1708,7 +1725,8 @@ export function buildProjectAnimaticTimeline(
     const { voiceClips, visualFrames } = buildBeatFirstPlaybackTimeline(
       scene,
       language,
-      dynamicDurations
+      dynamicDurations,
+      { preVisAnimatic }
     )
 
     const sceneDuration =
@@ -1801,6 +1819,17 @@ export function buildProjectAnimaticTimeline(
     }
 
     globalOffset += sceneDuration
+
+    if (interSceneFadeUrl && sceneIndex < scenes.length - 1) {
+      segments.push({
+        segmentId: `s${sceneIndex}-fade`,
+        sceneIndex,
+        imageUrl: interSceneFadeUrl,
+        startTime: globalOffset,
+        duration: interSceneFadeSec,
+      })
+      globalOffset += interSceneFadeSec
+    }
   }
 
   return {
