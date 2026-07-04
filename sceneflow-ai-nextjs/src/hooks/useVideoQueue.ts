@@ -30,6 +30,7 @@ import {
   resolveVeoRefForExtension,
   segmentHasVeoChain,
 } from '@/lib/video/veoChainQueue'
+import { normalizeReferenceImages } from '@/lib/video/normalizeReferenceImages'
 
 export interface VideoQueueState {
   /** All queue items with their configs */
@@ -97,6 +98,9 @@ export function useVideoQueue(
       generationMethod?: VideoGenerationMethod
       guidePrompt?: string
       previousSegmentVeoRef?: string
+      endFrameUrl?: string
+      referenceImages?: Array<{ url: string; type: 'style' | 'character' }> | string[]
+      qualityTier?: 'fast' | 'premium'
     }
   ) => Promise<void>,
   segmentGuideContext?: SegmentGuideContext,
@@ -391,6 +395,7 @@ export function useVideoQueue(
           }
 
           let startUrl = config.startFrameUrl?.trim() ? config.startFrameUrl : undefined
+          const endUrl = config.endFrameUrl?.trim() ? config.endFrameUrl : undefined
           if (batchMethod === 'FTV') {
             batchMethod = startUrl ? 'I2V' : 'T2V'
           }
@@ -404,6 +409,8 @@ export function useVideoQueue(
             liveSegment && batchMethod === 'EXT'
               ? resolveVeoRefForExtension(liveSegments, liveSegment)
               : undefined
+
+          const referenceImages = normalizeReferenceImages(config.referenceImages)
           
           await onGenerate(
             sceneId,
@@ -411,6 +418,7 @@ export function useVideoQueue(
             genType,
             {
               startFrameUrl: startUrl,
+              endFrameUrl: endUrl,
               sourceVideoUrl: previousSegmentVeoRef || config.sourceVideoUrl || undefined,
               prompt: config.prompt,
               negativePrompt: config.negativePrompt || undefined,
@@ -420,6 +428,8 @@ export function useVideoQueue(
               generationMethod: batchMethod,
               guidePrompt: config.guidePrompt,
               previousSegmentVeoRef,
+              referenceImages,
+              qualityTier: config.qualityTier,
             }
           )
           

@@ -91,6 +91,7 @@ export function selectOptimalMethod(context: MethodSelectionContext): MethodSele
     segmentIndex,
     hasSceneImage,
     hasStartFrameUrl,
+    hasEndFrameUrl,
     hasCharacterRefs,
     hasPreviousLastFrame,
     hasPreviousVeoRef,

@@ -25,6 +25,7 @@ import {
 import type { StemSeparationResult } from '@/lib/audio/stemSeparation'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
 import { extractVeoRaiDetailsFromErrorString } from '@/lib/vertexai/safety'
+import { normalizeReferenceImages } from '@/lib/video/normalizeReferenceImages'
 
 export const maxDuration = 300 // 5 minutes for video generation
 export const runtime = 'nodejs'
@@ -36,7 +37,7 @@ interface GenerateAssetRequest {
   startFrameUrl?: string
   endFrameUrl?: string  // Veo 3.1: For Frame-to-Video (FTV) generation with end frame
   sourceVideoUrl?: string  // Veo 3.1: Source video URL for extension mode - Veo handles frame continuity automatically
-  referenceImages?: Array<{ url: string; type: 'style' | 'character' }>  // Veo 3.1: Up to 3 reference images
+  referenceImages?: Array<{ url: string; type: 'style' | 'character' }> | string[]  // Veo 3.1: Up to 3 reference images
   generationMethod?: 'T2V' | 'I2V' | 'FTV' | 'EXT' | 'REF' | 'AUTO'  // Veo 3.1: Explicit generation method (AUTO = intelligent selection)
   sceneId: string
   projectId: string
@@ -84,13 +85,15 @@ export async function POST(
     const body = requestBody as GenerateAssetRequest
     let prompt = body.prompt
     let negativePrompt = body.negativePrompt
-    const { 
+    const referenceImages = normalizeReferenceImages(
+      body.referenceImages as string[] | GenerateAssetRequest['referenceImages'],
+    )
+    const {
       genType, 
       referenceImageIds, 
       startFrameUrl, 
       endFrameUrl,
       sourceVideoUrl,
-      referenceImages,
       generationMethod,
       sceneId, 
       projectId,

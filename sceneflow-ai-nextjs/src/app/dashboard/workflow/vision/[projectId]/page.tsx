@@ -54,6 +54,7 @@ import {
   findPreviousChainSegment,
   resolveVeoRefForExtension,
 } from '@/lib/video/veoChainQueue'
+import { normalizeReferenceImages } from '@/lib/video/normalizeReferenceImages'
 import {
   GALLERY_DIRECT_GENERATE_OPTS,
   GALLERY_MANUAL_GENERATE_OPTS,
@@ -2933,9 +2934,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         resolution?: '720p' | '1080p'
         generationMethod?: 'T2V' | 'I2V' | 'FTV' | 'EXT' | 'REF'
         endFrameUrl?: string
-        referenceImages?: Array<{ url: string; type: 'style' | 'character' }>
+        referenceImages?: Array<{ url: string; type: 'style' | 'character' }> | string[]
         guidePrompt?: string  // Voice/dialogue/SFX instructions for Veo 3.1 audio
         previousSegmentVeoRef?: string
+        qualityTier?: 'fast' | 'premium'
       }
     ) => {
       if (!project?.id) {
@@ -3010,6 +3012,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           segment.references?.startFrameUrl ||
           (segment.sequenceIndex === 0 && sceneImageUrlForApi ? sceneImageUrlForApi : undefined)
 
+        const resolvedEndFrameUrl =
+          options?.endFrameUrl?.trim() ||
+          segment.endFrameUrl ||
+          segment.references?.endFrameUrl ||
+          undefined
+
+        const normalizedReferenceImages = normalizeReferenceImages(
+          options?.referenceImages,
+        )
+
         // Use prompt from options (from prompt builder) or fall back to segment prompt
         const prompt = options?.prompt || segment.userEditedPrompt || segment.generatedPrompt || ''
         if (!prompt) {
@@ -3035,9 +3047,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             prompt,
             genType: mode,
             startFrameUrl: resolvedStartFrameUrl,
+            endFrameUrl: resolvedEndFrameUrl,
             sourceVideoUrl: options?.sourceVideoUrl,  // For EXT mode: Veo extends video directly
-            referenceImages: options?.referenceImages,
+            referenceImages: normalizedReferenceImages,
             generationMethod: effectiveGenerationMethod,
+            qualityTier: options?.qualityTier,
             sceneId,
             projectId: project.id,
             sceneImageUrl: sceneImageUrlForApi,
