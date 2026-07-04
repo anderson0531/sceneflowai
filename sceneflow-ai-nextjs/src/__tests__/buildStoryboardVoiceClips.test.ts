@@ -1256,6 +1256,110 @@ describe('getCurrentStoryboardVisualFrame', () => {
   })
 })
 
+describe('buildBeatFirstPlaybackTimeline preVisAnimatic', () => {
+  it('strips endImageUrl when preVisAnimatic is enabled', () => {
+    const scene = {
+      dialogue: [{ character: 'Alice', line: 'Hello' }],
+      beats: [
+        {
+          beatId: 'bt_1',
+          sequenceIndex: 0,
+          kind: 'dialogue',
+          character: 'Alice',
+          line: 'Hello',
+          storyboardImageUrl: 'https://example.com/start.jpg',
+          storyboardEndImageUrl: 'https://example.com/end.jpg',
+          audioUrl: SARAH_URL,
+          durationSeconds: 4,
+        },
+      ],
+    }
+
+    const defaultResult = buildBeatFirstPlaybackTimeline(scene, 'en', { [SARAH_URL]: 4 })
+    expect(defaultResult.visualFrames[0]?.endImageUrl).toBe('https://example.com/end.jpg')
+
+    const preVisResult = buildBeatFirstPlaybackTimeline(scene, 'en', { [SARAH_URL]: 4 }, {
+      preVisAnimatic: true,
+    })
+    expect(preVisResult.visualFrames[0]?.endImageUrl).toBeUndefined()
+    expect(preVisResult.visualFrames[0]?.imageUrl).toBe('https://example.com/start.jpg')
+  })
+
+  it('uses 10s hold for silent dialogue beats without voice URL', () => {
+    const scene = {
+      dialogue: [{ character: 'Alice', line: 'Hello' }],
+      beats: [
+        {
+          beatId: 'bt_1',
+          sequenceIndex: 0,
+          kind: 'dialogue',
+          character: 'Alice',
+          line: 'Hello',
+          storyboardImageUrl: 'https://example.com/start.jpg',
+        },
+      ],
+    }
+
+    const { visualFrames: preVis } = buildBeatFirstPlaybackTimeline(scene, 'en', {}, {
+      preVisAnimatic: true,
+    })
+    expect(preVis[0]?.duration).toBe(11)
+
+    const { visualFrames: defaultFrames } = buildBeatFirstPlaybackTimeline(scene, 'en')
+    expect(defaultFrames[0]?.duration).toBe(4)
+  })
+
+  it('uses 10s hold for action beats without durationSeconds', () => {
+    const scene = {
+      beats: [
+        {
+          beatId: 'bt_action',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Walk in',
+          storyboardImageUrl: 'https://example.com/action.jpg',
+        },
+      ],
+    }
+
+    const { visualFrames: preVis } = buildBeatFirstPlaybackTimeline(scene, 'en', {}, {
+      preVisAnimatic: true,
+    })
+    expect(preVis[0]?.duration).toBe(11)
+
+    const { visualFrames: defaultFrames } = buildBeatFirstPlaybackTimeline(scene, 'en')
+    expect(defaultFrames[0]?.duration).toBe(5)
+  })
+
+  it('keeps measured dialogue duration for spoken beats with voice URL', () => {
+    const scene = {
+      dialogue: [{ character: 'Alice', line: 'Hello' }],
+      beats: [
+        {
+          beatId: 'bt_1',
+          sequenceIndex: 0,
+          kind: 'dialogue',
+          character: 'Alice',
+          line: 'Hello',
+          storyboardImageUrl: 'https://example.com/start.jpg',
+          audioUrl: SARAH_URL,
+          durationSeconds: 4,
+        },
+      ],
+    }
+
+    const { voiceClips, visualFrames } = buildBeatFirstPlaybackTimeline(
+      scene,
+      'en',
+      { [SARAH_URL]: 6.2 },
+      { preVisAnimatic: true }
+    )
+
+    expect(voiceClips[0]?.duration).toBe(7.2)
+    expect(visualFrames[0]?.duration).toBe(7.2)
+  })
+})
+
 describe('getDialogueFrameUrl', () => {
   it('reads storyboardImageUrl from segments when flat dialogue lacks it', () => {
     const scene = {

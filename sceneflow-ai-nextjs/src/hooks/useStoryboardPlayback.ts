@@ -178,7 +178,9 @@ export function useStoryboardPlayback({
   const beatPlayback = useMemo(() => {
     const activeScene = sceneRef.current
     if (!activeScene?.beats?.length) return null
-    return buildBeatFirstPlaybackTimeline(activeScene, language, dynamicDurations)
+    return buildBeatFirstPlaybackTimeline(activeScene, language, dynamicDurations, {
+      preVisAnimatic: true,
+    })
   }, [sceneAudioRevision, sceneVisualRevision, language, dynamicDurationKey])
 
   const voiceClips = useMemo(() => {
@@ -196,6 +198,7 @@ export function useStoryboardPlayback({
     return buildStoryboardVisualTimeline(activeScene, voiceClips, {
       language,
       dynamicDurations,
+      preVisAnimatic: true,
     })
   }, [beatPlayback, voiceClips, sceneVisualRevision, language, dynamicDurationKey])
 

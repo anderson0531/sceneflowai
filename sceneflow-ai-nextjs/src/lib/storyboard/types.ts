@@ -18,6 +18,7 @@ import { resolveStandaloneNarrationUrl } from '@/lib/script/narration'
 import { isValidStoryboardMediaUrl } from '@/lib/storyboard/mergeSceneMedia'
 import { buildStoryboardMusicClips, resolveSceneMusicFileDuration } from '@/lib/storyboard/musicPlayback'
 import { buildBeatAlignedStoryboardSfxClips } from '@/lib/storyboard/sfxPlayback'
+import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
 
 const NARRATION_CLIP_BUFFER_SEC = 0.5
 const DIALOGUE_CLIP_BUFFER_SEC = 0.3
@@ -1191,11 +1192,23 @@ export function buildStoryboardVoiceClips(
   return clips
 }
 
-function resolveActionBeatDuration(beat: ReturnType<typeof getSceneBeats>[number]): number {
+export interface BeatFirstPlaybackOptions {
+  /** Pre-Vis animatic: start frame only, 10s hold when no voice audio. */
+  preVisAnimatic?: boolean
+}
+
+function resolveActionBeatDuration(
+  beat: ReturnType<typeof getSceneBeats>[number],
+  preVisAnimatic?: boolean
+): number {
   if (typeof beat.durationSeconds === 'number' && beat.durationSeconds > 0) {
     return beat.durationSeconds
   }
-  return DEFAULT_ACTION_BEAT_DURATION_SEC
+  return preVisAnimatic ? DEFAULT_VEO_CLIP_DURATION : DEFAULT_ACTION_BEAT_DURATION_SEC
+}
+
+function resolveSilentBeatDuration(preVisAnimatic?: boolean): number {
+  return preVisAnimatic ? DEFAULT_VEO_CLIP_DURATION : DEFAULT_CLIP_DURATION_SEC
 }
 
 /** Rebase playback times so the first voice clip starts at t=0. */
@@ -1264,8 +1277,10 @@ function extendVoiceClipsToVisualFrameDuration(
 export function buildBeatFirstPlaybackTimeline(
   scene: Record<string, unknown>,
   language: string,
-  dynamicDurations: Record<string, number> = {}
+  dynamicDurations: Record<string, number> = {},
+  options?: BeatFirstPlaybackOptions
 ): { voiceClips: StoryboardAudioClip[]; visualFrames: StoryboardVisualFrame[] } {
+  const preVisAnimatic = options?.preVisAnimatic === true
   const beats = getStoryboardTimelineBeats(scene)
   const slots = enumerateStoryboardFrameSlots(scene, beats)
   const startSlotByBeatId = new Map(
@@ -1298,11 +1313,11 @@ export function buildBeatFirstPlaybackTimeline(
     const slot = startSlotByBeatId.get(beat.beatId)
     const endSlot = endSlotByBeatId.get(beat.beatId)
     const imageUrl = slot?.ownImageUrl ?? slot?.displayImageUrl
-    const endImageUrl = endSlot?.ownImageUrl
+    const endImageUrl = preVisAnimatic ? undefined : endSlot?.ownImageUrl
     const isSceneEnd = beatIdx === beats.length - 1
 
     if (beat.kind === 'action') {
-      const duration = resolveActionBeatDuration(beat)
+      const duration = resolveActionBeatDuration(beat, preVisAnimatic)
       windows.push({
         beatId: beat.beatId,
         kind: 'action',
@@ -1338,7 +1353,7 @@ export function buildBeatFirstPlaybackTimeline(
     const clipId = beatVoiceClipId(beat, effectiveDialogueIndex)
 
     if (!url) {
-      const duration = DEFAULT_CLIP_DURATION_SEC
+      const duration = resolveSilentBeatDuration(preVisAnimatic)
       windows.push({
         beatId: beat.beatId,
         kind: beat.kind,
@@ -1426,7 +1441,11 @@ export function buildBeatFirstPlaybackTimeline(
 export function buildStoryboardVisualTimeline(
   scene: Record<string, unknown> | null | undefined,
   audioClips: StoryboardAudioClip[],
-  options?: { language?: string; dynamicDurations?: Record<string, number> }
+  options?: {
+    language?: string
+    dynamicDurations?: Record<string, number>
+    preVisAnimatic?: boolean
+  }
 ): StoryboardVisualFrame[] {
   if (!scene) return []
 
@@ -1434,7 +1453,8 @@ export function buildStoryboardVisualTimeline(
     const { visualFrames } = buildBeatFirstPlaybackTimeline(
       scene,
       options?.language ?? 'en',
-      options?.dynamicDurations ?? {}
+      options?.dynamicDurations ?? {},
+      { preVisAnimatic: options?.preVisAnimatic }
     )
     if (visualFrames.length > 0) return visualFrames
   }

@@ -74,6 +74,44 @@ function resolveSceneVideoUrl(
   return match?.mp4Url || null
 }
 
+function getVideoSceneIndices(
+  scenes: any[],
+  language: string,
+  sceneProductionState?: Record<string, SceneProductionData>
+): number[] {
+  return scenes
+    .map((scene, idx) =>
+      resolveSceneVideoUrl(scene, idx, language, sceneProductionState) ? idx : -1
+    )
+    .filter((idx) => idx >= 0)
+}
+
+function findNextVideoSceneIndex(indices: number[], currentIndex: number): number | null {
+  const pos = indices.indexOf(currentIndex)
+  if (pos >= 0 && pos < indices.length - 1) return indices[pos + 1]!
+  const next = indices.find((idx) => idx > currentIndex)
+  return next ?? null
+}
+
+function findPrevVideoSceneIndex(indices: number[], currentIndex: number): number | null {
+  const pos = indices.indexOf(currentIndex)
+  if (pos > 0) return indices[pos - 1]!
+  for (let i = indices.length - 1; i >= 0; i--) {
+    if (indices[i]! < currentIndex) return indices[i]!
+  }
+  return null
+}
+
+function findNearestForwardVideoSceneIndex(
+  indices: number[],
+  currentIndex: number
+): number | null {
+  if (indices.length === 0) return null
+  if (indices.includes(currentIndex)) return currentIndex
+  const next = indices.find((idx) => idx >= currentIndex)
+  return next ?? indices[0]!
+}
+
 interface AudioGalleryPlayerProps {
   scenes: any[]
   selectedLanguage: string
@@ -196,18 +234,54 @@ export function AudioGalleryPlayer({
     [scenes, selectedLanguage, sceneProductionState]
   )
 
-  const useVideoForCurrentScene = playbackMode === 'video' && !!currentSceneVideoUrl
+  const videoSceneIndices = useMemo(
+    () => getVideoSceneIndices(scenes, selectedLanguage, sceneProductionState),
+    [scenes, selectedLanguage, sceneProductionState]
+  )
+
+  const videoScenePosition = useMemo(() => {
+    const pos = videoSceneIndices.indexOf(currentSceneIndex)
+    return pos >= 0 ? pos + 1 : 0
+  }, [videoSceneIndices, currentSceneIndex])
+
+  const useVideoForCurrentScene =
+    playbackMode === 'video' && videoSceneIndices.includes(currentSceneIndex)
 
   const playAfterSceneChangeRef = useRef<() => void>(() => {})
+  const pausePlaybackRef = useRef<() => void>(() => {})
+  const resetPlaybackRef = useRef<() => void>(() => {})
+
+  const goToScene = useCallback(
+    (index: number) => {
+      if (index >= 0 && index < scenes.length) {
+        pausePlaybackRef.current()
+        resetPlaybackRef.current()
+        if (videoRef.current) {
+          videoRef.current.pause()
+        }
+        setVideoPlaying(false)
+        setVideoCurrentTime(0)
+        setVideoDuration(0)
+        setCurrentSceneIndex(index)
+        onSceneChange?.(index)
+      }
+    },
+    [scenes.length, onSceneChange]
+  )
 
   const goToNextScene = useCallback(() => {
+    if (playbackMode === 'video') {
+      const next = findNextVideoSceneIndex(videoSceneIndices, currentSceneIndex)
+      if (next != null) goToScene(next)
+      return
+    }
     setCurrentSceneIndex((prev) => {
       if (prev >= scenes.length - 1) return prev
       const next = prev + 1
       onSceneChange?.(next)
       return next
     })
-  }, [scenes.length, onSceneChange])
+  }, [playbackMode, videoSceneIndices, currentSceneIndex, goToScene, scenes.length, onSceneChange])
 
   const handlePlaybackEnd = useCallback(() => {
     if (autoAdvanceRef.current && currentSceneIndex < scenes.length - 1) {
@@ -242,11 +316,11 @@ export function AudioGalleryPlayer({
     reset,
   } = playback
 
+  pausePlaybackRef.current = pause
+  resetPlaybackRef.current = reset
+
   const displayImageUrl =
     currentVisualFrame?.imageUrl ?? getEstablishingFrameUrl(currentScene)
-
-  const BEAT_CROSSFADE_START_FRACTION = 0.35
-  const BEAT_CROSSFADE_MAX_SEC = 1.5
 
   const inBeatVisual = useMemo(() => {
     const frame = currentVisualFrame
@@ -256,19 +330,7 @@ export function AudioGalleryPlayer({
     const frameStart = frame.startTime
     const frameDuration = Math.max(frame.duration, 0.1)
     const t = Math.max(0, currentTime - frameStart)
-    let primaryUrl = frame.imageUrl
-    let overlayUrl: string | null = null
-    let blend = 0
-
-    if (frame.endImageUrl) {
-      const crossfadeDur = Math.min(BEAT_CROSSFADE_MAX_SEC, frameDuration * 0.25)
-      const crossfadeStart = frameDuration * BEAT_CROSSFADE_START_FRACTION
-      if (t >= crossfadeStart) {
-        blend = Math.min(1, (t - crossfadeStart) / crossfadeDur)
-        overlayUrl = frame.imageUrl
-        primaryUrl = frame.endImageUrl
-      }
-    }
+    const primaryUrl = frame.imageUrl
 
     let fadeBlack = 0
     if (frame.isSceneEnd) {
@@ -278,7 +340,7 @@ export function AudioGalleryPlayer({
       }
     }
 
-    return { primaryUrl, overlayUrl, blend, fadeBlack }
+    return { primaryUrl, overlayUrl: null as string | null, blend: 0, fadeBlack }
   }, [currentVisualFrame, currentTime, displayImageUrl])
 
   const rawSpeakerLabel = currentVisualFrame?.character ?? currentVisualFrame?.label
@@ -352,28 +414,15 @@ export function AudioGalleryPlayer({
     }
     lastImageUrlRef.current = url
   }, [inBeatVisual.primaryUrl, inBeatVisual.overlayUrl, imageEffectPrefs.mode])
-  
-  const goToScene = useCallback(
-    (index: number) => {
-      if (index >= 0 && index < scenes.length) {
-        pause()
-        reset()
-        if (videoRef.current) {
-          videoRef.current.pause()
-        }
-        setVideoPlaying(false)
-        setVideoCurrentTime(0)
-        setVideoDuration(0)
-        setCurrentSceneIndex(index)
-        onSceneChange?.(index)
-      }
-    },
-    [scenes.length, pause, reset, onSceneChange]
-  )
 
   const goToPrevScene = useCallback(() => {
+    if (playbackMode === 'video') {
+      const prev = findPrevVideoSceneIndex(videoSceneIndices, currentSceneIndex)
+      if (prev != null) goToScene(prev)
+      return
+    }
     goToScene(currentSceneIndex - 1)
-  }, [currentSceneIndex, goToScene])
+  }, [playbackMode, videoSceneIndices, currentSceneIndex, goToScene])
 
   const sceneDisplay = useMemo(
     () =>
@@ -398,6 +447,17 @@ export function AudioGalleryPlayer({
   }, [playbackMode, hasAnySceneVideo])
 
   useEffect(() => {
+    if (playbackMode !== 'video' || videoSceneIndices.length === 0) return
+    if (!videoSceneIndices.includes(currentSceneIndex)) {
+      const target = findNearestForwardVideoSceneIndex(videoSceneIndices, currentSceneIndex)
+      if (target != null && target !== currentSceneIndex) {
+        setCurrentSceneIndex(target)
+        onSceneChange?.(target)
+      }
+    }
+  }, [playbackMode, videoSceneIndices, currentSceneIndex, onSceneChange])
+
+  useEffect(() => {
     if (useVideoForCurrentScene) {
       pause()
       reset()
@@ -417,13 +477,16 @@ export function AudioGalleryPlayer({
 
   const handleVideoEnded = useCallback(() => {
     setVideoPlaying(false)
-    if (autoAdvanceRef.current && currentSceneIndex < scenes.length - 1) {
-      setTimeout(() => {
-        shouldAutoPlayVideoRef.current = playbackMode === 'video'
-        goToNextScene()
-      }, 100)
+    if (autoAdvanceRef.current) {
+      const next = findNextVideoSceneIndex(videoSceneIndices, currentSceneIndex)
+      if (next != null) {
+        setTimeout(() => {
+          shouldAutoPlayVideoRef.current = true
+          goToScene(next)
+        }, 100)
+      }
     }
-  }, [currentSceneIndex, scenes.length, goToNextScene, playbackMode])
+  }, [videoSceneIndices, currentSceneIndex, goToScene])
 
   const toggleVideoPlayback = useCallback(() => {
     const el = videoRef.current
@@ -616,7 +679,9 @@ export function AudioGalleryPlayer({
               </Tooltip>
             </div>
             <span className="text-xs text-gray-400 bg-gray-800 px-2 py-0.5 rounded">
-              Scene {currentSceneIndex + 1} of {scenes.length}
+              {playbackMode === 'video'
+                ? `Video ${videoScenePosition} of ${videoSceneIndices.length}`
+                : `Scene ${currentSceneIndex + 1} of ${scenes.length}`}
             </span>
           </div>
           
@@ -756,16 +821,8 @@ export function AudioGalleryPlayer({
               />
             ) : inBeatVisual.primaryUrl ? (
               <>
-                {crossfadeFromUrl && imageEffectPrefs.mode === 'crossfade' && !inBeatVisual.overlayUrl && (
+                {crossfadeFromUrl && imageEffectPrefs.mode === 'crossfade' && (
                   renderSceneImage(crossfadeFromUrl, 'previous')
-                )}
-                {inBeatVisual.overlayUrl && inBeatVisual.blend > 0 && (
-                  <div
-                    className="absolute inset-0 z-[1]"
-                    style={{ opacity: 1 - inBeatVisual.blend }}
-                  >
-                    {renderSceneImage(inBeatVisual.overlayUrl, 'start-overlay')}
-                  </div>
                 )}
                 {renderSceneImage(inBeatVisual.primaryUrl, 'current')}
                 {inBeatVisual.fadeBlack > 0 && (
@@ -847,9 +904,6 @@ export function AudioGalleryPlayer({
                 {!hasAudio && !useVideoForCurrentScene && (
                   <p className="text-xs text-amber-400 mt-2">No audio generated for this scene</p>
                 )}
-                {playbackMode === 'video' && !currentSceneVideoUrl && (
-                  <p className="text-xs text-indigo-300 mt-2">No scene video yet — showing animatic fallback</p>
-                )}
               </div>
             )}
             
@@ -882,7 +936,11 @@ export function AudioGalleryPlayer({
                     <TooltipTrigger asChild>
                       <button
                         onClick={goToPrevScene}
-                        disabled={currentSceneIndex === 0}
+                        disabled={
+                          playbackMode === 'video'
+                            ? findPrevVideoSceneIndex(videoSceneIndices, currentSceneIndex) == null
+                            : currentSceneIndex === 0
+                        }
                         className={cn(
                           "rounded-full bg-gray-700 hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors",
                           isFullscreen ? "p-3" : "p-2"
@@ -913,8 +971,12 @@ export function AudioGalleryPlayer({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
-                        onClick={() => goToScene(currentSceneIndex + 1)}
-                        disabled={currentSceneIndex === scenes.length - 1}
+                        onClick={() => goToNextScene()}
+                        disabled={
+                          playbackMode === 'video'
+                            ? findNextVideoSceneIndex(videoSceneIndices, currentSceneIndex) == null
+                            : currentSceneIndex === scenes.length - 1
+                        }
                         className={cn(
                           "rounded-full bg-gray-700 hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors",
                           isFullscreen ? "p-3" : "p-2"
@@ -933,7 +995,9 @@ export function AudioGalleryPlayer({
                   {embedMode && (
                     <>
                       <span className="text-[10px] text-gray-500 tabular-nums hidden sm:inline">
-                        {currentSceneIndex + 1}/{scenes.length}
+                        {playbackMode === 'video'
+                          ? `${videoScenePosition}/${videoSceneIndices.length}`
+                          : `${currentSceneIndex + 1}/${scenes.length}`}
                       </span>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -1072,7 +1136,9 @@ export function AudioGalleryPlayer({
           isFullscreen && "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pt-8"
         )}>
           <div className="flex gap-2 overflow-x-auto pb-2 justify-center">
-            {scenes.map((scene, idx) => {
+            {(playbackMode === 'video' ? videoSceneIndices : scenes.map((_, idx) => idx)).map(
+              (idx) => {
+              const scene = scenes[idx]
               const hasSceneAudio = sceneHasPlayablePreVisAudio(scene, selectedLanguage)
               const thumbUrl = getScenePlayableThumbnailUrl(scene)
 
