@@ -288,7 +288,8 @@ async function generateVideoWithOmniInteractions(
     hasLastFrame: !!omniBuildOptions.lastFrame,
     hasPreviousInteraction: !!omniBuildOptions.previousInteractionId,
     referenceImagesCount: options.referenceImages?.length || 0,
-    personGeneration: omniBuildOptions.personGeneration ?? 'allow_adult',
+    personGenerationIntent: omniBuildOptions.personGeneration ?? 'allow_adult',
+    personGenerationSentToInteractions: false,
     hasSafetySettings: Array.isArray(requestBody.safety_settings),
     background: requestBody.background,
   }))
@@ -300,12 +301,11 @@ async function generateVideoWithOmniInteractions(
       const errorText = await response.text()
       const lower = errorText.toLowerCase()
       if (
-        lower.includes('safety') ||
         lower.includes('safety_settings') ||
-        lower.includes('person_generation')
+        (lower.includes('unknown parameter') && lower.includes('safety'))
       ) {
         console.warn(
-          '[Omni Video] Interactions 400 with safety/person config — retrying without safety_settings'
+          '[Omni Video] Interactions 400 with safety_settings — retrying without safety_settings'
         )
         const retryOptions = { ...omniBuildOptions, omitSafetySettings: true }
         requestBody = await buildOmniInteractionRequestBody(model, prompt, retryOptions)

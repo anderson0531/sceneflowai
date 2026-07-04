@@ -292,15 +292,13 @@ export async function buildOmniInteractionRequestBody(
   const task = inferOmniVideoTask(options)
   const input = await buildOmniInteractionInput(prompt, options)
 
-  const personGeneration = options.personGeneration ?? 'allow_adult'
-
+  // Interactions video_config supports only `task`; person generation uses Omni model defaults.
   const body: Record<string, unknown> = {
     model,
     input,
     generation_config: {
       video_config: {
         task,
-        person_generation: personGeneration,
       },
     },
     response_format: {

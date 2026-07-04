@@ -97,7 +97,7 @@ describe('omniVideoInteractions helpers', () => {
     expect(body.background).toBe(true)
     expect(body.input).toBe('A cinematic sunset over the ocean.')
     expect(body.generation_config).toEqual({
-      video_config: { task: 'text_to_video', person_generation: 'allow_adult' },
+      video_config: { task: 'text_to_video' },
     })
     expect(body.response_format).toEqual({
       type: 'video',
@@ -165,7 +165,7 @@ describe('omniVideoInteractions helpers', () => {
     expect(extracted?.veoVideoRef).toBe('interaction:v1_uri_test')
   })
 
-  it('includes safety_settings and person_generation by default', async () => {
+  it('includes safety_settings by default and omits person_generation from video_config', async () => {
     const body = await buildOmniInteractionRequestBody(
       'gemini-omni-flash-preview',
       'Scene action.',
@@ -176,7 +176,8 @@ describe('omniVideoInteractions helpers', () => {
     expect((body.safety_settings as unknown[]).length).toBeGreaterThan(0)
     const videoConfig = (body.generation_config as Record<string, unknown>)
       .video_config as Record<string, unknown>
-    expect(videoConfig.person_generation).toBe('allow_all')
+    expect(videoConfig).toEqual({ task: 'text_to_video' })
+    expect(videoConfig.person_generation).toBeUndefined()
   })
 
   it('omits safety_settings when omitSafetySettings is true', async () => {
