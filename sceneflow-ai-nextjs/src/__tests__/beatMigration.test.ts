@@ -10,6 +10,8 @@ import {
   hydrateBeatStoryboardMediaFromLegacy,
   isAutoLeadingEstablishingBeat,
   migrateProjectToBeats,
+  migrateProjectBeatsToStartFrameOnly,
+  migrateSceneBeatsToStartFrameOnly,
   applyBeatStoryboardImageToScene,
   applyExpressStoryboardImageToScene,
 } from '@/lib/script/beatMigration'
@@ -344,6 +346,85 @@ describe('beatMigration', () => {
     const beats = scenes[0].beats
     expect(beats[0].storyboardImageUrl).toBe('https://example.com/scene1-est.jpg')
     expect(beats[1].storyboardImageUrl).toBe('https://example.com/scene1-line.jpg')
+  })
+})
+
+describe('migrateSceneBeatsToStartFrameOnly', () => {
+  it('promotes end URL to start when start is missing and strips end fields', () => {
+    const scene = {
+      beats: [
+        {
+          beatId: 'bt_1',
+          sequenceIndex: 0,
+          kind: 'dialogue',
+          character: 'Alice',
+          line: 'Hello',
+          storyboardEndImageUrl: 'https://example.com/end.jpg',
+          storyboardEndImagePrompt: 'End prompt',
+          storyboardEndImageTier: 'draft',
+        },
+      ],
+    }
+
+    const migrated = migrateSceneBeatsToStartFrameOnly(scene)
+    const beats = (migrated.beats as Array<Record<string, unknown>>) ?? []
+    expect(beats[0].storyboardImageUrl).toBe('https://example.com/end.jpg')
+    expect(beats[0].storyboardImagePrompt).toBe('End prompt')
+    expect(beats[0].storyboardImageTier).toBe('draft')
+    expect(beats[0].storyboardEndImageUrl).toBeUndefined()
+    expect(beats[0].storyboardEndImagePrompt).toBeUndefined()
+    expect(beats[0].storyboardEndImageTier).toBeUndefined()
+  })
+
+  it('strips end fields when start already exists', () => {
+    const scene = {
+      beats: [
+        {
+          beatId: 'bt_1',
+          sequenceIndex: 0,
+          kind: 'dialogue',
+          character: 'Alice',
+          line: 'Hello',
+          storyboardImageUrl: 'https://example.com/start.jpg',
+          storyboardEndImageUrl: 'https://example.com/end.jpg',
+        },
+      ],
+    }
+
+    const migrated = migrateSceneBeatsToStartFrameOnly(scene)
+    const beats = (migrated.beats as Array<Record<string, unknown>>) ?? []
+    expect(beats[0].storyboardImageUrl).toBe('https://example.com/start.jpg')
+    expect(beats[0].storyboardEndImageUrl).toBeUndefined()
+  })
+
+  it('migrateProjectBeatsToStartFrameOnly is idempotent', () => {
+    const metadata = {
+      visionPhase: {
+        script: {
+          script: {
+            scenes: [
+              {
+                beats: [
+                  {
+                    beatId: 'bt_1',
+                    sequenceIndex: 0,
+                    kind: 'dialogue',
+                    character: 'Alice',
+                    line: 'Hello',
+                    storyboardEndImageUrl: 'https://example.com/end.jpg',
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    }
+
+    const first = migrateProjectBeatsToStartFrameOnly(metadata)
+    expect(first.changed).toBe(true)
+    const second = migrateProjectBeatsToStartFrameOnly(first.metadata)
+    expect(second.changed).toBe(false)
   })
 })
 

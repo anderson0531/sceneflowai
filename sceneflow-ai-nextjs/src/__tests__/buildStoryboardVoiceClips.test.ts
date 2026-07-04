@@ -8,8 +8,13 @@ import {
   enumerateStoryboardFrameSlots,
   getCurrentStoryboardVisualFrame,
   getDialogueFrameUrl,
+  getScenePlayableThumbnailUrl,
   SCENE_FADE_TO_BLACK_SEC,
 } from '@/lib/storyboard/types'
+import {
+  migrateProjectBeatsToStartFrameOnly,
+  migrateSceneBeatsToStartFrameOnly,
+} from '@/lib/script/beatMigration'
 
 const NARRATION_URL = 'https://example.com/narration.mp3'
 const SARAH_URL = 'https://example.com/sarah.mp3'
@@ -1419,6 +1424,81 @@ describe('buildProjectAnimaticTimeline', () => {
         durationSeconds: 4,
       },
     ],
+  })
+
+  it('preVisAnimatic never uses end URL when start frame is missing', () => {
+    const scene = {
+      dialogue: [{ character: 'Alice', line: 'Hello' }],
+      beats: [
+        {
+          beatId: 'bt_1',
+          sequenceIndex: 0,
+          kind: 'dialogue',
+          character: 'Alice',
+          line: 'Hello',
+          storyboardEndImageUrl: 'https://example.com/end-only.jpg',
+          audioUrl: SARAH_URL,
+          durationSeconds: 4,
+        },
+      ],
+    }
+
+    const { visualFrames } = buildBeatFirstPlaybackTimeline(scene, 'en', { [SARAH_URL]: 4 }, {
+      preVisAnimatic: true,
+    })
+    expect(visualFrames[0]?.imageUrl).toBeUndefined()
+    expect(visualFrames[0]?.endImageUrl).toBeUndefined()
+  })
+
+  it('enumerateStoryboardFrameSlots startFramesOnly emits one slot per beat', () => {
+    const scene = {
+      beats: [
+        { beatId: 'bt_1', sequenceIndex: 0, kind: 'action', actionDescription: 'Wide' },
+        { beatId: 'bt_2', sequenceIndex: 1, kind: 'dialogue', character: 'A', line: 'Hi' },
+      ],
+    }
+
+    const startOnly = enumerateStoryboardFrameSlots(scene, undefined, { startFramesOnly: true })
+    const withEnd = enumerateStoryboardFrameSlots(scene, undefined, { startFramesOnly: false })
+
+    expect(startOnly).toHaveLength(2)
+    expect(withEnd).toHaveLength(4)
+    expect(startOnly.every((s) => s.frameRole !== 'end')).toBe(true)
+  })
+
+  it('getScenePlayableThumbnailUrl ignores end frames when start is missing', () => {
+    const scene = {
+      beats: [
+        {
+          beatId: 'bt_1',
+          sequenceIndex: 0,
+          kind: 'dialogue',
+          character: 'Alice',
+          line: 'Hello',
+          storyboardEndImageUrl: 'https://example.com/end.jpg',
+        },
+      ],
+    }
+
+    expect(getScenePlayableThumbnailUrl(scene)).toBeUndefined()
+  })
+
+  it('getScenePlayableThumbnailUrl prefers start frame over end when both exist', () => {
+    const scene = {
+      beats: [
+        {
+          beatId: 'bt_1',
+          sequenceIndex: 0,
+          kind: 'dialogue',
+          character: 'Alice',
+          line: 'Hello',
+          storyboardImageUrl: 'https://example.com/start.jpg',
+          storyboardEndImageUrl: 'https://example.com/end.jpg',
+        },
+      ],
+    }
+
+    expect(getScenePlayableThumbnailUrl(scene)).toBe('https://example.com/start.jpg')
   })
 
   it('preVisAnimatic produces no -end segments when end frame exists', () => {

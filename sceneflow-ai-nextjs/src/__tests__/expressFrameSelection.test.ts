@@ -52,7 +52,7 @@ describe('express frame slot selection helpers', () => {
     ).toBe(2)
   })
 
-  it('enumerateStoryboardFrameSlots uses stable beat start and end keys', () => {
+  it('enumerateStoryboardFrameSlots defaults to start-only keys', () => {
     const scene = {
       beats: [
         {
@@ -65,8 +65,13 @@ describe('express frame slot selection helpers', () => {
       ],
     }
 
-    const keys = enumerateStoryboardFrameSlots(scene).map((s) => s.key)
-    expect(keys).toContain('b1')
-    expect(keys).toContain('b1-end')
+    const startOnlyKeys = enumerateStoryboardFrameSlots(scene).map((s) => s.key)
+    expect(startOnlyKeys).toEqual(['b1'])
+
+    const withEndKeys = enumerateStoryboardFrameSlots(scene, undefined, {
+      startFramesOnly: false,
+    }).map((s) => s.key)
+    expect(withEndKeys).toContain('b1')
+    expect(withEndKeys).toContain('b1-end')
   })
 })

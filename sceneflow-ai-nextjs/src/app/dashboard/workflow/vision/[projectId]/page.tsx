@@ -6364,13 +6364,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             visionPhase: { ...visionPhase, script: migratedScript },
           }
           const segmentMigration = migrateProjectToSegmented(interimMetadata)
-          const { migrateProjectToBeats } = await import('@/lib/script/beatMigration')
+          const { migrateProjectToBeats, migrateProjectBeatsToStartFrameOnly } = await import('@/lib/script/beatMigration')
           const beatMigration = migrateProjectToBeats(segmentMigration.metadata)
-          const finalMetadata = beatMigration.metadata
+          const startFrameMigration = migrateProjectBeatsToStartFrameOnly(beatMigration.metadata)
+          const finalMetadata = startFrameMigration.metadata
           const finalScript = finalMetadata.visionPhase?.script ?? migratedScript
           loadedScript = finalScript
 
-          if (needsMigration || segmentMigration.changed || beatMigration.changed) {
+          if (needsMigration || segmentMigration.changed || beatMigration.changed || startFrameMigration.changed) {
             if (segmentMigration.changed) {
               console.log('[loadProject] Segmented-script migration applied:', {
                 migratedSceneCount: segmentMigration.migratedSceneCount,
@@ -6382,6 +6383,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             if (beatMigration.changed) {
               console.log('[loadProject] Beat-first migration applied:', {
                 migratedSceneCount: beatMigration.migratedSceneCount,
+              })
+            }
+            if (startFrameMigration.changed) {
+              console.log('[loadProject] Start-frame-only migration applied:', {
+                migratedSceneCount: startFrameMigration.migratedSceneCount,
               })
             }
             queuePersist({ metadata: finalMetadata }, 'loadProject-migration')
@@ -13060,10 +13066,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       let metadataToPersist: any = interimMetadata
       try {
         const { migrateProjectToSegmented } = await import('@/lib/script/migrateToSegmented')
-        const { migrateProjectToBeats } = await import('@/lib/script/beatMigration')
+        const { migrateProjectToBeats, migrateProjectBeatsToStartFrameOnly } = await import('@/lib/script/beatMigration')
         const segmentResult = migrateProjectToSegmented(interimMetadata)
         const beatResult = migrateProjectToBeats(segmentResult.metadata)
-        metadataToPersist = beatResult.metadata
+        const startFrameResult = migrateProjectBeatsToStartFrameOnly(beatResult.metadata)
+        metadataToPersist = startFrameResult.metadata
         if (segmentResult.changed) {
           console.log('[saveScenesToDatabase] Re-derived segments:', {
             migratedSceneCount: segmentResult.migratedSceneCount,
@@ -13073,6 +13080,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (beatResult.changed) {
           console.log('[saveScenesToDatabase] Beat hydration:', {
             migratedSceneCount: beatResult.migratedSceneCount,
+          })
+        }
+        if (startFrameResult.changed) {
+          console.log('[saveScenesToDatabase] Start-frame-only migration:', {
+            migratedSceneCount: startFrameResult.migratedSceneCount,
           })
         }
       } catch (segErr) {
@@ -13404,7 +13416,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 isRegeneratingScript={isRegeneratingScript}
                 onModerationReport={setLatestModerationReport}
                 onGenerateBeatFrame={handleRequestGenerateBeatFrame}
-                onGenerateBeatEndFrame={handleRequestGenerateBeatEndFrame}
                 onGenerateDialogueFrame={handleGenerateDialogueFrameImage}
                 onUploadBeatFrame={handleUploadBeatFrame}
                 onUploadDialogueFrame={handleUploadDialogueFrame}

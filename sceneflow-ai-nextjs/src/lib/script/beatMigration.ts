@@ -21,6 +21,7 @@ import { mintLineId } from '@/lib/script/segmentScript'
 import { applyDerivedSfxToScene } from '@/lib/script/deriveSfxFromSceneContent'
 
 const BEAT_MIGRATION_FLAG = 'beatsMigratedAt'
+const START_FRAME_ONLY_MIGRATION_FLAG = 'startFrameOnlyMigrationAt'
 const BEAT_DURATION_SEC = 8
 const MAX_DERIVED_BEATS = 12
 
@@ -1226,6 +1227,97 @@ export function migrateProjectToBeats(metadata: unknown): MigrateBeatsResult {
 
   if (changed) {
     visionPhase[BEAT_MIGRATION_FLAG] = new Date().toISOString()
+  }
+
+  return { metadata: cloned, migratedSceneCount, changed }
+}
+
+/** Promote legacy end frames to start when missing; strip all storyboardEndImage* fields. */
+export function migrateSceneBeatsToStartFrameOnly(
+  scene: Record<string, unknown>
+): Record<string, unknown> {
+  const beats = getSceneBeats(scene)
+  if (beats.length === 0) return scene
+
+  let changed = false
+  const nextBeats = beats.map((beat) => {
+    const startUrl = pickStoryboardString(beat.storyboardImageUrl)
+    const endUrl = pickStoryboardString(beat.storyboardEndImageUrl)
+    const hasEndFields =
+      !!endUrl ||
+      !!pickStoryboardString(beat.storyboardEndImageGcsPath) ||
+      !!pickStoryboardString(beat.storyboardEndImagePrompt) ||
+      beat.storyboardEndImageTier != null
+
+    if (!hasEndFields) return beat
+
+    changed = true
+    const {
+      storyboardEndImageUrl: _endUrl,
+      storyboardEndImageGcsPath: _endGcs,
+      storyboardEndImagePrompt: _endPrompt,
+      storyboardEndImageTier: _endTier,
+      ...rest
+    } = beat
+
+    if (!startUrl && endUrl) {
+      return {
+        ...rest,
+        storyboardImageUrl: endUrl,
+        ...(pickStoryboardString(beat.storyboardEndImageGcsPath)
+          ? { storyboardImageGcsPath: pickStoryboardString(beat.storyboardEndImageGcsPath) }
+          : {}),
+        ...(pickStoryboardString(beat.storyboardEndImagePrompt)
+          ? { storyboardImagePrompt: pickStoryboardString(beat.storyboardEndImagePrompt) }
+          : {}),
+        ...(beat.storyboardEndImageTier
+          ? { storyboardImageTier: beat.storyboardEndImageTier }
+          : {}),
+      }
+    }
+
+    return rest as SceneBeat
+  })
+
+  if (!changed) return scene
+  return applyBeatsToScene(scene, nextBeats)
+}
+
+/** Idempotent: one start frame per beat across all script scenes. */
+export function migrateProjectBeatsToStartFrameOnly(metadata: unknown): MigrateBeatsResult {
+  const empty: MigrateBeatsResult = {
+    metadata: (metadata && typeof metadata === 'object'
+      ? JSON.parse(JSON.stringify(metadata))
+      : {}) as Record<string, unknown>,
+    migratedSceneCount: 0,
+    changed: false,
+  }
+  if (!metadata || typeof metadata !== 'object') return empty
+
+  const cloned = JSON.parse(JSON.stringify(metadata)) as Record<string, unknown>
+  const visionPhase = cloned.visionPhase as Record<string, unknown> | undefined
+  if (!visionPhase) return empty
+
+  const scriptRoot = visionPhase.script as Record<string, unknown> | undefined
+  const nested = scriptRoot?.script as Record<string, unknown> | undefined
+  const scenes = (nested?.scenes ?? scriptRoot?.scenes) as unknown[]
+  if (!Array.isArray(scenes) || scenes.length === 0) return empty
+
+  let migratedSceneCount = 0
+  let changed = false
+
+  for (let i = 0; i < scenes.length; i++) {
+    const scene = scenes[i] as Record<string, unknown>
+    const nextScene = migrateSceneBeatsToStartFrameOnly(scene)
+    if (JSON.stringify(scene) !== JSON.stringify(nextScene)) {
+      scenes[i] = nextScene
+      changed = true
+      migratedSceneCount++
+    }
+  }
+
+  if (changed) {
+    visionPhase[START_FRAME_ONLY_MIGRATION_FLAG] = new Date().toISOString()
   }
 
   return { metadata: cloned, migratedSceneCount, changed }

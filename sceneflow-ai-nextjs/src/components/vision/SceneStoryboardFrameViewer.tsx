@@ -122,7 +122,6 @@ function buildStoryboardSlotFrameProps(
     onGenerate,
     onGenerateDialogueFrame,
     onGenerateBeatFrame,
-    onGenerateBeatEndFrame,
     onDirectFrame,
     onUploadDialogueFrame,
     onUploadBeatFrame,
@@ -168,13 +167,10 @@ function buildStoryboardSlotFrameProps(
 
   const dialogueIdx = slot.dialogueIndex
   const beatId = slot.beatId
-  const isEndBeatSlot = slot.frameRole === 'end' && !!beatId
-  const useBeatFrame = !!beatId && (slot.kind === 'narration' || slot.kind === 'action' || isEndBeatSlot)
+  const useBeatFrame = !!beatId && (slot.kind === 'narration' || slot.kind === 'action')
   const isGeneratingBeatFrame =
     useBeatFrame &&
-    generatingDialogueFrames.has(
-      isEndBeatSlot ? `${sceneIndex}-beat-end-${beatId}` : `${sceneIndex}-beat-${beatId}`
-    )
+    generatingDialogueFrames.has(`${sceneIndex}-beat-${beatId}`)
   const isGeneratingFrame =
     !useBeatFrame &&
     typeof dialogueIdx === 'number' &&
@@ -192,14 +188,12 @@ function buildStoryboardSlotFrameProps(
       : useBeatFrame
         ? isGeneratingBeatFrame
         : isGeneratingFrame,
-    label: isEndBeatSlot && slot.isMissing ? 'Add end frame' : slot.label,
+    label: slot.label,
     imageTier: slot.ownImageUrl ? slot.imageTier : undefined,
     beatRole: slot.beatRole,
     imagePrompt: slot.storyboardImagePrompt,
     onGenerate: () => {
-      if (isEndBeatSlot && beatId) {
-        void onGenerateBeatEndFrame?.(beatId)
-      } else if (useBeatFrame && beatId) {
+      if (useBeatFrame && beatId) {
         void onGenerateBeatFrame?.(beatId)
       } else if (isLegacyEstablishingOnly) {
         void onGenerate(prompt)
@@ -336,7 +330,10 @@ export function SceneStoryboardFrameViewer({
   } | null>(null)
   const thumbnailDidDragRef = useRef(false)
 
-  const frameSlots = useMemo(() => enumerateStoryboardFrameSlots(scene), [scene])
+  const frameSlots = useMemo(
+    () => enumerateStoryboardFrameSlots(scene, undefined, { startFramesOnly: true }),
+    [scene]
+  )
   const sceneBeats = useMemo(() => getSceneBeats(scene), [scene])
   const frameStats = useMemo(() => countStoryboardFrameStats(scene), [scene])
   const preVisStale = useMemo(() => isPreVisStale(scene), [scene])
@@ -489,12 +486,6 @@ export function SceneStoryboardFrameViewer({
             await wrapGenerate(key, () => onGenerateBeatFrame(beatId))
           }
         : undefined,
-      onGenerateBeatEndFrame: onGenerateBeatEndFrame
-        ? async (beatId) => {
-            const key = `${sceneIndex}-beat-end-${beatId}`
-            await wrapGenerate(key, () => onGenerateBeatEndFrame(beatId))
-          }
-        : undefined,
       onDirectFrame,
       onUploadDialogueFrame,
       onUploadBeatFrame,
@@ -528,7 +519,6 @@ export function SceneStoryboardFrameViewer({
       onGenerateScene,
       onGenerateDialogueFrame,
       onGenerateBeatFrame,
-      onGenerateBeatEndFrame,
       onDirectFrame,
       onUploadDialogueFrame,
       onUploadBeatFrame,

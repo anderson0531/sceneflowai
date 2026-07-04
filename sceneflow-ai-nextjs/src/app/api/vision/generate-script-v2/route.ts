@@ -14,6 +14,7 @@ import {
   ensureSceneBeats,
   embedCharacterIdsInSceneBeats,
   migrateProjectToBeats,
+  migrateProjectBeatsToStartFrameOnly,
 } from '@/lib/script/beatMigration'
 import { ensureCinematicBookends } from '@/lib/script/cinematicBookends'
 import {
@@ -610,7 +611,8 @@ export async function POST(request: NextRequest) {
         try {
           const segmentResult = migrateProjectToSegmented(interimMetadata)
           const beatResult = migrateProjectToBeats(segmentResult.metadata)
-          metadataToPersist = beatResult.metadata
+          const startFrameResult = migrateProjectBeatsToStartFrameOnly(beatResult.metadata)
+          metadataToPersist = startFrameResult.metadata
           if (segmentResult.changed) {
             console.log('[Script Gen V2] Segmented-script pass:', {
               migratedSceneCount: segmentResult.migratedSceneCount,
@@ -620,6 +622,11 @@ export async function POST(request: NextRequest) {
           if (beatResult.changed) {
             console.log('[Script Gen V2] Beat-first pass:', {
               migratedSceneCount: beatResult.migratedSceneCount,
+            })
+          }
+          if (startFrameResult.changed) {
+            console.log('[Script Gen V2] Start-frame-only pass:', {
+              migratedSceneCount: startFrameResult.migratedSceneCount,
             })
           }
         } catch (segErr) {

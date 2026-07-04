@@ -48,20 +48,21 @@ export function ExpressSceneConfirmDialog({
   onConfirm,
 }: ExpressSceneConfirmDialogProps) {
   const [scope, setScope] = useState<ExpressSceneScope>('missing')
-  const [includeEndFrames, setIncludeEndFrames] = useState(false)
   const [selectedFrameKeys, setSelectedFrameKeys] = useState<string[]>([])
 
-  const allSlots = useMemo(() => enumerateStoryboardFrameSlots(scene), [scene])
+  const allSlots = useMemo(
+    () => enumerateStoryboardFrameSlots(scene, undefined, { startFramesOnly: true }),
+    [scene]
+  )
 
   const checklistSlots = useMemo(
-    () => filterStoryboardSlotsForExpressChecklist(allSlots, { includeEndFrames }),
-    [allSlots, includeEndFrames]
+    () => filterStoryboardSlotsForExpressChecklist(allSlots, { includeEndFrames: false }),
+    [allSlots]
   )
 
   useEffect(() => {
     if (!open) return
     setScope('missing')
-    setIncludeEndFrames(false)
   }, [open])
 
   useEffect(() => {
@@ -128,15 +129,6 @@ export function ExpressSceneConfirmDialog({
             )}
           </div>
 
-          <label className="flex items-center gap-2 rounded border border-gray-700/80 bg-gray-800/40 p-2 cursor-pointer hover:bg-gray-800/70">
-            <Checkbox
-              checked={includeEndFrames}
-              onCheckedChange={(checked) => setIncludeEndFrames(checked === true)}
-              disabled={isRunning}
-            />
-            <span className="text-sm text-gray-100">Include end frames</span>
-          </label>
-
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
               Frames
@@ -198,7 +190,7 @@ export function ExpressSceneConfirmDialog({
             onClick={() =>
               onConfirm({
                 scope,
-                includeEndFrames,
+                includeEndFrames: false,
                 selectedFrameKeys,
               })
             }

@@ -69,7 +69,6 @@ export function ExpressConfirmDialog({
   onConfirm,
 }: ExpressConfirmDialogProps) {
   const [includeMusic, setIncludeMusic] = useState(false)
-  const [includeEndFrames, setIncludeEndFrames] = useState(false)
   const [missingFramesOnly, setMissingFramesOnly] = useState(false)
   const [regenerate, setRegenerate] = useState(false)
   const [artStyle, setArtStyle] = useState(lockedArtStyle || 'photorealistic')
@@ -82,7 +81,6 @@ export function ExpressConfirmDialog({
   useEffect(() => {
     if (open) {
       setIncludeMusic(hasTitleScene)
-      setIncludeEndFrames(false)
       setMissingFramesOnly(false)
       setRegenerate(false)
       setArtStyle(lockedArtStyle || 'photorealistic')
@@ -109,7 +107,7 @@ export function ExpressConfirmDialog({
       }
       if (!scene?.imageUrl) scenesNeedingImage += 1
 
-      const missingFrameCount = countExpressFrameScope(scene, { includeEndFrames })
+      const missingFrameCount = countExpressFrameScope(scene, { includeEndFrames: false })
       if (missingFrameCount > 0) scenesNeedingDialogueFrames += 1
 
       const dialogue = Array.isArray(scene?.dialogue) ? scene.dialogue : []
@@ -141,7 +139,7 @@ export function ExpressConfirmDialog({
       totalSfxCues,
       scenesWithMusic,
     }
-  }, [scenes, language, includeEndFrames])
+  }, [scenes, language])
 
   const effectiveEstablishingCount = regenerate
     ? stats.total
@@ -151,15 +149,15 @@ export function ExpressConfirmDialog({
       return scenes.reduce(
         (sum, scene) =>
           sum +
-          countExpressFrameScope(scene, { includeEndFrames, regenerate: true }),
+          countExpressFrameScope(scene, { includeEndFrames: false, regenerate: true }),
         0
       )
     }
     return scenes.reduce(
-      (sum, scene) => sum + countExpressFrameScope(scene, { includeEndFrames }),
+      (sum, scene) => sum + countExpressFrameScope(scene, { includeEndFrames: false }),
       0
     )
-  }, [regenerate, scenes, includeEndFrames])
+  }, [regenerate, scenes])
   const effectiveAudioScenes = regenerate ? stats.total : stats.scenesNeedingAudio
   const effectiveDirectionScenes = regenerate
     ? stats.total
@@ -311,25 +309,6 @@ export function ExpressConfirmDialog({
 
             <div className="flex items-start space-x-3 p-3 bg-gray-800 rounded-lg">
               <Checkbox
-                id="express-end-frames"
-                checked={includeEndFrames}
-                onCheckedChange={(checked) => setIncludeEndFrames(!!checked)}
-                disabled={isRunning}
-              />
-              <label
-                htmlFor="express-end-frames"
-                className="flex-1 text-sm text-gray-200 cursor-pointer"
-              >
-                <div className="font-medium">Include end frames</div>
-                <div className="text-xs text-gray-400">
-                  Generate a start + end frame pair per beat for in-beat motion and Frame-to-Video.
-                  Off by default for a faster, lower-cost first cut.
-                </div>
-              </label>
-            </div>
-
-            <div className="flex items-start space-x-3 p-3 bg-gray-800 rounded-lg">
-              <Checkbox
                 id="express-missing-frames"
                 checked={missingFramesOnly}
                 onCheckedChange={(checked) => {
@@ -345,8 +324,7 @@ export function ExpressConfirmDialog({
               >
                 <div className="font-medium">Only missing frames</div>
                 <div className="text-xs text-gray-400">
-                  Skip frames that already have images. Useful when start frames are done and you
-                  only need end frames (enable Include end frames).
+                  Skip frames that already have images.
                 </div>
               </label>
             </div>
@@ -444,7 +422,7 @@ export function ExpressConfirmDialog({
                 language,
                 artStyle,
                 storyboardQuality: 'draft',
-                includeEndFrames,
+                includeEndFrames: false,
                 missingFramesOnly,
               })
             }

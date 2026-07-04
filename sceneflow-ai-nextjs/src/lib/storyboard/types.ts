@@ -210,6 +210,24 @@ function getRawBeatStoryboardEndUrl(
   return isValidStoryboardMediaUrl(url) ? url : undefined
 }
 
+/** Pre-Vis animatic: resolve start frame URL only; never fall back to end-frame URLs. */
+function resolvePreVisStartFrameUrl(
+  scene: Record<string, unknown>,
+  beat: SceneBeat,
+  startSlot?: StoryboardFrameSlot
+): string | undefined {
+  const startUrl = startSlot?.ownImageUrl ?? startSlot?.displayImageUrl
+  if (!startUrl) return undefined
+
+  const beatStartUrl = beat.storyboardImageUrl?.trim()
+  const endUrl = getRawBeatStoryboardEndUrl(scene, beat)
+  if (!beatStartUrl && endUrl && startUrl === endUrl) {
+    return undefined
+  }
+
+  return startUrl
+}
+
 function buildBeatFrameSlot(
   beat: SceneBeat,
   beatIndex: number,
@@ -289,10 +307,12 @@ function getOwnDialogueStoryboardUrl(
 /** Ordered storyboard slots with explicit own vs placeholder image state. */
 export function enumerateStoryboardFrameSlots(
   scene: Record<string, unknown> | null | undefined,
-  beatsOverride?: SceneBeat[]
+  beatsOverride?: SceneBeat[],
+  options?: { startFramesOnly?: boolean }
 ): StoryboardFrameSlot[] {
   if (!scene) return []
 
+  const startFramesOnly = options?.startFramesOnly !== false
   const beats = beatsOverride ?? getStoryboardTimelineBeats(scene)
   const establishingUrl = getEstablishingFrameUrl(scene)
   const slots: StoryboardFrameSlot[] = []
@@ -334,14 +354,16 @@ export function enumerateStoryboardFrameSlots(
         })
       )
 
-      const endOwnImageUrl = getRawBeatStoryboardEndUrl(scene, beat)
-      slots.push(
-        buildBeatFrameSlot(beat, beatIndex, scene, 'end', {
-          ownImageUrl: endOwnImageUrl,
-          displayImageUrl: endOwnImageUrl,
-          dialogueIndex,
-        })
-      )
+      if (!startFramesOnly) {
+        const endOwnImageUrl = getRawBeatStoryboardEndUrl(scene, beat)
+        slots.push(
+          buildBeatFrameSlot(beat, beatIndex, scene, 'end', {
+            ownImageUrl: endOwnImageUrl,
+            displayImageUrl: endOwnImageUrl,
+            dialogueIndex,
+          })
+        )
+      }
     }
 
     for (const frame of getOrderedStoryboardFrames(scene)) {
@@ -560,11 +582,12 @@ export function getScenePlayableThumbnailUrl(
   const establishing = getEstablishingFrameUrl(scene)
   if (establishing) return establishing
 
-  const slots = enumerateStoryboardFrameSlots(scene)
-  const owned = slots.find((s) => s.ownImageUrl)
+  const slots = enumerateStoryboardFrameSlots(scene, undefined, { startFramesOnly: true })
+  const startSlots = slots.filter((s) => s.frameRole !== 'end')
+  const owned = startSlots.find((s) => s.ownImageUrl)
   if (owned?.ownImageUrl) return owned.ownImageUrl
 
-  const displayed = slots.find((s) => s.displayImageUrl && !s.isMissing)
+  const displayed = startSlots.find((s) => s.displayImageUrl && !s.isMissing)
   return displayed?.displayImageUrl
 }
 
@@ -1284,7 +1307,9 @@ export function buildBeatFirstPlaybackTimeline(
 ): { voiceClips: StoryboardAudioClip[]; visualFrames: StoryboardVisualFrame[] } {
   const preVisAnimatic = options?.preVisAnimatic === true
   const beats = getStoryboardTimelineBeats(scene)
-  const slots = enumerateStoryboardFrameSlots(scene, beats)
+  const slots = enumerateStoryboardFrameSlots(scene, beats, {
+    startFramesOnly: preVisAnimatic,
+  })
   const startSlotByBeatId = new Map(
     slots.filter((slot) => slot.beatId && slot.frameRole !== 'end').map((slot) => [slot.beatId!, slot])
   )
@@ -1314,7 +1339,9 @@ export function buildBeatFirstPlaybackTimeline(
     const beat = beats[beatIdx]
     const slot = startSlotByBeatId.get(beat.beatId)
     const endSlot = endSlotByBeatId.get(beat.beatId)
-    const imageUrl = slot?.ownImageUrl ?? slot?.displayImageUrl
+    const imageUrl = preVisAnimatic
+      ? resolvePreVisStartFrameUrl(scene, beat, slot)
+      : slot?.ownImageUrl ?? slot?.displayImageUrl
     const endImageUrl = preVisAnimatic ? undefined : endSlot?.ownImageUrl
     const isSceneEnd = beatIdx === beats.length - 1
 

@@ -6280,11 +6280,6 @@ function SceneCard({
                         ? (beatId) => onGenerateBeatFrame(sceneIdx, beatId)
                         : undefined
                     }
-                    onGenerateBeatEndFrame={
-                      onGenerateBeatEndFrame
-                        ? (beatId) => onGenerateBeatEndFrame(sceneIdx, beatId)
-                        : undefined
-                    }
                     onDirectFrame={
                       onDirectFrame ? (slot) => onDirectFrame(sceneIdx, slot) : undefined
                     }
