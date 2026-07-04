@@ -1,5 +1,6 @@
 /**
  * Build labeled multimodal preamble for Gemini Omni reference_to_video.
+ * Keep text minimal — mirrors concise Gemini chat prompts to avoid policy false positives.
  */
 
 import type { PrioritizedReferenceImage } from '@/lib/vision/referenceLimits'
@@ -17,33 +18,22 @@ export interface OmniVideoReferencePromptInput {
 export function buildOmniVideoReferencePrompt(input: OmniVideoReferencePromptInput): string {
   const parts: string[] = []
 
-  if (input.refs.length > 0) {
-    parts.push(
-      'Use the provided reference images for identity, wardrobe, and location. ' +
-        'Keep the subject consistent with the references.'
-    )
-    parts.push('')
-    parts.push(
-      'When characters speak, match lip sync and voice to the dialogue in the audio guide below.'
-    )
-    parts.push('')
-  }
-
   const scenePrompt = input.scenePrompt?.trim()
   if (scenePrompt) {
-    parts.push('SCENE ACTION:')
     parts.push(scenePrompt)
-    parts.push('')
+  }
+
+  if (input.refs.length > 0) {
+    if (parts.length > 0) parts.push('')
+    parts.push(
+      'References: keep the subject, wardrobe, and location consistent with the provided images.'
+    )
   }
 
   const guide = input.guidePrompt?.trim()
   if (guide) {
-    parts.push('AUDIO / DIALOGUE GUIDE:')
-    parts.push(guide)
     parts.push('')
-    parts.push(
-      'Include native synchronized audio (dialogue, ambience, and music) matching the guide above unless the scene should be silent.'
-    )
+    parts.push(guide)
   }
 
   return parts.join('\n').trim()

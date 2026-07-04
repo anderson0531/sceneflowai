@@ -4,6 +4,7 @@ import {
   normalizeReferenceImages,
   shouldRelabelRefs,
   veoRefsToPrioritized,
+  filterRefsForPolicyRetry,
 } from '@/lib/video/normalizeReferenceImages'
 
 describe('normalizeReferenceImages', () => {
@@ -123,5 +124,17 @@ describe('labeled refs reach Omni payloads', () => {
       'Location reference 3: POLICE STATION',
     ])
     expect(omniRefs.every((r) => !/^Reference \d+$/.test(r.label))).toBe(true)
+  })
+})
+
+describe('filterRefsForPolicyRetry', () => {
+  it('keeps identity and location refs and drops props in core mode', () => {
+    const refs = [
+      { url: 'https://example.com/id.png', label: 'Identity reference 1: Elara', role: 'identity' as const },
+      { url: 'https://example.com/prop.png', label: 'Prop reference 2: Folder', role: 'prop-important' as const },
+      { url: 'https://example.com/loc.png', label: 'Location reference 3: Kitchen', role: 'location' as const },
+    ]
+    const filtered = filterRefsForPolicyRetry(refs, 'core')
+    expect(filtered?.map((r) => r.role)).toEqual(['identity', 'location'])
   })
 })

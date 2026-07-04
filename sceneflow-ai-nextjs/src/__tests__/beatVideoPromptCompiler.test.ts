@@ -91,4 +91,45 @@ describe('compileBeatVideoPromptFromDirection', () => {
     const result = compileBeatVideoPromptFromDirection(dialogueBeat, null)
     expect(result.prompt).toBe(fallback.prompt)
   })
+
+  it('skips redundant segmentDirectionSummary when it duplicates videoPrompt', () => {
+    const direction: DetailedSceneDirection = {
+      camera: { shots: [], angle: '', movement: 'Dolly in', lensChoice: '', focus: '' },
+      lighting: {
+        overallMood: 'Low-Key',
+        timeOfDay: '',
+        keyLight: '',
+        fillLight: '',
+        backlight: '',
+        practicals: '',
+        colorTemperature: '',
+      },
+      scene: { location: '', keyProps: [], atmosphere: '' },
+      talent: {
+        blocking: '',
+        keyActions: [],
+        emotionalBeat: 'horrifying realization and quiet resignation',
+      },
+      audio: { priorities: '', considerations: '' },
+      segmentPromptBundle: [
+        {
+          timelineIndex: 0,
+          kind: 'dialogue',
+          character: 'SARAH',
+          lineText: 'We need to leave now.',
+          segmentDirectionSummary:
+            'Sarah turns sharply toward the exit with rising panic.',
+          startFramePrompt: '',
+          endFramePrompt: '',
+          videoPrompt:
+            'Sarah turns sharply toward the exit with rising panic. Dolly in on her face.',
+        },
+      ],
+    }
+
+    const result = compileBeatVideoPromptFromDirection(dialogueBeat, direction)
+    expect(result.prompt).not.toContain('..')
+    expect(result.prompt).not.toContain('horrifying')
+    expect(result.prompt.match(/Sarah turns sharply toward the exit/g)?.length).toBe(1)
+  })
 })

@@ -232,4 +232,30 @@ describe('omniVideoInteractions helpers', () => {
     expect(input.match(/Negative prompt \(exclude\):/g)).toHaveLength(1)
     expect(input).not.toContain('Do not include')
   })
+
+  it('omits embedded negative prompt for reference_to_video requests', async () => {
+    const body = await buildOmniInteractionRequestBody(
+      'gemini-omni-flash-preview',
+      'Scene with references.',
+      {
+        negativePrompt: 'watermark, blurry, unnatural motion',
+        referenceImages: [
+          {
+            base64Image: Buffer.from('fake-image').toString('base64'),
+            label: 'Identity reference 1: Elara Vance',
+          },
+        ],
+      }
+    )
+
+    const input = body.input
+    const textParts = Array.isArray(input)
+      ? (input as Array<{ type: string; text?: string }>)
+          .filter((p) => p.type === 'text' && p.text)
+          .map((p) => p.text!)
+      : [input as string]
+    const sceneText = textParts[textParts.length - 1]
+    expect(sceneText).toBe('Scene with references.')
+    expect(textParts.join('\n')).not.toContain('Negative prompt (exclude)')
+  })
 })

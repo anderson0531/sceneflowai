@@ -53,3 +53,41 @@ export function shouldRelabelRefs(
     return !ref.name?.trim()
   })
 }
+
+const CORE_REF_ROLES = new Set<PrioritizedReferenceImage['role']>([
+  'identity',
+  'wardrobe',
+  'location',
+])
+
+type RefWithRole = {
+  url?: string
+  imageUrl?: string
+  label?: string
+  role?: PrioritizedReferenceImage['role']
+  type?: 'style' | 'character'
+}
+
+function inferRoleFromRefLabel(ref: RefWithRole): PrioritizedReferenceImage['role'] | undefined {
+  const label = ref.label?.trim().toLowerCase() ?? ''
+  if (label.includes('identity reference')) return 'identity'
+  if (label.includes('location reference')) return 'location'
+  if (label.includes('prop reference')) return 'prop-other'
+  if (label.includes('wardrobe') || label.includes('diptych ref')) return 'wardrobe'
+  if (ref.type === 'style') return 'location'
+  if (ref.type === 'character' && label && !label.includes('prop')) return 'wardrobe'
+  return undefined
+}
+
+/** Keep identity/wardrobe/location refs on policy retry; drop props when mode is core. */
+export function filterRefsForPolicyRetry<T extends RefWithRole>(
+  refs: T[] | undefined,
+  mode: 'core' | 'all',
+): T[] | undefined {
+  if (!refs?.length || mode === 'all') return refs
+  const filtered = refs.filter((ref) => {
+    const role = ref.role ?? inferRoleFromRefLabel(ref)
+    return role ? CORE_REF_ROLES.has(role) : false
+  })
+  return filtered.length > 0 ? filtered : refs
+}

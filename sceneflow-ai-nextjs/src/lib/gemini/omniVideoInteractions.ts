@@ -245,7 +245,10 @@ export async function buildOmniInteractionInput(
   prompt: string,
   options: OmniInteractionBuildOptions = {}
 ): Promise<OmniInteractionInput> {
-  const textPrompt = appendNegativePrompt(prompt, options.negativePrompt)
+  const hasReferenceImages = (options.referenceImages?.length ?? 0) > 0
+  const textPrompt = hasReferenceImages
+    ? prompt.trim()
+    : appendNegativePrompt(prompt, options.negativePrompt)
   const parts: Array<{ type: string; text?: string; data?: string; mime_type?: string }> = []
 
   if (options.referencePromptPreamble?.trim()) {

@@ -15,18 +15,41 @@ describe('buildOmniVideoReferencePrompt', () => {
     },
   ]
 
-  it('uses concise reference instruction without per-role duplication', () => {
+  it('emits a clean minimal payload without scaffolding headers', () => {
     const text = buildOmniVideoReferencePrompt({
-      scenePrompt: 'CLOSE UP: the subject hands tremble on the table.',
+      scenePrompt:
+        'Slow dolly push-in on Elara Vance in an interrogation room. High-contrast clinical lighting.',
       refs,
+      guidePrompt:
+        'ELARA VANCE speaks: "I\'m telling you, it wasn\'t me!"',
     })
 
     expect(text).toContain(
-      'Use the provided reference images for identity, wardrobe, and location'
+      'Slow dolly push-in on Elara Vance in an interrogation room'
     )
+    expect(text).toContain(
+      'References: keep the subject, wardrobe, and location consistent with the provided images.'
+    )
+    expect(text).toContain('ELARA VANCE speaks')
+
+    expect(text).not.toContain('SCENE ACTION:')
+    expect(text).not.toContain('AUDIO / DIALOGUE GUIDE:')
+    expect(text).not.toContain('Use the provided reference images for identity')
+    expect(text).not.toContain('When characters speak, match lip sync')
+    expect(text).not.toContain('Include native synchronized audio')
+    expect(text).not.toContain('Negative prompt')
     expect(text).not.toContain('Match face, hair, and skin tone exactly')
     expect(text).not.toContain('REFERENCE IMAGES (use each as specified)')
-    expect(text).not.toContain('Reference image 1:')
+  })
+
+  it('omits reference instruction when no refs', () => {
+    const text = buildOmniVideoReferencePrompt({
+      scenePrompt: 'Wide establishing shot of the city.',
+      refs: [],
+    })
+
+    expect(text).toBe('Wide establishing shot of the city.')
+    expect(text).not.toContain('References:')
   })
 
   it('does not embed negative prompt in reference prompt text', () => {
@@ -38,18 +61,5 @@ describe('buildOmniVideoReferencePrompt', () => {
 
     expect(text).not.toContain('Do not include')
     expect(text).not.toContain('Negative prompt')
-  })
-
-  it('includes scene action and audio guide sections', () => {
-    const text = buildOmniVideoReferencePrompt({
-      scenePrompt: 'Slow dolly in on the subject.',
-      refs,
-      guidePrompt: 'Background music: soft piano.',
-    })
-
-    expect(text).toContain('SCENE ACTION:')
-    expect(text).toContain('Slow dolly in on the subject.')
-    expect(text).toContain('AUDIO / DIALOGUE GUIDE:')
-    expect(text).toContain('Include native synchronized audio')
   })
 })

@@ -19,6 +19,8 @@ import { autoSanitizePrompt } from '@/utils/promptModerator'
 import { runFalKlingVideo } from '@/lib/fal/klingPolicyClient'
 import { FAL_KLING_FALLBACK_MODEL_FAMILY } from '@/lib/fal/config'
 import type { VideoGenerationMethod } from '@/lib/vision/intelligentMethodSelection'
+import { neutralizeReferenceConflictPrompt } from '@/lib/gemini/neutralizeReferenceConflictPrompt'
+import { filterRefsForPolicyRetry } from '@/lib/video/normalizeReferenceImages'
 
 export type GenerationProvider = 'vertex' | 'fal'
 
@@ -57,6 +59,88 @@ function downgradeMethod(method: VideoGenerationMethod): VideoGenerationMethod {
 function stripExtForKling(opts: VideoGenerationOptions): VideoGenerationOptions {
   const { sourceVideo, sourceVideoUrl, ...rest } = opts
   return rest
+}
+
+function sanitizeReferenceImageLabels(
+  options: VideoGenerationOptions
+): VideoGenerationOptions {
+  if (!options.referenceImages?.length) return options
+  return {
+    ...options,
+    referenceImages: options.referenceImages.map((ref) => {
+      const label = (ref as { label?: string }).label
+      if (!label?.trim()) return ref
+      const sanitized = autoSanitizePrompt(label, { logChanges: true })
+      const nextLabel = neutralizeReferenceConflictPrompt(
+        sanitized.wasModified ? sanitized.sanitizedPrompt : label
+      )
+      return { ...ref, label: nextLabel }
+    }),
+  }
+}
+
+function preparePolicyRetry(
+  attempt: number,
+  maxAttempts: number,
+  ctx: {
+    method: VideoGenerationMethod
+    prompt: string
+    options: VideoGenerationOptions
+    referenceFallbackPrompt?: string
+  }
+): {
+  method: VideoGenerationMethod
+  prompt: string
+  options: VideoGenerationOptions
+} {
+  let { method, prompt, options } = ctx
+
+  if (attempt === 1) {
+    const sp = autoSanitizePrompt(prompt, { logChanges: true })
+    if (sp.wasModified) prompt = sp.sanitizedPrompt
+    options = sanitizeReferenceImageLabels(options)
+    return { method, prompt, options }
+  }
+
+  if (attempt === 2 && method === 'REF' && options.referenceImages?.length) {
+    options = {
+      ...options,
+      referenceImages: filterRefsForPolicyRetry(options.referenceImages, 'core'),
+    }
+    options = sanitizeReferenceImageLabels(options)
+    const sp = autoSanitizePrompt(prompt, { logChanges: true })
+    if (sp.wasModified) prompt = sp.sanitizedPrompt
+    return { method, prompt, options }
+  }
+
+  if (attempt === 3 && maxAttempts >= 4 && method === 'REF') {
+    method = 'T2V'
+    options = stripExtForKling(options)
+    if (ctx.referenceFallbackPrompt) {
+      const sp = autoSanitizePrompt(ctx.referenceFallbackPrompt, { logChanges: true })
+      prompt = sp.wasModified ? sp.sanitizedPrompt : ctx.referenceFallbackPrompt
+    }
+    options = { ...options, referenceImages: undefined }
+    return { method, prompt, options }
+  }
+
+  const prevMethod = method
+  const next = downgradeMethod(method)
+  if (next !== method) {
+    method = next
+    if (method === 'I2V' || method === 'T2V') {
+      options = stripExtForKling(options)
+    }
+    if (prevMethod === 'REF' && next === 'T2V') {
+      if (ctx.referenceFallbackPrompt) {
+        const sp = autoSanitizePrompt(ctx.referenceFallbackPrompt, { logChanges: true })
+        prompt = sp.wasModified ? sp.sanitizedPrompt : ctx.referenceFallbackPrompt
+      }
+      options = { ...options, referenceImages: undefined }
+    }
+  }
+
+  return { method, prompt, options }
 }
 
 async function runVertexAttempt(
@@ -163,33 +247,17 @@ export async function generateVideoWithVeoKlingFallback(
           }
         }
 
-        if (attempt === 1) {
-          const sp = autoSanitizePrompt(prompt, { logChanges: true })
-          if (sp.wasModified) prompt = sp.sanitizedPrompt
-          if (guidePrompt?.trim()) {
-            const sg = autoSanitizePrompt(guidePrompt, { logChanges: true })
-            if (sg.wasModified) guidePrompt = sg.sanitizedPrompt
-          }
+        if (attempt < maxAttempts) {
+          const next = preparePolicyRetry(attempt, maxAttempts, {
+            method,
+            prompt,
+            options,
+            referenceFallbackPrompt: input.referenceFallbackPrompt,
+          })
+          method = next.method
+          prompt = next.prompt
+          options = next.options
           continue
-        }
-
-        if (attempt === 2) {
-          const prevMethod = method
-          const next = downgradeMethod(method)
-          if (next !== method) {
-            method = next
-            if (method === 'I2V' || method === 'T2V') {
-              options = stripExtForKling(options)
-            }
-            if (prevMethod === 'REF' && next === 'T2V') {
-              if (input.referenceFallbackPrompt) {
-                const sp = autoSanitizePrompt(input.referenceFallbackPrompt, { logChanges: true })
-                prompt = sp.wasModified ? sp.sanitizedPrompt : input.referenceFallbackPrompt
-              }
-              options = { ...options, referenceImages: undefined }
-            }
-            continue
-          }
         }
       }
     } catch (e) {

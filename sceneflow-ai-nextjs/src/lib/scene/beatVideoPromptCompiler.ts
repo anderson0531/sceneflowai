@@ -61,24 +61,72 @@ function findBundleEntryForBeat(
   return undefined
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/** Join prompt segments with single periods; collapse double periods. */
+export function normalizePromptJoin(...segments: string[]): string {
+  const joined = segments
+    .map((s) => s.trim().replace(/\.+$/, ''))
+    .filter(Boolean)
+    .join('. ')
+  return joined.replace(/\.\.+/g, '.').trim()
+}
+
+/** True when summary largely duplicates content already in videoPrompt. */
+export function isRedundantSummary(summary: string, videoPrompt: string): boolean {
+  const s = summary.trim().toLowerCase()
+  const v = videoPrompt.trim().toLowerCase()
+  if (!s || !v) return false
+  if (v.includes(s)) return true
+  if (s.includes(v.slice(0, Math.min(48, v.length)))) return true
+
+  const sWords = new Set(s.split(/\s+/).filter((w) => w.length > 3))
+  const vWords = new Set(v.split(/\s+/).filter((w) => w.length > 3))
+  if (sWords.size === 0) return false
+  let overlap = 0
+  for (const w of sWords) {
+    if (vWords.has(w)) overlap++
+  }
+  return overlap / sWords.size >= 0.6
+}
+
+function tokenAlreadyInPrompt(token: string, videoPrompt: string): boolean {
+  const t = token.trim().toLowerCase()
+  const v = videoPrompt.toLowerCase()
+  if (!t) return true
+  return v.includes(t)
+}
+
 function sceneDirectionMotionHints(
-  direction?: DetailedSceneDirection | null
+  direction?: DetailedSceneDirection | null,
+  videoPrompt?: string
 ): string {
   if (!direction) return ''
+  const prompt = videoPrompt ?? ''
   const parts: string[] = []
   const camera = direction.camera
-  if (camera?.movement) parts.push(String(camera.movement))
-  if (camera?.shots?.[0]) parts.push(String(camera.shots[0]))
-  if (direction.lighting?.overallMood) {
+  if (camera?.movement && !tokenAlreadyInPrompt(String(camera.movement), prompt)) {
+    parts.push(String(camera.movement))
+  }
+  if (camera?.shots?.[0] && !tokenAlreadyInPrompt(String(camera.shots[0]), prompt)) {
+    parts.push(String(camera.shots[0]))
+  }
+  if (
+    direction.lighting?.overallMood &&
+    !tokenAlreadyInPrompt(String(direction.lighting.overallMood), prompt)
+  ) {
     parts.push(String(direction.lighting.overallMood))
   }
-  if (direction.talent?.emotionalBeat) {
-    parts.push(String(direction.talent.emotionalBeat))
-  }
-  if (direction.veoOptimization?.motionQuality) {
+  // Omit talent.emotionalBeat — often trigger salad and duplicates mood in videoPrompt
+  if (
+    direction.veoOptimization?.motionQuality &&
+    !tokenAlreadyInPrompt(String(direction.veoOptimization.motionQuality), prompt)
+  ) {
     parts.push(`${direction.veoOptimization.motionQuality} motion`)
   }
-  return parts.filter(Boolean).join(', ')
+  return parts.slice(0, 2).filter(Boolean).join(', ')
 }
 
 export function compileBeatVideoPrompt(
@@ -131,46 +179,45 @@ export function compileBeatVideoPromptFromDirection(
     beat,
     sceneDirection?.segmentPromptBundle
   )
-  const motionHints = sceneDirectionMotionHints(sceneDirection)
 
   if (entry?.videoPrompt?.trim()) {
     let core = entry.videoPrompt.trim()
-    if (entry.segmentDirectionSummary?.trim()) {
-      core = `${entry.segmentDirectionSummary.trim()}. ${core}`
+    const summary = entry.segmentDirectionSummary?.trim()
+    if (summary && !isRedundantSummary(summary, core)) {
+      core = normalizePromptJoin(summary, core)
     }
-    if (motionHints) {
-      core = `${core}. ${motionHints}`
+    const hints = sceneDirectionMotionHints(sceneDirection, core)
+    if (hints) {
+      core = normalizePromptJoin(core, hints)
     }
     return {
-      prompt: `${core}. ${styleSuffix}`.trim(),
+      prompt: normalizePromptJoin(core, styleSuffix),
       negativePrompt: `${BASE_NEGATIVES}, ${styleNegative}`,
     }
   }
 
   if (beat.kind === 'action') {
     const action = beat.actionDescription ?? 'Scene action'
-    const core = motionHints
-      ? `${action}. ${motionHints}`
-      : `${action}. Natural cinematic motion`
+    const hints = sceneDirectionMotionHints(sceneDirection, action)
+    const core = hints
+      ? normalizePromptJoin(action, hints)
+      : normalizePromptJoin(action, 'Natural cinematic motion')
     return {
-      prompt: `${core}. ${styleSuffix}`.trim(),
+      prompt: normalizePromptJoin(core, styleSuffix),
       negativePrompt: `${BASE_NEGATIVES}, ${styleNegative}`,
     }
   }
 
   const fallback = compileBeatVideoPrompt(beat, options)
-  if (!motionHints) return fallback
+  const hints = sceneDirectionMotionHints(sceneDirection, fallback.prompt)
+  if (!hints) return fallback
 
   const withoutStyle = fallback.prompt.replace(
     new RegExp(`\\. ${escapeRegExp(styleSuffix)}$`),
     ''
   )
   return {
-    prompt: `${withoutStyle}. ${motionHints}. ${styleSuffix}`.trim(),
+    prompt: normalizePromptJoin(withoutStyle, hints, styleSuffix),
     negativePrompt: fallback.negativePrompt,
   }
-}
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }

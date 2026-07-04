@@ -83,8 +83,9 @@ describe('generateVideoWithVeoKlingFallback', () => {
     expect(result.wasPolicyFallback).toBe(false)
   })
 
-  it('strips reference images and uses fallback prompt on REF to T2V policy downgrade', async () => {
+  it('keeps reference images through policy retries and only strips on last-resort downgrade', async () => {
     process.env.FAL_KEY = ''
+    process.env.VEO_POLICY_MAX_ATTEMPTS = '4'
     const calls: Array<{ prompt: string; options: VideoGenerationOptions }> = []
 
     vi.mocked(generateProductionVideo).mockImplementation(async (prompt, opts) => {
@@ -97,28 +98,36 @@ describe('generateVideoWithVeoKlingFallback', () => {
 
     await expect(
       generateVideoWithVeoKlingFallback({
-        prompt: 'Use the provided reference images for identity.',
-        referenceFallbackPrompt: 'SCENE ACTION:\nNeutral scene without references.',
+        prompt: 'References: keep the subject consistent with the provided images.',
+        referenceFallbackPrompt: 'Neutral scene without references.',
         method: 'REF',
         videoOptions: {
           durationSeconds: 10,
           aspectRatio: '16:9',
           referenceImages: [
             {
-              url: 'https://example.com/ref.png',
+              url: 'https://example.com/id.png',
               type: 'character',
-              label: 'Elara Vance — Distressed',
+              label: 'Identity reference 1: Elara Vance',
+              role: 'identity',
+            },
+            {
+              url: 'https://example.com/prop.png',
+              type: 'character',
+              label: 'Prop reference 2: False Evidence Folder',
+              role: 'prop-important',
             },
           ],
         },
       })
     ).rejects.toBeInstanceOf(ContentPolicyExhaustedError)
 
-    expect(calls.length).toBe(3)
-    expect(calls[0].options.referenceImages?.length).toBe(1)
-    expect(calls[1].options.referenceImages?.length).toBe(1)
-    expect(calls[2].options.referenceImages).toBeUndefined()
-    expect(calls[2].prompt).toContain('Neutral scene without references')
-    expect(calls[2].prompt).not.toContain('Use the provided reference images')
+    expect(calls.length).toBe(4)
+    expect(calls[0].options.referenceImages?.length).toBe(2)
+    expect(calls[1].options.referenceImages?.length).toBe(2)
+    expect(calls[2].options.referenceImages?.length).toBe(1)
+    expect(calls[2].options.referenceImages?.[0].label).toContain('Identity reference')
+    expect(calls[3].options.referenceImages).toBeUndefined()
+    expect(calls[3].prompt).toContain('Neutral scene without references')
   })
 })

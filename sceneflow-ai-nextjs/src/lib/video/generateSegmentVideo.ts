@@ -265,6 +265,7 @@ export async function generateSegmentVideoCore(
       url: img.url,
       type: img.type,
       label: neutralizeReferenceConflictPrompt(img.name || prioritized[i]?.name || ''),
+      role: prioritized[i]?.role,
     }))
 
     referenceFallbackPrompt = buildOmniVideoReferencePrompt({
