@@ -621,9 +621,9 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     setLocalError(null)
     setImageTriggered(false)
     setKeyframeEdit(null)
-    setUseCustomApiPrompt(false)
-    setApiPromptOverride('')
-    setAllowPolicyFallback(false)
+    setUseCustomApiPrompt(autoConfig.useCustomApiPrompt ?? false)
+    setApiPromptOverride(autoConfig.apiPromptOverride ?? '')
+    setAllowPolicyFallback(autoConfig.allowPolicyFallback ?? false)
     setApiPromptPreview('')
     setApiPromptPreviewError(null)
   }, [autoConfig, lockedVideoAspect, batchGuideSeed, segment, autoResolvedRefs.entries])
@@ -1543,8 +1543,18 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                     )}
                   </p>
                   <div className="flex flex-wrap items-center gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
+                    <div
+                      className="flex items-center gap-2 cursor-pointer"
+                      onClick={() => {
+                        const on = !useCustomApiPrompt
+                        setUseCustomApiPrompt(on)
+                        if (on && !apiPromptOverride.trim()) {
+                          setApiPromptOverride(apiPromptPreview)
+                        }
+                      }}
+                    >
                       <Checkbox
+                        id="useCustomApiPrompt"
                         checked={useCustomApiPrompt}
                         onCheckedChange={(checked) => {
                           const on = checked === true
@@ -1553,9 +1563,10 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                             setApiPromptOverride(apiPromptPreview)
                           }
                         }}
+                        onClick={(e) => e.stopPropagation()}
                       />
                       <span className="text-xs text-slate-300">Use custom API prompt</span>
-                    </label>
+                    </div>
                     <Button
                       type="button"
                       variant="outline"
@@ -1570,11 +1581,16 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                       Reset to preview
                     </Button>
                   </div>
-                  <label className="flex items-start gap-2 cursor-pointer pt-1">
+                  <div
+                    className="flex items-start gap-2 cursor-pointer pt-1"
+                    onClick={() => setAllowPolicyFallback((prev) => !prev)}
+                  >
                     <Checkbox
+                      id="allowPolicyFallback"
                       checked={allowPolicyFallback}
                       onCheckedChange={(checked) => setAllowPolicyFallback(checked === true)}
                       className="mt-0.5"
+                      onClick={(e) => e.stopPropagation()}
                     />
                     <span className="text-xs text-slate-300 leading-relaxed">
                       Allow backup engine if blocked
@@ -1582,7 +1598,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                         Uses an alternate video provider when Vertex blocks the prompt. May cost additional credits.
                       </span>
                     </span>
-                  </label>
+                  </div>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
