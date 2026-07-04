@@ -6,7 +6,7 @@ import { DataTypes, Model, Optional } from 'sequelize'
 import { sequelize } from '../config/database'
 
 export type GenerativeModelSource = 'veo-3.1' | 'kling-v3'
-export type GenerationProviderSource = 'vertex' | 'fal'
+export type GenerationProviderSource = 'vertex' | 'fal' | 'kling'
 
 export interface AssetProvenanceLogAttributes {
   id: string

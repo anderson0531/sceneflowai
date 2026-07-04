@@ -239,7 +239,7 @@ export async function POST(
     let stemSeparation: StemSeparationResult | undefined = undefined
     let actualVideoDurationSeconds: number | null = null
     let requestedVideoDurationSeconds: number | undefined = undefined
-    let generationProvider: 'vertex' | 'fal' | undefined
+    let generationProvider: 'vertex' | 'fal' | 'kling' | undefined
     let fallbackModelFamily: 'kling' | undefined
     let wasPolicyFallback: boolean | undefined
     let provenanceId: string | undefined
@@ -299,14 +299,15 @@ export async function POST(
       contentHash = videoResult.contentHash
 
       if (wasPolicyFallback) {
-        const falCredits =
+        const klingCredits =
           (requestedVideoDurationSeconds ?? duration ?? 5) >= 8
-            ? VIDEO_CREDITS.FAL_KLING_VIDEO_10S
-            : VIDEO_CREDITS.FAL_KLING_VIDEO_5S
-        await CreditService.charge(String(session.user.id), falCredits, 'ai_usage', projectId, {
-          operation: 'fal_kling_video',
+            ? VIDEO_CREDITS.KLING_VIDEO_10S
+            : VIDEO_CREDITS.KLING_VIDEO_5S
+        await CreditService.charge(String(session.user.id), klingCredits, 'ai_usage', projectId, {
+          operation:
+            generationProvider === 'kling' ? 'direct_kling_video' : 'fal_kling_video',
           segmentId,
-          generationProvider: 'fal',
+          generationProvider: generationProvider ?? 'fal',
         })
       }
 
@@ -355,6 +356,7 @@ export async function POST(
       generationProvider,
       fallbackModelFamily,
       wasPolicyFallback,
+      usedBackupEngine: wasPolicyFallback === true,
       provenanceId,
       contentHash,
     })

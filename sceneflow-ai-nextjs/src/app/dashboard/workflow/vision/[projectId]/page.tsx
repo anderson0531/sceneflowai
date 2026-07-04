@@ -3195,6 +3195,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               activeAssetUrl: data.assetUrl,
               generationProvider: data.generationProvider,
               wasPolicyFallback: data.wasPolicyFallback,
+              usedBackupEngine: data.usedBackupEngine,
               provenanceId: data.provenanceId,
               contentHash: data.contentHash,
               ...(data.assetType === 'video' && measuredDuration != null
@@ -3222,7 +3223,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
         try {
           const { toast } = require('sonner')
-          toast.success(`Asset generated successfully for beat ${segmentId.slice(0, 6)}`)
+          if (data.usedBackupEngine || data.wasPolicyFallback) {
+            toast.info('Generated with backup engine', {
+              description: 'Primary video engine was unavailable; a backup model completed this clip.',
+              duration: 6000,
+            })
+          } else {
+            toast.success(`Asset generated successfully for beat ${segmentId.slice(0, 6)}`)
+          }
           
           // After successful I2V/FTV generation, check if the next segment's start frame
           // was linked to this segment's end frame. If so, offer to update it with the 

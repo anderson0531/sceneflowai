@@ -52,6 +52,8 @@ export function getVeoPolicyMaxAttempts(): number {
   return Number.isFinite(n) && n >= 1 ? Math.min(n, 5) : 3
 }
 
+import { isDirectKlingFallbackEnabled } from '@/lib/kling/config'
+
 /** Fal.ai gateway for Kling models (platform pay-as-you-go). */
 export function isFalKlingFallbackEnabled(): boolean {
   if (process.env.FAL_KLING_POLICY_FALLBACK_ENABLED === 'false') return false
@@ -61,3 +63,16 @@ export function isFalKlingFallbackEnabled(): boolean {
 
 /** @deprecated Use isFalKlingFallbackEnabled */
 export const isKlingFallbackEnabled = isFalKlingFallbackEnabled
+
+export { isDirectKlingFallbackEnabled }
+
+/** Prefer direct Kling when configured; otherwise Fal-hosted Kling. */
+export function getKlingFallbackProvider(): 'kling' | 'fal' | null {
+  if (isDirectKlingFallbackEnabled()) return 'kling'
+  if (isFalKlingFallbackEnabled()) return 'fal'
+  return null
+}
+
+export function isVeoPolicyFastFallbackEnabled(): boolean {
+  return process.env.VEO_POLICY_FAST_FALLBACK === 'true'
+}

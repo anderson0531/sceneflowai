@@ -36,7 +36,7 @@ export class AssetProvenanceService {
     process.env.ASSET_PROVENANCE_SECRET || 'sceneflow-asset-provenance-dev-key'
 
   static resolveGenerativeModel(provider: GenerationProviderSource): GenerativeModelSource {
-    return provider === 'fal' ? 'kling-v3' : 'veo-3.1'
+    return provider === 'vertex' ? 'veo-3.1' : 'kling-v3'
   }
 
   static computeContentHash(videoBuffer: Buffer): string {

@@ -5,6 +5,7 @@
 import { downloadProductionVideo } from '@/lib/gemini/productionVideoClient'
 import { generateVideoWithVeoKlingFallback } from '@/lib/generation/veoWithKlingFallback'
 import { ContentPolicyExhaustedError } from '@/lib/generation/contentPolicy'
+import { neutralizePromptForVeo } from '@/lib/generation/preflightPromptGuard'
 import {
   moderateKlingVideoBuffer,
   KlingSafetyGuardBlockedError,
@@ -106,9 +107,10 @@ export interface GenerateSegmentVideoResult {
   actualDurationSeconds?: number | null
   methodSelection?: MethodSelectionResult
   stemSeparation?: StemSeparationResult
-  generationProvider?: 'vertex' | 'fal'
+  generationProvider?: 'vertex' | 'fal' | 'kling'
   fallbackModelFamily?: 'kling'
   wasPolicyFallback?: boolean
+  usedBackupEngine?: boolean
   vertexPolicyAttempts?: number
   provenanceId?: string
   contentHash?: string
@@ -346,7 +348,21 @@ export async function generateSegmentVideoCore(
     segmentIndex
   )
 
-  let generationProvider: 'vertex' | 'fal' = 'vertex'
+  const preflight = await neutralizePromptForVeo({
+    prompt: enhancedPrompt,
+    guidePrompt,
+    method,
+    startFrameUrl:
+      typeof videoOptions.startFrame === 'string' ? videoOptions.startFrame : undefined,
+  })
+  if (preflight.wasRewritten) {
+    console.log(
+      `[Segment Video] Pre-flight rewrite applied (risk=${preflight.riskScore.level}, triggers=${preflight.riskScore.triggers.join(',')})`
+    )
+  }
+  enhancedPrompt = preflight.prompt
+
+  let generationProvider: 'vertex' | 'fal' | 'kling' = 'vertex'
   let fallbackModelFamily: 'kling' | undefined
   let wasPolicyFallback = false
   let vertexPolicyAttempts = 0
@@ -406,8 +422,8 @@ export async function generateSegmentVideoCore(
     throw new Error('Video generation did not produce output')
   }
 
-  // Kling fallback only: mandatory Hive audit before storage (Vertex path skips entirely).
-  if (generationProvider === 'fal') {
+  // Non-Vertex fallback output: mandatory Hive audit before storage.
+  if (generationProvider !== 'vertex') {
     await moderateKlingVideoBuffer(videoBuffer, {
       userId,
       projectId,
@@ -511,6 +527,7 @@ export async function generateSegmentVideoCore(
     generationProvider,
     fallbackModelFamily,
     wasPolicyFallback,
+    usedBackupEngine: wasPolicyFallback,
     vertexPolicyAttempts,
     provenanceId: provenanceStamp.provenanceId,
     contentHash: provenanceStamp.contentHash,
