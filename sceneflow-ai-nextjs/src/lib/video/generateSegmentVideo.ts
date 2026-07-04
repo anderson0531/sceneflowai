@@ -22,6 +22,11 @@ import {
 import { getQualityForMethod, DEFAULT_VEO_CLIP_DURATION, type VeoClipDuration } from '@/lib/config/modelConfig'
 import { buildOmniVideoReferencePrompt } from '@/lib/gemini/buildOmniVideoReferencePrompt'
 import { neutralizeReferenceConflictPrompt } from '@/lib/gemini/neutralizeReferenceConflictPrompt'
+import {
+  cleanOmniRefScenePrompt,
+  sanitizeOmniRefGuide,
+  sanitizeOmniRefLabel,
+} from '@/lib/gemini/cleanOmniRefPrompt'
 import { veoRefsToPrioritized } from '@/lib/video/normalizeReferenceImages'
 import { isVeoVideoRefValid } from '@/lib/gemini/geminiStudioVideoClient'
 import { appendFtvTransitionStabilityTokens } from '@/lib/vision/ftvTransitionStability'
@@ -259,19 +264,24 @@ export async function generateSegmentVideoCore(
 
   if (method === 'REF' && referenceImages && referenceImages.length > 0) {
     const prioritized = veoRefsToPrioritized(referenceImages)
-    const neutralScenePrompt = neutralizeReferenceConflictPrompt(prompt)
+    const neutralScenePrompt = neutralizeReferenceConflictPrompt(
+      cleanOmniRefScenePrompt(prompt)
+    )
+    const refGuidePrompt = sanitizeOmniRefGuide(guidePrompt)
 
     videoOptions.referenceImages = referenceImages.map((img, i) => ({
       url: img.url,
       type: img.type,
-      label: neutralizeReferenceConflictPrompt(img.name || prioritized[i]?.name || ''),
+      label: sanitizeOmniRefLabel(
+        neutralizeReferenceConflictPrompt(img.name || prioritized[i]?.name || '')
+      ),
       role: prioritized[i]?.role,
     }))
 
     referenceFallbackPrompt = buildOmniVideoReferencePrompt({
       scenePrompt: neutralScenePrompt,
       refs: [],
-      guidePrompt: guidePrompt?.trim() || undefined,
+      guidePrompt: refGuidePrompt,
     })
   }
 
@@ -285,11 +295,14 @@ export async function generateSegmentVideoCore(
 
   if (method === 'REF' && referenceImages && referenceImages.length > 0) {
     const prioritized = veoRefsToPrioritized(referenceImages)
-    const neutralScenePrompt = neutralizeReferenceConflictPrompt(prompt)
+    const neutralScenePrompt = neutralizeReferenceConflictPrompt(
+      cleanOmniRefScenePrompt(prompt)
+    )
+    const refGuidePrompt = sanitizeOmniRefGuide(guidePrompt)
     enhancedPrompt = buildOmniVideoReferencePrompt({
       scenePrompt: neutralScenePrompt,
       refs: prioritized,
-      guidePrompt: guidePrompt?.trim() || undefined,
+      guidePrompt: refGuidePrompt,
     })
   } else if (guidePrompt?.trim()) {
     const gpRaw = guidePrompt.trim()

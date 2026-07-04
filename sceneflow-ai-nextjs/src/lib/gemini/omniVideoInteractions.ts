@@ -279,6 +279,17 @@ export async function buildOmniInteractionInput(
 
   parts.push({ type: 'text', text: textPrompt })
 
+  if (
+    hasReferenceImages &&
+    (process.env.OMNI_LOG_FINAL_PROMPT === 'true' ||
+      process.env.OMNI_LOG_FINAL_PROMPT === '1')
+  ) {
+    const textParts = parts
+      .filter((p) => p.type === 'text' && p.text?.trim())
+      .map((p) => p.text!.trim())
+    console.log('[Omni Video] Final REF text parts:', JSON.stringify(textParts))
+  }
+
   if (parts.length === 1 && parts[0].type === 'text') {
     return textPrompt
   }
