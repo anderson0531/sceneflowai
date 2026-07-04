@@ -255,13 +255,23 @@ export async function generateSegmentVideoCore(
     videoOptions.lastFrame = endFrameUrl
   }
 
+  let referenceFallbackPrompt: string | undefined
+
   if (method === 'REF' && referenceImages && referenceImages.length > 0) {
     const prioritized = veoRefsToPrioritized(referenceImages)
+    const neutralScenePrompt = neutralizeReferenceConflictPrompt(prompt)
+
     videoOptions.referenceImages = referenceImages.map((img, i) => ({
       url: img.url,
       type: img.type,
-      label: img.name || prioritized[i]?.name,
+      label: neutralizeReferenceConflictPrompt(img.name || prioritized[i]?.name || ''),
     }))
+
+    referenceFallbackPrompt = buildOmniVideoReferencePrompt({
+      scenePrompt: neutralScenePrompt,
+      refs: [],
+      guidePrompt: guidePrompt?.trim() || undefined,
+    })
   }
 
   let enhancedPrompt =
@@ -337,6 +347,7 @@ export async function generateSegmentVideoCore(
       negativePrompt,
       method,
       videoOptions: videoOptions as VideoGenerationOptions,
+      referenceFallbackPrompt,
     })
 
     generationProvider = genResult.generationProvider

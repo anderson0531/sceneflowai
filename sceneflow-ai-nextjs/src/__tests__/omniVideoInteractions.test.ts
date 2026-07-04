@@ -172,12 +172,27 @@ describe('omniVideoInteractions helpers', () => {
       { personGeneration: 'allow_all' }
     )
 
-    expect(Array.isArray(body.safety_settings)).toBe(true)
-    expect((body.safety_settings as unknown[]).length).toBeGreaterThan(0)
+    expect(body.safety_settings).toBeUndefined()
     const videoConfig = (body.generation_config as Record<string, unknown>)
       .video_config as Record<string, unknown>
     expect(videoConfig).toEqual({ task: 'text_to_video' })
     expect(videoConfig.person_generation).toBeUndefined()
+  })
+
+  it('includes safety_settings when OMNI_VIDEO_SAFETY_SETTINGS_ENABLED is true', async () => {
+    const prev = process.env.OMNI_VIDEO_SAFETY_SETTINGS_ENABLED
+    process.env.OMNI_VIDEO_SAFETY_SETTINGS_ENABLED = 'true'
+    try {
+      const body = await buildOmniInteractionRequestBody(
+        'gemini-omni-flash-preview',
+        'Scene action.'
+      )
+      expect(Array.isArray(body.safety_settings)).toBe(true)
+      expect((body.safety_settings as unknown[]).length).toBeGreaterThan(0)
+    } finally {
+      if (prev === undefined) delete process.env.OMNI_VIDEO_SAFETY_SETTINGS_ENABLED
+      else process.env.OMNI_VIDEO_SAFETY_SETTINGS_ENABLED = prev
+    }
   })
 
   it('omits safety_settings when omitSafetySettings is true', async () => {

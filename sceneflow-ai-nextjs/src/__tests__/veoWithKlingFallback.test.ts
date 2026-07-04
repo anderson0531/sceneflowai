@@ -1,5 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { generateVideoWithVeoKlingFallback } from '@/lib/generation/veoWithKlingFallback'
+import type { VideoGenerationOptions } from '@/lib/gemini/videoClient'
+import { ContentPolicyExhaustedError } from '@/lib/generation/contentPolicy'
 
 vi.mock('@/lib/gemini/productionVideoClient', () => ({
   generateProductionVideo: vi.fn(),
@@ -79,5 +81,44 @@ describe('generateVideoWithVeoKlingFallback', () => {
     expect(runFalKlingVideo).not.toHaveBeenCalled()
     expect(result.generationProvider).toBe('vertex')
     expect(result.wasPolicyFallback).toBe(false)
+  })
+
+  it('strips reference images and uses fallback prompt on REF to T2V policy downgrade', async () => {
+    process.env.FAL_KEY = ''
+    const calls: Array<{ prompt: string; options: VideoGenerationOptions }> = []
+
+    vi.mocked(generateProductionVideo).mockImplementation(async (prompt, opts) => {
+      calls.push({ prompt, options: opts as VideoGenerationOptions })
+      return {
+        status: 'FAILED',
+        error: 'The prompt is blocked due to prohibited contents',
+      }
+    })
+
+    await expect(
+      generateVideoWithVeoKlingFallback({
+        prompt: 'Use the provided reference images for identity.',
+        referenceFallbackPrompt: 'SCENE ACTION:\nNeutral scene without references.',
+        method: 'REF',
+        videoOptions: {
+          durationSeconds: 10,
+          aspectRatio: '16:9',
+          referenceImages: [
+            {
+              url: 'https://example.com/ref.png',
+              type: 'character',
+              label: 'Elara Vance — Distressed',
+            },
+          ],
+        },
+      })
+    ).rejects.toBeInstanceOf(ContentPolicyExhaustedError)
+
+    expect(calls.length).toBe(3)
+    expect(calls[0].options.referenceImages?.length).toBe(1)
+    expect(calls[1].options.referenceImages?.length).toBe(1)
+    expect(calls[2].options.referenceImages).toBeUndefined()
+    expect(calls[2].prompt).toContain('Neutral scene without references')
+    expect(calls[2].prompt).not.toContain('Use the provided reference images')
   })
 })

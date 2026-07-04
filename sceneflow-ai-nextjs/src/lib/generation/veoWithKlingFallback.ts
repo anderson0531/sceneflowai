@@ -43,6 +43,8 @@ export interface VeoKlingVideoInput {
   method: VideoGenerationMethod
   videoOptions: VideoGenerationOptions & { forceProvider?: 'vertex' | 'gemini' }
   guidePrompt?: string
+  /** Plain T2V prompt without reference preamble — used when REF is downgraded after policy blocks */
+  referenceFallbackPrompt?: string
 }
 
 function downgradeMethod(method: VideoGenerationMethod): VideoGenerationMethod {
@@ -172,11 +174,19 @@ export async function generateVideoWithVeoKlingFallback(
         }
 
         if (attempt === 2) {
+          const prevMethod = method
           const next = downgradeMethod(method)
           if (next !== method) {
             method = next
             if (method === 'I2V' || method === 'T2V') {
               options = stripExtForKling(options)
+            }
+            if (prevMethod === 'REF' && next === 'T2V') {
+              if (input.referenceFallbackPrompt) {
+                const sp = autoSanitizePrompt(input.referenceFallbackPrompt, { logChanges: true })
+                prompt = sp.wasModified ? sp.sanitizedPrompt : input.referenceFallbackPrompt
+              }
+              options = { ...options, referenceImages: undefined }
             }
             continue
           }

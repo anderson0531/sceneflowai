@@ -153,6 +153,9 @@ export const TRIGGER_WORD_ALTERNATIVES: Record<string, string[]> = {
   'oppressive': ['heavy', 'weighty', 'imposing'],
 
   // Distress / injury phrasing (common false positives in interrogation/drama scenes)
+  'bloodshot': ['weary', 'tired', 'fatigued'],
+  'trembling': ['slightly unsteady', 'subtle shake'],
+  'distress': ['tension', 'strain', 'emotional weight'],
   'distressed': ['emotional', 'tense', 'strained'],
   'desperate denial': ['firm denial', 'steadfast refusal'],
   'escalating panic': ['rising tension', 'building urgency'],
@@ -289,6 +292,11 @@ const TRIGGER_PHRASES: Record<string, string> = {
   'shadowed mark visible on his temple': 'subtle expression at the temples',
   'mark visible on her temple': 'subtle detail near the temple',
   'mark visible on his temple': 'subtle detail near the temple',
+  'mark forming on her temple': 'subtle detail near the temple',
+  'mark forming on his temple': 'subtle detail near the temple',
+  'a faint mark forming on her temple': 'a subtle detail near the temple',
+  'a faint mark forming on his temple': 'a subtle detail near the temple',
+  'absolute defeat': 'quiet resignation',
   'escalating panic': 'rising tension',
   'crushing weight of the evidence': 'heavy pressure of the evidence',
   'desperate denial collapsing into intense realization': 'firm denial giving way to realization',

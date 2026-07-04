@@ -26,4 +26,18 @@ describe('promptModerator distress phrasing', () => {
     expect(sanitizedPrompt.toLowerCase()).not.toContain('distressed')
     expect(sanitizedPrompt.toLowerCase()).not.toContain('desperate denial')
   })
+
+  it('sanitizes bloodshot trembling distress and absolute defeat without touching bare defeat', () => {
+    const raw =
+      'Bloodshot eyes, trembling hands, visible distress, absolute defeat in the scene. The hero must defeat the villain.'
+
+    const { sanitizedPrompt, wasModified } = autoSanitizePrompt(raw, { logChanges: false })
+
+    expect(wasModified).toBe(true)
+    expect(sanitizedPrompt.toLowerCase()).not.toContain('bloodshot')
+    expect(sanitizedPrompt.toLowerCase()).not.toContain('trembling')
+    expect(sanitizedPrompt.toLowerCase()).not.toContain('distress')
+    expect(sanitizedPrompt.toLowerCase()).not.toContain('absolute defeat')
+    expect(sanitizedPrompt.toLowerCase()).toContain('defeat the villain')
+  })
 })

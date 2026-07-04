@@ -25,4 +25,19 @@ describe('neutralizeReferenceConflictPrompt', () => {
     expect(neutral).not.toContain('escalating panic')
     expect(neutral.toLowerCase()).toContain('rising tension')
   })
+
+  it('softens bloodshot trembling distress and temple mark forming phrasing', () => {
+    const raw =
+      "CLOSE UP: hands visibly trembling, bloodshot eyes, a faint mark forming on her temple, capturing every detail of her distress and absolute defeat."
+
+    const neutral = neutralizeReferenceConflictPrompt(raw)
+
+    expect(neutral.toLowerCase()).not.toContain('bloodshot')
+    expect(neutral.toLowerCase()).not.toContain('trembling')
+    expect(neutral.toLowerCase()).not.toContain('distress')
+    expect(neutral.toLowerCase()).not.toContain('absolute defeat')
+    expect(neutral.toLowerCase()).not.toContain('mark forming on her temple')
+    expect(neutral.toLowerCase()).toContain('weary')
+    expect(neutral.toLowerCase()).toContain('tension')
+  })
 })

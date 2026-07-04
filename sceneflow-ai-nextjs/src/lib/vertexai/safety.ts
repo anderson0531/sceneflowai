@@ -182,13 +182,14 @@ export function getVeoIncludeRaiReason(): boolean {
 }
 
 /**
- * When true (default), Omni Interactions requests include explicit safety_settings.
- * Set OMNI_VIDEO_SAFETY_SETTINGS_ENABLED=false to omit if the preview endpoint rejects the field.
+ * When true, Omni Interactions requests include explicit safety_settings.
+ * Default false — the Omni Interactions preview endpoint rejects safety_settings.
+ * Set OMNI_VIDEO_SAFETY_SETTINGS_ENABLED=true to opt in if Google adds support.
  */
 export function isOmniVideoSafetySettingsEnabled(): boolean {
   const v = process.env.OMNI_VIDEO_SAFETY_SETTINGS_ENABLED
-  if (v === '0' || v === 'false' || v === 'off') return false
-  return true
+  if (v === '1' || v === 'true' || v === 'on') return true
+  return false
 }
 
 /**
