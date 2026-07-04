@@ -2934,7 +2934,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         resolution?: '720p' | '1080p'
         generationMethod?: 'T2V' | 'I2V' | 'FTV' | 'EXT' | 'REF'
         endFrameUrl?: string
-        referenceImages?: Array<{ url: string; type: 'style' | 'character' }> | string[]
+        referenceImages?: Array<{ url: string; type?: 'style' | 'character'; name?: string; role?: string }> | string[]
         guidePrompt?: string  // Voice/dialogue/SFX instructions for Veo 3.1 audio
         previousSegmentVeoRef?: string
         qualityTier?: 'fast' | 'premium'

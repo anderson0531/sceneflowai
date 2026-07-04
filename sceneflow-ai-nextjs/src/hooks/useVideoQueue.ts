@@ -100,7 +100,7 @@ export function useVideoQueue(
       guidePrompt?: string
       previousSegmentVeoRef?: string
       endFrameUrl?: string
-      referenceImages?: Array<{ url: string; type: 'style' | 'character' }> | string[]
+      referenceImages?: Array<{ url: string; type?: 'style' | 'character'; name?: string; role?: string }> | string[]
       qualityTier?: 'fast' | 'premium'
     }
   ) => Promise<void>,

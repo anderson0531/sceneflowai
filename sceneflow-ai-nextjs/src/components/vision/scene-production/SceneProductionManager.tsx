@@ -78,7 +78,7 @@ interface SceneProductionManagerProps {
   onGenerate: (sceneId: string, segmentId: string, mode: GenerationType, options?: { 
     startFrameUrl?: string
     endFrameUrl?: string
-    referenceImages?: Array<{ url: string; type: 'style' | 'character' }>
+    referenceImages?: Array<{ url: string; type?: 'style' | 'character'; name?: string; role?: string }>
     generationMethod?: VideoGenerationMethod
     prompt?: string
     negativePrompt?: string
@@ -1105,7 +1105,7 @@ export function SceneProductionManager({
   const handleGenerate = async (mode: GenerationType, options?: { 
     startFrameUrl?: string
     endFrameUrl?: string
-    referenceImages?: Array<{ url: string; type: 'style' | 'character' }>
+    referenceImages?: Array<{ url: string; type?: 'style' | 'character'; name?: string; role?: string }>
     generationMethod?: VideoGenerationMethod
     prompt?: string
     negativePrompt?: string

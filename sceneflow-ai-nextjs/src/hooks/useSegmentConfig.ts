@@ -419,6 +419,25 @@ function resolveConfigReferences(
   }
 }
 
+/** Prefer labeled refs for Omni; fall back to bare URL list when labels unavailable. */
+function toConfigReferenceImages(resolved: {
+  referenceImages?: string[]
+  labeledRefs: LabeledVideoReference[]
+}): VideoGenerationConfig['referenceImages'] {
+  if (resolved.labeledRefs.length > 0) {
+    return resolved.labeledRefs.map((r) => ({
+      url: r.url,
+      type: r.type,
+      name: r.name,
+      role: r.role,
+    }))
+  }
+  if (resolved.referenceImages?.length) {
+    return resolved.referenceImages
+  }
+  return undefined
+}
+
 /** True when batch auto-guide can include dialogue (IDs or embedded segment lines). */
 export function segmentHasBatchGuideDialogue(segment: SceneSegment): boolean {
   return (
@@ -633,7 +652,9 @@ export function useSegmentConfig(
     const extVeoRef =
       method === 'EXT' ? resolveVeoRefForExtension([segment], segment) : undefined
 
-    const { referenceImages } = resolveConfigReferences(segment, guideContext)
+    const referenceImages = toConfigReferenceImages(
+      resolveConfigReferences(segment, guideContext)
+    )
 
     const config: VideoGenerationConfig = {
       mode: method,
@@ -751,7 +772,9 @@ export function useSegmentConfigs(
       const extVeoRef =
         method === 'EXT' ? resolveVeoRefForExtension(validSegments, segment) : undefined
 
-      const { referenceImages } = resolveConfigReferences(segment, guideContext)
+      const referenceImages = toConfigReferenceImages(
+        resolveConfigReferences(segment, guideContext)
+      )
 
       const config: VideoGenerationConfig = {
         mode: method,

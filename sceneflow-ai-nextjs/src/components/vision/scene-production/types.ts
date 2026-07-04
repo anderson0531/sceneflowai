@@ -1323,7 +1323,7 @@ export interface VideoPromptPayload {
   startFrameUrl?: string
   endFrameUrl?: string
   // Reference images (character/scene refs)
-  referenceImages?: string[]
+  referenceImages?: string[] | Array<{ url: string; type?: 'character' | 'style'; name?: string; role?: string }>
   // Video extension source
   sourceVideoRef?: string  // Veo video reference for extension
   // Control signals derived from SmartPromptSettings

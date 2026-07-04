@@ -42,3 +42,14 @@ export function veoRefsToPrioritized(
       (ref.type === 'style' ? 'location' : 'identity'),
   }))
 }
+
+/** True when refs are empty or every entry lacks a non-empty name (bare URLs). */
+export function shouldRelabelRefs(
+  refs?: VeoReferenceImage[] | string[] | null,
+): boolean {
+  if (!refs?.length) return true
+  return refs.every((ref) => {
+    if (typeof ref === 'string') return true
+    return !ref.name?.trim()
+  })
+}
