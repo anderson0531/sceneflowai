@@ -61,6 +61,7 @@ describe('generateVideoWithVeoKlingFallback', () => {
     const result = await generateVideoWithVeoKlingFallback({
       prompt: 'test prompt',
       method: 'T2V',
+      allowPolicyFallback: true,
       videoOptions: {
         durationSeconds: 5,
         aspectRatio: '16:9',
@@ -155,6 +156,7 @@ describe('generateVideoWithVeoKlingFallback', () => {
     const result = await generateVideoWithVeoKlingFallback({
       prompt: 'blocked prompt',
       method: 'T2V',
+      allowPolicyFallback: true,
       videoOptions: { durationSeconds: 5, aspectRatio: '16:9' },
     })
 
@@ -178,11 +180,33 @@ describe('generateVideoWithVeoKlingFallback', () => {
     const result = await generateVideoWithVeoKlingFallback({
       prompt: 'test prompt',
       method: 'T2V',
+      allowPolicyFallback: true,
       videoOptions: { durationSeconds: 5, aspectRatio: '16:9' },
     })
 
     expect(generateProductionVideo).toHaveBeenCalledTimes(1)
     expect(result.vertexAttempts).toBe(1)
     expect(result.wasPolicyFallback).toBe(true)
+  })
+
+  it('does not invoke Kling when allowPolicyFallback is false', async () => {
+    process.env.KLING_API_KEY = 'api-key-kling-test'
+
+    vi.mocked(generateProductionVideo).mockResolvedValue({
+      status: 'FAILED',
+      error: 'Content Safety Filter Triggered',
+    })
+
+    await expect(
+      generateVideoWithVeoKlingFallback({
+        prompt: 'blocked prompt',
+        method: 'T2V',
+        allowPolicyFallback: false,
+        videoOptions: { durationSeconds: 5, aspectRatio: '16:9' },
+      })
+    ).rejects.toBeInstanceOf(ContentPolicyExhaustedError)
+
+    expect(runKlingVideo).not.toHaveBeenCalled()
+    expect(runFalKlingVideo).not.toHaveBeenCalled()
   })
 })

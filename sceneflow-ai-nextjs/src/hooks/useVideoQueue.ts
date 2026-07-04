@@ -102,6 +102,8 @@ export function useVideoQueue(
       endFrameUrl?: string
       referenceImages?: Array<{ url: string; type?: 'style' | 'character'; name?: string; role?: string }> | string[]
       qualityTier?: 'fast' | 'premium'
+      apiPromptOverride?: string
+      allowPolicyFallback?: boolean
     }
   ) => Promise<void>,
   segmentGuideContext?: SegmentGuideContext,
@@ -431,6 +433,8 @@ export function useVideoQueue(
               previousSegmentVeoRef,
               referenceImages,
               qualityTier: config.qualityTier,
+              apiPromptOverride: config.useCustomApiPrompt ? config.apiPromptOverride : undefined,
+              allowPolicyFallback: config.allowPolicyFallback === true,
             }
           )
           

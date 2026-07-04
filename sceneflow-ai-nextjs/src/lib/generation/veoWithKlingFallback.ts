@@ -52,6 +52,8 @@ export interface VeoKlingVideoInput {
   guidePrompt?: string
   /** Plain T2V prompt without reference preamble — used when REF is downgraded after policy blocks */
   referenceFallbackPrompt?: string
+  /** Opt-in backup engine after Vertex policy exhaustion. Default false. */
+  allowPolicyFallback?: boolean
 }
 
 function downgradeMethod(method: VideoGenerationMethod): VideoGenerationMethod {
@@ -325,6 +327,14 @@ export async function generateVideoWithVeoKlingFallback(
   if (!policyBlocked) {
     throw new ContentPolicyExhaustedError(
       lastError || 'Vertex video generation failed',
+      vertexAttempts,
+      lastError
+    )
+  }
+
+  if (!input.allowPolicyFallback) {
+    throw new ContentPolicyExhaustedError(
+      lastError || 'Vertex content policy blocked all attempts',
       vertexAttempts,
       lastError
     )

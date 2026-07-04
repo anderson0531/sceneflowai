@@ -21,26 +21,14 @@ import {
   type MethodSelectionResult,
 } from '@/lib/vision/intelligentMethodSelection'
 import { getQualityForMethod, DEFAULT_VEO_CLIP_DURATION, type VeoClipDuration } from '@/lib/config/modelConfig'
-import { buildOmniVideoReferencePrompt } from '@/lib/gemini/buildOmniVideoReferencePrompt'
+import { sanitizeOmniRefLabel } from '@/lib/gemini/cleanOmniRefPrompt'
 import { neutralizeReferenceConflictPrompt } from '@/lib/gemini/neutralizeReferenceConflictPrompt'
-import {
-  cleanOmniRefScenePrompt,
-  sanitizeOmniRefGuide,
-  sanitizeOmniRefLabel,
-} from '@/lib/gemini/cleanOmniRefPrompt'
 import { veoRefsToPrioritized } from '@/lib/video/normalizeReferenceImages'
 import { isVeoVideoRefValid } from '@/lib/gemini/geminiStudioVideoClient'
-import { appendFtvTransitionStabilityTokens } from '@/lib/vision/ftvTransitionStability'
-import {
-  FTV_MINIMAL_NATIVE_AUDIO_HINT,
-  narrowPromptForFtvFrameLock,
-  neutralizeFtvGuidePrompt,
-  extractSpeaksQuotedPerformCue,
-  normalizeVeoSuspiciousPunctuation,
-} from '@/lib/vision/ftvPromptNormalize'
 import { getVideoDurationFromBuffer } from '@/lib/video/serverVideoDuration'
 import { separateAudioStemsWithRetry, type StemSeparationResult } from '@/lib/audio/stemSeparation'
 import { computeSourceHash } from '@/lib/audio/stemJobs'
+import { buildSegmentEnhancedPrompt } from '@/lib/video/buildSegmentEnhancedPrompt'
 export class SegmentVideoRateLimitError extends Error {
   retryAfter: number
   constructor(message: string, retryAfter = 60) {
@@ -95,6 +83,10 @@ export interface GenerateSegmentVideoInput {
   existingStemJobId?: string
   /** When true, EXT without a Veo ref fails instead of I2V fallback. */
   requireVeoRefForExt?: boolean
+  /** When set, used as the full API prompt (skips assembly and pre-flight rewrite). */
+  apiPromptOverride?: string
+  /** Opt-in backup engine (Kling) after Vertex policy blocks. Default false. */
+  allowPolicyFallback?: boolean
 }
 
 export interface GenerateSegmentVideoResult {
@@ -152,6 +144,8 @@ export async function generateSegmentVideoCore(
     existingStemStatus,
     existingStemJobId,
     requireVeoRefForExt = false,
+    apiPromptOverride,
+    allowPolicyFallback = false,
   } = input
 
   const methodContext = buildMethodSelectionContext(
@@ -266,10 +260,6 @@ export async function generateSegmentVideoCore(
 
   if (method === 'REF' && referenceImages && referenceImages.length > 0) {
     const prioritized = veoRefsToPrioritized(referenceImages)
-    const neutralScenePrompt = neutralizeReferenceConflictPrompt(
-      cleanOmniRefScenePrompt(prompt)
-    )
-    const refGuidePrompt = sanitizeOmniRefGuide(guidePrompt)
 
     videoOptions.referenceImages = referenceImages.map((img, i) => ({
       url: img.url,
@@ -279,88 +269,37 @@ export async function generateSegmentVideoCore(
       ),
       role: prioritized[i]?.role,
     }))
-
-    referenceFallbackPrompt = buildOmniVideoReferencePrompt({
-      scenePrompt: neutralScenePrompt,
-      refs: [],
-      guidePrompt: refGuidePrompt,
-    })
   }
 
-  let enhancedPrompt =
-    method === 'FTV'
-      ? extractSpeaksQuotedPerformCue(prompt) ?? narrowPromptForFtvFrameLock(prompt)
-      : prompt
-  if (method === 'FTV' && !enhancedPrompt.trim()) {
-    enhancedPrompt = 'Natural motion and expression between the two keyframes.'
-  }
-
-  if (method === 'REF' && referenceImages && referenceImages.length > 0) {
-    const prioritized = veoRefsToPrioritized(referenceImages)
-    const neutralScenePrompt = neutralizeReferenceConflictPrompt(
-      cleanOmniRefScenePrompt(prompt)
-    )
-    const refGuidePrompt = sanitizeOmniRefGuide(guidePrompt)
-    enhancedPrompt = buildOmniVideoReferencePrompt({
-      scenePrompt: neutralScenePrompt,
-      refs: prioritized,
-      guidePrompt: refGuidePrompt,
-    })
-  } else if (guidePrompt?.trim()) {
-    const gpRaw = guidePrompt.trim()
-    const gp = method === 'FTV' ? neutralizeFtvGuidePrompt(gpRaw) : gpRaw
-    if (gp) {
-      enhancedPrompt = enhancedPrompt.trim() ? `${enhancedPrompt.trim()}\n\n${gp}` : gp
-      if (method === 'FTV') {
-        enhancedPrompt += `\n\n${FTV_MINIMAL_NATIVE_AUDIO_HINT}`
-      } else {
-        enhancedPrompt +=
-          '\n\nInclude native synchronized audio (dialogue, ambience, and music) matching the descriptions above unless the scene should be silent.'
-      }
-    }
-  }
-
-  if (audioContext && method !== 'FTV') {
-    const atmosphericGuidance: string[] = []
-    if (audioContext.emotionalTone) {
-      atmosphericGuidance.push(`Emotional atmosphere: ${audioContext.emotionalTone}`)
-    }
-    if (audioContext.suggestedAtmosphere) {
-      atmosphericGuidance.push(`Visual mood: ${audioContext.suggestedAtmosphere}`)
-    }
-    if (audioContext.hasNarration && audioContext.narrationText) {
-      atmosphericGuidance.push(
-        `Scene accompanies narration about: ${audioContext.narrationText.slice(0, 100)}...`
-      )
-    }
-    if (audioContext.dialogueBeat) {
-      atmosphericGuidance.push(`Dialogue moment: ${audioContext.dialogueBeat}`)
-    }
-    if (atmosphericGuidance.length > 0) {
-      const atmosphericText = `[Audio-Visual Sync Context]\n${atmosphericGuidance.join('\n')}`
-      enhancedPrompt = `${enhancedPrompt}\n\n${atmosphericText}`
-    }
-  }
-
-  enhancedPrompt = appendFtvTransitionStabilityTokens(
-    method === 'FTV' ? normalizeVeoSuspiciousPunctuation(enhancedPrompt) : enhancedPrompt,
-    method,
-    segmentIndex
-  )
-
-  const preflight = await neutralizePromptForVeo({
-    prompt: enhancedPrompt,
+  const built = buildSegmentEnhancedPrompt({
+    prompt,
     guidePrompt,
     method,
-    startFrameUrl:
-      typeof videoOptions.startFrame === 'string' ? videoOptions.startFrame : undefined,
+    referenceImages,
+    segmentIndex,
+    audioContext,
   })
-  if (preflight.wasRewritten) {
-    console.log(
-      `[Segment Video] Pre-flight rewrite applied (risk=${preflight.riskScore.level}, triggers=${preflight.riskScore.triggers.join(',')})`
-    )
+  referenceFallbackPrompt = built.referenceFallbackPrompt
+  let enhancedPrompt = built.enhancedPrompt
+
+  const override = apiPromptOverride?.trim()
+  if (override) {
+    enhancedPrompt = override
+  } else {
+    const preflight = await neutralizePromptForVeo({
+      prompt: enhancedPrompt,
+      guidePrompt,
+      method,
+      startFrameUrl:
+        typeof videoOptions.startFrame === 'string' ? videoOptions.startFrame : undefined,
+    })
+    if (preflight.wasRewritten) {
+      console.log(
+        `[Segment Video] Pre-flight rewrite applied (risk=${preflight.riskScore.level}, triggers=${preflight.riskScore.triggers.join(',')})`
+      )
+    }
+    enhancedPrompt = preflight.prompt
   }
-  enhancedPrompt = preflight.prompt
 
   let generationProvider: 'vertex' | 'fal' | 'kling' = 'vertex'
   let fallbackModelFamily: 'kling' | undefined
@@ -378,6 +317,7 @@ export async function generateSegmentVideoCore(
       method,
       videoOptions: videoOptions as VideoGenerationOptions,
       referenceFallbackPrompt,
+      allowPolicyFallback,
     })
 
     generationProvider = genResult.generationProvider

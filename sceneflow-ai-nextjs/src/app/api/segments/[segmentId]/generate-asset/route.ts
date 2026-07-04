@@ -73,6 +73,10 @@ interface GenerateAssetRequest {
   existingStemJobId?: string
   /** Beat-first: segment source beat for prompt compilation */
   beatId?: string
+  /** Full API prompt override — skips server assembly and pre-flight rewrite */
+  apiPromptOverride?: string
+  /** Opt-in backup engine when Vertex policy blocks. Default false. */
+  allowPolicyFallback?: boolean
 }
 
 export async function POST(
@@ -121,7 +125,9 @@ export async function POST(
       ,
       existingStemJobId
       ,
-      beatId
+      beatId,
+      apiPromptOverride,
+      allowPolicyFallback,
     } = body
 
     // Get user session for authentication
@@ -281,6 +287,8 @@ export async function POST(
         existingStemJobId,
         requireVeoRefForExt:
           generationMethod === 'EXT' && !sourceVideoUrl && !previousSegmentVeoRef,
+        apiPromptOverride,
+        allowPolicyFallback: allowPolicyFallback === true,
       })
 
       assetUrl = videoResult.assetUrl
@@ -448,6 +456,11 @@ export async function POST(
         'If you used reference images, try Text-to-Video without them.',
         'You were not charged for a completed clip when the request is blocked; optional wording fixes below are suggestions only.',
       ]
+      if (requestBody.allowPolicyFallback !== true) {
+        hints.push(
+          'Enable "Allow backup engine if blocked" in generation settings to try an alternate video provider when Vertex rejects the prompt.'
+        )
+      }
 
       const optionalSanitized: { prompt?: string; guidePrompt?: string } = {}
       const changeAcc: string[] = []

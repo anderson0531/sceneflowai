@@ -28,6 +28,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/Button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Accordion,
   AccordionContent,
@@ -245,6 +246,14 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const [resolution, setResolution] = useState<'720p' | '1080p'>(autoConfig.resolution)
   const [duration, setDuration] = useState(autoConfig.duration)
   const [guidePrompt, setGuidePrompt] = useState('')
+
+  // Full API prompt preview / override
+  const [apiPromptPreview, setApiPromptPreview] = useState('')
+  const [apiPromptPreviewLoading, setApiPromptPreviewLoading] = useState(false)
+  const [apiPromptPreviewError, setApiPromptPreviewError] = useState<string | null>(null)
+  const [useCustomApiPrompt, setUseCustomApiPrompt] = useState(false)
+  const [apiPromptOverride, setApiPromptOverride] = useState('')
+  const [allowPolicyFallback, setAllowPolicyFallback] = useState(false)
   
   // Intelligent prompt modification state
   const [promptInstruction, setPromptInstruction] = useState('')
@@ -612,7 +621,81 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     setLocalError(null)
     setImageTriggered(false)
     setKeyframeEdit(null)
+    setUseCustomApiPrompt(false)
+    setApiPromptOverride('')
+    setAllowPolicyFallback(false)
+    setApiPromptPreview('')
+    setApiPromptPreviewError(null)
   }, [autoConfig, lockedVideoAspect, batchGuideSeed, segment, autoResolvedRefs.entries])
+
+  const fetchApiPromptPreview = useCallback(async () => {
+    const method = modeToMethod[mode]
+    const startFrameUrl = segment.startFrameUrl || segment.references?.startFrameUrl || undefined
+    const endFrameUrl = segment.endFrameUrl || segment.references?.endFrameUrl || undefined
+    const refPayload =
+      method === 'REF'
+        ? referenceImages.map((ref) => ({
+            url: ref.url,
+            type: (ref.type === 'character' || ref.type === 'wardrobe' ? 'character' : 'style') as
+              | 'style'
+              | 'character',
+            name: ref.name,
+            role: ref.role,
+          }))
+        : undefined
+
+    setApiPromptPreviewLoading(true)
+    setApiPromptPreviewError(null)
+    try {
+      const res = await fetch(
+        `/api/segments/${encodeURIComponent(segment.segmentId)}/preview-api-prompt`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            prompt: visualPrompt,
+            guidePrompt: guidePrompt || undefined,
+            generationMethod: method,
+            startFrameUrl,
+            endFrameUrl,
+            segmentIndex: segment.sequenceIndex,
+            referenceImages: refPayload,
+          }),
+        }
+      )
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || `Preview failed (${res.status})`)
+      }
+      const data = await res.json()
+      setApiPromptPreview(data.apiPrompt || '')
+    } catch (e) {
+      setApiPromptPreviewError(
+        e instanceof Error ? e.message : 'Preview unavailable — enable custom mode to paste prompt manually'
+      )
+    } finally {
+      setApiPromptPreviewLoading(false)
+    }
+  }, [mode, visualPrompt, guidePrompt, referenceImages, segment])
+
+  useEffect(() => {
+    if (!isOpen) return
+    const timer = setTimeout(() => {
+      void fetchApiPromptPreview()
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [isOpen, fetchApiPromptPreview])
+
+  const displayedApiPrompt = useCustomApiPrompt ? apiPromptOverride : apiPromptPreview
+  const canGenerateWithCustomPrompt = !useCustomApiPrompt || apiPromptOverride.trim().length > 0
+
+  const appendAdvancedConfig = (config: VideoGenerationConfig): VideoGenerationConfig => ({
+    ...config,
+    useCustomApiPrompt,
+    apiPromptOverride: useCustomApiPrompt ? apiPromptOverride.trim() : undefined,
+    allowPolicyFallback,
+  })
 
   // Initialize state only on open transition or segment change while open.
   useEffect(() => {
@@ -728,7 +811,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     const effectiveMethod = method === 'FTV' ? 'I2V' : method
     const resolvedStartFrameUrl = segment.startFrameUrl || segment.references?.startFrameUrl || null
     
-    const savedConfig: VideoGenerationConfig = {
+    const savedConfig = appendAdvancedConfig({
       mode: effectiveMethod,
       prompt: visualPrompt,
       motionPrompt,
@@ -745,7 +828,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       confidence: autoConfig.confidence,
       qualityTier: qualityTier,
       referenceImages: method === 'REF' ? refsToConfig(referenceImages) : undefined,
-    }
+    })
     onSaveConfig(savedConfig)
   }
   
@@ -792,7 +875,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     }
     
     // Build T2V config without reference images and generate
-    const t2vConfig: VideoGenerationConfig = {
+    const t2vConfig = appendAdvancedConfig({
       mode: 'T2V',
       prompt: currentPrompt || visualPrompt,
       motionPrompt,
@@ -808,14 +891,14 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       approvalStatus: 'auto-ready',
       confidence: autoConfig.confidence,
       qualityTier,
-    }
+    })
     
     onSaveConfig(t2vConfig)
     if (onGenerate) {
       onGenerate(segment.segmentId, t2vConfig)
     }
     onClose()
-  }, [mode, motionPrompt, visualPrompt, negativePrompt, guidePrompt, aspectRatio, resolution, duration, autoConfig.confidence, qualityTier, onSaveConfig, onGenerate, segment.segmentId, onClose])
+  }, [mode, motionPrompt, visualPrompt, negativePrompt, guidePrompt, aspectRatio, resolution, duration, autoConfig.confidence, qualityTier, onSaveConfig, onGenerate, segment.segmentId, onClose, appendAdvancedConfig])
 
   // Handle generate - saves config AND triggers generation
   const handleGenerate = () => {
@@ -823,7 +906,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     const effectiveMethod = method === 'FTV' ? 'I2V' : method
     const resolvedStartFrameUrl = segment.startFrameUrl || segment.references?.startFrameUrl || null
     
-    const savedConfig: VideoGenerationConfig = {
+    const savedConfig = appendAdvancedConfig({
       mode: effectiveMethod,
       prompt: visualPrompt,
       motionPrompt,
@@ -840,7 +923,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       confidence: autoConfig.confidence,
       qualityTier: qualityTier,
       referenceImages: method === 'REF' ? refsToConfig(referenceImages) : undefined,
-    }
+    })
     
     onSaveConfig(savedConfig)
     if (onGenerate) {
@@ -1423,6 +1506,87 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
               </AccordionItem>
             </Accordion>
 
+            {/* Advanced: full API prompt + backup engine opt-in */}
+            <Accordion type="single" collapsible className="mt-3">
+              <AccordionItem value="api-prompt" className="border-slate-700">
+                <AccordionTrigger className="text-sm text-slate-300 hover:no-underline py-2">
+                  Advanced — API Prompt
+                </AccordionTrigger>
+                <AccordionContent className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label className="text-slate-400 text-xs">
+                      Full prompt sent to API {apiPromptPreviewLoading ? '(updating…)' : '(preview)'}
+                    </Label>
+                    {apiPromptPreviewLoading && (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400" />
+                    )}
+                  </div>
+                  {apiPromptPreviewError && !useCustomApiPrompt && (
+                    <p className="text-xs text-amber-400/90">{apiPromptPreviewError}</p>
+                  )}
+                  <Textarea
+                    value={displayedApiPrompt}
+                    onChange={(e) => {
+                      if (useCustomApiPrompt) setApiPromptOverride(e.target.value)
+                    }}
+                    readOnly={!useCustomApiPrompt}
+                    className={cn(
+                      'min-h-[120px] font-mono text-xs bg-slate-800 border-slate-700 text-slate-200 resize-y',
+                      !useCustomApiPrompt && 'opacity-90'
+                    )}
+                    placeholder="Server-assembled prompt preview…"
+                  />
+                  <p className="text-[10px] text-slate-500">
+                    {displayedApiPrompt.length.toLocaleString()} characters
+                    {displayedApiPrompt.length > 8000 && (
+                      <span className="text-amber-400 ml-2">Long prompt — may increase block risk</span>
+                    )}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <Checkbox
+                        checked={useCustomApiPrompt}
+                        onCheckedChange={(checked) => {
+                          const on = checked === true
+                          setUseCustomApiPrompt(on)
+                          if (on && !apiPromptOverride.trim()) {
+                            setApiPromptOverride(apiPromptPreview)
+                          }
+                        }}
+                      />
+                      <span className="text-xs text-slate-300">Use custom API prompt</span>
+                    </label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="text-xs h-8 border-slate-600"
+                      onClick={() => {
+                        setUseCustomApiPrompt(false)
+                        setApiPromptOverride('')
+                        void fetchApiPromptPreview()
+                      }}
+                    >
+                      Reset to preview
+                    </Button>
+                  </div>
+                  <label className="flex items-start gap-2 cursor-pointer pt-1">
+                    <Checkbox
+                      checked={allowPolicyFallback}
+                      onCheckedChange={(checked) => setAllowPolicyFallback(checked === true)}
+                      className="mt-0.5"
+                    />
+                    <span className="text-xs text-slate-300 leading-relaxed">
+                      Allow backup engine if blocked
+                      <span className="block text-slate-500 mt-0.5">
+                        Uses an alternate video provider when Vertex blocks the prompt. May cost additional credits.
+                      </span>
+                    </span>
+                  </label>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+
             {/* Content Policy Alerts */}
 
             {/* Success banner after fix applied */}
@@ -1512,8 +1676,9 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 Cancel
               </Button>
               <Button 
-                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
                 onClick={() => handleGenerate()}
+                disabled={!canGenerateWithCustomPrompt}
               >
                 <Play className="w-4 h-4 mr-2" />
                 Generate

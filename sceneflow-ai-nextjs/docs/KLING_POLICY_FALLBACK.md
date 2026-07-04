@@ -96,6 +96,17 @@ KLING_SECRET_KEY="sk_..."
 | `wasPolicyFallback` | `true` when Kling was used after Vertex policy exhaustion |
 | `usedBackupEngine` | `true` when `wasPolicyFallback` (subtle UI note) |
 
+## Backup engine opt-in (DirectorDialog)
+
+Backup engine (Kling) fallback is **off by default**. Users enable **"Allow backup engine if blocked"** in DirectorDialog → Advanced — API Prompt before generating.
+
+| Request field | Default | Behavior |
+|---------------|---------|----------|
+| `allowPolicyFallback` | `false` | When `true`, Kling ladder runs after Vertex policy exhaustion |
+| `apiPromptOverride` | — | When set, skips server prompt assembly and pre-flight rewrite |
+
+Preview the assembled prompt: `POST /api/segments/[segmentId]/preview-api-prompt`
+
 ## Continuous beats / EXT
 
 - **Vertex EXT** requires a prior segment `veoVideoRef` (Vertex-only).

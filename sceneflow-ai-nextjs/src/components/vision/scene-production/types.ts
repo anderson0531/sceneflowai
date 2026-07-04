@@ -350,6 +350,12 @@ export interface VideoGenerationConfig {
   // Workflow status
   approvalStatus: ApprovalStatus
   confidence: number          // 0-100, auto-calculated confidence in settings
+
+  /** Full prompt sent to Vertex/Omni API (override when useCustomApiPrompt) */
+  apiPromptOverride?: string
+  useCustomApiPrompt?: boolean
+  /** Opt-in backup engine (Kling) when Vertex policy blocks */
+  allowPolicyFallback?: boolean
 }
 
 /**

@@ -2938,6 +2938,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         guidePrompt?: string  // Voice/dialogue/SFX instructions for Veo 3.1 audio
         previousSegmentVeoRef?: string
         qualityTier?: 'fast' | 'premium'
+        apiPromptOverride?: string
+        allowPolicyFallback?: boolean
       }
     ) => {
       if (!project?.id) {
@@ -3073,6 +3075,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             existingStemSourceHash: segment.stemSeparation?.sourceHash,
             existingStemStatus: segment.stemSeparation?.status,
             existingStemJobId: segment.stemSeparation?.jobId,
+            apiPromptOverride: options?.apiPromptOverride,
+            allowPolicyFallback: options?.allowPolicyFallback === true,
           }),
         })
 
