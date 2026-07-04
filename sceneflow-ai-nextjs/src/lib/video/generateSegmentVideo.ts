@@ -21,6 +21,7 @@ import {
 } from '@/lib/vision/intelligentMethodSelection'
 import { getQualityForMethod, DEFAULT_VEO_CLIP_DURATION, type VeoClipDuration } from '@/lib/config/modelConfig'
 import { buildOmniVideoReferencePrompt } from '@/lib/gemini/buildOmniVideoReferencePrompt'
+import { neutralizeReferenceConflictPrompt } from '@/lib/gemini/neutralizeReferenceConflictPrompt'
 import { veoRefsToPrioritized } from '@/lib/video/normalizeReferenceImages'
 import { isVeoVideoRefValid } from '@/lib/gemini/geminiStudioVideoClient'
 import { appendFtvTransitionStabilityTokens } from '@/lib/vision/ftvTransitionStability'
@@ -273,11 +274,11 @@ export async function generateSegmentVideoCore(
 
   if (method === 'REF' && referenceImages && referenceImages.length > 0) {
     const prioritized = veoRefsToPrioritized(referenceImages)
+    const neutralScenePrompt = neutralizeReferenceConflictPrompt(prompt)
     enhancedPrompt = buildOmniVideoReferencePrompt({
-      scenePrompt: prompt,
+      scenePrompt: neutralScenePrompt,
       refs: prioritized,
       guidePrompt: guidePrompt?.trim() || undefined,
-      negativePrompt: negativePrompt?.trim() || undefined,
     })
   } else if (guidePrompt?.trim()) {
     const gpRaw = guidePrompt.trim()

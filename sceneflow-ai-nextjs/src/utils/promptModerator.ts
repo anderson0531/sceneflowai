@@ -151,6 +151,20 @@ export const TRIGGER_WORD_ALTERNATIVES: Record<string, string[]> = {
   'claustrophobic': ['intimate', 'close', 'confined'],
   'suffocating': ['pressing', 'enclosing', 'enveloping'],
   'oppressive': ['heavy', 'weighty', 'imposing'],
+
+  // Distress / injury phrasing (common false positives in interrogation/drama scenes)
+  'distressed': ['emotional', 'tense', 'strained'],
+  'desperate denial': ['firm denial', 'steadfast refusal'],
+  'escalating panic': ['rising tension', 'building urgency'],
+  'crushing weight': ['heavy pressure', 'significant burden'],
+  'inner struggle': ['inner conflict', 'emotional conflict'],
+  'mark on her temple': ['detail near the temple', 'subtle expression'],
+  'mark on his temple': ['detail near the temple', 'subtle expression'],
+  'shadowed mark': ['subtle shadow', 'soft shading'],
+  'bruised': ['marked', 'shadowed', 'worn'],
+  'bruise': ['mark', 'shadow', 'discoloration'],
+  'injured': ['affected', 'strained', 'weary'],
+  'injury': ['strain', 'fatigue', 'wear'],
   
   // Replacement for sci-fi/tech contexts
   'pulsating': ['glowing', 'rhythmic', 'dynamic'],
@@ -267,6 +281,18 @@ const TRIGGER_PHRASES: Record<string, string> = {
   'blood-curdling': 'intense',
   'gut-wrenching': 'emotionally powerful',
   'heart-stopping': 'breathtaking',
+
+  // Distress / injury (interrogation and drama scenes)
+  'faint shadowed mark visible on her temple': 'quiet emotional tension in the expression',
+  'faint shadowed mark visible on his temple': 'quiet emotional tension in the expression',
+  'shadowed mark visible on her temple': 'subtle expression at the temples',
+  'shadowed mark visible on his temple': 'subtle expression at the temples',
+  'mark visible on her temple': 'subtle detail near the temple',
+  'mark visible on his temple': 'subtle detail near the temple',
+  'escalating panic': 'rising tension',
+  'crushing weight of the evidence': 'heavy pressure of the evidence',
+  'desperate denial collapsing into intense realization': 'firm denial giving way to realization',
+  'eyes heavy with emotion': 'expression showing deep emotion',
   
   // Biological/organic phrases
   'organic material': 'textured material',

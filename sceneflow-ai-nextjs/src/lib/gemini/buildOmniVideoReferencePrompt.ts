@@ -8,43 +8,23 @@ export interface OmniVideoReferencePromptInput {
   scenePrompt: string
   refs: PrioritizedReferenceImage[]
   guidePrompt?: string
-  negativePrompt?: string
-}
-
-function roleInstruction(ref: PrioritizedReferenceImage, index: number): string {
-  const n = index + 1
-  switch (ref.role) {
-    case 'identity':
-      return `- Reference image ${n}: IDENTITY for character — ${ref.name}. Match face, hair, and skin tone exactly.`
-    case 'wardrobe':
-      return `- Reference image ${n}: WARDROBE for character — ${ref.name}. Match outfit, colors, and accessories.`
-    case 'location':
-      return `- Reference image ${n}: LOCATION — ${ref.name}. Match environment, architecture, and lighting.`
-    case 'prop-critical':
-    case 'prop-important':
-    case 'prop-other':
-      return `- Reference image ${n}: PROP — ${ref.name}. Include this object prominently when referenced in the scene.`
-    default:
-      return `- Reference image ${n}: ${ref.name}`
-  }
 }
 
 /**
  * Compose the text portion of an Omni REF video request.
- * Image order in multimodal input must match reference numbering here.
+ * Per-image labels are sent as separate multimodal parts; keep this block concise.
  */
 export function buildOmniVideoReferencePrompt(input: OmniVideoReferencePromptInput): string {
   const parts: string[] = []
 
   if (input.refs.length > 0) {
-    parts.push('REFERENCE IMAGES (use each as specified):')
-    input.refs.forEach((ref, i) => {
-      parts.push(roleInstruction(ref, i))
-    })
+    parts.push(
+      'Use the provided reference images for identity, wardrobe, and location. ' +
+        'Keep the subject consistent with the references.'
+    )
     parts.push('')
     parts.push(
-      'When characters speak, match lip sync and voice to the dialogue in the audio guide below. ' +
-        'Preserve identity from identity references and wardrobe from wardrobe references.'
+      'When characters speak, match lip sync and voice to the dialogue in the audio guide below.'
     )
     parts.push('')
   }
@@ -66,11 +46,7 @@ export function buildOmniVideoReferencePrompt(input: OmniVideoReferencePromptInp
     )
   }
 
-  let text = parts.join('\n').trim()
-  if (input.negativePrompt?.trim()) {
-    text += `\n\nDo not include: ${input.negativePrompt.trim()}`
-  }
-  return text
+  return parts.join('\n').trim()
 }
 
 /** Map prioritized refs to Omni reference image payloads with labels. */

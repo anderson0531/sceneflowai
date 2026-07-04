@@ -181,6 +181,51 @@ export function getVeoIncludeRaiReason(): boolean {
   return true
 }
 
+/**
+ * When true (default), Omni Interactions requests include explicit safety_settings.
+ * Set OMNI_VIDEO_SAFETY_SETTINGS_ENABLED=false to omit if the preview endpoint rejects the field.
+ */
+export function isOmniVideoSafetySettingsEnabled(): boolean {
+  const v = process.env.OMNI_VIDEO_SAFETY_SETTINGS_ENABLED
+  if (v === '0' || v === 'false' || v === 'off') return false
+  return true
+}
+
+/**
+ * Harm block threshold for Omni video Interactions API (non-sexual categories).
+ * Default: BLOCK_ONLY_HIGH. Override via OMNI_VIDEO_SAFETY_THRESHOLD.
+ */
+export function getOmniVideoSafetyThreshold(): HarmBlockThresholdType {
+  const envThreshold = process.env.OMNI_VIDEO_SAFETY_THRESHOLD
+
+  if (
+    envThreshold &&
+    Object.values(HarmBlockThreshold).includes(envThreshold as HarmBlockThresholdType)
+  ) {
+    return envThreshold as HarmBlockThresholdType
+  }
+
+  return HarmBlockThreshold.BLOCK_ONLY_HIGH
+}
+
+/**
+ * Safety settings for Gemini Omni video via Interactions API.
+ * Sexually explicit category stays stricter; child-safety is non-configurable at the API level.
+ */
+export function getOmniVideoSafetySettings(): SafetySetting[] {
+  const threshold = getOmniVideoSafetyThreshold()
+
+  return [
+    { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold },
+    { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold },
+    {
+      category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+      threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    },
+    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold },
+  ]
+}
+
 type JsonObject = Record<string, unknown>
 
 /**
@@ -383,6 +428,8 @@ export function logSafetyConfiguration(): void {
   console.log('  Imagen person generation:', getImagenPersonGeneration())
   console.log('  Veo safety setting:', getVeoSafetySetting())
   console.log('  Veo includeRaiReason:', getVeoIncludeRaiReason())
+  console.log('  Omni video safety settings enabled:', isOmniVideoSafetySettingsEnabled())
+  console.log('  Omni video safety threshold:', getOmniVideoSafetyThreshold())
 }
 
 /**

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+  appendNegativePrompt,
   buildOmniInteractionRequestBody,
+  compactOmniNegativePrompt,
   extractVideoFromOmniInteraction,
   formatOmniDuration,
   formatOmniInteractionErrorMessage,
@@ -95,7 +97,7 @@ describe('omniVideoInteractions helpers', () => {
     expect(body.background).toBe(true)
     expect(body.input).toBe('A cinematic sunset over the ocean.')
     expect(body.generation_config).toEqual({
-      video_config: { task: 'text_to_video' },
+      video_config: { task: 'text_to_video', person_generation: 'allow_adult' },
     })
     expect(body.response_format).toEqual({
       type: 'video',
@@ -161,5 +163,57 @@ describe('omniVideoInteractions helpers', () => {
 
     expect(extracted?.videoUrl).toContain('files/abc')
     expect(extracted?.veoVideoRef).toBe('interaction:v1_uri_test')
+  })
+
+  it('includes safety_settings and person_generation by default', async () => {
+    const body = await buildOmniInteractionRequestBody(
+      'gemini-omni-flash-preview',
+      'Scene action.',
+      { personGeneration: 'allow_all' }
+    )
+
+    expect(Array.isArray(body.safety_settings)).toBe(true)
+    expect((body.safety_settings as unknown[]).length).toBeGreaterThan(0)
+    const videoConfig = (body.generation_config as Record<string, unknown>)
+      .video_config as Record<string, unknown>
+    expect(videoConfig.person_generation).toBe('allow_all')
+  })
+
+  it('omits safety_settings when omitSafetySettings is true', async () => {
+    const body = await buildOmniInteractionRequestBody(
+      'gemini-omni-flash-preview',
+      'Scene action.',
+      { omitSafetySettings: true }
+    )
+    expect(body.safety_settings).toBeUndefined()
+  })
+
+  it('compactOmniNegativePrompt dedupes overlapping terms', () => {
+    const compact = compactOmniNegativePrompt(
+      'watermark, watermark, blurry, low quality, blurry, unnatural motion'
+    )
+    expect(compact.split(', ')).toEqual([
+      'watermark',
+      'blurry',
+      'low quality',
+      'unnatural motion',
+    ])
+  })
+
+  it('appendNegativePrompt uses noun-list exclusion once without Do not include', async () => {
+    const withNegative = appendNegativePrompt('Main prompt.', 'watermark, blurry')
+    expect(withNegative).toContain('Negative prompt (exclude):')
+    expect(withNegative).not.toContain('Do not include')
+    expect(withNegative.match(/Negative prompt \(exclude\):/g)).toHaveLength(1)
+
+    const body = await buildOmniInteractionRequestBody(
+      'gemini-omni-flash-preview',
+      'Main prompt.',
+      { negativePrompt: 'watermark, watermark, blurry' }
+    )
+    const input = body.input as string
+    expect(input).toContain('Negative prompt (exclude): watermark, blurry')
+    expect(input.match(/Negative prompt \(exclude\):/g)).toHaveLength(1)
+    expect(input).not.toContain('Do not include')
   })
 })

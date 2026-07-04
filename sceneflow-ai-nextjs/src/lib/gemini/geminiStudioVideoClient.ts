@@ -215,6 +215,7 @@ async function generateVideoWithOmniGeminiStudio(
       aspectRatio: options.aspectRatio,
       durationSeconds: effectiveDuration,
       negativePrompt: options.negativePrompt,
+      personGeneration: options.personGeneration,
       startFrame: options.startFrame,
       lastFrame: options.lastFrame,
       referenceImages: options.referenceImages,

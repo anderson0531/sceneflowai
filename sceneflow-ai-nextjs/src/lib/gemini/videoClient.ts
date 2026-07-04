@@ -251,6 +251,7 @@ async function generateVideoWithOmniInteractions(
       aspectRatio: options.aspectRatio,
       durationSeconds: effectiveDuration,
       negativePrompt: options.negativePrompt,
+      personGeneration: options.personGeneration,
       startFrame: options.startFrame,
       lastFrame: options.lastFrame,
       referenceImages: options.referenceImages,
@@ -260,7 +261,23 @@ async function generateVideoWithOmniInteractions(
   )
 
   const endpoint = `${apiBase}/interactions`
-  const requestBody = await buildOmniInteractionRequestBody(model, prompt, omniBuildOptions)
+
+  const postOmniInteraction = async (
+    buildOptions: typeof omniBuildOptions
+  ): Promise<Response> => {
+    const requestBody = await buildOmniInteractionRequestBody(model, prompt, buildOptions)
+    const accessToken = await getVertexAccessToken()
+    return fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(requestBody),
+    })
+  }
+
+  let requestBody = await buildOmniInteractionRequestBody(model, prompt, omniBuildOptions)
 
   console.log(`[Omni Video] Generating via Interactions API with ${model} (quality: ${quality}) at ${location}`)
   console.log('[Omni Video] Request summary:', JSON.stringify({
@@ -271,19 +288,41 @@ async function generateVideoWithOmniInteractions(
     hasLastFrame: !!omniBuildOptions.lastFrame,
     hasPreviousInteraction: !!omniBuildOptions.previousInteractionId,
     referenceImagesCount: options.referenceImages?.length || 0,
+    personGeneration: omniBuildOptions.personGeneration ?? 'allow_adult',
+    hasSafetySettings: Array.isArray(requestBody.safety_settings),
     background: requestBody.background,
   }))
 
   try {
-    const accessToken = await getVertexAccessToken()
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify(requestBody),
-    })
+    let response = await postOmniInteraction(omniBuildOptions)
+
+    if (!response.ok && response.status === 400 && !omniBuildOptions.omitSafetySettings) {
+      const errorText = await response.text()
+      const lower = errorText.toLowerCase()
+      if (
+        lower.includes('safety') ||
+        lower.includes('safety_settings') ||
+        lower.includes('person_generation')
+      ) {
+        console.warn(
+          '[Omni Video] Interactions 400 with safety/person config — retrying without safety_settings'
+        )
+        const retryOptions = { ...omniBuildOptions, omitSafetySettings: true }
+        requestBody = await buildOmniInteractionRequestBody(model, prompt, retryOptions)
+        response = await postOmniInteraction(retryOptions)
+      } else {
+        console.error('[Omni Video] Error response:', errorText)
+        let errorMsg = `Vertex AI Interactions error ${response.status}: ${errorText}`
+        try {
+          const parsed = JSON.parse(errorText) as unknown
+          const rai = formatVeoRaiDetailsFromPayload(parsed)
+          if (rai) errorMsg += `\n\nResponsible AI / safety detail:\n${rai}`
+        } catch {
+          /* not JSON */
+        }
+        return { status: 'FAILED', error: errorMsg }
+      }
+    }
 
     if (!response.ok) {
       const errorText = await response.text()

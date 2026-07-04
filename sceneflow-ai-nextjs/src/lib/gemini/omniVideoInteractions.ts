@@ -7,6 +7,11 @@ import {
   type VeoClipDuration,
 } from '@/lib/config/modelConfig'
 import { MAX_VERTEX_GEMINI_REFERENCE_IMAGES } from '@/lib/vision/referenceLimits'
+import {
+  getOmniVideoSafetySettings,
+  isOmniVideoSafetySettingsEnabled,
+  type ImagenPersonGeneration,
+} from '@/lib/vertexai/safety'
 
 export interface OmniReferenceImage {
   imageUrl?: string
@@ -22,6 +27,9 @@ export interface OmniInteractionBuildOptions {
   aspectRatio?: '16:9' | '9:16'
   durationSeconds?: VeoClipDuration
   negativePrompt?: string
+  personGeneration?: ImagenPersonGeneration
+  /** When true, omit safety_settings (retry after 400 from preview endpoint). */
+  omitSafetySettings?: boolean
   startFrame?: string
   lastFrame?: string
   referenceImages?: OmniReferenceImage[]
@@ -205,9 +213,21 @@ async function resolveImageBase64(
   return { base64: source, mimeType: 'image/png' }
 }
 
-function appendNegativePrompt(prompt: string, negativePrompt?: string): string {
-  if (!negativePrompt?.trim()) return prompt
-  return `${prompt.trim()}\n\nDo not include: ${negativePrompt.trim()}`
+/** Dedupe and cap negative prompt terms for Omni (reduces false-positive safety triggers). */
+export function compactOmniNegativePrompt(raw?: string, maxTerms = 24): string {
+  if (!raw?.trim()) return ''
+  const terms = raw
+    .split(/[,;]/)
+    .map((t) => t.trim().toLowerCase())
+    .filter(Boolean)
+  const unique = [...new Set(terms)]
+  return unique.slice(0, maxTerms).join(', ')
+}
+
+export function appendNegativePrompt(prompt: string, negativePrompt?: string): string {
+  const compact = compactOmniNegativePrompt(negativePrompt)
+  if (!compact) return prompt
+  return `${prompt.trim()}\n\nNegative prompt (exclude): ${compact}`
 }
 
 function inferOmniVideoTask(options: OmniInteractionBuildOptions): string {
@@ -272,11 +292,16 @@ export async function buildOmniInteractionRequestBody(
   const task = inferOmniVideoTask(options)
   const input = await buildOmniInteractionInput(prompt, options)
 
+  const personGeneration = options.personGeneration ?? 'allow_adult'
+
   const body: Record<string, unknown> = {
     model,
     input,
     generation_config: {
-      video_config: { task },
+      video_config: {
+        task,
+        person_generation: personGeneration,
+      },
     },
     response_format: {
       type: 'video',
@@ -284,6 +309,10 @@ export async function buildOmniInteractionRequestBody(
       delivery: 'inline',
     },
     background,
+  }
+
+  if (isOmniVideoSafetySettingsEnabled() && !options.omitSafetySettings) {
+    body.safety_settings = getOmniVideoSafetySettings()
   }
 
   if (options.previousInteractionId) {
