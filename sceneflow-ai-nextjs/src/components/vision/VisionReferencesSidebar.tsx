@@ -31,6 +31,7 @@ import {
   isDeferredImageUrl,
   isDisplayableImageUrl,
 } from '@/components/vision/DeferredImageSkeleton'
+import { ReferenceSplitPane } from './ReferenceSplitPane'
 
 // Extended scene type for Scene tab that includes sceneDirection
 interface SceneWithDirection {
@@ -175,6 +176,8 @@ interface DraggableReferenceCardProps {
   onImageUploaded?: (referenceId: string, referenceType: 'scene' | 'object', imageUrl: string) => void
   /** Open prompt dialog for object reference regeneration (Props tab) */
   onOpenObjectPromptDialog?: (reference: VisualReference) => void
+  /** 50/50 image | controls layout for Reference Library dialog */
+  splitLayout?: boolean
 }
 
 function DraggableReferenceCard({
@@ -187,6 +190,7 @@ function DraggableReferenceCard({
   projectId,
   onImageUploaded,
   onOpenObjectPromptDialog,
+  splitLayout = false,
 }: DraggableReferenceCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `visual-reference-${reference.id}`,
@@ -283,72 +287,59 @@ function DraggableReferenceCard({
   }
 
   // Check if we can show the Add to Timeline button
-  const canAddToTimeline = scenes && scenes.length > 0 && onInsertBackdropBeat && reference.imageUrl
+  const canAddToTimeline = scenes && scenes.length > 0 && onInsertBackdropSegment && reference.imageUrl
 
-  return (
-    <>
-      <div
-        ref={setNodeRef}
-        style={{
-          transform: transform ? CSS.Translate.toString(transform) : undefined,
-          opacity: isDragging ? 0.65 : 1,
-          cursor: 'grab',
-        }}
-        {...listeners}
-        {...attributes}
-        className="flex flex-col p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm group w-full"
-      >
-        {/* Row 1: Image + storyboard-style overlay (Quick, Prompt, Edit, Upload) for Props */}
-        <div className="w-full aspect-video rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800 relative mb-2 group">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleFileUpload}
-          />
+  const imagePanel = (
+    <div className={`relative rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800 group ${splitLayout ? 'h-full w-full' : 'w-full aspect-video mb-2'}`}>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileUpload}
+      />
 
-          {isDeferredImageUrl(reference.imageUrl) ? (
-            <DeferredImageSkeleton className="w-full h-full" label={`Loading ${reference.name}`} />
-          ) : isDisplayableImageUrl(reference.imageUrl) ? (
-            <img
-              src={reference.imageUrl}
-              alt={reference.name}
-              className="w-full h-full object-cover"
-              loading="lazy"
-              decoding="async"
-            />
-          ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
-              <Images className="w-8 h-8 text-gray-400" />
-              {!isObjectCard && <span className="text-xs mt-1">No image</span>}
-            </div>
-          )}
+      {isDeferredImageUrl(reference.imageUrl) ? (
+        <DeferredImageSkeleton className="w-full h-full" label={`Loading ${reference.name}`} />
+      ) : isDisplayableImageUrl(reference.imageUrl) ? (
+        <img
+          src={reference.imageUrl}
+          alt={reference.name}
+          className={`w-full h-full ${splitLayout ? 'object-contain' : 'object-cover'}`}
+          loading="lazy"
+          decoding="async"
+        />
+      ) : (
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
+          <Images className="w-8 h-8 text-gray-400" />
+          {!isObjectCard && <span className="text-xs mt-1">No image</span>}
+        </div>
+      )}
 
-          {reference.imageUrl && (
-            <button
-              type="button"
-              onPointerDown={(e) => {
-                e.stopPropagation()
-                e.preventDefault()
-              }}
-              onClick={(e) => {
-                e.stopPropagation()
-                setIsExpanded(true)
-              }}
-              className="absolute top-2 right-2 z-20 p-1.5 rounded-md bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
-              title="View full size"
-            >
-              <Maximize2 className="w-4 h-4" />
-            </button>
-          )}
+      {reference.imageUrl && (
+        <button
+          type="button"
+          onPointerDown={(e) => {
+            e.stopPropagation()
+            e.preventDefault()
+          }}
+          onClick={(e) => {
+            e.stopPropagation()
+            setIsExpanded(true)
+          }}
+          className="absolute top-2 right-2 z-20 p-1.5 rounded-md bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+          title="View full size"
+        >
+          <Maximize2 className="w-4 h-4" />
+        </button>
+      )}
 
-          {isObjectCard ? (
-            <div
-              className={`absolute inset-0 z-10 bg-black/40 transition-opacity flex items-center justify-center gap-3 ${
-                hasImage ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'
-              }`}
-            >
+      {isObjectCard ? (
+        <div
+          className={`absolute inset-0 z-10 bg-black/40 transition-opacity flex items-center justify-center gap-3 ${
+            hasImage ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'
+          }`}
+        >
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
@@ -462,10 +453,13 @@ function DraggableReferenceCard({
               )}
             </>
           )}
-        </div>
+    </div>
+  )
 
+  const detailsPanel = (
+    <>
         {/* Row 2: Name and Description */}
-        <div className="mb-2">
+        <div className={splitLayout ? '' : 'mb-2'}>
           <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">{reference.name}</div>
           {reference.description ? (
             <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-0.5">{reference.description}</div>
@@ -561,12 +555,36 @@ function DraggableReferenceCard({
             </button>
           </div>
         )}
+    </>
+  )
+
+  return (
+    <>
+      <div
+        ref={setNodeRef}
+        style={{
+          transform: transform ? CSS.Translate.toString(transform) : undefined,
+          opacity: isDragging ? 0.65 : 1,
+          cursor: 'grab',
+        }}
+        {...listeners}
+        {...attributes}
+        className="flex flex-col p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm group w-full"
+      >
+        {splitLayout ? (
+          <ReferenceSplitPane image={imagePanel} controls={detailsPanel} />
+        ) : (
+          <>
+            {imagePanel}
+            {detailsPanel}
+          </>
+        )}
       </div>
 
       {/* Expanded View Dialog */}
       {isDisplayableImageUrl(reference.imageUrl) && (
         <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
-          <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 bg-black border-none">
+          <DialogContent className={`${splitLayout ? 'max-w-[50vw]' : 'max-w-[90vw]'} max-h-[90vh] p-0 bg-black border-none`}>
             <DialogHeader className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/70 to-transparent z-10">
               <DialogTitle className="text-white">{reference.name}</DialogTitle>
               {reference.description && (
@@ -1201,6 +1219,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     initialTab,
   } = props
 
+  const splitLayout = layout === 'dialog'
+
   const [transferOpen, setTransferOpen] = useState(false)
   const [transferDirection, setTransferDirection] =
     useState<ReferenceTransferDirection>('series_to_project')
@@ -1630,6 +1650,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               setUploadingRef={setUploadingRef}
               enableDrag={enableDrag}
               compact
+              layout={layout}
               showProTips={showProTips}
               screenplayContext={screenplayContext}
             />
@@ -1648,6 +1669,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               onUploadLocationImage={onUploadLocationImage}
               generatingLocationId={generatingLocationId}
               screenplayContext={screenplayContext}
+              splitLayout={splitLayout}
             />
           )}
           
@@ -1688,6 +1710,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                     onEditImage={handleEditReferenceImage}
                     referenceType="object"
                     projectId={projectId}
+                    splitLayout={splitLayout}
                     onOpenObjectPromptDialog={(ref) => setObjectRegenerateTarget(ref)}
                     onImageUploaded={(refId, refType, imageUrl) => {
                       if (onUpdateReferenceImage) {

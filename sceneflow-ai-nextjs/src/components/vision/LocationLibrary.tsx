@@ -34,6 +34,7 @@ import {
   isDeferredImageUrl,
   isDisplayableImageUrl,
 } from '@/components/vision/DeferredImageSkeleton'
+import { ReferenceSplitPane } from './ReferenceSplitPane'
 
 // Scene heading regex for INT/EXT extraction
 const SCENE_CODE_REGEX = /^(INT\.\/EXT\.|EXT\.\/INT\.|INT\.\/EXT|EXT\.\/INT|INT\. |EXT\. |INT\/EXT|EXT\/INT|INT\.|EXT\.|INT|EXT)\s*(.*)$/i
@@ -77,6 +78,8 @@ interface LocationLibraryProps {
     setting?: string
     visualStyle?: string
   }
+  /** 50/50 image | controls layout for Reference Library dialog */
+  splitLayout?: boolean
 }
 
 /**
@@ -141,7 +144,8 @@ export function LocationLibrary({
   onEditLocationImage,
   onUploadLocationImage,
   generatingLocationId,
-  screenplayContext
+  screenplayContext,
+  splitLayout = false,
 }: LocationLibraryProps) {
   const [expandedLocationId, setExpandedLocationId] = useState<string | null>(null)
   const [editingDescriptionId, setEditingDescriptionId] = useState<string | null>(null)
@@ -396,268 +400,281 @@ export function LocationLibrary({
                 </button>
 
                 {/* Expanded content */}
-                {isExpanded && (
-                  <div className="px-3 pb-3 space-y-2 border-t border-gray-200 dark:border-gray-700">
-                    {/* Scene numbers */}
-                    {loc.sceneNumbers && loc.sceneNumbers.length > 0 && (
-                      <div className="flex flex-wrap gap-1 pt-2">
-                        {loc.sceneNumbers.map(n => (
-                          <span key={n} className="text-[10px] px-1.5 py-0.5 bg-slate-700/50 text-slate-300 rounded">
-                            Scene {n}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Description - editable */}
-                    <div className="pt-1">
-                      {editingDescriptionId === loc.id ? (
-                        <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
-                          <textarea
-                            value={descriptionText}
-                            onChange={(e) => setDescriptionText(e.target.value)}
-                            placeholder="Describe this location (e.g., Modern podcast studio with acoustic panels, professional lighting rig...)"
-                            className="w-full px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
-                            rows={3}
-                            autoFocus
-                          />
-                          <div className="flex gap-2 justify-end">
-                            <button
-                              onClick={() => { setEditingDescriptionId(null); setDescriptionText('') }}
-                              className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={() => handleSaveDescription(loc.id)}
-                              className="px-2 py-1 text-xs bg-cyan-500 hover:bg-cyan-600 text-white rounded flex items-center gap-1"
-                            >
-                              <Check className="w-3 h-3" />
-                              Save
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-start gap-2">
-                          <p className="text-xs text-gray-400 italic flex-1">
-                            {loc.description || 'No description — click edit to add'}
-                          </p>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setEditingDescriptionId(loc.id)
-                              setDescriptionText(loc.description || '')
-                            }}
-                            className="p-1 text-gray-400 hover:text-cyan-400 transition-colors flex-shrink-0"
-                            title="Edit description"
-                          >
-                            <Edit className="w-3 h-3" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Image Section — overlay controls match Storyboard / Scene Gallery (Quick, Prompt, Edit, Upload) */}
-                    {isDeferredImage ? (
-                      <DeferredImageSkeleton className="w-full aspect-video rounded-md" label={`Loading ${loc.location}`} />
-                    ) : hasImage ? (
-                      <div className="relative aspect-video rounded-md overflow-hidden bg-gray-200 dark:bg-gray-700 group">
-                        <img
-                          src={loc.imageUrl}
-                          alt={loc.location}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                          decoding="async"
-                        />
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setExpandedImageUrl(loc.imageUrl)
-                            setExpandedImageName(loc.location)
-                          }}
-                          className="absolute top-2 right-2 z-20 p-1.5 rounded-md bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
-                          title="View full size"
-                        >
-                          <Maximize2 className="w-4 h-4" />
-                        </button>
-                        <input
-                          id={`location-upload-${loc.id}`}
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => handleFileUpload(loc.id, e)}
-                        />
-                        <div className="absolute inset-0 z-10 bg-black/40 transition-opacity opacity-0 group-hover:opacity-100 flex items-center justify-center gap-3">
-                          {onGenerateLocationImage && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    onGenerateLocationImage(loc)
-                                  }}
-                                  disabled={isGenerating}
-                                  className="p-3 bg-indigo-600/80 hover:bg-indigo-600 rounded-full transition-colors disabled:opacity-50"
-                                >
-                                  {isGenerating ? (
-                                    <Loader2 className="w-5 h-5 text-white animate-spin" />
-                                  ) : (
-                                    <Zap className="w-5 h-5 text-white" />
-                                  )}
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent>Quick Regenerate Image</TooltipContent>
-                            </Tooltip>
-                          )}
+                {isExpanded && (() => {
+                  const locationImagePanel = isDeferredImage ? (
+                    <DeferredImageSkeleton className="w-full h-full rounded-md" label={`Loading ${loc.location}`} />
+                  ) : hasImage ? (
+                    <div className={`relative rounded-md overflow-hidden bg-gray-200 dark:bg-gray-700 group ${splitLayout ? 'h-full w-full' : 'aspect-video'}`}>
+                      <img
+                        src={loc.imageUrl}
+                        alt={loc.location}
+                        className={`w-full h-full ${splitLayout ? 'object-contain' : 'object-cover'}`}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setExpandedImageUrl(loc.imageUrl)
+                          setExpandedImageName(loc.location)
+                        }}
+                        className="absolute top-2 right-2 z-20 p-1.5 rounded-md bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+                        title="View full size"
+                      >
+                        <Maximize2 className="w-4 h-4" />
+                      </button>
+                      <input
+                        id={`location-upload-${loc.id}`}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleFileUpload(loc.id, e)}
+                      />
+                      <div className="absolute inset-0 z-10 bg-black/40 transition-opacity opacity-0 group-hover:opacity-100 flex items-center justify-center gap-3">
+                        {onGenerateLocationImage && (
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <button
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  setPromptBuilderOpenFor(loc.id)
+                                  onGenerateLocationImage(loc)
                                 }}
                                 disabled={isGenerating}
-                                className="p-3 bg-amber-600/80 hover:bg-amber-600 rounded-full transition-colors disabled:opacity-50"
+                                className="p-3 bg-indigo-600/80 hover:bg-indigo-600 rounded-full transition-colors disabled:opacity-50"
                               >
-                                <Wand2 className="w-5 h-5 text-white" />
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent>Open Prompt Builder</TooltipContent>
-                          </Tooltip>
-                          {onEditLocationImage && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    onEditLocationImage(loc.id, loc.imageUrl)
-                                  }}
-                                  className="p-3 bg-purple-600/80 hover:bg-purple-600 rounded-full transition-colors"
-                                >
-                                  <Settings2 className="w-5 h-5 text-white" />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent>Edit Image</TooltipContent>
-                            </Tooltip>
-                          )}
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  document.getElementById(`location-upload-${loc.id}`)?.click()
-                                }}
-                                disabled={isUploading}
-                                className="p-3 bg-emerald-600/80 hover:bg-emerald-600 rounded-full transition-colors disabled:opacity-50"
-                              >
-                                {isUploading ? (
+                                {isGenerating ? (
                                   <Loader2 className="w-5 h-5 text-white animate-spin" />
                                 ) : (
-                                  <Upload className="w-5 h-5 text-white" />
+                                  <Zap className="w-5 h-5 text-white" />
                                 )}
                               </button>
                             </TooltipTrigger>
-                            <TooltipContent>Upload Image</TooltipContent>
+                            <TooltipContent>Quick Regenerate Image</TooltipContent>
                           </Tooltip>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="relative aspect-video rounded-md overflow-hidden bg-gray-200 dark:bg-gray-700 group">
-                        {isGenerating || isUploading ? (
-                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                            <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
-                            <span className="text-xs text-gray-400">{isUploading ? 'Uploading...' : 'Generating...'}</span>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 pointer-events-none">
-                              <ImageIcon className="w-8 h-8 text-gray-400 mb-1" />
-                              <span className="text-xs">No reference image</span>
-                            </div>
-                            <input
-                              id={`location-upload-empty-${loc.id}`}
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(e) => handleFileUpload(loc.id, e)}
-                            />
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-3">
-                              {onGenerateLocationImage && (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        onGenerateLocationImage(loc)
-                                      }}
-                                      disabled={isGenerating}
-                                      className="p-3 bg-indigo-600/80 hover:bg-indigo-600 rounded-full transition-colors disabled:opacity-50"
-                                    >
-                                      <Zap className="w-5 h-5 text-white" />
-                                    </button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Quick Generate Image</TooltipContent>
-                                </Tooltip>
+                        )}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setPromptBuilderOpenFor(loc.id)
+                              }}
+                              disabled={isGenerating}
+                              className="p-3 bg-amber-600/80 hover:bg-amber-600 rounded-full transition-colors disabled:opacity-50"
+                            >
+                              <Wand2 className="w-5 h-5 text-white" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>Open Prompt Builder</TooltipContent>
+                        </Tooltip>
+                        {onEditLocationImage && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onEditLocationImage(loc.id, loc.imageUrl)
+                                }}
+                                className="p-3 bg-purple-600/80 hover:bg-purple-600 rounded-full transition-colors"
+                              >
+                                <Settings2 className="w-5 h-5 text-white" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>Edit Image</TooltipContent>
+                          </Tooltip>
+                        )}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                document.getElementById(`location-upload-${loc.id}`)?.click()
+                              }}
+                              disabled={isUploading}
+                              className="p-3 bg-emerald-600/80 hover:bg-emerald-600 rounded-full transition-colors disabled:opacity-50"
+                            >
+                              {isUploading ? (
+                                <Loader2 className="w-5 h-5 text-white animate-spin" />
+                              ) : (
+                                <Upload className="w-5 h-5 text-white" />
                               )}
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>Upload Image</TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={`relative rounded-md overflow-hidden bg-gray-200 dark:bg-gray-700 group ${splitLayout ? 'h-full w-full' : 'aspect-video'}`}>
+                      {isGenerating || isUploading ? (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                          <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
+                          <span className="text-xs text-gray-400">{isUploading ? 'Uploading...' : 'Generating...'}</span>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 pointer-events-none">
+                            <ImageIcon className="w-8 h-8 text-gray-400 mb-1" />
+                            <span className="text-xs">No reference image</span>
+                          </div>
+                          <input
+                            id={`location-upload-empty-${loc.id}`}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleFileUpload(loc.id, e)}
+                          />
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-3">
+                            {onGenerateLocationImage && (
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <button
                                     type="button"
                                     onClick={(e) => {
                                       e.stopPropagation()
-                                      setPromptBuilderOpenFor(loc.id)
+                                      onGenerateLocationImage(loc)
                                     }}
                                     disabled={isGenerating}
-                                    className="p-3 bg-amber-600/80 hover:bg-amber-600 rounded-full transition-colors disabled:opacity-50"
+                                    className="p-3 bg-indigo-600/80 hover:bg-indigo-600 rounded-full transition-colors disabled:opacity-50"
                                   >
-                                    <Wand2 className="w-5 h-5 text-white" />
+                                    <Zap className="w-5 h-5 text-white" />
                                   </button>
                                 </TooltipTrigger>
-                                <TooltipContent>Open Prompt Builder</TooltipContent>
+                                <TooltipContent>Quick Generate Image</TooltipContent>
                               </Tooltip>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      document.getElementById(`location-upload-empty-${loc.id}`)?.click()
-                                    }}
-                                    disabled={isUploading}
-                                    className="p-3 bg-emerald-600/80 hover:bg-emerald-600 rounded-full transition-colors disabled:opacity-50"
-                                  >
-                                    <Upload className="w-5 h-5 text-white" />
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent>Upload Image</TooltipContent>
-                              </Tooltip>
+                            )}
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setPromptBuilderOpenFor(loc.id)
+                                  }}
+                                  disabled={isGenerating}
+                                  className="p-3 bg-amber-600/80 hover:bg-amber-600 rounded-full transition-colors disabled:opacity-50"
+                                >
+                                  <Wand2 className="w-5 h-5 text-white" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>Open Prompt Builder</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    document.getElementById(`location-upload-empty-${loc.id}`)?.click()
+                                  }}
+                                  disabled={isUploading}
+                                  className="p-3 bg-emerald-600/80 hover:bg-emerald-600 rounded-full transition-colors disabled:opacity-50"
+                                >
+                                  <Upload className="w-5 h-5 text-white" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>Upload Image</TooltipContent>
+                            </Tooltip>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )
+
+                  const locationDetailsPanel = (
+                    <div className="space-y-2">
+                      {loc.sceneNumbers && loc.sceneNumbers.length > 0 && (
+                        <div className="flex flex-wrap gap-1 pt-2">
+                          {loc.sceneNumbers.map(n => (
+                            <span key={n} className="text-[10px] px-1.5 py-0.5 bg-slate-700/50 text-slate-300 rounded">
+                              Scene {n}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="pt-1">
+                        {editingDescriptionId === loc.id ? (
+                          <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+                            <textarea
+                              value={descriptionText}
+                              onChange={(e) => setDescriptionText(e.target.value)}
+                              placeholder="Describe this location (e.g., Modern podcast studio with acoustic panels, professional lighting rig...)"
+                              className="w-full px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                              rows={3}
+                              autoFocus
+                            />
+                            <div className="flex gap-2 justify-end">
+                              <button
+                                onClick={() => { setEditingDescriptionId(null); setDescriptionText('') }}
+                                className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={() => handleSaveDescription(loc.id)}
+                                className="px-2 py-1 text-xs bg-cyan-500 hover:bg-cyan-600 text-white rounded flex items-center gap-1"
+                              >
+                                <Check className="w-3 h-3" />
+                                Save
+                              </button>
                             </div>
-                          </>
+                          </div>
+                        ) : (
+                          <div className="flex items-start gap-2">
+                            <p className="text-xs text-gray-400 italic flex-1">
+                              {loc.description || 'No description — click edit to add'}
+                            </p>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setEditingDescriptionId(loc.id)
+                                setDescriptionText(loc.description || '')
+                              }}
+                              className="p-1 text-gray-400 hover:text-cyan-400 transition-colors flex-shrink-0"
+                              title="Edit description"
+                            >
+                              <Edit className="w-3 h-3" />
+                            </button>
+                          </div>
                         )}
                       </div>
-                    )}
 
-                    {/* Remove button */}
-                    <div className="flex justify-end pt-1">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onRemoveLocation(loc.id)
-                        }}
-                        className="flex items-center gap-1 px-2 py-1 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition-colors"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                        Remove
-                      </button>
+                      {!splitLayout && locationImagePanel}
+
+                      <div className="flex justify-end pt-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onRemoveLocation(loc.id)
+                          }}
+                          className="flex items-center gap-1 px-2 py-1 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition-colors"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          Remove
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )
+
+                  return (
+                    <div className="px-3 pb-3 border-t border-gray-200 dark:border-gray-700">
+                      {splitLayout ? (
+                        <ReferenceSplitPane
+                          image={locationImagePanel}
+                          controls={locationDetailsPanel}
+                        />
+                      ) : (
+                        locationDetailsPanel
+                      )}
+                    </div>
+                  )
+                })()}
               </div>
             )
           })}
@@ -686,7 +703,7 @@ export function LocationLibrary({
 
       {/* Expanded Image Dialog */}
       <Dialog open={!!expandedImageUrl} onOpenChange={() => { setExpandedImageUrl(null); setExpandedImageName('') }}>
-        <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 bg-black border-none">
+        <DialogContent className={`${splitLayout ? 'max-w-[50vw]' : 'max-w-[90vw]'} max-h-[90vh] p-0 bg-black border-none`}>
           <DialogHeader className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/70 to-transparent z-10">
             <DialogTitle className="text-white">{expandedImageName}</DialogTitle>
             <DialogDescription className="text-gray-300">

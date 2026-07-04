@@ -173,6 +173,8 @@ export interface CharacterLibraryProps {
   ) => void;
   enableDrag?: boolean;
   showProTips?: boolean;
+  /** Reference Library layout — dialog enables per-character tabs + split pane */
+  layout?: "sidebar" | "dialog";
   // Screenplay context for AI wardrobe recommendations
   screenplayContext?: {
     genre?: string;
@@ -284,6 +286,10 @@ interface CharacterCardProps {
     visualStyle?: string;
   };
   projectId?: string;
+  /** Skip collapsed row; always show full editor (Reference Library dialog) */
+  forceExpanded?: boolean;
+  /** 50/50 image | controls layout */
+  splitLayout?: boolean;
 }
 
 export function CharacterLibrary({
@@ -314,11 +320,23 @@ export function CharacterLibrary({
   enableDrag = false,
   showProTips: showProTipsProp,
   screenplayContext,
+  layout = "sidebar",
 }: CharacterLibraryProps) {
   const effectiveVoiceProvider =
     voiceAssignmentProvider ?? ttsProvider ?? "elevenlabs";
+  const splitLayout = layout === "dialog";
 
-  const [selectedChar, setSelectedChar] = useState<string | null>(null);
+  const castCharacters = useMemo(
+    () => characters.filter((char) => char.type !== "description"),
+    [characters],
+  );
+
+  const getCharacterId = (char: (typeof castCharacters)[number], idx: number) =>
+    char.id || idx.toString();
+
+  const [activeCharacterId, setActiveCharacterId] = useState<string | null>(
+    null,
+  );
   const [generatingChars, setGeneratingChars] = useState<Set<string>>(
     new Set(),
   );
@@ -342,7 +360,19 @@ export function CharacterLibrary({
   const [createVoiceDialogOpen, setCreateVoiceDialogOpen] = useState(false);
   const [addCharacterModalOpen, setAddCharacterModalOpen] = useState(false);
 
-  // Track orphan characters (not in script)
+  useEffect(() => {
+    if (layout !== "dialog") return;
+    if (castCharacters.length === 0) {
+      setActiveCharacterId(null);
+      return;
+    }
+    const ids = castCharacters.map((c, i) => getCharacterId(c, i));
+    setActiveCharacterId((prev) =>
+      prev && ids.includes(prev) ? prev : ids[0],
+    );
+  }, [layout, castCharacters]);
+
+  const [selectedChar, setSelectedChar] = useState<string | null>(null);
   const orphanCharacters = useOrphanCharacters(scenes, characters);
 
   // Use prop if provided (for compact mode), otherwise use internal state
@@ -513,6 +543,84 @@ export function CharacterLibrary({
     img.src = objectUrl;
   };
 
+  const renderCharacterCard = (
+    char: (typeof castCharacters)[number],
+    idx: number,
+    cardOptions?: { forceExpanded?: boolean; splitLayout?: boolean },
+  ) => {
+    const charId = getCharacterId(char, idx);
+    const appearancePrompt =
+      char.appearanceDescription ||
+      char.imagePrompt ||
+      `${char.name || "Character"}`;
+
+    return (
+      <CharacterCard
+        key={charId}
+        character={char}
+        characterId={charId}
+        isSelected={selectedChar === charId}
+        isOrphan={
+          orphanCharacters.has(charId) || orphanCharacters.has(char.name)
+        }
+        onClick={() => setSelectedChar(charId)}
+        onRegenerate={() => onRegenerateCharacter(charId)}
+        onGenerate={async () => {
+          setGeneratingChars((prev) => new Set(prev).add(charId));
+          try {
+            const promptToUse =
+              buildCharacterIdentityReferencePromptFromCharacter(char);
+            await onGenerateCharacter(charId, promptToUse);
+          } finally {
+            setGeneratingChars((prev) => {
+              const newSet = new Set(prev);
+              newSet.delete(charId);
+              return newSet;
+            });
+          }
+        }}
+        onUpload={(file) => onUploadCharacter(charId, file)}
+        onApprove={() => onApproveCharacter(charId)}
+        prompt={appearancePrompt}
+        isGenerating={generatingChars.has(charId)}
+        isUploading={uploadingRef[charId] || false}
+        expandedCharId={expandedSections[charId]}
+        onToggleExpand={handleToggleSection}
+        onUpdateCharacterVoice={onUpdateCharacterVoice}
+        onUpdateAppearance={onUpdateCharacterAppearance}
+        onUpdateCharacterName={onUpdateCharacterName}
+        onUpdateCharacterRole={onUpdateCharacterRole}
+        onUpdateCharacterAttributes={onUpdateCharacterAttributes}
+        onUpdateWardrobe={onUpdateCharacterWardrobe}
+        onBatchUpdateWardrobes={onBatchUpdateWardrobes}
+        scenes={scenes}
+        onRemove={() => onRemoveCharacter?.(char.name)}
+        onEditImage={
+          char.referenceImage && onEditCharacterImage
+            ? () => onEditCharacterImage(charId, char.referenceImage)
+            : undefined
+        }
+        onApplyEnhancedReference={onApplyEnhancedReference}
+        ttsProvider={effectiveVoiceProvider}
+        voiceAssignmentProvider={voiceAssignmentProvider}
+        voiceSectionExpanded={voiceSectionExpanded[charId] || false}
+        onToggleVoiceSection={() => handleToggleVoiceSection(charId)}
+        enableDrag={enableDrag}
+        onOpenCharacterPrompt={() => setPromptBuilderOpenFor(charId)}
+        screenplayContext={screenplayContext}
+        projectId={projectId}
+        forceExpanded={cardOptions?.forceExpanded}
+        splitLayout={cardOptions?.splitLayout}
+      />
+    );
+  };
+
+  const activeCharacterIndex = castCharacters.findIndex(
+    (char, idx) => getCharacterId(char, idx) === activeCharacterId,
+  );
+  const activeCharacter =
+    activeCharacterIndex >= 0 ? castCharacters[activeCharacterIndex] : null;
+
   return (
     <div
       className={`bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 ${compact ? "p-4" : "p-6"} h-full overflow-y-auto`}
@@ -549,6 +657,98 @@ export function CharacterLibrary({
           />
           <p className={compact ? "text-sm" : ""}>No characters yet</p>
         </div>
+      ) : layout === "dialog" ? (
+        <div className="flex flex-col min-h-0 gap-3">
+          <div className="flex items-center border-b border-gray-700/50 overflow-x-auto flex-shrink-0 gap-0.5 pb-px">
+            {castCharacters.map((char, idx) => {
+              const charId = getCharacterId(char, idx);
+              const isActive = activeCharacterId === charId;
+              const needsImage = !char.referenceImage?.trim();
+              const needsVoice = !char.voiceConfig;
+              return (
+                <button
+                  key={charId}
+                  type="button"
+                  onClick={() => setActiveCharacterId(charId)}
+                  className={`
+                    relative px-3 py-1.5 text-xs font-medium rounded-t-lg transition-all flex-shrink-0
+                    ${isActive
+                      ? "bg-slate-800/80 text-white border-t border-x border-gray-600/50 -mb-px"
+                      : "bg-slate-900/40 text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 border-transparent"
+                    }
+                  `}
+                >
+                  <span className="flex items-center gap-1.5 max-w-[140px]">
+                    <span className="truncate">{char.name || "Unnamed"}</span>
+                    {(needsImage || needsVoice) && (
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full shrink-0 ${needsImage ? "bg-amber-400" : "bg-green-400/80"}`}
+                        title={needsImage ? "Reference image needed" : "Voice needed"}
+                      />
+                    )}
+                  </span>
+                </button>
+              );
+            })}
+            {onAddCharacter && (
+              <button
+                type="button"
+                onClick={() => setAddCharacterModalOpen(true)}
+                className="ml-1 px-2.5 py-1.5 text-xs font-medium rounded-t-lg flex-shrink-0 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 border border-transparent"
+              >
+                <span className="flex items-center gap-1">
+                  <Plus className="w-3 h-3" />
+                  Add
+                </span>
+              </button>
+            )}
+          </div>
+
+          {activeCharacter && activeCharacterIndex >= 0
+            ? renderCharacterCard(activeCharacter, activeCharacterIndex, {
+                forceExpanded: true,
+                splitLayout: true,
+              })
+            : null}
+
+          {onAddCharacter && (
+            <AddCharacterModal
+              open={addCharacterModalOpen}
+              onClose={() => setAddCharacterModalOpen(false)}
+              characters={characters}
+              scenes={scenes}
+              onAddCharacter={onAddCharacter}
+              projectGenre={screenplayContext?.genre}
+            />
+          )}
+
+          {promptBuilderOpenFor && (
+            <CharacterPromptBuilder
+              open={!!promptBuilderOpenFor}
+              onClose={() => setPromptBuilderOpenFor(null)}
+              character={characters
+                .filter((c) => c.type !== "narrator")
+                .find(
+                  (c, idx) => (c.id || idx.toString()) === promptBuilderOpenFor,
+                )}
+              isGenerating={Array.from(generatingChars).includes(
+                promptBuilderOpenFor,
+              )}
+              onGenerateImage={(payload) => {
+                const targetId = promptBuilderOpenFor!;
+                setPromptBuilderOpenFor(null);
+                setGeneratingChars((prev) => new Set(prev).add(targetId));
+                onGenerateCharacter(targetId, payload).finally(() => {
+                  setGeneratingChars((prev) => {
+                    const ns = new Set(prev);
+                    ns.delete(targetId);
+                    return ns;
+                  });
+                });
+              }}
+            />
+          )}
+        </div>
       ) : (
         <div
           className={`${compact ? "space-y-3" : "grid grid-cols-2 lg:grid-cols-3 gap-4"}`}
@@ -581,75 +781,7 @@ export function CharacterLibrary({
           )}
 
           {/* Regular Character Cards */}
-          {characters
-            .filter((char) => char.type !== "description")
-            .map((char, idx) => {
-              const charId = char.id || idx.toString();
-              // Use appearanceDescription for image generation, fallback to saved imagePrompt or default
-              const appearancePrompt =
-                char.appearanceDescription ||
-                char.imagePrompt ||
-                `${char.name || "Character"}`;
-              return (
-                <CharacterCard
-                  key={charId}
-                  character={char}
-                  characterId={charId}
-                  isSelected={selectedChar === charId}
-                  isOrphan={
-                    orphanCharacters.has(charId) ||
-                    orphanCharacters.has(char.name)
-                  }
-                  onClick={() => setSelectedChar(charId)}
-                  onRegenerate={() => onRegenerateCharacter(charId)}
-                  onGenerate={async () => {
-                    setGeneratingChars((prev) => new Set(prev).add(charId));
-                    try {
-                      const promptToUse =
-                        buildCharacterIdentityReferencePromptFromCharacter(char);
-                      await onGenerateCharacter(charId, promptToUse);
-                    } finally {
-                      // Clear loading state after generation completes
-                      setGeneratingChars((prev) => {
-                        const newSet = new Set(prev);
-                        newSet.delete(charId);
-                        return newSet;
-                      });
-                    }
-                  }}
-                  onUpload={(file) => onUploadCharacter(charId, file)}
-                  onApprove={() => onApproveCharacter(charId)}
-                  prompt={appearancePrompt}
-                  isGenerating={generatingChars.has(charId)}
-                  isUploading={uploadingRef[charId] || false}
-                  expandedCharId={expandedSections[charId]}
-                  onToggleExpand={handleToggleSection}
-                  onUpdateCharacterVoice={onUpdateCharacterVoice}
-                  onUpdateAppearance={onUpdateCharacterAppearance}
-                  onUpdateCharacterName={onUpdateCharacterName}
-                  onUpdateCharacterRole={onUpdateCharacterRole}
-                  onUpdateCharacterAttributes={onUpdateCharacterAttributes}
-                  onUpdateWardrobe={onUpdateCharacterWardrobe}
-                  onBatchUpdateWardrobes={onBatchUpdateWardrobes}
-                  scenes={scenes}
-                  onRemove={() => onRemoveCharacter?.(char.name)}
-                  onEditImage={
-                    char.referenceImage && onEditCharacterImage
-                      ? () => onEditCharacterImage(charId, char.referenceImage)
-                      : undefined
-                  }
-                  onApplyEnhancedReference={onApplyEnhancedReference}
-                  ttsProvider={effectiveVoiceProvider}
-                  voiceAssignmentProvider={voiceAssignmentProvider}
-                  voiceSectionExpanded={voiceSectionExpanded[charId] || false}
-                  onToggleVoiceSection={() => handleToggleVoiceSection(charId)}
-                  enableDrag={enableDrag}
-                  onOpenCharacterPrompt={() => setPromptBuilderOpenFor(charId)}
-                  screenplayContext={screenplayContext}
-                  projectId={projectId}
-                />
-              );
-            })}
+          {castCharacters.map((char, idx) => renderCharacterCard(char, idx))}
           {/* Character Prompt Builder Modal */}
           {promptBuilderOpenFor && (
             <CharacterPromptBuilder
@@ -722,7 +854,7 @@ export function CharacterLibrary({
           className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
           onClick={() => setZoomedImage(null)}
         >
-          <div className="relative max-w-4xl max-h-[90vh]">
+          <div className={`relative ${splitLayout ? "max-w-[50vw]" : "max-w-4xl"} max-h-[90vh]`}>
             <button
               onClick={() => setZoomedImage(null)}
               className="absolute -top-10 right-0 p-2 rounded-full bg-gray-800 hover:bg-gray-700 text-white transition-colors"
@@ -814,6 +946,8 @@ const CharacterCard = ({
   onOpenCharacterPrompt,
   screenplayContext,
   projectId,
+  forceExpanded = false,
+  splitLayout = false,
 }: CharacterCardProps) => {
   const [imageError, setImageError] = useState(false); // Track if image failed to load
 
@@ -827,7 +961,7 @@ const CharacterCard = ({
   const isApproved = character.imageApproved === true;
   const isCoreExpanded = expandedCharId === `${characterId}-core`;
   const isAppearanceExpanded = expandedCharId === `${characterId}-appear`;
-  const [isCollapsed, setIsCollapsed] = useState(true); // Hide/show card content - default to collapsed
+  const [isCollapsed, setIsCollapsed] = useState(!forceExpanded);
   const [editingName, setEditingName] = useState(false);
   const [nameText, setNameText] = useState("");
   const [editingRole, setEditingRole] = useState(false);
@@ -1970,7 +2104,7 @@ const CharacterCard = ({
     : undefined;
 
   // Collapsed view - shows just character name with expand button
-  if (isCollapsed) {
+  if (isCollapsed && !forceExpanded) {
     return (
       <div
         ref={setNodeRef}
@@ -2022,6 +2156,179 @@ const CharacterCard = ({
     );
   }
 
+  const identityImageSection = (
+    <div
+      className={`relative bg-gray-100 dark:bg-gray-800 group rounded-md overflow-hidden ${
+        splitLayout ? "h-full w-full" : "aspect-square"
+      }`}
+    >
+      {isDeferredImage ? (
+        <DeferredImageSkeleton
+          className="w-full h-full"
+          label={`Loading ${character.name}`}
+        />
+      ) : hasImage ? (
+        <img
+          src={character.referenceImage}
+          alt={character.name}
+          className={`w-full h-full ${splitLayout ? "object-contain" : "object-cover"}`}
+          loading="lazy"
+          decoding="async"
+          onError={() => setImageError(true)}
+        />
+      ) : (
+        <div className="w-full h-full flex flex-col items-center justify-center">
+          <Camera className="w-8 h-8 text-gray-300 dark:text-gray-600 mb-2" />
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            No reference image
+          </span>
+        </div>
+      )}
+
+      {isGenerating && (
+        <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-20">
+          <Loader className="w-12 h-12 animate-spin text-blue-400 mb-3" />
+          <span className="text-sm text-white font-medium">
+            Generating Character...
+          </span>
+          <span className="text-xs text-gray-300 mt-1">Please wait</span>
+        </div>
+      )}
+
+      <div
+        className={`absolute inset-0 z-10 bg-black/40 transition-opacity flex items-center justify-center gap-3 ${
+          character.referenceImage && !imageError
+            ? "opacity-0 group-hover:opacity-100"
+            : "opacity-100"
+        }`}
+      >
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (isGenerating) return;
+            onGenerate();
+          }}
+          disabled={isGenerating}
+          className="p-3 bg-indigo-600/80 hover:bg-indigo-600 rounded-full transition-colors disabled:opacity-50"
+          title={
+            character.referenceImage && !imageError
+              ? "Quick Regenerate Character"
+              : "Quick Generate Character"
+          }
+        >
+          {isGenerating ? (
+            <Loader className="w-5 h-5 text-white animate-spin" />
+          ) : (
+            <Zap className="w-5 h-5 text-white" />
+          )}
+        </button>
+
+        {onOpenCharacterPrompt && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenCharacterPrompt();
+            }}
+            disabled={isGenerating}
+            className="p-3 bg-amber-600/80 hover:bg-amber-600 rounded-full transition-colors disabled:opacity-50"
+            title="Open Prompt Builder"
+          >
+            <Wand2 className="w-5 h-5 text-white" />
+          </button>
+        )}
+
+        {character.referenceImage && !imageError && onEditImage && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEditImage();
+            }}
+            className="p-3 bg-purple-600/80 hover:bg-purple-600 rounded-full transition-colors"
+            title="Edit Image"
+          >
+            <Settings2 className="w-5 h-5 text-white" />
+          </button>
+        )}
+
+        {character.referenceImage && !imageError && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (isEnhancingReference) return;
+              handleEnhanceReference();
+            }}
+            disabled={isEnhancingReference || enhanceIterationCount >= 3}
+            className="p-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title={
+              enhanceIterationCount >= 3
+                ? "Max iterations reached - upload new image"
+                : `Enhance Reference (${3 - enhanceIterationCount} left)`
+            }
+          >
+            {isEnhancingReference ? (
+              <Loader className="w-5 h-5 text-white animate-spin" />
+            ) : (
+              <Sparkles className="w-5 h-5 text-white" />
+            )}
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (isUploading) return;
+            const input = document.getElementById(
+              `upload-${characterId}`,
+            ) as HTMLInputElement;
+            input?.click();
+          }}
+          disabled={isUploading}
+          className="p-3 bg-emerald-600/80 hover:bg-emerald-600 rounded-full transition-colors disabled:opacity-50"
+          title={isUploading ? "Uploading..." : "Upload Image"}
+        >
+          {isUploading ? (
+            <Loader className="w-5 h-5 text-white animate-spin" />
+          ) : (
+            <Upload className="w-5 h-5 text-white" />
+          )}
+        </button>
+        <input
+          id={`upload-${characterId}`}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          disabled={isUploading}
+          onChange={(e) => {
+            e.stopPropagation();
+            if (isUploading) return;
+            const file = e.target.files?.[0];
+            if (file) onUpload(file);
+            e.target.value = "";
+          }}
+        />
+      </div>
+
+      {enableDrag && character.referenceImage && !imageError && (
+        <div
+          className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/60 to-transparent flex items-center justify-center cursor-grab active:cursor-grabbing z-20"
+          {...listeners}
+          {...attributes}
+        >
+          <div className="flex gap-1">
+            <div className="w-1 h-1 rounded-full bg-white/60"></div>
+            <div className="w-1 h-1 rounded-full bg-white/60"></div>
+            <div className="w-1 h-1 rounded-full bg-white/60"></div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div
       ref={setNodeRef}
@@ -2055,7 +2362,26 @@ const CharacterCard = ({
         </div>
       )}
 
-      <div className="p-4 space-y-4">
+      <div className="p-4">
+        <div
+          className={
+            splitLayout
+              ? "grid grid-cols-1 md:grid-cols-2 gap-4 items-start"
+              : "space-y-4"
+          }
+        >
+          {splitLayout && (
+            <div className="relative min-h-[180px] max-h-[50vh] rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800">
+              {identityImageSection}
+            </div>
+          )}
+          <div
+            className={
+              splitLayout
+                ? "space-y-4 min-w-0 overflow-y-auto max-h-[50vh]"
+                : "contents"
+            }
+          >
         {/* Header Section */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
@@ -2214,6 +2540,7 @@ const CharacterCard = ({
                 )}
             </div>
           </div>
+          {!forceExpanded && (
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -2224,6 +2551,7 @@ const CharacterCard = ({
           >
             <ChevronUp className="w-4 h-4" />
           </button>
+          )}
         </div>
 
         {/* Status Indicators */}
@@ -2336,182 +2664,7 @@ const CharacterCard = ({
               value="identity"
               className="mt-3 focus-visible:ring-0 space-y-3"
             >
-                {/* Image Section — overlay controls match Storyboard / Scene Gallery / Location Library (Quick, Prompt, Edit, Enhance, Upload) */}
-                <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 group rounded-md overflow-hidden">
-                  {isDeferredImage ? (
-                    <DeferredImageSkeleton className="w-full h-full" label={`Loading ${character.name}`} />
-                  ) : hasImage ? (
-                    <img
-                      src={character.referenceImage}
-                      alt={character.name}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                      decoding="async"
-                      onError={() => setImageError(true)}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center">
-                      <Camera className="w-8 h-8 text-gray-300 dark:text-gray-600 mb-2" />
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        No reference image
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Generation loading overlay */}
-                  {isGenerating && (
-                    <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-20">
-                      <Loader className="w-12 h-12 animate-spin text-blue-400 mb-3" />
-                      <span className="text-sm text-white font-medium">
-                        Generating Character...
-                      </span>
-                      <span className="text-xs text-gray-300 mt-1">
-                        Please wait
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Action overlay — always visible when no image, hover-only when image present */}
-                  <div
-                    className={`absolute inset-0 z-10 bg-black/40 transition-opacity flex items-center justify-center gap-3 ${
-                      character.referenceImage && !imageError
-                        ? "opacity-0 group-hover:opacity-100"
-                        : "opacity-100"
-                    }`}
-                  >
-                    {/* Quick Generate (Zap - indigo) */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (isGenerating) return;
-                        onGenerate();
-                      }}
-                      disabled={isGenerating}
-                      className="p-3 bg-indigo-600/80 hover:bg-indigo-600 rounded-full transition-colors disabled:opacity-50"
-                      title={
-                        character.referenceImage && !imageError
-                          ? "Quick Regenerate Character"
-                          : "Quick Generate Character"
-                      }
-                    >
-                      {isGenerating ? (
-                        <Loader className="w-5 h-5 text-white animate-spin" />
-                      ) : (
-                        <Zap className="w-5 h-5 text-white" />
-                      )}
-                    </button>
-
-                    {/* Prompt Builder (Wand2 - amber) */}
-                    {onOpenCharacterPrompt && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onOpenCharacterPrompt();
-                        }}
-                        disabled={isGenerating}
-                        className="p-3 bg-amber-600/80 hover:bg-amber-600 rounded-full transition-colors disabled:opacity-50"
-                        title="Open Prompt Builder"
-                      >
-                        <Wand2 className="w-5 h-5 text-white" />
-                      </button>
-                    )}
-
-                    {/* Edit (Settings2 - purple) — only when an image exists */}
-                    {character.referenceImage && !imageError && onEditImage && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEditImage();
-                        }}
-                        className="p-3 bg-purple-600/80 hover:bg-purple-600 rounded-full transition-colors"
-                        title="Edit Image"
-                      >
-                        <Settings2 className="w-5 h-5 text-white" />
-                      </button>
-                    )}
-
-                    {/* Enhance Reference (character-specific) — only when an image exists */}
-                    {character.referenceImage && !imageError && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (isEnhancingReference) return;
-                          handleEnhanceReference();
-                        }}
-                        disabled={
-                          isEnhancingReference || enhanceIterationCount >= 3
-                        }
-                        className="p-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        title={
-                          enhanceIterationCount >= 3
-                            ? "Max iterations reached - upload new image"
-                            : `Enhance Reference (${3 - enhanceIterationCount} left)`
-                        }
-                      >
-                        {isEnhancingReference ? (
-                          <Loader className="w-5 h-5 text-white animate-spin" />
-                        ) : (
-                          <Sparkles className="w-5 h-5 text-white" />
-                        )}
-                      </button>
-                    )}
-
-                    {/* Upload (Upload - emerald) */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (isUploading) return;
-                        const input = document.getElementById(
-                          `upload-${characterId}`,
-                        ) as HTMLInputElement;
-                        input?.click();
-                      }}
-                      disabled={isUploading}
-                      className="p-3 bg-emerald-600/80 hover:bg-emerald-600 rounded-full transition-colors disabled:opacity-50"
-                      title={isUploading ? "Uploading..." : "Upload Image"}
-                    >
-                      {isUploading ? (
-                        <Loader className="w-5 h-5 text-white animate-spin" />
-                      ) : (
-                        <Upload className="w-5 h-5 text-white" />
-                      )}
-                    </button>
-                    <input
-                      id={`upload-${characterId}`}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      disabled={isUploading}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        if (isUploading) return;
-                        const file = e.target.files?.[0];
-                        if (file) onUpload(file);
-                        e.target.value = "";
-                      }}
-                    />
-                  </div>
-
-                  {/* Drag Handle - Bottom Strip (only when an image is present) */}
-                  {enableDrag && character.referenceImage && !imageError && (
-                    <div
-                      className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/60 to-transparent flex items-center justify-center cursor-grab active:cursor-grabbing z-20"
-                      {...listeners}
-                      {...attributes}
-                    >
-                      <div className="flex gap-1">
-                        <div className="w-1 h-1 rounded-full bg-white/60"></div>
-                        <div className="w-1 h-1 rounded-full bg-white/60"></div>
-                        <div className="w-1 h-1 rounded-full bg-white/60"></div>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                {!splitLayout && identityImageSection}
 
                 {/* Body Description - Editable for image generation prompts */}
                 <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
@@ -3258,6 +3411,8 @@ const CharacterCard = ({
 
             </TabsContent>
           </Tabs>
+        </div>
+          </div>
         </div>
         {/* Voice Selection */}
         <Dialog open={genderConfirmOpen} onOpenChange={setGenderConfirmOpen}>
