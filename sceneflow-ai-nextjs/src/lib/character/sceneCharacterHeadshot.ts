@@ -8,6 +8,7 @@ import { uploadImageToBlob } from '@/lib/storage/blob'
 import {
   buildCharacterHairAnchor,
   buildCharacterHairDescription,
+  buildWardrobeDiptychReferenceLabel,
   resolveWardrobeForCharacter,
 } from '@/lib/character/characterReferenceAssembly'
 import { buildFullBodyWardrobePrompt } from '@/lib/character/characterReferencePrompts'
@@ -41,9 +42,7 @@ export const DIPTYCH_GENERATION_NEGATIVE_PROMPT =
   'outfit visible in left panel, clothing in close-up, different face between panels, identity mismatch between panels, full-body framing in left panel'
 
 /** Reference image label for beat frame attachment. */
-export function buildWardrobeDiptychReferenceLabel(characterName: string): string {
-  return `Diptych ref: ${characterName} — LEFT=identity face, RIGHT=wardrobe outfit`
-}
+export { buildWardrobeDiptychReferenceLabel } from '@/lib/character/characterReferenceAssembly'
 
 /** Per-character consumption line appended to beat frame prompts. */
 export function buildWardrobeDiptychCharacterConsumptionLine(characterName: string): string {

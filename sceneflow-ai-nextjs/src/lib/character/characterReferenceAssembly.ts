@@ -332,6 +332,10 @@ export function buildWardrobeReferenceLabel(
   return `Wardrobe reference${idx}: ${characterName} (full-body outfit)`
 }
 
+export function buildWardrobeDiptychReferenceLabel(characterName: string): string {
+  return `Diptych ref: ${characterName} — LEFT=identity face, RIGHT=wardrobe outfit`
+}
+
 export function buildDualReferenceLabels(
   characterName: string,
   identityIndex?: number,
