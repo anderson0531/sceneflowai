@@ -9,12 +9,13 @@ import {
 } from '@/lib/scene/veoExtensionChain'
 
 describe('veoExtensionChain', () => {
-  it('returns 0 extensions for dialogue within 10s chunk', () => {
-    expect(extensionCountForSpokenSeconds(10)).toBe(0)
+  it('returns 0 extensions for dialogue within 8s chunk', () => {
     expect(extensionCountForSpokenSeconds(8)).toBe(0)
+    expect(extensionCountForSpokenSeconds(7)).toBe(0)
   })
 
-  it('returns 1 extension for ~11s spoken', () => {
+  it('returns 1 extension for spoken just over 8s', () => {
+    expect(extensionCountForSpokenSeconds(10)).toBe(1)
     expect(extensionCountForSpokenSeconds(11)).toBe(1)
   })
 
@@ -23,31 +24,38 @@ describe('veoExtensionChain', () => {
     const plan = planVeoExtensionChain(15, ['first chunk', 'second chunk'])
     expect(plan.extensionCount).toBe(1)
     expect(plan.parts).toHaveLength(2)
-    expect(plan.parts[0].method).toBe('I2V')
+    expect(plan.parts[0].method).toBe('REF')
     expect(plan.parts[0].requestedDurationSeconds).toBe(10)
     expect(plan.parts[1].method).toBe('EXT')
     expect(plan.parts[1].chainMethod).toBe('extension')
-    expect(plan.totalVideoSeconds).toBe(10 + VEO_EXTENSION_DELTA_SEC)
+    expect(plan.totalVideoSeconds).toBe(8 + VEO_EXTENSION_DELTA_SEC)
   })
 
   it('plans multiple extensions for ~30s spoken', () => {
-    expect(extensionCountForSpokenSeconds(30)).toBe(2)
+    expect(extensionCountForSpokenSeconds(30)).toBe(3)
     const plan = planVeoExtensionChain(29)
-    expect(plan.parts).toHaveLength(3)
-    expect(plan.parts.filter((p) => p.method === 'EXT')).toHaveLength(2)
-    expect(plan.totalVideoSeconds).toBe(10 + 2 * VEO_EXTENSION_DELTA_SEC)
+    expect(plan.parts).toHaveLength(4)
+    expect(plan.parts.filter((p) => p.method === 'EXT')).toHaveLength(3)
+    expect(plan.totalVideoSeconds).toBe(8 + 3 * VEO_EXTENSION_DELTA_SEC)
   })
 
-  it('single part for 10s or less', () => {
+  it('uses extension chain when spoken exceeds 8s chunk', () => {
     const plan = planVeoExtensionChain(10)
+    expect(plan.usesExtensionChain).toBe(true)
+    expect(plan.parts).toHaveLength(2)
+    expect(plan.parts[0].method).toBe('REF')
+  })
+
+  it('single part for 8s or less', () => {
+    const plan = planVeoExtensionChain(8)
     expect(plan.usesExtensionChain).toBe(false)
     expect(plan.parts).toHaveLength(1)
-    expect(plan.parts[0].method).toBe('I2V')
+    expect(plan.parts[0].method).toBe('REF')
   })
 
   it('totalVideoSecondsForChain matches initial + extensions', () => {
     expect(totalVideoSecondsForChain(6, 1)).toBe(6 + VEO_EXTENSION_DELTA_SEC)
-    expect(totalVideoSecondsForChain(10, 3)).toBe(10 + 3 * VEO_EXTENSION_DELTA_SEC)
+    expect(totalVideoSecondsForChain(10, 3)).toBe(8 + 3 * VEO_EXTENSION_DELTA_SEC)
   })
 
   it('planContinuousDialogueBeat uses extension chain for long line', () => {
@@ -76,7 +84,7 @@ describe('veoExtensionChain', () => {
     expect(count).toBeLessThanOrEqual(20)
   })
 
-  it('spoken chunk constant is 10 seconds', () => {
-    expect(VEO_SPOKEN_CHUNK_SEC).toBe(10)
+  it('spoken chunk constant is 8 seconds (extension split threshold)', () => {
+    expect(VEO_SPOKEN_CHUNK_SEC).toBe(8)
   })
 })

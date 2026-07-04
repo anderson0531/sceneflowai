@@ -8,7 +8,7 @@
  * - Previous segment video availability (for EXT mode)
  * 
  * Veo 3.1 Method Constraints:
- * - REF (referenceImages): T2V only, CANNOT combine with startFrame
+ * REF (referenceImages): Omni reference_to_video — up to 8 labeled refs; may combine with startFrame on Omni
  * - I2V (image): Uses startFrame to animate
  * - FTV: Uses both startFrame and lastFrame for interpolation
  * - EXT: Requires veoVideoRef from previous Veo generation
@@ -108,12 +108,22 @@ export function selectOptimalMethod(context: MethodSelectionContext): MethodSele
   
   // Decision Tree
 
-  // Rule 0: Beat-first approved storyboard start frame → I2V (default pipeline)
+  // Rule 0: Character/beat references → REF (Omni reference_to_video, up to 8 images)
+  if (hasCharacterRefs) {
+    return {
+      method: 'REF',
+      confidence: 0.98,
+      reasoning: 'Beat references resolved — Omni REF preserves character, wardrobe, location, and props',
+      fallbackMethod: hasStartFrameUrl ? 'I2V' : undefined,
+    }
+  }
+
+  // Rule 0b: Start frame without refs → I2V
   if (hasStartFrameUrl) {
     return {
       method: 'I2V',
-      confidence: 0.98,
-      reasoning: 'Approved storyboard start frame — I2V preserves reference consistency',
+      confidence: 0.92,
+      reasoning: 'Approved storyboard start frame — I2V animates from keyframe',
       fallbackMethod: hasEndFrameUrl ? 'FTV' : undefined,
     }
   }

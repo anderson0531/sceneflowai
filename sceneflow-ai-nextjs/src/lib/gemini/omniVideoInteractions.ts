@@ -6,6 +6,7 @@
 import {
   type VeoClipDuration,
 } from '@/lib/config/modelConfig'
+import { MAX_VERTEX_GEMINI_REFERENCE_IMAGES } from '@/lib/vision/referenceLimits'
 
 export interface OmniReferenceImage {
   imageUrl?: string
@@ -13,6 +14,8 @@ export interface OmniReferenceImage {
   base64Image?: string
   referenceType?: 'asset' | 'style' | 'ASSET' | 'STYLE'
   type?: 'style' | 'character'
+  /** Human-readable role label for multimodal preamble */
+  label?: string
 }
 
 export interface OmniInteractionBuildOptions {
@@ -22,6 +25,8 @@ export interface OmniInteractionBuildOptions {
   startFrame?: string
   lastFrame?: string
   referenceImages?: OmniReferenceImage[]
+  /** Pre-built labeled reference preamble (prepended before images) */
+  referencePromptPreamble?: string
   /** Prior interaction id for EXT / conversational continuation */
   previousInteractionId?: string
 }
@@ -223,6 +228,10 @@ export async function buildOmniInteractionInput(
   const textPrompt = appendNegativePrompt(prompt, options.negativePrompt)
   const parts: Array<{ type: string; text?: string; data?: string; mime_type?: string }> = []
 
+  if (options.referencePromptPreamble?.trim()) {
+    parts.push({ type: 'text', text: options.referencePromptPreamble.trim() })
+  }
+
   if (options.startFrame) {
     const { base64, mimeType } = await resolveImageBase64(options.startFrame)
     parts.push({ type: 'image', data: base64, mime_type: mimeType })
@@ -234,9 +243,12 @@ export async function buildOmniInteractionInput(
   }
 
   if (options.referenceImages?.length) {
-    for (const ref of options.referenceImages.slice(0, 3)) {
+    for (const ref of options.referenceImages.slice(0, MAX_VERTEX_GEMINI_REFERENCE_IMAGES)) {
       const imageSource = ref.base64Image || ref.imageUrl || ref.url
       if (!imageSource) continue
+      if (ref.label?.trim()) {
+        parts.push({ type: 'text', text: ref.label.trim() })
+      }
       const { base64, mimeType } = await resolveImageBase64(imageSource)
       parts.push({ type: 'image', data: base64, mime_type: mimeType })
     }

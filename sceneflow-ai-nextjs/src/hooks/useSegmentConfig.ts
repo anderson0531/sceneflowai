@@ -33,12 +33,30 @@ import {
   buildMinimalFtvPerformPrompt,
   FTV_SILENT_MOTION_HINT,
 } from '@/lib/vision/ftvPromptNormalize'
-import { MAX_VEO_VIDEO_CLIP_SECONDS } from '@/lib/config/modelConfig'
+import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
+import {
+  resolveSegmentVideoReferences,
+  type LabeledVideoReference,
+} from '@/lib/vision/resolveBeatVideoReferences'
+import type { LocationReference } from '@/types/visionReferences'
+import type { VisualReference } from '@/types/visionReferences'
 
 /** Scene script + audio fields used to auto-build Veo guide text for batch generate */
 export type SegmentGuideContext = {
   scene: GuidePromptSceneContext
   characters?: GuideCharacterDemographic[]
+  sceneIndex?: number
+  filmTitle?: string
+  projectCharacters?: Array<{
+    id?: string
+    name?: string
+    referenceImage?: string
+    wardrobes?: unknown[]
+  }>
+  locationReferences?: LocationReference[]
+  objectReferences?: VisualReference[]
+  /** Full scene record for beat / reference resolution */
+  fullScene?: Record<string, unknown>
 }
 
 /**
@@ -295,21 +313,20 @@ function generateVisualPrompt(segment: SceneSegment, sceneImageUrl?: string): st
 }
 
 /**
- * Determines the recommended generation method based on available assets
- * 
- * FRAME-FIRST WORKFLOW: Prioritizes I2V when a start frame exists because
- * character consistency is best achieved by "baking" references into
- * keyframes, then animating from the start frame only.
- * 
+ * Determines the recommended generation method based on available assets.
+ *
  * Priority:
- * 1. I2V (Image-to-Video): Start frame anchors character appearance
- * 2. EXT (Extend): Extend existing video
- * 3. T2V (Text-to-Video): No frames = risk of character drift
+ * 1. EXT — continuation with valid prior veoVideoRef
+ * 2. REF — beat references resolve (Omni reference_to_video)
+ * 3. I2V — start frame when no usable refs
+ * 4. EXT — existing video asset
+ * 5. T2V — fallback
  */
 function detectRecommendedMethod(
   segment: SceneSegment,
   sceneImageUrl?: string,
-  allSegments?: SceneSegment[]
+  allSegments?: SceneSegment[],
+  guideContext?: SegmentGuideContext
 ): VideoGenerationMethod {
   if (
     segment.veoTimelineContinuation ||
@@ -343,8 +360,24 @@ function detectRecommendedMethod(
     masterSceneFrame
   )
   const hasExistingVideo = !!(segment.activeAssetUrl && segment.assetType === 'video')
-  
-  // Image-to-Video: start frame anchors generation (end frames ignored on active path)
+
+  if (
+    guideContext?.fullScene &&
+    guideContext.projectCharacters &&
+    segment.beatId
+  ) {
+    const resolved = resolveSegmentVideoReferences(segment, guideContext.fullScene, {
+      sceneIndex: guideContext.sceneIndex,
+      projectCharacters: guideContext.projectCharacters,
+      locationReferences: guideContext.locationReferences ?? [],
+      objectReferences: guideContext.objectReferences ?? [],
+      filmTitle: guideContext.filmTitle,
+    })
+    if (resolved.urlList.length > 0) {
+      return 'REF'
+    }
+  }
+
   if (hasStartFrame) {
     return 'I2V'
   }
@@ -356,6 +389,34 @@ function detectRecommendedMethod(
   
   // Text-to-Video: Fallback when no frames available (not recommended)
   return 'T2V'
+}
+
+/** Resolve beat reference images when guide context includes full scene + libraries. */
+function resolveConfigReferences(
+  segment: SceneSegment,
+  guideContext?: SegmentGuideContext
+): { referenceImages?: string[]; labeledRefs: LabeledVideoReference[] } {
+  if (
+    !guideContext?.fullScene ||
+    !guideContext.projectCharacters ||
+    !segment.beatId
+  ) {
+    return { labeledRefs: [] }
+  }
+  const resolved = resolveSegmentVideoReferences(segment, guideContext.fullScene, {
+    sceneIndex: guideContext.sceneIndex,
+    projectCharacters: guideContext.projectCharacters,
+    locationReferences: guideContext.locationReferences ?? [],
+    objectReferences: guideContext.objectReferences ?? [],
+    filmTitle: guideContext.filmTitle,
+  })
+  if (resolved.urlList.length === 0) {
+    return { labeledRefs: [] }
+  }
+  return {
+    referenceImages: resolved.urlList,
+    labeledRefs: resolved.labeledRefs,
+  }
 }
 
 /** True when batch auto-guide can include dialogue (IDs or embedded segment lines). */
@@ -547,7 +608,7 @@ export function useSegmentConfig(
   defaultAspectRatio: '16:9' | '9:16' | '1:1' | '4:3' = '16:9'
 ): SegmentConfigResult {
   return useMemo(() => {
-    const method = detectRecommendedMethod(segment, sceneImageUrl, [segment])
+    const method = detectRecommendedMethod(segment, sceneImageUrl, [segment], guideContext)
     const confidence = calculateConfidence(segment, method)
     const approvalStatus = determineApprovalStatus(segment)
     
@@ -572,6 +633,8 @@ export function useSegmentConfig(
     const extVeoRef =
       method === 'EXT' ? resolveVeoRefForExtension([segment], segment) : undefined
 
+    const { referenceImages } = resolveConfigReferences(segment, guideContext)
+
     const config: VideoGenerationConfig = {
       mode: method,
       prompt,
@@ -580,15 +643,13 @@ export function useSegmentConfig(
       aspectRatio: defaultAspectRatio === '1:1' || defaultAspectRatio === '4:3'
         ? '16:9'
         : defaultAspectRatio,
-      resolution: method === 'EXT' ? '720p' : '720p',
-      duration:
-        method === 'EXT'
-          ? 8
-          : Math.max(4, Math.min(MAX_VEO_VIDEO_CLIP_SECONDS, Math.round(segment.endTime - segment.startTime))),
+      resolution: '720p',
+      duration: DEFAULT_VEO_CLIP_DURATION,
       negativePrompt: '',
       approvalStatus,
       confidence,
       guidePrompt: guidePrompt || undefined,
+      referenceImages: referenceImages?.length ? referenceImages : undefined,
       // Asset URLs for generation
       startFrameUrl: resolvedStart,
       endFrameUrl: null,
@@ -667,7 +728,7 @@ export function useSegmentConfigs(
     )
     
     for (const segment of validSegments) {
-      const method = detectRecommendedMethod(segment, sceneImageUrl, validSegments)
+      const method = detectRecommendedMethod(segment, sceneImageUrl, validSegments, guideContext)
       const confidence = calculateConfidence(segment, method)
       const approvalStatus = determineApprovalStatus(segment)
       
@@ -690,6 +751,8 @@ export function useSegmentConfigs(
       const extVeoRef =
         method === 'EXT' ? resolveVeoRefForExtension(validSegments, segment) : undefined
 
+      const { referenceImages } = resolveConfigReferences(segment, guideContext)
+
       const config: VideoGenerationConfig = {
         mode: method,
         prompt,
@@ -699,14 +762,12 @@ export function useSegmentConfigs(
           ? '16:9'
           : defaultAspectRatio,
         resolution: '720p',
-        duration:
-          method === 'EXT'
-            ? 8
-            : Math.max(4, Math.min(MAX_VEO_VIDEO_CLIP_SECONDS, Math.round(segment.endTime - segment.startTime))),
+        duration: DEFAULT_VEO_CLIP_DURATION,
         negativePrompt: '',
         approvalStatus,
         confidence,
         guidePrompt: guidePrompt || undefined,
+        referenceImages: referenceImages?.length ? referenceImages : undefined,
         startFrameUrl: resolvedStart,
         endFrameUrl: null,
         sourceVideoUrl:

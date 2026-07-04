@@ -1,6 +1,13 @@
-export type VeoReferenceImage = { url: string; type: 'style' | 'character' }
+import type { PrioritizedReferenceImage } from '@/lib/vision/referenceLimits'
 
-/** Accept string URLs (Director dialog) or structured refs (prompt builder). */
+export type VeoReferenceImage = {
+  url: string
+  type: 'style' | 'character'
+  name?: string
+  role?: PrioritizedReferenceImage['role']
+}
+
+/** Accept string URLs (Director dialog) or structured labeled refs. */
 export function normalizeReferenceImages(
   raw?: VeoReferenceImage[] | string[] | null,
 ): VeoReferenceImage[] | undefined {
@@ -13,8 +20,25 @@ export function normalizeReferenceImages(
       }
       const url = item?.url?.trim()
       if (!url) return null
-      return { url, type: item.type === 'style' ? 'style' : 'character' }
+      return {
+        url,
+        type: item.type === 'style' ? 'style' : 'character',
+        name: item.name,
+        role: item.role,
+      }
     })
     .filter((item): item is VeoReferenceImage => item !== null)
   return normalized.length > 0 ? normalized : undefined
+}
+
+export function veoRefsToPrioritized(
+  refs: VeoReferenceImage[]
+): PrioritizedReferenceImage[] {
+  return refs.map((ref, i) => ({
+    imageUrl: ref.url,
+    name: ref.name?.trim() || `Reference ${i + 1}`,
+    role:
+      ref.role ??
+      (ref.type === 'style' ? 'location' : 'identity'),
+  }))
 }

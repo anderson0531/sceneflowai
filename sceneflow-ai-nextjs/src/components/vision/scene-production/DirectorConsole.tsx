@@ -310,8 +310,13 @@ function DirectorConsoleRoot({
         sfx: normalizedSceneSfx,
       },
       characters: effectiveGuideCharacters,
+      sceneIndex,
+      projectCharacters: characters,
+      locationReferences,
+      objectReferences,
+      fullScene: scene as Record<string, unknown>,
     }
-  }, [scene, effectiveGuideCharacters, normalizedSceneSfx])
+  }, [scene, effectiveGuideCharacters, normalizedSceneSfx, sceneIndex, characters, locationReferences, objectReferences])
 
   const videoGenerationAvailable = useMemo(
     () => segments.some(s => s.activeAssetUrl && s.status === 'COMPLETE'),
@@ -635,7 +640,7 @@ function DirectorConsoleRoot({
     })
   }, [processQueue])
   
-  // Handle batch render — Express queues segments with a start frame for I2V
+  // Handle batch render — Express queues segments with REF or I2V configs
   const handleExpress = useCallback(() => {
     const expressIds = queue
       .filter((item) => {
@@ -652,17 +657,19 @@ function DirectorConsoleRoot({
           (segment.sequenceIndex === 0 && sceneImageUrl?.trim() ? sceneImageUrl.trim() : '')
 
         const hasStartFrame = !!resolvedStart
+        const hasRefs =
+          (cfg.referenceImages?.length ?? 0) > 0 || cfg.mode === 'REF'
         const isCompleteOrRendering =
           item.status === 'complete' || item.status === 'rendering'
 
-        return hasStartFrame && !isCompleteOrRendering
+        return (hasRefs || hasStartFrame) && !isCompleteOrRendering
       })
       .map((item) => item.segmentId)
 
     if (expressIds.length === 0) {
       import('sonner').then(({ toast }) => {
         toast.info(
-          'No eligible segments for Express — need a start Beat Frame, unlocked, and not already rendering.'
+          'No eligible segments for Express — need beat references or a start Beat Frame, unlocked, and not already rendering.'
         )
       })
       return
@@ -1144,7 +1151,7 @@ function DirectorConsoleRoot({
             onClick={handleExpress}
             disabled={queue.length === 0}
             className="border-indigo-500/50 text-indigo-300 hover:bg-indigo-500/10 hover:border-indigo-400 shadow-md hover:shadow-lg transition-all"
-            title="Express: batch-generate video for unlocked segments that have a start Beat Frame"
+            title="Express: batch-generate video for unlocked segments with beat references or a start Beat Frame"
           >
             <Wand2 className="w-4 h-4 mr-2" />
             Express
@@ -1541,6 +1548,7 @@ function DirectorConsoleRoot({
           objectReferences={objectReferences}
           locationReferences={locationReferences}
           projectAspectRatio={projectAspectRatio}
+          sceneIndex={sceneIndex}
         />
       )}
       

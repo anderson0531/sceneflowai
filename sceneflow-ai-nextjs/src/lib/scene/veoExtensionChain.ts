@@ -8,7 +8,7 @@ import {
   estimateSpokenDurationSeconds,
   planDialogueLineSplits,
   splitSpokenTextAtBoundaries,
-  VEO_DIALOGUE_CLIP_MAX_SEC,
+  VEO_DIALOGUE_EXTENSION_SPLIT_SEC,
 } from '@/lib/scene/dialogueSegmentSplit'
 import { snapToVeoDuration } from '@/lib/scene/veoDuration'
 import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
@@ -21,14 +21,14 @@ export const VEO_INITIAL_CLIP_MAX_SEC = 10
 
 /**
  * Spoken dialogue budget per initial clip before chaining EXT steps.
- * Split/planning uses 10s spoken budget; API sends 10s per Omni clip.
+ * Split/planning uses 8s spoken budget; API sends 10s per Omni clip.
  */
-export const VEO_SPOKEN_CHUNK_SEC = 10
+export const VEO_SPOKEN_CHUNK_SEC = VEO_DIALOGUE_EXTENSION_SPLIT_SEC
 
 /** Max chained extensions per beat (Gemini API limit ~20). */
 export const VEO_MAX_EXTENSIONS_PER_BEAT = 20
 
-export type VeoChainPartMethod = 'I2V' | 'FTV' | 'EXT'
+export type VeoChainPartMethod = 'I2V' | 'FTV' | 'EXT' | 'REF'
 
 export interface VeoChainPartPlan {
   partIndex: number
@@ -75,7 +75,7 @@ export function totalVideoSecondsForChain(
 export function planVeoExtensionChain(
   spokenSeconds: number,
   excerptParts?: string[],
-  options?: { preferFtv?: boolean }
+  options?: { preferFtv?: boolean; preferRef?: boolean }
 ): VeoExtensionChainPlan {
   const totalSpoken = Math.max(0, spokenSeconds)
   const extCount = extensionCountForSpokenSeconds(totalSpoken)
@@ -84,7 +84,11 @@ export function planVeoExtensionChain(
   const initialTimeline = snapToVeoDuration(
     Math.min(totalSpoken, VEO_SPOKEN_CHUNK_SEC)
   ) as 4 | 6 | 8 | 10
-  const initialMethod: VeoChainPartMethod = options?.preferFtv ? 'FTV' : 'I2V'
+  const initialMethod: VeoChainPartMethod = options?.preferFtv
+    ? 'FTV'
+    : options?.preferRef !== false
+      ? 'REF'
+      : 'I2V'
 
   if (!usesExtensionChain) {
     const excerpt = excerptParts?.[0]?.trim() ?? ''
@@ -206,5 +210,5 @@ export function shouldAutoSplitForExtensionChain(
     typeof durationSeconds === 'number' && durationSeconds > 0
       ? durationSeconds
       : estimateSpokenDurationSeconds(line)
-  return spoken > VEO_DIALOGUE_CLIP_MAX_SEC || spoken > VEO_SPOKEN_CHUNK_SEC
+  return spoken > VEO_DIALOGUE_EXTENSION_SPLIT_SEC
 }

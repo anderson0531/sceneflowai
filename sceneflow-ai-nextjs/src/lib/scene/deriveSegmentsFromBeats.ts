@@ -107,7 +107,7 @@ function beatToSegment(
   const generationMethod: VideoGenerationMethod =
     opts.generationMethod ??
     opts.chainPart?.method ??
-    'I2V'
+    'REF'
 
   const preVisStartUrl = beat.storyboardImageUrl?.trim() || undefined
   const preVisEndUrl = beat.storyboardEndImageUrl?.trim() || undefined
@@ -263,7 +263,7 @@ function appendSegmentsFromBeat(
         excerpt,
         continuation: i > 0,
         duration: part?.timelineSeconds,
-        generationMethod: part?.method ?? (i > 0 ? 'EXT' : 'I2V'),
+        generationMethod: part?.method ?? (i > 0 ? 'EXT' : 'REF'),
         chainPart: part,
       })
       segments.push(segment)

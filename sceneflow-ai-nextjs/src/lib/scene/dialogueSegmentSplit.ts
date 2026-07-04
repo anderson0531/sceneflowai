@@ -9,6 +9,9 @@ import type { SceneBeat } from '@/lib/script/segmentTypes'
 /** Effective max for on-screen dialogue in a single Veo clip (user-facing ~10s). */
 export const VEO_DIALOGUE_CLIP_MAX_SEC = 10
 
+/** Spoken dialogue budget before auto extension chain kicks in (initial clip). */
+export const VEO_DIALOGUE_EXTENSION_SPLIT_SEC = 8
+
 /** Hard Veo 3.1 clip ceiling (action-only / narration backdrop). */
 export const VEO_ABSOLUTE_CLIP_MAX_SEC = 12
 

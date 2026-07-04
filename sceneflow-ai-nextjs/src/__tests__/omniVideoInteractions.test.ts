@@ -105,6 +105,27 @@ describe('omniVideoInteractions helpers', () => {
     expect((body.response_format as Record<string, unknown>).duration).toBeUndefined()
   })
 
+  it('includes labeled reference text parts in multimodal input', async () => {
+    const body = await buildOmniInteractionRequestBody(
+      'gemini-omni-flash-preview',
+      'Scene action prompt.',
+      {
+        aspectRatio: '16:9',
+        durationSeconds: 10,
+        referenceImages: Array.from({ length: 4 }, (_, i) => ({
+          base64Image: Buffer.from(`fake-image-${i}`).toString('base64'),
+          label: `Identity reference: Character ${i}`,
+        })),
+        referencePromptPreamble: 'Use these references:',
+      }
+    )
+
+    expect(Array.isArray(body.input)).toBe(true)
+    const parts = body.input as Array<{ type: string; text?: string }>
+    expect(parts.some((p) => p.text === 'Use these references:')).toBe(true)
+    expect(parts.filter((p) => p.type === 'text' && p.text?.includes('Identity reference')).length).toBe(4)
+  })
+
   it('extracts base64 video from completed interaction steps', () => {
     const extracted = extractVideoFromOmniInteraction({
       id: 'v1_test123',

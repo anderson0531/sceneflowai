@@ -25,6 +25,7 @@ import type {
   VideoGenerationMethod,
 } from '@/components/vision/scene-production/types'
 import { useSegmentConfigs, type SegmentGuideContext } from './useSegmentConfig'
+import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
 import {
   isVeoChainContinuation,
   resolveVeoRefForExtension,
@@ -422,7 +423,7 @@ export function useVideoQueue(
               sourceVideoUrl: previousSegmentVeoRef || config.sourceVideoUrl || undefined,
               prompt: config.prompt,
               negativePrompt: config.negativePrompt || undefined,
-              duration: batchMethod === 'EXT' ? 8 : config.duration,
+              duration: batchMethod === 'EXT' ? DEFAULT_VEO_CLIP_DURATION : config.duration,
               aspectRatio: config.aspectRatio,
               resolution: batchMethod === 'EXT' ? '720p' : config.resolution,
               generationMethod: batchMethod,

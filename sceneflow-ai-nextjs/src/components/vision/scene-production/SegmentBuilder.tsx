@@ -979,7 +979,7 @@ export function SegmentBuilder({
         onSegmentsGenerated(data.segments)
         onSegmentsFinalized(data.segments)
         toast.success(
-          'Dialogue split applied — generate part 1 with I2V, then continuation parts with Extend'
+          'Dialogue split applied — generate part 1 with Reference mode, then continuation parts with Extend'
         )
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err)

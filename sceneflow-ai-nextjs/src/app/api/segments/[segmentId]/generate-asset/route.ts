@@ -25,7 +25,8 @@ import {
 import type { StemSeparationResult } from '@/lib/audio/stemSeparation'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
 import { extractVeoRaiDetailsFromErrorString } from '@/lib/vertexai/safety'
-import { normalizeReferenceImages } from '@/lib/video/normalizeReferenceImages'
+import { normalizeReferenceImages, type VeoReferenceImage } from '@/lib/video/normalizeReferenceImages'
+import { resolveBeatVideoReferences } from '@/lib/vision/resolveBeatVideoReferences'
 
 export const maxDuration = 300 // 5 minutes for video generation
 export const runtime = 'nodejs'
@@ -85,7 +86,7 @@ export async function POST(
     const body = requestBody as GenerateAssetRequest
     let prompt = body.prompt
     let negativePrompt = body.negativePrompt
-    const referenceImages = normalizeReferenceImages(
+    let referenceImages = normalizeReferenceImages(
       body.referenceImages as string[] | GenerateAssetRequest['referenceImages'],
     )
     const {
@@ -174,6 +175,53 @@ export async function POST(
           )
           prompt = compiled.prompt
           negativePrompt = negativePrompt || compiled.negativePrompt
+        }
+      }
+    }
+
+    if (
+      (!referenceImages || referenceImages.length === 0) &&
+      generationMethod === 'REF' &&
+      beatId &&
+      projectId
+    ) {
+      await sequelize.authenticate()
+      const projectForRefs = await Project.findByPk(projectId)
+      const scenesForRefs =
+        projectForRefs?.metadata?.visionPhase?.script?.script?.scenes ||
+        projectForRefs?.metadata?.visionPhase?.script?.scenes ||
+        []
+      const sceneForRefs = scenesForRefs.find(
+        (s: { id?: string; sceneNumber?: number }, idx: number) =>
+          s?.id === sceneId || String(s?.sceneNumber) === sceneId || String(idx) === sceneId
+      )
+      const beats = sceneForRefs ? getSceneBeats(sceneForRefs as Record<string, unknown>) : []
+      const beat = beats.find((b) => b.beatId === beatId)
+      if (beat && sceneForRefs) {
+        const resolved = resolveBeatVideoReferences({
+          scene: sceneForRefs as Record<string, unknown>,
+          beat,
+          projectCharacters:
+            projectForRefs?.metadata?.visionPhase?.characters ||
+            projectForRefs?.metadata?.characters ||
+            [],
+          locationReferences:
+            projectForRefs?.metadata?.visionPhase?.references?.locationReferences || [],
+          objectReferences:
+            projectForRefs?.metadata?.visionPhase?.references?.objectReferences || [],
+        })
+        if (resolved.labeledRefs.length > 0) {
+          referenceImages = resolved.labeledRefs.map(
+            (ref): VeoReferenceImage => ({
+              url: ref.url,
+              type: ref.type,
+              name: ref.name,
+              role: ref.role,
+            })
+          )
+          console.log(
+            `[Segment Asset Generation] Server-resolved ${referenceImages.length} REF image(s) for beat ${beatId}`
+          )
         }
       }
     }

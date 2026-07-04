@@ -84,6 +84,8 @@ import { ImageEditModal } from '@/components/vision/ImageEditModal'
 import { AnalyzeKeyframeRiskPanel } from './AnalyzeKeyframeRiskPanel'
 import { moderatePrompt, type ModerationResult } from '@/utils/promptModerator'
 import { shouldInitializeDirectorDialogState } from '@/lib/vision/directorDialogState'
+import { MAX_VERTEX_GEMINI_REFERENCE_IMAGES } from '@/lib/vision/referenceLimits'
+import { resolveSegmentVideoReferences } from '@/lib/vision/resolveBeatVideoReferences'
 import type { BlueprintAspectRatio } from '@/lib/treatment/blueprintFoundation'
 import { toVideoAspectRatio } from '@/lib/vision/artStyle'
 
@@ -95,6 +97,13 @@ interface DirectorLibraryReference {
   name: string
   imageUrl: string
   description?: string
+}
+
+interface DirectorReferenceEntry {
+  url: string
+  name: string
+  type: DirectorReferenceType
+  role?: string
 }
 
 interface DirectorDialogProps {
@@ -138,6 +147,8 @@ interface DirectorDialogProps {
   }>
   /** Locked project aspect ratio from Blueprint */
   projectAspectRatio?: BlueprintAspectRatio
+  sceneIndex?: number
+  filmTitle?: string
 }
 
 // Map internal mode names to VideoGenerationMethod
@@ -163,6 +174,15 @@ function uiModeForMethod(method: VideoGenerationMethod): string {
   return methodToMode[method] ?? 'TEXT_TO_VIDEO'
 }
 
+function refsToConfig(entries: DirectorReferenceEntry[]): NonNullable<VideoGenerationConfig['referenceImages']> {
+  return entries.map((e) => ({
+    url: e.url,
+    type: e.type === 'location' || e.type === 'object' ? 'style' : 'character',
+    name: e.name,
+    role: e.role,
+  }))
+}
+
 export const DirectorDialog: React.FC<DirectorDialogProps> = ({ 
   segment, 
   sceneId,
@@ -180,11 +200,22 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   sceneReferences = [],
   locationReferences = [],
   projectAspectRatio = '16:9',
+  sceneIndex,
+  filmTitle,
 }) => {
   const segmentGuideContext = useMemo<SegmentGuideContext | undefined>(() => {
     if (!scene) return undefined
-    return { scene, characters: guideCharacters }
-  }, [scene, guideCharacters])
+    return {
+      scene,
+      characters: guideCharacters,
+      sceneIndex,
+      filmTitle,
+      projectCharacters: characterReferences,
+      locationReferences,
+      objectReferences,
+      fullScene: scene as unknown as Record<string, unknown>,
+    }
+  }, [scene, guideCharacters, sceneIndex, filmTitle, characterReferences, locationReferences, objectReferences])
 
   const lockedVideoAspect = toVideoAspectRatio(projectAspectRatio)
 
@@ -221,8 +252,35 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const [isOptimizingForMode, setIsOptimizingForMode] = useState(false)
   const [promptHistory, setPromptHistory] = useState<string[]>([])  // For undo support
   
-  // Reference images state (for REF mode - up to 3 character/style references)
-  const [referenceImages, setReferenceImages] = useState<string[]>([])
+  // Reference images state (Omni REF — up to 8 labeled references)
+  const [referenceImages, setReferenceImages] = useState<DirectorReferenceEntry[]>([])
+
+  const autoResolvedRefs = useMemo(() => {
+    if (!scene || !segment.beatId) {
+      return { entries: [] as DirectorReferenceEntry[], warnings: [] as string[] }
+    }
+    const resolved = resolveSegmentVideoReferences(segment, scene as unknown as Record<string, unknown>, {
+      sceneIndex,
+      projectCharacters: characterReferences,
+      locationReferences,
+      objectReferences,
+      filmTitle,
+    })
+    const entries: DirectorReferenceEntry[] = resolved.labeledRefs.map((ref) => ({
+      url: ref.url,
+      name: ref.name,
+      type:
+        ref.role === 'location'
+          ? 'location'
+          : ref.role?.startsWith('prop-')
+            ? 'object'
+            : ref.role === 'wardrobe'
+              ? 'wardrobe'
+              : 'character',
+      role: ref.role,
+    }))
+    return { entries, warnings: resolved.warnings }
+  }, [scene, segment, sceneIndex, characterReferences, locationReferences, objectReferences, filmTitle])
 
   const combinedReferenceLibrary = useMemo((): DirectorLibraryReference[] => {
     const library: DirectorLibraryReference[] = []
@@ -298,8 +356,13 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
 
   const handleSelectLibraryReference = useCallback((ref: DirectorLibraryReference) => {
     setReferenceImages(prev => {
-      if (prev.length >= 3 || prev.includes(ref.imageUrl)) return prev
-      return [...prev, ref.imageUrl]
+      if (prev.length >= MAX_VERTEX_GEMINI_REFERENCE_IMAGES || prev.some((p) => p.url === ref.imageUrl)) {
+        return prev
+      }
+      return [
+        ...prev,
+        { url: ref.imageUrl, name: ref.name, type: ref.type },
+      ]
     })
   }, [])
   
@@ -525,22 +588,31 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   }, [segment])
   
   const initializeDialogState = useCallback(() => {
-    setMode(uiModeForMethod(autoConfig.mode))
+    const isContinuation =
+      segment.veoTimelineContinuation ||
+      segment.generationMethod === 'EXT' ||
+      segment.videoChain?.chainMethod === 'extension'
+    const initialMode = isContinuation
+      ? 'EXTEND'
+      : uiModeForMethod(autoConfig.mode)
+
+    setMode(initialMode)
     setPrompt(autoConfig.prompt)
     setMotionPrompt(autoConfig.motionPrompt)
     setVisualPrompt(autoConfig.visualPrompt)
     setNegativePrompt(autoConfig.negativePrompt)
     setAspectRatio(lockedVideoAspect)
     setResolution(autoConfig.resolution)
-    setDuration(autoConfig.duration)
-    setGuidePrompt('')
+    setDuration(isContinuation ? 10 : autoConfig.duration)
+    setGuidePrompt(batchGuideSeed || autoConfig.guidePrompt || '')
+    setReferenceImages(autoResolvedRefs.entries)
     // Reset content policy state on open
     setPostFailureModerationResult(null)
     setPromptFixApplied(false)
     setLocalError(null)
     setImageTriggered(false)
     setKeyframeEdit(null)
-  }, [autoConfig, lockedVideoAspect])
+  }, [autoConfig, lockedVideoAspect, batchGuideSeed, segment, autoResolvedRefs.entries])
 
   // Initialize state only on open transition or segment change while open.
   useEffect(() => {
@@ -665,14 +737,14 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       guidePrompt: guidePrompt || undefined,
       aspectRatio,
       resolution,
-      duration,
+      duration: mode === 'EXTEND' ? 10 : duration,
       startFrameUrl: resolvedStartFrameUrl,
       endFrameUrl: null,
       sourceVideoUrl: autoConfig.sourceVideoUrl,
       approvalStatus: 'auto-ready',
       confidence: autoConfig.confidence,
       qualityTier: qualityTier,
-      referenceImages: method === 'REF' ? referenceImages : undefined,
+      referenceImages: method === 'REF' ? refsToConfig(referenceImages) : undefined,
     }
     onSaveConfig(savedConfig)
   }
@@ -729,7 +801,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       guidePrompt: guidePrompt || undefined,
       aspectRatio,
       resolution,
-      duration,
+      duration: mode === 'EXTEND' ? 10 : duration,
       startFrameUrl: null,
       endFrameUrl: null,
       sourceVideoUrl: null,
@@ -760,14 +832,14 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       guidePrompt: guidePrompt || undefined,
       aspectRatio,
       resolution,
-      duration,
+      duration: mode === 'EXTEND' ? 10 : duration,
       startFrameUrl: resolvedStartFrameUrl,
       endFrameUrl: null,
       sourceVideoUrl: autoConfig.sourceVideoUrl,
       approvalStatus: 'auto-ready',
       confidence: autoConfig.confidence,
       qualityTier: qualityTier,
-      referenceImages: method === 'REF' ? referenceImages : undefined,
+      referenceImages: method === 'REF' ? refsToConfig(referenceImages) : undefined,
     }
     
     onSaveConfig(savedConfig)
@@ -779,18 +851,25 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   
   const startFrameUrl = segment.startFrameUrl || segment.references?.startFrameUrl
   const hasExistingVideo = segment.activeAssetUrl && segment.assetType === 'video'
+  const isContinuationSegment =
+    segment.veoTimelineContinuation ||
+    segment.generationMethod === 'EXT' ||
+    segment.videoChain?.chainMethod === 'extension'
+  const continuationDialogueExcerpt =
+    segment.dialoguePortion?.excerpt?.trim() ||
+    segment.dialogueLines?.find((d) => d.covered !== false)?.line?.trim() ||
+    ''
   
-  // FRAME-FIRST WORKFLOW: I2V requires a start frame
   const tabStates = {
     TEXT_TO_VIDEO: true,
     IMAGE_TO_VIDEO: !!startFrameUrl || !!sceneImageUrl,
-    EXTEND: !!hasExistingVideo,
+    EXTEND: !!hasExistingVideo || isContinuationSegment || !!autoConfig.sourceVideoUrl,
     REFERENCE_IMAGES: true,
   }
   
   const tabDisabledReasons: Record<string, string> = {
     IMAGE_TO_VIDEO: !tabStates.IMAGE_TO_VIDEO ? 'Generate a Start Frame first (Frame step)' : '',
-    EXTEND: !tabStates.EXTEND ? 'Render a video first' : '',
+    EXTEND: !tabStates.EXTEND ? 'Generate the previous part first or render a source video' : '',
   }
 
   return (
@@ -906,12 +985,12 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 <div className="flex flex-col items-center justify-center min-h-[200px]">
                   <div className="flex items-center gap-3 mb-4">
                     {referenceImages.length > 0 ? (
-                      referenceImages.map((url, index) => (
-                        <div key={index} className="relative group">
+                      referenceImages.map((entry, index) => (
+                        <div key={`${entry.url}-${index}`} className="relative group">
                           <div className="w-24 h-24 bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
                             <img 
-                              src={url} 
-                              alt={`Reference ${index + 1}`}
+                              src={entry.url} 
+                              alt={entry.name}
                               className="w-full h-full object-cover" 
                             />
                           </div>
@@ -921,11 +1000,11 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                           >
                             <X className="w-3 h-3 text-white" />
                           </button>
-                          <Badge className="absolute bottom-1 left-1 text-[10px] bg-slate-800/90">Ref {index + 1}</Badge>
+                          <Badge className="absolute bottom-1 left-1 text-[10px] bg-slate-800/90 capitalize">{entry.type}</Badge>
                         </div>
                       ))
                     ) : null}
-                    {referenceImages.length < 3 && (
+                    {referenceImages.length < MAX_VERTEX_GEMINI_REFERENCE_IMAGES && (
                       <label className="w-24 h-24 bg-slate-800/50 rounded-lg border-2 border-dashed border-slate-600 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500 hover:bg-slate-800 transition-colors">
                         <Plus className="w-6 h-6 text-slate-400 mb-1" />
                         <span className="text-[10px] text-slate-400">Add Ref</span>
@@ -935,11 +1014,17 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                           className="hidden"
                           onChange={async (e) => {
                             const file = e.target.files?.[0]
-                            if (file && referenceImages.length < 3) {
-                              // Convert to data URL for preview (in production, upload to storage)
+                            if (file && referenceImages.length < MAX_VERTEX_GEMINI_REFERENCE_IMAGES) {
                               const reader = new FileReader()
                               reader.onload = () => {
-                                setReferenceImages(prev => [...prev, reader.result as string])
+                                setReferenceImages(prev => [
+                                  ...prev,
+                                  {
+                                    url: reader.result as string,
+                                    name: file.name,
+                                    type: 'character',
+                                  },
+                                ])
                               }
                               reader.readAsDataURL(file)
                             }
@@ -948,10 +1033,13 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                       </label>
                     )}
                   </div>
+                  {autoResolvedRefs.warnings.length > 0 && (
+                    <p className="text-xs text-amber-400/90 text-center mb-2">{autoResolvedRefs.warnings[0]}</p>
+                  )}
                   <p className="text-sm text-slate-400 text-center">
                     {referenceImages.length === 0 
-                      ? 'Add up to 3 reference images for character/style consistency'
-                      : `${referenceImages.length}/3 reference images added`
+                      ? `Auto-detected beat references appear here (up to ${MAX_VERTEX_GEMINI_REFERENCE_IMAGES})`
+                      : `${referenceImages.length}/${MAX_VERTEX_GEMINI_REFERENCE_IMAGES} reference images added`
                     }
                   </p>
                   <p className="text-xs text-slate-500 mt-1 mb-4">
@@ -981,7 +1069,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                                 <button
                                   key={ref.id}
                                   type="button"
-                                  disabled={referenceImages.length >= 3 || referenceImages.includes(ref.imageUrl)}
+                                  disabled={referenceImages.length >= MAX_VERTEX_GEMINI_REFERENCE_IMAGES || referenceImages.some((e) => e.url === ref.imageUrl)}
                                   onClick={() => handleSelectLibraryReference(ref)}
                                   className="group relative aspect-square rounded-lg border border-slate-700 overflow-hidden hover:border-purple-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
@@ -1009,7 +1097,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                                 <button
                                   key={ref.id}
                                   type="button"
-                                  disabled={referenceImages.length >= 3 || referenceImages.includes(ref.imageUrl)}
+                                  disabled={referenceImages.length >= MAX_VERTEX_GEMINI_REFERENCE_IMAGES || referenceImages.some((e) => e.url === ref.imageUrl)}
                                   onClick={() => handleSelectLibraryReference(ref)}
                                   className="group relative aspect-square rounded-lg border border-slate-700 overflow-hidden hover:border-rose-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
@@ -1037,7 +1125,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                                 <button
                                   key={ref.id}
                                   type="button"
-                                  disabled={referenceImages.length >= 3 || referenceImages.includes(ref.imageUrl)}
+                                  disabled={referenceImages.length >= MAX_VERTEX_GEMINI_REFERENCE_IMAGES || referenceImages.some((e) => e.url === ref.imageUrl)}
                                   onClick={() => handleSelectLibraryReference(ref)}
                                   className="group relative aspect-video rounded-lg border border-slate-700 overflow-hidden hover:border-blue-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
@@ -1065,7 +1153,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                                 <button
                                   key={ref.id}
                                   type="button"
-                                  disabled={referenceImages.length >= 3 || referenceImages.includes(ref.imageUrl)}
+                                  disabled={referenceImages.length >= MAX_VERTEX_GEMINI_REFERENCE_IMAGES || referenceImages.some((e) => e.url === ref.imageUrl)}
                                   onClick={() => handleSelectLibraryReference(ref)}
                                   className="group relative aspect-video rounded-lg border border-slate-700 overflow-hidden hover:border-emerald-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
@@ -1093,7 +1181,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                                 <button
                                   key={ref.id}
                                   type="button"
-                                  disabled={referenceImages.length >= 3 || referenceImages.includes(ref.imageUrl)}
+                                  disabled={referenceImages.length >= MAX_VERTEX_GEMINI_REFERENCE_IMAGES || referenceImages.some((e) => e.url === ref.imageUrl)}
                                   onClick={() => handleSelectLibraryReference(ref)}
                                   className="group relative aspect-square rounded-lg border border-slate-700 overflow-hidden hover:border-amber-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
@@ -1115,17 +1203,30 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                   </div>
                 </div>
               </div>
-            ) : mode === 'EXTEND' && hasExistingVideo ? (
-              <div className="p-4 w-full">
-                <div className="aspect-video w-full bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
-                  <video 
-                    src={segment.activeAssetUrl!}
-                    className="w-full h-full object-cover"
-                    controls
-                    muted
-                  />
-                </div>
-                <Badge className="absolute top-2 left-2 bg-slate-800">Source Video</Badge>
+            ) : mode === 'EXTEND' ? (
+              <div className="p-4 w-full space-y-3">
+                {hasExistingVideo ? (
+                  <div className="aspect-video w-full bg-slate-900 rounded-lg overflow-hidden border border-slate-700 relative">
+                    <video 
+                      src={segment.activeAssetUrl!}
+                      className="w-full h-full object-cover"
+                      controls
+                      muted
+                    />
+                    <Badge className="absolute top-2 left-2 bg-slate-800">Source Video</Badge>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-amber-500/40 bg-amber-950/20 p-4 text-sm text-amber-100">
+                    Extension continues from the previous part of this beat. Generate earlier parts in order.
+                  </div>
+                )}
+                {continuationDialogueExcerpt ? (
+                  <div className="rounded-lg border border-slate-700 bg-slate-900/80 p-3">
+                    <p className="text-xs font-medium text-slate-400 mb-1">Remaining dialogue (sent in guide prompt)</p>
+                    <p className="text-sm text-slate-200 italic">&ldquo;{continuationDialogueExcerpt}&rdquo;</p>
+                  </div>
+                ) : null}
+                <p className="text-xs text-slate-500">Extension clips are fixed at 10s and use the same auto-extend route as dialogue splits.</p>
               </div>
             ) : (startFrameUrl || sceneImageUrl) ? (
               <div className="p-4 w-full space-y-2">
@@ -1235,6 +1336,9 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 {/* Duration Selector */}
                 <div className="flex flex-col gap-2">
                   <Label className="text-slate-300">Duration</Label>
+                  {mode === 'EXTEND' ? (
+                    <p className="text-sm text-slate-400">Fixed at 10s for extension (matches auto-extend route)</p>
+                  ) : (
                   <div className="flex gap-2">
                     {[4, 6, 8, 10].map((d) => (
                       <Button
@@ -1248,6 +1352,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                       </Button>
                     ))}
                   </div>
+                  )}
                 </div>
 
             {/* Advanced Settings Accordion */}

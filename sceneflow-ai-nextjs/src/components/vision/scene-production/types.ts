@@ -341,8 +341,8 @@ export interface VideoGenerationConfig {
   endFrameUrl: string | null
   sourceVideoUrl: string | null  // For EXT mode
   
-  // Reference images for REF mode (up to 3 character/style references)
-  referenceImages?: string[]
+  // Reference images for REF mode (Omni: up to 8 labeled references)
+  referenceImages?: string[] | Array<{ url: string; type?: 'character' | 'style'; name?: string; role?: string }>
   
   // Cinematic element settings (for CIN mode)
   cinematicElementType?: string  // Type of cinematic element (title-sequence, match-cut-bridge, etc.)

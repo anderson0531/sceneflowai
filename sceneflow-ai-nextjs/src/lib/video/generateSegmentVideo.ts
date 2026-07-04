@@ -20,6 +20,8 @@ import {
   type MethodSelectionResult,
 } from '@/lib/vision/intelligentMethodSelection'
 import { getQualityForMethod, DEFAULT_VEO_CLIP_DURATION, type VeoClipDuration } from '@/lib/config/modelConfig'
+import { buildOmniVideoReferencePrompt } from '@/lib/gemini/buildOmniVideoReferencePrompt'
+import { veoRefsToPrioritized } from '@/lib/video/normalizeReferenceImages'
 import { isVeoVideoRefValid } from '@/lib/gemini/geminiStudioVideoClient'
 import { appendFtvTransitionStabilityTokens } from '@/lib/vision/ftvTransitionStability'
 import {
@@ -63,7 +65,7 @@ export interface GenerateSegmentVideoInput {
   previousSegmentVeoRef?: string
   previousSegmentVeoRefExpiry?: string
   previousSegmentAssetUrl?: string
-  referenceImages?: Array<{ url: string; type: 'style' | 'character' }>
+  referenceImages?: Array<{ url: string; type: 'style' | 'character'; name?: string; role?: string }>
   sceneImageUrl?: string
   segmentIndex?: number
   totalSegments?: number
@@ -253,9 +255,11 @@ export async function generateSegmentVideoCore(
   }
 
   if (method === 'REF' && referenceImages && referenceImages.length > 0) {
-    videoOptions.referenceImages = referenceImages.map((img) => ({
+    const prioritized = veoRefsToPrioritized(referenceImages)
+    videoOptions.referenceImages = referenceImages.map((img, i) => ({
       url: img.url,
       type: img.type,
+      label: img.name || prioritized[i]?.name,
     }))
   }
 
@@ -267,7 +271,15 @@ export async function generateSegmentVideoCore(
     enhancedPrompt = 'Natural motion and expression between the two keyframes.'
   }
 
-  if (guidePrompt?.trim()) {
+  if (method === 'REF' && referenceImages && referenceImages.length > 0) {
+    const prioritized = veoRefsToPrioritized(referenceImages)
+    enhancedPrompt = buildOmniVideoReferencePrompt({
+      scenePrompt: prompt,
+      refs: prioritized,
+      guidePrompt: guidePrompt?.trim() || undefined,
+      negativePrompt: negativePrompt?.trim() || undefined,
+    })
+  } else if (guidePrompt?.trim()) {
     const gpRaw = guidePrompt.trim()
     const gp = method === 'FTV' ? neutralizeFtvGuidePrompt(gpRaw) : gpRaw
     if (gp) {
