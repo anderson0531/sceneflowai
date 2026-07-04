@@ -994,6 +994,78 @@ const CharacterCard = ({
       return next;
     });
   };
+
+  const renderWardrobeImage = (
+    w: CharacterWardrobe,
+    variant: "split" | "stacked",
+  ) => {
+    const isGenerating = generatingWardrobeImageId === w.id;
+    const loadingOverlay = isGenerating ? (
+      <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+        <Loader className="w-6 h-6 animate-spin text-white" />
+      </div>
+    ) : null;
+
+    if (variant === "split") {
+      return (
+        <>
+          {w.fullBodyUrl ? (
+            <img
+              src={w.fullBodyUrl}
+              alt={`${character.name} — ${w.name} wardrobe reference`}
+              className="w-full h-full min-h-[180px] max-h-[50vh] object-contain"
+              loading="lazy"
+            />
+          ) : w.headshotUrl ? (
+            <img
+              src={w.headshotUrl}
+              alt={`${character.name} — ${w.name} wardrobe reference (legacy)`}
+              className="w-full h-full min-h-[180px] max-h-[50vh] object-contain"
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-full h-full min-h-[180px] flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 p-4 text-center">
+              <ImagePlus className="w-8 h-8 mb-2 opacity-50" />
+              <span className="text-xs">
+                No wardrobe reference yet — generate from the outfit description
+              </span>
+            </div>
+          )}
+          {loadingOverlay}
+        </>
+      );
+    }
+
+    if (w.fullBodyUrl) {
+      return (
+        <div className="relative aspect-auto max-h-64 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          <img
+            src={w.fullBodyUrl}
+            alt={`${character.name} — ${w.name} wardrobe reference`}
+            className="w-full h-full object-contain"
+            loading="lazy"
+          />
+          {loadingOverlay}
+        </div>
+      );
+    }
+
+    if (w.headshotUrl) {
+      return (
+        <div className="relative aspect-video max-h-48 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          <img
+            src={w.headshotUrl}
+            alt={`${character.name} — ${w.name} wardrobe reference (legacy)`}
+            className="w-full h-full object-cover object-top"
+            loading="lazy"
+          />
+          {loadingOverlay}
+        </div>
+      );
+    }
+
+    return null;
+  };
   const [genderConfirmOpen, setGenderConfirmOpen] = useState(false);
   const [isAutoSelectingVoice, setIsAutoSelectingVoice] = useState(false);
   const [isPlayingVoice, setIsPlayingVoice] = useState(false);
@@ -3113,245 +3185,394 @@ const CharacterCard = ({
                             : "bg-gray-50/50 dark:bg-gray-800/10 border-gray-200 dark:border-gray-700/50"
                         }`}
                       >
-                        {/* 
-                           Notice that we check w.fullBodyUrl. The previous code
-                           was using w.headshotUrl (the diptych), which isn't populated
-                           for face-first wardrobes.
-                        */}
-                        {w.fullBodyUrl && (
-                          <div className="relative aspect-auto max-h-64 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                            <img
-                              src={w.fullBodyUrl}
-                              alt={`${character.name} — ${w.name} wardrobe reference`}
-                              className="w-full h-full object-contain"
-                              loading="lazy"
-                            />
-                            {generatingWardrobeImageId === w.id && (
-                              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                                <Loader className="w-6 h-6 animate-spin text-white" />
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        {/* Fallback for legacy diptychs if fullBodyUrl doesn't exist but headshotUrl does */}
-                        {!w.fullBodyUrl && w.headshotUrl && (
-                          <div className="relative aspect-video max-h-48 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                            <img
-                              src={w.headshotUrl}
-                              alt={`${character.name} — ${w.name} wardrobe reference (legacy)`}
-                              className="w-full h-full object-cover object-top"
-                              loading="lazy"
-                            />
-                            {generatingWardrobeImageId === w.id && (
-                              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                                <Loader className="w-6 h-6 animate-spin text-white" />
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        <div className="p-3">
-                          {/* Title and badges row */}
-                          <div className="mb-2">
-                            <div className="flex flex-wrap items-center gap-2 min-w-0 mb-2">
-                              <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
-                                {w.name}
-                              </span>
-                              {w.isDefault && (
-                                <span className="text-[10px] px-1.5 py-0.5 bg-green-500/20 text-green-700 dark:text-green-400 rounded">
-                                  default
-                                </span>
-                              )}
-                              {w.sceneNumbers && w.sceneNumbers.length > 0 && (
-                                <span className="text-[10px] text-blue-700 dark:text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">
-                                  Scenes {formatSceneRange(w.sceneNumbers)}
-                                </span>
-                              )}
+                        {splitLayout ? (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 items-start">
+                            <div className="relative min-h-[180px] max-h-[50vh] rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800">
+                              {renderWardrobeImage(w, "split")}
                             </div>
-
-                            {/* Controls and Toggle row */}
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-1">
-                                {editingWardrobeId !== w.id && (
-                                  <>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleGenerateWardrobeImage(w);
-                                      }}
-                                      disabled={
-                                        generatingWardrobeImageId === w.id ||
-                                        !hasCharacterReferenceForVoice
-                                      }
-                                      className="p-1.5 rounded-lg text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10 disabled:opacity-50"
-                                      title={
-                                        !hasCharacterReferenceForVoice
-                                          ? "Generate character identity reference first"
-                                          : (w.fullBodyUrl || w.headshotUrl)
-                                            ? "Regenerate wardrobe reference image"
-                                            : "Generate wardrobe reference image"
-                                      }
-                                    >
-                                      {generatingWardrobeImageId === w.id ? (
-                                        <Loader className="w-3.5 h-3.5 animate-spin" />
-                                      ) : (
-                                        <ImagePlus className="w-3.5 h-3.5" />
-                                      )}
-                                    </button>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleEnhanceWardrobe(w.id);
-                                      }}
-                                      disabled={enhancingWardrobeId === w.id}
-                                      className="p-1.5 rounded-lg text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 disabled:opacity-50"
-                                      title="Enhance with AI"
-                                    >
-                                      {enhancingWardrobeId === w.id ? (
-                                        <Loader className="w-3.5 h-3.5 animate-spin" />
-                                      ) : (
-                                        <Wand2 className="w-3.5 h-3.5" />
-                                      )}
-                                    </button>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        startEditingWardrobe(w);
-                                      }}
-                                      className="p-1.5 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
-                                      title="Edit wardrobe"
-                                    >
-                                      <Edit className="w-3.5 h-3.5" />
-                                    </button>
-                                    {wardrobes.length > 1 && (
+                            <div className="space-y-4 min-w-0 overflow-y-auto max-h-[50vh]">
+                              <div>
+                                <div className="flex flex-wrap items-center gap-2 min-w-0 mb-2">
+                                  <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                                    {w.name}
+                                  </span>
+                                  {w.isDefault && (
+                                    <span className="text-[10px] px-1.5 py-0.5 bg-green-500/20 text-green-700 dark:text-green-400 rounded">
+                                      default
+                                    </span>
+                                  )}
+                                  {w.sceneNumbers && w.sceneNumbers.length > 0 && (
+                                    <span className="text-[10px] text-blue-700 dark:text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">
+                                      Scenes {formatSceneRange(w.sceneNumbers)}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  {editingWardrobeId !== w.id && (
+                                    <>
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          handleDeleteWardrobe(w.id);
+                                          handleGenerateWardrobeImage(w);
                                         }}
-                                        className="p-1.5 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-500/10"
-                                        title="Delete wardrobe"
+                                        disabled={
+                                          generatingWardrobeImageId === w.id ||
+                                          !hasCharacterReferenceForVoice
+                                        }
+                                        className="p-1.5 rounded-lg text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10 disabled:opacity-50"
+                                        title={
+                                          !hasCharacterReferenceForVoice
+                                            ? "Generate character identity reference first"
+                                            : (w.fullBodyUrl || w.headshotUrl)
+                                              ? "Regenerate wardrobe reference image"
+                                              : "Generate wardrobe reference image"
+                                        }
                                       >
-                                        <Trash2 className="w-3.5 h-3.5" />
+                                        {generatingWardrobeImageId === w.id ? (
+                                          <Loader className="w-3.5 h-3.5 animate-spin" />
+                                        ) : (
+                                          <ImagePlus className="w-3.5 h-3.5" />
+                                        )}
                                       </button>
-                                    )}
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleEnhanceWardrobe(w.id);
+                                        }}
+                                        disabled={enhancingWardrobeId === w.id}
+                                        className="p-1.5 rounded-lg text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 disabled:opacity-50"
+                                        title="Enhance with AI"
+                                      >
+                                        {enhancingWardrobeId === w.id ? (
+                                          <Loader className="w-3.5 h-3.5 animate-spin" />
+                                        ) : (
+                                          <Wand2 className="w-3.5 h-3.5" />
+                                        )}
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          startEditingWardrobe(w);
+                                        }}
+                                        className="p-1.5 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                                        title="Edit wardrobe"
+                                      >
+                                        <Edit className="w-3.5 h-3.5" />
+                                      </button>
+                                      {wardrobes.length > 1 && (
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteWardrobe(w.id);
+                                          }}
+                                          className="p-1.5 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-500/10"
+                                          title="Delete wardrobe"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      )}
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setExpandedWardrobe(w);
+                                        }}
+                                        className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-500/10"
+                                        title="Expand details"
+                                      >
+                                        <Maximize2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+
+                              {editingWardrobeId === w.id ? (
+                                <div
+                                  className="space-y-2"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <div>
+                                    <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">
+                                      Outfit Description
+                                    </label>
+                                    <textarea
+                                      value={wardrobeText}
+                                      onChange={(e) => setWardrobeText(e.target.value)}
+                                      className="w-full px-2 py-1.5 text-xs rounded border border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                      rows={3}
+                                      autoFocus
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">
+                                      Accessories
+                                    </label>
+                                    <textarea
+                                      value={accessoriesText}
+                                      onChange={(e) => setAccessoriesText(e.target.value)}
+                                      className="w-full px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none"
+                                      rows={2}
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">
+                                      Scene Appearance
+                                    </label>
+                                    <textarea
+                                      value={appearanceNotesText}
+                                      onChange={(e) => setAppearanceNotesText(e.target.value)}
+                                      placeholder="Makeup, hair, injuries (e.g., bloodshot eyes, bruise on temple)"
+                                      className="w-full px-2 py-1.5 text-xs rounded border border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none"
+                                      rows={2}
+                                    />
+                                  </div>
+                                  <div className="flex gap-2">
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        setExpandedWardrobe(w);
+                                        handleSaveWardrobe();
                                       }}
-                                      className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-500/10"
-                                      title="Expand details"
+                                      className="flex-1 px-2 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
                                     >
-                                      <Maximize2 className="w-3.5 h-3.5" />
+                                      Save
                                     </button>
-                                  </>
-                                )}
-                              </div>
-
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleWardrobeDescription(w.id);
-                                }}
-                                className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-                              >
-                                {expandedWardrobeDescriptions.has(w.id) ? (
-                                  <>
-                                    <span>Hide Details</span>
-                                    <ChevronUp className="w-3 h-3" />
-                                  </>
-                                ) : (
-                                  <>
-                                    <span>Show Details</span>
-                                    <ChevronDown className="w-3 h-3" />
-                                  </>
-                                )}
-                              </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        cancelEditingWardrobe();
+                                      }}
+                                      className="px-2 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div>
+                                  <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                                    {w.description}
+                                  </p>
+                                  {w.accessories && (
+                                    <p className="text-[11px] text-gray-500 dark:text-gray-500 mt-1.5">
+                                      <span className="font-medium text-gray-700 dark:text-gray-300">Accessories:</span> {w.accessories}
+                                    </p>
+                                  )}
+                                  {w.appearanceNotes && (
+                                    <p className="text-[11px] text-purple-600 dark:text-purple-400 mt-1.5">
+                                      <span className="font-medium">Look:</span> {w.appearanceNotes}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </div>
+                        ) : (
+                          <>
+                            {renderWardrobeImage(w, "stacked")}
+                            <div className="p-3">
+                              {/* Title and badges row */}
+                              <div className="mb-2">
+                                <div className="flex flex-wrap items-center gap-2 min-w-0 mb-2">
+                                  <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                                    {w.name}
+                                  </span>
+                                  {w.isDefault && (
+                                    <span className="text-[10px] px-1.5 py-0.5 bg-green-500/20 text-green-700 dark:text-green-400 rounded">
+                                      default
+                                    </span>
+                                  )}
+                                  {w.sceneNumbers && w.sceneNumbers.length > 0 && (
+                                    <span className="text-[10px] text-blue-700 dark:text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">
+                                      Scenes {formatSceneRange(w.sceneNumbers)}
+                                    </span>
+                                  )}
+                                </div>
 
-                          {editingWardrobeId === w.id ? (
-                            <div
-                              className="space-y-2 mt-1"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {/* ... editing fields ... */}
-                              <div>
-                                <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">
-                                  Outfit Description
-                                </label>
-                                <textarea
-                                  value={wardrobeText}
-                                  onChange={(e) => setWardrobeText(e.target.value)}
-                                  className="w-full px-2 py-1.5 text-xs rounded border border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                                  rows={3}
-                                  autoFocus
-                                />
+                                {/* Controls and Toggle row */}
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-1">
+                                    {editingWardrobeId !== w.id && (
+                                      <>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleGenerateWardrobeImage(w);
+                                          }}
+                                          disabled={
+                                            generatingWardrobeImageId === w.id ||
+                                            !hasCharacterReferenceForVoice
+                                          }
+                                          className="p-1.5 rounded-lg text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10 disabled:opacity-50"
+                                          title={
+                                            !hasCharacterReferenceForVoice
+                                              ? "Generate character identity reference first"
+                                              : (w.fullBodyUrl || w.headshotUrl)
+                                                ? "Regenerate wardrobe reference image"
+                                                : "Generate wardrobe reference image"
+                                          }
+                                        >
+                                          {generatingWardrobeImageId === w.id ? (
+                                            <Loader className="w-3.5 h-3.5 animate-spin" />
+                                          ) : (
+                                            <ImagePlus className="w-3.5 h-3.5" />
+                                          )}
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleEnhanceWardrobe(w.id);
+                                          }}
+                                          disabled={enhancingWardrobeId === w.id}
+                                          className="p-1.5 rounded-lg text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 disabled:opacity-50"
+                                          title="Enhance with AI"
+                                        >
+                                          {enhancingWardrobeId === w.id ? (
+                                            <Loader className="w-3.5 h-3.5 animate-spin" />
+                                          ) : (
+                                            <Wand2 className="w-3.5 h-3.5" />
+                                          )}
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            startEditingWardrobe(w);
+                                          }}
+                                          className="p-1.5 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                                          title="Edit wardrobe"
+                                        >
+                                          <Edit className="w-3.5 h-3.5" />
+                                        </button>
+                                        {wardrobes.length > 1 && (
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleDeleteWardrobe(w.id);
+                                            }}
+                                            className="p-1.5 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-500/10"
+                                            title="Delete wardrobe"
+                                          >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                          </button>
+                                        )}
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setExpandedWardrobe(w);
+                                          }}
+                                          className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-500/10"
+                                          title="Expand details"
+                                        >
+                                          <Maximize2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
+
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleWardrobeDescription(w.id);
+                                    }}
+                                    className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                                  >
+                                    {expandedWardrobeDescriptions.has(w.id) ? (
+                                      <>
+                                        <span>Hide Details</span>
+                                        <ChevronUp className="w-3 h-3" />
+                                      </>
+                                    ) : (
+                                      <>
+                                        <span>Show Details</span>
+                                        <ChevronDown className="w-3 h-3" />
+                                      </>
+                                    )}
+                                  </button>
+                                </div>
                               </div>
-                              <div>
-                                <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">
-                                  Accessories
-                                </label>
-                                <textarea
-                                  value={accessoriesText}
-                                  onChange={(e) => setAccessoriesText(e.target.value)}
-                                  className="w-full px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none"
-                                  rows={2}
-                                />
-                              </div>
-                              <div>
-                                <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">
-                                  Scene Appearance
-                                </label>
-                                <textarea
-                                  value={appearanceNotesText}
-                                  onChange={(e) => setAppearanceNotesText(e.target.value)}
-                                  placeholder="Makeup, hair, injuries (e.g., bloodshot eyes, bruise on temple)"
-                                  className="w-full px-2 py-1.5 text-xs rounded border border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none"
-                                  rows={2}
-                                />
-                              </div>
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleSaveWardrobe();
-                                  }}
-                                  className="flex-1 px-2 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+
+                              {editingWardrobeId === w.id ? (
+                                <div
+                                  className="space-y-2 mt-1"
+                                  onClick={(e) => e.stopPropagation()}
                                 >
-                                  Save
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    cancelEditingWardrobe();
-                                  }}
-                                  className="px-2 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
+                                  <div>
+                                    <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">
+                                      Outfit Description
+                                    </label>
+                                    <textarea
+                                      value={wardrobeText}
+                                      onChange={(e) => setWardrobeText(e.target.value)}
+                                      className="w-full px-2 py-1.5 text-xs rounded border border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                      rows={3}
+                                      autoFocus
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">
+                                      Accessories
+                                    </label>
+                                    <textarea
+                                      value={accessoriesText}
+                                      onChange={(e) => setAccessoriesText(e.target.value)}
+                                      className="w-full px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none"
+                                      rows={2}
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">
+                                      Scene Appearance
+                                    </label>
+                                    <textarea
+                                      value={appearanceNotesText}
+                                      onChange={(e) => setAppearanceNotesText(e.target.value)}
+                                      placeholder="Makeup, hair, injuries (e.g., bloodshot eyes, bruise on temple)"
+                                      className="w-full px-2 py-1.5 text-xs rounded border border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none"
+                                      rows={2}
+                                    />
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleSaveWardrobe();
+                                      }}
+                                      className="flex-1 px-2 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                                    >
+                                      Save
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        cancelEditingWardrobe();
+                                      }}
+                                      className="px-2 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                expandedWardrobeDescriptions.has(w.id) && (
+                                  <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-800 animate-in fade-in slide-in-from-top-1 duration-200">
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                                      {w.description}
+                                    </p>
+                                    {w.accessories && (
+                                      <p className="text-[11px] text-gray-500 dark:text-gray-500 mt-1.5">
+                                        <span className="font-medium text-gray-700 dark:text-gray-300">Accessories:</span> {w.accessories}
+                                      </p>
+                                    )}
+                                    {w.appearanceNotes && (
+                                      <p className="text-[11px] text-purple-600 dark:text-purple-400 mt-1.5">
+                                        <span className="font-medium">Look:</span> {w.appearanceNotes}
+                                      </p>
+                                    )}
+                                  </div>
+                                )
+                              )}
                             </div>
-                          ) : (
-                            expandedWardrobeDescriptions.has(w.id) && (
-                              <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-800 animate-in fade-in slide-in-from-top-1 duration-200">
-                                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                                  {w.description}
-                                </p>
-                                {w.accessories && (
-                                  <p className="text-[11px] text-gray-500 dark:text-gray-500 mt-1.5">
-                                    <span className="font-medium text-gray-700 dark:text-gray-300">Accessories:</span> {w.accessories}
-                                  </p>
-                                )}
-                                {w.appearanceNotes && (
-                                  <p className="text-[11px] text-purple-600 dark:text-purple-400 mt-1.5">
-                                    <span className="font-medium">Look:</span> {w.appearanceNotes}
-                                  </p>
-                                )}
-                              </div>
-                            )
-                          )}
-                        </div>
+                          </>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -3701,6 +3922,111 @@ const CharacterCard = ({
             </DialogHeader>
 
             {expandedWardrobe && (
+              splitLayout ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4 items-start">
+                  <div className="relative min-h-[180px] max-h-[50vh] rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800">
+                    {renderWardrobeImage(expandedWardrobe, "split")}
+                  </div>
+                  <div className="space-y-4 min-w-0 overflow-y-auto max-h-[50vh]">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Outfit Description
+                        </h4>
+                        <div className="flex items-center gap-2">
+                          <div className="group relative">
+                            <Info className="w-3.5 h-3.5 text-gray-400 cursor-help" />
+                            <div className="absolute right-0 bottom-full mb-1 w-56 p-2 bg-gray-900 text-gray-200 text-[10px] rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                              More detailed descriptions produce more consistent
+                              images across scenes. Use ✨ Enhance to automatically
+                              add specifics like exact colors, materials, fit, and
+                              footwear.
+                            </div>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEnhanceWardrobe(expandedWardrobe.id);
+                            }}
+                            disabled={enhancingWardrobeId === expandedWardrobe.id}
+                            className="flex items-center gap-1 px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-800/40 disabled:opacity-50"
+                          >
+                            {enhancingWardrobeId === expandedWardrobe.id ? (
+                              <>
+                                <Loader className="w-3 h-3 animate-spin" />{" "}
+                                Enhancing...
+                              </>
+                            ) : (
+                              <>
+                                <Wand2 className="w-3 h-3" /> Enhance
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                        {expandedWardrobe.description}
+                      </p>
+                    </div>
+
+                    {expandedWardrobe.accessories && (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Accessories
+                        </h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                          {expandedWardrobe.accessories}
+                        </p>
+                      </div>
+                    )}
+
+                    {expandedWardrobe.appearanceNotes && (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Scene Appearance
+                        </h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 border border-purple-100 dark:border-purple-800/40">
+                          {expandedWardrobe.appearanceNotes}
+                        </p>
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                          Makeup, hair, and injury details from script analysis — applied to the close-up panel when generating the wardrobe reference.
+                        </p>
+                      </div>
+                    )}
+
+                    {expandedWardrobe.reason && (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium text-amber-600 dark:text-amber-400 flex items-center gap-2">
+                          <Sparkles className="w-4 h-4" />
+                          Analysis
+                        </h4>
+                        <p className="text-sm text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 italic">
+                          {expandedWardrobe.reason}
+                        </p>
+                      </div>
+                    )}
+
+                    {expandedWardrobe.sceneNumbers &&
+                      expandedWardrobe.sceneNumbers.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Used in Scenes
+                          </h4>
+                          <div className="flex flex-wrap gap-2">
+                            {expandedWardrobe.sceneNumbers.map((num) => (
+                              <span
+                                key={num}
+                                className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded"
+                              >
+                                Scene {num}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                  </div>
+                </div>
+              ) : (
               <div className="space-y-6 py-4">
                 {/* Wardrobe reference image */}
                 <div className="space-y-2">
@@ -3833,6 +4159,7 @@ const CharacterCard = ({
                     </div>
                   )}
               </div>
+              )
             )}
 
             <DialogFooter className="flex flex-wrap gap-2">
@@ -3855,7 +4182,7 @@ const CharacterCard = ({
                   ) : (
                     <ImagePlus className="w-4 h-4 mr-2" />
                   )}
-                  {expandedWardrobe.headshotUrl ? "Regenerate Image" : "Generate Image"}
+                  {(expandedWardrobe.fullBodyUrl || expandedWardrobe.headshotUrl) ? "Regenerate Image" : "Generate Image"}
                 </Button>
               )}
               {expandedWardrobe && !expandedWardrobe.isDefault && (
