@@ -4,7 +4,7 @@ import {
   tryMatchCatalogModel,
   parseCatalogResponse,
 } from '@/lib/aggregator/renderfulCatalog'
-import { getAggregatorModel } from '@/lib/aggregator/modelRegistry'
+import { getAggregatorModel, getRefUpgradeEntryForModel } from '@/lib/aggregator/modelRegistry'
 
 describe('renderfulCatalog', () => {
   beforeEach(() => {
@@ -72,5 +72,26 @@ describe('renderfulCatalog', () => {
   it('returns null for Runway on text-to-video catalog', () => {
     const entry = getAggregatorModel('runway-gen4')
     expect(tryMatchCatalogModel(entry!, 'text-to-video', [])).toBeNull()
+  })
+
+  it('getRefUpgradeEntryForModel maps kling family to Kling Video O1', () => {
+    const entry = getAggregatorModel('kling-2.6')
+    expect(entry).toBeDefined()
+    const upgrade = getRefUpgradeEntryForModel(entry!)
+    expect(upgrade?.id).toBe('kling-video-o1')
+    expect(upgrade?.supportedRenderfulTypes).toContain('reference-to-video')
+  })
+
+  it('getRefUpgradeEntryForModel maps wan family to WAN 2.7 R2V', () => {
+    const entry = getAggregatorModel('wan-2.6')
+    expect(entry).toBeDefined()
+    const upgrade = getRefUpgradeEntryForModel(entry!)
+    expect(upgrade?.id).toBe('wan-2.7-r2v')
+  })
+
+  it('getRefUpgradeEntryForModel returns undefined for families without REF upgrade', () => {
+    const entry = getAggregatorModel('runway-gen4')
+    expect(entry).toBeDefined()
+    expect(getRefUpgradeEntryForModel(entry!)).toBeUndefined()
   })
 })

@@ -24,6 +24,10 @@ export interface AggregatorSubmitResult {
   jobId: string
   vendor: AggregatorVendor
   vendorModelId: string
+  billingModelId?: string
+  modelUpgraded?: boolean
+  effectiveType?: string
+  upgradeLabel?: string
 }
 
 export interface AggregatorPollResult {

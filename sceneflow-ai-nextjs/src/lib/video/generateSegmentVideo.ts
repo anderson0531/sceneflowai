@@ -138,6 +138,10 @@ export interface GenerateSegmentVideoResult {
   provenanceId?: string
   contentHash?: string
   videoModel?: string
+  billingModelId?: string
+  modelUpgraded?: boolean
+  effectiveAggregatorType?: string
+  upgradeLabel?: string
   aggregatorVendor?: string
   aggregatorJobId?: string
   asyncPending?: boolean
@@ -352,6 +356,10 @@ export async function generateSegmentVideoCore(
   let wasPolicyFallback = false
   let vertexPolicyAttempts = 0
   let aggregatorVendor: string | undefined
+  let billingModelId: string | undefined
+  let modelUpgraded: boolean | undefined
+  let effectiveAggregatorType: string | undefined
+  let upgradeLabel: string | undefined
 
   let videoBuffer: Buffer | null = null
   let finalVeoRef: string | undefined
@@ -388,8 +396,12 @@ export async function generateSegmentVideoCore(
     videoBuffer = aggResult.videoBuffer
     generationProvider = 'aggregator'
     aggregatorVendor = aggResult.vendor
+    billingModelId = aggResult.billingModelId
+    modelUpgraded = aggResult.modelUpgraded
+    effectiveAggregatorType = aggResult.effectiveType
+    upgradeLabel = aggResult.upgradeLabel
     console.log(
-      `[Segment Video] Aggregator ${aggResult.vendor} completed job ${aggResult.jobId} model=${selectedVideoModel}`
+      `[Segment Video] Aggregator ${aggResult.vendor} completed job ${aggResult.jobId} model=${selectedVideoModel}${modelUpgraded ? ` (upgraded to ${billingModelId})` : ''}`
     )
   } else try {
     console.log('[Segment Video] Routing to Vertex')
@@ -567,6 +579,10 @@ export async function generateSegmentVideoCore(
     methodSelection: methodSelectionResult,
     stemSeparation,
     videoModel: generationProvider === 'aggregator' ? selectedVideoModel : undefined,
+    billingModelId,
+    modelUpgraded,
+    effectiveAggregatorType,
+    upgradeLabel,
     aggregatorVendor,
   }
 }

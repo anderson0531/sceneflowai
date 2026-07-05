@@ -66,8 +66,47 @@ export const AGGREGATOR_MODEL_REGISTRY: AggregatorModelEntry[] = [
   },
 ]
 
+/** Internal REF-capable models used when the user's pick lacks reference-to-video. Not shown in UI. */
+export const RENDERFUL_REF_UPGRADE_ENTRIES: AggregatorModelEntry[] = [
+  {
+    id: 'kling-video-o1',
+    label: 'Kling Video O1',
+    vendorModelId: 'kling-video-o1',
+    matchKeywords: ['kling', 'o1'],
+    excludeKeywords: ['lipsync', 'edit', 'motion', '2.6', '3.0', '2.5', 'turbo'],
+    supportedRenderfulTypes: ['reference-to-video'],
+    methods: ['REF'],
+    costPerSecondUsd: 0.12,
+    nativeAudio: true,
+  },
+  {
+    id: 'wan-2.7-r2v',
+    label: 'WAN 2.7 Reference-to-Video',
+    vendorModelId: 'wan-2.7-r2v',
+    matchKeywords: ['wan', '2.7', 'reference'],
+    excludeKeywords: ['2.6', '2.5', '2.2', '2.1', 'edit', 'animate'],
+    supportedRenderfulTypes: ['reference-to-video'],
+    methods: ['REF'],
+    costPerSecondUsd: 0.08,
+    nativeAudio: false,
+  },
+]
+
+export function getRefUpgradeEntryForModel(
+  entry: AggregatorModelEntry
+): AggregatorModelEntry | undefined {
+  const family = entry.matchKeywords[0]?.toLowerCase()
+  if (!family) return undefined
+  return RENDERFUL_REF_UPGRADE_ENTRIES.find(
+    (upgrade) => upgrade.matchKeywords[0]?.toLowerCase() === family
+  )
+}
+
 export function getAggregatorModel(modelId: string): AggregatorModelEntry | undefined {
-  return AGGREGATOR_MODEL_REGISTRY.find((m) => m.id === modelId)
+  return (
+    AGGREGATOR_MODEL_REGISTRY.find((m) => m.id === modelId) ||
+    RENDERFUL_REF_UPGRADE_ENTRIES.find((m) => m.id === modelId)
+  )
 }
 
 export function getDefaultAggregatorModelId(): string {

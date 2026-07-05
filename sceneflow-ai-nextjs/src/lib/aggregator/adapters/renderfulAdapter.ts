@@ -4,7 +4,7 @@ import {
   getAggregatorBaseUrl,
   getAggregatorWebhookSecret,
 } from '../config'
-import { getAggregatorModel } from '../modelRegistry'
+import { getAggregatorModel, getRefUpgradeEntryForModel } from '../modelRegistry'
 import {
   fetchRenderfulCatalog,
   tryMatchCatalogModel,
@@ -51,23 +51,85 @@ function getCandidateTypes(requestedType: string, supportedTypes?: string[]): st
   return chain.filter((type) => supportedTypes.includes(type))
 }
 
-async function resolveEffectiveModel(
+interface EffectiveSubmission {
+  vendorModelId: string
+  effectiveType: string
+  billingModelId: string
+  modelUpgraded: boolean
+  upgradeLabel?: string
+}
+
+function collectReferenceImageUrls(
+  input: AggregatorVideoInput
+): string[] {
+  return (input.referenceImages || [])
+    .map((ref) => ref.url?.trim())
+    .filter((url): url is string => !!url)
+    .slice(0, 8)
+}
+
+async function resolveEffectiveSubmission(
   entry: AggregatorModelEntry,
   requestedType: string,
   imageUrl: string
-): Promise<{ vendorModelId: string; effectiveType: string }> {
-  const candidateTypes = getCandidateTypes(requestedType, entry.supportedRenderfulTypes)
+): Promise<EffectiveSubmission> {
   const catalogsByType = new Map<string, RenderfulCatalogEntry[]>()
+
+  if (requestedType === 'reference-to-video') {
+    const refCatalog = await fetchRenderfulCatalog('reference-to-video')
+    catalogsByType.set('reference-to-video', refCatalog)
+
+    const primaryRefSlug = tryMatchCatalogModel(entry, 'reference-to-video', refCatalog)
+    if (primaryRefSlug) {
+      return {
+        vendorModelId: primaryRefSlug,
+        effectiveType: 'reference-to-video',
+        billingModelId: entry.id,
+        modelUpgraded: false,
+      }
+    }
+
+    const upgradeEntry = getRefUpgradeEntryForModel(entry)
+    if (upgradeEntry) {
+      const upgradeSlug = tryMatchCatalogModel(
+        upgradeEntry,
+        'reference-to-video',
+        refCatalog
+      )
+      if (upgradeSlug) {
+        console.log(
+          `[Renderful] Upgraded REF model: ${entry.label} -> ${upgradeEntry.label} (${upgradeSlug})`
+        )
+        return {
+          vendorModelId: upgradeSlug,
+          effectiveType: 'reference-to-video',
+          billingModelId: upgradeEntry.id,
+          modelUpgraded: true,
+          upgradeLabel: upgradeEntry.label,
+        }
+      }
+    }
+  }
+
+  const candidateTypes = getCandidateTypes(requestedType, entry.supportedRenderfulTypes)
 
   for (const candidateType of candidateTypes) {
     if (candidateType === 'image-to-video' && !imageUrl) continue
 
-    const catalog = await fetchRenderfulCatalog(candidateType)
-    catalogsByType.set(candidateType, catalog)
+    let catalog = catalogsByType.get(candidateType)
+    if (!catalog) {
+      catalog = await fetchRenderfulCatalog(candidateType)
+      catalogsByType.set(candidateType, catalog)
+    }
 
     const slug = tryMatchCatalogModel(entry, candidateType, catalog)
     if (slug) {
-      return { vendorModelId: slug, effectiveType: candidateType }
+      return {
+        vendorModelId: slug,
+        effectiveType: candidateType,
+        billingModelId: entry.id,
+        modelUpgraded: false,
+      }
     }
   }
 
@@ -114,19 +176,20 @@ export const renderfulAdapter: VideoAggregatorAdapter = {
     }
 
     const hasStart = !!input.startFrameUrl?.trim()
+    const referenceImageUrls = collectReferenceImageUrls(input)
     const imageUrl =
-      input.startFrameUrl?.trim() || input.referenceImages?.[0]?.url?.trim() || ''
+      input.startFrameUrl?.trim() || referenceImageUrls[0] || ''
     const requestedType = mapGenerationType(input.method, hasStart)
 
-    const { vendorModelId, effectiveType } = await resolveEffectiveModel(
+    const submission = await resolveEffectiveSubmission(
       registryEntry,
       requestedType,
       imageUrl
     )
 
     const body: Record<string, unknown> = {
-      type: effectiveType,
-      model: vendorModelId,
+      type: submission.effectiveType,
+      model: submission.vendorModelId,
       prompt: input.prompt,
       aspect_ratio: mapAspectRatio(input.aspectRatio),
       duration: mapDuration(input.durationSeconds),
@@ -135,9 +198,15 @@ export const renderfulAdapter: VideoAggregatorAdapter = {
     if (input.negativePrompt?.trim()) {
       body.negative_prompt = input.negativePrompt.trim()
     }
-    if (effectiveType === 'image-to-video' && imageUrl) {
+
+    if (submission.effectiveType === 'reference-to-video' && referenceImageUrls.length > 0) {
+      body.reference_images = referenceImageUrls
+      body.image_urls = referenceImageUrls
+      body.image_url = referenceImageUrls[0]
+    } else if (submission.effectiveType === 'image-to-video' && imageUrl) {
       body.image_url = imageUrl
     }
+
     if (options?.webhookUrl) {
       body.webhook_url = options.webhookUrl
       body.webhook = options.webhookUrl
@@ -166,7 +235,15 @@ export const renderfulAdapter: VideoAggregatorAdapter = {
     const jobId = data.id || data.data?.id
     if (!jobId) throw new Error('Renderful did not return a generation id')
 
-    return { jobId, vendor: 'renderful', vendorModelId }
+    return {
+      jobId,
+      vendor: 'renderful',
+      vendorModelId: submission.vendorModelId,
+      billingModelId: submission.billingModelId,
+      modelUpgraded: submission.modelUpgraded,
+      effectiveType: submission.effectiveType,
+      upgradeLabel: submission.upgradeLabel,
+    }
   },
 
   async pollJob(jobId: string): Promise<AggregatorPollResult> {

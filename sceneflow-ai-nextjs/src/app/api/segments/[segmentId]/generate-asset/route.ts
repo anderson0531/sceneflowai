@@ -297,6 +297,10 @@ export async function POST(
     let contentHash: string | undefined
     let aggregatorVendor: string | undefined
     let responseVideoModel: string | undefined
+    let billingModelId: string | undefined
+    let modelUpgraded: boolean | undefined
+    let effectiveModel: string | undefined
+    let upgradeLabel: string | undefined
 
     if (genType === 'T2V' || genType === 'I2V') {
       const resolvedVideoProvider =
@@ -383,6 +387,10 @@ export async function POST(
       contentHash = videoResult.contentHash
       aggregatorVendor = videoResult.aggregatorVendor
       responseVideoModel = videoResult.videoModel
+      billingModelId = videoResult.billingModelId
+      modelUpgraded = videoResult.modelUpgraded
+      effectiveModel = videoResult.effectiveAggregatorType
+      upgradeLabel = videoResult.upgradeLabel
 
       if (wasPolicyFallback) {
         const klingCredits =
@@ -398,15 +406,17 @@ export async function POST(
       }
 
       if (generationProvider === 'aggregator' && videoModel) {
+        const creditsModelId = billingModelId ?? videoModel
         const aggCredits = getAggregatorCreditsForModel(
-          videoModel,
+          creditsModelId,
           requestedVideoDurationSeconds ?? duration ?? 8
         )
         await CreditService.charge(String(session.user.id), aggCredits, 'ai_usage', projectId, {
           operation: 'aggregator_video',
           segmentId,
-          videoModel,
+          videoModel: creditsModelId,
           generationProvider: 'aggregator',
+          ...(modelUpgraded ? { modelUpgraded: true, selectedVideoModel: videoModel } : {}),
         })
       }
 
@@ -459,6 +469,10 @@ export async function POST(
       provenanceId,
       contentHash,
       videoModel: responseVideoModel,
+      billingModelId,
+      modelUpgraded,
+      effectiveModel,
+      upgradeLabel,
       aggregatorVendor,
       routingTrace: buildRoutingTrace(
         resolvedVideoProvider,

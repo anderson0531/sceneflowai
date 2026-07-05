@@ -62,11 +62,75 @@ describe('aggregator adapters', () => {
     vi.unstubAllGlobals()
   })
 
-  it('degrades REF to image-to-video when reference image is present', async () => {
+  it('auto-upgrades REF to Kling Video O1 when primary model lacks reference-to-video', async () => {
     process.env.VIDEO_AGGREGATOR_API_KEY = 'test-renderful'
 
     const fetchMock = vi
       .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          models: [
+            {
+              id: 'kling-video-o1-reference-to-video',
+              name: 'Kling Video O1',
+              type: 'reference-to-video',
+            },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ id: 'gen_ref_upgraded' }),
+      })
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await renderfulAdapter.submitJob({
+      prompt: 'Detective close-up',
+      method: 'REF',
+      videoModel: 'kling-2.6',
+      durationSeconds: 8,
+      aspectRatio: '16:9',
+      referenceImages: [
+        { url: 'https://cdn.example.com/char-ref.png', type: 'character' },
+        { url: 'https://cdn.example.com/wardrobe-ref.png', type: 'character' },
+      ],
+    })
+
+    expect(result.jobId).toBe('gen_ref_upgraded')
+    expect(result.vendorModelId).toBe('kling-video-o1-reference-to-video')
+    expect(result.billingModelId).toBe('kling-video-o1')
+    expect(result.modelUpgraded).toBe(true)
+    expect(result.effectiveType).toBe('reference-to-video')
+    expect(result.upgradeLabel).toBe('Kling Video O1')
+
+    const submitCall = fetchMock.mock.calls[1]
+    const body = JSON.parse(String(submitCall[1]?.body))
+    expect(body.type).toBe('reference-to-video')
+    expect(body.model).toBe('kling-video-o1-reference-to-video')
+    expect(body.reference_images).toEqual([
+      'https://cdn.example.com/char-ref.png',
+      'https://cdn.example.com/wardrobe-ref.png',
+    ])
+    expect(body.image_urls).toEqual(body.reference_images)
+    expect(body.image_url).toBe('https://cdn.example.com/char-ref.png')
+
+    vi.unstubAllGlobals()
+  })
+
+  it('degrades REF to image-to-video when no REF upgrade model is in catalog', async () => {
+    process.env.VIDEO_AGGREGATOR_API_KEY = 'test-renderful'
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ models: [] }),
+      })
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
@@ -99,8 +163,10 @@ describe('aggregator adapters', () => {
 
     expect(result.jobId).toBe('gen_ref_i2v')
     expect(result.vendorModelId).toBe('kling-v2-6-image-to-video')
+    expect(result.modelUpgraded).toBe(false)
+    expect(result.effectiveType).toBe('image-to-video')
 
-    const submitCall = fetchMock.mock.calls[1]
+    const submitCall = fetchMock.mock.calls[2]
     const body = JSON.parse(String(submitCall[1]?.body))
     expect(body.type).toBe('image-to-video')
     expect(body.image_url).toBe('https://cdn.example.com/char-ref.png')
@@ -113,6 +179,11 @@ describe('aggregator adapters', () => {
 
     const fetchMock = vi
       .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ models: [] }),
+      })
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
@@ -143,7 +214,9 @@ describe('aggregator adapters', () => {
     })
 
     expect(result.jobId).toBe('gen_ref_t2v')
-    const submitCall = fetchMock.mock.calls[1]
+    expect(result.modelUpgraded).toBe(false)
+    expect(result.effectiveType).toBe('text-to-video')
+    const submitCall = fetchMock.mock.calls[2]
     const body = JSON.parse(String(submitCall[1]?.body))
     expect(body.type).toBe('text-to-video')
     expect(body.image_url).toBeUndefined()
@@ -170,6 +243,9 @@ describe('aggregator adapters', () => {
     const credits = getAggregatorCreditsForModel('kling-2.6', 8)
     expect(credits).toBeGreaterThanOrEqual(120)
     expect(getAggregatorModel('kling-2.6')?.label).toBe('Kling 2.6')
+
+    const upgradeCredits = getAggregatorCreditsForModel('kling-video-o1', 8)
+    expect(upgradeCredits).toBeGreaterThan(credits)
   })
 })
 

@@ -25,6 +25,10 @@ export interface GenerateVideoWithAggregatorSyncResult {
   vendor: AggregatorSubmitResult['vendor']
   vendorModelId: string
   jobId: string
+  billingModelId?: string
+  modelUpgraded?: boolean
+  effectiveType?: string
+  upgradeLabel?: string
 }
 
 export interface GenerateVideoWithAggregatorAsyncResult {
@@ -32,6 +36,10 @@ export interface GenerateVideoWithAggregatorAsyncResult {
   jobId: string
   vendor: AggregatorSubmitResult['vendor']
   vendorModelId: string
+  billingModelId?: string
+  modelUpgraded?: boolean
+  effectiveType?: string
+  upgradeLabel?: string
 }
 
 export type GenerateVideoWithAggregatorResult =
@@ -74,6 +82,10 @@ export async function generateVideoWithAggregator(
       jobId: submit.jobId,
       vendor: submit.vendor,
       vendorModelId: submit.vendorModelId,
+      billingModelId: submit.billingModelId,
+      modelUpgraded: submit.modelUpgraded,
+      effectiveType: submit.effectiveType,
+      upgradeLabel: submit.upgradeLabel,
     }
   }
 
@@ -94,6 +106,10 @@ export async function generateVideoWithAggregator(
     vendor: submit.vendor,
     vendorModelId: submit.vendorModelId,
     jobId: submit.jobId,
+    billingModelId: submit.billingModelId,
+    modelUpgraded: submit.modelUpgraded,
+    effectiveType: submit.effectiveType,
+    upgradeLabel: submit.upgradeLabel,
   }
 }
 
