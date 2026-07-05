@@ -24,7 +24,7 @@ import type {
   BatchRenderOptions,
   VideoGenerationMethod,
 } from '@/components/vision/scene-production/types'
-import type { SegmentGuideContext, SegmentConfigResult } from './useSegmentConfig'
+import type { SegmentGuideContext, SegmentConfigResult } from '@/lib/vision/segmentConfigBuilder'
 import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
 import {
   isVeoChainContinuation,
@@ -140,7 +140,7 @@ export function useVideoQueue(
     }
 
     let cancelled = false
-    import('./useSegmentConfig')
+    import('@/lib/vision/segmentConfigBuilder')
       .then(({ buildSegmentConfigsMap }) => {
         if (cancelled) return
         setConfigsMap(
