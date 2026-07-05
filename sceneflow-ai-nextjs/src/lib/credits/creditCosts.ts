@@ -161,6 +161,9 @@ export const VIDEO_CREDITS = {
   /** @deprecated Use FAL_KLING_VIDEO_* */
   KLING_VIDEO_5S: 180,
   KLING_VIDEO_10S: 320,
+
+  /** Multiplatform aggregator video (Renderful/Pollo) — baseline 8s clip */
+  AGGREGATOR_VIDEO_8S: 200,
   
   /** 
    * Topaz AI Upscale - ~$0.20/min → 50 credits/min ($0.50, ~60% margin)

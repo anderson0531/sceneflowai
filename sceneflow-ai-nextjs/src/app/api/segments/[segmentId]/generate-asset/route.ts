@@ -5,9 +5,11 @@ import { uploadImageToBlob } from '@/lib/storage/blob'
 import {
   generateSegmentVideoCore,
   SegmentVideoExtRefRequiredError,
+  SegmentVideoAggregatorAsyncError,
   SegmentVideoRateLimitError,
   KlingSafetyGuardBlockedError,
 } from '@/lib/video/generateSegmentVideo'
+import { getAggregatorCreditsForModel } from '@/lib/aggregator/modelRegistry'
 import { CreditService } from '@/services/CreditService'
 import { VIDEO_CREDITS } from '@/lib/credits/creditCosts'
 import { getServerSession } from 'next-auth'
@@ -77,6 +79,9 @@ interface GenerateAssetRequest {
   apiPromptOverride?: string
   /** Opt-in backup engine when Vertex policy blocks. Default false. */
   allowPolicyFallback?: boolean
+  /** Primary video backend for this generation. */
+  videoProvider?: 'vertex' | 'aggregator'
+  videoModel?: string
 }
 
 export async function POST(
@@ -128,6 +133,8 @@ export async function POST(
       beatId,
       apiPromptOverride,
       allowPolicyFallback,
+      videoProvider,
+      videoModel,
     } = body
 
     // Get user session for authentication
@@ -289,6 +296,8 @@ export async function POST(
           generationMethod === 'EXT' && !sourceVideoUrl && !previousSegmentVeoRef,
         apiPromptOverride,
         allowPolicyFallback: allowPolicyFallback === true,
+        videoProvider: videoProvider === 'aggregator' ? 'aggregator' : 'vertex',
+        videoModel,
       })
 
       assetUrl = videoResult.assetUrl
@@ -316,6 +325,19 @@ export async function POST(
             generationProvider === 'kling' ? 'direct_kling_video' : 'fal_kling_video',
           segmentId,
           generationProvider: generationProvider ?? 'fal',
+        })
+      }
+
+      if (generationProvider === 'aggregator' && videoModel) {
+        const aggCredits = getAggregatorCreditsForModel(
+          videoModel,
+          requestedVideoDurationSeconds ?? duration ?? 8
+        )
+        await CreditService.charge(String(session.user.id), aggCredits, 'ai_usage', projectId, {
+          operation: 'aggregator_video',
+          segmentId,
+          videoModel,
+          generationProvider: 'aggregator',
         })
       }
 
@@ -370,6 +392,21 @@ export async function POST(
     })
   } catch (error: any) {
     console.error('[Segment Asset Generation] Error:', error)
+
+    if (error instanceof SegmentVideoAggregatorAsyncError) {
+      return NextResponse.json(
+        {
+          success: true,
+          status: 'PROCESSING',
+          segmentId: (await params).segmentId,
+          aggregatorJobId: error.jobId,
+          generationProvider: 'aggregator',
+          aggregatorVendor: error.vendor,
+          videoModel: requestBody.videoModel,
+        },
+        { status: 202 }
+      )
+    }
 
     if (error instanceof SegmentVideoRateLimitError) {
       return NextResponse.json(

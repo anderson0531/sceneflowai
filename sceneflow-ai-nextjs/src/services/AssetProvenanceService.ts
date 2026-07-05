@@ -20,6 +20,8 @@ export interface VideoProvenanceInput {
   generationProvider: GenerationProviderSource
   wasPolicyFallback: boolean
   vertexPolicyAttempts?: number
+  videoModel?: string
+  aggregatorVendor?: string
 }
 
 export interface VideoProvenanceStamp {
@@ -35,8 +37,24 @@ export class AssetProvenanceService {
   private static readonly SIGNING_KEY =
     process.env.ASSET_PROVENANCE_SECRET || 'sceneflow-asset-provenance-dev-key'
 
-  static resolveGenerativeModel(provider: GenerationProviderSource): GenerativeModelSource {
-    return provider === 'vertex' ? 'veo-3.1' : 'kling-v3'
+  static resolveGenerativeModel(
+    provider: GenerationProviderSource,
+    videoModel?: string
+  ): GenerativeModelSource {
+    if (provider === 'vertex') return 'veo-3.1'
+    if (provider === 'aggregator' && videoModel) {
+      const known = [
+        'kling-2.6',
+        'kling-3.0',
+        'seedance-2.0',
+        'runway-gen4',
+        'wan-2.6',
+      ] as const
+      if ((known as readonly string[]).includes(videoModel)) {
+        return videoModel as GenerativeModelSource
+      }
+    }
+    return 'kling-v3'
   }
 
   static computeContentHash(videoBuffer: Buffer): string {
@@ -63,7 +81,10 @@ export class AssetProvenanceService {
    */
   static async stampVideoAsset(input: VideoProvenanceInput): Promise<VideoProvenanceStamp> {
     const contentHash = this.computeContentHash(input.videoBuffer)
-    const generativeModel = this.resolveGenerativeModel(input.generationProvider)
+    const generativeModel = this.resolveGenerativeModel(
+      input.generationProvider,
+      input.videoModel
+    )
     const signedAt = new Date().toISOString()
 
     const signature = this.signSidecar({

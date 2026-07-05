@@ -2940,6 +2940,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         qualityTier?: 'fast' | 'premium'
         apiPromptOverride?: string
         allowPolicyFallback?: boolean
+        videoProvider?: 'vertex' | 'aggregator'
+        videoModel?: string
       }
     ) => {
       if (!project?.id) {
@@ -3077,6 +3079,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             existingStemJobId: segment.stemSeparation?.jobId,
             apiPromptOverride: options?.apiPromptOverride,
             allowPolicyFallback: options?.allowPolicyFallback === true,
+            videoProvider: options?.videoProvider,
+            videoModel: options?.videoModel,
           }),
         })
 

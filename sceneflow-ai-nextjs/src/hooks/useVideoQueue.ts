@@ -104,6 +104,8 @@ export function useVideoQueue(
       qualityTier?: 'fast' | 'premium'
       apiPromptOverride?: string
       allowPolicyFallback?: boolean
+      videoProvider?: 'vertex' | 'aggregator'
+      videoModel?: string
     }
   ) => Promise<void>,
   segmentGuideContext?: SegmentGuideContext,
@@ -435,6 +437,8 @@ export function useVideoQueue(
               qualityTier: config.qualityTier,
               apiPromptOverride: config.useCustomApiPrompt ? config.apiPromptOverride : undefined,
               allowPolicyFallback: config.allowPolicyFallback === true,
+              videoProvider: config.videoProvider,
+              videoModel: config.videoModel,
             }
           )
           

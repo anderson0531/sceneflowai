@@ -254,6 +254,12 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const [useCustomApiPrompt, setUseCustomApiPrompt] = useState(false)
   const [apiPromptOverride, setApiPromptOverride] = useState('')
   const [allowPolicyFallback, setAllowPolicyFallback] = useState(false)
+  const [videoProvider, setVideoProvider] = useState<'vertex' | 'aggregator'>('vertex')
+  const [videoModel, setVideoModel] = useState('kling-2.6')
+  const [aggregatorEnabled, setAggregatorEnabled] = useState(false)
+  const [aggregatorModels, setAggregatorModels] = useState<
+    Array<{ id: string; label: string; costPerSecondUsd: number; nativeAudio: boolean }>
+  >([])
   
   // Intelligent prompt modification state
   const [promptInstruction, setPromptInstruction] = useState('')
@@ -624,6 +630,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     setUseCustomApiPrompt(autoConfig.useCustomApiPrompt ?? false)
     setApiPromptOverride(autoConfig.apiPromptOverride ?? '')
     setAllowPolicyFallback(autoConfig.allowPolicyFallback ?? false)
+    setVideoProvider(autoConfig.videoProvider ?? 'vertex')
+    setVideoModel(autoConfig.videoModel ?? 'kling-2.6')
     setApiPromptPreview('')
     setApiPromptPreviewError(null)
   }, [autoConfig, lockedVideoAspect, batchGuideSeed, segment, autoResolvedRefs.entries])
@@ -694,8 +702,24 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     ...config,
     useCustomApiPrompt,
     apiPromptOverride: useCustomApiPrompt ? apiPromptOverride.trim() : undefined,
-    allowPolicyFallback,
+    allowPolicyFallback: videoProvider === 'vertex' ? allowPolicyFallback : false,
+    videoProvider,
+    videoModel: videoProvider === 'aggregator' ? videoModel : undefined,
   })
+
+  useEffect(() => {
+    if (!isOpen) return
+    void fetch('/api/config/video-providers', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((data) => {
+        setAggregatorEnabled(data.enabled === true)
+        if (Array.isArray(data.models)) {
+          setAggregatorModels(data.models)
+          if (data.defaultModel && !videoModel) setVideoModel(data.defaultModel)
+        }
+      })
+      .catch(() => setAggregatorEnabled(false))
+  }, [isOpen])
 
   // Initialize state only on open transition or segment change while open.
   useEffect(() => {
@@ -1581,6 +1605,52 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                       Reset to preview
                     </Button>
                   </div>
+                  {aggregatorEnabled && (
+                    <div className="space-y-2 pt-2 border-t border-slate-700/80">
+                      <Label className="text-slate-400 text-xs">Video provider</Label>
+                      <Select
+                        value={videoProvider}
+                        onValueChange={(v) =>
+                          setVideoProvider(v as 'vertex' | 'aggregator')
+                        }
+                      >
+                        <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-slate-800 border-slate-700">
+                          <SelectItem value="vertex">Google Veo (default)</SelectItem>
+                          <SelectItem value="aggregator">
+                            Multiplatform (bypasses Google policy)
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {videoProvider === 'aggregator' && (
+                        <>
+                          <Label className="text-slate-400 text-xs">Model</Label>
+                          <Select value={videoModel} onValueChange={setVideoModel}>
+                            <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-slate-800 border-slate-700">
+                              {aggregatorModels.map((m) => (
+                                <SelectItem key={m.id} value={m.id}>
+                                  {m.label}
+                                  {m.nativeAudio ? ' · audio' : ''} (~$
+                                  {m.costPerSecondUsd.toFixed(2)}/s)
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <p className="text-[10px] text-slate-500 leading-relaxed">
+                            Multiplatform models use provider-native content policies (Kling,
+                            Runway, ByteDance), which are less restrictive than Google for creative
+                            violence, NIL, and trigger words.
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  {videoProvider === 'vertex' && (
                   <div
                     className="flex items-start gap-2 cursor-pointer pt-1"
                     onClick={() => setAllowPolicyFallback((prev) => !prev)}
@@ -1599,6 +1669,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                       </span>
                     </span>
                   </div>
+                  )}
                 </AccordionContent>
               </AccordionItem>
             </Accordion>

@@ -1,6 +1,6 @@
 import type { SceneSegment } from '@/components/vision/scene-production/types'
 
-export type SegmentVideoProvider = 'vertex' | 'fal' | 'kling'
+export type SegmentVideoProvider = 'vertex' | 'fal' | 'kling' | 'aggregator'
 
 /** True when a prior segment can supply a Vertex Veo ref for EXT (not Fal/Kling fallback). */
 export function priorSegmentSupportsVertexExt(
@@ -9,7 +9,7 @@ export function priorSegmentSupportsVertexExt(
   if (!prev) return false
   const provider = (prev as SceneSegment & { generationProvider?: SegmentVideoProvider })
     .generationProvider
-  if (provider === 'fal' || provider === 'kling') return false
+  if (provider === 'fal' || provider === 'kling' || provider === 'aggregator') return false
   const ref = prev.takes?.[0]?.veoVideoRef
   return typeof ref === 'string' && ref.trim().length > 0
 }

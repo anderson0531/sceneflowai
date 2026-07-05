@@ -5,8 +5,15 @@
 import { DataTypes, Model, Optional } from 'sequelize'
 import { sequelize } from '../config/database'
 
-export type GenerativeModelSource = 'veo-3.1' | 'kling-v3'
-export type GenerationProviderSource = 'vertex' | 'fal' | 'kling'
+export type GenerativeModelSource =
+  | 'veo-3.1'
+  | 'kling-v3'
+  | 'kling-2.6'
+  | 'kling-3.0'
+  | 'seedance-2.0'
+  | 'runway-gen4'
+  | 'wan-2.6'
+export type GenerationProviderSource = 'vertex' | 'fal' | 'kling' | 'aggregator'
 
 export interface AssetProvenanceLogAttributes {
   id: string

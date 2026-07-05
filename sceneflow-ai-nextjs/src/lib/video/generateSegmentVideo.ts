@@ -29,6 +29,10 @@ import { getVideoDurationFromBuffer } from '@/lib/video/serverVideoDuration'
 import { separateAudioStemsWithRetry, type StemSeparationResult } from '@/lib/audio/stemSeparation'
 import { computeSourceHash } from '@/lib/audio/stemJobs'
 import { buildSegmentEnhancedPrompt } from '@/lib/video/buildSegmentEnhancedPrompt'
+import { isAggregatorEnabled } from '@/lib/aggregator/config'
+import { generateVideoWithAggregator } from '@/lib/aggregator/generateVideoWithAggregator'
+import { getDefaultAggregatorModelId } from '@/lib/aggregator/modelRegistry'
+import { uploadVideo as uploadVideoToGCS } from '@/lib/storage/gcsAssets'
 export class SegmentVideoRateLimitError extends Error {
   retryAfter: number
   constructor(message: string, retryAfter = 60) {
@@ -87,6 +91,24 @@ export interface GenerateSegmentVideoInput {
   apiPromptOverride?: string
   /** Opt-in backup engine (Kling) after Vertex policy blocks. Default false. */
   allowPolicyFallback?: boolean
+  /** Primary video backend: vertex (default) or multiplatform aggregator. */
+  videoProvider?: 'vertex' | 'aggregator'
+  /** Aggregator model id from modelRegistry (e.g. kling-2.6). */
+  videoModel?: string
+}
+
+export class SegmentVideoAggregatorAsyncError extends Error {
+  jobId: string
+  vendor: string
+  vendorModelId: string
+
+  constructor(jobId: string, vendor: string, vendorModelId: string) {
+    super('Aggregator video job submitted — awaiting webhook completion')
+    this.name = 'SegmentVideoAggregatorAsyncError'
+    this.jobId = jobId
+    this.vendor = vendor
+    this.vendorModelId = vendorModelId
+  }
 }
 
 export interface GenerateSegmentVideoResult {
@@ -99,13 +121,17 @@ export interface GenerateSegmentVideoResult {
   actualDurationSeconds?: number | null
   methodSelection?: MethodSelectionResult
   stemSeparation?: StemSeparationResult
-  generationProvider?: 'vertex' | 'fal' | 'kling'
+  generationProvider?: 'vertex' | 'fal' | 'kling' | 'aggregator'
   fallbackModelFamily?: 'kling'
   wasPolicyFallback?: boolean
   usedBackupEngine?: boolean
   vertexPolicyAttempts?: number
   provenanceId?: string
   contentHash?: string
+  videoModel?: string
+  aggregatorVendor?: string
+  aggregatorJobId?: string
+  asyncPending?: boolean
 }
 
 export { KlingSafetyGuardBlockedError } from '@/lib/moderation/klingSafetyGuard'
@@ -146,6 +172,8 @@ export async function generateSegmentVideoCore(
     requireVeoRefForExt = false,
     apiPromptOverride,
     allowPolicyFallback = false,
+    videoProvider = 'vertex',
+    videoModel,
   } = input
 
   const methodContext = buildMethodSelectionContext(
@@ -283,9 +311,12 @@ export async function generateSegmentVideoCore(
   let enhancedPrompt = built.enhancedPrompt
 
   const override = apiPromptOverride?.trim()
+  const useAggregator =
+    videoProvider === 'aggregator' && isAggregatorEnabled()
+
   if (override) {
     enhancedPrompt = override
-  } else {
+  } else if (!useAggregator) {
     const preflight = await neutralizePromptForVeo({
       prompt: enhancedPrompt,
       guidePrompt,
@@ -301,16 +332,52 @@ export async function generateSegmentVideoCore(
     enhancedPrompt = preflight.prompt
   }
 
-  let generationProvider: 'vertex' | 'fal' | 'kling' = 'vertex'
+  let generationProvider: 'vertex' | 'fal' | 'kling' | 'aggregator' = 'vertex'
   let fallbackModelFamily: 'kling' | undefined
   let wasPolicyFallback = false
   let vertexPolicyAttempts = 0
+  let selectedVideoModel = videoModel || getDefaultAggregatorModelId()
+  let aggregatorVendor: string | undefined
 
   let videoBuffer: Buffer | null = null
   let finalVeoRef: string | undefined
   let finalVeoRefExpiry: string | undefined
 
-  try {
+  if (useAggregator) {
+    const aggResult = await generateVideoWithAggregator({
+      prompt: enhancedPrompt,
+      negativePrompt,
+      method,
+      videoModel: selectedVideoModel,
+      durationSeconds: effectiveDuration,
+      aspectRatio: (aspectRatio || '16:9') as '16:9' | '9:16',
+      startFrameUrl:
+        typeof videoOptions.startFrame === 'string' ? videoOptions.startFrame : undefined,
+      endFrameUrl:
+        typeof videoOptions.lastFrame === 'string' ? videoOptions.lastFrame : undefined,
+      referenceImages,
+      segmentId,
+      projectId,
+      sceneId,
+      userId,
+    })
+
+    if (aggResult.mode === 'async') {
+      throw new SegmentVideoAggregatorAsyncError(
+        aggResult.jobId,
+        aggResult.vendor,
+        aggResult.vendorModelId
+      )
+    }
+
+    videoBuffer = aggResult.videoBuffer
+    generationProvider = 'aggregator'
+    aggregatorVendor = aggResult.vendor
+    selectedVideoModel = videoModel || getDefaultAggregatorModelId()
+    console.log(
+      `[Segment Video] Aggregator ${aggResult.vendor} completed job ${aggResult.jobId} model=${selectedVideoModel}`
+    )
+  } else try {
     const genResult = await generateVideoWithVeoKlingFallback({
       prompt: enhancedPrompt,
       negativePrompt,
@@ -362,7 +429,7 @@ export async function generateSegmentVideoCore(
     throw new Error('Video generation did not produce output')
   }
 
-  // Non-Vertex fallback output: mandatory Hive audit before storage.
+  // Non-Vertex output: mandatory Hive audit before storage.
   if (generationProvider !== 'vertex') {
     await moderateKlingVideoBuffer(videoBuffer, {
       userId,
@@ -382,6 +449,8 @@ export async function generateSegmentVideoCore(
     generationProvider,
     wasPolicyFallback,
     vertexPolicyAttempts: vertexPolicyAttempts,
+    videoModel: generationProvider === 'aggregator' ? selectedVideoModel : undefined,
+    aggregatorVendor,
   })
 
   let actualVideoDurationSeconds: number | null = null
@@ -391,12 +460,19 @@ export async function generateSegmentVideoCore(
   }
 
   await probeAndLogDuration(videoBuffer)
-  const assetUrl = await uploadVideoToBlob(
-    videoBuffer,
-    `segments/${segmentId}-${Date.now()}.mp4`,
-    projectId,
-    provenanceStamp.gcsMetadata
-  )
+  const assetUrl =
+    generationProvider === 'aggregator'
+      ? await uploadVideoToGCS(
+          videoBuffer,
+          `segments/${segmentId}-${Date.now()}.mp4`,
+          projectId
+        )
+      : await uploadVideoToBlob(
+          videoBuffer,
+          `segments/${segmentId}-${Date.now()}.mp4`,
+          projectId,
+          provenanceStamp.gcsMetadata
+        )
 
   await AssetProvenanceService.attachAssetUrl(provenanceStamp.provenanceId, assetUrl)
   await AssetProvenanceService.scheduleC2paSigning({
@@ -475,5 +551,7 @@ export async function generateSegmentVideoCore(
     actualDurationSeconds: actualVideoDurationSeconds,
     methodSelection: methodSelectionResult,
     stemSeparation,
+    videoModel: generationProvider === 'aggregator' ? selectedVideoModel : undefined,
+    aggregatorVendor,
   }
 }

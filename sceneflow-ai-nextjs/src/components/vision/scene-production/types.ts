@@ -354,8 +354,12 @@ export interface VideoGenerationConfig {
   /** Full prompt sent to Vertex/Omni API (override when useCustomApiPrompt) */
   apiPromptOverride?: string
   useCustomApiPrompt?: boolean
-  /** Opt-in backup engine (Kling) when Vertex policy blocks */
+  /** Opt-in backup engine when Vertex policy blocks. Default false. */
   allowPolicyFallback?: boolean
+  /** Primary backend: vertex (default) or multiplatform aggregator. */
+  videoProvider?: 'vertex' | 'aggregator'
+  /** Aggregator model id when videoProvider is aggregator. */
+  videoModel?: string
 }
 
 /**
