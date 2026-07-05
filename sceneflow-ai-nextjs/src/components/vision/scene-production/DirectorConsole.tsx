@@ -87,14 +87,23 @@ const VideoEditingDialog = dynamic(
   () => import('./VideoEditingDialogV2').then(mod => ({ default: mod.VideoEditingDialog })),
   { ssr: false }
 )
-import { SceneVideoPlayer } from './SceneVideoPlayer'
+const SceneVideoPlayer = dynamic(
+  () => import('./SceneVideoPlayer').then(mod => ({ default: mod.SceneVideoPlayer })),
+  { ssr: false }
+)
 // Dynamic import for SceneRenderDialog - shared between DirectorConsole and ScriptPanel chunks
 const SceneRenderDialog = dynamic(
   () => import('./SceneRenderDialog').then(mod => ({ default: mod.SceneRenderDialog })),
   { ssr: false }
 )
-import { AddSpecialSegmentDialog, type FilmContext, type AdjacentSceneContext } from './AddSpecialSegmentDialog'
-import { ProductionStreamsPanel } from './ProductionStreamsPanel'
+const AddSpecialSegmentDialog = dynamic(
+  () => import('./AddSpecialSegmentDialog').then(mod => ({ default: mod.AddSpecialSegmentDialog })),
+  { ssr: false }
+)
+const ProductionStreamsPanel = dynamic(
+  () => import('./ProductionStreamsPanel').then(mod => ({ default: mod.ProductionStreamsPanel })),
+  { ssr: false }
+)
 import { ProductionSectionHeader } from './ProductionSectionHeader'
 // Dynamic import for SceneProductionMixer to avoid TDZ with LocalRenderService chain
 const SceneProductionMixer = dynamic(

@@ -24,7 +24,7 @@ import type {
   BatchRenderOptions,
   VideoGenerationMethod,
 } from '@/components/vision/scene-production/types'
-import { useSegmentConfigs, type SegmentGuideContext } from './useSegmentConfig'
+import type { SegmentGuideContext, SegmentConfigResult } from './useSegmentConfig'
 import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
 import {
   isVeoChainContinuation,
@@ -125,10 +125,46 @@ export function useVideoQueue(
     })
     return () => cancelAnimationFrame(rafId)
   }, [])
-  
-  // Get auto-drafted configs for all segments - skip processing until ready
-  // This prevents heavy computation during the TDZ-vulnerable initialization phase
-  const configsMap = useSegmentConfigs(segments, sceneImageUrl, !isReady, segmentGuideContext, defaultAspectRatio)
+
+  // Dynamically import segment config builder in a separate chunk — static import of
+  // useSegmentConfig in the same webpack bundle as DirectorConsole causes TDZ crashes
+  // ('Cannot access tO/tz before initialization') when the queue first builds.
+  const [configsMap, setConfigsMap] = useState<Map<string, SegmentConfigResult>>(new Map())
+  const [configsReady, setConfigsReady] = useState(false)
+
+  useEffect(() => {
+    if (!isReady) {
+      setConfigsMap(new Map())
+      setConfigsReady(false)
+      return
+    }
+
+    let cancelled = false
+    import('./useSegmentConfig')
+      .then(({ buildSegmentConfigsMap }) => {
+        if (cancelled) return
+        setConfigsMap(
+          buildSegmentConfigsMap(
+            segments,
+            sceneImageUrl,
+            segmentGuideContext,
+            defaultAspectRatio
+          )
+        )
+        setConfigsReady(true)
+      })
+      .catch((err) => {
+        console.error('[useVideoQueue] Failed to load segment config builder:', err)
+        if (!cancelled) {
+          setConfigsMap(new Map())
+          setConfigsReady(true)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [isReady, segments, sceneImageUrl, segmentGuideContext, defaultAspectRatio])
   
   // Local state for user-modified configs
   const [userConfigs, setUserConfigs] = useState<Map<string, VideoGenerationConfig>>(new Map())
@@ -152,10 +188,10 @@ export function useVideoQueue(
   const queue = useMemo<DirectorQueueItem[]>(() => {
     // QUARANTINE: Skip all processing until module graph has settled
     // This is the critical guard that prevents TDZ errors during rapid initial renders
-    if (!isReady) {
+    if (!isReady || !configsReady) {
       return []
     }
-    
+
     // Early return empty array for empty segments to avoid expensive processing
     if (!segments || segments.length === 0) {
       return []
@@ -258,7 +294,7 @@ export function useVideoQueue(
     // Cache the result to return on subsequent render loop iterations
     lastQueueRef.current = result
     return result
-  }, [isReady, segments, configsMap, userConfigs, sceneImageUrl, defaultAspectRatio])
+  }, [isReady, configsReady, segments, configsMap, userConfigs, sceneImageUrl, defaultAspectRatio])
   
   // Update config for a segment
   const updateConfig = useCallback((segmentId: string, config: VideoGenerationConfig) => {

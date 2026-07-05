@@ -722,6 +722,100 @@ export function useSegmentConfig(
 }
 
 /**
+ * Pure batch config builder — exported for dynamic import from useVideoQueue to avoid
+ * webpack scope-hoisting TDZ when bundled with DirectorConsole.
+ */
+export function buildSegmentConfigsMap(
+  segments: SceneSegment[],
+  sceneImageUrl?: string,
+  guideContext?: SegmentGuideContext,
+  defaultAspectRatio: '16:9' | '9:16' | '1:1' | '4:3' = '16:9'
+): Map<string, SegmentConfigResult> {
+  const configMap = new Map<string, SegmentConfigResult>()
+
+  const validSegments = segments.filter(
+    (s): s is SceneSegment => s != null && typeof s.segmentId === 'string'
+  )
+
+  for (const segment of validSegments) {
+    const method = detectRecommendedMethod(segment, sceneImageUrl, validSegments, guideContext)
+    const confidence = calculateConfidence(segment, method)
+    const approvalStatus = determineApprovalStatus(segment)
+
+    const motionPrompt = generateMotionPrompt(segment, sceneImageUrl)
+    const visualPrompt = generateVisualPrompt(segment, sceneImageUrl)
+    const prompt = visualPrompt
+
+    const { startFrameUrl: resolvedStart } = resolveSegmentFrameUrls(segment, sceneImageUrl)
+
+    const guidePrompt =
+      guideContext?.scene && segmentHasBatchGuideDialogue(segment)
+        ? buildDefaultBatchGuidePrompt(
+            segment,
+            guideContext.scene,
+            guideContext.characters ?? []
+          )
+        : ''
+
+    const extVeoRef =
+      method === 'EXT' ? resolveVeoRefForExtension(validSegments, segment) : undefined
+
+    const referenceImages = toConfigReferenceImages(
+      resolveConfigReferences(segment, guideContext)
+    )
+
+    const config: VideoGenerationConfig = {
+      mode: method,
+      prompt,
+      motionPrompt,
+      visualPrompt,
+      aspectRatio:
+        defaultAspectRatio === '1:1' || defaultAspectRatio === '4:3' ? '16:9' : defaultAspectRatio,
+      resolution: '720p',
+      duration: DEFAULT_VEO_CLIP_DURATION,
+      negativePrompt: '',
+      approvalStatus,
+      confidence,
+      guidePrompt: guidePrompt || undefined,
+      referenceImages: referenceImages?.length ? referenceImages : undefined,
+      startFrameUrl: resolvedStart,
+      endFrameUrl: null,
+      sourceVideoUrl:
+        extVeoRef ??
+        (segment.activeAssetUrl && segment.assetType === 'video'
+          ? segment.activeAssetUrl
+          : null),
+    }
+
+    const methodLabels: Record<VideoGenerationMethod, string> = {
+      FTV: 'Frame Interpolation',
+      I2V: 'Image to Video',
+      T2V: 'Text to Video',
+      EXT: 'Video Extension',
+      REF: 'Reference-Based',
+    }
+
+    const methodReasons: Record<VideoGenerationMethod, string> = {
+      FTV: 'Legacy interpolation mode',
+      I2V: 'Start frame available',
+      T2V: 'No frames available',
+      EXT: 'Existing video can be extended',
+      REF: 'Character references available',
+    }
+
+    configMap.set(segment.segmentId, {
+      config,
+      isReady: confidence >= 50 && approvalStatus !== 'error',
+      isApproved: approvalStatus === 'user-approved',
+      methodLabel: methodLabels[method],
+      methodReason: methodReasons[method],
+    })
+  }
+
+  return configMap
+}
+
+/**
  * Hook to batch-process multiple segments and generate configs
  * @param segments - Array of scene segments to process
  * @param sceneImageUrl - Optional fallback image URL
@@ -735,97 +829,10 @@ export function useSegmentConfigs(
   defaultAspectRatio: '16:9' | '9:16' | '1:1' | '4:3' = '16:9'
 ): Map<string, SegmentConfigResult> {
   return useMemo(() => {
-    // QUARANTINE GUARD: Skip all processing if told to
-    // This prevents TDZ errors during the initial module evaluation phase
     if (skip) {
       return new Map<string, SegmentConfigResult>()
     }
-    
-    const configMap = new Map<string, SegmentConfigResult>()
-    
-    // Filter out any undefined or invalid segments
-    const validSegments = segments.filter((s): s is SceneSegment => 
-      s != null && typeof s.segmentId === 'string'
-    )
-    
-    for (const segment of validSegments) {
-      const method = detectRecommendedMethod(segment, sceneImageUrl, validSegments, guideContext)
-      const confidence = calculateConfidence(segment, method)
-      const approvalStatus = determineApprovalStatus(segment)
-      
-      const motionPrompt = generateMotionPrompt(segment, sceneImageUrl)
-      const visualPrompt = generateVisualPrompt(segment, sceneImageUrl)
-      const prompt = visualPrompt
-
-      const { startFrameUrl: resolvedStart } =
-        resolveSegmentFrameUrls(segment, sceneImageUrl)
-
-      const guidePrompt =
-        guideContext?.scene && segmentHasBatchGuideDialogue(segment)
-          ? buildDefaultBatchGuidePrompt(
-              segment,
-              guideContext.scene,
-              guideContext.characters ?? [],
-            )
-          : ''
-      
-      const extVeoRef =
-        method === 'EXT' ? resolveVeoRefForExtension(validSegments, segment) : undefined
-
-      const referenceImages = toConfigReferenceImages(
-        resolveConfigReferences(segment, guideContext)
-      )
-
-      const config: VideoGenerationConfig = {
-        mode: method,
-        prompt,
-        motionPrompt,
-        visualPrompt,
-        aspectRatio: defaultAspectRatio === '1:1' || defaultAspectRatio === '4:3'
-          ? '16:9'
-          : defaultAspectRatio,
-        resolution: '720p',
-        duration: DEFAULT_VEO_CLIP_DURATION,
-        negativePrompt: '',
-        approvalStatus,
-        confidence,
-        guidePrompt: guidePrompt || undefined,
-        referenceImages: referenceImages?.length ? referenceImages : undefined,
-        startFrameUrl: resolvedStart,
-        endFrameUrl: null,
-        sourceVideoUrl:
-          extVeoRef ??
-          (segment.activeAssetUrl && segment.assetType === 'video'
-            ? segment.activeAssetUrl
-            : null),
-      }
-      
-      const methodLabels: Record<VideoGenerationMethod, string> = {
-        FTV: 'Frame Interpolation',
-        I2V: 'Image to Video',
-        T2V: 'Text to Video',
-        EXT: 'Video Extension',
-        REF: 'Reference-Based',
-      }
-      
-      const methodReasons: Record<VideoGenerationMethod, string> = {
-        FTV: 'Legacy interpolation mode',
-        I2V: 'Start frame available',
-        T2V: 'No frames available',
-        EXT: 'Existing video can be extended',
-        REF: 'Character references available',
-      }
-      
-      configMap.set(segment.segmentId, {
-        config,
-        isReady: confidence >= 50 && approvalStatus !== 'error',
-        isApproved: approvalStatus === 'user-approved',
-        methodLabel: methodLabels[method],
-        methodReason: methodReasons[method],
-      })
-    }
-    
-    return configMap
+    return buildSegmentConfigsMap(segments, sceneImageUrl, guideContext, defaultAspectRatio)
   }, [segments, sceneImageUrl, skip, guideContext, defaultAspectRatio])
 }
 
