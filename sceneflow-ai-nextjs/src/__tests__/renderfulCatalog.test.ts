@@ -1,11 +1,10 @@
 import { describe, expect, it, beforeEach } from 'vitest'
 import {
   clearRenderfulCatalogCache,
-  matchCatalogModel,
+  tryMatchCatalogModel,
   parseCatalogResponse,
 } from '@/lib/aggregator/renderfulCatalog'
 import { getAggregatorModel } from '@/lib/aggregator/modelRegistry'
-import { AggregatorHttpError } from '@/lib/aggregator/types'
 
 describe('renderfulCatalog', () => {
   beforeEach(() => {
@@ -40,7 +39,7 @@ describe('renderfulCatalog', () => {
     const entry = getAggregatorModel('kling-2.6')
     expect(entry).toBeDefined()
 
-    const slug = matchCatalogModel(entry!, 'text-to-video', [
+    const slug = tryMatchCatalogModel(entry!, 'text-to-video', [
       { id: 'kling-v2-6-text-to-video', name: 'Kling v2.6', type: 'text-to-video' },
       { id: 'kling-v3-0-text-to-video', name: 'Kling v3.0', type: 'text-to-video' },
       { id: 'kling-video-o1-reference-to-video', type: 'reference-to-video' },
@@ -53,7 +52,7 @@ describe('renderfulCatalog', () => {
     const entry = getAggregatorModel('runway-gen4')
     expect(entry).toBeDefined()
 
-    const slug = matchCatalogModel(entry!, 'image-to-video', [
+    const slug = tryMatchCatalogModel(entry!, 'image-to-video', [
       { id: 'runway-gen4-turbo-image-to-video', name: 'Runway Gen4 Turbo', type: 'image-to-video' },
       { id: 'runway-gen4-aleph-video-to-video', name: 'Runway Gen4 Aleph', type: 'video-to-video' },
     ])
@@ -61,17 +60,17 @@ describe('renderfulCatalog', () => {
     expect(slug).toBe('runway-gen4-turbo-image-to-video')
   })
 
-  it('rejects Runway for text-to-video with clear error', () => {
-    const entry = getAggregatorModel('runway-gen4')
-    expect(() => matchCatalogModel(entry!, 'text-to-video', [])).toThrow(AggregatorHttpError)
-  })
-
-  it('throws when no catalog match exists', () => {
+  it('returns null when no catalog match exists', () => {
     const entry = getAggregatorModel('kling-3.0')
-    expect(() =>
-      matchCatalogModel(entry!, 'text-to-video', [
+    expect(
+      tryMatchCatalogModel(entry!, 'text-to-video', [
         { id: 'wan-2.6-text-to-video', name: 'WAN 2.6', type: 'text-to-video' },
       ])
-    ).toThrow(/no text-to-video match/)
+    ).toBeNull()
+  })
+
+  it('returns null for Runway on text-to-video catalog', () => {
+    const entry = getAggregatorModel('runway-gen4')
+    expect(tryMatchCatalogModel(entry!, 'text-to-video', [])).toBeNull()
   })
 })

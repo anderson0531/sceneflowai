@@ -1,6 +1,5 @@
 import { getAggregatorApiKey, getAggregatorBaseUrl } from './config'
 import type { AggregatorModelEntry } from './types'
-import { AggregatorHttpError } from './types'
 
 export interface RenderfulCatalogEntry {
   id: string
@@ -212,22 +211,11 @@ export function clearRenderfulCatalogCache(): void {
   catalogCache.clear()
 }
 
-export function matchCatalogModel(
+export function tryMatchCatalogModel(
   entry: AggregatorModelEntry,
   generationType: string,
   catalog: RenderfulCatalogEntry[]
-): string {
-  if (
-    entry.supportedRenderfulTypes?.length &&
-    !entry.supportedRenderfulTypes.includes(generationType)
-  ) {
-    throw new AggregatorHttpError(
-      `${entry.label} is not available for ${generationType} on Renderful. Supported: ${entry.supportedRenderfulTypes.join(', ')}`,
-      400,
-      'renderful'
-    )
-  }
-
+): string | null {
   const typeFiltered = catalog.filter((item) => {
     if (!item.type) return true
     return item.type === generationType
@@ -252,7 +240,6 @@ export function matchCatalogModel(
         if (tier && haystack.includes(tier)) score += 3
       }
 
-      // Prefer entries whose slug encodes the generation type when names are absent.
       const typeHint = normalizeForMatch(generationType)
       if (haystack.includes(typeHint)) score += 2
 
@@ -261,18 +248,5 @@ export function matchCatalogModel(
     .filter((row): row is { id: string; score: number } => row != null)
     .sort((a, b) => b.score - a.score)
 
-  if (scored.length > 0) return scored[0].id
-
-  const sample = typeFiltered
-    .slice(0, 12)
-    .map((item) => item.name || item.id)
-    .join(', ')
-
-  throw new AggregatorHttpError(
-    `Renderful has no ${generationType} match for "${entry.label}" (keywords: ${entry.matchKeywords.join(', ')}). Available: ${sample}${
-      typeFiltered.length > 12 ? ', …' : ''
-    }`,
-    400,
-    'renderful'
-  )
+  return scored.length > 0 ? scored[0].id : null
 }

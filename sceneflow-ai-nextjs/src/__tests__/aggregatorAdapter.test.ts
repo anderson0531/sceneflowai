@@ -62,6 +62,95 @@ describe('aggregator adapters', () => {
     vi.unstubAllGlobals()
   })
 
+  it('degrades REF to image-to-video when reference image is present', async () => {
+    process.env.VIDEO_AGGREGATOR_API_KEY = 'test-renderful'
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          models: [
+            {
+              id: 'kling-v2-6-image-to-video',
+              name: 'Kling v2.6',
+              type: 'image-to-video',
+            },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ id: 'gen_ref_i2v' }),
+      })
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await renderfulAdapter.submitJob({
+      prompt: 'Detective close-up',
+      method: 'REF',
+      videoModel: 'kling-2.6',
+      durationSeconds: 8,
+      aspectRatio: '16:9',
+      referenceImages: [{ url: 'https://cdn.example.com/char-ref.png', type: 'character' }],
+    })
+
+    expect(result.jobId).toBe('gen_ref_i2v')
+    expect(result.vendorModelId).toBe('kling-v2-6-image-to-video')
+
+    const submitCall = fetchMock.mock.calls[1]
+    const body = JSON.parse(String(submitCall[1]?.body))
+    expect(body.type).toBe('image-to-video')
+    expect(body.image_url).toBe('https://cdn.example.com/char-ref.png')
+
+    vi.unstubAllGlobals()
+  })
+
+  it('degrades REF to text-to-video when no reference image is available', async () => {
+    process.env.VIDEO_AGGREGATOR_API_KEY = 'test-renderful'
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          models: [
+            {
+              id: 'kling-v2-6-text-to-video',
+              name: 'Kling v2.6',
+              type: 'text-to-video',
+            },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ id: 'gen_ref_t2v' }),
+      })
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await renderfulAdapter.submitJob({
+      prompt: 'Detective close-up',
+      method: 'REF',
+      videoModel: 'kling-2.6',
+      durationSeconds: 8,
+      aspectRatio: '16:9',
+    })
+
+    expect(result.jobId).toBe('gen_ref_t2v')
+    const submitCall = fetchMock.mock.calls[1]
+    const body = JSON.parse(String(submitCall[1]?.body))
+    expect(body.type).toBe('text-to-video')
+    expect(body.image_url).toBeUndefined()
+
+    vi.unstubAllGlobals()
+  })
+
   it('parses Renderful webhook payload', () => {
     const payload = renderfulAdapter.parseWebhook({
       event: 'generation.completed',

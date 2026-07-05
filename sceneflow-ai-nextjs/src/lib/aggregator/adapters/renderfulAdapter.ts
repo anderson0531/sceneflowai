@@ -7,8 +7,10 @@ import {
 import { getAggregatorModel } from '../modelRegistry'
 import {
   fetchRenderfulCatalog,
-  matchCatalogModel,
+  tryMatchCatalogModel,
+  type RenderfulCatalogEntry,
 } from '../renderfulCatalog'
+import type { AggregatorModelEntry } from '../types'
 import type {
   AggregatorPollResult,
   AggregatorSubmitOptions,
@@ -35,6 +37,51 @@ function mapGenerationType(method: VideoGenerationMethod, hasStart: boolean): st
   if (method === 'I2V' || method === 'FTV' || method === 'EXT' || hasStart) return 'image-to-video'
   if (method === 'REF') return 'reference-to-video'
   return 'text-to-video'
+}
+
+const DOWNGRADE_CHAINS: Record<string, string[]> = {
+  'reference-to-video': ['image-to-video', 'text-to-video'],
+  'image-to-video': ['image-to-video', 'text-to-video'],
+  'text-to-video': ['text-to-video'],
+}
+
+function getCandidateTypes(requestedType: string, supportedTypes?: string[]): string[] {
+  const chain = DOWNGRADE_CHAINS[requestedType] ?? [requestedType]
+  if (!supportedTypes?.length) return chain
+  return chain.filter((type) => supportedTypes.includes(type))
+}
+
+async function resolveEffectiveModel(
+  entry: AggregatorModelEntry,
+  requestedType: string,
+  imageUrl: string
+): Promise<{ vendorModelId: string; effectiveType: string }> {
+  const candidateTypes = getCandidateTypes(requestedType, entry.supportedRenderfulTypes)
+  const catalogsByType = new Map<string, RenderfulCatalogEntry[]>()
+
+  for (const candidateType of candidateTypes) {
+    if (candidateType === 'image-to-video' && !imageUrl) continue
+
+    const catalog = await fetchRenderfulCatalog(candidateType)
+    catalogsByType.set(candidateType, catalog)
+
+    const slug = tryMatchCatalogModel(entry, candidateType, catalog)
+    if (slug) {
+      return { vendorModelId: slug, effectiveType: candidateType }
+    }
+  }
+
+  const availableNames = [...catalogsByType.values()]
+    .flat()
+    .slice(0, 12)
+    .map((item) => item.name || item.id)
+    .join(', ')
+
+  throw new AggregatorHttpError(
+    `Renderful has no compatible generation type for "${entry.label}" (requested ${requestedType}, tried: ${candidateTypes.join(', ')}). Available: ${availableNames || 'none listed'}`,
+    400,
+    'renderful'
+  )
 }
 
 export const renderfulAdapter: VideoAggregatorAdapter = {
@@ -67,13 +114,18 @@ export const renderfulAdapter: VideoAggregatorAdapter = {
     }
 
     const hasStart = !!input.startFrameUrl?.trim()
-    const type = mapGenerationType(input.method, hasStart)
+    const imageUrl =
+      input.startFrameUrl?.trim() || input.referenceImages?.[0]?.url?.trim() || ''
+    const requestedType = mapGenerationType(input.method, hasStart)
 
-    const catalog = await fetchRenderfulCatalog(type)
-    const vendorModelId = matchCatalogModel(registryEntry, type, catalog)
+    const { vendorModelId, effectiveType } = await resolveEffectiveModel(
+      registryEntry,
+      requestedType,
+      imageUrl
+    )
 
     const body: Record<string, unknown> = {
-      type,
+      type: effectiveType,
       model: vendorModelId,
       prompt: input.prompt,
       aspect_ratio: mapAspectRatio(input.aspectRatio),
@@ -83,8 +135,8 @@ export const renderfulAdapter: VideoAggregatorAdapter = {
     if (input.negativePrompt?.trim()) {
       body.negative_prompt = input.negativePrompt.trim()
     }
-    if (hasStart) {
-      body.image_url = input.startFrameUrl
+    if (effectiveType === 'image-to-video' && imageUrl) {
+      body.image_url = imageUrl
     }
     if (options?.webhookUrl) {
       body.webhook_url = options.webhookUrl
