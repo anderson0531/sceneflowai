@@ -44,7 +44,14 @@ export interface AggregatorModelEntry {
   id: string
   label: string
   vendorModelId: string
-  renderfulModel?: string
+  /** Keywords matched against Renderful catalog entry name/id (normalized). */
+  matchKeywords: string[]
+  /** Keywords that disqualify a catalog entry when present in name/id. */
+  excludeKeywords?: string[]
+  /** Optional quality tier hint (e.g. turbo, pro, std). */
+  qualityTier?: string
+  /** Renderful generation types this UI model supports (text-to-video, etc.). */
+  supportedRenderfulTypes?: string[]
   polloEndpoint?: string
   methods: VideoGenerationMethod[]
   costPerSecondUsd: number

@@ -1,13 +1,14 @@
 import type { AggregatorModelEntry } from './types'
 
-/** SceneFlow-facing catalog — maps to vendor-specific model IDs per adapter. */
+/** SceneFlow-facing catalog — matched dynamically to Renderful slugs at runtime. */
 export const AGGREGATOR_MODEL_REGISTRY: AggregatorModelEntry[] = [
   {
     id: 'kling-2.6',
     label: 'Kling 2.6',
-    vendorModelId: 'kling/kling-v2-6',
-    // Renderful catalog uses hyphenated version ids (kling/kling-v2-6), not dotted (kling/kling-2.6).
-    renderfulModel: 'kling/kling-v2-6',
+    vendorModelId: 'kling-2.6',
+    matchKeywords: ['kling', '2.6'],
+    excludeKeywords: ['reference', 'o1', 'lipsync', 'motion', 'edit', '3.0', 'turbo'],
+    supportedRenderfulTypes: ['text-to-video', 'image-to-video', 'reference-to-video'],
     polloEndpoint: '/generation/kling/kling-v2-6',
     methods: ['T2V', 'I2V', 'REF'],
     costPerSecondUsd: 0.07,
@@ -16,8 +17,10 @@ export const AGGREGATOR_MODEL_REGISTRY: AggregatorModelEntry[] = [
   {
     id: 'kling-3.0',
     label: 'Kling 3.0',
-    vendorModelId: 'kling/kling-v3-std',
-    renderfulModel: 'kling/kling-v3-std',
+    vendorModelId: 'kling-3.0',
+    matchKeywords: ['kling', '3.0'],
+    excludeKeywords: ['reference', 'o1', '2.6', '2.5', 'lipsync', 'motion', 'edit'],
+    supportedRenderfulTypes: ['text-to-video', 'image-to-video', 'reference-to-video'],
     polloEndpoint: '/generation/kling/kling-v3',
     methods: ['T2V', 'I2V', 'REF'],
     costPerSecondUsd: 0.09,
@@ -26,8 +29,10 @@ export const AGGREGATOR_MODEL_REGISTRY: AggregatorModelEntry[] = [
   {
     id: 'seedance-2.0',
     label: 'Seedance 1.5 Pro',
-    vendorModelId: 'seedance/seedance-1.5-pro',
-    renderfulModel: 'seedance/seedance-1.5-pro',
+    vendorModelId: 'seedance-1.5-pro',
+    matchKeywords: ['seedance', '1.5'],
+    excludeKeywords: ['mini', 'fast', 'edit', 'extend', '2.0'],
+    supportedRenderfulTypes: ['text-to-video', 'image-to-video'],
     polloEndpoint: '/generation/seedance/seedance-2.0',
     methods: ['T2V', 'I2V'],
     costPerSecondUsd: 0.06,
@@ -35,10 +40,13 @@ export const AGGREGATOR_MODEL_REGISTRY: AggregatorModelEntry[] = [
   },
   {
     id: 'runway-gen4',
-    label: 'Runway Gen-3 Alpha Turbo',
-    vendorModelId: 'runway/gen3-alpha-turbo',
-    // Renderful exposes Runway as gen3-alpha-turbo; gen-4-turbo is rejected as "Unsupported model".
-    renderfulModel: 'runway/gen3-alpha-turbo',
+    label: 'Runway Gen-4 Turbo',
+    vendorModelId: 'runway-gen4-turbo',
+    matchKeywords: ['runway', 'gen4'],
+    excludeKeywords: ['aleph', 'upscale', 'edit'],
+    qualityTier: 'turbo',
+    // Renderful lists Runway as image-to-video only (Gen4 Turbo I2V).
+    supportedRenderfulTypes: ['image-to-video'],
     polloEndpoint: '/generation/runway/runway-gen-4',
     methods: ['T2V', 'I2V'],
     costPerSecondUsd: 0.1,
@@ -47,8 +55,10 @@ export const AGGREGATOR_MODEL_REGISTRY: AggregatorModelEntry[] = [
   {
     id: 'wan-2.6',
     label: 'Wan 2.6',
-    vendorModelId: 'wan/wan-2.6',
-    renderfulModel: 'wan/wan-2.6',
+    vendorModelId: 'wan-2.6',
+    matchKeywords: ['wan', '2.6'],
+    excludeKeywords: ['2.7', '2.5', '2.2', '2.1', 'reference', 'edit', 'animate'],
+    supportedRenderfulTypes: ['text-to-video', 'image-to-video'],
     polloEndpoint: '/generation/wan/wan-2.6',
     methods: ['T2V', 'I2V'],
     costPerSecondUsd: 0.05,

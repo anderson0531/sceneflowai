@@ -3,14 +3,63 @@ import { renderfulAdapter } from '@/lib/aggregator/adapters/renderfulAdapter'
 import { polloAdapter } from '@/lib/aggregator/adapters/polloAdapter'
 import { submitAggregatorJobWithFailover } from '@/lib/aggregator/dispatch'
 import { getAggregatorModel, getAggregatorCreditsForModel } from '@/lib/aggregator/modelRegistry'
+import { clearRenderfulCatalogCache } from '@/lib/aggregator/renderfulCatalog'
 
 describe('aggregator adapters', () => {
-  it('maps methods to Renderful model ids', () => {
-    expect(renderfulAdapter.mapMethodToModel('T2V', 'kling-2.6')).toContain('kling')
+  beforeEach(() => {
+    clearRenderfulCatalogCache()
+  })
+
+  it('maps methods to SceneFlow model ids for Renderful', () => {
+    expect(renderfulAdapter.mapMethodToModel('T2V', 'kling-2.6')).toBe('kling-2.6')
   })
 
   it('maps methods to Pollo endpoints', () => {
     expect(polloAdapter.mapMethodToModel('T2V', 'kling-2.6')).toContain('/generation/')
+  })
+
+  it('submits Renderful jobs with top-level prompt fields and matched slug', async () => {
+    process.env.VIDEO_AGGREGATOR_API_KEY = 'test-renderful'
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          models: [{ id: 'kling-v2-6-text-to-video', name: 'Kling v2.6', type: 'text-to-video' }],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ id: 'gen_test_1' }),
+      })
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await renderfulAdapter.submitJob({
+      prompt: 'A detective walks through rain',
+      method: 'T2V',
+      videoModel: 'kling-2.6',
+      durationSeconds: 8,
+      aspectRatio: '16:9',
+    })
+
+    expect(result.jobId).toBe('gen_test_1')
+    expect(result.vendorModelId).toBe('kling-v2-6-text-to-video')
+
+    const submitCall = fetchMock.mock.calls[1]
+    expect(submitCall[0]).toContain('/generations')
+    const body = JSON.parse(String(submitCall[1]?.body))
+    expect(body.type).toBe('text-to-video')
+    expect(body.model).toBe('kling-v2-6-text-to-video')
+    expect(body.prompt).toBe('A detective walks through rain')
+    expect(body.aspect_ratio).toBe('16:9')
+    expect(body.duration).toBe(8)
+    expect(body.input).toBeUndefined()
+
+    vi.unstubAllGlobals()
   })
 
   it('parses Renderful webhook payload', () => {
@@ -20,7 +69,7 @@ describe('aggregator adapters', () => {
         id: 'gen_abc',
         status: 'completed',
         outputs: ['https://cdn.example.com/video.mp4'],
-        model: 'kling/kling-2.6',
+        model: 'kling-v2-6-text-to-video',
       },
     })
     expect(payload?.jobId).toBe('gen_abc')
@@ -39,19 +88,19 @@ describe('submitAggregatorJobWithFailover', () => {
   const envBackup = { ...process.env }
 
   beforeEach(() => {
+    clearRenderfulCatalogCache()
     process.env.VIDEO_AGGREGATOR_VENDOR = 'renderful'
     process.env.VIDEO_AGGREGATOR_FAILOVER_VENDOR = 'pollo'
     process.env.VIDEO_AGGREGATOR_API_KEY = 'test-renderful'
     process.env.VIDEO_AGGREGATOR_FAILOVER_API_KEY = 'test-pollo'
     vi.stubGlobal(
       'fetch',
-      vi.fn()
-        .mockRejectedValueOnce(
-          Object.assign(new Error('server error'), {
-            status: 503,
-            name: 'AggregatorHttpError',
-          })
-        )
+      vi.fn().mockRejectedValueOnce(
+        Object.assign(new Error('server error'), {
+          status: 503,
+          name: 'AggregatorHttpError',
+        })
+      )
     )
   })
 
