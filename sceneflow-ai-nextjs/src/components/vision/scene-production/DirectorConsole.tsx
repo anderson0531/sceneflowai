@@ -1542,6 +1542,7 @@ function DirectorConsoleRoot({
           onSaveConfig={handleSaveConfig}
           onGenerate={handleGenerateFromDialog}
           savedConfig={getQueueItem(selectedSegment.segmentId)?.config}
+          projectId={projectId}
           onSaveEditedKeyframe={onSaveEditedKeyframe}
           guideCharacters={effectiveGuideCharacters}
           readOnlyPrompts={beatFirstReadOnlyPrompts}

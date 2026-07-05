@@ -12,6 +12,7 @@ import {
 } from '@/lib/video/generateSegmentVideo'
 import { getAggregatorCreditsForModel } from '@/lib/aggregator/modelRegistry'
 import { isAggregatorEnabled } from '@/lib/aggregator/config'
+import { buildAggregatorRouteProbeResult, buildRoutingTrace } from '@/lib/aggregator/routeProbe'
 import { CreditService } from '@/services/CreditService'
 import { VIDEO_CREDITS } from '@/lib/credits/creditCosts'
 import { getServerSession } from 'next-auth'
@@ -84,6 +85,8 @@ interface GenerateAssetRequest {
   /** Primary video backend for this generation. */
   videoProvider?: 'vertex' | 'aggregator'
   videoModel?: string
+  /** When true, verify aggregator routing without generating video or charging credits. */
+  routeProbe?: boolean
 }
 
 export async function POST(
@@ -137,12 +140,45 @@ export async function POST(
       allowPolicyFallback,
       videoProvider,
       videoModel,
+      routeProbe,
     } = body
 
     // Get user session for authentication
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const resolvedVideoProviderEarly =
+      videoProvider === 'aggregator' ? 'aggregator' : 'vertex'
+
+    if (
+      routeProbe === true &&
+      (genType === 'T2V' || genType === 'I2V')
+    ) {
+      if (resolvedVideoProviderEarly === 'aggregator') {
+        const probe = await buildAggregatorRouteProbeResult(videoModel)
+        return NextResponse.json({
+          success: true,
+          routeProbe: true,
+          segmentId,
+          routingTrace: buildRoutingTrace('aggregator', 'aggregator'),
+          routing: probe.routing,
+          renderfulProbe: probe.renderfulProbe,
+          diagnostics: probe.diagnostics,
+        })
+      }
+      return NextResponse.json({
+        success: true,
+        routeProbe: true,
+        segmentId,
+        routingTrace: buildRoutingTrace('vertex', 'vertex'),
+        routing: {
+          requestedProvider: 'vertex',
+          aggregatorEnabled: isAggregatorEnabled(),
+          wouldRouteTo: 'vertex',
+        },
+      })
     }
 
     if (!prompt || !genType || !sceneId || !projectId) {
@@ -275,6 +311,7 @@ export async function POST(
             error:
               'Multiplatform video is not configured on the server. Set VIDEO_AGGREGATOR_API_KEY in Vercel.',
             code: 'AGGREGATOR_NOT_CONFIGURED',
+            routingTrace: buildRoutingTrace('aggregator', 'vertex'),
           },
           { status: 503 }
         )
@@ -423,6 +460,10 @@ export async function POST(
       contentHash,
       videoModel: responseVideoModel,
       aggregatorVendor,
+      routingTrace: buildRoutingTrace(
+        resolvedVideoProvider,
+        generationProvider === 'aggregator' ? 'aggregator' : 'vertex'
+      ),
     })
   } catch (error: any) {
     console.error('[Segment Asset Generation] Error:', error)
@@ -447,6 +488,10 @@ export async function POST(
         {
           error: error.message,
           code: 'AGGREGATOR_NOT_CONFIGURED',
+          routingTrace: buildRoutingTrace(
+            requestBody.videoProvider === 'aggregator' ? 'aggregator' : 'vertex',
+            'vertex'
+          ),
         },
         { status: 503 }
       )
@@ -617,6 +662,12 @@ export async function POST(
         error: errorMessage,
         retryAfter,
         isRateLimited: statusCode === 429,
+        routingTrace: buildRoutingTrace(
+          requestBody.videoProvider === 'aggregator' ? 'aggregator' : 'vertex',
+          requestBody.videoProvider === 'aggregator' && isAggregatorEnabled()
+            ? 'aggregator'
+            : 'vertex'
+        ),
         ...(isAggregatorRequest
           ? {
               code: 'AGGREGATOR_GENERATION_FAILED',

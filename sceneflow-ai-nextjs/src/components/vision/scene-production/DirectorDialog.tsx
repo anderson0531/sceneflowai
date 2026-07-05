@@ -89,6 +89,43 @@ import { MAX_VERTEX_GEMINI_REFERENCE_IMAGES } from '@/lib/vision/referenceLimits
 import { resolveSegmentVideoReferences } from '@/lib/vision/resolveBeatVideoReferences'
 import type { BlueprintAspectRatio } from '@/lib/treatment/blueprintFoundation'
 import { toVideoAspectRatio } from '@/lib/vision/artStyle'
+import { AGGREGATOR_MODEL_REGISTRY } from '@/lib/aggregator/modelRegistry'
+import { toast } from 'sonner'
+
+type AggregatorDisabledReason =
+  | 'ok'
+  | 'no_api_key'
+  | 'explicitly_disabled'
+  | 'fetch_failed'
+
+interface AggregatorDiagnosticsState {
+  enabled: boolean
+  disabledReason: AggregatorDisabledReason
+  hasApiKey?: boolean
+  vendor?: string
+  vercelEnv?: string
+}
+
+const FALLBACK_AGGREGATOR_MODELS = AGGREGATOR_MODEL_REGISTRY.map((m) => ({
+  id: m.id,
+  label: m.label,
+  costPerSecondUsd: m.costPerSecondUsd,
+  nativeAudio: m.nativeAudio ?? false,
+}))
+
+function aggregatorStatusMessage(diagnostics: AggregatorDiagnosticsState | null): string | null {
+  if (!diagnostics || diagnostics.enabled) return null
+  switch (diagnostics.disabledReason) {
+    case 'no_api_key':
+      return 'Multiplatform unavailable — server missing VIDEO_AGGREGATOR_API_KEY. Add it to Vercel Production and redeploy.'
+    case 'explicitly_disabled':
+      return 'Multiplatform disabled via VIDEO_AGGREGATOR_ENABLED=false on the server.'
+    case 'fetch_failed':
+      return 'Could not load multiplatform config from the server.'
+    default:
+      return 'Multiplatform is not available on this server.'
+  }
+}
 
 type DirectorReferenceType = 'scene' | 'character' | 'object' | 'location' | 'wardrobe'
 
@@ -152,6 +189,7 @@ interface DirectorDialogProps {
   filmTitle?: string
   /** Saved queue config (preserves videoProvider across dialog re-opens). */
   savedConfig?: VideoGenerationConfig
+  projectId?: string
 }
 
 // Map internal mode names to VideoGenerationMethod
@@ -206,6 +244,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   sceneIndex,
   filmTitle,
   savedConfig,
+  projectId,
 }) => {
   const segmentGuideContext = useMemo<SegmentGuideContext | undefined>(() => {
     if (!scene) return undefined
@@ -260,6 +299,9 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const [videoProvider, setVideoProvider] = useState<'vertex' | 'aggregator'>('vertex')
   const [videoModel, setVideoModel] = useState('kling-2.6')
   const [aggregatorEnabled, setAggregatorEnabled] = useState(false)
+  const [aggregatorDiagnostics, setAggregatorDiagnostics] =
+    useState<AggregatorDiagnosticsState | null>(null)
+  const [routeProbeLoading, setRouteProbeLoading] = useState(false)
   const [aggregatorModels, setAggregatorModels] = useState<
     Array<{ id: string; label: string; costPerSecondUsd: number; nativeAudio: boolean }>
   >([])
@@ -711,12 +753,78 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   })
 
   const selectedAggregatorModelLabel =
-    aggregatorModels.find((m) => m.id === videoModel)?.label ?? videoModel
+    displayAggregatorModels.find((m) => m.id === videoModel)?.label ?? videoModel
 
   const generateButtonLabel =
     videoProvider === 'aggregator'
       ? `Generate via Multiplatform${selectedAggregatorModelLabel ? ` (${selectedAggregatorModelLabel})` : ''}`
       : 'Generate via Veo'
+
+  const displayAggregatorModels =
+    aggregatorModels.length > 0 ? aggregatorModels : FALLBACK_AGGREGATOR_MODELS
+
+  const aggregatorStatusBanner = aggregatorStatusMessage(aggregatorDiagnostics)
+
+  const handleTestRouting = useCallback(async () => {
+    if (!projectId) {
+      toast.error('Project not loaded — refresh the page and try again.')
+      return
+    }
+    setRouteProbeLoading(true)
+    try {
+      const res = await fetch(
+        `/api/segments/${encodeURIComponent(segment.segmentId)}/generate-asset`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            prompt: visualPrompt?.trim() || 'Route probe test',
+            genType: 'T2V',
+            sceneId,
+            projectId,
+            videoProvider: 'aggregator',
+            videoModel,
+            routeProbe: true,
+          }),
+        }
+      )
+      const data = await res.json()
+      if (!res.ok) {
+        const trace = data.routingTrace
+        const traceHint = trace
+          ? ` (requested=${trace.requestedProvider}, resolved=${trace.resolvedProvider}, enabled=${trace.aggregatorEnabled})`
+          : ''
+        throw new Error((data.error || 'Route probe failed') + traceHint)
+      }
+      const routing = data.routing as {
+        aggregatorEnabled?: boolean
+        wouldRouteTo?: string
+      }
+      const renderful = data.renderfulProbe as {
+        reachable?: boolean
+        modelCount?: number
+        error?: string
+      }
+      if (routing?.aggregatorEnabled && renderful?.reachable) {
+        toast.success(
+          `Routing OK → ${routing.wouldRouteTo ?? 'renderful'} (${renderful.modelCount ?? 0} models listed)`
+        )
+      } else if (routing?.aggregatorEnabled) {
+        toast.warning(
+          `Aggregator enabled but Renderful probe failed: ${renderful?.error ?? 'unknown error'}`
+        )
+      } else {
+        toast.warning(
+          `Server reports aggregator disabled (${data.diagnostics?.disabledReason ?? 'unknown'}). Check Vercel Production env.`
+        )
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Route probe failed')
+    } finally {
+      setRouteProbeLoading(false)
+    }
+  }, [projectId, sceneId, segment.segmentId, visualPrompt, videoModel])
 
   useEffect(() => {
     if (!isOpen) return
@@ -724,12 +832,38 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       .then((r) => r.json())
       .then((data) => {
         setAggregatorEnabled(data.enabled === true)
-        if (Array.isArray(data.models)) {
-          setAggregatorModels(data.models)
+        if (data.diagnostics) {
+          setAggregatorDiagnostics(data.diagnostics as AggregatorDiagnosticsState)
+        }
+        if (Array.isArray(data.models) && data.models.length > 0) {
+          setAggregatorModels(
+            data.models.map(
+              (m: {
+                id: string
+                label: string
+                costPerSecondUsd: number
+                nativeAudio: boolean
+              }) => ({
+                id: m.id,
+                label: m.label,
+                costPerSecondUsd: m.costPerSecondUsd,
+                nativeAudio: m.nativeAudio,
+              })
+            )
+          )
           if (data.defaultModel && !videoModel) setVideoModel(data.defaultModel)
+        } else {
+          setAggregatorModels(FALLBACK_AGGREGATOR_MODELS)
         }
       })
-      .catch(() => setAggregatorEnabled(false))
+      .catch(() => {
+        setAggregatorEnabled(false)
+        setAggregatorDiagnostics({
+          enabled: false,
+          disabledReason: 'fetch_failed',
+        })
+        setAggregatorModels(FALLBACK_AGGREGATOR_MODELS)
+      })
   }, [isOpen])
 
   // Initialize state only on open transition or segment change while open.
@@ -1616,57 +1750,85 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                       Reset to preview
                     </Button>
                   </div>
-                  {aggregatorEnabled && (
-                    <div className="space-y-2 pt-2 border-t border-slate-700/80">
-                      <Label className="text-slate-400 text-xs">Video provider</Label>
-                      <Select
-                        value={videoProvider}
-                        onValueChange={(v) =>
-                          setVideoProvider(v as 'vertex' | 'aggregator')
-                        }
-                      >
-                        <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-slate-800 border-slate-700">
-                          <SelectItem value="vertex">Google Veo (default)</SelectItem>
-                          <SelectItem value="aggregator">
-                            Multiplatform (bypasses Google policy)
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {videoProvider === 'aggregator' && (
-                        <>
-                          <Label className="text-slate-400 text-xs">Model</Label>
-                          <Select value={videoModel} onValueChange={setVideoModel}>
-                            <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-slate-800 border-slate-700">
-                              {aggregatorModels.map((m) => (
-                                <SelectItem key={m.id} value={m.id}>
-                                  {m.label}
-                                  {m.nativeAudio ? ' · audio' : ''} (~$
-                                  {m.costPerSecondUsd.toFixed(2)}/s)
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <p className="text-[10px] text-slate-500 leading-relaxed">
-                            Multiplatform models use provider-native content policies (Kling,
-                            Runway, ByteDance), which are less restrictive than Google for creative
-                            violence, NIL, and trigger words.
-                          </p>
-                          <p className="text-[10px] text-emerald-400/90">
-                            Active: Multiplatform · {selectedAggregatorModelLabel}
-                          </p>
-                        </>
-                      )}
-                      {videoProvider === 'vertex' && aggregatorEnabled && (
-                        <p className="text-[10px] text-slate-500">Active: Google Veo (default)</p>
-                      )}
-                    </div>
-                  )}
+                  <div className="space-y-2 pt-2 border-t border-slate-700/80">
+                    {aggregatorStatusBanner && (
+                      <p className="text-xs text-amber-400/90 leading-relaxed rounded-md border border-amber-700/40 bg-amber-950/30 px-2 py-1.5">
+                        {aggregatorStatusBanner}
+                        {aggregatorDiagnostics?.vercelEnv && (
+                          <span className="block text-[10px] text-amber-500/80 mt-1">
+                            Server env: {aggregatorDiagnostics.vercelEnv}
+                            {aggregatorDiagnostics.hasApiKey === false ? ' · API key not detected' : ''}
+                          </span>
+                        )}
+                      </p>
+                    )}
+                    <Label className="text-slate-400 text-xs">Video provider</Label>
+                    <Select
+                      value={videoProvider}
+                      onValueChange={(v) =>
+                        setVideoProvider(v as 'vertex' | 'aggregator')
+                      }
+                    >
+                      <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-800 border-slate-700">
+                        <SelectItem value="vertex">Google Veo (default)</SelectItem>
+                        <SelectItem value="aggregator">
+                          Multiplatform (bypasses Google policy)
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {videoProvider === 'aggregator' && (
+                      <>
+                        <Label className="text-slate-400 text-xs">Model</Label>
+                        <Select value={videoModel} onValueChange={setVideoModel}>
+                          <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-slate-800 border-slate-700">
+                            {displayAggregatorModels.map((m) => (
+                              <SelectItem key={m.id} value={m.id}>
+                                {m.label}
+                                {m.nativeAudio ? ' · audio' : ''} (~$
+                                {m.costPerSecondUsd.toFixed(2)}/s)
+                                {!aggregatorEnabled ? ' · server offline' : ''}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-[10px] text-slate-500 leading-relaxed">
+                          Multiplatform models use provider-native content policies (Kling,
+                          Runway, ByteDance), which are less restrictive than Google for creative
+                          violence, NIL, and trigger words.
+                        </p>
+                        <p className="text-[10px] text-emerald-400/90">
+                          Selected: Multiplatform · {selectedAggregatorModelLabel}
+                          {!aggregatorEnabled ? ' (server not configured)' : ''}
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="text-xs h-8 border-slate-600 w-full"
+                          disabled={routeProbeLoading || !projectId}
+                          onClick={() => void handleTestRouting()}
+                        >
+                          {routeProbeLoading ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
+                              Testing routing…
+                            </>
+                          ) : (
+                            'Test routing (no credits charged)'
+                          )}
+                        </Button>
+                      </>
+                    )}
+                    {videoProvider === 'vertex' && (
+                      <p className="text-[10px] text-slate-500">Active: Google Veo (default)</p>
+                    )}
+                  </div>
                   {videoProvider === 'vertex' && (
                   <div
                     className="flex items-start gap-2 cursor-pointer pt-1"

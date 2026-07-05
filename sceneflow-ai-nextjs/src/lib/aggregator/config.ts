@@ -45,6 +45,40 @@ export function getAggregatorWebhookSecret(): string | undefined {
   return process.env.VIDEO_AGGREGATOR_WEBHOOK_SECRET?.trim()
 }
 
+export type AggregatorDisabledReason =
+  | 'ok'
+  | 'no_api_key'
+  | 'explicitly_disabled'
+
+export interface AggregatorDiagnostics {
+  enabled: boolean
+  disabledReason: AggregatorDisabledReason
+  hasApiKey: boolean
+  vendor: AggregatorVendor
+  asyncEnabled: boolean
+  vercelEnv?: string
+}
+
+export function getAggregatorDiagnostics(): AggregatorDiagnostics {
+  const hasApiKey = !!process.env.VIDEO_AGGREGATOR_API_KEY?.trim()
+  const explicitlyDisabled = process.env.VIDEO_AGGREGATOR_ENABLED === 'false'
+  let disabledReason: AggregatorDisabledReason = 'ok'
+  if (explicitlyDisabled) {
+    disabledReason = 'explicitly_disabled'
+  } else if (!hasApiKey) {
+    disabledReason = 'no_api_key'
+  }
+
+  return {
+    enabled: isAggregatorEnabled(),
+    disabledReason,
+    hasApiKey,
+    vendor: getPrimaryAggregatorVendor(),
+    asyncEnabled: isAggregatorAsyncEnabled(),
+    vercelEnv: process.env.VERCEL_ENV,
+  }
+}
+
 export function isAggregatorEnabled(): boolean {
   if (process.env.VIDEO_AGGREGATOR_ENABLED === 'false') return false
   return !!getAggregatorApiKey()

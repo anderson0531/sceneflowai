@@ -53,16 +53,32 @@ Charged on successful aggregator generation via `getAggregatorCreditsForModel()`
 
 ## UI
 
-DirectorDialog → **Advanced — API Prompt** → **Video provider** + **Model** (visible when `VIDEO_AGGREGATOR_API_KEY` is set).
+DirectorDialog → **Advanced — API Prompt** → **Video provider** + **Model** (always visible; amber banner when server is not configured).
 
 When Multiplatform is selected, Veo backup-engine checkbox is hidden.
 
+Use **Test routing (no credits charged)** to verify server config and Renderful connectivity without generating a clip.
+
+## Troubleshooting / Vercel checklist
+
+1. Set `VIDEO_AGGREGATOR_API_KEY` on **Production** (not Preview only) in Vercel project settings.
+2. **Redeploy** after adding or changing env vars — serverless functions read env at deploy time.
+3. Confirm `VIDEO_AGGREGATOR_ENABLED` is not `false`.
+4. Open while logged in:
+   - `GET /api/config/video-providers` — check `diagnostics.hasApiKey` and `disabledReason`
+   - `GET /api/config/video-providers?probe=1` — verifies Renderful API key end-to-end
+5. In DirectorDialog, use **Test routing** or check Network tab: `generate-asset` with `routeProbe: true` returns `routing` + `renderfulProbe` without charging SceneFlow credits.
+
+Responses include `routingTrace` (`requestedProvider`, `resolvedProvider`, `aggregatorEnabled`) for debugging.
+
 ## Failover
 
-`dispatch.ts` retries on primary vendor HTTP 429/5XX with failover vendor (Pollo poll path).
+`dispatch.ts` retries on primary vendor HTTP 429/5XX with failover vendor only when `VIDEO_AGGREGATOR_FAILOVER_API_KEY` is set.
 
 ## Tests
 
 - `aggregatorAdapter.test.ts`
 - `aggregatorRouteSelection.test.ts`
 - `aggregatorWebhook.test.ts`
+- `aggregatorDiagnostics.test.ts`
+- `aggregatorRouteProbe.test.ts`

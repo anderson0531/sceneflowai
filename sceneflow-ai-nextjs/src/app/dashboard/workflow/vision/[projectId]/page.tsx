@@ -3095,6 +3095,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           // Server returns { error: string, retryAfter?: number, isRateLimited?: boolean }
           const errorData = await response.json().catch(() => null)
           const errorMessage = errorData?.error || 'Failed to generate asset'
+          const routingTrace = errorData?.routingTrace as
+            | {
+                requestedProvider?: string
+                resolvedProvider?: string
+                aggregatorEnabled?: boolean
+                disabledReason?: string
+              }
+            | undefined
+          if (routingTrace) {
+            console.warn('[Segment Generate] routingTrace:', routingTrace)
+            try {
+              toast.warning(
+                `Routing: requested ${routingTrace.requestedProvider ?? '?'} → resolved ${routingTrace.resolvedProvider ?? '?'} (aggregator enabled: ${routingTrace.aggregatorEnabled ?? '?'})`
+              )
+            } catch {}
+          }
           
           // Handle specific error codes with user-friendly messages
           if (response.status === 401) {
@@ -3133,8 +3149,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }
           if (response.status === 503 && errorData?.code === 'AGGREGATOR_NOT_CONFIGURED') {
             throw new Error(
-              errorData.error ||
-                'Multiplatform video is not configured on the server. Set VIDEO_AGGREGATOR_API_KEY in Vercel.'
+              (errorData.error ||
+                'Multiplatform video is not configured on the server. Set VIDEO_AGGREGATOR_API_KEY in Vercel.') +
+                (routingTrace
+                  ? `\n\nRouting trace: requested=${routingTrace.requestedProvider}, resolved=${routingTrace.resolvedProvider}, aggregatorEnabled=${routingTrace.aggregatorEnabled}`
+                  : '')
             )
           }
           throw new Error(errorMessage)
@@ -3160,7 +3179,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         console.log('[Segment Generate] Completed via provider:', data.generationProvider ?? 'unknown', {
           videoModel: data.videoModel,
           aggregatorVendor: data.aggregatorVendor,
+          routingTrace: data.routingTrace,
         })
+
+        if (data.routingTrace) {
+          console.log('[Segment Generate] routingTrace:', data.routingTrace)
+        }
 
         if (data.generationProvider === 'aggregator') {
           toast.success(
