@@ -5,8 +5,9 @@ export const AGGREGATOR_MODEL_REGISTRY: AggregatorModelEntry[] = [
   {
     id: 'kling-2.6',
     label: 'Kling 2.6',
-    vendorModelId: 'kling/kling-2.6',
-    renderfulModel: 'kling/kling-2.6',
+    vendorModelId: 'kling/kling-v2-6',
+    // Renderful catalog uses hyphenated version ids (kling/kling-v2-6), not dotted (kling/kling-2.6).
+    renderfulModel: 'kling/kling-v2-6',
     polloEndpoint: '/generation/kling/kling-v2-6',
     methods: ['T2V', 'I2V', 'REF'],
     costPerSecondUsd: 0.07,
@@ -15,8 +16,8 @@ export const AGGREGATOR_MODEL_REGISTRY: AggregatorModelEntry[] = [
   {
     id: 'kling-3.0',
     label: 'Kling 3.0',
-    vendorModelId: 'kling/kling-3.0',
-    renderfulModel: 'kuaishou/kling-v2-master',
+    vendorModelId: 'kling/kling-v3-std',
+    renderfulModel: 'kling/kling-v3-std',
     polloEndpoint: '/generation/kling/kling-v3',
     methods: ['T2V', 'I2V', 'REF'],
     costPerSecondUsd: 0.09,
@@ -24,8 +25,8 @@ export const AGGREGATOR_MODEL_REGISTRY: AggregatorModelEntry[] = [
   },
   {
     id: 'seedance-2.0',
-    label: 'Seedance 2.0',
-    vendorModelId: 'seedance/seedance-2.0',
+    label: 'Seedance 1.5 Pro',
+    vendorModelId: 'seedance/seedance-1.5-pro',
     renderfulModel: 'seedance/seedance-1.5-pro',
     polloEndpoint: '/generation/seedance/seedance-2.0',
     methods: ['T2V', 'I2V'],
@@ -34,9 +35,10 @@ export const AGGREGATOR_MODEL_REGISTRY: AggregatorModelEntry[] = [
   },
   {
     id: 'runway-gen4',
-    label: 'Runway Gen-4',
-    vendorModelId: 'runway/gen-4',
-    renderfulModel: 'runway/gen-4-turbo',
+    label: 'Runway Gen-3 Alpha Turbo',
+    vendorModelId: 'runway/gen3-alpha-turbo',
+    // Renderful exposes Runway as gen3-alpha-turbo; gen-4-turbo is rejected as "Unsupported model".
+    renderfulModel: 'runway/gen3-alpha-turbo',
     polloEndpoint: '/generation/runway/runway-gen-4',
     methods: ['T2V', 'I2V'],
     costPerSecondUsd: 0.1,
@@ -46,7 +48,7 @@ export const AGGREGATOR_MODEL_REGISTRY: AggregatorModelEntry[] = [
     id: 'wan-2.6',
     label: 'Wan 2.6',
     vendorModelId: 'wan/wan-2.6',
-    renderfulModel: 'wan-ai/wan2.1-t2v-turbo',
+    renderfulModel: 'wan/wan-2.6',
     polloEndpoint: '/generation/wan/wan-2.6',
     methods: ['T2V', 'I2V'],
     costPerSecondUsd: 0.05,

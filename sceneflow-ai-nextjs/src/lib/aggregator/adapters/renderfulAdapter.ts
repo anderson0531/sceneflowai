@@ -33,6 +33,71 @@ function mapGenerationType(method: VideoGenerationMethod, hasStart: boolean): st
   return 'text-to-video'
 }
 
+const MODEL_CACHE_TTL_MS = 5 * 60 * 1000
+const modelCache = new Map<string, { at: number; models: string[] }>()
+
+async function fetchModelCatalog(type: string): Promise<string[]> {
+  const apiKey = getAggregatorApiKey('renderful')
+  if (!apiKey) return []
+  const cached = modelCache.get(type)
+  if (cached && Date.now() - cached.at < MODEL_CACHE_TTL_MS) return cached.models
+
+  const baseUrl = getAggregatorBaseUrl('renderful')
+  const res = await fetch(`${baseUrl}/models?type=${encodeURIComponent(type)}`, {
+    headers: { Authorization: `Bearer ${apiKey}` },
+  })
+  if (!res.ok) return cached?.models ?? []
+  const data = (await res.json()) as { models?: Array<{ id?: string }> }
+  const models = (data.models || []).map((m) => m.id || '').filter(Boolean)
+  modelCache.set(type, { at: Date.now(), models })
+  return models
+}
+
+function normalizeModelId(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, '')
+}
+
+/**
+ * Resolve a configured model id against Renderful's live catalog so stale/dotted
+ * ids (e.g. kling/kling-2.6) self-heal to the real id (kling/kling-v2-6) instead
+ * of failing the whole job with "Unsupported model". Returns the configured id
+ * unchanged when the catalog is unavailable (best-effort), or throws a clear
+ * error listing candidates when the model genuinely isn't offered.
+ */
+function resolveCatalogModel(configured: string, available: string[]): string {
+  if (available.length === 0) return configured
+  if (available.includes(configured)) return configured
+
+  const target = normalizeModelId(configured)
+  const exact = available.find((m) => normalizeModelId(m) === target)
+  if (exact) return exact
+
+  const family = configured.split('/')[0]
+  const configuredVersions = configured.match(/\d+/g) || []
+  const sameFamily = available.filter((m) => m.split('/')[0] === family)
+
+  if (sameFamily.length > 0 && configuredVersions.length > 0) {
+    const scored = sameFamily
+      .map((m) => {
+        const versions = m.match(/\d+/g) || []
+        const shared = configuredVersions.filter((v) => versions.includes(v)).length
+        return { m, shared }
+      })
+      .filter((s) => s.shared > 0)
+      .sort((a, b) => b.shared - a.shared)
+    if (scored.length > 0) return scored[0].m
+  }
+
+  const sample = available.slice(0, 12).join(', ')
+  throw new AggregatorHttpError(
+    `Renderful does not offer model "${configured}". Available: ${sample}${
+      available.length > 12 ? ', …' : ''
+    }`,
+    400,
+    'renderful'
+  )
+}
+
 export const renderfulAdapter: VideoAggregatorAdapter = {
   vendor: 'renderful',
 
@@ -42,15 +107,7 @@ export const renderfulAdapter: VideoAggregatorAdapter = {
   },
 
   async listModels(): Promise<string[]> {
-    const apiKey = getAggregatorApiKey('renderful')
-    if (!apiKey) return []
-    const baseUrl = getAggregatorBaseUrl('renderful')
-    const res = await fetch(`${baseUrl}/models?type=text-to-video`, {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    })
-    if (!res.ok) return []
-    const data = (await res.json()) as { models?: Array<{ id?: string }> }
-    return (data.models || []).map((m) => m.id || '').filter(Boolean)
+    return fetchModelCatalog('text-to-video')
   },
 
   async submitJob(
@@ -60,9 +117,12 @@ export const renderfulAdapter: VideoAggregatorAdapter = {
     const apiKey = getAggregatorApiKey('renderful')
     if (!apiKey) throw new Error('VIDEO_AGGREGATOR_API_KEY not configured')
 
-    const vendorModelId = this.mapMethodToModel(input.method, input.videoModel)
     const hasStart = !!input.startFrameUrl?.trim()
     const type = mapGenerationType(input.method, hasStart)
+
+    const configuredModelId = this.mapMethodToModel(input.method, input.videoModel)
+    const catalog = await fetchModelCatalog(type).catch(() => [] as string[])
+    const vendorModelId = resolveCatalogModel(configuredModelId, catalog)
     const body: Record<string, unknown> = {
       type,
       model: vendorModelId,
