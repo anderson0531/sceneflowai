@@ -71,7 +71,13 @@ import type {
   ProductionTarget,
   AnimaticRenderSettings,
 } from './types'
-import { DirectorDialog } from './DirectorDialog'
+// Dynamic import for DirectorDialog — heavy module (aggregator registry, useSegmentConfig,
+// ImageEditModal) shared with useVideoQueue in this chunk; static import causes webpack TDZ
+// ('Cannot access tz before initialization') when the queue first builds.
+const DirectorDialog = dynamic(
+  () => import('./DirectorDialog').then(mod => ({ default: mod.DirectorDialog })),
+  { ssr: false }
+)
 import { ModerationValidateButton } from '@/components/moderation/ModerationValidateButton'
 // Dynamic import for VideoEditingDialog to prevent TDZ
 // VideoEditingDialog → VideoEditingDialogV2 is shared between DirectorConsole (chunk 4195)

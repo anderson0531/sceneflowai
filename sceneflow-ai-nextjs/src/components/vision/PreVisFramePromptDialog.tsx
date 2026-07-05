@@ -12,7 +12,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import { Loader2, MapPin, Check, ChevronDown, ChevronUp } from 'lucide-react'
 import {
@@ -203,8 +202,8 @@ export function PreVisFramePromptDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[92vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-3xl h-[85vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Direct — {slot.label}</DialogTitle>
           <DialogDescription>
             Scene {sceneIndex + 1} · Guided prompt builder with character and wardrobe references.
@@ -217,7 +216,7 @@ export function PreVisFramePromptDialog({
             <TabsTrigger value="advanced">Custom Prompt</TabsTrigger>
           </TabsList>
 
-          <ScrollArea className="flex-1 max-h-[55vh] pr-3 mt-3">
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pr-3 mt-3">
             <TabsContent value="guided" className="space-y-3 mt-0">
               <CharacterSelectionSection
                 characters={characters}
@@ -362,10 +361,10 @@ export function PreVisFramePromptDialog({
                 onThinkingLevelChange={setThinkingLevel}
               />
             </TabsContent>
-          </ScrollArea>
+          </div>
         </Tabs>
 
-        <DialogFooter className="gap-2">
+        <DialogFooter className="gap-2 flex-shrink-0">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isGenerating}>
             Cancel
           </Button>

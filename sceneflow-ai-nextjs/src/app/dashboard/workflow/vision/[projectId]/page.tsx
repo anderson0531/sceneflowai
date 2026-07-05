@@ -437,6 +437,10 @@ interface Project {
 
 const VISION_SCROLL_PANEL_SELECTOR = '[data-vision-scroll-panel]'
 
+function isInsideOpenDialog(el: HTMLElement | null): boolean {
+  return !!el?.closest('[role="dialog"]')
+}
+
 function findVisionScrollPanelMarker(start: HTMLElement | null): HTMLElement | null {
   let el: HTMLElement | null = start
   while (el) {
@@ -1281,6 +1285,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         e.key === 'PageDown'
 
       if (isVerticalKey) {
+        if (isInsideOpenDialog(document.activeElement as HTMLElement)) {
+          return
+        }
         const panel = resolveActiveVisionScrollPanel(pointer)
         if (panel) {
           const pageAmount = Math.max(120, Math.floor(panel.clientHeight * 0.8))
@@ -1337,6 +1344,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       const hovered = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null
+      if (isInsideOpenDialog(hovered)) {
+        return
+      }
+
       const nestedScrollable = findNearestScrollableAncestor(hovered, e.deltaY)
       if (nestedScrollable) {
         nestedScrollable.scrollTop += e.deltaY
