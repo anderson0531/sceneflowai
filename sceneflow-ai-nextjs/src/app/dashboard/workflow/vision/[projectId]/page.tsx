@@ -55,6 +55,7 @@ import {
   resolveVeoRefForExtension,
 } from '@/lib/video/veoChainQueue'
 import { normalizeReferenceImages } from '@/lib/video/normalizeReferenceImages'
+import { pollAggregatorJobForAsset } from '@/lib/aggregator/clientPoll'
 import {
   GALLERY_DIRECT_GENERATE_OPTS,
   GALLERY_MANUAL_GENERATE_OPTS,
@@ -2958,8 +2959,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       })
 
       try {
-        const { toast } = require('sonner')
-        toast.info(`Generating ${mode} for beat ${segmentId.slice(0, 6)}…`)
+        const providerLabel =
+          options?.videoProvider === 'aggregator'
+            ? `Multiplatform${options.videoModel ? ` (${options.videoModel})` : ''}`
+            : 'Google Veo'
+        toast.info(`Generating via ${providerLabel} · ${mode} · beat ${segmentId.slice(0, 6)}…`)
       } catch {}
 
       try {
@@ -3040,6 +3044,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           promptLength: prompt.length,
           promptPreview: prompt.substring(0, 100) + '...',
           generationMethod: options?.generationMethod,
+          videoProvider: options?.videoProvider ?? 'vertex',
+          videoModel: options?.videoModel,
         })
 
         // Call the asset generation API with all prompt builder options
@@ -3125,12 +3131,41 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           if (response.status === 429) {
             throw new Error('Rate limit exceeded. Please wait a moment and try again.')
           }
+          if (response.status === 503 && errorData?.code === 'AGGREGATOR_NOT_CONFIGURED') {
+            throw new Error(
+              errorData.error ||
+                'Multiplatform video is not configured on the server. Set VIDEO_AGGREGATOR_API_KEY in Vercel.'
+            )
+          }
           throw new Error(errorMessage)
         }
 
-        const data = await response.json()
+        let data = await response.json()
         if (!data.success) {
           throw new Error(data.error || 'Asset generation failed')
+        }
+
+        if (data.status === 'PROCESSING' && data.aggregatorJobId) {
+          toast.info('Multiplatform job submitted — waiting for Renderful…')
+          const polled = await pollAggregatorJobForAsset(data.aggregatorJobId)
+          data = {
+            ...data,
+            status: 'COMPLETE',
+            assetUrl: polled.assetUrl,
+            lastFrameUrl: polled.lastFrameUrl ?? data.lastFrameUrl,
+            assetType: 'video',
+          }
+        }
+
+        console.log('[Segment Generate] Completed via provider:', data.generationProvider ?? 'unknown', {
+          videoModel: data.videoModel,
+          aggregatorVendor: data.aggregatorVendor,
+        })
+
+        if (data.generationProvider === 'aggregator') {
+          toast.success(
+            `Video ready via Multiplatform${data.videoModel ? ` (${data.videoModel})` : ''}`
+          )
         }
         // SAFETY CHECK: If server returned base64 data, something is wrong
         // The server should always upload to blob storage and return a URL

@@ -111,6 +111,15 @@ export class SegmentVideoAggregatorAsyncError extends Error {
   }
 }
 
+export class SegmentVideoAggregatorNotConfiguredError extends Error {
+  constructor() {
+    super(
+      'Multiplatform video aggregator is not configured on the server (VIDEO_AGGREGATOR_API_KEY missing)'
+    )
+    this.name = 'SegmentVideoAggregatorNotConfiguredError'
+  }
+}
+
 export interface GenerateSegmentVideoResult {
   assetUrl: string
   assetType: 'video'
@@ -311,6 +320,12 @@ export async function generateSegmentVideoCore(
   let enhancedPrompt = built.enhancedPrompt
 
   const override = apiPromptOverride?.trim()
+  const selectedVideoModel = videoModel || getDefaultAggregatorModelId()
+
+  if (videoProvider === 'aggregator' && !isAggregatorEnabled()) {
+    throw new SegmentVideoAggregatorNotConfiguredError()
+  }
+
   const useAggregator =
     videoProvider === 'aggregator' && isAggregatorEnabled()
 
@@ -336,7 +351,6 @@ export async function generateSegmentVideoCore(
   let fallbackModelFamily: 'kling' | undefined
   let wasPolicyFallback = false
   let vertexPolicyAttempts = 0
-  let selectedVideoModel = videoModel || getDefaultAggregatorModelId()
   let aggregatorVendor: string | undefined
 
   let videoBuffer: Buffer | null = null
@@ -344,6 +358,7 @@ export async function generateSegmentVideoCore(
   let finalVeoRefExpiry: string | undefined
 
   if (useAggregator) {
+    console.log(`[Segment Video] Routing to aggregator (model=${selectedVideoModel})`)
     const aggResult = await generateVideoWithAggregator({
       prompt: enhancedPrompt,
       negativePrompt,
@@ -373,11 +388,11 @@ export async function generateSegmentVideoCore(
     videoBuffer = aggResult.videoBuffer
     generationProvider = 'aggregator'
     aggregatorVendor = aggResult.vendor
-    selectedVideoModel = videoModel || getDefaultAggregatorModelId()
     console.log(
       `[Segment Video] Aggregator ${aggResult.vendor} completed job ${aggResult.jobId} model=${selectedVideoModel}`
     )
   } else try {
+    console.log('[Segment Video] Routing to Vertex')
     const genResult = await generateVideoWithVeoKlingFallback({
       prompt: enhancedPrompt,
       negativePrompt,

@@ -26,8 +26,10 @@ export async function submitAggregatorJobWithFailover(
   try {
     return await primary.submitJob(input, options)
   } catch (e) {
+    const failoverKey = process.env.VIDEO_AGGREGATOR_FAILOVER_API_KEY?.trim()
     if (
       primaryVendor !== failoverVendor &&
+      failoverKey &&
       e instanceof AggregatorHttpError &&
       isFailoverStatus(e.status)
     ) {

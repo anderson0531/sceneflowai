@@ -65,4 +65,28 @@ describe('submitAggregatorJobWithFailover', () => {
     expect(process.env.VIDEO_AGGREGATOR_VENDOR).toBe('renderful')
     expect(process.env.VIDEO_AGGREGATOR_FAILOVER_VENDOR).toBe('pollo')
   })
+
+  it('does not failover when failover API key is unset', async () => {
+    delete process.env.VIDEO_AGGREGATOR_FAILOVER_API_KEY
+    const { AggregatorHttpError } = await import('@/lib/aggregator/types')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 503,
+        statusText: 'Service Unavailable',
+        text: async () => 'upstream error',
+      })
+    )
+
+    await expect(
+      submitAggregatorJobWithFailover({
+        prompt: 'test',
+        method: 'T2V',
+        videoModel: 'kling-2.6',
+        durationSeconds: 8,
+        aspectRatio: '16:9',
+      })
+    ).rejects.toBeInstanceOf(AggregatorHttpError)
+  })
 })

@@ -81,7 +81,7 @@ vi.mock('@/lib/video/serverVideoDuration', () => ({
 import { generateVideoWithAggregator } from '@/lib/aggregator/generateVideoWithAggregator'
 import { generateVideoWithVeoKlingFallback } from '@/lib/generation/veoWithKlingFallback'
 import { neutralizePromptForVeo } from '@/lib/generation/preflightPromptGuard'
-import { generateSegmentVideoCore } from '@/lib/video/generateSegmentVideo'
+import { generateSegmentVideoCore, SegmentVideoAggregatorNotConfiguredError } from '@/lib/video/generateSegmentVideo'
 
 const baseInput = {
   segmentId: 'seg-1',
@@ -140,6 +140,22 @@ describe('generateSegmentVideoCore aggregator routing', () => {
     expect(generateVideoWithVeoKlingFallback).toHaveBeenCalledTimes(1)
     expect(generateVideoWithAggregator).not.toHaveBeenCalled()
     expect(neutralizePromptForVeo).toHaveBeenCalled()
+  })
+
+  it('throws instead of falling back to Vertex when aggregator requested without API key', async () => {
+    process.env.VIDEO_AGGREGATOR_API_KEY = ''
+
+    await expect(
+      generateSegmentVideoCore({
+        ...baseInput,
+        videoProvider: 'aggregator',
+        videoModel: 'kling-2.6',
+      })
+    ).rejects.toBeInstanceOf(SegmentVideoAggregatorNotConfiguredError)
+
+    expect(generateVideoWithAggregator).not.toHaveBeenCalled()
+    expect(generateVideoWithVeoKlingFallback).not.toHaveBeenCalled()
+    expect(neutralizePromptForVeo).not.toHaveBeenCalled()
   })
 
   it('isAggregatorEnabled respects API key', () => {

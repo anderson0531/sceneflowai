@@ -6,10 +6,12 @@ import {
   generateSegmentVideoCore,
   SegmentVideoExtRefRequiredError,
   SegmentVideoAggregatorAsyncError,
+  SegmentVideoAggregatorNotConfiguredError,
   SegmentVideoRateLimitError,
   KlingSafetyGuardBlockedError,
 } from '@/lib/video/generateSegmentVideo'
 import { getAggregatorCreditsForModel } from '@/lib/aggregator/modelRegistry'
+import { isAggregatorEnabled } from '@/lib/aggregator/config'
 import { CreditService } from '@/services/CreditService'
 import { VIDEO_CREDITS } from '@/lib/credits/creditCosts'
 import { getServerSession } from 'next-auth'
@@ -252,15 +254,43 @@ export async function POST(
     let stemSeparation: StemSeparationResult | undefined = undefined
     let actualVideoDurationSeconds: number | null = null
     let requestedVideoDurationSeconds: number | undefined = undefined
-    let generationProvider: 'vertex' | 'fal' | 'kling' | undefined
+    let generationProvider: 'vertex' | 'fal' | 'kling' | 'aggregator' | undefined
     let fallbackModelFamily: 'kling' | undefined
     let wasPolicyFallback: boolean | undefined
     let provenanceId: string | undefined
     let contentHash: string | undefined
+    let aggregatorVendor: string | undefined
+    let responseVideoModel: string | undefined
 
     if (genType === 'T2V' || genType === 'I2V') {
-      console.log('[Segment Asset Generation] Using Veo 3.1 for video generation')
-      console.log('[Segment Asset Generation] Endpoint status:', JSON.stringify(getEndpointStatus()))
+      const resolvedVideoProvider =
+        videoProvider === 'aggregator' ? 'aggregator' : 'vertex'
+      console.log(
+        `[Segment Asset Generation] videoProvider=${resolvedVideoProvider} aggregatorEnabled=${isAggregatorEnabled()}`
+      )
+
+      if (resolvedVideoProvider === 'aggregator' && !isAggregatorEnabled()) {
+        return NextResponse.json(
+          {
+            error:
+              'Multiplatform video is not configured on the server. Set VIDEO_AGGREGATOR_API_KEY in Vercel.',
+            code: 'AGGREGATOR_NOT_CONFIGURED',
+          },
+          { status: 503 }
+        )
+      }
+
+      if (resolvedVideoProvider === 'aggregator') {
+        console.log(
+          `[Segment Asset Generation] Using multiplatform aggregator (model=${videoModel || 'default'})`
+        )
+      } else {
+        console.log('[Segment Asset Generation] Using Google Veo for video generation')
+        console.log(
+          '[Segment Asset Generation] Endpoint status:',
+          JSON.stringify(getEndpointStatus())
+        )
+      }
 
       const videoResult = await generateSegmentVideoCore({
         segmentId,
@@ -296,7 +326,7 @@ export async function POST(
           generationMethod === 'EXT' && !sourceVideoUrl && !previousSegmentVeoRef,
         apiPromptOverride,
         allowPolicyFallback: allowPolicyFallback === true,
-        videoProvider: videoProvider === 'aggregator' ? 'aggregator' : 'vertex',
+        videoProvider: resolvedVideoProvider,
         videoModel,
       })
 
@@ -314,6 +344,8 @@ export async function POST(
       wasPolicyFallback = videoResult.wasPolicyFallback
       provenanceId = videoResult.provenanceId
       contentHash = videoResult.contentHash
+      aggregatorVendor = videoResult.aggregatorVendor
+      responseVideoModel = videoResult.videoModel
 
       if (wasPolicyFallback) {
         const klingCredits =
@@ -389,6 +421,8 @@ export async function POST(
       usedBackupEngine: wasPolicyFallback === true,
       provenanceId,
       contentHash,
+      videoModel: responseVideoModel,
+      aggregatorVendor,
     })
   } catch (error: any) {
     console.error('[Segment Asset Generation] Error:', error)
@@ -405,6 +439,16 @@ export async function POST(
           videoModel: requestBody.videoModel,
         },
         { status: 202 }
+      )
+    }
+
+    if (error instanceof SegmentVideoAggregatorNotConfiguredError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          code: 'AGGREGATOR_NOT_CONFIGURED',
+        },
+        { status: 503 }
       )
     }
 
@@ -478,12 +522,17 @@ export async function POST(
     const hasMultipleFrames = !!(requestBody.startFrameUrl && requestBody.endFrameUrl)
     
     const errLow = errorMessage.toLowerCase()
-    if (errorMessage.includes('Content Safety Filter') ||
+    const isAggregatorRequest = requestBody.videoProvider === 'aggregator'
+
+    if (
+      !isAggregatorRequest &&
+      (errorMessage.includes('Content Safety Filter') ||
         errorMessage.includes('Content Policy') ||
         errLow.includes('safety filter') ||
         errorMessage.includes('filtered') ||
         errorMessage.includes('violate') ||
-        errorMessage.includes('usage guidelines')) {
+        errorMessage.includes('usage guidelines'))
+    ) {
       statusCode = 422 // Unprocessable Entity - indicates content issue, not server error
 
       const hints: string[] = [
@@ -568,6 +617,17 @@ export async function POST(
         error: errorMessage,
         retryAfter,
         isRateLimited: statusCode === 429,
+        ...(isAggregatorRequest
+          ? {
+              code: 'AGGREGATOR_GENERATION_FAILED',
+              generationProvider: 'aggregator' as const,
+              videoModel: requestBody.videoModel,
+              hints: [
+                'This request was routed to the multiplatform (Renderful) provider, not Google Veo.',
+                'Check Vercel logs for Renderful submit/poll errors.',
+              ],
+            }
+          : {}),
         details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : undefined) : undefined,
       },
       { status: statusCode }

@@ -150,6 +150,8 @@ interface DirectorDialogProps {
   projectAspectRatio?: BlueprintAspectRatio
   sceneIndex?: number
   filmTitle?: string
+  /** Saved queue config (preserves videoProvider across dialog re-opens). */
+  savedConfig?: VideoGenerationConfig
 }
 
 // Map internal mode names to VideoGenerationMethod
@@ -203,6 +205,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   projectAspectRatio = '16:9',
   sceneIndex,
   filmTitle,
+  savedConfig,
 }) => {
   const segmentGuideContext = useMemo<SegmentGuideContext | undefined>(() => {
     if (!scene) return undefined
@@ -627,14 +630,14 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     setLocalError(null)
     setImageTriggered(false)
     setKeyframeEdit(null)
-    setUseCustomApiPrompt(autoConfig.useCustomApiPrompt ?? false)
-    setApiPromptOverride(autoConfig.apiPromptOverride ?? '')
-    setAllowPolicyFallback(autoConfig.allowPolicyFallback ?? false)
-    setVideoProvider(autoConfig.videoProvider ?? 'vertex')
-    setVideoModel(autoConfig.videoModel ?? 'kling-2.6')
+    setUseCustomApiPrompt(autoConfig.useCustomApiPrompt ?? savedConfig?.useCustomApiPrompt ?? false)
+    setApiPromptOverride(autoConfig.apiPromptOverride ?? savedConfig?.apiPromptOverride ?? '')
+    setAllowPolicyFallback(autoConfig.allowPolicyFallback ?? savedConfig?.allowPolicyFallback ?? false)
+    setVideoProvider(savedConfig?.videoProvider ?? autoConfig.videoProvider ?? 'vertex')
+    setVideoModel(savedConfig?.videoModel ?? autoConfig.videoModel ?? 'kling-2.6')
     setApiPromptPreview('')
     setApiPromptPreviewError(null)
-  }, [autoConfig, lockedVideoAspect, batchGuideSeed, segment, autoResolvedRefs.entries])
+  }, [autoConfig, savedConfig, lockedVideoAspect, batchGuideSeed, segment, autoResolvedRefs.entries])
 
   const fetchApiPromptPreview = useCallback(async () => {
     const method = modeToMethod[mode]
@@ -706,6 +709,14 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     videoProvider,
     videoModel: videoProvider === 'aggregator' ? videoModel : undefined,
   })
+
+  const selectedAggregatorModelLabel =
+    aggregatorModels.find((m) => m.id === videoModel)?.label ?? videoModel
+
+  const generateButtonLabel =
+    videoProvider === 'aggregator'
+      ? `Generate via Multiplatform${selectedAggregatorModelLabel ? ` (${selectedAggregatorModelLabel})` : ''}`
+      : 'Generate via Veo'
 
   useEffect(() => {
     if (!isOpen) return
@@ -1646,7 +1657,13 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                             Runway, ByteDance), which are less restrictive than Google for creative
                             violence, NIL, and trigger words.
                           </p>
+                          <p className="text-[10px] text-emerald-400/90">
+                            Active: Multiplatform · {selectedAggregatorModelLabel}
+                          </p>
                         </>
+                      )}
+                      {videoProvider === 'vertex' && aggregatorEnabled && (
+                        <p className="text-[10px] text-slate-500">Active: Google Veo (default)</p>
                       )}
                     </div>
                   )}
@@ -1768,7 +1785,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 disabled={!canGenerateWithCustomPrompt}
               >
                 <Play className="w-4 h-4 mr-2" />
-                Generate
+                {generateButtonLabel}
               </Button>
             </div>
           </div>

@@ -336,6 +336,7 @@ function DirectorConsoleRoot({
     updateConfig,
     processQueue,
     cancelRendering,
+    getQueueItem,
   } = useVideoQueue(
     segments,
     sceneId,
@@ -1540,6 +1541,7 @@ function DirectorConsoleRoot({
           onClose={() => setSelectedSegment(null)}
           onSaveConfig={handleSaveConfig}
           onGenerate={handleGenerateFromDialog}
+          savedConfig={getQueueItem(selectedSegment.segmentId)?.config}
           onSaveEditedKeyframe={onSaveEditedKeyframe}
           guideCharacters={effectiveGuideCharacters}
           readOnlyPrompts={beatFirstReadOnlyPrompts}
