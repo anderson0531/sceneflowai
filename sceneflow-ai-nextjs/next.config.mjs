@@ -34,10 +34,6 @@ const nextConfig = {
     root: __dirname,
   },
   reactStrictMode: true,
-  // Temporary: emit client source maps so production TDZ stack traces
-  // ("Cannot access X before initialization") de-minify to real file/function
-  // names in the browser console. Remove once the Director Console init crash is fixed.
-  productionBrowserSourceMaps: true,
   serverExternalPackages: ["ffmpeg-static", "ffprobe-static"],
   outputFileTracingIncludes: {
     "/api/sfx/generate-veo-audio": ["./node_modules/ffmpeg-static/ffmpeg"],

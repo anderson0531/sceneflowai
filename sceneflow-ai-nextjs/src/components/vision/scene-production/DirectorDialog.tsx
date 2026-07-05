@@ -752,6 +752,9 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     videoModel: videoProvider === 'aggregator' ? videoModel : undefined,
   })
 
+  const displayAggregatorModels =
+    aggregatorModels.length > 0 ? aggregatorModels : FALLBACK_AGGREGATOR_MODELS
+
   const selectedAggregatorModelLabel =
     displayAggregatorModels.find((m) => m.id === videoModel)?.label ?? videoModel
 
@@ -759,9 +762,6 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     videoProvider === 'aggregator'
       ? `Generate via Multiplatform${selectedAggregatorModelLabel ? ` (${selectedAggregatorModelLabel})` : ''}`
       : 'Generate via Veo'
-
-  const displayAggregatorModels =
-    aggregatorModels.length > 0 ? aggregatorModels : FALLBACK_AGGREGATOR_MODELS
 
   const aggregatorStatusBanner = aggregatorStatusMessage(aggregatorDiagnostics)
 
