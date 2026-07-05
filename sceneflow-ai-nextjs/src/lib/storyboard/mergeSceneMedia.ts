@@ -1,8 +1,12 @@
 /**
  * Preserve storyboard image fields when merging stale/partial scene snapshots.
+ *
+ * NOTE: This module must NOT import from '@/lib/audio/cleanupAudio' — that creates a
+ * runtime circular dependency (cleanupAudio imports mergeScenePreservingMedia from here),
+ * which Turbopack scope-hoists into a "Cannot access X before initialization" TDZ crash.
+ * mergeExpressOrchestratedScenes (the only consumer that needed the audio merge) now lives
+ * in cleanupAudio.ts instead.
  */
-
-import { mergeScenePreservingAudio } from '@/lib/audio/cleanupAudio'
 
 const DIALOGUE_STORYBOARD_URL_KEYS = ['storyboardImageUrl', 'storyboardImageGcsPath'] as const
 const DIALOGUE_STORYBOARD_PROMPT_KEYS = ['storyboardImagePrompt'] as const
@@ -411,7 +415,7 @@ export function mergeSceneArraysForPersistence(
   )
 }
 
-function findMatchingSceneInArray(
+export function findMatchingSceneInArray(
   scenes: any[],
   target: any,
   index: number
@@ -427,54 +431,6 @@ function findMatchingSceneInArray(
     if (targetId && (atIdx?.id || atIdx?.sceneId) === targetId) return atIdx
   }
   return null
-}
-
-/**
- * Merge Express orchestrator output with a fresh DB snapshot.
- * Orchestrated scenes are authoritative — stale concurrent DB writes must not
- * overwrite direction/audio/images produced during the express run.
- */
-export function mergeExpressOrchestratedScenes(
-  orchestratedScenes: any[],
-  freshDbScenes: any[]
-): any[] {
-  if (!Array.isArray(orchestratedScenes) || orchestratedScenes.length === 0) {
-    return Array.isArray(freshDbScenes) ? freshDbScenes : []
-  }
-  if (!Array.isArray(freshDbScenes) || freshDbScenes.length === 0) {
-    return orchestratedScenes
-  }
-
-  const merged = orchestratedScenes.map((orchScene, idx) => {
-    const freshScene = findMatchingSceneInArray(freshDbScenes, orchScene, idx)
-    if (!freshScene) return orchScene
-
-    const spread = {
-      ...freshScene,
-      ...orchScene,
-      sceneDirection: orchScene.sceneDirection || freshScene.sceneDirection,
-    }
-    const withMedia = mergeScenePreservingMedia(orchScene, spread)
-    return mergeScenePreservingAudio(orchScene, withMedia)
-  })
-
-  const orchestratedIds = new Set(
-    orchestratedScenes
-      .filter((s) => s?.id || s?.sceneId)
-      .map((s) => s.id || s.sceneId)
-  )
-
-  const preservedFromDb = freshDbScenes.filter((freshScene) => {
-    const id = freshScene?.id || freshScene?.sceneId
-    if (!id) return false
-    return !orchestratedIds.has(id)
-  })
-
-  if (preservedFromDb.length === 0) return merged
-
-  return [...merged, ...preservedFromDb].sort(
-    (a: any, b: any) => (a.sceneNumber || 0) - (b.sceneNumber || 0)
-  )
 }
 
 /** Audit helper — counts media fields per scene for debugging fragmented storage. */

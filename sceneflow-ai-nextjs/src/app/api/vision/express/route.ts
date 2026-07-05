@@ -5,10 +5,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { runExpress } from '@/lib/sceneGeneration/expressOrchestrator'
 import type { ExpressEvent, ExpressOptions } from '@/lib/sceneGeneration/types'
-import {
-  auditStoryboardSceneMedia,
-  mergeExpressOrchestratedScenes,
-} from '@/lib/storyboard/mergeSceneMedia'
+import { auditStoryboardSceneMedia } from '@/lib/storyboard/mergeSceneMedia'
+import { mergeExpressOrchestratedScenes } from '@/lib/audio/cleanupAudio'
 import { resolveStoryboardScenes } from '@/lib/storyboard/resolveStoryboardScenes'
 
 export const runtime = 'nodejs'

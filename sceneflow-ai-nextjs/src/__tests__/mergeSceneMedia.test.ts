@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { mergeScenesForScriptSave } from '@/lib/audio/cleanupAudio'
+import { mergeScenesForScriptSave, mergeExpressOrchestratedScenes } from '@/lib/audio/cleanupAudio'
 import {
-  mergeExpressOrchestratedScenes,
   mergeSceneArraysForPersistence,
   mergeScenePreservingMedia,
   pickDialogueAudioEntry,

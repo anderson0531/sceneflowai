@@ -5,7 +5,7 @@
  * the associated audio files become stale and should be cleared.
  */
 
-import { mergeScenePreservingMedia } from '@/lib/storyboard/mergeSceneMedia'
+import { mergeScenePreservingMedia, findMatchingSceneInArray } from '@/lib/storyboard/mergeSceneMedia'
 import { stripGhostStandaloneNarration } from '@/lib/script/narration'
 import { coerceSceneSfxFlatArray } from '@/lib/script/segmentScript'
 
@@ -597,6 +597,57 @@ export function mergeScenePreservingAudio(canonical: any, incoming: any): any {
   }
 
   return merged
+}
+
+/**
+ * Merge Express orchestrator output with a fresh DB snapshot.
+ * Orchestrated scenes are authoritative — stale concurrent DB writes must not
+ * overwrite direction/audio/images produced during the express run.
+ *
+ * Lives here (not in mergeSceneMedia) so mergeSceneMedia never imports cleanupAudio,
+ * avoiding a runtime circular dependency / Turbopack TDZ.
+ */
+export function mergeExpressOrchestratedScenes(
+  orchestratedScenes: any[],
+  freshDbScenes: any[]
+): any[] {
+  if (!Array.isArray(orchestratedScenes) || orchestratedScenes.length === 0) {
+    return Array.isArray(freshDbScenes) ? freshDbScenes : []
+  }
+  if (!Array.isArray(freshDbScenes) || freshDbScenes.length === 0) {
+    return orchestratedScenes
+  }
+
+  const merged = orchestratedScenes.map((orchScene, idx) => {
+    const freshScene = findMatchingSceneInArray(freshDbScenes, orchScene, idx)
+    if (!freshScene) return orchScene
+
+    const spread = {
+      ...freshScene,
+      ...orchScene,
+      sceneDirection: orchScene.sceneDirection || freshScene.sceneDirection,
+    }
+    const withMedia = mergeScenePreservingMedia(orchScene, spread)
+    return mergeScenePreservingAudio(orchScene, withMedia)
+  })
+
+  const orchestratedIds = new Set(
+    orchestratedScenes
+      .filter((s) => s?.id || s?.sceneId)
+      .map((s) => s.id || s.sceneId)
+  )
+
+  const preservedFromDb = freshDbScenes.filter((freshScene) => {
+    const id = freshScene?.id || freshScene?.sceneId
+    if (!id) return false
+    return !orchestratedIds.has(id)
+  })
+
+  if (preservedFromDb.length === 0) return merged
+
+  return [...merged, ...preservedFromDb].sort(
+    (a: any, b: any) => (a.sceneNumber || 0) - (b.sceneNumber || 0)
+  )
 }
 
 /**
