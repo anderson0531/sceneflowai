@@ -518,19 +518,15 @@ export class HeadlessRenderService {
     };
     
     /**
-     * Centered uniform crop source rect (2–10%) — preserves aspect ratio.
+     * Bottom crop source rect for uploaded watermark removal (2–10%).
      */
     function getFrameCropSourceRect(vw, vh, cropPercent) {
       const pct = typeof cropPercent === 'number' ? Math.round(cropPercent) : 0;
       if (pct < 2 || pct > 10 || vw <= 0 || vh <= 0) {
         return { sx: 0, sy: 0, sw: vw, sh: vh };
       }
-      const factor = 1 - pct / 100;
-      const sw = Math.max(1, Math.round(vw * factor));
-      const sh = Math.max(1, Math.round(vh * factor));
-      const sx = Math.max(0, Math.round((vw - sw) / 2));
-      const sy = Math.max(0, Math.round((vh - sh) / 2));
-      return { sx, sy, sw, sh };
+      const sh = Math.max(1, Math.round(vh * (1 - pct / 100)));
+      return { sx: 0, sy: 0, sw: vw, sh };
     }
 
     function drawVideoCover(ctx, video, cropPercent, outW, outH) {

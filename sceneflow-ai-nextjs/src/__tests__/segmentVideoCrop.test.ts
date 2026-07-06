@@ -19,11 +19,11 @@ describe('clampWatermarkCropPercent', () => {
 })
 
 describe('getFrameCropSourceRect', () => {
-  it('crops evenly from all sides while preserving aspect ratio', () => {
+  it('crops from the bottom edge only', () => {
     expect(getFrameCropSourceRect(1920, 1080, 5)).toEqual({
-      sx: 48,
-      sy: 27,
-      sw: 1824,
+      sx: 0,
+      sy: 0,
+      sw: 1920,
       sh: 1026,
     })
   })
@@ -39,13 +39,9 @@ describe('getFrameCropSourceRect', () => {
 })
 
 describe('buildFfmpegFrameCropFilter', () => {
-  it('builds centered crop expression for valid percent', () => {
-    expect(buildFfmpegFrameCropFilter(5)).toBe(
-      'crop=iw*0.95:ih*0.95:(iw-iw*0.95)/2:(ih-ih*0.95)/2,'
-    )
-    expect(buildFfmpegFrameCropFilter(10)).toBe(
-      'crop=iw*0.9:ih*0.9:(iw-iw*0.9)/2:(ih-ih*0.9)/2,'
-    )
+  it('builds bottom crop expression for valid percent', () => {
+    expect(buildFfmpegFrameCropFilter(5)).toBe('crop=iw:ih*0.95:0:0,')
+    expect(buildFfmpegFrameCropFilter(10)).toBe('crop=iw:ih*0.9:0:0,')
   })
 
   it('returns empty when disabled', () => {
@@ -54,8 +50,8 @@ describe('buildFfmpegFrameCropFilter', () => {
 })
 
 describe('getFrameCropClipPath', () => {
-  it('returns even inset clip path for preview', () => {
-    expect(getFrameCropClipPath(WATERMARK_CROP_DEFAULT)).toBe('inset(2.5% 2.5% 2.5% 2.5%)')
+  it('returns bottom inset clip path for preview', () => {
+    expect(getFrameCropClipPath(WATERMARK_CROP_DEFAULT)).toBe('inset(0 0 5% 0)')
     expect(getFrameCropClipPath(undefined)).toBeUndefined()
   })
 })

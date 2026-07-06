@@ -2490,7 +2490,7 @@ function SegmentAudioControls({
 }
 
 /**
- * Per-beat uniform frame crop for uploaded videos.
+ * Per-beat bottom crop for uploaded videos.
  */
 function SegmentWatermarkCropControls({
   segments,
@@ -2538,7 +2538,7 @@ function SegmentWatermarkCropControls({
       {!isCollapsed && (
         <div className="px-3 pb-3 space-y-3">
           <p className="text-[11px] text-gray-500 leading-relaxed">
-            Crops uploaded clips evenly on all sides before preview and render to hide edge watermarks while keeping aspect ratio.
+            Removes the bottom band of uploaded clips before preview and render.
           </p>
           <div className="space-y-2">
             {uploadedVideoSegments.map((seg, i) => {
