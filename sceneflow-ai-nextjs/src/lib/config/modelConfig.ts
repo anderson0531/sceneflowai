@@ -8,9 +8,9 @@
  * 
  * Veo Video Generation:
  * - veo-3.1-lite-generate-001: ~$0.05/sec (Lite, 720p + audio, high-volume)
- * - gemini-omni-flash-preview: ~$0.10/sec (Omni Flash, primary fast/premium tier, up to 10s)
- * - veo-3.1-fast-generate-001: ~$0.10/sec (Fast, legacy 1080p)
- * - veo-3.1-generate-001: ~$0.40/sec (Premium, legacy 4K capable)
+ * - gemini-omni-flash-preview: ~$0.10/sec (Omni Flash preview, opt-in 10s / EXT interaction refs)
+ * - veo-3.1-fast-generate-001: ~$0.10/sec (Fast, default fast tier, predictLongRunning, up to 8s)
+ * - veo-3.1-generate-001: ~$0.40/sec (Premium, default premium tier + REF reference images)
  * 
  * Imagen Image Generation:
  * - imagen-3.0-fast-generate-001: ~$0.02/image (Fast)
@@ -48,11 +48,11 @@ export const VEO_MODELS = {
 /** Supported clip durations for standard Veo/Omni segment generation */
 export type VeoClipDuration = 4 | 6 | 8 | 10;
 
-/** Default segment clip duration (Omni Flash supports up to 10s) */
-export const DEFAULT_VEO_CLIP_DURATION: VeoClipDuration = 10;
+/** Default segment clip duration (Veo 3.1 predictLongRunning max 8s; 10s opts into Omni) */
+export const DEFAULT_VEO_CLIP_DURATION: VeoClipDuration = 8;
 
-/** Maximum video clip duration for standard segment generation (Omni Flash) */
-export const MAX_VEO_VIDEO_CLIP_SECONDS: VeoClipDuration = DEFAULT_VEO_CLIP_DURATION;
+/** Maximum video clip duration for segment generation (10s opts into Omni preview) */
+export const MAX_VEO_VIDEO_CLIP_SECONDS: VeoClipDuration = 10;
 
 /** Valid clip duration options for UI selects and sliders */
 export const VEO_CLIP_DURATION_OPTIONS: readonly VeoClipDuration[] = [4, 6, 8, 10];
@@ -112,14 +112,62 @@ export const DEFAULT_VEO_QUALITY: VeoQualityTier = 'fast';
 export const DEFAULT_FTV_QUALITY: VeoQualityTier = 
   process.env.FTV_USE_PREMIUM === 'true' ? 'premium' : 'fast';
 
-/** Get Veo model name for quality tier */
+/** Get Veo model name for quality tier (production predictLongRunning models only). */
 export function getVeoModel(quality: VeoQualityTier | ModelQuality = DEFAULT_VEO_QUALITY): string {
   // Map 'standard' to 'premium' for backward compatibility
   const tier = quality === 'standard' ? 'premium' : (quality as VeoQualityTier);
   if (tier === 'lite') return VEO_MODELS.lite;
-  // Fast and premium tiers use Gemini Omni Flash (10s capable)
-  if (tier === 'fast' || tier === 'premium') return VEO_MODELS.omni;
-  return VEO_MODELS.omni;
+  if (tier === 'premium') return VEO_MODELS.premium;
+  return VEO_MODELS.fast;
+}
+
+/** True when sourceVideo is an Omni Interactions continuation handle (EXT on Omni). */
+export function isOmniInteractionContinuationRef(sourceVideo?: string): boolean {
+  if (!sourceVideo?.trim()) return false
+  const ref = sourceVideo.trim()
+  return (
+    ref.startsWith('interaction:') ||
+    ref.startsWith('v1_') ||
+    ref.includes('/interactions/')
+  )
+}
+
+export interface ResolveVideoModelOptions {
+  durationSeconds?: VeoClipDuration | number
+  sourceVideo?: string
+  /** When true, prefer premium Veo (reference images on instance). */
+  hasReferenceImages?: boolean
+}
+
+/**
+ * Pick Vertex video model: Omni preview only for explicit 10s or Omni EXT refs;
+ * otherwise Veo 3.1 production via predictLongRunning.
+ */
+export function resolveVideoModel(
+  quality: VeoQualityTier | ModelQuality = DEFAULT_VEO_QUALITY,
+  options: ResolveVideoModelOptions = {}
+): string {
+  const duration = options.durationSeconds
+  if (duration === 10) return VEO_MODELS.omni
+  if (isOmniInteractionContinuationRef(options.sourceVideo)) return VEO_MODELS.omni
+
+  if (options.hasReferenceImages) {
+    const tier = quality === 'standard' ? 'premium' : (quality as VeoQualityTier)
+    if (tier === 'premium' || tier === 'fast') return VEO_MODELS.premium
+  }
+
+  return getVeoModel(quality)
+}
+
+/** Max clip duration for predictLongRunning Veo (not Omni). */
+export const MAX_VEO_PREDICT_LONG_RUNNING_SECONDS = 8 as const
+
+/** Clamp duration for Veo predictLongRunning (8s max). */
+export function clampDurationForVeoPredictLongRunning(
+  seconds: number | undefined
+): VeoClipDuration {
+  if (seconds == null || !Number.isFinite(seconds)) return DEFAULT_VEO_CLIP_DURATION
+  return clampToVeoClipDuration(Math.min(seconds, MAX_VEO_PREDICT_LONG_RUNNING_SECONDS))
 }
 
 /**

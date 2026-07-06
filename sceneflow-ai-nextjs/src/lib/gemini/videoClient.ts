@@ -1,5 +1,5 @@
 import { JWT } from 'google-auth-library';
-import { getVeoModel, DEFAULT_VIDEO_QUALITY, DEFAULT_VEO_CLIP_DURATION, isOmniVideoModel, getVertexLocation, getVertexHostname, getVertexApiBaseUrl, VEO_MODELS, type VeoQualityTier, type VeoClipDuration } from '@/lib/config/modelConfig';
+import { getVeoModel, DEFAULT_VIDEO_QUALITY, DEFAULT_VEO_CLIP_DURATION, isOmniVideoModel, getVertexLocation, getVertexHostname, getVertexApiBaseUrl, VEO_MODELS, resolveVideoModel, clampDurationForVeoPredictLongRunning, type VeoQualityTier, type VeoClipDuration } from '@/lib/config/modelConfig';
 import {
   getVeoSafetySetting,
   getVeoIncludeRaiReason,
@@ -476,7 +476,14 @@ export async function generateVideoWithVeo(
   const project = process.env.VERTEX_PROJECT_ID
   // Select model based on quality tier (default: fast for cost efficiency)
   const quality = options.quality || DEFAULT_VIDEO_QUALITY
-  const model = getVeoModel(quality)
+  const hasReferenceImages =
+    !options.startFrame &&
+    (options.referenceImages?.length ?? 0) > 0
+  const model = resolveVideoModel(quality, {
+    durationSeconds: options.durationSeconds,
+    sourceVideo: options.sourceVideo,
+    hasReferenceImages,
+  })
   const usingOmni = isOmniVideoModel(model)
   const stabilityDuration: VeoClipDuration = usingOmni ? 10 : 8
   const location = getVertexLocation(model)
@@ -485,6 +492,12 @@ export async function generateVideoWithVeo(
   // Gemini Omni Flash requires the Interactions API (not predictLongRunning)
   if (usingOmni) {
     return generateVideoWithOmniInteractions(prompt, options, model, quality, stabilityDuration)
+  }
+
+  // Veo predictLongRunning: clamp duration to 8s max
+  const veoOptions: VideoGenerationOptions = {
+    ...options,
+    durationSeconds: clampDurationForVeoPredictLongRunning(options.durationSeconds),
   }
 
   // Vertex endpoint: https://HOST/v1/projects/PROJECT_ID/locations/LOCATION/publishers/google/models/MODEL:predictLongRunning
@@ -503,13 +516,13 @@ export async function generateVideoWithVeo(
     console.log('[Veo Video] Prompt excerpt:', excerpt)
   }
   console.log('[Veo Video] Options:', JSON.stringify({
-    aspectRatio: options.aspectRatio || '16:9',
-    resolution: options.resolution || '720p',
-    duration: options.durationSeconds || DEFAULT_VEO_CLIP_DURATION,
-    hasStartFrame: !!options.startFrame,
-    hasLastFrame: !!options.lastFrame,
-    hasSourceVideo: !!options.sourceVideo,
-    referenceImagesCount: options.referenceImages?.length || 0
+    aspectRatio: veoOptions.aspectRatio || '16:9',
+    resolution: veoOptions.resolution || '720p',
+    duration: veoOptions.durationSeconds || DEFAULT_VEO_CLIP_DURATION,
+    hasStartFrame: !!veoOptions.startFrame,
+    hasLastFrame: !!veoOptions.lastFrame,
+    hasSourceVideo: !!veoOptions.sourceVideo,
+    referenceImagesCount: veoOptions.referenceImages?.length || 0
   }))
 
   // Build instances array (Veo uses Vertex AI-style request format)
@@ -518,16 +531,16 @@ export async function generateVideoWithVeo(
   }
 
   // Add start frame for I2V
-  if (options.startFrame) {
+  if (veoOptions.startFrame) {
     let startFrameData: string
     let mimeType = 'image/png'
     
-    if (options.startFrame.startsWith('http')) {
-      const result = await urlToBase64(options.startFrame)
+    if (veoOptions.startFrame.startsWith('http')) {
+      const result = await urlToBase64(veoOptions.startFrame)
       startFrameData = result.base64
       mimeType = result.mimeType
     } else {
-      startFrameData = options.startFrame
+      startFrameData = veoOptions.startFrame
     }
     
     instance.image = {
@@ -538,8 +551,8 @@ export async function generateVideoWithVeo(
   }
 
   // EXT: extend a prior Veo output (Vertex resource name, GCS URI, or files/ ref from prior gen)
-  if (options.sourceVideo && !options.startFrame) {
-    const ref = options.sourceVideo
+  if (veoOptions.sourceVideo && !veoOptions.startFrame) {
+    const ref = veoOptions.sourceVideo
     if (ref.startsWith('gs://')) {
       instance.video = { gcsUri: ref, mimeType: 'video/mp4' }
     } else if (ref.startsWith('http://') || ref.startsWith('https://')) {
@@ -552,43 +565,38 @@ export async function generateVideoWithVeo(
       instance.video = { name: ref, mimeType: 'video/mp4' }
     }
     console.log('[Veo Video] EXT mode with source video ref:', ref.substring(0, 80))
-  } else if (options.sourceVideoUrl) {
+  } else if (veoOptions.sourceVideoUrl) {
     console.log('[Veo Video] sourceVideoUrl legacy — use sourceVideo (Veo ref) for EXT on Vertex')
   }
 
   // Build parameters object
   // Note: For Veo 3 text-to-video, personGeneration must be 'allow_all'
   // For image-to-video, it should be 'allow_adult'
-  const isImageToVideo = !!options.startFrame
-  const isEXT = !!options.sourceVideo && !options.startFrame
-  const isFTV = !!options.startFrame && !!options.lastFrame
+  const isImageToVideo = !!veoOptions.startFrame
+  const isEXT = !!veoOptions.sourceVideo && !veoOptions.startFrame
+  const isFTV = !!veoOptions.startFrame && !!veoOptions.lastFrame
   
-  // FTV/EXT Stability Constraints:
-  // - Legacy Veo 3.1: duration MUST be 8s, resolution MUST be 720p
-  // - Gemini Omni Flash: duration MAY be 10s, resolution MUST be 720p
+  // FTV/EXT Stability Constraints (Veo predictLongRunning):
+  // - duration MUST be 8s, resolution MUST be 720p
   if (isFTV) {
-    if (options.durationSeconds && options.durationSeconds !== stabilityDuration) {
-      console.warn(`[Veo Video] FTV mode: Overriding duration ${options.durationSeconds}s → ${stabilityDuration}s (required for stability)`)
+    if (veoOptions.durationSeconds && veoOptions.durationSeconds !== stabilityDuration) {
+      console.warn(`[Veo Video] FTV mode: Overriding duration ${veoOptions.durationSeconds}s → ${stabilityDuration}s (required for stability)`)
     }
-    if (options.resolution && options.resolution !== '720p') {
-      console.warn(`[Veo Video] FTV mode: Overriding resolution ${options.resolution} → 720p (required for stability)`)
+    if (veoOptions.resolution && veoOptions.resolution !== '720p') {
+      console.warn(`[Veo Video] FTV mode: Overriding resolution ${veoOptions.resolution} → 720p (required for stability)`)
     }
     console.log(`[Veo Video] FTV MODE: Enforcing stability constraints (${stabilityDuration}s duration, 720p resolution)`)
   }
   
   // Safety setting: Use configurable setting from environment (default: 'block_only_high')
-  // This reduces false positives for dramatic/cinematic content while still blocking egregious content
-  // Options: 'block_most' (default/strict), 'block_some', 'block_few', 'block_only_high' (least restrictive)
-  const safetySetting = options.safetySetting || getVeoSafetySetting()
+  const safetySetting = veoOptions.safetySetting || getVeoSafetySetting()
   const personGeneration = isImageToVideo ? getImagenPersonGeneration() : 'allow_all'
   
   const parameters: Record<string, any> = {
-    aspectRatio: options.aspectRatio || '16:9',
-    // FTV/EXT require fixed stability duration; otherwise default to 10s (Omni) or requested value
-    durationSeconds: isFTV || isEXT ? stabilityDuration : (options.durationSeconds || DEFAULT_VEO_CLIP_DURATION),
+    aspectRatio: veoOptions.aspectRatio || '16:9',
+    durationSeconds: isFTV || isEXT ? stabilityDuration : (veoOptions.durationSeconds || DEFAULT_VEO_CLIP_DURATION),
     personGeneration: personGeneration,
     safetySetting: safetySetting,
-    // Return RAI categories / support codes in errors and operations (Vertex VideoGenerationModelParams)
     includeRaiReason: getVeoIncludeRaiReason(),
   }
 
@@ -604,28 +612,26 @@ export async function generateVideoWithVeo(
   if (isFTV || isEXT) {
     parameters.resolution = '720p'
     parameters.durationSeconds = stabilityDuration
-  } else if (options.resolution === '1080p') {
+  } else if (veoOptions.resolution === '1080p') {
     parameters.resolution = '1080p'
   }
 
   // Add negative prompt if provided (same string safety scoring as main prompt in practice).
-  if (options.negativePrompt) {
-    parameters.negativePrompt = options.negativePrompt
+  if (veoOptions.negativePrompt) {
+    parameters.negativePrompt = veoOptions.negativePrompt
   }
 
   // Add last frame for FTV interpolation mode
-  // IMPORTANT: lastFrame must go in the INSTANCE object alongside the start frame,
-  // NOT in parameters. The Veo API uses both frames from the instance to interpolate.
-  if (options.lastFrame) {
+  if (veoOptions.lastFrame) {
     let lastFrameData: string
     let mimeType = 'image/png'
     
-    if (options.lastFrame.startsWith('http')) {
-      const result = await urlToBase64(options.lastFrame)
+    if (veoOptions.lastFrame.startsWith('http')) {
+      const result = await urlToBase64(veoOptions.lastFrame)
       lastFrameData = result.base64
       mimeType = result.mimeType
     } else {
-      lastFrameData = options.lastFrame
+      lastFrameData = veoOptions.lastFrame
     }
     
     // lastFrame structure must match instance.image - flat structure, not nested
@@ -639,15 +645,15 @@ export async function generateVideoWithVeo(
   // Add reference images to instance (Veo 3.1 feature - T2V only, NOT compatible with I2V)
   // Vertex AI uses instance.referenceImages, not a separate config object
   // IMPORTANT: referenceImages cannot be used with startFrame (image parameter)
-  if (options.referenceImages && options.referenceImages.length > 0) {
+  if (veoOptions.referenceImages && veoOptions.referenceImages.length > 0) {
     // Safety check: referenceImages is T2V only
-    if (options.startFrame) {
+    if (veoOptions.startFrame) {
       console.warn('[Veo Video] WARNING: referenceImages cannot be used with startFrame (I2V)')
       console.warn('[Veo Video] Ignoring referenceImages - using I2V mode instead')
       // Skip adding referenceImages when startFrame is present
     } else {
       const refs = await Promise.all(
-        options.referenceImages.slice(0, 3).map(async (ref) => {
+        veoOptions.referenceImages.slice(0, 3).map(async (ref) => {
           // Support both imageUrl and url field names
           const imageSource = ref.base64Image || ref.imageUrl || ref.url
           if (!imageSource) return null

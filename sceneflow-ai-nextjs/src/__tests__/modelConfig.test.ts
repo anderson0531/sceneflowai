@@ -8,6 +8,9 @@ import {
   getVertexHostname,
   getVertexLocation,
   isOmniVideoModel,
+  isOmniInteractionContinuationRef,
+  resolveVideoModel,
+  clampDurationForVeoPredictLongRunning,
   MAX_VEO_VIDEO_CLIP_SECONDS,
   VEO_CLIP_DURATION_OPTIONS,
   clampToVeoClipDuration,
@@ -20,17 +23,43 @@ describe('modelConfig Veo tiers', () => {
     expect(VEO_MODELS.lite).toBe('veo-3.1-lite-generate-001')
   })
 
-  it('routes fast and premium tiers to Gemini Omni Flash', () => {
-    expect(getVeoModel('fast')).toBe('gemini-omni-flash-preview')
-    expect(getVeoModel('premium')).toBe('gemini-omni-flash-preview')
-    expect(getVeoModel('standard')).toBe('gemini-omni-flash-preview')
+  it('routes fast and premium tiers to Veo 3.1 production models', () => {
+    expect(getVeoModel('fast')).toBe('veo-3.1-fast-generate-001')
+    expect(getVeoModel('premium')).toBe('veo-3.1-generate-001')
+    expect(getVeoModel('standard')).toBe('veo-3.1-generate-001')
     expect(VEO_MODELS.omni).toBe('gemini-omni-flash-preview')
   })
 
-  it('defaults segment clip duration to 10 seconds', () => {
-    expect(DEFAULT_VEO_CLIP_DURATION).toBe(10)
+  it('defaults segment clip duration to 8 seconds (Veo predictLongRunning max)', () => {
+    expect(DEFAULT_VEO_CLIP_DURATION).toBe(8)
     expect(MAX_VEO_VIDEO_CLIP_SECONDS).toBe(10)
     expect(VEO_CLIP_DURATION_OPTIONS).toEqual([4, 6, 8, 10])
+  })
+
+  it('resolveVideoModel routes Omni only for explicit 10s or EXT interaction refs', () => {
+    expect(resolveVideoModel('fast', { durationSeconds: 10 })).toBe(VEO_MODELS.omni)
+    expect(resolveVideoModel('fast', { sourceVideo: 'interaction:v1_abc123' })).toBe(VEO_MODELS.omni)
+    expect(resolveVideoModel('fast', { sourceVideo: 'v1_abc123' })).toBe(VEO_MODELS.omni)
+    expect(resolveVideoModel('fast', { durationSeconds: 8 })).toBe(VEO_MODELS.fast)
+    expect(resolveVideoModel('premium', { durationSeconds: 8 })).toBe(VEO_MODELS.premium)
+  })
+
+  it('resolveVideoModel routes reference-image requests to premium Veo', () => {
+    expect(resolveVideoModel('fast', { hasReferenceImages: true })).toBe(VEO_MODELS.premium)
+    expect(resolveVideoModel('premium', { hasReferenceImages: true })).toBe(VEO_MODELS.premium)
+  })
+
+  it('detects Omni interaction continuation refs', () => {
+    expect(isOmniInteractionContinuationRef('interaction:v1_abc')).toBe(true)
+    expect(isOmniInteractionContinuationRef('v1_abc')).toBe(true)
+    expect(isOmniInteractionContinuationRef('projects/p/locations/global/interactions/abc')).toBe(true)
+    expect(isOmniInteractionContinuationRef('gs://bucket/video.mp4')).toBe(false)
+  })
+
+  it('clamps duration for Veo predictLongRunning to 8s max', () => {
+    expect(clampDurationForVeoPredictLongRunning(10)).toBe(8)
+    expect(clampDurationForVeoPredictLongRunning(6)).toBe(6)
+    expect(clampDurationForVeoPredictLongRunning(undefined)).toBe(8)
   })
 
   it('clamps numeric durations to valid clip lengths', () => {
