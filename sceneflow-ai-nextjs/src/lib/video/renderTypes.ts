@@ -297,7 +297,7 @@ export interface SceneRenderVideoSegment {
   voiceoverDuration?: number
   /** Pause duration after this segment ends (seconds) */
   pauseDuration?: number
-  /** Bottom-edge crop % (2–10) for uploaded video watermark removal */
+  /** Uniform frame crop % (2–10) for uploaded video; preserves aspect ratio */
   watermarkCropPercent?: number
 }
 

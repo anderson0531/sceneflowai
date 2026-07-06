@@ -1,9 +1,9 @@
-/** Valid bottom crop range for uploaded beat watermark removal (percent of frame height). */
+/** Valid uniform frame crop range for uploaded beats (percent shrink, preserves aspect ratio). */
 export const WATERMARK_CROP_MIN = 2
 export const WATERMARK_CROP_MAX = 10
 export const WATERMARK_CROP_DEFAULT = 5
 
-export interface BottomCropSourceRect {
+export interface FrameCropSourceRect {
   sx: number
   sy: number
   sw: number
@@ -23,36 +23,50 @@ export function clampWatermarkCropPercent(value: unknown): number | undefined {
 }
 
 /**
- * Source rectangle that removes `cropPercent` from the bottom edge (before scale/pad).
+ * Centered source rectangle that shrinks width and height by `cropPercent` evenly (before scale/pad).
  */
-export function getBottomCropSourceRect(
+export function getFrameCropSourceRect(
   width: number,
   height: number,
   cropPercent: number
-): BottomCropSourceRect {
+): FrameCropSourceRect {
   const pct = clampWatermarkCropPercent(cropPercent)
   if (!pct || width <= 0 || height <= 0) {
     return { sx: 0, sy: 0, sw: width, sh: height }
   }
-  const sh = Math.max(1, Math.round(height * (1 - pct / 100)))
-  return { sx: 0, sy: 0, sw: width, sh }
+  const factor = 1 - pct / 100
+  const sw = Math.max(1, Math.round(width * factor))
+  const sh = Math.max(1, Math.round(height * factor))
+  const sx = Math.max(0, Math.round((width - sw) / 2))
+  const sy = Math.max(0, Math.round((height - sh) / 2))
+  return { sx, sy, sw, sh }
 }
+
+/** @deprecated Use getFrameCropSourceRect */
+export const getBottomCropSourceRect = getFrameCropSourceRect
 
 /**
  * FFmpeg crop filter fragment (includes trailing comma when non-empty).
  */
-export function buildFfmpegBottomCropFilter(cropPercent: unknown): string {
+export function buildFfmpegFrameCropFilter(cropPercent: unknown): string {
   const pct = clampWatermarkCropPercent(cropPercent)
   if (!pct) return ''
   const factor = 1 - pct / 100
-  return `crop=iw:ih*${factor}:0:0,`
+  return `crop=iw*${factor}:ih*${factor}:(iw-iw*${factor})/2:(ih-ih*${factor})/2,`
 }
 
+/** @deprecated Use buildFfmpegFrameCropFilter */
+export const buildFfmpegBottomCropFilter = buildFfmpegFrameCropFilter
+
 /**
- * CSS clip-path inset for preview (percent of element box, bottom edge).
+ * CSS clip-path inset for preview (even inset on all sides).
  */
-export function getBottomCropClipPath(cropPercent: unknown): string | undefined {
+export function getFrameCropClipPath(cropPercent: unknown): string | undefined {
   const pct = clampWatermarkCropPercent(cropPercent)
   if (!pct) return undefined
-  return `inset(0 0 ${pct}% 0)`
+  const inset = pct / 2
+  return `inset(${inset}% ${inset}% ${inset}% ${inset}%)`
 }
+
+/** @deprecated Use getFrameCropClipPath */
+export const getBottomCropClipPath = getFrameCropClipPath

@@ -129,7 +129,7 @@ import {
 } from '@/lib/scene/mixerTiming'
 import {
   clampWatermarkCropPercent,
-  getBottomCropClipPath,
+  getFrameCropClipPath,
   WATERMARK_CROP_DEFAULT,
   WATERMARK_CROP_MAX,
   WATERMARK_CROP_MIN,
@@ -1316,7 +1316,7 @@ function ScenePreviewPlayer({
             muted={isMuted || !segmentAudioConfigs[currentSegment.segment.segmentId]?.includeAudio}
             playsInline
             style={{
-              clipPath: getBottomCropClipPath(currentSegment.segment.watermarkCropPercent),
+              clipPath: getFrameCropClipPath(currentSegment.segment.watermarkCropPercent),
             }}
             onLoadedMetadata={(e) => {
               const video = e.currentTarget
@@ -2490,7 +2490,7 @@ function SegmentAudioControls({
 }
 
 /**
- * Per-beat bottom crop for uploaded videos (watermark removal).
+ * Per-beat uniform frame crop for uploaded videos.
  */
 function SegmentWatermarkCropControls({
   segments,
@@ -2530,7 +2530,7 @@ function SegmentWatermarkCropControls({
             </button>
           )}
           <Crop className="w-4 h-4 text-amber-400" />
-          <span className="text-xs text-gray-400 uppercase tracking-wide">Watermark Crop</span>
+          <span className="text-xs text-gray-400 uppercase tracking-wide">Crop Frame</span>
           <span className="text-xs text-gray-500">{uploadedVideoSegments.length} uploaded</span>
         </div>
       </div>
@@ -2538,7 +2538,7 @@ function SegmentWatermarkCropControls({
       {!isCollapsed && (
         <div className="px-3 pb-3 space-y-3">
           <p className="text-[11px] text-gray-500 leading-relaxed">
-            Removes the bottom band of uploaded clips before preview and render.
+            Crops uploaded clips evenly on all sides before preview and render to hide edge watermarks while keeping aspect ratio.
           </p>
           <div className="space-y-2">
             {uploadedVideoSegments.map((seg, i) => {
@@ -2566,7 +2566,7 @@ function SegmentWatermarkCropControls({
                           )
                         }}
                       />
-                      Crop bottom
+                      Crop frame
                     </label>
                   </div>
                   {enabled && (

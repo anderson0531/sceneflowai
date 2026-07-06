@@ -17,7 +17,7 @@
 
 'use client'
 
-import { getBottomCropSourceRect } from './segmentVideoCrop'
+import { getFrameCropSourceRect } from './segmentVideoCrop'
 
 // =============================================================================
 // Canvas capture (video/mixed exports)
@@ -49,7 +49,7 @@ export interface LocalRenderSegment {
   volume?: number
   /** Include the video's audio track in the render */
   includeVideoAudio?: boolean
-  /** Bottom-edge crop % (2–10) for uploaded video watermark removal */
+  /** Uniform frame crop % (2–10) for uploaded video; preserves aspect ratio */
   watermarkCropPercent?: number
 }
 
@@ -1566,7 +1566,7 @@ export class LocalRenderService {
     const fullHeight = asset instanceof HTMLVideoElement ? asset.videoHeight : asset.height
     const cropRect =
       asset instanceof HTMLVideoElement && segment.watermarkCropPercent
-        ? getBottomCropSourceRect(fullWidth, fullHeight, segment.watermarkCropPercent)
+        ? getFrameCropSourceRect(fullWidth, fullHeight, segment.watermarkCropPercent)
         : { sx: 0, sy: 0, sw: fullWidth, sh: fullHeight }
 
     const contentWidth = cropRect.sw

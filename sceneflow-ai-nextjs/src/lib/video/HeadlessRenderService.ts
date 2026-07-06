@@ -28,7 +28,7 @@ export interface HeadlessRenderSegment {
   startTime: number
   duration: number
   volume?: number
-  /** Bottom-edge crop % (2–10) for uploaded video watermark removal */
+  /** Uniform frame crop % (2–10) for uploaded video; preserves aspect ratio */
   watermarkCropPercent?: number
 }
 
@@ -518,21 +518,25 @@ export class HeadlessRenderService {
     };
     
     /**
-     * Bottom crop source rect for uploaded watermark removal (2–10%).
+     * Centered uniform crop source rect (2–10%) — preserves aspect ratio.
      */
-    function getBottomCropSourceRect(vw, vh, cropPercent) {
+    function getFrameCropSourceRect(vw, vh, cropPercent) {
       const pct = typeof cropPercent === 'number' ? Math.round(cropPercent) : 0;
       if (pct < 2 || pct > 10 || vw <= 0 || vh <= 0) {
         return { sx: 0, sy: 0, sw: vw, sh: vh };
       }
-      const sh = Math.max(1, Math.round(vh * (1 - pct / 100)));
-      return { sx: 0, sy: 0, sw: vw, sh };
+      const factor = 1 - pct / 100;
+      const sw = Math.max(1, Math.round(vw * factor));
+      const sh = Math.max(1, Math.round(vh * factor));
+      const sx = Math.max(0, Math.round((vw - sw) / 2));
+      const sy = Math.max(0, Math.round((vh - sh) / 2));
+      return { sx, sy, sw, sh };
     }
 
     function drawVideoCover(ctx, video, cropPercent, outW, outH) {
       const vw = video.videoWidth;
       const vh = video.videoHeight;
-      const { sx, sy, sw, sh } = getBottomCropSourceRect(vw, vh, cropPercent);
+      const { sx, sy, sw, sh } = getFrameCropSourceRect(vw, vh, cropPercent);
       const scale = Math.max(outW / sw, outH / sh);
       const scaledW = sw * scale;
       const scaledH = sh * scale;
@@ -580,7 +584,7 @@ export class HeadlessRenderService {
               }
             });
             
-            // Draw video frame (optional bottom crop for uploaded watermarks)
+            // Draw video frame (optional uniform frame crop)
             drawVideoCover(hiddenCtx, video, activeSegment.watermarkCropPercent, width, height);
           }
         } else if (activeSegment.assetType === 'image') {

@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import {
-  buildFfmpegBottomCropFilter,
+  buildFfmpegFrameCropFilter,
   clampWatermarkCropPercent,
-  getBottomCropClipPath,
-  getBottomCropSourceRect,
+  getFrameCropClipPath,
+  getFrameCropSourceRect,
   WATERMARK_CROP_DEFAULT,
 } from '@/lib/video/segmentVideoCrop'
 
@@ -18,18 +18,18 @@ describe('clampWatermarkCropPercent', () => {
   })
 })
 
-describe('getBottomCropSourceRect', () => {
-  it('removes bottom percent from height', () => {
-    expect(getBottomCropSourceRect(1920, 1000, 5)).toEqual({
-      sx: 0,
-      sy: 0,
-      sw: 1920,
-      sh: 950,
+describe('getFrameCropSourceRect', () => {
+  it('crops evenly from all sides while preserving aspect ratio', () => {
+    expect(getFrameCropSourceRect(1920, 1080, 5)).toEqual({
+      sx: 48,
+      sy: 27,
+      sw: 1824,
+      sh: 1026,
     })
   })
 
   it('returns full frame when crop invalid', () => {
-    expect(getBottomCropSourceRect(800, 600, 0)).toEqual({
+    expect(getFrameCropSourceRect(800, 600, 0)).toEqual({
       sx: 0,
       sy: 0,
       sw: 800,
@@ -38,21 +38,24 @@ describe('getBottomCropSourceRect', () => {
   })
 })
 
-describe('buildFfmpegBottomCropFilter', () => {
-  it('builds crop expression for valid percent', () => {
-    expect(buildFfmpegBottomCropFilter(5)).toBe('crop=iw:ih*0.95:0:0,')
-    expect(buildFfmpegBottomCropFilter(10)).toBe('crop=iw:ih*0.9:0:0,')
-    expect(buildFfmpegBottomCropFilter(2)).toBe('crop=iw:ih*0.98:0:0,')
+describe('buildFfmpegFrameCropFilter', () => {
+  it('builds centered crop expression for valid percent', () => {
+    expect(buildFfmpegFrameCropFilter(5)).toBe(
+      'crop=iw*0.95:ih*0.95:(iw-iw*0.95)/2:(ih-ih*0.95)/2,'
+    )
+    expect(buildFfmpegFrameCropFilter(10)).toBe(
+      'crop=iw*0.9:ih*0.9:(iw-iw*0.9)/2:(ih-ih*0.9)/2,'
+    )
   })
 
   it('returns empty when disabled', () => {
-    expect(buildFfmpegBottomCropFilter(undefined)).toBe('')
+    expect(buildFfmpegFrameCropFilter(undefined)).toBe('')
   })
 })
 
-describe('getBottomCropClipPath', () => {
-  it('returns inset clip path for preview', () => {
-    expect(getBottomCropClipPath(WATERMARK_CROP_DEFAULT)).toBe('inset(0 0 5% 0)')
-    expect(getBottomCropClipPath(undefined)).toBeUndefined()
+describe('getFrameCropClipPath', () => {
+  it('returns even inset clip path for preview', () => {
+    expect(getFrameCropClipPath(WATERMARK_CROP_DEFAULT)).toBe('inset(2.5% 2.5% 2.5% 2.5%)')
+    expect(getFrameCropClipPath(undefined)).toBeUndefined()
   })
 })

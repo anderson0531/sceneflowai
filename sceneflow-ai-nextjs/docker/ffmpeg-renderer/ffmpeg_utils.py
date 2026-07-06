@@ -829,7 +829,11 @@ def build_concat_ffmpeg_command(
         apad_str = f",apad=pad_dur={pause_duration}" if pause_duration > 0 else ""
 
         crop_pct = float(segment.get('watermarkCropPercent') or 0)
-        crop_filter = f"crop=iw:ih*(1-{crop_pct / 100}):0:0," if crop_pct >= 2 else ""
+        if crop_pct >= 2:
+            factor = 1 - crop_pct / 100
+            crop_filter = f"crop=iw*{factor}:ih*{factor}:(iw-iw*{factor})/2:(ih-ih*{factor})/2,"
+        else:
+            crop_filter = ""
         
         # Scale to target resolution and set framerate
         # setpts=PTS-STARTPTS resets video timestamps to start at 0 for proper concatenation sync
