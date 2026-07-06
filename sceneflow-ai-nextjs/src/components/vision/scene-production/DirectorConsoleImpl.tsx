@@ -49,7 +49,6 @@ import {
   ChevronDown,
   ChevronRight,
   Wand2,
-  CloudUpload,
   ListVideo,
 } from 'lucide-react'
 import type { 
@@ -1261,12 +1260,6 @@ export function DirectorConsoleRoot({
                                 <CheckCircle className="w-3 h-3 mr-1" />
                                 Done
                               </Badge>
-                              {segment.isUserUpload && (
-                                <Badge className="bg-sky-500/80 text-white text-[10px] px-1.5 py-0">
-                                  <CloudUpload className="w-3 h-3 mr-1" />
-                                  Uploaded
-                                </Badge>
-                              )}
                             </div>
                             <button
                               className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/40 transition-colors group"
@@ -1308,25 +1301,13 @@ export function DirectorConsoleRoot({
                               <span>•</span>
                             </>
                           )}
-                          {segment.isUserUpload ? (
-                            <>
-                              <span className="text-sky-400 font-medium">
-                                {segment.actualVideoDuration ? `${Math.round(segment.actualVideoDuration)}s` : `${item.config.duration}s`}
-                              </span>
-                              <span>•</span>
-                              <span>{item.config.aspectRatio}</span>
-                              <span>•</span>
-                              <span className="text-sky-400">User Upload</span>
-                            </>
-                          ) : (
-                            <>
-                              <span>{item.config.duration}s</span>
-                              <span>•</span>
-                              <span>{item.config.aspectRatio}</span>
-                              <span>•</span>
-                              <span>{item.config.confidence}% confidence</span>
-                            </>
-                          )}
+                          <span>
+                            {segment.isUserUpload && segment.actualVideoDuration
+                              ? `${Math.round(segment.actualVideoDuration)}s`
+                              : `${item.config.duration}s`}
+                          </span>
+                          <span>•</span>
+                          <span>{item.config.aspectRatio}</span>
                         </div>
                       </div>
                       <div className="flex-shrink-0 flex items-center gap-1">
