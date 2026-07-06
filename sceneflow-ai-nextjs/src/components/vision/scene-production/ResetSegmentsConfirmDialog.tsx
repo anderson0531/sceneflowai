@@ -31,7 +31,6 @@ export interface SegmentResetImpact {
   alternateTakeCount: number
   hasRenderedScene: boolean
   productionStreamCount: number
-  lockedSegmentCount: number
 }
 
 export function computeSegmentResetImpact(
@@ -43,7 +42,6 @@ export function computeSegmentResetImpact(
   let videoCount = 0
   let imageClipCount = 0
   let alternateTakeCount = 0
-  let lockedSegmentCount = 0
 
   for (const seg of segments) {
     const startUrl = seg.references?.startFrameUrl || seg.startFrameUrl
@@ -58,7 +56,6 @@ export function computeSegmentResetImpact(
     }
 
     alternateTakeCount += Array.isArray(seg.takes) ? seg.takes.length : 0
-    if (seg.lockedForProduction) lockedSegmentCount++
   }
 
   const streams = production?.productionStreams ?? []
@@ -76,7 +73,6 @@ export function computeSegmentResetImpact(
     alternateTakeCount,
     hasRenderedScene,
     productionStreamCount,
-    lockedSegmentCount,
   }
 }
 

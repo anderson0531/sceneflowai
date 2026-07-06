@@ -42,8 +42,6 @@ import {
   Music,
   Upload,
   RefreshCw,
-  Lock,
-  Unlock,
   PlayCircle,
   Timer,
   Download,
@@ -51,8 +49,6 @@ import {
   ChevronDown,
   ChevronRight,
   Wand2,
-  Shield,
-  ShieldCheck,
   CloudUpload,
   ListVideo,
 } from 'lucide-react'
@@ -78,6 +74,11 @@ const DirectorDialog = dynamic(
   { ssr: false }
 )
 import { ModerationValidateButton } from '@/components/moderation/ModerationValidateButton'
+import { RetakeConfirmDialog } from './RetakeConfirmDialog'
+import {
+  resolveRetakeConfirmation,
+  type PendingRetakeAction,
+} from './retakeConfirm'
 // Dynamic import for VideoEditingDialog to prevent TDZ
 // VideoEditingDialog → VideoEditingDialogV2 is shared between DirectorConsole (chunk 4195)
 // and SegmentStudio (ScriptPanel chunk). When webpack's ModuleConcatenationPlugin scope-hoists
@@ -201,8 +202,6 @@ export interface DirectorConsoleProps {
     }
   ) => Promise<void>
   onSegmentUpload?: (segmentId: string, file: File) => void
-  /** Persist lock status to database */
-  onLockSegment?: (segmentId: string, locked: boolean) => void
   /** Persist rendered scene URL to database */
   onRenderedSceneUrlChange?: (url: string | null) => void
   /** Persist production data (including production streams) to database */
@@ -293,7 +292,6 @@ export function DirectorConsoleRoot({
   scene,
   onGenerate,
   onSegmentUpload,
-  onLockSegment,
   onRenderedSceneUrlChange,
   onProductionDataChange,
   sceneIndex,
@@ -383,6 +381,9 @@ export function DirectorConsoleRoot({
   
   // Selected segment for DirectorDialog
   const [selectedSegment, setSelectedSegment] = useState<SceneSegment | null>(null)
+
+  // Retake confirmation when replacing a completed take via Take or Upload
+  const [pendingRetakeAction, setPendingRetakeAction] = useState<PendingRetakeAction | null>(null)
   
   // Beat for VideoEditingDialog (editing completed videos)
   const [editingVideoSegment, setEditingVideoSegment] = useState<SceneSegment | null>(null)
@@ -656,33 +657,51 @@ export function DirectorConsoleRoot({
       overrideConfigs: new Map([[segmentId, config]]),
     })
   }, [updateConfig, processQueue])
-  
-  // Handle batch render - approved only
-  const handleRenderApproved = useCallback(() => {
-    processQueue({
-      mode: 'approved_only',
-      priority: 'sequence',
-      delayBetween: 6000,
-    })
-  }, [processQueue])
-  
-  // Handle batch render - all segments
-  const handleRenderAll = useCallback(() => {
-    processQueue({
-      mode: 'all',
-      priority: 'approved_first',
-      delayBetween: 6000,
-    })
-  }, [processQueue])
-  
+
+  const handleRequestTake = useCallback(
+    (segment: SceneSegment) => {
+      const pending = resolveRetakeConfirmation(segment, getQueueItem(segment.segmentId), 'openDialog')
+      if (pending) {
+        setPendingRetakeAction(pending)
+        return
+      }
+      setSelectedSegment(segment)
+    },
+    [getQueueItem]
+  )
+
+  const handleRequestUpload = useCallback(
+    (segmentId: string) => {
+      const segment = segments.find((s) => s.segmentId === segmentId)
+      if (!segment) return
+      const pending = resolveRetakeConfirmation(segment, getQueueItem(segmentId), 'upload')
+      if (pending) {
+        setPendingRetakeAction(pending)
+        return
+      }
+      document.getElementById(`upload-video-${segmentId}`)?.click()
+    },
+    [segments, getQueueItem]
+  )
+
+  const handleConfirmRetake = useCallback(() => {
+    if (!pendingRetakeAction) return
+    const { segmentId, action } = pendingRetakeAction
+    if (action === 'openDialog') {
+      const segment = segments.find((s) => s.segmentId === segmentId)
+      if (segment) setSelectedSegment(segment)
+    } else {
+      document.getElementById(`upload-video-${segmentId}`)?.click()
+    }
+    setPendingRetakeAction(null)
+  }, [pendingRetakeAction, segments])
+
   // Handle batch render — Express queues segments with REF or I2V configs
   const handleExpress = useCallback(() => {
     const expressIds = queue
       .filter((item) => {
         const segment = segments.find((s) => s.segmentId === item.segmentId)
         if (!segment) return false
-
-        if (segment.lockedForProduction || item.config.approvalStatus === 'locked') return false
 
         const cfg = item.config
         const resolvedStart =
@@ -709,7 +728,7 @@ export function DirectorConsoleRoot({
     if (expressIds.length === 0) {
       import('sonner').then(({ toast }) => {
         toast.info(
-          'No eligible segments for Express — need beat references or a start Beat Frame, unlocked, and not already rendering.'
+          'No eligible segments for Express — need beat references or a start Beat Frame, and not already rendering.'
         )
       })
       return
@@ -724,46 +743,6 @@ export function DirectorConsoleRoot({
     })
   }, [queue, segments, sceneImageUrl, processQueue])
 
-  // Toggle segment lock status (locked/unlocked) - persists to DB
-  const handleToggleLock = useCallback((segmentId: string) => {
-    const item = queue.find(q => q.segmentId === segmentId)
-    const segment = segments.find(s => s.segmentId === segmentId)
-    if (item && segment) {
-      // Check current lock state from both sources (segment.lockedForProduction or config status)
-      const isCurrentlyLocked = segment.lockedForProduction || item.config.approvalStatus === 'locked'
-      const newLockState = !isCurrentlyLocked
-      const newStatus = newLockState ? 'locked' : 'auto-ready'
-      
-      console.log('[DirectorConsole] Toggle lock:', { 
-        segmentId, 
-        currentLocked: isCurrentlyLocked,
-        newLocked: newLockState,
-        segmentLockedForProduction: segment.lockedForProduction,
-        configApprovalStatus: item.config.approvalStatus
-      })
-      
-      // Update local queue state
-      updateConfig(segmentId, { ...item.config, approvalStatus: newStatus })
-      
-      // Persist to DB if callback provided
-      if (onLockSegment) {
-        console.log('[DirectorConsole] Calling onLockSegment:', segmentId, newLockState)
-        onLockSegment(segmentId, newLockState)
-      } else {
-        console.warn('[DirectorConsole] onLockSegment callback not provided!')
-      }
-    }
-  }, [queue, segments, updateConfig, onLockSegment])
-  
-  // Mark segment for "Retake" - opens dialog for user to configure regeneration
-  const handleMarkRetake = useCallback((segmentId: string) => {
-    const segment = segments.find(s => s.segmentId === segmentId)
-    if (segment) {
-      // Open DirectorDialog so user can review/edit settings before regenerating
-      setSelectedSegment(segment)
-    }
-  }, [segments])
-  
   // === Text Overlay Handlers ===
   
   // Handle text overlay changes - update local state and persist to database
@@ -1011,19 +990,9 @@ export function DirectorConsoleRoot({
   
   // Count segments by status
   const statusCounts = {
-    approved: queue.filter(q => q.config.approvalStatus === 'user-approved').length,
-    autoReady: queue.filter(q => q.config.approvalStatus === 'auto-ready').length,
-    locked: queue.filter(q => q.config.approvalStatus === 'locked').length,
     rendered: queue.filter(q => q.status === 'complete').length,
-    retakes: queue.filter(q => q.status === 'complete' && q.config.approvalStatus === 'auto-ready').length,
     total: queue.length,
   }
-  
-  // Count selected segments that are NOT locked (eligible for generation)
-  const selectedUnlockedCount = Array.from(selectedSegmentIds).filter(id => {
-    const item = queue.find(q => q.segmentId === id)
-    return item && item.config.approvalStatus !== 'locked'
-  }).length
 
   // No segments state
   if (segments.length === 0) {
@@ -1191,7 +1160,7 @@ export function DirectorConsoleRoot({
             onClick={handleExpress}
             disabled={queue.length === 0}
             className="border-indigo-500/50 text-indigo-300 hover:bg-indigo-500/10 hover:border-indigo-400 shadow-md hover:shadow-lg transition-all"
-            title="Express: batch-generate video for unlocked segments with beat references or a start Beat Frame"
+            title="Express: batch-generate video for segments with beat references or a start Beat Frame"
           >
             <Wand2 className="w-4 h-4 mr-2" />
             Express
@@ -1298,11 +1267,6 @@ export function DirectorConsoleRoot({
                                   Uploaded
                                 </Badge>
                               )}
-                              {item.config.approvalStatus === 'locked' && (
-                                <Badge className="bg-amber-500/80 text-white text-[10px] px-1.5 py-0">
-                                  <ShieldCheck className="w-3 h-3" />
-                                </Badge>
-                              )}
                             </div>
                             <button
                               className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/40 transition-colors group"
@@ -1380,38 +1344,22 @@ export function DirectorConsoleRoot({
                                 }
                                 e.target.value = ''
                               }}
-                              disabled={item.config.approvalStatus === 'locked'}
                             />
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className={
-                                    item.config.approvalStatus === 'locked'
-                                      ? 'text-slate-600 cursor-not-allowed opacity-50'
-                                      : 'text-slate-500 hover:text-slate-300'
-                                  }
-                                  disabled={item.config.approvalStatus === 'locked'}
+                                  className="text-slate-500 hover:text-slate-300"
                                   onClick={(e) => {
                                     e.stopPropagation()
-                                    if (item.config.approvalStatus === 'locked') {
-                                      import('sonner').then(({ toast }) => {
-                                        toast.error('Beat is protected', {
-                                          description: 'Unprotect this segment first to upload a new video',
-                                        })
-                                      })
-                                      return
-                                    }
-                                    document.getElementById(`upload-video-${item.segmentId}`)?.click()
+                                    handleRequestUpload(item.segmentId)
                                   }}
                                 >
                                   <Upload className="w-4 h-4" />
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>
-                                {item.config.approvalStatus === 'locked' ? 'Unprotect segment to upload' : 'Upload Video'}
-                              </TooltipContent>
+                              <TooltipContent>Upload Video</TooltipContent>
                             </Tooltip>
                           </>
                         )}
@@ -1446,48 +1394,13 @@ export function DirectorConsoleRoot({
                           variant="outline"
                           size="sm"
                           className="text-xs bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700 px-2"
-                          onClick={() => setSelectedSegment(segment)}
+                          onClick={() => handleRequestTake(segment)}
                         >
                           <Settings2 className="w-3.5 h-3.5 mr-1" />
                           Take ({segment.takes?.length || 1})
                         </Button>
                       </div>
                     </div>
-                    {item.status === 'complete' && (
-                      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-700/50">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant={item.config.approvalStatus === 'locked' ? 'default' : 'outline'}
-                              size="sm"
-                              className={
-                                item.config.approvalStatus === 'locked'
-                                  ? 'flex-1 bg-amber-600 hover:bg-amber-700 text-white'
-                                  : 'flex-1 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700'
-                              }
-                              onClick={() => handleToggleLock(item.segmentId)}
-                            >
-                              {item.config.approvalStatus === 'locked' ? (
-                                <>
-                                  <ShieldCheck className="w-3.5 h-3.5 mr-1.5" />
-                                  Protected
-                                </>
-                              ) : (
-                                <>
-                                  <Shield className="w-3.5 h-3.5 mr-1.5" />
-                                  Protect
-                                </>
-                              )}
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {item.config.approvalStatus === 'locked'
-                              ? 'Unprotect to allow replacement'
-                              : 'Protect this segment from batch operations'}
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    )}
                   </div>
                 )
               })}
@@ -1593,6 +1506,14 @@ export function DirectorConsoleRoot({
           sceneIndex={sceneIndex}
         />
       )}
+
+      <RetakeConfirmDialog
+        open={!!pendingRetakeAction}
+        onOpenChange={(open) => {
+          if (!open) setPendingRetakeAction(null)
+        }}
+        onConfirm={handleConfirmRetake}
+      />
       
       {/* SceneVideoPlayer Modal */}
       <SceneVideoPlayer

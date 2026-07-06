@@ -226,7 +226,6 @@ export function useVideoQueue(
       segments.map(s => ({
         id: s.segmentId,
         status: s.status,
-        locked: s.lockedForProduction,
         asset: s.activeAssetUrl?.slice(-20), // Last 20 chars of URL for change detection
       }))
     )
@@ -273,12 +272,6 @@ export function useVideoQueue(
         confidence: 50,
       }
       
-      // If segment is locked in DB (persisted), override the approval status
-      if (segment.lockedForProduction && config.approvalStatus !== 'locked') {
-        console.log('[useVideoQueue] Segment locked from DB:', segment.segmentId, segment.lockedForProduction)
-        config = { ...config, approvalStatus: 'locked' as const }
-      }
-
       const liveStartFrameUrl = resolveEffectiveStartFrameUrl(
         segment,
         segmentGuideContext?.fullScene,

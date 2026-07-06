@@ -305,7 +305,7 @@ export interface CharacterReferencePrioritization {
 export type ApprovalStatus = 
   | 'auto-ready'      // System auto-configured, not yet user-reviewed
   | 'user-approved'   // User explicitly reviewed and approved settings
-  | 'locked'          // User locked this take - prevents regeneration
+  | 'locked'          // Legacy only — deprecated Protect feature; may exist in old queue configs
   | 'rendering'       // Currently generating video
   | 'rendered'        // Video successfully generated
   | 'error'           // Generation failed
@@ -651,8 +651,7 @@ export interface SceneSegment {
   // End frame URL (convenience accessor, also in references.endFrameUrl)
   endFrameUrl?: string | null
   
-  // Production lock - prevents regeneration in Director's Console
-  // Persisted to DB, survives page reloads
+  // Legacy production lock from deprecated Protect feature (read-only; no longer written)
   lockedForProduction?: boolean
   
   // ============================================================================

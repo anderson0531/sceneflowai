@@ -2863,24 +2863,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [applySceneProductionUpdate]
   )
 
-  // Handle segment lock state changes (persists to DB for production lock)
-  const handleLockSegment = useCallback(
-    (sceneId: string, segmentId: string, locked: boolean) => {
-      console.log('[handleLockSegment] Persisting lock state:', { sceneId, segmentId, locked })
-      applySceneProductionUpdate(sceneId, (current) => {
-        if (!current) return current
-        const segments = current.segments.map((segment) =>
-          segment.segmentId === segmentId
-            ? { ...segment, lockedForProduction: locked }
-            : segment
-        )
-        console.log('[handleLockSegment] Updated segments:', segments.map(s => ({ id: s.segmentId, locked: s.lockedForProduction })))
-        return { ...current, segments }
-      })
-    },
-    [applySceneProductionUpdate]
-  )
-
   // Handle segment animatic settings changes for Screening Room player
   // Controls image duration
   const handleSegmentAnimaticSettingsChange = useCallback(
@@ -13465,7 +13447,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onSegmentActionChange={handleSegmentActionChange}
                 onSegmentGenerate={handleSegmentGenerate}
                 onSegmentUpload={handleSegmentUpload}
-                onLockSegment={handleLockSegment}
                 onSegmentAnimaticSettingsChange={handleSegmentAnimaticSettingsChange}
                 onRenderedSceneUrlChange={handleRenderedSceneUrlChange}
                 onProductionDataChange={handleProductionDataChange}
