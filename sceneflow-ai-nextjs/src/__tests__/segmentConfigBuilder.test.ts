@@ -6,8 +6,9 @@ import {
   resolveSegmentFrameUrls,
 } from '@/lib/vision/segmentConfigBuilder'
 
-const STALE_SEGMENT_URL = 'https://example.com/stale-segment.jpg'
-const LIVE_BEAT_URL = 'https://example.com/live-beat.jpg'
+const STALE_SEGMENT_URL = 'https://example.com/stale-segment-1779527367000.jpeg'
+const LIVE_BEAT_URL = 'https://example.com/live-beat-1779527368000.jpeg'
+const NEWER_SEGMENT_URL = 'https://example.com/new-segment-1779527369000.jpeg'
 const BEAT_ID = 'beat-1'
 
 function makeSegment(overrides: Partial<SceneSegment> = {}): SceneSegment {
@@ -44,11 +45,26 @@ const sceneWithLiveBeat: Record<string, unknown> = {
 }
 
 describe('resolveEffectiveStartFrameUrl', () => {
-  it('prefers live beat storyboardImageUrl over stale segment startFrameUrl', () => {
+  it('prefers newer beat storyboardImageUrl over stale segment startFrameUrl', () => {
     const segment = makeSegment()
     expect(
       resolveEffectiveStartFrameUrl(segment, sceneWithLiveBeat)
     ).toBe(LIVE_BEAT_URL)
+  })
+
+  it('prefers newer production segment startFrameUrl over stale beat storyboardImageUrl', () => {
+    const segment = makeSegment({
+      startFrameUrl: NEWER_SEGMENT_URL,
+      references: {
+        startFrameUrl: NEWER_SEGMENT_URL,
+        characterIds: [],
+        sceneRefIds: [],
+        objectRefIds: [],
+      },
+    })
+    expect(
+      resolveEffectiveStartFrameUrl(segment, sceneWithLiveBeat)
+    ).toBe(NEWER_SEGMENT_URL)
   })
 
   it('falls back to segment startFrameUrl when beat has no storyboard image', () => {

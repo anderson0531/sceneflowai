@@ -61,6 +61,14 @@ function pickMediaUrl(incoming: unknown, canonical: unknown): string | undefined
   return undefined
 }
 
+/** Prefer the newer of two storyboard media URLs (blob timestamp when available). */
+export function resolvePreferredStoryboardUrl(
+  urlA?: unknown,
+  urlB?: unknown
+): string | undefined {
+  return pickMediaUrl(urlA, urlB)
+}
+
 function pickPromptText(incoming: unknown, canonical: unknown): string | undefined {
   const inc = typeof incoming === 'string' && incoming.trim() ? incoming.trim() : undefined
   const can = typeof canonical === 'string' && canonical.trim() ? canonical.trim() : undefined

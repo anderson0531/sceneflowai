@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   deriveSegmentsFromBeats,
   applyBeatSplitAndDerive,
+  mergeDerivedSegmentsWithExisting,
 } from '@/lib/scene/deriveSegmentsFromBeats'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
@@ -192,5 +193,36 @@ describe('deriveSegmentsFromBeats', () => {
     expect(enResult.segments).toHaveLength(1)
     expect(esResult.segments.length).toBeGreaterThan(1)
     expect(esResult.segments.some((s) => s.generationMethod === 'EXT')).toBe(true)
+  })
+})
+
+describe('mergeDerivedSegmentsWithExisting', () => {
+  it('preserves production startFrameUrl when re-deriving segments', () => {
+    const beatUrl = 'https://example.com/beat-1779527367000.jpeg'
+    const productionUrl = 'https://example.com/production-1779527369000.jpeg'
+    const scene = approvedScene([
+      {
+        beatId: 'bt_1',
+        sequenceIndex: 0,
+        kind: 'action',
+        storyboardImageUrl: beatUrl,
+      },
+    ])
+
+    const derived = deriveSegmentsFromBeats(scene).segments
+    const existing = [
+      {
+        ...derived[0],
+        startFrameUrl: productionUrl,
+        references: {
+          ...derived[0].references,
+          startFrameUrl: productionUrl,
+        },
+      },
+    ]
+
+    const merged = mergeDerivedSegmentsWithExisting(derived, existing)
+    expect(merged[0].startFrameUrl).toBe(productionUrl)
+    expect(merged[0].references?.startFrameUrl).toBe(productionUrl)
   })
 })

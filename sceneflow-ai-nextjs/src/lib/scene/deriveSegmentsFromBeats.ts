@@ -309,6 +309,11 @@ export function mergeDerivedSegmentsWithExisting(
     )
     if (!match) return seg
 
+    const preservedStart =
+      match.startFrameUrl?.trim() ||
+      match.references?.startFrameUrl?.trim() ||
+      undefined
+
     return {
       ...seg,
       segmentId: match.segmentId,
@@ -319,8 +324,10 @@ export function mergeDerivedSegmentsWithExisting(
       isUserUpload: match.isUserUpload,
       actualVideoDuration: match.actualVideoDuration ?? seg.actualVideoDuration,
       userEditedPrompt: match.userEditedPrompt ?? seg.userEditedPrompt,
+      ...(preservedStart ? { startFrameUrl: preservedStart } : {}),
       references: {
         ...seg.references,
+        ...(preservedStart ? { startFrameUrl: preservedStart } : {}),
         ...(match.references?.endFrameUrl
           ? { endFrameUrl: match.references.endFrameUrl }
           : {}),

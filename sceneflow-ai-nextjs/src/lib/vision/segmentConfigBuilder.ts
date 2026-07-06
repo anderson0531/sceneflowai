@@ -22,6 +22,7 @@ import {
   FTV_SILENT_MOTION_HINT,
 } from '@/lib/vision/ftvPromptNormalize'
 import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
+import { resolvePreferredStoryboardUrl } from '@/lib/storyboard/mergeSceneMedia'
 import {
   resolveSegmentVideoReferences,
   type LabeledVideoReference,
@@ -451,30 +452,37 @@ export function applyStartFrameUrlToProductionSegments(
   })
 }
 
-/** Live beat start frame when beat-first Pre-Vis has been regenerated. */
+/** Live beat start frame reconciled with production segment overrides. */
 export function resolveEffectiveStartFrameUrl(
   segment: SceneSegment,
   scene?: Record<string, unknown> | null,
   sceneImageUrl?: string
 ): string | null {
   const beatId = segment.beatId?.trim()
+  const segmentUrl =
+    segment.startFrameUrl?.trim() ||
+    segment.references?.startFrameUrl?.trim() ||
+    null
+
+  let beatUrl: string | null = null
   if (beatId && scene) {
     const beat = getSceneBeats(scene).find((b) => b.beatId === beatId)
-    const liveBeatUrl = beat?.storyboardImageUrl?.trim()
-    if (liveBeatUrl) return liveBeatUrl
+    beatUrl = beat?.storyboardImageUrl?.trim() || null
   }
+
+  if (beatUrl && segmentUrl) {
+    if (beatUrl === segmentUrl) return beatUrl
+    return resolvePreferredStoryboardUrl(segmentUrl, beatUrl) || segmentUrl || beatUrl
+  }
+  if (beatUrl) return beatUrl
+  if (segmentUrl) return segmentUrl
 
   const masterSceneFrame =
     segment.sequenceIndex === 0 && sceneImageUrl?.trim()
       ? sceneImageUrl.trim()
       : null
 
-  return (
-    segment.startFrameUrl?.trim() ||
-    segment.references?.startFrameUrl?.trim() ||
-    masterSceneFrame ||
-    null
-  )
+  return masterSceneFrame || null
 }
 
 /** Resolved URLs passed to Veo (segment fields + first-segment scene master frame). */

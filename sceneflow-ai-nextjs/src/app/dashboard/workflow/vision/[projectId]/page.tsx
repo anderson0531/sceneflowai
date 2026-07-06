@@ -745,6 +745,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             characters,
             script: updatedScript,
             scenes: updatedScenes,
+            scriptUpdatedAt: new Date().toISOString(),
           },
         },
       },
@@ -763,6 +764,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         characters,
         script: updatedScript,
         scenes: updatedScenes,
+        scriptUpdatedAt: new Date().toISOString(),
       },
     }
     const syncedProject = { ...currentProject, metadata: syncedMetadata }
@@ -1680,6 +1682,43 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [applySceneProductionUpdate]
   )
 
+  const syncProductionStartFrameToScript = useCallback(
+    async (sceneId: string, beatId: string, newUrl: string) => {
+      if (!beatId?.trim() || !newUrl?.trim()) return
+
+      const scenes = scriptRef.current?.script?.scenes
+      if (!Array.isArray(scenes)) return
+
+      const sceneIdx = scenes.findIndex(
+        (s: any, i: number) => (s.id || s.sceneId || `scene-${i}`) === sceneId
+      )
+      if (sceneIdx < 0) return
+
+      const rawBeatIdx = resolveRawBeatIndex(scenes[sceneIdx], { beatId })
+      if (rawBeatIdx === undefined) return
+
+      const updatedScenes = [...scenes]
+      updatedScenes[sceneIdx] = stampPreVisContentHash(
+        applyBeatStoryboardImageToScene(
+          updatedScenes[sceneIdx],
+          rawBeatIdx,
+          newUrl
+        )
+      )
+
+      const currentScript = scriptRef.current
+      if (currentScript?.script) {
+        setScript({
+          ...currentScript,
+          script: { ...currentScript.script, scenes: updatedScenes },
+        })
+      }
+
+      await persistVisionScriptScenes(updatedScenes, 'syncProductionStartFrameToScript')
+    },
+    [persistVisionScriptScenes]
+  )
+
   const handleCreateReference = useCallback(
     async (
       type: VisualReferenceType,
@@ -2250,13 +2289,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       
       applySceneProductionUpdate(sceneId, () => updatedData)
+
+      if (frameType === 'start') {
+        const beatId = updatedSegments.find((s) => s.segmentId === segmentId)?.beatId
+        if (beatId) {
+          void syncProductionStartFrameToScript(sceneId, beatId, newFrameUrl)
+        }
+      }
+
       toast.success(`${frameType === 'start' ? 'Start' : 'End'} frame updated`)
       console.log(`[VisionPage] ${frameType} frame edited for segment:`, segmentId)
     },
-    [sceneProductionState, applySceneProductionUpdate]
+    [sceneProductionState, applySceneProductionUpdate, syncProductionStartFrameToScript]
   )
-
-  // Handler for uploading a frame image from user's device
   const handleUploadFrame = useCallback(
     async (sceneId: string, segmentId: string, frameType: 'start' | 'end', file: File) => {
       try {
@@ -2564,6 +2609,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }
         })
 
+        if (
+          segment.beatId &&
+          (frameType === 'start' || frameType === 'both') &&
+          data.startFrameUrl
+        ) {
+          void syncProductionStartFrameToScript(sceneId, segment.beatId, data.startFrameUrl)
+        }
+
         toast.success(`Frame${frameType === 'both' ? 's' : ''} generated successfully`)
         return {
           startFrameUrl:
@@ -2583,7 +2636,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         setGeneratingFramePhase(null)
       }
     },
-    [script?.script?.scenes, sceneProductionState, characters, objectReferences, locationReferences, applySceneProductionUpdate, lockedAspectRatio]
+    [script?.script?.scenes, sceneProductionState, characters, objectReferences, locationReferences, applySceneProductionUpdate, lockedAspectRatio, syncProductionStartFrameToScript]
   )
 
   const handleInitializeSceneProduction = useCallback(
@@ -9542,7 +9595,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       setScript({ ...script, script: { ...script.script, scenes: updatedScenes } })
-      await persistVisionScriptScenes(updatedScenes, 'handleDirectFrameGenerate')
+      const saved = await persistVisionScriptScenes(updatedScenes, 'handleDirectFrameGenerate')
+      if (
+        saved &&
+        payload.frameType === 'beat' &&
+        typeof payload.beatId === 'string'
+      ) {
+        const sceneId =
+          (scene.id as string) ||
+          (scene.sceneId as string) ||
+          `scene-${sceneIndex}`
+        syncBeatStartFrameToProduction(sceneId, payload.beatId, data.imageUrl)
+      }
       setPreVisDirectDialog(null)
       toast.success('Frame generated with Direct')
     } catch (error: unknown) {
