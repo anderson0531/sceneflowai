@@ -115,6 +115,7 @@ import type { SceneAudioData } from './GuidePromptEditor'
 import type { GuideCharacterDemographic } from '@/lib/scene/segmentGuidePrompt'
 import { isBeatFirstPipelineEnabled, isStoryboardApproved } from '@/lib/script/beatMigration'
 import type { SegmentGuideContext } from '@/lib/vision/segmentConfigBuilder'
+import { resolveEffectiveStartFrameUrl } from '@/lib/vision/segmentConfigBuilder'
 
 function getAspectRatioTailwindClass(ratio: BlueprintAspectRatio): string {
   switch (ratio) {
@@ -685,10 +686,15 @@ export function DirectorConsoleRoot({
 
         const cfg = item.config
         const resolvedStart =
+          resolveEffectiveStartFrameUrl(
+            segment,
+            scene as Record<string, unknown> | undefined,
+            sceneImageUrl
+          ) ||
           (cfg.startFrameUrl && String(cfg.startFrameUrl).trim()) ||
           segment.startFrameUrl?.trim() ||
           segment.references?.startFrameUrl?.trim() ||
-          (segment.sequenceIndex === 0 && sceneImageUrl?.trim() ? sceneImageUrl.trim() : '')
+          ''
 
         const hasStartFrame = !!resolvedStart
         const hasRefs =

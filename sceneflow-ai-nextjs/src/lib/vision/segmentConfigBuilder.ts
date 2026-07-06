@@ -337,14 +337,10 @@ export function detectRecommendedMethod(
     }
   }
 
-  const masterSceneFrame =
-    segment.sequenceIndex === 0 && sceneImageUrl?.trim()
-      ? sceneImageUrl.trim()
-      : ''
-  const hasStartFrame = !!(
-    segment.startFrameUrl ||
-    segment.references?.startFrameUrl ||
-    masterSceneFrame
+  const hasStartFrame = !!resolveEffectiveStartFrameUrl(
+    segment,
+    guideContext?.fullScene,
+    sceneImageUrl
   )
   const hasExistingVideo = !!(segment.activeAssetUrl && segment.assetType === 'video')
 
@@ -433,17 +429,61 @@ export function segmentHasBatchGuideDialogue(segment: SceneSegment): boolean {
   )
 }
 
-/** Resolved URLs passed to Veo (segment fields + first-segment scene master frame). */
-export function resolveSegmentFrameUrls(segment: SceneSegment, sceneImageUrl?: string) {
+/** Apply a beat-level start frame URL to all production segments for that beat. */
+export function applyStartFrameUrlToProductionSegments(
+  segments: SceneSegment[],
+  beatId: string,
+  newUrl: string
+): SceneSegment[] {
+  const trimmed = newUrl.trim()
+  if (!trimmed || !beatId.trim()) return segments
+
+  return segments.map((seg) => {
+    if (seg.beatId !== beatId) return seg
+    return {
+      ...seg,
+      startFrameUrl: trimmed,
+      references: {
+        ...seg.references,
+        startFrameUrl: trimmed,
+      },
+    }
+  })
+}
+
+/** Live beat start frame when beat-first Pre-Vis has been regenerated. */
+export function resolveEffectiveStartFrameUrl(
+  segment: SceneSegment,
+  scene?: Record<string, unknown> | null,
+  sceneImageUrl?: string
+): string | null {
+  const beatId = segment.beatId?.trim()
+  if (beatId && scene) {
+    const beat = getSceneBeats(scene).find((b) => b.beatId === beatId)
+    const liveBeatUrl = beat?.storyboardImageUrl?.trim()
+    if (liveBeatUrl) return liveBeatUrl
+  }
+
   const masterSceneFrame =
     segment.sequenceIndex === 0 && sceneImageUrl?.trim()
       ? sceneImageUrl.trim()
       : null
-  const startFrameUrl =
-    segment.startFrameUrl ||
-    segment.references?.startFrameUrl ||
+
+  return (
+    segment.startFrameUrl?.trim() ||
+    segment.references?.startFrameUrl?.trim() ||
     masterSceneFrame ||
     null
+  )
+}
+
+/** Resolved URLs passed to Veo (segment fields + first-segment scene master frame). */
+export function resolveSegmentFrameUrls(
+  segment: SceneSegment,
+  sceneImageUrl?: string,
+  scene?: Record<string, unknown> | null
+) {
+  const startFrameUrl = resolveEffectiveStartFrameUrl(segment, scene, sceneImageUrl)
   const endFrameUrl =
     segment.endFrameUrl || segment.references?.endFrameUrl || null
   return { startFrameUrl, endFrameUrl }
@@ -628,7 +668,11 @@ export function buildSegmentConfigsMap(
     const visualPrompt = generateVisualPrompt(segment, sceneImageUrl)
     const prompt = visualPrompt
 
-    const { startFrameUrl: resolvedStart } = resolveSegmentFrameUrls(segment, sceneImageUrl)
+    const { startFrameUrl: resolvedStart } = resolveSegmentFrameUrls(
+      segment,
+      sceneImageUrl,
+      guideContext?.fullScene
+    )
 
     const guidePrompt =
       guideContext?.scene && segmentHasBatchGuideDialogue(segment)

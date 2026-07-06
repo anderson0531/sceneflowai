@@ -25,6 +25,7 @@ import type {
   VideoGenerationMethod,
 } from '@/components/vision/scene-production/types'
 import type { SegmentGuideContext, SegmentConfigResult } from '@/lib/vision/segmentConfigBuilder'
+import { resolveEffectiveStartFrameUrl } from '@/lib/vision/segmentConfigBuilder'
 import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
 import {
   isVeoChainContinuation,
@@ -166,6 +167,28 @@ export function useVideoQueue(
     }
   }, [isReady, segments, sceneImageUrl, segmentGuideContext, defaultAspectRatio])
   
+  // Refresh cached user configs when live beat start frames change
+  useEffect(() => {
+    if (!configsReady || !segmentGuideContext?.fullScene) return
+    setUserConfigs((prev) => {
+      let changed = false
+      const next = new Map(prev)
+      for (const seg of segments) {
+        const liveStart = resolveEffectiveStartFrameUrl(
+          seg,
+          segmentGuideContext.fullScene,
+          sceneImageUrl
+        )
+        const existing = next.get(seg.segmentId)
+        if (existing && liveStart && existing.startFrameUrl !== liveStart) {
+          next.set(seg.segmentId, { ...existing, startFrameUrl: liveStart })
+          changed = true
+        }
+      }
+      return changed ? next : prev
+    })
+  }, [segments, segmentGuideContext?.fullScene, sceneImageUrl, configsReady])
+  
   // Local state for user-modified configs
   const [userConfigs, setUserConfigs] = useState<Map<string, VideoGenerationConfig>>(new Map())
   
@@ -255,6 +278,15 @@ export function useVideoQueue(
         console.log('[useVideoQueue] Segment locked from DB:', segment.segmentId, segment.lockedForProduction)
         config = { ...config, approvalStatus: 'locked' as const }
       }
+
+      const liveStartFrameUrl = resolveEffectiveStartFrameUrl(
+        segment,
+        segmentGuideContext?.fullScene,
+        sceneImageUrl
+      )
+      if (liveStartFrameUrl) {
+        config = { ...config, startFrameUrl: liveStartFrameUrl }
+      }
       
       // Determine status
       // A segment is 'complete' if:
@@ -285,7 +317,7 @@ export function useVideoQueue(
         segmentId: segment.segmentId,
         sequenceIndex: segment.sequenceIndex,
         config,
-        thumbnailUrl: segment.startFrameUrl || segment.references?.startFrameUrl || sceneImageUrl || null,
+        thumbnailUrl: liveStartFrameUrl || sceneImageUrl || null,
         status,
         error: segment.errorMessage,
       }
@@ -294,7 +326,7 @@ export function useVideoQueue(
     // Cache the result to return on subsequent render loop iterations
     lastQueueRef.current = result
     return result
-  }, [isReady, configsReady, segments, configsMap, userConfigs, sceneImageUrl, defaultAspectRatio])
+  }, [isReady, configsReady, segments, configsMap, userConfigs, sceneImageUrl, segmentGuideContext, defaultAspectRatio])
   
   // Update config for a segment
   const updateConfig = useCallback((segmentId: string, config: VideoGenerationConfig) => {
@@ -435,7 +467,16 @@ export function useVideoQueue(
             }
           }
 
-          let startUrl = config.startFrameUrl?.trim() ? config.startFrameUrl : undefined
+          const liveStart = liveSegment
+            ? resolveEffectiveStartFrameUrl(
+                liveSegment,
+                segmentGuideContext?.fullScene,
+                sceneImageUrl
+              )
+            : undefined
+          let startUrl =
+            liveStart ??
+            (config.startFrameUrl?.trim() ? config.startFrameUrl : undefined)
           const endUrl = config.endFrameUrl?.trim() ? config.endFrameUrl : undefined
           if (batchMethod === 'FTV') {
             batchMethod = startUrl ? 'I2V' : 'T2V'
@@ -545,7 +586,7 @@ export function useVideoQueue(
     } else {
       toast.warning(`Rendered ${completed} segments, ${failed} failed`)
     }
-  }, [queue, sceneId, onGenerate, cancelRequested, segments, getSegments])
+  }, [queue, sceneId, onGenerate, cancelRequested, segments, getSegments, segmentGuideContext, sceneImageUrl])
   
   // Cancel rendering
   const cancelRendering = useCallback(() => {

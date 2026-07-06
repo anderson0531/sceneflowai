@@ -54,8 +54,11 @@ export function useSegmentConfig(
     
     const prompt = visualPrompt
 
-    const { startFrameUrl: resolvedStart } =
-      resolveSegmentFrameUrls(segment, sceneImageUrl)
+    const { startFrameUrl: resolvedStart } = resolveSegmentFrameUrls(
+      segment,
+      sceneImageUrl,
+      guideContext?.fullScene
+    )
 
     const guidePrompt =
       guideContext?.scene && segmentHasBatchGuideDialogue(segment)

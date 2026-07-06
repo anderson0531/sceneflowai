@@ -49,6 +49,10 @@ import {
 import type { BeatReferenceSelection } from '@/lib/script/segmentTypes'
 import type { StoryboardFrameSlot } from '@/lib/storyboard/types'
 import { mapBeatReferenceSelectionForApi } from '@/lib/vision/beatFrameGenerationContext'
+import {
+  applyStartFrameUrlToProductionSegments,
+  resolveEffectiveStartFrameUrl,
+} from '@/lib/vision/segmentConfigBuilder'
 import { DEFAULT_VEO_CLIP_DURATION, MAX_VEO_VIDEO_CLIP_SECONDS } from '@/lib/config/modelConfig'
 import {
   findPreviousChainSegment,
@@ -1658,6 +1662,24 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [persistSceneProduction]
   )
 
+  const syncBeatStartFrameToProduction = useCallback(
+    (sceneId: string, beatId: string, newUrl: string) => {
+      if (!beatId?.trim() || !newUrl?.trim()) return
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current?.segments?.length) return current
+        return {
+          ...current,
+          segments: applyStartFrameUrlToProductionSegments(
+            current.segments,
+            beatId,
+            newUrl
+          ),
+        }
+      })
+    },
+    [applySceneProductionUpdate]
+  )
+
   const handleCreateReference = useCallback(
     async (
       type: VisualReferenceType,
@@ -2345,6 +2367,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
         
         const fromDialog = options?.fromDialog === true
+        const liveStartFrameUrl = resolveEffectiveStartFrameUrl(
+          segment,
+          scene as Record<string, unknown> | undefined,
+          scene?.imageUrl
+        )
 
         const response = await fetch('/api/production/generate-segment-frames', {
           method: 'POST',
@@ -2359,7 +2386,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             transitionType: segment.transitionType || (segmentIndex === 0 ? 'CUT' : 'CONTINUE'),
             previousEndFrameUrl,
             sceneImageUrl: scene?.imageUrl,
-            startFrameUrl: segment.startFrameUrl || segment.references?.startFrameUrl,
+            startFrameUrl: liveStartFrameUrl,
+            forceRegenerateStart: frameType === 'start',
             startFramePrompt:
               segment.startFramePrompt ?? segment.references?.startFrameDescription,
             endFramePrompt:
@@ -9290,6 +9318,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         return
       }
 
+      const sceneId = scene.id || scene.sceneId || `scene-${sceneIdx}`
+      syncBeatStartFrameToProduction(sceneId, beatId, data.imageUrl)
+
       try { const { toast } = require('sonner'); toast.success('Beat frame generated!') } catch {}
     } catch (error: any) {
       console.error('Failed to generate beat frame:', error)
@@ -9661,6 +9692,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       const saved = await persistVisionScriptScenes(updatedScenes, 'handleUploadBeatFrame')
       if (saved) {
+        const sceneId = scene.id || scene.sceneId || `scene-${sceneIndex}`
+        syncBeatStartFrameToProduction(sceneId, beatId, uploadedUrl)
         try { const { toast } = require('sonner'); toast.success('Beat frame uploaded') } catch {}
       } else {
         try { const { toast } = require('sonner'); toast.error('Failed to save beat frame') } catch {}
@@ -9696,6 +9729,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
     try {
       await persistVisionScriptScenes(updatedScenes, 'handleSaveEditedBeatFrame')
+      const sceneId = scene.id || scene.sceneId || `scene-${sceneIndex}`
+      syncBeatStartFrameToProduction(sceneId, beatId, newImageUrl)
       try { const { toast } = require('sonner'); toast.success('Beat frame updated') } catch {}
     } catch (saveError) {
       console.error('[handleSaveEditedBeatFrame] Failed to save:', saveError)

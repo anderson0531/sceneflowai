@@ -85,6 +85,7 @@ import { ImageEditModal } from '@/components/vision/ImageEditModal'
 import { AnalyzeKeyframeRiskPanel } from './AnalyzeKeyframeRiskPanel'
 import { moderatePrompt, type ModerationResult } from '@/utils/promptModerator'
 import { shouldInitializeDirectorDialogState } from '@/lib/vision/directorDialogState'
+import { resolveEffectiveStartFrameUrl } from '@/lib/vision/segmentConfigBuilder'
 import { MAX_VERTEX_GEMINI_REFERENCE_IMAGES } from '@/lib/vision/referenceLimits'
 import { resolveSegmentVideoReferences } from '@/lib/vision/resolveBeatVideoReferences'
 import type { BlueprintAspectRatio } from '@/lib/treatment/blueprintFoundation'
@@ -444,6 +445,17 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const [qualityTier, setQualityTier] = useState<'fast' | 'premium'>('fast')
   const wasOpenRef = useRef(false)
   const lastInitializedSegmentIdRef = useRef<string | null>(null)
+  const lastInitializedStartFrameUrlRef = useRef<string | null>(null)
+
+  const effectiveStartFrameUrl = useMemo(
+    () =>
+      resolveEffectiveStartFrameUrl(
+        segment,
+        scene as Record<string, unknown> | undefined,
+        sceneImageUrl
+      ),
+    [segment, scene, sceneImageUrl]
+  )
   
   // Intelligent prompt modification handler
   const handleModifyPrompt = useCallback(async () => {
@@ -683,7 +695,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
 
   const fetchApiPromptPreview = useCallback(async () => {
     const method = modeToMethod[mode]
-    const startFrameUrl = segment.startFrameUrl || segment.references?.startFrameUrl || undefined
+    const startFrameUrl = effectiveStartFrameUrl || undefined
     const endFrameUrl = segment.endFrameUrl || segment.references?.endFrameUrl || undefined
     const refPayload =
       method === 'REF'
@@ -730,7 +742,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     } finally {
       setApiPromptPreviewLoading(false)
     }
-  }, [mode, visualPrompt, guidePrompt, referenceImages, segment])
+  }, [mode, visualPrompt, guidePrompt, referenceImages, segment, effectiveStartFrameUrl])
 
   useEffect(() => {
     if (!isOpen) return
@@ -868,24 +880,29 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
 
   // Initialize state only on open transition or segment change while open.
   useEffect(() => {
-    const shouldInit = shouldInitializeDirectorDialogState({
+    const segmentChanged = shouldInitializeDirectorDialogState({
       isOpen,
       wasOpen: wasOpenRef.current,
       currentSegmentId: segment.segmentId,
       lastInitializedSegmentId: lastInitializedSegmentIdRef.current,
     })
+    const startFrameChanged =
+      isOpen &&
+      lastInitializedStartFrameUrlRef.current !== effectiveStartFrameUrl
 
-    if (shouldInit) {
+    if (segmentChanged || startFrameChanged) {
       initializeDialogState()
       lastInitializedSegmentIdRef.current = segment.segmentId
+      lastInitializedStartFrameUrlRef.current = effectiveStartFrameUrl
     }
 
     if (!isOpen) {
       lastInitializedSegmentIdRef.current = null
+      lastInitializedStartFrameUrlRef.current = null
     }
 
     wasOpenRef.current = isOpen
-  }, [isOpen, segment.segmentId, initializeDialogState])
+  }, [isOpen, segment.segmentId, effectiveStartFrameUrl, initializeDialogState])
 
   // Detect post-failure content policy errors when segment status changes
   useEffect(() => {
@@ -978,7 +995,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const handleSave = () => {
     const method = modeToMethod[mode]
     const effectiveMethod = method === 'FTV' ? 'I2V' : method
-    const resolvedStartFrameUrl = segment.startFrameUrl || segment.references?.startFrameUrl || null
+    const resolvedStartFrameUrl = effectiveStartFrameUrl
     
     const savedConfig = appendAdvancedConfig({
       mode: effectiveMethod,
@@ -1073,7 +1090,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const handleGenerate = () => {
     const method = modeToMethod[mode]
     const effectiveMethod = method === 'FTV' ? 'I2V' : method
-    const resolvedStartFrameUrl = segment.startFrameUrl || segment.references?.startFrameUrl || null
+    const resolvedStartFrameUrl = effectiveStartFrameUrl
     
     const savedConfig = appendAdvancedConfig({
       mode: effectiveMethod,
@@ -1101,7 +1118,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     onClose()
   }
   
-  const startFrameUrl = segment.startFrameUrl || segment.references?.startFrameUrl
+  const startFrameUrl = effectiveStartFrameUrl
   const hasExistingVideo = segment.activeAssetUrl && segment.assetType === 'video'
   const isContinuationSegment =
     segment.veoTimelineContinuation ||
@@ -1963,7 +1980,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
             setVisualPrompt(newPrompt)
           }}
           mode={mode}
-          hasStartFrame={!!(segment.startFrameUrl || segment.references?.startFrameUrl)}
+          hasStartFrame={!!effectiveStartFrameUrl}
           hasEndFrame={false}
         />
       </DialogContent>
