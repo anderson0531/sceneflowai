@@ -297,6 +297,8 @@ export interface SceneRenderVideoSegment {
   voiceoverDuration?: number
   /** Pause duration after this segment ends (seconds) */
   pauseDuration?: number
+  /** Bottom-edge crop % (2–10) for uploaded video watermark removal */
+  watermarkCropPercent?: number
 }
 
 /**
@@ -487,6 +489,7 @@ export interface CreateSceneRenderJobRequest {
     voiceoverStartTime?: number
     voiceoverDuration?: number
     pauseDuration?: number
+    watermarkCropPercent?: number
   }>
   /** Audio tracks with timing */
   audioTracks: {

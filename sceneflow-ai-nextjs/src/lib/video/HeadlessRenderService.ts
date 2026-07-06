@@ -28,6 +28,8 @@ export interface HeadlessRenderSegment {
   startTime: number
   duration: number
   volume?: number
+  /** Bottom-edge crop % (2–10) for uploaded video watermark removal */
+  watermarkCropPercent?: number
 }
 
 export interface HeadlessRenderAudioClip {
@@ -516,6 +518,30 @@ export class HeadlessRenderService {
     };
     
     /**
+     * Bottom crop source rect for uploaded watermark removal (2–10%).
+     */
+    function getBottomCropSourceRect(vw, vh, cropPercent) {
+      const pct = typeof cropPercent === 'number' ? Math.round(cropPercent) : 0;
+      if (pct < 2 || pct > 10 || vw <= 0 || vh <= 0) {
+        return { sx: 0, sy: 0, sw: vw, sh: vh };
+      }
+      const sh = Math.max(1, Math.round(vh * (1 - pct / 100)));
+      return { sx: 0, sy: 0, sw: vw, sh };
+    }
+
+    function drawVideoCover(ctx, video, cropPercent, outW, outH) {
+      const vw = video.videoWidth;
+      const vh = video.videoHeight;
+      const { sx, sy, sw, sh } = getBottomCropSourceRect(vw, vh, cropPercent);
+      const scale = Math.max(outW / sw, outH / sh);
+      const scaledW = sw * scale;
+      const scaledH = sh * scale;
+      const x = (outW - scaledW) / 2;
+      const y = (outH - scaledH) / 2;
+      ctx.drawImage(video, sx, sy, sw, sh, x, y, scaledW, scaledH);
+    }
+    
+    /**
      * Render a single frame at the specified time
      * Implements "Seek, Draw, Commit" pattern
      */
@@ -554,8 +580,8 @@ export class HeadlessRenderService {
               }
             });
             
-            // Draw video frame
-            hiddenCtx.drawImage(video, 0, 0, width, height);
+            // Draw video frame (optional bottom crop for uploaded watermarks)
+            drawVideoCover(hiddenCtx, video, activeSegment.watermarkCropPercent, width, height);
           }
         } else if (activeSegment.assetType === 'image') {
           const img = imageElements[activeSegment.segmentId];

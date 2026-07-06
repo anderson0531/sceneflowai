@@ -827,11 +827,14 @@ def build_concat_ffmpeg_command(
         pause_duration = float(segment.get('pauseDuration', 0))
         tpad_str = f",tpad=stop_mode=clone:stop_duration={pause_duration}" if pause_duration > 0 else ""
         apad_str = f",apad=pad_dur={pause_duration}" if pause_duration > 0 else ""
+
+        crop_pct = float(segment.get('watermarkCropPercent') or 0)
+        crop_filter = f"crop=iw:ih*(1-{crop_pct / 100}):0:0," if crop_pct >= 2 else ""
         
         # Scale to target resolution and set framerate
         # setpts=PTS-STARTPTS resets video timestamps to start at 0 for proper concatenation sync
         filter_str = (
-            f"[{i}:v]setpts=PTS-STARTPTS,scale={width}:{height}:force_original_aspect_ratio=decrease,"
+            f"[{i}:v]setpts=PTS-STARTPTS,{crop_filter}scale={width}:{height}:force_original_aspect_ratio=decrease,"
             f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:black,"
             f"fps={fps},setsar=1{tpad_str}[v{i}]"
         )

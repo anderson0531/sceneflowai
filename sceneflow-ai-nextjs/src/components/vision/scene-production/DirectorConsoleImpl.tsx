@@ -6,11 +6,11 @@
  * - Clicking a segment to open DirectorDialog for granular control
  * - Batch rendering with "Render Approved Only" or "Render All" modes
  * 
- * Status Indicators:
- * - auto-ready: Configured by system, not yet reviewed
- * - user-approved: User opened dialog and clicked "Approve"
- * - rendering: Currently generating video
- * - rendered: Video exists
+ * Status Indicators (Footage cards):
+ * - Ready: Beat configured, no video yet
+ * - Rolling: Video generation in progress
+ * - In the Can: Video complete and ready to use
+ * - Error: Generation failed
  * 
  * @see /SCENEFLOW_AI_DESIGN_DOCUMENT.md for architecture decisions
  */
@@ -53,6 +53,7 @@ import {
 } from 'lucide-react'
 import type { 
   SceneSegment, 
+  DirectorQueueItem,
   VideoGenerationConfig,
   VideoGenerationMethod,
   SceneProductionData,
@@ -280,6 +281,16 @@ const statusBadgeConfig = {
   'rendering': { label: 'Rolling', className: 'bg-blue-500/20 text-blue-300 border-blue-500/50', icon: Loader2 },
   'rendered': { label: 'In the Can', className: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50', icon: Film },
   'error': { label: 'Error', className: 'bg-red-500/20 text-red-300 border-red-500/50', icon: AlertCircle },
+}
+
+/** Footage card status — completed beats always show "In the Can". */
+export function getFootageBeatStatusConfig(item: DirectorQueueItem) {
+  if (item.status === 'complete') return statusBadgeConfig['rendered']
+  if (item.status === 'rendering') return statusBadgeConfig['rendering']
+  if (item.status === 'error') return statusBadgeConfig['error']
+  if (item.config.approvalStatus === 'rendering') return statusBadgeConfig['rendering']
+  if (item.config.approvalStatus === 'error') return statusBadgeConfig['error']
+  return statusBadgeConfig['auto-ready']
 }
 
 export function DirectorConsoleRoot({
@@ -1215,16 +1226,17 @@ export function DirectorConsoleRoot({
                 const segment = segments.find(s => s.segmentId === item.segmentId)
                 if (!segment) return null
                 const methodConfig = methodBadgeConfig[item.config.mode] || methodBadgeConfig['I2V']
-                const statusConfig = statusBadgeConfig[item.config.approvalStatus] || statusBadgeConfig['auto-ready']
+                const statusConfig = getFootageBeatStatusConfig(item)
                 const StatusIcon = statusConfig.icon
                 const isCurrentlyRendering = currentSegmentId === item.segmentId
+                const isVideoInTheCan = item.status === 'complete'
                 return (
                   <div
                     key={item.segmentId}
                     className={`
                 border rounded-lg p-4 transition-all 
                 hover:border-indigo-500/70 hover:bg-slate-800/50
-                ${item.config.approvalStatus === 'user-approved' ? 'bg-indigo-900/10 border-indigo-500/30' : 'bg-slate-800/30 border-slate-700/50'}
+                ${isVideoInTheCan ? 'bg-emerald-900/10 border-emerald-500/30' : 'bg-slate-800/30 border-slate-700/50'}
                 ${selectedSegmentIds.has(item.segmentId) ? 'ring-4 ring-amber-500 bg-amber-500/10' : ''}
                 ${isCurrentlyRendering ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900' : ''}
               `}
@@ -1253,36 +1265,28 @@ export function DirectorConsoleRoot({
                             <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
                           </div>
                         )}
-                        {item.status === 'complete' && !isCurrentlyRendering && (
-                          <>
-                            <div className="absolute top-1 left-1 flex items-center gap-1">
-                              <Badge className="bg-emerald-500/80 text-white text-[10px] px-1.5 py-0">
-                                <CheckCircle className="w-3 h-3 mr-1" />
-                                Done
-                              </Badge>
-                            </div>
-                            <button
-                              className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/40 transition-colors group"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                const segmentIndex = segments.findIndex(s => s.segmentId === item.segmentId)
-                                if (segmentIndex >= 0) {
-                                  setPlayFromSegmentIndex(segmentIndex)
-                                  setIsScenePlayerOpen(true)
-                                }
-                              }}
-                              title="Play beat video"
-                            >
-                              <PlayCircle className="w-10 h-10 text-white/0 group-hover:text-white/90 transition-colors drop-shadow-lg" />
-                            </button>
-                          </>
+                        {isVideoInTheCan && !isCurrentlyRendering && (
+                          <button
+                            className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/40 transition-colors group"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              const segmentIndex = segments.findIndex(s => s.segmentId === item.segmentId)
+                              if (segmentIndex >= 0) {
+                                setPlayFromSegmentIndex(segmentIndex)
+                                setIsScenePlayerOpen(true)
+                              }
+                            }}
+                            title="Play beat video"
+                          >
+                            <PlayCircle className="w-10 h-10 text-white/0 group-hover:text-white/90 transition-colors drop-shadow-lg" />
+                          </button>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start gap-2">
                           <span className="font-semibold text-slate-200">Beat {item.sequenceIndex + 1}</span>
                           <Badge variant="outline" className={`flex items-center gap-1 text-[10px] ${statusConfig.className}`}>
-                            <StatusIcon className={`w-3 h-3 ${item.config.approvalStatus === 'rendering' ? 'animate-spin' : ''}`} />
+                            <StatusIcon className={`w-3 h-3 ${item.status === 'rendering' || isCurrentlyRendering ? 'animate-spin' : ''}`} />
                             {statusConfig.label}
                           </Badge>
                         </div>

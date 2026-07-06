@@ -700,6 +700,9 @@ export interface SceneSegment {
   // Flag indicating this segment contains a user-uploaded video (vs AI-generated)
   isUserUpload?: boolean
 
+  /** Bottom-edge crop % (2–10) for uploaded videos; removes watermark band before scale/pad */
+  watermarkCropPercent?: number
+
   // ===========================================================================
   // Lean Multi-Language (LML) Elastic Segment Fields
   // ===========================================================================

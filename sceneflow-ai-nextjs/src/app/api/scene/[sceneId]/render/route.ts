@@ -232,6 +232,7 @@ export async function POST(
         voiceoverStartTime: seg.voiceoverStartTime,
         voiceoverDuration: seg.voiceoverDuration,
         pauseDuration: seg.pauseDuration ?? 0,
+        watermarkCropPercent: seg.watermarkCropPercent,
       }
     })
     

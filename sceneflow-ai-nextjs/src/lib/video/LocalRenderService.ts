@@ -17,6 +17,8 @@
 
 'use client'
 
+import { getBottomCropSourceRect } from './segmentVideoCrop'
+
 // =============================================================================
 // Canvas capture (video/mixed exports)
 // =============================================================================
@@ -47,6 +49,8 @@ export interface LocalRenderSegment {
   volume?: number
   /** Include the video's audio track in the render */
   includeVideoAudio?: boolean
+  /** Bottom-edge crop % (2–10) for uploaded video watermark removal */
+  watermarkCropPercent?: number
 }
 
 export interface LocalRenderAudioClip {
@@ -1558,19 +1562,26 @@ export class LocalRenderService {
     }
     
     // Calculate position to fit and center (video uses post-seek dimensions; image uses bitmap)
-    const assetWidth = asset instanceof HTMLVideoElement ? asset.videoWidth : asset.width
-    const assetHeight = asset instanceof HTMLVideoElement ? asset.videoHeight : asset.height
-    
-    const scale = Math.max(width / assetWidth, height / assetHeight)
-    const scaledWidth = assetWidth * scale
-    const scaledHeight = assetHeight * scale
+    const fullWidth = asset instanceof HTMLVideoElement ? asset.videoWidth : asset.width
+    const fullHeight = asset instanceof HTMLVideoElement ? asset.videoHeight : asset.height
+    const cropRect =
+      asset instanceof HTMLVideoElement && segment.watermarkCropPercent
+        ? getBottomCropSourceRect(fullWidth, fullHeight, segment.watermarkCropPercent)
+        : { sx: 0, sy: 0, sw: fullWidth, sh: fullHeight }
+
+    const contentWidth = cropRect.sw
+    const contentHeight = cropRect.sh
+
+    const scale = Math.max(width / contentWidth, height / contentHeight)
+    const scaledWidth = contentWidth * scale
+    const scaledHeight = contentHeight * scale
     const x = (width - scaledWidth) / 2
     const y = (height - scaledHeight) / 2
-    
+
     this.contentBounds = { x, y, width: scaledWidth, height: scaledHeight }
-    
+
     if (asset instanceof HTMLVideoElement) {
-      ctx.drawImage(asset, x, y, scaledWidth, scaledHeight)
+      ctx.drawImage(asset, cropRect.sx, cropRect.sy, cropRect.sw, cropRect.sh, x, y, scaledWidth, scaledHeight)
     } else {
       const endImg = assets.get(`${segment.segmentId}__end`) as HTMLImageElement | undefined
       const progress =

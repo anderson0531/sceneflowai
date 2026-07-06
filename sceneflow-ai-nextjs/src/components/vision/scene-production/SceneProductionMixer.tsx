@@ -64,6 +64,7 @@ import {
   Mic,
   Gauge,
   Repeat,
+  Crop,
 } from 'lucide-react'
 import { upload } from '@vercel/blob/client'
 import { Button } from '@/components/ui/Button'
@@ -71,6 +72,7 @@ import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import { 
   Select, 
   SelectContent, 
@@ -125,6 +127,13 @@ import {
   getClipsAssignedToSegment,
   MIXER_DIALOGUE_INTRA_GAP_SEC,
 } from '@/lib/scene/mixerTiming'
+import {
+  clampWatermarkCropPercent,
+  getBottomCropClipPath,
+  WATERMARK_CROP_DEFAULT,
+  WATERMARK_CROP_MAX,
+  WATERMARK_CROP_MIN,
+} from '@/lib/video/segmentVideoCrop'
 
 export type { ProductionTarget, TextOverlay, TextOverlayStyle, TextOverlayPosition, TextOverlayTiming, AudioTrackConfig, MixerAudioTracks }
 
@@ -1306,6 +1315,9 @@ function ScenePreviewPlayer({
             className="w-full h-full object-contain"
             muted={isMuted || !segmentAudioConfigs[currentSegment.segment.segmentId]?.includeAudio}
             playsInline
+            style={{
+              clipPath: getBottomCropClipPath(currentSegment.segment.watermarkCropPercent),
+            }}
             onLoadedMetadata={(e) => {
               const video = e.currentTarget
               const id = segmentIdForLoadedVideoRef.current
@@ -2477,6 +2489,110 @@ function SegmentAudioControls({
   )
 }
 
+/**
+ * Per-beat bottom crop for uploaded videos (watermark removal).
+ */
+function SegmentWatermarkCropControls({
+  segments,
+  onSegmentCropChange,
+  disabled,
+  isCollapsed = false,
+  onToggleCollapse,
+}: {
+  segments: SceneSegment[]
+  onSegmentCropChange: (segmentId: string, cropPercent: number | undefined) => void
+  disabled?: boolean
+  isCollapsed?: boolean
+  onToggleCollapse?: () => void
+}) {
+  const uploadedVideoSegments = segments.filter(
+    (seg) => seg.isUserUpload && seg.assetType === 'video' && seg.activeAssetUrl
+  )
+
+  if (uploadedVideoSegments.length === 0) return null
+
+  return (
+    <div className="bg-gray-800/50 rounded-lg">
+      <div
+        className={`flex items-center justify-between p-3 ${onToggleCollapse ? 'cursor-pointer hover:bg-white/5' : ''}`}
+        onClick={onToggleCollapse}
+      >
+        <div className="flex items-center gap-2">
+          {onToggleCollapse && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onToggleCollapse()
+              }}
+              className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+            >
+              {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+            </button>
+          )}
+          <Crop className="w-4 h-4 text-amber-400" />
+          <span className="text-xs text-gray-400 uppercase tracking-wide">Watermark Crop</span>
+          <span className="text-xs text-gray-500">{uploadedVideoSegments.length} uploaded</span>
+        </div>
+      </div>
+
+      {!isCollapsed && (
+        <div className="px-3 pb-3 space-y-3">
+          <p className="text-[11px] text-gray-500 leading-relaxed">
+            Removes the bottom band of uploaded clips before preview and render.
+          </p>
+          <div className="space-y-2">
+            {uploadedVideoSegments.map((seg, i) => {
+              const enabled = seg.watermarkCropPercent != null
+              const value = clampWatermarkCropPercent(seg.watermarkCropPercent) ?? WATERMARK_CROP_DEFAULT
+              return (
+                <div
+                  key={seg.segmentId}
+                  className={`flex flex-col gap-2 p-2 rounded border ${
+                    enabled
+                      ? 'bg-amber-600/10 border-amber-500/30'
+                      : 'bg-gray-700/30 border-gray-600/30'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs text-gray-300 font-medium">Beat #{i + 1}</span>
+                    <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
+                      <Checkbox
+                        checked={enabled}
+                        disabled={disabled}
+                        onCheckedChange={(checked) => {
+                          onSegmentCropChange(
+                            seg.segmentId,
+                            checked === true ? WATERMARK_CROP_DEFAULT : undefined
+                          )
+                        }}
+                      />
+                      Crop bottom
+                    </label>
+                  </div>
+                  {enabled && (
+                    <div className="flex items-center gap-2">
+                      <Slider
+                        value={[value]}
+                        onValueChange={([v]) => onSegmentCropChange(seg.segmentId, Math.round(v))}
+                        min={WATERMARK_CROP_MIN}
+                        max={WATERMARK_CROP_MAX}
+                        step={1}
+                        disabled={disabled}
+                        className="flex-1"
+                      />
+                      <span className="text-xs text-gray-400 w-10 text-right tabular-nums">{value}%</span>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ============================================================================
 // Main Component
 // ============================================================================
@@ -2641,6 +2757,23 @@ export function SceneProductionMixer({
     toast.success('Beat timing aligned to dialogue')
   }, [segments, resolvedDialogueClips, probedDurations, narrationPrefix, onSegmentsChange])
 
+  const handleSegmentCropChange = useCallback(
+    (segmentId: string, cropPercent: number | undefined) => {
+      const nextCrop = clampWatermarkCropPercent(cropPercent)
+      onSegmentsChange?.(
+        segments.map((seg) =>
+          seg.segmentId === segmentId
+            ? {
+                ...seg,
+                watermarkCropPercent: nextCrop,
+              }
+            : seg
+        )
+      )
+    },
+    [segments, onSegmentsChange]
+  )
+
   
   // === Theater Mode State ===
   // Theater mode collapses the right sidebar and expands video+timeline to full width,
@@ -2722,6 +2855,7 @@ export function SceneProductionMixer({
   const [collapsedSections, setCollapsedSections] = useState<{
     textOverlays: boolean
     watermark: boolean
+    watermarkCrop: boolean
     segmentAudio: boolean
     narration: boolean
     dialogue: boolean
@@ -2732,6 +2866,7 @@ export function SceneProductionMixer({
     const defaultSections = {
       textOverlays: true,
       watermark: true,
+      watermarkCrop: true,
       segmentAudio: true,
       narration: true,
       dialogue: true,
@@ -3374,6 +3509,7 @@ export function SceneProductionMixer({
           audioSource: (audioConfig.includeAudio && (!useStemDubbingPolicy || includeSpeechStem || !hasBackgroundStem)) ? 'original' : 'none',
           audioVolume: audioConfig.volume,
           pauseDuration: audioTracks?.dialogue?.enabled ? Math.max(0, getPlaybackSegmentDuration(seg) - (seg.actualVideoDuration ?? seg.imageDuration ?? (seg.endTime - seg.startTime) ?? 4)) : 0.0,
+          watermarkCropPercent: seg.watermarkCropPercent,
         }
       })
       
@@ -3746,6 +3882,7 @@ export function SceneProductionMixer({
           endFrameUrl,
           volume: (audioConfig?.volume ?? 1.0) * masterSegmentVolume,
           includeVideoAudio, // Pass through to LocalRenderService for video audio extraction
+          watermarkCropPercent: seg.watermarkCropPercent,
         }
       })
       
@@ -4035,6 +4172,7 @@ export function SceneProductionMixer({
           startTime: seg.startTime,
           duration,
           volume: includeVideoAudio ? (audioConfig?.volume ?? 1.0) * masterSegmentVolume : 0,
+          watermarkCropPercent: seg.watermarkCropPercent,
         }
       })
       
@@ -5200,6 +5338,16 @@ export function SceneProductionMixer({
                 )}
               </div>
               
+              {productionTarget.streamType !== 'animatic' && (
+                <SegmentWatermarkCropControls
+                  segments={previewSegments}
+                  onSegmentCropChange={handleSegmentCropChange}
+                  disabled={isRendering || !onSegmentsChange}
+                  isCollapsed={collapsedSections.watermarkCrop}
+                  onToggleCollapse={() => toggleSection('watermarkCrop')}
+                />
+              )}
+
               {productionTarget.streamType !== 'animatic' && (
                 <SegmentAudioControls
                   segments={previewSegments}
