@@ -3134,7 +3134,7 @@ export function SceneProductionMixer({
 // === Audio Track Configs ===
   const [audioTracks, setAudioTracks] = useState<MixerAudioTracks>({
     narration: { enabled: false, volume: 0.8, startOffset: 0, startSegment: 0, endSegment: -1 },
-    dialogue: { enabled: true, volume: 0.9, startOffset: 0, startSegment: 0, endSegment: -1 },
+    dialogue: { enabled: false, volume: 0.9, startOffset: 0, startSegment: 0, endSegment: -1 },
     music: {
       enabled: false,
       volume: 0.4,
