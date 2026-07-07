@@ -149,14 +149,14 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const resolvedVideoProviderEarly =
+    const resolvedVideoProvider =
       videoProvider === 'aggregator' ? 'aggregator' : 'vertex'
 
     if (
       routeProbe === true &&
       (genType === 'T2V' || genType === 'I2V')
     ) {
-      if (resolvedVideoProviderEarly === 'aggregator') {
+      if (resolvedVideoProvider === 'aggregator') {
         const probe = await buildAggregatorRouteProbeResult(videoModel)
         return NextResponse.json({
           success: true,
@@ -303,8 +303,6 @@ export async function POST(
     let upgradeLabel: string | undefined
 
     if (genType === 'T2V' || genType === 'I2V') {
-      const resolvedVideoProvider =
-        videoProvider === 'aggregator' ? 'aggregator' : 'vertex'
       console.log(
         `[Segment Asset Generation] videoProvider=${resolvedVideoProvider} aggregatorEnabled=${isAggregatorEnabled()}`
       )
