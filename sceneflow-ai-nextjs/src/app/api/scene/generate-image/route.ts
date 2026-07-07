@@ -913,9 +913,10 @@ export async function POST(req: NextRequest) {
       isBeatFrame && sceneData
         ? getSceneBeats(sceneData as Record<string, unknown>)[effectiveBeatIndex]
         : undefined
+    const projectCharactersForBeat = project?.metadata?.visionPhase?.characters || []
     const beatSpeakerName =
       beatForEmotion?.character?.trim() ||
-      (beatForEmotion ? resolveBeatSpeaker(beatForEmotion, allCharacters)?.name : undefined)
+      (beatForEmotion ? resolveBeatSpeaker(beatForEmotion, projectCharactersForBeat)?.name : undefined)
     const beatDirectedEmotion = beatForEmotion
       ? resolveBeatDirectedEmotion({
           beatLine: beatForEmotion.line,
