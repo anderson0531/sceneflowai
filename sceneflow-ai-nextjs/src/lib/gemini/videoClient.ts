@@ -807,15 +807,9 @@ export async function checkVideoGenerationStatus(
   }
 
   // Veo predictLongRunning operations use regional endpoints (not global)
-  const location = getVertexLocation(model)
   const project = process.env.VERTEX_PROJECT_ID
   if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
-  
-  // For Veo predictLongRunning operations, use fetchPredictOperation
-  // The operation name format: projects/{project}/locations/{location}/publishers/google/models/{model}/operations/{opId}
-  // We call: POST https://{location}-aiplatform.googleapis.com/v1/{operationName}:fetchPredictOperation
-  // But actually, the simpler approach is to use the full operation name with a GET request
-  
+
   // Extract model from operation name if present, otherwise use default (fast)
   // Format: projects/{project}/locations/{location}/publishers/google/models/{model}/operations/{opId}
   let model: string
@@ -824,10 +818,12 @@ export async function checkVideoGenerationStatus(
     model = modelMatch[1]
     console.log('[Veo Video] Extracted model from operation name:', model)
   } else {
-    // Fallback to default model
     model = getVeoModel(DEFAULT_VIDEO_QUALITY)
     console.log('[Veo Video] Using default model for status check:', model)
   }
+
+  const locationMatch = operationName.match(/locations\/([^/]+)\//)
+  const location = locationMatch?.[1] ?? getVertexLocation(model)
   
   let opId = operationName
   if (operationName.includes('/operations/')) {

@@ -67,7 +67,7 @@ export function clampToVeoClipDuration(seconds: number): VeoClipDuration {
 
 /** Returns true when the model id is Gemini Omni Flash (supports 10s FTV/EXT) */
 export function isOmniVideoModel(model: string): boolean {
-  return model.includes('omni')
+  return typeof model === 'string' && model.includes('omni')
 }
 
 /** Default regional location for legacy Veo predictLongRunning (overridable via VEO_LOCATION) */
