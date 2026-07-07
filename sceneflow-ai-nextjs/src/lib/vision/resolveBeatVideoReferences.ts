@@ -20,7 +20,7 @@ import {
   buildLocationReferenceEntry,
   buildPropReferenceEntries,
   MAX_VERTEX_GEMINI_REFERENCE_IMAGES,
-  prioritizeReferenceImages,
+  selectReferenceImagesInOrder,
   type PrioritizedReferenceImage,
 } from '@/lib/vision/referenceLimits'
 
@@ -181,9 +181,14 @@ export function resolveBeatVideoReferences(
     ...(locationRefEntry ? [locationRefEntry] : []),
   ]
 
-  const { selected, dropped } = prioritizeReferenceImages(
+  const { selected, dropped } = selectReferenceImagesInOrder(
     allPrioritized,
-    MAX_VERTEX_GEMINI_REFERENCE_IMAGES
+    MAX_VERTEX_GEMINI_REFERENCE_IMAGES,
+    {
+      buildIdentityLabel: buildIdentityReferenceLabel,
+      buildWardrobeLabel: buildWardrobeReferenceLabel,
+      buildDiptychLabel: buildWardrobeDiptychReferenceLabel,
+    }
   )
 
   const warnings = [...beatContext.warnings]

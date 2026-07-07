@@ -58,7 +58,8 @@ import {
   buildCharacterReferenceEntries,
   buildLocationReferenceEntry,
   buildPropReferenceEntries,
-  prioritizeReferenceImages,
+  remapReferenceNumbersInPrompt,
+  selectReferenceImagesInOrder,
 } from '@/lib/vision/referenceLimits'
 import {
   resolveStoryboardGeneration,
@@ -1674,8 +1675,16 @@ export async function POST(req: NextRequest) {
             ...propRefEntries,
             ...(locationRefEntry ? [locationRefEntry] : []),
           ]
-          const { selected: selectedReferenceImages, dropped: droppedReferenceImages } =
-            prioritizeReferenceImages(allPrioritizedRefs, MAX_VERTEX_GEMINI_REFERENCE_IMAGES)
+          const { selected: selectedReferenceImages, dropped: droppedReferenceImages, indexMap } =
+            selectReferenceImagesInOrder(
+              allPrioritizedRefs,
+              MAX_VERTEX_GEMINI_REFERENCE_IMAGES,
+              {
+                buildIdentityLabel: buildIdentityReferenceLabel,
+                buildWardrobeLabel: buildWardrobeReferenceLabel,
+                buildDiptychLabel: buildWardrobeDiptychReferenceLabel,
+              }
+            )
 
           if (droppedReferenceImages.length > 0) {
             console.log(
@@ -1683,6 +1692,12 @@ export async function POST(req: NextRequest) {
               droppedReferenceImages.map((r) => r.name).join(', ')
             )
           }
+
+          console.log(
+            `[Scene Image] Reference send order: ${selectedReferenceImages
+              .map((r) => `${r.sendIndex}=${r.name}`)
+              .join(', ')}`
+          )
 
           const allReferenceImages = selectedReferenceImages.map((ref) => ({
             imageUrl: ref.imageUrl,
@@ -1692,14 +1707,22 @@ export async function POST(req: NextRequest) {
           const cappedObjectImageReferences = objectImageReferences.filter((obj) =>
             selectedReferenceUrls.has(obj.imageUrl)
           )
+          const cappedLocationEntry = selectedReferenceImages.find((ref) => ref.role === 'location')
           const cappedLocationReference =
-            matchedLocationReference?.imageUrl &&
-            selectedReferenceUrls.has(matchedLocationReference.imageUrl)
+            cappedLocationEntry?.imageUrl &&
+            matchedLocationReference?.imageUrl === cappedLocationEntry.imageUrl
               ? matchedLocationReference
               : null
-          const cappedImageReferences = imageReferences.filter((ref) =>
-            selectedReferenceUrls.has(ref.imageUrl)
-          )
+          const cappedImageReferences = selectedReferenceImages
+            .filter((entry) => entry.characterName && entry.refRole)
+            .map((entry) => {
+              const source = imageReferences.find((r) => r.imageUrl === entry.imageUrl)!
+              return {
+                ...source,
+                referenceId: entry.sendIndex!,
+                sendIndex: entry.sendIndex!,
+              }
+            })
           
           console.log(`[Scene Image] Labeled reference images: ${allReferenceImages.map(r => r.name).join(', ')}`)
           
@@ -1777,17 +1800,16 @@ export async function POST(req: NextRequest) {
           }
           
           // Location reference instructions
-          if (cappedLocationReference?.imageUrl) {
-            const locationRefIndex = selectedReferenceImages.findIndex((ref) => ref.role === 'location')
-            const refIndex = locationRefIndex >= 0 ? locationRefIndex + 1 : selectedReferenceImages.length
+          if (cappedLocationReference?.imageUrl && cappedLocationEntry?.sendIndex) {
             const locationName =
               cappedLocationReference.location ||
               cappedLocationReference.name ||
               'Location'
-            geminiPrompt += `${buildLocationReferencePromptLine(locationName, refIndex)} Environment: "${locationName}". Match lighting to the scene prompt Global Style Anchor.\n\n`
+            geminiPrompt += `${buildLocationReferencePromptLine(locationName, cappedLocationEntry.sendIndex)} Environment: "${locationName}". Match lighting to the scene prompt Global Style Anchor.\n\n`
           }
-          
-          geminiPrompt += `SCENE PROMPT:\n${optimizedPrompt}\n\n`
+
+          const remappedOptimizedPrompt = remapReferenceNumbersInPrompt(optimizedPrompt, indexMap)
+          geminiPrompt += `SCENE PROMPT:\n${remappedOptimizedPrompt}\n\n`
           
           geminiPrompt += `CRITICAL REQUIREMENTS:\n`
           geminiPrompt += `- Preserve character identity from identity reference images exactly\n`
