@@ -27,7 +27,7 @@ import type {
   SceneRenderTextOverlay,
   SceneRenderWatermark,
 } from '@/lib/video/renderTypes'
-import { RENDER_DEFAULTS } from '@/lib/video/renderTypes'
+import { RENDER_DEFAULTS, toSceneRenderVideoSegment } from '@/lib/video/renderTypes'
 import { uploadJobSpec, getOutputPath, getRenderBucket, getSignedDownloadUrl } from '@/lib/gcs/renderStorage'
 import { isCloudRunJobsEnabled } from '@/lib/video/CloudRunJobsService'
 import { getJobStatus, getJobStatusAsync, setJobStatus } from '@/lib/render/jobStatusStore'
@@ -218,24 +218,11 @@ export async function POST(
     
     // Build video segments for job spec (including per-segment audio settings)
     const videoSegments: SceneRenderVideoSegment[] = body.segments.map((seg, idx) => {
-      const audioSource = seg.audioSource ?? 'original'
-      console.log(`[SceneRender] API Segment ${idx}: audioSource='${audioSource}', audioVolume=${seg.audioVolume ?? 1.0}, pauseDuration=${seg.pauseDuration ?? 0}`)
-      return {
-        segmentId: seg.segmentId,
-        sequenceIndex: seg.sequenceIndex,
-        videoUrl: seg.videoUrl,
-        startTime: seg.startTime,
-        duration: seg.endTime - seg.startTime,
-        audioSource,
-        audioVolume: seg.audioVolume ?? 1.0,
-        voiceoverUrl: seg.voiceoverUrl,
-        voiceoverStartTime: seg.voiceoverStartTime,
-        voiceoverDuration: seg.voiceoverDuration,
-        pauseDuration: seg.pauseDuration ?? 0,
-        watermarkCropPercent: seg.watermarkCropPercent,
-        videoTrimInSec: seg.videoTrimInSec,
-        videoTrimOutSec: seg.videoTrimOutSec,
-      }
+      const mapped = toSceneRenderVideoSegment(seg)
+      console.log(
+        `[SceneRender] API Segment ${idx}: audioSource='${mapped.audioSource}', audioVolume=${mapped.audioVolume ?? 1.0}, pauseDuration=${mapped.pauseDuration ?? 0}, watermarkCropPercent=${mapped.watermarkCropPercent ?? 'none'}`
+      )
+      return mapped
     })
     
     // Get volume settings from audioConfig (with defaults)

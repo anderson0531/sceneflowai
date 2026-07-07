@@ -225,4 +225,32 @@ describe('mergeDerivedSegmentsWithExisting', () => {
     expect(merged[0].startFrameUrl).toBe(productionUrl)
     expect(merged[0].references?.startFrameUrl).toBe(productionUrl)
   })
+
+  it('preserves mixer crop and trim fields when re-deriving segments', () => {
+    const scene = approvedScene([
+      {
+        beatId: 'bt_1',
+        sequenceIndex: 0,
+        kind: 'action',
+        actionDescription: 'Test',
+      },
+    ])
+
+    const derived = deriveSegmentsFromBeats(scene).segments
+    const existing = [
+      {
+        ...derived[0],
+        watermarkCropPercent: 5,
+        videoTrimInSec: 0.25,
+        videoTrimOutSec: 7.5,
+        mixerBeatIncluded: true,
+      },
+    ]
+
+    const merged = mergeDerivedSegmentsWithExisting(derived, existing)
+    expect(merged[0].watermarkCropPercent).toBe(5)
+    expect(merged[0].videoTrimInSec).toBe(0.25)
+    expect(merged[0].videoTrimOutSec).toBe(7.5)
+    expect(merged[0].mixerBeatIncluded).toBe(true)
+  })
 })

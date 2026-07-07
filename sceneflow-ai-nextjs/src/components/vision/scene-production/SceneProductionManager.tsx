@@ -1904,6 +1904,7 @@ Example format:
               sceneImageUrl={scene?.imageUrl}
               audioTracks={audioTracks}
               segmentIndex={segments.findIndex(s => s.segmentId === selectedSegmentId)}
+              sceneIndex={sceneNumber - 1}
               sceneDialogueLines={sceneDialogueLines}
               segmentDialogueLines={selectedSegmentDialogue}
               onToggleDialogue={handleToggleDialogue}

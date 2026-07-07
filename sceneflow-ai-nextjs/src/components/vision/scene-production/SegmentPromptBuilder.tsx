@@ -15,6 +15,7 @@ import { SceneSegment, SceneSegmentTake } from './types'
 import { VisualReference, type LocationReference } from '@/types/visionReferences'
 import { resolveFrameGenerationContext, isNoTalentSceneForFrames } from '@/lib/vision/frameGenerationContext'
 import { cn } from '@/lib/utils'
+import { wardrobesForScene } from '@/lib/character/characterReferenceAssembly'
 import { ContentPolicyAlert, PolicyFixedBanner } from './ContentPolicyAlert'
 import { ImageEditModal } from '@/components/vision/ImageEditModal'
 import { AnalyzeKeyframeRiskPanel } from './AnalyzeKeyframeRiskPanel'
@@ -121,6 +122,8 @@ interface SegmentPromptBuilderProps {
   sceneDescription?: string
   sceneNarration?: string
   frameResolverScene?: any | null
+  /** Zero-based scene index for wardrobe sceneNumbers resolution */
+  sceneIndex?: number
   locationReferences?: LocationReference[]
   /** After AI keyframe edit in this dialog — persist new image URL */
   onSaveEditedKeyframe?: (frameType: 'start' | 'end', newFrameUrl: string) => void
@@ -180,6 +183,7 @@ export function SegmentPromptBuilder({
   sceneDescription,
   sceneNarration,
   frameResolverScene = null,
+  sceneIndex: sceneIndexProp,
   locationReferences = [],
   onSaveEditedKeyframe,
   onActionChange,
@@ -212,6 +216,13 @@ export function SegmentPromptBuilder({
   
   // Enhanced: Character dialog connections
   const [characterDialogConnections, setCharacterDialogConnections] = useState<Map<string, string>>(new Map())
+
+  const resolvedSceneIndex = useMemo(() => {
+    if (sceneIndexProp !== undefined) return sceneIndexProp
+    const sn = frameResolverScene?.sceneNumber
+    if (typeof sn === 'number' && sn > 0) return sn - 1
+    return undefined
+  }, [sceneIndexProp, frameResolverScene])
   
   const [veoGuidePrompt, setVeoGuidePrompt] = useState('')
   const [veoGuideNegativePrompt, setVeoGuideNegativePrompt] = useState('')
@@ -380,9 +391,9 @@ export function SegmentPromptBuilder({
       }
     })
 
-    // Add character wardrobe images
+    // Add character wardrobe images (scene-assigned only)
     availableCharacters.forEach(char => {
-      char.wardrobes?.forEach(wardrobe => {
+      wardrobesForScene(char, resolvedSceneIndex).forEach(wardrobe => {
         const imageUrl = wardrobe.fullBodyUrl ?? wardrobe.headshotUrl
         if (!imageUrl) return
         library.push({
@@ -409,7 +420,7 @@ export function SegmentPromptBuilder({
     })
     
     return library
-  }, [sceneReferences, objectReferences, availableCharacters, locationReferences])
+  }, [sceneReferences, objectReferences, availableCharacters, locationReferences, resolvedSceneIndex])
 
   // Handle reference selection from library
   const handleSelectReference = (ref: typeof combinedReferenceLibrary[0]) => {

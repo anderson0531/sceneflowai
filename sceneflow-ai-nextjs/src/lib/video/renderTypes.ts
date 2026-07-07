@@ -543,3 +543,26 @@ export interface CreateSceneRenderJobRequest {
   /** Burn-in watermark (same shape as Scene Production Mixer POST body) */
   watermark?: SceneRenderWatermark | null
 }
+
+/** Map Mixer POST segment payload to FFmpeg job-spec video segment. */
+export function toSceneRenderVideoSegment(
+  seg: CreateSceneRenderJobRequest['segments'][number]
+): SceneRenderVideoSegment {
+  const audioSource = seg.audioSource ?? 'original'
+  return {
+    segmentId: seg.segmentId,
+    sequenceIndex: seg.sequenceIndex,
+    videoUrl: seg.videoUrl,
+    startTime: seg.startTime,
+    duration: seg.endTime - seg.startTime,
+    audioSource,
+    audioVolume: seg.audioVolume ?? 1.0,
+    voiceoverUrl: seg.voiceoverUrl,
+    voiceoverStartTime: seg.voiceoverStartTime,
+    voiceoverDuration: seg.voiceoverDuration,
+    pauseDuration: seg.pauseDuration ?? 0,
+    watermarkCropPercent: seg.watermarkCropPercent,
+    videoTrimInSec: seg.videoTrimInSec,
+    videoTrimOutSec: seg.videoTrimOutSec,
+  }
+}

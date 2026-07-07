@@ -283,7 +283,10 @@ def main():
         for i, seg in enumerate(video_segments):
             audio_src = seg.get('audioSource', 'original')
             audio_vol = seg.get('audioVolume', 1.0)
-            log(f"  Segment {i}: audioSource='{audio_src}', audioVolume={audio_vol}")
+            log(
+                f"  Segment {i}: audioSource='{audio_src}', audioVolume={audio_vol}, "
+                f"watermarkCropPercent={seg.get('watermarkCropPercent', 'none')}"
+            )
         
         log(f"Audio clips: {len(audio_clips)}")
         log(f"Include Segment Audio: {include_segment_audio}")

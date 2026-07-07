@@ -4,7 +4,7 @@ import React from 'react'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { Users, Check, ChevronDown, ChevronUp, Shirt, Info } from 'lucide-react'
-import { resolveWardrobeIdForCharacterInScene } from '@/lib/character/characterReferenceAssembly'
+import { resolveWardrobeIdForCharacterInScene, wardrobesForScene } from '@/lib/character/characterReferenceAssembly'
 import type { CharacterSelectionProps } from './types'
 
 function normalizeSceneWardrobeMap(
@@ -59,7 +59,11 @@ function buildCharacterGroups(
       resolveWardrobeIdForCharacterInScene(char as Record<string, unknown>, scene ?? null, sceneIndex) ??
       sceneWardrobeByName[char.name]
 
-    const wardrobesWithImages = (char.wardrobes || []).filter((w) => wardrobeImageUrl(w as any))
+    const sceneWardrobesForChar = wardrobesForScene(
+      char as { wardrobes?: Array<{ id: string; sceneNumbers?: number[]; isDefault?: boolean; headshotUrl?: string; fullBodyUrl?: string; name?: string }> },
+      sceneIndex
+    )
+    const wardrobesWithImages = sceneWardrobesForChar.filter((w) => wardrobeImageUrl(w as any))
 
     const seenImageUrls = new Set<string>()
     const uniqueWardrobesWithImages = wardrobesWithImages.filter((w) => {

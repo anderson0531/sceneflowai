@@ -250,6 +250,33 @@ export function resolveWardrobeForCharacter(
   return resolved
 }
 
+type WardrobeScenePickerItem = {
+  id: string
+  sceneNumbers?: number[]
+  isDefault?: boolean
+}
+
+/** Wardrobes to show in scene pickers (sceneNumbers match, else isDefault, else all). */
+export function wardrobesForScene<T extends WardrobeScenePickerItem>(
+  character: { wardrobes?: T[] },
+  sceneIndex?: number
+): T[] {
+  const wardrobes = character.wardrobes ?? []
+  if (wardrobes.length === 0) return []
+  if (sceneIndex === undefined) return wardrobes
+
+  const sceneNum = sceneIndex + 1
+  const sceneAssigned = wardrobes.filter(
+    (w) => Array.isArray(w.sceneNumbers) && w.sceneNumbers.includes(sceneNum)
+  )
+  if (sceneAssigned.length > 0) return sceneAssigned
+
+  const defaultWardrobe = wardrobes.find((w) => w.isDefault === true)
+  if (defaultWardrobe) return [defaultWardrobe]
+
+  return wardrobes
+}
+
 /** Resolve wardrobe id for a character in the current scene (override → sceneNumbers → scene override → default). */
 export function resolveWardrobeIdForCharacterInScene(
   character: Record<string, unknown>,

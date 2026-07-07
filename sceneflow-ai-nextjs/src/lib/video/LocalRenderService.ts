@@ -17,7 +17,7 @@
 
 'use client'
 
-import { getFrameCropSourceRect } from './segmentVideoCrop'
+import { clampWatermarkCropPercent, getFrameCropSourceRect } from './segmentVideoCrop'
 
 // =============================================================================
 // Canvas capture (video/mixed exports)
@@ -1575,9 +1575,10 @@ export class LocalRenderService {
     // Calculate position to fit and center (video uses post-seek dimensions; image uses bitmap)
     const fullWidth = asset instanceof HTMLVideoElement ? asset.videoWidth : asset.width
     const fullHeight = asset instanceof HTMLVideoElement ? asset.videoHeight : asset.height
+    const cropPct = clampWatermarkCropPercent(segment.watermarkCropPercent)
     const cropRect =
-      asset instanceof HTMLVideoElement && segment.watermarkCropPercent
-        ? getFrameCropSourceRect(fullWidth, fullHeight, segment.watermarkCropPercent)
+      asset instanceof HTMLVideoElement && cropPct != null
+        ? getFrameCropSourceRect(fullWidth, fullHeight, cropPct)
         : { sx: 0, sy: 0, sw: fullWidth, sh: fullHeight }
 
     const contentWidth = cropRect.sw

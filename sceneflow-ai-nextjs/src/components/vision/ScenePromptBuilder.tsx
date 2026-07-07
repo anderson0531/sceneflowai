@@ -24,6 +24,7 @@ import {
   TalentDirectionSection,
 } from '@/components/image-gen'
 import type { ModelTier, ThinkingLevel } from '@/components/image-gen'
+import { resolveWardrobeIdForCharacterInScene } from '@/lib/character/characterReferenceAssembly'
 
 interface ScenePromptStructure {
   location: string
@@ -73,8 +74,8 @@ interface ScenePromptBuilderProps {
   objectReferences?: VisualReference[]
   /** Location references for environment/setting consistency */
   locationReferences?: LocationReference[]
-  /** Wardrobe assignments for this scene { characterName: wardrobeId } */
-  sceneWardrobes?: Record<string, string>
+  /** Zero-based scene index for wardrobe sceneNumbers resolution */
+  sceneIndex?: number
   onGenerateImage: (selectedCharacters: any[] | any) => void
   isGenerating?: boolean
 }
@@ -156,6 +157,28 @@ function extractPrimaryAction(keyActions: string[]): string {
   return primaryAction
 }
 
+function resolveEffectiveWardrobes(
+  characterNames: string[],
+  availableCharacters: ScenePromptBuilderProps['availableCharacters'],
+  scene: ScenePromptBuilderProps['scene'],
+  sceneIndex: number | undefined,
+  localWardrobes: Record<string, string>
+): Record<string, string> {
+  const effective: Record<string, string> = { ...localWardrobes }
+  for (const charName of characterNames) {
+    if (effective[charName]) continue
+    const char = availableCharacters?.find((c) => c.name === charName)
+    if (!char) continue
+    const wardrobeId = resolveWardrobeIdForCharacterInScene(
+      char as Record<string, unknown>,
+      scene ?? null,
+      sceneIndex
+    )
+    if (wardrobeId) effective[charName] = wardrobeId
+  }
+  return effective
+}
+
 export function ScenePromptBuilder({
   projectId,
   open,
@@ -165,7 +188,7 @@ export function ScenePromptBuilder({
   sceneReferences = [],
   objectReferences = [],
   locationReferences = [],
-  sceneWardrobes = {},
+  sceneIndex,
   onGenerateImage,
   isGenerating = false
 }: ScenePromptBuilderProps) {
@@ -186,7 +209,7 @@ export function ScenePromptBuilder({
   const [autoMatchedLocationRefIds, setAutoMatchedLocationRefIds] = useState<Set<string>>(new Set())
   const [locationSectionCollapsed, setLocationSectionCollapsed] = useState(true)
   
-  // Local wardrobe selections (can override sceneWardrobes prop)
+  // Local wardrobe selections (per-dialog overrides)
   const [localWardrobes, setLocalWardrobes] = useState<Record<string, string>>({})
   
   const [structure, setStructure] = useState<ScenePromptStructure>({
@@ -251,9 +274,16 @@ export function ScenePromptBuilder({
           let wardrobesUpdated = false
           
           detectedChars.forEach((char: any) => {
-            if (char.wardrobes && char.wardrobes.length > 0 && !newLocalWardrobes[char.name] && !sceneWardrobes?.[char.name]) {
-              newLocalWardrobes[char.name] = char.wardrobes[0].id
-              wardrobesUpdated = true
+            if (!newLocalWardrobes[char.name]) {
+              const wardrobeId = resolveWardrobeIdForCharacterInScene(
+                char as Record<string, unknown>,
+                scene ?? null,
+                sceneIndex
+              )
+              if (wardrobeId) {
+                newLocalWardrobes[char.name] = wardrobeId
+                wardrobesUpdated = true
+              }
             }
           })
           
@@ -567,7 +597,7 @@ export function ScenePromptBuilder({
       setAutoMatchedLocationRefIds(new Set())
       setLocationSectionCollapsed(true)
     }
-  }, [open, scene, availableCharacters, objectReferences, locationReferences])
+  }, [open, scene, sceneIndex, availableCharacters, objectReferences, locationReferences])
 
   // Sync to advanced mode when switching
   useEffect(() => {
@@ -611,8 +641,13 @@ export function ScenePromptBuilder({
       
       // 2. Add selected character wardrobes for visual consistency
       // e.g., "Dr. Benjamin Anderson wearing Obsessed Scientist Lab Attire"
-      // Merge sceneWardrobes with localWardrobes (local takes priority)
-      const effectiveWardrobes = { ...sceneWardrobes, ...localWardrobes }
+      const effectiveWardrobes = resolveEffectiveWardrobes(
+        structure.characters,
+        availableCharacters,
+        scene,
+        sceneIndex,
+        localWardrobes
+      )
       if (structure.characters.length > 0 && Object.keys(effectiveWardrobes).length > 0) {
         const wardrobeDescriptions: string[] = []
         
@@ -869,9 +904,14 @@ export function ScenePromptBuilder({
     // Pass prompt builder selections to API
     // Send raw prompt as scenePrompt (API will handle optimization)
     const rawPrompt = getRawPrompt()
-    // Build characterWardrobes array for API — maps character IDs to selected wardrobe IDs
-    // Merges scene-level assignments with local prompt builder overrides (local takes priority)
-    const effectiveWardrobes = { ...sceneWardrobes, ...localWardrobes }
+      // Wardrobe selections from sceneNumbers assignment + local overrides
+    const effectiveWardrobes = resolveEffectiveWardrobes(
+      structure.characters,
+      availableCharacters,
+      scene,
+      sceneIndex,
+      localWardrobes
+    )
     const characterWardrobesList = Object.entries(effectiveWardrobes)
       .map(([charName, wardrobeId]) => {
         const char = availableCharacters.find(c => c.name === charName)
@@ -1139,7 +1179,8 @@ export function ScenePromptBuilder({
               onSelectionChange={(names) => setStructure(prev => ({ ...prev, characters: names }))}
               selectedWardrobes={localWardrobes}
               onWardrobeChange={(name, wardrobeId) => setLocalWardrobes(prev => ({...prev, [name]: wardrobeId}))}
-              sceneWardrobes={sceneWardrobes}
+              scene={scene}
+              sceneIndex={sceneIndex}
               hasCharacterReferences={structure.characters.some(charName => {
                 const char = availableCharacters.find(c => c.name === charName)
                 return !!char?.referenceImage

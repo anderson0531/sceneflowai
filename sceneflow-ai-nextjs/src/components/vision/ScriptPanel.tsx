@@ -3454,20 +3454,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           sceneReferences={sceneReferences}
           objectReferences={objectReferences}
           locationReferences={locationReferences}
-          sceneWardrobes={(() => {
-            // Build wardrobes map from scene's characterWardrobes array
-            const scene = scenes[sceneBuilderIdx]
-            const wardrobesMap: Record<string, string> = {}
-            if (scene?.characterWardrobes) {
-              scene.characterWardrobes.forEach((cw: any) => {
-                const char = characters.find(c => c.id === cw.characterId)
-                if (char) {
-                  wardrobesMap[char.name] = cw.wardrobeId
-                }
-              })
-            }
-            return wardrobesMap
-          })()}
+          sceneIndex={sceneBuilderIdx}
           onGenerateImage={async (selectedCharacters) => {
             // Start generation (this sets generatingImageForScene)
             if (onGenerateSceneImage) {
@@ -3908,8 +3895,6 @@ interface SceneCardProps {
   // Image edit modal access
   setEditingImageData?: (data: { url: string; sceneIdx: number; segmentId?: string; frameType?: 'start' | 'end'; sceneId?: string } | null) => void
   setImageEditModalOpen?: (open: boolean) => void
-  // Scene wardrobe assignment - allows selecting which wardrobe each character uses in this scene
-  onUpdateSceneWardrobe?: (sceneIndex: number, characterId: string, wardrobeId: string | null) => void
   // Visual references for SegmentBuilder
   sceneReferences?: Array<{ id: string; name: string; description?: string; imageUrl?: string }>
   objectReferences?: Array<{ id: string; name: string; description?: string; imageUrl?: string }>
@@ -4097,7 +4082,6 @@ function SceneCard({
   onScriptChange,
   setEditingImageData,
   setImageEditModalOpen,
-  onUpdateSceneWardrobe,
   sceneReferences = [],
   objectReferences = [],
   locationReferences = [],
@@ -4165,7 +4149,7 @@ function SceneCard({
   // Add Beat dialog state
   const [addSegmentDialogOpen, setAddSegmentDialogOpen] = useState(false)
 
-  type SceneScriptTab = 'direction' | 'narration' | 'wardrobe' | 'previs' | 'beats' | 'music'
+  type SceneScriptTab = 'direction' | 'narration' | 'previs' | 'beats' | 'music'
   const [activeSceneTab, setActiveSceneTab] = useState<SceneScriptTab>('direction')
 
   type ShootTab = 'review' | 'video' | 'mixer' | 'streams'
@@ -4186,19 +4170,6 @@ function SceneCard({
     scene.narration &&
     !(Array.isArray((scene as any).segments) && (scene as any).segments.length > 0)
   )
-  const sceneWardrobeCharacters = useMemo(() => {
-    if (!scene.dialogue?.length || !characters?.length) return [] as typeof characters
-    const sceneCharacterNames = Array.from(
-      new Set(scene.dialogue.map((d: { character?: string }) => d.character))
-    ) as string[]
-    return sceneCharacterNames
-      .map((name) => characters.find((c) => c.name.toLowerCase() === name.toLowerCase()))
-      .filter(
-        (c): c is (typeof characters)[number] =>
-          !!c && !!c.wardrobes && c.wardrobes.length > 1
-      )
-  }, [scene.dialogue, characters])
-  const hasWardrobeTab = sceneWardrobeCharacters.length > 0
   const hasPreVisTab = frameSlotsForTabs.length > 0 || sceneBeatsForTabs.length > 0
   const hasBeatsTab = sceneBeatsForTabs.length > 0
   const hasMusicTab = !!scene.music
@@ -4234,9 +4205,8 @@ function SceneCard({
     if (hasMusicTab) tabs.push('music')
     if (hasPreVisTab) tabs.push('previs')
     if (hasNarrationTab) tabs.push('narration')
-    if (hasWardrobeTab) tabs.push('wardrobe')
     return tabs
-  }, [hasDirectionTab, hasNarrationTab, hasWardrobeTab, hasPreVisTab, hasBeatsTab, hasMusicTab])
+  }, [hasDirectionTab, hasNarrationTab, hasPreVisTab, hasBeatsTab, hasMusicTab])
 
   useEffect(() => {
     if (availableSceneTabs.length === 0) return
@@ -5881,13 +5851,6 @@ function SceneCard({
                               Narration
                             </TabsTrigger>
                           )}
-                          {hasWardrobeTab && (
-                            <TabsTrigger value="wardrobe" className="text-xs gap-1.5 px-2.5 py-1.5">
-                              <Users className="w-3.5 h-3.5 shrink-0" />
-                              Wardrobe
-                              <span className="text-[10px] opacity-60">({sceneWardrobeCharacters.length})</span>
-                            </TabsTrigger>
-                          )}
                         </TabsList>
                       </div>
 
@@ -6164,79 +6127,6 @@ function SceneCard({
                       </div>
                     </div>
                   )
-                  })()}
-                  </TabsContent>
-                  )}
-
-                  {/* Wardrobe */}
-                  {hasWardrobeTab && (
-                  <TabsContent value="wardrobe" className="mt-3 focus-visible:outline-none">
-                  {(() => {
-                    const sceneCharacters = sceneWardrobeCharacters
-                    
-                    return (
-                      <div className="bg-violet-950 border-l-4 border-violet-500 p-4 rounded-lg">
-                        <div className="mt-0 space-y-2">
-                            {sceneCharacters.map((character) => {
-                              // Get current wardrobe assignment for this scene
-                              const sceneWardrobe = scene.characterWardrobes?.find((cw: any) => cw.characterId === character.id)
-                              const currentWardrobeId = sceneWardrobe?.wardrobeId || character.wardrobes?.find(w => w.isDefault)?.id || ''
-                              const currentWardrobe = character.wardrobes?.find(w => w.id === currentWardrobeId)
-                              
-                              return (
-                                <div key={character.id} className="flex items-center gap-3 bg-violet-900/30 rounded-lg p-2">
-                                  <span className="text-sm font-medium text-violet-200 min-w-[100px]">{character.name}</span>
-                                  <select
-                                    value={currentWardrobeId}
-                                    onChange={(e) => {
-                                      e.stopPropagation()
-                                      const wardrobeId = e.target.value || null
-                                      onUpdateSceneWardrobe?.(sceneIdx, character.id, wardrobeId)
-                                    }}
-                                    className="flex-1 bg-violet-900/50 border border-violet-600/50 text-violet-200 text-sm rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                                  >
-                                    {character.wardrobes?.map((wardrobe) => (
-                                      <option key={wardrobe.id} value={wardrobe.id}>
-                                        {wardrobe.name}{wardrobe.isDefault ? ' (Default)' : ''}
-                                      </option>
-                                    ))}
-                                  </select>
-                                  {currentWardrobe && (
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <button className="p-1 text-violet-400 hover:text-violet-300 hover:bg-violet-800/30 rounded transition-colors">
-                                            <Info className="w-4 h-4" />
-                                          </button>
-                                        </TooltipTrigger>
-                                        <TooltipContent className="bg-gray-900 text-white border border-gray-700 max-w-xs p-3">
-                                          {currentWardrobe.previewImageUrl && (
-                                            <div className="mb-2">
-                                              <img 
-                                                src={currentWardrobe.previewImageUrl} 
-                                                alt={`${character.name} - ${currentWardrobe.name}`}
-                                                className="w-20 h-20 object-cover rounded-md border border-gray-600"
-                                              />
-                                            </div>
-                                          )}
-                                          <p className="text-xs font-medium text-violet-300 mb-1">{currentWardrobe.name}</p>
-                                          <p className="text-xs text-gray-300">{currentWardrobe.description}</p>
-                                          {currentWardrobe.accessories && (
-                                            <p className="text-xs text-gray-400 mt-1">Accessories: {currentWardrobe.accessories}</p>
-                                          )}
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  )}
-                                </div>
-                              )
-                            })}
-                            <p className="text-[10px] text-violet-400/70 mt-2">
-                              Select different wardrobes for characters in this scene. Changes affect image generation.
-                            </p>
-                          </div>
-                      </div>
-                    )
                   })()}
                   </TabsContent>
                   )}

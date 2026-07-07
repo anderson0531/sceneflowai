@@ -83,6 +83,7 @@ import { ImageEditModal } from '@/components/vision/ImageEditModal'
 import { shouldInitializeDirectorDialogState } from '@/lib/vision/directorDialogState'
 import { resolveEffectiveStartFrameUrl } from '@/lib/vision/segmentConfigBuilder'
 import { MAX_VERTEX_GEMINI_REFERENCE_IMAGES } from '@/lib/vision/referenceLimits'
+import { wardrobesForScene } from '@/lib/character/characterReferenceAssembly'
 import { resolveSegmentVideoReferences } from '@/lib/vision/resolveBeatVideoReferences'
 import type { BlueprintAspectRatio } from '@/lib/treatment/blueprintFoundation'
 import { toVideoAspectRatio } from '@/lib/vision/artStyle'
@@ -379,11 +380,12 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
           description: char.description,
         })
       }
-      char.wardrobes?.forEach(wardrobe => {
+      wardrobesForScene(char, sceneIndex).forEach(wardrobe => {
         const wardrobeWithPreview = wardrobe as {
           fullBodyUrl?: string
           headshotUrl?: string
           previewImageUrl?: string
+          name?: string
         }
         const imageUrl =
           wardrobeWithPreview.fullBodyUrl ??
@@ -393,7 +395,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
         library.push({
           id: `wardrobe-${char.name}-${wardrobe.id}`,
           type: 'wardrobe',
-          name: `${char.name} — ${wardrobe.name}`,
+          name: `${char.name} — ${wardrobeWithPreview.name ?? wardrobe.id}`,
           imageUrl,
         })
       })
@@ -424,7 +426,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     })
 
     return library
-  }, [sceneReferences, characterReferences, objectReferences, locationReferences])
+  }, [sceneReferences, characterReferences, objectReferences, locationReferences, sceneIndex])
 
   const handleSelectLibraryReference = useCallback((ref: DirectorLibraryReference) => {
     setReferenceImages(prev => {

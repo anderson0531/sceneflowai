@@ -333,6 +333,10 @@ export function mergeDerivedSegmentsWithExisting(
           : {}),
       },
       endFrameUrl: match.endFrameUrl ?? seg.endFrameUrl,
+      watermarkCropPercent: match.watermarkCropPercent ?? seg.watermarkCropPercent,
+      videoTrimInSec: match.videoTrimInSec ?? seg.videoTrimInSec,
+      videoTrimOutSec: match.videoTrimOutSec ?? seg.videoTrimOutSec,
+      mixerBeatIncluded: match.mixerBeatIncluded ?? seg.mixerBeatIncluded,
     }
   })
 }

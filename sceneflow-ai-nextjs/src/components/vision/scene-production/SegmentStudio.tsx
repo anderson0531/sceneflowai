@@ -66,6 +66,8 @@ interface SegmentStudioProps {
   audioTracks?: AudioTracksData
   // Beat position for establishing shot logic
   segmentIndex?: number
+  /** Zero-based scene index for wardrobe sceneNumbers resolution */
+  sceneIndex?: number
   // Phase 2: Dialogue coverage
   sceneDialogueLines?: SceneDialogueLine[]
   segmentDialogueLines?: SegmentDialogueAssignment[]
@@ -131,6 +133,7 @@ export function SegmentStudio({
   sceneImageUrl,
   audioTracks,
   segmentIndex = 0,
+  sceneIndex,
   sceneDialogueLines = [],
   segmentDialogueLines = [],
   onToggleDialogue,
@@ -1616,6 +1619,7 @@ export function SegmentStudio({
           sceneDescription={sceneDescription}
           sceneNarration={sceneNarration}
           frameResolverScene={visionScene ?? null}
+          sceneIndex={sceneIndex}
           locationReferences={locationReferences}
           onActionChange={
             onSegmentActionChange && segment

@@ -217,7 +217,8 @@ export function BeatReferenceSelectionDialog({
               onWardrobeChange={(name, wardrobeId) =>
                 setSelectedWardrobes((prev) => ({ ...prev, [name]: wardrobeId }))
               }
-              sceneWardrobes={Array.isArray(scene?.characterWardrobes) ? scene.characterWardrobes : []}
+              scene={scene}
+              sceneIndex={sceneIndex}
               isCollapsed={talentSectionCollapsed}
               onToggleCollapsed={() => setTalentSectionCollapsed((prev) => !prev)}
             />

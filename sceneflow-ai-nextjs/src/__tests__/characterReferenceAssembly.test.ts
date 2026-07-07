@@ -10,6 +10,7 @@ import {
   DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK,
   resolveCharacterReferencePair,
   resolveWardrobeIdForCharacterInScene,
+  wardrobesForScene,
   WARDROBE_ONLY_REFERENCE_INSTRUCTION,
 } from '@/lib/character/characterReferenceAssembly'
 
@@ -159,6 +160,34 @@ describe('characterReferenceAssembly', () => {
       1
     )
     expect(id).toBe('w1')
+  })
+
+  it('wardrobesForScene returns scene-assigned wardrobes when sceneNumbers match', () => {
+    const char = {
+      wardrobes: [
+        { id: 'w1', sceneNumbers: [1], isDefault: true },
+        { id: 'w2', sceneNumbers: [2] },
+      ],
+    }
+    expect(wardrobesForScene(char, 0).map((w) => w.id)).toEqual(['w1'])
+    expect(wardrobesForScene(char, 1).map((w) => w.id)).toEqual(['w2'])
+  })
+
+  it('wardrobesForScene falls back to isDefault when no sceneNumbers match', () => {
+    const char = {
+      wardrobes: [
+        { id: 'w1', sceneNumbers: [1], isDefault: false },
+        { id: 'w2', isDefault: true },
+      ],
+    }
+    expect(wardrobesForScene(char, 1).map((w) => w.id)).toEqual(['w2'])
+  })
+
+  it('wardrobesForScene returns all wardrobes when sceneIndex is undefined', () => {
+    const char = {
+      wardrobes: [{ id: 'w1' }, { id: 'w2' }],
+    }
+    expect(wardrobesForScene(char).length).toBe(2)
   })
 
   it('returns portrait-only when no wardrobe image URLs', () => {

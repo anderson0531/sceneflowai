@@ -25,6 +25,32 @@ RESOLUTIONS = {
 # We scale images 2x to allow for pan/zoom headroom
 SCALE_FACTOR = 2
 
+# Bottom crop range for uploaded beat watermark removal (matches segmentVideoCrop.ts)
+WATERMARK_CROP_MIN = 2
+WATERMARK_CROP_MAX = 10
+
+
+def clamp_watermark_crop_percent(value: Any) -> Optional[int]:
+    """Return validated crop percent (2–10) or None when disabled/invalid."""
+    if value is None or value == '':
+        return None
+    try:
+        n = round(float(value))
+    except (TypeError, ValueError):
+        return None
+    if n < WATERMARK_CROP_MIN or n > WATERMARK_CROP_MAX:
+        return None
+    return n
+
+
+def build_frame_crop_filter(crop_percent: Any) -> str:
+    """FFmpeg crop filter fragment (includes trailing comma when non-empty)."""
+    pct = clamp_watermark_crop_percent(crop_percent)
+    if pct is None:
+        return ''
+    factor = 1 - pct / 100
+    return f'crop=iw:ih*{factor}:0:0,'
+
 
 def build_atempo_filter_chain(rate: float) -> str:
     """
@@ -828,8 +854,7 @@ def build_concat_ffmpeg_command(
         tpad_str = f",tpad=stop_mode=clone:stop_duration={pause_duration}" if pause_duration > 0 else ""
         apad_str = f",apad=pad_dur={pause_duration}" if pause_duration > 0 else ""
 
-        crop_pct = float(segment.get('watermarkCropPercent') or 0)
-        crop_filter = f"crop=iw:ih*(1-{crop_pct / 100}):0:0," if crop_pct >= 2 else ""
+        crop_filter = build_frame_crop_filter(segment.get('watermarkCropPercent'))
 
         trim_in = float(segment.get('videoTrimInSec') or 0)
         raw_trim_out = segment.get('videoTrimOutSec')
