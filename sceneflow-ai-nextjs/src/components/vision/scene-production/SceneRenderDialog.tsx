@@ -46,6 +46,7 @@ import {
   VolumeX,
 } from 'lucide-react'
 import type { SceneSegment, SceneProductionData, AnimaticRenderSettings } from './types'
+import { filterMixerIncludedSegments } from '@/lib/scene/mixerBeatInclude'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { getBurnInPayloadForSceneRenderApi } from './sceneRenderBurnInPayload'
 
@@ -131,19 +132,23 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
   // Calculate rendered segments (video mode) or keyframe segments (animatic mode)
   const renderedSegments = useMemo(() => {
     if (renderMode === 'animatic') {
-      return segments.filter(s => {
-        const x = s as SceneSegment & { keyframeUrl?: string | null; thumbnailUrl?: string | null; imageUrl?: string }
-        const imageUrl =
-          s.startFrameUrl ||
-          s.references?.startFrameUrl ||
-          s.visualFrame ||
-          x.keyframeUrl ||
-          x.thumbnailUrl ||
-          x.imageUrl
-        return !!imageUrl
-      })
+      return filterMixerIncludedSegments(
+        segments.filter((s) => {
+          const x = s as SceneSegment & { keyframeUrl?: string | null; thumbnailUrl?: string | null; imageUrl?: string }
+          const imageUrl =
+            s.startFrameUrl ||
+            s.references?.startFrameUrl ||
+            s.visualFrame ||
+            x.keyframeUrl ||
+            x.thumbnailUrl ||
+            x.imageUrl
+          return !!imageUrl
+        })
+      )
     }
-    return segments.filter(s => s.activeAssetUrl && s.status === 'COMPLETE')
+    return filterMixerIncludedSegments(
+      segments.filter((s) => s.activeAssetUrl && s.status === 'COMPLETE')
+    )
   }, [segments, renderMode])
 
   // Detect effective mode: auto-detect if segments have video vs only images

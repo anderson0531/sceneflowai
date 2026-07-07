@@ -65,6 +65,8 @@ import {
   Gauge,
   Repeat,
   Crop,
+  Eye,
+  EyeOff,
 } from 'lucide-react'
 import { upload } from '@vercel/blob/client'
 import { Button } from '@/components/ui/Button'
@@ -134,6 +136,10 @@ import {
   WATERMARK_CROP_MAX,
   WATERMARK_CROP_MIN,
 } from '@/lib/video/segmentVideoCrop'
+import {
+  filterMixerIncludedSegments,
+  isMixerBeatIncluded,
+} from '@/lib/scene/mixerBeatInclude'
 
 export type { ProductionTarget, TextOverlay, TextOverlayStyle, TextOverlayPosition, TextOverlayTiming, AudioTrackConfig, MixerAudioTracks }
 
@@ -2328,6 +2334,124 @@ function DialogueLineControls({
 }
 
 /**
+ * SegmentBeatVideoControls - Include/exclude beat videos from mixer preview and render
+ */
+function SegmentBeatVideoControls({
+  segments,
+  onBeatIncludeChange,
+  onBeatIncludeAll,
+  disabled,
+  isCollapsed = false,
+  onToggleCollapse,
+}: {
+  segments: SceneSegment[]
+  onBeatIncludeChange: (segmentId: string, included: boolean) => void
+  onBeatIncludeAll: (included: boolean) => void
+  disabled?: boolean
+  isCollapsed?: boolean
+  onToggleCollapse?: () => void
+}) {
+  if (segments.length === 0) return null
+
+  const allIncluded = segments.every((s) => isMixerBeatIncluded(s))
+  const excludedCount = segments.filter((s) => !isMixerBeatIncluded(s)).length
+
+  const toggleSegment = (segmentId: string) => {
+    const seg = segments.find((s) => s.segmentId === segmentId)
+    if (!seg) return
+    onBeatIncludeChange(segmentId, !isMixerBeatIncluded(seg))
+  }
+
+  return (
+    <div className="bg-gray-800/50 rounded-lg">
+      <div
+        className={`flex items-center justify-between p-3 ${onToggleCollapse ? 'cursor-pointer hover:bg-white/5' : ''}`}
+        onClick={onToggleCollapse}
+      >
+        <div className="flex items-center gap-2">
+          {onToggleCollapse && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onToggleCollapse()
+              }}
+              className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+            >
+              {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+            </button>
+          )}
+          <Video className="w-4 h-4 text-cyan-400" />
+          <span className="text-xs text-gray-400 uppercase tracking-wide">Beat Video</span>
+          <span className="text-xs text-gray-500">
+            {segments.length} beats
+            {excludedCount > 0 ? ` · ${excludedCount} excluded` : ''}
+          </span>
+        </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onBeatIncludeAll(!allIncluded)
+          }}
+          disabled={disabled}
+          className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+        >
+          {allIncluded ? 'Exclude All' : 'Include All'}
+        </button>
+      </div>
+
+      {!isCollapsed && (
+        <div className="px-3 pb-3 space-y-2">
+          <p className="text-[11px] text-gray-500 leading-relaxed">
+            Excluded beats stay in your project but are hidden from preview and scene render.
+          </p>
+          {segments.map((seg, i) => {
+            const included = isMixerBeatIncluded(seg)
+            return (
+              <div
+                key={seg.segmentId}
+                className={cn(
+                  'flex items-center gap-2 p-2 rounded transition-colors border',
+                  included
+                    ? 'bg-cyan-600/10 border-cyan-500/30'
+                    : 'bg-gray-700/30 border-gray-600/30 opacity-70'
+                )}
+              >
+                <button
+                  onClick={() => toggleSegment(seg.segmentId)}
+                  disabled={disabled}
+                  className={cn(
+                    'w-10 h-8 rounded text-xs font-medium transition-colors flex-shrink-0 flex items-center justify-center',
+                    included
+                      ? 'bg-cyan-600/30 text-cyan-200 hover:bg-cyan-600/40'
+                      : 'bg-gray-600/40 text-gray-400 hover:bg-gray-600/60'
+                  )}
+                  title={included ? 'Exclude from mixer' : 'Include in mixer'}
+                >
+                  {included ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                </button>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs text-gray-300 font-medium">Beat #{i + 1}</span>
+                  {!included && (
+                    <span className="ml-2 text-[10px] uppercase tracking-wide text-gray-500">
+                      Excluded
+                    </span>
+                  )}
+                </div>
+                <Switch
+                  checked={included}
+                  onCheckedChange={(checked) => onBeatIncludeChange(seg.segmentId, checked)}
+                  disabled={disabled}
+                />
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/**
  * SegmentAudioControls - Mute/unmute and volume control for individual segment audio
  */
 function SegmentAudioControls({
@@ -2666,10 +2790,15 @@ export function SceneProductionMixer({
     [audioAssets.sfx]
   )
 
+  const mixerIncludedSegments = useMemo(
+    () => filterMixerIncludedSegments(segments),
+    [segments]
+  )
+
   /** Minimal scene shape for shared audio layout (segment dialogueLineIds + multi-lang audio). */
   const mixerAudioSceneStub = useMemo(
     () => ({
-      segments,
+      segments: mixerIncludedSegments,
       dialogueAudio: audioAssets.dialogueAudio,
       narrationAudio: audioAssets.narrationAudio,
       narrationAudioUrl: audioAssets.narrationAudioUrl,
@@ -2680,7 +2809,7 @@ export function SceneProductionMixer({
         .filter((u): u is string => !!u),
       sfx: normalizedSceneSfx,
     }),
-    [segments, audioAssets, normalizedSceneSfx]
+    [mixerIncludedSegments, audioAssets, normalizedSceneSfx]
   )
 
   const resolvedDialogueClips = useMemo(
@@ -2774,6 +2903,35 @@ export function SceneProductionMixer({
     [segments, onSegmentsChange]
   )
 
+  const handleMixerBeatIncludeChange = useCallback(
+    (segmentId: string, included: boolean) => {
+      onSegmentsChange?.(
+        segments.map((seg) =>
+          seg.segmentId === segmentId
+            ? { ...seg, mixerBeatIncluded: included }
+            : seg
+        )
+      )
+    },
+    [segments, onSegmentsChange]
+  )
+
+  const handleMixerBeatIncludeAll = useCallback(
+    (included: boolean) => {
+      const ids = new Set(
+        segments
+          .filter((s) => s.status === 'COMPLETE' && s.activeAssetUrl)
+          .map((s) => s.segmentId)
+      )
+      onSegmentsChange?.(
+        segments.map((seg) =>
+          ids.has(seg.segmentId) ? { ...seg, mixerBeatIncluded: included } : seg
+        )
+      )
+    },
+    [segments, onSegmentsChange]
+  )
+
   
   // === Theater Mode State ===
   // Theater mode collapses the right sidebar and expands video+timeline to full width,
@@ -2856,6 +3014,7 @@ export function SceneProductionMixer({
     textOverlays: boolean
     watermark: boolean
     watermarkCrop: boolean
+    beatVideo: boolean
     segmentAudio: boolean
     narration: boolean
     dialogue: boolean
@@ -2867,6 +3026,7 @@ export function SceneProductionMixer({
       textOverlays: true,
       watermark: true,
       watermarkCrop: true,
+      beatVideo: true,
       segmentAudio: true,
       narration: true,
       dialogue: true,
@@ -3265,39 +3425,46 @@ export function SceneProductionMixer({
   const localRenderSupported = localRenderSupportCheck.supported
   
   // === Derived Data ===
+
+  const completeRenderableSegments = useMemo(() => {
+    return segments.filter((s) => s.status === 'COMPLETE' && s.activeAssetUrl)
+  }, [segments])
   
   // Rendered segments (includes both video and image assets)
   const renderedSegments = useMemo(() => {
-    return segments.filter(s => s.status === 'COMPLETE' && s.activeAssetUrl)
-  }, [segments])
+    return filterMixerIncludedSegments(completeRenderableSegments)
+  }, [completeRenderableSegments])
   
   // Video-only segments for Video render mode (excludes image-only segments)
   // Check assetType === 'video' OR infer from URL (for uploaded videos where assetType may not be set)
   const videoSegments = useMemo(() => {
-    return segments.filter(s => {
-      if (s.status !== 'COMPLETE' || !s.activeAssetUrl) return false
-      // Explicit video asset type
-      if (s.assetType === 'video') return true
-      // Infer from URL extension for uploaded videos (bypass segments may not have assetType set)
-      const url = s.activeAssetUrl.toLowerCase()
-      const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.m4v']
-      if (videoExtensions.some(ext => url.includes(ext))) return true
-      // Check for video blob URLs or GCS video paths
-      if (url.includes('video/') || url.includes('/videos/')) return true
-      return false
-    })
-  }, [segments])
+    return filterMixerIncludedSegments(
+      completeRenderableSegments.filter((s) => {
+        // Explicit video asset type
+        if (s.assetType === 'video') return true
+        // Infer from URL extension for uploaded videos (bypass segments may not have assetType set)
+        const url = s.activeAssetUrl!.toLowerCase()
+        const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.m4v']
+        if (videoExtensions.some((ext) => url.includes(ext))) return true
+        // Check for video blob URLs or GCS video paths
+        if (url.includes('video/') || url.includes('/videos/')) return true
+        return false
+      })
+    )
+  }, [completeRenderableSegments])
 
   const canMixerStitchRender = videoSegments.length > 0
 
   const animaticPreviewSegments = useMemo(() => {
-    return segments
-      .map((s) => {
-        const url = animaticKeyframeUrl(s)
-        if (!url) return null
-        return { ...s, activeAssetUrl: url } as SceneSegment
-      })
-      .filter((s): s is SceneSegment => s != null)
+    return filterMixerIncludedSegments(
+      segments
+        .map((s) => {
+          const url = animaticKeyframeUrl(s)
+          if (!url) return null
+          return { ...s, activeAssetUrl: url } as SceneSegment
+        })
+        .filter((s): s is SceneSegment => s != null)
+    )
   }, [segments])
 
   const previewSegments = useMemo(() => {
@@ -4460,6 +4627,8 @@ export function SceneProductionMixer({
   
   const isRendering = renderStatus === 'preparing' || renderStatus === 'rendering'
   const hasRenderablePreview = previewSegments.length > 0
+  const allBeatsExcluded =
+    completeRenderableSegments.length > 0 && previewSegments.length === 0
 
   return (
     <div className="bg-gray-900/50 rounded-xl border border-purple-500/30 overflow-hidden">
@@ -5338,6 +5507,17 @@ export function SceneProductionMixer({
                 )}
               </div>
               
+              {productionTarget.streamType !== 'animatic' && completeRenderableSegments.length > 0 && (
+                <SegmentBeatVideoControls
+                  segments={completeRenderableSegments}
+                  onBeatIncludeChange={handleMixerBeatIncludeChange}
+                  onBeatIncludeAll={handleMixerBeatIncludeAll}
+                  disabled={isRendering || !onSegmentsChange}
+                  isCollapsed={collapsedSections.beatVideo}
+                  onToggleCollapse={() => toggleSection('beatVideo')}
+                />
+              )}
+
               {productionTarget.streamType !== 'animatic' && (
                 <SegmentWatermarkCropControls
                   segments={previewSegments}
@@ -5534,14 +5714,36 @@ export function SceneProductionMixer({
           </div>
         ) : (
           /* Empty State */
-          <div className="py-12 text-center">
+          <div className="py-12 text-center space-y-6">
             <Film className="w-16 h-16 mx-auto mb-4 text-gray-600 opacity-40" />
-            <h4 className="text-lg font-medium text-gray-300 mb-2">Nothing to preview yet</h4>
-            <p className="text-sm text-gray-500 max-w-md mx-auto">
-              {animaticPreviewSegments.length > 0
-                ? 'Use Preview output → Animatic above to preview keyframes, or generate segment videos in the Director’s Console for full video output and stitching.'
-                : 'Generate keyframes or video segments in the Director’s Console above, then mix and render from this panel.'}
-            </p>
+            {allBeatsExcluded ? (
+              <>
+                <h4 className="text-lg font-medium text-gray-300 mb-2">All beats are excluded</h4>
+                <p className="text-sm text-gray-500 max-w-md mx-auto">
+                  Include at least one beat to preview or render. Excluded beats keep their video — they are only hidden from the mixer.
+                </p>
+                {productionTarget.streamType !== 'animatic' && (
+                  <div className="max-w-md mx-auto text-left">
+                    <SegmentBeatVideoControls
+                      segments={completeRenderableSegments}
+                      onBeatIncludeChange={handleMixerBeatIncludeChange}
+                      onBeatIncludeAll={handleMixerBeatIncludeAll}
+                      disabled={isRendering || !onSegmentsChange}
+                      isCollapsed={false}
+                    />
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <h4 className="text-lg font-medium text-gray-300 mb-2">Nothing to preview yet</h4>
+                <p className="text-sm text-gray-500 max-w-md mx-auto">
+                  {animaticPreviewSegments.length > 0
+                    ? 'Use Preview output → Animatic above to preview keyframes, or generate segment videos in the Director’s Console for full video output and stitching.'
+                    : 'Generate keyframes or video segments in the Director’s Console above, then mix and render from this panel.'}
+                </p>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -5721,7 +5923,9 @@ export function SceneProductionMixer({
               </div>
               {!hasRenderablePreview && (
                 <p className="text-amber-300/90 leading-snug">
-                  Mixer quick/server stitch needs generated segment videos. For animatic (keyframes), use Render in the mixer footer.
+                  {allBeatsExcluded
+                    ? 'All beats are excluded — include at least one beat to preview or render.'
+                    : 'Mixer quick/server stitch needs generated segment videos. For animatic (keyframes), use Render in the mixer footer.'}
                 </p>
               )}
             </div>

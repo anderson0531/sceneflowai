@@ -703,6 +703,9 @@ export interface SceneSegment {
   /** Uniform frame crop % (2–10) for uploaded videos; preserves aspect ratio */
   watermarkCropPercent?: number
 
+  /** When false, beat video is hidden from mixer preview and scene render (asset is not deleted). */
+  mixerBeatIncluded?: boolean
+
   // ===========================================================================
   // Lean Multi-Language (LML) Elastic Segment Fields
   // ===========================================================================
