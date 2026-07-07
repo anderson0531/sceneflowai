@@ -203,10 +203,12 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
     }
   }, [totalDuration])
   
-  // Auto-scroll to follow playhead
+  // Auto-scroll to follow playhead (same coordinate basis as beat bars: 60px + f * (width - 72px))
   useEffect(() => {
     if (scrollContainerRef.current && currentPlaybackTime > 0) {
-      const playheadX = (currentPlaybackTime / totalDuration) * effectiveWidth
+      const innerWidth = containerRef.current?.offsetWidth ?? effectiveWidth
+      const trackWidth = Math.max(0, innerWidth - 72)
+      const playheadX = 60 + (currentPlaybackTime / totalDuration) * trackWidth
       const container = scrollContainerRef.current
       const containerWidth = container.clientWidth
       const scrollLeft = container.scrollLeft
@@ -300,11 +302,13 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
           className="relative px-3 pt-3 pb-2 flex-1"
           style={{ width: `${effectiveWidth}px`, minWidth: '100%' }}
         >
-          {/* Playhead */}
-          {currentPlaybackTime > 0 && (
+          {/* Playhead — aligned to flex-1 bar region (same basis as segment bars) */}
+          {currentPlaybackTime > 0 && totalDuration > 0 && (
             <div 
               className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20 pointer-events-none"
-              style={{ left: `calc(12px + 48px + ${(currentPlaybackTime / totalDuration) * effectiveWidth}px)` }}
+              style={{
+                left: `calc(60px + ${currentPlaybackTime / totalDuration} * (100% - 72px))`,
+              }}
             >
               <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-500 rotate-45" />
             </div>
@@ -330,7 +334,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
             <div className="sticky left-0 z-30 w-12 shrink-0 flex items-center bg-gray-900 border-r border-gray-700/50">
               <span className="text-[10px] text-gray-500 font-medium pl-1">Video</span>
             </div>
-            <div className="flex-1 h-full relative" style={{ width: `${effectiveWidth}px` }}>
+            <div className="flex-1 h-full relative min-w-0">
               {segmentPositions.map((pos, idx) => {
                 const startPercent = (pos.start / totalDuration) * 100
                 const widthPercent = (pos.duration / totalDuration) * 100
@@ -367,7 +371,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                 />
                 <span className="text-[10px] ml-1 text-gray-400">Dlg</span>
               </div>
-              <div className="flex-1 h-full relative" style={{ width: `${effectiveWidth}px` }}>
+              <div className="flex-1 h-full relative min-w-0">
                 {dialogueClips.map((clip) => {
                   const wallDur = wallClockClipDuration(clip)
                   const startPercent = (clip.startTime / totalDuration) * 100
@@ -403,7 +407,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                   Text
                 </span>
               </div>
-              <div className="flex-1 h-full relative" style={{ width: `${effectiveWidth}px` }}>
+              <div className="flex-1 h-full relative min-w-0">
                 {textOverlays.map((overlay) => {
                   const duration = overlay.timing.duration === -1 
                     ? videoTotalDuration - overlay.timing.startTime 
