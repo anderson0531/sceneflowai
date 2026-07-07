@@ -380,16 +380,54 @@ export function buildDualReferenceLabels(
   }
 }
 
+export const BEAT_FRAME_ANTI_POSE_NEGATIVE_PROMPT =
+  'posing for camera, looking at camera, direct eye contact with lens, staged studio portrait, headshot, red carpet pose, hands at sides neutral stance'
+
 export function buildIdentityReferencePromptLine(
   characterName: string,
-  referenceIndex: number
+  referenceIndex: number,
+  personTokenIndex?: number
 ): string {
-  return `- Reference image ${referenceIndex}: IDENTITY REFERENCE for ${characterName}\n  ${CHARACTER_IDENTITY_REFERENCE_INSTRUCTION}`
+  const personBinding =
+    personTokenIndex != null ? ` = person [${personTokenIndex}]` : ` for ${characterName}`
+  return `- Reference image ${referenceIndex}: IDENTITY REFERENCE${personBinding}\n  ${CHARACTER_IDENTITY_REFERENCE_INSTRUCTION}`
 }
 
 export function buildWardrobeReferencePromptLine(
   characterName: string,
-  referenceIndex: number
+  referenceIndex: number,
+  identityReferenceIndex?: number
 ): string {
-  return `- Reference image ${referenceIndex}: WARDROBE REFERENCE for ${characterName}\n  ${WARDROBE_ONLY_REFERENCE_INSTRUCTION}`
+  const binding =
+    identityReferenceIndex != null
+      ? ` for ${characterName}: apply this outfit ONLY to person [${identityReferenceIndex}] (${characterName}); do not apply to any other character`
+      : ` for ${characterName}`
+  return `- Reference image ${referenceIndex}: WARDROBE REFERENCE${binding}\n  ${WARDROBE_ONLY_REFERENCE_INSTRUCTION}`
+}
+
+/** Multi-character wardrobe binding summary for beat-frame gemini prompts. */
+export function buildWardrobeBindingSummary(
+  bindings: Array<{
+    characterName: string
+    identitySendIndex: number
+    wardrobeSendIndex?: number
+    isDiptych?: boolean
+  }>
+): string {
+  if (bindings.length < 2) return ''
+
+  const parts = bindings
+    .map((entry) => {
+      if (entry.isDiptych) {
+        return `person [${entry.identitySendIndex}] wears outfit from diptych Ref [${entry.identitySendIndex}] (RIGHT panel) (${entry.characterName})`
+      }
+      if (entry.wardrobeSendIndex != null) {
+        return `person [${entry.identitySendIndex}] wears Ref [${entry.wardrobeSendIndex}] (${entry.characterName})`
+      }
+      return null
+    })
+    .filter((part): part is string => !!part)
+
+  if (parts.length < 2) return ''
+  return `WARDROBE BINDING: ${parts.join('; ')}. Never swap outfits between people.`
 }

@@ -106,3 +106,33 @@ describe('generate-image expression negative regression guard', () => {
     )
   })
 })
+
+describe('generate-image beat frame acting and wardrobe regression guard', () => {
+  it('uses cinematic in-scene wrapper instead of reference-match phrasing', () => {
+    const routePath = join(
+      process.cwd(),
+      'src/app/api/scene/generate-image/route.ts'
+    )
+    const source = readFileSync(routePath, 'utf8')
+    expect(source).toMatch(/performing the following moment in-scene \(candid, not posed\)/)
+    expect(source).not.toMatch(
+      /Create an image about \$\{subjectIntroductions\} to match the description:/
+    )
+  })
+
+  it('adds anti-posing negatives for beat frames', () => {
+    const routePath = join(
+      process.cwd(),
+      'src/app/api/scene/generate-image/route.ts'
+    )
+    const assemblyPath = join(
+      process.cwd(),
+      'src/lib/character/characterReferenceAssembly.ts'
+    )
+    const routeSource = readFileSync(routePath, 'utf8')
+    const assemblySource = readFileSync(assemblyPath, 'utf8')
+    expect(routeSource).toMatch(/BEAT_FRAME_ANTI_POSE_NEGATIVE_PROMPT/)
+    expect(routeSource).toMatch(/buildWardrobeBindingSummary/)
+    expect(assemblySource).toMatch(/posing for camera/)
+  })
+})

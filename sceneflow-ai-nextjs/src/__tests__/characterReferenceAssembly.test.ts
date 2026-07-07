@@ -5,6 +5,7 @@ import {
   buildDualReferenceNegativeTerms,
   buildFramingAwareIdentityBlock,
   buildIdentityReferencePromptLine,
+  buildWardrobeBindingSummary,
   buildWardrobeReferencePromptLine,
   CHARACTER_IDENTITY_REFERENCE_INSTRUCTION,
   DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK,
@@ -262,6 +263,25 @@ describe('characterReferenceAssembly', () => {
     expect(identityLine).not.toContain('BOTTOM ROW')
     expect(wardrobeLine).not.toContain('2-row')
     expect(wardrobeLine.toLowerCase()).toContain('full-body')
+  })
+
+  it('binds wardrobe reference to person token for multi-character frames', () => {
+    const identityLine = buildIdentityReferencePromptLine('Elara Vance', 1, 1)
+    const wardrobeLine = buildWardrobeReferencePromptLine('Elara Vance', 2, 1)
+    expect(identityLine).toContain('IDENTITY REFERENCE = person [1]')
+    expect(wardrobeLine).toContain('apply this outfit ONLY to person [1] (Elara Vance)')
+    expect(wardrobeLine).toContain('do not apply to any other character')
+  })
+
+  it('buildWardrobeBindingSummary maps each person to their wardrobe ref', () => {
+    const summary = buildWardrobeBindingSummary([
+      { characterName: 'Elara Vance', identitySendIndex: 1, wardrobeSendIndex: 2 },
+      { characterName: 'Marcus Thorne', identitySendIndex: 3, wardrobeSendIndex: 4 },
+    ])
+    expect(summary).toMatch(/^WARDROBE BINDING:/)
+    expect(summary).toContain('person [1] wears Ref [2] (Elara Vance)')
+    expect(summary).toContain('person [3] wears Ref [4] (Marcus Thorne)')
+    expect(summary).toContain('Never swap outfits between people')
   })
 
   it('DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK establishes identity PRIMARY and wardrobe SECONDARY', () => {

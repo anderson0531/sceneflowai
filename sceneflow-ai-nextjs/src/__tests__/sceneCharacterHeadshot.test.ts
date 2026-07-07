@@ -121,6 +121,9 @@ describe('buildWardrobeDiptychCharacterConsumptionLine', () => {
     expect(buildWardrobeDiptychCharacterConsumptionLine('Elara')).toMatch(
       /RIGHT panel for outfit/i
     )
+    expect(buildWardrobeDiptychCharacterConsumptionLine('Elara', 1)).toMatch(
+      /person \[1\].*only/i
+    )
   })
 })
 

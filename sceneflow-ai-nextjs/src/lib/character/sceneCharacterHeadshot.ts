@@ -45,8 +45,12 @@ export const DIPTYCH_GENERATION_NEGATIVE_PROMPT =
 export { buildWardrobeDiptychReferenceLabel } from '@/lib/character/characterReferenceAssembly'
 
 /** Per-character consumption line appended to beat frame prompts. */
-export function buildWardrobeDiptychCharacterConsumptionLine(characterName: string): string {
-  return `${characterName}: use LEFT panel for face/identity only, RIGHT panel for outfit/wardrobe only.`
+export function buildWardrobeDiptychCharacterConsumptionLine(
+  characterName: string,
+  personTokenIndex?: number
+): string {
+  const personPart = personTokenIndex != null ? `person [${personTokenIndex}]` : characterName
+  return `${characterName} (${personPart}): use LEFT panel for face/identity only, RIGHT panel for outfit/wardrobe only — outfit applies to ${personPart} only.`
 }
 /** Negative terms targeting physics violations and object hallucinations. */
 export const PHYSICS_HALLUCINATION_NEGATIVE_PROMPT =

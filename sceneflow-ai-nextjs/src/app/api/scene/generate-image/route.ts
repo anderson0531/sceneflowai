@@ -38,6 +38,8 @@ import {
   buildIdentityReferencePromptLine,
   buildWardrobeReferenceLabel,
   buildWardrobeReferencePromptLine,
+  BEAT_FRAME_ANTI_POSE_NEGATIVE_PROMPT,
+  buildWardrobeBindingSummary,
   DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK,
   EXPRESSION_OVERRIDE_INSTRUCTION,
   resolveCharacterReferencePair,
@@ -1438,7 +1440,7 @@ export async function POST(req: NextRequest) {
                   : ref.linkingDescription)
             )
             .join(' and ')
-          optimizedPrompt = `Create an image about ${subjectIntroductions} to match the description: ${aiPromptBody}`
+          optimizedPrompt = `Cinematic film still. ${subjectIntroductions} performing the following moment in-scene (candid, not posed): ${aiPromptBody}`
         } else {
           optimizedPrompt = aiResult.prompt
         }
@@ -1652,6 +1654,13 @@ export async function POST(req: NextRequest) {
     if (aiNegativePromptAdditions.length) {
       negativePromptParts.push(...aiNegativePromptAdditions)
     }
+    const isDirectAddressDialogue =
+      isBeatFrame &&
+      beatKindForIntelligence === 'dialogue' &&
+      !!(beatForEmotion?.character?.trim() || beatForEmotion?.line?.trim())
+    if (isBeatFrame && !isDirectAddressDialogue) {
+      negativePromptParts.push(BEAT_FRAME_ANTI_POSE_NEGATIVE_PROMPT)
+    }
     const finalNegativePrompt = mergeBeatFrameNegativePrompt(negativePromptParts.join(', '))
     
     console.log(`[Scene Image] Negative prompt includes ${characterSpecificNegatives.length} character-specific exclusions (facial features only)`)
@@ -1787,9 +1796,17 @@ export async function POST(req: NextRequest) {
               const matchingCharRef = characterReferences.find(
                 (cr: any) => cr.name === ref.characterName
               )
+              const identitySendIndexForChar = cappedImageReferences.find(
+                (r) =>
+                  r.characterName === ref.characterName &&
+                  (r.refRole === 'identity' || r.refRole === 'wardrobe-diptych')
+              )?.referenceId
               if (ref.refRole === 'wardrobe-diptych') {
                 geminiPrompt += `- Reference image ${ref.referenceId}: ${buildWardrobeDiptychReferenceLabel(ref.characterName)}\n`
-                geminiPrompt += `  ${buildWardrobeDiptychCharacterConsumptionLine(ref.characterName)}\n`
+                geminiPrompt += `  ${buildWardrobeDiptychCharacterConsumptionLine(
+                  ref.characterName,
+                  identitySendIndexForChar ?? ref.referenceId
+                )}\n`
                 const hairLock =
                   matchingCharRef?.hairAnchor ?? matchingCharRef?.hairDescription
                 if (hairLock) {
@@ -1797,7 +1814,11 @@ export async function POST(req: NextRequest) {
                     `  Hairstyle lock: ${hairLock} — do not restyle for framing or injuries.\n`
                 }
               } else if (ref.refRole === 'identity') {
-                geminiPrompt += `${buildIdentityReferencePromptLine(ref.characterName, ref.referenceId)}\n`
+                geminiPrompt += `${buildIdentityReferencePromptLine(
+                  ref.characterName,
+                  ref.referenceId,
+                  ref.referenceId
+                )}\n`
                 const hairLock =
                   matchingCharRef?.hairAnchor ?? matchingCharRef?.hairDescription
                 if (hairLock) {
@@ -1805,11 +1826,52 @@ export async function POST(req: NextRequest) {
                     `  Hairstyle lock: ${hairLock} — do not restyle for framing or injuries.\n`
                 }
               } else if (matchingCharRef?.hasDualReferences) {
-                geminiPrompt += `${buildWardrobeReferencePromptLine(ref.characterName, ref.referenceId)}\n`
+                geminiPrompt += `${buildWardrobeReferencePromptLine(
+                  ref.characterName,
+                  ref.referenceId,
+                  identitySendIndexForChar
+                )}\n`
               } else {
                 geminiPrompt += `- Reference image ${ref.referenceId}: WARDROBE REFERENCE for ${ref.characterName}\n  ${WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION}\n`
               }
             })
+            const distinctCharacterNames = [
+              ...new Set(cappedImageReferences.map((ref) => ref.characterName)),
+            ]
+            if (distinctCharacterNames.length >= 2) {
+              const wardrobeBindingEntries = distinctCharacterNames
+                .map((characterName) => {
+                  const identityRef = cappedImageReferences.find(
+                    (r) =>
+                      r.characterName === characterName &&
+                      (r.refRole === 'identity' || r.refRole === 'wardrobe-diptych')
+                  )
+                  const wardrobeRef = cappedImageReferences.find(
+                    (r) => r.characterName === characterName && r.refRole === 'wardrobe'
+                  )
+                  if (!identityRef) return null
+                  return {
+                    characterName,
+                    identitySendIndex: identityRef.referenceId,
+                    wardrobeSendIndex: wardrobeRef?.referenceId,
+                    isDiptych: identityRef.refRole === 'wardrobe-diptych',
+                  }
+                })
+                .filter(
+                  (
+                    entry
+                  ): entry is {
+                    characterName: string
+                    identitySendIndex: number
+                    wardrobeSendIndex?: number
+                    isDiptych?: boolean
+                  } => entry != null
+                )
+              const wardrobeBindingSummary = buildWardrobeBindingSummary(wardrobeBindingEntries)
+              if (wardrobeBindingSummary) {
+                geminiPrompt += `${wardrobeBindingSummary}\n`
+              }
+            }
             const hasIdentityOnly = characterReferences.some(
               (cr: any) =>
                 cr.identityImageUrl &&
