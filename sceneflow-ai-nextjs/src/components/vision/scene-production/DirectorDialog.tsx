@@ -61,7 +61,6 @@ import {
   Users,
   X,
   Plus,
-  ImageOff,
   Library,
   MapPin,
   Box,
@@ -80,10 +79,7 @@ import {
 } from '@/lib/scene/segmentGuidePrompt'
 import { DirectionDialog } from './DirectionDialog'
 import { cn } from '@/lib/utils'
-import { ContentPolicyAlert, PolicyFixedBanner } from './ContentPolicyAlert'
 import { ImageEditModal } from '@/components/vision/ImageEditModal'
-import { AnalyzeKeyframeRiskPanel } from './AnalyzeKeyframeRiskPanel'
-import { moderatePrompt, type ModerationResult } from '@/utils/promptModerator'
 import { shouldInitializeDirectorDialogState } from '@/lib/vision/directorDialogState'
 import { resolveEffectiveStartFrameUrl } from '@/lib/vision/segmentConfigBuilder'
 import { MAX_VERTEX_GEMINI_REFERENCE_IMAGES } from '@/lib/vision/referenceLimits'
@@ -113,6 +109,22 @@ const FALLBACK_AGGREGATOR_MODELS = AGGREGATOR_MODEL_REGISTRY.map((m) => ({
   costPerSecondUsd: m.costPerSecondUsd,
   nativeAudio: m.nativeAudio ?? false,
 }))
+
+const VEO_DURATION_OPTIONS = [4, 6, 8, 10] as const
+const KLING_DURATION_OPTIONS = [5, 10] as const
+
+function snapDurationForProvider(
+  value: number,
+  provider: 'vertex' | 'aggregator'
+): number {
+  if (provider === 'aggregator') {
+    return value <= 7 ? 5 : 10
+  }
+  if (value <= 5) return 4
+  if (value <= 7) return 6
+  if (value <= 9) return 8
+  return 10
+}
 
 function aggregatorStatusMessage(diagnostics: AggregatorDiagnosticsState | null): string | null {
   if (!diagnostics || diagnostics.enabled) return null
@@ -293,7 +305,6 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   // Full API prompt preview / override
   const [apiPromptPreview, setApiPromptPreview] = useState('')
   const [apiPromptPreviewLoading, setApiPromptPreviewLoading] = useState(false)
-  const [apiPromptPreviewError, setApiPromptPreviewError] = useState<string | null>(null)
   const [useCustomApiPrompt, setUseCustomApiPrompt] = useState(false)
   const [apiPromptOverride, setApiPromptOverride] = useState('')
   const [allowPolicyFallback, setAllowPolicyFallback] = useState(false)
@@ -430,12 +441,6 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   // Direction Dialog state
   const [isDirectionDialogOpen, setIsDirectionDialogOpen] = useState(false)
   
-  // Content policy post-failure state (after Vertex rejects a generation)
-  const [postFailureModerationResult, setPostFailureModerationResult] = useState<ModerationResult | null>(null)
-  const [promptFixApplied, setPromptFixApplied] = useState(false)
-  const [localError, setLocalError] = useState<string | null>(null)
-  const [imageTriggered, setImageTriggered] = useState(false)
-
   // Force GuidePromptEditor remount on reset
   const [editorResetKey, setEditorResetKey] = useState(0)
 
@@ -675,22 +680,19 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     setNegativePrompt(autoConfig.negativePrompt)
     setAspectRatio(lockedVideoAspect)
     setResolution(autoConfig.resolution)
-    setDuration(isContinuation ? 10 : autoConfig.duration)
+    const initialProvider =
+      savedConfig?.videoProvider ?? autoConfig.videoProvider ?? 'vertex'
+    const rawDuration = isContinuation ? 10 : autoConfig.duration
+    setVideoProvider(initialProvider)
+    setDuration(snapDurationForProvider(rawDuration, initialProvider))
     setGuidePrompt(batchGuideSeed || autoConfig.guidePrompt || '')
     setReferenceImages(autoResolvedRefs.entries)
-    // Reset content policy state on open
-    setPostFailureModerationResult(null)
-    setPromptFixApplied(false)
-    setLocalError(null)
-    setImageTriggered(false)
     setKeyframeEdit(null)
     setUseCustomApiPrompt(autoConfig.useCustomApiPrompt ?? savedConfig?.useCustomApiPrompt ?? false)
     setApiPromptOverride(autoConfig.apiPromptOverride ?? savedConfig?.apiPromptOverride ?? '')
     setAllowPolicyFallback(autoConfig.allowPolicyFallback ?? savedConfig?.allowPolicyFallback ?? false)
-    setVideoProvider(savedConfig?.videoProvider ?? autoConfig.videoProvider ?? 'vertex')
     setVideoModel(savedConfig?.videoModel ?? autoConfig.videoModel ?? 'kling-2.6')
     setApiPromptPreview('')
-    setApiPromptPreviewError(null)
   }, [autoConfig, savedConfig, lockedVideoAspect, batchGuideSeed, segment, autoResolvedRefs.entries])
 
   const fetchApiPromptPreview = useCallback(async () => {
@@ -710,7 +712,6 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
         : undefined
 
     setApiPromptPreviewLoading(true)
-    setApiPromptPreviewError(null)
     try {
       const res = await fetch(
         `/api/segments/${encodeURIComponent(segment.segmentId)}/preview-api-prompt`,
@@ -735,10 +736,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       }
       const data = await res.json()
       setApiPromptPreview(data.apiPrompt || '')
-    } catch (e) {
-      setApiPromptPreviewError(
-        e instanceof Error ? e.message : 'Preview unavailable — enable custom mode to paste prompt manually'
-      )
+    } catch {
+      setApiPromptPreview('')
     } finally {
       setApiPromptPreviewLoading(false)
     }
@@ -772,8 +771,20 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
 
   const generateButtonLabel =
     videoProvider === 'aggregator'
-      ? `Generate via Multiplatform${selectedAggregatorModelLabel ? ` (${selectedAggregatorModelLabel})` : ''}`
+      ? `Generate via Kling${selectedAggregatorModelLabel ? ` (${selectedAggregatorModelLabel})` : ''}`
       : 'Generate via Veo'
+
+  const durationOptions =
+    videoProvider === 'aggregator' ? KLING_DURATION_OPTIONS : VEO_DURATION_OPTIONS
+
+  const handleVideoProviderChange = useCallback(
+    (provider: 'vertex' | 'aggregator') => {
+      if (provider === 'aggregator' && !aggregatorEnabled) return
+      setVideoProvider(provider)
+      setDuration((prev) => snapDurationForProvider(prev, provider))
+    },
+    [aggregatorEnabled]
+  )
 
   const aggregatorStatusBanner = aggregatorStatusMessage(aggregatorDiagnostics)
 
@@ -904,94 +915,6 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     wasOpenRef.current = isOpen
   }, [isOpen, segment.segmentId, effectiveStartFrameUrl, initializeDialogState])
 
-  // Detect post-failure content policy errors when segment status changes
-  useEffect(() => {
-    if (segment.status === 'ERROR' && segment.errorMessage) {
-      const errMsg = segment.errorMessage
-      setLocalError(errMsg)
-
-      const isContentPolicy = errMsg.includes('Content Policy') ||
-        errMsg.includes('safety filter') ||
-        errMsg.includes('violat') ||
-        errMsg.includes('usage guidelines')
-
-      if (isContentPolicy) {
-        const currentPrompt = visualPrompt
-        const isImageBasedMethod = mode === 'IMAGE_TO_VIDEO' || mode === 'REFERENCE_IMAGES'
-        const fromServer = segment.lastContentPolicyFailure
-        const hintLines = fromServer?.hints?.length
-          ? fromServer.hints
-          : []
-
-        if (fromServer?.optionalSanitized?.prompt) {
-          setImageTriggered(false)
-          setPostFailureModerationResult({
-            isClean: false,
-            severity: 'low',
-            flaggedTerms: [],
-            suggestedPrompt: fromServer.optionalSanitized.prompt,
-            warnings: [
-              ...hintLines,
-              'Optional: Auto-Fix updates your main video prompt (and guide/audio text if suggestions exist).',
-            ],
-          })
-        } else if (fromServer?.optionalSanitized?.guidePrompt && currentPrompt) {
-          setImageTriggered(false)
-          setPostFailureModerationResult({
-            isClean: false,
-            severity: 'low',
-            flaggedTerms: [],
-            suggestedPrompt: currentPrompt,
-            warnings: [
-              ...hintLines,
-              'Optional: Auto-Fix will apply softer wording to your audio/SFX guide only.',
-            ],
-          })
-        } else if (currentPrompt) {
-          const modResult = moderatePrompt(currentPrompt)
-          if (modResult.isClean && isImageBasedMethod) {
-            setImageTriggered(true)
-            setPostFailureModerationResult({
-              isClean: false,
-              severity: 'medium',
-              flaggedTerms: [],
-              suggestedPrompt: currentPrompt,
-              warnings: [
-                ...hintLines,
-                'Your prompt passed local checks, but Vertex still blocked the request. With start/end frames or a reference image, the visuals—not the text—often cause the block.',
-                'Try Image-to-Video with only the start frame, adjust keyframes, or use "Retry as Text-to-Video" below.',
-              ],
-            })
-          } else if (modResult.isClean) {
-            setImageTriggered(false)
-            setPostFailureModerationResult({
-              isClean: false,
-              severity: 'medium',
-              flaggedTerms: [],
-              suggestedPrompt: currentPrompt,
-              warnings: [
-                ...hintLines,
-                'Vertex rejected the request but no local trigger words were found. Try AI Rephrase or optional wording after a retry.',
-              ],
-            })
-          } else {
-            setImageTriggered(false)
-            setPostFailureModerationResult({
-              ...modResult,
-              warnings: [...hintLines, ...modResult.warnings],
-            })
-          }
-        }
-      } else {
-        setPostFailureModerationResult(null)
-      }
-    } else if (segment.status === 'COMPLETE' || segment.status === 'GENERATING') {
-      setLocalError(null)
-      setPostFailureModerationResult(null)
-      setImageTriggered(false)
-    }
-  }, [segment.status, segment.errorMessage, segment.lastContentPolicyFailure, mode, motionPrompt, visualPrompt])
-  
   const handleSave = () => {
     const method = modeToMethod[mode]
     const effectiveMethod = method === 'FTV' ? 'I2V' : method
@@ -1017,74 +940,6 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     })
     onSaveConfig(savedConfig)
   }
-  
-  // AI Rephrase handler for ContentPolicyAlert
-  const handleAIRephrase = useCallback(async (originalPrompt: string): Promise<string> => {
-    const response = await fetch('/api/prompt/rephrase', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        prompt: originalPrompt,
-        flaggedTerms: postFailureModerationResult?.flaggedTerms.map(ft => ft.term) || []
-      })
-    })
-    if (!response.ok) throw new Error('Failed to rephrase prompt')
-    const data = await response.json()
-    return data.rephrasedPrompt || data.prompt || originalPrompt
-  }, [postFailureModerationResult])
-
-  // Apply content policy fix — updates the active prompt
-  const handleApplyContentFix = useCallback((fixedPrompt: string) => {
-    setVisualPrompt(fixedPrompt)
-    const g = segment.lastContentPolicyFailure?.optionalSanitized?.guidePrompt
-    if (g) {
-      setGuidePrompt(g)
-    }
-    setPostFailureModerationResult(null)
-    setLocalError(null)
-    setImageTriggered(false)
-    setPromptFixApplied(true)
-    setTimeout(() => setPromptFixApplied(false), 5000)
-  }, [segment.lastContentPolicyFailure])
-
-  // Retry as T2V — fallback when reference image triggers content policy
-  const handleRetryAsT2V = useCallback(() => {
-    setMode('TEXT_TO_VIDEO')
-    setLocalError(null)
-    setPostFailureModerationResult(null)
-    setImageTriggered(false)
-    setPromptFixApplied(false)
-    
-    const currentPrompt = visualPrompt
-    if (currentPrompt) {
-      setVisualPrompt(currentPrompt)
-    }
-    
-    // Build T2V config without reference images and generate
-    const t2vConfig = appendAdvancedConfig({
-      mode: 'T2V',
-      prompt: currentPrompt || visualPrompt,
-      motionPrompt,
-      visualPrompt: currentPrompt || visualPrompt,
-      negativePrompt,
-      guidePrompt: guidePrompt || undefined,
-      aspectRatio,
-      resolution,
-      duration: mode === 'EXTEND' ? 10 : duration,
-      startFrameUrl: null,
-      endFrameUrl: null,
-      sourceVideoUrl: null,
-      approvalStatus: 'auto-ready',
-      confidence: autoConfig.confidence,
-      qualityTier,
-    })
-    
-    onSaveConfig(t2vConfig)
-    if (onGenerate) {
-      onGenerate(segment.segmentId, t2vConfig)
-    }
-    onClose()
-  }, [mode, motionPrompt, visualPrompt, negativePrompt, guidePrompt, aspectRatio, resolution, duration, autoConfig.confidence, qualityTier, onSaveConfig, onGenerate, segment.segmentId, onClose, appendAdvancedConfig])
 
   // Handle generate - saves config AND triggers generation
   const handleGenerate = () => {
@@ -1609,7 +1464,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                     <p className="text-sm text-slate-400">Fixed at 10s for extension (matches auto-extend route)</p>
                   ) : (
                   <div className="flex gap-2">
-                    {[4, 6, 8, 10].map((d) => (
+                    {durationOptions.map((d) => (
                       <Button
                         key={d}
                         variant={duration === d ? 'default' : 'outline'}
@@ -1624,204 +1479,124 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                   )}
                 </div>
 
-            {/* Advanced Settings Accordion */}
+            {/* Advanced — provider, settings, API prompt */}
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="advanced" className="border-slate-700">
                 <AccordionTrigger className="text-slate-300 hover:text-white text-sm">
-                  Advanced Settings
+                  Advanced
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-4 pt-2">
-                    {/* Aspect Ratio */}
                     <div className="flex flex-col gap-2">
-                      <Label className="text-slate-400 text-xs">Aspect Ratio</Label>
-                      <Select
-                        value={aspectRatio}
-                        onValueChange={(v) => setAspectRatio(v as '16:9' | '9:16')}
-                        disabled
-                      >
-                        <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-slate-800 border-slate-700">
-                          <SelectItem value="16:9">16:9 Landscape</SelectItem>
-                          <SelectItem value="9:16">9:16 Portrait</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Label className="text-slate-400 text-xs">Generation Provider</Label>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant={videoProvider === 'vertex' ? 'default' : 'outline'}
+                          size="sm"
+                          className={cn(
+                            'flex-1',
+                            videoProvider === 'vertex'
+                              ? 'bg-indigo-600'
+                              : 'bg-slate-800 border-slate-700 text-slate-300'
+                          )}
+                          onClick={() => handleVideoProviderChange('vertex')}
+                        >
+                          Google Veo
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={videoProvider === 'aggregator' ? 'default' : 'outline'}
+                          size="sm"
+                          disabled={!aggregatorEnabled}
+                          className={cn(
+                            'flex-1',
+                            videoProvider === 'aggregator'
+                              ? 'bg-indigo-600'
+                              : 'bg-slate-800 border-slate-700 text-slate-300',
+                            !aggregatorEnabled && 'opacity-50'
+                          )}
+                          onClick={() => handleVideoProviderChange('aggregator')}
+                        >
+                          Kling (Multiplatform)
+                        </Button>
+                      </div>
+                      {aggregatorStatusBanner && (
+                        <p className="text-[10px] text-slate-500 leading-relaxed">
+                          {aggregatorStatusBanner}
+                        </p>
+                      )}
                     </div>
-                    
-                    {/* Resolution */}
-                    <div className="flex flex-col gap-2">
-                      <Label className="text-slate-400 text-xs">Resolution</Label>
-                      <Select value={resolution} onValueChange={(v) => setResolution(v as '720p' | '1080p')}>
-                        <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-slate-800 border-slate-700">
-                          <SelectItem value="720p">720p HD</SelectItem>
-                          <SelectItem value="1080p">1080p Full HD</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="flex flex-col gap-2">
-                      <Label className="text-slate-400 text-xs">Quality Tier</Label>
-                      <Select value={qualityTier} onValueChange={(v) => setQualityTier(v as 'fast' | 'premium')}>
-                        <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-slate-800 border-slate-700">
-                          <SelectItem value="fast">Fast (~$1.60/8s) - Good for T2V, I2V</SelectItem>
-                          <SelectItem value="premium">Premium (~$6.00/8s) - Better motion reasoning</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    {/* Negative Prompt */}
-                    <div className="flex flex-col gap-2">
-                      <Label className="text-slate-400 text-xs">Negative Prompt</Label>
-                      <Textarea 
-                        value={negativePrompt}
-                        onChange={(e) => setNegativePrompt(e.target.value)}
-                        className="h-16 bg-slate-800 border-slate-700 text-white text-sm resize-none"
-                        placeholder="What to avoid..."
-                      />
-                    </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
 
-            {/* Advanced: full API prompt + backup engine opt-in */}
-            <Accordion type="single" collapsible className="mt-3">
-              <AccordionItem value="api-prompt" className="border-slate-700">
-                <AccordionTrigger className="text-sm text-slate-300 hover:no-underline py-2">
-                  Advanced — API Prompt
-                </AccordionTrigger>
-                <AccordionContent className="space-y-3 pt-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <Label className="text-slate-400 text-xs">
-                      Full prompt sent to API {apiPromptPreviewLoading ? '(updating…)' : '(preview)'}
-                    </Label>
-                    {apiPromptPreviewLoading && (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400" />
-                    )}
-                  </div>
-                  {apiPromptPreviewError && !useCustomApiPrompt && (
-                    <p className="text-xs text-amber-400/90">{apiPromptPreviewError}</p>
-                  )}
-                  <Textarea
-                    value={displayedApiPrompt}
-                    onChange={(e) => {
-                      if (useCustomApiPrompt) setApiPromptOverride(e.target.value)
-                    }}
-                    readOnly={!useCustomApiPrompt}
-                    className={cn(
-                      'min-h-[120px] font-mono text-xs bg-slate-800 border-slate-700 text-slate-200 resize-y',
-                      !useCustomApiPrompt && 'opacity-90'
-                    )}
-                    placeholder="Server-assembled prompt preview…"
-                  />
-                  <p className="text-[10px] text-slate-500">
-                    {displayedApiPrompt.length.toLocaleString()} characters
-                    {displayedApiPrompt.length > 8000 && (
-                      <span className="text-amber-400 ml-2">Long prompt — may increase block risk</span>
-                    )}
-                  </p>
-                  <div className="flex flex-wrap items-center gap-4">
-                    <div
-                      className="flex items-center gap-2 cursor-pointer"
-                      onClick={() => {
-                        const on = !useCustomApiPrompt
-                        setUseCustomApiPrompt(on)
-                        if (on && !apiPromptOverride.trim()) {
-                          setApiPromptOverride(apiPromptPreview)
-                        }
-                      }}
-                    >
-                      <Checkbox
-                        id="useCustomApiPrompt"
-                        checked={useCustomApiPrompt}
-                        onCheckedChange={(checked) => {
-                          const on = checked === true
-                          setUseCustomApiPrompt(on)
-                          if (on && !apiPromptOverride.trim()) {
-                            setApiPromptOverride(apiPromptPreview)
-                          }
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <span className="text-xs text-slate-300">Use custom API prompt</span>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="text-xs h-8 border-slate-600"
-                      onClick={() => {
-                        setUseCustomApiPrompt(false)
-                        setApiPromptOverride('')
-                        void fetchApiPromptPreview()
-                      }}
-                    >
-                      Reset to preview
-                    </Button>
-                  </div>
-                  <div className="space-y-2 pt-2 border-t border-slate-700/80">
-                    {aggregatorStatusBanner && (
-                      <p className="text-xs text-amber-400/90 leading-relaxed rounded-md border border-amber-700/40 bg-amber-950/30 px-2 py-1.5">
-                        {aggregatorStatusBanner}
-                        {aggregatorDiagnostics?.vercelEnv && (
-                          <span className="block text-[10px] text-amber-500/80 mt-1">
-                            Server env: {aggregatorDiagnostics.vercelEnv}
-                            {aggregatorDiagnostics.hasApiKey === false ? ' · API key not detected' : ''}
+                    {videoProvider === 'vertex' && (
+                      <>
+                        <div className="flex flex-col gap-2">
+                          <Label className="text-slate-400 text-xs">Quality Tier</Label>
+                          <Select value={qualityTier} onValueChange={(v) => setQualityTier(v as 'fast' | 'premium')}>
+                            <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-slate-800 border-slate-700">
+                              <SelectItem value="fast">Fast (~$1.60/8s) - Good for T2V, I2V</SelectItem>
+                              <SelectItem value="premium">Premium (~$6.00/8s) - Better motion reasoning</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="text-slate-400 text-xs">Resolution</Label>
+                          <Select value={resolution} onValueChange={(v) => setResolution(v as '720p' | '1080p')}>
+                            <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-slate-800 border-slate-700">
+                              <SelectItem value="720p">720p HD</SelectItem>
+                              <SelectItem value="1080p">1080p Full HD</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div
+                          className="flex items-start gap-2 cursor-pointer"
+                          onClick={() => setAllowPolicyFallback((prev) => !prev)}
+                        >
+                          <Checkbox
+                            id="allowPolicyFallback"
+                            checked={allowPolicyFallback}
+                            onCheckedChange={(checked) => setAllowPolicyFallback(checked === true)}
+                            className="mt-0.5"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <span className="text-xs text-slate-300 leading-relaxed">
+                            Allow backup engine if blocked
+                            <span className="block text-slate-500 mt-0.5">
+                              Uses Kling when Vertex blocks the prompt. May cost additional credits.
+                            </span>
                           </span>
-                        )}
-                      </p>
+                        </div>
+                      </>
                     )}
-                    <Label className="text-slate-400 text-xs">Video provider</Label>
-                    <Select
-                      value={videoProvider}
-                      onValueChange={(v) =>
-                        setVideoProvider(v as 'vertex' | 'aggregator')
-                      }
-                    >
-                      <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-slate-800 border-slate-700">
-                        <SelectItem value="vertex">Google Veo (default)</SelectItem>
-                        <SelectItem value="aggregator">
-                          Multiplatform (bypasses Google policy)
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+
                     {videoProvider === 'aggregator' && (
                       <>
-                        <Label className="text-slate-400 text-xs">Model</Label>
-                        <Select value={videoModel} onValueChange={setVideoModel}>
-                          <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-slate-800 border-slate-700">
-                            {displayAggregatorModels.map((m) => (
-                              <SelectItem key={m.id} value={m.id}>
-                                {m.label}
-                                {m.nativeAudio ? ' · audio' : ''} (~$
-                                {m.costPerSecondUsd.toFixed(2)}/s)
-                                {!aggregatorEnabled ? ' · server offline' : ''}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="flex flex-col gap-2">
+                          <Label className="text-slate-400 text-xs">Kling Model</Label>
+                          <Select value={videoModel} onValueChange={setVideoModel}>
+                            <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-slate-800 border-slate-700">
+                              {displayAggregatorModels.map((m) => (
+                                <SelectItem key={m.id} value={m.id}>
+                                  {m.label}
+                                  {m.nativeAudio ? ' · audio' : ''} (~$
+                                  {m.costPerSecondUsd.toFixed(2)}/s)
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                         <p className="text-[10px] text-slate-500 leading-relaxed">
-                          Multiplatform models use provider-native content policies (Kling,
-                          Runway, ByteDance), which are less restrictive than Google for creative
-                          violence, NIL, and trigger words.
-                        </p>
-                        <p className="text-[10px] text-emerald-400/90">
-                          Selected: Multiplatform · {selectedAggregatorModelLabel}
-                          {!aggregatorEnabled ? ' (server not configured)' : ''}
+                          Kling uses provider-native content policies — less restrictive than Google for
+                          creative violence, NIL, and trigger words.
                         </p>
                         <Button
                           type="button"
@@ -1842,112 +1617,105 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                         </Button>
                       </>
                     )}
-                    {videoProvider === 'vertex' && (
-                      <p className="text-[10px] text-slate-500">Active: Google Veo (default)</p>
-                    )}
+
+                    <div className="flex flex-col gap-2">
+                      <Label className="text-slate-400 text-xs">Aspect Ratio</Label>
+                      <Select
+                        value={aspectRatio}
+                        onValueChange={(v) => setAspectRatio(v as '16:9' | '9:16')}
+                        disabled
+                      >
+                        <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-slate-800 border-slate-700">
+                          <SelectItem value="16:9">16:9 Landscape</SelectItem>
+                          <SelectItem value="9:16">9:16 Portrait</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <Label className="text-slate-400 text-xs">Negative Prompt</Label>
+                      <Textarea
+                        value={negativePrompt}
+                        onChange={(e) => setNegativePrompt(e.target.value)}
+                        className="h-16 bg-slate-800 border-slate-700 text-white text-sm resize-none"
+                        placeholder="What to avoid..."
+                      />
+                    </div>
+
+                    <div className="space-y-3 pt-2 border-t border-slate-700/80">
+                      <div className="flex items-center justify-between gap-2">
+                        <Label className="text-slate-400 text-xs">
+                          API Prompt {apiPromptPreviewLoading ? '(updating…)' : '(preview)'}
+                        </Label>
+                        {apiPromptPreviewLoading && (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400" />
+                        )}
+                      </div>
+                      <Textarea
+                        value={displayedApiPrompt}
+                        onChange={(e) => {
+                          if (useCustomApiPrompt) setApiPromptOverride(e.target.value)
+                        }}
+                        readOnly={!useCustomApiPrompt}
+                        className={cn(
+                          'min-h-[100px] font-mono text-xs bg-slate-800 border-slate-700 text-slate-200 resize-y',
+                          !useCustomApiPrompt && 'opacity-90'
+                        )}
+                        placeholder="Server-assembled prompt preview…"
+                      />
+                      <p className="text-[10px] text-slate-500">
+                        {displayedApiPrompt.length.toLocaleString()} characters
+                        {displayedApiPrompt.length > 8000 && (
+                          <span className="text-amber-400 ml-2">Long prompt — may increase block risk</span>
+                        )}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-4">
+                        <div
+                          className="flex items-center gap-2 cursor-pointer"
+                          onClick={() => {
+                            const on = !useCustomApiPrompt
+                            setUseCustomApiPrompt(on)
+                            if (on && !apiPromptOverride.trim()) {
+                              setApiPromptOverride(apiPromptPreview)
+                            }
+                          }}
+                        >
+                          <Checkbox
+                            id="useCustomApiPrompt"
+                            checked={useCustomApiPrompt}
+                            onCheckedChange={(checked) => {
+                              const on = checked === true
+                              setUseCustomApiPrompt(on)
+                              if (on && !apiPromptOverride.trim()) {
+                                setApiPromptOverride(apiPromptPreview)
+                              }
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <span className="text-xs text-slate-300">Use custom API prompt</span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="text-xs h-8 border-slate-600"
+                          onClick={() => {
+                            setUseCustomApiPrompt(false)
+                            setApiPromptOverride('')
+                            void fetchApiPromptPreview()
+                          }}
+                        >
+                          Reset to preview
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                  {videoProvider === 'vertex' && (
-                  <div
-                    className="flex items-start gap-2 cursor-pointer pt-1"
-                    onClick={() => setAllowPolicyFallback((prev) => !prev)}
-                  >
-                    <Checkbox
-                      id="allowPolicyFallback"
-                      checked={allowPolicyFallback}
-                      onCheckedChange={(checked) => setAllowPolicyFallback(checked === true)}
-                      className="mt-0.5"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                    <span className="text-xs text-slate-300 leading-relaxed">
-                      Allow backup engine if blocked
-                      <span className="block text-slate-500 mt-0.5">
-                        Uses an alternate video provider when Vertex blocks the prompt. May cost additional credits.
-                      </span>
-                    </span>
-                  </div>
-                  )}
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
-
-            {/* Content Policy Alerts */}
-
-            {/* Success banner after fix applied */}
-            {promptFixApplied && (
-              <div className="mt-3">
-                <PolicyFixedBanner onDismiss={() => setPromptFixApplied(false)} />
-              </div>
-            )}
-
-            {/* Post-failure Error Banner */}
-            {localError && (
-              <div className="mt-3">
-                {postFailureModerationResult ? (
-                  <div className="space-y-2">
-                    <div className={`p-3 rounded-lg border ${imageTriggered ? 'bg-amber-900/30 border-amber-700' : 'bg-red-900/30 border-red-700'}`}>
-                      <div className="flex items-start gap-2">
-                        {imageTriggered ? (
-                          <ImageOff className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-                        ) : (
-                          <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          {imageTriggered ? (
-                            <>
-                              <p className="text-sm font-medium text-amber-200 mb-1">Reference Image Flagged</p>
-                              <p className="text-xs text-amber-300/80">Your prompt is clean, but the reference image appears to have triggered Vertex AI&apos;s safety filters. This can happen with dramatic visual effects like explosions, supernovae, or intense lighting — even when the image was generated by Vertex AI itself.</p>
-                            </>
-                          ) : (
-                            <>
-                              <p className="text-sm font-medium text-red-200 mb-1">Video Prompt Rejected</p>
-                              <p className="text-xs text-red-300/80">Vertex AI&apos;s safety filters rejected this prompt. Use Auto-Fix or AI Rephrase below.</p>
-                            </>
-                          )}
-                        </div>
-                        <button onClick={() => { setLocalError(null); setPostFailureModerationResult(null); setImageTriggered(false) }} className={imageTriggered ? 'text-amber-400 hover:text-amber-300' : 'text-red-400 hover:text-red-300'}><X className="w-4 h-4" /></button>
-                      </div>
-                    </div>
-                    {startFrameUrl && (
-                      <AnalyzeKeyframeRiskPanel
-                        startFrameUrl={startFrameUrl}
-                        promptExcerpt={visualPrompt}
-                        emphasizeImageHypothesis={imageTriggered}
-                      />
-                    )}
-                    {imageTriggered ? (
-                      <div className="flex flex-col gap-2">
-                        <button
-                          onClick={handleRetryAsT2V}
-                          className="w-full py-2.5 px-4 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium flex items-center justify-center gap-2 transition-colors"
-                        >
-                          <Type className="w-4 h-4" />
-                          Retry as Text-to-Video (without reference images)
-                        </button>
-                        <p className="text-[11px] text-slate-400 text-center">Generates using only the text prompt, bypassing the flagged reference image.</p>
-                      </div>
-                    ) : (
-                      <ContentPolicyAlert
-                        moderationResult={postFailureModerationResult}
-                        onApplyFix={handleApplyContentFix}
-                        onDismiss={() => { setLocalError(null); setPostFailureModerationResult(null) }}
-                        enableAIRegeneration={true}
-                        onRegenerateWithAI={handleAIRephrase}
-                      />
-                    )}
-                  </div>
-                ) : (
-                  <div className="p-3 rounded-lg bg-red-900/30 border border-red-700">
-                    <div className="flex items-start gap-2">
-                      <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                      <div className="flex-1 min-w-0">
-                        <pre className="text-xs text-red-200 whitespace-pre-wrap font-sans leading-relaxed">{localError}</pre>
-                      </div>
-                      <button onClick={() => setLocalError(null)} className="text-red-400 hover:text-red-300"><X className="w-4 h-4" /></button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
 
             {/* Footer Actions */}
             <div className="mt-auto flex gap-3 pt-4">

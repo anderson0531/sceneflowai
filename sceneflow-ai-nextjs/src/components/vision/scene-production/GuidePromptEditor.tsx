@@ -412,7 +412,7 @@ export function GuidePromptEditor({
   className,
 }: GuidePromptEditorProps) {
   const { playingUrl, toggle } = useAudioPlayer()
-  const [isExpanded, setIsExpanded] = useState(true)
+  const [isExpanded, setIsExpanded] = useState(false)
   const [elements, setElements] = useState<AudioElement[]>([])
   const [customAddition, setCustomAddition] = useState('')
   const [showRawPreview, setShowRawPreview] = useState(false)

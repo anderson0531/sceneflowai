@@ -117,6 +117,7 @@ import type { GuideCharacterDemographic } from '@/lib/scene/segmentGuidePrompt'
 import { isBeatFirstPipelineEnabled, isStoryboardApproved } from '@/lib/script/beatMigration'
 import type { SegmentGuideContext } from '@/lib/vision/segmentConfigBuilder'
 import { resolveEffectiveStartFrameUrl } from '@/lib/vision/segmentConfigBuilder'
+import { buildVideoErrorGuidance } from '@/lib/generation/videoErrorGuidance'
 
 function getAspectRatioTailwindClass(ratio: BlueprintAspectRatio): string {
   switch (ratio) {
@@ -1230,6 +1231,8 @@ export function DirectorConsoleRoot({
                 const StatusIcon = statusConfig.icon
                 const isCurrentlyRendering = currentSegmentId === item.segmentId
                 const isVideoInTheCan = item.status === 'complete'
+                const errorGuidance =
+                  item.status === 'error' ? buildVideoErrorGuidance(item.error) : null
                 return (
                   <div
                     key={item.segmentId}
@@ -1293,6 +1296,11 @@ export function DirectorConsoleRoot({
                         <p className="text-xs text-slate-400 mt-2 line-clamp-2">
                           {item.config.prompt || 'No prompt configured'}
                         </p>
+                        {errorGuidance && (
+                          <p className="text-xs text-amber-400/90 mt-1.5 leading-snug">
+                            {errorGuidance}
+                          </p>
+                        )}
                         {beatFirstReadOnlyPrompts && (
                           <p className="text-[10px] text-slate-500 mt-1">
                             Auto-derived from direction — edit script or Pre-Vis to change
