@@ -724,9 +724,14 @@ function ScenePreviewPlayer({
   // Track loaded video URL to prevent duplicate loads
   const loadedVideoUrlRef = useRef<string | null>(null)
   const segmentIdForLoadedVideoRef = useRef<string | null>(null)
+  const segmentEndHandledRef = useRef(false)
   
   // Timer for audio-extended playback (when video is frozen)
   const audioTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    segmentEndHandledRef.current = false
+  }, [currentSegmentIndex])
 
   const getTrimForSegment = useCallback(
     (seg: SceneSegment) => {
@@ -850,22 +855,10 @@ function ScenePreviewPlayer({
     const video = videoRef.current
     if (!video) return
     
-    const handleTimeUpdate = () => {
-      if (isVideoFrozen) return // Don't update from video when frozen
-      
-      const seg = segments[currentSegmentIndex]
-      const trim = getTrimForSegment(seg)
-      // Calculate global time based on segment position + trimmed local time
-      const globalTime = segmentStartTime + Math.max(0, video.currentTime - trim.inSec)
-      setCurrentTime(globalTime)
+    const completeCurrentSegment = () => {
+      if (segmentEndHandledRef.current) return
+      segmentEndHandledRef.current = true
 
-      if (video.currentTime >= trim.outSec - 0.05 && !isVideoFrozen) {
-        video.pause()
-        video.dispatchEvent(new Event('ended'))
-      }
-    }
-    
-    const handleEnded = () => {
       const config = segmentAudioConfigs[segments[currentSegmentIndex].segmentId]
       const trim = getTrimForSegment(segments[currentSegmentIndex])
       const autoPauseVal = audioTracks?.dialogue?.enabled
@@ -966,6 +959,25 @@ function ScenePreviewPlayer({
       } else {
         advanceOrEnd()
       }
+    }
+
+    const handleTimeUpdate = () => {
+      if (isVideoFrozen) return // Don't update from video when frozen
+      
+      const seg = segments[currentSegmentIndex]
+      const trim = getTrimForSegment(seg)
+      // Calculate global time based on segment position + trimmed local time
+      const globalTime = segmentStartTime + Math.max(0, video.currentTime - trim.inSec)
+      setCurrentTime(globalTime)
+
+      if (video.currentTime >= trim.outSec - 0.05 && !isVideoFrozen) {
+        video.pause()
+        completeCurrentSegment()
+      }
+    }
+    
+    const handleEnded = () => {
+      completeCurrentSegment()
     }
     
     video.addEventListener('timeupdate', handleTimeUpdate)
@@ -1135,29 +1147,39 @@ function ScenePreviewPlayer({
     if (playbackKind === 'image-sequence') return
     const video = videoRef.current
     const newUrl = currentSegment.segment?.activeAssetUrl
+    const segmentId = currentSegment.segment?.segmentId ?? null
+    const isNewUrl = newUrl !== loadedVideoUrlRef.current
+    const isNewSegment = segmentId !== segmentIdForLoadedVideoRef.current
     
-    if (video && newUrl && newUrl !== loadedVideoUrlRef.current) {
+    if (video && newUrl && currentSegment.segment && (isNewUrl || isNewSegment)) {
       loadedVideoUrlRef.current = newUrl
-      segmentIdForLoadedVideoRef.current = currentSegment.segment?.segmentId ?? null
-      video.src = newUrl
-      video.load()
+      segmentIdForLoadedVideoRef.current = segmentId
       const seekToTrimIn = () => {
         if (!currentSegment.segment) return
         const trim = getTrimForSegment(currentSegment.segment)
         video.currentTime = trim.inSec
       }
-      if (video.readyState >= 1) {
-        seekToTrimIn()
+      if (isNewUrl) {
+        video.src = newUrl
+        video.load()
+        if (video.readyState >= 1) {
+          seekToTrimIn()
+        } else {
+          video.addEventListener('loadedmetadata', seekToTrimIn, { once: true })
+        }
       } else {
-        video.addEventListener('loadedmetadata', seekToTrimIn, { once: true })
+        seekToTrimIn()
       }
       if (isPlaying && !isVideoFrozen) {
         video.play().catch(() => {})
       }
-    } else if (video && newUrl && newUrl === loadedVideoUrlRef.current && currentSegment.segment) {
+    } else if (video && newUrl && currentSegment.segment) {
       const trim = getTrimForSegment(currentSegment.segment)
       if (video.currentTime < trim.inSec - 0.05 || video.currentTime > trim.outSec) {
         video.currentTime = trim.inSec
+      }
+      if (isPlaying && !isVideoFrozen) {
+        video.play().catch(() => {})
       }
     }
   }, [playbackKind, currentSegmentIndex, currentSegment.segment, isPlaying, isVideoFrozen, getTrimForSegment])
