@@ -54,6 +54,122 @@ const EMOTION_VISUAL: Record<string, string> = {
   sarcastic: 'dry, knowing expression',
   nervous: 'nervous, uncertain expression',
   confident: 'confident, composed expression',
+  crying: 'crying, tearful distressed expression',
+  terrified: 'terrified, horrified expression',
+  scared: 'scared, frightened expression',
+  distressed: 'distressed, anguished expression',
+  furious: 'furious, enraged expression',
+}
+
+/** Action-prose keywords not always present in bracket cues. */
+const ACTION_EMOTION_PATTERNS: Array<{ pattern: RegExp; visual: string }> = [
+  { pattern: /\b(crying|cries|sobbing|sobs|in tears|tearful)\b/i, visual: EMOTION_VISUAL.crying },
+  { pattern: /\b(terrified|horrified|petrified)\b/i, visual: EMOTION_VISUAL.terrified },
+  { pattern: /\b(scared|frightened)\b/i, visual: EMOTION_VISUAL.scared },
+  { pattern: /\b(distress|distressed|anguish|anguished)\b/i, visual: EMOTION_VISUAL.distressed },
+  { pattern: /\b(furious|enraged|rage|raging)\b/i, visual: EMOTION_VISUAL.furious },
+  { pattern: /\b(exhausted|weary|fatigued|worn out)\b/i, visual: EMOTION_VISUAL.exhausted },
+  { pattern: /\b(angry|furious|livid)\b/i, visual: EMOTION_VISUAL.angry },
+  { pattern: /\b(sad|grief|grieving|mourning)\b/i, visual: EMOTION_VISUAL.sad },
+  { pattern: /\b(fearful|anxious|panicked|panic)\b/i, visual: EMOTION_VISUAL.fearful },
+]
+
+/** Infer facial expression from action prose when no bracket cue is present. */
+export function inferEmotionFromActionProse(text: string): string {
+  const trimmed = (text || '').trim()
+  if (!trimmed) return ''
+
+  for (const { pattern, visual } of ACTION_EMOTION_PATTERNS) {
+    if (pattern.test(trimmed)) return visual
+  }
+
+  for (const [keyword, visual] of Object.entries(EMOTION_VISUAL)) {
+    const re = new RegExp(`\\b${keyword}\\b`, 'i')
+    if (re.test(trimmed)) return visual
+  }
+
+  return ''
+}
+
+export interface ResolveDirectedEmotionOptions {
+  characterName?: string
+  beatSpeaker?: string | null
+  beatLine?: string | null
+  beatAction?: string | null
+  appearanceNotes?: string | null
+}
+
+function extractDirectedEmotionFromText(text: string): string {
+  const trimmed = (text || '').trim()
+  if (!trimmed) return ''
+
+  const fromCue = parsePerformanceCue(trimmed).visualExpression.trim()
+  if (fromCue) return fromCue
+
+  return inferEmotionFromActionProse(trimmed)
+}
+
+/**
+ * Resolve directed facial expression for a character in a beat frame.
+ * Priority: beat line (speaker only) → beat action → wardrobe appearanceNotes.
+ */
+export function resolveDirectedEmotionForCharacter(
+  options: ResolveDirectedEmotionOptions
+): string {
+  const speaker = options.beatSpeaker?.trim()
+  const isSpeaker =
+    !speaker ||
+    !options.characterName ||
+    speaker.toLowerCase() === options.characterName.trim().toLowerCase()
+
+  const textsInOrder: string[] = []
+  if (isSpeaker && options.beatLine?.trim()) {
+    textsInOrder.push(options.beatLine.trim())
+  }
+  if (options.beatAction?.trim()) {
+    textsInOrder.push(options.beatAction.trim())
+  }
+
+  for (const text of textsInOrder) {
+    const emotion = extractDirectedEmotionFromText(text)
+    if (emotion) return emotion
+  }
+
+  return options.appearanceNotes?.trim() || ''
+}
+
+/** Beat-level emotion from line + action (for AI intelligence). */
+export function resolveBeatDirectedEmotion(options: {
+  beatLine?: string | null
+  beatAction?: string | null
+}): string {
+  for (const text of [options.beatLine, options.beatAction]) {
+    if (!text?.trim()) continue
+    const emotion = extractDirectedEmotionFromText(text.trim())
+    if (emotion) return emotion
+  }
+  return ''
+}
+
+/** Build a single-character facial expression line for frame prompts. */
+export function formatDirectedEmotionLine(
+  emotion: string,
+  label: 'Facial expression' | 'Directed emotion' = 'Facial expression'
+): string {
+  const trimmed = emotion.trim()
+  if (!trimmed) return ''
+  return `${label}: ${trimmed}.`
+}
+
+/** Per-character directed emotion block for beat frame prompts. */
+export function buildBeatDirectedEmotionPromptSection(
+  entries: Array<{ name: string; emotion: string }>
+): string {
+  const parts = entries
+    .filter((entry) => entry.emotion.trim())
+    .map((entry) => `${entry.name}: ${entry.emotion.trim()}`)
+  if (!parts.length) return ''
+  return `Directed emotion: ${parts.join('; ')}.`
 }
 
 function parseAddressee(tagParts: string[]): { addressee: string | null; delivery: string; visual: string } {

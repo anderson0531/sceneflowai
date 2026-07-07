@@ -34,6 +34,11 @@ describe('performanceCues', () => {
     const cue = formatVisualExpressionCue(EXAMPLE_LINE)
     expect(cue).toMatch(/^Facial expression:/)
   })
+
+  it('parses angry cues from beat action descriptions', () => {
+    const parsed = parsePerformanceCue('[angry] She slams the folder shut.')
+    expect(parsed.visualExpression).toMatch(/angry/i)
+  })
 })
 
 describe('video prompt cue handling', () => {

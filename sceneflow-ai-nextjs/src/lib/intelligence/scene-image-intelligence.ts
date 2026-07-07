@@ -59,6 +59,8 @@ export interface CharacterContext {
   hasDualReferences?: boolean
   /** Whether a wardrobe turnaround reference image exists */
   hasCostumeReference?: boolean
+  /** Beat-directed facial expression — scene owns mood, not the identity reference */
+  directedEmotion?: string
 }
 
 export interface PropContext {
@@ -97,6 +99,8 @@ export interface SceneImageIntelligenceRequest {
   totalBeats?: number
   beatAction?: string
   beatRole?: string
+  /** Beat-level directed emotion (parsed from line/action before cue stripping) */
+  beatDirectedEmotion?: string
   /** Structured scene direction metadata (preserved cues) */
   directionMetadata?: SceneDirectionMetadata
   /** Characters in this scene with wardrobe resolved */
@@ -154,7 +158,8 @@ export function buildSceneImageCacheKey(request: SceneImageIntelligenceRequest):
     (request.beatAction ?? '').substring(0, 120),
     request.beatRole ?? 'na',
     request.beatKind ?? 'na',
-    ...request.characters.map(c => `${c.name}:${c.wardrobeDescription || 'default'}`),
+    request.beatDirectedEmotion ?? 'na',
+    ...request.characters.map(c => `${c.name}:${c.wardrobeDescription || 'default'}:${c.directedEmotion || 'na'}`),
     request.referenceImageCount,
   ]
   return parts.join('|')
@@ -234,7 +239,8 @@ CRITICAL RULES:
 2. TITLE SEQUENCES: For title/credit beats, compose a CENTERED title card. The film title is the primary subject with genre-appropriate background. No people unless explicitly required.
 
 3. NO CONFLICTING TEXT WITH REFERENCES:
-   - When an identity reference exists (person [N]), NEVER describe face, skin, ethnicity, age, gender, or body type in text — the reference image owns those
+   - When an identity reference exists (person [N]), NEVER describe face, skin, ethnicity, age, gender, or body type in text — the reference image owns those structural traits
+   - FACIAL EXPRESSION / EMOTION is NOT owned by identity or wardrobe references — always render the beat's directed emotional state on the face; describe expression in [SCENE COMPOSITION & BEAT] using directedEmotion from input when provided
    - When hairDescription is provided in input for a character with an identity ref, DO include a concise Hair lock in [SCENE COMPOSITION & BEAT] or Subject section — e.g. "person [1], hair: swept-back dark auburn ponytail (match identity reference exactly)"
    - When a wardrobe reference exists (Ref Image [M]), NEVER describe outfit colors, garments, or accessories in text — the wardrobe reference owns clothing
    - When a location reference exists, NEVER describe architectural layout, furniture placement, or room geometry in text — the location reference owns the set
@@ -268,7 +274,7 @@ Master Style: [art style + photorealistic/cinematic quality from input]
 Lighting & Camera: [lighting mood, color temperature, time of day, lens/framing from direction cues]
 
 [SCENE COMPOSITION & BEAT]
-Action/Framing: [shot type + frozen action for THIS beat; use person [N] tokens for characters with identity refs; name props by label only]
+Action/Framing: [shot type + frozen action for THIS beat; use person [N] tokens for characters with identity refs; name props by label only; include directed facial expression/emotion for each visible character — do NOT copy neutral expression from identity reference]
 
 [REFERENCE IMAGE MAPPING]
 For EACH reference image provided in the input, add one bullet using the exact Ref Image index from input:
@@ -306,6 +312,9 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
   // Beat-first focus when generating per-beat frames
   if (request.beatAction) {
     prompt += `BEAT ACTION (PRIMARY — compose this frame for THIS moment):\n${request.beatAction}\n`
+    if (request.beatDirectedEmotion?.trim()) {
+      prompt += `Directed emotion (render on face): ${request.beatDirectedEmotion.trim()}\n`
+    }
     if (request.beatIndex !== undefined && request.totalBeats) {
       prompt += `Beat ${request.beatIndex + 1} of ${request.totalBeats}\n`
     }
@@ -362,6 +371,10 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
         prompt += `   Wardrobe: USE WARDROBE REF ONLY — do not describe outfit in prompt text\n`
       } else {
         prompt += `   Wardrobe: Not specified (use scene context sparingly)\n`
+      }
+
+      if (char.directedEmotion?.trim()) {
+        prompt += `   Directed emotion (render on face): ${char.directedEmotion.trim()}\n`
       }
     })
     prompt += '\n'

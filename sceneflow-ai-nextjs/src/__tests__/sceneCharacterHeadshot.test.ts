@@ -98,6 +98,7 @@ describe('WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION', () => {
   it('is exported with strict left/right panel guidance', () => {
     expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/CRITICAL/i)
     expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/LEFT half.*identity/i)
+    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).not.toMatch(/injuries, expression/)
     expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/RIGHT half.*wardrobe/i)
     expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/NEVER derive face/i)
     expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/NEVER derive clothing/i)

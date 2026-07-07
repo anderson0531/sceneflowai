@@ -39,6 +39,7 @@ import {
   buildWardrobeReferenceLabel,
   buildWardrobeReferencePromptLine,
   DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK,
+  EXPRESSION_OVERRIDE_INSTRUCTION,
   resolveCharacterReferencePair,
 } from '@/lib/character/characterReferenceAssembly'
 import {
@@ -48,7 +49,14 @@ import {
   WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION,
   mergeBeatFrameNegativePrompt,
 } from '@/lib/character/sceneCharacterHeadshot'
-import { formatVisualExpressionCue, stripAllCues } from '@/lib/scene/performanceCues'
+import {
+  buildBeatDirectedEmotionPromptSection,
+  formatDirectedEmotionLine,
+  formatVisualExpressionCue,
+  resolveBeatDirectedEmotion,
+  resolveDirectedEmotionForCharacter,
+  stripAllCues,
+} from '@/lib/scene/performanceCues'
 import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
 import {
   buildLocationReferencePromptLine,
@@ -901,6 +909,19 @@ export async function POST(req: NextRequest) {
     // IMPORTANT: referenceId is ONLY assigned to characters with GCS images
     // This ensures the [1], [2] markers in the prompt match the API's referenceImages array
     let gcsRefIndex = 0
+    const beatForEmotion =
+      isBeatFrame && sceneData
+        ? getSceneBeats(sceneData as Record<string, unknown>)[effectiveBeatIndex]
+        : undefined
+    const beatSpeakerName =
+      beatForEmotion?.character?.trim() ||
+      (beatForEmotion ? resolveBeatSpeaker(beatForEmotion, allCharacters)?.name : undefined)
+    const beatDirectedEmotion = beatForEmotion
+      ? resolveBeatDirectedEmotion({
+          beatLine: beatForEmotion.line,
+          beatAction: beatForEmotion.actionDescription,
+        })
+      : ''
     const characterReferences = characterObjects.map((char: any, idx: number) => {
       // Prefer Gemini Vision description over manual description
       const rawDescription = char.visionDescription || char.appearanceDescription || 
@@ -1151,6 +1172,14 @@ export async function POST(req: NextRequest) {
         promptToken,
         subjectTextDescription,
         appearanceDescription: char.appearanceDescription || char.visionDescription,
+        appearanceNotes: refPair.resolvedWardrobe?.appearanceNotes,
+        directedEmotion: resolveDirectedEmotionForCharacter({
+          characterName: char.name,
+          beatSpeaker: beatSpeakerName,
+          beatLine: beatForEmotion?.line,
+          beatAction: beatForEmotion?.actionDescription,
+          appearanceNotes: refPair.resolvedWardrobe?.appearanceNotes,
+        }),
       }
     })
     
@@ -1268,6 +1297,7 @@ export async function POST(req: NextRequest) {
         wardrobeReferenceIndex: ref.wardrobeReferenceId,
         hasDualReferences: !!ref.hasDualReferences,
         hasCostumeReference: !!ref.hasCostumeReference,
+        directedEmotion: ref.directedEmotion,
       }))
       
       // Build prop contexts
@@ -1340,6 +1370,7 @@ export async function POST(req: NextRequest) {
         beatAction: stripAllCues(
           beatForIntelligence?.actionDescription || beatForIntelligence?.line || ''
         ),
+        beatDirectedEmotion: beatDirectedEmotion || undefined,
         beatRole: beatForIntelligence?.beatRole,
         directionMetadata,
         characters: characterContexts,
@@ -1481,12 +1512,24 @@ export async function POST(req: NextRequest) {
 
     console.log('[Scene Image] Optimized prompt preview:', optimizedPrompt.substring(0, 150))
 
-    const beatLineForExpression =
-      isBeatFrame && sceneData
-        ? getSceneBeats(sceneData as Record<string, unknown>)[effectiveBeatIndex]?.line
-        : undefined
-    if (beatLineForExpression) {
-      const expressionCue = formatVisualExpressionCue(beatLineForExpression)
+    if (isBeatFrame && characterReferences.length > 0) {
+      const directedEmotionSection = buildBeatDirectedEmotionPromptSection(
+        characterReferences.map((ref: { name: string; directedEmotion?: string }) => ({
+          name: ref.name,
+          emotion: ref.directedEmotion || '',
+        }))
+      )
+      if (directedEmotionSection && !optimizedPrompt.includes('Directed emotion:')) {
+        optimizedPrompt = `${optimizedPrompt.trim()} ${directedEmotionSection}`
+      } else if (
+        beatDirectedEmotion &&
+        !optimizedPrompt.includes('Facial expression:') &&
+        !optimizedPrompt.includes('Directed emotion:')
+      ) {
+        optimizedPrompt = `${optimizedPrompt.trim()} ${formatDirectedEmotionLine(beatDirectedEmotion)}`
+      }
+    } else if (beatForEmotion?.line) {
+      const expressionCue = formatVisualExpressionCue(beatForEmotion.line)
       if (expressionCue && !optimizedPrompt.includes('Facial expression:')) {
         optimizedPrompt = `${optimizedPrompt.trim()} ${expressionCue}`
       }
@@ -1570,11 +1613,6 @@ export async function POST(req: NextRequest) {
       // If reference has beard, exclude clean-shaven
       if (char.keyFeature && char.keyFeature.toLowerCase().includes('beard')) {
         characterSpecificNegatives.push('clean-shaven', 'no facial hair', 'shaved')
-      }
-      
-      // If reference shows specific expression, exclude opposite states that would change appearance
-      if (char.appearanceDescription && char.appearanceDescription.toLowerCase().includes('smile')) {
-        characterSpecificNegatives.push('frowning', 'sad expression', 'angry expression')
       }
 
       const charRef = characterReferences.find((cr: { name?: string }) => cr.name === char.name)
@@ -1791,6 +1829,7 @@ export async function POST(req: NextRequest) {
               geminiPrompt +=
                 'The character(s) MUST match the reference image(s) exactly — same face, ethnicity, age, hair, and facial features.\n\n'
             }
+            geminiPrompt += `${EXPRESSION_OVERRIDE_INSTRUCTION}\n\n`
           }
           
           // Object reference instructions
@@ -1812,7 +1851,19 @@ export async function POST(req: NextRequest) {
           geminiPrompt += `SCENE PROMPT:\n${remappedOptimizedPrompt}\n\n`
           
           geminiPrompt += `CRITICAL REQUIREMENTS:\n`
-          geminiPrompt += `- Preserve character identity from identity reference images exactly\n`
+          geminiPrompt += `- Preserve character identity from identity reference images exactly (bone structure, features, hair, skin tone, age, ethnicity — NOT facial expression)\n`
+          geminiPrompt += `- ${EXPRESSION_OVERRIDE_INSTRUCTION}\n`
+          const beatDirectedEmotionSection = buildBeatDirectedEmotionPromptSection(
+            characterReferences.map((ref: { name: string; directedEmotion?: string }) => ({
+              name: ref.name,
+              emotion: ref.directedEmotion || '',
+            }))
+          )
+          if (beatDirectedEmotionSection) {
+            geminiPrompt += `- ${beatDirectedEmotionSection}\n`
+          } else if (beatDirectedEmotion) {
+            geminiPrompt += `- ${formatDirectedEmotionLine(beatDirectedEmotion, 'Directed emotion')}\n`
+          }
           if (hairCompositionLock) {
             geminiPrompt += `- ${hairCompositionLock}\n`
           }

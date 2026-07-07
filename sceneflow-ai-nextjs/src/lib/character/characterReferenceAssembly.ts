@@ -6,6 +6,11 @@ export const CHARACTER_IDENTITY_REFERENCE_INSTRUCTION =
   'IDENTITY REFERENCE (PRIMARY): Match face, hair, skin tone, age, ethnicity, body proportions, and photorealistic rendering style from this image exactly at all shot distances. ' +
   'This image owns identity and realism — ignore clothing in this image if it differs from the scene wardrobe; outfit comes from the wardrobe reference or text.'
 
+export const EXPRESSION_OVERRIDE_INSTRUCTION =
+  'FACIAL EXPRESSION: Do NOT copy the neutral/posed expression from the identity or wardrobe reference. ' +
+  'Render the facial expression and emotional state described by the scene/beat direction. ' +
+  'Identity references define bone structure, features, skin tone, hair, age, and ethnicity — NOT mood.'
+
 export const WARDROBE_ONLY_REFERENCE_INSTRUCTION =
   'WARDROBE REFERENCE (SECONDARY): Full-body front-facing wardrobe reference — use for outfit colors, fabric, cut, fit, footwear, and accessories ONLY. ' +
   'Do NOT derive face, hair, skin tone, body type, ethnicity, age, or rendering style from this image — identity and photorealism come from the separate identity headshot reference. ' +
@@ -338,6 +343,7 @@ export function resolveCharacterReferencePair(
           name: resolvedWardrobe.name as string | undefined,
           description: resolvedWardrobe.description as string | undefined,
           accessories: resolvedWardrobe.accessories as string | undefined,
+          appearanceNotes: resolvedWardrobe.appearanceNotes as string | undefined,
         }
       : null,
   }
