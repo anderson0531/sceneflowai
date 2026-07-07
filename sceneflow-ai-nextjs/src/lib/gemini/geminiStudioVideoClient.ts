@@ -38,6 +38,10 @@ import {
   normalizeOmniInteractionId,
   resolveOmniPreviousInteractionId,
 } from '@/lib/gemini/omniVideoInteractions'
+import {
+  normalizeRefsForVeoPredictLongRunning,
+  inferVeoPredictReferenceType,
+} from '@/lib/video/normalizeReferenceImages'
 
 // ============================================================================
 // Types
@@ -599,8 +603,9 @@ export async function generateVideoWithGeminiStudio(
   
   // Add reference images (REF mode) - T2V only, not compatible with I2V
   if (options.referenceImages && options.referenceImages.length > 0 && !options.startFrame) {
+    const normalizedRefs = normalizeRefsForVeoPredictLongRunning(options.referenceImages)
     const refs = await Promise.all(
-      options.referenceImages.slice(0, 3).map(async (ref) => {
+      (normalizedRefs?.refs ?? []).map(async (ref) => {
         // Check url first (from API route), then imageUrl (legacy), then base64Image
         const imageSource = ref.url || ref.base64Image || ref.imageUrl
         if (!imageSource) return null
@@ -616,15 +621,14 @@ export async function generateVideoWithGeminiStudio(
           imageData = imageSource
         }
         
-        // Map type to Veo's referenceType (lowercase per Python SDK: 'asset' or 'style')
-        const refType = ref.referenceType || (ref.type === 'style' ? 'style' : 'asset')
+        const refType = normalizedRefs?.referenceType ?? inferVeoPredictReferenceType(ref)
         
         return {
           image: {
             bytesBase64Encoded: imageData,
             mimeType: mimeType
           },
-          referenceType: refType.toLowerCase() // Ensure lowercase: asset or style
+          referenceType: refType.toLowerCase()
         }
       })
     )

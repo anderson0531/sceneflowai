@@ -12,6 +12,10 @@ import {
   logVeoFetchPredictOperationResponseDiagnostics,
 } from '@/lib/gemini/veoRequestDiagnostics'
 import {
+  normalizeRefsForVeoPredictLongRunning,
+  inferVeoPredictReferenceType,
+} from '@/lib/video/normalizeReferenceImages'
+import {
   buildOmniInteractionRequestBody,
   extractVideoFromOmniInteraction,
   formatOmniDuration,
@@ -652,8 +656,17 @@ export async function generateVideoWithVeo(
       console.warn('[Veo Video] Ignoring referenceImages - using I2V mode instead')
       // Skip adding referenceImages when startFrame is present
     } else {
+      const normalizedRefs = normalizeRefsForVeoPredictLongRunning(veoOptions.referenceImages)
+      if (
+        normalizedRefs &&
+        veoOptions.referenceImages.length !== normalizedRefs.refs.length
+      ) {
+        console.log(
+          `[Veo Video] Normalized reference images for predictLongRunning: ${veoOptions.referenceImages.length} → ${normalizedRefs.refs.length} (${normalizedRefs.referenceType})`
+        )
+      }
       const refs = await Promise.all(
-        veoOptions.referenceImages.slice(0, 3).map(async (ref) => {
+        (normalizedRefs?.refs ?? []).map(async (ref) => {
           // Support both imageUrl and url field names
           const imageSource = ref.base64Image || ref.imageUrl || ref.url
           if (!imageSource) return null
@@ -668,9 +681,8 @@ export async function generateVideoWithVeo(
           } else {
             imageData = imageSource
           }
-            
-          // Map 'character' type to 'asset', keep 'style' as 'style'
-          const refType = ref.referenceType || (ref.type === 'style' ? 'style' : 'asset')
+
+          const refType = normalizedRefs?.referenceType ?? inferVeoPredictReferenceType(ref)
           
           return {
             image: {

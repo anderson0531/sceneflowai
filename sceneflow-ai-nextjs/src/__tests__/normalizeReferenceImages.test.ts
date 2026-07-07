@@ -5,6 +5,7 @@ import {
   shouldRelabelRefs,
   veoRefsToPrioritized,
   filterRefsForPolicyRetry,
+  normalizeRefsForVeoPredictLongRunning,
 } from '@/lib/video/normalizeReferenceImages'
 
 describe('normalizeReferenceImages', () => {
@@ -136,5 +137,35 @@ describe('filterRefsForPolicyRetry', () => {
     ]
     const filtered = filterRefsForPolicyRetry(refs, 'core')
     expect(filtered?.map((r) => r.role)).toEqual(['identity', 'location'])
+  })
+})
+
+describe('normalizeRefsForVeoPredictLongRunning', () => {
+  it('coerces mixed asset and style refs to asset-only (max 3)', () => {
+    const result = normalizeRefsForVeoPredictLongRunning([
+      { url: 'https://example.com/id.jpg', type: 'character', role: 'identity' },
+      { url: 'https://example.com/loc.jpg', type: 'style', role: 'location' },
+      { url: 'https://example.com/prop.jpg', type: 'style', role: 'prop-other' },
+      { url: 'https://example.com/wardrobe.jpg', type: 'character', role: 'wardrobe' },
+    ])
+
+    expect(result?.referenceType).toBe('asset')
+    expect(result?.refs).toHaveLength(3)
+    expect(result?.refs.map((r) => r.url)).toEqual([
+      'https://example.com/id.jpg',
+      'https://example.com/wardrobe.jpg',
+      'https://example.com/loc.jpg',
+    ])
+  })
+
+  it('allows a single style ref when no asset refs are present', () => {
+    const result = normalizeRefsForVeoPredictLongRunning([
+      { url: 'https://example.com/a.jpg', type: 'style', role: 'location' },
+      { url: 'https://example.com/b.jpg', type: 'style', role: 'location' },
+    ])
+
+    expect(result?.referenceType).toBe('style')
+    expect(result?.refs).toHaveLength(1)
+    expect(result?.refs[0].url).toBe('https://example.com/a.jpg')
   })
 })
