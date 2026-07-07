@@ -51,7 +51,7 @@ import {
   mapBeatReferenceSelectionForApi,
   shouldUseExplicitBeatReferences,
 } from '../vision/beatFrameGenerationContext'
-import { getSceneBeats, applyBeatsToScene } from '../script/beatMigration'
+import { getSceneBeats, applyBeatsToScene, isBeatExcluded } from '../script/beatMigration'
 import { countExpressFrameScope } from '../storyboard/types'
 import { stampPreVisContentHash } from '../storyboard/preVisSync'
 import type { SceneBeat } from '../script/segmentTypes'
@@ -712,6 +712,7 @@ async function runSupplementalEndFrames(
   for (let beatIdx = 0; beatIdx < beats.length; beatIdx++) {
     if (failedStartBeatIndices.has(beatIdx)) continue
     const beat = beats[beatIdx]
+    if (isBeatExcluded(beat)) continue
     if (!isBeatEndSlotSelected(beat, selectedKeys)) continue
     if (!beat.storyboardImageUrl?.trim()) continue
     if (!beatEndFrameNeedsGeneration(beat, genCtx)) continue
@@ -800,6 +801,7 @@ async function runBeatImages(
   const beatsToGenerate: number[] = []
   for (let beatIdx = 0; beatIdx < beats.length; beatIdx++) {
     const beat = beats[beatIdx]
+    if (isBeatExcluded(beat)) continue
     if (!isBeatStartSlotSelected(beat, selectedKeys)) continue
     if (!beatFrameNeedsGeneration(beat, genCtx)) continue
     beatsToGenerate.push(beatIdx)
@@ -989,6 +991,10 @@ async function planSceneBeatKeyframes(
   })
 
   try {
+    const activeEntries = beats
+      .map((beat, beatIndex) => ({ beat, beatIndex }))
+      .filter(({ beat }) => !isBeatExcluded(beat))
+
     const visionPhase = project?.metadata?.visionPhase || {}
     const treatment = visionPhase.treatment || project?.metadata?.treatmentPhase
     const scenes =
@@ -998,7 +1004,7 @@ async function planSceneBeatKeyframes(
     const planResult = await trafficCop.runInLane('text', () =>
       planBeatSequence({
         scene,
-        beats,
+        beats: activeEntries.map((entry) => entry.beat),
         sceneNumber,
         totalScenes: Array.isArray(scenes) ? scenes.length : undefined,
         filmContext: {
@@ -1016,8 +1022,12 @@ async function planSceneBeatKeyframes(
         projectId: options.projectId,
       })
     )
-    Object.assign(scene, applyBeatKeyframePlansToScene(scene, planResult.plans))
-    for (const plan of planResult.plans) {
+    const remappedPlans = planResult.plans.map((plan) => ({
+      ...plan,
+      beatIndex: activeEntries[plan.beatIndex]?.beatIndex ?? plan.beatIndex,
+    }))
+    Object.assign(scene, applyBeatKeyframePlansToScene(scene, remappedPlans))
+    for (const plan of remappedPlans) {
       beatPlansByIndex.set(plan.beatIndex, plan)
     }
     safeEmit(emit, {
@@ -1028,7 +1038,7 @@ async function planSceneBeatKeyframes(
       ok: true,
     })
     console.log(
-      `[expressOrchestrator] Planned ${planResult.plans.length} keyframes (AI: ${planResult.usedAI}) scene ${sceneNumber}`
+      `[expressOrchestrator] Planned ${remappedPlans.length} keyframes (AI: ${planResult.usedAI}) scene ${sceneNumber}`
     )
   } catch (err: unknown) {
     const error = err instanceof Error ? err.message : String(err)

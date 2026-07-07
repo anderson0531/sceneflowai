@@ -100,6 +100,7 @@ import {
 import { buildBeatFirstPlaybackTimeline } from '@/lib/storyboard/types'
 import { buildStoryboardMusicClips } from '@/lib/storyboard/musicPlayback'
 import { BeatMusicToggle } from '@/components/vision/BeatMusicToggle'
+import { BeatExcludeToggle } from '@/components/vision/BeatExcludeToggle'
 import { ExportDialog } from './ExportDialog'
 import { isDirectionStale, isImageStale } from '@/lib/utils/contentHash'
 import { isPreVisStale } from '@/lib/storyboard/preVisSync'
@@ -4156,6 +4157,10 @@ function SceneCard({
   const [activeShootTab, setActiveShootTab] = useState<ShootTab>('review')
 
   const sceneBeatsForTabs = useMemo(() => getSceneBeats(scene), [scene])
+  const excludedBeatCount = useMemo(
+    () => sceneBeatsForTabs.filter((beat) => beat.excluded === true).length,
+    [sceneBeatsForTabs]
+  )
   const frameSlotsForTabs = useMemo(() => enumerateStoryboardFrameSlots(scene), [scene])
   const preVisFrameStats = useMemo(() => countStoryboardFrameStats(scene), [scene])
 
@@ -5825,7 +5830,10 @@ function SceneCard({
                             <TabsTrigger value="beats" className="text-xs gap-1.5 px-2.5 py-1.5">
                               <List className="w-3.5 h-3.5 shrink-0" />
                               Beats
-                              <span className="text-[10px] opacity-60">({sceneBeatsForTabs.length})</span>
+                              <span className="text-[10px] opacity-60">
+                                ({sceneBeatsForTabs.length}
+                                {excludedBeatCount > 0 ? `, ${excludedBeatCount} ignored` : ''})
+                              </span>
                             </TabsTrigger>
                           )}
                           {hasMusicTab && (
@@ -6444,19 +6452,33 @@ function SceneCard({
                           return (
                             <div
                               key={beat.beatId}
-                              className="p-3 bg-amber-900/25 rounded-lg border border-amber-700/40"
+                              className={`p-3 bg-amber-900/25 rounded-lg border border-amber-700/40 ${
+                                beat.excluded ? 'opacity-50' : ''
+                              }`}
                             >
                               <div className="flex items-center gap-2 mb-1.5">
                                 <div className="flex items-center gap-2 min-w-0">
                                 <span className="text-xs font-semibold uppercase tracking-wide text-amber-300">
                                   Action
                                 </span>
+                                {beat.excluded && (
+                                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-500/20 text-gray-300 border border-gray-500/30">
+                                    Excluded
+                                  </span>
+                                )}
                                 {beat.beatRole === 'title_reveal' && (
                                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
                                     Title
                                   </span>
                                 )}
                                 </div>
+                                <BeatExcludeToggle
+                                  beat={beat}
+                                  sceneIdx={sceneIdx}
+                                  scenes={scenes}
+                                  script={script}
+                                  onScriptChange={onScriptChange}
+                                />
                                 {hasSceneMusic && (
                                   <BeatMusicToggle
                                     beat={beat}
@@ -6536,12 +6558,22 @@ function SceneCard({
                           : dialogueLineText
                         
                         return (
-                          <div key={beat.beatId} className="p-3 bg-green-900/30 rounded-lg border border-green-700/30 hover:border-green-600/50 transition-colors">
+                          <div
+                            key={beat.beatId}
+                            className={`p-3 bg-green-900/30 rounded-lg border border-green-700/30 hover:border-green-600/50 transition-colors ${
+                              beat.excluded ? 'opacity-50' : ''
+                            }`}
+                          >
                             <div className="flex items-start gap-3">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1.5">
                                   <div className="flex items-center gap-2 min-w-0 flex-1">
                                   <div className="text-sm font-semibold text-green-200">{d.character}</div>
+                                  {beat.excluded && (
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-500/20 text-gray-300 border border-gray-500/30">
+                                      Excluded
+                                    </span>
+                                  )}
                                   {/* Voice direction / parenthetical */}
                                   {(parenthetical || d.voiceDirection || d.emotion) && (
                                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 italic">
@@ -6555,6 +6587,13 @@ function SceneCard({
                                     </span>
                                   )}
                                   </div>
+                                  <BeatExcludeToggle
+                                    beat={beat}
+                                    sceneIdx={sceneIdx}
+                                    scenes={scenes}
+                                    script={script}
+                                    onScriptChange={onScriptChange}
+                                  />
                                   {hasSceneMusic && (
                                     <BeatMusicToggle
                                       beat={beat}

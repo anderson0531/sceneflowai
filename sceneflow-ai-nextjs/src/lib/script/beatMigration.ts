@@ -25,6 +25,11 @@ const START_FRAME_ONLY_MIGRATION_FLAG = 'startFrameOnlyMigrationAt'
 const BEAT_DURATION_SEC = 8
 const MAX_DERIVED_BEATS = 12
 
+/** True when a beat is excluded from image/video/render (audio preserved for spoken beats). */
+export function isBeatExcluded(beat: SceneBeat | null | undefined): boolean {
+  return beat?.excluded === true
+}
+
 type SceneDirectionShape = {
   sceneDescription?: string
   camera?: { shots?: string[]; angle?: string; movement?: string; focus?: string }

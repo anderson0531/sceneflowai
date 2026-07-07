@@ -71,6 +71,11 @@ export interface SceneBeat {
   musicEnabled?: boolean
   /** Saved character/location/prop references for storyboard generation. */
   referenceSelection?: BeatReferenceSelection
+  /**
+   * When true, skip storyboard image, video/segment, and final render for this beat.
+   * Dialogue/narration audio is preserved. Default: included.
+   */
+  excluded?: boolean
 }
 
 /**

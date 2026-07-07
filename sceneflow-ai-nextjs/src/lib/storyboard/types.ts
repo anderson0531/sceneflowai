@@ -9,7 +9,7 @@ import {
   dialogueLineIdForIndex,
   findDialogueAudioForLine,
 } from '@/components/vision/scene-production/audioTrackBuilder'
-import { getSceneBeats, getStoryboardTimelineBeats } from '@/lib/script/beatMigration'
+import { getSceneBeats, getStoryboardTimelineBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import { resolveEffectiveStoryboardTier } from '@/lib/storyboard/storyboardQuality'
 import { NARRATOR_CHARACTER, NARRATOR_CHARACTER_ID } from '@/lib/script/segmentTypes'
@@ -321,6 +321,7 @@ export function enumerateStoryboardFrameSlots(
     let spokenIdx = 0
     for (let beatIndex = 0; beatIndex < beats.length; beatIndex++) {
       const beat = beats[beatIndex]
+      if (isBeatExcluded(beat)) continue
       let ownImageUrl =
         beat.kind === 'action'
           ? getRawBeatStoryboardUrl(scene, beat)
@@ -1337,6 +1338,47 @@ export function buildBeatFirstPlaybackTimeline(
 
   for (let beatIdx = 0; beatIdx < beats.length; beatIdx++) {
     const beat = beats[beatIdx]
+    if (isBeatExcluded(beat)) {
+      if (beat.kind !== 'action') {
+        const effectiveDialogueIndex = resolveBeatDialogueIndex(
+          scene,
+          beat,
+          spokenDialogueIdx,
+          language
+        )
+        spokenDialogueIdx = Math.max(
+          spokenDialogueIdx + 1,
+          typeof effectiveDialogueIndex === 'number' ? effectiveDialogueIndex + 1 : 0
+        )
+        const url = resolveBeatVoiceUrl(scene, beat, effectiveDialogueIndex, language)
+        if (url) {
+          const isNarration = isNarratorBeat(beat)
+          const clipId = beatVoiceClipId(beat, effectiveDialogueIndex)
+          const duration = resolveBeatVoiceDuration(
+            url,
+            beat,
+            scene,
+            effectiveDialogueIndex,
+            language,
+            dynamicDurations
+          )
+          voiceClips.push({
+            id: clipId,
+            url,
+            startTime: currentStartTime,
+            duration,
+            type: 'dialogue',
+            label: isNarration
+              ? 'Narrator'
+              : beat.character || `Dialogue ${(effectiveDialogueIndex ?? spokenDialogueIdx) + 1}`,
+            dialogueIndex: effectiveDialogueIndex,
+            beatId: beat.beatId,
+          })
+          currentStartTime += duration + DIALOGUE_CLIP_BUFFER_SEC
+        }
+      }
+      continue
+    }
     const slot = startSlotByBeatId.get(beat.beatId)
     const endSlot = endSlotByBeatId.get(beat.beatId)
     const imageUrl = preVisAnimatic

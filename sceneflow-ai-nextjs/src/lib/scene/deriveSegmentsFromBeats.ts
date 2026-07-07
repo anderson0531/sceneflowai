@@ -19,6 +19,7 @@ import {
 import {
   applyBeatsToScene,
   getSceneBeats,
+  isBeatExcluded,
   isStoryboardApproved,
 } from '@/lib/script/beatMigration'
 import { collectDraftStoryboardFrameWarnings } from '@/lib/storyboard/storyboardQuality'
@@ -358,7 +359,13 @@ export function deriveSegmentsFromBeats(
     return { segments: [], errors }
   }
 
-  const missingFrames = beats.filter((b) => !b.storyboardImageUrl?.trim())
+  const activeBeats = beats.filter((beat) => !isBeatExcluded(beat))
+  if (activeBeats.length === 0) {
+    errors.push('Scene has no active beats (all beats are excluded)')
+    return { segments: [], errors }
+  }
+
+  const missingFrames = activeBeats.filter((b) => !b.storyboardImageUrl?.trim())
   if (missingFrames.length > 0) {
     errors.push(
       `${missingFrames.length} beat(s) missing storyboard frames: ${missingFrames.map((b) => b.beatId).join(', ')}`
@@ -371,7 +378,7 @@ export function deriveSegmentsFromBeats(
   let startTime = 0
   let sequenceIndex = 0
 
-  for (const beat of beats) {
+  for (const beat of activeBeats) {
     const next = appendSegmentsFromBeat(
       beat,
       segments,
