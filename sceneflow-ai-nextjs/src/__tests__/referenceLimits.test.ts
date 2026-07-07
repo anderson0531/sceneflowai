@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
   MAX_VERTEX_GEMINI_REFERENCE_IMAGES,
+  buildSubjectCountGuardrail,
+  getMaxReferenceImagesForTier,
   prioritizeReferenceImages,
   remapReferenceNumbersInPrompt,
+  resolveEffectiveImageTier,
   selectReferenceImagesInOrder,
   type PrioritizedReferenceImage,
 } from '@/lib/vision/referenceLimits'
@@ -25,6 +28,54 @@ function ref(
 describe('referenceLimits', () => {
   it('exports cap of 8 reference images', () => {
     expect(MAX_VERTEX_GEMINI_REFERENCE_IMAGES).toBe(8)
+  })
+
+  it('getMaxReferenceImagesForTier returns eco=3 and pro=14', () => {
+    expect(getMaxReferenceImagesForTier('eco')).toBe(3)
+    expect(getMaxReferenceImagesForTier('designer')).toBe(14)
+    expect(getMaxReferenceImagesForTier('director')).toBe(14)
+  })
+
+  it('resolveEffectiveImageTier upgrades eco for multi-character or over-budget refs', () => {
+    expect(
+      resolveEffectiveImageTier({
+        modelTier: 'eco',
+        distinctCharacterCount: 2,
+        totalWantedRefs: 4,
+      })
+    ).toBe('designer')
+    expect(
+      resolveEffectiveImageTier({
+        modelTier: 'eco',
+        distinctCharacterCount: 1,
+        totalWantedRefs: 4,
+      })
+    ).toBe('designer')
+    expect(
+      resolveEffectiveImageTier({
+        modelTier: 'eco',
+        distinctCharacterCount: 1,
+        totalWantedRefs: 3,
+      })
+    ).toBe('eco')
+    expect(
+      resolveEffectiveImageTier({
+        modelTier: 'designer',
+        distinctCharacterCount: 2,
+        totalWantedRefs: 10,
+      })
+    ).toBe('designer')
+  })
+
+  it('buildSubjectCountGuardrail lists contiguous person tokens', () => {
+    const guardrail = buildSubjectCountGuardrail([
+      { characterName: 'Elara Vance', identitySendIndex: 1 },
+      { characterName: 'Marcus Thorne', identitySendIndex: 2 },
+    ])
+    expect(guardrail).toMatch(/^SUBJECT COUNT: EXACTLY 2 people/)
+    expect(guardrail).toContain('person [1] (Elara Vance)')
+    expect(guardrail).toContain('person [2] (Marcus Thorne)')
+    expect(guardrail).toContain('NOT additional people')
   })
 
   it('prioritizes identity, wardrobe, location, then props by importance', () => {
@@ -158,6 +209,107 @@ describe('referenceLimits', () => {
     expect(indexMap.get(5)).toBe(6)
     expect(indexMap.get(8)).toBeNull()
     expect(indexMap.get(9)).toBeNull()
+  })
+
+  it('selectReferenceImagesInOrder with groupByRole groups identities before wardrobes', () => {
+    const refs = [
+      ref('identity', 'Identity reference 1: Elara Vance', undefined, {
+        provisionalIndex: 1,
+        characterName: 'Elara Vance',
+        refRole: 'identity',
+        imageUrl: 'https://example.com/elara-identity.jpg',
+      }),
+      ref('wardrobe', 'Wardrobe reference 2: Elara Vance (full-body outfit)', undefined, {
+        provisionalIndex: 2,
+        characterName: 'Elara Vance',
+        refRole: 'wardrobe',
+        imageUrl: 'https://example.com/elara-wardrobe.jpg',
+      }),
+      ref('identity', 'Identity reference 3: Marcus Thorne', undefined, {
+        provisionalIndex: 3,
+        characterName: 'Marcus Thorne',
+        refRole: 'identity',
+        imageUrl: 'https://example.com/marcus-identity.jpg',
+      }),
+      ref('wardrobe', 'Wardrobe reference 4: Marcus Thorne (full-body outfit)', undefined, {
+        provisionalIndex: 4,
+        characterName: 'Marcus Thorne',
+        refRole: 'wardrobe',
+        imageUrl: 'https://example.com/marcus-wardrobe.jpg',
+      }),
+      ref('location', 'Location reference 10: Office', undefined, {
+        provisionalIndex: 10,
+        locationName: "MARCUS THORNE'S OFFICE",
+        imageUrl: 'https://example.com/office.jpg',
+      }),
+      ref('prop-critical', 'Prop reference 5: EMP', 'critical', {
+        provisionalIndex: 5,
+        propName: "Elara's EMP / Hacking Device",
+        imageUrl: 'https://example.com/emp.jpg',
+      }),
+      ref('prop-important', 'Prop reference 6: Chip', 'important', {
+        provisionalIndex: 6,
+        propName: 'OmniCorp Encrypted Data Chip',
+        imageUrl: 'https://example.com/chip.jpg',
+      }),
+      ref('prop-important', 'Prop reference 7: Tablet', 'important', {
+        provisionalIndex: 7,
+        propName: 'Transparent Tablet',
+        imageUrl: 'https://example.com/tablet.jpg',
+      }),
+      ref('prop-other', 'Prop reference 8: Scanner', undefined, {
+        provisionalIndex: 8,
+        propName: "Elara's Biometric Scanner",
+        imageUrl: 'https://example.com/scanner.jpg',
+      }),
+      ref('prop-other', 'Prop reference 9: Folder', undefined, {
+        provisionalIndex: 9,
+        propName: 'False Evidence Folder',
+        imageUrl: 'https://example.com/folder.jpg',
+      }),
+    ]
+
+    const { selected, indexMap } = selectReferenceImagesInOrder(refs, 8, { groupByRole: true })
+
+    expect(selected.map((r) => r.refRole)).toEqual([
+      'identity',
+      'identity',
+      'wardrobe',
+      'wardrobe',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ])
+    expect(selected[0].characterName).toBe('Elara Vance')
+    expect(selected[1].characterName).toBe('Marcus Thorne')
+    expect(selected[0].sendIndex).toBe(1)
+    expect(selected[1].sendIndex).toBe(2)
+    expect(selected[2].sendIndex).toBe(3)
+    expect(selected[3].sendIndex).toBe(4)
+
+    expect(indexMap.get(1)).toBe(1)
+    expect(indexMap.get(3)).toBe(2)
+    expect(indexMap.get(2)).toBe(3)
+    expect(indexMap.get(4)).toBe(4)
+  })
+
+  it('remapReferenceNumbersInPrompt remaps person [3] to person [2] after groupByRole', () => {
+    const indexMap = new Map<number, number | null>([
+      [1, 1],
+      [2, 3],
+      [3, 2],
+      [4, 4],
+    ])
+
+    const output = remapReferenceNumbersInPrompt(
+      'Wide shot with person [1] and person [3] in frame.',
+      indexMap
+    )
+
+    expect(output).toContain('person [1]')
+    expect(output).toContain('person [2]')
+    expect(output).not.toContain('person [3]')
   })
 
   it('remapReferenceNumbersInPrompt updates person and Refs tokens', () => {

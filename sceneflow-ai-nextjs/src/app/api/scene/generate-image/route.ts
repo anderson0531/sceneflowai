@@ -64,12 +64,15 @@ import {
   buildLocationReferencePromptLine,
 } from '@/lib/vision/locationReferencePrompts'
 import {
-  MAX_VERTEX_GEMINI_REFERENCE_IMAGES,
+  buildSubjectCountGuardrail,
+  getMaxReferenceImagesForTier,
   buildCharacterReferenceEntries,
   buildLocationReferenceEntry,
   buildPropReferenceEntries,
   remapReferenceNumbersInPrompt,
+  resolveEffectiveImageTier,
   selectReferenceImagesInOrder,
+  type VertexImageTier,
 } from '@/lib/vision/referenceLimits'
 import {
   resolveStoryboardGeneration,
@@ -1697,10 +1700,13 @@ export async function POST(req: NextRequest) {
         console.log(`[Scene Image] Generation attempt ${generationAttempt}/${maxGenerationAttempts}`)
         
         if (useVertexGeminiImage) {
-          console.log(
-            `[Scene Image] Using Vertex Gemini Image (tier=${resolvedModelTier || 'designer'}) for reference images`
-          )
-          
+          const baseImageTier: VertexImageTier =
+            resolvedModelTier === 'eco' ||
+            resolvedModelTier === 'designer' ||
+            resolvedModelTier === 'director'
+              ? resolvedModelTier
+              : 'designer'
+
           // Combine character, object, and location reference images (priority-capped)
           const characterRefEntries = buildCharacterReferenceEntries(
             imageReferences,
@@ -1723,20 +1729,43 @@ export async function POST(req: NextRequest) {
             ...propRefEntries,
             ...(locationRefEntry ? [locationRefEntry] : []),
           ]
+
+          const distinctCharacterCount = new Set(
+            imageReferences.map((ref) => ref.characterName)
+          ).size
+          const totalWantedRefs = allPrioritizedRefs.length
+          const effectiveImageTier = resolveEffectiveImageTier({
+            modelTier: baseImageTier,
+            distinctCharacterCount,
+            totalWantedRefs,
+          })
+          const referenceImageCap = getMaxReferenceImagesForTier(effectiveImageTier)
+
+          if (effectiveImageTier !== baseImageTier) {
+            console.log(
+              `[Scene Image] Upgraded image tier ${baseImageTier} -> ${effectiveImageTier} (${distinctCharacterCount} characters, ${totalWantedRefs} refs, cap=${referenceImageCap})`
+            )
+          }
+
+          console.log(
+            `[Scene Image] Using Vertex Gemini Image (tier=${effectiveImageTier}) for reference images`
+          )
+
           const { selected: selectedReferenceImages, dropped: droppedReferenceImages, indexMap } =
             selectReferenceImagesInOrder(
               allPrioritizedRefs,
-              MAX_VERTEX_GEMINI_REFERENCE_IMAGES,
+              referenceImageCap,
               {
                 buildIdentityLabel: buildIdentityReferenceLabel,
                 buildWardrobeLabel: buildWardrobeReferenceLabel,
                 buildDiptychLabel: buildWardrobeDiptychReferenceLabel,
+                groupByRole: true,
               }
             )
 
           if (droppedReferenceImages.length > 0) {
             console.log(
-              `[Scene Image] Dropped ${droppedReferenceImages.length} reference image(s) (cap=${MAX_VERTEX_GEMINI_REFERENCE_IMAGES}):`,
+              `[Scene Image] Dropped ${droppedReferenceImages.length} reference image(s) (cap=${referenceImageCap}):`,
               droppedReferenceImages.map((r) => r.name).join(', ')
             )
           }
@@ -1915,8 +1944,14 @@ export async function POST(req: NextRequest) {
             ...new Set(cappedImageReferences.map((ref) => ref.characterName)),
           ]
           let subjectBindingSummary = ''
+          let subjectBindingEntries: Array<{
+            characterName: string
+            identitySendIndex: number
+            wardrobeSendIndex?: number
+            isDiptych?: boolean
+          }> = []
           if (distinctCharacterNamesForBinding.length >= 2) {
-            const subjectBindingEntries = distinctCharacterNamesForBinding
+            subjectBindingEntries = distinctCharacterNamesForBinding
               .map((characterName) => {
                 const identityRef = cappedImageReferences.find(
                   (r) =>
@@ -1945,6 +1980,18 @@ export async function POST(req: NextRequest) {
                 } => entry != null
               )
             subjectBindingSummary = buildWardrobeBindingSummary(subjectBindingEntries)
+          }
+          const subjectCountGuardrail =
+            subjectBindingEntries.length >= 2
+              ? buildSubjectCountGuardrail(
+                  subjectBindingEntries.map((entry) => ({
+                    characterName: entry.characterName,
+                    identitySendIndex: entry.identitySendIndex,
+                  }))
+                )
+              : ''
+          if (subjectCountGuardrail) {
+            geminiPrompt += `${subjectCountGuardrail}\n\n`
           }
           if (subjectBindingSummary) {
             geminiPrompt += `${subjectBindingSummary}\n\n`
@@ -2010,7 +2057,7 @@ export async function POST(req: NextRequest) {
             imageSize: effectiveImageSize,
             referenceImages: allReferenceImages,
             negativePrompt: finalNegativePrompt,
-            ...(resolvedModelTier ? { modelTier: resolvedModelTier } : {}),
+            ...(effectiveImageTier ? { modelTier: effectiveImageTier } : {}),
           })
 
           base64Image = vertexResult.imageBase64

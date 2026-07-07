@@ -159,4 +159,17 @@ describe('generate-image beat frame acting and wardrobe regression guard', () =>
     expect(source).toMatch(/unwrapSceneImageAiPrompt/)
     expect(source).toMatch(/looksLikeJsonPrompt/)
   })
+
+  it('upgrades eco tier and enforces contiguous person tokens for multi-character beats', () => {
+    const routePath = join(
+      process.cwd(),
+      'src/app/api/scene/generate-image/route.ts'
+    )
+    const source = readFileSync(routePath, 'utf8')
+    expect(source).toMatch(/resolveEffectiveImageTier/)
+    expect(source).toMatch(/getMaxReferenceImagesForTier/)
+    expect(source).toMatch(/groupByRole:\s*true/)
+    expect(source).toMatch(/buildSubjectCountGuardrail/)
+    expect(source).toMatch(/modelTier:\s*effectiveImageTier/)
+  })
 })

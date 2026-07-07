@@ -6,6 +6,47 @@ import {
 import { buildLocationReferenceLabel } from '@/lib/vision/locationReferencePrompts'
 
 export const MAX_VERTEX_GEMINI_REFERENCE_IMAGES = 8
+export const MAX_REFERENCE_IMAGES_ECO = 3
+export const MAX_REFERENCE_IMAGES_PRO = 14
+
+export type VertexImageTier = 'eco' | 'designer' | 'director'
+
+export function getMaxReferenceImagesForTier(tier: VertexImageTier): number {
+  return tier === 'eco' ? MAX_REFERENCE_IMAGES_ECO : MAX_REFERENCE_IMAGES_PRO
+}
+
+/**
+ * Auto-upgrade eco to designer when multi-character or ref count exceeds the eco cap.
+ */
+export function resolveEffectiveImageTier(args: {
+  modelTier?: VertexImageTier
+  distinctCharacterCount: number
+  totalWantedRefs: number
+}): VertexImageTier {
+  const baseTier = args.modelTier ?? 'designer'
+  if (
+    baseTier === 'eco' &&
+    (args.distinctCharacterCount >= 2 ||
+      args.totalWantedRefs > getMaxReferenceImagesForTier('eco'))
+  ) {
+    return 'designer'
+  }
+  return baseTier
+}
+
+export function buildSubjectCountGuardrail(
+  entries: Array<{ characterName: string; identitySendIndex: number }>
+): string {
+  if (entries.length < 2) return ''
+  const peopleList = entries
+    .map((entry) => `person [${entry.identitySendIndex}] (${entry.characterName})`)
+    .join(' and ')
+  return (
+    `SUBJECT COUNT: EXACTLY ${entries.length} people in this image - ${peopleList}. ` +
+    `Do NOT add, invent, or duplicate any other people. ` +
+    `Wardrobe, prop, and location reference images are NOT additional people.`
+  )
+}
 
 export type ReferencePriorityRole =
   | 'identity'
@@ -108,6 +149,8 @@ export function selectReferenceImagesInOrder(
     buildIdentityLabel?: (name: string, index: number) => string
     buildWardrobeLabel?: (name: string, index: number) => string
     buildDiptychLabel?: (name: string) => string
+    /** When true, group survivors by role (identity, wardrobe, location, props) for contiguous person tokens. */
+    groupByRole?: boolean
   }
 ): {
   selected: PrioritizedReferenceImage[]
@@ -123,7 +166,13 @@ export function selectReferenceImagesInOrder(
 
   const selected = tagged
     .filter((r) => keptUrls.has(r.imageUrl))
-    .sort((a, b) => (a.originalOrder ?? 0) - (b.originalOrder ?? 0))
+    .sort((a, b) => {
+      if (labelOptions?.groupByRole) {
+        const roleDiff = ROLE_PRIORITY[a.role] - ROLE_PRIORITY[b.role]
+        if (roleDiff !== 0) return roleDiff
+      }
+      return (a.originalOrder ?? 0) - (b.originalOrder ?? 0)
+    })
     .map((ref, idx) => {
       const sendIndex = idx + 1
       return {
