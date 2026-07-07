@@ -419,15 +419,18 @@ export function buildWardrobeBindingSummary(
   const parts = bindings
     .map((entry) => {
       if (entry.isDiptych) {
-        return `person [${entry.identitySendIndex}] wears outfit from diptych Ref [${entry.identitySendIndex}] (RIGHT panel) (${entry.characterName})`
+        return `person [${entry.identitySendIndex}] = ${entry.characterName}: face/identity from diptych Ref [${entry.identitySendIndex}] (LEFT panel), outfit from diptych Ref [${entry.identitySendIndex}] (RIGHT panel)`
       }
       if (entry.wardrobeSendIndex != null) {
-        return `person [${entry.identitySendIndex}] wears Ref [${entry.wardrobeSendIndex}] (${entry.characterName})`
+        return `person [${entry.identitySendIndex}] = ${entry.characterName}: face/identity from Ref [${entry.identitySendIndex}], outfit from Ref [${entry.wardrobeSendIndex}]`
       }
-      return null
+      return `person [${entry.identitySendIndex}] = ${entry.characterName}: face/identity from Ref [${entry.identitySendIndex}]`
     })
     .filter((part): part is string => !!part)
 
   if (parts.length < 2) return ''
-  return `WARDROBE BINDING: ${parts.join('; ')}. Never swap outfits between people.`
+  return (
+    `SUBJECT BINDING:\n${parts.map((part) => `- ${part}`).join('\n')}\n` +
+    'Each person [N] must match ONLY their paired refs. Never swap identity or wardrobe between people.'
+  )
 }

@@ -1911,6 +1911,44 @@ export async function POST(req: NextRequest) {
           }
 
           const remappedOptimizedPrompt = remapReferenceNumbersInPrompt(optimizedPrompt, indexMap)
+          const distinctCharacterNamesForBinding = [
+            ...new Set(cappedImageReferences.map((ref) => ref.characterName)),
+          ]
+          let subjectBindingSummary = ''
+          if (distinctCharacterNamesForBinding.length >= 2) {
+            const subjectBindingEntries = distinctCharacterNamesForBinding
+              .map((characterName) => {
+                const identityRef = cappedImageReferences.find(
+                  (r) =>
+                    r.characterName === characterName &&
+                    (r.refRole === 'identity' || r.refRole === 'wardrobe-diptych')
+                )
+                const wardrobeRef = cappedImageReferences.find(
+                  (r) => r.characterName === characterName && r.refRole === 'wardrobe'
+                )
+                if (!identityRef) return null
+                return {
+                  characterName,
+                  identitySendIndex: identityRef.referenceId,
+                  wardrobeSendIndex: wardrobeRef?.referenceId,
+                  isDiptych: identityRef.refRole === 'wardrobe-diptych',
+                }
+              })
+              .filter(
+                (
+                  entry
+                ): entry is {
+                  characterName: string
+                  identitySendIndex: number
+                  wardrobeSendIndex?: number
+                  isDiptych?: boolean
+                } => entry != null
+              )
+            subjectBindingSummary = buildWardrobeBindingSummary(subjectBindingEntries)
+          }
+          if (subjectBindingSummary) {
+            geminiPrompt += `${subjectBindingSummary}\n\n`
+          }
           geminiPrompt += `SCENE PROMPT:\n${remappedOptimizedPrompt}\n\n`
           
           geminiPrompt += `CRITICAL REQUIREMENTS:\n`
@@ -1929,6 +1967,10 @@ export async function POST(req: NextRequest) {
           }
           if (hairCompositionLock) {
             geminiPrompt += `- ${hairCompositionLock}\n`
+          }
+          if (subjectBindingSummary) {
+            geminiPrompt +=
+              '- Each person [N] must use ONLY their paired identity and wardrobe reference images.\n'
           }
           if (cappedImageReferences.length > 0) {
             const wardrobeReminders = characterReferences

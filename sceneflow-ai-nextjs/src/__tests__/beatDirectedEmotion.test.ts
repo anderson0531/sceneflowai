@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
   buildBeatDirectedEmotionPromptSection,
+  extractSceneStateFromAppearanceNotes,
   formatDirectedEmotionLine,
   inferEmotionFromActionProse,
   resolveBeatDirectedEmotion,
@@ -56,6 +57,17 @@ describe('resolveDirectedEmotionForCharacter', () => {
     })
     expect(emotion).not.toMatch(/angry/i)
     expect(emotion).toMatch(/distress|exhaustion/i)
+  })
+
+  it('extractSceneStateFromAppearanceNotes drops base identity traits', () => {
+    const scoped = extractSceneStateFromAppearanceNotes(
+      'Bloodshot eyes, pale skin, a faint bruise forming on her temple, dark brown wavy hair, visible exhaustion and distress'
+    )
+    expect(scoped).toMatch(/bloodshot/i)
+    expect(scoped).toMatch(/bruise/i)
+    expect(scoped).toMatch(/distress|exhaustion/i)
+    expect(scoped).not.toMatch(/pale skin/i)
+    expect(scoped).not.toMatch(/dark brown wavy hair/i)
   })
 })
 
@@ -133,6 +145,18 @@ describe('generate-image beat frame acting and wardrobe regression guard', () =>
     const assemblySource = readFileSync(assemblyPath, 'utf8')
     expect(routeSource).toMatch(/BEAT_FRAME_ANTI_POSE_NEGATIVE_PROMPT/)
     expect(routeSource).toMatch(/buildWardrobeBindingSummary/)
+    expect(routeSource).toMatch(/subjectBindingSummary/)
+    expect(routeSource).toMatch(/SCENE PROMPT:/)
     expect(assemblySource).toMatch(/posing for camera/)
+  })
+
+  it('does not pass JSON-wrapped prompts through the AI optimized path', () => {
+    const intelligencePath = join(
+      process.cwd(),
+      'src/lib/intelligence/scene-image-intelligence.ts'
+    )
+    const source = readFileSync(intelligencePath, 'utf8')
+    expect(source).toMatch(/unwrapSceneImageAiPrompt/)
+    expect(source).toMatch(/looksLikeJsonPrompt/)
   })
 })

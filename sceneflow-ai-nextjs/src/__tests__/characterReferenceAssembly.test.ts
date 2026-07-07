@@ -273,15 +273,15 @@ describe('characterReferenceAssembly', () => {
     expect(wardrobeLine).toContain('do not apply to any other character')
   })
 
-  it('buildWardrobeBindingSummary maps each person to their wardrobe ref', () => {
+  it('buildWardrobeBindingSummary maps each person to identity and wardrobe refs', () => {
     const summary = buildWardrobeBindingSummary([
       { characterName: 'Elara Vance', identitySendIndex: 1, wardrobeSendIndex: 2 },
       { characterName: 'Marcus Thorne', identitySendIndex: 3, wardrobeSendIndex: 4 },
     ])
-    expect(summary).toMatch(/^WARDROBE BINDING:/)
-    expect(summary).toContain('person [1] wears Ref [2] (Elara Vance)')
-    expect(summary).toContain('person [3] wears Ref [4] (Marcus Thorne)')
-    expect(summary).toContain('Never swap outfits between people')
+    expect(summary).toMatch(/^SUBJECT BINDING:/)
+    expect(summary).toContain('person [1] = Elara Vance: face/identity from Ref [1], outfit from Ref [2]')
+    expect(summary).toContain('person [3] = Marcus Thorne: face/identity from Ref [3], outfit from Ref [4]')
+    expect(summary).toContain('Never swap identity or wardrobe between people')
   })
 
   it('DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK establishes identity PRIMARY and wardrobe SECONDARY', () => {

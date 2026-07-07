@@ -145,9 +145,96 @@ interface CacheEntry {
 
 const promptCache = new Map<string, CacheEntry>()
 const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
+const SCENE_IMAGE_CACHE_KEY_VERSION = 'v2'
+
+function unescapeJsonString(value: string): string {
+  return value
+    .replace(/\\n/g, '\n')
+    .replace(/\\r/g, '\r')
+    .replace(/\\t/g, '\t')
+    .replace(/\\"/g, '"')
+    .replace(/\\\\/g, '\\')
+}
+
+function looksLikeJsonPrompt(text: string): boolean {
+  const trimmed = text.trim()
+  return (
+    /^\s*\{/.test(trimmed) ||
+    /^\s*\{\s*"prompt"\s*:/.test(trimmed) ||
+    /"prompt"\s*:\s*"/.test(trimmed)
+  )
+}
+
+function extractPromptFieldFromBrokenJson(json: string): string | null {
+  const match = json.match(/"prompt"\s*:\s*"/)
+  if (!match || match.index === undefined) return null
+
+  let i = match.index + match[0].length
+  let result = ''
+  while (i < json.length) {
+    const ch = json[i]
+    if (ch === '\\' && i + 1 < json.length) {
+      result += ch + json[i + 1]
+      i += 2
+      continue
+    }
+    if (ch === '"') {
+      const rest = json.slice(i + 1).trimStart()
+      if (!rest || rest.startsWith(',') || rest.startsWith('}')) {
+        break
+      }
+    }
+    result += ch
+    i += 1
+  }
+
+  return result.trim() || null
+}
+
+/** Recover the scene prompt body from JSON or truncated JSON wrappers. */
+export function unwrapSceneImageAiPrompt(text: string): string {
+  let clean = (text || '').trim()
+  if (!clean) return ''
+
+  if (clean.startsWith('```')) {
+    clean = clean.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '').trim()
+  }
+
+  if (clean.startsWith('{') || /"prompt"\s*:\s*"/.test(clean)) {
+    try {
+      const parsed = JSON.parse(clean) as { prompt?: string }
+      if (parsed.prompt?.trim()) {
+        const unwrapped = unescapeJsonString(parsed.prompt.trim())
+        if (!looksLikeJsonPrompt(unwrapped)) return unwrapped
+      }
+    } catch {
+      const extracted = extractPromptFieldFromBrokenJson(clean)
+      if (extracted) {
+        const unwrapped = unescapeJsonString(extracted)
+        if (!looksLikeJsonPrompt(unwrapped)) return unwrapped
+      }
+    }
+    return ''
+  }
+
+  if (!looksLikeJsonPrompt(clean)) return clean
+  return ''
+}
+
+function normalizeCachedSceneImageResult(
+  result: SceneImageIntelligenceResult
+): SceneImageIntelligenceResult | null {
+  if (!result.prompt?.trim()) return null
+  const unwrapped = unwrapSceneImageAiPrompt(result.prompt)
+  if (!unwrapped || unwrapped.length < 20 || looksLikeJsonPrompt(unwrapped)) {
+    return null
+  }
+  return { ...result, prompt: unwrapped }
+}
 
 export function buildSceneImageCacheKey(request: SceneImageIntelligenceRequest): string {
   const parts = [
+    SCENE_IMAGE_CACHE_KEY_VERSION,
     request.sceneHeading,
     request.sceneAction.substring(0, 200),
     request.sceneNumber,
@@ -209,16 +296,23 @@ function getCachedResult(key: string): SceneImageIntelligenceResult | null {
     promptCache.delete(key)
     return null
   }
-  return entry.result
+  const normalized = normalizeCachedSceneImageResult(entry.result)
+  if (!normalized) {
+    promptCache.delete(key)
+    return null
+  }
+  return normalized
 }
 
 function setCachedResult(key: string, result: SceneImageIntelligenceResult): void {
+  const normalized = normalizeCachedSceneImageResult(result)
+  if (!normalized) return
   // Evict old entries if cache is too large
   if (promptCache.size > 100) {
     const oldestKey = promptCache.keys().next().value
     if (oldestKey) promptCache.delete(oldestKey)
   }
-  promptCache.set(key, { result, timestamp: Date.now() })
+  promptCache.set(key, { result: normalized, timestamp: Date.now() })
 }
 
 // =============================================================================
@@ -281,11 +375,12 @@ Action/Framing: [shot type + frozen action for THIS beat; use person [N] tokens 
 [REFERENCE IMAGE MAPPING]
 For EACH reference image provided in the input, add one bullet using the exact Ref Image index from input:
 - SUBJECT REFERENCE (Ref Image [N]): Extract face shape, hair, skin tone, and physical identity only. Maintain organic human skin textures. Ignore clothing in this image if wardrobe ref exists.
-- WARDROBE REFERENCE (Ref Image [M]): Extract clothing design, color palette, and garments only. Completely ignore the mannequin/plastic base, stylized medium, turnaround sheet layout, and gray studio background. Translate these clothes onto the realistic human subject from the identity ref.
+- WARDROBE REFERENCE (Ref Image [M]): Apply clothing ONLY to person [N] ({name}). Identity for that character comes from Ref Image [N]. Do not apply to any other person [X]. Completely ignore the mannequin/plastic base, stylized medium, turnaround sheet layout, and gray studio background.
 - LOCATION REFERENCE (Ref Image [K]): Single extreme-wide establishing shot of the environment. Match architectural layout, furniture placement, color palette, and spatial geometry. Render ONE unified full-frame cinematic shot for this beat. Do NOT reproduce any multi-panel reference layout, 2x2 grid, split-screen, or collage. Match lighting to Global Style Anchor.
 - PROP REFERENCE (Ref Image [P]): Extract shape, material, color, and design of the named prop only.
 
 Omit mapping lines for references not used in this beat.
+When multiple characters have identity refs, every WARDROBE REFERENCE line must name the target person [N] for that character.
 
 [EXCLUSIONS & BOUNDARIES]
 Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, canvas textures, turnaround sheet layout, 2x2 grid output, 4-panel layout, split-screen output, multi-panel layout, diptych, reference sheet collage, faceless figures, or artistic blending of reference mediums. Maintain 100% photographic realism when art style is photorealistic. No dialogue captions, subtitles, or watermarks (except centered title typography on title beats).
@@ -511,7 +606,7 @@ export async function generateSceneImagePrompt(
         systemInstruction: systemPrompt,
         cacheContextParts: [{ text: systemPrompt }],
         temperature: 0.4, // Slightly creative but mostly deterministic
-        maxOutputTokens: 2048,
+        maxOutputTokens: 3072,
         responseMimeType: 'application/json',
         thinkingLevel: 'low', // Fast thinking for prompt generation
         cacheTtlMinutes: 30, // Shorter TTL for batch operations
@@ -521,28 +616,45 @@ export async function generateSceneImagePrompt(
         console.log(`[Scene Image Intelligence] Used cached system prompt for scene ${request.sceneNumber}`)
       }
     
-    // Parse JSON response
-    let parsed: { prompt?: string; reasoning?: string; negativeAdditions?: string[]; selectedCharacterNames?: string[]; selectedPropNames?: string[]; selectedLocationName?: string }
+    // Parse JSON response and recover prompt from truncated wrappers when needed
+    let parsed: {
+      prompt?: string
+      reasoning?: string
+      negativeAdditions?: string[]
+      selectedCharacterNames?: string[]
+      selectedPropNames?: string[]
+      selectedLocationName?: string
+    }
+    let cleanText = result.text.trim()
+    if (cleanText.startsWith('```')) {
+      cleanText = cleanText.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '')
+    }
+
     try {
-      // Handle potential markdown code fence wrapping
-      let cleanText = result.text.trim()
-      if (cleanText.startsWith('```')) {
-        cleanText = cleanText.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '')
-      }
       parsed = JSON.parse(cleanText)
     } catch (parseError) {
-      console.warn(`[Scene Image Intelligence] Failed to parse JSON response, using raw text`)
+      console.warn(`[Scene Image Intelligence] Failed to parse JSON response, attempting prompt extraction`)
       console.warn(`[Scene Image Intelligence] Raw response: ${result.text.substring(0, 200)}`)
-      parsed = { prompt: result.text.trim() }
+      const recovered = unwrapSceneImageAiPrompt(cleanText)
+      if (!recovered) {
+        throw new Error('AI returned unparseable JSON prompt')
+      }
+      parsed = { prompt: recovered }
     }
-    
-    if (!parsed.prompt || parsed.prompt.trim().length < 20) {
+
+    const rawPrompt = parsed.prompt?.trim() || unwrapSceneImageAiPrompt(cleanText)
+    if (!rawPrompt || rawPrompt.length < 20) {
       console.warn(`[Scene Image Intelligence] AI returned insufficient prompt, falling back`)
       throw new Error('AI returned insufficient prompt')
     }
-    
+
+    if (looksLikeJsonPrompt(rawPrompt)) {
+      console.warn(`[Scene Image Intelligence] Prompt still looks like JSON after unwrap, falling back`)
+      throw new Error('AI returned JSON-wrapped prompt')
+    }
+
     // Sanitize: ensure no dangerous content slipped through
-    let finalPrompt = parsed.prompt.trim()
+    let finalPrompt = rawPrompt
     
     // Structured prompts are longer — preserve section headers; truncate only if excessive
     const MAX_PROMPT_CHARS = 2400

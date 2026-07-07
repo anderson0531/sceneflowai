@@ -48,6 +48,19 @@ describe('promptOptimizer reference-first binding', () => {
     expect(sanitized).not.toContain('Maria')
   })
 
+  it('sanitizePromptForIdentityRefs preserves newlines in structured prompts', () => {
+    const structured = `[GLOBAL STYLE ANCHOR]
+Master Style: Photorealistic
+
+[SCENE COMPOSITION & BEAT]
+Action/Framing: person [1] clutches a file.`
+    const sanitized = sanitizePromptForIdentityRefs(structured, [
+      { name: 'Elara Vance', promptToken: 'person [1]', identityReferenceId: 1 },
+    ])
+    expect(sanitized).toContain('\n[SCENE COMPOSITION & BEAT]')
+    expect(sanitized).not.toMatch(/\nMaster Style:[^\n]*\[SCENE/)
+  })
+
   it('filterCharactersForPromptRefs keeps only characters referenced in prompt body', () => {
     const refs = [
       { name: 'Elara Vance', promptToken: 'person [1]', identityReferenceId: 1 },

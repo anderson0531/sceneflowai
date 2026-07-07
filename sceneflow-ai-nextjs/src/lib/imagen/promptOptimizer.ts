@@ -140,6 +140,18 @@ export function sanitizePromptForIdentityRefs(
     (match) => (/\bperson\s*\[\d+\]/i.test(sanitized) ? 'person' : match)
   )
 
+  const isStructuredPrompt = /\[(?:GLOBAL STYLE ANCHOR|SCENE COMPOSITION & BEAT|REFERENCE IMAGE MAPPING)\]/i.test(
+    sanitized
+  )
+  if (isStructuredPrompt) {
+    return sanitized
+      .split('\n')
+      .map((line) => line.replace(/[ \t]+/g, ' ').trimEnd())
+      .join('\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim()
+  }
+
   return sanitized.replace(/\s+/g, ' ').trim()
 }
 

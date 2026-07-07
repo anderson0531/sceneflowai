@@ -135,7 +135,45 @@ export function resolveDirectedEmotionForCharacter(
     if (emotion) return emotion
   }
 
-  return options.appearanceNotes?.trim() || ''
+  return extractSceneStateFromAppearanceNotes(options.appearanceNotes || '')
+}
+
+const IDENTITY_OWNED_APPEARANCE_PATTERNS: RegExp[] = [
+  /\b(?:pale|fair|warm|medium-tan|olive|light|dark|tan|brown|golden|ivory)\s+skin\b/gi,
+  /\bskin\s+tone\b/gi,
+  /\b(?:south asian|middle eastern|caucasian|asian|hispanic|latino|african|ethnicity)\b/gi,
+  /\b(?:oval|round|square|heart-shaped)\s+face\b/gi,
+  /\b(?:long|short|dark|light|brown|blonde|auburn|black|wavy|curly|straight)\s+(?:brown|black|blonde|auburn)?\s*\w*\s*hair\b/gi,
+  /\bhair\s+styled\s+half-up\b/gi,
+  /\bperfect\s+volume\b/gi,
+]
+
+/** Keep scene-state injuries/makeup/exhaustion; drop base identity traits the reference owns. */
+export function extractSceneStateFromAppearanceNotes(notes: string): string {
+  const trimmed = (notes || '').trim()
+  if (!trimmed) return ''
+
+  const parts = trimmed
+    .split(/[,;]+/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+
+  const kept = parts.filter((part) => {
+    const lower = part.toLowerCase()
+    if (IDENTITY_OWNED_APPEARANCE_PATTERNS.some((pattern) => {
+      pattern.lastIndex = 0
+      return pattern.test(part)
+    })) {
+      return false
+    }
+    return (
+      /\b(bloodshot|bruise|contusion|cut|scar|injury|wound|distress|exhaustion|exhausted|tearful|crying|makeup|mascara|smudged|messy|disheveled|anguish)\b/i.test(
+        lower
+      ) || /\b(losing|lost)\s+(?:its\s+)?(?:perfect\s+)?volume\b/i.test(lower)
+    )
+  })
+
+  return kept.join(', ')
 }
 
 /** Beat-level emotion from line + action (for AI intelligence). */
