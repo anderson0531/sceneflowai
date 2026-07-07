@@ -47,6 +47,7 @@ import {
 } from 'lucide-react'
 import type { SceneSegment, SceneProductionData, AnimaticRenderSettings } from './types'
 import { filterMixerIncludedSegments } from '@/lib/scene/mixerBeatInclude'
+import { resolveVideoTrimWindow, resolveSegmentSourceDurationSec } from '@/lib/video/segmentVideoTrim'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { getBurnInPayloadForSceneRenderApi } from './sceneRenderBurnInPayload'
 
@@ -326,6 +327,8 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
       const segmentData = renderedSegments.map((s, idx) => {
         const audioSettings = segmentAudioSettings[s.segmentId] || { includeAudio: true, volume: 1.0 }
         const audioSource = audioSettings.includeAudio ? 'original' : 'none'
+        const sourceDur = resolveSegmentSourceDurationSec(s)
+        const trimWin = resolveVideoTrimWindow(s, sourceDur)
         console.log(`[SceneRender] Segment ${idx} (${s.segmentId}): includeAudio=${audioSettings.includeAudio}, audioSource=${audioSource}`)
         return {
           segmentId: s.segmentId,
@@ -335,6 +338,8 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
           endTime: s.endTime,
           audioSource,
           audioVolume: audioSettings.volume,
+          videoTrimInSec: trimWin.inSec > 0.001 ? trimWin.inSec : undefined,
+          videoTrimOutSec: trimWin.isTrimmed ? trimWin.outSec : undefined,
         }
       })
       console.log('[SceneRender] Full segmentData:', JSON.stringify(segmentData, null, 2))

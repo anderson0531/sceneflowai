@@ -706,6 +706,11 @@ export interface SceneSegment {
   /** When false, beat video is hidden from mixer preview and scene render (asset is not deleted). */
   mixerBeatIncluded?: boolean
 
+  /** Seconds into source MP4 where beat playback begins (default 0). */
+  videoTrimInSec?: number
+  /** Seconds into source MP4 where beat playback ends (omit = end of file). */
+  videoTrimOutSec?: number
+
   // ===========================================================================
   // Lean Multi-Language (LML) Elastic Segment Fields
   // ===========================================================================

@@ -3,6 +3,7 @@
  */
 import type { AudioTrackClipV2, SceneSegment } from '@/components/vision/scene-production/types'
 import { dialogueLineIdForIndex } from '@/components/vision/scene-production/audioTrackBuilder'
+import { resolveVideoTrimWindow, resolveSegmentSourceDurationSec } from '@/lib/video/segmentVideoTrim'
 
 /** Gap between dialogue lines within the same segment (seconds). */
 export const MIXER_DIALOGUE_INTRA_GAP_SEC = 0.3
@@ -38,7 +39,16 @@ export function getClipsAssignedToSegment(
   return clips.filter((c) => lineIds.some((id) => clipMatchesDialogueLineId(c, id, narrationPrefix)))
 }
 
-export function getVisualBaseDuration(segment: SceneSegment): number {
+export function getVisualBaseDuration(
+  segment: SceneSegment,
+  measuredSourceDurationSec?: number
+): number {
+  const sourceDuration = resolveSegmentSourceDurationSec(segment, measuredSourceDurationSec)
+  const { playableSec, isTrimmed } = resolveVideoTrimWindow(segment, sourceDuration)
+  if (isTrimmed) {
+    return Math.max(MIXER_MIN_SEGMENT_VISUAL_SEC, playableSec)
+  }
+
   const raw =
     segment.imageDuration ??
     segment.actualVideoDuration ??
@@ -90,9 +100,7 @@ export function computeSegmentContentDuration(input: SegmentDurationInput): numb
 
   const visual = Math.max(
     MIXER_MIN_SEGMENT_VISUAL_SEC,
-    measuredVideoDuration != null && measuredVideoDuration > 0
-      ? measuredVideoDuration
-      : getVisualBaseDuration(segment)
+    getVisualBaseDuration(segment, measuredVideoDuration)
   )
 
   if (!dialogueEnabled) return visual

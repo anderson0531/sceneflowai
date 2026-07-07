@@ -830,11 +830,18 @@ def build_concat_ffmpeg_command(
 
         crop_pct = float(segment.get('watermarkCropPercent') or 0)
         crop_filter = f"crop=iw:ih*(1-{crop_pct / 100}):0:0," if crop_pct >= 2 else ""
+
+        trim_in = float(segment.get('videoTrimInSec') or 0)
+        raw_trim_out = segment.get('videoTrimOutSec')
+        trim_filter = ""
+        if trim_in > 0.001 or raw_trim_out is not None:
+            end_clause = f":end={float(raw_trim_out)}" if raw_trim_out is not None else ""
+            trim_filter = f"trim=start={trim_in}{end_clause},"
         
         # Scale to target resolution and set framerate
         # setpts=PTS-STARTPTS resets video timestamps to start at 0 for proper concatenation sync
         filter_str = (
-            f"[{i}:v]setpts=PTS-STARTPTS,{crop_filter}scale={width}:{height}:force_original_aspect_ratio=decrease,"
+            f"[{i}:v]{trim_filter}setpts=PTS-STARTPTS,{crop_filter}scale={width}:{height}:force_original_aspect_ratio=decrease,"
             f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:black,"
             f"fps={fps},setsar=1{tpad_str}[v{i}]"
         )
@@ -852,9 +859,13 @@ def build_concat_ffmpeg_command(
         if audio_source == 'original':
             # Use original MP4 audio - normalize format for concat compatibility
             print(f"[FFmpeg] Segment {i}: Using ORIGINAL audio from MP4")
-            # Always normalize audio format AND reset timestamps to ensure concat compatibility
-            # asetpts=PTS-STARTPTS ensures audio starts at 0 for proper concatenation with silence streams
-            audio_filter = f"[{i}:a]asetpts=PTS-STARTPTS,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo{apad_str}"
+            trim_in = float(segment.get('videoTrimInSec') or 0)
+            raw_trim_out = segment.get('videoTrimOutSec')
+            atrim_clause = ""
+            if trim_in > 0.001 or raw_trim_out is not None:
+                end_clause = f":end={float(raw_trim_out)}" if raw_trim_out is not None else ""
+                atrim_clause = f"atrim=start={trim_in}{end_clause},"
+            audio_filter = f"[{i}:a]{atrim_clause}asetpts=PTS-STARTPTS,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo{apad_str}"
             if seg_audio_volume != 1.0:
                 audio_filter += f",volume={seg_audio_volume}"
             audio_filter += f"[seg_audio_{i}]"

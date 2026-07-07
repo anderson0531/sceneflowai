@@ -299,6 +299,10 @@ export interface SceneRenderVideoSegment {
   pauseDuration?: number
   /** Uniform frame crop % (2–10) for uploaded video; preserves aspect ratio */
   watermarkCropPercent?: number
+  /** Seconds into source MP4 where beat playback begins */
+  videoTrimInSec?: number
+  /** Seconds into source MP4 where beat playback ends */
+  videoTrimOutSec?: number
 }
 
 /**
@@ -490,6 +494,8 @@ export interface CreateSceneRenderJobRequest {
     voiceoverDuration?: number
     pauseDuration?: number
     watermarkCropPercent?: number
+    videoTrimInSec?: number
+    videoTrimOutSec?: number
   }>
   /** Audio tracks with timing */
   audioTracks: {

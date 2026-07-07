@@ -233,6 +233,8 @@ export async function POST(
         voiceoverDuration: seg.voiceoverDuration,
         pauseDuration: seg.pauseDuration ?? 0,
         watermarkCropPercent: seg.watermarkCropPercent,
+        videoTrimInSec: seg.videoTrimInSec,
+        videoTrimOutSec: seg.videoTrimOutSec,
       }
     })
     

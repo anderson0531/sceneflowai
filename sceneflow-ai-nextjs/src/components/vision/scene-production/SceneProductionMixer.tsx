@@ -67,6 +67,7 @@ import {
   Crop,
   Eye,
   EyeOff,
+  Scissors,
 } from 'lucide-react'
 import { upload } from '@vercel/blob/client'
 import { Button } from '@/components/ui/Button'
@@ -140,6 +141,13 @@ import {
   filterMixerIncludedSegments,
   isMixerBeatIncluded,
 } from '@/lib/scene/mixerBeatInclude'
+import {
+  formatTrimTimeSec,
+  parseTrimTimeInput,
+  resolveSegmentSourceDurationSec,
+  resolveVideoTrimWindow,
+  MIN_TRIM_PLAYABLE_SEC,
+} from '@/lib/video/segmentVideoTrim'
 
 export type { ProductionTarget, TextOverlay, TextOverlayStyle, TextOverlayPosition, TextOverlayTiming, AudioTrackConfig, MixerAudioTracks }
 
@@ -646,6 +654,8 @@ function ScenePreviewPlayer({
   onMeasuredDurationsChange,
   onPlaybackTimeChange,
   musicFileDuration = DEFAULT_MUSIC_FILE_DURATION_SEC,
+  focusBeatSegmentId,
+  onFocusBeatHandled,
 }: {
   segments: SceneSegment[]
   audioTracks: MixerAudioTracks
@@ -676,6 +686,9 @@ function ScenePreviewPlayer({
   onPlaybackTimeChange?: (time: number) => void
   /** Probed WAV length for modulo loop sync */
   musicFileDuration?: number
+  /** When set, jump preview to this beat (e.g. from Beat Trim panel) */
+  focusBeatSegmentId?: string | null
+  onFocusBeatHandled?: () => void
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -714,6 +727,17 @@ function ScenePreviewPlayer({
   
   // Timer for audio-extended playback (when video is frozen)
   const audioTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  const getTrimForSegment = useCallback(
+    (seg: SceneSegment) => {
+      const source = resolveSegmentSourceDurationSec(
+        seg,
+        measuredSegmentDurations[seg.segmentId]
+      )
+      return resolveVideoTrimWindow(seg, source)
+    },
+    [measuredSegmentDurations]
+  )
   
   // Helper: Start time on the playback timeline (uses measured segment lengths)
   const getSegmentStartTime = useCallback(
@@ -829,14 +853,24 @@ function ScenePreviewPlayer({
     const handleTimeUpdate = () => {
       if (isVideoFrozen) return // Don't update from video when frozen
       
-      // Calculate global time based on segment position + local time
-      const globalTime = segmentStartTime + video.currentTime
+      const seg = segments[currentSegmentIndex]
+      const trim = getTrimForSegment(seg)
+      // Calculate global time based on segment position + trimmed local time
+      const globalTime = segmentStartTime + Math.max(0, video.currentTime - trim.inSec)
       setCurrentTime(globalTime)
+
+      if (video.currentTime >= trim.outSec - 0.05 && !isVideoFrozen) {
+        video.pause()
+        video.dispatchEvent(new Event('ended'))
+      }
     }
     
     const handleEnded = () => {
       const config = segmentAudioConfigs[segments[currentSegmentIndex].segmentId]
-      const autoPauseVal = audioTracks?.dialogue?.enabled ? Math.max(0, getPlaybackSegmentDuration(segments[currentSegmentIndex]) - (segments[currentSegmentIndex].actualVideoDuration ?? segments[currentSegmentIndex].imageDuration ?? (segments[currentSegmentIndex].endTime - segments[currentSegmentIndex].startTime) ?? 4)) : 0.0
+      const trim = getTrimForSegment(segments[currentSegmentIndex])
+      const autoPauseVal = audioTracks?.dialogue?.enabled
+        ? Math.max(0, getPlaybackSegmentDuration(segments[currentSegmentIndex]) - trim.playableSec)
+        : 0.0
       const pauseDuration = (config?.postSegmentPause || 0) + autoPauseVal
 
       const advanceOrEnd = () => {
@@ -956,6 +990,7 @@ function ScenePreviewPlayer({
     segmentAudioConfigs,
     getPlaybackSegmentDuration,
     getSegmentStartTime,
+    getTrimForSegment,
   ])
   
   // Sync audio tracks with video playback
@@ -1106,11 +1141,44 @@ function ScenePreviewPlayer({
       segmentIdForLoadedVideoRef.current = currentSegment.segment?.segmentId ?? null
       video.src = newUrl
       video.load()
+      const seekToTrimIn = () => {
+        if (!currentSegment.segment) return
+        const trim = getTrimForSegment(currentSegment.segment)
+        video.currentTime = trim.inSec
+      }
+      if (video.readyState >= 1) {
+        seekToTrimIn()
+      } else {
+        video.addEventListener('loadedmetadata', seekToTrimIn, { once: true })
+      }
       if (isPlaying && !isVideoFrozen) {
         video.play().catch(() => {})
       }
+    } else if (video && newUrl && newUrl === loadedVideoUrlRef.current && currentSegment.segment) {
+      const trim = getTrimForSegment(currentSegment.segment)
+      if (video.currentTime < trim.inSec - 0.05 || video.currentTime > trim.outSec) {
+        video.currentTime = trim.inSec
+      }
     }
-  }, [playbackKind, currentSegmentIndex, currentSegment.segment?.activeAssetUrl, isPlaying, isVideoFrozen])
+  }, [playbackKind, currentSegmentIndex, currentSegment.segment, isPlaying, isVideoFrozen, getTrimForSegment])
+
+  useEffect(() => {
+    if (!focusBeatSegmentId || playbackKind === 'image-sequence') return
+    const idx = segments.findIndex((s) => s.segmentId === focusBeatSegmentId)
+    if (idx < 0) {
+      onFocusBeatHandled?.()
+      return
+    }
+    setIsVideoFrozen(false)
+    if (audioTimerRef.current) {
+      cancelAnimationFrame(audioTimerRef.current as unknown as number)
+      audioTimerRef.current = null
+    }
+    setCurrentSegmentIndex(idx)
+    setCurrentTime(getSegmentStartTime(idx))
+    loadedVideoUrlRef.current = null
+    onFocusBeatHandled?.()
+  }, [focusBeatSegmentId, segments, playbackKind, getSegmentStartTime, onFocusBeatHandled])
   
   // Comprehensive cleanup on unmount - prevents memory leaks
   useEffect(() => {
@@ -1222,8 +1290,12 @@ function ScenePreviewPlayer({
       if (videoTargetTime < elapsed + segDuration) {
         setCurrentSegmentIndex(i)
         const localTime = videoTargetTime - elapsed
+        const trim = getTrimForSegment(segments[i])
         if (videoRef.current) {
-          videoRef.current.currentTime = localTime
+          videoRef.current.currentTime = Math.min(
+            trim.outSec - 0.01,
+            trim.inSec + localTime
+          )
         }
         setCurrentTime(targetTime)
         return
@@ -1260,8 +1332,9 @@ function ScenePreviewPlayer({
     }
 
     setCurrentSegmentIndex(nextIdx)
-    if (videoRef.current) {
-      videoRef.current.currentTime = 0
+    if (videoRef.current && segments[nextIdx]) {
+      const trim = getTrimForSegment(segments[nextIdx])
+      videoRef.current.currentTime = trim.inSec
     }
     loadedVideoUrlRef.current = null // Force reload
   }
@@ -2451,6 +2524,284 @@ function SegmentBeatVideoControls({
   )
 }
 
+function BeatTrimRangeEditor({
+  segment,
+  sourceDurationSec,
+  measuredDurations,
+  onTrimChange,
+  onReset,
+  onPreview,
+  disabled,
+}: {
+  segment: SceneSegment
+  sourceDurationSec: number
+  measuredDurations: Record<string, number>
+  onTrimChange: (inSec: number, outSec: number) => void
+  onReset: () => void
+  onPreview: () => void
+  disabled?: boolean
+}) {
+  const source = resolveSegmentSourceDurationSec(
+    segment,
+    measuredDurations[segment.segmentId] ?? sourceDurationSec
+  )
+  const trim = resolveVideoTrimWindow(segment, source)
+  const maxEnd = source
+  const minGap = MIN_TRIM_PLAYABLE_SEC
+
+  const setIn = (inSec: number) => {
+    const nextIn = Math.max(0, Math.min(inSec, trim.outSec - minGap))
+    onTrimChange(nextIn, trim.outSec)
+  }
+
+  const setOut = (outSec: number) => {
+    const nextOut = Math.min(maxEnd, Math.max(outSec, trim.inSec + minGap))
+    onTrimChange(trim.inSec, nextOut)
+  }
+
+  const inPct = source > 0 ? (trim.inSec / source) * 100 : 0
+  const outPct = source > 0 ? (trim.outSec / source) * 100 : 100
+
+  return (
+    <div className="space-y-3 rounded border border-amber-500/20 bg-amber-500/5 p-3">
+      <div className="relative h-8 rounded bg-gray-900/80 overflow-hidden">
+        <div className="absolute inset-y-0 left-0 bg-gray-800/90" style={{ width: `${inPct}%` }} />
+        <div
+          className="absolute inset-y-0 bg-amber-500/35 border-x border-amber-400/50"
+          style={{ left: `${inPct}%`, width: `${Math.max(0, outPct - inPct)}%` }}
+        />
+        <div
+          className="absolute inset-y-0 right-0 bg-gray-800/90"
+          style={{ width: `${100 - outPct}%` }}
+        />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-[10px] text-amber-200/80 font-medium">
+            {trim.playableSec.toFixed(1)}s playable
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-[10px] text-gray-500 uppercase tracking-wide mb-1 block">Start</label>
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              disabled={disabled}
+              onClick={() => setIn(trim.inSec - 0.5)}
+            >
+              -0.5s
+            </Button>
+            <Input
+              value={formatTrimTimeSec(trim.inSec)}
+              disabled={disabled}
+              className="h-8 text-xs font-mono"
+              onChange={(e) => {
+                const parsed = parseTrimTimeInput(e.target.value)
+                if (parsed != null) setIn(parsed)
+              }}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              disabled={disabled}
+              onClick={() => setIn(trim.inSec + 0.5)}
+            >
+              +0.5s
+            </Button>
+          </div>
+          <Slider
+            className="mt-2"
+            value={[trim.inSec]}
+            min={0}
+            max={Math.max(minGap, trim.outSec - minGap)}
+            step={0.1}
+            disabled={disabled}
+            onValueChange={([v]) => setIn(v)}
+          />
+        </div>
+        <div>
+          <label className="text-[10px] text-gray-500 uppercase tracking-wide mb-1 block">End</label>
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              disabled={disabled}
+              onClick={() => setOut(trim.outSec - 0.5)}
+            >
+              -0.5s
+            </Button>
+            <Input
+              value={formatTrimTimeSec(trim.outSec)}
+              disabled={disabled}
+              className="h-8 text-xs font-mono"
+              onChange={(e) => {
+                const parsed = parseTrimTimeInput(e.target.value)
+                if (parsed != null) setOut(parsed)
+              }}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              disabled={disabled}
+              onClick={() => setOut(trim.outSec + 0.5)}
+            >
+              +0.5s
+            </Button>
+          </div>
+          <Slider
+            className="mt-2"
+            value={[trim.outSec]}
+            min={trim.inSec + minGap}
+            max={maxEnd}
+            step={0.1}
+            disabled={disabled}
+            onValueChange={([v]) => setOut(v)}
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-500">
+        <span>
+          Source {source.toFixed(1)}s · Trimmed {trim.playableSec.toFixed(1)}s
+          {trim.isTrimmed ? ' · Trimmed' : ''}
+        </span>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            disabled={disabled || !trim.isTrimmed}
+            onClick={onReset}
+            className="text-amber-400 hover:text-amber-300 disabled:opacity-40"
+          >
+            Reset trim
+          </button>
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={onPreview}
+            className="text-cyan-400 hover:text-cyan-300"
+          >
+            Preview beat
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function SegmentBeatTrimControls({
+  segments,
+  selectedSegmentId,
+  onSelectSegment,
+  measuredDurations,
+  onTrimChange,
+  onResetTrim,
+  onPreviewBeat,
+  disabled,
+  isCollapsed = false,
+  onToggleCollapse,
+}: {
+  segments: SceneSegment[]
+  selectedSegmentId: string | null
+  onSelectSegment: (segmentId: string) => void
+  measuredDurations: Record<string, number>
+  onTrimChange: (segmentId: string, inSec: number, outSec: number) => void
+  onResetTrim: (segmentId: string) => void
+  onPreviewBeat: (segmentId: string) => void
+  disabled?: boolean
+  isCollapsed?: boolean
+  onToggleCollapse?: () => void
+}) {
+  if (segments.length === 0) return null
+
+  const selected =
+    segments.find((s) => s.segmentId === selectedSegmentId) ?? segments[0]
+
+  return (
+    <div className="bg-gray-800/50 rounded-lg">
+      <div
+        className={`flex items-center justify-between p-3 ${onToggleCollapse ? 'cursor-pointer hover:bg-white/5' : ''}`}
+        onClick={onToggleCollapse}
+      >
+        <div className="flex items-center gap-2">
+          {onToggleCollapse && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onToggleCollapse()
+              }}
+              className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+            >
+              {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+            </button>
+          )}
+          <Scissors className="w-4 h-4 text-amber-400" />
+          <span className="text-xs text-gray-400 uppercase tracking-wide">Beat Trim</span>
+          <span className="text-xs text-gray-500">{segments.length} beats</span>
+        </div>
+      </div>
+
+      {!isCollapsed && (
+        <div className="px-3 pb-3 space-y-3">
+          <p className="text-[11px] text-gray-500 leading-relaxed">
+            Set where each beat video starts and ends in the source file. Trimming is non-destructive.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {segments.map((seg, i) => {
+              const source = resolveSegmentSourceDurationSec(
+                seg,
+                measuredDurations[seg.segmentId]
+              )
+              const { isTrimmed } = resolveVideoTrimWindow(seg, source)
+              const active = seg.segmentId === selected.segmentId
+              return (
+                <button
+                  key={seg.segmentId}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => onSelectSegment(seg.segmentId)}
+                  className={cn(
+                    'px-2.5 py-1 rounded text-xs border transition-colors',
+                    active
+                      ? 'bg-amber-600/20 border-amber-500/40 text-amber-200'
+                      : 'bg-gray-700/40 border-gray-600/40 text-gray-400 hover:text-gray-200'
+                  )}
+                >
+                  Beat #{i + 1}
+                  {isTrimmed && (
+                    <span className="ml-1 text-[9px] uppercase text-amber-400/80">Trimmed</span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+          <BeatTrimRangeEditor
+            segment={selected}
+            sourceDurationSec={resolveSegmentSourceDurationSec(
+              selected,
+              measuredDurations[selected.segmentId]
+            )}
+            measuredDurations={measuredDurations}
+            onTrimChange={(inSec, outSec) => onTrimChange(selected.segmentId, inSec, outSec)}
+            onReset={() => onResetTrim(selected.segmentId)}
+            onPreview={() => onPreviewBeat(selected.segmentId)}
+            disabled={disabled}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
 /**
  * SegmentAudioControls - Mute/unmute and volume control for individual segment audio
  */
@@ -2862,7 +3213,8 @@ export function SceneProductionMixer({
       const fromTiming = computePlaybackSegmentDuration(buildSegmentDurationInput(segment))
       const measured = measuredSegmentDurations[segment.segmentId]
       if (measured != null && Number.isFinite(measured) && measured > 0) {
-        return Math.max(measured, fromTiming)
+        const trimmed = resolveVideoTrimWindow(segment, measured).playableSec
+        return Math.max(trimmed, fromTiming)
       }
       return fromTiming
     },
@@ -2931,6 +3283,49 @@ export function SceneProductionMixer({
     },
     [segments, onSegmentsChange]
   )
+
+  const [selectedTrimSegmentId, setSelectedTrimSegmentId] = useState<string | null>(null)
+  const [focusBeatSegmentId, setFocusBeatSegmentId] = useState<string | null>(null)
+
+  const handleSegmentTrimChange = useCallback(
+    (segmentId: string, inSec: number, outSec: number) => {
+      const seg = segments.find((s) => s.segmentId === segmentId)
+      if (!seg) return
+      const source = resolveSegmentSourceDurationSec(
+        seg,
+        measuredSegmentDurations[segmentId]
+      )
+      onSegmentsChange?.(
+        segments.map((s) =>
+          s.segmentId === segmentId
+            ? {
+                ...s,
+                videoTrimInSec: inSec > 0.001 ? inSec : undefined,
+                videoTrimOutSec: outSec < source - 0.001 ? outSec : undefined,
+              }
+            : s
+        )
+      )
+    },
+    [segments, measuredSegmentDurations, onSegmentsChange]
+  )
+
+  const handleSegmentTrimReset = useCallback(
+    (segmentId: string) => {
+      onSegmentsChange?.(
+        segments.map((seg) =>
+          seg.segmentId === segmentId
+            ? { ...seg, videoTrimInSec: undefined, videoTrimOutSec: undefined }
+            : seg
+        )
+      )
+    },
+    [segments, onSegmentsChange]
+  )
+
+  const handlePreviewTrimBeat = useCallback((segmentId: string) => {
+    setFocusBeatSegmentId(segmentId)
+  }, [])
 
   
   // === Theater Mode State ===
@@ -3015,6 +3410,7 @@ export function SceneProductionMixer({
     watermark: boolean
     watermarkCrop: boolean
     beatVideo: boolean
+    beatTrim: boolean
     segmentAudio: boolean
     narration: boolean
     dialogue: boolean
@@ -3027,6 +3423,7 @@ export function SceneProductionMixer({
       watermark: true,
       watermarkCrop: true,
       beatVideo: true,
+      beatTrim: true,
       segmentAudio: true,
       narration: true,
       dialogue: true,
@@ -3429,6 +3826,19 @@ export function SceneProductionMixer({
   const completeRenderableSegments = useMemo(() => {
     return segments.filter((s) => s.status === 'COMPLETE' && s.activeAssetUrl)
   }, [segments])
+
+  useEffect(() => {
+    if (completeRenderableSegments.length === 0) {
+      setSelectedTrimSegmentId(null)
+      return
+    }
+    if (
+      !selectedTrimSegmentId ||
+      !completeRenderableSegments.some((s) => s.segmentId === selectedTrimSegmentId)
+    ) {
+      setSelectedTrimSegmentId(completeRenderableSegments[0].segmentId)
+    }
+  }, [completeRenderableSegments, selectedTrimSegmentId])
   
   // Rendered segments (includes both video and image assets)
   const renderedSegments = useMemo(() => {
@@ -3667,6 +4077,11 @@ export function SceneProductionMixer({
       const segmentData = renderedSegments.map(seg => {
         const audioConfig = segmentAudioConfigs[seg.segmentId] || { includeAudio: true, volume: 1.0, postSegmentPause: 0 }
         const hasBackgroundStem = !!seg.stemSeparation?.backgroundStemUrl
+        const sourceDur = resolveSegmentSourceDurationSec(
+          seg,
+          measuredSegmentDurations[seg.segmentId]
+        )
+        const trimWin = resolveVideoTrimWindow(seg, sourceDur)
         return {
           segmentId: seg.segmentId,
           sequenceIndex: seg.sequenceIndex,
@@ -3675,8 +4090,12 @@ export function SceneProductionMixer({
           endTime: seg.endTime,
           audioSource: (audioConfig.includeAudio && (!useStemDubbingPolicy || includeSpeechStem || !hasBackgroundStem)) ? 'original' : 'none',
           audioVolume: audioConfig.volume,
-          pauseDuration: audioTracks?.dialogue?.enabled ? Math.max(0, getPlaybackSegmentDuration(seg) - (seg.actualVideoDuration ?? seg.imageDuration ?? (seg.endTime - seg.startTime) ?? 4)) : 0.0,
+          pauseDuration: audioTracks?.dialogue?.enabled
+            ? Math.max(0, getPlaybackSegmentDuration(seg) - trimWin.playableSec)
+            : 0.0,
           watermarkCropPercent: seg.watermarkCropPercent,
+          videoTrimInSec: trimWin.inSec > 0.001 ? trimWin.inSec : undefined,
+          videoTrimOutSec: trimWin.isTrimmed ? trimWin.outSec : undefined,
         }
       })
       
@@ -4034,6 +4453,11 @@ export function SceneProductionMixer({
           hasEndFrame: !!endFrameUrl,
           volume: audioConfig?.volume ?? 1.0,
         })
+        const sourceDur = resolveSegmentSourceDurationSec(
+          seg,
+          measuredSegmentDurations[seg.segmentId]
+        )
+        const trimWin = resolveVideoTrimWindow(seg, sourceDur)
         return {
           segmentId: seg.segmentId,
           assetUrl: seg.activeAssetUrl!,
@@ -4050,6 +4474,8 @@ export function SceneProductionMixer({
           volume: (audioConfig?.volume ?? 1.0) * masterSegmentVolume,
           includeVideoAudio, // Pass through to LocalRenderService for video audio extraction
           watermarkCropPercent: seg.watermarkCropPercent,
+          videoTrimInSec: trimWin.inSec > 0.001 ? trimWin.inSec : undefined,
+          videoTrimOutSec: trimWin.isTrimmed ? trimWin.outSec : undefined,
         }
       })
       
@@ -4329,17 +4755,23 @@ export function SceneProductionMixer({
     try {
       // Build segments for headless render
       const segmentsForHeadless = videoSegments.map(seg => {
-        const duration = seg.actualVideoDuration ?? (seg.endTime - seg.startTime)
         const audioConfig = segmentAudioConfigs[seg.segmentId]
         const includeVideoAudio = audioConfig?.includeAudio ?? true
+        const sourceDur = resolveSegmentSourceDurationSec(
+          seg,
+          measuredSegmentDurations[seg.segmentId]
+        )
+        const trimWin = resolveVideoTrimWindow(seg, sourceDur)
         return {
           segmentId: seg.segmentId,
           assetUrl: seg.activeAssetUrl!,
           assetType: (seg.assetType || 'video') as 'video' | 'image',
           startTime: seg.startTime,
-          duration,
+          duration: getPlaybackSegmentDuration(seg),
           volume: includeVideoAudio ? (audioConfig?.volume ?? 1.0) * masterSegmentVolume : 0,
           watermarkCropPercent: seg.watermarkCropPercent,
+          videoTrimInSec: trimWin.inSec > 0.001 ? trimWin.inSec : undefined,
+          videoTrimOutSec: trimWin.isTrimmed ? trimWin.outSec : undefined,
         }
       })
       
@@ -4719,6 +5151,8 @@ export function SceneProductionMixer({
                 }}
                 onDeleteOverlay={deleteOverlay}
                 musicFileDuration={musicFileDuration}
+                focusBeatSegmentId={focusBeatSegmentId}
+                onFocusBeatHandled={() => setFocusBeatSegmentId(null)}
               />
               
               {/* Timeline Overview - directly under video for spatial continuity */}
@@ -5515,6 +5949,21 @@ export function SceneProductionMixer({
                   disabled={isRendering || !onSegmentsChange}
                   isCollapsed={collapsedSections.beatVideo}
                   onToggleCollapse={() => toggleSection('beatVideo')}
+                />
+              )}
+
+              {productionTarget.streamType !== 'animatic' && completeRenderableSegments.length > 0 && (
+                <SegmentBeatTrimControls
+                  segments={completeRenderableSegments}
+                  selectedSegmentId={selectedTrimSegmentId}
+                  onSelectSegment={setSelectedTrimSegmentId}
+                  measuredDurations={measuredSegmentDurations}
+                  onTrimChange={handleSegmentTrimChange}
+                  onResetTrim={handleSegmentTrimReset}
+                  onPreviewBeat={handlePreviewTrimBeat}
+                  disabled={isRendering || !onSegmentsChange}
+                  isCollapsed={collapsedSections.beatTrim}
+                  onToggleCollapse={() => toggleSection('beatTrim')}
                 />
               )}
 

@@ -51,6 +51,10 @@ export interface LocalRenderSegment {
   includeVideoAudio?: boolean
   /** Uniform frame crop % (2–10) for uploaded video; preserves aspect ratio */
   watermarkCropPercent?: number
+  /** Seconds into source MP4 where beat playback begins */
+  videoTrimInSec?: number
+  /** Seconds into source MP4 where beat playback ends */
+  videoTrimOutSec?: number
 }
 
 export interface LocalRenderAudioClip {
@@ -856,8 +860,9 @@ export class LocalRenderService {
               source.connect(gainNode)
               gainNode.connect(offlineCtx.destination)
               
-              // Schedule at the segment's start time
-              source.start(segment.startTime, 0, segment.duration)
+              // Schedule at the segment's start time (respect source trim window)
+              const trimIn = segment.videoTrimInSec ?? 0
+              source.start(segment.startTime, trimIn, segment.duration)
               
               console.log('[LocalRender] Video audio scheduled in offline context:', {
                 segmentId: segment.segmentId,
@@ -1537,10 +1542,16 @@ export class LocalRenderService {
     
     // If video, seek to correct time and WAIT for seek to complete
     if (asset instanceof HTMLVideoElement) {
+      const trimIn = segment.videoTrimInSec ?? 0
+      const trimOut =
+        segment.videoTrimOutSec ??
+        (Number.isFinite(asset.duration) && asset.duration > 0
+          ? asset.duration
+          : trimIn + segment.duration)
       const dur = segment.duration
       const localSeek = Math.min(
-        Math.max(localTime, 0),
-        Math.max(0, dur - 0.001)
+        Math.max(trimIn + localTime, trimIn),
+        Math.max(trimIn, trimOut - 0.001)
       )
       if (Math.abs(asset.currentTime - localSeek) > 0.04) {
         await new Promise<void>((resolve) => {

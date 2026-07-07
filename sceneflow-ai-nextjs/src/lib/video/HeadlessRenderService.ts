@@ -30,6 +30,8 @@ export interface HeadlessRenderSegment {
   volume?: number
   /** Uniform frame crop % (2–10) for uploaded video; preserves aspect ratio */
   watermarkCropPercent?: number
+  videoTrimInSec?: number
+  videoTrimOutSec?: number
 }
 
 export interface HeadlessRenderAudioClip {
@@ -568,8 +570,9 @@ export class HeadlessRenderService {
         if (activeSegment.assetType === 'video') {
           const video = videoElements[activeSegment.segmentId];
           if (video) {
-            // Seek video to exact frame
-            video.currentTime = localTime;
+            // Seek video to exact frame (respect source trim in-point)
+            const trimIn = activeSegment.videoTrimInSec || 0;
+            video.currentTime = trimIn + localTime;
             
             // Wait for seek to complete
             await new Promise(resolve => {
