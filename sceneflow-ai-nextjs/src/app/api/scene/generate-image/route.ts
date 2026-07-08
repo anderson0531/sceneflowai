@@ -30,6 +30,9 @@ import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
 import {
   buildCharacterHairAnchor,
   buildCharacterHairDescription,
+  beatFrameNeedsHairLock,
+  BEAT_FRAME_CANDID_ACTION_CONSTRAINT,
+  isExplicitDirectToCameraBeat,
   buildDualReferenceNegativeTerms,
   buildFramingAwareIdentityBlock,
   buildHairCompositionLock,
@@ -83,6 +86,7 @@ import { getArtStyleNegativeTerms, getArtStylePromptSuffix } from '@/lib/vision/
 import { editImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
 import { buildEndFramePrompt } from '@/lib/scene/deriveSegmentsFromBeats'
 import { buildPreVisEndFrameEditInstruction } from '@/lib/vision/framePromptBaseline'
+import { buildSceneStagingText } from '@/lib/vision/frameGenerationContext'
 import {
   isExpressImageRateLimitError,
   isTransientExpressImageError,
@@ -853,7 +857,9 @@ export async function POST(req: NextRequest) {
           const beats = getSceneBeats(scene as Record<string, unknown>)
           const beat = beats[effectiveBeatIndex]
           const beatAction = beat?.actionDescription?.trim() || beat?.line?.trim() || ''
-          fullSceneContext = beatAction || scene.action || scene.visualDescription || scene.heading || ''
+          const staging = buildSceneStagingText(scene)
+          const base = beatAction || scene.action || scene.visualDescription || scene.heading || ''
+          fullSceneContext = staging ? `${base}\n\nScene staging: ${staging}` : base
           console.log('[Scene Image] Using beat-primary context for beat frame')
         } else if (sceneDirectionText && sceneDirectionText.trim()) {
           fullSceneContext = sceneDirectionText
@@ -880,7 +886,7 @@ export async function POST(req: NextRequest) {
         console.log('[Scene Image] Scene context established:', {
           hasVisualDescription: !!scene.visualDescription,
           hasAction: !!scene.action,
-          hasSceneDirection: !!sceneDirectionText,
+          hasSceneDirection: !!(scene.sceneDirection || scene.detailedDirection || sceneDirectionText),
           hasCustomPrompt: !!customPrompt,
           contextLength: fullSceneContext.length,
           sceneIndex: sceneIndex
@@ -931,6 +937,8 @@ export async function POST(req: NextRequest) {
           beatAction: beatForEmotion.actionDescription,
         })
       : ''
+    const beatFrameHairLockNeeded =
+      isBeatFrame && beatFrameNeedsHairLock(fullSceneContext, effectiveShotType)
     const characterReferences = characterObjects.map((char: any, idx: number) => {
       // Prefer Gemini Vision description over manual description
       const rawDescription = char.visionDescription || char.appearanceDescription || 
@@ -1073,22 +1081,21 @@ export async function POST(req: NextRequest) {
 
       const appearanceSource =
         char.appearanceDescription || char.visionDescription || char.description || ''
-      const hairAnchor = buildCharacterHairAnchor({
+      const rawHairAnchor = buildCharacterHairAnchor({
         hairStyle: char.hairStyle,
         hairColor: char.hairColor,
         appearanceDescription: appearanceSource,
         visionDescription: char.visionDescription,
       })
+      const hasIdentityReferenceImage = !!(identityImageUrl || wardrobeDiptychUrl)
+      const hairAnchor =
+        hasIdentityReferenceImage && !beatFrameHairLockNeeded
+          ? undefined
+          : rawHairAnchor || undefined
       const hairDescription =
         buildCharacterHairDescription(char) ??
         (hairAnchor ? hairAnchor.replace(/ matching identity reference$/i, '') : undefined)
 
-      if (!char.hairStyle?.trim() && hairAnchor) {
-        console.warn(
-          `[Scene Image] ${char.name} missing hairStyle field; using hair anchor extracted from appearance metadata`
-        )
-      }
-      
       // Build wardrobe description if available (using effective wardrobe, which may be overridden)
       // When a costume reference image exists, we minimize wardrobe text since the model sees it
       let wardrobeDescription = ''
@@ -1446,7 +1453,7 @@ export async function POST(req: NextRequest) {
                   : ref.linkingDescription)
             )
             .join(' and ')
-          optimizedPrompt = `Cinematic film still. ${subjectIntroductions} performing the following moment in-scene (candid, not posed): ${aiPromptBody}`
+          optimizedPrompt = `${BEAT_FRAME_CANDID_ACTION_CONSTRAINT} Cinematic film still. ${subjectIntroductions} performing the following moment in-scene (candid, not posed): ${aiPromptBody}`
         } else {
           optimizedPrompt = aiResult.prompt
         }
@@ -1663,7 +1670,7 @@ export async function POST(req: NextRequest) {
     const isDirectAddressDialogue =
       isBeatFrame &&
       beatKindForIntelligence === 'dialogue' &&
-      !!(beatForEmotion?.character?.trim() || beatForEmotion?.line?.trim())
+      isExplicitDirectToCameraBeat(beatForEmotion)
     if (isBeatFrame && !isDirectAddressDialogue) {
       negativePromptParts.push(BEAT_FRAME_ANTI_POSE_NEGATIVE_PROMPT)
     }
@@ -2004,7 +2011,8 @@ export async function POST(req: NextRequest) {
           geminiPrompt += `SCENE PROMPT:\n${remappedOptimizedPrompt}\n\n`
           
           geminiPrompt += `CRITICAL REQUIREMENTS:\n`
-          geminiPrompt += `- Preserve character identity from identity reference images exactly (bone structure, features, hair, skin tone, age, ethnicity — NOT facial expression)\n`
+          geminiPrompt += `- ${BEAT_FRAME_CANDID_ACTION_CONSTRAINT}\n`
+          geminiPrompt += `- Match character identity from identity reference images (bone structure, features, hair, skin tone, age, ethnicity — NOT facial expression)\n`
           geminiPrompt += `- ${EXPRESSION_OVERRIDE_INSTRUCTION}\n`
           const beatDirectedEmotionSection = buildBeatDirectedEmotionPromptSection(
             characterReferences.map((ref: { name: string; directedEmotion?: string }) => ({

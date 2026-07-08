@@ -751,6 +751,12 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
           params.sceneWardrobeOverrides
         ) : null
         
+        const hasIdentityReference = !!(
+          fullRef?.identityReferenceId ||
+          fullRef?.hasDualReferences ||
+          fullRef?.hasWardrobeDiptych
+        )
+
         return {
           name: ref.name,
           firstName: ref.name.split(' ')[0],
@@ -764,15 +770,22 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
           appearanceDescription: fullRef?.appearanceDescription,
           hairDescription:
             fullRef?.hairDescription ??
-            buildCharacterHairDescription({
-              hairStyle: fullRef?.hairStyle,
-              hairColor: fullRef?.hairColor,
-            }),
-          hairAnchor: buildCharacterHairAnchor({
-            hairStyle: fullRef?.hairStyle,
-            hairColor: fullRef?.hairColor,
-            appearanceDescription: fullRef?.appearanceDescription,
-          }),
+            (hasIdentityReference
+              ? undefined
+              : buildCharacterHairDescription({
+                  hairStyle: fullRef?.hairStyle,
+                  hairColor: fullRef?.hairColor,
+                })),
+          hairAnchor:
+            fullRef?.hairAnchor !== undefined
+              ? fullRef.hairAnchor
+              : hasIdentityReference
+                ? undefined
+                : buildCharacterHairAnchor({
+                    hairStyle: fullRef?.hairStyle,
+                    hairColor: fullRef?.hairColor,
+                    appearanceDescription: fullRef?.appearanceDescription,
+                  }),
         }
       })
     
@@ -792,7 +805,7 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
     // PHASE 1: Build SUBJECT & WARDROBE section (placed FIRST)
     // REFERENCE-FIRST STRATEGY:
     // - With reference image: use person [N] token; face/body from image
-    // - Hairstyle lock text is allowed alongside identity refs (styling constraint, not identity prose)
+    // - Hairstyle lock text only when hairAnchor/hairDescription is explicitly set (injury/wide-shot cases)
     const subjectWardrobeDescriptions: string[] = []
     characterRefs.forEach(ref => {
       const fullRef = params.characterReferences!.find((r) => r.name === ref.name)
@@ -816,7 +829,7 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
         if (hasReferenceImage) {
           subjectClause = token
           console.log(
-            `[Prompt Optimizer] Reference-first for ${ref.name}: token "${token}" with hairstyle lock when available`
+            `[Prompt Optimizer] Reference-first for ${ref.name}: token "${token}"`
           )
         } else if (ref.appearanceDescription) {
           const sentences = ref.appearanceDescription.split(/[.!?]+/).filter(s => s.trim())

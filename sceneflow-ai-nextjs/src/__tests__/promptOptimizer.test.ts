@@ -99,7 +99,7 @@ Action/Framing: person [1] clutches a file.`
     expect(filtered.map((r) => r.name)).toEqual(['Elara Vance'])
   })
 
-  it('includes hair lock in Subject & Wardrobe when identity ref and hairStyle exist', () => {
+  it('includes hair lock in Subject & Wardrobe when injury beat and hairAnchor is set', () => {
     const prompt = optimizePromptForImagen({
       sceneAction:
         'Close-up of person [1] with bloodshot eyes and a faint bruise on her left temple.',
@@ -115,8 +115,7 @@ Action/Framing: person [1] clutches a file.`
           promptToken: 'person [1]',
           linkingDescription: 'person [1]',
           defaultWardrobe: 'black compression top and leggings',
-          hairStyle: 'swept back ponytail',
-          hairColor: 'dark auburn',
+          hairAnchor: 'dark auburn swept back ponytail hair matching identity reference',
         },
       ],
     })
@@ -124,6 +123,31 @@ Action/Framing: person [1] clutches a file.`
     expect(prompt).toContain('Subject & Wardrobe:')
     expect(prompt).toContain('hair: dark auburn swept back ponytail hair matching identity reference')
     expect(prompt).toContain('match identity reference exactly')
+  })
+
+  it('omits hair lock text when identity ref exists without explicit hairAnchor', () => {
+    const prompt = optimizePromptForImagen({
+      sceneAction: 'Medium shot. person [1] walks through her living room scanning every detail.',
+      visualDescription: 'Medium shot. person [1] walks through her living room scanning every detail.',
+      artStyle: 'photorealistic',
+      characterReferences: [
+        {
+          referenceId: 1,
+          name: 'Elara',
+          description: 'Woman in her early 30s',
+          identityReferenceId: 1,
+          hasDualReferences: true,
+          promptToken: 'person [1]',
+          linkingDescription: 'person [1]',
+          defaultWardrobe: 'casual outfit',
+          hairStyle: 'dark brown wavy',
+          hairColor: 'dark brown',
+        },
+      ],
+    })
+
+    expect(prompt).not.toContain('matching identity reference')
+    expect(prompt).not.toContain('hair: dark brown')
   })
 
   it('adds composition lock for temple bruise beats', () => {

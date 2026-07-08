@@ -253,6 +253,24 @@ export function remapReferenceNumbersInPrompt(
     return `Refs ${remapped.join(', ')}`
   })
 
+  const droppedIndices = [...indexMap.entries()]
+    .filter(([, mapped]) => mapped == null)
+    .map(([old]) => old)
+
+  if (droppedIndices.length > 0) {
+    console.warn(
+      `[Scene Image] Dropped reference indices from prompt after tier cap: ${droppedIndices.join(', ')}`
+    )
+    const droppedPattern = new RegExp(
+      `(?:Ref(?:erence)?\\s*[Ii]mage\\s*\\[?(${droppedIndices.join('|')})\\]?|person\\s*\\[(${droppedIndices.join('|')})\\])`,
+      'i'
+    )
+    result = result
+      .split('\n')
+      .filter((line) => !droppedPattern.test(line))
+      .join('\n')
+  }
+
   return result
     .replace(/\s{2,}/g, ' ')
     .replace(/\s+([,.])/g, '$1')

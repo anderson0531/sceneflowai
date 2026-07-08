@@ -160,6 +160,29 @@ export function beatActionNeedsHairCompositionLock(text: string): boolean {
   return INJURY_FRAMING_PATTERN.test(text)
 }
 
+/** True when beat context needs explicit hair-lock text alongside an identity reference image. */
+export function beatFrameNeedsHairLock(sceneContext: string, shotType?: string): boolean {
+  return (
+    beatActionNeedsHairCompositionLock(sceneContext) ||
+    (!!shotType && WIDE_SHOT_KEYWORDS.test(shotType))
+  )
+}
+
+export const BEAT_FRAME_CANDID_ACTION_CONSTRAINT =
+  'Subjects caught mid-action, unaware of the camera — no posing, no lens eye-contact, no headshot or turnaround framing.'
+
+/** Beat explicitly calls for on-camera address (skip anti-pose negatives). */
+export function isExplicitDirectToCameraBeat(beat: {
+  line?: string
+  actionDescription?: string
+} | null | undefined): boolean {
+  if (!beat) return false
+  const text = [beat.line, beat.actionDescription].filter(Boolean).join(' ')
+  return /\bdirect[- ]?to[- ]?camera\b|\baddresses?\s+(the\s+)?camera\b|\blooking\s+at\s+(the\s+)?camera\b/i.test(
+    text
+  )
+}
+
 /** Lock hairstyle when beat describes forehead/temple injuries — prevents unprompted hair restyling. */
 export function buildHairCompositionLock(
   beatAction: string,

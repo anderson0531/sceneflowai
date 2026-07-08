@@ -333,6 +333,28 @@ describe('referenceLimits', () => {
     expect(output).not.toContain('person [3]')
   })
 
+  it('remapReferenceNumbersInPrompt removes lines for dropped reference indices', () => {
+    const indexMap = new Map<number, number | null>([
+      [1, 1],
+      [2, 2],
+      [16, null],
+    ])
+
+    const input = [
+      '- SUBJECT REFERENCE (Ref Image [1]): Identity',
+      '- WARDROBE REFERENCE (Ref Image [2]): Outfit',
+      '- LOCATION REFERENCE (Ref Image [16]): Apartment establishing shot',
+      'Medium shot with person [1] in the apartment.',
+    ].join('\n')
+
+    const output = remapReferenceNumbersInPrompt(input, indexMap)
+
+    expect(output).toContain('Ref Image [1]')
+    expect(output).toContain('Ref Image [2]')
+    expect(output).not.toContain('Ref Image [16]')
+    expect(output).not.toContain('LOCATION REFERENCE')
+  })
+
   it('remapReferenceNumbersInPrompt updates person and Refs tokens', () => {
     const indexMap = new Map<number, number | null>([
       [1, 1],

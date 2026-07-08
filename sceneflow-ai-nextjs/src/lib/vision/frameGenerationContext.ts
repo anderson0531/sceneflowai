@@ -40,6 +40,21 @@ export function buildSceneDirectionText(scene: any): string {
   return parts.join('\n')
 }
 
+/** Staging-relevant prose from scene direction (talent blocking/actions/emotion + scene description). */
+export function buildSceneStagingText(scene: any): string {
+  if (!scene) return ''
+  const parts: string[] = []
+  const dir = scene.sceneDirection ?? scene.detailedDirection
+  if (dir && typeof dir === 'object') {
+    if (typeof dir.sceneDescription === 'string' && dir.sceneDescription.trim()) {
+      parts.push(dir.sceneDescription.trim())
+    }
+  }
+  const talentText = talentTextFromScene(scene)
+  if (talentText.trim()) parts.push(talentText.trim())
+  return parts.join(' ')
+}
+
 function talentTextFromScene(scene: any): string {
   const t = scene?.sceneDirection?.talent ?? scene?.detailedDirection?.talent
   if (!t) return ''
