@@ -87,6 +87,7 @@ import { editImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
 import { buildEndFramePrompt } from '@/lib/scene/deriveSegmentsFromBeats'
 import { buildPreVisEndFrameEditInstruction } from '@/lib/vision/framePromptBaseline'
 import { buildSceneStagingText } from '@/lib/vision/frameGenerationContext'
+import { resolveBeatFrameGenerationContext } from '@/lib/vision/beatFrameGenerationContext'
 import {
   isExpressImageRateLimitError,
   isTransientExpressImageError,
@@ -913,11 +914,39 @@ export async function POST(req: NextRequest) {
     // Fetch available project references for the AI to choose from
     const projectObjectRefs = project?.metadata?.visionPhase?.references?.objectReferences || []
     const projectLocationRefs = project?.metadata?.visionPhase?.references?.locationReferences || []
-    
+
+    if (isBeatFrame && !matchedLocationReference && resolvedScene) {
+      const beatsForLocation = getSceneBeats(resolvedScene as Record<string, unknown>)
+      const beatForLocation = beatsForLocation[effectiveBeatIndex]
+      if (beatForLocation) {
+        const autoCtx = resolveBeatFrameGenerationContext({
+          scene: resolvedScene as Record<string, unknown>,
+          beat: beatForLocation,
+          sceneIndex,
+          projectCharacters,
+          locationReferences: projectLocationRefs,
+          objectReferences: projectObjectRefs,
+        })
+        if (autoCtx.locationRefId) {
+          const autoLoc = projectLocationRefs.find(
+            (loc: { id?: string }) => loc.id === autoCtx.locationRefId
+          )
+          if (autoLoc?.imageUrl) {
+            matchedLocationReference = autoLoc
+            console.log('[Scene Image] Beat frame auto-selected location from scene assignment:', {
+              location: autoLoc.location,
+              confidence: autoCtx.locationMatchConfidence,
+              sceneIndex,
+            })
+          }
+        }
+      }
+    }
+
     // We pass all available references to the AI, and let it filter them.
     // If the user manually provided references (objectReferences or locationReferences), we bypass auto-detection for those categories.
     const autoDetectObjects = detectedObjectReferences.length === 0 && !skipObjectAutoDetection
-    const autoDetectLocations = !matchedLocationReference
+    let autoDetectLocations = !matchedLocationReference
     
     // Build character references using visionDescription (preferred) or fallback descriptions
     // IMPORTANT: referenceId is ONLY assigned to characters with GCS images

@@ -50,6 +50,72 @@ describe('resolveBeatFrameGenerationContext', () => {
     expect(resolved.characterIds).toContain('c1')
   })
 
+  it('auto-selects location from sceneNumbers assignment over heading match', () => {
+    const assignedLocations: LocationReference[] = [
+      {
+        id: 'loc-assigned',
+        location: 'PODCAST STUDIO',
+        locationDisplay: 'INT. PODCAST STUDIO - DAY',
+        imageUrl: 'https://blob.example/studio.jpg',
+        sourceSceneIndex: 2,
+        sourceSceneHeading: 'INT. PODCAST STUDIO - DAY',
+        pinnedAt: new Date().toISOString(),
+        sceneNumbers: [3],
+      },
+      ...locations,
+    ]
+    const scene = { heading: 'INT. KITCHEN - DAY' }
+    const resolved = resolveBeatFrameGenerationContext({
+      scene,
+      sceneIndex: 2,
+      beat: actionBeat(),
+      projectCharacters: characters,
+      locationReferences: assignedLocations,
+      objectReferences: [],
+    })
+
+    expect(resolved.locationRefId).toBe('loc-assigned')
+    expect(resolved.locationMatchConfidence).toBe('assigned')
+    expect(resolved.locationName).toBe('PODCAST STUDIO')
+  })
+
+  it('warns when multiple locations are assigned to the same scene', () => {
+    const assignedLocations: LocationReference[] = [
+      {
+        id: 'loc-a',
+        location: 'STUDIO A',
+        locationDisplay: 'INT. STUDIO A',
+        imageUrl: 'https://blob.example/a.jpg',
+        sourceSceneIndex: 0,
+        sourceSceneHeading: 'INT. STUDIO A',
+        pinnedAt: new Date().toISOString(),
+        sceneNumbers: [1],
+      },
+      {
+        id: 'loc-b',
+        location: 'STUDIO B',
+        locationDisplay: 'INT. STUDIO B',
+        imageUrl: 'https://blob.example/b.jpg',
+        sourceSceneIndex: 0,
+        sourceSceneHeading: 'INT. STUDIO B',
+        pinnedAt: new Date().toISOString(),
+        sceneNumbers: [1],
+      },
+    ]
+    const resolved = resolveBeatFrameGenerationContext({
+      scene: { heading: 'INT. STUDIO - DAY' },
+      sceneIndex: 0,
+      beat: actionBeat(),
+      projectCharacters: characters,
+      locationReferences: assignedLocations,
+      objectReferences: [],
+    })
+
+    expect(resolved.locationRefId).toBe('loc-a')
+    expect(resolved.locationMatchConfidence).toBe('assigned')
+    expect(resolved.warnings.some((w) => w.includes('Multiple location references'))).toBe(true)
+  })
+
   it('does not pick bedroom when heading is kitchen', () => {
     const scene = { heading: 'INT. KITCHEN - NIGHT' }
     const resolved = resolveBeatFrameGenerationContext({

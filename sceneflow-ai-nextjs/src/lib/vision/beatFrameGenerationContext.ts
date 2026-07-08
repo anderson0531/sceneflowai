@@ -9,12 +9,14 @@ import { extractLocation } from '@/lib/script/formatSceneHeading'
 import type { BeatReferenceSelection, SceneBeat } from '@/lib/script/segmentTypes'
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
 import {
+  findLocationReferencesAssignedToScene,
   findMatchingLocationReferences,
   isNoTalentSceneForFrames,
+  resolveSceneNumberForLocationMatch,
 } from '@/lib/vision/frameGenerationContext'
 import { resolveWardrobeIdForCharacterInScene } from '@/lib/character/characterReferenceAssembly'
 
-export type LocationMatchConfidence = 'heading' | 'direction' | 'weak' | 'none'
+export type LocationMatchConfidence = 'assigned' | 'heading' | 'direction' | 'weak' | 'none'
 
 export type ResolvedBeatFrameContext = BeatReferenceSelection & {
   locationMatchConfidence: LocationMatchConfidence
@@ -58,10 +60,41 @@ function buildBeatPropMatchText(scene: Record<string, unknown>, beat: SceneBeat)
 
 function pickBestLocationRef(
   scene: Record<string, unknown>,
-  locationRefs: LocationReference[]
-): { id: string | null; confidence: LocationMatchConfidence; name?: string } {
+  locationRefs: LocationReference[],
+  sceneIndex?: number
+): {
+  id: string | null
+  confidence: LocationMatchConfidence
+  name?: string
+  warnings: string[]
+} {
+  const warnings: string[] = []
   const withImages = locationRefs.filter((r) => r.imageUrl)
-  if (!withImages.length) return { id: null, confidence: 'none' }
+  if (!withImages.length) return { id: null, confidence: 'none', warnings }
+
+  const sceneNumber = resolveSceneNumberForLocationMatch(scene, sceneIndex)
+  if (sceneNumber !== undefined) {
+    const assigned = findLocationReferencesAssignedToScene(withImages, sceneNumber)
+    if (assigned.length === 1) {
+      return {
+        id: assigned[0].id,
+        confidence: 'assigned',
+        name: assigned[0].location,
+        warnings,
+      }
+    }
+    if (assigned.length > 1) {
+      warnings.push(
+        `Multiple location references are assigned to Scene ${sceneNumber} — using the first match.`
+      )
+      return {
+        id: assigned[0].id,
+        confidence: 'assigned',
+        name: assigned[0].location,
+        warnings,
+      }
+    }
+  }
 
   const headingLoc = (extractLocation(sceneHeadingText(scene)) || '').toUpperCase()
 
@@ -70,23 +103,23 @@ function pickBestLocationRef(
       const loc = (ref.location || '').toUpperCase()
       const display = (ref.locationDisplay || '').toUpperCase()
       if (loc === headingLoc || loc.includes(headingLoc) || headingLoc.includes(loc)) {
-        return { id: ref.id, confidence: 'heading', name: ref.location }
+        return { id: ref.id, confidence: 'heading', name: ref.location, warnings }
       }
       if (display.includes(headingLoc)) {
-        return { id: ref.id, confidence: 'heading', name: ref.location }
+        return { id: ref.id, confidence: 'heading', name: ref.location, warnings }
       }
     }
   }
 
-  const matches = findMatchingLocationReferences(scene, locationRefs)
+  const matches = findMatchingLocationReferences(scene, locationRefs, sceneIndex)
   if (matches.length > 0) {
     const first = matches[0]
     const ref = withImages.find((r) => r.id === first.id)
     const confidence: LocationMatchConfidence = headingLoc ? 'direction' : 'weak'
-    return { id: first.id, confidence, name: first.name }
+    return { id: first.id, confidence, name: first.name ?? ref?.location, warnings }
   }
 
-  return { id: null, confidence: 'none' }
+  return { id: null, confidence: 'none', warnings }
 }
 
 function resolveBeatCharacters(
@@ -155,12 +188,13 @@ export function resolveBeatFrameGenerationContext(
     }
   }
 
-  const locationPick = pickBestLocationRef(scene, locationReferences)
+  const locationPick = pickBestLocationRef(scene, locationReferences, sceneIndex)
+  warnings.push(...locationPick.warnings)
   if (locationPick.confidence === 'weak') {
     warnings.push('Location match is uncertain — verify the selected environment reference.')
   }
   if (locationPick.confidence === 'none' && locationReferences.some((l) => l.imageUrl)) {
-    warnings.push('No location auto-matched from scene heading — pick one manually if needed.')
+    warnings.push('No location auto-matched — pick one manually if needed.')
   }
   if (locationPick.id) {
     const locRef = locationReferences.find((l) => l.id === locationPick.id)

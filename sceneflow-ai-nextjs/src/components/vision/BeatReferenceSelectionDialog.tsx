@@ -71,12 +71,13 @@ export function BeatReferenceSelectionDialog({
       resolveBeatFrameGenerationContext({
         scene,
         beat,
+        sceneIndex,
         projectCharacters: characters,
         locationReferences,
         objectReferences,
         filmTitle,
       }),
-    [scene, beat, characters, locationReferences, objectReferences, filmTitle]
+    [scene, beat, sceneIndex, characters, locationReferences, objectReferences, filmTitle]
   )
 
   const [selectedCharacterNames, setSelectedCharacterNames] = useState<string[]>([])
@@ -202,6 +203,11 @@ export function BeatReferenceSelectionDialog({
                   {warning}
                 </p>
               ))}
+              {matchConfidence === 'assigned' && selectedLocationRefId && (
+                <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-0">
+                  Location matched from scene assignment
+                </Badge>
+              )}
               {matchConfidence === 'heading' && selectedLocationRefId && (
                 <Badge variant="secondary" className="text-[10px] bg-cyan-500/20 text-cyan-300 border-0">
                   Location matched from scene heading

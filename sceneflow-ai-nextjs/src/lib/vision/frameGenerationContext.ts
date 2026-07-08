@@ -80,24 +80,68 @@ export type ResolvedLocationForFrames = {
   description?: string
 }
 
+/** 1-based scene number for location assignment matching. */
+export function resolveSceneNumberForLocationMatch(
+  scene: Record<string, unknown> | null | undefined,
+  sceneIndex?: number
+): number | undefined {
+  if (!scene) return undefined
+  if (typeof scene.sceneNumber === 'number' && scene.sceneNumber > 0) {
+    return scene.sceneNumber
+  }
+  if (typeof sceneIndex === 'number' && sceneIndex >= 0) {
+    return sceneIndex + 1
+  }
+  return undefined
+}
+
+/** Location refs explicitly assigned to a scene via sceneNumbers. */
+export function findLocationReferencesAssignedToScene(
+  locationRefs: LocationReference[],
+  sceneNumber: number
+): LocationReference[] {
+  return locationRefs.filter(
+    (ref) => !!ref.imageUrl && Array.isArray(ref.sceneNumbers) && ref.sceneNumbers.includes(sceneNumber)
+  )
+}
+
 /**
- * Match project location references to this scene (heading slug + direction text).
+ * Match project location references to this scene (scene assignments, then heading + direction text).
  */
 export function findMatchingLocationReferences(
   scene: any,
-  locationRefs: LocationReference[]
+  locationRefs: LocationReference[],
+  sceneIndex?: number
 ): ResolvedLocationForFrames[] {
   if (!locationRefs?.length) return []
-  const withImages = locationRefs.filter(r => r.imageUrl)
+  const withImages = locationRefs.filter((r) => r.imageUrl)
   if (!withImages.length) return []
+
+  const sceneNumber = resolveSceneNumberForLocationMatch(scene, sceneIndex)
+  const matches: LocationReference[] = []
+  const seen = new Set<string>()
+
+  if (sceneNumber !== undefined) {
+    for (const ref of findLocationReferencesAssignedToScene(withImages, sceneNumber)) {
+      if (!seen.has(ref.id)) {
+        seen.add(ref.id)
+        matches.push(ref)
+      }
+    }
+    if (matches.length > 0) {
+      return matches.map((ref) => ({
+        id: ref.id,
+        name: ref.location,
+        imageUrl: ref.imageUrl,
+        description: ref.description,
+      }))
+    }
+  }
 
   const heading = typeof scene?.heading === 'string' ? scene.heading : scene?.heading?.text || ''
   const fromHeading = extractLocation(heading)
   const directionBlob = `${buildSceneDirectionText(scene)} ${heading}`.toLowerCase()
   const headingLoc = (fromHeading || '').toUpperCase()
-
-  const matches: LocationReference[] = []
-  const seen = new Set<string>()
 
   for (const ref of withImages) {
     const loc = (ref.location || '').toUpperCase()
