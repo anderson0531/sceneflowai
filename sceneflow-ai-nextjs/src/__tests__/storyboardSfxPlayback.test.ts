@@ -130,4 +130,100 @@ describe('buildBeatAlignedStoryboardSfxClips', () => {
     expect(clips[0].startTime).toBe(0)
     expect(clips[1].startTime).toBeCloseTo(4.5, 1)
   })
+
+  it('skips SFX for excluded beats instead of legacy spread over dialogue', () => {
+    const scene = {
+      dialogue: [{ character: 'Sarah', line: 'Hello from beat five.' }],
+      beats: [
+        {
+          beatId: 'bt_a1',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Ignored action one',
+          excluded: true,
+        },
+        {
+          beatId: 'bt_d2',
+          sequenceIndex: 1,
+          kind: 'dialogue',
+          character: 'Sarah',
+          line: 'Earlier line.',
+          audioUrl: 'https://example.com/earlier.mp3',
+          durationSeconds: 2,
+          excluded: true,
+        },
+        {
+          beatId: 'bt_a3',
+          sequenceIndex: 2,
+          kind: 'action',
+          actionDescription: 'Ignored action three',
+          excluded: true,
+        },
+        {
+          beatId: 'bt_d4',
+          sequenceIndex: 3,
+          kind: 'dialogue',
+          character: 'Sarah',
+          line: 'Another ignored line.',
+          audioUrl: 'https://example.com/another.mp3',
+          durationSeconds: 2,
+          excluded: true,
+        },
+        {
+          beatId: 'bt_a5',
+          sequenceIndex: 4,
+          kind: 'action',
+          actionDescription: 'Ignored action five',
+          excluded: true,
+        },
+        {
+          beatId: 'bt_d5',
+          sequenceIndex: 5,
+          kind: 'dialogue',
+          character: 'Sarah',
+          line: 'Hello from beat five.',
+          audioUrl: SARAH_URL,
+          durationSeconds: 3,
+          excluded: true,
+        },
+        {
+          beatId: 'bt_a7',
+          sequenceIndex: 6,
+          kind: 'action',
+          actionDescription: 'Ignored action seven',
+          excluded: true,
+        },
+      ],
+      sfx: [
+        { description: 'SFX one', sourceBeatId: 'bt_a1' },
+        { description: 'SFX three', sourceBeatId: 'bt_a3' },
+        { description: 'SFX five', sourceBeatId: 'bt_a5' },
+        { description: 'SFX seven', sourceBeatId: 'bt_a7' },
+      ],
+      sfxAudio: [SFX_A1, SFX_A2, SFX_A1, SFX_A2],
+    }
+
+    const { visualFrames, voiceClips } = buildBeatFirstPlaybackTimeline(scene, 'en', {
+      [SARAH_URL]: 3,
+      'https://example.com/earlier.mp3': 2,
+      'https://example.com/another.mp3': 2,
+    })
+
+    expect(visualFrames).toHaveLength(0)
+    expect(voiceClips.some((clip) => clip.beatId === 'bt_d5')).toBe(true)
+
+    const dialogueClip = voiceClips.find((clip) => clip.beatId === 'bt_d5')!
+    const clips = buildBeatAlignedStoryboardSfxClips(scene, visualFrames, {
+      voiceEndTime: voiceClips[voiceClips.length - 1].startTime + voiceClips[voiceClips.length - 1].duration,
+    })
+
+    expect(clips).toHaveLength(0)
+    expect(
+      clips.some(
+        (clip) =>
+          clip.startTime >= dialogueClip.startTime &&
+          clip.startTime < dialogueClip.startTime + dialogueClip.duration
+      )
+    ).toBe(false)
+  })
 })

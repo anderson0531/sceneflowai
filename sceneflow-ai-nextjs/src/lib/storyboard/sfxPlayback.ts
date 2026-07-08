@@ -3,6 +3,7 @@
  */
 
 import type { SceneSfxCue } from '@/lib/script/deriveSfxFromSceneContent'
+import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 import type { StoryboardVisualFrame } from '@/lib/storyboard/types'
 
 const DEFAULT_SFX_DURATION_SEC = 3
@@ -126,6 +127,12 @@ export function buildBeatAlignedStoryboardSfxClips(
       .map((frame) => [frame.beatId!, frame])
   )
 
+  const excludedBeatIds = new Set(
+    getSceneBeats(scene)
+      .filter((beat) => isBeatExcluded(beat))
+      .map((beat) => beat.beatId)
+  )
+
   const clips: BeatAlignedSfxClip[] = []
 
   sfxArray.forEach((entry, idx) => {
@@ -134,6 +141,8 @@ export function buildBeatAlignedStoryboardSfxClips(
 
     const cue = parseCueAtIndex(scene, idx)
     const beatId = cue?.sourceBeatId
+    if (beatId && excludedBeatIds.has(beatId)) return
+
     const frame = beatId ? frameByBeatId.get(beatId) : undefined
 
     let startTime: number
