@@ -630,11 +630,18 @@ export function AudioGalleryPlayer({
   const playerToolbar = (
     <div
       className={cn(
-        'flex flex-wrap items-center justify-between gap-3 px-4 py-3',
-        useScreeningLayout ? 'w-[75%] border-t border-white/10' : 'border-b border-white/10'
+        'px-3 py-2',
+        useScreeningLayout
+          ? 'w-full shrink-0 border-b border-white/10 flex flex-col items-stretch gap-2'
+          : 'flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-white/10'
       )}
     >
-      <div className="flex flex-wrap items-center gap-3">
+      <div
+        className={cn(
+          'flex flex-wrap items-center gap-2',
+          useScreeningLayout && 'w-full'
+        )}
+      >
         <Volume2 className="w-5 h-5 text-emerald-400" />
         <span className="font-semibold text-white">Screening Room</span>
         <div className="flex items-center rounded-md border border-white/10 bg-gray-800/80 p-0.5">
@@ -686,7 +693,12 @@ export function AudioGalleryPlayer({
         </span>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div
+        className={cn(
+          'flex flex-wrap items-center gap-2',
+          useScreeningLayout && 'w-full'
+        )}
+      >
         {onGenVideo && !isSharedView && (
           <Button
             variant="outline"
@@ -778,6 +790,327 @@ export function AudioGalleryPlayer({
     </div>
   )
 
+  const videoStageContent = (
+    <>
+      {useVideoForCurrentScene ? (
+        <>
+          <video
+            ref={videoRef}
+            key={currentSceneVideoUrl || `scene-${currentSceneIndex}`}
+            src={currentSceneVideoUrl || undefined}
+            className="w-full h-full object-contain"
+            onLoadedMetadata={(e) => setVideoDuration(e.currentTarget.duration || 0)}
+            onTimeUpdate={(e) => setVideoCurrentTime(e.currentTarget.currentTime)}
+            onPlay={() => setVideoPlaying(true)}
+            onPause={() => setVideoPlaying(false)}
+            onEnded={handleVideoEnded}
+          />
+          {videoFadeBlack > 0 && (
+            <div
+              className="absolute inset-0 bg-black z-[2] pointer-events-none"
+              style={{ opacity: videoFadeBlack }}
+            />
+          )}
+        </>
+      ) : inBeatVisual.primaryUrl ? (
+        <>
+          {crossfadeFromUrl && imageEffectPrefs.mode === 'crossfade' && (
+            renderSceneImage(crossfadeFromUrl, 'previous')
+          )}
+          {renderSceneImage(inBeatVisual.primaryUrl, 'current')}
+          {inBeatVisual.fadeBlack > 0 && (
+            <div
+              className="absolute inset-0 bg-black z-[2] pointer-events-none"
+              style={{ opacity: inBeatVisual.fadeBlack }}
+            />
+          )}
+        </>
+      ) : (
+        <div className="w-full h-full flex items-center justify-center text-gray-500">
+          <span className="text-sm">No image</span>
+        </div>
+      )}
+      <div className="absolute bottom-4 right-4 z-[3] pointer-events-none opacity-60 mix-blend-overlay">
+        <span
+          className="text-white font-bold tracking-widest uppercase"
+          style={{ fontSize: isFullscreen ? '1.5rem' : '0.875rem' }}
+        >
+          SceneFlow AI Studio
+        </span>
+      </div>
+      {embedMode && availableLanguages.length > 1 && (
+        <div className="absolute top-3 left-3 z-10 pointer-events-auto">
+          <GroupedLanguageSelector
+            value={selectedLanguage}
+            onValueChange={onLanguageChange}
+            filterCodes={availableLanguages}
+            size="sm"
+            className="bg-black/70 border-white/20 backdrop-blur-sm"
+          />
+        </div>
+      )}
+      {speakerLabel && (
+        <div className="absolute bottom-2 left-2 right-auto max-w-[70%] bg-black/70 rounded px-2 py-1 z-[2]">
+          <span className={cn('text-white', isFullscreen && !sharedCompact ? 'text-base' : 'text-xs')}>
+            {speakerLabel}
+          </span>
+        </div>
+      )}
+    </>
+  )
+
+  const sceneThumbnailsRow = (
+    <div className="flex gap-2 overflow-x-auto pb-1 justify-start">
+      {(playbackMode === 'video' ? videoSceneIndices : scenes.map((_, idx) => idx)).map((idx) => {
+        const scene = scenes[idx]
+        const hasSceneAudio = sceneHasPlayablePreVisAudio(scene, selectedLanguage)
+        const thumbUrl = getScenePlayableThumbnailUrl(scene)
+
+        return (
+          <button
+            key={idx}
+            onClick={() => goToScene(idx)}
+            className={cn(
+              'flex-shrink-0 rounded overflow-hidden border-2 transition-all relative',
+              isFullscreen ? 'w-24 h-14' : 'w-14 h-9',
+              idx === currentSceneIndex
+                ? 'border-emerald-500 ring-2 ring-emerald-500/30'
+                : 'border-transparent hover:border-gray-500'
+            )}
+          >
+            {thumbUrl ? (
+              <img src={thumbUrl} alt={`Scene ${idx + 1}`} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                <span className="text-[10px] text-gray-400">{idx + 1}</span>
+              </div>
+            )}
+            {hasSceneAudio && (
+              <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-emerald-500" />
+            )}
+          </button>
+        )
+      })}
+    </div>
+  )
+
+  const playbackControlsBlock = (
+    <>
+      <div className={cn('mt-3', (isFullscreen || sharedCompact) && 'mt-0', useScreeningLayout && 'mt-0')}>
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-xs text-gray-400 w-10">{formatTime(effectiveCurrentTime)}</span>
+          <div
+            className="flex-1 h-2 bg-gray-700 rounded-full cursor-pointer overflow-hidden"
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect()
+              const x = e.clientX - rect.left
+              const percent = x / rect.width
+              seekEffective(percent * effectiveDuration)
+            }}
+          >
+            <div
+              className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-100"
+              style={{ width: `${(effectiveCurrentTime / effectiveDuration) * 100}%` }}
+            />
+          </div>
+          <span className="text-xs text-gray-400 w-10">{formatTime(effectiveDuration)}</span>
+        </div>
+
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={goToPrevScene}
+                  disabled={
+                    playbackMode === 'video'
+                      ? findPrevVideoSceneIndex(videoSceneIndices, currentSceneIndex) == null
+                      : currentSceneIndex === 0
+                  }
+                  className={cn(
+                    'rounded-full bg-gray-700 hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors',
+                    isFullscreen ? 'p-3' : 'p-2'
+                  )}
+                >
+                  <SkipBack className={cn('text-white', isFullscreen ? 'w-5 h-5' : 'w-4 h-4')} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Previous scene</TooltipContent>
+            </Tooltip>
+
+            <button
+              onClick={toggleEffectivePlayback}
+              className={cn(
+                'rounded-full bg-emerald-600 hover:bg-emerald-500 transition-colors',
+                isFullscreen ? 'p-4' : 'p-3'
+              )}
+            >
+              {effectiveIsPlaying ? (
+                <Pause className={cn('text-white', isFullscreen ? 'w-6 h-6' : 'w-5 h-5')} />
+              ) : (
+                <Play className={cn('text-white ml-0.5', isFullscreen ? 'w-6 h-6' : 'w-5 h-5')} />
+              )}
+            </button>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => goToNextScene()}
+                  disabled={
+                    playbackMode === 'video'
+                      ? findNextVideoSceneIndex(videoSceneIndices, currentSceneIndex) == null
+                      : currentSceneIndex === scenes.length - 1
+                  }
+                  className={cn(
+                    'rounded-full bg-gray-700 hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors',
+                    isFullscreen ? 'p-3' : 'p-2'
+                  )}
+                >
+                  <SkipForward className={cn('text-white', isFullscreen ? 'w-5 h-5' : 'w-4 h-4')} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Next scene</TooltipContent>
+            </Tooltip>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            {(sharedCompact || isFullscreen) && motionControl}
+            {embedMode && (
+              <>
+                <span className="text-[10px] text-gray-500 tabular-nums hidden sm:inline">
+                  {playbackMode === 'video'
+                    ? `${videoScenePosition}/${videoSceneIndices.length}`
+                    : `${currentSceneIndex + 1}/${scenes.length}`}
+                </span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => setAutoAdvance(!autoAdvance)}
+                      className={cn(
+                        'px-2 py-1 rounded text-[10px] font-medium transition-colors',
+                        autoAdvance
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      )}
+                    >
+                      Auto
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {autoAdvance ? 'Auto-advance enabled' : 'Auto-advance disabled'}
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={toggleFullscreen}
+                      className="p-1.5 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors"
+                    >
+                      {isFullscreen ? (
+                        <Minimize className="w-3.5 h-3.5" />
+                      ) : (
+                        <Maximize className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                  </TooltipContent>
+                </Tooltip>
+                {expandHref && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <a
+                        href={expandHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors inline-flex"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </TooltipTrigger>
+                    <TooltipContent>Open full screening player</TooltipContent>
+                  </Tooltip>
+                )}
+              </>
+            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setIsMuted(!isMuted)}
+                  className="p-1 rounded hover:bg-gray-700 transition-colors"
+                >
+                  {isMuted ? (
+                    <VolumeX className="w-4 h-4 text-gray-400" />
+                  ) : (
+                    <Volume2 className="w-4 h-4 text-gray-400" />
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>{isMuted ? 'Unmute' : 'Mute'}</TooltipContent>
+            </Tooltip>
+            <span className="text-[10px] text-gray-500 shrink-0">Master</span>
+            <Slider
+              value={[volume * 100]}
+              onValueChange={([val]) => setVolume(val / 100)}
+              max={100}
+              step={1}
+              className="w-20"
+            />
+            <span className="text-[10px] text-gray-500 shrink-0">Music</span>
+            <Slider
+              value={[musicVolume * 100]}
+              onValueChange={([val]) => setMusicVolume(val / 100)}
+              max={100}
+              step={1}
+              className="w-16"
+              title={`Music volume: ${Math.round(musicVolume * 100)}%`}
+            />
+            <div className="flex items-center gap-1.5 shrink-0 border-l border-gray-600 pl-2 ml-1">
+              <Switch
+                checked={musicIntroFade.enabled}
+                onCheckedChange={(enabled) => updateMusicIntroFade({ enabled })}
+                className="scale-75"
+                aria-label="Music intro fade"
+              />
+              <span className="text-[10px] text-gray-500 whitespace-nowrap">Intro fade</span>
+              {musicIntroFade.enabled && (
+                <>
+                  <span className="text-[10px] text-gray-500 shrink-0">Start</span>
+                  <Slider
+                    value={[Math.round(musicIntroFade.startLevel * 100)]}
+                    onValueChange={([val]) =>
+                      updateMusicIntroFade({
+                        startLevel: val / 100,
+                      })
+                    }
+                    min={MUSIC_INTRO_FADE_START_MIN * 100}
+                    max={MUSIC_INTRO_FADE_START_MAX * 100}
+                    step={5}
+                    className="w-12"
+                    title={`Intro start level: ${Math.round(musicIntroFade.startLevel * 100)}%`}
+                  />
+                  <span className="text-[10px] text-gray-500 shrink-0">
+                    {Math.round(musicIntroFade.durationSec)}s
+                  </span>
+                  <Slider
+                    value={[musicIntroFade.durationSec]}
+                    onValueChange={([val]) => updateMusicIntroFade({ durationSec: val })}
+                    min={MUSIC_INTRO_FADE_DURATION_MIN}
+                    max={MUSIC_INTRO_FADE_DURATION_MAX}
+                    step={1}
+                    className="w-12"
+                    title={`Intro fade duration: ${musicIntroFade.durationSec}s`}
+                  />
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+
   return (
     <TooltipProvider>
       <style
@@ -798,7 +1131,7 @@ export function AudioGalleryPlayer({
         ref={containerRef}
         className={cn(
           "rounded-xl border border-emerald-500/30 bg-gradient-to-br from-gray-900 via-gray-900 to-emerald-950/20 overflow-hidden",
-          useScreeningLayout && "w-full",
+          useScreeningLayout && "w-full h-full min-h-0 flex flex-col",
           isFullscreen && "fixed inset-0 z-50 rounded-none border-none flex flex-col"
         )}
       >
@@ -809,123 +1142,24 @@ export function AudioGalleryPlayer({
         <div
           className={cn(
             'flex gap-4 p-4',
-            useScreeningLayout && 'flex-col items-center w-full pt-2 pb-4 px-2',
+            useScreeningLayout && 'flex-1 flex-row items-stretch h-full min-h-0 w-full',
             isFullscreen && 'flex-1 flex-col items-center justify-center w-full',
             sharedCompact && 'flex-col items-center w-full gap-3 py-2 px-2 sm:px-4',
             landingWide ? 'max-w-none mx-0' : sharedCompact && 'max-w-4xl mx-auto'
           )}
         >
-          {/* Scene image with Ken Burns effect */}
-          <div className={cn(
-            "relative rounded-lg overflow-hidden bg-black flex-shrink-0 w-full",
-            useScreeningLayout && "w-[75%] aspect-video shadow-xl",
-            isFullscreen 
-              ? "max-w-7xl aspect-video" 
-              : !useScreeningLayout && landingWide
-                ? "max-w-none aspect-video shadow-lg"
-                : !useScreeningLayout && sharedCompact
-                  ? "max-w-3xl sm:max-w-4xl aspect-video shadow-lg"
-                  : !useScreeningLayout && "max-w-[500px] aspect-video shadow-xl"
-          )}>
-            {useVideoForCurrentScene ? (
-              <>
-                <video
-                  ref={videoRef}
-                  key={currentSceneVideoUrl || `scene-${currentSceneIndex}`}
-                  src={currentSceneVideoUrl || undefined}
-                  className="w-full h-full object-contain"
-                  onLoadedMetadata={(e) => setVideoDuration(e.currentTarget.duration || 0)}
-                  onTimeUpdate={(e) => setVideoCurrentTime(e.currentTarget.currentTime)}
-                  onPlay={() => setVideoPlaying(true)}
-                  onPause={() => setVideoPlaying(false)}
-                  onEnded={handleVideoEnded}
-                />
-                {videoFadeBlack > 0 && (
-                  <div
-                    className="absolute inset-0 bg-black z-[2] pointer-events-none"
-                    style={{ opacity: videoFadeBlack }}
-                  />
-                )}
-              </>
-            ) : inBeatVisual.primaryUrl ? (
-              <>
-                {crossfadeFromUrl && imageEffectPrefs.mode === 'crossfade' && (
-                  renderSceneImage(crossfadeFromUrl, 'previous')
-                )}
-                {renderSceneImage(inBeatVisual.primaryUrl, 'current')}
-                {inBeatVisual.fadeBlack > 0 && (
-                  <div
-                    className="absolute inset-0 bg-black z-[2] pointer-events-none"
-                    style={{ opacity: inBeatVisual.fadeBlack }}
-                  />
-                )}
-              </>
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-500">
-                <span className="text-sm">No image</span>
+          {useScreeningLayout ? (
+            <>
+              <div className="flex w-[75%] min-w-0 flex-col min-h-0 gap-2 self-stretch">
+                <div className="flex flex-1 min-h-0 items-center justify-center">
+                  <div className="relative w-full max-h-full aspect-video rounded-lg overflow-hidden bg-black shadow-xl">
+                    {videoStageContent}
+                  </div>
+                </div>
+                <div className="shrink-0 px-1">{sceneThumbnailsRow}</div>
               </div>
-            )}
-            
-            {/* Watermark overlay */}
-            <div className="absolute bottom-4 right-4 z-[3] pointer-events-none opacity-60 mix-blend-overlay">
-              <span className="text-white font-bold tracking-widest uppercase" style={{ fontSize: isFullscreen ? '1.5rem' : '0.875rem' }}>
-                SceneFlow AI Studio
-              </span>
-            </div>
-
-            {/* Language pill — landing embed only (header removed) */}
-            {embedMode && availableLanguages.length > 1 && (
-              <div className="absolute top-3 left-3 z-10 pointer-events-auto">
-                <GroupedLanguageSelector
-                  value={selectedLanguage}
-                  onValueChange={onLanguageChange}
-                  filterCodes={availableLanguages}
-                  size="sm"
-                  className="bg-black/70 border-white/20 backdrop-blur-sm"
-                />
-              </div>
-            )}
-            
-            {/* Current clip label overlay — speaker name only (no dialogue caption) */}
-            {speakerLabel && (
-              <div className="absolute bottom-2 left-2 right-auto max-w-[70%] bg-black/70 rounded px-2 py-1 z-[2]">
-                <span className={cn("text-white", isFullscreen && !sharedCompact ? "text-base" : "text-xs")}>
-                  {speakerLabel}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {useScreeningLayout && playerToolbar}
-          
-          {/* Scene title + description below video in fullscreen or shared view */}
-          {isFullscreen && !sharedCompact && (
-            <PreVisSceneInfoPanel
-              display={sceneDisplay}
-              variant="fullscreen"
-              totalScenes={scenes.length}
-              playerLabels={playerLabels}
-            />
-          )}
-          {sharedCompact && (
-            <PreVisSceneInfoPanel
-              display={sceneDisplay}
-              variant="compact"
-              totalScenes={scenes.length}
-              className={landingWide ? 'max-w-4xl mx-auto' : 'max-w-2xl mx-auto'}
-              playerLabels={playerLabels}
-            />
-          )}
-          
-          {/* Playback controls and info */}
-          <div className={cn(
-            "flex flex-col justify-between min-w-0 w-full",
-            useScreeningLayout && "w-[75%]",
-            isFullscreen ? "max-w-7xl mt-3" : sharedCompact ? cn('mx-auto mt-2', landingWide ? 'max-w-4xl' : 'max-w-2xl') : !useScreeningLayout && "flex-1"
-          )}>
-            {/* Scene info - hide in fullscreen / shared compact / screening toolbar layout */}
-            {(!isFullscreen && !isSharedView && !useScreeningLayout) && (
-              <div>
+              <div className="flex flex-1 min-w-[260px] min-h-0 flex-col gap-3 overflow-hidden">
+                {playerToolbar}
                 <PreVisSceneInfoPanel
                   display={sceneDisplay}
                   variant="inline"
@@ -933,243 +1167,78 @@ export function AudioGalleryPlayer({
                   playerLabels={playerLabels}
                 />
                 {!hasAudio && !useVideoForCurrentScene && (
-                  <p className="text-xs text-amber-400 mt-2">No audio generated for this scene</p>
+                  <p className="text-xs text-amber-400 shrink-0">No audio generated for this scene</p>
                 )}
-              </div>
-            )}
-            {useScreeningLayout && (
-              <PreVisSceneInfoPanel
-                display={sceneDisplay}
-                variant="compact"
-                totalScenes={scenes.length}
-                playerLabels={playerLabels}
-              />
-            )}
-            
-            {/* Progress bar */}
-            <div className={cn("mt-3", (isFullscreen || sharedCompact) && "mt-0")}>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs text-gray-400 w-10">{formatTime(effectiveCurrentTime)}</span>
-                <div 
-                  className="flex-1 h-2 bg-gray-700 rounded-full cursor-pointer overflow-hidden"
-                  onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect()
-                    const x = e.clientX - rect.left
-                    const percent = x / rect.width
-                    seekEffective(percent * effectiveDuration)
-                  }}
-                >
-                  <div 
-                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-100"
-                    style={{ width: `${(effectiveCurrentTime / effectiveDuration) * 100}%` }}
-                  />
+                <div className="mt-auto flex flex-col gap-2 shrink-0 min-h-0">
+                  {playbackControlsBlock}
                 </div>
-                <span className="text-xs text-gray-400 w-10">{formatTime(effectiveDuration)}</span>
               </div>
-              
-              {/* Controls row */}
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <div className="flex items-center gap-2">
-                  {/* Previous scene */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={goToPrevScene}
-                        disabled={
-                          playbackMode === 'video'
-                            ? findPrevVideoSceneIndex(videoSceneIndices, currentSceneIndex) == null
-                            : currentSceneIndex === 0
-                        }
-                        className={cn(
-                          "rounded-full bg-gray-700 hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors",
-                          isFullscreen ? "p-3" : "p-2"
-                        )}
-                      >
-                        <SkipBack className={cn("text-white", isFullscreen ? "w-5 h-5" : "w-4 h-4")} />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent>Previous scene</TooltipContent>
-                  </Tooltip>
-                  
-                  {/* Play/Pause */}
-                  <button
-                    onClick={toggleEffectivePlayback}
-                    className={cn(
-                      "rounded-full bg-emerald-600 hover:bg-emerald-500 transition-colors",
-                      isFullscreen ? "p-4" : "p-3"
-                    )}
-                  >
-                    {effectiveIsPlaying ? (
-                      <Pause className={cn("text-white", isFullscreen ? "w-6 h-6" : "w-5 h-5")} />
-                    ) : (
-                      <Play className={cn("text-white ml-0.5", isFullscreen ? "w-6 h-6" : "w-5 h-5")} />
-                    )}
-                  </button>
-                  
-                  {/* Next scene */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={() => goToNextScene()}
-                        disabled={
-                          playbackMode === 'video'
-                            ? findNextVideoSceneIndex(videoSceneIndices, currentSceneIndex) == null
-                            : currentSceneIndex === scenes.length - 1
-                        }
-                        className={cn(
-                          "rounded-full bg-gray-700 hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors",
-                          isFullscreen ? "p-3" : "p-2"
-                        )}
-                      >
-                        <SkipForward className={cn("text-white", isFullscreen ? "w-5 h-5" : "w-4 h-4")} />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent>Next scene</TooltipContent>
-                  </Tooltip>
-                </div>
-                
-                {/* Volume + embed view controls */}
-                <div className="flex items-center gap-2 flex-wrap justify-end">
-                  {(sharedCompact || isFullscreen) && motionControl}
-                  {embedMode && (
-                    <>
-                      <span className="text-[10px] text-gray-500 tabular-nums hidden sm:inline">
-                        {playbackMode === 'video'
-                          ? `${videoScenePosition}/${videoSceneIndices.length}`
-                          : `${currentSceneIndex + 1}/${scenes.length}`}
-                      </span>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            onClick={() => setAutoAdvance(!autoAdvance)}
-                            className={cn(
-                              'px-2 py-1 rounded text-[10px] font-medium transition-colors',
-                              autoAdvance
-                                ? 'bg-emerald-600 text-white'
-                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                            )}
-                          >
-                            Auto
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          {autoAdvance ? 'Auto-advance enabled' : 'Auto-advance disabled'}
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            onClick={toggleFullscreen}
-                            className="p-1.5 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors"
-                          >
-                            {isFullscreen ? (
-                              <Minimize className="w-3.5 h-3.5" />
-                            ) : (
-                              <Maximize className="w-3.5 h-3.5" />
-                            )}
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          {isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-                        </TooltipContent>
-                      </Tooltip>
-                      {expandHref && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <a
-                              href={expandHref}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="p-1.5 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors inline-flex"
-                            >
-                              <ExternalLink className="w-3.5 h-3.5" />
-                            </a>
-                          </TooltipTrigger>
-                          <TooltipContent>Open full screening player</TooltipContent>
-                        </Tooltip>
-                      )}
-                    </>
-                  )}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={() => setIsMuted(!isMuted)}
-                        className="p-1 rounded hover:bg-gray-700 transition-colors"
-                      >
-                        {isMuted ? (
-                          <VolumeX className="w-4 h-4 text-gray-400" />
-                        ) : (
-                          <Volume2 className="w-4 h-4 text-gray-400" />
-                        )}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent>{isMuted ? 'Unmute' : 'Mute'}</TooltipContent>
-                  </Tooltip>
-                  <span className="text-[10px] text-gray-500 shrink-0">Master</span>
-                  <Slider
-                    value={[volume * 100]}
-                    onValueChange={([val]) => setVolume(val / 100)}
-                    max={100}
-                    step={1}
-                    className="w-20"
-                  />
-                  <span className="text-[10px] text-gray-500 shrink-0">Music</span>
-                  <Slider
-                    value={[musicVolume * 100]}
-                    onValueChange={([val]) => setMusicVolume(val / 100)}
-                    max={100}
-                    step={1}
-                    className="w-16"
-                    title={`Music volume: ${Math.round(musicVolume * 100)}%`}
-                  />
-                  <div className="flex items-center gap-1.5 shrink-0 border-l border-gray-600 pl-2 ml-1">
-                    <Switch
-                      checked={musicIntroFade.enabled}
-                      onCheckedChange={(enabled) => updateMusicIntroFade({ enabled })}
-                      className="scale-75"
-                      aria-label="Music intro fade"
+            </>
+          ) : (
+            <>
+              <div
+                className={cn(
+                  'relative rounded-lg overflow-hidden bg-black flex-shrink-0 w-full',
+                  isFullscreen
+                    ? 'max-w-7xl aspect-video'
+                    : landingWide
+                      ? 'max-w-none aspect-video shadow-lg'
+                      : sharedCompact
+                        ? 'max-w-3xl sm:max-w-4xl aspect-video shadow-lg'
+                        : 'max-w-[500px] aspect-video shadow-xl'
+                )}
+              >
+                {videoStageContent}
+              </div>
+
+              {isFullscreen && !sharedCompact && (
+                <PreVisSceneInfoPanel
+                  display={sceneDisplay}
+                  variant="fullscreen"
+                  totalScenes={scenes.length}
+                  playerLabels={playerLabels}
+                />
+              )}
+              {sharedCompact && (
+                <PreVisSceneInfoPanel
+                  display={sceneDisplay}
+                  variant="compact"
+                  totalScenes={scenes.length}
+                  className={landingWide ? 'max-w-4xl mx-auto' : 'max-w-2xl mx-auto'}
+                  playerLabels={playerLabels}
+                />
+              )}
+
+              <div
+                className={cn(
+                  'flex flex-col justify-between min-w-0 w-full',
+                  isFullscreen
+                    ? 'max-w-7xl mt-3'
+                    : sharedCompact
+                      ? cn('mx-auto mt-2', landingWide ? 'max-w-4xl' : 'max-w-2xl')
+                      : 'flex-1'
+                )}
+              >
+                {!isFullscreen && !isSharedView && (
+                  <div>
+                    <PreVisSceneInfoPanel
+                      display={sceneDisplay}
+                      variant="inline"
+                      totalScenes={scenes.length}
+                      playerLabels={playerLabels}
                     />
-                    <span className="text-[10px] text-gray-500 whitespace-nowrap">Intro fade</span>
-                    {musicIntroFade.enabled && (
-                      <>
-                        <span className="text-[10px] text-gray-500 shrink-0">Start</span>
-                        <Slider
-                          value={[Math.round(musicIntroFade.startLevel * 100)]}
-                          onValueChange={([val]) =>
-                            updateMusicIntroFade({
-                              startLevel: val / 100,
-                            })
-                          }
-                          min={MUSIC_INTRO_FADE_START_MIN * 100}
-                          max={MUSIC_INTRO_FADE_START_MAX * 100}
-                          step={5}
-                          className="w-12"
-                          title={`Intro start level: ${Math.round(musicIntroFade.startLevel * 100)}%`}
-                        />
-                        <span className="text-[10px] text-gray-500 shrink-0">
-                          {Math.round(musicIntroFade.durationSec)}s
-                        </span>
-                        <Slider
-                          value={[musicIntroFade.durationSec]}
-                          onValueChange={([val]) =>
-                            updateMusicIntroFade({ durationSec: val })
-                          }
-                          min={MUSIC_INTRO_FADE_DURATION_MIN}
-                          max={MUSIC_INTRO_FADE_DURATION_MAX}
-                          step={1}
-                          className="w-12"
-                          title={`Intro fade duration: ${musicIntroFade.durationSec}s`}
-                        />
-                      </>
+                    {!hasAudio && !useVideoForCurrentScene && (
+                      <p className="text-xs text-amber-400 mt-2">No audio generated for this scene</p>
                     )}
                   </div>
-                </div>
+                )}
+                {playbackControlsBlock}
               </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Scene thumbnails row */}
+            </>
+          )}
+        </div>        
+        {/* Scene thumbnails row — hidden in screening tab (thumbnails live under video) */}
+        {!useScreeningLayout && (
         <div className={cn(
           "px-4 pb-4",
           isFullscreen && "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pt-8"
@@ -1214,6 +1283,7 @@ export function AudioGalleryPlayer({
             })}
           </div>
         </div>
+        )}
       </div>
     </TooltipProvider>
   )

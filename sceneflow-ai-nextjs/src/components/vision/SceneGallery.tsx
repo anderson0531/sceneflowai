@@ -407,7 +407,7 @@ export function SceneGallery({
     <div
       className={
         mode === 'screening'
-          ? 'bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-2 h-full min-h-0 flex flex-col items-center'
+          ? 'bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-2 h-full min-h-0 flex flex-col'
           : 'bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6'
       }
     >
@@ -662,7 +662,7 @@ export function SceneGallery({
         <div
           className={
             mode === 'screening'
-              ? 'flex-1 min-h-0 w-full flex flex-col items-center justify-center'
+              ? 'flex-1 min-h-0 h-full w-full'
               : 'mb-2'
           }
         >
