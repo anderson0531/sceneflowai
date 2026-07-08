@@ -404,6 +404,7 @@ export async function POST(req: NextRequest) {
     let project = null
     let resolvedScene: any = null
     let characterObjects = characterArray
+    let projectCharacters: any[] = []
 
     // Filter out null/undefined values immediately
     const beforeFilterCount = characterArray.length
@@ -430,6 +431,7 @@ export async function POST(req: NextRequest) {
       }
 
       const allCharacters = project.metadata?.visionPhase?.characters || []
+      projectCharacters = allCharacters
       const scenesForType = project.metadata?.visionPhase?.script?.script?.scenes || []
       const filmTitleForDetection =
         (project.metadata?.title as string | undefined) || project.title || undefined
@@ -827,10 +829,10 @@ export async function POST(req: NextRequest) {
             `Storyboard custom frame "${label}". ` +
             (character ? `Feature ${character}${lineText ? ` — "${lineText}"` : ''}. ` : '') +
             'Create a cinematic storyboard cut that fits the scene continuity. '
-          if (character && allCharacters.length > 0) {
+          if (character && projectCharacters.length > 0) {
             characterSelectionExplicit = true
             const charLower = character.toLowerCase()
-            const match = allCharacters.find((c: any) => {
+            const match = projectCharacters.find((c: any) => {
               if (!c?.name) return false
               const nameLower = c.name.toLowerCase()
               return nameLower === charLower || nameLower.includes(charLower) || charLower.includes(nameLower)
@@ -918,7 +920,7 @@ export async function POST(req: NextRequest) {
       isBeatFrame && sceneData
         ? getSceneBeats(sceneData as Record<string, unknown>)[effectiveBeatIndex]
         : undefined
-    const projectCharactersForBeat = project?.metadata?.visionPhase?.characters || []
+    const projectCharactersForBeat = projectCharacters
     const beatSpeakerName =
       beatForEmotion?.character?.trim() ||
       (beatForEmotion ? resolveBeatSpeaker(beatForEmotion, projectCharactersForBeat)?.name : undefined)

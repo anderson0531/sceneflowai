@@ -172,4 +172,19 @@ describe('generate-image beat frame acting and wardrobe regression guard', () =>
     expect(source).toMatch(/buildSubjectCountGuardrail/)
     expect(source).toMatch(/modelTier:\s*effectiveImageTier/)
   })
+
+  it('keeps project characters at function scope for beat and custom frame paths', () => {
+    const routePath = join(
+      process.cwd(),
+      'src/app/api/scene/generate-image/route.ts'
+    )
+    const source = readFileSync(routePath, 'utf8')
+    expect(source).toMatch(/let projectCharacters:\s*any\[\]\s*=\s*\[\]/)
+    expect(source).toMatch(/projectCharacters\s*=\s*allCharacters/)
+    expect(source).toMatch(/character && projectCharacters\.length > 0/)
+    expect(source).toMatch(/projectCharactersForBeat = projectCharacters/)
+    expect(source).not.toMatch(
+      /resolveBeatSpeaker\(beatForEmotion,\s*allCharacters\)/
+    )
+  })
 })
