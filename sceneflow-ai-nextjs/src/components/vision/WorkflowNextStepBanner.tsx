@@ -7,7 +7,6 @@ import {
   FileText,
   Volume2,
   Compass,
-  Frame,
   Sparkles,
   CheckCircle2,
   Lightbulb,
@@ -90,17 +89,6 @@ function getNextStep(state: WorkflowState): NextStepAction | null {
       targetTab: 'callAction',
       actionId: 'generate-direction',
       accentColor: 'cyan',
-    }
-  }
-
-  if (!state.hasFrame) {
-    return {
-      label: 'Build Beat Frames',
-      description: 'Generate start and end Beat Frame images for each beat clip. This enables Frame-to-Video generation.',
-      icon: <Frame className="w-4 h-4" />,
-      targetTab: 'callAction',
-      actionId: 'generate-beat-frames',
-      accentColor: 'purple',
     }
   }
 
