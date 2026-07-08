@@ -2744,7 +2744,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         {/* Title and Action Buttons - Same Line */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <h3 className="text-xl font-bold text-white">Production</h3>
+            <h3 className="text-xl font-bold text-white">Production Studio</h3>
             {isGenerating && (
               <span className="text-xs text-cyan-300 flex items-center gap-1.5">
                 <Loader className="w-3.5 h-3.5 animate-spin" />
@@ -2982,25 +2982,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           </div>
         )}
 
-        {onToggleStoryboard && (
-          <div className="mt-3 flex items-center">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onToggleStoryboard}
-              className={`flex items-center gap-2 ${
-                showStoryboard
-                  ? 'border-cyan-500/50 bg-cyan-500/10 hover:bg-cyan-500/20'
-                  : 'border-cyan-500/30 hover:border-cyan-500/50 hover:bg-cyan-500/10'
-              }`}
-              title={showStoryboard ? 'Close Pre-Visualization' : 'Open Pre-Visualization'}
-            >
-              <Film className="w-4 h-4 text-cyan-400" />
-              <span className="text-sm">{showStoryboard ? 'Close Pre-Vis' : 'Pre-Vis'}</span>
-            </Button>
-          </div>
-        )}
-        
       </div>
       
       {/* Script Content - scrollable area containing storyboard and scenes */}

@@ -407,7 +407,7 @@ export function SceneGallery({
     <div
       className={
         mode === 'screening'
-          ? 'bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 h-full min-h-0 flex flex-col'
+          ? 'bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-2 h-full min-h-0 flex flex-col items-center'
           : 'bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6'
       }
     >
@@ -421,6 +421,7 @@ export function SceneGallery({
       </div>
       )}
 
+      {mode !== 'screening' && (
       <div className="flex flex-wrap items-center justify-between gap-y-2 mb-6">
         <div className="flex items-center gap-2">
           {mode === 'screening' ? (
@@ -429,7 +430,7 @@ export function SceneGallery({
             <Clapperboard className="w-5 h-5 text-sf-primary" />
           )}
           <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">
-            {mode === 'screening' ? 'Screening' : 'Pre-Vis Studio'}
+            {mode === 'screening' ? 'Screening Room' : 'Pre-Vis Studio'}
           </h3>
           <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
             {scenes.length} {scenes.length === 1 ? 'scene' : 'scenes'}
@@ -638,6 +639,7 @@ export function SceneGallery({
           )}
         </div>
       </div>
+      )}
 
       {productionReadyChecklist && mode !== 'screening' && (
         <div ref={preVisBannerRef} className="mb-4 rounded-lg transition-shadow">
@@ -657,7 +659,13 @@ export function SceneGallery({
       )}
 
       {playableSceneCount > 0 && (
-        <div className={mode === 'screening' ? 'flex-1 min-h-0' : 'mb-2'}>
+        <div
+          className={
+            mode === 'screening'
+              ? 'flex-1 min-h-0 w-full flex flex-col items-center justify-center'
+              : 'mb-2'
+          }
+        >
           <AudioGalleryPlayer
             scenes={scenes}
             selectedLanguage={selectedLanguage}
@@ -670,6 +678,8 @@ export function SceneGallery({
             isGenVideoRunning={isGenVideoRunning}
             exportedAnimaticUrl={exportedAnimaticUrl}
             sceneProductionState={sceneProductionState}
+            screeningLayout={mode === 'screening'}
+            onClose={mode === 'screening' ? onClose : undefined}
           />
         </div>
       )}

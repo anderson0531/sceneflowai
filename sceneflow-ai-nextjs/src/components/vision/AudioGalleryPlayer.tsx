@@ -136,6 +136,8 @@ interface AudioGalleryPlayerProps {
   playerLabels?: PlayerLabelMap
   /** Per-scene production data for resolving completed video streams. */
   sceneProductionState?: Record<string, SceneProductionData>
+  /** Production Screening tab: large player on top, title and controls below. */
+  screeningLayout?: boolean
 }
 
 function formatTime(seconds: number) {
@@ -189,6 +191,7 @@ export function AudioGalleryPlayer({
   sceneTranslations,
   playerLabels,
   sceneProductionState,
+  screeningLayout = false,
 }: AudioGalleryPlayerProps) {
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0)
   const [playbackMode, setPlaybackMode] = useState<PreVisPlaybackMode>('animatic')
@@ -614,6 +617,7 @@ export function AudioGalleryPlayer({
   /** Public share / landing embed: compact stacked layout. */
   const sharedCompact = (isSharedView || embedMode) && !isFullscreen
   const landingWide = embedMode && fullWidthEmbed && !isFullscreen
+  const useScreeningLayout = screeningLayout && !isFullscreen
 
   const motionControl = (
     <StoryboardImageEffectControl
@@ -621,6 +625,157 @@ export function AudioGalleryPlayer({
       onChange={updateImageEffectPrefs}
       compact={sharedCompact}
     />
+  )
+
+  const playerToolbar = (
+    <div
+      className={cn(
+        'flex flex-wrap items-center justify-between gap-3 px-4 py-3',
+        useScreeningLayout ? 'w-[75%] border-t border-white/10' : 'border-b border-white/10'
+      )}
+    >
+      <div className="flex flex-wrap items-center gap-3">
+        <Volume2 className="w-5 h-5 text-emerald-400" />
+        <span className="font-semibold text-white">Screening Room</span>
+        <div className="flex items-center rounded-md border border-white/10 bg-gray-800/80 p-0.5">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => setPlaybackMode('animatic')}
+                className={cn(
+                  'px-2 py-0.5 rounded text-[11px] font-medium transition-colors',
+                  playbackMode === 'animatic'
+                    ? 'bg-emerald-600 text-white'
+                    : 'text-gray-400 hover:text-white'
+                )}
+              >
+                Animatic
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Storyboard frames with synced audio</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => hasAnySceneVideo && setPlaybackMode('video')}
+                disabled={!hasAnySceneVideo}
+                className={cn(
+                  'px-2 py-0.5 rounded text-[11px] font-medium transition-colors',
+                  playbackMode === 'video'
+                    ? 'bg-indigo-600 text-white'
+                    : 'text-gray-400 hover:text-white',
+                  !hasAnySceneVideo && 'opacity-40 cursor-not-allowed hover:text-gray-400'
+                )}
+              >
+                Video
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {hasAnySceneVideo
+                ? 'Play completed scene videos back-to-back'
+                : 'Render at least one scene video to enable Video mode'}
+            </TooltipContent>
+          </Tooltip>
+        </div>
+        <span className="text-xs text-gray-400 bg-gray-800 px-2 py-0.5 rounded">
+          {playbackMode === 'video'
+            ? `Video ${videoScenePosition} of ${videoSceneIndices.length}`
+            : `Scene ${currentSceneIndex + 1} of ${scenes.length}`}
+        </span>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        {onGenVideo && !isSharedView && (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isGenVideoRunning}
+            onClick={() => void onGenVideo(selectedLanguage)}
+            className="h-7 text-xs bg-indigo-900/40 border-indigo-500/40 hover:bg-indigo-800/50 hover:text-white"
+          >
+            {isGenVideoRunning ? (
+              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+            ) : (
+              <Film className="w-3.5 h-3.5 mr-1.5" />
+            )}
+            Gen Video
+          </Button>
+        )}
+        {exportedAnimaticUrl && !isSharedView && (
+          <a
+            href={exportedAnimaticUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[10px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
+          >
+            <ExternalLink className="w-3 h-3" />
+            Animatic
+          </a>
+        )}
+        {onShare && !isSharedView && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onShare}
+            className="h-7 text-xs bg-gray-800 border-gray-700 hover:bg-gray-700 hover:text-white"
+          >
+            <Share2 className="w-3.5 h-3.5 mr-1.5" />
+            Share
+          </Button>
+        )}
+        {availableLanguages.length > 1 && (
+          <div className="flex items-center gap-2">
+            <GroupedLanguageSelector
+              value={selectedLanguage}
+              onValueChange={onLanguageChange}
+              filterCodes={availableLanguages}
+              size="sm"
+              className="bg-gray-800 border-gray-700"
+            />
+          </div>
+        )}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => setAutoAdvance(!autoAdvance)}
+              className={cn(
+                'px-2 py-1 rounded text-xs font-medium transition-colors',
+                autoAdvance
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              )}
+            >
+              Auto
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {autoAdvance ? 'Auto-advance enabled' : 'Auto-advance disabled'}
+          </TooltipContent>
+        </Tooltip>
+        {!isSharedView && motionControl}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={toggleFullscreen}
+              className="p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+            >
+              {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>{isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}</TooltipContent>
+        </Tooltip>
+        {onClose && !isFullscreen && (
+          <button
+            onClick={onClose}
+            className="p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+    </div>
   )
 
   return (
@@ -643,170 +798,18 @@ export function AudioGalleryPlayer({
         ref={containerRef}
         className={cn(
           "rounded-xl border border-emerald-500/30 bg-gradient-to-br from-gray-900 via-gray-900 to-emerald-950/20 overflow-hidden",
+          useScreeningLayout && "w-full",
           isFullscreen && "fixed inset-0 z-50 rounded-none border-none flex flex-col"
         )}
       >
-        {/* Header with language selector — hidden in landing embed */}
-        {!embedMode && (
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <Volume2 className="w-5 h-5 text-emerald-400" />
-            <span className="font-semibold text-white">Screening</span>
-            <div className="flex items-center rounded-md border border-white/10 bg-gray-800/80 p-0.5">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={() => setPlaybackMode('animatic')}
-                    className={cn(
-                      'px-2 py-0.5 rounded text-[11px] font-medium transition-colors',
-                      playbackMode === 'animatic'
-                        ? 'bg-emerald-600 text-white'
-                        : 'text-gray-400 hover:text-white'
-                    )}
-                  >
-                    Animatic
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>Storyboard frames with synced audio</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={() => hasAnySceneVideo && setPlaybackMode('video')}
-                    disabled={!hasAnySceneVideo}
-                    className={cn(
-                      'px-2 py-0.5 rounded text-[11px] font-medium transition-colors',
-                      playbackMode === 'video'
-                        ? 'bg-indigo-600 text-white'
-                        : 'text-gray-400 hover:text-white',
-                      !hasAnySceneVideo && 'opacity-40 cursor-not-allowed hover:text-gray-400'
-                    )}
-                  >
-                    Video
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {hasAnySceneVideo
-                    ? 'Play completed scene videos back-to-back'
-                    : 'Render at least one scene video to enable Video mode'}
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <span className="text-xs text-gray-400 bg-gray-800 px-2 py-0.5 rounded">
-              {playbackMode === 'video'
-                ? `Video ${videoScenePosition} of ${videoSceneIndices.length}`
-                : `Scene ${currentSceneIndex + 1} of ${scenes.length}`}
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {onGenVideo && !isSharedView && (
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={isGenVideoRunning}
-                onClick={() => void onGenVideo(selectedLanguage)}
-                className="h-7 text-xs bg-indigo-900/40 border-indigo-500/40 hover:bg-indigo-800/50 hover:text-white"
-              >
-                {isGenVideoRunning ? (
-                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                ) : (
-                  <Film className="w-3.5 h-3.5 mr-1.5" />
-                )}
-                Gen Video
-              </Button>
-            )}
-            {exportedAnimaticUrl && !isSharedView && (
-              <a
-                href={exportedAnimaticUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[10px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
-              >
-                <ExternalLink className="w-3 h-3" />
-                Animatic
-              </a>
-            )}
-            {/* Share button */}
-            {onShare && !isSharedView && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onShare}
-                className="h-7 text-xs bg-gray-800 border-gray-700 hover:bg-gray-700 hover:text-white"
-              >
-                <Share2 className="w-3.5 h-3.5 mr-1.5" />
-                Share
-              </Button>
-            )}
-            
-            {/* Language selector */}
-            {availableLanguages.length > 1 && (
-              <div className="flex items-center gap-2">
-                <GroupedLanguageSelector
-                  value={selectedLanguage}
-                  onValueChange={onLanguageChange}
-                  filterCodes={availableLanguages}
-                  size="sm"
-                  className="bg-gray-800 border-gray-700"
-                />
-              </div>
-            )}
-            
-            {/* Auto-advance toggle */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => setAutoAdvance(!autoAdvance)}
-                  className={cn(
-                    "px-2 py-1 rounded text-xs font-medium transition-colors",
-                    autoAdvance 
-                      ? "bg-emerald-600 text-white" 
-                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                  )}
-                >
-                  Auto
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {autoAdvance ? 'Auto-advance enabled' : 'Auto-advance disabled'}
-              </TooltipContent>
-            </Tooltip>
-
-            {!isSharedView && motionControl}
-            
-            {/* Fullscreen toggle */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={toggleFullscreen}
-                  className="p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
-                >
-                  {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>{isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}</TooltipContent>
-            </Tooltip>
-            
-            {/* Close button */}
-            {onClose && !isFullscreen && (
-              <button
-                onClick={onClose}
-                className="p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        </div>
-        )}
+        {/* Header with language selector — hidden in landing embed and screening layout */}
+        {!embedMode && !useScreeningLayout && playerToolbar}
         
         {/* Main content area */}
         <div
           className={cn(
             'flex gap-4 p-4',
+            useScreeningLayout && 'flex-col items-center w-full pt-2 pb-4 px-2',
             isFullscreen && 'flex-1 flex-col items-center justify-center w-full',
             sharedCompact && 'flex-col items-center w-full gap-3 py-2 px-2 sm:px-4',
             landingWide ? 'max-w-none mx-0' : sharedCompact && 'max-w-4xl mx-auto'
@@ -815,13 +818,14 @@ export function AudioGalleryPlayer({
           {/* Scene image with Ken Burns effect */}
           <div className={cn(
             "relative rounded-lg overflow-hidden bg-black flex-shrink-0 w-full",
+            useScreeningLayout && "w-[75%] aspect-video shadow-xl",
             isFullscreen 
               ? "max-w-7xl aspect-video" 
-              : landingWide
+              : !useScreeningLayout && landingWide
                 ? "max-w-none aspect-video shadow-lg"
-                : sharedCompact
+                : !useScreeningLayout && sharedCompact
                   ? "max-w-3xl sm:max-w-4xl aspect-video shadow-lg"
-                  : "max-w-[500px] aspect-video shadow-xl"
+                  : !useScreeningLayout && "max-w-[500px] aspect-video shadow-xl"
           )}>
             {useVideoForCurrentScene ? (
               <>
@@ -891,6 +895,8 @@ export function AudioGalleryPlayer({
               </div>
             )}
           </div>
+
+          {useScreeningLayout && playerToolbar}
           
           {/* Scene title + description below video in fullscreen or shared view */}
           {isFullscreen && !sharedCompact && (
@@ -914,10 +920,11 @@ export function AudioGalleryPlayer({
           {/* Playback controls and info */}
           <div className={cn(
             "flex flex-col justify-between min-w-0 w-full",
-            isFullscreen ? "max-w-7xl mt-3" : sharedCompact ? cn('mx-auto mt-2', landingWide ? 'max-w-4xl' : 'max-w-2xl') : "flex-1"
+            useScreeningLayout && "w-[75%]",
+            isFullscreen ? "max-w-7xl mt-3" : sharedCompact ? cn('mx-auto mt-2', landingWide ? 'max-w-4xl' : 'max-w-2xl') : !useScreeningLayout && "flex-1"
           )}>
-            {/* Scene info - hide in fullscreen / shared compact (shown above video area) */}
-            {(!isFullscreen && !isSharedView) && (
+            {/* Scene info - hide in fullscreen / shared compact / screening toolbar layout */}
+            {(!isFullscreen && !isSharedView && !useScreeningLayout) && (
               <div>
                 <PreVisSceneInfoPanel
                   display={sceneDisplay}
@@ -929,6 +936,14 @@ export function AudioGalleryPlayer({
                   <p className="text-xs text-amber-400 mt-2">No audio generated for this scene</p>
                 )}
               </div>
+            )}
+            {useScreeningLayout && (
+              <PreVisSceneInfoPanel
+                display={sceneDisplay}
+                variant="compact"
+                totalScenes={scenes.length}
+                playerLabels={playerLabels}
+              />
             )}
             
             {/* Progress bar */}

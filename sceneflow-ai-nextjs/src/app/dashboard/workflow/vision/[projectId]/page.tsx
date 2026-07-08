@@ -13235,7 +13235,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     return (
       <VisionLoadingOverlay
         visible
-        title={!mounted ? 'Initializing' : 'Opening Production'}
+        title={!mounted ? 'Initializing' : 'Opening Production Studio'}
       />
     )
   }
@@ -13276,7 +13276,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           
           <div className="flex items-center gap-2">
             <Video className="w-4 h-4 text-sf-primary" />
-            <span className="text-sm font-medium text-gray-900 dark:text-white">Production</span>
+            <span className="text-sm font-medium text-gray-900 dark:text-white">Production Studio</span>
           </div>
 
           <div className="h-5 w-px bg-gray-300 dark:bg-gray-700 hidden sm:block" />
@@ -13304,7 +13304,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               }`}
             >
               <Play className="w-3.5 h-3.5" />
-              <span>Screening</span>
+              <span>Screening Room</span>
             </button>
           </div>
         </div>

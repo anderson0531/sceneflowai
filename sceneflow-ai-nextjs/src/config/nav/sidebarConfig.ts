@@ -177,7 +177,7 @@ export const productionSidebarConfig: WorkflowSidebarConfig = {
   ],
   quickActions: [
     { id: 'goto-bookmark', label: 'Go to Bookmark', icon: 'Bookmark', iconColor: 'text-amber-500', action: 'event', eventName: 'production:goto-bookmark' },
-    { id: 'screening', label: 'Screening', icon: 'Play', iconColor: 'text-green-500', action: 'event', eventName: 'production:screening-room' },
+    { id: 'screening', label: 'Screening Room', icon: 'Play', iconColor: 'text-green-500', action: 'event', eventName: 'production:screening-room' },
     { id: 'update-reviews', label: 'Audience Resonance', icon: 'BarChart3', iconColor: 'text-purple-500', action: 'event', eventName: 'production:update-reviews' },
     { id: 'review-analysis', label: 'Script Review', icon: 'FileText', iconColor: 'text-blue-500', action: 'event', eventName: 'production:review-analysis' },
     { id: 'production-render', label: 'Production Render', icon: 'Film', iconColor: 'text-purple-400', action: 'event', eventName: 'production:render-all' },

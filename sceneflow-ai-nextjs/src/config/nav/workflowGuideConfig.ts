@@ -79,7 +79,7 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
       { id: 'run-express-scene', label: 'Express per scene (recommended)', description: 'Checkpoint after each scene to avoid massive redos', actionEventName: 'production:scene-gallery' },
       { id: 'review-storyboard', label: 'Review pre-vis gallery', actionEventName: 'production:scene-gallery' },
       { id: 'collaborate-share', label: 'Share for review', actionEventName: 'production:share-link' },
-      { id: 'review-animatic', label: 'Screening preview', actionEventName: 'production:screening-room' },
+      { id: 'review-animatic', label: 'Screening Room preview', actionEventName: 'production:screening-room' },
     ],
   },
   {
@@ -102,7 +102,7 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
     steps: [
       { id: 'review-streams', label: 'Review finished MP4s', actionEventName: 'production:edit-video' },
       { id: 'rerender-stale', label: 'Re-render when beats change', description: 'Update available badge' },
-      { id: 'open-screening-room', label: 'Open Screening', actionEventName: 'production:screening-room' },
+      { id: 'open-screening-room', label: 'Open Screening Room', actionEventName: 'production:screening-room' },
     ],
   },
   {
