@@ -64,6 +64,8 @@ interface SceneGalleryProps {
   scenes: any[]
   projectTitle?: string
   onClose?: () => void
+  /** studio = Pre-Vis build tools; screening = playback + share only */
+  mode?: 'studio' | 'screening'
   /** Callback to open Generate Audio dialog */
   onOpenGenerateAudio?: () => void
   /**
@@ -103,6 +105,7 @@ export function SceneGallery({
   scenes,
   projectTitle,
   onClose,
+  mode = 'studio',
   onOpenGenerateAudio,
   onExpressGenerate,
   onFinalizeStoryboard,
@@ -401,7 +404,14 @@ export function SceneGallery({
 
   return (
     <TooltipProvider>
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+    <div
+      className={
+        mode === 'screening'
+          ? 'bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 h-full min-h-0 flex flex-col'
+          : 'bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6'
+      }
+    >
+      {mode !== 'screening' && (
       <div className="mb-4 rounded-lg border border-cyan-500/20 bg-cyan-500/5 px-4 py-3 text-sm text-cyan-100/90">
         <p className="font-medium text-cyan-200">Recommended: Express scene by scene</p>
         <p className="text-xs text-cyan-100/70 mt-1">
@@ -409,11 +419,18 @@ export function SceneGallery({
           Project-wide Express All is available as an advanced option below.
         </p>
       </div>
+      )}
 
       <div className="flex flex-wrap items-center justify-between gap-y-2 mb-6">
         <div className="flex items-center gap-2">
-          <Clapperboard className="w-5 h-5 text-sf-primary" />
-          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">Pre-Vis Studio</h3>
+          {mode === 'screening' ? (
+            <Play className="w-5 h-5 text-emerald-500" />
+          ) : (
+            <Clapperboard className="w-5 h-5 text-sf-primary" />
+          )}
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">
+            {mode === 'screening' ? 'Screening' : 'Pre-Vis Studio'}
+          </h3>
           <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
             {scenes.length} {scenes.length === 1 ? 'scene' : 'scenes'}
           </span>
@@ -434,6 +451,7 @@ export function SceneGallery({
           >
             v{storyboardVersion}
           </span>
+          {mode !== 'screening' && (
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -452,10 +470,11 @@ export function SceneGallery({
               records which version the reviewer had loaded.
             </TooltipContent>
           </Tooltip>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-2 items-center">
-          {onExpressGenerate && scenes.length > 0 && (
+          {mode !== 'screening' && onExpressGenerate && scenes.length > 0 && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -514,7 +533,7 @@ export function SceneGallery({
               </TooltipContent>
             </Tooltip>
           )}
-          {onFinalizeStoryboard && draftFrameCount > 0 && !isExpressRunning && (
+          {mode !== 'screening' && onFinalizeStoryboard && draftFrameCount > 0 && !isExpressRunning && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -533,7 +552,7 @@ export function SceneGallery({
               </TooltipContent>
             </Tooltip>
           )}
-          {isExpressRunning && expressProgress && (
+          {mode !== 'screening' && isExpressRunning && expressProgress && (
             <div className="flex items-center gap-1.5 rounded-md border border-indigo-500/40 bg-indigo-500/10 px-2 py-1 text-[11px] text-indigo-200">
               <span className="font-semibold">
                 Beats {storyboardBeatProgress.complete}/{storyboardBeatProgress.total}
@@ -589,7 +608,7 @@ export function SceneGallery({
               </span>
             )}
           </div>
-          {scenes.length > 0 && (
+          {scenes.length > 0 && mode !== 'screening' && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -614,13 +633,13 @@ export function SceneGallery({
                   <X className="w-4 h-4" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent>Close Pre-Vis Studio</TooltipContent>
+              <TooltipContent>{mode === 'screening' ? 'Back to Studio' : 'Close Pre-Vis Studio'}</TooltipContent>
             </Tooltip>
           )}
         </div>
       </div>
 
-      {productionReadyChecklist && (
+      {productionReadyChecklist && mode !== 'screening' && (
         <div ref={preVisBannerRef} className="mb-4 rounded-lg transition-shadow">
           <ProductionReadyBanner
             id="previs-ready-banner"
@@ -638,7 +657,7 @@ export function SceneGallery({
       )}
 
       {playableSceneCount > 0 && (
-        <div className="mb-2">
+        <div className={mode === 'screening' ? 'flex-1 min-h-0' : 'mb-2'}>
           <AudioGalleryPlayer
             scenes={scenes}
             selectedLanguage={selectedLanguage}
@@ -655,7 +674,7 @@ export function SceneGallery({
         </div>
       )}
 
-      {scenes.length > 0 && (
+      {scenes.length > 0 && mode !== 'screening' && (
         <ReportPreviewModal
           type={ReportType.STORYBOARD}
           data={{
@@ -682,7 +701,7 @@ export function SceneGallery({
         />
       )}
 
-      {onExpressGenerate && (
+      {onExpressGenerate && mode !== 'screening' && (
         <ExpressConfirmDialog
           open={expressDialogOpen}
           onOpenChange={setExpressDialogOpen}

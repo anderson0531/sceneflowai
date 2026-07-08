@@ -651,7 +651,7 @@ export function AudioGalleryPlayer({
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
           <div className="flex items-center gap-3">
             <Volume2 className="w-5 h-5 text-emerald-400" />
-            <span className="font-semibold text-white">Pre-vis Player</span>
+            <span className="font-semibold text-white">Screening</span>
             <div className="flex items-center rounded-md border border-white/10 bg-gray-800/80 p-0.5">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -1070,7 +1070,7 @@ export function AudioGalleryPlayer({
                               <ExternalLink className="w-3.5 h-3.5" />
                             </a>
                           </TooltipTrigger>
-                          <TooltipContent>Open full pre-vis player</TooltipContent>
+                          <TooltipContent>Open full screening player</TooltipContent>
                         </Tooltip>
                       )}
                     </>

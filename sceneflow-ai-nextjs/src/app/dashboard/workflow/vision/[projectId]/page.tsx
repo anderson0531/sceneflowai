@@ -15,7 +15,7 @@ Implement the fix * Do NOT create separate `scenes` state - this causes sync bug
 // Force rebuild: 2024-11-01
 
 import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { upload } from '@vercel/blob/client'
 import debounce from 'lodash/debounce'
@@ -119,11 +119,6 @@ import {
   type ExpressBeatFrameStatus,
 } from '@/lib/storyboard/expressBeatFrameProgress'
 import { GenerationProgress } from '@/components/vision/GenerationProgress'
-// Dynamic import to break TDZ chain - ScreeningRoom shell → FullscreenPlayer → audioTrackBuilder
-const ProductionScreeningRoomShell = dynamic(
-  () => import('@/components/screening-room/ProductionScreeningRoomShell').then(mod => ({ default: mod.ProductionScreeningRoomShell })),
-  { ssr: false }
-)
 const ProductionWorkspaceSheet = dynamic(
   () => import('@/components/production/ProductionWorkspaceSheet').then(mod => ({ default: mod.ProductionWorkspaceSheet })),
   { ssr: false }
@@ -136,7 +131,7 @@ import { Button, buttonVariants } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, ChevronRight, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User, Bookmark, FileText, Coins, ExternalLink, CheckCircle2, Circle, Music, Video, Loader2 } from 'lucide-react'
+import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, ChevronRight, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User, Bookmark, FileText, Coins, ExternalLink, CheckCircle2, Circle, Music, Video, Loader2, Clapperboard } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { resolveProjectArtStyle, resolveProjectAspectRatio, toVideoAspectRatio } from '@/lib/vision/artStyle'
 import {
@@ -584,11 +579,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     warning?: string
     dismissed?: boolean
   }>>({})
-  const [isPlayerOpen, setIsPlayerOpen] = useState(false)
-  const [screeningRoomReturnTo, setScreeningRoomReturnTo] = useState<string | null>(null)
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
+  const [productionView, setProductionView] = useState<'studio' | 'screening'>(() =>
+    searchParams.get('view') === 'screening' ? 'screening' : 'studio'
+  )
   const [productionWorkspaceOpen, setProductionWorkspaceOpen] = useState(false)
   const [productionWorkspaceTab, setProductionWorkspaceTab] = useState<ProductionWorkspaceTab>('render')
-  const [screeningPlaybackMode, setScreeningPlaybackMode] = useState<'animatic' | 'video' | 'auto'>('auto')
   const [showSceneGallery, setShowSceneGallery] = useState(false)
   const [isGenVideoRunning, setIsGenVideoRunning] = useState(false)
   const [showDashboard, setShowDashboard] = useState(false)
@@ -1067,21 +1064,31 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }, [projectId])
 
+  const setProductionViewWithUrl = useCallback(
+    (view: 'studio' | 'screening') => {
+      setProductionView(view)
+      const newParams = new URLSearchParams(searchParams.toString())
+      if (view === 'screening') {
+        newParams.set('view', 'screening')
+      } else {
+        newParams.delete('view')
+      }
+      const newUrl = newParams.toString() ? `${pathname}?${newParams}` : pathname
+      window.history.replaceState({}, '', newUrl)
+    },
+    [pathname, searchParams]
+  )
+
   const openScreeningRoomFromVisionUi = useCallback(() => {
-    setScreeningRoomReturnTo(null)
-    setIsPlayerOpen(true)
-  }, [])
+    setProductionViewWithUrl('screening')
+  }, [setProductionViewWithUrl])
 
-  const handleCloseScreeningRoom = useCallback(() => {
-    setIsPlayerOpen(false)
-    setScreeningRoomReturnTo((prev) => {
-      if (prev) router.push(prev)
-      return null
-    })
-  }, [router])
+  useEffect(() => {
+    const nextView = searchParams.get('view') === 'screening' ? 'screening' : 'studio'
+    setProductionView(nextView)
+  }, [searchParams])
 
-  // Handle openPlayer (+ optional returnTo) from Screening Room / Premiere
-  const searchParams = useSearchParams()
+  // Handle deep links: panel, openPlayer, youtube
   useEffect(() => {
     const panel = searchParams.get('panel')
     if (panel === 'render' || panel === 'publish') {
@@ -1095,15 +1102,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       window.history.replaceState({}, '', newUrl)
     }
     if (searchParams.get('openPlayer') === 'true') {
-      setIsPlayerOpen(true)
-      const safeReturn = sanitizeReturnTo(searchParams.get('returnTo'))
-      setScreeningRoomReturnTo(safeReturn)
+      setProductionView('screening')
       const newParams = new URLSearchParams(searchParams.toString())
       newParams.delete('openPlayer')
       newParams.delete('returnTo')
-      const newUrl = newParams.toString()
-        ? `${window.location.pathname}?${newParams}`
-        : window.location.pathname
+      newParams.set('view', 'screening')
+      const newUrl = `${window.location.pathname}?${newParams}`
       window.history.replaceState({}, '', newUrl)
     }
     if (searchParams.get('youtube') === 'connected') {
@@ -6242,8 +6246,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const eventHandlers: Record<string, () => void> = {
       // Actions dropdown events
       'production:goto-bookmark': () => handlersRef.current.jumpToBookmark(),
-      'production:scene-gallery': () => setShowSceneGallery(prev => !prev),
-      'production:screening-room': () => openScreeningRoomFromVisionUi(),
+      'production:scene-gallery': () => {
+        setProductionViewWithUrl('studio')
+        setShowSceneGallery(true)
+      },
+      'production:screening-room': () => setProductionViewWithUrl('screening'),
       'production:render-all': () => {
         setProductionWorkspaceTab('render')
         setProductionWorkspaceOpen(true)
@@ -6294,7 +6301,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         window.removeEventListener(eventName, listener)
       })
     }
-  }, [openScreeningRoomFromVisionUi, openReferenceLibrary])
+  }, [openScreeningRoomFromVisionUi, openReferenceLibrary, setProductionViewWithUrl])
   // ============================================================================
 
   // Broadcast storyboard open/close state to sidebar
@@ -13271,18 +13278,38 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             <Video className="w-4 h-4 text-sf-primary" />
             <span className="text-sm font-medium text-gray-900 dark:text-white">Production</span>
           </div>
+
+          <div className="h-5 w-px bg-gray-300 dark:bg-gray-700 hidden sm:block" />
+
+          <div className="inline-flex rounded-lg p-0.5 border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800/60">
+            <button
+              type="button"
+              onClick={() => setProductionViewWithUrl('studio')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                productionView === 'studio'
+                  ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              <Clapperboard className="w-3.5 h-3.5" />
+              <span>Studio</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setProductionViewWithUrl('screening')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                productionView === 'screening'
+                  ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              <Play className="w-3.5 h-3.5" />
+              <span>Screening</span>
+            </button>
+          </div>
         </div>
         
         <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-zinc-600"
-            onClick={() => setIsPlayerOpen(true)}
-          >
-            <span className="hidden sm:inline">Screening Room</span>
-            <span className="sm:hidden">Screen</span>
-          </Button>
           <Button
             size="sm"
             variant="outline"
@@ -13316,13 +13343,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 <div className="shrink-0">
                 <ScriptImportOnboardingBanner
                   onOpenScriptReview={() => setShowReviewModal(true)}
-                  onOpenStoryboard={() => setShowSceneGallery(true)}
+                  onOpenStoryboard={() => {
+                    setProductionViewWithUrl('studio')
+                    setShowSceneGallery(true)
+                  }}
                   onDismiss={handleDismissImportOnboarding}
                   isDismissing={isDismissingImportOnboarding}
                 />
                 </div>
               )}
               <div className="flex-1 min-h-0 h-full flex flex-col min-w-0">
+              {productionView === 'studio' && (
               <ScriptPanel 
                 script={script}
                 onScriptChange={handleScriptChange}
@@ -13563,6 +13594,33 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   </div>
                 )}
               />
+              )}
+              {productionView === 'screening' && (
+                <div className="flex-1 min-h-0 h-full flex flex-col min-w-0 overflow-hidden">
+                  <SceneGallery
+                    mode="screening"
+                    scenes={storyboardGalleryScenes}
+                    projectTitle={project?.title}
+                    onClose={() => setProductionViewWithUrl('studio')}
+                    productionReadyChecklist={productionReadyChecklist}
+                    onOpenReferences={() => openReferenceLibrary()}
+                    onExpressGenerate={handleExpressGenerate}
+                    onFinalizeStoryboard={handleFinalizeStoryboard}
+                    isExpressRunning={isExpressRunning}
+                    expressStatus={expressStatus}
+                    expressGateBlocked={!expressGate.allowed}
+                    expressGateReasons={expressGate.reasons}
+                    lockedArtStyle={lockedArtStyle}
+                    onGenVideo={handleGenProjectVideo}
+                    isGenVideoRunning={isGenVideoRunning}
+                    exportedAnimaticUrl={exportedAnimaticUrl}
+                    sceneTranslationsByLanguage={storedTranslations}
+                    playerLabelsByLanguage={playerLabelsByLanguage}
+                    onGenerateLanguage={handleGenerateLanguageStream}
+                    sceneProductionState={sceneProductionState}
+                  />
+                </div>
+              )}
               </div>
             </div>
           </div>
@@ -13674,23 +13732,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         )}
       </div>
 
-      {/* Screening Room V2 (Full-screen overlay) */}
-      {isPlayerOpen && script && (
-        <ProductionScreeningRoomShell
-          variant="overlay"
-          script={script}
-          characters={characters}
-          onClose={handleCloseScreeningRoom}
-          backButtonLabel={screeningRoomReturnTo ? 'Back' : undefined}
-          scriptEditedAt={scriptEditedAt}
-          sceneProductionState={sceneProductionState}
-          projectId={projectId}
-          storedTranslations={storedTranslations}
-          playbackMode={screeningPlaybackMode}
-          onPlaybackModeChange={setScreeningPlaybackMode}
-        />
-      )}
-
       <ProductionWorkspaceSheet
         open={productionWorkspaceOpen}
         tab={productionWorkspaceTab}
@@ -13703,7 +13744,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         exportedVideoUrl={
           (project?.metadata as { exportedVideoUrl?: string } | undefined)?.exportedVideoUrl ?? null
         }
-        onOpenScreeningRoom={() => setIsPlayerOpen(true)}
+        onOpenScreeningRoom={() => setProductionViewWithUrl('screening')}
       />
 
       {/* Navigation Warning Dialog */}
