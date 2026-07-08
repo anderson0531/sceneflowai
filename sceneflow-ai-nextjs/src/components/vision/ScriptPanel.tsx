@@ -49,6 +49,10 @@ import {
 } from '@/components/vision/ExpressAudioConfirmDialog'
 import type { ExpressSceneConfirmOptions } from '@/components/vision/ExpressSceneConfirmDialog'
 import { processWithConcurrency } from '@/lib/utils/concurrent-processor'
+import {
+  buildExpressAudioItems,
+  parseExpressAudioSelectedIds,
+} from '@/lib/audio/buildExpressAudioItems'
 
 // Dynamic imports with ssr: false to prevent TDZ circular dependency issues
 // These components have complex initialization that can cause module load order problems
@@ -4356,58 +4360,39 @@ function SceneCard({
     [scene]
   )
 
-  const expressAudioSummary = useMemo(() => {
-    const lang = selectedLanguage
-    const dialogueLines: any[] = Array.isArray(scene.dialogue) ? scene.dialogue : []
-    let dialogueTotal = 0
-    let dialogueMissing = 0
-    dialogueLines.forEach((d: any, i: number) => {
-      if (!d?.line || !d?.character) return
-      dialogueTotal++
-      const entry = findDialogueAudioForLine(scene, {
-        language: lang,
-        lineId: d.lineId,
-        dialogueIndex: i,
-        character: d.character,
-      })
-      if (!(entry?.audioUrl || entry?.url)) dialogueMissing++
-    })
-
-    const hasNarrationText = !!String(scene.narration || '').trim()
-    const narrationMissing = hasNarrationText && !getNarrationAudioUrlForLang(lang)
-
-    const hasMusic = !!scene.music
-    const musicMissing = hasMusic && !((scene as any).musicAudio || (scene as any).music?.url)
-
-    return {
-      dialogue: { total: dialogueTotal, missing: dialogueMissing },
-      narration: { present: hasNarrationText, missing: narrationMissing },
-      music: { present: hasMusic, missing: musicMissing },
-    }
-  }, [scene, selectedLanguage, getNarrationAudioUrlForLang])
+  const expressAudioItems = useMemo(
+    () => buildExpressAudioItems(scene as Record<string, unknown>, selectedLanguage),
+    [scene, selectedLanguage]
+  )
 
   const handleExpressAudioConfirm = useCallback(
     async (options: ExpressAudioConfirmOptions) => {
       if (!projectId) return
       const lang = selectedLanguage
       const isAll = options.scope === 'all'
+      const selection = parseExpressAudioSelectedIds(options.selectedIds)
+      const selectedDialogueIndices = new Set(selection.dialogueIndices)
 
       setIsExpressAudioRunning(true)
       overlayStore?.show(`Express Audio for Scene ${sceneIdx + 1}...`, 60, 'audio-generation')
 
       try {
-        // Scope = All: delete existing audio for the selected types first.
+        // Scope = All: delete existing audio for the selected items first.
         if (isAll && onDeleteSceneAudio) {
           const deletions: Promise<unknown>[] = []
-          if (options.includeDialogue) {
+          if (selection.includeNarration) {
             deletions.push(
               Promise.resolve(onDeleteSceneAudio(sceneIdx, 'narration', undefined, undefined, true))
             )
+          }
+          for (const dialogueIndex of selection.dialogueIndices) {
             deletions.push(
-              Promise.resolve(onDeleteSceneAudio(sceneIdx, 'dialogue', -1, undefined, true))
+              Promise.resolve(
+                onDeleteSceneAudio(sceneIdx, 'dialogue', dialogueIndex, undefined, true)
+              )
             )
           }
-          if (options.includeMusic) {
+          if (selection.includeMusic) {
             deletions.push(
               Promise.resolve(onDeleteSceneAudio(sceneIdx, 'music', undefined, undefined, true))
             )
@@ -4419,12 +4404,14 @@ function SceneCard({
 
         // ---- TTS lane: narration + dialogue lines (concurrency 3) ----
         const ttsLane = async () => {
-          if (!options.includeDialogue || !onGenerateSceneAudio) return
+          if (!onGenerateSceneAudio) return
           const tasks: Array<{ id: string; execute: () => Promise<void> }> = []
 
           const hasNarrationText = !!String(scene.narration || '').trim()
           const narrationNeeded =
-            hasNarrationText && (isAll || !getNarrationAudioUrlForLang(lang))
+            selection.includeNarration &&
+            hasNarrationText &&
+            (isAll || !getNarrationAudioUrlForLang(lang))
           if (narrationNeeded) {
             tasks.push({
               id: 'narration',
@@ -4437,6 +4424,7 @@ function SceneCard({
           const dialogueLines: any[] = Array.isArray(scene.dialogue) ? scene.dialogue : []
           dialogueLines.forEach((d: any, i: number) => {
             if (!d?.line || !d?.character) return
+            if (!selectedDialogueIndices.has(i)) return
             if (!isAll) {
               const entry = findDialogueAudioForLine(scene, {
                 language: lang,
@@ -4460,7 +4448,7 @@ function SceneCard({
 
         // ---- Music lane ----
         const musicLane = async () => {
-          if (!options.includeMusic || !generateMusic || !scene.music) return
+          if (!selection.includeMusic || !generateMusic || !scene.music) return
           const musicMissing = !((scene as any).musicAudio || (scene as any).music?.url)
           if (!isAll && !musicMissing) return
           await generateMusic(sceneIdx, true)
@@ -4468,11 +4456,11 @@ function SceneCard({
 
         // ---- Veo SFX lane ----
         const sfxLane = async () => {
-          if (!options.includeSfx || options.sfxBeatIds.length === 0) return
+          if (selection.sfxBeatIds.length === 0) return
           await dispatchExpressVeoSfx({
             projectId,
             sceneIndex: sceneIdx,
-            beatIds: options.sfxBeatIds,
+            beatIds: selection.sfxBeatIds,
             segmentDurationSeconds: scene.duration,
             durationOverride: options.durationOverride,
             regenerate: isAll,
@@ -7494,10 +7482,7 @@ function SceneCard({
           <ExpressAudioConfirmDialog
             open={expressAudioDialogOpen}
             onOpenChange={setExpressAudioDialogOpen}
-            beats={expressSfxBeatOptions}
-            dialogue={expressAudioSummary.dialogue}
-            narration={expressAudioSummary.narration}
-            music={expressAudioSummary.music}
+            items={expressAudioItems}
             segmentDurationSeconds={scene.duration}
             isRunning={isExpressAudioRunning}
             onConfirm={handleExpressAudioConfirm}

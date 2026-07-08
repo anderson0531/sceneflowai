@@ -11,9 +11,14 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Loader, MessageSquare, Music, Sparkles, Waves } from 'lucide-react'
+import { Loader, Sparkles } from 'lucide-react'
 import type { SfxDurationOverride } from '@/lib/elevenlabs/sfxDuration'
 import { resolveAutoSfxDuration } from '@/lib/elevenlabs/sfxDuration'
+import {
+  defaultExpressAudioSelection,
+  type ExpressAudioItem,
+  type ExpressAudioScope,
+} from '@/lib/audio/buildExpressAudioItems'
 import { estimateExpressVeoSfxCredits } from '@/lib/sfx/clientExpressVeoSfx'
 import { VEO_SFX_CREDIT_HINT } from '@/lib/sfx/clientGenerateVeoSfx'
 import {
@@ -22,96 +27,67 @@ import {
   veoSfxCoversFullBeat,
 } from '@/lib/sfx/veoSfxDuration'
 
-export type ExpressAudioScope = 'missing' | 'all'
+export type { ExpressAudioScope } from '@/lib/audio/buildExpressAudioItems'
 
 export interface ExpressAudioConfirmOptions {
   scope: ExpressAudioScope
-  includeDialogue: boolean
-  includeMusic: boolean
-  includeSfx: boolean
-  sfxBeatIds: string[]
+  selectedIds: string[]
   durationOverride: SfxDurationOverride
-}
-
-export interface ExpressAudioBeatOption {
-  beatId: string
-  label: string
-  hasAudio: boolean
-}
-
-export interface ExpressAudioDialogueSummary {
-  total: number
-  missing: number
-}
-
-export interface ExpressAudioTrackSummary {
-  present: boolean
-  missing: boolean
 }
 
 interface ExpressAudioConfirmDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  beats: ExpressAudioBeatOption[]
-  dialogue?: ExpressAudioDialogueSummary
-  narration?: ExpressAudioTrackSummary
-  music?: ExpressAudioTrackSummary
+  items: ExpressAudioItem[]
   segmentDurationSeconds?: number
   isRunning?: boolean
   onConfirm: (options: ExpressAudioConfirmOptions) => void
 }
 
+function typeBadgeClass(kind: ExpressAudioItem['kind']): string {
+  switch (kind) {
+    case 'music':
+      return 'bg-purple-500/15 text-purple-200 border-purple-500/30'
+    case 'narration':
+    case 'dialogue':
+      return 'bg-emerald-500/15 text-emerald-200 border-emerald-500/30'
+    case 'sfx':
+      return 'bg-violet-500/15 text-violet-200 border-violet-500/30'
+  }
+}
+
 export function ExpressAudioConfirmDialog({
   open,
   onOpenChange,
-  beats,
-  dialogue,
-  narration,
-  music,
+  items,
   segmentDurationSeconds,
   isRunning = false,
   onConfirm,
 }: ExpressAudioConfirmDialogProps) {
   const [scope, setScope] = useState<ExpressAudioScope>('missing')
-  const [includeDialogue, setIncludeDialogue] = useState(true)
-  const [includeMusic, setIncludeMusic] = useState(true)
-  const [includeSfx, setIncludeSfx] = useState(true)
-  const [selectedBeatIds, setSelectedBeatIds] = useState<string[]>([])
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [durationPreset, setDurationPreset] = useState<SfxDurationOverride>('auto')
 
-  const hasDialogueOrNarration =
-    (dialogue?.total ?? 0) > 0 || !!narration?.present
-  const hasMusic = !!music?.present
-  const hasSfx = beats.length > 0
-
-  // Reset state whenever the dialog opens or scope changes so the SFX beat
-  // selection matches the chosen scope (missing = beats without audio).
   useEffect(() => {
     if (!open) return
     setDurationPreset('auto')
-    setIncludeDialogue(hasDialogueOrNarration)
-    setIncludeMusic(hasMusic)
-    setIncludeSfx(hasSfx)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setScope('missing')
   }, [open])
 
   useEffect(() => {
     if (!open) return
-    const selected =
-      scope === 'all'
-        ? beats.map((beat) => beat.beatId)
-        : beats.filter((beat) => !beat.hasAudio).map((beat) => beat.beatId)
-    setSelectedBeatIds(selected)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, scope, beats])
+    setSelectedIds(defaultExpressAudioSelection(items, scope))
+  }, [open, scope, items])
 
-  const selectedSet = useMemo(() => new Set(selectedBeatIds), [selectedBeatIds])
+  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
+  const selectedSfxCount = useMemo(
+    () => items.filter((item) => item.kind === 'sfx' && selectedSet.has(item.id)).length,
+    [items, selectedSet]
+  )
   const autoSeconds = resolveAutoSfxDuration(segmentDurationSeconds)
   const veoAutoSeconds = resolveAutoVeoSfxDuration(segmentDurationSeconds)
   const showPartialVeoHint = !veoSfxCoversFullBeat(segmentDurationSeconds, durationPreset)
-  const creditTotal = estimateExpressVeoSfxCredits(
-    includeSfx ? selectedBeatIds.length : 0
-  )
+  const creditTotal = estimateExpressVeoSfxCredits(selectedSfxCount)
 
   const chips: Array<{ id: SfxDurationOverride; label: string }> = [
     {
@@ -123,28 +99,19 @@ export function ExpressAudioConfirmDialog({
     { id: 'long', label: 'Long 15s / Veo 8s max' },
   ]
 
-  const toggleBeat = (beatId: string, checked: boolean) => {
-    setSelectedBeatIds((prev) => {
-      if (checked) return prev.includes(beatId) ? prev : [...prev, beatId]
-      return prev.filter((id) => id !== beatId)
+  const toggleItem = (id: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      if (checked) return prev.includes(id) ? prev : [...prev, id]
+      return prev.filter((entry) => entry !== id)
     })
   }
 
-  const dialogueCount =
-    scope === 'all' ? dialogue?.total ?? 0 : dialogue?.missing ?? 0
-  const narrationNeeded =
-    !!narration?.present && (scope === 'all' || !!narration?.missing)
-  const musicNeeded = hasMusic && (scope === 'all' || !!music?.missing)
-
-  const nothingSelected =
-    (!includeDialogue || (dialogueCount === 0 && !narrationNeeded)) &&
-    (!includeMusic || !musicNeeded) &&
-    (!includeSfx || selectedBeatIds.length === 0)
+  const nothingSelected = selectedIds.length === 0
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg bg-gray-900 border-gray-700 text-gray-100">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col bg-gray-900 border-gray-700 text-gray-100">
+        <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center gap-2 text-violet-200">
             <Sparkles className="w-5 h-5" />
             Express Audio
@@ -155,13 +122,12 @@ export function ExpressAudioConfirmDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
-          {/* Scope */}
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-4 py-2">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
               Scope
             </p>
-            <div className="inline-flex rounded-md border border-violet-600/40 overflow-hidden">
+            <div className="inline-flex max-w-full rounded-md border border-violet-600/40 overflow-hidden">
               {(['missing', 'all'] as ExpressAudioScope[]).map((value) => (
                 <button
                   key={value}
@@ -180,137 +146,97 @@ export function ExpressAudioConfirmDialog({
             </div>
             {scope === 'all' && (
               <p className="text-[11px] text-amber-200/70 mt-2">
-                Existing audio for the selected types will be deleted and regenerated.
+                Existing audio for the selected items will be deleted and regenerated.
               </p>
             )}
           </div>
 
-          {/* Audio types */}
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-              Audio types
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+              Audio to generate
             </p>
-
-            {hasDialogueOrNarration && (
-              <label className="flex items-center justify-between gap-2 rounded border border-gray-700/80 bg-gray-800/40 p-2 cursor-pointer hover:bg-gray-800/70">
-                <span className="flex items-center gap-2 text-sm text-gray-100">
-                  <Checkbox
-                    checked={includeDialogue}
-                    onCheckedChange={(checked) => setIncludeDialogue(checked === true)}
-                    disabled={isRunning}
-                  />
-                  <MessageSquare className="w-4 h-4 text-emerald-300" />
-                  Dialogue &amp; narration
-                </span>
-                <span className="text-[11px] text-gray-400">
-                  {dialogueCount + (narrationNeeded ? 1 : 0)}{' '}
-                  {scope === 'all' ? 'line(s)' : 'missing'}
-                </span>
-              </label>
-            )}
-
-            {hasMusic && (
-              <label className="flex items-center justify-between gap-2 rounded border border-gray-700/80 bg-gray-800/40 p-2 cursor-pointer hover:bg-gray-800/70">
-                <span className="flex items-center gap-2 text-sm text-gray-100">
-                  <Checkbox
-                    checked={includeMusic}
-                    onCheckedChange={(checked) => setIncludeMusic(checked === true)}
-                    disabled={isRunning}
-                  />
-                  <Music className="w-4 h-4 text-purple-300" />
-                  Background music
-                </span>
-                <span className="text-[11px] text-gray-400">
-                  {musicNeeded ? (scope === 'all' ? 'regenerate' : 'missing') : 'ready'}
-                </span>
-              </label>
-            )}
-
-            {hasSfx && (
-              <label className="flex items-center justify-between gap-2 rounded border border-gray-700/80 bg-gray-800/40 p-2 cursor-pointer hover:bg-gray-800/70">
-                <span className="flex items-center gap-2 text-sm text-gray-100">
-                  <Checkbox
-                    checked={includeSfx}
-                    onCheckedChange={(checked) => setIncludeSfx(checked === true)}
-                    disabled={isRunning}
-                  />
-                  <Waves className="w-4 h-4 text-violet-300" />
-                  Action-beat SFX (Veo)
-                </span>
-                <span className="text-[11px] text-gray-400">
-                  {selectedBeatIds.length} beat(s)
-                </span>
-              </label>
-            )}
-          </div>
-
-          {/* SFX beat list */}
-          {includeSfx && hasSfx && (
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-                Action beats
+            {items.length === 0 ? (
+              <p className="text-sm text-gray-500 py-4 text-center">
+                No audio items available for this scene.
               </p>
-              <div className="max-h-40 overflow-y-auto space-y-2 pr-1">
-                {beats.map((beat) => (
+            ) : (
+              <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
+                {items.map((item) => (
                   <label
-                    key={beat.beatId}
-                    className="flex items-start gap-2 rounded border border-gray-700/80 bg-gray-800/40 p-2 cursor-pointer hover:bg-gray-800/70"
+                    key={item.id}
+                    className="flex w-full min-w-0 box-border items-start gap-2 rounded border border-gray-700/80 bg-gray-800/40 p-2 cursor-pointer hover:bg-gray-800/70"
                   >
                     <Checkbox
-                      checked={selectedSet.has(beat.beatId)}
-                      onCheckedChange={(checked) => toggleBeat(beat.beatId, checked === true)}
+                      checked={selectedSet.has(item.id)}
+                      onCheckedChange={(checked) => toggleItem(item.id, checked === true)}
                       disabled={isRunning}
-                      className="mt-0.5"
+                      className="mt-0.5 shrink-0"
                     />
                     <span className="min-w-0 flex-1">
-                      <span className="block text-sm text-gray-100 truncate">{beat.label}</span>
-                      {beat.hasAudio && (
-                        <span className="text-[10px] text-green-400">Audio ready</span>
-                      )}
+                      <span className="flex items-center gap-2 min-w-0">
+                        <span className="block text-sm text-gray-100 truncate flex-1 min-w-0">
+                          {item.label}
+                        </span>
+                        <span
+                          className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded-full border ${typeBadgeClass(item.kind)}`}
+                        >
+                          {item.typeLabel}
+                        </span>
+                      </span>
+                      <span
+                        className={`text-[10px] ${
+                          item.hasAudio ? 'text-green-400' : 'text-amber-400'
+                        }`}
+                      >
+                        {item.hasAudio ? 'Ready' : 'Missing'}
+                      </span>
                     </span>
                   </label>
                 ))}
               </div>
+            )}
+          </div>
 
-              <div className="mt-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-                  SFX duration preset
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {chips.map((chip) => (
-                    <button
-                      key={chip.id}
-                      type="button"
-                      disabled={isRunning}
-                      onClick={() => setDurationPreset(chip.id)}
-                      className={`text-[10px] leading-none px-2 py-1 rounded border transition-colors ${
-                        durationPreset === chip.id
-                          ? 'bg-violet-600 border-violet-600 text-white'
-                          : 'bg-transparent border-violet-600/40 text-violet-200/80 hover:bg-violet-900/30'
-                      } disabled:opacity-50`}
-                    >
-                      {chip.label}
-                    </button>
-                  ))}
-                </div>
-                {showPartialVeoHint && (
-                  <p className="text-[10px] text-amber-200/60 mt-2">
-                    Veo covers up to 8s (Auto target{' '}
-                    {resolveVeoSfxTargetSeconds({ segmentDurationSeconds, override: durationPreset })}s
-                    ).
-                  </p>
-                )}
-                {selectedBeatIds.length > 0 && (
-                  <p className="text-[11px] text-violet-300/60 mt-2">
-                    SFX credits: {creditTotal}. {VEO_SFX_CREDIT_HINT}
-                  </p>
-                )}
+          {selectedSfxCount > 0 && (
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+                SFX duration preset
+              </p>
+              <div className="flex min-w-0 flex-wrap gap-1.5">
+                {chips.map((chip) => (
+                  <button
+                    key={chip.id}
+                    type="button"
+                    disabled={isRunning}
+                    onClick={() => setDurationPreset(chip.id)}
+                    className={`text-[10px] leading-none px-2 py-1 rounded border transition-colors ${
+                      durationPreset === chip.id
+                        ? 'bg-violet-600 border-violet-600 text-white'
+                        : 'bg-transparent border-violet-600/40 text-violet-200/80 hover:bg-violet-900/30'
+                    } disabled:opacity-50`}
+                  >
+                    {chip.label}
+                  </button>
+                ))}
               </div>
+              {showPartialVeoHint && (
+                <p className="text-[10px] text-amber-200/60 mt-2">
+                  Veo covers up to 8s (Auto target{' '}
+                  {resolveVeoSfxTargetSeconds({
+                    segmentDurationSeconds,
+                    override: durationPreset,
+                  })}
+                  s).
+                </p>
+              )}
+              <p className="text-[11px] text-violet-300/60 mt-2">
+                SFX credits: {creditTotal}. {VEO_SFX_CREDIT_HINT}
+              </p>
             </div>
           )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="shrink-0">
           <Button
             type="button"
             variant="outline"
@@ -324,10 +250,7 @@ export function ExpressAudioConfirmDialog({
             onClick={() =>
               onConfirm({
                 scope,
-                includeDialogue,
-                includeMusic,
-                includeSfx,
-                sfxBeatIds: includeSfx ? selectedBeatIds : [],
+                selectedIds,
                 durationOverride: durationPreset,
               })
             }
@@ -342,7 +265,7 @@ export function ExpressAudioConfirmDialog({
             ) : (
               <>
                 <Sparkles className="w-4 h-4 mr-2" />
-                Express Audio
+                Express Audio ({selectedIds.length})
               </>
             )}
           </Button>
