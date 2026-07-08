@@ -194,4 +194,52 @@ describe('resolveBeatFrameGenerationContext', () => {
 
     expect(resolved.characterWardrobes).toEqual([{ characterId: 'c1', wardrobeId: 'w-scene4' }])
   })
+
+  it('auto-selects only props named in beat text, not scene-tagged props from other beats', () => {
+    const scene = {
+      heading: 'INT. OFFICE - DAY',
+      sceneNumber: 5,
+      action:
+        'Elara adjusts a tiny lapel camera. Marcus sips from a coffee mug while reviewing a transparent tablet.',
+    }
+    const objectReferences = [
+      {
+        id: 'prop-lapel',
+        name: 'Tiny lapel camera',
+        sceneNumbers: [5],
+        importance: 'critical',
+      },
+      {
+        id: 'prop-tablet',
+        name: 'Transparent tablet',
+        sceneNumbers: [5],
+        importance: 'important',
+      },
+      {
+        id: 'prop-mug',
+        name: 'Coffee mug',
+        sceneNumbers: [5],
+        importance: 'background',
+      },
+      {
+        id: 'prop-unrelated',
+        name: 'Vintage typewriter',
+        sceneNumbers: [5],
+        importance: 'background',
+      },
+    ]
+    const resolved = resolveBeatFrameGenerationContext({
+      scene,
+      beat: actionBeat({
+        actionDescription:
+          'Close-up. Elara adjusts a tiny lapel camera clipped to her clothing.',
+      }),
+      projectCharacters: characters,
+      locationReferences: [],
+      objectReferences,
+    })
+
+    expect(resolved.objectRefIds).toEqual(['prop-lapel'])
+    expect(resolved.objectNames).toEqual(['Tiny lapel camera'])
+  })
 })

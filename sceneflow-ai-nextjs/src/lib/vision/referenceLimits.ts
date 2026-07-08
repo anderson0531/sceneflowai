@@ -303,6 +303,20 @@ export function buildCharacterReferenceEntries(
   return entries
 }
 
+export function buildPropReferenceMappingLines(
+  props: Array<{ propName?: string; sendIndex?: number }>
+): string {
+  const valid = props.filter((p) => p.propName && p.sendIndex)
+  if (!valid.length) return ''
+  const lines = valid
+    .map(
+      (p) =>
+        `- PROP REFERENCE (Ref Image [${p.sendIndex}]): ${p.propName} — Extract shape, material, color, and design of the named prop only. Do not add unrelated objects.`
+    )
+    .join('\n')
+  return `PROP REFERENCES (${valid.length}):\n${lines}\n\n`
+}
+
 export function buildPropReferenceEntries(
   objectImageReferences: Array<{ imageUrl: string; name: string; importance?: string }>,
   startIndex: number

@@ -69,6 +69,7 @@ import {
   buildCharacterReferenceEntries,
   buildLocationReferenceEntry,
   buildPropReferenceEntries,
+  buildPropReferenceMappingLines,
   remapReferenceNumbersInPrompt,
   resolveEffectiveImageTier,
   selectReferenceImagesInOrder,
@@ -1927,9 +1928,11 @@ export async function POST(req: NextRequest) {
           }
           
           // Object reference instructions
-          if (cappedObjectImageReferences.length > 0) {
-            const objectNames = cappedObjectImageReferences.map((o: any) => o.name).join(', ')
-            geminiPrompt += `PROP REFERENCES: Include these specific props/objects matching their reference images: ${objectNames}.\n\n`
+          const selectedPropRefs = selectedReferenceImages.filter(
+            (r) => r.propName && r.sendIndex
+          )
+          if (selectedPropRefs.length > 0) {
+            geminiPrompt += buildPropReferenceMappingLines(selectedPropRefs)
           }
           
           // Location reference instructions

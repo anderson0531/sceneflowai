@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   MAX_VERTEX_GEMINI_REFERENCE_IMAGES,
+  buildPropReferenceMappingLines,
   buildSubjectCountGuardrail,
   getMaxReferenceImagesForTier,
   prioritizeReferenceImages,
@@ -76,6 +77,26 @@ describe('referenceLimits', () => {
     expect(guardrail).toContain('person [1] (Elara Vance)')
     expect(guardrail).toContain('person [2] (Marcus Thorne)')
     expect(guardrail).toContain('NOT additional people')
+  })
+
+  it('buildPropReferenceMappingLines emits one Ref Image line per prop with indices', () => {
+    const mapping = buildPropReferenceMappingLines([
+      { propName: 'Tiny lapel camera', sendIndex: 4 },
+      { propName: 'Coffee mug', sendIndex: 5 },
+    ])
+    expect(mapping).toContain('PROP REFERENCES (2):')
+    expect(mapping).toContain(
+      '- PROP REFERENCE (Ref Image [4]): Tiny lapel camera — Extract shape, material, color, and design of the named prop only.'
+    )
+    expect(mapping).toContain(
+      '- PROP REFERENCE (Ref Image [5]): Coffee mug — Extract shape, material, color, and design of the named prop only.'
+    )
+  })
+
+  it('buildPropReferenceMappingLines returns empty string when no valid props', () => {
+    expect(buildPropReferenceMappingLines([])).toBe('')
+    expect(buildPropReferenceMappingLines([{ propName: 'Mug' }])).toBe('')
+    expect(buildPropReferenceMappingLines([{ sendIndex: 3 }])).toBe('')
   })
 
   it('prioritizes identity, wardrobe, location, then props by importance', () => {

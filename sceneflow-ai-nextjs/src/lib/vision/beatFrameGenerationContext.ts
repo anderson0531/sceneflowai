@@ -9,7 +9,6 @@ import { extractLocation } from '@/lib/script/formatSceneHeading'
 import type { BeatReferenceSelection, SceneBeat } from '@/lib/script/segmentTypes'
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
 import {
-  buildSceneDirectionText,
   findMatchingLocationReferences,
   isNoTalentSceneForFrames,
 } from '@/lib/vision/frameGenerationContext'
@@ -45,18 +44,16 @@ function sceneHeadingText(scene: Record<string, unknown>): string {
   return ''
 }
 
-function buildBeatMatchText(scene: Record<string, unknown>, beat: SceneBeat): string {
-  const heading = sceneHeadingText(scene)
-  const parts = [
-    heading,
-    scene?.action || '',
-    scene?.visualDescription || '',
-    buildSceneDirectionText(scene),
+function buildBeatPropMatchText(scene: Record<string, unknown>, beat: SceneBeat): string {
+  return [
+    sceneHeadingText(scene),
     beat.actionDescription || '',
     beat.line || '',
     beat.character || '',
   ]
-  return parts.filter(Boolean).join(' ').trim()
+    .filter(Boolean)
+    .join(' ')
+    .trim()
 }
 
 function pickBestLocationRef(
@@ -172,9 +169,8 @@ export function resolveBeatFrameGenerationContext(
     }
   }
 
-  const sceneNumber = typeof scene?.sceneNumber === 'number' ? scene.sceneNumber : undefined
-  const matchText = buildBeatMatchText(scene, beat)
-  const detectedObjects = findSceneObjects(matchText, objectReferences as any[], sceneNumber)
+  const matchText = buildBeatPropMatchText(scene, beat)
+  const detectedObjects = findSceneObjects(matchText, objectReferences as any[])
   const objectRefIds = detectedObjects.map((o) => o.id).filter(Boolean) as string[]
 
   const characterWardrobes = buildCharacterWardrobes(scene, characterIds, projectCharacters, sceneIndex)
