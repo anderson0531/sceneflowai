@@ -10,8 +10,8 @@
     "more": "Zaidi",
     "useCases": "Visa vya Matumizi",
     "audienceResonance": "Audience Resonance",
+    "trustSafety": "Uaminifu na Usalama",
     "platformTrust": "Jukwaa na Imani",
-    "faq": "Maswali Yanayoulizwa Mara Kwa Mara",
     "signIn": "Ingia",
     "startProject": "Anzisha mradi",
     "dashboard": "Dashibodi",
@@ -24,17 +24,18 @@
   },
   "floatingNav": {
     "compare": "Linganisha",
+    "looksAndFormats": "Muonekano na Miundo",
     "howItWorks": "Jinsi Inavyofanya Kazi",
     "useCases": "Visa vya Matumizi",
+    "preVisEngine": "Injini ya Taswira ya Awali",
     "platformWalkthrough": "Mwongozo wa Matumizi ya Jukwaa",
+    "trustSafety": "Uaminifu na Usalama",
     "platform": "Jukwaa",
-    "pricing": "Bei",
-    "faq": "Maswali Yanayoulizwa Mara Kwa Mara",
-    "preVisEngine": "Pre-Vis Engine"
+    "pricing": "Bei"
   },
   "hero": {
-    "headline": "Acha kuhangaika na tabu tano tofauti za AI. Studio moja inakuwezesha kuanzia hatua ya wazo hadi video iliyo tayari kuchapishwa.",
-    "subheadline": "Studio moja inayokuongoza kuanzia hatua ya wazo hadi video ya mwisho iliyo tayari kuchapishwa. Tazama *pre-vis* yako kabla ya kulipia video ya mwisho — idhinisha muonekano wake badala ya kupoteza *credits* kwa majaribio ya kubahatisha. SceneFlow hurahisisha na kufanya kazi za kawaida ziende zenyewe — kama vile uandishi wa muswada, *pre-vis*, sauti, na uunganishaji wa vipengele — huku ukiwa na udhibiti kamili wa kila hatua.",
+    "headline": "Wazia kisa hicho. SceneFlow inashughulikia mchakato huo.",
+    "subheadline": "Acha kushughulika na hatua za kutoa maelekezo zinazochosha. Zingatia kikamilifu lengo lako la ubunifu ukitumia mfumo wa uzalishaji wa kiwango cha kitaalamu na unaojiendesha wenyewe.",
     "audienceMicroLine": "Imeundwa kwa ajili ya wabunifu wanaotaka matokeo, na timu zinazotaka kuona jinsi inavyofanya kazi.",
     "ctaSecondary": "Tazama 'What's Possible'",
     "ctaToolStack": "Ona jinsi inavyochukua nafasi ya mkusanyiko wako wa zana.",
@@ -83,7 +84,7 @@
       },
       {
         "label": "Idhinisha kabla ya video ya mwisho",
-        "detail": "Kagua vipengele vya ubao wa hadithi kabla ya kufanya render."
+        "detail": "Kagua sehemu za taswira ya awali (pre-vis beats) kabla ya kufanya render."
       },
       {
         "label": "Jaribu hadithi yako kwanza",
@@ -97,13 +98,23 @@
   },
   "audiencePaths": {
     "prompt": "Wewe ni nani? Chagua njia yako.",
+    "showDetails": "Onyesha maelezo",
+    "hideDetails": "Ficha maelezo",
     "seeExamples": "Tazama mifano",
     "examplesFor": "Mifano ya {label}:",
     "andMore": ", na mengineyo.",
+    "expandImage": "Panua picha",
+    "closePreview": "Funga hakikisho",
+    "playNarration": "Cheza simulizi",
+    "pauseNarration": "Sitisha simulizi",
+    "narrationComingSoon": "Simulizi inakuja hivi karibuni",
+    "hearStory": "Sikia Hadithi",
+    "pauseStory": "Sitisha hadithi",
+    "storyComingSoon": "Habari inakuja hivi karibuni",
     "modes": {
       "automate": {
-        "label": "Iweke ijiendeshe yenyewe",
-        "description": "Mchakato wa kazi unaoongozwa — idhinisha michoro ya awali (pre-vis), kamilisha na kutoa kazi kwa haraka zaidi"
+        "label": "Iweke katika mfumo wa kujiendesha",
+        "description": "Mchakato wa kazi ulioongozwa — idhinisha taswira ya awali, kamilisha na uwasilishe kwa haraka zaidi"
       },
       "engine": {
         "label": "Nionyeshe injini",
@@ -113,21 +124,35 @@
     "paths": [
       {
         "id": "Muumba",
+        "hash": "Kiunda-kesi-za-matumizi",
+        "icon": "video",
         "label": "Muumba",
-        "outcome": "Kamilisha na uwasilishe kwa wakati — acha kujenga upya katika kila zana",
+        "outcome": "Kamilisha na uwasilishe kwa wakati — acha kurudia kazi katika kila zana.",
+        "narrative": "Una hadithi, lakini kila kipindi kinahitaji kutoa upya (re-export) vipengele, kuingiza maelekezo mapya kwenye tabu (tabs) mpya, na kutumaini kuwa mtiririko na muendelezo utabaki thabiti. SceneFlow inaunganisha Mfululizo, Blueprint, na Uzalishaji katika studio moja — hivyo unaweza kuidhinisha muonekano katika hatua ya awali ya taswira (pre-vis), kuzalisha maudhui eneo kwa eneo, na kukamilisha vipindi vyenye muendelezo thabiti kwa wakati uliopangwa, badala ya kuanza kila kitu upya kabisa.",
         "useCases": [
+          "Tamthilia ya YouTube TV ya uwiano wa 16:9",
+          "Tamthilia ya simu ya mkononi ya wima yenye uwiano wa 9:16",
+          "Mfululizo wa katuni wa mtandaoni",
           "YouTube na mfululizo wa vipindi",
           "Podikasti za video na vipande vya vipindi",
-          "Habari za eneo mahususi na zinazotolewa wakati muafaka",
           "Filamu na mfululizo wa filamu za makala",
-          "Chaneli za mafunzo ya vitendo na ujuzi",
           "Muhtasari na uchambuzi wa michezo"
-        ]
+        ],
+        "example": {
+          "challengeTitle": "Kikwazo cha \"B-Roll\"",
+          "challengeDescription": "Una hati nzuri ya video, lakini kujifunza zana sita tofauti za kutengeneza na kuhariri — au kukwama katika mzunguko wa video zinazojirudia-rudia — kunachelewesha kila video unayopakia. Mafanikio ya mfululizo wa video za YouTube na mahitaji ya kasi ya vipindi vya drama kwenye YouTube TV yanahitaji utendaji wa haraka zaidi kuliko ule unaoweza kupatikana kwa kutumia zana mbalimbali za AI zisizounganishwa.",
+          "solutionTitle": "Msimulizi wa Hadithi wa Kiotomatiki",
+          "solutionDescription": "Toa mfululizo wa vipindi na video fupi zinazovutia na kusimamisha watu wanapovinjari mtandaoni — yote kutoka studio moja: ikijumuisha uundaji wa awali (pre-visualization) unaozingatia mtiririko wa matukio, udumishaji thabiti wa mwendelezo wa hadithi, na nakala za mwisho tayari kwa kuchapishwa, mahususi kwa ajili ya uchumi wa wabunifu unaoongozwa na YouTube.",
+          "win": "Badilika kutoka kupakia maudhui mara kwa mara na kuelekea kwenye mfumo thabiti wa uzalishaji wenye gharama na juhudi ndogo za uendeshaji."
+        }
       },
       {
         "id": "timu",
+        "hash": "Timu ya visa vya matumizi",
+        "icon": "jengo",
         "label": "Timu ya ndani",
         "outcome": "Ondokana na michakato ya polepole ya wauzaji — dhibiti chapa na bajeti",
+        "narrative": "Maombi ya ndani ya video yanarundikana huku makadirio ya gharama kutoka kwa mashirika yakirefusha muda wa utekelezaji na miongozo ya chapa ikipoteza mwelekeo katika kila hatua ya marekebisho. SceneFlow inaunganisha shughuli za mafunzo na maendeleo (L&D), mawasiliano, na utengenezaji wa video za ufafanuzi wa bidhaa katika mtiririko mmoja wa kazi uliopangwa — timu yako inakuwa na udhibiti kamili wa hati, rasimu ya awali ya taswira (pre-vis), na bidhaa ya mwisho, bila kuhitaji kukodi studio au kusubiri watoa huduma wa nje.",
         "useCases": [
           "Mafunzo na Maendeleo ya Wafanyakazi na Uzingatiaji wa Kanuni",
           "Mawasiliano ya ndani na mikutano ya hadhara ya shirika",
@@ -135,33 +160,83 @@
           "Uajiri na utamaduni wa Rasilimali Watu",
           "Masomo ya K-12 / elimu ya juu",
           "Taarifa mpya kuhusu afya na usalama wa umma"
-        ]
+        ],
+        "example": {
+          "challengeTitle": "Mrundikano wa Kazi kwa Wasambazaji na Kupoteza Mwelekeo wa Chapa",
+          "challengeDescription": "Timu za mawasiliano, mafunzo na maendeleo (L&D), pamoja na masoko, hulazimika kusubiri kwa wiki kadhaa ili kupata video kutoka kwa wakala au watoa huduma wa nje — au hukabiliwa na wingi wa zana tata bila kuwa na mfumo thabiti wa ndani unaoweza kutumika mara kwa mara. Njia zote hizi husababisha kutokuwepo kwa uwiano katika utambulisho wa chapa na kukwama kwa kampeni.",
+          "solutionTitle": "Uzalishaji wa Ndani ya Kampuni Ndani ya Wiki Hiyo Hiyo",
+          "solutionDescription": "Wape wafanyakazi jukumu la kutengeneza video kwa kutumia bajeti ya mikopo inayotabirika — wakitumia violezo vya chapa na kupata idhini kabla ya hatua ya mwisho ya uzalishaji, bila kuhusisha gharama za siku za kazi za timu au mchakato wa kuhariri usio na kikomo.",
+          "win": "Toa video za mafunzo, mawasiliano, na kampeni kulingana na ratiba yako — bila kusubiri orodha ya kazi iliyochelewa ya mtoa huduma."
+        }
       },
       {
         "id": "Warsha ya uzalishaji",
+        "hash": "visa vya matumizi katika eneo la uzalishaji",
+        "icon": "filamu",
         "label": "Warsha ya uzalishaji",
         "outcome": "Geuza huduma ya eneo mahususi la soko kuwa bidhaa yenye mchakato unaoweza kurudiwarudiwa kuanzia hatua ya kupokea hadi kukamilisha kazi.",
+        "narrative": "Uundaji wa video maalum huleta faida hadi pale mteja anapokuwa wa mara moja tu — hali inayohitaji zana mpya, michakato mipya ya makabidhiano, na kusababisha faida kuyeyuka kutokana na kazi ya kurudia. SceneFlow hugeuza eneo lako maalum la utaalamu kuwa bidhaa: mfumo thabiti wa kupokea oda, violezo vinavyoweza kubinafsishwa, simulizi kwa kutumia sauti iliyoigwa kidijitali, na mchakato ulio wazi kuanzia maelekezo ya awali hadi kukabidhi faili ya mwisho ya MP4.",
         "useCases": [
           "Vifurushi vya kumbukumbu za video",
           "Video za urithi na heshima",
-          "Simulizi kwa sauti iliyoigwa",
-          "Violezo vya studio vya 'white-label'",
+          "Usimulizi kwa sauti iliyoigwa kielektroniki",
+          "Violezo vya studio vya chapa nyeupe",
           "Ziara za sekta ya majengo na ukarimu",
           "Huduma za video za usajili"
-        ]
+        ],
+        "example": {
+          "challengeTitle": "Sekta Maalum, Hakuna Mfumo Unaoweza Kurudiwa",
+          "challengeDescription": "Wateja wanaohitaji huduma za kumbukumbu binafsi, urithi, sekta ya majengo, na elimu wanataka kazi ikamilike haraka — lakini kila mradi huanza upya kabisa. Mchakato wa kukabidhiana kazi katika kila hatua, pamoja na marekebisho ya mara kwa mara yanayofanana na bahati nasibu katika vipengele vya muswada, picha, sauti, video, muziki, na uhariri, hupunguza faida inayotokana na wingi wa kazi.",
+          "solutionTitle": "Geuza Huduma Yako ya Video Kuwa Bidhaa",
+          "solutionDescription": "Buni mifumo ya kazi inayoweza kurudiarudiwa kwa ajili ya studio za kutengeneza kumbukumbu za maisha na sekta maalum. Kuanzia upakiaji wa violezo, uundaji wa sauti bandia (voice clones) na avata, hadi uidhinishaji wa taswira ya awali — rekebisha huduma kulingana na mahitaji ya mteja na uongeze faida kupitia wingi wa kazi.",
+          "win": "Anzisha huduma ya kutengeneza video za kumbukumbu za maisha au huduma maalum ya studio inayoweza kutolewa mara kwa mara — badala ya kazi ya kujitegemea ya mara moja tu."
+        }
       },
       {
         "id": "wakala",
+        "hash": "kesi za matumizi kwa wakala",
+        "icon": "mkoba wa hati",
         "label": "Wakala",
         "outcome": "Uwasilishaji wa mapendekezo ya biashara kwa kasi zaidi na utoaji huduma kwa wateja unaoweza kupanuliwa",
+        "narrative": "Kufanikiwa katika uwasilishaji wa wazo kunahitaji kulionyesha wazo hilo badala ya kulielezea tu; hata hivyo, hatua za awali za uundaji wa taswira (pre-viz) na urekebishaji kulingana na muktadha wa eneo (localization) mara nyingi hupunguza faida kabla hata mkataba haujasainiwa. SceneFlow huwezesha kuwasilisha taswira hizo za awali kwa wadau kwa haraka na kuzitumia katika kampeni mbalimbali na lugha zaidi ya 70, bila kulazimika kuanzisha upya mchakato mzima wa uzalishaji kwa kila mteja.",
         "useCases": [
           "Taswira ya awali ya uwasilishaji kwa mteja",
           "Kampeni za uzinduzi wa bidhaa",
           "Uchunguzi wa kina na ushuhuda",
-          "Matangazo ya hafla na makongamano",
+          "Matangazo ya hafla na mikutano",
           "Kampeni za lugha nyingi",
           "Uuzaji wa mali kwa wateja"
-        ]
+        ],
+        "example": {
+          "challengeTitle": "Utoaji wa huduma kwa wateja kwa kiwango kikubwa",
+          "challengeDescription": "Kufanikiwa katika awamu ya awali ya pendekezo ni nusu tu ya safari. Kazi za mara kwa mara za wateja zinahitaji kukamilishwa kwa haraka — lakini uhamishaji wa kazi katika kila hatua na mchakato wa kurudia-rudia uundaji wa video (kama bahati nasibu) kati ya zana tofauti za kutengeneza na kuhariri hupunguza kasi ya kila mzunguko wa kazi.",
+          "solutionTitle": "Kiwango cha Uzalishaji + Idhini ya Mteja",
+          "solutionDescription": "Badilika kutoka hatua ya mapendekezo ya awali hadi utoaji wa kazi unaoendelea, ukiwa na mifumo ya kulinda hadhi ya chapa, ukaguzi wa mteja kabla ya kukamilisha kazi, na gharama za 'credit' zinazotabirika kwa kila mradi.",
+          "win": "Tekeleza mchakato wa kuwasilisha mapendekezo ya biashara na kazi za wateja zinazojirudia kwa kasi zaidi, huku ukipunguza hatari katika uzalishaji na kuongeza faida."
+        }
+      },
+      {
+        "id": "Utengenezaji wa filamu",
+        "hash": "matukio ya matumizi katika utengenezaji wa filamu",
+        "icon": "bao la kurekodia",
+        "label": "Uzalishaji wa Filamu",
+        "outcome": "Muswada wa animatiki shirikishi unayoweza kuionyesha na kuifanyia majaribio kabla ya kuanza kurekodi",
+        "narrative": "Awali, hatua za awali za taswira (previz) na upimaji wa maoni ya hadhira zilihusisha wiki kadhaa za kuandaa michoro ya mwongozo wa matukio (storyboards), sauti ya majaribio, na makadirio ya gharama kubwa kabla ya kuanza kurekodi. SceneFlow hubadilisha hati yako kuwa uhuishaji shirikishi wa awali (interactive animatic) kwa kutumia mfumo wa Express pre-vis; boresha kazi hiyo kwa Audience Resonance, ionyeshe katika Screening Room, na utenge bajeti pale tu ambapo hadithi inapoleta matokeo yanayotarajiwa.",
+        "useCases": [
+          "Taswira ya awali ya filamu za kawaida na huru",
+          "Michoro ya uhuishaji kwa ajili ya uwasilishaji kwa wawekezaji",
+          "Uboreshaji wa Audience Resonance",
+          "Onyesho la awali katika lugha zaidi ya 70",
+          "Kuingiza na kutoa hati (MDX, FDX)",
+          "Screening Room majaribio ya hadhira"
+        ],
+        "example": {
+          "challengeTitle": "Mchakato wa Polepole wa Kuunda Taswira ya Awali Kabla ya Kuweza Kujaribu Hadithi",
+          "challengeDescription": "Una hati ya filamu — lakini usomaji wa pamoja, hatua za uandaaji wa vibao vya picha (storyboards), na zana zisizounganishwa za taswira ya awali (previz) huchelewesha uwasilishaji wa mradi kwa wawekezaji, majaribio kwa hadhira, na maamuzi ya kuidhinisha uzalishaji.",
+          "solutionTitle": "Taswira-awali shirikishi inayozingatia hati kwanza",
+          "solutionDescription": "Pakia hati yako (MDX, FDX, na miundo mingine), iboreshe kwa kutumia Audience Resonance, na utengeneze onyesho la awali (pre-vis) shirikishi kwa ajili ya kutazama na kufanyia majaribio — likiwa na uwezo wa kutengeneza vipengele mbalimbali kwa wakati mmoja, chaguzi za lugha zaidi ya 70, na uwekaji wa matabaka ya lugha nyingi kwa kasi.",
+          "win": "Thibitisha kufaa kwa hadithi na hadhira kabla ya kuanza kurekodi filamu yenyewe — kwa kutumia *animatic* inayoweza kushirikiwa, badala ya mchakato wa awali wa taswira (*previz*) unaochukua wiki kadhaa."
+        }
       }
     ]
   },
@@ -170,7 +245,7 @@
     "subtitle": "Gemini Studio na Google Flow ni bora katika kushughulikia klipu. SceneFlow inajumuisha mchakato mzima wa uzalishaji.",
     "rows": [
       {
-        "them": "Uzalishaji wa klipu kulingana na maelekezo, kwa kutengwa",
+        "them": "Uzalishaji wa klipu kulingana na maelekezo, kwa kujitegemea",
         "us": "Awamu zilizopangwa kwa utaratibu, zenye viwango vya msingi vinavyoweza kurekebishwa katika kila hatua."
       },
       {
@@ -192,15 +267,262 @@
   "beatFirstPipeline": {
     "title": "Mchakato wa Uzalishaji wa Video Unaozingatia Mdundo Kwanza",
     "subtitle": "Thibitisha kabla ya kuzalisha matokeo ya mwisho — siyo kuzalisha upya kwa bahati nasibu.",
-    "intro": "Hakuna tena mchakato wa kubahatisha na kujaribu ili kupata matokeo. Unakagua na kuidhinisha mwonekano kabla ya SceneFlow kutumia krediti kwa ajili ya video ya mwisho.",
-    "description": "SceneFlow hupanga utaratibu wa kuidhinisha vipengele vya kuona katika kila hatua: Express Pre-vis kwa ajili ya mapitio, Beat Frames ili kudhibiti mpangilio, kisha F2V kwa kila mpigo (beat). Unaboresha mwonekano kabla ya kutumia 'credits' kwa matokeo yasiyotarajiwa au makosa ya mfumo (drift na hallucinations).",
+    "intro": "Hakuna tena mchakato wa kubahatisha na kujaribu ili kupata matokeo. Unakagua na kuidhinisha mwonekano kabla ya SceneFlow kutumia salio lako kwa ajili ya video ya mwisho.",
+    "description": "SceneFlow hupanga utaratibu wa kuidhinisha taswira katika kila hatua: Express Pre-vis kwa ajili ya mapitio, Beat Frames ili kudhibiti mpangilio, kisha F2V kwa kila mpigo (beat). Unaboresha mwonekano kabla ya kutumia 'credits' kwa matokeo yasiyotabirika (drift) au makosa ya mfumo (hallucinations).",
     "steps": [
       "Express Pre-vis — shiriki midundo yenye sauti na picha ili ikaguliwe ndani ya dakika chache",
       "Beat Frames — funga muundo wa mwanzo/mwisho kwa mwendelezo wa Reference Library",
       "F2V kwa kila mpigo — tengeneza video kutoka kwenye fremu zilizoidhinishwa, badala ya maelekezo yasiyo na mwongozo mahususi.",
-      "Production Mixer — muda, sauti, na usafirishaji wa mtiririko kwenda kwenye mkusanyiko wa Final Cut"
+      "Msururu endelevu wa EXT — hatua asilia za upanuzi wa sekunde +7 kwa ajili ya sehemu ndefu za mazungumzo",
+      "Production Mixer — muda, sauti, na usafirishaji wa mtiririko kwenda Screening Room"
     ],
     "footerLine": "Marekebisho machache ya michoro ya mashine ya sloti — idhinisha taswira kabla ya matumizi ya mwisho ya fedha kwa ajili ya video."
+  },
+  "trustSafeguard": {
+    "badge": "Uaminifu na Usalama",
+    "title": "Vizuizi vya usalama vya tabaka mbalimbali kwa ajili ya",
+    "titleAccent": "Waundaji na Majukwaa",
+    "subtitle": "Usalama asilia wa Google katika kila hatua ya uzalishaji, Huduma za Ubunifu Zilizopanuliwa zenye mifumo ya udhibiti (guardrails) pale ambapo vikwazo vya sera vinatumika, pamoja na usimamizi wa ziada na hatua za kupunguza hatari katika mtiririko wako wa kazi wa Studio.",
+    "tiers": [
+      {
+        "id": "asili ya Google",
+        "title": "Usalama Asilia wa Google",
+        "description": "Kila picha na video inayozalishwa hupitia vichujio vya usalama vya Google, huku vigezo vyake vikiwa vimewekwa mahususi kwa ajili ya michakato ya kitaalamu ya ubunifu—badala ya kutumia mipangilio ya kawaida iliyokusudiwa watumiaji wa jumla.",
+        "highlights": [
+          "Vertex Responsible AI katika uzalishaji wa maudhui kwa kutumia Veo, Imagen, na Gemini",
+          "Viwango vya kikomo vya madhara vilivyorekebishwa kulingana na mahitaji ya uzalishaji kwa maudhui ya filamu",
+          "Rasilimali zako za ubunifu hazitumiki kufunza miundo inayoshirikiwa."
+        ],
+        "badge": "Vertex AI ya Uwajibikaji"
+      },
+      {
+        "id": "vizuizi vya usalama vilivyorefushwa",
+        "title": "Vizuizi vya Usalama Vilivyorefushwa",
+        "description": "Wakati njia kuu imezuiwa na sera, Huduma za Ubunifu Zilizopanuliwa zenye Mifumo ya Udhibiti (Guardrails) zinaweza kukamilisha uwasilishaji—lakini ni baada tu ya hatua ya ziada ya kukagua maudhui kabla ya kuhifadhiwa.",
+        "highlights": [
+          "Marekebisho ya kidokezo na majaribio ya kurudia mbinu kwenye njia kuu ya Google",
+          "Njia mbadala iliyolindwa yenye ukaguzi wa lazima kabla ya kuhifadhi",
+          "Viwango sawa vya maudhui katika njia za msingi na zilizopanuliwa"
+        ],
+        "badge": "Njia mbadala iliyolindwa"
+      },
+      {
+        "id": "uthibitisho wa asili",
+        "title": "Uthibitishaji na Asili",
+        "description": "Hatua za ziada za usimamizi wa maudhui na udhibiti wa hatari zinapatikana katika Blueprint, hati, taswira ya awali (pre-vis), na video za sehemu—kwa kutumia mfumo uleule wa utambuzi wa mchango (credit model) kama ilivyo katika zana nyingine za Studio. Klipu zilizofanikiwa hupokea rekodi zilizotiwa saini zinazothibitisha asili ya maudhui.",
+        "highlights": [
+          "Ishara za uthibitishaji wa maudhui kabla ya matumizi makubwa ya rasilimali za uwasilishaji (rendering)",
+          "Hashi ya maudhui iliyotiwa saini na metadata ya asili kwenye sehemu ya video",
+          "Kumbukumbu za ukaguzi, ufuatiliaji wa ukiukaji, na kuripoti matumizi mabaya kwa ajili ya kulinda jukwaa"
+        ],
+        "badge": "Uthibitishaji wa maudhui"
+      }
+    ],
+    "flowSteps": [
+      {
+        "label": "Msingi",
+        "detail": "Usalama wa Google Vertex"
+      },
+      {
+        "label": "Iliyopanuliwa",
+        "detail": "Njia mbadala ya ubunifu iliyolindwa"
+      },
+      {
+        "label": "Studio",
+        "detail": "Usimamizi wa maudhui na udhibiti wa hatari"
+      },
+      {
+        "label": "Kichunguzi cha Kiforensiki",
+        "detail": "Rekodi ya asili iliyotiwa saini"
+      }
+    ],
+    "morNote": "SceneFlow inatekeleza dhima ya pamoja na Mfanyabiashara wetu Rasmi (Merchant of Record): usalama wa kiwango cha mtoa-huduma kutoka Google, pamoja na mifumo ya udhibiti na rekodi za ufuatiliaji kutoka SceneFlow—hatua zinazopunguza hatari kwa wabunifu na jukwaa lenyewe.",
+    "ctaPolicy": "Soma Sera ya Kuaminika na Usalama",
+    "ctaPolicyHref": "/uaminifu-na-usalama",
+    "ctaStudio": "Chunguza katika Studio"
+  },
+  "extendedScenes": {
+    "badge": "Midundo Endelevu",
+    "title": "Zaidi ya Kipande cha Video cha Sekunde Nane",
+    "subtitle": "Vuka kikwazo cha kutegemea kipande kimoja tu cha video—hakikisha muonekano unakubalika kwanza, kisha panua tukio lako hatua kwa hatua na kuligeuza kuwa mfululizo usio na mshono wa mazungumzo ya mtu mmoja, maelezo, na sehemu za majadiliano.",
+    "intro": "SceneFlow haiahidi utengenezaji wa kipande kimoja kisicho na kikomo. Inapanga midundo mirefu kama mfuatano wa hatua: klipu ya awali ya hadi sekunde 8, ikifuatiwa na hatua endelevu za kuongeza sekunde 7—huku ukihitajika kuidhinisha mdundo husika kabla ya kutumia krediti zako.",
+    "steps": [
+      {
+        "title": "Klipu ya awali ya sekunde 8",
+        "description": "Ubadilishaji wa fremu au picha kuwa video kutoka kwa Beat Frames iliyoidhinishwa hufunga muundo kabla ya mwendo kuanza."
+      },
+      {
+        "title": "Hatua za nyongeza za sekunde 7",
+        "description": "Kila hatua hudumisha pembe na miondoko ileile—jambo linalofaa kabisa kwa mazungumzo yasiyokatizwa ndani ya mpigo."
+      },
+      {
+        "title": "Idhini ya awali ya eneo la doria",
+        "description": "Mistari mirefu hugawanyika yenyewe wakati wa uhakiki wa awali wa taswira. Unaidhinisha fremu kabla ya mchakato wa uundaji wa mwisho (rendering) kuanza—tofauti na uundaji upya wa nasibu kama wa mashine ya kamari."
+      },
+      {
+        "title": "Production Mixer maliza",
+        "description": "Vipande mfululizo huunganishwa katika uchezaji wa tukio; sauti inayoweza kurekebishwa urefu wake hubeba simulizi inayoendelea kwa muda mrefu kuliko video yenyewe."
+      }
+    ],
+    "stats": [
+      {
+        "value": "Takriban sekunde 15",
+        "label": "Sehemu ya kawaida ya mazungumzo (sekunde 8 + nyongeza 1)"
+      },
+      {
+        "value": "~sekunde 29",
+        "label": "Sehemu ndefu ya monolojia (sekunde 8 + nyongeza 3)"
+      },
+      {
+        "value": "Imeagizwa",
+        "label": "Uzazi wa mfululizo huhifadhi mwendelezo."
+      }
+    ],
+    "footnote": "Minyororo ya upanuzi (extension chains) huhitaji njia kuu ya uzalishaji ya Google na marejeleo halali ya video kati ya hatua mbalimbali (marejeleo hayo huisha muda wake baada ya takriban saa 48). Kila hatua ya API husalia ndani ya mipaka ya muda wa Veo—muda wa jumla wa video hutokana na kuunganisha hatua hizo, si kutokana na mchakato mmoja mrefu wa uundaji (render)."
+  },
+  "creativeRange": {
+    "badge": "Upeo wa Ubunifu",
+    "title": "Kila Mtindo, Kila Skrini",
+    "titleAccent": "DNA yako ya ubunifu, imehifadhiwa katika Blueprint",
+    "subtitle": "Blueprint ndipo utambulisho wako wa kipekee wa ubunifu unapojengeka imara—ikiwemo mtindo wa sanaa, uwiano wa picha, hisia za kazi, na msingi wa simulizi. SceneFlow huhamishia maamuzi hayo kwenye hatua ya muhtasari wa kina (treatment), Audience Resonance, na uandishi wa muswada, ili maelekezo ya matukio yaendane na mpangilio wa picha pamoja na muonekano unaokusudia tangu hatua ya awali kabisa—na si kama marekebisho ya mwisho wakati wa kutoa faili ya mwisho ya kazi.",
+    "pillars": [
+      {
+        "title": "Umbo hufuata Kazi (na Muktadha)",
+        "description": "Ukubwa wa skrini huamua namna ya kusimulia hadithi kwa picha. Umbizo la wima la 9:16 huhitaji mpangilio wa karibu zaidi wa wahusika, vivutio vya haraka, na uelekezi unaotegemea sana picha za karibu (close-ups)—tofauti kabisa na mpangilio wa skrini pana ya 16:9. Funga uwiano wa picha (aspect ratio) katika Blueprint ili mfumo wa kuandaa hati uandike maelekezo ya eneo la tukio yanayoendana na umbizo hilo la skrini."
+      },
+      {
+        "title": "Mtindo wa sanaa huamua namna ya uandishi wa nathari.",
+        "description": "Anime ya mtindo wa *noir* na uhuishaji wa 3D wa Pixar huhitaji mazungumzo, mazingira, na kasi tofauti. Chagua mtindo unaoutaka katika Blueprint, na LLM itauingiza mtindo huo katika kiini kabisa cha hati—bila kuutumia kama kichujio cha kuongezwa baadaye."
+      }
+    ],
+    "blueprintTagline": "Mtindo na simulizi kuu hukamilisha mfumo huo—Blueprint ndiyo akili; Utekelezaji ndiyo misuli.",
+    "ui": {
+      "expandImage": "Panua picha",
+      "closePreview": "Funga hakikisho"
+    },
+    "artStyles": {
+      "subsectionTitle": "Chagua muonekano wako",
+      "subsectionIntro": "Muonekano wako si mpangilio wa awali wa uundaji wa picha (render preset)—bali ni sauti ya hati yenyewe. Weka mtindo wa sanaa katika Blueprint, na kila sehemu itarithi mtindo huo wa urembo.",
+      "footnote": "Imethibitishwa Blueprint Visual Foundation—na kutekelezwa kuanzia hatua ya muswada, taswira ya awali (pre-vis), hadi utoaji wa mwisho wa picha (final render).",
+      "popularBadge": "Maarufu",
+      "items": [
+        {
+          "id": "halisi kama picha",
+          "name": "Inayoonekana kama picha halisi",
+          "displayTitle": "Uhalisia wa picha",
+          "description": "Mtindo wa upigaji picha wa kitaalamu",
+          "tagline": "Uhalisia wa kina na wa hadhi ya juu",
+          "marketingBody": "Uhalisia wa picha huleta mvuto wa hadhira pana ambao watazamaji wa vipindi vya hadhi ya juu vya televisheni na makala hutarajia. Hakikisha wahusika na mwanga vinaonekana halisi katika sehemu mbalimbali zinazounganishwa, ili tamthilia za mfululizo na makala ndefu zidumishe mtiririko wa hisia kuanzia mwanzo hadi mwisho.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_w5y03bw5y03bw5y0.jpeg"
+        },
+        {
+          "id": "Anime ya miaka ya 90",
+          "name": "Anime (miaka ya 90)",
+          "displayTitle": "Anime",
+          "description": "Mtindo wa kawaida wa anime wa miaka ya 90",
+          "tagline": "Mfuatano wa vipengele vya simulizi",
+          "marketingBody": "Mbinu ya *cel shading* ya mtindo wa *anime* huibua ushiriki mkubwa wa mashabiki katika mfululizo wa vipindi vya mtandaoni na hadithi ndefu zenye mtiririko mpana. Mifumo ya uzalishaji wa kidijitali iliyofunzwa kwa mtindo huu huzalisha michoro yenye mistari iliyo wazi na mipangilio ya picha inayotabirika—mambo yanayofaa sana kwa uzalishaji wa mfululizo kwa kiwango kikubwa.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_5qoasf5qoasf5qoa.jpeg"
+        },
+        {
+          "id": "Pixar",
+          "name": "Uhuishaji wa Pixar",
+          "displayTitle": "Sinema ya 3D / Iliyochochewa na Pixar",
+          "description": "Uhisuishaji wa 3D wa mtindo wa Pixar",
+          "tagline": "Muendelezo wa hisia katika vipindi mbalimbali",
+          "marketingBody": "Maumbo laini ya duara na muundo wa wahusika wenye kuonyesha hisia hujenga hali ya uchangamfu wa kihisia inayowafanya watazamaji waendelee kufuatilia kipindi katika msimu mzima. Hii inafaa sana kwa mfululizo wa katuni, vipindi virefu vya familia, na usimulizi wa hadithi unaolenga kukuza chapa, ambapo kudumisha uthabiti wa wahusika katika kila hatua ya hadithi ni jambo la muhimu.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_zi32rnzi32rnzi32.jpeg"
+        },
+        {
+          "id": "sanaa ya dhana",
+          "name": "Sanaa ya Dhana",
+          "displayTitle": "Sanaa ya Dhana",
+          "description": "Sanaa ya dhana ya mchezo/filamu",
+          "tagline": "Picha muhimu za awali (keyframes) za filamu na vipindi vya televisheni, zenye mwangaza unaojenga hisia na tayari kwa hatua ya utayarishaji.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_qlf261qlf261qlf2.jpeg"
+        },
+        {
+          "id": "Ghibli",
+          "name": "Kama mtindo wa Ghibli",
+          "displayTitle": "Iliyochorwa kwa mkono / Mtindo wa Ghibli",
+          "description": "Iliyoongozwa na Studio Ghibli",
+          "tagline": "Ufundi kama anasa",
+          "marketingBody": "Mtindo huu unajikita moja kwa moja katika harakati kuu ya ubunifu inayotilia mkazo dhana ya \"Ufundi kama Anasa.\" Mionekano ya rangi za maji na mandhari zinazokumbusha sanaa ya uchoraji huunda ulimwengu wa vipindi ulioandaliwa kwa ustadi wa mikono, ambapo kasoro za asili huonekana kama sanaa iliyokusudiwa katika mfululizo huo mrefu.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_xojqsuxojqsuxojq.jpeg"
+        },
+        {
+          "id": "kitabu cha katuni",
+          "name": "Kitabu cha katuni",
+          "displayTitle": "Kitabu cha katuni",
+          "description": "Mtindo wa wino wa vitabu vya katuni",
+          "tagline": "Wino mzito, muundo wa nukta (halftone), na rangi za mtindo wa 'pop-art' kwa ajili ya usimulizi wa hadithi yenye sehemu nyingi mfululizo.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_ezhp8cezhp8cezhp.jpeg"
+        },
+        {
+          "id": "Mchoro wa rangi ya mafuta",
+          "name": "Uchoraji wa rangi ya mafuta",
+          "displayTitle": "Uchoraji wa rangi ya mafuta",
+          "description": "Mchoro wa kitamaduni wa rangi ya mafuta",
+          "tagline": "Mbinu za kitamaduni za upakaji rangi na rangi zenye kina, kwa ajili ya kazi ndefu za kimaelezo na za kihistoria.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
+        },
+        {
+          "id": "sanaa ya kidijitali",
+          "name": "Sanaa ya Kidijitali",
+          "displayTitle": "Sanaa ya Kidijitali",
+          "description": "Mchoro wa kidijitali wa kisasa",
+          "tagline": "Mchoro wa kipekee kwa ajili ya filamu ya hali halisi ya uhuishaji na mfululizo wa vipindi vya ufafanuzi.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_omdmt6omdmt6omdm.jpeg"
+        },
+        {
+          "id": "rangi ya maji",
+          "name": "Rangi ya maji",
+          "displayTitle": "Rangi ya maji",
+          "description": "Mchoro wa rangi ya maji wenye toni laini",
+          "tagline": "Michoro laini ya rangi kwa ajili ya tawasifu, makala ya uhalisia, na maandishi marefu ya kutafakari.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
+        },
+        {
+          "id": "mchoro wa awali",
+          "name": "Mchoro/Sanaa ya Mistari",
+          "displayTitle": "Mchoro/Sanaa ya Mistari",
+          "description": "Mtindo wa mchoro wa penseli",
+          "tagline": "Mistari yenye maelezo ya kina na muundo wa penseli kwa ajili ya hatua za awali za uundaji (pre-vis) hadi uzalishaji wa vipengele virefu vya simulizi.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
+        }
+      ]
+    },
+    "outputFormats": {
+      "subsectionTitle": "Toa Kila Skrini",
+      "subsectionIntro": "Uchaguzi wa namna ya kuweka fremu ni sehemu ya usimulizi wa hadithi, si chaguo la kawaida tu wakati wa kutoa faili ya mwisho. Blueprint hubainisha uwiano wa picha (aspect ratio) kabla hata maelekezo ya kwanza ya tukio hayajaandikwa.",
+      "resolutionFootnote": "Imechaguliwa katika Blueprint; hati na maelekezo ya onyesho vinazingatia mpangilio huu. Hamisha faili katika ubora wa 720p au 1080p pale ambapo mradi wako unaruhusu kufanya hivyo.",
+      "items": [
+        {
+          "id": "16 kwa 9",
+          "label": "Skrini pana ya 16:9",
+          "ratio": "16:9",
+          "description": "Kwa YouTube kuu, TV iliyounganishwa mtandaoni, na mfululizo wa vipindi—Blueprint huandika maelekezo ya matukio ya skrini pana na mpangilio wa harakati za waigizaji wengi kwa ajili ya uwasilishaji wa ki-sinema."
+        },
+        {
+          "id": "9x16",
+          "label": "Wima wa 9:16",
+          "ratio": "9:16",
+          "description": "Kwa ajili ya tamthilia za vipindi na mfululizo wa vipindi vilivyoundwa mahususi kwa ajili ya simu (katika muundo wa wima), Blueprint huandika hati zinazozingatia mpangilio wa picha wa wima, mwendo wa kasi na msisitizo wa picha za karibu—mambo ambayo watazamaji wanaopenda kutazama vipindi mfululizo bila kukoma huyatarajia."
+        },
+        {
+          "id": "1 kwa 1",
+          "label": "Mraba wa 1:1",
+          "ratio": "1:1",
+          "description": "Vipande vya vipindi vya umbo la mraba, mikusanyiko ya mahojiano, na vivutio vya sehemu mbalimbali vilivyochukuliwa kutoka kwenye mfululizo mrefu — kipengele kimoja cha maktaba za vipindi zilizoundwa mahususi kwa ajili ya mitiririko ya maudhui (feeds)."
+        },
+        {
+          "id": "4x3",
+          "label": "4:3 ya Kawaida",
+          "ratio": "4:3",
+          "description": "Moduli za mafunzo, maktaba za filamu za makala, na miundo inayofaa kwa mawasilisho, pale hadhira yako inapotarajia mtindo wa kawaida (classic) kwa maudhui marefu."
+        }
+      ]
+    }
   },
   "toolStack": {
     "badge": "Inasikika kuwa ya kawaida kwako?",
@@ -223,7 +545,7 @@
           "category": "Usafirishaji wa sauti ya maelezo na kurekodi upya kwa njia ya mikono"
         },
         {
-          "name": "Uundaji wa video",
+          "name": "Utengenezaji wa video",
           "category": "Mzunguko wa ziada wa mashine ya bahati nasibu — toa agizo, tengeneza, kataa, rudia"
         },
         {
@@ -232,7 +554,7 @@
         },
         {
           "name": "Uhariri wa video",
-          "category": "Uunganishaji wa mikono, usafirishaji nje, na uboreshaji wa uwezo wa kuhimili ongezeko la mahitaji"
+          "category": "Uunganishaji wa mikono, usafirishaji, na uboreshaji wa uwezo wa kuhimili ongezeko la matumizi"
         }
       ],
       "chaosLabel": "Tabu sita. Jaribu tena hadi kitu kifanikiwe.",
@@ -243,7 +565,7 @@
         "Hakuna uhakiki wa hadhira kabla ya kutumia fedha",
         "Fujo za matoleo katika faili zinazotolewa"
       ],
-      "timeLabel": "Kulingana na video (mpangilio wa zana nyingi za mkono)",
+      "timeLabel": "Kulingana na video (mkusanyiko wa zana nyingi za kutumia kwa mkono)",
       "timeValue": "Zaidi ya saa 4"
     },
     "sceneflowWay": {
@@ -260,7 +582,7 @@
         },
         {
           "label": "Uzalishaji",
-          "detail": "Sauti + picha"
+          "detail": "Sauti + taswira"
         },
         {
           "label": "Chapisha",
@@ -270,17 +592,17 @@
       "syncLabel": "Faili moja la mradi — hakuna kuhangaika na vichupo vingi",
       "benefits": [
         "Hatua zinazoongozwa — komesha kuhangaika na tabu nyingi na kupoteza muktadha",
-        "Uidhinishaji wa mwongozo wa taswira (pre-vis) — sitisha marekebisho ya mara kwa mara kabla ya kuanza kutumia fedha kwa ajili ya video.",
+        "Idhini ya Pre-vis — sitisha mizunguko ya ziada ya mashine ya sloti kabla ya matumizi ya video",
         "Alama ya Audience Resonance kabla ya uundaji wa picha wenye uzito mkubwa",
-        "Nakala kuu tayari kwa kuchapishwa ndani ya dakika 30–60, badala ya zaidi ya saa 4"
+        "Nakala kuu iliyo tayari kuchapishwa ndani ya dakika 30–60, badala ya zaidi ya saa 4"
       ],
       "timeLabel": "Kwa kila video (matokeo yaleyale)",
       "timeValue": "Dakika 30–60"
     },
     "comparisonCaption": "Studio moja inachukua nafasi ya zana za uzalishaji zilizotawanyika, uundaji upya wa video kwa mtindo wa mashine ya kamari, na uunganishaji wa vipande vya video kwa mikono.",
     "comparisonImageAlt": "Gharama za kawaida za uzalishaji dhidi ya studio ya SceneFlow inayojiendesha — mchakato wa haraka zaidi kutoka hatua ya wazo hadi video iliyo tayari kuchapishwa",
-    "costNote": "Gharama ileile ya AI, muda mchache unaopotea. Unalipia mifumo hiyo kwa njia yoyote ile — iwe ni kwa kutumia salio la SceneFlow, akaunti yako binafsi ya mtoa huduma, au BYOK. SceneFlow huondoa gharama ya ziada inayotokana na mchakato wa kuunganisha vipande kwa njia ya kunakili na kubandika, hivyo kukuwezesha kuzalisha video nyingi zaidi kwa bajeti ileile.",
-    "proofLine": "Imethibitishwa kupitia ziara ya ukaguzi wa nyumba: mchakato kamili wa mikono ulichukua zaidi ya saa 4 → matokeo hayo hayo yakipatikana ndani ya SceneFlow kwa muda usiozidi saa moja."
+    "costNote": "Gharama ileile ya AI, muda mchache unaopotea bure. Unalipia mifano hiyo kwa njia yoyote ile — iwe ni kupitia salio la SceneFlow, akaunti yako binafsi ya mtoa huduma, au BYOK. SceneFlow huondoa gharama ya ziada inayotokana na mchakato wa kuunganisha vipande kwa njia ya kunakili na kubandika, hivyo kukuwezesha kutoa video nyingi zaidi kwa bajeti ileile.",
+    "proofLine": "Imethibitishwa kupitia ziara ya ukaguzi wa nyumba: mchakato kamili wa mikono ulichukua zaidi ya saa 4 → matokeo hayo hayo yakipatikana ndani ya saa moja kwa kutumia SceneFlow."
   },
   "comparison": {
     "title": "Kasi ya uzalishaji bila gharama za ziada za uendeshaji",
@@ -291,7 +613,7 @@
   "howItWorks": {
     "title": "Kuanzia wazo hadi video iliyo tayari kuchapishwa",
     "titleAccent": "Mstari mmoja wa mtiririko ulioelekezwa",
-    "subtitle": "Mfululizo ni wa hiari. Njia kuu ni Blueprint → Uzalishaji → Final Cut → Premiere — ikijumuisha hatua za *pre-vis*, *animatic*, video, na faili kuu la MP4.",
+    "subtitle": "Mfululizo ni wa hiari. Njia kuu ni Blueprint → Uzalishaji → Screening Room — ikijumuisha *pre-vis*, *animatic*, video ya tukio, na MP4 ya mwisho (*master*) katika hatua hizo.",
     "tagline": "Kila hatua imefanywa kujiendesha yenyewe kwa ustadi. Kila hatua inakupa udhibiti kamili.",
     "optionalBadge": "Hiari",
     "optionalSuffix": " (hiari)",
@@ -302,9 +624,9 @@
         "id": "mfululizo",
         "stepLabel": "Mfululizo",
         "subtitle": "Injini ya Showrunner",
-        "description": "Bainisha ulimwengu wako mara moja na uunde mtiririko wa matukio wenye uwiano katika vipindi vingi. Matumizi ya Reference Library ya pamoja huhakikisha wahusika na mtindo wa simulizi vinadumisha uwiano katika msimu mzima.",
+        "description": "Bainisha ulimwengu wako mara moja na uunde mtiririko wa matukio unaoshikamana katika vipindi vingi. Matumizi ya Reference Library ya pamoja huhakikisha wahusika na mtindo wa kazi vinabaki na uwiano thabiti katika msimu mzima.",
         "keySteps": [
-          "Bainisha ulimwengu — wahusika, mtindo, na mtiririko wa hadithi wa msimu",
+          "Bainisha ulimwengu — wahusika, mtindo, na mtiririko wa msimu",
           "Tengeneza kiotomatiki muhtasari wa vipindi kwa msimu mzima",
           "Kuoanisha na Blueprint pamoja na uzalishaji kwa kila kipindi"
         ],
@@ -316,10 +638,10 @@
         ]
       },
       {
-        "id": "mchoro wa usanifu",
+        "id": "ramani ya ujenzi",
         "stepLabel": "⟦Muhula wa 3 wa SF⟧",
         "subtitle": "Uundaji wa Hadithi",
-        "description": "Badilisha mawazo kuwa rasimu zilizopangiliwa vizuri, zikiwa na muhtasari mfupi (logline), hatua muhimu za hadithi, wahusika, na mtindo wa simulizi. Tekeleza Audience Resonance na ushirikiane na wengine kabla ya kuanza mchakato mzito wa uundaji wa mwisho (rendering).",
+        "description": "Badilisha mawazo kuwa muhtasari uliopangwa vizuri, ukijumuisha maelezo mafupi ya hadithi (logline), hatua muhimu za simulizi, wahusika, na mtindo wa hadithi. Tekeleza Audience Resonance na ushirikiane na wengine kabla ya kuanza mchakato mzito wa uundaji wa mwisho wa picha (rendering).",
         "keySteps": [
           "Tengeneza → Kagua → Fanyia marekebisho → Anza uzalishaji",
           "Audience Resonance kupata alama kwa lengo la 80+",
@@ -329,74 +651,159 @@
           "Tengeneza → Kagua → Fanyia marekebisho → Anzisha mtiririko wa uzalishaji",
           "Kutoka wazo hadi muundo ndani ya dakika chache — muhtasari mfupi, hatua muhimu za hadithi, wahusika, na mtindo.",
           "Audience Resonance kupata alama 80 au zaidi (lengo) kabla ya hatua ya uzalishaji",
-          "Viungo vya kushiriki vya washirikiano — kuunganisha mrejesho ili kuongoza marekebisho"
+          "Viungo vya kushiriki kwa washirikiana — kuunganisha maoni ili kufanya marekebisho yaliyoongozwa"
         ]
       },
       {
         "id": "uzalishaji",
         "stepLabel": "Uzalishaji",
-        "subtitle": "Kutoka Hati hadi Utiririshaji",
-        "description": "Vichupo vya Script na Action huongoza mchakato kuanzia Foundation → pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer, na mitiririko ya MP4 — bila kuhitaji kubadili zana.",
+        "subtitle": "Hati ya Screening Room",
+        "description": "Vichupo vya Script na Shoot huongoza mchakato kuanzia Foundation → Pre-Vis → Footage → Mixer hadi Streams. Hatua za ukaguzi kwa kila tukio hupunguza marudio ya kazi; Screening Room hushughulikia uhakiki wa awali, uunganishaji, na uchapishaji.",
         "keySteps": [
           "Thibitisha hati, sauti, na sauti ya eneo la tukio",
-          "Express Pre-vis — ghala na kushiriki kwa ajili ya mapitio",
-          "Beat Frames → Dashibodi ya Msimamizi → Mtiririko wa Utoaji",
-          "Tuma mitiririko iliyokamilika kwa Final Cut"
+          "Taswira ya awali (Pre-Vis) kwa kila tukio — ghala na kushiriki kwa ajili ya mapitio",
+          "Kichupo cha Kurekodi — Picha/Video → Kichanganyaji → Mitiririko kwa kila tukio",
+          "Screening Room — hakiki awali, kusanya toleo kuu, chapisha"
         ],
         "keyFeatures": [
-          "Foundation — hati, sauti, sauti ya tukio, funga hati",
-          "Express Pre-vis — mwelekeo na fremu kwa dakika; ghala na kushiriki",
-          "Beat Frames na Mixer — fremu za kuanzia/kumalizia, Director Console, kutoa (render) mitiririko ya MP4",
-          "Mitiririko ya Uzalishaji — kagua matokeo, tengeneza upya midundo iliyopitwa na wakati, tuma kwa Final Cut"
+          "Foundation — hati, sauti, sauti ya tukio, Audience Resonance",
+          "Pre-Vis — mwongozo, sauti, na fremu za mpangilio wa matukio (beat frames) kwa kila tukio, pamoja na viungo vya kushiriki.",
+          "Rekodi — Picha, Mchanganyiko wa sauti, na Mitiririko bila kuondoka kwenye eneo la uzalishaji.",
+          "Screening Room — hakiki ya onyesho, mkusanyiko wa mwisho, maonyesho, na kuchapisha YouTube"
         ]
       },
       {
-        "id": "toleo la mwisho",
-        "stepLabel": "Final Cut",
-        "subtitle": "Mkusanyiko wa Mtiririko",
-        "description": "Unganisha mitiririko ya uzalishaji iliyokamilika kuwa faili moja kuu la MP4. Chagua Animatic au video na lugha kwa kila tukio — hakuna uhariri wa mpangilio wa muda (timeline); mabadiliko ya kibunifu hubaki katika Production Mixer.",
+        "id": "chumba cha kuonyeshea filamu",
+        "stepLabel": "Screening Room",
+        "subtitle": "Hakiki · Kusanya · Chapisha",
+        "description": "Eneo moja la kukamilisha kazi ndani ya sehemu ya Uzalishaji: hakiki video za matukio, unganisha mitiririko kuwa faili kuu la MP4, endesha maonyesho yanayoweza kushirikiwa pamoja na takwimu, na uchapishe kwenye YouTube au utoe vifurushi vya faili.",
         "keySteps": [
-          "Chagua mitiririko kwa kila tukio — mchanganyiko uliowekwa awali au maalum",
-          "Hakiki kipindi kizima kulingana na mpangilio wa hati",
-          "Hamisha faili moja kuu la MP4 kwa ajili ya Premiere"
-        ],
-        "keyFeatures": [
-          "Uchaguzi wa mtiririko kwa kila tukio — Animatic, Video, lugha, toleo",
-          "Mipangilio ya awali ya uundaji — Video pekee, Mseto, Mchanganyiko maalum",
-          "Hakuna uhariri wa ratiba ya muda — mabadiliko ya kibunifu yanabaki ndani ya Production Mixer",
-          "Usafirishaji wa faili kuu kwa mbofyo mmoja — MP4 iliyounganishwa kwa ajili ya Premiere"
-        ]
-      },
-      {
-        "id": "Onyesho la kwanza",
-        "stepLabel": "Premiere",
-        "subtitle": "Kitovu cha Usambazaji",
-        "description": "Kagua nakala yako kuu (master) pamoja na takwimu za hadhira, kisha uichapishe kwenye YouTube ikiwa na maelezo (metadata) yaliyorekebishwa kulingana na eneo, au utoe faili mahususi kwa ajili ya Shorts, Reels, na TikTok.",
-        "keySteps": [
+          "Hakiki mitiririko ya eneo lililochakatwa kwa mfuatano",
+          "Unganisha toleo kuu — chagua Animatic au Video kwa kila tukio",
           "Unda uchunguzi na ushiriki kiungo",
-          "Tathmini ya alama, ushirikishwaji, na maarifa ya taswira",
-          "Zana ya YouTube au kifurushi cha kusafirisha"
+          "Kagua maarifa na uchapishe kwenye YouTube"
         ],
         "keyFeatures": [
-          "Inayoweza kushirikiwa Screening Room — viungo vya /s/ vyenye mfumo wa alama na takwimu za hiari za ushiriki (kwa idhini ya mtazamaji)",
-          "Dashibodi ya maarifa — Vichupo vya Utoaji Alama, Biometriki, na Taswira",
-          "Mtaalamu wa YouTube — picha ya jalada, kichwa/maelezo yaliyojanibishwa, SceneFlow wito wa kuchukua hatua (CTA)",
-          "Vifurushi vya kusafirisha na mipango ya klipu fupi za wima"
+          "Uchezaji wa video ya tukio — huakisi uzoefu wa mtumiaji (UX) wa kicheza-Pre-Vis kwa kutumia mitiririko iliyochakatwa (rendered streams)",
+          "Mipangilio ya awali ya uundaji — Video pekee, Mseto, au mchanganyiko maalum kwa kila tukio",
+          "Tathmini zinazoweza kushirikiwa — viungo vyenye alama na mrejesho uliopangwa",
+          "Mtaalamu wa YouTube, faili za video fupi, na vifurushi vya usambazaji"
         ]
       }
     ]
   },
+  "simpleWalkthrough": {
+    "badge": "Jinsi inavyofanya kazi",
+    "title": "Kuanzia wazo hadi video iliyo tayari kuchapishwa",
+    "titleAccent": "katika hatua saba zinazoongozwa",
+    "subtitle": "Anza na wazo au muswada, boresha kwa kutumia Blueprint na Audience Resonance, taswiri kwa kutumia Pre-Vis, rekodi video ya tukio, fanyia majaribio katika Screening Room, na uchapishe — yote katika studio moja.",
+    "tagline": "Kila hatua imefanywa kujiendesha yenyewe kwa ustadi. Kila hatua inakupa udhibiti kamili.",
+    "showDetails": "Onyesha maelezo",
+    "hideDetails": "Ficha maelezo",
+    "readyTitle": "Je, uko tayari kujaribu mchakato mzima?",
+    "explorerCta": "Anza na Explorer — $9",
+    "steps": [
+      {
+        "id": "dhana",
+        "stepLabel": "Anza na dhana yako au hati iliyopo.",
+        "shortDescription": "Anza na wazo lililoandikwa kwa lugha ya kawaida au ingiza hati yako ya filamu — Fountain, Final Draft, au ubandike hati yako.",
+        "detailedDescription": "SceneFlow hupokea mawazo yaliyowasilishwa kwa lugha ya kawaida au katika miundo rasmi ya hati. Akili Bandia (AI) husaidia kukuza dhana hizo na kuzigeuza kuwa muhtasari wa kina wa hadithi, na inaweza kuingiza hati zilizopo tayari ili usilazimike kuanza kuandika kutoka ukurasa tupu.",
+        "media": "Picha ya skrini",
+        "screenshotSlot": "Weka picha ya skrini: Dirisha la kuingiza dhana ya mradi mpya au kuingiza hati"
+      },
+      {
+        "id": "ramani ya ujenzi",
+        "stepLabel": "Boresha dhana yako kwa kutumia Blueprint",
+        "shortDescription": "Badilisha mawazo kuwa muhtasari uliopangwa vizuri — ikijumuisha muhtasari mfupi (logline), hatua muhimu za hadithi, wahusika, na mtindo — kabla ya kuanza mchakato wa kina wa uundaji wa mwisho.",
+        "detailedDescription": "Blueprint huandaa kiotomatiki muhtasari wa kina wa hadithi. Boresha mabadiliko ya wahusika, hatua muhimu za mtiririko wa hadithi, na mtindo wa usimulizi kwa kutumia mapendekezo mahiri. Viungo vya kushirikiana huruhusu wadau kupitia kazi hiyo kabla ya hatua ya uzalishaji.",
+        "media": "video"
+      },
+      {
+        "id": "kuendana na hisia za hadhira",
+        "stepLabel": "Boresha hati yako kwa kutumia Audience Resonance",
+        "shortDescription": "Pima hati yako ili kuona jinsi inavyofaa hadhira lengwa, na utekeleze mapendekezo ya kila tukio kwa marekebisho ya mbofyo mmoja.",
+        "detailedDescription": "Audience Resonance (AR) huchanganua kwa kina hati yako kulingana na hadhira uliyoiainisha. Pata alama za sehemu mbalimbali, mapendekezo yanayoweza kutekelezeka, na vipengele vya Uhariri wa Kuongozwa — tumia marekebisho kiotomatiki kwa kila tukio au fanya mabadiliko ya jumla kwenye hati kupitia kiolesura cha AR.",
+        "media": "video"
+      },
+      {
+        "id": "taswira ya awali",
+        "stepLabel": "Taswira na ujaribu kwa kutumia taswira ya awali",
+        "shortDescription": "Andaa sauti ya mazungumzo na fremu za matukio muhimu (beat frames) kwa kila eneo la video. Wasilisha michoro ya awali ya uhuishaji (animatics) ili kupata idhini kabla ya kufanya matumizi ya mwisho ya fedha kwa ajili ya video hiyo.",
+        "detailedDescription": "Pre-Vis Studio huandaa mwongozo wa uelekeo, sauti, na fremu muhimu kwa kila tukio — hatua hizi hupunguza marudio ya kazi ya gharama kubwa iwapo wahusika au mtindo wa kazi utabadilika. Shirikisha kiungo cha kutazama kazi hiyo ili kurahisisha ushirikiano; toleo kamili la *animatic* linaweza kuwa ndilo bidhaa ya mwisho kwa miradi mingi.",
+        "media": "kicheza-previs"
+      },
+      {
+        "id": "piga risasi",
+        "stepLabel": "Rekodi kazi yako ya uzalishaji",
+        "shortDescription": "Tengeneza video inayolandana na mdundo, changanya sauti na vipengele vya ziada (overlays), na utoe mitiririko ya tukio zima — Picha/Video, Kichanganyaji, na Mitiririko yote katika kichupo kimoja cha 'Shoot'.",
+        "detailedDescription": "Kichupo cha 'Shoot' katika sehemu ya Uzalishaji (Production) ndicho eneo lako la kurekodia: tengeneza video kutokana na fremu zilizoidhinishwa za Pre-Vis (Footage), rekebisha kwa usahihi muda, alama za maji (watermarks), na sauti katika 'Mixer', kisha tengeneza (render) faili kamili za MP4 za eneo husika katika 'Streams'.",
+        "media": "video",
+        "subPoints": [
+          "Picha za video — utengenezaji wa video hatua kwa hatua kuanzia fremu za mwanzo na mwisho za Pre-Vis",
+          "Kichanganyaji — alama ya maji, maandishi ya juu, na muda wa sauti kwa kila tukio",
+          "Mitiririko — video kamili iliyochakatwa ya tukio (sehemu zote) tayari kwa Screening Room"
+        ]
+      },
+      {
+        "id": "chumba cha kuonyeshea filamu",
+        "stepLabel": "Jaribu mfumo wako wa uzalishaji kwa kutumia Screening Room",
+        "shortDescription": "Hakiki video za matukio kwa mpangilio, tengeneza faili kuu la MP4, na uendeshe vipindi vya utazamaji vinavyoweza kushirikiwa huku ukikusanya maoni yaliyopangwa.",
+        "detailedDescription": "Screening Room inaiga uzoefu wa mtumiaji (UX) wa kichezaji cha Pre-Vis lakini inachezesha mitiririko ya matukio yaliyokamilishwa (rendered). Chagua Animatic au Video kwa kila tukio, unganisha vipande ili kupata toleo kuu, shiriki viungo vya ukaguzi, na upange kipaumbele cha maoni yenye mihuri ya muda kabla ya kuchapisha.",
+        "media": "video"
+      },
+      {
+        "id": "chapisha",
+        "stepLabel": "Chapisha",
+        "shortDescription": "Sambaza toleo lako kuu kwenye YouTube, toa vipande vifupi, na ufuatilie takwimu za hadhira kutoka kwenye jukwaa moja la kukamilisha kazi.",
+        "detailedDescription": "Kutoka Screening Room, endesha zana ya kuchapisha kwenye YouTube, tengeneza faili za video fupi kwa ajili ya mitandao ya kijamii, na upakue vifurushi vya usambazaji. Takwimu na maoni ya wakaguzi vinapatikana sehemu moja — hakuna haja ya kuhamishia kazi kwenye zana tofauti.",
+        "media": "video"
+      }
+    ],
+    "ui": {
+      "screenshot": "Picha ya skrini",
+      "video": "Video",
+      "expandImage": "Panua picha",
+      "closePreview": "Funga hakikisho",
+      "openScreenshot": "Fungua picha ya skrini",
+      "openFeatureVideo": "Fungua video kuu"
+    }
+  },
   "useCases": {
-    "badge": "Programu za Uzalishaji",
+    "badge": "Mifano ya Matumizi",
     "title": "Video yoyote unayoweza kuifikiria,",
     "titleAccent": "Ijenge katika SceneFlow",
-    "subtitle": "Maonyesho ya mali isiyohamishika, elimu, podikasti, miundo ya habari, kampeni za chapa, na simulizi za sinema — studio moja inayojiendesha yenyewe, kuanzia hatua ya wazo hadi kazi iliyokamilika na tayari kuchapishwa.",
-    "qualifyingStatement": "SceneFlow hubadilisha picha zako asili, faili ulizopakia, na maelezo kuwa video za mwongozo zenye simulizi — huku ukidhibiti vipengele vya hiari kama vile sauti na uwepo wa wahusika. Hizi ni mawasilisho yaliyoboreshwa kwa kutumia Akili Bandia (AI): ni taswira halisi zinazotokana na nyenzo zako, na si rekodi za moja kwa moja za kamera. Hakiki na kuidhinisha kila mpangilio wa matukio (pre-vis) kabla ya kuchapisha; weka lebo wazi kwenye video hizo ili watazamaji wafahamu kile wanachotazama.",
+    "subtitle": "vipindi vya burudani na vya wabunifu, maonyesho ya mali isiyohamishika, elimu, podikasti, miundo ya habari, na kampeni za chapa — studio moja inayojiendesha yenyewe, kuanzia hatua ya wazo hadi faili la mwisho tayari kwa kuchapishwa.",
+    "qualifyingStatement": "SceneFlow hubadilisha picha zako asili, faili ulizopakia, na maelezo kuwa video za mwongozo zenye simulizi — huku ukidhibiti chaguo la sauti na uwepo wa wahusika. Hizi ni mawasilisho yaliyoundwa kwa kutumia Akili Bandia (AI): ni taswira halisi zinazotokana na nyenzo zako, na si rekodi za moja kwa moja za kamera. Hakiki na kuidhinisha kila taswira ya awali kabla ya kuichapisha; weka lebo wazi kwenye matokeo ili watazamaji wafahamu kile wanachotazama.",
+    "entertainmentStats": {
+      "title": "Uchumi wa umakini unaolenga wabunifu",
+      "footnote": "Vyanzo: Nielsen, Digital i (ripoti za sekta). Muktadha wa soko—si data za utendaji wa SceneFlow.",
+      "stats": [
+        {
+          "value": "13.4%",
+          "label": "Sehemu ya YouTube katika utazamaji wa televisheni nchini Marekani"
+        },
+        {
+          "value": "8.8%",
+          "label": "Hisa ya Netflix (muktadha)"
+        },
+        {
+          "value": "Dakika 99.1",
+          "label": "Wastani wa matumizi ya kila siku ya YouTube kwa kila akaunti (kimataifa)"
+        },
+        {
+          "value": "35% au zaidi",
+          "label": "Muda wa kutazama YouTube kwenye TV iliyounganishwa na mtandao"
+        }
+      ]
+    },
     "ui": {
       "useCases": "Visa vya Matumizi",
       "sectors": "Sekta {count}",
       "demoComingSoon": "Onyesho la awali linakuja hivi karibuni",
-      "selectExample": "Chagua mfano ili kuona onyesho lake",
+      "selectExample": "Chagua mfano wa matumizi ili kufahamu zaidi",
+      "hearStory": "Sikia Hadithi",
+      "pauseStory": "Sitisha hadithi",
+      "storyComingSoon": "Habari inakuja hivi karibuni",
       "targetPersona": "Mtu Lengwa",
       "theChallenge": "Changamoto",
       "sceneFlowSolution": "Suluhisho la SceneFlow",
@@ -406,9 +813,11 @@
       "theWin": "\"Ushindi\"",
       "frameAnchoredTitle": "Mwendelezo Ulioegemezwa kwenye Fremu",
       "frameAnchoredDescription": "SceneFlow ndiyo zana pekee inayowezesha mwendelezo unaozingatia fremu mahususi, ikihakikisha kuwa bidhaa au mhusika wa mteja wako anabaki vilevile katika kila sehemu ya tukio.",
-      "closePreview": "Funga Onyesho la Awali",
+      "closePreview": "Funga hakikisho",
       "expandVideo": "Panua video",
       "expandImage": "Panua picha",
+      "conceptPreview": "Dhana ya kisa cha matumizi",
+      "videoPreview": "Hakikisho la video",
       "orStartExplorer": "Anza na mpango wa $9 Explorer",
       "orPrefix": "Au"
     },
@@ -422,13 +831,13 @@
         },
         "challenge": {
           "title": "Kikwazo cha \"B-Roll\"",
-          "description": "Una hati nzuri ya maudhui, lakini kujifunza zana sita tofauti za kutengeneza na kuhariri — au kukwama katika mzunguko usioisha wa kutengeneza video — kunachelewesha kila hatua ya kupakia maudhui. Ucheleweshaji huo hudhoofisha mzunguko wa kuchapisha na uwezo wa kuwabakiza watazamaji."
+          "description": "Una hati nzuri ya video, lakini kujifunza zana sita tofauti za kutengeneza na kuhariri — au kukwama katika mzunguko wa video zinazojirudia-rudia — kunachelewesha kila video unayopakia. Mafanikio ya mfululizo wa video za YouTube na mahitaji ya kasi ya vipindi vya drama kwenye YouTube TV yanahitaji utendaji wa haraka zaidi kuliko ule unaoweza kupatikana kwa kutumia zana mbalimbali za AI zisizounganishwa."
         },
         "solution": {
           "title": "Msimulizi wa Hadithi wa Kiotomatiki",
-          "description": "Uendeshaji wa kazi wa kiotomatiki unaoongozwa, kuanzia muswada hadi toleo la mwisho tayari kwa kuchapishwa — hakuna haja ya kujifunza programu sita tofauti. Dumisha mwendelezo wa wahusika na mtindo kuanzia tukio la kwanza hadi katika utayarishaji wa mfululizo mzima.",
+          "description": "Toa mfululizo wa vipindi na video fupi zinazovutia na kusimamisha watu wanapovinjari mtandaoni — yote kutoka studio moja: ikijumuisha uundaji wa awali (pre-visualization) unaozingatia mtiririko wa matukio, udumishaji thabiti wa mwendelezo wa hadithi, na nakala za mwisho tayari kwa kuchapishwa, mahususi kwa ajili ya uchumi wa wabunifu unaoongozwa na YouTube.",
           "features": [
-            "Taswira zinazoendana sawasawa na hatua za mtiririko wa hati",
+            "Taswira zinazoendana sawasawa na hatua muhimu za muswada",
             "Wahusika wakuu thabiti katika kila tukio",
             "Panua hadi kwenye mfululizo wa vipindi kwa kutumia maktaba ya marejeleo ya pamoja"
           ]
@@ -449,7 +858,7 @@
         },
         "challenge": {
           "title": "Mrundikano wa Kazi kwa Wasambazaji na Kupoteza Mwelekeo wa Chapa",
-          "description": "Timu za mawasiliano, mafunzo na maendeleo (L&D), pamoja na masoko hulazimika kusubiri kwa wiki kadhaa ili kupata video kutoka kwa wakala au wauzaji wa nje — au hukabiliwa na wingi wa zana tata bila kuwa na mfumo thabiti wa ndani unaoweza kutumika mara kwa mara. Njia zote hizi husababisha kutokuwepo kwa uwiano katika utambulisho wa chapa na kukwama kwa kampeni."
+          "description": "Timu za mawasiliano, mafunzo na maendeleo (L&D), pamoja na masoko, hulazimika kusubiri kwa wiki kadhaa ili kupata video kutoka kwa wakala au watoa huduma wa nje — au hukabiliwa na wingi wa zana tata bila kuwa na mfumo thabiti wa ndani unaoweza kutumika mara kwa mara. Njia zote hizi husababisha kutokuwepo kwa uwiano katika utambulisho wa chapa na kukwama kwa kampeni."
         },
         "solution": {
           "title": "Uzalishaji wa Ndani ya Kampuni Ndani ya Wiki Hiyo Hiyo",
@@ -458,7 +867,7 @@
             "Badilisha utaratibu wa kutumia watoa huduma wa nje kwa upigaji picha na mifumo ya ndani inayoongozwa na mwongozo.",
             "Violezo na maktaba za marejeleo zinazoendana na utambulisho wa chapa",
             "Matumizi ya mkopo na viwango vya juu vya bajeti vinavyoonekana kwa kila mradi",
-            "Idhinisha michoro ya mwongozo wa video kabla ya kulipia video ya mwisho."
+            "Idhinisha onyesho la awali kabla ya kulipia video ya mwisho."
           ]
         },
         "win": "Toa video za mafunzo, mawasiliano, na kampeni kulingana na ratiba yako — bila kusubiri orodha ya kazi iliyochelewa ya mtoa huduma.",
@@ -470,22 +879,22 @@
       },
       "productionShop": {
         "label": "Warsha ya Uzalishaji",
-        "title": "Warsha ya Uzalishaji wa Bidhaa Maalum",
+        "title": "Warsha ya Uzalishaji Maalum",
         "beforeAfter": {
           "before": "Zaidi ya saa 4",
           "after": "Dakika 30–60"
         },
         "challenge": {
           "title": "Sekta Maalum, Hakuna Mfumo Unaoweza Kurudiwa",
-          "description": "Wateja wanaohitaji huduma za kumbukumbu binafsi, urithi, sekta ya majengo, na elimu wanataka kazi ikamilike haraka — lakini kila mradi huanza upya kabisa. Mchakato wa kukabidhiana kazi katika kila hatua, pamoja na marekebisho ya mara kwa mara na yasiyotabirika (kama bahati nasibu) kwenye maandishi, picha, sauti, video, muziki, na zana za uhariri, hupunguza faida inayotokana na wingi wa kazi."
+          "description": "Wateja wanaohitaji huduma za kumbukumbu binafsi, urithi, sekta ya majengo, na elimu wanataka kazi ikamilike haraka — lakini kila mradi huanza upya kabisa. Mchakato wa kukabidhiana kazi katika kila hatua, pamoja na marekebisho ya mara kwa mara yanayofanana na bahati nasibu katika vipengele vya muswada, picha, sauti, video, muziki, na uhariri, hupunguza faida inayotokana na wingi wa kazi."
         },
         "solution": {
-          "title": "Badilisha huduma yako ya video kuwa bidhaa",
-          "description": "Tengeneza mifumo ya kazi inayoweza kurudiarudiwa kwa ajili ya studio za kutengeneza kumbukumbu za maisha na sekta maalum. Kuanzia upakiaji wa violezo, uundaji wa sauti zinazofanana na halisi (voice clones), na avata, hadi uidhinishaji wa mwongozo wa taswira (pre-vis) — rekebisha huduma kulingana na mahitaji ya kila mteja na uongeze faida kupitia wingi wa kazi.",
+          "title": "Geuza Huduma Yako ya Video Kuwa Bidhaa",
+          "description": "Buni mifumo ya kazi inayoweza kurudiarudiwa kwa ajili ya studio za kutengeneza kumbukumbu za maisha na sekta maalum. Kuanzia upakiaji wa violezo, uundaji wa sauti bandia (voice clones) na avata, hadi uidhinishaji wa taswira ya awali — rekebisha huduma kulingana na mahitaji ya mteja na uongeze faida kupitia wingi wa kazi.",
           "features": [
             "Violezo vya kumbukumbu binafsi vyenye vipengele vya kupakia picha, kuiga sauti, na waongozaji wa kidijitali (avatars)",
-            "Mchakato wa kupokea wateja ukihusishwa na Blueprint na hatua za kuidhinisha ubao wa michoro (pre-vis)",
-            "Vifurushi vya studio vya chapa nyeupe kwa ajili ya video za kumbukumbu ya historia ya maisha, video za heshima, na video za mfumo wa usajili",
+            "Usajili wa mteja ukihusishwa na Blueprint na hatua za uidhinishaji wa kabla ya ziara",
+            "Vifurushi vya studio vya chapa nyeupe kwa ajili ya video za kumbukumbu ya urithi, video za heshima, na video za usajili",
             "Faida kwenye mikopo badala ya gharama za uendeshaji kwa kila kipindi cha upigaji picha"
           ]
         },
@@ -505,7 +914,7 @@
         },
         "challenge": {
           "title": "Utoaji wa huduma kwa wateja kwa kiwango kikubwa",
-          "description": "Kufanikiwa katika uwasilishaji wa awali wa wazo ni nusu tu ya safari. Kazi za mara kwa mara za wateja zinahitaji kukamilishwa kwa haraka — lakini uhamishaji wa kazi katika kila hatua na mchakato wa kurudia-rudia uundaji wa video (kama bahati nasibu) kwa kutumia zana tofauti za kutengeneza na kuhariri, hupunguza kasi ya kila mzunguko wa kazi."
+          "description": "Kufanikiwa katika awamu ya awali ya pendekezo ni nusu tu ya safari. Kazi za mara kwa mara za wateja zinahitaji kukamilishwa kwa haraka — lakini uhamishaji wa kazi katika kila hatua na mchakato wa kurudia-rudia uundaji wa video (kama bahati nasibu) kati ya zana tofauti za kutengeneza na kuhariri hupunguza kasi ya kila mzunguko wa kazi."
         },
         "solution": {
           "title": "Kiwango cha Uzalishaji + Idhini ya Mteja",
@@ -517,18 +926,48 @@
             "Utoaji huduma unaoweza kupanuliwa bila kuongeza idadi ya wafanyakazi"
           ]
         },
-        "win": "Tekeleza mchakato wa kuwasilisha mapendekezo na kazi za wateja zinazojirudia kwa kasi zaidi, huku ukipunguza hatari katika uzalishaji na kuongeza faida.",
+        "win": "Tekeleza mchakato wa kuwasilisha mapendekezo ya biashara na kazi za wateja zinazojirudia kwa kasi zaidi, huku ukipunguza hatari katika uzalishaji na kuongeza faida.",
         "keyPhrases": [
           "Uidhinishaji wa Wateja",
           "Kiwango cha Uwasilishaji",
           "Utabirika wa Bajeti"
+        ]
+      },
+      "filmProduction": {
+        "label": "Uzalishaji wa Filamu",
+        "title": "Mtayarishaji wa Filamu",
+        "beforeAfter": {
+          "before": "Wiki kadhaa za uundaji wa taswira ya awali",
+          "after": "Chini ya dakika 30"
+        },
+        "challenge": {
+          "title": "Mchakato wa Polepole wa Kuunda Taswira ya Awali Kabla ya Kuweza Kujaribu Hadithi",
+          "description": "Una hati ya filamu — lakini usomaji wa pamoja, hatua za uandaaji wa vibao vya picha (storyboards), na zana zisizounganishwa za taswira ya awali (previz) huchelewesha uwasilishaji wa mradi kwa wawekezaji, majaribio kwa hadhira, na maamuzi ya kuidhinisha uzalishaji."
+        },
+        "solution": {
+          "title": "Taswira-awali shirikishi inayozingatia hati kwanza",
+          "description": "Pakia hati yako (MDX, FDX, na miundo mingine), iboreshe kwa kutumia Audience Resonance, na utengeneze onyesho la awali (pre-vis) shirikishi kwa ajili ya kutazama na kufanyia majaribio — likiwa na uwezo wa kutengeneza vipengele mbalimbali kwa wakati mmoja, chaguzi za lugha zaidi ya 70, na uwekaji wa matabaka ya lugha nyingi kwa kasi.",
+          "features": [
+            "Pakia na uingize hati (MDX, FDX, na nyinginezo)",
+            "Boresha kwa kutumia Audience Resonance",
+            "Animesheni ya awali ya kuonyesha dhana (pre-vis animatic) kwa ajili ya mapitio na uidhinishaji wa wadau",
+            "Lugha zaidi ya 70 zenye tabaka za lugha nyingi za haraka",
+            "Rekebisha na usafirishe hati (MDX na miundo mingine)",
+            "Screening Room kwa ajili ya kufanyia majaribio animatiki kamili kwa hadhira"
+          ]
+        },
+        "win": "Thibitisha kufaa kwa hadithi na hadhira kabla ya kuanza kurekodi filamu yenyewe — kwa kutumia *animatic* inayoweza kushirikiwa, badala ya mchakato wa awali wa taswira (*previz*) unaochukua wiki kadhaa.",
+        "keyPhrases": [
+          "Uundaji wa Awali wa Taswira Kulingana na Hati",
+          "Audience Resonance",
+          "Screening Room Majaribio"
         ]
       }
     },
     "segmentCtas": {
       "creator": {
         "label": "Anza safari yako ya majaribio ya uzalishaji",
-        "subtext": "$9 malipo ya mara moja • Mikopo 750 • Ufikiaji kamili wa jukwaa"
+        "subtext": "$9 malipo ya mara moja • Kredi 750 • Ufikiaji kamili wa mfumo"
       },
       "team": {
         "label": "Weka nafasi ya ziara ya ukaguzi na timu",
@@ -541,13 +980,49 @@
       "agency": {
         "label": "Angalia bei kwa ajili ya timu",
         "subtext": "Mipango kwa ajili ya mashirika na vituo vya uzalishaji vinavyofanya kazi kwa kiwango kikubwa"
+      },
+      "filmProduction": {
+        "label": "Anza safari yako ya majaribio ya awali ya taswira (pre-vis)",
+        "subtext": "$9 malipo ya mara moja • Pakia hati → animatiki shirikishi kwa ajili ya mapitio"
       }
     },
     "categories": [
       {
+        "id": "burudani",
+        "title": "Mfululizo wa Burudani na Watayarishaji",
+        "qualifyingStatement": "Kwa sasa, YouTube inashindana na televisheni ya kawaida katika kuvutia watazamaji—studio huru za uhuishaji na wabunifu binafsi wanazalisha vipindi vya mfululizo vinavyovuma sana, huku kila sehemu ikipata mamilioni ya mara za kutazamwa. SceneFlow inakupa zana za awali za taswira (pre-vis) zinazozingatia mtiririko wa matukio, Reference Library inahakikisha mwendelezo thabiti, na inatoa faili za mwisho tayari kabisa kwa ajili ya uchapishaji katika uchumi wa wabunifu—tofauti na zana za kawaida za kutengeneza klipu fupi zisizo na mpangilio.",
+        "examples": [
+          {
+            "id": "Tamthilia fupi ya wima",
+            "label": "Tamthilia ya YouTube TV",
+            "description": "Hebu fikiria kutoa tamthilia yenye sehemu mbalimbali na uwiano wa picha wa 16:9 kwenye YouTube—ambapo sasa YouTube inachukua asilimia 13.4 ya muda wa kutazama TV nchini Marekani na zaidi ya asilimia 35 ya muda huo hutumika kwenye TV zilizounganishwa na mtandao. SceneFlow huwasaidia wabunifu kuongeza sehemu hiyo ya soko kupitia maudhui mbadala yenye kuvutia: taswira za awali zinazozingatia mtiririko wa matukio (beat-first pre-vis), udumishaji wa mwendelezo wa Reference Library, na nakala za mwisho zenye ubora wa skrini pana tayari kwa kuchapishwa."
+          },
+          {
+            "id": "mfululizo wa katuni wa mtandaoni",
+            "label": "Mfululizo wa Katuni wa Mtandaoni",
+            "description": "Hebu fikiria kuweka rasmi muundo wa wahusika wenye mtindo wa kipekee katika Reference Library yako mara moja—kisha kutoa vipindi mfululizo vyenye sanaa inayoakisi mitindo ya anime, Pixar, au Ghibli, huku ukidumisha kiwango cha ubora thabiti kinachohitajika katika kazi zilizofanikiwa sana kutoka kwa studio huru kama vile Glitch Productions."
+          },
+          {
+            "id": "Mfululizo wa video za YouTube wenye sehemu mbalimbali",
+            "label": "Mfululizo wa YouTube wa Vipindi",
+            "description": "Hebu fikiria mtiririko wa msimu unaozalishwa kiotomatiki ndani ya Series Studio—ambapo muhtasari wa vipindi unaoanishwa na Blueprint pamoja na hatua ya uzalishaji, ili kila sura, sauti, na hatua ya simulizi iendelee kuwiana katika chaneli inayokua."
+          },
+          {
+            "id": "shindano la uhalisia la wabunifu wa maudhui",
+            "label": "Mashindano na Vipindi vya Uhalisia vya Watayarishaji Maudhui",
+            "description": "Hebu fikiria kuandaa mashindano makubwa ya wabunifu (ya aina ya 'reality show') bila kuhitaji timu ya utangazaji—ikiwemo matumizi ya kamera nyingi, ukaguzi na wadau, na kukamilisha kazi yote kuanzia rasimu ya maandishi hadi faili la mwisho la MP4 ndani ya wiki moja."
+          },
+          {
+            "id": "Mfululizo tayari kwa CTV",
+            "label": "Tamthilia ya Simu ya Mkononi ya Wima",
+            "description": "Wazia vipengele vya kuvutia vya 9:16 vinavyoonekana halisi na vipindi vya mfululizo vya simu vilivyoundwa mahususi kwa ajili ya kuvinjari—idhinisha Beat Frames kabla ya kukamilisha utengenezaji, na unganisha vipengele asilia ili kuleta hisia zinazomfanya mtumiaji asimamishe kidole chake. SceneFlow hutoa faili kuu za wima zilizo tayari kwa YouTube Shorts na mitiririko ya maudhui kwenye simu."
+          }
+        ]
+      },
+      {
         "id": "mali",
         "title": "Mali, Nafasi na Huduma za Ukarimu",
-        "qualifyingStatement": "Imetengenezwa kwa kutumia picha halisi za mali yako — na kuwasilishwa kama ziara ya kutazama ndani iliyoboreshwa kwa teknolojia ya AI, ikijumuisha sauti na avatar yako. Hii inatoa taswira halisi ya mpangilio na vipengele vya mali hiyo, lakini haichukui nafasi ya ziara ya kwenda kuiona mali yenyewe. Ziara zote zimewekewa maelezo wazi.",
+        "qualifyingStatement": "Imetengenezwa kwa kutumia picha halisi za mali yako — na kuwasilishwa kama ziara ya mtandaoni yenye maelezo, iliyoboreshwa kwa teknolojia ya AI na kutumia sauti pamoja na avatar yako. Hii inatoa taswira halisi ya mpangilio na vipengele vya mali hiyo, lakini haichukui nafasi ya ziara ya kwenda kuiona mali yenyewe. Ziara zote zimewekewa maelezo wazi.",
         "examples": [
           {
             "id": "Majengo ya makazi",
@@ -567,12 +1042,12 @@
           {
             "id": "Ukarimu na utalii",
             "label": "Ukarimu na Utalii",
-            "description": "Hebu fikiria kupakia picha za hoteli na vivutio muhimu vya ratiba ya safari, huku ukitumia sauti ya mtangazaji na avatar iliyohifadhiwa ya chapa yako. Kisha, unazalisha na kusambaza papo hapo ziara za kidijitali na miongozo ya kusimuliwa kwa lugha zaidi ya 70 — bila kuhitaji timu ya kurekodi katika kila eneo."
+            "description": "Hebu fikiria kupakia picha za hoteli na vivutio muhimu vya ratiba ya safari, huku ukitumia sauti ya mtangazaji na avatar iliyohifadhiwa ya chapa yako. Kisha, unazalisha na kusambaza papo hapo ziara za kidijitali na miongozo ya safari yenye maelezo ya sauti katika lugha zaidi ya 70 — bila kuhitaji timu ya kurekodi kwa kila eneo."
           },
           {
             "id": "Waelekezi wa makumbusho na magaleri",
             "label": "Miongozo ya Makumbusho na Majumba ya Sanaa",
-            "description": "Hebu fikiria kupakia picha za maonyesho na maelezo ya msimamizi kadiri maonyesho yanavyobadilika. Kisha kusasisha papo hapo ziara za maelezo ya sauti katika lugha zaidi ya 70 — bila kuhitaji kurekodi upya wakati maonyesho yanapobadilishwa."
+            "description": "Hebu fikiria kupakia picha za maonyesho na maelezo ya msimamizi kadiri maonyesho yanavyobadilika. Kisha, kusasisha papo hapo ziara za maelezo ya sauti katika lugha zaidi ya 70 — bila kuhitaji kurekodi upya wakati maonyesho yanapobadilishwa."
           }
         ]
       },
@@ -583,12 +1058,12 @@
           {
             "id": "Elimu ya K-12 na Elimu ya Juu",
             "label": "Elimu ya Msingi na Sekondari (K-12) na Elimu ya Juu",
-            "description": "Hebu fikiria kupakia nyenzo za masomo zikiwa na sauti iliyohifadhiwa ya mkufunzi wako pamoja na sifa za kipekee za utambulisho wake. Kisha, kutengeneza papo hapo moduli kamili za mtaala ambazo wanafunzi wako wa ESL na wale wa kampasi ya kimataifa wanaweza kuzitazama katika lugha zaidi ya 70."
+            "description": "Hebu fikiria kupakia nyenzo za masomo zikiwa na sauti iliyohifadhiwa ya mkufunzi wako pamoja na taswira yake. Kisha, kutengeneza papo hapo moduli kamili za mtaala ambazo wanafunzi wako wa ESL na wale wa kampasi ya kimataifa wanaweza kuzitazama katika lugha zaidi ya 70."
           },
           {
-            "id": "kitambulisho cha shirika",
+            "id": "utambulisho wa shirika",
             "label": "Mafunzo na Maendeleo ya Wafanyakazi",
-            "description": "Hebu fikiria kupakia maandishi ya maelekezo ya kufuata kanuni kwa kutumia sauti na avatar iliyohifadhiwa ya mkufunzi wako. Kisha, kuanza mara moja kutoa mafunzo sanifu ya uingizaji kazini na usalama katika ofisi zote — yakiwa yametafsiriwa na kurekebishwa kulingana na lugha zaidi ya 70."
+            "description": "Hebu fikiria kupakia slaidi za mafunzo zikiwa na sauti iliyorekodiwa ya msimamizi wako wa Mafunzo na Maendeleo (L&D). Kisha kuchapisha papo hapo video za moduli—kuunganisha sehemu za ziada za sekunde 7 kwa ajili ya maelezo marefu, na kuidhinisha Beat Frames kabla ya kukamilisha utengenezaji wa video (rendering)."
           },
           {
             "id": "Mafunzo ya programu na SaaS",
@@ -601,14 +1076,14 @@
             "description": "Hebu fikiria kupakia picha zinazoonyesha hatua mbalimbali, pamoja na sauti iliyohifadhiwa ya mkufunzi wako na sifa za kipekee za utambulisho wake. Kisha, kuchapisha papo hapo mfululizo wa mafunzo ya kitaalamu—iwe ni ya upishi, miradi ya kujifanyia mwenyewe (DIY), au maandalizi ya mitihani ya uthibitisho—katika lugha zaidi ya 70."
           },
           {
-            "id": "Elimu ya afya kwa wagonjwa",
+            "id": "Elimu ya matibabu kwa wagonjwa",
             "label": "Elimu ya Afya/Elimu kwa Wagonjwa",
             "description": "Hebu fikiria kupakia michoro ya taratibu za matibabu pamoja na sauti iliyorekodiwa na kuidhinishwa na mtaalamu wako wa afya. Kisha, kutengeneza papo hapo video zilizo wazi za kuelimisha wagonjwa, ambazo familia zinaweza kuzielewa katika lugha zaidi ya 70."
           },
           {
             "id": "kumbukumbu za video",
             "label": "Kumbukumbu za Video",
-            "description": "Hebu fikiria kupakia picha za familia, sauti za mahojiano, na maelezo ya matukio pamoja na sauti ya msimulizi iliyohifadhiwa. Kisha, tengeneza papo hapo video za kumbukumbu zilizogawanywa katika sura mbalimbali — na uidhinishe mpangilio wa matukio kabla ya video kukamilishwa."
+            "description": "Hebu fikiria kupakia picha za familia, sauti za mahojiano, na maelezo ya matukio pamoja na sauti ya msimulizi iliyohifadhiwa. Kisha, tengeneza papo hapo video za kumbukumbu zilizogawanywa katika sura mbalimbali — na uidhinishe rasimu ya awali kabla ya video ya mwisho kutengenezwa."
           }
         ]
       },
@@ -619,12 +1094,12 @@
           {
             "id": "habari za eneo mahususi",
             "label": "Habari za Eneo Mahususi",
-            "description": "Hebu fikiria kupakia picha na taarifa za leo kwa kutumia sauti iliyorekodiwa ya mtangazaji wako. Kisha kuchapisha papo hapo muhtasari wa habari za mtaani wa kila siku — bila kuhitaji timu ya kurekodi wala kuchelewa kukamilisha kazi kwa wakati."
+            "description": "Hebu fikiria kupakia picha na taarifa za habari za leo kwa kutumia sauti iliyorekodiwa ya mtangazaji wako. Kisha, kuchapisha papo hapo muhtasari wa habari za kila siku za mtaa — bila kuhitaji timu ya kurekodi wala kuchelewa kukamilisha kazi kwa wakati."
           },
           {
             "id": "Muhtasari wa masoko ya fedha",
             "label": "Muhtasari wa Masuala ya Fedha na Soko",
-            "description": "Hebu fikiria kupakia data za soko na picha za chati kila asubuhi pamoja na sauti iliyorekodiwa ya mchambuzi wako. Kisha, kuvigeuza papo hapo kuwa muhtasari wa kuona unaoambatana na maelezo ya sauti — tayari kabla ya kengele ya kufungua soko."
+            "description": "Hebu fikiria kupakia data za soko na picha za chati kila asubuhi pamoja na sauti iliyorekodiwa ya mchambuzi wako. Kisha, kuvigeuza papo hapo kuwa muhtasari wa kuona na kusikia — tayari kabla ya kengele ya kufungua soko."
           },
           {
             "id": "Uchambuzi wa michezo",
@@ -644,23 +1119,23 @@
         ]
       },
       {
-        "id": "Biashara kwa biashara",
+        "id": "Biashara kati ya biashara",
         "title": "Masoko na Mauzo ya Biashara-kwa-Biashara (B2B)",
         "examples": [
           {
             "id": "Video za kuelezea bidhaa",
             "label": "Video za Kuelezea Bidhaa",
-            "description": "Hebu fikiria kupakia picha za orodha ya bidhaa pamoja na sauti ya mtangazaji na avatar iliyohifadhiwa ya chapa yako. Kisha, tengeneza papo hapo mfululizo wa video za ufafanuzi zenye ubora wa sinema — na uidhinishe mpangilio wa matukio (pre-vis) kabla ya kukamilisha utengenezaji wa video hizo."
+            "description": "Hebu fikiria kupakia picha za orodha ya bidhaa pamoja na sauti ya mtangazaji na avatar iliyohifadhiwa ya chapa yako. Kisha, kutengeneza papo hapo mfululizo wa video za ufafanuzi zenye ubora wa sinema — na kuidhinisha onyesho la awali (pre-vis) kabla ya kukamilisha utengenezaji wa video hizo (rendering)."
           },
           {
             "id": "Shuhuda za uchambuzi wa kisa",
             "label": "Uchambuzi wa Kisa/Shuhuda",
-            "description": "Hebu fikiria kupakia picha za wateja, picha za miradi, na takwimu za mafanikio pamoja na sauti iliyorekodiwa ya msimulizi. Kisha, kutengeneza papo hapo video za kitaalamu zinazoonyesha mifano halisi ya mafanikio — bila kuhitaji kurekodi video ya ushuhuda."
+            "description": "Hebu fikiria kupakia picha za wateja, picha za mradi, na takwimu za mafanikio pamoja na sauti iliyorekodiwa ya msimulizi. Kisha, kutengeneza papo hapo ripoti za kina na za kuvutia kuhusu matokeo ya mradi — bila kuhitaji kurekodi video ya ushuhuda."
           },
           {
             "id": "Ujenzi wa taswira ya mwajiri",
             "label": "Uajiri na Ujenzi wa Taswira ya Chapa",
-            "description": "Hebu fikiria kupakia picha za ofisi na vipengele muhimu vya utamaduni wa kampuni, ukijumuisha sauti iliyorekodiwa na avatar ya mtaalamu wako wa kuajiri. Kisha, kuwapa watahiniwa ziara ya papo hapo inayoonyesha maisha ya kila siku kazini na kusindikizwa na maelezo ya sauti — katika lugha zaidi ya 70 kwa ajili ya kuajiri watu duniani kote."
+            "description": "Hebu fikiria kupakia picha za ofisi na vipengele muhimu vya utamaduni wa kampuni, ukijumuisha sauti na avatar iliyohifadhiwa ya mtaalamu wako wa kuajiri. Kisha, kuwapa watahiniwa ziara ya papo hapo inayoonyesha maisha ya kila siku kazini na kusindikizwa na maelezo ya sauti — katika lugha zaidi ya 70 kwa ajili ya kuajiri watu duniani kote."
           },
           {
             "id": "Matangazo ya mikutano na hafla",
@@ -676,102 +1151,69 @@
           {
             "id": "Ripoti za athari za mashirika yasiyo ya kiserikali",
             "label": "Ripoti za Athari za Mashirika Yasiyo ya Kiserikali",
-            "description": "Hebu fikiria kupakia picha kutoka nyanjani na takwimu za matokeo ya kazi yako, ukizichanganya na sauti iliyorekodiwa ya msimulizi kutoka shirika lako. Kisha, kubadilisha ripoti za wafadhili kuwa video zenye simulizi zinazogusa hisia papo hapo — video zinazobeba sauti na ujumbe wa dhumuni la shirika lako, badala ya kuwa onyesho la kawaida la slaidi."
+            "description": "Hebu fikiria kupakia picha kutoka nyanjani na takwimu za matokeo ya kazi, ukichanganya na sauti iliyorekodiwa ya msimulizi wa shirika lako. Kisha, kubadilisha ripoti za wafadhili papo hapo kuwa video zenye simulizi zinazogusa hisia — video zinazowasilisha sauti ya dhumuni la shirika lako, badala ya onyesho la kawaida la slaidi."
           },
           {
             "id": "Matangazo ya afya ya umma",
             "label": "Matangazo ya Afya ya Umma",
-            "description": "Hebu fikiria kupakia ujumbe wa afya uliothibitishwa kwa kutumia sauti inayotambulika na kuaminika ya idara yako. Kisha, kuwafikia mara moja watu wa jamii mbalimbali kwa lugha zaidi ya 70—ukiwa na uwazi uleule, uharaka uleule, na bila kuchelewa hata kidogo kwa sababu ya tafsiri."
+            "description": "Hebu fikiria kupakia ujumbe wa afya uliothibitishwa kwa kutumia sauti inayotambulika na kuaminika ya idara yako. Kisha, kuwafikia mara moja watu wa jamii zote katika lugha zaidi ya 70 — huku ujumbe ukiwa na uwazi na uharaka uleule, na bila kuchelewa hata kidogo kwa sababu ya tafsiri."
           },
           {
             "id": "Maelezo kuhusu masuala ya kisheria na bima",
             "label": "Maelezo kuhusu Masuala ya Kisheria na Bima",
-            "description": "Hebu fikiria kupakia muhtasari wa mikataba na michoro ya mtiririko wa michakato, pamoja na sauti ya mshauri wako iliyorekodiwa. Kisha, kutengeneza papo hapo maelezo ya kuona ambayo wateja wanaweza kuyaelewa kikweli — kabla hawajasaini au kuwasilisha dai."
+            "description": "Hebu fikiria kupakia muhtasari wa mikataba na michoro ya mtiririko wa michakato, pamoja na sauti iliyorekodiwa ya mshauri wako. Kisha, kutengeneza papo hapo maelezo ya kuona ambayo wateja wanaweza kuyaelewa kikweli — kabla hawajasaini au kuwasilisha dai."
           },
           {
-            "id": "Mafundisho ya kidini na ya kiroho",
-            "label": "Mafundisho ya Dini na Kiroho",
-            "description": "Hebu fikiria kupakia dondoo za mahubiri au maandiko matakatifu pamoja na sauti na taswira iliyohifadhiwa ya mwalimu wako. Kisha, kuchapisha papo hapo mfululizo wa video za kila siku kwa ajili ya makundi ya waumini duniani kote — katika lugha zaidi ya 70."
+            "id": "Mafundisho ya kidini na kiroho",
+            "label": "Mafundisho ya Kidini na Kiroho",
+            "description": "Hebu fikiria kupakia dondoo za mahubiri au maandiko matakatifu pamoja na sauti na uwepo wa mwalimu wako uliorekodiwa. Kisha, kuchapisha papo hapo mfululizo wa video za kila siku kwa ajili ya makutano duniani kote — katika lugha zaidi ya 70."
           }
         ]
       }
     ]
   },
-  "institutionalRoi": {
-    "badge": "Kwa timu za ndani na taasisi",
-    "title": "Badilisha utaratibu wa kutumia watoa huduma wa nje kwa ajili ya upigaji picha na video na mfumo wa uzalishaji wa ndani unaotabirika.",
-    "subtitle": "Timu za mawasiliano, mafunzo na maendeleo (L&D), na masoko zenye watu 1–5 zinaweza kukamilisha na kutoa video ndani ya wiki hiyo hiyo, bila kuhitaji mikataba ya kudumu na wakala au mchakato wa kuhariri usio na kikomo.",
-    "comparisons": [
-      {
-        "label": "Upigaji picha na uhariri wa watoa huduma wa harusi za kitamaduni",
-        "cost": "$5,000–$15,000",
-        "timeline": "Wiki 4–8"
-      },
-      {
-        "label": "SceneFlow mtiririko wa kazi wa ndani",
-        "cost": "Mikopo ya $50–$500",
-        "timeline": "Wiki hiyo hiyo"
-      }
-    ],
-    "bullets": [
-      "Violezo vinavyozingatia viwango vya chapa na uidhinishaji kabla ya utayarishaji wa mwisho",
-      "Vikomo vya bajeti pamoja na taarifa wazi ya matumizi ya mkopo kwa kila mradi",
-      "Hakuna siku za timu ya uzalishaji, wala mchakato wa kurudishiana kazi mara kwa mara wakati wa kila marekebisho."
-    ],
-    "ctaPrimary": "Weka nafasi ya ziara ya maelezo kwa timu",
-    "ctaSecondary": "Angalia bei",
-    "typicalCost": "Gharama ya kawaida",
-    "timeline": "Ratiba ya matukio"
-  },
   "platformWalkthrough": {
-    "badge": "Ziara ya Kuongozwa",
-    "title": "Mwongozo wa Matumizi ya Jukwaa",
-    "subtitle": "Mwongozo kamili wa mtiririko wa kazi wa SceneFlow AI Studio, kuanzia mapitio ya ushirikiano hadi matokeo ya mwisho ya sinema.",
-    "subheading": "Gundua jukwaa — anza na mambo ya msingi",
-    "chapterHint": "Mambo manne ya kufahamu leo. Panua sura pale unapotaka picha kamili.",
+    "badge": "Chini ya boneti",
+    "title": "Mwongozo wa kina wa jukwaa",
+    "subtitle": "Panua ili kuona klipu elekezi kuhusu upangaji wa mfululizo, mwendelezo wa marejeleo, kina cha uzalishaji, Screening Room, na imani na usalama — kwa ajili ya wakaguzi wa kiufundi na uchambuzi wa kina.",
+    "subheading": "Ndani ya mfumo — video elekezi kwa wakaguzi wa kiufundi",
+    "chapterHint": "Panua wigo ili kujumuisha upangaji wa mfululizo, mwendelezo wa marejeleo, kina cha uzalishaji, pamoja na masuala ya uaminifu na usalama.",
     "expandChapter": "Vipengele vya kipindi",
     "collapseChapter": "Ficha vipengele",
     "underTheHoodLabel": "Chini ya boneti",
     "chapters": [
       {
-        "id": "vitu vya msingi",
-        "label": "Anzia hapa — unachopata siku ya kwanza"
+        "id": "Anzia hapa",
+        "label": "Anzia hapa — mpango, mwendelezo, na kuendana na hadhira"
       },
       {
-        "id": "Ubora",
-        "label": "Hakikisha ujumbe wako unaeleweka na kugusa hisia za hadhira yako."
-      },
-      {
-        "id": "uzalishaji",
-        "label": "Kuanzia midundo iliyoidhinishwa hadi rekodi ya mwisho iliyochapishwa"
-      },
-      {
-        "id": "cha juu",
-        "label": "Kwa timu zinazohitaji mifumo ya malipo na usimamizi"
+        "id": "zalisha-chapisha",
+        "label": "Tengeneza na uchapishe — Nenda kwenye kichupo cha Shoot hadi Screening Room"
       }
     ],
     "close": "Funga",
     "viewDetails": "Tazama maelezo",
     "beatFirst": {
       "title": "Mchakato wa Uzalishaji wa Video Unaozingatia Mdundo Kwanza",
-      "description": "Idhinisha vipengele vya *pre-vis* na Beat Frames kabla ya hatua ya F2V — ili kupunguza uundaji upya usio na mwelekeo unaotokana na makosa ya mfumo (*hallucination*) na kupotea kwa mtiririko wa taswira. Fuata mkondo mmoja uliopangwa vizuri kuanzia hatua ya mapitio hadi klipu ya mwisho.",
+      "description": "Idhinisha vipengele vya taswira ya awali (pre-vis beats) na Beat Frames kabla ya hatua ya F2V — hii hupunguza utengenezaji upya usio na mwelekeo unaotokana na makosa ya AI (hallucination) au kupotea kwa mwelekeo wa taswira. Mchakato mmoja uliopangwa vizuri kuanzia hatua ya mapitio hadi klipu ya mwisho.",
       "keyFeatures": [
-        "Express Pre-vis kwa ajili ya mapitio — shiriki midundo kabla ya mchakato mzito wa uundaji wa mwisho (rendering)",
+        "Express Pre-vis kwa ajili ya mapitio — shiriki midundo kabla ya mchakato mzito wa utoaji wa faili ya mwisho (rendering)",
         "Beat Frames muundo wa kufuli — Reference Library mwendelezo",
         "F2V kwa kila mpigo — tengeneza video kutoka kwa fremu zilizoidhinishwa",
-        "Muda na mitiririko ya kichanganyaji — hamishia kwenye mkusanyiko wa Final Cut"
+        "Minyororo endelevu ya EXT — hatua za asili za +7s kwa ajili ya mazungumzo marefu ndani ya 'beat'",
+        "Muda na mitiririko ya kichanganyaji — fungua Screening Room ili kuunganisha na kuchapisha"
       ],
-      "screenshotSlot": "Weka picha ya skrini: Beat Frames na idhini ya ubao wa hadithi kabla ya kutengeneza video",
+      "screenshotSlot": "Weka picha ya skrini: Beat Frames na idhini ya taswira ya awali kabla ya kutengeneza video",
       "videoSlot": "Weka klipu ya sekunde 30: kuidhinisha midundo, kufunga fremu, kisha kutengeneza klipu za F2V."
     },
     "screeningRoom": {
-      "title": "Mapitio na Uchambuzi wa Hadhira",
-      "description": "Viungo vya faragha vya kushiriki na wadau — vinavyojumuisha alama zilizowekwa kwa mikono, maoni yaliyopangwa, na takwimu za hiari za ushiriki (kwa idhini ya mtazamaji). Hutumika katika Premiere kabla ya kuchapishwa na kwa ajili ya kuhakiki ubao wa hadithi (pre-vis) wa hatua ya uzalishaji.",
+      "title": "Screening Room",
+      "description": "Hakiki video za matukio, unganisha toleo la mwisho, na uchapishe — yote yakifanyika ndani ya mfumo wa Uzalishaji (Production). Toa viungo vya faragha kwa wadau ili wapate fursa ya kutoa maoni yaliyopangiliwa vizuri, pamoja na takwimu za hiari kuhusu namna wanavyoshirikiana na maudhui hayo.",
       "keyFeatures": [
-        "Vikao vya tathmini vya faragha — viungo salama vya kushiriki kwa ajili ya wadau",
-        "Maoni yaliyopangwa kutoka kwa hadhira — viwango na sehemu za maoni huru",
-        "Takwimu za hiari za uchambuzi wa ushiriki — kwa idhini ya mtazamaji kabla ya kukusanywa kwa taarifa hizo",
-        "Fanya marekebisho ya mara kwa mara kulingana na data halisi — boresha Blueprint na hati (script) kwa kutumia maoni ya wakaguzi."
+        "Hakiki ya video ya tukio — cheza mitiririko iliyochakatwa kwa mfuatano",
+        "Uunganishaji wa mwisho — chagua Animatic au Video kwa kila tukio na utoe faili moja ya MP4.",
+        "Tathmini zinazoweza kushirikiwa — viungo salama vyenye mfumo wa kutoa alama na kupanga vipaumbele vya mrejesho",
+        "Chapisha — Zana elekezi ya YouTube, usafirishaji wa video fupi, na vifurushi vya usambazaji"
       ],
       "screenshotSlot": "Weka picha ya skrini: Paneli ya uchanganuzi na maoni ya mkaguzi ya Screening Room",
       "screenshotUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-19%20at%2018.29.48.png",
@@ -785,69 +1227,47 @@
       "openScreenshot": "Fungua picha ya skrini",
       "openFeatureVideo": "Fungua video kuu",
       "expandImage": "Panua picha",
-      "closePreview": "Funga Onyesho la Awali"
+      "closePreview": "Funga hakikisho"
     },
     "items": [
       {
         "id": "1",
-        "title": "Uzoefu wa mtumiaji angavu + Udhibiti kamili kwa mtayarishaji",
-        "description": "Anza kwa kasi ukitumia mfumo wa otomatiki unaoongozwa, kisha uhariri kila matokeo yanayozalishwa ili timu zidumishe udhibiti wa ubunifu bila kupoteza kasi.",
+        "title": "Muhtasari wa Jukwaa",
+        "description": "Studio moja inayoshughulikia kila hatua, kuanzia wazo hadi video iliyo tayari kuchapishwa. Mchakato mmoja unaotumika kwa mafunzo, podikasti, habari, na vipindi vya filamu — idhinisha taswira ya awali (pre-vis) kabla ya kuingia gharama za utengenezaji wa mwisho.",
         "keyFeatures": [
-          "Mchakato wa kazi wa Studio unaoongozwa — kuanzia wazo hadi hatua ya mwisho (export) katika sehemu moja",
-          "Hariri kila biti, mhusika, na mstari uliotengenezwa na AI moja kwa moja mahali pake.",
-          "Toleo mbadala za mbinu — ulinganisho wa kando kwa kando kwa ajili ya mwelekeo wa ubunifu",
-          "Blueprint Shirikiana — shiriki viungo, sauti ya sehemu husika, na maoni yaliyopangwa kutoka kwa wakaguzi"
+          "Mfululizo → Blueprint → Uzalishaji → Screening Room",
+          "Uidhinishaji wa hatua kwa hatua (beat-first) — pre-vis na Beat Frames kabla ya F2V",
+          "Uzalishaji wa Google Vertex AI kwa kutumia mfuatano wa viendelezi asilia vya Veo",
+          "Hatua za kulinda uaminifu na usalama pamoja na uthibitisho wa asili uliotiwa saini wakati wa uwasilishaji"
         ],
-        "screenshotSlot": "Weka picha ya skrini: Kihariri cha Blueprint chenye sehemu zilizozalishwa zinazoweza kuhaririwa",
-        "videoSlot": "Weka kipande cha sekunde 30: Mtiririko wa UX kuanzia wazo hadi matokeo yanayoweza kuhaririwa."
+        "screenshotSlot": "Weka picha ya skrini: Sehemu kuu ya ukurasa wa kutua (hero section) + sehemu ya maelezo ya hatua kwa hatua yaliyorahisishwa",
+        "videoSlot": "Ingiza klipu ya 01:30: Hero → mradi mpya → Blueprint → Urekodi wa Uzalishaji → Screening Room → Chapisha"
       },
       {
-        "id": "2",
-        "title": "Bajeti ya Mikopo na Udhibiti wa Gharama",
-        "description": "Fuatilia matumizi ya mikopo kwa wakati halisi na uweke mipaka ya udhibiti kabla ya kuanza michakato ya uzalishaji inayotumia gharama kubwa.",
+        "id": "9",
+        "title": "Uendeshaji wa Kiotomatiki wa Mfululizo",
+        "description": "Bainisha ulimwengu wako mara moja na uunde mtiririko wa matukio unaoshikamana katika vipindi vingi. Matumizi ya Reference Library ya pamoja huhakikisha wahusika na mtindo wa kazi vinabaki na uwiano thabiti katika msimu mzima.",
         "keyFeatures": [
-          "Matumizi ya mkopo kwa wakati halisi — kulingana na mradi na shughuli",
-          "Hatua za udhibiti katika uzalishaji — kabla ya michakato ya uzalishaji yenye gharama kubwa",
-          "Orodha za bei zilizo wazi — kwa TTS, video, na akili bandia",
-          "Uwazi wa bajeti — kwa timu na wabunifu binafsi"
+          "Bainisha ulimwengu wako mara moja — wahusika, mtindo, na mtiririko wa msimu.",
+          "Muhtasari wa vipindi wenye mtiririko mzuri — unaozalishwa kiotomatiki kwa msimu mzima",
+          "Ufuatiliaji wa mwendelezo — misimu yenye vipindi vingi ikiwa imepangiliwa ipasavyo",
+          "Usawazishaji wa mfululizo na vipindi — katika Studio na Uzalishaji wa Blueprint"
         ],
-        "screenshotSlot": "Weka picha ya skrini: paneli ya matumizi ya mkopo na mipangilio ya BYOK",
-        "videoSlot": "Ingiza klipu ya sekunde 30: dashibodi ya bajeti na usanidi muhimu",
-        "underTheHood": {
-          "title": "Chini ya boneti",
-          "body": "Kwa timu za uzalishaji zenye mikataba ya huduma za wingu iliyopo:",
-          "bullets": [
-            "Vertex AI BYOK — utozaji na usimamizi wa shirika",
-            "Vifungo vya kuchagua watoa huduma katika kikokotoo cha mikopo",
-            "Orodha za viwango vya jukwaa zilizo wazi, pamoja na funguo zako"
-          ]
-        }
+        "screenshotSlot": "Weka picha ya skrini: Muhtasari wa mfululizo pamoja na mtiririko wa matukio ya vipindi uliotengenezwa kiotomatiki",
+        "videoSlot": "Weka kipande cha sekunde 30: Wazo likipanuliwa na kuwa msimu wenye vipindi vingi"
       },
       {
-        "id": "3",
-        "title": "Wazo lolote, mtiririko mmoja wa kazi ya uzalishaji",
-        "description": "Tumia mfumo mmoja madhubuti kwa ajili ya mafunzo, podikasti, habari, video za mauzo ya nyumba, na maudhui ya sinema.",
+        "id": "10",
+        "title": "Blueprint Uendeshaji wa Kiotomatiki",
+        "description": "Badilisha mawazo kuwa muhtasari uliopangwa vizuri, ukijumuisha maelezo mafupi ya hadithi (logline), hatua muhimu za simulizi, wahusika, na mtindo wa hadithi. Tekeleza Audience Resonance na ushirikiane na wengine kabla ya kuanza mchakato mzito wa uundaji wa mwisho wa picha (rendering).",
         "keyFeatures": [
-          "Mchakato mmoja — podikasti, habari, mafunzo, sekta ya majengo, na miundo ya sinema",
-          "Violezo vya miradi — Studio inajirekebisha kulingana na nyenzo zako za asili",
-          "Mchakato uleule wa Blueprint → Hati → Uzalishaji — bila kujali aina ya kazi",
-          "Hakuna kubadili zana — kuanzia hatua ya kubuni wazo hadi utekelezaji"
+          "Tengeneza → Kagua → Fanyia marekebisho → Anzisha mtiririko wa uzalishaji",
+          "Kutoka wazo hadi muundo ndani ya dakika chache — muhtasari mfupi, hatua muhimu za hadithi, wahusika, na mtindo.",
+          "Audience Resonance kupata alama 80 au zaidi (lengo) kabla ya hatua ya uzalishaji",
+          "Viungo vya kushiriki kwa washirikiana — kuunganisha maoni ili kufanya marekebisho yaliyoongozwa"
         ],
-        "screenshotSlot": "Weka picha ya skrini: Mwonekano uliogawanywa au gridi inayoonyesha violezo vya Podcast, Habari, Majengo, na Sinema vikiingizwa kwenye kiolesura kimoja cha mfumo wa mtiririko wa kazi wa SceneFlow.",
-        "videoSlot": "Weka klipu ya sekunde 30: \"Anza na nyenzo yoyote ya awali...\" ukibofya New Project -> Podcast (kiolesura kinabadilika kulingana na sauti), kisha ukionyesha skrini iliyogawanywa ikionyesha miradi ya Habari na Sinema ikiunganishwa katika kihariri cha Blueprint."
-      },
-      {
-        "id": "4",
-        "title": "Uendeshaji otomatiki mahiri wenye udhibiti sahihi wa uhariri",
-        "description": "Jukwaa la SceneFlow hutumia akili kuzalisha kiotomatiki msingi wa kitaalamu (mfululizo, ramani ya kina, hati, maelekezo ya uzalishaji, na marekebisho) huku likitoa njia za mawasiliano zenye akili zinazokupa udhibiti kamili wa kuhariri, pamoja na mifumo iliyojengewa ndani ya kuhakikisha ufuatiliaji wa miongozo sahihi.",
-        "keyFeatures": [
-          "Msingi wa AI katika hatua moja — mfululizo, ramani ya kina, muswada, na maelekezo ya uzalishaji",
-          "Visanduku mahiri vya kuhariri — miongozo ya usalama, si uandishi upya usio na udhibiti",
-          "Kubali, boresha, au kataa — kila pendekezo linabaki chini ya udhibiti wako.",
-          "Ushiriki wa binadamu — katika kila hatua ya uzalishaji"
-        ],
-        "screenshotSlot": "Weka picha ya skrini: Dirisha shirikishi lenye akili linaloonyesha uundaji wa msingi (baseline) pamoja na vidhibiti vya kuhariri.",
-        "videoSlot": "Weka klipu ya sekunde 30: Uzalishaji wa msingi kwa kutumia AI, ikifuatiwa na mtumiaji kufanya marekebisho ya kina."
+        "screenshotSlot": "Weka picha ya skrini: Blueprint iliyotengenezwa kiotomatiki ikionyesha hatua muhimu za hadithi na mabadiliko ya wahusika.",
+        "videoSlot": "Ingiza kipande cha sekunde 30: Kubadilisha dhana kuwa Blueprint iliyopangwa vizuri"
       },
       {
         "id": "5",
@@ -863,21 +1283,8 @@
         "videoSlot": "Weka klipu ya sekunde 30: Kutumia marejeleo katika matukio kadhaa"
       },
       {
-        "id": "6",
-        "title": "Injini ya Uzalishaji wa Haraka",
-        "description": "Zalisha picha na sehemu za video kiotomatiki na kwa wakati mmoja. Express Pre-vis hukuwezesha kukagua na kushiriki rasimu za video (pre-vis) ndani ya dakika chache. Express Pre-vis hutengeneza matukio kamili ya mtindo wa Ken Burns ndani ya dakika chache, huku Express Video ikitoa matukio ya mwisho ya video ndani ya dakika chache badala ya siku.",
-        "keyFeatures": [
-          "Uzalishaji wa wakati mmoja — picha na video katika mandhari mbalimbali kwa mpigo",
-          "Express Pre-vis — hakiki za sauti na picha zinazoweza kushirikiwa ndani ya dakika chache",
-          "Express Animatics — Mwendo wa Ken Burns kutoka kwenye picha tuli",
-          "Express Video — klipu za kiwango cha tukio ndani ya dakika chache, si siku nyingi."
-        ],
-        "screenshotSlot": "Weka picha ya skrini: Dashibodi ya utengenezaji wa haraka yenye Animatic na maendeleo ya video",
-        "videoSlot": "Weka klipu ya sekunde 30: Utengenezaji wa wakati mmoja unaobadilisha hati kuwa animatiki na kisha video ya mwisho."
-      },
-      {
         "id": "7",
-        "title": "Audience Resonance Mhariri",
+        "title": "Audience Resonance Uchambuzi",
         "description": "Bainisha hadhira unayolenga ili kupata alama, uchanganuzi, na mapendekezo ya papo hapo. Tekeleza marekebisho ya mbofyo mmoja au tumia vipengele vya kuhariri kwa mwongozo ili kuboresha kikamilifu vipindi, Blueprint, na hati yako kwa ajili ya matokeo bora zaidi.",
         "keyFeatures": [
           "Ukadiriaji wa hadhira lengwa — pamoja na uchanganuzi wa kategoria",
@@ -885,99 +1292,48 @@
           "Marekebisho ya mbofyo mmoja na Uhariri wa Kuongozwa — marekebisho sahihi, si kubahatisha",
           "Hatua ya kuwa tayari kwa uzalishaji — tambua wakati mwafaka wa kuwekeza katika uundaji wa picha ya mwisho (full render)"
         ],
-        "screenshotSlot": "Weka picha ya skrini: Resonance Editor yenye mfumo wa kutoa alama na utendaji wa kurekebisha kwa mbofyo mmoja",
-        "videoSlot": "Weka kipande cha sekunde 30: Kutumia marekebisho yaliyoongozwa kulingana na alama ya mwitikio wa hadhira."
-      },
-      {
-        "id": "8",
-        "title": "Tafsiri Inayoweza Kubadilika (Lugha 70+)",
-        "description": "Rekebisha maudhui kulingana na mahitaji ya eneo kwa kiwango kikubwa, huku ukizingatia dhumuni la simulizi na mpangilio wa muda kwa ajili ya usambazaji katika lugha mbalimbali.",
-        "keyFeatures": [
-          "Lugha zaidi ya 70 — usimulizi, mazungumzo, na maandishi kwa kiwango kikubwa",
-          "Lengo la simulizi limehifadhiwa — maana na muda vinaendana.",
-          "Nyimbo za sauti za lugha nyingi — kwenye kalenda ya matukio",
-          "Vifurushi tayari kwa usafirishaji — kwa kila eneo kwa ajili ya usambazaji"
-        ],
-        "screenshotSlot": "Weka picha ya skrini: Ratiba ya lugha nyingi na mipangilio ya tafsiri",
-        "videoSlot": "Weka klipu ya sekunde 30: Kubadilisha eneo la video ili liendane na lugha mbalimbali papo hapo"
-      },
-      {
-        "id": "9",
-        "title": "Uendeshaji wa Kiotomatiki wa Mfululizo",
-        "description": "Bainisha ulimwengu wako mara moja na uunde mtiririko wa matukio wenye uwiano katika vipindi vingi. Matumizi ya Reference Library ya pamoja huhakikisha wahusika na mtindo wa simulizi vinadumisha uwiano katika msimu mzima.",
-        "keyFeatures": [
-          "Bainisha ulimwengu wako mara moja — wahusika, mtindo, na mtiririko wa msimu.",
-          "Muhtasari wa vipindi wenye mtiririko mzuri — unaozalishwa kiotomatiki kwa msimu mzima",
-          "Ufuatiliaji wa mwendelezo — misimu yenye vipindi vingi ikiwa imepangiliwa ipasavyo",
-          "Usawazishaji wa mfululizo na vipindi — katika Studio na Uzalishaji wa Blueprint"
-        ],
-        "screenshotSlot": "Weka picha ya skrini: Muhtasari wa mfululizo pamoja na mtiririko wa matukio ya vipindi uliotengenezwa kiotomatiki",
-        "videoSlot": "Weka kipande cha sekunde 30: Wazo likipanuliwa na kuwa msimu wenye vipindi vingi"
-      },
-      {
-        "id": "10",
-        "title": "Blueprint Uendeshaji wa Kiotomatiki",
-        "description": "Badilisha mawazo kuwa rasimu zilizopangiliwa vizuri, zikiwa na muhtasari mfupi (logline), hatua muhimu za hadithi, wahusika, na mtindo wa simulizi. Tekeleza Audience Resonance na ushirikiane na wengine kabla ya kuanza mchakato mzito wa uundaji wa mwisho (rendering).",
-        "keyFeatures": [
-          "Tengeneza → Kagua → Fanyia marekebisho → Anzisha mtiririko wa uzalishaji",
-          "Kutoka wazo hadi muundo ndani ya dakika chache — muhtasari mfupi, hatua muhimu za hadithi, wahusika, na mtindo.",
-          "Audience Resonance kupata alama 80 au zaidi (lengo) kabla ya hatua ya uzalishaji",
-          "Viungo vya kushiriki vya washirikiano — kuunganisha mrejesho ili kuongoza marekebisho"
-        ],
-        "screenshotSlot": "Weka picha ya skrini: Blueprint iliyotengenezwa kiotomatiki, ikionyesha hatua muhimu za hadithi na mabadiliko ya wahusika.",
-        "videoSlot": "Ingiza kipande cha sekunde 30: Kubadilisha dhana kuwa Blueprint iliyopangwa vizuri"
+        "screenshotSlot": "Weka picha ya skrini: Resonance Editor yenye mfumo wa kutoa alama kulingana na hadhira na marekebisho ya kubofya mara moja.",
+        "videoSlot": "Ingiza kipande cha sekunde 30: Kutumia marekebisho yaliyoongozwa kulingana na alama ya mwitikio wa hadhira."
       },
       {
         "id": "11",
         "title": "Uendeshaji wa Uzalishaji kwa Njia ya Otomatiki",
-        "description": "Vichupo vya Script na Action huongoza mchakato kuanzia Foundation → pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer, na mitiririko ya MP4 — bila kuhitaji kubadili zana.",
+        "description": "Vichupo vya Script na Shoot huongoza mchakato kuanzia Foundation → Pre-Vis → Footage → Mixer hadi Streams. Hatua za ukaguzi kwa kila tukio hupunguza marudio ya kazi; Screening Room hushughulikia uhakiki wa awali, uunganishaji, na uchapishaji.",
         "keyFeatures": [
-          "Foundation — hati, sauti, sauti ya tukio, funga hati",
-          "Express Pre-vis — mwelekeo na fremu kwa dakika; ghala na kushiriki",
-          "Beat Frames na Mixer — fremu za kuanzia/kumalizia, Director Console, kutoa (render) mitiririko ya MP4",
-          "Mitiririko ya Uzalishaji — kagua matokeo, tengeneza upya midundo iliyopitwa na wakati, tuma kwa Final Cut"
+          "Foundation — hati, sauti, sauti ya tukio, Audience Resonance",
+          "Pre-Vis — mwongozo, sauti, na fremu za mpangilio wa matukio (beat frames) kwa kila tukio, pamoja na viungo vya kushiriki.",
+          "Rekodi — Picha, Mchanganyiko wa sauti, na Mitiririko bila kuondoka kwenye eneo la uzalishaji.",
+          "Screening Room — hakiki ya onyesho, mkusanyiko wa mwisho, maonyesho, na kuchapisha YouTube"
         ],
-        "screenshotSlot": "Weka picha ya skrini: Dashibodi ya uzalishaji inayoonyesha hati, Beat Frames, na kifaa cha kuchanganya sauti (Mixer)",
-        "videoSlot": "Ingiza klipu ya sekunde 30: Foundation, Express Pre-vis, Beat Frames, na usafirishaji wa mtiririko"
-      },
-      {
-        "id": "12",
-        "title": "Final Cut Mkutano",
-        "description": "Unganisha mitiririko ya uzalishaji iliyokamilika kuwa faili moja kuu la MP4. Chagua Animatic au video na lugha kwa kila tukio — hakuna uhariri wa mpangilio wa muda (timeline); mabadiliko ya kibunifu hubaki katika Production Mixer.",
-        "keyFeatures": [
-          "Uchaguzi wa mtiririko kwa kila tukio — Animatic, Video, lugha, toleo",
-          "Mipangilio ya awali ya uundaji — Video pekee, Mseto, Mchanganyiko maalum",
-          "Hakuna uhariri wa ratiba ya muda — mabadiliko ya kibunifu yanabaki ndani ya Production Mixer",
-          "Usafirishaji wa faili kuu kwa mbofyo mmoja — MP4 iliyounganishwa kwa ajili ya Premiere"
-        ],
-        "screenshotSlot": "Weka picha ya skrini: Paneli ya uundaji ya Final Cut yenye vichagua mtiririko kwa kila tukio",
-        "videoSlot": "Ingiza klipu ya sekunde 30: Kuchagua mitiririko, kuhakiki mpangilio, na kutoa faili kuu"
-      },
-      {
-        "id": "13",
-        "title": "Premiere Usambazaji",
-        "description": "Kagua nakala yako kuu (master) pamoja na takwimu za hadhira, kisha uichapishe kwenye YouTube ikiwa na maelezo (metadata) yaliyorekebishwa kulingana na eneo, au utoe faili mahususi kwa ajili ya Shorts, Reels, na TikTok.",
-        "keyFeatures": [
-          "Inayoweza kushirikiwa Screening Room — viungo vya /s/ vyenye mfumo wa alama na takwimu za hiari za ushiriki (kwa idhini ya mtazamaji)",
-          "Dashibodi ya maarifa — Vichupo vya Utoaji Alama, Biometriki, na Taswira",
-          "Mtaalamu wa YouTube — picha ya jalada, kichwa/maelezo yaliyojanibishwa, SceneFlow wito wa kuchukua hatua (CTA)",
-          "Vifurushi vya kusafirisha na mipango ya klipu fupi za wima"
-        ],
-        "screenshotSlot": "Weka picha ya skrini: Dashibodi ya Premiere yenye maarifa na mchawi wa kuchapisha",
-        "videoSlot": "Weka klipu ya sekunde 30: Maarifa ya uchanganuzi, zana ya mwongozo wa YouTube, na vifurushi vya usafirishaji wa faili."
+        "screenshotSlot": "Weka picha ya skrini: Dashibodi ya uzalishaji inayoonyesha kichupo cha Hati, kichupo cha Urekodi, na Pre-Vis",
+        "videoSlot": "Ingiza klipu ya sekunde 60: Thibitisha hati → Express Pre-vis kwa kila tukio → Rekodi picha → Kichanganyaji → Mitiririko"
       },
       {
         "id": "14",
-        "title": "Mapitio na Uchambuzi wa Hadhira",
-        "description": "Viungo vya faragha vya kushiriki na wadau — vinavyojumuisha alama zilizowekwa kwa mikono, maoni yaliyopangwa, na takwimu za hiari za ushiriki (kwa idhini ya mtazamaji). Hutumika katika Premiere kabla ya kuchapishwa na kwa ajili ya kuhakiki ubao wa hadithi (pre-vis) wa hatua ya uzalishaji.",
+        "title": "Screening Room",
+        "description": "Hakiki video za matukio, unganisha toleo la mwisho, na uchapishe — yote yakifanyika ndani ya mfumo wa Uzalishaji (Production). Toa viungo vya faragha kwa wadau ili wapate fursa ya kutoa maoni yaliyopangiliwa vizuri, pamoja na takwimu za hiari kuhusu namna wanavyoshirikiana na maudhui hayo.",
         "keyFeatures": [
-          "Vikao vya tathmini vya faragha — viungo salama vya kushiriki kwa ajili ya wadau",
-          "Maoni yaliyopangwa kutoka kwa hadhira — viwango na sehemu za maoni huru",
-          "Takwimu za hiari za uchambuzi wa ushiriki — kwa idhini ya mtazamaji kabla ya kukusanywa kwa taarifa hizo",
-          "Fanya marekebisho ya mara kwa mara kulingana na data halisi — boresha Blueprint na hati (script) kwa kutumia maoni ya wakaguzi."
+          "Hakiki ya video ya tukio — cheza mitiririko iliyochakatwa kwa mfuatano",
+          "Uunganishaji wa mwisho — chagua Animatic au Video kwa kila tukio na utoe faili moja ya MP4.",
+          "Tathmini zinazoweza kushirikiwa — viungo salama vyenye mfumo wa kutoa alama na kupanga vipaumbele vya mrejesho",
+          "Chapisha — Zana elekezi ya YouTube, usafirishaji wa video fupi, na vifurushi vya usambazaji"
         ],
         "screenshotSlot": "Weka picha ya skrini: Paneli ya uchanganuzi na maoni ya mkaguzi ya Screening Room",
         "videoSlot": "Weka kipande cha video cha sekunde 30: Kuendesha kikao cha tathmini na kukusanya data za ushiriki"
+      },
+      {
+        "id": "16",
+        "title": "Uaminifu na Usalama",
+        "description": "Hatua za ulinzi zenye tabaka mbalimbali katika kila hatua ya uundaji: Usalama wa Google Vertex AI, Huduma za Ubunifu Zilizopanuliwa zenye hatua za ulinzi, uthibitishaji wa hiari wa maudhui ya Studio, na uthibitisho wa asili uliotiwa saini kwa video za sehemu mahususi.",
+        "keyFeatures": [
+          "Usalama asilia wa Google — Vertex Responsible AI katika uzalishaji wote wa maudhui",
+          "Utaratibu mbadala uliolindwa — uhakiki wa awali wa njia mbadala kabla ya kuhifadhi",
+          "Uthibitishaji wa maudhui ya Studio — ishara za sera kabla ya uchakataji mzito wa uundaji",
+          "Utekelezaji wa kanuni dhidi ya ukiukaji — rekodi za makosa na viwango vya kusimamishwa",
+          "Asili iliyothibitishwa — heshi za maudhui na kumbukumbu za ukaguzi wakati wa uwasilishaji"
+        ],
+        "screenshotSlot": "Weka picha ya skrini: Sehemu ya kuanzia ya Trust & Safety au kidirisha cha uthibitishaji cha Studio",
+        "videoSlot": "Weka klipu ya sekunde 00:45: Viwango vya uaminifu → Ishara za uthibitishaji wa studio → Kizuizi cha njia iliyolindwa → Metadata ya asili → Sera ya uaminifu na usalama"
       }
     ]
   },
@@ -985,23 +1341,23 @@
     "badge": "Uhandisi na Usalama",
     "title": "Iliyoundwa kwa ajili ya",
     "titleAccent": "Mizigo ya Kazi ya Uzalishaji",
-    "subtitle": "Muundo unaofaa kwa kampuni changa, wenye vipengele vya Google Cloud vinavyosaidia usalama, uwezo wa kukua, na utekelezaji wa vitendo katika mazingira ya uzalishaji.",
+    "subtitle": "Muundo unaofaa kwa kampuni changa, wenye vipengele vya Google Cloud vinavyosaidia usalama, uwezo wa kupanuka, na utekelezaji wa vitendo katika hatua ya uzalishaji.",
     "pillars": [
       {
         "id": "Usanifu majengo",
         "title": "Usanifu wa Shirika",
-        "description": "Imejengwa kwenye miundombinu ya Google Cloud ikiwa na mfumo wa uratibu unaoweza kupanuka ili kukidhi mahitaji ya utendaji kazi na timu zinazokua.",
+        "description": "Imejengwa juu ya miundombinu ya Google Cloud, ikiwa na mfumo wa uratibu unaoweza kupanuka ili kukidhi mahitaji ya kazi za uzalishaji na timu zinazokua.",
         "highlights": [
           "Vertex AI kwa ajili ya mtiririko wa kazi za uzalishaji",
           "Muunganisho wa Imagen 4 na Veo 3.1",
-          "ElevenLabs Ujumuishaji wa TTS",
-          "BYOK kwa ajili ya udhibiti wa utozaji wa shirika"
+          "ElevenLabs Muunganisho wa TTS",
+          "BYOK kwa ajili ya udhibiti wa utozaji wa kibiashara"
         ]
       },
       {
         "id": "usalama",
         "title": "Usalama na Faragha",
-        "description": "Rasilimali za ubunifu husalia kulindwa kupitia usimbaji fiche wa data iliyohifadhiwa, udhibiti wa ufikiaji, na utaratibu unaotanguliza faragha.",
+        "description": "Rasilimali za ubunifu husalia salama kupitia usimbaji fiche wa data iliyohifadhiwa, udhibiti wa ufikiaji, na utaratibu unaotanguliza faragha.",
         "highlights": [
           "Vidhibiti vya wingu vilivyotayarishwa kwa ajili ya mashirika",
           "Usimbaji fiche wa AES-256",
@@ -1059,15 +1415,16 @@
       ]
     },
     "partnership": {
-      "poweredBy": "Inaendeshwa na Google Cloud pamoja na Vertex AI, Hifadhi ya Winguni, na zana za tafsiri",
-      "footnote": "SceneFlow AI inaendeshwa kwenye miundombinu ya Google Cloud inayoweza kupanuka, iliyoundwa kwa ajili ya ukuaji wa kampuni changa na mahitaji ya makampuni makubwa."
+      "poweredBy": "Inaendeshwa na Google Cloud pamoja na Vertex AI, Hifadhi ya Wingu, na zana za tafsiri",
+      "footnote": "SceneFlow AI inaendeshwa kwenye miundombinu ya Google Cloud inayoweza kupanuka, iliyoundwa kwa ajili ya ukuaji wa kampuni changa na kukidhi matarajio ya makampuni makubwa."
     },
+    "trustSafeguardLink": "Uaminifu wa ngazi mbalimbali: Usalama wa Google Vertex pamoja na hatua za udhibiti (guardrails), uthibitishaji, na chanzo (provenance) — tazama sehemu ya Uaminifu na Usalama hapa chini.",
     "attribution": "— Timu ya Uhandisi ya SceneFlow"
   },
   "coreCapabilities": {
     "audienceResonance": {
       "badge": "Tabaka la Akili",
-      "title": "Audience Resonance Mhariri",
+      "title": "Audience Resonance Uchambuzi",
       "description": "Fahamu alama zako kabla ya kuwekeza katika utengenezaji wa video kamili (full renders). Lenga alama za Audience Resonance na Blueprint pamoja na marekebisho yanayotekelezeka kwenye hati — boresha kila sehemu kabla ya hatua ya Express na utengenezaji wa video.",
       "bullets": [
         "Bainisha hadhira yako mahususi unayolenga.",
@@ -1083,19 +1440,19 @@
         "bullets": [
           "Pima alama za Blueprint na hati dhidi ya hadhira lengwa uliyoiainisha.",
           "Mapendekezo ya kiwango cha sehemu — si namba isiyoeleweka inayotaka uamini tu bila maelezo.",
-          "Masuluhisho ya kubofya mara moja na uhariri unaoongozwa — si alama pekee",
-          "Tekeleza kabla ya kutumia rasilimali nyingi kwa ajili ya 'render', si baada ya kuchapisha."
+          "Suluhisho za haraka za kubofya mara moja na uhariri unaoongozwa — si alama pekee",
+          "Tekeleza kabla ya kutumia rasilimali nyingi kwa ajili ya 'rendering', si baada ya kuchapisha."
         ]
       }
     },
     "express": {
       "badge": "Uzalishaji wa Kasi ya Juu Sana",
       "title": "Sceneflow Express",
-      "description": "Tengeneza kiotomatiki vibao vya hadithi (pre-vis), animatiki, na vipengele vya video kwa wakati mmoja. Badilisha hati kuwa onyesho la awali linaloweza kushirikiwa ndani ya dakika chache — kisha uidhinishe Beat Frames kabla ya matumizi ya mwisho ya F2V.",
+      "description": "Zalisha kiotomatiki taswira za awali (pre-vis), animatics, na mpangilio wa matukio ya video kwa wakati mmoja. Badilisha hati ya maandishi kuwa onyesho la awali linaloweza kushirikiwa ndani ya dakika chache — kisha uidhinishe Beat Frames kabla ya matumizi ya mwisho ya fedha kwa ajili ya uzalishaji wa video (F2V).",
       "items": [
         {
-          "title": "Ubao wa Hadithi wa Haraka",
-          "desc": "Kagua na ushiriki ubao wa hadithi wa sauti na video ndani ya dakika chache badala ya saa nyingi.",
+          "title": "Express Pre-vis",
+          "desc": "Kagua na ushiriki taswira za awali (pre-vis) za sauti na video ndani ya dakika chache badala ya saa nyingi.",
           "time": "Dakika dhidi ya Saa"
         },
         {
@@ -1105,16 +1462,47 @@
         },
         {
           "title": "Video ya Haraka",
-          "desc": "Ratibu uundaji wa picha na video kwa wakati mmoja ili kukamilisha uwasilishaji wa tukio zima.",
+          "desc": "Simamia utengenezaji wa picha na video kwa wakati mmoja—ikiwemo mfuatano wa viendelezi asilia vya Veo kwa ajili ya sehemu ndefu za mazungumzo.",
           "time": "Dakika dhidi ya Siku"
         }
       ],
       "cta": "Anzisha Utoaji wa Haraka"
     }
   },
+  "preVisEngine": {
+    "badge": "Creative Decision Engine",
+    "title": "Pre-Visualization Engine",
+    "subtitle": "Kuunda *animatic* ya sauti na picha yenye urefu wa dakika 40, ikiwa na sauti kamili na muziki, ndani ya dakika 15 si hatua tu ya mchakato wa kazi — bali ndiyo bidhaa yenyewe. Huko Hollywood, hatua ya awali ya taswira (*pre-vis*) huchukua wiki kadhaa na kugharimu mamia ya maelfu ya dola. SceneFlow hufanikisha hilo ndani ya dakika chache na kwa gharama ndogo sana.",
+    "narrative": "Katika tasnia ya filamu, *storyboard* ni kitu unachokikabidhi kwa timu ya uzalishaji. Pre-vis ndicho unachowaonyesha watendaji wa studio, wawekezaji, na watayarishaji ili kupata idhini ya kuanza mradi. SceneFlow huinua kiwango cha uzalishaji kutoka kuwa zana ya kawaida ya watayarishaji binafsi hadi kuwa rasilimali muhimu ya kiwango cha kitaalamu katika mchakato wa kazi wa makampuni makubwa.",
+    "pillars": [
+      {
+        "title": "Wasilisho Bora Kabisa la Biashara",
+        "description": "Pakia muswada na uingie kwenye kikao cha kuwasilisha wazo ukiwa na onyesho la awali (pre-vis) lenye sauti kamili, muziki, na tafsiri ya lugha mbalimbali, pamoja na takwimu thabiti kutoka Audience Resonance. Wape wabunifu njia ya mkato yenye nguvu—inayoungwa mkono na takwimu na vipengele vya sauti na picha—ili kufanikisha utengenezaji wa filamu zao."
+      },
+      {
+        "title": "Hatua ya Kabla ya Uzalishaji yenye Utaratibu wa Kugundua Hitilafu Mapema",
+        "description": "Mchakato wa kawaida wa kuandaa taswira ya awali (pre-visualization) huhitaji wahuishaji wa 3D, wachoraji wa ubao wa matukio (storyboard artists), na waigizaji wa sauti kwa wiki kadhaa. Iwapo tukio fulani halifanyi kazi inavyotakiwa, makumi ya maelfu ya dola hupotea bure. Fanya marekebisho na majaribio ndani ya dakika 15 kabla hata ya kuajiri mtu yeyote wa timu ya kamera."
+      },
+      {
+        "title": "Uchanganuzi wa Kifedha",
+        "description": "Audience Resonance katika hatua ya upakiaji huwavutia wadau wa sekta hiyo wanaoepuka zaidi hatari: wafadhili. Onyesha jinsi kasi ya mtiririko, toni, na mazungumzo yanavyoendana na hadhira lengwa kabla ya hata dola moja kutumika katika uzalishaji."
+      }
+    ],
+    "workflow": {
+      "title": "Upakiaji wa hati → taswira ya awali tayari kwa idhini ya uzalishaji",
+      "steps": [
+        "Pakia hati zenye viwango vya sekta (.fountain, .fdx, .txt)",
+        "Fanya tathmini ya alama ya Audience Resonance kwa kundi lako lengwa la watu.",
+        "Tengeneza Express Pre-vis — michoro ya uhuishaji yenye sauti na muziki ndani ya dakika chache",
+        "Shirikisha wadau ili wapitie kabla ya matumizi ya mwisho ya fedha kwa ajili ya video."
+      ]
+    },
+    "cta": "Anza kwa kupakia hati",
+    "ctaSubtext": "Unganisha utengenezaji wa filamu wa jadi na AI ya uzalishaji"
+  },
   "exitIntent": {
     "title": "Subiri! Usiondoke mikono mitupu.",
-    "subtitle": "Pata fursa ya kipekee ya kufikia mapema na vidokezo vya utengenezaji wa filamu kwa kutumia AI.",
+    "subtitle": "Pata fursa ya kipekee ya kuanza mapema na vidokezo vya utengenezaji wa filamu kwa kutumia AI.",
     "benefits": [
       "Mafunzo ya kila wiki ya utengenezaji wa filamu kwa kutumia AI",
       "Upatikanaji wa mapema wa vipengele vipya",
@@ -1179,7 +1567,7 @@
       "elevenLabsDetail": "Ubadilishaji wa Maandishi kuwa Hotuba na Uigaji wa Sauti",
       "savingsLabel": "Akiba ya 80%",
       "onImagesVideo": "kwenye picha na video",
-      "onVoiceover": "katika sauti ya nje",
+      "onVoiceover": "katika simulizi ya sauti",
       "note": "Akiba ya mikopo iliyoonyeshwa ni ile inayopatikana kupitia jukwaa la SceneFlow. Gharama zako halisi za jumla hutegemea bei ya API uliyokubaliana na kila mtoa huduma, iwe ni kwa ajili yako binafsi au kwa ajili ya kampuni."
     },
     "creditTopUps": {
@@ -1213,58 +1601,58 @@
       "customize": "Rekebisha vigezo",
       "imagesLabel": "Picha za kutengeneza",
       "videoClipsLabel": "Vipande vya video",
-      "voiceoverLabel": "Simulizi ya sauti (dakika)",
-      "byokTitle": "Leta Ufunguo Wako Mwenyewe (BYOK)",
-      "byokBadge": "Pro na Studio",
-      "byokDescription": "Tumia funguo zako za API ili kuokoa hadi 80% ya gharama za mikopo ya SceneFlow. Unawalipa watoa huduma wa AI moja kwa moja kulingana na viwango vyao.",
+      "voiceoverLabel": "Sauti (dakika)",
+      "byokTitle": "Lete Ufunguo Wako Mwenyewe (BYOK)",
+      "byokBadge": "Wataalamu na Studio",
+      "byokDescription": "Tumia funguo zako za API ili kuokoa hadi 80% kwenye salio la SceneFlow. Unawalipa watoa huduma za AI moja kwa moja kwa viwango vyao.",
       "vertexToggle": "Vertex AI (Picha na Video)",
-      "elevenLabsToggle": "ElevenLabs (Sauti ya nje ya picha)",
-      "imageGeneration": "Uzalishaji wa Picha",
-      "videoGeneration": "Uzalishaji wa Video",
-      "voiceover": "Sauti ya nje",
+      "elevenLabsToggle": "ElevenLabs (Sauti ya juu)",
+      "imageGeneration": "Uundaji wa Picha",
+      "videoGeneration": "Uundaji wa Video",
+      "voiceover": "Sauti ya juu",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Makadirio ya Jumla",
+      "totalEstimate": "Makadirio Yote",
       "withTopUps": "pamoja na nyongeza",
-      "creditSavings": "Akiba ya mkopo",
-      "savePercent": "Unaokoa {percent}% kwenye mikopo ya masomo ya SceneFlow",
-      "transparency": "Uwazi kamili: Utaona matumizi ya mikopo kwa wakati halisi unapoendelea na kazi. Hakuna mshangao wowote—rekebisha wigo wa mradi wako wakati wowote.",
+      "creditSavings": "SceneFlow akiba ya mikopo",
+      "savePercent": "Unaokoa {percent}% kwenye salio la SceneFlow",
+      "transparency": "Uwazi kamili: Utaona matumizi ya mikopo ya wakati halisi unapofanya kazi. Hakuna mshangao—rekebisha wigo wa mradi wako wakati wowote.",
       "transparencyHighlight": "Uwazi kamili:",
-      "byokDisclaimer": "BYOK Kumbuka: Akiba ya mikopo iliyoonyeshwa inaakisi upunguzaji wa mikopo ya mfumo wa SceneFlow pekee. Gharama zako halisi hutegemea mipango yako ya bei ya Vertex AI na ElevenLabs. Mipango ya mashirika au ile ya matumizi makubwa ya API inaweza kutoa akiba ya ziada.",
+      "byokDisclaimer": "BYOK Kumbuka: Akiba ya mikopo inayoonyeshwa inaonyesha SceneFlow punguzo la mikopo ya jukwaa pekee. Gharama zako halisi hutegemea mipango yako ya bei ya Vertex AI na ElevenLabs. Mipango ya API ya shirika au ya kiwango cha juu inaweza kutoa akiba ya ziada.",
       "byokDisclaimerHighlight": "BYOK Kumbuka:",
       "presets": [
         {
-          "id": "wa kibiashara",
-          "name": "Tangazo la sekunde 30"
+          "id": "kibiashara",
+          "name": "Biashara ya sekunde 30"
         },
         {
           "id": "fupi",
-          "name": "Filamu fupi ya dakika 2"
+          "name": "Filamu Fupi ya Dakika 2"
         },
         {
-          "id": "sehemu",
+          "id": "kipindi",
           "name": "Kipindi cha dakika 10"
         },
         {
           "id": "kipengele",
-          "name": "Filamu ya dakika 90"
+          "name": "Kipengele cha dakika 90"
         }
       ],
       "minSuffix": "dakika"
     },
     "tierGrid": {
-      "productionTestFlight": "Safari ya Majaribio ya Uzalishaji",
+      "productionTestFlight": "Ndege ya Jaribio la Uzalishaji",
       "getStarted": "Anza",
-      "startTestFlight": "Anzisha Safari ya Majaribio",
+      "startTestFlight": "Anza Safari ya Jaribio",
       "loading": "Inapakia...",
       "mostPopular": "Maarufu Zaidi",
       "creditsPerMonth": "Mikopo/mwezi",
-      "storage": "Uhifadhi",
+      "storage": "Hifadhi",
       "perMonth": "/mwezi"
     },
     "trust": {
       "cancelAnytime": "Ghairi wakati wowote",
-      "moneyBack": "Dhamana ya kurejeshewa pesa ndani ya siku 14",
-      "creditsNeverExpire": "Salio halimalizi muda wake (kifurushi cha Explorer)"
+      "moneyBack": "Dhamana ya kurejeshewa pesa ya siku 14",
+      "creditsNeverExpire": "Mikopo haimaliziki kamwe (kifurushi cha Explorer)"
     },
     "plans": {
       "explorer": {
@@ -1272,18 +1660,18 @@
         "description": "Ununuzi wa mara moja ili kujaribu",
         "features": [
           "Ununuzi wa mara moja",
-          "Mikopo 750 (haiishi muda wake)",
+          "Mikopo 750 (haiishii muda wake)",
           "Hifadhi ya GB 5 (siku 30)",
           "Ufikiaji kamili wa jukwaa",
-          "Kutoa faili la MP4 (azimio lolote)",
-          "Sauti ya AI (lugha zaidi ya 70)"
+          "Uhamishaji wa MP4 (ubora wowote)",
+          "Sauti ya akili bandia (lugha 70+)"
         ]
       },
       "subscriptions": [
         {
-          "id": "chakula cha kuanzia",
-          "name": "Kitoweo cha kuanzia",
-          "description": "Kwa wabunifu binafsi",
+          "id": "mwanzilishi",
+          "name": "Kianzilishi",
+          "description": "Kwa waundaji binafsi",
           "features": [
             "Ufikiaji kamili wa jukwaa",
             "Mikopo 4,500 kwa mwezi imejumuishwa",
@@ -1304,7 +1692,7 @@
             "Upatikanaji wa ubora wa Veo 3.1 (4K)",
             "Mfumo wa Kudumisha Uthabiti wa Wahusika",
             "Uigaji wa sauti",
-            "BYOK (Leta Ufunguo Wako Mwenyewe)",
+            "BYOK (Tumia Ufunguo Wako Mwenyewe)",
             "Viti 3 vya timu",
             "Usaidizi wa kipaumbele"
           ]
@@ -1323,66 +1711,23 @@
             "Ufikiaji wa API",
             "Viti 10 vya timu",
             "Meneja wa akaunti aliyejitolea",
-            "Makubaliano ya Kiwango cha Huduma (SLA) kwa ajili ya mashirika yanapatikana kwa ombi."
+            "Makubaliano ya Kiwango cha Huduma (SLA) kwa ajili ya mashirika makubwa yanapatikana kwa ombi."
           ]
         }
       ]
     }
   },
-  "faq": {
-    "badge": "Una maswali?",
-    "title": "Maswali Yanayoulizwa Mara Kwa Mara",
-    "subtitle": "Kila kitu unachohitaji kujua kuhusu SceneFlow AI",
-    "items": [
-      {
-        "question": "Je, mtiririko wa kazi wa SceneFlow unaendeshwaje kuanzia hatua ya wazo hadi video iliyo tayari kuchapishwa?",
-        "answer": "SceneFlow hutumia mtiririko wa kazi uliopangwa: Mfululizo (hiari) → Blueprint → Uzalishaji → Final Cut → Premiere. Blueprint hubainisha muundo wa hadithi na hadhira lengwa kwa kutumia Audience Resonance. Hatua ya uzalishaji hutengeneza hati, ubao wa hadithi (pre-vis), video ya mwongozo wa midundo (beat video), na mitiririko ya matukio iliyokamilishwa (rendered scenes). Final Cut huunganisha mitiririko iliyochaguliwa kuwa faili moja kuu la MP4 — si zana ya kuhariri kwa mfumo wa 'timeline'. Premiere hushughulikia maonyesho, uchambuzi wa takwimu, uchapishaji kwenye YouTube, na vifurushi vya faili zilizotayarishwa kwa ajili ya matumizi ya mwisho."
-      },
-      {
-        "question": "Je, SceneFlow inatofautianaje na Gemini Studio au Google Flow?",
-        "answer": "Gemini Studio na Google Flow hujikita katika kuunda klipu kwa kutumia maelekezo (prompts). SceneFlow huunganisha mchakato mzima wa uzalishaji: hatua zilizopangwa zenye vipengele vya msingi vinavyoweza kuhaririwa, Reference Library na Beat Frames kwa ajili ya kudumisha uwiano na ubora thabiti, Audience Resonance kabla ya hatua za gharama kubwa za uundaji wa mwisho (rendering), mfumo wa kiotomatiki wa kuchanganya vipengele (Mixer) na kuunganisha mtiririko wa video, pamoja na uthibitishaji wa Screening Room kabla ya kuchapisha — yote haya katika studio moja inayotoa mwongozo. Gharama ya kutumia modeli ni sawa iwe unatumia SceneFlow, akaunti zako binafsi za mtoa huduma, au BYOK — hata hivyo, SceneFlow huokoa saa nyingi ambazo zingetumika katika kunakili na kubandika, kuunda upya, na kuunganisha video kwa mikono."
-      },
-      {
-        "question": "Je, ninaweza kuhariri maandishi, picha, na sauti vilivyotengenezwa na AI?",
-        "answer": "Ndiyo. Matokeo yote yanayozalishwa yanaweza kuhaririwa. Unaweza kuandika upya hati, kurekebisha mwelekeo wa tukio, kuzalisha upya sehemu mahususi, kurekebisha sauti ya maelezo (voiceover), na kuboresha muda katika Production Mixer. Final Cut huunganisha tu vipengele vilivyokamilika — mabadiliko ya kiubunifu hufanywa katika hatua ya awali ya Uzalishaji."
-      },
-      {
-        "question": "Target Audience Resonance inafanya kazi vipi sasa?",
-        "answer": "Audience Resonance inachanganya uchanganuzi wa muundo wa simulizi (uwazi, kasi ya mtiririko, na mabadiliko ya hisia) na ulinganifu na hadhira lengwa uliyoiainisha katika Blueprint — badala ya kutegemea data za viwango vya ushikiliaji wa hadhira baada ya kuchapishwa. Unapata mapendekezo ya kiwango cha sehemu na marekebisho ya haraka (kwa kubofya mara moja) katika hatua za Mfululizo, Blueprint, na uhakiki wa hati kabla ya mchakato mzito wa uundaji wa mwisho (rendering)."
-      },
-      {
-        "question": "Je, ninaweza kutengeneza video za uorodheshaji au za masoko katika lugha mbalimbali?",
-        "answer": "Ndiyo. Unaweza kuunda na kurekebisha video ili ziendane na lugha mbalimbali—zaidi ya lugha 70—huku ukizingatia mtiririko wa kazi unaoleta uwiano katika muda wa video hizo. Kwa kawaida, timu huandaa toleo moja kuu la video, kisha hutengeneza matoleo ya lugha tofauti kwa ajili ya wanunuzi au wateja wa kimataifa, au hadhira ya maeneo mahususi."
-      },
-      {
-        "question": "Je, Premiere hufanya nini ikiwa Screening Room ndiyo awamu ya mapitio?",
-        "answer": "Screening Room ni kiolesura cha mapitio kilicho ndani ya Premiere — na hutumika pia kuhakiki ubao wa hadithi (pre-vis) wa uzalishaji. Shiriki viungo vya /s/, kusanya maoni kutoka kwa wadau na takwimu za hiari za ushiriki (kwa idhini ya mtazamaji), kagua alama na maarifa ya taswira, kisha uchapishe kupitia zana ya YouTube au usafirishe vifurushi vya faili."
-      },
-      {
-        "question": "Je, ninahitaji uzoefu wa kiufundi au wa kuhariri?",
-        "answer": "Hapana. SceneFlow imeundwa kwa ajili ya wabunifu na timu zisizo na utaalamu wa kiufundi. Unaanza kwa kutumia maelekezo ya uingizaji data na misingi ya AI inayoweza kurekebishika katika kila hatua — bila kuhitaji ujuzi tata wa kuunda maelekezo (prompt engineering) au mifumo changamano inayohusisha zana nyingi."
-      },
-      {
-        "question": "Mpango wa Explorer hufanyaje kazi?",
-        "answer": "Kwa $9, unapata 'credits' 750 za kujaribu mchakato mzima wa kazi kupitia malipo ya mara moja. Imesanifiwa kama jaribio la kivitendo ili uweze kutekeleza kazi halisi—kuanzia hatua ya wazo hadi video—kabla ya kuchagua mpango wa malipo ya kila mwezi."
-      },
-      {
-        "question": "Je, mikopo na BYOK hushughulikiwaje?",
-        "answer": "Mikopo hufuatiliwa ndani ya mfumo ili timu ziweze kudhibiti bajeti kulingana na hatua za mtiririko wa kazi. Vifurushi vya Pro na Studio pia vinawezesha matumizi ya ufunguo wako mwenyewe (Bring Your Own Key) kwa watoa huduma wanaokubalika, jambo linalotoa udhibiti wa ziada wa gharama kwa mashirika yenye mikataba iliyopo na watoa huduma hao."
-      },
-      {
-        "question": "Ninaweza kuunda nini kihalisi kwa kutumia SceneFlow?",
-        "answer": "Timu hutumia SceneFlow kwa ajili ya ziara za mali isiyohamishika, maudhui ya elimu, podikasti zinazotumia usimulizi wa kuona, vipindi vya ufafanuzi wa habari, kampeni za chapa, na mfululizo wa vipindi vya filamu. Mchakato huo huo wa kazi unawezesha utayarishaji wa maudhui ya muda mfupi na yale ya muda mrefu."
-      }
-    ]
+  "landingSections": {
+    "expandSection": "Onyesha sehemu",
+    "collapseSection": "Ficha sehemu"
   },
   "finalCta": {
     "title": "Je, uko tayari kujaribu mchakato mzima?",
-    "subtitle": "Tekeleza hatua zote—kuanzia wazo, uandaaji wa *pre-vis* na video, hadi faili la mwisho la MP4—katika studio moja. Anza na kifurushi cha $9 Explorer na ujionee jinsi mtiririko wa kazi unaotanguliza mdundo unavyofanya kazi.",
+    "subtitle": "Tekeleza hatua zote—kuanzia dhana, taswira ya awali (pre-vis), na video hadi faili la mwisho la MP4—katika studio moja. Anza na kifurushi cha $9 (Explorer) na ujionee jinsi mtiririko wa kazi unaoanza na 'beat' unavyofanya kazi.",
     "cta": "Anzisha studio yako kwa $9"
   },
   "footer": {
-    "description": "Uzalishaji wa video uliojiendesha kikamilifu — kuanzia wazo hadi nakala kuu iliyo tayari kuchapishwa. Studio moja yenye mwongozo: Blueprint → Uzalishaji → Final Cut → Premiere.",
+    "description": "Uzalishaji wa video otomatiki kuanzia mwanzo hadi mwisho — kutoka wazo hadi nakala ya mwisho iliyo tayari kuchapishwa. Studio moja yenye mwongozo: Blueprint → Uzalishaji → Screening Room.",
     "product": "Bidhaa",
     "resources": "Rasilimali",
     "legal": "Kisheria",
@@ -1390,7 +1735,6 @@
       "features": "Vipengele",
       "pricing": "Bei",
       "howItWorks": "Jinsi Inavyofanya Kazi",
-      "faq": "Maswali Yanayoulizwa Mara Kwa Mara",
       "gettingStarted": "Kuanza",
       "privacy": "Sera ya Faragha",
       "terms": "Masharti ya Huduma",
@@ -1400,14 +1744,14 @@
     },
     "tagline": "Imetengenezwa kwa ❤️ kwa ajili ya wabunifu",
     "taglineSub": "Kuanzia Wazo hadi Video Iliyochapishwa",
-    "securePayments": "Malipo salama yanayoshughulikiwa na Whop, Mfanyabiashara wetu Rasmi wa Rekodi",
+    "securePayments": "Malipo salama yanayoshughulikiwa na Whop, mfanyabiashara wetu rasmi wa rekodi",
     "morLine": "Malipo salama, ukokotoaji wa kodi, na uzingatiaji wa kanuni vinashughulikiwa na Whop, Mfanyabiashara wetu Rasmi wa Rekodi, kwa niaba ya Life Focus, LLC.",
     "copyright": "© 2026 SceneFlow AI. Haki zote zimehifadhiwa.",
     "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Mawasiliano: brian@sfai.studio",
     "poweredBy": "Inaendeshwa na Google Cloud"
   },
   "floatingCta": {
-    "seePricing": "Angalia bei",
+    "seePricing": "Angalia Bei",
     "tryNine": "Jaribu $9",
     "tryForNine": "Jaribu kwa $9",
     "dismiss": "Ondoa"
@@ -1419,36 +1763,5 @@
     "mute": "Zima sauti",
     "unmute": "Washa sauti",
     "expandVideo": "Panua video"
-  },
-  "preVisEngine": {
-    "badge": "Creative Decision Engine",
-    "title": "Pre-Visualization Engine",
-    "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
-    "narrative": "In the film industry, a pre-vis is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
-    "pillars": [
-      {
-        "title": "The Ultimate Pitch Deck",
-        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
-      },
-      {
-        "title": "Fail-Fast Pre-Production",
-        "description": "Traditional pre-vis requires 3D animators, pre-vis artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
-      },
-      {
-        "title": "Financier Analytics",
-        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
-      }
-    ],
-    "workflow": {
-      "title": "Script upload → greenlight-ready pre-vis",
-      "steps": [
-        "Upload industry-standard scripts (.fountain, .fdx, .txt)",
-        "Run Audience Resonance scoring on your target demographic",
-        "Generate Express Pre-vis — voiced, scored animatics in minutes",
-        "Share for stakeholder review before final video spend"
-      ]
-    },
-    "cta": "Start with Script Upload",
-    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
   }
 }

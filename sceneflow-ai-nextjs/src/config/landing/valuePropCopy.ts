@@ -3,9 +3,9 @@
  */
 
 export const HERO_COPY = {
-  headline: 'Stop juggling five AI tabs. One studio takes you from idea to publish-ready video.',
+  headline: 'Envision the story. SceneFlow handles the pipeline.',
   subheadline:
-    'One guided studio from idea to publish-ready master. See your pre-vis before you pay for final video — approve the look instead of burning credits on guess-and-check generations. SceneFlow automates the busywork — script, pre-vis, voice, and assembly — while you stay in control of every beat.',
+    'Move past tedious prompting. Focus entirely on your creative intent with an automated, professional-grade production workflow.',
   audienceMicroLine:
     'Built for creators who want results, and teams who want to see how it works.',
   ctaSecondary: "Watch the 'What's Possible'",

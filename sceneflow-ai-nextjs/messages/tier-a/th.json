@@ -11,8 +11,6 @@
     "startProject": "เริ่มโปรเจกต์"
   },
   "hero": {
-    "headline": "สร้างวิดีโอระดับมืออาชีพโดยไม่ต้องมีทีมโปรดักชันหรือแอปหลายสิบตัว",
-    "subheadline": "สตูดิโอแบบ guided จากไอเดียสู่ master ที่พร้อมเผยแพร่ ดู pre-vis ก่อนจ่ายค่าวิดีโอฉบับสุดท้าย — อนุมัติลุคก่อน render แทนการเผา credits กับการ generate แบบเดา",
     "ctaSecondary": "ดู 'What's Possible'"
   },
   "finalCta": {

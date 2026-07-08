@@ -13,6 +13,9 @@
     "Premiere",
     "Animatic",
     "Express Pre-vis",
+    "Pre-vis",
+    "Pre-Visualization Engine",
+    "Creative Decision Engine",
     "BYOK",
     "Whop",
     "Explorer",
@@ -23,188 +26,9 @@
     "Google Flow"
   ],
   "locales": {
-    "es": {
-      "tier": "A-reviewed",
-      "mt": true
-    },
-    "pt": {
-      "tier": "A-reviewed",
-      "mt": true
-    },
-    "fr": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "de": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "it": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "nl": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "pl": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "ru": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "uk": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "cs": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "sv": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "da": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "no": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "fi": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "el": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "tr": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "ro": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "hu": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "zh-CN": {
-      "tier": "A-reviewed",
-      "mt": true
-    },
-    "zh-TW": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "ja": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "ko": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "hi": {
-      "tier": "A-reviewed",
-      "mt": true
-    },
-    "bn": {
-      "tier": "B-mt",
-      "mt": true
-    },
     "th": {
       "tier": "A-reviewed",
       "mt": true
-    },
-    "vi": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "id": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "ms": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "tl": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "ur": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "ar": {
-      "tier": "A-reviewed",
-      "mt": true
-    },
-    "he": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "fa": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "sw": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "am": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "yo": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "zu": {
-      "tier": "B-mt",
-      "mt": true
-    },
-    "af": {
-      "tier": "B-mt",
-      "mt": true
     }
-  },
-  "preVisEngine": {
-    "badge": "Creative Decision Engine",
-    "title": "Pre-Visualization Engine",
-    "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
-    "narrative": "In the film industry, a pre-vis is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
-    "pillars": [
-      {
-        "title": "The Ultimate Pitch Deck",
-        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
-      },
-      {
-        "title": "Fail-Fast Pre-Production",
-        "description": "Traditional pre-vis requires 3D animators, pre-vis artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
-      },
-      {
-        "title": "Financier Analytics",
-        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
-      }
-    ],
-    "workflow": {
-      "title": "Script upload → greenlight-ready pre-vis",
-      "steps": [
-        "Upload industry-standard scripts (.fountain, .fdx, .txt)",
-        "Run Audience Resonance scoring on your target demographic",
-        "Generate Express Pre-vis — voiced, scored animatics in minutes",
-        "Share for stakeholder review before final video spend"
-      ]
-    },
-    "cta": "Start with Script Upload",
-    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
   }
 }

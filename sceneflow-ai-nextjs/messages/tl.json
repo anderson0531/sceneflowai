@@ -10,8 +10,8 @@
     "more": "Higit pa",
     "useCases": "Mga Kaso ng Paggamit",
     "audienceResonance": "Audience Resonance",
+    "trustSafety": "Tiwala at Kaligtasan",
     "platformTrust": "Platform at Tiwala",
-    "faq": "Mga Madalas Itanong",
     "signIn": "Mag-sign in",
     "startProject": "Magsimula ng Proyekto",
     "dashboard": "Dashboard",
@@ -24,17 +24,18 @@
   },
   "floatingNav": {
     "compare": "Ihambing",
+    "looksAndFormats": "Hitsura at mga Format",
     "howItWorks": "Paano Ito Gumagana",
     "useCases": "Mga Kaso ng Paggamit",
+    "preVisEngine": "Pre-visualization Engine",
     "platformWalkthrough": "Gabay sa Paggamit ng Platform",
-    "platform": "Plataporma",
-    "pricing": "Pagpepresyo",
-    "faq": "Mga Madalas Itanong",
-    "preVisEngine": "Pre-Vis Engine"
+    "trustSafety": "Tiwala at Kaligtasan",
+    "platform": "Platform",
+    "pricing": "Pagpepresyo"
   },
   "hero": {
-    "headline": "Hindi mo na kailangang magpalipat-lipat sa limang AI tab. Sa iisang studio, mula sa ideya ay makakagawa ka na ng video na handa nang i-publish.",
-    "subheadline": "Isang guided studio na gagabay sa iyo mula sa ideya hanggang sa master copy na handa nang i-publish. Tingnan ang iyong pre-vis bago bayaran ang final video — aprubahan ang hitsura nito sa halip na mag-aksaya ng credits sa paulit-ulit na pagsubok. Awtomatikong ginagawa ng SceneFlow ang mga nakakapagod na gawain — tulad ng script, pre-vis, voice, at assembly — habang hawak mo pa rin ang kontrol sa bawat bahagi nito.",
+    "headline": "Ilarawan sa isip ang kuwento. Ang SceneFlow ang namamahala sa pipeline.",
+    "subheadline": "Lagpasan na ang nakakapagod na pagbibigay ng mga prompt. Ituon nang lubos ang iyong atensyon sa iyong malikhaing layunin gamit ang isang awtomatiko at propesyonal na daloy ng trabaho sa produksyon.",
     "audienceMicroLine": "Ginawa para sa mga creator na nagnanais ng resulta, at sa mga team na gustong makita kung paano ito gumagana.",
     "ctaSecondary": "Panoorin ang 'What's Possible'",
     "ctaToolStack": "Tingnan kung paano nito pinapalitan ang iyong tool stack.",
@@ -83,7 +84,7 @@
       },
       {
         "label": "Aprubahan bago ang pinal na video",
-        "detail": "Suriin ang mga bahagi ng pre-vis bago mag-render."
+        "detail": "Suriin ang mga pre-vis beat bago ka mag-render."
       },
       {
         "label": "Subukan muna ang iyong kuwento.",
@@ -97,13 +98,23 @@
   },
   "audiencePaths": {
     "prompt": "Sino ka? Piliin ang iyong landas.",
+    "showDetails": "Ipakita ang mga detalye",
+    "hideDetails": "Itago ang mga detalye",
     "seeExamples": "Tingnan ang mga halimbawa",
     "examplesFor": "Mga halimbawa para sa {label}:",
     "andMore": ", at marami pang iba.",
+    "expandImage": "Palakihin ang larawan",
+    "closePreview": "Isara ang preview",
+    "playNarration": "I-play ang pagsasalaysay",
+    "pauseNarration": "I-pause ang pagsasalaysay",
+    "narrationComingSoon": "Darating na ang pagsasalaysay",
+    "hearStory": "Pakinggan ang kuwento",
+    "pauseStory": "I-pause ang kwento",
+    "storyComingSoon": "Abangan ang kwento",
     "modes": {
       "automate": {
         "label": "Gawin itong awtomatiko",
-        "description": "Gabay na daloy ng trabaho — aprubahan ang mga pre-vis, mas mabilis na ilabas ang produkto"
+        "description": "Pinapatnubayang daloy ng trabaho — aprubahan ang pre-vis, mas mabilis na paghahatid"
       },
       "engine": {
         "label": "Ipakita mo sa akin ang makina.",
@@ -113,34 +124,58 @@
     "paths": [
       {
         "id": "lumikha",
+        "hash": "tagalikha ng mga kaso ng paggamit",
+        "icon": "bidyo",
         "label": "Lumikha",
         "outcome": "Ilabas ang produkto ayon sa iskedyul — itigil ang paulit-ulit na pagbuo sa bawat tool",
+        "narrative": "Hawak mo na ang kwento, ngunit ang bawat episode ay nangangailangan ng muling pag-export ng mga asset, paglalagay ng mga bagong prompt sa mga bagong tab, at pag-asang mapanatili ang pagkakaugnay-ugnay ng mga eksena. Pinag-uugnay ng SceneFlow ang Series, Blueprint, at Production sa iisang studio — kaya maaari mong aprubahan ang visual style sa pre-vis, bumuo ng mga eksena nang sunud-sunod, at maglabas ng mga episode na may pare-parehong kalidad at pasok sa schedule, sa halip na magsimula muli sa wala.",
         "useCases": [
+          "16:9 na drama sa YouTube TV",
+          "Vertical mobile drama na may aspect ratio na 9:16",
+          "Animated na web series",
           "YouTube at mga seryeng episodic",
           "Mga video podcast at clip ng palabas",
-          "Hyper-local at napapanahong balita",
           "Mga dokumentaryo at docuseries",
-          "Mga channel para sa mga tutorial at kasanayan",
           "Mga buod at komentaryo sa sports"
-        ]
+        ],
+        "example": {
+          "challengeTitle": "Ang Pagkakabara sa Proseso ng \"B-Roll\"",
+          "challengeDescription": "Maganda ang iyong script, ngunit ang pag-aaral sa anim na magkakahiwalay na tool para sa paggawa at pag-edit — o ang pagka-stuck sa mga paulit-ulit na video loop — ay nagpapabagal sa bawat upload. Ang mga sikat na serye sa YouTube at mga drama na may pacing na parang sa TV ay nangangailangan ng mas mabilis na proseso kaysa sa kayang ibigay ng mga hiwa-hiwalay na AI tab.",
+          "solutionTitle": "Ang Awtomatikong Tagapagsalaysay",
+          "solutionDescription": "Maglabas ng mga episodic series at mga short-form video na talagang nakakakuha ng atensyon mula sa iisang studio — kabilang ang pre-visualization na nakatuon sa daloy ng kwento, maayos na continuity, at mga master file na handa nang i-publish para sa creator economy na pinangungunahan ng YouTube.",
+          "win": "Lumipat mula sa paminsan-minsang pag-upload patungo sa maaasahang daloy ng produksyon na may mas mababang overhead."
+        }
       },
       {
         "id": "koponan",
+        "hash": "koponan para sa mga kaso ng paggamit",
+        "icon": "gusali",
         "label": "In-house na pangkat",
         "outcome": "Palitan ang mabagal na proseso ng mga vendor — kontrolin ang brand at badyet",
+        "narrative": "Nag-iipon ang mga internal na request para sa video habang pinapahaba ng mga quote mula sa agency ang mga timeline, at nagbabago-bago ang pagsunod sa brand guidelines sa bawat round ng rebisyon. Pinagsasama ng SceneFlow ang L&D, communications, at product explainer videos sa iisang guided workflow — hawak ng iyong team ang script, pre-vis, at master output nang hindi na kailangang umupa ng studio o maghintay sa mga vendor.",
         "useCases": [
           "Pag-aaral at Pagpapaunlad (L&D) at Pagsunod sa mga Pamantayan sa Korporasyon",
           "Komunikasyong panloob at mga town hall",
           "Mga materyales na nagpapaliwanag sa produkto para sa pagbebenta",
-          "Pagkuha ng empleyado at kultura ng HR",
+          "Pag-recruit at kultura ng HR",
           "Mga aralin sa K-12 at mas mataas na antas ng edukasyon",
           "Mga update sa kalusugan at kaligtasan ng publiko"
-        ]
+        ],
+        "example": {
+          "challengeTitle": "Mga Nakatenggang Gawain ng Vendor at Paglayo sa Pagkakakilanlan ng Brand",
+          "challengeDescription": "Ang mga team ng Communications, L&D, at marketing ay umaabot ng ilang linggo sa paghihintay ng video mula sa mga agency o vendor — o kaya naman ay nahaharap sa napakaraming tool na walang sinusunod na sistema sa loob mismo ng kumpanya. Sa alinmang paraan, nagreresulta ito sa hindi pare-parehong branding at pagkaantala ng mga kampanya.",
+          "solutionTitle": "Produksyong In-House sa Loob ng Linggong Ito",
+          "solutionDescription": "Magtalaga ng mga tauhan para gumawa ng video gamit ang credit budget na madaling matantiya — kalakip ang mga brand template at proseso ng pag-apruba bago ang final render, nang hindi na kailangan ng bayad para sa mga araw ng trabaho ng crew o walang katapusang cycle ng pag-edit.",
+          "win": "Ilabas ang mga video para sa pagsasanay, komunikasyon, at kampanya ayon sa sarili mong iskedyul — hindi batay sa backlog ng vendor."
+        }
       },
       {
         "id": "pagawaan",
-        "label": "Pasilidad sa produksyon",
-        "outcome": "Gawing produkto ang isang niche gamit ang paulit-ulit na proseso ng pagtanggap at paghahatid.",
+        "hash": "mga kaso ng paggamit sa production shop",
+        "icon": "pelikula",
+        "label": "Pabrika o pagawaan",
+        "outcome": "Gawing produkto ang isang niche gamit ang prosesong mauulit mula sa pagtanggap hanggang sa paghahatid.",
+        "narrative": "Kumikita ang paggawa ng mga custom na video hanggang sa maging \"one-off\" o minsanang proyekto na lang ang bawat kliyente — na nangangailangan ng mga bagong tool at proseso ng paglilipat ng trabaho, at nagreresulta sa pagkaubos ng kita dahil sa paulit-ulit na pag-aayos. Ginagawang produkto ng SceneFlow ang iyong espesyalisasyon: may sistematikong proseso ng pagtanggap ng kliyente, mga white-label template, voice-cloned na narration, at malinaw na daloy ng trabaho mula sa paunang brief hanggang sa paghahatid ng pinal na MP4.",
         "useCases": [
           "Mga pakete ng video memoir",
           "Mga video ng pamana at pagpupugay",
@@ -148,12 +183,22 @@
           "Mga white-label studio template",
           "Mga tour sa real estate at hospitality",
           "Mga serbisyo ng video na nakabatay sa suskrisyon"
-        ]
+        ],
+        "example": {
+          "challengeTitle": "Mga Espesipikong Sektor, Walang Sistemang Mauulit",
+          "challengeDescription": "Kailangan ng mga kliyente sa larangan ng memoir, legacy, real estate, at edukasyon ang mabilis na pagtatapos ng trabaho — ngunit nagsisimula sa wala ang bawat proyekto. Ang proseso ng paglilipat ng mga output at ang paulit-ulit na pagsubok (na parang sa slot machine) sa script, imahe, boses, video, musika, at mga tool sa pag-edit ay kumakain sa kita mula sa dami ng trabaho.",
+          "solutionTitle": "Gawing Produkto ang Iyong Serbisyo sa Video",
+          "solutionDescription": "Bumuo ng mga prosesong maaaring ulit-ulitin para sa mga memoir studio at mga espesyalisadong sektor. Mula sa pag-upload ng mga template, voice clone, at avatar hanggang sa pag-apruba ng pre-visualization — i-customize ang serbisyo para sa bawat kliyente at palakihin ang kita sa pamamagitan ng mataas na volume ng trabaho.",
+          "win": "Maglunsad ng serbisyong video memoir o espesyalisadong studio service na may sistema para sa paulit-ulit na paghahatid ng serbisyo — hindi basta isang beses na freelance na trabaho."
+        }
       },
       {
         "id": "ahensya",
+        "hash": "mga kaso ng paggamit para sa ahensya",
+        "icon": "maletang pampapel",
         "label": "Ahensya",
         "outcome": "Mas mabilis na paglalahad ng mga panukala at serbisyong madaling palakihin ang saklaw para sa mga kliyente",
+        "narrative": "Ang pagwawagi sa pitch ay nangangahulugan ng pagpapakita ng ideya—hindi lang basta paglalarawan dito—ngunit madalas na nauubos ang kita dahil sa mga gastos sa pre-visualization at localization bago pa man mapirmahan ang kontrata. Sa pamamagitan ng SceneFlow, mabilis na naipapakita sa mga stakeholder ang pre-visualization na handa na para sa kliyente, at napapalawak ang paghahatid nito sa iba't ibang kampanya at mahigit 70 wika nang hindi na kinakailangang bumuo muli ng proseso para sa bawat account.",
         "useCases": [
           "Pre-visualization para sa presentasyon sa kliyente",
           "Mga kampanya sa paglulunsad ng produkto",
@@ -161,7 +206,37 @@
           "Mga promo para sa mga event at kumperensya",
           "Mga kampanyang gumagamit ng iba't ibang wika",
           "Pag-o-market ng ari-arian para sa mga kliyente"
-        ]
+        ],
+        "example": {
+          "challengeTitle": "Paghahatid ng Serbisyo sa Kliyente sa Malawakang Antas",
+          "challengeDescription": "Ang pagwawagi sa pitch ay kalahati pa lamang ng laban. Nangangailangan ng mabilis na pagtapos ng trabaho ang mga paulit-ulit na proyekto ng kliyente — ngunit ang paglilipat ng mga output at ang paulit-ulit na pag-generate ng video (na parang sugal sa slot machine) gamit ang magkakahiwalay na tool sa paggawa at pag-edit ay nagpapabagal sa bawat yugto ng pitch.",
+          "solutionTitle": "Dami ng Naproseso + Pag-apruba ng Kliyente",
+          "solutionDescription": "Lumipat mula sa pitch spec patungo sa tuloy-tuloy na paghahatid gamit ang mga kontrol na ligtas para sa brand, pagsusuri ng kliyente bago ang final render, at mga gastusing credit na matatantiya bawat proyekto.",
+          "win": "Maghatid ng mas mabilis na mga cycle ng pitch at paulit-ulit na trabaho para sa kliyente, nang may mas mababang panganib sa produksyon at mas mataas na kita."
+        }
+      },
+      {
+        "id": "produksyon ng pelikula",
+        "hash": "mga sitwasyon ng paggamit sa produksyon ng pelikula",
+        "icon": "clapperboard",
+        "label": "Produksyon ng Pelikula",
+        "outcome": "Script para sa isang interactive na animatic na maaari mong ipakita at subukan bago ka mag-shoot",
+        "narrative": "Dati, ang previz at audience testing ay nangangahulugan ng ilang linggong paggawa ng mga storyboard, pansamantalang voice-over, at magastos na paghula bago pa man magsimula ang aktuwal na pag-shoot. Gamit ang SceneFlow, ginagawang interactive animatic ang iyong script sa pamamagitan ng Express pre-vis — i-optimize ito gamit ang Audience Resonance, ipalabas sa Screening Room, at maglaan lamang ng badyet kapag naging epektibo na ang takbo ng kuwento.",
+        "useCases": [
+          "Previz para sa mga feature film at indie film",
+          "Mga animatic para sa pitch sa mga investor",
+          "Audience Resonance optimisasyon",
+          "Pre-visualization sa mahigit 70 wika",
+          "Pag-import at pag-export ng script (MDX, FDX)",
+          "Screening Room mga pagsusuri sa madla"
+        ],
+        "example": {
+          "challengeTitle": "Mabagal na Pre-Vis Bago Mo Masubukan ang Kuwento",
+          "challengeDescription": "Mayroon kang script — ngunit ang mga table read, cycle ng storyboard, at watak-watak na previz tool ay nagpapabagal sa mga investor pitch, audience test, at desisyon sa pag-apruba ng proyekto.",
+          "solutionTitle": "Interaktibong Pre-biswalisasyon na Nakabatay sa Iskrip",
+          "solutionDescription": "I-upload ang iyong script (MDX, FDX, at iba pang format), i-optimize gamit ang Audience Resonance, at bumuo ng interactive na pre-vis para sa pag-screen at pagsubok — gamit ang Express na sabay-sabay na pagbuo sa iba't ibang beat, sa mahigit 70 opsyon sa wika, at mabilis na multi-language overlay.",
+          "win": "Siguraduhing angkop ang kuwento para sa audience bago ang principal photography — gamit ang animatic na madaling maibahagi, sa halip na previz cycle na tumatagal nang ilang linggo."
+        }
       }
     ]
   },
@@ -174,7 +249,7 @@
         "us": "Mga estrukturadong yugto na may mga baseline na maaaring baguhin sa bawat hakbang"
       },
       {
-        "them": "Pagkakapare-pareho sa mga sesyon gamit ang manu-manong pamamaraan",
+        "them": "Pagkakapare-pareho sa mga sesyon gamit ang manual na pamamaraan",
         "us": "Reference Library + Beat Frames i-lock ang mga visual bago ang video"
       },
       {
@@ -190,17 +265,264 @@
     "usHeader": "Mga bundle ng SceneFlow"
   },
   "beatFirstPipeline": {
-    "title": "Proseso ng Paggawa ng Video na Inuuna ang Beat",
-    "subtitle": "Aprubahan bago i-render — hindi 'yung parang slot machine na basta na lang nag-ge-generate.",
+    "title": "Proseso ng Paggawa ng Video na Nakabatay sa Beat",
+    "subtitle": "Aprubahan bago i-render — hindi 'yung parang slot machine na basta na lang nag-a-generate muli.",
     "intro": "Hindi na kailangan ng pagsubok-at-pagkakamali sa paggawa. Maaari mong silipin at aprubahan ang magiging hitsura nito bago gamitin ng SceneFlow ang mga credit para sa pinal na video.",
-    "description": "Inaayos ng SceneFlow ang proseso ng visual approval sa bawat hakbang: Express Pre-vis para sa pagsusuri, Beat Frames upang i-lock ang komposisyon, at pagkatapos ay F2V sa bawat beat. Pinipino mo ang hitsura bago ka mag-aksaya ng credits sa drift at hallucinations.",
+    "description": "Inaayos ng SceneFlow ang proseso ng pag-apruba sa visual sa bawat hakbang: Express Pre-vis para sa pagsusuri, Beat Frames para i-lock ang komposisyon, at pagkatapos ay F2V sa bawat beat. Pinipino mo ang hitsura bago ka mag-aksaya ng mga credit sa drift at hallucinations.",
     "steps": [
       "Express Pre-vis — magbahagi ng mga audio-visual beat para suriin sa loob ng ilang minuto",
       "Beat Frames — i-lock ang simula/wakas ng komposisyon gamit ang continuity ng Reference Library",
       "F2V bawat beat — bumuo ng video mula sa mga aprubadong frame, hindi sa mga blind prompt",
-      "Production Mixer — timing, audio, at pag-export ng stream patungo sa assembly na Final Cut"
+      "Tuloy-tuloy na EXT chain — mga native na extension step na +7 segundo para sa mahahabang bahagi ng diyalogo",
+      "Production Mixer — pag-export ng timing, audio, at stream patungo sa Screening Room"
     ],
     "footerLine": "Mas kaunting pag-uulit sa paggawa ng slot-machine visuals — aprubahan ang mga visual bago ang pinal na gastusin sa video."
+  },
+  "trustSafeguard": {
+    "badge": "Tiwala at Kaligtasan",
+    "title": "Mga Patong-patong na Harang na Pangkaligtasan para sa",
+    "titleAccent": "Mga Tagalikha at Platform",
+    "subtitle": "Seguridad na likas sa Google sa bawat pag-generate, Extended Creative Services na may mga guardrail kapag umiiral ang mga limitasyon sa patakaran, at karagdagang moderation at pag-mitigate ng panganib sa kabuuan ng iyong Studio workflow.",
+    "tiers": [
+      {
+        "id": "katutubo sa Google",
+        "title": "Seguridad na Katutubo sa Google",
+        "description": "Ang bawat pagbuo ng imahe at video ay dumadaan sa mga safety filter ng Google Vertex AI, na may mga threshold na iniangkop para sa mga propesyonal na creative workflow—hindi sa mga default na pang-consumer.",
+        "highlights": [
+          "Vertex Responsible AI sa pagbuo gamit ang Veo, Imagen, at Gemini",
+          "Mga threshold ng pinsala na iniangkop sa produksyon para sa nilalamang pampelikula",
+          "Hindi ginagamit ang iyong mga creative asset upang magsanay ng mga shared model."
+        ],
+        "badge": "Vertex Responsible AI"
+      },
+      {
+        "id": "pinahabang mga rehas na pang-proteksyon",
+        "title": "Pinahabang mga Bakod-pananggalang",
+        "description": "Kapag nahaharang ng patakaran ang pangunahing daluyan, maaaring kumpletuhin ng Extended Creative Services with Guardrails ang paghahatid—ngunit pagkatapos lamang ng karagdagang pagsusuri sa nilalaman bago ito i-store.",
+        "highlights": [
+          "Pagsasaayos ng prompt at muling pagsubok sa pamamaraan sa pangunahing path ng Google",
+          "Pinoprotektahang alternatibong proseso na may sapilitang pagsusuri bago ang pag-iimbak",
+          "Parehong pamantayan sa nilalaman para sa pangunahin at pinalawak na mga landas"
+        ],
+        "badge": "Pinoprotektahang fallback"
+      },
+      {
+        "id": "pagpapatunay ng pinagmulan",
+        "title": "Pagpapatunay at Pinagmulan",
+        "description": "Mayroong karagdagang moderation at pagbabawas ng panganib para sa Blueprint, script, pre-vis, at segment video—gamit ang parehong credit model gaya ng sa ibang mga tool ng Studio. Ang mga matagumpay na clip ay makakatanggap ng mga pirmadong record ng content provenance.",
+        "highlights": [
+          "Mga signal para sa pag-validate ng content bago ang malaking paggamit ng resources sa pag-render",
+          "Nilagdaang content hash at metadata ng pinagmulan sa segment ng video",
+          "Mga audit log, pagsubaybay sa mga paglabag, at pag-uulat ng pang-aabuso para sa proteksyon ng platform"
+        ],
+        "badge": "Pagpapatunay ng nilalaman"
+      }
+    ],
+    "flowSteps": [
+      {
+        "label": "Pangunahin",
+        "detail": "Kaligtasan ng Google Vertex"
+      },
+      {
+        "label": "Pinalawig",
+        "detail": "Maingat na alternatibong malikhain"
+      },
+      {
+        "label": "Studio",
+        "detail": "Pagmo-moderate at pagpapababa ng panganib"
+      },
+      {
+        "label": "Forensic",
+        "detail": "May-lagdang patunay ng pinagmulan"
+      }
+    ],
+    "morNote": "Ang SceneFlow ay nagpapatakbo sa ilalim ng sistemang may pinagsasaluhang responsibilidad kasama ang aming Merchant of Record: seguridad na nasa antas-provider mula sa Google, at mga mekanismo sa pagprotekta at audit trail mula sa SceneFlow—na nagpapababa sa panganib para sa mga creator at sa mismong platform.",
+    "ctaPolicy": "Basahin ang Patakaran sa Pagtitiwala at Kaligtasan",
+    "ctaPolicyHref": "/tiwala-at-kaligtasan",
+    "ctaStudio": "Mag-explore sa Studio"
+  },
+  "extendedScenes": {
+    "badge": "Tuloy-tuloy na mga Tibok",
+    "title": "Higit pa sa 8-segundong clip",
+    "subtitle": "Lagpasan ang limitasyon ng iisang clip—aprubahan muna ang visual style, pagkatapos ay unti-unting palawigin ang iyong eksena upang makabuo ng tuloy-tuloy na mga monologue, explainer, at mga bahagi ng diyalogo.",
+    "intro": "Hindi nangangako ang SceneFlow ng isang walang-limitasyong render. Pinaplano nito ang mahahabang beat bilang magkakasunod na bahagi: isang paunang clip na aabot sa 8 segundo, na susundan ng tuloy-tuloy na mga extension na tig-7 segundo—kung saan kailangan munang aprubahan ang beat bago ka gumastos ng credits.",
+    "steps": [
+      {
+        "title": "Paunang clip na 8 segundo",
+        "description": "Ang frame-to-video o image-to-video mula sa inaprubahang Beat Frames ay nagla-lock sa komposisyon bago ang paggalaw."
+      },
+      {
+        "title": "Mga hakbang para sa +7s extension",
+        "description": "Ipinagpapatuloy ng bawat hakbang ang parehong anggulo at galaw—mainam para sa tuloy-tuloy na diyalogo sa loob ng isang *beat*."
+      },
+      {
+        "title": "Pag-apruba batay sa unang ulat",
+        "description": "Awtomatikong nahahati ang mahahabang linya sa pre-vis review. Inaaprubahan mo ang mga frame bago i-render ang chain—hindi ito tulad ng pag-generate ng slot machine."
+      },
+      {
+        "title": "Production Mixer tapos",
+        "description": "Pinagdurugtong ang mga segment sa playback ng eksena; pinapanatili ng elastic audio ang narration na mas mahaba kaysa sa video."
+      }
+    ],
+    "stats": [
+      {
+        "value": "~15 segundo",
+        "label": "Karaniwang yugto ng diyalogo (8 segundo + 1 ekstensyon)"
+      },
+      {
+        "value": "~29 segundo",
+        "label": "Mahabang bahagi ng monologue (8 segundo + 3 karagdagan)"
+      },
+      {
+        "value": "Umorder",
+        "label": "Pinapanatili ng sunod-sunod na pagbuo ang pagpapatuloy."
+      }
+    ],
+    "footnote": "Ang mga extension chain ay nangangailangan ng pangunahing Google generation path at mga wastong video reference sa pagitan ng mga hakbang (nawawalan ng bisa ang mga reference pagkalipas ng humigit-kumulang 48 oras). Nananatili sa loob ng mga limitasyon sa tagal ng Veo ang bawat hakbang sa API—ang kabuuang haba ay nagmumula sa pag-uugnay ng mga ito (chaining), at hindi sa iisang mahabang render."
+  },
+  "creativeRange": {
+    "badge": "Saklaw ng Pagkamalikhain",
+    "title": "Bawat Estilo, Bawat Screen",
+    "titleAccent": "Ang iyong creative DNA, nakatatak sa Blueprint",
+    "subtitle": "Sa Blueprint nabubuo ang iyong creative DNA—ang art style, aspect ratio, tono, at pangunahing naratibo. Isinasama ng SceneFlow ang mga elementong ito sa treatment, Audience Resonance, at pagbuo ng script upang ang mga direksyon sa eksena ay tumugma sa iyong frame at visual style mula pa sa simula—hindi bilang mga setting na inilalagay lamang sa huling sandali ng export.",
+    "pillars": [
+      {
+        "title": "Sumusunod ang Anyo sa Gamit (at Pagbabalangkas)",
+        "description": "Ang laki ng screen ang nagtatakda ng paraan ng visual storytelling. Ang vertical na 9:16 ay nangangailangan ng mas siksik na blocking, mas mabilis na mga hook, at direksyong nakatuon sa mga close-up—na malayo sa istilo ng 16:9 widescreen. I-lock ang aspect ratio sa Blueprint upang ang mabubuong script ay maglaman ng mga direksyon sa eksena na angkop sa frame."
+      },
+      {
+        "title": "Ang estilo ng sining ang nagtatakda sa prosa.",
+        "description": "Ang noir anime at Pixar 3D ay nangangailangan ng magkakaibang diyalogo, atmospera, at takbo ng kuwento. Piliin ang nais mong estilo sa Blueprint at ihahabi ng LLM ang katangiang iyon sa mismong DNA ng script—hindi bilang filter na idinaragdag na lamang pagkatapos gawin ang lahat."
+      }
+    ],
+    "blueprintTagline": "Ang tono at pangunahing naratibo ang bumubuo sa kabuuan—ang Blueprint ang utak; ang produksyon naman ang kalamnan.",
+    "ui": {
+      "expandImage": "Palakihin ang larawan",
+      "closePreview": "Isara ang Preview"
+    },
+    "artStyles": {
+      "subsectionTitle": "Piliin ang iyong hitsura",
+      "subsectionIntro": "Hindi basta render preset ang iyong visual style—ito ang boses ng script. Itakda ang art style sa Blueprint at taglayin ng bawat bahagi ang aesthetic na iyon.",
+      "footnote": "Itinakda ang Visual Foundation para sa Blueprint—at pinanatili ito sa kabuuan ng script, pre-vis, at final render.",
+      "popularBadge": "Patok",
+      "items": [
+        {
+          "id": "mukhang totoo (tulad ng litrato)",
+          "name": "Parang totoo (tulad ng litrato)",
+          "displayTitle": "Photorealism",
+          "description": "Estilo ng propesyonal na pagkuha ng litrato",
+          "tagline": "Mataas na uri ng makatotohanang akdang mahaba ang anyo",
+          "marketingBody": "Hatid ng photorealism ang malawak na hatak na inaasahan ng mga manonood ng mga prestihiyosong palabas sa TV at mga dokumentaryo. Panatilihin ang pagiging makatotohanan ng mga karakter at pag-iilaw sa magkakaugnay na mga bahagi ng kwento upang mapanatili ng episodic drama at docuseries ang tuluy-tuloy na daloy ng emosyon mula simula hanggang sa huling bahagi.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_w5y03bw5y03bw5y0.jpeg"
+        },
+        {
+          "id": "anime noong dekada '90",
+          "name": "Anime (dekada '90)",
+          "displayTitle": "Anime",
+          "description": "Klasikong istilo ng anime noong dekada '90",
+          "tagline": "Mga dugtungan na daloy ng kuwento",
+          "marketingBody": "Ang *cel shading* na istilong-anime ay nakalilikha ng matinding ugnayan sa mga tagahanga sa mga *web series* na may maraming *episode* at sa mga kuwentong may mahahabang daloy ng salaysay. Ang mga *generative engine* na sinanay sa ganitong pamamaraan ay nakapagbibigay ng malinaw na *line art* at maayos na *framing*—mga katangiang mainam para sa malakihang produksyon ng mga serye.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_5qoasf5qoasf5qoa.jpeg"
+        },
+        {
+          "id": "Pixar",
+          "name": "Pixar Animation",
+          "displayTitle": "3D Cinematic / Inspirado ng Pixar",
+          "description": "3D animation na istilong-Pixar",
+          "tagline": "Pagpapatuloy ng emosyon sa mga episode",
+          "marketingBody": "Ang malalambot at bilugang hugis pati na ang disenyong nagpapamalas ng damdamin ay lumilikha ng init sa puso na nagpapanatili sa interes ng mga manonood sa buong season. Tamang-tama ito para sa mga animated series, mahahabang kwentong pampamilya, at storytelling na may kinalaman sa brand, kung saan mahalaga ang pagpapanatili ng pagkakapare-pareho ng karakter sa bawat eksena.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_zi32rnzi32rnzi32.jpeg"
+        },
+        {
+          "id": "sining-konsepto",
+          "name": "Sining-konsepto",
+          "displayTitle": "Sining-konsepto",
+          "description": "Concept art para sa laro/pelikula",
+          "tagline": "Mga keyframe para sa pre-visualization ng pelikula at serye, na may atmospheric na pag-iilaw na handa na para sa produksyon.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_qlf261qlf261qlf2.jpeg"
+        },
+        {
+          "id": "Ghibli",
+          "name": "Ala-Ghibli",
+          "displayTitle": "Iginihit-kamay / Estilong-Ghibli",
+          "description": "Hango sa istilo ng Studio Ghibli",
+          "tagline": "Ang pagkakayari bilang karangyaan",
+          "marketingBody": "Direktang tumutugon ang estilong ito sa isang malaking kilusang malikhain na nagpapahalaga sa konsepto ng \"Craft as Luxury\" o sining-kamay bilang isang uri ng karangyaan. Ang mga teksturang watercolor at mga background na tila likha ng pintor ay bumubuo ng mga mundong likha sa pamamagitan ng sining-kamay, kung saan ang mga likas na di-kasakdalan ay nagiging tanda ng sinadyang kasiningan sa kabuuan ng isang mahabang serye.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_xojqsuxojqsuxojq.jpeg"
+        },
+        {
+          "id": "komiks",
+          "name": "Komiks",
+          "displayTitle": "Komiks",
+          "description": "Estilong ink ng komiks",
+          "tagline": "Matapang na linya ng tinta, teksturang halftone, at mga kulay na pop-art para sa pagkukuwentong may maraming yugto.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_ezhp8cezhp8cezhp.jpeg"
+        },
+        {
+          "id": "pintang-langis",
+          "name": "Pinturang gamit ang pintura na nakabase sa langis",
+          "displayTitle": "Pinturang gamit ang pintura na nakabase sa langis",
+          "description": "Klasikong pagpipinta gamit ang pintura na nakabase sa langis",
+          "tagline": "Klasikong istilo ng paggamit ng brotsa at matingkad na pigment para sa mga dokumentaryo at mahahabang akdang pangkasaysayan.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
+        },
+        {
+          "id": "sining-digital",
+          "name": "Sining-dihital",
+          "displayTitle": "Sining-dihital",
+          "description": "Makabagong digital na ilustrasyon",
+          "tagline": "Estilisadong ilustrasyon para sa animated na dokumentaryo at seryeng nagpapaliwanag na binubuo ng mga yugto.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_omdmt6omdmt6omdm.jpeg"
+        },
+        {
+          "id": "pinturang pantubig",
+          "name": "Watercolor",
+          "displayTitle": "Watercolor",
+          "description": "Malambot na painting gamit ang watercolor",
+          "tagline": "Mga banayad na sapin ng kulay para sa memoir, dokumentaryo, at mapagnilay-nilay na mahahabang akda.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
+        },
+        {
+          "id": "eskis",
+          "name": "Eskis/Line Art",
+          "displayTitle": "Eskis/Line Art",
+          "description": "Estilong sketch na lapis",
+          "tagline": "Detalyadong linework at teksturang parang lapis para sa mga mahahabang sequence, mula pre-visualization hanggang produksyon.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
+        }
+      ]
+    },
+    "outputFormats": {
+      "subsectionTitle": "Ilabas ang bawat screen",
+      "subsectionIntro": "Ang pagpili ng framing ay bahagi ng pagkukuwento, hindi lamang isang opsyon na kailangang lagyan ng tsek sa pag-export. Itinatakda na ng Blueprint ang iyong aspect ratio bago pa man isulat ang unang direksyon para sa eksena.",
+      "resolutionFootnote": "Pinili sa Blueprint; nakabatay sa frame na ito ang script at direksyon ng eksena. I-export sa 720p o 1080p kung sinusuportahan ito ng iyong proyekto.",
+      "items": [
+        {
+          "id": "16x9",
+          "label": "16:9 na Widescreen",
+          "ratio": "16:9",
+          "description": "Para sa YouTube main, connected TV, at mga episodic series—nagsusulat ang Blueprint ng mga direksyon sa eksenang widescreen at blocking para sa mga grupo ng aktor (ensemble blocking) upang makamit ang cinematic na pagtatanghal."
+        },
+        {
+          "id": "9x16",
+          "label": "9:16 Patayo",
+          "ratio": "9:16",
+          "description": "Para sa mga vertical episodic drama at mobile-first series, nagsusulat ang Blueprint gamit ang vertical-first blocking, mas mabilis na pacing, at direksyong nakatuon sa mga close-up—mga elementong inaasahan ng mga manonood na mahilig mag-binge-watch."
+        },
+        {
+          "id": "1x1",
+          "label": "1:1 Parisukat",
+          "ratio": "1:1",
+          "description": "Mga square clip ng episode, mga koleksyon ng panayam, at mga highlight ng chapter na kinuha mula sa isang long-form series — isang aspeto ng mga library ng episode na sadyang idinisenyo para sa feed."
+        },
+        {
+          "id": "4x3",
+          "label": "Klasikong 4:3",
+          "ratio": "4:3",
+          "description": "Mga training module, archive ng dokumentaryo, at mga frame na angkop sa presentasyon para sa mga pagkakataong inaasahan ng iyong audience ang klasikong aspect ratio sa mahahabang materyal."
+        }
+      ]
+    }
   },
   "toolStack": {
     "badge": "Pamilyar ba?",
@@ -224,7 +546,7 @@
         },
         {
           "name": "Pagbuo ng video",
-          "category": "Pag-ulit sa slot machine — mag-utos, bumuo, tumanggi, ulitin"
+          "category": "Pag-ulit na parang sa slot machine — mag-prompt, bumuo, tumanggi, ulitin"
         },
         {
           "name": "Paglikha ng musika",
@@ -238,7 +560,7 @@
       "chaosLabel": "Anim na tab. Subukan ulit hanggang sa may gumana.",
       "painPoints": [
         "Pag-copy at paste sa pagitan ng mga tool sa pag-generate at pag-edit",
-        "Pagbuo ng video na parang slot machine — paulit-ulit na pagsubok hanggang sa may gumana.",
+        "Pagbuo ng video na parang slot machine — paulit-ulit na pagsubok hanggang sa may makuha na swak.",
         "Pagkapagod sa paggawa ng mga prompt at mga paulit-ulit na siklo ng pagbuo ng tugon",
         "Walang pagsusuri sa audience bago ka gumastos",
         "Magulong sistema ng mga bersyon sa mga export"
@@ -252,7 +574,7 @@
       "stages": [
         {
           "label": "Blueprint",
-          "detail": "Nakabalangkas na plano ng kuwento"
+          "detail": "Balangkas ng kuwento"
         },
         {
           "label": "Mga Sanggunian",
@@ -270,28 +592,28 @@
       "syncLabel": "Isang project file — hindi na kailangang magpalipat-lipat ng mga tab",
       "benefits": [
         "Mga gabay na yugto — iwasan ang pagpapalit-palit ng tab at pagkawala ng konteksto",
-        "Pag-apruba sa pre-vis — itigil ang paulit-ulit na pagbabago bago gumastos sa video",
+        "Pag-apruba sa Pre-vis — itigil ang re-roll sa slot machine bago ang paggastos sa video",
         "Marka ng Audience Resonance bago ang mabigat na rendering",
         "Master copy na handa nang i-publish sa loob ng 30–60 minuto, hindi mahigit 4 na oras"
       ],
       "timeLabel": "Bawat video (parehong output)",
       "timeValue": "30–60 minuto"
     },
-    "comparisonCaption": "Pinapalitan ng isang studio ang mga hiwa-hiwalay na tool sa paggawa, ang pag-uulit ng video na parang sa slot machine, at ang manu-manong pagbuo ng mga edit.",
-    "comparisonImageAlt": "Tradisyonal na gastusin sa produksyon kumpara sa SceneFlow automated studio — mas mabilis na proseso mula konsepto hanggang sa video na handa nang i-publish",
-    "costNote": "Parehong gastos sa AI, mas kaunting nasasayang na oras. Magbabayad ka pa rin naman para sa mga model—sa pamamagitan man ng SceneFlow credits, sarili mong provider account, o BYOK. Inaalis ng SceneFlow ang karagdagang gastos at oras sa manu-manong pagbuo (copy-paste assembly), kaya mas marami kang mai-produce na video gamit ang parehong badyet.",
-    "proofLine": "Napatunayan sa isang residential listing tour: ang dating prosesong manual na tumatagal nang mahigit 4 na oras ay nagreresulta na ngayon sa parehong output gamit ang SceneFlow sa loob ng wala pang isang oras."
+    "comparisonCaption": "Pinapalitan ng isang studio ang mga watak-watak na tool sa paggawa, ang pag-uulit ng video na parang sa slot machine, at ang manu-manong pagbuo ng mga edit.",
+    "comparisonImageAlt": "Mga gastusin sa tradisyonal na produksyon kumpara sa SceneFlow automated studio — mas mabilis na proseso mula konsepto hanggang sa video na handa nang i-publish",
+    "costNote": "Parehong gastos sa AI, mas kaunting oras ang nasasayang. Magbabayad ka pa rin para sa mga model—sa pamamagitan man ng SceneFlow credits, sarili mong account sa provider, o BYOK. Inaalis ng SceneFlow ang dagdag-gastos at pagod sa manu-manong pagbuo (copy-paste assembly), kaya mas marami kang mai-produce na video gamit ang parehong badyet.",
+    "proofLine": "Napatunayan sa isang residential listing tour: ang dating mahigit 4 na oras na full manual process ay naging katulad na output sa loob ng wala pang isang oras gamit ang SceneFlow."
   },
   "comparison": {
     "title": "Bilis ng produksyon nang walang karagdagang gastusin sa operasyon",
-    "subtitle": "Palitan ang mga hiwa-hiwalay na tool para sa prompt at manu-manong pagbuo ng isang automated na studio — mula sa unang konsepto hanggang sa master na handa nang i-publish.",
+    "subtitle": "Palitan ang mga hiwa-hiwalay na tool para sa prompt at ang manu-manong pagbuo ng isang automated studio — mula sa unang konsepto hanggang sa master na handa nang i-publish.",
     "caption": "Pinapalitan ng iisang studio ang mga hiwa-hiwalay na tool para sa prompt, manu-manong pag-edit, at paglilipat ng trabaho sa iba't ibang platform.",
-    "imageAlt": "Tradisyonal na gastusin sa produksyon kumpara sa SceneFlow automated studio — mas mabilis na proseso mula konsepto hanggang sa video na handa nang i-publish"
+    "imageAlt": "Mga gastusin sa tradisyonal na produksyon kumpara sa SceneFlow automated studio — mas mabilis na proseso mula konsepto hanggang sa video na handa nang i-publish"
   },
   "howItWorks": {
     "title": "Mula sa konsepto hanggang sa video na handa nang i-publish",
     "titleAccent": "Isang ginagabayang pipeline",
-    "subtitle": "Opsyonal ang series. Ang pangunahing daloy ay Blueprint → Production → Final Cut → Premiere — na kinabibilangan ng mga tier na pre-vis, animatic, video, at master MP4 sa proseso.",
+    "subtitle": "Opsyonal ang series. Ang pangunahing daloy ay Blueprint → Produksyon → Screening Room — kasama ang pre-vis, animatic, scene video, at master MP4 sa proseso.",
     "tagline": "Ang bawat hakbang ay awtomatiko at mahusay na naisagawa. Ang bawat hakbang ay nagbibigay sa iyo ng ganap na kontrol.",
     "optionalBadge": "Opsyonal",
     "optionalSuffix": " (opsyonal)",
@@ -311,7 +633,7 @@
         "keyFeatures": [
           "Tukuyin nang minsan ang iyong mundo—mga karakter, tono, at takbo ng kuwento sa season.",
           "Magkakaugnay na balangkas ng mga episode — awtomatikong nabubuo para sa buong season",
-          "Pagsubaybay sa pagpapatuloy — pag-aayos ng mga season na binubuo ng maraming episode",
+          "Pagsubaybay sa pagpapatuloy — pag-aayon ng mga season na binubuo ng maraming episode",
           "Pag-synchronize ng serye sa episode — patungo sa Blueprint Studio at Produksyon"
         ]
       },
@@ -323,11 +645,11 @@
         "keySteps": [
           "Bumuo → Suriin → Isaayos → Simulan ang Produksyon",
           "Audience Resonance pag-iskor na may target na 80+",
-          "Mga link sa pagbabahagi at pag-export (PDF, Doc, PPTX) para sa mga collaborator"
+          "Mga link para sa pagbabahagi at pag-export (PDF, Doc, PPTX) para sa mga collaborator"
         ],
         "keyFeatures": [
           "Daloy ng trabahong Pagbuo → Pagsusuri → Pag-uulit → Pagsisimula ng Produksyon",
-          "Mula konsepto hanggang estruktura sa loob ng ilang minuto — logline, beats, mga karakter, at tono",
+          "Mula konsepto hanggang estruktura sa loob ng ilang minuto — logline, beats, mga tauhan, at tono",
           "Audience Resonance pagmamarka na may target na 80+ bago ang Production",
           "Mga link na ibinahagi ng mga katuwang — pagsasama-sama ng mga puna para sa ginabayang rebisyon"
         ]
@@ -335,68 +657,153 @@
       {
         "id": "produksyon",
         "stepLabel": "Produksyon",
-        "subtitle": "Mula Iskrip Patungong Stream",
-        "description": "Ginagabayan ng mga tab na Script at Action ang Foundation → pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer, at mga MP4 stream — hindi na kailangang lumipat ng tool.",
+        "subtitle": "Script para sa Screening Room",
+        "description": "Pinapatnubayan ng mga tab na Script at Shoot ang daloy mula Foundation → Pre-Vis → Footage → Mixer → Streams. Binabawasan ng mga checkpoint sa bawat eksena ang pangangailangang ulitin ang trabaho; pinangangasiwaan naman ng Screening Room ang preview, assembly, at publishing.",
         "keySteps": [
           "I-finalize ang script, mga boses, at audio ng eksena",
-          "Express Pre-vis — gallery at pagbabahagi para sa pagsusuri",
-          "Beat Frames → Director Console → Render Stream",
-          "Ipadala ang mga natapos na stream sa Final Cut"
+          "Pre-visualization bawat eksena — gallery at pagbabahagi para sa pagsusuri",
+          "Tab na Shoot — Footage → Mixer → Mga stream bawat eksena",
+          "Screening Room — silipin, buuin ang master, ilathala"
         ],
         "keyFeatures": [
-          "Foundation — iskrip, mga boses, audio ng eksena, pinal na iskrip",
-          "Express Pre-vis — direksyon at mga frame sa loob ng ilang minuto; gallery at pagbabahagi",
-          "Beat Frames at Mixer — mga frame ng simula/wakas, Director Console, pag-render ng mga MP4 stream",
-          "Mga Production Stream — suriin ang mga output, i-render muli ang mga outdated na beat, ipadala sa Final Cut"
+          "Foundation — iskrip, mga boses, audio ng eksena, Audience Resonance",
+          "Pre-Vis — direksyon, audio, at mga beat frame bawat eksena, kalakip ang mga link para sa pagbabahagi",
+          "Mag-shoot — Footage, Mixer, at Streams nang hindi umaalis sa Production",
+          "Screening Room — preview ng eksena, pagbuo ng master copy, mga screening, at pag-publish sa YouTube"
         ]
       },
       {
-        "id": "pinal na bersyon",
-        "stepLabel": "Final Cut",
-        "subtitle": "Pagbuo ng Stream",
-        "description": "Pagsamahin ang mga tapos nang Production stream sa iisang master MP4. Pumili ng Animatic o kaya ay video at wika para sa bawat eksena — hindi na kailangan ng timeline editing; ang mga creative change ay mananatili sa Production Mixer.",
+        "id": "silid-palabas",
+        "stepLabel": "Screening Room",
+        "subtitle": "Silipin · Buuin · I-publish",
+        "description": "Isang sentro para sa huling yugto ng produksyon: i-preview ang mga video ng eksena, pagsamahin ang mga stream sa isang master MP4, magsagawa ng mga screening na maaaring ibahagi (kalakip ang analytics), at mag-publish sa YouTube o mag-export ng mga bundle.",
         "keySteps": [
-          "Pumili ng mga stream para sa bawat scene — preset o custom na mix",
-          "Silipin ang buong programa ayon sa pagkakasunod-sunod ng script",
-          "Mag-export ng isang master MP4 para sa Premiere"
-        ],
-        "keyFeatures": [
-          "Pagpili ng stream bawat eksena — Animatic, Video, wika, bersyon",
-          "Mga preset ng pagbuo — Lahat ng Video, Hybrid, Custom mix",
-          "Walang pag-e-edit sa timeline — ang mga malikhaing pagbabago ay mananatili sa Production Mixer",
-          "One-click master export — pinagdugtong na MP4 para sa Premiere"
-        ]
-      },
-      {
-        "id": "unang pagtatanghal",
-        "stepLabel": "Premiere",
-        "subtitle": "Sentro ng Distribusyon",
-        "description": "Suriin ang iyong master copy gamit ang audience analytics, pagkatapos ay i-publish ito sa YouTube na may localized metadata o mag-export ng mga bundle para sa Shorts, Reels, at TikTok.",
-        "keySteps": [
+          "I-preview ang mga stream ng rendered scene nang sunud-sunod",
+          "Buuin ang master — piliin ang Animatic o Video bawat eksena",
           "Gumawa ng screening at ibahagi ang /s/ link",
-          "Suriin ang pagmamarka, pakikipag-ugnayan, at mga visual insight",
-          "YouTube wizard o export bundle"
+          "Suriin ang mga insight at i-publish sa YouTube"
         ],
         "keyFeatures": [
-          "Maaaring ibahagi Screening Room — mga link na /s/ na may scoring at opsyonal na analytics ng engagement (may pahintulot ng manonood)",
-          "Dashboard ng mga insight — Mga tab na Scoring, Biometric, at Visual",
-          "YouTube wizard — thumbnail, naka-localize na pamagat/paglalarawan, SceneFlow CTA",
-          "Mga bundle para sa pag-export at mga plano para sa mga vertical na short-form clip"
+          "Pag-playback ng video ng eksena — ginagaya ang UX ng Pre-Vis player gamit ang mga na-render na stream",
+          "Mga preset ng pagbuo — All Video, Hybrid, o custom na kombinasyon para sa bawat eksena",
+          "Mga screening na maaaring ibahagi — mga link na may scoring at nakabalangkas na feedback",
+          "YouTube wizard, mga short-form export, at mga distribution bundle"
         ]
       }
     ]
   },
+  "simpleWalkthrough": {
+    "badge": "Paano ito gumagana",
+    "title": "Mula sa konsepto hanggang sa video na handa nang i-publish",
+    "titleAccent": "sa pitong hakbang na may gabay",
+    "subtitle": "Magsimula sa isang ideya o script, i-optimize gamit ang Blueprint at Audience Resonance, i-visualize gamit ang Pre-Vis, kunan ang video ng eksena, subukan sa Screening Room, at i-publish — lahat sa iisang studio.",
+    "tagline": "Ang bawat hakbang ay awtomatiko at mahusay na naisagawa. Ang bawat hakbang ay nagbibigay sa iyo ng ganap na kontrol.",
+    "showDetails": "Ipakita ang mga detalye",
+    "hideDetails": "Itago ang mga detalye",
+    "readyTitle": "Handa na bang subukan ang buong pipeline?",
+    "explorerCta": "Magsimula sa Explorer — $9",
+    "steps": [
+      {
+        "id": "konsepto",
+        "stepLabel": "Magsimula sa iyong konsepto o kasalukuyang script.",
+        "shortDescription": "Magsimula sa isang konsepto gamit ang natural na wika o mag-import ng iyong screenplay — Fountain, Final Draft, o i-paste ang iyong script.",
+        "detailedDescription": "Tinatanggap ng SceneFlow ang mga ideya sa simpleng pananalita o sa mga nakabalangkas na format ng script. Tumutulong ang AI na palawakin ang mga konsepto upang maging mga treatment, at kaya nitong mag-import ng mga kasalukuyang screenplay upang hindi mo na kailangang magsimula sa blangkong pahina.",
+        "media": "screenshot",
+        "screenshotSlot": "Maglagay ng screenshot: Dialog box para sa paglalagay ng konsepto ng bagong proyekto o pag-import ng script"
+      },
+      {
+        "id": "blueprint",
+        "stepLabel": "I-optimize ang iyong konsepto gamit ang Blueprint",
+        "shortDescription": "Isalin ang mga ideya sa isang nakabalangkas na treatment — logline, beats, mga karakter, at tono — bago simulan ang masinsinang rendering.",
+        "detailedDescription": "Awtomatikong bumubuo ang Blueprint ng komprehensibong balangkas ng kuwento. Pinuhin ang pag-unlad ng mga karakter, mahahalagang bahagi ng plot, at tono ng pagsasalaysay gamit ang matatalinong mungkahi. Binibigyang-daan ng mga link para sa pakikipagtulungan ang mga stakeholder na suriin ito bago ang yugto ng produksyon.",
+        "media": "bidyo"
+      },
+      {
+        "id": "pagtugon ng mga manonood",
+        "stepLabel": "I-optimize ang iyong script gamit ang Audience Resonance",
+        "shortDescription": "Bigyan ng marka ang iyong script batay sa pagiging angkop nito sa target na audience, at ilapat ang mga rekomendasyon para sa bawat eksena gamit ang mga solusyong isang-click lang.",
+        "detailedDescription": "Sinusuri nang mabuti ng Audience Resonance (AR) ang iyong script batay sa audience na iyong tinukoy. Makakuha ng mga marka para sa bawat bahagi, mga rekomendasyong maisasagawa, at Guided Edits — awtomatikong ilapat ang mga pagwawasto sa bawat eksena o gumawa ng mga pagbabagong sumasaklaw sa buong script mula sa AR dialog.",
+        "media": "bidyo"
+      },
+      {
+        "id": "pre-visualization",
+        "stepLabel": "I-visualize at subukan gamit ang pre-visualization",
+        "shortDescription": "Gumawa ng audio para sa mga diyalogo at mga beat frame para sa bawat eksena. Ibahagi ang mga animatic upang maaprubahan bago ilabas ang pinal na pondo para sa video.",
+        "detailedDescription": "Lumilikha ang Pre-Vis Studio ng direksyon, audio, at mga beat frame para sa bawat eksena—mga checkpoint na nagpapababa sa posibilidad ng magastos na pag-uulit sakaling magbago ang mga karakter o ang tono. Ibahagi ang player para sa kolaborasyon; ang buong animatic ay maaari na ring magsilbing pinal na output para sa maraming proyekto.",
+        "media": "previs-player"
+      },
+      {
+        "id": "barilin",
+        "stepLabel": "Kunan ang iyong produksyon",
+        "shortDescription": "Gumawa ng video na naka-sync sa beat, paghaluin ang audio at mga overlay, at mag-export ng mga full scene stream — Footage, Mixer, at Streams sa iisang Shoot tab.",
+        "detailedDescription": "Ang Shoot tab sa Production ang nagsisilbing iyong on-set: bumuo ng video mula sa mga inaprubahang Pre-Vis frame (Footage), ayusin nang detalyado ang timing, mga watermark, at audio sa Mixer, at pagkatapos ay i-render ang mga kumpletong MP4 ng eksena sa Streams.",
+        "media": "bidyo",
+        "subPoints": [
+          "Footage — pagbuo ng video nang sunod-sunod (beat-by-beat) mula sa mga panimula at pangwakas na frame ng Pre-Vis",
+          "Mixer — watermark, text overlay, at timing ng audio bawat eksena",
+          "Mga Stream — video ng eksenang ganap na na-render (lahat ng beat) na handa na para sa Screening Room"
+        ]
+      },
+      {
+        "id": "silid-palabas",
+        "stepLabel": "Subukan ang iyong production gamit ang Screening Room",
+        "shortDescription": "I-preview nang sunod-sunod ang mga video ng eksena, buuin ang master MP4, at magsagawa ng mga screening na maaaring ibahagi, kalakip ang sistematikong pagkuha ng feedback.",
+        "detailedDescription": "Ginagaya ng Screening Room ang UX ng Pre-Vis player ngunit nagpe-play ito ng mga rendered scene stream. Pumili sa pagitan ng Animatic o Video para sa bawat eksena, pagdugtung-dugtungin ang mga ito para sa master copy, ibahagi ang mga link para sa pagsusuri, at ayusin ang mga feedback na may timestamp bago ang pag-publish.",
+        "media": "bidyo"
+      },
+      {
+        "id": "ilathala",
+        "stepLabel": "I-publish",
+        "shortDescription": "I-distribute ang iyong master sa YouTube, mag-export ng mga short-form cut, at subaybayan ang audience insights mula sa iisang finishing platform.",
+        "detailedDescription": "Mula sa Screening Room, patakbuhin ang YouTube publishing wizard, gumawa ng mga export na short-form para sa social media, at mag-download ng mga distribution bundle. Nasa iisang lugar lang ang analytics at feedback ng reviewer — hindi na kailangang ilipat ang mga ito sa magkakahiwalay na tool.",
+        "media": "bidyo"
+      }
+    ],
+    "ui": {
+      "screenshot": "Screenshot",
+      "video": "Video",
+      "expandImage": "Palakihin ang larawan",
+      "closePreview": "Isara ang Preview",
+      "openScreenshot": "Buksan ang screenshot",
+      "openFeatureVideo": "Buksan ang feature video"
+    }
+  },
   "useCases": {
-    "badge": "Mga Aplikasyon sa Produksyon",
+    "badge": "Mga Halimbawa ng Kaso ng Paggamit",
     "title": "Anumang video na kaya mong isipin,",
     "titleAccent": "Buuin ito sa SceneFlow",
-    "subtitle": "Mga presentasyon ng real estate, edukasyon, podcast, format ng balita, branded campaign, at mga kuwentong mala-pelikula — isang automated na studio para sa lahat ng ito, mula sa konsepto hanggang sa master copy na handa nang ilathala.",
-    "qualifyingStatement": "Ginagawang narrated walkthrough video ng SceneFlow ang iyong mga orihinal na larawan, mga na-upload na file, at mga paglalarawan — na may opsyonal na boses at karakter na ikaw ang kumokontrol. Ang mga ito ay mga presentasyong binago gamit ang AI: mga makatotohanang visual na nakabatay sa iyong mga materyales, at hindi mga live na recording mula sa camera. Suriin at aprubahan ang bawat pre-vis bago ito i-publish; lagyan ng malinaw na label ang mga output upang malaman ng mga manonood kung ano ang kanilang pinapanood.",
+    "subtitle": "Mga seryeng pang-aliw at gawa ng mga creator, pagtatampok ng real estate, edukasyon, podcast, mga format ng balita, at branded campaign — isang automated na studio mula sa konsepto hanggang sa master na handa nang i-publish.",
+    "qualifyingStatement": "Ginagawang narrated walkthrough video ng SceneFlow ang iyong mga orihinal na larawan, mga na-upload na file, at mga paglalarawan — na may opsyonal na boses at karakter na ikaw ang nagkokontrol. Ang mga ito ay mga presentasyong binuo gamit ang AI: mga makatotohanang visual na nakabatay sa iyong mga materyales, at hindi mga aktuwal na video recording. Suriin at aprubahan ang bawat pre-visualization bago ito i-publish; lagyan ng malinaw na label ang mga output upang malaman ng mga manonood kung ano ang kanilang pinapanood.",
+    "entertainmentStats": {
+      "title": "Ekonomiya ng atensyon para sa mga creator",
+      "footnote": "Mga Pinagmulan: Nielsen, Digital i (mga ulat ng industriya). Konteksto ng merkado—hindi datos ng pagganap ng SceneFlow.",
+      "stats": [
+        {
+          "value": "13.4%",
+          "label": "Bahagi ng YouTube sa panonood ng TV sa U.S."
+        },
+        {
+          "value": "8.8%",
+          "label": "Bahagi ng Netflix (konteksto)"
+        },
+        {
+          "value": "99.1 minuto",
+          "label": "Average na pang-araw-araw na paggamit ng YouTube bawat account (global)"
+        },
+        {
+          "value": "35% pataas",
+          "label": "Oras ng panonood sa YouTube sa connected TV"
+        }
+      ]
+    },
     "ui": {
       "useCases": "Mga Kaso ng Paggamit",
       "sectors": "{count} na SEKTOR",
       "demoComingSoon": "Darating na ang demo",
-      "selectExample": "Pumili ng halimbawa upang makita ang preview ng demo nito.",
+      "selectExample": "Pumili ng sitwasyon ng paggamit upang matuto nang higit pa.",
+      "hearStory": "Pakinggan ang kuwento",
+      "pauseStory": "I-pause ang kwento",
+      "storyComingSoon": "Abangan ang kwento",
       "targetPersona": "Target na Persona",
       "theChallenge": "Ang Hamon",
       "sceneFlowSolution": "Ang Solusyong SceneFlow",
@@ -407,9 +814,11 @@
       "frameAnchoredTitle": "Pagpapatuloy na Nakabatay sa Frame",
       "frameAnchoredDescription": "Ang SceneFlow ang tanging tool na nagbibigay-daan sa Frame-Anchored continuity, na tinitiyak na mananatiling parehong-pareho ang produkto o karakter ng iyong kliyente sa bawat bahagi ng eksena.",
       "closePreview": "Isara ang Preview",
-      "expandVideo": "Palakihin ang Video",
+      "expandVideo": "Palakihin ang video",
       "expandImage": "Palakihin ang larawan",
-      "orStartExplorer": "magsimula sa $9 Explorer plan",
+      "conceptPreview": "Konsepto ng use case",
+      "videoPreview": "Preview ng video",
+      "orStartExplorer": "Magsimula sa planong $9 Explorer",
       "orPrefix": "O"
     },
     "personas": {
@@ -421,16 +830,16 @@
           "after": "25 minuto"
         },
         "challenge": {
-          "title": "Ang Hadlang sa \"B-Roll\"",
-          "description": "Maganda ang iyong script, ngunit ang pag-aaral sa anim na magkakahiwalay na tool para sa paggawa at pag-edit — o ang pagka-stuck sa mga paulit-ulit na video loop na parang sa slot machine — ay nagpapabagal sa bawat pag-upload. Ang pagkaantalang ito ay nagpapahina sa dalas ng pag-publish at sa kakayahang mapanatili ang atensyon ng mga manonood."
+          "title": "Ang Pagkakabara sa Proseso ng \"B-Roll\"",
+          "description": "Maganda ang iyong script, ngunit ang pag-aaral sa anim na magkakahiwalay na tool para sa paggawa at pag-edit — o ang pagka-stuck sa mga paulit-ulit na video loop — ay nagpapabagal sa bawat upload. Ang mga sikat na serye sa YouTube at mga drama na may pacing na parang sa TV ay nangangailangan ng mas mabilis na proseso kaysa sa kayang ibigay ng mga hiwa-hiwalay na AI tab."
         },
         "solution": {
           "title": "Ang Awtomatikong Tagapagsalaysay",
-          "description": "May gabay na automation mula sa script hanggang sa master copy na handa nang i-publish — hindi na kailangang matuto ng anim na magkakahiwalay na app. Panatilihin ang pagkakapare-pareho ng mga karakter at estilo mula sa unang eksena hanggang sa produksyon ng buong serye.",
+          "description": "Maglabas ng mga episodic series at mga short-form video na talagang nakakakuha ng atensyon mula sa iisang studio — kabilang ang pre-visualization na nakatuon sa daloy ng kwento, maayos na continuity, at mga master file na handa nang i-publish para sa creator economy na pinangungunahan ng YouTube.",
           "features": [
             "Mga biswal na tumutugma nang maayos sa mga bahagi ng iskrip",
             "Pare-parehong mga pangunahing tauhan sa bawat eksena",
-            "Palawakin ang produksyon sa mga serye ng episode gamit ang isang nakabahaging library ng mga sanggunian."
+            "Palawakin ang produksyon sa isang serye ng mga episode gamit ang isang nakabahaging library ng mga sanggunian."
           ]
         },
         "win": "Lumipat mula sa paminsan-minsang pag-upload patungo sa maaasahang daloy ng produksyon na may mas mababang overhead.",
@@ -449,7 +858,7 @@
         },
         "challenge": {
           "title": "Mga Nakatenggang Gawain ng Vendor at Paglayo sa Pagkakakilanlan ng Brand",
-          "description": "Ang mga team ng Communications, L&D, at marketing ay umaabot ng ilang linggo sa paghihintay ng video mula sa mga agency o vendor — o kaya naman ay nahaharap sa napakaraming tool na walang maayos at paulit-ulit na sistema sa loob mismo ng kumpanya. Sa alinmang paraan, nagreresulta ito sa hindi pare-parehong branding at mga kampanyang hindi umuusad."
+          "description": "Ang mga team ng Communications, L&D, at marketing ay umaabot ng ilang linggo sa paghihintay ng video mula sa mga agency o vendor — o kaya naman ay nahaharap sa napakaraming tool na walang sinusunod na sistema sa loob mismo ng kumpanya. Sa alinmang paraan, nagreresulta ito sa hindi pare-parehong branding at pagkaantala ng mga kampanya."
         },
         "solution": {
           "title": "Produksyong In-House sa Loob ng Linggong Ito",
@@ -458,7 +867,7 @@
             "Palitan ang mga shoot na isinasagawa ng mga vendor ng mga guided in-house workflow.",
             "Mga template at library ng sanggunian na ligtas para sa brand",
             "Nakikitang paggamit ng credit at mga limitasyon sa badyet bawat proyekto",
-            "Aprubahan ang mga pre-vis bago bayaran ang pinal na video."
+            "Aprubahan ang pre-vis bago bayaran ang pinal na video."
           ]
         },
         "win": "Ilabas ang mga video para sa pagsasanay, komunikasyon, at kampanya ayon sa sarili mong iskedyul — hindi batay sa backlog ng vendor.",
@@ -470,26 +879,26 @@
       },
       "productionShop": {
         "label": "Pasilidad sa Produksyon",
-        "title": "Ang Tindahan ng Espesyalisadong Produksyon",
+        "title": "Ang Tindahan ng Produksyong Nakatuon sa Espesipikong Merkado",
         "beforeAfter": {
           "before": "Mahigit 4 na oras",
           "after": "30–60 minuto"
         },
         "challenge": {
           "title": "Mga Espesipikong Sektor, Walang Sistemang Mauulit",
-          "description": "Kailangan ng mga kliyente sa larangan ng memoir, legacy, real estate, at edukasyon ang mabilis na pagtatapos ng trabaho — ngunit nagsisimula sa wala ang bawat proyekto. Ang proseso ng paglilipat ng mga output at ang paulit-ulit na pagsubok (na parang sugal sa slot machine) sa script, imahe, boses, video, musika, at mga tool sa pag-edit ay kumakain sa kita mula sa dami ng trabaho."
+          "description": "Kailangan ng mga kliyente sa larangan ng memoir, legacy, real estate, at edukasyon ang mabilis na pagtatapos ng trabaho — ngunit nagsisimula sa wala ang bawat proyekto. Ang proseso ng paglilipat ng mga output at ang paulit-ulit na pagsubok (na parang sa slot machine) sa script, imahe, boses, video, musika, at mga tool sa pag-edit ay kumakain sa kita mula sa dami ng trabaho."
         },
         "solution": {
           "title": "Gawing Produkto ang Iyong Serbisyo sa Video",
-          "description": "Bumuo ng mga workflow na maaaring ulit-ulitin para sa mga memoir studio at mga espesyalisadong sektor. Mula sa pag-upload ng mga template, voice clone, at avatar hanggang sa pag-apruba ng pre-vis — i-customize ang mga ito para sa bawat kliyente at palakihin ang kita sa pamamagitan ng mataas na volume ng trabaho.",
+          "description": "Bumuo ng mga prosesong maaaring ulit-ulitin para sa mga memoir studio at mga espesyalisadong sektor. Mula sa pag-upload ng mga template, voice clone, at avatar hanggang sa pag-apruba ng pre-visualization — i-customize ang serbisyo para sa bawat kliyente at palakihin ang kita sa pamamagitan ng mataas na volume ng trabaho.",
           "features": [
             "Mga template para sa memoir na may kakayahang mag-upload ng mga larawan, voice clone, at avatar host",
-            "Ang proseso ng pagtanggap sa kliyente ay nakaugnay sa Blueprint at sa mga yugto ng pag-apruba ng pre-vis.",
+            "Ang pagtanggap sa kliyente ay nakatali sa Blueprint at sa mga yugto ng pag-apruba bago ang pagbisita.",
             "Mga white-label studio package para sa mga video na pang-alaala, pagpupugay, at subscription",
             "Margin sa mga credit sa halip na overhead bawat shoot"
           ]
         },
-        "win": "Maglunsad ng serbisyong video memoir o espesyalisadong studio service na may sistema para sa paulit-ulit na paghahatid ng serbisyo — hindi 'yung isang beses lang na freelance na trabaho.",
+        "win": "Maglunsad ng serbisyong video memoir o espesyalisadong studio service na may sistema para sa paulit-ulit na paghahatid ng serbisyo — hindi basta isang beses na freelance na trabaho.",
         "keyPhrases": [
           "Mga Template ng Memoir",
           "Pagkakakilanlan ng Boses at Avatar",
@@ -513,15 +922,45 @@
           "features": [
             "Mabilis na pre-visualization para sa mga pitch at pag-apruba ng kliyente",
             "Mga template na maaaring gamitin muli para sa mga paulit-ulit na format ng kliyente",
-            "Nakikita ang badyet sa bawat yugto ng pag-uulit",
+            "Nakikita ang badyet sa bawat yugto ng pag-aayos o pagbabago",
             "Kakayahang palawakin ang serbisyo nang hindi nagdaragdag ng tauhan"
           ]
         },
-        "win": "Pabilisin ang mga cycle ng pitch at pagtugon sa mga paulit-ulit na trabaho ng kliyente, habang binabawasan ang panganib sa produksyon at pinapataas ang kita.",
+        "win": "Maghatid ng mas mabilis na mga cycle ng pitch at paulit-ulit na trabaho para sa kliyente, nang may mas mababang panganib sa produksyon at mas mataas na kita.",
         "keyPhrases": [
           "Mga Pag-apruba ng Kliyente",
           "Dami ng Naihahatid",
           "Kakayahang Mahulaan ang Badyet"
+        ]
+      },
+      "filmProduction": {
+        "label": "Produksyon ng Pelikula",
+        "title": "Ang Producer ng Pelikula",
+        "beforeAfter": {
+          "before": "Mga linggo ng previz",
+          "after": "wala pang 30 minuto"
+        },
+        "challenge": {
+          "title": "Mabagal na Pre-Vis Bago Mo Masubukan ang Kuwento",
+          "description": "Mayroon kang script — ngunit ang mga table read, cycle ng storyboard, at watak-watak na previz tool ay nagpapabagal sa mga investor pitch, audience test, at desisyon sa pag-apruba ng proyekto."
+        },
+        "solution": {
+          "title": "Interaktibong Pre-biswalisasyon na Nakabatay sa Iskrip",
+          "description": "I-upload ang iyong script (MDX, FDX, at iba pang format), i-optimize gamit ang Audience Resonance, at bumuo ng interactive na pre-vis para sa pag-screen at pagsubok — gamit ang Express na sabay-sabay na pagbuo sa iba't ibang beat, sa mahigit 70 opsyon sa wika, at mabilis na multi-language overlay.",
+          "features": [
+            "Mag-upload at mag-import ng mga script (MDX, FDX, at iba pa)",
+            "I-optimize gamit ang Audience Resonance",
+            "Mabilisang pre-vis animatic para sa pagsusuri at pag-apruba ng mga stakeholder",
+            "Mahigit 70 wika na may mabilis na multi-language overlay",
+            "Rebisahin at i-export ang script (MDX at iba pang mga format)",
+            "Screening Room para sa audience testing ng buong animatic"
+          ]
+        },
+        "win": "Siguraduhing angkop ang kuwento para sa audience bago ang principal photography — gamit ang animatic na madaling maibahagi, sa halip na previz cycle na tumatagal nang ilang linggo.",
+        "keyPhrases": [
+          "Pre-visualization na Nakabatay sa Iskrip",
+          "Audience Resonance",
+          "Screening Room Pagsubok"
         ]
       }
     },
@@ -541,9 +980,45 @@
       "agency": {
         "label": "Tingnan ang presyo para sa team",
         "subtext": "Mga planong angkop sa malalaking ahensya at production shop"
+      },
+      "filmProduction": {
+        "label": "Simulan ang iyong pre-vis test flight",
+        "subtext": "$9 (isang beses na bayad) • Mag-upload ng script → interactive animatic para sa pagsusuri"
       }
     },
     "categories": [
+      {
+        "id": "libangan",
+        "title": "Serye ng Libangan at mga Creator",
+        "qualifyingStatement": "Nakikipagsabayan na ngayon ang YouTube sa tradisyonal na TV sa pagkuha ng atensyon—ang mga indie animation studio at mga indibidwal na creator ay naglalabas ng mga seryeng patok na umaabot sa sampu-sampung milyong views bawat episode. Hatid ng SceneFlow ang pre-visualization na nakatuon sa daloy ng kwento (beat-first), pagpapanatili ng pagkakaugnay-ugnay (continuity) gamit ang Reference Library, at mga master file na handa nang i-publish para sa creator economy—hindi tulad ng mga tool na parang slot machine lang sa paggawa ng clips.",
+        "examples": [
+          {
+            "id": "maikling dramang patayo",
+            "label": "Drama sa YouTube TV",
+            "description": "Isipin mong naglalabas ka ng episodic drama na may 16:9 aspect ratio sa YouTube—kung saan hawak na ngayon ng YouTube ang 13.4% ng panonood ng TV sa U.S. at mahigit 35% ng oras ng panonood ay nagaganap sa connected TV. Tinutulungan ng SceneFlow ang mga creator na palakihin ang bahaging iyon sa pamamagitan ng mga kawili-wiling alternatibong content: beat-first pre-vis, Reference Library continuity, at mga widescreen master na handa nang i-publish."
+          },
+          {
+            "id": "animated web series",
+            "label": "Animated na Web Series",
+            "description": "Isipin mong itatakda mo lang nang minsan ang mga stylized na karakter sa iyong Reference Library—pagkatapos ay maglalabas ka na ng mga seryeng episode na may art style na hango sa anime, Pixar, o Ghibli, taglay ang consistency na kinakailangan ng mga indie hit tulad ng Glitch Productions."
+          },
+          {
+            "id": "serye sa YouTube na binubuo ng mga episode",
+            "label": "Serye sa YouTube na binubuo ng mga episode",
+            "description": "Isipin ang mga *season arc* na awtomatikong nabubuo sa Series Studio—kung saan ang mga balangkas ng *episode* ay naka-sync sa Blueprint at sa Production, kaya nananatiling magkakatugma ang bawat mukha, boses, at daloy ng kwento sa lumalawak na *channel*."
+          },
+          {
+            "id": "paligsahang reality para sa mga creator",
+            "label": "Reality at Kompetisyon ng mga Creator",
+            "description": "Isipin ang paggawa ng mga kompetisyon ng creator na kasing-laki ng mga reality show nang hindi nangangailangan ng broadcast crew—mula sa multi-cam na mga eksena at pagsusuri ng mga stakeholder hanggang sa pagbuo ng master MP4 sa loob lamang ng isang linggo."
+          },
+          {
+            "id": "seryeng handa para sa CTV",
+            "label": "Vertical Mobile Drama",
+            "description": "Isipin ang mga photoreal na 9:16 hook at mga serialized na mobile episode na sadyang ginawa para sa pag-scroll—aprubahan ang Beat Frames bago ang rendering, at pagdugtung-dugtungin ang mga native extension para sa mga emosyonal na bahaging humahadlang sa pag-scroll ng user. Ang SceneFlow ay gumagawa ng mga vertical master na handa na para sa YouTube Shorts at mga mobile feed."
+          }
+        ]
+      },
       {
         "id": "ari-arian",
         "title": "Ari-arian, mga Espasyo at Hospitality",
@@ -567,7 +1042,7 @@
           {
             "id": "hospitalidad at turismo",
             "label": "Hospitalidad at Turismo",
-            "description": "Isipin mong nag-a-upload ka ng mga larawan ng hotel at mga highlight ng itinerary gamit ang nakaimbak na boses ng host at avatar ng iyong brand. Pagkatapos, agad kang makakapaglabas ng mga virtual tour at travel guide na may narration sa mahigit 70 wika — nang hindi na nangangailangan ng film crew sa bawat property."
+            "description": "Isipin mong nag-a-upload ka ng mga larawan ng hotel at mga highlight ng itinerary gamit ang nakaimbak na boses ng host at avatar ng iyong brand. Pagkatapos, agad kang nakakapaglabas ng mga virtual tour at narrated travel guide sa mahigit 70 wika — nang hindi na nangangailangan ng film crew sa bawat property."
           },
           {
             "id": "mga gabay sa museo at galeriya",
@@ -583,12 +1058,12 @@
           {
             "id": "K-12 at mas mataas na antas ng edukasyon",
             "label": "K-12 at Mas Mataas na Antas ng Edukasyon",
-            "description": "Isipin ang pag-upload ng mga materyales sa aralin gamit ang nakaimbak na boses at character reference ng iyong instruktor. Pagkatapos, ang agarang pagbuo ng mga kumpletong module ng kurikulum na mapapanood ng iyong mga estudyante sa ESL at global campus sa mahigit 70 wika."
+            "description": "Isipin ang pag-upload ng mga materyales sa aralin gamit ang nakaimbak na boses at character reference ng iyong instruktor. Pagkatapos ay ang agarang pagbuo ng mga kumpletong module ng kurikulum na mapapanood ng iyong mga estudyante sa ESL at global campus sa mahigit 70 wika."
           },
           {
             "id": "pang-korporasyon",
             "label": "Pag-aaral at Pagpapaunlad sa Korporasyon",
-            "description": "Isipin ang pag-upload ng mga compliance script gamit ang nakaimbak na boses at avatar ng iyong trainer. Pagkatapos ay ang agarang pagpapatupad ng pare-parehong onboarding at safety training sa bawat opisina — na naka-localize sa mahigit 70 wika."
+            "description": "Isipin mong nag-a-upload ka ng mga training slide na gamit ang nakaimbak na boses ng iyong L&D lead. Pagkatapos ay agad na maglalathala ng mga module video—pagdugtung-dugtungin ang mga native na +7 segundong extension para sa mahahabang video na nagpapaliwanag, at aprubahan ang Beat Frames bago ang rendering."
           },
           {
             "id": "mga tutorial sa software at SaaS",
@@ -598,7 +1073,7 @@
           {
             "id": "pagtuturo ng espesyalisadong kasanayan",
             "label": "Pagtuturo ng Espesyal na Kasanayan",
-            "description": "Isipin mong nag-a-upload ka ng mga larawan ng bawat hakbang, kasama ang nakaimbak na boses at character reference ng iyong instructor. Pagkatapos, agad kang makakapaglathala ng mga propesyonal na \"how-to\" series—tulad ng pagluluto, DIY, o paghahanda para sa sertipikasyon—sa mahigit 70 wika."
+            "description": "Isipin mong nag-a-upload ka ng mga larawan ng bawat hakbang, kasama ang nakaimbak na boses at character reference ng iyong instructor. Pagkatapos ay agad kang makakapaglathala ng mga propesyonal na \"how-to\" series—tulad ng pagluluto, DIY, o paghahanda para sa sertipikasyon—sa mahigit 70 wika."
           },
           {
             "id": "edukasyong medikal para sa pasyente",
@@ -608,7 +1083,7 @@
           {
             "id": "mga video-memoir",
             "label": "Mga Video na Tala ng Alaala",
-            "description": "Isipin ang pag-upload ng mga larawan ng pamilya, audio ng panayam, at mga tala sa eksena, kasama ang nakaimbak na boses ng narrator. Pagkatapos, agad na bumuo ng mga video ng alaala na nakaayos ayon sa mga kabanata—at aprubahan ang pre-vis bago ang pinal na pag-render."
+            "description": "Isipin mong nag-a-upload ka ng mga litrato ng pamilya, audio ng interview, at mga tala tungkol sa eksena, kasama ang nakaimbak na boses ng narrator. Pagkatapos, mabilis kang makabubuo ng mga video ng iyong mga alaala na nakaayos ayon sa mga kabanata—at maaari mong aprubahan ang paunang bersyon (pre-vis) bago ang pinal na pag-render."
           }
         ]
       },
@@ -619,7 +1094,7 @@
           {
             "id": "balitang hyper-local",
             "label": "Balitang Hyper-lokal",
-            "description": "Isipin mong nag-a-upload ka ng mga larawan at balita para sa araw na ito gamit ang nakaimbak na boses ng iyong anchor. Pagkatapos ay agad na naglalathala ng maikling balita para sa komunidad—nang hindi na kailangan ng film crew o nangangamba sa paglampas sa deadline."
+            "description": "Isipin mong nag-a-upload ka ng mga larawan at balita para sa araw na ito gamit ang nakaimbak na boses ng iyong anchor. Pagkatapos ay agad na naglalathala ng maikling balita para sa komunidad—nang hindi na kailangan ng film crew o nangangambang lumampas sa deadline."
           },
           {
             "id": "mga buod ng merkado ng pananalapi",
@@ -628,18 +1103,18 @@
           },
           {
             "id": "komentaryo sa palakasan",
-            "label": "Komentaryong Pampalakasan",
-            "description": "Isipin ang pag-upload ng mga istatistika ng laro at mga litrato kasama ang nakaimbak na boses ng iyong commentator. Pagkatapos ay ang agarang paggawa ng mga recap video na may animated na aksyon — na ipinapalabas habang pinag-uusapan pa ito ng mga tagahanga."
+            "label": "Komentaryo sa Palakasan",
+            "description": "Isipin mong nag-a-upload ka ng mga istatistika ng laro at mga litrato, kasama ang nakaimbak na boses ng iyong commentator. Pagkatapos ay agad na nakagagawa ng mga recap video na may animated na aksyon—na naipapublish habang mainit pa ang usapan ng mga tagahanga."
           },
           {
             "id": "mga dokumentaryong pangkasaysayan tungkol sa totoong krimen",
             "label": "Mga Dokumentaryo sa Tunay na Krimen at Kasaysayan",
-            "description": "Isipin mong i-save nang minsan lang ang mga historikal na personalidad sa iyong Reference Library. Pagkatapos, agad kang makakagawa ng mga episode na may maraming bahagi kung saan nananatiling pareho ang bawat mukha at boses — sa sunod-sunod na mga serye."
+            "description": "Isipin mong i-save nang minsan lang ang mga historikal na personalidad sa iyong Reference Library. Pagkatapos, agad kang makakapag-produce ng mga episode na may maraming bahagi kung saan nananatiling pareho ang bawat mukha at boses — sa sunod-sunod na mga serye."
           },
           {
             "id": "mga babala sa emergency na may kaugnayan sa panahon",
             "label": "Mga Alerto sa Panahon at Emergency",
-            "description": "Isipin ang pag-upload ng mga emergency bulletin gamit ang pinagkakatiwalaan at nakaimbak na boses ng inyong ahensya. Pagkatapos ay ang agarang pagpapalabas ng malilinaw na alerto sa mahigit 70 wika sa iba't ibang social platform — sa loob lamang ng ilang minuto, hindi mga araw."
+            "description": "Isipin ang pag-upload ng mga emergency bulletin gamit ang pinagkakatiwalaan at nakaimbak na boses ng inyong ahensya. Pagkatapos ay ang agarang pagpapalabas ng malinaw na mga alerto sa mahigit 70 wika sa iba't ibang social platform — sa loob ng ilang minuto, hindi mga araw."
           }
         ]
       },
@@ -650,7 +1125,7 @@
           {
             "id": "mga video na nagpapaliwanag ng produkto",
             "label": "Mga Video na Nagpapaliwanag sa Produkto",
-            "description": "Isipin mong nag-a-upload ka ng mga larawan mula sa product catalog kasama ang nakaimbak na boses ng presenter at avatar ng iyong brand. Pagkatapos, agad kang makakabuo ng serye ng mga cinematic explainer video—at maaari mong aprubahan ang pre-vis bago ang rendering."
+            "description": "Isipin mong nag-a-upload ka ng mga larawan mula sa product catalog kasama ang nakaimbak na boses ng presenter at avatar ng iyong brand. Pagkatapos, agad kang makakabuo ng serye ng mga cinematic explainer video—aprubahan muna ang pre-visualization bago ang rendering."
           },
           {
             "id": "mga testimonya mula sa case study",
@@ -686,7 +1161,7 @@
           {
             "id": "Mga paliwanag tungkol sa legal at insurance",
             "label": "Mga Paliwanag sa Legal at Seguro",
-            "description": "Isipin mong nag-a-upload ka ng mga buod ng kontrata at diagram ng proseso na kalakip ang nakarekord na boses ng iyong advisor. Pagkatapos, agad kang makakabuo ng mga visual na paliwanag na talagang mauunawaan ng mga kliyente — bago pa man sila pumirma o maghain ng claim."
+            "description": "Isipin mong nag-a-upload ka ng mga buod ng kontrata at diagram ng proseso na kalakip ang nakarekord na boses ng iyong advisor. Pagkatapos, agad kang nakakagawa ng mga visual na paliwanag na talagang mauunawaan ng mga kliyente — bago pa man sila pumirma o maghain ng claim."
           },
           {
             "id": "mga aral na panrelihiyon at espirituwal",
@@ -697,85 +1172,52 @@
       }
     ]
   },
-  "institutionalRoi": {
-    "badge": "Para sa mga in-house na team at institusyon",
-    "title": "Palitan ang mga shoot na isinasagawa ng mga vendor ng produksyong in-house na may predictable na resulta.",
-    "subtitle": "Ang mga team sa communications, L&D, at marketing na binubuo ng 1–5 tao ay makakapaglabas ng video sa loob mismo ng linggong iyon—nang hindi nangangailangan ng retainer sa agency o walang katapusang proseso ng pag-edit.",
-    "comparisons": [
-      {
-        "label": "Tradisyonal na shoot at pag-edit para sa vendor",
-        "cost": "$5,000–$15,000",
-        "timeline": "4–8 linggo"
-      },
-      {
-        "label": "SceneFlow panloob na daloy ng trabaho",
-        "cost": "$50–$500 na halaga ng credits",
-        "timeline": "Sa parehong linggo"
-      }
-    ],
-    "bullets": [
-      "Mga template na ligtas para sa brand at pag-apruba bago ang pinal na render",
-      "Mga limitasyon sa badyet na may nakikitang paggamit ng credit bawat proyekto",
-      "Walang mga araw para sa production crew, at walang pabalik-balik na proseso ng pag-e-edit sa bawat rebisyon."
-    ],
-    "ctaPrimary": "Mag-iskedyul ng walkthrough kasama ang team",
-    "ctaSecondary": "Tingnan ang mga presyo",
-    "typicalCost": "Karaniwang gastos",
-    "timeline": "Timeline"
-  },
   "platformWalkthrough": {
-    "badge": "Pinatnubayang Paglilibot",
-    "title": "Gabay sa Paggamit ng Platform",
-    "subtitle": "Isang kumpletong gabay sa daloy ng trabaho ng SceneFlow AI Studio, mula sa mga pagsusuri sa kolaborasyon hanggang sa pinal na cinematic output.",
-    "subheading": "Galugarin ang platform — magsimula sa mga pangunahing bagay",
-    "chapterHint": "Apat na bagay na dapat malaman ngayon. Palawakin ang mga chapter kung nais mong makuha ang kabuuang detalye.",
+    "badge": "Sa ilalim ng hood",
+    "title": "Detalyadong Paglilibot sa Platform",
+    "subtitle": "Palawakin upang makita ang mga guided clip tungkol sa pagpaplano ng serye, pagpapanatili ng consistency sa mga reference, lalim ng produksyon, Screening Room, at trust & safety — para sa mga teknikal na reviewer at sa mga nais ng mas malalim na pagtalakay.",
+    "subheading": "Sa likod ng mga eksena — mga gabay na video para sa mga teknikal na tagasuri",
+    "chapterHint": "Palawakin para sa pagpaplano ng serye, pagpapanatili ng pagkakaugnay-ugnay ng mga sanggunian, lalim ng produksyon, at tiwala at kaligtasan.",
     "expandChapter": "Mga tampok ng palabas",
     "collapseChapter": "Itago ang mga feature",
     "underTheHoodLabel": "Sa ilalim ng hood",
     "chapters": [
       {
-        "id": "mga pangunahing pangangailangan",
-        "label": "Magsimula rito — ang makukuha mo sa unang araw"
+        "id": "Magsimula rito",
+        "label": "Magsimula rito — pagpaplano, pagpapatuloy, at pagiging angkop sa mga manonood"
       },
       {
-        "id": "kalidad",
-        "label": "Siguraduhing tumimo ito sa iyong mga tagapakinig."
-      },
-      {
-        "id": "produksyon",
-        "label": "Mula sa mga inaprubahang beat hanggang sa nailathalang master recording"
-      },
-      {
-        "id": "advanced",
-        "label": "Para sa mga team na nagnanais ng billing at pamamahala"
+        "id": "lumikha at maglathala",
+        "label": "Gumawa at mag-publish — I-shoot ang tab papunta sa Screening Room"
       }
     ],
     "close": "Isara",
     "viewDetails": "Tingnan ang mga detalye",
     "beatFirst": {
-      "title": "Proseso ng Paggawa ng Video na Inuuna ang Beat",
-      "description": "Aprubahan ang mga pre-vis beat at Beat Frames bago ang F2V — mababawasan ang mga walang-batayang muling pagbuo (blind regeneration) na dulot ng hallucination at visual drift. Isang organisadong proseso mula sa pagsusuri hanggang sa pinal na clip.",
+      "title": "Proseso ng Paggawa ng Video na Nakabatay sa Beat",
+      "description": "Aprubahan ang mga pre-vis beat at Beat Frames bago ang F2V — mababawasan ang mga blind regeneration na dulot ng hallucination at visual drift. Isang organisadong proseso mula sa review hanggang sa final clip.",
       "keyFeatures": [
         "Express Pre-vis para sa pagsusuri — ibahagi ang mga beat bago ang mabigat na rendering",
         "Beat Frames komposisyon ng lock — Reference Library pagpapatuloy",
-        "F2V bawat beat — bumuo ng video mula sa mga aprubadong frame",
-        "Timing at mga stream ng mixer — i-export sa assembly na Final Cut"
+        "F2V bawat beat — bumuo ng video mula sa mga inaprubahang frame",
+        "Tuloy-tuloy na EXT chain — mga native na +7s step para sa mahahabang diyalogo sa loob ng isang beat",
+        "Timing at mga stream ng mixer — buksan ang Screening Room upang buuin at i-publish"
       ],
       "screenshotSlot": "Maglagay ng screenshot: Beat Frames at pag-apruba sa pre-vis bago ang pagbuo ng video",
-      "videoSlot": "Maglagay ng 00:30 clip: Pag-apruba sa mga beat, pag-lock sa mga frame, at pagkatapos ay pag-generate ng mga F2V clip."
+      "videoSlot": "Maglagay ng 00:30 na clip: Pag-apruba sa mga beat, pag-lock sa mga frame, at pagkatapos ay pag-generate ng mga F2V clip."
     },
     "screeningRoom": {
-      "title": "Pagsusuri at Analytics ng Audience",
-      "description": "Mga pribadong link para sa pagbabahagi sa mga stakeholder — naglalaman ng mga manual na marka, nakabalangkas na feedback, at opsyonal na analytics ng engagement (na may pahintulot ng manonood). Ginagamit sa Premiere bago ang pag-publish at para sa preview ng production pre-vis.",
+      "title": "Screening Room",
+      "description": "I-preview ang mga video ng eksena, buuin ang master copy, at i-publish — lahat mula sa Production. Mga pribadong link para sa pagbabahagi sa mga stakeholder, na may kasamang structured feedback at opsyonal na engagement analytics.",
       "keyFeatures": [
-        "Mga pribadong sesyon ng pagsusuri — ligtas na mga link para sa pagbabahagi sa mga stakeholder",
-        "Nakabalangkas na feedback mula sa mga manonood — mga rating at mga bukas na punto",
-        "Opsyonal na analytics ng pakikipag-ugnayan — na may pahintulot ng manonood bago ang pagkuha ng datos",
-        "Magpatuloy sa pag-aayos batay sa totoong datos — pinuhin ang Blueprint at ang script gamit ang mga insight mula sa mga reviewer."
+        "Preview ng video ng eksena — i-play nang sunod-sunod ang mga na-render na stream",
+        "Master assembly — piliin ang Animatic o Video per scene at mag-render ng isang MP4",
+        "Mga screening na maaaring ibahagi — mga secure na link na may scoring at pagsusuri ng feedback",
+        "Pag-publish — YouTube wizard, mga export na short-form, at mga distribution bundle"
       ],
       "screenshotSlot": "Maglagay ng screenshot: Screening Room panel ng analytics at feedback ng reviewer",
       "screenshotUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-19%20at%2018.29.48.png",
-      "videoSlot": "Maglagay ng 00:30 na clip: Pagsasagawa ng review session at pagkalap ng datos sa engagement"
+      "videoSlot": "Maglagay ng 00:30 clip: Pagsasagawa ng review session at pagkalap ng datos sa engagement"
     },
     "ui": {
       "screenshot": "Screenshot",
@@ -790,116 +1232,16 @@
     "items": [
       {
         "id": "1",
-        "title": "Intuitive na UX + Ganap na Kontrol ng Creator",
-        "description": "Magsimula nang mabilis gamit ang guided automation, pagkatapos ay i-edit ang bawat output upang mapanatili ng mga team ang kontrol sa pagiging malikhain nang hindi nawawala ang bilis.",
+        "title": "Pangkalahatang-ideya ng Platform",
+        "description": "Isang studio lang mula sa konsepto hanggang sa video na handa nang i-publish. Parehong proseso para sa training, podcast, balita, at cinematic series — aprubahan ang pre-visualization bago gumastos para sa final rendering.",
         "keyFeatures": [
-          "Guided Studio workflow — mula konsepto hanggang export sa iisang lugar",
-          "I-edit nang direkta ang bawat beat, karakter, at linyang binuo ng AI.",
-          "Mga baryasyon ng treatment — paghahambing nang magkatabi para sa malikhaing direksyon",
-          "Blueprint Makipagtulungan — magbahagi ng mga link, audio ng seksyon, at nakabalangkas na feedback mula sa mga reviewer."
+          "Serye → Blueprint → Produksyon → Screening Room",
+          "Pag-apruba batay sa beat — pre-vis at Beat Frames bago ang F2V",
+          "Pagbuo ng Google Vertex AI gamit ang mga native na Veo extension chain",
+          "Mga mekanismo para sa tiwala at kaligtasan, at patunay ng pinagmulan na may lagda sa oras ng paghahatid"
         ],
-        "screenshotSlot": "Maglagay ng screenshot: editor ng Blueprint na may mga nababagong seksyong nabuo",
-        "videoSlot": "Maglagay ng 00:30 clip: UX flow mula sa konsepto hanggang sa output na maaaring i-edit"
-      },
-      {
-        "id": "2",
-        "title": "Badyet sa Kredit at Pagkontrol sa Gastos",
-        "description": "Subaybayan ang paggamit ng credit nang real-time at magtakda ng mga limitasyon bago ang mga proseso ng generation na magastos.",
-        "keyFeatures": [
-          "Paggamit ng credit sa real-time — ayon sa proyekto at operasyon",
-          "Mga pananggalang sa production — bago ang mga magastos na proseso ng generation",
-          "Mga malinaw na talaan ng presyo — para sa TTS, video, at intelligence",
-          "Visibility sa budget — para sa mga team at solo creator"
-        ],
-        "screenshotSlot": "Maglagay ng screenshot: panel ng paggamit ng credit at mga setting ng BYOK",
-        "videoSlot": "Maglagay ng 00:30 na clip: budget dashboard at pangunahing configuration",
-        "underTheHood": {
-          "title": "Sa ilalim ng hood",
-          "body": "Para sa mga production team na may mga kasalukuyang kontrata sa cloud:",
-          "bullets": [
-            "Vertex AI BYOK — pagsingil at pamamahala sa antas-enterprise",
-            "Mga toggle ng provider sa credit calculator",
-            "Mga malinaw na talaan ng mga rate ng platform kasabay ng iyong mga key"
-          ]
-        }
-      },
-      {
-        "id": "3",
-        "title": "Anumang Konsepto, Isang Daloy ng Trabaho sa Produksyon",
-        "description": "Gumamit ng iisang maaasahang daloy ng trabaho para sa pagsasanay, mga podcast, balita, mga video ng pagbebenta ng bahay, at cinematic content.",
-        "keyFeatures": [
-          "Isang daloy ng produksyon — mga format para sa podcast, balita, pagsasanay, real estate, at pelikula",
-          "Mga template ng proyekto — Umaangkop ang Studio sa iyong source material",
-          "Parehong Blueprint → Iskrip → Proseso ng produksyon — anuman ang genre",
-          "Hindi na kailangang magpalit-palit ng tool — mula sa pagbuo ng ideya hanggang sa paghahatid"
-        ],
-        "screenshotSlot": "Maglagay ng screenshot: Split-view o grid na nagpapakita ng mga template para sa Podcast, Balita, Real Estate, at Cinematic na pumapasok sa iisang pinag-isang UI ng pipeline na SceneFlow.",
-        "videoSlot": "Maglagay ng 00:30 clip: \"Magsimula sa anumang source material...\" pag-click sa New Project -> Podcast (nag-a-adjust ang UI para sa audio), kasunod ang split screen na nagpapakita sa mga proyektong News at Cinematic na nagsasama-sama sa Blueprint editor."
-      },
-      {
-        "id": "4",
-        "title": "Matalinong Automation na may Tumpak na Kontrol sa Pag-edit",
-        "description": "Ginagamit ng SceneFlow platform ang intelligence upang awtomatikong bumuo ng propesyonal na baseline (serye, blueprint, script, production prompts, at mga edit), habang nagbibigay ng matatalinong dialog na nagbibigay sa iyo ng ganap na kontrol sa pag-edit na may kasamang mga built-in na guardrail.",
-        "keyFeatures": [
-          "Mga batayang AI sa isang pasada — serye, blueprint, script, at mga prompt para sa produksyon",
-          "Mga matalinong dialog sa pag-edit — mga gabay at limitasyon, hindi basta-bastang muling pagsulat",
-          "Tanggapin, ayusin, o tanggihan — nasa ilalim ng iyong kontrol ang bawat mungkahi.",
-          "Pakikilahok ng tao — sa bawat yugto ng produksyon"
-        ],
-        "screenshotSlot": "Maglagay ng screenshot: Intelligent dialog na nagpapakita ng pagbuo ng baseline kasama ang mga kontrol sa pag-edit",
-        "videoSlot": "Maglagay ng 00:30 na clip: pagbuo ng baseline gamit ang AI, na susundan ng paggawa ng mga tiyak na pagbabago ng user."
-      },
-      {
-        "id": "5",
-        "title": "Ibinahagi ang Reference Library para sa pagpapatuloy",
-        "description": "Panatilihin ang pagkakapare-pareho ng mga karakter, kasuotan, boses, lokasyon, at props sa iba't ibang eksena at episode gamit ang mga reperensiyang maaaring gamitin muli.",
-        "keyFeatures": [
-          "Mga profile na maaaring gamitin muli — mga karakter, kasuotan, boses, lokasyon, at mga props",
-          "Aplikasyong sumasaklaw sa iba't ibang senaryo — dumadaloy ang mga reperensiya sa bawat henerasyon",
-          "Pagkakapare-pareho ng visual — magkakatulad na mga mukha at tono sa mga output ng Imagen at Veo",
-          "Pagpapatuloy na ang saklaw ay pang-franchise — dinisenyo para sa mga seryeng binubuo ng maraming episode"
-        ],
-        "screenshotSlot": "Maglagay ng screenshot: Library ng mga sanggunian na nagpapakita ng continuity ng karakter at mga prop.",
-        "videoSlot": "Maglagay ng 00:30 na clip: Paglalapat ng mga reference sa iba't ibang eksena"
-      },
-      {
-        "id": "6",
-        "title": "Express Generation Engine",
-        "description": "Awtomatikong bumuo ng mga imahe at video segment nang sabay-sabay. Hinahayaan ka ng Express Pre-vis na suriin at ibahagi ang mga audio-visual pre-vis sa loob lamang ng ilang minuto. Gumagawa ang Express Pre-vis ng mga kumpletong Ken Burns scene sa loob ng ilang minuto, habang ang Express Video naman ay nakapagbibigay ng mga pinal na video scene sa loob ng ilang minuto sa halip na ilang araw.",
-        "keyFeatures": [
-          "Sabay-sabay na pagbuo — mga imahe at video sa iba't ibang eksena nang sabay",
-          "Express Pre-vis — mga audio-visual preview na maaaring ibahagi sa loob ng ilang minuto",
-          "Express Animatics — Ken Burns motion mula sa mga still image",
-          "Express Video — mga clip na nakabase sa eksena sa loob ng ilang minuto, hindi mga araw"
-        ],
-        "screenshotSlot": "Maglagay ng screenshot: Express generation dashboard na may mga Animatic at progreso ng video",
-        "videoSlot": "Maglagay ng 00:30 clip: Sabay-sabay na pagbuo kung saan ginagawang animatic ang script at pagkatapos ay ang pinal na video."
-      },
-      {
-        "id": "7",
-        "title": "Audience Resonance Editor",
-        "description": "Tukuyin ang iyong target na audience upang makakuha ng agarang scoring, pagsusuri, at mga rekomendasyon. Gamitin ang one-click fixes o Guided Edits upang perpektong ma-optimize ang iyong mga Episode, Blueprint, at Script para sa pinakamataas na epekto.",
-        "keyFeatures": [
-          "Pagmamarka ng target na madla — kasama ang paghihiwalay ayon sa kategorya",
-          "Mga rekomendasyong nakabatay sa seksyon — ayusin ang tamang bahagi ng iyong kuwento",
-          "Mga pag-aayos sa isang click at Guided Edit — tumpak na muling pagsulat, hindi hula-hula",
-          "Antas para sa pagiging handa sa produksyon — alamin kung kailan dapat mamuhunan sa full render"
-        ],
-        "screenshotSlot": "Maglagay ng screenshot: Resonance Editor na may audience scoring at mga one-click fix",
-        "videoSlot": "Maglagay ng 00:30 na clip: Paglalapat ng mga guided edit batay sa audience resonance score"
-      },
-      {
-        "id": "8",
-        "title": "Adaptibong Pagsasalin (Mahigit 70 Wika)",
-        "description": "I-localize ang nilalaman nang malawakan habang pinapanatili ang layunin ng naratibo at pagkakahanay ng timeline para sa paghahatid sa iba't ibang wika.",
-        "keyFeatures": [
-          "Mahigit 70 wika — narasyon, diyalogo, at kopya sa malakihang antas",
-          "Napanatili ang layunin ng pagsasalaysay — nananatiling magkatugma ang kahulugan at tiyempo.",
-          "Mga audio track na may iba't ibang wika — sa timeline ng eksena",
-          "Mga package na handa nang i-export — bawat locale para sa distribusyon"
-        ],
-        "screenshotSlot": "Maglagay ng screenshot: Timeline na may iba't ibang wika at mga setting ng pagsasalin",
-        "videoSlot": "Maglagay ng 00:30 na clip: Agarang pag-aangkop ng isang eksena sa iba't ibang wika"
+        "screenshotSlot": "Maglagay ng screenshot: Landing hero + pinasimpleng walkthrough strip",
+        "videoSlot": "Ilagay ang clip na 01:30: Hero → bagong proyekto → Blueprint → Production Shoot → Screening Room → I-publish"
       },
       {
         "id": "9",
@@ -908,7 +1250,7 @@
         "keyFeatures": [
           "Tukuyin nang minsan ang iyong mundo—mga karakter, tono, at takbo ng kuwento sa season.",
           "Magkakaugnay na balangkas ng mga episode — awtomatikong nabubuo para sa buong season",
-          "Pagsubaybay sa pagpapatuloy — pag-aayos ng mga season na binubuo ng maraming episode",
+          "Pagsubaybay sa pagpapatuloy — pag-aayon ng mga season na binubuo ng maraming episode",
           "Pag-synchronize ng serye sa episode — patungo sa Blueprint Studio at Produksyon"
         ],
         "screenshotSlot": "Maglagay ng screenshot: Pangkalahatang-ideya ng serye na may mga episode arc na awtomatikong nabuo",
@@ -920,69 +1262,83 @@
         "description": "Gawing mga estrukturadong treatment ang mga konsepto, na kinabibilangan ng logline, beats, mga karakter, at tono. Patakbuhin ang Audience Resonance at makipagtulungan bago ang mabigat na rendering.",
         "keyFeatures": [
           "Daloy ng trabahong Pagbuo → Pagsusuri → Pag-uulit → Pagsisimula ng Produksyon",
-          "Mula konsepto hanggang estruktura sa loob ng ilang minuto — logline, beats, mga karakter, at tono",
+          "Mula konsepto hanggang estruktura sa loob ng ilang minuto — logline, beats, mga tauhan, at tono",
           "Audience Resonance pagmamarka na may target na 80+ bago ang Production",
           "Mga link na ibinahagi ng mga katuwang — pagsasama-sama ng mga puna para sa ginabayang rebisyon"
         ],
         "screenshotSlot": "Maglagay ng screenshot: Awtomatikong nabuong Blueprint na may mga story beat at character arc",
-        "videoSlot": "Maglagay ng 00:30 na clip: Pagbuo ng isang structured na Blueprint mula sa isang konsepto"
+        "videoSlot": "Maglagay ng 00:30 clip: Pagbuo ng isang konsepto tungo sa isang estrukturadong Blueprint"
+      },
+      {
+        "id": "5",
+        "title": "Ibinahagi ang Reference Library para sa pagpapatuloy",
+        "description": "Panatilihin ang pagkakapare-pareho ng mga karakter, kasuotan, boses, lokasyon, at props sa iba't ibang eksena at episode gamit ang mga reperensiyang maaaring gamitin muli.",
+        "keyFeatures": [
+          "Mga profile na maaaring gamitin muli — mga karakter, kasuotan, boses, lokasyon, at props",
+          "Aplikasyon sa iba't ibang sitwasyon — dumadaloy ang mga reperensiya sa bawat henerasyon",
+          "Pagkakapare-pareho ng visual — magkakatulad na mga mukha at tono sa mga output ng Imagen at Veo",
+          "Pagpapatuloy na pang-franchise — dinisenyo para sa mga seryeng binubuo ng maraming episode"
+        ],
+        "screenshotSlot": "Maglagay ng screenshot: Library ng mga sanggunian na nagpapakita ng continuity ng karakter at mga prop.",
+        "videoSlot": "Maglagay ng 00:30 na clip: Paglalapat ng mga reference sa iba't ibang eksena"
+      },
+      {
+        "id": "7",
+        "title": "Audience Resonance Pagsusuri",
+        "description": "Tukuyin ang iyong target na audience upang makakuha ng agarang scoring, pagsusuri, at mga rekomendasyon. Gamitin ang one-click fixes o Guided Edits upang perpektong ma-optimize ang iyong mga Episode, Blueprint, at Script para sa pinakamataas na epekto.",
+        "keyFeatures": [
+          "Pagmamarka ng target na madla — kasama ang paghihiwalay ayon sa kategorya",
+          "Mga rekomendasyong nakabatay sa seksyon — ayusin ang tamang bahagi ng iyong kuwento",
+          "Mga pag-aayos sa isang click at Guided Edit — tumpak na muling pagsulat, hindi hula-hula",
+          "Antas para sa pagiging handa sa produksyon — alamin kung kailan dapat mamuhunan sa full render"
+        ],
+        "screenshotSlot": "Maglagay ng screenshot: Resonance Editor na may audience scoring at mga one-click fix",
+        "videoSlot": "Maglagay ng 00:30 na clip: Paglalapat ng mga guided edit batay sa audience resonance score"
       },
       {
         "id": "11",
         "title": "Awtomasyon sa Produksyon",
-        "description": "Ginagabayan ng mga tab na Script at Action ang Foundation → pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer, at mga MP4 stream — hindi na kailangang lumipat ng tool.",
+        "description": "Pinapatnubayan ng mga tab na Script at Shoot ang daloy mula Foundation → Pre-Vis → Footage → Mixer → Streams. Binabawasan ng mga checkpoint sa bawat eksena ang pangangailangang ulitin ang trabaho; pinangangasiwaan naman ng Screening Room ang preview, assembly, at publishing.",
         "keyFeatures": [
-          "Foundation — iskrip, mga boses, audio ng eksena, pinal na iskrip",
-          "Express Pre-vis — direksyon at mga frame sa loob ng ilang minuto; gallery at pagbabahagi",
-          "Beat Frames at Mixer — mga frame ng simula/wakas, Director Console, pag-render ng mga MP4 stream",
-          "Mga Production Stream — suriin ang mga output, i-render muli ang mga outdated na beat, ipadala sa Final Cut"
+          "Foundation — iskrip, mga boses, audio ng eksena, Audience Resonance",
+          "Pre-Vis — direksyon, audio, at mga beat frame bawat eksena, kalakip ang mga link para sa pagbabahagi",
+          "Mag-shoot — Footage, Mixer, at Streams nang hindi umaalis sa Production",
+          "Screening Room — preview ng eksena, pagbuo ng master copy, mga screening, at pag-publish sa YouTube"
         ],
-        "screenshotSlot": "Maglagay ng screenshot: Production dashboard na nagpapakita ng script, Beat Frames, at Mixer",
-        "videoSlot": "Maglagay ng 00:30 na clip: Foundation, Express Pre-vis, Beat Frames, at stream export"
-      },
-      {
-        "id": "12",
-        "title": "Final Cut Asembliya",
-        "description": "Pagsamahin ang mga tapos nang Production stream sa iisang master MP4. Pumili ng Animatic o kaya ay video at wika para sa bawat eksena — hindi na kailangan ng timeline editing; ang mga creative change ay mananatili sa Production Mixer.",
-        "keyFeatures": [
-          "Pagpili ng stream bawat eksena — Animatic, Video, wika, bersyon",
-          "Mga preset ng pagbuo — Lahat ng Video, Hybrid, Custom mix",
-          "Walang pag-e-edit sa timeline — ang mga malikhaing pagbabago ay mananatili sa Production Mixer",
-          "One-click master export — pinagdugtong na MP4 para sa Premiere"
-        ],
-        "screenshotSlot": "Maglagay ng screenshot: Final Cut assembly panel na may mga stream picker para sa bawat eksena",
-        "videoSlot": "Maglagay ng 00:30 na clip: Pagpili ng mga stream, pag-preview sa assembly, at pag-export ng master"
-      },
-      {
-        "id": "13",
-        "title": "Premiere Distribusyon",
-        "description": "Suriin ang iyong master copy gamit ang audience analytics, pagkatapos ay i-publish ito sa YouTube na may localized metadata o mag-export ng mga bundle para sa Shorts, Reels, at TikTok.",
-        "keyFeatures": [
-          "Maaaring ibahagi Screening Room — mga link na /s/ na may scoring at opsyonal na analytics ng engagement (may pahintulot ng manonood)",
-          "Dashboard ng mga insight — Mga tab na Scoring, Biometric, at Visual",
-          "YouTube wizard — thumbnail, naka-localize na pamagat/paglalarawan, SceneFlow CTA",
-          "Mga bundle para sa pag-export at mga plano para sa mga vertical na short-form clip"
-        ],
-        "screenshotSlot": "Maglagay ng screenshot: Dashboard ng Premiere na may mga insight at publish wizard",
-        "videoSlot": "Maglagay ng 00:30 na clip: Mga insight sa screening, YouTube wizard, at mga export bundle"
+        "screenshotSlot": "Maglagay ng screenshot: Production dashboard na nagpapakita ng Script tab, Shoot tab, at Pre-Vis.",
+        "videoSlot": "Maglagay ng 00:60 na clip: I-finalize ang script → Express Pre-vis bawat eksena → Kunan ang footage → Mixer → Mga stream"
       },
       {
         "id": "14",
-        "title": "Pagsusuri at Analytics ng Audience",
-        "description": "Mga pribadong link para sa pagbabahagi sa mga stakeholder — naglalaman ng mga manual na marka, nakabalangkas na feedback, at opsyonal na analytics ng engagement (na may pahintulot ng manonood). Ginagamit sa Premiere bago ang pag-publish at para sa preview ng production pre-vis.",
+        "title": "Screening Room",
+        "description": "I-preview ang mga video ng eksena, buuin ang master copy, at i-publish — lahat mula sa Production. Mga pribadong link para sa pagbabahagi sa mga stakeholder, na may kasamang structured feedback at opsyonal na engagement analytics.",
         "keyFeatures": [
-          "Mga pribadong sesyon ng pagsusuri — ligtas na mga link para sa pagbabahagi sa mga stakeholder",
-          "Nakabalangkas na feedback mula sa mga manonood — mga rating at mga bukas na punto",
-          "Opsyonal na analytics ng pakikipag-ugnayan — na may pahintulot ng manonood bago ang pagkuha ng datos",
-          "Magpatuloy sa pag-aayos batay sa totoong datos — pinuhin ang Blueprint at ang script gamit ang mga insight mula sa mga reviewer."
+          "Preview ng video ng eksena — i-play nang sunod-sunod ang mga na-render na stream",
+          "Master assembly — piliin ang Animatic o Video per scene at mag-render ng isang MP4",
+          "Mga screening na maaaring ibahagi — mga secure na link na may scoring at pagsusuri ng feedback",
+          "Pag-publish — YouTube wizard, mga export na short-form, at mga distribution bundle"
         ],
         "screenshotSlot": "Maglagay ng screenshot: Screening Room panel ng analytics at feedback ng reviewer",
-        "videoSlot": "Maglagay ng 00:30 na clip: Pagsasagawa ng review session at pagkalap ng datos sa engagement"
+        "videoSlot": "Maglagay ng 00:30 clip: Pagsasagawa ng review session at pagkalap ng datos sa engagement"
+      },
+      {
+        "id": "16",
+        "title": "Tiwala at Kaligtasan",
+        "description": "Mga patong-patong na pananggalang sa bawat proseso ng pagbuo: seguridad ng Google Vertex AI, Extended Creative Services na may mga pananggalang, opsyonal na pagpapatunay ng nilalaman sa Studio, at pirmadong patunay ng pinagmulan para sa segment video.",
+        "keyFeatures": [
+          "Seguridad na likas sa Google — Vertex Responsible AI sa lahat ng henerasyon",
+          "May-ingat na fallback — pagsusuri sa mga alternatibong landas bago ang pag-imbak",
+          "Pagpapatunay ng nilalaman sa Studio — mga signal ng patakaran bago ang mabigat na pag-render",
+          "Pagpapatupad laban sa mga paglabag — mga naitalang strike at mga limitasyong nagdudulot ng suspensyon",
+          "Nilagdaang patunay ng pinagmulan — mga content hash at audit log sa oras ng paghahatid"
+        ],
+        "screenshotSlot": "Maglagay ng screenshot: Seksyon ng Trust & Safety o panel ng validation sa Studio",
+        "videoSlot": "Ilagay ang 00:45 na clip: Mga antas ng tiwala sa landing → Mga signal ng pagpapatunay ng studio → guarded-path block → provenance metadata → patakaran sa tiwala at kaligtasan (/trust-safety policy)"
       }
     ]
   },
   "engineeringTrust": {
-    "badge": "Inhinyeriya at Seguridad",
+    "badge": "Inhenyeriya at Seguridad",
     "title": "Ginawa para sa",
     "titleAccent": "Mga Load ng Trabaho sa Produksyon",
     "subtitle": "Arkitekturang angkop sa mga startup na may mga component na Google Cloud na sumusuporta sa seguridad, scalability, at praktikal na paghahatid sa production.",
@@ -1003,7 +1359,7 @@
         "title": "Seguridad at Privacy",
         "description": "Nananatiling protektado ang mga creative asset sa pamamagitan ng encryption habang nakaimbak, mga kontrol sa access, at pangangasiwang prayoridad ang privacy.",
         "highlights": [
-          "Mga kontrol sa cloud na handa para sa enterprise",
+          "Mga cloud control na handa para sa enterprise",
           "AES-256 encryption",
           "Dinisenyo nang isinasaalang-alang ang GDPR",
           "Tingnan ang aming Patakaran sa Privacy para sa paghawak ng datos."
@@ -1035,7 +1391,7 @@
         "label": "Pag-e-encrypt"
       },
       {
-        "value": "24 oras sa isang araw, 7 araw sa isang linggo",
+        "value": "24 oras, 7 araw sa isang linggo",
         "label": "Pagsubaybay"
       }
     ],
@@ -1062,16 +1418,17 @@
       "poweredBy": "Pinapagana ng Google Cloud kasama ang Vertex AI, Cloud Storage, at mga kagamitan sa pagsasalin",
       "footnote": "Ang SceneFlow AI ay tumatakbo sa scalable na imprastrukturang Google Cloud na idinisenyo para sa paglago ng mga startup at sa mga inaasahan ng malalaking negosyo."
     },
+    "trustSafeguardLink": "Pinag-ipatong na tiwala: seguridad ng Google Vertex kasama ang mga guardrail, pagpapatunay, at provenance ng SceneFlow — tingnan ang Trust & Safety sa ibaba.",
     "attribution": "— Ang Engineering Team ng SceneFlow"
   },
   "coreCapabilities": {
     "audienceResonance": {
-      "badge": "Patong ng Katalinuhan",
-      "title": "Audience Resonance Editor",
+      "badge": "Antas ng Katalinuhan",
+      "title": "Audience Resonance Pagsusuri",
       "description": "Alamin ang iyong score bago mamuhunan sa full renders. Puntiryahin ang mga score na Audience Resonance at Blueprint pati na ang script gamit ang mga konkretong pagbabago — i-optimize ang bawat bahagi bago ang Express at video generation.",
       "bullets": [
         "Tukuyin ang iyong tiyak na target na madla",
-        "Kumuha ng real-time na iskor, pagsusuri, at mga rekomendasyon.",
+        "Kumuha ng real-time na iskor, pagsusuri, at mga rekomendasyon",
         "Mga solusyong isang-click lang para ayusin ang mga kahinaan sa naratibo",
         "Guided Edit upang i-optimize ang mga Episode, Blueprint, at Script"
       ],
@@ -1079,7 +1436,7 @@
       "howWeScore": {
         "toggle": "Paano kami nagbibigay ng marka",
         "title": "Paano gumagana ang Audience Resonance",
-        "description": "Pinagsasama ng Audience Resonance ang pagsusuri sa estruktura ng naratibo (kalinawan, bilis ng daloy, at emosyonal na daloy ng kuwento) at ang pagiging angkop nito sa target na persona batay sa audience na tinukoy mo sa Blueprint — hindi ito nakabatay sa mga \"vanity metric\" o datos ng retention pagkatapos ma-publish ang video. Nakatali ang mga rekomendasyon sa mga partikular na bahagi ng script upang maitama mo ang mga isyu bago ang Express o ang pag-generate ng video.",
+        "description": "Pinagsasama ng Audience Resonance ang pagsusuri sa estruktura ng naratibo (kalinawan, bilis ng daloy, at emosyonal na daloy ng kuwento) at ang pagiging angkop nito sa target na persona na tinukoy mo sa Blueprint — hindi ito nakabatay sa mga \"vanity metric\" o datos ng retention pagkatapos ma-publish ang video. Nakatali ang mga rekomendasyon sa mga partikular na bahagi ng script upang maitama mo ang mga isyu bago ang proseso ng Express o pagbuo ng video.",
         "bullets": [
           "I-evaluate ang mga score ng Blueprint at ang script batay sa iyong tinukoy na target na audience.",
           "Mga rekomendasyong nakabatay sa bawat seksyon — hindi isang numerong \"magtiwala na lang kayo\" na nagmumula sa isang hindi maipaliwanag na sistema.",
@@ -1091,10 +1448,10 @@
     "express": {
       "badge": "Napakabilis na Produksyon",
       "title": "Sceneflow Express",
-      "description": "Awtomatikong bumuo ng mga pre-vis, animatic, at video beat nang sabay-sabay. Mula sa script patungo sa preview na maaaring ibahagi sa loob lamang ng ilang minuto — pagkatapos ay aprubahan ang Beat Frames bago ang pinal na paggastos para sa F2V.",
+      "description": "Awtomatikong bumuo ng pre-vis, animatics, at video beats nang sabay-sabay. Mula sa script patungo sa preview na maaaring ibahagi sa loob lamang ng ilang minuto — at pagkatapos ay aprubahan ang Beat Frames bago ang pinal na paggastos para sa F2V.",
       "items": [
         {
-          "title": "Mabilisang pre-vis",
+          "title": "Express Pre-vis",
           "desc": "Suriin at ibahagi ang mga audio at video pre-vis sa loob ng ilang minuto sa halip na ilang oras.",
           "time": "Mga minuto laban sa mga oras"
         },
@@ -1105,12 +1462,43 @@
         },
         {
           "title": "Express Video",
-          "desc": "Pangasiwaan ang sabay-sabay na pagbuo ng mga imahe at video para sa kumpletong paghahatid ng eksena.",
+          "desc": "Pamahalaan ang sabay-sabay na pagbuo ng imahe at video—kabilang ang mga native na extension chain ng Veo para sa mahahabang bahagi ng diyalogo.",
           "time": "Mga Minuto laban sa mga Araw"
         }
       ],
       "cta": "Simulan ang Express Rendering"
     }
+  },
+  "preVisEngine": {
+    "badge": "Creative Decision Engine",
+    "title": "Pre-Visualization Engine",
+    "subtitle": "Ang paggawa ng isang 40-minutong audio-visual animatic na kumpleto sa boses at musika sa loob lamang ng 15 minuto ay hindi na basta isang hakbang sa proseso ng paggawa—ito mismo ang mismong produkto. Sa Hollywood, ang pre-visualization ay inaabot ng ilang linggo at nagkakahalaga ng daan-daang libong dolyar. Ginagawa itong posible ng SceneFlow sa loob ng ilang minuto at sa napakaliit na halaga.",
+    "narrative": "Sa industriya ng pelikula, ang storyboard ay ibinibigay sa production crew. Ang Pre-vis naman ay ipinapakita sa mga executive ng studio, investor, at producer upang maaprubahan ang isang proyekto. Itinataas ng SceneFlow ang antas ng produksyon mula sa pagiging tool para sa mga consumer creator patungo sa pagiging enterprise-grade pipeline asset.",
+    "pillars": [
+      {
+        "title": "Ang Pinakamahusay na Pitch Deck",
+        "description": "Mag-upload ng script at humarap sa pitch meeting dala ang isang pre-visualization na may kumpletong boses, musika, at suporta sa iba't ibang wika, pati na ang mga konkretong datos mula sa Audience Resonance. Bigyan ang mga creator ng isang audio-visual na \"cheat code\" na nakabatay sa datos upang maisakatuparan ang paggawa ng kanilang mga pelikula."
+      },
+      {
+        "title": "Maagang Pagtukoy ng Pagkabigo bago ang Produksyon",
+        "description": "Ang tradisyonal na pre-visualization ay nangangailangan ng mga 3D animator, storyboard artist, at voice actor sa loob ng ilang linggo. Kapag hindi naging epektibo ang isang eksena, nasasayang ang sampu-sampung libong dolyar. Maaari nang gumawa ng mga pagbabago at pag-aayos sa loob lamang ng 15 minuto, bago pa man kumuha ng kahit isang miyembro ng camera crew."
+      },
+      {
+        "title": "Pagsusuri sa Pananalapi",
+        "description": "Umaapela ito sa bahagi ng industriya na pinaka-ayaw sa panganib: ang mga financier. Ipakita kung paano tumutugma ang pacing, tono, at mga diyalogo sa target na audience bago pa man gumastos ng kahit isang dolyar para sa produksyon."
+      }
+    ],
+    "workflow": {
+      "title": "Pag-upload ng script → pre-visualization na handa nang aprubahan",
+      "steps": [
+        "Mag-upload ng mga script na sumusunod sa pamantayan ng industriya (.fountain, .fdx, .txt)",
+        "Isagawa ang Audience Resonance scoring sa iyong target na demograpiko.",
+        "Gumawa ng Express Pre-vis — mga animatic na may boses at musika sa loob ng ilang minuto",
+        "Ibahagi para sa pagsusuri ng mga stakeholder bago ang pinal na paggastos para sa video."
+      ]
+    },
+    "cta": "Magsimula sa pag-upload ng script",
+    "ctaSubtext": "Pag-ugnayin ang tradisyonal na paggawa ng pelikula at generative AI"
   },
   "exitIntent": {
     "title": "Sandali! Huwag kang umalis nang walang dala.",
@@ -1134,7 +1522,7 @@
   "pricing": {
     "badge": "Pagpepresyong nakabatay sa paggamit",
     "title": "Magbayad para sa iyong nilikha",
-    "subtitle": "Isang base plan para sa access sa platform. Mga credit para sa AI generation. Mag-top up kapag kailangan pa ng dagdag. Ganap na kontrol, walang nasasayang.",
+    "subtitle": "Isang base plan para sa access sa platform. Mga credit para sa AI generation. Mag-top up kapag kailangan mo pa. Ganap na kontrol, walang nasasayang.",
     "valueAnchor": {
       "traditionalCost": "Mahigit $2,000",
       "traditionalLabel": "Tradisyonal na pre-visualization",
@@ -1164,8 +1552,8 @@
           "description": "Magbayad lamang ng 20% na platform fee para sa orchestration at mga tool."
         },
         {
-          "title": "Gamitin ang mga corporate plan",
-          "description": "Gamitin ang iyong kasalukuyang mga volume discount na Vertex AI o ElevenLabs"
+          "title": "Gamitin ang mga plano ng korporasyon",
+          "description": "Gamitin ang iyong mga kasalukuyang volume discount na Vertex AI o ElevenLabs"
         },
         {
           "title": "Ganap na Kontrol",
@@ -1179,7 +1567,7 @@
       "elevenLabsDetail": "Text-to-Speech at Voice Cloning",
       "savingsLabel": "80% na matitipid",
       "onImagesVideo": "sa mga larawan at video",
-      "onVoiceover": "sa voiceover",
+      "onVoiceover": "habang nagsasalita sa voiceover",
       "note": "Ang mga ipinapakitang matitipid sa credit ay mula sa platform na SceneFlow. Ang iyong aktwal na kabuuang gastos ay nakadepende sa iyong personal o pang-korporasyong presyo ng API sa bawat provider."
     },
     "creditTopUps": {
@@ -1203,7 +1591,7 @@
           "description": "Buong kapasidad ng produksyon"
         }
       ],
-      "creditsUnit": "mga kinikilala"
+      "creditsUnit": "mga kinilala"
     },
     "calculator": {
       "sectionTitle": "Tantiyahin ang iyong proyekto",
@@ -1242,7 +1630,7 @@
         },
         {
           "id": "episodyo",
-          "name": "10-minutong episode"
+          "name": "10-minutong Episode"
         },
         {
           "id": "tampok",
@@ -1257,7 +1645,7 @@
       "startTestFlight": "Simulan ang Test Flight",
       "loading": "Naglo-load...",
       "mostPopular": "Pinakasikat",
-      "creditsPerMonth": "Mga credit kada buwan",
+      "creditsPerMonth": "Mga credit/buwan",
       "storage": "Imbakan",
       "perMonth": "/buwan"
     },
@@ -1271,7 +1659,7 @@
         "name": "Explorer",
         "description": "Isang beses na pagbili para subukan ito",
         "features": [
-          "Isang beses na pagbili",
+          "Isahang pagbili",
           "750 credits (hindi mawawalan ng bisa)",
           "5 GB na storage (30 araw)",
           "Ganap na access sa platform",
@@ -1329,60 +1717,17 @@
       ]
     }
   },
-  "faq": {
-    "badge": "May mga tanong ka ba?",
-    "title": "Mga Madalas Itanong",
-    "subtitle": "Lahat ng kailangan mong malaman tungkol sa SceneFlow AI",
-    "items": [
-      {
-        "question": "Paano tumatakbo ang workflow ng SceneFlow mula sa ideya hanggang sa video na handa nang i-publish?",
-        "answer": "Gumagamit ang SceneFlow ng nakabalangkas na daloy ng trabaho: Series (opsyonal) → Blueprint → Produksyon → Final Cut → Premiere. Tinutukoy ng Blueprint ang estruktura ng kuwento at target na manonood kasama ang Audience Resonance. Lumilikha ang Produksyon ng script, pre-vis, beat video, at mga rendered na stream ng eksena. Pinagsasama-sama ng Final Cut ang mga napiling stream sa isang master MP4 — hindi ito isang timeline editor. Pinamamahalaan ng Premiere ang mga screening, mga insight mula sa analytics, pag-publish sa YouTube, at mga export bundle."
-      },
-      {
-        "question": "Paano naiiba ang SceneFlow sa Gemini Studio o Google Flow?",
-        "answer": "Nakatuon ang Gemini Studio at Google Flow sa paggawa ng mga clip gamit ang prompt-and-generate. Pinagsasama-sama ng SceneFlow ang buong daloy ng produksyon: mga estrukturadong yugto na may mga nababagong baseline, Reference Library at Beat Frames para sa pagkakapare-pareho, Audience Resonance bago ang magastos na pag-render, awtomatikong Mixer at pagbuo ng stream, at pag-validate gamit ang Screening Room bago i-publish — lahat sa loob ng isang guided studio. Halos pareho lang ang gastos sa paggamit ng modelo, gamitin man ang SceneFlow, ang sarili mong mga account sa provider, o ang BYOK — ngunit nakatitipid ang SceneFlow ng maraming oras sa bawat video dahil hindi na kailangan ang paulit-ulit na copy-paste, re-generation, at manu-manong pagbuo ng video."
-      },
-      {
-        "question": "Maaari ko bang i-edit ang mga script, visual, at audio na ginawa ng AI?",
-        "answer": "Oo. Maaari pang baguhin ang lahat ng nabuong output. Sa Production Mixer, maaari kang muling sumulat ng mga script, mag-adjust ng direksyon ng eksena, muling bumuo ng mga partikular na bahagi (beats), mag-ayos ng voiceover, at pinuhin ang timing. Pinagsasama-sama lamang ng Final Cut ang mga tapos nang stream — ang mga malikhaing pagbabago ay ginagawa sa naunang yugto, sa Production."
-      },
-      {
-        "question": "Paano na gumagana ang Target Audience Resonance ngayon?",
-        "answer": "Pinagsasama ng Audience Resonance ang pagsusuri sa estruktura ng naratibo (kalinawan, bilis ng daloy, at emosyonal na daloy ng kuwento) at ang pag-aangkop nito sa target na persona batay sa audience na tinukoy mo sa Blueprint — hindi sa datos ng retention pagkatapos nang ma-publish. Makakakuha ka ng mga rekomendasyon para sa bawat bahagi at mga solusyong isang-click lang ang kailangan sa antas ng Series, Blueprint, at pagsusuri ng script bago ang proseso ng heavy rendering."
-      },
-      {
-        "question": "Maaari ba akong gumawa ng mga video para sa listing o marketing na nasa iba't ibang wika?",
-        "answer": "Oo. Maaari kang gumawa at mag-localize ng mga video sa mahigit 70 wika gamit ang mga naka-align na workflow para sa timing. Karaniwang gumagawa ang mga team ng isang \"master cut,\" at pagkatapos ay lumilikha ng mga bersyon sa iba't ibang wika para sa mga pandaigdigang mamimili, customer, o mga audience sa iba't ibang rehiyon."
-      },
-      {
-        "question": "Ano ang ginagawa ng Premiere kung ang Screening Room ay ang yugto ng pagsusuri?",
-        "answer": "Ang Screening Room ay ang review surface sa loob ng Premiere — at para sa preview ng Production pre-vis. Magbahagi ng mga /s/ link, mangalap ng feedback mula sa mga stakeholder at opsyonal na engagement analytics (nang may pahintulot ng manonood), suriin ang Scoring at Visual insights, at pagkatapos ay mag-publish gamit ang YouTube wizard o mag-export ng mga bundle."
-      },
-      {
-        "question": "Kailangan ko ba ng karanasan sa teknikal na aspeto o sa pag-e-edit?",
-        "answer": "Hindi. Ang SceneFlow ay dinisenyo para sa mga creator at team na walang teknikal na background. Magsisimula ka gamit ang mga guided input at mga AI baseline na maaaring i-edit sa bawat yugto — hindi sa pamamagitan ng kumplikadong prompt engineering o paggamit ng maraming magkakaibang tool."
-      },
-      {
-        "question": "Paano gumagana ang Explorer Plan?",
-        "answer": "Sa halagang $9, makakakuha ka ng 750 credits para subukan ang buong workflow sa pamamagitan ng isang beses na pagbili. Dinisenyo ito bilang praktikal na pagsubok upang makapagsagawa ka ng mga totoong gawain—mula konsepto hanggang video—bago ka pumili ng buwanang plano."
-      },
-      {
-        "question": "Paano pinangangasiwaan ang mga credit at ang BYOK?",
-        "answer": "Sinusubaybayan ang mga credit sa loob mismo ng platform upang mapamahalaan ng mga team ang badyet batay sa yugto ng workflow. Sinusuportahan din ng mga planong Pro at Studio ang \"Bring Your Own Key\" (BYOK) para sa mga suportadong provider, na nagbibigay ng karagdagang kontrol sa gastos para sa mga organisasyong mayroon nang mga kontrata sa provider."
-      },
-      {
-        "question": "Ano ang mga bagay na talagang maaari kong likhain gamit ang SceneFlow?",
-        "answer": "Ginagamit ng mga team ang SceneFlow para sa mga real estate tour, educational content, podcast na may visual storytelling, mga video na nagpapaliwanag ng balita, branded campaign, at cinematic na serye ng mga episode. Sinusuportahan ng parehong workflow ang produksyon ng mga short-form at long-form na materyal."
-      }
-    ]
+  "landingSections": {
+    "expandSection": "Ipakita ang seksyon",
+    "collapseSection": "Itago ang seksyon"
   },
   "finalCta": {
     "title": "Handa na bang subukan ang buong pipeline?",
-    "subtitle": "Isagawa ang proseso mula konsepto → pre-vis → video → master MP4 sa iisang studio. Magsimula sa planong $9 na Explorer at subukan ang workflow na inuuna ang beat.",
+    "subtitle": "Isagawa ang lahat—mula sa konsepto, pre-vis, at video, hanggang sa master MP4—sa iisang studio. Magsimula sa $9 na planong Explorer at subukan mismo ang \"beat-first\" na daloy ng trabaho.",
     "cta": "Ilunsad ang iyong studio sa halagang $9"
   },
   "footer": {
-    "description": "Awtomatikong produksyon ng video mula simula hanggang katapusan — mula sa konsepto hanggang sa master na handa nang i-publish. Isang guided studio: Blueprint → Produksyon → Final Cut → Premiere.",
+    "description": "Awtomatikong produksyon ng video mula simula hanggang katapusan — mula konsepto hanggang sa master na handa nang i-publish. Isang guided studio: Blueprint → Produksyon → Screening Room.",
     "product": "Produkto",
     "resources": "Mga Mapagkukunan",
     "legal": "Legal",
@@ -1390,9 +1735,8 @@
       "features": "Mga Tampok",
       "pricing": "Pagpepresyo",
       "howItWorks": "Paano Ito Gumagana",
-      "faq": "Mga Madalas Itanong",
       "gettingStarted": "Pagsisimula",
-      "privacy": "Patakaran sa Pagkapribado",
+      "privacy": "Patakaran sa Privacy",
       "terms": "Mga Tuntunin ng Serbisyo",
       "trustSafety": "Tiwala at Kaligtasan",
       "refunds": "Patakaran sa Pagsasauli ng Bayad",
@@ -1407,7 +1751,7 @@
     "poweredBy": "Pinapagana ng Google Cloud"
   },
   "floatingCta": {
-    "seePricing": "Tingnan ang mga presyo",
+    "seePricing": "Tingnan ang Presyo",
     "tryNine": "Subukan ang $9",
     "tryForNine": "Subukan sa halagang $9",
     "dismiss": "Ibasura"
@@ -1418,37 +1762,6 @@
     "play": "Maglaro",
     "mute": "I-mute",
     "unmute": "I-unmute",
-    "expandVideo": "Palakihin ang Video"
-  },
-  "preVisEngine": {
-    "badge": "Creative Decision Engine",
-    "title": "Pre-Visualization Engine",
-    "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
-    "narrative": "In the film industry, a pre-vis is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
-    "pillars": [
-      {
-        "title": "The Ultimate Pitch Deck",
-        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
-      },
-      {
-        "title": "Fail-Fast Pre-Production",
-        "description": "Traditional pre-vis requires 3D animators, pre-vis artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
-      },
-      {
-        "title": "Financier Analytics",
-        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
-      }
-    ],
-    "workflow": {
-      "title": "Script upload → greenlight-ready pre-vis",
-      "steps": [
-        "Upload industry-standard scripts (.fountain, .fdx, .txt)",
-        "Run Audience Resonance scoring on your target demographic",
-        "Generate Express Pre-vis — voiced, scored animatics in minutes",
-        "Share for stakeholder review before final video spend"
-      ]
-    },
-    "cta": "Start with Script Upload",
-    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
+    "expandVideo": "Palakihin ang video"
   }
 }

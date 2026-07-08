@@ -1,619 +1,1089 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - AI-Powered Video Creation",
-    "description": "Transform your ideas into professional videos with AI-powered workflow automation"
+    "title": "SceneFlow AI – Tvorba videa s využitím AI",
+    "description": "Proměňte své nápady v profesionální videa díky automatizaci pracovních postupů řízené umělou inteligencí."
   },
   "nav": {
-    "workflow": "The Workflow",
-    "platformWalkthrough": "Platform Walkthrough",
-    "plansPricing": "Plans & Pricing",
-    "more": "More",
-    "useCases": "Use Cases",
+    "workflow": "Pracovní postup",
+    "platformWalkthrough": "Průvodce platformou",
+    "plansPricing": "Plány a ceny",
+    "more": "Více",
+    "useCases": "Případy užití",
     "audienceResonance": "Audience Resonance",
-    "platformTrust": "Platform & Trust",
-    "faq": "FAQ",
-    "signIn": "Sign In",
-    "startProject": "Start a Project",
-    "dashboard": "Dashboard",
-    "adminPanel": "Admin Panel",
-    "signOut": "Sign Out",
-    "goToDashboard": "Go to Dashboard",
-    "userFallback": "User",
-    "searchLanguages": "Search languages...",
-    "noLanguagesFound": "No languages found"
+    "trustSafety": "Důvěra a bezpečnost",
+    "platformTrust": "Platforma a důvěra",
+    "signIn": "Přihlásit se",
+    "startProject": "Zahájit projekt",
+    "dashboard": "Řídicí panel",
+    "adminPanel": "Administrátorský panel",
+    "signOut": "Odhlásit se",
+    "goToDashboard": "Přejít na nástěnku",
+    "userFallback": "Uživatel",
+    "searchLanguages": "Hledat jazyky...",
+    "noLanguagesFound": "Nebyly nalezeny žádné jazyky"
   },
   "floatingNav": {
-    "compare": "Compare",
-    "howItWorks": "How It Works",
-    "useCases": "Use Cases",
-    "platformWalkthrough": "Platform Walkthrough",
-    "platform": "Platform",
-    "pricing": "Pricing",
-    "faq": "FAQ",
-    "preVisEngine": "Pre-Vis Engine"
+    "compare": "Porovnat",
+    "looksAndFormats": "Vzhled a formáty",
+    "howItWorks": "Jak to funguje",
+    "useCases": "Případy užití",
+    "preVisEngine": "Engine pro předběžnou vizualizaci",
+    "platformWalkthrough": "Průvodce platformou",
+    "trustSafety": "Důvěra a bezpečnost",
+    "platform": "Platforma",
+    "pricing": "Ceny"
   },
   "hero": {
-    "headline": "Stop juggling five AI tabs. One studio takes you from idea to publish-ready video.",
-    "subheadline": "One guided studio from idea to publish-ready master. See your pre-vis before you pay for final video — approve the look instead of burning credits on guess-and-check generations. SceneFlow automates the busywork — script, pre-vis, voice, and assembly — while you stay in control of every beat.",
-    "audienceMicroLine": "Built for creators who want results, and teams who want to see how it works.",
-    "ctaSecondary": "Watch the 'What's Possible'",
-    "ctaToolStack": "See how it replaces your tool stack",
-    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production.",
-    "playWithNarration": "Play with narration",
-    "tapToHear": "Tap to hear",
-    "fullscreen": "Fullscreen",
+    "headline": "Představte si ten příběh. SceneFlow zajišťuje zpracovatelský řetězec.",
+    "subheadline": "Zbavte se zdlouhavého zadávání příkazů. Soustřeďte se plně na svůj tvůrčí záměr díky automatizovanému produkčnímu procesu na profesionální úrovni.",
+    "audienceMicroLine": "Vytvořeno pro tvůrce, kteří chtějí výsledky, a týmy, které chtějí vidět, jak to funguje.",
+    "ctaSecondary": "Podívejte se na „What's Possible“",
+    "ctaToolStack": "Podívejte se, jak nahradí vaši sadu nástrojů.",
+    "languagePrompt": "Uslyšte hrdinu ve svém jazyce – stejný proces, nové trhy",
+    "multilangHint": "Klíčový dabing v 7 jazycích – kompletní produkční proces podporuje více než 70 jazyků.",
+    "playWithNarration": "Přehrát s komentářem",
+    "tapToHear": "Klepnutím si poslechnete",
+    "fullscreen": "Celá obrazovka",
     "heroVideoLanguages": {
       "en": {
-        "label": "English",
-        "nativeLabel": "English"
+        "label": "Angličtina",
+        "nativeLabel": "Angličtina"
       },
       "es": {
-        "label": "Spanish",
-        "nativeLabel": "Español"
+        "label": "Španělština",
+        "nativeLabel": "Španělština"
       },
       "pt": {
-        "label": "Portuguese",
-        "nativeLabel": "Português"
+        "label": "Portugalština",
+        "nativeLabel": "Portugalština"
       },
       "hi": {
-        "label": "Hindi",
-        "nativeLabel": "हिन्दी"
+        "label": "hindština",
+        "nativeLabel": "hindština"
       },
       "zh": {
-        "label": "Chinese",
-        "nativeLabel": "中文"
+        "label": "Čínština",
+        "nativeLabel": "Čínština"
       },
       "ar": {
-        "label": "Arabic",
-        "nativeLabel": "العربية"
+        "label": "Arabština",
+        "nativeLabel": "Arabština"
       },
       "th": {
-        "label": "Thai",
-        "nativeLabel": "ไทย"
+        "label": "Thajský",
+        "nativeLabel": "Thajsko"
       }
     },
-    "soon": "Soon"
+    "soon": "Brzy"
   },
   "valueProp": {
     "pills": [
       {
         "label": "One Studio",
-        "detail": "Concept to publish in one place"
+        "detail": "Koncept pro zveřejnění na jednom místě"
       },
       {
-        "label": "Approve Before Final Video",
-        "detail": "Review pre-vis beats before you render"
+        "label": "Schválit před finálním videem",
+        "detail": "Před renderováním zkontrolujte jednotlivé sekvence pre-vizualizace."
       },
       {
-        "label": "Test Your Story First",
-        "detail": "Know what lands before heavy spend"
+        "label": "Nejprve otestujte svůj příběh",
+        "detail": "Zjistěte, co funguje, než začnete hodně utrácet."
       },
       {
-        "label": "Publish-Ready Output",
-        "detail": "Master MP4 + distribution bundles"
+        "label": "Výstup připravený k publikaci",
+        "detail": "Balíčky zahrnující master MP4 a distribuci"
       }
     ]
   },
   "audiencePaths": {
-    "prompt": "Who are you? Pick your path",
-    "seeExamples": "See examples",
-    "examplesFor": "Examples for {label}:",
-    "andMore": ", and more.",
+    "prompt": "Kdo jsi? Vyber si svou cestu.",
+    "showDetails": "Zobrazit podrobnosti",
+    "hideDetails": "Skrýt podrobnosti",
+    "seeExamples": "Viz příklady",
+    "examplesFor": "Příklady pro {label}:",
+    "andMore": ", a další.",
+    "expandImage": "Zvětšit obrázek",
+    "closePreview": "Zavřít náhled",
+    "playNarration": "Přehrát komentář",
+    "pauseNarration": "Pozastavit komentář",
+    "narrationComingSoon": "Komentář již brzy",
+    "hearStory": "Vyslechněte si příběh",
+    "pauseStory": "Pozastavit příběh",
+    "storyComingSoon": "Příběh již brzy",
     "modes": {
       "automate": {
-        "label": "Automate it",
-        "description": "Guided workflow — approve pre-vis, ship faster"
+        "label": "Automatizujte to",
+        "description": "Řízený pracovní postup – schvalte vizualizaci a dodejte rychleji"
       },
       "engine": {
-        "label": "Show me the engine",
-        "description": "Architecture, BYOK, and platform depth"
+        "label": "Ukažte mi motor.",
+        "description": "Architektura, BYOK a hloubka platformy"
       }
     },
     "paths": [
       {
-        "id": "creator",
-        "label": "Creator",
-        "outcome": "Ship on schedule — stop rebuilding in every tool",
+        "id": "tvůrce",
+        "hash": "Nástroj pro tvorbu případů užití",
+        "icon": "video",
+        "label": "Tvůrce",
+        "outcome": "Dodávejte včas – přestaňte práci znovu vytvářet v každém nástroji.",
+        "narrative": "Máte příběh, ale každá epizoda vyžaduje opakovaný export podkladů, zadávání nových promptů v dalších záložkách a doufání, že zůstane zachována kontinuita. SceneFlow propojuje fáze Series, Blueprint a Production v rámci jednoho studia – díky tomu schválíte vizuální podobu ve fázi pre-viz, generujete obsah scénu po scéně a dodáváte konzistentní epizody včas, aniž byste museli vše vytvářet znovu od nuly.",
         "useCases": [
-          "YouTube & episodic series",
-          "Video podcasts & show clips",
-          "Hyper-local & JIT news",
-          "Documentaries & docuseries",
-          "How-to & skill channels",
-          "Sports recaps & commentary"
-        ]
+          "Dramatický seriál pro YouTube TV ve formátu 16:9",
+          "Vertikální mobilní drama ve formátu 9:16",
+          "Animovaný webový seriál",
+          "YouTube a seriálová tvorba",
+          "Videopodcasty a ukázky z pořadů",
+          "Dokumentární filmy a seriály",
+          "Sportovní přehledy a komentáře"
+        ],
+        "example": {
+          "challengeTitle": "Úzké hrdlo v oblasti doplňkových záběrů",
+          "challengeDescription": "Máte skvělý scénář, ale nutnost ovládat šest různých nástrojů pro generování a střih – či zasekávání se ve smyčkách připomínajících výherní automaty – zpomaluje každé nahrávání videa. Úspěšné seriálové formáty na YouTube i dramatická tvorba ve stylu YouTube TV vyžadují rychlejší zpracování, než jaké dokážou zajistit roztříštěné záložky s nástroji umělé inteligence.",
+          "solutionTitle": "Automatizovaný vypravěč",
+          "solutionDescription": "Vydávejte epizodické seriály i krátká videa, která okamžitě zaujmou – to vše z jednoho studia: od pre-vizualizace zaměřené na klíčové momenty děje přes zachování kontinuity až po finální master soubory připravené k publikaci v prostředí „creator economy“, které dominuje YouTube.",
+          "win": "Přejděte od občasného nahrávání k spolehlivému produkčnímu rytmu s nižšími nároky na organizaci a správu."
+        }
       },
       {
-        "id": "team",
-        "label": "In-house team",
-        "outcome": "Replace slow vendor cycles — control brand and budget",
+        "id": "tým",
+        "hash": "tým pro případu užití",
+        "icon": "budova",
+        "label": "Interní tým",
+        "outcome": "Nahraďte pomalé procesy dodavatelů – mějte pod kontrolou značku i rozpočet",
+        "narrative": "Interní požadavky na tvorbu videí se hromadí, cenové nabídky agentur prodlužují termíny a s každým kolem připomínek se vytrácí soulad s pravidly značky. SceneFlow sjednocuje tvorbu vzdělávacích a komunikačních videí i produktových prezentací do jednoho řízeného procesu – váš tým má plnou kontrolu nad scénářem, vizualizací i finálním výstupem, aniž byste museli pronajímat studio nebo čekat na externí dodavatele.",
         "useCases": [
-          "Corporate L&D & compliance",
-          "Internal comms & town halls",
-          "Product explainers for sales",
-          "HR recruitment & culture",
-          "K-12 / higher-ed lessons",
-          "Public health & safety updates"
-        ]
+          "Firemní vzdělávání a rozvoj a oblast compliance",
+          "Interní komunikace a celofiremní setkání",
+          "Vysvětlující videa o produktech pro obchodní účely",
+          "Nábor a firemní kultura",
+          "Výukové lekce pro základní a střední školy / vysoké školy",
+          "Aktuální informace o veřejném zdraví a bezpečnosti"
+        ],
+        "example": {
+          "challengeTitle": "Nahromaděné požadavky u dodavatele a odklon od identity značky",
+          "challengeDescription": "Týmy pro komunikaci, vzdělávání a rozvoj (L&D) i marketing čekají týdny na videa od agentur či dodavatelů – nebo čelí nepřehledné záplavě nástrojů bez jakéhokoli opakovatelného interního systému. Obě cesty vedou k nejednotné prezentaci značky a zpoždění kampaní.",
+          "solutionTitle": "Interní výroba v průběhu týdne",
+          "solutionDescription": "Pověřte tým tvorbou videí v rámci předvídatelného rozpočtu založeného na kreditech – s využitím šablon značky a schvalováním před finálním renderováním, a to bez nutnosti platit za natáčecí dny či nekonečné cykly úprav.",
+          "win": "Vydávejte výuková, komunikační a kampanová videa podle vlastního harmonogramu – a nečekejte, až na ně přijde řada v seznamu úkolů dodavatele."
+        }
       },
       {
-        "id": "productionShop",
-        "label": "Production shop",
-        "outcome": "Productize a niche with repeatable intake → delivery",
+        "id": "výrobní dílna",
+        "hash": "případy užití ve výrobní dílně",
+        "icon": "film",
+        "label": "Výrobní dílna",
+        "outcome": "Proměňte úzce zaměřenou službu v produkt díky opakovatelnému procesu od přijetí zakázky po její realizaci.",
+        "narrative": "Zakázková tvorba videí je zisková, dokud se každý klient nestane jednorázovou záležitostí – s tím přicházejí nové nástroje, složité předávání zakázek a marže, které se rozplynou v přepracovávání. SceneFlow promění vaši specializaci v produkt: díky standardizovanému příjmu zakázek, šablonám typu white-label, komentáři vytvořenému klonováním hlasu a jasnému postupu od zadání až po finální MP4.",
         "useCases": [
-          "Video memoir packages",
-          "Legacy & tribute videos",
-          "Voice-cloned narration",
-          "White-label studio templates",
-          "Real estate & hospitality tours",
-          "Subscription video services"
-        ]
+          "Balíčky video-vzpomínek",
+          "Videa připomínající odkaz a vzdávající hold",
+          "Komentář vytvořený klonováním hlasu",
+          "Šablony studií typu white-label",
+          "Prohlídky nemovitostí a zařízení v oblasti pohostinství",
+          "Video služby na bázi předplatného"
+        ],
+        "example": {
+          "challengeTitle": "Řešení na míru pro konkrétní odvětví – bez opakovatelného systému",
+          "challengeDescription": "Klienti z oblastí pamětí, odkazu, realit či vzdělávání vyžadují rychlé zpracování – přitom každý projekt začíná od nuly. Předávání jednotlivých výstupů a neustálé, náhodné přepracovávání prvků (scénáře, obrazu, hlasu, videa, hudby či střihu) – připomínající hru na výherním automatu – pak ukrajují marži plynoucí z objemu zakázek.",
+          "solutionTitle": "Proměňte svou video službu v produkt",
+          "solutionDescription": "Vytvářejte opakovatelné pracovní postupy pro studia specializující se na tvorbu pamětí a pro specifické tržní segmenty. Využívejte šablony, klonování hlasu, avatary a schvalování předběžných vizualizací – vše přizpůsobte na míru klientům a zvyšujte marži díky objemu zakázek.",
+          "win": "Rozjeďte tvorbu video-memoárů nebo specializovanou studiovou službu s opakovatelným procesem – nejedná se o jednorázovou zakázkovou práci na volné noze."
+        }
       },
       {
-        "id": "agency",
-        "label": "Agency",
-        "outcome": "Faster pitches and scalable client delivery",
+        "id": "agentura",
+        "hash": "případy užití pro agentury",
+        "icon": "aktovka",
+        "label": "Agentura",
+        "outcome": "Rychlejší obchodní prezentace a škálovatelné poskytování služeb klientům",
+        "narrative": "Úspěch v tendru vyžaduje prezentaci samotné myšlenky, nikoli její pouhý popis; tvorba předběžných vizualizací a lokalizace však často ukrojí značnou část marže ještě před podpisem smlouvy. SceneFlow umožňuje rychle předložit klíčovým osobám vizualizace připravené pro klienta a následně škálovat jejich nasazení napříč kampaněmi i více než 70 jazyky, aniž by bylo nutné pro každého klienta znovu nastavovat celý proces zpracování.",
         "useCases": [
-          "Client pitch pre-viz",
-          "Product launch campaigns",
-          "Case studies & testimonials",
-          "Event & conference promos",
-          "Multi-language campaigns",
-          "Property marketing for clients"
-        ]
+          "Previzualizace pro prezentaci klientovi",
+          "Kampaně na uvedení produktů na trh",
+          "Případové studie a reference",
+          "Propagace akcí a konferencí",
+          "Vícejazyčné kampaně",
+          "Marketing nemovitostí pro klienty"
+        ],
+        "example": {
+          "challengeTitle": "Realizace služeb pro klienty ve velkém měřítku",
+          "challengeDescription": "Vyhrát výběrové řízení je jen polovina úspěchu. Opakující se zakázky pro klienty vyžadují rychlé zpracování – avšak předávání jednotlivých výstupů a zdlouhavé, náhodné generování nových verzí videa (připomínající hru na výherním automatu) při přecházení mezi oddělenými nástroji pro tvorbu a střih celý proces brzdí.",
+          "solutionTitle": "Propustnost + schválení klientem",
+          "solutionDescription": "Přejděte od návrhu v rámci nabídky k opakovaným dodávkám díky nástrojům zajišťujícím soulad se značkou, schválení klientem před finálním renderováním a předvídatelným nákladům na kredity u jednotlivých projektů.",
+          "win": "Realizujte cykly přípravy nabídek i opakované zakázky pro klienty rychleji, s nižším výrobním rizikem a vyšší marží."
+        }
+      },
+      {
+        "id": "filmová produkce",
+        "hash": "Případy užití ve filmové produkci",
+        "icon": "filmová klapka",
+        "label": "Filmová produkce",
+        "outcome": "Scénář interaktivního animatiku, který můžete promítnout a otestovat ještě před natáčením.",
+        "narrative": "Dříve znamenaly předběžná vizualizace a testování na publiku týdny tvorby storyboardů, provizorních komentářů a nákladného odhadování ještě předtím, než se začalo natáčet. SceneFlow promění váš scénář v interaktivní animatik díky funkci Express pre-vis – optimalizujte jej pomocí Audience Resonance, promítněte v Screening Room a rozpočet uvolněte až ve chvíli, kdy příběh skutečně funguje.",
+        "useCases": [
+          "Previzualizace pro celovečerní a nezávislé filmy",
+          "Animatiky pro prezentaci investorům",
+          "Optimalizace Audience Resonance",
+          "Vizualizace ve více než 70 jazycích",
+          "Import a export scénáře (MDX, FDX)",
+          "Screening Room testy na publiku"
+        ],
+        "example": {
+          "challengeTitle": "Zdlouhavá předvizualizace před možností otestovat příběh",
+          "challengeDescription": "Máte scénář, ale čtené zkoušky, cykly tvorby storyboardů a roztříštěné nástroje pro předběžnou vizualizaci zdržují prezentace investorům, testování na publiku i rozhodnutí o zahájení výroby.",
+          "solutionTitle": "Interaktivní pre-vizualizace vycházející ze scénáře",
+          "solutionDescription": "Nahrajte svůj scénář (ve formátech MDX, FDX a dalších), optimalizujte jej pomocí Audience Resonance a vygenerujte interaktivní pre-vizualizaci pro promítání a testování – s využitím rychlého souběžného generování napříč jednotlivými sekvencemi (beats), podporou více než 70 jazyků a možností rychlého vkládání vícejazyčných překryvů.",
+          "win": "Ověřte soulad příběhu s cílovým publikem ještě před zahájením hlavního natáčení – pomocí sdílitelného animatiku, nikoli zdlouhavého procesu tvorby vizualizací trvajícího celé týdny."
+        }
       }
     ]
   },
   "whySceneFlow": {
-    "title": "Why SceneFlow vs prompt-and-generate tools",
-    "subtitle": "Gemini Studio and Google Flow excel at clips. SceneFlow bundles the full production workflow.",
+    "title": "Proč SceneFlow namísto nástrojů typu „prompt-and-generate“",
+    "subtitle": "Gemini Studio a Google Flow vynikají v práci s klipy. SceneFlow zahrnuje kompletní produkční workflow.",
     "rows": [
       {
-        "them": "Prompt + clip generation in isolation",
-        "us": "Structured phases with editable baselines at each step"
+        "them": "Generování klipu na základě promptu v izolaci",
+        "us": "Strukturované fáze s upravitelnými výchozími stavy v každém kroku"
       },
       {
-        "them": "Manual consistency across sessions",
-        "us": "Reference Library + Beat Frames lock visuals before video"
+        "them": "Manuální konzistence napříč relacemi",
+        "us": "Reference Library + Beat Frames uzamknou vizuální složku před videem"
       },
       {
-        "them": "No audience validation workflow",
-        "us": "Audience Resonance before render; Screening Room before publish"
+        "them": "Žádný proces ověřování publika",
+        "us": "Audience Resonance před vykreslením; Screening Room před publikováním"
       },
       {
-        "them": "No production pipeline or handoff",
-        "us": "Script → streams → assembly → distribution in one app"
+        "them": "Žádná produkční pipeline ani proces předávání",
+        "us": "Scénář → streamy → sestavení → distribuce v jedné aplikaci"
       }
     ],
-    "themHeader": "Typical clip-generation tools",
-    "usHeader": "SceneFlow bundles"
+    "themHeader": "Typické nástroje pro tvorbu klipů",
+    "usHeader": "Balíčky SceneFlow"
   },
   "beatFirstPipeline": {
-    "title": "Beat-First Video Pipeline",
-    "subtitle": "Approve before you render — not slot-machine regeneration",
-    "intro": "No guess-and-check generations. You preview and approve the look before SceneFlow spends credits on final video.",
-    "description": "SceneFlow structures visual approval at every step: Express Pre-vis for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.",
+    "title": "Video pipeline řízená rytmem",
+    "subtitle": "Schvalte před vykreslením – ne generování stylem výherního automatu",
+    "intro": "Žádné generování metodou pokus-omyl. Vzhled si prohlédnete a schválíte ještě předtím, než SceneFlow spotřebuje kredity na finální video.",
+    "description": "SceneFlow organizuje proces vizuálního schvalování v každé fázi: Express Pre-vis pro kontrolu, Beat Frames pro ukotvení kompozice a následně F2V pro jednotlivé doby (beaty). Vzhled tak vyladíte ještě předtím, než vyplýtváte kredity na nežádoucí odchylky a halucinace modelu.",
     "steps": [
-      "Express Pre-vis — share audio-visual beats for review in minutes",
-      "Beat Frames — lock start/end composition with Reference Library continuity",
-      "F2V per beat — generate video from approved frames, not blind prompts",
-      "Production Mixer — timing, audio, and stream export to Final Cut assembly"
+      "Express Pre-vis — sdílejte audiovizuální hudební podklady k posouzení během několika minut",
+      "Beat Frames — uzamčení počáteční/koncové kompozice se zachováním kontinuity Reference Library",
+      "F2V na úder – generujte video ze schválených snímků, nikoli z naslepo zadávaných promptů.",
+      "Souvislý řetězec EXT – nativní kroky prodloužení o 7 sekund pro dlouhé dialogové pasáže",
+      "Production Mixer — časování, zvuk a export streamu do Screening Room"
     ],
-    "footerLine": "Fewer slot-machine regenerations — approve visuals before final video spend"
+    "footerLine": "Méně přepracovávání vizuálů výherního automatu – schvalte vizuální podobu před vynaložením konečných nákladů na video."
+  },
+  "trustSafeguard": {
+    "badge": "Důvěra a bezpečnost",
+    "title": "Vícevrstvé ochranné mechanismy pro",
+    "titleAccent": "Tvůrci a platformy",
+    "subtitle": "Zabezpečení přímo od Googlu u každého vygenerovaného výstupu, rozšířené kreativní služby s ochrannými mechanismy při uplatnění zásad a další prvky moderování a zmírňování rizik v rámci vašeho pracovního postupu ve Studiu.",
+    "tiers": [
+      {
+        "id": "google-native",
+        "title": "Zabezpečení nativní pro Google",
+        "description": "Každé generování obrázků a videí prochází bezpečnostními filtry Google s prahovými hodnotami vyladěnými pro profesionální kreativní postupy – nikoli s výchozím nastavením pro běžné spotřebitele.",
+        "highlights": [
+          "Zodpovědná umělá inteligence ve službě Vertex při generování pomocí modelů Veo, Imagen a Gemini",
+          "Praxí vyladěné prahové hodnoty škodlivosti pro filmový obsah",
+          "Vaše kreativní podklady se nepoužívají k trénování sdílených modelů."
+        ],
+        "badge": "Vertex Responsible AI"
+      },
+      {
+        "id": "prodloužená zábradlí",
+        "title": "Prodloužená zábradlí",
+        "description": "Pokud je primární cesta zablokována na základě zásad, mohou službu doručení zajistit Extended Creative Services s mechanismy Guardrails – avšak až po dodatečné kontrole obsahu provedené před uložením.",
+        "highlights": [
+          "Úprava promptu a opakované pokusy o provedení metody na primární cestě přes Google",
+          "Zabezpečená záložní cesta s povinnou kontrolou před uložením",
+          "Stejné obsahové standardy pro základní i rozšířené vzdělávací cesty"
+        ],
+        "badge": "Podmíněná záložní varianta"
+      },
+      {
+        "id": "původ validace",
+        "title": "Validace a původ",
+        "description": "Pro Blueprint, scénáře, předběžné vizualizace (pre-vis) a videa jednotlivých segmentů jsou k dispozici další nástroje pro moderování a zmírňování rizik, přičemž se využívá stejný model kreditů jako u ostatních nástrojů studia. Úspěšné klipy získávají podepsané záznamy o původu obsahu.",
+        "highlights": [
+          "Signály pro ověření obsahu před náročným vykreslováním",
+          "Podepsaný hash obsahu a metadata o původu u video segmentu",
+          "Protokoly auditu, sledování porušení pravidel a hlášení zneužití pro ochranu platformy"
+        ],
+        "badge": "Validace obsahu"
+      }
+    ],
+    "flowSteps": [
+      {
+        "label": "Primární",
+        "detail": "Bezpečnost Google Vertex"
+      },
+      {
+        "label": "Rozšířený",
+        "detail": "Podmíněná záložní varianta kreativního prvku"
+      },
+      {
+        "label": "Studio",
+        "detail": "Moderování a zmírňování rizik"
+      },
+      {
+        "label": "Soudní",
+        "detail": "Provenience s podpisem"
+      }
+    ],
+    "morNote": "SceneFlow uplatňuje model sdílené odpovědnosti ve spolupráci s naším zprostředkovatelem prodeje (Merchant of Record): zahrnuje zabezpečení na úrovni poskytovatele ze strany Googlu a ochranné mechanismy i záznamy o činnosti (auditní stopy) ze strany SceneFlow, čímž se snižuje riziko jak pro tvůrce, tak pro samotnou platformu.",
+    "ctaPolicy": "Přečtěte si zásady důvěry a bezpečnosti",
+    "ctaPolicyHref": "/důvěra-a-bezpečnost",
+    "ctaStudio": "Prozkoumat ve Studiu"
+  },
+  "extendedScenes": {
+    "badge": "Nepřetržité údery",
+    "title": "Nad rámec osmisekundového klipu",
+    "subtitle": "Překonejte omezení jediného záběru – nejprve schvalte vizuální podobu a poté scénu postupně rozšiřujte o plynulé monology, vysvětlující pasáže a dialogové sekvence.",
+    "intro": "SceneFlow neslibuje jediný neomezený render. Dlouhé hudební úseky (beaty) plánuje jako řazené sekvence: počáteční klip o délce až 8 sekund a následné kroky prodloužení vždy o 7 sekund – přičemž daný úsek nejprve schvalujete, než dojde k čerpání kreditů.",
+    "steps": [
+      {
+        "title": "Úvodní klip v délce 8 sekund",
+        "description": "Převod snímku nebo obrázku na video z schváleného zdroje Beat Frames zafixuje kompozici před zahájením pohybu."
+      },
+      {
+        "title": "Kroky prodloužení o +7 s",
+        "description": "Každý krok navazuje na stejný úhel a pohyb – ideální pro nepřerušovaný dialog v rámci jedné dramatické jednotky."
+      },
+      {
+        "title": "Schválení na základě překonání očekávání",
+        "description": "Dlouhé sekvence se při kontrole vizualizace automaticky rozdělují. Jednotlivé snímky schvalujete ještě předtím, než proběhne finální renderování celého řetězce – nejde tedy o náhodné generování výsledku."
+      },
+      {
+        "title": "Production Mixer dokončit",
+        "description": "Jednotlivé segmenty se spojují do souvislého přehrávání scény; funkce Elastic Audio udržuje synchronizaci komentáře, který je delší než samotné video."
+      }
+    ],
+    "stats": [
+      {
+        "value": "cca 15 s",
+        "label": "Typický dialogový úsek (8 s + 1 prodloužení)"
+      },
+      {
+        "value": "cca 29 s",
+        "label": "Dlouhý úsek monologu (8 s + 3 prodloužení)"
+      },
+      {
+        "value": "Objednáno",
+        "label": "Postupné vytváření zachovává kontinuitu."
+      }
+    ],
+    "footnote": "Řetězce rozšíření vyžadují primární cestu generování Google a platné odkazy na video mezi jednotlivými kroky (platnost odkazů vyprší přibližně po 48 hodinách). Každý krok API dodržuje limity délky modelu Veo – celková délka záběru vzniká řetězením, nikoli jedním dlouhým renderem."
+  },
+  "creativeRange": {
+    "badge": "Kreativní řada",
+    "title": "Každý styl, každá obrazovka",
+    "titleAccent": "Vaše kreativní DNA, uzamčená v Blueprint",
+    "subtitle": "Právě ve fázi Blueprint se ukotvuje vaše kreativní DNA – výtvarný styl, poměr stran, tón a jádro příběhu. SceneFlow tyto volby promítá do treatmentu, Audience Resonance i generování scénáře, takže pokyny ke scénám odpovídají zvolenému záběrování a vizuálnímu stylu už od samého začátku, a nikoli až ve fázi nastavení exportu na poslední chvíli.",
+    "pillars": [
+      {
+        "title": "Forma následuje funkci (a rámování)",
+        "description": "Velikost obrazovky určuje způsob vizuálního vyprávění. Vertikální formát 9:16 vyžaduje těsnější kompozici pohybu (blocking), rychlejší úvodní momenty a režii zaměřenou na detailní záběry – to vše se zásadně liší od inscenování pro širokoúhlý formát 16:9. Uzamkněte poměr stran v Blueprint, aby generátor scénáře vytvářel pokyny odpovídající danému formátu záběru."
+      },
+      {
+        "title": "Výtvarný styl určuje prózu.",
+        "description": "Noir anime a 3D animace ve stylu Pixaru vyžadují odlišné dialogy, atmosféru i tempo. Zvolte si vizuální styl v Blueprint a LLM tuto texturu vetká přímo do DNA scénáře – nejedná se tedy o filtr aplikovaný až zpětně."
+      }
+    ],
+    "blueprintTagline": "Tón a stěžejní narativ celek uzavírají – Blueprint představuje mozek, produkce pak svaly.",
+    "ui": {
+      "expandImage": "Zvětšit obrázek",
+      "closePreview": "Zavřít náhled"
+    },
+    "artStyles": {
+      "subsectionTitle": "Vyberte si svůj vzhled",
+      "subsectionIntro": "Váš vizuální styl není jen předvolba renderování – je to hlas scénáře. Zafixujte výtvarný styl v Blueprint a každá část příběhu tuto estetiku převezme.",
+      "footnote": "Ustálen vizuální základ Blueprint – uplatněn ve scénáři, pre-vizualizaci i finálním renderu.",
+      "popularBadge": "Populární",
+      "items": [
+        {
+          "id": "fotorealistický",
+          "name": "Fotorealistický",
+          "displayTitle": "Fotorealismus",
+          "description": "Styl profesionální fotografie",
+          "tagline": "Prestižní realistická tvorba velkého rozsahu",
+          "marketingBody": "Fotorealismus zajišťuje diváckou atraktivitu, kterou publikum očekává od prestižních televizních pořadů a dokumentů. Zajistěte konzistentní podobu realistických postav a osvětlení napříč jednotlivými scénami, aby si epizodická dramata i dokumentární série udržely emocionální kontinuitu od úvodní části až po finále.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_w5y03bw5y03bw5y0.jpeg"
+        },
+        {
+          "id": "anime z 90. let",
+          "name": "Anime (90. léta)",
+          "displayTitle": "Anime",
+          "description": "Klasický styl anime z 90. let",
+          "tagline": "Seriálové dějové oblouky",
+          "marketingBody": "Stylizace typu „cel shading“ (typická pro anime) zajišťuje silnou angažovanost fanoušků u vícedílných webových seriálů i rozsáhlých příběhových celků. Generativní modely trénované na tomto vizuálním stylu vytvářejí čisté linie a předvídatelnou kompozici záběrů, což je ideální pro sériovou produkci ve velkém měřítku.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_5qoasf5qoasf5qoa.jpeg"
+        },
+        {
+          "id": "Pixar",
+          "name": "Animace studia Pixar",
+          "displayTitle": "Filmové 3D / ve stylu Pixaru",
+          "description": "3D animace ve stylu Pixaru",
+          "tagline": "Emocionální kontinuita napříč epizodami",
+          "marketingBody": "Měkké, oblé tvary a výrazný design postav vytvářejí hřejivou atmosféru, která udrží pozornost diváků po celou sérii. Ideální volba pro animované seriály, rodinné snímky s delší stopáží i brandový storytelling, kde je klíčová stálost podoby postav v každém okamžiku.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_zi32rnzi32rnzi32.jpeg"
+        },
+        {
+          "id": "konceptuální umění",
+          "name": "Konceptuální umění",
+          "displayTitle": "Konceptuální umění",
+          "description": "Konceptuální umění pro hry a filmy",
+          "tagline": "Klíčové záběry pro vizualizaci filmů a seriálů s atmosférickým osvětlením připraveným pro produkci.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_qlf261qlf261qlf2.jpeg"
+        },
+        {
+          "id": "Ghibli",
+          "name": "ve stylu Ghibli",
+          "displayTitle": "Ručně kreslené / ve stylu studia Ghibli",
+          "description": "Inspirováno studiem Ghibli",
+          "tagline": "Řemeslo jako luxus",
+          "marketingBody": "Tento styl přímo navazuje na významný tvůrčí směr, který klade důraz na pojetí řemesla jako formy luxusu. Akvarelové textury a malířsky pojatá pozadí vytvářejí ručně zpracované epizodické světy, v nichž organická nedokonalost v rámci rozsáhlé série působí jako záměrný umělecký počin.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_xojqsuxojqsuxojq.jpeg"
+        },
+        {
+          "id": "komiks",
+          "name": "Komiks",
+          "displayTitle": "Komiks",
+          "description": "Styl komiksové kresby tuší",
+          "tagline": "Výrazná linka, polotónová textura a pop-artové barvy pro seriálové vyprávění.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_ezhp8cezhp8cezhp.jpeg"
+        },
+        {
+          "id": "olejomalba",
+          "name": "Olejomalba",
+          "displayTitle": "Olejomalba",
+          "description": "Klasická olejomalba",
+          "tagline": "Klasická práce štětcem a syté pigmenty pro dokumentární a historické formáty.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
+        },
+        {
+          "id": "digitální umění",
+          "name": "Digitální umění",
+          "displayTitle": "Digitální umění",
+          "description": "Moderní digitální ilustrace",
+          "tagline": "Stylizovaná ilustrace pro animovaný dokument a epizodický vysvětlující seriál.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_omdmt6omdmt6omdm.jpeg"
+        },
+        {
+          "id": "akvarel",
+          "name": "Akvarel",
+          "displayTitle": "Akvarel",
+          "description": "Jemná akvarelová malba",
+          "tagline": "Jemné pigmentové lazury pro memoáry, dokumentární tvorbu a kontemplativní rozsáhlé texty.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
+        },
+        {
+          "id": "skica",
+          "name": "Skica / Line art",
+          "displayTitle": "Skica / Line art",
+          "description": "Styl tužkové skici",
+          "tagline": "Detailní kresba linek a tužková textura pro rozsáhlé sekvence, pokrývající fázi od pre-vizualizace až po produkci.",
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
+        }
+      ]
+    },
+    "outputFormats": {
+      "subsectionTitle": "Vydávejte každou obrazovku",
+      "subsectionIntro": "Volba záběrování je tvůrčím rozhodnutím, nikoli pouhou položkou v nastavení exportu. Blueprint pracuje s poměrem stran ještě předtím, než napíšete první scénickou poznámku.",
+      "resolutionFootnote": "Zvoleno v Blueprint; scénář a režijní pokyny vycházejí z tohoto formátu. Exportujte v rozlišení 720p nebo 1080p, pokud to váš projekt umožňuje.",
+      "items": [
+        {
+          "id": "16:9",
+          "label": "Širokoúhlý formát 16:9",
+          "ratio": "16:9",
+          "description": "Hlavní kanál YouTube, připojené televize (CTV) a epizodické seriály – Blueprint vytváří širokoúhlé scénické pokyny a choreografii pohybu postav pro filmové pojetí scény."
+        },
+        {
+          "id": "9x16",
+          "label": "Vertikální formát 9:16",
+          "ratio": "9:16",
+          "description": "Vertikální dramatické seriály a tvorba primárně pro mobilní zařízení – Blueprint píše scénáře s důrazem na vertikální kompozici, svižnější tempo a časté využití detailních záběrů, tedy prvky, které diváci vyhledávající „binge-watching“ očekávají."
+        },
+        {
+          "id": "1×1",
+          "label": "Čtverec 1:1",
+          "ratio": "1:1",
+          "description": "Čtvercové úryvky z epizod, sestřihy rozhovorů a výběry klíčových momentů z rozsáhlých seriálů – to je jeden z prvků knihoven epizod přizpůsobených přímo pro feed."
+        },
+        {
+          "id": "4×3",
+          "label": "Klasický formát 4:3",
+          "ratio": "4:3",
+          "description": "Školicí moduly, dokumentární archivy a formáty vhodné pro prezentace – pro případy, kdy vaše publikum očekává klasický poměr stran u obsahu s delší stopáží."
+        }
+      ]
+    }
   },
   "toolStack": {
-    "badge": "Sound familiar?",
-    "title": "The Broken Way vs the SceneFlow Way",
-    "subtitle": "Experienced producers: stop losing hours to copy-paste across script, image, voice, video, music, and edit tools. New to AI video: one guided studio automates the stack so you ship without learning six separate apps.",
+    "badge": "Zní vám to povědomě?",
+    "title": "Nefunkční způsob vs. způsob SceneFlow",
+    "subtitle": "Zkušení producenti: přestaňte ztrácet hodiny neustálým kopírováním a vkládáním mezi nástroji pro scénář, obraz, hlas, video, hudbu a střih. Začínáte s AI videem? Jediné studio s průvodcem automatizuje celý proces, takže výsledek vytvoříte, aniž byste se museli učit ovládat šest různých aplikací.",
     "brokenWay": {
-      "title": "The Broken Way",
-      "tagline": "Fragmented. Manual. Slot-machine video.",
+      "title": "Zlomená cesta",
+      "tagline": "Roztříštěné. Manuální. Video ve stylu výherního automatu.",
       "tools": [
         {
-          "name": "Script generation",
-          "category": "Drafts without audience validation"
+          "name": "Generování skriptů",
+          "category": "Koncepty bez ověření u cílového publika"
         },
         {
-          "name": "Image generation",
-          "category": "Frames and stills in a separate tool"
+          "name": "Generování obrázků",
+          "category": "Snímky a statické záběry v samostatném nástroji"
         },
         {
-          "name": "Voice generation",
-          "category": "Manual voiceover export and re-takes"
+          "name": "Generování hlasu",
+          "category": "Ruční export komentáře a opakované nahrávky"
         },
         {
-          "name": "Video generation",
-          "category": "Slot-machine re-rolls — prompt, generate, reject, repeat"
+          "name": "Generování videa",
+          "category": "Opakované pokusy ve stylu výherního automatu – zadat, vygenerovat, zamítnout, opakovat"
         },
         {
-          "name": "Music generation",
-          "category": "Separate soundtrack pass"
+          "name": "Generování hudby",
+          "category": "Samostatná propustka na soundtrack"
         },
         {
-          "name": "Video editing",
-          "category": "Manual assembly, export, and upscaling polish"
+          "name": "Střih videa",
+          "category": "Ruční sestavení, export a doladění upscalingu"
         }
       ],
-      "chaosLabel": "Six tabs. Re-roll until something sticks.",
+      "chaosLabel": "Šest záložek. Zkoušet to znovu a znovu, dokud se něco nechytí.",
       "painPoints": [
-        "Copy-paste between generation and edit tools",
-        "Slot-machine video generation — re-roll until something sticks",
-        "Prompt fatigue and re-generation loops",
-        "No audience check before you spend",
-        "Version chaos across exports"
+        "Kopírování a vkládání mezi nástroji pro generování a úpravy",
+        "Generování videa stylem výherního automatu – opakované pokusy, dokud se něco nechytí",
+        "Únava z tvorby promptů a smyčky opakovaného generování",
+        "Žádná kontrola publika před vynaložením prostředků",
+        "Chaos ve verzích napříč exporty"
       ],
-      "timeLabel": "Per video (manual multi-tool stack)",
-      "timeValue": "4+ hours"
+      "timeLabel": "Podle videa (sestava ručních multifunkčních nástrojů)",
+      "timeValue": "Více než 4 hodiny"
     },
     "sceneflowWay": {
-      "title": "The SceneFlow Way",
-      "tagline": "One studio. Guided automation — or serious throughput if you already know the stack.",
+      "title": "Přístup SceneFlow",
+      "tagline": "Jedno studio. Automatizace s průvodcem – nebo vysoký výkon, pokud už daný technologický stack ovládáte.",
       "stages": [
         {
           "label": "Blueprint",
-          "detail": "Structured story plan"
+          "detail": "Strukturovaný plán příběhu"
         },
         {
-          "label": "References",
-          "detail": "Consistent characters"
+          "label": "Reference",
+          "detail": "Konzistentní postavy"
         },
         {
-          "label": "Production",
-          "detail": "Voice + visuals"
+          "label": "Výroba",
+          "detail": "Hlas a obraz"
         },
         {
-          "label": "Publish",
-          "detail": "One master MP4"
+          "label": "Publikovat",
+          "detail": "Jeden hlavní soubor MP4"
         }
       ],
-      "syncLabel": "One project file — no tab juggling",
+      "syncLabel": "Jeden soubor projektu – žádné přeskakování mezi záložkami",
       "benefits": [
-        "Guided phases — stop tab juggling and context loss",
-        "pre-vis approval — stop slot-machine re-rolls before video spend",
-        "Audience Resonance score before heavy render",
-        "Publish-ready master in 30–60 min, not 4+ hrs"
+        "Řízené fáze – konec neustálého přepínání mezi záložkami a ztráty kontextu",
+        "Schválení Pre-vis – zastavení opakovaných losování (re-rolls) u výherních automatů před zahájením útraty za video.",
+        "Audience Resonance skóre před náročným vykreslováním",
+        "Finální master připravený k publikaci za 30–60 minut, nikoli za více než 4 hodiny"
       ],
-      "timeLabel": "Per video (same deliverable)",
-      "timeValue": "30–60 minutes"
+      "timeLabel": "Za video (stejný výstup)",
+      "timeValue": "30–60 minut"
     },
-    "comparisonCaption": "One studio replaces fragmented generation tools, slot-machine video re-rolls, and manual edit assembly",
-    "comparisonImageAlt": "Traditional production overhead vs SceneFlow automated studio — faster concept to publish-ready video",
-    "costNote": "Same AI spend, less wasted time. You pay for models either way — through SceneFlow credits, your own provider account, or BYOK. SceneFlow removes the copy-paste assembly tax so you can ship more videos with the same budget.",
-    "proofLine": "Validated on a residential listing tour: full manual stack 4+ hours → same deliverable in SceneFlow under an hour."
+    "comparisonCaption": "Jediné studio nahrazuje roztříštěné nástroje pro generování, opakované generování videí (ve stylu výherních automatů) a ruční sestavování střihu.",
+    "comparisonImageAlt": "Tradiční režijní náklady na produkci vs. automatizované studio SceneFlow – rychlejší cesta od konceptu k videu připravenému ke zveřejnění",
+    "costNote": "Stejné výdaje na AI, méně promarněného času. Za modely platíte tak či onak – ať už prostřednictvím kreditů SceneFlow, vlastního účtu u poskytovatele, nebo BYOK. SceneFlow eliminuje časovou zátěž spojenou se sestavováním obsahu metodou „kopírovat a vložit“, takže se stejným rozpočtem vytvoříte více videí.",
+    "proofLine": "Ověřeno na prohlídce rezidenční nemovitosti: kompletní manuální zpracování trvalo více než 4 hodiny → stejný výstup v SceneFlow za méně než hodinu."
   },
   "comparison": {
-    "title": "Production speed without the overhead",
-    "subtitle": "Replace fragmented prompt tools and manual assembly with one automated studio — from first concept to publish-ready master.",
-    "caption": "One studio replaces fragmented prompt tools, manual edits, and multi-platform handoffs",
-    "imageAlt": "Traditional production overhead vs SceneFlow automated studio — faster concept to publish-ready video"
+    "title": "Rychlost výroby bez režijní zátěže",
+    "subtitle": "Nahraďte roztříštěné nástroje pro tvorbu promptů a ruční sestavování jedním automatizovaným studiem – od prvotního konceptu až po finální verzi připravenou k publikaci.",
+    "caption": "Jediné studio nahrazuje roztříštěné nástroje pro tvorbu promptů, ruční úpravy a předávání práce mezi různými platformami.",
+    "imageAlt": "Tradiční režijní náklady na produkci vs. automatizované studio SceneFlow – rychlejší cesta od konceptu k videu připravenému ke zveřejnění"
   },
   "howItWorks": {
-    "title": "From concept to publish-ready video",
-    "titleAccent": "One guided pipeline",
-    "subtitle": "Series is optional. The core path is Blueprint → Production → Final Cut → Premiere — pre-vis, animatic, video, and master MP4 tiers along the way.",
-    "tagline": "Every step is expertly automated. Every step gives you full control.",
-    "optionalBadge": "Optional",
-    "optionalSuffix": " (optional)",
-    "readyTitle": "Ready to test the full pipeline?",
-    "explorerCta": "Start with Explorer — $9",
+    "title": "Od konceptu až po video připravené k publikaci",
+    "titleAccent": "Jedna řízená pipeline",
+    "subtitle": "Série je volitelná. Hlavní cesta vede přes Blueprint → Produkce → Screening Room – a zahrnuje pre-vizualizaci, animatik, video scény a finální master MP4.",
+    "tagline": "Každý krok je odborně automatizován. Každý krok vám dává plnou kontrolu.",
+    "optionalBadge": "Volitelné",
+    "optionalSuffix": " (volitelné)",
+    "readyTitle": "Jste připraveni otestovat celou pipeline?",
+    "explorerCta": "Začněte s Explorer — 9 $",
     "phases": [
       {
-        "id": "series",
-        "stepLabel": "Series",
+        "id": "série",
+        "stepLabel": "Seriál",
         "subtitle": "Showrunner Engine",
-        "description": "Define your universe once and generate cohesive multi-episode arcs. Shared Reference Library keeps characters and tone aligned across the season.",
+        "description": "Definujte svůj svět jednou a vytvářejte ucelené dějové oblouky napříč několika epizodami. Sdílený Reference Library zajišťuje konzistenci postav a tónu v průběhu celé sezóny.",
         "keySteps": [
-          "Define universe — characters, tone, and season arc",
-          "Auto-generate episode outlines across the season",
-          "Sync into Blueprint and Production per episode"
+          "Definujte svět – postavy, ladění a dějový oblouk sezóny",
+          "Automaticky generovat osnovy epizod pro celou sezónu",
+          "Synchronizace do Blueprint a produkce na epizodu"
         ],
         "keyFeatures": [
-          "Define your universe once — characters, tone, and season arc",
-          "Cohesive episode outlines — auto-generated across the season",
-          "Continuity tracking — multi-episode seasons in alignment",
-          "Series-to-episode sync — into Blueprint Studio and Production"
-        ],
-        "optional": true
+          "Definujte svůj svět jednou – postavy, ladění a dějový oblouk sezóny.",
+          "Ucelené osnovy epizod – automaticky generované pro celou sérii",
+          "Sledování kontinuity – sladění vícedílných řad",
+          "Synchronizace seriálu s epizodou – do studia a produkce Blueprint"
+        ]
       },
       {
-        "id": "blueprint",
+        "id": "plán",
         "stepLabel": "Blueprint",
-        "subtitle": "Story Development",
-        "description": "Transform concepts into structured treatments with logline, beats, characters, and tone. Run Audience Resonance and collaborate before heavy rendering.",
+        "subtitle": "Rozvoj příběhu",
+        "description": "Převeďte koncepty na strukturované náměty (treatments) zahrnující logline, klíčové momenty, postavy a tón. Spusťte Audience Resonance a spolupracujte ještě před náročným renderováním.",
         "keySteps": [
-          "Generate → Review → Iterate → Start Production",
-          "Audience Resonance scoring with 80+ target",
-          "Collaborator share links and export (PDF, Doc, PPTX)"
+          "Generování → Kontrola → Iterace → Zahájení výroby",
+          "Audience Resonance bodování s cílovou hodnotou 80+",
+          "Odkazy pro sdílení se spolupracovníky a export (PDF, Doc, PPTX)"
         ],
         "keyFeatures": [
-          "Generate → Review → Iterate → Start Production workflow",
-          "Concept to structure in minutes — logline, beats, characters, and tone",
-          "Audience Resonance scoring with 80+ target before Production",
-          "Collaborator share links — feedback synthesis into guided revision"
-        ],
-        "optional": false
+          "Pracovní postup: Generování → Kontrola → Iterace → Zahájení výroby",
+          "Od konceptu ke struktuře během několika minut – logline, klíčové momenty, postavy a tón",
+          "Audience Resonance bodování s cílovou hodnotou 80+ před fází výroby",
+          "Odkazy pro sdílení se spolupracovníky – syntéza zpětné vazby do podoby řízené revize"
+        ]
       },
       {
-        "id": "production",
-        "stepLabel": "Production",
-        "subtitle": "Script to Streams",
-        "description": "Script and Action tabs guide Foundation → pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer, and MP4 streams — no tool switching.",
+        "id": "výroba",
+        "stepLabel": "Výroba",
+        "subtitle": "Skript pro Screening Room",
+        "description": "Karty Script a Shoot provázejí procesem od fáze Foundation přes Pre-Vis, Footage a Mixer až po Streams. Kontrolní body po jednotlivých scénách minimalizují nutnost opakování práce; Screening Room zajišťuje náhled, sestavení a publikování.",
         "keySteps": [
-          "Lock script, voices, and scene audio",
-          "Express Pre-vis — gallery and share for review",
-          "Beat Frames → Director Console → Render Stream",
-          "Send finished streams to Final Cut"
+          "Uzamknout scénář, hlasy a zvuk scény",
+          "Previzualizace scéna po scéně – galerie a sdílení k revizi",
+          "Karta Shoot — Záběry → Mixážní pult → Streamy na scénu",
+          "Screening Room — náhled, sestavení masteru, publikování"
         ],
         "keyFeatures": [
-          "Foundation — script, voices, scene audio, lock script",
-          "Express Pre-vis — direction and frames in minutes; gallery and share",
-          "Beat Frames and Mixer — start/end frames, Director Console, render MP4 streams",
-          "Production Streams — review outputs, re-render stale beats, send to Final Cut"
-        ],
-        "optional": false
+          "Foundation – scénář, hlasy, zvuk scény, Audience Resonance",
+          "Pre-vizualizace — režijní pokyny, zvuk a klíčové záběry pro jednotlivé scény včetně odkazů pro sdílení",
+          "Natáčení – záběry, mixáž a streamy bez opuštění produkčního prostředí",
+          "Screening Room — náhled scény, sestavení finální verze, promítání a zveřejnění na YouTube"
+        ]
       },
       {
-        "id": "final-cut",
-        "stepLabel": "Final Cut",
-        "subtitle": "Stream Assembly",
-        "description": "Stitch finished Production streams into one master MP4. Pick Animatic or Video and language per scene — no timeline editing; creative changes stay in Production Mixer.",
+        "id": "promítací sál",
+        "stepLabel": "Screening Room",
+        "subtitle": "Náhled · Sestavení · Publikování",
+        "description": "Jediné prostředí pro finální zpracování v rámci modulu Production: prohlížejte si videa jednotlivých scén, spojujte streamy do výsledného souboru MP4, pořádejte sdílené projekce s analytikou a publikujte obsah na YouTube nebo exportujte balíčky souborů.",
         "keySteps": [
-          "Pick streams per scene — preset or custom mix",
-          "Preview full program in script order",
-          "Export one master MP4 for Premiere"
+          "Postupné zobrazení náhledů proudů vykreslené scény",
+          "Sestavit master – vybrat Animatic nebo video pro každou scénu",
+          "Vytvořte promítání a sdílejte odkaz /s/",
+          "Projděte si poznatky a publikujte na YouTube"
         ],
         "keyFeatures": [
-          "Per-scene stream pick — Animatic, Video, language, version",
-          "Assembly presets — All Video, Hybrid, Custom mix",
-          "No timeline editing — creative changes stay in Production Mixer",
-          "One-click master export — stitched MP4 for Premiere"
-        ],
-        "optional": false
-      },
-      {
-        "id": "premiere",
-        "stepLabel": "Premiere",
-        "subtitle": "Distribution Hub",
-        "description": "Screen your master with audience analytics, then publish to YouTube with localized metadata or export bundles for Shorts, Reels, and TikTok.",
-        "keySteps": [
-          "Create screening and share /s/ link",
-          "Review Scoring, engagement, and visual insights",
-          "YouTube wizard or export bundle"
-        ],
-        "keyFeatures": [
-          "Shareable Screening Room — /s/ links with scoring and optional engagement analytics (viewer consent)",
-          "Insights dashboard — Scoring, Biometric, and Visual tabs",
-          "YouTube wizard — thumbnail, localized title/description, SceneFlow CTA",
-          "Export bundles and vertical short-form clip plans"
-        ],
-        "optional": false
+          "Přehrávání videa scény – využívá uživatelské rozhraní přehrávače Pre-Vis s renderovanými streamy",
+          "Předvolby sestavení – Pouze video, hybridní režim nebo vlastní kombinace pro jednotlivé scény",
+          "Sdílitelná hodnocení – odkazy typu /s/ s bodováním a strukturovanou zpětnou vazbou",
+          "Průvodce pro YouTube, exporty krátkých videí a distribuční balíčky"
+        ]
       }
     ]
   },
-  "useCases": {
-    "badge": "Use Case Examples",
-    "title": "Whatever Video You Can Imagine,",
-    "titleAccent": "Build It in SceneFlow",
-    "subtitle": "Real-estate showcases, education, podcasts, news formats, branded campaigns, and cinematic stories — one automated studio from concept to publish-ready master.",
-    "qualifyingStatement": "SceneFlow turns your source photos, uploads, and descriptions into narrated walkthrough videos — with optional voice and character presence you control. These are AI-altered presentations: realistic visualizations grounded in your materials, not live camera recordings. Review and approve every pre-vis before publish; label outputs clearly so audiences know what they're watching.",
+  "simpleWalkthrough": {
+    "badge": "Jak to funguje",
+    "title": "Od konceptu až po video připravené k publikaci",
+    "titleAccent": "v sedmi řízených krocích",
+    "subtitle": "Začněte nápadem nebo scénářem, optimalizujte pomocí Blueprint a Audience Resonance, vizualizujte pomocí Pre-Vis, natočte video scény, otestujte v Screening Room a publikujte – to vše v jednom studiu.",
+    "tagline": "Každý krok je odborně automatizován. Každý krok vám dává plnou kontrolu.",
+    "showDetails": "Zobrazit podrobnosti",
+    "hideDetails": "Skrýt podrobnosti",
+    "readyTitle": "Jste připraveni otestovat celou pipeline?",
+    "explorerCta": "Začněte s Explorer — 9 $",
+    "steps": [
+      {
+        "id": "koncept",
+        "stepLabel": "Začněte svým konceptem nebo stávajícím scénářem.",
+        "shortDescription": "Začněte konceptem v přirozeném jazyce nebo importujte svůj scénář – ve formátu Fountain či Final Draft – případně jej vložte přímo.",
+        "detailedDescription": "SceneFlow přijímá nápady formulované běžným jazykem i ve formě strukturovaných scénářů. Umělá inteligence pomáhá rozpracovat náměty do podoby scénářových nástinů a umožňuje importovat již existující scénáře, takže nikdy nezačínáte na „čistém listu“.",
+        "media": "snímek obrazovky",
+        "screenshotSlot": "Vložit snímek obrazovky: Dialogové okno pro zadání konceptu nového projektu nebo import scénáře"
+      },
+      {
+        "id": "plán",
+        "stepLabel": "Optimalizujte svůj koncept pomocí Blueprint",
+        "shortDescription": "Před zahájením náročného renderování přetvořte nápady do strukturovaného námětu – zahrnujícího logline, klíčové dějové body, postavy a tón.",
+        "detailedDescription": "Blueprint automaticky vytváří komplexní osnovu příběhu. Pomocí inteligentních návrhů můžete vyladit vývoj postav, klíčové dějové momenty i tón vyprávění. Díky odkazům pro sdílení mohou zúčastněné strany projekt posoudit ještě před zahájením produkce.",
+        "media": "video"
+      },
+      {
+        "id": "odezva u publika",
+        "stepLabel": "Optimalizujte svůj skript pomocí Audience Resonance",
+        "shortDescription": "Ohodnoťte svůj scénář z hlediska vhodnosti pro cílové publikum a aplikujte doporučení pro jednotlivé scény pomocí oprav na jedno kliknutí.",
+        "detailedDescription": "Audience Resonance (AR) kriticky analyzuje váš scénář s ohledem na vámi definované publikum. Získejte hodnocení jednotlivých částí, konkrétní doporučení a funkci Guided Edits – aplikujte opravy automaticky pro jednotlivé scény nebo provádějte globální změny scénáře přímo v dialogovém okně AR.",
+        "media": "video"
+      },
+      {
+        "id": "pre-vizualizace",
+        "stepLabel": "Vizualizujte a testujte pomocí předběžné vizualizace",
+        "shortDescription": "Vygenerujte zvuk dialogů a klíčové snímky (beat frames) pro jednotlivé scény. Před vynaložením konečných nákladů na video předložte k schválení animatiky.",
+        "detailedDescription": "Pre-Vis Studio vytváří pro každou scénu režijní pokyny, zvukovou stopu a klíčové záběry (tzv. beat frames) – kontrolní body, které minimalizují nákladné předělávky v případě změn postav či celkového ladění. Přehrávač můžete sdílet a spolupracovat na projektu; kompletní animatik pak může u mnoha projektů sloužit jako finální výstup.",
+        "media": "přehrávač previsualizace"
+      },
+      {
+        "id": "střílet",
+        "stepLabel": "Natočte svou produkci",
+        "shortDescription": "Generujte video synchronizované s beaty, mixujte zvuk i překryvné prvky a exportujte streamy celých scén – záběry, mixážní pult i streamy najdete na jedné kartě Shoot.",
+        "detailedDescription": "Karta „Shoot“ v sekci Production představuje vaše natáčecí prostředí: generujte video ze schválených snímků předvizualizace (Footage), dolaďte načasování, vodoznaky a zvuk v mixéru (Mixer) a následně vyrenderujte kompletní MP4 soubory scén v sekci Streams.",
+        "media": "video",
+        "subPoints": [
+          "Záběry – generování videa krok za krokem na základě počátečních a koncových snímků z pre-vizualizace",
+          "Mixér – vodoznak, textová vrstva a časování zvuku pro jednotlivé scény",
+          "Streamy — plně vyrenderované video scény (všechny fáze) připravené pro Screening Room"
+        ]
+      },
+      {
+        "id": "promítací sál",
+        "stepLabel": "Otestujte svou produkci pomocí Screening Room",
+        "shortDescription": "Prohlížejte si videa jednotlivých scén v pořadí, sestavte výsledný soubor MP4 a organizujte sdílené projekce se strukturovanou zpětnou vazbou.",
+        "detailedDescription": "Screening Room kopíruje uživatelské prostředí přehrávače Pre-Vis, ale přehrává streamy vyrenderovaných scén. Vyberte Animatic nebo video pro jednotlivé scény, sestavte výsledný střih, sdílejte odkazy pro revizi a před zveřejněním roztřiďte připomínky vázané na časové značky.",
+        "media": "video"
+      },
+      {
+        "id": "publikovat",
+        "stepLabel": "Publikovat",
+        "shortDescription": "Distribuujte finální verzi na YouTube, exportujte krátké sestřihy a sledujte statistiky publika – to vše z jednoho rozhraní pro dokončování obsahu.",
+        "detailedDescription": "Přímo v Screening Room spusťte průvodce publikováním na YouTube, vytvořte exporty krátkých videí pro sociální sítě a stáhněte si distribuční balíčky. Analytika i zpětná vazba od recenzentů zůstávají na jednom místě – bez nutnosti přecházet do jiných nástrojů.",
+        "media": "video"
+      }
+    ],
     "ui": {
-      "useCases": "Use Cases",
-      "sectors": "{count} SECTORS",
-      "demoComingSoon": "Demo Coming Soon",
-      "selectExample": "Select an example to preview its demo",
-      "targetPersona": "Target Persona",
-      "theChallenge": "The Challenge",
-      "sceneFlowSolution": "The SceneFlow Solution",
-      "beforeVsAfter": "Before vs After",
-      "before": "Before",
-      "after": "After",
-      "theWin": "The \"Win\"",
-      "frameAnchoredTitle": "Frame-Anchored Continuity",
-      "frameAnchoredDescription": "SceneFlow is the only tool that allows Frame-Anchored continuity, ensuring your client's product or character remains identical across every scene segment.",
-      "closePreview": "Close Preview",
-      "expandVideo": "Expand Video",
-      "expandImage": "Expand Image",
-      "orStartExplorer": "start with the $9 Explorer plan",
-      "orPrefix": "Or"
+      "screenshot": "Snímek obrazovky",
+      "video": "Video",
+      "expandImage": "Zvětšit obrázek",
+      "closePreview": "Zavřít náhled",
+      "openScreenshot": "Otevřít snímek obrazovky",
+      "openFeatureVideo": "Otevřít prezentační video"
+    }
+  },
+  "useCases": {
+    "badge": "Příklady případů užití",
+    "title": "Jakékoli video, které si dokážete představit,",
+    "titleAccent": "Vytvořte to v SceneFlow",
+    "subtitle": "Zábavné pořady a série tvůrců, prezentace nemovitostí, vzdělávací obsah, podcasty, zpravodajské formáty i kampaně značek – jedno automatizované studio, které zajistí vše od konceptu až po finální master připravený k publikaci.",
+    "qualifyingStatement": "SceneFlow promění vaše zdrojové fotografie, nahrané soubory a popisy ve videa s komentářem a virtuální prohlídkou – včetně volitelného hlasu a postav, které sami ovládáte. Jedná se o prezentace upravené pomocí AI: realistické vizualizace vycházející z vašich podkladů, nikoli o živé záběry z kamery. Každou předběžnou vizualizaci před zveřejněním zkontrolujte a schvalte; výstupy jasně označte, aby diváci věděli, na co se dívají.",
+    "entertainmentStats": {
+      "title": "Ekonomika pozornosti zaměřená na tvůrce",
+      "footnote": "Zdroje: Nielsen, Digital i (oborové zprávy). Kontext trhu – nikoli údaje o výkonnosti SceneFlow.",
+      "stats": [
+        {
+          "value": "13,4 %",
+          "label": "Podíl YouTube na sledování televize v USA"
+        },
+        {
+          "value": "8,8 %",
+          "label": "Podíl Netflixu (kontext)"
+        },
+        {
+          "value": "99,1 min",
+          "label": "Průměrná denní aktivita na YouTube na účet (celosvětově)"
+        },
+        {
+          "value": "35 % a více",
+          "label": "Doba sledování YouTube na připojených televizorech"
+        }
+      ]
+    },
+    "ui": {
+      "useCases": "Případy užití",
+      "sectors": "{count} SEKTORŮ",
+      "demoComingSoon": "Demo již brzy",
+      "selectExample": "Vyberte případ užití a dozvíte se více",
+      "hearStory": "Vyslechněte si příběh",
+      "pauseStory": "Pozastavit příběh",
+      "storyComingSoon": "Příběh již brzy",
+      "targetPersona": "Cílová persona",
+      "theChallenge": "Výzva",
+      "sceneFlowSolution": "Řešení SceneFlow",
+      "beforeVsAfter": "Před a po",
+      "before": "Předtím",
+      "after": "Po",
+      "theWin": "„Výhra“",
+      "frameAnchoredTitle": "Kontinuita ukotvená v rámci",
+      "frameAnchoredDescription": "SceneFlow je jediný nástroj umožňující kontinuitu vázanou na konkrétní snímky (tzv. Frame-Anchored continuity), díky čemuž zůstává produkt či postava vašeho klienta identická v každém segmentu scény.",
+      "closePreview": "Zavřít náhled",
+      "expandVideo": "Rozbalit video",
+      "expandImage": "Zvětšit obrázek",
+      "conceptPreview": "Koncept případu užití",
+      "videoPreview": "Náhled videa",
+      "orStartExplorer": "začněte s tarifem za 9 $ Explorer",
+      "orPrefix": "Nebo"
     },
     "personas": {
       "creator": {
-        "label": "Solo Creator",
-        "title": "The YouTube Creator",
+        "label": "Samostatný tvůrce",
+        "title": "Tvůrce na YouTube",
         "beforeAfter": {
-          "before": "40 hrs",
-          "after": "25 mins"
+          "before": "40 hodin",
+          "after": "25 minut"
         },
         "challenge": {
-          "title": "The \"B-Roll\" Bottleneck",
-          "description": "You have a strong script, but learning six separate generation and edit tools — or getting stuck in slot-machine video loops — slows every upload. That delay weakens publishing cadence and audience retention."
+          "title": "Úzké hrdlo v oblasti doplňkových záběrů",
+          "description": "Máte skvělý scénář, ale nutnost ovládat šest různých nástrojů pro generování a střih – či zasekávání se ve smyčkách připomínajících výherní automaty – zpomaluje každé nahrávání videa. Úspěšné seriálové formáty na YouTube i dramatická tvorba ve stylu YouTube TV vyžadují rychlejší zpracování, než jaké dokážou zajistit roztříštěné záložky s nástroji umělé inteligence."
         },
         "solution": {
-          "title": "The Automated Storyteller",
-          "description": "Guided automation from script to publish-ready master — no need to learn six separate apps. Keep character and style continuity from first scene through series production.",
+          "title": "Automatizovaný vypravěč",
+          "description": "Vydávejte epizodické seriály i krátká videa, která okamžitě zaujmou – to vše z jednoho studia: od pre-vizualizace zaměřené na klíčové momenty děje přes zachování kontinuity až po finální master soubory připravené k publikaci v prostředí „creator economy“, které dominuje YouTube.",
           "features": [
-            "Visuals that map cleanly to script beats",
-            "Consistent protagonists across every scene",
-            "Scale to episode series with a shared reference library"
+            "Vizuální prvky, které přesně odpovídají jednotlivým bodům scénáře",
+            "Konzistentní hlavní postavy napříč všemi scénami",
+            "Škálování na seriály s využitím sdílené knihovny referenčních materiálů"
           ]
         },
-        "win": "Move from occasional uploads to a reliable production cadence with less overhead.",
+        "win": "Přejděte od občasného nahrávání k spolehlivému produkčnímu rytmu s nižšími nároky na organizaci a správu.",
         "keyPhrases": [
-          "Faster Turnaround",
-          "Consistent Characters",
-          "Series-Ready Workflow"
+          "Rychlejší vyřízení",
+          "Konzistentní postavy",
+          "Pracovní postup připravený pro sériovou výrobu"
         ]
       },
       "team": {
-        "label": "In-house Team",
-        "title": "The In-House Video Team",
+        "label": "Interní tým",
+        "title": "Interní video tým",
         "beforeAfter": {
-          "before": "6 wks",
-          "after": "Same wk"
+          "before": "6 týdnů",
+          "after": "Stejný týden"
         },
         "challenge": {
-          "title": "Vendor Backlog & Brand Drift",
-          "description": "Comms, L&D, and marketing teams wait weeks for agency or vendor video — or face an overwhelming tool stack with no repeatable in-house system. Every path brings inconsistent branding and stalled campaigns."
+          "title": "Nahromaděné požadavky u dodavatele a odklon od identity značky",
+          "description": "Týmy pro komunikaci, vzdělávání a rozvoj (L&D) i marketing čekají týdny na videa od agentur či dodavatelů – nebo čelí nepřehledné záplavě nástrojů bez jakéhokoli opakovatelného interního systému. Obě cesty vedou k nejednotné prezentaci značky a zpoždění kampaní."
         },
         "solution": {
-          "title": "Same-Week In-House Production",
-          "description": "Assign staff to produce video on a predictable credit budget — with brand templates, approval before final render, and no crew days or open-ended edit cycles.",
+          "title": "Interní výroba v průběhu týdne",
+          "description": "Pověřte tým tvorbou videí v rámci předvídatelného rozpočtu založeného na kreditech – s využitím šablon značky a schvalováním před finálním renderováním, a to bez nutnosti platit za natáčecí dny či nekonečné cykly úprav.",
           "features": [
-            "Replace vendor shoots with guided in-house workflows",
-            "Brand-safe templates and reference libraries",
-            "Visible credit spend and budget caps per project",
-            "Approve pre-vis before paying for final video"
+            "Nahraďte externí focení řízenými interními postupy.",
+            "Šablony a referenční knihovny v souladu se značkou",
+            "Přehled čerpání kreditů a rozpočtové limity pro jednotlivé projekty",
+            "Schvalte vizualizaci (pre-viz) před zaplacením za finální video."
           ]
         },
-        "win": "Ship training, comms, and campaign video on your timeline — not the vendor's backlog.",
+        "win": "Vydávejte výuková, komunikační a kampanová videa podle vlastního harmonogramu – a nečekejte, až na ně přijde řada v seznamu úkolů dodavatele.",
         "keyPhrases": [
-          "Predictable Cost",
-          "Brand Control",
-          "Same-Week Turnaround"
+          "Předvídatelné náklady",
+          "Kontrola značky",
+          "Vyřízení v průběhu téhož týdne"
         ]
       },
       "productionShop": {
-        "label": "Production Shop",
-        "title": "The Niche Production Shop",
+        "label": "Výrobní dílna",
+        "title": "Specializovaná výrobní dílna",
         "beforeAfter": {
-          "before": "4+ hrs",
-          "after": "30–60 min"
+          "before": "více než 4 hodiny",
+          "after": "30–60 min."
         },
         "challenge": {
-          "title": "Custom Verticals, No Repeatable System",
-          "description": "Memoir, legacy, real estate, and education clients need fast turnaround — but every project starts from scratch. Per-deliverable handoffs plus slot-machine video re-rolls across script, image, voice, video, music, and edit tools eat margin on volume."
+          "title": "Řešení na míru pro konkrétní odvětví – bez opakovatelného systému",
+          "description": "Klienti z oblastí pamětí, odkazu, realit či vzdělávání vyžadují rychlé zpracování – přitom každý projekt začíná od nuly. Předávání jednotlivých výstupů a neustálé, náhodné přepracovávání prvků (scénáře, obrazu, hlasu, videa, hudby či střihu) – připomínající hru na výherním automatu – pak ukrajují marži plynoucí z objemu zakázek."
         },
         "solution": {
-          "title": "Productize Your Video Service",
-          "description": "Build repeatable workflows for memoir studios and niche verticals. Template uploads, voice clones, avatars, and pre-vis approval — customize per client and grow margin on volume.",
+          "title": "Proměňte svou video službu v produkt",
+          "description": "Vytvářejte opakovatelné pracovní postupy pro studia specializující se na tvorbu pamětí a pro specifické tržní segmenty. Využívejte šablony, klonování hlasu, avatary a schvalování předběžných vizualizací – vše přizpůsobte na míru klientům a zvyšujte marži díky objemu zakázek.",
           "features": [
-            "Memoir templates with photo uploads, voice clones, and avatar hosts",
-            "Client intake tied to Blueprint and pre-vis approval phases",
-            "White-label studio packages for legacy, tribute, and subscription video",
-            "Margin on credits instead of per-shoot overhead"
+            "Šablony pro tvorbu pamětí s možností nahrání fotografií, klonováním hlasu a avatary v roli průvodců",
+            "Přijetí klienta vázané na Blueprint a fáze schvalování před návštěvou",
+            "Studiové balíčky typu white-label pro videa zaměřená na životní příběhy, vzpomínkové projekty a předplatné",
+            "Marže z kreditů namísto režijních nákladů na jednotlivé focení"
           ]
         },
-        "win": "Launch a video memoir or niche studio service with repeatable delivery — not a one-off freelance grind.",
+        "win": "Rozjeďte tvorbu video-memoárů nebo specializovanou studiovou službu s opakovatelným procesem – nejedná se o jednorázovou zakázkovou práci na volné noze.",
         "keyPhrases": [
-          "Memoir Templates",
-          "Voice & Avatar Identity",
-          "Repeatable Delivery"
+          "Šablony pro paměti",
+          "Identita hlasu a avatara",
+          "Opakovatelné dodání"
         ]
       },
       "agency": {
-        "label": "Agency",
-        "title": "The Client Delivery Lead",
+        "label": "Agentura",
+        "title": "Vedoucí dodávky služeb klientovi",
         "beforeAfter": {
-          "before": "3 wk delivery",
-          "after": "3 day delivery"
+          "before": "Dodání do 3 týdnů",
+          "after": "Dodání do 3 dnů"
         },
         "challenge": {
-          "title": "Client Delivery at Scale",
-          "description": "Winning the pitch is only half the battle. Recurring client work needs fast turnaround — but per-deliverable handoffs and slot-machine video re-rolls across separate generation and edit tools slow every pitch cycle."
+          "title": "Realizace služeb pro klienty ve velkém měřítku",
+          "description": "Vyhrát výběrové řízení je jen polovina úspěchu. Opakující se zakázky pro klienty vyžadují rychlé zpracování – avšak předávání jednotlivých výstupů a zdlouhavé, náhodné generování nových verzí videa (připomínající hru na výherním automatu) při přecházení mezi oddělenými nástroji pro tvorbu a střih celý proces brzdí."
         },
         "solution": {
-          "title": "Throughput + Client Approval",
-          "description": "Move from pitch spec to recurring delivery with brand-safe controls, client review before final render, and predictable credit costs per project.",
+          "title": "Propustnost + schválení klientem",
+          "description": "Přejděte od návrhu v rámci nabídky k opakovaným dodávkám díky nástrojům zajišťujícím soulad se značkou, schválení klientem před finálním renderováním a předvídatelným nákladům na kredity u jednotlivých projektů.",
           "features": [
-            "Fast pre-visualization for pitches and client sign-off",
-            "Reusable templates for recurring client formats",
-            "Budget visibility through every iteration",
-            "Scalable delivery without adding headcount"
+            "Rychlá předběžná vizualizace pro prezentace a schválení klientem",
+            "Znovu použitelné šablony pro opakující se formáty klientů",
+            "Přehled o rozpočtu v průběhu všech iterací",
+            "Škálovatelné zajištění služeb bez navyšování počtu zaměstnanců"
           ]
         },
-        "win": "Deliver faster pitch cycles and recurring client work with less production risk and more margin.",
+        "win": "Realizujte cykly přípravy nabídek i opakované zakázky pro klienty rychleji, s nižším výrobním rizikem a vyšší marží.",
         "keyPhrases": [
-          "Client Approvals",
-          "Delivery Throughput",
-          "Budget Predictability"
+          "Schválení klientem",
+          "Propustnost dodávek",
+          "Předvídatelnost rozpočtu"
+        ]
+      },
+      "filmProduction": {
+        "label": "Filmová produkce",
+        "title": "Filmový producent",
+        "beforeAfter": {
+          "before": "Týdny předvizualizace",
+          "after": "méně než 30 minut"
+        },
+        "challenge": {
+          "title": "Zdlouhavá předvizualizace před možností otestovat příběh",
+          "description": "Máte scénář, ale čtené zkoušky, cykly tvorby storyboardů a roztříštěné nástroje pro předběžnou vizualizaci zdržují prezentace investorům, testování na publiku i rozhodnutí o zahájení výroby."
+        },
+        "solution": {
+          "title": "Interaktivní pre-vizualizace vycházející ze scénáře",
+          "description": "Nahrajte svůj scénář (ve formátech MDX, FDX a dalších), optimalizujte jej pomocí Audience Resonance a vygenerujte interaktivní pre-vizualizaci pro promítání a testování – s využitím rychlého souběžného generování napříč jednotlivými sekvencemi (beats), podporou více než 70 jazyků a možností rychlého vkládání vícejazyčných překryvů.",
+          "features": [
+            "Nahrávání a import skriptů (MDX, FDX a další)",
+            "Optimalizujte pomocí Audience Resonance",
+            "Expresní pre-vizualizační animatik k posouzení a schválení zainteresovanými stranami",
+            "Více než 70 jazyků s rychlými vícejazyčnými překryvy",
+            "Revize a export skriptu (MDX a další formáty)",
+            "Screening Room pro testování kompletního animatiku na publiku"
+          ]
+        },
+        "win": "Ověřte soulad příběhu s cílovým publikem ještě před zahájením hlavního natáčení – pomocí sdílitelného animatiku, nikoli zdlouhavého procesu tvorby vizualizací trvajícího celé týdny.",
+        "keyPhrases": [
+          "Previzualizace vycházející ze scénáře",
+          "Audience Resonance",
+          "Screening Room Testování"
         ]
       }
     },
     "segmentCtas": {
       "creator": {
-        "label": "Start Your Production Test Flight",
-        "subtext": "$9 one-time • 750 credits • Full platform access"
+        "label": "Zahajte svůj produkční zkušební let",
+        "subtext": "9 $ jednorázově • 750 kreditů • Plný přístup k platformě"
       },
       "team": {
-        "label": "Book a Team Walkthrough",
-        "subtext": "See how in-house teams replace vendor cycles"
+        "label": "Rezervujte si prohlídku pro tým",
+        "subtext": "Podívejte se, jak interní týmy nahrazují cykly externích dodavatelů."
       },
       "productionShop": {
-        "label": "Explore Vertical Templates",
-        "subtext": "RE, education, docs, and more — see what you can productize"
+        "label": "Prozkoumejte vertikální šablony",
+        "subtext": "Realitní sektor, vzdělávání, dokumentace a další – podívejte se, co můžete přetvořit v produkt."
       },
       "agency": {
-        "label": "See Team Pricing",
-        "subtext": "Plans for agencies and production shops at scale"
+        "label": "Zobrazit ceny pro týmy",
+        "subtext": "Plány pro agentury a produkční studia s velkým objemem zakázek"
+      },
+      "filmProduction": {
+        "label": "Spusťte svůj zkušební let pro vizualizaci",
+        "subtext": "9 $ jednorázově • Nahrání scénáře → interaktivní animatik ke kontrole"
       }
     },
     "categories": [
       {
-        "id": "property",
-        "title": "Property, Spaces & Hospitality",
-        "qualifyingStatement": "Built from your real property photos — presented as a narrated AI-altered walkthrough with your voice and avatar. A realistic preview of layout and features, not a substitute for an in-person showing. All tours are clearly labeled.",
+        "id": "zábava",
+        "title": "Série o zábavě a tvůrcích",
+        "qualifyingStatement": "YouTube dnes v boji o diváckou pozornost konkuruje tradiční televizi – nezávislá animační studia i jednotliví tvůrci přinášejí seriálové hity, jejichž epizody dosahují desítek milionů zhlédnutí. SceneFlow vám poskytne vizualizaci zaměřenou na klíčové momenty děje (tzv. beaty), kontinuitu Reference Library a finální master verze připravené k publikaci v prostředí „creator economy“ – nejedná se tedy o nástroje pro generování náhodných klipů ve stylu výherních automatů.",
         "examples": [
           {
-            "id": "residential-real-estate",
-            "label": "Residential Real Estate",
-            "description": "Imagine uploading your property images with your saved character reference and voice. Then instantly generating a professional listing walkthrough with your image and voice — in over 70 languages."
+            "id": "krátké vertikální drama",
+            "label": "Dramatický seriál na YouTube TV",
+            "description": "Představte si, že na YouTube uvádíte dramatický seriál ve formátu 16:9 – tedy na platformě, která v USA aktuálně představuje 13,4 % celkové sledovanosti televizního obsahu a kde více než 35 % času sledování připadá na připojené televizory (Connected TV). SceneFlow pomáhá tvůrcům tento podíl zvyšovat pomocí poutavého alternativního obsahu: vizualizací zaměřených na klíčové dějové momenty (tzv. „beats“), kontinuity Reference Library a finálních širokoúhlých masterů připravených k okamžitému zveřejnění."
           },
           {
-            "id": "commercial-real-estate",
-            "label": "Commercial Real Estate",
-            "description": "Imagine uploading floor plans, renderings, and neighborhood data with your broker's saved voice and avatar. Then instantly producing investor pitch walkthroughs that bring every square foot to life — localized in 70+ languages."
+            "id": "animovaný webový seriál",
+            "label": "Animovaný webový seriál",
+            "description": "Představte si, že jednou zafixujete podobu stylizovaných postav ve svém Reference Library – a poté vydáváte epizody seriálu ve výtvarném stylu inspirovaném anime, Pixarem či studiem Ghibli, a to s takovou konzistencí, jakou vyžadují nezávislé hity typu Glitch Productions."
           },
           {
-            "id": "short-term-rentals",
-            "label": "Short-Term Rentals",
-            "description": "Imagine uploading house photos and amenity notes with your host's saved voice. Then instantly publishing digital welcome videos that greet every guest in their language — before they ever check in."
+            "id": "epizodický seriál na YouTube",
+            "label": "Epizodický seriál na YouTube",
+            "description": "Představte si automaticky generované dějové oblouky sezóny v nástroji Series Studio – osnovy epizod se synchronizují s Blueprint a produkcí, takže každá tvář, hlas i klíčový moment zůstávají konzistentní napříč rozrůstajícím se kanálem."
           },
           {
-            "id": "hospitality-tourism",
-            "label": "Hospitality & Tourism",
-            "description": "Imagine uploading hotel photos and itinerary highlights with your brand's saved host voice and avatar. Then instantly shipping virtual tours and narrated travel guides in 70+ languages — no film crew per property."
+            "id": "soutěžní reality show pro tvůrce",
+            "label": "Reality show a soutěže s tvůrci",
+            "description": "Představte si produkci soutěží pro tvůrce v měřítku televizních reality show, avšak bez klasického štábu – s využitím více kamer, schvalováním ze strany zainteresovaných stran a zpracováním od scénáře po finální MP4 během jediného týdne."
           },
           {
-            "id": "museum-gallery-guides",
-            "label": "Museum & Gallery Guides",
-            "description": "Imagine uploading exhibit photos and curator notes as displays change. Then instantly refreshing narrated gallery tours in 70+ languages — no reshoot when the exhibition rotates."
+            "id": "Řada připravená pro CTV",
+            "label": "Vertikální mobilní drama",
+            "description": "Představte si fotorealistické úvodní sekvence ve formátu 9:16 a seriálové epizody pro mobilní zařízení, které jsou stvořeny pro scrollování – schvalte Beat Frames ještě před renderováním a řaďte za sebe nativní rozšíření vytvářející emocionální momenty, jež přimějí uživatele zastavit pohyb palce. SceneFlow generuje vertikální finální verze připravené pro YouTube Shorts a mobilní feedy."
           }
         ]
       },
       {
-        "id": "knowledge",
-        "title": "Knowledge, Training & Education",
+        "id": "majetek",
+        "title": "Nemovitosti, prostory a pohostinství",
+        "qualifyingStatement": "Vytvořeno z vašich skutečných fotografií nemovitosti – prezentováno formou komentované prohlídky upravené pomocí AI, s využitím vašeho hlasu a avatara. Nabízí realistický náhled na dispozice a vybavení, avšak nenahrazuje osobní prohlídku. Všechny prohlídky jsou zřetelně označeny.",
         "examples": [
           {
-            "id": "k12-higher-ed",
-            "label": "K-12 & Higher Ed",
-            "description": "Imagine uploading lesson materials with your instructor's saved voice and character reference. Then instantly generating full curriculum modules your ESL and global campus students can watch in 70+ languages."
+            "id": "rezidenční nemovitosti",
+            "label": "Rezidenční nemovitosti",
+            "description": "Představte si, že nahrajete fotografie své nemovitosti spolu s uloženým vzhledem a hlasem své postavy. Následně okamžitě vygenerujete profesionální videoprohlídku s využitím této podoby a hlasu – a to ve více než 70 jazycích."
           },
           {
-            "id": "corporate-ld",
-            "label": "Corporate L&D",
-            "description": "Imagine uploading compliance scripts with your trainer's saved voice and avatar. Then instantly rolling out consistent onboarding and safety training across every office — localized in 70+ languages."
+            "id": "komerční nemovitosti",
+            "label": "Komerční nemovitosti",
+            "description": "Představte si, že nahrajete půdorysy, vizualizace a data o okolí a využijete uložený hlas i avatara svého makléře. Následně okamžitě vytvoříte prezentace formou virtuální prohlídky pro investory, které vdechnou život každému čtverečnímu metru – a to v lokalizované podobě pro více než 70 jazyků."
           },
           {
-            "id": "software-saas-tutorials",
-            "label": "Software SaaS Tutorials",
-            "description": "Imagine uploading UI screenshots as reference frames with your product expert's saved voice. Then instantly generating walkthrough videos that animate every click — updated the day your UI ships."
+            "id": "krátkodobé pronájmy",
+            "label": "Krátkodobé pronájmy",
+            "description": "Představte si, že nahrajete fotografie domu a informace o vybavení doplněné o uložený hlas hostitele. A poté okamžitě zveřejníte digitální uvítací videa, která každého hosta pozdraví v jeho vlastním jazyce – ještě předtím, než se vůbec ubytuje."
           },
           {
-            "id": "niche-skill-tutoring",
-            "label": "Niche Skill Tutoring",
-            "description": "Imagine uploading step photos with your instructor's saved voice and character reference. Then instantly publishing professional how-to series — cooking, DIY, or certification prep — in 70+ languages."
+            "id": "pohostinství a cestovní ruch",
+            "label": "Pohostinství a cestovní ruch",
+            "description": "Představte si, že nahrajete fotografie hotelu a zajímavosti z itineráře a využijete přitom uložený hlas průvodce a avatara vaší značky. Následně okamžitě zpřístupníte virtuální prohlídky a komentované cestovní průvodce ve více než 70 jazycích – a to bez nutnosti vysílat filmový štáb do každého jednotlivého objektu."
           },
           {
-            "id": "medical-patient-education",
-            "label": "Medical/Patient Education",
-            "description": "Imagine uploading procedure diagrams with your clinician's approved saved voice. Then instantly generating clear patient education videos families can understand in 70+ languages."
+            "id": "průvodci po muzeích a galeriích",
+            "label": "Průvodci po muzeích a galeriích",
+            "description": "Představte si, že při obměně expozice nahrajete fotografie vystavených děl a poznámky kurátora. Následně okamžitě aktualizujete komentované prohlídky ve více než 70 jazycích – bez nutnosti nového natáčení při každé změně výstavy."
+          }
+        ]
+      },
+      {
+        "id": "znalosti",
+        "title": "Znalosti, školení a vzdělávání",
+        "examples": [
+          {
+            "id": "Vzdělávání od mateřské školy po vysokou školu",
+            "label": "Základní a střední školství a vysoké školství",
+            "description": "Představte si, že nahrajete výukové materiály a využijete přitom uložený hlas a vizuální podobu lektora. Následně okamžitě vygenerujete kompletní výukové moduly, které mohou vaši studenti (ať už jde o výuku angličtiny, či globální kampus) sledovat ve více než 70 jazycích."
           },
           {
-            "id": "video-memoirs",
-            "label": "Video Memoirs",
-            "description": "Imagine uploading family photos, interview audio, and scene notes with a saved narrator voice. Then instantly shaping chapter-based memoir videos — approve the pre-vis before final render."
+            "id": "korporátní identita",
+            "label": "Firemní vzdělávání a rozvoj",
+            "description": "Představte si, že nahrajete školicí snímky využívající uložený hlas vašeho manažera pro vzdělávání a rozvoj (L&D). Následně okamžitě publikujete videa k jednotlivým modulům – pro delší výkladová videa řetězíte nativní sedmivteřinová prodloužení a před vygenerováním finální verze schválíte Beat Frames."
+          },
+          {
+            "id": "Výukové materiály k softwaru a SaaS",
+            "label": "Výukové materiály k SaaS softwaru",
+            "description": "Představte si, že nahrajete snímky obrazovky jako referenční záběry a využijete uložený hlas produktového experta. Následně okamžitě vygenerujete instruktážní videa, která animují každé kliknutí – a která se aktualizují v den, kdy nasadíte nové uživatelské rozhraní."
+          },
+          {
+            "id": "Výuka specializovaných dovedností",
+            "label": "Výuka specializovaných dovedností",
+            "description": "Představte si, že nahrajete fotografie jednotlivých kroků spolu s uloženým hlasem instruktora a definicí jeho charakteru. A poté okamžitě publikujete profesionální instruktážní série – ať už jde o vaření, kutilství nebo přípravu na certifikaci – ve více než 70 jazycích."
+          },
+          {
+            "id": "edukace pacientů v oblasti medicíny",
+            "label": "Vzdělávání v oblasti medicíny / Vzdělávání pacientů",
+            "description": "Představte si, že nahrajete schémata zákroků spolu s uloženým hlasem lékaře a okamžitě vytvoříte srozumitelná vzdělávací videa pro pacienty, kterým porozumí celé rodiny – a to ve více než 70 jazycích."
+          },
+          {
+            "id": "videomemoáry",
+            "label": "Videomemoáry",
+            "description": "Představte si, že nahrajete rodinné fotografie, zvukové záznamy rozhovorů a poznámky ke scénám a využijete uložený hlas vypravěče. Následně okamžitě sestavíte videa s paměťmi rozdělená do kapitol – a před finálním vyrenderováním schválíte předběžnou vizualizaci."
           }
         ]
       },
@@ -622,843 +1092,676 @@
         "title": "JIT Media & Information",
         "examples": [
           {
-            "id": "hyper-local-news",
-            "label": "Hyper-Local News",
-            "description": "Imagine uploading today's photos and bulletins with your anchor's saved voice. Then instantly publishing a daily neighborhood news brief — no film crew, no missed deadline."
+            "id": "hyperlokální zpravodajství",
+            "label": "Hyperlokální zpravodajství",
+            "description": "Představte si, že nahrajete dnešní fotografie a zprávy a využijete přitom uložený hlas svého moderátora. A vzápětí okamžitě zveřejníte krátký denní přehled novinek z okolí – bez filmového štábu a bez rizika, že nestihnete termín."
           },
           {
-            "id": "financial-market-recaps",
-            "label": "Financial & Market Recaps",
-            "description": "Imagine uploading market data and chart snapshots each morning with your analyst's saved voice. Then instantly turning them into a narrated visual digest — ready before the opening bell."
+            "id": "Shrnutí dění na finančních trzích",
+            "label": "Přehledy finančních a tržních údajů",
+            "description": "Představte si, že každé ráno nahrajete tržní data a snímky grafů spolu s uloženým hlasem svého analytika. A vzápětí je proměníte v komentovaný vizuální přehled – připravený ještě před zahájením obchodování."
           },
           {
-            "id": "sports-commentary",
-            "label": "Sports Commentary",
-            "description": "Imagine uploading game stats and still photography with your commentator's saved voice. Then instantly generating recap videos with animated action — published while fans are still talking."
+            "id": "sportovní komentář",
+            "label": "Sportovní komentář",
+            "description": "Představte si, že nahrajete herní statistiky a fotografie spolu s uloženým hlasem komentátora. Následně okamžitě vygenerujete sestřihová videa s animovanými herními situacemi – a zveřejníte je v době, kdy o zápase fanoušci stále ještě živě diskutují."
           },
           {
-            "id": "true-crime-historical-docs",
-            "label": "True Crime & Historical Docs",
-            "description": "Imagine locking historical figures in your Reference Library once. Then instantly producing multi-part episodes where every face and voice stays consistent — series after series."
+            "id": "historické dokumenty o skutečných zločinech",
+            "label": "Dokumenty o skutečných zločinech a historii",
+            "description": "Představte si, že historické postavy jednou uložíte do svého systému Reference Library. A poté okamžitě vytváříte vícedílné epizody, v nichž si každá tvář i hlas zachovávají konzistenci – napříč řadami."
           },
           {
-            "id": "weather-emergency-alerts",
-            "label": "Weather & Emergency Alerts",
-            "description": "Imagine uploading emergency bulletins with your agency's trusted saved voice. Then instantly broadcasting clear alerts in 70+ languages across social platforms — in minutes, not days."
+            "id": "Varování před nebezpečným počasím",
+            "label": "Výstrahy před počasím a mimořádnými událostmi",
+            "description": "Představte si, že nahrajete krizová hlášení s využitím důvěryhodného, předem uloženého hlasu vaší organizace. A poté okamžitě – během minut, nikoli dnů – šíříte srozumitelná varování ve více než 70 jazycích napříč sociálními sítěmi."
           }
         ]
       },
       {
-        "id": "b2b",
-        "title": "B2B Marketing & Sales",
+        "id": "B2B",
+        "title": "B2B marketing a prodej",
         "examples": [
           {
-            "id": "product-explainer-videos",
-            "label": "Product Explainer Videos",
-            "description": "Imagine uploading product catalog shots with your brand's saved presenter voice and avatar. Then instantly generating a cinematic explainer series — approve the pre-vis before you render."
+            "id": "vysvětlující videa k produktům",
+            "label": "Vysvětlující videa o produktech",
+            "description": "Představte si, že nahrajete snímky produktů z katalogu a využijete uložený hlas moderátora i avatara vaší značky. Následně okamžitě vygenerujete sérii filmově laděných vysvětlujících videí – a před samotným renderováním schválíte jejich vizuální náhled."
           },
           {
-            "id": "case-study-testimonials",
-            "label": "Case Study/Testimonials",
-            "description": "Imagine uploading client headshots, project photos, and success metrics with a saved narrator voice. Then instantly producing polished visual case studies — without a testimonial shoot."
+            "id": "Reference k případovým studiím",
+            "label": "Případová studie / Reference",
+            "description": "Představte si, že nahrajete portréty klientů, fotografie projektů a metriky úspěšnosti a využijete uložený hlas vypravěče. A vzápětí okamžitě vytvoříte profesionálně zpracované vizuální případové studie – aniž byste museli natáčet výpovědi klientů."
           },
           {
-            "id": "recruitment-branding",
-            "label": "Recruitment & Branding",
-            "description": "Imagine uploading office photos and culture highlights with your recruiter's saved voice and avatar. Then instantly giving candidates a narrated day-in-the-life tour — in 70+ languages for global hiring."
+            "id": "náborový branding",
+            "label": "Nábor a budování značky",
+            "description": "Představte si, že nahrajete fotografie kanceláří a ukázky firemní kultury a zkombinujete je s uloženým hlasem a avatarem svého náboráře. Uchazečům pak můžete okamžitě nabídnout komentovanou prohlídku běžného pracovního dne – a to ve více než 70 jazycích pro globální nábor."
           },
           {
-            "id": "conference-event-promos",
-            "label": "Conference & Event Promos",
-            "description": "Imagine uploading speaker bios, session details, and venue photos with your event host's saved voice. Then instantly generating speaker intros and what-to-expect guides — refreshed every time the agenda changes."
+            "id": "Propagace konferencí a akcí",
+            "label": "Propagační materiály pro konference a akce",
+            "description": "Představte si, že nahrajete medailonky řečníků, podrobnosti o jednotlivých blocích programu a fotografie místa konání, a to vše v kombinaci s hlasem moderátora vaší akce. Následně můžete okamžitě generovat úvody k vystoupením i přehledy toho, co účastníky čeká – a to s automatickou aktualizací při každé změně programu."
           }
         ]
       },
       {
-        "id": "public",
-        "title": "Public Sector & Advocacy",
+        "id": "veřejný",
+        "title": "Veřejný sektor a prosazování zájmů",
         "examples": [
           {
-            "id": "ngo-impact-reports",
-            "label": "NGO Impact Reports",
-            "description": "Imagine uploading field photography and impact data with your organization's saved narrator voice. Then instantly turning donor reports into emotive narrated videos — your mission's voice, not a slideshow."
+            "id": "Zprávy o dopadu činnosti neziskových organizací",
+            "label": "Zprávy o dopadu činnosti nevládních organizací",
+            "description": "Představte si, že nahrajete fotografie z terénu a údaje o dopadu vaší činnosti a využijete přitom předem uložený hlas vypravěče vaší organizace. Zprávy pro dárce tak okamžitě proměníte v emotivní videa s komentářem – videa, která nesou hlas vašeho poslání, a ne jen obyčejnou prezentaci snímků."
           },
           {
-            "id": "public-health-announcements",
-            "label": "Public Health Announcements",
-            "description": "Imagine uploading approved health messaging with your department's trusted saved voice. Then instantly reaching every community in 70+ languages — same clarity, same urgency, zero translation delay."
+            "id": "oznámení týkající se veřejného zdraví",
+            "label": "Oznámení týkající se veřejného zdraví",
+            "description": "Představte si, že nahrajete schválené zdravotní sdělení s využitím důvěryhodného, předem uloženého hlasu vašeho oddělení. A poté okamžitě oslovíte všechny komunity ve více než 70 jazycích – se stejnou srozumitelností a naléhavostí, a to bez jakéhokoli zpoždění způsobeného překladem."
           },
           {
-            "id": "legal-insurance-explainers",
-            "label": "Legal & Insurance Explainers",
-            "description": "Imagine uploading contract summaries and process diagrams with your advisor's saved voice. Then instantly generating visual breakdowns clients actually understand — before they sign or file a claim."
+            "id": "Vysvětlující informace k právnímu pojištění",
+            "label": "Vysvětlující materiály k právním a pojistným tématům",
+            "description": "Představte si, že nahrajete shrnutí smluv a schémata procesů spolu s uloženým hlasem svého poradce. A poté okamžitě vygenerujete vizuální přehledy, kterým klienti skutečně rozumí – ještě předtím, než smlouvu podepíšou nebo nahlásí pojistnou událost."
           },
           {
-            "id": "religious-spiritual-teachings",
-            "label": "Religious & Spiritual Teachings",
-            "description": "Imagine uploading sermon notes or sacred texts with your teacher's saved voice and presence. Then instantly publishing a consistent daily video series for global congregations — in 70+ languages."
+            "id": "nábožensko-spirituální učení",
+            "label": "Náboženská a duchovní učení",
+            "description": "Představte si, že nahrajete poznámky ke kázání nebo posvátné texty a spojíte je s uloženým hlasem a vizuální podobou svého učitele. A poté okamžitě zveřejníte ucelenou sérii každodenních videí pro sbory po celém světě – ve více než 70 jazycích."
           }
         ]
       }
     ]
   },
-  "institutionalRoi": {
-    "badge": "For in-house teams & institutions",
-    "title": "Replace vendor shoots with predictable in-house production",
-    "subtitle": "Comms, L&D, and marketing teams of 1–5 can ship same-week video without agency retainers or open-ended edit cycles.",
-    "comparisons": [
-      {
-        "label": "Traditional vendor shoot + edit",
-        "cost": "$5,000–$15,000",
-        "timeline": "4–8 weeks"
-      },
-      {
-        "label": "SceneFlow in-house workflow",
-        "cost": "$50–$500 in credits",
-        "timeline": "Same week"
-      }
-    ],
-    "bullets": [
-      "Brand-safe templates and approval before final render",
-      "Budget caps with visible credit spend per project",
-      "No crew days, no edit back-and-forth on every revision"
-    ],
-    "ctaPrimary": "Book a team walkthrough",
-    "ctaSecondary": "See pricing",
-    "typicalCost": "Typical cost",
-    "timeline": "Timeline"
-  },
   "platformWalkthrough": {
-    "badge": "Guided Tour",
-    "title": "Platform Walkthrough",
-    "subtitle": "A complete guide to the SceneFlow AI Studio workflow, from collaboration reviews to final cinematic output.",
-    "subheading": "Explore the platform — start with essentials",
-    "chapterHint": "Four things to know today. Expand chapters when you want the full picture.",
-    "expandChapter": "Show features",
-    "collapseChapter": "Hide features",
-    "underTheHoodLabel": "Under the hood",
+    "badge": "Pod kapotou",
+    "title": "Podrobný průvodce platformou",
+    "subtitle": "Rozbalte a zobrazte si komentovaná videa k tématům: plánování seriálu, kontinuita referencí, hloubka produkce, Screening Room a důvěra a bezpečnost – určeno pro technické recenzenty a zájemce o hlubší vhled.",
+    "subheading": "Pod kapotou – komentovaná videa pro technické recenzenty",
+    "chapterHint": "Rozšiřte o plánování sérií, kontinuitu referencí, hloubku produkce a oblast důvěry a bezpečnosti.",
+    "expandChapter": "Funkce pořadu",
+    "collapseChapter": "Skrýt funkce",
+    "underTheHoodLabel": "Pod kapotou",
     "chapters": [
       {
-        "id": "essentials",
-        "label": "Start here — what you get on day one",
-        "defaultExpanded": true
+        "id": "Začněte zde",
+        "label": "Začněte zde – plán, kontinuita a přizpůsobení publiku"
       },
       {
-        "id": "quality",
-        "label": "Make it land with your audience",
-        "defaultExpanded": false
-      },
-      {
-        "id": "production",
-        "label": "From approved beats to published master",
-        "defaultExpanded": false
-      },
-      {
-        "id": "advanced",
-        "label": "For teams who want billing and governance",
-        "defaultExpanded": false
+        "id": "vytvořit a publikovat",
+        "label": "Vytvořit a publikovat — karta Snímání do Screening Room"
       }
     ],
-    "close": "Close",
-    "viewDetails": "View Details",
+    "close": "Zavřít",
+    "viewDetails": "Zobrazit podrobnosti",
     "beatFirst": {
-      "id": 15,
-      "title": "Beat-First Video Pipeline",
-      "description": "Approve pre-vis beats and Beat Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.",
+      "title": "Video pipeline řízená rytmem",
+      "description": "Schvalte klíčové body vizualizace (pre-vis beats) a Beat Frames ještě před fází F2V – omezíte tak nutnost opakovaných generování naslepo způsobených halucinacemi či vizuálním posunem. Získáte jeden strukturovaný postup od revize až po finální klip.",
       "keyFeatures": [
-        "Express Pre-vis for review — share beats before heavy render",
-        "Beat Frames lock composition — Reference Library continuity",
-        "F2V per beat — generate video from approved frames",
-        "Mixer timing and streams — export to Final Cut assembly"
+        "Express Pre-vis ke kontrole – sdílení beatů před náročným renderováním",
+        "Beat Frames skladba zámku — Reference Library spojitost",
+        "F2V na úder – generování videa ze schválených snímků",
+        "Souvislé řetězce EXT – nativní kroky po více než 7 sekundách pro dlouhé dialogy v rámci jedné sekvence",
+        "Časování a datové toky mixéru – otevřete Screening Room pro sestavení a publikování"
       ],
-      "screenshotSlot": "Insert screenshot: Beat Frames and pre-vis approval before video generation",
-      "videoSlot": "Insert 00:30 clip: Approving beats, locking frames, then generating F2V clips"
+      "screenshotSlot": "Vložit snímek obrazovky: Beat Frames a schválení předběžné vizualizace před vygenerováním videa",
+      "videoSlot": "Vložit 30sekundový klip: Schvalování rytmů, fixace snímků a následné generování klipů F2V."
     },
     "screeningRoom": {
-      "title": "Audience Review and Analytics",
-      "description": "Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production pre-vis preview.",
+      "title": "Screening Room",
+      "description": "Prohlížejte si videa jednotlivých scén, sestavte finální verzi a publikujte – to vše v prostředí Production. Využívejte soukromé odkazy pro sdílení se zainteresovanými stranami, které umožňují sběr strukturované zpětné vazby a volitelné sledování analytiky zapojení.",
       "keyFeatures": [
-        "Private review sessions — secure /s/ share links for stakeholders",
-        "Structured audience feedback — ratings and open items",
-        "Optional engagement analytics — with viewer consent before capture",
-        "Iterate from real data — refine Blueprint and script from reviewer insights"
+        "Náhled videa scény – postupné přehrávání vyrenderovaných proudů",
+        "Finální sestavení – vyberte Animatic nebo video pro každou scénu a vyrenderujte jeden soubor MP4.",
+        "Sdílitelná hodnocení – zabezpečené odkazy s bodováním a tříděním zpětné vazby",
+        "Publikování — průvodce pro YouTube, exporty krátkých videí a distribuční balíčky"
       ],
-      "screenshotSlot": "Insert screenshot: Screening Room analytics and reviewer feedback panel",
+      "screenshotSlot": "Vložit snímek obrazovky: Screening Room panel analytiky a zpětné vazby od recenzentů",
       "screenshotUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-19%20at%2018.29.48.png",
-      "videoSlot": "Insert 00:30 clip: Hosting a review session and gathering engagement data"
+      "videoSlot": "Vložit 30sekundový klip: Vedení hodnotícího setkání a sběr dat o zapojení"
     },
     "ui": {
-      "screenshot": "Screenshot",
+      "screenshot": "Snímek obrazovky",
       "video": "Video",
-      "featureVideo": "Feature Video",
-      "keyFeatures": "Key features",
-      "openScreenshot": "Open screenshot",
-      "openFeatureVideo": "Open feature video",
-      "expandImage": "Expand Image",
-      "closePreview": "Close Preview"
+      "featureVideo": "Hlavní video",
+      "keyFeatures": "Klíčové vlastnosti",
+      "openScreenshot": "Otevřít snímek obrazovky",
+      "openFeatureVideo": "Otevřít prezentační video",
+      "expandImage": "Zvětšit obrázek",
+      "closePreview": "Zavřít náhled"
     },
     "items": [
       {
         "id": "1",
-        "title": "Intuitive UX + Full Creator Control",
-        "description": "Start fast with guided automation, then edit every generated output so teams keep creative control without losing speed.",
+        "title": "Přehled platformy",
+        "description": "Jediné studio, které vás provede celým procesem od nápadu až po video připravené k publikaci. Stejný výrobní postup pro školení, podcasty, zpravodajství i filmové seriály – schvalte předběžnou vizualizaci (pre-viz) ještě před investicí do finálního renderování.",
         "keyFeatures": [
-          "Guided Studio workflow — from concept to export in one place",
-          "Edit every AI-generated beat, character, and line in place",
-          "Treatment variants — side-by-side compare for creative direction",
-          "Blueprint Collaborate — share links, section audio, and structured reviewer feedback"
+          "Řada → Blueprint → Výroba → Screening Room",
+          "Schvalování po jednotlivých sekvencích (beat-first) – pre-vizualizace a Beat Frames před fází F2V",
+          "Generování Google Vertex AI pomocí nativních řetězců rozšíření Veo",
+          "Ochranné mechanismy pro důvěru a bezpečnost a potvrzený původ při dodání"
         ],
-        "screenshotSlot": "Insert screenshot: Blueprint editor with editable generated sections",
-        "videoSlot": "Insert 00:30 clip: UX flow from concept to editable output"
-      },
-      {
-        "id": "2",
-        "title": "Credit Budget & Cost Control",
-        "description": "Track credit usage in real time and set guardrails before expensive generation runs.",
-        "keyFeatures": [
-          "Real-time credit usage — by project and operation",
-          "Production guardrails — before costly generation runs",
-          "Transparent rate cards — for TTS, video, and intelligence",
-          "Budget visibility — for teams and solo creators"
-        ],
-        "screenshotSlot": "Insert screenshot: credit usage panel and BYOK settings",
-        "videoSlot": "Insert 00:30 clip: budget dashboard and key configuration",
-        "underTheHood": {
-          "title": "Under the hood",
-          "body": "For production teams with existing cloud contracts:",
-          "bullets": [
-            "Vertex AI BYOK — enterprise billing and governance",
-            "Provider toggles in the credit calculator",
-            "Transparent platform rate cards alongside your keys"
-          ]
-        }
-      },
-      {
-        "id": "3",
-        "title": "Any Concept, One Production Workflow",
-        "description": "Use one reliable pipeline for training, podcasts, news, home sales videos, and cinematic content.",
-        "keyFeatures": [
-          "One pipeline — podcast, news, training, real estate, and cinematic formats",
-          "Project templates — Studio adapts to your source material",
-          "Same Blueprint → Script → Production path — regardless of genre",
-          "No tool-switching — from ideation through delivery"
-        ],
-        "screenshotSlot": "Insert screenshot: Split-view or grid showing Podcast, News, Real Estate, and Cinematic templates feeding into one unified SceneFlow pipeline UI.",
-        "videoSlot": "Insert 00:30 clip: \"Start with any source material...\" clicking New Project -> Podcast (UI adapts to audio), then showing split screen of News & Cinematic projects converging into the Blueprint editor."
-      },
-      {
-        "id": "4",
-        "title": "Smart Automation with Precision Edit Control",
-        "description": "The SceneFlow platform uses intelligence to automatically generate a professional baseline (series, blueprint, script, production prompts, and edits) while providing intelligent dialogs that give you full edit control with built-in guardrails.",
-        "keyFeatures": [
-          "AI baselines in one pass — series, blueprint, script, and production prompts",
-          "Intelligent edit dialogs — guardrails, not blind rewrites",
-          "Accept, refine, or reject — every suggestion stays under your control",
-          "Human-in-the-loop — at every phase of production"
-        ],
-        "screenshotSlot": "Insert screenshot: Intelligent dialog showing baseline generation with edit controls",
-        "videoSlot": "Insert 00:30 clip: AI baseline generation followed by user making precise edits"
-      },
-      {
-        "id": "5",
-        "title": "Shared Reference Library for Continuity",
-        "description": "Maintain consistent characters, wardrobe, voices, locations, and props across scenes and episodes with reusable references.",
-        "keyFeatures": [
-          "Reusable profiles — characters, wardrobe, voices, locations, and props",
-          "Cross-scene application — references flow into every generation",
-          "Visual consistency — same faces and tone in Imagen and Veo outputs",
-          "Franchise-scale continuity — built for multi-episode series"
-        ],
-        "screenshotSlot": "Insert screenshot: Reference library showing character and prop continuity",
-        "videoSlot": "Insert 00:30 clip: Applying references across multiple scenes"
-      },
-      {
-        "id": "6",
-        "title": "Express Generation Engine",
-        "description": "Auto-generate images and video segments concurrently. Express Pre-vis lets you review and share audio-visual pre-vis in minutes. Express Animatics renders full Ken Burns scenes in minutes, while Express Video delivers final video scenes in minutes instead of days.",
-        "keyFeatures": [
-          "Concurrent generation — images and video across scenes at once",
-          "Express Pre-vis — shareable audio-visual previews in minutes",
-          "Express Animatics — Ken Burns motion from stills",
-          "Express Video — scene-level clips in minutes, not days"
-        ],
-        "screenshotSlot": "Insert screenshot: Express generation dashboard with Animatics and Video progress",
-        "videoSlot": "Insert 00:30 clip: Concurrent generation turning script into animatic then final video"
-      },
-      {
-        "id": "7",
-        "title": "Audience Resonance Editor",
-        "description": "Determine your target audience to get instant scoring, analysis, and recommendations. Apply one-click fixes or use Guided Edits to perfectly optimize your Episodes, Blueprint, and Script for maximum impact.",
-        "keyFeatures": [
-          "Target-audience scoring — with category breakdown",
-          "Section-tied recommendations — fix the right part of your story",
-          "One-click fixes and Guided Edit — precise rewrites, not guesswork",
-          "Production-ready threshold — know when to invest in full render"
-        ],
-        "screenshotSlot": "Insert screenshot: Resonance Editor with audience scoring and one-click fixes",
-        "videoSlot": "Insert 00:30 clip: Applying guided edits based on audience resonance score"
-      },
-      {
-        "id": "8",
-        "title": "Adaptive Translation (70+ Languages)",
-        "description": "Localize content at scale while preserving narrative intent and timeline alignment for multilingual delivery.",
-        "keyFeatures": [
-          "70+ languages — narration, dialogue, and copy at scale",
-          "Narrative intent preserved — meaning and timing stay aligned",
-          "Multi-language audio tracks — on the scene timeline",
-          "Export-ready packages — per locale for distribution"
-        ],
-        "screenshotSlot": "Insert screenshot: Multi-language timeline and translation settings",
-        "videoSlot": "Insert 00:30 clip: Instantly localizing a scene into multiple languages"
+        "screenshotSlot": "Vložit snímek obrazovky: Hlavní sekce vstupní stránky + zjednodušený pruh s průvodcem",
+        "videoSlot": "Vložit klip o délce 01:30: Hero → nový projekt → Blueprint → Produkční natáčení → Screening Room → Publikovat"
       },
       {
         "id": "9",
-        "title": "Series Automation",
-        "description": "Define your universe once and generate cohesive multi-episode arcs. Shared Reference Library keeps characters and tone aligned across the season.",
+        "title": "Automatizace sériové výroby",
+        "description": "Definujte svůj svět jednou a vytvářejte ucelené dějové oblouky napříč několika epizodami. Sdílený Reference Library zajišťuje konzistenci postav a tónu v průběhu celé sezóny.",
         "keyFeatures": [
-          "Define your universe once — characters, tone, and season arc",
-          "Cohesive episode outlines — auto-generated across the season",
-          "Continuity tracking — multi-episode seasons in alignment",
-          "Series-to-episode sync — into Blueprint Studio and Production"
+          "Definujte svůj svět jednou – postavy, ladění a dějový oblouk sezóny.",
+          "Ucelené osnovy epizod – automaticky generované pro celou sérii",
+          "Sledování kontinuity – sladění vícedílných řad",
+          "Synchronizace seriálu s epizodou – do studia a produkce Blueprint"
         ],
-        "screenshotSlot": "Insert screenshot: Series overview with auto-generated episode arcs",
-        "videoSlot": "Insert 00:30 clip: Concept expanding into a multi-episode season"
+        "screenshotSlot": "Vložit snímek obrazovky: Přehled seriálu s automaticky vygenerovanými dějovými oblouky epizod",
+        "videoSlot": "Vložit 30sekundový klip: Koncept rozšiřovaný do vícedílné série"
       },
       {
         "id": "10",
-        "title": "Blueprint Automation",
-        "description": "Transform concepts into structured treatments with logline, beats, characters, and tone. Run Audience Resonance and collaborate before heavy rendering.",
+        "title": "Blueprint Automatizace",
+        "description": "Převeďte koncepty na strukturované náměty (treatments) zahrnující logline, klíčové momenty, postavy a tón. Spusťte Audience Resonance a spolupracujte ještě před náročným renderováním.",
         "keyFeatures": [
-          "Generate → Review → Iterate → Start Production workflow",
-          "Concept to structure in minutes — logline, beats, characters, and tone",
-          "Audience Resonance scoring with 80+ target before Production",
-          "Collaborator share links — feedback synthesis into guided revision"
+          "Pracovní postup: Generování → Kontrola → Iterace → Zahájení výroby",
+          "Od konceptu ke struktuře během několika minut – logline, klíčové momenty, postavy a tón",
+          "Audience Resonance bodování s cílovou hodnotou 80+ před fází výroby",
+          "Odkazy pro sdílení se spolupracovníky – syntéza zpětné vazby do podoby řízené revize"
         ],
-        "screenshotSlot": "Insert screenshot: Auto-generated Blueprint with story beats and character arcs",
-        "videoSlot": "Insert 00:30 clip: Turning a concept into a structured Blueprint"
+        "screenshotSlot": "Vložit snímek obrazovky: Automaticky vygenerovaný Blueprint s klíčovými momenty příběhu a oblouky postav",
+        "videoSlot": "Vložit 30sekundový klip: Přeměna konceptu na strukturovaný Blueprint"
+      },
+      {
+        "id": "5",
+        "title": "Sdíleno Reference Library pro zajištění kontinuity",
+        "description": "Zajistěte konzistentnost postav, kostýmů, hlasů, lokací a rekvizit napříč scénami i epizodami pomocí opakovaně použitelných referencí.",
+        "keyFeatures": [
+          "Znovu použitelné profily – postavy, kostýmy, hlasy, lokace a rekvizity",
+          "Aplikace napříč scénáři – reference proudí do každé generace",
+          "Vizuální konzistence – stejné tváře a ladění ve výstupech modelů Imagen a Veo",
+          "Kontinuita v měřítku celé franšízy – navrženo pro vícedílné série"
+        ],
+        "screenshotSlot": "Vložit snímek obrazovky: Referenční knihovna znázorňující kontinuitu postav a rekvizit",
+        "videoSlot": "Vložit 30sekundový klip: Použití referencí napříč více scénami"
+      },
+      {
+        "id": "7",
+        "title": "Audience Resonance Analýza",
+        "description": "Určete svou cílovou skupinu a získejte okamžité hodnocení, analýzu i doporučení. Aplikujte opravy jedním kliknutím nebo využijte asistované úpravy a dokonale optimalizujte své epizody, Blueprint i scénář pro dosažení maximálního účinku.",
+        "keyFeatures": [
+          "Bodování cílové skupiny – s rozpisem podle kategorií",
+          "Doporučení vázaná na konkrétní části – opravte tu správnou část svého příběhu",
+          "Opravy jedním kliknutím a asistované úpravy – přesné úpravy bez hádání",
+          "Bod připravenosti k produkci – poznejte, kdy investovat do plného renderu"
+        ],
+        "screenshotSlot": "Vložte snímek obrazovky: Resonance Editor s hodnocením od publika a opravami na jedno kliknutí.",
+        "videoSlot": "Vložení 30sekundového klipu: Aplikace řízených úprav na základě skóre ohlasu u publika"
       },
       {
         "id": "11",
-        "title": "Production Automation",
-        "description": "Script and Action tabs guide Foundation → pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer, and MP4 streams — no tool switching.",
+        "title": "Automatizace výroby",
+        "description": "Karty Script a Shoot provázejí procesem od fáze Foundation přes Pre-Vis, Footage a Mixer až po Streams. Kontrolní body po jednotlivých scénách minimalizují nutnost opakování práce; Screening Room zajišťuje náhled, sestavení a publikování.",
         "keyFeatures": [
-          "Foundation — script, voices, scene audio, lock script",
-          "Express Pre-vis — direction and frames in minutes; gallery and share",
-          "Beat Frames and Mixer — start/end frames, Director Console, render MP4 streams",
-          "Production Streams — review outputs, re-render stale beats, send to Final Cut"
+          "Foundation – scénář, hlasy, zvuk scény, Audience Resonance",
+          "Pre-vizualizace — režijní pokyny, zvuk a klíčové záběry pro jednotlivé scény včetně odkazů pro sdílení",
+          "Natáčení – záběry, mixáž a streamy bez opuštění produkčního prostředí",
+          "Screening Room — náhled scény, sestavení finální verze, promítání a zveřejnění na YouTube"
         ],
-        "screenshotSlot": "Insert screenshot: Production dashboard showing script, Beat Frames, and Mixer",
-        "videoSlot": "Insert 00:30 clip: Foundation, Express Pre-vis, Beat Frames, and stream export"
-      },
-      {
-        "id": "12",
-        "title": "Final Cut Assembly",
-        "description": "Stitch finished Production streams into one master MP4. Pick Animatic or Video and language per scene — no timeline editing; creative changes stay in Production Mixer.",
-        "keyFeatures": [
-          "Per-scene stream pick — Animatic, Video, language, version",
-          "Assembly presets — All Video, Hybrid, Custom mix",
-          "No timeline editing — creative changes stay in Production Mixer",
-          "One-click master export — stitched MP4 for Premiere"
-        ],
-        "screenshotSlot": "Insert screenshot: Final Cut assembly panel with per-scene stream pickers",
-        "videoSlot": "Insert 00:30 clip: Picking streams, previewing assembly, and exporting master"
-      },
-      {
-        "id": "13",
-        "title": "Premiere Distribution",
-        "description": "Screen your master with audience analytics, then publish to YouTube with localized metadata or export bundles for Shorts, Reels, and TikTok.",
-        "keyFeatures": [
-          "Shareable Screening Room — /s/ links with scoring and optional engagement analytics (viewer consent)",
-          "Insights dashboard — Scoring, Biometric, and Visual tabs",
-          "YouTube wizard — thumbnail, localized title/description, SceneFlow CTA",
-          "Export bundles and vertical short-form clip plans"
-        ],
-        "screenshotSlot": "Insert screenshot: Premiere dashboard with insights and publish wizard",
-        "videoSlot": "Insert 00:30 clip: Screening insights, YouTube wizard, and export bundles"
+        "screenshotSlot": "Vložte snímek obrazovky: Produkční panel s kartami Scénář, Natáčení a Previzualizace.",
+        "videoSlot": "Vložit 60sekundový klip: Uzamčení scénáře → Express Pre-vis pro každou scénu → Natáčení → Mixážní pult → Streamy"
       },
       {
         "id": "14",
-        "title": "Audience Review and Analytics",
-        "description": "Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production pre-vis preview.",
+        "title": "Screening Room",
+        "description": "Prohlížejte si videa jednotlivých scén, sestavte finální verzi a publikujte – to vše v prostředí Production. Využívejte soukromé odkazy pro sdílení se zainteresovanými stranami, které umožňují sběr strukturované zpětné vazby a volitelné sledování analytiky zapojení.",
         "keyFeatures": [
-          "Private review sessions — secure /s/ share links for stakeholders",
-          "Structured audience feedback — ratings and open items",
-          "Optional engagement analytics — with viewer consent before capture",
-          "Iterate from real data — refine Blueprint and script from reviewer insights"
+          "Náhled videa scény – postupné přehrávání vyrenderovaných proudů",
+          "Finální sestavení – vyberte Animatic nebo video pro každou scénu a vyrenderujte jeden soubor MP4.",
+          "Sdílitelná hodnocení – zabezpečené odkazy s bodováním a tříděním zpětné vazby",
+          "Publikování — průvodce pro YouTube, exporty krátkých videí a distribuční balíčky"
         ],
-        "screenshotSlot": "Insert screenshot: Screening Room analytics and reviewer feedback panel",
-        "videoSlot": "Insert 00:30 clip: Hosting a review session and gathering engagement data"
+        "screenshotSlot": "Vložit snímek obrazovky: Screening Room panel analytiky a zpětné vazby od recenzentů",
+        "videoSlot": "Vložit 30sekundový klip: Vedení hodnotícího setkání a sběr dat o zapojení"
+      },
+      {
+        "id": "16",
+        "title": "Důvěra a bezpečnost",
+        "description": "Vícevrstvé ochranné mechanismy na každé cestě generování: bezpečnostní prvky Google, rozšířené kreativní služby s ochrannými mechanismy, volitelné ověřování obsahu ve Studiu a digitálně podepsané údaje o původu u segmentovaných videí.",
+        "keyFeatures": [
+          "Zabezpečení přímo od Googlu – Vertex Responsible AI pro veškeré generování",
+          "Zabezpečené přepnutí na záložní řešení – kontrola alternativních cest před uložením",
+          "Ověřování obsahu ve Studiu – signály ohledně zásad před náročným vykreslováním",
+          "Vymáhání pravidel – zaznamenaná varování a limity pro pozastavení",
+          "Podepsaný původ – haše obsahu a záznamy auditu při doručení"
+        ],
+        "screenshotSlot": "Vložte snímek obrazovky: sekce „Trust & Safety“ nebo panel ověřování ve Studiu",
+        "videoSlot": "Vložit 45sekundový klip: Úrovně důvěry → Signály ověření studia → Blokování chráněné cesty → Metadata o původu → Zásady důvěry a bezpečnosti"
       }
     ]
   },
   "engineeringTrust": {
-    "badge": "Engineering & Security",
-    "title": "Built for",
-    "titleAccent": "Production Workloads",
-    "subtitle": "Startup-friendly architecture with Google Cloud components that support security, scale, and practical production delivery.",
+    "badge": "Inženýrství a bezpečnost",
+    "title": "Stvořeno pro",
+    "titleAccent": "Produkční zátěže",
+    "subtitle": "Architektura vstřícná ke startupům s komponentami Google Cloud, které podporují bezpečnost, škálovatelnost a praktické nasazení do produkce.",
     "pillars": [
       {
-        "id": "architecture",
-        "title": "Enterprise Architecture",
-        "description": "Built on Google Cloud infrastructure with scalable orchestration for production workloads and growing teams.",
+        "id": "architektura",
+        "title": "Podniková architektura",
+        "description": "Postaveno na infrastruktuře Google Cloud se škálovatelnou orchestrací pro produkční zátěž a rostoucí týmy.",
         "highlights": [
-          "Vertex AI for generation workflows",
-          "Imagen 4 and Veo 3.1 synthesis",
-          "ElevenLabs TTS integration",
-          "BYOK for enterprise billing control"
+          "Vertex AI pro generovací pracovní postupy",
+          "Syntéza modelů Imagen 4 a Veo 3.1",
+          "ElevenLabs Integrace TTS",
+          "BYOK pro řízení fakturace v podniku"
         ]
       },
       {
-        "id": "security",
-        "title": "Security & Privacy",
-        "description": "Creative assets stay protected with encryption at rest, access controls, and privacy-first handling.",
+        "id": "bezpečnost",
+        "title": "Bezpečnost a soukromí",
+        "description": "Kreativní podklady zůstávají chráněny díky šifrování uložených dat, řízení přístupu a přístupu upřednostňujícímu ochranu soukromí.",
         "highlights": [
-          "Enterprise-ready cloud controls",
-          "AES-256 encryption",
-          "Designed with GDPR considerations",
-          "See our Privacy Policy for data handling"
+          "Cloudové ovládací prvky připravené pro podnikové nasazení",
+          "Šifrování AES-256",
+          "Navrženo s ohledem na požadavky GDPR",
+          "Informace o nakládání s údaji naleznete v našich zásadách ochrany osobních údajů."
         ]
       },
       {
-        "id": "scale",
-        "title": "Scale & Reliability",
-        "description": "Global cloud delivery supports reliable render and review pipelines as your volume grows.",
+        "id": "měřítko",
+        "title": "Škálovatelnost a spolehlivost",
+        "description": "Globální cloudové doručování podporuje spolehlivé procesy renderování a schvalování v souladu s rostoucím objemem práce.",
         "highlights": [
-          "Multi-region deployment",
-          "CDN-accelerated delivery",
-          "Automatic failover",
-          "Real-time monitoring"
+          "Nasazení ve více regionech",
+          "Doručování zrychlené pomocí CDN",
+          "Automatické přepnutí při selhání",
+          "Monitorování v reálném čase"
         ]
       }
     ],
     "metrics": [
       {
-        "value": "Global",
-        "label": "Cloud delivery"
+        "value": "Globální",
+        "label": "Poskytování z cloudu"
       },
       {
-        "value": "Imagen 4",
-        "label": "Image generation"
+        "value": "Obrázek 4",
+        "label": "Generování obrázků"
       },
       {
-        "value": "256-bit",
-        "label": "Encryption"
+        "value": "256bitový",
+        "label": "Šifrování"
       },
       {
-        "value": "24/7",
-        "label": "Monitoring"
+        "value": "24 hodin denně, 7 dní v týdnu",
+        "label": "Monitorování"
       }
     ],
     "vertexSection": {
-      "title": "Why Google Vertex AI?",
-      "subtitle": "The technical moat that matters",
+      "title": "Proč Google Vertex AI?",
+      "subtitle": "Technologická konkurenční výhoda, na které záleží",
       "cards": [
         {
-          "title": "Data Privacy",
-          "description": "Your scripts and creative assets are not used to train shared models, helping protect your IP and client work.",
-          "highlight": "not used to train shared models"
+          "title": "Ochrana osobních údajů",
+          "description": "Vaše skripty a kreativní podklady se nepoužívají k trénování sdílených modelů, což pomáhá chránit vaše duševní vlastnictví a práci pro klienty.",
+          "highlight": "nepoužívá se k trénování sdílených modelů"
         },
         {
-          "title": "Built for Reliable Throughput",
-          "description": "Production-oriented infrastructure helps maintain stable generation workflows during high-demand cycles."
+          "title": "Navrženo pro spolehlivou propustnost",
+          "description": "Infrastruktura zaměřená na produkci pomáhá udržovat stabilní procesy generování během období vysoké zátěže."
         },
         {
-          "title": "Reference-Aware Consistency",
-          "description": "SceneFlow uses reference-aware generation to improve consistency across characters, locations, and props from scene to scene."
+          "title": "Konzistence zohledňující reference",
+          "description": "SceneFlow využívá generování zohledňující reference ke zlepšení konzistence postav, lokací a rekvizit napříč jednotlivými scénami."
         }
       ]
     },
     "partnership": {
-      "poweredBy": "Powered by Google Cloud with Vertex AI, Cloud Storage, and translation tooling",
-      "footnote": "SceneFlow AI runs on scalable Google Cloud infrastructure designed for startup growth and enterprise expectations."
+      "poweredBy": "Využívá Google Cloud s Vertex AI, cloudovým úložištěm a nástroji pro překlad",
+      "footnote": "SceneFlow AI běží na škálovatelné infrastruktuře Google Cloud, která je navržena s ohledem na růst startupů i požadavky velkých podniků."
     },
-    "attribution": "— The SceneFlow Engineering Team"
+    "trustSafeguardLink": "Vícevrstvá důvěra: zabezpečení Google Vertex a k tomu ochranné mechanismy (guardrails), validace a doložení původu (provenance) – viz část Důvěra a bezpečnost níže.",
+    "attribution": "— Technický tým SceneFlow"
   },
   "coreCapabilities": {
     "audienceResonance": {
-      "badge": "Intelligence Layer",
-      "title": "Audience Resonance Editor",
-      "description": "Know your score before you invest in full renders. Target Audience Resonance scores Blueprint and script with actionable fixes — optimize every beat before Express and video generation.",
+      "badge": "Vrstva inteligence",
+      "title": "Audience Resonance Analýza",
+      "description": "Zjistěte své skóre ještě předtím, než investujete do plného renderování. Zaměřte se na dosažení skóre Audience Resonance (Blueprint) a upravte scénář na základě konkrétních doporučení – optimalizujte každý krok před fází Express a generováním videa.",
       "bullets": [
-        "Determine your specific target audience",
-        "Get real-time score, analysis, and recommendations",
-        "One-click fixes to resolve narrative weaknesses",
-        "Guided Edit to optimize Episodes, Blueprint, and Script"
+        "Určete svou konkrétní cílovou skupinu",
+        "Získejte skóre, analýzu a doporučení v reálném čase.",
+        "Opravy nedostatků v příběhu na jedno kliknutí",
+        "Řízená úprava pro optimalizaci epizod, Blueprint a scénáře"
       ],
-      "cta": "Analyze Your Script",
+      "cta": "Analyzujte svůj scénář",
       "howWeScore": {
-        "toggle": "How we score",
-        "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
+        "toggle": "Jak hodnotíme",
+        "title": "Jak funguje Audience Resonance",
+        "description": "Audience Resonance kombinuje analýzu narativní struktury (srozumitelnost, tempo, emoční oblouk) s mírou shody s cílovou personou (na základě publika definovaného v Blueprint) – namísto pouhých povrchních metrik či údajů o udržení diváků po zveřejnění. Doporučení jsou vázána na konkrétní části scénáře, takže případné nedostatky můžete odstranit ještě před fází Express nebo samotným generováním videa.",
         "bullets": [
-          "Scores Blueprint and script against your stated target audience",
-          "Section-level recommendations — not a black-box “trust us” number",
-          "Actionable one-click fixes and guided edit — not just a grade",
-          "Run before heavy render spend, not after publish"
+          "Ohodnoťte Blueprint a scénář s ohledem na vaši definovanou cílovou skupinu.",
+          "Doporučení na úrovni jednotlivých sekcí – nikoli číslo z „černé skříňky“ typu „věřte nám“",
+          "Praktické opravy jedním kliknutím a asistované úpravy – nejen hodnocení",
+          "Spusťte před zahájením náročného renderování, nikoli až po publikaci."
         ]
       }
     },
     "express": {
-      "badge": "Hyper-Speed Production",
+      "badge": "Hyperrychlá výroba",
       "title": "Sceneflow Express",
-      "description": "Auto-generate pre-vis, animatics, and video beats concurrently. Move from script to shareable preview in minutes — then approve Beat Frames before final F2V spend.",
+      "description": "Souběžně automaticky generujte pre-vizualizace, animatiky a video sekvence. Přejděte od scénáře k náhledu připravenému ke sdílení během několika minut – a poté schvalte Beat Frames před finální investicí do výroby videa (F2V).",
       "items": [
         {
           "title": "Express Pre-vis",
-          "desc": "Review and share audio and video pre-vis in minutes vs hours.",
-          "time": "Minutes vs Hours"
+          "desc": "Kontrolujte a sdílejte zvukové i obrazové pre-vizualizace v řádu minut namísto hodin.",
+          "time": "Minuty vs. hodiny"
         },
         {
-          "title": "Express Animatics",
-          "desc": "Render full Ken Burns animatic scenes with high-end voiceovers instantly.",
-          "time": "Minutes vs Hours"
+          "title": "Vyjádřete Animatic",
+          "desc": "Okamžitě vygenerujte kompletní animatikové scény ve stylu Ken Burns s prvotřídním namluvením.",
+          "time": "Minuty vs. hodiny"
         },
         {
-          "title": "Express Video",
-          "desc": "Orchestrate concurrent image and video generation for total scene delivery.",
-          "time": "Minutes vs Days"
+          "title": "Expresní video",
+          "desc": "Koordinujte souběžné generování obrázků a videa – včetně nativních řetězců rozšíření Veo pro dlouhé dialogové sekvence.",
+          "time": "Minuty vs. dny"
         }
       ],
-      "cta": "Start Express Rendering"
+      "cta": "Spustit rychlé vykreslování"
     }
   },
-  "exitIntent": {
-    "title": "Wait! Don't leave empty-handed",
-    "subtitle": "Get exclusive early access and tips for AI-powered filmmaking",
-    "benefits": [
-      "Weekly AI filmmaking tutorials",
-      "Early access to new features",
-      "Exclusive creator discounts"
+  "preVisEngine": {
+    "badge": "Creative Decision Engine",
+    "title": "Pre-Visualization Engine",
+    "subtitle": "Vygenerování čtyřicetiminutového audiovizuálního animatiku s kompletním namluvením a hudebním doprovodem během pouhých 15 minut není jen dílčím krokem pracovního postupu – je to hotový produkt. V Hollywoodu trvá předběžná vizualizace týdny a stojí statisíce dolarů. SceneFlow tento proces zkracuje na minuty a snižuje náklady na zlomek původní ceny.",
+    "narrative": "Ve filmovém průmyslu je storyboard materiálem, který předáváte štábu. Pre-vis je to, co ukazujete vedení studia, investorům a producentům, abyste získali schválení projektu. SceneFlow posouvá produkci od nástroje pro běžné tvůrce k prvku výrobního procesu na podnikové úrovni.",
+    "pillars": [
+      {
+        "title": "Dokonalá prezentace pro investory",
+        "description": "Nahrajte scénář a přijďte na prezentaci projektu s plně namluvenou a ozvučenou vizualizací ve více jazycích, doplněnou o konkrétní data z Audience Resonance. Poskytněte tvůrcům audiovizuální „zkratku“ k realizaci jejich filmů, podloženou tvrdými daty."
+      },
+      {
+        "title": "Předvýrobní fáze s rychlým odhalením selhání",
+        "description": "Tradiční předvizualizace vyžaduje na celé týdny 3D animátory, tvůrce storyboardů a dabéry. Pokud scéna nefunguje, přicházíte zbytečně o desítky tisíc dolarů. Provádějte úpravy během 15 minut – ještě předtím, než najmete jediného člena štábu."
+      },
+      {
+        "title": "Financier Analytics",
+        "description": "Audience Resonance oslovuje tu část filmového průmyslu, která se nejvíce vyhýbá riziku: investory. Ukažte, jak tempo, tón a dialogy ladí s cílovou skupinou, ještě než se za produkci utratí jediný dolar."
+      }
     ],
-    "emailPlaceholder": "Enter your email",
-    "subscribe": "Get Early Access",
-    "subscribing": "Subscribing...",
-    "or": "or",
-    "startNow": "Start creating now for just $9 →",
-    "privacy": "No spam, ever. Unsubscribe anytime.",
-    "successTitle": "You're on the list!",
-    "successSubtitle": "Check your inbox for exclusive filmmaking tips and early access updates.",
-    "ctaText": "Start Exploring — $9",
-    "closePopup": "Close popup"
+    "workflow": {
+      "title": "Nahrání scénáře → pre-vizualizace připravená ke schválení",
+      "steps": [
+        "Nahrajte scénáře ve standardních formátech (.fountain, .fdx, .txt)",
+        "Proveďte skórování Audience Resonance u své cílové demografické skupiny.",
+        "Generujte Express Pre-vis – animatiky s dabingem a hudbou během několika minut.",
+        "Sdílejte se zainteresovanými stranami k posouzení před konečným vynaložením prostředků na video."
+      ]
+    },
+    "cta": "Začněte nahráním skriptu",
+    "ctaSubtext": "Propojte tradiční filmovou tvorbu s generativní AI"
+  },
+  "exitIntent": {
+    "title": "Počkejte! Neodcházejte s prázdnou.",
+    "subtitle": "Získejte exkluzivní přednostní přístup a tipy pro tvorbu filmů s využitím AI.",
+    "benefits": [
+      "Týdenní návody na tvorbu filmů pomocí AI",
+      "Přednostní přístup k novým funkcím",
+      "Exkluzivní slevy pro tvůrce"
+    ],
+    "emailPlaceholder": "Zadejte svůj e-mail",
+    "subscribe": "Získejte přednostní přístup",
+    "subscribing": "Probíhá přihlašování k odběru...",
+    "or": "nebo",
+    "startNow": "Začněte tvořit hned teď jen za 9 $ →",
+    "privacy": "Žádný spam. Odhlásit se můžete kdykoli.",
+    "successTitle": "Jste na seznamu!",
+    "successSubtitle": "Sledujte svou e-mailovou schránku, kde najdete exkluzivní tipy pro filmaře a novinky o přednostním přístupu.",
+    "ctaText": "Začněte objevovat — 9 $",
+    "closePopup": "Zavřít vyskakovací okno"
   },
   "pricing": {
-    "badge": "Usage-Based Pricing",
-    "title": "Pay for What You Create",
-    "subtitle": "One base plan for platform access. Credits for AI generation. Top up when you need more. Full control, zero waste.",
+    "badge": "Cenotvorba podle míry využití",
+    "title": "Plaťte za to, co vytvoříte",
+    "subtitle": "Jeden základní tarif pro přístup k platformě. Kredity na generování pomocí AI. Dobití podle potřeby. Plná kontrola, žádné zbytečné výdaje.",
     "valueAnchor": {
-      "traditionalCost": "$2,000+",
-      "traditionalLabel": "Traditional pre-vis",
-      "vs": "vs",
-      "sceneFlowCost": "$49-149",
-      "sceneFlowLabel": "SceneFlow monthly",
-      "saveBadge": "Save 90%+ per project"
+      "traditionalCost": "Více než 2 000 USD",
+      "traditionalLabel": "Tradiční pre-vizualizace",
+      "vs": "vs.",
+      "sceneFlowCost": "49–149 USD",
+      "sceneFlowLabel": "SceneFlow měsíčně",
+      "saveBadge": "Ušetřete více než 90 % na projekt"
     },
     "teamCta": {
-      "title": "In-house team or institution?",
-      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
-      "button": "Book Walkthrough"
+      "title": "Interní tým, nebo instituce?",
+      "description": "Rezervujte si prohlídku pracovních postupů pro týmy komunikace, vzdělávání a rozvoje (L&D) a marketingu.",
+      "button": "Průvodce knihou"
     },
     "agencyCta": {
-      "title": "Agency or production shop?",
-      "description": "Custom credits, SLA, and dedicated support at scale",
-      "button": "Contact Sales"
+      "title": "Agentura, nebo produkční studio?",
+      "description": "Kredit na míru, SLA a vyhrazená podpora ve velkém měřítku",
+      "button": "Kontaktovat obchodní oddělení"
     },
     "byok": {
-      "title": "Bring Your Own Key",
-      "badge": "Pro & Studio Plans",
-      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
-      "savingsHighlight": "80% on platform credits",
+      "title": "Použití vlastního klíče",
+      "badge": "Plány Pro a Studio",
+      "description": "Máte již API klíče pro Vertex AI nebo ElevenLabs? Použijte je s SceneFlow AI a ušetřete až 80 % za kredity platformy.",
+      "savingsHighlight": "80 % ve formě kreditů na platformě",
       "benefits": [
         {
-          "title": "80% SceneFlow Credit Savings",
-          "description": "Pay only a 20% platform fee for orchestration & tools"
+          "title": "80% úspora kreditů SceneFlow",
+          "description": "Za orchestraci a nástroje zaplatíte pouze 20% poplatek za platformu."
         },
         {
-          "title": "Leverage Corporate Plans",
-          "description": "Use your existing Vertex AI or ElevenLabs volume discounts"
+          "title": "Využijte firemní plány",
+          "description": "Využijte své stávající množstevní slevy Vertex AI nebo ElevenLabs"
         },
         {
-          "title": "Full Control",
-          "description": "Your keys, your billing, your cost management"
+          "title": "Plná kontrola",
+          "description": "Vaše klíče, vaše fakturace, vaše řízení nákladů"
         }
       ],
-      "supportedProviders": "Supported Providers",
+      "supportedProviders": "Podporovaní poskytovatelé",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "Imagen 4 & Veo 3.1",
+      "vertexDetail": "Imagen 4 a Veo 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
-      "savingsLabel": "80% savings",
-      "onImagesVideo": "on images & video",
-      "onVoiceover": "on voiceover",
-      "note": "Credit savings shown are SceneFlow platform savings. Your actual total costs depend on your personal or corporate API pricing with each provider."
+      "elevenLabsDetail": "Převod textu na řeč a klonování hlasu",
+      "savingsLabel": "80% úspora",
+      "onImagesVideo": "na obrázcích a videu",
+      "onVoiceover": "v komentáři",
+      "note": "Uvedené úspory kreditů představují úspory v rámci platformy SceneFlow. Vaše skutečné celkové náklady závisí na vašich individuálních nebo firemních cenových podmínkách pro API u jednotlivých poskytovatelů."
     },
     "creditTopUps": {
-      "title": "Need More Credits?",
-      "subtitle": "Top up anytime. Credits never expire.",
+      "title": "Potřebujete více kreditů?",
+      "subtitle": "Dobijte si kdykoli. Kredit nikdy nepropadá.",
       "packs": [
         {
-          "label": "Starter Pack",
-          "description": "Perfect for quick revisions"
+          "label": "Startovací balíček",
+          "description": "Ideální pro rychlé zopakování"
         },
         {
-          "label": "Scene Pack",
-          "description": "Complete a short project"
+          "label": "Balíček scén",
+          "description": "Dokončete krátký projekt"
         },
         {
-          "label": "Production Pack",
-          "description": "Major film sequence"
+          "label": "Produkční balíček",
+          "description": "Významná filmová sekvence"
         },
         {
           "label": "Studio Pack",
-          "description": "Full production capacity"
+          "description": "Plná výrobní kapacita"
         }
       ],
-      "creditsUnit": "credits"
+      "creditsUnit": "titulky"
     },
     "calculator": {
-      "sectionTitle": "Estimate Your Project",
-      "sectionSubtitle": "Know exactly what you'll pay before you commit",
-      "title": "Project Budget Calculator",
-      "subtitle": "Estimate credits before you start",
-      "customize": "Customize parameters",
-      "imagesLabel": "Images to generate",
-      "videoClipsLabel": "Video clips",
-      "voiceoverLabel": "Voiceover (minutes)",
-      "byokTitle": "Bring Your Own Key (BYOK)",
-      "byokBadge": "Pro & Studio",
-      "byokDescription": "Use your own API keys to save up to 80% on SceneFlow credits. You pay the AI providers directly at their rates.",
-      "vertexToggle": "Vertex AI (Images & Video)",
-      "elevenLabsToggle": "ElevenLabs (Voiceover)",
-      "imageGeneration": "Image Generation",
-      "videoGeneration": "Video Generation",
-      "voiceover": "Voiceover",
+      "sectionTitle": "Odhadněte náklady na svůj projekt",
+      "sectionSubtitle": "Zjistěte přesně, kolik zaplatíte, než se zavážete.",
+      "title": "Kalkulačka rozpočtu projektu",
+      "subtitle": "Před zahájením odhadněte počet kreditů.",
+      "customize": "Přizpůsobit parametry",
+      "imagesLabel": "Obrázky k vygenerování",
+      "videoClipsLabel": "Videoklipy",
+      "voiceoverLabel": "Komentář (minuty)",
+      "byokTitle": "Vlastní šifrovací klíč (BYOK)",
+      "byokBadge": "Pro a Studio",
+      "byokDescription": "Použijte vlastní API klíče a ušetřete až 80 % za kredity SceneFlow. Poskytovatelům AI platíte přímo podle jejich sazeb.",
+      "vertexToggle": "Vertex AI (Obrázky a video)",
+      "elevenLabsToggle": "ElevenLabs (Komentář)",
+      "imageGeneration": "Generování obrázků",
+      "videoGeneration": "Generování videa",
+      "voiceover": "Komentář",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Total Estimate",
-      "withTopUps": "with top-ups",
-      "creditSavings": "SceneFlow credit savings",
-      "savePercent": "You save {percent}% on SceneFlow credits",
-      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
-      "transparencyHighlight": "Full transparency:",
-      "byokDisclaimer": "BYOK Note: Credit savings shown reflect SceneFlow platform credit reductions only. Your actual costs depend on your Vertex AI and ElevenLabs pricing plans. Corporate or high-volume API plans may offer additional savings.",
-      "byokDisclaimerHighlight": "BYOK Note:",
+      "totalEstimate": "Celkový odhad",
+      "withTopUps": "s dobíjením",
+      "creditSavings": "SceneFlow úvěrové spoření",
+      "savePercent": "Ušetříte {percent} % za kredity SceneFlow",
+      "transparency": "Naprostá transparentnost: Spotřebu kreditů uvidíte v reálném čase přímo při práci. Žádná překvapení – rozsah projektu můžete kdykoli upravit.",
+      "transparencyHighlight": "Naprostá transparentnost:",
+      "byokDisclaimer": "BYOK Poznámka: Uvedené úspory kreditů odrážejí pouze snížení počtu kreditů na platformě SceneFlow. Vaše skutečné náklady závisí na vašich cenových plánech Vertex AI a ElevenLabs. Firemní plány nebo plány s vysokým objemem využití API mohou nabízet další úspory.",
+      "byokDisclaimerHighlight": "BYOK Poznámka:",
       "presets": [
         {
-          "id": "commercial",
-          "name": "30-sec Commercial"
+          "id": "reklama",
+          "name": "Třicetisekundový reklamní spot"
         },
         {
-          "id": "short",
-          "name": "2-min Short Film"
+          "id": "krátký",
+          "name": "Dvouminutový krátký film"
         },
         {
-          "id": "episode",
-          "name": "10-min Episode"
+          "id": "epizoda",
+          "name": "Desetiminutová epizoda"
         },
         {
-          "id": "feature",
-          "name": "90-min Feature"
+          "id": "funkce",
+          "name": "90minutový celovečerní film"
         }
       ],
-      "minSuffix": "min"
+      "minSuffix": "min."
     },
     "tierGrid": {
-      "productionTestFlight": "Production Test Flight",
-      "getStarted": "Get Started",
-      "startTestFlight": "Start Test Flight",
-      "loading": "Loading...",
-      "mostPopular": "Most Popular",
-      "creditsPerMonth": "Credits/mo",
-      "storage": "Storage",
-      "perMonth": "/month"
+      "productionTestFlight": "Výrobní zkušební let",
+      "getStarted": "Začít",
+      "startTestFlight": "Zahájit zkušební let",
+      "loading": "Načítání...",
+      "mostPopular": "Nejoblíbenější",
+      "creditsPerMonth": "Kredity/měsíc",
+      "storage": "Skladování",
+      "perMonth": "/měsíc"
     },
     "trust": {
-      "cancelAnytime": "Cancel anytime",
-      "moneyBack": "14-day money-back guarantee",
-      "creditsNeverExpire": "Credits never expire (Explorer pack)"
+      "cancelAnytime": "Zrušit můžete kdykoli",
+      "moneyBack": "Záruka vrácení peněz do 14 dnů",
+      "creditsNeverExpire": "Kredity nikdy nepropadají (balíček Explorer)"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "One-time purchase to try it out",
+        "description": "Jednorázový nákup na vyzkoušení",
         "features": [
-          "One-time purchase",
-          "750 credits (never expire)",
-          "5 GB storage (30 days)",
-          "Full platform access",
-          "MP4 export (any resolution)",
-          "AI voiceover (70+ languages)"
+          "Jednorázový nákup",
+          "750 kreditů (platnost nikdy nevyprší)",
+          "5 GB úložiště (30 dní)",
+          "Plný přístup k platformě",
+          "Export do MP4 (jakékoli rozlišení)",
+          "AI komentář (více než 70 jazyků)"
         ]
       },
       "subscriptions": [
         {
-          "id": "starter",
-          "name": "Starter",
-          "description": "For individual creators",
+          "id": "předkrm",
+          "name": "Předkrm",
+          "description": "Pro individuální tvůrce",
           "features": [
-            "Full platform access",
-            "4,500 credits/month included",
-            "25 GB active storage",
-            "MP4 export (any resolution)",
-            "AI voiceover (70+ languages)",
-            "Email support"
+            "Plný přístup k platformě",
+            "4 500 kreditů měsíčně v ceně",
+            "25 GB aktivního úložiště",
+            "Export do MP4 (jakékoli rozlišení)",
+            "AI komentář (více než 70 jazyků)",
+            "E-mailová podpora"
           ]
         },
         {
           "id": "pro",
           "name": "Pro",
-          "description": "For professional creators",
+          "description": "Pro profesionální tvůrce",
           "features": [
-            "Everything in Starter, plus:",
-            "15,000 credits/month included",
-            "100 GB active storage",
-            "Veo 3.1 Quality (4K) access",
-            "Character Consistency Engine",
-            "Voice cloning",
-            "BYOK (Bring Your Own Key)",
-            "3 team seats",
-            "Priority support"
+            "Vše z tarifu Starter a navíc:",
+            "V ceně je zahrnuto 15 000 kreditů měsíčně.",
+            "100 GB aktivního úložiště",
+            "Přístup ke kvalitě Veo 3.1 (4K)",
+            "Systém pro zajištění konzistence postav",
+            "Klonování hlasu",
+            "BYOK (Vlastní šifrovací klíč)",
+            "3 týmová sedadla",
+            "Prioritní podpora"
           ]
         },
         {
           "id": "studio",
           "name": "Studio",
-          "description": "For teams & agencies",
+          "description": "Pro týmy a agentury",
           "features": [
-            "Everything in Pro, plus:",
-            "75,000 credits/month included",
-            "500 GB active storage",
-            "Veo 3.1 4K Priority Queue",
-            "Unlimited Character Consistency",
-            "White-label exports",
-            "API access",
-            "10 team seats",
-            "Dedicated account manager",
-            "Enterprise SLA available on request"
+            "Vše z verze Pro a navíc:",
+            "V ceně je zahrnuto 75 000 kreditů měsíčně",
+            "500 GB aktivního úložiště",
+            "Prioritní fronta pro Veo 3.1 4K",
+            "Neomezená konzistence postav",
+            "Export produktů pod vlastní značkou odběratele (white-label)",
+            "Přístup k API",
+            "10 míst pro tým",
+            "Vyhrazený manažer pro správu klienta",
+            "SLA pro podniky k dispozici na vyžádání"
           ]
         }
       ]
     }
   },
-  "faq": {
-    "badge": "Got Questions?",
-    "title": "Frequently Asked Questions",
-    "subtitle": "Everything you need to know about SceneFlow AI",
-    "items": [
-      {
-        "question": "How does the SceneFlow workflow run from idea to publish-ready video?",
-        "answer": "SceneFlow uses a structured workflow: Series (optional) → Blueprint → Production → Final Cut → Premiere. Blueprint defines story structure and target audience with Audience Resonance. Production generates script, pre-vis, beat video, and rendered scene streams. Final Cut assembles selected streams into one master MP4 — not a timeline editor. Premiere handles screenings, analytics insights, YouTube publish, and export bundles."
-      },
-      {
-        "question": "How is SceneFlow different from Gemini Studio or Google Flow?",
-        "answer": "Gemini Studio and Google Flow focus on prompt-and-generate clips. SceneFlow bundles the full production workflow: structured phases with editable baselines, Reference Library and Beat Frames for consistency, Audience Resonance before expensive renders, automated Mixer and stream assembly, and Screening Room validation before publish — all in one guided studio. Model usage cost is similar whether you use SceneFlow, your own provider accounts, or BYOK — SceneFlow saves hours of copy-paste, re-generation, and manual video assembly per video."
-      },
-      {
-        "question": "Can I edit AI-generated scripts, visuals, and audio?",
-        "answer": "Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific beats, tune voiceover, and refine timing in the Production Mixer. Final Cut only stitches finished streams — creative changes stay upstream in Production."
-      },
-      {
-        "question": "How does Target Audience Resonance work now?",
-        "answer": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not post-publish retention data. You get section-level recommendations and one-click fixes at Series, Blueprint, and script review before heavy rendering."
-      },
-      {
-        "question": "Can I produce multilingual listing or marketing videos?",
-        "answer": "Yes. You can generate and localize videos in 70+ languages with aligned timing workflows. Teams typically create one master cut, then produce language variants for global buyers, customers, or regional audiences."
-      },
-      {
-        "question": "What does Premiere do if Screening Room is the review phase?",
-        "answer": "Screening Room is the review surface inside Premiere — and for Production pre-vis preview. Share /s/ links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review Scoring and Visual insights, then publish via YouTube wizard or export bundles."
-      },
-      {
-        "question": "Do I need technical or editing experience?",
-        "answer": "No. SceneFlow is built for non-technical creators and teams. You start with guided inputs and editable AI baselines at each phase — not complex prompt engineering or multi-tool stacks."
-      },
-      {
-        "question": "How does the Explorer Plan work?",
-        "answer": "For $9, you get 750 credits to test the full workflow with a one-time purchase. It is designed as a practical test flight so you can run real concept-to-video tasks before choosing a monthly plan."
-      },
-      {
-        "question": "How are credits and BYOK handled?",
-        "answer": "Credits are tracked in-platform so teams can manage budget by workflow phase. Pro and Studio plans also support Bring Your Own Key (BYOK) for supported providers, giving additional cost control for organizations with existing provider contracts."
-      },
-      {
-        "question": "What can I realistically create with SceneFlow?",
-        "answer": "Teams use SceneFlow for real estate tours, education content, podcasts with visual storytelling, news explainers, branded campaigns, and cinematic episode series. The same workflow supports short-form and long-form production."
-      }
-    ]
+  "landingSections": {
+    "expandSection": "Zobrazit sekci",
+    "collapseSection": "Skrýt sekci"
   },
   "finalCta": {
-    "title": "Ready to test the full pipeline?",
-    "subtitle": "Run concept → pre-vis → video → master MP4 in one studio. Start with the $9 Explorer plan and see the beat-first workflow in action.",
-    "cta": "Launch Your Studio for $9"
+    "title": "Jste připraveni otestovat celou pipeline?",
+    "subtitle": "Realizujte vše od konceptu přes pre-vizualizaci a video až po finální MP4 v jediném studiu. Začněte s tarifem za 9 $ Explorer a vyzkoušejte si v praxi pracovní postup, který klade důraz na rytmus.",
+    "cta": "Spusťte své studio za 9 $"
   },
   "footer": {
-    "description": "End-to-end automated video production — from concept to publish-ready master. One guided studio: Blueprint → Production → Final Cut → Premiere.",
-    "product": "Product",
-    "resources": "Resources",
-    "legal": "Legal",
+    "description": "Komplexní automatizovaná produkce videa – od konceptu až po finální verzi připravenou k publikaci. Jedno studio s průvodcem: Blueprint → Produkce → Screening Room.",
+    "product": "Produkt",
+    "resources": "Zdroje",
+    "legal": "Právní informace",
     "links": {
-      "features": "Features",
-      "pricing": "Pricing",
-      "howItWorks": "How It Works",
-      "faq": "FAQ",
-      "gettingStarted": "Getting Started",
-      "privacy": "Privacy Policy",
-      "terms": "Terms of Service",
-      "trustSafety": "Trust & Safety",
-      "refunds": "Refund Policy",
-      "contact": "Contact Us"
+      "features": "Funkce",
+      "pricing": "Ceny",
+      "howItWorks": "Jak to funguje",
+      "gettingStarted": "Začínáme",
+      "privacy": "Zásady ochrany osobních údajů",
+      "terms": "Podmínky služby",
+      "trustSafety": "Důvěra a bezpečnost",
+      "refunds": "Zásady vracení peněz",
+      "contact": "Kontaktujte nás"
     },
-    "tagline": "Made with ❤️ for creators",
-    "taglineSub": "From Idea to Published Video",
-    "securePayments": "Secure payments processed by Whop, our Merchant of Record",
-    "morLine": "Secure payments, tax calculation, and compliance are handled by Whop, our Merchant of Record, on behalf of Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. All rights reserved.",
-    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Contact: brian@sfai.studio",
-    "poweredBy": "Powered by Google Cloud"
+    "tagline": "Vytvořeno s ❤️ pro tvůrce",
+    "taglineSub": "Od nápadu po zveřejněné video",
+    "securePayments": "Bezpečné platby zpracovávané společností Whop, naším oficiálním prodejcem (Merchant of Record)",
+    "morLine": "Bezpečné platby, výpočet daní a zajištění souladu s předpisy zajišťuje společnost Whop, náš oficiální prodejce (Merchant of Record), jménem společnosti Life Focus, LLC.",
+    "copyright": "© 2026 SceneFlow AI. Všechna práva vyhrazena.",
+    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Kontakt: brian@sfai.studio",
+    "poweredBy": "Poháněno systémem Google Cloud"
   },
   "floatingCta": {
-    "seePricing": "See Pricing",
-    "tryNine": "Try $9",
-    "tryForNine": "Try for $9",
-    "dismiss": "Dismiss"
+    "seePricing": "Zobrazit ceník",
+    "tryNine": "Vyzkoušejte za 9 $",
+    "tryForNine": "Vyzkoušejte za 9 $",
+    "dismiss": "Zavřít"
   },
   "common": {
     "watermark": "SceneFlow AI Studio",
-    "pause": "Pause",
-    "play": "Play",
-    "mute": "Mute",
-    "unmute": "Unmute",
-    "expandVideo": "Expand Video"
-  },
-  "preVisEngine": {
-    "badge": "Creative Decision Engine",
-    "title": "Pre-Visualization Engine",
-    "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
-    "narrative": "In the film industry, a pre-vis is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
-    "pillars": [
-      {
-        "title": "The Ultimate Pitch Deck",
-        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
-      },
-      {
-        "title": "Fail-Fast Pre-Production",
-        "description": "Traditional pre-vis requires 3D animators, pre-vis artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
-      },
-      {
-        "title": "Financier Analytics",
-        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
-      }
-    ],
-    "workflow": {
-      "title": "Script upload → greenlight-ready pre-vis",
-      "steps": [
-        "Upload industry-standard scripts (.fountain, .fdx, .txt)",
-        "Run Audience Resonance scoring on your target demographic",
-        "Generate Express Pre-vis — voiced, scored animatics in minutes",
-        "Share for stakeholder review before final video spend"
-      ]
-    },
-    "cta": "Start with Script Upload",
-    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
+    "pause": "Pozastavit",
+    "play": "Přehrát",
+    "mute": "Ztlumit",
+    "unmute": "Zapnout zvuk",
+    "expandVideo": "Rozbalit video"
   }
 }
