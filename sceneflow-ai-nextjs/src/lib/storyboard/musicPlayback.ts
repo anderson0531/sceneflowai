@@ -28,9 +28,9 @@ export interface BuildBeatAlignedMusicClipsOptions {
   musicFileDuration?: number
 }
 
-/** Default on — only explicit false disables music for a beat. */
+/** Default off — only explicit true enables music for a beat. */
 export function isBeatMusicEnabled(beat: SceneBeat | undefined): boolean {
-  return beat?.musicEnabled !== false
+  return beat?.musicEnabled === true
 }
 
 /** Wrap a scene timeline offset into the music file duration. */

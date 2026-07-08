@@ -67,7 +67,7 @@ export interface SceneBeat {
   splitRecommendation?: BeatSplitRecommendation
   /** Stable line id when this beat maps to a dialogue/narration line. */
   lineId?: string
-  /** When false, background music is muted for this beat's timeline window. Default: on. */
+  /** When true, background music plays for this beat's timeline window. Default: off. */
   musicEnabled?: boolean
   /** Saved character/location/prop references for storyboard generation. */
   referenceSelection?: BeatReferenceSelection

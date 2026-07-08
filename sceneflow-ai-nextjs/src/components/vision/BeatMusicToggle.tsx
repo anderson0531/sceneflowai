@@ -22,7 +22,7 @@ export function BeatMusicToggle({
   onScriptChange,
   className,
 }: BeatMusicToggleProps) {
-  const enabled = beat.musicEnabled !== false
+  const enabled = beat.musicEnabled === true
 
   const handleChange = (checked: boolean) => {
     if (!onScriptChange) return

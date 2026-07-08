@@ -21,16 +21,19 @@ function buildBeatScene(overrides?: { beats?: Record<string, unknown>[] }) {
         kind: 'action',
         actionDescription: 'Establishing shot',
         storyboardImageUrl: 'https://example.com/est.jpg',
+        musicEnabled: true,
       },
       {
         beatId: 'bt_a1',
         kind: 'action',
         actionDescription: 'Sarah enters the room',
+        musicEnabled: true,
       },
       {
         beatId: 'bt_a2',
         kind: 'action',
         actionDescription: 'Sarah looks around',
+        musicEnabled: true,
       },
       {
         beatId: 'bt_d1',
@@ -39,17 +42,29 @@ function buildBeatScene(overrides?: { beats?: Record<string, unknown>[] }) {
         line: 'Hello.',
         audioUrl: SARAH_URL,
         durationSeconds: 3,
+        musicEnabled: true,
       },
     ],
   }
 }
 
 describe('isBeatMusicEnabled', () => {
-  it('defaults to enabled when musicEnabled is undefined', () => {
-    expect(isBeatMusicEnabled({ beatId: 'x', sequenceIndex: 0, kind: 'action' })).toBe(true)
+  it('defaults to disabled when musicEnabled is undefined', () => {
+    expect(isBeatMusicEnabled({ beatId: 'x', sequenceIndex: 0, kind: 'action' })).toBe(false)
   })
 
-  it('returns false only when explicitly disabled', () => {
+  it('returns true only when explicitly enabled', () => {
+    expect(
+      isBeatMusicEnabled({
+        beatId: 'x',
+        sequenceIndex: 0,
+        kind: 'action',
+        musicEnabled: true,
+      })
+    ).toBe(true)
+  })
+
+  it('returns false when explicitly disabled', () => {
     expect(
       isBeatMusicEnabled({
         beatId: 'x',
@@ -115,6 +130,7 @@ describe('buildBeatAlignedMusicClips', () => {
           line: 'Hello.',
           audioUrl: SARAH_URL,
           durationSeconds: 3,
+          musicEnabled: true,
         },
       ],
     })
@@ -185,7 +201,7 @@ describe('buildBeatAlignedMusicClips', () => {
 
   it('wraps trimStart for a late beat beyond music file length', () => {
     const clips = buildBeatAlignedMusicClips(
-      { beats: [{ beatId: 'bt_late', kind: 'action' }] },
+      { beats: [{ beatId: 'bt_late', kind: 'action', musicEnabled: true }] },
       [
         {
           clipId: 'action-bt_late',
