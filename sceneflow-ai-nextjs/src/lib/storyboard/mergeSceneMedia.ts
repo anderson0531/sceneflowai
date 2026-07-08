@@ -282,6 +282,107 @@ function mergeDialogueAudioField(canon: any, incoming: any): any {
   return inc ?? c
 }
 
+function isNonEmptySfxUrl(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0
+}
+
+/** Positional merge: incoming URL wins when non-empty; otherwise keep canonical slot. */
+function mergeSfxAudioArrays(canonArr: unknown[], incomingArr: unknown[]): (string | null)[] {
+  const maxLen = Math.max(canonArr.length, incomingArr.length)
+  const result: (string | null)[] = []
+  for (let i = 0; i < maxLen; i++) {
+    const inc = incomingArr[i]
+    const can = canonArr[i]
+    if (isNonEmptySfxUrl(inc)) result.push(inc)
+    else if (isNonEmptySfxUrl(can)) result.push(can)
+    else result.push(null)
+  }
+  return result
+}
+
+function mergeSfxAudioField(canon: any, incoming: any): (string | null)[] | undefined {
+  const c = canon?.sfxAudio
+  const inc = incoming?.sfxAudio
+  if (c === undefined && inc === undefined) return undefined
+  const canonArr = Array.isArray(c) ? c : []
+  const incomingArr = Array.isArray(inc) ? inc : []
+  if (canonArr.length === 0 && incomingArr.length === 0) {
+    return Array.isArray(inc) ? inc : Array.isArray(c) ? c : undefined
+  }
+  return mergeSfxAudioArrays(canonArr, incomingArr)
+}
+
+function mergeSfxSourceMetaField(canon: any, incoming: any): unknown[] | undefined {
+  const c = canon?.sfxSourceMeta
+  const inc = incoming?.sfxSourceMeta
+  if (c === undefined && inc === undefined) return undefined
+  const canonArr = Array.isArray(c) ? c : []
+  const incomingArr = Array.isArray(inc) ? inc : []
+  if (canonArr.length === 0 && incomingArr.length === 0) {
+    return Array.isArray(inc) ? inc : Array.isArray(c) ? c : undefined
+  }
+  const maxLen = Math.max(canonArr.length, incomingArr.length)
+  const result: unknown[] = []
+  for (let i = 0; i < maxLen; i++) {
+    const inc = incomingArr[i]
+    const can = canonArr[i]
+    if (inc != null && inc !== '') result.push(inc)
+    else if (can != null && can !== '') result.push(can)
+    else result.push(null)
+  }
+  return result
+}
+
+function sfxCueRichness(entry: unknown): number {
+  if (entry == null) return 0
+  if (typeof entry === 'string' && entry.trim()) return 1
+  if (typeof entry === 'object') {
+    const cue = entry as Record<string, unknown>
+    let score = 2
+    if (isNonEmptySfxUrl(cue.audioUrl)) score += 2
+    if (typeof cue.sourceBeatId === 'string' && cue.sourceBeatId.trim()) score += 1
+    if (typeof cue.description === 'string' && cue.description.trim()) score += 1
+    return score
+  }
+  return 0
+}
+
+function mergeSfxCueAtIndex(canon: unknown, incoming: unknown): unknown {
+  const ri = sfxCueRichness(incoming)
+  const rc = sfxCueRichness(canon)
+  if (ri >= rc) {
+    if (incoming && typeof incoming === 'object' && canon && typeof canon === 'object') {
+      return { ...(canon as object), ...(incoming as object) }
+    }
+    return incoming ?? canon ?? null
+  }
+  if (canon && typeof canon === 'object' && incoming && typeof incoming === 'object') {
+    return { ...(canon as object), ...(incoming as object) }
+  }
+  return canon ?? incoming ?? null
+}
+
+function mergeSfxCuesArrays(canonArr: unknown[], incomingArr: unknown[]): unknown[] {
+  const maxLen = Math.max(canonArr.length, incomingArr.length)
+  const result: unknown[] = []
+  for (let i = 0; i < maxLen; i++) {
+    result.push(mergeSfxCueAtIndex(canonArr[i], incomingArr[i]))
+  }
+  return result
+}
+
+function mergeSfxCuesField(canon: any, incoming: any): unknown[] | undefined {
+  const c = canon?.sfx
+  const inc = incoming?.sfx
+  if (c === undefined && inc === undefined) return undefined
+  const canonArr = Array.isArray(c) ? c : []
+  const incomingArr = Array.isArray(inc) ? inc : []
+  if (canonArr.length === 0 && incomingArr.length === 0) {
+    return Array.isArray(inc) ? inc : Array.isArray(c) ? c : undefined
+  }
+  return mergeSfxCuesArrays(canonArr, incomingArr)
+}
+
 function mergeSegmentDialogueMedia(canonSegments: any[] | undefined, incomingSegments: any[] | undefined): any[] | undefined {
   if (!Array.isArray(incomingSegments) || incomingSegments.length === 0) {
     return Array.isArray(canonSegments) && canonSegments.length > 0 ? canonSegments : incomingSegments
@@ -344,6 +445,15 @@ export function mergeScenePreservingMedia(canonical: any, incoming: any): any {
   merged.beats = mergeBeatsArray(canonical.beats, incoming.beats)
   merged.segments = mergeSegmentDialogueMedia(canonical.segments, incoming.segments)
   merged.dialogueAudio = mergeDialogueAudioField(canonical, incoming)
+
+  const mergedSfxAudio = mergeSfxAudioField(canonical, incoming)
+  if (mergedSfxAudio !== undefined) merged.sfxAudio = mergedSfxAudio
+
+  const mergedSfxSourceMeta = mergeSfxSourceMetaField(canonical, incoming)
+  if (mergedSfxSourceMeta !== undefined) merged.sfxSourceMeta = mergedSfxSourceMeta
+
+  const mergedSfx = mergeSfxCuesField(canonical, incoming)
+  if (mergedSfx !== undefined) merged.sfx = mergedSfx
 
   return merged
 }

@@ -537,6 +537,9 @@ export interface CleanupResult {
 /** True when the scene object references any generated audio URL. */
 export function sceneHasAudioRefs(scene: any): boolean {
   if (!scene || typeof scene !== 'object') return false
+  if (Array.isArray(scene.sfxAudio) && scene.sfxAudio.some((u: unknown) => typeof u === 'string' && u)) {
+    return true
+  }
   if (scene.narrationAudioUrl || scene.descriptionAudioUrl || scene.musicAudio || scene.musicUrl) {
     return true
   }
