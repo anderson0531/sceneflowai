@@ -13276,12 +13276,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           
           <div className="flex items-center gap-2">
             <Video className="w-4 h-4 text-sf-primary" />
-            <span className="text-sm font-medium text-gray-900 dark:text-white">Production Studio</span>
+            <span className="text-sm font-medium text-gray-900 dark:text-white">Production</span>
           </div>
 
           <div className="h-5 w-px bg-gray-300 dark:bg-gray-700 hidden sm:block" />
 
-          <div className="inline-flex rounded-lg p-0.5 border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800/60">
+          <div className="inline-flex gap-1 rounded-lg p-0.5 border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800/60">
             <button
               type="button"
               onClick={() => setProductionViewWithUrl('studio')}
