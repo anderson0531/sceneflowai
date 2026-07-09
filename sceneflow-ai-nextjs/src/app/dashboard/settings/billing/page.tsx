@@ -130,6 +130,12 @@ export default function BillingPage() {
     [fetchSubscriptionData]
   )
 
+  const handleCheckoutComplete = useCallback(async () => {
+    closeCheckout()
+    const baseline = await fetchSubscriptionData()
+    await pollForActivation(baseline)
+  }, [closeCheckout, fetchSubscriptionData, pollForActivation])
+
   useEffect(() => {
     if (session?.user) {
       loadBillingPage()
