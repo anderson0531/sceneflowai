@@ -51,6 +51,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { upload } from "@vercel/blob/client";
 import { VoiceSelectionDialog } from "@/components/tts/VoiceSelectionDialog";
+import { VoiceDirectionEditor } from "@/components/tts/VoiceDirectionEditor";
 import { GeminiVoicePicker } from "@/components/tts/GeminiVoicePicker";
 import { NarratorVoicePicker } from "@/components/tts/NarratorVoicePicker";
 import { CharacterPromptBuilder } from "@/components/vision/CharacterPromptBuilder";
@@ -981,6 +982,9 @@ const CharacterCard = ({
   const [aiPromptText, setAiPromptText] = useState("");
   const [isGeneratingWardrobe, setIsGeneratingWardrobe] = useState(false);
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
+  const [voiceProfileDialogOpen, setVoiceProfileDialogOpen] = useState(false);
+  const [editingVoiceDescription, setEditingVoiceDescription] = useState(false);
+  const [voiceDescriptionText, setVoiceDescriptionText] = useState("");
   const [expandedWardrobeDescriptions, setExpandedWardrobeDescriptions] = useState<Set<string>>(new Set());
 
   const toggleWardrobeDescription = (wardrobeId: string) => {
@@ -1143,6 +1147,19 @@ const CharacterCard = ({
   const hasCharacterReferenceForVoice =
     typeof character.referenceImage === "string" &&
     character.referenceImage.trim().startsWith("http");
+
+  const hasNarrativeForVoice =
+    Boolean(character.description?.trim()) ||
+    Boolean(character.appearanceDescription?.trim()) ||
+    Boolean(character.role?.trim()) ||
+    Boolean(character.keyFeature?.trim());
+
+  const supportsGeminiVoiceProfileEditor =
+    Boolean(character.voiceConfig?.voiceId) &&
+    (useGeminiVoicePicker ||
+      ttsProvider === "google" ||
+      character.voiceConfig?.provider === "google" ||
+      character.voiceConfig?.voiceId?.startsWith("gemini-"));
 
   // Build character context for voice recommendations
   const characterContext: CharacterContext = {
@@ -2857,14 +2874,11 @@ const CharacterCard = ({
                   Assign a Gemini voice so dialogue generation uses the correct engine and voice id.
                 </p>
               )}
-              {useGeminiVoicePicker && !hasCharacterReferenceForVoice ? (
+              {useGeminiVoicePicker &&
+              !hasCharacterReferenceForVoice &&
+              !hasNarrativeForVoice ? (
                 <p className="text-[10px] text-amber-600 dark:text-amber-400">
-                  Generate a character reference image first — Auto Voice matches from the face.
-                </p>
-              ) : null}
-              {useGeminiVoicePicker && hasCharacterReferenceForVoice && character.voiceConfig ? (
-                <p className="text-[10px] text-emerald-600 dark:text-emerald-400">
-                  Voice matched from character reference
+                  Add a character description or reference image for Auto Voice profiling.
                 </p>
               ) : null}
               {character.voiceConfig?.voiceName && (
@@ -2872,7 +2886,79 @@ const CharacterCard = ({
                   {character.voiceConfig.voiceName}
                 </p>
               )}
-              <div className="grid grid-cols-3 gap-2">
+
+              <div className="pt-1 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <FileText className="w-3.5 h-3.5" />
+                    Casting Brief
+                  </span>
+                  {!editingVoiceDescription && onUpdateCharacterAttributes && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setVoiceDescriptionText(character.voiceDescription || "");
+                        setEditingVoiceDescription(true);
+                      }}
+                      className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                      title="Edit casting brief used for voice matching"
+                    >
+                      <Edit className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+                {editingVoiceDescription ? (
+                  <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+                    <textarea
+                      value={voiceDescriptionText}
+                      onChange={(e) => setVoiceDescriptionText(e.target.value)}
+                      placeholder="e.g., Intelligent male voice with quiet authority, measured pace, and deep conviction."
+                      className="w-full px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      rows={3}
+                      autoFocus
+                    />
+                    <div className="flex gap-2 justify-end">
+                      <button
+                        onClick={() => setEditingVoiceDescription(false)}
+                        className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => {
+                          onUpdateCharacterAttributes?.(characterId, {
+                            voiceDescription: voiceDescriptionText.trim(),
+                          });
+                          setEditingVoiceDescription(false);
+                          toast.success("Casting brief updated");
+                        }}
+                        className="px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded flex items-center gap-1"
+                      >
+                        <Check className="w-3 h-3" />
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-500 dark:text-gray-500 italic line-clamp-3">
+                    {character.voiceDescription ||
+                      "Run Auto Voice or edit to add a casting brief for voice matching."}
+                  </p>
+                )}
+              </div>
+
+              {character.voiceConfig?.prompt ? (
+                <div className="space-y-1">
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    Director&apos;s Note
+                  </span>
+                  <p className="text-xs text-gray-500 dark:text-gray-500 line-clamp-3">
+                    {character.voiceConfig.prompt}
+                  </p>
+                </div>
+              ) : null}
+
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -2895,15 +2981,16 @@ const CharacterCard = ({
                   disabled={
                     isAutoSelectingVoice ||
                     ((useGeminiVoicePicker || ttsProvider === "google") &&
-                      !hasCharacterReferenceForVoice)
+                      !hasCharacterReferenceForVoice &&
+                      !hasNarrativeForVoice)
                   }
                   className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 disabled:opacity-60"
                   title={
                     useGeminiVoicePicker || ttsProvider === "google"
-                      ? hasCharacterReferenceForVoice
-                        ? "Analyze character reference, auto select Gemini voice, and generate Director's Note"
-                        : "Generate character reference image first"
-                      : "Auto pick an ElevenLabs voice from character profile (same recommendations as the voice browser)"
+                      ? hasCharacterReferenceForVoice || hasNarrativeForVoice
+                        ? "Profile voice from character narrative and reference, then auto-select Gemini voice"
+                        : "Add character description or reference image first"
+                      : "Auto pick an ElevenLabs voice from character profile"
                   }
                 >
                   {isAutoSelectingVoice ? (
@@ -2934,6 +3021,26 @@ const CharacterCard = ({
                     <Play className="w-4 h-4" />
                   )}
                   Play
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!supportsGeminiVoiceProfileEditor) {
+                      toast.error("Assign a Gemini voice before editing the profile.");
+                      return;
+                    }
+                    setVoiceProfileDialogOpen(true);
+                  }}
+                  disabled={!supportsGeminiVoiceProfileEditor}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 text-violet-700 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-900/40 disabled:opacity-40 disabled:cursor-not-allowed"
+                  title={
+                    supportsGeminiVoiceProfileEditor
+                      ? "Edit Director's Note, test delivery, and refine the voice profile"
+                      : "Assign a Gemini voice first"
+                  }
+                >
+                  <Settings2 className="w-4 h-4" />
+                  Edit Profile
                 </button>
               </div>
             </TabsContent>
@@ -3700,6 +3807,38 @@ const CharacterCard = ({
                 Male
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        <Dialog open={voiceProfileDialogOpen} onOpenChange={setVoiceProfileDialogOpen}>
+          <DialogContent
+            className="max-w-3xl h-[85vh] max-h-[800px] p-0 overflow-hidden flex flex-col bg-gray-950 border-gray-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {character.voiceConfig?.voiceId ? (
+              <VoiceDirectionEditor
+                key={`${characterId}-${character.voiceConfig.voiceId}`}
+                voiceId={character.voiceConfig.voiceId}
+                voiceName={character.voiceConfig.voiceName || character.voiceConfig.voiceId}
+                initialPrompt={character.voiceConfig.prompt || ""}
+                characterContext={{
+                  ...characterContext,
+                  voiceDescription: character.voiceDescription,
+                }}
+                screenplayContext={screenplayContext}
+                onSave={(prompt) => {
+                  onUpdateCharacterVoice?.(characterId, {
+                    ...character.voiceConfig,
+                    provider: character.voiceConfig.provider || "google",
+                    voiceId: character.voiceConfig.voiceId,
+                    voiceName: character.voiceConfig.voiceName,
+                    prompt: prompt.trim(),
+                  });
+                  setVoiceProfileDialogOpen(false);
+                  toast.success("Voice profile updated");
+                }}
+                onCancel={() => setVoiceProfileDialogOpen(false)}
+              />
+            ) : null}
           </DialogContent>
         </Dialog>
         {useGeminiVoicePicker ? (
