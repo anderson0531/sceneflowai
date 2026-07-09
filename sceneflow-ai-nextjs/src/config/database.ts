@@ -151,14 +151,12 @@ function createSequelize(): Sequelize {
       hooks: {
         beforeConnect: async (config: Record<string, unknown>) => {
           const opts = await ensureCloudSqlOpts()
-          config.host = opts.host
-          config.port = opts.port
-          config.ssl = opts.ssl
+          config.stream = opts.stream
           const dialectOptions =
             config.dialectOptions && typeof config.dialectOptions === 'object'
               ? (config.dialectOptions as Record<string, unknown>)
               : {}
-          dialectOptions.ssl = opts.ssl
+          dialectOptions.stream = opts.stream
           config.dialectOptions = dialectOptions
           if (config.query && typeof config.query === 'object') {
             const query = config.query as Record<string, unknown>

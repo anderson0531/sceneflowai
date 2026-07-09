@@ -36,6 +36,7 @@
                 "@dnd-kit/sortable": "^10.0.0",
                 "@dnd-kit/utilities": "^3.2.2",
                 "@fal-ai/client": "^1.10.1",
+                "@google-cloud/cloud-sql-connector": "^1.11.2",
                 "@google-cloud/firestore": "^8.3.0",
                 "@google-cloud/storage": "^7.19.0",
                 "@google-cloud/text-to-speech": "^6.3.1",
