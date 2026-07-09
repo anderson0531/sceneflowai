@@ -29,6 +29,7 @@ GCS_BUCKET="${GCS_RENDER_BUCKET:-sceneflow-render-jobs}"
 ARTIFACT_REPO="${ARTIFACT_REGISTRY_REPO:-sceneflow}"
 IMAGE_NAME="puppeteer-renderer"
 JOB_NAME="${CLOUD_RUN_PUPPETEER_JOB_NAME:-puppeteer-render-job}"
+CLOUD_SQL_INSTANCE="${CLOUD_SQL_INSTANCE_CONNECTION_NAME:-sceneflowai-2d3e6:us-central1:sceneflow-db}"
 
 # Resource configuration for 4K rendering
 MEMORY="8Gi"
@@ -151,7 +152,8 @@ gcloud run jobs describe $JOB_NAME --region=$REGION 2>/dev/null && \
         --max-retries=1 \
         --cpu=$CPU \
         --memory=$MEMORY \
-        --set-env-vars="GCS_BUCKET=$GCS_BUCKET" \
+        --set-env-vars="GCS_BUCKET=$GCS_BUCKET,CLOUD_SQL_INSTANCE_CONNECTION_NAME=$CLOUD_SQL_INSTANCE,DB_USER=\${DB_USER},DB_PASSWORD=\${DB_PASSWORD},DB_NAME=\${DB_NAME:-sceneflow}" \
+        --add-cloudsql-instances="$CLOUD_SQL_INSTANCE" \
         --service-account="${PROJECT_ID}-compute@developer.gserviceaccount.com" \
 || \
     gcloud run jobs create $JOB_NAME \
@@ -161,7 +163,8 @@ gcloud run jobs describe $JOB_NAME --region=$REGION 2>/dev/null && \
         --max-retries=1 \
         --cpu=$CPU \
         --memory=$MEMORY \
-        --set-env-vars="GCS_BUCKET=$GCS_BUCKET" \
+        --set-env-vars="GCS_BUCKET=$GCS_BUCKET,CLOUD_SQL_INSTANCE_CONNECTION_NAME=$CLOUD_SQL_INSTANCE,DB_USER=\${DB_USER},DB_PASSWORD=\${DB_PASSWORD},DB_NAME=\${DB_NAME:-sceneflow}" \
+        --add-cloudsql-instances="$CLOUD_SQL_INSTANCE" \
         --service-account="${PROJECT_ID}-compute@developer.gserviceaccount.com"
 
 echo ""

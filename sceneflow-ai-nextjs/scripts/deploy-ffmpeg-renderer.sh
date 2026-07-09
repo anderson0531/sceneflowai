@@ -23,6 +23,7 @@ GCS_BUCKET="${GCS_RENDER_BUCKET:-sceneflow-render-jobs}"
 ARTIFACT_REPO="${ARTIFACT_REGISTRY_REPO:-sceneflow}"
 IMAGE_NAME="ffmpeg-renderer"
 JOB_NAME="${CLOUD_RUN_JOB_NAME:-ffmpeg-render-job}"
+CLOUD_SQL_INSTANCE="${CLOUD_SQL_INSTANCE_CONNECTION_NAME:-sceneflowai-2d3e6:us-central1:sceneflow-db}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -134,7 +135,8 @@ gcloud run jobs create $JOB_NAME \
     --max-retries=0 \
     --cpu=4 \
     --memory=8Gi \
-    --set-env-vars="GCS_BUCKET=$GCS_BUCKET,DATABASE_URL=\${DATABASE_URL}" \
+    --add-cloudsql-instances="$CLOUD_SQL_INSTANCE" \
+    --set-env-vars="GCS_BUCKET=$GCS_BUCKET,CLOUD_SQL_INSTANCE_CONNECTION_NAME=$CLOUD_SQL_INSTANCE,DB_USER=\${DB_USER},DB_PASSWORD=\${DB_PASSWORD},DB_NAME=\${DB_NAME:-sceneflow}" \
     --service-account="${PROJECT_ID}-compute@developer.gserviceaccount.com"
 
 # Set IAM permissions for the service account
@@ -161,6 +163,10 @@ echo "  GCS_RENDER_BUCKET=$GCS_BUCKET"
 echo "  CLOUD_RUN_JOB_NAME=$JOB_NAME"
 echo "  CLOUD_RUN_REGION=$REGION"
 echo "  GCP_PROJECT_ID=$PROJECT_ID"
+echo "  CLOUD_SQL_INSTANCE_CONNECTION_NAME=$CLOUD_SQL_INSTANCE"
+echo "  DB_USER=<your-cloud-sql-user>"
+echo "  DB_PASSWORD=<your-cloud-sql-password>"
+echo "  DB_NAME=sceneflow"
 echo ""
 echo -e "${YELLOW}For service account authentication, create a key and add:${NC}"
 echo ""

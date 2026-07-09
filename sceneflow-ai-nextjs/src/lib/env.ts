@@ -8,7 +8,12 @@ export const isDemoMode = (): boolean => {
 
   // Fallback: if not explicitly set, enable demo in non-production or when DB env is missing on server
   const isProd = process.env.NODE_ENV === 'production'
-  const hasDb = Boolean(process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.DB_HOST)
+  const hasDb = Boolean(
+    process.env.CLOUD_SQL_INSTANCE_CONNECTION_NAME ||
+      process.env.DATABASE_URL ||
+      process.env.POSTGRES_URL ||
+      process.env.DB_HOST
+  )
   return !isProd || !hasDb
 }
 

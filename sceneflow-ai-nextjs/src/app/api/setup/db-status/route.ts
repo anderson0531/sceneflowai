@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { QueryTypes } from 'sequelize'
-import { sequelize } from '@/config/database'
+import { sequelize, getDatabaseConnectionInfo } from '@/config/database'
 import '@/models'
 
 export const dynamic = 'force-dynamic'
@@ -81,18 +81,7 @@ export async function GET() {
       results.recent_users = userSample
     }
 
-    const envSource =
-      process.env.DATABASE_URL_DIRECT ? 'DATABASE_URL_DIRECT' :
-      process.env.POSTGRES_URL_NON_POOLING ? 'POSTGRES_URL_NON_POOLING' :
-      process.env.SUPABASE_DATABASE_URL ? 'SUPABASE_DATABASE_URL' :
-      process.env.DATABASE_URL ? 'DATABASE_URL' : 'NONE'
-
-    let envHost = 'unknown'
-    const raw = process.env.DATABASE_URL_DIRECT || process.env.POSTGRES_URL_NON_POOLING || process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL
-    if (raw) {
-      try { envHost = new URL(raw).hostname } catch { /* */ }
-    }
-    results.env = { source: envSource, host: envHost }
+    results.env = getDatabaseConnectionInfo()
 
   } catch (err: any) {
     results.connected = false

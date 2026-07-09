@@ -25,6 +25,11 @@ import CreditPricing from '@/models/CreditPricing'
 import VoiceConsent from '@/models/VoiceConsent'
 import UserVoiceClone from '@/models/UserVoiceClone'
 import ModerationEvent from '@/models/ModerationEvent'
+import PaymentWebhookEvent from '@/models/PaymentWebhookEvent'
+import UserIntegration from '@/models/UserIntegration'
+import GenerationJob from '@/models/GenerationJob'
+import Notification from '@/models/Notification'
+import AssetProvenanceLog from '@/models/AssetProvenanceLog'
 
 import { migrateUsersSubscriptionColumns } from '@/lib/database/migrateUsersSubscription'
 import { migrateCreditLedger } from '@/lib/database/migrateCreditLedger'
@@ -195,6 +200,35 @@ export async function bootstrapDatabaseSchema(): Promise<{
     logs.push('25. Creating RenderJob table...')
     await RenderJob.sync({ force: false })
     logs.push('✅ RenderJob table created')
+
+    logs.push('26. Creating PaymentWebhookEvent table...')
+    await PaymentWebhookEvent.sync({ force: false })
+    logs.push('✅ PaymentWebhookEvent table created')
+
+    logs.push('27. Creating UserIntegration table...')
+    await UserIntegration.sync({ force: false })
+    logs.push('✅ UserIntegration table created')
+
+    logs.push('28. Creating GenerationJob table...')
+    await GenerationJob.sync({ force: false })
+    logs.push('✅ GenerationJob table created')
+
+    logs.push('29. Creating Notification table...')
+    await Notification.sync({ force: false })
+    logs.push('✅ Notification table created')
+
+    logs.push('30. Creating AssetProvenanceLog table...')
+    await AssetProvenanceLog.sync({ force: false })
+    logs.push('✅ AssetProvenanceLog table created')
+
+    logs.push('31. Enabling pgcrypto extension (for UUID defaults)...')
+    try {
+      await sequelize.query('CREATE EXTENSION IF NOT EXISTS "pgcrypto"')
+      logs.push('✅ pgcrypto extension enabled')
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error)
+      logs.push(`⚠️ pgcrypto extension note: ${msg}`)
+    }
 
     logs.push('🎉 Database setup complete! All tables created.')
 

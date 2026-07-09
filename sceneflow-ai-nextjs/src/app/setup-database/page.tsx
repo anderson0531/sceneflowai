@@ -39,7 +39,7 @@ export default function SetupDatabasePage() {
         <div>
           <h1 className="text-3xl font-bold mb-2">Database Setup</h1>
           <p className="text-gray-400">
-            Initialize your Supabase database by creating all required tables.
+            Initialize your Cloud SQL database by creating all required tables.
           </p>
           <p className="text-sm text-amber-300 mt-2">
             ⚠️ Run this once after deploying to a fresh database.
@@ -136,7 +136,7 @@ export default function SetupDatabasePage() {
         <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
           <h3 className="text-lg font-semibold mb-3">What This Does</h3>
           <ul className="text-sm text-gray-400 space-y-2">
-            <li>• Creates all database tables in your Supabase database</li>
+            <li>• Creates all database tables in your Cloud SQL database</li>
             <li>• Sets up proper relationships and foreign keys</li>
             <li>• Safe to run multiple times (won't drop existing data)</li>
             <li>• Takes about 5-10 seconds to complete</li>

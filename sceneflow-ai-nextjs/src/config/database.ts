@@ -1,30 +1,96 @@
 import { Sequelize } from 'sequelize'
 import pg from 'pg'
 import dotenv from 'dotenv'
+import { mkdirSync, writeFileSync } from 'fs'
+import { join } from 'path'
+import { tmpdir } from 'os'
+import { getCloudSqlDriverOptions } from '@/lib/database/cloudSqlDriverOptions'
 
 dotenv.config({ path: '.env.local' })
 
-const envSource =
-  process.env.DATABASE_URL_DIRECT ? 'DATABASE_URL_DIRECT' :
-  process.env.POSTGRES_URL_NON_POOLING ? 'POSTGRES_URL_NON_POOLING' :
-  process.env.SUPABASE_DATABASE_URL ? 'SUPABASE_DATABASE_URL' :
-  process.env.DATABASE_URL ? 'DATABASE_URL' : null
-
-const rawConnectionString =
-  process.env.DATABASE_URL_DIRECT ||
-  process.env.POSTGRES_URL_NON_POOLING ||
-  process.env.SUPABASE_DATABASE_URL ||
-  process.env.DATABASE_URL
-
-if (!rawConnectionString || !envSource) {
-  throw new Error('DATABASE_URL is missing. Please check your Vercel environment variables.')
+function parseGoogleServiceAccountJson(raw: string): Record<string, unknown> {
+  try {
+    return JSON.parse(raw) as Record<string, unknown>
+  } catch {
+    const fixed = raw.replace(
+      /("private_key"\s*:\s*")([\s\S]*?)("\s*,\s*"client_email")/,
+      (_match, start: string, keyBody: string, end: string) =>
+        `${start}${keyBody.replace(/\r?\n/g, '\\n')}${end}`
+    )
+    return JSON.parse(fixed) as Record<string, unknown>
+  }
 }
 
-try {
-  const u = new URL(rawConnectionString)
-  console.log(`[database] Using ${envSource} → host=${u.hostname}, port=${u.port || '5432'}, db=${u.pathname.slice(1) || 'postgres'}, user=${u.username}`)
-} catch {
-  console.log(`[database] Using ${envSource} (could not parse URL for logging)`)
+function ensureGoogleApplicationCredentialsFile(): void {
+  if (process.env.GOOGLE_APPLICATION_CREDENTIALS || !process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON?.trim()) {
+    return
+  }
+  try {
+    const credentials = parseGoogleServiceAccountJson(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
+    const dir = join(tmpdir(), 'sceneflow-gcp')
+    mkdirSync(dir, { recursive: true })
+    const credPath = join(dir, 'application_default_credentials.json')
+    writeFileSync(credPath, JSON.stringify(credentials), { mode: 0o600 })
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = credPath
+  } catch {
+    /* fall back to inline credentials in getCloudSqlConnector */
+  }
+}
+
+ensureGoogleApplicationCredentialsFile()
+
+const pool = { max: 5, min: 0, acquire: 60000, idle: 10000 }
+const define = { underscored: true }
+
+function useCloudSqlFromEnv(): boolean {
+  return Boolean(
+    process.env.CLOUD_SQL_INSTANCE_CONNECTION_NAME?.trim() &&
+      process.env.DB_USER?.trim() &&
+      process.env.DB_PASSWORD &&
+      process.env.DB_NAME?.trim()
+  )
+}
+
+const cloudSqlEnabled = useCloudSqlFromEnv()
+
+const directEnvSource = cloudSqlEnabled
+  ? null
+  : process.env.DATABASE_URL_DIRECT
+    ? 'DATABASE_URL_DIRECT'
+    : process.env.POSTGRES_URL_NON_POOLING
+      ? 'POSTGRES_URL_NON_POOLING'
+      : process.env.SUPABASE_DATABASE_URL
+        ? 'SUPABASE_DATABASE_URL'
+        : process.env.DATABASE_URL
+          ? 'DATABASE_URL'
+          : null
+
+const rawConnectionString = cloudSqlEnabled
+  ? null
+  : process.env.DATABASE_URL_DIRECT ||
+    process.env.POSTGRES_URL_NON_POOLING ||
+    process.env.SUPABASE_DATABASE_URL ||
+    process.env.DATABASE_URL
+
+if (!cloudSqlEnabled && (!rawConnectionString || !directEnvSource)) {
+  throw new Error(
+    'Database config missing. Set CLOUD_SQL_INSTANCE_CONNECTION_NAME + DB_USER + DB_PASSWORD + DB_NAME, or DATABASE_URL.'
+  )
+}
+
+if (cloudSqlEnabled) {
+  console.log(
+    `[database] Using Cloud SQL → instance=${process.env.CLOUD_SQL_INSTANCE_CONNECTION_NAME}, db=${process.env.DB_NAME}, user=${process.env.DB_USER}`
+  )
+} else {
+  try {
+    const u = new URL(rawConnectionString!)
+    console.log(
+      `[database] Using ${directEnvSource} → host=${u.hostname}, port=${u.port || '5432'}, db=${u.pathname.slice(1) || 'postgres'}, user=${u.username}`
+    )
+  } catch {
+    console.log(`[database] Using ${directEnvSource} (could not parse URL for logging)`)
+  }
 }
 
 function hostLooksLocal(url: string): boolean {
@@ -36,29 +102,6 @@ function hostLooksLocal(url: string): boolean {
   }
 }
 
-/** project ref from https://<ref>.supabase.co */
-function supabaseProjectRefFromEnv(): string | null {
-  const explicit = process.env.SUPABASE_PROJECT_REF?.trim()
-  if (explicit) return explicit
-
-  for (const key of ['NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_URL'] as const) {
-    const raw = process.env[key]
-    if (!raw) continue
-    try {
-      const host = new URL(raw).hostname
-      const m = host.match(/^([a-z0-9]{15,40})\.supabase\.co$/i)
-      if (m) return m[1]
-    } catch {
-      /* ignore */
-    }
-  }
-  return null
-}
-
-/**
- * Parse postgres URL with WHATWG URL (no url.parse).
- * Omit sslmode in URI for remote hosts so pg v8 does not force verify-full.
- */
 function parsePostgresUrl(connectionUrl: string): {
   host: string
   port: number
@@ -71,59 +114,55 @@ function parsePostgresUrl(connectionUrl: string): {
   const rawDb = pathMatch?.[1]?.trim()
   const database = rawDb && rawDb.length > 0 ? rawDb : 'postgres'
 
-  let username = decodeURIComponent(u.username)
-  const host = u.hostname
-  const port = Number.parseInt(u.port || '5432', 10)
-
-  /**
-   * Supavisor *session* pooler (shared): aws-0-<region>.pooler.supabase.com:5432
-   * Docs: user must be postgres.<project_ref>, NOT plain postgres.
-   * Plain postgres on this host → FATAL "Tenant or user not found".
-   */
-  const isSupavisorSessionHost =
-    /\.pooler\.supabase\.com$/i.test(host) && port === 5432
-
-  if (isSupavisorSessionHost && username === 'postgres') {
-    const ref = supabaseProjectRefFromEnv()
-    if (!ref) {
-      throw new Error(
-        'DATABASE_URL points at Supabase session pooler (pooler.supabase.com:5432) with user "postgres". ' +
-          'Use the exact Session mode string from Supabase (Connect → Session pooling), or set SUPABASE_PROJECT_REF / NEXT_PUBLIC_SUPABASE_URL so the user can be set to postgres.<ref>. ' +
-          'Alternatively set DATABASE_URL_DIRECT or POSTGRES_URL_NON_POOLING to the direct or non-pooling URL.'
-      )
-    }
-    username = `postgres.${ref}`
-  }
-
   return {
-    host,
-    port,
-    username,
+    host: u.hostname,
+    port: Number.parseInt(u.port || '5432', 10),
+    username: decodeURIComponent(u.username),
     password: decodeURIComponent(u.password),
     database,
   }
 }
 
-const isLocal = hostLooksLocal(rawConnectionString)
 const strictTls = process.env.DATABASE_SSL_REJECT_UNAUTHORIZED === 'true'
-
 const remoteSsl = {
   require: true as const,
   rejectUnauthorized: strictTls,
 }
 
-const pool = { max: 5, min: 0, acquire: 60000, idle: 10000 }
-const define = { underscored: true }
+let cloudSqlOptsPromise: ReturnType<typeof getCloudSqlDriverOptions> | null = null
 
-export const sequelize = isLocal
-  ? new Sequelize(rawConnectionString, {
+function ensureCloudSqlOpts() {
+  if (!cloudSqlOptsPromise) {
+    cloudSqlOptsPromise = getCloudSqlDriverOptions(
+      process.env.CLOUD_SQL_INSTANCE_CONNECTION_NAME!.trim()
+    )
+  }
+  return cloudSqlOptsPromise
+}
+
+function createSequelize(): Sequelize {
+  if (cloudSqlEnabled) {
+    return new Sequelize(process.env.DB_NAME!, process.env.DB_USER!, process.env.DB_PASSWORD!, {
       dialect: 'postgres',
       dialectModule: pg,
-      dialectOptions: { ssl: false },
+      host: '127.0.0.1',
+      port: 5432,
+      dialectOptions: {},
       hooks: {
-        beforeConnect: async (config: any) => {
-          if (config.query?.options) {
-            delete config.query.options
+        beforeConnect: async (config: Record<string, unknown>) => {
+          const opts = await ensureCloudSqlOpts()
+          config.host = opts.host
+          config.port = opts.port
+          config.ssl = opts.ssl
+          const dialectOptions =
+            config.dialectOptions && typeof config.dialectOptions === 'object'
+              ? (config.dialectOptions as Record<string, unknown>)
+              : {}
+          dialectOptions.ssl = opts.ssl
+          config.dialectOptions = dialectOptions
+          if (config.query && typeof config.query === 'object') {
+            const query = config.query as Record<string, unknown>
+            if (query.options) delete query.options
           }
         },
       },
@@ -131,29 +170,53 @@ export const sequelize = isLocal
       logging: false,
       define,
     })
-  : (() => {
-      const { host, port, username, password, database } = parsePostgresUrl(rawConnectionString)
-      return new Sequelize(database, username, password, {
-        dialect: 'postgres',
-        dialectModule: pg,
-        host,
-        port,
-        dialectOptions: {
-          ssl: remoteSsl,
+  }
+
+  const isLocal = hostLooksLocal(rawConnectionString!)
+  if (isLocal) {
+    return new Sequelize(rawConnectionString!, {
+      dialect: 'postgres',
+      dialectModule: pg,
+      dialectOptions: { ssl: false },
+      hooks: {
+        beforeConnect: async (config: Record<string, unknown>) => {
+          if (config.query && typeof config.query === 'object') {
+            const query = config.query as Record<string, unknown>
+            if (query.options) delete query.options
+          }
         },
-        hooks: {
-          beforeConnect: async (config: any) => {
-            if (config.query?.options) {
-              delete config.query.options
-            }
-            config.ssl = remoteSsl
-          },
-        },
-        pool,
-        logging: false,
-        define,
-      })
-    })()
+      },
+      pool,
+      logging: false,
+      define,
+    })
+  }
+
+  const { host, port, username, password, database } = parsePostgresUrl(rawConnectionString!)
+  return new Sequelize(database, username, password, {
+    dialect: 'postgres',
+    dialectModule: pg,
+    host,
+    port,
+    dialectOptions: {
+      ssl: remoteSsl,
+    },
+    hooks: {
+      beforeConnect: async (config: Record<string, unknown>) => {
+        if (config.query && typeof config.query === 'object') {
+          const query = config.query as Record<string, unknown>
+          if (query.options) delete query.options
+        }
+        config.ssl = remoteSsl
+      },
+    },
+    pool,
+    logging: false,
+    define,
+  })
+}
+
+export const sequelize = createSequelize()
 
 export const testConnection = async () => {
   try {
@@ -169,6 +232,43 @@ export const syncDatabase = async () => {
   await sequelize.sync({ alter: true })
 }
 
-export const connectionEnvName = 'DATABASE_URL'
-export const selectedConnectionHost = 'supabase'
+export const connectionEnvName = cloudSqlEnabled
+  ? 'CLOUD_SQL_INSTANCE_CONNECTION_NAME'
+  : (directEnvSource ?? 'DATABASE_URL')
+
+export const selectedConnectionHost = cloudSqlEnabled
+  ? 'cloud-sql'
+  : rawConnectionString && hostLooksLocal(rawConnectionString)
+    ? 'local'
+    : 'direct'
+
 export const selectedConnectionIsPooled = false
+
+export function getDatabaseConnectionInfo() {
+  if (cloudSqlEnabled) {
+    return {
+      mode: 'cloud-sql' as const,
+      envSource: 'CLOUD_SQL_INSTANCE_CONNECTION_NAME' as const,
+      host: process.env.CLOUD_SQL_INSTANCE_CONNECTION_NAME,
+      database: process.env.DB_NAME,
+      user: process.env.DB_USER,
+    }
+  }
+
+  let envHost = 'unknown'
+  if (rawConnectionString) {
+    try {
+      envHost = new URL(rawConnectionString).hostname
+    } catch {
+      /* ignore */
+    }
+  }
+
+  return {
+    mode: selectedConnectionHost === 'local' ? ('local' as const) : ('direct' as const),
+    envSource: directEnvSource ?? 'DATABASE_URL',
+    host: envHost,
+    database: undefined,
+    user: undefined,
+  }
+}
