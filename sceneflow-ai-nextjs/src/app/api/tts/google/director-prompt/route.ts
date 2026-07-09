@@ -4,6 +4,12 @@ import { CharacterContext, ScreenplayContext } from '@/lib/voiceRecommendation'
 
 export const dynamic = 'force-dynamic'
 
+const DIRECTOR_PROMPT_GEN_OPTIONS = {
+  temperature: 0.7,
+  maxOutputTokens: 2048,
+  thinkingLevel: 'minimal' as const,
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { characterContext, screenplayContext, selectedInstructions, wardrobeImageUrl } = await request.json() as {
@@ -102,28 +108,19 @@ Synopsis: ${screenplayContext.synopsis || 'Not specified'}`
             },
             { text: prompt }
           ],
-          {
-            temperature: 0.7,
-            maxOutputTokens: 250,
-          }
+          DIRECTOR_PROMPT_GEN_OPTIONS
         )
         
         generatedText = response.text.trim()
       } catch (visionError) {
         console.warn('[Director Prompt] Vision failed, falling back to text-only:', visionError)
         // Fallback to text-only generation
-        const response = await generateText(prompt, {
-          temperature: 0.7,
-          maxOutputTokens: 250
-        })
+        const response = await generateText(prompt, DIRECTOR_PROMPT_GEN_OPTIONS)
         generatedText = response.text.trim()
       }
     } else {
       // Text-only generation
-      const response = await generateText(prompt, {
-        temperature: 0.7,
-        maxOutputTokens: 250
-      })
+      const response = await generateText(prompt, DIRECTOR_PROMPT_GEN_OPTIONS)
       generatedText = response.text.trim()
     }
     
@@ -149,6 +146,14 @@ Synopsis: ${screenplayContext.synopsis || 'Not specified'}`
                                    .replace(/\n?```$/, '')
                                    .replace(/^(Here is the )?JSON requested:?\n?/i, '')
                                    .trim()
+    }
+
+    if (!generatedText?.trim()) {
+      console.error('[Director Prompt] Empty profile after parsing')
+      return NextResponse.json(
+        { error: 'Failed to generate director prompt (empty response)' },
+        { status: 502 }
+      )
     }
 
     return NextResponse.json({ script: generatedText })

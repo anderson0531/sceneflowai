@@ -14,10 +14,10 @@ import {
   getImagenSafetyFilterLevel,
   type SafetySetting 
 } from './safety'
-import { 
-  getGeminiTextModel, 
+import {
+  getGeminiTextModel,
   GEMINI_TEXT_MODELS_PREVIOUS,
-  type GeminiThinkingLevel 
+  type GeminiThinkingLevel,
 } from '../config/modelConfig'
 
 // =============================================================================
@@ -394,6 +394,47 @@ export async function generateWithVision(
     return part
   })
   
+  const isGemini3 = model.includes('gemini-3')
+  const isThinkingModel = model.includes('gemini-3') || model.includes('gemini-2.5')
+
+  const generationConfig: Record<string, unknown> = {
+    temperature: options.temperature ?? 0.2,
+    topP: options.topP ?? 0.9,
+    maxOutputTokens: options.maxOutputTokens ?? 8192,
+  }
+
+  const thinkingExplicit =
+    options.thinkingLevel !== undefined || options.thinkingBudget !== undefined
+  if (thinkingExplicit) {
+    const isMinimal = options.thinkingLevel === 'minimal' || options.thinkingBudget === 0
+    const thinkingConfig: Record<string, unknown> = { includeThoughts: !isMinimal }
+
+    if (isThinkingModel) {
+      if (isGemini3) {
+        if (!isMinimal) {
+          const validLevels = ['LOW', 'MEDIUM', 'HIGH']
+          const level = (options.thinkingLevel || 'MEDIUM').toUpperCase()
+          thinkingConfig.thinkingLevel = validLevels.includes(level) ? level : 'LOW'
+        }
+      } else {
+        const budgets = { minimal: 0, low: 1024, medium: 4096, high: 8192 }
+        const budget =
+          options.thinkingBudget ??
+          budgets[options.thinkingLevel as keyof typeof budgets] ??
+          1024
+        thinkingConfig.thinkingBudget = budget
+
+        if (budget === 0) {
+          thinkingConfig.includeThoughts = false
+        }
+      }
+    }
+
+    if (isThinkingModel && !isMinimal) {
+      generationConfig.thinkingConfig = thinkingConfig
+    }
+  }
+
   const requestBody: any = {
     contents: [
       {
@@ -401,11 +442,7 @@ export async function generateWithVision(
         parts: vertexParts
       }
     ],
-    generationConfig: {
-      temperature: options.temperature ?? 0.2,
-      topP: options.topP ?? 0.9,
-      maxOutputTokens: options.maxOutputTokens ?? 8192,
-    },
+    generationConfig,
     // Add safety settings for vision (default: BLOCK_ONLY_HIGH for creative content)
     safetySettings: options.safetySettings || getDefaultGeminiSafetySettings()
   }
@@ -463,9 +500,16 @@ export async function generateWithVision(
     throw new Error('No candidates in Vertex AI vision response')
   }
   
-  const text = candidate.content?.parts?.[0]?.text
+  const responseParts = candidate.content?.parts ?? []
+  const text = responseParts
+    .map((part: { text?: string }) => part.text)
+    .filter(Boolean)
+    .join('')
+    .trim()
   if (!text) {
-    throw new Error('No text content in Vertex AI vision response')
+    throw new Error(
+      `No text content in Vertex AI vision response (finishReason: ${candidate.finishReason ?? 'unknown'})`
+    )
   }
   
   return {
