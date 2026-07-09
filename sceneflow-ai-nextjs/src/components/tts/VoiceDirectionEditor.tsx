@@ -175,6 +175,7 @@ export function VoiceDirectionEditor({
         body: JSON.stringify({
           text: sampleText,
           voiceId,
+          audioType: 'dialogue',
           ...(currentPrompt ? { prompt: currentPrompt } : {})
         })
       })

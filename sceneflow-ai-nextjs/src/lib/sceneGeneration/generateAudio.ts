@@ -343,7 +343,6 @@ export async function generateSceneAudio(
         const sceneTranslation = storedTranslations?.[sceneIndex]
         const storedDialogueLine = sceneTranslation?.dialogue?.[dialogueIndex]
         const dialogueText = storedDialogueLine || dialogueLine.line
-        const optimized = optimizeTextForTTS(dialogueText)
 
         const edgeVoiceConfig = character
           ? getEdgeVoiceConfigForResolution(character, language || 'en')
@@ -361,7 +360,7 @@ export async function generateSceneAudio(
                 projectId,
                 sceneIndex,
                 audioType: 'dialogue',
-                text: optimized.text,
+                text: dialogueText,
                 voiceConfig: resolvedVoice,
                 characterName: resolvedName,
                 characterId: resolvedCharacterId,

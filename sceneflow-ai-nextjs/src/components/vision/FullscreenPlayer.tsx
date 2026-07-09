@@ -10,9 +10,12 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { SegmentData } from '@/types/screenplay'
-import { buildAudioTracksForLanguage, buildAudioTracksWithBaselineTiming, determineBaselineLanguage, flattenAudioTracks, analyzeSceneLML, type AudioTrackClipV2 } from '@/components/vision/scene-production/audioTrackBuilder'
+import { buildAudioTracksForLanguage, buildAudioTracksWithBaselineTiming, determineBaselineLanguage, flattenAudioTracks, analyzeSceneLML, countResolvableSceneSfx } from '@/components/vision/scene-production/audioTrackBuilder'
+import type { AudioTrackClipV2 } from '@/components/vision/scene-production/types'
 import { getAvailableLanguages } from '@/lib/audio/languageDetection'
 import { GroupedNativeSelect } from '@/components/vision/GroupedNativeSelect'
+import { buildBeatAlignedStoryboardSfxClips } from '@/lib/storyboard/sfxPlayback'
+import { buildStoryboardVisualTimeline, buildStoryboardVoiceClips } from '@/lib/storyboard/types'
 // Audience Feedback Components
 import { EmojiReactionBar } from '@/components/screening-room/EmojiReactionBar'
 import { ConsentModal } from '@/components/screening-room/ConsentModal'
@@ -436,14 +439,56 @@ export function FullscreenPlayer({
     if (!scene) return null
     return buildAudioTracksWithBaselineTiming(scene, language, baselineLanguage)
   }, [scene, language, baselineLanguage])
+
+  const beatAlignedSfxClips = useMemo(() => {
+    if (!scene || countResolvableSceneSfx(scene) === 0) return []
+
+    const voiceClips = buildStoryboardVoiceClips(scene, language, {})
+    const visualFrames = buildStoryboardVisualTimeline(scene, voiceClips, {
+      language,
+      preVisAnimatic: true,
+    })
+
+    const voiceEndTime =
+      voiceClips.length > 0
+        ? voiceClips[voiceClips.length - 1].startTime + voiceClips[voiceClips.length - 1].duration
+        : undefined
+
+    const visualEnd =
+      visualFrames.length > 0
+        ? visualFrames[visualFrames.length - 1].startTime + visualFrames[visualFrames.length - 1].duration
+        : undefined
+
+    return buildBeatAlignedStoryboardSfxClips(scene, visualFrames, {
+      voiceEndTime,
+      sceneDuration: visualEnd,
+    })
+  }, [scene, language])
   
   // ============================================================================
   // Flatten Audio Tracks to Clips (using flattenAudioTracks like SceneTimelineV2)
   // ============================================================================
   const allAudioClips = useMemo<AudioTrackClipV2[]>(() => {
     if (!audioTracks) return []
-    return flattenAudioTracks(audioTracks)
-  }, [audioTracks])
+
+    const baseClips = flattenAudioTracks(audioTracks)
+    if (beatAlignedSfxClips.length === 0) return baseClips
+
+    const nonSfxClips = baseClips.filter((clip) => !clip.id.startsWith('sfx'))
+    const alignedSfxClips: AudioTrackClipV2[] = beatAlignedSfxClips.map((clip) => ({
+      id: clip.id,
+      url: clip.url,
+      startTime: clip.startTime,
+      duration: clip.duration,
+      label: clip.label,
+      volume: 0.8,
+      language: 'all',
+      source: 'scene',
+      scenePropertyPath: clip.id,
+    }))
+
+    return [...nonSfxClips, ...alignedSfxClips]
+  }, [audioTracks, beatAlignedSfxClips])
   
   // ============================================================================
   // Get Track Type from Clip ID (clips don't have a 'type' field, derive from id)
@@ -503,10 +548,19 @@ export function FullscreenPlayer({
   // Calculate Scene Duration
   // ============================================================================
   const sceneDuration = useMemo(() => {
-    if (visualClips.length === 0) return 10
-    const lastClip = visualClips[visualClips.length - 1]
-    return lastClip.startTime + lastClip.duration
-  }, [visualClips])
+    const visualEnd =
+      visualClips.length === 0
+        ? 10
+        : visualClips[visualClips.length - 1].startTime + visualClips[visualClips.length - 1].duration
+
+    if (allAudioClips.length === 0) return visualEnd
+
+    const audioEnd = Math.max(
+      ...allAudioClips.map((clip) => clip.startTime + clip.duration)
+    )
+
+    return Math.max(visualEnd, audioEnd)
+  }, [visualClips, allAudioClips])
   
   // ============================================================================
   // Get Current Visual Clip
@@ -738,7 +792,13 @@ export function FullscreenPlayer({
               const audioTime = elapsed - clipStart + (clip.trimStart || 0)
               if (audio.paused) {
                 audio.currentTime = audioTime
-                audio.play().catch(() => {})
+                audio.play().catch((err) => {
+                  if (clip.id.startsWith('sfx')) {
+                    console.warn('[FullscreenPlayer][SFX] Playback failed:', clip.id, clip.url, err)
+                  } else {
+                    console.warn('[FullscreenPlayer] Audio playback failed:', clip.id, err)
+                  }
+                })
               } else {
                 // Drift correction
                 const drift = Math.abs(audio.currentTime - audioTime)

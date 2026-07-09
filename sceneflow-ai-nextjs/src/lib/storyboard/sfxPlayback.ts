@@ -3,6 +3,7 @@
  */
 
 import type { SceneSfxCue } from '@/lib/script/deriveSfxFromSceneContent'
+import { readBeatSfxAudio } from '@/lib/script/deriveSfxFromSceneContent'
 import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 import type { StoryboardVisualFrame } from '@/lib/storyboard/types'
 
@@ -20,7 +21,7 @@ export interface BeatAlignedSfxClip {
 function parseCueAtIndex(
   scene: Record<string, unknown>,
   idx: number
-): Pick<SceneSfxCue, 'sourceBeatId' | 'time' | 'description'> | null {
+): Partial<Pick<SceneSfxCue, 'sourceBeatId' | 'time' | 'description'>> | null {
   const arr = Array.isArray(scene.sfx) ? scene.sfx : []
   if (idx >= arr.length) return null
 
@@ -33,9 +34,9 @@ function parseCueAtIndex(
     const o = raw as Record<string, unknown>
     const description = String(o.description ?? o.text ?? o.name ?? '').trim()
     return {
-      sourceBeatId: typeof o.sourceBeatId === 'string' ? o.sourceBeatId : undefined,
-      time: typeof o.time === 'number' ? o.time : undefined,
-      description: description || undefined,
+      ...(typeof o.sourceBeatId === 'string' ? { sourceBeatId: o.sourceBeatId } : {}),
+      ...(typeof o.time === 'number' ? { time: o.time } : {}),
+      ...(description ? { description } : {}),
     }
   }
   return null
@@ -109,8 +110,10 @@ export function buildBeatAlignedStoryboardSfxClips(
     dynamicDurations?: Record<string, number>
   }
 ): BeatAlignedSfxClip[] {
-  const sfxArray = scene.sfxAudio
-  if (!Array.isArray(sfxArray) || sfxArray.length === 0) return []
+  const sfxArray = Array.isArray(scene.sfxAudio) ? scene.sfxAudio : []
+  const sfxDefs = Array.isArray(scene.sfx) ? scene.sfx : []
+  const slotCount = Math.max(sfxArray.length, sfxDefs.length)
+  if (slotCount === 0) return []
 
   const dynamicDurations = options?.dynamicDurations ?? {}
   const baseDuration =
@@ -135,13 +138,18 @@ export function buildBeatAlignedStoryboardSfxClips(
 
   const clips: BeatAlignedSfxClip[] = []
 
-  sfxArray.forEach((entry, idx) => {
-    const url = resolveSfxUrl(entry)
-    if (!url) return
-
+  for (let idx = 0; idx < slotCount; idx++) {
+    const entry = sfxArray[idx]
     const cue = parseCueAtIndex(scene, idx)
+    const url =
+      resolveSfxUrl(entry) ||
+      readBeatSfxAudio(scene, {
+        sfxIndex: idx,
+        sourceBeatId: cue?.sourceBeatId ?? '',
+      })
+    if (!url) continue
     const beatId = cue?.sourceBeatId
-    if (beatId && excludedBeatIds.has(beatId)) return
+    if (beatId && excludedBeatIds.has(beatId)) continue
 
     const frame = beatId ? frameByBeatId.get(beatId) : undefined
 
@@ -180,7 +188,7 @@ export function buildBeatAlignedStoryboardSfxClips(
       trackType: 'sfx',
       label,
     })
-  })
+  }
 
   return clips
 }

@@ -1196,6 +1196,7 @@ const CharacterCard = ({
       body: JSON.stringify({
         text,
         voiceId,
+        audioType: "dialogue",
         ...(prompt ? { prompt } : {}),
       }),
     });
@@ -3814,6 +3815,12 @@ const CharacterCard = ({
             className="max-w-3xl h-[85vh] max-h-[800px] p-0 overflow-hidden flex flex-col bg-gray-950 border-gray-800"
             onClick={(e) => e.stopPropagation()}
           >
+            <DialogHeader className="sr-only">
+              <DialogTitle>Edit voice profile for {character.name}</DialogTitle>
+              <DialogDescription>
+                Customize director notes and test voice delivery for this character.
+              </DialogDescription>
+            </DialogHeader>
             {character.voiceConfig?.voiceId ? (
               <VoiceDirectionEditor
                 key={`${characterId}-${character.voiceConfig.voiceId}`}

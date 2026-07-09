@@ -11,6 +11,12 @@ import {
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
+const VOICE_ANALYSIS_GEN_OPTIONS = {
+  temperature: 0.5,
+  maxOutputTokens: 2048,
+  thinkingLevel: 'minimal' as const,
+}
+
 interface AnalyzeVoiceFromWardrobeRequest {
   characterName: string
   /** Preferred: character identity portrait URL */
@@ -116,8 +122,7 @@ export async function POST(req: NextRequest) {
         ],
         {
           model: 'gemini-2.5-flash',
-          temperature: 0.5,
-          maxOutputTokens: 1024,
+          ...VOICE_ANALYSIS_GEN_OPTIONS,
         },
       )
       resultText = result.text?.trim() || ''
@@ -126,9 +131,8 @@ export async function POST(req: NextRequest) {
 
       const result = await generateText(prompt, {
         model: 'gemini-2.5-flash',
-        temperature: 0.5,
-        maxOutputTokens: 1024,
         responseMimeType: 'application/json',
+        ...VOICE_ANALYSIS_GEN_OPTIONS,
       })
       resultText = result.text?.trim() || ''
     }

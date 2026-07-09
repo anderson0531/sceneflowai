@@ -119,6 +119,7 @@ export function GeminiVoicePicker({
         body: JSON.stringify({
           text: 'This is a preview of my voice for the Director\'s Note.',
           voiceId: voiceId,
+          audioType: 'dialogue',
           ...(directorPrompt?.trim() ? { prompt: directorPrompt.trim() } : {}),
         }),
       })

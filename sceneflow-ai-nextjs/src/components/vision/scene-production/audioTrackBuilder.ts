@@ -53,6 +53,77 @@ export const AUDIO_ALIGNMENT_BUFFERS = {
   MUSIC_END_BUFFER: 5,    // Buffer at end of music for fade-out (totalAudio + 5s)
 }
 
+/** Default SFX clip length when metadata is unavailable (seconds). */
+export const DEFAULT_SFX_CLIP_DURATION_SECONDS = 2
+
+/**
+ * Resolve a playable SFX URL from scene.sfxAudio[] with fallbacks to cue.audioUrl.
+ */
+export function resolveSceneSfxUrl(scene: Record<string, unknown>, idx: number): string | undefined {
+  const sfxAudioList = Array.isArray(scene.sfxAudio) ? scene.sfxAudio : []
+  const entry = sfxAudioList[idx]
+
+  if (typeof entry === 'string' && entry.trim()) return entry.trim()
+  if (entry && typeof entry === 'object' && !Array.isArray(entry)) {
+    const url = (entry as { url?: string }).url
+    if (typeof url === 'string' && url.trim()) return url.trim()
+  }
+
+  const sfxList = Array.isArray(scene.sfx) ? scene.sfx : []
+  const sfxDef = sfxList[idx]
+  if (sfxDef && typeof sfxDef === 'object' && !Array.isArray(sfxDef)) {
+    const audioUrl = (sfxDef as { audioUrl?: string }).audioUrl
+    if (typeof audioUrl === 'string' && audioUrl.trim()) return audioUrl.trim()
+  }
+
+  return undefined
+}
+
+/**
+ * Resolve SFX clip duration from metadata, cue definition, or default.
+ */
+export function resolveSceneSfxDuration(
+  scene: Record<string, unknown>,
+  idx: number,
+  fallback: number = DEFAULT_SFX_CLIP_DURATION_SECONDS
+): number {
+  const metaList = Array.isArray(scene.sfxSourceMeta) ? scene.sfxSourceMeta : []
+  const meta = metaList[idx] as { clipDurationSeconds?: number } | null | undefined
+  if (typeof meta?.clipDurationSeconds === 'number' && meta.clipDurationSeconds > 0) {
+    return meta.clipDurationSeconds
+  }
+
+  const sfxList = Array.isArray(scene.sfx) ? scene.sfx : []
+  const sfxDef = sfxList[idx]
+  if (sfxDef && typeof sfxDef === 'object' && !Array.isArray(sfxDef)) {
+    const duration = (sfxDef as { duration?: number }).duration
+    if (typeof duration === 'number' && duration > 0) return duration
+  }
+
+  const sfxAudioList = Array.isArray(scene.sfxAudio) ? scene.sfxAudio : []
+  const entry = sfxAudioList[idx]
+  if (entry && typeof entry === 'object' && !Array.isArray(entry)) {
+    const duration = (entry as { duration?: number }).duration
+    if (typeof duration === 'number' && duration > 0) return duration
+  }
+
+  return fallback
+}
+
+/**
+ * Count SFX slots that resolve to a playable URL.
+ */
+export function countResolvableSceneSfx(scene: Record<string, unknown>): number {
+  const sfxAudioLen = Array.isArray(scene.sfxAudio) ? scene.sfxAudio.length : 0
+  const sfxLen = Array.isArray(scene.sfx) ? scene.sfx.length : 0
+  const slotCount = Math.max(sfxAudioLen, sfxLen)
+  let count = 0
+  for (let idx = 0; idx < slotCount; idx++) {
+    if (resolveSceneSfxUrl(scene, idx)) count++
+  }
+  return count
+}
+
 /** Default AI video segment length on the timeline (seconds). */
 export const DEFAULT_SEGMENT_DURATION_SECONDS = 12
 
@@ -622,31 +693,32 @@ export function buildAudioTracksForLanguage(
     }
   }
 
-  const sfxAnchorTime = narrationAsDialogue
-    ? narrationAsDialogue.startTime + narrationAsDialogue.duration + AUDIO_ALIGNMENT_BUFFERS.NARRATION_BUFFER
-    : 0
+  const sfxAnchorTime = 0
   let sfxCursor = sfxAnchorTime
-  if (Array.isArray(scene.sfxAudio)) {
-    scene.sfxAudio.forEach((sfxUrl: string, idx: number) => {
-      if (sfxUrl && typeof sfxUrl === 'string' && sfxUrl.trim()) {
-        const sfxDef = scene.sfx?.[idx]
-        const explicitStartTime = sfxDef?.time ?? sfxDef?.startTime
-        const clipDur = typeof sfxDef?.duration === 'number' && sfxDef.duration > 0 ? sfxDef.duration : 2
-        const startTime = typeof explicitStartTime === 'number' ? explicitStartTime : sfxCursor
-        tracks.sfx.push({
-          id: `sfx-${idx}`,
-          url: sfxUrl,
-          startTime,
-          duration: clipDur,
-          label: sfxDef?.name || sfxDef?.description || `SFX ${idx + 1}`,
-          volume: 0.8,
-          language: 'all',
-          source: 'scene' as AudioClipSource,
-          scenePropertyPath: `sfxAudio[${idx}]`,
-        })
-        sfxCursor = startTime + clipDur + INTER_CLIP_BUFFER
-      }
+  const sfxAudioLen = Array.isArray(scene.sfxAudio) ? scene.sfxAudio.length : 0
+  const sfxDefLen = Array.isArray(scene.sfx) ? scene.sfx.length : 0
+  const sfxSlotCount = Math.max(sfxAudioLen, sfxDefLen)
+
+  for (let idx = 0; idx < sfxSlotCount; idx++) {
+    const sfxUrl = resolveSceneSfxUrl(scene, idx)
+    if (!sfxUrl) continue
+
+    const sfxDef = scene.sfx?.[idx]
+    const explicitStartTime = sfxDef?.time ?? sfxDef?.startTime
+    const clipDur = resolveSceneSfxDuration(scene, idx)
+    const startTime = typeof explicitStartTime === 'number' ? explicitStartTime : sfxCursor
+    tracks.sfx.push({
+      id: `sfx-${idx}`,
+      url: sfxUrl,
+      startTime,
+      duration: clipDur,
+      label: sfxDef?.name || sfxDef?.description || `SFX ${idx + 1}`,
+      volume: 0.8,
+      language: 'all',
+      source: 'scene' as AudioClipSource,
+      scenePropertyPath: `sfxAudio[${idx}]`,
     })
+    sfxCursor = startTime + clipDur + INTER_CLIP_BUFFER
   }
 
   return tracks

@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { chunkNarrationText } from '@/lib/blueprint/sectionNarrationText'
 import { synthesizeGeminiFlashMp3, isGeminiTtsConfigured } from '@/lib/tts/geminiFlashTts'
+import type { GeminiTtsAudioType } from '@/lib/tts/geminiTtsPrompt'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
 export async function POST(request: NextRequest) {
   try {
-    const { text, voiceId, prompt } = await request.json()
+    const { text, voiceId, prompt, audioType } = await request.json()
 
     if (!text || typeof text !== 'string') {
       return NextResponse.json({ error: 'Missing text parameter' }, { status: 400 })
@@ -26,6 +27,10 @@ export async function POST(request: NextRequest) {
     }
 
     const voice = typeof voiceId === 'string' && voiceId.trim() ? voiceId.trim() : 'gemini-Kore'
+    const ttsAudioType: GeminiTtsAudioType =
+      audioType === 'dialogue' || audioType === 'narration' || audioType === 'music' || audioType === 'sfx'
+        ? audioType
+        : 'narration'
     const chunks = chunkNarrationText(cleanText, 4000)
     const audioBuffers: Buffer[] = []
 
@@ -38,6 +43,7 @@ export async function POST(request: NextRequest) {
         text: chunkText,
         voiceId: voice,
         directorNotes,
+        audioType: ttsAudioType,
       })
       audioBuffers.push(buf)
     }

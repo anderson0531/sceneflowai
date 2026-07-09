@@ -550,9 +550,7 @@ export async function POST(req: NextRequest) {
                   
                   const sceneTranslation = (storedTranslations as any)[sceneIndex] as { narration?: string; dialogue?: string[] } | undefined;
                   const storedDialogueLine = sceneTranslation?.dialogue?.[dialogueIndex];
-                  const dialogueText = storedDialogueLine || dialogueLine.line;
-                  
-                  const optimizedDialogue = optimizeTextForTTS(dialogueText);
+                  const dialogueText = storedDialogueLine || dialogueLine.line
                   
                   const dialogueResult = await fetch(`${baseUrl}/api/vision/generate-scene-audio`, {
                     method: 'POST',
@@ -561,7 +559,7 @@ export async function POST(req: NextRequest) {
                       projectId,
                       sceneIndex: sceneIndex,
                       audioType: 'dialogue',
-                      text: optimizedDialogue.text,
+                      text: dialogueText,
                       voiceConfig: character.voiceConfig,
                       characterName: character.name,
                       dialogueIndex,

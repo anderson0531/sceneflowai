@@ -10632,6 +10632,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         hasVoiceConfig: !!voiceConfig,
         voiceId: voiceConfig?.voiceId,
         provider: voiceConfig?.provider,
+        promptLength: voiceConfig?.prompt?.length ?? 0,
+        promptPreview: voiceConfig?.prompt?.slice(0, 80) ?? '(none)',
         characterName: character?.name,
         characterHasVoice: !!character?.voiceConfig,
         edgeVoiceId: edgeVoiceConfig?.voiceId,

@@ -23,7 +23,7 @@ export function buildGeminiTtsPrompt(params: {
     params.voicePrompt?.trim() || (audioType === 'narration' ? DEFAULT_BLUEPRINT_NARRATION_NOTES : '')
   const profile = profileSource
     ? audioType === 'dialogue'
-      ? ` Character voice profile for timbre and manner (style only, not spoken as dialogue): ${profileSource.slice(0, 700)}.`
+      ? ` IMPORTANT: Maintain this exact vocal character—timbre, age, accent, and manner—throughout the entire spoken line. Character voice profile (style only, not spoken as dialogue): ${profileSource.slice(0, 700)}.`
       : ` Voice profile—apply as delivery style without narrating this sentence verbatim: ${profileSource.slice(0, 800)}.`
     : ''
   return `${prosody}${acting}${profile} ${guard}`.trim()

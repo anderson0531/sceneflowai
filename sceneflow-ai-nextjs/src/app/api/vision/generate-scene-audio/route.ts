@@ -24,6 +24,8 @@ import {
   isEdgeTtsFallbackEnabled,
   isQuotaOrRateLimitError,
 } from '../../../../lib/tts/edgeTtsFallback'
+import { buildGeminiTtsPrompt } from '../../../../lib/tts/geminiTtsPrompt'
+import { resolveCharacterVoicePrompt } from '../../../../lib/tts/resolveCharacterVoicePrompt'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -256,13 +258,29 @@ export async function POST(req: NextRequest) {
       }, { status: 200 }) // Return 200 (success) but indicate no audio was generated
     }
 
-    const finalVoiceConfig = voiceConfig
+    let finalVoiceConfig = voiceConfig
+    let promptSource: ReturnType<typeof resolveCharacterVoicePrompt>['source'] = 'none'
+
+    if (audioType === 'dialogue') {
+      const dbCharacter = await findVisionCharacter(projectId, characterId, characterName)
+      const resolved = resolveCharacterVoicePrompt(voiceConfig, dbCharacter as {
+        voiceConfig?: { prompt?: string }
+        voiceDescription?: string
+      } | undefined)
+      promptSource = resolved.source
+      if (resolved.prompt) {
+        finalVoiceConfig = { ...voiceConfig, prompt: resolved.prompt }
+      }
+    }
 
     // Step 4: Generate audio using specified provider with optimized text
     console.log('[Scene Audio] ==================== TTS INPUT DEBUG ====================')
     console.log('[Scene Audio] Language:', language)
     console.log('[Scene Audio] Provider:', finalVoiceConfig.provider)
     console.log('[Scene Audio] Voice ID:', finalVoiceConfig.voiceId)
+    console.log('[Scene Audio] Prompt source:', promptSource)
+    console.log('[Scene Audio] Prompt length:', finalVoiceConfig.prompt?.length ?? 0)
+    console.log('[Scene Audio] Prompt preview:', finalVoiceConfig.prompt?.slice(0, 80) ?? '(none)')
     console.log('[Scene Audio] Text being sent to TTS:', optimized.text)
     console.log('[Scene Audio] Text length:', optimized.text.length)
     console.log('[Scene Audio] ==================== END TTS INPUT DEBUG ====================')
@@ -571,28 +589,6 @@ async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig): 
   })
 }
 
-/** Natural-language style steering for Gemini-TTS (prompt field). See Cloud TTS Gemini docs. */
-function buildGeminiTtsPrompt(params: {
-  audioType: AudioGenerationRequest['audioType']
-  voicePrompt?: string
-  deliveryCues: string[]
-}): string {
-  const guard =
-    'Speak only the words in the text field. Do not read meta-instructions aloud, do not add filler words, and do not repeat or summarize the line.'
-  const prosody =
-    'Deliver with natural human prosody—conversational rhythm, believable pacing, and subtle emotion. Avoid flat, monotone, or robotic delivery.'
-  const acting =
-    params.deliveryCues.length > 0
-      ? ` Acting direction for this performance: ${params.deliveryCues.join('; ')}.`
-      : ''
-  const profile = params.voicePrompt?.trim()
-    ? params.audioType === 'dialogue'
-      ? ` Character voice profile for timbre and manner (style only, not spoken as dialogue): ${params.voicePrompt.trim().slice(0, 700)}.`
-      : ` Voice profile—apply as delivery style without narrating this sentence verbatim: ${params.voicePrompt.trim().slice(0, 800)}.`
-    : ''
-  return `${prosody}${acting}${profile} ${guard}`.trim()
-}
-
 /**
  * Default Google TTS voice for each supported locale. Used when the user's
  * configured voice (e.g. `en-US-Studio-M`) is locked to a specific locale
@@ -784,7 +780,7 @@ async function generateGoogleAudio(
     payload.voice.modelName =
       process.env.GEMINI_TTS_MODEL?.trim() || 'gemini-3.1-flash-tts-preview'
     payload.input.prompt = buildGeminiTtsPrompt({
-      audioType,
+      audioType: audioType === 'description' ? 'narration' : audioType,
       voicePrompt: voiceConfig.prompt,
       deliveryCues,
     })
