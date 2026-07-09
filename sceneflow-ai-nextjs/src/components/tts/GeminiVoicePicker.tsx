@@ -51,6 +51,8 @@ interface GeminiVoicePickerProps {
   geminiOnly?: boolean
   /** Adjust dialog copy for character voice assignment */
   mode?: 'narrator' | 'character'
+  /** Character Director's Note — applied to row previews when set */
+  directorPrompt?: string
 }
 
 export function GeminiVoicePicker({
@@ -60,6 +62,7 @@ export function GeminiVoicePicker({
   onSelectVoice,
   geminiOnly = false,
   mode = 'narrator',
+  directorPrompt,
 }: GeminiVoicePickerProps) {
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null)
   const [isSynthesizing, setIsSynthesizing] = useState<string | null>(null)
@@ -115,7 +118,8 @@ export function GeminiVoicePicker({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: 'This is a preview of my voice for the Director\'s Note.',
-          voiceId: voiceId
+          voiceId: voiceId,
+          ...(directorPrompt?.trim() ? { prompt: directorPrompt.trim() } : {}),
         }),
       })
 
@@ -137,7 +141,7 @@ export function GeminiVoicePicker({
     } finally {
       setIsSynthesizing(null)
     }
-  }, [playingVoiceId])
+  }, [playingVoiceId, directorPrompt])
 
   const handleSelect = useCallback((voiceId: string, voiceName: string) => {
     onSelectVoice(voiceId, voiceName)

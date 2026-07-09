@@ -290,32 +290,120 @@ function inferProfessionFromDescription(description: string): { profession: stri
 }
 
 /**
- * Infer age group from character description
+ * Infer age group from character description or apparentAge phrase.
  */
-function inferAgeFromDescription(description: string): 'young' | 'middle' | 'mature' | null {
-  const text = description.toLowerCase()
-  
-  // Extract numeric ages
-  const ageMatch = text.match(/\b(\d{1,3})\s*(?:years?|yrs?)\s*old\b|\bage\s*(\d{1,3})\b|\b(\d{1,3})\s*year\s*old\b/)
+export type CharacterAgeBand = 'young' | 'middle' | 'mature'
+
+export function inferAgeFromDescription(description: string): CharacterAgeBand | null {
+  const text = description.toLowerCase().trim()
+  if (!text) return null
+
+  // Numeric age: "62 years old", "age 45", "in his 60s" style decades
+  const ageMatch = text.match(
+    /\b(\d{1,3})\s*(?:years?|yrs?)\s*old\b|\bage\s*(\d{1,3})\b|\b(\d{1,3})\s*year\s*old\b|\bin\s+(?:his|her|their)\s+(\d{1,2})s\b/
+  )
   if (ageMatch) {
-    const age = parseInt(ageMatch[1] || ageMatch[2] || ageMatch[3], 10)
-    if (age < 30) return 'young'
-    if (age >= 30 && age < 55) return 'middle'
-    if (age >= 55) return 'mature'
+    const age = parseInt(
+      ageMatch[1] || ageMatch[2] || ageMatch[3] || ageMatch[4],
+      10
+    )
+    if (!Number.isNaN(age)) {
+      if (age < 30) return 'young'
+      if (age >= 30 && age < 55) return 'middle'
+      if (age >= 55) return 'mature'
+    }
   }
-  
-  // Keyword-based inference
-  const youngIndicators = ['young', 'youthful', 'teen', 'teenager', 'adolescent', 'child', 'kid', 'boy', 'girl', 'twenties', '20s']
-  const matureIndicators = ['old', 'elderly', 'senior', 'ancient', 'elder', 'grandparent', 'grandmother', 'grandfather', 'retired', 'fifties', 'sixties', 'seventies', '50s', '60s', '70s']
-  
+
+  // Decade phrases: "early 60s", "mid-sixties", "late 50s"
+  const decadeMatch = text.match(
+    /\b(?:early|mid|late|mid-)?\s*(\d{2})s\b|\b(?:early|mid|late|mid-)?\s*(twenties|thirties|forties|fifties|sixties|seventies|eighties)\b/
+  )
+  if (decadeMatch) {
+    const wordToDecade: Record<string, number> = {
+      twenties: 20,
+      thirties: 30,
+      forties: 40,
+      fifties: 50,
+      sixties: 60,
+      seventies: 70,
+      eighties: 80,
+    }
+    const decade = decadeMatch[1]
+      ? parseInt(decadeMatch[1], 10)
+      : wordToDecade[decadeMatch[2]] ?? NaN
+    if (!Number.isNaN(decade)) {
+      if (decade < 30) return 'young'
+      if (decade >= 30 && decade < 55) return 'middle'
+      return 'mature'
+    }
+  }
+
+  const youngIndicators = [
+    'young',
+    'youthful',
+    'teen',
+    'teenager',
+    'adolescent',
+    'child',
+    'kid',
+    'boy',
+    'girl',
+    'twenties',
+    '20s',
+  ]
+  const matureIndicators = [
+    'old',
+    'elderly',
+    'senior',
+    'ancient',
+    'elder',
+    'grandparent',
+    'grandmother',
+    'grandfather',
+    'retired',
+    'fifties',
+    'sixties',
+    'seventies',
+    '50s',
+    '60s',
+    '70s',
+    'veteran',
+    'seasoned',
+    'gravelly',
+  ]
+
   for (const indicator of matureIndicators) {
     if (text.includes(indicator)) return 'mature'
   }
   for (const indicator of youngIndicators) {
     if (text.includes(indicator)) return 'young'
   }
-  
-  return 'middle' // Default to middle-aged for unspecified adults
+
+  if (text === 'adult' || text === 'middle-aged' || text === 'middle') {
+    return 'middle'
+  }
+
+  return null
+}
+
+/** Normalize character.age / vision apparentAge into a scoring band. */
+export function normalizeCharacterAgeBand(
+  age?: string
+): CharacterAgeBand | null {
+  if (!age?.trim()) return null
+  const direct = inferAgeFromDescription(age)
+  if (direct) return direct
+  const lower = age.toLowerCase().trim()
+  if (lower === 'young' || lower === 'youthful') return 'young'
+  if (lower === 'mature' || lower === 'senior' || lower === 'elderly') return 'mature'
+  if (lower === 'middle' || lower === 'adult') return 'middle'
+  return null
+}
+
+function resolveVoiceAgeBand(voice: ElevenLabsVoice): CharacterAgeBand | null {
+  const raw = voice.age?.toLowerCase() || voice.labels?.age?.toLowerCase()
+  if (!raw) return null
+  return normalizeCharacterAgeBand(raw) ?? inferAgeFromDescription(raw)
 }
 
 /**
@@ -385,19 +473,81 @@ function scoreVoiceForCharacter(
     }
   }
 
-  // Infer age if not provided
-  let charAge = character.age?.toLowerCase()
-  if (!charAge && profileText.trim()) {
-    const inferredAge = inferAgeFromDescription(profileText)
-    if (inferredAge) {
-      charAge = inferredAge
+  // Resolve character age band for scoring
+  let charAgeBand = normalizeCharacterAgeBand(character.age)
+  if (!charAgeBand && profileText.trim()) {
+    charAgeBand = inferAgeFromDescription(profileText)
+  }
+  if (!charAgeBand && profileText.trim()) {
+    charAgeBand = 'middle'
+  }
+
+  const voiceAgeBand = resolveVoiceAgeBand(voice)
+
+  if (voiceAgeBand && charAgeBand) {
+    if (voiceAgeBand === charAgeBand) {
+      score += 20
+      reasons.push(`Age band match: ${charAgeBand}`)
+    } else if (
+      (voiceAgeBand === 'young' && charAgeBand === 'mature') ||
+      (voiceAgeBand === 'mature' && charAgeBand === 'young')
+    ) {
+      score -= 25
+      reasons.push(`Age band mismatch: voice ${voiceAgeBand} vs character ${charAgeBand}`)
     }
   }
-  
-  // Age matching (medium weight)
+
+  // Archetype description age cues (Gemini catalog text)
+  const archetypeDesc = (voice.description || '').toLowerCase()
+  const youthfulArchetype = [
+    'youthful',
+    'young',
+    'upbeat',
+    'bright',
+    'playful',
+    'cheerful',
+    'energetic',
+    'teen',
+    'contemporary',
+    'high-energy',
+  ]
+  const matureArchetype = [
+    'older',
+    'veteran',
+    'gravelly',
+    'seasoned',
+    'deep',
+    'gravitas',
+    'elder',
+    'historical',
+    'gritty',
+  ]
+
+  if (charAgeBand === 'mature') {
+    if (matureArchetype.some((k) => archetypeDesc.includes(k))) {
+      score += 15
+      reasons.push('Mature archetype alignment')
+    }
+    if (youthfulArchetype.some((k) => archetypeDesc.includes(k))) {
+      score -= 25
+      reasons.push('Youthful archetype penalty for mature character')
+    }
+  } else if (charAgeBand === 'young') {
+    if (youthfulArchetype.some((k) => archetypeDesc.includes(k))) {
+      score += 15
+      reasons.push('Youthful archetype alignment')
+    }
+    if (matureArchetype.some((k) => archetypeDesc.includes(k))) {
+      score -= 15
+      reasons.push('Mature archetype penalty for young character')
+    }
+  }
+
+  // Legacy age keyword overlap (ElevenLabs labels)
+  const charAge = charAgeBand
   const voiceAge = voice.age?.toLowerCase() || voice.labels?.age?.toLowerCase()
-  
-  if (voiceAge && charAge) {
+
+  if (voiceAge && charAge && !voiceAgeBand) {
     const ageMap: Record<string, string[]> = {
       'young': ['young', 'youthful', 'teen', 'adolescent', 'twenties', '20s'],
       'middle': ['middle', 'middle-aged', 'adult', 'thirties', 'forties', '30s', '40s'],
@@ -405,9 +555,10 @@ function scoreVoiceForCharacter(
     }
     
     for (const [ageGroup, keywords] of Object.entries(ageMap)) {
-      const voiceMatches = keywords.some(k => voiceAge.includes(k))
-      const charMatches = keywords.some(k => charAge.includes(k))
-      
+      const voiceMatches = keywords.some((k) => voiceAge.includes(k))
+      const charMatches =
+        charAge === ageGroup || keywords.some((k) => charAge.includes(k))
+
       if (voiceMatches && charMatches) {
         score += 20
         reasons.push(`Age range match: ${ageGroup}`)

@@ -3,6 +3,7 @@
  */
 
 export type GeminiVoiceGender = 'male' | 'female'
+export type GeminiVoiceAgeBand = 'young' | 'middle' | 'mature'
 
 export interface GeminiVoiceCatalogEntry {
   id: string
@@ -10,6 +11,30 @@ export interface GeminiVoiceCatalogEntry {
   gender: GeminiVoiceGender
   languageCode: string
   archetypeDescription: string
+  ageBand: GeminiVoiceAgeBand
+}
+
+/** Gemini base voices tagged youthful/bright for young cast. */
+const YOUNG_VOICE_IDS = new Set([
+  'gemini-Despina',
+  'gemini-Leda',
+  'gemini-Puck',
+  'gemini-Zephyr',
+  'gemini-Fenrir',
+])
+
+/** Gemini base voices tagged older/gravelly for mature cast. */
+const MATURE_VOICE_IDS = new Set([
+  'gemini-Schedar',
+  'gemini-Rasalgethi',
+  'gemini-Charon',
+  'gemini-Zubenelgenubi',
+])
+
+export function getGeminiVoiceAgeBand(id: string): GeminiVoiceAgeBand {
+  if (YOUNG_VOICE_IDS.has(id)) return 'young'
+  if (MATURE_VOICE_IDS.has(id)) return 'mature'
+  return 'middle'
 }
 
 export const GEMINI_VOICE_CATALOG: GeminiVoiceCatalogEntry[] = [
@@ -253,7 +278,10 @@ export const GEMINI_VOICE_CATALOG: GeminiVoiceCatalogEntry[] = [
     archetypeDescription:
       'Strong, highly steady, and deeply resonant; creates a solid anchor for heavy, grounding dialogue.',
   },
-]
+].map((entry) => ({
+  ...entry,
+  ageBand: getGeminiVoiceAgeBand(entry.id),
+}))
 
 const CATALOG_BY_ID = new Map(GEMINI_VOICE_CATALOG.map((v) => [v.id, v]))
 
@@ -297,20 +325,23 @@ export function getGeminiVoicesForApi() {
     gender: voice.gender.toUpperCase(),
     type: 'Gemini',
     description: voice.archetypeDescription,
+    age: voice.ageBand,
   }))
   return [...gemini, ...LEGACY_GOOGLE_VOICES]
 }
 
 export function enrichGeminiVoicesForScoring<
-  T extends { id: string; name?: string; gender?: string; description?: string },
->(apiVoices: T[]): Array<T & { description: string; gender: string }> {
+  T extends { id: string; name?: string; gender?: string; description?: string; age?: string },
+>(apiVoices: T[]): Array<T & { description: string; gender: string; age: string }> {
   return apiVoices.map((voice) => {
     const catalog = CATALOG_BY_ID.get(voice.id)
+    const ageBand = catalog?.ageBand ?? getGeminiVoiceAgeBand(voice.id)
     return {
       ...voice,
       description: catalog?.archetypeDescription || voice.description || '',
       gender: catalog?.gender || voice.gender || '',
       name: catalog?.displayName || voice.name || voice.id,
+      age: ageBand,
     }
   })
 }

@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
+  buildWardrobeVoiceAnalysisPrompt,
+  enrichVoiceDescriptionWithAttributes,
   getDefaultWardrobeForVoice,
   getWardrobeVoiceImageForCharacter,
   getWardrobeVoiceImageUrl,
@@ -85,6 +87,36 @@ describe('getWardrobeVoiceImageForCharacter', () => {
   })
 })
 
+describe('buildWardrobeVoiceAnalysisPrompt', () => {
+  it('prioritizes narrative role and personality over portrait', () => {
+    const prompt = buildWardrobeVoiceAnalysisPrompt('Professor Gideon Croft', {
+      characterRole: 'primary guide / narrator',
+      personality: 'quiet authority, deep conviction',
+      characterDescription:
+        'An academic outcast who presents suppressed histories with measured gravitas.',
+      hasPortrait: true,
+      screenplayContext: { genre: 'Documentary', tone: 'Investigative' },
+    })
+    expect(prompt).toContain('CHARACTER NARRATIVE (PRIMARY')
+    expect(prompt).toContain('Professor Gideon Croft')
+    expect(prompt).toContain('quiet authority')
+    expect(prompt).toContain('academic outcast')
+    expect(prompt).not.toContain('FACE only')
+    expect(prompt).not.toContain('disambiguation only')
+    expect(prompt).toContain('PORTRAIT REFERENCE')
+    expect(prompt).toContain('vocalAttributes')
+  })
+
+  it('supports narrative-only mode without portrait', () => {
+    const prompt = buildWardrobeVoiceAnalysisPrompt('Maya Chen', {
+      characterDescription: 'A determined investigator.',
+      hasPortrait: false,
+    })
+    expect(prompt).toContain('NO PORTRAIT')
+    expect(prompt).not.toContain('PORTRAIT REFERENCE')
+  })
+})
+
 describe('parseWardrobeVoiceAnalysisJson', () => {
   it('parses valid vision JSON', () => {
     const raw = `\`\`\`json
@@ -113,6 +145,40 @@ describe('parseWardrobeVoiceAnalysisJson', () => {
       }),
     )
     expect(parsed).toBeNull()
+  })
+
+  it('parses vocalAttributes and folds into voiceDescription', () => {
+    const raw = JSON.stringify({
+      gender: 'male',
+      apparentAge: 'late 50s',
+      vocalAttributes: {
+        timbre: 'resonant baritone',
+        pitch: 'low-mid',
+        pace: 'measured',
+        authority: 'quiet authority',
+        warmth: 'neutral',
+      },
+      voiceDescription:
+        'An intelligent male voice with articulate academic delivery and deep conviction for a documentary guide.',
+      audioProfile:
+        'A male voice in his late 50s with measured cadence and quiet authority. Resonant baritone with controlled warmth.',
+    })
+    const parsed = parseWardrobeVoiceAnalysisJson(raw, { confidence: 'narrative' })
+    expect(parsed?.confidence).toBe('narrative')
+    expect(parsed?.vocalAttributes?.authority).toBe('quiet authority')
+    expect(parsed?.voiceDescription).toContain('Vocal qualities:')
+    expect(parsed?.voiceDescription).toContain('quiet authority')
+  })
+})
+
+describe('enrichVoiceDescriptionWithAttributes', () => {
+  it('appends attribute summary when not already present', () => {
+    const enriched = enrichVoiceDescriptionWithAttributes('Authoritative male voice.', {
+      timbre: 'resonant baritone',
+      pace: 'measured',
+    })
+    expect(enriched).toContain('Vocal qualities:')
+    expect(enriched).toContain('resonant baritone')
   })
 })
 

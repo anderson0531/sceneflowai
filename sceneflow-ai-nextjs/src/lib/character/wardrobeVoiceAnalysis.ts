@@ -4,6 +4,15 @@ import { normalizeGender } from '@/lib/voiceRecommendation'
 
 export type WardrobeVoiceGender = 'male' | 'female'
 
+export interface VocalAttributes {
+  timbre?: string
+  pitch?: string
+  pace?: string
+  authority?: string
+  warmth?: string
+  accent?: string
+}
+
 export interface WardrobeVoiceCharacterInput {
   wardrobes?: CharacterWardrobe[]
   defaultWardrobe?: string
@@ -16,7 +25,8 @@ export interface WardrobeVoiceAnalysisResult {
   ethnicity?: string
   voiceDescription: string
   audioProfile: string
-  confidence: 'vision'
+  vocalAttributes?: VocalAttributes
+  confidence: 'vision' | 'narrative'
 }
 
 /** Resolve wardrobes list including legacy defaultWardrobe synthesis. */
@@ -71,11 +81,25 @@ export function getWardrobeVoiceImageForCharacter(
   return { wardrobe, imageUrl }
 }
 
+export function formatVocalAttributesForDescription(attrs: VocalAttributes): string {
+  const parts: string[] = []
+  if (attrs.timbre?.trim()) parts.push(`${attrs.timbre.trim()} timbre`)
+  if (attrs.pitch?.trim()) parts.push(`${attrs.pitch.trim()} pitch`)
+  if (attrs.pace?.trim()) parts.push(`${attrs.pace.trim()} pace`)
+  if (attrs.authority?.trim()) parts.push(`${attrs.authority.trim()} authority`)
+  if (attrs.warmth?.trim()) parts.push(`${attrs.warmth.trim()} warmth`)
+  if (attrs.accent?.trim()) parts.push(`${attrs.accent.trim()} accent`)
+  return parts.join(', ')
+}
+
 export function buildWardrobeVoiceAnalysisPrompt(
   characterName: string,
   options?: {
     screenplayContext?: ScreenplayContext
     characterDescription?: string
+    characterRole?: string
+    personality?: string
+    hasPortrait?: boolean
   },
 ): string {
   const screenplay = options?.screenplayContext
@@ -85,36 +109,104 @@ export function buildWardrobeVoiceAnalysisPrompt(
   if (screenplay?.setting) screenplayLines.push(`Setting: ${screenplay.setting}`)
   if (screenplay?.title) screenplayLines.push(`Project: ${screenplay.title}`)
 
-  return `You are an expert voice casting director analyzing a character portrait reference image.
+  const hasPortrait = options?.hasPortrait === true
+  const narrativeLines: string[] = []
+  if (options?.characterRole?.trim()) {
+    narrativeLines.push(`Role in story: ${options.characterRole.trim()}`)
+  }
+  if (options?.personality?.trim()) {
+    narrativeLines.push(`Personality / key traits: ${options.personality.trim()}`)
+  }
+  if (options?.characterDescription?.trim()) {
+    narrativeLines.push(`Character description: ${options.characterDescription.trim()}`)
+  }
 
-IMAGE:
-The attached image is a single character portrait (identity reference). Infer voice, gender, age, and ethnicity from the FACE only — ignore clothing for vocal qualities.
+  const portraitBlock = hasPortrait
+    ? `PORTRAIT REFERENCE:
+An attached character portrait is provided. Use it to refine gender, apparent age, ethnicity, and physical vocal timbre — but the narrative profile above is the PRIMARY casting signal. Reconcile portrait cues with the character's role and personality; if they conflict, favor the narrative unless the portrait clearly contradicts gender.`
+    : `NO PORTRAIT:
+No reference image is attached. Derive the full voice profile from the character narrative, role, personality, and production context below.`
+
+  return `You are an expert voice casting director for film, television, and documentary narration.
 
 CHARACTER: ${characterName}
-${options?.characterDescription ? `Script context (disambiguation only): ${options.characterDescription}` : ''}
+
+${narrativeLines.length > 0 ? `CHARACTER NARRATIVE (PRIMARY — cast from this first):\n${narrativeLines.join('\n')}` : 'CHARACTER NARRATIVE: Limited — infer voice from name and production context.'}
+
 ${screenplayLines.length > 0 ? `\nPRODUCTION CONTEXT:\n${screenplayLines.join('\n')}` : ''}
 
+${portraitBlock}
+
+CASTING GUIDANCE:
+- Academic, intellectual, professor, historian, narrator, guide → measured pace, controlled resonance, articulate diction, quiet authority, conviction, lower-mid pitch
+- Corporate executive, attorney, judge, military → authoritative, crisp, confident, polished
+- Warm mentor, caregiver, empathetic lead → warm, gentle, reassuring timbre
+- Youthful protagonist, sidekick, comedic relief → brighter, energetic, approachable
+- Veteran, elder, grizzled investigator → gravelly, deep, seasoned, mature timbre
+
 TASK:
-From the portrait, infer how this character should sound in Gemini TTS and return a single JSON object.
+Synthesize how this character should sound in Gemini TTS. Return a single JSON object.
 
 REQUIREMENTS:
-1. "gender" must be exactly "male" or "female" based on visible presentation in the portrait.
-2. "apparentAge" — short phrase (e.g. "late 40s", "mid 20s").
-3. "ethnicity" — optional, brief (e.g. "African American", "East Asian").
-4. "voiceDescription" — 200–600 characters describing vocal casting for voice matching. Use archetype vocabulary: authoritative, corporate, warm, gravelly, crisp, professional, resonant, confident, articulate, steady, polished, engaging, deep, bright, gentle, energetic, etc.
-5. "audioProfile" — 4–5 sentences, Director's Note / Audio Profile for Gemini TTS. Focus on tone, pitch, cadence, accent, texture, emotional delivery. Do NOT write dialogue.
+1. "gender" — exactly "male" or "female" from narrative and${hasPortrait ? ' portrait' : ''} cues.
+2. "apparentAge" — short phrase (e.g. "late 40s", "early 60s", "mid 20s").
+3. "ethnicity" — optional, brief accent/cultural hint if inferable.
+4. "vocalAttributes" — object with short phrases:
+   - "timbre" (e.g. resonant baritone, bright tenor, warm alto)
+   - "pitch" (e.g. low, mid, high)
+   - "pace" (e.g. measured, brisk, deliberate)
+   - "authority" (e.g. quiet authority, commanding, approachable)
+   - "warmth" (e.g. warm, neutral, cool)
+   - "accent" (e.g. neutral American, British RP) — optional
+5. "voiceDescription" — 200–600 characters for voice matching. Use archetype vocabulary: authoritative, intellectual, measured, resonant, articulate, quiet authority, conviction, corporate, warm, gravelly, crisp, professional, confident, steady, polished, engaging, deep, bright, gentle, energetic, etc. Reflect role and personality.
+6. "audioProfile" — 4–5 sentences, Director's Note for Gemini TTS. Tone, pitch, cadence, texture, emotional delivery. Do NOT write dialogue.
 
 OUTPUT: Return ONLY valid JSON, no markdown:
 {
   "gender": "male",
-  "apparentAge": "late 40s",
+  "apparentAge": "late 50s",
   "ethnicity": "optional string",
+  "vocalAttributes": {
+    "timbre": "resonant baritone",
+    "pitch": "low-mid",
+    "pace": "measured",
+    "authority": "quiet authority",
+    "warmth": "neutral",
+    "accent": "neutral British"
+  },
   "voiceDescription": "casting brief paragraph",
   "audioProfile": "Director's Note paragraph"
 }`
 }
 
-export function parseWardrobeVoiceAnalysisJson(raw: string): WardrobeVoiceAnalysisResult | null {
+function parseVocalAttributes(raw: unknown): VocalAttributes | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const obj = raw as Record<string, unknown>
+  const attrs: VocalAttributes = {}
+  const keys = ['timbre', 'pitch', 'pace', 'authority', 'warmth', 'accent'] as const
+  for (const key of keys) {
+    const val = String(obj[key] ?? '').trim()
+    if (val) attrs[key] = val.slice(0, 80)
+  }
+  return Object.keys(attrs).length > 0 ? attrs : undefined
+}
+
+export function enrichVoiceDescriptionWithAttributes(
+  voiceDescription: string,
+  vocalAttributes?: VocalAttributes,
+): string {
+  if (!vocalAttributes) return voiceDescription
+  const attrText = formatVocalAttributesForDescription(vocalAttributes)
+  if (!attrText) return voiceDescription
+  const base = voiceDescription.trim()
+  if (base.toLowerCase().includes(attrText.toLowerCase().slice(0, 12))) return base
+  return `${base} Vocal qualities: ${attrText}.`.slice(0, 900)
+}
+
+export function parseWardrobeVoiceAnalysisJson(
+  raw: string,
+  options?: { confidence?: 'vision' | 'narrative' },
+): WardrobeVoiceAnalysisResult | null {
   let cleaned = raw.trim()
   cleaned = cleaned.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
 
@@ -126,8 +218,12 @@ export function parseWardrobeVoiceAnalysisJson(raw: string): WardrobeVoiceAnalys
     const gender = normalizeGender(String(parsed.gender ?? ''))
     if (gender !== 'male' && gender !== 'female') return null
 
-    const voiceDescription = String(parsed.voiceDescription ?? '').trim()
+    let voiceDescription = String(parsed.voiceDescription ?? '').trim()
     const audioProfile = String(parsed.audioProfile ?? '').trim()
+    const vocalAttributes = parseVocalAttributes(parsed.vocalAttributes)
+
+    voiceDescription = enrichVoiceDescriptionWithAttributes(voiceDescription, vocalAttributes)
+
     if (voiceDescription.length < 20 || audioProfile.length < 20) return null
 
     const apparentAge = String(parsed.apparentAge ?? '').trim() || 'adult'
@@ -139,7 +235,8 @@ export function parseWardrobeVoiceAnalysisJson(raw: string): WardrobeVoiceAnalys
       ethnicity,
       voiceDescription: voiceDescription.slice(0, 900),
       audioProfile: audioProfile.slice(0, 1200),
-      confidence: 'vision',
+      vocalAttributes,
+      confidence: options?.confidence ?? 'vision',
     }
   } catch {
     return null

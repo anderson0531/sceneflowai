@@ -69,6 +69,11 @@ import {
   type PreVisDirectGenerationOptions,
 } from '@/components/vision/PreVisFramePromptDialog'
 import { toast } from 'sonner'
+import {
+  resolveCharacterId,
+  updateCharacterInList,
+} from '@/lib/vision/updateCharacterReference'
+import { updateObjectReferenceInList } from '@/lib/vision/updateObjectReference'
 
 // Dynamic import to break TDZ initialization chain - ScriptPanel imports heavy scene-production modules
 const ScriptPanel = dynamic(
@@ -689,6 +694,46 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     saveQueueRef.current = resultPromise.catch(() => null)
     return resultPromise
   }, [projectId])
+
+  const persistVisionCharacters = useCallback(
+    async (charactersToSave: any[], debugLabel?: string): Promise<Response> => {
+      charactersRef.current = charactersToSave
+      setCharacters(charactersToSave)
+
+      const currentProject = projectRef.current || project
+      const existingMetadata = currentProject?.metadata || {}
+      const existingVisionPhase = existingMetadata.visionPhase || {}
+      const currentScript = scriptRef.current || script
+      const currentScenes =
+        currentScript?.script?.scenes ??
+        existingVisionPhase.scenes ??
+        scenes
+
+      const syncedMetadata = {
+        ...existingMetadata,
+        visionPhase: {
+          ...existingVisionPhase,
+          script: currentScript,
+          scenes: currentScenes,
+          characters: charactersToSave,
+        },
+      }
+
+      const response = await serializedProjectSave(
+        { metadata: syncedMetadata },
+        debugLabel || 'persistVisionCharacters'
+      )
+
+      if (response.ok && currentProject) {
+        const syncedProject = { ...currentProject, metadata: syncedMetadata }
+        projectRef.current = syncedProject
+        setProject(syncedProject)
+      }
+
+      return response
+    },
+    [project, script, scenes, serializedProjectSave]
+  )
 
   const handleDismissImportOnboarding = useCallback(async () => {
     if (!project?.id || isDismissingImportOnboarding) return
@@ -1843,28 +1888,38 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   // Handler for updating a reference image after editing
   const handleUpdateReferenceImage = useCallback(
-    async (type: 'scene' | 'object', referenceId: string, newImageUrl: string) => {
-      // Update local state
-      let updatedSceneRefs = sceneReferences
-      let updatedObjectRefs = objectReferences
-      
+    async (
+      type: 'scene' | 'object',
+      referenceId: string,
+      newImageUrl: string,
+      options?: { quiet?: boolean }
+    ) => {
+      const updatedAt = new Date().toISOString()
+      let updatedSceneRefs = sceneReferencesRef.current
+      let updatedObjectRefs = objectReferencesRef.current
+
       if (type === 'scene') {
-        updatedSceneRefs = sceneReferences.map((ref) => 
-          ref.id === referenceId ? { ...ref, imageUrl: newImageUrl, updatedAt: new Date().toISOString() } : ref
+        updatedSceneRefs = sceneReferencesRef.current.map((ref) =>
+          ref.id === referenceId
+            ? { ...ref, imageUrl: newImageUrl, updatedAt }
+            : ref
         )
+        sceneReferencesRef.current = updatedSceneRefs
         setSceneReferences(updatedSceneRefs)
       } else {
-        updatedObjectRefs = objectReferences.map((ref) => 
-          ref.id === referenceId ? { ...ref, imageUrl: newImageUrl, updatedAt: new Date().toISOString() } : ref
+        updatedObjectRefs = updateObjectReferenceInList(
+          objectReferencesRef.current,
+          referenceId,
+          { imageUrl: newImageUrl, updatedAt }
         )
+        objectReferencesRef.current = updatedObjectRefs
         setObjectReferences(updatedObjectRefs)
       }
-      
-      // Save to database
+
       try {
-        const existingMetadata = project?.metadata || {}
+        const existingMetadata = (projectRef.current || project)?.metadata || {}
         const existingVisionPhase = existingMetadata.visionPhase || {}
-        
+
         const payload = {
           metadata: {
             ...existingMetadata,
@@ -1872,65 +1927,57 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               ...existingVisionPhase,
               references: {
                 sceneReferences: updatedSceneRefs,
-                objectReferences: updatedObjectRefs
-              }
-            }
-          }
+                objectReferences: updatedObjectRefs,
+                locationReferences: locationReferencesRef.current,
+              },
+            },
+          },
         }
-        
-        const response = await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        })
-        
+
+        const response = await serializedProjectSave(
+          payload,
+          'handleUpdateReferenceImage'
+        )
+
         if (!response.ok) {
           console.error('[handleUpdateReferenceImage] Failed to save updated image to database')
-        } else {
+        } else if (!options?.quiet) {
           toast.success(`${type === 'scene' ? 'Scene' : 'Object'} image updated`)
+        }
+
+        if (response.ok && projectRef.current) {
+          const syncedProject = {
+            ...projectRef.current,
+            metadata: payload.metadata,
+          }
+          projectRef.current = syncedProject
+          setProject(syncedProject)
         }
       } catch (error) {
         console.error('[handleUpdateReferenceImage] Error saving updated image:', error)
-        toast.error('Failed to save image update')
+        if (!options?.quiet) {
+          toast.error('Failed to save image update')
+        }
       }
     },
-    [project, projectId, sceneReferences, objectReferences]
+    [project, serializedProjectSave]
   )
 
   // Handler for updating a character's reference image after editing
   const handleEditCharacterImage = useCallback(
     async (characterId: string, newImageUrl: string) => {
-      // Update local state
-      const updatedCharacters = characters.map((char, idx) => {
-        const charId = char.id || idx.toString()
-        return charId === characterId 
-          ? { ...char, referenceImage: newImageUrl, imageApproved: false }
-          : char
-      })
-      
-      setCharacters(updatedCharacters)
-      
-      // Save to database
+      const updatedCharacters = updateCharacterInList(
+        charactersRef.current,
+        characterId,
+        { referenceImage: newImageUrl, imageApproved: false }
+      )
+
       try {
-        const existingMetadata = project?.metadata || {}
-        const existingVisionPhase = existingMetadata.visionPhase || {}
-        
-        const payload = {
-          metadata: {
-            ...existingMetadata,
-            visionPhase: {
-              ...existingVisionPhase,
-              characters: updatedCharacters
-            }
-          }
-        }
-        
-        const response = await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        })
-        
+        const response = await persistVisionCharacters(
+          updatedCharacters,
+          'handleEditCharacterImage'
+        )
+
         if (!response.ok) {
           console.error('[handleEditCharacterImage] Failed to save updated image to database')
         } else {
@@ -1941,7 +1988,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         toast.error('Failed to save image update')
       }
     },
-    [project, projectId, characters]
+    [persistVisionCharacters]
   )
 
   // Handler for when a backdrop is generated via AI
@@ -7395,8 +7442,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     try {
       setUploadingRef(prev => ({ ...prev, [characterId]: true }))
       
-      const character = characters.find(c => {
-        const charId = c.id || characters.indexOf(c).toString()
+      const character = charactersRef.current.find((c, idx) => {
+        const charId = resolveCharacterId(c, idx)
         return charId === characterId
       })
       
@@ -7432,35 +7479,30 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       } : null
       
       // Update character with the Blob URL and analysis results
-        const updatedCharacters = characters.map(char => {
-          const charId = char.id || characters.indexOf(char).toString()
-          return charId === characterId 
-          ? { 
-              ...char, 
-              referenceImage: blobUrl,  // Vercel Blob URL for both UI display and Imagen API
-              imageApproved: false,
-              // Add appearance description and attributes if analysis succeeded
-              ...(analysisData?.success ? {
-                appearanceDescription: analysisData.appearanceDescription,
-                ethnicity: analysisData.ethnicity || char.ethnicity,
-                hairStyle: analysisData.hairStyle || char.hairStyle,
-                hairColor: analysisData.hairColor || char.hairColor,
-                eyeColor: analysisData.eyeColor || char.eyeColor,
-                expression: analysisData.expression || char.expression,
-                build: analysisData.build || char.build,
-                keyFeature: analysisData.keyFeature || char.keyFeature
-              } : {})
-            }
-            : char
-        })
-        
-        setCharacters(updatedCharacters)
+        const updatedCharacters = updateCharacterInList(
+          charactersRef.current,
+          characterId,
+          (char) => ({
+            ...char,
+            referenceImage: blobUrl,
+            imageApproved: false,
+            ...(analysisData?.success
+              ? {
+                  appearanceDescription: analysisData.appearanceDescription,
+                  ethnicity: analysisData.ethnicity || char.ethnicity,
+                  hairStyle: analysisData.hairStyle || char.hairStyle,
+                  hairColor: analysisData.hairColor || char.hairColor,
+                  eyeColor: analysisData.eyeColor || char.eyeColor,
+                  expression: analysisData.expression || char.expression,
+                  build: analysisData.build || char.build,
+                  keyFeature: analysisData.keyFeature || char.keyFeature,
+                }
+              : {}),
+          })
+        )
         
         // Persist to project metadata
         try {
-          const existingMetadata = (projectRef.current || project)?.metadata || {}
-          const existingVisionPhase = existingMetadata.visionPhase || {}
-          
           console.log('[Character Upload] Saving to project:', projectId)
           console.log('[Character Upload] Updated characters:', updatedCharacters.map(c => ({ 
             name: c.name, 
@@ -7469,17 +7511,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           })))
           
           console.log('[REVERSION-DEBUG][CharUpload] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
-          const saveResponse = await serializedProjectSave({
-              metadata: {
-                ...existingMetadata,
-                visionPhase: {
-                  ...existingVisionPhase,
-                  script: scriptRef.current || script,
-                  scenes: scenes,
-                  characters: updatedCharacters
-                }
-              }
-            }, 'handleCharacterUpload')
+          const saveResponse = await persistVisionCharacters(
+            updatedCharacters,
+            'handleCharacterUpload'
+          )
           
           if (!saveResponse.ok) {
             const errorText = await saveResponse.text()
@@ -7512,34 +7547,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   const handleApproveCharacter = async (characterId: string) => {
     try {
-      const updatedCharacters = characters.map(char => {
-        const charId = char.id || characters.indexOf(char).toString()
-        return charId === characterId 
-          ? { ...char, imageApproved: !char.imageApproved } 
-          : char
-      })
+      const updatedCharacters = updateCharacterInList(
+        charactersRef.current,
+        characterId,
+        (char) => ({ ...char, imageApproved: !char.imageApproved })
+      )
       
-      setCharacters(updatedCharacters)
-      
-      // Persist to project metadata
       try {
-        const existingMetadata = (projectRef.current || project)?.metadata || {}
-        const existingVisionPhase = existingMetadata.visionPhase || {}
-        
         console.log('[REVERSION-DEBUG][ApproveChar] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
-        await serializedProjectSave({
-            metadata: {
-              ...existingMetadata,
-              visionPhase: {
-                ...existingVisionPhase,
-                script: scriptRef.current || script,
-                scenes: scenes,
-                characters: updatedCharacters
-              }
-            }
-          }, 'handleApproveCharacter')
+        await persistVisionCharacters(updatedCharacters, 'handleApproveCharacter')
         
-        const char = updatedCharacters.find(c => (c.id || characters.indexOf(c).toString()) === characterId)
+        const char = updatedCharacters.find((c, idx) => resolveCharacterId(c, idx) === characterId)
         const msg = char?.imageApproved ? 'Character image approved!' : 'Character image unlocked for editing'
         try { toast.success(msg) } catch {}
       } catch (saveError) {
@@ -7560,10 +7578,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   ) => {
     try {
-      const updatedCharacters = characters.map(char => {
-        const charId = char.id || characters.indexOf(char).toString()
-        if (charId !== characterId) return char
-        return {
+      const updatedCharacters = updateCharacterInList(
+        charactersRef.current,
+        characterId,
+        (char) => ({
           ...char,
           referenceImage: payload.referenceImageUrl,
           ...(payload.visionDescription
@@ -7575,26 +7593,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           ...(payload.enhanceIterationCount != null
             ? { enhanceIterationCount: payload.enhanceIterationCount }
             : {}),
-        }
-      })
+        })
+      )
 
-      setCharacters(updatedCharacters)
-
-      const existingMetadata = (projectRef.current || project)?.metadata || {}
-      const existingVisionPhase = existingMetadata.visionPhase || {}
-
-      const saveResponse = await serializedProjectSave(
-        {
-          metadata: {
-            ...existingMetadata,
-            visionPhase: {
-              ...existingVisionPhase,
-              script: scriptRef.current || script,
-              scenes: scenes,
-              characters: updatedCharacters,
-            },
-          },
-        },
+      const saveResponse = await persistVisionCharacters(
+        updatedCharacters,
         'handleApplyEnhancedReference'
       )
 
@@ -7614,7 +7617,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
-  const handleGenerateCharacter = async (characterId: string, promptOrPayload: any) => {
+  const handleGenerateCharacter = async (
+    characterId: string,
+    promptOrPayload: any,
+    options?: { quiet?: boolean }
+  ) => {
     const isObjectPayload = promptOrPayload && typeof promptOrPayload === 'object'
     const prompt: string = isObjectPayload ? (promptOrPayload.characterPrompt || '') : (promptOrPayload || '')
     if (!prompt?.trim()) return
@@ -7640,51 +7647,37 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (json?.imageUrl) {
         const visionDescription =
           typeof json.visionDescription === 'string' ? json.visionDescription : undefined
-        // Update character with generated image and prompt
-        const updatedCharacters = characters.map(char => {
-          const charId = char.id || characters.indexOf(char).toString()
-          return charId === characterId
-            ? {
-                ...char,
-                referenceImage: json.imageUrl,
-                imagePrompt: prompt,
-                ...(visionDescription
-                  ? {
-                      visionDescription,
-                      appearanceDescription: visionDescription,
-                    }
-                  : {}),
-              }
-            : char
-        })
-        
-        setCharacters(updatedCharacters)
+        const updatedCharacters = updateCharacterInList(
+          charactersRef.current,
+          characterId,
+          (char) => ({
+            ...char,
+            referenceImage: json.imageUrl,
+            imagePrompt: prompt,
+            ...(visionDescription
+              ? {
+                  visionDescription,
+                  appearanceDescription: visionDescription,
+                }
+              : {}),
+          })
+        )
         
         // Persist to project metadata
         try {
           console.log('[Character Save] Saving character image to project:', {
             projectId,
             characterId,
-            characterName: updatedCharacters.find(c => (c.id || characters.indexOf(c).toString()) === characterId)?.name,
+            characterName: updatedCharacters.find((c, idx) => resolveCharacterId(c, idx) === characterId)?.name,
             hasImageUrl: !!json.imageUrl,
             imageUrl: json.imageUrl?.substring(0, 50)
           })
           
-          const existingMetadata = (projectRef.current || project)?.metadata || {}
-          const existingVisionPhase = existingMetadata.visionPhase || {}
-          
           console.log('[REVERSION-DEBUG][GenerateChar] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
-          const saveResponse = await serializedProjectSave({
-              metadata: {
-                ...existingMetadata,
-                visionPhase: {
-                  ...existingVisionPhase,
-                  script: scriptRef.current || script,
-                  scenes: scenes,
-                  characters: updatedCharacters
-                }
-              }
-            }, 'handleGenerateCharacter')
+          const saveResponse = await persistVisionCharacters(
+            updatedCharacters,
+            'handleGenerateCharacter'
+          )
           
           if (!saveResponse.ok) {
             const errorText = await saveResponse.text()
@@ -7695,10 +7688,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           console.log('[Character Save] Successfully saved character image to database')
         } catch (saveError) {
           console.error('[Character Save] Failed to save character to project:', saveError)
-          try { toast.error('Character image generated but failed to save to project') } catch {}
+          if (!options?.quiet) {
+            try { toast.error('Character image generated but failed to save to project') } catch {}
+          }
         }
         
-        try { toast.success('Character image generated!') } catch {}
+        if (!options?.quiet) {
+          try { toast.success('Character image generated!') } catch {}
+        }
       } else {
         const errorMsg = json?.error || 'Failed to generate image'
         throw new Error(errorMsg)
@@ -7706,7 +7703,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     } catch (error) {
       console.error('Character image generation failed:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate character image'
-      try { toast.error(errorMessage, { duration: Infinity }) } catch {}
+      if (!options?.quiet) {
+        try { toast.error(errorMessage, { duration: Infinity }) } catch {}
+      } else {
+        throw error
+      }
     }
   }
 
@@ -8784,11 +8785,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
     try {
       for (const char of castMissing) {
-        const charId = char.id ?? String(characters.indexOf(char))
+        const refIndex = charactersRef.current.findIndex(
+          (c) => c.id === char.id || c.name === char.name
+        )
+        const charId = resolveCharacterId(
+          char,
+          refIndex >= 0 ? refIndex : charactersRef.current.indexOf(char)
+        )
         completed += 1
         overlayStore.setStatus(`Cast: ${char.name} (${completed}/${total})`)
         try {
-          await handleGenerateCharacter(charId, buildCharacterReferencePrompt(char))
+          await handleGenerateCharacter(charId, buildCharacterReferencePrompt(char), {
+            quiet: true,
+          })
         } catch (err) {
           failures += 1
           console.error('[Express References] Character failed:', char.name, err)
@@ -8862,7 +8871,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }
           const data = await response.json()
           if (data.imageUrl) {
-            await handleUpdateReferenceImage('object', prop.id, data.imageUrl)
+            await handleUpdateReferenceImage('object', prop.id, data.imageUrl, {
+              quiet: true,
+            })
           }
         } catch (err) {
           failures += 1

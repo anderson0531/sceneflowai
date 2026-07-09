@@ -116,6 +116,9 @@ describe('getCharacterVoiceRecommendations gender hard filter', () => {
       'gemini-Schedar',
       'gemini-Algieba',
       'gemini-Achird',
+      'gemini-Charon',
+      'gemini-Rasalgethi',
+      'gemini-Zubenelgenubi',
     ]
     expect(topIds.some((id) => authoritativeMale.includes(id))).toBe(true)
   })

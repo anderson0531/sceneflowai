@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { generateWithVision } from '@/lib/vertexai/gemini'
+import { generateText, generateWithVision } from '@/lib/vertexai/gemini'
 import type { CharacterContext, ScreenplayContext } from '@/lib/voiceRecommendation'
 import {
   buildWardrobeVoiceAnalysisPrompt,
@@ -22,6 +22,24 @@ interface AnalyzeVoiceFromWardrobeRequest {
   screenplayContext?: ScreenplayContext
 }
 
+function buildAnalysisPrompt(
+  characterName: string,
+  characterContext?: CharacterContext,
+  screenplayContext?: ScreenplayContext,
+  hasPortrait?: boolean,
+): string {
+  return buildWardrobeVoiceAnalysisPrompt(characterName, {
+    screenplayContext,
+    characterDescription:
+      characterContext?.description ||
+      characterContext?.voiceDescription ||
+      undefined,
+    characterRole: characterContext?.role,
+    personality: characterContext?.personality,
+    hasPortrait,
+  })
+}
+
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -40,62 +58,88 @@ export async function POST(req: NextRequest) {
     } = body
 
     const imageUrl = characterImageUrl?.trim() || wardrobeImageUrl?.trim()
+    const hasPortrait = Boolean(imageUrl?.startsWith('http'))
 
     if (!characterName?.trim()) {
       return NextResponse.json({ error: 'Character name is required' }, { status: 400 })
     }
 
-    if (!imageUrl?.startsWith('http')) {
+    const hasNarrative =
+      Boolean(characterContext?.description?.trim()) ||
+      Boolean(characterContext?.voiceDescription?.trim()) ||
+      Boolean(characterContext?.role?.trim()) ||
+      Boolean(characterContext?.personality?.trim())
+
+    if (!hasPortrait && !hasNarrative) {
       return NextResponse.json(
-        { error: 'A valid character reference image URL is required' },
-        { status: 400 },
-      )
-    }
-
-    const prompt = buildWardrobeVoiceAnalysisPrompt(characterName, {
-      screenplayContext,
-      characterDescription:
-        characterContext?.description ||
-        characterContext?.voiceDescription ||
-        undefined,
-    })
-
-    const imageResponse = await fetch(imageUrl)
-    if (!imageResponse.ok) {
-      return NextResponse.json(
-        { error: `Failed to fetch character image: ${imageResponse.status}` },
-        { status: 400 },
-      )
-    }
-
-    const imageBuffer = await imageResponse.arrayBuffer()
-    const base64Image = Buffer.from(imageBuffer).toString('base64')
-    const contentType = imageResponse.headers.get('content-type') || 'image/jpeg'
-
-    console.log(`[Character Voice Analysis] Analyzing "${characterName}" from portrait...`)
-
-    const result = await generateWithVision(
-      [
         {
-          inlineData: {
-            mimeType: contentType,
-            data: base64Image,
-          },
+          error:
+            'Provide a character description, role, or reference image for voice profiling',
         },
-        { text: prompt },
-      ],
-      {
+        { status: 400 },
+      )
+    }
+
+    const prompt = buildAnalysisPrompt(
+      characterName,
+      characterContext,
+      screenplayContext,
+      hasPortrait,
+    )
+
+    let resultText = ''
+
+    if (hasPortrait && imageUrl) {
+      const imageResponse = await fetch(imageUrl)
+      if (!imageResponse.ok) {
+        return NextResponse.json(
+          { error: `Failed to fetch character image: ${imageResponse.status}` },
+          { status: 400 },
+        )
+      }
+
+      const imageBuffer = await imageResponse.arrayBuffer()
+      const base64Image = Buffer.from(imageBuffer).toString('base64')
+      const contentType = imageResponse.headers.get('content-type') || 'image/jpeg'
+
+      console.log(`[Character Voice Analysis] Vision + narrative for "${characterName}"...`)
+
+      const result = await generateWithVision(
+        [
+          {
+            inlineData: {
+              mimeType: contentType,
+              data: base64Image,
+            },
+          },
+          { text: prompt },
+        ],
+        {
+          model: 'gemini-2.5-flash',
+          temperature: 0.5,
+          maxOutputTokens: 1024,
+        },
+      )
+      resultText = result.text?.trim() || ''
+    } else {
+      console.log(`[Character Voice Analysis] Narrative-only for "${characterName}"...`)
+
+      const result = await generateText(prompt, {
         model: 'gemini-2.5-flash',
         temperature: 0.5,
         maxOutputTokens: 1024,
-      },
-    )
+        responseMimeType: 'application/json',
+      })
+      resultText = result.text?.trim() || ''
+    }
 
-    const parsed = parseWardrobeVoiceAnalysisJson(result.text?.trim() || '')
+    const parsed = parseWardrobeVoiceAnalysisJson(resultText, {
+      confidence: hasPortrait ? 'vision' : 'narrative',
+    })
     if (!parsed) {
-      console.error('[Character Voice Analysis] Failed to parse response:', result.text?.slice(0, 300))
+      console.error('[Character Voice Analysis] Failed to parse response:', resultText.slice(0, 300))
       return NextResponse.json(
-        { error: 'Failed to parse voice analysis from character image' },
+        { error: 'Failed to parse voice analysis' },
         { status: 502 },
       )
     }

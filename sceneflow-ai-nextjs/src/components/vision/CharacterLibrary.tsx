@@ -1239,9 +1239,17 @@ const CharacterCard = ({
   };
 
   const fetchWardrobeVoiceAnalysis = async (): Promise<WardrobeVoiceAnalysisResult | null> => {
-    const imageUrl = character.referenceImage?.trim();
-    if (!imageUrl?.startsWith("http")) {
-      toast.error("Generate a character reference image before Auto Voice.");
+    const imageUrl = character.referenceImage?.trim()
+    const hasNarrative =
+      Boolean(character.description?.trim()) ||
+      Boolean(character.appearanceDescription?.trim()) ||
+      Boolean(character.role?.trim()) ||
+      Boolean(character.keyFeature?.trim())
+
+    if (!imageUrl?.startsWith("http") && !hasNarrative) {
+      toast.error(
+        "Add a character description or reference image before Auto Voice.",
+      );
       return null;
     }
 
@@ -1250,8 +1258,16 @@ const CharacterCard = ({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         characterName: characterContext.name,
-        characterImageUrl: imageUrl,
-        characterContext,
+        ...(imageUrl?.startsWith("http")
+          ? { characterImageUrl: imageUrl }
+          : {}),
+        characterContext: {
+          ...characterContext,
+          role: character.role,
+          personality: character.keyFeature,
+          description:
+            character.description || character.appearanceDescription,
+        },
         screenplayContext,
       }),
     });
@@ -1271,8 +1287,16 @@ const CharacterCard = ({
 
     const useGoogleTts =
       ttsProvider === "google" || voiceAssignmentProvider === "google";
-    if (useGoogleTts && !hasCharacterReferenceForVoice) {
-      toast.error("Generate a character reference image before Auto Voice.");
+    const hasNarrativeForVoice =
+      Boolean(character.description?.trim()) ||
+      Boolean(character.appearanceDescription?.trim()) ||
+      Boolean(character.role?.trim()) ||
+      Boolean(character.keyFeature?.trim());
+
+    if (useGoogleTts && !hasCharacterReferenceForVoice && !hasNarrativeForVoice) {
+      toast.error(
+        "Add a character description or reference image before Auto Voice.",
+      );
       return;
     }
 
@@ -1336,7 +1360,11 @@ const CharacterCard = ({
             ethnicity: visionAnalysis.ethnicity,
             voiceDescription: visionAnalysis.voiceDescription,
           });
-          toast.success("Matched voice profile from character reference.");
+          toast.success(
+            visionAnalysis.confidence === "narrative"
+              ? "Matched voice profile from character narrative."
+              : "Matched voice profile from character reference.",
+          );
         }
 
         const voicesRes = await fetch("/api/tts/google/voices", {
@@ -1357,6 +1385,12 @@ const CharacterCard = ({
         const enrichedVoices = enrichGeminiVoicesForScoring(geminiVoices);
         const scoringContext: CharacterContext = {
           ...characterContext,
+          role: character.role ?? characterContext.role,
+          personality: character.keyFeature ?? characterContext.personality,
+          description:
+            character.description ||
+            character.appearanceDescription ||
+            characterContext.description,
           ...(genderOverride ? { gender: genderOverride } : {}),
           ...(visionAnalysis
             ? {
@@ -2629,8 +2663,23 @@ const CharacterCard = ({
         {/* Status Indicators */}
         <div className="flex flex-wrap gap-2 items-center">
           {character.voiceConfig ? (
-            <div className="bg-green-500/10 text-green-700 dark:text-green-400 text-[10px] px-2.5 py-1 rounded-md flex items-center gap-1.5 border border-green-500/20 shadow-sm">
-              <Mic className="w-3 h-3" /> <span>Voice</span>
+            <div
+              className="bg-green-500/10 text-green-700 dark:text-green-400 text-[10px] px-2.5 py-1 rounded-md flex items-center gap-1.5 border border-green-500/20 shadow-sm max-w-[200px]"
+              title={
+                character.voiceConfig.voiceName
+                  ? `Assigned: ${character.voiceConfig.voiceName}`
+                  : 'Voice assigned'
+              }
+            >
+              <Mic className="w-3 h-3 shrink-0" />
+              <span className="truncate">
+                {character.voiceConfig.voiceName
+                  ? character.voiceConfig.voiceName.replace(
+                      / \((Gemini|Studio|Premium)\)/i,
+                      '',
+                    )
+                  : 'Voice'}
+              </span>
             </div>
           ) : (
             <div
@@ -2639,28 +2688,6 @@ const CharacterCard = ({
             >
               <AlertCircle className="w-3 h-3" /> <span>No Voice</span>
             </div>
-          )}
-          {character.voiceConfig?.voiceId && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePlayAssignedVoice();
-              }}
-              className="bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 text-[10px] px-2.5 py-1 rounded-md flex items-center gap-1.5 border border-cyan-500/20 shadow-sm hover:bg-cyan-500/20 transition-colors"
-              title={
-                isPlayingVoice
-                  ? "Stop voice preview"
-                  : "Play assigned Gemini voice preview"
-              }
-            >
-              {isPlayingVoice ? (
-                <Loader className="w-3 h-3 animate-spin" />
-              ) : (
-                <Play className="w-3 h-3" />
-              )}
-              <span>{isPlayingVoice ? "Playing" : "Play"}</span>
-            </button>
           )}
           {character.referenceImage && (
             <div className="bg-blue-500/10 text-blue-700 dark:text-blue-400 text-[10px] px-2.5 py-1 rounded-md flex items-center gap-1.5 border border-blue-500/20 shadow-sm">
@@ -3682,6 +3709,7 @@ const CharacterCard = ({
             mode="character"
             geminiOnly
             selectedVoiceId={character.voiceConfig?.voiceId || ""}
+            directorPrompt={character.voiceConfig?.prompt}
             onSelectVoice={async (voiceId, voiceName) => {
               let prompt = character.voiceConfig?.prompt;
               if (!prompt && hasCharacterReferenceForVoice) {
