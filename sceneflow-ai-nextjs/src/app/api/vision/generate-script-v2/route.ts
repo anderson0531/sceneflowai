@@ -3,6 +3,7 @@ import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { v4 as uuidv4 } from 'uuid'
 import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
+import { buildCharacterDialogueExamples } from '@/lib/character/characterNamingPrompt'
 import { SubscriptionService } from '../../../../services/SubscriptionService'
 import { runScriptQA, autoFixScript } from '@/lib/script/qualityAssurance'
 import { generateText } from '@/lib/vertexai/gemini'
@@ -27,6 +28,7 @@ import {
   type NarrationPolicy,
 } from '@/lib/script/narrationPolicy'
 import { adaptPromptForLyria, LYRIA_MUSIC_PROMPT_RULES } from '@/lib/audio/lyriaPromptAdapter'
+import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
 import {
   buildFoundationPromptBlock,
   getArtStylePresetName,
@@ -154,7 +156,7 @@ export async function POST(request: NextRequest) {
         
         // Safety cap only - prevent runaway generation (max ~25 scenes for shorts)
         // Let the AI determine natural scene count based on story structure
-        const maxSafetyScenes = Math.min(30, Math.ceil(duration / 30))  // Absolute max: 30s/scene
+        const maxSafetyScenes = Math.min(90, Math.ceil(duration / 20))  // ~1 scene per 20s, capped at 90
         
         // Validate: beat count should not exceed reasonable scene count to prevent fragmentation
         if (beatCount > 15) {
@@ -239,6 +241,22 @@ export async function POST(request: NextRequest) {
           contentIntent,
         })
         console.log(`[Script Gen V2] Narration policy: mode=${narrationPolicy.mode}, allowPerScene=${narrationPolicy.allowPerSceneNarration}`)
+
+        // Load series continuity context if this project belongs to a series
+        let seriesContinuityBlock = ''
+        if ((project as any).series_id) {
+          try {
+            const continuityCtx = await loadContinuityContextForProject(project)
+            if (continuityCtx) {
+              seriesContinuityBlock = continuityCtx.continuityPromptBlock
+              console.log(
+                `[Script Gen V2] Series continuity loaded: Ep ${continuityCtx.currentEpisodeNumber}/${continuityCtx.totalEpisodes}, ${continuityCtx.activeStoryThreads.length} active threads`
+              )
+            }
+          } catch (err) {
+            console.warn('[Script Gen V2] Failed to load series continuity context:', err)
+          }
+        }
         
         // Build the single-pass prompt
         const singlePassPrompt = buildSinglePassPrompt(
@@ -250,7 +268,8 @@ export async function POST(request: NextRequest) {
           subscriptionMaxScenes,
           projectFormat,
           contentIntent,
-          narrationPolicy
+          narrationPolicy,
+          seriesContinuityBlock
         )
         
         let retryCount = 0
@@ -692,29 +711,11 @@ ${characterList}
 
 CRITICAL CHARACTER RULES:
 - The character list below defines the ONLY approved characters
-- Character names are formatted in Title Case (e.g., "Brian Anderson Sr", "Dr. Sarah Martinez")
-- Use EXACT names in dialogue - NO variations, abbreviations, or nicknames
-- "Brian Anderson Sr" ≠ "Brian" ≠ "BRIAN" ≠ "Anderson"
-- Match names character-for-character (case-insensitive acceptable in JSON, but use Title Case)
+- Character names are formatted in Title Case — use EXACT names in dialogue attribution
+- Use EXACT names in dialogue - NO variations, abbreviations, or nicknames in the "character" field
 - DO NOT invent new characters unless absolutely necessary (minor roles: waiter, passerby with 1 line)
 
-CHARACTER NAME RULES (CRITICAL):
-1. **In the "character" field**: Use EXACT full names from the character list
-   - Example: {"character": "Brian Anderson Sr", "line": "..."}
-   
-2. **In the "line" field (dialogue text)**: Use NATURAL, CONTEXTUAL names
-   - Characters address each other as they would in real conversation
-   - Use first names, nicknames, titles, or relationship terms (Dad, Mom, Sir, etc.)
-   - Example: {"character": "Brian Anderson Sr", "line": "[calmly] Eric, it's been a while."}
-   - Example: {"character": "Eric Anderson", "line": "[dryly] What is this, Dad? Another attempt?"}
-   
-3. **Addressing characters naturally**:
-   - Family: First names, "Dad", "Mom", "Son", nicknames
-   - Professional: Titles (Dr., Mr./Mrs.) + last name
-   - Friends/Peers: First names or nicknames
-   - Strangers/Formal: Mr./Mrs./Ms. + last name or sir/ma'am
-   
-DO NOT force full character names into dialogue text unnaturally.
+${buildCharacterDialogueExamples(characters)}
 
 DIALOGUE AUDIO TAGS (CRITICAL FOR ELEVENLABS TTS):
 EVERY dialogue line MUST include emotional/vocal direction tags to guide AI voice generation.
@@ -871,22 +872,11 @@ ${characterList}
 
 CRITICAL CHARACTER RULES:
 - Use ONLY these approved characters: ${characters.map((c: any) => c.name).join(', ')}
-- Names are in Title Case - use them EXACTLY
-- NO abbreviations: "Brian Anderson Sr" not "Brian"
+- Names are in Title Case - use them EXACTLY in the "character" field
 - Match character names exactly as listed in the character list
 - DO NOT invent new dialogue speakers
 
-CHARACTER NAME RULES (CRITICAL):
-1. **In the "character" field**: Use EXACT full names from the character list
-   - Example: {"character": "Brian Anderson Sr", "line": "..."}
-   
-2. **In the "line" field (dialogue text)**: Use NATURAL, CONTEXTUAL names
-   - Characters address each other as they would in real conversation
-   - Use first names, nicknames, titles, or relationship terms (Dad, Mom, Sir, etc.)
-   - Example: {"character": "Brian Anderson Sr", "line": "[calmly] Eric, it's been a while."}
-   - Example: {"character": "Eric Anderson", "line": "[dryly] What is this, Dad? Another attempt?"}
-   
-DO NOT force full character names into dialogue text unnaturally.
+${buildCharacterDialogueExamples(characters)}
 
 DIALOGUE AUDIO TAGS (CRITICAL FOR ELEVENLABS TTS):
 EVERY dialogue line MUST include emotional/vocal direction tags to guide AI voice generation.
@@ -1001,7 +991,8 @@ function buildSinglePassPrompt(
   subscriptionMaxScenes: number | null,
   format: string = 'narrative',
   contentIntent?: string,
-  narrationPolicy?: NarrationPolicy
+  narrationPolicy?: NarrationPolicy,
+  seriesContinuityBlock: string = ''
 ): string {
   const intent = contentIntent || resolveContentIntentFromMetadata({ format, genre: treatment.genre })
   const policy = narrationPolicy ?? resolveNarrationPolicy({ format, treatment, contentIntent })
@@ -1016,7 +1007,7 @@ function buildSinglePassPrompt(
   let persona = 'You are a master screenwriter. Write a complete, production-ready script'
   let formatLabel = 'FILM'
   let sceneHeadingExample = '"heading": "INT. LOCATION - TIME"'
-  let philosophyIntro = 'Your goal is to write an ENGAGING, ENTERTAINING script optimized for audience connection.'
+  let philosophyIntro = 'Your goal is to write an ENGAGING, CINEMATIC script optimized for audience connection and long-form storytelling.'
   
   if (format === 'educational' || format === 'education' || format === 'training') {
     persona = 'You are an expert curriculum designer and educational video producer. Write a complete, production-ready lesson script'
@@ -1085,7 +1076,9 @@ Target Duration: ~${Math.floor(targetDuration / 60)} minutes (${targetDuration} 
 Synopsis:
 ${treatment.synopsis || treatment.content}
 ${characterList}
+${characters.length > 0 ? `\n${buildCharacterDialogueExamples(characters)}` : ''}
 ${storyBeatsText}
+${seriesContinuityBlock ? `\n${seriesContinuityBlock}` : ''}
 
 ${buildFoundationPromptBlock(resolveVariantArtStyle(treatment), resolveVariantAspectRatio(treatment))}
 
@@ -1102,11 +1095,18 @@ Do NOT fragment the content into tiny segments. Each segment should be a COMPLET
 ${constraintBlock}
 
 STRUCTURE PRINCIPLES:
-• Each segment = ONE complete beat/lesson/discussion point with beginning, middle, end
-• Natural breaks occur at: topic changes, transitions, ad breaks, or location changes
-• Minimum 4-8 dialogue exchanges per dialogue-heavy segment
-• Target 60-120 seconds per segment (based on content density)
+• Each segment = ONE complete dramatic unit with beginning, middle, end
+• Natural breaks occur at: location changes, time jumps, act turns, POV shifts
+• Dialogue-driven segments: 4–8+ exchanges when speech carries the scene
+• Visual/action-driven segments: may be mostly action beats with little or no dialogue
+• Target 60–120 seconds per segment (based on content density)
 • Do NOT create duplicate segments for the same dialogue line.
+
+VISUAL STORYTELLING (CRITICAL):
+• Prefer ACTION beats for: reveals, reactions, geography, tension, montage, silent character moments
+• Prefer DIALOGUE beats when speech advances conflict, relationship, or information that cannot be shown
+• Do NOT fill scenes with talk when a visual beat tells it better — use silence and action as storytelling tools
+• Show emotion through behavior, blocking, and camera before defaulting to exposition dialogue
 
 WHAT TO AVOID:
 ❌ Fragmenting discussions across multiple segments
@@ -1210,6 +1210,7 @@ CINEMATIC BOOKENDS (MANDATORY):
 BEAT TIMELINE (CRITICAL — PRIMARY PRODUCTION SOURCE):
 ${beatTimelineNarrationRules}
 • Action beats are MANDATORY for visuals without spoken lines: reactions, inserts, B-roll, camera moves, environment changes, blocking without speech
+• Use action beats to carry story when dialogue would be redundant or expositional
 • NEVER put stage directions in "line" — they belong in actionDescription
 • Rhythm rule: no more than 2 consecutive spoken beats (dialogue or narration) without an intervening action beat
 • actionDescription format: shot type + subject + motion/mood (e.g., "Close-up: hands trembling on keyboard, shallow DOF, cool blue light")
@@ -1221,14 +1222,15 @@ ${beatTimelineNarrationRules}
 • Keep legacy "dialogue" and "action" fields in sync with beats content
 
 IMPORTANT CONSTRAINTS:
-• Maximum ${sceneLimit} main content segments (bookends excluded; consolidate if needed)
+• Scene count is a guide, not a hard ceiling — serve the story first
+• Up to ${sceneLimit} main content segments (bookends excluded; do not over-consolidate distinct dramatic turns)
 • Each main content segment MINIMUM 45 seconds (title/credits bookends exempt)
 • Write the COMPLETE script from beginning to end
 • Do NOT duplicate dialogue or segments
 • Ensure "action" is specific to the events of the segment, NOT repeated across segments
 • Return ONLY valid JSON - no markdown, no explanations
 
-Now write the complete script, following the Treatment's beats naturally and dynamically adapting the structure to match the ${format} format. Focus on value and audience engagement over hitting any specific segment count.`
+Now write the complete script, following the Treatment's beats naturally. Let story structure and dramatic rhythm drive scene breaks — do not compress the arc for brevity.`
 }
 
 /**

@@ -242,8 +242,9 @@ export function getIntentPromptBlocks(
         characterBlock: `CRITICAL — CHARACTER ARCS ARE MANDATORY:
 - Generate 3-5 detailed character_descriptions (protagonist + supporting characters)
 - Each character MUST have complete attributes and psychological depth
-- **CHARACTER NAMES MUST BE CULTURALLY AUTHENTIC**
+- **CHARACTER NAMES MUST BE CULTURALLY AUTHENTIC AND ORIGINAL** — avoid stock AI names (Elara, Vance, Lyra, Kael, Thorne, etc.)
 - **EVERY CHARACTER MUST HAVE**: externalGoal, internalNeed, fatalFlaw, arcStartingState, arcShift, arcEndingState
+- Each character needs a distinct voice, want/need/flaw, and clear relationship to the protagonist — not interchangeable archetypes
 - Generate 3-5 detailed scene_descriptions (key locations)
 - Character arcs must show CLEAR TRANSFORMATION`,
         schemaFieldSemantics: `SCHEMA FIELD SEMANTICS (fiction):

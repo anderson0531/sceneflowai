@@ -5,6 +5,7 @@
 
 import type { ContentIntent } from '@/lib/content/contentIntent'
 import { resolveContentIntentFromMetadata } from '@/lib/content/contentIntent'
+import { SERIES_CHARACTER_NAMING_BLOCK } from '@/lib/character/characterNamingPrompt'
 
 export interface EpisodeBatchPromptInput {
   seriesTitle: string
@@ -181,6 +182,8 @@ CONTENT INTENT: ${intent}
 
 CHARACTERS/SUBJECTS:
 ${characterList}
+
+${SERIES_CHARACTER_NAMING_BLOCK}
 
 ${mapping.leadLabel}: ${input.protagonist?.name || 'Not specified'} - Goal/Role: ${input.protagonist?.goal || ''}${input.protagonist?.flaw ? `, Trait: ${input.protagonist.flaw}` : ''}
 

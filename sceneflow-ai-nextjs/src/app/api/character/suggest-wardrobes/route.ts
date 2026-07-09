@@ -186,7 +186,7 @@ IMPORTANT RULES — APPEARANCE CHANGES (makeup, hair, injuries):
 8. Read beat-level lines carefully — close-ups often describe bruises, bloodshot eyes, and makeup that scene summaries omit.
 
 EXAMPLE — beat close-up with injury (must capture in appearanceNotes):
-Beat text: "CLOSE UP: Elara's hands trembling on the table. Her eyes are bloodshot, a faint bruise forming on her temple."
+Beat text: "CLOSE UP: the subject's hands trembling on the table. Bloodshot eyes, a faint bruise forming on the temple."
 Correct output for that scene:
 {
   "name": "Interrogation — Distressed",

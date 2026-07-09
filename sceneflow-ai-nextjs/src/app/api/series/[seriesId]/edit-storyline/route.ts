@@ -4,6 +4,7 @@ import { Series } from '@/models/Series'
 import { sequelize } from '@/config/database'
 import { callLLM } from '@/services/llmGateway'
 import { v4 as uuidv4 } from 'uuid'
+import { SERIES_CHARACTER_NAMING_BLOCK } from '@/lib/character/characterNamingPrompt'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300 // 5 minutes for comprehensive storyline refactor
@@ -181,6 +182,8 @@ Protagonist: ${JSON.stringify(currentBible.protagonist || {})}
 Characters: ${JSON.stringify((currentBible.characters || []).slice(0, 6))}
 
 TASK: Apply the instruction COMPREHENSIVELY. Update ALL relevant fields to reflect this change consistently.
+
+${SERIES_CHARACTER_NAMING_BLOCK}
 
 Return ONLY valid JSON (no markdown, no explanation):
 {

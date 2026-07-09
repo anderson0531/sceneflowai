@@ -62,39 +62,39 @@ export interface ScriptSettings {
 // ============================================================================
 
 export const DEFAULT_SCRIPT_SETTINGS: ScriptSettings = {
-  beatToSceneRatio: 5,
+  beatToSceneRatio: 4,
   narrationMode: 'minimal',
   repetitionTolerance: 'normal',
-  maxScenesPerAct: 12,
+  maxScenesPerAct: 15,
   enforceStateProgression: true,
-  targetSceneCount: 50
+  targetSceneCount: 55
 }
 
 export const SCRIPT_SETTINGS_BY_FORMAT: Record<string, Partial<ScriptSettings>> = {
   'short-film': {
     beatToSceneRatio: 3,
-    maxScenesPerAct: 8,
-    targetSceneCount: 20
+    maxScenesPerAct: 10,
+    targetSceneCount: 28
   },
   short_film: {
     beatToSceneRatio: 3,
-    maxScenesPerAct: 8,
-    targetSceneCount: 20
+    maxScenesPerAct: 10,
+    targetSceneCount: 28
   },
   narrative: {
     beatToSceneRatio: 4,
-    maxScenesPerAct: 10,
-    targetSceneCount: 35
+    maxScenesPerAct: 14,
+    targetSceneCount: 50
   },
   feature: {
-    beatToSceneRatio: 5,
-    maxScenesPerAct: 15,
-    targetSceneCount: 50
+    beatToSceneRatio: 4,
+    maxScenesPerAct: 18,
+    targetSceneCount: 80
   },
   'tv-episode': {
     beatToSceneRatio: 4,
-    maxScenesPerAct: 10,
-    targetSceneCount: 35
+    maxScenesPerAct: 14,
+    targetSceneCount: 50
   },
   documentary: {
     beatToSceneRatio: 6,
@@ -726,12 +726,13 @@ export function buildScriptConstraintPrompt(settings: ScriptSettings): string {
   return `
 === SCRIPT GENERATION CONSTRAINTS ===
 
-## 1. SCENE CONSOLIDATION (${settings.beatToSceneRatio}-to-1 Rule)
-- Merge consecutive story beats in the SAME LOCATION into single scenes
+## 1. SCENE CONSOLIDATION (Story-First)
+- Merge consecutive story beats ONLY when they form the same continuous dramatic unit in the SAME LOCATION
+- Do NOT collapse distinct emotional turns, revelations, or location changes just to hit a scene quota
 - Each scene MUST have a beginning, middle, and end
-- Do NOT cut away and cut back to the same location unless significant time passes
-- Target: ${settings.targetSceneCount || 50} total scenes for the entire script
+- Target: ~${settings.targetSceneCount || 55} total scenes for the entire script (guide, not hard ceiling)
 - Maximum ${settings.maxScenesPerAct} scenes per act
+- Serve the story first — scene count is a guide, not a hard ceiling
 
 ## 2. NARRATION RULES
 ${narrationGuidelines.conversionInstructions}

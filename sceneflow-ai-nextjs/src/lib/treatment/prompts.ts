@@ -12,6 +12,7 @@ import {
   resolveVariantArtStyle,
   resolveVariantAspectRatio,
 } from '@/lib/treatment/blueprintFoundation'
+import { BLUEPRINT_CHARACTER_IDENTITY_BLOCK } from '@/lib/character/characterNamingPrompt'
 
 type Format = ProductionFormat
 
@@ -38,7 +39,7 @@ const TREATMENT_SCHEMA_TEMPLATE = `SCHEMA - GENERATE IN THIS EXACT ORDER:
   "logline": "One- or two-sentence hook",
   "genre": "Genre",
   "format_length": "Short (5–40m) | Feature (90–120m) | Series episode | …",
-  "synopsis": "≤120 words",
+  "synopsis": "≤200 words",
   "audience": "string",
   "tone": "string",
   "style": "string",
@@ -86,7 +87,7 @@ const TREATMENT_SCHEMA_TEMPLATE = `SCHEMA - GENERATE IN THIS EXACT ORDER:
   "cta": "__CTA_VALUE__",
   "learning_objectives": __LEARNING_VALUE__,
   "beats": [
-    { "title": "Beat title", "intent": "Purpose/retention goal", "synopsis": "≤50 words beat summary", "minutes": 2.5 }
+    { "title": "Beat title", "intent": "Purpose/retention goal", "synopsis": "≤80 words beat summary", "minutes": 2.5 }
   ],
   "visual_style": "string",
   "audio_direction": "string",
@@ -96,15 +97,7 @@ const TREATMENT_SCHEMA_TEMPLATE = `SCHEMA - GENERATE IN THIS EXACT ORDER:
 // =============================================================================
 // STATIC BASE INSTRUCTIONS - Built once at module load
 // =============================================================================
-const CULTURAL_AUTHENTICITY_BLOCK = `
-CULTURAL AUTHENTICITY - MANDATORY:
-- Extract nationality, ethnicity, and cultural clues from the user's input
-- Character names MUST be culturally authentic to their ethnicity and the story's setting
-- If input mentions "Thai woman" → use authentic Thai names (e.g., Niran, Somchai, Priya, Malai, Nong)
-- If input mentions "Japanese" → use Japanese names (e.g., Yuki, Haruto, Kenji, Sakura)
-- If input mentions "Mexican" → use Spanish/Latin names (e.g., María, Diego, Carmen)
-- NEVER use generic Western names for non-Western characters unless explicitly stated
-- The ethnicity field must EXACTLY match what's implied in the input`
+const CULTURAL_AUTHENTICITY_BLOCK = BLUEPRINT_CHARACTER_IDENTITY_BLOCK
 
 const OUTPUT_RULES_BLOCK = `
 OUTPUT RULES - CRITICAL:
@@ -122,7 +115,7 @@ OUTPUT RULES - CRITICAL:
 
 5. Beat durations MUST sum to target minutes (±10%)
 
-6. Be concise and engaging. Avoid fluff.
+6. Be vivid and specific. Prefer concrete sensory detail and dramatic stakes over vague summary. Do not pad, but do not starve the story.
 
 7. Do NOT use placeholders like "General audience"; provide concrete descriptions.
 
@@ -330,13 +323,13 @@ AXIS 1: CONCEPT ORIGINALITY (25% of score)
 
 AXIS 2: CHARACTER DEPTH (25% of score)
 [ ] PROTAGONIST GOAL: State clearly what they want (external, tangible)
-    EXAMPLE: "Marcus must find the killer before the 48-hour deadline expires"
+    EXAMPLE: "The protagonist must expose the cover-up before the election closes the investigation window"
 [ ] PROTAGONIST FLAW: State their internal weakness that creates obstacles
-    EXAMPLE: "His inability to trust anyone isolates him from potential allies"
+    EXAMPLE: "Their refusal to trust allies leaves them isolated when evidence surfaces"
 [ ] ANTAGONIST DEFINED: Name or describe the opposing force
-    EXAMPLE: "Opposing him is Councilman Webb, whose political ambitions require the truth stay buried"
+    EXAMPLE: "A city official whose career depends on burying the truth"
 [ ] THE "GHOST": Include past trauma or secret that haunts the protagonist
-    EXAMPLE: "Haunted by his partner's unsolved murder five years ago"
+    EXAMPLE: "Haunted by a case they failed to solve years ago"
     This is CRITICAL for ${targetAudience} resonance.
 
 AXIS 3: PACING & STRUCTURE (20% of score)

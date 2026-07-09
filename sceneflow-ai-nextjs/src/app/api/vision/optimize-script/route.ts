@@ -736,7 +736,7 @@ Return ONLY valid JSON:
     {
       "action": "rewrite",
       "sceneNumbers": [1],
-      "rewriteFocus": "Replace narration-heavy opening with a visceral visual flashback of Elara's re-patterning, then cut to present-day Ben at his screen",
+      "rewriteFocus": "Replace narration-heavy opening with a visceral visual flashback, then cut to present-day action at the screen",
       "rationale": "Scene 1 tells the backstory through narration instead of showing it — a visual flashback establishes the stakes immediately"
     }
   ],

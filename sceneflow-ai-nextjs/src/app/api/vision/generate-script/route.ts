@@ -6,6 +6,7 @@ import { generateText } from '@/lib/vertexai/gemini'
 import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
 import { migrateProjectToSegmented } from '@/lib/script/migrateToSegmented'
 import { normalizeDialogueToProductionLineTargets } from '@/lib/script/segmentScript'
+import { buildCharacterDialogueExamples } from '@/lib/character/characterNamingPrompt'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -305,28 +306,10 @@ ${characters.map((c: any) => `${c.name} (${c.role}): ${c.description || ''}`).jo
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ${seriesContinuityBlock ? `\n${seriesContinuityBlock}` : ''}
 CRITICAL DIALOGUE RULES:
-- Use ONLY the EXACT character names from the list above
-- DO NOT abbreviate, modify, or create variations of character names
-- Example: If character is "Brian Anderson Sr", dialogue MUST be "BRIAN ANDERSON SR:" not "BRIAN:" or "Brian:"
-- Character names in dialogue must match the character list EXACTLY (case-insensitive is acceptable but use consistent formatting)                              
+- Use ONLY the EXACT character names from the list above in the "character" field
+- DO NOT abbreviate, modify, or create variations of character names in attribution
 
-CHARACTER NAME RULES (CRITICAL):
-1. **In the "character" field**: Use EXACT full names from the character list
-   - Example: {"character": "Brian Anderson Sr", "line": "..."}
-   
-2. **In the "line" field (dialogue text)**: Use NATURAL, CONTEXTUAL names
-   - Characters address each other as they would in real conversation
-   - Use first names, nicknames, titles, or relationship terms (Dad, Mom, Sir, etc.)
-   - Example: {"character": "Brian Anderson Sr", "line": "[calmly] Eric, it's been a while."}
-   - Example: {"character": "Eric Anderson", "line": "[dryly] What is this, Dad? Another attempt?"}
-   
-3. **Addressing characters naturally**:
-   - Family: First names, "Dad", "Mom", "Son", nicknames
-   - Professional: Titles (Dr., Mr./Mrs.) + last name
-   - Friends/Peers: First names or nicknames
-   - Strangers/Formal: Mr./Mrs./Ms. + last name or sir/ma'am
-   
-DO NOT force full character names into dialogue text unnaturally.
+${buildCharacterDialogueExamples(characters)}
 
 DIALOGUE AUDIO TAGS (CRITICAL FOR ELEVENLABS TTS):
 EVERY dialogue line MUST include emotional/vocal direction tags to guide AI voice generation.

@@ -6,6 +6,7 @@ import { resolveUser } from '@/lib/userHelper'
 import { callLLM } from '@/services/llmGateway'
 import { v4 as uuidv4 } from 'uuid'
 import { StoryThread } from '@/types/series'
+import { SERIES_CHARACTER_NAMING_BLOCK } from '@/lib/character/characterNamingPrompt'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 600 // Allow 10 minutes for full series generation
@@ -425,6 +426,8 @@ Generate:
 4. Synopsis (2 paragraphs covering the full series arc)
 5. Comprehensive characters and locations arrays.
 
+${SERIES_CHARACTER_NAMING_BLOCK}
+
 ${mappingInstruction}
 
 Return ONLY valid JSON:
@@ -657,6 +660,7 @@ async function regenerateSpecificField(
 ${options.genre ? `Genre: ${options.genre}` : ''}
 ${options.tone ? `Tone: ${options.tone}` : ''}
 Format: ${format}
+${field === 'characters' || field === 'protagonist' ? SERIES_CHARACTER_NAMING_BLOCK : ''}
 
 Return ONLY valid JSON.`
 
