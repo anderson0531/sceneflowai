@@ -10,12 +10,10 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { SegmentData } from '@/types/screenplay'
-import { buildAudioTracksForLanguage, buildAudioTracksWithBaselineTiming, determineBaselineLanguage, flattenAudioTracks, analyzeSceneLML, countResolvableSceneSfx } from '@/components/vision/scene-production/audioTrackBuilder'
+import { buildAudioTracksForLanguage, buildAudioTracksWithBaselineTiming, determineBaselineLanguage, flattenAudioTracks, analyzeSceneLML } from '@/components/vision/scene-production/audioTrackBuilder'
 import type { AudioTrackClipV2 } from '@/components/vision/scene-production/types'
 import { getAvailableLanguages } from '@/lib/audio/languageDetection'
 import { GroupedNativeSelect } from '@/components/vision/GroupedNativeSelect'
-import { buildBeatAlignedStoryboardSfxClips } from '@/lib/storyboard/sfxPlayback'
-import { buildStoryboardVisualTimeline, buildStoryboardVoiceClips } from '@/lib/storyboard/types'
 // Audience Feedback Components
 import { EmojiReactionBar } from '@/components/screening-room/EmojiReactionBar'
 import { ConsentModal } from '@/components/screening-room/ConsentModal'
@@ -95,6 +93,29 @@ function savePanSettings(intensity: PanIntensity): void {
   } catch (e) {
     console.warn('Failed to save pan settings:', e)
   }
+}
+
+function getClipFileDurationSeconds(clip: AudioTrackClipV2): number {
+  const fileLen =
+    clip.actualDuration && clip.actualDuration > 0 ? clip.actualDuration : clip.duration
+  return fileLen > 0 ? fileLen : clip.duration
+}
+
+function isClipActiveAtTimeline(clip: AudioTrackClipV2, timelineSec: number): boolean {
+  const clipStart = clip.startTime
+  const clipEnd = clip.startTime + clip.duration
+  if (clip.loop) {
+    return timelineSec >= clipStart
+  }
+  return timelineSec >= clipStart && timelineSec < clipEnd
+}
+
+function getClipAudioTime(clip: AudioTrackClipV2, timelineSec: number): number {
+  const raw = timelineSec - clip.startTime + (clip.trimStart || 0)
+  if (!clip.loop) return raw
+  const fileLen = getClipFileDurationSeconds(clip)
+  if (fileLen <= 0) return raw
+  return raw % fileLen
 }
 
 // ============================================================================
@@ -439,56 +460,14 @@ export function FullscreenPlayer({
     if (!scene) return null
     return buildAudioTracksWithBaselineTiming(scene, language, baselineLanguage)
   }, [scene, language, baselineLanguage])
-
-  const beatAlignedSfxClips = useMemo(() => {
-    if (!scene || countResolvableSceneSfx(scene) === 0) return []
-
-    const voiceClips = buildStoryboardVoiceClips(scene, language, {})
-    const visualFrames = buildStoryboardVisualTimeline(scene, voiceClips, {
-      language,
-      preVisAnimatic: true,
-    })
-
-    const voiceEndTime =
-      voiceClips.length > 0
-        ? voiceClips[voiceClips.length - 1].startTime + voiceClips[voiceClips.length - 1].duration
-        : undefined
-
-    const visualEnd =
-      visualFrames.length > 0
-        ? visualFrames[visualFrames.length - 1].startTime + visualFrames[visualFrames.length - 1].duration
-        : undefined
-
-    return buildBeatAlignedStoryboardSfxClips(scene, visualFrames, {
-      voiceEndTime,
-      sceneDuration: visualEnd,
-    })
-  }, [scene, language])
   
   // ============================================================================
   // Flatten Audio Tracks to Clips (using flattenAudioTracks like SceneTimelineV2)
   // ============================================================================
   const allAudioClips = useMemo<AudioTrackClipV2[]>(() => {
     if (!audioTracks) return []
-
-    const baseClips = flattenAudioTracks(audioTracks)
-    if (beatAlignedSfxClips.length === 0) return baseClips
-
-    const nonSfxClips = baseClips.filter((clip) => !clip.id.startsWith('sfx'))
-    const alignedSfxClips: AudioTrackClipV2[] = beatAlignedSfxClips.map((clip) => ({
-      id: clip.id,
-      url: clip.url,
-      startTime: clip.startTime,
-      duration: clip.duration,
-      label: clip.label,
-      volume: 0.8,
-      language: 'all',
-      source: 'scene',
-      scenePropertyPath: clip.id,
-    }))
-
-    return [...nonSfxClips, ...alignedSfxClips]
-  }, [audioTracks, beatAlignedSfxClips])
+    return flattenAudioTracks(audioTracks)
+  }, [audioTracks])
   
   // ============================================================================
   // Get Track Type from Clip ID (clips don't have a 'type' field, derive from id)
@@ -553,11 +532,10 @@ export function FullscreenPlayer({
         ? 10
         : visualClips[visualClips.length - 1].startTime + visualClips[visualClips.length - 1].duration
 
-    if (allAudioClips.length === 0) return visualEnd
-
-    const audioEnd = Math.max(
-      ...allAudioClips.map((clip) => clip.startTime + clip.duration)
-    )
+    const nonLoopEnds = allAudioClips
+      .filter((clip) => !clip.loop)
+      .map((clip) => clip.startTime + clip.duration)
+    const audioEnd = nonLoopEnds.length > 0 ? Math.max(...nonLoopEnds) : 0
 
     return Math.max(visualEnd, audioEnd)
   }, [visualClips, allAudioClips])
@@ -618,7 +596,13 @@ export function FullscreenPlayer({
       if (!audioRefs.current.has(audioKey)) {
         const audio = new Audio(clip.url)
         audio.preload = 'auto'
+        if (clip.loop) {
+          audio.loop = true
+        }
         audioRefs.current.set(audioKey, audio)
+      } else if (clip.loop) {
+        const audio = audioRefs.current.get(audioKey)!
+        audio.loop = true
       }
     })
     
@@ -785,11 +769,8 @@ export function FullscreenPlayer({
             const trackType = getTrackTypeFromClipId(clip.id, clip.label)
             audio.volume = getVolumeForTrack(trackType)
             
-            const clipStart = clip.startTime
-            const clipEnd = clip.startTime + clip.duration
-            
-            if (elapsed >= clipStart && elapsed < clipEnd) {
-              const audioTime = elapsed - clipStart + (clip.trimStart || 0)
+            if (isClipActiveAtTimeline(clip, elapsed)) {
+              const audioTime = getClipAudioTime(clip, elapsed)
               if (audio.paused) {
                 audio.currentTime = audioTime
                 audio.play().catch((err) => {
@@ -837,11 +818,8 @@ export function FullscreenPlayer({
       const audio = audioRefs.current.get(audioKey)
       
       if (audio) {
-        const clipStart = clip.startTime
-        const clipEnd = clip.startTime + clip.duration
-        
-        if (newTime >= clipStart && newTime < clipEnd) {
-          audio.currentTime = newTime - clipStart + (clip.trimStart || 0)
+        if (isClipActiveAtTimeline(clip, newTime)) {
+          audio.currentTime = getClipAudioTime(clip, newTime)
         } else if (!audio.paused) {
           audio.pause()
         }
@@ -1153,7 +1131,7 @@ export function FullscreenPlayer({
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={skipToPreviousSegment}
+                onClick={skipToPreviousBeat}
                 className="text-white hover:bg-white/20"
                 title="Previous Beat"
               >
@@ -1176,7 +1154,7 @@ export function FullscreenPlayer({
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={skipToNextSegment}
+                onClick={skipToNextBeat}
                 className="text-white hover:bg-white/20"
                 title="Next Beat"
               >
