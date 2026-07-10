@@ -1,7 +1,7 @@
 'use client'
 
 import NextImage from 'next/image'
-import { Camera } from 'lucide-react'
+import { Camera, Film } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { getGuidedStepMedia } from '@/config/landing/guidedStepsMedia'
 import { cn } from '@/lib/utils'
@@ -21,7 +21,8 @@ export function StepImagePlaceholder({
 }: StepImagePlaceholderProps) {
   const t = useTranslations('pipeline.ui')
   const media = getGuidedStepMedia(stepId)
-  const imageUrl = media.imageUrl
+  const { videoUrl, posterUrl, imageUrl } = media
+  const hasMedia = Boolean(videoUrl || imageUrl)
 
   return (
     <div
@@ -31,16 +32,36 @@ export function StepImagePlaceholder({
       )}
     >
       <p className="mb-3 inline-flex items-center gap-2 text-sm font-medium uppercase tracking-wider text-indigo-300">
-        <Camera className="h-4 w-4" />
-        {t('imagePlaceholder')}
+        {videoUrl ? (
+          <>
+            <Film className="h-4 w-4" />
+            {t('videoWalkthrough')}
+          </>
+        ) : (
+          <>
+            <Camera className="h-4 w-4" />
+            {t('imagePlaceholder')}
+          </>
+        )}
       </p>
       <div
         className={cn(
           'aspect-video rounded-xl border border-white/10 bg-slate-900/70 overflow-hidden flex items-center justify-center relative',
-          imageUrl && 'cursor-default'
+          hasMedia && 'cursor-default'
         )}
       >
-        {imageUrl ? (
+        {videoUrl ? (
+          <video
+            className="w-full h-full object-cover"
+            controls
+            playsInline
+            preload="metadata"
+            poster={posterUrl}
+            aria-label={alt}
+          >
+            <source src={videoUrl} type="video/mp4" />
+          </video>
+        ) : imageUrl ? (
           <NextImage
             src={imageUrl}
             alt={alt}
