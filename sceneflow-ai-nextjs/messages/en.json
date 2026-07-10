@@ -118,16 +118,118 @@
   },
   "guidedSteps": {
     "badge": "How It Works",
-    "title": "Seven Guided Steps",
-    "subtitle": "From concept to publish — clear milestones, no information overload.",
-    "steps": [
-      { "label": "Concept", "body": "Input your idea, script outline, or documentation." },
-      { "label": "Blueprint", "body": "Lock in style, asset reference continuity, and tone." },
-      { "label": "Optimize", "body": "Run Audience Resonance checks to perfect narrative delivery." },
-      { "label": "Pre-Vis", "body": "Generate fully-voiced, timed storyboards automatically." },
-      { "label": "Screening Room", "body": "Play the 30-minute interactive animatic; review and edit beats off-canvas." },
-      { "label": "Shoot Scene Video", "body": "Convert approved pre-vis beats into high-fidelity motion (4s to 15s beats)." },
-      { "label": "Publish", "body": "Master your distribution bundle and auto-publish to YouTube and your favorite networks." }
+    "title": "The Guided Pipeline",
+    "subtitle": "Three phases from first idea to publish-ready master — every milestone automated, every beat under your control.",
+    "ui": {
+      "imagePlaceholder": "Screenshot placeholder",
+      "comingSoon": "Product screenshot coming soon"
+    },
+    "phases": [
+      {
+        "id": "start",
+        "tabLabel": "Start / Series",
+        "number": "1",
+        "label": "Start Production or Series",
+        "headline": "Spin up a season or a single project",
+        "narrative": "Drop in a concept, script outline, or full documentation — or define a multi-episode series arc. SceneFlow structures your intake into a production-ready foundation without juggling separate tools.",
+        "imagePlaceholder": "New project intake — concept, script import, or series arc"
+      },
+      {
+        "id": "blueprint",
+        "tabLabel": "Blueprint",
+        "number": "2",
+        "label": "Blueprint",
+        "headline": "Lock your creative DNA before a single frame renders",
+        "narrative": "Generate a deep film treatment that sets style, tone, and asset reference continuity. Review characters and story beats with collaborators before the pipeline moves into generation.",
+        "imagePlaceholder": "Blueprint treatment — style, tone, and reference continuity"
+      },
+      {
+        "id": "production",
+        "tabLabel": "Production",
+        "number": "3",
+        "label": "Production",
+        "headline": "Automated studio from script to 4K publish",
+        "narrative": "Eleven guided milestones inside Production — express generation, Screening Room review, shoot, mixer polish, dub, and distribute.",
+        "substeps": [
+          {
+            "id": "draft-script",
+            "number": "3.1",
+            "label": "Generate a professional draft script",
+            "narrative": "Turn your treatment into a structured, scene-by-scene screenplay. SceneFlow formats dialogue, action lines, and beat markers so every downstream step has a clear script to follow.",
+            "imagePlaceholder": "Script editor — professional draft with scene beats"
+          },
+          {
+            "id": "audience-resonance",
+            "number": "3.2",
+            "label": "Optimize with Audience Resonance Analysis",
+            "narrative": "Score your script against your target audience before you spend credits on generation. Flag pacing drops, sharpen dialogue hooks, and apply one-click narrative improvements scene by scene.",
+            "imagePlaceholder": "Audience Resonance panel — scores and guided edits"
+          },
+          {
+            "id": "reference-library",
+            "number": "3.3",
+            "label": "Generate Reference Library",
+            "narrative": "Lock characters, wardrobe, voice profiles, locations, and props into a Shared Reference Library. Every scene generation pulls from the same visual DNA — no drift across episodes or beats.",
+            "imagePlaceholder": "Reference Library — characters, wardrobe, voice, locations, props"
+          },
+          {
+            "id": "express-audio",
+            "number": "3.4",
+            "label": "Express generate production audio",
+            "narrative": "Concurrently produce dialogue, SFX, and music beds timed to your script beats. Native-quality voiceover in 70+ languages starts here — before a single frame is rendered.",
+            "imagePlaceholder": "Express audio generation — dialogue, SFX, and music"
+          },
+          {
+            "id": "beat-frames",
+            "number": "3.5",
+            "label": "Express generate Beat Frames",
+            "narrative": "Generate start and end composition frames for every beat — locked to your Reference Library. Approve the look before SceneFlow spends credits on motion video.",
+            "imagePlaceholder": "Beat Frames gallery — composition locked per beat"
+          },
+          {
+            "id": "screening-room",
+            "number": "3.6",
+            "label": "Review animatic in Screening Room",
+            "narrative": "Play the full interactive animatic in under 30 minutes. Share a Screening Room link for stakeholder feedback, then optionally render a reviewable animatic video before committing to final motion.",
+            "imagePlaceholder": "Screening Room player — interactive animatic review"
+          },
+          {
+            "id": "script-assistant",
+            "number": "3.7",
+            "label": "Edit script scenes through intelligent assistant",
+            "narrative": "Revise scenes off-canvas with an intelligent assistant that understands your story context. Changes propagate through the pipeline without rebuilding from scratch.",
+            "imagePlaceholder": "Intelligent script assistant — scene-level edits"
+          },
+          {
+            "id": "shoot",
+            "number": "3.8",
+            "label": "Generate full motion video scenes (Shoot)",
+            "narrative": "Convert approved beat frames into high-fidelity express video — 4s to 15s motion beats per scene. Frame-anchored generation keeps characters and environments consistent shot to shot.",
+            "imagePlaceholder": "Shoot tab — express video generation per beat"
+          },
+          {
+            "id": "mixer",
+            "number": "3.9",
+            "label": "Fine-tune scenes in the Mixer",
+            "narrative": "Polish every scene after generation — add text overlays and watermarks, trim beats, and align audio timing before you dub or publish. Brand-safe finishing without leaving the studio.",
+            "imagePlaceholder": "Production Mixer — text overlay, watermark, trim, and audio controls"
+          },
+          {
+            "id": "multilanguage",
+            "number": "3.10",
+            "label": "Generate multilanguage streams",
+            "narrative": "Spin up dubbed or lip-synced language variants from the same approved master. Reach new markets without re-shooting — one pipeline, many localized outputs.",
+            "imagePlaceholder": "Multilanguage streams — dubbed and lip-sync overlays"
+          },
+          {
+            "id": "publish",
+            "number": "3.11",
+            "label": "Render final (4K) and Publish",
+            "narrative": "Stitch scene streams into a 4K master, bundle your distribution package, and auto-publish to YouTube and your connected networks — from one finishing surface.",
+            "imagePlaceholder": "Publish wizard — 4K master and distribution bundle"
+          }
+        ]
+      }
     ]
   },
   "useCasesShowcase": {
