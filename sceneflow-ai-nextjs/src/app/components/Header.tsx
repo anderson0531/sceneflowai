@@ -136,7 +136,14 @@ export function Header() {
             
             {/* Navigation Links - Center */}
             <nav className="flex items-center space-x-2">
-              {/* The Workflow Link */}
+              <button
+                onClick={() => scrollToSection('pipeline')}
+                className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
+              >
+                <Film className="w-4 h-4" />
+                {t('pipeline')}
+              </button>
+
               <button
                 onClick={() => scrollToSection('how-it-works')}
                 className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
@@ -145,16 +152,14 @@ export function Header() {
                 {t('workflow')}
               </button>
 
-              {/* Platform Walkthrough Link */}
               <button
-                onClick={() => scrollToSection('feature-pre-vis')}
+                onClick={() => scrollToSection('use-cases')}
                 className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
-                <Film className="w-4 h-4" />
-                {t('platformWalkthrough')}
+                <Building2 className="w-4 h-4" />
+                {t('useCases')}
               </button>
 
-              {/* View All Plans Link */}
               <button
                 onClick={() => scrollToSection('pricing')}
                 className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
@@ -162,30 +167,6 @@ export function Header() {
                 <Sparkles className="w-4 h-4 text-sf-primary" />
                 {t('plansPricing')}
               </button>
-              
-              {/* More Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-1 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50">
-                    {t('more')}
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => scrollToSection('use-cases')}>
-                    {t('useCases')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => scrollToSection('core-capabilities')}>
-                    {t('audienceResonance')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => scrollToSection('trust-safety')}>
-                    {t('trustSafety')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => scrollToSection('engineering')}>
-                    {t('platformTrust')}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </nav>
             
             {/* CTA Buttons - Right */}
@@ -278,24 +259,17 @@ export function Header() {
             {isMobileMenuOpen && (
               <div className="lg:hidden pb-4 border-t border-gray-800/50">
                 <nav className="flex flex-col space-y-1 pt-4">
-                  {/* Primary Navigation */}
+                  <button onClick={() => scrollToSection('pipeline')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
+                    <Film className="w-4 h-4" />
+                    {t('pipeline')}
+                  </button>
                   <button onClick={() => scrollToSection('how-it-works')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Workflow className="w-4 h-4" />
                     {t('workflow')}
                   </button>
-                  <button onClick={() => scrollToSection('feature-pre-vis')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
-                    <Film className="w-4 h-4" />
-                    {t('platformWalkthrough')}
-                  </button>
                   <button onClick={() => scrollToSection('use-cases')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
+                    <Building2 className="w-4 h-4" />
                     {t('useCases')}
-                  </button>
-                  <button onClick={() => scrollToSection('core-capabilities')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
-                    {t('audienceResonance')}
-                  </button>
-                  <button onClick={() => scrollToSection('trust-safety')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
-                    <Shield className="w-4 h-4" />
-                    {t('trustSafety')}
                   </button>
                   <button onClick={() => scrollToSection('pricing')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Sparkles className="w-4 h-4 text-sf-primary" />

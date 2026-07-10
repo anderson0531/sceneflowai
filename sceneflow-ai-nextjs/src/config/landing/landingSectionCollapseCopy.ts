@@ -5,18 +5,9 @@ export const LANDING_SECTION_COLLAPSE_COPY = {
 
 /** Collapsible landing section ids (anchor targets). */
 export const COLLAPSIBLE_LANDING_SECTION_IDS = [
-  'creative-range',
-  'tool-stack',
-  'how-it-works',
-  'why-sceneflow',
-  'beat-first-pipeline',
-  'extended-scenes',
-  'trust-safety',
+  'pipeline',
   'use-cases',
-  'core-capabilities',
-  'pre-vis-engine',
-  'feature-pre-vis',
-  'engineering',
+  'how-it-works',
   'pricing',
 ] as const
 
@@ -24,21 +15,8 @@ export type CollapsibleLandingSectionId = (typeof COLLAPSIBLE_LANDING_SECTION_ID
 
 /** Hash fragments that should expand a parent collapsible section. */
 export const LANDING_HASH_TO_SECTION: Record<string, CollapsibleLandingSectionId> = {
-  'creative-range': 'creative-range',
-  'art-styles': 'creative-range',
-  'output-formats': 'creative-range',
-  'tool-stack': 'tool-stack',
-  'how-it-works': 'how-it-works',
-  'why-sceneflow': 'why-sceneflow',
-  'beat-first-pipeline': 'beat-first-pipeline',
-  'extended-scenes': 'extended-scenes',
-  'trust-safety': 'trust-safety',
+  pipeline: 'pipeline',
   'use-cases': 'use-cases',
-  'production-verticals': 'use-cases',
-  'core-capabilities': 'core-capabilities',
-  'pre-vis-engine': 'pre-vis-engine',
-  'feature-pre-vis': 'feature-pre-vis',
-  'feature-storyboard': 'feature-pre-vis',
-  engineering: 'engineering',
+  'how-it-works': 'how-it-works',
   pricing: 'pricing',
 }

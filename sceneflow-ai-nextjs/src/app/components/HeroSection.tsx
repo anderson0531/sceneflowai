@@ -24,6 +24,7 @@ import {
 } from '@/config/landing/heroVideoLocales'
 import { HeroLanguagePills } from '@/components/landing/HeroLanguagePills'
 import { HeroTheaterModal } from '@/components/landing/HeroTheaterModal'
+import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 
 function readStoredLocale(): HeroVideoLocaleId | null {
   if (typeof window === 'undefined') return null
@@ -58,7 +59,6 @@ function applyLocaleToVideo(
 
 export function HeroSection() {
   const t = useTranslations('hero')
-  const tc = useTranslations('common')
   const videoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [isPlaying, setIsPlaying] = useState(true)
@@ -120,13 +120,8 @@ export function HeroSection() {
     [isTheaterOpen]
   )
 
-  const watchWhatsPossible = useCallback(() => {
-    document.getElementById('hero-video')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    window.setTimeout(() => unmuteWithSound(), 450)
-  }, [unmuteWithSound])
-
-  const scrollToToolStack = useCallback(() => {
-    document.getElementById('tool-stack')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  const scrollToCheckout = useCallback(() => {
+    window.location.href = getSignupUrlForTier('explorer')
   }, [])
 
   const openTheater = useCallback(() => {
@@ -363,17 +358,21 @@ export function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.35 }}
             >
-              <Button size="lg" className="w-full sm:w-auto" onClick={watchWhatsPossible}>
-                <Play className="mr-2 w-5 h-5" />
-                {t('ctaSecondary')}
+              <Button
+                size="lg"
+                className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:opacity-90"
+                onClick={scrollToCheckout}
+              >
+                {t('ctaPrimaryLaunch')}
               </Button>
               <Button
                 size="lg"
                 variant="outline"
                 className="w-full sm:w-auto border-white/20 text-gray-200 hover:bg-white/5"
-                onClick={scrollToToolStack}
+                onClick={openTheater}
               >
-                {t('ctaToolStack')}
+                <Play className="mr-2 w-5 h-5" />
+                {t('ctaWatchWalkthrough')}
               </Button>
             </motion.div>
           </div>

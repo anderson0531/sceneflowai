@@ -3,30 +3,15 @@
 import dynamic from 'next/dynamic'
 import { Header } from './components/Header'
 import { HeroSection } from './components/HeroSection'
-import { EngineeringTrust } from '@/components/landing/EngineeringTrust'
 import { LandingSectionCollapseProvider } from '@/components/landing/LandingSectionCollapse'
 
-const PricingCredits = dynamic(() => import('@/components/landing/PricingCredits'), { ssr: false })
-
-const ValuePropStrip = dynamic(() => import('@/components/landing/ValuePropStrip').then(m => m.ValuePropStrip), { ssr: false })
-const CreativeRangeSection = dynamic(
-  () => import('@/components/landing/CreativeRangeSection').then((m) => m.CreativeRangeSection),
-  { ssr: false }
-)
-const AudiencePathStrip = dynamic(() => import('@/components/landing/AudiencePathStrip').then(m => m.AudiencePathStrip), { ssr: false })
-const ToolStackSection = dynamic(() => import('@/components/landing/ToolStackSection').then(m => m.ToolStackSection), { ssr: false })
-const WhySceneFlowSection = dynamic(() => import('@/components/landing/WhySceneFlowSection').then(m => m.WhySceneFlowSection), { ssr: false })
-const OneTakePipelineSection = dynamic(() => import('@/components/landing/OneTakePipelineSection').then(m => m.OneTakePipelineSection), { ssr: false })
-const ExtendedScenesSection = dynamic(() => import('@/components/landing/ExtendedScenesSection').then(m => m.ExtendedScenesSection), { ssr: false })
-const TrustSafeguardSection = dynamic(() => import('@/components/landing/TrustSafeguardSection').then(m => m.TrustSafeguardSection), { ssr: false })
-const SimpleWalkthroughSection = dynamic(
-  () => import('@/components/landing/SimpleWalkthroughSection').then((m) => m.SimpleWalkthroughSection),
+const PipelinePillarsSection = dynamic(
+  () => import('@/components/landing/PipelinePillarsSection'),
   { ssr: false }
 )
 const UseCasesSection = dynamic(() => import('@/components/landing/UseCasesSection'), { ssr: false })
-const CoreCapabilitiesSection = dynamic(() => import('@/components/landing/CoreCapabilitiesSection').then(m => m.CoreCapabilitiesSection), { ssr: false })
-const PreVisEngineSection = dynamic(() => import('@/components/landing/PreVisEngineSection').then(m => m.PreVisEngineSection), { ssr: false })
-const FeatureStoryboardSection = dynamic(() => import('@/components/landing/FeatureStoryboardSection'), { ssr: false })
+const HowItWorksSteps = dynamic(() => import('@/components/landing/HowItWorksSteps'), { ssr: false })
+const PricingCredits = dynamic(() => import('@/components/landing/PricingCredits'), { ssr: false })
 const FloatingNav = dynamic(() => import('@/components/landing/FloatingNav'), { ssr: false })
 const FloatingCTA = dynamic(() => import('@/components/landing/FloatingCTA'), { ssr: false })
 const ExitIntentPopup = dynamic(() => import('@/components/landing/ExitIntentPopup'), { ssr: false })
@@ -42,37 +27,12 @@ export default function LandingPageClient() {
 
       <HeroSection />
 
-      <AudiencePathStrip />
-
-      <ValuePropStrip />
-
       <LandingSectionCollapseProvider>
         <FloatingNav />
 
-        <CreativeRangeSection />
-
-        <ToolStackSection />
-
-        <SimpleWalkthroughSection />
-
-        <WhySceneFlowSection />
-
-        <OneTakePipelineSection />
-
-        <ExtendedScenesSection />
-
-        <TrustSafeguardSection />
-
+        <PipelinePillarsSection />
         <UseCasesSection />
-
-        <CoreCapabilitiesSection />
-
-        <PreVisEngineSection />
-
-        <FeatureStoryboardSection />
-
-        <EngineeringTrust />
-
+        <HowItWorksSteps />
         <PricingCredits />
       </LandingSectionCollapseProvider>
 

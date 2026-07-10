@@ -4,7 +4,8 @@
     "description": "Transform your ideas into professional videos with AI-powered workflow automation"
   },
   "nav": {
-    "workflow": "The Workflow",
+    "workflow": "How It Works",
+    "pipeline": "The Pipeline",
     "platformWalkthrough": "Platform Walkthrough",
     "plansPricing": "Plans & Pricing",
     "more": "More",
@@ -23,20 +24,17 @@
     "noLanguagesFound": "No languages found"
   },
   "floatingNav": {
-    "compare": "Compare",
-    "looksAndFormats": "Looks & Formats",
+    "pipeline": "Pipeline",
     "howItWorks": "How It Works",
     "useCases": "Use Cases",
-    "preVisEngine": "Pre-Vis Engine",
-    "platformWalkthrough": "Platform Walkthrough",
-    "trustSafety": "Trust & Safety",
-    "platform": "Platform",
     "pricing": "Pricing"
   },
   "hero": {
-    "headline": "Envision the story. SceneFlow handles the pipeline.",
-    "subheadline": "Move past tedious prompting. Focus entirely on your creative intent with an automated, professional-grade production workflow.",
+    "headline": "Envision the Story. SceneFlow Handles the Pipeline.",
+    "subheadline": "Move past tedious clip-by-clip prompting. Focus entirely on your creative intent with an automated studio built for long-form, multi-language video series.",
     "audienceMicroLine": "Built for creators who want results, and teams who want to see how it works.",
+    "ctaPrimaryLaunch": "Launch Your Studio ($9)",
+    "ctaWatchWalkthrough": "Watch Walkthrough",
     "ctaSecondary": "Watch the 'What's Possible'",
     "ctaToolStack": "See how it replaces your tool stack",
     "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
@@ -75,6 +73,98 @@
       }
     },
     "soon": "Soon"
+  },
+  "pipeline": {
+    "badge": "What is SceneFlow?",
+    "title": "The 3-Pillar Pipeline Architecture",
+    "subtitle": "A single concept scales into a complete studio pipeline — from universe building to publish-ready video.",
+    "pillars": [
+      {
+        "number": "01",
+        "title": "Series Generation",
+        "header": "Build a Universe, Not a Clip",
+        "body": "Start with a core concept, story arc, or production treatment. SceneFlow spins up an episodic structure with a Shared Reference Library, locking in character continuity, environmental assets, and overarching storylines across your entire season."
+      },
+      {
+        "number": "02",
+        "title": "Creative Blueprint",
+        "header": "Your Creative DNA, Locked In",
+        "body": "Generate a deep film treatment for script and character review. Includes built-in Audience Resonance Analysis to flag pacing drops, optimize your dialogue hooks, and recommend narrative improvements before you ever click render."
+      },
+      {
+        "number": "03",
+        "title": "Guided Production",
+        "header": "Multi-Engine Automation",
+        "body": "Run lightning-fast concurrent generations. From automated script translation to Express Audio, Express Scene Beat Frames, and high-fidelity 4s to 15s Express Video beats—all flowing directly into the interactive Screening Room player in under 30 minutes."
+      }
+    ]
+  },
+  "screeningRoom": {
+    "badge": "Interactive Screening Room — Animatic Preview Available",
+    "languagePrompt": "Hear the pipeline in your target market:",
+    "languages": [
+      { "id": "en", "label": "English", "flag": "🇺🇸" },
+      { "id": "es", "label": "Español", "flag": "🇪🇸" },
+      { "id": "pt", "label": "Português", "flag": "🇧🇷" },
+      { "id": "hi", "label": "हिन्दी", "flag": "🇮🇳" },
+      { "id": "zh", "label": "中文", "flag": "🇨🇳" }
+    ],
+    "steps": [
+      { "id": "concept", "label": "Concept & Script Optimization" },
+      { "id": "animatic", "label": "30-Min Animatic Review" },
+      { "id": "video", "label": "Full Motion Express Video Renders" }
+    ],
+    "previewLabel": "Preview"
+  },
+  "guidedSteps": {
+    "badge": "How It Works",
+    "title": "Seven Guided Steps",
+    "subtitle": "From concept to publish — clear milestones, no information overload.",
+    "steps": [
+      { "label": "Concept", "body": "Input your idea, script outline, or documentation." },
+      { "label": "Blueprint", "body": "Lock in style, asset reference continuity, and tone." },
+      { "label": "Optimize", "body": "Run Audience Resonance checks to perfect narrative delivery." },
+      { "label": "Pre-Vis", "body": "Generate fully-voiced, timed storyboards automatically." },
+      { "label": "Screening Room", "body": "Play the 30-minute interactive animatic; review and edit beats off-canvas." },
+      { "label": "Shoot Scene Video", "body": "Convert approved pre-vis beats into high-fidelity motion (4s to 15s beats)." },
+      { "label": "Publish", "body": "Master your distribution bundle and auto-publish to YouTube and your favorite networks." }
+    ]
+  },
+  "useCasesShowcase": {
+    "badge": "Who is SceneFlow For?",
+    "title": "Who is SceneFlow For?",
+    "subtitle": "One automated pipeline — tailored to how you produce video.",
+    "cta": "Launch Your Studio ($9)",
+    "personas": [
+      {
+        "id": "youtubeCreator",
+        "label": "The YouTube Creator",
+        "headline": "Scale to Serialized Cinematic Universes",
+        "description": "Move from fragmented video editing tools to an automated pipeline. Keep characters locked, pacing high, and output consistent week-over-week.",
+        "screeningRoomPreview": "Sci-Fi Anthology: Echoes of 2150"
+      },
+      {
+        "id": "startupProvider",
+        "label": "The Startup Provider",
+        "headline": "Turn Video Production into a Scalable Business",
+        "description": "Deliver complete, localized business and educational video suites to local schools and small businesses who don't have the internal staff or massive agency budgets.",
+        "screeningRoomPreview": "The Fractional Agency Model - Client Asset Bundle"
+      },
+      {
+        "id": "enterprise",
+        "label": "Enterprise & Institutions",
+        "headline": "Automate Complex In-House Training Stacks",
+        "description": "Keep corporate branding, messaging, and training materials perfectly compliant. Let internal HR or instructional design teams spin up modules in minutes instead of paying slow vendor cycles.",
+        "screeningRoomPreview": "Global Cybersecurity Compliance Onboarding"
+      },
+      {
+        "id": "educator",
+        "label": "The Educator",
+        "headline": "Turn Text Curriculum Into Localized Video",
+        "description": "Transform dense chapters into visually engaging, narrative lessons. Instantly match local student demographics with multi-language native audio options.",
+        "screeningRoomPreview": "Interactive Chronicles: The Renaissance Workshop"
+      }
+    ]
   },
   "valueProp": {
     "pills": [
@@ -1537,9 +1627,16 @@
     "closePopup": "Close popup"
   },
   "pricing": {
-    "badge": "Usage-Based Pricing",
-    "title": "Pay for What You Create",
-    "subtitle": "One base plan for platform access. Credits for AI generation. Top up when you need more. Full control, zero waste.",
+    "badge": "Simple Pricing",
+    "title": "Start with Explorer — $9",
+    "subtitle": "Test the full pipeline with a frictionless entry point. Scale when you're ready.",
+    "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
+    "trustBadges": [
+      "Google Cloud infrastructure",
+      "Vertex AI generation",
+      "Secure payments via Whop",
+      "14-day money-back guarantee"
+    ],
     "valueAnchor": {
       "traditionalCost": "$2,000+",
       "traditionalLabel": "Traditional pre-vis",
