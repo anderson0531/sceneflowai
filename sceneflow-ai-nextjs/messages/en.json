@@ -80,18 +80,24 @@
     "subtitle": "A single concept scales into a complete studio pipeline — from universe building to publish-ready video.",
     "pillars": [
       {
+        "id": "series",
+        "tabLabel": "Series",
         "number": "01",
         "title": "Series Generation",
         "header": "Build a Universe, Not a Clip",
         "body": "Start with a core concept, story arc, or production treatment. SceneFlow spins up an episodic structure with a Shared Reference Library, locking in character continuity, environmental assets, and overarching storylines across your entire season."
       },
       {
+        "id": "blueprint",
+        "tabLabel": "Blueprint",
         "number": "02",
         "title": "Creative Blueprint",
         "header": "Your Creative DNA, Locked In",
         "body": "Generate a deep film treatment for script and character review. Includes built-in Audience Resonance Analysis to flag pacing drops, optimize your dialogue hooks, and recommend narrative improvements before you ever click render."
       },
       {
+        "id": "production",
+        "tabLabel": "Production",
         "number": "03",
         "title": "Guided Production",
         "header": "Multi-Engine Automation",
