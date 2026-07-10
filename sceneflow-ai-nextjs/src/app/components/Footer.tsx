@@ -15,10 +15,10 @@ export function Footer() {
     product: [
       { name: t('links.features'), href: '#features' },
       { name: t('links.pricing'), href: '#pricing' },
-      { name: t('links.howItWorks'), href: '#how-it-works' },
+      { name: t('links.howItWorks'), href: '#pipeline' },
     ],
     resources: [
-      { name: t('links.gettingStarted'), href: '#how-it-works' },
+      { name: t('links.gettingStarted'), href: '#pipeline' },
       { name: t('links.pricing'), href: '#pricing' },
     ],
     legal: [

@@ -7,7 +7,6 @@ export const LANDING_SECTION_COLLAPSE_COPY = {
 export const COLLAPSIBLE_LANDING_SECTION_IDS = [
   'pipeline',
   'use-cases',
-  'how-it-works',
   'pricing',
 ] as const
 
@@ -17,6 +16,6 @@ export type CollapsibleLandingSectionId = (typeof COLLAPSIBLE_LANDING_SECTION_ID
 export const LANDING_HASH_TO_SECTION: Record<string, CollapsibleLandingSectionId> = {
   pipeline: 'pipeline',
   'use-cases': 'use-cases',
-  'how-it-works': 'how-it-works',
+  'how-it-works': 'pipeline',
   pricing: 'pricing',
 }

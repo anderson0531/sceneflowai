@@ -19,7 +19,7 @@ export function StepImagePlaceholder({
   alt,
   className,
 }: StepImagePlaceholderProps) {
-  const t = useTranslations('guidedSteps.ui')
+  const t = useTranslations('pipeline.ui')
   const media = getGuidedStepMedia(stepId)
   const imageUrl = media.imageUrl
 
