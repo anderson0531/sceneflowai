@@ -78,6 +78,11 @@
     "badge": "What is SceneFlow?",
     "title": "The 3-Pillar Pipeline Architecture",
     "subtitle": "A single concept scales into a complete studio pipeline — from universe building to publish-ready video.",
+    "ui": {
+      "expandFullscreen": "View fullscreen",
+      "closeFullscreen": "Close",
+      "landscapeHint": "Rotate your device for a wider landscape view"
+    },
     "pillars": [
       {
         "id": "series",
