@@ -44,6 +44,7 @@ import {
   ensureSceneBeats,
   getSceneBeats,
   isBeatFirstPipelineEnabled,
+  reconcileSceneBeatsFromScript,
   resolveRawBeatIndex,
 } from '@/lib/script/beatMigration'
 import type { BeatReferenceSelection } from '@/lib/script/segmentTypes'
@@ -10126,14 +10127,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   // Background direction generator - runs silently after scene edits/optimization
   // Does NOT use the blocking overlay, just shows toast notifications
-  const handleBackgroundDirectionGeneration = async (sceneIdx: number) => {
+  const handleBackgroundDirectionGeneration = async (sceneIdx: number, sceneOverride?: any) => {
     // Guard: skip if already generating direction for this scene
     if (backgroundDirectionInFlight.current.has(sceneIdx) || generatingDirectionFor === sceneIdx) {
       console.log(`[AutoDirection] Skipping Scene ${sceneIdx + 1} - already generating`)
       return
     }
     
-    const scene = script?.script?.scenes?.[sceneIdx]
+    const scene = sceneOverride ?? script?.script?.scenes?.[sceneIdx]
     if (!scene) return
     
     backgroundDirectionInFlight.current.add(sceneIdx)
@@ -11381,9 +11382,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
     }
     
-    // Force re-segmentation only when beats/frames are not preserved.
+    // Force re-segmentation and beat reconciliation when beats/frames are not preserved.
     if (!shouldSkipBeatRederivation(preserveElements)) {
       cleanedScene.segments = undefined
+      cleanedScene = reconcileSceneBeatsFromScript(cleanedScene, originalScene)
     }
     updatedScenes[sceneIndex] = cleanedScene
 
@@ -11463,7 +11465,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Auto-regenerate scene direction unless direction is preserved
       if (shouldRegenerateSceneDirection(preserveElements)) {
         console.log(`[AutoDirection] Scene ${sceneIndex + 1} edited - triggering background direction regeneration`)
-        handleBackgroundDirectionGeneration(sceneIndex)
+        handleBackgroundDirectionGeneration(sceneIndex, persistedScenes[sceneIndex])
       } else {
         console.log(`[AutoDirection] Scene ${sceneIndex + 1} edited - skipping direction regeneration (preserved)`)
       }
@@ -14116,14 +14118,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           characters={characters}
           previousScene={editingSceneIndex > 0 ? script.script.scenes[editingSceneIndex - 1] : undefined}
           nextScene={editingSceneIndex < script.script.scenes.length - 1 ? script.script.scenes[editingSceneIndex + 1] : undefined}
-          script={{
-            title: script.title,
-            logline: script.logline,
-            scenes: script.script.scenes,
-            characters: characters
-          }}
           onApplyChanges={handleApplySceneChanges}
-          onUpdateSceneScores={handleUpdateSceneScores}
           initialInstructions={sceneEditorInitialInstructions}
         />
       )}

@@ -130,7 +130,7 @@ export function InstructionsPanel({
             Common Revisions
           </h3>
           <span className="text-xs text-gray-500 dark:text-gray-400">
-            {instructionCount}/{maxInstructions} instructions
+            {instructionCount}/{maxInstructions} directions
           </span>
         </div>
         <div className="grid grid-cols-2 gap-2">
@@ -168,12 +168,12 @@ export function InstructionsPanel({
         )}
       </div>
 
-      {/* Custom Instruction */}
+      {/* Direction */}
       <div>
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-semibold flex items-center gap-1">
             <Edit className="w-4 h-4 text-green-600" />
-            Custom Instructions
+            Direction
           </h3>
           {instructionCount > 0 && (
             <Button
@@ -190,30 +190,31 @@ export function InstructionsPanel({
         <DictationTextarea
           value={instruction}
           onChange={onInstructionChange}
-          placeholder="Click buttons above to add instructions, or type custom ones here...
+          placeholder="Describe how to revise this scene — dialogue, pacing, narration, visuals, music...
 
-Instructions are automatically numbered for clarity:
-1. First instruction
-2. Second instruction
-3. Third instruction"
+Use the buttons above to add direction, or speak using the microphone.
+
+Numbered directions are supported:
+1. First change
+2. Second change"
           className="min-h-[180px] text-sm"
           rows={8}
         />
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-          Combine up to {maxInstructions} instructions per revision for efficient editing. More specific = better results.
+          Combine up to {maxInstructions} directions per revision. More specific = better results.
         </p>
       </div>
 
       {/* Tips */}
       <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
         <h4 className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-2">
-          💡 Multi-Instruction Tips
+          Direction tips
         </h4>
         <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
-          <li>• Combine related changes in one revision</li>
-          <li>• Use Common Revisions buttons to build instructions</li>
-          <li>• Use "Apply Recommendations" from scene analysis for targeted fixes</li>
-          <li>• {maxInstructions} instructions per update is optimal for quality</li>
+          <li>• Describe what should change — dialogue, beats, narration, or visuals</li>
+          <li>• Use Common Revisions buttons to build direction quickly</li>
+          <li>• Use scene recommendations for targeted fixes</li>
+          <li>• {maxInstructions} directions per update is optimal for quality</li>
         </ul>
       </div>
     </div>

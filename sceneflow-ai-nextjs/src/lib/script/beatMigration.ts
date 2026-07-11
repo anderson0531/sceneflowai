@@ -1117,6 +1117,61 @@ export function reconcileBeatsWithScriptContent(
   return { beats: normalized, priorFingerprints, newFingerprints }
 }
 
+function beatFingerprintChanged(
+  beat: SceneBeat,
+  priorFingerprints: Map<string, string>,
+  newFingerprints: Map<string, string>
+): boolean {
+  const prior = priorFingerprints.get(beat.beatId)
+  const next = newFingerprints.get(beat.beatId)
+  if (prior === undefined || next === undefined) return true
+  return prior !== next
+}
+
+function clearBeatStoryboardFrames(beat: SceneBeat): SceneBeat {
+  const next = { ...beat }
+  delete next.storyboardImageUrl
+  delete next.storyboardImageGcsPath
+  delete next.storyboardImagePrompt
+  delete next.storyboardImageTier
+  delete next.storyboardEndImageUrl
+  delete next.storyboardEndImageGcsPath
+  delete next.storyboardEndImagePrompt
+  delete next.storyboardEndImageTier
+  return next
+}
+
+/**
+ * After a scene edit, align beats[] with revised flat script fields and clear
+ * storyboard frames for beats whose content changed.
+ */
+export function reconcileSceneBeatsFromScript(
+  scene: Record<string, unknown>,
+  originalScene: Record<string, unknown>
+): Record<string, unknown> {
+  const { beats, priorFingerprints, newFingerprints } = reconcileBeatsWithScriptContent(scene)
+  let working = applyBeatsToScene(scene, beats)
+
+  const updatedBeats = getSceneBeats(working).map((beat) => {
+    if (!beatFingerprintChanged(beat, priorFingerprints, newFingerprints)) {
+      return beat
+    }
+    return clearBeatStoryboardFrames(beat)
+  })
+  working = applyBeatsToScene(working, updatedBeats)
+
+  const priorAction = String(originalScene.action ?? originalScene.visualDescription ?? '').trim()
+  const nextAction = String(working.action ?? working.visualDescription ?? '').trim()
+  if (priorAction !== nextAction || !priorFingerprints.size) {
+    delete working.imageUrl
+    delete working.imageGcsPath
+    delete working.imagePrompt
+    delete working.imageGeneratedAt
+  }
+
+  return working
+}
+
 export function getSceneBeats(scene: Record<string, unknown> | null | undefined): SceneBeat[] {
   if (!scene) return []
   const beats =
