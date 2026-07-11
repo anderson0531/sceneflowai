@@ -16,7 +16,8 @@ export function getMaxReferenceImagesForTier(tier: VertexImageTier): number {
 }
 
 /**
- * Auto-upgrade eco to designer when multi-character or ref count exceeds the eco cap.
+ * Auto-upgrade eco to designer when any reference images are needed.
+ * Reference-bearing generations use gemini-3-pro-image-preview (14 refs), not eco (3 refs).
  */
 export function resolveEffectiveImageTier(args: {
   modelTier?: VertexImageTier
@@ -26,8 +27,7 @@ export function resolveEffectiveImageTier(args: {
   const baseTier = args.modelTier ?? 'designer'
   if (
     baseTier === 'eco' &&
-    (args.distinctCharacterCount >= 2 ||
-      args.totalWantedRefs > getMaxReferenceImagesForTier('eco'))
+    (args.totalWantedRefs > 0 || args.distinctCharacterCount >= 1)
   ) {
     return 'designer'
   }

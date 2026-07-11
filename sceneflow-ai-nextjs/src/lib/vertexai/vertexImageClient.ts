@@ -14,6 +14,7 @@ import {
   type ImagenQualityTier,
 } from '@/lib/config/modelConfig'
 import { getGeminiSafetyThreshold } from '@/lib/vertexai/safety'
+import { MAX_REFERENCE_IMAGES_ECO } from '@/lib/vision/referenceLimits'
 
 export type VertexImageTier = 'eco' | 'designer' | 'director'
 export type VertexThinkingLevel = 'low' | 'high'
@@ -30,6 +31,14 @@ const MAX_RETRIES = 3
 const INITIAL_RETRY_DELAY_MS = 2000
 const MAX_RETRY_DELAY_MS = 10_000
 const REQUEST_TIMEOUT_MS = 90_000
+
+function referenceCountExceedsEcoCap(referenceImages?: VertexReferenceImage[]): boolean {
+  return (referenceImages?.length ?? 0) > MAX_REFERENCE_IMAGES_ECO
+}
+
+function canFallbackToEcoTier(options: GenerateVertexImageOptions): boolean {
+  return !referenceCountExceedsEcoCap(options.referenceImages)
+}
 
 async function sleepWithBackoff(attempt: number): Promise<void> {
   const delay = Math.min(INITIAL_RETRY_DELAY_MS * 2 ** attempt, MAX_RETRY_DELAY_MS)
@@ -127,7 +136,10 @@ export async function generateVertexGeminiImage(
 ): Promise<VertexImageResult> {
   const tier = options.modelTier || 'designer'
   const useFlashFallback =
-    tier !== 'eco' && proModelRateLimitedUntil != null && Date.now() < proModelRateLimitedUntil
+    tier !== 'eco' &&
+    canFallbackToEcoTier(options) &&
+    proModelRateLimitedUntil != null &&
+    Date.now() < proModelRateLimitedUntil
 
   let model: string
   if (tier === 'eco' || useFlashFallback) {
@@ -197,12 +209,17 @@ export async function generateVertexGeminiImage(
   } catch (error) {
     clearTimeout(timeoutId)
     if (error instanceof Error && error.name === 'AbortError') {
-      if (model.includes('pro-image')) {
+      if (model.includes('pro-image') && canFallbackToEcoTier(options)) {
         console.warn(
           `[Vertex Gemini Image] ${model} timed out after ${REQUEST_TIMEOUT_MS}ms, falling back to ${GEMINI_IMAGE_TIER_CONFIG.eco.model}`
         )
         proModelRateLimitedUntil = Date.now() + RATE_LIMIT_COOLDOWN_MS
         return generateVertexGeminiImage({ ...options, modelTier: 'eco' }, 0)
+      }
+      if (model.includes('pro-image') && referenceCountExceedsEcoCap(options.referenceImages)) {
+        console.warn(
+          `[Vertex Gemini Image] ${model} timed out with ${options.referenceImages?.length ?? 0} refs (exceeds eco cap ${MAX_REFERENCE_IMAGES_ECO}); retrying pro model`
+        )
       }
       if (retryCount < MAX_RETRIES) {
         await sleepWithBackoff(retryCount)
@@ -230,12 +247,22 @@ export async function generateVertexGeminiImage(
     if (
       response.status === 404 &&
       model !== GEMINI_IMAGE_TIER_CONFIG.eco.model &&
-      (errorText.includes('NOT_FOUND') || errorText.includes('not found'))
+      (errorText.includes('NOT_FOUND') || errorText.includes('not found')) &&
+      canFallbackToEcoTier(options)
     ) {
       console.warn(
         `[Vertex Gemini Image] Model ${model} unavailable (404), falling back to ${GEMINI_IMAGE_TIER_CONFIG.eco.model}`
       )
       return generateVertexGeminiImage({ ...options, modelTier: 'eco' }, 0)
+    }
+    if (
+      response.status === 404 &&
+      model.includes('pro-image') &&
+      referenceCountExceedsEcoCap(options.referenceImages)
+    ) {
+      console.warn(
+        `[Vertex Gemini Image] Model ${model} unavailable (404) with ${options.referenceImages?.length ?? 0} refs; cannot fall back to eco (cap ${MAX_REFERENCE_IMAGES_ECO})`
+      )
     }
     if (response.status === 503 && retryCount < MAX_RETRIES) {
       await sleepWithBackoff(retryCount)

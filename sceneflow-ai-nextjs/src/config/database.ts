@@ -22,6 +22,8 @@ function parseGoogleServiceAccountJson(raw: string): Record<string, unknown> {
 }
 
 function ensureGoogleApplicationCredentialsFile(): void {
+  // Optional legacy path: connector uses inline credentials from cloudSqlDriverOptions.ts.
+  // Writing to /tmp is best-effort only (Vercel /tmp is limited; ENOSPC must not block DB).
   if (process.env.GOOGLE_APPLICATION_CREDENTIALS || !process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON?.trim()) {
     return
   }
@@ -32,8 +34,11 @@ function ensureGoogleApplicationCredentialsFile(): void {
     const credPath = join(dir, 'application_default_credentials.json')
     writeFileSync(credPath, JSON.stringify(credentials), { mode: 0o600 })
     process.env.GOOGLE_APPLICATION_CREDENTIALS = credPath
-  } catch {
-    /* fall back to inline credentials in getCloudSqlConnector */
+  } catch (error) {
+    console.warn(
+      '[database] Skipped writing GCP credentials to /tmp (connector uses inline auth):',
+      error instanceof Error ? error.message : error
+    )
   }
 }
 

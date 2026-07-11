@@ -37,7 +37,7 @@ describe('referenceLimits', () => {
     expect(getMaxReferenceImagesForTier('director')).toBe(14)
   })
 
-  it('resolveEffectiveImageTier upgrades eco for multi-character or over-budget refs', () => {
+  it('resolveEffectiveImageTier upgrades eco whenever any reference is wanted', () => {
     expect(
       resolveEffectiveImageTier({
         modelTier: 'eco',
@@ -57,6 +57,20 @@ describe('referenceLimits', () => {
         modelTier: 'eco',
         distinctCharacterCount: 1,
         totalWantedRefs: 3,
+      })
+    ).toBe('designer')
+    expect(
+      resolveEffectiveImageTier({
+        modelTier: 'eco',
+        distinctCharacterCount: 1,
+        totalWantedRefs: 1,
+      })
+    ).toBe('designer')
+    expect(
+      resolveEffectiveImageTier({
+        modelTier: 'eco',
+        distinctCharacterCount: 0,
+        totalWantedRefs: 0,
       })
     ).toBe('eco')
     expect(

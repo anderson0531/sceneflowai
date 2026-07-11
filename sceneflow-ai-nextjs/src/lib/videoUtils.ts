@@ -58,9 +58,10 @@ export async function extractAndStoreLastFrame(
     return null
   }
   
+  let tmpDir: string | null = null
   try {
     // Create temporary directory for processing
-    const tmpDir = path.join('/tmp', `frames_${segmentId}_${Date.now()}`)
+    tmpDir = path.join('/tmp', `frames_${segmentId}_${Date.now()}`)
     await fs.promises.mkdir(tmpDir, { recursive: true })
 
     const outputPath = path.join(tmpDir, `last_frame_${segmentId}.jpg`)
@@ -108,19 +109,19 @@ export async function extractAndStoreLastFrame(
       `segments/${segmentId}/last_frame.jpg`
     )
 
-    // Clean up temporary files
-    try {
-      await fs.promises.unlink(outputPath)
-      await fs.promises.rmdir(tmpDir)
-    } catch (cleanupError) {
-      console.warn('[Video Utils] Failed to clean up temp files:', cleanupError)
-    }
-
     console.log('[Video Utils] Last frame extracted and uploaded:', imageUrl)
     return imageUrl
   } catch (error) {
     console.error('[Video Utils] Error extracting last frame:', error)
     return null
+  } finally {
+    if (tmpDir) {
+      try {
+        await fs.promises.rm(tmpDir, { recursive: true, force: true })
+      } catch (cleanupError) {
+        console.warn('[Video Utils] Failed to clean up temp files:', cleanupError)
+      }
+    }
   }
 }
 

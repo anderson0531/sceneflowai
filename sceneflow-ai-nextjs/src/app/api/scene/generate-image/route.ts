@@ -422,6 +422,10 @@ export async function POST(req: NextRequest) {
     console.log('[Scene Image] DEBUG - selectedCharacters[0]:', characterObjects[0] ? JSON.stringify(characterObjects[0]).substring(0, 200) : 'none')
     console.log('[Scene Image] DEBUG - projectId:', projectId)
 
+    const clientVerifiedBeatRefs =
+      body.characterSelectionExplicit === true && skipObjectAutoDetection === true
+    const honorExplicitChars = clientVerifiedBeatRefs && characterObjects.length > 0
+
     let effectiveBeatIndex =
       isBeatFrame && typeof beatIndex === 'number' && beatIndex >= 0 ? beatIndex : -1
     let effectiveCharacterWardrobes = characterWardrobes
@@ -551,12 +555,14 @@ export async function POST(req: NextRequest) {
           (sceneIndex ?? 0) + 1,
           scenesForType.length
         )
-      if (storyboardNoCharacterScene) {
+      if (storyboardNoCharacterScene && !honorExplicitChars) {
         effectiveExcludeCharacters = true
         characterObjects = []
         characterSelectionExplicit = true
         characterArray = []
         console.log('[Scene Image] Title/credits/no-talent scene — excluding character references')
+      } else if (storyboardNoCharacterScene) {
+        console.log('[Scene Image] Title/no-talent scene but honoring explicit character selection')
       }
       console.log('[Scene Image] DEBUG - characters in project:', allCharacters.length)
       console.log('[Scene Image] DEBUG - characters from DB:', allCharacters.map((c: any) => ({
@@ -629,8 +635,6 @@ export async function POST(req: NextRequest) {
             }
           }
         } else if (isBeatFrame && resolvedScene) {
-          const clientVerifiedBeatRefs =
-            body.characterSelectionExplicit === true && skipObjectAutoDetection === true
           if (!clientVerifiedBeatRefs) {
             characterSelectionExplicit = true
           }
@@ -638,7 +642,7 @@ export async function POST(req: NextRequest) {
           const beat = beats[effectiveBeatIndex]
           if (beat) {
             beatKindForIntelligence = beat.kind
-            if (storyboardNoCharacterScene) {
+            if (storyboardNoCharacterScene && !honorExplicitChars) {
               if (!clientVerifiedBeatRefs) characterObjects = []
               if (beat.kind === 'action') {
                 const actionText = beat.actionDescription?.trim() || ''

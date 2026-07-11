@@ -1,7 +1,5 @@
-import { mkdirSync, writeFileSync } from 'fs'
-import { join } from 'path'
-import { tmpdir } from 'os'
 import { Connector, IpAddressTypes } from '@google-cloud/cloud-sql-connector'
+import { GoogleAuth } from 'google-auth-library'
 
 let connector: Connector | null = null
 
@@ -25,29 +23,33 @@ function getGoogleCredentialsJson(): string | null {
   return raw || null
 }
 
-/** Writes SA JSON to a temp file so @google-cloud/cloud-sql-connector can authenticate. */
-function ensureGoogleApplicationCredentialsFile(): void {
+function createConnectorAuth(): GoogleAuth | undefined {
   if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-    return
+    return undefined
   }
   const raw = getGoogleCredentialsJson()
   if (!raw) {
-    throw new Error(
-      'GOOGLE_APPLICATION_CREDENTIALS_JSON or GCP_SERVICE_ACCOUNT_KEY is required for Cloud SQL'
-    )
+    return undefined
   }
   const credentials = parseGoogleServiceAccountJson(raw)
-  const dir = join(tmpdir(), 'sceneflow-gcp')
-  mkdirSync(dir, { recursive: true })
-  const credPath = join(dir, 'application_default_credentials.json')
-  writeFileSync(credPath, JSON.stringify(credentials), { mode: 0o600 })
-  process.env.GOOGLE_APPLICATION_CREDENTIALS = credPath
+  return new GoogleAuth({
+    credentials,
+    scopes: ['https://www.googleapis.com/auth/sqlservice.admin'],
+  })
 }
 
 function getConnector(): Connector {
   if (!connector) {
-    ensureGoogleApplicationCredentialsFile()
-    connector = new Connector()
+    const auth = createConnectorAuth()
+    if (!auth && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+      const raw = getGoogleCredentialsJson()
+      if (!raw) {
+        throw new Error(
+          'GOOGLE_APPLICATION_CREDENTIALS_JSON or GCP_SERVICE_ACCOUNT_KEY is required for Cloud SQL'
+        )
+      }
+    }
+    connector = auth ? new Connector({ auth }) : new Connector()
   }
   return connector
 }
