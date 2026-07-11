@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Mic, Square } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Textarea } from '@/components/ui/textarea'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 
 interface DictationTextareaProps {
@@ -22,6 +23,7 @@ export function DictationTextarea({
 }: DictationTextareaProps) {
   const {
     supported: sttSupported,
+    isSecure,
     isRecording,
     transcript,
     error: micError,
@@ -30,33 +32,41 @@ export function DictationTextarea({
     setTranscript,
   } = useSpeechRecognition()
 
+  const baseRef = useRef('')
+
   useEffect(() => {
-    if (!isRecording && transcript && transcript !== value) {
-      onChange(transcript)
-    }
-  }, [isRecording, transcript, onChange, value])
+    if (!transcript) return
+    const base = baseRef.current.trim()
+    onChange(base ? `${base} ${transcript}` : transcript)
+  }, [transcript, onChange])
 
   const handleMicClick = () => {
+    if (!sttSupported || !isSecure) return
+
     if (isRecording) {
       stop()
-      if (transcript) onChange(transcript)
+      baseRef.current = value
+      setTranscript('')
     } else {
-      setTranscript(value)
+      baseRef.current = value
+      setTranscript('')
       start()
     }
   }
 
+  const showMic = sttSupported && isSecure
+
   return (
-    <div className={cn('flex flex-col gap-1.5', className)}>
+    <div className="flex flex-col gap-1.5">
       <div className="relative">
-        <textarea
+        <Textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           rows={rows}
-          className="w-full bg-gray-800 border border-gray-700 rounded-md p-3 pr-10 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none min-h-[120px]"
+          className={cn('pr-10 resize-none', className)}
         />
-        {sttSupported && (
+        {showMic && (
           <button
             type="button"
             onClick={handleMicClick}
@@ -65,7 +75,7 @@ export function DictationTextarea({
               'absolute right-2 top-2 p-1.5 rounded-md transition-colors',
               isRecording
                 ? 'bg-red-600 text-white animate-pulse'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
             )}
           >
             {isRecording ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
@@ -73,10 +83,12 @@ export function DictationTextarea({
         )}
       </div>
       {isRecording && (
-        <p className="text-xs text-emerald-400">Listening… speak your feedback, then tap stop.</p>
+        <p className="text-xs text-emerald-600 dark:text-emerald-400">
+          Listening… speak your instructions, then tap stop.
+        </p>
       )}
       {micError && !isRecording && (
-        <p className="text-xs text-amber-400">Microphone: {micError}</p>
+        <p className="text-xs text-amber-600 dark:text-amber-400">Microphone: {micError}</p>
       )}
     </div>
   )

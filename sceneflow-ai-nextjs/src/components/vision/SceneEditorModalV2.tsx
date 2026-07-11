@@ -4,12 +4,11 @@ import { useState, useEffect, useCallback } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { Loader, Eye, Check, Undo, Redo, Sparkles, Mic, MicOff, Volume2, X } from 'lucide-react'
+import { Loader, Eye, Check, Undo, Redo, Sparkles, Volume2, X } from 'lucide-react'
 import { InstructionsPanel } from './InstructionsPanel'
 import { PreviewPanel } from './PreviewPanel'
 import { CurrentScenePanel } from './CurrentScenePanel'
 import { SceneComparisonPanel } from './SceneComparisonPanel'
-import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { useOverlayStore } from '@/store/useOverlayStore'
 import type { PreserveElement } from '@/lib/audio/cleanupAudio'
 import {
@@ -128,21 +127,6 @@ export function SceneEditorModal({
     }
   }
 
-  // Voice input
-  const {
-    supported: voiceSupported,
-    isSecure,
-    isRecording,
-    transcript,
-    error: voiceError,
-    start: startRecording,
-    stop: stopRecording,
-    setTranscript,
-    permission: micPermission
-  } = useSpeechRecognition()
-  
-  const [baseInstruction, setBaseInstruction] = useState('')
-
   const syncSceneDescriptionFrom = useCallback((candidate?: any) => {
     if (candidate && typeof candidate.visualDescription === 'string') {
       setSceneDescription(candidate.visualDescription)
@@ -172,23 +156,6 @@ export function SceneEditorModal({
       setDeselectedChanges(new Set())
     }
   }, [isOpen, scene, initialInstructions])
-
-  // Handle voice transcript updates
-  useEffect(() => {
-    if (transcript) {
-      setCustomInstruction(baseInstruction + (baseInstruction ? ' ' : '') + transcript)
-    }
-  }, [transcript, baseInstruction])
-
-  const handleVoiceToggle = () => {
-    if (isRecording) {
-      stopRecording()
-    } else {
-      setBaseInstruction(customInstruction)
-      setTranscript('')
-      startRecording()
-    }
-  }
 
   const handleGeneratePreview = async () => {
     if (!customInstruction.trim()) {
@@ -444,7 +411,7 @@ export function SceneEditorModal({
               <CurrentScenePanel scene={scene} />
             </div>
             
-            {/* Right: Instructions with Voice Input */}
+            {/* Right: Instructions */}
             <div className="overflow-y-auto">
               <div className="space-y-4">
                 <InstructionsPanel
@@ -458,65 +425,6 @@ export function SceneEditorModal({
                   canAddMoreInstructions={canAddMoreInstructions}
                 />
                 
-                {/* Voice Input Section */}
-                <div className="border-t pt-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                      <Mic className="w-4 h-4" />
-                      Voice Input
-                    </label>
-                    {voiceSupported && isSecure && micPermission !== 'denied' && (
-                      <Button
-                        variant={isRecording ? 'destructive' : 'outline'}
-                        size="sm"
-                        onClick={handleVoiceToggle}
-                        className="gap-2"
-                      >
-                        {isRecording ? (
-                          <>
-                            <MicOff className="w-4 h-4" />
-                            Stop Recording
-                          </>
-                        ) : (
-                          <>
-                            <Mic className="w-4 h-4" />
-                            Start Recording
-                          </>
-                        )}
-                      </Button>
-                    )}
-                  </div>
-                  
-                  {!voiceSupported && (
-                    <p className="text-xs text-yellow-600 dark:text-yellow-400">
-                      Voice input is not supported in this browser. Try Chrome or Edge.
-                    </p>
-                  )}
-                  {voiceSupported && !isSecure && (
-                    <p className="text-xs text-yellow-600 dark:text-yellow-400">
-                      Voice input requires HTTPS. Please use a secure connection.
-                    </p>
-                  )}
-                  {voiceSupported && isSecure && micPermission === 'denied' && (
-                    <p className="text-xs text-red-600 dark:text-red-400">
-                      Microphone permission denied. Please enable it in your browser settings.
-                    </p>
-                  )}
-                  {voiceError && (
-                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">
-                      {voiceError}
-                    </p>
-                  )}
-                  {isRecording && (
-                    <div className="flex items-center gap-2 mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                      <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-                      <span className="text-sm text-red-700 dark:text-red-300">
-                        Listening... Speak your instructions
-                      </span>
-                    </div>
-                  )}
-                </div>
-
                 {/* Preservation Options */}
                 <div className="border-t pt-4">
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">

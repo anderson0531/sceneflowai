@@ -3,7 +3,7 @@
 import { Star, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { FeedbackChipRow } from './FeedbackChipRow'
-import { DictationTextarea } from './DictationTextarea'
+import { DictationTextarea } from '@/components/ui/DictationTextarea'
 import { SceneAudienceBadge } from './SceneAudienceBadge'
 import {
   syncCommentWithTags,

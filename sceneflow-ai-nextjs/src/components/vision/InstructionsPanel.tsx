@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/Button'
-import { Textarea } from '@/components/ui/textarea'
+import { DictationTextarea } from '@/components/ui/DictationTextarea'
 import { Wand2, Edit, Zap, Heart, Eye, Target, Lightbulb, Trash2, Sparkles, Check } from 'lucide-react'
 import { 
   SCENE_OPTIMIZATION_TEMPLATES, 
@@ -187,9 +187,9 @@ export function InstructionsPanel({
             </Button>
           )}
         </div>
-        <Textarea
+        <DictationTextarea
           value={instruction}
-          onChange={(e) => onInstructionChange(e.target.value)}
+          onChange={onInstructionChange}
           placeholder="Click buttons above to add instructions, or type custom ones here...
 
 Instructions are automatically numbered for clarity:
@@ -197,6 +197,7 @@ Instructions are automatically numbered for clarity:
 2. Second instruction
 3. Third instruction"
           className="min-h-[180px] text-sm"
+          rows={8}
         />
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
           Combine up to {maxInstructions} instructions per revision for efficient editing. More specific = better results.
