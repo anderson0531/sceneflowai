@@ -42,6 +42,19 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    const initialMetadata = project.metadata || {}
+    const initialVisionPhase = initialMetadata.visionPhase || {}
+    const initialScript = initialVisionPhase.script || {}
+    const initialScriptScenes =
+      initialScript.script?.scenes || initialScript.scenes || []
+
+    if (sceneIndex < 0 || sceneIndex >= initialScriptScenes.length) {
+      return NextResponse.json(
+        { success: false, error: `Invalid scene index: ${sceneIndex}` },
+        { status: 400 }
+      )
+    }
+
     let sceneDirection
     try {
       const result = await generateSceneDirection({ scene, sceneIndex })
@@ -58,14 +71,24 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const metadata = project.metadata || {}
+    // Re-read after Gemini so we patch sceneDirection onto the latest DB snapshot,
+    // not the ~25s-stale snapshot from request start (avoids clobbering concurrent edits).
+    const fresh = await Project.findByPk(projectId)
+    if (!fresh) {
+      return NextResponse.json(
+        { success: false, error: 'Project not found after direction generation' },
+        { status: 404 }
+      )
+    }
+
+    const metadata = fresh.metadata || {}
     const visionPhase = metadata.visionPhase || {}
     const script = visionPhase.script || {}
     const scriptScenes = script.script?.scenes || script.scenes || []
 
     if (sceneIndex < 0 || sceneIndex >= scriptScenes.length) {
       return NextResponse.json(
-        { success: false, error: `Invalid scene index: ${sceneIndex}` },
+        { success: false, error: `Invalid scene index after refresh: ${sceneIndex}` },
         { status: 400 }
       )
     }
@@ -80,12 +103,13 @@ export async function POST(req: NextRequest) {
       ? { ...script, script: { ...script.script, scenes: updatedScenes } }
       : { ...script, scenes: updatedScenes }
 
-    await project.update({
+    await fresh.update({
       metadata: {
         ...metadata,
         visionPhase: {
           ...visionPhase,
           script: updatedScript,
+          scenes: updatedScenes,
         },
       },
     })

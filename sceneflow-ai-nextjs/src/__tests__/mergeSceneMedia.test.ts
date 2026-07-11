@@ -240,7 +240,7 @@ describe('mergeScenesForScriptSave media preservation', () => {
 })
 
 describe('mergeSceneArraysForPersistence', () => {
-  it('preserves beat storyboardImageUrl when express incoming scene omits it', () => {
+  it('preserves beat storyboardImageUrl when incoming omits it but beat content is unchanged', () => {
     const existing = [
       {
         id: 's2',
@@ -248,6 +248,8 @@ describe('mergeSceneArraysForPersistence', () => {
           {
             beatId: 'bt_1',
             kind: 'dialogue',
+            character: 'A',
+            line: 'Same line',
             storyboardImageUrl: 'https://example.com/saved.jpg',
           },
         ],
@@ -264,7 +266,10 @@ describe('mergeSceneArraysForPersistence', () => {
       },
     ]
     const incoming = [
-      { id: 's2', beats: [{ beatId: 'bt_1', kind: 'dialogue', line: 'Updated' }] },
+      {
+        id: 's2',
+        beats: [{ beatId: 'bt_1', kind: 'dialogue', character: 'A', line: 'Same line' }],
+      },
       {
         id: 's4',
         beats: [
@@ -284,6 +289,33 @@ describe('mergeSceneArraysForPersistence', () => {
     expect(merged.find((s: any) => s.id === 's3')?.beats[0].storyboardImageUrl).toBe(
       'https://example.com/s3.jpg'
     )
+  })
+
+  it('does not restore beat storyboardImageUrl when beat dialogue content changed', () => {
+    const existing = [
+      {
+        id: 's2',
+        beats: [
+          {
+            beatId: 'bt_1',
+            kind: 'dialogue',
+            character: 'A',
+            line: 'Old line',
+            storyboardImageUrl: 'https://example.com/saved.jpg',
+          },
+        ],
+      },
+    ]
+    const incoming = [
+      {
+        id: 's2',
+        beats: [{ beatId: 'bt_1', kind: 'dialogue', character: 'A', line: 'Updated' }],
+      },
+    ]
+
+    const merged = mergeSceneArraysForPersistence(existing, incoming)
+    expect(merged[0].beats[0].line).toBe('Updated')
+    expect(merged[0].beats[0].storyboardImageUrl).toBeUndefined()
   })
 
   it('preserves visionPhase.scenes dialogue frames when incoming legacy mirror omits them', () => {

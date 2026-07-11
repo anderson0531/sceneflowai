@@ -109,9 +109,22 @@ function mergeDialogueLineMedia(canonLine: any, incomingLine: any): any {
   return merged
 }
 
+/** Mirrors beatContentFingerprint in beatMigration.ts (inline to avoid circular imports). */
+function beatContentChanged(canonBeat: any, incomingBeat: any): boolean {
+  const norm = (b: any) =>
+    b?.kind === 'action'
+      ? `action|${(b?.actionDescription ?? '').trim()}`
+      : `${b?.kind}|${(b?.character ?? '').trim().toUpperCase()}|${(b?.line ?? '').trim()}`
+  return norm(canonBeat) !== norm(incomingBeat)
+}
+
 function mergeBeatMedia(canonBeat: any, incomingBeat: any): any {
   if (!incomingBeat) return canonBeat
   if (!canonBeat) return incomingBeat
+
+  if (beatContentChanged(canonBeat, incomingBeat)) {
+    return { ...incomingBeat }
+  }
 
   const merged = { ...incomingBeat }
   mergeMediaFields(
