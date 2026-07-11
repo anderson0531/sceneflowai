@@ -156,6 +156,41 @@ function fillDirectionDefaults(direction: any): DetailedSceneDirection {
   if (!Array.isArray(direction.segmentPromptBundle)) {
     direction.segmentPromptBundle = []
   }
+  if (!direction.performanceDirection) {
+    direction.performanceDirection = {
+      microExpressions: ['subtle facial transitions matching the emotional beat'],
+      physicalWeight: 'Natural weight and gravity in all movement',
+      emotionalTransitions: ['As scripted'],
+      subtextMotivation: 'Inner motivation aligned with dialogue and action',
+      physiologicalCues: 'Natural breathing and tension appropriate to the moment',
+    }
+  }
+  if (!direction.veoOptimization) {
+    direction.veoOptimization = {
+      subsurfaceScattering: true,
+      negativePrompts: [
+        'stiff posture',
+        'frozen expression',
+        'robotic movement',
+        'digital mask',
+        'mannequin-like',
+        'lifeless expression',
+        'mechanical motion',
+        'unnatural pose',
+      ],
+      motionQuality: 'weighted',
+      objectInteraction: 'Characters interact WITH objects, not just near them',
+      textureHints: ['realistic skin and fabric textures', 'visible material detail'],
+    }
+  }
+  if (!direction.narrativeLighting) {
+    direction.narrativeLighting = {
+      keyPracticals: ['practical lights that serve the emotional story'],
+      atmosphericElements: ['subtle atmospheric depth in the light'],
+      colorTemperatureStory: 'Color temperature reinforces the scene mood',
+      shadowNarrative: 'Shadows emphasize psychological depth',
+    }
+  }
   return direction as DetailedSceneDirection
 }
 
@@ -285,7 +320,7 @@ function buildSceneDirectionPrompt(
   }))
   const segmentPromptTimeline = buildSegmentPromptTimeline(scene)
 
-  return `You are a world-class film director and cinematographer. Your task is to generate detailed, professional-grade technical instructions for a live-action film crew based on the following scene information.
+  return `You are a world-class film director and cinematographer specializing in scene direction for AI video generation (Veo-3). Your task is to generate detailed, professional-grade technical instructions optimized for cinematic, human-like performances based on the following scene information.
 
 SCENE INFORMATION:
 ${heading ? `Heading: ${heading}\n` : ''}${charactersList}${action ? `Action: ${action}\n` : ''}${visualDescription ? `Visual Description: ${visualDescription}\n` : ''}${narration ? `Narration: ${narration}\n` : ''}${dialogueText ? `Dialogue:\n${dialogueText}\n` : ''}
@@ -303,7 +338,17 @@ For each dialogue line, provide specific, actionable performance direction that 
 5. SUBTEXT: The character's inner motivation beneath the words
 6. PHYSIOLOGICAL: Breathing patterns, swallowing, tension (e.g., "breathing becomes shallow and heavy")
 
-Generate comprehensive technical direction suitable for professional film production crews. Return ONLY valid JSON with this exact structure:
+CRITICAL QUALITY GUIDELINES (apply to every scene):
+1. Replace generic emotions (sad, happy) with transitional sequences showing the journey
+2. Add micro-expressions and physiological cues (trembling lip, shallow breathing)
+3. Include physical weight and gravity in all movement descriptions
+4. Make characters interact WITH objects, not just NEAR them
+5. Add narrative purpose to lighting choices
+6. Include subtext and motivation for all talent direction
+7. Add "subsurface scattering" keyword for realistic skin rendering during facial acting
+8. Include negative prompts to prevent stiff/mannequin-like renders
+
+Generate comprehensive technical direction suitable for professional film production and AI video generation. Return ONLY valid JSON with this exact structure:
 
 {
   "sceneDescription": "A clear, plain-language narrative summary (2-4 sentences) of what happens in this scene. Describe the intent, action, and emotional arc in accessible terms that anyone can understand without film jargon. Focus on WHO does WHAT, WHY, and how the emotional tone shifts.",
@@ -336,6 +381,26 @@ Generate comprehensive technical direction suitable for professional film produc
   "audio": {
     "priorities": "audio priorities, e.g., 'Capture clean dialogue', 'Prioritize environmental sounds', 'Silence on set'",
     "considerations": "audio considerations, e.g., 'Be aware of HVAC noise', 'Room tone needed for this location'"
+  },
+  "performanceDirection": {
+    "microExpressions": ["specific micro-expressions: 'lower lip trembles almost imperceptibly', 'eyes widen with recognition'"],
+    "physicalWeight": "description of physical weight and physics in movement",
+    "emotionalTransitions": ["emotional arc: 'Recognition → Grief → Acceptance'"],
+    "subtextMotivation": "what the character is really feeling beneath the surface",
+    "physiologicalCues": "breathing, pulse, tension visible in the body"
+  },
+  "veoOptimization": {
+    "subsurfaceScattering": true,
+    "negativePrompts": ["stiff posture", "frozen expression", "robotic movement", "mannequin-like", "lifeless expression"],
+    "motionQuality": "one of: fluid, weighted, deliberate, dynamic",
+    "objectInteraction": "how character interacts WITH objects",
+    "textureHints": ["texture and material hints for realism"]
+  },
+  "narrativeLighting": {
+    "keyPracticals": ["practical lights that tell the story"],
+    "atmosphericElements": ["visible atmospheric effects in light"],
+    "colorTemperatureStory": "how color temperature tells the emotion",
+    "shadowNarrative": "what the shadows reveal"
   },
   "dialogueTalentDirections": [
     ${dialogueLinesList

@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/Button'
 import { Loader, Eye, Check, Undo, Redo } from 'lucide-react'
 import { InstructionsPanel } from './InstructionsPanel'
 import { PreviewPanel } from './PreviewPanel'
-import { CurrentScenePanel } from './CurrentScenePanel'
 import { SceneComparisonPanel } from './SceneComparisonPanel'
 import { useOverlayStore } from '@/store/useOverlayStore'
 import type { PreserveElement } from '@/lib/audio/cleanupAudio'
@@ -288,29 +287,24 @@ export function SceneEditorModal({
         </DialogHeader>
 
         {!showPreview ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(90vh-200px)]">
-            <div className="overflow-y-auto">
-              <CurrentScenePanel scene={scene} />
-            </div>
+          <div className="h-[calc(90vh-200px)] overflow-y-auto">
+            <div className="space-y-4 max-w-3xl mx-auto">
+              <InstructionsPanel
+                instruction={customInstruction}
+                onInstructionChange={setCustomInstruction}
+                recommendations={sceneRecommendations}
+                appliedRecommendationIds={appliedRecommendationIds}
+                onApplyRecommendation={(recText, recId) => {
+                  appendInstruction(recText, recId)
+                }}
+                canAddMoreInstructions={canAddMoreInstructions}
+              />
 
-            <div className="overflow-y-auto">
-              <div className="space-y-4">
-                <InstructionsPanel
-                  instruction={customInstruction}
-                  onInstructionChange={setCustomInstruction}
-                  recommendations={sceneRecommendations}
-                  appliedRecommendationIds={appliedRecommendationIds}
-                  onApplyRecommendation={(recText, recId) => {
-                    appendInstruction(recText, recId)
-                  }}
-                  canAddMoreInstructions={canAddMoreInstructions}
-                />
-
-                <div className="border-t pt-4">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                    Preserve Elements
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  Preserve Elements
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <label className="flex items-center gap-2 text-sm cursor-pointer">
                       <input
                         type="checkbox"
@@ -361,7 +355,6 @@ export function SceneEditorModal({
                     Preserved items keep their script text, audio, direction, and frame images unchanged through the edit.
                   </p>
                 </div>
-              </div>
             </div>
           </div>
         ) : (
