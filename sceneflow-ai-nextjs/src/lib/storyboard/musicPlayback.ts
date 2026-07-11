@@ -49,6 +49,33 @@ function resolveSceneMusicUrl(scene: Record<string, unknown>): string | undefine
   return url || undefined
 }
 
+const CONTIGUOUS_FRAME_TOLERANCE_SEC = 0.05
+
+/** Group music-enabled frames into contiguous timeline runs (gaps = disabled beats). */
+export function groupContiguousMusicFrames(
+  frames: StoryboardVisualFrame[]
+): StoryboardVisualFrame[][] {
+  if (frames.length === 0) return []
+
+  const sorted = [...frames].sort((a, b) => a.startTime - b.startTime)
+  const groups: StoryboardVisualFrame[][] = []
+  let current = [sorted[0]]
+
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = current[current.length - 1]
+    const next = sorted[i]
+    const prevEnd = prev.startTime + prev.duration
+    if (next.startTime <= prevEnd + CONTIGUOUS_FRAME_TOLERANCE_SEC) {
+      current.push(next)
+    } else {
+      groups.push(current)
+      current = [next]
+    }
+  }
+  groups.push(current)
+  return groups
+}
+
 /**
  * Schedule background music aligned to beat visual frames when the scene has beats.
  * Legacy scenes without beats use one full-scene looping clip.
@@ -91,14 +118,22 @@ export function buildBeatAlignedMusicClips(
       ? Math.min(...enabledFrames.map((frame) => frame.startTime))
       : 0
 
-  for (const frame of enabledFrames) {
-    const beat = beatById.get(frame.beatId!)
+  const runs = groupContiguousMusicFrames(enabledFrames)
+
+  for (const run of runs) {
+    const first = run[0]
+    const last = run[run.length - 1]
+    const startTime = first.startTime
+    const duration = last.startTime + last.duration - startTime
+    const id =
+      runs.length === 1 && run.length > 1 ? 'music-scene' : `music-${first.beatId}`
+
     clips.push({
-      id: `music-${frame.beatId}`,
+      id,
       url: musicUrl.trim(),
-      startTime: frame.startTime,
-      duration: frame.duration,
-      trimStart: resolveMusicTrimStart(frame.startTime, musicFileDuration),
+      startTime,
+      duration,
+      trimStart: resolveMusicTrimStart(startTime, musicFileDuration),
       fadeAnchorTime,
       trackType: 'music',
       label: 'Background Music',

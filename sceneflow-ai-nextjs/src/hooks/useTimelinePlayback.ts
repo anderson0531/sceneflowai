@@ -103,6 +103,27 @@ export interface UseTimelinePlaybackReturn {
 
 const DRIFT_THRESHOLD = 0.2 // Resync audio if drifts more than 200ms
 
+/** Whether a clip should be playing at the given timeline position. */
+function isClipPlaybackActive(
+  clip: AudioClip,
+  elapsed: number,
+  sceneDuration: number
+): boolean {
+  if (elapsed < clip.startTime) return false
+
+  const clipEnd = clip.startTime + clip.duration
+  if (clip.loop && clip.trackType === 'music') {
+    // Merged scene music: keep looping for the full scene (matches FullscreenPlayer).
+    if (clip.id === 'music-scene' || clip.id === 'music') {
+      return elapsed < sceneDuration
+    }
+    // Split runs (disabled beat gap): still respect the run window.
+    return elapsed < clipEnd
+  }
+
+  return elapsed < clipEnd
+}
+
 function computeEffectiveClipVolume(
   clip: AudioClip,
   elapsed: number,
@@ -124,14 +145,13 @@ function syncAudioClipAtTime(
   audio: HTMLAudioElement,
   trackEnabled: TrackEnabled,
   trackVolumes: TrackVolumes,
-  musicIntroFade: MusicIntroFadeConfig | undefined
+  musicIntroFade: MusicIntroFadeConfig | undefined,
+  sceneDuration: number
 ): void {
   const isEnabled = trackEnabled[clip.trackType]
   const baseVolume = trackVolumes[clip.trackType]
-  const clipStart = clip.startTime
-  const clipEnd = clip.startTime + clip.duration
 
-  if (!isEnabled || elapsed < clipStart || elapsed >= clipEnd) {
+  if (!isEnabled || !isClipPlaybackActive(clip, elapsed, sceneDuration)) {
     audio.volume = 0
     return
   }
@@ -217,7 +237,8 @@ export function useTimelinePlayback({
         audio,
         currentTrackEnabled,
         currentTrackVolumes,
-        fadeConfig
+        fadeConfig,
+        sceneDurationRef.current
       )
     })
   }, [])
@@ -356,11 +377,10 @@ export function useTimelinePlayback({
         return
       }
       
-      const clipStart = clip.startTime
-      const clipEnd = clip.startTime + clip.duration
-      
-      // Check if current time is within this clip's range
-      if (elapsed >= clipStart && elapsed < clipEnd) {
+      const currentSceneDuration = sceneDurationRef.current
+
+      // Check if current time is within this clip's active window
+      if (isClipPlaybackActive(clip, elapsed, currentSceneDuration)) {
         const audioDuration = audio.duration
         const audioTime = computeClipAudioTime(clip, elapsed, audioDuration)
         

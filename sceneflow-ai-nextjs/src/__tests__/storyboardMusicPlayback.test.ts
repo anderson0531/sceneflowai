@@ -84,7 +84,7 @@ describe('resolveMusicTrimStart', () => {
 })
 
 describe('buildBeatAlignedMusicClips', () => {
-  it('emits looping clips with wrapped trimStart for each visible beat', () => {
+  it('merges contiguous music-enabled beats into one looping scene clip', () => {
     const scene = buildBeatScene()
     const { visualFrames } = buildBeatFirstPlaybackTimeline(scene, 'en', {
       [SARAH_URL]: 3,
@@ -96,22 +96,63 @@ describe('buildBeatAlignedMusicClips', () => {
       musicFileDuration: 30,
     })
 
-    const framedBeats = visualFrames.filter((frame) => frame.beatId)
-    expect(clips).toHaveLength(framedBeats.length)
-    expect(clips.every((clip) => clip.url === MUSIC_URL)).toBe(true)
-    expect(clips[0].id).toBe(`music-${visualFrames[0].beatId}`)
-    expect(clips[0].startTime).toBe(visualFrames[0].startTime)
+    const enabledFrames = visualFrames.filter((frame) => frame.beatId)
+    const firstFrame = enabledFrames[0]
+    const lastFrame = enabledFrames[enabledFrames.length - 1]
+    const expectedDuration = lastFrame.startTime + lastFrame.duration - firstFrame.startTime
+
+    expect(clips).toHaveLength(1)
+    expect(clips[0].id).toBe('music-scene')
+    expect(clips[0].url).toBe(MUSIC_URL)
+    expect(clips[0].startTime).toBe(firstFrame.startTime)
+    expect(clips[0].duration).toBe(expectedDuration)
     expect(clips[0].trimStart).toBe(
-      resolveMusicTrimStart(visualFrames[0].startTime, 30)
+      resolveMusicTrimStart(firstFrame.startTime, 30)
     )
     expect(clips[0].loop).toBe(true)
+  })
 
-    const lastClip = clips[clips.length - 1]
-    const lastFrame = visualFrames.find((frame) => frame.beatId === lastClip.id.replace('music-', ''))
-    if (lastFrame && lastFrame.startTime >= 30) {
-      expect(lastClip.trimStart).toBe(lastFrame.startTime % 30)
-      expect(lastClip.loop).toBe(true)
-    }
+  it('splits music into two clips when a middle beat disables music', () => {
+    const scene = buildBeatScene({
+      beats: [
+        {
+          beatId: 'bt_a1',
+          kind: 'action',
+          actionDescription: 'Sarah enters',
+          musicEnabled: true,
+        },
+        {
+          beatId: 'bt_a2',
+          kind: 'action',
+          actionDescription: 'Silent beat',
+          musicEnabled: false,
+        },
+        {
+          beatId: 'bt_d1',
+          kind: 'dialogue',
+          character: 'Sarah',
+          line: 'Hello.',
+          audioUrl: SARAH_URL,
+          durationSeconds: 3,
+          musicEnabled: true,
+        },
+      ],
+    })
+
+    const { visualFrames } = buildBeatFirstPlaybackTimeline(scene, 'en', {
+      [SARAH_URL]: 3,
+    })
+
+    const clips = buildBeatAlignedMusicClips(scene, visualFrames, {
+      musicUrl: MUSIC_URL,
+      sceneDuration: 20,
+      musicFileDuration: 30,
+    })
+
+    expect(clips).toHaveLength(2)
+    expect(clips[0].id).toBe('music-bt_a1')
+    expect(clips[1].id).toBe('music-bt_d1')
+    expect(clips.some((clip) => clip.id === 'music-bt_a2')).toBe(false)
   })
 
   it('skips beats with musicEnabled false', () => {
