@@ -192,6 +192,7 @@ import { isStoryboardNoCharacterScene } from '../../../../../lib/script/sceneCla
 import { resolveQuickFrameActionPrompt } from '@/lib/vision/framePromptBaseline'
 import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
 import { getEdgeVoiceConfigForResolution } from '@/lib/tts/edgeTtsVoices'
+import { backoffMsFor429Attempt, sleep } from '@/lib/tts/googleTtsRetry'
 import { v4 as uuidv4 } from 'uuid'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { useOverlayStore } from '@/store/useOverlayStore'
@@ -10574,83 +10575,110 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         return
       }
 
-      const response = await fetch('/api/vision/generate-scene-audio', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          sceneIndex: sceneIdx,
-          audioType,
-          text,
-          voiceConfig,
-          characterName,
-          dialogueIndex,
-          lineId: (dialogueLine as any)?.lineId,
-          lineKind: (dialogueLine as any)?.kind ?? (audioType === 'dialogue' ? 'dialogue' : undefined),
-          characterId: character?.id ?? (dialogueLine as any)?.characterId,
-          language: language || 'en',
-          edgeVoiceConfig,
-          characterGender,
-          // Skip server-side translation if we already have pre-translated text from stored translations
-          // This prevents double-translation (translating already-translated text)
-          skipTranslation: isPreTranslated,
-        }),
-      })
+      const MAX_CLIENT_429_RETRIES = 2
+      const audioRequestBody = {
+        projectId,
+        sceneIndex: sceneIdx,
+        audioType,
+        text,
+        voiceConfig,
+        characterName,
+        dialogueIndex,
+        lineId: (dialogueLine as any)?.lineId,
+        lineKind: (dialogueLine as any)?.kind ?? (audioType === 'dialogue' ? 'dialogue' : undefined),
+        characterId: character?.id ?? (dialogueLine as any)?.characterId,
+        language: language || 'en',
+        edgeVoiceConfig,
+        characterGender,
+        // Skip server-side translation if we already have pre-translated text from stored translations
+        // This prevents double-translation (translating already-translated text)
+        skipTranslation: isPreTranslated,
+      }
 
-      let data: Record<string, any>
-      try {
-        data = await response.json()
-      } catch {
-        throw new Error('Audio generation failed (could not read server response)')
+      let response!: Response
+      let data!: Record<string, any>
+      let retryToastId: string | number | undefined
+
+      for (let attempt = 0; attempt <= MAX_CLIENT_429_RETRIES; attempt++) {
+        if (retryToastId !== undefined) {
+          try {
+            toast.dismiss(retryToastId)
+          } catch {}
+          retryToastId = undefined
+        }
+
+        response = await fetch('/api/vision/generate-scene-audio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(audioRequestBody),
+        })
+
+        try {
+          data = await response.json()
+        } catch {
+          throw new Error('Audio generation failed (could not read server response)')
+        }
+
+        if (data.policyBlocked === true) {
+          try {
+            const tips: string[] = Array.isArray(data.tips) ? data.tips : []
+            const description =
+              tips.length > 0
+                ? tips.map((t: string, i: number) => `${i + 1}. ${t}`).join('\n')
+                : undefined
+            const characterLabel =
+              audioType === 'dialogue'
+                ? (characterName || dialogueLine?.character || 'the character')
+                : 'the narrator'
+            const rephraseInstruction =
+              `Rephrase ${characterLabel}'s line so it passes Google's text-to-speech safety filter while preserving meaning, tone, and subtext. Keep it in-character. Line: "${text}"`
+            const toastOptions: Record<string, unknown> = {
+              description,
+              duration: 16000,
+            }
+            if (data.action === 'enhance_dialogue_direct') {
+              toastOptions.action = {
+                label: 'Enhance dialogue (Direct)',
+                onClick: () => openSceneDirectWithInstruction(sceneIdx, rephraseInstruction),
+              }
+            }
+            toast.error(data.error || 'This line was blocked by speech safety filters', toastOptions)
+          } catch {}
+          return
+        }
+
+        const isRateLimited = response.status === 429 || data.rateLimited === true
+        if (isRateLimited) {
+          if (attempt < MAX_CLIENT_429_RETRIES) {
+            const delayMs = backoffMsFor429Attempt(attempt, response.headers.get('retry-after'))
+            try {
+              retryToastId = toast.loading(
+                `Speech service busy — retrying (${attempt + 1}/${MAX_CLIENT_429_RETRIES})…`
+              )
+            } catch {}
+            await sleep(delayMs)
+            continue
+          }
+
+          try {
+            const tips: string[] = Array.isArray(data.tips) ? data.tips : []
+            const description =
+              tips.length > 0
+                ? tips.map((t: string, i: number) => `${i + 1}. ${t}`).join('\n')
+                : undefined
+            toast.error(data.error || 'Speech service rate limit — try again shortly', {
+              description,
+              duration: 14000,
+            })
+          } catch {}
+          return
+        }
+
+        break
       }
 
       if (!response.ok) {
         throw new Error(data?.error || data?.details || `Audio generation failed (${response.status})`)
-      }
-
-      if (data.policyBlocked === true) {
-        try {
-          const { toast } = require('sonner')
-          const tips: string[] = Array.isArray(data.tips) ? data.tips : []
-          const description =
-            tips.length > 0
-              ? tips.map((t: string, i: number) => `${i + 1}. ${t}`).join('\n')
-              : undefined
-          const characterLabel =
-            audioType === 'dialogue'
-              ? (characterName || dialogueLine?.character || 'the character')
-              : 'the narrator'
-          const rephraseInstruction =
-            `Rephrase ${characterLabel}'s line so it passes Google's text-to-speech safety filter while preserving meaning, tone, and subtext. Keep it in-character. Line: "${text}"`
-          const toastOptions: Record<string, unknown> = {
-            description,
-            duration: 16000,
-          }
-          if (data.action === 'enhance_dialogue_direct') {
-            toastOptions.action = {
-              label: 'Enhance dialogue (Direct)',
-              onClick: () => openSceneDirectWithInstruction(sceneIdx, rephraseInstruction),
-            }
-          }
-          toast.error(data.error || 'This line was blocked by speech safety filters', toastOptions)
-        } catch {}
-        return
-      }
-
-      if (data.rateLimited === true) {
-        try {
-          const { toast } = require('sonner')
-          const tips: string[] = Array.isArray(data.tips) ? data.tips : []
-          const description =
-            tips.length > 0
-              ? tips.map((t: string, i: number) => `${i + 1}. ${t}`).join('\n')
-              : undefined
-          toast.error(data.error || 'Speech service rate limit — try again shortly', {
-            description,
-            duration: 14000,
-          })
-        } catch {}
-        return
       }
 
       if (data.success) {
