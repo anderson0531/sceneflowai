@@ -268,4 +268,42 @@ describe('structured scene revision', () => {
     expect(changes.some((key) => key.startsWith('beat:'))).toBe(false)
     expect(isStructuredBeatPreview(originalScene, { music: 'Only music changed' })).toBe(false)
   })
+
+  it('diffSceneChanges reports sceneDirection when direction summary changes', () => {
+    const candidate = {
+      ...originalScene,
+      sceneDirection: {
+        sceneDescription: 'Alex confronts the intruder with new resolve.',
+        camera: { movement: 'Handheld', shots: ['Close-Up'], angle: 'Low', lensChoice: '50mm', focus: 'Shallow' },
+        lighting: { overallMood: 'Low-Key', timeOfDay: 'Night', keyLight: 'Hard', fillLight: 'None', backlight: 'Rim', practicals: 'Lamp', colorTemperature: 'Cool' },
+        scene: { location: 'Room', keyProps: [], atmosphere: 'Tense' },
+        talent: { blocking: 'Center', keyActions: ['Stand'], emotionalBeat: 'Defiant' },
+        audio: { priorities: 'Dialogue', considerations: 'Quiet set' },
+      },
+    }
+
+    const changes = diffSceneChanges(originalScene, candidate)
+    expect(changes).toContain('sceneDirection')
+  })
+
+  it('applyDeselectedSceneChanges restores original sceneDirection when deselected', () => {
+    const candidate = {
+      ...originalScene,
+      sceneDirection: {
+        sceneDescription: 'A completely new direction summary.',
+        camera: { movement: 'Dolly', shots: ['Wide'], angle: 'High', lensChoice: '24mm', focus: 'Deep' },
+        lighting: { overallMood: 'High-Key', timeOfDay: 'Day', keyLight: 'Soft', fillLight: 'Ambient', backlight: 'None', practicals: 'Window', colorTemperature: 'Warm' },
+        scene: { location: 'Office', keyProps: ['Phone'], atmosphere: 'Bright' },
+        talent: { blocking: 'Window', keyActions: ['Pace'], emotionalBeat: 'Anxious' },
+        audio: { priorities: 'Ambient', considerations: 'HVAC' },
+      },
+    }
+
+    const merged = applyDeselectedSceneChanges(
+      originalScene,
+      candidate,
+      new Set(['sceneDirection'])
+    )
+    expect(merged.sceneDirection).toEqual(originalScene.sceneDirection)
+  })
 })

@@ -83,11 +83,11 @@ function getNextStep(state: WorkflowState): NextStepAction | null {
   // Action tab steps
   if (!state.hasDirection) {
     return {
-      label: 'Generate Scene Direction',
-      description: 'Scene direction provides camera angles, lighting, and atmosphere for better Beat Frame generation.',
+      label: 'Scene direction pending',
+      description:
+        'Direction is generated automatically after script generation or when you edit the scene.',
       icon: <Compass className="w-4 h-4" />,
       targetTab: 'callAction',
-      actionId: 'generate-direction',
       accentColor: 'cyan',
     }
   }

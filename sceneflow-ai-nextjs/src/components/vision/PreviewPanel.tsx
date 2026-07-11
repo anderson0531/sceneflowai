@@ -18,6 +18,8 @@ import {
   beatDisplayText,
   countSelectedChanges,
   diffSceneChanges,
+  directionDescriptionText,
+  directionFacetSummary,
   isStructuredBeatPreview,
   type SceneChangeKey,
 } from '@/lib/script/sceneDiffChanges'
@@ -332,7 +334,7 @@ export function PreviewPanel({
             </div>
           </section>
 
-          <section>
+          <section className={dimIfSkipped('sceneDirection')}>
             <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
               <Sparkles className="w-4 h-4" />
               Direction
@@ -340,12 +342,54 @@ export function PreviewPanel({
             <div className="rounded-lg border p-3 bg-blue-50 dark:bg-blue-900/20">
               {preserveSceneDirection ? (
                 <p className="text-xs text-blue-800 dark:text-blue-200">
-                  Scene direction preserved — existing direction will not be regenerated.
+                  Scene direction preserved — existing direction will not change.
                 </p>
+              ) : changeSet.has('sceneDirection') ? (
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-xs text-blue-800 dark:text-blue-200 flex-1">
+                      Direction is co-generated with the revised beats. Deselect individual beats
+                      without also skipping Direction if you want the old summary.
+                    </p>
+                    <ChangeControl
+                      changeKey="sceneDirection"
+                      changed={changeSet.has('sceneDirection')}
+                      deselectedChanges={deselectedChanges}
+                      onToggleChange={onToggleChange}
+                    />
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">Before</p>
+                      <p className="text-gray-600 dark:text-gray-400 line-through break-words">
+                        {directionDescriptionText(originalScene) || '(no scene description)'}
+                      </p>
+                      {directionFacetSummary(originalScene).length > 0 && (
+                        <ul className="text-xs text-gray-500 mt-1 list-disc pl-4">
+                          {directionFacetSummary(originalScene).map((facet) => (
+                            <li key={facet}>{facet}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">After</p>
+                      <p className="text-gray-800 dark:text-gray-200 break-words">
+                        {directionDescriptionText(previewScene) || '(no scene description)'}
+                      </p>
+                      {directionFacetSummary(previewScene).length > 0 && (
+                        <ul className="text-xs text-gray-600 dark:text-gray-400 mt-1 list-disc pl-4">
+                          {directionFacetSummary(previewScene).map((facet) => (
+                            <li key={facet}>{facet}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <p className="text-xs text-blue-800 dark:text-blue-200">
-                  Scene direction will refresh automatically to match the approved beats after you
-                  apply.
+                  Scene direction unchanged in this revision.
                 </p>
               )}
             </div>

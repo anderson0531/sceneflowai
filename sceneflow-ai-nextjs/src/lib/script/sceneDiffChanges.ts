@@ -17,6 +17,7 @@ export type SceneChangeKey =
   | 'narration'
   | 'music'
   | 'sfx'
+  | 'sceneDirection'
   | `dialogue:${number}`
   | `beat:${string}`
   | `beat-added:${string}`
@@ -60,6 +61,36 @@ function sfxComparable(sfx: unknown): string {
       return ''
     })
     .join('\0')
+}
+
+function sceneDirectionComparable(direction: unknown): string {
+  if (!direction || typeof direction !== 'object') return ''
+  const d = direction as Record<string, unknown>
+  const subset = {
+    sceneDescription: d.sceneDescription ?? '',
+    camera: d.camera,
+    lighting: d.lighting,
+    scene: d.scene,
+    talent: d.talent,
+    audio: d.audio,
+    performanceDirection: d.performanceDirection,
+    veoOptimization: d.veoOptimization,
+    narrativeLighting: d.narrativeLighting,
+  }
+  return JSON.stringify(subset)
+}
+
+function appendSceneDirectionDiff(
+  changes: SceneChangeKey[],
+  originalScene: any,
+  candidateScene: any
+): void {
+  if (
+    sceneDirectionComparable(originalScene?.sceneDirection) !==
+    sceneDirectionComparable(candidateScene?.sceneDirection)
+  ) {
+    changes.push('sceneDirection')
+  }
 }
 
 function sceneUsesStructuredBeatDiff(originalScene: any, candidateScene: any): boolean {
@@ -110,6 +141,7 @@ function diffFlatSceneChanges(originalScene: any, candidateScene: any): SceneCha
     }
   }
 
+  appendSceneDirectionDiff(changes, originalScene, candidateScene)
   return changes
 }
 
@@ -142,6 +174,7 @@ function diffStructuredBeatChanges(originalScene: any, candidateScene: any): Sce
     changes.push('sfx')
   }
 
+  appendSceneDirectionDiff(changes, originalScene, candidateScene)
   return changes
 }
 
@@ -233,6 +266,9 @@ function applyDeselectedFlatChanges(
   if (deselectedChanges.has('sfx')) {
     next.sfx = originalScene.sfx
   }
+  if (deselectedChanges.has('sceneDirection')) {
+    next.sceneDirection = originalScene.sceneDirection
+  }
 
   const previewDialogue = Array.isArray(next.dialogue) ? [...next.dialogue] : []
   const originalDialogue = Array.isArray(originalScene?.dialogue) ? originalScene.dialogue : []
@@ -280,6 +316,9 @@ export function applyDeselectedSceneChanges(
     if (deselectedChanges.has('sfx')) {
       next.sfx = originalScene.sfx
     }
+    if (deselectedChanges.has('sceneDirection')) {
+      next.sceneDirection = originalScene.sceneDirection
+    }
     return next
   }
 
@@ -322,4 +361,24 @@ export function beatChangeSummary(
 export function beatDisplayText(beat: SceneBeat): string {
   if (beat.kind === 'action') return beat.actionDescription ?? ''
   return beat.line ?? ''
+}
+
+export function directionDescriptionText(scene: any): string {
+  const dir = scene?.sceneDirection
+  if (!dir) return ''
+  if (typeof dir === 'string') return dir
+  return String(dir.sceneDescription ?? '').trim()
+}
+
+export function directionFacetSummary(scene: any): string[] {
+  const dir = scene?.sceneDirection
+  if (!dir || typeof dir !== 'object') return []
+  const facets: string[] = []
+  const camera = dir.camera as Record<string, unknown> | undefined
+  const lighting = dir.lighting as Record<string, unknown> | undefined
+  const talent = dir.talent as Record<string, unknown> | undefined
+  if (camera?.movement) facets.push(`Camera: ${String(camera.movement)}`)
+  if (lighting?.overallMood) facets.push(`Lighting: ${String(lighting.overallMood)}`)
+  if (talent?.emotionalBeat) facets.push(`Talent: ${String(talent.emotionalBeat)}`)
+  return facets
 }

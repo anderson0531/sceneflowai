@@ -275,7 +275,6 @@ interface ScriptPanelProps {
   hasBYOK?: boolean
   onOpenBYOK?: () => void
   // NEW: Scene direction generation props
-  onGenerateSceneDirection?: (sceneIdx: number) => Promise<void>
   generatingDirectionFor?: number | null
   onGenerateAllCharacters?: () => Promise<void>
   // NEW: Scene production props
@@ -694,7 +693,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onOpenReferences, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onOpenReferences, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice }: ScriptPanelProps) {
 
 
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
@@ -3045,7 +3044,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       generateMusic={generateMusic}
                       uploadAudio={uploadAudio}
                       onSaveSfxAudio={saveSceneAudio}
-                      onGenerateSceneDirection={onGenerateSceneDirection}
                       generatingDirectionFor={generatingDirectionFor}
                       sceneProductionData={sceneProductionData[scene.sceneId || scene.id || `scene-${idx}`] || undefined}
                       sceneProductionReferences={sceneProductionReferences[scene.sceneId || scene.id || `scene-${idx}`] || undefined}
@@ -3671,7 +3669,6 @@ interface SceneCardProps {
     beatContext?: { beatId: string; beatDescription: string }
   ) => Promise<void> | void
   // NEW: Scene direction generation props
-  onGenerateSceneDirection?: (sceneIdx: number) => Promise<void>
   generatingDirectionFor?: number | null
   // NEW: Scene production props
   sceneProductionData?: SceneProductionData | null
@@ -3905,7 +3902,6 @@ function SceneCard({
   generateMusic,
   onSaveSfxAudio,
   uploadAudio,
-  onGenerateSceneDirection,
   generatingDirectionFor,
   sceneProductionData,
   sceneProductionReferences,
@@ -5560,18 +5556,17 @@ function SceneCard({
                         <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                         <span className="text-sm font-medium">
                           {directionStale
-                            ? 'Script has changed. Direction may be stale — regenerate before creating Frame.'
+                            ? 'Script has changed. Re-edit the scene to refresh direction, or continue with the current summary.'
                             : preVisStale
                               ? 'Script has changed since pre-vis was generated — update frame prompts before regenerating.'
                               : 'Direction has changed. Consider regenerating Frame.'}
                         </span>
                         <div className="ml-auto flex items-center gap-2">
+                          {(preVisStale || imageStale) && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              if (directionStale && onGenerateSceneDirection) {
-                                onGenerateSceneDirection(sceneIdx)
-                              } else if (preVisStale && onSyncPreVisToScript) {
+                              if (preVisStale && onSyncPreVisToScript) {
                                 void onSyncPreVisToScript(sceneIdx)
                               } else if (imageStale && onGenerateImage) {
                                 onGenerateImage(sceneIdx)
@@ -5579,12 +5574,11 @@ function SceneCard({
                             }}
                             className="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs rounded border border-amber-500/40 transition-colors"
                           >
-                            {directionStale
-                              ? 'Regenerate Direction'
-                              : preVisStale
+                            {preVisStale
                                 ? 'Update Pre-vis Frames'
                                 : 'Regenerate Frame'}
                           </button>
+                          )}
                           {onDismissStaleWarning && (
                             <button
                               onClick={(e) => {
@@ -5738,29 +5732,9 @@ function SceneCard({
                     const sceneDescription = scene.visualDescription || scene.action || scene.summary || scene.heading
                     const sceneDir = scene.sceneDirection
                     const hasDirection = !!sceneDir
-                    const isGeneratingDirection = generatingDirectionFor === sceneIdx
 
                     return (
                       <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                        <div className="flex items-center justify-end gap-1 mb-2">
-                          <button
-                            onClick={async (e) => {
-                              e.stopPropagation()
-                              if (!onGenerateSceneDirection) return
-                              await onGenerateSceneDirection(sceneIdx)
-                            }}
-                            disabled={isGeneratingDirection}
-                            className="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
-                            title="Generate detailed scene direction for camera, lighting, talent, and audio"
-                          >
-                            {isGeneratingDirection ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <Sparkles className="w-3 h-3" />
-                            )}
-                            {hasDirection ? 'Regenerate' : 'Generate'}
-                          </button>
-                        </div>
                         <div className="space-y-3">
                             {/* Scene Description — plain-language narrative of what happens */}
                             {hasDirection && sceneDir.sceneDescription && (
@@ -6870,7 +6844,6 @@ function SceneCard({
                       existingDirection={scene.sceneDirection}
                       onGenerate={() => {
                         setDirectionBuilderOpen(false)
-                        onGenerateSceneDirection?.(sceneIdx)
                       }}
                       isGenerating={generatingDirectionFor === sceneIdx}
                     />
@@ -7374,11 +7347,7 @@ function SceneCard({
               activeStep={activeStep}
               isOpen={copilotPanelOpen}
               onClose={() => setCopilotPanelOpen(false)}
-              onRegenerate={activeStep === 'directorsChair' && onGenerateSceneDirection ? async () => {
-                if (onGenerateSceneDirection) {
-                  await onGenerateSceneDirection(sceneIdx)
-                }
-              } : undefined}
+              onRegenerate={undefined}
               sceneIdx={sceneIdx}
               generatingDirectionFor={generatingDirectionFor}
             />

@@ -15,8 +15,9 @@ import {
   finalizeStructuredRevisedScene,
   isStructuredRevisionResponse,
 } from '@/lib/script/structuredSceneRevision'
+import { attachCoGeneratedSceneDirection } from '@/lib/sceneGeneration/attachRevisedSceneDirection'
 
-export const maxDuration = 60
+export const maxDuration = 120
 export const runtime = 'nodejs'
 
 interface SceneRevisionRequest {
@@ -65,6 +66,7 @@ export async function POST(req: NextRequest) {
     const revisedScene = await generateRevisedScene({
         projectId,
       currentScene,
+      sceneIndex,
       revisionMode,
       selectedRecommendations,
       customInstruction,
@@ -91,6 +93,7 @@ export async function POST(req: NextRequest) {
 async function generateRevisedScene({
     projectId,
   currentScene,
+  sceneIndex,
   revisionMode,
   selectedRecommendations,
   customInstruction,
@@ -101,6 +104,7 @@ async function generateRevisedScene({
 }: {
     projectId: string
   currentScene: any
+  sceneIndex: number
   revisionMode: string
   selectedRecommendations: (string | { text: string; category?: string; impact?: 'structural' | 'polish' })[]
   customInstruction: string
@@ -384,9 +388,25 @@ Now rewrite the scene following all the rules, constraints, and formatting requi
 
   if (isStructuredRevisionResponse(parsed)) {
     console.log('[Scene Revision] Using structured beats response:', parsed.beats.length, 'beats')
-    return finalizeStructuredRevisedScene(parsed, currentScene, preserveElements, context)
+    const finalized = finalizeStructuredRevisedScene(parsed, currentScene, preserveElements, context)
+    return attachCoGeneratedSceneDirection({
+      finalizedScene: finalized,
+      currentScene,
+      context,
+      sceneIndex,
+      preserveElements,
+      skipDirection: false,
+    })
   }
 
   console.warn('[Scene Revision] Structured beats missing — falling back to flat-field merge')
-  return finalizeFlatRevisedScene(parsed, currentScene, preserveElements, context)
+  const finalized = finalizeFlatRevisedScene(parsed, currentScene, preserveElements, context)
+  return attachCoGeneratedSceneDirection({
+    finalizedScene: finalized,
+    currentScene,
+    context,
+    sceneIndex,
+    preserveElements,
+    skipDirection: true,
+  })
 }

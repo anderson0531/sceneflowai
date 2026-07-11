@@ -21,7 +21,6 @@ import { upload } from '@vercel/blob/client'
 import debounce from 'lodash/debounce'
 import {
   applyScenePreservation,
-  shouldRegenerateSceneDirection,
   shouldSkipBeatRederivation,
 } from '@/lib/script/scenePreservation'
 import {
@@ -5048,7 +5047,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Scene reference generation state (for Reference Library Scene tab)
   const [generatingSceneReferenceIndex, setGeneratingSceneReferenceIndex] = useState<number | null>(null)
-  const [generatingSceneDirectionIndex, setGeneratingSceneDirectionIndex] = useState<number | null>(null)
   const [isGeneratingAllSceneReferences, setIsGeneratingAllSceneReferences] = useState(false)
   const [isExpressGeneratingReferences, setIsExpressGeneratingReferences] = useState(false)
   
@@ -10004,128 +10002,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
-  // Handle generate scene direction
-  const handleGenerateSceneDirection = async (sceneIdx: number) => {
-    const scene = script?.script?.scenes?.[sceneIdx]
-    if (!scene) {
-      console.warn('No scene data available for scene', sceneIdx)
-      try { const { toast } = require('sonner'); toast.error('Scene data not found') } catch {}
-      return
-    }
-
-    setGeneratingDirectionFor(sceneIdx)
-
-    // Use the overlay to prevent navigation during generation
-    await execute(
-      async () => {
-        try {
-          const directionResponse = await fetch('/api/scene/generate-direction', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            projectId,
-            sceneIndex: sceneIdx,
-            scene: {
-              heading: scene.heading,
-              action: scene.action,
-              visualDescription: scene.visualDescription,
-              narration: scene.narration,
-              dialogue: scene.dialogue,
-              characters: scene.characters  // Include character list for accurate talent blocking
-            }
-          })
-        })
-
-        if (!directionResponse.ok) {
-          const errorData = await directionResponse.json().catch(() => ({ error: 'Unknown error' }))
-          throw new Error(errorData.error || 'Failed to generate scene direction')
-        }
-
-        const data = await directionResponse.json()
-        
-        if (!data.success || !data.sceneDirection) {
-          throw new Error(data.error || 'Failed to generate scene direction')
-        }
-
-        // Build updated scenes array with the new direction
-        const updatedScenes = [...(script.script.scenes || [])]
-        updatedScenes[sceneIdx] = ensureSceneBeats({
-          ...updatedScenes[sceneIdx],
-          sceneDirection: data.sceneDirection,
-        } as Record<string, unknown>)
-
-        // Build the updated script object
-        const updatedScript = {
-        ...script,
-        script: {
-          ...script.script,
-          scenes: updatedScenes
-        }
-      }
-
-      // Update local state
-      setScript(updatedScript)
-
-      // Update project metadata and persist to DB
-      // RACE CONDITION FIX: Use functional setProject and projectRef instead of stale closure
-      const currentProject = projectRef.current || project
-      if (currentProject) {
-        console.log('[SceneDirection] Saving to DB:', {
-          sceneIdx,
-          hasSceneDirection: !!updatedScenes[sceneIdx]?.sceneDirection,
-          sceneDirectionKeys: Object.keys(updatedScenes[sceneIdx]?.sceneDirection || {}),
-          updatedMetadataPath: 'metadata.visionPhase.script.script.scenes[' + sceneIdx + '].sceneDirection'
-        })
-        
-        // Build metadata from latest project state via ref
-        const updatedMetadata = {
-          ...currentProject.metadata,
-          visionPhase: {
-            ...currentProject.metadata?.visionPhase,
-            script: updatedScript
-          }
-        }
-        
-        // Use functional setProject to avoid stale closure overwrites
-        setProject((prev: any) => {
-          if (!prev) return prev
-          const updated = { ...prev, metadata: updatedMetadata }
-          projectRef.current = updated
-          return updated
-        })
-
-        // Persist to database using serialized save queue
-        const saveResponse = await serializedProjectSave({
-          metadata: updatedMetadata
-        }, 'handleGenerateSceneDirection')
-        
-        if (!saveResponse.ok) {
-          const errorText = await saveResponse.text()
-          console.error('[SceneDirection] Save failed:', errorText)
-          throw new Error('Failed to save scene direction to database')
-        } else {
-          console.log('[SceneDirection] Save successful')
-        }
-      }
-
-      try { const { toast } = require('sonner'); toast.success('Scene direction generated!') } catch {}
-      
-      // NOTE: Removed auto handleGenerateSceneScore() call to prevent stale-closure
-      // overwrites. Score analysis is now triggered manually via the Analyze button.
-      } catch (error: any) {
-        console.error('Failed to generate scene direction:', error)
-        try { const { toast } = require('sonner'); toast.error(`Failed to generate scene direction: ${error.message}`) } catch {}
-        throw error // Re-throw to let overlay know it failed
-      }
-    }, {
-      message: `🎬 Generating Scene Direction for Scene ${sceneIdx + 1}... Please wait, do not navigate away.`,
-      estimatedDuration: 30 // 30 seconds estimated (in seconds, not ms)
-    }).finally(() => {
-      setGeneratingDirectionFor(null)
-    })
-  }
-
-  // Background direction generator - runs silently after scene edits/optimization
+  // Background direction generator - runs silently after script generation
   // Does NOT use the blocking overlay, just shows toast notifications
   const handleBackgroundDirectionGeneration = async (sceneIdx: number, sceneOverride?: any) => {
     // Guard: skip if already generating direction for this scene
@@ -11471,14 +11348,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       overlayStore.hide()
 
-      // Auto-regenerate scene direction unless direction is preserved
-      if (shouldRegenerateSceneDirection(preserveElements)) {
-        console.log(`[AutoDirection] Scene ${sceneIndex + 1} edited - triggering background direction regeneration`)
-        handleBackgroundDirectionGeneration(sceneIndex, persistedScenes[sceneIndex])
-      } else {
-        console.log(`[AutoDirection] Scene ${sceneIndex + 1} edited - skipping direction regeneration (preserved)`)
-      }
-      
       // NOTE: Removed loadProject() call - it was causing race condition
       // where stale data would be reloaded before DB write completed.
       // Local state update above is sufficient since saveScenesToDatabase was awaited.
@@ -13449,7 +13318,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 audienceReview={audienceReview}
                 hasBYOK={!!byokSettings?.videoProvider}
                 onOpenBYOK={() => setShowBYOKSettings(true)}
-                onGenerateSceneDirection={handleGenerateSceneDirection}
                 generatingDirectionFor={generatingDirectionFor}
                 onGenerateAllCharacters={generateCharacters}
                 sceneProductionData={sceneProductionState}
@@ -13729,8 +13597,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         onUploadSceneReferenceImage={handleUploadSceneReferenceImage}
         onAddSceneReferenceToLibrary={handleAddSceneReferenceToLibrary}
         generatingReferenceForScene={generatingSceneReferenceIndex}
-        generatingDirectionForScene={generatingSceneDirectionIndex}
-        onGenerateSceneDirection={handleGenerateSceneDirection}
         onGenerateAllSceneReferences={handleGenerateAllSceneReferences}
         isGeneratingAllSceneReferences={isGeneratingAllSceneReferences}
         onGenerateSceneImage={(sceneIdx) => handleGenerateSceneImage(sceneIdx, undefined, { excludeCharacters: true })}

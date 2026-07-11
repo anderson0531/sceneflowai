@@ -93,12 +93,8 @@ export interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps
   onEditSceneReferenceImage?: (sceneIdx: number, imageUrl: string) => void
   /** Callback to add scene reference image to library */
   onAddSceneReferenceToLibrary?: (sceneIdx: number, imageUrl: string, name: string) => void
-  /** Callback to generate scene direction (when missing) */
-  onGenerateSceneDirection?: (sceneIdx: number) => void
   /** Index of scene currently generating reference image */
   generatingReferenceForScene?: number | null
-  /** Index of scene currently generating direction */
-  generatingDirectionForScene?: number | null
   /** Callback for generate all scene reference images */
   onGenerateAllSceneReferences?: () => void
   /** Whether currently generating all scene references */
@@ -1191,9 +1187,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     onUploadSceneReferenceImage,
     onEditSceneReferenceImage,
     onAddSceneReferenceToLibrary,
-    onGenerateSceneDirection,
     generatingReferenceForScene,
-    generatingDirectionForScene,
     onGenerateAllSceneReferences,
     isGeneratingAllSceneReferences = false,
     // Legacy props (backward compatibility)
