@@ -6261,7 +6261,9 @@ function SceneCard({
                         )}
                       </div>
                       <div className="space-y-3">
-                      {timelineBeats.map((beat) => {
+                      {timelineBeats.map((beat, beatIndex) => {
+                        const beatNumber =
+                          (typeof beat.sequenceIndex === 'number' ? beat.sequenceIndex : beatIndex) + 1
                         if (beat.kind === 'action') {
                           const beatSfx = sfxByBeatId.get(beat.beatId) ?? []
                           const inlineSfx =
@@ -6281,6 +6283,9 @@ function SceneCard({
                             >
                               <div className="flex items-center gap-2 mb-1.5">
                                 <div className="flex items-center gap-2 min-w-0">
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-700/50 text-slate-300 border border-slate-600/40 font-medium tabular-nums shrink-0">
+                                  Beat {beatNumber}
+                                </span>
                                 <span className="text-xs font-semibold uppercase tracking-wide text-blue-300">
                                   Action
                                 </span>
@@ -6395,6 +6400,9 @@ function SceneCard({
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1.5">
                                   <div className="flex items-center gap-2 min-w-0 flex-1">
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-700/50 text-slate-300 border border-slate-600/40 font-medium tabular-nums shrink-0">
+                                    Beat {beatNumber}
+                                  </span>
                                   <div className={`text-sm font-semibold ${isNarrationBeat ? 'text-indigo-200' : 'text-blue-200'}`}>
                                     {isNarrationBeat ? 'Narration' : d.character}
                                   </div>
