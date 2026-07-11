@@ -10138,6 +10138,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     if (!scene) return
     
     backgroundDirectionInFlight.current.add(sceneIdx)
+    setGeneratingDirectionFor(sceneIdx)
     
     try {
       console.log(`[AutoDirection] Auto-generating direction for Scene ${sceneIdx + 1}...`)
@@ -10237,6 +10238,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       try { const { toast } = require('sonner'); toast.error(`Failed to update Scene ${sceneIdx + 1} direction`) } catch {}
     } finally {
       backgroundDirectionInFlight.current.delete(sceneIdx)
+      setGeneratingDirectionFor((cur) => (cur === sceneIdx ? null : cur))
     }
   }
 
@@ -11360,6 +11362,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   ) => {
     if (!script) return
 
+    overlayStore.show('Applying scene changes...', 18, 'scene-revision')
+    overlayStore.setStatus('Saving changes...')
+
     const updatedScenes = [...(script.script?.scenes || [])]
     const originalScene = updatedScenes[sceneIndex]
 
@@ -11462,6 +11467,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       } catch {}
       
+      overlayStore.hide()
+
       // Auto-regenerate scene direction unless direction is preserved
       if (shouldRegenerateSceneDirection(preserveElements)) {
         console.log(`[AutoDirection] Scene ${sceneIndex + 1} edited - triggering background direction regeneration`)
@@ -11474,6 +11481,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // where stale data would be reloaded before DB write completed.
       // Local state update above is sufficient since saveScenesToDatabase was awaited.
     } catch (error) {
+      overlayStore.hide()
       console.error('[Vision] Failed to save scene changes:', error)
       try {
         const { toast } = require('sonner')
