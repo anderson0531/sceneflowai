@@ -26,6 +26,7 @@ import {
 } from '../../../../lib/tts/edgeTtsFallback'
 import { buildGeminiTtsPrompt } from '../../../../lib/tts/geminiTtsPrompt'
 import { resolveCharacterVoicePrompt } from '../../../../lib/tts/resolveCharacterVoicePrompt'
+import { buildGeminiTtsAdvancedVoiceOptions } from '../../../../lib/tts/geminiTtsSafety'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -424,6 +425,7 @@ export async function POST(req: NextRequest) {
           code: 'VERTEX_TTS_CONTENT_POLICY',
           tips: error.payload.tips,
           supportCode: error.payload.supportCode ?? null,
+          action: error.payload.action,
         },
         { status: 400 }
       )
@@ -784,6 +786,10 @@ async function generateGoogleAudio(
       voicePrompt: voiceConfig.prompt,
       deliveryCues,
     })
+    const advancedVoiceOptions = buildGeminiTtsAdvancedVoiceOptions()
+    if (advancedVoiceOptions) {
+      payload.advancedVoiceOptions = advancedVoiceOptions
+    }
   }
 
   // Use v1beta1 for Gemini TTS and Voice Cloning

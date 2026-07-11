@@ -13,15 +13,20 @@ export function extractVertexTtsSupportCode(message: string): string | undefined
   return m?.[1]
 }
 
+export type VertexTtsPolicyAction = 'enhance_dialogue_direct'
+
 export type VertexTtsPolicyViolationPayload = {
   userMessage: string
   tips: string[]
   supportCode?: string
+  action: VertexTtsPolicyAction
 }
 
 /** Editing hints shown when Gemini/Google TTS blocks synthesis (no word-level detail from API). */
 export function getVertexTtsPolicyTips(audioType: 'narration' | 'dialogue' | 'description'): string[] {
   const base = [
+    'Harm filters are already relaxed—this block is from Google\'s baseline usage policy, not per-category harm settings.',
+    'Recommended fix: use Direct → Enhance Dialogue to rephrase this line while keeping meaning and tone.',
     'Google does not indicate which exact phrase triggered the filter—small wording changes usually fix it.',
     'Try softer synonyms for metaphors that might sound violent or threatening (e.g. "target", "hunt", "weapon", "kill").',
     'Shorten or split long lines; very stacked bracket cues ([whispering, dread, …]) sometimes correlate with blocks.',
@@ -63,6 +68,7 @@ export function parseVertexTtsPolicyViolation(
     userMessage,
     tips: getVertexTtsPolicyTips(audioType),
     supportCode,
+    action: 'enhance_dialogue_direct',
   }
 }
 

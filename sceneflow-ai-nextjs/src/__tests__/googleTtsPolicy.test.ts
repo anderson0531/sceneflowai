@@ -23,7 +23,9 @@ describe('googleTtsPolicy', () => {
     expect(v).not.toBeNull()
     expect(v?.supportCode).toBe('54702341')
     expect(v?.userMessage).toMatch(/blocked/i)
+    expect(v?.action).toBe('enhance_dialogue_direct')
     expect(v?.tips.length).toBeGreaterThan(2)
+    expect(v?.tips.some((t) => /Direct/i.test(t))).toBe(true)
   })
 
   it('returns null for unrelated 400 bodies', () => {

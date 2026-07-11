@@ -10616,10 +10616,23 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             tips.length > 0
               ? tips.map((t: string, i: number) => `${i + 1}. ${t}`).join('\n')
               : undefined
-          toast.error(data.error || 'This line was blocked by speech safety filters', {
+          const characterLabel =
+            audioType === 'dialogue'
+              ? (characterName || dialogueLine?.character || 'the character')
+              : 'the narrator'
+          const rephraseInstruction =
+            `Rephrase ${characterLabel}'s line so it passes Google's text-to-speech safety filter while preserving meaning, tone, and subtext. Keep it in-character. Line: "${text}"`
+          const toastOptions: Record<string, unknown> = {
             description,
             duration: 16000,
-          })
+          }
+          if (data.action === 'enhance_dialogue_direct') {
+            toastOptions.action = {
+              label: 'Enhance dialogue (Direct)',
+              onClick: () => openSceneDirectWithInstruction(sceneIdx, rephraseInstruction),
+            }
+          }
+          toast.error(data.error || 'This line was blocked by speech safety filters', toastOptions)
         } catch {}
         return
       }
@@ -11199,10 +11212,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   // Scene editor handlers
-  const handleEditScene = (sceneIndex: number) => {
+  const openSceneDirectWithInstruction = (sceneIndex: number, instruction: string) => {
     setEditingSceneIndex(sceneIndex)
-    setSceneEditorInitialInstructions('')
+    setSceneEditorInitialInstructions(instruction)
     setIsSceneEditorOpen(true)
+  }
+
+  const handleEditScene = (sceneIndex: number) => {
+    openSceneDirectWithInstruction(sceneIndex, '')
   }
 
   // Handler for Apply Recommendations - opens Edit dialog with pre-populated instructions

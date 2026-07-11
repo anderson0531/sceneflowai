@@ -11,6 +11,7 @@ import {
   DEFAULT_GEMINI_TTS_MODEL,
   normalizeBlueprintGeminiVoiceId,
 } from '@/lib/tts/blueprintTtsConstants'
+import { buildGeminiTtsAdvancedVoiceOptions } from '@/lib/tts/geminiTtsSafety'
 
 export {
   DEFAULT_BLUEPRINT_GEMINI_VOICE,
@@ -81,7 +82,7 @@ export async function synthesizeGeminiFlashMp3(
     url += `?key=${apiKey}`
   }
 
-  const payload = {
+  const payload: Record<string, unknown> = {
     input: {
       text: sanitizedText,
       prompt: buildGeminiTtsPrompt({
@@ -98,6 +99,11 @@ export async function synthesizeGeminiFlashMp3(
     audioConfig: {
       audioEncoding: 'MP3' as const,
     },
+  }
+
+  const advancedVoiceOptions = buildGeminiTtsAdvancedVoiceOptions()
+  if (advancedVoiceOptions) {
+    payload.advancedVoiceOptions = advancedVoiceOptions
   }
 
   const controller = new AbortController()
