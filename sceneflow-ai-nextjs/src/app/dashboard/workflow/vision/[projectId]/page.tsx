@@ -44,9 +44,9 @@ import {
   ensureSceneBeats,
   getSceneBeats,
   isBeatFirstPipelineEnabled,
-  reconcileSceneBeatsFromScript,
   resolveRawBeatIndex,
 } from '@/lib/script/beatMigration'
+import { invalidateChangedBeatFramesOnScene } from '@/lib/script/structuredSceneRevision'
 import type { BeatReferenceSelection } from '@/lib/script/segmentTypes'
 import type { StoryboardFrameSlot } from '@/lib/storyboard/types'
 import { mapBeatReferenceSelectionForApi } from '@/lib/vision/beatFrameGenerationContext'
@@ -11387,10 +11387,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
     }
     
-    // Force re-segmentation and beat reconciliation when beats/frames are not preserved.
+    // Force re-segmentation; invalidate storyboard frames only for beats whose content changed.
     if (!shouldSkipBeatRederivation(preserveElements)) {
       cleanedScene.segments = undefined
-      cleanedScene = reconcileSceneBeatsFromScript(cleanedScene, originalScene)
+      if (getSceneBeats(cleanedScene).length > 0) {
+        cleanedScene = invalidateChangedBeatFramesOnScene(cleanedScene, originalScene)
+      }
     }
     updatedScenes[sceneIndex] = cleanedScene
 

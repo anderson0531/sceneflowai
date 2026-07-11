@@ -1,10 +1,24 @@
 'use client'
 
 import { Badge } from '@/components/ui/badge'
-import { Loader, Eye, CheckCircle, AlertCircle, Clock, Users, Music, Volume2 } from 'lucide-react'
 import {
+  Loader,
+  Eye,
+  AlertCircle,
+  Clock,
+  Music,
+  Clapperboard,
+  ImageIcon,
+  Sparkles,
+} from 'lucide-react'
+import { getSceneBeats } from '@/lib/script/beatMigration'
+import { beatsWithChangedFingerprints } from '@/lib/script/structuredSceneRevision'
+import {
+  beatChangeSummary,
+  beatDisplayText,
   countSelectedChanges,
   diffSceneChanges,
+  isStructuredBeatPreview,
   type SceneChangeKey,
 } from '@/lib/script/sceneDiffChanges'
 
@@ -15,12 +29,8 @@ interface PreviewPanelProps {
   changes: string[]
   deselectedChanges?: Set<string>
   onToggleChange?: (key: SceneChangeKey) => void
-}
-
-function headingText(scene: any): string {
-  if (!scene?.heading) return ''
-  if (typeof scene.heading === 'string') return scene.heading.trim()
-  return String(scene.heading?.text ?? '').trim()
+  preserveSceneDirection?: boolean
+  preserveBeatFrames?: boolean
 }
 
 function ChangeControl({
@@ -67,6 +77,110 @@ function ChangeControl({
   )
 }
 
+function StructuredBeatPreview({
+  originalScene,
+  previewScene,
+  changeSet,
+  deselectedChanges,
+  onToggleChange,
+}: {
+  originalScene: any
+  previewScene: any
+  changeSet: Set<string>
+  deselectedChanges?: Set<string>
+  onToggleChange?: (key: SceneChangeKey) => void
+}) {
+  const candidateBeats = getSceneBeats(previewScene)
+  const originalBeats = getSceneBeats(originalScene)
+  const allBeatIds = new Set([
+    ...originalBeats.map((b) => b.beatId),
+    ...candidateBeats.map((b) => b.beatId),
+  ])
+
+  return (
+    <div className="space-y-2">
+      {Array.from(allBeatIds).map((beatId) => {
+        const summary = beatChangeSummary(originalScene, previewScene, beatId)
+        if (summary.status === 'unchanged') return null
+
+        const changeKey =
+          summary.status === 'added'
+            ? (`beat-added:${beatId}` as SceneChangeKey)
+            : summary.status === 'removed'
+              ? (`beat-removed:${beatId}` as SceneChangeKey)
+              : (`beat:${beatId}` as SceneChangeKey)
+
+        const label =
+          summary.status === 'added'
+            ? 'New beat'
+            : summary.status === 'removed'
+              ? 'Removed beat'
+              : summary.candidate?.kind === 'action'
+                ? 'Action beat'
+                : summary.candidate?.kind === 'narration'
+                  ? 'Narration'
+                  : `Dialogue: ${summary.candidate?.character ?? ''}`
+
+        return (
+          <div
+            key={beatId}
+            className={`rounded-lg border p-3 ${
+              deselectedChanges?.has(changeKey) ? 'opacity-50' : ''
+            }`}
+          >
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <Clapperboard className="w-3.5 h-3.5 text-blue-500" />
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">
+                  {label}
+                </span>
+                {summary.status === 'added' && (
+                  <Badge variant="secondary" className="text-xs">Added</Badge>
+                )}
+                {summary.status === 'removed' && (
+                  <Badge variant="secondary" className="text-xs">Removed</Badge>
+                )}
+              </div>
+              <ChangeControl
+                changeKey={changeKey}
+                changed={changeSet.has(changeKey)}
+                deselectedChanges={deselectedChanges}
+                onToggleChange={onToggleChange}
+              />
+            </div>
+            {summary.status === 'changed' && summary.original && summary.candidate && (
+              <div className="space-y-2 text-sm">
+                <div>
+                  <p className="text-xs text-gray-500 mb-0.5">Before</p>
+                  <p className="text-gray-600 dark:text-gray-400 line-through break-words">
+                    {beatDisplayText(summary.original) || '(empty)'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 mb-0.5">After</p>
+                  <p className="text-gray-800 dark:text-gray-200 break-words">
+                    {beatDisplayText(summary.candidate) || '(empty)'}
+                  </p>
+                </div>
+              </div>
+            )}
+            {summary.status === 'added' && summary.candidate && (
+              <p className="text-sm text-gray-800 dark:text-gray-200 break-words">
+                {beatDisplayText(summary.candidate)}
+              </p>
+            )}
+            {summary.status === 'removed' && summary.original && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 line-through break-words">
+                {beatDisplayText(summary.original)}
+              </p>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export function PreviewPanel({
   originalScene,
   previewScene,
@@ -74,6 +188,8 @@ export function PreviewPanel({
   changes,
   deselectedChanges,
   onToggleChange,
+  preserveSceneDirection = false,
+  preserveBeatFrames = false,
 }: PreviewPanelProps) {
   if (isGenerating) {
     return (
@@ -99,7 +215,7 @@ export function PreviewPanel({
             <Eye className="w-8 h-8 mx-auto mb-3 text-gray-400" />
             <p className="text-sm text-gray-600 dark:text-gray-400">No preview available</p>
             <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-              Select recommendations or add instructions to generate a preview
+              Enter direction to generate a preview
             </p>
           </div>
         </div>
@@ -110,8 +226,17 @@ export function PreviewPanel({
   const changeKeys = diffSceneChanges(originalScene, previewScene)
   const changeSet = new Set(changeKeys)
   const { selected, total } = countSelectedChanges(changeKeys, deselectedChanges ?? new Set())
+  const structured = isStructuredBeatPreview(originalScene, previewScene)
   const dimIfSkipped = (key: SceneChangeKey) =>
     deselectedChanges?.has(key) ? 'opacity-50' : ''
+
+  const framesToRegenerate = preserveBeatFrames
+    ? []
+    : beatsWithChangedFingerprints(
+        originalScene,
+        previewScene,
+        deselectedChanges ?? new Set()
+      )
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
@@ -131,191 +256,168 @@ export function PreviewPanel({
         </div>
       </div>
 
-      {changes.length > 0 && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
-          <h4 className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-2">
-            <CheckCircle className="w-3 h-3 inline mr-1" />
-            Applied Changes
-          </h4>
-          <div className="text-xs text-blue-700 dark:text-blue-300">
-            {changes.length} recommendation{changes.length !== 1 ? 's' : ''} selected
+      {structured ? (
+        <div className="space-y-6">
+          <section>
+            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+              <Clapperboard className="w-4 h-4" />
+              Beats
+            </h4>
+            <StructuredBeatPreview
+              originalScene={originalScene}
+              previewScene={previewScene}
+              changeSet={changeSet}
+              deselectedChanges={deselectedChanges}
+              onToggleChange={onToggleChange}
+            />
+            {!changeKeys.some((k) => k.startsWith('beat')) && (
+              <p className="text-xs text-gray-500">No beat changes in this revision.</p>
+            )}
+          </section>
+
+          {(previewScene.music || changeSet.has('music')) && (
+            <section className={dimIfSkipped('music')}>
+              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                <Music className="w-4 h-4" />
+                Music
+              </h4>
+              <div className="flex items-start justify-between gap-2 rounded-lg border p-3">
+                <p className="text-sm text-gray-700 dark:text-gray-300 break-words flex-1">
+                  {typeof previewScene.music === 'string'
+                    ? previewScene.music
+                    : previewScene.music?.description || '(no music)'}
+                </p>
+                <ChangeControl
+                  changeKey="music"
+                  changed={changeSet.has('music')}
+                  deselectedChanges={deselectedChanges}
+                  onToggleChange={onToggleChange}
+                />
+              </div>
+            </section>
+          )}
+
+          <section>
+            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+              <ImageIcon className="w-4 h-4" />
+              Frames
+            </h4>
+            <div className="rounded-lg border p-3 bg-gray-50 dark:bg-gray-800/50">
+              {preserveBeatFrames ? (
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Beat frames preserved — existing storyboard images will be kept.
+                </p>
+              ) : framesToRegenerate.length > 0 ? (
+                <div className="space-y-1">
+                  <p className="text-xs text-amber-700 dark:text-amber-300">
+                    {framesToRegenerate.length} beat frame
+                    {framesToRegenerate.length !== 1 ? 's' : ''} will be cleared for regeneration
+                    after apply.
+                  </p>
+                  <ul className="text-xs text-gray-600 dark:text-gray-400 list-disc pl-4">
+                    {framesToRegenerate.slice(0, 6).map((beat) => (
+                      <li key={beat.beatId}>
+                        {beat.kind === 'action'
+                          ? `Action: ${(beat.actionDescription ?? '').slice(0, 60)}`
+                          : `${beat.character}: ${(beat.line ?? '').slice(0, 60)}`}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  No beat frames need regeneration for the selected changes.
+                </p>
+              )}
+            </div>
+          </section>
+
+          <section>
+            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              Direction
+            </h4>
+            <div className="rounded-lg border p-3 bg-blue-50 dark:bg-blue-900/20">
+              {preserveSceneDirection ? (
+                <p className="text-xs text-blue-800 dark:text-blue-200">
+                  Scene direction preserved — existing direction will not be regenerated.
+                </p>
+              ) : (
+                <p className="text-xs text-blue-800 dark:text-blue-200">
+                  Scene direction will refresh automatically to match the approved beats after you
+                  apply.
+                </p>
+              )}
+            </div>
+          </section>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className={dimIfSkipped('visualDescription')}>
+            <h4 className="text-sm font-medium text-gray-500 mb-1">SCENE DESCRIPTION</h4>
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed break-words flex-1">
+                {previewScene.visualDescription || 'No scene description'}
+              </p>
+              <ChangeControl
+                changeKey="visualDescription"
+                changed={changeSet.has('visualDescription')}
+                deselectedChanges={deselectedChanges}
+                onToggleChange={onToggleChange}
+              />
+            </div>
           </div>
+
+          <div className={dimIfSkipped('action')}>
+            <h4 className="text-sm font-medium text-gray-500 mb-1">ACTION</h4>
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed break-words flex-1">
+                {previewScene.action || 'No action description'}
+              </p>
+              <ChangeControl
+                changeKey="action"
+                changed={changeSet.has('action')}
+                deselectedChanges={deselectedChanges}
+                onToggleChange={onToggleChange}
+              />
+            </div>
+          </div>
+
+          {(previewScene.music || changeSet.has('music')) && (
+            <div className={dimIfSkipped('music')}>
+              <h4 className="text-sm font-medium text-gray-500 mb-1 flex items-center gap-1">
+                <Music className="w-3 h-3" />
+                MUSIC
+              </h4>
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-sm text-gray-700 dark:text-gray-300 break-words flex-1">
+                  {typeof previewScene.music === 'string'
+                    ? previewScene.music
+                    : previewScene.music?.description || ''}
+                </p>
+                <ChangeControl
+                  changeKey="music"
+                  changed={changeSet.has('music')}
+                  deselectedChanges={deselectedChanges}
+                  onToggleChange={onToggleChange}
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      <div className="space-y-4">
-        <div className={dimIfSkipped('heading')}>
-          <h4 className="text-sm font-medium text-gray-500 mb-1">SCENE HEADING</h4>
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-semibold">
-              {headingText(previewScene) || 'Untitled Scene'}
-            </p>
-            <ChangeControl
-              changeKey="heading"
-              changed={changeSet.has('heading')}
-              deselectedChanges={deselectedChanges}
-              onToggleChange={onToggleChange}
-            />
+      {previewScene.duration && (
+        <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="flex items-center gap-2 text-sm">
+            <Clock className="w-4 h-4 text-gray-500" />
+            <span className="font-medium">Duration:</span>
+            <span className="text-gray-600 dark:text-gray-400">
+              {Math.round(previewScene.duration / 8) * 8}s
+            </span>
           </div>
         </div>
-
-        <div className={dimIfSkipped('visualDescription')}>
-          <h4 className="text-sm font-medium text-gray-500 mb-1">SCENE DESCRIPTION</h4>
-          <div className="flex items-start justify-between gap-2">
-            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed break-words flex-1">
-              {previewScene.visualDescription || 'No scene description'}
-            </p>
-            <ChangeControl
-              changeKey="visualDescription"
-              changed={changeSet.has('visualDescription')}
-              deselectedChanges={deselectedChanges}
-              onToggleChange={onToggleChange}
-            />
-          </div>
-        </div>
-
-        <div className={dimIfSkipped('action')}>
-          <h4 className="text-sm font-medium text-gray-500 mb-1">ACTION</h4>
-          <div className="flex items-start justify-between gap-2">
-            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed break-words flex-1">
-              {previewScene.action || 'No action description'}
-            </p>
-            <ChangeControl
-              changeKey="action"
-              changed={changeSet.has('action')}
-              deselectedChanges={deselectedChanges}
-              onToggleChange={onToggleChange}
-            />
-          </div>
-        </div>
-
-        {(previewScene.narration || changeSet.has('narration')) && (
-          <div className={dimIfSkipped('narration')}>
-            <h4 className="text-sm font-medium text-gray-500 mb-1 flex items-center gap-1">
-              <Volume2 className="w-3 h-3" />
-              NARRATION
-            </h4>
-            <div className="flex items-start justify-between gap-2">
-              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed break-words flex-1">
-                {previewScene.narration}
-              </p>
-              <ChangeControl
-                changeKey="narration"
-                changed={changeSet.has('narration')}
-                deselectedChanges={deselectedChanges}
-                onToggleChange={onToggleChange}
-              />
-            </div>
-          </div>
-        )}
-
-        {previewScene.dialogue && previewScene.dialogue.length > 0 && (
-          <div>
-            <h4 className="text-sm font-medium text-gray-500 mb-2 flex items-center gap-1">
-              <Users className="w-3 h-3" />
-              DIALOGUE
-            </h4>
-            <div className="space-y-2">
-              {previewScene.dialogue.map((line: any, index: number) => {
-                const changeKey = `dialogue:${index}` as SceneChangeKey
-                const isChanged = changeSet.has(changeKey)
-
-                return (
-                  <div
-                    key={index}
-                    className={`text-sm flex items-start justify-between gap-2 ${dimIfSkipped(changeKey)}`}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <span className="font-semibold text-blue-600 dark:text-blue-400">
-                        {line.character}:
-                      </span>
-                      <span className="ml-2 text-gray-700 dark:text-gray-300 break-words">
-                        {line.line || line.text || ''}
-                      </span>
-                    </div>
-                    <ChangeControl
-                      changeKey={changeKey}
-                      changed={isChanged}
-                      deselectedChanges={deselectedChanges}
-                      onToggleChange={onToggleChange}
-                    />
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {(previewScene.music || changeSet.has('music')) && (
-          <div className={dimIfSkipped('music')}>
-            <h4 className="text-sm font-medium text-gray-500 mb-1 flex items-center gap-1">
-              <Music className="w-3 h-3" />
-              MUSIC
-            </h4>
-            <div className="flex items-start justify-between gap-2">
-              <p className="text-sm text-gray-700 dark:text-gray-300 break-words flex-1">
-                {typeof previewScene.music === 'string'
-                  ? previewScene.music
-                  : previewScene.music?.description || ''}
-              </p>
-              <ChangeControl
-                changeKey="music"
-                changed={changeSet.has('music')}
-                deselectedChanges={deselectedChanges}
-                onToggleChange={onToggleChange}
-              />
-            </div>
-          </div>
-        )}
-
-        {((Array.isArray(previewScene.sfx) && previewScene.sfx.length > 0) ||
-          changeSet.has('sfx')) && (
-          <div className={dimIfSkipped('sfx')}>
-            <h4 className="text-sm font-medium text-gray-500 mb-1 flex items-center gap-1">
-              <Volume2 className="w-3 h-3" />
-              SOUND EFFECTS
-            </h4>
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex flex-wrap gap-1 flex-1">
-                {(Array.isArray(previewScene.sfx) ? previewScene.sfx : []).map(
-                  (effect: any, index: number) => {
-                    const effectText =
-                      typeof effect === 'string' ? effect : effect?.description || ''
-                    return (
-                      <Badge key={index} variant="secondary" className="text-xs">
-                        {effectText}
-                      </Badge>
-                    )
-                  }
-                )}
-              </div>
-              <ChangeControl
-                changeKey="sfx"
-                changed={changeSet.has('sfx')}
-                deselectedChanges={deselectedChanges}
-                onToggleChange={onToggleChange}
-              />
-            </div>
-          </div>
-        )}
-
-        {previewScene.duration && (
-          <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="flex items-center gap-2 text-sm">
-              <Clock className="w-4 h-4 text-gray-500" />
-              <span className="font-medium">Duration:</span>
-              <span className="text-gray-600 dark:text-gray-400">
-                {Math.round(previewScene.duration / 8) * 8}s
-              </span>
-              {originalScene.duration !== previewScene.duration && (
-                <Badge variant="outline" className="text-xs bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700">
-                  Updated
-                </Badge>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+      )}
 
       <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3">
         <div className="flex items-start gap-2">

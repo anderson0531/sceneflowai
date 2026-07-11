@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateTextCacheAware } from '@/lib/vertexai/gemini'
 import { logCacheEvent } from '@/lib/vertexai/cacheObservability'
-import { findMatchingCharacter } from '@/lib/character/matching'
+import { safeParseJsonFromText, strictJsonPromptSuffix } from '@/lib/safeJson'
 import {
-  copyPreservedSceneAudioFields,
   formatMusicForPrompt,
   formatSfxForPrompt,
   normalizePreserveElements,
   type PreserveElementInput,
 } from '@/lib/audio/cleanupAudio'
+import { getSceneBeats } from '@/lib/script/beatMigration'
+import {
+  formatBeatsForRevisionPrompt,
+  finalizeFlatRevisedScene,
+  finalizeStructuredRevisedScene,
+  isStructuredRevisionResponse,
+} from '@/lib/script/structuredSceneRevision'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -169,6 +175,8 @@ For each recommendation, make the necessary STRUCTURAL or CONTENT changes. Do NO
 
   const dialogueText = currentScene.dialogue?.map((d: any) => `${d.character}: ${d.line || d.text || ''}`).join('\n') || 'No dialogue'
   const characterNames = context.characters?.map((c: any) => c.name).join(', ') || 'No characters'
+  const currentBeats = getSceneBeats(currentScene)
+  const beatsText = formatBeatsForRevisionPrompt(currentBeats)
 
     // ── Cache-aware prompt splitting ──
     // Cacheable context: scene data, formatting rules, dialogue tags, constraints
@@ -177,8 +185,13 @@ For each recommendation, make the necessary STRUCTURAL or CONTENT changes. Do NO
       ? `\nTARGET AUDIENCE:\n${targetDemographic.trim()}\nRewrite this scene so it resonates more strongly with this audience.\n\n`
       : ''
 
-    const cacheableContext = `${audienceContext}CURRENT SCENE:
+    const cacheableContext = `${audienceContext}CURRENT SCENE (structured beats timeline — edit this directly):
 Heading: ${currentScene.heading || 'Untitled Scene'}
+
+BEATS (ordered timeline — keep beatId for kept/edited beats, omit for new beats, drop removed beats):
+${beatsText}
+
+Legacy flat fields (derived from beats — do not output these separately):
 Scene Description: ${currentScene.visualDescription || 'No dedicated scene description'}
 Action: ${currentScene.action || 'No action description'}
 Narration: ${currentScene.narration || 'No narration'}
@@ -265,18 +278,25 @@ REWRITE REQUIREMENTS:
 
 Output the REWRITTEN scene as JSON with this exact structure:
 {
-  "heading": "Scene heading",
-  "visualDescription": "Scene description / director notes that set the look and feel",
-  "action": "Rewritten action description with improved visual storytelling",
-  "narration": "Rewritten narration (or removed if converted to action)",
-  "dialogue": [
-    {"character": "Character Name", "line": "[emotion tag] Rewritten dialogue text with emotional cues"}
+  "beats": [
+    { "beatId": "existing-id", "kind": "action", "actionDescription": "Visual beat description" },
+    { "beatId": "existing-id", "kind": "dialogue", "character": "CHARACTER NAME", "line": "[emotion] One sentence of dialogue", "voiceDirection": "[emotion]" },
+    { "kind": "narration", "character": "NARRATOR", "line": "[calm] Narration line" }
   ],
-  "music": "Music specification",
+  "music": "Music specification or empty string",
   "sfx": ["Sound effect 1", "Sound effect 2"]
 }
 
-REMEMBER: ALL dialogue must include [emotional tags] at the beginning.
+STRUCTURED BEATS RULES:
+- Return the FULL ordered beats[] array for the revised scene.
+- Keep beatId for beats you keep or edit; omit beatId for new beats; remove beats that should be deleted.
+- One sentence per spoken line (dialogue/narration).
+- Do NOT emit sceneDirection, storyboard images, or frame URLs.
+- Action beats use kind "action" with actionDescription only.
+- Dialogue beats use kind "dialogue" with character + line.
+- Narration beats use kind "narration" with character "NARRATOR" unless narrator is already a dialogue character.
+
+REMEMBER: ALL dialogue/narration lines must include [emotional tags] at the beginning.
 
 CRITICAL SUCCESS CRITERIA:
 - A successful rewrite will have DIFFERENT dialogue content, not just different wording
@@ -291,7 +311,7 @@ ${revisionInstruction}
 
 ${preserveInstructions ? `PRESERVATION REQUIREMENTS: ${preserveInstructions}` : ''}
 
-Now rewrite the scene following all the rules, constraints, and formatting requirements provided in the context above.`
+Now rewrite the scene following all the rules, constraints, and formatting requirements provided in the context above.${strictJsonPromptSuffix}`
 
     // System instruction for the screenwriter persona
     const systemInstruction = `You are a professional screenwriter REWRITING a scene. Your task is to make SUBSTANTIVE changes—not cosmetic polishing. When recommendations call for change, CHANGE THE ACTUAL CONTENT, not just the wording.`
@@ -306,6 +326,7 @@ Now rewrite the scene following all the rules, constraints, and formatting requi
       model: 'gemini-2.5-flash',
       temperature: 0.7,
       maxOutputTokens: 16384,
+      responseMimeType: 'application/json',
       cacheTtlMinutes: 60
     })
 
@@ -331,129 +352,41 @@ Now rewrite the scene following all the rules, constraints, and formatting requi
 
   console.log('[Scene Revision] Response received, finishReason:', result.finishReason, 'length:', result.text?.length || 0)
 
-  const revisedText = result.text
+  if (result.finishReason === 'SAFETY') {
+    throw new Error('Scene revision blocked by safety filters. Try rephrasing your direction.')
+  }
+  if (result.finishReason === 'MAX_TOKENS') {
+    throw new Error('Scene revision response was truncated. Try a shorter direction or fewer changes at once.')
+  }
 
+  const revisedText = result.text
   if (!revisedText) {
     throw new Error('No revised scene generated from Gemini')
   }
 
-  // Extract JSON from markdown code blocks if present
-  console.log('[Scene Revision] Raw response text:', revisedText.substring(0, 200))
-  console.log('[Scene Revision] Raw response end:', revisedText.slice(-100))
-  let jsonText = revisedText.trim()
-
-  // Try multiple extraction methods
-  const codeBlockMatch = jsonText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/)
-  if (codeBlockMatch) {
-    jsonText = codeBlockMatch[1].trim()
-    console.log('[Scene Revision] Extracted from code block')
-  } else if (jsonText.startsWith('```')) {
-    // Fallback: manually strip code block markers
-    jsonText = jsonText.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '').trim()
-    console.log('[Scene Revision] Manually stripped code blocks')
-  }
-
-  console.log('[Scene Revision] JSON to parse:', jsonText.substring(0, 200))
-
-  // Try to repair truncated JSON if needed — don't rely only on finishReason
-  // The model sometimes returns STOP even when output is incomplete
-  const jsonEndsClean = jsonText.trim().endsWith('}') || jsonText.trim().endsWith(']}')
-  if (!jsonEndsClean) {
-    console.log('[Scene Revision] Attempting to repair truncated JSON (endsClean:', jsonEndsClean, ', finishReason:', result.finishReason, ')' )
-    // Count open braces/brackets and close them
-    const openBraces = (jsonText.match(/{/g) || []).length
-    const closeBraces = (jsonText.match(/}/g) || []).length
-    const openBrackets = (jsonText.match(/\[/g) || []).length
-    const closeBrackets = (jsonText.match(/\]/g) || []).length
-    
-    // Close any open strings
-    const quoteCount = (jsonText.match(/"/g) || []).length
-    if (quoteCount % 2 !== 0) {
-      jsonText += '"'
-    }
-    
-    // Close open brackets and braces
-    for (let i = 0; i < (openBrackets - closeBrackets); i++) {
-      jsonText += ']'
-    }
-    for (let i = 0; i < (openBraces - closeBraces); i++) {
-      jsonText += '}'
-    }
-    
-    console.log('[Scene Revision] Repaired JSON (last 200 chars):', jsonText.slice(-200))
-  }
-
+  let parsed: any
   try {
-    const revisedScene = JSON.parse(jsonText)
-    return finalizeRevisedScene(revisedScene, currentScene, preserveElements, context)
-} catch (parseError) {
-  console.error('[Scene Revision] JSON parse error:', parseError)
-  console.error('[Scene Revision] Failed to parse text:', jsonText.substring(0, 500))
-  
-  // Retry with a simpler extraction — find the outermost JSON object
-  console.log('[Scene Revision] Retrying with simplified extraction...')
-  try {
-    const jsonObjectMatch = jsonText.match(/\{[\s\S]*\}/)
-    if (jsonObjectMatch) {
-      const retryParsed = JSON.parse(jsonObjectMatch[0])
-      if (retryParsed.heading || retryParsed.dialogue || retryParsed.action) {
-        console.log('[Scene Revision] Retry parse succeeded')
-        return finalizeRevisedScene(retryParsed, currentScene, preserveElements, context)
-      }
-    }
-  } catch (retryError) {
-    console.error('[Scene Revision] Retry parse also failed:', retryError)
-  }
-  
-  // If all parsing fails, throw so the client sees the error
-  throw new Error('Failed to parse revised scene from AI response. The scene may be too complex for a single revision. Try again or edit the scene manually.')
-}
-}
-
-function finalizeRevisedScene(
-  revisedScene: any,
-  currentScene: any,
-  preserveElements: PreserveElementInput[],
-  context: any
-): any {
-  const normalizedPreserve = normalizePreserveElements(preserveElements)
-  let finalScene = { ...currentScene, ...revisedScene }
-  if (revisedScene.visualDescription === undefined && currentScene.visualDescription) {
-    finalScene.visualDescription = currentScene.visualDescription
+    parsed = safeParseJsonFromText(revisedText)
+  } catch (parseError) {
+    console.error('[Scene Revision] JSON parse error:', parseError)
+    throw new Error(
+      'Failed to parse revised scene from AI response. Try again or simplify your direction.'
+    )
   }
 
-  if (normalizedPreserve.includes('dialogueBeats')) {
-    finalScene.dialogue = currentScene.dialogue
-  }
-  if (normalizedPreserve.includes('actionBeats')) {
-    finalScene.action = currentScene.action
-    finalScene.visualDescription = currentScene.visualDescription
-    if (currentScene.description !== undefined) finalScene.description = currentScene.description
-    finalScene.sfx = currentScene.sfx
-  }
-  if (normalizedPreserve.includes('music')) {
-    finalScene.music = currentScene.music
-  }
-  if (normalizedPreserve.includes('sceneDirection')) {
-    finalScene.sceneDirection = currentScene.sceneDirection
-  }
-  if (preserveElements.includes('narration')) {
-    finalScene.narration = currentScene.narration
+  if (parsed?.error === 'OUT_OF_SCOPE') {
+    throw new Error(
+      typeof parsed.message === 'string'
+        ? parsed.message
+        : 'The requested changes are outside scene-level edit scope.'
+    )
   }
 
-  finalScene = copyPreservedSceneAudioFields(currentScene, finalScene, preserveElements)
-
-  if (finalScene.dialogue && Array.isArray(finalScene.dialogue) && context?.characters) {
-    finalScene.dialogue = finalScene.dialogue.map((d: any) => {
-      if (d.character) {
-        const match = findMatchingCharacter(d.character, context.characters)
-        if (match) {
-          return { ...d, character: match.name.toUpperCase() }
-        }
-      }
-      return d
-    })
+  if (isStructuredRevisionResponse(parsed)) {
+    console.log('[Scene Revision] Using structured beats response:', parsed.beats.length, 'beats')
+    return finalizeStructuredRevisedScene(parsed, currentScene, preserveElements, context)
   }
 
-  return finalScene
+  console.warn('[Scene Revision] Structured beats missing — falling back to flat-field merge')
+  return finalizeFlatRevisedScene(parsed, currentScene, preserveElements, context)
 }

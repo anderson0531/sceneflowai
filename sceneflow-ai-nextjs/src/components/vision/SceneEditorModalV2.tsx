@@ -389,6 +389,8 @@ export function SceneEditorModal({
                 changes={[]}
                 deselectedChanges={deselectedChanges}
                 onToggleChange={handleToggleChange}
+                preserveSceneDirection={preserveSceneDirection}
+                preserveBeatFrames={preserveBeatFrames}
               />
             )}
           </div>

@@ -253,14 +253,35 @@ describe('sceneEditAudioPreservation', () => {
         { character: 'ALEX', line: '[neutral] Hello.' },
         { character: 'MARY', line: '[calm] Hi.' },
       ],
+      beats: [
+        {
+          ...original.beats[0],
+          actionDescription: 'Alex paces.',
+        },
+        {
+          beatId: 'beat-mary',
+          sequenceIndex: 1,
+          kind: 'dialogue',
+          character: 'MARY',
+          line: '[calm] Hi.',
+          lineId: 'line-2',
+        },
+      ],
     }
 
     const changes = diffSceneChanges(original, candidate)
-    expect(changes).toContain('action')
-    expect(changes).toContain('dialogue:1')
+    expect(changes).toContain('beat:beat-action')
+    expect(changes).toContain('beat-added:beat-mary')
+    expect(changes).toContain('beat-removed:beat-dialogue')
 
-    const reverted = applyDeselectedSceneChanges(original, candidate, new Set(['action']))
+    const reverted = applyDeselectedSceneChanges(
+      original,
+      candidate,
+      new Set(['beat:beat-action'])
+    )
     expect(reverted.action).toBe('Alex enters.')
-    expect(reverted.dialogue[1].line).toBe('[calm] Hi.')
+    expect(reverted.dialogue.some((line: { character: string }) => line.character === 'MARY')).toBe(
+      true
+    )
   })
 })
