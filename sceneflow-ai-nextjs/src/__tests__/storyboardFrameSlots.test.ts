@@ -4,6 +4,7 @@ import {
   countStoryboardFrameStats,
   countStoryboardFramesNeedingGeneration,
   enumerateStoryboardFrameSlots,
+  sceneHasNoOwnedBeatImages,
 } from '@/lib/storyboard/types'
 import { applyExpressStoryboardImageToScene, getStoryboardTimelineBeats } from '@/lib/script/beatMigration'
 
@@ -201,5 +202,61 @@ describe('storyboard frame slots', () => {
     expect(getStoryboardTimelineBeats(scene)).toHaveLength(8)
     expect(enumerateStoryboardFrameSlots(scene)).toHaveLength(8)
     expect(countStoryboardFramesNeedingGeneration(scene)).toBe(8)
+  })
+
+  it('sceneHasNoOwnedBeatImages is true when all slots lack own images', () => {
+    const scene = {
+      beats: [
+        { beatId: 'bt_1', sequenceIndex: 0, kind: 'action', actionDescription: 'Wide' },
+        { beatId: 'bt_2', sequenceIndex: 1, kind: 'dialogue', character: 'A', line: 'Hi' },
+      ],
+    }
+    expect(sceneHasNoOwnedBeatImages(scene)).toBe(true)
+  })
+
+  it('sceneHasNoOwnedBeatImages is false when a beat has storyboardImageUrl', () => {
+    const scene = {
+      imageUrl: 'https://example.com/establishing.jpg',
+      beats: [
+        {
+          beatId: 'bt_1',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Wide',
+          storyboardImageUrl: 'https://example.com/beat1.jpg',
+        },
+        { beatId: 'bt_2', sequenceIndex: 1, kind: 'dialogue', character: 'A', line: 'Hi' },
+      ],
+    }
+    expect(sceneHasNoOwnedBeatImages(scene)).toBe(false)
+  })
+
+  it('sceneHasNoOwnedBeatImages is true when slots only show establishing placeholders', () => {
+    const scene = {
+      imageUrl: 'https://example.com/establishing.jpg',
+      beats: [
+        {
+          beatId: 'bt_1',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Wide',
+        },
+        {
+          beatId: 'bt_2',
+          sequenceIndex: 1,
+          kind: 'narration',
+          character: 'NARRATOR',
+          line: 'Voiceover.',
+          lineId: 'ln_1',
+        },
+      ],
+      dialogue: [
+        { lineId: 'ln_1', kind: 'narration', character: 'NARRATOR', line: 'Voiceover.' },
+      ],
+    }
+    const slots = enumerateStoryboardFrameSlots(scene)
+    expect(slots.every((s) => !s.ownImageUrl)).toBe(true)
+    expect(slots.some((s) => s.isPlaceholder)).toBe(true)
+    expect(sceneHasNoOwnedBeatImages(scene)).toBe(true)
   })
 })

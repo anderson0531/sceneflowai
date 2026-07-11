@@ -1295,6 +1295,7 @@ async function runScene(
       narrationVoice: visionPhase.narrationVoice,
       language: options.language || 'en',
       regenerate: options.regenerate,
+      framesOnly: options.framesOnly,
     })
 
     if (!preflight.ok) {

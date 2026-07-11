@@ -477,6 +477,12 @@ export function countStoryboardFramesNeedingGeneration(
   return enumerateStoryboardFrameSlots(scene).filter((s) => !s.ownImageUrl).length
 }
 
+/** True when every start frame lacks a stored image (placeholders do not count). */
+export function sceneHasNoOwnedBeatImages(scene: Record<string, unknown>): boolean {
+  const startSlots = enumerateStoryboardFrameSlots(scene)
+  return startSlots.length > 0 && startSlots.every((s) => !s.ownImageUrl)
+}
+
 /** Slots shown in the Scene Express frame checklist (end rows optional). */
 export function filterStoryboardSlotsForExpressChecklist(
   slots: StoryboardFrameSlot[],

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef } from 'react'
-import { ImageIcon, Sparkles, Upload, Wand2, Loader2, CheckCircle2, RefreshCw, FolderPlus, Trash2, AlertTriangle, SlidersHorizontal, Maximize2, X } from 'lucide-react'
+import { ImageIcon, Sparkles, Upload, Wand2, Loader2, CheckCircle2, RefreshCw, FolderPlus, Trash2, AlertTriangle, SlidersHorizontal, Maximize2, X, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -54,6 +54,10 @@ export interface SceneImageFrameProps {
   promptLineClamp?: number
   /** Show expand button + full-size lightbox (hero preview). */
   expandable?: boolean
+  /** Override empty-state primary button label (e.g. Express Scene). */
+  generateLabel?: string
+  /** Use Zap icon instead of Sparkles on the empty-state generate button. */
+  useExpressGenerateIcon?: boolean
 }
 
 function CompactIconButton({
@@ -257,6 +261,8 @@ export function SceneImageFrame({
   alwaysShowControls = false,
   promptLineClamp,
   expandable = false,
+  generateLabel,
+  useExpressGenerateIcon = false,
 }: SceneImageFrameProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isHovering, setIsHovering] = useState(false)
@@ -536,10 +542,12 @@ export function SceneImageFrame({
               >
                 {isGenerating ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                ) : useExpressGenerateIcon ? (
+                  <Zap className="w-4 h-4 mr-1" />
                 ) : (
                   <Sparkles className="w-4 h-4 mr-1" />
                 )}
-                Generate
+                {generateLabel ?? 'Generate'}
               </Button>
               <Button
                 variant="outline"

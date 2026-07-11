@@ -1731,6 +1731,29 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [applySceneProductionUpdate]
   )
 
+  const syncExpressBeatImageToProduction = useCallback(
+    (
+      sceneIndex: number,
+      beatIndex: number,
+      imageUrl: string,
+      frameRole: 'start' | 'end' = 'start'
+    ) => {
+      if (frameRole !== 'start') return
+      const scenes = scriptRef.current?.script?.scenes
+      if (!Array.isArray(scenes) || !scenes[sceneIndex]) return
+      const sceneRec = scenes[sceneIndex] as Record<string, unknown>
+      const beat = getSceneBeats(sceneRec)[beatIndex]
+      const sceneId =
+        (typeof sceneRec.id === 'string' && sceneRec.id) ||
+        (typeof sceneRec.sceneId === 'string' && sceneRec.sceneId) ||
+        `scene-${sceneIndex}`
+      if (beat?.beatId) {
+        syncBeatStartFrameToProduction(sceneId, beat.beatId, imageUrl)
+      }
+    },
+    [syncBeatStartFrameToProduction]
+  )
+
   const syncProductionStartFrameToScript = useCallback(
     async (sceneId: string, beatId: string, newUrl: string) => {
       if (!beatId?.trim() || !newUrl?.trim()) return
@@ -11729,6 +11752,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         gcsPath: event.gcsPath ?? undefined,
                         frameRole: event.frameRole ?? 'start',
                       })
+                      if (typeof event.beatIndex === 'number') {
+                        syncExpressBeatImageToProduction(
+                          event.sceneIndex,
+                          event.beatIndex,
+                          event.imageUrl,
+                          event.frameRole ?? 'start'
+                        )
+                      }
                     }
                   } else {
                     const phaseError = event.error || 'phase failed'
@@ -11863,7 +11894,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         setIsExpressRunning(false)
       }
     },
-    [projectId, script, isExpressRunning, setShowSceneGallery, imageQuality, rehydrateScriptFromProject, applyExpressSceneImage]
+    [projectId, script, isExpressRunning, setShowSceneGallery, imageQuality, rehydrateScriptFromProject, applyExpressSceneImage, syncExpressBeatImageToProduction]
   )
 
   const handleGenerateLanguageStream = useCallback(
@@ -12076,7 +12107,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             includeEndFrames: !!options?.includeEndFrames,
             missingFramesOnly: options?.scope === 'missing',
             regenerate: options?.scope === 'selected',
-            framesOnly: options?.scope === 'selected',
+            framesOnly: options?.scope === 'selected' || options?.scope === 'missing',
             ...(options?.selectedFrameKeys?.length
               ? { selectedFrameKeys: options.selectedFrameKeys }
               : {}),
@@ -12148,6 +12179,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         gcsPath: event.gcsPath ?? undefined,
                         frameRole: event.frameRole ?? 'start',
                       })
+                      if (typeof event.beatIndex === 'number') {
+                        syncExpressBeatImageToProduction(
+                          event.sceneIndex,
+                          event.beatIndex,
+                          event.imageUrl,
+                          event.frameRole ?? 'start'
+                        )
+                      }
                     }
                     if (event.phase === 'image' && event.beatIndex != null) {
                       updateOverlayBeatFrame(
@@ -12297,7 +12336,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
       }
     },
-    [projectId, script, isExpressRunning, lockedArtStyle, imageQuality, rehydrateScriptFromProject, applyExpressSceneImage]
+    [projectId, script, isExpressRunning, lockedArtStyle, imageQuality, rehydrateScriptFromProject, applyExpressSceneImage, syncExpressBeatImageToProduction]
   )
 
   const handleFinalizeStoryboard = useCallback(

@@ -20,6 +20,8 @@ export interface SceneExpressPreflightInput {
   narrationVoice?: unknown
   language?: string
   regenerate?: boolean
+  /** Image-only Express pass — relax voice checks when direction/audio are already complete. */
+  framesOnly?: boolean
 }
 
 export interface SceneExpressPreflightResult {
@@ -76,6 +78,7 @@ export function runSceneExpressPreflight(
     narrationVoice,
     language = 'en',
     regenerate,
+    framesOnly,
   } = input
   const errors: string[] = []
 
@@ -103,19 +106,27 @@ export function runSceneExpressPreflight(
     )
   }
 
-  if (missingVoices.length > 0) {
-    errors.push(
-      `Missing voices: ${missingVoices.join(', ')} — assign in Reference Library.`
-    )
-  }
+  const framesOnlyImagePreflight =
+    !!framesOnly &&
+    countStoryboardFramesNeedingGeneration(scene) > 0 &&
+    !sceneNeedsDirection(scene) &&
+    !sceneNeedsAudio(scene, language)
 
-  const wantsStandaloneNarration = shouldScheduleStandaloneNarration(scene)
-  const hasNarratorInDialogue = sceneHasNarratorInDialogue(scene)
-  const needsNarrationVoice =
-    (wantsStandaloneNarration || hasNarratorInDialogue) && sceneNeedsAudio(scene, language)
+  if (!framesOnlyImagePreflight) {
+    if (missingVoices.length > 0) {
+      errors.push(
+        `Missing voices: ${missingVoices.join(', ')} — assign in Reference Library.`
+      )
+    }
 
-  if (needsNarrationVoice && !narrationVoice) {
-    errors.push('Narration voice not configured — open Generate Audio setup.')
+    const wantsStandaloneNarration = shouldScheduleStandaloneNarration(scene)
+    const hasNarratorInDialogue = sceneHasNarratorInDialogue(scene)
+    const needsNarrationVoice =
+      (wantsStandaloneNarration || hasNarratorInDialogue) && sceneNeedsAudio(scene, language)
+
+    if (needsNarrationVoice && !narrationVoice) {
+      errors.push('Narration voice not configured — open Generate Audio setup.')
+    }
   }
 
   if (errors.length > 0) {

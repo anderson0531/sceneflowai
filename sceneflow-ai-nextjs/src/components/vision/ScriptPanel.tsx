@@ -5107,11 +5107,11 @@ function SceneCard({
                               className="flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg font-medium border transition-all bg-gray-700/40 text-gray-300 border-gray-600/50 hover:bg-gray-700/60 hover:border-gray-500/70 hover:text-white shadow-sm"
                             >
                               <Pencil className="w-3 h-3" />
-                              <span>Edit</span>
+                              <span>Direct</span>
                             </button>
                           </TooltipTrigger>
                           <TooltipContent className="bg-gray-900 text-white border border-gray-700">
-                            <p className="text-xs">Edit scene with AI assistance</p>
+                            <p className="text-xs">Direct scene with AI assistance</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -5321,7 +5321,7 @@ function SceneCard({
                       className="h-8 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
                     >
                       <Pencil className="w-3.5 h-3.5 mr-1.5" />
-                      Edit Scene
+                      Direct
                     </Button>
                   )}
                   {onAnalyzeScene && (
@@ -5618,10 +5618,10 @@ function SceneCard({
                                 className="px-3 py-1.5 text-xs font-medium rounded-md flex items-center gap-1.5 transition-all shadow-sm bg-blue-600 hover:bg-blue-500 text-white"
                               >
                                 <Edit className="w-3 h-3" />
-                                Edit
+                                Direct
                               </button>
                             </TooltipTrigger>
-                            <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Edit and revise scene script</TooltipContent>
+                            <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Direct and revise scene script</TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
                       )}

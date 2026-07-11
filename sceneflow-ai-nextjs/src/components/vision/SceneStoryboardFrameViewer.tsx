@@ -24,6 +24,7 @@ import type { ExpressPhaseStatus, ExpressSceneStatus } from './SceneGallery'
 import {
   countStoryboardFrameStats,
   enumerateStoryboardFrameSlots,
+  sceneHasNoOwnedBeatImages,
   type StoryboardFrameSlot,
 } from '@/lib/storyboard/types'
 import { getSceneBeats } from '@/lib/script/beatMigration'
@@ -97,6 +98,8 @@ interface StoryboardSlotHandlers {
   onGenerateCustomFrame?: (frameId: string) => Promise<void>
   onUploadCustomFrame?: (frameId: string, file: File) => void
   onDeleteStoryboardFrame?: (frameId: string) => void | Promise<void>
+  /** When set, per-slot Generate opens Express instead of single-frame API. */
+  routeGenerateToExpress?: () => void
 }
 
 function buildStoryboardSlotFrameProps(
@@ -130,7 +133,10 @@ function buildStoryboardSlotFrameProps(
     onGenerateCustomFrame,
     onUploadCustomFrame,
     onDeleteStoryboardFrame,
+    routeGenerateToExpress,
   } = handlers
+
+  const useExpressGenerate = !!routeGenerateToExpress
 
   if (slot.kind === 'custom') {
     const genKey = `custom-${sceneIndex}-${slot.customFrameId}`
@@ -193,6 +199,10 @@ function buildStoryboardSlotFrameProps(
     beatRole: slot.beatRole,
     imagePrompt: slot.storyboardImagePrompt,
     onGenerate: () => {
+      if (routeGenerateToExpress) {
+        routeGenerateToExpress()
+        return
+      }
       if (useBeatFrame && beatId) {
         void onGenerateBeatFrame?.(beatId)
       } else if (isLegacyEstablishingOnly) {
@@ -223,6 +233,8 @@ function buildStoryboardSlotFrameProps(
             }
           }
         : undefined,
+    generateLabel: useExpressGenerate ? 'Express Scene' : undefined,
+    useExpressGenerateIcon: useExpressGenerate,
   }
 }
 
@@ -337,6 +349,10 @@ export function SceneStoryboardFrameViewer({
   const sceneBeats = useMemo(() => getSceneBeats(scene), [scene])
   const frameStats = useMemo(() => countStoryboardFrameStats(scene), [scene])
   const preVisStale = useMemo(() => isPreVisStale(scene), [scene])
+  const isFirstTimeFrameGeneration = useMemo(
+    () => sceneHasNoOwnedBeatImages(scene),
+    [scene]
+  )
 
   const sceneKey = scene?.sceneId || scene?.id || `scene-${sceneIndex}`
 
@@ -357,8 +373,9 @@ export function SceneStoryboardFrameViewer({
         characters,
         narrationVoice,
         language: selectedLanguage,
+        framesOnly: isFirstTimeFrameGeneration,
       }),
-    [scene, sceneIndex, characters, narrationVoice, selectedLanguage]
+    [scene, sceneIndex, characters, narrationVoice, selectedLanguage, isFirstTimeFrameGeneration]
   )
 
   const sceneExpressDisabled =
@@ -508,6 +525,10 @@ export function SceneStoryboardFrameViewer({
         : undefined,
       onUploadCustomFrame,
       onDeleteStoryboardFrame,
+      routeGenerateToExpress:
+        isFirstTimeFrameGeneration && onExpressSceneGenerate
+          ? openExpressSceneDialog
+          : undefined,
     }),
     [
       sceneIndex,
@@ -528,6 +549,9 @@ export function SceneStoryboardFrameViewer({
       onUploadCustomFrame,
       onDeleteStoryboardFrame,
       wrapGenerate,
+      isFirstTimeFrameGeneration,
+      onExpressSceneGenerate,
+      openExpressSceneDialog,
     ]
   )
 
