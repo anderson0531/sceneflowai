@@ -260,7 +260,7 @@ export function SceneEditorModal({
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div>
-              <DialogTitle>Edit Scene {sceneIndex + 1}</DialogTitle>
+              <DialogTitle>Direct Scene {sceneIndex + 1}</DialogTitle>
               <DialogDescription>
                 {typeof scene.heading === 'string' ? scene.heading : (scene.heading?.text || 'Untitled Scene')}
               </DialogDescription>
