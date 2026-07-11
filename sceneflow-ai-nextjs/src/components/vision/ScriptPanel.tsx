@@ -6103,7 +6103,7 @@ function SceneCard({
                     const hasSceneMusic = !!(scene.musicAudio || scene.music?.url)
                     let spokenBeatCursor = 0
                     return (
-                    <div className="bg-emerald-950 border-l-4 border-emerald-500 p-4 rounded-lg">
+                    <div className="p-4 rounded-lg bg-slate-900/40 border border-slate-700/50">
                       <div className="flex items-center justify-end gap-2 mb-3 flex-wrap">
                         {(() => {
                           const hasAudioContent =
@@ -6210,10 +6210,10 @@ function SceneCard({
                                 <TooltipTrigger asChild>
                                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full border flex items-center gap-0.5 ${
                                     allReady 
-                                      ? 'bg-green-600/50 text-green-200 border-green-500/50' 
+                                      ? 'bg-blue-600/30 text-blue-200 border-blue-500/40' 
                                       : charAudioReady > 0
                                       ? 'bg-yellow-800/50 text-yellow-300 border-yellow-600/30'
-                                      : 'bg-green-800/50 text-green-300 border-green-600/30'
+                                      : 'bg-slate-700/40 text-slate-300 border-slate-600/40'
                                   }`}>
                                     {character?.slice(0, 2)?.toUpperCase() || '??'}
                                     <span className="text-[8px] opacity-70">({charDialogues.length})</span>
@@ -6241,7 +6241,7 @@ function SceneCard({
                                       onResyncAudioTiming(sceneIdx, selectedLanguage)
                                     }}
                                     disabled={resyncingAudioSceneIndex === sceneIdx}
-                                    className="ml-2 p-1 rounded hover:bg-emerald-800/50 text-emerald-400 hover:text-emerald-300 transition-colors disabled:opacity-50"
+                                    className="ml-2 p-1 rounded hover:bg-blue-900/30 text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-50"
                                   >
                                     {resyncingAudioSceneIndex === sceneIdx ? (
                                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -6275,13 +6275,13 @@ function SceneCard({
                           return (
                             <div
                               key={beat.beatId}
-                              className={`p-3 bg-amber-900/25 rounded-lg border border-amber-700/40 ${
+                              className={`p-3 bg-slate-800/35 rounded-lg border border-slate-600/40 ${
                                 beat.excluded ? 'opacity-50' : ''
                               }`}
                             >
                               <div className="flex items-center gap-2 mb-1.5">
                                 <div className="flex items-center gap-2 min-w-0">
-                                <span className="text-xs font-semibold uppercase tracking-wide text-amber-300">
+                                <span className="text-xs font-semibold uppercase tracking-wide text-blue-300">
                                   Action
                                 </span>
                                 {beat.excluded && (
@@ -6320,7 +6320,7 @@ function SceneCard({
                                   {sfxLabels.map((label, sfxIdx) => (
                                     <span
                                       key={`${beat.beatId}-sfx-${sfxIdx}`}
-                                      className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-200 border border-amber-500/30"
+                                      className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-200 border border-blue-500/25"
                                     >
                                       <VolumeIcon className="w-3 h-3 shrink-0" />
                                       SFX: {label.length > 56 ? `${label.slice(0, 56)}…` : label}
@@ -6380,18 +6380,24 @@ function SceneCard({
                           ? dialogueLineText.replace(/^\([^)]+\)\s*/, '')
                           : dialogueLineText
                         
+                        const isNarrationBeat = beat.kind === 'narration'
+                        
                         return (
                           <div
                             key={beat.beatId}
-                            className={`p-3 bg-green-900/30 rounded-lg border border-green-700/30 hover:border-green-600/50 transition-colors ${
-                              beat.excluded ? 'opacity-50' : ''
-                            }`}
+                            className={`p-3 rounded-lg border transition-colors ${
+                              isNarrationBeat
+                                ? 'bg-indigo-900/20 border-indigo-700/30 hover:border-indigo-600/40'
+                                : 'bg-blue-900/20 border-blue-700/30 hover:border-blue-600/40'
+                            } ${beat.excluded ? 'opacity-50' : ''}`}
                           >
                             <div className="flex items-start gap-3">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1.5">
                                   <div className="flex items-center gap-2 min-w-0 flex-1">
-                                  <div className="text-sm font-semibold text-green-200">{d.character}</div>
+                                  <div className={`text-sm font-semibold ${isNarrationBeat ? 'text-indigo-200' : 'text-blue-200'}`}>
+                                    {isNarrationBeat ? 'Narration' : d.character}
+                                  </div>
                                   {beat.excluded && (
                                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-500/20 text-gray-300 border border-gray-500/30">
                                       Excluded
@@ -6399,7 +6405,7 @@ function SceneCard({
                                   )}
                                   {/* Voice direction / parenthetical */}
                                   {(parenthetical || d.voiceDirection || d.emotion) && (
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 italic">
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-700/40 text-slate-300 border border-slate-600/40 italic">
                                       {parenthetical || d.voiceDirection || d.emotion}
                                     </span>
                                   )}

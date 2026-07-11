@@ -131,7 +131,7 @@ export function ActionBeatSfxControls({
   const isBusy = isGenerating || isExpressRunning || expressStatus === 'running'
 
   return (
-    <div className="mt-3 pt-3 border-t border-amber-700/30">
+    <div className="mt-3 pt-3 border-t border-slate-600/40">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
         <div className="flex items-center gap-2 flex-wrap">
           {expressSelectable && (
@@ -145,8 +145,8 @@ export function ActionBeatSfxControls({
               className="border-violet-400/60 data-[state=checked]:bg-violet-600"
             />
           )}
-          <Volume2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-amber-300/90">
+          <Volume2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-blue-300/90">
             Action SFX
           </span>
           {sfxAudio && (
@@ -186,7 +186,7 @@ export function ActionBeatSfxControls({
                   e.stopPropagation()
                   onPlayAudio?.(sfxAudio, `action-sfx-${beat.beatId}`)
                 }}
-                className="p-1.5 hover:bg-amber-800/40 rounded text-amber-200"
+                className="p-1.5 hover:bg-slate-700/40 rounded text-blue-200"
                 title="Play SFX"
               >
                 {playingAudio === sfxAudio ? (
@@ -206,7 +206,7 @@ export function ActionBeatSfxControls({
                     index: slot.sfxIndex,
                   }).catch(() => toast.error('Failed to save audio file'))
                 }}
-                className="p-1.5 hover:bg-amber-800/40 rounded text-amber-200"
+                className="p-1.5 hover:bg-slate-700/40 rounded text-blue-200"
                 title="Download SFX"
               >
                 <Download className="w-3.5 h-3.5" />
@@ -240,7 +240,7 @@ export function ActionBeatSfxControls({
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-1.5 mb-2">
-        <span className="text-[10px] uppercase tracking-wide text-amber-300/60 mr-1">Duration</span>
+        <span className="text-[10px] uppercase tracking-wide text-blue-300/60 mr-1">Duration</span>
         {chips.map((chip) => {
           const active = durationPreset === chip.id
           return (
@@ -254,8 +254,8 @@ export function ActionBeatSfxControls({
               }}
               className={`text-[10px] leading-none px-2 py-0.5 rounded border transition-colors ${
                 active
-                  ? 'bg-amber-600 border-amber-600 text-white'
-                  : 'bg-transparent border-amber-600/40 text-amber-200/80 hover:bg-amber-900/30'
+                  ? 'bg-blue-600 border-blue-600 text-white'
+                  : 'bg-transparent border-blue-600/40 text-blue-200/80 hover:bg-slate-700/40'
               } disabled:opacity-50`}
             >
               {chip.label}
@@ -264,7 +264,7 @@ export function ActionBeatSfxControls({
         })}
       </div>
       {showPartialVeoHint && (
-        <p className="text-[10px] text-amber-200/60 mb-1">
+        <p className="text-[10px] text-blue-200/60 mb-1">
           Veo covers up to 8s (Auto target{' '}
           {resolveVeoSfxTargetSeconds({ segmentDurationSeconds, override: durationPreset })}s →{' '}
           {veoAutoSeconds}s clip).
