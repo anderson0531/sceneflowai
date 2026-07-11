@@ -12,6 +12,7 @@ import {
   applyBeatsToScene,
   beatContentFingerprint,
   getSceneBeats,
+  normalizeBeatsForProduction,
   parseLlmBeats,
 } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
@@ -73,6 +74,19 @@ function carryBeatMediaIfUnchanged(next: SceneBeat, original: SceneBeat): SceneB
   return merged
 }
 
+function mergeBeatIdentityFromOriginal(next: SceneBeat, original: SceneBeat): SceneBeat {
+  const merged: SceneBeat = { ...next, beatId: original.beatId }
+  if (next.kind === 'dialogue' || next.kind === 'narration') {
+    if (original.lineId) merged.lineId = original.lineId
+    if (original.characterId) merged.characterId = original.characterId
+  }
+  return merged
+}
+
+/**
+ * Re-align AI-returned beats onto original beat ids when the model omits beatId.
+ * Exact id matches win; otherwise claim the next unclaimed original of the same kind.
+ */
 export function mapStructuredRevisionBeats(
   rawBeats: unknown[],
   currentScene: Record<string, unknown>
@@ -80,12 +94,50 @@ export function mapStructuredRevisionBeats(
   const originalBeats = getSceneBeats(currentScene)
   const originalById = new Map(originalBeats.map((beat) => [beat.beatId, beat]))
   const parsed = parseLlmBeats(rawBeats)
+  const claimedOriginalIds = new Set<string>()
+  const aligned: SceneBeat[] = []
 
-  return parsed.map((beat) => {
-    const original = originalById.get(beat.beatId)
-    if (!original) return beat
-    return carryBeatMediaIfUnchanged(beat, original)
-  })
+  for (const beat of parsed) {
+    const hasValidOriginalId =
+      Boolean(beat.beatId) &&
+      originalById.has(beat.beatId) &&
+      !claimedOriginalIds.has(beat.beatId)
+
+    if (hasValidOriginalId) {
+      const original = originalById.get(beat.beatId)!
+      claimedOriginalIds.add(beat.beatId)
+      const merged = mergeBeatIdentityFromOriginal(beat, original)
+      aligned.push(carryBeatMediaIfUnchanged(merged, original))
+      continue
+    }
+
+    const kindMatch = originalBeats.find(
+      (original) => original.kind === beat.kind && !claimedOriginalIds.has(original.beatId)
+    )
+    if (kindMatch) {
+      claimedOriginalIds.add(kindMatch.beatId)
+      const merged = mergeBeatIdentityFromOriginal(beat, kindMatch)
+      aligned.push(carryBeatMediaIfUnchanged(merged, kindMatch))
+      continue
+    }
+
+    aligned.push(beat)
+  }
+
+  return normalizeBeatsForProduction(aligned)
+}
+
+function enforceRevisionBeatCount(
+  scene: Record<string, unknown>,
+  beats: SceneBeat[],
+  context: string
+): Record<string, unknown> {
+  const onScene = getSceneBeats(scene)
+  if (onScene.length === beats.length) return scene
+  console.warn(
+    `[Scene Revision] Beat count mismatch after ${context}: expected ${beats.length}, got ${onScene.length} — forcing authoritative beats[]`
+  )
+  return applyBeatsToScene(scene, beats)
 }
 
 export function finalizeStructuredRevisedScene(
@@ -119,6 +171,7 @@ export function finalizeStructuredRevisedScene(
   }
 
   let finalScene = applyBeatsToScene(currentScene, beats)
+  finalScene = enforceRevisionBeatCount(finalScene, beats, 'finalizeStructuredRevisedScene')
 
   if (parsed.music !== undefined && !normalizedPreserve.includes('music')) {
     finalScene.music = parsed.music

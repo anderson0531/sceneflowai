@@ -5,7 +5,7 @@ import {
   diffSceneChanges,
   isStructuredBeatPreview,
 } from '@/lib/script/sceneDiffChanges'
-import { getSceneBeats } from '@/lib/script/beatMigration'
+import { getSceneBeats, migrateProjectToBeats } from '@/lib/script/beatMigration'
 import {
   finalizeFlatRevisedScene,
   finalizeStructuredRevisedScene,
@@ -305,5 +305,120 @@ describe('structured scene revision', () => {
       new Set(['sceneDirection'])
     )
     expect(merged.sceneDirection).toEqual(originalScene.sceneDirection)
+  })
+})
+
+describe('beat identity re-alignment when AI omits beatIds', () => {
+  const fourBeatOriginal: SceneBeat[] = [
+    { beatId: 'b1', sequenceIndex: 0, kind: 'action', actionDescription: 'Enter.' },
+    {
+      beatId: 'b2',
+      sequenceIndex: 1,
+      kind: 'dialogue',
+      character: 'ALEX',
+      line: 'Hi.',
+      lineId: 'l2',
+    },
+    { beatId: 'b3', sequenceIndex: 2, kind: 'action', actionDescription: 'Pause.' },
+    {
+      beatId: 'b4',
+      sequenceIndex: 3,
+      kind: 'dialogue',
+      character: 'JORDAN',
+      line: 'Hey.',
+      lineId: 'l4',
+    },
+  ]
+
+  const fourBeatScene = structuredScene(fourBeatOriginal)
+
+  const rawSixBeatsNoIds = [
+    { kind: 'action', actionDescription: 'Enter revised.' },
+    { kind: 'dialogue', character: 'ALEX', line: '[happy] Hi revised.' },
+    { kind: 'action', actionDescription: 'Pause revised.' },
+    { kind: 'dialogue', character: 'JORDAN', line: '[cold] Hey revised.' },
+    { kind: 'narration', character: 'NARRATOR', line: 'New narration.' },
+    { kind: 'action', actionDescription: 'New action beat.' },
+  ]
+
+  it('mapStructuredRevisionBeats reuses original beatIds and lineIds for aligned beats', () => {
+    const mapped = mapStructuredRevisionBeats(rawSixBeatsNoIds, fourBeatScene)
+    expect(mapped).toHaveLength(6)
+
+    const reusedIds = ['b1', 'b2', 'b3', 'b4']
+    for (const id of reusedIds) {
+      expect(mapped.some((b) => b.beatId === id)).toBe(true)
+    }
+    expect(mapped.find((b) => b.beatId === 'b2')?.lineId).toBe('l2')
+    expect(mapped.find((b) => b.beatId === 'b4')?.lineId).toBe('l4')
+
+    const newIds = mapped.filter((b) => !reusedIds.includes(b.beatId))
+    expect(newIds).toHaveLength(2)
+  })
+
+  it('diff reports changed beats instead of spurious add+remove when ids were omitted', () => {
+    const candidate = finalizeStructuredRevisedScene(
+      { beats: rawSixBeatsNoIds },
+      fourBeatScene,
+      [],
+      {}
+    )
+    const changes = diffSceneChanges(fourBeatScene, candidate)
+
+    const added = changes.filter((k) => k.startsWith('beat-added:'))
+    const removed = changes.filter((k) => k.startsWith('beat-removed:'))
+    const changed = changes.filter(
+      (k) => k.startsWith('beat:') && !k.startsWith('beat-added:') && !k.startsWith('beat-removed:')
+    )
+
+    expect(added.length).toBeLessThanOrEqual(2)
+    expect(removed.length).toBe(0)
+    expect(changed.length).toBe(4)
+    expect(getSceneBeats(candidate)).toHaveLength(6)
+  })
+
+  it('preview union shows 6 beat rows not 10 when ids are realigned', () => {
+    const candidate = finalizeStructuredRevisedScene(
+      { beats: rawSixBeatsNoIds },
+      fourBeatScene,
+      [],
+      {}
+    )
+    const candidateBeats = getSceneBeats(candidate)
+    const originalBeats = getSceneBeats(fourBeatScene)
+    const allBeatIds = new Set([
+      ...originalBeats.map((b) => b.beatId),
+      ...candidateBeats.map((b) => b.beatId),
+    ])
+    const visibleRows = Array.from(allBeatIds).filter((id) => {
+      const summary = beatChangeSummary(fourBeatScene, candidate, id)
+      return summary.status !== 'unchanged'
+    })
+
+    expect(allBeatIds.size).toBe(6)
+    expect(visibleRows.length).toBe(6)
+    expect(candidateBeats.length).toBe(6)
+  })
+
+  it('migrateProjectToBeats does not re-expand a 6-beat revised scene to 10', () => {
+    const candidate = finalizeStructuredRevisedScene(
+      { beats: rawSixBeatsNoIds },
+      fourBeatScene,
+      [],
+      {}
+    )
+    const metadata = {
+      visionPhase: {
+        script: {
+          script: {
+            scenes: [candidate],
+          },
+        },
+      },
+    }
+    const result = migrateProjectToBeats(metadata)
+    const scenes = (result.metadata.visionPhase as { script: { script: { scenes: unknown[] } } })
+      .script.script.scenes
+    expect(getSceneBeats(scenes[0] as Record<string, unknown>)).toHaveLength(6)
   })
 })
