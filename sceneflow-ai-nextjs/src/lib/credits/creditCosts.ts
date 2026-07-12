@@ -214,6 +214,33 @@ export function getKlingCreditsForGeneration(args: {
   return duration >= 8 ? VIDEO_CREDITS.KLING_VIDEO_10S : VIDEO_CREDITS.KLING_VIDEO_5S
 }
 
+export function getKlingLongTakeCredits(args: {
+  model?: string
+  quality?: KlingCreditQuality
+  plan: { baseSeconds: number; extensions: number; totalSeconds: number }
+  masterSeconds?: number
+}): number {
+  const quality = args.quality ?? 'pro'
+  const model = args.model || 'kling-v3-omni'
+  const base = getKlingCreditsForGeneration({
+    model,
+    quality,
+    durationSeconds: args.plan.baseSeconds,
+  })
+  const perExtend = getKlingCreditsForGeneration({
+    model,
+    quality,
+    durationSeconds: 5,
+  })
+  const stitchMinutes = Math.max(1, Math.ceil(args.plan.totalSeconds / 60))
+  const stitch = RENDER_CREDITS.PER_MINUTE * stitchMinutes
+  const lipsync = getKlingCreditsForGeneration({
+    operation: 'lipsync',
+    durationSeconds: args.masterSeconds ?? args.plan.totalSeconds,
+  })
+  return base + perExtend * args.plan.extensions + stitch + lipsync
+}
+
 // =============================================================================
 // AUDIO / VOICEOVER
 // =============================================================================

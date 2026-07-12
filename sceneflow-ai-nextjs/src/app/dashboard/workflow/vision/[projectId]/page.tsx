@@ -62,6 +62,11 @@ import { normalizeReferenceImages } from '@/lib/video/normalizeReferenceImages'
 import { pollAggregatorJobForAsset } from '@/lib/aggregator/clientPoll'
 import { pollKlingJobForAsset } from '@/lib/kling/clientPoll'
 import {
+  applySpokenDurationMargin,
+  estimateSpokenDurationSeconds,
+} from '@/lib/scene/dialogueSegmentSplit'
+import { shouldUseKlingLongTake } from '@/lib/kling/longTakePlanner'
+import {
   GALLERY_DIRECT_GENERATE_OPTS,
   GALLERY_MANUAL_GENERATE_OPTS,
 } from '@/lib/vision/galleryImageGeneration'
@@ -3212,6 +3217,65 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           videoProvider: options?.videoProvider ?? 'vertex',
           videoModel: options?.videoModel,
         })
+
+        const videoProvider = options?.videoProvider ?? 'kling'
+        const isContinuation =
+          segment.veoTimelineContinuation ||
+          segment.generationMethod === 'EXT' ||
+          (segment.dialoguePortion && segment.dialoguePortion.partIndex > 0)
+        const dialogueText =
+          segment.dialogueLines?.map((d) => d.line).join(' ') ||
+          segment.dialoguePortion?.excerpt ||
+          ''
+        const estimatedDialogueSec = applySpokenDurationMargin(
+          estimateSpokenDurationSeconds(dialogueText)
+        )
+
+        if (
+          videoProvider === 'kling' &&
+          !isContinuation &&
+          segment.beatId &&
+          shouldUseKlingLongTake(estimatedDialogueSec)
+        ) {
+          const longTakeRes = await fetch(
+            `/api/scenes/${encodeURIComponent(sceneId)}/beats/${encodeURIComponent(segment.beatId)}/generate-longtake`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({
+                projectId: project.id,
+                segmentId,
+                prompt,
+                negativePrompt: options?.negativePrompt,
+                startFrameUrl: resolvedStartFrameUrl,
+                klingModel: options?.klingModel,
+                klingQuality: options?.klingQuality,
+                cfgScale: options?.cfgScale,
+                aspectRatio: options?.aspectRatio,
+                resolution: options?.resolution,
+                faceConsistency: true,
+              }),
+            }
+          )
+          const longTakeData = await longTakeRes.json()
+          if (!longTakeRes.ok) {
+            throw new Error(longTakeData.error || 'Long-take enqueue failed')
+          }
+          toast.info(
+            `Long-form dialogue pipeline queued (${longTakeData.plan?.totalSeconds ?? estimatedDialogueSec}s). Job ${String(longTakeData.jobId).slice(0, 8)}…`
+          )
+          applySceneProductionUpdate(sceneId, (current) => {
+            if (!current) return current
+            const segments = current.segments.map((seg) =>
+              seg.segmentId === segmentId
+                ? { ...seg, status: 'GENERATING' as const, longTakeJobId: longTakeData.jobId }
+                : seg
+            )
+            return { ...current, segments }
+          })
+          return
+        }
 
         // Call the asset generation API with all prompt builder options
         const response = await fetch(`/api/segments/${encodeURIComponent(segmentId)}/generate-asset`, {

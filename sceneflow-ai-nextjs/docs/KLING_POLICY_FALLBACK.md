@@ -115,6 +115,50 @@ Preview the assembled prompt: `POST /api/segments/[segmentId]/preview-api-prompt
 - **Vertex EXT** requires a prior segment `veoVideoRef` (Vertex-only).
 - If the previous part used **`generationProvider: 'fal'` or `'kling'`**, EXT is skipped; use I2V with the prior clip's last frame (`priorSegmentSupportsVertexExt` in `veoChainQueue.ts`).
 
+## Long-form dialogue (2-tier pipeline)
+
+When beat dialogue exceeds **15s**, SceneFlow auto-routes to the **Kling long-take pipeline** instead of a single `generate-asset` call.
+
+### Architecture
+
+1. **Tier 1 — Native extend chain:** Kling base I2V (`face_consistency` when refs present, `sound: off`) → chained `video-extend` (+5s each, model locked, **180s** hard cap) → Cloud Run FFmpeg **`stitch`** mode (silent master).
+2. **Tier 2 — Lip-sync overdub:** Async Kling lip-sync (`audio2video`, full dialogue MP3, up to **60s**) on the stitched master → moderate → GCS upload.
+
+Orchestrated via **Inngest** `processKlingLongTake` with `waitForEvent` on Kling webhooks (`kling/task.completed`, 30m timeout per step) and stitch callbacks (`render/stitch.completed`).
+
+### Enqueue
+
+```http
+POST /api/scenes/{sceneId}/beats/{beatId}/generate-longtake
+```
+
+Returns **202** + `jobId` (GenerationJob `kling_long_take`). Client polls `/api/jobs` or receives notification on completion.
+
+### Required env
+
+| Variable | Purpose |
+|----------|---------|
+| `KLING_ASYNC=true` | Async webhook mode |
+| `KLING_WEBHOOK_SECRET` | Webhook signature verification |
+| `KLING_WEBHOOK_BASE_URL` | Public app URL for callbacks |
+| `GCS_RENDER_BUCKET` + Cloud Run job | FFmpeg stitch renderer |
+| `GCP_PROJECT_ID`, `CLOUD_RUN_JOB_NAME` | Trigger stitch jobs |
+
+Rebuild the FFmpeg renderer image after deploying the `stitch` branch in `docker/ffmpeg-renderer/render.py`.
+
+### UI guidance
+
+- Dialogue **>30s:** Director Dialog recommends a **camera-angle cut** or **multi-shot** instead of one continuous extend chain.
+- Dialogue **>60s:** drift-risk warning; `face_consistency` defaults on when character references exist.
+
+### Modules
+
+- `src/lib/kling/longTakePlanner.ts` — duration math, 180s cap, warnings
+- `src/lib/kling/longTakeOrchestrator.ts` — submit base/extend/stitch/lipsync/finalize
+- `src/lib/kling/buildStitchJobSpec.ts` — clip-list stitch job spec
+- `src/inngest/functions.ts` — `processKlingLongTake`
+- `src/app/api/scenes/.../generate-longtake/route.ts` — enqueue endpoint
+
 ## Modules
 
 - `src/lib/generation/preflightPromptGuard.ts` — risk score + Flash rewrite

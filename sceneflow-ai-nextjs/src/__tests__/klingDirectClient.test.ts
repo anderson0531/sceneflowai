@@ -3,7 +3,9 @@ import jwt from 'jsonwebtoken'
 import {
   buildKlingAuthHeader,
   buildKlingVideoBody,
+  buildKlingExtendBody,
   extractKlingVideoUrl,
+  extractKlingVideoId,
   parseKlingWebhookPayload,
 } from '@/lib/kling/klingDirectClient'
 
@@ -99,5 +101,49 @@ describe('klingDirectClient helpers', () => {
     })
     expect(payload?.task_id).toBe('task-123')
     expect(payload?.task_status).toBe('succeed')
+  })
+
+  it('extracts video_id from task result', () => {
+    const id = extractKlingVideoId({
+      task_result: { videos: [{ id: 'vid-abc', url: 'https://cdn.example.com/out.mp4' }] },
+    })
+    expect(id).toBe('vid-abc')
+  })
+
+  it('builds video-extend body without model override', () => {
+    const { body, droppedKeys } = buildKlingExtendBody({
+      videoId: 'parent-vid-1',
+      prompt: 'Continue the scene calmly',
+      negativePrompt: 'blur',
+      cfgScale: 0.6,
+      webhookUrl: 'https://app.example.com/api/webhooks/kling',
+      model: 'kling-v3-omni',
+    })
+    expect(body.video_id).toBe('parent-vid-1')
+    expect(body.prompt).toBe('Continue the scene calmly')
+    expect(body.callback_url).toBe('https://app.example.com/api/webhooks/kling')
+    expect(body.model_name).toBeUndefined()
+    expect(droppedKeys).toContain('model_name')
+  })
+
+  it('gates face_consistency without reference frame', () => {
+    const { body, droppedKeys } = buildKlingVideoBody({
+      prompt: 'Test',
+      model_name: 'kling-v3-omni',
+      face_consistency: true,
+    })
+    expect(body.face_consistency).toBeUndefined()
+    expect(droppedKeys).toContain('face_consistency')
+  })
+
+  it('includes face_consistency with start frame on v3-omni', () => {
+    const { body } = buildKlingVideoBody({
+      prompt: 'Test',
+      model_name: 'kling-v3-omni',
+      face_consistency: true,
+      startFrame: 'https://cdn.example.com/frame.png',
+    })
+    expect(body.face_consistency).toBe(true)
+    expect(body.image_list).toBeDefined()
   })
 })

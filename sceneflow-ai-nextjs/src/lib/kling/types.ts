@@ -55,6 +55,10 @@ export interface KlingModelCapabilities {
   imageList: boolean
   watermark: boolean
   nativeAudio: boolean
+  /** Native video-extend chaining from parent video_id */
+  videoExtend: boolean
+  /** Face consistency lock across extend chain */
+  faceConsistency: boolean
   qualities: KlingQuality[]
   maxDuration: number
   minDuration: number
@@ -64,6 +68,18 @@ export interface KlingModelCapabilities {
   /** Legacy single-image I2V field */
   legacyImageField: boolean
 }
+
+/** Kling single-clip ceiling (seconds) before long-take pipeline */
+export const KLING_SINGLE_CLIP_MAX_SEC = 15
+
+/** Seconds added per native video-extend call */
+export const KLING_EXTEND_DELTA_SEC = 5
+
+/** Hard cumulative ceiling for extend chains (seconds) */
+export const KLING_LONG_TAKE_MAX_SEC = 180
+
+/** Max dialogue audio length for long-form lip-sync overdub */
+export const KLING_LIPSYNC_MAX_SEC = 60
 
 export const KLING_MODEL_CATALOG: Record<
   KlingModelId,
@@ -82,6 +98,8 @@ export const KLING_MODEL_CATALOG: Record<
       imageList: true,
       watermark: true,
       nativeAudio: true,
+      videoExtend: true,
+      faceConsistency: true,
       qualities: ['std', 'pro', '4k'],
       maxDuration: 15,
       minDuration: 3,
@@ -104,6 +122,8 @@ export const KLING_MODEL_CATALOG: Record<
       imageList: true,
       watermark: true,
       nativeAudio: true,
+      videoExtend: true,
+      faceConsistency: true,
       qualities: ['std', 'pro'],
       maxDuration: 15,
       minDuration: 3,
@@ -126,6 +146,8 @@ export const KLING_MODEL_CATALOG: Record<
       imageList: true,
       watermark: true,
       nativeAudio: true,
+      videoExtend: true,
+      faceConsistency: false,
       qualities: ['std', 'pro'],
       maxDuration: 10,
       minDuration: 3,
@@ -148,6 +170,8 @@ export const KLING_MODEL_CATALOG: Record<
       imageList: false,
       watermark: false,
       nativeAudio: true,
+      videoExtend: true,
+      faceConsistency: false,
       qualities: ['std', 'pro'],
       maxDuration: 10,
       minDuration: 5,
@@ -204,12 +228,37 @@ export interface KlingVideoInput {
   watermark_enabled?: boolean
   /** Second image for dual-image presets */
   secondaryImageUrl?: string
+  /** Lock face identity across extend chain (requires reference frame) */
+  face_consistency?: boolean
 }
 
 export interface KlingSubmitResult {
   taskId: string
   endpoint: 'text2video' | 'image2video' | 'video-extend' | 'lip-sync'
   asyncMode: boolean
+  /** Kling output video_id for chaining extends */
+  videoId?: string
+}
+
+export type KlingJobKind =
+  | 'segment'
+  | 'long_take_base'
+  | 'long_take_extend'
+  | 'long_take_lipsync'
+  | 'long_take_stitch'
+
+export interface KlingLongTakeChainContext {
+  generationJobId: string
+  beatId: string
+  model: string
+  quality: string
+  targetSeconds: number
+  clipUrls: string[]
+  currentVideoId?: string
+  dialogueAudioUrl?: string
+  stepIndex: number
+  totalExtendSteps: number
+  stitchJobId?: string
 }
 
 export interface KlingJobRecord {
@@ -223,7 +272,12 @@ export interface KlingJobRecord {
   modelName: string
   status: 'queued' | 'processing' | 'completed' | 'failed'
   assetUrl?: string
+  /** Raw Kling CDN URL before moderation (long-take intermediate steps) */
+  videoUrl?: string
+  videoId?: string
   error?: string
+  kind?: KlingJobKind
+  longTake?: KlingLongTakeChainContext
   createdAt: string
   updatedAt: string
 }

@@ -270,7 +270,11 @@ def main():
     log(f"Render Mode: {render_mode}")
     
     # Route to appropriate render function
-    if render_mode == 'concatenate':
+    if render_mode == 'stitch':
+        clip_urls = job_spec.get('clipUrls', [])
+        log(f"Stitch clips: {len(clip_urls)}")
+        render_stitch_clips(job_id, clip_urls, output_path_gcs, resolution, fps, callback_url)
+    elif render_mode == 'concatenate':
         # Video concatenation mode (for scene renders)
         video_segments = job_spec.get('videoSegments', [])
         include_segment_audio = job_spec.get('includeSegmentAudio', True)
@@ -552,6 +556,57 @@ def finish_render(job_id: str, output_file: str, output_path_gcs: str, callback_
     shutil.rmtree(OUTPUT_DIR, ignore_errors=True)
     
     log("=== Job Finished Successfully ===")
+
+
+def render_stitch_clips(job_id: str, clip_urls: list, output_path_gcs: str,
+                        resolution: str, fps: int, callback_url: str):
+    """Concatenate ordered clip URLs into a silent master MP4 (long-take stitch mode)."""
+    send_callback(callback_url, job_id, 'PROCESSING', 10)
+    log("=== Downloading Assets (Stitch Mode) ===")
+
+    video_segments = []
+    for i, url in enumerate(clip_urls):
+        if not url:
+            log(f"Stitch clip {i} has no URL", 'ERROR')
+            send_callback(callback_url, job_id, 'FAILED', 0, error=f"Clip {i} missing URL")
+            sys.exit(1)
+        local_file = download_asset(url, 'video', i)
+        if not local_file:
+            log(f"Failed to download stitch clip {i}", 'ERROR')
+            send_callback(callback_url, job_id, 'FAILED', 0, error=f"Failed to download clip {i}")
+            sys.exit(1)
+        video_segments.append({
+            'videoUrl': url,
+            'localFile': local_file,
+            'startTime': 0,
+            'duration': 0,
+            'audioSource': 'none',
+        })
+
+    send_callback(callback_url, job_id, 'PROCESSING', 40)
+    output_file = os.path.join(OUTPUT_DIR, f"{job_id}.mp4")
+
+    ffmpeg_cmd = build_concat_ffmpeg_command(
+        video_segments=video_segments,
+        audio_clips=[],
+        output_path=output_file,
+        resolution=resolution,
+        fps=fps,
+        temp_dir=TEMP_DIR,
+        include_segment_audio=False,
+        segment_audio_volume=0.0,
+        text_overlays=[],
+        watermark=None,
+    )
+
+    send_callback(callback_url, job_id, 'PROCESSING', 60)
+    success = run_ffmpeg(ffmpeg_cmd, timeout=7200)
+    if not success:
+        log("Stitch FFmpeg render failed", 'ERROR')
+        send_callback(callback_url, job_id, 'FAILED', 0, error="Stitch FFmpeg render failed")
+        sys.exit(1)
+
+    finish_render(job_id, output_file, output_path_gcs, callback_url)
 
 
 if __name__ == '__main__':

@@ -100,6 +100,20 @@ export function extractKlingVideoUrl(data: unknown): string | undefined {
   return undefined
 }
 
+/** Exported for unit tests — reads task_result.videos[0].id for extend chaining */
+export function extractKlingVideoId(data: unknown): string | undefined {
+  if (!data || typeof data !== 'object') return undefined
+  const d = data as KlingTaskResponse['data']
+  const videos = d?.task_result?.videos
+  if (videos?.[0]?.id) return videos[0].id
+  return undefined
+}
+
+export interface KlingPollResult {
+  videoUrl: string
+  videoId?: string
+}
+
 export function parseKlingWebhookPayload(body: unknown): KlingWebhookPayload | null {
   if (!body || typeof body !== 'object') return null
   const raw = body as Record<string, unknown>
@@ -183,6 +197,16 @@ export async function pollKlingTask(
   maxWaitSec = 300,
   intervalMs = 5000
 ): Promise<string> {
+  const result = await pollKlingTaskResult(taskId, endpoint, maxWaitSec, intervalMs)
+  return result.videoUrl
+}
+
+export async function pollKlingTaskResult(
+  taskId: string,
+  endpoint: 'text2video' | 'image2video' | 'video-extend' | 'lip-sync',
+  maxWaitSec = 300,
+  intervalMs = 5000
+): Promise<KlingPollResult> {
   const deadline = Date.now() + maxWaitSec * 1000
 
   while (Date.now() < deadline) {
@@ -190,9 +214,12 @@ export async function pollKlingTask(
     const status = json.data?.task_status
 
     if (status === 'succeed') {
-      const url = extractKlingVideoUrl(json.data)
-      if (url) return url
-      throw new Error('Kling task succeeded without video URL')
+      const videoUrl = extractKlingVideoUrl(json.data)
+      if (!videoUrl) throw new Error('Kling task succeeded without video URL')
+      return {
+        videoUrl,
+        videoId: extractKlingVideoId(json.data),
+      }
     }
 
     if (status === 'failed') {
@@ -340,6 +367,12 @@ export function buildKlingVideoBody(
     droppedKeys.push('preset')
   }
 
+  if (caps.faceConsistency && input.face_consistency && hasStart) {
+    body.face_consistency = true
+  } else if (input.face_consistency) {
+    droppedKeys.push('face_consistency')
+  }
+
   if (input.webhook_url) {
     body.webhook_url = input.webhook_url
   }
@@ -404,10 +437,117 @@ export async function submitKlingVideo(
 
 export async function runKlingVideo(input: KlingVideoInput): Promise<Buffer> {
   const submit = await submitKlingVideo(input)
-  const videoUrl = await pollKlingTask(submit.taskId, submit.endpoint)
-  const res = await fetch(videoUrl)
+  const polled = await pollKlingTaskResult(submit.taskId, submit.endpoint)
+  const res = await fetch(polled.videoUrl)
   if (!res.ok) throw new Error(`Kling video download failed: ${res.status}`)
   return Buffer.from(await res.arrayBuffer())
+}
+
+export interface KlingExtendInput {
+  videoId: string
+  prompt?: string
+  negativePrompt?: string
+  cfgScale?: number
+  webhookUrl?: string
+  /** Intentionally ignored — model/mode inherited from parent video */
+  model?: string
+}
+
+export interface BuildKlingExtendBodyResult {
+  body: Record<string, unknown>
+  droppedKeys: string[]
+}
+
+/** Exported for unit tests */
+export function buildKlingExtendBody(input: KlingExtendInput): BuildKlingExtendBodyResult {
+  const droppedKeys: string[] = []
+  const body: Record<string, unknown> = {
+    video_id: input.videoId,
+  }
+
+  if (input.prompt) {
+    body.prompt = truncatePrompt(input.prompt)
+  }
+  if (input.negativePrompt) {
+    body.negative_prompt = truncatePrompt(input.negativePrompt)
+  }
+  if (input.cfgScale != null) {
+    body.cfg_scale = Math.min(1, Math.max(0, input.cfgScale))
+  }
+  if (input.webhookUrl) {
+    body.callback_url = input.webhookUrl
+  }
+  if (input.model) {
+    droppedKeys.push('model_name')
+    droppedKeys.push('mode')
+  }
+
+  return { body, droppedKeys }
+}
+
+export async function submitKlingVideoExtend(
+  input: KlingExtendInput
+): Promise<KlingSubmitResult> {
+  if (!hasDirectKlingCredentials()) {
+    throw new Error('Direct Kling credentials are not configured')
+  }
+
+  const { body } = buildKlingExtendBody(input)
+  const create = await klingRequest('/videos/video-extend', body)
+  const taskId = create.data?.task_id
+  if (!taskId) {
+    throw new Error('Kling video-extend task created without task_id')
+  }
+
+  return {
+    taskId,
+    endpoint: 'video-extend',
+    asyncMode: !!input.webhookUrl,
+  }
+}
+
+export async function runKlingVideoExtend(input: KlingExtendInput): Promise<{
+  buffer: Buffer
+  videoId?: string
+}> {
+  const submit = await submitKlingVideoExtend(input)
+  const polled = await pollKlingTaskResult(submit.taskId, 'video-extend')
+  const res = await fetch(polled.videoUrl)
+  if (!res.ok) throw new Error(`Kling extend download failed: ${res.status}`)
+  return {
+    buffer: Buffer.from(await res.arrayBuffer()),
+    videoId: polled.videoId,
+  }
+}
+
+export async function submitKlingLipSync(input: {
+  videoUrl: string
+  audioUrl: string
+  webhookUrl?: string
+}): Promise<KlingSubmitResult> {
+  if (!hasDirectKlingCredentials()) {
+    throw new Error('Direct Kling credentials are not configured')
+  }
+
+  const body: Record<string, unknown> = {
+    video_url: input.videoUrl,
+    audio_url: input.audioUrl,
+    audio_type: 'url',
+    mode: 'audio2video',
+  }
+  if (input.webhookUrl) {
+    body.callback_url = input.webhookUrl
+  }
+
+  const create = await klingRequest('/videos/lip-sync', body)
+  const taskId = create.data?.task_id
+  if (!taskId) throw new Error('Kling lip-sync task created without task_id')
+
+  return {
+    taskId,
+    endpoint: 'lip-sync',
+    asyncMode: !!input.webhookUrl,
+  }
 }
 
 export async function runKlingLipSync(videoUrl: string, audioUrl: string): Promise<Buffer> {
@@ -415,16 +555,8 @@ export async function runKlingLipSync(videoUrl: string, audioUrl: string): Promi
     throw new Error('Direct Kling credentials are not configured')
   }
 
-  const create = await klingRequest('/videos/lip-sync', {
-    video_url: videoUrl,
-    audio_url: audioUrl,
-    model_name: getKlingDefaultModel(),
-  })
-
-  const taskId = create.data?.task_id
-  if (!taskId) throw new Error('Kling lip-sync task created without task_id')
-
-  const outUrl = await pollKlingTask(taskId, 'lip-sync')
+  const submit = await submitKlingLipSync({ videoUrl, audioUrl })
+  const outUrl = await pollKlingTask(submit.taskId, 'lip-sync')
   const res = await fetch(outUrl)
   if (!res.ok) throw new Error(`Kling lip-sync download failed: ${res.status}`)
   return Buffer.from(await res.arrayBuffer())

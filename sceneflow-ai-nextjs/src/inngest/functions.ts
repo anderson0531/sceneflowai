@@ -4,6 +4,18 @@ import {
   notifyUser,
   updateGenerationJob,
 } from '@/lib/jobs/jobService'
+import { planKlingLongTake } from '@/lib/kling/longTakePlanner'
+import {
+  enqueueLongTakeStitch,
+  finalizeLongTakeMaster,
+  submitLongTakeBase,
+  submitLongTakeExtend,
+  submitLongTakeLipSync,
+  type KlingLongTakeJobPayload,
+} from '@/lib/kling/longTakeOrchestrator'
+import { getKlingLongTakeCredits } from '@/lib/credits/creditCosts'
+import { CreditService } from '@/services/CreditService'
+import type { KlingQuality } from '@/lib/kling/types'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -45,6 +57,10 @@ export const processGenerationJob = inngest.createFunction(
       projectId: string
       jobType: string
       payload: Record<string, unknown>
+    }
+
+    if (jobType === 'kling_long_take') {
+      return { ok: true, delegated: 'process-kling-long-take' }
     }
 
     await step.run('mark-processing', async () => {
@@ -149,4 +165,210 @@ export const processBatchGenerationJob = inngest.createFunction(
   }
 )
 
-export const inngestFunctions = [processGenerationJob, processBatchGenerationJob]
+export const processKlingLongTake = inngest.createFunction(
+  {
+    id: 'process-kling-long-take',
+    retries: 2,
+    triggers: [{ event: 'generation/job.queued', if: 'event.data.jobType == "kling_long_take"' }],
+  },
+  async ({ event, step }) => {
+    const { jobId, userId, projectId, payload } = event.data as {
+      jobId: string
+      userId: string
+      projectId: string
+      payload: KlingLongTakeJobPayload
+    }
+
+    const longTakePayload: KlingLongTakeJobPayload = {
+      ...payload,
+      generationJobId: jobId,
+      userId,
+      projectId,
+    }
+
+    const plan = planKlingLongTake({
+      targetSeconds: longTakePayload.targetSeconds,
+      model: longTakePayload.model,
+    })
+
+    await step.run('mark-processing', async () => {
+      await updateGenerationJob(jobId, { status: 'processing', progress: 5 })
+    })
+
+    try {
+      const base = await step.run('submit-base', async () =>
+        submitLongTakeBase(longTakePayload)
+      )
+
+      const baseEvent = await step.waitForEvent('wait-kling-base', {
+        event: 'kling/task.completed',
+        timeout: '30m',
+        if: `event.data.taskId == "${base.taskId}"`,
+      })
+
+      const baseData = baseEvent?.data as {
+        videoUrl?: string
+        videoId?: string
+        status?: string
+        error?: string
+      }
+      if (!baseData?.videoUrl || baseData.status === 'failed') {
+        throw new Error(baseData?.error || 'Kling base clip failed')
+      }
+
+      let clipUrls = [baseData.videoUrl]
+      let currentVideoId = baseData.videoId
+      await updateGenerationJob(jobId, { progress: 20 })
+
+      for (let i = 0; i < plan.extensions; i++) {
+        if (!currentVideoId) {
+          throw new Error('Kling extend chain missing video_id from previous step')
+        }
+
+        const ext = await step.run(`submit-extend-${i}`, async () =>
+          submitLongTakeExtend({
+            payload: longTakePayload,
+            videoId: currentVideoId!,
+            stepIndex: i + 1,
+            totalExtendSteps: plan.extensions,
+            clipUrls,
+          })
+        )
+
+        const extEvent = await step.waitForEvent(`wait-kling-extend-${i}`, {
+          event: 'kling/task.completed',
+          timeout: '30m',
+          if: `event.data.taskId == "${ext.taskId}"`,
+        })
+
+        const extData = extEvent?.data as {
+          videoUrl?: string
+          videoId?: string
+          status?: string
+          error?: string
+        }
+        if (!extData?.videoUrl || extData.status === 'failed') {
+          throw new Error(extData?.error || `Kling extend step ${i + 1} failed`)
+        }
+
+        clipUrls = [...clipUrls, extData.videoUrl]
+        currentVideoId = extData.videoId || currentVideoId
+        await updateGenerationJob(jobId, {
+          progress: 20 + Math.round(((i + 1) / Math.max(1, plan.extensions)) * 35),
+        })
+      }
+
+      const stitch = await step.run('enqueue-stitch', async () =>
+        enqueueLongTakeStitch({
+          payload: longTakePayload,
+          clipUrls,
+        })
+      )
+
+      const stitchEvent = await step.waitForEvent('wait-stitch', {
+        event: 'render/stitch.completed',
+        timeout: '30m',
+        if: `event.data.jobId == "${stitch.stitchJobId}"`,
+      })
+
+      const stitchData = stitchEvent?.data as {
+        outputUrl?: string
+        status?: string
+        error?: string
+      }
+      if (!stitchData?.outputUrl || stitchData.status === 'FAILED') {
+        throw new Error(stitchData?.error || 'FFmpeg stitch failed')
+      }
+
+      await updateGenerationJob(jobId, { progress: 70 })
+
+      const lipsync = await step.run('submit-lipsync', async () =>
+        submitLongTakeLipSync({
+          payload: longTakePayload,
+          masterVideoUrl: stitchData.outputUrl!,
+        })
+      )
+
+      const lipEvent = await step.waitForEvent('wait-lipsync', {
+        event: 'kling/task.completed',
+        timeout: '30m',
+        if: `event.data.taskId == "${lipsync.taskId}"`,
+      })
+
+      const lipData = lipEvent?.data as {
+        videoUrl?: string
+        status?: string
+        error?: string
+      }
+      if (!lipData?.videoUrl || lipData.status === 'failed') {
+        throw new Error(lipData?.error || 'Kling lip-sync failed')
+      }
+
+      const finalized = await step.run('finalize-master', async () =>
+        finalizeLongTakeMaster({
+          payload: longTakePayload,
+          videoUrl: lipData.videoUrl!,
+          provenance: {
+            plan,
+            clipCount: clipUrls.length,
+            stitchJobId: stitch.stitchJobId,
+          },
+        })
+      )
+
+      await step.run('charge-credits', async () => {
+        const credits = getKlingLongTakeCredits({
+          model: longTakePayload.model,
+          quality: (longTakePayload.quality as KlingQuality) || 'pro',
+          plan,
+          masterSeconds: plan.totalSeconds,
+        })
+        await CreditService.charge(userId, credits, 'ai_usage', projectId, {
+          operation: 'kling_long_take',
+          segmentId: longTakePayload.segmentId,
+          beatId: longTakePayload.beatId,
+        })
+      })
+
+      await step.run('complete', async () => {
+        await updateGenerationJob(jobId, {
+          status: 'completed',
+          progress: 100,
+          result: {
+            assetUrl: finalized.assetUrl,
+            segmentId: longTakePayload.segmentId,
+            beatId: longTakePayload.beatId,
+            totalSeconds: plan.totalSeconds,
+            warnings: plan.warnings,
+          },
+        })
+        await notifyUser({
+          userId,
+          projectId,
+          jobId,
+          type: 'job_completed',
+          title: 'Long-form dialogue video ready',
+          message: `Kling long-take (${plan.totalSeconds}s) finished for beat ${longTakePayload.beatId}.`,
+        })
+      })
+
+      return { ok: true, assetUrl: finalized.assetUrl }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Long-take job failed'
+      await step.run('fail', async () => {
+        await updateGenerationJob(jobId, { status: 'failed', error: message })
+        await notifyUser({
+          userId,
+          projectId,
+          jobId,
+          type: 'job_failed',
+          title: 'Long-form dialogue failed',
+          message,
+        })
+      })
+      throw err
+    }
+  }
+)
+
+export const inngestFunctions = [processGenerationJob, processBatchGenerationJob, processKlingLongTake]

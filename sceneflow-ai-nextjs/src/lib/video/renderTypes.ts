@@ -566,3 +566,20 @@ export function toSceneRenderVideoSegment(
     videoTrimOutSec: seg.videoTrimOutSec,
   }
 }
+
+/**
+ * Lightweight stitch job spec for long-take Kling clip concatenation.
+ * Concat only — no audio/overlays (lip-sync overdub comes later).
+ */
+export interface StitchRenderJobSpec {
+  jobId: string
+  projectId: string
+  sceneId: string
+  resolution: '720p' | '1080p' | '4K'
+  fps: number
+  clipUrls: string[]
+  outputPath: string
+  callbackUrl?: string
+  createdAt: string
+  renderMode: 'stitch'
+}

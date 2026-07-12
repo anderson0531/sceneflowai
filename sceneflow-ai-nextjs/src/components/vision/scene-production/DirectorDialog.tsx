@@ -82,6 +82,15 @@ import { cn } from '@/lib/utils'
 import { ImageEditModal } from '@/components/vision/ImageEditModal'
 import { shouldInitializeDirectorDialogState } from '@/lib/vision/directorDialogState'
 import { resolveEffectiveStartFrameUrl } from '@/lib/vision/segmentConfigBuilder'
+import {
+  applySpokenDurationMargin,
+  estimateSpokenDurationSeconds,
+} from '@/lib/scene/dialogueSegmentSplit'
+import {
+  planKlingLongTake,
+  shouldUseKlingLongTake,
+} from '@/lib/kling/longTakePlanner'
+import { KLING_SINGLE_CLIP_MAX_SEC } from '@/lib/kling/types'
 import { MAX_VERTEX_GEMINI_REFERENCE_IMAGES } from '@/lib/vision/referenceLimits'
 import { wardrobesForScene } from '@/lib/character/characterReferenceAssembly'
 import { resolveSegmentVideoReferences } from '@/lib/vision/resolveBeatVideoReferences'
@@ -1055,6 +1064,24 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     segment.dialoguePortion?.excerpt?.trim() ||
     segment.dialogueLines?.find((d) => d.covered !== false)?.line?.trim() ||
     ''
+
+  const estimatedDialogueSeconds = useMemo(() => {
+    const text =
+      segment.dialogueLines?.map((d) => d.line).join(' ') ||
+      continuationDialogueExcerpt ||
+      ''
+    return applySpokenDurationMargin(estimateSpokenDurationSeconds(text))
+  }, [segment.dialogueLines, continuationDialogueExcerpt])
+
+  const klingLongTakePlan = useMemo(() => {
+    if (videoProvider !== 'kling' || !shouldUseKlingLongTake(estimatedDialogueSeconds)) {
+      return null
+    }
+    return planKlingLongTake({
+      targetSeconds: estimatedDialogueSeconds,
+      model: klingModel,
+    })
+  }, [videoProvider, estimatedDialogueSeconds, klingModel])
   
   const tabStates = {
     TEXT_TO_VIDEO: true,
@@ -1083,6 +1110,28 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
             Review and customize generation parameters before rendering.
           </DialogDescription>
         </DialogHeader>
+
+        {klingLongTakePlan && (
+          <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100 space-y-2">
+            <p>
+              Dialogue (~{estimatedDialogueSeconds}s) exceeds the {KLING_SINGLE_CLIP_MAX_SEC}s Kling
+              single-clip ceiling — generation will use the <strong>long-take pipeline</strong> (
+              {klingLongTakePlan.totalSeconds}s: base {klingLongTakePlan.baseSeconds}s +{' '}
+              {klingLongTakePlan.extensions} extends).
+            </p>
+            {klingLongTakePlan.warnings.includes('camera_angle_cut') && (
+              <p className="text-amber-200/90">
+                Recommend a <strong>camera-angle cut</strong> for takes over 30s. Consider enabling{' '}
+                <strong>Multi-shot</strong> instead of one continuous extend chain.
+              </p>
+            )}
+            {klingLongTakePlan.warnings.includes('drift_risk') && (
+              <p className="text-amber-200/80 text-xs">
+                Takes over 60s may drift — face consistency is enabled when character references are present.
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Guide Prompt Editor - Audio & Scene Direction Context */}
         {scene && (
