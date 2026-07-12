@@ -11,7 +11,6 @@ import {
 import type { VideoGenerationOptions } from '@/lib/gemini/videoClient'
 import { isVertexContentPolicyError } from '@/lib/generation/contentPolicy'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
-import { neutralizeReferenceConflictPrompt } from '@/lib/gemini/neutralizeReferenceConflictPrompt'
 import { filterRefsForPolicyRetry } from '@/lib/video/normalizeReferenceImages'
 import type { VideoGenerationMethod } from '@/lib/vision/intelligentMethodSelection'
 import {
@@ -177,7 +176,9 @@ async function runVertexFallback(
 ): Promise<ProductionVideoResult> {
   let enhanced = prompt
   if (guidePrompt?.trim()) {
-    enhanced = enhanced.trim() ? `${enhanced.trim()}\n\n${guidePrompt.trim()}` : guidePrompt.trim()
+    const sanitized = autoSanitizePrompt(guidePrompt, { logChanges: true })
+    const safeGuide = sanitized.wasModified ? sanitized.sanitizedPrompt : guidePrompt.trim()
+    enhanced = enhanced.trim() ? `${enhanced.trim()}\n\n${safeGuide}` : safeGuide
   }
 
   const start = await generateProductionVideo(enhanced, {
@@ -205,6 +206,72 @@ export class KlingVideoAsyncSubmittedError extends Error {
     this.name = 'KlingVideoAsyncSubmittedError'
     this.jobId = jobId
     this.taskId = taskId
+  }
+}
+
+/**
+ * Vertex-only fallback after direct Kling (and optional aggregator) have failed.
+ */
+export async function generateVertexVideoFallbackOnly(
+  input: Pick<KlingVeoVideoInput, 'prompt' | 'guidePrompt' | 'videoOptions'>
+): Promise<KlingVeoVideoResult> {
+  try {
+    const veoResult = await runVertexFallback(
+      input.prompt,
+      input.guidePrompt,
+      input.videoOptions
+    )
+    if (veoResult.status === 'COMPLETED' && veoResult.videoUrl) {
+      let buffer: Buffer | null = null
+      if (veoResult.videoUrl.startsWith('data:video')) {
+        const b64 = veoResult.videoUrl.split(',')[1]
+        buffer = Buffer.from(b64, 'base64')
+      } else if (veoResult.videoUrl.startsWith('file:')) {
+        buffer = await downloadProductionVideo(veoResult.videoUrl.slice(5), 'vertex')
+      } else {
+        buffer = await downloadProductionVideo(veoResult.videoUrl, 'vertex')
+      }
+      if (!buffer) throw new Error('Failed to download Vertex fallback video')
+      return {
+        status: 'COMPLETED',
+        videoBuffer: buffer,
+        operationName: veoResult.operationName,
+        videoUrl: veoResult.videoUrl,
+        veoVideoRef: veoResult.veoVideoRef,
+        veoVideoRefExpiry: veoResult.veoVideoRefExpiry,
+        generationProvider: 'vertex',
+        wasVeoFallback: true,
+        klingAttempts: 0,
+      }
+    }
+
+    const err = veoResult.error || 'Vertex fallback failed'
+    if (isVertexContentPolicyError(err)) {
+      return {
+        status: 'FAILED',
+        error: `Vertex policy blocked: ${err}`,
+        generationProvider: 'vertex',
+        wasVeoFallback: true,
+        klingAttempts: 0,
+      }
+    }
+
+    return {
+      status: 'FAILED',
+      error: `Vertex fallback: ${err}`,
+      generationProvider: 'vertex',
+      wasVeoFallback: true,
+      klingAttempts: 0,
+    }
+  } catch (veoErr) {
+    const msg = veoErr instanceof Error ? veoErr.message : String(veoErr)
+    return {
+      status: 'FAILED',
+      error: `Vertex fallback error: ${msg}`,
+      generationProvider: 'vertex',
+      wasVeoFallback: true,
+      klingAttempts: 0,
+    }
   }
 }
 

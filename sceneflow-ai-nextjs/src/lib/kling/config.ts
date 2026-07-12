@@ -79,6 +79,15 @@ export function isVeoFallbackEnabled(): boolean {
   return process.env.VEO_FALLBACK_ENABLED !== 'false'
 }
 
+/** When true, basic segments may fall back to all-platform Kling via the video aggregator after direct Kling fails. */
+export function isKlingAggregatorFallbackEnabled(): boolean {
+  return process.env.KLING_AGGREGATOR_FALLBACK_ENABLED !== 'false'
+}
+
+export function getKlingAggregatorFallbackModelId(): string {
+  return process.env.VIDEO_AGGREGATOR_KLING_FALLBACK_MODEL?.trim() || 'kling-2.6'
+}
+
 /** True when direct Kling credentials are configured */
 export function hasDirectKlingCredentials(): boolean {
   const apiKey = process.env.KLING_API_KEY?.trim()

@@ -1,8 +1,8 @@
 # Kling policy fallback + primary video provider
 
-**As of the Kling-primary rollout**, direct Kling (`kling-v3-omni` default) is the **default production video engine** for segment generation. Vertex Veo is the automatic fallback when Kling fails or is blocked.
+**As of the Kling-primary rollout**, direct Kling (`kling-v3-omni` internal id, mapped to official `kling-v2-6` at the API) is the **default production video engine** for segment generation. When direct Kling fails on a **basic** segment (plain T2V/I2V/REF, no multi-shot/elements/voices/presets/extension), SceneFlow automatically tries **all-platform Kling** via the video aggregator (`kling-2.6` default). Vertex Veo is an **opt-in** last resort when `allowVeoFallback` is explicitly enabled.
 
-When Vertex Veo or Gemini Omni video generation is used explicitly (or as fallback), SceneFlow uses a **layered defense** before falling back to Kling on the legacy Vertex-primary path:
+When Vertex Veo or Gemini Omni video generation is used explicitly (or as opt-in fallback), SceneFlow uses a **layered defense** before falling back to Kling on the legacy Vertex-primary path:
 
 
 1. **Pre-flight risk score** — fast local regex + semantic triggers (`preflightPromptGuard.ts`)
@@ -10,7 +10,31 @@ When Vertex Veo or Gemini Omni video generation is used explicitly (or as fallba
 3. **Vertex policy ladder** — sanitize → reference trim → method downgrade (`veoWithKlingFallback.ts`)
 4. **Kling fallback (last resort)** — direct Kling API preferred, else Fal-hosted Kling
 
-## Flow
+## SceneFlow failover chain (direct Kling primary)
+
+```mermaid
+flowchart TD
+  A[SceneFlow request] --> B[Direct Kling api.klingai.com]
+  B -->|ok| G[Upload]
+  B -->|fail| C{Basic segment?}
+  C -->|yes| D[All-platform Kling kling-2.6]
+  D -->|ok| G
+  D -->|fail| E{allowVeoFallback?}
+  C -->|no advanced| E
+  E -->|true| F[Vertex last resort]
+  E -->|false| H[Fail with clear message]
+```
+
+**All-platform aggregator limits** (why advanced jobs skip backup): no lip-sync, no video-extend/long-take, no multi-shot, no elements/voices/presets, no start+end (FTV) frames, max ~8s duration. Long-take pipeline stays direct-only.
+
+| Env | Default | Purpose |
+|-----|---------|---------|
+| `KLING_AGGREGATOR_FALLBACK_ENABLED` | `true` | Auto all-platform Kling backup for basic segments |
+| `VIDEO_AGGREGATOR_KLING_FALLBACK_MODEL` | `kling-2.6` | Aggregator model id for backup |
+| `KLING_VEO_FALLBACK_ENABLED` | `true` | Server-side Veo fallback when opt-in |
+| `allowVeoFallback` (request) | `false` | User must opt in for Vertex after Kling paths fail |
+
+## Flow (Vertex-primary / policy ladder)
 
 ```mermaid
 flowchart LR
@@ -65,7 +89,7 @@ KLING_SECRET_KEY="sk_..."
 
 | Variable | Default |
 |----------|---------|
-| `KLING_MODEL_NAME` | `kling-v2-6` |
+| `KLING_MODEL_NAME` | `kling-v2-6` (official API name; internal default `kling-v3-omni` maps to this) |
 | `KLING_VIDEO_MODE` | `std` (`pro` for higher quality) |
 | `KLING_SOUND_ENABLED` | `on` (native audio for dialogue) |
 

@@ -33,11 +33,17 @@ import { isAggregatorEnabled } from '@/lib/aggregator/config'
 import { generateVideoWithAggregator } from '@/lib/aggregator/generateVideoWithAggregator'
 import { getDefaultAggregatorModelId } from '@/lib/aggregator/modelRegistry'
 import { uploadVideo as uploadVideoToGCS } from '@/lib/storage/gcsAssets'
-import { isKlingConfigured, getKlingDefaultModel, resolveKlingQuality } from '@/lib/kling/config'
+import { isKlingConfigured, getKlingDefaultModel, resolveKlingQuality, getKlingAggregatorFallbackModelId, isKlingAggregatorFallbackEnabled } from '@/lib/kling/config'
 import {
   generateVideoWithKlingVeoFallback,
+  generateVertexVideoFallbackOnly,
   KlingVideoAsyncSubmittedError,
 } from '@/lib/kling/klingWithVeoFallback'
+import {
+  isBasicSegmentEligibleForAggregator,
+  formatAdvancedKlingFailureMessage,
+  formatBasicKlingFailureMessage,
+} from '@/lib/video/klingAggregatorFallback'
 import type {
   KlingQuality,
   KlingShotType,
@@ -398,7 +404,7 @@ export async function generateSegmentVideoCore(
   let enhancedPrompt = built.enhancedPrompt
 
   const override = apiPromptOverride?.trim()
-  const selectedVideoModel = videoModel || getDefaultAggregatorModelId()
+  let selectedVideoModel = videoModel || getDefaultAggregatorModelId()
   const selectedKlingModel = klingModel || getKlingDefaultModel()
   const resolvedKlingQuality =
     klingQuality || resolveKlingQuality(undefined, effectiveResolution as '720p' | '1080p' | '4k')
@@ -490,8 +496,19 @@ export async function generateSegmentVideoCore(
     )
   } else if (useKling) {
     console.log(`[Segment Video] Routing to Kling (model=${selectedKlingModel})`)
+    const aggregatorEligible = isBasicSegmentEligibleForAggregator({
+      method,
+      multiShot,
+      elementList,
+      voiceList,
+      preset,
+      endFrameUrl,
+      sourceVideoUrl,
+    })
+    const veoFallbackAllowed = allowVeoFallback === true
+
     try {
-      const genResult = await generateVideoWithKlingVeoFallback({
+      let genResult = await generateVideoWithKlingVeoFallback({
         prompt: enhancedPrompt,
         negativePrompt,
         method,
@@ -501,7 +518,7 @@ export async function generateSegmentVideoCore(
         },
         guidePrompt,
         referenceFallbackPrompt,
-        allowVeoFallback: allowVeoFallback ?? allowPolicyFallback ?? false,
+        allowVeoFallback: false,
         klingModel: selectedKlingModel,
         klingQuality: resolvedKlingQuality,
         cfgScale,
@@ -527,22 +544,120 @@ export async function generateSegmentVideoCore(
       klingJobId = genResult.klingJobId
 
       if (genResult.status === 'FAILED') {
-        const err = genResult.error || 'Kling video generation failed'
-        if (err.toLowerCase().includes('rate limit')) {
-          throw new SegmentVideoRateLimitError(err, 60)
+        const directError = genResult.error || 'Kling video generation failed'
+        let aggregatorError: string | undefined
+
+        if (
+          aggregatorEligible &&
+          isAggregatorEnabled() &&
+          isKlingAggregatorFallbackEnabled()
+        ) {
+          const backupModel = getKlingAggregatorFallbackModelId()
+          console.log(
+            `[Segment Video] Direct Kling failed; trying all-platform backup (model=${backupModel})`
+          )
+          try {
+            const aggResult = await generateVideoWithAggregator({
+              prompt: enhancedPrompt,
+              negativePrompt,
+              method,
+              videoModel: backupModel,
+              durationSeconds: effectiveDuration,
+              aspectRatio: (aspectRatio || '16:9') as '16:9' | '9:16',
+              startFrameUrl:
+                typeof videoOptions.startFrame === 'string' ? videoOptions.startFrame : undefined,
+              referenceImages,
+              segmentId,
+              projectId,
+              sceneId,
+              userId,
+            })
+
+            if (aggResult.mode === 'async') {
+              throw new SegmentVideoAggregatorAsyncError(
+                aggResult.jobId,
+                aggResult.vendor,
+                aggResult.vendorModelId
+              )
+            }
+
+            videoBuffer = aggResult.videoBuffer
+            generationProvider = 'aggregator'
+            aggregatorVendor = aggResult.vendor
+            billingModelId = aggResult.billingModelId
+            modelUpgraded = aggResult.modelUpgraded
+            effectiveAggregatorType = aggResult.effectiveType
+            upgradeLabel = aggResult.upgradeLabel
+            selectedVideoModel = backupModel
+            fallbackModelFamily = 'kling'
+            wasPolicyFallback = true
+            wasVeoFallback = false
+            console.log(
+              `[Segment Video] All-platform Kling backup succeeded via ${aggResult.vendor} job ${aggResult.jobId}`
+            )
+          } catch (aggErr) {
+            if (aggErr instanceof SegmentVideoAggregatorAsyncError) throw aggErr
+            aggregatorError = aggErr instanceof Error ? aggErr.message : String(aggErr)
+          }
         }
-        throw new Error(err)
-      }
 
-      videoBuffer = genResult.videoBuffer ?? null
-      finalVeoRef = genResult.veoVideoRef
-      finalVeoRefExpiry = genResult.veoVideoRefExpiry
+        if (!videoBuffer) {
+          if (veoFallbackAllowed) {
+            console.log('[Segment Video] Trying opt-in Vertex fallback after Kling failure')
+            genResult = await generateVertexVideoFallbackOnly({
+              prompt: enhancedPrompt,
+              guidePrompt,
+              videoOptions: {
+                ...(videoOptions as VideoGenerationOptions),
+                durationSeconds: klingDurationSeconds as VeoClipDuration,
+              },
+            })
+            generationProvider = genResult.generationProvider
+            wasVeoFallback = genResult.wasVeoFallback
+            wasPolicyFallback = genResult.wasVeoFallback
+            vertexPolicyAttempts = genResult.klingAttempts
+            klingJobId = genResult.klingJobId
 
-      if (!videoBuffer && genResult.videoUrl) {
-        if (genResult.videoUrl.startsWith('data:video/')) {
-          const base64Match = genResult.videoUrl.match(/^data:video\/[^;]+;base64,(.+)$/)
-          if (!base64Match) throw new Error('Invalid base64 video data format')
-          videoBuffer = Buffer.from(base64Match[1], 'base64')
+            if (genResult.status === 'FAILED') {
+              const veoErr = genResult.error || 'Vertex fallback failed'
+              if (veoErr.toLowerCase().includes('rate limit')) {
+                throw new SegmentVideoRateLimitError(veoErr, 60)
+              }
+              if (!aggregatorEligible) {
+                throw new Error(
+                  `${formatAdvancedKlingFailureMessage(directError)} Vertex fallback: ${veoErr}`
+                )
+              }
+              throw new Error(
+                `${formatBasicKlingFailureMessage(directError, aggregatorError)} Vertex fallback: ${veoErr}`
+              )
+            }
+
+            videoBuffer = genResult.videoBuffer ?? null
+            finalVeoRef = genResult.veoVideoRef
+            finalVeoRefExpiry = genResult.veoVideoRefExpiry
+          } else {
+            const err = directError
+            if (err.toLowerCase().includes('rate limit')) {
+              throw new SegmentVideoRateLimitError(err, 60)
+            }
+            if (!aggregatorEligible) {
+              throw new Error(formatAdvancedKlingFailureMessage(err))
+            }
+            throw new Error(formatBasicKlingFailureMessage(err, aggregatorError))
+          }
+        }
+      } else if (genResult.status !== 'FAILED') {
+        videoBuffer = genResult.videoBuffer ?? null
+        finalVeoRef = genResult.veoVideoRef
+        finalVeoRefExpiry = genResult.veoVideoRefExpiry
+
+        if (!videoBuffer && genResult.videoUrl) {
+          if (genResult.videoUrl.startsWith('data:video/')) {
+            const base64Match = genResult.videoUrl.match(/^data:video\/[^;]+;base64,(.+)$/)
+            if (!base64Match) throw new Error('Invalid base64 video data format')
+            videoBuffer = Buffer.from(base64Match[1], 'base64')
+          }
         }
       }
     } catch (e) {

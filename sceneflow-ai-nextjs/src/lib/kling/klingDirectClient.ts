@@ -17,6 +17,7 @@ import {
   type KlingImageListEntry,
   type KlingModelId,
   type KlingQuality,
+  resolveKlingApiModelName,
   type KlingSubmitResult,
   type KlingVideoInput,
   type KlingWebhookPayload,
@@ -270,8 +271,10 @@ export function buildKlingVideoBody(
 
   if (effectiveQuality !== quality) droppedKeys.push('mode')
 
+  const apiModelName = resolveKlingApiModelName(model)
+
   const body: Record<string, unknown> = {
-    model_name: model,
+    model_name: apiModelName,
     prompt: truncatePrompt(input.prompt),
     duration: mapKlingDuration(input.duration, model),
     aspect_ratio: mapAspectRatio(input.aspect_ratio, hasStart),

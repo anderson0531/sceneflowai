@@ -83,10 +83,11 @@ export const KLING_LIPSYNC_MAX_SEC = 60
 
 export const KLING_MODEL_CATALOG: Record<
   KlingModelId,
-  { label: string; capabilities: KlingModelCapabilities }
+  { label: string; /** Official klingai.com API model_name */ apiModelName: string; capabilities: KlingModelCapabilities }
 > = {
   'kling-v3-omni': {
     label: 'Kling v3 Omni',
+    apiModelName: 'kling-v2-6',
     capabilities: {
       multiShot: true,
       elements: true,
@@ -111,6 +112,7 @@ export const KLING_MODEL_CATALOG: Record<
   },
   'kling-v3': {
     label: 'Kling v3',
+    apiModelName: 'kling-v3',
     capabilities: {
       multiShot: true,
       elements: true,
@@ -135,6 +137,7 @@ export const KLING_MODEL_CATALOG: Record<
   },
   'kling-v3-turbo': {
     label: 'Kling v3 Turbo',
+    apiModelName: 'kling-v2-5-turbo',
     capabilities: {
       multiShot: false,
       elements: true,
@@ -159,6 +162,7 @@ export const KLING_MODEL_CATALOG: Record<
   },
   'kling-v2.6': {
     label: 'Kling v2.6',
+    apiModelName: 'kling-v2-6',
     capabilities: {
       multiShot: false,
       elements: false,
@@ -196,6 +200,12 @@ export const KLING_SINGLE_IMAGE_PRESETS: KlingSingleImagePreset[] = [
 ]
 
 export const KLING_DUAL_IMAGE_PRESETS: KlingDualImagePreset[] = ['hug', 'kiss', 'heart_gesture']
+
+/** Map internal catalog id to official klingai.com API model_name. */
+export function resolveKlingApiModelName(model?: string): string {
+  const id = (model || 'kling-v3-omni') as KlingModelId
+  return KLING_MODEL_CATALOG[id]?.apiModelName ?? 'kling-v2-6'
+}
 
 export const KLING_QUALITY_RESOLUTION: Record<KlingQuality, '720p' | '1080p' | '4k'> = {
   std: '720p',

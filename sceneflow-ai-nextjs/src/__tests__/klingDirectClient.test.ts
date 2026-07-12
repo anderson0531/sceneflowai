@@ -52,7 +52,7 @@ describe('klingDirectClient helpers', () => {
       aspect_ratio: '16:9',
       model_name: 'kling-v3-omni',
     })
-    expect(body.model_name).toBe('kling-v3-omni')
+    expect(body.model_name).toBe('kling-v2-6')
     expect(body.prompt).toBe('Character speaks calmly.')
     expect(body.duration).toBe('5')
     expect(body.sound).toBe('on')
