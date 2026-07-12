@@ -69,11 +69,39 @@ export interface KlingVeoVideoInput {
   userId?: string
 }
 
-function downgradeMethod(method: VideoGenerationMethod): VideoGenerationMethod {
+function downgradeMethod(
+  method: VideoGenerationMethod,
+  options?: { hasStartFrame?: boolean }
+): VideoGenerationMethod {
   if (method === 'FTV') return 'I2V'
-  if (method === 'REF') return 'T2V'
+  if (method === 'REF') return options?.hasStartFrame ? 'I2V' : 'T2V'
   if (method === 'EXT') return 'I2V'
   return method
+}
+
+function normalizePromptForGuideCheck(text: string): string {
+  return text.replace(/\s+/g, ' ').trim().toLowerCase()
+}
+
+function promptAlreadyContainsGuide(prompt: string, guide: string): boolean {
+  const normGuide = normalizePromptForGuideCheck(guide)
+  const normPrompt = normalizePromptForGuideCheck(prompt)
+  if (!normGuide) return true
+  if (normPrompt.includes(normGuide)) return true
+
+  const sectionMarkers = [
+    'background music:',
+    'native audio:',
+    'dialogue:',
+    'voice:',
+    'sound design:',
+  ]
+  for (const marker of sectionMarkers) {
+    if (normGuide.includes(marker) && normPrompt.includes(marker)) {
+      return true
+    }
+  }
+  return false
 }
 
 function buildKlingInputFromContext(
@@ -82,7 +110,8 @@ function buildKlingInputFromContext(
   options: VideoGenerationOptions,
   ctx: KlingVeoVideoInput
 ): KlingVideoInput {
-  const needsStart = method === 'I2V' || method === 'FTV' || method === 'EXT'
+  const needsStart =
+    method === 'I2V' || method === 'FTV' || method === 'EXT' || method === 'REF'
   const quality = resolveKlingQuality(ctx.klingQuality, options.resolution)
 
   const input: KlingVideoInput = {
@@ -141,16 +170,29 @@ function prepareKlingRetry(
     return { method, prompt, options }
   }
 
-  if (attempt === 3 && method === 'REF' && ctx.referenceFallbackPrompt) {
-    method = 'T2V'
-    const sp = autoSanitizePrompt(ctx.referenceFallbackPrompt, { logChanges: true })
-    prompt = sp.wasModified ? sp.sanitizedPrompt : ctx.referenceFallbackPrompt
-    options = { ...options, referenceImages: undefined, sourceVideo: undefined, sourceVideoUrl: undefined }
-    return { method, prompt, options }
+  if (attempt === 3 && method === 'REF') {
+    if (options.startFrame) {
+      method = 'I2V'
+      const sp = autoSanitizePrompt(prompt, { logChanges: true })
+      if (sp.wasModified) prompt = sp.sanitizedPrompt
+      return { method, prompt, options }
+    }
+    if (ctx.referenceFallbackPrompt) {
+      method = 'T2V'
+      const sp = autoSanitizePrompt(ctx.referenceFallbackPrompt, { logChanges: true })
+      prompt = sp.wasModified ? sp.sanitizedPrompt : ctx.referenceFallbackPrompt
+      options = {
+        ...options,
+        referenceImages: undefined,
+        sourceVideo: undefined,
+        sourceVideoUrl: undefined,
+      }
+      return { method, prompt, options }
+    }
   }
 
   const prev = method
-  const next = downgradeMethod(method)
+  const next = downgradeMethod(method, { hasStartFrame: !!options.startFrame })
   if (next !== method) {
     method = next
     if (prev === 'REF' && next === 'T2V' && ctx.referenceFallbackPrompt) {
@@ -169,11 +211,14 @@ async function runVertexFallback(
   options: VideoGenerationOptions
 ): Promise<ProductionVideoResult> {
   let enhanced = prompt
-  if (guidePrompt?.trim()) {
-    const sanitized = autoSanitizePrompt(guidePrompt, { logChanges: true })
-    const safeGuide = sanitized.wasModified ? sanitized.sanitizedPrompt : guidePrompt.trim()
-    enhanced = enhanced.trim() ? `${enhanced.trim()}\n\n${safeGuide}` : safeGuide
+  if (guidePrompt?.trim() && !promptAlreadyContainsGuide(prompt, guidePrompt)) {
+    enhanced = enhanced.trim()
+      ? `${enhanced.trim()}\n\n${guidePrompt.trim()}`
+      : guidePrompt.trim()
   }
+
+  const sanitized = autoSanitizePrompt(enhanced, { logChanges: true })
+  enhanced = sanitized.wasModified ? sanitized.sanitizedPrompt : enhanced
 
   const start = await generateProductionVideo(enhanced, {
     ...options,

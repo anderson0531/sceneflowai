@@ -453,6 +453,14 @@ export function applyStartFrameUrlToProductionSegments(
 }
 
 /** Live beat start frame reconciled with production segment overrides. */
+export function resolveExpressGenerationMethod(
+  hasRefs: boolean,
+  hasStartFrame: boolean
+): 'REF' | 'I2V' {
+  return hasRefs ? 'REF' : hasStartFrame ? 'I2V' : 'I2V'
+}
+
+/** Live beat start frame reconciled with production segment overrides. */
 export function resolveEffectiveStartFrameUrl(
   segment: SceneSegment,
   scene?: Record<string, unknown> | null,

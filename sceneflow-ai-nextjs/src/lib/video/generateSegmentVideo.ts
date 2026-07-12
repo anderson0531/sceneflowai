@@ -82,6 +82,8 @@ export interface GenerateSegmentVideoInput {
   previousSegmentVeoRef?: string
   previousSegmentVeoRefExpiry?: string
   previousSegmentAssetUrl?: string
+  /** Prior chain segment last frame — used when Kling EXT downgrades to I2V. */
+  previousSegmentLastFrameUrl?: string
   referenceImages?: Array<{ url: string; type: 'style' | 'character'; name?: string; role?: string }>
   sceneImageUrl?: string
   segmentIndex?: number
@@ -225,6 +227,7 @@ export async function generateSegmentVideoCore(
     previousSegmentVeoRef,
     previousSegmentVeoRefExpiry,
     previousSegmentAssetUrl,
+    previousSegmentLastFrameUrl,
     referenceImages,
     sceneImageUrl,
     segmentIndex = 0,
@@ -289,6 +292,22 @@ export async function generateSegmentVideoCore(
   const methodSelectionResult = getMethodWithFallback(requestedMethod, methodContext)
   let method = methodSelectionResult.method
 
+  const isKlingExtContinuation =
+    videoProvider === 'kling' &&
+    requestedMethod === 'EXT' &&
+    !(sourceVideoUrl || previousSegmentVeoRef)
+
+  if (
+    requestedMethod === 'EXT' &&
+    videoProvider !== 'kling' &&
+    requireVeoRefForExt &&
+    !(sourceVideoUrl || previousSegmentVeoRef)
+  ) {
+    throw new SegmentVideoExtRefRequiredError(
+      'Veo extension requires the previous part’s video reference. Generate earlier parts in order within ~2 days, or regenerate the previous clip.'
+    )
+  }
+
   if (method === 'FTV' && (!startFrameUrl?.trim?.() || !endFrameUrl?.trim?.())) {
     const coerced: Exclude<VideoGenerationMethod, 'AUTO'> = startFrameUrl?.trim() ? 'I2V' : 'T2V'
     method = coerced
@@ -340,7 +359,17 @@ export async function generateSegmentVideoCore(
     quality: effectiveQualityTier,
   }
 
-  if ((method === 'I2V' || method === 'FTV') && startFrameUrl) {
+  if (isKlingExtContinuation) {
+    method = 'I2V'
+    const continuationFrame =
+      previousSegmentLastFrameUrl?.trim() || startFrameUrl?.trim()
+    if (continuationFrame) {
+      videoOptions.startFrame = continuationFrame
+    }
+    console.log(
+      '[Segment Video] Kling chain continuation: downgraded EXT -> I2V with prior last frame'
+    )
+  } else if ((method === 'I2V' || method === 'FTV' || method === 'REF') && startFrameUrl) {
     videoOptions.startFrame = startFrameUrl
   }
 
@@ -368,9 +397,9 @@ export async function generateSegmentVideoCore(
     } else if (startFrameUrl) {
       videoOptions.startFrame = startFrameUrl
     }
-  } else if (method === 'FTV' && startFrameUrl) {
+  } else if (method === 'FTV' && startFrameUrl && !videoOptions.startFrame) {
     videoOptions.startFrame = startFrameUrl
-  } else if (method === 'I2V' && startFrameUrl) {
+  } else if (method === 'I2V' && startFrameUrl && !videoOptions.startFrame) {
     videoOptions.startFrame = startFrameUrl
   }
 

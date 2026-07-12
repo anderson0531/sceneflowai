@@ -120,7 +120,7 @@ import type { SceneAudioData } from './GuidePromptEditor'
 import type { GuideCharacterDemographic } from '@/lib/scene/segmentGuidePrompt'
 import { isBeatFirstPipelineEnabled, isStoryboardApproved } from '@/lib/script/beatMigration'
 import type { SegmentGuideContext } from '@/lib/vision/segmentConfigBuilder'
-import { resolveEffectiveStartFrameUrl } from '@/lib/vision/segmentConfigBuilder'
+import { resolveEffectiveStartFrameUrl, resolveExpressGenerationMethod } from '@/lib/vision/segmentConfigBuilder'
 import { buildVideoErrorGuidance } from '@/lib/generation/videoErrorGuidance'
 
 function getAspectRatioTailwindClass(ratio: BlueprintAspectRatio): string {
@@ -759,6 +759,24 @@ export function DirectorConsoleRoot({
     for (const segmentId of expressIds) {
       const item = queue.find((q) => q.segmentId === segmentId)
       if (!item) continue
+      const segment = segments.find((s) => s.segmentId === segmentId)
+      const cfg = item.config
+      const resolvedStart =
+        (segment &&
+          resolveEffectiveStartFrameUrl(
+            segment,
+            scene as Record<string, unknown> | undefined,
+            sceneImageUrl
+          )) ||
+        (cfg.startFrameUrl && String(cfg.startFrameUrl).trim()) ||
+        segment?.startFrameUrl?.trim() ||
+        segment?.references?.startFrameUrl?.trim() ||
+        ''
+      const hasStartFrame = !!resolvedStart
+      const hasRefs =
+        (cfg.referenceImages?.length ?? 0) > 0 || cfg.mode === 'REF'
+      const expressMethod = resolveExpressGenerationMethod(hasRefs, hasStartFrame)
+
       updateConfig(segmentId, {
         ...item.config,
         videoProvider: 'kling',
@@ -766,7 +784,7 @@ export function DirectorConsoleRoot({
         klingQuality: 'pro',
         resolution: '1080p',
         duration: 10,
-        mode: 'I2V',
+        mode: expressMethod,
         expressMode: true,
         allowVeoFallback: false,
       })

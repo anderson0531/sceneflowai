@@ -37,6 +37,7 @@ import { resolveBeatVideoReferences } from '@/lib/vision/resolveBeatVideoReferen
 import {
   collectKlingElementSources,
   injectElementTagsIntoPrompt,
+  persistKlingElementIdsToProject,
   resolveKlingElementsFromSources,
 } from '@/lib/kling/elementRegistry'
 import { resolveKlingApiModelName } from '@/lib/kling/types'
@@ -66,6 +67,7 @@ interface GenerateAssetRequest {
   totalSegments?: number
   sceneImageUrl?: string
   previousSegmentAssetUrl?: string
+  previousSegmentLastFrameUrl?: string
   previousSegmentVeoRef?: string
   previousSegmentVeoRefExpiry?: string
   isEstablishingShot?: boolean
@@ -142,6 +144,7 @@ export async function POST(
       totalSegments = 1,
       sceneImageUrl,
       previousSegmentAssetUrl,
+      previousSegmentLastFrameUrl,
       previousSegmentVeoRef,
       previousSegmentVeoRefExpiry,
       isEstablishingShot = false,
@@ -409,9 +412,15 @@ export async function POST(
             : []
           const beat = beats.find((b) => b.beatId === beatId)
           if (beat) {
+            const beatCharacterIds =
+              beat.referenceSelection?.characterIds?.length
+                ? beat.referenceSelection.characterIds
+                : beat.characterId
+                  ? [beat.characterId]
+                  : []
             const sources = collectKlingElementSources({
               characters: projectForElements?.metadata?.visionPhase?.characters || [],
-              characterIds: beat.referenceSelection?.characterIds || [],
+              characterIds: beatCharacterIds,
               characterWardrobes: beat.referenceSelection?.characterWardrobes || [],
               objectReferences:
                 projectForElements?.metadata?.visionPhase?.references?.objectReferences || [],
@@ -432,6 +441,12 @@ export async function POST(
               effectivePrompt = injectElementTagsIntoPrompt(
                 effectivePrompt,
                 resolvedElements.promptTags
+              )
+            }
+            if (resolvedElements.newRegistrations.length) {
+              await persistKlingElementIdsToProject(
+                projectId,
+                resolvedElements.newRegistrations
               )
             }
           }
@@ -455,6 +470,7 @@ export async function POST(
         previousSegmentVeoRef,
         previousSegmentVeoRefExpiry,
         previousSegmentAssetUrl,
+        previousSegmentLastFrameUrl,
         referenceImages,
         sceneImageUrl,
         segmentIndex,
@@ -471,7 +487,10 @@ export async function POST(
         existingStemStatus,
         existingStemJobId,
         requireVeoRefForExt:
-          generationMethod === 'EXT' && !sourceVideoUrl && !previousSegmentVeoRef,
+          generationMethod === 'EXT' &&
+          !sourceVideoUrl &&
+          !previousSegmentVeoRef &&
+          resolvedVideoProvider === 'vertex',
         apiPromptOverride,
         allowPolicyFallback: allowPolicyFallback === true,
         videoProvider: resolvedVideoProvider,

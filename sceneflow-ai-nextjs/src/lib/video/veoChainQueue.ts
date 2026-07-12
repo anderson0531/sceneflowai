@@ -61,6 +61,27 @@ export function resolveVeoRefForExtension(
   return typeof ref === 'string' && ref.trim() ? ref.trim() : undefined
 }
 
+/** Last frame URL from the prior segment in a beat/dialogue chain (for Kling I2V continuations). */
+export function resolvePriorChainLastFrameUrl(
+  segments: SceneSegment[],
+  current: SceneSegment
+): string | undefined {
+  const prev = findPreviousChainSegment(segments, current)
+  if (!prev) return undefined
+
+  const successfulTakes =
+    prev.takes?.filter(
+      (t) => t.status === 'done' && (t.lastFrameUrl || t.thumbnailUrl)
+    ) || []
+
+  if (successfulTakes.length > 0) {
+    const latestTake = successfulTakes[successfulTakes.length - 1]
+    return latestTake.lastFrameUrl || latestTake.thumbnailUrl || undefined
+  }
+
+  return prev.references?.endFrameUrl || prev.lastFrameUrl || undefined
+}
+
 /** Ordered segments belonging to one beat chain. */
 export function getBeatChainSegments(
   segments: SceneSegment[],

@@ -26,6 +26,7 @@ interface GenerateContinuousBody {
   guidePrompt?: string
   aspectRatio?: '16:9' | '9:16'
   qualityTier?: 'fast' | 'premium'
+  videoProvider?: 'kling' | 'vertex'
 }
 
 function readProductionSegments(
@@ -46,7 +47,9 @@ export async function POST(
   try {
     const { sceneId, beatId } = await context.params
     const body = (await req.json()) as GenerateContinuousBody
-    const { projectId, guidePrompt, aspectRatio, qualityTier } = body
+    const { projectId, guidePrompt, aspectRatio, qualityTier, videoProvider } = body
+    const chainVideoProvider: 'kling' | 'vertex' =
+      videoProvider === 'vertex' ? 'vertex' : 'kling'
 
     if (!projectId) {
       return NextResponse.json({ error: 'projectId is required' }, { status: 400 })
@@ -119,6 +122,7 @@ export async function POST(
 
     let previousVeoRef: string | undefined
     let previousAssetUrl: string | undefined
+    let previousLastFrameUrl: string | undefined
 
     for (let i = 0; i < chainSegments.length; i++) {
       const segment = chainSegments[i]
@@ -152,6 +156,7 @@ export async function POST(
         endFrameUrl: segment.endFrameUrl || segment.references?.endFrameUrl,
         previousSegmentVeoRef: previousVeoRef,
         previousSegmentAssetUrl: previousAssetUrl,
+        previousSegmentLastFrameUrl: previousLastFrameUrl,
         sceneImageUrl,
         segmentIndex: segment.sequenceIndex,
         totalSegments: allSegments.length,
@@ -160,7 +165,9 @@ export async function POST(
         resolution: method === 'EXT' ? '720p' : '720p',
         qualityTier,
         guidePrompt,
-        requireVeoRefForExt: isContinuation && method === 'EXT',
+        requireVeoRefForExt:
+          isContinuation && method === 'EXT' && chainVideoProvider === 'vertex',
+        videoProvider: chainVideoProvider,
         existingStemSourceAudioUrl: segment.stemSeparation?.sourceAudioUrl,
         existingStemSourceHash: segment.stemSeparation?.sourceHash,
         existingStemStatus: segment.stemSeparation?.status,
@@ -185,6 +192,7 @@ export async function POST(
 
       previousVeoRef = result.veoVideoRef
       previousAssetUrl = result.assetUrl
+      previousLastFrameUrl = result.lastFrameUrl ?? undefined
     }
 
     const lastPart = parts[parts.length - 1]

@@ -56,6 +56,7 @@ import {
 import { DEFAULT_VEO_CLIP_DURATION, MAX_VEO_VIDEO_CLIP_SECONDS } from '@/lib/config/modelConfig'
 import {
   findPreviousChainSegment,
+  resolvePriorChainLastFrameUrl,
   resolveVeoRefForExtension,
 } from '@/lib/video/veoChainQueue'
 import { normalizeReferenceImages } from '@/lib/video/normalizeReferenceImages'
@@ -3093,6 +3094,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         referenceImages?: Array<{ url: string; type?: 'style' | 'character'; name?: string; role?: string }> | string[]
         guidePrompt?: string  // Voice/dialogue/SFX instructions for Veo 3.1 audio
         previousSegmentVeoRef?: string
+        previousSegmentLastFrameUrl?: string
         qualityTier?: 'fast' | 'premium'
         apiPromptOverride?: string
         allowPolicyFallback?: boolean
@@ -3171,6 +3173,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           prevSeg?.takes?.[0]?.veoVideoRef
         const previousSegmentVeoRefExpiry =
           chainPrevSeg?.takes?.[0]?.veoVideoRefExpiry ?? prevSeg?.takes?.[0]?.veoVideoRefExpiry
+        const previousSegmentLastFrameUrl = resolvePriorChainLastFrameUrl(
+          segmentsForChain,
+          segment
+        )
 
         const autoExtContinuation =
           (segment.veoTimelineContinuation ||
@@ -3295,6 +3301,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             projectId: project.id,
             sceneImageUrl: sceneImageUrlForApi,
             previousSegmentAssetUrl,
+            previousSegmentLastFrameUrl,
             previousSegmentVeoRef,
             previousSegmentVeoRefExpiry,
             isEstablishingShot: segment.isEstablishingShot,

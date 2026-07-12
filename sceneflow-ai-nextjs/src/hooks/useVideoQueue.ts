@@ -29,6 +29,7 @@ import { resolveEffectiveStartFrameUrl } from '@/lib/vision/segmentConfigBuilder
 import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
 import {
   isVeoChainContinuation,
+  resolvePriorChainLastFrameUrl,
   resolveVeoRefForExtension,
   segmentHasVeoChain,
 } from '@/lib/video/veoChainQueue'
@@ -100,6 +101,7 @@ export function useVideoQueue(
       generationMethod?: VideoGenerationMethod
       guidePrompt?: string
       previousSegmentVeoRef?: string
+      previousSegmentLastFrameUrl?: string
       endFrameUrl?: string
       referenceImages?: Array<{ url: string; type?: 'style' | 'character'; name?: string; role?: string }> | string[]
       qualityTier?: 'fast' | 'premium'
@@ -459,17 +461,22 @@ export function useVideoQueue(
         
         try {
           let batchMethod = config.mode
+          const isKlingProvider = (config.videoProvider ?? 'kling') === 'kling'
           if (liveSegment && isVeoChainContinuation(liveSegment)) {
             const veoRef = resolveVeoRefForExtension(liveSegments, liveSegment)
             if (veoRef) {
               batchMethod = 'EXT'
             } else if (batchMethod === 'EXT' || liveSegment.generationMethod === 'EXT') {
-              toast.error(
-                `Generate the previous part of this beat first (segment ${item.segmentId.slice(0, 6)}…). Veo extension references expire after ~2 days.`
-              )
-              failed++
-              setFailedCount(failed)
-              continue
+              if (isKlingProvider) {
+                batchMethod = 'I2V'
+              } else {
+                toast.error(
+                  `Generate the previous part of this beat first (segment ${item.segmentId.slice(0, 6)}…). Veo extension references expire after ~2 days.`
+                )
+                failed++
+                setFailedCount(failed)
+                continue
+              }
             }
           }
 
@@ -483,6 +490,15 @@ export function useVideoQueue(
           let startUrl =
             liveStart ??
             (config.startFrameUrl?.trim() ? config.startFrameUrl : undefined)
+          if (
+            liveSegment &&
+            isKlingProvider &&
+            batchMethod === 'I2V' &&
+            isVeoChainContinuation(liveSegment)
+          ) {
+            const priorLastFrame = resolvePriorChainLastFrameUrl(liveSegments, liveSegment)
+            if (priorLastFrame) startUrl = priorLastFrame
+          }
           const endUrl = config.endFrameUrl?.trim() ? config.endFrameUrl : undefined
           if (batchMethod === 'FTV') {
             batchMethod = startUrl ? 'I2V' : 'T2V'
@@ -496,6 +512,10 @@ export function useVideoQueue(
           const previousSegmentVeoRef =
             liveSegment && batchMethod === 'EXT'
               ? resolveVeoRefForExtension(liveSegments, liveSegment)
+              : undefined
+          const previousSegmentLastFrameUrl =
+            liveSegment && batchMethod === 'I2V' && isVeoChainContinuation(liveSegment)
+              ? resolvePriorChainLastFrameUrl(liveSegments, liveSegment)
               : undefined
 
           const referenceImages = normalizeReferenceImages(config.referenceImages)
@@ -516,6 +536,7 @@ export function useVideoQueue(
               generationMethod: batchMethod,
               guidePrompt: config.guidePrompt,
               previousSegmentVeoRef,
+              previousSegmentLastFrameUrl,
               referenceImages,
               qualityTier: config.qualityTier,
               apiPromptOverride: config.useCustomApiPrompt ? config.apiPromptOverride : undefined,
