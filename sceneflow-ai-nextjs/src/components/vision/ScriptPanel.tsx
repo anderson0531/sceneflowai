@@ -4577,7 +4577,7 @@ function SceneCard({
     { key: 'dialogueAction', label: 'Script', icon: <FileText className="w-4 h-4" />, description: 'Write and edit your scene script' },
     // Direction (directorsChair) is hidden - auto-generated from Script, accessible via Frame dialog and Export
     // Frame (storyboardPreViz) merged into Action for unified production workflow
-    { key: 'callAction', label: 'Shoot', icon: <Clapperboard className="w-4 h-4" />, description: 'Generate and edit the full-motion video for this scene' }
+    { key: 'callAction', label: 'Motion', icon: <Clapperboard className="w-4 h-4" />, description: 'Generate and edit the full-motion video for this scene' }
   ], [])
   
   // Update active workflow tab when completions change if we haven't manually switched

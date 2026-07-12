@@ -45,3 +45,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .cloud-sql-credentials.local
+.kling-longtake-env.local

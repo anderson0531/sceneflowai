@@ -22,7 +22,7 @@ REGION="${GCP_REGION:-us-central1}"
 GCS_BUCKET="${GCS_RENDER_BUCKET:-sceneflow-render-jobs}"
 ARTIFACT_REPO="${ARTIFACT_REGISTRY_REPO:-sceneflow}"
 IMAGE_NAME="ffmpeg-renderer"
-JOB_NAME="${CLOUD_RUN_JOB_NAME:-ffmpeg-render-job}"
+JOB_NAME="${CLOUD_RUN_JOB_NAME:-sceneflow-ffmpeg-renderer}"
 CLOUD_SQL_INSTANCE="${CLOUD_SQL_INSTANCE_CONNECTION_NAME:-sceneflowai-2d3e6:us-central1:sceneflow-db}"
 
 # Colors for output
