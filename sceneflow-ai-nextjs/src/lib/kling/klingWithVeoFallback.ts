@@ -15,19 +15,13 @@ import { filterRefsForPolicyRetry } from '@/lib/video/normalizeReferenceImages'
 import type { VideoGenerationMethod } from '@/lib/vision/intelligentMethodSelection'
 import {
   getKlingDefaultModel,
-  getKlingPollIntervalMs,
-  getKlingPollTimeoutSec,
-  getKlingWebhookBaseUrl,
-  isKlingAsyncEnabled,
   isVeoFallbackEnabled,
   resolveKlingQuality,
 } from './config'
 import {
   runKlingVideo,
-  submitKlingVideo,
   type KlingVideoInput,
 } from './klingDirectClient'
-import { saveKlingJob } from './jobStore'
 import type { KlingQuality, KlingShotType, KlingMultiPromptEntry, KlingCreativePreset } from './types'
 
 export type KlingVeoGenerationProvider = 'kling' | 'vertex'
@@ -292,26 +286,6 @@ export async function generateVideoWithKlingVeoFallback(
     klingAttempts = attempt
     try {
       const klingInput = buildKlingInputFromContext(prompt, method, options, input)
-
-      if (isKlingAsyncEnabled() && input.segmentId && input.projectId && input.userId) {
-        const webhookUrl = `${getKlingWebhookBaseUrl()}/api/webhooks/kling`
-        const submit = await submitKlingVideo(klingInput, { webhookUrl })
-        const jobId = submit.taskId
-        await saveKlingJob({
-          jobId,
-          taskId: submit.taskId,
-          endpoint: submit.endpoint,
-          segmentId: input.segmentId,
-          projectId: input.projectId,
-          sceneId: input.sceneId || '',
-          userId: input.userId,
-          modelName: String(klingInput.model_name),
-          status: 'processing',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        })
-        throw new KlingVideoAsyncSubmittedError(jobId, submit.taskId)
-      }
 
       const buffer = await runKlingVideo(klingInput)
       return {

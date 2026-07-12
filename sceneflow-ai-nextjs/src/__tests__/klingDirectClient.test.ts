@@ -8,6 +8,7 @@ import {
   extractKlingVideoId,
   parseKlingWebhookPayload,
 } from '@/lib/kling/klingDirectClient'
+import { getKlingSegmentPollTimeoutSec } from '@/lib/kling/config'
 
 describe('klingDirectClient helpers', () => {
   const envBackup: Record<string, string | undefined> = {}
@@ -17,10 +18,12 @@ describe('klingDirectClient helpers', () => {
     envBackup.KLING_ACCESS_KEY = process.env.KLING_ACCESS_KEY
     envBackup.KLING_SECRET_KEY = process.env.KLING_SECRET_KEY
     envBackup.KLING_DEFAULT_MODEL = process.env.KLING_DEFAULT_MODEL
+    envBackup.KLING_POLL_TIMEOUT_SEC = process.env.KLING_POLL_TIMEOUT_SEC
     delete process.env.KLING_API_KEY
     delete process.env.KLING_ACCESS_KEY
     delete process.env.KLING_SECRET_KEY
     delete process.env.KLING_DEFAULT_MODEL
+    delete process.env.KLING_POLL_TIMEOUT_SEC
   })
 
   afterEach(() => {
@@ -28,6 +31,7 @@ describe('klingDirectClient helpers', () => {
     process.env.KLING_ACCESS_KEY = envBackup.KLING_ACCESS_KEY
     process.env.KLING_SECRET_KEY = envBackup.KLING_SECRET_KEY
     process.env.KLING_DEFAULT_MODEL = envBackup.KLING_DEFAULT_MODEL
+    process.env.KLING_POLL_TIMEOUT_SEC = envBackup.KLING_POLL_TIMEOUT_SEC
   })
 
   it('builds gateway Bearer auth from KLING_API_KEY', () => {
@@ -209,5 +213,23 @@ describe('klingDirectClient helpers', () => {
     expect(body.face_consistency).toBe(true)
     expect(body.image).toBe('https://cdn.example.com/frame.png')
     expect(body.image_list).toBeUndefined()
+  })
+
+  it('emits callback_url (not webhook_url) when webhook_url input is provided', () => {
+    const { body } = buildKlingVideoBody({
+      prompt: 'Test',
+      model_name: 'kling-v3-omni',
+      webhook_url: 'https://app.example.com/api/webhooks/kling',
+    })
+    expect(body.callback_url).toBe('https://app.example.com/api/webhooks/kling')
+    expect(body.webhook_url).toBeUndefined()
+  })
+
+  it('caps segment server poll timeout at 270s under Vercel maxDuration', () => {
+    expect(getKlingSegmentPollTimeoutSec()).toBe(270)
+    process.env.KLING_POLL_TIMEOUT_SEC = '120'
+    expect(getKlingSegmentPollTimeoutSec()).toBe(120)
+    process.env.KLING_POLL_TIMEOUT_SEC = '500'
+    expect(getKlingSegmentPollTimeoutSec()).toBe(270)
   })
 })

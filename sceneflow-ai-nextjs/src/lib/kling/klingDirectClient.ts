@@ -9,6 +9,8 @@ import {
   getKlingCapabilities,
   getKlingDefaultModel,
   getKlingWatermarkDefault,
+  getKlingPollIntervalMs,
+  getKlingSegmentPollTimeoutSec,
   hasDirectKlingCredentials,
   isKlingSoundEnabled,
 } from './config'
@@ -388,7 +390,7 @@ export function buildKlingVideoBody(
   }
 
   if (input.webhook_url) {
-    body.webhook_url = input.webhook_url
+    body.callback_url = input.webhook_url
   }
 
   const endpoint: 'text2video' | 'image2video' = hasStart ? 'image2video' : 'text2video'
@@ -451,7 +453,12 @@ export async function submitKlingVideo(
 
 export async function runKlingVideo(input: KlingVideoInput): Promise<Buffer> {
   const submit = await submitKlingVideo(input)
-  const polled = await pollKlingTaskResult(submit.taskId, submit.endpoint)
+  const polled = await pollKlingTaskResult(
+    submit.taskId,
+    submit.endpoint,
+    getKlingSegmentPollTimeoutSec(),
+    getKlingPollIntervalMs()
+  )
   const res = await fetch(polled.videoUrl)
   if (!res.ok) throw new Error(`Kling video download failed: ${res.status}`)
   return Buffer.from(await res.arrayBuffer())

@@ -74,6 +74,11 @@ export function getKlingPollTimeoutSec(): number {
   return Number.isFinite(n) && n > 0 ? n : 300
 }
 
+/** Server-side poll budget for single-segment sync generation (under 300s Vercel maxDuration). */
+export function getKlingSegmentPollTimeoutSec(): number {
+  return Math.min(getKlingPollTimeoutSec(), 270)
+}
+
 export function isVeoFallbackEnabled(): boolean {
   if (process.env.KLING_VEO_FALLBACK_ENABLED === 'false') return false
   return process.env.VEO_FALLBACK_ENABLED !== 'false'
