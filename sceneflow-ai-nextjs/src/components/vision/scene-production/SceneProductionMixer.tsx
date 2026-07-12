@@ -141,6 +141,7 @@ import {
   filterMixerIncludedSegments,
   isMixerBeatIncluded,
 } from '@/lib/scene/mixerBeatInclude'
+import { resolveBeatPreviewVolume } from '@/lib/scene/segmentAudioPreview'
 import {
   formatTrimTimeSec,
   parseTrimTimeInput,
@@ -642,6 +643,7 @@ function ScenePreviewPlayer({
   isMuted,
   onToggleMute,
   segmentAudioConfigs,
+  masterSegmentVolume,
   textOverlays = [],
   onEditOverlay,
   onDeleteOverlay,
@@ -670,6 +672,8 @@ function ScenePreviewPlayer({
   isMuted: boolean
   onToggleMute: () => void
   segmentAudioConfigs: Record<string, SegmentAudioConfig>
+  /** Global multiplier for embedded beat video audio in preview (0–1). */
+  masterSegmentVolume: number
   textOverlays?: TextOverlay[]
   onEditOverlay?: (overlay: TextOverlay) => void
   onDeleteOverlay?: (overlayId: string) => void
@@ -1141,6 +1145,25 @@ function ScenePreviewPlayer({
       dialogueRefsById.current.forEach(el => el?.pause())
     }
   }, [isPlaying, currentTime, audioTracks, currentAudioUrls, dialogueClipConfigs, isMuted, getSegmentStartTime, musicFileDuration, segments, getPlaybackSegmentDuration])
+
+  // Sync embedded beat video audio volume with Beat Audio panel sliders
+  useEffect(() => {
+    if (playbackKind === 'image-sequence') return
+    const video = videoRef.current
+    if (!video) return
+    const segId = segments[currentSegmentIndex]?.segmentId
+    const cfg = segId ? segmentAudioConfigs[segId] : undefined
+    const { muted, volume } = resolveBeatPreviewVolume(cfg, masterSegmentVolume, isMuted)
+    video.muted = muted
+    video.volume = volume
+  }, [
+    playbackKind,
+    currentSegmentIndex,
+    segments,
+    segmentAudioConfigs,
+    masterSegmentVolume,
+    isMuted,
+  ])
   
   // Load new segment video when segment index changes
   useEffect(() => {
@@ -2850,12 +2873,15 @@ function SegmentAudioControls({
   getPlaybackSegmentDuration: (segment: SceneSegment) => number
   audioTracks?: MixerAudioTracks
 }) {
-  const allMuted = Object.values(segmentConfigs).every(c => !c.includeAudio)
+  const allMuted = segments.length > 0 && segments.every(
+    (seg) => !(segmentConfigs[seg.segmentId]?.includeAudio ?? true)
+  )
   
   const toggleAll = () => {
     const newConfigs = { ...segmentConfigs }
-    Object.keys(newConfigs).forEach(k => {
-      newConfigs[k] = { ...newConfigs[k], includeAudio: allMuted }
+    segments.forEach((seg) => {
+      const current = newConfigs[seg.segmentId] || { includeAudio: true, volume: 1.0 }
+      newConfigs[seg.segmentId] = { ...current, includeAudio: allMuted }
     })
     onConfigChange(newConfigs)
   }
@@ -3582,14 +3608,21 @@ export function SceneProductionMixer({
     }
   }, [preserveBackgroundStem, includeSpeechStem, klingLipsyncEnabled])
   
-  // Initialize segment configs
+  const segmentIdsKey = useMemo(
+    () => segments.map((seg) => seg.segmentId).join(','),
+    [segments]
+  )
+
+  // Initialize segment configs when beat list changes (preserve user volume/mute edits)
   useEffect(() => {
-    const configs: Record<string, SegmentAudioConfig> = {}
-    segments.forEach(seg => {
-      configs[seg.segmentId] = segmentAudioConfigs[seg.segmentId] || { includeAudio: true, volume: 1.0 }
+    setSegmentAudioConfigs((prev) => {
+      const configs: Record<string, SegmentAudioConfig> = {}
+      segments.forEach((seg) => {
+        configs[seg.segmentId] = prev[seg.segmentId] || { includeAudio: true, volume: 1.0 }
+      })
+      return configs
     })
-    setSegmentAudioConfigs(configs)
-  }, [segments]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [segmentIdsKey, segments])
   
   // Get available languages from audio assets
   const availableLanguages = useMemo(() => {
@@ -5198,6 +5231,7 @@ export function SceneProductionMixer({
                 isMuted={isMuted}
                 onToggleMute={() => setIsMuted(prev => !prev)}
                 segmentAudioConfigs={segmentAudioConfigs}
+                masterSegmentVolume={masterSegmentVolume}
                 getPlaybackSegmentDuration={getPlaybackSegmentDuration}
                 getSegmentDuration={getSegmentDuration}
                 measuredSegmentDurations={measuredSegmentDurations}
