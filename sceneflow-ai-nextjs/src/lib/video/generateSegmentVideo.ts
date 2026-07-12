@@ -50,6 +50,7 @@ import type {
   KlingMultiPromptEntry,
   KlingCreativePreset,
 } from '@/lib/kling/types'
+import { resolveKlingApiModelName } from '@/lib/kling/types'
 export class SegmentVideoRateLimitError extends Error {
   retryAfter: number
   constructor(message: string, retryAfter = 60) {
@@ -495,7 +496,9 @@ export async function generateSegmentVideoCore(
       `[Segment Video] Aggregator ${aggResult.vendor} completed job ${aggResult.jobId} model=${selectedVideoModel}${modelUpgraded ? ` (upgraded to ${billingModelId})` : ''}`
     )
   } else if (useKling) {
-    console.log(`[Segment Video] Routing to Kling (model=${selectedKlingModel})`)
+    console.log(
+      `[Segment Video] Routing to Kling (catalog=${selectedKlingModel}, api=${resolveKlingApiModelName(selectedKlingModel)})`
+    )
     const aggregatorEligible = isBasicSegmentEligibleForAggregator({
       method,
       multiShot,

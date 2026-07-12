@@ -39,6 +39,7 @@ import {
   injectElementTagsIntoPrompt,
   resolveKlingElementsFromSources,
 } from '@/lib/kling/elementRegistry'
+import { resolveKlingApiModelName } from '@/lib/kling/types'
 
 export const maxDuration = 300 // 5 minutes for video generation
 export const runtime = 'nodejs'
@@ -376,8 +377,9 @@ export async function POST(
           `[Segment Asset Generation] Using multiplatform aggregator (model=${videoModel || 'default'})`
         )
       } else if (resolvedVideoProvider === 'kling') {
+        const catalogModel = klingModel || 'kling-v3-omni'
         console.log(
-          `[Segment Asset Generation] Using direct Kling API (model=${klingModel || 'kling-v3-omni'})`
+          `[Segment Asset Generation] Using direct Kling API (catalog=${catalogModel}, api=${resolveKlingApiModelName(catalogModel)})`
         )
       } else {
         console.log('[Segment Asset Generation] Using Google Veo for video generation')

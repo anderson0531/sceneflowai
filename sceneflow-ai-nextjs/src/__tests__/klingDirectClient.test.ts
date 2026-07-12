@@ -45,7 +45,7 @@ describe('klingDirectClient helpers', () => {
     expect(decoded.iss).toBe('ak_test')
   })
 
-  it('builds T2V request body with sound enabled by default', () => {
+  it('builds T2V request body with sound enabled by default for kling-v2-6', () => {
     const { body } = buildKlingVideoBody({
       prompt: 'Character speaks calmly.',
       duration: 5,
@@ -56,6 +56,48 @@ describe('klingDirectClient helpers', () => {
     expect(body.prompt).toBe('Character speaks calmly.')
     expect(body.duration).toBe('5')
     expect(body.sound).toBe('on')
+    expect(body.image_list).toBeUndefined()
+  })
+
+  it('sends official image field for I2V (not image_list)', () => {
+    const { body, endpoint } = buildKlingVideoBody({
+      prompt: 'Animate the scene',
+      model_name: 'kling-v3-omni',
+      startFrame: 'https://cdn.example.com/start.png',
+    })
+    expect(endpoint).toBe('image2video')
+    expect(body.image).toBe('https://cdn.example.com/start.png')
+    expect(body.image_list).toBeUndefined()
+    expect(body.tail_image).toBeUndefined()
+  })
+
+  it('sends image_tail and forces pro mode when end frame is present', () => {
+    const { body } = buildKlingVideoBody({
+      prompt: 'Interpolate',
+      model_name: 'kling-v3-omni',
+      mode: 'std',
+      startFrame: 'https://cdn.example.com/start.png',
+      lastFrame: 'https://cdn.example.com/end.png',
+    })
+    expect(body.image).toBe('https://cdn.example.com/start.png')
+    expect(body.image_tail).toBe('https://cdn.example.com/end.png')
+    expect(body.mode).toBe('pro')
+  })
+
+  it('snaps duration to official 5/10 enum', () => {
+    const short = buildKlingVideoBody({
+      prompt: 'Test',
+      model_name: 'kling-v3-omni',
+      duration: 3,
+    })
+    expect(short.body.duration).toBe('5')
+
+    const long = buildKlingVideoBody({
+      prompt: 'Test',
+      model_name: 'kling-v3-omni',
+      duration: 12,
+    })
+    expect(long.body.duration).toBe('10')
   })
 
   it('gates unsupported params for kling-v2.6', () => {
@@ -72,6 +114,27 @@ describe('klingDirectClient helpers', () => {
     expect(droppedKeys).toContain('cfg_scale')
     expect(droppedKeys).toContain('multi_shot')
     expect(droppedKeys).toContain('element_list')
+  })
+
+  it('omits sound for kling-v2-5-turbo official model', () => {
+    const { body, droppedKeys } = buildKlingVideoBody({
+      prompt: 'Test',
+      model_name: 'kling-v3-turbo',
+      sound: true,
+    })
+    expect(body.model_name).toBe('kling-v2-5-turbo')
+    expect(body.sound).toBeUndefined()
+    expect(droppedKeys).toContain('sound')
+  })
+
+  it('includes cfg_scale for kling-v3 official model', () => {
+    const { body } = buildKlingVideoBody({
+      prompt: 'Test',
+      model_name: 'kling-v3',
+      cfg_scale: 0.5,
+    })
+    expect(body.model_name).toBe('kling-v3')
+    expect(body.cfg_scale).toBe(0.5)
   })
 
   it('includes element_list for kling-v3-omni', () => {
@@ -144,6 +207,7 @@ describe('klingDirectClient helpers', () => {
       startFrame: 'https://cdn.example.com/frame.png',
     })
     expect(body.face_consistency).toBe(true)
-    expect(body.image_list).toBeDefined()
+    expect(body.image).toBe('https://cdn.example.com/frame.png')
+    expect(body.image_list).toBeUndefined()
   })
 })

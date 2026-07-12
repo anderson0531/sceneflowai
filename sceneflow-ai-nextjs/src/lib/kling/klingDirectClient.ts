@@ -47,16 +47,27 @@ export interface BuildKlingBodyResult {
   endpoint: 'text2video' | 'image2video'
 }
 
-function clampDuration(seconds: number | undefined, model: string): number {
-  const caps = getKlingCapabilities(model)
-  const min = caps.minDuration
-  const max = caps.maxDuration
+/** Official klingai.com duration enum: "5" or "10" only. */
+function mapOfficialKlingDuration(seconds: number | undefined): string {
   const raw = seconds ?? 10
-  return Math.min(max, Math.max(min, Math.round(raw)))
+  return raw <= 7 ? '5' : '10'
 }
 
-function mapKlingDuration(seconds: number | undefined, model: string): string {
-  return String(clampDuration(seconds, model))
+function isOfficialV2ApiModel(apiModelName: string): boolean {
+  return apiModelName.startsWith('kling-v2')
+}
+
+function supportsOfficialNativeAudio(apiModelName: string): boolean {
+  return apiModelName === 'kling-v2-6'
+}
+
+function mapOfficialKlingMode(
+  quality: KlingQuality,
+  hasEndFrame: boolean
+): 'std' | 'pro' {
+  if (hasEndFrame) return 'pro'
+  if (quality === 'std') return 'std'
+  return 'pro'
 }
 
 function mapAspectRatio(ratio?: string, hasStartFrame?: boolean): string {
@@ -260,32 +271,33 @@ export function buildKlingVideoBody(
 
   const imageList = resolvedImageList ?? buildImageList(input)
   const hasStart = imageList.some((e) => e.type === 'first_frame')
+  const endFrame = imageList.find((e) => e.type === 'end_frame')
+  const hasEndFrame = !!endFrame
   const quality: KlingQuality =
     input.mode === 'std' || input.mode === 'pro' || input.mode === '4k'
       ? input.mode
       : 'pro'
 
-  const effectiveQuality = caps.qualities.includes(quality)
-    ? quality
-    : (caps.qualities[caps.qualities.length - 1] ?? 'pro')
-
-  if (effectiveQuality !== quality) droppedKeys.push('mode')
-
   const apiModelName = resolveKlingApiModelName(model)
+  const officialMode = mapOfficialKlingMode(quality, hasEndFrame)
+
+  if (quality === '4k' || (hasEndFrame && quality === 'std')) {
+    droppedKeys.push('mode')
+  }
 
   const body: Record<string, unknown> = {
     model_name: apiModelName,
     prompt: truncatePrompt(input.prompt),
-    duration: mapKlingDuration(input.duration, model),
+    duration: mapOfficialKlingDuration(input.duration),
     aspect_ratio: mapAspectRatio(input.aspect_ratio, hasStart),
-    mode: effectiveQuality,
+    mode: officialMode,
   }
 
   if (input.negative_prompt) {
     body.negative_prompt = truncatePrompt(input.negative_prompt)
   }
 
-  if (caps.cfgScale && input.cfg_scale != null) {
+  if (!isOfficialV2ApiModel(apiModelName) && input.cfg_scale != null) {
     const cfg = Math.min(1, Math.max(0, input.cfg_scale))
     body.cfg_scale = cfg
   } else if (input.cfg_scale != null) {
@@ -296,7 +308,7 @@ export function buildKlingVideoBody(
     input.sound === true ||
     input.sound === 'on' ||
     (input.sound !== false && input.sound !== 'off' && isKlingSoundEnabled())
-  if (caps.nativeAudio && soundOn) {
+  if (supportsOfficialNativeAudio(apiModelName) && soundOn) {
     body.sound = 'on'
   } else if (soundOn) {
     droppedKeys.push('sound')
@@ -310,15 +322,14 @@ export function buildKlingVideoBody(
     body.watermark_enabled = true
   }
 
-  if (caps.imageList && imageList.length > 0) {
-    body.image_list = imageList.map((e) => ({ image: e.url, type: e.type }))
-  } else if (imageList.length > 0 && caps.legacyImageField) {
-    const first = imageList.find((e) => e.type === 'first_frame')
-    if (first) body.image = first.url
-    const end = imageList.find((e) => e.type === 'end_frame')
-    if (end) body.tail_image = end.url
-  } else if (imageList.length > 0) {
-    droppedKeys.push('image_list')
+  const firstFrame = imageList.find((e) => e.type === 'first_frame')
+  if (firstFrame) {
+    body.image = firstFrame.url
+  }
+  if (endFrame) {
+    body.image_tail = endFrame.url
+  } else if (imageList.length > 0 && !firstFrame) {
+    droppedKeys.push('image')
   }
 
   if (caps.v2v && input.video_url) {
