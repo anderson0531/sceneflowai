@@ -76,6 +76,7 @@ const DirectorDialog = dynamic(
 import { ModerationValidateButton } from '@/components/moderation/ModerationValidateButton'
 import { useStore } from '@/store/useStore'
 import { readFinalCutSelection } from '@/hooks/final-cut/useFinalCutSelection'
+import { persistFinalCutSelectionApi } from '@/lib/final-cut/persistFinalCutSelection'
 import type { FinalCutSelection, FinalCutSceneOverride, ProductionLanguage } from '@/lib/types/finalCut'
 import { RetakeConfirmDialog } from './RetakeConfirmDialog'
 import {
@@ -802,17 +803,7 @@ export function DirectorConsoleRoot({
       if (!currentProject) return
       setIsDesignatingScreening(true)
       try {
-        const res = await fetch(`/api/projects/${projectId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            metadata: {
-              ...currentProject.metadata,
-              finalCut: nextSelection,
-            },
-          }),
-        })
-        if (!res.ok) throw new Error('Failed to save screening version')
+        await persistFinalCutSelectionApi(projectId, nextSelection)
         updateProject(projectId, {
           metadata: {
             ...(currentProject.metadata as Record<string, unknown>),

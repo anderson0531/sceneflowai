@@ -9,6 +9,7 @@ import { getSceneProductionStateFromMetadata } from '@/lib/final-cut/projectProd
 import { getAvailableLanguagesForFormat } from '@/lib/final-cut/resolveSegmentMedia'
 import { buildFinalCutClips } from '@/lib/final-cut/useFinalCutClips'
 import { readFinalCutSelection, useFinalCutSelection } from '@/hooks/final-cut/useFinalCutSelection'
+import { persistFinalCutSelectionApi } from '@/lib/final-cut/persistFinalCutSelection'
 import type { FinalCutAssemblyPresetId } from '@/lib/types/finalCut'
 
 interface ScreeningRoomAssemblePanelProps {
@@ -79,17 +80,7 @@ export function ScreeningRoomAssemblePanel({
     if (!projectId || isDemo || !currentProject) return
     setIsSaving(true)
     try {
-      const res = await fetch(`/api/projects/${projectId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          metadata: {
-            ...currentProject.metadata,
-            finalCut: selection,
-          },
-        }),
-      })
-      if (!res.ok) throw new Error('Failed to save assembly')
+      await persistFinalCutSelectionApi(projectId, selection)
       updateProject(projectId, {
         metadata: {
           ...(currentProject.metadata as Record<string, unknown>),
