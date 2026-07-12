@@ -3313,7 +3313,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             existingStemStatus: segment.stemSeparation?.status,
             existingStemJobId: segment.stemSeparation?.jobId,
             apiPromptOverride: options?.apiPromptOverride,
-            allowPolicyFallback: options?.allowPolicyFallback !== false,
+            allowPolicyFallback: options?.allowPolicyFallback === true,
             videoProvider: options?.videoProvider ?? 'kling',
             videoModel: options?.videoModel,
             klingModel: options?.klingModel,

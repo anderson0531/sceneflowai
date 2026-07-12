@@ -97,7 +97,7 @@ export function useSegmentConfig(
       klingModel: 'kling-v3-omni',
       klingQuality: 'pro',
       sound: true,
-      allowVeoFallback: true,
+      allowVeoFallback: false,
     }
     
     // Method labels for UI

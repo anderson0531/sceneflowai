@@ -757,7 +757,7 @@ export function DirectorConsoleRoot({
         duration: 10,
         mode: 'I2V',
         expressMode: true,
-        allowVeoFallback: true,
+        allowVeoFallback: false,
       })
     }
 

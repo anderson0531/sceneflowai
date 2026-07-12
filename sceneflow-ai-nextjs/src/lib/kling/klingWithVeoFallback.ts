@@ -274,11 +274,12 @@ export async function generateVideoWithKlingVeoFallback(
     }
   }
 
-  const allowVeo = input.allowVeoFallback !== false && isVeoFallbackEnabled()
+  const allowVeo = input.allowVeoFallback === true && isVeoFallbackEnabled()
   if (!allowVeo) {
+    const baseError = lastError || 'Video generation failed'
     return {
       status: 'FAILED',
-      error: lastError || 'Kling video generation failed',
+      error: `${baseError}. Try again later, or open Advanced and choose a different video engine.`,
       generationProvider: 'kling',
       wasVeoFallback: false,
       klingAttempts,

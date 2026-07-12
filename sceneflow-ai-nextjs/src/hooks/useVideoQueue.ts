@@ -519,7 +519,7 @@ export function useVideoQueue(
               referenceImages,
               qualityTier: config.qualityTier,
               apiPromptOverride: config.useCustomApiPrompt ? config.apiPromptOverride : undefined,
-              allowPolicyFallback: config.allowPolicyFallback !== false,
+              allowPolicyFallback: config.allowPolicyFallback === true,
               videoProvider: config.videoProvider ?? 'kling',
               videoModel: config.videoModel,
               klingModel: config.klingModel,

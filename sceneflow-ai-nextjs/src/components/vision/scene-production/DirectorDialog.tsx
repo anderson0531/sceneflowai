@@ -96,8 +96,20 @@ import { wardrobesForScene } from '@/lib/character/characterReferenceAssembly'
 import { resolveSegmentVideoReferences } from '@/lib/vision/resolveBeatVideoReferences'
 import type { BlueprintAspectRatio } from '@/lib/treatment/blueprintFoundation'
 import { toVideoAspectRatio } from '@/lib/vision/artStyle'
-import { AGGREGATOR_MODEL_REGISTRY } from '@/lib/aggregator/modelRegistry'
 import { toast } from 'sonner'
+import {
+  SCENEFLOW_ENGINE_ID,
+  SCENEFLOW_QUALITY_TIERS,
+  ALTERNATIVE_ENGINES,
+  SCENEFLOW_DEFAULT_MODEL,
+  resolveEngineConfig,
+  inferEngineSelectionFromConfig,
+  snapDurationForEngine,
+  isAggregatorEngine,
+  alternativeEngineUnavailableMessage,
+  type SceneFlowQualityTierId,
+  type VideoEngineId,
+} from './videoEngineOptions'
 
 type AggregatorDisabledReason =
   | 'ok'
@@ -113,22 +125,8 @@ interface AggregatorDiagnosticsState {
   vercelEnv?: string
 }
 
-const FALLBACK_AGGREGATOR_MODELS = AGGREGATOR_MODEL_REGISTRY.map((m) => ({
-  id: m.id,
-  label: m.label,
-  costPerSecondUsd: m.costPerSecondUsd,
-  nativeAudio: m.nativeAudio ?? false,
-}))
-
 const VEO_DURATION_OPTIONS = [4, 6, 8, 10] as const
 const KLING_DURATION_OPTIONS = [3, 5, 7, 10, 12, 15] as const
-
-const KLING_MODEL_OPTIONS = [
-  { id: 'kling-v3-omni', label: 'Kling v3 Omni (recommended)' },
-  { id: 'kling-v3', label: 'Kling v3' },
-  { id: 'kling-v3-turbo', label: 'Kling v3 Turbo' },
-  { id: 'kling-v2.6', label: 'Kling v2.6' },
-] as const
 
 const KLING_SINGLE_PRESETS = [
   'jelly_press', 'jelly_slice', 'squish', 'expansion', 'yearbook', 'instant_film', 'pixelpixel',
@@ -136,37 +134,9 @@ const KLING_SINGLE_PRESETS = [
 
 const KLING_DUAL_PRESETS = ['hug', 'kiss', 'heart_gesture'] as const
 
-function snapDurationForProvider(
-  value: number,
-  provider: 'kling' | 'vertex' | 'aggregator'
-): number {
-  if (provider === 'kling') {
-    const opts = KLING_DURATION_OPTIONS
-    return opts.reduce((best, cur) =>
-      Math.abs(cur - value) < Math.abs(best - value) ? cur : best
-    , opts[3])
-  }
-  if (provider === 'aggregator') {
-    return value <= 7 ? 5 : 10
-  }
-  if (value <= 5) return 4
-  if (value <= 7) return 6
-  if (value <= 9) return 8
-  return 10
-}
-
 function aggregatorStatusMessage(diagnostics: AggregatorDiagnosticsState | null): string | null {
   if (!diagnostics || diagnostics.enabled) return null
-  switch (diagnostics.disabledReason) {
-    case 'no_api_key':
-      return 'Multiplatform unavailable — server missing VIDEO_AGGREGATOR_API_KEY. Add it to Vercel Production and redeploy.'
-    case 'explicitly_disabled':
-      return 'Multiplatform disabled via VIDEO_AGGREGATOR_ENABLED=false on the server.'
-    case 'fetch_failed':
-      return 'Could not load multiplatform config from the server.'
-    default:
-      return 'Multiplatform is not available on this server.'
-  }
+  return alternativeEngineUnavailableMessage(diagnostics.disabledReason)
 }
 
 type DirectorReferenceType = 'scene' | 'character' | 'object' | 'location' | 'wardrobe'
@@ -336,11 +306,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const [apiPromptPreviewLoading, setApiPromptPreviewLoading] = useState(false)
   const [useCustomApiPrompt, setUseCustomApiPrompt] = useState(false)
   const [apiPromptOverride, setApiPromptOverride] = useState('')
-  const [allowPolicyFallback, setAllowPolicyFallback] = useState(true)
-  const [videoProvider, setVideoProvider] = useState<'kling' | 'vertex' | 'aggregator'>('kling')
-  const [videoModel, setVideoModel] = useState('kling-2.6')
-  const [klingModel, setKlingModel] = useState('kling-v3-omni')
-  const [klingQuality, setKlingQuality] = useState<'std' | 'pro' | '4k'>('pro')
+  const [selectedEngine, setSelectedEngine] = useState<VideoEngineId>(SCENEFLOW_ENGINE_ID)
+  const [qualityTierId, setQualityTierId] = useState<SceneFlowQualityTierId>('cinematic')
   const [cfgScale, setCfgScale] = useState(0.5)
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [watermarkEnabled, setWatermarkEnabled] = useState(false)
@@ -354,9 +321,6 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const [aggregatorDiagnostics, setAggregatorDiagnostics] =
     useState<AggregatorDiagnosticsState | null>(null)
   const [routeProbeLoading, setRouteProbeLoading] = useState(false)
-  const [aggregatorModels, setAggregatorModels] = useState<
-    Array<{ id: string; label: string; costPerSecondUsd: number; nativeAudio: boolean }>
-  >([])
   
   // Intelligent prompt modification state
   const [promptInstruction, setPromptInstruction] = useState('')
@@ -486,12 +450,25 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const [editorResetKey, setEditorResetKey] = useState(0)
 
   const [keyframeEdit, setKeyframeEdit] = useState<{ frameType: 'start' | 'end'; url: string } | null>(null)
-  // Quality tier state - default to 'fast' for all modes (cost-optimized)
-  // Users can manually select 'premium' when higher quality is needed
-  const [qualityTier, setQualityTier] = useState<'fast' | 'premium'>('fast')
   const wasOpenRef = useRef(false)
   const lastInitializedSegmentIdRef = useRef<string | null>(null)
   const lastInitializedStartFrameUrlRef = useRef<string | null>(null)
+
+  const engineSelection = useMemo(
+    () =>
+      selectedEngine === SCENEFLOW_ENGINE_ID
+        ? ({ engineId: SCENEFLOW_ENGINE_ID, qualityTierId } as const)
+        : ({ engineId: selectedEngine } as const),
+    [selectedEngine, qualityTierId]
+  )
+
+  const resolvedEngine = useMemo(
+    () => resolveEngineConfig(engineSelection),
+    [engineSelection]
+  )
+
+  const { videoProvider, videoModel, qualityTier } = resolvedEngine
+  const isSceneFlowEngine = selectedEngine === SCENEFLOW_ENGINE_ID
 
   const effectiveStartFrameUrl = useMemo(
     () =>
@@ -721,20 +698,20 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     setNegativePrompt(autoConfig.negativePrompt)
     setAspectRatio(lockedVideoAspect)
     setResolution(autoConfig.resolution)
-    const initialProvider =
-      savedConfig?.videoProvider ?? autoConfig.videoProvider ?? 'kling'
+    const inferred = inferEngineSelectionFromConfig(savedConfig ?? autoConfig)
+    setSelectedEngine(inferred.engineId)
+    setQualityTierId(inferred.qualityTierId)
     const rawDuration = isContinuation ? 10 : autoConfig.duration
-    setVideoProvider(initialProvider)
-    setDuration(snapDurationForProvider(rawDuration, initialProvider))
+    const selection =
+      inferred.engineId === SCENEFLOW_ENGINE_ID
+        ? { engineId: SCENEFLOW_ENGINE_ID, qualityTierId: inferred.qualityTierId }
+        : { engineId: inferred.engineId }
+    setDuration(snapDurationForEngine(rawDuration, selection))
     setGuidePrompt(batchGuideSeed || autoConfig.guidePrompt || '')
     setReferenceImages(autoResolvedRefs.entries)
     setKeyframeEdit(null)
     setUseCustomApiPrompt(autoConfig.useCustomApiPrompt ?? savedConfig?.useCustomApiPrompt ?? false)
     setApiPromptOverride(autoConfig.apiPromptOverride ?? savedConfig?.apiPromptOverride ?? '')
-    setAllowPolicyFallback(autoConfig.allowPolicyFallback ?? savedConfig?.allowPolicyFallback ?? true)
-    setVideoModel(savedConfig?.videoModel ?? autoConfig.videoModel ?? 'kling-2.6')
-    setKlingModel(savedConfig?.klingModel ?? autoConfig.klingModel ?? 'kling-v3-omni')
-    setKlingQuality(savedConfig?.klingQuality ?? autoConfig.klingQuality ?? 'pro')
     setCfgScale(savedConfig?.cfgScale ?? autoConfig.cfgScale ?? 0.5)
     setSoundEnabled(savedConfig?.sound ?? autoConfig.sound ?? true)
     setWatermarkEnabled(savedConfig?.watermarkEnabled ?? autoConfig.watermarkEnabled ?? false)
@@ -814,57 +791,49 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     ...config,
     useCustomApiPrompt,
     apiPromptOverride: useCustomApiPrompt ? apiPromptOverride.trim() : undefined,
-    allowPolicyFallback: videoProvider === 'kling' ? allowPolicyFallback : videoProvider === 'vertex' ? allowPolicyFallback : false,
-    allowVeoFallback: videoProvider === 'kling' ? allowPolicyFallback : undefined,
-    videoProvider,
-    videoModel: videoProvider === 'aggregator' ? videoModel : undefined,
-    klingModel: videoProvider === 'kling' ? klingModel : undefined,
-    klingQuality: videoProvider === 'kling' ? klingQuality : undefined,
-    cfgScale: videoProvider === 'kling' ? cfgScale : undefined,
-    sound: videoProvider === 'kling' ? soundEnabled : undefined,
-    watermarkEnabled: videoProvider === 'kling' ? watermarkEnabled : undefined,
-    multiShot: videoProvider === 'kling' ? multiShot : undefined,
-    shotType: videoProvider === 'kling' ? shotType : undefined,
+    ...resolvedEngine,
+    allowPolicyFallback: false,
+    allowVeoFallback: false,
+    resolution: resolvedEngine.resolution ?? config.resolution,
+    qualityTier: resolvedEngine.qualityTier ?? config.qualityTier,
+    cfgScale: isSceneFlowEngine ? cfgScale : undefined,
+    sound: isSceneFlowEngine ? soundEnabled : undefined,
+    watermarkEnabled: isSceneFlowEngine ? watermarkEnabled : undefined,
+    multiShot: isSceneFlowEngine ? multiShot : undefined,
+    shotType: isSceneFlowEngine ? shotType : undefined,
     multiPrompt:
-      videoProvider === 'kling' && multiShot
+      isSceneFlowEngine && multiShot
         ? multiPromptRows.map((row) => ({
             index: row.index,
             prompt: row.prompt,
             duration: row.duration,
           }))
         : undefined,
-    preset: videoProvider === 'kling' ? selectedPreset : undefined,
+    preset: isSceneFlowEngine ? selectedPreset : undefined,
   })
 
-  const displayAggregatorModels =
-    aggregatorModels.length > 0 ? aggregatorModels : FALLBACK_AGGREGATOR_MODELS
-
-  const selectedAggregatorModelLabel =
-    displayAggregatorModels.find((m) => m.id === videoModel)?.label ?? videoModel
-
-  const generateButtonLabel =
-    videoProvider === 'kling'
-      ? `Generate via Kling (${KLING_MODEL_OPTIONS.find((m) => m.id === klingModel)?.label ?? klingModel})`
-      : videoProvider === 'aggregator'
-        ? `Generate via Kling${selectedAggregatorModelLabel ? ` (${selectedAggregatorModelLabel})` : ''}`
-        : 'Generate via Veo'
+  const generateButtonLabel = 'Generate Video'
 
   const durationOptions =
     videoProvider === 'kling' || videoProvider === 'aggregator'
       ? KLING_DURATION_OPTIONS
       : VEO_DURATION_OPTIONS
 
-  const handleVideoProviderChange = useCallback(
-    (provider: 'kling' | 'vertex' | 'aggregator') => {
-      if (provider === 'aggregator' && !aggregatorEnabled) return
-      setVideoProvider(provider)
-      setDuration((prev) => snapDurationForProvider(prev, provider))
-      if (provider === 'kling') {
-        setResolution('1080p')
-        setKlingQuality('pro')
+  const handleEngineChange = useCallback(
+    (engineId: VideoEngineId) => {
+      if (isAggregatorEngine(engineId) && !aggregatorEnabled) return
+      setSelectedEngine(engineId)
+      const selection =
+        engineId === SCENEFLOW_ENGINE_ID
+          ? { engineId: SCENEFLOW_ENGINE_ID, qualityTierId }
+          : { engineId }
+      setDuration((prev) => snapDurationForEngine(prev, selection))
+      if (engineId === SCENEFLOW_ENGINE_ID) {
+        const tier = SCENEFLOW_QUALITY_TIERS.find((t) => t.id === qualityTierId)
+        if (tier) setResolution(tier.resolution)
       }
     },
-    [aggregatorEnabled]
+    [aggregatorEnabled, qualityTierId]
   )
 
   const aggregatorStatusBanner = aggregatorStatusMessage(aggregatorDiagnostics)
@@ -939,26 +908,6 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
         if (data.diagnostics) {
           setAggregatorDiagnostics(data.diagnostics as AggregatorDiagnosticsState)
         }
-        if (Array.isArray(data.models) && data.models.length > 0) {
-          setAggregatorModels(
-            data.models.map(
-              (m: {
-                id: string
-                label: string
-                costPerSecondUsd: number
-                nativeAudio: boolean
-              }) => ({
-                id: m.id,
-                label: m.label,
-                costPerSecondUsd: m.costPerSecondUsd,
-                nativeAudio: m.nativeAudio,
-              })
-            )
-          )
-          if (data.defaultModel && !videoModel) setVideoModel(data.defaultModel)
-        } else {
-          setAggregatorModels(FALLBACK_AGGREGATOR_MODELS)
-        }
       })
       .catch(() => {
         setAggregatorEnabled(false)
@@ -966,7 +915,6 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
           enabled: false,
           disabledReason: 'fetch_failed',
         })
-        setAggregatorModels(FALLBACK_AGGREGATOR_MODELS)
       })
   }, [isOpen])
 
@@ -1074,14 +1022,14 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   }, [segment.dialogueLines, continuationDialogueExcerpt])
 
   const klingLongTakePlan = useMemo(() => {
-    if (videoProvider !== 'kling' || !shouldUseKlingLongTake(estimatedDialogueSeconds)) {
+    if (!isSceneFlowEngine || !shouldUseKlingLongTake(estimatedDialogueSeconds)) {
       return null
     }
     return planKlingLongTake({
       targetSeconds: estimatedDialogueSeconds,
-      model: klingModel,
+      model: SCENEFLOW_DEFAULT_MODEL,
     })
-  }, [videoProvider, estimatedDialogueSeconds, klingModel])
+  }, [isSceneFlowEngine, estimatedDialogueSeconds])
   
   const tabStates = {
     TEXT_TO_VIDEO: true,
@@ -1114,7 +1062,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
         {klingLongTakePlan && (
           <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100 space-y-2">
             <p>
-              Dialogue (~{estimatedDialogueSeconds}s) exceeds the {KLING_SINGLE_CLIP_MAX_SEC}s Kling
+              Dialogue (~{estimatedDialogueSeconds}s) exceeds the {KLING_SINGLE_CLIP_MAX_SEC}s
               single-clip ceiling — generation will use the <strong>long-take pipeline</strong> (
               {klingLongTakePlan.totalSeconds}s: base {klingLongTakePlan.baseSeconds}s +{' '}
               {klingLongTakePlan.extensions} extends).
@@ -1608,54 +1556,85 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-4 pt-2">
-                    <div className="flex flex-col gap-2">
-                      <Label className="text-slate-400 text-xs">Generation Provider</Label>
-                      <div className="flex gap-2 flex-wrap">
-                        <Button
-                          type="button"
-                          variant={videoProvider === 'kling' ? 'default' : 'outline'}
-                          size="sm"
-                          className={cn(
-                            'flex-1 min-w-[100px]',
-                            videoProvider === 'kling'
-                              ? 'bg-indigo-600'
-                              : 'bg-slate-800 border-slate-700 text-slate-300'
-                          )}
-                          onClick={() => handleVideoProviderChange('kling')}
-                        >
-                          Kling (Direct)
-                        </Button>
-                        <Button
-                          type="button"
-                          variant={videoProvider === 'vertex' ? 'default' : 'outline'}
-                          size="sm"
-                          className={cn(
-                            'flex-1 min-w-[100px]',
-                            videoProvider === 'vertex'
-                              ? 'bg-indigo-600'
-                              : 'bg-slate-800 border-slate-700 text-slate-300'
-                          )}
-                          onClick={() => handleVideoProviderChange('vertex')}
-                        >
-                          Google Veo
-                        </Button>
-                        <Button
-                          type="button"
-                          variant={videoProvider === 'aggregator' ? 'default' : 'outline'}
-                          size="sm"
-                          disabled={!aggregatorEnabled}
-                          className={cn(
-                            'flex-1 min-w-[100px]',
-                            videoProvider === 'aggregator'
-                              ? 'bg-indigo-600'
-                              : 'bg-slate-800 border-slate-700 text-slate-300',
-                            !aggregatorEnabled && 'opacity-50'
-                          )}
-                          onClick={() => handleVideoProviderChange('aggregator')}
-                        >
-                          Multiplatform
-                        </Button>
+                    <div className="flex flex-col gap-3">
+                      <Label className="text-slate-400 text-xs">Video Engine</Label>
+
+                      <button
+                        type="button"
+                        onClick={() => handleEngineChange(SCENEFLOW_ENGINE_ID)}
+                        className={cn(
+                          'w-full text-left rounded-lg border px-3 py-3 transition-colors',
+                          selectedEngine === SCENEFLOW_ENGINE_ID
+                            ? 'border-indigo-500 bg-indigo-500/10'
+                            : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+                        )}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-medium text-white">SceneFlow</span>
+                          <Badge variant="outline" className="text-[10px] border-indigo-500/50 text-indigo-300">
+                            Recommended
+                          </Badge>
+                        </div>
+                        <p className="text-[11px] text-slate-400 mt-1">
+                          Creative-friendly engine with multi-shot, lip-sync, and long-take support.
+                        </p>
+                        {selectedEngine === SCENEFLOW_ENGINE_ID && (
+                          <div
+                            className="mt-3 flex flex-col gap-2"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Label className="text-slate-400 text-[10px]">Quality</Label>
+                            <Select
+                              value={qualityTierId}
+                              onValueChange={(v) => {
+                                const tierId = v as SceneFlowQualityTierId
+                                setQualityTierId(tierId)
+                                const tier = SCENEFLOW_QUALITY_TIERS.find((t) => t.id === tierId)
+                                if (tier) setResolution(tier.resolution)
+                              }}
+                            >
+                              <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300 h-8">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="bg-slate-800 border-slate-700">
+                                {SCENEFLOW_QUALITY_TIERS.map((tier) => (
+                                  <SelectItem key={tier.id} value={tier.id}>
+                                    {tier.label} — {tier.description}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+                      </button>
+
+                      <div className="space-y-2">
+                        <Label className="text-slate-400 text-[10px] uppercase tracking-wide">
+                          Alternative engines
+                        </Label>
+                        {ALTERNATIVE_ENGINES.map((alt) => {
+                          const disabled = alt.requiresAggregator && !aggregatorEnabled
+                          return (
+                            <button
+                              key={alt.id}
+                              type="button"
+                              disabled={disabled}
+                              onClick={() => handleEngineChange(alt.id)}
+                              className={cn(
+                                'w-full text-left rounded-lg border px-3 py-2.5 transition-colors',
+                                selectedEngine === alt.id
+                                  ? 'border-indigo-500 bg-indigo-500/10'
+                                  : 'border-slate-700 bg-slate-800/50 hover:border-slate-600',
+                                disabled && 'opacity-50 cursor-not-allowed'
+                              )}
+                            >
+                              <span className="text-sm text-slate-200">{alt.label}</span>
+                              <p className="text-[11px] text-slate-500 mt-0.5">{alt.description}</p>
+                            </button>
+                          )
+                        })}
                       </div>
+
                       {aggregatorStatusBanner && (
                         <p className="text-[10px] text-slate-500 leading-relaxed">
                           {aggregatorStatusBanner}
@@ -1663,37 +1642,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                       )}
                     </div>
 
-                    {videoProvider === 'kling' && (
+                    {isSceneFlowEngine && (
                       <>
-                        <div className="flex flex-col gap-2">
-                          <Label className="text-slate-400 text-xs">Kling Model</Label>
-                          <Select value={klingModel} onValueChange={setKlingModel}>
-                            <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-slate-800 border-slate-700">
-                              {KLING_MODEL_OPTIONS.map((m) => (
-                                <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <Label className="text-slate-400 text-xs">Quality (std / pro / 4k)</Label>
-                          <Select value={klingQuality} onValueChange={(v) => {
-                            setKlingQuality(v as 'std' | 'pro' | '4k')
-                            setResolution(v === 'std' ? '720p' : v === '4k' ? '1080p' : '1080p')
-                          }}>
-                            <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-slate-800 border-slate-700">
-                              <SelectItem value="std">Standard — 720p fast</SelectItem>
-                              <SelectItem value="pro">Pro — 1080p high-fidelity</SelectItem>
-                              <SelectItem value="4k">4K — Premium native 4K</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
                         <div className="flex flex-col gap-2">
                           <Label className="text-slate-400 text-xs">CFG Guidance ({cfgScale.toFixed(2)})</Label>
                           <input
@@ -1715,24 +1665,6 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                             <Checkbox checked={watermarkEnabled} onCheckedChange={(c) => setWatermarkEnabled(c === true)} />
                             Watermark preview
                           </label>
-                        </div>
-                        <div
-                          className="flex items-start gap-2 cursor-pointer"
-                          onClick={() => setAllowPolicyFallback((prev) => !prev)}
-                        >
-                          <Checkbox
-                            id="allowVeoFallback"
-                            checked={allowPolicyFallback}
-                            onCheckedChange={(checked) => setAllowPolicyFallback(checked === true)}
-                            className="mt-0.5"
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                          <span className="text-xs text-slate-300 leading-relaxed">
-                            Allow Vertex Veo backup if Kling fails
-                            <span className="block text-slate-500 mt-0.5">
-                              Falls back to Google Veo when Kling blocks or errors.
-                            </span>
-                          </span>
                         </div>
                         <div className="flex flex-col gap-2">
                           <Label className="text-slate-400 text-xs">Creative FX Presets</Label>
@@ -1828,76 +1760,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                       </>
                     )}
 
-                    {videoProvider === 'vertex' && (
+                    {isAggregatorEngine(selectedEngine) && (
                       <>
-                        <div className="flex flex-col gap-2">
-                          <Label className="text-slate-400 text-xs">Quality Tier</Label>
-                          <Select value={qualityTier} onValueChange={(v) => setQualityTier(v as 'fast' | 'premium')}>
-                            <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-slate-800 border-slate-700">
-                              <SelectItem value="fast">Fast (~$1.60/8s) - Good for T2V, I2V</SelectItem>
-                              <SelectItem value="premium">Premium (~$6.00/8s) - Better motion reasoning</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <Label className="text-slate-400 text-xs">Resolution</Label>
-                          <Select value={resolution} onValueChange={(v) => setResolution(v as '720p' | '1080p')}>
-                            <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-slate-800 border-slate-700">
-                              <SelectItem value="720p">720p HD</SelectItem>
-                              <SelectItem value="1080p">1080p Full HD</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div
-                          className="flex items-start gap-2 cursor-pointer"
-                          onClick={() => setAllowPolicyFallback((prev) => !prev)}
-                        >
-                          <Checkbox
-                            id="allowPolicyFallback"
-                            checked={allowPolicyFallback}
-                            onCheckedChange={(checked) => setAllowPolicyFallback(checked === true)}
-                            className="mt-0.5"
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                          <span className="text-xs text-slate-300 leading-relaxed">
-                            Allow Kling backup if blocked
-                            <span className="block text-slate-500 mt-0.5">
-                              Uses direct Kling when Vertex blocks the prompt. May cost additional credits.
-                            </span>
-                          </span>
-                        </div>
-                      </>
-                    )}
-
-                    {videoProvider === 'aggregator' && (
-                      <>
-                        <div className="flex flex-col gap-2">
-                          <Label className="text-slate-400 text-xs">Kling Model</Label>
-                          <Select value={videoModel} onValueChange={setVideoModel}>
-                            <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-slate-800 border-slate-700">
-                              {displayAggregatorModels.map((m) => (
-                                <SelectItem key={m.id} value={m.id}>
-                                  {m.label}
-                                  {m.nativeAudio ? ' · audio' : ''} (~$
-                                  {m.costPerSecondUsd.toFixed(2)}/s)
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <p className="text-[10px] text-slate-500 leading-relaxed">
-                          Kling uses provider-native content policies — less restrictive than Google for
-                          creative violence, NIL, and trigger words.
-                        </p>
                         <Button
                           type="button"
                           variant="outline"
@@ -1909,10 +1773,10 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                           {routeProbeLoading ? (
                             <>
                               <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
-                              Testing routing…
+                              Testing connection…
                             </>
                           ) : (
-                            'Test routing (no credits charged)'
+                            'Test connection (no credits charged)'
                           )}
                         </Button>
                       </>

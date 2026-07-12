@@ -334,7 +334,7 @@ export async function generateVideoWithVeoKlingFallback(
 
   if (!input.allowPolicyFallback) {
     throw new ContentPolicyExhaustedError(
-      lastError || 'Vertex content policy blocked all attempts',
+      `${lastError || 'Vertex content policy blocked all attempts'}. Try again later, or open Advanced and choose a different video engine.`,
       vertexAttempts,
       lastError
     )

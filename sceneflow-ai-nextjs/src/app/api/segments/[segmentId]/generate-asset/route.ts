@@ -471,7 +471,7 @@ export async function POST(
         requireVeoRefForExt:
           generationMethod === 'EXT' && !sourceVideoUrl && !previousSegmentVeoRef,
         apiPromptOverride,
-        allowPolicyFallback: allowPolicyFallback !== false,
+        allowPolicyFallback: allowPolicyFallback === true,
         videoProvider: resolvedVideoProvider,
         videoModel,
         klingModel,
@@ -485,7 +485,7 @@ export async function POST(
         shotType,
         multiPrompt,
         preset: preset as GenerateAssetRequest['preset'],
-        allowVeoFallback: allowVeoFallback !== false,
+        allowVeoFallback: allowVeoFallback === true,
         expressMode: expressMode === true,
       })
 
