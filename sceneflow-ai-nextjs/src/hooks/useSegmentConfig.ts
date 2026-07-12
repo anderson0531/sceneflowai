@@ -10,6 +10,11 @@ import { resolveVeoRefForExtension } from '@/lib/video/veoChainQueue'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import type { VideoGenerationConfig, ApprovalStatus } from '@/components/vision/scene-production/types'
 import {
+  collectDraftStoryboardFrameWarnings,
+  resolveEffectiveStoryboardTier,
+} from '@/lib/storyboard/storyboardQuality'
+import { buildDefaultBatchGuidePrompt } from '@/lib/scene/segmentGuidePrompt'
+import {
   buildSegmentConfigsMap,
   detectRecommendedMethod,
   calculateConfidence,
