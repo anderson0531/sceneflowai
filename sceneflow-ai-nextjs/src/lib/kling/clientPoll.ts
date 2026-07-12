@@ -1,4 +1,4 @@
-import { getKlingJob } from './jobStore'
+/** Client-side poll for async Kling jobs (KLING_ASYNC=true). */
 
 export async function pollKlingJobForAsset(
   jobId: string,
@@ -9,10 +9,19 @@ export async function pollKlingJobForAsset(
   const deadline = Date.now() + timeoutMs
 
   while (Date.now() < deadline) {
-    const job = await getKlingJob(jobId)
-    if (!job) {
-      await new Promise((r) => setTimeout(r, intervalMs))
-      continue
+    const res = await fetch(`/api/kling/jobs/${encodeURIComponent(jobId)}`, {
+      credentials: 'include',
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(
+        (err as { error?: string }).error || `Failed to poll Kling job (${res.status})`
+      )
+    }
+    const job = (await res.json()) as {
+      status?: string
+      assetUrl?: string
+      error?: string
     }
     if (job.status === 'completed' && job.assetUrl) {
       return { assetUrl: job.assetUrl, status: 'completed' }
