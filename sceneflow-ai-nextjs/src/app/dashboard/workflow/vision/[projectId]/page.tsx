@@ -60,6 +60,7 @@ import {
 } from '@/lib/video/veoChainQueue'
 import { normalizeReferenceImages } from '@/lib/video/normalizeReferenceImages'
 import { pollAggregatorJobForAsset } from '@/lib/aggregator/clientPoll'
+import { pollKlingJobForAsset } from '@/lib/kling/clientPoll'
 import {
   GALLERY_DIRECT_GENERATE_OPTS,
   GALLERY_MANUAL_GENERATE_OPTS,
@@ -3090,8 +3091,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         qualityTier?: 'fast' | 'premium'
         apiPromptOverride?: string
         allowPolicyFallback?: boolean
-        videoProvider?: 'vertex' | 'aggregator'
+        videoProvider?: 'kling' | 'vertex' | 'aggregator'
         videoModel?: string
+        klingModel?: string
+        klingQuality?: 'std' | 'pro' | '4k'
+        cfgScale?: number
+        sound?: boolean
+        watermarkEnabled?: boolean
+        elementList?: string[]
+        voiceList?: Array<{ voice_id: string; name?: string }>
+        multiShot?: boolean
+        shotType?: 'customize' | 'intelligence'
+        multiPrompt?: Array<{ index: number; prompt: string; duration: string | number }>
+        preset?: string
+        allowVeoFallback?: boolean
+        expressMode?: boolean
       }
     ) => {
       if (!project?.id) {
@@ -3111,7 +3125,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const providerLabel =
           options?.videoProvider === 'aggregator'
             ? `Multiplatform${options.videoModel ? ` (${options.videoModel})` : ''}`
-            : 'Google Veo'
+            : options?.videoProvider === 'vertex'
+              ? 'Google Veo'
+              : `Kling${options.klingModel ? ` (${options.klingModel})` : ''}`
         toast.info(`Generating via ${providerLabel} · ${mode} · beat ${segmentId.slice(0, 6)}…`)
       } catch {}
 
@@ -3233,9 +3249,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             existingStemStatus: segment.stemSeparation?.status,
             existingStemJobId: segment.stemSeparation?.jobId,
             apiPromptOverride: options?.apiPromptOverride,
-            allowPolicyFallback: options?.allowPolicyFallback === true,
-            videoProvider: options?.videoProvider,
+            allowPolicyFallback: options?.allowPolicyFallback !== false,
+            videoProvider: options?.videoProvider ?? 'kling',
             videoModel: options?.videoModel,
+            klingModel: options?.klingModel,
+            klingQuality: options?.klingQuality,
+            cfgScale: options?.cfgScale,
+            sound: options?.sound,
+            watermarkEnabled: options?.watermarkEnabled,
+            elementList: options?.elementList,
+            voiceList: options?.voiceList,
+            multiShot: options?.multiShot,
+            shotType: options?.shotType,
+            multiPrompt: options?.multiPrompt,
+            preset: options?.preset,
+            allowVeoFallback: options?.allowVeoFallback,
+            expressMode: options?.expressMode,
           }),
         })
 
@@ -3313,6 +3342,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           throw new Error(data.error || 'Asset generation failed')
         }
 
+        if (data.status === 'PROCESSING' && data.klingJobId) {
+          toast.info('Kling job submitted — waiting for completion…')
+          const polled = await pollKlingJobForAsset(data.klingJobId)
+          data = {
+            ...data,
+            status: 'COMPLETE',
+            assetUrl: polled.assetUrl,
+            assetType: 'video',
+          }
+        }
+
         if (data.status === 'PROCESSING' && data.aggregatorJobId) {
           toast.info('Multiplatform job submitted — waiting for Renderful…')
           const polled = await pollAggregatorJobForAsset(data.aggregatorJobId)
@@ -3335,7 +3375,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           console.log('[Segment Generate] routingTrace:', data.routingTrace)
         }
 
-        if (data.generationProvider === 'aggregator') {
+        if (data.generationProvider === 'kling') {
+          toast.success(
+            `Video ready via Kling${data.klingModel ? ` (${data.klingModel})` : ''}`
+          )
+        } else if (data.generationProvider === 'aggregator') {
           toast.success(
             `Video ready via Multiplatform${data.videoModel ? ` (${data.videoModel})` : ''}`
           )

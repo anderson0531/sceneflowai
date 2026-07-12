@@ -7,16 +7,6 @@ import { useMemo } from 'react'
 import type { SceneSegment } from '@/components/vision/scene-production/types'
 import type { VideoGenerationMethod } from '@/components/vision/scene-production/types'
 import { resolveVeoRefForExtension } from '@/lib/video/veoChainQueue'
-import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
-import {
-  buildDefaultBatchGuidePrompt,
-  type GuideCharacterDemographic,
-  type GuidePromptSceneContext,
-} from '@/lib/scene/segmentGuidePrompt'
-import {
-  collectDraftStoryboardFrameWarnings,
-  resolveEffectiveStoryboardTier,
-} from '@/lib/storyboard/storyboardQuality'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import type { VideoGenerationConfig, ApprovalStatus } from '@/components/vision/scene-production/types'
 import {
@@ -77,21 +67,20 @@ export function useSegmentConfig(
     )
 
     const config: VideoGenerationConfig = {
-      mode: method,
+      mode: resolvedStart ? 'I2V' : method,
       prompt,
       motionPrompt,
       visualPrompt,
       aspectRatio: defaultAspectRatio === '1:1' || defaultAspectRatio === '4:3'
         ? '16:9'
         : defaultAspectRatio,
-      resolution: '720p',
-      duration: DEFAULT_VEO_CLIP_DURATION,
+      resolution: '1080p',
+      duration: 10,
       negativePrompt: '',
       approvalStatus,
       confidence,
       guidePrompt: guidePrompt || undefined,
       referenceImages: referenceImages?.length ? referenceImages : undefined,
-      // Asset URLs for generation
       startFrameUrl: resolvedStart,
       endFrameUrl: null,
       sourceVideoUrl:
@@ -99,6 +88,11 @@ export function useSegmentConfig(
         (segment.activeAssetUrl && segment.assetType === 'video'
           ? segment.activeAssetUrl
           : null),
+      videoProvider: 'kling',
+      klingModel: 'kling-v3-omni',
+      klingQuality: 'pro',
+      sound: true,
+      allowVeoFallback: true,
     }
     
     // Method labels for UI

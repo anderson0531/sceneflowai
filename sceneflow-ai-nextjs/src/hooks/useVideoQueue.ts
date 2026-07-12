@@ -105,8 +105,21 @@ export function useVideoQueue(
       qualityTier?: 'fast' | 'premium'
       apiPromptOverride?: string
       allowPolicyFallback?: boolean
-      videoProvider?: 'vertex' | 'aggregator'
+      videoProvider?: 'kling' | 'vertex' | 'aggregator'
       videoModel?: string
+      klingModel?: string
+      klingQuality?: 'std' | 'pro' | '4k'
+      cfgScale?: number
+      sound?: boolean
+      watermarkEnabled?: boolean
+      elementIds?: string[]
+      voiceList?: Array<{ voice_id: string; name?: string }>
+      multiShot?: boolean
+      shotType?: 'customize' | 'intelligence'
+      multiPrompt?: Array<{ index: number; prompt: string; duration: string | number }>
+      preset?: string
+      allowVeoFallback?: boolean
+      expressMode?: boolean
     }
   ) => Promise<void>,
   segmentGuideContext?: SegmentGuideContext,
@@ -506,9 +519,22 @@ export function useVideoQueue(
               referenceImages,
               qualityTier: config.qualityTier,
               apiPromptOverride: config.useCustomApiPrompt ? config.apiPromptOverride : undefined,
-              allowPolicyFallback: config.allowPolicyFallback === true,
-              videoProvider: config.videoProvider,
+              allowPolicyFallback: config.allowPolicyFallback !== false,
+              videoProvider: config.videoProvider ?? 'kling',
               videoModel: config.videoModel,
+              klingModel: config.klingModel,
+              klingQuality: config.klingQuality,
+              cfgScale: config.cfgScale,
+              sound: config.sound,
+              watermarkEnabled: config.watermarkEnabled,
+              elementList: config.elementIds,
+              voiceList: config.voiceList,
+              multiShot: config.multiShot,
+              shotType: config.shotType,
+              multiPrompt: config.multiPrompt,
+              preset: config.preset,
+              allowVeoFallback: config.allowVeoFallback,
+              expressMode: config.expressMode,
             }
           )
           

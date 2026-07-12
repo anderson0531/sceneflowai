@@ -162,6 +162,12 @@ export const VIDEO_CREDITS = {
   KLING_VIDEO_5S: 180,
   KLING_VIDEO_10S: 320,
 
+  /** Direct Kling primary — v3 omni pro 10s */
+  KLING_V3_OMNI_PRO_10S: 280,
+  KLING_V3_OMNI_STD_10S: 200,
+  KLING_V3_OMNI_4K_10S: 380,
+  KLING_LIPSYNC_10S: 240,
+
   /** Multiplatform aggregator video (Renderful/Pollo) — baseline 8s clip */
   AGGREGATOR_VIDEO_8S: 200,
   
@@ -177,6 +183,36 @@ export const VIDEO_CREDITS = {
    */
   TOPAZ_UPSCALE_INSTANT_MULTIPLIER: 2,
 } as const;
+
+export type KlingCreditQuality = 'std' | 'pro' | '4k'
+
+export function getKlingCreditsForGeneration(args: {
+  model?: string
+  quality?: KlingCreditQuality
+  durationSeconds?: number
+  operation?: 'video' | 'lipsync'
+}): number {
+  const duration = Math.max(3, args.durationSeconds ?? 10)
+  const quality = args.quality ?? 'pro'
+  const model = (args.model || 'kling-v3-omni').toLowerCase()
+
+  if (args.operation === 'lipsync') {
+    return duration >= 8 ? VIDEO_CREDITS.KLING_LIPSYNC_10S : Math.round(VIDEO_CREDITS.KLING_LIPSYNC_10S * 0.6)
+  }
+
+  if (quality === '4k' || model.includes('4k')) {
+    return Math.max(VIDEO_GUARDRAIL_MIN_CREDITS_PER_8S, Math.round((VIDEO_CREDITS.KLING_V3_OMNI_4K_10S / 10) * duration))
+  }
+  if (quality === 'std') {
+    return Math.max(VIDEO_GUARDRAIL_MIN_CREDITS_PER_8S, Math.round((VIDEO_CREDITS.KLING_V3_OMNI_STD_10S / 10) * duration))
+  }
+
+  if (model.includes('v3-omni') || model.includes('v3')) {
+    return Math.max(VIDEO_GUARDRAIL_MIN_CREDITS_PER_8S, Math.round((VIDEO_CREDITS.KLING_V3_OMNI_PRO_10S / 10) * duration))
+  }
+
+  return duration >= 8 ? VIDEO_CREDITS.KLING_VIDEO_10S : VIDEO_CREDITS.KLING_VIDEO_5S
+}
 
 // =============================================================================
 // AUDIO / VOICEOVER

@@ -7,6 +7,8 @@ import {
   SegmentVideoExtRefRequiredError,
   SegmentVideoAggregatorAsyncError,
   SegmentVideoAggregatorNotConfiguredError,
+  SegmentVideoKlingAsyncError,
+  SegmentVideoKlingNotConfiguredError,
   SegmentVideoRateLimitError,
   KlingSafetyGuardBlockedError,
 } from '@/lib/video/generateSegmentVideo'
@@ -14,7 +16,7 @@ import { getAggregatorCreditsForModel } from '@/lib/aggregator/modelRegistry'
 import { isAggregatorEnabled } from '@/lib/aggregator/config'
 import { buildAggregatorRouteProbeResult, buildRoutingTrace } from '@/lib/aggregator/routeProbe'
 import { CreditService } from '@/services/CreditService'
-import { VIDEO_CREDITS } from '@/lib/credits/creditCosts'
+import { VIDEO_CREDITS, getKlingCreditsForGeneration } from '@/lib/credits/creditCosts'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { isBeatFirstPipelineEnabled, isStoryboardApproved, getSceneBeats } from '@/lib/script/beatMigration'
@@ -32,6 +34,11 @@ import { autoSanitizePrompt } from '@/utils/promptModerator'
 import { extractVeoRaiDetailsFromErrorString } from '@/lib/vertexai/safety'
 import { normalizeReferenceImages, shouldRelabelRefs, type VeoReferenceImage } from '@/lib/video/normalizeReferenceImages'
 import { resolveBeatVideoReferences } from '@/lib/vision/resolveBeatVideoReferences'
+import {
+  collectKlingElementSources,
+  injectElementTagsIntoPrompt,
+  resolveKlingElementsFromSources,
+} from '@/lib/kling/elementRegistry'
 
 export const maxDuration = 300 // 5 minutes for video generation
 export const runtime = 'nodejs'
@@ -80,11 +87,24 @@ interface GenerateAssetRequest {
   beatId?: string
   /** Full API prompt override — skips server assembly and pre-flight rewrite */
   apiPromptOverride?: string
-  /** Opt-in backup engine when Vertex policy blocks. Default false. */
+  /** Opt-in Vertex Veo backup when Kling policy blocks. Default true on Kling path. */
   allowPolicyFallback?: boolean
   /** Primary video backend for this generation. */
-  videoProvider?: 'vertex' | 'aggregator'
+  videoProvider?: 'kling' | 'vertex' | 'aggregator'
   videoModel?: string
+  klingModel?: string
+  klingQuality?: 'std' | 'pro' | '4k'
+  cfgScale?: number
+  sound?: boolean
+  watermarkEnabled?: boolean
+  elementList?: string[]
+  voiceList?: Array<{ voice_id: string; name?: string }>
+  multiShot?: boolean
+  shotType?: 'customize' | 'intelligence'
+  multiPrompt?: Array<{ index: number; prompt: string; duration: string | number }>
+  preset?: string
+  allowVeoFallback?: boolean
+  expressMode?: boolean
   /** When true, verify aggregator routing without generating video or charging credits. */
   routeProbe?: boolean
 }
@@ -140,6 +160,19 @@ export async function POST(
       allowPolicyFallback,
       videoProvider,
       videoModel,
+      klingModel,
+      klingQuality,
+      cfgScale,
+      sound,
+      watermarkEnabled,
+      elementList,
+      voiceList,
+      multiShot,
+      shotType,
+      multiPrompt,
+      preset,
+      allowVeoFallback,
+      expressMode,
       routeProbe,
     } = body
 
@@ -150,7 +183,11 @@ export async function POST(
     }
 
     const resolvedVideoProvider =
-      videoProvider === 'aggregator' ? 'aggregator' : 'vertex'
+      videoProvider === 'aggregator'
+        ? 'aggregator'
+        : videoProvider === 'vertex'
+          ? 'vertex'
+          : 'kling'
 
     if (
       routeProbe === true &&
@@ -166,6 +203,21 @@ export async function POST(
           routing: probe.routing,
           renderfulProbe: probe.renderfulProbe,
           diagnostics: probe.diagnostics,
+        })
+      }
+      if (resolvedVideoProvider === 'kling') {
+        const { isKlingConfigured, getKlingDefaultModel } = await import('@/lib/kling/config')
+        return NextResponse.json({
+          success: true,
+          routeProbe: true,
+          segmentId,
+          routingTrace: buildRoutingTrace('kling', 'kling'),
+          routing: {
+            requestedProvider: 'kling',
+            wouldRouteTo: 'kling',
+            klingConfigured: isKlingConfigured(),
+            defaultModel: getKlingDefaultModel(),
+          },
         })
       }
       return NextResponse.json({
@@ -323,6 +375,10 @@ export async function POST(
         console.log(
           `[Segment Asset Generation] Using multiplatform aggregator (model=${videoModel || 'default'})`
         )
+      } else if (resolvedVideoProvider === 'kling') {
+        console.log(
+          `[Segment Asset Generation] Using direct Kling API (model=${klingModel || 'kling-v3-omni'})`
+        )
       } else {
         console.log('[Segment Asset Generation] Using Google Veo for video generation')
         console.log(
@@ -331,12 +387,63 @@ export async function POST(
         )
       }
 
+      let resolvedElementList = elementList
+      let effectivePrompt = prompt
+
+      if (resolvedVideoProvider === 'kling' && beatId && projectId) {
+        try {
+          await sequelize.authenticate()
+          const projectForElements = await Project.findByPk(projectId)
+          const scenesForElements =
+            projectForElements?.metadata?.visionPhase?.script?.script?.scenes ||
+            projectForElements?.metadata?.visionPhase?.script?.scenes ||
+            []
+          const sceneForElements = scenesForElements.find(
+            (s: { id?: string; sceneNumber?: number }, idx: number) =>
+              s?.id === sceneId || String(s?.sceneNumber) === sceneId || String(idx) === sceneId
+          )
+          const beats = sceneForElements
+            ? getSceneBeats(sceneForElements as Record<string, unknown>)
+            : []
+          const beat = beats.find((b) => b.beatId === beatId)
+          if (beat) {
+            const sources = collectKlingElementSources({
+              characters: projectForElements?.metadata?.visionPhase?.characters || [],
+              characterIds: beat.referenceSelection?.characterIds || [],
+              characterWardrobes: beat.referenceSelection?.characterWardrobes || [],
+              objectReferences:
+                projectForElements?.metadata?.visionPhase?.references?.objectReferences || [],
+              objectRefIds: beat.referenceSelection?.objectRefIds || [],
+              locationReferences:
+                projectForElements?.metadata?.visionPhase?.references?.locationReferences || [],
+              locationRefId: beat.referenceSelection?.locationRefId,
+            })
+            const resolvedElements = await resolveKlingElementsFromSources(
+              sources,
+              klingModel
+            )
+            if (resolvedElements.elementIds.length) {
+              resolvedElementList = [
+                ...(resolvedElementList || []),
+                ...resolvedElements.elementIds,
+              ]
+              effectivePrompt = injectElementTagsIntoPrompt(
+                effectivePrompt,
+                resolvedElements.promptTags
+              )
+            }
+          }
+        } catch (elementErr) {
+          console.warn('[Segment Asset Generation] Kling element resolution failed:', elementErr)
+        }
+      }
+
       const videoResult = await generateSegmentVideoCore({
         segmentId,
         projectId,
         sceneId,
         userId: String(session.user.id),
-        prompt,
+        prompt: effectivePrompt,
         negativePrompt,
         genType,
         generationMethod: generationMethod as VideoGenerationMethod | undefined,
@@ -364,9 +471,22 @@ export async function POST(
         requireVeoRefForExt:
           generationMethod === 'EXT' && !sourceVideoUrl && !previousSegmentVeoRef,
         apiPromptOverride,
-        allowPolicyFallback: allowPolicyFallback === true,
+        allowPolicyFallback: allowPolicyFallback !== false,
         videoProvider: resolvedVideoProvider,
         videoModel,
+        klingModel,
+        klingQuality,
+        cfgScale,
+        sound,
+        watermarkEnabled,
+        elementList: resolvedElementList,
+        voiceList,
+        multiShot,
+        shotType,
+        multiPrompt,
+        preset: preset as GenerateAssetRequest['preset'],
+        allowVeoFallback: allowVeoFallback !== false,
+        expressMode: expressMode === true,
       })
 
       assetUrl = videoResult.assetUrl
@@ -390,7 +510,21 @@ export async function POST(
       effectiveModel = videoResult.effectiveAggregatorType
       upgradeLabel = videoResult.upgradeLabel
 
-      if (wasPolicyFallback) {
+      if (generationProvider === 'kling' && !videoResult.wasVeoFallback) {
+        const klingCredits = getKlingCreditsForGeneration({
+          model: videoResult.klingModel || klingModel,
+          quality: klingQuality || 'pro',
+          durationSeconds: requestedVideoDurationSeconds ?? duration ?? 10,
+        })
+        await CreditService.charge(String(session.user.id), klingCredits, 'ai_usage', projectId, {
+          operation: 'direct_kling_video',
+          segmentId,
+          generationProvider: 'kling',
+          klingModel: videoResult.klingModel || klingModel,
+        })
+      }
+
+      if (wasPolicyFallback && generationProvider !== 'kling') {
         const klingCredits =
           (requestedVideoDurationSeconds ?? duration ?? 5) >= 8
             ? VIDEO_CREDITS.KLING_VIDEO_10S
@@ -479,6 +613,31 @@ export async function POST(
     })
   } catch (error: any) {
     console.error('[Segment Asset Generation] Error:', error)
+
+    if (error instanceof SegmentVideoKlingAsyncError) {
+      return NextResponse.json(
+        {
+          success: true,
+          status: 'PROCESSING',
+          segmentId: (await params).segmentId,
+          klingJobId: error.jobId,
+          generationProvider: 'kling',
+          klingModel: error.modelName,
+        },
+        { status: 202 }
+      )
+    }
+
+    if (error instanceof SegmentVideoKlingNotConfiguredError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          code: 'KLING_NOT_CONFIGURED',
+          routingTrace: buildRoutingTrace('kling', 'vertex'),
+        },
+        { status: 503 }
+      )
+    }
 
     if (error instanceof SegmentVideoAggregatorAsyncError) {
       return NextResponse.json(

@@ -354,12 +354,26 @@ export interface VideoGenerationConfig {
   /** Full prompt sent to Vertex/Omni API (override when useCustomApiPrompt) */
   apiPromptOverride?: string
   useCustomApiPrompt?: boolean
-  /** Opt-in backup engine when Vertex policy blocks. Default false. */
+  /** Opt-in Vertex Veo backup when Kling policy blocks. Default true on Kling path. */
   allowPolicyFallback?: boolean
-  /** Primary backend: vertex (default) or multiplatform aggregator. */
-  videoProvider?: 'vertex' | 'aggregator'
+  /** Primary backend: kling (default), vertex, or multiplatform aggregator. */
+  videoProvider?: 'kling' | 'vertex' | 'aggregator'
   /** Aggregator model id when videoProvider is aggregator. */
   videoModel?: string
+  /** Direct Kling model when videoProvider is kling. */
+  klingModel?: string
+  klingQuality?: 'std' | 'pro' | '4k'
+  cfgScale?: number
+  sound?: boolean
+  watermarkEnabled?: boolean
+  elementIds?: string[]
+  voiceList?: Array<{ voice_id: string; name?: string }>
+  multiShot?: boolean
+  shotType?: 'customize' | 'intelligence'
+  multiPrompt?: Array<{ index: number; prompt: string; duration: string | number }>
+  preset?: string
+  allowVeoFallback?: boolean
+  expressMode?: boolean
 }
 
 /**

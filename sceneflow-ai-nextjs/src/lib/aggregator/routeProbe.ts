@@ -17,12 +17,12 @@ export interface RenderfulProbeResult {
 }
 
 export function buildRoutingTrace(
-  requestedProvider: 'vertex' | 'aggregator' | undefined,
-  resolvedProvider: 'vertex' | 'aggregator'
+  requestedProvider: 'kling' | 'vertex' | 'aggregator' | undefined,
+  resolvedProvider: 'kling' | 'vertex' | 'aggregator'
 ) {
   const diagnostics = getAggregatorDiagnostics()
   return {
-    requestedProvider: requestedProvider ?? 'vertex',
+    requestedProvider: requestedProvider ?? 'kling',
     resolvedProvider,
     aggregatorEnabled: diagnostics.enabled,
     disabledReason: diagnostics.disabledReason,

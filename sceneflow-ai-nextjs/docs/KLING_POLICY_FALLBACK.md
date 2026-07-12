@@ -1,6 +1,9 @@
-# Kling policy fallback + pre-flight prompt guard
+# Kling policy fallback + primary video provider
 
-When Vertex Veo or Gemini Omni video generation is blocked by content policy, SceneFlow uses a **layered defense** before falling back to Kling:
+**As of the Kling-primary rollout**, direct Kling (`kling-v3-omni` default) is the **default production video engine** for segment generation. Vertex Veo is the automatic fallback when Kling fails or is blocked.
+
+When Vertex Veo or Gemini Omni video generation is used explicitly (or as fallback), SceneFlow uses a **layered defense** before falling back to Kling on the legacy Vertex-primary path:
+
 
 1. **Pre-flight risk score** — fast local regex + semantic triggers (`preflightPromptGuard.ts`)
 2. **Choreography rewrite** — Gemini Flash neutralizes borderline/high-risk prompts (additive affirmation, no negations)

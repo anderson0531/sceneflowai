@@ -112,12 +112,31 @@ const FALLBACK_AGGREGATOR_MODELS = AGGREGATOR_MODEL_REGISTRY.map((m) => ({
 }))
 
 const VEO_DURATION_OPTIONS = [4, 6, 8, 10] as const
-const KLING_DURATION_OPTIONS = [5, 10] as const
+const KLING_DURATION_OPTIONS = [3, 5, 7, 10, 12, 15] as const
+
+const KLING_MODEL_OPTIONS = [
+  { id: 'kling-v3-omni', label: 'Kling v3 Omni (recommended)' },
+  { id: 'kling-v3', label: 'Kling v3' },
+  { id: 'kling-v3-turbo', label: 'Kling v3 Turbo' },
+  { id: 'kling-v2.6', label: 'Kling v2.6' },
+] as const
+
+const KLING_SINGLE_PRESETS = [
+  'jelly_press', 'jelly_slice', 'squish', 'expansion', 'yearbook', 'instant_film', 'pixelpixel',
+] as const
+
+const KLING_DUAL_PRESETS = ['hug', 'kiss', 'heart_gesture'] as const
 
 function snapDurationForProvider(
   value: number,
-  provider: 'vertex' | 'aggregator'
+  provider: 'kling' | 'vertex' | 'aggregator'
 ): number {
+  if (provider === 'kling') {
+    const opts = KLING_DURATION_OPTIONS
+    return opts.reduce((best, cur) =>
+      Math.abs(cur - value) < Math.abs(best - value) ? cur : best
+    , opts[3])
+  }
   if (provider === 'aggregator') {
     return value <= 7 ? 5 : 10
   }
@@ -308,9 +327,20 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const [apiPromptPreviewLoading, setApiPromptPreviewLoading] = useState(false)
   const [useCustomApiPrompt, setUseCustomApiPrompt] = useState(false)
   const [apiPromptOverride, setApiPromptOverride] = useState('')
-  const [allowPolicyFallback, setAllowPolicyFallback] = useState(false)
-  const [videoProvider, setVideoProvider] = useState<'vertex' | 'aggregator'>('vertex')
+  const [allowPolicyFallback, setAllowPolicyFallback] = useState(true)
+  const [videoProvider, setVideoProvider] = useState<'kling' | 'vertex' | 'aggregator'>('kling')
   const [videoModel, setVideoModel] = useState('kling-2.6')
+  const [klingModel, setKlingModel] = useState('kling-v3-omni')
+  const [klingQuality, setKlingQuality] = useState<'std' | 'pro' | '4k'>('pro')
+  const [cfgScale, setCfgScale] = useState(0.5)
+  const [soundEnabled, setSoundEnabled] = useState(true)
+  const [watermarkEnabled, setWatermarkEnabled] = useState(false)
+  const [multiShot, setMultiShot] = useState(false)
+  const [shotType, setShotType] = useState<'customize' | 'intelligence'>('customize')
+  const [multiPromptRows, setMultiPromptRows] = useState<
+    Array<{ index: number; prompt: string; duration: string }>
+  >([])
+  const [selectedPreset, setSelectedPreset] = useState<string | undefined>()
   const [aggregatorEnabled, setAggregatorEnabled] = useState(false)
   const [aggregatorDiagnostics, setAggregatorDiagnostics] =
     useState<AggregatorDiagnosticsState | null>(null)
@@ -683,7 +713,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     setAspectRatio(lockedVideoAspect)
     setResolution(autoConfig.resolution)
     const initialProvider =
-      savedConfig?.videoProvider ?? autoConfig.videoProvider ?? 'vertex'
+      savedConfig?.videoProvider ?? autoConfig.videoProvider ?? 'kling'
     const rawDuration = isContinuation ? 10 : autoConfig.duration
     setVideoProvider(initialProvider)
     setDuration(snapDurationForProvider(rawDuration, initialProvider))
@@ -692,8 +722,23 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     setKeyframeEdit(null)
     setUseCustomApiPrompt(autoConfig.useCustomApiPrompt ?? savedConfig?.useCustomApiPrompt ?? false)
     setApiPromptOverride(autoConfig.apiPromptOverride ?? savedConfig?.apiPromptOverride ?? '')
-    setAllowPolicyFallback(autoConfig.allowPolicyFallback ?? savedConfig?.allowPolicyFallback ?? false)
+    setAllowPolicyFallback(autoConfig.allowPolicyFallback ?? savedConfig?.allowPolicyFallback ?? true)
     setVideoModel(savedConfig?.videoModel ?? autoConfig.videoModel ?? 'kling-2.6')
+    setKlingModel(savedConfig?.klingModel ?? autoConfig.klingModel ?? 'kling-v3-omni')
+    setKlingQuality(savedConfig?.klingQuality ?? autoConfig.klingQuality ?? 'pro')
+    setCfgScale(savedConfig?.cfgScale ?? autoConfig.cfgScale ?? 0.5)
+    setSoundEnabled(savedConfig?.sound ?? autoConfig.sound ?? true)
+    setWatermarkEnabled(savedConfig?.watermarkEnabled ?? autoConfig.watermarkEnabled ?? false)
+    setMultiShot(savedConfig?.multiShot ?? autoConfig.multiShot ?? false)
+    setShotType(savedConfig?.shotType ?? autoConfig.shotType ?? 'customize')
+    setMultiPromptRows(
+      (savedConfig?.multiPrompt ?? autoConfig.multiPrompt ?? []).map((row) => ({
+        index: row.index,
+        prompt: row.prompt,
+        duration: String(row.duration),
+      }))
+    )
+    setSelectedPreset(savedConfig?.preset ?? autoConfig.preset)
     setApiPromptPreview('')
   }, [autoConfig, savedConfig, lockedVideoAspect, batchGuideSeed, segment, autoResolvedRefs.entries])
 
@@ -760,9 +805,26 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     ...config,
     useCustomApiPrompt,
     apiPromptOverride: useCustomApiPrompt ? apiPromptOverride.trim() : undefined,
-    allowPolicyFallback: videoProvider === 'vertex' ? allowPolicyFallback : false,
+    allowPolicyFallback: videoProvider === 'kling' ? allowPolicyFallback : videoProvider === 'vertex' ? allowPolicyFallback : false,
+    allowVeoFallback: videoProvider === 'kling' ? allowPolicyFallback : undefined,
     videoProvider,
     videoModel: videoProvider === 'aggregator' ? videoModel : undefined,
+    klingModel: videoProvider === 'kling' ? klingModel : undefined,
+    klingQuality: videoProvider === 'kling' ? klingQuality : undefined,
+    cfgScale: videoProvider === 'kling' ? cfgScale : undefined,
+    sound: videoProvider === 'kling' ? soundEnabled : undefined,
+    watermarkEnabled: videoProvider === 'kling' ? watermarkEnabled : undefined,
+    multiShot: videoProvider === 'kling' ? multiShot : undefined,
+    shotType: videoProvider === 'kling' ? shotType : undefined,
+    multiPrompt:
+      videoProvider === 'kling' && multiShot
+        ? multiPromptRows.map((row) => ({
+            index: row.index,
+            prompt: row.prompt,
+            duration: row.duration,
+          }))
+        : undefined,
+    preset: videoProvider === 'kling' ? selectedPreset : undefined,
   })
 
   const displayAggregatorModels =
@@ -772,18 +834,26 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     displayAggregatorModels.find((m) => m.id === videoModel)?.label ?? videoModel
 
   const generateButtonLabel =
-    videoProvider === 'aggregator'
-      ? `Generate via Kling${selectedAggregatorModelLabel ? ` (${selectedAggregatorModelLabel})` : ''}`
-      : 'Generate via Veo'
+    videoProvider === 'kling'
+      ? `Generate via Kling (${KLING_MODEL_OPTIONS.find((m) => m.id === klingModel)?.label ?? klingModel})`
+      : videoProvider === 'aggregator'
+        ? `Generate via Kling${selectedAggregatorModelLabel ? ` (${selectedAggregatorModelLabel})` : ''}`
+        : 'Generate via Veo'
 
   const durationOptions =
-    videoProvider === 'aggregator' ? KLING_DURATION_OPTIONS : VEO_DURATION_OPTIONS
+    videoProvider === 'kling' || videoProvider === 'aggregator'
+      ? KLING_DURATION_OPTIONS
+      : VEO_DURATION_OPTIONS
 
   const handleVideoProviderChange = useCallback(
-    (provider: 'vertex' | 'aggregator') => {
+    (provider: 'kling' | 'vertex' | 'aggregator') => {
       if (provider === 'aggregator' && !aggregatorEnabled) return
       setVideoProvider(provider)
       setDuration((prev) => snapDurationForProvider(prev, provider))
+      if (provider === 'kling') {
+        setResolution('1080p')
+        setKlingQuality('pro')
+      }
     },
     [aggregatorEnabled]
   )
@@ -1491,13 +1561,27 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                   <div className="space-y-4 pt-2">
                     <div className="flex flex-col gap-2">
                       <Label className="text-slate-400 text-xs">Generation Provider</Label>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
+                        <Button
+                          type="button"
+                          variant={videoProvider === 'kling' ? 'default' : 'outline'}
+                          size="sm"
+                          className={cn(
+                            'flex-1 min-w-[100px]',
+                            videoProvider === 'kling'
+                              ? 'bg-indigo-600'
+                              : 'bg-slate-800 border-slate-700 text-slate-300'
+                          )}
+                          onClick={() => handleVideoProviderChange('kling')}
+                        >
+                          Kling (Direct)
+                        </Button>
                         <Button
                           type="button"
                           variant={videoProvider === 'vertex' ? 'default' : 'outline'}
                           size="sm"
                           className={cn(
-                            'flex-1',
+                            'flex-1 min-w-[100px]',
                             videoProvider === 'vertex'
                               ? 'bg-indigo-600'
                               : 'bg-slate-800 border-slate-700 text-slate-300'
@@ -1512,7 +1596,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                           size="sm"
                           disabled={!aggregatorEnabled}
                           className={cn(
-                            'flex-1',
+                            'flex-1 min-w-[100px]',
                             videoProvider === 'aggregator'
                               ? 'bg-indigo-600'
                               : 'bg-slate-800 border-slate-700 text-slate-300',
@@ -1520,7 +1604,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                           )}
                           onClick={() => handleVideoProviderChange('aggregator')}
                         >
-                          Kling (Multiplatform)
+                          Multiplatform
                         </Button>
                       </div>
                       {aggregatorStatusBanner && (
@@ -1529,6 +1613,171 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                         </p>
                       )}
                     </div>
+
+                    {videoProvider === 'kling' && (
+                      <>
+                        <div className="flex flex-col gap-2">
+                          <Label className="text-slate-400 text-xs">Kling Model</Label>
+                          <Select value={klingModel} onValueChange={setKlingModel}>
+                            <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-slate-800 border-slate-700">
+                              {KLING_MODEL_OPTIONS.map((m) => (
+                                <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="text-slate-400 text-xs">Quality (std / pro / 4k)</Label>
+                          <Select value={klingQuality} onValueChange={(v) => {
+                            setKlingQuality(v as 'std' | 'pro' | '4k')
+                            setResolution(v === 'std' ? '720p' : v === '4k' ? '1080p' : '1080p')
+                          }}>
+                            <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-slate-800 border-slate-700">
+                              <SelectItem value="std">Standard — 720p fast</SelectItem>
+                              <SelectItem value="pro">Pro — 1080p high-fidelity</SelectItem>
+                              <SelectItem value="4k">4K — Premium native 4K</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="text-slate-400 text-xs">CFG Guidance ({cfgScale.toFixed(2)})</Label>
+                          <input
+                            type="range"
+                            min={0}
+                            max={1}
+                            step={0.05}
+                            value={cfgScale}
+                            onChange={(e) => setCfgScale(Number(e.target.value))}
+                            className="w-full accent-indigo-500"
+                          />
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                            <Checkbox checked={soundEnabled} onCheckedChange={(c) => setSoundEnabled(c === true)} />
+                            Native audio (sound)
+                          </label>
+                          <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                            <Checkbox checked={watermarkEnabled} onCheckedChange={(c) => setWatermarkEnabled(c === true)} />
+                            Watermark preview
+                          </label>
+                        </div>
+                        <div
+                          className="flex items-start gap-2 cursor-pointer"
+                          onClick={() => setAllowPolicyFallback((prev) => !prev)}
+                        >
+                          <Checkbox
+                            id="allowVeoFallback"
+                            checked={allowPolicyFallback}
+                            onCheckedChange={(checked) => setAllowPolicyFallback(checked === true)}
+                            className="mt-0.5"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <span className="text-xs text-slate-300 leading-relaxed">
+                            Allow Vertex Veo backup if Kling fails
+                            <span className="block text-slate-500 mt-0.5">
+                              Falls back to Google Veo when Kling blocks or errors.
+                            </span>
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="text-slate-400 text-xs">Creative FX Presets</Label>
+                          <div className="flex flex-wrap gap-1">
+                            {KLING_SINGLE_PRESETS.map((p) => (
+                              <Button
+                                key={p}
+                                type="button"
+                                size="sm"
+                                variant={selectedPreset === p ? 'default' : 'outline'}
+                                className="text-[10px] h-7"
+                                onClick={() => setSelectedPreset(selectedPreset === p ? undefined : p)}
+                              >
+                                {p.replace(/_/g, ' ')}
+                              </Button>
+                            ))}
+                            {KLING_DUAL_PRESETS.map((p) => (
+                              <Button
+                                key={p}
+                                type="button"
+                                size="sm"
+                                variant={selectedPreset === p ? 'default' : 'outline'}
+                                className="text-[10px] h-7"
+                                onClick={() => setSelectedPreset(selectedPreset === p ? undefined : p)}
+                              >
+                                {p} (2 imgs)
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                            <Checkbox checked={multiShot} onCheckedChange={(c) => setMultiShot(c === true)} />
+                            Multi-shot storyboard (up to 6 scenes / 15s)
+                          </label>
+                          {multiShot && (
+                            <div className="space-y-2 pl-2 border-l border-slate-700">
+                              <Select value={shotType} onValueChange={(v) => setShotType(v as 'customize' | 'intelligence')}>
+                                <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300 h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-slate-800 border-slate-700">
+                                  <SelectItem value="customize">Customize — manual per-scene prompts</SelectItem>
+                                  <SelectItem value="intelligence">Intelligence — AI auto-segments</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              {shotType === 'customize' && (
+                                <div className="space-y-2">
+                                  {multiPromptRows.map((row, idx) => (
+                                    <div key={row.index} className="flex gap-2">
+                                      <Input
+                                        value={row.prompt}
+                                        onChange={(e) => {
+                                          const next = [...multiPromptRows]
+                                          next[idx] = { ...row, prompt: e.target.value }
+                                          setMultiPromptRows(next)
+                                        }}
+                                        placeholder={`Scene ${row.index + 1} prompt`}
+                                        className="bg-slate-800 border-slate-700 text-slate-300 text-xs"
+                                      />
+                                      <Input
+                                        value={row.duration}
+                                        onChange={(e) => {
+                                          const next = [...multiPromptRows]
+                                          next[idx] = { ...row, duration: e.target.value }
+                                          setMultiPromptRows(next)
+                                        }}
+                                        className="w-14 bg-slate-800 border-slate-700 text-slate-300 text-xs"
+                                      />
+                                    </div>
+                                  ))}
+                                  {multiPromptRows.length < 6 && (
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      className="text-xs"
+                                      onClick={() =>
+                                        setMultiPromptRows((rows) => [
+                                          ...rows,
+                                          { index: rows.length, prompt: '', duration: '5' },
+                                        ])
+                                      }
+                                    >
+                                      Add scene
+                                    </Button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
 
                     {videoProvider === 'vertex' && (
                       <>
@@ -1568,9 +1817,9 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                             onClick={(e) => e.stopPropagation()}
                           />
                           <span className="text-xs text-slate-300 leading-relaxed">
-                            Allow backup engine if blocked
+                            Allow Kling backup if blocked
                             <span className="block text-slate-500 mt-0.5">
-                              Uses Kling when Vertex blocks the prompt. May cost additional credits.
+                              Uses direct Kling when Vertex blocks the prompt. May cost additional credits.
                             </span>
                           </span>
                         </div>

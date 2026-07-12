@@ -130,6 +130,8 @@ export interface VisionCharacter {
   role?: 'protagonist' | 'main' | 'supporting'
   type?: 'character' | 'narrator' | 'description'
   referenceImage?: string
+  /** Cached Kling element_list ID for character consistency */
+  klingElementId?: string
   appearanceDescription?: string
   voiceConfig?: VisionVoiceConfig
   /** Per-language Edge fallback voices (e.g. hi, es, en). */

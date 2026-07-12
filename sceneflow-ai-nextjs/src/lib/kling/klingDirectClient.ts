@@ -1,25 +1,28 @@
 /**
- * Direct Kling AI API client (klingai.com) for Vertex policy fallback.
+ * Direct Kling AI API client (klingai.com) — primary SceneFlow video engine.
  * Supports official JWT auth (AccessKey + SecretKey) and gateway Bearer token mode.
  */
 
 import jwt from 'jsonwebtoken'
 import {
   getKlingApiBaseUrl,
-  getKlingModelName,
-  getKlingVideoMode,
+  getKlingCapabilities,
+  getKlingDefaultModel,
+  getKlingWatermarkDefault,
   hasDirectKlingCredentials,
   isKlingSoundEnabled,
 } from './config'
+import {
+  KLING_DUAL_IMAGE_PRESETS,
+  type KlingImageListEntry,
+  type KlingModelId,
+  type KlingQuality,
+  type KlingSubmitResult,
+  type KlingVideoInput,
+  type KlingWebhookPayload,
+} from './types'
 
-export type KlingVideoInput = {
-  prompt: string
-  negative_prompt?: string
-  duration?: number
-  aspect_ratio?: string
-  startFrame?: string
-  lastFrame?: string
-}
+export type { KlingVideoInput } from './types'
 
 type KlingTaskStatus = 'submitted' | 'processing' | 'succeed' | 'failed'
 
@@ -30,21 +33,40 @@ interface KlingTaskResponse {
     task_id?: string
     task_status?: KlingTaskStatus
     task_status_msg?: string
+    element_id?: string
     task_result?: {
       videos?: Array<{ url?: string; id?: string }>
     }
   }
 }
 
-function mapKlingDuration(seconds?: number): '5' | '10' {
-  if (seconds != null && seconds >= 8) return '10'
-  return '5'
+export interface BuildKlingBodyResult {
+  body: Record<string, unknown>
+  droppedKeys: string[]
+  endpoint: 'text2video' | 'image2video'
 }
 
-function mapAspectRatio(ratio?: string): string {
+function clampDuration(seconds: number | undefined, model: string): number {
+  const caps = getKlingCapabilities(model)
+  const min = caps.minDuration
+  const max = caps.maxDuration
+  const raw = seconds ?? 10
+  return Math.min(max, Math.max(min, Math.round(raw)))
+}
+
+function mapKlingDuration(seconds: number | undefined, model: string): string {
+  return String(clampDuration(seconds, model))
+}
+
+function mapAspectRatio(ratio?: string, hasStartFrame?: boolean): string {
   if (ratio === '9:16') return '9:16'
   if (ratio === '1:1') return '1:1'
+  if (ratio === 'auto' && hasStartFrame) return 'auto'
   return '16:9'
+}
+
+function truncatePrompt(text: string, max = 2500): string {
+  return text.length > max ? text.slice(0, max) : text
 }
 
 /** Exported for unit tests */
@@ -76,6 +98,20 @@ export function extractKlingVideoUrl(data: unknown): string | undefined {
   const videos = d?.task_result?.videos
   if (videos?.[0]?.url) return videos[0].url
   return undefined
+}
+
+export function parseKlingWebhookPayload(body: unknown): KlingWebhookPayload | null {
+  if (!body || typeof body !== 'object') return null
+  const raw = body as Record<string, unknown>
+  const data = (raw.data as Record<string, unknown> | undefined) ?? raw
+  const taskId = (data.task_id as string | undefined) ?? (raw.task_id as string | undefined)
+  if (!taskId) return null
+  return {
+    task_id: taskId,
+    task_status: data.task_status as KlingWebhookPayload['task_status'],
+    task_status_msg: data.task_status_msg as string | undefined,
+    task_result: data.task_result as KlingWebhookPayload['task_result'],
+  }
 }
 
 async function resolveImageForKling(source: string): Promise<string> {
@@ -129,20 +165,28 @@ async function klingRequest(path: string, body: Record<string, unknown>): Promis
   return json
 }
 
-async function pollKlingTask(
-  taskId: string,
-  endpoint: 'text2video' | 'image2video',
-  maxWaitSec = 300
-): Promise<string> {
+async function klingGet(path: string): Promise<KlingTaskResponse> {
   const baseUrl = getKlingApiBaseUrl()
+  const res = await fetch(`${baseUrl}${path}`, {
+    headers: { Authorization: buildKlingAuthHeader() },
+  })
+  const json = (await res.json()) as KlingTaskResponse
+  if (!res.ok || (json.code != null && json.code !== 0)) {
+    throw new Error(json.message || `Kling API error: ${res.status}`)
+  }
+  return json
+}
+
+export async function pollKlingTask(
+  taskId: string,
+  endpoint: 'text2video' | 'image2video' | 'video-extend' | 'lip-sync',
+  maxWaitSec = 300,
+  intervalMs = 5000
+): Promise<string> {
   const deadline = Date.now() + maxWaitSec * 1000
 
   while (Date.now() < deadline) {
-    const res = await fetch(`${baseUrl}/videos/${endpoint}/${taskId}`, {
-      headers: { Authorization: buildKlingAuthHeader() },
-    })
-
-    const json = (await res.json()) as KlingTaskResponse
+    const json = await klingGet(`/videos/${endpoint}/${taskId}`)
     const status = json.data?.task_status
 
     if (status === 'succeed') {
@@ -155,66 +199,239 @@ async function pollKlingTask(
       throw new Error(json.data?.task_status_msg || 'Kling video generation failed')
     }
 
-    await new Promise((r) => setTimeout(r, 5000))
+    await new Promise((r) => setTimeout(r, intervalMs))
   }
 
   throw new Error('Kling video generation timed out')
 }
 
-/** Exported for unit tests */
-export function buildKlingVideoBody(body: KlingVideoInput, imageUrl?: string): Record<string, unknown> {
-  const input: Record<string, unknown> = {
-    model_name: getKlingModelName(),
-    prompt: body.prompt,
-    duration: mapKlingDuration(body.duration),
-    aspect_ratio: mapAspectRatio(body.aspect_ratio),
-    mode: getKlingVideoMode(),
+function buildImageList(input: KlingVideoInput): KlingImageListEntry[] {
+  const list: KlingImageListEntry[] = [...(input.image_list ?? [])]
+  if (input.startFrame && !list.some((e) => e.type === 'first_frame')) {
+    list.push({ url: input.startFrame, type: 'first_frame' })
   }
-
-  if (body.negative_prompt) input.negative_prompt = body.negative_prompt
-  if (isKlingSoundEnabled()) input.sound = 'on'
-  if (imageUrl) {
-    input.image = imageUrl
-    if (body.lastFrame) {
-      // tail image support varies by model — best-effort
-      input.tail_image = body.lastFrame
-    }
+  if (input.lastFrame && !list.some((e) => e.type === 'end_frame')) {
+    list.push({ url: input.lastFrame, type: 'end_frame' })
   }
-
-  return input
+  if (input.secondaryImageUrl) {
+    list.push({ url: input.secondaryImageUrl, type: 'end_frame' })
+  }
+  return list
 }
 
-export async function runKlingVideo(body: KlingVideoInput): Promise<Buffer> {
+/**
+ * Build gated Kling request body. Unsupported params for the model are stripped.
+ */
+export function buildKlingVideoBody(
+  input: KlingVideoInput,
+  resolvedImageList?: KlingImageListEntry[]
+): BuildKlingBodyResult {
+  const model = (input.model_name || getKlingDefaultModel()) as KlingModelId
+  const caps = getKlingCapabilities(model)
+  const droppedKeys: string[] = []
+
+  const imageList = resolvedImageList ?? buildImageList(input)
+  const hasStart = imageList.some((e) => e.type === 'first_frame')
+  const quality: KlingQuality =
+    input.mode === 'std' || input.mode === 'pro' || input.mode === '4k'
+      ? input.mode
+      : 'pro'
+
+  const effectiveQuality = caps.qualities.includes(quality)
+    ? quality
+    : (caps.qualities[caps.qualities.length - 1] ?? 'pro')
+
+  if (effectiveQuality !== quality) droppedKeys.push('mode')
+
+  const body: Record<string, unknown> = {
+    model_name: model,
+    prompt: truncatePrompt(input.prompt),
+    duration: mapKlingDuration(input.duration, model),
+    aspect_ratio: mapAspectRatio(input.aspect_ratio, hasStart),
+    mode: effectiveQuality,
+  }
+
+  if (input.negative_prompt) {
+    body.negative_prompt = truncatePrompt(input.negative_prompt)
+  }
+
+  if (caps.cfgScale && input.cfg_scale != null) {
+    const cfg = Math.min(1, Math.max(0, input.cfg_scale))
+    body.cfg_scale = cfg
+  } else if (input.cfg_scale != null) {
+    droppedKeys.push('cfg_scale')
+  }
+
+  const soundOn =
+    input.sound === true ||
+    input.sound === 'on' ||
+    (input.sound !== false && input.sound !== 'off' && isKlingSoundEnabled())
+  if (caps.nativeAudio && soundOn) {
+    body.sound = 'on'
+  } else if (soundOn) {
+    droppedKeys.push('sound')
+  }
+
+  if (caps.watermark && input.watermark_enabled != null) {
+    body.watermark_enabled = input.watermark_enabled
+  } else if (input.watermark_enabled != null) {
+    droppedKeys.push('watermark_enabled')
+  } else if (caps.watermark && getKlingWatermarkDefault()) {
+    body.watermark_enabled = true
+  }
+
+  if (caps.imageList && imageList.length > 0) {
+    body.image_list = imageList.map((e) => ({ image: e.url, type: e.type }))
+  } else if (imageList.length > 0 && caps.legacyImageField) {
+    const first = imageList.find((e) => e.type === 'first_frame')
+    if (first) body.image = first.url
+    const end = imageList.find((e) => e.type === 'end_frame')
+    if (end) body.tail_image = end.url
+  } else if (imageList.length > 0) {
+    droppedKeys.push('image_list')
+  }
+
+  if (caps.v2v && input.video_url) {
+    body.video_url = input.video_url
+  } else if (input.video_url) {
+    droppedKeys.push('video_url')
+  }
+
+  if (caps.elements && input.element_list?.length) {
+    body.element_list = input.element_list.slice(0, caps.maxElements)
+  } else if (input.element_list?.length) {
+    droppedKeys.push('element_list')
+  }
+
+  if (caps.voiceList && input.voice_list?.length) {
+    body.voice_list = input.voice_list.slice(0, caps.maxVoices).map((v) => ({
+      voice_id: v.voice_id,
+    }))
+  } else if (input.voice_list?.length) {
+    droppedKeys.push('voice_list')
+  }
+
+  if (caps.multiShot && input.multi_shot) {
+    body.multi_shot = true
+    if (input.shot_type) body.shot_type = input.shot_type
+    if (input.multi_prompt?.length) {
+      body.multi_prompt = input.multi_prompt
+        .slice(0, caps.maxMultiPromptScenes)
+        .map((row) => ({
+          index: row.index,
+          prompt: truncatePrompt(row.prompt),
+          duration: String(row.duration),
+        }))
+    }
+  } else {
+    if (input.multi_shot) droppedKeys.push('multi_shot')
+    if (input.shot_type) droppedKeys.push('shot_type')
+    if (input.multi_prompt?.length) droppedKeys.push('multi_prompt')
+  }
+
+  if (caps.presets && input.preset) {
+    const isDual = KLING_DUAL_IMAGE_PRESETS.includes(input.preset as never)
+    if (!isDual || imageList.length >= 2) {
+      body.preset = input.preset
+    } else {
+      droppedKeys.push('preset')
+    }
+  } else if (input.preset) {
+    droppedKeys.push('preset')
+  }
+
+  if (input.webhook_url) {
+    body.webhook_url = input.webhook_url
+  }
+
+  const endpoint: 'text2video' | 'image2video' = hasStart ? 'image2video' : 'text2video'
+
+  if (droppedKeys.length) {
+    console.log(`[Kling] Dropped unsupported params for ${model}: ${droppedKeys.join(', ')}`)
+  }
+
+  return { body, droppedKeys, endpoint }
+}
+
+export async function registerKlingElement(imageUrl: string, name?: string): Promise<string> {
+  const resolved = await resolveImageForKling(imageUrl)
+  const create = await klingRequest('/elements', {
+    image: resolved,
+    name: name?.slice(0, 128) || 'sceneflow-element',
+  })
+  const elementId = create.data?.element_id
+  if (!elementId) {
+    throw new Error('Kling element registration completed without element_id')
+  }
+  return elementId
+}
+
+export async function submitKlingVideo(
+  input: KlingVideoInput,
+  options?: { webhookUrl?: string }
+): Promise<KlingSubmitResult> {
   if (!hasDirectKlingCredentials()) {
     throw new Error('Direct Kling credentials are not configured')
   }
 
-  const hasStart = !!body.startFrame
-  let imageUrl: string | undefined
-
-  if (hasStart && body.startFrame) {
-    imageUrl = await resolveImageForKling(body.startFrame)
+  const imageList = buildImageList(input)
+  const resolvedList: KlingImageListEntry[] = []
+  for (const entry of imageList) {
+    resolvedList.push({
+      ...entry,
+      url: await resolveImageForKling(entry.url),
+    })
   }
 
-  let lastFrameUrl: string | undefined
-  if (body.lastFrame) {
-    lastFrameUrl = await resolveImageForKling(body.lastFrame)
+  const withWebhook: KlingVideoInput = {
+    ...input,
+    webhook_url: options?.webhookUrl ?? input.webhook_url,
   }
 
-  const payload = buildKlingVideoBody(body, imageUrl)
-  if (lastFrameUrl) payload.tail_image = lastFrameUrl
-
-  const endpoint = hasStart ? 'image2video' : 'text2video'
-  const createPath = `/videos/${endpoint}`
-  const create = await klingRequest(createPath, payload)
+  const { body, endpoint } = buildKlingVideoBody(withWebhook, resolvedList)
+  const create = await klingRequest(`/videos/${endpoint}`, body)
   const taskId = create.data?.task_id
-
   if (!taskId) {
     throw new Error('Kling video task created without task_id')
   }
 
-  const videoUrl = await pollKlingTask(taskId, endpoint)
+  return {
+    taskId,
+    endpoint,
+    asyncMode: !!options?.webhookUrl || !!input.webhook_url,
+  }
+}
+
+export async function runKlingVideo(input: KlingVideoInput): Promise<Buffer> {
+  const submit = await submitKlingVideo(input)
+  const videoUrl = await pollKlingTask(submit.taskId, submit.endpoint)
   const res = await fetch(videoUrl)
+  if (!res.ok) throw new Error(`Kling video download failed: ${res.status}`)
+  return Buffer.from(await res.arrayBuffer())
+}
+
+export async function runKlingLipSync(videoUrl: string, audioUrl: string): Promise<Buffer> {
+  if (!hasDirectKlingCredentials()) {
+    throw new Error('Direct Kling credentials are not configured')
+  }
+
+  const create = await klingRequest('/videos/lip-sync', {
+    video_url: videoUrl,
+    audio_url: audioUrl,
+    model_name: getKlingDefaultModel(),
+  })
+
+  const taskId = create.data?.task_id
+  if (!taskId) throw new Error('Kling lip-sync task created without task_id')
+
+  const outUrl = await pollKlingTask(taskId, 'lip-sync')
+  const res = await fetch(outUrl)
+  if (!res.ok) throw new Error(`Kling lip-sync download failed: ${res.status}`)
+  return Buffer.from(await res.arrayBuffer())
+}
+
+export async function downloadKlingVideoUrl(url: string): Promise<Buffer> {
+  const res = await fetch(url)
   if (!res.ok) throw new Error(`Kling video download failed: ${res.status}`)
   return Buffer.from(await res.arrayBuffer())
 }

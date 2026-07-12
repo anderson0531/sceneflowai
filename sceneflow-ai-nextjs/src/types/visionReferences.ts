@@ -29,6 +29,8 @@ export interface VisualReference {
   sourceReferenceUrl?: string
   /** Whether the image was AI-generated vs uploaded */
   aiGenerated?: boolean
+  /** Cached Kling element_list ID */
+  klingElementId?: string
   /** 
    * When true, this prop is ALWAYS included in scene generation if mentioned,
    * regardless of budget constraints. Use for signature items like hero vehicles,
@@ -81,6 +83,8 @@ export interface LocationReference {
   sceneNumbers?: number[]
   /** Whether this location was auto-extracted from script (vs manually pinned) */
   autoExtracted?: boolean
+  /** Cached Kling element_list ID */
+  klingElementId?: string
   /** The generation prompt used for the reference image */
   generationPrompt?: string
 }

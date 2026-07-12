@@ -33,6 +33,17 @@ import { isAggregatorEnabled } from '@/lib/aggregator/config'
 import { generateVideoWithAggregator } from '@/lib/aggregator/generateVideoWithAggregator'
 import { getDefaultAggregatorModelId } from '@/lib/aggregator/modelRegistry'
 import { uploadVideo as uploadVideoToGCS } from '@/lib/storage/gcsAssets'
+import { isKlingConfigured, getKlingDefaultModel, resolveKlingQuality } from '@/lib/kling/config'
+import {
+  generateVideoWithKlingVeoFallback,
+  KlingVideoAsyncSubmittedError,
+} from '@/lib/kling/klingWithVeoFallback'
+import type {
+  KlingQuality,
+  KlingShotType,
+  KlingMultiPromptEntry,
+  KlingCreativePreset,
+} from '@/lib/kling/types'
 export class SegmentVideoRateLimitError extends Error {
   retryAfter: number
   constructor(message: string, retryAfter = 60) {
@@ -89,12 +100,49 @@ export interface GenerateSegmentVideoInput {
   requireVeoRefForExt?: boolean
   /** When set, used as the full API prompt (skips assembly and pre-flight rewrite). */
   apiPromptOverride?: string
-  /** Opt-in backup engine (Kling) after Vertex policy blocks. Default false. */
+  /** Opt-in Vertex Veo backup when Kling policy blocks. Default true on Kling path. */
   allowPolicyFallback?: boolean
-  /** Primary video backend: vertex (default) or multiplatform aggregator. */
-  videoProvider?: 'vertex' | 'aggregator'
+  /** Primary video backend: kling (default), vertex, or multiplatform aggregator. */
+  videoProvider?: 'kling' | 'vertex' | 'aggregator'
   /** Aggregator model id from modelRegistry (e.g. kling-2.6). */
   videoModel?: string
+  /** Direct Kling model (e.g. kling-v3-omni). */
+  klingModel?: string
+  klingQuality?: KlingQuality
+  cfgScale?: number
+  sound?: boolean
+  watermarkEnabled?: boolean
+  elementList?: string[]
+  voiceList?: Array<{ voice_id: string; name?: string }>
+  multiShot?: boolean
+  shotType?: KlingShotType
+  multiPrompt?: KlingMultiPromptEntry[]
+  preset?: KlingCreativePreset
+  allowVeoFallback?: boolean
+  expressMode?: boolean
+}
+
+export class SegmentVideoKlingNotConfiguredError extends Error {
+  constructor() {
+    super(
+      'Direct Kling API is not configured on the server (KLING_API_KEY or KLING_ACCESS_KEY + KLING_SECRET_KEY missing)'
+    )
+    this.name = 'SegmentVideoKlingNotConfiguredError'
+  }
+}
+
+export class SegmentVideoKlingAsyncError extends Error {
+  jobId: string
+  taskId: string
+  modelName: string
+
+  constructor(jobId: string, taskId: string, modelName: string) {
+    super('Kling video job submitted — awaiting webhook completion')
+    this.name = 'SegmentVideoKlingAsyncError'
+    this.jobId = jobId
+    this.taskId = taskId
+    this.modelName = modelName
+  }
 }
 
 export class SegmentVideoAggregatorAsyncError extends Error {
@@ -144,6 +192,9 @@ export interface GenerateSegmentVideoResult {
   upgradeLabel?: string
   aggregatorVendor?: string
   aggregatorJobId?: string
+  klingJobId?: string
+  wasVeoFallback?: boolean
+  klingModel?: string
   asyncPending?: boolean
 }
 
@@ -184,9 +235,22 @@ export async function generateSegmentVideoCore(
     existingStemJobId,
     requireVeoRefForExt = false,
     apiPromptOverride,
-    allowPolicyFallback = false,
-    videoProvider = 'vertex',
+    allowPolicyFallback = true,
+    videoProvider = 'kling',
     videoModel,
+    klingModel,
+    klingQuality,
+    cfgScale,
+    sound,
+    watermarkEnabled,
+    elementList,
+    voiceList,
+    multiShot,
+    shotType,
+    multiPrompt,
+    preset,
+    allowVeoFallback,
+    expressMode,
   } = input
 
   const methodContext = buildMethodSelectionContext(
@@ -230,7 +294,12 @@ export async function generateSegmentVideoCore(
     (method === 'REF' && referenceImages && referenceImages.length > 0)
 
   let effectiveDuration: VeoClipDuration = DEFAULT_VEO_CLIP_DURATION
-  if (method === 'EXT') {
+  let klingDurationSeconds = duration ?? (expressMode ? 10 : 10)
+
+  if (videoProvider === 'kling') {
+    klingDurationSeconds = Math.min(15, Math.max(3, duration ?? (expressMode ? 10 : 10)))
+    effectiveDuration = klingDurationSeconds <= 5 ? 4 : klingDurationSeconds <= 7 ? 6 : klingDurationSeconds <= 9 ? 8 : 10
+  } else if (method === 'EXT') {
     effectiveDuration = DEFAULT_VEO_CLIP_DURATION
   } else {
     const requiresStabilityDuration =
@@ -248,7 +317,12 @@ export async function generateSegmentVideoCore(
   }
 
   const effectiveQualityTier = qualityTier || getQualityForMethod(method)
-  const effectiveResolution = method === 'EXT' ? '720p' : resolution || '720p'
+  const effectiveResolution =
+    videoProvider === 'kling'
+      ? (klingQuality === 'std' ? '720p' : klingQuality === '4k' ? '4k' : resolution || '1080p')
+      : method === 'EXT'
+        ? '720p'
+        : resolution || '720p'
 
   const videoOptions: Record<string, unknown> = {
     aspectRatio: aspectRatio || '16:9',
@@ -325,6 +399,13 @@ export async function generateSegmentVideoCore(
 
   const override = apiPromptOverride?.trim()
   const selectedVideoModel = videoModel || getDefaultAggregatorModelId()
+  const selectedKlingModel = klingModel || getKlingDefaultModel()
+  const resolvedKlingQuality =
+    klingQuality || resolveKlingQuality(undefined, effectiveResolution as '720p' | '1080p' | '4k')
+
+  if (videoProvider === 'kling' && !isKlingConfigured()) {
+    throw new SegmentVideoKlingNotConfiguredError()
+  }
 
   if (videoProvider === 'aggregator' && !isAggregatorEnabled()) {
     throw new SegmentVideoAggregatorNotConfiguredError()
@@ -333,9 +414,11 @@ export async function generateSegmentVideoCore(
   const useAggregator =
     videoProvider === 'aggregator' && isAggregatorEnabled()
 
+  const useKling = videoProvider === 'kling' && isKlingConfigured()
+
   if (override) {
     enhancedPrompt = override
-  } else if (!useAggregator) {
+  } else if (!useAggregator && !useKling) {
     const preflight = await neutralizePromptForVeo({
       prompt: enhancedPrompt,
       guidePrompt,
@@ -351,10 +434,13 @@ export async function generateSegmentVideoCore(
     enhancedPrompt = preflight.prompt
   }
 
-  let generationProvider: 'vertex' | 'fal' | 'kling' | 'aggregator' = 'vertex'
+  let generationProvider: 'vertex' | 'fal' | 'kling' | 'aggregator' = 'kling'
   let fallbackModelFamily: 'kling' | undefined
   let wasPolicyFallback = false
+  let wasVeoFallback = false
   let vertexPolicyAttempts = 0
+  let klingJobId: string | undefined
+  let responseKlingModel: string | undefined
   let aggregatorVendor: string | undefined
   let billingModelId: string | undefined
   let modelUpgraded: boolean | undefined
@@ -366,7 +452,6 @@ export async function generateSegmentVideoCore(
   let finalVeoRefExpiry: string | undefined
 
   if (useAggregator) {
-    console.log(`[Segment Video] Routing to aggregator (model=${selectedVideoModel})`)
     const aggResult = await generateVideoWithAggregator({
       prompt: enhancedPrompt,
       negativePrompt,
@@ -403,6 +488,69 @@ export async function generateSegmentVideoCore(
     console.log(
       `[Segment Video] Aggregator ${aggResult.vendor} completed job ${aggResult.jobId} model=${selectedVideoModel}${modelUpgraded ? ` (upgraded to ${billingModelId})` : ''}`
     )
+  } else if (useKling) {
+    console.log(`[Segment Video] Routing to Kling (model=${selectedKlingModel})`)
+    try {
+      const genResult = await generateVideoWithKlingVeoFallback({
+        prompt: enhancedPrompt,
+        negativePrompt,
+        method,
+        videoOptions: {
+          ...(videoOptions as VideoGenerationOptions),
+          durationSeconds: klingDurationSeconds as VeoClipDuration,
+        },
+        guidePrompt,
+        referenceFallbackPrompt,
+        allowVeoFallback: allowVeoFallback ?? allowPolicyFallback ?? true,
+        klingModel: selectedKlingModel,
+        klingQuality: resolvedKlingQuality,
+        cfgScale,
+        sound,
+        watermarkEnabled,
+        elementList,
+        voiceList,
+        multiShot,
+        shotType,
+        multiPrompt,
+        preset,
+        segmentId,
+        projectId,
+        sceneId,
+        userId,
+      })
+
+      generationProvider = genResult.generationProvider
+      wasVeoFallback = genResult.wasVeoFallback
+      wasPolicyFallback = genResult.wasVeoFallback
+      vertexPolicyAttempts = genResult.klingAttempts
+      responseKlingModel = genResult.klingModel || selectedKlingModel
+      klingJobId = genResult.klingJobId
+
+      if (genResult.status === 'FAILED') {
+        const err = genResult.error || 'Kling video generation failed'
+        if (err.toLowerCase().includes('rate limit')) {
+          throw new SegmentVideoRateLimitError(err, 60)
+        }
+        throw new Error(err)
+      }
+
+      videoBuffer = genResult.videoBuffer ?? null
+      finalVeoRef = genResult.veoVideoRef
+      finalVeoRefExpiry = genResult.veoVideoRefExpiry
+
+      if (!videoBuffer && genResult.videoUrl) {
+        if (genResult.videoUrl.startsWith('data:video/')) {
+          const base64Match = genResult.videoUrl.match(/^data:video\/[^;]+;base64,(.+)$/)
+          if (!base64Match) throw new Error('Invalid base64 video data format')
+          videoBuffer = Buffer.from(base64Match[1], 'base64')
+        }
+      }
+    } catch (e) {
+      if (e instanceof KlingVideoAsyncSubmittedError) {
+        throw new SegmentVideoKlingAsyncError(e.jobId, e.taskId, selectedKlingModel)
+      }
+      throw e
+    }
   } else try {
     console.log('[Segment Video] Routing to Vertex')
     const genResult = await generateVideoWithVeoKlingFallback({
@@ -574,15 +722,24 @@ export async function generateSegmentVideoCore(
     vertexPolicyAttempts,
     provenanceId: provenanceStamp.provenanceId,
     contentHash: provenanceStamp.contentHash,
-    requestedDurationSeconds: effectiveDuration,
+    requestedDurationSeconds:
+      videoProvider === 'kling' ? klingDurationSeconds : effectiveDuration,
     actualDurationSeconds: actualVideoDurationSeconds,
     methodSelection: methodSelectionResult,
     stemSeparation,
-    videoModel: generationProvider === 'aggregator' ? selectedVideoModel : undefined,
+    videoModel:
+      generationProvider === 'aggregator'
+        ? selectedVideoModel
+        : generationProvider === 'kling'
+          ? responseKlingModel
+          : undefined,
     billingModelId,
     modelUpgraded,
     effectiveAggregatorType,
     upgradeLabel,
     aggregatorVendor,
+    klingJobId,
+    wasVeoFallback,
+    klingModel: responseKlingModel,
   }
 }

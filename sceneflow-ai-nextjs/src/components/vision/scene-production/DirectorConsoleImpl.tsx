@@ -745,6 +745,22 @@ export function DirectorConsoleRoot({
       return
     }
 
+    for (const segmentId of expressIds) {
+      const item = queue.find((q) => q.segmentId === segmentId)
+      if (!item) continue
+      updateConfig(segmentId, {
+        ...item.config,
+        videoProvider: 'kling',
+        klingModel: 'kling-v3-omni',
+        klingQuality: 'pro',
+        resolution: '1080p',
+        duration: 10,
+        mode: 'I2V',
+        expressMode: true,
+        allowVeoFallback: true,
+      })
+    }
+
     processQueue({
       mode: 'selected',
       priority: 'sequence',
@@ -752,7 +768,7 @@ export function DirectorConsoleRoot({
       selectedIds: expressIds,
       concurrency: 3,
     })
-  }, [queue, segments, sceneImageUrl, processQueue])
+  }, [queue, segments, sceneImageUrl, processQueue, updateConfig])
 
   // === Text Overlay Handlers ===
   

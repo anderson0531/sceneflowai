@@ -3541,6 +3541,7 @@ export function SceneProductionMixer({
   }, [projectId, sceneId, selectedLanguage, lastRenderedUrl])
   const [preserveBackgroundStem, setPreserveBackgroundStem] = useState(true)
   const [includeSpeechStem, setIncludeSpeechStem] = useState(false)
+  const [klingLipsyncEnabled, setKlingLipsyncEnabled] = useState(false)
   const [masterSegmentVolume, setMasterSegmentVolume] = useState(0.8)
 
   useEffect(() => {
@@ -3553,6 +3554,9 @@ export function SceneProductionMixer({
       }
       if (typeof parsed.includeSpeechStem === 'boolean') {
         setIncludeSpeechStem(parsed.includeSpeechStem)
+      }
+      if (typeof parsed.klingLipsyncEnabled === 'boolean') {
+        setKlingLipsyncEnabled(parsed.klingLipsyncEnabled)
       }
     } catch (e) {
       console.warn('[SceneProductionMixer] Failed to load stem policy settings:', e)
@@ -3570,12 +3574,13 @@ export function SceneProductionMixer({
           ...parsed,
           preserveBackgroundStem,
           includeSpeechStem,
+          klingLipsyncEnabled,
         })
       )
     } catch (e) {
       console.warn('[SceneProductionMixer] Failed to persist stem policy settings:', e)
     }
-  }, [preserveBackgroundStem, includeSpeechStem])
+  }, [preserveBackgroundStem, includeSpeechStem, klingLipsyncEnabled])
   
   // Initialize segment configs
   useEffect(() => {
@@ -4094,6 +4099,39 @@ export function SceneProductionMixer({
     )
     
     try {
+      let lipsyncedVideoBySegment: Record<string, string> = {}
+      if (
+        klingLipsyncEnabled &&
+        selectedLanguage !== 'en' &&
+        productionTarget.streamType === 'video' &&
+        audioTracks.dialogue.enabled
+      ) {
+        const { lipsyncSegmentVideosForLanguage } = await import('@/lib/kling/lipsyncWorkflow')
+        const dialogueBySegment = new Map<string, string>()
+        for (const seg of renderedSegments) {
+          const clip = resolvedDialogueClips.find(
+            (c) =>
+              c.url &&
+              c.startTime >= (seg.startTime ?? 0) &&
+              c.startTime < (seg.endTime ?? Number.MAX_SAFE_INTEGER)
+          )
+          if (clip?.url) {
+            dialogueBySegment.set(seg.segmentId, clip.url)
+          }
+        }
+        lipsyncedVideoBySegment = await lipsyncSegmentVideosForLanguage({
+          segments: renderedSegments.map((seg) => ({
+            segmentId: seg.segmentId,
+            videoUrl: seg.activeAssetUrl!,
+            dialogueAudioUrl: dialogueBySegment.get(seg.segmentId),
+          })),
+          projectId,
+          sceneId,
+          language: selectedLanguage,
+          durationSeconds: Math.ceil(totalDuration),
+        })
+      }
+
       // Build segment data
       const useStemDubbingPolicy = productionTarget.language !== 'en' && preserveBackgroundStem
       const segmentData = renderedSegments.map(seg => {
@@ -4107,7 +4145,7 @@ export function SceneProductionMixer({
         return {
           segmentId: seg.segmentId,
           sequenceIndex: seg.sequenceIndex,
-          videoUrl: seg.activeAssetUrl!,
+          videoUrl: lipsyncedVideoBySegment[seg.segmentId] || seg.activeAssetUrl!,
           startTime: seg.startTime,
           endTime: seg.endTime,
           audioSource: (audioConfig.includeAudio && (!useStemDubbingPolicy || includeSpeechStem || !hasBackgroundStem)) ? 'original' : 'none',
@@ -6094,6 +6132,18 @@ export function SceneProductionMixer({
                         <Switch
                           checked={includeSpeechStem}
                           onCheckedChange={setIncludeSpeechStem}
+                          disabled={isRendering}
+                        />
+                      </div>
+                    )}
+                    {preserveBackgroundStem && productionTarget.language !== 'en' && (
+                      <div className="flex items-center justify-between">
+                        <div className="text-[11px] text-gray-500">
+                          Kling lip-sync dubbed dialogue to video
+                        </div>
+                        <Switch
+                          checked={klingLipsyncEnabled}
+                          onCheckedChange={setKlingLipsyncEnabled}
                           disabled={isRendering}
                         />
                       </div>
