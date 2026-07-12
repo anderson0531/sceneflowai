@@ -28,6 +28,8 @@ export interface HeadlessRenderSegment {
   startTime: number
   duration: number
   volume?: number
+  /** When false, skip embedded video audio extraction during render */
+  includeVideoAudio?: boolean
   /** Uniform frame crop % (2–10) for uploaded video; preserves aspect ratio */
   watermarkCropPercent?: number
   videoTrimInSec?: number

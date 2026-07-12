@@ -141,7 +141,12 @@ import {
   filterMixerIncludedSegments,
   isMixerBeatIncluded,
 } from '@/lib/scene/mixerBeatInclude'
-import { resolveBeatPreviewVolume } from '@/lib/scene/segmentAudioPreview'
+import {
+  anySegmentEmbedAudioIncluded,
+  isBeatEmbedAudioIncluded,
+  resolveBeatPreviewVolume,
+  resolveSegmentEmbedAudioForRender,
+} from '@/lib/scene/segmentAudioPreview'
 import {
   formatTrimTimeSec,
   parseTrimTimeInput,
@@ -4114,7 +4119,10 @@ export function SceneProductionMixer({
   
   // Render Scene Handler
   const handleRender = useCallback(async () => {
-    if (renderedSegments.length === 0) {
+    const serverRenderSegments =
+      productionTarget.streamType === 'video' ? videoSegments : renderedSegments
+
+    if (serverRenderSegments.length === 0) {
       setRenderError('No rendered video segments available')
       return
     }
@@ -4141,7 +4149,7 @@ export function SceneProductionMixer({
       ) {
         const { lipsyncSegmentVideosForLanguage } = await import('@/lib/kling/lipsyncWorkflow')
         const dialogueBySegment = new Map<string, string>()
-        for (const seg of renderedSegments) {
+        for (const seg of serverRenderSegments) {
           const clip = resolvedDialogueClips.find(
             (c) =>
               c.url &&
@@ -4153,7 +4161,7 @@ export function SceneProductionMixer({
           }
         }
         lipsyncedVideoBySegment = await lipsyncSegmentVideosForLanguage({
-          segments: renderedSegments.map((seg) => ({
+          segments: serverRenderSegments.map((seg) => ({
             segmentId: seg.segmentId,
             videoUrl: seg.activeAssetUrl!,
             dialogueAudioUrl: dialogueBySegment.get(seg.segmentId),
@@ -4167,9 +4175,14 @@ export function SceneProductionMixer({
 
       // Build segment data
       const useStemDubbingPolicy = productionTarget.language !== 'en' && preserveBackgroundStem
-      const segmentData = renderedSegments.map(seg => {
+      const segmentData = serverRenderSegments.map(seg => {
         const audioConfig = segmentAudioConfigs[seg.segmentId] || { includeAudio: true, volume: 1.0, postSegmentPause: 0 }
         const hasBackgroundStem = !!seg.stemSeparation?.backgroundStemUrl
+        const embedAudio = resolveSegmentEmbedAudioForRender(audioConfig, masterSegmentVolume, {
+          useStemDubbingPolicy,
+          includeSpeechStem,
+          hasBackgroundStem,
+        })
         const sourceDur = resolveSegmentSourceDurationSec(
           seg,
           measuredSegmentDurations[seg.segmentId]
@@ -4181,8 +4194,8 @@ export function SceneProductionMixer({
           videoUrl: lipsyncedVideoBySegment[seg.segmentId] || seg.activeAssetUrl!,
           startTime: seg.startTime,
           endTime: seg.endTime,
-          audioSource: (audioConfig.includeAudio && (!useStemDubbingPolicy || includeSpeechStem || !hasBackgroundStem)) ? 'original' : 'none',
-          audioVolume: audioConfig.volume,
+          audioSource: embedAudio.audioSource,
+          audioVolume: embedAudio.audioVolume,
           pauseDuration: audioTracks?.dialogue?.enabled
             ? Math.max(0, getPlaybackSegmentDuration(seg) - trimWin.playableSec)
             : 0.0,
@@ -4260,9 +4273,15 @@ export function SceneProductionMixer({
         }))
       }
 
-      if (useStemDubbingPolicy) {
-        const stemClips = renderedSegments
-          .filter(seg => !!seg.stemSeparation?.backgroundStemUrl)
+      if (useStemDubbingPolicy && audioTracks.sfx.enabled) {
+        const stemClips = serverRenderSegments
+          .filter((seg) => {
+            const audioConfig = segmentAudioConfigs[seg.segmentId]
+            return (
+              isBeatEmbedAudioIncluded(audioConfig) &&
+              !!seg.stemSeparation?.backgroundStemUrl
+            )
+          })
           .map(seg => ({
             url: seg.stemSeparation!.backgroundStemUrl!,
             startTime: seg.startTime,
@@ -4291,13 +4310,19 @@ export function SceneProductionMixer({
             includeDialogue: audioTracks.dialogue.enabled,
             includeMusic: audioTracks.music.enabled,
             includeSfx: audioTracks.sfx.enabled,
-            includeSegmentAudio: Object.values(segmentAudioConfigs).some(c => c.includeAudio),
+            includeSegmentAudio: anySegmentEmbedAudioIncluded(
+              serverRenderSegments,
+              segmentAudioConfigs,
+              masterSegmentVolume,
+              useStemDubbingPolicy,
+              includeSpeechStem
+            ),
             language: selectedLanguage,
             narrationVolume: audioTracks.narration.volume,
             dialogueVolume: audioTracks.dialogue.volume,
             musicVolume: audioTracks.music.volume,
             sfxVolume: audioTracks.sfx.volume,
-            segmentAudioVolume: masterSegmentVolume,
+            segmentAudioVolume: 1,
           },
           segments: segmentData,
           audioTracks: audioTracksPayload,
@@ -4349,10 +4374,12 @@ export function SceneProductionMixer({
       overlayStore.hide()
     }
   }, [
-    renderedSegments, segmentAudioConfigs, audioTracks, playbackAudioUrls,
+    renderedSegments, videoSegments, productionTarget.streamType, segmentAudioConfigs, audioTracks, playbackAudioUrls,
     dialogueClipConfigs,
     totalDuration, sceneId, projectId, sceneNumber, resolution, selectedLanguage,
-    textOverlays, masterSegmentVolume, watermarkConfig, overlayStore
+    textOverlays, masterSegmentVolume, watermarkConfig, overlayStore,
+    preserveBackgroundStem, includeSpeechStem, klingLipsyncEnabled, resolvedDialogueClips,
+    measuredSegmentDurations, getPlaybackSegmentDuration
   ])
 
   /**
@@ -4526,11 +4553,13 @@ export function SceneProductionMixer({
       const useStemDubbingPolicy = productionTarget.language !== 'en' && preserveBackgroundStem
       const segmentsForLocal = sourceSegments.map((seg, idx) => {
         const duration = seg.actualVideoDuration ?? (seg.endTime - seg.startTime)
-        const audioConfig = segmentAudioConfigs[seg.segmentId]
+        const audioConfig = segmentAudioConfigs[seg.segmentId] || { includeAudio: true, volume: 1.0 }
         const hasBackgroundStem = !!seg.stemSeparation?.backgroundStemUrl
-        const includeVideoAudio =
-          (audioConfig?.includeAudio ?? true) &&
-          (!useStemDubbingPolicy || includeSpeechStem || !hasBackgroundStem)
+        const embedAudio = resolveSegmentEmbedAudioForRender(audioConfig, masterSegmentVolume, {
+          useStemDubbingPolicy,
+          includeSpeechStem,
+          hasBackgroundStem,
+        })
         const localAssetType: 'video' | 'image' = (seg.assetType || 'video') as 'video' | 'image'
         const endFrameUrl = undefined
         console.log('[LocalRender] Segment config:', {
@@ -4542,9 +4571,9 @@ export function SceneProductionMixer({
           calculatedDuration: duration,
           isUserUpload: seg.isUserUpload,
           assetType: localAssetType,
-          includeVideoAudio,
+          includeVideoAudio: embedAudio.includeVideoAudio,
           hasEndFrame: !!endFrameUrl,
-          volume: audioConfig?.volume ?? 1.0,
+          volume: embedAudio.audioVolume,
         })
         const sourceDur = resolveSegmentSourceDurationSec(
           seg,
@@ -4564,8 +4593,8 @@ export function SceneProductionMixer({
           })(),
           duration: getPlaybackSegmentDuration(seg),
           endFrameUrl,
-          volume: (audioConfig?.volume ?? 1.0) * masterSegmentVolume,
-          includeVideoAudio, // Pass through to LocalRenderService for video audio extraction
+          volume: embedAudio.audioVolume,
+          includeVideoAudio: embedAudio.includeVideoAudio,
           watermarkCropPercent: seg.watermarkCropPercent,
           videoTrimInSec: trimWin.inSec > 0.001 ? trimWin.inSec : undefined,
           videoTrimOutSec: trimWin.isTrimmed ? trimWin.outSec : undefined,
@@ -4635,8 +4664,10 @@ export function SceneProductionMixer({
         })
       }
 
-      if (useStemDubbingPolicy) {
+      if (useStemDubbingPolicy && audioTracks.sfx.enabled) {
         videoSegments.forEach(seg => {
+          const audioConfig = segmentAudioConfigs[seg.segmentId]
+          if (!isBeatEmbedAudioIncluded(audioConfig)) return
           const backgroundStemUrl = seg.stemSeparation?.backgroundStemUrl
           if (!backgroundStemUrl) return
           audioClips.push({
@@ -4848,8 +4879,14 @@ export function SceneProductionMixer({
     try {
       // Build segments for headless render
       const segmentsForHeadless = videoSegments.map(seg => {
-        const audioConfig = segmentAudioConfigs[seg.segmentId]
-        const includeVideoAudio = audioConfig?.includeAudio ?? true
+        const audioConfig = segmentAudioConfigs[seg.segmentId] || { includeAudio: true, volume: 1.0 }
+        const hasBackgroundStem = !!seg.stemSeparation?.backgroundStemUrl
+        const useStemDubbingPolicy = productionTarget.language !== 'en' && preserveBackgroundStem
+        const embedAudio = resolveSegmentEmbedAudioForRender(audioConfig, masterSegmentVolume, {
+          useStemDubbingPolicy,
+          includeSpeechStem,
+          hasBackgroundStem,
+        })
         const sourceDur = resolveSegmentSourceDurationSec(
           seg,
           measuredSegmentDurations[seg.segmentId]
@@ -4861,7 +4898,8 @@ export function SceneProductionMixer({
           assetType: (seg.assetType || 'video') as 'video' | 'image',
           startTime: seg.startTime,
           duration: getPlaybackSegmentDuration(seg),
-          volume: includeVideoAudio ? (audioConfig?.volume ?? 1.0) * masterSegmentVolume : 0,
+          volume: embedAudio.audioVolume,
+          includeVideoAudio: embedAudio.includeVideoAudio,
           watermarkCropPercent: seg.watermarkCropPercent,
           videoTrimInSec: trimWin.inSec > 0.001 ? trimWin.inSec : undefined,
           videoTrimOutSec: trimWin.isTrimmed ? trimWin.outSec : undefined,
@@ -5037,7 +5075,9 @@ export function SceneProductionMixer({
   }, [
     videoSegments, segmentAudioConfigs, audioTracks, playbackAudioUrls,
     totalDuration, resolution, textOverlays, masterSegmentVolume,
-    dialogueClipConfigs, watermarkConfig, overlayStore
+    dialogueClipConfigs, watermarkConfig, overlayStore,
+    preserveBackgroundStem, includeSpeechStem, productionTarget.language,
+    measuredSegmentDurations, getPlaybackSegmentDuration,
   ])
   
   // Poll headless job status

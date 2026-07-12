@@ -31,4 +31,19 @@ describe('toSceneRenderVideoSegment', () => {
 
     expect(mapped.watermarkCropPercent).toBeUndefined()
   })
+
+  it('passes audioSource none and audioVolume through to the job spec segment', () => {
+    const mapped = toSceneRenderVideoSegment({
+      segmentId: 'seg-muted',
+      sequenceIndex: 0,
+      videoUrl: 'https://example.com/beat.mp4',
+      startTime: 0,
+      endTime: 5,
+      audioSource: 'none',
+      audioVolume: 0,
+    })
+
+    expect(mapped.audioSource).toBe('none')
+    expect(mapped.audioVolume).toBe(0)
+  })
 })

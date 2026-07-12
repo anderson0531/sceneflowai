@@ -388,6 +388,7 @@ import type {
   SceneRenderAudioClip,
   CreateSceneRenderJobRequest,
 } from './renderTypes'
+import { toSceneRenderVideoSegment } from './renderTypes'
 
 /**
  * Create and trigger a scene render job (video concatenation with audio mixing)
@@ -408,14 +409,10 @@ export async function createSceneRenderJob(
   console.log(`[CloudRunJobs] Segments: ${request.segments.length}`)
   
   try {
-    // Build video segments from request
-    const videoSegments: SceneRenderVideoSegment[] = request.segments.map((seg) => ({
-      segmentId: seg.segmentId,
-      sequenceIndex: seg.sequenceIndex,
-      videoUrl: seg.videoUrl,
-      startTime: seg.startTime,
-      duration: seg.endTime - seg.startTime,
-    }))
+    // Build video segments from request (preserve audio, trim, crop, pause)
+    const videoSegments: SceneRenderVideoSegment[] = request.segments.map((seg) =>
+      toSceneRenderVideoSegment(seg)
+    )
     
     if (videoSegments.length === 0) {
       return {
@@ -507,6 +504,8 @@ export async function createSceneRenderJob(
       createdAt: new Date().toISOString(),
       renderMode: 'concatenate',
       language: request.audioConfig.language,
+      includeSegmentAudio: request.audioConfig.includeSegmentAudio,
+      segmentAudioVolume: request.audioConfig.segmentAudioVolume ?? 1,
     }
     
     console.log(`[CloudRunJobs] Scene job spec created:`, {
