@@ -53,6 +53,8 @@ import {
 } from '@/lib/storyboard/storyboardImageEffects'
 import { StoryboardImageEffectControl } from '@/components/vision/StoryboardImageEffectControl'
 import type { SceneProductionData } from '@/components/vision/scene-production/types'
+import type { FinalCutSelection } from '@/lib/types/finalCut'
+import { resolveScreeningVideoStreamUrl } from '@/lib/final-cut/resolveScreeningVideoStreamUrl'
 
 type PreVisPlaybackMode = 'animatic' | 'video'
 
@@ -60,28 +62,28 @@ function resolveSceneVideoUrl(
   scene: any,
   sceneIndex: number,
   language: string,
-  sceneProductionState?: Record<string, SceneProductionData>
+  sceneProductionState?: Record<string, SceneProductionData>,
+  finalCutSelection?: FinalCutSelection | null
 ): string | null {
   const sceneId = scene?.id || scene?.sceneId || `scene-${sceneIndex}`
-  const streams = sceneProductionState?.[sceneId]?.productionStreams || []
-  const match = streams.find(
-    (s) =>
-      s.streamType === 'video' &&
-      s.language === language &&
-      s.status === 'complete' &&
-      !!s.mp4Url
+  if (!sceneProductionState) return null
+  return resolveScreeningVideoStreamUrl(
+    sceneId,
+    sceneProductionState as Record<string, unknown>,
+    language,
+    finalCutSelection
   )
-  return match?.mp4Url || null
 }
 
 function getVideoSceneIndices(
   scenes: any[],
   language: string,
-  sceneProductionState?: Record<string, SceneProductionData>
+  sceneProductionState?: Record<string, SceneProductionData>,
+  finalCutSelection?: FinalCutSelection | null
 ): number[] {
   return scenes
     .map((scene, idx) =>
-      resolveSceneVideoUrl(scene, idx, language, sceneProductionState) ? idx : -1
+      resolveSceneVideoUrl(scene, idx, language, sceneProductionState, finalCutSelection) ? idx : -1
     )
     .filter((idx) => idx >= 0)
 }
@@ -136,6 +138,8 @@ interface AudioGalleryPlayerProps {
   playerLabels?: PlayerLabelMap
   /** Per-scene production data for resolving completed video streams. */
   sceneProductionState?: Record<string, SceneProductionData>
+  /** Screening Room / Assemble version pins (metadata.finalCut) */
+  finalCutSelection?: FinalCutSelection | null
   /** Production Screening tab: large player on top, title and controls below. */
   screeningLayout?: boolean
 }
@@ -191,6 +195,7 @@ export function AudioGalleryPlayer({
   sceneTranslations,
   playerLabels,
   sceneProductionState,
+  finalCutSelection,
   screeningLayout = false,
 }: AudioGalleryPlayerProps) {
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0)
@@ -225,21 +230,21 @@ export function AudioGalleryPlayer({
   const currentScene = scenes[currentSceneIndex]
 
   const currentSceneVideoUrl = useMemo(
-    () => resolveSceneVideoUrl(currentScene, currentSceneIndex, selectedLanguage, sceneProductionState),
-    [currentScene, currentSceneIndex, selectedLanguage, sceneProductionState]
+    () => resolveSceneVideoUrl(currentScene, currentSceneIndex, selectedLanguage, sceneProductionState, finalCutSelection),
+    [currentScene, currentSceneIndex, selectedLanguage, sceneProductionState, finalCutSelection]
   )
 
   const hasAnySceneVideo = useMemo(
     () =>
       scenes.some((scene, idx) =>
-        !!resolveSceneVideoUrl(scene, idx, selectedLanguage, sceneProductionState)
+        !!resolveSceneVideoUrl(scene, idx, selectedLanguage, sceneProductionState, finalCutSelection)
       ),
-    [scenes, selectedLanguage, sceneProductionState]
+    [scenes, selectedLanguage, sceneProductionState, finalCutSelection]
   )
 
   const videoSceneIndices = useMemo(
-    () => getVideoSceneIndices(scenes, selectedLanguage, sceneProductionState),
-    [scenes, selectedLanguage, sceneProductionState]
+    () => getVideoSceneIndices(scenes, selectedLanguage, sceneProductionState, finalCutSelection),
+    [scenes, selectedLanguage, sceneProductionState, finalCutSelection]
   )
 
   const videoScenePosition = useMemo(() => {

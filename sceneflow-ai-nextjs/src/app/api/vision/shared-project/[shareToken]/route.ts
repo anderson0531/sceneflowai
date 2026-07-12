@@ -94,6 +94,7 @@ export async function GET(
       visionPhaseScenes: visionPhase.scenes,
       characters: visionPhase.characters,
       sceneProductionState: visionPhase.production?.scenes,
+      metadata: { finalCut: md.finalCut },
       allowedFeatures: shareLink.allowedFeatures,
       shareToken: actualShareToken, // Pass this back so the feedback API can find it
       storyboardRevision,

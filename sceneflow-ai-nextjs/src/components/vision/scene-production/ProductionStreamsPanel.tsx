@@ -21,8 +21,10 @@ import {
   Upload,
   Pencil,
   Check,
+  MonitorPlay,
 } from 'lucide-react'
 import { FLAG_EMOJIS } from '@/constants/languages'
+import type { FinalCutSelection } from '@/lib/types/finalCut'
 import type {
   ProductionStream,
   ProductionStreamStatus,
@@ -75,6 +77,14 @@ interface ProductionStreamsPanelProps {
   /** Sync Animatic/Video tab with mixer output target */
   streamType?: ProductionStreamType
   onStreamTypeChange?: (streamType: ProductionStreamType) => void
+  /** Scene id for screening version pin (metadata.finalCut) */
+  sceneId?: string
+  /** Project final-cut selection — shared with Screening Room + Assemble */
+  finalCutSelection?: FinalCutSelection | null
+  /** Pin or clear this stream as the Screening Room video version */
+  onDesignateScreeningStream?: (streamId: string) => void | Promise<void>
+  /** Whether a screening designation save is in progress */
+  isDesignatingScreening?: boolean
   /** Disabled state */
   disabled?: boolean
 }
@@ -347,23 +357,29 @@ function ProductionStreamCard({
   stream,
   isRendering,
   isActive,
+  isScreeningVersion,
   renderProgress,
   onPreview,
   onDownload,
   onReRender,
   onDelete,
   onRename,
+  onDesignateScreening,
+  isDesignatingScreening,
   disabled
 }: {
   stream: ProductionStream
   isRendering: boolean
   isActive?: boolean
+  isScreeningVersion?: boolean
   renderProgress?: number
   onPreview: () => void
   onDownload: () => void
   onReRender: () => void
   onDelete: () => void
   onRename?: (displayName: string) => void
+  onDesignateScreening?: () => void
+  isDesignatingScreening?: boolean
   disabled?: boolean
 }) {
   const statusConfig = STATUS_CONFIG[stream.status]
@@ -396,7 +412,9 @@ function ProductionStreamCard({
   
   return (
     <div className={`flex items-center justify-between p-3 bg-gray-800/50 rounded-lg border transition-all duration-200 ${
-      isActive 
+      isScreeningVersion
+        ? 'border-violet-500/60 ring-1 ring-violet-500/30 bg-violet-500/5'
+        : isActive 
         ? 'border-cyan-500/60 ring-1 ring-cyan-500/30 bg-cyan-500/5' 
         : 'border-gray-700/50 hover:border-gray-600/50'
     }`}>
@@ -471,6 +489,11 @@ function ProductionStreamCard({
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-600/50 text-slate-300 font-medium">
               Version {stream.streamVersion ?? 1}
             </span>
+            {isScreeningVersion && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-200 border border-violet-500/30 font-medium">
+                Screening
+              </span>
+            )}
             <span className={`flex items-center gap-1 text-xs ${statusConfig.className}`}>
               <statusConfig.Icon className={`w-4 h-4 ${statusConfig.iconClassName || ''}`} />
               {statusConfig.label}
@@ -533,6 +556,30 @@ function ProductionStreamCard({
             >
               <Download className="w-4 h-4" />
             </Button>
+            {onDesignateScreening && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onDesignateScreening}
+                disabled={disabled || isDesignatingScreening}
+                className={`h-8 w-8 p-0 hover:bg-gray-700 ${
+                  isScreeningVersion
+                    ? 'text-violet-300 hover:text-violet-200'
+                    : 'text-gray-400 hover:text-violet-300'
+                }`}
+                title={
+                  isScreeningVersion
+                    ? 'Clear Screening Room version (use latest)'
+                    : 'Use in Screening Room'
+                }
+              >
+                {isDesignatingScreening ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <MonitorPlay className="w-4 h-4" />
+                )}
+              </Button>
+            )}
             <Button
               size="sm"
               variant="ghost"
@@ -603,6 +650,10 @@ export function ProductionStreamsPanel({
   videoGenerationAvailable = false,
   streamType: controlledStreamType,
   onStreamTypeChange,
+  sceneId,
+  finalCutSelection,
+  onDesignateScreeningStream,
+  isDesignatingScreening = false,
   disabled = false
 }: ProductionStreamsPanelProps) {
   const [internalStreamTab, setInternalStreamTab] = useState<ProductionStreamType>('video')
@@ -676,6 +727,19 @@ export function ProductionStreamsPanel({
       return new Date(b.completedAt || b.createdAt || 0).getTime() - new Date(a.completedAt || a.createdAt || 0).getTime()
     })
   }, [videoStreams])
+
+  const isStreamScreeningVersion = useCallback(
+    (stream: ProductionStream) => {
+      if (!sceneId || !finalCutSelection?.perSceneOverrides) return false
+      const override = finalCutSelection.perSceneOverrides[sceneId]
+      if (!override || override.streamType !== 'video') return false
+      return (
+        override.language === stream.language &&
+        (override.streamVersion ?? 1) === (stream.streamVersion ?? 1)
+      )
+    },
+    [sceneId, finalCutSelection]
+  )
   
   return (
     <div className="space-y-4">
@@ -783,12 +847,19 @@ export function ProductionStreamsPanel({
               stream={stream}
               isRendering={isRendering && renderingStreamId === stream.id}
               isActive={previewingStreamId === stream.id}
+              isScreeningVersion={isStreamScreeningVersion(stream)}
               renderProgress={renderingStreamId === stream.id ? renderProgress : undefined}
               onPreview={() => stream.mp4Url && handleInlinePreview(stream.id)}
               onDownload={() => stream.mp4Url && onDownloadStream(stream.id, stream.mp4Url, stream.language)}
               onReRender={() => onReRenderStream(stream.id)}
               onDelete={() => onDeleteStream(stream.id)}
               onRename={onRenameStream ? (name) => onRenameStream(stream.id, name) : undefined}
+              onDesignateScreening={
+                onDesignateScreeningStream
+                  ? () => onDesignateScreeningStream(stream.id)
+                  : undefined
+              }
+              isDesignatingScreening={isDesignatingScreening}
               disabled={disabled}
             />
           ))}

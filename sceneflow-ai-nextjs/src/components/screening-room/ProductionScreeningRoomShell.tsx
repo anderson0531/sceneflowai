@@ -1,8 +1,10 @@
 'use client'
 
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { X, Play, Layers, Upload, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useStore } from '@/store/useStore'
+import { readFinalCutSelection } from '@/hooks/final-cut/useFinalCutSelection'
 import { ScreeningRoomV2 } from '@/components/vision/ScreeningRoomV2'
 import { ScreeningRoomAssemblePanel } from './ScreeningRoomAssemblePanel'
 import { ScreeningRoomPublishPanel } from './ScreeningRoomPublishPanel'
@@ -47,6 +49,11 @@ export function ProductionScreeningRoomShell({
 }: ProductionScreeningRoomShellProps) {
   const [activeTab, setActiveTab] = useState<ScreeningRoomTab>(initialTab)
   const [showFeedbackPanel, setShowFeedbackPanel] = useState(false)
+  const currentProject = useStore((s) => s.currentProject)
+  const finalCutSelection = useMemo(
+    () => readFinalCutSelection(currentProject?.metadata),
+    [currentProject?.metadata]
+  )
 
   useEffect(() => {
     setActiveTab(initialTab)
@@ -123,6 +130,7 @@ export function ProductionScreeningRoomShell({
               sceneProductionState={sceneProductionState}
               projectId={projectId}
               storedTranslations={storedTranslations}
+              finalCutSelection={finalCutSelection}
             />
           </div>
           {showFeedbackPanel && (
@@ -183,6 +191,7 @@ export function ProductionScreeningRoomShell({
             sceneProductionState={sceneProductionState}
             projectId={projectId}
             storedTranslations={storedTranslations}
+            finalCutSelection={finalCutSelection}
           />
         )}
 

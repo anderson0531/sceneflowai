@@ -22,6 +22,8 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { AudiencePlayer } from '@/components/screening-room/AudiencePlayer'
 import { ScreeningRoomV2 } from '@/components/vision/ScreeningRoomV2'
+import { readFinalCutSelection } from '@/hooks/final-cut/useFinalCutSelection'
+import type { FinalCutSelection } from '@/lib/types/finalCut'
 import type { AudienceFeedbackEvent } from '@/components/vision/FullscreenPlayer'
 import {
   Loader2,
@@ -61,6 +63,7 @@ interface VideoData {
   feedbackEnabled: boolean
   collectBiometrics: boolean
   collectDemographics: boolean
+  finalCut?: FinalCutSelection
 }
 
 interface PageState {
@@ -398,6 +401,7 @@ export default function AudienceScreeningPage() {
           characters={videoData.characters || []}
           onClose={() => window.close()}
           sceneProductionState={videoData.sceneProductionState || videoData.productionScenes || {}}
+          finalCutSelection={videoData.finalCut ? readFinalCutSelection({ finalCut: videoData.finalCut }) : undefined}
           enableAudienceFeedback={videoData.feedbackEnabled}
           screeningId={screeningId}
           sessionId={sessionId}

@@ -165,6 +165,7 @@ export async function GET(
       characters,
       // Production data for keyframe playback
       sceneProductionState: productionScenes,
+      finalCut: metadata.finalCut,
       // Simplified scenes list for fallback
       scenes: scenes.map((scene: any, index: number) => ({
         id: scene.id || scene.sceneId || `scene-${index}`,

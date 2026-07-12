@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/Input'
 import { useStore } from '@/store/useStore'
+import { readFinalCutSelection } from '@/hooks/final-cut/useFinalCutSelection'
 import {
   flattenSceneToStoryboardFrames,
   countStoryboardFramesNeedingGeneration,
@@ -168,6 +169,10 @@ export function SceneGallery({
 
   const currentProject = useStore(s => s.currentProject)
   const setCurrentProject = useStore(s => s.setCurrentProject)
+  const finalCutSelection = useMemo(
+    () => readFinalCutSelection(currentProject?.metadata),
+    [currentProject?.metadata]
+  )
   const storyboardRevision = currentProject?.metadata?.storyboardRevision
   const storyboardVersion =
     typeof storyboardRevision?.version === 'number' && storyboardRevision.version >= 1
@@ -678,6 +683,7 @@ export function SceneGallery({
             isGenVideoRunning={isGenVideoRunning}
             exportedAnimaticUrl={exportedAnimaticUrl}
             sceneProductionState={sceneProductionState}
+            finalCutSelection={finalCutSelection}
             screeningLayout={mode === 'screening'}
             onClose={mode === 'screening' ? onClose : undefined}
           />

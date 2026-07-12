@@ -2,6 +2,7 @@
 
 import React, { use, useEffect, useState } from 'react'
 import { ScreeningRoomV2 } from '@/components/vision/ScreeningRoomV2'
+import { readFinalCutSelection } from '@/hooks/final-cut/useFinalCutSelection'
 import { Loader, AlertCircle } from 'lucide-react'
 
 export default function SharedScreeningRoomPage({ params }: { params: Promise<{ shareToken: string }> }) {
@@ -68,6 +69,8 @@ export default function SharedScreeningRoomPage({ params }: { params: Promise<{ 
     return null
   }
 
+  const finalCutSelection = readFinalCutSelection(projectData.metadata)
+
   return (
     <div className="min-h-screen bg-black">
       {/* Sceneflow Branding */}
@@ -88,6 +91,7 @@ export default function SharedScreeningRoomPage({ params }: { params: Promise<{ 
         script={projectData.script}
         characters={projectData.characters || []}
         sceneProductionState={projectData.sceneProductionState}
+        finalCutSelection={finalCutSelection}
         onClose={() => {
           // Show message that this is a shared view
           alert('This is a shared Screening Room. Close this browser tab to exit.')

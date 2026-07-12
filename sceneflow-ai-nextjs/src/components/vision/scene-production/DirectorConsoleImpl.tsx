@@ -74,6 +74,9 @@ const DirectorDialog = dynamic(
   { ssr: false }
 )
 import { ModerationValidateButton } from '@/components/moderation/ModerationValidateButton'
+import { useStore } from '@/store/useStore'
+import { readFinalCutSelection } from '@/hooks/final-cut/useFinalCutSelection'
+import type { FinalCutSelection, FinalCutSceneOverride, ProductionLanguage } from '@/lib/types/finalCut'
 import { RetakeConfirmDialog } from './RetakeConfirmDialog'
 import {
   resolveRetakeConfirmation,
@@ -458,8 +461,15 @@ export function DirectorConsoleRoot({
   const [streamRenderProgress, setStreamRenderProgress] = useState(0)
   const [isUploadingStream, setIsUploadingStream] = useState(false)
   const [streamUploadError, setStreamUploadError] = useState<string | null>(null)
+  const [isDesignatingScreening, setIsDesignatingScreening] = useState(false)
   const [productionTarget, setProductionTarget] = useState<ProductionTarget>({ streamType: 'video', language: 'en' })
   const prevProductionLanguageRef = useRef(productionTarget.language)
+  const currentProject = useStore((s) => s.currentProject)
+  const updateProject = useStore((s) => s.updateProject)
+  const finalCutSelection = useMemo(
+    () => readFinalCutSelection(currentProject?.metadata),
+    [currentProject?.metadata]
+  )
   const [renderDialogMode, setRenderDialogMode] = useState<'video' | 'animatic'>('video')
   const [renderDialogAnimaticSettings, setRenderDialogAnimaticSettings] = useState<
     Partial<Omit<AnimaticRenderSettings, 'type'>> | undefined
@@ -786,9 +796,94 @@ export function DirectorConsoleRoot({
   }, [onProductionDataChange, productionData])
   
   // === Production Streams Handlers ===
+
+  const persistFinalCutSelection = useCallback(
+    async (nextSelection: FinalCutSelection, toastMessage: string) => {
+      if (!currentProject) return
+      setIsDesignatingScreening(true)
+      try {
+        const res = await fetch(`/api/projects/${projectId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metadata: {
+              ...currentProject.metadata,
+              finalCut: nextSelection,
+            },
+          }),
+        })
+        if (!res.ok) throw new Error('Failed to save screening version')
+        updateProject(projectId, {
+          metadata: {
+            ...(currentProject.metadata as Record<string, unknown>),
+            finalCut: nextSelection,
+          } as typeof currentProject.metadata,
+        })
+        const { toast } = await import('sonner')
+        toast.success(toastMessage)
+      } catch (err) {
+        const { toast } = await import('sonner')
+        toast.error(err instanceof Error ? err.message : 'Failed to save screening version')
+      } finally {
+        setIsDesignatingScreening(false)
+      }
+    },
+    [currentProject, projectId, updateProject]
+  )
+
+  const streamMatchesScreeningOverride = useCallback(
+    (stream: ProductionStream, override?: FinalCutSceneOverride) => {
+      if (!override || override.streamType !== 'video') return false
+      return (
+        override.language === stream.language &&
+        (override.streamVersion ?? 1) === (stream.streamVersion ?? 1)
+      )
+    },
+    []
+  )
+
+  const handleDesignateScreeningStream = useCallback(
+    async (streamId: string) => {
+      const stream = productionStreams.find((s) => s.id === streamId)
+      if (!stream || stream.streamType !== 'video' || stream.status !== 'complete') return
+
+      const base = readFinalCutSelection(currentProject?.metadata)
+      const overrides = { ...(base.perSceneOverrides ?? {}) }
+      const current = overrides[sceneId]
+      const alreadyDesignated = current && streamMatchesScreeningOverride(stream, current)
+
+      if (alreadyDesignated) {
+        delete overrides[sceneId]
+        await persistFinalCutSelection(
+          { ...base, perSceneOverrides: overrides },
+          `Scene ${sceneNumber}: Screening Room will use the latest video version`
+        )
+        return
+      }
+
+      overrides[sceneId] = {
+        streamType: 'video',
+        language: stream.language as ProductionLanguage,
+        streamVersion: stream.streamVersion ?? 1,
+      }
+      await persistFinalCutSelection(
+        { ...base, perSceneOverrides: overrides },
+        `Scene ${sceneNumber}: Screening Room will use Video v${stream.streamVersion ?? 1}`
+      )
+    },
+    [
+      productionStreams,
+      currentProject?.metadata,
+      sceneId,
+      sceneNumber,
+      streamMatchesScreeningOverride,
+      persistFinalCutSelection,
+    ]
+  )
   
   // Delete a production stream
   const handleDeleteStream = useCallback((streamId: string) => {
+    const deletedStream = productionStreams.find((s) => s.id === streamId)
     const updatedStreams = productionStreams.filter(s => s.id !== streamId)
     setProductionStreams(updatedStreams)
     
@@ -799,7 +894,29 @@ export function DirectorConsoleRoot({
         productionStreams: updatedStreams,
       })
     }
-  }, [productionStreams, productionData, onProductionDataChange])
+
+    if (deletedStream && currentProject) {
+      const base = readFinalCutSelection(currentProject.metadata)
+      const override = base.perSceneOverrides?.[sceneId]
+      if (override && streamMatchesScreeningOverride(deletedStream, override)) {
+        const overrides = { ...(base.perSceneOverrides ?? {}) }
+        delete overrides[sceneId]
+        void persistFinalCutSelection(
+          { ...base, perSceneOverrides: overrides },
+          `Scene ${sceneNumber}: Screening version cleared (stream deleted)`
+        )
+      }
+    }
+  }, [
+    productionStreams,
+    productionData,
+    onProductionDataChange,
+    currentProject,
+    sceneId,
+    sceneNumber,
+    streamMatchesScreeningOverride,
+    persistFinalCutSelection,
+  ])
   
   // Re-render an existing production stream
   const handleReRenderStream = useCallback(async (streamId: string) => {
@@ -1039,6 +1156,10 @@ export function DirectorConsoleRoot({
       productionStreams={productionStreams}
       selectedLanguage={productionTarget.language}
       streamType={productionTarget.streamType}
+      sceneId={sceneId}
+      finalCutSelection={finalCutSelection}
+      onDesignateScreeningStream={handleDesignateScreeningStream}
+      isDesignatingScreening={isDesignatingScreening}
       onStreamTypeChange={(streamType) =>
         setProductionTarget((prev) => ({ ...prev, streamType }))
       }

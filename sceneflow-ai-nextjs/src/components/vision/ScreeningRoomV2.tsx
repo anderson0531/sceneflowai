@@ -15,6 +15,8 @@
 import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react'
 import { FullscreenPlayer, type AudienceFeedbackEvent } from './FullscreenPlayer'
 import type { SceneProductionData } from '@/components/vision/scene-production/types'
+import type { FinalCutSelection } from '@/lib/types/finalCut'
+import { resolveScreeningVideoStreamUrl } from '@/lib/final-cut/resolveScreeningVideoStreamUrl'
 import { getLanguagePlaybackOffset, countResolvableSceneSfx } from '@/components/vision/scene-production/audioTrackBuilder'
 
 interface ScreeningRoomV2Props {
@@ -44,6 +46,8 @@ interface ScreeningRoomV2Props {
   /** Prefer stitched video streams over Ken Burns animatic when available */
   playbackMode?: 'animatic' | 'video' | 'auto'
   onPlaybackModeChange?: (mode: 'animatic' | 'video' | 'auto') => void
+  /** Screening Room / Assemble version pins (metadata.finalCut) */
+  finalCutSelection?: FinalCutSelection | null
 }
 
 // Helper function to normalize scenes from various data paths
@@ -91,6 +95,7 @@ export function ScreeningRoomV2({
   backButtonLabel,
   playbackMode = 'auto',
   onPlaybackModeChange,
+  finalCutSelection,
 }: ScreeningRoomV2Props) {
   // ============================================================================
   // Scene State
@@ -107,16 +112,14 @@ export function ScreeningRoomV2({
   const currentProductionData = sceneProductionState?.[currentSceneId]
 
   const sceneVideoUrl = useMemo(() => {
-    const streams = currentProductionData?.productionStreams || []
-    const match = streams.find(
-      (s) =>
-        s.streamType === 'video' &&
-        s.language === selectedLanguage &&
-        s.status === 'complete' &&
-        !!s.mp4Url
+    if (!sceneProductionState) return null
+    return resolveScreeningVideoStreamUrl(
+      currentSceneId,
+      sceneProductionState as Record<string, unknown>,
+      selectedLanguage,
+      finalCutSelection
     )
-    return match?.mp4Url || null
-  }, [currentProductionData, selectedLanguage])
+  }, [sceneProductionState, currentSceneId, selectedLanguage, finalCutSelection])
 
   const sceneHasSeparateSfx = useMemo(
     () => (currentScene ? countResolvableSceneSfx(currentScene) > 0 : false),
