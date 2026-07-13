@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 import { formatRelativeTime, getPhaseDisplayName, getStepNumber, getTotalSteps } from '@/hooks/useDashboardData'
 import { getProjectCreditsUsed } from '@/lib/credits/projectBudgetShared'
-import { getProductionRoute } from '@/constants/workflowRoutes'
+import { getProductionRoute, getResumeRouteForStep } from '@/constants/workflowRoutes'
 
 // Types for project data from API
 interface DashboardProject {
@@ -126,13 +126,16 @@ function transformProject(project: DashboardProject, index: number) {
     }
     
     const config = stepConfig[project.currentStep] || stepConfig['blueprint']
+    const isComplete = project.progress >= 100
     return {
       name: config.name,
       description: config.description,
       estimatedCredits: scenes.length * 10 || 35,
-      actionLabel: project.progress >= 100 ? 'View Project' : 'Resume',
-      actionUrl: config.url,
-      isComplete: project.progress >= 100
+      actionLabel: isComplete ? 'View Project' : 'Resume',
+      actionUrl: isComplete
+        ? config.url
+        : getResumeRouteForStep(project.id, project.currentStep),
+      isComplete,
     }
   }
 

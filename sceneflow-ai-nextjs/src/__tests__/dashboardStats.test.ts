@@ -34,7 +34,17 @@ describe('dashboardStats', () => {
   })
 
   it('builds resume URLs by workflow step', () => {
-    expect(getProjectResumeUrl(baseProject({ currentStep: 'vision' }))).toContain('final-cut')
-    expect(getProjectResumeUrl(baseProject({ currentStep: 'blueprint' }))).toContain('/vision/')
+    expect(getProjectResumeUrl(baseProject({ currentStep: 'blueprint' }))).toBe(
+      '/dashboard/studio/p1'
+    )
+    expect(getProjectResumeUrl(baseProject({ currentStep: 'vision' }))).toBe(
+      '/dashboard/workflow/vision/p1'
+    )
+    expect(getProjectResumeUrl(baseProject({ currentStep: 'creation' }))).toBe(
+      '/dashboard/workflow/vision/p1'
+    )
+    expect(getProjectResumeUrl(baseProject({ currentStep: 'final-cut' }))).toBe(
+      '/dashboard/workflow/vision/p1'
+    )
   })
 })

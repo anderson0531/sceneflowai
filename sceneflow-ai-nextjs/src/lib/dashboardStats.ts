@@ -1,3 +1,4 @@
+import { getResumeRouteForStep } from '@/constants/workflowRoutes'
 import {
   normalizeWorkflowStep,
   WORKFLOW_STEP_LABELS,
@@ -53,18 +54,5 @@ export function computeDashboardProjectStats(
 }
 
 export function getProjectResumeUrl(project: DashboardProject): string {
-  const step = normalizeWorkflowStep(project.currentStep)
-  switch (step) {
-    case 'blueprint':
-      return `/dashboard/workflow/vision/${project.id}`
-    case 'vision':
-      return `/dashboard/workflow/final-cut?projectId=${project.id}`
-    case 'creation':
-    case 'polish':
-      return `/dashboard/workflow/premiere?projectId=${project.id}`
-    case 'launch':
-      return `/dashboard/projects/${project.id}`
-    default:
-      return `/dashboard/workflow/vision/${project.id}`
-  }
+  return getResumeRouteForStep(project.id, project.currentStep)
 }

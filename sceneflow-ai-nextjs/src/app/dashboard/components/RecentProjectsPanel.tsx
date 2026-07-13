@@ -9,7 +9,7 @@ import {
   getPhaseDisplayName,
   type DashboardProject,
 } from '@/hooks/useDashboardData'
-import { getProjectResumeUrl } from '@/lib/dashboardStats'
+import { getResumeRouteForStep } from '@/constants/workflowRoutes'
 import { cn } from '@/lib/utils'
 
 interface RecentProjectsPanelProps {
@@ -71,7 +71,7 @@ export function RecentProjectsPanel({ projects, featuredProjectId }: RecentProje
           {listProjects.map((project) => {
             const thumb = getThumbnail(project)
             const phase = getPhaseDisplayName(project.currentStep)
-            const resumeUrl = getProjectResumeUrl(project)
+            const resumeUrl = getResumeRouteForStep(project.id, project.currentStep)
 
             return (
               <li key={project.id}>
