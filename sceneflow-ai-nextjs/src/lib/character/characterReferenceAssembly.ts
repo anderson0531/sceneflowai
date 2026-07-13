@@ -432,6 +432,7 @@ export function buildWardrobeReferencePromptLine(
 export function buildWardrobeBindingSummary(
   bindings: Array<{
     characterName: string
+    subjectOrdinal: number
     identitySendIndex: number
     wardrobeSendIndex?: number
     isDiptych?: boolean
@@ -442,12 +443,12 @@ export function buildWardrobeBindingSummary(
   const parts = bindings
     .map((entry) => {
       if (entry.isDiptych) {
-        return `person [${entry.identitySendIndex}] = ${entry.characterName}: face/identity from diptych Ref [${entry.identitySendIndex}] (LEFT panel), outfit from diptych Ref [${entry.identitySendIndex}] (RIGHT panel)`
+        return `person [${entry.subjectOrdinal}] = ${entry.characterName}: face/identity from diptych Ref [${entry.identitySendIndex}] (LEFT panel), outfit from diptych Ref [${entry.identitySendIndex}] (RIGHT panel)`
       }
       if (entry.wardrobeSendIndex != null) {
-        return `person [${entry.identitySendIndex}] = ${entry.characterName}: face/identity from Ref [${entry.identitySendIndex}], outfit from Ref [${entry.wardrobeSendIndex}]`
+        return `person [${entry.subjectOrdinal}] = ${entry.characterName}: face/identity from Ref [${entry.identitySendIndex}], outfit from Ref [${entry.wardrobeSendIndex}]`
       }
-      return `person [${entry.identitySendIndex}] = ${entry.characterName}: face/identity from Ref [${entry.identitySendIndex}]`
+      return `person [${entry.subjectOrdinal}] = ${entry.characterName}: face/identity from Ref [${entry.identitySendIndex}]`
     })
     .filter((part): part is string => !!part)
 

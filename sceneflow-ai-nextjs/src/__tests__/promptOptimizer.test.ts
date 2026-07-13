@@ -4,7 +4,9 @@ import {
   filterCharactersForPromptRefs,
   optimizePromptForImagen,
   sanitizePromptForIdentityRefs,
+  stripReferenceImageMappingBlock,
 } from '@/lib/imagen/promptOptimizer'
+import { stripPromptMetaInstructions } from '@/lib/scene/performanceCues'
 
 describe('promptOptimizer reference-first binding', () => {
   it('buildIdentityPromptToken returns person [N] token', () => {
@@ -174,5 +176,44 @@ Action/Framing: person [1] clutches a file.`
 
     expect(prompt).toContain('do not pull hair back')
     expect(prompt).toContain('without changing hair placement')
+  })
+
+  it('sanitizePromptForIdentityRefs preserves names inside parentheses', () => {
+    const sanitized = sanitizePromptForIdentityRefs(
+      'WARDROBE REFERENCE (Ref Image [2]): Apply clothing ONLY to person [1] (Maria).',
+      [{ name: 'Maria', promptToken: 'person [1]', identityReferenceId: 1 }]
+    )
+    expect(sanitized).toContain('person [1] (Maria)')
+    expect(sanitized).not.toContain('person [1] (person [1])')
+  })
+
+  it('stripReferenceImageMappingBlock removes AI mapping section', () => {
+    const input = `[GLOBAL STYLE ANCHOR]
+Master Style: photorealistic
+
+[SCENE COMPOSITION & BEAT]
+Action/Framing: person [1] grabs person [2].
+
+[REFERENCE IMAGE MAPPING]
+- SUBJECT REFERENCE (Ref Image [1]): Identity only.
+
+[EXCLUSIONS & BOUNDARIES]
+Strictly Avoid: cartoon style.`
+
+    const output = stripReferenceImageMappingBlock(input)
+    expect(output).not.toContain('[REFERENCE IMAGE MAPPING]')
+    expect(output).not.toContain('SUBJECT REFERENCE')
+    expect(output).toContain('[EXCLUSIONS & BOUNDARIES]')
+    expect(output).toContain('person [1] grabs person [2]')
+  })
+
+  it('stripPromptMetaInstructions removes generator-directed meta text', () => {
+    const input =
+      "ALICE pulls BOB toward a fissure. I'm not sure how to balance two reference images. Consider using combo references (e.g., 1,2). Use your expertise to optimize the prompt."
+    const output = stripPromptMetaInstructions(input)
+    expect(output).toContain('ALICE pulls BOB toward a fissure')
+    expect(output).not.toMatch(/not sure how to/i)
+    expect(output).not.toMatch(/combo references/i)
+    expect(output).not.toMatch(/use your expertise/i)
   })
 })

@@ -273,6 +273,27 @@ export function stripAllCues(text: string): string {
     .trim()
 }
 
+/** Strip second-person meta-instructions aimed at the image generator (not scene content). */
+export function stripPromptMetaInstructions(text: string): string {
+  if (!text?.trim()) return text
+  const patterns = [
+    /\b(?:use your expertise|use your intelligence)\b[^.!?]*[.!?]?/gi,
+    /\bconsider using combo references?\b[^.!?]*[.!?]?/gi,
+    /\bi(?:'m| am) not sure how to\b[^.!?]*[.!?]?/gi,
+    /\boptimize the prompt\b[^.!?]*[.!?]?/gi,
+    /\bbalance two reference images?\b[^.!?]*[.!?]?/gi,
+    /\bhow to balance\b[^.!?]*reference images?[^.!?]*[.!?]?/gi,
+  ]
+  let result = text
+  for (const pattern of patterns) {
+    result = result.replace(pattern, ' ')
+  }
+  return result
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([,.!?])/g, '$1')
+    .trim()
+}
+
 /**
  * Parse leading bracket performance cue and map to delivery + visual guidance.
  */

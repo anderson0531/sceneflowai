@@ -84,8 +84,8 @@ describe('referenceLimits', () => {
 
   it('buildSubjectCountGuardrail lists contiguous person tokens', () => {
     const guardrail = buildSubjectCountGuardrail([
-      { characterName: 'Elara Vance', identitySendIndex: 1 },
-      { characterName: 'Marcus Thorne', identitySendIndex: 2 },
+      { characterName: 'Elara Vance', subjectOrdinal: 1 },
+      { characterName: 'Marcus Thorne', subjectOrdinal: 2 },
     ])
     expect(guardrail).toMatch(/^SUBJECT COUNT: EXACTLY 2 people/)
     expect(guardrail).toContain('person [1] (Elara Vance)')
@@ -329,7 +329,7 @@ describe('referenceLimits', () => {
     expect(indexMap.get(4)).toBe(4)
   })
 
-  it('remapReferenceNumbersInPrompt remaps person [3] to person [2] after groupByRole', () => {
+  it('remapReferenceNumbersInPrompt preserves stable subject ordinals in person tokens', () => {
     const indexMap = new Map<number, number | null>([
       [1, 1],
       [2, 3],
@@ -338,7 +338,7 @@ describe('referenceLimits', () => {
     ])
 
     const output = remapReferenceNumbersInPrompt(
-      'Wide shot with person [1] and person [3] in frame.',
+      'Wide shot with person [1] and person [2] in frame.',
       indexMap
     )
 

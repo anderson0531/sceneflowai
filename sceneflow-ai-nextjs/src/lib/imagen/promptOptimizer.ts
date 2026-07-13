@@ -102,6 +102,30 @@ export function buildIdentityPromptToken(refIndex: number): string {
   return `person [${refIndex}]`
 }
 
+function replaceNameOutsideParentheses(text: string, name: string, token: string): string {
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const pattern = new RegExp(`\\b${escaped}\\b`, 'gi')
+  return text.replace(pattern, (match, offset, full) => {
+    const before = full.slice(0, offset)
+    const openParens = (before.match(/\(/g) || []).length
+    const closeParens = (before.match(/\)/g) || []).length
+    if (openParens > closeParens) return match
+    return token
+  })
+}
+
+/** Remove AI-emitted [REFERENCE IMAGE MAPPING] — code owns reference binding. */
+export function stripReferenceImageMappingBlock(prompt: string): string {
+  if (!prompt?.trim()) return prompt
+  return prompt
+    .replace(
+      /\[REFERENCE IMAGE MAPPING\][\s\S]*?(?=\[EXCLUSIONS & BOUNDARIES\]|\[GLOBAL STYLE ANCHOR\]|$)/i,
+      ''
+    )
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
 /**
  * Strip appearance prose from AI-generated prompts when identity refs exist.
  * Replaces character names with person [N] tokens and removes redundant demographic phrases.
@@ -117,13 +141,11 @@ export function sanitizePromptForIdentityRefs(
       (ref.identityReferenceId != null ? buildIdentityPromptToken(ref.identityReferenceId) : undefined)
     if (!token) continue
 
-    const fullNamePattern = new RegExp(`\\b${ref.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi')
-    sanitized = sanitized.replace(fullNamePattern, token)
+    sanitized = replaceNameOutsideParentheses(sanitized, ref.name, token)
 
     const firstName = ref.name.split(' ')[0]
     if (firstName.length > 1) {
-      const firstNamePattern = new RegExp(`\\b${firstName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi')
-      sanitized = sanitized.replace(firstNamePattern, token)
+      sanitized = replaceNameOutsideParentheses(sanitized, firstName, token)
     }
   }
 
@@ -140,7 +162,7 @@ export function sanitizePromptForIdentityRefs(
     (match) => (/\bperson\s*\[\d+\]/i.test(sanitized) ? 'person' : match)
   )
 
-  const isStructuredPrompt = /\[(?:GLOBAL STYLE ANCHOR|SCENE COMPOSITION & BEAT|REFERENCE IMAGE MAPPING)\]/i.test(
+  const isStructuredPrompt = /\[(?:GLOBAL STYLE ANCHOR|SCENE COMPOSITION & BEAT|EXCLUSIONS & BOUNDARIES)\]/i.test(
     sanitized
   )
   if (isStructuredPrompt) {

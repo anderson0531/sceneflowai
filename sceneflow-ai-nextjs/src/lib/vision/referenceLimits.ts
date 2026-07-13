@@ -35,11 +35,11 @@ export function resolveEffectiveImageTier(args: {
 }
 
 export function buildSubjectCountGuardrail(
-  entries: Array<{ characterName: string; identitySendIndex: number }>
+  entries: Array<{ characterName: string; subjectOrdinal: number }>
 ): string {
   if (entries.length < 2) return ''
   const peopleList = entries
-    .map((entry) => `person [${entry.identitySendIndex}] (${entry.characterName})`)
+    .map((entry) => `person [${entry.subjectOrdinal}] (${entry.characterName})`)
     .join(' and ')
   return (
     `SUBJECT COUNT: EXACTLY ${entries.length} people in this image - ${peopleList}. ` +
@@ -212,11 +212,7 @@ export function remapReferenceNumbersInPrompt(
 
   let result = text
 
-  result = result.replace(/person\s*\[\s*(\d+)\s*\]/gi, (match, n) => {
-    const remapped = remapNumber(parseInt(n, 10))
-    return remapped == null ? '' : `person [${remapped}]`
-  })
-
+  // person [N] tokens are stable subject ordinals — do not remap them with image send indices
   result = result.replace(
     /(?:Reference image|Ref [Ii]mage)\s*(\d+)/g,
     (match, n) => {

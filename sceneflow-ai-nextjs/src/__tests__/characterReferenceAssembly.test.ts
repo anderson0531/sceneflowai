@@ -275,12 +275,12 @@ describe('characterReferenceAssembly', () => {
 
   it('buildWardrobeBindingSummary maps each person to identity and wardrobe refs', () => {
     const summary = buildWardrobeBindingSummary([
-      { characterName: 'Elara Vance', identitySendIndex: 1, wardrobeSendIndex: 2 },
-      { characterName: 'Marcus Thorne', identitySendIndex: 3, wardrobeSendIndex: 4 },
+      { characterName: 'Elara Vance', subjectOrdinal: 1, identitySendIndex: 1, wardrobeSendIndex: 3 },
+      { characterName: 'Marcus Thorne', subjectOrdinal: 2, identitySendIndex: 2, wardrobeSendIndex: 4 },
     ])
     expect(summary).toMatch(/^SUBJECT BINDING:/)
-    expect(summary).toContain('person [1] = Elara Vance: face/identity from Ref [1], outfit from Ref [2]')
-    expect(summary).toContain('person [3] = Marcus Thorne: face/identity from Ref [3], outfit from Ref [4]')
+    expect(summary).toContain('person [1] = Elara Vance: face/identity from Ref [1], outfit from Ref [3]')
+    expect(summary).toContain('person [2] = Marcus Thorne: face/identity from Ref [2], outfit from Ref [4]')
     expect(summary).toContain('Never swap identity or wardrobe between people')
   })
 

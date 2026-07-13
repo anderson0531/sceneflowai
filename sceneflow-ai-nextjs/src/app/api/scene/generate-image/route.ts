@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { generateImageWithVertexKlingFallback } from '@/lib/generation/vertexImageWithKlingFallback'
 import { uploadImageToBlob } from '@/lib/storage/blob'
-import { optimizePromptForImagen, generateLinkingDescription, extractDemographicAnchor, buildIdentityPromptToken, sanitizePromptForIdentityRefs, filterCharactersForPromptRefs } from '@/lib/imagen/promptOptimizer'
+import { optimizePromptForImagen, generateLinkingDescription, extractDemographicAnchor, buildIdentityPromptToken, sanitizePromptForIdentityRefs, filterCharactersForPromptRefs, stripReferenceImageMappingBlock } from '@/lib/imagen/promptOptimizer'
 import { validateCharacterLikeness } from '@/lib/imagen/imageValidator'
 import { waitForGCSURIs, checkGCSURIAccessibility } from '@/lib/storage/gcsAccessibility'
 import { generateDirectionHash, generateImageSourceHash } from '@/lib/utils/contentHash'
@@ -61,6 +61,7 @@ import {
   resolveBeatDirectedEmotion,
   resolveDirectedEmotionForCharacter,
   stripAllCues,
+  stripPromptMetaInstructions,
 } from '@/lib/scene/performanceCues'
 import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
 import {
@@ -99,6 +100,14 @@ export const maxDuration = 120  // Increased for new AI image models
 
 /** Stop image-generation retries when this much of the route budget is consumed. */
 const ROUTE_TIME_BUDGET_MS = 100_000
+
+function lookupSubjectOrdinal(
+  characterReferences: Array<{ name: string; subjectOrdinal?: number }>,
+  characterName?: string
+): number | undefined {
+  if (!characterName) return undefined
+  return characterReferences.find((cr) => cr.name === characterName)?.subjectOrdinal
+}
 
 /**
  * @deprecated Use generateLinkingDescription from promptOptimizer instead
@@ -891,6 +900,8 @@ export async function POST(req: NextRequest) {
         if (dialogueFrameContext && !(customPrompt && customPrompt.trim())) {
           fullSceneContext = `${dialogueFrameContext}${fullSceneContext}`
         }
+
+        fullSceneContext = stripPromptMetaInstructions(fullSceneContext)
         
         console.log('[Scene Image] Scene context established:', {
           hasVisualDescription: !!scene.visualDescription,
@@ -960,6 +971,7 @@ export async function POST(req: NextRequest) {
     // IMPORTANT: referenceId is ONLY assigned to characters with GCS images
     // This ensures the [1], [2] markers in the prompt match the API's referenceImages array
     let gcsRefIndex = 0
+    let subjectOrdinalCounter = 0
     const beatForEmotion =
       isBeatFrame && sceneData
         ? getSceneBeats(sceneData as Record<string, unknown>)[effectiveBeatIndex]
@@ -1181,11 +1193,10 @@ export async function POST(req: NextRequest) {
         diptychReferenceId ??
         identityReferenceId ??
         (hasWardrobeOnlyReference ? wardrobeReferenceId : undefined)
-      const promptToken = linkingRefId
-        ? diptychReferenceId || identityReferenceId
-          ? buildIdentityPromptToken(linkingRefId)
-          : `person [${linkingRefId}]`
-        : undefined
+      const hasSubjectReference = !!linkingRefId
+      const subjectOrdinal = hasSubjectReference ? ++subjectOrdinalCounter : undefined
+      const promptToken =
+        subjectOrdinal != null ? buildIdentityPromptToken(subjectOrdinal) : undefined
       const linkingDescription = promptToken
       
       if (hasReferenceImage) {
@@ -1221,6 +1232,7 @@ export async function POST(req: NextRequest) {
         hasWardrobeDiptych,
         hasDualReferences,
         hasWardrobeOnlyReference,
+        subjectOrdinal,
         linkingDescription,
         promptToken,
         subjectTextDescription,
@@ -1247,7 +1259,7 @@ export async function POST(req: NextRequest) {
     let characterReferencesForImages = characterReferences
     
     if (customPrompt && customPrompt.trim()) {
-      let promptBody = customPrompt.trim()
+      let promptBody = stripPromptMetaInstructions(customPrompt.trim())
       if (allowTypography) {
         promptBody =
           'Abstract cinematic digital composition with NO people and NO character portraits. ' +
@@ -1339,6 +1351,8 @@ export async function POST(req: NextRequest) {
       // Build character contexts with resolved wardrobes
       const characterContexts: CharacterContext[] = characterReferences.map((ref: any) => ({
         name: ref.name,
+        promptToken: ref.promptToken,
+        subjectOrdinal: ref.subjectOrdinal,
         linkingDescription: ref.promptToken ?? ref.linkingDescription,
         appearanceDescription: ref.appearanceDescription,
         wardrobeDescription: ref.defaultWardrobe,
@@ -1420,8 +1434,8 @@ export async function POST(req: NextRequest) {
         beatKind: beatKindForIntelligence,
         beatIndex: isBeatFrame ? effectiveBeatIndex : undefined,
         totalBeats: isBeatFrame ? getSceneBeats(sceneData as Record<string, unknown>).length : undefined,
-        beatAction: stripAllCues(
-          beatForIntelligence?.actionDescription || beatForIntelligence?.line || ''
+        beatAction: stripPromptMetaInstructions(
+          stripAllCues(beatForIntelligence?.actionDescription || beatForIntelligence?.line || '')
         ),
         beatDirectedEmotion: beatDirectedEmotion || undefined,
         beatRole: beatForIntelligence?.beatRole,
@@ -1466,7 +1480,7 @@ export async function POST(req: NextRequest) {
           (ref: any) => ref.identityReferenceId || ref.wardrobeReferenceId
         )
         
-        let aiPromptBody = aiResult.prompt
+        let aiPromptBody = stripReferenceImageMappingBlock(aiResult.prompt)
         if (charactersWithRefs.length > 0) {
           aiPromptBody = sanitizePromptForIdentityRefs(aiPromptBody, charactersWithRefs)
           const filteredForPrompt = filterCharactersForPromptRefs(
@@ -1741,6 +1755,8 @@ export async function POST(req: NextRequest) {
       imageReferences.length > 0 ||
       objectImageReferences.length > 0 ||
       (matchedLocationReference && matchedLocationReference.imageUrl)
+
+    let promptForResponse = stripReferenceImageMappingBlock(optimizedPrompt)
     
     while (generationAttempt < maxGenerationAttempts) {
       try {
@@ -1873,6 +1889,7 @@ export async function POST(req: NextRequest) {
               const matchingCharRef = characterReferences.find(
                 (cr: any) => cr.name === ref.characterName
               )
+              const subjectOrdinal = lookupSubjectOrdinal(characterReferences, ref.characterName)
               const identitySendIndexForChar = cappedImageReferences.find(
                 (r) =>
                   r.characterName === ref.characterName &&
@@ -1882,7 +1899,7 @@ export async function POST(req: NextRequest) {
                 geminiPrompt += `- Reference image ${ref.referenceId}: ${buildWardrobeDiptychReferenceLabel(ref.characterName)}\n`
                 geminiPrompt += `  ${buildWardrobeDiptychCharacterConsumptionLine(
                   ref.characterName,
-                  identitySendIndexForChar ?? ref.referenceId
+                  subjectOrdinal ?? identitySendIndexForChar ?? ref.referenceId
                 )}\n`
                 const hairLock =
                   matchingCharRef?.hairAnchor ?? matchingCharRef?.hairDescription
@@ -1894,7 +1911,7 @@ export async function POST(req: NextRequest) {
                 geminiPrompt += `${buildIdentityReferencePromptLine(
                   ref.characterName,
                   ref.referenceId,
-                  ref.referenceId
+                  subjectOrdinal
                 )}\n`
                 const hairLock =
                   matchingCharRef?.hairAnchor ?? matchingCharRef?.hairDescription
@@ -1906,7 +1923,7 @@ export async function POST(req: NextRequest) {
                 geminiPrompt += `${buildWardrobeReferencePromptLine(
                   ref.characterName,
                   ref.referenceId,
-                  identitySendIndexForChar
+                  subjectOrdinal
                 )}\n`
               } else {
                 geminiPrompt += `- Reference image ${ref.referenceId}: WARDROBE REFERENCE for ${ref.characterName}\n  ${WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION}\n`
@@ -1927,8 +1944,11 @@ export async function POST(req: NextRequest) {
                     (r) => r.characterName === characterName && r.refRole === 'wardrobe'
                   )
                   if (!identityRef) return null
+                  const subjectOrdinal = lookupSubjectOrdinal(characterReferences, characterName)
+                  if (subjectOrdinal == null) return null
                   return {
                     characterName,
+                    subjectOrdinal,
                     identitySendIndex: identityRef.referenceId,
                     wardrobeSendIndex: wardrobeRef?.referenceId,
                     isDiptych: identityRef.refRole === 'wardrobe-diptych',
@@ -1939,6 +1959,7 @@ export async function POST(req: NextRequest) {
                     entry
                   ): entry is {
                     characterName: string
+                    subjectOrdinal: number
                     identitySendIndex: number
                     wardrobeSendIndex?: number
                     isDiptych?: boolean
@@ -1989,13 +2010,16 @@ export async function POST(req: NextRequest) {
             geminiPrompt += `${buildLocationReferencePromptLine(locationName, cappedLocationEntry.sendIndex)} Environment: "${locationName}". Match lighting to the scene prompt Global Style Anchor.\n\n`
           }
 
-          const remappedOptimizedPrompt = remapReferenceNumbersInPrompt(optimizedPrompt, indexMap)
+          const scenePromptBody = stripReferenceImageMappingBlock(optimizedPrompt)
+          const remappedOptimizedPrompt = remapReferenceNumbersInPrompt(scenePromptBody, indexMap)
+          promptForResponse = remappedOptimizedPrompt
           const distinctCharacterNamesForBinding = [
             ...new Set(cappedImageReferences.map((ref) => ref.characterName)),
           ]
           let subjectBindingSummary = ''
           let subjectBindingEntries: Array<{
             characterName: string
+            subjectOrdinal: number
             identitySendIndex: number
             wardrobeSendIndex?: number
             isDiptych?: boolean
@@ -2012,8 +2036,11 @@ export async function POST(req: NextRequest) {
                   (r) => r.characterName === characterName && r.refRole === 'wardrobe'
                 )
                 if (!identityRef) return null
+                const subjectOrdinal = lookupSubjectOrdinal(characterReferences, characterName)
+                if (subjectOrdinal == null) return null
                 return {
                   characterName,
+                  subjectOrdinal,
                   identitySendIndex: identityRef.referenceId,
                   wardrobeSendIndex: wardrobeRef?.referenceId,
                   isDiptych: identityRef.refRole === 'wardrobe-diptych',
@@ -2024,6 +2051,7 @@ export async function POST(req: NextRequest) {
                   entry
                 ): entry is {
                   characterName: string
+                  subjectOrdinal: number
                   identitySendIndex: number
                   wardrobeSendIndex?: number
                   isDiptych?: boolean
@@ -2036,7 +2064,7 @@ export async function POST(req: NextRequest) {
               ? buildSubjectCountGuardrail(
                   subjectBindingEntries.map((entry) => ({
                     characterName: entry.characterName,
-                    identitySendIndex: entry.identitySendIndex,
+                    subjectOrdinal: entry.subjectOrdinal,
                   }))
                 )
               : ''
@@ -2298,7 +2326,7 @@ export async function POST(req: NextRequest) {
       // Credit info
       creditsCharged: CREDIT_COST,
       creditsBalance: newBalance,
-      prompt: optimizedPrompt,
+      prompt: promptForResponse,
       frameType: isDialogueFrame ? 'dialogue' : isCustomFrame ? 'custom' : 'establishing',
       ...(isDialogueFrame ? { dialogueIndex } : {}),
       ...(isCustomFrame ? { customFrameId } : {}),

@@ -63,8 +63,12 @@ import type { FilmContext, SceneDirectionMetadata, SceneType } from '@/lib/intel
 
 export interface CharacterContext {
   name: string
+  /** Stable subject ordinal token e.g. "person [1]" — independent of image send index */
+  promptToken?: string
   /** Reference token like "person [1]" when reference image exists */
   linkingDescription?: string
+  /** 1-based subject ordinal for multi-character binding (person [k]) */
+  subjectOrdinal?: number
   /** Full physical appearance description */
   appearanceDescription?: string
   /** Resolved wardrobe for THIS scene (already prioritized) */
@@ -394,20 +398,12 @@ Master Style: [art style + photorealistic/cinematic quality from input]
 Lighting & Camera: [lighting mood, color temperature, time of day, lens/framing from direction cues]
 
 [SCENE COMPOSITION & BEAT]
-Action/Framing: [shot type + frozen action for THIS beat; use person [N] tokens for characters with identity refs; name props by label only; describe body blocking, gesture, what each character is physically doing, hand/prop interaction, and gaze target (where they look); include directed facial expression/emotion for each visible character — do NOT copy neutral expression from identity reference; characters are engaged in the action and NOT looking at the camera unless the beat is direct-to-camera address]
-
-[REFERENCE IMAGE MAPPING]
-For EACH reference image provided in the input, add one bullet using the exact Ref Image index from input:
-- SUBJECT REFERENCE (Ref Image [N]): Extract face shape, hair, skin tone, and physical identity only. Maintain organic human skin textures. Ignore clothing in this image if wardrobe ref exists.
-- WARDROBE REFERENCE (Ref Image [M]): Apply clothing ONLY to person [N] ({name}). Identity for that character comes from Ref Image [N]. Do not apply to any other person [X]. Completely ignore the mannequin/plastic base, stylized medium, turnaround sheet layout, and gray studio background.
-- LOCATION REFERENCE (Ref Image [K]): Single extreme-wide establishing shot of the environment. Match architectural layout, furniture placement, color palette, and spatial geometry. Render ONE unified full-frame cinematic shot for this beat. Do NOT reproduce any multi-panel reference layout, 2x2 grid, split-screen, or collage. Match lighting to Global Style Anchor.
-- PROP REFERENCE (Ref Image [P]): Extract shape, material, color, and design of the named prop only.
-
-Omit mapping lines for references not used in this beat.
-When multiple characters have identity refs, every WARDROBE REFERENCE line must name the target person [N] for that character.
+Action/Framing: [shot type + frozen action for THIS beat; use ONLY the exact person [N] tokens provided in CHARACTERS input — never invent, renumber, or skip ordinals; never restate character names in parentheses after a person token; name props by label only; describe body blocking, gesture, what each character is physically doing, hand/prop interaction, and gaze target (where they look); include directed facial expression/emotion for each visible character — do NOT copy neutral expression from identity reference; characters are engaged in the action and NOT looking at the camera unless the beat is direct-to-camera address]
 
 [EXCLUSIONS & BOUNDARIES]
 Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, canvas textures, turnaround sheet layout, 2x2 grid output, 4-panel layout, split-screen output, multi-panel layout, diptych, reference sheet collage, faceless figures, or artistic blending of reference mediums. Maintain 100% photographic realism when art style is photorealistic. No dialogue captions, subtitles, or watermarks (except centered title typography on title beats).
+
+REFERENCE IMAGE BINDING: Do NOT emit a [REFERENCE IMAGE MAPPING] section. Reference images are bound in code — use only the person [N] tokens from CHARACTERS input in your composition text.
 
 9. FOREHEAD/TEMPLE INJURIES: When the beat describes a bruise, cut, or injury on the forehead or temple, preserve the character's reference hairstyle exactly — do NOT pull hair back or restyle to expose the injury. The injury must be visible without changing hair placement.`
 }
@@ -463,14 +459,19 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
       const useHairText = !!char.hairDescription
 
       let refLabel = ' [No reference image — describe appearance in prompt]'
-      if (char.hasDualReferences && char.identityReferenceIndex && char.wardrobeReferenceIndex) {
+      const personToken = char.promptToken || char.linkingDescription
+      if (personToken && char.hasDualReferences && char.identityReferenceIndex && char.wardrobeReferenceIndex) {
+        refLabel = ` [Prompt token: ${personToken}; Identity Ref Image [${char.identityReferenceIndex}]; Wardrobe Ref Image [${char.wardrobeReferenceIndex}]]`
+      } else if (personToken && char.identityReferenceIndex) {
+        refLabel = ` [Prompt token: ${personToken}; Identity Ref Image [${char.identityReferenceIndex}]]`
+      } else if (char.hasDualReferences && char.identityReferenceIndex && char.wardrobeReferenceIndex) {
         refLabel = ` [Identity Ref Image [${char.identityReferenceIndex}]; Wardrobe Ref Image [${char.wardrobeReferenceIndex}]]`
       } else if (char.identityReferenceIndex) {
-        refLabel = ` [Identity Ref Image [${char.identityReferenceIndex}] — person [${char.identityReferenceIndex}] in prompt]`
+        refLabel = ` [Identity Ref Image [${char.identityReferenceIndex}]]`
       } else if (char.wardrobeReferenceIndex) {
         refLabel = ` [Wardrobe Ref Image [${char.wardrobeReferenceIndex}] only]`
       } else if (char.hasReferenceImage && char.referenceIndex) {
-        refLabel = ` [Ref Image [${char.referenceIndex}] — person [${char.referenceIndex}] in prompt]`
+        refLabel = ` [Ref Image [${char.referenceIndex}]]`
       }
       prompt += `${idx + 1}. ${char.name}${refLabel}\n`
       
@@ -507,7 +508,7 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
   
   // Reference images summary
   if (request.referenceImageCount > 0) {
-    prompt += `REFERENCE IMAGES: ${request.referenceImageCount} inline reference image(s) will accompany this prompt (characters, location, props). Map each in [REFERENCE IMAGE MAPPING] using the Ref Image indices listed above.\n\n`
+    prompt += `REFERENCE IMAGES: ${request.referenceImageCount} inline reference image(s) will accompany this prompt (characters, location, props). Use ONLY the person [N] prompt tokens listed in CHARACTERS — reference-to-image binding is handled in code, not in your output.\n\n`
   }
   
   // Props — include index when known; suppress visual description when ref exists
