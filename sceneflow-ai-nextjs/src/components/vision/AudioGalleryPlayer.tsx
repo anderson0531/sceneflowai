@@ -18,9 +18,11 @@ import { cn } from '@/lib/utils'
 import { resolvePreVisSceneDisplay } from '@/lib/storyboard/preVisSceneDisplay'
 import {
   translatePlayerLabel,
+  resolveBeatCaptionText,
   type PlayerLabelMap,
   type SceneTranslation,
 } from '@/lib/storyboard/playerTranslations'
+import { BeatCaptionOverlay } from '@/components/vision/BeatCaptionOverlay'
 import { PreVisSceneInfoPanel } from '@/components/vision/PreVisSceneInfoPanel'
 import {
   getEstablishingFrameUrl,
@@ -369,6 +371,26 @@ export function AudioGalleryPlayer({
 
   const rawSpeakerLabel = currentVisualFrame?.character ?? currentVisualFrame?.label
   const speakerLabel = translatePlayerLabel(rawSpeakerLabel, playerLabels)
+
+  const activeCaption = useMemo(() => {
+    const sceneTranslation = sceneTranslations?.[currentSceneIndex]
+    const text = resolveBeatCaptionText(
+      sceneTranslation,
+      currentVisualFrame?.beatId,
+      currentVisualFrame?.overlayText
+    )
+    if (!text) return null
+    return {
+      text,
+      overlayType: currentVisualFrame?.overlayType || 'signage',
+    }
+  }, [
+    sceneTranslations,
+    currentSceneIndex,
+    currentVisualFrame?.beatId,
+    currentVisualFrame?.overlayText,
+    currentVisualFrame?.overlayType,
+  ])
   
   // Fullscreen toggle
   const toggleFullscreen = useCallback(() => {
@@ -827,6 +849,15 @@ export function AudioGalleryPlayer({
             <div
               className="absolute inset-0 bg-black z-[2] pointer-events-none"
               style={{ opacity: inBeatVisual.fadeBlack }}
+            />
+          )}
+          {activeCaption && (
+            <BeatCaptionOverlay
+              text={activeCaption.text}
+              overlayType={activeCaption.overlayType}
+              isPlaying={isPlaying}
+              isFullscreen={isFullscreen}
+              hasSpeakerLabel={!!speakerLabel && activeCaption.overlayType === 'lower_third'}
             />
           )}
         </>

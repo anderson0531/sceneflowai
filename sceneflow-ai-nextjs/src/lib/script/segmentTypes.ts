@@ -16,6 +16,7 @@ export const NARRATOR_CHARACTER_ID = 'narrator'
 
 export type DialogueKind = 'narration' | 'dialogue'
 export type BeatKind = 'dialogue' | 'action' | 'narration'
+export type BeatOverlayType = 'title' | 'signage' | 'lower_third'
 export type StoryboardStatus = 'none' | 'pending_review' | 'approved'
 export type SegmentTransitionType = 'CUT' | 'CONTINUE' | 'DISSOLVE' | 'FADE'
 
@@ -76,6 +77,10 @@ export interface SceneBeat {
    * Dialogue/narration audio is preserved. Default: included.
    */
   excluded?: boolean
+  /** English on-screen caption for signage/titles (separate from spoken line). */
+  overlayText?: string
+  /** Auto-positioned caption style in the Screening Room animatic. */
+  overlayType?: BeatOverlayType
 }
 
 /**

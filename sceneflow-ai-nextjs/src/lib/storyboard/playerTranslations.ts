@@ -2,12 +2,22 @@
  * Pre-Vis player — translation types and client-safe label helpers.
  */
 
+import type { BeatOverlayType } from '@/lib/script/segmentTypes'
+
 export interface SceneTranslation {
   heading?: string
   description?: string
   action?: string
   narration?: string
   dialogue?: string[]
+  beatsByBeatId?: Record<
+    string,
+    {
+      overlayText?: string
+      /** True when the user manually edited this language's caption override. */
+      overlayEdited?: boolean
+    }
+  >
 }
 
 export type PlayerLabelMap = Record<string, string>
@@ -37,4 +47,28 @@ export function translatePlayerLabel(
   }
 
   return label
+}
+
+export function defaultBeatOverlayType(beatRole?: string): BeatOverlayType {
+  if (beatRole === 'title_reveal') return 'title'
+  if (beatRole === 'credit') return 'lower_third'
+  return 'signage'
+}
+
+export function resolveBeatCaptionText(
+  sceneTranslation: SceneTranslation | undefined,
+  beatId: string | undefined,
+  englishOverlayText: string | undefined
+): string | undefined {
+  const english = englishOverlayText?.trim()
+  if (!beatId) return english || undefined
+  const translated = sceneTranslation?.beatsByBeatId?.[beatId]?.overlayText?.trim()
+  return translated || english || undefined
+}
+
+export function isBeatCaptionManuallyEdited(
+  sceneTranslation: SceneTranslation | undefined,
+  beatId: string
+): boolean {
+  return sceneTranslation?.beatsByBeatId?.[beatId]?.overlayEdited === true
 }

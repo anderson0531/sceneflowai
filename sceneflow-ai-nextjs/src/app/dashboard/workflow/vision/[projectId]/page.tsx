@@ -1261,6 +1261,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           action?: string
           narration?: string
           dialogue?: string[]
+          beatsByBeatId?: Record<
+            string,
+            {
+              overlayText?: string
+              overlayEdited?: boolean
+            }
+          >
         }
       >
     >
@@ -1274,7 +1281,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }, [project?.metadata?.visionPhase?.playerLabels])
   
   // Save translations callback
-  const handleSaveTranslations = useCallback(async (langCode: string, translations: Record<number, { heading?: string; description?: string; action?: string; narration?: string; dialogue?: string[] }>) => {
+  const handleSaveTranslations = useCallback(async (langCode: string, translations: Record<number, { heading?: string; description?: string; action?: string; narration?: string; dialogue?: string[]; beatsByBeatId?: Record<string, { overlayText?: string; overlayEdited?: boolean }> }>) => {
     try {
       const existingMetadata = project?.metadata || {}
       const existingVisionPhase = existingMetadata.visionPhase || {}

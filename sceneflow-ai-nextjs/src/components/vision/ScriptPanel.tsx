@@ -105,6 +105,7 @@ import { buildBeatFirstPlaybackTimeline } from '@/lib/storyboard/types'
 import { buildStoryboardMusicClips } from '@/lib/storyboard/musicPlayback'
 import { BeatMusicToggle } from '@/components/vision/BeatMusicToggle'
 import { BeatExcludeToggle } from '@/components/vision/BeatExcludeToggle'
+import { BeatCaptionControl } from '@/components/vision/BeatCaptionControl'
 import { ExportDialog } from './ExportDialog'
 import { isDirectionStale, isImageStale } from '@/lib/utils/contentHash'
 import { isPreVisStale } from '@/lib/storyboard/preVisSync'
@@ -170,6 +171,13 @@ interface DialogGenerationProgress {
 export interface SceneTranslation {
   narration?: string
   dialogue?: string[] // Indexed by dialogue position
+  beatsByBeatId?: Record<
+    string,
+    {
+      overlayText?: string
+      overlayEdited?: boolean
+    }
+  >
 }
 
 export interface ProjectTranslations {
@@ -6495,6 +6503,16 @@ function SceneCard({
                                 onPlayAudio={onPlayAudio}
                                 onSaveSfxAudio={onSaveSfxAudio}
                               />
+                              <BeatCaptionControl
+                                beat={beat}
+                                sceneIdx={sceneIdx}
+                                selectedLanguage={selectedLanguage}
+                                scenes={scenes}
+                                script={script}
+                                storedTranslations={storedTranslations}
+                                onScriptChange={onScriptChange}
+                                onSaveTranslations={onSaveTranslations}
+                              />
                             </div>
                           )
                         }
@@ -6724,6 +6742,16 @@ function SceneCard({
                             </div>
                             )}
                             </div>
+                            <BeatCaptionControl
+                              beat={beat}
+                              sceneIdx={sceneIdx}
+                              selectedLanguage={selectedLanguage}
+                              scenes={scenes}
+                              script={script}
+                              storedTranslations={storedTranslations}
+                              onScriptChange={onScriptChange}
+                              onSaveTranslations={onSaveTranslations}
+                            />
                           </div>
                         )
                       })}

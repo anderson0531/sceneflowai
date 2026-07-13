@@ -10,7 +10,7 @@ import {
   findDialogueAudioForLine,
 } from '@/components/vision/scene-production/audioTrackBuilder'
 import { getSceneBeats, getStoryboardTimelineBeats, isBeatExcluded } from '@/lib/script/beatMigration'
-import type { SceneBeat } from '@/lib/script/segmentTypes'
+import type { SceneBeat, BeatOverlayType } from '@/lib/script/segmentTypes'
 import { resolveEffectiveStoryboardTier } from '@/lib/storyboard/storyboardQuality'
 import { NARRATOR_CHARACTER, NARRATOR_CHARACTER_ID } from '@/lib/script/segmentTypes'
 import { generateAliases, toCanonicalName } from '@/lib/character/canonical'
@@ -18,6 +18,7 @@ import { resolveStandaloneNarrationUrl } from '@/lib/script/narration'
 import { isValidStoryboardMediaUrl } from '@/lib/storyboard/mergeSceneMedia'
 import { buildStoryboardMusicClips, resolveSceneMusicFileDuration } from '@/lib/storyboard/musicPlayback'
 import { buildBeatAlignedStoryboardSfxClips } from '@/lib/storyboard/sfxPlayback'
+import { getBeatOverlayFields } from '@/lib/storyboard/beatCaption'
 import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
 
 const NARRATION_CLIP_BUFFER_SEC = 0.5
@@ -96,6 +97,9 @@ export interface StoryboardVisualFrame {
   label?: string
   character?: string
   line?: string
+  /** English on-screen caption carried from scene.beats[]. */
+  overlayText?: string
+  overlayType?: BeatOverlayType
   /** True when this is the last beat in a scene (triggers fade-to-black after). */
   isSceneEnd?: boolean
   /** True when this is the first beat in a scene (triggers fade-from-black at start). */
@@ -1340,6 +1344,8 @@ export function buildBeatFirstPlaybackTimeline(
     line?: string
     dialogueIndex?: number
     clipId: string
+    overlayText?: string
+    overlayType?: BeatOverlayType
   }> = []
 
   for (let beatIdx = 0; beatIdx < beats.length; beatIdx++) {
@@ -1395,6 +1401,7 @@ export function buildBeatFirstPlaybackTimeline(
 
     if (beat.kind === 'action') {
       const duration = resolveActionBeatDuration(beat, preVisAnimatic)
+      const overlay = getBeatOverlayFields(beat)
       windows.push({
         beatId: beat.beatId,
         kind: 'action',
@@ -1406,6 +1413,7 @@ export function buildBeatFirstPlaybackTimeline(
         label: 'Action',
         line: beat.actionDescription,
         clipId: `action-${beat.beatId}`,
+        ...overlay,
       })
       currentStartTime += duration + DIALOGUE_CLIP_BUFFER_SEC
       continue
@@ -1431,6 +1439,7 @@ export function buildBeatFirstPlaybackTimeline(
 
     if (!url) {
       const duration = resolveSilentBeatDuration(preVisAnimatic)
+      const overlay = getBeatOverlayFields(beat)
       windows.push({
         beatId: beat.beatId,
         kind: beat.kind,
@@ -1444,6 +1453,7 @@ export function buildBeatFirstPlaybackTimeline(
         line: beat.line,
         dialogueIndex: effectiveDialogueIndex,
         clipId,
+        ...overlay,
       })
       currentStartTime += duration + DIALOGUE_CLIP_BUFFER_SEC
       continue
@@ -1482,6 +1492,7 @@ export function buildBeatFirstPlaybackTimeline(
       line: beat.line,
       dialogueIndex: effectiveDialogueIndex,
       clipId,
+      ...getBeatOverlayFields(beat),
     })
 
     currentStartTime += duration + DIALOGUE_CLIP_BUFFER_SEC
@@ -1502,6 +1513,8 @@ export function buildBeatFirstPlaybackTimeline(
     label: win.label,
     character: win.character,
     line: win.line,
+    overlayText: win.overlayText,
+    overlayType: win.overlayType,
     isSceneEnd: win.isSceneEnd,
     isSceneStart: index === 0,
   }))
