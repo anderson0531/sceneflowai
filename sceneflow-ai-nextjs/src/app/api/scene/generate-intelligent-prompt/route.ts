@@ -5,7 +5,7 @@ import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
 import {
-  generateSceneImagePrompt,
+  generateSceneImagePromptWithDeadline,
   detectSceneType,
   extractDirectionMetadata,
   assignPropAndLocationReferenceIndices,
@@ -171,7 +171,7 @@ export async function POST(req: NextRequest) {
     const directionMetadata = extractDirectionMetadata(sceneData.sceneDirection)
 
     // 6. Call Gemini intelligence
-    const aiResult = await generateSceneImagePrompt({
+    const aiResult = await generateSceneImagePromptWithDeadline({
       sceneHeading: sceneData.heading || '',
       sceneAction: fullSceneContext,
       sceneNumber: sceneIndex + 1,

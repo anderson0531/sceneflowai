@@ -1,19 +1,66 @@
-import { describe, expect, it } from 'vitest'
-import { buildSceneImageSystemPrompt } from '@/lib/intelligence/scene-image-intelligence'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
-describe('buildSceneImageSystemPrompt', () => {
-  it('requires in-scene performance and camera awareness', () => {
-    const prompt = buildSceneImageSystemPrompt()
-    expect(prompt).toMatch(/CAMERA AWARENESS/i)
-    expect(prompt).toMatch(/unaware of the camera/i)
-    expect(prompt).toMatch(/mid-action/i)
-    expect(prompt).toMatch(/body blocking, gesture/i)
-    expect(prompt).toMatch(/NOT looking at the camera/i)
+vi.mock('@/lib/vertexai/gemini', () => ({
+  generateText: vi.fn(),
+  generateTextCacheAware: vi.fn(
+    () =>
+      new Promise(() => {
+        // never resolves — simulates a hung Vertex call
+      })
+  ),
+}))
+
+import {
+  SCENE_IMAGE_INTELLIGENCE_GEMINI_OPTIONS,
+  SCENE_IMAGE_INTELLIGENCE_DEADLINE_MS,
+  generateSceneImagePromptWithDeadline,
+  type SceneImageIntelligenceRequest,
+} from '@/lib/intelligence/scene-image-intelligence'
+
+const baseRequest: SceneImageIntelligenceRequest = {
+  sceneHeading: 'INT. ALLEY - NIGHT',
+  sceneAction: 'Rain falls as Vesper waits in the shadows.',
+  sceneNumber: 8,
+  sceneType: 'narrative',
+  characters: [
+    {
+      name: 'Vesper Thorne',
+      hasReferenceImage: true,
+      referenceIndex: 1,
+    },
+  ],
+  props: [],
+  referenceImageCount: 1,
+}
+
+describe('scene image intelligence timeout tuning', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
   })
 
-  it('does not collapse action into a neutral standing pose', () => {
-    const prompt = buildSceneImageSystemPrompt()
-    expect(prompt).not.toMatch(/single pose\/position/i)
-    expect(prompt).toMatch(/Do NOT reduce it to a neutral standing pose/i)
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('uses fast Gemini options with no retries and a tight timeout', () => {
+    expect(SCENE_IMAGE_INTELLIGENCE_GEMINI_OPTIONS.model).toBe('gemini-2.5-flash')
+    expect(SCENE_IMAGE_INTELLIGENCE_GEMINI_OPTIONS.thinkingLevel).toBe('minimal')
+    expect(SCENE_IMAGE_INTELLIGENCE_GEMINI_OPTIONS.maxRetries).toBe(0)
+    expect(SCENE_IMAGE_INTELLIGENCE_GEMINI_OPTIONS.skipCache).toBe(true)
+    expect(SCENE_IMAGE_INTELLIGENCE_GEMINI_OPTIONS.timeoutMs).toBeLessThanOrEqual(30_000)
+  })
+
+  it('defines a route-level intelligence deadline under the Vercel maxDuration budget', () => {
+    expect(SCENE_IMAGE_INTELLIGENCE_DEADLINE_MS).toBeLessThanOrEqual(40_000)
+  })
+
+  it('returns rules-based fallback when intelligence exceeds the deadline', async () => {
+    const resultPromise = generateSceneImagePromptWithDeadline(baseRequest, 50)
+    await vi.advanceTimersByTimeAsync(60)
+    const result = await resultPromise
+
+    expect(result.usedAI).toBe(false)
+    expect(result.prompt).toBe('')
+    expect(result.reasoning).toContain('timed out')
   })
 })

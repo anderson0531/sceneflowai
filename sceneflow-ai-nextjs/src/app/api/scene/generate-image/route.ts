@@ -14,7 +14,7 @@ import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
 import {
-  generateSceneImagePrompt,
+  generateSceneImagePromptWithDeadline,
   detectSceneType,
   extractDirectionMetadata,
   assignPropAndLocationReferenceIndices,
@@ -96,6 +96,9 @@ import {
 
 export const runtime = 'nodejs'
 export const maxDuration = 120  // Increased for new AI image models
+
+/** Stop image-generation retries when this much of the route budget is consumed. */
+const ROUTE_TIME_BUDGET_MS = 100_000
 
 /**
  * @deprecated Use generateLinkingDescription from promptOptimizer instead
@@ -267,6 +270,7 @@ export async function POST(req: NextRequest) {
   let userId: string | null = null
   let creditsCharged = 0
   const CREDIT_COST = IMAGE_CREDITS.IMAGEN_3 // 5 credits per image
+  const routeStart = Date.now()
 
   try {
     // 1. Authenticate user
@@ -1406,7 +1410,7 @@ export async function POST(req: NextRequest) {
           ? getSceneBeats(sceneData as Record<string, unknown>)[effectiveBeatIndex]
           : undefined
 
-      const aiResult = await generateSceneImagePrompt({
+      const aiResult = await generateSceneImagePromptWithDeadline({
         sceneHeading: sceneData.heading || '',
         sceneAction: fullSceneContext,
         sceneNumber: (sceneIndex || 0) + 1,
@@ -1427,6 +1431,7 @@ export async function POST(req: NextRequest) {
         availableLocations: locationsWithIndices,
         artStyle: artStyle || 'photorealistic',
         referenceImageCount: totalAvailableRefImages,
+        projectId,
       })
 
       if (aiResult.negativePromptAdditions?.length) {
@@ -2140,6 +2145,12 @@ export async function POST(req: NextRequest) {
         const status = resolveExpressImageErrorStatus(error)
 
         if (isTransientError && generationAttempt < maxGenerationAttempts) {
+          if (Date.now() - routeStart > ROUTE_TIME_BUDGET_MS) {
+            console.warn(
+              `[Scene Image] Route time budget exceeded (${ROUTE_TIME_BUDGET_MS}ms), skipping further retries`
+            )
+            throw error
+          }
           const retryDelay =
             rateLimitBackoffMs[generationAttempt - 1] ??
             rateLimitBackoffMs[rateLimitBackoffMs.length - 1]
@@ -2167,6 +2178,12 @@ export async function POST(req: NextRequest) {
                 errorLower.includes('permission'))))
 
         if (isReferenceImageError && generationAttempt < maxGenerationAttempts) {
+          if (Date.now() - routeStart > ROUTE_TIME_BUDGET_MS) {
+            console.warn(
+              `[Scene Image] Route time budget exceeded (${ROUTE_TIME_BUDGET_MS}ms), skipping further retries`
+            )
+            throw error
+          }
           const retryDelay = 1000 * Math.pow(2, generationAttempt - 1)
           console.log(
             `[Scene Image] Reference image access error. Retrying after ${retryDelay}ms...`

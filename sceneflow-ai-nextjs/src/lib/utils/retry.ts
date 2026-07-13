@@ -245,3 +245,40 @@ export async function fetchWithRetry(
 export function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
+
+// =============================================================================
+// Deadline / Timeout Wrapper
+// =============================================================================
+
+export class TimeoutError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'TimeoutError'
+  }
+}
+
+/**
+ * Race a promise against a deadline. Rejects with TimeoutError if the deadline
+ * is exceeded before the promise settles.
+ */
+export async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  operationName = 'Operation'
+): Promise<T> {
+  let timeoutId: NodeJS.Timeout | undefined
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new TimeoutError(`${operationName} timed out after ${timeoutMs}ms`))
+    }, timeoutMs)
+  })
+
+  try {
+    return await Promise.race([promise, timeoutPromise])
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+    }
+  }
+}

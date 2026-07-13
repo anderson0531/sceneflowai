@@ -17,12 +17,36 @@
  * - Graceful fallback to existing optimizePromptForImagen() if Gemini unavailable
  */
 
-import { generateText, generateTextCacheAware, type TextGenerationOptions } from '@/lib/vertexai/gemini'
+import {
+  generateText,
+  generateTextCacheAware,
+  type CacheAwareTextGenerationOptions,
+} from '@/lib/vertexai/gemini'
+import { withTimeout } from '@/lib/utils/retry'
 import {
   DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK,
 } from '@/lib/character/characterReferenceAssembly'
 import { LOCATION_TURNAROUND_USER_PROMPT_HINT } from '@/lib/vision/locationReferencePrompts'
 import type { BeatKind } from '@/lib/script/segmentTypes'
+
+// =============================================================================
+// Gemini call tuning — fast auxiliary prompt step (must stay within Vercel budget)
+// =============================================================================
+
+/** Shared Vertex options for scene image prompt intelligence. */
+export const SCENE_IMAGE_INTELLIGENCE_GEMINI_OPTIONS: CacheAwareTextGenerationOptions = {
+  model: 'gemini-2.5-flash',
+  thinkingLevel: 'minimal',
+  maxOutputTokens: 3072,
+  timeoutMs: 25_000,
+  maxRetries: 0,
+  skipCache: true,
+  temperature: 0.4,
+  responseMimeType: 'application/json',
+}
+
+/** Route-level deadline for the intelligence phase (belt-and-suspenders). */
+export const SCENE_IMAGE_INTELLIGENCE_DEADLINE_MS = 35_000
 
 // =============================================================================
 // Types
@@ -601,15 +625,12 @@ export async function generateSceneImagePrompt(
       // Use cache-aware generation: the system prompt is static across all scenes
       // in a batch, so it benefits from Vertex AI context caching.
       const result = await generateTextCacheAware(userPrompt, {
+        ...SCENE_IMAGE_INTELLIGENCE_GEMINI_OPTIONS,
         cacheZone: 'style_consistency',
         sceneflowProjectId: request.projectId || 'default',
         systemInstruction: systemPrompt,
         cacheContextParts: [{ text: systemPrompt }],
-        temperature: 0.4, // Slightly creative but mostly deterministic
-        maxOutputTokens: 3072,
-        responseMimeType: 'application/json',
-        thinkingLevel: 'low', // Fast thinking for prompt generation
-        cacheTtlMinutes: 30, // Shorter TTL for batch operations
+        cacheTtlMinutes: 30,
       })
       
       if (result.usedCache) {
@@ -692,6 +713,33 @@ export async function generateSceneImagePrompt(
     return {
       prompt: '', // Empty signals the caller to use the fallback
       reasoning: `AI intelligence unavailable: ${error.message}`,
+      usedAI: false,
+    }
+  }
+}
+
+/**
+ * Run prompt intelligence under a route-level deadline so image generation
+ * can proceed via the rules-based optimizer when Vertex is slow.
+ */
+export async function generateSceneImagePromptWithDeadline(
+  request: SceneImageIntelligenceRequest,
+  deadlineMs: number = SCENE_IMAGE_INTELLIGENCE_DEADLINE_MS
+): Promise<SceneImageIntelligenceResult> {
+  try {
+    return await withTimeout(
+      generateSceneImagePrompt(request),
+      deadlineMs,
+      'Scene Image Intelligence'
+    )
+  } catch (error: any) {
+    const message = error?.message || String(error)
+    console.warn(
+      `[Scene Image Intelligence] Deadline exceeded (${deadlineMs}ms), using rules-based optimizer: ${message}`
+    )
+    return {
+      prompt: '',
+      reasoning: `AI intelligence unavailable: ${message}`,
       usedAI: false,
     }
   }
