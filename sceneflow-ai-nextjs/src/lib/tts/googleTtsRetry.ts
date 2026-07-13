@@ -35,6 +35,19 @@ export function backoffMsFor429Attempt(
   return Math.min(capMs, raw)
 }
 
+/**
+ * Short backoff after intermittent Vertex usage-guidelines blocks (not rate limits).
+ */
+export function backoffMsForPolicyAttempt(
+  attemptIndex: number,
+  baseDelayMs: number = 400,
+  capMs: number = 3000
+): number {
+  const exponential = baseDelayMs * Math.pow(2, attemptIndex)
+  const jitter = Math.floor(Math.random() * 150)
+  return Math.min(capMs, exponential + jitter)
+}
+
 export type VertexTtsRateLimitPayload = {
   userMessage: string
   tips: string[]
@@ -75,4 +88,13 @@ export function getGoogleTts429MaxRetries(): number {
   const n = parseInt(raw, 10)
   if (!Number.isFinite(n) || n < 0) return 3
   return Math.min(n, 8)
+}
+
+/** Extra attempts after a Vertex usage-guidelines block before surfacing policyBlocked to the client. */
+export function getGoogleTtsPolicyMaxRetries(): number {
+  const raw = process.env.GOOGLE_TTS_POLICY_MAX_RETRIES
+  if (raw === undefined || raw === '') return 2
+  const n = parseInt(raw, 10)
+  if (!Number.isFinite(n) || n < 0) return 2
+  return Math.min(n, 4)
 }

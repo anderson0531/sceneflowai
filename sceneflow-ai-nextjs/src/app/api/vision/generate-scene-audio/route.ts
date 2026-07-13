@@ -11,7 +11,9 @@ import { GoogleTtsBlockedError, parseVertexTtsPolicyViolation } from '../../../.
 import {
   GoogleTtsRateLimitedError,
   backoffMsFor429Attempt,
+  backoffMsForPolicyAttempt,
   getGoogleTts429MaxRetries,
+  getGoogleTtsPolicyMaxRetries,
   parseVertexTtsRateLimit,
   sleep,
 } from '../../../../lib/tts/googleTtsRetry'
@@ -782,16 +784,13 @@ async function generateGoogleAudio(
     // e.g. gemini-2.5-flash-tts or gemini-2.5-pro-tts for GA regions / quality tradeoffs.
     payload.voice.modelName =
       process.env.GEMINI_TTS_MODEL?.trim() || 'gemini-3.1-flash-tts-preview'
-    payload.input.prompt = buildGeminiTtsPrompt({
-      audioType: audioType === 'description' ? 'narration' : audioType,
-      voicePrompt: voiceConfig.prompt,
-      deliveryCues,
-    })
     const advancedVoiceOptions = buildGeminiTtsAdvancedVoiceOptions()
     if (advancedVoiceOptions) {
       payload.advancedVoiceOptions = advancedVoiceOptions
     }
   }
+
+  const geminiAudioType = audioType === 'description' ? 'narration' : audioType
 
   // Use v1beta1 for Gemini TTS and Voice Cloning
   const apiVersion = (isGemini || isCustomClone) ? 'v1beta1' : 'v1'
@@ -808,11 +807,24 @@ async function generateGoogleAudio(
   }
 
   const max429Retries = getGoogleTts429MaxRetries()
+  const maxPolicyRetries = getGoogleTtsPolicyMaxRetries()
   let response: Response | null = null
   let lastErrorText = ''
   let lastStatus = 0
+  let attempt429 = 0
+  let policyAttempt = 0
 
-  for (let attempt = 0; attempt <= max429Retries; attempt++) {
+  while (true) {
+    if (isGemini) {
+      const promptLevel = Math.min(policyAttempt, 2) as 0 | 1 | 2
+      payload.input.prompt = buildGeminiTtsPrompt({
+        audioType: geminiAudioType,
+        voicePrompt: voiceConfig.prompt,
+        deliveryCues,
+        promptLevel,
+      })
+    }
+
     response = await fetch(url, {
       method: 'POST',
       headers,
@@ -829,17 +841,29 @@ async function generateGoogleAudio(
 
     const violation = parseVertexTtsPolicyViolation(response.status, lastErrorText, audioType)
     if (violation) {
+      if (policyAttempt < maxPolicyRetries) {
+        const delayMs = backoffMsForPolicyAttempt(policyAttempt)
+        const nextPromptLevel = Math.min(policyAttempt + 1, 2)
+        console.warn(
+          `[Google TTS] Policy block — retry ${policyAttempt + 1}/${maxPolicyRetries} ` +
+            `with prompt level ${nextPromptLevel} after ${delayMs}ms`
+        )
+        policyAttempt++
+        await sleep(delayMs)
+        continue
+      }
       console.warn('[Google TTS] Vertex usage-guidelines block — returning user-facing guidance')
       throw new GoogleTtsBlockedError(violation)
     }
 
     const is429 = response.status === 429
     const ratePayload = parseVertexTtsRateLimit(response.status, lastErrorText)
-    if (is429 && attempt < max429Retries) {
-      const delayMs = backoffMsFor429Attempt(attempt, response.headers.get('retry-after'))
+    if (is429 && attempt429 < max429Retries) {
+      const delayMs = backoffMsFor429Attempt(attempt429, response.headers.get('retry-after'))
       console.warn(
-        `[Google TTS] Rate limited (429), retry ${attempt + 1}/${max429Retries} after ${delayMs}ms`
+        `[Google TTS] Rate limited (429), retry ${attempt429 + 1}/${max429Retries} after ${delayMs}ms`
       )
+      attempt429++
       await sleep(delayMs)
       continue
     }
