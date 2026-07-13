@@ -9,6 +9,7 @@ import { PreviewPanel } from './PreviewPanel'
 import { SceneComparisonPanel } from './SceneComparisonPanel'
 import { useOverlayStore } from '@/store/useOverlayStore'
 import { toast } from 'sonner'
+import { waitForUiPaint } from '@/lib/ui/waitForUiPaint'
 import type { PreserveElement } from '@/lib/audio/cleanupAudio'
 import {
   applyDeselectedSceneChanges,
@@ -29,7 +30,11 @@ interface SceneEditorModalProps {
   characters: any[]
   previousScene?: any
   nextScene?: any
-  onApplyChanges: (sceneIndex: number, revisedScene: any, options?: SceneEditorApplyOptions) => void
+  onApplyChanges: (
+    sceneIndex: number,
+    revisedScene: any,
+    options?: SceneEditorApplyOptions
+  ) => void | Promise<void>
   initialInstructions?: string
 }
 
@@ -48,6 +53,7 @@ export function SceneEditorModal({
   const [customInstruction, setCustomInstruction] = useState(initialInstructions)
   const [previewScene, setPreviewScene] = useState<any | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isApplying, setIsApplying] = useState(false)
   const [revisionHistory, setRevisionHistory] = useState<any[]>([])
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState(-1)
   const [showPreview, setShowPreview] = useState(false)
@@ -188,9 +194,11 @@ export function SceneEditorModal({
       setCurrentHistoryIndex(newHistory.length - 1)
 
       overlayStore.setProgress(100)
-      overlayStore.setStatus('Revision complete!')
+      overlayStore.setStatus('Loading preview...')
 
       setShowPreview(true)
+      await waitForUiPaint(50)
+      overlayStore.hide()
     } catch (error) {
       console.error('[Scene Editor] Failed to generate preview:', error)
       const message = error instanceof Error ? error.message : 'Failed to revise scene'
@@ -203,9 +211,9 @@ export function SceneEditorModal({
           ? 'Scene revision timed out — try again or preserve scene direction.'
           : message
       )
+      overlayStore.hide()
     } finally {
       setIsGenerating(false)
-      overlayStore.hide()
     }
   }
 
@@ -218,8 +226,8 @@ export function SceneEditorModal({
     })
   }
 
-  const handleApplyChanges = () => {
-    if (!previewScene) return
+  const handleApplyChanges = async () => {
+    if (!previewScene || isApplying) return
 
     const revisedSceneWithMetadata = applyDeselectedSceneChanges(
       scene,
@@ -231,10 +239,14 @@ export function SceneEditorModal({
     setRevisionHistory(newHistory)
     setCurrentHistoryIndex(newHistory.length - 1)
 
-    onApplyChanges(sceneIndex, revisedSceneWithMetadata, {
-      preserveElements: buildPreserveElements(),
-    })
-    onClose()
+    setIsApplying(true)
+    try {
+      await onApplyChanges(sceneIndex, revisedSceneWithMetadata, {
+        preserveElements: buildPreserveElements(),
+      })
+    } finally {
+      setIsApplying(false)
+    }
   }
 
   const handleUndo = () => {
@@ -434,11 +446,20 @@ export function SceneEditorModal({
               ) : (
                 <Button
                   onClick={handleApplyChanges}
-                  disabled={!canApplyPreview || isGenerating}
+                  disabled={!canApplyPreview || isGenerating || isApplying}
                   className="bg-sf-primary"
                 >
-                  <Check className="w-4 h-4 mr-2" />
-                  Apply Changes
+                  {isApplying ? (
+                    <>
+                      <Loader className="w-4 h-4 animate-spin mr-2" />
+                      Applying...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 mr-2" />
+                      Apply Changes
+                    </>
+                  )}
                 </Button>
               )}
             </div>

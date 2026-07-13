@@ -5,7 +5,17 @@
  * the associated audio files become stale and should be cleared.
  */
 
-import { mergeScenePreservingMedia, findMatchingSceneInArray } from '@/lib/storyboard/mergeSceneMedia'
+import {
+  mergeScenePreservingMedia,
+  findMatchingSceneInArray,
+  mergeSfxAudioArrays,
+  mergeSfxCuesByIdentity,
+  mergeSfxParallelArraysByCueIdentity,
+  mergeSfxSourceMetaField,
+  mergeDialogueAudioField,
+  sceneSfxHasIdentityKeys,
+} from '@/lib/storyboard/mergeSceneMedia'
+import { upsertBeatSfxCueOnScene } from '@/lib/script/deriveSfxFromSceneContent'
 import { stripGhostStandaloneNarration } from '@/lib/script/narration'
 import { coerceSceneSfxFlatArray } from '@/lib/script/segmentScript'
 
@@ -76,6 +86,112 @@ export const SCENE_AUDIO_FIELD_KEYS = [
 ] as const
 
 const SFX_AUDIO_FIELD_KEYS = ['sfxAudio', 'sfxSourceMeta'] as const
+
+/** Audio object-map fields merged by shallow per-key union (incoming wins per lang key). */
+const LANG_AUDIO_OBJECT_FIELD_KEYS = ['narrationAudio', 'descriptionAudio'] as const
+
+function mergeLangAudioObjectField(canonVal: unknown, incomingVal: unknown): unknown {
+  if (!canonVal) return incomingVal
+  if (!incomingVal) return canonVal
+  if (typeof canonVal !== 'object' || Array.isArray(canonVal)) return incomingVal ?? canonVal
+  if (typeof incomingVal !== 'object' || Array.isArray(incomingVal)) return incomingVal ?? canonVal
+
+  const canonMap = canonVal as Record<string, unknown>
+  const incomingMap = incomingVal as Record<string, unknown>
+  const langs = new Set([...Object.keys(canonMap), ...Object.keys(incomingMap)])
+  const merged: Record<string, unknown> = {}
+
+  for (const lang of langs) {
+    const canonEntry = canonMap[lang]
+    const incomingEntry = incomingMap[lang]
+    if (!canonEntry) {
+      merged[lang] = incomingEntry
+      continue
+    }
+    if (!incomingEntry) {
+      merged[lang] = canonEntry
+      continue
+    }
+    const incUrl = (incomingEntry as { url?: string })?.url?.trim()
+    const canUrl = (canonEntry as { url?: string })?.url?.trim()
+    if (incUrl) {
+      merged[lang] = { ...(canonEntry as object), ...(incomingEntry as object) }
+    } else if (canUrl) {
+      merged[lang] = { ...(incomingEntry as object), ...(canonEntry as object) }
+    } else {
+      merged[lang] = { ...(canonEntry as object), ...(incomingEntry as object) }
+    }
+  }
+
+  return merged
+}
+
+export type AudioSlotSavedPayload = {
+  sceneIndex: number
+  audioType: 'sfx' | 'music'
+  audioUrl: string
+  sfxIndex?: number
+  sfxAttribution?: Record<string, unknown> | null
+  beatContext?: { beatId: string; beatDescription: string }
+  musicDuration?: number
+  musicFileDuration?: number
+}
+
+/** Apply one server-confirmed audio slot onto a scene (mirrors persistSceneAudioAtomic client-side). */
+export function applyAudioSlotToScene(scene: any, payload: AudioSlotSavedPayload): any {
+  if (!scene || typeof scene !== 'object') return scene
+  const updated = { ...scene }
+
+  if (payload.audioType === 'music') {
+    updated.musicAudio = payload.audioUrl
+    if (typeof payload.musicDuration === 'number' && payload.musicDuration > 0) {
+      updated.musicDuration = payload.musicDuration
+    }
+    if (typeof payload.musicFileDuration === 'number' && payload.musicFileDuration > 0) {
+      updated.musicFileDuration = payload.musicFileDuration
+    }
+    return updated
+  }
+
+  let sfxIndex = payload.sfxIndex
+  if (payload.beatContext?.beatId?.trim()) {
+    const slot = upsertBeatSfxCueOnScene(updated, {
+      beatId: payload.beatContext.beatId.trim(),
+      actionDescription: String(payload.beatContext.beatDescription ?? '').trim(),
+      kind: 'action',
+    })
+    sfxIndex = slot.sfxIndex
+  }
+
+  if (sfxIndex === undefined) return updated
+
+  const sfxAudio = Array.isArray(updated.sfxAudio) ? [...updated.sfxAudio] : []
+  while (sfxAudio.length <= sfxIndex) sfxAudio.push(null)
+  sfxAudio[sfxIndex] = payload.audioUrl
+  updated.sfxAudio = sfxAudio
+
+  if (!Array.isArray(updated.sfx)) updated.sfx = []
+  const sfx = [...updated.sfx]
+  while (sfx.length <= sfxIndex) sfx.push(null)
+  const sfxEntry = sfx[sfxIndex]
+  if (sfxEntry) {
+    if (typeof sfxEntry === 'string') {
+      sfx[sfxIndex] = { description: sfxEntry, audioUrl: payload.audioUrl }
+    } else if (typeof sfxEntry === 'object') {
+      sfx[sfxIndex] = { ...(sfxEntry as object), audioUrl: payload.audioUrl }
+    }
+  }
+  updated.sfx = sfx
+
+  if (payload.sfxAttribution !== undefined) {
+    const sfxSourceMeta = Array.isArray(updated.sfxSourceMeta) ? [...updated.sfxSourceMeta] : []
+    while (sfxSourceMeta.length <= sfxIndex) sfxSourceMeta.push(null)
+    sfxSourceMeta[sfxIndex] = payload.sfxAttribution
+    updated.sfxSourceMeta = sfxSourceMeta
+  }
+
+  return updated
+}
 
 function dedupeUrls(urls: string[]): string[] {
   return [...new Set(urls.filter((url) => url && typeof url === 'string'))]
@@ -600,25 +716,100 @@ export function incomingAudioFieldHasContent(key: string, value: unknown): boole
 /**
  * Merge one scene when incoming audio came from a fresh server snapshot (atomic PATCH).
  * Preserves storyboard media from canonical; incoming audio fields win when non-empty.
+ * Array fields use additive union so out-of-order refreshes never drop sibling slots.
  */
 export function mergeSceneTrustingIncomingAudio(canonical: any, incoming: any): any {
   if (!canonical) return incoming
   if (!incoming) return canonical
 
   const merged = mergeScenePreservingMedia(canonical, incoming)
+
+  const arrayUnionKeys = new Set<string>([
+    ...SFX_AUDIO_FIELD_KEYS,
+    'dialogueAudio',
+    ...LANG_AUDIO_OBJECT_FIELD_KEYS,
+  ])
+
   for (const key of SCENE_AUDIO_FIELD_KEYS) {
+    if (arrayUnionKeys.has(key)) continue
     if (
       key in incoming &&
       incoming[key] !== undefined &&
       incomingAudioFieldHasContent(key, incoming[key])
     ) {
       merged[key] = incoming[key]
+    } else if (
+      canonical[key] !== undefined &&
+      incomingAudioFieldHasContent(key, canonical[key])
+    ) {
+      merged[key] = canonical[key]
     }
   }
-  if (Array.isArray(incoming.sfx) && incoming.sfx.length > 0) {
-    merged.sfx = incoming.sfx
+
+  if ('dialogueAudio' in incoming || canonical.dialogueAudio !== undefined) {
+    const mergedDialogue = mergeDialogueAudioField(canonical, incoming)
+    if (mergedDialogue !== undefined) merged.dialogueAudio = mergedDialogue
   }
+
+  for (const key of LANG_AUDIO_OBJECT_FIELD_KEYS) {
+    if (key in incoming || canonical[key] !== undefined) {
+      const mergedLangAudio = mergeLangAudioObjectField(canonical[key], incoming[key])
+      if (mergedLangAudio !== undefined) merged[key] = mergedLangAudio
+    }
+  }
+
+  const canonSfxArr = Array.isArray(canonical.sfx) ? canonical.sfx : []
+  const incomingSfxArr = Array.isArray(incoming.sfx) ? incoming.sfx : []
+  if (incomingSfxArr.length > 0 || canonSfxArr.length > 0) {
+    const mergedSfx =
+      sceneSfxHasIdentityKeys(canonical, incoming) || incomingSfxArr.length > 0
+        ? mergeSfxCuesByIdentity(canonSfxArr, incomingSfxArr)
+        : incomingSfxArr.length > 0
+          ? incomingSfxArr
+          : canonSfxArr
+    if (mergedSfx.length > 0) {
+      merged.sfx = mergedSfx
+      const { sfxAudio, sfxSourceMeta } = mergeSfxParallelArraysByCueIdentity(
+        canonical,
+        incoming,
+        mergedSfx
+      )
+      if (
+        sfxAudio.length > 0 ||
+        Array.isArray(canonical.sfxAudio) ||
+        Array.isArray(incoming.sfxAudio)
+      ) {
+        merged.sfxAudio = sfxAudio
+      }
+      if (
+        sfxSourceMeta.length > 0 ||
+        Array.isArray(canonical.sfxSourceMeta) ||
+        Array.isArray(incoming.sfxSourceMeta)
+      ) {
+        merged.sfxSourceMeta = sfxSourceMeta
+      }
+    }
+  } else {
+    const mergedSfxAudio = mergeSfxAudioFieldUnion(canonical, incoming)
+    if (mergedSfxAudio !== undefined) merged.sfxAudio = mergedSfxAudio
+
+    const mergedSfxSourceMeta = mergeSfxSourceMetaField(canonical, incoming)
+    if (mergedSfxSourceMeta !== undefined) merged.sfxSourceMeta = mergedSfxSourceMeta
+  }
+
   return merged
+}
+
+function mergeSfxAudioFieldUnion(canon: any, incoming: any): (string | null)[] | undefined {
+  const c = canon?.sfxAudio
+  const inc = incoming?.sfxAudio
+  if (c === undefined && inc === undefined) return undefined
+  const canonArr = Array.isArray(c) ? c : []
+  const incomingArr = Array.isArray(inc) ? inc : []
+  if (canonArr.length === 0 && incomingArr.length === 0) {
+    return Array.isArray(inc) ? inc : Array.isArray(c) ? c : undefined
+  }
+  return mergeSfxAudioArrays(canonArr, incomingArr)
 }
 
 /** Per-scene merge for atomic audio refresh (after PATCH + GET). */

@@ -19,6 +19,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { upload } from '@vercel/blob/client'
 import debounce from 'lodash/debounce'
+import { waitForUiPaint } from '@/lib/ui/waitForUiPaint'
 import {
   applyScenePreservation,
   shouldRegenerateSceneDirection,
@@ -26,10 +27,12 @@ import {
 } from '@/lib/script/scenePreservation'
 import {
   applySceneEditAudioPolicy,
+  applyAudioSlotToScene,
   clearAllSceneAudio,
   mergeScenesForScriptSave,
   mergeScenesTrustingIncomingAudio,
   removeStaleAudioUrlFromScene,
+  type AudioSlotSavedPayload,
   type PreserveElement,
 } from '@/lib/audio/cleanupAudio'
 import { resolveStoryboardScenes, totalStoryboardMediaScore } from '@/lib/storyboard/resolveStoryboardScenes'
@@ -1129,6 +1132,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
     }
   }, [projectId])
+
+  const handleAudioSlotSaved = useCallback((payload: AudioSlotSavedPayload) => {
+    setScript((prev) => {
+      const current = prev || scriptRef.current
+      if (!current?.script?.scenes || payload.sceneIndex < 0) return current
+
+      const scenes = [...current.script.scenes]
+      if (payload.sceneIndex >= scenes.length) return current
+
+      scenes[payload.sceneIndex] = applyAudioSlotToScene(scenes[payload.sceneIndex], payload)
+      const updated = {
+        ...current,
+        script: {
+          ...current.script,
+          scenes,
+        },
+      }
+      scriptRef.current = updated
+      return updated
+    })
+    setScriptEditedAt(Date.now())
+  }, [])
 
   const setProductionViewWithUrl = useCallback(
     (view: 'studio' | 'screening') => {
@@ -11550,6 +11575,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         void handleBackgroundDirectionGeneration(sceneIndex, persistedScene)
       }
 
+      overlayStore.setProgress(95)
+      overlayStore.setStatus('Updating display...')
+      await waitForUiPaint(100)
+
       // Close the editor
       setIsSceneEditorOpen(false)
       setEditingSceneIndex(null)
@@ -11563,7 +11592,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           toast.success('Scene changes applied — existing audio preserved')
         }
       } catch {}
-      
+
       overlayStore.hide()
 
       // NOTE: Removed loadProject() call - it was causing race condition
@@ -13485,6 +13514,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               <ScriptPanel 
                 script={script}
                 onScriptChange={handleScriptChange}
+                onAudioSlotSaved={handleAudioSlotSaved}
                 isGenerating={isGenerating}
                 onExpandScene={expandScene}
                 onExpandAllScenes={expandAllScenes}

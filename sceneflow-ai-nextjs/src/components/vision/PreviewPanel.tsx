@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import { Badge } from '@/components/ui/badge'
 import {
   Loader,
@@ -193,6 +194,33 @@ export function PreviewPanel({
   preserveSceneDirection = false,
   preserveBeatFrames = false,
 }: PreviewPanelProps) {
+  const deselected = deselectedChanges ?? new Set<string>()
+
+  const changeKeys = useMemo(() => {
+    if (isGenerating || !previewScene) return [] as SceneChangeKey[]
+    return diffSceneChanges(originalScene, previewScene)
+  }, [originalScene, previewScene, isGenerating])
+
+  const changeSet = useMemo(() => new Set(changeKeys), [changeKeys])
+
+  const { selected, total } = useMemo(
+    () => countSelectedChanges(changeKeys, deselected),
+    [changeKeys, deselected]
+  )
+
+  const structured = useMemo(() => {
+    if (isGenerating || !previewScene) return false
+    return isStructuredBeatPreview(originalScene, previewScene)
+  }, [originalScene, previewScene, isGenerating])
+
+  const framesToRegenerate = useMemo(() => {
+    if (preserveBeatFrames || isGenerating || !previewScene) return []
+    return beatsWithChangedFingerprints(originalScene, previewScene, deselected)
+  }, [preserveBeatFrames, originalScene, previewScene, deselected, isGenerating])
+
+  const dimIfSkipped = (key: SceneChangeKey) =>
+    deselected.has(key) ? 'opacity-50' : ''
+
   if (isGenerating) {
     return (
       <div className="space-y-4">
@@ -224,21 +252,6 @@ export function PreviewPanel({
       </div>
     )
   }
-
-  const changeKeys = diffSceneChanges(originalScene, previewScene)
-  const changeSet = new Set(changeKeys)
-  const { selected, total } = countSelectedChanges(changeKeys, deselectedChanges ?? new Set())
-  const structured = isStructuredBeatPreview(originalScene, previewScene)
-  const dimIfSkipped = (key: SceneChangeKey) =>
-    deselectedChanges?.has(key) ? 'opacity-50' : ''
-
-  const framesToRegenerate = preserveBeatFrames
-    ? []
-    : beatsWithChangedFingerprints(
-        originalScene,
-        previewScene,
-        deselectedChanges ?? new Set()
-      )
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto">

@@ -268,7 +268,7 @@ function mergeDialogueAudioArrays(canonArr: any[], incomingArr: any[]): any[] {
   return result
 }
 
-function mergeDialogueAudioField(canon: any, incoming: any): any {
+export function mergeDialogueAudioField(canon: any, incoming: any): any {
   const c = canon?.dialogueAudio
   const inc = incoming?.dialogueAudio
   if (!c) return inc
@@ -333,7 +333,7 @@ function sfxCueIdentityKeys(cue: SfxCueRecord, arrayIndex: number): string[] {
   return keys
 }
 
-function sceneSfxHasIdentityKeys(canon: any, incoming: any): boolean {
+export function sceneSfxHasIdentityKeys(canon: any, incoming: any): boolean {
   const hasIdentity = (arr: unknown[]) =>
     arr.some((raw, i) => {
       const cue = coerceSfxCueRecord(raw, i)
@@ -408,7 +408,7 @@ function resolveSfxBundleForCue(
   return { url: null, meta: null }
 }
 
-function mergeSfxCuesByIdentity(canonArr: unknown[], incomingArr: unknown[]): unknown[] {
+export function mergeSfxCuesByIdentity(canonArr: unknown[], incomingArr: unknown[]): unknown[] {
   const canonByKey = new Map<string, SfxCueRecord>()
   canonArr.forEach((raw, idx) => {
     const cue = coerceSfxCueRecord(raw, idx)
@@ -455,7 +455,7 @@ function mergeSfxCuesByIdentity(canonArr: unknown[], incomingArr: unknown[]): un
   return merged
 }
 
-function mergeSfxParallelArraysByCueIdentity(
+export function mergeSfxParallelArraysByCueIdentity(
   canon: any,
   incoming: any,
   mergedCues: unknown[]
@@ -480,7 +480,7 @@ function mergeSfxParallelArraysByCueIdentity(
 }
 
 /** Positional merge: incoming URL wins when non-empty; otherwise keep canonical slot. */
-function mergeSfxAudioArrays(canonArr: unknown[], incomingArr: unknown[]): (string | null)[] {
+export function mergeSfxAudioArrays(canonArr: unknown[], incomingArr: unknown[]): (string | null)[] {
   const maxLen = Math.max(canonArr.length, incomingArr.length)
   const result: (string | null)[] = []
   for (let i = 0; i < maxLen; i++) {
@@ -505,7 +505,7 @@ function mergeSfxAudioField(canon: any, incoming: any): (string | null)[] | unde
   return mergeSfxAudioArrays(canonArr, incomingArr)
 }
 
-function mergeSfxSourceMetaField(canon: any, incoming: any): unknown[] | undefined {
+export function mergeSfxSourceMetaField(canon: any, incoming: any): unknown[] | undefined {
   const c = canon?.sfxSourceMeta
   const inc = incoming?.sfxSourceMeta
   if (c === undefined && inc === undefined) return undefined

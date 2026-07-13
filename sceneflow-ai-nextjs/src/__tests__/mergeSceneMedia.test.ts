@@ -4,6 +4,7 @@ import {
   mergeExpressOrchestratedScenes,
   mergeScenesTrustingIncomingAudio,
   mergeSceneTrustingIncomingAudio,
+  applyAudioSlotToScene,
   sceneHasAudioRefs,
   countNonEmptySfxSlots,
 } from '@/lib/audio/cleanupAudio'
@@ -405,6 +406,108 @@ describe('mergeSceneTrustingIncomingAudio sibling preservation', () => {
     const merged = mergeSceneTrustingIncomingAudio(canonical, incoming)
     expect(merged.dialogueAudio.en[0].audioUrl).toBe('https://example.com/d.mp3')
     expect(merged.sfxAudio[0]).toBe('https://example.com/sfx.mp3')
+  })
+
+  it('union-merges sfxAudio when stale GET snapshot is shorter (out-of-order refresh)', () => {
+    const canonical = {
+      id: 's1',
+      sfx: [
+        { description: 'A', sourceBeatId: 'bt_1', sfxId: 'sfx_1' },
+        { description: 'B', sourceBeatId: 'bt_2', sfxId: 'sfx_2' },
+        { description: 'C', sourceBeatId: 'bt_3', sfxId: 'sfx_3' },
+      ],
+      sfxAudio: [
+        'https://example.com/a.mp3',
+        'https://example.com/b.mp3',
+        'https://example.com/c.mp3',
+      ],
+    }
+    const staleIncoming = {
+      id: 's1',
+      sfx: [
+        { description: 'A', sourceBeatId: 'bt_1', sfxId: 'sfx_1' },
+        { description: 'B', sourceBeatId: 'bt_2', sfxId: 'sfx_2' },
+      ],
+      sfxAudio: ['https://example.com/a.mp3', 'https://example.com/b.mp3'],
+    }
+
+    const merged = mergeSceneTrustingIncomingAudio(canonical, staleIncoming)
+    expect(merged.sfxAudio).toEqual([
+      'https://example.com/a.mp3',
+      'https://example.com/b.mp3',
+      'https://example.com/c.mp3',
+    ])
+    expect(merged.sfx).toHaveLength(3)
+  })
+
+  it('retains all parallel SFX sibling slots when incoming adds one beat at a time', () => {
+    const canonical = {
+      id: 's1',
+      sfx: [{ description: 'Wind', sourceBeatId: 'bt_1' }],
+      sfxAudio: ['https://example.com/wind.mp3'],
+    }
+    const incoming = {
+      id: 's1',
+      sfx: [
+        { description: 'Wind', sourceBeatId: 'bt_1' },
+        { description: 'Thunder', sourceBeatId: 'bt_2' },
+      ],
+      sfxAudio: ['https://example.com/wind.mp3', 'https://example.com/thunder.mp3'],
+    }
+
+    const merged = mergeSceneTrustingIncomingAudio(canonical, incoming)
+    expect(merged.sfxAudio).toEqual([
+      'https://example.com/wind.mp3',
+      'https://example.com/thunder.mp3',
+    ])
+  })
+
+  it('single incoming sfx slot does not clear unrelated canonical slots', () => {
+    const canonical = {
+      id: 's1',
+      musicAudio: 'https://example.com/music.mp3',
+      sfxAudio: [null, 'https://example.com/existing.mp3'],
+    }
+    const incoming = {
+      id: 's1',
+      sfxAudio: ['https://example.com/new.mp3'],
+    }
+
+    const merged = mergeSceneTrustingIncomingAudio(canonical, incoming)
+    expect(merged.musicAudio).toBe('https://example.com/music.mp3')
+    expect(merged.sfxAudio[0]).toBe('https://example.com/new.mp3')
+    expect(merged.sfxAudio[1]).toBe('https://example.com/existing.mp3')
+  })
+})
+
+describe('applyAudioSlotToScene', () => {
+  it('writes confirmed sfx slot at server-resolved index', () => {
+    const scene = {
+      id: 's1',
+      sfx: [{ description: 'Action', sourceBeatId: 'bt_5' }],
+      sfxAudio: [null],
+    }
+    const updated = applyAudioSlotToScene(scene, {
+      sceneIndex: 0,
+      audioType: 'sfx',
+      audioUrl: 'https://example.com/beat5.mp3',
+      sfxIndex: 0,
+    })
+    expect(updated.sfxAudio[0]).toBe('https://example.com/beat5.mp3')
+  })
+
+  it('writes music audio and duration fields', () => {
+    const scene = { id: 's1' }
+    const updated = applyAudioSlotToScene(scene, {
+      sceneIndex: 0,
+      audioType: 'music',
+      audioUrl: 'https://example.com/music.mp3',
+      musicDuration: 30,
+      musicFileDuration: 29.5,
+    })
+    expect(updated.musicAudio).toBe('https://example.com/music.mp3')
+    expect(updated.musicDuration).toBe(30)
+    expect(updated.musicFileDuration).toBe(29.5)
   })
 })
 

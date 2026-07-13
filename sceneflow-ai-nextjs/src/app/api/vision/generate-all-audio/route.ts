@@ -5,7 +5,7 @@ import { optimizeTextForTTS } from '../../../../lib/tts/textOptimizer'
 import { getBatchNarrationTtsText, sceneHasNarratorInDialogue } from '../../../../lib/script/narration'
 import { put } from '@vercel/blob'
 import { toCanonicalName, generateAliases } from '../../../../lib/character/canonical'
-import { resolveSfxDuration } from '../../../../lib/elevenlabs/sfxDuration'
+import { mergeSceneTrustingIncomingAudio } from '../../../../lib/audio/cleanupAudio'
 
 export const maxDuration = 300 // 5 minutes for batch generation
 export const runtime = 'nodejs'
@@ -642,12 +642,34 @@ export async function POST(req: NextRequest) {
             })); // End of chunk Promise.all
           } // End of outer chunk loop
           
-          // FINAL ATOMIC DB UPDATE
+          // FINAL ATOMIC DB UPDATE — union-merge with fresh DB so concurrent atomic PATCHes are not clobbered
           const freshProject = await Project.findByPk(projectId);
           if (freshProject) {
             const freshMetadata = freshProject.metadata || {};
             const freshVisionPhase = freshMetadata.visionPhase || {};
             const hasNestedStructure = !!freshVisionPhase.script?.script?.scenes?.length;
+            const freshScenesRaw = hasNestedStructure
+              ? freshVisionPhase.script?.script?.scenes
+              : freshVisionPhase.script?.scenes;
+            const freshScenes = Array.isArray(freshScenesRaw) ? freshScenesRaw : [];
+
+            const maxLen = Math.max(freshScenes.length, scenes.length);
+            const mergedScenes: any[] = [];
+            for (let idx = 0; idx < maxLen; idx++) {
+              const freshScene = freshScenes[idx];
+              const generatedScene = scenes[idx];
+              if (!generatedScene) {
+                if (freshScene) mergedScenes.push(freshScene);
+                continue;
+              }
+              if (!freshScene) {
+                mergedScenes.push(generatedScene);
+                continue;
+              }
+              mergedScenes.push(
+                mergeSceneTrustingIncomingAudio(freshScene, generatedScene)
+              );
+            }
             
             await freshProject.update({
               metadata: {
@@ -659,17 +681,17 @@ export async function POST(req: NextRequest) {
                         ...freshVisionPhase.script,
                         script: {
                           ...freshVisionPhase.script?.script,
-                          scenes: scenes
+                          scenes: mergedScenes
                         }
                       }
                     : {
                         ...freshVisionPhase.script,
-                        scenes: scenes
+                        scenes: mergedScenes
                       }
                 }
               }
             });
-            console.log('[Batch Audio] Final DB update complete.');
+            console.log('[Batch Audio] Final DB update complete (union-merged with fresh state).');
           }
           
           // Send completion

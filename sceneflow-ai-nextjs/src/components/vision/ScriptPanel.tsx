@@ -11,6 +11,7 @@
  */
 'use client'
 
+import type { AudioSlotSavedPayload } from '@/lib/audio/cleanupAudio'
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -195,6 +196,19 @@ const DirectorChairIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 const SCENE_IMAGE_DELAY_MS = 5000
 
+/** Serialize PATCH -> refresh per project so out-of-order GET merges cannot drop sibling slots. */
+const audioRefreshQueues = new Map<string, Promise<void>>()
+
+function enqueueSerializedAudioRefresh(
+  projectId: string,
+  task: () => Promise<void>
+): Promise<void> {
+  const prev = audioRefreshQueues.get(projectId) ?? Promise.resolve()
+  const next = prev.then(task, task)
+  audioRefreshQueues.set(projectId, next.catch(() => {}))
+  return next
+}
+
 // Production readiness state for workflow guards
 interface ProductionReadiness {
   voicesAssigned: number
@@ -211,6 +225,8 @@ interface ProductionReadiness {
 interface ScriptPanelProps {
   script: any
   onScriptChange: (script: any, options?: { trustIncomingAudio?: boolean }) => void
+  /** Apply one server-confirmed audio slot without a full-project GET refresh. */
+  onAudioSlotSaved?: (payload: AudioSlotSavedPayload) => void
   isGenerating: boolean
   onExpandScene?: (sceneNumber: number) => Promise<void>
   onExpandAllScenes?: () => Promise<void>
@@ -703,7 +719,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onOpenReferences, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onOpenReferences, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice }: ScriptPanelProps) {
 
 
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
@@ -2297,20 +2313,38 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         const error = await response.json()
         throw new Error(error.error || 'Failed to save audio atomically')
       }
-      
-      console.log('[Save Audio] Atomic update successful, now fetching fresh state from server')
-      
-      // Fetch fresh project data from server to get updated scenes with all audio
-      const projectResponse = await fetch(`/api/projects/${projectId}`)
-      if (projectResponse.ok) {
-        const projectData = await projectResponse.json()
-        const freshScript = projectData.project?.metadata?.visionPhase?.script
-        
-        if (freshScript) {
-          console.log('[Save Audio] Got fresh script from server, updating local state')
-          // Update parent state with fresh data from server (includes all saved audio)
-          onScriptChange(freshScript, { trustIncomingAudio: true })
-        }
+
+      const patchResult = await response.json()
+      const confirmedSfxIndex =
+        typeof patchResult.sfxIndex === 'number' ? patchResult.sfxIndex : sfxIdx
+
+      if (onAudioSlotSaved) {
+        onAudioSlotSaved({
+          sceneIndex: sceneIdx,
+          audioType,
+          audioUrl,
+          sfxIndex: confirmedSfxIndex,
+          sfxAttribution,
+          beatContext,
+          musicDuration,
+          musicFileDuration,
+        })
+        console.log('[Save Audio] Applied server-confirmed slot from PATCH response:', {
+          sceneIdx,
+          audioType,
+          sfxIndex: confirmedSfxIndex,
+        })
+      } else if (projectId) {
+        await enqueueSerializedAudioRefresh(projectId, async () => {
+          console.log('[Save Audio] Fallback: fetching fresh state from server (serialized)')
+          const projectResponse = await fetch(`/api/projects/${projectId}`)
+          if (!projectResponse.ok) return
+          const projectData = await projectResponse.json()
+          const freshScript = projectData.project?.metadata?.visionPhase?.script
+          if (freshScript) {
+            onScriptChange(freshScript, { trustIncomingAudio: true })
+          }
+        })
       }
       
       console.log('[Save Audio] State synced with server:', {
@@ -2321,6 +2355,17 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     } catch (error: any) {
       console.error('[Save Audio] Atomic update failed:', error)
       toast.error(`Failed to save audio: ${error.message}`)
+      if (projectId) {
+        await enqueueSerializedAudioRefresh(projectId, async () => {
+          const projectResponse = await fetch(`/api/projects/${projectId}`)
+          if (!projectResponse.ok) return
+          const projectData = await projectResponse.json()
+          const freshScript = projectData.project?.metadata?.visionPhase?.script
+          if (freshScript) {
+            onScriptChange(freshScript, { trustIncomingAudio: true })
+          }
+        })
+      }
     }
   }
 
