@@ -3680,9 +3680,14 @@ export function SceneProductionMixer({
     // Build a map of dialogue clip id -> segment index
     const clipIdToSegmentIndex = new Map<string, number>()
     segments.forEach((seg, idx) => {
-      const lineIds = seg.dialogueLineIds || []
+      const lineIds = [
+        ...(seg.dialogueLineIds || []),
+        ...((seg.dialogueLines || [])
+          .map((line) => line?.id)
+          .filter((id): id is string => typeof id === 'string' && !!id)),
+      ]
       resolvedDialogueClips.forEach((c) => {
-        if (lineIds.some((lineId) => clipMatchesDialogueLineId(c, lineId, narrationPrefix))) {
+        if (lineIds.some((lineId) => clipMatchesDialogueLineId(c, lineId, narrationPrefix, mixerAudioSceneStub))) {
           clipIdToSegmentIndex.set(c.id, idx)
         }
       })
@@ -3723,6 +3728,7 @@ export function SceneProductionMixer({
     getPlaybackSegmentDuration,
     narrationPrefix,
     getDialoguePlaybackRate,
+    mixerAudioSceneStub,
   ])
 
   /** Timeline bars reflect wall-clock span (source duration / playback rate). */

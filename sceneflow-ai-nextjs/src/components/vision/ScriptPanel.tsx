@@ -5436,11 +5436,6 @@ function SceneCard({
                   onWorkflowOpenChange(true)
                 }
               }}
-              onNextScene={() => {
-                if (onNavigateScene && totalScenes && sceneIdx < totalScenes - 1) {
-                  onNavigateScene(sceneIdx + 1)
-                }
-              }}
             />
           )
         })()}

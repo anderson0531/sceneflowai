@@ -7,8 +7,6 @@ import {
   FileText,
   Volume2,
   Compass,
-  Sparkles,
-  CheckCircle2,
   Lightbulb,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -47,16 +45,6 @@ interface NextStepAction {
 // ============================================================================
 
 function getNextStep(state: WorkflowState): NextStepAction | null {
-  // All done
-  if (state.hasRender) {
-    return {
-      label: 'Scene Complete — Move to Next Scene',
-      description: 'This scene is fully rendered. Navigate to the next scene or open Production Render.',
-      icon: <CheckCircle2 className="w-4 h-4" />,
-      accentColor: 'emerald',
-    }
-  }
-
   // Script tab steps
   if (!state.hasScript) {
     return {
@@ -116,15 +104,12 @@ interface WorkflowNextStepBannerProps {
   workflowState: WorkflowState
   /** Called when user clicks the action button */
   onAction?: (actionId: string, targetTab?: string) => void
-  /** Called to navigate to next scene */
-  onNextScene?: () => void
   className?: string
 }
 
 export function WorkflowNextStepBanner({
   workflowState,
   onAction,
-  onNextScene,
   className,
 }: WorkflowNextStepBannerProps) {
   const nextStep = getNextStep(workflowState)
@@ -132,8 +117,7 @@ export function WorkflowNextStepBanner({
 
   // Hide the banner when the user is already on the tab the next step would navigate to.
   // They already see the relevant UI (e.g., SceneProductionDirector on Action tab).
-  const isComplete = workflowState.hasRender
-  if (!isComplete && nextStep.targetTab && nextStep.targetTab === workflowState.activeTab) return null
+  if (nextStep.targetTab && nextStep.targetTab === workflowState.activeTab) return null
 
   const colors = ACCENT_COLORS[nextStep.accentColor] || ACCENT_COLORS.purple
 
@@ -158,16 +142,7 @@ export function WorkflowNextStepBanner({
         </p>
       </div>
 
-      {isComplete && onNextScene ? (
-        <Button
-          size="sm"
-          onClick={onNextScene}
-          className={cn("text-white flex-shrink-0", colors.button)}
-        >
-          Next Scene
-          <ArrowRight className="w-3.5 h-3.5 ml-1" />
-        </Button>
-      ) : nextStep.actionId && onAction ? (
+      {nextStep.actionId && onAction ? (
         <Button
           size="sm"
           onClick={() => onAction(nextStep.actionId!, nextStep.targetTab)}

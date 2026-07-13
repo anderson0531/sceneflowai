@@ -208,6 +208,44 @@ export function dialogueLineIdForIndex(dialogueIndex: number): string {
   return `dialogue-${dialogueIndex}`
 }
 
+/** Resolve script `lineId` (e.g. ln_1) to index in scene.dialogue[]. */
+export function resolveDialogueIndexForLineId(
+  scene: Record<string, unknown> | null | undefined,
+  lineId: string
+): number | undefined {
+  if (!lineId?.trim()) return undefined
+  const dialogue = Array.isArray(scene?.dialogue)
+    ? (scene.dialogue as Array<{ lineId?: string }>)
+    : []
+  const idx = dialogue.findIndex((entry) => entry?.lineId === lineId)
+  return idx >= 0 ? idx : undefined
+}
+
+/** Whether a dialogue clip is assigned to a segment dialogueLineId. */
+export function clipMatchesDialogueLineId(
+  clip: Pick<AudioTrackClipV2, 'dialogueIndex' | 'id' | 'lineId'>,
+  lineId: string,
+  narrationPrefix = 0,
+  scene?: Record<string, unknown> | null
+): boolean {
+  if (!lineId) return false
+  if (clip.id === lineId) return true
+  if (clip.lineId && clip.lineId === lineId) return true
+
+  const idx = clip.dialogueIndex
+  if (typeof idx === 'number' && idx >= 0) {
+    if (lineId === dialogueLineIdForIndex(idx)) return true
+    if (lineId === `dialogue-${idx}`) return true
+    if (narrationPrefix > 0 && lineId === `dialogue-${narrationPrefix + idx}`) return true
+  }
+
+  if (scene) {
+    const resolvedIdx = resolveDialogueIndexForLineId(scene, lineId)
+    if (resolvedIdx !== undefined && clip.dialogueIndex === resolvedIdx) return true
+  }
+
+  return false
+}
 
 /**
  * Look up the persisted dialogue-audio entry for a given line on a scene.
@@ -402,16 +440,7 @@ export function buildDialogueLineIdToCumulativeTimelineStart(
     let audioDur = 0
     if (dialogueClips && ids.length > 0) {
       const assignedClips = dialogueClips.filter((c) =>
-        ids.some((id) => {
-          if (c.lineId && c.lineId === id) return true
-          const idx = c.dialogueIndex
-          if (typeof idx !== 'number') return false
-          return (
-            id === dialogueLineIdForIndex(idx) ||
-            id === `dialogue-${idx}` ||
-            (narrPrefix > 0 && id === `dialogue-${narrPrefix + idx}`)
-          )
-        })
+        ids.some((id) => clipMatchesDialogueLineId(c, id, narrPrefix, scene))
       )
       if (assignedClips.length > 0) {
         audioDur = assignedClips.reduce((sum, c) => sum + (c.duration || 0), 0)
@@ -578,7 +607,11 @@ export function buildAudioTracksForLanguage(
         
         const duration = dialogueClipDurationFromSource(audio)
         const dialogueIndex = audio.dialogueIndex ?? idx
-        const lineId = dialogueLineIdForIndex(dialogueIndex)
+        const persistedLineId =
+          typeof audio.lineId === 'string' && audio.lineId.trim()
+            ? audio.lineId.trim()
+            : null
+        const lineId = persistedLineId ?? dialogueLineIdForIndex(dialogueIndex)
         dialogueClips.push({
           id: lineId,
           lineId,
@@ -606,7 +639,9 @@ export function buildAudioTracksForLanguage(
       const url = d.audioUrl || d.url
       if (url && typeof url === 'string' && url.trim()) {
         const duration = dialogueClipDurationFromSource(d)
-        const lineId = dialogueLineIdForIndex(idx)
+        const persistedLineId =
+          typeof d.lineId === 'string' && d.lineId.trim() ? d.lineId.trim() : null
+        const lineId = persistedLineId ?? dialogueLineIdForIndex(idx)
         dialogueClips.push({
           id: lineId,
           lineId,
@@ -639,12 +674,18 @@ export function buildAudioTracksForLanguage(
         
         for (const clip of dialogueClips) {
           const idx = clip.dialogueIndex
-          if (typeof idx !== 'number' || Number.isNaN(idx) || idx < 0) continue
-          const key = dialogueLineIdForIndex(idx)
-          let t0 = cumulativeStarts.get(key)
-          // Legacy segments: dialogueLineIds used combined-timeline indices (dialogue-2 = first script line when 2 VO lines)
-          if (t0 === undefined && narrPrefix > 0) {
-            t0 = cumulativeStarts.get(`dialogue-${narrPrefix + idx}`)
+          const persistentId = clip.lineId ?? clip.id
+          let t0 =
+            persistentId && typeof persistentId === 'string'
+              ? cumulativeStarts.get(persistentId)
+              : undefined
+          if (t0 === undefined && typeof idx === 'number' && !Number.isNaN(idx) && idx >= 0) {
+            const key = dialogueLineIdForIndex(idx)
+            t0 = cumulativeStarts.get(key)
+            // Legacy segments: dialogueLineIds used combined-timeline indices (dialogue-2 = first script line when 2 VO lines)
+            if (t0 === undefined && narrPrefix > 0) {
+              t0 = cumulativeStarts.get(`dialogue-${narrPrefix + idx}`)
+            }
           }
           if (t0 !== undefined) {
             const cursor = segmentTimeCursors.get(t0) ?? t0

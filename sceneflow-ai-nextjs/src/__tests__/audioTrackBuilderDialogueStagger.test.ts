@@ -13,8 +13,8 @@ describe('dialogue audio vs video segment alignment (cumulative timeline)', () =
       ],
       dialogueAudio: {
         en: [
-          { audioUrl: 'https://example.com/d0.mp3', duration: 25, dialogueIndex: 0 },
-          { audioUrl: 'https://example.com/d1.mp3', duration: 31, dialogueIndex: 1 },
+          { audioUrl: 'https://example.com/d0.mp3', duration: 4, dialogueIndex: 0 },
+          { audioUrl: 'https://example.com/d1.mp3', duration: 4, dialogueIndex: 1 },
         ],
       },
       segments: [
@@ -117,5 +117,56 @@ describe('dialogue audio vs video segment alignment (cumulative timeline)', () =
     const map = buildDialogueLineIdToCumulativeTimelineStart(scene, 0.5)
     expect(map.get('dialogue-0')).toBe(0)
     expect(map.get('dialogue-1')).toBeCloseTo(4.5, 5)
+  })
+
+  it('packs beat-first lineIds (ln_*) to cumulative beat starts', () => {
+    const scene = {
+      dialogue: [
+        { lineId: 'ln_1', character: 'DOC', line: 'First' },
+        { lineId: 'ln_2', character: 'DOC', line: 'Second' },
+      ],
+      dialogueAudio: {
+        en: [
+          {
+            lineId: 'ln_1',
+            audioUrl: 'https://example.com/d0.mp3',
+            duration: 4,
+            dialogueIndex: 0,
+          },
+          {
+            lineId: 'ln_2',
+            audioUrl: 'https://example.com/d1.mp3',
+            duration: 5,
+            dialogueIndex: 1,
+          },
+        ],
+      },
+      segments: [
+        {
+          sequenceIndex: 0,
+          startTime: 0,
+          endTime: 8,
+          dialogueLineIds: ['ln_1'],
+        },
+        {
+          sequenceIndex: 1,
+          startTime: 8,
+          endTime: 16,
+          dialogueLineIds: ['ln_2'],
+        },
+      ],
+    }
+
+    const tracks = buildAudioTracksForLanguage(scene, 'en', {
+      packDialogueToSegmentTimeline: true,
+      segmentPlaybackOffsetSeconds: 1.0,
+    })
+    expect(tracks.dialogue.length).toBe(2)
+    const byStart = [...tracks.dialogue].sort((a, b) => a.startTime - b.startTime)
+    expect(byStart[0].id).toBe('ln_1')
+    expect(byStart[0].startTime).toBeCloseTo(0, 5)
+    expect(byStart[1].id).toBe('ln_2')
+    expect(byStart[1].startTime).toBeGreaterThan(0.5)
+    expect(byStart[0].startTime).not.toBe(byStart[1].startTime)
   })
 })

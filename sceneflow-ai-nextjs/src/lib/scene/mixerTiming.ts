@@ -2,8 +2,10 @@
  * Production Mixer timing — single source for segment ↔ dialogue alignment.
  */
 import type { AudioTrackClipV2, SceneSegment } from '@/components/vision/scene-production/types'
-import { dialogueLineIdForIndex } from '@/components/vision/scene-production/audioTrackBuilder'
+import { clipMatchesDialogueLineId } from '@/components/vision/scene-production/audioTrackBuilder'
 import { resolveVideoTrimWindow, resolveSegmentSourceDurationSec } from '@/lib/video/segmentVideoTrim'
+
+export { clipMatchesDialogueLineId } from '@/components/vision/scene-production/audioTrackBuilder'
 
 /** Gap between dialogue lines within the same segment (seconds). */
 export const MIXER_DIALOGUE_INTRA_GAP_SEC = 0.3
@@ -14,29 +16,17 @@ export const MIXER_SEGMENT_DIALOGUE_PAUSE_SEC = 1.0
 export const MIXER_MIN_SEGMENT_VISUAL_SEC = 2
 export const MIXER_DEFAULT_VISUAL_SEC = 4
 
-export function clipMatchesDialogueLineId(
-  clip: Pick<AudioTrackClipV2, 'dialogueIndex' | 'id'>,
-  lineId: string,
-  narrationPrefix = 0
-): boolean {
-  if (!lineId) return false
-  if (clip.id === lineId) return true
-  const idx = clip.dialogueIndex
-  if (typeof idx !== 'number' || idx < 0) return false
-  if (lineId === dialogueLineIdForIndex(idx)) return true
-  if (lineId === `dialogue-${idx}`) return true
-  if (narrationPrefix > 0 && lineId === `dialogue-${narrationPrefix + idx}`) return true
-  return false
-}
-
 export function getClipsAssignedToSegment(
   segment: SceneSegment,
   clips: AudioTrackClipV2[],
-  narrationPrefix = 0
+  narrationPrefix = 0,
+  scene?: Record<string, unknown> | null
 ): AudioTrackClipV2[] {
   const lineIds = segment.dialogueLineIds ?? []
   if (lineIds.length === 0) return []
-  return clips.filter((c) => lineIds.some((id) => clipMatchesDialogueLineId(c, id, narrationPrefix)))
+  return clips.filter((c) =>
+    lineIds.some((id) => clipMatchesDialogueLineId(c, id, narrationPrefix, scene))
+  )
 }
 
 export function getVisualBaseDuration(

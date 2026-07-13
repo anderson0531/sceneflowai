@@ -4,6 +4,7 @@ import {
   clipMatchesDialogueLineId,
   computePlaybackSegmentDuration,
   computeSegmentContentDuration,
+  getClipsAssignedToSegment,
   MIXER_DIALOGUE_INTRA_GAP_SEC,
   MIXER_SEGMENT_DIALOGUE_PAUSE_SEC,
 } from '@/lib/scene/mixerTiming'
@@ -36,6 +37,47 @@ describe('mixerTiming', () => {
   it('matches clips by line id or dialogue index', () => {
     expect(clipMatchesDialogueLineId({ id: 'dialogue-0', dialogueIndex: 0 }, 'dialogue-0')).toBe(true)
     expect(clipMatchesDialogueLineId({ id: 'dialogue-0', dialogueIndex: 0 }, 'other')).toBe(false)
+  })
+
+  it('matches beat-first script lineIds (ln_*)', () => {
+    const scene = {
+      dialogue: [{ lineId: 'ln_1', character: 'Sarah', line: 'Hello.' }],
+    }
+    expect(
+      clipMatchesDialogueLineId(
+        { id: 'ln_1', lineId: 'ln_1', dialogueIndex: 0 },
+        'ln_1',
+        0,
+        scene
+      )
+    ).toBe(true)
+    expect(
+      clipMatchesDialogueLineId(
+        { id: 'dialogue-0', lineId: 'dialogue-0', dialogueIndex: 0 },
+        'ln_1',
+        0,
+        scene
+      )
+    ).toBe(true)
+  })
+
+  it('assigns clips to segments by script lineId', () => {
+    const assigned = getClipsAssignedToSegment(
+      makeSegment({ dialogueLineIds: ['ln_1'] }),
+      [
+        {
+          id: 'ln_1',
+          lineId: 'ln_1',
+          dialogueIndex: 0,
+          duration: 4,
+          url: 'https://example.com/a.mp3',
+        },
+      ],
+      0,
+      { dialogue: [{ lineId: 'ln_1', character: 'Sarah', line: 'Hello.' }] }
+    )
+    expect(assigned).toHaveLength(1)
+    expect(assigned[0].id).toBe('ln_1')
   })
 
   it('extends segment content to dialogue duration', () => {
