@@ -3336,6 +3336,8 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       onExpressGateBlocked={onExpressGateBlocked}
                       isExpressRunning={isExpressRunning}
                       narrationVoice={narrationVoice}
+                      storedTranslations={storedTranslations}
+                      onSaveTranslations={onSaveTranslations}
                     />
                     )
                   })}
@@ -3992,6 +3994,8 @@ interface SceneCardProps {
   onExpressGateBlocked?: () => void
   isExpressRunning?: boolean
   narrationVoice?: unknown
+  storedTranslations?: ProjectTranslations
+  onSaveTranslations?: (langCode: string, translations: { [sceneIndex: number]: SceneTranslation }) => Promise<void>
 }
 
 async function downloadSceneAudioFile(
@@ -4170,6 +4174,8 @@ function SceneCard({
   onExpressGateBlocked,
   isExpressRunning = false,
   narrationVoice,
+  storedTranslations,
+  onSaveTranslations,
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(
