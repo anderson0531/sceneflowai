@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 let directionCalls = 0
 let audioCalls = 0
 let imageCalls = 0
+let capturedImageCalls: Array<Record<string, unknown>> = []
 let concurrentDirections = 0
 let peakConcurrentDirections = 0
 
@@ -27,10 +28,11 @@ vi.mock('@/lib/sceneGeneration/generateAudio', () => ({
 }))
 
 vi.mock('@/lib/sceneGeneration/generateImage', () => ({
-  generateSceneImage: vi.fn(async ({ beatIndex }: { beatIndex?: number }) => {
+  generateSceneImage: vi.fn(async (params: Record<string, unknown>) => {
     imageCalls++
+    capturedImageCalls.push(params)
     await new Promise((r) => setTimeout(r, 15))
-    return { imageUrl: `https://example.com/beat-${beatIndex ?? 0}.png` }
+    return { imageUrl: `https://example.com/beat-${params.beatIndex ?? 0}.png` }
   }),
 }))
 
@@ -94,6 +96,7 @@ describe('runExpress', () => {
     directionCalls = 0
     audioCalls = 0
     imageCalls = 0
+    capturedImageCalls = []
     concurrentDirections = 0
     peakConcurrentDirections = 0
     process.env.EXPRESS_SCENE_CONCURRENCY = '2'
@@ -181,5 +184,151 @@ describe('runExpress', () => {
     const storedBeats = scene.beats as Array<{ storyboardImageUrl?: string }>
     expect(storedBeats[2]?.storyboardImageUrl).toBe('https://example.com/beat-2.png')
     expect(scene.imageUrl).toBe('https://example.com/beat-0.png')
+  })
+
+  it('sends explicit beat refs and useAIPrompt true for fresh beats', async () => {
+    const project = {
+      metadata: {
+        title: 'Parity Film',
+        visionPhase: {
+          narrationVoice: { voiceId: 'v1', provider: 'google' },
+          characters: [
+            {
+              id: 'c1',
+              name: 'ALICE',
+              referenceImage: 'https://example.com/alice.png',
+              voiceConfig: { voiceId: 'v2', provider: 'google' },
+              wardrobes: [
+                {
+                  id: 'w1',
+                  name: 'Default',
+                  isDefault: true,
+                  sceneNumbers: [1],
+                  fullBodyUrl: 'https://example.com/alice-wardrobe.png',
+                },
+              ],
+            },
+          ],
+          references: {
+            locationReferences: [
+              {
+                id: 'loc1',
+                location: 'OFFICE',
+                imageUrl: 'https://example.com/office.png',
+                sceneNumbers: [1],
+              },
+            ],
+            objectReferences: [],
+          },
+          script: {
+            script: {
+              scenes: [
+                {
+                  heading: 'INT. OFFICE - DAY',
+                  action: 'ALICE works.',
+                  dialogue: [{ character: 'ALICE', line: 'Hello', characterId: 'c1' }],
+                  beats: [
+                    {
+                      beatId: 'bt_a',
+                      kind: 'action',
+                      actionDescription: 'ALICE reviews documents.',
+                      sequenceIndex: 0,
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      },
+    }
+
+    await runExpress({
+      project,
+      options: { projectId: 'p1', mode: 'batch', regenerate: true },
+      baseUrl: 'http://localhost',
+      emit: () => {},
+    })
+
+    const beatStartCalls = capturedImageCalls.filter(
+      (c) => c.frameType === 'beat' && c.frameRole !== 'end'
+    )
+    expect(beatStartCalls.length).toBeGreaterThan(0)
+
+    const firstBeat = beatStartCalls[0]
+    expect(firstBeat.characterSelectionExplicit).toBe(true)
+    expect(firstBeat.skipObjectAutoDetection).toBe(true)
+    expect(firstBeat.useAIPrompt).toBe(true)
+    expect(firstBeat.customPrompt).toBe('prompt-0')
+    expect(Array.isArray(firstBeat.selectedCharacters)).toBe(true)
+    expect((firstBeat.selectedCharacters as string[]).length).toBeGreaterThan(0)
+    expect(firstBeat.locationReferences).toBeDefined()
+  })
+
+  it('sends excludeCharacters without selectedCharacters on title scenes', async () => {
+    const project = {
+      metadata: {
+        title: 'Parity Film',
+        visionPhase: {
+          narrationVoice: { voiceId: 'v1', provider: 'google' },
+          characters: [
+            {
+              id: 'c1',
+              name: 'ALICE',
+              referenceImage: 'https://example.com/alice.png',
+              voiceConfig: { voiceId: 'v2', provider: 'google' },
+            },
+          ],
+          references: {
+            locationReferences: [
+              {
+                id: 'loc1',
+                location: 'TITLE',
+                imageUrl: 'https://example.com/title.png',
+                sceneNumbers: [1],
+              },
+            ],
+            objectReferences: [],
+          },
+          script: {
+            script: {
+              scenes: [
+                {
+                  heading: 'INT. TITLE SEQUENCE - DAY',
+                  action: 'Digital title cards.',
+                  beats: [
+                    {
+                      beatId: 'bt_a',
+                      kind: 'action',
+                      actionDescription: 'Title cards animate.',
+                      sequenceIndex: 0,
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      },
+    }
+
+    await runExpress({
+      project,
+      options: { projectId: 'p1', mode: 'batch', regenerate: true },
+      baseUrl: 'http://localhost',
+      emit: () => {},
+    })
+
+    const beatStartCalls = capturedImageCalls.filter(
+      (c) => c.frameType === 'beat' && c.frameRole !== 'end'
+    )
+    expect(beatStartCalls.length).toBeGreaterThan(0)
+
+    const firstBeat = beatStartCalls[0]
+    expect(firstBeat.excludeCharacters).toBe(true)
+    expect(firstBeat.selectedCharacters).toBeUndefined()
+    expect(firstBeat.characterWardrobes).toBeUndefined()
+    expect(firstBeat.skipObjectAutoDetection).toBe(true)
+    expect(firstBeat.characterSelectionExplicit).toBe(true)
   })
 })

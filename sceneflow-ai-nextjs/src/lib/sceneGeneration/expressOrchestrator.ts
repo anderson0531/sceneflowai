@@ -49,6 +49,7 @@ import { generateSceneImage } from './generateImage'
 import { shouldScheduleStandaloneNarration } from '../script/narration'
 import {
   mapBeatReferenceSelectionForApi,
+  resolveBeatFrameGenerationContext,
   shouldUseExplicitBeatReferences,
 } from '../vision/beatFrameGenerationContext'
 import { getSceneBeats, applyBeatsToScene, isBeatExcluded } from '../script/beatMigration'
@@ -115,6 +116,88 @@ function isBeatEndSlotSelected(beat: SceneBeat, selectedKeys: Set<string> | null
 function isLegacySlotSelected(key: string, selectedKeys: Set<string> | null): boolean {
   if (!selectedKeys) return true
   return selectedKeys.has(key)
+}
+
+/** Resolve beat references for Express — saved dialog selection wins, else dialog-parity auto-resolve. */
+export function resolveExpressBeatReferences(args: {
+  beat: SceneBeat
+  scene: Record<string, unknown>
+  sceneIndex: number
+  beatIdx: number
+  sceneNumber: number
+  project: any
+}): ReturnType<typeof mapBeatReferenceSelectionForApi> | null {
+  const { beat, scene, sceneIndex, beatIdx, sceneNumber, project } = args
+  const visionPhase = project?.metadata?.visionPhase || {}
+  const references = visionPhase.references || {}
+  const projectCharacters = visionPhase.characters || []
+  const locationReferences = references.locationReferences || []
+  const objectReferences = references.objectReferences || []
+  const filmTitle = project?.metadata?.title || project?.title
+
+  if (shouldUseExplicitBeatReferences(beat)) {
+    console.log(
+      `[expressOrchestrator] Beat ${beatIdx + 1} scene ${sceneNumber} — using saved reference selection`
+    )
+    return mapBeatReferenceSelectionForApi(
+      beat.referenceSelection,
+      projectCharacters,
+      locationReferences,
+      objectReferences
+    )
+  }
+
+  const autoCtx = resolveBeatFrameGenerationContext({
+    scene,
+    beat,
+    sceneIndex,
+    projectCharacters,
+    locationReferences,
+    objectReferences,
+    filmTitle,
+  })
+
+  if (autoCtx.warnings.length > 0) {
+    console.log(
+      `[expressOrchestrator] Beat ${beatIdx + 1} scene ${sceneNumber} — reference warnings: ${autoCtx.warnings.join('; ')}`
+    )
+  } else {
+    console.log(
+      `[expressOrchestrator] Beat ${beatIdx + 1} scene ${sceneNumber} — auto-resolved references (dialog parity)`
+    )
+  }
+
+  return mapBeatReferenceSelectionForApi(
+    autoCtx,
+    projectCharacters,
+    locationReferences,
+    objectReferences
+  )
+}
+
+export function buildExpressBeatRefPayload(
+  verifiedBeatRefs: ReturnType<typeof mapBeatReferenceSelectionForApi> | null,
+  excludeCharacters: boolean
+): Record<string, unknown> {
+  if (!verifiedBeatRefs) return {}
+
+  const payload: Record<string, unknown> = {
+    locationReferences: verifiedBeatRefs.locationReferences,
+    objectReferences: verifiedBeatRefs.objectReferences,
+    characterSelectionExplicit: true,
+    skipObjectAutoDetection: true,
+  }
+
+  if (!excludeCharacters) {
+    if (verifiedBeatRefs.selectedCharacters.length > 0) {
+      payload.selectedCharacters = verifiedBeatRefs.selectedCharacters
+    }
+    if (verifiedBeatRefs.characterWardrobes.length > 0) {
+      payload.characterWardrobes = verifiedBeatRefs.characterWardrobes
+    }
+  }
+
+  return payload
 }
 
 export interface RunExpressParams {
@@ -545,21 +628,18 @@ async function generateSingleBeatImage(
   const excludeCharacters = isStoryboardNoCharacterScene(scene, sceneNumber)
   const beats = getSceneBeats(scene)
   const beat = beats[beatIdx]
-  const visionPhase = project?.metadata?.visionPhase || {}
-  const references = visionPhase.references || {}
 
-  let verifiedBeatRefs: ReturnType<typeof mapBeatReferenceSelectionForApi> | null = null
-  if (shouldUseExplicitBeatReferences(beat)) {
-    verifiedBeatRefs = mapBeatReferenceSelectionForApi(
-      beat.referenceSelection,
-      visionPhase.characters || [],
-      references.locationReferences || [],
-      references.objectReferences || []
-    )
-    console.log(
-      `[expressOrchestrator] Beat ${beatIdx + 1} scene ${sceneNumber} — using saved reference selection`
-    )
-  }
+  const verifiedBeatRefs = beat
+    ? resolveExpressBeatReferences({
+        beat,
+        scene,
+        sceneIndex,
+        beatIdx,
+        sceneNumber,
+        project,
+      })
+    : null
+  const beatRefPayload = buildExpressBeatRefPayload(verifiedBeatRefs, excludeCharacters)
 
   const result = await trafficCop.runInLane('image', () =>
     generateSceneImage({
@@ -574,23 +654,9 @@ async function generateSingleBeatImage(
     beatIndex: beatIdx,
     ...(beat?.beatId ? { beatId: beat.beatId } : {}),
     sceneOverride: scene,
-    ...(verifiedBeatRefs
-      ? {
-          selectedCharacters: verifiedBeatRefs.selectedCharacters,
-          locationReferences: verifiedBeatRefs.locationReferences,
-          objectReferences: verifiedBeatRefs.objectReferences,
-          characterWardrobes: verifiedBeatRefs.characterWardrobes,
-          characterSelectionExplicit: true,
-          skipObjectAutoDetection: true,
-        }
-      : {}),
-    ...(Array.isArray(scene.characterWardrobes) && scene.characterWardrobes.length > 0 && !verifiedBeatRefs
-      ? { characterWardrobes: scene.characterWardrobes }
-      : {}),
-    ...(excludeCharacters && !verifiedBeatRefs
-      ? { excludeCharacters: true, characterSelectionExplicit: true }
-      : {}),
-    ...(beatPlan?.prompt ? { customPrompt: beatPlan.prompt, useAIPrompt: false } : {}),
+    ...beatRefPayload,
+    ...(excludeCharacters ? { excludeCharacters: true } : {}),
+    ...(beatPlan?.prompt ? { customPrompt: beatPlan.prompt, useAIPrompt: true } : {}),
     ...(typeof beatPlan?.allowTypography === 'boolean'
       ? { allowTypography: beatPlan.allowTypography }
       : {}),
@@ -632,9 +698,20 @@ async function generateSingleBeatEndImage(
 ): Promise<{ imageUrl: string }> {
   const { sceneIndex, sceneNumber, scene } = ctx
   const imageParams = getExpressImageParams(options)
+  const excludeCharacters = isStoryboardNoCharacterScene(scene, sceneNumber)
   const beats = getSceneBeats(scene)
   const beat = beats[beatIdx]
   if (!beat) return { imageUrl: startFrameUrl }
+
+  const verifiedBeatRefs = resolveExpressBeatReferences({
+    beat,
+    scene,
+    sceneIndex,
+    beatIdx,
+    sceneNumber,
+    project,
+  })
+  const beatRefPayload = buildExpressBeatRefPayload(verifiedBeatRefs, excludeCharacters)
 
   safeEmit(emit, {
     type: 'frame-start',
@@ -661,6 +738,8 @@ async function generateSingleBeatEndImage(
       beatIndex: beatIdx,
       ...(beat?.beatId ? { beatId: beat.beatId } : {}),
       sceneOverride: scene,
+      ...beatRefPayload,
+      ...(excludeCharacters ? { excludeCharacters: true } : {}),
       customPrompt: endPrompt,
       useAIPrompt: false,
       modelTier: imageParams.modelTier,
