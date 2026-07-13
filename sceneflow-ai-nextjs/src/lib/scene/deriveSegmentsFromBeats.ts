@@ -190,6 +190,28 @@ export interface DeriveSegmentsOptions {
   existingSegments?: SceneSegment[]
 }
 
+/**
+ * Whether production segments should be derived from beats for an approved scene.
+ * Compares active (non-excluded) beat IDs to existing segment beatIds — not raw counts.
+ */
+export function needsProductionDerive(
+  scene: Record<string, unknown>,
+  segments: SceneSegment[] | null | undefined
+): boolean {
+  if (!isStoryboardApproved(scene)) return false
+
+  const activeBeats = getSceneBeats(scene).filter((beat) => !isBeatExcluded(beat))
+  if (activeBeats.length === 0) return false
+
+  const existing = segments ?? []
+  if (existing.length === 0) return true
+
+  const segmentBeatIds = new Set(
+    existing.map((seg) => seg.beatId).filter((id): id is string => !!id)
+  )
+  return activeBeats.some((beat) => !segmentBeatIds.has(beat.beatId))
+}
+
 /** Preserve generated/uploaded assets when re-deriving extension timing. */
 export function mergeDerivedSegmentsWithExisting(
   newSegments: SceneSegment[],

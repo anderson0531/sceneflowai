@@ -45,6 +45,7 @@ import {
   isBeatFirstPipelineEnabled,
   resolveRawBeatIndex,
 } from '@/lib/script/beatMigration'
+import { needsProductionDerive } from '@/lib/scene/deriveSegmentsFromBeats'
 import { invalidateChangedBeatFramesOnScene } from '@/lib/script/structuredSceneRevision'
 import type { BeatReferenceSelection } from '@/lib/script/segmentTypes'
 import type { StoryboardFrameSlot } from '@/lib/storyboard/types'
@@ -1634,12 +1635,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (!response.ok) {
           const errorText = await response.text()
           console.error('[SceneProduction] Lightweight persist failed:', response.status, errorText.substring(0, 200))
-          return
+          throw new Error(errorText || `Failed to save production data (${response.status})`)
         }
         
         console.log('[SceneProduction] Lightweight persist successful for scene:', sceneId)
       } catch (error) {
         console.error('[SceneProduction] Failed to persist production data (lightweight)', error)
+        throw error
       }
     },
     [project?.id]
@@ -2777,7 +2779,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ projectId: project.id, language: 'en' }),
+            body: JSON.stringify({
+              projectId: project.id,
+              language: 'en',
+              existingSegments: sceneProductionState[sceneId]?.segments ?? [],
+            }),
           }
         )
         const data = await response.json()
@@ -2848,7 +2854,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         toast.success(`Scene split into ${productionData.segments.length} blocks.`)
       } catch {}
     },
-    [project?.id, applySceneProductionUpdate, script?.script?.scenes]
+    [project?.id, applySceneProductionUpdate, script?.script?.scenes, sceneProductionState]
   )
 
   const handleApproveStoryboard = useCallback(
@@ -2901,19 +2907,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   useEffect(() => {
     if (!project?.id || !script?.script?.scenes || !isBeatFirstPipelineEnabled()) return
 
+    const dbScenes = project?.metadata?.visionPhase?.production?.scenes as
+      | Record<string, SceneProductionData>
+      | undefined
+    const dbHasProduction = dbScenes && Object.keys(dbScenes).length > 0
+    if (dbHasProduction && Object.keys(sceneProductionState).length === 0) return
+
     script.script.scenes.forEach((scene: Record<string, unknown>, idx: number) => {
-      const sceneId =
-        (scene.id as string) || (scene.sceneId as string) || `scene-${idx}`
+      const sceneId = getSceneProductionKey(scene as Scene, idx)
       if (scene.storyboardStatus !== 'approved') return
 
       const production = sceneProductionState[sceneId]
-      const beatCount = getSceneBeats(scene).length
-      const segmentCount = production?.segments?.length ?? 0
-      const needsDerive =
-        segmentCount === 0 ||
-        (beatCount > 0 && segmentCount !== beatCount)
-
-      if (!needsDerive) return
+      if (!needsProductionDerive(scene, production?.segments)) return
       if (backfillDeriveAttemptedRef.current.has(sceneId)) return
 
       backfillDeriveAttemptedRef.current.add(sceneId)
@@ -2927,6 +2932,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     })
   }, [
     project?.id,
+    project?.metadata?.visionPhase?.production?.scenes,
     script?.script?.scenes,
     sceneProductionState,
     handleInitializeSceneProduction,
@@ -4112,6 +4118,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
 
         // Update segment with uploaded asset AND actual duration
+        let nextProduction: SceneProductionData | undefined
         applySceneProductionUpdate(sceneId, (current) => {
           if (!current) return current
           
@@ -4163,8 +4170,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
             return segment
           })
-          return { ...current, segments }
+          nextProduction = { ...current, segments }
+          return nextProduction
         })
+
+        if (!nextProduction) {
+          throw new Error('Production data unavailable for upload')
+        }
+
+        await persistSceneProduction(
+          { ...sceneProductionState, [sceneId]: nextProduction },
+          [],
+          sceneId
+        )
 
         const { toast } = await import('sonner')
         toast.success(`Uploaded ${file.type.startsWith('image') ? 'image' : 'video'} to beat`)
@@ -4186,7 +4204,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         toast.error(error.message || 'Upload failed')
       }
     },
-    [applySceneProductionUpdate]
+    [applySceneProductionUpdate, persistSceneProduction, sceneProductionState]
   )
   
   // Handle adding a new segment
