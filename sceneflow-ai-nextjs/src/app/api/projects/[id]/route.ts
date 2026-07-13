@@ -4,6 +4,7 @@ import { sequelize } from '@/config/database'
 import { stripBase64FromMetadata, calculateBase64Size } from '@/lib/storage/mediaStorage'
 import { isValidStoryboardMediaUrl, mergeSceneArraysForPersistence } from '@/lib/storyboard/mergeSceneMedia'
 import { upsertBeatSfxCueOnScene } from '@/lib/script/deriveSfxFromSceneContent'
+import { persistSceneAudioAtomic } from '@/lib/audio/persistSceneAudioAtomic'
 import { persistSceneSfxAudioAtomic } from '@/lib/sfx/persistSceneSfxAudio'
 
 // Increase timeout for large project updates
@@ -182,16 +183,23 @@ export async function PUT(
     }
     
     await sequelize.authenticate()
-    
-    const project = await Project.findByPk(id)
-    if (!project) {
-      console.error('[Projects PUT] Project not found:', id)
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
-    }
-    
+
+    let project!: Project
+    let mergedMetadata: Record<string, unknown> = {}
+
+    await sequelize.transaction(async (transaction) => {
+      const lockedProject = await Project.findByPk(id, {
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      })
+      if (!lockedProject) {
+        throw new Error('PROJECT_NOT_FOUND')
+      }
+      project = lockedProject
+
     // Update project fields - deep merge metadata to preserve existing nested data
     const existingMetadata = project.metadata || {}
-    let mergedMetadata = body.metadata ? { ...existingMetadata } : existingMetadata
+    mergedMetadata = body.metadata ? { ...existingMetadata } : existingMetadata
     
     if (body.metadata) {
       // Shallow merge all top-level properties
@@ -519,9 +527,10 @@ export async function PUT(
     // Sequelize sometimes doesn't detect nested changes in JSONB fields
     project.set('metadata', mergedMetadata)
     project.changed('metadata', true)
-    
-    await project.save()
-    
+
+    await project.save({ transaction })
+    })
+
     // Reload to ensure the updated data is committed and fetched fresh
     await project.reload()
     
@@ -547,6 +556,10 @@ export async function PUT(
     
     return NextResponse.json({ success: true, project })
   } catch (error: any) {
+    if (error?.message === 'PROJECT_NOT_FOUND') {
+      console.error('[Projects PUT] Project not found:', id)
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+    }
     console.error('[Projects PUT] Error:', error)
     
     // Check for pool exhaustion error
@@ -642,21 +655,14 @@ export async function PATCH(
       }
       
       if (audioType === 'music') {
-        scene.musicAudio = audioUrl
-        if (typeof musicDuration === 'number' && musicDuration > 0) {
-          scene.musicDuration = musicDuration
-        }
-        if (typeof musicFileDuration === 'number' && musicFileDuration > 0) {
-          scene.musicFileDuration = musicFileDuration
-        }
-        if (scenePath === 'nested') {
-          metadata.visionPhase.script.script.scenes = scenes
-        } else {
-          metadata.visionPhase.script.scenes = scenes
-        }
-        project.set('metadata', metadata)
-        project.changed('metadata', true)
-        await project.save()
+        await persistSceneAudioAtomic({
+          projectId: id,
+          sceneIndex,
+          audioType: 'music',
+          audioUrl,
+          musicDuration,
+          musicFileDuration,
+        })
         console.log(`[Projects PATCH] Updated musicAudio for scene ${sceneIndex}`)
       } else if (audioType === 'sfx' && sfxIndex !== undefined) {
         await persistSceneSfxAudioAtomic({

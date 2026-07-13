@@ -3,6 +3,7 @@ import {
   mergeScenesForScriptSave,
   mergeExpressOrchestratedScenes,
   mergeScenesTrustingIncomingAudio,
+  mergeSceneTrustingIncomingAudio,
   sceneHasAudioRefs,
   countNonEmptySfxSlots,
 } from '@/lib/audio/cleanupAudio'
@@ -356,6 +357,54 @@ describe('mergeScenesTrustingIncomingAudio', () => {
     const merged = mergeScenesTrustingIncomingAudio(canonical, incoming)
     expect(merged[0].sfxAudio[0]).toBe('https://example.com/beat1.mp3')
     expect(merged[0].sfxAudio[1]).toBe('https://example.com/beat2.mp3')
+  })
+
+  it('keeps canonical dialogueAudio when incoming SFX snapshot omits dialogue', () => {
+    const canonical = [
+      {
+        id: 's1',
+        dialogueAudio: {
+          en: [
+            {
+              character: 'Vesper',
+              dialogueIndex: 0,
+              audioUrl: 'https://example.com/dialogue.mp3',
+            },
+          ],
+        },
+      },
+    ]
+    const incoming = [
+      {
+        id: 's1',
+        sfx: [{ description: 'Wind', sourceBeatId: 'bt_2', sfxId: 'sfx_2' }],
+        sfxAudio: ['https://example.com/sfx.mp3'],
+      },
+    ]
+
+    const merged = mergeScenesTrustingIncomingAudio(canonical, incoming)
+    expect(merged[0].dialogueAudio.en[0].audioUrl).toBe('https://example.com/dialogue.mp3')
+    expect(merged[0].sfxAudio[0]).toBe('https://example.com/sfx.mp3')
+  })
+})
+
+describe('mergeSceneTrustingIncomingAudio sibling preservation', () => {
+  it('does not wipe dialogueAudio when incoming only has sfx fields', () => {
+    const canonical = {
+      id: 's1',
+      dialogueAudio: {
+        en: [{ character: 'A', dialogueIndex: 0, audioUrl: 'https://example.com/d.mp3' }],
+      },
+    }
+    const incoming = {
+      id: 's1',
+      sfxAudio: ['https://example.com/sfx.mp3'],
+      sfx: [{ description: 'Click', sourceBeatId: 'bt_1' }],
+    }
+
+    const merged = mergeSceneTrustingIncomingAudio(canonical, incoming)
+    expect(merged.dialogueAudio.en[0].audioUrl).toBe('https://example.com/d.mp3')
+    expect(merged.sfxAudio[0]).toBe('https://example.com/sfx.mp3')
   })
 })
 

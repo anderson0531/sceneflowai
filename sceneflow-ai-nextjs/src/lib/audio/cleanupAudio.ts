@@ -541,9 +541,65 @@ export function countNonEmptySfxSlots(scene: any): number {
   return arr.filter((u: unknown) => typeof u === 'string' && u.trim().length > 0).length
 }
 
+/** True when an incoming audio field carries usable persisted content. */
+export function incomingAudioFieldHasContent(key: string, value: unknown): boolean {
+  if (value === undefined || value === null) return false
+
+  if (key === 'sfxAudio') {
+    return (
+      Array.isArray(value) &&
+      value.some((u) => typeof u === 'string' && u.trim().length > 0)
+    )
+  }
+
+  if (key === 'sfxSourceMeta') {
+    return Array.isArray(value) && value.some((m) => m != null && m !== '')
+  }
+
+  if (key === 'dialogueAudio') {
+    if (Array.isArray(value)) {
+      return value.some(
+        (d) =>
+          d &&
+          typeof d === 'object' &&
+          (typeof (d as { audioUrl?: string }).audioUrl === 'string' ||
+            typeof (d as { url?: string }).url === 'string')
+      )
+    }
+    if (typeof value === 'object') {
+      return Object.values(value as Record<string, unknown>).some((arr) => {
+        if (!Array.isArray(arr)) return false
+        return arr.some(
+          (d) =>
+            d &&
+            typeof d === 'object' &&
+            (typeof (d as { audioUrl?: string }).audioUrl === 'string' ||
+              typeof (d as { url?: string }).url === 'string')
+        )
+      })
+    }
+    return false
+  }
+
+  if (key === 'narrationAudio' || key === 'descriptionAudio') {
+    if (typeof value !== 'object' || Array.isArray(value)) return false
+    return Object.values(value as Record<string, unknown>).some((entry) => {
+      if (!entry || typeof entry !== 'object') return false
+      const url = (entry as { url?: string }).url
+      return typeof url === 'string' && url.trim().length > 0
+    })
+  }
+
+  if (typeof value === 'string') {
+    return value.trim().length > 0
+  }
+
+  return true
+}
+
 /**
  * Merge one scene when incoming audio came from a fresh server snapshot (atomic PATCH).
- * Preserves storyboard media from canonical; incoming audio fields win.
+ * Preserves storyboard media from canonical; incoming audio fields win when non-empty.
  */
 export function mergeSceneTrustingIncomingAudio(canonical: any, incoming: any): any {
   if (!canonical) return incoming
@@ -551,11 +607,15 @@ export function mergeSceneTrustingIncomingAudio(canonical: any, incoming: any): 
 
   const merged = mergeScenePreservingMedia(canonical, incoming)
   for (const key of SCENE_AUDIO_FIELD_KEYS) {
-    if (key in incoming && incoming[key] !== undefined) {
+    if (
+      key in incoming &&
+      incoming[key] !== undefined &&
+      incomingAudioFieldHasContent(key, incoming[key])
+    ) {
       merged[key] = incoming[key]
     }
   }
-  if (Array.isArray(incoming.sfx)) {
+  if (Array.isArray(incoming.sfx) && incoming.sfx.length > 0) {
     merged.sfx = incoming.sfx
   }
   return merged

@@ -27,6 +27,7 @@ import {
 import { buildGeminiTtsPrompt } from '../../../../lib/tts/geminiTtsPrompt'
 import { resolveCharacterVoicePrompt } from '../../../../lib/tts/resolveCharacterVoicePrompt'
 import { buildGeminiTtsAdvancedVoiceOptions } from '../../../../lib/tts/geminiTtsSafety'
+import { persistSceneAudioAtomic } from '../../../../lib/audio/persistSceneAudioAtomic'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -876,211 +877,29 @@ async function updateSceneAudio(
   },
   provider?: string
 ) {
-  await sequelize.authenticate()
-  const project = await Project.findByPk(projectId)
-  if (!project) throw new Error('Project not found')
-
-  const metadata = project.metadata || {}
-  const visionPhase = metadata.visionPhase || {}
-  
-  // FIX: Check where scenes actually live
-  const script = visionPhase.script || {}
-  const existingScenes = script.script?.scenes || script.scenes || []
-  
-  console.log('[Update Scene Audio] Current structure:', {
-    hasScriptScript: !!script.script,
-    hasScriptScenes: !!script.scenes,
-    hasScriptScriptScenes: !!script.script?.scenes,
-    sceneCount: existingScenes.length,
-    language
+  console.log('[Update Scene Audio] Persisting via locked atomic writer:', {
+    projectId,
+    sceneIndex,
+    audioType,
+    language,
+    dialogueIndex,
+    characterName,
   })
 
-  // Find old audio URL to delete after successful update
-  let oldAudioUrl: string | null = null
-  const currentScene = existingScenes[sceneIndex]
-  if (currentScene) {
-    if (audioType === 'narration') {
-      oldAudioUrl = currentScene.narrationAudio?.[language]?.url || 
-                    (language === 'en' ? currentScene.narrationAudioUrl : null)
-    } else if (audioType === 'description') {
-      oldAudioUrl = currentScene.descriptionAudio?.[language]?.url ||
-                    (language === 'en' ? currentScene.descriptionAudioUrl : null)
-    } else if (audioType === 'dialogue') {
-      const dialogueArray = currentScene.dialogueAudio?.[language] || []
-      const targetLineId = lineMeta?.lineId
-      let existingEntry: any = null
-      if (targetLineId) {
-        existingEntry = dialogueArray.find((d: any) => d.lineId === targetLineId)
-      }
-      if (!existingEntry && dialogueIndex !== undefined) {
-        existingEntry = dialogueArray.find((d: any) => d.dialogueIndex === dialogueIndex)
-      }
-      if (!existingEntry && dialogueIndex !== undefined && characterName) {
-        existingEntry = dialogueArray.find(
-          (d: any) =>
-            d.dialogueIndex === dialogueIndex &&
-            d.character?.toLowerCase() === characterName.toLowerCase()
-        )
-      }
-      oldAudioUrl = existingEntry?.audioUrl || existingEntry?.url || null
-    }
-  }
-
-  // Update the specific scene
-  const updatedScenes = existingScenes.map((s: any, idx: number) => {
-    if (idx !== sceneIndex) return s
-
-    const scene = { ...s }
-
-    if (audioType === 'narration') {
-      // Initialize narrationAudio if it doesn't exist
-      if (!scene.narrationAudio) {
-        scene.narrationAudio = {}
-      }
-      
-      // Store language-specific narration audio
-      scene.narrationAudio[language] = {
-        url: audioUrl,
-        duration: duration || undefined,
-        generatedAt: new Date().toISOString(),
-        voiceId: voiceId || undefined,
-        provider: provider || undefined,
-        adaptation: adaptation || undefined,
-      }
-      
-      // Maintain backward compatibility: set narrationAudioUrl for English
-      if (language === 'en') {
-        scene.narrationAudioUrl = audioUrl
-        scene.narrationAudioGeneratedAt = new Date().toISOString()
-      }
-      
-      return scene
-    } else if (audioType === 'description') {
-      if (!scene.descriptionAudio) {
-        scene.descriptionAudio = {}
-      }
-
-      scene.descriptionAudio[language] = {
-        url: audioUrl,
-        duration: duration || undefined,
-        generatedAt: new Date().toISOString(),
-        voiceId: voiceId || undefined,
-        provider: provider || undefined,
-        adaptation: adaptation || undefined,
-      }
-
-      if (language === 'en') {
-        scene.descriptionAudioUrl = audioUrl
-        scene.descriptionAudioGeneratedAt = new Date().toISOString()
-      }
-
-      return scene
-    } else {
-      // Dialogue audio - initialize dialogueAudio object if needed
-      if (!scene.dialogueAudio || Array.isArray(scene.dialogueAudio)) {
-        // Migrate old array format if exists
-        if (Array.isArray(scene.dialogueAudio) && scene.dialogueAudio.length > 0) {
-          scene.dialogueAudio = { en: scene.dialogueAudio }
-        } else {
-          scene.dialogueAudio = {}
-        }
-      }
-      
-      // Initialize language array if it doesn't exist
-      if (!scene.dialogueAudio[language]) {
-        scene.dialogueAudio[language] = []
-      }
-      
-      const dialogueArray = [...scene.dialogueAudio[language]]
-      const targetLineId = lineMeta?.lineId
-      
-      // Find existing entry: prefer lineId match, then fall back to dialogueIndex,
-      // then to character + dialogueIndex.
-      let existingIndex = -1
-      if (targetLineId) {
-        existingIndex = dialogueArray.findIndex((d: any) => d.lineId === targetLineId)
-      }
-      if (existingIndex < 0 && dialogueIndex !== undefined) {
-        existingIndex = dialogueArray.findIndex((d: any) =>
-          d.dialogueIndex === dialogueIndex
-        )
-      }
-      if (existingIndex < 0 && dialogueIndex !== undefined) {
-        existingIndex = dialogueArray.findIndex((d: any) =>
-          d.character?.toLowerCase() === characterName?.toLowerCase() && 
-          d.dialogueIndex === dialogueIndex
-        )
-      }
-      
-      const dialogueEntry = {
-        character: characterName!,
-        dialogueIndex: dialogueIndex!,
-        ...(targetLineId ? { lineId: targetLineId } : {}),
-        ...(lineMeta?.lineKind ? { kind: lineMeta.lineKind } : {}),
-        ...(lineMeta?.characterId ? { characterId: lineMeta.characterId } : {}),
-        audioUrl,
-        duration: duration || undefined,
-        voiceId: voiceId || undefined,
-        provider: provider || undefined,
-        adaptation: adaptation || undefined,
-      }
-      
-      if (existingIndex >= 0) {
-        dialogueArray[existingIndex] = { ...dialogueArray[existingIndex], ...dialogueEntry }
-      } else {
-        dialogueArray.push(dialogueEntry)
-      }
-      
-      // Deduplicate by lineId first (preferred), falling back to dialogueIndex.
-      const deduplicatedArray = dialogueArray.filter((d: any, idx: number, arr: any[]) => {
-        if (targetLineId && d.lineId === targetLineId) {
-          const lastIdx = arr.findLastIndex((x: any) => x.lineId === targetLineId)
-          return idx === lastIdx
-        }
-        if (d.dialogueIndex === dialogueIndex && (!d.lineId || !targetLineId)) {
-          const lastIdx = arr.findLastIndex(
-            (x: any) => x.dialogueIndex === dialogueIndex && (!x.lineId || !targetLineId)
-          )
-          return idx === lastIdx
-        }
-        return true
-      })
-      
-      scene.dialogueAudio[language] = deduplicatedArray
-      
-      // Maintain backward compatibility: set legacy dialogueAudio array for English ONLY if object structure doesn't exist
-      // DO NOT overwrite the object structure - this would delete other languages!
-      // The object structure { en: [...], th: [...], es: [...] } must be preserved
-      scene.dialogueAudioGeneratedAt = new Date().toISOString()
-      
-      return scene
-    }
-  })
-
-  // FIX: Preserve the existing structure (don't create double nesting)
-  const updatedScript = script.script?.scenes
-    ? { ...script, script: { ...script.script, scenes: updatedScenes } }  // Preserve script.script.scenes
-    : { ...script, scenes: updatedScenes }  // Use script.scenes
-
-  console.log('[Update Scene Audio] Updating with structure:', {
-    hasScriptScript: !!updatedScript.script,
-    hasScriptScenes: !!updatedScript.scenes,
-    language
-  })
-
-  const scriptUpdatedAt = new Date().toISOString()
-
-  // Update metadata — keep script.script.scenes and visionPhase.scenes in sync
-  await project.update({
-    metadata: {
-      ...metadata,
-      visionPhase: {
-        ...visionPhase,
-        script: updatedScript,
-        scenes: updatedScenes,
-        scriptUpdatedAt,
-      },
-    },
+  const { oldAudioUrl } = await persistSceneAudioAtomic({
+    projectId,
+    sceneIndex,
+    audioType,
+    audioUrl,
+    language,
+    duration,
+    voiceId,
+    characterName,
+    dialogueIndex,
+    adaptation,
+    lineMeta,
+    provider,
+    updateScriptUpdatedAt: true,
   })
 
   console.log('[Update Scene Audio] Project updated successfully for language:', language)
