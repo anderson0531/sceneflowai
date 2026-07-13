@@ -16,6 +16,7 @@
 'use client'
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react'
+import debounce from 'lodash/debounce'
 import { coerceSceneSfxFlatArray } from '@/lib/script/segmentScript'
 import {
   computeClipAudioTime,
@@ -120,8 +121,21 @@ import type {
   TextOverlayTiming,
   AudioTrackConfig,
   MixerAudioTracks,
+  MixerDialogueClipConfig,
+  MixerSegmentAudioConfig,
+  SceneMixerSettings,
+  WatermarkAnchor,
+  WatermarkConfig,
 } from './types'
-import { SCENEFLOW_WATERMARK_STORAGE_KEY } from './sceneRenderBurnInPayload'
+import {
+  buildPersistedMixerSettings,
+  buildSegmentAudioConfigsForSegments,
+  DEFAULT_MIXER_AUDIO_TRACKS,
+  DEFAULT_MIXER_COLLAPSED_SECTIONS,
+  DEFAULT_WATERMARK_CONFIG,
+  mergeMixerSettings,
+  migrateLegacyLocalStorageSettings,
+} from '@/lib/scene/mixerSettings'
 import {
   getResolvedDialogueClipsForScene,
   inferNarrationTimelinePrefixCount,
@@ -299,91 +313,19 @@ const TEXT_OVERLAY_PRESETS: Record<string, Partial<TextOverlay>> = {
 }
 
 // ============================================================================
-// Watermark Types
+// Mixer persistence type aliases (canonical types in ./types.ts)
 // ============================================================================
 
-export type WatermarkType = 'text' | 'image'
+export type {
+  WatermarkAnchor,
+  WatermarkConfig,
+} from './types'
+export { DEFAULT_WATERMARK_CONFIG } from '@/lib/scene/mixerSettings'
 
-export type WatermarkAnchor = 
-  | 'top-left' 
-  | 'top-center' 
-  | 'top-right' 
-  | 'bottom-left' 
-  | 'bottom-center' 
-  | 'bottom-right'
+/** Individual dialogue line control in the mixer */
+export type AudioClipConfig = MixerDialogueClipConfig
 
-export interface WatermarkTextStyle {
-  fontFamily: string
-  fontSize: number  // percentage of video height
-  fontWeight: 400 | 500 | 600 | 700 | 800
-  color: string
-  opacity: number   // 0-1
-  textShadow?: boolean
-  background?: boolean
-  backgroundColor?: string
-  backgroundOpacity?: number  // 0-1
-}
-
-export interface WatermarkImageStyle {
-  width: number     // percentage of video width
-  opacity: number   // 0-1
-}
-
-export interface WatermarkConfig {
-  enabled: boolean
-  type: WatermarkType
-  /** Text content (for text watermarks) */
-  text?: string
-  /** Text styling */
-  textStyle: WatermarkTextStyle
-  /** Image URL (for image watermarks) */
-  imageUrl?: string
-  /** Image styling */
-  imageStyle: WatermarkImageStyle
-  /** Position anchor on the video */
-  anchor: WatermarkAnchor
-  /** Padding from edge in pixels */
-  padding: number
-}
-
-export const DEFAULT_WATERMARK_CONFIG: WatermarkConfig = {
-  enabled: true,
-  type: 'text',
-  text: 'SceneFlow AI Studio',
-  textStyle: {
-    fontFamily: 'Inter',
-    fontSize: 3,
-    fontWeight: 500,
-    color: '#FFFFFF',
-    opacity: 0.6,
-    textShadow: true,
-    background: false,
-    backgroundColor: '#000000',
-    backgroundOpacity: 0.5,
-  },
-  imageUrl: '',
-  imageStyle: {
-    width: 10,
-    opacity: 0.7,
-  },
-  anchor: 'bottom-right',
-  padding: 60,
-}
-
-// ============================================================================
-// Types (remaining types that aren't shared with MixerTimeline)
-// ============================================================================
-
-/** Individual audio clip configuration for per-line control */
-export interface AudioClipConfig {
-  id: string
-  enabled: boolean
-  volume: number
-  startTime: number
-  duration: number
-  /** 1 = normal; >1 faster/shorter on timeline, <1 slower/longer (dub alignment). */
-  playbackRate?: number
-}
+export type SegmentAudioConfig = MixerSegmentAudioConfig
 
 export interface SceneAudioAssets {
   /** Narration audio per language: { en: { url, duration }, th: { url, duration } } */
@@ -416,12 +358,6 @@ export interface SceneAudioAssets {
     startTime?: number
     duration?: number
   }>
-}
-
-export interface SegmentAudioConfig {
-  includeAudio: boolean
-  volume: number
-  postSegmentPause?: number
 }
 
 type RenderStatus = 'idle' | 'preparing' | 'rendering' | 'complete' | 'error'
@@ -474,6 +410,8 @@ interface SceneProductionMixerProps {
   videoGenerationAvailable: boolean
   /** Persist segment timing after auto-align or manual edits */
   onSegmentsChange?: (segments: SceneSegment[]) => void
+  /** Persist mixer UI settings to scene production data */
+  onMixerSettingsChange?: (settings: SceneMixerSettings) => void
 }
 
 // ============================================================================
@@ -486,9 +424,6 @@ const TRACK_COLORS = {
   sfx: { icon: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30', slider: 'bg-amber-500' },
   music: { icon: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/30', slider: 'bg-green-500' },
 }
-
-// LocalStorage keys for persisting mixer settings (watermark key shared with sceneRenderBurnInPayload)
-const MIXER_SETTINGS_STORAGE_KEY = 'sceneflow-mixer-settings'
 
 // ============================================================================
 // Utility Functions
@@ -1357,13 +1292,13 @@ function ScenePreviewPlayer({
         ? Math.max(0, baseIdx - 1)
         : Math.min(segments.length - 1, baseIdx + 1)
 
+    setCurrentTime(getSegmentStartTime(nextIdx))
+    setCurrentSegmentIndex(nextIdx)
+
     if (playbackKind === 'image-sequence') {
-      setCurrentTime(getSegmentStartTime(nextIdx))
-      setCurrentSegmentIndex(nextIdx)
       return
     }
 
-    setCurrentSegmentIndex(nextIdx)
     if (videoRef.current && segments[nextIdx]) {
       const trim = getTrimForSegment(segments[nextIdx])
       videoRef.current.currentTime = trim.inSec
@@ -1669,8 +1604,8 @@ function ScenePreviewPlayer({
       <div className="p-3 bg-gray-800/50 flex items-center gap-3">
         {/* Skip Prev */}
         <button
-          onClick={() => skipToSegment('prev')}
-          disabled={currentSegmentIndex === 0}
+          onClick={() => skipToBeat('prev')}
+          disabled={activeSegmentIndex === 0}
           className="p-1.5 rounded-lg hover:bg-gray-700 text-gray-400 hover:text-white transition-colors disabled:opacity-30"
         >
           <SkipBack className="w-4 h-4" />
@@ -1686,8 +1621,8 @@ function ScenePreviewPlayer({
         
         {/* Skip Next */}
         <button
-          onClick={() => skipToSegment('next')}
-          disabled={currentSegmentIndex === segments.length - 1}
+          onClick={() => skipToBeat('next')}
+          disabled={activeSegmentIndex === segments.length - 1}
           className="p-1.5 rounded-lg hover:bg-gray-700 text-gray-400 hover:text-white transition-colors disabled:opacity-30"
         >
           <SkipForward className="w-4 h-4" />
@@ -3129,6 +3064,7 @@ export function SceneProductionMixer({
   onProductionTargetChange,
   videoGenerationAvailable,
   onSegmentsChange,
+  onMixerSettingsChange,
 }: SceneProductionMixerProps) {
   const selectedLanguage = productionTarget.language
   const [isGeneratingLanguageAudio, setIsGeneratingLanguageAudio] = useState(false)
@@ -3144,23 +3080,8 @@ export function SceneProductionMixer({
   // === Beat Audio Configs ===
   const [segmentAudioConfigs, setSegmentAudioConfigs] = useState<Record<string, SegmentAudioConfig>>({})
 
-// === Audio Track Configs ===
-  const [audioTracks, setAudioTracks] = useState<MixerAudioTracks>({
-    narration: { enabled: false, volume: 0.8, startOffset: 0, startSegment: 0, endSegment: -1 },
-    dialogue: { enabled: false, volume: 0.9, startOffset: 0, startSegment: 0, endSegment: -1 },
-    music: {
-      enabled: false,
-      volume: 0.4,
-      startOffset: 0,
-      startSegment: 0,
-      endSegment: -1,
-      loop: true,
-      fadeInSec: 0,
-      fadeOutSec: 0,
-      playbackRate: 1,
-    },
-    sfx: { enabled: false, volume: 0.6, startOffset: 0, startSegment: 0, endSegment: -1 },
-  })
+  // === Audio Track Configs ===
+  const [audioTracks, setAudioTracks] = useState<MixerAudioTracks>(() => DEFAULT_MIXER_AUDIO_TRACKS)
   
   // === Dialogue Clip Configs (individual line control) ===
   const [dialogueClipConfigs, setDialogueClipConfigs] = useState<Record<string, AudioClipConfig>>({})
@@ -3424,94 +3345,113 @@ export function SceneProductionMixer({
   )
   
   // Watermark state
-  const [watermarkConfig, setWatermarkConfig] = useState<WatermarkConfig>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem(SCENEFLOW_WATERMARK_STORAGE_KEY)
-        if (stored) {
-          const parsed = JSON.parse(stored)
-          return { ...DEFAULT_WATERMARK_CONFIG, ...parsed }
-        }
-      } catch (e) {
-        console.warn('[SceneProductionMixer] Failed to load watermark config from localStorage:', e)
-      }
-    }
-    return DEFAULT_WATERMARK_CONFIG
-  })
+  const [watermarkConfig, setWatermarkConfig] = useState<WatermarkConfig>(() => DEFAULT_WATERMARK_CONFIG)
   
-  // === Section Collapse State (with localStorage persistence) ===
-  const [collapsedSections, setCollapsedSections] = useState<{
-    textOverlays: boolean
-    watermark: boolean
-    watermarkCrop: boolean
-    beatVideo: boolean
-    beatTrim: boolean
-    segmentAudio: boolean
-    narration: boolean
-    dialogue: boolean
-    sfx: boolean
-    music: boolean
-    timeline: boolean
-  }>(() => {
-    const defaultSections = {
-      textOverlays: true,
-      watermark: true,
-      watermarkCrop: true,
-      beatVideo: true,
-      beatTrim: true,
-      segmentAudio: true,
-      narration: true,
-      dialogue: true,
-      sfx: true,
-      music: true,
-      timeline: true,
-    }
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem(MIXER_SETTINGS_STORAGE_KEY)
-        if (stored) {
-          const parsed = JSON.parse(stored)
-          if (parsed.collapsedSections) {
-            return { ...defaultSections, ...parsed.collapsedSections }
-          }
-        }
-      } catch (e) {
-        console.warn('[SceneProductionMixer] Failed to load mixer settings from localStorage:', e)
-      }
-    }
-    return defaultSections
-  })
+  // === Section Collapse State ===
+  const [collapsedSections, setCollapsedSections] = useState(DEFAULT_MIXER_COLLAPSED_SECTIONS)
+
+  const [preserveBackgroundStem, setPreserveBackgroundStem] = useState(true)
+  const [includeSpeechStem, setIncludeSpeechStem] = useState(false)
+  const [klingLipsyncEnabled, setKlingLipsyncEnabled] = useState(false)
+  const [masterSegmentVolume, setMasterSegmentVolume] = useState(0.8)
   
   const toggleSection = useCallback((section: keyof typeof collapsedSections) => {
     setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }))
   }, [])
   
-  // Persist watermark config to localStorage when it changes
+  const hydratedSettingsTokenRef = useRef<string | null>(null)
+  const hasHydratedMixerSettingsRef = useRef(false)
+
+  // Hydrate mixer settings from production data (per scene) with legacy localStorage fallback
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem(SCENEFLOW_WATERMARK_STORAGE_KEY, JSON.stringify(watermarkConfig))
-      } catch (e) {
-        console.warn('[SceneProductionMixer] Failed to save watermark config to localStorage:', e)
-      }
+    const hasSaved =
+      !!productionData?.mixerSettings &&
+      Object.keys(productionData.mixerSettings).length > 0
+    const token = `${sceneId}:${hasSaved ? 'saved' : 'empty'}`
+    if (hydratedSettingsTokenRef.current === token) return
+
+    const merged = mergeMixerSettings(
+      hasSaved ? productionData!.mixerSettings : migrateLegacyLocalStorageSettings()
+    )
+
+    setAudioTracks(merged.audioTracks)
+    setDialogueClipConfigs(merged.dialogueClipConfigs)
+    setMasterSegmentVolume(merged.masterSegmentVolume)
+    setResolution(merged.resolution)
+    setPreserveBackgroundStem(merged.preserveBackgroundStem)
+    setIncludeSpeechStem(merged.includeSpeechStem)
+    setKlingLipsyncEnabled(merged.klingLipsyncEnabled)
+    setWatermarkConfig(merged.watermarkConfig)
+    setCollapsedSections(merged.collapsedSections)
+    setTheaterMode(merged.theaterMode)
+
+    setSegmentAudioConfigs(
+      buildSegmentAudioConfigsForSegments(
+        segments.map((seg) => seg.segmentId),
+        merged.segmentAudioConfigs
+      )
+    )
+
+    if (hasSaved && productionData?.mixerSettings?.productionTarget && onProductionTargetChange) {
+      onProductionTargetChange(productionData.mixerSettings.productionTarget)
     }
-  }, [watermarkConfig])
-  
-  // Persist collapsed sections to localStorage when they change
+
+    hydratedSettingsTokenRef.current = token
+    hasHydratedMixerSettingsRef.current = true
+  }, [
+    sceneId,
+    productionData?.mixerSettings,
+    segments,
+    onProductionTargetChange,
+  ])
+
+  const onMixerSettingsChangeRef = useRef(onMixerSettingsChange)
+  onMixerSettingsChangeRef.current = onMixerSettingsChange
+
+  const schedulePersistMixerSettings = useMemo(
+    () =>
+      debounce((settings: SceneMixerSettings) => {
+        onMixerSettingsChangeRef.current?.(settings)
+      }, 400),
+    []
+  )
+
+  useEffect(() => () => schedulePersistMixerSettings.cancel(), [schedulePersistMixerSettings])
+
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem(MIXER_SETTINGS_STORAGE_KEY)
-        const existing = stored ? JSON.parse(stored) : {}
-        localStorage.setItem(MIXER_SETTINGS_STORAGE_KEY, JSON.stringify({
-          ...existing,
-          collapsedSections
-        }))
-      } catch (e) {
-        console.warn('[SceneProductionMixer] Failed to save mixer settings to localStorage:', e)
-      }
-    }
-  }, [collapsedSections])
+    if (!hasHydratedMixerSettingsRef.current || !onMixerSettingsChange) return
+    schedulePersistMixerSettings(
+      buildPersistedMixerSettings({
+        audioTracks,
+        segmentAudioConfigs,
+        dialogueClipConfigs,
+        masterSegmentVolume,
+        resolution,
+        preserveBackgroundStem,
+        includeSpeechStem,
+        klingLipsyncEnabled,
+        watermarkConfig,
+        collapsedSections,
+        theaterMode,
+        productionTarget,
+      })
+    )
+  }, [
+    audioTracks,
+    segmentAudioConfigs,
+    dialogueClipConfigs,
+    masterSegmentVolume,
+    resolution,
+    preserveBackgroundStem,
+    includeSpeechStem,
+    klingLipsyncEnabled,
+    watermarkConfig,
+    collapsedSections,
+    theaterMode,
+    productionTarget,
+    onMixerSettingsChange,
+    schedulePersistMixerSettings,
+  ])
   
   // Sync with external overlays
   useEffect(() => {
@@ -3552,49 +3492,7 @@ export function SceneProductionMixer({
     }
     loadCachedVideo()
   }, [projectId, sceneId, selectedLanguage, lastRenderedUrl])
-  const [preserveBackgroundStem, setPreserveBackgroundStem] = useState(true)
-  const [includeSpeechStem, setIncludeSpeechStem] = useState(false)
-  const [klingLipsyncEnabled, setKlingLipsyncEnabled] = useState(false)
-  const [masterSegmentVolume, setMasterSegmentVolume] = useState(0.8)
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    try {
-      const stored = localStorage.getItem(MIXER_SETTINGS_STORAGE_KEY)
-      const parsed = stored ? JSON.parse(stored) : {}
-      if (typeof parsed.preserveBackgroundStem === 'boolean') {
-        setPreserveBackgroundStem(parsed.preserveBackgroundStem)
-      }
-      if (typeof parsed.includeSpeechStem === 'boolean') {
-        setIncludeSpeechStem(parsed.includeSpeechStem)
-      }
-      if (typeof parsed.klingLipsyncEnabled === 'boolean') {
-        setKlingLipsyncEnabled(parsed.klingLipsyncEnabled)
-      }
-    } catch (e) {
-      console.warn('[SceneProductionMixer] Failed to load stem policy settings:', e)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    try {
-      const stored = localStorage.getItem(MIXER_SETTINGS_STORAGE_KEY)
-      const parsed = stored ? JSON.parse(stored) : {}
-      localStorage.setItem(
-        MIXER_SETTINGS_STORAGE_KEY,
-        JSON.stringify({
-          ...parsed,
-          preserveBackgroundStem,
-          includeSpeechStem,
-          klingLipsyncEnabled,
-        })
-      )
-    } catch (e) {
-      console.warn('[SceneProductionMixer] Failed to persist stem policy settings:', e)
-    }
-  }, [preserveBackgroundStem, includeSpeechStem, klingLipsyncEnabled])
-  
   const segmentIdsKey = useMemo(
     () => segments.map((seg) => seg.segmentId).join(','),
     [segments]
@@ -3602,13 +3500,12 @@ export function SceneProductionMixer({
 
   // Initialize segment configs when beat list changes (preserve user volume/mute edits)
   useEffect(() => {
-    setSegmentAudioConfigs((prev) => {
-      const configs: Record<string, SegmentAudioConfig> = {}
-      segments.forEach((seg) => {
-        configs[seg.segmentId] = prev[seg.segmentId] || { includeAudio: true, volume: 1.0 }
-      })
-      return configs
-    })
+    setSegmentAudioConfigs((prev) =>
+      buildSegmentAudioConfigsForSegments(
+        segments.map((seg) => seg.segmentId),
+        prev
+      )
+    )
   }, [segmentIdsKey, segments])
   
   // Get available languages from audio assets
@@ -4107,6 +4004,8 @@ export function SceneProductionMixer({
   
   // Render Scene Handler
   const handleRender = useCallback(async () => {
+    schedulePersistMixerSettings.flush()
+
     const serverRenderSegments =
       productionTarget.streamType === 'video' ? videoSegments : renderedSegments
 
@@ -4367,7 +4266,7 @@ export function SceneProductionMixer({
     totalDuration, sceneId, projectId, sceneNumber, resolution, selectedLanguage,
     textOverlays, masterSegmentVolume, watermarkConfig, overlayStore,
     preserveBackgroundStem, includeSpeechStem, klingLipsyncEnabled, resolvedDialogueClips,
-    measuredSegmentDurations, getPlaybackSegmentDuration
+    measuredSegmentDurations, getPlaybackSegmentDuration, schedulePersistMixerSettings
   ])
 
   /**
@@ -4477,6 +4376,7 @@ export function SceneProductionMixer({
   
   // === Local Render Handler ===
   const handleLocalRender = useCallback(async () => {
+    schedulePersistMixerSettings.flush()
     const sourceSegments = videoSegments
     console.log('[LocalRender] Checking segments:', {
       totalSegments: segments.length,
@@ -4842,11 +4742,13 @@ export function SceneProductionMixer({
     productionTarget.streamType, previewSegments, videoSegments, segments, segmentAudioConfigs, audioTracks, playbackAudioUrls,
     totalDuration, videoTotalDuration, maxAudioDuration, resolution, selectedLanguage, 
     textOverlays, masterSegmentVolume, localRenderSupported, localRenderSupportCheck.reason,
-    dialogueClipConfigs, sceneNumber, onRenderComplete, watermarkConfig, overlayStore
+    dialogueClipConfigs, sceneNumber, onRenderComplete, watermarkConfig, overlayStore,
+    schedulePersistMixerSettings,
   ])
   
   // === Headless Render Handler (GCP Cloud Run) ===
   const handleHeadlessRender = useCallback(async () => {
+    schedulePersistMixerSettings.flush()
     if (videoSegments.length === 0) {
       setRenderError('No video segments available for headless rendering')
       return
@@ -5065,7 +4967,7 @@ export function SceneProductionMixer({
     totalDuration, resolution, textOverlays, masterSegmentVolume,
     dialogueClipConfigs, watermarkConfig, overlayStore,
     preserveBackgroundStem, includeSpeechStem, productionTarget.language,
-    measuredSegmentDurations, getPlaybackSegmentDuration,
+    measuredSegmentDurations, getPlaybackSegmentDuration, schedulePersistMixerSettings,
   ])
   
   // Poll headless job status

@@ -955,6 +955,8 @@ export interface SceneProductionData {
   audioTracks?: AudioTracksData
   /** Text overlays for this scene (titles, lower-thirds, subtitles) */
   textOverlays?: TextOverlayData[]
+  /** Persisted Scene Production Mixer UI settings (per scene) */
+  mixerSettings?: SceneMixerSettings
   /** @deprecated Use productionStreams instead. Kept for backwards compatibility. */
   renderedSceneUrl?: string | null
   /** @deprecated Use productionStreams instead. Kept for backwards compatibility. */
@@ -1583,6 +1585,95 @@ export interface MixerAudioTracks {
   dialogue: AudioTrackConfig
   music: AudioTrackConfig
   sfx: AudioTrackConfig
+}
+
+// ============================================================================
+// Scene Production Mixer persistence types
+// ============================================================================
+
+export type WatermarkType = 'text' | 'image'
+
+export type WatermarkAnchor =
+  | 'top-left'
+  | 'top-center'
+  | 'top-right'
+  | 'bottom-left'
+  | 'bottom-center'
+  | 'bottom-right'
+
+export interface WatermarkTextStyle {
+  fontFamily: string
+  fontSize: number
+  fontWeight: 400 | 500 | 600 | 700 | 800
+  color: string
+  opacity: number
+  textShadow?: boolean
+  background?: boolean
+  backgroundColor?: string
+  backgroundOpacity?: number
+}
+
+export interface WatermarkImageStyle {
+  width: number
+  opacity: number
+}
+
+export interface WatermarkConfig {
+  enabled: boolean
+  type: WatermarkType
+  text?: string
+  textStyle: WatermarkTextStyle
+  imageUrl?: string
+  imageStyle: WatermarkImageStyle
+  anchor: WatermarkAnchor
+  padding: number
+}
+
+/** Per-beat audio mix settings in the Production Mixer */
+export interface MixerSegmentAudioConfig {
+  includeAudio: boolean
+  volume: number
+  postSegmentPause?: number
+}
+
+/** Per-dialogue-line control in the Production Mixer (not timeline AudioClipConfig) */
+export interface MixerDialogueClipConfig {
+  id: string
+  enabled: boolean
+  volume: number
+  startTime: number
+  duration: number
+  playbackRate?: number
+}
+
+export interface SceneMixerCollapsedSections {
+  textOverlays: boolean
+  watermark: boolean
+  watermarkCrop: boolean
+  beatVideo: boolean
+  beatTrim: boolean
+  segmentAudio: boolean
+  narration: boolean
+  dialogue: boolean
+  sfx: boolean
+  music: boolean
+  timeline: boolean
+}
+
+/** Persisted mixer controls stored on SceneProductionData.mixerSettings */
+export interface SceneMixerSettings {
+  audioTracks?: Partial<MixerAudioTracks>
+  segmentAudioConfigs?: Record<string, Partial<MixerSegmentAudioConfig>>
+  dialogueClipConfigs?: Record<string, Partial<MixerDialogueClipConfig>>
+  masterSegmentVolume?: number
+  resolution?: '720p' | '1080p' | '4K'
+  productionTarget?: ProductionTarget
+  preserveBackgroundStem?: boolean
+  includeSpeechStem?: boolean
+  klingLipsyncEnabled?: boolean
+  watermarkConfig?: Partial<WatermarkConfig>
+  collapsedSections?: Partial<SceneMixerCollapsedSections>
+  theaterMode?: boolean
 }
 
 // ============================================================================

@@ -464,6 +464,7 @@ export function DirectorConsoleRoot({
   const [streamUploadError, setStreamUploadError] = useState<string | null>(null)
   const [isDesignatingScreening, setIsDesignatingScreening] = useState(false)
   const [productionTarget, setProductionTarget] = useState<ProductionTarget>({ streamType: 'video', language: 'en' })
+  const hydratedProductionTargetRef = useRef<string | null>(null)
   const prevProductionLanguageRef = useRef(productionTarget.language)
   const currentProject = useStore((s) => s.currentProject)
   const updateProject = useStore((s) => s.updateProject)
@@ -511,6 +512,15 @@ export function DirectorConsoleRoot({
       localStorage.setItem('mixerCollapsed', JSON.stringify(mixerCollapsed))
     }
   }, [mixerCollapsed])
+
+  // Hydrate production target from persisted mixer settings (per scene)
+  useEffect(() => {
+    const saved = productionData?.mixerSettings?.productionTarget
+    const token = `${sceneId}:${saved ? `${saved.streamType}:${saved.language}` : 'default'}`
+    if (hydratedProductionTargetRef.current === token) return
+    setProductionTarget(saved ?? { streamType: 'video', language: 'en' })
+    hydratedProductionTargetRef.current = token
+  }, [sceneId, productionData?.mixerSettings?.productionTarget])
 
   // Sync renderedSceneUrl when productionData changes (e.g., after page reload)
   useEffect(() => {
@@ -1194,6 +1204,7 @@ export function DirectorConsoleRoot({
   const mixerBody =
     segments.length > 0 && sceneId ? (
       <SceneProductionMixer
+        key={sceneId}
         sceneId={sceneId}
         sceneNumber={sceneNumber}
         projectId={projectId}
@@ -1227,6 +1238,20 @@ export function DirectorConsoleRoot({
               segments: updatedSegments,
             })
           }
+        }}
+        onMixerSettingsChange={(settings) => {
+          if (!onProductionDataChange) return
+          const base =
+            productionData ??
+            ({
+              isSegmented: segments.length > 0,
+              targetSegmentDuration: 10,
+              segments,
+            } as import('./types').SceneProductionData)
+          onProductionDataChange({
+            ...base,
+            mixerSettings: settings,
+          })
         }}
         onRenderComplete={(downloadUrl, language, streamType = productionTarget.streamType, meta) => {
           setRenderedSceneUrl(downloadUrl)

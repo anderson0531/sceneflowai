@@ -3,11 +3,15 @@
  * Keeps Scene Production Mixer and Scene Render Dialog aligned with the FFmpeg job spec.
  */
 
-import type { SceneProductionData, TextOverlayData } from './types'
+import type { SceneProductionData, TextOverlayData, WatermarkConfig } from './types'
+import {
+  DEFAULT_WATERMARK_CONFIG,
+  SCENEFLOW_WATERMARK_STORAGE_KEY,
+} from '@/lib/scene/mixerSettings'
 
-export const SCENEFLOW_WATERMARK_STORAGE_KEY = 'sceneflow-watermark-config'
+export { SCENEFLOW_WATERMARK_STORAGE_KEY }
 
-/** Mirrors DEFAULT_WATERMARK_CONFIG in SceneProductionMixer (enabled by default). */
+/** Mirrors DEFAULT_WATERMARK_CONFIG (enabled by default). */
 const DEFAULT_WATERMARK_FOR_API = {
   type: 'text' as const,
   text: 'SceneFlow AI Studio',
@@ -28,26 +32,7 @@ const DEFAULT_WATERMARK_FOR_API = {
   },
 }
 
-type StoredWatermark = {
-  enabled?: boolean
-  type?: 'text' | 'image'
-  text?: string
-  imageUrl?: string
-  anchor?: string
-  padding?: number
-  textStyle?: {
-    fontFamily?: string
-    fontSize?: number
-    fontWeight?: number
-    color?: string
-    opacity?: number
-    textShadow?: boolean
-  }
-  imageStyle?: {
-    width?: number
-    opacity?: number
-  }
-}
+type StoredWatermark = Partial<WatermarkConfig>
 
 export function mapTextOverlaysForSceneRenderApi(overlays: TextOverlayData[] | undefined) {
   if (!overlays?.length) return []
@@ -69,49 +54,75 @@ export function mapTextOverlaysForSceneRenderApi(overlays: TextOverlayData[] | u
   }))
 }
 
+function watermarkConfigToApiPayload(
+  parsed: WatermarkConfig
+): typeof DEFAULT_WATERMARK_FOR_API | null {
+  if (parsed.enabled === false) return null
+  if (!parsed.type) return null
+  return {
+    type: parsed.type,
+    text: parsed.text ?? DEFAULT_WATERMARK_FOR_API.text,
+    imageUrl: parsed.imageUrl ?? '',
+    anchor: parsed.anchor || DEFAULT_WATERMARK_FOR_API.anchor,
+    padding: parsed.padding ?? DEFAULT_WATERMARK_FOR_API.padding,
+    textStyle: {
+      fontFamily: parsed.textStyle?.fontFamily ?? DEFAULT_WATERMARK_FOR_API.textStyle.fontFamily,
+      fontSize: parsed.textStyle?.fontSize ?? DEFAULT_WATERMARK_FOR_API.textStyle.fontSize,
+      fontWeight: (parsed.textStyle?.fontWeight ??
+        DEFAULT_WATERMARK_FOR_API.textStyle.fontWeight) as 400 | 500 | 600 | 700 | 800,
+      color: parsed.textStyle?.color ?? DEFAULT_WATERMARK_FOR_API.textStyle.color,
+      opacity: parsed.textStyle?.opacity ?? DEFAULT_WATERMARK_FOR_API.textStyle.opacity,
+      textShadow: parsed.textStyle?.textShadow ?? DEFAULT_WATERMARK_FOR_API.textStyle.textShadow,
+    },
+    imageStyle: {
+      width: parsed.imageStyle?.width ?? DEFAULT_WATERMARK_FOR_API.imageStyle.width,
+      opacity: parsed.imageStyle?.opacity ?? DEFAULT_WATERMARK_FOR_API.imageStyle.opacity,
+    },
+  }
+}
+
 /**
  * Watermark object for the render API (enabled only), or null when disabled / unavailable.
- * Reads the same localStorage key as the Production Mixer.
+ * Prefers per-scene productionData.mixerSettings; falls back to legacy localStorage.
  */
-export function readWatermarkForSceneRenderApi(): typeof DEFAULT_WATERMARK_FOR_API | null {
+export function readWatermarkForSceneRenderApi(
+  productionData?: SceneProductionData | null
+): typeof DEFAULT_WATERMARK_FOR_API | null {
+  const saved = productionData?.mixerSettings?.watermarkConfig
+  if (saved) {
+    const merged: WatermarkConfig = {
+      ...DEFAULT_WATERMARK_CONFIG,
+      ...saved,
+      textStyle: { ...DEFAULT_WATERMARK_CONFIG.textStyle, ...saved.textStyle },
+      imageStyle: { ...DEFAULT_WATERMARK_CONFIG.imageStyle, ...saved.imageStyle },
+    }
+    return watermarkConfigToApiPayload(merged)
+  }
+
   if (typeof window === 'undefined') {
-    return null
+    return watermarkConfigToApiPayload(DEFAULT_WATERMARK_CONFIG)
   }
   try {
     const raw = localStorage.getItem(SCENEFLOW_WATERMARK_STORAGE_KEY)
     if (!raw) {
-      return { ...DEFAULT_WATERMARK_FOR_API, textStyle: { ...DEFAULT_WATERMARK_FOR_API.textStyle }, imageStyle: { ...DEFAULT_WATERMARK_FOR_API.imageStyle } }
+      return watermarkConfigToApiPayload(DEFAULT_WATERMARK_CONFIG)
     }
     const parsed = JSON.parse(raw) as StoredWatermark
-    if (parsed.enabled === false) return null
-    if (!parsed.type) return null
-    return {
-      type: parsed.type,
-      text: parsed.text ?? DEFAULT_WATERMARK_FOR_API.text,
-      imageUrl: parsed.imageUrl ?? '',
-      anchor: (parsed.anchor as typeof DEFAULT_WATERMARK_FOR_API.anchor) || DEFAULT_WATERMARK_FOR_API.anchor,
-      padding: parsed.padding ?? DEFAULT_WATERMARK_FOR_API.padding,
-      textStyle: {
-        fontFamily: parsed.textStyle?.fontFamily ?? DEFAULT_WATERMARK_FOR_API.textStyle.fontFamily,
-        fontSize: parsed.textStyle?.fontSize ?? DEFAULT_WATERMARK_FOR_API.textStyle.fontSize,
-        fontWeight: (parsed.textStyle?.fontWeight ?? DEFAULT_WATERMARK_FOR_API.textStyle.fontWeight) as 400 | 500 | 600 | 700 | 800,
-        color: parsed.textStyle?.color ?? DEFAULT_WATERMARK_FOR_API.textStyle.color,
-        opacity: parsed.textStyle?.opacity ?? DEFAULT_WATERMARK_FOR_API.textStyle.opacity,
-        textShadow: parsed.textStyle?.textShadow ?? DEFAULT_WATERMARK_FOR_API.textStyle.textShadow,
-      },
-      imageStyle: {
-        width: parsed.imageStyle?.width ?? DEFAULT_WATERMARK_FOR_API.imageStyle.width,
-        opacity: parsed.imageStyle?.opacity ?? DEFAULT_WATERMARK_FOR_API.imageStyle.opacity,
-      },
+    const merged: WatermarkConfig = {
+      ...DEFAULT_WATERMARK_CONFIG,
+      ...parsed,
+      textStyle: { ...DEFAULT_WATERMARK_CONFIG.textStyle, ...parsed.textStyle },
+      imageStyle: { ...DEFAULT_WATERMARK_CONFIG.imageStyle, ...parsed.imageStyle },
     }
+    return watermarkConfigToApiPayload(merged)
   } catch {
-    return { ...DEFAULT_WATERMARK_FOR_API, textStyle: { ...DEFAULT_WATERMARK_FOR_API.textStyle }, imageStyle: { ...DEFAULT_WATERMARK_FOR_API.imageStyle } }
+    return watermarkConfigToApiPayload(DEFAULT_WATERMARK_CONFIG)
   }
 }
 
 export function getBurnInPayloadForSceneRenderApi(productionData: SceneProductionData | null) {
   const textOverlays = mapTextOverlaysForSceneRenderApi(productionData?.textOverlays)
-  const wm = readWatermarkForSceneRenderApi()
+  const wm = readWatermarkForSceneRenderApi(productionData)
   return {
     textOverlays,
     watermark: wm,
