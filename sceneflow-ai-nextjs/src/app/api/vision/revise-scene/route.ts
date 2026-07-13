@@ -395,7 +395,7 @@ Now rewrite the scene following all the rules, constraints, and formatting requi
       context,
       sceneIndex,
       preserveElements,
-      skipDirection: false,
+      skipDirection: true,
     })
   }
 

@@ -21,6 +21,7 @@ import { upload } from '@vercel/blob/client'
 import debounce from 'lodash/debounce'
 import {
   applyScenePreservation,
+  shouldRegenerateSceneDirection,
   shouldSkipBeatRederivation,
 } from '@/lib/script/scenePreservation'
 import {
@@ -11543,6 +11544,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // Update script edit timestamp to force cache clear in ScreeningRoom
       setScriptEditedAt(Date.now())
+
+      const persistedScene = persistedScenes[sceneIndex] ?? cleanedScene
+      if (shouldRegenerateSceneDirection(preserveElements)) {
+        void handleBackgroundDirectionGeneration(sceneIndex, persistedScene)
+      }
 
       // Close the editor
       setIsSceneEditorOpen(false)

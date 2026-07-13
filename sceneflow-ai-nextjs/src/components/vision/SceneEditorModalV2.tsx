@@ -8,6 +8,7 @@ import { InstructionsPanel } from './InstructionsPanel'
 import { PreviewPanel } from './PreviewPanel'
 import { SceneComparisonPanel } from './SceneComparisonPanel'
 import { useOverlayStore } from '@/store/useOverlayStore'
+import { toast } from 'sonner'
 import type { PreserveElement } from '@/lib/audio/cleanupAudio'
 import {
   applyDeselectedSceneChanges,
@@ -140,7 +141,7 @@ export function SceneEditorModal({
       const preserveElements = buildPreserveElements()
 
       overlayStore.setProgress(15)
-      overlayStore.setStatus('Analyzing direction...')
+      overlayStore.setStatus('Revising scene content...')
 
       const response = await fetch('/api/vision/revise-scene', {
         method: 'POST',
@@ -162,14 +163,21 @@ export function SceneEditorModal({
       })
 
       overlayStore.setProgress(60)
-      overlayStore.setStatus('Revising scene content...')
+      overlayStore.setStatus('Finalizing beats...')
 
       if (!response.ok) {
-        throw new Error('Failed to revise scene')
+        const errorData = await response.json().catch(() => ({}))
+        const apiError =
+          typeof errorData.error === 'string'
+            ? errorData.error
+            : typeof errorData.message === 'string'
+              ? errorData.message
+              : 'Failed to revise scene'
+        throw new Error(apiError)
       }
 
       overlayStore.setProgress(85)
-      overlayStore.setStatus('Polishing details...')
+      overlayStore.setStatus('Preparing preview...')
 
       const data = await response.json()
       setPreviewScene(data.revisedScene)
@@ -185,6 +193,16 @@ export function SceneEditorModal({
       setShowPreview(true)
     } catch (error) {
       console.error('[Scene Editor] Failed to generate preview:', error)
+      const message = error instanceof Error ? error.message : 'Failed to revise scene'
+      const isTimeout =
+        message === 'Failed to fetch' ||
+        message.toLowerCase().includes('timeout') ||
+        message.toLowerCase().includes('timed out')
+      toast.error(
+        isTimeout
+          ? 'Scene revision timed out — try again or preserve scene direction.'
+          : message
+      )
     } finally {
       setIsGenerating(false)
       overlayStore.hide()
