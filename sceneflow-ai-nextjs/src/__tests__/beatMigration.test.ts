@@ -15,7 +15,6 @@ import {
   applyBeatStoryboardImageToScene,
   applyExpressStoryboardImageToScene,
 } from '@/lib/script/beatMigration'
-import { VEO_DIALOGUE_CLIP_MAX_SEC } from '@/lib/scene/dialogueSegmentSplit'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
 describe('beatMigration', () => {
@@ -166,7 +165,7 @@ describe('beatMigration', () => {
     expect(legacy.action).toContain('Wide shot')
   })
 
-  it('normalizeBeatsForProduction flags long dialogue for split', () => {
+  it('normalizeBeatsForProduction does not flag long dialogue for Veo split', () => {
     const longLine =
       'This is a very long line that should exceed the spoken duration budget when read aloud at a natural pace. '.repeat(
         4
@@ -181,13 +180,8 @@ describe('beatMigration', () => {
         lineId: 'ln_long',
       },
     ])
-    expect(beats[0].needsSplit).toBe(true)
-    expect(beats[0].splitRecommendation?.partCount).toBeGreaterThan(1)
-    expect(beats[0].splitRecommendation?.excerpts.length).toBeGreaterThan(1)
-    for (const excerpt of beats[0].splitRecommendation?.excerpts ?? []) {
-      expect(excerpt.length).toBeGreaterThan(0)
-    }
-    expect(VEO_DIALOGUE_CLIP_MAX_SEC).toBeGreaterThan(0)
+    expect(beats[0].needsSplit).toBe(false)
+    expect(beats[0].splitRecommendation).toBeUndefined()
   })
 
   it('isStoryboardApproved returns true only when status is approved', () => {

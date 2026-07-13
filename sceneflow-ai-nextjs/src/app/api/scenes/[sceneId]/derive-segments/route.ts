@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Project from '../../../../../models/Project'
 import { sequelize } from '../../../../../config/database'
-import {
-  applyBeatSplitAndDerive,
-  deriveSegmentsFromBeats,
-} from '@/lib/scene/deriveSegmentsFromBeats'
+import { deriveSegmentsFromBeats } from '@/lib/scene/deriveSegmentsFromBeats'
 import { isBeatFirstPipelineEnabled } from '@/lib/script/beatMigration'
 import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
 import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
@@ -76,9 +73,9 @@ export async function POST(
       existingSegments,
     }
 
-    const result = extendBeatId
-      ? applyBeatSplitAndDerive(scene, extendBeatId, deriveOptions)
-      : deriveSegmentsFromBeats(scene, deriveOptions)
+    // extendBeatId accepted for backward compatibility but ignored (Kling-first: one beat = one segment).
+    void extendBeatId
+    const result = deriveSegmentsFromBeats(scene, deriveOptions)
 
     if (result.errors.length > 0) {
       return NextResponse.json(

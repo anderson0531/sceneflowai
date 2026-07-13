@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { Button } from '@/components/ui/Button'
-import { Check, ImageIcon, AlertTriangle, Clock } from 'lucide-react'
+import { Check, ImageIcon, AlertTriangle } from 'lucide-react'
 import {
   getSceneBeats,
   getStoryboardStatus,
@@ -103,12 +103,6 @@ export function StoryboardReviewPanel({
               >
                 {kindLabel(beat.kind)}
               </span>
-              {beat.needsSplit && (
-                <span className="absolute top-1 right-1 text-[10px] px-1.5 py-0.5 rounded bg-orange-500/30 text-orange-200 flex items-center gap-0.5">
-                  <Clock className="w-3 h-3" />
-                  Split
-                </span>
-              )}
             </div>
             <div className="p-2 space-y-1">
               <p className="text-[10px] text-gray-400 line-clamp-2">

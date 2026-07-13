@@ -5417,8 +5417,8 @@ function SceneCard({
           </div>
         )}
 
-        {/* Next Step CTA Banner — contextual workflow guidance */}
-        {!isOutline && isWorkflowOpen && (() => {
+        {/* Next Step CTA Banner — contextual workflow guidance (Script tab only) */}
+        {!isOutline && isWorkflowOpen && activeWorkflowTab !== 'callAction' && (() => {
           const wfState: WorkflowState = buildWorkflowState(
             scene,
             sceneProductionData,

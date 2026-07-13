@@ -5,11 +5,6 @@
 import { toCanonicalName } from '@/lib/character/canonical'
 import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
 import {
-  estimateSpokenDurationSeconds,
-  planDialogueLineSplits,
-  VEO_DIALOGUE_CLIP_MAX_SEC,
-} from '@/lib/scene/dialogueSegmentSplit'
-import {
   NARRATOR_CHARACTER,
   NARRATOR_CHARACTER_ID,
   type BeatKind,
@@ -55,21 +50,9 @@ function isSpokenBeatKind(kind: BeatKind): boolean {
   return kind === 'dialogue' || kind === 'narration'
 }
 
+/** Kling-first: long dialogue is handled at generation time (long-take), not via beat splits. */
 function computeSplitFlags(beat: SceneBeat): SceneBeat {
-  if (!isSpokenBeatKind(beat.kind) || !beat.line?.trim()) return beat
-  const estimated = estimateSpokenDurationSeconds(beat.line)
-  if (estimated <= VEO_DIALOGUE_CLIP_MAX_SEC) {
-    return { ...beat, needsSplit: false, splitRecommendation: undefined }
-  }
-  const parts = planDialogueLineSplits(beat.line, VEO_DIALOGUE_CLIP_MAX_SEC)
-  return {
-    ...beat,
-    needsSplit: parts.length > 1,
-    splitRecommendation:
-      parts.length > 1
-        ? { partCount: parts.length, excerpts: parts.map((p) => p.excerpt) }
-        : undefined,
-  }
+  return { ...beat, needsSplit: false, splitRecommendation: undefined }
 }
 
 /** Assign stable beatIds, sequenceIndex, and split flags. */
