@@ -404,8 +404,8 @@ export function applyDerivedSfxToScene(
   const derivedKeys = new Set(derived.map((d) => normalizeDescription(d.description)))
   const preserved = existingWithIdx
     .filter(({ cue, idx }) => {
+      if (hasSfxAudioAtIndex(scene, idx)) return true
       if (!derivedKeys.has(normalizeDescription(cue.description))) return true
-      if (cue.sourceBeatId && hasSfxAudioAtIndex(scene, idx)) return true
       return false
     })
     .map(({ cue }) => cue)

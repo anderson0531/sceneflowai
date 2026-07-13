@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { mergeScenesForScriptSave, mergeExpressOrchestratedScenes, sceneHasAudioRefs } from '@/lib/audio/cleanupAudio'
+import {
+  mergeScenesForScriptSave,
+  mergeExpressOrchestratedScenes,
+  mergeScenesTrustingIncomingAudio,
+  sceneHasAudioRefs,
+  countNonEmptySfxSlots,
+} from '@/lib/audio/cleanupAudio'
 import {
   mergeSceneArraysForPersistence,
   mergeScenePreservingMedia,
@@ -196,6 +202,53 @@ describe('mergeScenePreservingMedia', () => {
     expect(merged.sfxAudio).toBeUndefined()
     expect(merged.sfx).toBeUndefined()
   })
+
+  it('remaps sfxAudio by sourceBeatId when cue order changes after beat B upsert', () => {
+    const canonical = {
+      id: 's1',
+      sfx: [
+        { description: 'Keyboard', sourceBeatId: 'bt_1', sfxId: 'sfx_1' },
+        { description: 'Door', sourceBeatId: 'bt_2', sfxId: 'sfx_2' },
+      ],
+      sfxAudio: ['https://example.com/beat1.mp3', 'https://example.com/beat2.mp3'],
+    }
+    const incoming = {
+      id: 's1',
+      sfx: [
+        { description: 'Door creak', sourceBeatId: 'bt_2', sfxId: 'sfx_2' },
+        { description: 'Keyboard typing', sourceBeatId: 'bt_1', sfxId: 'sfx_1' },
+        { description: 'Wind', sourceBeatId: 'bt_3', sfxId: 'sfx_3' },
+      ],
+      sfxAudio: ['https://example.com/beat2-new.mp3', null, 'https://example.com/beat3.mp3'],
+    }
+
+    const merged = mergeScenePreservingMedia(canonical, incoming)
+    const beat1Idx = merged.sfx.findIndex((c: any) => c.sourceBeatId === 'bt_1')
+    const beat2Idx = merged.sfx.findIndex((c: any) => c.sourceBeatId === 'bt_2')
+    expect(merged.sfxAudio[beat1Idx]).toBe('https://example.com/beat1.mp3')
+    expect(merged.sfxAudio[beat2Idx]).toBe('https://example.com/beat2-new.mp3')
+  })
+
+  it('merges sequential beat SFX saves when canonical lacks prior beat audio', () => {
+    const canonical = {
+      id: 's1',
+      heading: 'Scene',
+      sfx: [{ description: 'Keyboard', sourceBeatId: 'bt_1', sfxId: 'sfx_1' }],
+    }
+    const incoming = {
+      id: 's1',
+      heading: 'Scene',
+      sfx: [
+        { description: 'Keyboard', sourceBeatId: 'bt_1', sfxId: 'sfx_1' },
+        { description: 'Door', sourceBeatId: 'bt_2', sfxId: 'sfx_2' },
+      ],
+      sfxAudio: ['https://example.com/beat1.mp3', 'https://example.com/beat2.mp3'],
+    }
+
+    const merged = mergeScenePreservingMedia(canonical, incoming)
+    expect(merged.sfxAudio[0]).toBe('https://example.com/beat1.mp3')
+    expect(merged.sfxAudio[1]).toBe('https://example.com/beat2.mp3')
+  })
 })
 
 describe('mergeScenesForScriptSave media preservation', () => {
@@ -236,6 +289,73 @@ describe('mergeScenesForScriptSave media preservation', () => {
     const merged = mergeScenesForScriptSave(canonical, incoming)
     expect(merged[1].imageUrl).toBe('https://example.com/2.png')
     expect(merged[1].heading).toBe('B edited')
+  })
+
+  it('keeps incoming sfxAudio when canonical has no SFX after atomic beat save', () => {
+    const canonical = [{ id: 's1', heading: 'Scene' }]
+    const incoming = [
+      {
+        id: 's1',
+        heading: 'Scene',
+        sfx: [{ description: 'Click', sourceBeatId: 'bt_1', sfxId: 'sfx_1' }],
+        sfxAudio: ['https://example.com/beat1.mp3'],
+      },
+    ]
+
+    const merged = mergeScenesForScriptSave(canonical, incoming)
+    expect(merged[0].sfxAudio[0]).toBe('https://example.com/beat1.mp3')
+    expect(countNonEmptySfxSlots(merged[0])).toBe(1)
+  })
+
+  it('preserves both beat URLs when incoming is server-fresh superset', () => {
+    const canonical = [
+      {
+        id: 's1',
+        sfx: [{ description: 'Click', sourceBeatId: 'bt_1', sfxId: 'sfx_1' }],
+        sfxAudio: ['https://example.com/beat1.mp3'],
+      },
+    ]
+    const incoming = [
+      {
+        id: 's1',
+        sfx: [
+          { description: 'Click', sourceBeatId: 'bt_1', sfxId: 'sfx_1' },
+          { description: 'Door', sourceBeatId: 'bt_2', sfxId: 'sfx_2' },
+        ],
+        sfxAudio: ['https://example.com/beat1.mp3', 'https://example.com/beat2.mp3'],
+      },
+    ]
+
+    const merged = mergeScenesForScriptSave(canonical, incoming)
+    expect(merged[0].sfxAudio[0]).toBe('https://example.com/beat1.mp3')
+    expect(merged[0].sfxAudio[1]).toBe('https://example.com/beat2.mp3')
+  })
+})
+
+describe('mergeScenesTrustingIncomingAudio', () => {
+  it('prefers incoming sfxAudio over stale canonical when syncing after atomic save', () => {
+    const canonical = [
+      {
+        id: 's1',
+        heading: 'Local edit',
+        sfx: [{ description: 'Click', sourceBeatId: 'bt_1', sfxId: 'sfx_1' }],
+      },
+    ]
+    const incoming = [
+      {
+        id: 's1',
+        heading: 'Server',
+        sfx: [
+          { description: 'Click', sourceBeatId: 'bt_1', sfxId: 'sfx_1' },
+          { description: 'Door', sourceBeatId: 'bt_2', sfxId: 'sfx_2' },
+        ],
+        sfxAudio: ['https://example.com/beat1.mp3', 'https://example.com/beat2.mp3'],
+      },
+    ]
+
+    const merged = mergeScenesTrustingIncomingAudio(canonical, incoming)
+    expect(merged[0].sfxAudio[0]).toBe('https://example.com/beat1.mp3')
+    expect(merged[0].sfxAudio[1]).toBe('https://example.com/beat2.mp3')
   })
 })
 

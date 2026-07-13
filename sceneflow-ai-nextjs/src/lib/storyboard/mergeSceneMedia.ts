@@ -299,6 +299,186 @@ function isNonEmptySfxUrl(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
 }
 
+type SfxCueRecord = Record<string, unknown>
+
+function coerceSfxCueRecord(raw: unknown, legacyIndex: number): SfxCueRecord | null {
+  if (raw == null) return null
+  if (typeof raw === 'string') {
+    const description = raw.trim()
+    if (!description) return null
+    return { description, legacyIndex }
+  }
+  if (typeof raw === 'object' && !Array.isArray(raw)) {
+    const o = raw as SfxCueRecord
+    return {
+      ...o,
+      legacyIndex: typeof o.legacyIndex === 'number' ? o.legacyIndex : legacyIndex,
+    }
+  }
+  return null
+}
+
+function sfxCueIdentityKeys(cue: SfxCueRecord, arrayIndex: number): string[] {
+  const keys: string[] = []
+  if (typeof cue.sfxId === 'string' && cue.sfxId.trim()) {
+    keys.push(`sfxId:${cue.sfxId.trim()}`)
+  }
+  if (typeof cue.sourceBeatId === 'string' && cue.sourceBeatId.trim()) {
+    keys.push(`beatId:${cue.sourceBeatId.trim()}`)
+  }
+  if (typeof cue.legacyIndex === 'number' && Number.isFinite(cue.legacyIndex)) {
+    keys.push(`idx:${cue.legacyIndex}`)
+  }
+  keys.push(`pos:${arrayIndex}`)
+  return keys
+}
+
+function sceneSfxHasIdentityKeys(canon: any, incoming: any): boolean {
+  const hasIdentity = (arr: unknown[]) =>
+    arr.some((raw, i) => {
+      const cue = coerceSfxCueRecord(raw, i)
+      if (!cue) return false
+      return sfxCueIdentityKeys(cue, i).some(
+        (k) => k.startsWith('sfxId:') || k.startsWith('beatId:')
+      )
+    })
+  const canonArr = Array.isArray(canon?.sfx) ? canon.sfx : []
+  const incomingArr = Array.isArray(incoming?.sfx) ? incoming.sfx : []
+  return hasIdentity(canonArr) || hasIdentity(incomingArr)
+}
+
+interface SfxAudioBundle {
+  url: string | null
+  meta: unknown
+}
+
+function upsertSfxUrlLookup(
+  lookup: Map<string, SfxAudioBundle>,
+  cues: unknown[],
+  urls: unknown[],
+  metas: unknown[],
+  incomingWins: boolean
+): void {
+  cues.forEach((raw, idx) => {
+    const cue = coerceSfxCueRecord(raw, idx)
+    if (!cue) return
+    const url = isNonEmptySfxUrl(urls[idx]) ? (urls[idx] as string) : null
+    const meta = metas[idx] ?? null
+    const bundle: SfxAudioBundle = { url, meta }
+    for (const key of sfxCueIdentityKeys(cue, idx)) {
+      const existing = lookup.get(key)
+      if (!existing) {
+        lookup.set(key, bundle)
+      } else if (incomingWins && bundle.url) {
+        lookup.set(key, bundle)
+      } else if (!existing.url && bundle.url) {
+        lookup.set(key, bundle)
+      } else if (!incomingWins && existing.url && !bundle.url) {
+        // keep canonical
+      } else if (incomingWins && !bundle.url && existing.url) {
+        // keep existing when incoming slot empty
+      }
+    }
+  })
+}
+
+function buildMergedSfxUrlLookup(canon: any, incoming: any): Map<string, SfxAudioBundle> {
+  const lookup = new Map<string, SfxAudioBundle>()
+  const canonCues = Array.isArray(canon?.sfx) ? canon.sfx : []
+  const incomingCues = Array.isArray(incoming?.sfx) ? incoming.sfx : []
+  const canonUrls = Array.isArray(canon?.sfxAudio) ? canon.sfxAudio : []
+  const incomingUrls = Array.isArray(incoming?.sfxAudio) ? incoming.sfxAudio : []
+  const canonMetas = Array.isArray(canon?.sfxSourceMeta) ? canon.sfxSourceMeta : []
+  const incomingMetas = Array.isArray(incoming?.sfxSourceMeta) ? incoming.sfxSourceMeta : []
+
+  upsertSfxUrlLookup(lookup, canonCues, canonUrls, canonMetas, false)
+  upsertSfxUrlLookup(lookup, incomingCues, incomingUrls, incomingMetas, true)
+  return lookup
+}
+
+function resolveSfxBundleForCue(
+  cue: SfxCueRecord,
+  newIndex: number,
+  lookup: Map<string, SfxAudioBundle>
+): SfxAudioBundle {
+  for (const key of sfxCueIdentityKeys(cue, newIndex)) {
+    const bundle = lookup.get(key)
+    if (bundle?.url) return bundle
+  }
+  return { url: null, meta: null }
+}
+
+function mergeSfxCuesByIdentity(canonArr: unknown[], incomingArr: unknown[]): unknown[] {
+  const canonByKey = new Map<string, SfxCueRecord>()
+  canonArr.forEach((raw, idx) => {
+    const cue = coerceSfxCueRecord(raw, idx)
+    if (!cue) return
+    for (const key of sfxCueIdentityKeys(cue, idx)) {
+      if (!canonByKey.has(key)) canonByKey.set(key, cue)
+    }
+  })
+
+  const merged: unknown[] = []
+  const seen = new Set<string>()
+
+  const primaryKey = (cue: SfxCueRecord, idx: number): string =>
+    sfxCueIdentityKeys(cue, idx).find((k) => k.startsWith('sfxId:') || k.startsWith('beatId:')) ??
+    `pos:${idx}`
+
+  incomingArr.forEach((raw, idx) => {
+    const cue = coerceSfxCueRecord(raw, idx)
+    if (!cue) return
+    const idKey = primaryKey(cue, idx)
+    if (seen.has(idKey)) return
+    seen.add(idKey)
+
+    let base: SfxCueRecord = { ...cue }
+    for (const key of sfxCueIdentityKeys(cue, idx)) {
+      const canonCue = canonByKey.get(key)
+      if (canonCue) {
+        base = { ...canonCue, ...cue }
+        break
+      }
+    }
+    merged.push(base)
+  })
+
+  canonArr.forEach((raw, idx) => {
+    const cue = coerceSfxCueRecord(raw, idx)
+    if (!cue) return
+    const idKey = primaryKey(cue, idx)
+    if (seen.has(idKey)) return
+    seen.add(idKey)
+    merged.push(cue)
+  })
+
+  return merged
+}
+
+function mergeSfxParallelArraysByCueIdentity(
+  canon: any,
+  incoming: any,
+  mergedCues: unknown[]
+): { sfxAudio: (string | null)[]; sfxSourceMeta: unknown[] } {
+  const lookup = buildMergedSfxUrlLookup(canon, incoming)
+  const sfxAudio: (string | null)[] = []
+  const sfxSourceMeta: unknown[] = []
+
+  mergedCues.forEach((raw, idx) => {
+    const cue = coerceSfxCueRecord(raw, idx)
+    if (!cue) {
+      sfxAudio.push(null)
+      sfxSourceMeta.push(null)
+      return
+    }
+    const bundle = resolveSfxBundleForCue(cue, idx, lookup)
+    sfxAudio.push(bundle.url)
+    sfxSourceMeta.push(bundle.meta)
+  })
+
+  return { sfxAudio, sfxSourceMeta }
+}
+
 /** Positional merge: incoming URL wins when non-empty; otherwise keep canonical slot. */
 function mergeSfxAudioArrays(canonArr: unknown[], incomingArr: unknown[]): (string | null)[] {
   const maxLen = Math.max(canonArr.length, incomingArr.length)
@@ -459,14 +639,41 @@ export function mergeScenePreservingMedia(canonical: any, incoming: any): any {
   merged.segments = mergeSegmentDialogueMedia(canonical.segments, incoming.segments)
   merged.dialogueAudio = mergeDialogueAudioField(canonical, incoming)
 
-  const mergedSfxAudio = mergeSfxAudioField(canonical, incoming)
-  if (mergedSfxAudio !== undefined) merged.sfxAudio = mergedSfxAudio
+  if (sceneSfxHasIdentityKeys(canonical, incoming)) {
+    const canonSfxArr = Array.isArray(canonical.sfx) ? canonical.sfx : []
+    const incomingSfxArr = Array.isArray(incoming.sfx) ? incoming.sfx : []
+    const mergedSfx =
+      canonSfxArr.length === 0 && incomingSfxArr.length === 0
+        ? undefined
+        : mergeSfxCuesByIdentity(canonSfxArr, incomingSfxArr)
+    if (mergedSfx !== undefined) {
+      merged.sfx = mergedSfx
+      const { sfxAudio, sfxSourceMeta } = mergeSfxParallelArraysByCueIdentity(
+        canonical,
+        incoming,
+        mergedSfx
+      )
+      if (sfxAudio.length > 0 || Array.isArray(canonical.sfxAudio) || Array.isArray(incoming.sfxAudio)) {
+        merged.sfxAudio = sfxAudio
+      }
+      if (
+        sfxSourceMeta.length > 0 ||
+        Array.isArray(canonical.sfxSourceMeta) ||
+        Array.isArray(incoming.sfxSourceMeta)
+      ) {
+        merged.sfxSourceMeta = sfxSourceMeta
+      }
+    }
+  } else {
+    const mergedSfxAudio = mergeSfxAudioField(canonical, incoming)
+    if (mergedSfxAudio !== undefined) merged.sfxAudio = mergedSfxAudio
 
-  const mergedSfxSourceMeta = mergeSfxSourceMetaField(canonical, incoming)
-  if (mergedSfxSourceMeta !== undefined) merged.sfxSourceMeta = mergedSfxSourceMeta
+    const mergedSfxSourceMeta = mergeSfxSourceMetaField(canonical, incoming)
+    if (mergedSfxSourceMeta !== undefined) merged.sfxSourceMeta = mergedSfxSourceMeta
 
-  const mergedSfx = mergeSfxCuesField(canonical, incoming)
-  if (mergedSfx !== undefined) merged.sfx = mergedSfx
+    const mergedSfx = mergeSfxCuesField(canonical, incoming)
+    if (mergedSfx !== undefined) merged.sfx = mergedSfx
+  }
 
   return merged
 }

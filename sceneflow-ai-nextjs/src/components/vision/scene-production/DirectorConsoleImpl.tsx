@@ -19,6 +19,7 @@
 
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { coerceSceneSfxFlatArray } from '@/lib/script/segmentScript'
+import { resolveSceneSfxUrl } from '@/components/vision/scene-production/audioTrackBuilder'
 import type { BlueprintAspectRatio } from '@/lib/treatment/blueprintFoundation'
 import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/Button'
@@ -339,10 +340,19 @@ export function DirectorConsoleRoot({
     [guideCharacters, scene]
   )
 
-  const normalizedSceneSfx = useMemo(
-    () => coerceSceneSfxFlatArray(scene?.sfx),
-    [scene?.sfx]
-  )
+  const normalizedSceneSfx = useMemo(() => {
+    const cues = coerceSceneSfxFlatArray(scene?.sfx)
+    const sceneRecord = scene as Record<string, unknown> | undefined
+    if (!sceneRecord) return cues
+    return cues.map((cue, idx) => {
+      const resolved = resolveSceneSfxUrl(sceneRecord, idx)
+      if (!resolved) return cue
+      if (typeof cue === 'object' && cue) {
+        return { ...cue, audioUrl: resolved }
+      }
+      return { description: String(cue), audioUrl: resolved }
+    })
+  }, [scene])
 
   const segmentGuideContext = useMemo<SegmentGuideContext | undefined>(() => {
     if (!scene) return undefined

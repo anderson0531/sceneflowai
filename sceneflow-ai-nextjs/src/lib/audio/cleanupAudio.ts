@@ -534,6 +534,56 @@ export interface CleanupResult {
   deletedUrls: string[]
 }
 
+/** Count non-empty URLs in scene.sfxAudio. */
+export function countNonEmptySfxSlots(scene: any): number {
+  if (!scene || typeof scene !== 'object') return 0
+  const arr = Array.isArray(scene.sfxAudio) ? scene.sfxAudio : []
+  return arr.filter((u: unknown) => typeof u === 'string' && u.trim().length > 0).length
+}
+
+/**
+ * Merge one scene when incoming audio came from a fresh server snapshot (atomic PATCH).
+ * Preserves storyboard media from canonical; incoming audio fields win.
+ */
+export function mergeSceneTrustingIncomingAudio(canonical: any, incoming: any): any {
+  if (!canonical) return incoming
+  if (!incoming) return canonical
+
+  const merged = mergeScenePreservingMedia(canonical, incoming)
+  for (const key of SCENE_AUDIO_FIELD_KEYS) {
+    if (key in incoming && incoming[key] !== undefined) {
+      merged[key] = incoming[key]
+    }
+  }
+  if (Array.isArray(incoming.sfx)) {
+    merged.sfx = incoming.sfx
+  }
+  return merged
+}
+
+/** Per-scene merge for atomic audio refresh (after PATCH + GET). */
+export function mergeScenesTrustingIncomingAudio(
+  canonicalScenes: any[],
+  incomingScenes: any[]
+): any[] {
+  const maxLen = Math.max(canonicalScenes.length, incomingScenes.length)
+  const merged: any[] = []
+  for (let idx = 0; idx < maxLen; idx++) {
+    const canonical = canonicalScenes[idx]
+    const incoming = incomingScenes[idx]
+    if (!incoming) {
+      if (canonical) merged.push(canonical)
+      continue
+    }
+    if (!canonical) {
+      merged.push(incoming)
+      continue
+    }
+    merged.push(mergeSceneTrustingIncomingAudio(canonical, incoming))
+  }
+  return merged
+}
+
 /** True when the scene object references any generated audio URL. */
 export function sceneHasAudioRefs(scene: any): boolean {
   if (!scene || typeof scene !== 'object') return false
@@ -683,11 +733,18 @@ export function mergeScenesForScriptSave(
       continue
     }
 
-    // Reject audio reversion: canonical cleared but stale incoming still has URLs
+    // Reject audio reversion: canonical cleared but stale incoming still has URLs.
+    // When incoming has more SFX slots, treat as server-fresh (e.g. atomic beat SFX save).
     if (!sceneHasAudioRefs(canonical) && sceneHasAudioRefs(incoming)) {
-      merged.push(
-        mergeScenePreservingMedia(canonical, mergeScenePreservingAudio(canonical, incoming))
-      )
+      const canonSfxSlots = countNonEmptySfxSlots(canonical)
+      const incomingSfxSlots = countNonEmptySfxSlots(incoming)
+      if (incomingSfxSlots > canonSfxSlots) {
+        merged.push(mergeScenePreservingMedia(canonical, incoming))
+      } else {
+        merged.push(
+          mergeScenePreservingMedia(canonical, mergeScenePreservingAudio(canonical, incoming))
+        )
+      }
       continue
     }
 

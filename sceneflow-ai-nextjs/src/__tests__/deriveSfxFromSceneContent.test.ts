@@ -131,6 +131,34 @@ describe('deriveSfxFromSceneContent', () => {
     expect(readBeatSfxAudio(updated, slotB)).toBe('https://example.com/b.mp3')
     expect((updated.sfxAudio as string[]).includes('https://example.com/a.mp3')).toBe(true)
   })
+
+  it('preserves cues with generated audio even when derived description matches', () => {
+    const scene = {
+      duration: 30,
+      sceneDirection: marcusDirection,
+      sfx: [
+        {
+          description: 'Mouse clicks',
+          sourceBeatId: 'bt_a',
+          sfxId: 'sfx_a',
+          legacyIndex: 0,
+        },
+      ],
+      sfxAudio: ['https://example.com/generated.mp3'],
+      beats: [
+        {
+          beatId: 'bt_a',
+          kind: 'action' as const,
+          sequenceIndex: 0,
+          actionDescription: 'Clicks mouse rapidly',
+        },
+      ],
+    }
+    const beats = deriveBeatsFromSceneContent(scene)
+    const updated = applyDerivedSfxToScene(scene, beats)
+    expect((updated.sfxAudio as string[])[0]).toBe('https://example.com/generated.mp3')
+    expect((updated.sfx as unknown[]).length).toBeGreaterThan(0)
+  })
 })
 
 describe('assignSfxToBeats', () => {

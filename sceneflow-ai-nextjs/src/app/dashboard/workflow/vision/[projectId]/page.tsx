@@ -27,6 +27,7 @@ import {
   applySceneEditAudioPolicy,
   clearAllSceneAudio,
   mergeScenesForScriptSave,
+  mergeScenesTrustingIncomingAudio,
   removeStaleAudioUrlFromScene,
   type PreserveElement,
 } from '@/lib/audio/cleanupAudio'
@@ -1041,16 +1042,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // and that changes are persisted to the database
   // Reference Library opens in a dialog (see openReferenceLibrary below)
 
-  const handleScriptChange = useCallback(async (updatedScript: any) => {
+  const handleScriptChange = useCallback(async (
+    updatedScript: any,
+    options?: { trustIncomingAudio?: boolean }
+  ) => {
     const canonical = scriptRef.current
     const incomingScenes = updatedScript?.script?.scenes || []
     const canonicalScenes = canonical?.script?.scenes || []
 
     const mergedScenes =
       canonicalScenes.length > 0 && incomingScenes.length > 0
-        ? mergeScenesForScriptSave(canonicalScenes, incomingScenes, {
-            preserveAudio: audioRegenInProgressRef.current,
-          })
+        ? options?.trustIncomingAudio
+          ? mergeScenesTrustingIncomingAudio(canonicalScenes, incomingScenes)
+          : mergeScenesForScriptSave(canonicalScenes, incomingScenes, {
+              preserveAudio: audioRegenInProgressRef.current,
+            })
         : incomingScenes
 
     const mergedScript = {
@@ -1069,6 +1075,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     // Guard: Don't save if projectId is invalid
     if (!isValidProjectId(projectId)) {
       console.warn('[handleScriptChange] Skipping save - invalid projectId:', projectId)
+      return
+    }
+
+    // Atomic audio PATCH already persisted; only sync local state
+    if (options?.trustIncomingAudio) {
       return
     }
     

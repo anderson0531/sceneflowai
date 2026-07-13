@@ -200,7 +200,7 @@ interface ProductionReadiness {
 
 interface ScriptPanelProps {
   script: any
-  onScriptChange: (script: any) => void
+  onScriptChange: (script: any, options?: { trustIncomingAudio?: boolean }) => void
   isGenerating: boolean
   onExpandScene?: (sceneNumber: number) => Promise<void>
   onExpandAllScenes?: () => Promise<void>
@@ -2215,7 +2215,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         if (freshScript) {
           console.log('[Save Audio] Got fresh script from server, updating local state')
           // Update parent state with fresh data from server (includes all saved audio)
-          onScriptChange(freshScript)
+          onScriptChange(freshScript, { trustIncomingAudio: true })
         }
       }
       
@@ -3776,7 +3776,7 @@ interface SceneCardProps {
   // Ken Burns toggle and script updates
   scenes?: any[]
   script?: any
-  onScriptChange?: (script: any) => void
+  onScriptChange?: (script: any, options?: { trustIncomingAudio?: boolean }) => void
   // Image edit modal access
   setEditingImageData?: (data: { url: string; sceneIdx: number; segmentId?: string; frameType?: 'start' | 'end'; sceneId?: string } | null) => void
   setImageEditModalOpen?: (open: boolean) => void
