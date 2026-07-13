@@ -3,7 +3,7 @@
  */
 
 import Project from '@/models/Project'
-import { registerKlingElement } from './klingDirectClient'
+import { registerKlingElement, registerKlingElementMulti } from './klingDirectClient'
 import { getKlingCapabilities } from './config'
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
 
@@ -11,6 +11,12 @@ export type KlingElementSource = {
   id: string
   name: string
   imageUrl: string
+  /** Identity / primary frontal image for multi-image bind */
+  frontalImageUrl?: string
+  /** Wardrobe or additional angle images (1-3) */
+  referImageUrls?: string[]
+  description?: string
+  tagId?: string
   klingElementId?: string
   type: 'character' | 'prop' | 'location'
   wardrobeId?: string
@@ -36,9 +42,26 @@ async function ensureElementRegistered(
   if (source.klingElementId?.trim()) {
     return { elementId: source.klingElementId.trim() }
   }
-  if (!source.imageUrl?.trim()) return { elementId: null }
+
+  const frontal = source.frontalImageUrl?.trim() || source.imageUrl?.trim()
+  if (!frontal) return { elementId: null }
+
   try {
-    const elementId = await registerKlingElement(source.imageUrl, source.name)
+    const referUrls = (source.referImageUrls || []).filter((u) => u?.trim())
+    let elementId: string
+
+    if (referUrls.length >= 1) {
+      elementId = await registerKlingElementMulti({
+        name: source.name,
+        description: source.description,
+        frontalImageUrl: frontal,
+        referImageUrls: referUrls,
+        tagId: source.tagId,
+      })
+    } else {
+      elementId = await registerKlingElement(frontal, source.name)
+    }
+
     return {
       elementId,
       registration: {
@@ -101,7 +124,13 @@ export function collectKlingElementSources(args: {
     name?: string
     referenceImage?: string
     klingElementId?: string
-    wardrobes?: Array<{ id?: string; headshotUrl?: string; klingElementId?: string }>
+    wardrobes?: Array<{
+      id?: string
+      name?: string
+      headshotUrl?: string
+      fullBodyUrl?: string
+      klingElementId?: string
+    }>
   }>
   characterIds?: string[]
   characterWardrobes?: Array<{ characterId: string; wardrobeId: string }>
@@ -130,13 +159,30 @@ export function collectKlingElementSources(args: {
       ? char.wardrobes?.find((w) => w.id === wardrobePick.wardrobeId)
       : undefined
 
-    const imageUrl = wardrobe?.headshotUrl || char.referenceImage
+    const identityUrl = char.referenceImage?.trim()
+    const referCandidates = [wardrobe?.headshotUrl, wardrobe?.fullBodyUrl].filter(
+      (u): u is string => !!u?.trim()
+    )
+
+    let frontalImageUrl = identityUrl
+    let referImageUrls = referCandidates
+
+    if (!frontalImageUrl && referCandidates.length > 0) {
+      frontalImageUrl = referCandidates[0]
+      referImageUrls = referCandidates.slice(1)
+    }
+
+    const imageUrl = frontalImageUrl || referImageUrls[0]
     if (!imageUrl) continue
 
     sources.push({
       id: char.id || char.name,
       name: char.name,
       imageUrl,
+      frontalImageUrl,
+      referImageUrls: referImageUrls.length ? referImageUrls : undefined,
+      description: wardrobe ? `${char.name} in ${wardrobe.name}` : char.name,
+      tagId: 'o_102',
       klingElementId: wardrobe?.klingElementId || char.klingElementId,
       type: 'character',
       wardrobeId: wardrobe?.id,
@@ -150,6 +196,9 @@ export function collectKlingElementSources(args: {
       id: prop.id,
       name: prop.name,
       imageUrl: prop.imageUrl,
+      frontalImageUrl: prop.imageUrl,
+      description: prop.description || prop.name,
+      tagId: 'o_104',
       klingElementId: (prop as VisualReference & { klingElementId?: string }).klingElementId,
       type: 'prop',
     })
@@ -162,6 +211,9 @@ export function collectKlingElementSources(args: {
         id: loc.id,
         name: loc.locationDisplay || loc.location,
         imageUrl: loc.imageUrl,
+        frontalImageUrl: loc.imageUrl,
+        description: loc.description || loc.locationDisplay || loc.location,
+        tagId: 'o_106',
         klingElementId: (loc as LocationReference & { klingElementId?: string }).klingElementId,
         type: 'location',
       })

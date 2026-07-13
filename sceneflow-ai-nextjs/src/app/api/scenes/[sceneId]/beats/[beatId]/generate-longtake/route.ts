@@ -25,6 +25,7 @@ import { isKlingConfigured, isKlingAsyncEnabled } from '@/lib/kling/config'
 import {
   collectKlingElementSources,
   injectElementTagsIntoPrompt,
+  persistKlingElementIdsToProject,
   resolveKlingElementsFromSources,
 } from '@/lib/kling/elementRegistry'
 import type { KlingLongTakeJobPayload } from '@/lib/kling/longTakeOrchestrator'
@@ -224,6 +225,9 @@ export async function POST(
       locationRefId: beat.referenceSelection?.locationRefId,
     })
     const resolvedElements = await resolveKlingElementsFromSources(elementSources, model)
+    if (resolvedElements.newRegistrations.length) {
+      await persistKlingElementIdsToProject(projectId, resolvedElements.newRegistrations)
+    }
     const elementList = resolvedElements.elementIds
     const basePrompt = body.prompt?.trim() || compiled.prompt
     const prompt =

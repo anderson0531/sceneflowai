@@ -79,6 +79,39 @@ export function getKlingSegmentPollTimeoutSec(): number {
   return Math.min(getKlingPollTimeoutSec(), 270)
 }
 
+/** POST path for Kling element creation (override for gateway advanced-custom-elements). */
+export function getKlingElementEndpoint(): string {
+  const raw = process.env.KLING_ELEMENT_ENDPOINT?.trim()
+  if (raw) return raw.startsWith('/') ? raw : `/${raw}`
+  return '/elements'
+}
+
+/** Optional model flag on create-element payloads (some gateways require it). */
+export function getKlingElementCreateModel(): string {
+  return process.env.KLING_ELEMENT_MODEL?.trim() || ''
+}
+
+export function getKlingElementPollIntervalMs(): number {
+  return getKlingPollIntervalMs()
+}
+
+/** Poll budget for async multi-image element registration (capped for segment latency). */
+export function getKlingElementPollTimeoutSec(): number {
+  const n = Number(process.env.KLING_ELEMENT_POLL_TIMEOUT_SEC)
+  const fallback = Math.min(getKlingPollTimeoutSec(), 120)
+  return Number.isFinite(n) && n > 0 ? Math.min(n, 120) : fallback
+}
+
+/** GET path template for element task status; supports `{taskId}` placeholder. */
+export function getKlingElementPollPath(taskId: string): string {
+  const template = process.env.KLING_ELEMENT_POLL_PATH?.trim()
+  if (template) {
+    return template.replace('{taskId}', encodeURIComponent(taskId))
+  }
+  const endpoint = getKlingElementEndpoint().replace(/\/$/, '')
+  return `${endpoint}/${encodeURIComponent(taskId)}`
+}
+
 export function isVeoFallbackEnabled(): boolean {
   if (process.env.KLING_VEO_FALLBACK_ENABLED === 'false') return false
   return process.env.VEO_FALLBACK_ENABLED !== 'false'

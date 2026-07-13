@@ -26,6 +26,8 @@ export interface CharacterWardrobe {
   sceneNumbers?: number[]
   /** Makeup, hair state, visible injuries/marks for this wardrobe look */
   appearanceNotes?: string
+  /** Cached Kling element_list ID for this identity+wardrobe bind */
+  klingElementId?: string
   isDefault: boolean
   createdAt: string
 }

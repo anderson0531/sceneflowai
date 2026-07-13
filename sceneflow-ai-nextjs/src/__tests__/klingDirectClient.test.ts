@@ -4,11 +4,17 @@ import {
   buildKlingAuthHeader,
   buildKlingVideoBody,
   buildKlingExtendBody,
+  buildKlingElementMultiBody,
   extractKlingVideoUrl,
   extractKlingVideoId,
   parseKlingWebhookPayload,
+  pollKlingElementTask,
 } from '@/lib/kling/klingDirectClient'
-import { getKlingSegmentPollTimeoutSec } from '@/lib/kling/config'
+import {
+  getKlingElementEndpoint,
+  getKlingElementPollPath,
+  getKlingSegmentPollTimeoutSec,
+} from '@/lib/kling/config'
 
 describe('klingDirectClient helpers', () => {
   const envBackup: Record<string, string | undefined> = {}
@@ -19,11 +25,17 @@ describe('klingDirectClient helpers', () => {
     envBackup.KLING_SECRET_KEY = process.env.KLING_SECRET_KEY
     envBackup.KLING_DEFAULT_MODEL = process.env.KLING_DEFAULT_MODEL
     envBackup.KLING_POLL_TIMEOUT_SEC = process.env.KLING_POLL_TIMEOUT_SEC
+    envBackup.KLING_ELEMENT_ENDPOINT = process.env.KLING_ELEMENT_ENDPOINT
+    envBackup.KLING_ELEMENT_POLL_PATH = process.env.KLING_ELEMENT_POLL_PATH
+    envBackup.KLING_ELEMENT_MODEL = process.env.KLING_ELEMENT_MODEL
     delete process.env.KLING_API_KEY
     delete process.env.KLING_ACCESS_KEY
     delete process.env.KLING_SECRET_KEY
     delete process.env.KLING_DEFAULT_MODEL
     delete process.env.KLING_POLL_TIMEOUT_SEC
+    delete process.env.KLING_ELEMENT_ENDPOINT
+    delete process.env.KLING_ELEMENT_POLL_PATH
+    delete process.env.KLING_ELEMENT_MODEL
   })
 
   afterEach(() => {
@@ -32,6 +44,9 @@ describe('klingDirectClient helpers', () => {
     process.env.KLING_SECRET_KEY = envBackup.KLING_SECRET_KEY
     process.env.KLING_DEFAULT_MODEL = envBackup.KLING_DEFAULT_MODEL
     process.env.KLING_POLL_TIMEOUT_SEC = envBackup.KLING_POLL_TIMEOUT_SEC
+    process.env.KLING_ELEMENT_ENDPOINT = envBackup.KLING_ELEMENT_ENDPOINT
+    process.env.KLING_ELEMENT_POLL_PATH = envBackup.KLING_ELEMENT_POLL_PATH
+    process.env.KLING_ELEMENT_MODEL = envBackup.KLING_ELEMENT_MODEL
   })
 
   it('builds gateway Bearer auth from KLING_API_KEY', () => {
@@ -231,5 +246,95 @@ describe('klingDirectClient helpers', () => {
     expect(getKlingSegmentPollTimeoutSec()).toBe(120)
     process.env.KLING_POLL_TIMEOUT_SEC = '500'
     expect(getKlingSegmentPollTimeoutSec()).toBe(270)
+  })
+
+  it('builds image_refer multi-element body with truncated name and up to 3 refer images', () => {
+    process.env.KLING_ELEMENT_MODEL = 'kling-create-element'
+    const body = buildKlingElementMultiBody(
+      {
+        name: 'Detective Sarah Chen',
+        description: 'Female detective in brown trench coat with short black hair and warm smile across rainy city streets at night',
+        frontalImageUrl: 'https://cdn.example.com/front.jpg',
+        referImageUrls: [
+          'https://cdn.example.com/side.jpg',
+          'https://cdn.example.com/back.jpg',
+          'https://cdn.example.com/extra.jpg',
+          'https://cdn.example.com/dropped.jpg',
+        ],
+        tagId: 'o_102',
+      },
+      {
+        frontal: 'https://kling.cdn/front-resolved.jpg',
+        refers: [
+          'https://kling.cdn/side-resolved.jpg',
+          'https://kling.cdn/back-resolved.jpg',
+          'https://kling.cdn/extra-resolved.jpg',
+          'https://kling.cdn/dropped-resolved.jpg',
+        ],
+      }
+    )
+
+    expect(body.reference_type).toBe('image_refer')
+    expect(body.element_name).toBe('Detective Sarah Chen')
+    expect(body.element_description).toHaveLength(100)
+    expect(body.model).toBe('kling-create-element')
+    expect(body.tag_list).toEqual([{ tag_id: 'o_102' }])
+    expect(body.element_image_list).toEqual({
+      frontal_image: 'https://kling.cdn/front-resolved.jpg',
+      refer_images: [
+        { image_url: 'https://kling.cdn/side-resolved.jpg' },
+        { image_url: 'https://kling.cdn/back-resolved.jpg' },
+        { image_url: 'https://kling.cdn/extra-resolved.jpg' },
+      ],
+    })
+  })
+
+  it('uses configurable element endpoint and poll path', () => {
+    expect(getKlingElementEndpoint()).toBe('/elements')
+
+    process.env.KLING_ELEMENT_ENDPOINT = '/kling/v1/general/advanced-custom-elements'
+    expect(getKlingElementEndpoint()).toBe('/kling/v1/general/advanced-custom-elements')
+
+    process.env.KLING_ELEMENT_POLL_PATH =
+      '/kling/v1/general/advanced-custom-elements/{taskId}'
+    expect(getKlingElementPollPath('task-abc')).toBe(
+      '/kling/v1/general/advanced-custom-elements/task-abc'
+    )
+  })
+
+  it('pollKlingElementTask resolves element_id after async processing', async () => {
+    process.env.KLING_ACCESS_KEY = 'ak_test'
+    process.env.KLING_SECRET_KEY = 'sk_test_secret'
+    process.env.KLING_ELEMENT_POLL_TIMEOUT_SEC = '30'
+    process.env.KLING_POLL_INTERVAL_MS = '10'
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          code: 0,
+          data: { task_status: 'processing', task_id: 'task-elem-1' },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          code: 0,
+          data: { task_status: 'succeed', element_id: 'elem-async-42' },
+        }),
+      })
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    const promise = pollKlingElementTask('task-elem-1')
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled())
+    await new Promise((r) => setTimeout(r, 15))
+    const elementId = await promise
+
+    expect(elementId).toBe('elem-async-42')
+    expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(2)
+
+    vi.unstubAllGlobals()
   })
 })

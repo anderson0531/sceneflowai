@@ -8,6 +8,11 @@ import {
   getKlingApiBaseUrl,
   getKlingCapabilities,
   getKlingDefaultModel,
+  getKlingElementCreateModel,
+  getKlingElementEndpoint,
+  getKlingElementPollIntervalMs,
+  getKlingElementPollPath,
+  getKlingElementPollTimeoutSec,
   getKlingWatermarkDefault,
   getKlingPollIntervalMs,
   getKlingSegmentPollTimeoutSec,
@@ -402,17 +407,104 @@ export function buildKlingVideoBody(
   return { body, droppedKeys, endpoint }
 }
 
+export interface KlingElementMultiInput {
+  name: string
+  description?: string
+  frontalImageUrl: string
+  referImageUrls: string[]
+  tagId?: string
+}
+
+/** Exported for unit tests — builds image_refer create-element body. */
+export function buildKlingElementMultiBody(
+  input: KlingElementMultiInput,
+  resolved: { frontal: string; refers: string[] }
+): Record<string, unknown> {
+  const body: Record<string, unknown> = {
+    reference_type: 'image_refer',
+    element_name: input.name.slice(0, 20),
+    element_description: (input.description || input.name).slice(0, 100),
+    element_image_list: {
+      frontal_image: resolved.frontal,
+      refer_images: resolved.refers.slice(0, 3).map((image_url) => ({ image_url })),
+    },
+  }
+
+  const model = getKlingElementCreateModel()
+  if (model) body.model = model
+
+  if (input.tagId?.trim()) {
+    body.tag_list = [{ tag_id: input.tagId.trim() }]
+  }
+
+  return body
+}
+
+export async function pollKlingElementTask(taskId: string): Promise<string> {
+  const deadline = Date.now() + getKlingElementPollTimeoutSec() * 1000
+  const intervalMs = getKlingElementPollIntervalMs()
+  const pollPath = getKlingElementPollPath(taskId)
+
+  while (Date.now() < deadline) {
+    const json = await klingGet(pollPath)
+    const elementId = json.data?.element_id
+    if (elementId) return elementId
+
+    const status = json.data?.task_status
+    if (status === 'succeed') {
+      if (json.data?.element_id) return json.data.element_id
+      throw new Error('Kling element task succeeded without element_id')
+    }
+    if (status === 'failed') {
+      throw new Error(json.data?.task_status_msg || 'Kling element registration failed')
+    }
+
+    await new Promise((r) => setTimeout(r, intervalMs))
+  }
+
+  throw new Error('Kling element registration timed out')
+}
+
+/** Multi-image bind element (identity frontal + wardrobe refer images). */
+export async function registerKlingElementMulti(
+  input: KlingElementMultiInput
+): Promise<string> {
+  const frontal = await resolveImageForKling(input.frontalImageUrl)
+  const refers: string[] = []
+  for (const url of input.referImageUrls.slice(0, 3)) {
+    refers.push(await resolveImageForKling(url))
+  }
+  if (refers.length < 1) {
+    throw new Error('Multi-image element requires at least one refer image')
+  }
+
+  const body = buildKlingElementMultiBody(input, { frontal, refers })
+  const create = await klingRequest(getKlingElementEndpoint(), body)
+
+  const immediateId = create.data?.element_id
+  if (immediateId) return immediateId
+
+  const taskId = create.data?.task_id
+  if (!taskId) {
+    throw new Error('Kling element registration completed without element_id or task_id')
+  }
+
+  return pollKlingElementTask(taskId)
+}
+
 export async function registerKlingElement(imageUrl: string, name?: string): Promise<string> {
   const resolved = await resolveImageForKling(imageUrl)
-  const create = await klingRequest('/elements', {
+  const create = await klingRequest(getKlingElementEndpoint(), {
     image: resolved,
     name: name?.slice(0, 128) || 'sceneflow-element',
   })
   const elementId = create.data?.element_id
-  if (!elementId) {
-    throw new Error('Kling element registration completed without element_id')
-  }
-  return elementId
+  if (elementId) return elementId
+
+  const taskId = create.data?.task_id
+  if (taskId) return pollKlingElementTask(taskId)
+
+  throw new Error('Kling element registration completed without element_id')
 }
 
 export async function submitKlingVideo(
