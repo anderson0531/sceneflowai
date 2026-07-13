@@ -24,6 +24,10 @@ import {
   computeMusicVolumeMultiplier,
   MUSIC_FADE_MAX_SEC,
 } from '@/lib/audio/loopingAudioSync'
+import {
+  getMusicTrackTiming,
+  isMusicActiveInBeatWindow,
+} from '@/lib/scene/mixerMusicTiming'
 import { DEFAULT_MUSIC_FILE_DURATION_SEC } from '@/lib/storyboard/musicPlayback'
 import { toast } from 'sonner'
 import { 
@@ -185,30 +189,6 @@ function clampDialoguePlaybackRate(r: number | undefined): number {
 function dialogueClipWallDuration(sourceSeconds: number | undefined, playbackRate: number | undefined): number {
   const src = sourceSeconds ?? 3
   return src / clampDialoguePlaybackRate(playbackRate)
-}
-
-/** Wall-clock span for music over selected beat range. */
-function getMusicTrackTiming(
-  musicConfig: AudioTrackConfig,
-  segments: SceneSegment[],
-  getPlaybackSegmentDuration: (segment: SceneSegment) => number
-): { startTime: number; duration: number } {
-  if (segments.length === 0) {
-    return { startTime: musicConfig.startOffset, duration: 0 }
-  }
-  let startTime = 0
-  for (let i = 0; i < musicConfig.startSegment && i < segments.length; i++) {
-    startTime += getPlaybackSegmentDuration(segments[i])
-  }
-  const effectiveEnd =
-    musicConfig.endSegment === -1
-      ? segments.length - 1
-      : Math.min(musicConfig.endSegment, segments.length - 1)
-  let endTime = startTime
-  for (let i = musicConfig.startSegment; i <= effectiveEnd; i++) {
-    endTime += getPlaybackSegmentDuration(segments[i])
-  }
-  return { startTime, duration: Math.max(0, endTime - startTime) }
 }
 
 function musicClipRenderOptions(
@@ -1063,10 +1043,12 @@ function ScenePreviewPlayer({
       const fadeOut = musicCfg.fadeOutSec ?? 0
 
       const musicLocalTime = currentTime - musicStartTime
-      const withinWindow =
-        isPlaying &&
-        currentTime >= musicStartTime &&
-        (loop || musicLocalTime < musicPlayDuration)
+      const withinWindow = isMusicActiveInBeatWindow(
+        currentTime,
+        musicStartTime,
+        musicEndTime,
+        isPlaying
+      )
 
       if (withinWindow) {
         const expectedAudioTime = loop
