@@ -20,16 +20,20 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { creditsUsed, creditsBudget } = body ?? {}
+    const { creditsUsed, creditsBudget, creditsBudgetParams } = body ?? {}
 
-    if (creditsUsed === undefined && creditsBudget === undefined) {
+    if (creditsUsed === undefined && creditsBudget === undefined && creditsBudgetParams === undefined) {
       return NextResponse.json(
-        { error: 'Provide creditsUsed and/or creditsBudget' },
+        { error: 'Provide creditsUsed, creditsBudget, and/or creditsBudgetParams' },
         { status: 400 }
       )
     }
 
-    const result = await updateProjectBudgetFields(projectId, { creditsUsed, creditsBudget })
+    const result = await updateProjectBudgetFields(projectId, {
+      creditsUsed,
+      creditsBudget,
+      creditsBudgetParams,
+    })
 
     return NextResponse.json({
       success: true,

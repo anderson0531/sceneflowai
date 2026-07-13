@@ -199,7 +199,8 @@ export function getVeoCostEstimate(
   quality: VeoQualityTier = DEFAULT_VEO_QUALITY,
   durationSeconds: number = DEFAULT_VEO_CLIP_DURATION
 ): number {
-  const tier = quality === 'lite' ? 'lite' : 'fast';
+  const tier =
+    quality === 'lite' ? 'lite' : quality === 'premium' ? 'premium' : 'fast';
   return VEO_COST_PER_SECOND[tier] * durationSeconds;
 }
 

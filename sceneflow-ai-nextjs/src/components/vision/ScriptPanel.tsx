@@ -122,6 +122,16 @@ import { uploadAssetViaAPI } from '@/lib/vision/uploads'
 import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
 import { useCredits } from '@/contexts/CreditsContext'
 import { ProjectCostCalculator } from '@/components/credits/ProjectCostCalculator'
+import { useProjectCosts } from '@/hooks/useProjectCosts'
+import {
+  calculateDetailedProjectCost,
+  mergeProjectParameters,
+} from '@/lib/credits/projectCalculator'
+import { getProjectCreditsBudget } from '@/lib/credits/projectBudgetShared'
+import {
+  buildCreditsBudgetParams,
+  normalizeVideoParameters,
+} from '@/lib/credits/videoEnginePricing'
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogHeader, DialogDescription } from '@/components/ui/dialog'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
@@ -701,6 +711,89 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   
   // Credits context for budget calculator
   const { credits: userCredits } = useCredits()
+
+  const visionPhaseForCosts = script?.metadata?.visionPhase ?? script
+  const projectCosts = useProjectCosts(visionPhaseForCosts)
+  const creditsBudget = useMemo(
+    () => getProjectCreditsBudget(script?.metadata),
+    [script?.metadata?.creditsBudget, script?.metadata]
+  )
+
+  const budgetCalculatorInitialParams = useMemo(() => {
+    const savedVideoParams = script?.metadata?.creditsBudgetParams as
+      | Partial<import('@/lib/credits/projectCalculator').VideoParameters>
+      | undefined
+    return mergeProjectParameters({
+      ...projectCosts,
+      video: {
+        ...(projectCosts?.video || {}),
+        ...(savedVideoParams || {}),
+      },
+    })
+  }, [projectCosts, script?.metadata?.creditsBudgetParams])
+
+  const saveProjectBudget = useCallback(
+    async (budget: number, budgetParams?: Record<string, unknown>) => {
+      if (!projectId) return
+      const response = await fetch(`/api/projects/${projectId}/budget`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creditsBudget: budget,
+          ...(budgetParams ? { creditsBudgetParams: budgetParams } : {}),
+        }),
+      })
+      if (!response.ok) {
+        throw new Error('Failed to save budget')
+      }
+      if (onScriptChange && script) {
+        onScriptChange({
+          ...script,
+          metadata: {
+            ...(script.metadata || {}),
+            creditsBudget: budget,
+            ...(budgetParams ? { creditsBudgetParams: budgetParams } : {}),
+          },
+        })
+      }
+      window.dispatchEvent(new CustomEvent('project-updated'))
+    },
+    [projectId, onScriptChange, script]
+  )
+
+  const handleQuickSetBudget = useCallback(async () => {
+    if (!projectId) {
+      toast.error('Save the project before setting a budget')
+      return
+    }
+
+    if (creditsBudget > 0) {
+      setCostCalculatorOpen(true)
+      return
+    }
+
+    setIsSettingBudget(true)
+    try {
+      const params = budgetCalculatorInitialParams
+      const breakdown = calculateDetailedProjectCost(params)
+      const budget = breakdown.total.credits
+      const budgetParams = buildCreditsBudgetParams(normalizeVideoParameters(params.video))
+
+      await saveProjectBudget(budget, budgetParams)
+
+      toast.success(`Budget set to ${budget.toLocaleString()} credits`, {
+        action: {
+          label: 'Adjust',
+          onClick: () => setCostCalculatorOpen(true),
+        },
+      })
+    } catch (error) {
+      console.error('Failed to set budget:', error)
+      toast.error('Failed to set budget')
+    } finally {
+      setIsSettingBudget(false)
+    }
+  }, [projectId, creditsBudget, budgetCalculatorInitialParams, saveProjectBudget])
   
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -709,6 +802,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [sceneDirectionPreviewOpen, setSceneDirectionPreviewOpen] = useState(false)
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [costCalculatorOpen, setCostCalculatorOpen] = useState(false)
+  const [isSettingBudget, setIsSettingBudget] = useState(false)
   const [generateAudioDialogOpen, setGenerateAudioDialogOpen] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en')
   
@@ -2682,6 +2776,30 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           
           {/* Action Buttons - Right Justified */}
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleQuickSetBudget}
+              disabled={isSettingBudget}
+              className="flex items-center gap-2 border-cyan-500/30 hover:border-cyan-500/50 hover:bg-cyan-500/10"
+              title={
+                creditsBudget > 0
+                  ? 'View or adjust project credit budget'
+                  : 'Estimate and set a default credit budget from your script'
+              }
+            >
+              {isSettingBudget ? (
+                <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
+              ) : (
+                <Calculator className="w-4 h-4 text-cyan-400" />
+              )}
+              <span className="text-sm hidden sm:inline">
+                {creditsBudget > 0
+                  ? `Budget: ${creditsBudget.toLocaleString()}`
+                  : 'Set Budget'}
+              </span>
+            </Button>
+
             {onOpenReferences && (
               <Button
                 variant="outline"
@@ -3541,23 +3659,12 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               currentBalance={userCredits?.total_credits ?? 0}
               compact={false}
               projectId={projectId}
-              initialParams={undefined}
-              onSetBudget={async (budget) => {
-                // Save budget to project metadata
+              initialParams={budgetCalculatorInitialParams}
+              onSetBudget={async (budget, budgetParams) => {
                 if (!projectId) return
                 try {
-                  await fetch(`/api/projects/${projectId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                      metadata: { 
-                        ...script?.metadata, 
-                        creditsBudget: budget 
-                      } 
-                    })
-                  })
+                  await saveProjectBudget(budget, budgetParams)
                   setCostCalculatorOpen(false)
-                  window.dispatchEvent(new CustomEvent('project-updated'))
                   toast.success('Budget saved successfully')
                 } catch (error) {
                   console.error('Failed to set budget:', error)

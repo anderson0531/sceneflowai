@@ -49,6 +49,18 @@ import {
   type StrategyComparison,
   type SubscriptionTierName,
 } from '@/lib/credits/projectCalculator'
+import {
+  SCENEFLOW_ENGINE_ID,
+  SCENEFLOW_QUALITY_TIERS,
+  ALTERNATIVE_ENGINES,
+  estimateVideoClipCredits,
+  normalizeVideoParameters,
+  snapSegmentDurationForEngine,
+  toEngineSelection,
+  buildCreditsBudgetParams,
+  type VideoEngineId,
+  type SceneFlowQualityTierId,
+} from '@/lib/credits/videoEnginePricing'
 
 // =============================================================================
 // TYPES
@@ -62,7 +74,7 @@ interface ProjectCostCalculatorProps {
   compact?: boolean
   projectId?: string
   currentCreditsUsed?: number
-  onSetBudget?: (credits: number) => void | Promise<void>
+  onSetBudget?: (credits: number, budgetParams?: Record<string, unknown>) => void | Promise<void>
   onSetCreditsUsed?: (credits: number) => void | Promise<void>
   initialParams?: Partial<FullProjectParameters>
 }
@@ -157,6 +169,7 @@ export function ProjectCostCalculator({
     };
   })
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [showAlternativeEngines, setShowAlternativeEngines] = useState(false)
   const [activePreset, setActivePreset] = useState<string | null>(null)
   
   // Production type: full_video (with AI video) or animatic (frames + audio only)
@@ -186,6 +199,71 @@ export function ProjectCostCalculator({
     }))
     setActivePreset(null)
   }, [])
+
+  const selectSceneFlowTier = useCallback((qualityTier: SceneFlowQualityTierId) => {
+    setParams((prev) => ({
+      ...prev,
+      video: {
+        ...prev.video,
+        engine: SCENEFLOW_ENGINE_ID,
+        qualityTier,
+        model: undefined,
+      },
+    }))
+    setActivePreset(null)
+  }, [])
+
+  const selectAlternativeEngine = useCallback((engine: VideoEngineId) => {
+    setParams((prev) => {
+      const selection = toEngineSelection(engine)
+      const snappedDuration = snapSegmentDurationForEngine(
+        prev.video.segmentDuration ?? 8,
+        selection
+      )
+      return {
+        ...prev,
+        video: {
+          ...prev.video,
+          engine,
+          qualityTier: undefined,
+          segmentDuration: snappedDuration,
+          model: undefined,
+        },
+      }
+    })
+    setActivePreset(null)
+  }, [])
+
+  const updateSegmentDuration = useCallback((duration: number) => {
+    setParams((prev) => {
+      const engine = prev.video.engine ?? SCENEFLOW_ENGINE_ID
+      const selection = toEngineSelection(engine, prev.video.qualityTier)
+      const snappedDuration = snapSegmentDurationForEngine(duration, selection)
+      return {
+        ...prev,
+        video: {
+          ...prev.video,
+          segmentDuration: snappedDuration,
+        },
+      }
+    })
+    setActivePreset(null)
+  }, [])
+
+  const normalizedVideo = useMemo(
+    () => normalizeVideoParameters(params.video),
+    [params.video]
+  )
+
+  const clipEstimate = useMemo(
+    () => estimateVideoClipCredits(normalizedVideo),
+    [normalizedVideo]
+  )
+
+  const totalClipCount = useMemo(() => {
+    const segments = params.scenes.count * params.scenes.segmentsPerScene
+    return segments * params.scenes.takesPerSegment
+  }, [params.scenes])
 
   // Apply preset
   const applyPreset = useCallback((preset: typeof PROJECT_PRESETS[0]) => {
@@ -228,7 +306,7 @@ export function ProjectCostCalculator({
     const adjustedParams = productionType === 'animatic'
       ? {
           ...params,
-          video: { ...params.video, model: 'veo_fast' as const }, // Keep model but we'll zero it
+          video: { ...params.video, engine: SCENEFLOW_ENGINE_ID as const },
         }
       : params;
     
@@ -536,43 +614,154 @@ export function ProjectCostCalculator({
             </div>
           </div>
 
-          {/* Video Model */}
+          {/* Engine & Quality */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-gray-400 flex items-center gap-2">
-              <Video className="w-4 h-4" /> Video Quality
+              <Video className="w-4 h-4" /> Engine & Quality
             </h3>
-            
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => updateParam('video', 'model', 'veo_fast')}
-                className={`p-4 rounded-xl border transition-all ${
-                  params.video.model === 'veo_fast'
-                    ? 'bg-cyan-500/20 border-cyan-500 text-white'
-                    : 'bg-slate-800 border-slate-700 text-gray-300 hover:border-slate-600'
-                }`}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <Zap className="w-4 h-4" />
-                  <span className="font-medium">Veo Fast</span>
-                </div>
-                <div className="text-xs text-gray-400">1080p • 1200 credits/8s</div>
-              </button>
-              
-              <button
-                onClick={() => updateParam('video', 'model', 'veo_quality_4k')}
-                className={`p-4 rounded-xl border transition-all ${
-                  params.video.model === 'veo_quality_4k'
-                    ? 'bg-cyan-500/20 border-cyan-500 text-white'
-                    : 'bg-slate-800 border-slate-700 text-gray-300 hover:border-slate-600'
-                }`}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <Sparkles className="w-4 h-4" />
-                  <span className="font-medium">Veo 4K</span>
-                </div>
-                <div className="text-xs text-gray-400">4K Quality • 2000 credits/8s</div>
-              </button>
+
+            <div className="space-y-2">
+              <p className="text-xs text-gray-500">SceneFlow (Kling) — default production engine</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {SCENEFLOW_QUALITY_TIERS.map((tier) => {
+                  const tierEstimate = estimateVideoClipCredits(
+                    normalizeVideoParameters({
+                      ...params.video,
+                      engine: SCENEFLOW_ENGINE_ID,
+                      qualityTier: tier.id,
+                      segmentDuration: normalizedVideo.segmentDuration,
+                    })
+                  )
+                  const isSelected =
+                    (params.video.engine ?? SCENEFLOW_ENGINE_ID) === SCENEFLOW_ENGINE_ID &&
+                    (params.video.qualityTier ?? 'cinematic') === tier.id
+
+                  return (
+                    <button
+                      key={tier.id}
+                      type="button"
+                      onClick={() => selectSceneFlowTier(tier.id)}
+                      className={`p-4 rounded-xl border text-left transition-all ${
+                        isSelected
+                          ? 'bg-cyan-500/20 border-cyan-500 text-white'
+                          : 'bg-slate-800 border-slate-700 text-gray-300 hover:border-slate-600'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        {tier.id === 'cinematic' ? (
+                          <Sparkles className="w-4 h-4" />
+                        ) : tier.id === 'ultra-4k' ? (
+                          <Layers className="w-4 h-4" />
+                        ) : (
+                          <Zap className="w-4 h-4" />
+                        )}
+                        <span className="font-medium">{tier.label}</span>
+                        {tier.id === 'cinematic' && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300">
+                            Recommended
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-400">{tier.description}</div>
+                      <div className="text-xs text-cyan-400/80 mt-2">
+                        {formatCredits(tierEstimate.creditsEach)} credits / {normalizedVideo.segmentDuration}s clip
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
+
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowAlternativeEngines((prev) => !prev)}
+                className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-300 transition-colors"
+              >
+                {showAlternativeEngines ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+                Alternative engines
+              </button>
+
+              <AnimatePresence>
+                {showAlternativeEngines && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 overflow-hidden"
+                  >
+                    {ALTERNATIVE_ENGINES.map((engine) => {
+                      const engineEstimate = estimateVideoClipCredits(
+                        normalizeVideoParameters({
+                          ...params.video,
+                          engine: engine.id,
+                          segmentDuration: normalizedVideo.segmentDuration,
+                        })
+                      )
+                      const isSelected = params.video.engine === engine.id
+                      const providerLabel =
+                        engine.provider === 'vertex' ? 'Vertex / Veo' : 'Aggregator'
+
+                      return (
+                        <button
+                          key={engine.id}
+                          type="button"
+                          onClick={() => selectAlternativeEngine(engine.id)}
+                          className={`p-4 rounded-xl border text-left transition-all ${
+                            isSelected
+                              ? 'bg-cyan-500/20 border-cyan-500 text-white'
+                              : 'bg-slate-800 border-slate-700 text-gray-300 hover:border-slate-600'
+                          }`}
+                        >
+                          <div className="font-medium mb-1">{engine.label}</div>
+                          <div className="text-xs text-gray-400">{engine.description}</div>
+                          <div className="text-[10px] text-gray-500 mt-1">{providerLabel}</div>
+                          <div className="text-xs text-cyan-400/80 mt-2">
+                            {formatCredits(engineEstimate.creditsEach)} credits / {normalizedVideo.segmentDuration}s clip
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <div>
+              <div className="flex justify-between mb-2">
+                <label className="text-sm text-gray-300">Clip duration (seconds)</label>
+                <span className="text-sm font-medium text-white">{normalizedVideo.segmentDuration}s</span>
+              </div>
+              <input
+                type="range"
+                min={3}
+                max={15}
+                step={1}
+                value={normalizedVideo.segmentDuration}
+                onChange={(e) => updateSegmentDuration(Number(e.target.value))}
+                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Snaps to valid durations for the selected engine
+              </p>
+            </div>
+
+            {productionType === 'full_video' && (
+              <div className="p-3 rounded-lg bg-slate-800/60 border border-slate-700/60 text-sm text-gray-300">
+                <span className="text-cyan-400 font-medium">
+                  {formatCredits(clipEstimate.creditsEach)}
+                </span>{' '}
+                credits/clip × {formatCredits(totalClipCount)} clips ={' '}
+                <span className="text-white font-medium">
+                  {formatCredits(clipEstimate.creditsEach * totalClipCount)} credits
+                </span>{' '}
+                for video
+              </div>
+            )}
           </div>
 
           {/* Images */}
@@ -842,7 +1031,12 @@ export function ProjectCostCalculator({
             {/* Set Budget Button */}
             {onSetBudget && (
               <button
-                onClick={() => onSetBudget(breakdown.total.credits)}
+                onClick={() =>
+                  onSetBudget(
+                    breakdown.total.credits,
+                    buildCreditsBudgetParams(normalizedVideo)
+                  )
+                }
                 className="mt-4 w-full px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 rounded-lg text-white text-sm font-medium transition-all flex items-center justify-center gap-2"
               >
                 <Check className="w-4 h-4" />

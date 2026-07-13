@@ -66,7 +66,11 @@ export async function setProjectCreditsUsed(projectId: string, amount: number): 
 
 export async function updateProjectBudgetFields(
   projectId: string,
-  fields: { creditsUsed?: number; creditsBudget?: number }
+  fields: {
+    creditsUsed?: number
+    creditsBudget?: number
+    creditsBudgetParams?: Record<string, unknown>
+  }
 ): Promise<{ creditsUsed: number; creditsBudget: number }> {
   if (!isProjectIdRef(projectId)) {
     throw new Error('Invalid project ID')
@@ -94,6 +98,10 @@ export async function updateProjectBudgetFields(
     }
     metadata.creditsBudget = Math.round(fields.creditsBudget)
     metadata.creditsBudgetSetAt = now
+  }
+
+  if (fields.creditsBudgetParams !== undefined) {
+    metadata.creditsBudgetParams = fields.creditsBudgetParams
   }
 
   project.set('metadata', metadata)

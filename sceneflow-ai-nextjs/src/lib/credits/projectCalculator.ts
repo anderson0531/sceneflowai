@@ -10,7 +10,6 @@
 
 import {
   CREDIT_EXCHANGE_RATE,
-  VIDEO_CREDITS,
   IMAGE_CREDITS,
   AUDIO_CREDITS,
   UPSCALE_CREDITS,
@@ -21,6 +20,14 @@ import {
   PLATFORM_OVERHEAD_COSTS,
   calculateModerationCost,
 } from './creditCosts';
+
+import {
+  SCENEFLOW_ENGINE_ID,
+  estimateVideoClipCredits,
+  normalizeVideoParameters,
+  type SceneFlowQualityTierId,
+  type VideoEngineId,
+} from './videoEnginePricing';
 
 import {
   STORAGE_LIMITS,
@@ -41,11 +48,17 @@ export interface SceneParameters {
   takesPerSegment: number;
 }
 
+export type { VideoEngineId, SceneFlowQualityTierId } from './videoEnginePricing';
+
 export interface VideoParameters {
-  /** Video model to use */
-  model: 'veo_fast' | 'veo_quality_4k';
-  /** Duration per segment in seconds (Veo generates 8s clips) */
-  segmentDuration: 8;
+  /** @deprecated Legacy Veo model — mapped to natural-dialogue on read */
+  model?: 'veo_fast' | 'veo_quality_4k';
+  /** Video engine selection (mirrors production) */
+  engine?: VideoEngineId;
+  /** SceneFlow quality tier when engine is sceneflow */
+  qualityTier?: SceneFlowQualityTierId;
+  /** Duration per segment in seconds */
+  segmentDuration?: number;
   /** Total minutes of final output expected */
   totalMinutes: number;
 }
@@ -237,11 +250,7 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
       segmentsPerScene: Math.max(1, Number(params.scenes?.segmentsPerScene) || 3),
       takesPerSegment: Math.max(1, Number(params.scenes?.takesPerSegment) || 2),
     },
-    video: {
-      model: params.video?.model || 'veo_fast',
-      segmentDuration: Number(params.video?.segmentDuration) || 8,
-      totalMinutes: Math.max(1, Number(params.video?.totalMinutes) || 4),
-    },
+    video: normalizeVideoParameters(params.video),
     images: {
       keyFrames: Math.max(1, Number(params.images?.keyFrames) || 30),
       retakesPerFrame: Number(params.images?.retakesPerFrame) || 1,
@@ -267,23 +276,20 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
     },
   };
 
-  // Video costs
-  const videoCreditsPerSegment = safeParams.video.model === 'veo_fast' 
-    ? VIDEO_CREDITS.VEO_FAST 
-    : VIDEO_CREDITS.VEO_QUALITY_4K;
-  
+  // Video costs — engine-aware (Kling per-second, Veo per-clip, aggregator per-model)
+  const clipEstimate = estimateVideoClipCredits(safeParams.video);
   const totalSegments = safeParams.scenes.count * safeParams.scenes.segmentsPerScene;
   const totalTakes = totalSegments * safeParams.scenes.takesPerSegment;
-  const videoCredits = totalTakes * videoCreditsPerSegment;
-  
+  const videoCredits = totalTakes * clipEstimate.creditsEach;
+
   const video: CategoryCost = {
     credits: videoCredits,
     usdCost: videoCredits / CREDIT_EXCHANGE_RATE,
     items: [
       {
-        name: `${safeParams.video.model === 'veo_fast' ? 'Veo Fast' : 'Veo 4K'} 8s clips`,
+        name: clipEstimate.label,
         quantity: totalTakes,
-        creditsEach: videoCreditsPerSegment,
+        creditsEach: clipEstimate.creditsEach,
         totalCredits: videoCredits,
       },
     ],
@@ -716,7 +722,8 @@ export function estimateShortFilm(scenes: number, minutesPerScene: number): Stra
       takesPerSegment: 2, // Average 2 takes per segment
     },
     video: {
-      model: 'veo_quality_4k',
+      engine: SCENEFLOW_ENGINE_ID,
+      qualityTier: 'cinematic',
       segmentDuration: 8,
       totalMinutes: scenes * minutesPerScene,
     },
@@ -761,7 +768,8 @@ export function estimateCommercial(durationSeconds: number, takes: number = 3): 
       takesPerSegment: takes,
     },
     video: {
-      model: 'veo_quality_4k',
+      engine: SCENEFLOW_ENGINE_ID,
+      qualityTier: 'cinematic',
       segmentDuration: 8,
       totalMinutes: durationSeconds / 60,
     },
@@ -804,7 +812,8 @@ export function estimateMusicVideo(durationMinutes: number): StrategyComparison 
       takesPerSegment: 3, // More takes for visual variety
     },
     video: {
-      model: 'veo_quality_4k',
+      engine: SCENEFLOW_ENGINE_ID,
+      qualityTier: 'cinematic',
       segmentDuration: 8,
       totalMinutes: durationMinutes,
     },
@@ -836,10 +845,6 @@ export function estimateMusicVideo(durationMinutes: number): StrategyComparison 
   return compareStrategies(params);
 }
 
-// =============================================================================
-// EXPORT DEFAULT PARAMETERS FOR UI
-// =============================================================================
-
 export const DEFAULT_PROJECT_PARAMS: FullProjectParameters = {
   scenes: {
     count: 10,
@@ -847,7 +852,8 @@ export const DEFAULT_PROJECT_PARAMS: FullProjectParameters = {
     takesPerSegment: 2,
   },
   video: {
-    model: 'veo_fast',
+    engine: SCENEFLOW_ENGINE_ID,
+    qualityTier: 'cinematic',
     segmentDuration: 8,
     totalMinutes: 4,
   },
@@ -875,3 +881,39 @@ export const DEFAULT_PROJECT_PARAMS: FullProjectParameters = {
     useInstant: false,
   },
 };
+
+/** Deep-merge partial script-derived params with calculator defaults. */
+export function mergeProjectParameters(
+  initial?: Partial<FullProjectParameters> | null
+): FullProjectParameters {
+  return {
+    scenes: {
+      ...DEFAULT_PROJECT_PARAMS.scenes,
+      ...(initial?.scenes || {}),
+    },
+    video: {
+      ...DEFAULT_PROJECT_PARAMS.video,
+      ...(initial?.video || {}),
+    },
+    images: {
+      ...DEFAULT_PROJECT_PARAMS.images,
+      ...(initial?.images || {}),
+    },
+    audio: {
+      ...DEFAULT_PROJECT_PARAMS.audio,
+      ...(initial?.audio || {}),
+    },
+    voice: {
+      ...DEFAULT_PROJECT_PARAMS.voice,
+      ...(initial?.voice || {}),
+    },
+    storage: {
+      ...DEFAULT_PROJECT_PARAMS.storage,
+      ...(initial?.storage || {}),
+    },
+    upscale: {
+      ...DEFAULT_PROJECT_PARAMS.upscale,
+      ...(initial?.upscale || {}),
+    },
+  };
+}

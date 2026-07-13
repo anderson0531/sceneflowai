@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { FullProjectParameters } from '@/lib/credits/calculateFullProjectCredits';
+import { FullProjectParameters } from '@/lib/credits/projectCalculator';
 
 /**
  * Vision phase data structure from project.metadata.visionPhase
@@ -139,6 +139,9 @@ export function useProjectCosts(visionPhaseData?: VisionPhaseData | null): Parti
         takesPerSegment: 2, // Default to 2 takes as requested
       },
       video: {
+        engine: 'sceneflow',
+        qualityTier: 'cinematic',
+        segmentDuration: 8,
         totalMinutes: safeTotalMinutes,
       },
       images: {

@@ -5,6 +5,7 @@ import {
   isProjectIdRef,
   resolveProjectIdFromCharge,
 } from '@/lib/credits/projectBudgetShared'
+import { buildCreditsBudgetParams, normalizeVideoParameters } from '@/lib/credits/videoEnginePricing'
 
 describe('projectBudget', () => {
   const projectId = '550e8400-e29b-41d4-a716-446655440000'
@@ -33,5 +34,21 @@ describe('projectBudget', () => {
     expect(resolveProjectIdFromCharge(projectId, null)).toBe(projectId)
     expect(resolveProjectIdFromCharge('segment-1', { projectId })).toBe(projectId)
     expect(resolveProjectIdFromCharge('segment-1', null)).toBeUndefined()
+  })
+
+  it('builds reproducible creditsBudgetParams payload', () => {
+    const params = buildCreditsBudgetParams(
+      normalizeVideoParameters({
+        engine: 'sceneflow',
+        qualityTier: 'cinematic',
+        segmentDuration: 8,
+        totalMinutes: 4,
+      })
+    )
+    expect(params).toEqual({
+      engine: 'sceneflow',
+      qualityTier: 'cinematic',
+      segmentDuration: 8,
+    })
   })
 })
