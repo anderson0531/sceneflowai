@@ -226,4 +226,55 @@ describe('buildBeatAlignedStoryboardSfxClips', () => {
       )
     ).toBe(false)
   })
+
+  it('builds clips when sfxAudio slot is null but sfx cue has audioUrl (production crash regression)', () => {
+    const scene = {
+      imageUrl: 'https://example.com/est.jpg',
+      dialogue: [{ character: 'Sarah', line: 'Hello.' }],
+      beats: [
+        {
+          beatId: 'bt_est',
+          kind: 'action',
+          actionDescription: 'Establishing shot',
+          storyboardImageUrl: 'https://example.com/est.jpg',
+        },
+        {
+          beatId: 'bt_a1',
+          kind: 'action',
+          actionDescription: 'Sarah enters the room',
+        },
+        {
+          beatId: 'bt_d1',
+          kind: 'dialogue',
+          character: 'Sarah',
+          line: 'Hello.',
+          audioUrl: SARAH_URL,
+          durationSeconds: 3,
+        },
+      ],
+      sfx: [
+        { description: 'Establishing ambient', sourceBeatId: 'bt_est' },
+        { description: 'Footsteps', sourceBeatId: 'bt_a1', audioUrl: SFX_A1 },
+      ],
+      sfxAudio: [null, null],
+      sfxSourceMeta: [
+        null,
+        { source: 'veo', clipDurationSeconds: 4, promptMode: 'actionBeat' },
+      ],
+    }
+
+    const { visualFrames, voiceClips } = buildBeatFirstPlaybackTimeline(scene, 'en', {
+      [SARAH_URL]: 3,
+    })
+
+    const clips = buildBeatAlignedStoryboardSfxClips(scene, visualFrames, {
+      voiceEndTime: voiceClips[0].startTime + voiceClips[0].duration,
+    })
+
+    expect(clips).toHaveLength(1)
+    expect(clips[0].url).toBe(SFX_A1)
+    expect(clips[0].label).toBe('Footsteps')
+    expect(clips[0].duration).toBe(4)
+    expect(clips[0].startTime).toBe(visualFrames.find((f) => f.beatId === 'bt_a1')!.startTime)
+  })
 })

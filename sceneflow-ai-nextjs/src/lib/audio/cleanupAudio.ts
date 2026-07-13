@@ -180,6 +180,8 @@ export function applyAudioSlotToScene(scene: any, payload: AudioSlotSavedPayload
     } else if (typeof sfxEntry === 'object') {
       sfx[sfxIndex] = { ...(sfxEntry as object), audioUrl: payload.audioUrl }
     }
+  } else if (payload.audioUrl) {
+    sfx[sfxIndex] = { audioUrl: payload.audioUrl }
   }
   updated.sfx = sfx
 

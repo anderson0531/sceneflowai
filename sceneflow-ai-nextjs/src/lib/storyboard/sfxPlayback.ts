@@ -169,15 +169,22 @@ export function buildBeatAlignedStoryboardSfxClips(
     }
 
     let duration = resolveClipDuration(idx, scene, frame, dynamicDurations, url)
-    if (typeof entry === 'object' && typeof entry.duration === 'number' && entry.duration > 0) {
-      duration = entry.duration
+    if (
+      entry != null &&
+      typeof entry === 'object' &&
+      typeof (entry as { duration?: number }).duration === 'number' &&
+      (entry as { duration: number }).duration > 0
+    ) {
+      duration = (entry as { duration: number }).duration
     }
     duration = capDurationToFrameWindow(startTime, duration, frame)
 
     const id = beatId ? `sfx-beat-${beatId}` : `sfx-${idx}`
     const label =
       cue?.description?.slice(0, 48) ||
-      (typeof entry === 'object' && (entry as { description?: string }).description) ||
+      (entry != null &&
+        typeof entry === 'object' &&
+        (entry as { description?: string }).description) ||
       `Sound Effect ${idx + 1}`
 
     clips.push({

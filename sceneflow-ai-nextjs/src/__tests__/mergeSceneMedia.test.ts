@@ -496,6 +496,22 @@ describe('applyAudioSlotToScene', () => {
     expect(updated.sfxAudio[0]).toBe('https://example.com/beat5.mp3')
   })
 
+  it('materializes sfx cue when applying audio to a padded null slot', () => {
+    const scene = {
+      id: 's1',
+      sfx: [null],
+      sfxAudio: [null],
+    }
+    const updated = applyAudioSlotToScene(scene, {
+      sceneIndex: 0,
+      audioType: 'sfx',
+      audioUrl: 'https://example.com/slot0.mp3',
+      sfxIndex: 0,
+    })
+    expect(updated.sfxAudio[0]).toBe('https://example.com/slot0.mp3')
+    expect(updated.sfx[0]).toEqual({ audioUrl: 'https://example.com/slot0.mp3' })
+  })
+
   it('writes music audio and duration fields', () => {
     const scene = { id: 's1' }
     const updated = applyAudioSlotToScene(scene, {
