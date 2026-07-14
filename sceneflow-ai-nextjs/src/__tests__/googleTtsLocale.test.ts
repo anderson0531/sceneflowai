@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { resolveGoogleTtsLanguageCode } from '@/lib/tts/googleTtsLocale'
+import {
+  resolveGeminiTtsLanguageCode,
+  resolveGoogleTtsLanguageCode,
+} from '@/lib/tts/googleTtsLocale'
 
 describe('resolveGoogleTtsLanguageCode', () => {
   it('maps Arabic short code to ar-XA', () => {
@@ -29,5 +32,36 @@ describe('resolveGoogleTtsLanguageCode', () => {
 
   it('maps Ukrainian via voice metadata', () => {
     expect(resolveGoogleTtsLanguageCode('uk')).toBe('uk-UA')
+  })
+})
+
+describe('resolveGeminiTtsLanguageCode', () => {
+  it('maps Arabic short code to ar-EG', () => {
+    expect(resolveGeminiTtsLanguageCode('ar')).toBe('ar-EG')
+  })
+
+  it('maps legacy ar-XA to ar-EG for Gemini', () => {
+    expect(resolveGeminiTtsLanguageCode('ar-XA')).toBe('ar-EG')
+  })
+
+  it('maps Chinese short code to cmn-CN', () => {
+    expect(resolveGeminiTtsLanguageCode('zh')).toBe('cmn-CN')
+  })
+
+  it('maps Spanish short code to es-ES', () => {
+    expect(resolveGeminiTtsLanguageCode('es')).toBe('es-ES')
+  })
+
+  it('maps Norwegian short code to nb-NO', () => {
+    expect(resolveGeminiTtsLanguageCode('no')).toBe('nb-NO')
+  })
+
+  it('maps English short code to en-US', () => {
+    expect(resolveGeminiTtsLanguageCode('en')).toBe('en-US')
+  })
+
+  it('passes through valid Gemini locale codes', () => {
+    expect(resolveGeminiTtsLanguageCode('ar-EG')).toBe('ar-EG')
+    expect(resolveGeminiTtsLanguageCode('th-TH')).toBe('th-TH')
   })
 })

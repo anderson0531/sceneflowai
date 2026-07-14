@@ -29,7 +29,7 @@ import {
 import { buildGeminiTtsPrompt } from '../../../../lib/tts/geminiTtsPrompt'
 import { resolveCharacterVoicePrompt } from '../../../../lib/tts/resolveCharacterVoicePrompt'
 import { buildGeminiTtsAdvancedVoiceOptions } from '../../../../lib/tts/geminiTtsSafety'
-import { resolveGoogleTtsLanguageCode } from '../../../../lib/tts/googleTtsLocale'
+import { resolveGeminiTtsLanguageCode, resolveGoogleTtsLanguageCode } from '../../../../lib/tts/googleTtsLocale'
 import { persistSceneAudioAtomic } from '../../../../lib/audio/persistSceneAudioAtomic'
 
 export const maxDuration = 60
@@ -710,8 +710,12 @@ async function generateGoogleAudio(
 
   // Override with the requested target language to ensure native accents
   if (language && language !== 'en') {
-    languageCode = resolveGoogleTtsLanguageCode(language)
-    console.log(`[Google TTS] Target language ${language} requested. Setting languageCode to ${languageCode} to enforce native accent.`)
+    languageCode = isGemini
+      ? resolveGeminiTtsLanguageCode(language)
+      : resolveGoogleTtsLanguageCode(language)
+    console.log(
+      `[Google TTS] Target language ${language} requested (${isGemini ? 'gemini' : 'standard'}). languageCode=${languageCode}.`
+    )
   }
 
   // Voice substitution for cross-locale generation. Studio/WaveNet/Neural2/

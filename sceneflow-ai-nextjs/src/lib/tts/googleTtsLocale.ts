@@ -36,6 +36,59 @@ const GOOGLE_TTS_PRECISE_MAP: Record<string, string> = {
   sw: 'sw-KE',
 }
 
+/**
+ * SceneFlow short code -> Cloud Gemini-TTS BCP-47 locale.
+ * @see https://cloud.google.com/text-to-speech/docs/gemini-tts
+ */
+const GEMINI_TTS_LOCALE_MAP: Record<string, string> = {
+  ar: 'ar-EG',
+  bn: 'bn-BD',
+  ca: 'ca-ES',
+  cs: 'cs-CZ',
+  da: 'da-DK',
+  de: 'de-DE',
+  el: 'el-GR',
+  en: 'en-US',
+  es: 'es-ES',
+  et: 'et-EE',
+  fa: 'fa-IR',
+  fi: 'fi-FI',
+  fil: 'fil-PH',
+  fr: 'fr-FR',
+  he: 'he-IL',
+  hi: 'hi-IN',
+  hr: 'hr-HR',
+  hu: 'hu-HU',
+  id: 'id-ID',
+  it: 'it-IT',
+  ja: 'ja-JP',
+  ka: 'ka-GE',
+  ko: 'ko-KR',
+  mk: 'mk-MK',
+  ms: 'ms-MY',
+  nl: 'nl-NL',
+  no: 'nb-NO',
+  pl: 'pl-PL',
+  pt: 'pt-BR',
+  ro: 'ro-RO',
+  ru: 'ru-RU',
+  sk: 'sk-SK',
+  sl: 'sl-SI',
+  sv: 'sv-SE',
+  sw: 'sw-KE',
+  ta: 'ta-IN',
+  te: 'te-IN',
+  th: 'th-TH',
+  tr: 'tr-TR',
+  uk: 'uk-UA',
+  ur: 'ur-PK',
+  vi: 'vi-VN',
+  zh: 'cmn-CN',
+  az: 'az-AZ',
+}
+
+const GEMINI_SUPPORTED_LOCALES = new Set(Object.values(GEMINI_TTS_LOCALE_MAP))
+
 function extractLocaleFromVoiceName(name: string): string | null {
   if (!name) return null
   const parts = name.split('-')
@@ -63,4 +116,26 @@ export function resolveGoogleTtsLanguageCode(shortCode: string): string {
   if (GOOGLE_TTS_PRECISE_MAP[code]) return GOOGLE_TTS_PRECISE_MAP[code]
 
   return `${code}-${code.toUpperCase()}`
+}
+
+/**
+ * Resolve a SceneFlow language code to a Cloud Gemini-TTS `languageCode`.
+ * Gemini voices use a different locale list than legacy WaveNet/Standard voices
+ * (e.g. Arabic is `ar-EG`, not `ar-XA`).
+ */
+export function resolveGeminiTtsLanguageCode(shortCode: string): string {
+  const code = shortCode?.trim()
+  if (!code) return 'en-US'
+
+  const normalized = code.toLowerCase()
+  if (code.includes('-')) {
+    if (GEMINI_SUPPORTED_LOCALES.has(code)) return code
+    const base = code.split('-')[0]?.toLowerCase()
+    if (base && GEMINI_TTS_LOCALE_MAP[base]) return GEMINI_TTS_LOCALE_MAP[base]
+    return resolveGoogleTtsLanguageCode(code)
+  }
+
+  if (GEMINI_TTS_LOCALE_MAP[normalized]) return GEMINI_TTS_LOCALE_MAP[normalized]
+
+  return resolveGoogleTtsLanguageCode(code)
 }
