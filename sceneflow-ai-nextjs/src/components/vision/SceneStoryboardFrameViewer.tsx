@@ -31,6 +31,7 @@ import { getSceneBeats } from '@/lib/script/beatMigration'
 import { runSceneExpressPreflight } from '@/lib/sceneGeneration/sceneExpressPreflight'
 import { isPreVisStale } from '@/lib/storyboard/preVisSync'
 import { countDraftStoryboardFrames } from '@/lib/storyboard/storyboardQuality'
+import { resolveFrameEditCharacterReferences } from '@/lib/vision/resolveFrameEditCharacterReferences'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -365,6 +366,19 @@ export function SceneStoryboardFrameViewer({
     if (frameSlots.length === 0) return null
     return frameSlots.find((slot) => slot.key === selectedFrameKey) ?? frameSlots[0]
   }, [frameSlots, selectedFrameKey])
+
+  const editCharacterReferences = useMemo(
+    () =>
+      resolveFrameEditCharacterReferences({
+        editingFrame,
+        scene,
+        sceneIndex,
+        characters: characters ?? [],
+        slot: previewSlot,
+        objectReferences: objectReferences as never,
+      }),
+    [editingFrame, scene, sceneIndex, characters, previewSlot, objectReferences]
+  )
 
   const sceneExpressPreflight = useMemo(
     () =>
@@ -852,32 +866,7 @@ export function SceneStoryboardFrameViewer({
         imageType="scene"
         aspectRatio="16:9"
         objectReferences={objectReferences}
-        subjectReference={(() => {
-          if (!editingFrame) return undefined
-          if (editingFrame.kind === 'dialogue') {
-            const line = scene.dialogue?.[editingFrame.dialogueIndex]
-            const charName = line?.character
-            const char = characters.find((c) => c.name === charName)
-            if (char?.referenceImage) {
-              return {
-                imageUrl: char.referenceImage,
-                description: char.appearanceDescription || char.description || charName || 'Character',
-              }
-            }
-          }
-          if (editingFrame.kind === 'beat') {
-            const beat = scene.beats?.find((b: { beatId?: string }) => b.beatId === editingFrame.beatId)
-            const charName = beat?.character
-            const char = characters.find((c) => c.name === charName)
-            if (char?.referenceImage) {
-              return {
-                imageUrl: char.referenceImage,
-                description: char.appearanceDescription || char.description || charName || 'Character',
-              }
-            }
-          }
-          return undefined
-        })()}
+        characterReferences={editCharacterReferences}
         onSave={(newImageUrl) => {
           if (!editingFrame) return
           if (editingFrame.kind === 'establishing' && onSaveEditedScene) {

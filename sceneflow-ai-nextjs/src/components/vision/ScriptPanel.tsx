@@ -94,6 +94,7 @@ import { saveAudioFile } from '@/lib/download/saveFile'
 import { useOverlayStore } from '@/store/useOverlayStore'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType, StoryboardData, SceneDirectionData } from '@/lib/types/reports'
+import { resolveSegmentEditCharacterReferences } from '@/lib/vision/resolveFrameEditCharacterReferences'
 import { flattenSceneToStoryboardFrames } from '@/lib/storyboard/types'
 import { StoryboardReviewPanel } from './StoryboardReviewPanel'
 import { getSceneBeats, isBeatFirstPipelineEnabled } from '@/lib/script/beatMigration'
@@ -103,7 +104,10 @@ import {
 } from '@/lib/storyboard/types'
 import { buildBeatFirstPlaybackTimeline } from '@/lib/storyboard/types'
 import { buildStoryboardMusicClips } from '@/lib/storyboard/musicPlayback'
+import { isBeatSfxMuted } from '@/lib/storyboard/sfxPlayback'
+import { readBeatSfxAudio, resolveBeatSfxSlot } from '@/lib/script/deriveSfxFromSceneContent'
 import { BeatMusicToggle } from '@/components/vision/BeatMusicToggle'
+import { BeatSfxToggle } from '@/components/vision/BeatSfxToggle'
 import { BeatExcludeToggle } from '@/components/vision/BeatExcludeToggle'
 import { BeatCaptionControl } from '@/components/vision/BeatCaptionControl'
 import { ExportDialog } from './ExportDialog'
@@ -1946,15 +1950,22 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
     // SFX - play concurrently, use specified time or distribute across scene
     if (scene.sfxAudio && scene.sfxAudio.length > 0) {
       config.sfx = []
-      
+      const beatById = new Map(getSceneBeats(scene).map((beat) => [beat.beatId, beat]))
+
       for (let idx = 0; idx < scene.sfxAudio.length; idx++) {
         const sfxUrl = scene.sfxAudio[idx]
         if (!sfxUrl) continue
 
+        const sfxDef = scene.sfx?.[idx] || {}
+        const sourceBeatId =
+          typeof sfxDef === 'object' && sfxDef && typeof sfxDef.sourceBeatId === 'string'
+            ? sfxDef.sourceBeatId
+            : undefined
+        if (sourceBeatId && isBeatSfxMuted(beatById.get(sourceBeatId))) continue
+
         const normalizedSfxUrl = await normalizeAudioUrl(sfxUrl)
         if (!normalizedSfxUrl) continue  // Skip if URL is unreachable
-        
-        const sfxDef = scene.sfx?.[idx] || {}
+
         // Use specified time, or distribute SFX evenly across the scene
         let sfxTime: number
         if (sfxDef.time !== undefined) {
@@ -3414,7 +3425,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                   }))
               : undefined
           }
-          subjectReference={(() => {
+          characterReferences={(() => {
             if (!editingImageData.segmentId || editingImageData.sceneIdx === undefined) {
               return undefined
             }
@@ -3426,21 +3437,12 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
             const segment = prod?.segments?.find(
               (s) => s.segmentId === editingImageData.segmentId
             )
-            const firstLine = segment?.dialogueLines?.find((d) => d.covered !== false)
-            const charName = firstLine?.character
-            if (!charName) return undefined
-            const char = characters.find((c) => c.name === charName)
-            const refUrl = (char as { referenceImage?: string; referenceUrl?: string })
-              ?.referenceImage || (char as { referenceUrl?: string })?.referenceUrl
-            if (!refUrl) return undefined
-            return {
-              imageUrl: refUrl,
-              description:
-                (char as { appearanceDescription?: string; description?: string })
-                  ?.appearanceDescription ||
-                (char as { description?: string })?.description ||
-                charName,
-            }
+            return resolveSegmentEditCharacterReferences({
+              segment,
+              scene,
+              sceneIndex: editingImageData.sceneIdx,
+              characters,
+            })
           })()}
           onSave={(newImageUrl) => {
             // Check if this is a frame edit or scene image edit
@@ -6458,6 +6460,15 @@ function SceneCard({
                             ...beatSfx.map((s) => s.description),
                             ...inlineSfx,
                           ]
+                          const hasBeatSfx =
+                            sfxLabels.length > 0 ||
+                            (() => {
+                              try {
+                                return !!readBeatSfxAudio(scene, resolveBeatSfxSlot(scene, beat))
+                              } catch {
+                                return false
+                              }
+                            })()
                           return (
                             <div
                               key={beat.beatId}
@@ -6500,12 +6511,30 @@ function SceneCard({
                                     onScriptChange={onScriptChange}
                                   />
                                 )}
+                                {hasBeatSfx && (
+                                  <BeatSfxToggle
+                                    beat={beat}
+                                    sceneIdx={sceneIdx}
+                                    scenes={scenes}
+                                    script={script}
+                                    onScriptChange={onScriptChange}
+                                  />
+                                )}
                               </div>
                               <p className="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap">
                                 {beat.actionDescription?.trim() || 'No action description'}
                               </p>
                               {sfxLabels.length > 0 && (
-                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                <div
+                                  className={`mt-2 flex flex-wrap gap-1.5 ${
+                                    beat.sfxMuted ? 'opacity-50' : ''
+                                  }`}
+                                >
+                                  {beat.sfxMuted && (
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-600/30 text-slate-400 border border-slate-600/40">
+                                      SFX muted
+                                    </span>
+                                  )}
                                   {sfxLabels.map((label, sfxIdx) => (
                                     <span
                                       key={`${beat.beatId}-sfx-${sfxIdx}`}
@@ -6581,6 +6610,7 @@ function SceneCard({
                           : dialogueLineText
                         
                         const isNarrationBeat = beat.kind === 'narration'
+                        const hasBeatSfx = (sfxByBeatId.get(beat.beatId)?.length ?? 0) > 0
                         
                         return (
                           <div
@@ -6628,6 +6658,15 @@ function SceneCard({
                                   />
                                   {hasSceneMusic && (
                                     <BeatMusicToggle
+                                      beat={beat}
+                                      sceneIdx={sceneIdx}
+                                      scenes={scenes}
+                                      script={script}
+                                      onScriptChange={onScriptChange}
+                                    />
+                                  )}
+                                  {hasBeatSfx && (
+                                    <BeatSfxToggle
                                       beat={beat}
                                       sceneIdx={sceneIdx}
                                       scenes={scenes}

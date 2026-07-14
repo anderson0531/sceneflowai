@@ -5,9 +5,15 @@
 import type { SceneSfxCue } from '@/lib/script/deriveSfxFromSceneContent'
 import { readBeatSfxAudio } from '@/lib/script/deriveSfxFromSceneContent'
 import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
+import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type { StoryboardVisualFrame } from '@/lib/storyboard/types'
 
 const DEFAULT_SFX_DURATION_SEC = 3
+
+/** Default on — only explicit true mutes SFX for a beat. */
+export function isBeatSfxMuted(beat: SceneBeat | undefined): boolean {
+  return beat?.sfxMuted === true
+}
 
 export interface BeatAlignedSfxClip {
   id: string
@@ -136,6 +142,8 @@ export function buildBeatAlignedStoryboardSfxClips(
       .map((beat) => beat.beatId)
   )
 
+  const beatById = new Map(getSceneBeats(scene).map((beat) => [beat.beatId, beat]))
+
   const clips: BeatAlignedSfxClip[] = []
 
   for (let idx = 0; idx < slotCount; idx++) {
@@ -150,6 +158,7 @@ export function buildBeatAlignedStoryboardSfxClips(
     if (!url) continue
     const beatId = cue?.sourceBeatId
     if (beatId && excludedBeatIds.has(beatId)) continue
+    if (beatId && isBeatSfxMuted(beatById.get(beatId))) continue
 
     const frame = beatId ? frameByBeatId.get(beatId) : undefined
 

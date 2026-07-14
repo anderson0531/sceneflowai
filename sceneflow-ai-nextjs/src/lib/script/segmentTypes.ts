@@ -70,6 +70,8 @@ export interface SceneBeat {
   lineId?: string
   /** When true, background music plays for this beat's timeline window. Default: off. */
   musicEnabled?: boolean
+  /** When true, SFX linked to this beat is skipped during playback. Default: play. */
+  sfxMuted?: boolean
   /** Saved character/location/prop references for storyboard generation. */
   referenceSelection?: BeatReferenceSelection
   /**

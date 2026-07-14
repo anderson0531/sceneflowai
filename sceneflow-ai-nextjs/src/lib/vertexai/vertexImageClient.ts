@@ -354,6 +354,7 @@ export interface VertexImageEditOptions {
   sourceImage: string
   instruction: string
   referenceImage?: string
+  referenceImages?: Array<{ imageUrl: string; name?: string }>
   aspectRatio?: GenerateVertexImageOptions['aspectRatio']
   imageSize?: '1K' | '2K'
   editIntent?: 'default' | 'keyframeEnd' | 'preVisEdit'
@@ -361,6 +362,8 @@ export interface VertexImageEditOptions {
   modelTier?: VertexImageTier
   thinkingLevel?: VertexThinkingLevel
   negativePrompt?: string
+  /** Appended when identity + wardrobe refs are both sent. */
+  dualReferenceInstruction?: string
 }
 
 export async function editVertexImage(options: VertexImageEditOptions): Promise<VertexImageResult> {
@@ -382,6 +385,9 @@ export async function editVertexImage(options: VertexImageEditOptions): Promise<
     editPrompt =
       `PRE-VIS STORYBOARD EDIT:\n${options.instruction}\n\n` +
       'Apply a minimal, localized change only. Preserve exact composition, framing, aspect ratio, character identities, and overall scene layout unless the instruction explicitly requires otherwise.'
+    if (options.dualReferenceInstruction?.trim()) {
+      editPrompt += `\n\n${options.dualReferenceInstruction.trim()}`
+    }
   } else {
     editPrompt = `Edit this image: ${options.instruction}\nPreserve identity, framing, and lighting unless the edit requires otherwise.`
   }
@@ -401,6 +407,23 @@ export async function editVertexImage(options: VertexImageEditOptions): Promise<
       if (m) referenceImages.push({ base64Image: m[2], mimeType: m[1], name: 'identity-reference' })
     } else {
       referenceImages.push({ imageUrl: options.referenceImage, name: 'identity-reference' })
+    }
+  }
+
+  for (const ref of options.referenceImages ?? []) {
+    if (!ref.imageUrl?.trim()) continue
+    const url = ref.imageUrl.trim()
+    if (url.startsWith('data:')) {
+      const m = url.match(/^data:([^;]+);base64,(.+)$/)
+      if (m) {
+        referenceImages.push({
+          base64Image: m[2],
+          mimeType: m[1],
+          name: ref.name || 'reference',
+        })
+      }
+    } else {
+      referenceImages.push({ imageUrl: url, name: ref.name || 'reference' })
     }
   }
 

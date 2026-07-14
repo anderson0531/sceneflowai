@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { buildBeatFirstPlaybackTimeline } from '@/lib/storyboard/types'
-import { buildBeatAlignedStoryboardSfxClips } from '@/lib/storyboard/sfxPlayback'
+import { buildBeatAlignedStoryboardSfxClips, isBeatSfxMuted } from '@/lib/storyboard/sfxPlayback'
 
 const SARAH_URL = 'https://example.com/sarah.mp3'
 const SFX_A1 = 'https://example.com/sfx-a1.mp3'
@@ -276,5 +276,87 @@ describe('buildBeatAlignedStoryboardSfxClips', () => {
     expect(clips[0].label).toBe('Footsteps')
     expect(clips[0].duration).toBe(4)
     expect(clips[0].startTime).toBe(visualFrames.find((f) => f.beatId === 'bt_a1')!.startTime)
+  })
+
+  it('omits SFX clips for beats with sfxMuted true', () => {
+    const scene = {
+      imageUrl: 'https://example.com/est.jpg',
+      dialogue: [{ character: 'Sarah', line: 'Hello.' }],
+      beats: [
+        {
+          beatId: 'bt_est',
+          kind: 'action',
+          actionDescription: 'Establishing shot',
+          storyboardImageUrl: 'https://example.com/est.jpg',
+        },
+        {
+          beatId: 'bt_a1',
+          kind: 'action',
+          actionDescription: 'Sarah enters the room',
+          sfxMuted: true,
+        },
+        {
+          beatId: 'bt_a2',
+          kind: 'action',
+          actionDescription: 'Sarah looks around',
+        },
+        {
+          beatId: 'bt_d1',
+          kind: 'dialogue',
+          character: 'Sarah',
+          line: 'Hello.',
+          audioUrl: SARAH_URL,
+          durationSeconds: 3,
+        },
+      ],
+      sfx: [
+        { description: 'Establishing ambient', sourceBeatId: 'bt_est' },
+        { description: 'Footsteps', sourceBeatId: 'bt_a1' },
+        { description: 'Room tone shift', sourceBeatId: 'bt_a2' },
+      ],
+      sfxAudio: [null, SFX_A1, SFX_A2],
+      sfxSourceMeta: [
+        null,
+        { source: 'veo', clipDurationSeconds: 4, promptMode: 'actionBeat' },
+        { source: 'veo', clipDurationSeconds: 4, promptMode: 'actionBeat' },
+      ],
+    }
+
+    const { visualFrames, voiceClips } = buildBeatFirstPlaybackTimeline(scene, 'en', {
+      [SARAH_URL]: 3,
+    })
+
+    const clips = buildBeatAlignedStoryboardSfxClips(scene, visualFrames, {
+      voiceEndTime: voiceClips[0].startTime + voiceClips[0].duration,
+    })
+
+    expect(clips).toHaveLength(1)
+    expect(clips[0].id).toBe('sfx-beat-bt_a2')
+    expect(clips.find((c) => c.id === 'sfx-beat-bt_a1')).toBeUndefined()
+  })
+})
+
+describe('isBeatSfxMuted', () => {
+  it('defaults to not muted when sfxMuted is undefined', () => {
+    expect(isBeatSfxMuted({ beatId: 'x', sequenceIndex: 0, kind: 'action' })).toBe(false)
+  })
+
+  it('returns true only when sfxMuted is explicitly true', () => {
+    expect(
+      isBeatSfxMuted({
+        beatId: 'x',
+        sequenceIndex: 0,
+        kind: 'action',
+        sfxMuted: true,
+      })
+    ).toBe(true)
+    expect(
+      isBeatSfxMuted({
+        beatId: 'x',
+        sequenceIndex: 0,
+        kind: 'action',
+        sfxMuted: false,
+      })
+    ).toBe(false)
   })
 })
