@@ -1,3 +1,9 @@
+import { getSceneBeats } from '@/lib/script/beatMigration'
+import type { SceneBeat } from '@/lib/script/segmentTypes'
+import {
+  getConfiguredStreamLanguages,
+  type ProjectStream,
+} from '@/lib/streams/projectStreams'
 import type { SceneTranslation } from '@/lib/storyboard/playerTranslations'
 
 export type BeatCaptionTranslationsByLanguage = Record<
@@ -5,7 +11,7 @@ export type BeatCaptionTranslationsByLanguage = Record<
   Record<number, SceneTranslation>
 >
 
-async function translateCaptionText(
+export async function translateCaptionText(
   text: string,
   targetLanguage: string
 ): Promise<string | null> {
@@ -21,6 +27,45 @@ async function translateCaptionText(
   if (!response.ok) return null
   const data = (await response.json()) as { translatedText?: string }
   return data.translatedText?.trim() || null
+}
+
+/**
+ * Languages that should receive auto-translated beat captions.
+ * Prefers Production Streams; falls back to legacy audio/translation keys.
+ */
+export function collectCaptionTargetLanguages(
+  scenes: unknown[],
+  storedTranslations?: BeatCaptionTranslationsByLanguage,
+  projectStreams?: ProjectStream[]
+): string[] {
+  const langs = new Set<string>()
+
+  for (const lang of getConfiguredStreamLanguages(projectStreams || [])) {
+    if (lang !== 'en') langs.add(lang)
+  }
+
+  Object.keys(storedTranslations || {}).forEach((lang) => {
+    if (lang !== 'en') langs.add(lang)
+  })
+
+  scenes.forEach((scene) => {
+    const s = scene as {
+      dialogueAudio?: Record<string, unknown>
+      narrationAudio?: Record<string, unknown>
+    }
+    if (s?.dialogueAudio && typeof s.dialogueAudio === 'object') {
+      Object.keys(s.dialogueAudio).forEach((lang) => {
+        if (lang !== 'en') langs.add(lang)
+      })
+    }
+    if (s?.narrationAudio && typeof s.narrationAudio === 'object') {
+      Object.keys(s.narrationAudio).forEach((lang) => {
+        if (lang !== 'en') langs.add(lang)
+      })
+    }
+  })
+
+  return Array.from(langs).sort()
 }
 
 /**
@@ -66,6 +111,8 @@ export async function autoTranslateBeatCaption(params: {
   targetLanguages: string[]
   storedTranslations: BeatCaptionTranslationsByLanguage
   previousEnglishText?: string
+  /** When true, re-translate even if overlayEdited (e.g. user clicked Auto-translate). */
+  forceRetranslate?: boolean
   onSaveTranslations: (
     langCode: string,
     translations: Record<number, SceneTranslation>
@@ -93,7 +140,12 @@ export async function autoTranslateBeatCaption(params: {
       const beatsByBeatId = { ...(sceneTrans.beatsByBeatId || {}) }
       const existing = beatsByBeatId[params.beatId]
 
-      if (existing?.overlayEdited && !englishChanged && existing.overlayText?.trim()) {
+      if (
+        !params.forceRetranslate &&
+        existing?.overlayEdited &&
+        !englishChanged &&
+        existing.overlayText?.trim()
+      ) {
         return
       }
 
@@ -109,4 +161,65 @@ export async function autoTranslateBeatCaption(params: {
     })
 
   await Promise.all(saves)
+}
+
+/**
+ * Backfill beat caption translations for a newly added language stream.
+ */
+export async function backfillBeatCaptionsForLanguage(params: {
+  language: string
+  scenes: unknown[]
+  storedTranslations: BeatCaptionTranslationsByLanguage
+  onSaveTranslations: (
+    langCode: string,
+    translations: Record<number, SceneTranslation>
+  ) => Promise<void>
+}): Promise<number> {
+  const language = params.language?.trim()
+  if (!language || language === 'en') return 0
+
+  const langMap = { ...(params.storedTranslations[language] || {}) }
+  let translatedCount = 0
+
+  for (let sceneIdx = 0; sceneIdx < params.scenes.length; sceneIdx++) {
+    const scene = params.scenes[sceneIdx]
+    const beats = getSceneBeats(scene as Record<string, unknown>)
+    const sceneTrans = { ...(langMap[sceneIdx] || {}) }
+    const beatsByBeatId = { ...(sceneTrans.beatsByBeatId || {}) }
+    let sceneChanged = false
+
+    for (const beat of beats) {
+      const englishText = (beat as SceneBeat).overlayText?.trim()
+      if (!englishText) continue
+
+      const beatId = (beat as SceneBeat).beatId
+      const existing = beatsByBeatId[beatId]
+      if (existing?.overlayEdited && existing.overlayText?.trim()) {
+        continue
+      }
+
+      const translated = await translateCaptionText(englishText, language)
+      if (!translated) continue
+
+      beatsByBeatId[beatId] = {
+        overlayText: translated,
+        overlayEdited: false,
+      }
+      sceneChanged = true
+      translatedCount += 1
+    }
+
+    if (sceneChanged) {
+      langMap[sceneIdx] = {
+        ...sceneTrans,
+        beatsByBeatId,
+      }
+    }
+  }
+
+  if (translatedCount > 0) {
+    await params.onSaveTranslations(language, langMap)
+  }
+
+  return translatedCount
 }

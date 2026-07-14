@@ -1,12 +1,17 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { getBeatOverlayFields } from '@/lib/storyboard/beatCaption'
 import {
   defaultBeatOverlayType,
   resolveBeatCaptionText,
   isBeatCaptionManuallyEdited,
 } from '@/lib/storyboard/playerTranslations'
-import { purgeBeatCaptionTranslations } from '@/lib/storyboard/beatCaptionTranslations'
+import {
+  purgeBeatCaptionTranslations,
+  collectCaptionTargetLanguages,
+  backfillBeatCaptionsForLanguage,
+} from '@/lib/storyboard/beatCaptionTranslations'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
+import type { ProjectStream } from '@/lib/streams/projectStreams'
 
 describe('beat caption helpers', () => {
   it('getBeatOverlayFields returns empty when no overlay text', () => {
@@ -107,5 +112,103 @@ describe('beat caption helpers', () => {
     }
     expect(isBeatCaptionManuallyEdited(sceneTranslation, 'bt_1')).toBe(true)
     expect(isBeatCaptionManuallyEdited(sceneTranslation, 'bt_2')).toBe(false)
+  })
+
+  it('collectCaptionTargetLanguages includes stream languages without dialogueAudio', () => {
+    const projectStreams: ProjectStream[] = [
+      {
+        id: 'stream-es',
+        language: 'es',
+        format: 'animatic',
+        status: 'draft',
+      },
+    ]
+    const scenes = [{ beats: [] }]
+    expect(collectCaptionTargetLanguages(scenes, {}, projectStreams)).toEqual(['es'])
+  })
+
+  it('collectCaptionTargetLanguages unions stream, stored, and legacy audio keys', () => {
+    const projectStreams: ProjectStream[] = [
+      { id: 's1', language: 'es', format: 'animatic', status: 'draft' },
+    ]
+    const scenes = [
+      {
+        dialogueAudio: { th: { url: 'x' } },
+        narrationAudio: { fr: { url: 'y' } },
+      },
+    ]
+    const storedTranslations = { de: { 0: {} } }
+    expect(collectCaptionTargetLanguages(scenes, storedTranslations, projectStreams)).toEqual([
+      'de',
+      'es',
+      'fr',
+      'th',
+    ])
+  })
+
+  describe('backfillBeatCaptionsForLanguage', () => {
+    const originalFetch = global.fetch
+
+    beforeEach(() => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ translatedText: 'Capítulo Uno' }),
+      } as Response)
+    })
+
+    afterEach(() => {
+      global.fetch = originalFetch
+    })
+
+    it('translates beats with overlayText and skips manual overrides', async () => {
+      const onSaveTranslations = vi.fn().mockResolvedValue(undefined)
+      const scenes = [
+        {
+          beats: [
+            { beatId: 'bt_1', sequenceIndex: 0, kind: 'action', overlayText: 'Chapter One' },
+            { beatId: 'bt_2', sequenceIndex: 1, kind: 'action', overlayText: 'The End' },
+          ],
+        },
+      ]
+      const storedTranslations = {
+        es: {
+          0: {
+            beatsByBeatId: {
+              bt_2: { overlayText: 'Fin manual', overlayEdited: true },
+            },
+          },
+        },
+      }
+
+      const count = await backfillBeatCaptionsForLanguage({
+        language: 'es',
+        scenes,
+        storedTranslations,
+        onSaveTranslations,
+      })
+
+      expect(count).toBe(1)
+      expect(onSaveTranslations).toHaveBeenCalledTimes(1)
+      expect(onSaveTranslations).toHaveBeenCalledWith('es', {
+        0: {
+          beatsByBeatId: {
+            bt_1: { overlayText: 'Capítulo Uno', overlayEdited: false },
+            bt_2: { overlayText: 'Fin manual', overlayEdited: true },
+          },
+        },
+      })
+    })
+
+    it('returns zero for English and does not save', async () => {
+      const onSaveTranslations = vi.fn()
+      const count = await backfillBeatCaptionsForLanguage({
+        language: 'en',
+        scenes: [{ beats: [{ beatId: 'bt_1', sequenceIndex: 0, kind: 'action', overlayText: 'Hi' }] }],
+        storedTranslations: {},
+        onSaveTranslations,
+      })
+      expect(count).toBe(0)
+      expect(onSaveTranslations).not.toHaveBeenCalled()
+    })
   })
 })

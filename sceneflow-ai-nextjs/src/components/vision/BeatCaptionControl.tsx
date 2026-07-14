@@ -9,9 +9,11 @@ import {
 } from '@/lib/storyboard/playerTranslations'
 import {
   autoTranslateBeatCaption,
+  collectCaptionTargetLanguages,
   purgeBeatCaptionTranslations,
 } from '@/lib/storyboard/beatCaptionTranslations'
 import type { SceneTranslation } from '@/lib/storyboard/playerTranslations'
+import type { ProjectStream } from '@/lib/streams/projectStreams'
 
 type ProjectTranslations = Record<string, Record<number, SceneTranslation>>
 
@@ -27,6 +29,7 @@ interface BeatCaptionControlProps {
   selectedLanguage: string
   scenes: any[]
   script: any
+  projectStreams?: ProjectStream[]
   storedTranslations?: ProjectTranslations
   onScriptChange?: (script: any) => void
   onSaveTranslations?: (
@@ -35,41 +38,20 @@ interface BeatCaptionControlProps {
   ) => Promise<void>
 }
 
-function collectCaptionTargetLanguages(
-  scenes: any[],
-  storedTranslations?: ProjectTranslations
-): string[] {
-  const langs = new Set<string>()
-  Object.keys(storedTranslations || {}).forEach((lang) => {
-    if (lang !== 'en') langs.add(lang)
-  })
-  scenes.forEach((scene) => {
-    if (scene?.dialogueAudio && typeof scene.dialogueAudio === 'object') {
-      Object.keys(scene.dialogueAudio).forEach((lang) => {
-        if (lang !== 'en') langs.add(lang)
-      })
-    }
-    if (scene?.narrationAudio && typeof scene.narrationAudio === 'object') {
-      Object.keys(scene.narrationAudio).forEach((lang) => {
-        if (lang !== 'en') langs.add(lang)
-      })
-    }
-  })
-  return Array.from(langs)
-}
-
 export function BeatCaptionControl({
   beat,
   sceneIdx,
   selectedLanguage,
   scenes,
   script,
+  projectStreams,
   storedTranslations,
   onScriptChange,
   onSaveTranslations,
 }: BeatCaptionControlProps) {
   const [expanded, setExpanded] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [autoTranslating, setAutoTranslating] = useState(false)
   const previousEnglishRef = useRef(beat.overlayText?.trim() || '')
 
   const isEnglish = selectedLanguage === 'en'
@@ -126,7 +108,11 @@ export function BeatCaptionControl({
 
           if (onSaveTranslations) {
             if (text) {
-              const targetLanguages = collectCaptionTargetLanguages(scenes, storedTranslations)
+              const targetLanguages = collectCaptionTargetLanguages(
+                scenes,
+                storedTranslations,
+                projectStreams
+              )
               await autoTranslateBeatCaption({
                 englishText: text,
                 beatId: beat.beatId,
@@ -189,8 +175,38 @@ export function BeatCaptionControl({
       onSaveTranslations,
       storedTranslations,
       selectedLanguage,
+      projectStreams,
     ]
   )
+
+  const autoTranslateFromEnglish = useCallback(async () => {
+    const englishText = beat.overlayText?.trim()
+    if (!englishText || !onSaveTranslations || isEnglish) return
+
+    setAutoTranslating(true)
+    try {
+      await autoTranslateBeatCaption({
+        englishText,
+        beatId: beat.beatId,
+        sceneIdx,
+        targetLanguages: [selectedLanguage],
+        storedTranslations: storedTranslations || {},
+        previousEnglishText: englishText,
+        forceRetranslate: true,
+        onSaveTranslations,
+      })
+    } finally {
+      setAutoTranslating(false)
+    }
+  }, [
+    beat.overlayText,
+    beat.beatId,
+    onSaveTranslations,
+    isEnglish,
+    sceneIdx,
+    selectedLanguage,
+    storedTranslations,
+  ])
 
   const removeCaption = useCallback(async () => {
     setDraftText('')
@@ -234,7 +250,7 @@ export function BeatCaptionControl({
                 void commitCaption()
               }
             }}
-            disabled={saving}
+            disabled={saving || autoTranslating}
             placeholder={
               isEnglish
                 ? 'On-screen title or signage text…'
@@ -248,7 +264,7 @@ export function BeatCaptionControl({
                 <button
                   key={opt.value}
                   type="button"
-                  disabled={saving}
+                  disabled={saving || autoTranslating}
                   onClick={() => {
                     setDraftType(opt.value)
                     void commitCaption({ overlayType: opt.value })
@@ -267,12 +283,22 @@ export function BeatCaptionControl({
           {hasCaption && (
             <button
               type="button"
-              disabled={saving}
+              disabled={saving || autoTranslating}
               onClick={() => void removeCaption()}
               className="flex items-center gap-1.5 text-[10px] text-red-300/90 hover:text-red-200 transition-colors"
             >
               <Trash2 className="h-3 w-3" />
               Remove caption
+            </button>
+          )}
+          {!isEnglish && beat.overlayText?.trim() && statusLabel === 'Using English' && (
+            <button
+              type="button"
+              disabled={saving || autoTranslating}
+              onClick={() => void autoTranslateFromEnglish()}
+              className="rounded-md border border-violet-500/40 bg-violet-500/10 px-2 py-1 text-[10px] text-violet-200 hover:bg-violet-500/20 transition-colors"
+            >
+              {autoTranslating ? 'Translating…' : 'Auto-translate from English'}
             </button>
           )}
           {!isEnglish && (

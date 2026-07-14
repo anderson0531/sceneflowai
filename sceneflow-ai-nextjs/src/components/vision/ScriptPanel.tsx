@@ -6537,6 +6537,7 @@ function SceneCard({
                                 selectedLanguage={selectedLanguage}
                                 scenes={scenes}
                                 script={script}
+                                projectStreams={projectStreams}
                                 storedTranslations={storedTranslations}
                                 onScriptChange={onScriptChange}
                                 onSaveTranslations={onSaveTranslations}
@@ -6776,6 +6777,7 @@ function SceneCard({
                               selectedLanguage={selectedLanguage}
                               scenes={scenes}
                               script={script}
+                              projectStreams={projectStreams}
                               storedTranslations={storedTranslations}
                               onScriptChange={onScriptChange}
                               onSaveTranslations={onSaveTranslations}

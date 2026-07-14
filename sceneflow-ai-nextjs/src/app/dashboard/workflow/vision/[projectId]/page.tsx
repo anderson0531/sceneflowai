@@ -154,6 +154,8 @@ import {
   getProjectStreams,
   type ProjectStream,
 } from '@/lib/streams/projectStreams'
+import { backfillBeatCaptionsForLanguage } from '@/lib/storyboard/beatCaptionTranslations'
+import { getLanguageName } from '@/constants/languages'
 import { getSceneProductionStateFromMetadata } from '@/lib/final-cut/projectProductionState'
 import { ImageQualitySelector } from '@/components/vision/ImageQualitySelector'
 import { VoiceSelector } from '@/components/tts/VoiceSelector'
@@ -12391,8 +12393,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         dialogueOnly: true,
         storyboardQuality: 'draft',
       })
+
+      const scenes = script?.script?.scenes
+      if (!scenes?.length || !handleSaveTranslations) return
+
+      try {
+        const count = await backfillBeatCaptionsForLanguage({
+          language,
+          scenes,
+          storedTranslations,
+          onSaveTranslations: handleSaveTranslations,
+        })
+        if (count > 0) {
+          toast.success(
+            `Caption translations updated for ${getLanguageName(language)} (${count} beat${count === 1 ? '' : 's'})`
+          )
+        }
+      } catch (err) {
+        console.warn('[Streams] Beat caption backfill failed:', err)
+        toast.error(`Failed to translate captions for ${getLanguageName(language)}`)
+      }
     },
-    [handleExpressGenerate]
+    [handleExpressGenerate, script?.script?.scenes, storedTranslations, handleSaveTranslations]
   )
 
   const handleSyncPreVisToScript = useCallback(
