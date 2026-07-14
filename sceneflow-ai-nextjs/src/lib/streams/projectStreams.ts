@@ -222,3 +222,16 @@ export function getReadyStreamLanguages(streams: ProjectStream[]): string[] {
     )
   ).sort()
 }
+
+/** Languages configured in Streams tab (always includes English as source). */
+export function getConfiguredStreamLanguages(streams: ProjectStream[]): string[] {
+  const langs = new Set<string>(['en'])
+  for (const s of streams) {
+    if (s.language?.trim()) langs.add(s.language.trim())
+  }
+  return Array.from(langs).sort((a, b) => {
+    if (a === 'en') return -1
+    if (b === 'en') return 1
+    return a.localeCompare(b)
+  })
+}

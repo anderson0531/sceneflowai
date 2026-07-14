@@ -13965,6 +13965,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 }}
                 isExpressRunning={isExpressRunning}
                 narrationVoice={narrationVoice}
+                projectStreams={projectStreams}
               belowDashboardSlot={({ openGenerateAudio, openPromptBuilder }) => (
                 <div className="rounded-2xl border border-white/10 bg-slate950/40 shadow-inner">
                   <div className="px-5 py-5">
