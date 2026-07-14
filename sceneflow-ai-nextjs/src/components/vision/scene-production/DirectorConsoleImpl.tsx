@@ -66,7 +66,9 @@ import type {
   TextOverlay,
   ProductionTarget,
   AnimaticRenderSettings,
+  MixerSettingsPersistPayload,
 } from './types'
+import { migrateMixerSettingsByLanguage } from '@/lib/scene/mixerSettings'
 // Dynamic import for DirectorDialog — heavy module (aggregator registry, useSegmentConfig,
 // ImageEditModal) shared with useVideoQueue in this chunk; static import causes webpack TDZ
 // ('Cannot access tz before initialization') when the queue first builds.
@@ -1249,7 +1251,7 @@ export function DirectorConsoleRoot({
             })
           }
         }}
-        onMixerSettingsChange={(settings) => {
+        onMixerSettingsChange={(payload: MixerSettingsPersistPayload) => {
           if (!onProductionDataChange) return
           const base =
             productionData ??
@@ -1258,9 +1260,23 @@ export function DirectorConsoleRoot({
               targetSegmentDuration: 10,
               segments,
             } as import('./types').SceneProductionData)
+          const byLang = migrateMixerSettingsByLanguage(base)
           onProductionDataChange({
             ...base,
-            mixerSettings: settings,
+            mixerSettingsByLanguage: {
+              ...byLang,
+              [payload.language]: {
+                ...byLang[payload.language],
+                ...payload.languageSettings,
+              },
+            },
+            mixerSettings: {
+              productionTarget: payload.productionTarget ?? base.mixerSettings?.productionTarget,
+              collapsedSections: payload.collapsedSections ?? base.mixerSettings?.collapsedSections,
+              theaterMode: payload.theaterMode ?? base.mixerSettings?.theaterMode,
+            },
+            textOverlayTranslations:
+              payload.textOverlayTranslations ?? base.textOverlayTranslations,
           })
         }}
         onRenderComplete={(downloadUrl, language, streamType = productionTarget.streamType, meta) => {

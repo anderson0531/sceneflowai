@@ -155,6 +155,7 @@ import {
   type ProjectStream,
 } from '@/lib/streams/projectStreams'
 import { backfillBeatCaptionsForLanguage } from '@/lib/storyboard/beatCaptionTranslations'
+import { backfillMixerTextForScene } from '@/lib/storyboard/mixerTextTranslations'
 import { getLanguageName } from '@/constants/languages'
 import { getSceneProductionStateFromMetadata } from '@/lib/final-cut/projectProductionState'
 import { ImageQualitySelector } from '@/components/vision/ImageQualitySelector'
@@ -12413,8 +12414,38 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         console.warn('[Streams] Beat caption backfill failed:', err)
         toast.error(`Failed to translate captions for ${getLanguageName(language)}`)
       }
+
+      try {
+        let mixerTextCount = 0
+        for (const [sceneId, productionData] of Object.entries(sceneProductionState)) {
+          if (!productionData) continue
+          const { productionData: updated, count } = await backfillMixerTextForScene(
+            language,
+            productionData
+          )
+          if (count > 0) {
+            mixerTextCount += count
+            applySceneProductionUpdate(sceneId, () => updated)
+          }
+        }
+        if (mixerTextCount > 0) {
+          toast.success(
+            `Mixer text translations updated for ${getLanguageName(language)} (${mixerTextCount} item${mixerTextCount === 1 ? '' : 's'})`
+          )
+        }
+      } catch (err) {
+        console.warn('[Streams] Mixer text backfill failed:', err)
+        toast.error(`Failed to translate mixer text for ${getLanguageName(language)}`)
+      }
     },
-    [handleExpressGenerate, script?.script?.scenes, storedTranslations, handleSaveTranslations]
+    [
+      handleExpressGenerate,
+      script?.script?.scenes,
+      storedTranslations,
+      handleSaveTranslations,
+      sceneProductionState,
+      applySceneProductionUpdate,
+    ]
   )
 
   const handleSyncPreVisToScript = useCallback(

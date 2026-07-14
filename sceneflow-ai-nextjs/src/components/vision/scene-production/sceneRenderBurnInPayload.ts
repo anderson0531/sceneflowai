@@ -6,8 +6,13 @@
 import type { SceneProductionData, TextOverlayData, WatermarkConfig } from './types'
 import {
   DEFAULT_WATERMARK_CONFIG,
+  getMixerSettingsForLanguage,
   SCENEFLOW_WATERMARK_STORAGE_KEY,
 } from '@/lib/scene/mixerSettings'
+import {
+  applyResolvedOverlaysForLanguage,
+  applyResolvedWatermarkForLanguage,
+} from '@/lib/storyboard/mixerTextTranslations'
 
 export { SCENEFLOW_WATERMARK_STORAGE_KEY }
 
@@ -83,12 +88,15 @@ function watermarkConfigToApiPayload(
 
 /**
  * Watermark object for the render API (enabled only), or null when disabled / unavailable.
- * Prefers per-scene productionData.mixerSettings; falls back to legacy localStorage.
+ * Prefers per-language mixerSettingsByLanguage; falls back to legacy mixerSettings / localStorage.
  */
 export function readWatermarkForSceneRenderApi(
-  productionData?: SceneProductionData | null
+  productionData?: SceneProductionData | null,
+  language = 'en'
 ): typeof DEFAULT_WATERMARK_FOR_API | null {
-  const saved = productionData?.mixerSettings?.watermarkConfig
+  const lang = language?.trim() || 'en'
+  const langSettings = getMixerSettingsForLanguage(productionData ?? null, lang)
+  const saved = langSettings?.watermarkConfig ?? productionData?.mixerSettings?.watermarkConfig
   if (saved) {
     const merged: WatermarkConfig = {
       ...DEFAULT_WATERMARK_CONFIG,
@@ -96,7 +104,8 @@ export function readWatermarkForSceneRenderApi(
       textStyle: { ...DEFAULT_WATERMARK_CONFIG.textStyle, ...saved.textStyle },
       imageStyle: { ...DEFAULT_WATERMARK_CONFIG.imageStyle, ...saved.imageStyle },
     }
-    return watermarkConfigToApiPayload(merged)
+    const resolved = applyResolvedWatermarkForLanguage(merged, lang, productionData)
+    return watermarkConfigToApiPayload(resolved)
   }
 
   if (typeof window === 'undefined') {
@@ -120,9 +129,18 @@ export function readWatermarkForSceneRenderApi(
   }
 }
 
-export function getBurnInPayloadForSceneRenderApi(productionData: SceneProductionData | null) {
-  const textOverlays = mapTextOverlaysForSceneRenderApi(productionData?.textOverlays)
-  const wm = readWatermarkForSceneRenderApi(productionData)
+export function getBurnInPayloadForSceneRenderApi(
+  productionData: SceneProductionData | null,
+  language = 'en'
+) {
+  const lang = language?.trim() || 'en'
+  const resolvedOverlays = applyResolvedOverlaysForLanguage(
+    productionData?.textOverlays,
+    lang,
+    productionData?.textOverlayTranslations
+  )
+  const textOverlays = mapTextOverlaysForSceneRenderApi(resolvedOverlays)
+  const wm = readWatermarkForSceneRenderApi(productionData, lang)
   return {
     textOverlays,
     watermark: wm,

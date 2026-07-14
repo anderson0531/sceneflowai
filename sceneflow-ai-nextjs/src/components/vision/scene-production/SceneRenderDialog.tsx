@@ -397,7 +397,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
       setStatus('uploading')
       setProgress(10)
 
-      const { textOverlays, watermark } = getBurnInPayloadForSceneRenderApi(productionData)
+      const { textOverlays, watermark } = getBurnInPayloadForSceneRenderApi(productionData, selectedLanguage)
 
       // Call scene render API
       const response = await fetch(`/api/scene/${sceneId}/render`, {

@@ -4,7 +4,9 @@ import type {
   MixerDialogueClipConfig,
   MixerSegmentAudioConfig,
   SceneMixerCollapsedSections,
+  SceneMixerLanguageSettings,
   SceneMixerSettings,
+  SceneProductionData,
   WatermarkConfig,
 } from '@/components/vision/scene-production/types'
 
@@ -211,6 +213,83 @@ export function buildPersistedMixerSettings(input: MixerSettingsPersistInput): S
     watermarkConfig: input.watermarkConfig,
     collapsedSections: input.collapsedSections,
     theaterMode: input.theaterMode,
+  }
+}
+
+/** Strip shared UI-only fields from a full settings blob. */
+export function splitLanguageMixerSettings(
+  settings: SceneMixerSettings | null | undefined
+): SceneMixerLanguageSettings {
+  if (!settings) return {}
+  const {
+    collapsedSections: _c,
+    theaterMode: _t,
+    productionTarget: _p,
+    ...languageSettings
+  } = settings
+  return languageSettings
+}
+
+/** Build per-language snapshot from current mixer UI state. */
+export function buildLanguageMixerSnapshot(
+  input: Omit<MixerSettingsPersistInput, 'productionTarget' | 'collapsedSections' | 'theaterMode'>
+): SceneMixerLanguageSettings {
+  return splitLanguageMixerSettings(buildPersistedMixerSettings(input))
+}
+
+/** Migrate legacy single blob into per-language map. */
+export function migrateMixerSettingsByLanguage(
+  data: SceneProductionData | null | undefined
+): Record<string, SceneMixerSettings> {
+  if (data?.mixerSettingsByLanguage && Object.keys(data.mixerSettingsByLanguage).length > 0) {
+    return { ...data.mixerSettingsByLanguage }
+  }
+  const legacy = data?.mixerSettings
+  if (!legacy || Object.keys(legacy).length === 0) return {}
+  const lang = legacy.productionTarget?.language?.trim() || 'en'
+  return { [lang]: { ...legacy } }
+}
+
+/** Read mixer settings for a language with legacy fallback. */
+export function getMixerSettingsForLanguage(
+  data: SceneProductionData | null | undefined,
+  language: string
+): SceneMixerSettings | undefined {
+  const lang = language?.trim() || 'en'
+  const byLang = migrateMixerSettingsByLanguage(data)
+  if (byLang[lang]) return byLang[lang]
+  if (lang === 'en' && data?.mixerSettings) return data.mixerSettings
+  return undefined
+}
+
+/** Merge persisted language settings with defaults for hydration. */
+export function mergeMixerSettingsForLanguage(
+  data: SceneProductionData | null | undefined,
+  language: string
+): ResolvedMixerSettings {
+  const saved = getMixerSettingsForLanguage(data, language)
+  const shared = data?.mixerSettings
+  const merged = mergeMixerSettings({
+    ...saved,
+    collapsedSections: shared?.collapsedSections ?? saved?.collapsedSections,
+    theaterMode: shared?.theaterMode ?? saved?.theaterMode,
+  })
+  return merged
+}
+
+/** Extract shared UI prefs from production data (scene-level). */
+export function getSharedMixerUiSettings(data: SceneProductionData | null | undefined): {
+  productionTarget?: SceneMixerSettings['productionTarget']
+  collapsedSections: SceneMixerCollapsedSections
+  theaterMode: boolean
+} {
+  const legacy = data?.mixerSettings
+  const firstLang = Object.values(migrateMixerSettingsByLanguage(data))[0]
+  const source = legacy ?? firstLang
+  return {
+    productionTarget: source?.productionTarget,
+    collapsedSections: mergeCollapsedSections(source?.collapsedSections),
+    theaterMode: source?.theaterMode ?? false,
   }
 }
 

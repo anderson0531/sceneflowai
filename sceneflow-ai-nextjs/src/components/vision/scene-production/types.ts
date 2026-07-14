@@ -955,8 +955,12 @@ export interface SceneProductionData {
   audioTracks?: AudioTracksData
   /** Text overlays for this scene (titles, lower-thirds, subtitles) */
   textOverlays?: TextOverlayData[]
-  /** Persisted Scene Production Mixer UI settings (per scene) */
+  /** Per-language translated overlay text (English source in textOverlays) */
+  textOverlayTranslations?: TextOverlayTranslationsByLanguage
+  /** Persisted Scene Production Mixer UI settings (per scene) — legacy single blob */
   mixerSettings?: SceneMixerSettings
+  /** Full mixer snapshot per language stream */
+  mixerSettingsByLanguage?: Record<string, SceneMixerSettings>
   /** @deprecated Use productionStreams instead. Kept for backwards compatibility. */
   renderedSceneUrl?: string | null
   /** @deprecated Use productionStreams instead. Kept for backwards compatibility. */
@@ -1000,6 +1004,18 @@ export interface TextOverlayData {
     exit: 'fade' | 'slide-down' | 'slide-right' | 'none'
   }
 }
+
+/** Per-language translated strings for a text overlay (layout stays in textOverlays). */
+export interface TextOverlayTranslationEntry {
+  text?: string
+  subtext?: string
+  edited?: boolean
+}
+
+export type TextOverlayTranslationsByLanguage = Record<
+  string,
+  Record<string, TextOverlayTranslationEntry>
+>
 
 export interface SceneProductionReferences {
   characters: any[]
@@ -1622,6 +1638,8 @@ export interface WatermarkConfig {
   enabled: boolean
   type: WatermarkType
   text?: string
+  /** When true, manual watermark text for this language — skip auto-translate overwrite. */
+  textEdited?: boolean
   textStyle: WatermarkTextStyle
   imageUrl?: string
   imageStyle: WatermarkImageStyle
@@ -1674,6 +1692,22 @@ export interface SceneMixerSettings {
   watermarkConfig?: Partial<WatermarkConfig>
   collapsedSections?: Partial<SceneMixerCollapsedSections>
   theaterMode?: boolean
+}
+
+/** Per-language mixer snapshot (excludes shared UI-only fields). */
+export type SceneMixerLanguageSettings = Omit<
+  SceneMixerSettings,
+  'collapsedSections' | 'theaterMode' | 'productionTarget'
+>
+
+/** Payload when persisting mixer state from SceneProductionMixer. */
+export interface MixerSettingsPersistPayload {
+  language: string
+  languageSettings: SceneMixerLanguageSettings
+  productionTarget?: ProductionTarget
+  collapsedSections?: SceneMixerCollapsedSections
+  theaterMode?: boolean
+  textOverlayTranslations?: TextOverlayTranslationsByLanguage
 }
 
 // ============================================================================

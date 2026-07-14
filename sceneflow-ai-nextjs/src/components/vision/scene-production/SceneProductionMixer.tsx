@@ -123,19 +123,32 @@ import type {
   MixerAudioTracks,
   MixerDialogueClipConfig,
   MixerSegmentAudioConfig,
-  SceneMixerSettings,
+  MixerSettingsPersistPayload,
+  TextOverlayTranslationsByLanguage,
   WatermarkAnchor,
   WatermarkConfig,
 } from './types'
 import {
-  buildPersistedMixerSettings,
+  buildLanguageMixerSnapshot,
   buildSegmentAudioConfigsForSegments,
   DEFAULT_MIXER_AUDIO_TRACKS,
   DEFAULT_MIXER_COLLAPSED_SECTIONS,
   DEFAULT_WATERMARK_CONFIG,
+  getSharedMixerUiSettings,
   mergeMixerSettings,
+  mergeMixerSettingsForLanguage,
   migrateLegacyLocalStorageSettings,
+  migrateMixerSettingsByLanguage,
 } from '@/lib/scene/mixerSettings'
+import {
+  applyResolvedOverlaysForLanguage,
+  applyResolvedWatermarkForLanguage,
+  autoTranslateMixerTextOverlays,
+  autoTranslateWatermarkText,
+  getOverlayTranslationStatus,
+  getWatermarkTranslationStatus,
+  resolveOverlayText,
+} from '@/lib/storyboard/mixerTextTranslations'
 import {
   getResolvedDialogueClipsForScene,
   inferNarrationTimelinePrefixCount,
@@ -410,8 +423,8 @@ interface SceneProductionMixerProps {
   videoGenerationAvailable: boolean
   /** Persist segment timing after auto-align or manual edits */
   onSegmentsChange?: (segments: SceneSegment[]) => void
-  /** Persist mixer UI settings to scene production data */
-  onMixerSettingsChange?: (settings: SceneMixerSettings) => void
+  /** Persist mixer UI settings to scene production data (per language) */
+  onMixerSettingsChange?: (payload: MixerSettingsPersistPayload) => void
 }
 
 // ============================================================================
@@ -3067,6 +3080,7 @@ export function SceneProductionMixer({
   onMixerSettingsChange,
 }: SceneProductionMixerProps) {
   const selectedLanguage = productionTarget.language
+  const isEnglish = selectedLanguage === 'en'
   const [isGeneratingLanguageAudio, setIsGeneratingLanguageAudio] = useState(false)
   const [isRegeneratingNarration, setIsRegeneratingNarration] = useState(false)
   const [resolution, setResolution] = useState<'720p' | '1080p' | '4K'>('1080p')
@@ -3288,12 +3302,84 @@ export function SceneProductionMixer({
   // Theater mode collapses the right sidebar and expands video+timeline to full width,
   // giving accurate text overlay placement preview and a practical timeline for long scenes.
   const [theaterMode, setTheaterMode] = useState(false)
+  const [collapsedSections, setCollapsedSections] = useState(DEFAULT_MIXER_COLLAPSED_SECTIONS)
   
   // === Text Overlay State ===
   const [textOverlays, setTextOverlays] = useState<TextOverlay[]>(externalTextOverlays || [])
+  const [textOverlayTranslations, setTextOverlayTranslations] = useState<TextOverlayTranslationsByLanguage>(
+    () => productionData?.textOverlayTranslations || {}
+  )
   const [showOverlayPanel, setShowOverlayPanel] = useState(false)
   const [editingOverlay, setEditingOverlay] = useState<TextOverlay | null>(null)
-  
+  const previousEnglishOverlaysRef = useRef<TextOverlay[]>(externalTextOverlays || [])
+  const previousEnglishWatermarkRef = useRef(DEFAULT_WATERMARK_CONFIG.text || '')
+
+  const getTranslationTargetLanguages = useCallback(() => {
+    const langs = new Set<string>()
+    if (audioAssets.narrationAudio) {
+      Object.keys(audioAssets.narrationAudio).forEach((l) => langs.add(l))
+    }
+    if (audioAssets.dialogueAudio) {
+      Object.keys(audioAssets.dialogueAudio).forEach((l) => langs.add(l))
+    }
+    return Array.from(langs).filter((l) => l !== 'en')
+  }, [audioAssets])
+
+  const persistOverlayTranslations = useCallback(
+    async (translations: TextOverlayTranslationsByLanguage) => {
+      setTextOverlayTranslations(translations)
+    },
+    []
+  )
+
+  const triggerOverlayAutoTranslate = useCallback(
+    async (overlays: TextOverlay[], previousOverlays?: TextOverlay[]) => {
+      const targets = getTranslationTargetLanguages()
+      if (!targets.length) return
+      await autoTranslateMixerTextOverlays({
+        overlays,
+        targetLanguages: targets,
+        translations: textOverlayTranslations,
+        previousOverlays,
+        onSave: persistOverlayTranslations,
+      })
+    },
+    [getTranslationTargetLanguages, textOverlayTranslations, persistOverlayTranslations]
+  )
+
+  const triggerWatermarkAutoTranslate = useCallback(
+    async (englishText: string, previousEnglishText?: string) => {
+      const targets = getTranslationTargetLanguages()
+      if (!targets.length || !onMixerSettingsChange) return
+      const byLang = migrateMixerSettingsByLanguage(productionData)
+      await autoTranslateWatermarkText({
+        englishText,
+        targetLanguages: targets,
+        mixerSettingsByLanguage: byLang,
+        previousEnglishText,
+        onSaveLanguageSettings: async (lang, settings) => {
+          onMixerSettingsChange({
+            language: lang,
+            languageSettings: settings,
+            productionTarget,
+            collapsedSections,
+            theaterMode,
+            textOverlayTranslations,
+          })
+        },
+      })
+    },
+    [
+      getTranslationTargetLanguages,
+      onMixerSettingsChange,
+      productionData,
+      productionTarget,
+      collapsedSections,
+      theaterMode,
+      textOverlayTranslations,
+    ]
+  )
+
   // Text overlay handlers (declared early to avoid TDZ in minified production builds)
   const addTextOverlay = useCallback((preset: 'title' | 'lower-third' | 'subtitle') => {
     const presetConfig = TEXT_OVERLAY_PRESETS[preset]
@@ -3309,31 +3395,79 @@ export function SceneProductionMixer({
     setTextOverlays(prevOverlays => {
       const newOverlays = [...prevOverlays, newOverlay]
       onTextOverlaysChange?.(newOverlays)
+      if (isEnglish) {
+        void triggerOverlayAutoTranslate(newOverlays, prevOverlays)
+        previousEnglishOverlaysRef.current = newOverlays
+      }
       return newOverlays
     })
     setEditingOverlay(newOverlay)
     setShowOverlayPanel(true)
-  }, [onTextOverlaysChange])
-  
+  }, [onTextOverlaysChange, isEnglish, triggerOverlayAutoTranslate])
+
   const updateOverlay = useCallback((updatedOverlay: TextOverlay) => {
-    setTextOverlays(prevOverlays => {
-      const newOverlays = prevOverlays.map(o => o.id === updatedOverlay.id ? updatedOverlay : o)
-      onTextOverlaysChange?.(newOverlays)
-      return newOverlays
-    })
+    if (isEnglish) {
+      setTextOverlays(prevOverlays => {
+        const newOverlays = prevOverlays.map(o => o.id === updatedOverlay.id ? updatedOverlay : o)
+        onTextOverlaysChange?.(newOverlays)
+        void triggerOverlayAutoTranslate(newOverlays, previousEnglishOverlaysRef.current)
+        previousEnglishOverlaysRef.current = newOverlays
+        return newOverlays
+      })
+      setEditingOverlay(updatedOverlay)
+      return
+    }
+
+    const langMap = { ...(textOverlayTranslations[selectedLanguage] || {}) }
+    langMap[updatedOverlay.id] = {
+      text: updatedOverlay.text,
+      subtext: updatedOverlay.subtext,
+      edited: true,
+    }
+    const nextTranslations = {
+      ...textOverlayTranslations,
+      [selectedLanguage]: langMap,
+    }
+    void persistOverlayTranslations(nextTranslations)
     setEditingOverlay(updatedOverlay)
-  }, [onTextOverlaysChange])
-  
+  }, [
+    isEnglish,
+    onTextOverlaysChange,
+    triggerOverlayAutoTranslate,
+    textOverlayTranslations,
+    selectedLanguage,
+    persistOverlayTranslations,
+  ])
+
+  const autoTranslateOverlayFromEnglish = useCallback(
+    async (overlayId: string) => {
+      const overlay = textOverlays.find((o) => o.id === overlayId)
+      if (!overlay?.text?.trim()) return
+      await autoTranslateMixerTextOverlays({
+        overlays: [overlay],
+        targetLanguages: [selectedLanguage],
+        translations: textOverlayTranslations,
+        forceRetranslate: true,
+        onSave: persistOverlayTranslations,
+      })
+    },
+    [textOverlays, selectedLanguage, textOverlayTranslations, persistOverlayTranslations]
+  )
+
   const deleteOverlay = useCallback((overlayId: string) => {
     setTextOverlays(prevOverlays => {
       const newOverlays = prevOverlays.filter(o => o.id !== overlayId)
       onTextOverlaysChange?.(newOverlays)
+      if (isEnglish) {
+        previousEnglishOverlaysRef.current = newOverlays
+        void triggerOverlayAutoTranslate(newOverlays, prevOverlays)
+      }
       return newOverlays
     })
     if (editingOverlay?.id === overlayId) {
       setEditingOverlay(null)
     }
-  }, [onTextOverlaysChange, editingOverlay?.id])
+  }, [onTextOverlaysChange, editingOverlay?.id, isEnglish, triggerOverlayAutoTranslate])
   
   // === Render State (declared early to avoid TDZ in useEffect dependency arrays) ===
   const [renderStatus, setRenderStatus] = useState<RenderStatus>('idle')
@@ -3346,9 +3480,6 @@ export function SceneProductionMixer({
   
   // Watermark state
   const [watermarkConfig, setWatermarkConfig] = useState<WatermarkConfig>(() => DEFAULT_WATERMARK_CONFIG)
-  
-  // === Section Collapse State ===
-  const [collapsedSections, setCollapsedSections] = useState(DEFAULT_MIXER_COLLAPSED_SECTIONS)
 
   const [preserveBackgroundStem, setPreserveBackgroundStem] = useState(true)
   const [includeSpeechStem, setIncludeSpeechStem] = useState(false)
@@ -3361,48 +3492,76 @@ export function SceneProductionMixer({
   
   const hydratedSettingsTokenRef = useRef<string | null>(null)
   const hasHydratedMixerSettingsRef = useRef(false)
+  const activeLanguageRef = useRef(selectedLanguage)
 
-  // Hydrate mixer settings from production data (per scene) with legacy localStorage fallback
-  useEffect(() => {
-    const hasSaved =
-      !!productionData?.mixerSettings &&
-      Object.keys(productionData.mixerSettings).length > 0
-    const token = `${sceneId}:${hasSaved ? 'saved' : 'empty'}`
-    if (hydratedSettingsTokenRef.current === token) return
-
-    const merged = mergeMixerSettings(
-      hasSaved ? productionData!.mixerSettings : migrateLegacyLocalStorageSettings()
-    )
-
-    setAudioTracks(merged.audioTracks)
-    setDialogueClipConfigs(merged.dialogueClipConfigs)
-    setMasterSegmentVolume(merged.masterSegmentVolume)
-    setResolution(merged.resolution)
-    setPreserveBackgroundStem(merged.preserveBackgroundStem)
-    setIncludeSpeechStem(merged.includeSpeechStem)
-    setKlingLipsyncEnabled(merged.klingLipsyncEnabled)
-    setWatermarkConfig(merged.watermarkConfig)
-    setCollapsedSections(merged.collapsedSections)
-    setTheaterMode(merged.theaterMode)
-
-    setSegmentAudioConfigs(
-      buildSegmentAudioConfigsForSegments(
-        segments.map((seg) => seg.segmentId),
-        merged.segmentAudioConfigs
+  const applyMergedSettingsToState = useCallback(
+    (merged: ReturnType<typeof mergeMixerSettings>) => {
+      setAudioTracks(merged.audioTracks)
+      setDialogueClipConfigs(merged.dialogueClipConfigs)
+      setMasterSegmentVolume(merged.masterSegmentVolume)
+      setResolution(merged.resolution)
+      setPreserveBackgroundStem(merged.preserveBackgroundStem)
+      setIncludeSpeechStem(merged.includeSpeechStem)
+      setKlingLipsyncEnabled(merged.klingLipsyncEnabled)
+      setWatermarkConfig(merged.watermarkConfig)
+      setSegmentAudioConfigs(
+        buildSegmentAudioConfigsForSegments(
+          segments.map((seg) => seg.segmentId),
+          merged.segmentAudioConfigs
+        )
       )
-    )
+      previousEnglishWatermarkRef.current = merged.watermarkConfig.text?.trim() || ''
+    },
+    [segments]
+  )
 
-    if (hasSaved && productionData?.mixerSettings?.productionTarget && onProductionTargetChange) {
-      onProductionTargetChange(productionData.mixerSettings.productionTarget)
+  const hydrateLanguageSettings = useCallback(
+    (language: string) => {
+      const byLang = migrateMixerSettingsByLanguage(productionData)
+      const hasByLang = Object.keys(byLang).length > 0
+      const merged = hasByLang
+        ? mergeMixerSettingsForLanguage(productionData, language)
+        : mergeMixerSettings(
+            productionData?.mixerSettings ?? migrateLegacyLocalStorageSettings()
+          )
+      applyMergedSettingsToState(merged)
+
+      const shared = getSharedMixerUiSettings(productionData)
+      setCollapsedSections(shared.collapsedSections)
+      setTheaterMode(shared.theaterMode)
+
+      if (productionData?.textOverlayTranslations) {
+        setTextOverlayTranslations(productionData.textOverlayTranslations)
+      }
+      previousEnglishOverlaysRef.current = externalTextOverlays || productionData?.textOverlays || []
+    },
+    [productionData, applyMergedSettingsToState, externalTextOverlays]
+  )
+
+  // Hydrate mixer settings when scene changes
+  useEffect(() => {
+    const token = `scene:${sceneId}`
+    if (hydratedSettingsTokenRef.current === token && hasHydratedMixerSettingsRef.current) return
+
+    hydrateLanguageSettings(selectedLanguage)
+
+    const shared = getSharedMixerUiSettings(productionData)
+    if (shared.productionTarget && onProductionTargetChange) {
+      onProductionTargetChange(shared.productionTarget)
     }
 
     hydratedSettingsTokenRef.current = token
     hasHydratedMixerSettingsRef.current = true
+    activeLanguageRef.current = selectedLanguage
   }, [
     sceneId,
+    productionData?.mixerSettingsByLanguage,
     productionData?.mixerSettings,
-    segments,
+    productionData?.textOverlayTranslations,
+    hydrateLanguageSettings,
     onProductionTargetChange,
+    productionData,
+    selectedLanguage,
   ])
 
   const onMixerSettingsChangeRef = useRef(onMixerSettingsChange)
@@ -3410,18 +3569,29 @@ export function SceneProductionMixer({
 
   const schedulePersistMixerSettings = useMemo(
     () =>
-      debounce((settings: SceneMixerSettings) => {
-        onMixerSettingsChangeRef.current?.(settings)
+      debounce((payload: MixerSettingsPersistPayload) => {
+        onMixerSettingsChangeRef.current?.(payload)
       }, 400),
     []
   )
 
   useEffect(() => () => schedulePersistMixerSettings.cancel(), [schedulePersistMixerSettings])
 
+  // Flush previous language snapshot when switching streams
+  useEffect(() => {
+    if (!hasHydratedMixerSettingsRef.current) return
+    if (activeLanguageRef.current === selectedLanguage) return
+
+    schedulePersistMixerSettings.flush()
+    hydrateLanguageSettings(selectedLanguage)
+    activeLanguageRef.current = selectedLanguage
+  }, [selectedLanguage, hydrateLanguageSettings, schedulePersistMixerSettings])
+
   useEffect(() => {
     if (!hasHydratedMixerSettingsRef.current || !onMixerSettingsChange) return
-    schedulePersistMixerSettings(
-      buildPersistedMixerSettings({
+    schedulePersistMixerSettings({
+      language: selectedLanguage,
+      languageSettings: buildLanguageMixerSnapshot({
         audioTracks,
         segmentAudioConfigs,
         dialogueClipConfigs,
@@ -3431,11 +3601,12 @@ export function SceneProductionMixer({
         includeSpeechStem,
         klingLipsyncEnabled,
         watermarkConfig,
-        collapsedSections,
-        theaterMode,
-        productionTarget,
-      })
-    )
+      }),
+      productionTarget,
+      collapsedSections,
+      theaterMode,
+      textOverlayTranslations,
+    })
   }, [
     audioTracks,
     segmentAudioConfigs,
@@ -3449,6 +3620,8 @@ export function SceneProductionMixer({
     collapsedSections,
     theaterMode,
     productionTarget,
+    selectedLanguage,
+    textOverlayTranslations,
     onMixerSettingsChange,
     schedulePersistMixerSettings,
   ])
@@ -3519,6 +3692,80 @@ export function SceneProductionMixer({
     }
     return Array.from(langs)
   }, [audioAssets])
+
+  const displayOverlays = useMemo(
+    () => applyResolvedOverlaysForLanguage(textOverlays, selectedLanguage, textOverlayTranslations),
+    [textOverlays, selectedLanguage, textOverlayTranslations]
+  )
+
+  const displayWatermarkConfig = useMemo(
+    () => applyResolvedWatermarkForLanguage(watermarkConfig, selectedLanguage, productionData),
+    [watermarkConfig, selectedLanguage, productionData]
+  )
+
+  const englishWatermarkConfig = useMemo(
+    () =>
+      applyResolvedWatermarkForLanguage(
+        mergeMixerSettingsForLanguage(productionData, 'en').watermarkConfig,
+        'en',
+        productionData
+      ),
+    [productionData]
+  )
+
+  const handleWatermarkTextChange = useCallback(
+    (text: string) => {
+      if (isEnglish) {
+        const prev = previousEnglishWatermarkRef.current
+        setWatermarkConfig((prevCfg) => ({ ...prevCfg, text, textEdited: false }))
+        void triggerWatermarkAutoTranslate(text, prev)
+        previousEnglishWatermarkRef.current = text
+        return
+      }
+      setWatermarkConfig((prevCfg) => ({ ...prevCfg, text, textEdited: true }))
+    },
+    [isEnglish, triggerWatermarkAutoTranslate]
+  )
+
+  const autoTranslateWatermarkFromEnglish = useCallback(async () => {
+    const englishText = englishWatermarkConfig.text?.trim()
+    if (!englishText || isEnglish) return
+    const translated = await autoTranslateWatermarkText({
+      englishText,
+      targetLanguages: [selectedLanguage],
+      mixerSettingsByLanguage: migrateMixerSettingsByLanguage(productionData),
+      forceRetranslate: true,
+      onSaveLanguageSettings: async (lang, settings) => {
+        if (lang === selectedLanguage && settings.watermarkConfig) {
+          setWatermarkConfig((prevCfg) => ({
+            ...prevCfg,
+            ...settings.watermarkConfig,
+            textStyle: { ...prevCfg.textStyle, ...settings.watermarkConfig?.textStyle },
+            imageStyle: { ...prevCfg.imageStyle, ...settings.watermarkConfig?.imageStyle },
+          }))
+        }
+        onMixerSettingsChange?.({
+          language: lang,
+          languageSettings: settings,
+          productionTarget,
+          collapsedSections,
+          theaterMode,
+          textOverlayTranslations,
+        })
+      },
+    })
+    void translated
+  }, [
+    englishWatermarkConfig.text,
+    isEnglish,
+    selectedLanguage,
+    productionData,
+    onMixerSettingsChange,
+    productionTarget,
+    collapsedSections,
+    theaterMode,
+    textOverlayTranslations,
+  ])
   // Removed unused dialogueLayoutSignature useMemo here
 
   // Get audio URLs for selected language
@@ -4214,7 +4461,7 @@ export function SceneProductionMixer({
           segments: segmentData,
           audioTracks: audioTracksPayload,
           // Include text overlays for FFmpeg drawtext burning
-          textOverlays: textOverlays.map(overlay => ({
+          textOverlays: displayOverlays.map(overlay => ({
             id: overlay.id,
             text: overlay.text,
             subtext: overlay.subtext,
@@ -4231,14 +4478,14 @@ export function SceneProductionMixer({
             timing: overlay.timing,
           })),
           // Include watermark config for FFmpeg burning
-          watermark: watermarkConfig.enabled ? {
-            type: watermarkConfig.type,
-            text: watermarkConfig.text,
-            imageUrl: watermarkConfig.imageUrl,
-            anchor: watermarkConfig.anchor,
-            padding: watermarkConfig.padding,
-            textStyle: watermarkConfig.textStyle,
-            imageStyle: watermarkConfig.imageStyle,
+          watermark: displayWatermarkConfig.enabled ? {
+            type: displayWatermarkConfig.type,
+            text: displayWatermarkConfig.text,
+            imageUrl: displayWatermarkConfig.imageUrl,
+            anchor: displayWatermarkConfig.anchor,
+            padding: displayWatermarkConfig.padding,
+            textStyle: displayWatermarkConfig.textStyle,
+            imageStyle: displayWatermarkConfig.imageStyle,
           } : null,
         }),
       })
@@ -4264,7 +4511,7 @@ export function SceneProductionMixer({
     renderedSegments, videoSegments, productionTarget.streamType, segmentAudioConfigs, audioTracks, playbackAudioUrls,
     dialogueClipConfigs,
     totalDuration, sceneId, projectId, sceneNumber, resolution, selectedLanguage,
-    textOverlays, masterSegmentVolume, watermarkConfig, overlayStore,
+    textOverlays, displayOverlays, masterSegmentVolume, watermarkConfig, displayWatermarkConfig, overlayStore,
     preserveBackgroundStem, includeSpeechStem, klingLipsyncEnabled, resolvedDialogueClips,
     measuredSegmentDurations, getPlaybackSegmentDuration, schedulePersistMixerSettings
   ])
@@ -5167,10 +5414,12 @@ export function SceneProductionMixer({
                 measuredSegmentDurations={measuredSegmentDurations}
                 onMeasuredDurationsChange={setMeasuredSegmentDurations}
                 onPlaybackTimeChange={handlePlaybackTimeChange}
-                textOverlays={textOverlays}
-                watermarkConfig={watermarkConfig}
+                textOverlays={displayOverlays}
+                watermarkConfig={displayWatermarkConfig}
                 onEditOverlay={(overlay) => {
-                  setEditingOverlay(overlay)
+                  const source = textOverlays.find((o) => o.id === overlay.id) || overlay
+                  const resolved = resolveOverlayText(source, selectedLanguage, textOverlayTranslations)
+                  setEditingOverlay({ ...source, text: resolved.text, subtext: resolved.subtext })
                   setShowOverlayPanel(true)
                 }}
                 onDeleteOverlay={deleteOverlay}
@@ -5291,7 +5540,10 @@ export function SceneProductionMixer({
                   <div className="px-3 pb-3">
                 {textOverlays.length > 0 ? (
                   <div className="space-y-2">
-                    {textOverlays.map((overlay) => (
+                    {textOverlays.map((overlay) => {
+                      const resolved = resolveOverlayText(overlay, selectedLanguage, textOverlayTranslations)
+                      const status = getOverlayTranslationStatus(overlay, selectedLanguage, textOverlayTranslations)
+                      return (
                       <div
                         key={overlay.id}
                         className={`flex items-center gap-3 p-2 rounded-md border transition-colors cursor-pointer ${
@@ -5300,17 +5552,22 @@ export function SceneProductionMixer({
                             : 'bg-gray-900/50 border-gray-700 hover:border-gray-600'
                         }`}
                         onClick={() => {
-                          setEditingOverlay(overlay)
+                          setEditingOverlay({ ...overlay, text: resolved.text, subtext: resolved.subtext })
                           setShowOverlayPanel(true)
                         }}
                       >
                         <Type className="w-4 h-4 text-amber-400 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm text-white truncate">{overlay.text}</div>
-                          {overlay.subtext && (
-                            <div className="text-xs text-gray-400 truncate">{overlay.subtext}</div>
+                          <div className="text-sm text-white truncate">{resolved.text}</div>
+                          {resolved.subtext && (
+                            <div className="text-xs text-gray-400 truncate">{resolved.subtext}</div>
                           )}
                         </div>
+                        {status && (
+                          <Badge variant="outline" className="text-[9px] border-violet-500/30 text-violet-200">
+                            {status}
+                          </Badge>
+                        )}
                         <Badge variant="outline" className="text-[10px] capitalize">
                           {overlay.style.preset}
                         </Badge>
@@ -5326,7 +5583,7 @@ export function SceneProductionMixer({
                           <Trash2 className="w-3 h-3" />
                         </Button>
                       </div>
-                    ))}
+                    )})}
                   </div>
                 ) : (
                   <div className="text-center py-4 text-gray-500 text-sm">
@@ -5359,9 +5616,27 @@ export function SceneProductionMixer({
                           value={editingOverlay.text}
                           onChange={(e) => updateOverlay({ ...editingOverlay, text: e.target.value })}
                           className="h-8 bg-gray-900 border-gray-600 text-white text-sm"
-                          placeholder="Enter text..."
+                          placeholder={isEnglish ? 'Enter text...' : 'Translated overlay text…'}
                         />
                       </div>
+                      {!isEnglish && editingOverlay.text && getOverlayTranslationStatus(
+                        textOverlays.find((o) => o.id === editingOverlay.id) || editingOverlay,
+                        selectedLanguage,
+                        textOverlayTranslations
+                      ) === 'Using English' && (
+                        <button
+                          type="button"
+                          onClick={() => void autoTranslateOverlayFromEnglish(editingOverlay.id)}
+                          className="rounded-md border border-violet-500/40 bg-violet-500/10 px-2 py-1 text-[10px] text-violet-200 hover:bg-violet-500/20"
+                        >
+                          Auto-translate from English
+                        </button>
+                      )}
+                      {!isEnglish && (
+                        <p className="text-[10px] text-slate-500">
+                          Editing the {selectedLanguage.toUpperCase()} stream. English source overlay is unchanged.
+                        </p>
+                      )}
                       {/* Subtext Input (for lower-thirds) */}
                       {editingOverlay.style.preset === 'lower-third' && (
                         <div>
@@ -5742,12 +6017,27 @@ export function SceneProductionMixer({
                         <div>
                           <label className="text-xs text-gray-400 mb-1 block">Watermark Text</label>
                           <Input
-                            value={watermarkConfig.text || ''}
-                            onChange={(e) => setWatermarkConfig(prev => ({ ...prev, text: e.target.value }))}
+                            value={displayWatermarkConfig.text || ''}
+                            onChange={(e) => handleWatermarkTextChange(e.target.value)}
                             className="h-8 bg-gray-900 border-gray-600 text-white text-sm"
-                            placeholder="© Your Name or Company"
+                            placeholder={isEnglish ? '© Your Name or Company' : 'Translated watermark…'}
                             disabled={isRendering}
                           />
+                          {!isEnglish && getWatermarkTranslationStatus(watermarkConfig, selectedLanguage, englishWatermarkConfig) && (
+                            <span className="mt-1 inline-block rounded-full border border-violet-500/30 bg-violet-500/10 px-1.5 py-0.5 text-[9px] text-violet-200">
+                              {getWatermarkTranslationStatus(watermarkConfig, selectedLanguage, englishWatermarkConfig)}
+                            </span>
+                          )}
+                          {!isEnglish && getWatermarkTranslationStatus(watermarkConfig, selectedLanguage, englishWatermarkConfig) === 'Using English' && (
+                            <button
+                              type="button"
+                              disabled={isRendering}
+                              onClick={() => void autoTranslateWatermarkFromEnglish()}
+                              className="mt-2 rounded-md border border-violet-500/40 bg-violet-500/10 px-2 py-1 text-[10px] text-violet-200 hover:bg-violet-500/20"
+                            >
+                              Auto-translate from English
+                            </button>
+                          )}
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
