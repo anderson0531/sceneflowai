@@ -40,6 +40,8 @@ export interface SceneImageFrameProps {
   imageTier?: 'draft' | 'final'
   /** Beat planner role (e.g. title_reveal, opening). */
   beatRole?: string
+  /** 1-based beat number for beat-backed storyboard frames. */
+  beatNumber?: number
   /** Image generation prompt used for this frame. */
   imagePrompt?: string
   /** @deprecated References moved into Direct prompt builder */
@@ -236,6 +238,27 @@ function formatBeatRoleLabel(beatRole?: string): string | null {
   if (beatRole === 'progression') return 'Progression'
   return beatRole.replace(/_/g, ' ')
 }
+
+function BeatNumberPill({
+  beatNumber,
+  size = 'default',
+}: {
+  beatNumber: number
+  size?: 'compact' | 'default'
+}) {
+  const sizeClass =
+    size === 'compact'
+      ? 'text-[8px] px-1 py-0.5'
+      : 'text-[10px] px-1.5 py-0.5'
+  return (
+    <span
+      className={`shrink-0 rounded-full bg-slate-700/50 text-slate-300 border border-slate-600/40 font-medium tabular-nums ${sizeClass}`}
+    >
+      Beat {beatNumber}
+    </span>
+  )
+}
+
 export function SceneImageFrame({
   sceneIdx,
   sceneNumber,
@@ -255,6 +278,7 @@ export function SceneImageFrame({
   label = 'Scene Reference',
   imageTier,
   beatRole,
+  beatNumber,
   imagePrompt,
   showControls = true,
   controlsVariant = 'compact',
@@ -369,6 +393,12 @@ export function SceneImageFrame({
                   Expand image
                 </TooltipContent>
               </Tooltip>
+            )}
+
+            {compact && beatNumber != null && (
+              <div className="absolute top-1 left-1 z-10">
+                <BeatNumberPill beatNumber={beatNumber} size="compact" />
+              </div>
             )}
 
             <div className="absolute top-1 right-1 z-10">
@@ -573,6 +603,7 @@ export function SceneImageFrame({
       {label && compact && (
         <div className="px-1.5 py-1 bg-slate-800/50 border-t border-slate-700/50">
           <div className="flex items-center gap-1 min-w-0">
+            {beatNumber != null && <BeatNumberPill beatNumber={beatNumber} size="compact" />}
             {roleLabel && (
               <span
                 className={`shrink-0 text-[8px] px-1 py-0.5 rounded ${

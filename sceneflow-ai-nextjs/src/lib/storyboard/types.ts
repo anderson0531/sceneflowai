@@ -172,6 +172,8 @@ export interface StoryboardFrameSlot {
   beatId?: string
   /** Index into scene.beats[] for beat-first frame generation */
   beatIndex?: number
+  /** 1-based display number (sequenceIndex + 1) for beat-backed frames */
+  beatNumber?: number
   dialogueIndex?: number
   customFrameId?: string
   /** Image stored directly on this beat/line/frame — not a borrowed fallback. */
@@ -264,6 +266,8 @@ function buildBeatFrameSlot(
     frameRole,
     beatId: beat.beatId,
     beatIndex,
+    beatNumber:
+      (typeof beat.sequenceIndex === 'number' ? beat.sequenceIndex : beatIndex) + 1,
     dialogueIndex: opts.dialogueIndex,
     ownImageUrl,
     displayImageUrl,

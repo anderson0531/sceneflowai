@@ -231,7 +231,7 @@ export const OPERATION_CONFIGS: Record<OperationType, OperationConfig> = {
     ]
   },
   'storyboard-production': {
-    title: 'Pre-vis Production',
+    title: 'Beat Frame',
     animationType: 'storyboard',
     phases: [
       { id: 'analyze', label: 'Reading scene description...', progress: 10 },

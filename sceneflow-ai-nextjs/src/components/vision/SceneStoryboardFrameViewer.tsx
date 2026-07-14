@@ -197,6 +197,7 @@ function buildStoryboardSlotFrameProps(
     label: slot.label,
     imageTier: slot.ownImageUrl ? slot.imageTier : undefined,
     beatRole: slot.beatRole,
+    beatNumber: slot.beatId ? slot.beatNumber : undefined,
     imagePrompt: slot.storyboardImagePrompt,
     onGenerate: () => {
       if (routeGenerateToExpress) {
@@ -786,6 +787,11 @@ export function SceneStoryboardFrameViewer({
                   {previewSlot && (
                     <div className="px-2 pb-1">
                       <div className="flex items-center gap-2 min-w-0">
+                        {previewSlot.beatNumber != null && (
+                          <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-slate-700/50 text-slate-300 border border-slate-600/40 font-medium tabular-nums">
+                            Beat {previewSlot.beatNumber}
+                          </span>
+                        )}
                         {previewSlot.beatRole && (
                           <span
                             className={cn(
