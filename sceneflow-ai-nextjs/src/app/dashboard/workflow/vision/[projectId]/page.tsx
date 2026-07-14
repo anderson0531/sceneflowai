@@ -631,7 +631,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     mode: 'stream'
     language: string
   } | null>(null)
-  const [showSceneGallery, setShowSceneGallery] = useState(false)
   const [isGenVideoRunning, setIsGenVideoRunning] = useState(false)
   const [showDashboard, setShowDashboard] = useState(false)
   const [showNavigationWarning, setShowNavigationWarning] = useState(false)
@@ -6693,7 +6692,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // These handlers are called when user clicks quick action buttons in the sidebar
   useSidebarQuickActions(useMemo(() => ({
     'goto-bookmark': handleJumpToBookmark,
-    'scene-gallery': () => setShowSceneGallery(prev => !prev),
+    'scene-gallery': () => openScreeningRoomFromVisionUi(),
     'screening-room': () => openScreeningRoomFromVisionUi(),
     'update-reviews': handleGenerateReviews,
     'review-analysis': () => setShowReviewModal(true),
@@ -6720,10 +6719,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const eventHandlers: Record<string, () => void> = {
       // Actions dropdown events
       'production:goto-bookmark': () => handlersRef.current.jumpToBookmark(),
-      'production:scene-gallery': () => {
-        setProductionViewWithUrl('studio')
-        setShowSceneGallery(true)
-      },
+      'production:scene-gallery': () => openScreeningRoomFromVisionUi(),
       'production:screening-room': () => setProductionViewWithUrl('screening'),
       'production:streams': () => setProductionViewWithUrl('streams'),
       'production:render-all': () => setProductionViewWithUrl('streams'),
@@ -6746,14 +6742,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       'vision:characters': () => {
         openReferenceLibrary('cast')
       },
-      'vision:script-preview': () => {
-        // Toggle scene gallery as script preview
-        setShowSceneGallery(prev => !prev)
-      },
-      'vision:gallery': () => {
-        // Toggle scene gallery
-        setShowSceneGallery(prev => !prev)
-      },
+      'vision:script-preview': () => openScreeningRoomFromVisionUi(),
+      'vision:gallery': () => openScreeningRoomFromVisionUi(),
       'vision:cost-estimate': () => {
         // Show cost calculator modal (dispatches event for ScriptPanel to handle)
         window.dispatchEvent(new CustomEvent('open-cost-calculator'))
@@ -6775,11 +6765,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }, [openScreeningRoomFromVisionUi, openReferenceLibrary, setProductionViewWithUrl])
   // ============================================================================
-
-  // Broadcast storyboard open/close state to sidebar
-  useEffect(() => {
-    window.dispatchEvent(new CustomEvent('production:storyboard-state', { detail: { open: showSceneGallery } }))
-  }, [showSceneGallery])
 
   const loadProject = async (skipAutoGeneration: boolean = false) => {
     setInitialLoadComplete(false)
@@ -12328,10 +12313,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               },
             },
           })
-          setShowSceneGallery(true)
-          requestAnimationFrame(() => {
-            document.getElementById('scene-gallery-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          })
+          openScreeningRoomFromVisionUi()
         } else if (failedScenes > 0 && successScenes > 0) {
           toast.warning(
             `Express finished — ${successScenes} ok, ${failedScenes} with errors${
@@ -12381,7 +12363,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         setIsExpressRunning(false)
       }
     },
-    [projectId, script, isExpressRunning, setShowSceneGallery, imageQuality, rehydrateScriptFromProject, applyExpressSceneImage, syncExpressBeatImageToProduction]
+    [projectId, script, isExpressRunning, openScreeningRoomFromVisionUi, imageQuality, rehydrateScriptFromProject, applyExpressSceneImage, syncExpressBeatImageToProduction]
   )
 
   const handleGenerateLanguageStream = useCallback(
@@ -13803,10 +13785,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 <div className="shrink-0">
                 <ScriptImportOnboardingBanner
                   onOpenScriptReview={() => setShowReviewModal(true)}
-                  onOpenStoryboard={() => {
-                    setProductionViewWithUrl('studio')
-                    setShowSceneGallery(true)
-                  }}
+                  onOpenStoryboard={() => openScreeningRoomFromVisionUi()}
                   onDismiss={handleDismissImportOnboarding}
                   isDismissing={isDismissingImportOnboarding}
                 />
@@ -13971,8 +13950,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 sceneReferences={sceneReferences}
                 objectReferences={objectReferences}
                 locationReferences={locationReferences}
-                showStoryboard={showSceneGallery}
-                onToggleStoryboard={() => setShowSceneGallery(!showSceneGallery)}
                 showDashboard={showDashboard}
                 onToggleDashboard={() => setShowDashboard(!showDashboard)}
                 isGeneratingKeyframe={isGeneratingKeyframe}
@@ -14019,44 +13996,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 isExpressRunning={isExpressRunning}
                 narrationVoice={narrationVoice}
                 projectStreams={projectStreams}
-              belowDashboardSlot={({ openGenerateAudio, openPromptBuilder }) => (
-                <div className="rounded-2xl border border-white/10 bg-slate950/40 shadow-inner">
-                  <div className="px-5 py-5">
-                    {showSceneGallery && (
-                      <div
-                        id="scene-gallery-section"
-                        className="rounded-2xl border border-white/5 bg-slate-900/40 p-4 shadow-[0_15px_40px_rgba(8,8,20,0.35)]"
-                      >
-                          <SceneGallery
-                            scenes={storyboardGalleryScenes}
-                            projectTitle={project?.title}
-                            onClose={() => setShowSceneGallery(false)}
-                            onOpenGenerateAudio={openGenerateAudio}
-                            productionReadyChecklist={productionReadyChecklist}
-                            onOpenReferences={() => openReferenceLibrary()}
-                            onExpressGenerate={handleExpressGenerate}
-                            onFinalizeStoryboard={handleFinalizeStoryboard}
-                            isExpressRunning={isExpressRunning}
-                            expressStatus={expressStatus}
-                            expressGateBlocked={!expressGate.allowed}
-                            expressGateReasons={expressGate.reasons}
-                            lockedArtStyle={lockedArtStyle}
-                            onGenVideo={handleGenProjectVideo}
-                            isGenVideoRunning={isGenVideoRunning}
-                            exportedAnimaticUrl={exportedAnimaticUrl}
-                            sceneTranslationsByLanguage={storedTranslations}
-                            playerLabelsByLanguage={playerLabelsByLanguage}
-                            onGenerateLanguage={handleGenerateLanguageStream}
-                            sceneProductionState={sceneProductionState}
-                            beatCaptionSettings={beatCaptionSettings}
-                            onBeatCaptionSettingsChange={handleBeatCaptionSettingsChange}
-                            projectStreams={projectStreams}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
               />
               )}
               {productionView === 'streams' && (

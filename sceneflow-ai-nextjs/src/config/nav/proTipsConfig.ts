@@ -124,7 +124,7 @@ export const proTipsConfig: Record<WorkflowPhase, ProTip[]> = {
       phase: 'production',
       title: 'Preview key frames',
       description: 'Ensure visual continuity',
-      actionLabel: 'Open Gallery',
+      actionLabel: 'Open Screening Room',
       actionEventName: 'vision:gallery',
       priority: 4,
     },

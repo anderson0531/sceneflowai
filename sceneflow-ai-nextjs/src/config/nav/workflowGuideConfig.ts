@@ -77,7 +77,7 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
     iconColor: 'text-emerald-500',
     steps: [
       { id: 'run-express-scene', label: 'Express per scene (recommended)', description: 'Checkpoint after each scene to avoid massive redos', actionEventName: 'production:scene-gallery' },
-      { id: 'review-storyboard', label: 'Review pre-vis gallery', actionEventName: 'production:scene-gallery' },
+      { id: 'review-storyboard', label: 'Open Screening Room', actionEventName: 'production:scene-gallery' },
       { id: 'collaborate-share', label: 'Share for review', actionEventName: 'production:share-link' },
       { id: 'review-animatic', label: 'Screening Room preview', actionEventName: 'production:screening-room' },
     ],

@@ -364,9 +364,6 @@ interface ScriptPanelProps {
   bookmarkedScene?: { sceneId?: string; sceneNumber?: number } | null
   onBookmarkScene?: (bookmark: { sceneId: string; sceneNumber: number } | null) => Promise<void> | void
   onJumpToBookmark?: () => void
-  // Storyboard visibility control
-  showStoryboard?: boolean
-  onToggleStoryboard?: () => void
   // Dashboard visibility control
   showDashboard?: boolean
   onToggleDashboard?: () => void
@@ -375,11 +372,6 @@ interface ScriptPanelProps {
   // Global keyframe generation state (for screen freeze)
   isGeneratingKeyframe?: boolean
   generatingKeyframeSceneNumber?: number | null
-  // Below dashboard slot
-  belowDashboardSlot?: (helpers: { 
-    openGenerateAudio: () => void
-    openPromptBuilder: (sceneIdx: number) => void
-  }) => React.ReactNode
   // Scene timeline filtering - only show selected scene when set
   selectedSceneIndex?: number | null
   // Callback when scene selection changes (for timeline sync)
@@ -733,7 +725,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
-export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onOpenReferences, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, projectStreams = [] }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onOpenReferences, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, projectStreams = [] }: ScriptPanelProps) {
 
 
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
@@ -3129,16 +3121,6 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
           </div>
         ) : null}
 
-        {/* Optional storyboard slot - now inside scrollable area */}
-        {belowDashboardSlot && showStoryboard ? (
-          <div className="px-6 pt-6">
-            {belowDashboardSlot({ 
-              openGenerateAudio: () => setGenerateAudioDialogOpen(true),
-              openPromptBuilder: handleOpenSceneBuilder
-            })}
-          </div>
-        ) : null}
-        
         {!script || isGenerating ? (
           <div className="h-full flex items-center justify-center text-gray-500 dark:text-gray-400">
             {isGenerating ? (
@@ -3874,9 +3856,6 @@ interface SceneCardProps {
   // NEW: Scene production props
   sceneProductionData?: SceneProductionData | null
   sceneProductionReferences?: SceneProductionReferences
-  // Optional slot renderer to place content below Dashboard (e.g., Storyboard header)
-  // Provides helper to open the Generate Audio dialog from parent section
-  belowDashboardSlot?: (helpers: { openGenerateAudio: () => void }) => React.ReactNode
   onInitializeSceneProduction?: (
     sceneId: string,
     options: { targetDuration: number; segments?: any[]; generationOptions?: Record<string, unknown> }
