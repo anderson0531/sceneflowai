@@ -93,6 +93,7 @@ IMPORTANT GUIDELINES:
 - Consider the character's dialogue style to inform their personality
 - Make choices that are cinematically interesting and casting-ready
 - Avoid generic descriptions - be specific about features
+- For gender: use explicit narrative cues only — never infer from the character's name alone
 
 Return a JSON object with these exact fields:
 {
@@ -100,7 +101,7 @@ Return a JSON object with these exact fields:
   "personality": "Key personality traits based on dialogue and actions (e.g., 'sharp-witted, guarded, quietly determined')",
   "appearanceDescription": "A comprehensive, vivid physical description suitable for image generation (2-3 sentences)",
   "ethnicity": "Specific ethnicity (e.g., 'East Asian', 'South Asian', 'African American', 'Latino', 'Middle Eastern', 'Caucasian', 'Mixed heritage')",
-  "gender": "male or female based on dialogue/context",
+  "gender": "male, female, or non-binary — base on explicit narrative cues (dialogue, role, description), NOT the character's name. User can override in Character Identity.",
   "ageRange": "Approximate age range (e.g., 'early 30s', 'late 40s', 'mid 20s')",
   "build": "Body type (e.g., 'athletic', 'slender', 'stocky', 'average', 'tall and lean')",
   "hairStyle": "Specific hair style (e.g., 'short cropped', 'long wavy', 'slicked back', 'natural curls', 'pixie cut')",

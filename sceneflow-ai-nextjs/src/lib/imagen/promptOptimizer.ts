@@ -14,6 +14,12 @@ import {
   buildCharacterHairDescription,
   buildHairCompositionLock,
 } from '@/lib/character/characterReferenceAssembly'
+import {
+  isFemaleGender,
+  getPronounsForGender,
+  genderToSubjectTerm,
+  type CharacterGender,
+} from '@/lib/character/visualGender'
 
 /**
  * Extract demographic anchor (ethnicity + age + key features) from appearance description.
@@ -28,7 +34,10 @@ import {
  * @param appearanceDescription - Full appearance description from character
  * @returns Concise description like "a Black man in his late 40s with salt-and-pepper hair and beard"
  */
-export function extractDemographicAnchor(appearanceDescription: string): string | null {
+export function extractDemographicAnchor(
+  appearanceDescription: string,
+  resolvedGender?: CharacterGender | null
+): string | null {
   if (!appearanceDescription) return null
   
   const desc = appearanceDescription.toLowerCase()
@@ -51,9 +60,12 @@ export function extractDemographicAnchor(appearanceDescription: string): string 
     }
   }
   
-  // Extract gender
+  // Extract gender — prefer authoritative resolved gender over text heuristics
   let gender = ''
-  if (/\b(woman|female)\b/i.test(desc)) gender = 'woman'
+  if (resolvedGender === 'female') gender = 'woman'
+  else if (resolvedGender === 'male') gender = 'man'
+  else if (resolvedGender === 'non-binary') gender = 'person'
+  else if (/\b(woman|female)\b/i.test(desc)) gender = 'woman'
   else if (/\b(man|male)\b/i.test(desc)) gender = 'man'
   
   // Extract age
@@ -61,7 +73,8 @@ export function extractDemographicAnchor(appearanceDescription: string): string 
   const ageMatch = desc.match(/\b(late|early|mid)?[- ]?(20s|30s|40s|50s|60s|70s)\b/i)
   if (ageMatch) {
     const qualifier = ageMatch[1] ? `${ageMatch[1]} ` : ''
-    age = `in ${gender === 'woman' ? 'her' : 'his'} ${qualifier}${ageMatch[2]}`
+    const pronouns = getPronounsForGender(resolvedGender ?? (gender === 'woman' ? 'female' : gender === 'man' ? 'male' : null))
+    age = `in ${pronouns.possessive} ${qualifier}${ageMatch[2]}`
   }
   
   // Extract distinctive hair characteristics
@@ -256,6 +269,7 @@ interface OptimizePromptParams {
     hairColor?: string
     hairDescription?: string
     hairAnchor?: string
+    gender?: CharacterGender | null
     hasDualReferences?: boolean
     identityReferenceId?: number
     wardrobeReferenceId?: number
@@ -292,9 +306,15 @@ interface OptimizePromptParams {
  * @param description - The character's appearance description
  * @returns A short linking phrase like "a young man with curly hair"
  */
-export function generateLinkingDescription(description: string): string {
+export function generateLinkingDescription(
+  description: string,
+  resolvedGender?: CharacterGender | null
+): string {
   const descLower = (description || '').toLowerCase()
-  const isFemale = descLower.includes('woman') || descLower.includes('female')
+  const isFemale =
+    resolvedGender != null
+      ? isFemaleGender(resolvedGender)
+      : descLower.includes('woman') || descLower.includes('female')
   
   // Build the LINKING DESCRIPTION that will appear in BOTH prompt and subjectDescription
   // This must be distinctive enough to identify each character
@@ -330,7 +350,12 @@ export function generateLinkingDescription(description: string): string {
   }
   
   // Build the description
-  const gender = isFemale ? 'woman' : 'man'
+  const gender =
+    resolvedGender === 'non-binary'
+      ? 'person'
+      : resolvedGender === 'female' || isFemale
+        ? 'woman'
+        : 'man'
   
   if (anchors.length === 0) {
     return `a ${gender}`
@@ -754,7 +779,10 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
       .filter(ref => ref.referenceId !== undefined)
       .map(ref => {
         const descLower = (ref.description || '').toLowerCase()
-        const isFemale = descLower.includes('woman') || descLower.includes('female')
+        const isFemale =
+          ref.gender != null
+            ? isFemaleGender(ref.gender)
+            : descLower.includes('woman') || descLower.includes('female')
         
         const fullRef = params.characterReferences!.find(r => r.name === ref.name)
         // Reference-first: use promptToken when set, else linkingDescription
@@ -764,7 +792,7 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
             ? buildIdentityPromptToken(fullRef.identityReferenceId)
             : undefined)
         const linkingDescription =
-          promptToken || ref.linkingDescription || generateLinkingDescription(ref.description)
+          promptToken || ref.linkingDescription || generateLinkingDescription(ref.description, ref.gender)
         
         // Find scene-specific wardrobe (if sceneNumber provided)
         const sceneWardrobe = fullRef ? findWardrobeForScene(
@@ -903,7 +931,9 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
       const firstNamePattern = new RegExp(`\\b${ref.firstName}\\b`, 'gi')
       const replacement = token.includes('[') 
         ? token 
-        : (ref.isFemale ? 'the woman' : 'the man')
+        : ref.gender
+          ? genderToSubjectTerm(ref.gender)
+          : (ref.isFemale ? 'the woman' : 'the man')
       promptScene = promptScene.replace(firstNamePattern, replacement)
     })
     
@@ -1139,7 +1169,10 @@ function integrateCharactersIntoScene(
     if (ref.defaultWardrobe) {
       // Extract the key wardrobe item for brief reinforcement
       const wardrobeShort = ref.defaultWardrobe.split(',')[0].trim() // Take first item
-      const pronoun = ref.description.toLowerCase().includes('woman') ? 'her' : 'his'
+      const pronouns = getPronounsForGender(
+        ref.gender ?? (ref.description.toLowerCase().includes('woman') ? 'female' : 'male')
+      )
+      const pronoun = pronouns.possessive
       
       // Only replace FIRST occurrence to avoid repetition
       const firstMatch = processedScene.match(namePattern)

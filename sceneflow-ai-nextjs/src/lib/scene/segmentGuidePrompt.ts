@@ -74,6 +74,7 @@ const CHARACTER_VOICE_STYLES: Record<string, string> = {
   'elderly-female': 'an elderly woman with a gentle, knowing voice',
   male: 'a man speaking naturally',
   female: 'a woman speaking naturally',
+  'non-binary': 'speaking clearly and naturally with a neutral tone',
   neutral: 'speaking clearly and naturally',
 }
 
@@ -86,7 +87,9 @@ export function getCharacterVoiceStyle(age?: string, gender?: string): string {
       ? 'male'
       : genderLower === 'female' || genderLower === 'f'
         ? 'female'
-        : 'neutral'
+        : genderLower === 'non-binary' || genderLower === 'nonbinary' || genderLower === 'nb'
+          ? 'non-binary'
+          : 'neutral'
 
   if (!age) return CHARACTER_VOICE_STYLES[genderKey] || CHARACTER_VOICE_STYLES.neutral
 

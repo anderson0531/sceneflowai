@@ -135,6 +135,9 @@ export interface VisionCharacter {
   /** Cached Kling element_list ID for character consistency */
   klingElementId?: string
   appearanceDescription?: string
+  /** Authoritative gender for image/video prompts and voice casting. */
+  gender?: 'male' | 'female' | 'non-binary' | 'unspecified'
+  genderSource?: 'ai' | 'user'
   voiceConfig?: VisionVoiceConfig
   /** Per-language Edge fallback voices (e.g. hi, es, en). */
   edgeVoiceConfigByLang?: Record<string, EdgeVoiceConfig>

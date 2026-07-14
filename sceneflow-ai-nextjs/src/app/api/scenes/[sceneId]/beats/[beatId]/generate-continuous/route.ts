@@ -5,6 +5,7 @@ import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { isBeatFirstPipelineEnabled, isStoryboardApproved, getSceneBeats } from '@/lib/script/beatMigration'
 import { compileBeatVideoPrompt } from '@/lib/scene/beatVideoPromptCompiler'
+import { resolveVisualGender } from '@/lib/character/visualGender'
 import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
 import {
   findSceneById,
@@ -104,7 +105,21 @@ export async function POST(
     }
 
     const artStyleId = resolveProjectArtStyle(metadata)
-    const compiled = compileBeatVideoPrompt(beat, { artStyleId })
+    const characters = (visionPhase as { characters?: Array<Record<string, unknown>> }).characters || []
+    const beatCharacter = beat.character?.trim()
+    const charRecord = beatCharacter
+      ? characters.find((c) => {
+          const name = String(c.name || '').toLowerCase()
+          const target = beatCharacter.toLowerCase()
+          return name === target || name.includes(target) || target.includes(name)
+        })
+      : undefined
+    const resolvedGender = charRecord ? resolveVisualGender(charRecord as never) : null
+    const compiled = compileBeatVideoPrompt(beat, {
+      artStyleId,
+      characterGender: resolvedGender?.isAuthoritative ? resolvedGender.gender : null,
+      characterName: beatCharacter,
+    })
     const sceneImageUrl =
       typeof (matchedScene as { imageUrl?: string }).imageUrl === 'string'
         ? (matchedScene as { imageUrl: string }).imageUrl.trim()

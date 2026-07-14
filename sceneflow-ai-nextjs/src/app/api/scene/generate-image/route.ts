@@ -28,6 +28,11 @@ import { getSceneBeats, isNarratorBeat } from '@/lib/script/beatMigration'
 import { NARRATOR_CHARACTER, type BeatKind } from '@/lib/script/segmentTypes'
 import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
 import {
+  resolveVisualGender,
+  correctPronounsToGender,
+  isFemaleGender,
+} from '@/lib/character/visualGender'
+import {
   buildCharacterHairAnchor,
   buildCharacterHairDescription,
   beatFrameNeedsHairLock,
@@ -123,11 +128,13 @@ function lookupSubjectOrdinal(
 function createVisualAnchorDescription(char: any, index: number): string {
   const description = char.visionDescription || char.appearanceDescription || ''
   const descLower = description.toLowerCase()
-  
-  // Detect gender
-  const isFemale = descLower.includes('woman') || 
-                   descLower.includes('female') ||
-                   descLower.includes('she ')
+  const resolved = resolveVisualGender(char)
+  const isFemale =
+    resolved.gender != null
+      ? isFemaleGender(resolved.gender)
+      : descLower.includes('woman') ||
+        descLower.includes('female') ||
+        descLower.includes('she ')
   
   const anchors: string[] = []
   
@@ -170,7 +177,12 @@ function createVisualAnchorDescription(char: any, index: number): string {
   }
   
   // Build the description
-  const gender = isFemale ? 'woman' : 'man'
+  const gender =
+    resolved.gender === 'non-binary'
+      ? 'person'
+      : isFemale
+        ? 'woman'
+        : 'man'
   let result: string
   
   if (anchors.length === 0) {
@@ -995,15 +1007,38 @@ export async function POST(req: NextRequest) {
           beatAction: beatForEmotion.actionDescription,
         })
       : ''
+
+    if (beatSpeakerName && fullSceneContext) {
+      const speakerChar = characterObjects.find((c: any) => {
+        const name = (c?.name || '').toLowerCase()
+        const speaker = beatSpeakerName.toLowerCase()
+        return name === speaker || name.includes(speaker) || speaker.includes(name)
+      })
+      if (speakerChar) {
+        const resolved = resolveVisualGender(speakerChar)
+        if (resolved.isAuthoritative && resolved.gender) {
+          fullSceneContext = correctPronounsToGender(fullSceneContext, resolved.gender, {
+            characterName: speakerChar.name,
+          })
+        }
+      }
+    }
+
     const beatFrameHairLockNeeded =
       isBeatFrame && beatFrameNeedsHairLock(fullSceneContext, effectiveShotType)
     const characterReferences = characterObjects.map((char: any, idx: number) => {
+      const resolvedGender = resolveVisualGender(char)
       // Prefer Gemini Vision description over manual description
       const rawDescription = char.visionDescription || char.appearanceDescription || 
         `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
       
       // Strip emotional descriptors - let scene drive emotions
       let description = stripEmotionalDescriptors(rawDescription)
+      if (resolvedGender.isAuthoritative && resolvedGender.gender) {
+        description = correctPronounsToGender(description, resolvedGender.gender, {
+          characterName: char.name,
+        })
+      }
       
       // Determine wardrobe for this character in this scene
       // Check for scene-level wardrobe override first
@@ -1186,7 +1221,7 @@ export async function POST(req: NextRequest) {
         subjectTextDescription = char.name || 'person'
       } else if (hasReferenceImage && appearanceSource) {
         subjectTextDescription =
-          extractDemographicAnchor(appearanceSource) ||
+          extractDemographicAnchor(appearanceSource, resolvedGender.gender) ||
           createVisualAnchorDescription(char, referenceId ?? idx + 1)
         console.log(
           `[Scene Image] ${char.name} subjectDescription: "${subjectTextDescription}"`
@@ -1254,6 +1289,8 @@ export async function POST(req: NextRequest) {
           beatAction: beatForEmotion?.actionDescription,
           appearanceNotes: refPair.resolvedWardrobe?.appearanceNotes,
         }),
+        gender: resolvedGender.gender,
+        genderSource: resolvedGender.source,
       }
     })
     
@@ -1367,6 +1404,7 @@ export async function POST(req: NextRequest) {
         wardrobeDescription: ref.defaultWardrobe,
         wardrobeAccessories: ref.wardrobeAccessories,
         hairDescription: ref.hairAnchor ?? ref.hairDescription,
+        gender: ref.gender ?? undefined,
         hasReferenceImage: !!ref.identityReferenceId || !!ref.wardrobeReferenceId,
         referenceIndex: ref.identityReferenceId ?? ref.wardrobeReferenceId,
         identityReferenceIndex: ref.identityReferenceId,

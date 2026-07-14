@@ -4,6 +4,10 @@
 
 import { getArtStyleNegativeTerms, getArtStylePromptSuffix } from '@/lib/vision/artStyle'
 import { parsePerformanceCue } from '@/lib/scene/performanceCues'
+import {
+  correctPronounsToGender,
+  type CharacterGender,
+} from '@/lib/character/visualGender'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type {
   DetailedSceneDirection,
@@ -134,6 +138,8 @@ export function compileBeatVideoPrompt(
   options?: {
     artStyleId?: string
     excerpt?: string
+    characterGender?: CharacterGender | null
+    characterName?: string
   }
 ): BeatVideoPromptResult {
   const artStyleId = options?.artStyleId ?? 'photorealistic'
@@ -149,7 +155,12 @@ export function compileBeatVideoPrompt(
   } else {
     const character = beat.character ?? 'Character'
     const parsed = parsePerformanceCue(line)
-    const cleanLine = parsed.spokenText.replace(/"/g, "'")
+    let cleanLine = parsed.spokenText.replace(/"/g, "'")
+    if (options?.characterGender) {
+      cleanLine = correctPronounsToGender(cleanLine, options.characterGender, {
+        characterName: options.characterName ?? character,
+      })
+    }
     const deliverySuffix = parsed.deliveryProse
       ? ` Delivery: ${parsed.deliveryProse}.`
       : ''

@@ -20,11 +20,14 @@ export interface WardrobeTurnaroundPromptInput {
 }
 
 function getPronouns(gender?: string): { pronoun: string; possessive: string } {
-  const isFemale = gender?.toLowerCase() === 'female' || gender?.toLowerCase() === 'woman'
-  return {
-    pronoun: isFemale ? 'She' : 'He',
-    possessive: isFemale ? 'Her' : 'His',
+  const g = gender?.toLowerCase()
+  if (g === 'female' || g === 'woman' || g === 'f') {
+    return { pronoun: 'She', possessive: 'Her' }
   }
+  if (g === 'non-binary' || g === 'nonbinary' || g === 'nb') {
+    return { pronoun: 'They', possessive: 'Their' }
+  }
+  return { pronoun: 'He', possessive: 'His' }
 }
 
 /** Opening line for mannequin-only wardrobe sheet generation (no character portrait input). */

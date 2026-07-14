@@ -408,6 +408,8 @@ interface Character {
   type?: 'character' | 'narrator' | 'description'
   referenceImage?: string
   appearanceDescription?: string
+  gender?: 'male' | 'female' | 'non-binary' | 'unspecified'
+  genderSource?: 'ai' | 'user'
   // Voice assignment
   voiceConfig?: VoiceConfig
   edgeVoiceConfig?: { voiceId: string; voiceName: string }

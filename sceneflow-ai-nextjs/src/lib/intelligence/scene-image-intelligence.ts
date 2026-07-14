@@ -89,6 +89,8 @@ export interface CharacterContext {
   hasCostumeReference?: boolean
   /** Beat-directed facial expression — scene owns mood, not the identity reference */
   directedEmotion?: string
+  /** Authoritative gender for prompt text (male, female, non-binary) */
+  gender?: string
 }
 
 export interface PropContext {
@@ -361,6 +363,7 @@ CRITICAL RULES:
 2. TITLE SEQUENCES: For title/credit beats, compose a CENTERED title card. The film title is the primary subject with genre-appropriate background. No people unless explicitly required.
 
 3. NO CONFLICTING TEXT WITH REFERENCES:
+   - Use the provided Gender for each character as authoritative — never infer gender from the character's name
    - When an identity reference exists (person [N]), NEVER describe face, skin, ethnicity, age, gender, or body type in text — the reference image owns those structural traits
    - FACIAL EXPRESSION / EMOTION is NOT owned by identity or wardrobe references — always render the beat's directed emotional state on the face; describe expression in [SCENE COMPOSITION & BEAT] using directedEmotion from input when provided
    - When hairDescription is provided in input for a character with an identity ref, DO include a concise Hair lock in [SCENE COMPOSITION & BEAT] or Subject section — e.g. "person [1], hair: swept-back dark auburn ponytail (match identity reference exactly)"
@@ -474,6 +477,10 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
         refLabel = ` [Ref Image [${char.referenceIndex}]]`
       }
       prompt += `${idx + 1}. ${char.name}${refLabel}\n`
+
+      if (char.gender) {
+        prompt += `   Gender (authoritative): ${char.gender}\n`
+      }
       
       if (useAppearanceText) {
         prompt += `   Appearance (text-only): ${char.appearanceDescription}\n`

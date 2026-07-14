@@ -36,7 +36,8 @@ Extract these specific fields as JSON:
   "hairColor": "hair color",
   "eyeColor": "eye color",
   "expression": "typical expression",
-  "build": "body build"
+  "build": "body build",
+  "gender": "male, female, or non-binary — from portrait cues only, not name"
 }
 
 PART 2 - APPEARANCE DESCRIPTION (for image generation):

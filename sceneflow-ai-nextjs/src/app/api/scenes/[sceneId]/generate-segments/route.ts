@@ -20,6 +20,7 @@ import { expandDirectionsForTimelineAudioBudget } from '@/lib/scene/expandDirect
 import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
 import { resolveNarrationTextForAudioTimeline } from '@/lib/script/narration'
 import { SegmentDirection, SceneSegmentPromptBundleEntry, detectNoTalentSegment } from '@/types/scene-direction'
+import { resolveVisualGender } from '@/lib/character/visualGender'
 
 /** Vercel: match `vercel.json` for this route — long Gemini JSON on global endpoint. */
 export const maxDuration = 300
@@ -1078,13 +1079,16 @@ function buildComprehensiveSceneData(
         const charName = (c.name || '').toLowerCase()
         return sceneText.includes(charName)
       })
-      .map((c: any) => ({
+      .map((c: any) => {
+        const resolved = resolveVisualGender(c)
+        return {
         name: c.name || 'Unknown',
         description: c.appearanceDescription || c.description || '',
+        gender: resolved.gender ?? undefined,
         hasReferenceImage: !!(c.referenceImageUrl || c.imageUrl || c.referenceImage),
         referenceImageUrl: c.referenceImageUrl || c.imageUrl || c.referenceImage || undefined,
         wardrobe: c.defaultWardrobe || c.wardrobe || undefined
-      }))
+      }})
   } else {
     console.log(`[buildComprehensiveSceneData] No-talent scene detected — suppressing character extraction`)
   }
@@ -1463,6 +1467,7 @@ function generateIntelligentSegmentationPrompt(
     : sceneData.characters.length > 0
       ? sceneData.characters.map(c => {
           let description = `- ${c.name}: ${c.description}`
+          if (c.gender) description += ` | Gender: ${c.gender}`
           if (c.wardrobe) description += ` | Wardrobe: ${c.wardrobe}`
           if (c.hasReferenceImage) description += ' (✓ Reference image available - USE for identity lock)'
           return description
@@ -2240,6 +2245,7 @@ function generatePromptsFromDirectionsPrompt(
     ? ''
     : sceneData.characters.map(c => {
         let desc = `- ${c.name}: ${c.description}`
+        if (c.gender) desc += ` | Gender: ${c.gender}`
         if (c.wardrobe) desc += ` | Wardrobe: ${c.wardrobe}`
         if (c.hasReferenceImage) desc += ' (✓ Reference available)'
         return desc
@@ -2345,7 +2351,7 @@ For each approved direction, generate a RICH cinematic video prompt (80-150 word
 
 **PROMPT ELEMENTS FORMULA:**
 1. **camera**: [Shot Type] + [Lens/Focal Length]
-2. **character**: [Subject with FULL visual description including face, hair, body, wardrobe]
+2. **character**: [Subject with FULL visual description including face, hair, body, wardrobe — honor the provided Gender field; do NOT infer gender from the character's name]
 3. **action**: [Specific Physical Action]
 4. **dialogue**: [DIALOGUE if any: Name speaks, "exact text"]
 5. **camera_movement**: [Camera Movement with speed]

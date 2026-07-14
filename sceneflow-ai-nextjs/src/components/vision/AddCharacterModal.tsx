@@ -225,6 +225,7 @@ export function AddCharacterModal({
         appearanceDescription: profile.appearanceDescription || '',
         ethnicity: profile.ethnicity,
         gender: profile.gender,
+        genderSource: 'ai',
         ageRange: profile.ageRange,
         build: profile.build,
         hairStyle: profile.hairStyle,

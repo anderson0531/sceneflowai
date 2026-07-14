@@ -70,6 +70,12 @@ import {
   resolveCharacterGender,
   type ElevenLabsVoice,
 } from "@/lib/voiceRecommendation";
+import {
+  resolveVisualGender,
+  normalizeCharacterGender,
+  formatGenderLabel,
+  type CharacterGender,
+} from "@/lib/character/visualGender";
 import { enrichGeminiVoicesForScoring } from "@/lib/tts/geminiVoiceCatalog";
 import {
   type WardrobeVoiceAnalysisResult,
@@ -1297,6 +1303,18 @@ const CharacterCard = ({
     return data as WardrobeVoiceAnalysisResult;
   };
 
+  const resolvedGender = useMemo(
+    () => resolveVisualGender(character),
+    [character]
+  );
+
+  const handleGenderChange = (gender: CharacterGender) => {
+    onUpdateCharacterAttributes?.(characterId, {
+      gender,
+      genderSource: "user",
+    });
+  };
+
   const handleAutoVoiceClick = () => {
     if (!onUpdateCharacterVoice) {
       toast.error("Voice update is not available.");
@@ -1323,8 +1341,11 @@ const CharacterCard = ({
 
   const handleGenderConfirmForAutoVoice = (gender: "male" | "female" | "non-binary") => {
     setGenderConfirmOpen(false);
-    if (gender !== "non-binary" && onUpdateCharacterAttributes) {
-      onUpdateCharacterAttributes(characterId, { gender });
+    if (onUpdateCharacterAttributes) {
+      onUpdateCharacterAttributes(characterId, {
+        gender,
+        genderSource: "user",
+      });
     }
     const genderOverride =
       gender === "non-binary" ? undefined : gender;
@@ -1352,7 +1373,7 @@ const CharacterCard = ({
           visionAnalysis = await fetchWardrobeVoiceAnalysis();
         } catch (analysisErr) {
           console.warn("[Auto Voice] Wardrobe voice analysis failed:", analysisErr);
-          if (!genderOverride) {
+          if (!genderOverride && character.genderSource !== "user") {
             const { confidence } = resolveCharacterGender(characterContext);
             if (confidence === "ambiguous") {
               setGenderConfirmOpen(true);
@@ -1362,7 +1383,7 @@ const CharacterCard = ({
           }
         }
 
-        if (!visionAnalysis && !genderOverride) {
+        if (!visionAnalysis && !genderOverride && character.genderSource !== "user") {
           const { confidence } = resolveCharacterGender(characterContext);
           if (confidence === "ambiguous") {
             setGenderConfirmOpen(true);
@@ -1372,12 +1393,16 @@ const CharacterCard = ({
         }
 
         if (visionAnalysis && onUpdateCharacterAttributes) {
-          onUpdateCharacterAttributes(characterId, {
-            gender: visionAnalysis.gender,
+          const attrs: Record<string, unknown> = {
             age: visionAnalysis.apparentAge,
             ethnicity: visionAnalysis.ethnicity,
             voiceDescription: visionAnalysis.voiceDescription,
-          });
+          };
+          if (character.genderSource !== "user") {
+            attrs.gender = visionAnalysis.gender;
+            attrs.genderSource = "ai";
+          }
+          onUpdateCharacterAttributes(characterId, attrs);
           toast.success(
             visionAnalysis.confidence === "narrative"
               ? "Matched voice profile from character narrative."
@@ -2782,6 +2807,73 @@ const CharacterCard = ({
               className="mt-3 focus-visible:ring-0 space-y-3"
             >
                 {!splitLayout && identityImageSection}
+
+                <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+                      <User className="w-3.5 h-3.5" />
+                      Gender
+                    </span>
+                    <span
+                      className={`rounded-full px-1.5 py-0.5 text-[9px] font-medium ${
+                        character.genderSource === "user"
+                          ? "bg-blue-500/15 text-blue-300 border border-blue-500/30"
+                          : "bg-gray-500/10 text-gray-400 border border-gray-500/20"
+                      }`}
+                      title={
+                        character.genderSource === "user"
+                          ? "You set this gender — used for frame and video generation"
+                          : "Auto-detected from script, reference image, or description"
+                      }
+                    >
+                      {character.genderSource === "user" ? "Set by you" : "Auto"}
+                    </span>
+                  </div>
+                  {onUpdateCharacterAttributes ? (
+                    <div className="flex flex-wrap gap-1">
+                      {(
+                        [
+                          "male",
+                          "female",
+                          "non-binary",
+                          "unspecified",
+                        ] as CharacterGender[]
+                      ).map((value) => {
+                        const active =
+                          (normalizeCharacterGender(character.gender) ||
+                            resolvedGender.gender ||
+                            "unspecified") === value;
+                        return (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleGenderChange(value);
+                            }}
+                            className={`rounded-full border px-2 py-0.5 text-[10px] transition-colors ${
+                              active
+                                ? "border-violet-400/60 bg-violet-500/20 text-violet-100"
+                                : "border-gray-600/50 bg-gray-800/40 text-gray-300 hover:border-gray-500"
+                            }`}
+                          >
+                            {formatGenderLabel(value)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-500 italic">
+                      {formatGenderLabel(
+                        normalizeCharacterGender(character.gender) ||
+                          resolvedGender.gender
+                      )}
+                    </p>
+                  )}
+                  <p className="mt-1 text-[10px] text-gray-500">
+                    Controls how this character is depicted in generated frames and video.
+                  </p>
+                </div>
 
                 {/* Body Description - Editable for image generation prompts */}
                 <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
