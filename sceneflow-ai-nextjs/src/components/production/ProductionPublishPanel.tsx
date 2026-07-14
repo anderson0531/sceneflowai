@@ -41,6 +41,10 @@ export interface ProductionPublishPanelProps {
   title?: string
   projectTitle?: string
   metadata?: unknown
+  /** Override master language for MLA publish (per-stream). */
+  masterLanguage?: string
+  onShareCreated?: (result: { shareUrl: string; shareSlug?: string }) => void | Promise<void>
+  onYoutubePublished?: (result: { youtubeUrl: string }) => void | Promise<void>
 }
 
 type PublishPhase = 'idle' | 'stitching' | 'uploading' | 'publishing'
@@ -52,6 +56,9 @@ export function ProductionPublishPanel({
   title,
   projectTitle,
   metadata,
+  masterLanguage: masterLanguageOverride,
+  onShareCreated,
+  onYoutubePublished,
 }: ProductionPublishPanelProps) {
   const [youtubeConnected, setYoutubeConnected] = useState(false)
   const [checkingAuth, setCheckingAuth] = useState(true)
@@ -72,9 +79,10 @@ export function ProductionPublishPanel({
   })
 
   const masterLanguage = useMemo(() => {
+    if (masterLanguageOverride) return masterLanguageOverride
     const stored = (metadata as { finalCut?: FinalCutSelection } | null)?.finalCut?.language
     return stored || 'en'
-  }, [metadata])
+  }, [metadata, masterLanguageOverride])
 
   const availableLanguages = useMemo(
     () => getAvailablePublishLanguages(metadata),
@@ -199,6 +207,9 @@ export function ProductionPublishPanel({
       setAudioTrackResults(data.audioTracks || [])
       setShowYoutubeConfig(false)
       setPublishProgress(100)
+      if (data.url) {
+        await onYoutubePublished?.({ youtubeUrl: data.url })
+      }
 
       const uploaded = (data.audioTracks || []).filter(
         (t: AudioTrackPublishResult) => t.status === 'uploaded'
@@ -242,12 +253,13 @@ export function ProductionPublishPanel({
         setShareUrl(url)
         await navigator.clipboard.writeText(url)
         toast.success('Screening room link copied')
+        await onShareCreated?.({ shareUrl: url, shareSlug: data.slug })
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Could not create share link'
       toast.error(message)
     }
-  }, [projectId])
+  }, [projectId, onShareCreated])
 
   const isPublishing = publishPhase !== 'idle'
 

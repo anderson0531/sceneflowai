@@ -8,7 +8,7 @@ export const maxDuration = 30
 
 export async function POST(request: NextRequest) {
   try {
-    const { projectId, linkType = 'screening-room' } = await request.json()
+    const { projectId, linkType = 'screening-room', language, playbackMode } = await request.json()
     
     if (!projectId) {
       return NextResponse.json({ error: 'Project ID required' }, { status: 400 })
@@ -51,6 +51,8 @@ export async function POST(request: NextRequest) {
       shareToken,
       slug: finalSlug,
       linkType,
+      language: typeof language === 'string' ? language : undefined,
+      playbackMode: typeof playbackMode === 'string' ? playbackMode : undefined,
       createdAt: new Date().toISOString(),
       isActive: true,
       viewCount: 0,
@@ -82,9 +84,13 @@ export async function POST(request: NextRequest) {
     })
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sceneflowai.studio'
+    const shareQuery = new URLSearchParams()
+    if (typeof language === 'string' && language) shareQuery.set('lang', language)
+    if (typeof playbackMode === 'string' && playbackMode) shareQuery.set('playback', playbackMode)
+    const shareQueryString = shareQuery.toString()
     const shareUrl = linkType === 'storyboard' 
       ? `${baseUrl}/${finalSlug}`
-      : `${baseUrl}/share/screening-room/${finalSlug}`
+      : `${baseUrl}/share/screening-room/${finalSlug}${shareQueryString ? `?${shareQueryString}` : ''}`
 
     console.log(`[Create Share Link] Created ${linkType} link for project ${projectId}: ${shareUrl}`)
 

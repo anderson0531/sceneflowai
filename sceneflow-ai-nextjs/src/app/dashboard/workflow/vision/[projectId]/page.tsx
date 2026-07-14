@@ -142,19 +142,25 @@ import {
   type ExpressBeatFrameStatus,
 } from '@/lib/storyboard/expressBeatFrameProgress'
 import { GenerationProgress } from '@/components/vision/GenerationProgress'
-const ProductionWorkspaceSheet = dynamic(
-  () => import('@/components/production/ProductionWorkspaceSheet').then(mod => ({ default: mod.ProductionWorkspaceSheet })),
+const ProductionStreamsManager = dynamic(
+  () =>
+    import('@/components/production/ProductionStreamsManager').then((mod) => ({
+      default: mod.ProductionStreamsManager,
+    })),
   { ssr: false }
 )
 import { NotificationCenter } from '@/components/notifications/NotificationCenter'
-import type { ProductionWorkspaceTab } from '@/components/production/ProductionWorkspaceSheet'
+import {
+  getProjectStreams,
+  type ProjectStream,
+} from '@/lib/streams/projectStreams'
 import { ImageQualitySelector } from '@/components/vision/ImageQualitySelector'
 import { VoiceSelector } from '@/components/tts/VoiceSelector'
 import { Button, buttonVariants } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, ChevronRight, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User, Bookmark, FileText, Coins, ExternalLink, CheckCircle2, Circle, Music, Video, Loader2, Clapperboard } from 'lucide-react'
+import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, ChevronRight, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User, Bookmark, FileText, Coins, ExternalLink, CheckCircle2, Circle, Music, Video, Loader2, Clapperboard, Layers, Film } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { resolveProjectArtStyle, resolveProjectAspectRatio, toVideoAspectRatio } from '@/lib/vision/artStyle'
 import {
@@ -607,11 +613,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }>>({})
   const searchParams = useSearchParams()
   const pathname = usePathname()
-  const [productionView, setProductionView] = useState<'studio' | 'screening'>(() =>
-    searchParams.get('view') === 'screening' ? 'screening' : 'studio'
+  type ProductionViewMode = 'studio' | 'streams' | 'screening'
+  const parseProductionView = (params: URLSearchParams): ProductionViewMode => {
+    const view = params.get('view')
+    if (view === 'screening') return 'screening'
+    if (view === 'streams') return 'streams'
+    return 'studio'
+  }
+  const [productionView, setProductionView] = useState<ProductionViewMode>(() =>
+    parseProductionView(searchParams)
   )
-  const [productionWorkspaceOpen, setProductionWorkspaceOpen] = useState(false)
-  const [productionWorkspaceTab, setProductionWorkspaceTab] = useState<ProductionWorkspaceTab>('render')
+  const [screeningPlaybackHint, setScreeningPlaybackHint] = useState<{
+    mode: 'stream'
+    language: string
+  } | null>(null)
   const [showSceneGallery, setShowSceneGallery] = useState(false)
   const [isGenVideoRunning, setIsGenVideoRunning] = useState(false)
   const [showDashboard, setShowDashboard] = useState(false)
@@ -1163,14 +1178,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }, [])
 
   const setProductionViewWithUrl = useCallback(
-    (view: 'studio' | 'screening') => {
+    (view: ProductionViewMode) => {
       setProductionView(view)
       const newParams = new URLSearchParams(searchParams.toString())
-      if (view === 'screening') {
-        newParams.set('view', 'screening')
-      } else {
+      if (view === 'studio') {
         newParams.delete('view')
+      } else {
+        newParams.set('view', view)
       }
+      newParams.delete('playback')
+      newParams.delete('lang')
       const newUrl = newParams.toString() ? `${pathname}?${newParams}` : pathname
       window.history.replaceState({}, '', newUrl)
     },
@@ -1182,18 +1199,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }, [setProductionViewWithUrl])
 
   useEffect(() => {
-    const nextView = searchParams.get('view') === 'screening' ? 'screening' : 'studio'
-    setProductionView(nextView)
+    setProductionView(parseProductionView(searchParams))
+    const playback = searchParams.get('playback')
+    const lang = searchParams.get('lang')
+    if (playback === 'stream' && lang) {
+      setScreeningPlaybackHint({ mode: 'stream', language: lang })
+    }
   }, [searchParams])
 
   // Handle deep links: panel, openPlayer, youtube
   useEffect(() => {
     const panel = searchParams.get('panel')
     if (panel === 'render' || panel === 'publish') {
-      setProductionWorkspaceTab(panel)
-      setProductionWorkspaceOpen(true)
+      setProductionView('streams')
       const newParams = new URLSearchParams(searchParams.toString())
       newParams.delete('panel')
+      newParams.set('view', 'streams')
       const newUrl = newParams.toString()
         ? `${window.location.pathname}?${newParams}`
         : window.location.pathname
@@ -1210,8 +1231,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
     if (searchParams.get('youtube') === 'connected') {
       toast.success('YouTube account connected')
-      setProductionWorkspaceTab('publish')
-      setProductionWorkspaceOpen(true)
+      setProductionView('streams')
+      const newParams = new URLSearchParams(searchParams.toString())
+      newParams.set('view', 'streams')
+      window.history.replaceState({}, '', `${window.location.pathname}?${newParams}`)
     }
   }, [searchParams])
 
@@ -1389,6 +1412,125 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
     },
     [project, projectId]
+  )
+
+  const projectStreams = useMemo(
+    () => getProjectStreams(project?.metadata),
+    [project?.metadata]
+  )
+
+  const handleSaveProjectStreams = useCallback(
+    async (
+      streams: ProjectStream[],
+      compat?: { exportedVideoUrl?: string; exportedAnimaticUrl?: string }
+    ) => {
+      try {
+        const existingMetadata = project?.metadata || {}
+        const existingVisionPhase = existingMetadata.visionPhase || {}
+
+        const response = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metadata: {
+              ...existingMetadata,
+              ...(compat?.exportedVideoUrl ? { exportedVideoUrl: compat.exportedVideoUrl } : {}),
+              ...(compat?.exportedAnimaticUrl
+                ? { exportedAnimaticUrl: compat.exportedAnimaticUrl }
+                : {}),
+              visionPhase: {
+                ...existingVisionPhase,
+                streams,
+              },
+            },
+          }),
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to save project streams')
+        }
+
+        setProject((prev) => {
+          if (!prev) return prev
+          return {
+            ...prev,
+            metadata: {
+              ...prev.metadata,
+              ...(compat?.exportedVideoUrl ? { exportedVideoUrl: compat.exportedVideoUrl } : {}),
+              ...(compat?.exportedAnimaticUrl
+                ? { exportedAnimaticUrl: compat.exportedAnimaticUrl }
+                : {}),
+              visionPhase: {
+                ...prev.metadata?.visionPhase,
+                streams,
+              },
+            },
+          }
+        })
+      } catch (error) {
+        console.error('[VisionPage] Error saving project streams:', error)
+        throw error
+      }
+    },
+    [project, projectId]
+  )
+
+  const handlePreviewStream = useCallback(
+    (language: string) => {
+      setScreeningPlaybackHint({ mode: 'stream', language })
+      setProductionView('screening')
+      const newParams = new URLSearchParams(searchParams.toString())
+      newParams.set('view', 'screening')
+      newParams.set('playback', 'stream')
+      newParams.set('lang', language)
+      window.history.replaceState({}, '', `${pathname}?${newParams}`)
+    },
+    [pathname, searchParams]
+  )
+
+  const handleShareStream = useCallback(
+    async (language: string) => {
+      try {
+        const res = await fetch('/api/vision/create-share-link', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId,
+            linkType: 'screening-room',
+            language,
+            playbackMode: 'stream',
+          }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Failed to create share link')
+
+        const shareUrl = data.shareUrl || data.url
+        if (shareUrl) {
+          await navigator.clipboard.writeText(shareUrl)
+          toast.success('Stream share link copied')
+        }
+
+        const streams = getProjectStreams(project?.metadata)
+        const updated = streams.map((s) =>
+          s.language === language
+            ? {
+                ...s,
+                publish: {
+                  ...s.publish,
+                  shareUrl,
+                  shareSlug: data.slug,
+                  publishedAt: new Date().toISOString(),
+                },
+              }
+            : s
+        )
+        await handleSaveProjectStreams(updated)
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Could not share stream'
+        toast.error(message)
+      }
+    },
+    [projectId, project?.metadata, handleSaveProjectStreams]
   )
 
   // Auto-select first scene when scenes are loaded
@@ -6557,14 +6699,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         setShowSceneGallery(true)
       },
       'production:screening-room': () => setProductionViewWithUrl('screening'),
-      'production:render-all': () => {
-        setProductionWorkspaceTab('render')
-        setProductionWorkspaceOpen(true)
-      },
-      'production:publish': () => {
-        setProductionWorkspaceTab('publish')
-        setProductionWorkspaceOpen(true)
-      },
+      'production:streams': () => setProductionViewWithUrl('streams'),
+      'production:render-all': () => setProductionViewWithUrl('streams'),
+      'production:publish': () => setProductionViewWithUrl('streams'),
+      'screening-room:preview': () => setProductionViewWithUrl('screening'),
+      'screening-room:assemble': () => setProductionViewWithUrl('streams'),
+      'screening-room:publish': () => setProductionViewWithUrl('streams'),
       'production:update-reviews': () => handlersRef.current.generateReviews(),
       'production:review-analysis': () => setShowReviewModal(true),
       'production:assign-voices': () => openReferenceLibrary('cast'),
@@ -13550,6 +13690,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             </button>
             <button
               type="button"
+              onClick={() => setProductionViewWithUrl('streams')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                productionView === 'streams'
+                  ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>Streams</span>
+            </button>
+            <button
+              type="button"
               onClick={() => setProductionViewWithUrl('screening')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                 productionView === 'screening'
@@ -13564,28 +13716,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         </div>
         
         <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-zinc-600"
-            onClick={() => {
-              setProductionWorkspaceTab('render')
-              setProductionWorkspaceOpen(true)
-            }}
-          >
-            Production Render
-          </Button>
-          <Button
-            size="sm"
-            className="bg-sf-primary hover:bg-sf-accent text-white"
-            onClick={() => {
-              setProductionWorkspaceTab('publish')
-              setProductionWorkspaceOpen(true)
-            }}
-          >
-            Publish
-          </Button>
-
           <NotificationCenter userId={getUserId()} />
         </div>
       </header>
@@ -13851,6 +13981,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 )}
               />
               )}
+              {productionView === 'streams' && (
+                <div className="flex-1 min-h-0 h-full flex flex-col min-w-0 overflow-hidden">
+                  <ProductionStreamsManager
+                    projectId={projectId}
+                    projectTitle={project?.title || script?.title}
+                    metadata={project?.metadata}
+                    script={script}
+                    userId={getUserId()}
+                    streams={projectStreams}
+                    onSaveStreams={handleSaveProjectStreams}
+                    onGenerateLanguage={handleGenerateLanguageStream}
+                    onPreviewStream={handlePreviewStream}
+                  />
+                </div>
+              )}
               {productionView === 'screening' && (
                 <div className="flex-1 min-h-0 h-full flex flex-col min-w-0 overflow-hidden">
                   <SceneGallery
@@ -13876,6 +14021,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     sceneProductionState={sceneProductionState}
                     beatCaptionSettings={beatCaptionSettings}
                     onBeatCaptionSettingsChange={handleBeatCaptionSettingsChange}
+                    projectStreams={projectStreams}
+                    onShareStream={handleShareStream}
+                    screeningPlaybackHint={screeningPlaybackHint}
+                    onScreeningPlaybackHintConsumed={() => setScreeningPlaybackHint(null)}
                   />
                 </div>
               )}
@@ -13987,21 +14136,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           <GenerationProgress progress={generationProgress} />
         )}
       </div>
-
-      <ProductionWorkspaceSheet
-        open={productionWorkspaceOpen}
-        tab={productionWorkspaceTab}
-        onTabChange={setProductionWorkspaceTab}
-        onClose={() => setProductionWorkspaceOpen(false)}
-        projectId={projectId}
-        userId={getUserId()}
-        projectTitle={project?.title || script?.title}
-        metadata={project?.metadata}
-        exportedVideoUrl={
-          (project?.metadata as { exportedVideoUrl?: string } | undefined)?.exportedVideoUrl ?? null
-        }
-        onOpenScreeningRoom={() => setProductionViewWithUrl('screening')}
-      />
 
       {/* Navigation Warning Dialog */}
       <NavigationWarningDialog

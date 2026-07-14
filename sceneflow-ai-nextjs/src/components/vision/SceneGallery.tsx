@@ -19,6 +19,7 @@ import {
   type BeatCaptionSettings,
 } from '@/lib/storyboard/beatCaptionSettings'
 import type { SceneProductionData } from '@/components/vision/scene-production/types'
+import type { ProjectStream } from '@/lib/streams/projectStreams'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType, StoryboardData } from '@/lib/types/reports'
@@ -107,6 +108,13 @@ interface SceneGalleryProps {
   /** Per-language beat caption visibility in Screening Room. */
   beatCaptionSettings?: BeatCaptionSettings
   onBeatCaptionSettingsChange?: (settings: BeatCaptionSettings) => void | Promise<void>
+  /** Project-level rendered language masters (visionPhase.streams). */
+  projectStreams?: ProjectStream[]
+  /** Share a rendered stream master from Screening Room stream mode. */
+  onShareStream?: (language: string) => void | Promise<void>
+  /** One-shot hint to open Screening Room in stream mode for a language. */
+  screeningPlaybackHint?: { mode: 'stream'; language: string } | null
+  onScreeningPlaybackHintConsumed?: () => void
 }
 
 export function SceneGallery({
@@ -133,6 +141,10 @@ export function SceneGallery({
   sceneProductionState,
   beatCaptionSettings,
   onBeatCaptionSettingsChange,
+  projectStreams,
+  onShareStream,
+  screeningPlaybackHint,
+  onScreeningPlaybackHintConsumed,
 }: SceneGalleryProps) {
   const preVisBannerRef = React.useRef<HTMLDivElement>(null)
 
@@ -716,6 +728,10 @@ export function SceneGallery({
                 : undefined
             }
             onClose={mode === 'screening' ? onClose : undefined}
+            projectStreams={projectStreams}
+            onShareStream={onShareStream}
+            screeningPlaybackHint={mode === 'screening' ? screeningPlaybackHint : undefined}
+            onScreeningPlaybackHintConsumed={onScreeningPlaybackHintConsumed}
           />
         </div>
       )}

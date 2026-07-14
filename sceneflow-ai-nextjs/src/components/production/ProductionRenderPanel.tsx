@@ -4,8 +4,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { FinalCutStreamsPanel } from '@/components/final-cut/FinalCutStreamsPanel'
 import { buildFinalCutClips } from '@/lib/final-cut/useFinalCutClips'
+import { applyAssemblyPreset } from '@/lib/final-cut/finalCutPresets'
 import { getAvailableLanguagesForFormat } from '@/lib/final-cut/resolveSegmentMedia'
-import type { FinalCutSelection } from '@/lib/types/finalCut'
+import type { FinalCutAssemblyPresetId, FinalCutSelection } from '@/lib/types/finalCut'
 
 const DEFAULT_SELECTION: FinalCutSelection = {
   format: 'full-video',
@@ -117,24 +118,25 @@ export function ProductionRenderPanel({
         availableLanguages={availableLanguages}
         disabled={saving}
         showProductionLink={false}
-        onChangeFormat={(format) => {
-          const next = { ...selection, format }
+        onApplyPreset={(presetId: FinalCutAssemblyPresetId) => {
+          const sceneIds = clips.map((c) => c.sceneId)
+          const next = applyAssemblyPreset({
+            presetId,
+            sceneIds,
+            metadata,
+            baselineLanguage: selection.language,
+          })
           setSelection(next)
           void persistSelection(next)
         }}
-        onChangeLanguage={(language) => {
-          const next = { ...selection, language }
-          setSelection(next)
-          void persistSelection(next)
-        }}
-        onChangeSceneOverride={(sceneId, version) => {
+        onChangeSceneOverride={(sceneId, patch) => {
           const overrides = { ...(selection.perSceneOverrides || {}) }
-          if (version == null) {
+          if (patch == null) {
             delete overrides[sceneId]
           } else {
-            overrides[sceneId] = { streamVersion: version }
+            overrides[sceneId] = { ...overrides[sceneId], ...patch }
           }
-          const next = { ...selection, perSceneOverrides: overrides }
+          const next = { ...selection, presetId: 'custom', perSceneOverrides: overrides }
           setSelection(next)
           void persistSelection(next)
         }}

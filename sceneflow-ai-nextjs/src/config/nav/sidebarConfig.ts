@@ -178,10 +178,11 @@ export const productionSidebarConfig: WorkflowSidebarConfig = {
   quickActions: [
     { id: 'goto-bookmark', label: 'Go to Bookmark', icon: 'Bookmark', iconColor: 'text-amber-500', action: 'event', eventName: 'production:goto-bookmark' },
     { id: 'screening', label: 'Screening Room', icon: 'Play', iconColor: 'text-green-500', action: 'event', eventName: 'production:screening-room' },
+    { id: 'streams', label: 'Streams', icon: 'Layers', iconColor: 'text-violet-400', action: 'event', eventName: 'production:streams' },
     { id: 'update-reviews', label: 'Audience Resonance', icon: 'BarChart3', iconColor: 'text-purple-500', action: 'event', eventName: 'production:update-reviews' },
     { id: 'review-analysis', label: 'Script Review', icon: 'FileText', iconColor: 'text-blue-500', action: 'event', eventName: 'production:review-analysis' },
-    { id: 'production-render', label: 'Production Render', icon: 'Film', iconColor: 'text-purple-400', action: 'event', eventName: 'production:render-all' },
-    { id: 'publish', label: 'Publish', icon: 'Upload', iconColor: 'text-emerald-400', action: 'event', eventName: 'production:publish' },
+    { id: 'production-render', label: 'Production Render', icon: 'Film', iconColor: 'text-purple-400', action: 'event', eventName: 'production:streams' },
+    { id: 'publish', label: 'Publish', icon: 'Upload', iconColor: 'text-emerald-400', action: 'event', eventName: 'production:streams' },
   ],
   sectionVisibility: {
     workflow: true,
@@ -298,16 +299,14 @@ export const dashboardSidebarConfig: WorkflowSidebarConfig = {
  * Get sidebar config based on current pathname
  */
 export function getSidebarConfigForPath(pathname: string): WorkflowSidebarConfig {
-  if (pathname.includes('/dashboard/workflow/screening-room')) {
-    return screeningRoomSidebarConfig
-  }
   if (pathname.includes('/dashboard/workflow/vision/')) {
     return productionSidebarConfig
   }
-  if (pathname.includes('/dashboard/workflow/premiere') ||
+  if (pathname.includes('/dashboard/workflow/screening-room') ||
+      pathname.includes('/dashboard/workflow/premiere') ||
       pathname.includes('/dashboard/workflow/final-cut') ||
       pathname.includes('/dashboard/workflow/generation/')) {
-    return screeningRoomSidebarConfig
+    return productionSidebarConfig
   }
   if (pathname.includes('/dashboard/studio/') || pathname.includes('/dashboard/workflow/ideation/')) {
     return blueprintSidebarConfig

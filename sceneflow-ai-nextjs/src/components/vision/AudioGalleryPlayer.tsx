@@ -57,8 +57,13 @@ import { StoryboardImageEffectControl } from '@/components/vision/StoryboardImag
 import type { SceneProductionData } from '@/components/vision/scene-production/types'
 import type { FinalCutSelection } from '@/lib/types/finalCut'
 import { resolveScreeningVideoStreamUrl } from '@/lib/final-cut/resolveScreeningVideoStreamUrl'
+import {
+  findStreamMaster,
+  getReadyStreamLanguages,
+  type ProjectStream,
+} from '@/lib/streams/projectStreams'
 
-type PreVisPlaybackMode = 'animatic' | 'video'
+type PreVisPlaybackMode = 'animatic' | 'video' | 'stream'
 
 function resolveSceneVideoUrl(
   scene: any,
@@ -148,6 +153,13 @@ interface AudioGalleryPlayerProps {
   beatCaptionsEnabled?: boolean
   /** Screening tab: toggle beat captions for the currently selected language. */
   onBeatCaptionsEnabledChange?: (enabled: boolean) => void
+  /** Project-level language stream masters. */
+  projectStreams?: ProjectStream[]
+  /** Share rendered stream master (stream playback mode). */
+  onShareStream?: (language: string) => void | Promise<void>
+  /** One-shot open hint from Streams tab preview. */
+  screeningPlaybackHint?: { mode: 'stream'; language: string } | null
+  onScreeningPlaybackHintConsumed?: () => void
 }
 
 function formatTime(seconds: number) {
@@ -205,6 +217,10 @@ export function AudioGalleryPlayer({
   screeningLayout = false,
   beatCaptionsEnabled = true,
   onBeatCaptionsEnabledChange,
+  projectStreams,
+  onShareStream,
+  screeningPlaybackHint,
+  onScreeningPlaybackHintConsumed,
 }: AudioGalleryPlayerProps) {
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0)
   const [playbackMode, setPlaybackMode] = useState<PreVisPlaybackMode>('animatic')
@@ -260,6 +276,25 @@ export function AudioGalleryPlayer({
     return pos >= 0 ? pos + 1 : 0
   }, [videoSceneIndices, currentSceneIndex])
 
+  const streamReadyLanguages = useMemo(
+    () => getReadyStreamLanguages(projectStreams ?? []),
+    [projectStreams]
+  )
+
+  const hasReadyStreamForLanguage = useMemo(
+    () => !!findStreamMaster(projectStreams ?? [], selectedLanguage),
+    [projectStreams, selectedLanguage]
+  )
+
+  const activeStreamMaster = useMemo(
+    () => findStreamMaster(projectStreams ?? [], selectedLanguage),
+    [projectStreams, selectedLanguage]
+  )
+
+  const streamMasterUrl = activeStreamMaster?.mp4Url ?? null
+
+  const useStreamMaster = playbackMode === 'stream' && !!streamMasterUrl
+
   const useVideoForCurrentScene =
     playbackMode === 'video' && videoSceneIndices.includes(currentSceneIndex)
 
@@ -300,13 +335,14 @@ export function AudioGalleryPlayer({
   }, [playbackMode, videoSceneIndices, currentSceneIndex, goToScene, scenes.length, onSceneChange])
 
   const handlePlaybackEnd = useCallback(() => {
+    if (playbackMode === 'stream') return
     if (autoAdvanceRef.current && currentSceneIndex < scenes.length - 1) {
       setTimeout(() => {
         goToNextScene()
         setTimeout(() => playAfterSceneChangeRef.current(), 100)
       }, 100)
     }
-  }, [currentSceneIndex, scenes.length, goToNextScene])
+  }, [playbackMode, currentSceneIndex, scenes.length, goToNextScene])
 
   const playback = useStoryboardPlayback({
     scene: currentScene,
@@ -365,15 +401,17 @@ export function AudioGalleryPlayer({
     return { primaryUrl, overlayUrl: null as string | null, blend: 0, fadeBlack }
   }, [currentVisualFrame, currentTime, displayImageUrl])
 
+  const useActiveVideoPlayback = useStreamMaster || useVideoForCurrentScene
+
   const videoFadeBlack = useMemo(() => {
-    if (!useVideoForCurrentScene || videoDuration <= 0) return 0
+    if (!useActiveVideoPlayback || videoDuration <= 0) return 0
     const fadeIn = Math.max(0, 1 - videoCurrentTime / SCENE_FADE_TO_BLACK_SEC)
     const fadeOut = Math.max(
       0,
       1 - (videoDuration - videoCurrentTime) / SCENE_FADE_TO_BLACK_SEC
     )
     return Math.min(1, Math.max(fadeIn, fadeOut))
-  }, [useVideoForCurrentScene, videoCurrentTime, videoDuration])
+  }, [useActiveVideoPlayback, videoCurrentTime, videoDuration])
 
   const rawSpeakerLabel = currentVisualFrame?.character ?? currentVisualFrame?.label
   const speakerLabel = translatePlayerLabel(rawSpeakerLabel, playerLabels)
@@ -495,10 +533,32 @@ export function AudioGalleryPlayer({
     (Array.isArray(currentScene?.sfxAudio) && currentScene!.sfxAudio.length > 0)
 
   useEffect(() => {
+    if (!screeningPlaybackHint || screeningPlaybackHint.mode !== 'stream') return
+    setPlaybackMode('stream')
+    onLanguageChange(screeningPlaybackHint.language)
+    onScreeningPlaybackHintConsumed?.()
+  }, [screeningPlaybackHint, onLanguageChange, onScreeningPlaybackHintConsumed])
+
+  useEffect(() => {
     if (playbackMode === 'video' && !hasAnySceneVideo) {
       setPlaybackMode('animatic')
     }
   }, [playbackMode, hasAnySceneVideo])
+
+  useEffect(() => {
+    if (playbackMode === 'stream' && streamReadyLanguages.length === 0) {
+      setPlaybackMode('animatic')
+      return
+    }
+    if (playbackMode === 'stream' && !hasReadyStreamForLanguage && streamReadyLanguages.length > 0) {
+      onLanguageChange(streamReadyLanguages[0]!)
+    }
+  }, [
+    playbackMode,
+    streamReadyLanguages,
+    hasReadyStreamForLanguage,
+    onLanguageChange,
+  ])
 
   useEffect(() => {
     if (playbackMode !== 'video' || videoSceneIndices.length === 0) return
@@ -512,25 +572,26 @@ export function AudioGalleryPlayer({
   }, [playbackMode, videoSceneIndices, currentSceneIndex, onSceneChange])
 
   useEffect(() => {
-    if (useVideoForCurrentScene) {
+    if (useStreamMaster || useVideoForCurrentScene) {
       pause()
       reset()
     } else if (videoRef.current) {
       videoRef.current.pause()
       setVideoPlaying(false)
     }
-  }, [useVideoForCurrentScene, currentSceneIndex, currentSceneVideoUrl, pause, reset])
+  }, [useStreamMaster, useVideoForCurrentScene, currentSceneIndex, currentSceneVideoUrl, pause, reset])
 
   useEffect(() => {
-    if (!shouldAutoPlayVideoRef.current || !useVideoForCurrentScene) return
+    if (!shouldAutoPlayVideoRef.current || (!useVideoForCurrentScene && !useStreamMaster)) return
     shouldAutoPlayVideoRef.current = false
     const el = videoRef.current
     if (!el) return
     void el.play().then(() => setVideoPlaying(true)).catch(() => setVideoPlaying(false))
-  }, [useVideoForCurrentScene, currentSceneIndex, currentSceneVideoUrl])
+  }, [useStreamMaster, useVideoForCurrentScene, currentSceneIndex, currentSceneVideoUrl, streamMasterUrl])
 
   const handleVideoEnded = useCallback(() => {
     setVideoPlaying(false)
+    if (useStreamMaster) return
     if (autoAdvanceRef.current) {
       const next = findNextVideoSceneIndex(videoSceneIndices, currentSceneIndex)
       if (next != null) {
@@ -540,7 +601,9 @@ export function AudioGalleryPlayer({
         }, 100)
       }
     }
-  }, [videoSceneIndices, currentSceneIndex, goToScene])
+  }, [useStreamMaster, videoSceneIndices, currentSceneIndex, goToScene])
+
+  const activeVideoUrl = useStreamMaster ? streamMasterUrl : currentSceneVideoUrl
 
   const toggleVideoPlayback = useCallback(() => {
     const el = videoRef.current
@@ -553,31 +616,36 @@ export function AudioGalleryPlayer({
     }
   }, [])
 
-  const effectiveIsPlaying = useVideoForCurrentScene ? videoPlaying : isPlaying
-  const effectiveCurrentTime = useVideoForCurrentScene ? videoCurrentTime : currentTime
-  const effectiveDuration = useVideoForCurrentScene
+  const effectiveIsPlaying = useStreamMaster || useVideoForCurrentScene ? videoPlaying : isPlaying
+  const effectiveCurrentTime = useStreamMaster || useVideoForCurrentScene ? videoCurrentTime : currentTime
+  const effectiveDuration = useStreamMaster || useVideoForCurrentScene
     ? Math.max(videoDuration, 0.1)
     : sceneDuration
 
   const toggleEffectivePlayback = useCallback(() => {
-    if (useVideoForCurrentScene) {
+    if (useStreamMaster || useVideoForCurrentScene) {
       toggleVideoPlayback()
     } else {
       togglePlayback()
     }
-  }, [useVideoForCurrentScene, toggleVideoPlayback, togglePlayback])
+  }, [useStreamMaster, useVideoForCurrentScene, toggleVideoPlayback, togglePlayback])
 
   const seekEffective = useCallback(
     (time: number) => {
-      if (useVideoForCurrentScene && videoRef.current) {
+      if (useActiveVideoPlayback && videoRef.current) {
         videoRef.current.currentTime = time
         setVideoCurrentTime(time)
       } else {
         seekTo(time)
       }
     },
-    [useVideoForCurrentScene, seekTo]
+    [useActiveVideoPlayback, seekTo]
   )
+
+  const languageFilterCodes =
+    playbackMode === 'stream' && streamReadyLanguages.length > 0
+      ? streamReadyLanguages
+      : availableLanguages
 
   // Image motion transform — one Ken Burns cycle per storyboard cut
   const kenBurnsProgress = useMemo(() => {
@@ -720,9 +788,34 @@ export function AudioGalleryPlayer({
                 : 'Render at least one scene video to enable Video mode'}
             </TooltipContent>
           </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => streamReadyLanguages.length > 0 && setPlaybackMode('stream')}
+                disabled={streamReadyLanguages.length === 0}
+                className={cn(
+                  'px-2 py-0.5 rounded text-[11px] font-medium transition-colors',
+                  playbackMode === 'stream'
+                    ? 'bg-violet-600 text-white'
+                    : 'text-gray-400 hover:text-white',
+                  streamReadyLanguages.length === 0 && 'opacity-40 cursor-not-allowed hover:text-gray-400'
+                )}
+              >
+                Stream
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {streamReadyLanguages.length > 0
+                ? 'Play stitched master MP4 for the selected language'
+                : 'Render a language master in Streams to enable Stream mode'}
+            </TooltipContent>
+          </Tooltip>
         </div>
         <span className="text-xs text-gray-400 bg-gray-800 px-2 py-0.5 rounded">
-          {playbackMode === 'video'
+          {playbackMode === 'stream'
+            ? 'Language master'
+            : playbackMode === 'video'
             ? `Video ${videoScenePosition} of ${videoSceneIndices.length}`
             : `Scene ${currentSceneIndex + 1} of ${scenes.length}`}
         </span>
@@ -761,23 +854,29 @@ export function AudioGalleryPlayer({
             Animatic
           </a>
         )}
-        {onShare && !isSharedView && (
+        {(onShare || onShareStream) && !isSharedView && (
           <Button
             variant="outline"
             size="sm"
-            onClick={onShare}
+            onClick={() => {
+              if (playbackMode === 'stream' && onShareStream) {
+                void onShareStream(selectedLanguage)
+              } else if (onShare) {
+                onShare()
+              }
+            }}
             className="h-7 text-xs bg-gray-800 border-gray-700 hover:bg-gray-700 hover:text-white"
           >
             <Share2 className="w-3.5 h-3.5 mr-1.5" />
             Share
           </Button>
         )}
-        {availableLanguages.length > 1 && (
+        {languageFilterCodes.length > 1 && (
           <div className="flex items-center gap-2">
             <GroupedLanguageSelector
               value={selectedLanguage}
               onValueChange={onLanguageChange}
-              filterCodes={availableLanguages}
+              filterCodes={languageFilterCodes}
               size="sm"
               className="bg-gray-800 border-gray-700"
             />
@@ -845,12 +944,12 @@ export function AudioGalleryPlayer({
 
   const videoStageContent = (
     <>
-      {useVideoForCurrentScene ? (
+      {useActiveVideoPlayback ? (
         <>
           <video
             ref={videoRef}
-            key={currentSceneVideoUrl || `scene-${currentSceneIndex}`}
-            src={currentSceneVideoUrl || undefined}
+            key={activeVideoUrl || `scene-${currentSceneIndex}`}
+            src={activeVideoUrl || undefined}
             className="w-full h-full object-contain"
             onLoadedMetadata={(e) => setVideoDuration(e.currentTarget.duration || 0)}
             onTimeUpdate={(e) => setVideoCurrentTime(e.currentTarget.currentTime)}
@@ -858,7 +957,7 @@ export function AudioGalleryPlayer({
             onPause={() => setVideoPlaying(false)}
             onEnded={handleVideoEnded}
           />
-          {videoFadeBlack > 0 && (
+          {videoFadeBlack > 0 && !useStreamMaster && (
             <div
               className="absolute inset-0 bg-black z-[2] pointer-events-none"
               style={{ opacity: videoFadeBlack }}
