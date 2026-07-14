@@ -2,6 +2,7 @@
  * Resolve character identity + wardrobe URLs for the Edit frame dialog.
  */
 
+import { findSceneCharacters } from '@/lib/character/matching'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type { StoryboardFrameSlot } from '@/lib/storyboard/types'
@@ -31,6 +32,15 @@ export type FrameEditEditingFrame =
   | { kind: 'beat'; sceneIndex: number; beatId: string; imageUrl: string }
   | { kind: 'dialogue'; sceneIndex: number; dialogueIndex: number; imageUrl: string }
   | { kind: 'custom'; sceneIndex: number; customFrameId: string; imageUrl: string }
+
+function sceneHeadingText(scene: Record<string, unknown>): string {
+  const heading = scene?.heading
+  if (typeof heading === 'string') return heading
+  if (heading && typeof heading === 'object' && 'text' in heading) {
+    return String((heading as { text?: string }).text || '')
+  }
+  return ''
+}
 
 function fillSelectedWardrobesForCharacters(
   characterNames: string[],
@@ -267,6 +277,33 @@ export function resolveFrameEditCharacterReferences(args: {
         characters
       )
     }
+  }
+
+  if (characterNames.length === 0) {
+    const sceneText = [
+      sceneHeadingText(scene),
+      scene.action || '',
+      scene.visualDescription || '',
+      ...(Array.isArray(scene.dialogue)
+        ? scene.dialogue.map((d: { character?: string }) => d.character || '')
+        : []),
+    ].join(' ')
+    const detected = findSceneCharacters(
+      sceneText,
+      characters as Parameters<typeof findSceneCharacters>[1]
+    )
+    characterNames = detected.map((c) => c.name).filter(Boolean) as string[]
+    const selectedWardrobes = fillSelectedWardrobesForCharacters(
+      characterNames,
+      characters,
+      scene,
+      sceneIndex
+    )
+    characterWardrobes = characterWardrobesFromNames(
+      characterNames,
+      selectedWardrobes,
+      characters
+    )
   }
 
   const seen = new Set<string>()

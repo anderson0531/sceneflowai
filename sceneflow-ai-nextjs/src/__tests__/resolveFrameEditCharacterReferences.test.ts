@@ -93,6 +93,41 @@ describe('resolveFrameEditCharacterReferences', () => {
     expect(refs[0].wardrobeImageUrl).toBe('https://example.com/lab-coat.jpg')
   })
 
+  it('returns identity + wardrobe URLs for establishing frame via scene-wide detection', () => {
+    const scene = {
+      heading: 'INT. OFFICE - DAY',
+      action: 'Marcus enters the office and looks around.',
+    }
+    const refs = resolveFrameEditCharacterReferences({
+      editingFrame: {
+        kind: 'establishing',
+        sceneIndex: 0,
+        imageUrl: 'https://example.com/scene.jpg',
+      },
+      scene,
+      sceneIndex: 0,
+      characters: [marcus],
+    })
+    expect(refs).toHaveLength(1)
+    expect(refs[0].characterName).toBe('Marcus')
+    expect(refs[0].identityImageUrl).toBe('https://example.com/marcus-portrait.jpg')
+    expect(refs[0].wardrobeImageUrl).toBe('https://example.com/marcus-turnaround.jpg')
+  })
+
+  it('returns empty array when establishing frame has no matching cast', () => {
+    const refs = resolveFrameEditCharacterReferences({
+      editingFrame: {
+        kind: 'establishing',
+        sceneIndex: 0,
+        imageUrl: 'https://example.com/scene.jpg',
+      },
+      scene: { heading: 'EXT. PARK - DAY', action: 'Birds chirp in the trees.' },
+      sceneIndex: 0,
+      characters: [marcus],
+    })
+    expect(refs).toEqual([])
+  })
+
   it('returns empty array when no characters resolve', () => {
     const refs = resolveFrameEditCharacterReferences({
       editingFrame: {
