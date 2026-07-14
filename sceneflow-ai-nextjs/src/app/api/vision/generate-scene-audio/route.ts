@@ -29,6 +29,7 @@ import {
 import { buildGeminiTtsPrompt } from '../../../../lib/tts/geminiTtsPrompt'
 import { resolveCharacterVoicePrompt } from '../../../../lib/tts/resolveCharacterVoicePrompt'
 import { buildGeminiTtsAdvancedVoiceOptions } from '../../../../lib/tts/geminiTtsSafety'
+import { resolveGoogleTtsLanguageCode } from '../../../../lib/tts/googleTtsLocale'
 import { persistSceneAudioAtomic } from '../../../../lib/audio/persistSceneAudioAtomic'
 
 export const maxDuration = 60
@@ -709,17 +710,7 @@ async function generateGoogleAudio(
 
   // Override with the requested target language to ensure native accents
   if (language && language !== 'en') {
-    const preciseMap: Record<string, string> = {
-      'th': 'th-TH', 'es': 'es-ES', 'fr': 'fr-FR', 'de': 'de-DE', 'it': 'it-IT',
-      'ja': 'ja-JP', 'ko': 'ko-KR', 'zh': 'cmn-CN', 'pt': 'pt-BR', 'ru': 'ru-RU',
-      'nl': 'nl-NL', 'pl': 'pl-PL', 'sv': 'sv-SE', 'tr': 'tr-TR', 'da': 'da-DK',
-      'fi': 'fi-FI', 'no': 'nb-NO', 'hi': 'hi-IN', 'id': 'id-ID', 'vi': 'vi-VN',
-      'cy': 'cy-GB', 'et': 'et-EE', 'hr': 'hr-HR', 'bs': 'bs-BA', 'sl': 'sl-SI',
-      'mk': 'mk-MK', 'ka': 'ka-GE', 'az': 'az-AZ', 'kk': 'kk-KZ', 'fa': 'fa-IR',
-      'ur': 'ur-PK', 'sw': 'sw-KE'
-    }
-    
-    languageCode = preciseMap[language] || `${language}-${language.toUpperCase()}`
+    languageCode = resolveGoogleTtsLanguageCode(language)
     console.log(`[Google TTS] Target language ${language} requested. Setting languageCode to ${languageCode} to enforce native accent.`)
   }
 
