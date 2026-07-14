@@ -115,7 +115,7 @@ import { GenerateAudioDialog } from './GenerateAudioDialog'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import {
-  getConfiguredStreamLanguages,
+  mergeStreamSelectorLanguages,
   type ProjectStream,
 } from '@/lib/streams/projectStreams'
 import { useAudioPlayerContext, type Track } from '@/context/AudioPlayerProvider'
@@ -836,10 +836,29 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
   const [generateAudioDialogOpen, setGenerateAudioDialogOpen] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en')
 
-  const streamLanguages = useMemo(
-    () => getConfiguredStreamLanguages(projectStreams),
-    [projectStreams]
-  )
+  const streamLanguages = useMemo(() => {
+    const audioLangs = new Set<string>()
+    const scriptScenes = script?.script?.scenes ?? []
+    for (const scene of scriptScenes) {
+      const s = scene as {
+        narrationAudio?: Record<string, { url?: string }>
+        dialogueAudio?: Record<string, unknown[]>
+      }
+      if (s.narrationAudio) {
+        for (const lang of Object.keys(s.narrationAudio)) {
+          if (s.narrationAudio[lang]?.url) audioLangs.add(lang)
+        }
+      }
+      if (s.dialogueAudio) {
+        for (const lang of Object.keys(s.dialogueAudio)) {
+          if (Array.isArray(s.dialogueAudio[lang]) && s.dialogueAudio[lang].length > 0) {
+            audioLangs.add(lang)
+          }
+        }
+      }
+    }
+    return mergeStreamSelectorLanguages(projectStreams, audioLangs)
+  }, [projectStreams, script?.script?.scenes])
 
   useEffect(() => {
     if (!streamLanguages.includes(selectedLanguage)) {
@@ -7240,6 +7259,7 @@ function SceneCard({
                           onSaveEditedKeyframe={onEditFrame}
                           onModerationReport={onModerationReport}
                           projectAspectRatio={projectAspectRatio}
+                          projectStreams={projectStreams}
                         >
                           {(slots) => (
                             <Tabs

@@ -14050,6 +14050,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             sceneProductionState={sceneProductionState}
                             beatCaptionSettings={beatCaptionSettings}
                             onBeatCaptionSettingsChange={handleBeatCaptionSettingsChange}
+                            projectStreams={projectStreams}
                           />
                         </div>
                       )}

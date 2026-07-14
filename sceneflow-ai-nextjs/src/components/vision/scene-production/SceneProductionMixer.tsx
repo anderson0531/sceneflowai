@@ -92,6 +92,10 @@ import { Progress } from '@/components/ui/progress'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { cn, forceDownload } from '@/lib/utils'
 import { SUPPORTED_LANGUAGES, FLAG_EMOJIS } from '@/constants/languages'
+import {
+  mergeStreamSelectorLanguages,
+  type ProjectStream,
+} from '@/lib/streams/projectStreams'
 import { MixerTimeline } from './MixerTimeline'
 import { ProductionSectionHeader } from './ProductionSectionHeader'
 import { useOverlayStore } from '@/store/useOverlayStore'
@@ -425,6 +429,8 @@ interface SceneProductionMixerProps {
   onSegmentsChange?: (segments: SceneSegment[]) => void
   /** Persist mixer UI settings to scene production data (per language) */
   onMixerSettingsChange?: (payload: MixerSettingsPersistPayload) => void
+  /** Project-level configured language streams (visionPhase.streams). */
+  projectStreams?: ProjectStream[]
 }
 
 // ============================================================================
@@ -3078,6 +3084,7 @@ export function SceneProductionMixer({
   videoGenerationAvailable,
   onSegmentsChange,
   onMixerSettingsChange,
+  projectStreams,
 }: SceneProductionMixerProps) {
   const selectedLanguage = productionTarget.language
   const isEnglish = selectedLanguage === 'en'
@@ -3322,8 +3329,8 @@ export function SceneProductionMixer({
     if (audioAssets.dialogueAudio) {
       Object.keys(audioAssets.dialogueAudio).forEach((l) => langs.add(l))
     }
-    return Array.from(langs).filter((l) => l !== 'en')
-  }, [audioAssets])
+    return mergeStreamSelectorLanguages(projectStreams, langs).filter((l) => l !== 'en')
+  }, [audioAssets, projectStreams])
 
   const persistOverlayTranslations = useCallback(
     async (translations: TextOverlayTranslationsByLanguage) => {
@@ -3681,17 +3688,17 @@ export function SceneProductionMixer({
     )
   }, [segmentIdsKey, segments])
   
-  // Get available languages from audio assets
+  // Languages available in the mixer: configured streams + per-scene audio keys
   const availableLanguages = useMemo(() => {
-    const langs = new Set<string>(['en'])
+    const langs = new Set<string>()
     if (audioAssets.narrationAudio) {
-      Object.keys(audioAssets.narrationAudio).forEach(l => langs.add(l))
+      Object.keys(audioAssets.narrationAudio).forEach((l) => langs.add(l))
     }
     if (audioAssets.dialogueAudio) {
-      Object.keys(audioAssets.dialogueAudio).forEach(l => langs.add(l))
+      Object.keys(audioAssets.dialogueAudio).forEach((l) => langs.add(l))
     }
-    return Array.from(langs)
-  }, [audioAssets])
+    return mergeStreamSelectorLanguages(projectStreams, langs)
+  }, [audioAssets, projectStreams])
 
   const displayOverlays = useMemo(
     () => applyResolvedOverlaysForLanguage(textOverlays, selectedLanguage, textOverlayTranslations),

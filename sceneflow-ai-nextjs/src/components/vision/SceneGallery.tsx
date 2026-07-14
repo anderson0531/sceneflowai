@@ -19,7 +19,10 @@ import {
   type BeatCaptionSettings,
 } from '@/lib/storyboard/beatCaptionSettings'
 import type { SceneProductionData } from '@/components/vision/scene-production/types'
-import type { ProjectStream } from '@/lib/streams/projectStreams'
+import {
+  mergeStreamSelectorLanguages,
+  type ProjectStream,
+} from '@/lib/streams/projectStreams'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType, StoryboardData } from '@/lib/types/reports'
@@ -215,7 +218,7 @@ export function SceneGallery({
     [scenes, selectedLanguage]
   )
 
-  const availableLanguages = useMemo(() => {
+  const languagesWithAudio = useMemo(() => {
     const langs = new Set<string>()
     scenes.forEach(scene => {
       if (scene.narrationAudio) {
@@ -232,6 +235,11 @@ export function SceneGallery({
     if (langs.size === 0) langs.add('en')
     return Array.from(langs).sort()
   }, [scenes])
+
+  const availableLanguages = useMemo(
+    () => mergeStreamSelectorLanguages(projectStreams, languagesWithAudio),
+    [projectStreams, languagesWithAudio]
+  )
 
   const handleLanguageSelect = useCallback(
     (lang: string) => {
@@ -633,18 +641,19 @@ export function SceneGallery({
                   <GroupedLanguageSelector
                     value={selectedLanguage}
                     onValueChange={handleLanguageSelect}
+                    filterCodes={availableLanguages}
                     size="xs"
                     intent="generate"
                   />
                 </div>
               </TooltipTrigger>
               <TooltipContent>
-                {availableLanguages.includes(selectedLanguage)
+                {languagesWithAudio.includes(selectedLanguage)
                   ? 'Switch storyboard playback language'
                   : 'No audio in this language yet — generate dialogue stream'}
               </TooltipContent>
             </Tooltip>
-            {!availableLanguages.includes(selectedLanguage) && (
+            {!languagesWithAudio.includes(selectedLanguage) && (
               <span className="text-[10px] uppercase tracking-wider text-amber-300 bg-amber-900/30 border border-amber-700/40 px-1.5 py-0.5 rounded">
                 Missing
               </span>

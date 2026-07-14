@@ -235,3 +235,20 @@ export function getConfiguredStreamLanguages(streams: ProjectStream[]): string[]
     return a.localeCompare(b)
   })
 }
+
+/** Union configured stream languages with legacy per-scene audio language keys. */
+export function mergeStreamSelectorLanguages(
+  projectStreams: ProjectStream[] | undefined,
+  audioLanguages: Iterable<string> = []
+): string[] {
+  const langs = new Set<string>(getConfiguredStreamLanguages(projectStreams || []))
+  for (const lang of audioLanguages) {
+    const code = lang?.trim()
+    if (code) langs.add(code)
+  }
+  return Array.from(langs).sort((a, b) => {
+    if (a === 'en') return -1
+    if (b === 'en') return 1
+    return a.localeCompare(b)
+  })
+}

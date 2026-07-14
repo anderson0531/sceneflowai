@@ -254,6 +254,8 @@ export interface DirectorConsoleProps {
   }>
   /** Locked project aspect ratio from Blueprint */
   projectAspectRatio?: BlueprintAspectRatio
+  /** Project-level configured language streams (visionPhase.streams). */
+  projectStreams?: import('@/lib/streams/projectStreams').ProjectStream[]
 }
 
 /** Slots for splitting Video / Mixer / Streams across parent section cards (ScriptPanel). */
@@ -324,6 +326,7 @@ export function DirectorConsoleRoot({
   objectReferences = [],
   locationReferences = [],
   projectAspectRatio = '16:9',
+  projectStreams,
   children,
 }: DirectorConsoleProps & {
   children?: (slots: DirectorWorkflowSlots) => React.ReactNode
@@ -1279,6 +1282,7 @@ export function DirectorConsoleRoot({
               payload.textOverlayTranslations ?? base.textOverlayTranslations,
           })
         }}
+        projectStreams={projectStreams}
         onRenderComplete={(downloadUrl, language, streamType = productionTarget.streamType, meta) => {
           setRenderedSceneUrl(downloadUrl)
           const languageInfo = SUPPORTED_LANGUAGES.find(l => l.code === language)
