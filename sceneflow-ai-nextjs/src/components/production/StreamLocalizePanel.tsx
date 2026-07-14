@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo } from 'react'
+import React, { useMemo } from 'react'
 import { Coins, Loader2, Mic, Sparkles, Volume2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Switch } from '@/components/ui/switch'
@@ -97,14 +97,6 @@ export function StreamLocalizePanel({
     onPersistSceneProduction,
     reloadSceneProduction,
   })
-
-  useEffect(() => {
-    if (!running) {
-      setMode(persisted.mode)
-      setSpeed(persisted.speed)
-      setStemMode(persisted.stemMode)
-    }
-  }, [persisted.mode, persisted.speed, persisted.stemMode, running, setMode, setSpeed, setStemMode])
 
   const scriptScenes = useMemo(() => readScriptScenesFromProject(script), [script])
   const activeLocalize = running ? localizeDraft : persisted

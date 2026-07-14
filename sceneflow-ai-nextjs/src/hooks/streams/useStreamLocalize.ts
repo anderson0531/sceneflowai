@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import type { SceneProductionData } from '@/components/vision/scene-production/types'
 import { buildFinalCutClips } from '@/lib/final-cut/useFinalCutClips'
@@ -179,6 +179,18 @@ export function useStreamLocalize({
     getLocalizeState(stream)
   )
   const runningLocalizeRef = useRef<StreamLocalizeState>(getLocalizeState(stream))
+
+  useEffect(() => {
+    if (running) return
+    setLocalizeDraft(getLocalizeState(stream))
+  }, [
+    running,
+    stream.localize?.updatedAt,
+    stream.localize?.mode,
+    stream.localize?.speed,
+    stream.localize?.stemMode,
+    stream.localize?.status,
+  ])
 
   const persistStreamLocalize = useCallback(
     async (patch: Partial<StreamLocalizeState>) => {
@@ -441,6 +453,19 @@ export function useStreamLocalize({
     updateSceneStatus,
   ])
 
+  const setMode = useCallback(
+    (mode: StreamLocalizeMode) => setDraft({ mode }),
+    [setDraft]
+  )
+  const setSpeed = useCallback(
+    (speed: number) => setDraft({ speed }),
+    [setDraft]
+  )
+  const setStemMode = useCallback(
+    (stemMode: StreamStemMode) => setDraft({ stemMode }),
+    [setDraft]
+  )
+
   return {
     running,
     localizeDraft,
@@ -448,8 +473,8 @@ export function useStreamLocalize({
     saveDraftSettings,
     runLocalize,
     estimatedLipsyncCredits,
-    setMode: (mode: StreamLocalizeMode) => setDraft({ mode }),
-    setSpeed: (speed: number) => setDraft({ speed }),
-    setStemMode: (stemMode: StreamStemMode) => setDraft({ stemMode }),
+    setMode,
+    setSpeed,
+    setStemMode,
   }
 }
