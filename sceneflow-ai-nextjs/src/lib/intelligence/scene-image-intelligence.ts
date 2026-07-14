@@ -708,7 +708,7 @@ export async function generateSceneImagePrompt(
     return intelligenceResult
     
   } catch (error: any) {
-    console.error(`[Scene Image Intelligence] Gemini error, falling back to rules-based optimizer:`, error.message)
+    console.warn(`[Scene Image Intelligence] Gemini error, falling back to rules-based optimizer:`, error.message)
     
     // Return a fallback indicator — the caller should use optimizePromptForImagen() instead
     return {

@@ -144,6 +144,10 @@ interface AudioGalleryPlayerProps {
   finalCutSelection?: FinalCutSelection | null
   /** Production Screening tab: large player on top, title and controls below. */
   screeningLayout?: boolean
+  /** When false, beat caption overlays are hidden for the active language stream. */
+  beatCaptionsEnabled?: boolean
+  /** Screening tab: toggle beat captions for the currently selected language. */
+  onBeatCaptionsEnabledChange?: (enabled: boolean) => void
 }
 
 function formatTime(seconds: number) {
@@ -199,6 +203,8 @@ export function AudioGalleryPlayer({
   sceneProductionState,
   finalCutSelection,
   screeningLayout = false,
+  beatCaptionsEnabled = true,
+  onBeatCaptionsEnabledChange,
 }: AudioGalleryPlayerProps) {
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0)
   const [playbackMode, setPlaybackMode] = useState<PreVisPlaybackMode>('animatic')
@@ -373,6 +379,7 @@ export function AudioGalleryPlayer({
   const speakerLabel = translatePlayerLabel(rawSpeakerLabel, playerLabels)
 
   const activeCaption = useMemo(() => {
+    if (!beatCaptionsEnabled) return null
     const sceneTranslation = sceneTranslations?.[currentSceneIndex]
     const text = resolveBeatCaptionText(
       sceneTranslation,
@@ -385,6 +392,7 @@ export function AudioGalleryPlayer({
       overlayType: currentVisualFrame?.overlayType || 'signage',
     }
   }, [
+    beatCaptionsEnabled,
     sceneTranslations,
     currentSceneIndex,
     currentVisualFrame?.beatId,
@@ -774,6 +782,24 @@ export function AudioGalleryPlayer({
               className="bg-gray-800 border-gray-700"
             />
           </div>
+        )}
+        {screeningLayout && onBeatCaptionsEnabledChange && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1.5">
+                <Switch
+                  checked={beatCaptionsEnabled}
+                  onCheckedChange={onBeatCaptionsEnabledChange}
+                  className="scale-75"
+                  aria-label="Beat captions"
+                />
+                <span className="text-[10px] text-gray-400 whitespace-nowrap">Beat captions</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              Show on-screen beat titles and signage for this language stream
+            </TooltipContent>
+          </Tooltip>
         )}
         <Tooltip>
           <TooltipTrigger asChild>

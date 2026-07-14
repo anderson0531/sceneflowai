@@ -82,6 +82,11 @@ import {
   type PreVisDirectGenerationOptions,
 } from '@/components/vision/PreVisFramePromptDialog'
 import { toast } from 'sonner'
+import { SceneImageQuotaToast } from '@/components/vision/SceneImageQuotaToast'
+import {
+  fetchSceneGenerateImageWith429Retry,
+  isSceneImageQuotaResponse,
+} from '@/lib/vision/sceneImageClientRetry'
 import {
   resolveCharacterId,
   updateCharacterInList,
@@ -1279,6 +1284,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       Record<string, string>
     >
   }, [project?.metadata?.visionPhase?.playerLabels])
+
+  const beatCaptionSettings = useMemo(() => {
+    return (project?.metadata?.visionPhase?.beatCaptionSettings || {}) as Record<
+      string,
+      boolean
+    >
+  }, [project?.metadata?.visionPhase?.beatCaptionSettings])
   
   // Save translations callback
   const handleSaveTranslations = useCallback(async (langCode: string, translations: Record<number, { heading?: string; description?: string; action?: string; narration?: string; dialogue?: string[]; beatsByBeatId?: Record<string, { overlayText?: string; overlayEdited?: boolean }> }>) => {
@@ -1331,6 +1343,51 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       throw error
     }
   }, [project, projectId])
+
+  const handleBeatCaptionSettingsChange = useCallback(
+    async (settings: Record<string, boolean>) => {
+      try {
+        const existingMetadata = project?.metadata || {}
+        const existingVisionPhase = existingMetadata.visionPhase || {}
+
+        const response = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metadata: {
+              ...existingMetadata,
+              visionPhase: {
+                ...existingVisionPhase,
+                beatCaptionSettings: settings,
+              },
+            },
+          }),
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to save beat caption settings')
+        }
+
+        setProject((prev) => {
+          if (!prev) return prev
+          return {
+            ...prev,
+            metadata: {
+              ...prev.metadata,
+              visionPhase: {
+                ...prev.metadata?.visionPhase,
+                beatCaptionSettings: settings,
+              },
+            },
+          }
+        })
+      } catch (error) {
+        console.error('[VisionPage] Error saving beat caption settings:', error)
+        throw error
+      }
+    },
+    [project, projectId]
+  )
 
   // Auto-select first scene when scenes are loaded
   useEffect(() => {
@@ -9373,25 +9430,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Check for quota error
       if (error.message?.includes('quota') || error.message?.includes('RESOURCE_EXHAUSTED')) {
         try { 
-          const { toast } = require('sonner')
           toast.error(
-            <div className="space-y-2">
-              <div className="font-semibold">Image Generation Quota Exceeded</div>
-              <div className="text-sm">
-                Google Cloud has rate limits on image generation. Please:
-              </div>
-              <ul className="text-sm list-disc pl-4 space-y-1">
-                <li>Wait 30-60 seconds before trying again</li>
-                <li>Generate one scene at a time</li>
-                <li>Consider using Auto quality for faster generation</li>
-              </ul>
-              <button 
-                onClick={() => handleGenerateSceneImage(sceneIdx)}
-                className="mt-2 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded"
-              >
-                Retry Generation
-              </button>
-            </div>,
+            <SceneImageQuotaToast
+              onRetry={() => handleGenerateSceneImage(sceneIdx)}
+            />,
             { duration: 10000, position: 'top-center' }
           )
         } catch {}
@@ -9439,36 +9481,59 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       : null
 
     try {
-      const response = await fetch('/api/scene/generate-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          sceneIndex: sceneIdx,
-          frameType: 'beat',
-          beatId,
-          beatIndex: rawBeatIdx,
-          quality: imageQuality,
-          characterWardrobes:
-            explicitRefs?.characterWardrobes ?? scene.characterWardrobes ?? [],
-          ...(explicitRefs
-            ? {
-                selectedCharacters: explicitRefs.selectedCharacters,
-                locationReferences: explicitRefs.locationReferences,
-                objectReferences: explicitRefs.objectReferences,
-                characterSelectionExplicit: explicitRefs.characterSelectionExplicit,
-                skipObjectAutoDetection: explicitRefs.skipObjectAutoDetection,
-              }
-            : {
-                characterSelectionExplicit: true,
-              }),
-          ...GALLERY_MANUAL_GENERATE_OPTS,
-        }),
+      const requestBody = {
+        projectId,
+        sceneIndex: sceneIdx,
+        frameType: 'beat',
+        beatId,
+        beatIndex: rawBeatIdx,
+        quality: imageQuality,
+        characterWardrobes:
+          explicitRefs?.characterWardrobes ?? scene.characterWardrobes ?? [],
+        ...(explicitRefs
+          ? {
+              selectedCharacters: explicitRefs.selectedCharacters,
+              locationReferences: explicitRefs.locationReferences,
+              objectReferences: explicitRefs.objectReferences,
+              characterSelectionExplicit: explicitRefs.characterSelectionExplicit,
+              skipObjectAutoDetection: explicitRefs.skipObjectAutoDetection,
+            }
+          : {
+              characterSelectionExplicit: true,
+            }),
+        ...GALLERY_MANUAL_GENERATE_OPTS,
+      }
+
+      let retryToastId: string | number | undefined
+      const { response, data } = await fetchSceneGenerateImageWith429Retry(requestBody, {
+        onRetryScheduled: (attempt, maxRetries) => {
+          try {
+            if (retryToastId !== undefined) toast.dismiss(retryToastId)
+            retryToastId = toast.loading(
+              `Image service busy — retrying (${attempt}/${maxRetries})…`
+            )
+          } catch {}
+        },
       })
 
-      const data = await response.json()
+      if (retryToastId !== undefined) {
+        try {
+          toast.dismiss(retryToastId)
+        } catch {}
+      }
+
       if (!response.ok) {
-        throw new Error(data?.error || 'Beat frame generation failed')
+        if (isSceneImageQuotaResponse(response.status, data)) {
+          toast.error(
+            <SceneImageQuotaToast
+              onRetry={() => handleGenerateBeatFrameImage(sceneIdx, beatId, referenceSelection)}
+              retryLabel="Retry Beat Frame"
+            />,
+            { duration: 10000, position: 'top-center' }
+          )
+          return
+        }
+        throw new Error((data?.error as string) || 'Beat frame generation failed')
       }
 
       const updatedScenes = [...(script.script.scenes || [])]
@@ -9536,26 +9601,49 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     setGeneratingKeyframeSceneNumber(sceneIdx + 1)
 
     try {
-      const response = await fetch('/api/scene/generate-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          sceneIndex: sceneIdx,
-          frameType: 'beat',
-          frameRole: 'end',
-          beatId,
-          beatIndex: rawBeatIdx,
-          startFrameUrl,
-          quality: imageQuality,
-          characterSelectionExplicit: true,
-          ...GALLERY_MANUAL_GENERATE_OPTS,
-        }),
+      const requestBody = {
+        projectId,
+        sceneIndex: sceneIdx,
+        frameType: 'beat',
+        frameRole: 'end',
+        beatId,
+        beatIndex: rawBeatIdx,
+        startFrameUrl,
+        quality: imageQuality,
+        characterSelectionExplicit: true,
+        ...GALLERY_MANUAL_GENERATE_OPTS,
+      }
+
+      let retryToastId: string | number | undefined
+      const { response, data } = await fetchSceneGenerateImageWith429Retry(requestBody, {
+        onRetryScheduled: (attempt, maxRetries) => {
+          try {
+            if (retryToastId !== undefined) toast.dismiss(retryToastId)
+            retryToastId = toast.loading(
+              `Image service busy — retrying (${attempt}/${maxRetries})…`
+            )
+          } catch {}
+        },
       })
 
-      const data = await response.json()
+      if (retryToastId !== undefined) {
+        try {
+          toast.dismiss(retryToastId)
+        } catch {}
+      }
+
       if (!response.ok) {
-        throw new Error(data?.error || 'End frame generation failed')
+        if (isSceneImageQuotaResponse(response.status, data)) {
+          toast.error(
+            <SceneImageQuotaToast
+              onRetry={() => handleGenerateBeatEndFrameImage(sceneIdx, beatId)}
+              retryLabel="Retry End Frame"
+            />,
+            { duration: 10000, position: 'top-center' }
+          )
+          return
+        }
+        throw new Error((data?.error as string) || 'End frame generation failed')
       }
 
       const updatedScenes = [...(script.script.scenes || [])]
@@ -13751,6 +13839,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             playerLabelsByLanguage={playerLabelsByLanguage}
                             onGenerateLanguage={handleGenerateLanguageStream}
                             sceneProductionState={sceneProductionState}
+                            beatCaptionSettings={beatCaptionSettings}
+                            onBeatCaptionSettingsChange={handleBeatCaptionSettingsChange}
                           />
                         </div>
                       )}
@@ -13782,6 +13872,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     playerLabelsByLanguage={playerLabelsByLanguage}
                     onGenerateLanguage={handleGenerateLanguageStream}
                     sceneProductionState={sceneProductionState}
+                    beatCaptionSettings={beatCaptionSettings}
+                    onBeatCaptionSettingsChange={handleBeatCaptionSettingsChange}
                   />
                 </div>
               )}

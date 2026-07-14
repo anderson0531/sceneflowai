@@ -1,13 +1,16 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Type, ChevronDown, ChevronUp } from 'lucide-react'
+import { Type, ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
 import type { SceneBeat, BeatOverlayType } from '@/lib/script/segmentTypes'
 import {
   defaultBeatOverlayType,
   isBeatCaptionManuallyEdited,
 } from '@/lib/storyboard/playerTranslations'
-import { autoTranslateBeatCaption } from '@/lib/storyboard/beatCaptionTranslations'
+import {
+  autoTranslateBeatCaption,
+  purgeBeatCaptionTranslations,
+} from '@/lib/storyboard/beatCaptionTranslations'
 import type { SceneTranslation } from '@/lib/storyboard/playerTranslations'
 
 type ProjectTranslations = Record<string, Record<number, SceneTranslation>>
@@ -121,17 +124,26 @@ export function BeatCaptionControl({
           updatedScenes[sceneIdx] = scene
           onScriptChange({ ...script, script: { ...script.script, scenes: updatedScenes } })
 
-          if (text && onSaveTranslations) {
-            const targetLanguages = collectCaptionTargetLanguages(scenes, storedTranslations)
-            await autoTranslateBeatCaption({
-              englishText: text,
-              beatId: beat.beatId,
-              sceneIdx,
-              targetLanguages,
-              storedTranslations: storedTranslations || {},
-              previousEnglishText: previousEnglishRef.current,
-              onSaveTranslations,
-            })
+          if (onSaveTranslations) {
+            if (text) {
+              const targetLanguages = collectCaptionTargetLanguages(scenes, storedTranslations)
+              await autoTranslateBeatCaption({
+                englishText: text,
+                beatId: beat.beatId,
+                sceneIdx,
+                targetLanguages,
+                storedTranslations: storedTranslations || {},
+                previousEnglishText: previousEnglishRef.current,
+                onSaveTranslations,
+              })
+            } else {
+              await purgeBeatCaptionTranslations({
+                beatId: beat.beatId,
+                sceneIdx,
+                storedTranslations: storedTranslations || {},
+                onSaveTranslations,
+              })
+            }
           }
           previousEnglishRef.current = text
         } finally {
@@ -179,6 +191,11 @@ export function BeatCaptionControl({
       selectedLanguage,
     ]
   )
+
+  const removeCaption = useCallback(async () => {
+    setDraftText('')
+    await commitCaption({ text: '' })
+  }, [commitCaption])
 
   const hasCaption = Boolean(displayText.trim())
 
@@ -246,6 +263,17 @@ export function BeatCaptionControl({
                 </button>
               ))}
             </div>
+          )}
+          {hasCaption && (
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => void removeCaption()}
+              className="flex items-center gap-1.5 text-[10px] text-red-300/90 hover:text-red-200 transition-colors"
+            >
+              <Trash2 className="h-3 w-3" />
+              Remove caption
+            </button>
           )}
           {!isEnglish && (
             <p className="text-[10px] text-slate-500">

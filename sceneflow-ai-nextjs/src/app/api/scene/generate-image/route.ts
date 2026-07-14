@@ -280,6 +280,7 @@ export async function POST(req: NextRequest) {
   let creditsCharged = 0
   const CREDIT_COST = IMAGE_CREDITS.IMAGEN_3 // 5 credits per image
   const routeStart = Date.now()
+  let logContext: Record<string, unknown> = {}
 
   try {
     // 1. Authenticate user
@@ -351,6 +352,14 @@ export async function POST(req: NextRequest) {
       frameRole = 'start',
       startFrameUrl,
     } = body
+
+    logContext = {
+      projectId,
+      sceneIndex,
+      frameType: frameType ?? 'establishing',
+      beatId,
+      frameRole: frameRole ?? 'start',
+    }
 
     const resolvedGen = resolveStoryboardGeneration({
       storyboardQuality:
@@ -2339,6 +2348,13 @@ export async function POST(req: NextRequest) {
       response.validationMessage = `Storyboard generated (${validation.confidence}% character similarity - informational only)`
     }
 
+    console.log('[Scene Image] Generation succeeded', {
+      ...logContext,
+      usedAIIntelligence,
+      model: generationModelId,
+      elapsedMs: Date.now() - routeStart,
+    })
+
     return NextResponse.json(response)
   } catch (error: any) {
     console.error('[Scene Image] Error:', error)
@@ -2357,6 +2373,11 @@ export async function POST(req: NextRequest) {
                         error.message?.includes('429')
     
     if (isQuotaError) {
+      console.warn('[Scene Image] Quota/rate limit — client may retry', {
+        ...logContext,
+        googleError: error.message?.substring(0, 300),
+        elapsedMs: Date.now() - routeStart,
+      })
       return NextResponse.json({
         success: false,
         error: 'Google Cloud quota limit reached',

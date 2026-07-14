@@ -62,8 +62,16 @@ export function resolveBeatCaptionText(
 ): string | undefined {
   const english = englishOverlayText?.trim()
   if (!beatId) return english || undefined
-  const translated = sceneTranslation?.beatsByBeatId?.[beatId]?.overlayText?.trim()
-  return translated || english || undefined
+
+  const entry = sceneTranslation?.beatsByBeatId?.[beatId]
+  const translated = entry?.overlayText?.trim()
+
+  if (!english) {
+    if (entry?.overlayEdited && translated) return translated
+    return undefined
+  }
+
+  return translated || english
 }
 
 export function isBeatCaptionManuallyEdited(

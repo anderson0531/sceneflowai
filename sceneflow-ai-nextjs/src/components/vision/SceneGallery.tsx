@@ -14,6 +14,10 @@ import { Button } from '@/components/ui/Button'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { getLanguageName, FLAG_EMOJIS } from '@/constants/languages'
 import type { PlayerLabelMap, SceneTranslation } from '@/lib/storyboard/playerTranslations'
+import {
+  isBeatCaptionEnabledForLanguage,
+  type BeatCaptionSettings,
+} from '@/lib/storyboard/beatCaptionSettings'
 import type { SceneProductionData } from '@/components/vision/scene-production/types'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
@@ -100,6 +104,9 @@ interface SceneGalleryProps {
   onGenerateLanguage?: (language: string) => Promise<void> | void
   /** Per-scene production data for all-scene video playback. */
   sceneProductionState?: Record<string, SceneProductionData>
+  /** Per-language beat caption visibility in Screening Room. */
+  beatCaptionSettings?: BeatCaptionSettings
+  onBeatCaptionSettingsChange?: (settings: BeatCaptionSettings) => void | Promise<void>
 }
 
 export function SceneGallery({
@@ -124,6 +131,8 @@ export function SceneGallery({
   playerLabelsByLanguage,
   onGenerateLanguage,
   sceneProductionState,
+  beatCaptionSettings,
+  onBeatCaptionSettingsChange,
 }: SceneGalleryProps) {
   const preVisBannerRef = React.useRef<HTMLDivElement>(null)
 
@@ -246,6 +255,21 @@ export function SceneGallery({
 
   const activeSceneTranslations = sceneTranslationsByLanguage?.[selectedLanguage]
   const activePlayerLabels = playerLabelsByLanguage?.[selectedLanguage]
+  const beatCaptionsEnabled = isBeatCaptionEnabledForLanguage(
+    selectedLanguage,
+    beatCaptionSettings
+  )
+
+  const handleBeatCaptionsToggle = useCallback(
+    (enabled: boolean) => {
+      if (!onBeatCaptionSettingsChange) return
+      void onBeatCaptionSettingsChange({
+        ...(beatCaptionSettings || {}),
+        [selectedLanguage]: enabled,
+      })
+    },
+    [beatCaptionSettings, onBeatCaptionSettingsChange, selectedLanguage]
+  )
 
   const scenesNeedingExpress = useMemo(() => {
     return scenes.filter((scene) => {
@@ -685,6 +709,12 @@ export function SceneGallery({
             sceneProductionState={sceneProductionState}
             finalCutSelection={finalCutSelection}
             screeningLayout={mode === 'screening'}
+            beatCaptionsEnabled={beatCaptionsEnabled}
+            onBeatCaptionsEnabledChange={
+              mode === 'screening' && onBeatCaptionSettingsChange
+                ? handleBeatCaptionsToggle
+                : undefined
+            }
             onClose={mode === 'screening' ? onClose : undefined}
           />
         </div>

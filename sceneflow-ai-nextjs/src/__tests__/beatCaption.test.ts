@@ -1,10 +1,11 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { getBeatOverlayFields } from '@/lib/storyboard/beatCaption'
 import {
   defaultBeatOverlayType,
   resolveBeatCaptionText,
   isBeatCaptionManuallyEdited,
 } from '@/lib/storyboard/playerTranslations'
+import { purgeBeatCaptionTranslations } from '@/lib/storyboard/beatCaptionTranslations'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
 describe('beat caption helpers', () => {
@@ -41,6 +42,61 @@ describe('beat caption helpers', () => {
     }
     expect(resolveBeatCaptionText(sceneTranslation, 'bt_1', 'Chapter One')).toBe('บทที่หนึ่ง')
     expect(resolveBeatCaptionText(sceneTranslation, 'bt_2', 'Chapter One')).toBe('Chapter One')
+  })
+
+  it('resolveBeatCaptionText hides stale auto-translation when English is empty', () => {
+    const sceneTranslation = {
+      beatsByBeatId: {
+        bt_1: { overlayText: 'บทที่หนึ่ง', overlayEdited: false },
+      },
+    }
+    expect(resolveBeatCaptionText(sceneTranslation, 'bt_1', '')).toBeUndefined()
+    expect(resolveBeatCaptionText(sceneTranslation, 'bt_1', undefined)).toBeUndefined()
+  })
+
+  it('resolveBeatCaptionText keeps manually edited translation when English is empty', () => {
+    const sceneTranslation = {
+      beatsByBeatId: {
+        bt_1: { overlayText: 'Título manual', overlayEdited: true },
+      },
+    }
+    expect(resolveBeatCaptionText(sceneTranslation, 'bt_1', '')).toBe('Título manual')
+  })
+
+  it('purgeBeatCaptionTranslations removes beat from all language maps', async () => {
+    const onSaveTranslations = vi.fn().mockResolvedValue(undefined)
+    const storedTranslations = {
+      th: {
+        0: {
+          beatsByBeatId: {
+            bt_1: { overlayText: 'บทที่หนึ่ง' },
+            bt_2: { overlayText: 'อื่นๆ' },
+          },
+        },
+      },
+      es: {
+        0: {
+          beatsByBeatId: {
+            bt_1: { overlayText: 'Capítulo Uno' },
+          },
+        },
+      },
+    }
+
+    await purgeBeatCaptionTranslations({
+      beatId: 'bt_1',
+      sceneIdx: 0,
+      storedTranslations,
+      onSaveTranslations,
+    })
+
+    expect(onSaveTranslations).toHaveBeenCalledTimes(2)
+    expect(onSaveTranslations).toHaveBeenCalledWith('th', {
+      0: { beatsByBeatId: { bt_2: { overlayText: 'อื่นๆ' } } },
+    })
+    expect(onSaveTranslations).toHaveBeenCalledWith('es', {
+      0: { beatsByBeatId: undefined },
+    })
   })
 
   it('isBeatCaptionManuallyEdited reads overlayEdited flag', () => {
