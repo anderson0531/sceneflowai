@@ -154,6 +154,7 @@ import {
   getProjectStreams,
   type ProjectStream,
 } from '@/lib/streams/projectStreams'
+import { getSceneProductionStateFromMetadata } from '@/lib/final-cut/projectProductionState'
 import { ImageQualitySelector } from '@/components/vision/ImageQualitySelector'
 import { VoiceSelector } from '@/components/tts/VoiceSelector'
 import { Button, buttonVariants } from '@/components/ui/Button'
@@ -1474,6 +1475,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     },
     [project, projectId]
   )
+
+  const reloadSceneProduction = useCallback(async () => {
+    const response = await fetch(`/api/projects/${projectId}`)
+    if (!response.ok) {
+      throw new Error('Failed to reload scene production')
+    }
+    const data = await response.json()
+    const metadata = data.project?.metadata ?? data.metadata
+    const scenes = getSceneProductionStateFromMetadata(metadata) as Record<
+      string,
+      SceneProductionData
+    >
+    setSceneProductionState(scenes)
+    setProject((prev) => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        metadata: metadata ?? prev.metadata,
+      }
+    })
+    return scenes
+  }, [projectId])
 
   const handlePreviewStream = useCallback(
     (language: string) => {
@@ -13993,6 +14016,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     onSaveStreams={handleSaveProjectStreams}
                     onGenerateLanguage={handleGenerateLanguageStream}
                     onPreviewStream={handlePreviewStream}
+                    sceneProductionState={sceneProductionState}
+                    onPersistSceneProduction={applySceneProductionUpdate}
+                    reloadSceneProduction={reloadSceneProduction}
                   />
                 </div>
               )}

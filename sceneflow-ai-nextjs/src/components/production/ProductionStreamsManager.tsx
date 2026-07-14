@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import {
   Film,
   Globe,
+  Languages,
   Layers,
   Loader2,
   Play,
@@ -16,12 +17,14 @@ import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { FinalCutStreamsPanel } from '@/components/final-cut/FinalCutStreamsPanel'
 import { ProductionPublishPanel } from '@/components/production/ProductionPublishPanel'
+import { StreamLocalizePanel } from '@/components/production/StreamLocalizePanel'
 import { buildFinalCutClips, type BuildFinalCutClipsArgs } from '@/lib/final-cut/useFinalCutClips'
 import { applyAssemblyPreset } from '@/lib/final-cut/finalCutPresets'
 import { getAvailableLanguagesForFormat } from '@/lib/final-cut/resolveSegmentMedia'
 import { getSceneProductionStateFromMetadata } from '@/lib/final-cut/projectProductionState'
 import {
   buildDraftStream,
+  isLocalizeEligibleLanguage,
   mergeStreamsWithLanguages,
   resolveStreamCoverage,
   type ProjectStream,
@@ -33,6 +36,7 @@ import type {
   FinalCutSelection,
   ProductionLanguage,
 } from '@/lib/types/finalCut'
+import type { SceneProductionData } from '@/components/vision/scene-production/types'
 
 type ProjectLike = NonNullable<BuildFinalCutClipsArgs['project']>
 
@@ -49,6 +53,12 @@ export interface ProductionStreamsManagerProps {
   ) => Promise<void>
   onGenerateLanguage: (language: string) => Promise<void>
   onPreviewStream: (language: string) => void
+  sceneProductionState: Record<string, SceneProductionData>
+  onPersistSceneProduction: (
+    sceneId: string,
+    updater: (current: SceneProductionData | undefined) => SceneProductionData | undefined
+  ) => void
+  reloadSceneProduction: () => Promise<Record<string, SceneProductionData>>
 }
 
 function statusBadge(status: ProjectStream['status']) {
@@ -86,6 +96,9 @@ interface StreamCardProps {
   onSaveStreams: ProductionStreamsManagerProps['onSaveStreams']
   onPreviewStream: (language: string) => void
   allStreams: ProjectStream[]
+  sceneProductionState: Record<string, SceneProductionData>
+  onPersistSceneProduction: ProductionStreamsManagerProps['onPersistSceneProduction']
+  reloadSceneProduction: ProductionStreamsManagerProps['reloadSceneProduction']
 }
 
 function StreamCard({
@@ -98,9 +111,13 @@ function StreamCard({
   onSaveStreams,
   onPreviewStream,
   allStreams,
+  sceneProductionState,
+  onPersistSceneProduction,
+  reloadSceneProduction,
 }: StreamCardProps) {
   const [expanded, setExpanded] = useState(false)
   const [publishOpen, setPublishOpen] = useState(false)
+  const [localizeOpen, setLocalizeOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [lastRenderUrl, setLastRenderUrl] = useState<string | null>(stream.mp4Url ?? null)
 
@@ -331,6 +348,22 @@ function StreamCard({
               <ChevronDown className="w-3.5 h-3.5 ml-1" />
             )}
           </Button>
+          {isLocalizeEligibleLanguage(stream.language) ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-zinc-700 text-zinc-200"
+              onClick={() => setLocalizeOpen((v) => !v)}
+            >
+              <Languages className="w-3.5 h-3.5 mr-1.5" />
+              Localize
+              {localizeOpen ? (
+                <ChevronUp className="w-3.5 h-3.5 ml-1" />
+              ) : (
+                <ChevronDown className="w-3.5 h-3.5 ml-1" />
+              )}
+            </Button>
+          ) : null}
           <Button
             size="sm"
             className="bg-sf-primary hover:bg-sf-accent text-white"
@@ -361,6 +394,30 @@ function StreamCard({
               onRendered: handleRendered,
               lastRenderUrl: lastRenderUrl ?? stream.mp4Url ?? undefined,
             }}
+          />
+        </div>
+      ) : null}
+
+      {localizeOpen && isLocalizeEligibleLanguage(stream.language) ? (
+        <div className="border-t border-zinc-800/80 px-4 py-4 sm:px-5 sm:py-5">
+          <div className="mb-3">
+            <h4 className="text-sm font-semibold text-white">Localize Video</h4>
+            <p className="text-xs text-zinc-400 mt-0.5">
+              Dub or lip-sync each scene, then stitch a localized master for this language.
+            </p>
+          </div>
+          <StreamLocalizePanel
+            projectId={projectId}
+            projectTitle={projectTitle}
+            script={script}
+            metadata={metadata}
+            stream={stream}
+            allStreams={allStreams}
+            sceneProductionState={sceneProductionState}
+            finalCutSelection={localSelection}
+            onSaveStreams={onSaveStreams}
+            onPersistSceneProduction={onPersistSceneProduction}
+            reloadSceneProduction={reloadSceneProduction}
           />
         </div>
       ) : null}
@@ -397,6 +454,9 @@ export function ProductionStreamsManager({
   onSaveStreams,
   onGenerateLanguage,
   onPreviewStream,
+  sceneProductionState,
+  onPersistSceneProduction,
+  reloadSceneProduction,
 }: ProductionStreamsManagerProps) {
   const [addLanguageOpen, setAddLanguageOpen] = useState(false)
   const [selectedNewLanguage, setSelectedNewLanguage] = useState<string>('es')
@@ -532,6 +592,9 @@ export function ProductionStreamsManager({
               onSaveStreams={onSaveStreams}
               onPreviewStream={onPreviewStream}
               allStreams={displayStreams}
+              sceneProductionState={sceneProductionState}
+              onPersistSceneProduction={onPersistSceneProduction}
+              reloadSceneProduction={reloadSceneProduction}
             />
           ))
         )}

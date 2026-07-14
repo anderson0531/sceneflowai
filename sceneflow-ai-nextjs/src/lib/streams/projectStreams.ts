@@ -21,6 +21,70 @@ export interface ProjectStream {
   jobId?: string
   finalCutSnapshot?: FinalCutSelection
   publish?: ProjectStreamPublish
+  localize?: StreamLocalizeState
+}
+
+export type StreamLocalizeMode = 'off' | 'dub' | 'lipsync'
+
+export type StreamStemMode = 'mute-all' | 'keep-background'
+
+export type StreamLocalizeStatus =
+  | 'idle'
+  | 'preparing'
+  | 'lipsyncing'
+  | 'rendering'
+  | 'stitching'
+  | 'ready'
+  | 'error'
+
+export interface StreamLocalizeSceneStatus {
+  status: string
+  mp4Url?: string
+  jobId?: string
+  error?: string
+}
+
+export interface StreamLocalizeState {
+  mode: StreamLocalizeMode
+  /** Global dialogue playback rate (0.5–1.5). */
+  speed: number
+  stemMode: StreamStemMode
+  status: StreamLocalizeStatus
+  sceneStatuses?: Record<string, StreamLocalizeSceneStatus>
+  updatedAt?: string
+  error?: string
+}
+
+export const DEFAULT_STREAM_LOCALIZE_STATE: StreamLocalizeState = {
+  mode: 'dub',
+  speed: 1,
+  stemMode: 'keep-background',
+  status: 'idle',
+}
+
+export function getLocalizeState(stream: ProjectStream): StreamLocalizeState {
+  return {
+    ...DEFAULT_STREAM_LOCALIZE_STATE,
+    ...stream.localize,
+  }
+}
+
+export function withLocalizeState(
+  stream: ProjectStream,
+  patch: Partial<StreamLocalizeState>
+): ProjectStream {
+  return {
+    ...stream,
+    localize: {
+      ...getLocalizeState(stream),
+      ...patch,
+      updatedAt: new Date().toISOString(),
+    },
+  }
+}
+
+export function isLocalizeEligibleLanguage(language: string): boolean {
+  return language !== 'en'
 }
 
 export interface StreamCoverage {
