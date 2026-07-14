@@ -42,6 +42,47 @@ function sceneHeadingText(scene: Record<string, unknown>): string {
   return ''
 }
 
+function buildSceneWideDetectionText(scene: Record<string, unknown>): string {
+  const beatText = getSceneBeats(scene)
+    .map((beat) =>
+      [beat.actionDescription || '', beat.line || '', beat.character || ''].filter(Boolean).join(' ')
+    )
+    .join(' ')
+  return [
+    sceneHeadingText(scene),
+    scene.action || '',
+    scene.visualDescription || '',
+    ...(Array.isArray(scene.dialogue)
+      ? scene.dialogue.map((d: { character?: string }) => d.character || '')
+      : []),
+    beatText,
+  ]
+    .filter(Boolean)
+    .join(' ')
+}
+
+function characterHasUsableReference(character: Record<string, unknown>): boolean {
+  const refImage = character.referenceImage
+  if (typeof refImage === 'string' && refImage.trim()) return true
+  const wardrobes = character.wardrobes
+  if (!Array.isArray(wardrobes)) return false
+  return wardrobes.some((w) => {
+    const wardrobe = w as { fullBodyUrl?: string; headshotUrl?: string }
+    return (
+      (typeof wardrobe.fullBodyUrl === 'string' && wardrobe.fullBodyUrl.trim()) ||
+      (typeof wardrobe.headshotUrl === 'string' && wardrobe.headshotUrl.trim())
+    )
+  })
+}
+
+function allProjectCharactersWithUsableReferences(
+  projectCharacters: Array<Record<string, unknown>>
+): string[] {
+  return projectCharacters
+    .filter((c) => typeof c.name === 'string' && characterHasUsableReference(c))
+    .map((c) => String(c.name))
+}
+
 function fillSelectedWardrobesForCharacters(
   characterNames: string[],
   projectCharacters: Array<Record<string, unknown>>,
@@ -280,19 +321,27 @@ export function resolveFrameEditCharacterReferences(args: {
   }
 
   if (characterNames.length === 0) {
-    const sceneText = [
-      sceneHeadingText(scene),
-      scene.action || '',
-      scene.visualDescription || '',
-      ...(Array.isArray(scene.dialogue)
-        ? scene.dialogue.map((d: { character?: string }) => d.character || '')
-        : []),
-    ].join(' ')
+    const sceneText = buildSceneWideDetectionText(scene)
     const detected = findSceneCharacters(
       sceneText,
       characters as Parameters<typeof findSceneCharacters>[1]
     )
     characterNames = detected.map((c) => c.name).filter(Boolean) as string[]
+    const selectedWardrobes = fillSelectedWardrobesForCharacters(
+      characterNames,
+      characters,
+      scene,
+      sceneIndex
+    )
+    characterWardrobes = characterWardrobesFromNames(
+      characterNames,
+      selectedWardrobes,
+      characters
+    )
+  }
+
+  if (characterNames.length === 0) {
+    characterNames = allProjectCharactersWithUsableReferences(characters)
     const selectedWardrobes = fillSelectedWardrobesForCharacters(
       characterNames,
       characters,

@@ -881,17 +881,7 @@ export function SceneStoryboardFrameViewer({
           setEditModalOpen(false)
           setEditingFrame(null)
         }}
-        title={
-          editingFrame
-            ? editingFrame.kind === 'beat'
-              ? `Edit beat — Scene ${sceneNumber}`
-              : editingFrame.kind === 'dialogue'
-                ? `Edit dialogue frame — Scene ${sceneNumber}`
-                : editingFrame.kind === 'custom'
-                  ? `Edit custom frame — Scene ${sceneNumber}`
-                  : `Edit Scene ${sceneNumber}`
-            : 'Edit frame'
-        }
+        title={editingFrame ? `Edit Frame — Scene ${sceneNumber}` : 'Edit Frame'}
       />
     </div>
     </TooltipProvider>

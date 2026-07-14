@@ -114,7 +114,33 @@ describe('resolveFrameEditCharacterReferences', () => {
     expect(refs[0].wardrobeImageUrl).toBe('https://example.com/marcus-turnaround.jpg')
   })
 
-  it('returns empty array when establishing frame has no matching cast', () => {
+  it('returns identity + wardrobe URLs for beat-first scene via beat text in fallback', () => {
+    const scene = {
+      heading: 'INT. LAB - DAY',
+      beats: [
+        {
+          beatId: 'beat-1',
+          kind: 'action',
+          actionDescription: 'Marcus scans the equipment on the bench.',
+        },
+      ],
+    }
+    const refs = resolveFrameEditCharacterReferences({
+      editingFrame: {
+        kind: 'establishing',
+        sceneIndex: 0,
+        imageUrl: 'https://example.com/scene.jpg',
+      },
+      scene,
+      sceneIndex: 0,
+      characters: [marcus],
+    })
+    expect(refs).toHaveLength(1)
+    expect(refs[0].characterName).toBe('Marcus')
+    expect(refs[0].identityImageUrl).toBe('https://example.com/marcus-portrait.jpg')
+  })
+
+  it('falls back to all project characters with reference images when cast is undetectable', () => {
     const refs = resolveFrameEditCharacterReferences({
       editingFrame: {
         kind: 'establishing',
@@ -124,6 +150,27 @@ describe('resolveFrameEditCharacterReferences', () => {
       scene: { heading: 'EXT. PARK - DAY', action: 'Birds chirp in the trees.' },
       sceneIndex: 0,
       characters: [marcus],
+    })
+    expect(refs).toHaveLength(1)
+    expect(refs[0].characterName).toBe('Marcus')
+    expect(refs[0].identityImageUrl).toBe('https://example.com/marcus-portrait.jpg')
+  })
+
+  it('returns empty array when establishing frame has no matching cast and no usable refs', () => {
+    const characterWithoutRef = {
+      id: 'char-2',
+      name: 'Marcus',
+      wardrobes: [],
+    }
+    const refs = resolveFrameEditCharacterReferences({
+      editingFrame: {
+        kind: 'establishing',
+        sceneIndex: 0,
+        imageUrl: 'https://example.com/scene.jpg',
+      },
+      scene: { heading: 'EXT. PARK - DAY', action: 'Birds chirp in the trees.' },
+      sceneIndex: 0,
+      characters: [characterWithoutRef],
     })
     expect(refs).toEqual([])
   })
