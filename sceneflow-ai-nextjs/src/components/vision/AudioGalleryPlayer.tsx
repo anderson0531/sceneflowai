@@ -954,6 +954,7 @@ export function AudioGalleryPlayer({
             ref={videoRef}
             key={activeVideoUrl || `scene-${currentSceneIndex}`}
             src={activeVideoUrl || undefined}
+            poster={displayImageUrl || getScenePlayableThumbnailUrl(currentScene) || undefined}
             className="w-full h-full object-contain"
             onLoadedMetadata={(e) => setVideoDuration(e.currentTarget.duration || 0)}
             onTimeUpdate={(e) => setVideoCurrentTime(e.currentTarget.currentTime)}
@@ -961,7 +962,7 @@ export function AudioGalleryPlayer({
             onPause={() => setVideoPlaying(false)}
             onEnded={handleVideoEnded}
           />
-          {videoFadeBlack > 0 && !useStreamMaster && (
+          {videoFadeBlack > 0 && !useStreamMaster && effectiveIsPlaying && (
             <div
               className="absolute inset-0 bg-black z-[2] pointer-events-none"
               style={{ opacity: videoFadeBlack }}
@@ -974,7 +975,7 @@ export function AudioGalleryPlayer({
             renderSceneImage(crossfadeFromUrl, 'previous')
           )}
           {renderSceneImage(inBeatVisual.primaryUrl, 'current')}
-          {inBeatVisual.fadeBlack > 0 && (
+          {inBeatVisual.fadeBlack > 0 && effectiveIsPlaying && (
             <div
               className="absolute inset-0 bg-black z-[2] pointer-events-none"
               style={{ opacity: inBeatVisual.fadeBlack }}
