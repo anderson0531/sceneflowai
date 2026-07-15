@@ -9586,6 +9586,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         // Wardrobe assignments — from prompt builder (explicit selection) or scene-level assignments (auto-fallback)
         characterWardrobes: promptData.characterWardrobes || scene.characterWardrobes || [],
         ...GALLERY_MANUAL_GENERATE_OPTS,
+        regenerate: !!(scene.imageUrl?.trim() || scene.storyboardImageUrl?.trim()),
       }
       console.log('[handleGenerateSceneImage] Request body:', JSON.stringify(requestBody).substring(0, 500))
       
@@ -9713,6 +9714,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       return
     }
 
+    const beats = getSceneBeats(scene)
+    const beat = beats[rawBeatIdx]
+    const isRegenerate = !!beat?.storyboardImageUrl?.trim()
+
     if (!batchGeneratingRef.current) {
       overlayStore.show(`Beat frame — Scene ${sceneIdx + 1}`, 25, 'storyboard-production')
     }
@@ -9749,6 +9754,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               characterSelectionExplicit: true,
             }),
         ...GALLERY_MANUAL_GENERATE_OPTS,
+        regenerate: isRegenerate,
       }
 
       let retryToastId: string | number | undefined
@@ -9872,6 +9878,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const beats = getSceneBeats(scene)
     const beat = beats[rawBeatIdx]
     const startFrameUrl = beat?.storyboardImageUrl?.trim()
+    const isRegenerate = !!beat?.storyboardEndImageUrl?.trim()
     if (!startFrameUrl) {
       try { const { toast } = require('sonner'); toast.error('Generate the start frame first') } catch {}
       return
@@ -9894,6 +9901,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         quality: imageQuality,
         characterSelectionExplicit: true,
         ...GALLERY_MANUAL_GENERATE_OPTS,
+        regenerate: isRegenerate,
       }
 
       let retryToastId: string | number | undefined
@@ -10012,6 +10020,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         sceneIndex,
         quality: imageQuality,
         ...GALLERY_DIRECT_GENERATE_OPTS,
+        regenerate: !!slot.ownImageUrl?.trim(),
         customPrompt: options.customPrompt,
         artStyle: options.artStyle,
         shotType: options.visualSetup.shotType,

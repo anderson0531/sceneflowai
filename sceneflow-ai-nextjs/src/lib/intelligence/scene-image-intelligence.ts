@@ -145,6 +145,8 @@ export interface SceneImageIntelligenceRequest {
   referenceImageCount: number
   /** SceneFlow project ID for cache scoping */
   projectId?: string
+  /** Skip reading the short-lived prompt cache (regeneration / likeness auto-retry) */
+  bustPromptCache?: boolean
 }
 
 export interface SceneImageIntelligenceResult {
@@ -612,12 +614,18 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
 export async function generateSceneImagePrompt(
   request: SceneImageIntelligenceRequest
 ): Promise<SceneImageIntelligenceResult> {
-  // Check cache first
+  // Check cache first (skip when busting for regeneration or likeness auto-retry)
   const cacheKey = getCacheKey(request)
-  const cachedResult = getCachedResult(cacheKey)
-  if (cachedResult) {
-    console.log(`[Scene Image Intelligence] Cache hit for scene ${request.sceneNumber}`)
-    return cachedResult
+  if (!request.bustPromptCache) {
+    const cachedResult = getCachedResult(cacheKey)
+    if (cachedResult) {
+      console.log(`[Scene Image Intelligence] Cache hit for scene ${request.sceneNumber}`)
+      return cachedResult
+    }
+  } else {
+    console.log(
+      `[Scene Image Intelligence] Prompt cache bypassed for scene ${request.sceneNumber}`
+    )
   }
   
   console.log(`[Scene Image Intelligence] Generating AI prompt for scene ${request.sceneNumber} (type: ${request.sceneType})`)

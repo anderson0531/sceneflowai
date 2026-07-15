@@ -370,11 +370,19 @@ export async function generateWithVision(
   parts: VisionPart[],
   options: VisionGenerationOptions = {}
 ): Promise<TextGenerationResult> {
-  const { projectId, location } = getConfig()
+  const { projectId, location: defaultLocation } = getConfig()
   // Use central model constant for vision by default
   const model = options.model || getGeminiTextModel()
-  
-  const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
+
+  const isGemini3 = model.includes('gemini-3')
+  const isPreview = model.includes('preview')
+  const location = isGemini3 ? 'global' : (options.location || defaultLocation)
+  const apiVersion = isPreview ? 'v1beta1' : 'v1'
+  const baseUrl =
+    location === 'global'
+      ? 'https://aiplatform.googleapis.com'
+      : `https://${location}-aiplatform.googleapis.com`
+  const endpoint = `${baseUrl}/${apiVersion}/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
   
   const accessToken = await getVertexAIAuthToken()
   
@@ -394,7 +402,6 @@ export async function generateWithVision(
     return part
   })
   
-  const isGemini3 = model.includes('gemini-3')
   const isThinkingModel = model.includes('gemini-3') || model.includes('gemini-2.5')
 
   const generationConfig: Record<string, unknown> = {

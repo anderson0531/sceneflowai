@@ -21,7 +21,14 @@ import {
   type CharacterContext,
   type PropContext,
   type LocationContext,
+  type SceneImageIntelligenceRequest,
+  type SceneImageIntelligenceResult,
 } from '@/lib/intelligence/scene-image-intelligence'
+import { applySceneImageAiResultToPrompt } from '@/lib/scene/sceneImageAiPromptApply'
+import {
+  resolveFeaturedCharactersForValidation,
+  isGenuineLikenessFailure,
+} from '@/lib/scene/sceneImageFeaturedValidation'
 import { detectCharactersInText, resolveBeatSpeaker } from '@/lib/scene/characterDetection'
 import { isStoryboardNoCharacterScene } from '@/lib/script/sceneClassification'
 import { getSceneBeats, isNarratorBeat } from '@/lib/script/beatMigration'
@@ -105,6 +112,77 @@ export const maxDuration = 120  // Increased for new AI image models
 
 /** Stop image-generation retries when this much of the route budget is consumed. */
 const ROUTE_TIME_BUDGET_MS = 100_000
+/** Reserve time for one likeness auto-retry (AI prompt + image gen + validation). */
+const LIKENESS_RETRY_RESERVE_MS = 45_000
+
+function appendSceneImagePromptModifiers(
+  basePrompt: string,
+  ctx: {
+    storyboardQuality: 'draft' | 'final' | undefined
+    artStyle?: string
+    fullSceneContext: string
+    characterReferences: any[]
+    isBeatFrame: boolean
+    beatDirectedEmotion?: string
+    beatForEmotion?: { line?: string } | null
+  }
+): string {
+  let optimizedPrompt = basePrompt
+
+  const photorealisticAnchor = getPhotorealisticPromptAnchor(
+    ctx.storyboardQuality,
+    ctx.artStyle
+  )
+  if (photorealisticAnchor) {
+    optimizedPrompt = `${optimizedPrompt.trim()}. ${photorealisticAnchor}`
+  }
+
+  const personTokens = ctx.characterReferences
+    .map((ref: { promptToken?: string }) => ref.promptToken)
+    .filter((token): token is string => !!token)
+  const hairCompositionLock = buildHairCompositionLock(ctx.fullSceneContext, personTokens)
+  if (hairCompositionLock && !optimizedPrompt.includes('do not pull hair back')) {
+    optimizedPrompt = `${optimizedPrompt.trim()} ${hairCompositionLock}`.trim()
+  }
+
+  const diptychCharacters = ctx.characterReferences.filter(
+    (cr: { hasWardrobeDiptych?: boolean }) => cr.hasWardrobeDiptych
+  )
+  if (diptychCharacters.length > 0) {
+    const perCharacterDiptychLines = diptychCharacters
+      .map((cr: { name: string }) => buildWardrobeDiptychCharacterConsumptionLine(cr.name))
+      .join('\n')
+    optimizedPrompt = `${optimizedPrompt.trim()}\n\n${WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION}\n${perCharacterDiptychLines}`
+    console.log(
+      `[Scene Image] Appended wardrobe diptych consumption for: ${diptychCharacters.map((cr: { name: string }) => cr.name).join(', ')}`
+    )
+  }
+
+  if (ctx.isBeatFrame && ctx.characterReferences.length > 0) {
+    const directedEmotionSection = buildBeatDirectedEmotionPromptSection(
+      ctx.characterReferences.map((ref: { name: string; directedEmotion?: string }) => ({
+        name: ref.name,
+        emotion: ref.directedEmotion || '',
+      }))
+    )
+    if (directedEmotionSection && !optimizedPrompt.includes('Directed emotion:')) {
+      optimizedPrompt = `${optimizedPrompt.trim()} ${directedEmotionSection}`
+    } else if (
+      ctx.beatDirectedEmotion &&
+      !optimizedPrompt.includes('Facial expression:') &&
+      !optimizedPrompt.includes('Directed emotion:')
+    ) {
+      optimizedPrompt = `${optimizedPrompt.trim()} ${formatDirectedEmotionLine(ctx.beatDirectedEmotion)}`
+    }
+  } else if (ctx.beatForEmotion?.line) {
+    const expressionCue = formatVisualExpressionCue(ctx.beatForEmotion.line)
+    if (expressionCue && !optimizedPrompt.includes('Facial expression:')) {
+      optimizedPrompt = `${optimizedPrompt.trim()} ${expressionCue}`
+    }
+  }
+
+  return optimizedPrompt
+}
 
 function lookupSubjectOrdinal(
   characterReferences: Array<{ name: string; subjectOrdinal?: number }>,
@@ -363,6 +441,7 @@ export async function POST(req: NextRequest) {
       wardrobeTextOverrides,
       frameRole = 'start',
       startFrameUrl,
+      regenerate = false,
     } = body
 
     logContext = {
@@ -1303,6 +1382,10 @@ export async function POST(req: NextRequest) {
     let aiNegativePromptAdditions: string[] = []
     /** Subset of characterReferences whose refs are sent to the image model (may be filtered after AI prompt). */
     let characterReferencesForImages = characterReferences
+    let bustPromptCache = !!regenerate
+    let sceneImageIntelligenceRequest: SceneImageIntelligenceRequest | null = null
+    let sceneImageAiResult: SceneImageIntelligenceResult | null = null
+    let aiSceneType: string | undefined
     
     if (customPrompt && customPrompt.trim()) {
       let promptBody = stripPromptMetaInstructions(customPrompt.trim())
@@ -1377,6 +1460,7 @@ export async function POST(req: NextRequest) {
         (sceneIndex || 0) + 1,
         scenes.length
       )
+      aiSceneType = sceneType
       
       // Extract useful direction metadata (lighting, framing, mood)
       const directionMetadata = {
@@ -1471,7 +1555,7 @@ export async function POST(req: NextRequest) {
           ? getSceneBeats(sceneData as Record<string, unknown>)[effectiveBeatIndex]
           : undefined
 
-      const aiResult = await generateSceneImagePromptWithDeadline({
+      sceneImageIntelligenceRequest = {
         sceneHeading: sceneData.heading || '',
         sceneAction: fullSceneContext,
         sceneNumber: (sceneIndex || 0) + 1,
@@ -1493,85 +1577,31 @@ export async function POST(req: NextRequest) {
         artStyle: artStyle || 'photorealistic',
         referenceImageCount: totalAvailableRefImages,
         projectId,
-      })
+        bustPromptCache,
+      }
 
-      if (aiResult.negativePromptAdditions?.length) {
-        aiNegativePromptAdditions = aiResult.negativePromptAdditions
-      }
-      
-      // Apply AI selections if auto-detect was enabled
-      if (aiResult.usedAI) {
-        if (autoDetectObjects && aiResult.selectedPropNames && aiResult.selectedPropNames.length > 0) {
-          detectedObjectReferences = projectObjectRefs.filter((obj: any) => 
-            aiResult.selectedPropNames!.includes(obj.name)
-          ).slice(0, 4) // Max 4 objects
-          
-          console.log(`[Scene Image] AI selected props:`, detectedObjectReferences.map((o: any) => o.name).join(', '))
-        }
-        
-        if (autoDetectLocations && aiResult.selectedLocationName) {
-          const matched = projectLocationRefs.find((loc: any) => 
-            loc.location === aiResult.selectedLocationName || loc.name === aiResult.selectedLocationName
-          )
-          if (matched) {
-            matchedLocationReference = matched
-            console.log(`[Scene Image] AI selected location:`, matched.location || matched.name)
-          }
-        }
-      }
-      
-      if (aiResult.usedAI && aiResult.prompt) {
-        // AI intelligence succeeded — use the AI-generated prompt
-        // Wrap it with the linking template for reference image binding
-        const charactersWithRefs = characterReferences.filter(
-          (ref: any) => ref.identityReferenceId || ref.wardrobeReferenceId
-        )
-        
-        let aiPromptBody = stripReferenceImageMappingBlock(aiResult.prompt)
-        if (charactersWithRefs.length > 0) {
-          aiPromptBody = sanitizePromptForIdentityRefs(aiPromptBody, charactersWithRefs)
-          const filteredForPrompt = filterCharactersForPromptRefs(
-            charactersWithRefs,
-            aiPromptBody,
-            aiResult.selectedCharacterNames
-          )
-          characterReferencesForImages = characterReferences.filter((ref: any) =>
-            filteredForPrompt.some((filtered) => filtered.name === ref.name)
-          )
-          if (filteredForPrompt.length < charactersWithRefs.length) {
-            console.log(
-              `[Scene Image] Filtered character refs for prompt/images: ${filteredForPrompt.map((r: any) => r.name).join(', ')} (dropped ${charactersWithRefs.length - filteredForPrompt.length})`
-            )
-          }
-          const subjectIntroductions = filteredForPrompt
-            .map(
-              (ref: any) =>
-                ref.promptToken ??
-                (ref.identityReferenceId != null
-                  ? buildIdentityPromptToken(ref.identityReferenceId)
-                  : ref.linkingDescription)
-            )
-            .join(' and ')
-          optimizedPrompt = `${BEAT_FRAME_CANDID_ACTION_CONSTRAINT} Cinematic film still. ${subjectIntroductions} performing the following moment in-scene (candid, not posed): ${aiPromptBody}`
-        } else {
-          optimizedPrompt = aiResult.prompt
-        }
-        
-        usedAIIntelligence = true
-        console.log(`[Scene Image] ✓ AI intelligence generated prompt (${optimizedPrompt.length} chars, type: ${sceneType})`)
-        console.log(`[Scene Image] AI reasoning: ${aiResult.reasoning || 'none'}`)
-      } else {
-        // AI failed — fall back to rules-based optimizer
-        console.log(`[Scene Image] AI intelligence unavailable, falling back to rules-based optimizer`)
-        console.log(`[Scene Image] Fallback reason: ${aiResult.reasoning || 'unknown'}`)
-        optimizedPrompt = optimizePromptForImagen({
-          sceneAction: fullSceneContext,
-          visualDescription: fullSceneContext,
-          characterReferences: characterReferences,
-          artStyle: artStyle || 'photorealistic',
-          objectReferences: detectedObjectReferences
-        })
-      }
+      const aiResult = await generateSceneImagePromptWithDeadline(sceneImageIntelligenceRequest)
+      sceneImageAiResult = aiResult
+
+      const appliedAiPrompt = applySceneImageAiResultToPrompt({
+        aiResult,
+        characterReferences,
+        fullSceneContext,
+        artStyle,
+        autoDetectObjects,
+        autoDetectLocations,
+        projectObjectRefs,
+        projectLocationRefs,
+        detectedObjectReferences,
+        matchedLocationReference,
+        sceneType: aiSceneType,
+      })
+      optimizedPrompt = appliedAiPrompt.optimizedPrompt
+      usedAIIntelligence = appliedAiPrompt.usedAIIntelligence
+      characterReferencesForImages = appliedAiPrompt.characterReferencesForImages
+      detectedObjectReferences = appliedAiPrompt.detectedObjectReferences
+      matchedLocationReference = appliedAiPrompt.matchedLocationReference
+      aiNegativePromptAdditions = appliedAiPrompt.aiNegativePromptAdditions
     } else {
       // Rules-based optimizer (no AI, no custom prompt)
       optimizedPrompt = optimizePromptForImagen({
@@ -1587,34 +1617,15 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const photorealisticAnchor = getPhotorealisticPromptAnchor(
-      resolvedGen.storyboardQuality,
-      artStyle
-    )
-    if (photorealisticAnchor) {
-      optimizedPrompt = `${optimizedPrompt.trim()}. ${photorealisticAnchor}`
-    }
-
-    const personTokens = characterReferences
-      .map((ref: { promptToken?: string }) => ref.promptToken)
-      .filter((token): token is string => !!token)
-    const hairCompositionLock = buildHairCompositionLock(fullSceneContext, personTokens)
-    if (hairCompositionLock && !optimizedPrompt.includes('do not pull hair back')) {
-      optimizedPrompt = `${optimizedPrompt.trim()} ${hairCompositionLock}`.trim()
-    }
-
-    const diptychCharacters = characterReferences.filter(
-      (cr: { hasWardrobeDiptych?: boolean }) => cr.hasWardrobeDiptych
-    )
-    if (diptychCharacters.length > 0) {
-      const perCharacterDiptychLines = diptychCharacters
-        .map((cr: { name: string }) => buildWardrobeDiptychCharacterConsumptionLine(cr.name))
-        .join('\n')
-      optimizedPrompt = `${optimizedPrompt.trim()}\n\n${WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION}\n${perCharacterDiptychLines}`
-      console.log(
-        `[Scene Image] Appended wardrobe diptych consumption for: ${diptychCharacters.map((cr: { name: string }) => cr.name).join(', ')}`
-      )
-    }
+    optimizedPrompt = appendSceneImagePromptModifiers(optimizedPrompt, {
+      storyboardQuality: resolvedGen.storyboardQuality,
+      artStyle,
+      fullSceneContext,
+      characterReferences,
+      isBeatFrame,
+      beatDirectedEmotion,
+      beatForEmotion,
+    })
 
     // Validate we have a prompt to send to the model
     if (!optimizedPrompt || !optimizedPrompt.trim()) {
@@ -1626,29 +1637,6 @@ export async function POST(req: NextRequest) {
     }
 
     console.log('[Scene Image] Optimized prompt preview:', optimizedPrompt.substring(0, 150))
-
-    if (isBeatFrame && characterReferences.length > 0) {
-      const directedEmotionSection = buildBeatDirectedEmotionPromptSection(
-        characterReferences.map((ref: { name: string; directedEmotion?: string }) => ({
-          name: ref.name,
-          emotion: ref.directedEmotion || '',
-        }))
-      )
-      if (directedEmotionSection && !optimizedPrompt.includes('Directed emotion:')) {
-        optimizedPrompt = `${optimizedPrompt.trim()} ${directedEmotionSection}`
-      } else if (
-        beatDirectedEmotion &&
-        !optimizedPrompt.includes('Facial expression:') &&
-        !optimizedPrompt.includes('Directed emotion:')
-      ) {
-        optimizedPrompt = `${optimizedPrompt.trim()} ${formatDirectedEmotionLine(beatDirectedEmotion)}`
-      }
-    } else if (beatForEmotion?.line) {
-      const expressionCue = formatVisualExpressionCue(beatForEmotion.line)
-      if (expressionCue && !optimizedPrompt.includes('Facial expression:')) {
-        optimizedPrompt = `${optimizedPrompt.trim()} ${expressionCue}`
-      }
-    }
 
     // Build character references using Blob URLs
     // Filter for characters that have reference images
@@ -1668,6 +1656,68 @@ export async function POST(req: NextRequest) {
       console.warn('[Scene Image] These characters should have referenceImage saved to database for optimal image generation')
     }
     
+    let imageUrl = ''
+    let validation: any = null
+    let likenessRound = 0
+    let shouldLikenessAutoRetry = false
+    let firstLikenessRound: {
+      imageUrl: string
+      validation: any
+      promptForResponse: string
+      generationModelId: string
+      generationProvider: 'vertex' | 'fal'
+    } | null = null
+
+    const promptModifierContext = {
+      storyboardQuality: resolvedGen.storyboardQuality,
+      artStyle,
+      fullSceneContext,
+      characterReferences,
+      isBeatFrame,
+      beatDirectedEmotion,
+      beatForEmotion,
+    }
+
+    let generationModelId = 'imagen-3.0-fast-generate-001'
+    let generationProvider: 'vertex' | 'fal' = 'vertex'
+    let promptForResponse = stripReferenceImageMappingBlock(optimizedPrompt)
+
+    do {
+      if (likenessRound > 0) {
+        if (!sceneImageIntelligenceRequest) break
+        console.log('[Scene Image] Likeness auto-retry: busting prompt cache and regenerating image...')
+        const retryAiResult = await generateSceneImagePromptWithDeadline({
+          ...sceneImageIntelligenceRequest,
+          bustPromptCache: true,
+        })
+        sceneImageAiResult = retryAiResult
+        const appliedRetry = applySceneImageAiResultToPrompt({
+          aiResult: retryAiResult,
+          characterReferences,
+          fullSceneContext,
+          artStyle,
+          autoDetectObjects,
+          autoDetectLocations,
+          projectObjectRefs,
+          projectLocationRefs,
+          detectedObjectReferences,
+          matchedLocationReference,
+          sceneType: aiSceneType,
+        })
+        if (!appliedRetry.usedAIIntelligence) {
+          console.log('[Scene Image] Likeness auto-retry skipped — AI prompt unavailable on retry')
+          break
+        }
+        optimizedPrompt = appendSceneImagePromptModifiers(
+          appliedRetry.optimizedPrompt,
+          promptModifierContext
+        )
+        characterReferencesForImages = appliedRetry.characterReferencesForImages
+        detectedObjectReferences = appliedRetry.detectedObjectReferences
+        matchedLocationReference = appliedRetry.matchedLocationReference
+        aiNegativePromptAdditions = appliedRetry.aiNegativePromptAdditions
+      }
+
     // Build image references — identity and wardrobe are separate slots when both exist
     const imageReferences: Array<{
       referenceId: number
@@ -1793,8 +1843,6 @@ export async function POST(req: NextRequest) {
 
     // Vertex AI image generation (see docs/VERTEX_MEDIA_MIGRATION.md)
     let base64Image: string | null = null
-    let generationModelId = 'imagen-3.0-fast-generate-001'
-    let generationProvider: 'vertex' | 'fal' = 'vertex'
     let generationAttempt = 0
     const maxGenerationAttempts = 4
     const rateLimitBackoffMs = [5000, 15000, 30000]
@@ -1803,7 +1851,7 @@ export async function POST(req: NextRequest) {
       objectImageReferences.length > 0 ||
       (matchedLocationReference && matchedLocationReference.imageUrl)
 
-    let promptForResponse = stripReferenceImageMappingBlock(optimizedPrompt)
+    promptForResponse = stripReferenceImageMappingBlock(optimizedPrompt)
     
     while (generationAttempt < maxGenerationAttempts) {
       try {
@@ -2276,7 +2324,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Upload to Vercel Blob storage
-    const imageUrl = await uploadImageToBlob(
+    imageUrl = await uploadImageToBlob(
       base64Image,
       `scenes/scene-${Date.now()}.png`
     )
@@ -2284,49 +2332,110 @@ export async function POST(req: NextRequest) {
     console.log('[Scene Image] ✓ Image generated and uploaded')
 
     // Validate character likeness (optional - informational only; skipped during Express batch)
-    let validation: any = null
+    validation = null
     if (!skipLikenessValidation && characterObjects.length > 0) {
       console.log('[Scene Image] Validating character likeness...')
 
-      // Determine which character to validate (prefer character mentioned in action/visualDesc)
-      let primaryCharForValidation = characterObjects[0]
+      const featuredCharacters = resolveFeaturedCharactersForValidation({
+        characterObjects,
+        characterReferences,
+        optimizedPrompt,
+        fullSceneContext,
+        aiResult: sceneImageAiResult,
+        usedAIIntelligence,
+      })
 
-      // ✅ ADD: Skip validation if no valid character
-      if (!primaryCharForValidation || !primaryCharForValidation.referenceImage) {
-        console.log('[Scene Image] Skipping validation - no character with reference image')
+      if (featuredCharacters.length === 0) {
+        console.log('[Scene Image] Skipping validation - no featured character with reference image')
       } else {
-      
-      const sceneText = `${fullSceneContext || ''}`.toLowerCase()
-      for (const char of characterObjects) {
-        if (char && char.name && char.referenceImage && sceneText.includes(char.name.toLowerCase())) {
-          // ✅ Added char && char.referenceImage check
-          primaryCharForValidation = char
-          console.log(`[Scene Image] Validating against ${char.name} (featured in scene)`)
-          break
-        }
-      }
-
-      try {
-        validation = await validateCharacterLikeness(
-          imageUrl,
-          primaryCharForValidation.referenceImage!,
-          primaryCharForValidation.name
+        const primaryFeatured = featuredCharacters[0]
+        console.log(
+          `[Scene Image] Validating against ${primaryFeatured.name} (AI-featured character${featuredCharacters.length > 1 ? `, ${featuredCharacters.length} total` : ''})`
         )
 
-        console.log(`[Image Validator] ${primaryCharForValidation.name} - Matches: ${validation.matches}, Confidence: ${validation.confidence}%`)
-        
-        // 80% threshold is appropriate for AI-generated likeness (perfect match is rare)
-        if (!validation.matches && validation.confidence < 80) {
-          console.warn('[Scene Image] ⚠️  Character likeness validation failed (confidence < 80%).')
-          console.warn('[Scene Image] Issues:', validation.issues.join(', '))
-        } else if (validation.matches) {
-          console.log(`[Scene Image] ✓ Character likeness validated (${validation.confidence}% confidence)`)
+        try {
+          validation = await validateCharacterLikeness(
+            imageUrl,
+            primaryFeatured.referenceImageUrl,
+            primaryFeatured.name
+          )
+
+          console.log(
+            `[Image Validator] ${primaryFeatured.name} - Matches: ${validation.matches}, Confidence: ${validation.confidence}%`
+          )
+
+          if (featuredCharacters.length > 1) {
+            for (const extraFeatured of featuredCharacters.slice(1)) {
+              try {
+                const extraValidation = await validateCharacterLikeness(
+                  imageUrl,
+                  extraFeatured.referenceImageUrl,
+                  extraFeatured.name
+                )
+                console.log(
+                  `[Image Validator] ${extraFeatured.name} - Matches: ${extraValidation.matches}, Confidence: ${extraValidation.confidence}%`
+                )
+              } catch (error) {
+                console.error(`[Scene Image] Validation failed for ${extraFeatured.name}:`, error)
+              }
+            }
+          }
+
+          if (!validation.matches && validation.confidence < 80) {
+            console.warn('[Scene Image] ⚠️  Character likeness validation failed (confidence < 80%).')
+            console.warn('[Scene Image] Issues:', validation.issues.join(', '))
+          } else if (validation.matches) {
+            console.log(`[Scene Image] ✓ Character likeness validated (${validation.confidence}% confidence)`)
+          }
+        } catch (error) {
+          console.error('[Scene Image] Validation failed:', error)
         }
-      } catch (error) {
-        console.error('[Scene Image] Validation failed:', error)
       }
-      } // Close the else block
     }
+
+    if (
+      likenessRound === 0 &&
+      isGenuineLikenessFailure(validation) &&
+      usedAIIntelligence &&
+      sceneImageIntelligenceRequest &&
+      !skipLikenessValidation
+    ) {
+      if (Date.now() - routeStart <= ROUTE_TIME_BUDGET_MS - LIKENESS_RETRY_RESERVE_MS) {
+        firstLikenessRound = {
+          imageUrl,
+          validation,
+          promptForResponse,
+          generationModelId,
+          generationProvider,
+        }
+        shouldLikenessAutoRetry = true
+        likenessRound = 1
+        continue
+      }
+      console.log('[Scene Image] Skipping likeness auto-retry — insufficient time budget')
+    }
+
+    if (likenessRound === 1 && firstLikenessRound) {
+      const retryConfidence = validation?.confidence ?? 0
+      const firstConfidence = firstLikenessRound.validation?.confidence ?? 0
+      if (firstConfidence > retryConfidence) {
+        imageUrl = firstLikenessRound.imageUrl
+        validation = firstLikenessRound.validation
+        promptForResponse = firstLikenessRound.promptForResponse
+        generationModelId = firstLikenessRound.generationModelId
+        generationProvider = firstLikenessRound.generationProvider
+        console.log(
+          `[Scene Image] Likeness auto-retry kept first attempt (${firstConfidence}% vs ${retryConfidence}%)`
+        )
+      } else {
+        console.log(
+          `[Scene Image] Likeness auto-retry kept second attempt (${retryConfidence}% vs ${firstConfidence}%)`
+        )
+      }
+    }
+
+    shouldLikenessAutoRetry = false
+    } while (shouldLikenessAutoRetry)
 
     // Calculate workflow sync hashes for tracking staleness
     const basedOnDirectionHash = sceneData ? generateDirectionHash(sceneData) : undefined
