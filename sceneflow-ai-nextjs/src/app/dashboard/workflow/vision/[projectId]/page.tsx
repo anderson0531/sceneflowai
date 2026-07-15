@@ -10164,6 +10164,43 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  const handleSetScreeningPoster = async (
+    sceneIndex: number,
+    frameKey: string | null,
+    imageUrl: string | null
+  ) => {
+    if (!script?.script?.scenes) return
+
+    const updatedScenes = script.script.scenes.map((s: any, idx: number) =>
+      idx === sceneIndex
+        ? {
+            ...s,
+            screeningPosterFrameKey: frameKey ?? undefined,
+            screeningPosterImageUrl: imageUrl ?? undefined,
+          }
+        : s
+    )
+
+    setScript((prev: any) => ({
+      ...prev,
+      script: { ...prev?.script, scenes: updatedScenes },
+    }))
+
+    try {
+      await persistVisionScriptScenes(updatedScenes, 'handleSetScreeningPoster')
+      try {
+        const { toast } = require('sonner')
+        toast.success(frameKey ? 'Screening Room poster set' : 'Screening Room poster cleared')
+      } catch {}
+    } catch (saveError) {
+      console.error('[handleSetScreeningPoster] Failed to save:', saveError)
+      try {
+        const { toast } = require('sonner')
+        toast.error('Failed to save Screening Room poster')
+      } catch {}
+    }
+  }
+
   const handleSaveEditedDialogueFrame = async (
     sceneIndex: number,
     dialogueIdx: number,
@@ -13975,6 +14012,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onUploadBeatFrame={handleUploadBeatFrame}
                 onUploadDialogueFrame={handleUploadDialogueFrame}
                 onSaveEditedBeatFrame={handleSaveEditedBeatFrame}
+                onSetScreeningPoster={handleSetScreeningPoster}
                 onSaveEditedDialogueFrame={handleSaveEditedDialogueFrame}
                 onSaveEditedCustomFrame={handleSaveEditedCustomFrame}
                 onSaveEditedStoryboardScene={handleSaveEditedScene}

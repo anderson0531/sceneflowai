@@ -590,10 +590,28 @@ export function countPlayablePreVisScenes(
   return scenes.filter((scene) => sceneHasPlayablePreVisContent(scene, language)).length
 }
 
-/** Best thumbnail for player scene strip (establishing, then first owned beat/dialogue frame). */
+/** User-designated Screening Room poster frame for this scene, if any. */
+export function getScreeningPosterUrl(
+  scene: Record<string, unknown>
+): string | undefined {
+  const key = typeof scene?.screeningPosterFrameKey === 'string' ? scene.screeningPosterFrameKey : ''
+  if (key) {
+    const slots = enumerateStoryboardFrameSlots(scene, undefined, { startFramesOnly: true })
+    const slot = slots.find((s) => s.key === key && !s.isMissing)
+    const url = slot?.ownImageUrl ?? slot?.displayImageUrl
+    if (isValidStoryboardMediaUrl(url)) return url!.trim()
+  }
+  const stored = scene?.screeningPosterImageUrl
+  return isValidStoryboardMediaUrl(stored) ? String(stored).trim() : undefined
+}
+
+/** Best thumbnail for player scene strip (designated poster, then establishing, then first owned beat/dialogue frame). */
 export function getScenePlayableThumbnailUrl(
   scene: Record<string, unknown>
 ): string | undefined {
+  const poster = getScreeningPosterUrl(scene)
+  if (poster) return poster
+
   const establishing = getEstablishingFrameUrl(scene)
   if (establishing) return establishing
 

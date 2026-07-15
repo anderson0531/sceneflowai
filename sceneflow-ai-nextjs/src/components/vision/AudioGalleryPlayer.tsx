@@ -27,6 +27,7 @@ import { PreVisSceneInfoPanel } from '@/components/vision/PreVisSceneInfoPanel'
 import {
   getEstablishingFrameUrl,
   getScenePlayableThumbnailUrl,
+  getScreeningPosterUrl,
   sceneHasPlayablePreVisAudio,
   SCENE_FADE_TO_BLACK_SEC,
 } from '@/lib/storyboard/types'
@@ -255,6 +256,7 @@ export function AudioGalleryPlayer({
   }, [])
 
   const currentScene = scenes[currentSceneIndex]
+  const screeningPosterUrl = getScreeningPosterUrl(currentScene)
 
   const currentSceneVideoUrl = useMemo(
     () => resolveSceneVideoUrl(currentScene, currentSceneIndex, selectedLanguage, sceneProductionState, finalCutSelection),
@@ -625,6 +627,9 @@ export function AudioGalleryPlayer({
     ? Math.max(videoDuration, 0.1)
     : sceneDuration
 
+  const showPosterStill =
+    !effectiveIsPlaying && effectiveCurrentTime < 0.1 && !!screeningPosterUrl
+
   const toggleEffectivePlayback = useCallback(() => {
     if (useStreamMaster || useVideoForCurrentScene) {
       toggleVideoPlayback()
@@ -954,7 +959,7 @@ export function AudioGalleryPlayer({
             ref={videoRef}
             key={activeVideoUrl || `scene-${currentSceneIndex}`}
             src={activeVideoUrl || undefined}
-            poster={displayImageUrl || getScenePlayableThumbnailUrl(currentScene) || undefined}
+            poster={screeningPosterUrl || displayImageUrl || getScenePlayableThumbnailUrl(currentScene) || undefined}
             className="w-full h-full object-contain"
             onLoadedMetadata={(e) => setVideoDuration(e.currentTarget.duration || 0)}
             onTimeUpdate={(e) => setVideoCurrentTime(e.currentTarget.currentTime)}
@@ -974,7 +979,10 @@ export function AudioGalleryPlayer({
           {crossfadeFromUrl && imageEffectPrefs.mode === 'crossfade' && (
             renderSceneImage(crossfadeFromUrl, 'previous')
           )}
-          {renderSceneImage(inBeatVisual.primaryUrl, 'current')}
+          {renderSceneImage(
+            showPosterStill ? screeningPosterUrl! : inBeatVisual.primaryUrl,
+            'current'
+          )}
           {inBeatVisual.fadeBlack > 0 && effectiveIsPlaying && (
             <div
               className="absolute inset-0 bg-black z-[2] pointer-events-none"

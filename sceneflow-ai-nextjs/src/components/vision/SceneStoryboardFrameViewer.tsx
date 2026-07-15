@@ -8,6 +8,7 @@ import {
   ChevronUp,
   Clapperboard,
   Loader,
+  MonitorPlay,
   Plus,
   RefreshCw,
   Sparkles,
@@ -76,6 +77,9 @@ export interface SceneStoryboardFrameViewerProps {
   onDeleteStoryboardFrame?: (frameId: string) => void | Promise<void>
   onGenerateCustomFrame?: (frameId: string) => Promise<void>
   onUploadCustomFrame?: (frameId: string, file: File) => void
+  /** Key of the frame designated as this scene's Screening Room poster. */
+  screeningPosterFrameKey?: string
+  onSetScreeningPoster?: (slot: StoryboardFrameSlot | null) => void
   /** When true, skip accordion header — used inside Script tab Pre-Vis panel */
   hideOuterChrome?: boolean
 }
@@ -326,6 +330,8 @@ export function SceneStoryboardFrameViewer({
   onDeleteStoryboardFrame,
   onGenerateCustomFrame,
   onUploadCustomFrame,
+  screeningPosterFrameKey,
+  onSetScreeningPoster,
   hideOuterChrome = false,
 }: SceneStoryboardFrameViewerProps) {
   const [collapsed, setCollapsed] = useState(false)
@@ -758,7 +764,7 @@ export function SceneStoryboardFrameViewer({
                   onClickCapture={handleThumbnailClickCapture}
                 >
                   {frameSlots.map((slot) => (
-                    <div key={slot.key} className="w-full">
+                    <div key={slot.key} className="relative w-full">
                       <SceneImageFrame
                         {...buildStoryboardSlotFrameProps(slot, slotHandlers)}
                         showControls={false}
@@ -767,6 +773,14 @@ export function SceneStoryboardFrameViewer({
                         isSelected={selectedFrameKey === slot.key}
                         onSelect={() => setSelectedFrameKey(slot.key)}
                       />
+                      {screeningPosterFrameKey === slot.key && (
+                        <span
+                          className="absolute top-1 right-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600/90 text-white shadow-sm"
+                          title="Screening Room poster"
+                        >
+                          <MonitorPlay className="w-2.5 h-2.5" />
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -800,7 +814,7 @@ export function SceneStoryboardFrameViewer({
                   </div>
                   {previewSlot && (
                     <div className="px-2 pb-1">
-                      <div className="flex items-center gap-2 min-w-0">
+                      <div className="flex items-center gap-2 min-w-0 flex-wrap">
                         {previewSlot.beatNumber != null && (
                           <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-slate-700/50 text-slate-300 border border-slate-600/40 font-medium tabular-nums">
                             Beat {previewSlot.beatNumber}
@@ -818,9 +832,34 @@ export function SceneStoryboardFrameViewer({
                             {formatBeatRoleLabel(previewSlot.beatRole)}
                           </span>
                         )}
-                        <p className="text-sm font-semibold text-slate-200 truncate" title={previewSlot.label}>
+                        <p className="text-sm font-semibold text-slate-200 truncate flex-1 min-w-0" title={previewSlot.label}>
                           {previewSlot.label}
                         </p>
+                        {onSetScreeningPoster &&
+                          previewSlot.displayImageUrl &&
+                          !previewSlot.isMissing && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className={cn(
+                                'h-7 text-[10px] shrink-0',
+                                screeningPosterFrameKey === previewSlot.key
+                                  ? 'border-emerald-500/50 text-emerald-300 bg-emerald-500/10'
+                                  : 'border-slate-600/50 text-slate-300 hover:bg-slate-700/50'
+                              )}
+                              onClick={() =>
+                                onSetScreeningPoster(
+                                  screeningPosterFrameKey === previewSlot.key ? null : previewSlot
+                                )
+                              }
+                            >
+                              <MonitorPlay className="w-3 h-3 mr-0.5" />
+                              {screeningPosterFrameKey === previewSlot.key
+                                ? 'Screening Room poster'
+                                : 'Set as poster'}
+                            </Button>
+                          )}
                       </div>
                       {previewSlot.storyboardImagePrompt?.trim() && (
                         <p
