@@ -2609,7 +2609,7 @@ export function SegmentPromptBuilder({
         imageUrl={keyframeEdit.url}
         imageType="scene"
         aspectRatio="16:9"
-        title={`Edit ${keyframeEdit.frameType === 'start' ? 'Start' : 'End'} Frame`}
+        title="Edit Frame"
         objectReferences={objectReferences
           .filter((ref) => ref.imageUrl)
           .map((ref) => ({

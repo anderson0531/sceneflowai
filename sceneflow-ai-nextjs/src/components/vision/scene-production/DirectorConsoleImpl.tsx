@@ -83,9 +83,19 @@ import { persistFinalCutSelectionApi } from '@/lib/final-cut/persistFinalCutSele
 import type { FinalCutSelection, FinalCutSceneOverride, ProductionLanguage } from '@/lib/types/finalCut'
 import { RetakeConfirmDialog } from './RetakeConfirmDialog'
 import {
+  IntelligentRetakeDialog,
+  type IntelligentRetakeSubmitOptions,
+} from './IntelligentRetakeDialog'
+import {
   resolveRetakeConfirmation,
   type PendingRetakeAction,
 } from './retakeConfirm'
+import { mergeNegativePrompt, type RetakePlan } from '@/lib/video/retakeIntelligence'
+import {
+  buildFrameEditReferenceImages,
+  frameEditReferenceKeys,
+  resolveSegmentEditCharacterReferences,
+} from '@/lib/vision/resolveFrameEditCharacterReferences'
 // Dynamic import for VideoEditingDialog to prevent TDZ
 // VideoEditingDialog → VideoEditingDialogV2 is shared between DirectorConsole (chunk 4195)
 // and SegmentStudio (ScriptPanel chunk). When webpack's ModuleConcatenationPlugin scope-hoists
@@ -207,6 +217,7 @@ export interface DirectorConsoleProps {
       aspectRatio?: '16:9' | '9:16'
       resolution?: '720p' | '1080p'
       generationMethod?: VideoGenerationMethod
+      videoProvider?: 'kling' | 'vertex' | 'aggregator'
     }
   ) => Promise<void>
   onSegmentUpload?: (segmentId: string, file: File) => void
@@ -414,6 +425,9 @@ export function DirectorConsoleRoot({
 
   // Retake confirmation when replacing a completed take via Take or Upload
   const [pendingRetakeAction, setPendingRetakeAction] = useState<PendingRetakeAction | null>(null)
+
+  // Intelligent retake dialog for completed video clips
+  const [retakeSegment, setRetakeSegment] = useState<SceneSegment | null>(null)
   
   // Beat for VideoEditingDialog (editing completed videos)
   const [editingVideoSegment, setEditingVideoSegment] = useState<SceneSegment | null>(null)
@@ -742,6 +756,169 @@ export function DirectorConsoleRoot({
     }
     setPendingRetakeAction(null)
   }, [pendingRetakeAction, segments])
+
+  const retakeCharacterReferences = useMemo(() => {
+    if (!retakeSegment || !scene) return []
+    return resolveSegmentEditCharacterReferences({
+      segment: retakeSegment,
+      scene: scene as Record<string, unknown>,
+      sceneIndex: sceneIndex ?? 0,
+      characters: characters as Array<Record<string, unknown>>,
+    })
+  }, [retakeSegment, scene, sceneIndex, characters])
+
+  const handleSubmitRetake = useCallback(
+    async (plan: RetakePlan, opts: IntelligentRetakeSubmitOptions) => {
+      if (!retakeSegment) return
+
+      const segmentId = retakeSegment.segmentId
+      const queueItem = getQueueItem(segmentId)
+      const existingConfig = queueItem?.config
+      const currentPrompt =
+        retakeSegment.userEditedPrompt || retakeSegment.generatedPrompt || existingConfig?.prompt || ''
+
+      const resolvedStartFrameUrl =
+        resolveEffectiveStartFrameUrl(
+          retakeSegment,
+          scene as Record<string, unknown> | undefined,
+          sceneImageUrl
+        ) ||
+        existingConfig?.startFrameUrl?.trim() ||
+        retakeSegment.references?.startFrameUrl?.trim() ||
+        ''
+
+      let editedStartFrameUrl: string | undefined
+
+      if (opts.fixFrame && resolvedStartFrameUrl && opts.frameEditInstruction) {
+        const selectedKeys = new Set(frameEditReferenceKeys(retakeCharacterReferences))
+        const referenceImages = buildFrameEditReferenceImages({
+          characterReferences: retakeCharacterReferences,
+          selectedKeys,
+        }).map((ref) => ({
+          imageUrl: ref.imageUrl,
+          name: ref.name,
+        }))
+
+        const response = await fetch('/api/image/edit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mode: 'instruction',
+            sourceImage: resolvedStartFrameUrl,
+            instruction: opts.frameEditInstruction,
+            referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
+            aspectRatio: videoAspectRatio,
+            imageSize: '1K',
+            saveToBlob: true,
+            blobPrefix: 'edited-start-frame',
+          }),
+        })
+
+        const data = await response.json()
+        if (!response.ok) {
+          throw new Error(data.error || 'Start frame edit failed')
+        }
+
+        if (!data.imageUrl) {
+          throw new Error('Start frame edit returned no image URL')
+        }
+
+        editedStartFrameUrl = data.imageUrl as string
+        onSaveEditedKeyframe?.(sceneId, segmentId, 'start', editedStartFrameUrl)
+
+        if (onProductionDataChange && productionData) {
+          onProductionDataChange({
+            ...productionData,
+            segments: productionData.segments.map((seg) =>
+              seg.segmentId === segmentId
+                ? {
+                    ...seg,
+                    references: {
+                      ...seg.references,
+                      startFrameUrl: editedStartFrameUrl,
+                    },
+                  }
+                : seg
+            ),
+          })
+        }
+      }
+
+      const existingNegative = existingConfig?.negativePrompt ?? ''
+      const mergedNegative = opts.applyPromptChanges
+        ? mergeNegativePrompt(existingNegative, plan.negativePromptAdditions)
+        : existingNegative
+
+      const revisedPrompt = opts.applyPromptChanges ? plan.revisedPrompt : currentPrompt
+
+      if (onProductionDataChange && productionData && opts.applyPromptChanges) {
+        onProductionDataChange({
+          ...productionData,
+          segments: productionData.segments.map((seg) =>
+            seg.segmentId === segmentId
+              ? { ...seg, userEditedPrompt: revisedPrompt }
+              : seg
+          ),
+        })
+      }
+
+      const updatedConfig = {
+        ...(existingConfig ?? {
+          mode: 'I2V' as VideoGenerationMethod,
+          prompt: currentPrompt,
+          motionPrompt: currentPrompt,
+          visualPrompt: currentPrompt,
+          negativePrompt: '',
+          aspectRatio: videoAspectRatio,
+          resolution: '1080p' as const,
+          duration: 8,
+          startFrameUrl: resolvedStartFrameUrl || null,
+          endFrameUrl: null,
+          sourceVideoUrl: null,
+          approvalStatus: 'user-approved' as const,
+          confidence: 100,
+        }),
+        mode: 'I2V' as VideoGenerationMethod,
+        prompt: revisedPrompt,
+        motionPrompt: revisedPrompt,
+        visualPrompt: revisedPrompt,
+        negativePrompt: mergedNegative,
+        startFrameUrl: editedStartFrameUrl ?? resolvedStartFrameUrl ?? existingConfig?.startFrameUrl ?? null,
+        videoProvider: 'kling' as const,
+      }
+
+      updateConfig(segmentId, updatedConfig)
+
+      await onGenerate(sceneId, segmentId, 'I2V', {
+        prompt: revisedPrompt,
+        negativePrompt: mergedNegative || undefined,
+        startFrameUrl: editedStartFrameUrl ?? resolvedStartFrameUrl ?? undefined,
+        generationMethod: 'I2V',
+        videoProvider: 'kling',
+        aspectRatio: updatedConfig.aspectRatio,
+        resolution: updatedConfig.resolution,
+        duration: updatedConfig.duration,
+      })
+
+      const { toast } = await import('sonner')
+      toast.success('Intelligent retake submitted')
+      setRetakeSegment(null)
+    },
+    [
+      retakeSegment,
+      getQueueItem,
+      scene,
+      sceneImageUrl,
+      retakeCharacterReferences,
+      videoAspectRatio,
+      onSaveEditedKeyframe,
+      sceneId,
+      onProductionDataChange,
+      productionData,
+      updateConfig,
+      onGenerate,
+    ]
+  )
 
   // Handle batch render — Express queues segments with REF or I2V configs
   const handleExpress = useCallback(() => {
@@ -1593,6 +1770,22 @@ export function DirectorConsoleRoot({
                           <Settings2 className="w-3.5 h-3.5 mr-1" />
                           Take ({segment.takes?.length || 1})
                         </Button>
+                        {item.status === 'complete' &&
+                          segment.assetType === 'video' &&
+                          segment.activeAssetUrl && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs bg-indigo-950/40 border-indigo-500/40 text-indigo-200 hover:bg-indigo-900/40 px-2"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setRetakeSegment(segment)
+                              }}
+                            >
+                              <Wand2 className="w-3.5 h-3.5 mr-1" />
+                              Retake
+                            </Button>
+                          )}
                       </div>
                     </div>
                   </div>
@@ -1708,6 +1901,24 @@ export function DirectorConsoleRoot({
         }}
         onConfirm={handleConfirmRetake}
       />
+
+      {retakeSegment && (
+        <IntelligentRetakeDialog
+          open={!!retakeSegment}
+          onOpenChange={(open) => {
+            if (!open) setRetakeSegment(null)
+          }}
+          segment={retakeSegment}
+          negativePrompt={getQueueItem(retakeSegment.segmentId)?.config.negativePrompt ?? ''}
+          sceneDescription={
+            (scene as { visualDescription?: string; action?: string } | undefined)?.visualDescription ||
+            (scene as { action?: string } | undefined)?.action
+          }
+          characterReferences={retakeCharacterReferences}
+          aspectRatio={videoAspectRatio}
+          onSubmitRetake={handleSubmitRetake}
+        />
+      )}
       
       {/* SceneVideoPlayer Modal */}
       <SceneVideoPlayer

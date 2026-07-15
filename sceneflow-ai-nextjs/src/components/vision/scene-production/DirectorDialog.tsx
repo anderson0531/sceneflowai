@@ -1927,7 +1927,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
         imageUrl={keyframeEdit.url}
         imageType="scene"
         aspectRatio="16:9"
-        title={`Edit ${keyframeEdit.frameType === 'start' ? 'Start' : 'End'} Frame`}
+        title="Edit Frame"
         objectReferences={objectReferences.filter(
           (ref): ref is { id: string; name: string; imageUrl: string; description?: string } =>
             !!ref.imageUrl

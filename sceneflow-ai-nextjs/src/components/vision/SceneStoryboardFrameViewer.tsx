@@ -881,7 +881,7 @@ export function SceneStoryboardFrameViewer({
           setEditModalOpen(false)
           setEditingFrame(null)
         }}
-        title={editingFrame ? `Edit Frame — Scene ${sceneNumber}` : 'Edit Frame'}
+        title="Edit Frame"
       />
     </div>
     </TooltipProvider>

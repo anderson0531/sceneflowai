@@ -10,7 +10,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
-import { Textarea } from '@/components/ui/textarea'
+import { DictationTextarea } from '@/components/ui/DictationTextarea'
 import { Label } from '@/components/ui/label'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { toast } from 'sonner'
@@ -148,7 +148,7 @@ export function ImageEditModal({
 
   const handleEdit = async () => {
     if (!instruction.trim()) {
-      toast.error('Please enter an edit instruction')
+      toast.error('Please enter a direction')
       return
     }
 
@@ -255,7 +255,7 @@ export function ImageEditModal({
           {modalTitle}
         </DialogTitle>
         <DialogDescription className="text-slate-400">
-          Edit your image using AI-powered tools. Describe the change you want in natural language.
+          Type or speak a direction in natural language to edit this image with AI.
         </DialogDescription>
 
         {showComparison && editedImageUrl ? (
@@ -320,15 +320,16 @@ export function ImageEditModal({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-slate-300">Edit Instruction</Label>
-                <Textarea
+                <Label className="text-slate-300">Direction</Label>
+                <DictationTextarea
                   value={instruction}
-                  onChange={(e) => setInstruction(e.target.value)}
-                  placeholder="Describe the change you want, e.g., 'Change the suit to a tuxedo' or 'Make the lighting warmer'"
+                  onChange={setInstruction}
+                  placeholder="Describe the direction, e.g. 'Change the suit to a tuxedo' or 'Make the lighting warmer'"
+                  rows={5}
                   className="h-32 bg-slate-800 border-slate-600 text-white resize-none"
                 />
                 <p className="text-xs text-slate-500">
-                  Use natural language to describe your edit. The AI will understand context.
+                  Type or speak your direction in natural language. The AI will understand context.
                 </p>
 
                 {characterReferences && characterReferences.length > 0 && (

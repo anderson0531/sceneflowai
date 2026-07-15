@@ -3409,10 +3409,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
           imageUrl={editingImageData.url}
           imageType="scene"
           aspectRatio={projectAspectRatio}
-          title={editingImageData.segmentId 
-            ? `Edit ${editingImageData.frameType === 'start' ? 'Start' : 'End'} Frame`
-            : undefined
-          }
+          title={editingImageData.segmentId ? 'Edit Frame' : undefined}
           objectReferences={
             editingImageData.segmentId
               ? objectReferences
@@ -7570,7 +7567,7 @@ function SceneCard({
             </DialogContent>
           </Dialog>
           
-          {/* Edit Beat Dialog */}
+          {/* Edit Segment Dialog */}
           <EditSegmentDialog
             open={editSegmentDialogOpen}
             onOpenChange={setEditSegmentDialogOpen}
