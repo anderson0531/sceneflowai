@@ -1,5 +1,5 @@
+import { BEAT_FRAME_CANDID_ACTION_CONSTRAINT } from '@/lib/character/characterReferenceAssembly'
 import {
-  BEAT_FRAME_CANDID_ACTION_CONSTRAINT,
   buildIdentityPromptToken,
   filterCharactersForPromptRefs,
   optimizePromptForImagen,
