@@ -4,7 +4,11 @@ import dotenv from 'dotenv'
 import { mkdirSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
-import { getCloudSqlDriverOptions } from '@/lib/database/cloudSqlDriverOptions'
+import { getCloudSqlDriverOptions, resetCloudSqlConnector } from '@/lib/database/cloudSqlDriverOptions'
+import {
+  logDatabaseConnectionFailure,
+  isSslOrCertConnectionError,
+} from '@/lib/database/connectionDiagnostics'
 
 dotenv.config({ path: '.env.local' })
 
@@ -83,10 +87,47 @@ if (!cloudSqlEnabled && (!rawConnectionString || !directEnvSource)) {
   )
 }
 
+function logCloudSqlStartupDiagnostics(): void {
+  if (!cloudSqlEnabled) return
+
+  const hasJson = Boolean(
+    process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON?.trim() ||
+      process.env.GCP_SERVICE_ACCOUNT_KEY?.trim()
+  )
+  const hasFile = Boolean(process.env.GOOGLE_APPLICATION_CREDENTIALS)
+
+  if (!hasJson && !hasFile) {
+    console.error(
+      '[database] Cloud SQL is enabled but no GCP credentials are configured. ' +
+        'Set GOOGLE_APPLICATION_CREDENTIALS_JSON (or GCP_SERVICE_ACCOUNT_KEY). ' +
+        'Missing/invalid credentials typically surface as TLS alert 42 (bad_certificate). ' +
+        'Ensure the service account has roles/cloudsql.client and redeploy after rotating keys.'
+    )
+    return
+  }
+
+  if (hasJson) {
+    try {
+      const raw =
+        process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON?.trim() ||
+        process.env.GCP_SERVICE_ACCOUNT_KEY?.trim()!
+      const creds = parseGoogleServiceAccountJson(raw)
+      const email = typeof creds.client_email === 'string' ? creds.client_email : 'unknown'
+      console.log(`[database] Cloud SQL auth: service account ${email}`)
+    } catch {
+      console.error(
+        '[database] GOOGLE_APPLICATION_CREDENTIALS_JSON is not valid JSON. ' +
+          'Cloud SQL connector auth will fail (often as bad_certificate / alert 42).'
+      )
+    }
+  }
+}
+
 if (cloudSqlEnabled) {
   console.log(
     `[database] Using Cloud SQL → instance=${process.env.CLOUD_SQL_INSTANCE_CONNECTION_NAME}, db=${process.env.DB_NAME}, user=${process.env.DB_USER}`
   )
+  logCloudSqlStartupDiagnostics()
 } else {
   try {
     const u = new URL(rawConnectionString!)
@@ -219,11 +260,51 @@ function createSequelize(): Sequelize {
   })
 }
 
-export const sequelize = createSequelize()
+export let sequelize = createSequelize()
+
+export async function resetDatabaseConnection(): Promise<void> {
+  console.warn('[database] Resetting Sequelize + Cloud SQL connector singletons after SSL/cert error')
+  try {
+    await sequelize.close()
+  } catch {
+    /* pool may already be closed */
+  }
+  cloudSqlOptsPromise = null
+  resetCloudSqlConnector()
+  sequelize = createSequelize()
+}
+
+export async function withDatabaseSelfHeal<T>(
+  operation: () => Promise<T>,
+  context = 'database'
+): Promise<T> {
+  try {
+    return await operation()
+  } catch (error) {
+    if (!isSslOrCertConnectionError(error)) {
+      logDatabaseConnectionFailure(error, context, getDatabaseConnectionInfo)
+      throw error
+    }
+
+    logDatabaseConnectionFailure(error, `${context} (retrying after connector reset)`, getDatabaseConnectionInfo)
+    await resetDatabaseConnection()
+
+    try {
+      return await operation()
+    } catch (retryError) {
+      logDatabaseConnectionFailure(retryError, `${context} (after connector reset)`, getDatabaseConnectionInfo)
+      throw retryError
+    }
+  }
+}
+
+export async function ensureDatabaseConnection(context = 'ensureDatabaseConnection'): Promise<void> {
+  await withDatabaseSelfHeal(() => sequelize.authenticate(), context)
+}
 
 export const testConnection = async () => {
   try {
-    await sequelize.authenticate()
+    await ensureDatabaseConnection('testConnection')
     console.log('✅ DB Connected')
   } catch (err) {
     console.error('❌ DB Fail:', err)
@@ -255,6 +336,11 @@ export function getDatabaseConnectionInfo() {
       host: process.env.CLOUD_SQL_INSTANCE_CONNECTION_NAME,
       database: process.env.DB_NAME,
       user: process.env.DB_USER,
+      hasGcpCredentialsJson: Boolean(
+        process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON?.trim() ||
+          process.env.GCP_SERVICE_ACCOUNT_KEY?.trim()
+      ),
+      hasGcpCredentialsFile: Boolean(process.env.GOOGLE_APPLICATION_CREDENTIALS),
     }
   }
 
@@ -273,5 +359,6 @@ export function getDatabaseConnectionInfo() {
     host: envHost,
     database: undefined,
     user: undefined,
+    sslRejectUnauthorized: strictTls,
   }
 }

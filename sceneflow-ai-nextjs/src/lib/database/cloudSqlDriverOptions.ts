@@ -3,6 +3,11 @@ import { GoogleAuth } from 'google-auth-library'
 
 let connector: Connector | null = null
 
+/** Drop cached connector so the next connection mints a fresh ephemeral client cert. */
+export function resetCloudSqlConnector(): void {
+  connector = null
+}
+
 function parseGoogleServiceAccountJson(raw: string): Record<string, unknown> {
   try {
     return JSON.parse(raw) as Record<string, unknown>

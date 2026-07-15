@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { extractConnectionErrorCodes } from '@/lib/database/connectionDiagnostics'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -29,6 +30,9 @@ export async function GET(request: NextRequest) {
       DB_PORT: process.env.DB_PORT || 'Not set',
       DB_USERNAME: process.env.DB_USERNAME || 'Not set',
       DB_NAME: process.env.DB_NAME || 'Not set',
+      CLOUD_SQL_INSTANCE_CONNECTION_NAME: process.env.CLOUD_SQL_INSTANCE_CONNECTION_NAME ? 'Set' : 'Not set',
+      GOOGLE_APPLICATION_CREDENTIALS_JSON: process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON ? 'Set' : 'Not set',
+      GCP_SERVICE_ACCOUNT_KEY: process.env.GCP_SERVICE_ACCOUNT_KEY ? 'Set' : 'Not set',
       NODE_ENV: process.env.NODE_ENV || 'Not set',
       ENCRYPTION_KEY: process.env.ENCRYPTION_KEY ? 'Set' : 'Not set',
       JWT_SECRET: process.env.JWT_SECRET ? 'Set' : 'Not set'
@@ -37,6 +41,7 @@ export async function GET(request: NextRequest) {
     // Try to import and test database connection
     let dbStatus = 'Not tested'
     let dbError = null
+    let dbErrorDetails = null
     let pgImport = 'Not tried'
     let nodeVersion = process.versions?.node || 'unknown'
     let vercelRegion = process.env.VERCEL_REGION || 'unknown'
@@ -49,13 +54,15 @@ export async function GET(request: NextRequest) {
       pgImport = `Import failed: ${err instanceof Error ? err.message : String(err)}`
     }
 
+    const databaseModule = await import('@/config/database')
+
     try {
-      const { sequelize, connectionEnvName, selectedConnectionHost, selectedConnectionIsPooled } = await import('@/config/database')
-      await sequelize.authenticate()
+      await databaseModule.ensureDatabaseConnection('debug-db')
       dbStatus = 'Connected successfully'
     } catch (error) {
       dbStatus = 'Connection failed'
       dbError = error instanceof Error ? error.message : String(error)
+      dbErrorDetails = extractConnectionErrorCodes(error)
     }
 
     return NextResponse.json({
@@ -66,9 +73,11 @@ export async function GET(request: NextRequest) {
       database: {
         status: dbStatus,
         error: dbError,
-        connectionEnv: (await import('@/config/database')).connectionEnvName,
-        host: (await import('@/config/database')).selectedConnectionHost,
-        pooled: (await import('@/config/database')).selectedConnectionIsPooled
+        errorDetails: dbErrorDetails,
+        connectionEnv: databaseModule.connectionEnvName,
+        host: databaseModule.selectedConnectionHost,
+        pooled: databaseModule.selectedConnectionIsPooled,
+        connectionInfo: databaseModule.getDatabaseConnectionInfo(),
       }
     })
 

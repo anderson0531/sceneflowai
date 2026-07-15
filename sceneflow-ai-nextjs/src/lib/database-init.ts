@@ -1,4 +1,4 @@
-import { sequelize } from '../config/database';
+import { sequelize, ensureDatabaseConnection } from '../config/database';
 import '../models'; // Import all models to register them
 
 let isInitialized = false;
@@ -10,7 +10,7 @@ export async function initializeDatabase() {
 
   try {
     // Test the connection
-    await sequelize.authenticate();
+    await ensureDatabaseConnection('initializeDatabase');
     console.log('✅ Database connection established successfully.');
     
     // Sync models (only in development)

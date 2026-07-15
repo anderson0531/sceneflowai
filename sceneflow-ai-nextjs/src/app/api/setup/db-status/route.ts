@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { QueryTypes } from 'sequelize'
-import { sequelize, getDatabaseConnectionInfo } from '@/config/database'
+import { sequelize, ensureDatabaseConnection, getDatabaseConnectionInfo } from '@/config/database'
+import { extractConnectionErrorCodes } from '@/lib/database/connectionDiagnostics'
 import '@/models'
 
 export const dynamic = 'force-dynamic'
@@ -9,7 +10,7 @@ export async function GET() {
   const results: Record<string, unknown> = {}
 
   try {
-    await sequelize.authenticate()
+    await ensureDatabaseConnection('db-status')
     results.connected = true
 
     const [connInfo] = await sequelize.query<{
@@ -83,9 +84,11 @@ export async function GET() {
 
     results.env = getDatabaseConnectionInfo()
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     results.connected = false
-    results.error = err.message
+    results.error = err instanceof Error ? err.message : String(err)
+    results.errorDetails = extractConnectionErrorCodes(err)
+    results.env = getDatabaseConnectionInfo()
   }
 
   return NextResponse.json(results, {

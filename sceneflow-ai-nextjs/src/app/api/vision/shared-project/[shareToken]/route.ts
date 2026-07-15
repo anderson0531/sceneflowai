@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Project from '../../../../../models/Project'
-import { sequelize } from '../../../../../config/database'
 import { resolveStoryboardScenes } from '../../../../../lib/storyboard/resolveStoryboardScenes'
 import { validateAndCleanSceneAudio } from '../../../../../lib/audio/cleanupAudio'
 import { findActiveShareProject } from '../../../../../lib/storyboard/shareProjectLookup'
@@ -37,8 +36,6 @@ export async function GET(
       return NextResponse.json({ error: 'Share token required' }, { status: 400 })
     }
 
-    await sequelize.authenticate()
-    
     const project = await findActiveShareProject(shareToken)
 
     if (!project) {
