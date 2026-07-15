@@ -1682,6 +1682,13 @@ export async function POST(req: NextRequest) {
     let generationProvider: 'vertex' | 'fal' = 'vertex'
     let promptForResponse = stripReferenceImageMappingBlock(optimizedPrompt)
 
+    const hairCompositionLock = buildHairCompositionLock(
+      fullSceneContext,
+      characterReferences
+        .map((ref: { promptToken?: string }) => ref.promptToken)
+        .filter((token): token is string => !!token)
+    )
+
     do {
       if (likenessRound > 0) {
         if (!sceneImageIntelligenceRequest) break
