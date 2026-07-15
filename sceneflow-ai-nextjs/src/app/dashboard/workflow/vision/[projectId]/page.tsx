@@ -5353,6 +5353,29 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const [editingSceneIndex, setEditingSceneIndex] = useState<number | null>(null)                                                                               
   const [isSceneEditorOpen, setIsSceneEditorOpen] = useState(false)
   const [sceneEditorInitialInstructions, setSceneEditorInitialInstructions] = useState<string>('')
+
+  const editorAudienceAnalysis = useMemo(() => {
+    if (editingSceneIndex === null || !script?.script?.scenes?.[editingSceneIndex]) {
+      return undefined
+    }
+    const editingScene = script.script.scenes[editingSceneIndex]
+    if (editingScene?.audienceAnalysis) {
+      return editingScene.audienceAnalysis
+    }
+    const reviewScene = audienceReview?.sceneAnalysis?.find(
+      (sa: { sceneNumber: number }) => sa.sceneNumber === editingSceneIndex + 1
+    )
+    if (!reviewScene) return undefined
+    return {
+      score: reviewScene.score,
+      pacing: reviewScene.pacing,
+      tension: reviewScene.tension,
+      characterDevelopment: reviewScene.characterDevelopment,
+      visualPotential: reviewScene.visualPotential,
+      notes: reviewScene.notes,
+      recommendations: reviewScene.recommendations ?? [],
+    }
+  }, [editingSceneIndex, script?.script?.scenes, audienceReview?.sceneAnalysis])
   
   // Character deletion dialog state
   const [deletionDialogOpen, setDeletionDialogOpen] = useState(false)
@@ -14553,6 +14576,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           nextScene={editingSceneIndex < script.script.scenes.length - 1 ? script.script.scenes[editingSceneIndex + 1] : undefined}
           onApplyChanges={handleApplySceneChanges}
           initialInstructions={sceneEditorInitialInstructions}
+          audienceAnalysis={editorAudienceAnalysis}
         />
       )}
 

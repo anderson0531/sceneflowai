@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
 import { Loader, Eye, Check, Undo, Redo } from 'lucide-react'
-import { InstructionsPanel } from './InstructionsPanel'
+import { InstructionsPanel, type InstructionsPanelAudienceAnalysis } from './InstructionsPanel'
 import { PreviewPanel } from './PreviewPanel'
 import { SceneComparisonPanel } from './SceneComparisonPanel'
 import { useOverlayStore } from '@/store/useOverlayStore'
@@ -36,6 +36,7 @@ interface SceneEditorModalProps {
     options?: SceneEditorApplyOptions
   ) => void | Promise<void>
   initialInstructions?: string
+  audienceAnalysis?: InstructionsPanelAudienceAnalysis | null
 }
 
 export function SceneEditorModal({
@@ -48,7 +49,8 @@ export function SceneEditorModal({
   previousScene,
   nextScene,
   onApplyChanges,
-  initialInstructions = ''
+  initialInstructions = '',
+  audienceAnalysis: audienceAnalysisProp,
 }: SceneEditorModalProps) {
   const [customInstruction, setCustomInstruction] = useState(initialInstructions)
   const [previewScene, setPreviewScene] = useState<any | null>(null)
@@ -278,9 +280,8 @@ export function SceneEditorModal({
       ? 'Direction ready — generate preview to review changes'
       : 'Enter direction to revise this scene'
 
-  const sceneRecommendations: string[] = (scene?.audienceAnalysis?.recommendations || []).map(
-    (rec: string | { text: string }) => typeof rec === 'string' ? rec : rec?.text || String(rec)
-  )
+  const resolvedAudienceAnalysis =
+    audienceAnalysisProp ?? scene?.audienceAnalysis ?? null
 
   if (!scene) return null
 
@@ -322,7 +323,7 @@ export function SceneEditorModal({
               <InstructionsPanel
                 instruction={customInstruction}
                 onInstructionChange={setCustomInstruction}
-                recommendations={sceneRecommendations}
+                audienceAnalysis={resolvedAudienceAnalysis}
                 appliedRecommendationIds={appliedRecommendationIds}
                 onApplyRecommendation={(recText, recId) => {
                   appendInstruction(recText, recId)
