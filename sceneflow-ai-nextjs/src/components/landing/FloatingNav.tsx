@@ -10,8 +10,8 @@ export function FloatingNav() {
   const t = useTranslations('floatingNav')
   const sections = useMemo(
     () => [
-      { id: 'pipeline', label: t('pipeline'), icon: Layers },
       { id: 'use-cases', label: t('useCases'), icon: Rocket },
+      { id: 'pipeline', label: t('pipeline'), icon: Layers },
       { id: 'pricing', label: t('pricing'), icon: DollarSign },
     ],
     [t]

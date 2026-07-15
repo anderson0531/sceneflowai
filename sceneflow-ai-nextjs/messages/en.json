@@ -232,36 +232,98 @@
   "useCasesShowcase": {
     "badge": "Who is SceneFlow For?",
     "title": "Who is SceneFlow For?",
-    "subtitle": "One automated pipeline — tailored to how you produce video.",
+    "subtitle": "From concept to a Screening Room animatic to auto-published multilanguage video — one automated pipeline, four ways to ship.",
     "cta": "Launch Your Studio ($9)",
+    "seeWorkflow": "See the workflow",
+    "hideWorkflow": "Hide the workflow",
     "personas": [
       {
         "id": "youtubeCreator",
         "label": "The YouTube Creator",
-        "headline": "Scale to Serialized Cinematic Universes",
-        "description": "Move from fragmented video editing tools to an automated pipeline. Keep characters locked, pacing high, and output consistent week-over-week.",
-        "screeningRoomPreview": "Sci-Fi Anthology: Echoes of 2150"
+        "headline": "From Concept to Cinematic Series — No Prompt Engineering",
+        "intro": "Start with a concept or a detailed series description. SceneFlow builds the series universe, characters, and unlimited episodes, then uses Express to render audio, frames, and video concurrently. You create and direct with plain text or voice; SceneFlow builds the vision — no prompt engineering, no slot-machine retakes.",
+        "differentiators": [
+          "Express concurrent renders",
+          "Text/voice intelligent edits",
+          "30-min Screening Room animatic",
+          "Auto-published in 70+ languages"
+        ],
+        "workflow": [
+          "Generate and optimize a SceneFlow series — storyline, characters, episode slate",
+          "First episode Blueprint in minutes",
+          "Full production script in minutes",
+          "Consistency references + Screening Room animatic in under 30 minutes",
+          "Full video production in under 60 minutes with Express",
+          "Auto-publish multilanguage streams with localized thumbnails, titles, and descriptions"
+        ],
+        "screeningRoomHook": "Visualize the story as an animatic before motion video, review scenes before finalizing streams, and share multilanguage streams (70+ languages) for pre-release feedback.",
+        "screeningRoomPreview": "The Unseen Archive: The Grand Illusion: The Chicago World's Fair Deception"
       },
       {
         "id": "startupProvider",
         "label": "The Startup Provider",
-        "headline": "Turn Video Production into a Scalable Business",
-        "description": "Deliver complete, localized business and educational video suites to local schools and small businesses who don't have the internal staff or massive agency budgets.",
-        "screeningRoomPreview": "The Fractional Agency Model - Client Asset Bundle"
+        "headline": "Run a Global Video Studio — Without Building One",
+        "intro": "Deliver polished, localized video to small businesses that can't afford an agency. Express renders whole client packages concurrently, Mixer adds brand overlays, watermarks, and timing, and auto-aligned dub/lip-sync ships every deliverable in your client's market language — all from one predictable pipeline.",
+        "differentiators": [
+          "Express batch delivery",
+          "Mixer branding & watermark",
+          "Dub/lip-sync localization",
+          "Repeatable client intake"
+        ],
+        "workflow": [
+          "Capture the client brief as a series or single-project concept",
+          "Generate Blueprint + script packages per client in minutes",
+          "Lock brand characters and continuity once, reuse across deliverables",
+          "Express-render scenes, then finish with Mixer overlays and watermark",
+          "Screening Room animatic for client approval before motion spend",
+          "Deliver auto-aligned multilanguage streams and masters on a set timeline"
+        ],
+        "screeningRoomHook": "Client-facing review of the animatic, scene sign-off before final streams, and shareable multilanguage previews for stakeholders abroad.",
+        "screeningRoomPreview": "Main Street Rising: A Local Business Relaunch"
       },
       {
         "id": "enterprise",
         "label": "Enterprise & Institutions",
-        "headline": "Automate Complex In-House Training Stacks",
-        "description": "Keep corporate branding, messaging, and training materials perfectly compliant. Let internal HR or instructional design teams spin up modules in minutes instead of paying slow vendor cycles.",
-        "screeningRoomPreview": "Global Cybersecurity Compliance Onboarding"
+        "headline": "Compliant Training at the Speed of Policy Change",
+        "intro": "Internal L&D and comms teams ship brand-locked, audit-ready modules without vendor cycles. Refine any frame or line with text or voice to stay on-message, finish with Mixer overlays and watermarks, and roll out auto-aligned dubbed or lip-synced versions to every region from a single approved master.",
+        "differentiators": [
+          "Brand-locked consistency",
+          "Text/voice compliance edits",
+          "Dub/lip-sync at scale",
+          "Private Screening Room review"
+        ],
+        "workflow": [
+          "Turn policy, SOPs, or training outlines into a SceneFlow project or series",
+          "Blueprint locks brand voice, characters, and messaging constraints",
+          "Express-generate production script, references, and video beats",
+          "Adjust wording and visuals with text/voice edits — no re-shoots",
+          "Screening Room animatic for legal/compliance/stakeholder review",
+          "Auto-align multilanguage streams for global rollout"
+        ],
+        "screeningRoomHook": "Review scenes before streams go final and share private Screening Room links for cross-region feedback without exporting unfinished masters.",
+        "screeningRoomPreview": "Shield Protocol: Global Cybersecurity Onboarding"
       },
       {
         "id": "educator",
         "label": "The Educator",
-        "headline": "Turn Text Curriculum Into Localized Video",
-        "description": "Transform dense chapters into visually engaging, narrative lessons. Instantly match local student demographics with multi-language native audio options.",
-        "screeningRoomPreview": "Interactive Chronicles: The Renaissance Workshop"
+        "headline": "Turn Curriculum Into Lessons Students Actually Watch",
+        "intro": "Large institutions convert dense chapters into localized, narrative video. Express builds full lessons fast, intelligent text/voice edits let faculty tune content without prompt engineering, and auto-aligned dub/lip-sync matches each cohort's language — then auto-publish ships localized titles and thumbnails to every channel.",
+        "differentiators": [
+          "Express lesson builds",
+          "Faculty text/voice edits",
+          "Native-language dub/lip-sync",
+          "Auto-published to channels"
+        ],
+        "workflow": [
+          "Start from a course outline, chapter, or learning objective",
+          "Generate series structure (units/lessons) with locked teaching characters and settings",
+          "Blueprint + full lesson script in minutes",
+          "Consistency references + Screening Room animatic for faculty review (under 30 minutes)",
+          "Express-render lesson video, refine with text/voice edits",
+          "Auto-publish localized lesson video for LMS / multi-campus distribution"
+        ],
+        "screeningRoomHook": "Faculty preview the animatic before production spend, review lesson scenes, and share streams in 70+ languages for multi-campus feedback.",
+        "screeningRoomPreview": "Renaissance Workshop: Seeing the Past in Motion"
       }
     ]
   },

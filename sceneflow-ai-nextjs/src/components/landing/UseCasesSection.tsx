@@ -1,9 +1,17 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useMemo, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslations } from 'next-intl'
-import { User, Video, Briefcase, Building2, GraduationCap, ArrowRight } from 'lucide-react'
+import {
+  User,
+  Video,
+  Briefcase,
+  Building2,
+  GraduationCap,
+  ArrowRight,
+  ChevronDown,
+} from 'lucide-react'
 import { ScreeningRoomPreview } from './ScreeningRoomPreview'
 import { getLandingYoutubeCreatorScreeningSlug } from '@/config/landingSamples'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
@@ -31,13 +39,17 @@ type PersonaData = {
   id: PersonaId
   label: string
   headline: string
-  description: string
+  intro: string
+  differentiators: string[]
+  workflow: string[]
+  screeningRoomHook: string
   screeningRoomPreview: string
 }
 
 export default function UseCasesSection() {
   const t = useTranslations('useCasesShowcase')
   const [activePersona, setActivePersona] = useState<PersonaId>('youtubeCreator')
+  const [workflowOpen, setWorkflowOpen] = useState(false)
 
   const personas = useMemo(
     () => t.raw('personas') as PersonaData[],
@@ -45,6 +57,10 @@ export default function UseCasesSection() {
   )
 
   const active = personas.find((p) => p.id === activePersona) ?? personas[0]
+
+  useEffect(() => {
+    setWorkflowOpen(false)
+  }, [activePersona])
 
   return (
     <section
@@ -106,10 +122,72 @@ export default function UseCasesSection() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35 }}
-            className="space-y-4 w-full"
+            className="space-y-5 w-full"
           >
             <h3 className="text-2xl md:text-3xl font-bold text-white">{active?.headline}</h3>
-            <p className="text-gray-400 text-lg leading-relaxed max-w-4xl">{active?.description}</p>
+            <p className="text-gray-400 text-lg leading-relaxed max-w-4xl">{active?.intro}</p>
+
+            {active?.differentiators && active.differentiators.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {active.differentiators.map((chip) => (
+                  <span
+                    key={chip}
+                    className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-indigo-500/10 border border-indigo-500/20 text-indigo-200"
+                  >
+                    {chip}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {active?.workflow && active.workflow.length > 0 && (
+              <div className="max-w-4xl">
+                <button
+                  type="button"
+                  onClick={() => setWorkflowOpen((open) => !open)}
+                  aria-expanded={workflowOpen}
+                  className="inline-flex items-center gap-2 text-sm font-medium text-indigo-300 hover:text-indigo-200 transition-colors"
+                >
+                  <ChevronDown
+                    className={cn(
+                      'w-4 h-4 transition-transform duration-300',
+                      workflowOpen && 'rotate-180'
+                    )}
+                  />
+                  {workflowOpen ? t('hideWorkflow') : t('seeWorkflow')}
+                </button>
+
+                <AnimatePresence initial={false}>
+                  {workflowOpen && (
+                    <motion.ol
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.35, ease: [0.04, 0.62, 0.23, 0.98] }}
+                      className="overflow-hidden mt-4 space-y-3 list-none pl-0"
+                    >
+                      {active.workflow.map((step, index) => (
+                        <li
+                          key={step}
+                          className="flex gap-3 text-gray-400 text-base leading-relaxed"
+                        >
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 border border-slate-700 text-xs font-semibold text-indigo-300">
+                            {index + 1}
+                          </span>
+                          <span className="pt-0.5">{step}</span>
+                        </li>
+                      ))}
+                    </motion.ol>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+
+            {active?.screeningRoomHook && (
+              <p className="text-gray-500 text-base leading-relaxed max-w-4xl border-l-2 border-indigo-500/30 pl-4">
+                {active.screeningRoomHook}
+              </p>
+            )}
           </motion.div>
 
           <motion.div
