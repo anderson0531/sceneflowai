@@ -1303,6 +1303,51 @@ const CharacterCard = ({
     return data as WardrobeVoiceAnalysisResult;
   };
 
+  const generateDirectorNote = async (
+    directorContext: CharacterContext,
+    options?: { selectedInstructions?: string[] },
+  ): Promise<string | null> => {
+    try {
+      const characterRef = character.referenceImage?.trim();
+      const wardrobeImageUrl = characterRef?.startsWith("http")
+        ? characterRef
+        : undefined;
+      const promptRes = await fetch("/api/tts/google/director-prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          characterContext: directorContext,
+          screenplayContext,
+          wardrobeImageUrl,
+          selectedInstructions: options?.selectedInstructions,
+        }),
+      });
+      if (!promptRes.ok) return null;
+      const promptData = await promptRes.json().catch(() => ({}));
+      const script = (promptData?.script || "").trim();
+      return script || null;
+    } catch (err) {
+      console.warn("[Voice] Director prompt generation failed:", err);
+      return null;
+    }
+  };
+
+  const resolveDirectorNote = async (
+    directorContext: CharacterContext,
+    fallbacks: {
+      audioProfile?: string | null;
+      existingPrompt?: string | null;
+    },
+  ): Promise<string> => {
+    const fromDirector = await generateDirectorNote(directorContext);
+    return (
+      fromDirector?.trim() ||
+      fallbacks.audioProfile?.trim() ||
+      fallbacks.existingPrompt?.trim() ||
+      ""
+    );
+  };
+
   const resolvedGender = useMemo(
     () => resolveVisualGender(character),
     [character]
@@ -1460,13 +1505,18 @@ const CharacterCard = ({
           `Auto selected: ${selectedVoice.name.replace(/ \((Gemini|Studio)\)/i, "")}`,
         );
 
-        generatedPrompt =
-          visionAnalysis?.audioProfile?.trim() ||
-          character.voiceConfig?.prompt ||
-          "";
+        const directorContext: CharacterContext = {
+          ...scoringContext,
+          referenceImage: character.referenceImage,
+        };
+
+        generatedPrompt = await resolveDirectorNote(directorContext, {
+          audioProfile: visionAnalysis?.audioProfile,
+          existingPrompt: character.voiceConfig?.prompt,
+        });
 
         if (generatedPrompt) {
-          toast.success("Director's Note ready from wardrobe analysis.");
+          toast.success("Matched voice profile ready.");
         }
 
         onUpdateCharacterVoice(characterId, {
@@ -3949,44 +3999,45 @@ const CharacterCard = ({
             selectedVoiceId={character.voiceConfig?.voiceId || ""}
             directorPrompt={character.voiceConfig?.prompt}
             onSelectVoice={async (voiceId, voiceName) => {
-              let prompt = character.voiceConfig?.prompt;
+              let prompt = character.voiceConfig?.prompt?.trim() || "";
+              let visionAnalysis: WardrobeVoiceAnalysisResult | null = null;
+
               if (!prompt && hasCharacterReferenceForVoice) {
                 try {
-                  const analysis = await fetchWardrobeVoiceAnalysis();
-                  if (analysis) {
-                    prompt = analysis.audioProfile;
+                  visionAnalysis = await fetchWardrobeVoiceAnalysis();
+                  if (visionAnalysis) {
                     onUpdateCharacterAttributes?.(characterId, {
-                      gender: analysis.gender,
-                      age: analysis.apparentAge,
-                      ethnicity: analysis.ethnicity,
-                      voiceDescription: analysis.voiceDescription,
+                      gender: visionAnalysis.gender,
+                      age: visionAnalysis.apparentAge,
+                      ethnicity: visionAnalysis.ethnicity,
+                      voiceDescription: visionAnalysis.voiceDescription,
                     });
                   }
                 } catch (err) {
                   console.warn("[Select Voice] Wardrobe voice analysis failed:", err);
                 }
               }
+
               if (!prompt) {
-                try {
-                  const characterRef = character.referenceImage?.trim();
-                  const promptRes = await fetch("/api/tts/google/director-prompt", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      characterContext,
-                      screenplayContext,
-                      characterImageUrl: characterRef,
-                      wardrobeImageUrl: characterRef,
-                    }),
-                  });
-                  if (promptRes.ok) {
-                    const promptData = await promptRes.json();
-                    prompt = (promptData?.script || "").trim() || prompt;
-                  }
-                } catch (err) {
-                  console.warn("[Select Voice] Director prompt generation failed:", err);
-                }
+                const directorContext: CharacterContext = {
+                  ...characterContext,
+                  voiceDescription:
+                    visionAnalysis?.voiceDescription ?? character.voiceDescription,
+                  ...(visionAnalysis
+                    ? {
+                        gender: visionAnalysis.gender,
+                        age: visionAnalysis.apparentAge,
+                        ethnicity: visionAnalysis.ethnicity,
+                      }
+                    : {}),
+                  referenceImage: character.referenceImage,
+                };
+                prompt = await resolveDirectorNote(directorContext, {
+                  audioProfile: visionAnalysis?.audioProfile,
+                  existingPrompt: character.voiceConfig?.prompt,
+                });
               }
+
               onUpdateCharacterVoice?.(characterId, {
                 provider: "google",
                 voiceId,
