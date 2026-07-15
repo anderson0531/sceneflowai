@@ -136,6 +136,48 @@ export function isImageStale(scene: any): boolean {
  * 
  * @returns Object with stale status for each step
  */
+export interface ScriptDirectionReadiness {
+  total: number
+  withDirection: number
+  missing: number
+  stale: number
+  needsUpdate: number
+  ready: boolean
+}
+
+/**
+ * Aggregate scene-direction readiness across the full script.
+ * Missing = no sceneDirection; stale = direction hash mismatch with current script.
+ */
+export function getScriptDirectionReadiness(scenes: any[]): ScriptDirectionReadiness {
+  const list = scenes ?? []
+  const total = list.length
+  let missing = 0
+  let stale = 0
+  let withDirection = 0
+
+  for (const scene of list) {
+    if (!scene?.sceneDirection) {
+      missing += 1
+    } else {
+      withDirection += 1
+      if (isDirectionStale(scene)) {
+        stale += 1
+      }
+    }
+  }
+
+  const needsUpdate = missing + stale
+  return {
+    total,
+    withDirection,
+    missing,
+    stale,
+    needsUpdate,
+    ready: total > 0 && needsUpdate === 0,
+  }
+}
+
 export function getSceneSyncStatus(scene: any): {
   script: { complete: boolean }
   direction: { complete: boolean; stale: boolean }

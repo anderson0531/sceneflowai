@@ -230,6 +230,8 @@ import type { ModerationReport } from '@/lib/moderation/moderationPipeline'
 import { useSidebarData, useSidebarQuickActions } from '@/hooks/useSidebarData'
 import { DetailedSceneDirection } from '@/types/scene-direction'
 import { cn } from '@/lib/utils'
+import { getScriptDirectionReadiness, isDirectionStale } from '@/lib/utils/contentHash'
+import { DirectionReadinessBanner } from '@/components/vision/DirectionReadinessBanner'
 import { sanitizeReturnTo } from '@/lib/navigation/sanitizeReturnTo'
 import { ReferenceLibraryDialog, type ReferenceLibraryTab } from '@/components/vision/ReferenceLibraryDialog'
 import { VisualReference, VisualReferenceType, VisionReferencesPayload, LocationReference } from '@/types/visionReferences'
@@ -5353,6 +5355,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const [editingSceneIndex, setEditingSceneIndex] = useState<number | null>(null)                                                                               
   const [isSceneEditorOpen, setIsSceneEditorOpen] = useState(false)
   const [sceneEditorInitialInstructions, setSceneEditorInitialInstructions] = useState<string>('')
+  const [recentlyUpdatedSceneIndex, setRecentlyUpdatedSceneIndex] = useState<number | null>(null)
+  const recentlyUpdatedSceneClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const editorAudienceAnalysis = useMemo(() => {
     if (editingSceneIndex === null || !script?.script?.scenes?.[editingSceneIndex]) {
@@ -5499,6 +5503,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [generatingSceneReferenceIndex, setGeneratingSceneReferenceIndex] = useState<number | null>(null)
   const [isGeneratingAllSceneReferences, setIsGeneratingAllSceneReferences] = useState(false)
   const [isExpressGeneratingReferences, setIsExpressGeneratingReferences] = useState(false)
+  const [isUpdatingAllDirections, setIsUpdatingAllDirections] = useState(false)
   
   // Keyframe State Machine - Frame step generation state
   const [generatingFrameForSegment, setGeneratingFrameForSegment] = useState<string | null>(null)
@@ -6660,6 +6665,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       emotionalImpact: audienceReview?.emotionalImpact
     }
   }, [audienceReview?.categories, audienceReview?.targetDemographic, audienceReview?.emotionalImpact])
+
+  const directionReadiness = useMemo(
+    () => getScriptDirectionReadiness(script?.script?.scenes || []),
+    [script?.script?.scenes]
+  )
+  const audienceReviewed = audienceReview?.overallScore != null
   
   const sidebarProjectStats = useMemo(() => {
     const scriptScenes = normalizeScenes(script)
@@ -10621,6 +10632,137 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  const handleUpdateAllDirections = async () => {
+    const scenes = script?.script?.scenes || []
+    const scenesNeedingDirection = scenes
+      .map((scene: any, idx: number) => ({ scene, idx }))
+      .filter(
+        ({ scene }: { scene: any }) => !scene?.sceneDirection || isDirectionStale(scene)
+      )
+
+    if (scenesNeedingDirection.length === 0) {
+      try {
+        const { toast } = require('sonner')
+        toast.info('All scene directions are already up to date')
+      } catch {}
+      return
+    }
+
+    setIsUpdatingAllDirections(true)
+    const total = scenesNeedingDirection.length
+    overlayStore.show('Updating scene directions', total * 8, 'scene-revision')
+
+    let completed = 0
+    let failures = 0
+
+    try {
+      for (const { scene, idx } of scenesNeedingDirection) {
+        completed += 1
+        const headingText =
+          typeof scene.heading === 'string' ? scene.heading : scene.heading?.text
+        const label = headingText || `Scene ${idx + 1}`
+        overlayStore.setStatus(`Scene ${completed}/${total}: ${label}`)
+        overlayStore.setProgress(Math.round((completed / total) * 95))
+
+        try {
+          const directionResponse = await fetch('/api/scene/generate-direction', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              projectId,
+              sceneIndex: idx,
+              scene: {
+                heading: scene.heading,
+                action: scene.action,
+                visualDescription: scene.visualDescription,
+                narration: scene.narration,
+                dialogue: scene.dialogue,
+                characters: scene.characters,
+              },
+            }),
+          })
+
+          if (!directionResponse.ok) {
+            const errorData = await directionResponse.json().catch(() => ({ error: 'Unknown error' }))
+            throw new Error(
+              typeof errorData.error === 'string'
+                ? errorData.error
+                : 'Failed to generate scene direction'
+            )
+          }
+
+          const data = await directionResponse.json()
+          if (!data.success || !data.sceneDirection) {
+            throw new Error('Failed to generate scene direction')
+          }
+
+          setScript((currentScript: any) => {
+            if (!currentScript?.script?.scenes) return currentScript
+            const updatedScenes = [...currentScript.script.scenes]
+            updatedScenes[idx] = ensureSceneBeats({
+              ...updatedScenes[idx],
+              sceneDirection: data.sceneDirection,
+            } as Record<string, unknown>)
+            const updatedScript = {
+              ...currentScript,
+              script: { ...currentScript.script, scenes: updatedScenes },
+            }
+
+            setProject((p: any) => {
+              if (!p) return p
+              const updated = {
+                ...p,
+                metadata: {
+                  ...p.metadata,
+                  visionPhase: {
+                    ...p.metadata?.visionPhase,
+                    script: updatedScript,
+                  },
+                },
+              }
+              projectRef.current = updated
+              return updated
+            })
+
+            return updatedScript
+          })
+        } catch (err) {
+          failures += 1
+          console.error(`[UpdateAllDirections] Failed for Scene ${idx + 1}:`, err)
+        }
+
+        if (completed < total) {
+          await new Promise((r) => setTimeout(r, 500))
+        }
+      }
+
+      const succeeded = total - failures
+      try {
+        const { toast } = require('sonner')
+        if (failures === 0) {
+          toast.success(
+            `Updated scene direction for ${succeeded} scene${succeeded === 1 ? '' : 's'}`
+          )
+        } else if (succeeded > 0) {
+          toast.warning(
+            `Updated ${succeeded} of ${total} scene directions (${failures} failed)`
+          )
+        } else {
+          toast.error('Failed to update scene directions')
+        }
+      } catch {}
+    } catch (error) {
+      console.error('[handleUpdateAllDirections] Error:', error)
+      try {
+        const { toast } = require('sonner')
+        toast.error('Failed to update scene directions')
+      } catch {}
+    } finally {
+      setIsUpdatingAllDirections(false)
+      overlayStore.hide()
+    }
+  }
+
   // Handle generate all audio - supports multi-language via translation
   const handleGenerateAllAudio = async (
     language: string = 'en',
@@ -11883,15 +12025,25 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         void handleBackgroundDirectionGeneration(sceneIndex, persistedScene)
       }
 
-      overlayStore.setProgress(95)
-      overlayStore.setStatus('Updating display...')
-      await waitForUiPaint(100)
+      overlayStore.setProgress(98)
+      overlayStore.setStatus('Updating scene…')
 
-      // Close the editor
       setIsSceneEditorOpen(false)
       setEditingSceneIndex(null)
 
-      // Show success message
+      setRecentlyUpdatedSceneIndex(sceneIndex)
+      if (recentlyUpdatedSceneClearTimerRef.current) {
+        clearTimeout(recentlyUpdatedSceneClearTimerRef.current)
+      }
+      recentlyUpdatedSceneClearTimerRef.current = setTimeout(() => {
+        setRecentlyUpdatedSceneIndex(null)
+        recentlyUpdatedSceneClearTimerRef.current = null
+      }, 2500)
+
+      await waitForUiPaint(250)
+
+      overlayStore.hide()
+
       try {
         const { toast } = require('sonner')
         if (allDeletedUrls.length > 0) {
@@ -11900,8 +12052,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           toast.success('Scene changes applied — existing audio preserved')
         }
       } catch {}
-
-      overlayStore.hide()
 
       // NOTE: Removed loadProject() call - it was causing race condition
       // where stale data would be reloaded before DB write completed.
@@ -13905,6 +14055,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onReorderScenes={handleReorderScenes}
                 onEditScene={handleEditScene}
                 onEditSceneWithRecommendations={handleEditSceneWithRecommendations}
+                recentlyUpdatedSceneIndex={recentlyUpdatedSceneIndex}
                 onUpdateSceneAudio={handleUpdateSceneAudio}
                 onDeleteSceneAudio={handleDeleteSceneAudio}
                 onEnhanceSceneContext={handleEnhanceSceneContext}
@@ -13918,6 +14069,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 isGeneratingReviews={isGeneratingReviews}
                 onShowReviews={handleAudienceHeaderClick}
                 onOpenReferences={() => openReferenceLibrary()}
+                directionReadiness={directionReadiness}
+                onUpdateAllDirections={handleUpdateAllDirections}
+                isUpdatingAllDirections={isUpdatingAllDirections}
                 onShowTreatmentReview={() => setShowTreatmentReview(true)}
                 onRefactorFoundation={() => handleRefactorFoundation('artStyle')}
                 directorReview={directorReview}
@@ -14122,23 +14276,32 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }}
         initialTab={referenceLibraryInitialTab}
         topContent={
-          findPotentialDuplicates(characters).length > 0 ? (
-            <Button
-              onClick={() => {
-                const duplicates = findPotentialDuplicates(characters)
-                if (duplicates.length > 0) {
-                  setMergePrimaryCharId(duplicates[0][0].id)
-                  setMergeDuplicateCharIds(duplicates[0].slice(1).map((c: any) => c.id))
-                  setMergeDialogOpen(true)
-                }
-              }}
-              variant="outline"
-              className="w-full shrink-0 text-amber-600 border-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20"
-            >
-              <Users className="w-4 h-4 mr-2" />
-              Merge Duplicates ({findPotentialDuplicates(characters).reduce((sum, group) => sum + group.length - 1, 0)} duplicate{findPotentialDuplicates(characters).reduce((sum, group) => sum + group.length - 1, 0) !== 1 ? 's' : ''})
-            </Button>
-          ) : null
+          <div className="flex flex-col gap-2 shrink-0">
+            <DirectionReadinessBanner
+              directionReadiness={directionReadiness}
+              audienceReviewed={audienceReviewed}
+              isUpdatingAllDirections={isUpdatingAllDirections}
+              onUpdateAllDirections={handleUpdateAllDirections}
+              onReviewAudience={handleAudienceHeaderClick}
+            />
+            {findPotentialDuplicates(characters).length > 0 ? (
+              <Button
+                onClick={() => {
+                  const duplicates = findPotentialDuplicates(characters)
+                  if (duplicates.length > 0) {
+                    setMergePrimaryCharId(duplicates[0][0].id)
+                    setMergeDuplicateCharIds(duplicates[0].slice(1).map((c: any) => c.id))
+                    setMergeDialogOpen(true)
+                  }
+                }}
+                variant="outline"
+                className="w-full shrink-0 text-amber-600 border-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Merge Duplicates ({findPotentialDuplicates(characters).reduce((sum, group) => sum + group.length - 1, 0)} duplicate{findPotentialDuplicates(characters).reduce((sum, group) => sum + group.length - 1, 0) !== 1 ? 's' : ''})
+              </Button>
+            ) : null}
+          </div>
         }
         projectId={projectId}
         seriesId={project?.series_id}

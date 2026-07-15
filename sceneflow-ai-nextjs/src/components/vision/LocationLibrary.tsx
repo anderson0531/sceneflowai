@@ -35,9 +35,30 @@ import {
   isDisplayableImageUrl,
 } from '@/components/vision/DeferredImageSkeleton'
 import { ReferenceSplitPane } from './ReferenceSplitPane'
+import { isDirectionStale } from '@/lib/utils/contentHash'
 
 // Scene heading regex for INT/EXT extraction
 const SCENE_CODE_REGEX = /^(INT\.\/EXT\.|EXT\.\/INT\.|INT\.\/EXT|EXT\.\/INT|INT\. |EXT\. |INT\/EXT|EXT\/INT|INT\.|EXT\.|INT|EXT)\s*(.*)$/i
+
+function locationHasOutdatedDirection(
+  loc: LocationReference,
+  scenes: LocationLibraryProps['scenes']
+): boolean {
+  const sceneNumbers =
+    loc.sceneNumbers && loc.sceneNumbers.length > 0
+      ? loc.sceneNumbers
+      : loc.sourceSceneIndex != null
+        ? [loc.sourceSceneIndex + 1]
+        : []
+
+  for (const sceneNum of sceneNumbers) {
+    const scene = scenes[sceneNum - 1]
+    if (!scene?.sceneDirection || isDirectionStale(scene)) {
+      return true
+    }
+  }
+  return false
+}
 
 interface LocationLibraryProps {
   /** Current location references */
@@ -355,6 +376,7 @@ export function LocationLibrary({
             const isUploading = uploadingForId === loc.id
             const hasImage = isDisplayableImageUrl(loc.imageUrl)
             const isDeferredImage = isDeferredImageUrl(loc.imageUrl)
+            const directionOutdated = locationHasOutdatedDirection(loc, scenes)
 
             return (
               <div
@@ -389,6 +411,16 @@ export function LocationLibrary({
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {directionOutdated && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          Scene direction missing or outdated for mapped scene(s)
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
                     {/* Image status indicator */}
                     {hasImage ? (
                       <Camera className="w-3.5 h-3.5 text-green-400" />

@@ -427,6 +427,12 @@ interface ScriptPanelProps {
   // Audio timing resync - recalculates startTime for all audio clips after edits
   onResyncAudioTiming?: (sceneIndex: number, language: string) => Promise<void>
   resyncingAudioSceneIndex?: number | null
+  /** Briefly highlight scene card after scene editor apply */
+  recentlyUpdatedSceneIndex?: number | null
+  /** Aggregate scene-direction readiness for reference generation guidance */
+  directionReadiness?: import('@/lib/utils/contentHash').ScriptDirectionReadiness
+  onUpdateAllDirections?: () => void
+  isUpdatingAllDirections?: boolean
   // Script regeneration - for recovering from empty scenes state
   onRegenerateScript?: () => Promise<void>
   isRegeneratingScript?: boolean
@@ -730,7 +736,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
-export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onOpenReferences, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, projectStreams = [] }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onOpenReferences, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, directionReadiness, onUpdateAllDirections, isUpdatingAllDirections = false, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, projectStreams = [] }: ScriptPanelProps) {
 
 
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
@@ -2894,16 +2900,32 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
             </Button>
 
             {onOpenReferences && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onOpenReferences}
-                className="flex items-center gap-2 border-cyan-500/30 hover:border-cyan-500/50 hover:bg-cyan-500/10"
-                title="Open Reference Library — cast, locations, and props"
-              >
-                <BookOpen className="w-4 h-4 text-cyan-400" />
-                <span className="text-sm hidden sm:inline">Reference</span>
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={onOpenReferences}
+                      className="flex items-center gap-2 border-cyan-500/30 hover:border-cyan-500/50 hover:bg-cyan-500/10 relative"
+                      title="Open Reference Library — cast, locations, and props"
+                    >
+                      <BookOpen className="w-4 h-4 text-cyan-400" />
+                      <span className="text-sm hidden sm:inline">Reference</span>
+                      {directionReadiness && directionReadiness.needsUpdate > 0 && (
+                        <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-white">
+                          {directionReadiness.needsUpdate}
+                        </span>
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {directionReadiness && directionReadiness.needsUpdate > 0
+                      ? `${directionReadiness.needsUpdate} scene${directionReadiness.needsUpdate !== 1 ? 's' : ''} need updated direction before references`
+                      : 'Open Reference Library — cast, locations, and props'}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
 
             {onShowReviews && (
@@ -3277,6 +3299,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       onDeleteTake={onDeleteTake}
                       sceneAudioTracks={sceneAudioTracks[scene.sceneId || scene.id || `scene-${idx}`]}
                       domId={domId}
+                      isRecentlyUpdated={recentlyUpdatedSceneIndex === idx}
                       isBookmarked={bookmarkedSceneIndex === idx}
                       onBookmarkToggle={() => handleBookmarkToggle(idx)}
                       bookmarkSaving={bookmarkSavingSceneIdx === idx}
@@ -3920,6 +3943,7 @@ interface SceneCardProps {
     music?: { url?: string; startTime: number; duration: number }
   }
   domId?: string
+  isRecentlyUpdated?: boolean
   isBookmarked?: boolean
   onBookmarkToggle?: () => void
   bookmarkSaving?: boolean
@@ -4117,6 +4141,7 @@ function SceneCard({
   characters = [],
   sceneAudioTracks,
   domId,
+  isRecentlyUpdated = false,
   isBookmarked = false,
   onBookmarkToggle,
   bookmarkSaving = false,
@@ -4202,6 +4227,7 @@ function SceneCard({
   projectStreams = [],
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
+  const cardRef = useRef<HTMLDivElement>(null)
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(
     scene.workflowCompletions?.['callAction'] ? 'callAction' : 'dialogueAction'
   )
@@ -4891,6 +4917,16 @@ function SceneCard({
     : 'border-white/10 hover:border-sf-primary/30'
 
   const bookmarkClasses = isBookmarked ? 'border-amber-300/80 shadow-[0_0_35px_rgba(251,191,36,0.25)]' : ''
+  const recentlyUpdatedClasses = isRecentlyUpdated
+    ? 'ring-2 ring-violet-400 animate-pulse border-violet-400/70'
+    : ''
+
+  useEffect(() => {
+    if (!isRecentlyUpdated) return
+    const el = cardRef.current ?? (domId ? document.getElementById(domId) : null)
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [isRecentlyUpdated, domId])
+
   const headingText =
     typeof scene?.heading === 'string'
       ? scene.heading
@@ -4907,8 +4943,9 @@ function SceneCard({
 
   return (
     <div
+      ref={cardRef}
       id={domId}
-      className={`relative overflow-hidden p-5 rounded-2xl border transition-all shadow-[0_15px_40px_rgba(8,8,20,0.35)] bg-slate-950/50 backdrop-blur ${selectionClasses} ${bookmarkClasses} ${isOutline ? 'bg-amber-500/10 border-amber-300/40' : ''}`}
+      className={`relative overflow-hidden p-5 rounded-2xl border transition-all shadow-[0_15px_40px_rgba(8,8,20,0.35)] bg-slate-950/50 backdrop-blur ${selectionClasses} ${bookmarkClasses} ${recentlyUpdatedClasses} ${isOutline ? 'bg-amber-500/10 border-amber-300/40' : ''}`}
     >
       <div className={`pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br ${accentGradient} opacity-40`} />
       <div className="relative z-[1]">
