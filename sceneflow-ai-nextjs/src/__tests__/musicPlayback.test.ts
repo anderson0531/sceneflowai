@@ -102,6 +102,52 @@ describe('buildBeatAlignedMusicClips', () => {
     expect(clips.every((c) => c.fadeAnchorTime === 0)).toBe(true)
   })
 
+  it('bounds leading partial run to enabled beats only (not music-scene)', () => {
+    const scene = {
+      beats: [
+        { beatId: 'b1', kind: 'dialogue', musicEnabled: true },
+        { beatId: 'b2', kind: 'dialogue', musicEnabled: true },
+        { beatId: 'b3', kind: 'action', musicEnabled: false },
+      ],
+    }
+
+    const visualFrames: StoryboardVisualFrame[] = [
+      {
+        clipId: 'c1',
+        beatId: 'b1',
+        startTime: 0,
+        duration: 5,
+        imageUrl: 'https://example.com/1.jpg',
+      },
+      {
+        clipId: 'c2',
+        beatId: 'b2',
+        startTime: 5,
+        duration: 4,
+        imageUrl: 'https://example.com/2.jpg',
+      },
+      {
+        clipId: 'c3',
+        beatId: 'b3',
+        startTime: 9,
+        duration: 3,
+        imageUrl: 'https://example.com/3.jpg',
+      },
+    ]
+
+    const clips = buildBeatAlignedMusicClips(scene, visualFrames, {
+      musicUrl,
+      sceneDuration: 15,
+    })
+
+    expect(clips).toHaveLength(1)
+    expect(clips[0].id).toBe('music-b1')
+    expect(clips[0].id).not.toBe('music-scene')
+    expect(clips[0].startTime).toBe(0)
+    expect(clips[0].duration).toBe(9)
+    expect(clips[0].loop).toBe(true)
+  })
+
   it('uses earliest enabled beat startTime as fadeAnchor when first beat has music off', () => {
     const scene = {
       beats: [

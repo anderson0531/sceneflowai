@@ -107,6 +107,10 @@ export function buildBeatAlignedMusicClips(
   const beatById = new Map(beats.map((beat) => [beat.beatId, beat]))
   const clips: BeatAlignedMusicClip[] = []
 
+  const eligibleFrames = visualFrames.filter(
+    (frame) => frame.beatId && frame.duration > 0 && beatById.has(frame.beatId)
+  )
+
   const enabledFrames = visualFrames.filter((frame) => {
     if (!frame.beatId || frame.duration <= 0) return false
     const beat = beatById.get(frame.beatId)
@@ -119,14 +123,15 @@ export function buildBeatAlignedMusicClips(
       : 0
 
   const runs = groupContiguousMusicFrames(enabledFrames)
+  const coversWholeScene =
+    runs.length === 1 && enabledFrames.length === eligibleFrames.length
 
   for (const run of runs) {
     const first = run[0]
     const last = run[run.length - 1]
     const startTime = first.startTime
     const duration = last.startTime + last.duration - startTime
-    const id =
-      runs.length === 1 && run.length > 1 ? 'music-scene' : `music-${first.beatId}`
+    const id = coversWholeScene ? 'music-scene' : `music-${first.beatId}`
 
     clips.push({
       id,
