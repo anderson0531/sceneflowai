@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { useTranslations } from 'next-intl'
 import { User, Video, Briefcase, Building2, GraduationCap, ArrowRight } from 'lucide-react'
 import { ScreeningRoomPreview } from './ScreeningRoomPreview'
+import { getLandingYoutubeCreatorScreeningSlug } from '@/config/landingSamples'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { cn } from '@/lib/utils'
 
@@ -117,7 +118,14 @@ export default function UseCasesSection() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.35 }}
           >
-            <ScreeningRoomPreview previewTitle={active?.screeningRoomPreview ?? ''} />
+            <ScreeningRoomPreview
+              previewTitle={active?.screeningRoomPreview ?? ''}
+              embedSlug={
+                activePersona === 'youtubeCreator'
+                  ? getLandingYoutubeCreatorScreeningSlug()
+                  : null
+              }
+            />
           </motion.div>
         </div>
 

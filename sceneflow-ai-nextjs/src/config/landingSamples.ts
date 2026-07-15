@@ -23,6 +23,8 @@ export const LANDING_SAMPLE = {
   animaticVideoUrl:
     'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Whitehouse%20Waltz.mp4',
   fullVideoUrl: '',
+  /** Public storyboard share slug for YouTube Creator use-case embed on landing. Empty = mock placeholder. */
+  youtubeCreatorScreeningSlug: 'TheUnseenArchiveTheGrandIllusionTheChicagoWorldsFairDeception',
 } as const
 
 /** Languages showcased on the landing demo storyboard (audio pruned via scripts/prune-demo-languages.mjs). */
@@ -52,4 +54,16 @@ export function getLandingPremiereScreeningEmbedHref(): string | null {
   const id = LANDING_SAMPLE.premiereScreeningId.trim()
   if (!id) return null
   return `/embed/screening/${encodeURIComponent(id)}`
+}
+
+export function getLandingYoutubeCreatorScreeningSlug(): string | null {
+  const slug = LANDING_SAMPLE.youtubeCreatorScreeningSlug.trim()
+  if (!slug) return null
+  return slug
+}
+
+export function getLandingYoutubeCreatorScreeningHref(): string | null {
+  const slug = getLandingYoutubeCreatorScreeningSlug()
+  if (!slug) return null
+  return `/${slug}`
 }
