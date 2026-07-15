@@ -54,7 +54,12 @@ import { needsProductionDerive } from '@/lib/scene/deriveSegmentsFromBeats'
 import { invalidateChangedBeatFramesOnScene } from '@/lib/script/structuredSceneRevision'
 import type { BeatReferenceSelection } from '@/lib/script/segmentTypes'
 import type { StoryboardFrameSlot } from '@/lib/storyboard/types'
-import { mapBeatReferenceSelectionForApi } from '@/lib/vision/beatFrameGenerationContext'
+import {
+  mapBeatReferenceSelectionForApi,
+  resolveBeatFrameGenerationContext,
+  shouldUseExplicitBeatReferences,
+  toBeatReferenceSelection,
+} from '@/lib/vision/beatFrameGenerationContext'
 import {
   applyStartFrameUrlToProductionSegments,
   resolveEffectiveStartFrameUrl,
@@ -8822,10 +8827,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
-  /**
-   * Helper: persist location references to project metadata via API.
-   * Uses the same fetch pattern as handleBackdropGenerated / handleObjectGenerated.
-   */
   const persistLocationReferences = async (updatedLocationRefs: LocationReference[]) => {
     const existingMetadata = project?.metadata || {}
     const existingVisionPhase = existingMetadata.visionPhase || {}
@@ -8870,6 +8871,65 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       }
     })
+  }
+
+  /** Sync live reference library + cast to project metadata before Express (server resolver source). */
+  const syncVisionReferencesForExpress = async () => {
+    if (!projectId) return
+    const existingMetadata = project?.metadata || {}
+    const existingVisionPhase = existingMetadata.visionPhase || {}
+    const updatedReferences = {
+      sceneReferences: sceneReferencesRef.current,
+      objectReferences: objectReferencesRef.current,
+      locationReferences: locationReferencesRef.current,
+    }
+
+    const payload = {
+      metadata: {
+        ...existingMetadata,
+        visionPhase: {
+          ...existingVisionPhase,
+          characters: charactersRef.current,
+          references: updatedReferences,
+        },
+      },
+    }
+
+    const response = await fetch(`/api/projects/${projectId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to sync references for Express')
+    }
+
+    setProject((prev) => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        metadata: {
+          ...prev.metadata,
+          visionPhase: {
+            ...prev.metadata?.visionPhase,
+            characters: charactersRef.current,
+            references: updatedReferences,
+          },
+        },
+      }
+    })
+    projectRef.current = {
+      ...projectRef.current,
+      metadata: {
+        ...projectRef.current?.metadata,
+        visionPhase: {
+          ...projectRef.current?.metadata?.visionPhase,
+          characters: charactersRef.current,
+          references: updatedReferences,
+        },
+      },
+    }
   }
 
   /**
@@ -9724,14 +9784,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       const updatedScenes = [...(script.script.scenes || [])]
-      updatedScenes[sceneIdx] = stampPreVisContentHash(
-        applyBeatStoryboardImageToScene(
-          updatedScenes[sceneIdx],
-          rawBeatIdx,
-          data.imageUrl,
-          { imagePrompt: data.prompt || '' }
-        )
+      let updatedScene = applyBeatStoryboardImageToScene(
+        updatedScenes[sceneIdx],
+        rawBeatIdx,
+        data.imageUrl,
+        { imagePrompt: data.prompt || '' }
       )
+      if (referenceSelection) {
+        updatedScene = applyBeatReferenceSelectionToScene(
+          updatedScene,
+          beatId,
+          referenceSelection
+        )
+      }
+      updatedScenes[sceneIdx] = stampPreVisContentHash(updatedScene)
 
       setScript({
         ...script,
@@ -9758,7 +9824,36 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   const handleRequestGenerateBeatFrame = async (sceneIdx: number, beatId: string) => {
-    await handleGenerateBeatFrameImage(sceneIdx, beatId)
+    const scene = script?.script?.scenes?.[sceneIdx]
+    if (!scene) {
+      await handleGenerateBeatFrameImage(sceneIdx, beatId)
+      return
+    }
+
+    const beats = getSceneBeats(scene)
+    const beat = beats.find((b) => b.beatId === beatId)
+    if (!beat) {
+      await handleGenerateBeatFrameImage(sceneIdx, beatId)
+      return
+    }
+
+    let referenceSelection: BeatReferenceSelection
+    if (shouldUseExplicitBeatReferences(beat)) {
+      referenceSelection = beat.referenceSelection
+    } else {
+      const auto = resolveBeatFrameGenerationContext({
+        scene,
+        beat,
+        sceneIndex: sceneIdx,
+        projectCharacters: characters,
+        locationReferences,
+        objectReferences,
+        filmTitle: project?.title,
+      })
+      referenceSelection = toBeatReferenceSelection(auto)
+    }
+
+    await handleGenerateBeatFrameImage(sceneIdx, beatId, referenceSelection)
   }
 
   const handleGenerateBeatEndFrameImage = async (sceneIdx: number, beatId: string) => {
@@ -12368,6 +12463,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       try {
+        await syncVisionReferencesForExpress()
         const response = await fetch('/api/vision/express', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -12822,6 +12918,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       try {
+        await syncVisionReferencesForExpress()
         const response = await fetch('/api/vision/express', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

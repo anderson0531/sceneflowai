@@ -51,11 +51,17 @@ import {
   mapBeatReferenceSelectionForApi,
   resolveBeatFrameGenerationContext,
   shouldUseExplicitBeatReferences,
+  toBeatReferenceSelection,
 } from '../vision/beatFrameGenerationContext'
-import { getSceneBeats, applyBeatsToScene, isBeatExcluded } from '../script/beatMigration'
+import {
+  applyBeatReferenceSelectionToScene,
+  getSceneBeats,
+  applyBeatsToScene,
+  isBeatExcluded,
+} from '../script/beatMigration'
 import { countExpressFrameScope } from '../storyboard/types'
 import { stampPreVisContentHash } from '../storyboard/preVisSync'
-import type { SceneBeat } from '../script/segmentTypes'
+import type { BeatReferenceSelection, SceneBeat } from '../script/segmentTypes'
 import {
   planBeatSequence,
   applyBeatKeyframePlansToScene,
@@ -118,6 +124,12 @@ function isLegacySlotSelected(key: string, selectedKeys: Set<string> | null): bo
   return selectedKeys.has(key)
 }
 
+export type ExpressBeatRefsResolved = {
+  api: ReturnType<typeof mapBeatReferenceSelectionForApi>
+  selection: BeatReferenceSelection
+  fromSavedSelection: boolean
+}
+
 /** Resolve beat references for Express — saved dialog selection wins, else dialog-parity auto-resolve. */
 export function resolveExpressBeatReferences(args: {
   beat: SceneBeat
@@ -126,7 +138,7 @@ export function resolveExpressBeatReferences(args: {
   beatIdx: number
   sceneNumber: number
   project: any
-}): ReturnType<typeof mapBeatReferenceSelectionForApi> | null {
+}): ExpressBeatRefsResolved | null {
   const { beat, scene, sceneIndex, beatIdx, sceneNumber, project } = args
   const visionPhase = project?.metadata?.visionPhase || {}
   const references = visionPhase.references || {}
@@ -139,12 +151,16 @@ export function resolveExpressBeatReferences(args: {
     console.log(
       `[expressOrchestrator] Beat ${beatIdx + 1} scene ${sceneNumber} — using saved reference selection`
     )
-    return mapBeatReferenceSelectionForApi(
-      beat.referenceSelection,
-      projectCharacters,
-      locationReferences,
-      objectReferences
-    )
+    return {
+      api: mapBeatReferenceSelectionForApi(
+        beat.referenceSelection,
+        projectCharacters,
+        locationReferences,
+        objectReferences
+      ),
+      selection: beat.referenceSelection,
+      fromSavedSelection: true,
+    }
   }
 
   const autoCtx = resolveBeatFrameGenerationContext({
@@ -167,12 +183,18 @@ export function resolveExpressBeatReferences(args: {
     )
   }
 
-  return mapBeatReferenceSelectionForApi(
-    autoCtx,
-    projectCharacters,
-    locationReferences,
-    objectReferences
-  )
+  const selection = toBeatReferenceSelection(autoCtx)
+
+  return {
+    api: mapBeatReferenceSelectionForApi(
+      autoCtx,
+      projectCharacters,
+      locationReferences,
+      objectReferences
+    ),
+    selection,
+    fromSavedSelection: false,
+  }
 }
 
 export function buildExpressBeatRefPayload(
@@ -639,7 +661,10 @@ async function generateSingleBeatImage(
         project,
       })
     : null
-  const beatRefPayload = buildExpressBeatRefPayload(verifiedBeatRefs, excludeCharacters)
+  if (beat && verifiedBeatRefs?.selection && !verifiedBeatRefs.fromSavedSelection) {
+    persistBeatReferenceSelection(scene, beatIdx, verifiedBeatRefs.selection)
+  }
+  const beatRefPayload = buildExpressBeatRefPayload(verifiedBeatRefs?.api ?? null, excludeCharacters)
 
   const result = await trafficCop.runInLane('image', () =>
     generateSceneImage({
@@ -711,7 +736,10 @@ async function generateSingleBeatEndImage(
     sceneNumber,
     project,
   })
-  const beatRefPayload = buildExpressBeatRefPayload(verifiedBeatRefs, excludeCharacters)
+  if (verifiedBeatRefs?.selection && !verifiedBeatRefs.fromSavedSelection) {
+    persistBeatReferenceSelection(scene, beatIdx, verifiedBeatRefs.selection)
+  }
+  const beatRefPayload = buildExpressBeatRefPayload(verifiedBeatRefs?.api ?? null, excludeCharacters)
 
   safeEmit(emit, {
     type: 'frame-start',
@@ -967,6 +995,18 @@ async function runBeatImages(
 
 /** Serialize in-memory beat persist so parallel generations do not drop sibling URLs. */
 const beatPersistChains = new WeakMap<object, Promise<void>>()
+
+function persistBeatReferenceSelection(
+  scene: Record<string, unknown>,
+  beatIndex: number,
+  selection: BeatReferenceSelection
+): void {
+  const beats = getSceneBeats(scene)
+  const beat = beats[beatIndex]
+  if (!beat?.beatId) return
+  const updated = applyBeatReferenceSelectionToScene(scene, beat.beatId, selection)
+  Object.assign(scene, updated)
+}
 
 function writeBeatFrameToScene(
   scene: any,

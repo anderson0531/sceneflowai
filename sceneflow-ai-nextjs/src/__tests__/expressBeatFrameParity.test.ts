@@ -108,15 +108,16 @@ describe('resolveExpressBeatReferences', () => {
     })
 
     expect(refs).not.toBeNull()
-    expect(refs!.characterSelectionExplicit).toBe(true)
-    expect(refs!.skipObjectAutoDetection).toBe(true)
-    expect(refs!.selectedCharacters).toContain('char-alice')
-    expect(refs!.locationReferences).toHaveLength(1)
-    expect(refs!.locationReferences[0].id).toBe('loc-alley')
-    expect(refs!.objectReferences.some((o) => o.id === 'prop-lantern')).toBe(true)
-    expect(refs!.characterWardrobes).toEqual([
+    expect(refs!.api.characterSelectionExplicit).toBe(true)
+    expect(refs!.api.skipObjectAutoDetection).toBe(true)
+    expect(refs!.api.selectedCharacters).toContain('char-alice')
+    expect(refs!.api.locationReferences).toHaveLength(1)
+    expect(refs!.api.locationReferences[0].id).toBe('loc-alley')
+    expect(refs!.api.objectReferences.some((o) => o.id === 'prop-lantern')).toBe(true)
+    expect(refs!.api.characterWardrobes).toEqual([
       { characterId: 'char-alice', wardrobeId: 'wardrobe-alley' },
     ])
+    expect(refs!.selection.characterIds).toContain('char-alice')
   })
 
   it('prefers saved beat.referenceSelection over auto-resolve', () => {
@@ -143,8 +144,9 @@ describe('resolveExpressBeatReferences', () => {
       project,
     })
 
-    expect(refs!.objectReferences).toHaveLength(0)
-    expect(refs!.selectedCharacters).toEqual(['char-alice'])
+    expect(refs!.api.objectReferences).toHaveLength(0)
+    expect(refs!.api.selectedCharacters).toEqual(['char-alice'])
+    expect(refs!.fromSavedSelection).toBe(true)
   })
 })
 
@@ -163,7 +165,7 @@ describe('buildExpressBeatRefPayload', () => {
       project,
     })!
 
-    const payload = buildExpressBeatRefPayload(refs, true)
+    const payload = buildExpressBeatRefPayload(refs.api, true)
 
     expect(payload.selectedCharacters).toBeUndefined()
     expect(payload.characterWardrobes).toBeUndefined()

@@ -7,6 +7,21 @@ import { detectCharactersInText, resolveBeatSpeaker } from '@/lib/scene/characte
 import { isNarratorBeat } from '@/lib/script/beatMigration'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
 import type { BeatReferenceSelection, SceneBeat } from '@/lib/script/segmentTypes'
+
+export function toBeatReferenceSelection(
+  ctx: Pick<
+    BeatReferenceSelection,
+    'characterIds' | 'locationRefId' | 'objectRefIds' | 'characterWardrobes'
+  >
+): BeatReferenceSelection {
+  return {
+    characterIds: ctx.characterIds,
+    locationRefId: ctx.locationRefId,
+    objectRefIds: ctx.objectRefIds,
+    characterWardrobes: ctx.characterWardrobes ?? [],
+    resolvedAt: new Date().toISOString(),
+  }
+}
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
 import {
   findLocationReferencesAssignedToScene,
@@ -136,9 +151,18 @@ function resolveBeatCharacters(
       sceneHeadingText(scene),
       beat.actionDescription || '',
     ].join(' ')
-    return detectCharactersInText(actionContext, projectCharacters, {
+    const matched = detectCharactersInText(actionContext, projectCharacters, {
       excludeTexts: filmTitle ? [filmTitle] : [],
     })
+    if (matched.length > 0) return matched
+
+    const nonNarrators = projectCharacters.filter(
+      (c) => c.type !== 'narrator' && (c.referenceImage || c.id || c.name)
+    )
+    if (nonNarrators.length === 1) {
+      return [nonNarrators[0]]
+    }
+    return []
   }
 
   if (isNarratorBeat(beat) || beat.kind === 'narration') {

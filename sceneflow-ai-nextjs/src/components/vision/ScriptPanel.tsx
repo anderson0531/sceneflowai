@@ -5932,7 +5932,7 @@ function SceneCard({
                           {hasPreVisTab && (
                             <TabsTrigger value="previs" className="text-xs gap-1.5 px-2.5 py-1.5">
                               <Clapperboard className="w-3.5 h-3.5 shrink-0" />
-                              Visualization
+                              Frames
                               {preVisFrameStats.total > 0 && (
                                 <span className="text-[10px] opacity-60">
                                   ({preVisFrameStats.withImage}/{preVisFrameStats.total})

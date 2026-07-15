@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, MapPin, Check, ChevronDown, ChevronUp } from 'lucide-react'
+import { Loader2, MapPin, Check, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react'
 import {
   LocationSettingSection,
   CharacterSelectionSection,
@@ -209,6 +209,20 @@ export function PreVisFramePromptDialog({
             Scene {sceneIndex + 1} · Guided prompt builder with character and wardrobe references.
           </DialogDescription>
         </DialogHeader>
+
+        {initialContext?.warnings && initialContext.warnings.length > 0 && (
+          <div className="flex-shrink-0 rounded-lg border border-amber-700/40 bg-amber-900/15 px-3 py-2 space-y-1">
+            <div className="flex items-center gap-2 text-amber-200 text-xs font-medium">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+              Reference matching notes
+            </div>
+            <ul className="text-[11px] text-amber-100/80 list-disc list-inside space-y-0.5">
+              {initialContext.warnings.map((warning) => (
+                <li key={warning}>{warning}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <Tabs value={mode} onValueChange={(v) => setMode(v as 'guided' | 'advanced')} className="flex-1 flex flex-col min-h-0">
           <TabsList className="grid w-full grid-cols-2">

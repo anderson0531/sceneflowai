@@ -26,6 +26,7 @@ export interface PreVisFramePromptContext {
   wardrobeTextOverrides: Record<string, string>
   locationRefId: string | null
   objectRefIds: string[]
+  warnings?: string[]
   beat?: SceneBeat
   beatReferenceSelection?: BeatReferenceSelection | null
 }
@@ -168,11 +169,13 @@ export function resolvePreVisFramePromptContext(args: {
         filmTitle,
       })
       const saved = beat.referenceSelection
-      const selectedCharacterNames = saved?.resolvedAt
-        ? saved.characterIds
+      const savedCharacterNames = saved?.resolvedAt
+        ? (saved.characterIds
             .map((id) => projectCharacters.find((c) => c.id === id || c.name === id)?.name)
-            .filter(Boolean) as string[]
-        : auto.characterNames
+            .filter(Boolean) as string[])
+        : []
+      const selectedCharacterNames =
+        savedCharacterNames.length > 0 ? savedCharacterNames : auto.characterNames
       const selectedWardrobes: Record<string, string> = {}
       const wardrobeSource = saved?.characterWardrobes?.length
         ? saved.characterWardrobes
@@ -209,6 +212,7 @@ export function resolvePreVisFramePromptContext(args: {
         ),
         locationRefId: saved?.locationRefId ?? auto.locationRefId ?? null,
         objectRefIds: saved?.objectRefIds?.length ? saved.objectRefIds : auto.objectRefIds,
+        warnings: auto.warnings,
         beat,
         beatReferenceSelection: saved ?? null,
       }
