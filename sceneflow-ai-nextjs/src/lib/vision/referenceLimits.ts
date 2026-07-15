@@ -7,7 +7,9 @@ import { buildLocationReferenceLabel } from '@/lib/vision/locationReferencePromp
 
 export const MAX_VERTEX_GEMINI_REFERENCE_IMAGES = 8
 export const MAX_REFERENCE_IMAGES_ECO = 3
-export const MAX_REFERENCE_IMAGES_PRO = 14
+/** Fal Kling O3 Omni: max 10 total elements + image_urls */
+export const MAX_REFERENCE_IMAGES_PRO = 10
+export const MAX_FAL_KLING_REFERENCE_SLOTS = 10
 
 export type VertexImageTier = 'eco' | 'designer' | 'director'
 
@@ -17,7 +19,7 @@ export function getMaxReferenceImagesForTier(tier: VertexImageTier): number {
 
 /**
  * Auto-upgrade eco to designer when any reference images are needed.
- * Reference-bearing generations use gemini-3-pro-image-preview (14 refs), not eco (3 refs).
+ * Reference-bearing generations use designer tier (10 refs for Fal Kling O3), not eco (3 refs).
  */
 export function resolveEffectiveImageTier(args: {
   modelTier?: VertexImageTier

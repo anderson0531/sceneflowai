@@ -1,54 +1,97 @@
 /**
- * Blob storage helper functions
- * 
- * These functions delegate to GCS storage backend.
- * They use dynamic imports to avoid bundling @google-cloud/storage in client builds.
+ * Blob storage helper functions — Vercel Blob (public).
  */
 
+import { put } from '@vercel/blob'
+
+function parseBase64Image(base64Data: string): { buffer: Buffer; contentType: string } {
+  if (base64Data.startsWith('data:')) {
+    const match = base64Data.match(/^data:([^;]+);base64,(.+)$/)
+    if (match) {
+      return {
+        buffer: Buffer.from(match[2], 'base64'),
+        contentType: match[1],
+      }
+    }
+  }
+
+  return {
+    buffer: Buffer.from(base64Data.replace(/^data:[^;]+;base64,/, ''), 'base64'),
+    contentType: 'image/png',
+  }
+}
+
+function inferContentType(filename: string, fallback = 'image/png'): string {
+  const ext = filename.split('.').pop()?.toLowerCase()
+  switch (ext) {
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg'
+    case 'webp':
+      return 'image/webp'
+    case 'gif':
+      return 'image/gif'
+    case 'png':
+      return 'image/png'
+    default:
+      return fallback
+  }
+}
+
+function buildBlobPath(filename: string, projectId = 'default'): string {
+  if (filename.startsWith('projects/') || filename.startsWith('http')) {
+    return filename.replace(/^https?:\/\/[^/]+\//, '')
+  }
+
+  const parts = filename.split('/')
+  let subcategory = 'scenes'
+  let actualFilename = filename
+
+  if (parts.length > 1) {
+    const possibleSubcategory = parts[0] as
+      | 'scenes'
+      | 'thumbnails'
+      | 'frames'
+      | 'treatment'
+      | 'characters'
+    if (
+      ['scenes', 'thumbnails', 'frames', 'treatment', 'characters'].includes(
+        possibleSubcategory
+      )
+    ) {
+      subcategory = possibleSubcategory
+      actualFilename = parts.slice(1).join('/')
+    }
+  }
+
+  if (projectId && projectId !== 'default') {
+    return `projects/${projectId}/images/${subcategory}/${actualFilename}`
+  }
+  return `images/${subcategory}/${actualFilename}`
+}
+
 /**
- * Upload a base64 image to Google Cloud Storage
- * @param base64Data - Base64 image data (with or without data URI prefix)
- * @param filename - Filename for the blob (e.g., 'thumbnails/project-123.png')
- * @param projectId - Project ID for organizing assets (defaults to 'default')
- * @returns Public URL of the uploaded image
+ * Upload a base64 image to Vercel Blob storage.
  */
 export async function uploadImageToBlob(
   base64Data: string,
   filename: string,
   projectId: string = 'default'
 ): Promise<string> {
-  // Dynamic import to avoid bundling @google-cloud/storage in client builds
-  const { uploadBase64ImageToGCS } = await import('./gcsAssets')
-  
-  // Extract category from filename path (e.g., 'thumbnails/project-123.png')
-  const parts = filename.split('/')
-  let subcategory: 'scenes' | 'thumbnails' | 'frames' | 'treatment' | 'characters' = 'scenes'
-  let actualFilename = filename
-  
-  if (parts.length > 1) {
-    const possibleSubcategory = parts[0] as typeof subcategory
-    if (['scenes', 'thumbnails', 'frames', 'treatment', 'characters'].includes(possibleSubcategory)) {
-      subcategory = possibleSubcategory
-      actualFilename = parts.slice(1).join('/')
-    }
-  }
-  
-  const result = await uploadBase64ImageToGCS(base64Data, {
-    projectId,
-    category: 'images',
-    subcategory,
-    filename: actualFilename,
+  const { buffer, contentType } = parseBase64Image(base64Data)
+  const blobPath = buildBlobPath(filename, projectId)
+
+  const blob = await put(blobPath, buffer, {
+    access: 'public',
+    contentType: inferContentType(blobPath, contentType),
   })
-  
-  return result.url
+
+  console.log('[Blob Storage] Uploaded to Vercel Blob:', blob.url)
+  return blob.url
 }
 
 /**
- * Upload a video buffer to Google Cloud Storage
- * @param videoBuffer - Video data as Buffer
- * @param filename - Filename for the blob (e.g., 'segments/segment-123.mp4')
- * @param projectId - Project ID for organizing assets (defaults to 'default')
- * @returns Public URL of the uploaded video
+ * Upload a video buffer to Vercel Blob storage.
  */
 export async function uploadVideoToBlob(
   videoBuffer: Buffer,
@@ -56,25 +99,16 @@ export async function uploadVideoToBlob(
   projectId: string = 'default',
   metadata?: Record<string, string>
 ): Promise<string> {
-  // Dynamic import to avoid bundling @google-cloud/storage in client builds
-  const { uploadToGCS } = await import('./gcsAssets')
-  
-  const result = await uploadToGCS(videoBuffer, {
-    projectId,
-    category: 'renders',
-    subcategory: 'scenes',
-    filename,
+  const blobPath = buildBlobPath(filename, projectId)
+  const blob = await put(blobPath, videoBuffer, {
+    access: 'public',
     contentType: 'video/mp4',
-    metadata,
+    ...(metadata ? { addRandomSuffix: false } : {}),
   })
-  
-  return result.url
+  console.log('[Blob Storage] Uploaded video to Vercel Blob:', blob.url)
+  return blob.url
 }
 
-/**
- * Check if a string is a base64 data URI
- */
 export function isBase64DataUri(str: string): boolean {
   return typeof str === 'string' && str.startsWith('data:image')
 }
-

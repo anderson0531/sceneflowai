@@ -31,10 +31,10 @@ describe('referenceLimits', () => {
     expect(MAX_VERTEX_GEMINI_REFERENCE_IMAGES).toBe(8)
   })
 
-  it('getMaxReferenceImagesForTier returns eco=3 and pro=14', () => {
+  it('getMaxReferenceImagesForTier returns eco=3 and pro=10', () => {
     expect(getMaxReferenceImagesForTier('eco')).toBe(3)
-    expect(getMaxReferenceImagesForTier('designer')).toBe(14)
-    expect(getMaxReferenceImagesForTier('director')).toBe(14)
+    expect(getMaxReferenceImagesForTier('designer')).toBe(10)
+    expect(getMaxReferenceImagesForTier('director')).toBe(10)
   })
 
   it('resolveEffectiveImageTier upgrades eco whenever any reference is wanted', () => {

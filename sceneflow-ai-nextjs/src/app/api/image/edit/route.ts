@@ -1,12 +1,12 @@
 /**
  * Image Edit API Route
  *
- * Instruction-based editing via Gemini multimodal edit on Vertex (editVertexImage).
- * Preserves composition better than Imagen foreground-inpaint for storyboard edits.
+ * Instruction-based editing via Fal Kling O3 (default) or Vertex Gemini edit (rollback).
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { editVertexImage } from '@/lib/vertexai/vertexImageClient'
+import { editImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
+import { isFalKlingImageProvider } from '@/lib/fal/config'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import {
   CHARACTER_IDENTITY_REFERENCE_INSTRUCTION,
@@ -93,18 +93,23 @@ export async function POST(request: NextRequest) {
 
     const totalRefs = 1 + referenceImages.length
     const modelTier = totalRefs > 3 ? 'designer' : requestedTier
+    const identityRef = referenceImages.find((r) => r.imageUrl !== sourceImage)?.imageUrl
 
-    console.log(`[Image Edit API] Gemini edit: "${instruction.substring(0, 50)}..."`)
+    console.log(`[Image Edit API] ${isFalKlingImageProvider() ? 'Fal Kling O3' : 'Vertex Gemini'} edit: "${instruction.substring(0, 50)}..."`)
 
-    const result = await editVertexImage({
+    const dualRefInstruction = buildDualReferenceInstruction(referenceImages)
+    const fullInstruction = dualRefInstruction
+      ? `${dualRefInstruction}\n\n${instruction.trim()}`
+      : instruction.trim()
+
+    const result = await editImageWithGeminiStudio({
       sourceImage,
-      instruction: instruction.trim(),
-      referenceImages,
+      instruction: fullInstruction,
+      referenceImage: identityRef,
       aspectRatio,
       imageSize,
       modelTier,
       editIntent: 'preVisEdit',
-      dualReferenceInstruction: buildDualReferenceInstruction(referenceImages),
     })
 
     const imageDataUrl = `data:${result.mimeType};base64,${result.imageBase64}`
@@ -126,7 +131,8 @@ export async function POST(request: NextRequest) {
       mode: 'instruction',
       imageUrl: permanentUrl,
       originalImageUrl: sourceImage,
-      model: result.modelId,
+      model: isFalKlingImageProvider() ? 'fal-kling-o3' : 'vertex-gemini',
+      provider: isFalKlingImageProvider() ? 'fal-kling' : 'vertex-gemini',
     })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error'
@@ -138,9 +144,9 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   return NextResponse.json({
     service: 'Image Edit API',
-    version: '4.1.0',
-    description: 'AI-powered image editing via Gemini multimodal edit on Vertex',
-    provider: 'vertex-gemini',
+    version: '5.0.0',
+    description: 'AI-powered image editing via Fal Kling O3 (default) or Vertex Gemini edit',
+    provider: isFalKlingImageProvider() ? 'fal-kling' : 'vertex-gemini',
     modes: [
       {
         mode: 'instruction',

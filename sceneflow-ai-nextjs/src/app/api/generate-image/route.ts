@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isFalKlingImageProvider } from '@/lib/fal/config';
+import { generateKlingImageTextOnly } from '@/lib/fal/klingImageClient';
 import { getVertexAIAuthToken } from '@/lib/vertexai/client';
 import { getImagenSafetyFilterLevel, getImagenPersonGeneration } from '@/lib/vertexai/safety';
 
@@ -51,6 +53,24 @@ export async function POST(req: NextRequest) {
       Aspect ratio: 16:9 landscape for thumbnail display`;
       
       console.log('🎨 Enhanced prompt created:', enhancedPrompt);
+
+      if (isFalKlingImageProvider()) {
+        const klingResult = await generateKlingImageTextOnly({
+          prompt: enhancedPrompt,
+          aspectRatio: '16:9',
+        });
+        const imageUrl = `data:${klingResult.mimeType};base64,${klingResult.imageBase64}`;
+        return NextResponse.json({
+          success: true,
+          imageUrl,
+          images: [{ dataUrl: imageUrl, mimeType: klingResult.mimeType }],
+          prompt: enhancedPrompt,
+          model: klingResult.modelId,
+          provider: 'fal-kling',
+          traceId,
+          durationMs: Date.now() - startedAt,
+        });
+      }
 
       // If caller requests OpenAI directly, use it immediately
       if (options?.forceOpenAI) {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isFalKlingImageProvider } from '@/lib/fal/config';
 import { getStorageClient } from '@/lib/storage/gcs';
 import { getVertexAIAuthToken } from '@/lib/vertexai/client';
 import { getImagenSafetyFilterLevel, getImagenPersonGeneration } from '@/lib/vertexai/safety';
@@ -14,6 +15,14 @@ export async function POST(req: NextRequest) {
 
   try {
     const { gcsUri, prompt, subjectDescription } = await req.json();
+
+    if (isFalKlingImageProvider()) {
+      return NextResponse.json({
+        success: false,
+        logs: ['IMAGE_PROVIDER=fal-kling — Vertex Imagen subject-customization test is disabled. Set IMAGE_PROVIDER=vertex to run this diagnostic.'],
+        error: 'Vertex Imagen test disabled when IMAGE_PROVIDER=fal-kling',
+      }, { status: 400 });
+    }
 
     if (!gcsUri) throw new Error('GCS URI is required');
 

@@ -109,8 +109,8 @@ export interface CreditChargeResult {
 
 const DEFAULT_CREDITS: Record<CreditOperation, number> = {
   // Image
-  imagen_generate: IMAGE_CREDITS.IMAGEN_3,
-  imagen_edit: IMAGE_CREDITS.IMAGEN_3,
+  imagen_generate: IMAGE_CREDITS.FAL_KLING_IMAGE,
+  imagen_edit: IMAGE_CREDITS.FAL_KLING_IMAGE,
   gemini_image_edit: IMAGE_CREDITS.GEMINI_EDIT,
   // Video
   veo_fast: VIDEO_CREDITS.VEO_FAST,

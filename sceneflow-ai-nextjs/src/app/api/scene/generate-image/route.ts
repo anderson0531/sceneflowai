@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
+import { isFalKlingImageProvider } from '@/lib/fal/config'
+import {
+  generateKlingImageWithRefs,
+} from '@/lib/fal/klingImageClient'
+import {
+  mapSceneImageToKlingO3,
+  MAX_FAL_KLING_REFERENCE_SLOTS,
+} from '@/lib/fal/klingImagePromptMapper'
 import { generateImageWithVertexKlingFallback } from '@/lib/generation/vertexImageWithKlingFallback'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen, generateLinkingDescription, extractDemographicAnchor, buildIdentityPromptToken, sanitizePromptForIdentityRefs, filterCharactersForPromptRefs, stripReferenceImageMappingBlock } from '@/lib/imagen/promptOptimizer'
@@ -368,7 +376,7 @@ function stripClothingDescriptors(description: string): string {
 export async function POST(req: NextRequest) {
   let userId: string | null = null
   let creditsCharged = 0
-  const CREDIT_COST = IMAGE_CREDITS.IMAGEN_3 // 5 credits per image
+  const CREDIT_COST = IMAGE_CREDITS.FAL_KLING_IMAGE // 12 credits per image
   const routeStart = Date.now()
   let logContext: Record<string, unknown> = {}
 
@@ -653,8 +661,8 @@ export async function POST(req: NextRequest) {
             frameType: 'beat',
             frameRole: 'end',
             beatIndex: effectiveBeatIndex,
-            model: 'gemini-image-edit',
-            provider: 'gemini',
+            model: 'fal-kling-o3-edit',
+            provider: 'fal-kling',
             storage: 'vercel-blob',
             creditsCharged: IMAGE_CREDITS.FRAME_GENERATION,
           })
@@ -1678,8 +1686,8 @@ export async function POST(req: NextRequest) {
       beatForEmotion,
     }
 
-    let generationModelId = 'imagen-3.0-fast-generate-001'
-    let generationProvider: 'vertex' | 'fal' = 'vertex'
+    let generationModelId = 'fal-ai/kling-image/v3/text-to-image'
+    let generationProvider: 'vertex' | 'fal' = 'fal'
     let promptForResponse = stripReferenceImageMappingBlock(optimizedPrompt)
 
     const hairCompositionLock = buildHairCompositionLock(
@@ -1914,7 +1922,7 @@ export async function POST(req: NextRequest) {
           }
 
           console.log(
-            `[Scene Image] Using Vertex Gemini Image (tier=${effectiveImageTier}) for reference images`
+            `[Scene Image] Using ${isFalKlingImageProvider() ? 'Fal Kling O3' : 'Vertex Gemini Image'} (tier=${effectiveImageTier}) for reference images`
           )
 
           const { selected: selectedReferenceImages, dropped: droppedReferenceImages, indexMap } =
@@ -2232,20 +2240,61 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          const vertexResult = await generateImageWithVertexKlingFallback({
-            prompt: geminiPrompt,
-            aspectRatio: '16:9',
-            imageSize: effectiveImageSize,
-            referenceImages: allReferenceImages,
-            negativePrompt: finalNegativePrompt,
-            ...(effectiveImageTier ? { modelTier: effectiveImageTier } : {}),
-          })
+          if (isFalKlingImageProvider()) {
+            const scenePromptMarker = 'SCENE PROMPT:\n'
+            const markerIdx = geminiPrompt.indexOf(scenePromptMarker)
+            const instructionPrefix =
+              markerIdx >= 0 ? geminiPrompt.slice(0, markerIdx).trim() : geminiPrompt.trim()
 
-          base64Image = vertexResult.imageBase64
-          generationModelId = vertexResult.modelId
-          generationProvider = vertexResult.generationProvider
+            const characterOrdinals = characterReferences
+              .filter(
+                (cr: { name: string; subjectOrdinal?: number }) =>
+                  typeof cr.subjectOrdinal === 'number'
+              )
+              .map((cr: { name: string; subjectOrdinal?: number }) => ({
+                name: cr.name,
+                subjectOrdinal: cr.subjectOrdinal!,
+              }))
+
+            const mapped = mapSceneImageToKlingO3({
+              scenePrompt: remappedOptimizedPrompt,
+              selectedReferences: selectedReferenceImages,
+              characterOrdinals,
+              instructionPrefix,
+              maxTotalRefs: MAX_FAL_KLING_REFERENCE_SLOTS,
+            })
+
+            console.log(
+              `[Scene Image] Fal O3 mapping: ${mapped.elements.length} element(s), ${mapped.imageUrls.length} image_url(s)`
+            )
+
+            const klingResult = await generateKlingImageWithRefs({
+              prompt: mapped.prompt,
+              elements: mapped.elements,
+              imageUrls: mapped.imageUrls,
+              aspectRatio: '16:9',
+              negativePrompt: finalNegativePrompt,
+            })
+
+            base64Image = klingResult.imageBase64
+            generationModelId = klingResult.modelId
+            generationProvider = 'fal'
+          } else {
+            const vertexResult = await generateImageWithVertexKlingFallback({
+              prompt: geminiPrompt,
+              aspectRatio: '16:9',
+              imageSize: effectiveImageSize,
+              referenceImages: allReferenceImages,
+              negativePrompt: finalNegativePrompt,
+              ...(effectiveImageTier ? { modelTier: effectiveImageTier } : {}),
+            })
+
+            base64Image = vertexResult.imageBase64
+            generationModelId = vertexResult.modelId
+            generationProvider = vertexResult.generationProvider
+          }
         } else {
-          console.log('[Scene Image] Using Vertex AI Imagen (no reference images)')
+          console.log('[Scene Image] Using Fal Kling v3 text-to-image (no reference images)')
           // When excludeCharacters is true, force personGeneration to 'dont_allow' for scene reference images
           const effectivePersonGeneration = effectiveExcludeCharacters
             ? 'dont_allow'
@@ -2256,8 +2305,12 @@ export async function POST(req: NextRequest) {
             imageSize: effectiveImageSize,
             quality: effectiveImagenQuality,
             personGeneration: effectivePersonGeneration,
-            negativePrompt: finalNegativePrompt
+            negativePrompt: finalNegativePrompt,
           })
+          generationModelId = isFalKlingImageProvider()
+            ? 'fal-ai/kling-image/v3/text-to-image'
+            : 'imagen-3.0-fast-generate-001'
+          generationProvider = isFalKlingImageProvider() ? 'fal' : 'vertex'
         }
         
         // Success - break out of retry loop
@@ -2455,7 +2508,7 @@ export async function POST(req: NextRequest) {
         CREDIT_COST,
         'ai_usage',
         projectId || null,
-        { operation: 'imagen_generate', sceneIndex, model: generationModelId }
+        { operation: 'kling_image_generate', sceneIndex, model: generationModelId }
       )
       creditsCharged = CREDIT_COST
       console.log(`[Scene Image] Charged ${CREDIT_COST} credits to user ${userId}`)

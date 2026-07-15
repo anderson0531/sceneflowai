@@ -35,3 +35,23 @@ export function getFalKlingImageModel(): string {
     'fal-ai/kling-image/v3/text-to-image'
   )
 }
+
+export function getFalKlingImageO3Model(): string {
+  return (
+    process.env.FAL_KLING_IMAGE_O3_MODEL ||
+    'fal-ai/kling-image/o3/image-to-image'
+  )
+}
+
+export type ImageProvider = 'fal-kling' | 'vertex'
+
+/** Primary image generation backend. Default: fal-kling (Fal-hosted Kling O3). */
+export function getImageProvider(): ImageProvider {
+  const raw = process.env.IMAGE_PROVIDER?.trim().toLowerCase()
+  if (raw === 'vertex') return 'vertex'
+  return 'fal-kling'
+}
+
+export function isFalKlingImageProvider(): boolean {
+  return getImageProvider() === 'fal-kling'
+}

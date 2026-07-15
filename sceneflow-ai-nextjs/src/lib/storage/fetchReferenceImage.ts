@@ -117,6 +117,45 @@ function formatDownloadError(url: string, label: string | undefined, reason: str
 }
 
 /**
+ * Return a public URL suitable for Fal/Kling when possible (skip download for public Blob URLs).
+ * Falls back to base64 download for gs://, private blobs, or when base64 is explicitly needed.
+ */
+export async function resolveReferenceUrlForFal(
+  url: string,
+  options: FetchReferenceImageOptions = {}
+): Promise<string> {
+  const trimmed = url.trim()
+  if (!trimmed) {
+    throw formatDownloadError(url, options.label, 'empty URL')
+  }
+
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    if (isPublicVercelBlobUrl(trimmed)) {
+      return trimmed
+    }
+  }
+
+  if (trimmed.startsWith('data:')) {
+    const { resolveImageUrlForFal } = await import('@/lib/fal/klingImageClient')
+    return resolveImageUrlForFal(trimmed)
+  }
+
+  if (isVercelBlobUrl(trimmed)) {
+    const { resolveImageUrlForFal } = await import('@/lib/fal/klingImageClient')
+    const { base64, mimeType } = await fetchReferenceImageAsBase64(trimmed, options)
+    return resolveImageUrlForFal(`data:${mimeType};base64,${base64}`)
+  }
+
+  if (trimmed.startsWith('gs://') || isGcsHttpUrl(trimmed)) {
+    const { resolveImageUrlForFal } = await import('@/lib/fal/klingImageClient')
+    const { base64, mimeType } = await fetchReferenceImageAsBase64(trimmed, options)
+    return resolveImageUrlForFal(`data:${mimeType};base64,${base64}`)
+  }
+
+  return trimmed
+}
+
+/**
  * Download a reference image URL and return base64 + mime type.
  * Uses Vercel Blob SDK for blob URLs (avoids production 403 on plain fetch).
  */

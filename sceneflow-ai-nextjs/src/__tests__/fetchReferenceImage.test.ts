@@ -10,7 +10,7 @@ vi.mock('@/lib/storage/gcs', () => ({
   downloadImageAsBase64: vi.fn().mockResolvedValue('gcs-base64-data'),
 }))
 
-import { fetchReferenceImageAsBase64 } from '@/lib/storage/fetchReferenceImage'
+import { fetchReferenceImageAsBase64, resolveReferenceUrlForFal } from '@/lib/storage/fetchReferenceImage'
 
 describe('fetchReferenceImageAsBase64', () => {
   const originalFetch = global.fetch
@@ -97,5 +97,14 @@ describe('fetchReferenceImageAsBase64', () => {
     expect(mockGet).not.toHaveBeenCalled()
     expect(global.fetch).toHaveBeenCalled()
     expect(result.mimeType).toBe('image/png')
+  })
+})
+
+describe('resolveReferenceUrlForFal', () => {
+  it('returns public Blob URLs without downloading', async () => {
+    const url =
+      'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/refs/hero.jpg'
+    await expect(resolveReferenceUrlForFal(url)).resolves.toBe(url)
+    expect(mockGet).not.toHaveBeenCalled()
   })
 })

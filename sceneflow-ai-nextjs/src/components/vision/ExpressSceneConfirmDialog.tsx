@@ -82,7 +82,7 @@ export function ExpressSceneConfirmDialog({
     })
   }
 
-  const creditTotal = selectedFrameKeys.length * IMAGE_CREDITS.IMAGEN_3
+  const creditTotal = selectedFrameKeys.length * IMAGE_CREDITS.FAL_KLING_IMAGE
   const nothingSelected = selectedFrameKeys.length === 0
 
   return (
@@ -170,7 +170,7 @@ export function ExpressSceneConfirmDialog({
             {selectedFrameKeys.length > 0 && (
               <p className="text-[11px] text-amber-300/60 mt-2">
                 Image credits (est.): {creditTotal} ({selectedFrameKeys.length} frame
-                {selectedFrameKeys.length === 1 ? '' : 's'} × {IMAGE_CREDITS.IMAGEN_3})
+                {selectedFrameKeys.length === 1 ? '' : 's'} × {IMAGE_CREDITS.FAL_KLING_IMAGE})
               </p>
             )}
           </div>
