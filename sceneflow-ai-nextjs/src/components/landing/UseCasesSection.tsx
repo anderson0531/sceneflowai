@@ -100,23 +100,24 @@ export default function UseCasesSection() {
           </div>
         </motion.div>
 
-        <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-start">
+        <div className="flex flex-col gap-8 w-full">
           <motion.div
             key={activePersona}
-            initial={{ opacity: 0, x: -16 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35 }}
-            className="space-y-4"
+            className="space-y-4 w-full"
           >
             <h3 className="text-2xl md:text-3xl font-bold text-white">{active?.headline}</h3>
-            <p className="text-gray-400 text-lg leading-relaxed">{active?.description}</p>
+            <p className="text-gray-400 text-lg leading-relaxed max-w-4xl">{active?.description}</p>
           </motion.div>
 
           <motion.div
             key={`preview-${activePersona}`}
-            initial={{ opacity: 0, x: 16 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.35 }}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.05 }}
+            className="w-full"
           >
             <ScreeningRoomPreview
               previewTitle={active?.screeningRoomPreview ?? ''}

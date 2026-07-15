@@ -5,6 +5,8 @@ import { Loader2 } from 'lucide-react'
 import { AudioGalleryPlayer } from '@/components/vision/AudioGalleryPlayer'
 import { cn } from '@/lib/utils'
 import { resolveStoryboardScenes } from '@/lib/storyboard/resolveStoryboardScenes'
+import { getProjectStreams } from '@/lib/streams/projectStreams'
+import type { FinalCutSelection } from '@/lib/types/finalCut'
 
 function deriveAvailableLanguages(scenes: any[]): string[] {
   const langs = new Set<string>()
@@ -128,7 +130,7 @@ export function StoryboardEmbedPlayer({
   }
 
   return (
-    <div className={cn('h-full storyboard-embed-player [&>div]:rounded-lg', minHeight, className)}>
+    <div className={cn('h-full w-full storyboard-embed-player [&>div]:rounded-lg', minHeight, className)}>
       <AudioGalleryPlayer
         scenes={scenes}
         selectedLanguage={selectedLanguage}
@@ -137,6 +139,10 @@ export function StoryboardEmbedPlayer({
         isSharedView
         embedMode
         fullWidthEmbed={fullWidthEmbed}
+        landingEmbedToolbar={fullWidthEmbed}
+        sceneProductionState={projectData.sceneProductionState}
+        finalCutSelection={(projectData.metadata?.finalCut as FinalCutSelection | null) ?? null}
+        projectStreams={getProjectStreams(projectData.metadata)}
         expandHref={
           showExpandLink && slug.trim()
             ? `/embed/pre-vis/${encodeURIComponent(slug.trim())}`

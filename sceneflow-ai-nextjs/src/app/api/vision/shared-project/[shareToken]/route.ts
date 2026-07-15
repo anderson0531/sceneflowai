@@ -4,6 +4,7 @@ import { sequelize } from '../../../../../config/database'
 import { resolveStoryboardScenes } from '../../../../../lib/storyboard/resolveStoryboardScenes'
 import { validateAndCleanSceneAudio } from '../../../../../lib/audio/cleanupAudio'
 import { findActiveShareProject } from '../../../../../lib/storyboard/shareProjectLookup'
+import { getProjectStreams } from '@/lib/streams/projectStreams'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -94,7 +95,10 @@ export async function GET(
       visionPhaseScenes: visionPhase.scenes,
       characters: visionPhase.characters,
       sceneProductionState: visionPhase.production?.scenes,
-      metadata: { finalCut: md.finalCut },
+      metadata: {
+        finalCut: md.finalCut,
+        visionPhase: { streams: getProjectStreams(md) },
+      },
       allowedFeatures: shareLink.allowedFeatures,
       shareToken: actualShareToken, // Pass this back so the feedback API can find it
       storyboardRevision,

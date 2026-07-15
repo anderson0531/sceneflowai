@@ -136,6 +136,8 @@ interface AudioGalleryPlayerProps {
   expandHref?: string
   /** Landing full-width embed: use full pane width for scene image and controls. */
   fullWidthEmbed?: boolean
+  /** Landing use-case embed: show Screening Room title + Animatic/Video/Stream toolbar. */
+  landingEmbedToolbar?: boolean
   /** Trigger full-project cloud animatic render (matches player timeline). */
   onGenVideo?: (language: string) => void | Promise<void>
   isGenVideoRunning?: boolean
@@ -207,6 +209,7 @@ export function AudioGalleryPlayer({
   embedMode = false,
   expandHref,
   fullWidthEmbed = false,
+  landingEmbedToolbar = false,
   onGenVideo,
   isGenVideoRunning = false,
   exportedAnimaticUrl,
@@ -721,6 +724,7 @@ export function AudioGalleryPlayer({
   const sharedCompact = (isSharedView || embedMode) && !isFullscreen
   const landingWide = embedMode && fullWidthEmbed && !isFullscreen
   const useScreeningLayout = screeningLayout && !isFullscreen
+  const showToolbar = (!embedMode || landingEmbedToolbar) && !useScreeningLayout
 
   const motionControl = (
     <StoryboardImageEffectControl
@@ -1297,7 +1301,7 @@ export function AudioGalleryPlayer({
         )}
       >
         {/* Header with language selector — hidden in landing embed and screening layout */}
-        {!embedMode && !useScreeningLayout && playerToolbar}
+        {showToolbar && playerToolbar}
         
         {/* Main content area */}
         <div
@@ -1360,7 +1364,7 @@ export function AudioGalleryPlayer({
                   playerLabels={playerLabels}
                 />
               )}
-              {sharedCompact && (
+              {sharedCompact && !landingEmbedToolbar && (
                 <PreVisSceneInfoPanel
                   display={sceneDisplay}
                   variant="compact"
