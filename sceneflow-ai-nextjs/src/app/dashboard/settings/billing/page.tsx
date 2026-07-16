@@ -248,7 +248,7 @@ export default function BillingPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Card className="bg-dark-card border-dark-border text-white">
+        <Card className="bg-gray-800/60 border-gray-700/60 text-white">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
@@ -329,7 +329,7 @@ export default function BillingPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.05 }}
         >
-          <Card className="bg-dark-card border-dark-border text-white">
+          <Card className="bg-gray-800/60 border-gray-700/60 text-white">
             <CardHeader>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-sf-primary/20 rounded-lg flex items-center justify-center">
@@ -356,7 +356,7 @@ export default function BillingPage() {
                       className={`p-4 rounded-lg border-2 transition-all ${
                         isCurrent || isExplorerOwned
                           ? 'border-green-500/60 bg-green-900/20'
-                          : 'border-dark-border bg-dark-bg hover:border-sf-primary/40'
+                          : 'border-gray-700/60 bg-gray-900/80 hover:border-sf-primary/40'
                       }`}
                     >
                       <div className="text-center mb-3">
@@ -420,7 +420,7 @@ export default function BillingPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.05 }}
         >
-          <Card className="bg-dark-card border-amber-500/30 text-white">
+          <Card className="bg-gray-800/60 border-amber-500/30 text-white">
             <CardHeader>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center">
@@ -449,7 +449,7 @@ export default function BillingPage() {
                       className={`p-4 rounded-lg border-2 transition-all ${
                         isCurrentPlan
                           ? 'border-green-500/60 bg-green-900/20'
-                          : 'border-dark-border bg-dark-bg hover:border-sf-primary/40'
+                          : 'border-gray-700/60 bg-gray-900/80 hover:border-sf-primary/40'
                       }`}
                     >
                       <div className="text-center mb-3">
@@ -529,7 +529,7 @@ export default function BillingPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
       >
-        <Card className="bg-dark-card border-dark-border text-white">
+        <Card className="bg-gray-800/60 border-gray-700/60 text-white">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-sf-primary/20 rounded-lg flex items-center justify-center">
@@ -545,7 +545,7 @@ export default function BillingPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-dark-bg rounded-lg border border-dark-border">
+              <div className="flex items-center justify-between p-4 bg-gray-900/80 rounded-lg border border-gray-700/60">
                 <div>
                   <h4 className="text-white font-semibold">Upgrade Plan</h4>
                   <p className="text-gray-400 text-sm">Get more credits and features</p>
@@ -562,25 +562,25 @@ export default function BillingPage() {
                 </Button>
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-dark-bg rounded-lg border border-dark-border">
+              <div className="flex items-center justify-between p-4 bg-gray-900/80 rounded-lg border border-gray-700/60">
                 <div>
                   <h4 className="text-white font-semibold">Purchase Add-on Credits</h4>
                   <p className="text-gray-400 text-sm">Buy additional credits that never expire</p>
                 </div>
-                <Button variant="outline" className="border-dark-border text-dark-text hover:bg-dark-bg flex items-center gap-2" disabled>
+                <Button variant="outline" className="border-gray-700/60 text-gray-200 hover:bg-gray-900/80 flex items-center gap-2" disabled>
                   Coming Soon
                 </Button>
               </div>
 
               {subscription?.subscription?.status === 'active' && (
-                <div className="flex items-center justify-between p-4 bg-dark-bg rounded-lg border border-dark-border">
+                <div className="flex items-center justify-between p-4 bg-gray-900/80 rounded-lg border border-gray-700/60">
                   <div>
                     <h4 className="text-white font-semibold">Manage Subscription</h4>
                     <p className="text-gray-400 text-sm">Update payment method or cancel via Whop</p>
                   </div>
                   <Button
                     variant="outline"
-                    className="border-dark-border text-dark-text hover:bg-dark-bg flex items-center gap-2"
+                    className="border-gray-700/60 text-gray-200 hover:bg-gray-900/80 flex items-center gap-2"
                     onClick={() => window.open('https://whop.com/hub/memberships', '_blank', 'noopener,noreferrer')}
                   >
                     Manage on Whop
@@ -590,12 +590,12 @@ export default function BillingPage() {
               )}
 
               {subscription?.subscription?.status === 'active' && (
-                <div className="flex items-center justify-between p-4 bg-dark-bg rounded-lg border border-dark-border">
+                <div className="flex items-center justify-between p-4 bg-gray-900/80 rounded-lg border border-gray-700/60">
                   <div>
                     <h4 className="text-white font-semibold">Billing History</h4>
                     <p className="text-gray-400 text-sm">View past invoices and payments</p>
                   </div>
-                  <Button variant="outline" className="border-dark-border text-dark-text hover:bg-dark-bg flex items-center gap-2" disabled>
+                  <Button variant="outline" className="border-gray-700/60 text-gray-200 hover:bg-gray-900/80 flex items-center gap-2" disabled>
                     Coming Soon
                   </Button>
                 </div>
@@ -612,7 +612,7 @@ export default function BillingPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.15 }}
         >
-          <Card className="bg-dark-card border-dark-border text-white">
+          <Card className="bg-gray-800/60 border-gray-700/60 text-white">
             <CardHeader>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
@@ -628,19 +628,19 @@ export default function BillingPage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="p-4 bg-dark-bg rounded-lg border border-dark-border">
+                <div className="p-4 bg-gray-900/80 rounded-lg border border-gray-700/60">
                   <div className="text-gray-400 text-sm mb-1">Monthly Credits</div>
                   <div className="text-xl font-bold text-white">
                     {subscription.subscription.tier.included_credits_monthly.toLocaleString()}
                   </div>
                 </div>
-                <div className="p-4 bg-dark-bg rounded-lg border border-dark-border">
+                <div className="p-4 bg-gray-900/80 rounded-lg border border-gray-700/60">
                   <div className="text-gray-400 text-sm mb-1">Storage</div>
                   <div className="text-xl font-bold text-white">
                     {subscription.subscription.tier.storage_gb} GB
                   </div>
                 </div>
-                <div className="p-4 bg-dark-bg rounded-lg border border-dark-border">
+                <div className="p-4 bg-gray-900/80 rounded-lg border border-gray-700/60">
                   <div className="text-gray-400 text-sm mb-1">Features</div>
                   <div className="text-sm text-white">
                     {subscription.subscription.tier.features?.length > 0 

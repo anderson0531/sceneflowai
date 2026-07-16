@@ -44,7 +44,7 @@ export default function IntegrationsPage() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="bg-dark-card border-dark-border text-white">
+      <Card className="bg-gray-800/60 border-gray-700/60 text-white">
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-sf-primary/20 rounded-lg flex items-center justify-center">
@@ -65,8 +65,8 @@ export default function IntegrationsPage() {
                 key={integration.name}
                 className={`p-4 rounded-lg border ${
                   integration.available
-                    ? 'bg-dark-bg border-dark-border hover:border-sf-primary/50'
-                    : 'bg-dark-bg/50 border-dark-border/50 opacity-60'
+                    ? 'bg-gray-900/80 border-gray-700/60 hover:border-sf-primary/50'
+                    : 'bg-gray-900/80/50 border-gray-700/60/50 opacity-60'
                 } transition-colors`}
               >
                 <div className="flex items-start justify-between mb-3">
@@ -90,7 +90,7 @@ export default function IntegrationsPage() {
                   <Link href={integration.href}>
                     <Button
                       variant="outline"
-                      className="w-full border-dark-border text-dark-text hover:bg-dark-bg"
+                      className="w-full border-gray-700/60 text-gray-200 hover:bg-gray-900/80"
                     >
                       Configure
                       <ExternalLink className="w-4 h-4 ml-2" />
@@ -100,7 +100,7 @@ export default function IntegrationsPage() {
                   <Button
                     variant="outline"
                     disabled
-                    className="w-full border-dark-border text-gray-500"
+                    className="w-full border-gray-700/60 text-gray-500"
                   >
                     Coming Soon
                   </Button>

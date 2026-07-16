@@ -28,6 +28,13 @@
   --sf-brand-cyan: #00F2FF;
   --sf-brand-navy: #050A18;
   --sf-brand-purple: #1A0B2E;
+
+  /* Product contextual accents (dashboard / series / production) */
+  --sf-accent-product-from: #06b6d4;
+  --sf-accent-product-to: #9333ea;
+  --sf-accent-series-from: #f59e0b;
+  --sf-accent-series-to: #ea580c;
+  --sf-accent-ready: #10b981;
 }
 
 @layer base {

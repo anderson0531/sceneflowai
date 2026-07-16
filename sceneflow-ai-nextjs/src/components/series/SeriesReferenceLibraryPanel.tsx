@@ -11,6 +11,7 @@ import {
   RefreshCw,
   Upload,
 } from 'lucide-react'
+import { ProductTabList, ProductEmptyState } from '@/components/product'
 import { Button } from '@/components/ui/Button'
 import {
   Select,
@@ -191,24 +192,17 @@ export function SeriesReferenceLibraryPanel({
         </div>
       </div>
 
-      <div className="flex items-center border-b border-gray-700/50 overflow-x-auto">
-        {subTabs.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => setSubTab(tab.key)}
-            className={`relative px-4 py-2 text-sm font-medium rounded-t-lg transition-all mr-1 flex-shrink-0 flex items-center gap-2 ${
-              subTab === tab.key
-                ? 'bg-gray-800 text-amber-300 border-t border-x border-gray-600/50 -mb-px'
-                : 'text-gray-500 hover:text-gray-300'
-            }`}
-          >
-            {tab.icon}
-            {tab.label}
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-700/80">{tab.count}</span>
-          </button>
-        ))}
-      </div>
+      <ProductTabList
+        tabs={subTabs.map((t) => ({
+          key: t.key,
+          label: t.label,
+          icon: t.icon,
+          count: t.count,
+        }))}
+        activeKey={subTab}
+        onChange={(key) => setSubTab(key as RefSubTab)}
+        accent="series"
+      />
 
       {subTab === 'cast' && (
         <SeriesCastSection

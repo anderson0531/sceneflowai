@@ -38,6 +38,7 @@ import {
   DialogDescription
 } from '@/components/ui/dialog'
 import { SeriesCard } from '@/components/series/SeriesCard'
+import { ProductPageShell, ProductPageHeader, ProductEmptyState } from '@/components/product'
 import { useSeriesList, useEpisode } from '@/hooks/useSeries'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
@@ -165,42 +166,20 @@ export default function SeriesPage() {
   }
 
   return (
-    <div className="min-h-full bg-gray-950 text-white p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-cyan-500/30 to-purple-600/30 rounded-xl flex items-center justify-center border border-cyan-500/20">
-                <Clapperboard className="w-6 h-6 text-cyan-400" />
-              </div>
-              <div>
-                <div className="flex items-center gap-3 mb-1">
-                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-gradient-to-r from-cyan-500/20 to-purple-500/20 text-cyan-400 border border-cyan-500/30">
-                    PRODUCTION HUB
-                  </span>
-                </div>
-                <h1 className="text-3xl font-bold">Production Series Dashboard</h1>
-                <p className="text-gray-400 mt-1">
-                  Create multi-episode video series with consistent characters and storylines
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
-              <Button
-                onClick={() => setIsCreateDialogOpen(true)}
-                className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white shadow-lg shadow-cyan-500/25"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                New Series
-              </Button>
-            </div>
-          </div>
-        </motion.div>
+    <ProductPageShell>
+        <ProductPageHeader
+          icon={<Clapperboard className="h-6 w-6" />}
+          eyebrow="PRODUCTION HUB"
+          title="Production Series Dashboard"
+          subtitle="Create multi-episode video series with consistent characters and storylines"
+          accent="product"
+          primaryAction={
+            <Button variant="primary" onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              New Series
+            </Button>
+          }
+        />
 
         {/* Feature Banner */}
         <motion.div
@@ -332,33 +311,24 @@ export default function SeriesPage() {
             ))}
           </motion.div>
         ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="bg-gray-800 border border-gray-700 rounded-xl p-12 text-center"
-          >
-            <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Library className="w-8 h-8 text-gray-500" />
-            </div>
-            <h3 className="text-lg font-semibold text-white mb-2">
-              {searchQuery || statusFilter !== 'all' ? 'No matching series' : 'No Series Yet'}
-            </h3>
-            <p className="text-gray-400 mb-6 max-w-md mx-auto">
-              {searchQuery || statusFilter !== 'all' 
+          <ProductEmptyState
+            icon={<Library className="h-8 w-8 text-gray-500" />}
+            title={searchQuery || statusFilter !== 'all' ? 'No matching series' : 'No Series Yet'}
+            description={
+              searchQuery || statusFilter !== 'all'
                 ? 'Try adjusting your filters or search query.'
-                : 'Create your first series to start building multi-episode video content with consistent characters and storylines.'}
-            </p>
-            {!searchQuery && statusFilter === 'all' && (
-              <Button
-                onClick={() => setIsCreateDialogOpen(true)}
-                className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white shadow-lg shadow-cyan-500/25"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create Your First Series
-              </Button>
-            )}
-          </motion.div>
+                : 'Create your first series to start building multi-episode video content with consistent characters and storylines.'
+            }
+            actionLabel={
+              !searchQuery && statusFilter === 'all' ? 'Create Your First Series' : undefined
+            }
+            onAction={
+              !searchQuery && statusFilter === 'all'
+                ? () => setIsCreateDialogOpen(true)
+                : undefined
+            }
+            accent="product"
+          />
         )}
 
         {/* Pagination */}
@@ -394,7 +364,6 @@ export default function SeriesPage() {
             </Button>
           </Link>
         </div>
-      </div>
 
       {/* Create Series Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -520,6 +489,6 @@ export default function SeriesPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </ProductPageShell>
   )
 }

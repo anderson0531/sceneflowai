@@ -53,6 +53,7 @@ const TreatmentCard = dynamic(
 import TopProgressBar from '@/components/ui/TopProgressBar'
 import GeneratingOverlay from '@/components/ui/GeneratingOverlay'
 import { BlueprintOnboarding } from '@/components/blueprint/BlueprintOnboarding'
+import { ProductEmptyState } from '@/components/product'
 import { BlueprintResonanceStrip } from '@/components/blueprint/BlueprintResonanceStrip'
 import { BlueprintNextStepBanner } from '@/components/blueprint/BlueprintNextStepBanner'
 import { BlueprintReadyBanner } from '@/components/blueprint/BlueprintReadyBanner'
@@ -1459,36 +1460,28 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
 
                 {/* Empty Blueprint State - Show prominent CTA when no Blueprint exists */}
                 {(!guide.treatmentVariants || guide.treatmentVariants.length === 0) && !isGen && (
-                  <div className="rounded-2xl border-2 border-dashed border-cyan-500/30 bg-gradient-to-br from-cyan-500/5 to-purple-500/5 p-8 text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center border border-cyan-500/30">
-                      <Wand2 className="w-8 h-8 text-cyan-400" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-white mb-2">Create Your Blueprint</h3>
-                    <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">
-                      Generate a professional film treatment with AI-powered story structure, characters, and visual direction.
-                    </p>
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                      <Button
-                        onClick={() => setShowReimaginDialog(true)}
-                        className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white px-6 py-3 text-base font-medium"
-                      >
-                        <Sparkles className="w-5 h-5 mr-2" />
-                        Generate Blueprint
-                      </Button>
-                      <span className="text-gray-500 text-sm">or</span>
-                      <Button
-                        variant="outline"
-                        onClick={() => setShowScriptImportDialog(true)}
-                        className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white px-6 py-3 text-base"
-                      >
-                        <FileText className="w-5 h-5 mr-2" />
-                        Import Script
-                      </Button>
-                    </div>
-                    <p className="text-gray-500 text-xs mt-4">
-                      Supports .txt, .md, .fountain, .fdx, .pdf, .docx formats
-                    </p>
-                  </div>
+                  <ProductEmptyState
+                    icon={<Wand2 className="h-8 w-8 text-cyan-400" />}
+                    title="Create Your Blueprint"
+                    description="Generate a professional film treatment with AI-powered story structure, characters, and visual direction."
+                    accent="product"
+                    className="border-cyan-500/30 bg-gradient-to-br from-cyan-500/5 to-purple-500/5"
+                    actionLabel="Generate Blueprint"
+                    onAction={() => setShowReimaginDialog(true)}
+                    secondaryAction={
+                      <>
+                        <span className="text-gray-500 text-sm">or</span>
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowScriptImportDialog(true)}
+                          className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white"
+                        >
+                          <FileText className="w-5 h-5 mr-2" />
+                          Import Script
+                        </Button>
+                      </>
+                    }
+                  />
                 )}
 
                 {/* Treatment Card */}

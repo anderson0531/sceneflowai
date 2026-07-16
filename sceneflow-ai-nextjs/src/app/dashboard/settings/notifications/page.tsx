@@ -11,7 +11,7 @@ export default function NotificationsPage() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="bg-dark-card border-dark-border text-white">
+      <Card className="bg-gray-800/60 border-gray-700/60 text-white">
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-sf-primary/20 rounded-lg flex items-center justify-center">
@@ -27,7 +27,7 @@ export default function NotificationsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            <div className="p-4 bg-dark-bg rounded-lg border border-dark-border">
+            <div className="p-4 bg-gray-900/80 rounded-lg border border-gray-700/60">
               <div className="flex items-center gap-3 mb-4">
                 <Mail className="w-5 h-5 text-gray-400" />
                 <h3 className="text-white font-semibold">Email Notifications</h3>
@@ -41,26 +41,26 @@ export default function NotificationsPage() {
                     <p className="text-white text-sm">Project Updates</p>
                     <p className="text-gray-400 text-xs">Get notified when your projects are updated</p>
                   </div>
-                  <input type="checkbox" className="w-5 h-5 rounded border-dark-border" defaultChecked />
+                  <input type="checkbox" className="w-5 h-5 rounded border-gray-700/60" defaultChecked />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-white text-sm">Credit Alerts</p>
                     <p className="text-gray-400 text-xs">Notifications about credit usage and balance</p>
                   </div>
-                  <input type="checkbox" className="w-5 h-5 rounded border-dark-border" defaultChecked />
+                  <input type="checkbox" className="w-5 h-5 rounded border-gray-700/60" defaultChecked />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-white text-sm">System Announcements</p>
                     <p className="text-gray-400 text-xs">Important updates and feature announcements</p>
                   </div>
-                  <input type="checkbox" className="w-5 h-5 rounded border-dark-border" defaultChecked />
+                  <input type="checkbox" className="w-5 h-5 rounded border-gray-700/60" defaultChecked />
                 </div>
               </div>
             </div>
 
-            <div className="p-4 bg-dark-bg rounded-lg border border-dark-border">
+            <div className="p-4 bg-gray-900/80 rounded-lg border border-gray-700/60">
               <div className="flex items-center gap-3 mb-4">
                 <Smartphone className="w-5 h-5 text-gray-400" />
                 <h3 className="text-white font-semibold">Push Notifications</h3>
@@ -74,7 +74,7 @@ export default function NotificationsPage() {
                     <p className="text-white text-sm">Browser Notifications</p>
                     <p className="text-gray-400 text-xs">Receive push notifications in your browser</p>
                   </div>
-                  <input type="checkbox" className="w-5 h-5 rounded border-dark-border" />
+                  <input type="checkbox" className="w-5 h-5 rounded border-gray-700/60" />
                 </div>
               </div>
             </div>

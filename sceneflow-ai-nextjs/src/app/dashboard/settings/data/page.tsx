@@ -53,7 +53,7 @@ export default function DataPrivacyPage() {
       className="space-y-6"
     >
       {/* Data Export */}
-      <Card className="bg-dark-card border-dark-border text-white">
+      <Card className="bg-gray-800/60 border-gray-700/60 text-white">
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-sf-primary/20 rounded-lg flex items-center justify-center">
@@ -95,7 +95,7 @@ export default function DataPrivacyPage() {
       </Card>
 
       {/* Privacy Settings */}
-      <Card className="bg-dark-card border-dark-border text-white">
+      <Card className="bg-gray-800/60 border-gray-700/60 text-white">
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
@@ -111,26 +111,26 @@ export default function DataPrivacyPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-dark-bg rounded-lg border border-dark-border">
+            <div className="flex items-center justify-between p-4 bg-gray-900/80 rounded-lg border border-gray-700/60">
               <div>
                 <p className="text-white text-sm font-medium">Analytics & Usage Tracking</p>
                 <p className="text-gray-400 text-xs">Help improve SceneFlow by sharing anonymous usage data</p>
               </div>
-              <input type="checkbox" className="w-5 h-5 rounded border-dark-border" defaultChecked />
+              <input type="checkbox" className="w-5 h-5 rounded border-gray-700/60" defaultChecked />
             </div>
-            <div className="flex items-center justify-between p-4 bg-dark-bg rounded-lg border border-dark-border">
+            <div className="flex items-center justify-between p-4 bg-gray-900/80 rounded-lg border border-gray-700/60">
               <div>
                 <p className="text-white text-sm font-medium">Marketing Communications</p>
                 <p className="text-gray-400 text-xs">Receive emails about new features and offers</p>
               </div>
-              <input type="checkbox" className="w-5 h-5 rounded border-dark-border" />
+              <input type="checkbox" className="w-5 h-5 rounded border-gray-700/60" />
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Account Deletion */}
-      <Card className="bg-dark-card border-dark-border text-white border-red-500/30">
+      <Card className="bg-gray-800/60 border-gray-700/60 text-white border-red-500/30">
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">

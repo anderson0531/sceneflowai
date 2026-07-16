@@ -1,13 +1,27 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
+import { Shield } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ProductEmptyState } from '@/components/product'
+
 export default function SecurityPage() {
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-8">
-      <div className="max-w-4xl mx-auto text-center">
-        <h1 className="text-3xl font-bold">Security Settings</h1>
-        <p className="text-gray-400 mt-2">This section is being rebuilt. Check back soon.</p>
-      </div>
-    </div>
+    <Card className="border-gray-700/60 bg-gray-800/60 text-white">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-white">
+          <Shield className="h-5 w-5 text-sf-primary" />
+          Security
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ProductEmptyState
+          icon={<Shield className="h-8 w-8 text-gray-500" />}
+          title="Security settings coming soon"
+          description="Password management, two-factor authentication, and session controls are being rebuilt."
+          accent="product"
+        />
+      </CardContent>
+    </Card>
   )
 }
