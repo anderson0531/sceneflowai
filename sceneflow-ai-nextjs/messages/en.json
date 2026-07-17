@@ -83,6 +83,8 @@
       "closeFullscreen": "Close",
       "landscapeHint": "Rotate your device for a wider landscape view",
       "howItWorksLabel": "How it works in this phase",
+      "showHowItWorks": "Show how it works",
+      "hideHowItWorks": "Hide how it works",
       "imagePlaceholder": "Screenshot placeholder",
       "videoWalkthrough": "30-second walkthrough",
       "comingSoon": "Product screenshot coming soon"
