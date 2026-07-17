@@ -291,8 +291,9 @@
     "title": "Who is SceneFlow For?",
     "subtitle": "From concept to a Screening Room animatic to auto-published multilanguage video — one automated pipeline, four ways to ship.",
     "cta": "Launch Your Studio ($9)",
-    "seeWorkflow": "See the workflow",
-    "hideWorkflow": "Hide the workflow",
+    "problemLabel": "The Problem",
+    "solutionLabel": "The SceneFlow Solution",
+    "outcomeLabel": "The Outcome",
     "personas": [
       {
         "id": "youtubeCreator",
@@ -305,14 +306,12 @@
           "30-min Screening Room animatic",
           "Auto-published in 70+ languages"
         ],
-        "workflow": [
-          "Generate and optimize a SceneFlow series — storyline, characters, episode slate",
-          "First episode Blueprint in minutes",
-          "Full production script in minutes",
-          "Consistency references + Screening Room animatic in under 30 minutes",
-          "Full video production in under 60 minutes with Express",
-          "Auto-publish multilanguage streams with localized thumbnails, titles, and descriptions"
-        ],
+        "story": {
+          "problem": "Making one polished video today usually means paying for and learning half a dozen separate AI apps — one for the script, then others for images, voices, video, music, and editing — and re-generating each one over and over hoping for a usable result. It's costly, technical, and can eat an entire weekend, and your characters still look different from scene to scene.",
+          "solution": "SceneFlow replaces that entire stack with one guided studio. Describe your idea in plain words and it writes the series, designs the cast, and renders the audio, frames, and video together, while a shared Reference Library keeps every character consistent across episodes — no prompt engineering and no re-rolling.",
+          "outcome": "You move from an all-weekend, many-app ordeal to a steady upload rhythm you can actually sustain.",
+          "metric": { "before": "8-40 hrs", "after": "30-180 min" }
+        },
         "screeningRoomHook": "Visualize the story as an animatic before motion video, review scenes before finalizing streams, and share multilanguage streams (70+ languages) for pre-release feedback.",
         "screeningRoomPreview": "The Unseen Archive: The Grand Illusion: The Chicago World's Fair Deception"
       },
@@ -327,14 +326,12 @@
           "Dub/lip-sync localization",
           "Repeatable client intake"
         ],
-        "workflow": [
-          "Capture the client brief as a series or single-project concept",
-          "Generate Blueprint + script packages per client in minutes",
-          "Lock brand characters and continuity once, reuse across deliverables",
-          "Express-render scenes, then finish with Mixer overlays and watermark",
-          "Screening Room animatic for client approval before motion spend",
-          "Deliver auto-aligned multilanguage streams and masters on a set timeline"
-        ],
+        "story": {
+          "problem": "Your small-business clients can't afford a traditional video agency, but producing it yourself means buying and juggling many tools, redoing the work for every client, and manually recreating each video again for every language — costs and hours that make the service hard to scale.",
+          "solution": "SceneFlow gives you one predictable pipeline: it renders a client's whole video package at once, adds each client's branding, overlays, and watermark, and automatically dubs and lip-syncs every video into the customer's market language.",
+          "outcome": "You can run a global, multi-language video studio for many clients without hiring a crew or building infrastructure.",
+          "metric": { "before": "1 market", "after": "70+ languages" }
+        },
         "screeningRoomHook": "Client-facing review of the animatic, scene sign-off before final streams, and shareable multilanguage previews for stakeholders abroad.",
         "screeningRoomPreview": "Main Street Rising: A Local Business Relaunch"
       },
@@ -349,14 +346,12 @@
           "Dub/lip-sync at scale",
           "Private Screening Room review"
         ],
-        "workflow": [
-          "Turn policy, SOPs, or training outlines into a SceneFlow project or series",
-          "Blueprint locks brand voice, characters, and messaging constraints",
-          "Express-generate production script, references, and video beats",
-          "Adjust wording and visuals with text/voice edits — no re-shoots",
-          "Screening Room animatic for legal/compliance/stakeholder review",
-          "Auto-align multilanguage streams for global rollout"
-        ],
+        "story": {
+          "problem": "Internal training and communications usually wait weeks on outside vendors and cost a premium — and the moment a policy or product changes, the videos are outdated and off-brand, forcing another expensive round.",
+          "solution": "Teams produce brand-locked, audit-ready videos in-house. Update any line or frame with a typed or spoken instruction, review and approve before paying for the final render, and roll out one approved master to every region.",
+          "outcome": "Training and communications keep pace with policy changes instead of trailing weeks behind.",
+          "metric": { "before": "6-wk vendor backlog", "after": "same week" }
+        },
         "screeningRoomHook": "Review scenes before streams go final and share private Screening Room links for cross-region feedback without exporting unfinished masters.",
         "screeningRoomPreview": "Shield Protocol: Global Cybersecurity Onboarding"
       },
@@ -371,14 +366,12 @@
           "Native-language dub/lip-sync",
           "Auto-published to channels"
         ],
-        "workflow": [
-          "Start from a course outline, chapter, or learning objective",
-          "Generate series structure (units/lessons) with locked teaching characters and settings",
-          "Blueprint + full lesson script in minutes",
-          "Consistency references + Screening Room animatic for faculty review (under 30 minutes)",
-          "Express-render lesson video, refine with text/voice edits",
-          "Auto-publish localized lesson video for LMS / multi-campus distribution"
-        ],
+        "story": {
+          "problem": "Turning dense course material into engaging video normally takes weeks, specialized skills, or a production budget most institutions don't have — so lessons end up as slideshows students skip, and serving students in multiple languages multiplies the work.",
+          "solution": "SceneFlow builds full narrated lessons quickly, lets faculty adjust content by typing or speaking (no technical prompts), and automatically dubs and lip-syncs each lesson into every cohort's language before publishing with localized titles and thumbnails.",
+          "outcome": "Curriculum becomes video students actually watch — in every campus's language — without a production team.",
+          "metric": { "before": "weeks / lesson", "after": "< 1 hr" }
+        },
         "screeningRoomHook": "Faculty preview the animatic before production spend, review lesson scenes, and share streams in 70+ languages for multi-campus feedback.",
         "screeningRoomPreview": "Renaissance Workshop: Seeing the Past in Motion"
       }

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useMemo } from 'react'
+import { motion } from 'framer-motion'
 import { useTranslations } from 'next-intl'
 import {
   User,
@@ -10,7 +10,9 @@ import {
   Building2,
   GraduationCap,
   ArrowRight,
-  ChevronDown,
+  AlertCircle,
+  Sparkles,
+  TrendingUp,
 } from 'lucide-react'
 import { ScreeningRoomPreview } from './ScreeningRoomPreview'
 import { getLandingYoutubeCreatorScreeningSlug } from '@/config/landingSamples'
@@ -35,13 +37,20 @@ const PERSONA_GRADIENTS: Record<PersonaId, string> = {
   educator: 'from-emerald-500 to-teal-600',
 }
 
+type PersonaStory = {
+  problem: string
+  solution: string
+  outcome: string
+  metric?: { before: string; after: string }
+}
+
 type PersonaData = {
   id: PersonaId
   label: string
   headline: string
   intro: string
   differentiators: string[]
-  workflow: string[]
+  story?: PersonaStory
   screeningRoomHook: string
   screeningRoomPreview: string
 }
@@ -49,7 +58,6 @@ type PersonaData = {
 export default function UseCasesSection() {
   const t = useTranslations('useCasesShowcase')
   const [activePersona, setActivePersona] = useState<PersonaId>('youtubeCreator')
-  const [workflowOpen, setWorkflowOpen] = useState(false)
 
   const personas = useMemo(
     () => t.raw('personas') as PersonaData[],
@@ -57,10 +65,6 @@ export default function UseCasesSection() {
   )
 
   const active = personas.find((p) => p.id === activePersona) ?? personas[0]
-
-  useEffect(() => {
-    setWorkflowOpen(false)
-  }, [activePersona])
 
   return (
     <section
@@ -140,46 +144,48 @@ export default function UseCasesSection() {
               </div>
             )}
 
-            {active?.workflow && active.workflow.length > 0 && (
-              <div className="max-w-4xl">
-                <button
-                  type="button"
-                  onClick={() => setWorkflowOpen((open) => !open)}
-                  aria-expanded={workflowOpen}
-                  className="inline-flex items-center gap-2 text-sm font-medium text-indigo-300 hover:text-indigo-200 transition-colors"
-                >
-                  <ChevronDown
-                    className={cn(
-                      'w-4 h-4 transition-transform duration-300',
-                      workflowOpen && 'rotate-180'
-                    )}
-                  />
-                  {workflowOpen ? t('hideWorkflow') : t('seeWorkflow')}
-                </button>
+            {active?.story && (
+              <div className="grid gap-4 md:grid-cols-3 max-w-6xl">
+                <div className="rounded-2xl border border-rose-500/20 bg-rose-500/[0.06] p-5">
+                  <div className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-rose-300">
+                    <AlertCircle className="h-4 w-4" />
+                    {t('problemLabel')}
+                  </div>
+                  <p className="text-sm md:text-base text-gray-300 leading-relaxed">
+                    {active.story.problem}
+                  </p>
+                </div>
 
-                <AnimatePresence initial={false}>
-                  {workflowOpen && (
-                    <motion.ol
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.35, ease: [0.04, 0.62, 0.23, 0.98] }}
-                      className="overflow-hidden mt-4 space-y-3 list-none pl-0"
-                    >
-                      {active.workflow.map((step, index) => (
-                        <li
-                          key={step}
-                          className="flex gap-3 text-gray-400 text-base leading-relaxed"
-                        >
-                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 border border-slate-700 text-xs font-semibold text-indigo-300">
-                            {index + 1}
-                          </span>
-                          <span className="pt-0.5">{step}</span>
-                        </li>
-                      ))}
-                    </motion.ol>
+                <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/[0.06] p-5">
+                  <div className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-300">
+                    <Sparkles className="h-4 w-4" />
+                    {t('solutionLabel')}
+                  </div>
+                  <p className="text-sm md:text-base text-gray-300 leading-relaxed">
+                    {active.story.solution}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-5">
+                  <div className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-300">
+                    <TrendingUp className="h-4 w-4" />
+                    {t('outcomeLabel')}
+                  </div>
+                  <p className="text-sm md:text-base text-gray-300 leading-relaxed">
+                    {active.story.outcome}
+                  </p>
+                  {active.story.metric && (
+                    <div className="mt-4 flex items-center gap-2 text-sm font-semibold">
+                      <span className="rounded-md bg-slate-800/80 px-2 py-1 text-gray-400 line-through decoration-rose-400/60">
+                        {active.story.metric.before}
+                      </span>
+                      <ArrowRight className="h-4 w-4 text-emerald-400" />
+                      <span className="rounded-md bg-emerald-500/15 px-2 py-1 text-emerald-300">
+                        {active.story.metric.after}
+                      </span>
+                    </div>
                   )}
-                </AnimatePresence>
+                </div>
               </div>
             )}
 
