@@ -1,8 +1,10 @@
 "use client"
 
 import { useEffect, useState } from 'react'
+import { useSession } from 'next-auth/react'
 
 export default function InstallPrompt() {
+  const { status } = useSession()
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
   const [showBanner, setShowBanner] = useState(false)
   const [isStandalone, setIsStandalone] = useState(false)
@@ -37,6 +39,9 @@ export default function InstallPrompt() {
 
     return () => window.removeEventListener('beforeinstallprompt', handler as any)
   }, [])
+
+  // Only prompt logged-in users (subscribers), never anonymous landing-page viewers
+  if (status !== 'authenticated') return null
 
   // Don't show if app is already installed
   if (isStandalone) return null
