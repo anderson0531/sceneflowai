@@ -1,31 +1,19 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import NextImage from 'next/image'
 import { useTranslations } from 'next-intl'
-import { Layers, Maximize2, X } from 'lucide-react'
+import { Layers, ChevronDown } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { StepImagePlaceholder } from '@/components/landing/StepImagePlaceholder'
 import { getPipelinePillarMedia } from '@/config/landing/pipelinePillarsMedia'
 import { cn } from '@/lib/utils'
 
 const SECTION_ID = 'pipeline'
-const DEFAULT_SUBSTEP = 'draft-script'
 
 type GuidedStep = {
-  mediaId: string
   headline: string
   narrative: string
-  imagePlaceholder: string
-}
-
-type Substep = {
-  id: string
-  number: string
-  label: string
-  narrative: string
-  imagePlaceholder: string
 }
 
 type Pillar = {
@@ -36,299 +24,122 @@ type Pillar = {
   header: string
   body: string
   guidedStep?: GuidedStep
-  substepsIntro?: string
-  substeps?: Substep[]
 }
 
-type FullscreenImage = {
-  url: string
-  alt: string
-}
-
-function PipelinePillarFullscreen({
-  image,
-  closeLabel,
-  landscapeHint,
-  onClose,
-}: {
-  image: FullscreenImage
-  closeLabel: string
-  landscapeHint: string
-  onClose: () => void
-}) {
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.body.style.overflow = previousOverflow
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [onClose])
+function PillarMedia({ pillarId, alt, eager }: { pillarId: string; alt: string; eager?: boolean }) {
+  const media = getPipelinePillarMedia(pillarId)
+  if (!media?.imageUrl && !media?.videoUrl) return null
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex flex-col bg-black"
-      style={{ height: '100dvh', width: '100dvw' }}
-      role="dialog"
-      aria-modal="true"
-      aria-label={image.alt}
-    >
-      <div className="flex shrink-0 items-center justify-between gap-3 px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] border-b border-white/10 bg-black/80 backdrop-blur-sm">
-        <p className="text-xs text-slate-400 sm:hidden">{landscapeHint}</p>
-        <p className="hidden sm:block text-sm text-slate-300 truncate flex-1">{image.alt}</p>
-        <button
-          type="button"
-          onClick={onClose}
-          className="ml-auto flex shrink-0 items-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white hover:bg-white/20 transition-colors"
-        >
-          <X className="h-4 w-4" />
-          {closeLabel}
-        </button>
+    <div className="w-full overflow-hidden rounded-xl md:rounded-2xl border border-white/10 bg-slate-900 shadow-xl">
+      <div className="aspect-video w-full">
+        {media.videoUrl ? (
+          <video
+            className="h-full w-full object-cover"
+            controls
+            playsInline
+            preload="metadata"
+            poster={media.imageUrl}
+            aria-label={alt}
+          >
+            <source src={media.videoUrl} type="video/mp4" />
+          </video>
+        ) : (
+          <NextImage
+            src={media.imageUrl}
+            alt={alt}
+            width={1920}
+            height={1080}
+            className="h-full w-full object-cover"
+            priority={eager}
+          />
+        )}
       </div>
-
-      <button
-        type="button"
-        onClick={onClose}
-        className="flex flex-1 min-h-0 w-full items-center justify-center p-2 sm:p-6 cursor-zoom-out"
-        aria-label={closeLabel}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={image.url}
-          alt={image.alt}
-          className="max-h-full max-w-full h-auto w-auto object-contain"
-          style={{ maxHeight: 'calc(100dvh - 3.5rem)', maxWidth: '100dvw' }}
-        />
-      </button>
-    </motion.div>
+    </div>
   )
 }
 
-function PillarPanel({
-  pillar,
-  onExpand,
-}: {
-  pillar: Pillar
-  onExpand: (image: FullscreenImage) => void
-}) {
-  const t = useTranslations('pipeline.ui')
-  const media = getPipelinePillarMedia(pillar.id)
-
-  const openFullscreen = useCallback(() => {
-    if (!media?.imageUrl) return
-    onExpand({ url: media.imageUrl, alt: pillar.header })
-  }, [media?.imageUrl, onExpand, pillar.header])
-
+function PillarPanel({ pillar }: { pillar: Pillar }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="grid gap-8 lg:grid-cols-2 lg:gap-12 items-start"
+      className="flex w-full flex-col gap-6"
     >
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4 max-w-3xl">
         <div className="flex items-center gap-3">
-          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15 border border-indigo-500/25 text-sm font-bold text-indigo-300">
+          <span className="inline-flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15 border border-indigo-500/25 text-sm font-bold text-indigo-300">
             {pillar.number}
           </span>
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
             {pillar.title}
           </span>
         </div>
-        <h3 className="text-2xl md:text-3xl font-bold text-white">{pillar.header}</h3>
-        <p className="text-base text-gray-400 leading-relaxed">{pillar.body}</p>
+        <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">{pillar.header}</h3>
+        <p className="text-sm sm:text-base text-gray-400 leading-relaxed">{pillar.body}</p>
       </div>
 
-      {media?.imageUrl && (
-        <div className="rounded-2xl border border-slate-700/60 bg-slate-950/70 p-3 md:p-4 overflow-hidden shadow-xl">
-          <div className="aspect-video rounded-xl border border-white/10 bg-slate-900 overflow-hidden relative group">
-            <NextImage
-              src={media.imageUrl}
-              alt={pillar.header}
-              width={1920}
-              height={1080}
-              className="w-full h-full object-top object-contain"
-              priority={pillar.id === 'series'}
-            />
-            <button
-              type="button"
-              onClick={openFullscreen}
-              className="absolute top-2 right-2 z-10 flex items-center gap-1.5 rounded-lg bg-black/60 border border-white/15 px-2.5 py-1.5 text-xs font-medium text-gray-200 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:text-white hover:border-indigo-400/40 transition-all"
-              aria-label={t('expandFullscreen')}
-            >
-              <Maximize2 className="h-3.5 w-3.5" aria-hidden />
-              <span className="hidden sm:inline">{t('expandFullscreen')}</span>
-            </button>
-          </div>
-        </div>
-      )}
+      <PillarMedia pillarId={pillar.id} alt={pillar.header} eager={pillar.id === 'series'} />
     </motion.div>
   )
 }
 
 function GuidedStepPanel({ step }: { step: GuidedStep }) {
   return (
-    <div className="grid gap-8 lg:grid-cols-2 lg:gap-12 items-start">
-      <div className="space-y-4">
-        <h4 className="text-xl md:text-2xl font-bold text-white">{step.headline}</h4>
-        <p className="text-base text-gray-400 leading-relaxed">{step.narrative}</p>
-      </div>
-      <StepImagePlaceholder
-        stepId={step.mediaId}
-        placeholderText={step.imagePlaceholder}
-        alt={step.headline}
-      />
+    <div className="max-w-3xl space-y-3 sm:space-y-4">
+      <h4 className="text-lg sm:text-xl md:text-2xl font-bold text-white">{step.headline}</h4>
+      <p className="text-sm sm:text-base text-gray-400 leading-relaxed">{step.narrative}</p>
     </div>
   )
 }
 
-function ProductionSubstepsPanel({
-  substepsIntro,
-  substeps,
-  activeSubstep,
-  onSubstepChange,
-}: {
-  substepsIntro?: string
-  substeps: Substep[]
-  activeSubstep: string
-  onSubstepChange: (id: string) => void
-}) {
-  const active = substeps.find((s) => s.id === activeSubstep) ?? substeps[0]
-
-  return (
-    <div className="space-y-6">
-      {substepsIntro && (
-        <p className="text-sm text-gray-400 leading-relaxed max-w-3xl">{substepsIntro}</p>
-      )}
-
-      <div className="lg:hidden -mx-1 overflow-x-auto pb-1">
-        <div className="inline-flex gap-1.5 p-1 min-w-max">
-          {substeps.map((sub) => (
-            <button
-              key={sub.id}
-              type="button"
-              onClick={() => onSubstepChange(sub.id)}
-              className={cn(
-                'shrink-0 rounded-lg px-3 py-2 text-xs font-medium transition-all',
-                activeSubstep === sub.id
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'bg-slate-800 text-slate-400 border border-slate-700'
-              )}
-            >
-              {sub.number}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="grid lg:grid-cols-[minmax(200px,240px)_1fr] gap-6 lg:gap-8">
-        <nav className="hidden lg:flex flex-col gap-1" aria-label="Production milestones">
-          {substeps.map((sub) => (
-            <button
-              key={sub.id}
-              type="button"
-              onClick={() => onSubstepChange(sub.id)}
-              className={cn(
-                'text-left rounded-xl px-3 py-2.5 text-sm transition-all duration-200',
-                activeSubstep === sub.id
-                  ? 'bg-indigo-600/20 border border-indigo-500/40 text-white'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60 border border-transparent'
-              )}
-            >
-              <span className="text-indigo-400/80 font-mono text-xs mr-2">{sub.number}</span>
-              <span className="font-medium leading-snug">{sub.label}</span>
-            </button>
-          ))}
-        </nav>
-
-        <AnimatePresence mode="wait">
-          {active && (
-            <motion.div
-              key={active.id}
-              initial={{ opacity: 0, x: 12 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -12 }}
-              transition={{ duration: 0.25 }}
-              className="space-y-6"
-            >
-              <div className="space-y-2">
-                <p className="text-indigo-300 font-mono text-sm">{active.number}</p>
-                <h4 className="text-lg lg:text-xl font-semibold text-white">{active.label}</h4>
-              </div>
-              <p className="text-gray-400 leading-relaxed">{active.narrative}</p>
-              <StepImagePlaceholder
-                stepId={active.id}
-                placeholderText={active.imagePlaceholder}
-                alt={active.label}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </div>
-  )
-}
-
-function PillarTabContent({
-  pillar,
-  onExpand,
-  activeSubstep,
-  onSubstepChange,
-}: {
-  pillar: Pillar
-  onExpand: (image: FullscreenImage) => void
-  activeSubstep: string
-  onSubstepChange: (id: string) => void
-}) {
+function PillarTabContent({ pillar }: { pillar: Pillar }) {
   const tUi = useTranslations('pipeline.ui')
+  const [howItWorksOpen, setHowItWorksOpen] = useState(false)
 
   return (
-    <div className="space-y-10">
-      <PillarPanel pillar={pillar} onExpand={onExpand} />
+    <div className="space-y-8">
+      <PillarPanel pillar={pillar} />
 
-      <div className="border-t border-slate-800 pt-10 space-y-6">
-        <p className="text-xs font-semibold uppercase tracking-wider text-indigo-300">
-          {tUi('howItWorksLabel')}
-        </p>
+      {pillar.guidedStep && (
+        <div className="border-t border-slate-800 pt-6">
+          <button
+            type="button"
+            onClick={() => setHowItWorksOpen((open) => !open)}
+            aria-expanded={howItWorksOpen}
+            className="inline-flex min-h-11 items-center gap-2 py-2 text-sm font-semibold uppercase tracking-wider text-indigo-300 transition-colors hover:text-indigo-200"
+          >
+            <ChevronDown
+              className={cn('h-4 w-4 transition-transform duration-300', howItWorksOpen && 'rotate-180')}
+            />
+            {howItWorksOpen ? tUi('hideHowItWorks') : tUi('showHowItWorks')}
+          </button>
 
-        {pillar.substeps && pillar.substeps.length > 0 ? (
-          <ProductionSubstepsPanel
-            substepsIntro={pillar.substepsIntro}
-            substeps={pillar.substeps}
-            activeSubstep={activeSubstep}
-            onSubstepChange={onSubstepChange}
-          />
-        ) : pillar.guidedStep ? (
-          <GuidedStepPanel step={pillar.guidedStep} />
-        ) : null}
-      </div>
+          <AnimatePresence initial={false}>
+            {howItWorksOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.35, ease: [0.04, 0.62, 0.23, 0.98] }}
+                className="overflow-hidden"
+              >
+                <div className="pt-6">
+                  <GuidedStepPanel step={pillar.guidedStep} />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
     </div>
   )
 }
 
 export function PipelinePillarsSection() {
   const t = useTranslations('pipeline')
-  const tUi = useTranslations('pipeline.ui')
   const pillars = t.raw('pillars') as Pillar[]
-  const [fullscreenImage, setFullscreenImage] = useState<FullscreenImage | null>(null)
-  const [activeSubstep, setActiveSubstep] = useState(DEFAULT_SUBSTEP)
-
-  const closeFullscreen = useCallback(() => setFullscreenImage(null), [])
-
-  const handleTabChange = (value: string) => {
-    if (value === 'production') {
-      setActiveSubstep(DEFAULT_SUBSTEP)
-    }
-  }
 
   return (
     <section
@@ -353,7 +164,7 @@ export function PipelinePillarsSection() {
           <p className="text-lg text-gray-400 max-w-2xl mx-auto">{t('subtitle')}</p>
         </motion.div>
 
-        <Tabs defaultValue="series" onValueChange={handleTabChange} className="w-full">
+        <Tabs defaultValue="series" className="w-full">
           <TabsList className="flex h-auto gap-1 p-1 w-full max-w-md mx-auto mb-10 bg-slate-900/60 border-slate-700">
             {pillars.map((pillar) => (
               <TabsTrigger
@@ -372,29 +183,13 @@ export function PipelinePillarsSection() {
               value={pillar.id}
               className="mt-0 focus-visible:outline-none"
             >
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 md:p-8 lg:p-10">
-                <PillarTabContent
-                  pillar={pillar}
-                  onExpand={setFullscreenImage}
-                  activeSubstep={activeSubstep}
-                  onSubstepChange={setActiveSubstep}
-                />
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 sm:p-6 md:p-8 lg:p-10">
+                <PillarTabContent pillar={pillar} />
               </div>
             </TabsContent>
           ))}
         </Tabs>
       </div>
-
-      <AnimatePresence>
-        {fullscreenImage && (
-          <PipelinePillarFullscreen
-            image={fullscreenImage}
-            closeLabel={tUi('closeFullscreen')}
-            landscapeHint={tUi('landscapeHint')}
-            onClose={closeFullscreen}
-          />
-        )}
-      </AnimatePresence>
     </section>
   )
 }

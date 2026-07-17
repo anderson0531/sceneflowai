@@ -83,6 +83,8 @@
       "closeFullscreen": "Close",
       "landscapeHint": "Rotate your device for a wider landscape view",
       "howItWorksLabel": "How it works in this phase",
+      "showHowItWorks": "Show how it works",
+      "hideHowItWorks": "Hide how it works",
       "imagePlaceholder": "Screenshot placeholder",
       "videoWalkthrough": "30-second walkthrough",
       "comingSoon": "Product screenshot coming soon"
@@ -123,93 +125,10 @@
         "title": "Guided Production",
         "header": "Multi-Engine Automation",
         "body": "Run lightning-fast concurrent generations. From automated script translation to Express Audio, Express Scene Beat Frames, and high-fidelity 4s to 15s Express Video beats—all flowing directly into the interactive Screening Room player in under 30 minutes.",
-        "substepsIntro": "Twelve guided milestones inside Production — budget planning, express generation, Screening Room review, shoot, mixer polish, dub, and distribute.",
-        "substeps": [
-          {
-            "id": "draft-script",
-            "number": "1",
-            "label": "Generate a professional draft script",
-            "narrative": "Turn your treatment into a structured, scene-by-scene screenplay. SceneFlow formats dialogue, action lines, and beat markers so every downstream step has a clear script to follow.",
-            "imagePlaceholder": "Script editor — professional draft with scene beats"
-          },
-          {
-            "id": "audience-resonance",
-            "number": "2",
-            "label": "Optimize with Audience Resonance Analysis",
-            "narrative": "Score your script against your target audience before you spend credits on generation. Flag pacing drops, sharpen dialogue hooks, and apply one-click narrative improvements scene by scene.",
-            "imagePlaceholder": "Audience Resonance panel — scores and guided edits"
-          },
-          {
-            "id": "set-production-budget",
-            "number": "3",
-            "label": "Set your production budget",
-            "narrative": "Open the Project Cost Calculator to see a credit breakdown across script, audio, images, and video. Pick a preset or fine-tune the scope, then Set as Project Budget so every generation tracks against your cap.",
-            "imagePlaceholder": "Project Cost Calculator — credit breakdown and Set as Project Budget"
-          },
-          {
-            "id": "reference-library",
-            "number": "4",
-            "label": "Generate Reference Library",
-            "narrative": "Lock characters, wardrobe, voice profiles, locations, and props into a Shared Reference Library. Every scene generation pulls from the same visual DNA — no drift across episodes or beats.",
-            "imagePlaceholder": "Reference Library — characters, wardrobe, voice, locations, props"
-          },
-          {
-            "id": "express-audio",
-            "number": "5",
-            "label": "Express generate production audio",
-            "narrative": "Concurrently produce dialogue, SFX, and music beds timed to your script beats. Native-quality voiceover in 70+ languages starts here — before a single frame is rendered.",
-            "imagePlaceholder": "Express audio generation — dialogue, SFX, and music"
-          },
-          {
-            "id": "beat-frames",
-            "number": "6",
-            "label": "Express generate Beat Frames",
-            "narrative": "Generate start and end composition frames for every beat — locked to your Reference Library. Approve the look before SceneFlow spends credits on motion video.",
-            "imagePlaceholder": "Beat Frames gallery — composition locked per beat"
-          },
-          {
-            "id": "screening-room",
-            "number": "7",
-            "label": "Review animatic in Screening Room",
-            "narrative": "Play the full interactive animatic in under 30 minutes. Share a Screening Room link for stakeholder feedback, then optionally render a reviewable animatic video before committing to final motion.",
-            "imagePlaceholder": "Screening Room player — interactive animatic review"
-          },
-          {
-            "id": "script-assistant",
-            "number": "8",
-            "label": "Edit script scenes through intelligent assistant",
-            "narrative": "Revise scenes off-canvas with an intelligent assistant that understands your story context. Changes propagate through the pipeline without rebuilding from scratch.",
-            "imagePlaceholder": "Intelligent script assistant — scene-level edits"
-          },
-          {
-            "id": "shoot",
-            "number": "9",
-            "label": "Generate full motion video scenes (Shoot)",
-            "narrative": "Convert approved beat frames into high-fidelity express video — 4s to 15s motion beats per scene. Frame-anchored generation keeps characters and environments consistent shot to shot.",
-            "imagePlaceholder": "Shoot tab — express video generation per beat"
-          },
-          {
-            "id": "mixer",
-            "number": "10",
-            "label": "Fine-tune scenes in the Mixer",
-            "narrative": "Polish every scene after generation — add text overlays and watermarks, trim beats, and align audio timing before you dub or publish. Brand-safe finishing without leaving the studio.",
-            "imagePlaceholder": "Production Mixer — text overlay, watermark, trim, and audio controls"
-          },
-          {
-            "id": "multilanguage",
-            "number": "11",
-            "label": "Generate multilanguage streams",
-            "narrative": "Spin up dubbed or lip-synced language variants from the same approved master. Reach new markets without re-shooting — one pipeline, many localized outputs.",
-            "imagePlaceholder": "Multilanguage streams — dubbed and lip-sync overlays"
-          },
-          {
-            "id": "publish",
-            "number": "12",
-            "label": "Render final (4K) and Publish",
-            "narrative": "Stitch scene streams into a 4K master, bundle your distribution package, and auto-publish to YouTube and your connected networks — from one finishing surface.",
-            "imagePlaceholder": "Publish wizard — 4K master and distribution bundle"
-          }
-        ]
+        "guidedStep": {
+          "headline": "Concurrent generation, from script to master",
+          "narrative": "Production runs script translation, Express Audio, Express Scene Beat Frames, and 4–15s Express Video beats concurrently — all flowing into the interactive Screening Room player in under 30 minutes, then out to a 4K master and multilanguage distribution."
+        }
       }
     ]
   },
