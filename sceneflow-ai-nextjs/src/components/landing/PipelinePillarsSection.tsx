@@ -1,19 +1,21 @@
 'use client'
 
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import NextImage from 'next/image'
 import { useTranslations } from 'next-intl'
-import { Layers, ChevronDown } from 'lucide-react'
+import { Layers } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { StepImagePlaceholder } from '@/components/landing/StepImagePlaceholder'
 import { getPipelinePillarMedia } from '@/config/landing/pipelinePillarsMedia'
-import { cn } from '@/lib/utils'
 
 const SECTION_ID = 'pipeline'
 
-type GuidedStep = {
-  headline: string
-  narrative: string
+type Step = {
+  id: string
+  number: string
+  title: string
+  description: string
+  imagePlaceholder: string
 }
 
 type Pillar = {
@@ -23,7 +25,7 @@ type Pillar = {
   title: string
   header: string
   body: string
-  guidedStep?: GuidedStep
+  steps?: Step[]
 }
 
 function PillarMedia({ pillarId, alt, eager }: { pillarId: string; alt: string; eager?: boolean }) {
@@ -59,81 +61,78 @@ function PillarMedia({ pillarId, alt, eager }: { pillarId: string; alt: string; 
   )
 }
 
-function PillarPanel({ pillar }: { pillar: Pillar }) {
+function PillarHeader({ pillar }: { pillar: Pillar }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="flex w-full flex-col gap-6"
-    >
-      <div className="space-y-3 sm:space-y-4 max-w-3xl">
-        <div className="flex items-center gap-3">
-          <span className="inline-flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15 border border-indigo-500/25 text-sm font-bold text-indigo-300">
-            {pillar.number}
-          </span>
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-            {pillar.title}
-          </span>
-        </div>
-        <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">{pillar.header}</h3>
-        <p className="text-sm sm:text-base text-gray-400 leading-relaxed">{pillar.body}</p>
+    <div className="space-y-3 sm:space-y-4 max-w-3xl">
+      <div className="flex items-center gap-3">
+        <span className="inline-flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15 border border-indigo-500/25 text-sm font-bold text-indigo-300">
+          {pillar.number}
+        </span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+          {pillar.title}
+        </span>
       </div>
-
-      <PillarMedia pillarId={pillar.id} alt={pillar.header} eager={pillar.id === 'series'} />
-    </motion.div>
+      <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">{pillar.header}</h3>
+      <p className="text-sm sm:text-base text-gray-400 leading-relaxed">{pillar.body}</p>
+    </div>
   )
 }
 
-function GuidedStepPanel({ step }: { step: GuidedStep }) {
+function PillarSteps({ steps, label }: { steps: Step[]; label: string }) {
   return (
-    <div className="max-w-3xl space-y-3 sm:space-y-4">
-      <h4 className="text-lg sm:text-xl md:text-2xl font-bold text-white">{step.headline}</h4>
-      <p className="text-sm sm:text-base text-gray-400 leading-relaxed">{step.narrative}</p>
+    <div className="space-y-6">
+      <p className="text-xs font-semibold uppercase tracking-wider text-indigo-300">{label}</p>
+
+      <ol className="space-y-8 list-none pl-0">
+        {steps.map((step, index) => (
+          <motion.li
+            key={step.id}
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-80px' }}
+            transition={{ duration: 0.4, delay: Math.min(index * 0.04, 0.2) }}
+            className="grid gap-5 md:grid-cols-2 md:gap-8 md:items-center"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">
+                  {step.number}
+                </span>
+                <h4 className="text-lg sm:text-xl font-semibold text-white">{step.title}</h4>
+              </div>
+              <p className="text-sm sm:text-base text-gray-400 leading-relaxed">{step.description}</p>
+            </div>
+
+            <StepImagePlaceholder
+              stepId={step.id}
+              placeholderText={step.imagePlaceholder}
+              alt={step.title}
+            />
+          </motion.li>
+        ))}
+      </ol>
     </div>
   )
 }
 
 function PillarTabContent({ pillar }: { pillar: Pillar }) {
   const tUi = useTranslations('pipeline.ui')
-  const [howItWorksOpen, setHowItWorksOpen] = useState(false)
 
   return (
-    <div className="space-y-8">
-      <PillarPanel pillar={pillar} />
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-10"
+    >
+      <PillarHeader pillar={pillar} />
 
-      {pillar.guidedStep && (
-        <div className="border-t border-slate-800 pt-6">
-          <button
-            type="button"
-            onClick={() => setHowItWorksOpen((open) => !open)}
-            aria-expanded={howItWorksOpen}
-            className="inline-flex min-h-11 items-center gap-2 py-2 text-sm font-semibold uppercase tracking-wider text-indigo-300 transition-colors hover:text-indigo-200"
-          >
-            <ChevronDown
-              className={cn('h-4 w-4 transition-transform duration-300', howItWorksOpen && 'rotate-180')}
-            />
-            {howItWorksOpen ? tUi('hideHowItWorks') : tUi('showHowItWorks')}
-          </button>
-
-          <AnimatePresence initial={false}>
-            {howItWorksOpen && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.35, ease: [0.04, 0.62, 0.23, 0.98] }}
-                className="overflow-hidden"
-              >
-                <div className="pt-6">
-                  <GuidedStepPanel step={pillar.guidedStep} />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+      {pillar.steps && pillar.steps.length > 0 && (
+        <PillarSteps steps={pillar.steps} label={tUi('howItWorksLabel')} />
       )}
-    </div>
+
+      <PillarMedia pillarId={pillar.id} alt={pillar.header} eager={pillar.id === 'series'} />
+    </motion.div>
   )
 }
 

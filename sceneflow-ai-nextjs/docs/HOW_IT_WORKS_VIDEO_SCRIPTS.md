@@ -1,21 +1,24 @@
-# How It Works — Per-Step Narrated Video Scripts
+# Pipeline Pillar — Narrated Marketing Video Scripts
 
-Production guide for the 14 guided pipeline walkthrough videos on the landing page (`#pipeline`). Each video is **30 seconds**, narrated, with synchronized screen capture of the real SceneFlow Studio UI.
+Production guide for the **3 per-pillar walkthrough videos** on the landing page 3-Pillar Pipeline section (`#pipeline`): **Series**, **Blueprint**, and **Production**. These are **marketing** videos — not step demos — engineered for a concept-to-publish "wow": streamlined, cinematic, and built to convert potential subscribers.
 
-**Asset convention** (wired in `src/config/landing/guidedStepsMedia.ts`):
+Each pillar video plays full-width beneath the pillar's "How It Works" step timeline and uses the pillar screenshot as its poster.
 
-| Asset | Path |
-|-------|------|
-| Video | `public/landing/how-it-works/{stepId}.mp4` |
-| Poster | `public/landing/how-it-works/{stepId}.jpg` |
+**Asset convention** (wired in [`src/config/landing/pipelinePillarsMedia.ts`](../src/config/landing/pipelinePillarsMedia.ts)):
 
-Uncomment `videoUrl` / `posterUrl` in `guidedStepsMedia.ts` when each MP4 is ready.
+| Pillar | Video | Poster |
+|--------|-------|--------|
+| Series | `Series.mp4` | `/landing/pipeline/series.png` |
+| Blueprint | `BLUEPRINT.mp4` | `/landing/pipeline/blueprint.png` |
+| Production | `walkthrough/Production.mp4` | `/landing/pipeline/production.png` |
+
+Per-step screenshot placeholders in the How It Works timeline are wired in [`src/config/landing/guidedStepsMedia.ts`](../src/config/landing/guidedStepsMedia.ts) (`{stepId}.mp4` / `{stepId}.jpg` under `public/landing/how-it-works/`).
 
 ---
 
 ## Narrator voice & profile
 
-Use one consistent narrator across all 14 videos so the pipeline feels like a single guided tour.
+Use one consistent narrator across all three videos so the pipeline feels like a single guided tour from the same creative director.
 
 ### Persona
 
@@ -23,23 +26,22 @@ Use one consistent narrator across all 14 videos so the pipeline feels like a si
 |-------|-------|
 | **Name** | Studio Guide (internal label only) |
 | **Role** | Senior creative director welcoming a new producer to SceneFlow |
-| **Tone** | Warm, confident, unhurried — expert peer, not sales pitch |
-| **Pace** | 150–160 words per minute (~75 words per 30s script) |
-| **Energy** | Measured enthusiasm; emphasize outcomes (“you approve,” “you control”) |
+| **Tone** | Warm, confident, unhurried — an expert peer, not a sales pitch |
+| **Pace** | 150–160 words per minute |
+| **Energy** | Measured enthusiasm; emphasize outcomes ("you approve," "you control," "in one click") |
+| **POV** | Speak to "you," the creator; sell the streamlined concept-to-publish feeling |
 
 ### Recommended TTS voice (Gemini)
 
-Align with existing landing narrator patterns in `src/config/landing/roleStoryScripts.ts`:
+Aligns with existing landing narrator patterns in [`src/config/landing/roleStoryScripts.ts`](../src/config/landing/roleStoryScripts.ts):
 
 | Setting | Value |
 |---------|-------|
 | **Voice ID** | `gemini-Rasalgethi` |
 | **Profile** | Robust, deep, narrative-driven storyteller; cinematic gravity, unhurried, documentary-quality delivery |
-| **Director note (per line)** | “Speak as a creative director walking a client through their studio for the first time — clear, reassuring, never rushed.” |
+| **Director note** | "Speak as a creative director walking a client through their studio for the first time — clear, reassuring, never rushed. Land the payoff lines with quiet confidence." |
 
 ### Alternate (ElevenLabs)
-
-If producing via ElevenLabs instead of Gemini TTS:
 
 | Setting | Value |
 |---------|-------|
@@ -50,345 +52,209 @@ If producing via ElevenLabs instead of Gemini TTS:
 
 ### Audio & video specs
 
-- **Duration:** 28–32 seconds (target 30s)
-- **Format:** MP4, H.264, 1920×1080, 30fps
-- **Audio:** AAC 48 kHz, −16 LUFS integrated loudness
-- **Capture:** 1920×1080 browser window, dark UI theme, cursor visible, no personal data in frame
-- **Edit:** Light zoom on key clicks; cut dead air; narration recorded first or generated from script below, then timed to capture
+- **Duration:** Series ~50s, Blueprint ~40s, Production ~2:15 (see per-pillar targets).
+- **Format:** MP4, H.264, 1920×1080, 30fps.
+- **Audio:** AAC 48 kHz, −16 LUFS integrated loudness; light bed music under narration (−22 LUFS), duck on VO.
+- **Capture:** 1920×1080 browser window, dark UI theme, cursor visible, no personal data in frame.
+- **Edit:** Light zoom on key clicks; snappy cuts between beats; open on a title card, close on the SceneFlow logo + CTA. Beat titles lower-third on screen.
 
 ---
 
-## Series pillar
+## 1. Series — "Build a Universe, Not a Clip"
 
-### Step: `start` — Spin up a season or a single project
+**Video:** `Series.mp4` · **Target:** ~50 seconds · **Beats:** 6
 
-**On-screen title:** Spin up a season or a single project
+**Opening hook (0:00–0:06)**
 
-**Narration script (~75 words):**
+> One idea. One studio. An entire series — cast, episodes, and a consistent world — built before you touch a timeline.
 
-> Every great production starts with a clear intake. In SceneFlow, you can spin up a multi-episode series from a single concept — or open a single project and paste your script. Choose your format, set episode count, and SceneFlow builds your storyline, episode blueprints, and shared reference foundation. One studio. One pipeline. Whether you're launching a season or shipping one film, your creative DNA is structured before a single frame generates.
+### Beat 1 — Start with your concept
+- **On-screen title:** Start with your concept
+- **Narration:**
+  > It starts with a sentence. Describe your series or your YouTube channel, and SceneFlow turns your concept into a production-ready foundation — no prompt engineering.
+- **Screen capture:** `/dashboard/series` → **New Series** → type a **Topic / Concept**, pick **Production Format**, set **Number of Episodes** → **Generate Storyline**.
+- **Primary UI:** `src/app/dashboard/series/page.tsx`, `src/components/blueprint/BlueprintReimaginDialog.tsx`
 
-**Screen capture instructions:**
+### Beat 2 — Review the SceneFlow baseline
+- **On-screen title:** Review the professional baseline
+- **Narration:**
+  > SceneFlow returns a professional baseline — scored by Audience Resonance Analysis against your target viewers. Read it, or listen to the narrated overview, then add your direction.
+- **Screen capture:** Series **Overview** tab (Production Bible) with the **Audience Resonance** score strip; click the narrated-overview play button; show the listen/read toggle.
+- **Primary UI:** `src/app/dashboard/series/[seriesId]/page.tsx`, `src/components/blueprint/AudienceResonancePanelV3.tsx`
 
-1. Open `/dashboard` → click **New Project** or navigate to `/dashboard/series`.
-2. **Series path:** Click **New Series** → fill **Topic / Concept**, select **Production Format** (e.g. Narrative Series), set **Number of Episodes** → **Generate Storyline**.
-3. Show **Series Studio** (`/dashboard/series/{seriesId}`): **Overview** tab with Production Bible, then **Episodes** tab with episode blueprints.
-4. Cut to **Single project path:** `/dashboard/studio/new-project` → **Create Your Blueprint** empty state → click **Generate Blueprint** or **Import Script**.
-5. Hold on **Create Blueprint** dialog with **Your Concept** textarea and format/tone settings.
-6. End on dashboard **Quick Actions** showing both entry paths.
+### Beat 3 — Create unlimited episodes
+- **On-screen title:** Create unlimited episodes
+- **Narration:**
+  > Need a season? Spin up an unlimited number of episodes — each one inheriting your series DNA, so the cast, tone, and world never drift.
+- **Screen capture:** **Episodes** tab; add episodes; scroll the generated episode blueprints.
+- **Primary UI:** `src/app/dashboard/series/[seriesId]/page.tsx`
 
-**Primary UI files:** `src/app/dashboard/series/page.tsx`, `src/app/dashboard/series/[seriesId]/page.tsx`, `src/app/dashboard/studio/[projectId]/StudioPageClient.tsx`, `src/components/blueprint/BlueprintReimaginDialog.tsx`
+### Beat 4 — Review the Reference Library
+- **On-screen title:** One shared Reference Library
+- **Narration:**
+  > Every episode draws from one shared Reference Library — characters, voices, wardrobe, locations, and props — created and maintained through Production and reused across the whole series.
+- **Screen capture:** Open **Series Reference Library**; pan across Cast, Locations, Props with identity images.
+- **Primary UI:** `src/components/series/SeriesReferenceLibraryPanel.tsx`
 
----
+### Beat 5 — Direct the Intelligent Assistant Writer
+- **On-screen title:** Direct by voice or text
+- **Narration:**
+  > Want a change? Just say it. The Intelligent Assistant Writer reshapes your series or any episode from spoken or typed direction — professional copy, instantly, no blank page.
+- **Screen capture:** Open the assistant on the series; dictate a direction (mic), show the rewrite; then a typed edit on an episode.
+- **Primary UI:** `src/components/ui/DictationTextarea.tsx`, `src/components/vision/InstructionsPanel.tsx`
 
-## Blueprint pillar
+### Beat 6 — Start production in one click
+- **On-screen title:** Start production in one click
+- **Narration:**
+  > When an episode is ready, start its production with a single click — and flow straight into the guided pipeline.
+- **Screen capture:** Hover an episode → **Start Production**; cut to the Vision workspace loading.
+- **Primary UI:** `src/components/blueprint/StartProductionDialog.tsx`
 
-### Step: `blueprint` — Lock your creative DNA before a single frame renders
+**Closing payoff (~0:46–0:50)**
 
-**On-screen title:** Lock your creative DNA before a single frame renders
-
-**Narration script (~76 words):**
-
-> Blueprint is where your creative DNA gets locked in. SceneFlow generates a deep film treatment — logline, characters, beats, tone, and visual style — from your concept or imported script. Review every section, run Audience Resonance against your target viewers, and refine with scoped edits before you spend a single credit. When the story sings, hit Start Production — and the entire pipeline inherits your approved vision. No drift. No guesswork.
-
-**Screen capture instructions:**
-
-1. Open `/dashboard/studio/{projectId}` with a completed Blueprint.
-2. Show header: **Blueprint**, **Saved** status, **Audience Resonance** score strip.
-3. Scroll **TreatmentCard** sections: **Core Identifying Information**, **Story Setup**, **Tone, Style, & Themes**, **Beats & Runtime**, **Characters**.
-4. Open side panel → **Resonance** tab → **Analyze** (show score breakdown).
-5. Click **Edit Blueprint** (`BlueprintRefineDialog`) — show scoped section edit.
-6. Close dialog → click **Start Production** (`StartProductionDialog` readiness gate).
-7. End on treatment hero poster image if visible.
-
-**Primary UI files:** `src/app/dashboard/studio/[projectId]/StudioPageClient.tsx`, `src/components/blueprint/TreatmentCard.tsx`, `src/components/blueprint/AudienceResonancePanelV3.tsx`, `src/components/blueprint/StartProductionDialog.tsx`
-
----
-
-## Production pillar — 12 milestones
-
-All Production steps capture from `/dashboard/workflow/vision/{projectId}` unless noted.
-
----
-
-### Step 1: `draft-script` — Generate a professional draft script
-
-**On-screen title:** Generate a professional draft script
-
-**Narration script (~74 words):**
-
-> Your approved Blueprint becomes a professional screenplay — automatically. SceneFlow formats every scene with dialogue, action lines, and beat markers so downstream audio, frames, and video all follow the same script. Watch scenes populate in real time as Generation Progress tracks each batch. Expand any scene card to review Direction, Beats, Music, and Pre-Vis tabs. This isn't a rough draft — it's production-ready structure your entire studio pipeline will follow.
-
-**Screen capture instructions:**
-
-1. Navigate to Vision page after **Start Production** (first load triggers script generation).
-2. Show floating **GenerationProgress** toast: “Generating Vision…”, “X of Y scenes completed”.
-3. Expand a **SCENE** card; click **Script** workflow tab.
-4. Show sub-tabs: **Direction**, **Beats**, **Music**, **Pre-Vis**, **Narration**.
-5. Scroll through 2–3 populated scene cards with dialogue and action lines.
-6. End on full script list with scene count visible in header.
-
-**Primary UI files:** `src/app/dashboard/workflow/vision/[projectId]/page.tsx`, `src/components/vision/ScriptPanel.tsx`, `src/components/vision/GenerationProgress.tsx`
+> From one idea to a whole series — that's the SceneFlow pipeline.
 
 ---
 
-### Step 2: `audience-resonance` — Optimize with Audience Resonance Analysis
+## 2. Blueprint — "Your Creative DNA, Locked In"
 
-**On-screen title:** Optimize with Audience Resonance Analysis
+**Video:** `BLUEPRINT.mp4` · **Target:** ~40 seconds · **Beats:** 4
 
-**Narration script (~75 words):**
+**Opening hook (0:00–0:06)**
 
-> Before you spend credits on generation, score your script against your target audience. Open Audience Resonance from the toolbar to see an overview, scene-by-scene breakdown, and cinematic analysis. Flag pacing drops, sharpen dialogue hooks, and apply one-click improvements scene by scene. Each scene shows its resonance score with expandable recommendations. Fix the story now — when edits are free — not after you've rendered fifty beats of video.
+> Before a single frame renders, your story is already working — pacing, characters, and tone, approved.
 
-**Screen capture instructions:**
+### Beat 1 — Review the baseline Blueprint
+- **On-screen title:** Review the baseline Blueprint
+- **Narration:**
+  > Blueprint is your deep film treatment — synopsis, beats, characters, tone, and style — with Audience Resonance Analysis built in. Read it, or listen to the narrated overview, and hear exactly why it lands.
+- **Screen capture:** `/dashboard/studio/{projectId}` Blueprint; scroll `TreatmentCard` sections; show the resonance score; play the narrated overview.
+- **Primary UI:** `src/app/dashboard/studio/[projectId]/StudioPageClient.tsx`, `src/components/blueprint/TreatmentCard.tsx`, `src/components/blueprint/AudienceResonancePanelV3.tsx`
 
-1. In ScriptPanel toolbar, click **Audience** button (show score badge, e.g. `85`).
-2. Open **ScriptReviewModal** — tab through **Overview**, **Analysis**, **Scene Breakdown**.
-3. Show per-scene **Audience Resonance: N/100** badge expanded with recommendations.
-4. Click **Edit & Apply** or **Optimize Scene** on one recommendation.
-5. Briefly show **OptimizeSceneDialog** with a suggested fix.
-6. Close modal; show updated score badge on toolbar.
+### Beat 2 — Direct the Intelligent Assistant Writer
+- **On-screen title:** Refine by voice or text
+- **Narration:**
+  > Shape the synopsis, beats, or characters by speaking or typing your direction. The Intelligent Assistant Writer revises the treatment instantly — no prompt engineering.
+- **Screen capture:** Open **Edit Blueprint** (`BlueprintRefineDialog`); dictate/type a scoped edit; show the section updating.
+- **Primary UI:** `src/components/blueprint/BlueprintRefineDialog.tsx`, `src/components/ui/DictationTextarea.tsx`
 
-**Primary UI files:** `src/components/vision/ScriptReviewModal.tsx`, `src/components/vision/OptimizeSceneDialog.tsx`, `src/components/vision/ScriptPanel.tsx`
+### Beat 3 — Review the Reasoning
+- **On-screen title:** See the creative reasoning
+- **Narration:**
+  > Curious why it works? Open the Reasoning section for the creative logic behind every beat and character choice — your story, explained.
+- **Screen capture:** Expand the **Reasoning** panel; scroll the explanation tied to beats/characters.
+- **Primary UI:** `src/components/blueprint/TreatmentCard.tsx`
 
----
+### Beat 4 — Start production when ready
+- **On-screen title:** Start production when ready
+- **Narration:**
+  > When the story sings, start production — and the entire pipeline inherits your approved creative DNA. No drift. No guesswork.
+- **Screen capture:** Click **Start Production** (`StartProductionDialog` readiness gate); cut to the Production workspace.
+- **Primary UI:** `src/components/blueprint/StartProductionDialog.tsx`
 
-### Step 3: `set-production-budget` — Set your production budget
+**Closing payoff (~0:36–0:40)**
 
-**On-screen title:** Set your production budget
-
-**Narration script (~76 words):**
-
-> Smart producers set the budget before they generate. Open the Project Cost Calculator from your script toolbar to see a full credit breakdown — script, audio, images, and video — scene by scene. Pick a preset like Short Film or Commercial, or fine-tune scope yourself. When the numbers look right, click Set as Project Budget. Every generation from here tracks against your cap, so you stay in control of spend from day one.
-
-**Screen capture instructions:**
-
-1. In ScriptPanel toolbar, click the **Calculator** icon.
-2. Open **Project Cost Calculator** modal showing credit breakdown by category (Film, Image, Mic, Video icons).
-3. Select a preset (e.g. **Short Film** or **Commercial**) — show totals updating.
-4. Expand scene-level detail; show per-scene credit estimates.
-5. Click **Set as Project Budget (N credits)** button.
-6. Cut to dashboard **ActiveProjectCard** showing **Project Budget** used vs. budget bar.
-7. End on calculator summary with total credits and USD estimate.
-
-**Primary UI files:** `src/components/credits/ProjectCostCalculator.tsx`, `src/components/vision/ScriptPanel.tsx`, `src/lib/credits/projectCalculator.ts`, `src/app/dashboard/components/ActiveProjectCard.tsx`
-
----
-
-### Step 4: `reference-library` — Generate Reference Library
-
-**On-screen title:** Generate Reference Library
-
-**Narration script (~74 words):**
-
-> Consistency starts in the Reference Library. Lock every character's look, wardrobe, voice profile, location, and prop before generation begins. Open Reference from the toolbar and browse Cast, Locations, and Props tabs. Assign voices, upload identity images, or batch Express Generate missing references. Every scene downstream pulls from this shared visual DNA — so characters don't drift and worlds stay coherent across episodes and beats.
-
-**Screen capture instructions:**
-
-1. Click **Reference** button in ScriptPanel toolbar.
-2. Open **Reference Library** dialog.
-3. **Cast** tab: show character cards with identity images, **Wardrobe**, voice assignment.
-4. Open **VoiceSelectionDialog** or voice picker on one character.
-5. **Locations** tab: show location reference images.
-6. **Props** tab: show object references.
-7. Click **Express Generate** for a missing reference; show generation progress.
-8. Close dialog; show **Reference** button with readiness indicator.
-
-**Primary UI files:** `src/components/vision/ReferenceLibraryDialog.tsx`, `src/components/vision/CharacterLibrary.tsx`, `src/components/vision/LocationLibrary.tsx`
+> Approve the story first. Then let SceneFlow build it.
 
 ---
 
-### Step 5: `express-audio` — Express generate production audio
+## 3. Production — "From Script to Published Master"
 
-**On-screen title:** Express generate production audio
+**Video:** `walkthrough/Production.mp4` · **Target:** ~2:15 · **Beats:** 11
 
-**Narration script (~73 words):**
+**Opening hook (0:00–0:08)**
 
-> Hear your story before you see it. Express Audio generates dialogue, narration, SFX, and music beds — timed to every beat in your script. Open the Beats tab, click Express Audio, and choose scope: missing cues only or the full soundtrack. Credit estimates appear before you confirm. Native-quality voiceover in seventy-plus languages starts here — laying the audio foundation your animatic and final video will follow.
+> This is where it all comes together — script, audio, frames, and video, generated concurrently, and carried all the way to a published master. Without leaving the studio.
 
-**Screen capture instructions:**
+### Beat 1 — Review the baseline script
+- **On-screen title:** Review the baseline script
+- **Narration:**
+  > Production opens on a professional baseline script, scored by Audience Resonance Analysis. Read it, or listen to the narrated analysis — so you know what lands before you spend a credit.
+- **Screen capture:** Vision page after Start Production; script scenes populate; open **Audience** score; play narrated analysis.
+- **Primary UI:** `src/app/dashboard/workflow/vision/[projectId]/page.tsx`, `src/components/vision/ScriptReviewModal.tsx`
 
-1. Expand a scene card → **Beats** tab.
-2. Click **Express Audio** button.
-3. Open **ExpressAudioConfirmDialog** — show scope toggle (**missing** / **all**), per-cue checkboxes, credit estimate.
-4. Confirm generation; show progress on beat audio lines.
-5. Show completed audio waveforms / play buttons on dialogue and SFX cues.
-6. Briefly show **SceneGallery** Express pipeline **Audio** phase badge.
+### Beat 2 — Optimize scene by scene
+- **On-screen title:** Optimize scene by scene
+- **Narration:**
+  > Tune the script scene by scene with the Intelligent Assistant Writer — tighten dialogue, reshape a beat, apply one-click improvements by voice or text.
+- **Screen capture:** Open `SceneEditorModalV2`; dictate a revision; **Generate Preview**; before/after; **Apply**.
+- **Primary UI:** `src/components/vision/SceneEditorModalV2.tsx`, `src/components/vision/OptimizeSceneDialog.tsx`
 
-**Primary UI files:** `src/components/vision/ExpressAudioConfirmDialog.tsx`, `src/components/vision/ScriptPanel.tsx`, `src/components/vision/SceneGallery.tsx`
+### Beat 3 — Build the Reference Library
+- **On-screen title:** Build the Reference Library
+- **Narration:**
+  > Lock your world in the Reference Library — scripted, custom, or uploaded characters, voices, wardrobes, locations, and props. Edit a reference image directly — no slot-machine regenerations.
+- **Screen capture:** `ReferenceLibraryDialog`; Cast/Locations/Props tabs; assign a voice; edit a reference image in place.
+- **Primary UI:** `src/components/vision/ReferenceLibraryDialog.tsx`, `src/components/vision/CharacterLibrary.tsx`
 
----
+### Beat 4 — Generate audio
+- **On-screen title:** Generate audio
+- **Narration:**
+  > Hear it before you see it. Generate dialogue, narration, SFX, and music with Express Production across every scene, a single scene, or beat by beat — native-quality voiceover in seventy-plus languages.
+- **Screen capture:** **Beats** tab → **Express Audio** → `ExpressAudioConfirmDialog` scope + credit estimate; waveforms populate.
+- **Primary UI:** `src/components/vision/ExpressAudioConfirmDialog.tsx`, `src/components/vision/ScriptPanel.tsx`
 
-### Step 6: `beat-frames` — Express generate Beat Frames
+### Beat 5 — Generate and edit frames
+- **On-screen title:** Generate and edit frames
+- **Narration:**
+  > Generate beat frames with Express Production, Express Scene, or beat by beat — then edit any frame with the Intelligent Assistant Director. Just describe the change: remove the coffee mug, and it's done.
+- **Screen capture:** `SceneGallery` **Express All**; frames populate locked to references; open IAD edit on a frame; type an instruction; show the result.
+- **Primary UI:** `src/components/vision/SceneGallery.tsx`, `src/components/vision/SceneStoryboardFrameViewer.tsx`
 
-**On-screen title:** Express generate Beat Frames
+### Beat 6 — Review the animatic
+- **On-screen title:** Review the animatic
+- **Narration:**
+  > In under thirty minutes, play the full animatic — frames, dialogue, SFX, and music, synced — in the interactive Screening Room. Share a link for feedback without exporting a file.
+- **Screen capture:** `ScreeningRoomV2` playing the animatic; transport + language controls; **Feedback** / share link.
+- **Primary UI:** `src/components/vision/ScreeningRoomV2.tsx`, `src/components/vision/AudioGalleryPlayer.tsx`
 
-**Narration script (~74 words):**
+### Beat 7 — Generate video
+- **On-screen title:** Generate video
+- **Narration:**
+  > Turn approved frames into motion with Express Scene or beat by beat. Don't love a shot? Retake it with the Intelligent Assistant Director — no endless slot-machine loops.
+- **Screen capture:** **Shoot** tab in `DirectorConsoleImpl`; generate beats with method badges; open the intelligent retake dialog; regenerate one beat.
+- **Primary UI:** `src/components/vision/scene-production/DirectorConsoleImpl.tsx`, `src/components/vision/scene-production/IntelligentRetakeDialog.tsx`
 
-> Approve the look before SceneFlow spends credits on motion. Express Beat Frames generates start and end composition stills for every beat — locked to your Reference Library. Open Pre-Vis Studio, run Express All, and watch the pipeline move through Direction, Audio, Image Plan, and Beat Frames. Review each frame, finalize the set, and sign off on the visual story. No surprises when video generation starts.
+### Beat 8 — Edit in the Mixer
+- **On-screen title:** Edit in the Mixer
+- **Narration:**
+  > Finish inside the studio. In the Mixer, add captions, trim beats, balance audio, and dub — brand-safe polish without another tool.
+- **Screen capture:** `SceneProductionMixer`; add a caption/overlay; trim a beat; show dubbing/language stems.
+- **Primary UI:** `src/components/vision/scene-production/SceneProductionMixer.tsx`
 
-**Screen capture instructions:**
+### Beat 9 — Render and review scenes
+- **On-screen title:** Render and review scenes
+- **Narration:**
+  > Render your scenes, then review and share them again through the Screening Room — approval locked before final assembly.
+- **Screen capture:** Render a scene stream; play the rendered scene in the Screening Room; share.
+- **Primary UI:** `src/components/vision/scene-production/ProductionStreamsPanel.tsx`, `src/components/vision/ScreeningRoomV2.tsx`
 
-1. Open **Pre-Vis Studio** panel (`SceneGallery`).
-2. Click **Express All** → **ExpressConfirmDialog** with toggles: music, SFX, **includeEndFrames**, quality preset, credit estimate.
-3. Confirm; show **ExpressBeatFrameProgressOverlay** phases: Direction → Audio → Image plan → Beat frames.
-4. Open a scene **Pre-Vis** tab → `SceneStoryboardFrameViewer` with start/end frame slots.
-5. Show generated frames locked to character references.
-6. Click **Finalize frames (N)** button.
-7. End on gallery grid of approved beat frames.
+### Beat 10 — Generate multilanguage streams
+- **On-screen title:** Generate multilanguage streams
+- **Narration:**
+  > One master, seventy-plus markets. Generate dubbed or lip-synced language streams from the same approved cut — without re-shooting a single frame.
+- **Screen capture:** `GroupedLanguageSelector` add a language; localized audio generates; two language streams play the same scene.
+- **Primary UI:** `src/components/vision/GroupedLanguageSelector.tsx`, `src/components/vision/scene-production/ProductionStreamsPanel.tsx`
 
-**Primary UI files:** `src/components/vision/SceneGallery.tsx`, `src/components/vision/ExpressConfirmDialog.tsx`, `src/components/vision/SceneStoryboardFrameViewer.tsx`, `src/components/vision/ExpressBeatFrameProgressOverlay.tsx`
+### Beat 11 — Render final and publish
+- **On-screen title:** Render final and publish
+- **Narration:**
+  > This is the finish line. Render the final master, then publish — with auto-generated thumbnails, titles, and descriptions ready for your YouTube channel. From concept to published, every step lived in SceneFlow.
+- **Screen capture:** `FinalCutStreamsPanel` master render; **Publish** → `PublishingWizard` (YouTube, title, description, thumbnail); completed master preview.
+- **Primary UI:** `src/components/production/ProductionRenderPanel.tsx`, `src/components/production/ProductionPublishPanel.tsx`, `src/components/premiere/PublishingWizard.tsx`
 
----
+**Closing payoff (~2:05–2:15)**
 
-### Step 7: `screening-room` — Review animatic in Screening Room
-
-**On-screen title:** Review animatic in Screening Room
-
-**Narration script (~75 words):**
-
-> Your animatic is ready in under thirty minutes. Open Screening Room to play the full interactive preview — beat frames, dialogue, music, and SFX synced in real time. Share a Screening Room link for stakeholder feedback without exporting a file. When the story lands, move to Assemble for master export, or jump ahead to final motion. Review early, approve confidently, and keep everyone aligned before the shoot.
-
-**Screen capture instructions:**
-
-1. Toggle **Screening Room** in Vision header (embedded mode) OR navigate to `/dashboard/workflow/screening-room?projectId={id}`.
-2. Show `ScreeningRoomV2` player playing the animatic.
-3. Show transport controls, scene/beat navigation.
-4. Tab to **Feedback** — show comment thread or share link.
-5. Tab to **Assemble** — brief glimpse of `FinalCutStreamsPanel`.
-6. End on full-screen animatic playback with audio audible.
-
-**Primary UI files:** `src/app/dashboard/workflow/screening-room/page.tsx`, `src/components/screening-room/ProductionScreeningRoomShell.tsx`, `src/components/vision/ScreeningRoomV2.tsx`
-
----
-
-### Step 8: `script-assistant` — Edit script scenes through intelligent assistant
-
-**On-screen title:** Edit script scenes through intelligent assistant
-
-**Narration script (~74 words):**
-
-> Story changes don't mean starting over. Open the intelligent script assistant on any scene to describe what you want — tighter dialogue, a new beat, a shifted tone. SceneFlow generates a preview with before-and-after comparison so you approve exactly what changes. Dialogue, beats, music, and direction can propagate through the pipeline without rebuilding from scratch. Iterate fast, stay in control, and keep your production moving.
-
-**Screen capture instructions:**
-
-1. On a scene card, open overflow menu → **Edit Scene** (or click **Edit & Apply** from an Audience recommendation).
-2. Open **SceneEditorModalV2** with instruction panel.
-3. Type a revision prompt (e.g. “Tighten the opening dialogue”).
-4. Click **Generate Preview** — show before/after comparison.
-5. Toggle preservation options (dialogue, beats, music, direction).
-6. Click **Apply** — show scene card updating.
-7. Briefly show **SceneWorkflowCoPilotPanel** with AI Co-Pilot suggestions.
-
-**Primary UI files:** `src/components/vision/SceneEditorModalV2.tsx`, `src/components/vision/SceneWorkflowCoPilotPanel.tsx`, `src/components/vision/OptimizeSceneDialog.tsx`
-
----
-
-### Step 9: `shoot` — Generate full motion video scenes (Shoot)
-
-**On-screen title:** Generate full motion video scenes (Shoot)
-
-**Narration script (~73 words):**
-
-> This is where still frames become motion. Open the Shoot tab on any scene to generate express video — four to fifteen seconds per beat, frame-anchored to your approved compositions. Each beat shows its method — image-to-video, interpolation, or text-to-video — with generation status badges. Play beats inline, review Footage, and approve before moving to the Mixer. Characters stay consistent shot to shot because every render pulls from the same references.
-
-**Screen capture instructions:**
-
-1. Expand scene card → click **Shoot** tab (clapperboard icon).
-2. Show inner tabs: **Review**, **Video**, **Mixer**, **Streams**.
-3. Scroll **Footage** section in `DirectorConsoleImpl` — beat cards with method badges (**I2V**, **INTERP**, **Rolling**, **In the Can**).
-4. Click generate on one beat; show progress spinner.
-5. Click **Play Beats** on a completed segment.
-6. Open `VideoEditingDialogV2` briefly to show per-beat prompt and reference anchors.
-7. End on a row of completed motion beats.
-
-**Primary UI files:** `src/components/vision/ScriptPanel.tsx`, `src/components/vision/scene-production/DirectorConsoleImpl.tsx`, `src/components/vision/scene-production/VideoEditingDialogV2.tsx`
-
----
-
-### Step 10: `mixer` — Fine-tune scenes in the Mixer
-
-**On-screen title:** Fine-tune scenes in the Mixer
-
-**Narration script (~74 words):**
-
-> The Mixer is your finishing suite — inside the studio. Polish every scene after generation: balance audio stems, add text overlays and watermarks, trim beat timing, and choose output resolution up to 4K. Toggle beats in or out, preview the mix in real time, then Render Stream to lock your approved cut. Brand-safe finishing without exporting to another tool. Your scene is publish-ready before it leaves this panel.
-
-**Screen capture instructions:**
-
-1. In Shoot tab, expand **Mixer** collapsible section (`SceneProductionMixer`).
-2. Show **Language Streams** chips and **Text Overlay** controls.
-3. Add a sample text overlay; show preview on canvas.
-4. Configure **Watermark** (text or image, anchor position).
-5. Toggle beat **Include/exclude from mixer** on one beat.
-6. Select output resolution: **1080p** then **4K (UHD)**.
-7. Click **Render Stream** — show render options (Fast WebM / Cloud MP4).
-
-**Primary UI files:** `src/components/vision/scene-production/SceneProductionMixer.tsx`, `src/components/vision/scene-production/DirectorConsoleImpl.tsx`
-
----
-
-### Step 11: `multilanguage` — Generate multilanguage streams
-
-**On-screen title:** Generate multilanguage streams
-
-**Narration script (~72 words):**
-
-> One master. Seventy-plus markets. Generate dubbed and lip-synced language streams from the same approved cut — without re-shooting a single frame. Add a language from the Mixer or Pre-Vis Studio, and SceneFlow produces localized dialogue and narration timed to your beats. Export scripts for translation, import finished copy, and manage separate animatic and video streams per locale. Global reach from one pipeline.
-
-**Screen capture instructions:**
-
-1. In **Pre-Vis Studio** / **SceneGallery**, open `GroupedLanguageSelector`.
-2. Click **Generate language…** for a missing locale (e.g. Español).
-3. Show generation progress for localized audio.
-4. In **Mixer → Language Streams**, click **+ Add Language** and show flag chips.
-5. Show separate stream entries in `ProductionStreamsPanel` (Animatic / Video per language).
-6. Briefly show **Export Script for Translation** / **Import Translation** in scene overflow menu.
-7. End on two language streams playing the same scene.
-
-**Primary UI files:** `src/components/vision/GroupedLanguageSelector.tsx`, `src/components/vision/scene-production/SceneProductionMixer.tsx`, `src/components/vision/scene-production/ProductionStreamsPanel.tsx`
-
----
-
-### Step 12: `publish` — Render final (4K) and Publish
-
-**On-screen title:** Render final (4K) and Publish
-
-**Narration script (~75 words):**
-
-> This is the finish line. Open Production Render to stitch your scene streams into a master — up to 4K where your tier allows. Preview the assembled cut, then Publish to YouTube with title, description, and thumbnail — or download a distribution bundle for your other channels. From first concept to published master, every step lived inside SceneFlow. Your story is ready for the world.
-
-**Screen capture instructions:**
-
-1. In Vision header, click **Production Render** → open **Production Workspace** sheet.
-2. Show **Production Render** tab (`FinalCutStreamsPanel`) — per-scene stream/version picks, language selector.
-3. Start a master render; show progress.
-4. Click **Publish** → **ProductionPublishPanel** or navigate to Screening Room **Publish** tab.
-5. Open **PublishingWizard**: YouTube OAuth, title, description, privacy, thumbnail.
-6. Show **Bundle** download option.
-7. End on a completed 4K master playing in preview with Publish confirmation visible.
-
-**Primary UI files:** `src/components/production/ProductionWorkspaceSheet.tsx`, `src/components/production/ProductionRenderPanel.tsx`, `src/components/production/ProductionPublishPanel.tsx`, `src/components/premiere/PublishingWizard.tsx`
+> Concept to published master — one streamlined pipeline. That's SceneFlow.
 
 ---
 
 ## Production checklist
 
-| Step ID | Video file | Poster | Script words | Captured |
-|---------|------------|--------|--------------|----------|
-| `start` | ☐ | ☐ | ~75 | ☐ |
-| `blueprint` | ☐ | ☐ | ~76 | ☐ |
-| `draft-script` | ☐ | ☐ | ~74 | ☐ |
-| `audience-resonance` | ☐ | ☐ | ~75 | ☐ |
-| `set-production-budget` | ☐ | ☐ | ~76 | ☐ |
-| `reference-library` | ☐ | ☐ | ~74 | ☐ |
-| `express-audio` | ☐ | ☐ | ~73 | ☐ |
-| `beat-frames` | ☐ | ☐ | ~74 | ☐ |
-| `screening-room` | ☐ | ☐ | ~75 | ☐ |
-| `script-assistant` | ☐ | ☐ | ~74 | ☐ |
-| `shoot` | ☐ | ☐ | ~73 | ☐ |
-| `mixer` | ☐ | ☐ | ~74 | ☐ |
-| `multilanguage` | ☐ | ☐ | ~72 | ☐ |
-| `publish` | ☐ | ☐ | ~75 | ☐ |
+| Pillar | Video file | Poster | Beats | Target | Captured |
+|--------|------------|--------|-------|--------|----------|
+| Series | `Series.mp4` | `/landing/pipeline/series.png` | 6 | ~50s | ☐ |
+| Blueprint | `BLUEPRINT.mp4` | `/landing/pipeline/blueprint.png` | 4 | ~40s | ☐ |
+| Production | `walkthrough/Production.mp4` | `/landing/pipeline/production.png` | 11 | ~2:15 | ☐ |
 
-After each video is exported, uncomment the matching `videoUrl` and `posterUrl` lines in `src/config/landing/guidedStepsMedia.ts` (or set them explicitly).
+Per-step screenshot placeholders (How It Works timeline) can be filled by adding `{stepId}.jpg` / `{stepId}.mp4` under `public/landing/how-it-works/` and wiring them in [`src/config/landing/guidedStepsMedia.ts`](../src/config/landing/guidedStepsMedia.ts). Step ids: `series-concept`, `series-baseline`, `series-episodes`, `series-reference-library`, `series-assistant-writer`, `series-start-production`, `blueprint-baseline`, `blueprint-assistant-writer`, `blueprint-reasoning`, `blueprint-start-production`, `production-script-ara`, `production-assistant-writer`, `production-reference-library`, `production-audio`, `production-frames`, `production-animatic`, `production-video`, `production-mixer`, `production-render-scenes`, `production-multilanguage`, `production-publish`.

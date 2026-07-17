@@ -83,8 +83,6 @@
       "closeFullscreen": "Close",
       "landscapeHint": "Rotate your device for a wider landscape view",
       "howItWorksLabel": "How it works in this phase",
-      "showHowItWorks": "Show how it works",
-      "hideHowItWorks": "Hide how it works",
       "imagePlaceholder": "Screenshot placeholder",
       "videoWalkthrough": "30-second walkthrough",
       "comingSoon": "Product screenshot coming soon"
@@ -96,13 +94,51 @@
         "number": "01",
         "title": "Series Generation",
         "header": "Build a Universe, Not a Clip",
-        "body": "Start with a core concept, story arc, or production treatment. SceneFlow spins up an episodic structure with a Shared Reference Library, locking in character continuity, environmental assets, and overarching storylines across your entire season.",
-        "guidedStep": {
-          "mediaId": "start",
-          "headline": "Spin up a season or a single project",
-          "narrative": "Drop in a concept, script outline, or full documentation — or define a multi-episode series arc. SceneFlow structures your intake into a production-ready foundation without juggling separate tools.",
-          "imagePlaceholder": "New project intake — concept, script import, or series arc"
-        }
+        "body": "Describe your series or YouTube channel once, and SceneFlow builds the whole world — storyline, cast, and an unlimited episode slate — with a Shared Reference Library that keeps every episode on-brand.",
+        "steps": [
+          {
+            "id": "series-concept",
+            "number": "1",
+            "title": "Start with your concept",
+            "description": "Drop in a concept or a detailed description of your series or YouTube channel. SceneFlow turns it into a structured, production-ready foundation — no prompt engineering required.",
+            "imagePlaceholder": "New series intake — concept or channel description"
+          },
+          {
+            "id": "series-baseline",
+            "number": "2",
+            "title": "Review the SceneFlow baseline",
+            "description": "SceneFlow returns a professional baseline scored by Audience Resonance Analysis. Read or listen to the narrated overview, then steer it with your own direction.",
+            "imagePlaceholder": "Series baseline — Audience Resonance score and narrated overview"
+          },
+          {
+            "id": "series-episodes",
+            "number": "3",
+            "title": "Create unlimited episodes",
+            "description": "Spin up as many episodes as your story needs. Each one inherits your series DNA, so the cast, tone, and world stay consistent from episode one to the season finale.",
+            "imagePlaceholder": "Episode slate — unlimited episodes generated from the series arc"
+          },
+          {
+            "id": "series-reference-library",
+            "number": "4",
+            "title": "Review the Reference Library",
+            "description": "Browse the shared Reference Library — characters, voices, wardrobe, locations, and props — created and maintained through Production and reused across every episode.",
+            "imagePlaceholder": "Shared Reference Library — characters, voices, locations, props"
+          },
+          {
+            "id": "series-assistant-writer",
+            "number": "5",
+            "title": "Direct the Intelligent Assistant Writer",
+            "description": "Reshape the series or any episode by speaking or typing your direction. The Intelligent Assistant Writer rewrites professional copy instantly — no blank page, no prompt engineering.",
+            "imagePlaceholder": "Intelligent Assistant Writer — voice or text direction on series and episodes"
+          },
+          {
+            "id": "series-start-production",
+            "number": "6",
+            "title": "Start production in one click",
+            "description": "When an episode feels right, start its production with a single click and flow straight into the guided Production pipeline.",
+            "imagePlaceholder": "One-click start production on a selected episode"
+          }
+        ]
       },
       {
         "id": "blueprint",
@@ -110,25 +146,124 @@
         "number": "02",
         "title": "Creative Blueprint",
         "header": "Your Creative DNA, Locked In",
-        "body": "Generate a deep film treatment for script and character review. Includes built-in Audience Resonance Analysis to flag pacing drops, optimize your dialogue hooks, and recommend narrative improvements before you ever click render.",
-        "guidedStep": {
-          "mediaId": "blueprint",
-          "headline": "Lock your creative DNA before a single frame renders",
-          "narrative": "Generate a deep film treatment that sets style, tone, and asset reference continuity. Review characters and story beats with collaborators before the pipeline moves into generation.",
-          "imagePlaceholder": "Blueprint treatment — style, tone, and reference continuity"
-        }
+        "body": "Blueprint is your deep film treatment — synopsis, beats, characters, tone, and style — pre-scored by Audience Resonance Analysis so you approve a story that lands before a single frame renders.",
+        "steps": [
+          {
+            "id": "blueprint-baseline",
+            "number": "1",
+            "title": "Review the baseline Blueprint",
+            "description": "Open a professional baseline Blueprint with Audience Resonance Analysis built in. Read or listen to the narrated overview to hear exactly why it works.",
+            "imagePlaceholder": "Baseline Blueprint — treatment with Audience Resonance score"
+          },
+          {
+            "id": "blueprint-assistant-writer",
+            "number": "2",
+            "title": "Direct the Intelligent Assistant Writer",
+            "description": "Refine the synopsis, beats, characters, and more by speaking or typing your direction. The Intelligent Assistant Writer revises the treatment instantly — no prompt engineering.",
+            "imagePlaceholder": "Intelligent Assistant Writer — editing synopsis, beats, and characters"
+          },
+          {
+            "id": "blueprint-reasoning",
+            "number": "3",
+            "title": "Review the Reasoning",
+            "description": "Open the Reasoning section for a creative explanation of the current Blueprint — the story logic behind every beat and character choice.",
+            "imagePlaceholder": "Reasoning panel — creative explanation of the Blueprint"
+          },
+          {
+            "id": "blueprint-start-production",
+            "number": "4",
+            "title": "Start production when ready",
+            "description": "Once the story sings, start production — and the entire pipeline inherits your approved creative DNA with no drift.",
+            "imagePlaceholder": "Start Production — readiness gate from an approved Blueprint"
+          }
+        ]
       },
       {
         "id": "production",
         "tabLabel": "Production",
         "number": "03",
         "title": "Guided Production",
-        "header": "Multi-Engine Automation",
-        "body": "Run lightning-fast concurrent generations. From automated script translation to Express Audio, Express Scene Beat Frames, and high-fidelity 4s to 15s Express Video beats—all flowing directly into the interactive Screening Room player in under 30 minutes.",
-        "guidedStep": {
-          "headline": "Concurrent generation, from script to master",
-          "narrative": "Production runs script translation, Express Audio, Express Scene Beat Frames, and 4–15s Express Video beats concurrently — all flowing into the interactive Screening Room player in under 30 minutes, then out to a 4K master and multilanguage distribution."
-        }
+        "header": "From Script to Published Master",
+        "body": "Production runs concurrent, multi-engine generation — script, audio, frames, and video — with the Intelligent Assistant Director, the Screening Room, and multilanguage streams carrying you from approved script to a published 4K master.",
+        "steps": [
+          {
+            "id": "production-script-ara",
+            "number": "1",
+            "title": "Review the baseline script",
+            "description": "Start from a professional baseline script with Audience Resonance Analysis. Read or listen to the narrated analysis to know what lands before you spend a credit.",
+            "imagePlaceholder": "Baseline script — Audience Resonance analysis and narrated overview"
+          },
+          {
+            "id": "production-assistant-writer",
+            "number": "2",
+            "title": "Optimize scene by scene",
+            "description": "Use the Intelligent Assistant Writer to optimize the script scene by scene — tighten dialogue, reshape beats, and apply one-click improvements by voice or text.",
+            "imagePlaceholder": "Intelligent Assistant Writer — scene-by-scene script optimization"
+          },
+          {
+            "id": "production-reference-library",
+            "number": "3",
+            "title": "Build the Reference Library",
+            "description": "Create or update the Reference Library with scripted, custom, or uploaded characters, voices, wardrobes, locations, and props. Edit reference images directly — no \"slot machine\" regenerations.",
+            "imagePlaceholder": "Reference Library — characters, voices, wardrobe, locations, props"
+          },
+          {
+            "id": "production-audio",
+            "number": "4",
+            "title": "Generate audio",
+            "description": "Generate dialogue, narration, SFX, and music with Express Production across all scenes, Express Scene, or beat by beat — native-quality voiceover in 70+ languages.",
+            "imagePlaceholder": "Express audio — all scenes, single scene, or beat by beat"
+          },
+          {
+            "id": "production-frames",
+            "number": "5",
+            "title": "Generate and edit frames",
+            "description": "Generate beat frames with Express Production, Express Scene, or beat by beat, then edit any frame with the Intelligent Assistant Director (IAD) — just describe the change.",
+            "imagePlaceholder": "Beat frames with Intelligent Assistant Director edits"
+          },
+          {
+            "id": "production-animatic",
+            "number": "6",
+            "title": "Review the animatic",
+            "description": "Play the full animatic — frames, dialogue, SFX, and music — in the interactive Screening Room, and share a link for feedback without exporting a file.",
+            "imagePlaceholder": "Screening Room — interactive animatic review and sharing"
+          },
+          {
+            "id": "production-video",
+            "number": "7",
+            "title": "Generate video",
+            "description": "Turn approved frames into motion with Express Scene or beat by beat. Retake any shot with the Intelligent Assistant Director — no endless slot-machine regenerations.",
+            "imagePlaceholder": "Express video generation with IAD retakes"
+          },
+          {
+            "id": "production-mixer",
+            "number": "8",
+            "title": "Edit in the Mixer",
+            "description": "Polish every scene in the Mixer — captions, trims, dubbing, overlays, and audio balance — brand-safe finishing without leaving the studio.",
+            "imagePlaceholder": "Mixer — captions, trim, dubbing, and audio controls"
+          },
+          {
+            "id": "production-render-scenes",
+            "number": "9",
+            "title": "Render and review scenes",
+            "description": "Render your scenes, then review and share them through the Screening Room to lock approval before final assembly.",
+            "imagePlaceholder": "Rendered scenes reviewed and shared in the Screening Room"
+          },
+          {
+            "id": "production-multilanguage",
+            "number": "10",
+            "title": "Generate multilanguage streams",
+            "description": "Spin up dubbed or lip-synced language streams from the same approved cut — reach 70+ markets without re-shooting a single frame.",
+            "imagePlaceholder": "Multilanguage streams — dubbed and lip-sync per locale"
+          },
+          {
+            "id": "production-publish",
+            "number": "11",
+            "title": "Render final and publish",
+            "description": "Render the final production into a master and publish — auto-generated thumbnails, titles, and descriptions ready for your YouTube channel and beyond.",
+            "imagePlaceholder": "Final render and one-click publish to YouTube"
+          }
+        ]
       }
     ]
   },
