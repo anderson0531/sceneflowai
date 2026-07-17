@@ -10,6 +10,7 @@ const PipelinePillarsSection = dynamic(
   { ssr: false }
 )
 const UseCasesSection = dynamic(() => import('@/components/landing/UseCasesSection'), { ssr: false })
+const KeyFeaturesSection = dynamic(() => import('@/components/landing/KeyFeaturesSection'), { ssr: false })
 const PricingCredits = dynamic(() => import('@/components/landing/PricingCredits'), { ssr: false })
 const FloatingNav = dynamic(() => import('@/components/landing/FloatingNav'), { ssr: false })
 const FloatingCTA = dynamic(() => import('@/components/landing/FloatingCTA'), { ssr: false })
@@ -31,6 +32,7 @@ export default function LandingPageClient() {
 
         <UseCasesSection />
         <PipelinePillarsSection />
+        <KeyFeaturesSection />
         <PricingCredits />
       </LandingSectionCollapseProvider>
 

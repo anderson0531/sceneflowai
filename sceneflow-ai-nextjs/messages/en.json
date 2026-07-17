@@ -27,6 +27,7 @@
     "pipeline": "Pipeline",
     "howItWorks": "How It Works",
     "useCases": "Use Cases",
+    "keyFeatures": "Features",
     "pricing": "Pricing"
   },
   "hero": {
@@ -324,6 +325,91 @@
         ],
         "screeningRoomHook": "Faculty preview the animatic before production spend, review lesson scenes, and share streams in 70+ languages for multi-campus feedback.",
         "screeningRoomPreview": "Renaissance Workshop: Seeing the Past in Motion"
+      }
+    ]
+  },
+  "keyFeatures": {
+    "badge": "Key Features",
+    "title": "The Features That Set SceneFlow Apart",
+    "subtitle": "Beyond the pipeline — intelligent assistants, express production, and global distribution tools that turn SceneFlow into a complete studio, not another AI tab.",
+    "categories": [
+      {
+        "id": "create",
+        "label": "Create",
+        "features": [
+          {
+            "icon": "writer",
+            "title": "Intelligent Assistant Writer",
+            "description": "Never start from a blank page. SceneFlow builds professional Series, Blueprint, and Script copy from a concept or detailed outline. Direct the baseline with plain speech or typed direction — no complex prompt engineering."
+          },
+          {
+            "icon": "ara",
+            "title": "Audience Resonance Analysis (ARA)",
+            "description": "Define your target audience and get expert analysis with a score, detailed recommendations, and one-click revisions — across Series, Blueprint, and Script before you spend on production."
+          },
+          {
+            "icon": "referenceLibrary",
+            "title": "Reference Library",
+            "description": "Create consistent character, wardrobe, voice, location, and prop references across Series. Use scripted characters or build custom ones with auto voice generation based on character image and role."
+          },
+          {
+            "icon": "workflowAssistant",
+            "title": "Intelligent Workflow Assistant",
+            "description": "SceneFlow is intuitively designed and guides you through script, Reference Library, audio, and visual production — with step-by-step checklists and the Cue AI assistant at every milestone."
+          }
+        ]
+      },
+      {
+        "id": "direct",
+        "label": "Direct",
+        "features": [
+          {
+            "icon": "express",
+            "title": "Express Production",
+            "description": "Generate frames and videos in minutes, not hours, with SceneFlow's concurrent processing engine — Express orchestrates audio, image, and video generation in parallel across your scenes."
+          },
+          {
+            "icon": "iad",
+            "title": "Intelligent Assistant Director (IAD)",
+            "description": "No endless slot-machine generations. Direct frame or video revisions by speech or typed direction — remove the coffee mug from the table and IAD handles the rest, using your Reference Library for consistency."
+          },
+          {
+            "icon": "multilanguage",
+            "title": "Multilanguage Streams",
+            "description": "70+ languages. Express-generate audio in minutes, auto-aligned to animatic beat frames and video. Generate dubbed or lip-sync language streams so every market hears your story natively."
+          },
+          {
+            "icon": "versionControl",
+            "title": "Version Control",
+            "description": "Generate and manage multiple versions of each production stream. Compare takes, pin favorites, and iterate without losing prior work — every scene keeps its full version history."
+          }
+        ]
+      },
+      {
+        "id": "ship",
+        "label": "Ship",
+        "features": [
+          {
+            "icon": "screeningRoom",
+            "title": "Screening Room",
+            "description": "Review and share Animatic (scene frames with dialogue, SFX, and music), Video (scene video with full audio mix), and Streams (each language produced). Viewers get playback controls; reviewers can leave feedback."
+          },
+          {
+            "icon": "autoPublish",
+            "title": "Auto Publish",
+            "description": "Auto-create thumbnails, titles, descriptions, and multilanguage audio tracks for one-click YouTube publishing. Reach billions of viewers with distribution-ready output from your studio."
+          },
+          {
+            "icon": "byok",
+            "title": "Bring Your Own Key (BYOK)",
+            "description": "Provide your personal or corporate API key for image and video processing. Reduce platform costs with Bring Your Own Key for supported providers while keeping full studio control."
+          },
+          {
+            "icon": "budget",
+            "title": "Production Budget Management",
+            "description": "Calculate and track each production's credit budget. Get guidance on reducing costs — draft frames, fewer video generations — and purchase add-on credits when you need more runway."
+          }
+        ]
       }
     ]
   },
