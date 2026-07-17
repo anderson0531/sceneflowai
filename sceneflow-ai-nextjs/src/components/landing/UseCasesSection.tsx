@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useMemo } from 'react'
+import { motion } from 'framer-motion'
 import { useTranslations } from 'next-intl'
 import {
   User,
@@ -13,8 +13,8 @@ import {
   AlertCircle,
   Sparkles,
   TrendingUp,
-  ChevronDown,
 } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScreeningRoomPreview } from './ScreeningRoomPreview'
 import { MultiLanguageVideoPlayer } from './MultiLanguageVideoPlayer'
 import { getLandingYoutubeCreatorScreeningSlug } from '@/config/landingSamples'
@@ -62,7 +62,7 @@ type PersonaData = {
 export default function UseCasesSection() {
   const t = useTranslations('useCasesShowcase')
   const [activePersona, setActivePersona] = useState<PersonaId>('youtubeCreator')
-  const [storyOpen, setStoryOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<'story' | 'screening'>('story')
 
   const personas = useMemo(
     () => t.raw('personas') as PersonaData[],
@@ -70,10 +70,6 @@ export default function UseCasesSection() {
   )
 
   const active = personas.find((p) => p.id === activePersona) ?? personas[0]
-
-  useEffect(() => {
-    setStoryOpen(false)
-  }, [activePersona])
 
   return (
     <section
@@ -140,114 +136,104 @@ export default function UseCasesSection() {
             <h3 className="text-2xl md:text-3xl font-bold text-white">{active?.headline}</h3>
             <p className="text-gray-400 text-lg leading-relaxed w-full">{active?.intro}</p>
 
-            {active?.story && (
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setStoryOpen((open) => !open)}
-                  aria-expanded={storyOpen}
-                  className="inline-flex min-h-11 items-center gap-2 py-2 text-sm font-semibold uppercase tracking-wider text-indigo-300 transition-colors hover:text-indigo-200"
+            <Tabs
+              value={activeTab}
+              onValueChange={(v) => setActiveTab(v as 'story' | 'screening')}
+              className="w-full pt-2"
+            >
+              <TabsList className="flex h-auto gap-1 p-1 w-full max-w-xl mx-auto mb-8 bg-slate-900/60 border-slate-700">
+                <TabsTrigger
+                  value="story"
+                  className="flex-1 min-w-0 px-2 sm:px-4 text-xs sm:text-sm py-2.5 truncate data-[state=active]:bg-indigo-600 data-[state=active]:text-white"
                 >
-                  <ChevronDown
-                    className={cn(
-                      'h-4 w-4 transition-transform duration-300',
-                      storyOpen && 'rotate-180'
-                    )}
-                  />
-                  {storyOpen ? t('hideStory') : t('showStory')}
-                </button>
+                  {t('tabStory')}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="screening"
+                  className="flex-1 min-w-0 px-2 sm:px-4 text-xs sm:text-sm py-2.5 truncate data-[state=active]:bg-indigo-600 data-[state=active]:text-white"
+                >
+                  {t('tabScreening')}
+                </TabsTrigger>
+              </TabsList>
 
-                <AnimatePresence initial={false}>
-                  {storyOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.35, ease: [0.04, 0.62, 0.23, 0.98] }}
-                      className="overflow-hidden"
-                    >
-                      <div className="pt-4">
-                        <MultiLanguageVideoPlayer
-                          locales={getPersonaStoryVideoLocales(active.id)}
-                          defaultLocaleId={getDefaultPersonaStoryLocale(active.id)}
-                          languagePromptLabel={t('videoLanguagePrompt')}
-                          comingSoonLabel={t('videoComingSoon')}
-                          soonLabel={t('videoSoon')}
-                          title={active.headline}
-                          accentGradient={PERSONA_GRADIENTS[active.id]}
-                        />
+              <TabsContent value="story" className="mt-0 focus-visible:outline-none">
+                {active?.story && (
+                  <div className="space-y-6">
+                    <MultiLanguageVideoPlayer
+                      locales={getPersonaStoryVideoLocales(active.id)}
+                      defaultLocaleId={getDefaultPersonaStoryLocale(active.id)}
+                      languagePromptLabel={t('videoLanguagePrompt')}
+                      comingSoonLabel={t('videoComingSoon')}
+                      soonLabel={t('videoSoon')}
+                      title={active.headline}
+                      accentGradient={PERSONA_GRADIENTS[active.id]}
+                    />
+
+                    <div className="grid gap-4 md:grid-cols-3 w-full">
+                      <div className="rounded-2xl border border-rose-500/20 bg-rose-500/[0.06] p-5">
+                        <div className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-rose-300">
+                          <AlertCircle className="h-4 w-4" />
+                          {t('problemLabel')}
+                        </div>
+                        <p className="text-sm md:text-base text-gray-300 leading-relaxed">
+                          {active.story.problem}
+                        </p>
                       </div>
 
-                      <div className="grid gap-4 md:grid-cols-3 w-full pt-6">
-                        <div className="rounded-2xl border border-rose-500/20 bg-rose-500/[0.06] p-5">
-                          <div className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-rose-300">
-                            <AlertCircle className="h-4 w-4" />
-                            {t('problemLabel')}
-                          </div>
-                          <p className="text-sm md:text-base text-gray-300 leading-relaxed">
-                            {active.story.problem}
-                          </p>
+                      <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/[0.06] p-5">
+                        <div className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-300">
+                          <Sparkles className="h-4 w-4" />
+                          {t('solutionLabel')}
                         </div>
-
-                        <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/[0.06] p-5">
-                          <div className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-300">
-                            <Sparkles className="h-4 w-4" />
-                            {t('solutionLabel')}
-                          </div>
-                          <p className="text-sm md:text-base text-gray-300 leading-relaxed">
-                            {active.story.solution}
-                          </p>
-                        </div>
-
-                        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-5">
-                          <div className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-300">
-                            <TrendingUp className="h-4 w-4" />
-                            {t('outcomeLabel')}
-                          </div>
-                          <p className="text-sm md:text-base text-gray-300 leading-relaxed">
-                            {active.story.outcome}
-                          </p>
-                          {active.story.metric && (
-                            <div className="mt-4 flex items-center gap-2 text-sm font-semibold">
-                              <span className="rounded-md bg-slate-800/80 px-2 py-1 text-gray-400 line-through decoration-rose-400/60">
-                                {active.story.metric.before}
-                              </span>
-                              <ArrowRight className="h-4 w-4 text-emerald-400" />
-                              <span className="rounded-md bg-emerald-500/15 px-2 py-1 text-emerald-300">
-                                {active.story.metric.after}
-                              </span>
-                            </div>
-                          )}
-                        </div>
+                        <p className="text-sm md:text-base text-gray-300 leading-relaxed">
+                          {active.story.solution}
+                        </p>
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            )}
 
-            {active?.screeningRoomHook && (
-              <p className="text-gray-500 text-base leading-relaxed w-full border-l-2 border-indigo-500/30 pl-4">
-                {active.screeningRoomHook}
-              </p>
-            )}
-          </motion.div>
+                      <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-5">
+                        <div className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-300">
+                          <TrendingUp className="h-4 w-4" />
+                          {t('outcomeLabel')}
+                        </div>
+                        <p className="text-sm md:text-base text-gray-300 leading-relaxed">
+                          {active.story.outcome}
+                        </p>
+                        {active.story.metric && (
+                          <div className="mt-4 flex items-center gap-2 text-sm font-semibold">
+                            <span className="rounded-md bg-slate-800/80 px-2 py-1 text-gray-400 line-through decoration-rose-400/60">
+                              {active.story.metric.before}
+                            </span>
+                            <ArrowRight className="h-4 w-4 text-emerald-400" />
+                            <span className="rounded-md bg-emerald-500/15 px-2 py-1 text-emerald-300">
+                              {active.story.metric.after}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
 
-          <motion.div
-            key={`preview-${activePersona}`}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: 0.05 }}
-            className="w-full"
-          >
-            <ScreeningRoomPreview
-              previewTitle={active?.screeningRoomPreview ?? ''}
-              embedSlug={
-                activePersona === 'youtubeCreator'
-                  ? getLandingYoutubeCreatorScreeningSlug()
-                  : null
-              }
-            />
+              <TabsContent
+                value="screening"
+                className="mt-0 focus-visible:outline-none space-y-4"
+              >
+                {active?.screeningRoomHook && (
+                  <p className="text-gray-500 text-base leading-relaxed w-full border-l-2 border-indigo-500/30 pl-4">
+                    {active.screeningRoomHook}
+                  </p>
+                )}
+                <ScreeningRoomPreview
+                  previewTitle={active?.screeningRoomPreview ?? ''}
+                  embedSlug={
+                    active?.id === 'youtubeCreator'
+                      ? getLandingYoutubeCreatorScreeningSlug()
+                      : null
+                  }
+                />
+              </TabsContent>
+            </Tabs>
           </motion.div>
         </div>
 
