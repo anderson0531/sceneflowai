@@ -31,7 +31,9 @@ export const GUIDED_STEPS_MEDIA: Record<string, GuidedStepsMediaEntry> = {
   },
 
   // Series pillar (How It Works timeline)
-  'series-concept': stepMedia('series-concept'),
+  'series-concept': {
+    imageUrl: `${HOW_IT_WORKS_BASE}/series-concept.png`,
+  },
   'series-baseline': stepMedia('series-baseline'),
   'series-episodes': stepMedia('series-episodes'),
   'series-reference-library': stepMedia('series-reference-library'),
