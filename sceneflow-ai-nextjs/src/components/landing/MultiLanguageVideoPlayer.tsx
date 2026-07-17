@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { Languages, Video as VideoIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { StudioVideoWatermark } from '@/components/landing/StudioVideoWatermark'
 import type {
   PersonaStoryLocale,
   PersonaStoryLocaleId,
@@ -93,21 +92,18 @@ export function MultiLanguageVideoPlayer({
 
       <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-black">
         {hasVideo ? (
-          <>
-            <video
-              key={activeLocaleId}
-              src={active!.src}
-              poster={active!.poster}
-              controls
-              playsInline
-              preload="metadata"
-              controlsList="nodownload"
-              onContextMenu={(e) => e.preventDefault()}
-              aria-label={title}
-              className="h-full w-full object-cover"
-            />
-            <StudioVideoWatermark />
-          </>
+          <video
+            key={activeLocaleId}
+            src={active!.src}
+            poster={active!.poster}
+            controls
+            playsInline
+            preload="metadata"
+            controlsList="nodownload"
+            onContextMenu={(e) => e.preventDefault()}
+            aria-label={title}
+            className="h-full w-full object-cover"
+          />
         ) : (
           <div
             className={cn(
