@@ -44,6 +44,7 @@ const PRODUCED_VIDEOS: Partial<
 > = {
   youtubeCreator: {
     en: { src: vid('Youtube Creator .mp4') },
+    es: { src: vid('Youtube Creator (Spanis).mp4') },
   },
 }
 
