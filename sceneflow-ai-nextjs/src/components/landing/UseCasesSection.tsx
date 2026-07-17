@@ -16,13 +16,17 @@ import {
   ChevronDown,
 } from 'lucide-react'
 import { ScreeningRoomPreview } from './ScreeningRoomPreview'
+import { MultiLanguageVideoPlayer } from './MultiLanguageVideoPlayer'
 import { getLandingYoutubeCreatorScreeningSlug } from '@/config/landingSamples'
+import {
+  getDefaultPersonaStoryLocale,
+  getPersonaStoryVideoLocales,
+  type PersonaId,
+} from '@/config/landing/personaStoryVideos'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { cn } from '@/lib/utils'
 
 const SECTION_ID = 'use-cases'
-
-type PersonaId = 'youtubeCreator' | 'startupProvider' | 'enterprise' | 'educator'
 
 const PERSONA_ICONS: Record<PersonaId, React.ElementType> = {
   youtubeCreator: Video,
@@ -162,7 +166,19 @@ export default function UseCasesSection() {
                       transition={{ duration: 0.35, ease: [0.04, 0.62, 0.23, 0.98] }}
                       className="overflow-hidden"
                     >
-                      <div className="grid gap-4 md:grid-cols-3 w-full pt-4">
+                      <div className="pt-4">
+                        <MultiLanguageVideoPlayer
+                          locales={getPersonaStoryVideoLocales(active.id)}
+                          defaultLocaleId={getDefaultPersonaStoryLocale(active.id)}
+                          languagePromptLabel={t('videoLanguagePrompt')}
+                          comingSoonLabel={t('videoComingSoon')}
+                          soonLabel={t('videoSoon')}
+                          title={active.headline}
+                          accentGradient={PERSONA_GRADIENTS[active.id]}
+                        />
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-3 w-full pt-6">
                         <div className="rounded-2xl border border-rose-500/20 bg-rose-500/[0.06] p-5">
                           <div className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-rose-300">
                             <AlertCircle className="h-4 w-4" />

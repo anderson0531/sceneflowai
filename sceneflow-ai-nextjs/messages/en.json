@@ -296,6 +296,9 @@
     "problemLabel": "The Problem",
     "solutionLabel": "The SceneFlow Solution",
     "outcomeLabel": "The Outcome",
+    "videoLanguagePrompt": "Watch this journey in your language",
+    "videoComingSoon": "Walkthrough video coming soon",
+    "videoSoon": "Soon",
     "personas": [
       {
         "id": "youtubeCreator",
