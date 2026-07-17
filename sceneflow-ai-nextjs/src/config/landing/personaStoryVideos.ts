@@ -43,7 +43,7 @@ const PRODUCED_VIDEOS: Partial<
   Record<PersonaId, Partial<Record<PersonaStoryLocaleId, { src: string; poster?: string }>>>
 > = {
   youtubeCreator: {
-    en: { src: vid('Youtube Creator .mp4') },
+    en: { src: vid('YouTube Creator (English).mp4') },
     es: { src: vid('Youtube Creator (Spanis).mp4') },
   },
 }
