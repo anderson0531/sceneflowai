@@ -20,8 +20,10 @@ export type PersonaStoryLocale = {
 
 const BLOB_HOST = 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com'
 
-function vid(path: string): string {
-  return `${BLOB_HOST}/${encodeURI(path)}#t=0.1`
+function vid(path: string, version?: string): string {
+  const url = `${BLOB_HOST}/${encodeURI(path)}`
+  const versioned = version ? `${url}?v=${encodeURIComponent(version)}` : url
+  return `${versioned}#t=0.1`
 }
 
 /** Static poster in /public/landing/persona-stories (served at same path). */
@@ -49,7 +51,7 @@ const PRODUCED_VIDEOS: Partial<
 > = {
   youtubeCreator: {
     en: {
-      src: vid('YouTube Creator (English).mp4'),
+      src: vid('YouTube Creator (English).mp4', '20260718'),
       poster: poster('youtube-creator-en-poster.jpg'),
     },
     es: {

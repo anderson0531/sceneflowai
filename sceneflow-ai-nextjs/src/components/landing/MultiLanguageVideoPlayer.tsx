@@ -93,7 +93,7 @@ export function MultiLanguageVideoPlayer({
       <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-black">
         {hasVideo ? (
           <video
-            key={activeLocaleId}
+            key={`${activeLocaleId}-${active!.src}`}
             src={active!.src}
             poster={active!.poster}
             controls
