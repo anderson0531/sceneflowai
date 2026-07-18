@@ -24,6 +24,11 @@ function vid(path: string): string {
   return `${BLOB_HOST}/${encodeURI(path)}#t=0.1`
 }
 
+/** Static poster in /public/landing/persona-stories (served at same path). */
+function poster(filename: string): string {
+  return `/landing/persona-stories/${filename}`
+}
+
 /** Display/selection order for the language pills (mirrors the hero locales). */
 export const PERSONA_STORY_LOCALE_ORDER: PersonaStoryLocaleId[] = [
   'en',
@@ -43,7 +48,10 @@ const PRODUCED_VIDEOS: Partial<
   Record<PersonaId, Partial<Record<PersonaStoryLocaleId, { src: string; poster?: string }>>>
 > = {
   youtubeCreator: {
-    en: { src: vid('Youtube Creator (English).mp4') },
+    en: {
+      src: vid('Youtube Creator (English).mp4'),
+      poster: poster('youtube-creator-en-poster.jpg'),
+    },
     es: { src: vid('Youtube Creator (Spanis).mp4') },
     pt: { src: vid('Youtube Creator (Portugese).mp4') },
     hi: { src: vid('Youtube Creator (Hindi).mp4') },
