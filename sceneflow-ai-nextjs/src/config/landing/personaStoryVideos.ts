@@ -60,7 +60,7 @@ const PRODUCED_VIDEOS: Partial<
     },
     pt: { src: vid('YouTube Creator (Portuguese).mp4', '20260718') },
     hi: { src: vid('YouTube Creator (Hindi).mp4', '20260718') },
-    zh: { src: vid('Youtube Creator (Chinese).mp4') },
+    zh: { src: vid('YouTube Creator (Chinese).mp4', '20260718') },
     ar: { src: vid('Youtube Creator (Arabic).mp4') },
     th: { src: vid('YouTube Creator (Thai) .mp4') },
   },
