@@ -58,7 +58,7 @@ const PRODUCED_VIDEOS: Partial<
       src: vid('Youtube Creator (Spanish).mp4'),
       poster: poster('youtube-creator-es-poster.jpg'),
     },
-    pt: { src: vid('Youtube Creator (Portugese).mp4') },
+    pt: { src: vid('YouTube Creator (Portuguese).mp4', '20260718') },
     hi: { src: vid('Youtube Creator (Hindi).mp4') },
     zh: { src: vid('Youtube Creator (Chinese).mp4') },
     ar: { src: vid('Youtube Creator (Arabic).mp4') },
