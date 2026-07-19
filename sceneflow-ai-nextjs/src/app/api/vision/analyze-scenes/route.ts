@@ -184,8 +184,13 @@ SCORE CALIBRATION:
 `
   }
 
+  const hasCulturalSpecificity = /Cultural specificity:/i.test(targetDemographic || '')
+  const culturalInstruction = hasCulturalSpecificity
+    ? ` This audience is culturally specific — for each scene, validate cultural authenticity (character names & identities, language, customs, faith, setting) and flag generic or stereotyped elements with concrete, culturally-grounded fixes.`
+    : ''
+
   const audienceBlock = targetDemographic?.trim()
-    ? `\n## TARGET AUDIENCE (CRITICAL)\n${targetDemographic.trim()}\n\nAnalyze each scene for how well it resonates with this audience. Tailor scores, notes, and recommendations accordingly.\n`
+    ? `\n## TARGET AUDIENCE (CRITICAL)\n${targetDemographic.trim()}\n\nAnalyze each scene for how well it resonates with this audience. Tailor scores, notes, and recommendations accordingly.${culturalInstruction}\n`
     : ''
 
   const prompt = `You are an expert screenplay analyst. Analyze each scene in this script and provide detailed, actionable feedback.
