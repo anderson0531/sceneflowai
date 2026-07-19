@@ -24,7 +24,7 @@ export function FinalCTA() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">{t('title')}</h2>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6">{t('title')}</h2>
           <p className="text-lg text-gray-300 max-w-2xl mx-auto mb-8">{t('subtitle')}</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href={getLoginUrl({ mode: 'signup' })} className="w-full sm:w-auto">
