@@ -111,14 +111,14 @@ export default function UseCasesSection() {
                   type="button"
                   onClick={() => setActivePersona(persona.id)}
                   className={cn(
-                    'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300',
+                    'flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-300 max-w-full',
                     activePersona === persona.id
                       ? `bg-gradient-to-r ${gradient} text-white shadow-lg`
                       : 'text-gray-400 hover:text-white hover:bg-slate-700/50'
                   )}
                 >
                   <Icon className="w-4 h-4 shrink-0" />
-                  <span className="whitespace-nowrap">{persona.label}</span>
+                  <span className="truncate">{persona.label}</span>
                 </button>
               )
             })}
@@ -249,10 +249,10 @@ export default function UseCasesSection() {
             onClick={() => {
               window.location.href = getSignupUrlForTier('explorer')
             }}
-            className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 text-white font-semibold text-lg shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-300"
+            className="group inline-flex w-full sm:w-auto max-w-full items-center justify-center gap-2 px-6 sm:px-8 py-4 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 text-white font-semibold text-base sm:text-lg shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-300"
           >
-            {t('cta')}
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            <span className="truncate">{t('cta')}</span>
+            <ArrowRight className="w-5 h-5 shrink-0 group-hover:translate-x-1 transition-transform" />
           </button>
         </motion.div>
       </div>

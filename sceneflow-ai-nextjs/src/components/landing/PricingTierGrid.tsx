@@ -44,18 +44,18 @@ export function PricingTierGrid({
               <p className="text-sm text-gray-400">{tPlans('explorer.description')}</p>
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="text-right">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+              <div className="text-left sm:text-right">
                 <div className="text-3xl font-bold text-white">${explorerPlan.price}</div>
                 <div className="text-sm text-amber-400">{explorerPlan.includedCredits} {t('creditsPerMonth').replace('/mo', '')}</div>
               </div>
               <Button
                 onClick={() => onSelectTier('explorer')}
                 disabled={disabled || loadingTier === 'explorer'}
-                className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6"
+                className="w-full sm:w-auto justify-center bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6"
               >
                 {loadingTier === 'explorer' ? t('loading') : t('startTestFlight')}
-                <ArrowRight className="w-4 h-4 ml-2" />
+                <ArrowRight className="w-4 h-4 ml-2 shrink-0" />
               </Button>
             </div>
           </div>
@@ -109,7 +109,7 @@ export function PricingTierGrid({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
               <div className="p-3 rounded-lg bg-gray-800/50 border border-gray-700/50">
                 <div className="flex items-center gap-2 mb-1">
                   <Zap className="w-4 h-4 text-amber-400" />

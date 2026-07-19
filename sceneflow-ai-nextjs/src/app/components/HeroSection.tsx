@@ -308,7 +308,7 @@ export function HeroSection() {
             </div>
 
             <div className="relative z-10 mt-4 flex flex-col items-center gap-2 px-1">
-              <p className="inline-flex items-center gap-1.5 text-xs text-gray-400">
+              <p className="flex flex-wrap items-center justify-center gap-1.5 text-xs text-gray-400 text-center">
                 <Globe className="h-3.5 w-3.5 text-cyan-400/80 shrink-0" aria-hidden />
                 {t('languagePrompt')}
               </p>
@@ -326,7 +326,7 @@ export function HeroSection() {
 
           <div className="max-w-4xl mx-auto text-center mt-12 lg:mt-14">
             <motion.h1
-              className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter leading-tight bg-gradient-to-r from-white via-gray-300 to-gray-400 text-transparent bg-clip-text"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter leading-tight bg-gradient-to-r from-white via-gray-300 to-gray-400 text-transparent bg-clip-text"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.15 }}
@@ -335,7 +335,7 @@ export function HeroSection() {
             </motion.h1>
 
             <motion.p
-              className="mt-6 max-w-2xl mx-auto text-lg text-gray-300"
+              className="mt-6 max-w-2xl mx-auto text-base sm:text-lg text-gray-300"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.25 }}
