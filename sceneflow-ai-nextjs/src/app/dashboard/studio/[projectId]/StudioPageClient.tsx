@@ -775,7 +775,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         body: JSON.stringify({
           input: text,
           format: opts?.format || currentProject?.metadata?.format || 'short_film',
-          filmType: opts?.duration || 'short_film',
+          filmType: opts?.duration || 'auto',
           rigor: opts?.rigor || 'thorough',
           variants: variantCount,
           // Pass user's name for "Created By" field

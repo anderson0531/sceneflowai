@@ -123,8 +123,11 @@ const TONE_OPTIONS = [
   { value: 'nostalgic', label: 'Nostalgic' },
 ]
 
-const DURATION_OPTIONS = [
-  { value: 'micro_short', label: 'Micro (< 5 min)' },
+// Scope is advisory only. "auto" lets the story/illustration determine its own
+// length instead of forcing beats and scenes to hit a fixed duration target.
+const SCOPE_OPTIONS = [
+  { value: 'auto', label: 'Auto (let the story decide)' },
+  { value: 'micro_short', label: 'Brief (~ under 5 min)' },
   { value: 'short_film', label: 'Short (5-30 min)' },
   { value: 'featurette', label: 'Featurette (30-60 min)' },
   { value: 'feature_length', label: 'Feature (60-120 min)' },
@@ -292,7 +295,7 @@ export function BlueprintReimaginDialog({
   const [tone, setTone] = useState('')
   const [artStyle, setArtStyle] = useState(DEFAULT_ART_STYLE)
   const [aspectRatio, setAspectRatio] = useState<BlueprintAspectRatio>(DEFAULT_ASPECT_RATIO)
-  const [duration, setDuration] = useState('short_film')
+  const [duration, setDuration] = useState('auto')
   const [targetAudience, setTargetAudience] = useState('')
   
   // Instruction builder state
@@ -319,7 +322,7 @@ export function BlueprintReimaginDialog({
       setTone(existingVariant.tone_description || existingVariant.tone || '')
       setArtStyle(resolveVariantArtStyle(existingVariant))
       setAspectRatio(resolveVariantAspectRatio(existingVariant))
-      setDuration(existingVariant.duration || 'short_film')
+      setDuration(existingVariant.duration || 'auto')
       setTargetAudience(existingVariant.target_audience || '')
     } else if (initialIdea) {
       setSynopsis(initialIdea.synopsis || initialIdea.logline)
@@ -503,18 +506,21 @@ export function BlueprintReimaginDialog({
             
             <div className="space-y-1.5">
               <label className="text-xs text-gray-400 flex items-center gap-1">
-                <Clock className="w-3 h-3" /> Duration
+                <Clock className="w-3 h-3" /> Scope <span className="text-gray-500">(optional)</span>
               </label>
               <Select value={duration} onValueChange={setDuration}>
                 <SelectTrigger className="bg-slate-800/50 border-slate-700 text-sm">
-                  <SelectValue placeholder="Select..." />
+                  <SelectValue placeholder="Auto (let the story decide)" />
                 </SelectTrigger>
                 <SelectContent>
-                  {DURATION_OPTIONS.map(opt => (
+                  {SCOPE_OPTIONS.map(opt => (
                     <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {duration === 'auto' && (
+                <p className="text-[10px] text-gray-500">Length follows the story; no fixed runtime is forced.</p>
+              )}
             </div>
             
             <div className="space-y-1.5">

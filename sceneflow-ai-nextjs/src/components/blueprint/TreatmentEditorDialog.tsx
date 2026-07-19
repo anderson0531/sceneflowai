@@ -96,8 +96,11 @@ const TONE_OPTIONS = [
   { value: 'nostalgic', label: 'Nostalgic' },
 ]
 
-const DURATION_OPTIONS = [
-  { value: 'micro_short', label: 'Micro (< 5 min)', description: 'Social media, quick narratives' },
+// Scope is advisory only. "auto" lets the story/illustration determine its own
+// length instead of forcing beats and scenes to hit a fixed duration target.
+const SCOPE_OPTIONS = [
+  { value: 'auto', label: 'Auto (let the story decide)', description: 'Length follows the material; no fixed runtime forced' },
+  { value: 'micro_short', label: 'Brief (~ under 5 min)', description: 'Social media, quick narratives' },
   { value: 'short_film', label: 'Short (5-30 min)', description: 'Festival shorts, web series' },
   { value: 'featurette', label: 'Featurette (30-60 min)', description: 'Mid-length content' },
   { value: 'feature_length', label: 'Feature (60-120 min)', description: 'Full-length films' },
@@ -154,7 +157,7 @@ export default function TreatmentEditorDialog({ open, variant, onClose, onApply 
       aspectRatio: resolveVariantAspectRatio(variant),
       visual_style: getArtStylePresetName(resolveVariantArtStyle(variant)),
       target_audience: variant.target_audience || '',
-      duration: variant.duration || 'short_film'
+      duration: variant.duration || 'auto'
     } : null)
     dirtyRef.current = false
   }, [open, variant])
@@ -231,8 +234,9 @@ export default function TreatmentEditorDialog({ open, variant, onClose, onApply 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           input,
-          format: draft.duration || 'short_film',
-          filmType: draft.duration || 'short_film',
+          genre: draft.genre,
+          // Scope is advisory; 'auto' lets the story decide its own length.
+          filmType: draft.duration || 'auto',
           rigor: 'thorough',
           variants: 1
         })
@@ -500,21 +504,21 @@ export default function TreatmentEditorDialog({ open, variant, onClose, onApply 
                     </div>
                   </div>
 
-                  {/* Duration - Full Width */}
+                  {/* Scope - Full Width (advisory only) */}
                   <div>
                     <label className="text-xs font-medium text-gray-400 mb-1.5 flex items-center gap-2">
                       <Clock className="w-3 h-3" />
-                      Duration / Film Type
+                      Scope <span className="text-gray-500 font-normal">(optional)</span>
                     </label>
                     <Select 
-                      value={draft?.duration || 'short_film'} 
+                      value={draft?.duration || 'auto'} 
                       onValueChange={v => { onAnyChange(); setDraft(d => ({ ...d, duration: v })) }}
                     >
                       <SelectTrigger className="w-full border-gray-600 bg-gray-900 text-white">
-                        <SelectValue placeholder="Select duration..." />
+                        <SelectValue placeholder="Auto (let the story decide)" />
                       </SelectTrigger>
                       <SelectContent>
-                        {DURATION_OPTIONS.map(opt => (
+                        {SCOPE_OPTIONS.map(opt => (
                           <SelectItem key={opt.value} value={opt.value}>
                             <div>
                               <div className="font-medium">{opt.label}</div>

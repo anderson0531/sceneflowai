@@ -1,6 +1,7 @@
 import {
   type ContentIntent,
   type ProductionFormat,
+  buildPacingPhilosophyBlock,
   formatLabel,
   getFormatBlock,
   getIntentPromptBlocks,
@@ -87,7 +88,7 @@ const TREATMENT_SCHEMA_TEMPLATE = `SCHEMA - GENERATE IN THIS EXACT ORDER:
   "cta": "__CTA_VALUE__",
   "learning_objectives": __LEARNING_VALUE__,
   "beats": [
-    { "title": "Beat title", "intent": "Purpose/retention goal", "synopsis": "≤80 words beat summary", "minutes": 2.5 }
+    { "title": "Beat title", "intent": "Narrative/dramatic purpose (fiction) OR clarifying/illustrative purpose (non-fiction)", "synopsis": "≤80 words beat summary", "minutes": 2.5 }
   ],
   "visual_style": "string",
   "audio_direction": "string",
@@ -113,13 +114,13 @@ OUTPUT RULES - CRITICAL:
 
 4. Return ONLY valid JSON - no markdown, no explanations, no text outside the JSON object
 
-5. Beat durations MUST sum to target minutes (±10%)
+5. Be vivid and specific. Prefer concrete sensory detail and dramatic stakes over vague summary. Do not pad, but do not starve the story.
 
-6. Be vivid and specific. Prefer concrete sensory detail and dramatic stakes over vague summary. Do not pad, but do not starve the story.
+6. Do NOT use placeholders like "General audience"; provide concrete descriptions.
 
-7. Do NOT use placeholders like "General audience"; provide concrete descriptions.
+7. "protagonist" and "antagonist" MUST be plain JSON strings (one string each). Do NOT use nested objects here — put name, goal, and flaw inside the string sentences if needed.
 
-8. "protagonist" and "antagonist" MUST be plain JSON strings (one string each). Do NOT use nested objects here — put name, goal, and flaw inside the string sentences if needed.`
+8. Assign each beat the number of minutes the story/illustration genuinely needs. Beat "minutes" should reflect real pacing — do not invent uniform values.`
 
 function getFormatSpecificBlocks(format: Format, contentIntent?: ContentIntent) {
   const intent = contentIntent ?? resolveContentIntent(format === 'short_film' ? 'drama' : format.replace('_', '-'))
@@ -131,6 +132,8 @@ export function buildTreatmentPrompt(opts: {
   coreConcept: any
   format: Format
   targetMinutes: number
+  autoScope?: boolean
+  advisoryScopeLabel?: string
   styleHint?: string
   context?: any
   beatStructure?: { label: string; beats: Array<{ title: string }> } | null
@@ -139,8 +142,14 @@ export function buildTreatmentPrompt(opts: {
   contentIntent?: ContentIntent
   rigor?: 'fast' | 'balanced' | 'thorough'
 }) {
-  const { input, coreConcept, format, targetMinutes, styleHint, context, beatStructure, persona, hasExplicitSettings, contentIntent, rigor = 'thorough' } = opts
+  const { input, coreConcept, format, targetMinutes, autoScope, advisoryScopeLabel, styleHint, context, beatStructure, persona, hasExplicitSettings, contentIntent, rigor = 'thorough' } = opts
   const intent = contentIntent ?? resolveContentIntent(context?.genre)
+  const pacingPhilosophy = buildPacingPhilosophyBlock(intent)
+  // In auto scope, runtime is advisory: the story/illustration decides its own
+  // length. In fixed scope, honor the user's selected target.
+  const scopeBlock = autoScope
+    ? `SCOPE (ADVISORY): Let the material decide its length — aim for ${advisoryScopeLabel || 'the length the content genuinely needs'}. Do NOT pad or compress to hit a runtime; there is no fixed target.`
+    : `TARGET RUNTIME: ~${targetMinutes} minutes (±10%). Shape beat "minutes" so they sum to roughly this target.`
   const formatBlock = getFormatBlock(format)
   const formatSpecifics = getFormatSpecificBlocks(format, intent)
   const structureBlock = beatStructure ? `\nBEAT STRUCTURE:\n- Use the ${beatStructure.label} structure.\n- Produce beats matching these titles IN ORDER (adapt wording if needed, keep intent):\n${beatStructure.beats.map((b,i)=>`  ${i+1}. ${b.title}`).join('\n')}\n` : ''
@@ -160,7 +169,9 @@ export function buildTreatmentPrompt(opts: {
       })
   
   const schemaBlock = TREATMENT_SCHEMA_TEMPLATE
-    .replace('__TARGET_MINUTES__', String(targetMinutes))
+    .replace('__TARGET_MINUTES__', autoScope
+      ? 'Your honest estimate in minutes, derived from the beats you wrote'
+      : String(targetMinutes))
     .replace('__CTA_VALUE__', formatBlock.includeCTA ? '"string"' : 'null')
     .replace('__LEARNING_VALUE__', formatBlock.includeLearning ? '["Objective 1", "Objective 2"]' : '[]')
   
@@ -174,9 +185,11 @@ export function buildTreatmentPrompt(opts: {
 
   return `CRITICAL INSTRUCTIONS: You are a professional ${formatSpecifics.personaLabel} showrunner.
 CONTENT INTENT: ${intent.toUpperCase()} — ${formatSpecifics.schemaFieldSemantics}
-TARGET RUNTIME: ~${targetMinutes} minutes (±10%).
+${scopeBlock}
 PRIORITIES: ${formatBlock.priorities}
 ${personaBlock}${structureBlock}
+
+${pacingPhilosophy}
 
 ${scoringChecklist}
 ${CULTURAL_AUTHENTICITY_BLOCK}
