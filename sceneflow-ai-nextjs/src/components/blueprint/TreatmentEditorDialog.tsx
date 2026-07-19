@@ -21,6 +21,11 @@ import {
   RefreshCw
 } from 'lucide-react'
 import { BlueprintFoundationFields } from '@/components/blueprint/BlueprintFoundationFields'
+import { AudienceDescriptionField } from '@/components/audience/AudienceDescriptionField'
+import {
+  createAudienceDefinition,
+  type AudienceDefinition,
+} from '@/lib/types/audienceResonance'
 import {
   type BlueprintAspectRatio,
   getArtStylePresetName,
@@ -45,6 +50,7 @@ type Variant = {
   artStyle?: string
   aspectRatio?: BlueprintAspectRatio
   target_audience?: string
+  audienceDefinition?: AudienceDefinition
   genre?: string
   duration?: string
 }
@@ -102,15 +108,6 @@ const DURATION_OPTIONS = [
   { value: 'featurette', label: 'Featurette (30-60 min)', description: 'Mid-length content' },
   { value: 'feature_length', label: 'Feature (60-120 min)', description: 'Full-length films' },
   { value: 'epic', label: 'Epic (120-180 min)', description: 'Extended features' },
-]
-
-const AUDIENCE_OPTIONS = [
-  { value: 'general', label: 'General Audience' },
-  { value: 'family', label: 'Family Friendly' },
-  { value: 'teens', label: 'Teens & Young Adults' },
-  { value: 'adults', label: 'Adults' },
-  { value: 'mature', label: 'Mature Audience' },
-  { value: 'niche', label: 'Niche/Specialized' },
 ]
 
 const QUICK_EDITS = [
@@ -481,22 +478,34 @@ export default function TreatmentEditorDialog({ open, variant, onClose, onApply 
                       }}
                     />
 
-                    {/* Target Audience */}
+                    {/* Target Audience — free-text description + AI enhance */}
                     <div>
                       <label className="text-xs font-medium text-gray-400 mb-1.5 block">Target Audience</label>
-                      <Select 
-                        value={draft?.target_audience || ''} 
-                        onValueChange={v => { onAnyChange(); setDraft(d => ({ ...d, target_audience: v })) }}
-                      >
-                        <SelectTrigger className="w-full border-gray-600 bg-gray-900 text-white">
-                          <SelectValue placeholder="Select audience..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {AUDIENCE_OPTIONS.map(opt => (
-                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <AudienceDescriptionField
+                        value={createAudienceDefinition({
+                          ...(draft?.audienceDefinition || {}),
+                          description:
+                            draft?.audienceDefinition?.description ||
+                            draft?.target_audience ||
+                            '',
+                          source: 'blueprint',
+                        })}
+                        onChange={(def) => {
+                          onAnyChange()
+                          setDraft((d) => ({
+                            ...d,
+                            target_audience: def.description,
+                            audienceDefinition: def,
+                          }))
+                        }}
+                        context={{
+                          title: draft?.title,
+                          genre: draft?.genre,
+                          logline: draft?.logline,
+                        }}
+                        variant="compact"
+                        rows={3}
+                      />
                     </div>
                   </div>
 
