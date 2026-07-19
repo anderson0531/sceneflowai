@@ -64,6 +64,11 @@ const PRODUCED_VIDEOS: Partial<
     ar: { src: vid('YouTube Creator (Arabic).mp4', '20260718') },
     th: { src: vid('YouTube Creator (Thai).mp4', '20260718') },
   },
+  startupProvider: {
+    en: {
+      src: vid('Startup Provider (English).mp4'),
+    },
+  },
 }
 
 export function getPersonaStoryVideoLocales(personaId: PersonaId): PersonaStoryLocale[] {
