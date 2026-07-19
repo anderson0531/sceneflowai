@@ -22,5 +22,31 @@
     "tone": "dark",
     "targetAudience": "adults",
     "contentIntent": "fiction"
+  },
+  {
+    "id": "thai-audience-western-treatment",
+    "input": "A coming-of-age drama about a high school senior named John who navigates family expectations, first love, and choosing a career path in a small suburban American town.",
+    "genre": "drama",
+    "tone": "heartwarming",
+    "targetAudience": "Thai teenagers and young adults in Thailand",
+    "contentIntent": "fiction",
+    "note": "Deliberately Western-coded treatment (protagonist 'John', American suburb) with a Thai audience. A good cultural analysis must flag the cultural mismatch (names, setting, customs) and recommend Thai-specific fixes.",
+    "audienceDefinition": {
+      "description": "Thai teenagers and young adults in Thailand who love heartfelt local coming-of-age stories rooted in Thai family values and Buddhist culture.",
+      "profile": {
+        "region": "southeast-asia",
+        "ageRange": "young-adult-18-24",
+        "gender": "all-genders",
+        "educationLevel": "some-college",
+        "community": "family-parenting"
+      },
+      "culturalSignals": {
+        "cultures": ["Thai"],
+        "locales": ["Thailand"],
+        "languages": ["Thai"],
+        "faith": ["Theravada Buddhism"]
+      },
+      "source": "blueprint"
+    }
   }
 ]
