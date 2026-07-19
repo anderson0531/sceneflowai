@@ -16,13 +16,11 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import dynamic from 'next/dynamic'
-import { TargetAudienceSelector } from '@/components/audience/TargetAudienceSelector'
-import { AUDIENCE_PRESETS } from '@/lib/constants/audience-presets'
+import { AudienceDescriptionField } from '@/components/audience/AudienceDescriptionField'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import {
   type AudienceDefinition,
-  type AudienceTargetProfile,
   type BlueprintAudienceResonanceAnalysis,
   type BlueprintAudienceRecommendation,
   type PersistedBlueprintAudienceResonance,
@@ -32,8 +30,6 @@ import {
   READY_FOR_PRODUCTION_THRESHOLD_V3,
   type AudienceIntent,
   normalizeAudienceIntent,
-  targetAudienceToPromptString,
-  GENRE_OPTIONS,
 } from '@/lib/types/audienceResonance'
 import { BlueprintTtsControls } from './BlueprintTtsControls'
 import type { OpenBlueprintRefineOptions } from '@/lib/blueprint/openBlueprintRefine'
@@ -194,30 +190,10 @@ export function AudienceResonancePanelV3({
     ? Math.max(0, READY_FOR_PRODUCTION_THRESHOLD_V3 - analysis.overallScore)
     : 0
 
-  const updateProfile = (field: keyof AudienceTargetProfile, value: string) => {
-    setAudienceDefinition((prev) =>
-      createAudienceDefinition({
-        ...prev,
-        profile: { ...prev.profile, [field]: value },
-        presetId: undefined,
-      })
-    )
+  const handleAudienceDefChange = useCallback((def: AudienceDefinition) => {
+    setAudienceDefinition(createAudienceDefinition({ ...def, source: 'blueprint' }))
     setAudienceDirty(true)
-  }
-
-  const applyPreset = (presetId: string) => {
-    const preset = AUDIENCE_PRESETS.find((p) => p.id === presetId)
-    if (!preset) return
-    setAudienceDefinition(
-      createAudienceDefinition({
-        profile: preset.profile,
-        presetId: preset.id,
-        customDirection: audienceDefinition.customDirection,
-        source: 'blueprint',
-      })
-    )
-    setAudienceDirty(true)
-  }
+  }, [])
 
   const handleSaveAudience = async () => {
     setIsSavingAudience(true)
@@ -438,7 +414,8 @@ export function AudienceResonancePanelV3({
 
           {!audienceSetupExpanded && (
             <p className="text-[11px] text-gray-500 leading-snug line-clamp-2">
-              {targetAudienceToPromptString(audienceDefinition.profile)}
+              {audienceDefinition.description ||
+                'Describe your target audience to run a resonance analysis.'}
               {audienceDefinition.customDirection
                 ? ` · ${audienceDefinition.customDirection}`
                 : ''}
@@ -447,29 +424,17 @@ export function AudienceResonancePanelV3({
 
           {audienceSetupExpanded && (
             <div className="space-y-4 pt-1">
-              <div className="flex flex-wrap gap-1.5">
-                {AUDIENCE_PRESETS.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => applyPreset(p.id)}
-                    className={cn(
-                      'px-2 py-1 text-[10px] rounded-md border transition-colors',
-                      audienceDefinition.presetId === p.id
-                        ? 'border-cyan-500/50 bg-cyan-500/15 text-cyan-200'
-                        : 'border-slate-700 text-gray-400 hover:border-slate-500'
-                    )}
-                  >
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-
-              <TargetAudienceSelector
-                value={audienceDefinition.profile}
-                onChange={updateProfile}
+              <AudienceDescriptionField
+                value={audienceDefinition}
+                onChange={handleAudienceDefChange}
+                context={{
+                  title: (treatment?.label as string) || (treatment?.title as string),
+                  genre: treatment?.genre as string | undefined,
+                  logline: treatment?.logline as string | undefined,
+                }}
+                projectId={projectId}
                 variant="compact"
-                showSummary
+                rows={3}
               />
 
               <div>

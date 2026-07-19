@@ -29,6 +29,11 @@ import {
   Globe
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { AudienceDescriptionField } from '@/components/audience/AudienceDescriptionField'
+import {
+  createAudienceDefinition,
+  type AudienceDefinition,
+} from '@/lib/types/audienceResonance'
 import {
   SeriesResonanceAnalysis,
   SeriesResonanceInsight,
@@ -39,7 +44,7 @@ import {
 
 interface SeriesResonancePanelProps {
   series: SeriesResponse
-  onAnalyze: (config?: { targetAudience?: string, targetMarkets?: string[] }) => Promise<SeriesResonanceAnalysis>
+  onAnalyze: (config?: { targetAudience?: string, targetMarkets?: string[], audienceDefinition?: AudienceDefinition }) => Promise<SeriesResonanceAnalysis>
   onApplyFix: (insightId: string, fixSuggestion: string, targetSection: string, targetId?: string) => Promise<void>
   savedAnalysis?: SeriesResonanceAnalysis | null
   onSeriesUpdated?: () => void
@@ -70,7 +75,15 @@ export function SeriesResonancePanel({
   
   // Market config state
   const [showConfig, setShowConfig] = useState(!savedAnalysis)
-  const [targetAudience, setTargetAudience] = useState(series.targetAudience || '')
+  const [audienceDef, setAudienceDef] = useState<AudienceDefinition>(() =>
+    createAudienceDefinition({
+      ...(series.metadata?.audienceDefinition || {}),
+      description:
+        series.metadata?.audienceDefinition?.description || series.targetAudience || '',
+      source: 'series',
+    })
+  )
+  const targetAudience = audienceDef.description
   const [targetMarkets, setTargetMarkets] = useState<string[]>(series.metadata?.targetMarkets || ['Global'])
   
   // Update local state if the savedAnalysis prop changes
@@ -90,7 +103,11 @@ export function SeriesResonancePanel({
     setError(null)
     
     try {
-      const result = await onAnalyze({ targetAudience, targetMarkets })
+      const result = await onAnalyze({
+        targetAudience,
+        targetMarkets,
+        audienceDefinition: audienceDef.description?.trim() ? audienceDef : undefined,
+      })
       setAnalysis(result)
       setShowConfig(false)
       // Preserve appliedFixes from the new analysis result
@@ -102,7 +119,7 @@ export function SeriesResonancePanel({
     } finally {
       setIsAnalyzing(false)
     }
-  }, [onAnalyze, targetAudience, targetMarkets])
+  }, [onAnalyze, targetAudience, targetMarkets, audienceDef])
   
   // Handle apply fix
   const handleApplyFix = useCallback(async (insight: SeriesResonanceInsight) => {
@@ -736,12 +753,15 @@ export function SeriesResonancePanel({
           <div className="space-y-6 text-left mb-8">
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-2">Target Audience</label>
-              <input
-                type="text"
-                placeholder="e.g., 18-35 Males, Sci-Fi fans..."
-                value={targetAudience}
-                onChange={e => setTargetAudience(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition-all"
+              <AudienceDescriptionField
+                value={audienceDef}
+                onChange={setAudienceDef}
+                context={{
+                  title: series.title,
+                  genre: series.genre,
+                  logline: series.logline,
+                }}
+                rows={3}
               />
             </div>
             
