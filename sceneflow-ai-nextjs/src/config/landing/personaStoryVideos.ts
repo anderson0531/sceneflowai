@@ -74,6 +74,9 @@ const PRODUCED_VIDEOS: Partial<
     pt: {
       src: vid('The Startup Provider (Portuguese).mp4'),
     },
+    hi: {
+      src: vid('The Startup Provider (Hindi).mp4'),
+    },
   },
 }
 
