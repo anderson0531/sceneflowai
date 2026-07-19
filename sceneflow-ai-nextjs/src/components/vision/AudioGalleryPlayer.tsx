@@ -729,7 +729,18 @@ export function AudioGalleryPlayer({
   const sharedCompact = (isSharedView || embedMode) && !isFullscreen
   const landingWide = embedMode && fullWidthEmbed && !isFullscreen
   const useScreeningLayout = screeningLayout && !isFullscreen
-  const showToolbar = (!embedMode || landingEmbedToolbar) && !useScreeningLayout
+  /** Landing/embed player in fullscreen: minimal chrome (no toolbar/thumbnails/scene info). */
+  const embedFullscreen = embedMode && isFullscreen
+  const showToolbar = (!embedMode || landingEmbedToolbar) && !useScreeningLayout && !embedFullscreen
+  /** True when the top toolbar already provides a language selector. */
+  const toolbarHasLanguage = showToolbar && languageFilterCodes.length > 1
+  /**
+   * Show the on-video language pill only when the toolbar selector is not
+   * visible (avoids the redundant duplicate on landing embeds, but keeps a
+   * language control available in minimal fullscreen and toolbar-less embeds).
+   */
+  const showOverlayLanguage =
+    embedMode && availableLanguages.length > 1 && !toolbarHasLanguage
 
   const motionControl = (
     <StoryboardImageEffectControl
@@ -928,17 +939,20 @@ export function AudioGalleryPlayer({
           </TooltipContent>
         </Tooltip>
         {!isSharedView && motionControl}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={toggleFullscreen}
-              className="p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
-            >
-              {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>{isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}</TooltipContent>
-        </Tooltip>
+        {/* Embed players expose fullscreen in the bottom control bar instead (avoids a duplicate). */}
+        {!embedMode && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={toggleFullscreen}
+                className="p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+              >
+                {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>{isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}</TooltipContent>
+          </Tooltip>
+        )}
         {onClose && !isFullscreen && (
           <button
             onClick={onClose}
@@ -1012,7 +1026,7 @@ export function AudioGalleryPlayer({
           SceneFlow AI Studio
         </span>
       </div>
-      {embedMode && availableLanguages.length > 1 && (
+      {showOverlayLanguage && (
         <div className="absolute top-3 left-3 z-10 pointer-events-auto">
           <GroupedLanguageSelector
             value={selectedLanguage}
@@ -1365,7 +1379,7 @@ export function AudioGalleryPlayer({
                 {videoStageContent}
               </div>
 
-              {isFullscreen && !sharedCompact && (
+              {isFullscreen && !sharedCompact && !embedMode && (
                 <PreVisSceneInfoPanel
                   display={sceneDisplay}
                   variant="fullscreen"
@@ -1411,8 +1425,8 @@ export function AudioGalleryPlayer({
             </>
           )}
         </div>        
-        {/* Scene thumbnails row — hidden in screening tab (thumbnails live under video) */}
-        {!useScreeningLayout && (
+        {/* Scene thumbnails row — hidden in screening tab and in minimal embed fullscreen */}
+        {!useScreeningLayout && !embedFullscreen && (
         <div className={cn(
           "px-4 pb-4",
           isFullscreen && "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pt-8"
