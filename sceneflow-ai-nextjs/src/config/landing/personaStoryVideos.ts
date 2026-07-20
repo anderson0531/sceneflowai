@@ -91,6 +91,9 @@ const PRODUCED_VIDEOS: Partial<
     en: {
       src: vid('Enterprise (English).mp4', '20260720'),
     },
+    es: {
+      src: vid('Enterprise (Spanish).mp4', '20260720'),
+    },
   },
 }
 
