@@ -21,6 +21,8 @@ import createNextIntlPlugin from "next-intl/plugin";
 }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+/** Monorepo root — must match Vercel's outputFileTracingRoot (/vercel/path0). */
+const repoRoot = path.join(__dirname, "..");
 
 const bundleAnalyzer = withBundleAnalyzer({
   enabled: process.env.ANALYZE === "1" || process.env.ANALYZE === "true",
@@ -29,9 +31,10 @@ const bundleAnalyzer = withBundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  outputFileTracingRoot: repoRoot,
   turbopack: {
-    // Repo has multiple package-lock.json files; pin Turbopack to this app so routes/output resolve correctly.
-    root: __dirname,
+    // Repo has multiple package-lock.json files; pin Turbopack to monorepo root (matches tracing).
+    root: repoRoot,
   },
   reactStrictMode: true,
   serverExternalPackages: ["ffmpeg-static", "ffprobe-static"],
