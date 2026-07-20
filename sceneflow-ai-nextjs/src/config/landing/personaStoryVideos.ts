@@ -106,6 +106,9 @@ const PRODUCED_VIDEOS: Partial<
     ar: {
       src: vid('Enterprise (Arabic) .mp4', '20260720'),
     },
+    th: {
+      src: vid('Enterprise (Thai).mp4', '20260720'),
+    },
   },
 }
 
