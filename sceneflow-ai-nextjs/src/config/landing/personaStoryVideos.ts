@@ -97,6 +97,9 @@ const PRODUCED_VIDEOS: Partial<
     pt: {
       src: vid('Enterprise (Portuguese).mp4', '20260720'),
     },
+    hi: {
+      src: vid('Enterprise (Hindi).mp4', '20260720'),
+    },
   },
 }
 
