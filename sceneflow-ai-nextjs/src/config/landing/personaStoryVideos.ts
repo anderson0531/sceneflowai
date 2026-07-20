@@ -80,6 +80,9 @@ const PRODUCED_VIDEOS: Partial<
     zh: {
       src: vid('The Startup Provider (Chinese).mp4', '20260720'),
     },
+    ar: {
+      src: vid('The Startup Provider (Arabic).mp4', '20260720'),
+    },
   },
 }
 
