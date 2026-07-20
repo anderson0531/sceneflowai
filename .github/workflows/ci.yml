@@ -9,6 +9,8 @@ on:
 jobs:
   build-and-check:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -16,8 +18,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 22
+          cache: npm
           cache-dependency-path: sceneflow-ai-nextjs/package-lock.json
 
       - name: Install dependencies
@@ -40,6 +42,8 @@ jobs:
       - name: Build (optional)
         if: ${{ success() }}
         working-directory: sceneflow-ai-nextjs
+        env:
+          DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
         run: npm run build
 
 
