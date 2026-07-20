@@ -83,6 +83,9 @@ const PRODUCED_VIDEOS: Partial<
     ar: {
       src: vid('The Startup Provider (Arabic).mp4', '20260720'),
     },
+    th: {
+      src: vid('The Startup Provider (Thai).mp4', '20260720'),
+    },
   },
 }
 
