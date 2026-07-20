@@ -100,6 +100,9 @@ const PRODUCED_VIDEOS: Partial<
     hi: {
       src: vid('Enterprise (Hindi).mp4', '20260720'),
     },
+    zh: {
+      src: vid('Enterprise (Chinese).mp4', '20260720'),
+    },
   },
 }
 
