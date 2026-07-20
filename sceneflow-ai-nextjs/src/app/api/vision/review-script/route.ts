@@ -255,8 +255,13 @@ async function generateAudienceResonance(
     policy
   )
 
+  const hasCulturalSpecificity = /Cultural specificity:/i.test(targetDemographic || '')
+  const culturalInstruction = hasCulturalSpecificity
+    ? `\n\nThis audience is CULTURALLY SPECIFIC. Rigorously validate cultural authenticity: character names & identities, language/dialect, customs, faith, humor, and setting. Flag generic, culturally-neutral, or stereotyped elements as specific deductions, and give concrete, culturally-grounded recommendations that name the exact element to change (e.g. a culturally appropriate character name, an authentic custom or setting detail).`
+    : ''
+
   const audienceContext = targetDemographic?.trim()
-    ? `\nCRITICAL CONTEXT — TARGET AUDIENCE PROFILE:\n${targetDemographic.trim()}\n\nAnalyze this script SPECIFICALLY for the audience described above. Tailor all feedback, strengths, improvements, scene-level recommendations, and scores to how this audience would perceive narrative, pacing, themes, and cultural resonance.`
+    ? `\nCRITICAL CONTEXT — TARGET AUDIENCE PROFILE:\n${targetDemographic.trim()}\n\nAnalyze this script SPECIFICALLY for the audience described above. Tailor all feedback, strengths, improvements, scene-level recommendations, and scores to how this audience would perceive narrative, pacing, themes, and cultural resonance.${culturalInstruction}`
     : ''
 
   const prompt = `You are an expert screenplay analyst using a DEDUCTION-BASED RUBRIC system. Your job is to provide fair, constructive feedback that helps writers improve their scripts.${audienceContext}

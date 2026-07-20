@@ -384,7 +384,7 @@ export default function SeriesStudioPage() {
   }
 
   // Resonance analysis handlers
-  const handleAnalyzeResonance = useCallback(async (config?: { targetAudience?: string, targetMarkets?: string[] }): Promise<SeriesResonanceAnalysis> => {
+  const handleAnalyzeResonance = useCallback(async (config?: { targetAudience?: string, targetMarkets?: string[], audienceDefinition?: unknown }): Promise<SeriesResonanceAnalysis> => {
     if (!series) throw new Error('No series loaded')
     
     const episodeCount = series.episodeCount || 10
@@ -413,7 +413,13 @@ export default function SeriesStudioPage() {
     if (series) {
       series.metadata = {
         ...(series.metadata || {}),
-        resonance_analysis: result
+        resonance_analysis: result,
+        ...(config?.audienceDefinition
+          ? { audienceDefinition: config.audienceDefinition }
+          : {})
+      }
+      if (config?.targetAudience !== undefined) {
+        series.targetAudience = config.targetAudience
       }
     }
     

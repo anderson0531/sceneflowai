@@ -5,6 +5,7 @@ import { Project } from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { resolveUser } from '@/lib/userHelper'
 import { resolveContentIntentFromMetadata } from '@/lib/content/contentIntent'
+import { createAudienceDefinition } from '@/lib/types/audienceResonance'
 import { v4 as uuidv4 } from 'uuid'
 
 export const dynamic = 'force-dynamic'
@@ -78,7 +79,22 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Build Blueprint prime input from series data for auto-generation
     const blueprintPrimeInput = buildBlueprintPrimeInput(episode, bible, series)
     console.log(`[${timestamp}] [DEBUG_START_PROJECT] Built prime input (len: ${blueprintPrimeInput.length}):`, blueprintPrimeInput.substring(0, 100).replace(/\n/g, ' '));
-    
+
+    // Inherit the shared audience definition from the series so every episode
+    // blueprint is analyzed against the same audience.
+    const seriesMeta = (series.metadata || {}) as Record<string, any>
+    const seriesDef = seriesMeta.audienceDefinition as
+      | { description?: string }
+      | undefined
+    const inheritedAudienceDefinition =
+      seriesDef?.description || series.target_audience
+        ? createAudienceDefinition({
+            ...(seriesDef || {}),
+            description: seriesDef?.description || series.target_audience || '',
+            source: 'series',
+          })
+        : undefined
+
     // Create the project
     const project = await Project.create({
       user_id: resolvedUserId,
@@ -87,6 +103,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       title: `${series.title} - Ep ${episode.episodeNumber}: ${episode.title}`,
       description: episode.synopsis || episode.logline,
       genre: series.genre,
+      target_audience: inheritedAudienceDefinition?.description || undefined,
       status: 'draft',
       current_step: 'ideation',
       step_progress: {},
@@ -94,6 +111,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         // Series context
         seriesId,
         seriesTitle: series.title,
+        audienceDefinition: inheritedAudienceDefinition || undefined,
         episodeId,
         episodeNumber: episode.episodeNumber,
         format: series.metadata?.format || 'narrative',

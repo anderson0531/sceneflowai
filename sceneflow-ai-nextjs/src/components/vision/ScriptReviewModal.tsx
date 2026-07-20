@@ -22,14 +22,11 @@ import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import {
-  DEFAULT_TARGET_AUDIENCE,
-  normalizeTargetAudience,
   createAudienceDefinition,
   formatAudienceDefinitionForPrompt,
   type AudienceDefinition,
-  type AudienceTargetProfile,
 } from '@/lib/types/audienceResonance'
-import { TargetAudienceSelector } from '@/components/audience/TargetAudienceSelector'
+import { AudienceDescriptionField } from '@/components/audience/AudienceDescriptionField'
 
 const SCRIPT_REVIEW_TARGET_AUDIENCE_KEY = 'sceneflow-script-review-target-audience'
 
@@ -694,44 +691,43 @@ export default function ScriptReviewModal({
   const [isOptimizingYouDirect, setIsOptimizingYouDirect] = useState(false)
   const baseInstructionRef = useRef<string>('')
 
-  const [targetAudience, setTargetAudience] = useState<AudienceTargetProfile>(
-    () => normalizeTargetAudience(projectAudienceDefinition?.profile)
-  )
-  const [customDirection, setCustomDirection] = useState(
-    () => projectAudienceDefinition?.customDirection || ''
+  const [audienceDef, setAudienceDef] = useState<AudienceDefinition>(() =>
+    createAudienceDefinition({ ...(projectAudienceDefinition || {}), source: 'script' })
   )
   const [targetAudienceOpen, setTargetAudienceOpen] = useState(false)
 
   useEffect(() => {
     if (!isOpen) return
     if (projectAudienceDefinition) {
-      setTargetAudience(normalizeTargetAudience(projectAudienceDefinition.profile))
-      setCustomDirection(projectAudienceDefinition.customDirection || '')
+      setAudienceDef(
+        createAudienceDefinition({ ...projectAudienceDefinition, source: 'script' })
+      )
       return
     }
     if (typeof window === 'undefined') return
     try {
       const raw = localStorage.getItem(SCRIPT_REVIEW_TARGET_AUDIENCE_KEY)
-      if (raw) setTargetAudience(normalizeTargetAudience(JSON.parse(raw)))
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        // Backward-compat: older builds stored just the profile object
+        setAudienceDef(
+          parsed && parsed.profile
+            ? createAudienceDefinition({ ...parsed, source: 'script' })
+            : createAudienceDefinition({ profile: parsed, source: 'script' })
+        )
+      }
     } catch {}
   }, [isOpen, projectAudienceDefinition])
 
   useEffect(() => {
     try {
-      localStorage.setItem(SCRIPT_REVIEW_TARGET_AUDIENCE_KEY, JSON.stringify(targetAudience))
+      localStorage.setItem(SCRIPT_REVIEW_TARGET_AUDIENCE_KEY, JSON.stringify(audienceDef))
     } catch {}
-  }, [targetAudience])
+  }, [audienceDef])
 
   const buildAudiencePrompt = useCallback(() => {
-    return formatAudienceDefinitionForPrompt(
-      createAudienceDefinition({
-        profile: targetAudience,
-        customDirection,
-        presetId: projectAudienceDefinition?.presetId,
-        source: 'script',
-      })
-    )
-  }, [targetAudience, customDirection, projectAudienceDefinition?.presetId])
+    return formatAudienceDefinitionForPrompt(audienceDef)
+  }, [audienceDef])
 
   const handleRegenerate = async () => {
     await onRegenerate(buildAudiencePrompt())
@@ -1626,19 +1622,26 @@ export default function ScriptReviewModal({
                           Edit audience in Blueprint →
                         </Link>
                       )}
-                      <TargetAudienceSelector
-                        value={targetAudience}
-                        onChange={(field, value) =>
-                          setTargetAudience((prev) => ({ ...prev, [field]: value }))
-                        }
+                      <AudienceDescriptionField
+                        value={audienceDef}
+                        onChange={setAudienceDef}
+                        projectId={projectId}
                         variant="compact"
+                        rows={3}
                       />
                       <label className="block text-xs text-gray-400 mt-4 mb-1">
                         Analysis direction (optional)
                       </label>
                       <Textarea
-                        value={customDirection}
-                        onChange={(e) => setCustomDirection(e.target.value)}
+                        value={audienceDef.customDirection || ''}
+                        onChange={(e) =>
+                          setAudienceDef((prev) =>
+                            createAudienceDefinition({
+                              ...prev,
+                              customDirection: e.target.value,
+                            })
+                          )
+                        }
                         placeholder="e.g. Focus on Gen Z social-media pacing and authenticity…"
                         className="min-h-[72px] text-xs bg-slate-900 border-slate-700"
                       />

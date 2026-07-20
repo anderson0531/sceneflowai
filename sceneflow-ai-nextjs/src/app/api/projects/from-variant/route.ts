@@ -8,6 +8,12 @@ import {
   resolveVariantArtStyle,
   resolveVariantAspectRatio,
 } from '@/lib/treatment/blueprintFoundation'
+import {
+  createAudienceDefinition,
+  loadBlueprintARFromMetadata,
+  type AudienceDefinition,
+  type PersistedBlueprintAudienceResonance,
+} from '@/lib/types/audienceResonance'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -163,7 +169,39 @@ export async function POST(request: NextRequest) {
       genre: validatedGenre,
       tone: validatedTone
     })
-    
+
+    // Inherit the shared audience definition (and prior AR) from the source
+    // blueprint so Production analyzes against the same audience. Priority:
+    // variant.audienceDefinition → source blueprint project → variant.target_audience string.
+    let inheritedAudienceDefinition: AudienceDefinition | undefined
+    let inheritedBlueprintAR: PersistedBlueprintAudienceResonance | undefined
+    try {
+      if (variant?.audienceDefinition?.description) {
+        inheritedAudienceDefinition = createAudienceDefinition({
+          ...variant.audienceDefinition,
+          source: 'blueprint',
+        })
+      }
+      if (sourceBlueprintProjectId) {
+        const sourceProject = await Project.findByPk(sourceBlueprintProjectId)
+        const loaded = loadBlueprintARFromMetadata(
+          (sourceProject?.metadata || {}) as Record<string, unknown>
+        )
+        if (!inheritedAudienceDefinition && loaded.audienceDefinition) {
+          inheritedAudienceDefinition = loaded.audienceDefinition
+        }
+        if (loaded.persisted) inheritedBlueprintAR = loaded.persisted
+      }
+      if (!inheritedAudienceDefinition && variant?.target_audience) {
+        inheritedAudienceDefinition = createAudienceDefinition({
+          description: String(variant.target_audience),
+          source: 'blueprint',
+        })
+      }
+    } catch (inheritError) {
+      console.warn('[from-variant] Failed to inherit audience definition:', inheritError)
+    }
+
     // Create project
     const project = await Project.create({
       user_id: userId,
@@ -172,6 +210,7 @@ export async function POST(request: NextRequest) {
       genre: validatedGenre,
       duration: validatedDuration,
       tone: validatedTone,
+      target_audience: inheritedAudienceDefinition?.description || undefined,
       current_step: 'storyboard', // Move to Vision
       status: 'in_progress',
       metadata: {
@@ -179,6 +218,8 @@ export async function POST(request: NextRequest) {
         filmTreatmentVariant: variant,
         blueprintInput: variant.content || variant.synopsis,
         sourceBlueprintProjectId: sourceBlueprintProjectId || undefined,
+        audienceDefinition: inheritedAudienceDefinition || undefined,
+        blueprintAudienceResonance: inheritedBlueprintAR || undefined,
         visionPhase: {
           scriptGenerated: false,
           charactersGenerated: false,

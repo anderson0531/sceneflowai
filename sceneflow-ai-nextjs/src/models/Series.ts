@@ -230,7 +230,8 @@ Series.init(
       allowNull: true,
     },
     target_audience: {
-      type: DataTypes.STRING(255),
+      // TEXT (not VARCHAR) so free-text audience descriptions are not truncated
+      type: DataTypes.TEXT,
       allowNull: true,
     },
     status: {

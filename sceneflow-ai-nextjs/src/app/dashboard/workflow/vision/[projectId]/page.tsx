@@ -197,7 +197,11 @@ const DirectorChairIcon: React.FC<React.SVGProps<SVGSVGElement> & { size?: numbe
   </svg>
 )
 import Link from 'next/link'
-import { loadBlueprintARFromMetadata } from '@/lib/types/audienceResonance'
+import {
+  loadBlueprintARFromMetadata,
+  createAudienceDefinition,
+  type AudienceDefinition,
+} from '@/lib/types/audienceResonance'
 import type { CinematicScenePlan } from '@/components/vision/ScriptReviewModal'
 const ScriptReviewModal = dynamic(
   () => import('@/components/vision/ScriptReviewModal').then((m) => ({ default: m.default })),
@@ -593,6 +597,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     episodeNumber: number
     seriesBibleVersion?: string
   } | null>(null)
+  // Audience definition inherited from the parent series (fallback when the
+  // project's own metadata has none). Keeps audience shared across the series.
+  const [seriesAudienceDefinition, setSeriesAudienceDefinition] =
+    useState<AudienceDefinition | null>(null)
   // Timestamp updated when script is edited - used to clear audio caches in ScreeningRoom
   const [scriptEditedAt, setScriptEditedAt] = useState<number>(Date.now())
   const [characters, setCharacters] = useState<any[]>([])
@@ -674,11 +682,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [reviewsOutdated, setReviewsOutdated] = useState(false)
 
   const projectAudienceDefinition = useMemo(() => {
-    if (!project?.metadata) return null
-    return loadBlueprintARFromMetadata(
-      project.metadata as Record<string, unknown>
-    ).audienceDefinition
-  }, [project?.metadata])
+    const own = project?.metadata
+      ? loadBlueprintARFromMetadata(project.metadata as Record<string, unknown>)
+          .audienceDefinition
+      : null
+    // Fall back to the parent series' audience so the whole series stays aligned
+    return own || seriesAudienceDefinition
+  }, [project?.metadata, seriesAudienceDefinition])
 
   const showScriptImportOnboarding = useMemo(() => {
     const meta = project?.metadata as Record<string, unknown> | undefined
@@ -6878,12 +6888,33 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               episodeNumber: proj.episode_number || 1,
               seriesBibleVersion: seriesData.series?.production_bible?.version,
             })
+            const seriesRecord = seriesData.series || seriesData
+            const seriesMeta = (seriesRecord?.metadata || {}) as Record<string, unknown>
+            const seriesDef = seriesMeta.audienceDefinition as
+              | Partial<AudienceDefinition>
+              | undefined
+            const seriesAudienceText =
+              (seriesDef?.description as string | undefined) ||
+              (seriesRecord?.targetAudience as string | undefined) ||
+              (seriesRecord?.target_audience as string | undefined)
+            if (seriesDef?.description || seriesAudienceText) {
+              setSeriesAudienceDefinition(
+                createAudienceDefinition({
+                  ...(seriesDef || {}),
+                  description: seriesDef?.description || seriesAudienceText || '',
+                  source: 'series',
+                })
+              )
+            } else {
+              setSeriesAudienceDefinition(null)
+            }
           })
           .catch((seriesError) => {
             console.error('[Load Series] Failed to load series info:', seriesError)
           })
       } else {
         setSeriesInfo(null)
+        setSeriesAudienceDefinition(null)
       }
       
       // DEBUG: Log loaded scene assets from BOTH locations

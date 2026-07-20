@@ -784,33 +784,197 @@ export function targetAudienceToPromptString(profile: AudienceTargetProfile): st
 // AUDIENCE DEFINITION (project-level, Blueprint + Script)
 // =============================================================================
 
-export type AudienceDefinitionSource = 'blueprint' | 'script' | 'manual'
+export type AudienceDefinitionSource = 'blueprint' | 'script' | 'manual' | 'series'
+
+/**
+ * Structured cultural / specificity signals extracted from the free-text
+ * audience description. Captures the nuance a coarse region bucket loses so
+ * resonance analysis can validate concrete cultural fit (e.g. Thai names,
+ * language, customs, faith) instead of generic appeal.
+ */
+export interface AudienceCulturalSignals {
+  /** Named cultures / ethnicities, e.g. ["Thai"] */
+  cultures?: string[]
+  /** Countries / regions / cities, e.g. ["Thailand"] */
+  locales?: string[]
+  /** Languages / dialects, e.g. ["Thai"] */
+  languages?: string[]
+  /** Religions / faith traditions, e.g. ["Theravada Buddhism"] */
+  faith?: string[]
+  /** Subcultures / fandoms / professions, e.g. ["Muay Thai fighters"] */
+  subcultures?: string[]
+  /** Core values the audience holds */
+  values?: string[]
+  /** Cultural taboos / sensitivities to avoid */
+  sensitivities?: string[]
+}
 
 export interface AudienceDefinition {
+  /**
+   * Canonical, free-text audience description (speech or typing). Preferred
+   * over the structured profile for all resonance prompts.
+   */
+  description: string
   profile: AudienceTargetProfile
   presetId?: string
   customDirection?: string
+  /** True when the description was clarified / enhanced by the AI refine step */
+  aiEnhanced?: boolean
+  /** Structured cultural signals extracted from the description */
+  culturalSignals?: AudienceCulturalSignals
   updatedAt: string
   source: AudienceDefinitionSource
+}
+
+/** Build a readable description from a structured profile (backward-compat) */
+export function describeProfile(profile: AudienceTargetProfile): string {
+  const intent = normalizeAudienceIntent(profile)
+  return formatTargetAudienceForPrompt(intent)
+}
+
+function normalizeStringList(input: unknown): string[] | undefined {
+  if (!Array.isArray(input)) return undefined
+  const cleaned = input
+    .map((v) => (typeof v === 'string' ? v.trim() : ''))
+    .filter((v) => v.length > 0)
+  return cleaned.length > 0 ? Array.from(new Set(cleaned)) : undefined
+}
+
+export function normalizeCulturalSignals(
+  raw?: Partial<AudienceCulturalSignals> | null
+): AudienceCulturalSignals | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const signals: AudienceCulturalSignals = {
+    cultures: normalizeStringList(raw.cultures),
+    locales: normalizeStringList(raw.locales),
+    languages: normalizeStringList(raw.languages),
+    faith: normalizeStringList(raw.faith),
+    subcultures: normalizeStringList(raw.subcultures),
+    values: normalizeStringList(raw.values),
+    sensitivities: normalizeStringList(raw.sensitivities),
+  }
+  const hasAny = Object.values(signals).some((v) => v && v.length > 0)
+  if (!hasAny) return undefined
+  // Strip empty keys for cleaner persistence
+  return Object.fromEntries(
+    Object.entries(signals).filter(([, v]) => v && v.length > 0)
+  ) as AudienceCulturalSignals
+}
+
+export function hasCulturalSignals(
+  signals?: AudienceCulturalSignals | null
+): signals is AudienceCulturalSignals {
+  if (!signals) return false
+  return Object.values(signals).some((v) => Array.isArray(v) && v.length > 0)
 }
 
 export function createAudienceDefinition(
   partial: Partial<AudienceDefinition> & { profile?: Partial<AudienceTargetProfile> }
 ): AudienceDefinition {
+  const profile = normalizeTargetAudience(partial.profile)
+  const description =
+    typeof partial.description === 'string' && partial.description.trim()
+      ? partial.description.trim()
+      : describeProfile(profile)
   return {
-    profile: normalizeTargetAudience(partial.profile),
+    description,
+    profile,
     presetId: partial.presetId,
     customDirection: partial.customDirection?.trim() || undefined,
+    aiEnhanced: partial.aiEnhanced ?? false,
+    culturalSignals: normalizeCulturalSignals(partial.culturalSignals),
     updatedAt: partial.updatedAt || new Date().toISOString(),
     source: partial.source || 'blueprint',
   }
 }
 
-/** Build prompt block from saved audience definition */
-export function formatAudienceDefinitionForPrompt(def: AudienceDefinition): string {
-  const lines = [
-    formatTargetAudienceForPrompt(normalizeAudienceIntent(def.profile)),
+/** Radar/scoring category added when the audience has cultural specificity */
+export const CULTURAL_AUTHENTICITY_CATEGORY = 'Cultural Authenticity & Representation'
+export const CULTURAL_AUTHENTICITY_WEIGHT = 20
+
+/**
+ * Build an explicit cultural-authenticity evaluation directive for resonance
+ * prompts. Returns '' when the audience has no cultural specificity, so generic
+ * audiences are unaffected. When cultures/locales/languages/faith are named,
+ * the model is required to validate concrete, culture-specific resonance and to
+ * cite exact elements (names, language, customs, setting) in its findings.
+ */
+export function buildCulturalAnalysisDirective(
+  def: AudienceDefinition | null | undefined
+): string {
+  const signals = def?.culturalSignals
+  if (!hasCulturalSignals(signals)) return ''
+
+  const primary =
+    signals!.cultures?.join(', ') ||
+    signals!.locales?.join(', ') ||
+    signals!.languages?.join(', ') ||
+    'the specified culture'
+
+  const lines: string[] = [
+    `CULTURAL AUTHENTICITY REQUIREMENTS (audience: ${primary}):`,
+    `This content targets a culturally specific audience. Rigorously evaluate how authentically and respectfully it resonates with them, and flag every gap as a concrete deduction + recommendation that names the exact element to change:`,
+    `- Character names & casting: are character names, ethnicities, and identities authentic to ${primary}? Flag generic or Western-default names and suggest specific, culturally appropriate alternatives.`,
+    `- Language & dialect: is dialogue, terminology, and idiom appropriate${signals!.languages?.length ? ` (${signals!.languages.join(', ')})` : ''}?`,
+    `- Cultural references & customs: are traditions, food, dress, etiquette, holidays, and social norms accurate and specific rather than generic?`,
   ]
+  if (signals!.faith?.length) {
+    lines.push(
+      `- Faith & values: does the content respect and accurately reflect ${signals!.faith.join(', ')}?`
+    )
+  }
+  if (signals!.locales?.length) {
+    lines.push(
+      `- Setting authenticity: are locations, architecture, and environment true to ${signals!.locales.join(', ')}?`
+    )
+  }
+  lines.push(
+    `- Humor & tone: does humor and emotional tone translate for this audience without relying on out-group stereotypes?`
+  )
+  if (signals!.sensitivities?.length) {
+    lines.push(
+      `- Sensitivities & taboos: avoid ${signals!.sensitivities.join(', ')}; flag anything that could offend this audience.`
+    )
+  }
+  lines.push(
+    `Reward genuine, specific cultural grounding. Penalize generic, culturally-neutral, or stereotyped content that would not resonate with ${primary}.`
+  )
+  return lines.join('\n')
+}
+
+/** Render extracted cultural signals as prompt lines */
+export function formatCulturalSignalsForPrompt(
+  signals?: AudienceCulturalSignals | null
+): string {
+  if (!hasCulturalSignals(signals)) return ''
+  const parts: string[] = []
+  const add = (label: string, list?: string[]) => {
+    if (list && list.length > 0) parts.push(`${label}: ${list.join(', ')}`)
+  }
+  add('Cultures', signals.cultures)
+  add('Locales', signals.locales)
+  add('Languages', signals.languages)
+  add('Faith / traditions', signals.faith)
+  add('Subcultures / communities', signals.subcultures)
+  add('Core values', signals.values)
+  add('Sensitivities to avoid', signals.sensitivities)
+  return parts.join('\n')
+}
+
+/** Build prompt block from saved audience definition (description-first) */
+export function formatAudienceDefinitionForPrompt(def: AudienceDefinition): string {
+  const lines: string[] = []
+  const description = def.description?.trim()
+  if (description) {
+    lines.push(`Audience description: ${description}`)
+  } else {
+    lines.push(formatTargetAudienceForPrompt(normalizeAudienceIntent(def.profile)))
+  }
+  const culturalBlock = formatCulturalSignalsForPrompt(def.culturalSignals)
+  if (culturalBlock) {
+    lines.push('Cultural specificity:')
+    lines.push(culturalBlock)
+  }
   if (def.customDirection?.trim()) {
     lines.push(`User analysis direction: ${def.customDirection.trim()}`)
   }
@@ -894,6 +1058,8 @@ export const BLUEPRINT_AR_CATEGORY_WEIGHTS: Record<string, number> = {
   'Concept Hook': 20,
   'Character Connection': 20,
   'Clarity & Structure': 15,
+  // Only scored when the audience has cultural specificity (see buildCulturalAnalysisDirective)
+  [CULTURAL_AUTHENTICITY_CATEGORY]: CULTURAL_AUTHENTICITY_WEIGHT,
 }
 
 export const READY_FOR_PRODUCTION_THRESHOLD_V3 = 80

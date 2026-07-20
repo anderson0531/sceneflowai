@@ -36,6 +36,11 @@ import {
   DEFAULT_ART_STYLE,
   DEFAULT_ASPECT_RATIO,
 } from '@/components/blueprint/BlueprintFoundationFields'
+import { AudienceDescriptionField } from '@/components/audience/AudienceDescriptionField'
+import {
+  createAudienceDefinition,
+  type AudienceDefinition,
+} from '@/lib/types/audienceResonance'
 import {
   type BlueprintAspectRatio,
   resolveVariantArtStyle,
@@ -65,6 +70,7 @@ type Props = {
     aspectRatio?: BlueprintAspectRatio
     duration?: string
     targetAudience?: string
+    audienceDefinition?: AudienceDefinition
     variantCount?: number
     hasStoryDirections?: boolean
     generateThreeDirections?: boolean
@@ -132,15 +138,6 @@ const SCOPE_OPTIONS = [
   { value: 'featurette', label: 'Featurette (30-60 min)' },
   { value: 'feature_length', label: 'Feature (60-120 min)' },
   { value: 'epic', label: 'Epic (120-180 min)' },
-]
-
-const AUDIENCE_OPTIONS = [
-  { value: 'general', label: 'General Audience' },
-  { value: 'family', label: 'Family Friendly' },
-  { value: 'teens', label: 'Teens & Young Adults' },
-  { value: 'adults', label: 'Adults' },
-  { value: 'mature', label: 'Mature Audience' },
-  { value: 'niche', label: 'Niche/Specialized' },
 ]
 
 // Instruction templates for the guided prompt builder
@@ -296,7 +293,9 @@ export function BlueprintReimaginDialog({
   const [artStyle, setArtStyle] = useState(DEFAULT_ART_STYLE)
   const [aspectRatio, setAspectRatio] = useState<BlueprintAspectRatio>(DEFAULT_ASPECT_RATIO)
   const [duration, setDuration] = useState('auto')
-  const [targetAudience, setTargetAudience] = useState('')
+  const [audienceDef, setAudienceDef] = useState<AudienceDefinition>(() =>
+    createAudienceDefinition({ description: '', source: 'blueprint' })
+  )
   
   // Instruction builder state
   const [selectedInstructions, setSelectedInstructions] = useState<string[]>([])
@@ -323,7 +322,16 @@ export function BlueprintReimaginDialog({
       setArtStyle(resolveVariantArtStyle(existingVariant))
       setAspectRatio(resolveVariantAspectRatio(existingVariant))
       setDuration(existingVariant.duration || 'auto')
-      setTargetAudience(existingVariant.target_audience || '')
+      setAudienceDef(
+        createAudienceDefinition({
+          ...(existingVariant.audienceDefinition || {}),
+          description:
+            existingVariant.audienceDefinition?.description ||
+            existingVariant.target_audience ||
+            '',
+          source: 'blueprint',
+        })
+      )
     } else if (initialIdea) {
       setSynopsis(initialIdea.synopsis || initialIdea.logline)
       setGenre(initialIdea.genre || '')
@@ -395,7 +403,8 @@ export function BlueprintReimaginDialog({
         artStyle,
         aspectRatio,
         duration,
-        targetAudience,
+        targetAudience: audienceDef.description?.trim() || undefined,
+        audienceDefinition: audienceDef.description?.trim() ? audienceDef : undefined,
         variantCount,
         hasStoryDirections,
         generateThreeDirections,
@@ -523,21 +532,24 @@ export function BlueprintReimaginDialog({
               )}
             </div>
             
-            <div className="space-y-1.5">
-              <label className="text-xs text-gray-400 flex items-center gap-1">
-                <Users className="w-3 h-3" /> Audience
-              </label>
-              <Select value={targetAudience} onValueChange={setTargetAudience}>
-                <SelectTrigger className="bg-slate-800/50 border-slate-700 text-sm">
-                  <SelectValue placeholder="Select..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {AUDIENCE_OPTIONS.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          </div>
+
+          {/* Target Audience — free-text description (speech or typing) + AI enhance */}
+          <div className="space-y-1.5">
+            <label className="text-xs text-gray-400 flex items-center gap-1">
+              <Users className="w-3 h-3" /> Target Audience
+              <span className="text-gray-500">(describe in your own words)</span>
+            </label>
+            <AudienceDescriptionField
+              value={audienceDef}
+              onChange={setAudienceDef}
+              context={{
+                genre: genre || undefined,
+                format: resolveProductionFormat(genre),
+              }}
+              projectId={projectId}
+              rows={3}
+            />
           </div>
           
           {/* Visual Foundation — art style + aspect ratio */}

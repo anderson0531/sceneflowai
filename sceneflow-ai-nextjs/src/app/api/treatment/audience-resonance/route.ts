@@ -14,6 +14,10 @@ import {
   createAudienceDefinition,
   createPersistedBlueprintAR,
   formatAudienceDefinitionForPrompt,
+  hasCulturalSignals,
+  buildCulturalAnalysisDirective,
+  CULTURAL_AUTHENTICITY_CATEGORY,
+  CULTURAL_AUTHENTICITY_WEIGHT,
   READY_FOR_PRODUCTION_THRESHOLD_V3,
 } from '@/lib/types/audienceResonance'
 import {
@@ -87,6 +91,20 @@ function buildPrompt(
   const presetHint = preset?.directionHint
     ? `\nPreset lens (${preset.label}): ${preset.directionHint}`
     : ''
+  const culturalDirective = buildCulturalAnalysisDirective(audienceDefinition)
+  const hasCulture = culturalDirective.length > 0
+  const culturalBlock = hasCulture ? `\n\n${culturalDirective}` : ''
+  const evalCategories = hasCulture
+    ? [
+        ...rubric.categories,
+        {
+          name: CULTURAL_AUTHENTICITY_CATEGORY,
+          weight: CULTURAL_AUTHENTICITY_WEIGHT,
+          description:
+            'How authentically and respectfully the content resonates with the specific culture(s), language(s), and values named in the target audience.',
+        },
+      ]
+    : rubric.categories
 
   const beatsText =
     treatment.beats?.slice(0, 8).map((b, i) =>
@@ -108,7 +126,7 @@ function buildPrompt(
 ${rubric.guardrail}
 
 CRITICAL — TARGET AUDIENCE PROFILE:
-${audienceBlock}${presetHint}
+${audienceBlock}${presetHint}${culturalBlock}
 ${appliedBlock}
 
 Secondary context (genre/tone only): Genre: ${genre || treatment.genre || 'unspecified'} | Tone: ${tone || treatment.tone_description || 'unspecified'} | Content Intent: ${intent}
@@ -136,7 +154,7 @@ Participants:
 ${charsText}
 
 EVALUATION CATEGORIES (score each 1–100 for radar display):
-${rubric.categories.map((c) => `- ${c.name} (weight ${c.weight}): ${c.description}`).join('\n')}
+${evalCategories.map((c) => `- ${c.name} (weight ${c.weight}): ${c.description}`).join('\n')}
 
 Return ONLY valid JSON:
 {
@@ -147,7 +165,7 @@ Return ONLY valid JSON:
     {"text": "...", "title": "...", "priority": "high|medium|low", "pointsDeducted": <number>, "fixSection": "story", "impactSections": ["story","beats"], "intentLabel": "Short chip", "category": "..."}
   ],
   "categories": [
-${rubric.categories.map((c) => `    {"name": "${c.name}", "score": <1-100>, "weight": ${c.weight}}`).join(',\n')}
+${evalCategories.map((c) => `    {"name": "${c.name}", "score": <1-100>, "weight": ${c.weight}}`).join(',\n')}
   ],
   "strengths": ["..."],
   "improvements": ["..."],
@@ -197,12 +215,15 @@ export async function POST(request: NextRequest) {
     const appliedIds = body.appliedRecommendationIds || []
     const prompt = buildPrompt(treatment, audienceDefinition, genre, tone, appliedIds, contentIntent)
 
+    // Give the model more room to reason when validating cultural nuance
+    const needsCulturalReasoning = hasCulturalSignals(audienceDefinition.culturalSignals)
+
     const result = await generateText(prompt, {
       model: 'gemini-3.0-flash',
       temperature: 0.15,
-      maxOutputTokens: 8000,
-      thinkingLevel: 'low',
-      timeoutMs: 90000,
+      maxOutputTokens: needsCulturalReasoning ? 10000 : 8000,
+      thinkingLevel: needsCulturalReasoning ? 'medium' : 'low',
+      timeoutMs: needsCulturalReasoning ? 110000 : 90000,
       maxRetries: 1,
     })
 

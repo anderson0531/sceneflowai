@@ -14,6 +14,11 @@ import { sequelize } from '@/config/database'
 import { callLLM } from '@/services/llmGateway'
 import { v4 as uuidv4 } from 'uuid'
 import {
+  createAudienceDefinition,
+  buildCulturalAnalysisDirective,
+  type AudienceDefinition,
+} from '@/lib/types/audienceResonance'
+import {
   SeriesResonanceAnalysis,
   SeriesResonanceAxis,
   EpisodeEngagementScore,
@@ -119,7 +124,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   
   try {
     const body = await request.json().catch(() => ({}))
-    const { targetAudience, targetMarkets } = body
+    const { targetAudience, targetMarkets, audienceDefinition } = body
 
     await sequelize.authenticate()
     
@@ -130,12 +135,29 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Save configuration to series
     let requiresUpdate = false
+    let meta = series.metadata || {}
+
+    // Persist the shared audience definition (with cultural signals) to metadata
+    if (audienceDefinition && (audienceDefinition as AudienceDefinition).description) {
+      const normalizedDef = createAudienceDefinition({
+        ...(audienceDefinition as Partial<AudienceDefinition>),
+        source: 'series',
+      })
+      meta.audienceDefinition = normalizedDef
+      series.metadata = meta
+      series.changed('metadata', true)
+      // Keep the free-text description in target_audience as the canonical string
+      if (targetAudience === undefined && normalizedDef.description !== series.target_audience) {
+        series.target_audience = normalizedDef.description
+      }
+      requiresUpdate = true
+    }
+
     if (targetAudience !== undefined && targetAudience !== series.target_audience) {
       series.target_audience = targetAudience
       requiresUpdate = true
     }
-    
-    let meta = series.metadata || {}
+
     if (targetMarkets && Array.isArray(targetMarkets)) {
       meta.targetMarkets = targetMarkets
       series.metadata = meta
@@ -289,6 +311,12 @@ function buildAnalysisPrompt(
   const meta = series.metadata as Record<string, unknown> | null;
   const format = (meta?.format as string) || 'narrative';
 
+  // Cultural authenticity directive derived from the shared audience definition
+  const audienceDefinition = meta?.audienceDefinition as AudienceDefinition | undefined
+  const culturalDirective = audienceDefinition
+    ? buildCulturalAnalysisDirective(createAudienceDefinition(audienceDefinition))
+    : ''
+
   // Episode summaries with story threads
   const episodeSummaries = episodes.map(ep => {
     const threads = ep.storyThreads?.map((t: any) => `${t.name}(${t.status})`).join(', ') || 'none'
@@ -370,6 +398,7 @@ GENRE: ${series.genre || 'Drama'}
 TARGET AUDIENCE: ${series.target_audience || 'General'}
 TARGET MARKETS: ${meta?.targetMarkets ? (meta.targetMarkets as string[]).join(', ') : 'Global'}
 LOGLINE: ${series.logline || bible.logline || 'Not specified'}
+${culturalDirective ? `\n${culturalDirective}\n` : ''}
 
 SYNOPSIS:
 ${bible.synopsis || 'Not specified'}

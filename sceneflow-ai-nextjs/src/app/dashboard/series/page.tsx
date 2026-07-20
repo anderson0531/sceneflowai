@@ -38,6 +38,11 @@ import {
   DialogDescription
 } from '@/components/ui/dialog'
 import { SeriesCard } from '@/components/series/SeriesCard'
+import { AudienceDescriptionField } from '@/components/audience/AudienceDescriptionField'
+import {
+  createAudienceDefinition,
+  type AudienceDefinition,
+} from '@/lib/types/audienceResonance'
 import { useSeriesList, useEpisode } from '@/hooks/useSeries'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
@@ -73,6 +78,9 @@ export default function SeriesPage() {
   const [episodeCount, setEpisodeCount] = useState(10)
   const [genre, setGenre] = useState('any')
   const [tone, setTone] = useState('any')
+  const [audienceDef, setAudienceDef] = useState<AudienceDefinition>(() =>
+    createAudienceDefinition({ description: '', source: 'series' })
+  )
   const [isCreating, setIsCreating] = useState(false)
   
   // Filter series by search and status
@@ -93,15 +101,18 @@ export default function SeriesPage() {
       const words = ideaTopic.trim().split(/\s+/)
       const workingTitle = words.slice(0, 5).join(' ') + (words.length > 5 ? '...' : '')
       
+      const hasAudience = !!audienceDef.description?.trim()
       const newSeries = await createSeries({
         userId,
         title: workingTitle || 'Untitled Series',
+        targetAudience: hasAudience ? audienceDef.description.trim() : undefined,
         metadata: {
           ideaTopic,
           format,
           genre: genre === 'any' ? undefined : genre,
           tone: tone === 'any' ? undefined : tone,
           episodeCount,
+          audienceDefinition: hasAudience ? audienceDef : undefined,
           contentIntent: resolveContentIntentFromMetadata({
             format,
             genre: genre === 'any' ? undefined : genre,
@@ -116,6 +127,7 @@ export default function SeriesPage() {
       setEpisodeCount(10)
       setGenre('any')
       setTone('any')
+      setAudienceDef(createAudienceDefinition({ description: '', source: 'series' }))
       
       // Navigate to series studio for ideation with autoGenerate flag
       router.push(`/dashboard/series/${newSeries.id}?autoGenerate=true`)
@@ -499,7 +511,24 @@ export default function SeriesPage() {
                 </SelectContent>
               </Select>
             </div>
-            
+
+            <div>
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+                <Users className="w-4 h-4 text-cyan-400" />
+                Target Audience <span className="text-gray-500 text-xs">(optional, shared across the series)</span>
+              </label>
+              <AudienceDescriptionField
+                value={audienceDef}
+                onChange={setAudienceDef}
+                context={{
+                  title: ideaTopic || undefined,
+                  genre: genre === 'any' ? undefined : genre,
+                  format,
+                }}
+                rows={3}
+              />
+            </div>
+
             <div className="flex items-center gap-3 pt-2">
               <Button
                 variant="outline"

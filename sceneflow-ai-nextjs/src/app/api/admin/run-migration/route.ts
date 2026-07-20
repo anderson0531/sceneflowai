@@ -7,6 +7,7 @@
  *   POST /api/admin/run-migration                    - Run all pending migrations
  *   POST /api/admin/run-migration?type=series        - Run Series feature migration
  *   POST /api/admin/run-migration?type=moderation    - Run moderation violations migration
+ *   POST /api/admin/run-migration?type=audience-text - Widen target_audience columns to TEXT
  *   POST /api/admin/run-migration?type=rollback-series - Rollback Series migration (emergency)
  * 
  * @version 2.37
@@ -15,6 +16,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { migrateModerationViolations } from '@/lib/database/migrateModerationViolations'
 import { migrateSeriesFeature, rollbackSeriesFeature } from '@/lib/database/migrateSeriesFeature'
+import { migrateTargetAudienceToText } from '@/lib/database/migrateTargetAudienceToText'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -42,6 +44,13 @@ export async function POST(request: NextRequest) {
       await migrateModerationViolations()
       results.moderation = { success: true, message: 'Completed' }
       console.log('[run-migration] Moderation migration completed')
+    }
+
+    if (migrationType === 'all' || migrationType === 'audience-text') {
+      console.log('[run-migration] Running target_audience TEXT migration...')
+      const audienceResult = await migrateTargetAudienceToText()
+      results.audienceText = audienceResult
+      console.log('[run-migration] target_audience migration result:', audienceResult)
     }
     
     // Rollback Series feature (emergency only)
@@ -82,6 +91,7 @@ export async function GET(request: NextRequest) {
       { type: 'all', description: 'Run all pending migrations' },
       { type: 'series', description: 'Create Series table and add columns to Projects' },
       { type: 'moderation', description: 'Add moderation violation fields to Users' },
+      { type: 'audience-text', description: 'Widen series/projects target_audience columns to TEXT' },
       { type: 'rollback-series', description: 'EMERGENCY: Rollback Series feature migration' }
     ],
     usage: 'POST /api/admin/run-migration?type=<type>',

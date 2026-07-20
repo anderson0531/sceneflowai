@@ -100,10 +100,11 @@ async function scoreAudienceResonance(treatment, fixture) {
         beats: treatment.beats,
         character_descriptions: treatment.character_descriptions,
       },
-      audienceDefinition: {
+      audienceDefinition: fixture.audienceDefinition || {
+        description: fixture.targetAudience || 'General audience',
         profile: {
           region: 'global',
-          ageRange: 'general',
+          ageRange: 'general-all-ages',
           gender: 'all-genders',
           educationLevel: 'general',
           community: 'general',
@@ -123,7 +124,38 @@ async function scoreAudienceResonance(treatment, fixture) {
   }
 
   const json = await res.json()
-  return json.analysis?.overallScore ?? null
+  return json.analysis ?? null
+}
+
+/**
+ * When a fixture targets a specific culture, verify the analysis surfaces
+ * culture-specific findings (names, language, customs, faith, setting) rather
+ * than generic feedback. Returns { pass, matched } or null when not applicable.
+ */
+function assertCulturalSpecificity(analysis, fixture) {
+  const signals = fixture.audienceDefinition?.culturalSignals
+  if (!analysis || !signals) return null
+
+  const terms = [
+    ...(signals.cultures || []),
+    ...(signals.locales || []),
+    ...(signals.languages || []),
+    ...(signals.faith || []),
+  ].map((t) => String(t).toLowerCase())
+  // Generic cultural keywords also count as evidence of culture-aware analysis
+  const genericTerms = ['cultur', 'name', 'language', 'custom', 'authentic', 'setting', 'faith']
+
+  const haystack = JSON.stringify({
+    deductions: analysis.deductions,
+    recommendations: analysis.recommendations,
+    strengths: analysis.strengths,
+    improvements: analysis.improvements,
+    summary: analysis.summary,
+    categories: analysis.categories,
+  }).toLowerCase()
+
+  const matched = [...terms, ...genericTerms].filter((t) => haystack.includes(t))
+  return { pass: matched.length > 0, matched }
 }
 
 function summarizeResults(allResults) {
@@ -181,8 +213,15 @@ async function main() {
 
       let arScore = null
       if (withAr && SESSION_COOKIE) {
-        arScore = await scoreAudienceResonance(treatment, fixture)
+        const analysis = await scoreAudienceResonance(treatment, fixture)
+        arScore = analysis?.overallScore ?? null
         if (arScore != null) console.log(`    AR score: ${arScore}`)
+        const cultural = assertCulturalSpecificity(analysis, fixture)
+        if (cultural) {
+          console.log(
+            `    Cultural specificity: ${cultural.pass ? 'PASS' : 'WARN (generic output)'} — matched: ${cultural.matched.slice(0, 6).join(', ') || 'none'}`
+          )
+        }
       }
 
       runs.push({ label, thinkingBudget: budget, timing, arScore, title: treatment?.title })
