@@ -483,6 +483,29 @@ export function getFormatBlock(f: ProductionFormat) {
   }
 }
 
+/**
+ * Balanced pacing philosophy shared by the Blueprint (treatment) and the script
+ * generation prompts. It counterweights the retention-hook bias so the model is
+ * explicitly told to EARN payoffs and allow gradual establishment (fiction) or
+ * clear, gradual illustration (non-fiction), rather than front-loading hooks.
+ */
+export function buildPacingPhilosophyBlock(intent: ContentIntent): string {
+  if (intent === 'fiction') {
+    return `PACING PHILOSOPHY (BALANCE RETENTION WITH CRAFT):
+- Open with intrigue, but EARN your payoffs — do not resolve or reveal everything early to chase a hook.
+- Allow deliberate establishment: give the audience time to meet characters, understand the world, and feel the stakes before escalation.
+- A retention hook and a quiet character/establishing beat are BOTH valuable; do not sacrifice setup, subtext, or the second act for speed.
+- Vary rhythm intentionally: tension and release, action and reflection. Do not make every beat a cliffhanger.
+- Let transformation land — reversals, low points, and resolutions need room to breathe.`
+  }
+  return `PACING PHILOSOPHY (BALANCE A STRONG ENTRY WITH CLEAR ILLUSTRATION):
+- Open with a clear, engaging entry point, but do not sacrifice context, credibility, or completeness to front-load a hook.
+- Establish the premise and the "why it matters" before diving into details.
+- Illustrate with concrete examples, demonstrations, or proof BEFORE the takeaway or CTA — clarity and completeness over hook density.
+- Build understanding gradually and logically; give each idea the space it needs to be understood.
+- Reinforce key points for retention without padding or repetition for its own sake.`
+}
+
 /** Resolve content intent from genre string or stored metadata */
 export function resolveContentIntentFromMetadata(metadata?: {
   contentIntent?: ContentIntent

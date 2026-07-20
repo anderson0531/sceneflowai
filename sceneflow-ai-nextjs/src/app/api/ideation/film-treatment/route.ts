@@ -41,7 +41,9 @@ interface FilmTreatmentRequest {
   format?: string
   contentIntent?: ContentIntent
   targetMinutes?: number  // Legacy, kept for backward compatibility
-  filmType?: 'micro_short'|'short_film'|'featurette'|'feature_length'|'epic'
+  // 'auto' (or omitted) means advisory-only scope: the story/illustration
+  // decides its own length and beats are NOT rescaled to a fixed target.
+  filmType?: 'auto'|'micro_short'|'short_film'|'featurette'|'feature_length'|'epic'
   rigor?: 'fast'|'balanced'|'thorough'
   beatStructure?: BeatStructureKey
   variants?: number // default 1 when explicit settings, else 3
@@ -224,6 +226,29 @@ function getFilmTypeMinutes(filmType?: string): number {
   }
 }
 
+// A scope is "auto" (advisory only) when the user has not pinned an explicit
+// duration bucket or target. In auto mode we still keep a soft reference length
+// for downstream defaults, but we do NOT rescale beats or force a runtime.
+function isAutoScope(filmType?: string, targetMinutes?: number): boolean {
+  if (targetMinutes && targetMinutes > 0) return false
+  return !filmType || filmType === 'auto'
+}
+
+// Human-readable advisory band used only as loose guidance in the prompt.
+function getAdvisoryScopeLabel(contentIntent: ContentIntent): string {
+  switch (contentIntent) {
+    case 'informational':
+      return 'as long as needed to explain and illustrate the material clearly — do not pad or rush'
+    case 'commercial':
+      return 'as concise as the message allows while still proving the value — do not pad'
+    case 'conversational':
+      return 'the natural length of a well-paced conversation on this topic'
+    case 'fiction':
+    default:
+      return 'the length the story needs to establish, develop, and pay off its arc — do not compress or pad'
+  }
+}
+
 /**
  * Auto-detect the optimal film structure based on content analysis
  * Uses keyword matching, format hints, and duration to select the best beat structure
@@ -329,21 +354,29 @@ export async function POST(request: NextRequest) {
     
     console.log(`[Film Treatment] rigor=${rigor} thinkingBudget=${thinkingBudget} variants=${variantsCount}${hasExplicitSettings ? ' (explicit settings)' : ''}`)
     
+    const requestedFilmType = body.filmType && body.filmType !== 'auto' ? body.filmType : undefined
     const format = body.format || resolveProductionFormat(genre) || 'short_film'
     const contentIntent: ContentIntent =
       body.contentIntent || resolveContentIntent(genre)
-    // Prefer filmType over targetMinutes, but fall back to analyzeDuration if neither provided
-    const targetMinutes = body.filmType 
-      ? getFilmTypeMinutes(body.filmType)
-      : (body.targetMinutes || analyzeDuration(input, 20))
+
+    // Scope mode: when the user leaves scope on "Auto" (or omits it), duration is
+    // advisory only. Beats are shaped by the story, not rescaled to a target.
+    const autoScope = isAutoScope(body.filmType, body.targetMinutes)
+    // Prefer an explicit bucket/target; otherwise parse any duration mentioned in
+    // the input purely as a soft reference (0 = unknown, story decides).
+    const targetMinutes = requestedFilmType
+      ? getFilmTypeMinutes(requestedFilmType)
+      : (body.targetMinutes || (autoScope ? analyzeDuration(input, 0) : analyzeDuration(input, 20)))
 
     // Cap duration at 180 minutes (3 hours) as reasonable maximum
     const MAX_DURATION_MINUTES = 180
-    const cappedTargetMinutes = Math.min(targetMinutes, MAX_DURATION_MINUTES)
+    const cappedTargetMinutes = Math.min(targetMinutes || 0, MAX_DURATION_MINUTES)
+    const advisoryScopeLabel = getAdvisoryScopeLabel(contentIntent)
 
     if (targetMinutes > MAX_DURATION_MINUTES) {
       console.warn(`[Film Treatment] Duration ${targetMinutes}min exceeds maximum ${MAX_DURATION_MINUTES}min, capping to ${MAX_DURATION_MINUTES}min`)
     }
+    console.log(`[Film Treatment] scopeMode=${autoScope ? 'auto (advisory)' : 'fixed'} targetMinutes=${cappedTargetMinutes || 'story-driven'}`)
 
     if (!input) {
       return NextResponse.json({ success: false, message: 'Input content is required' }, { status: 400 })
@@ -387,7 +420,7 @@ export async function POST(request: NextRequest) {
     let autoDetectedStructure: { structure: BeatStructureKey; confidence: number; reason: string } | null = null
     
     if (!effectiveBeatStructure) {
-      autoDetectedStructure = autoDetectFilmStructure(input, coreConcept, format, cappedTargetMinutes)
+      autoDetectedStructure = autoDetectFilmStructure(input, coreConcept, format, cappedTargetMinutes || 20)
       effectiveBeatStructure = autoDetectedStructure.structure
       console.log(`[Film Treatment] Auto-detected structure: ${effectiveBeatStructure} (confidence: ${autoDetectedStructure.confidence}, reason: ${autoDetectedStructure.reason})`)
     }
@@ -417,6 +450,8 @@ export async function POST(request: NextRequest) {
       aspectRatio: lockedAspectRatio,
       visualStyle: getArtStylePresetName(lockedArtStyle),
       targetMinutes: cappedTargetMinutes, 
+      autoScope,
+      advisoryScopeLabel,
       beatStructure: effectiveBeatStructure, 
       userName,
       hasExplicitSettings,
@@ -489,6 +524,8 @@ async function generateFilmTreatment(
   attempt: number = 1
 ): Promise<FilmTreatmentItem> {
   const maxAttempts = 2 // Allow 1 retry
+  const autoScope = !!context?.autoScope
+  // Soft reference length only; in auto scope this is NOT enforced on the beats.
   const targetMinutes = context?.targetMinutes || 20
   
   // Add stricter JSON formatting instruction on retry
@@ -501,6 +538,8 @@ async function generateFilmTreatment(
     coreConcept,
     format: context?.format || 'short_film',
     targetMinutes,
+    autoScope,
+    advisoryScopeLabel: context?.advisoryScopeLabel,
     styleHint: context?.variantStyle,
     context,
     beatStructure: context?.beatStructure ? { label: BEAT_STRUCTURES[context.beatStructure as BeatStructureKey]?.label, beats: (BEAT_STRUCTURES[context.beatStructure as BeatStructureKey]?.beats || []).map(b => ({ title: b.title })) } : null,
@@ -531,16 +570,22 @@ async function generateFilmTreatment(
     const parsedRaw = safeParseJsonFromText(generatedText)
     const parsed = repairTreatment(parsedRaw)
     
-    // Normalize beats to target duration if model deviates
     const beats = Array.isArray(parsed.beats) ? parsed.beats : []
-    const normalizedBeats = normalizeDuration(
-      beats.map((b: any) => ({ title: b.title || 'Segment', summary: b.intent || '', minutes: Number(b.minutes) || 1 })),
-      targetMinutes
-    )
+    const rawBeats = beats.map((b: any) => ({ title: b.title || 'Segment', summary: b.intent || '', minutes: Number(b.minutes) || 1 }))
+    // In auto scope, KEEP the model's own beat pacing (story decides length).
+    // In fixed scope, rescale beats so they sum to the user-selected target.
+    const normalizedBeats = autoScope
+      ? rawBeats
+      : normalizeDuration(rawBeats, targetMinutes)
     const filmTreatmentText = (parsed as any).film_treatment || parsed.synopsis || 'Comprehensive film treatment'
     
     // Calculate total duration from beats (in seconds)
     const totalDurationSeconds = normalizedBeats.reduce((sum: number, b: any) => sum + ((b.minutes || 1) * 60), 0)
+    // Duration is DERIVED from the beats the model actually wrote in auto scope,
+    // and equals the user's target in fixed scope.
+    const estimatedMinutes = autoScope
+      ? Math.max(1, Math.round(totalDurationSeconds / 60))
+      : targetMinutes
     
     // Prepare the result object
     const result = {
@@ -615,7 +660,7 @@ async function generateFilmTreatment(
         minutes: b.minutes,
         synopsis: beats[i]?.synopsis
       })),
-      estimatedDurationMinutes: targetMinutes,
+      estimatedDurationMinutes: estimatedMinutes,
       total_duration_seconds: totalDurationSeconds,
       
       // Narrative reasoning - now flattened at root level

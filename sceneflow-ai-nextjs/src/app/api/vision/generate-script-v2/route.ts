@@ -8,7 +8,7 @@ import { SubscriptionService } from '../../../../services/SubscriptionService'
 import { runScriptQA, autoFixScript } from '@/lib/script/qualityAssurance'
 import { generateText } from '@/lib/vertexai/gemini'
 import { getSettingsForFormat, getScriptProgressStatuses, buildScriptConstraintPrompt, SCRIPT_SETTINGS_BY_FORMAT } from '@/lib/script/scriptGenerationRules'
-import { resolveContentIntentFromMetadata } from '@/lib/content/contentIntent'
+import { resolveContentIntentFromMetadata, buildPacingPhilosophyBlock } from '@/lib/content/contentIntent'
 import { migrateProjectToSegmented } from '@/lib/script/migrateToSegmented'
 import { normalizeDialogueToProductionLineTargets } from '@/lib/script/segmentScript'
 import {
@@ -154,9 +154,15 @@ export async function POST(request: NextRequest) {
         const storyBeats = treatment.story_beats || treatment.storyBeats || []
         const beatCount = storyBeats.length || 7
         
-        // Safety cap only - prevent runaway generation (max ~25 scenes for shorts)
-        // Let the AI determine natural scene count based on story structure
-        const maxSafetyScenes = Math.min(90, Math.ceil(duration / 20))  // ~1 scene per 20s, capped at 90
+        // Story/format-driven safety ceiling — NOT derived from a target runtime.
+        // Duration no longer dictates how many scenes the story is allowed to have.
+        // We take the format's target scene count and the story's own beats, add
+        // generous headroom, and only clamp with a high absolute cap to prevent
+        // runaway generation. The AI decides the natural scene count within this.
+        const ABSOLUTE_MAX_SCENES = 120
+        const formatTargetScenes = getSettingsForFormat(projectFormat).targetSceneCount || 40
+        const storyDrivenCeiling = Math.max(formatTargetScenes, beatCount * 4, 24)
+        const maxSafetyScenes = Math.min(ABSOLUTE_MAX_SCENES, storyDrivenCeiling + 20)
         
         // Validate: beat count should not exceed reasonable scene count to prevent fragmentation
         if (beatCount > 15) {
@@ -369,16 +375,20 @@ export async function POST(request: NextRequest) {
 
               allScenes = enforceNarrationPolicyOnScenes(allScenes, narrationPolicy)
               
-              // Validate against subscription limit
+              // Business limit only: subscription scene cap (paid-tier feature gate).
               if (subscriptionMaxScenes && allScenes.length > subscriptionMaxScenes) {
                 console.warn(`[Script Gen V2] Generated ${allScenes.length} scenes, but user limit is ${subscriptionMaxScenes}. Truncating.`)
                 allScenes = allScenes.slice(0, subscriptionMaxScenes)
               }
               
-              // Validate against safety cap
-              if (allScenes.length > maxSafetyScenes) {
-                console.warn(`[Script Gen V2] Generated ${allScenes.length} scenes exceeds safety cap of ${maxSafetyScenes}. Consolidating.`)
-                allScenes = consolidateToTargetCount(allScenes, maxSafetyScenes)
+              // We no longer force-merge scenes down to a duration-derived count —
+              // that used to cut creative scenes/beats to hit a runtime. Only guard
+              // against true runaway output well beyond the absolute ceiling.
+              if (allScenes.length > ABSOLUTE_MAX_SCENES) {
+                console.warn(`[Script Gen V2] Generated ${allScenes.length} scenes exceeds absolute cap of ${ABSOLUTE_MAX_SCENES}. Consolidating runaway output.`)
+                allScenes = consolidateToTargetCount(allScenes, ABSOLUTE_MAX_SCENES)
+              } else if (allScenes.length > maxSafetyScenes) {
+                console.log(`[Script Gen V2] Generated ${allScenes.length} scenes (above soft ceiling ${maxSafetyScenes}); keeping — story-driven length.`)
               }
               
               console.log(`[Script Gen V2] Single-pass generation complete: ${allScenes.length} scenes`)
@@ -652,9 +662,17 @@ export async function POST(request: NextRequest) {
           console.warn('[Script Gen V2] Segmented-script pass failed; persisting flat shape only', segErr)
         }
 
+        // Duration is now DERIVED from the script the model actually wrote,
+        // rather than a target the content was forced to hit. Persist it so the
+        // downstream video/cost/Veo budgeting reflects the real content length.
+        const derivedDuration = Math.round(totalEstimatedDuration)
         await project.update({
-          metadata: metadataToPersist
+          metadata: metadataToPersist,
+          ...(derivedDuration > 0 ? { duration: derivedDuration } : {}),
         })
+        if (derivedDuration > 0) {
+          console.log(`[Script Gen V2] Derived project duration from script: ${derivedDuration}s (was ${project.duration || 'unset'}s)`)
+        }
 
         // Send completion (single-pass is always complete, not partial)
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({
@@ -1071,7 +1089,7 @@ Logline: ${treatment.logline}
 Genre: ${treatment.genre || 'Drama'}
 Tone: ${treatment.tone || 'Engaging'}
 Format: ${format}
-Target Duration: ~${Math.floor(targetDuration / 60)} minutes (${targetDuration} seconds)
+Approximate Scope (advisory only): ~${Math.floor(targetDuration / 60)} minutes. This is a rough reference, NOT a target to hit — let the story/illustration determine its own length. Each scene should run as long as its beat genuinely needs; do not pad thin material or compress rich material to match this number.
 
 Synopsis:
 ${treatment.synopsis || treatment.content}
@@ -1092,6 +1110,8 @@ Aspect Ratio: ${resolveVariantAspectRatio(treatment)}
 
 ${philosophyIntro}
 Do NOT fragment the content into tiny segments. Each segment should be a COMPLETE unit.
+
+${buildPacingPhilosophyBlock(intent as any)}
 ${constraintBlock}
 
 STRUCTURE PRINCIPLES:
@@ -1110,7 +1130,6 @@ VISUAL STORYTELLING (CRITICAL):
 
 WHAT TO AVOID:
 ❌ Fragmenting discussions across multiple segments
-❌ Creating segments under 45 seconds
 ❌ One segment per line of dialogue
 ❌ Arbitrary breaks that disrupt flow
 ❌ Duplicate segments containing the exact same dialogue
@@ -1224,7 +1243,7 @@ ${beatTimelineNarrationRules}
 IMPORTANT CONSTRAINTS:
 • Scene count is a guide, not a hard ceiling — serve the story first
 • Up to ${sceneLimit} main content segments (bookends excluded; do not over-consolidate distinct dramatic turns)
-• Each main content segment MINIMUM 45 seconds (title/credits bookends exempt)
+• Most main content segments should run ~45 seconds or longer, but a deliberate short beat is fine when the moment calls for it (title/credits bookends exempt)
 • Write the COMPLETE script from beginning to end
 • Do NOT duplicate dialogue or segments
 • Ensure "action" is specific to the events of the segment, NOT repeated across segments
@@ -1326,7 +1345,10 @@ function parseSinglePassResponse(response: string): { scenes: any[] } {
       dialogue: Array.isArray(s.dialogue) ? s.dialogue : [],
       creditLines: Array.isArray(s.creditLines) ? s.creditLines : undefined,
       visualDescription: s.visualDescription || s.action || '',
-      duration: Math.max(45, s.duration || 60), // Enforce minimum 45s
+      // Preserve the model's own pacing. Keep a small 4s video-sanity floor for
+      // provided values (smallest Veo bucket), and only default to 60s when the
+      // model gave no usable duration. We no longer force every scene up to 45s.
+      duration: (typeof s.duration === 'number' && s.duration > 0) ? Math.max(4, s.duration) : 60,
       sfx: Array.isArray(s.sfx) ? s.sfx : [],
       music: s.music || undefined,
       isExpanded: true
@@ -1335,7 +1357,46 @@ function parseSinglePassResponse(response: string): { scenes: any[] } {
 }
 
 /**
- * Consolidate fragmented scenes (under 45s) by merging with adjacent scenes
+ * A scene is "degenerate" when it carries essentially no content — a parsing
+ * artifact or empty stub rather than a deliberate creative beat.
+ */
+function isDegenerateScene(scene: any): boolean {
+  const hasBeats = Array.isArray(scene?.beats) && scene.beats.length > 0
+  const hasDialogue = Array.isArray(scene?.dialogue) && scene.dialogue.length > 0
+  const hasAction = typeof scene?.action === 'string' && scene.action.trim().length > 0
+  const triviallyShort = (scene?.duration || 0) < 8
+  return triviallyShort && !hasBeats && !hasDialogue && !hasAction
+}
+
+/**
+ * Two adjacent scenes are near-duplicates when they share the same heading and
+ * repeat the same content (same speakers / near-identical action text).
+ */
+function areNearDuplicateScenes(a: any, b: any): boolean {
+  const normHeading = (s: any) => String(s?.heading || '').trim().toLowerCase()
+  if (!normHeading(a) || normHeading(a) !== normHeading(b)) return false
+
+  const speakers = (s: any) =>
+    (Array.isArray(s?.dialogue) ? s.dialogue : [])
+      .map((d: any) => String(d?.character || d?.speaker || '').toLowerCase())
+      .join(',')
+  const sameSpeakers = speakers(a) && speakers(a) === speakers(b)
+
+  const actionA = String(a?.action || '').toLowerCase().split(/\s+/).filter(Boolean)
+  const actionB = new Set(String(b?.action || '').toLowerCase().split(/\s+/).filter(Boolean))
+  const overlap = actionA.length > 0
+    ? actionA.filter((w: string) => actionB.has(w)).length / actionA.length
+    : 0
+
+  return sameSpeakers || overlap > 0.8
+}
+
+/**
+ * Consolidate ONLY degenerate stubs and true near-duplicate scenes.
+ *
+ * We intentionally no longer merge every sub-45s scene: intentional quick beats
+ * (a silent reaction, a hard cut, a punchy establishing shot) are legitimate
+ * storytelling and must survive to preserve pacing and rhythm.
  */
 function consolidateFragmentedScenes(scenes: any[]): any[] {
   if (scenes.length <= 1) return scenes
@@ -1349,9 +1410,8 @@ function consolidateFragmentedScenes(scenes: any[]): any[] {
       continue
     }
     
-    // If current scene is too short (<45s), merge with next
-    if (currentScene.duration < 45) {
-      console.log(`[Consolidate] Merging short scene ${currentScene.sceneNumber} (${currentScene.duration}s) with scene ${scene.sceneNumber}`)
+    if (isDegenerateScene(currentScene) || areNearDuplicateScenes(currentScene, scene)) {
+      console.log(`[Consolidate] Merging redundant scene ${currentScene.sceneNumber} into scene ${scene.sceneNumber}`)
       currentScene = mergeScenes(currentScene, scene)
     } else {
       consolidated.push(currentScene)
