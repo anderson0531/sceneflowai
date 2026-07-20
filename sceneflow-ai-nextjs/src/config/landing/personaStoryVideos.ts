@@ -87,6 +87,11 @@ const PRODUCED_VIDEOS: Partial<
       src: vid('The Startup Provider (Thai).mp4', '20260720'),
     },
   },
+  enterprise: {
+    en: {
+      src: vid('Enterprise (English).mp4', '20260720'),
+    },
+  },
 }
 
 export function getPersonaStoryVideoLocales(personaId: PersonaId): PersonaStoryLocale[] {
