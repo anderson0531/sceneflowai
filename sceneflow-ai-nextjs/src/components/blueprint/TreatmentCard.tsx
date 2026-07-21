@@ -933,10 +933,14 @@ export function TreatmentCard({
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 input,
-                format: opts?.duration || 'short_film',
-                filmType: opts?.duration || 'short_film',
+                format: opts?.format || 'short_film',
+                filmType: opts?.duration || 'auto',
                 genre: opts?.genre,
                 tone: opts?.tone,
+                contentIntent: opts?.contentIntent,
+                artStyle: opts?.artStyle,
+                aspectRatio: opts?.aspectRatio,
+                targetAudience: opts?.targetAudience,
                 rigor: 'thorough',
                 variants: 1
               })

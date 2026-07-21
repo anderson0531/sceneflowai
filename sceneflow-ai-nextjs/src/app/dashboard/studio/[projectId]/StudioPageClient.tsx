@@ -16,6 +16,10 @@ import { cn } from "@/lib/utils";
 import { getUserDisplayName } from '@/lib/user/displayName';
 import { BlueprintReimaginDialog } from '@/components/blueprint/BlueprintReimaginDialog'
 import {
+  resolveContentIntentFromMetadata,
+  defaultFormatForIntent,
+} from '@/lib/content/contentIntent'
+import {
   ScriptImportDialog,
   type ScriptImportPayload,
 } from '@/components/blueprint/ScriptImportDialog'
@@ -1103,13 +1107,21 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             console.log('[StudioPage] Series episode detected - auto-generating Blueprint directly from load()')
             router.replace(`/dashboard/studio/${projectId}`, { scroll: false })
             setTimeout(() => {
+              // Honor the series/episode's stored intent instead of forcing a
+              // fiction (Drama/Cinematic) storyline for every auto-generation.
+              const primeIntent = resolveContentIntentFromMetadata({
+                contentIntent: metadata.contentIntent,
+                genre: metadata.genre || projectData.genre,
+                format: metadata.format || projectData.metadata?.format,
+              })
               handleGenerateBlueprint(metadata.blueprintPrimeInput, {
-                genre: metadata.genre || projectData.genre || 'Drama',
-                tone: metadata.tone || projectData.tone || 'Cinematic',
+                genre: metadata.genre || projectData.genre || undefined,
+                tone: metadata.tone || projectData.tone || undefined,
                 targetAudience: metadata.targetAudience || 'General Audience',
                 variantCount: 1,
                 hasStoryDirections: true,
-                format: metadata.format || projectData.metadata?.format || 'narrative',
+                contentIntent: primeIntent,
+                format: metadata.format || projectData.metadata?.format || defaultFormatForIntent(primeIntent),
               }).catch((err) => {
                 console.error('[StudioPage] Auto-generation failed:', err)
                 toast.error('Failed to generate Blueprint automatically.')
