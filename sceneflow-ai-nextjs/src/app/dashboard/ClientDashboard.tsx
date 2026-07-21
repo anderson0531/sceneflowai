@@ -10,6 +10,7 @@ import { DashboardQuickStart } from './components/DashboardQuickStart'
 import { useDashboardData } from '@/hooks/useDashboardData'
 import { DashboardRedirectGuard } from '@/components/auth/DashboardRedirectGuard'
 import { getProjectCreditsUsed } from '@/lib/credits/projectBudgetShared'
+import { ProductPageShell, ProductSection } from '@/components/product'
 import { motion } from 'framer-motion'
 import { Loader2, AlertCircle } from 'lucide-react'
 
@@ -62,9 +63,9 @@ export default function ClientDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-6 md:p-8 font-sans">
+    <ProductPageShell className="font-sans">
       <DashboardRedirectGuard />
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="space-y-6">
         <CueCommandBar />
 
         {error && (
@@ -81,15 +82,12 @@ export default function ClientDashboard() {
         />
 
         {featuredProject && (
-          <section>
-            <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3 px-1">
-              Continue working
-            </h2>
+          <ProductSection label="Continue working">
             <ActiveProjectsContainer
               projects={[featuredProject]}
               onProjectUpdated={refresh}
             />
-          </section>
+          </ProductSection>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -115,6 +113,6 @@ export default function ClientDashboard() {
           addonCredits={addonCredits}
         />
       </div>
-    </div>
+    </ProductPageShell>
   )
 }

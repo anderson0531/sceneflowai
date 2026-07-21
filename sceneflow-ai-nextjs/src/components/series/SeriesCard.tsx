@@ -384,21 +384,25 @@ function EpisodeRow({ episode, onStart }: EpisodeRowProps) {
       
       <div className="flex items-center gap-2 ml-2">
         {episode.projectId ? (
-          <Link href={`/dashboard/workflow/vision/${episode.projectId}`}>
-            <Button variant="ghost" size="sm" className="text-indigo-400 hover:text-indigo-300 text-xs h-7 px-2">
+          <Link href={`/dashboard/studio/${episode.projectId}?primeBlueprint=true`}>
+            <Button variant="outline" size="sm" className="text-indigo-400 border-indigo-500/30 hover:bg-indigo-500/10 text-xs h-7 px-2">
               Continue
             </Button>
           </Link>
         ) : canStart ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onStart}
-            className="text-emerald-400 hover:text-emerald-300 text-xs h-7 px-2"
-          >
-            <Play className="w-3 h-3 mr-1" />
-            Start
-          </Button>
+          <div className="flex flex-col items-end gap-0.5">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onStart}
+              title="Opens Blueprint Studio"
+              className="text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 text-xs h-7 px-2"
+            >
+              <Play className="w-3 h-3 mr-1" />
+              Start episode
+            </Button>
+            <span className="text-[9px] text-gray-500">Opens Blueprint Studio</span>
+          </div>
         ) : (
           <span className="text-[10px] text-gray-600">Blueprint</span>
         )}

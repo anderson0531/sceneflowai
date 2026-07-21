@@ -37,6 +37,10 @@ import { blueprintCategoryToSection, scrollToBlueprintSection } from '@/lib/blue
 import { BLUEPRINT_COPY } from '@/lib/blueprint/blueprintGlossary'
 import { buildBlueprintARNarrationText } from '@/lib/blueprint/arNarrationText'
 import { resolveContentIntent, type ContentIntent } from '@/lib/content/contentIntent'
+import {
+  getScoreTextClassName,
+  SCORE_READY_THRESHOLD,
+} from '@/lib/product/scoreThresholds'
 
 const ResonanceRadarChart = dynamic(
   () =>
@@ -81,27 +85,23 @@ const CATEGORY_SECTION_MAP: Record<string, string> = {
 }
 
 function getBlueprintScoreTextClass(score: number): string {
-  if (score >= READY_FOR_PRODUCTION_THRESHOLD_V3) return 'text-emerald-400'
-  if (score >= 60) return 'text-amber-400'
-  return 'text-red-400'
+  return getScoreTextClassName(score)
 }
 
 function getBlueprintScoreBarClass(score: number): string {
-  if (score >= READY_FOR_PRODUCTION_THRESHOLD_V3) {
-    return 'bg-gradient-to-r from-emerald-500 to-green-400'
-  }
+  if (score >= SCORE_READY_THRESHOLD) return 'bg-gradient-to-r from-emerald-500 to-green-400'
   if (score >= 60) return 'bg-gradient-to-r from-amber-500 to-yellow-400'
   return 'bg-gradient-to-r from-red-600 to-red-400'
 }
 
 function getBlueprintScoreBorderClass(score: number): string {
-  if (score >= READY_FOR_PRODUCTION_THRESHOLD_V3) return 'border-emerald-500/35'
+  if (score >= SCORE_READY_THRESHOLD) return 'border-emerald-500/35'
   if (score >= 60) return 'border-amber-500/35'
   return 'border-red-500/35'
 }
 
 function getBlueprintScoreLabel(score: number): string {
-  if (score >= READY_FOR_PRODUCTION_THRESHOLD_V3) return 'Production ready'
+  if (score >= SCORE_READY_THRESHOLD) return 'Production ready'
   if (score >= 60) return 'Needs improvement'
   return 'Major gaps'
 }

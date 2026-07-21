@@ -111,7 +111,7 @@ export default function BYOKPage() {
       transition={{ duration: 0.5 }}
       className="space-y-6"
     >
-      <Card className="bg-dark-card border-dark-border text-white">
+      <Card className="bg-gray-800/60 border-gray-700/60 text-white">
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-sf-primary/20 rounded-lg flex items-center justify-center">
@@ -139,7 +139,7 @@ export default function BYOKPage() {
             </div>
           </div>
 
-          <div className="p-4 bg-dark-bg rounded-lg border border-dark-border">
+          <div className="p-4 bg-gray-900/80 rounded-lg border border-gray-700/60">
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
@@ -161,7 +161,7 @@ export default function BYOKPage() {
 
             <div className="space-y-3">
               <div>
-                <label htmlFor="vertex-api-key" className="text-sm font-medium text-dark-text block">
+                <label htmlFor="vertex-api-key" className="text-sm font-medium text-gray-200 block">
                   Vertex AI API Key
                 </label>
                 <div className="flex gap-2 mt-1">
@@ -171,7 +171,7 @@ export default function BYOKPage() {
                     value={vertexApiKey}
                     onChange={(e) => setVertexApiKey(e.target.value)}
                     placeholder={vertexConfig.configured ? 'Enter a new key to rotate' : 'Enter your Vertex AI API key'}
-                    className="bg-dark-bg border-dark-border text-white"
+                    className="bg-gray-900/80 border-gray-700/60 text-white"
                     autoComplete="off"
                   />
                   <Button

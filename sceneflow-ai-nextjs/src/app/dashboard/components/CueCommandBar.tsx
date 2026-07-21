@@ -104,7 +104,7 @@ export function CueCommandBar() {
           className="shrink-0"
         >
           <Link href="/dashboard/studio/new-project">
-            <Button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md hover:from-indigo-500 hover:to-purple-500 sm:w-auto">
+            <Button variant="primary" className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               New project
             </Button>

@@ -8,6 +8,7 @@ import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Max
 import { ReferenceTransferDialog } from '@/components/series/ReferenceTransferDialog'
 import type { ReferenceTransferDirection } from '@/types/series'
 import { toast } from 'sonner'
+import { ProductTabList, ProductEmptyState } from '@/components/product'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/Input'
@@ -1576,45 +1577,29 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
           </div>
         )}
         
-        {/* Tab Navigation - matching ScriptPanel folder tab style */}
-        <div className="flex items-center border-b border-gray-700/50 mb-3 overflow-x-auto flex-shrink-0">
-          <div className="flex items-center flex-shrink-0">
-          {referenceTabs.map((tab) => {
-            const isActive = activeReferenceTab === tab.key
-            return (
+        <ProductTabList
+          tabs={referenceTabs.map((tab) => ({
+            key: tab.key,
+            label: tab.label,
+            icon: tab.icon,
+            count: tab.count,
+          }))}
+          activeKey={activeReferenceTab}
+          onChange={(key) => setActiveReferenceTab(key as 'cast' | 'object' | 'locations')}
+          accent="product"
+          trailing={
+            activeReferenceTab === 'cast' ? (
               <button
-                key={tab.key}
-                onClick={() => setActiveReferenceTab(tab.key)}
-                className={`
-                  relative px-3 py-1.5 text-xs font-medium rounded-t-lg transition-all mr-0.5 flex-shrink-0
-                  ${isActive 
-                    ? 'bg-slate-800/80 text-white border-t border-x border-gray-600/50 -mb-px' 
-                    : 'bg-slate-900/40 text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 border-transparent'
-                  }
-                `}
+                type="button"
+                onClick={() => setShowProTips((prev) => !prev)}
+                className="p-1 rounded-full hover:bg-blue-500/10 text-blue-400 hover:text-blue-300 transition-colors flex-shrink-0"
+                title={showProTips ? 'Hide Pro Tips' : 'Show Pro Tips'}
               >
-                <div className="flex items-center gap-1.5">
-                  {React.cloneElement(tab.icon as React.ReactElement, { className: `w-3 h-3 ${isActive ? 'text-sf-primary' : ''}` })}
-                  <span>{tab.label}</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${isActive ? 'bg-sf-primary/20 text-sf-primary' : 'bg-gray-700/50 text-gray-500'}`}>
-                    {tab.count}
-                  </span>
-                </div>
+                <Info className="w-3 h-3" />
               </button>
-            )
-          })}
-          </div>
-          {/* Pro Tips Toggle - Cast tab only */}
-          {activeReferenceTab === 'cast' && (
-            <button
-              onClick={() => setShowProTips((prev) => !prev)}
-              className="ml-auto p-1 rounded-full hover:bg-blue-500/10 text-blue-400 hover:text-blue-300 transition-colors flex-shrink-0"
-              title={showProTips ? "Hide Pro Tips" : "Show Pro Tips"}
-            >
-              <Info className="w-3 h-3" />
-            </button>
-          )}
-        </div>
+            ) : null
+          }
+        />
         
         {/* Tab Content - independent vertical scroll */}
         <div data-vision-scroll-panel className="flex-1 overflow-y-auto min-h-0 space-y-3">
@@ -1692,8 +1677,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                 </Button>
               </div>
               {objectReferences.length === 0 ? (
-                <div className="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg py-6 text-center">
-                  No object references yet. Add props or set pieces.
+                <div className="text-sm text-gray-500 border border-dashed border-gray-700/60 rounded-lg py-6 text-center">
+                  No props yet. Add props or set pieces for this scene.
                 </div>
               ) : (
                 objectReferences.map((reference) => (

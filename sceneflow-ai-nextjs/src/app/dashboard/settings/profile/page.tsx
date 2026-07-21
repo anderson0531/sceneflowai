@@ -121,7 +121,7 @@ export default function ProfilePage() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="bg-dark-card border-dark-border text-white">
+      <Card className="bg-gray-800/60 border-gray-700/60 text-white">
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-sf-primary/20 rounded-lg flex items-center justify-center">
@@ -139,7 +139,7 @@ export default function ProfilePage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label htmlFor="username" className="text-sm font-medium text-dark-text flex items-center gap-2">
+                <label htmlFor="username" className="text-sm font-medium text-gray-200 flex items-center gap-2">
                   <User className="w-4 h-4" />
                   Username
                 </label>
@@ -149,13 +149,13 @@ export default function ProfilePage() {
                   type="text"
                   value={formData.username}
                   onChange={handleChange}
-                  className="bg-dark-bg border-dark-border text-white"
+                  className="bg-gray-900/80 border-gray-700/60 text-white"
                   placeholder="Enter your username"
                 />
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium text-dark-text flex items-center gap-2">
+                <label htmlFor="email" className="text-sm font-medium text-gray-200 flex items-center gap-2">
                   <Mail className="w-4 h-4" />
                   Email Address
                 </label>
@@ -165,14 +165,14 @@ export default function ProfilePage() {
                   type="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="bg-dark-bg border-dark-border text-white"
+                  className="bg-gray-900/80 border-gray-700/60 text-white"
                   placeholder="Enter your email"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="first_name" className="text-sm font-medium text-dark-text">
+                <label htmlFor="first_name" className="text-sm font-medium text-gray-200">
                   First Name
                 </label>
                 <Input
@@ -181,13 +181,13 @@ export default function ProfilePage() {
                   type="text"
                   value={formData.first_name}
                   onChange={handleChange}
-                  className="bg-dark-bg border-dark-border text-white"
+                  className="bg-gray-900/80 border-gray-700/60 text-white"
                   placeholder="Enter your first name"
                 />
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="last_name" className="text-sm font-medium text-dark-text">
+                <label htmlFor="last_name" className="text-sm font-medium text-gray-200">
                   Last Name
                 </label>
                 <Input
@@ -196,13 +196,13 @@ export default function ProfilePage() {
                   type="text"
                   value={formData.last_name}
                   onChange={handleChange}
-                  className="bg-dark-bg border-dark-border text-white"
+                  className="bg-gray-900/80 border-gray-700/60 text-white"
                   placeholder="Enter your last name"
                 />
               </div>
             </div>
 
-            <div className="flex justify-end pt-4 border-t border-dark-border">
+            <div className="flex justify-end pt-4 border-t border-gray-700/60">
               <Button
                 type="submit"
                 disabled={saving}

@@ -53,6 +53,7 @@ const TreatmentCard = dynamic(
 import TopProgressBar from '@/components/ui/TopProgressBar'
 import GeneratingOverlay from '@/components/ui/GeneratingOverlay'
 import { BlueprintOnboarding } from '@/components/blueprint/BlueprintOnboarding'
+import { ProductEmptyState } from '@/components/product'
 import { BlueprintResonanceStrip } from '@/components/blueprint/BlueprintResonanceStrip'
 import { BlueprintNextStepBanner } from '@/components/blueprint/BlueprintNextStepBanner'
 import { BlueprintReadyBanner } from '@/components/blueprint/BlueprintReadyBanner'
@@ -1445,24 +1446,15 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 {/* Empty Blueprint State - the Start Project dialog opens automatically;
                     this slim CTA is the fallback to reopen it after dismissal. */}
                 {(!guide.treatmentVariants || guide.treatmentVariants.length === 0) && !isGen && (
-                  <div className="rounded-2xl border-2 border-dashed border-cyan-500/30 bg-gradient-to-br from-cyan-500/5 to-purple-500/5 p-8 text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center border border-cyan-500/30">
-                      <Wand2 className="w-8 h-8 text-cyan-400" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-white mb-2">Start Your Project</h3>
-                    <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">
-                      Describe your project and generate a professional Blueprint with AI-powered story structure, characters, and visual direction.
-                    </p>
-                    <div className="flex items-center justify-center">
-                      <Button
-                        onClick={() => setShowReimaginDialog(true)}
-                        className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white px-6 py-3 text-base font-medium"
-                      >
-                        <Sparkles className="w-5 h-5 mr-2" />
-                        Start Project
-                      </Button>
-                    </div>
-                  </div>
+                  <ProductEmptyState
+                    icon={<Wand2 className="h-8 w-8 text-cyan-400" />}
+                    title="Start Your Project"
+                    description="Describe your project and generate a professional Blueprint with AI-powered story structure, characters, and visual direction."
+                    accent="product"
+                    className="border-cyan-500/30 bg-gradient-to-br from-cyan-500/5 to-purple-500/5"
+                    actionLabel="Start Project"
+                    onAction={() => setShowReimaginDialog(true)}
+                  />
                 )}
 
                 {/* Treatment Card */}
