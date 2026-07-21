@@ -10333,6 +10333,43 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  const handleSaveBeatKenBurns = async (
+    sceneIndex: number,
+    beatId: string,
+    settings: import('@/lib/storyboard/kenBurnsFrame').BeatKenBurnsSettings
+  ) => {
+    if (!script?.script?.scenes) return
+
+    const scene = script.script.scenes[sceneIndex]
+    const rawBeatIdx = scene ? resolveRawBeatIndex(scene, { beatId }) : undefined
+    if (rawBeatIdx === undefined) {
+      try { const { toast } = require('sonner'); toast.error('Beat not found') } catch {}
+      return
+    }
+
+    const updatedScenes = script.script.scenes.map((s: any, idx: number) => {
+      if (idx !== sceneIndex || !Array.isArray(s.beats)) return s
+      const beats = [...s.beats]
+      const beat = beats[rawBeatIdx]
+      if (!beat) return s
+      beats[rawBeatIdx] = { ...beat, kenBurns: settings }
+      return { ...s, beats }
+    })
+
+    setScript((prev: any) => ({
+      ...prev,
+      script: { ...prev?.script, scenes: updatedScenes },
+    }))
+
+    try {
+      await persistVisionScriptScenes(updatedScenes, 'handleSaveBeatKenBurns')
+      try { const { toast } = require('sonner'); toast.success('Frame motion saved') } catch {}
+    } catch (saveError) {
+      console.error('[handleSaveBeatKenBurns] Failed to save:', saveError)
+      try { const { toast } = require('sonner'); toast.error('Failed to save frame motion') } catch {}
+    }
+  }
+
   const handleSetScreeningPoster = async (
     sceneIndex: number,
     frameKey: string | null,
@@ -14326,6 +14363,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onUploadBeatFrame={handleUploadBeatFrame}
                 onUploadDialogueFrame={handleUploadDialogueFrame}
                 onSaveEditedBeatFrame={handleSaveEditedBeatFrame}
+                onSaveBeatKenBurns={handleSaveBeatKenBurns}
                 onSetScreeningPoster={handleSetScreeningPoster}
                 onSaveEditedDialogueFrame={handleSaveEditedDialogueFrame}
                 onSaveEditedCustomFrame={handleSaveEditedCustomFrame}

@@ -24,6 +24,7 @@ import type {
 } from '@/components/vision/scene-production/types'
 import { calculateSourceHash } from '@/types/productionStreams'
 import { buildProjectAnimaticTimeline } from '@/lib/storyboard/types'
+import { rectToRenderKenBurns, resolveBeatKenBurnsSettings } from '@/lib/storyboard/kenBurnsFrame'
 
 export interface ProjectAnimaticRequest {
   projectId: string
@@ -71,19 +72,25 @@ function buildProjectAnimaticJobSpec(
     type: 'animatic',
   }
 
-  const kenBurns = getKenBurnsSettings(settings.kenBurnsIntensity)
+  const kenBurnsFallback = getKenBurnsSettings(settings.kenBurnsIntensity)
 
-  const renderSegments: RenderSegment[] = timeline.segments.map((seg, index) => ({
-    segmentId: seg.segmentId,
-    imageUrl: seg.imageUrl,
-    startTime: seg.startTime,
-    duration: seg.duration,
-    kenBurns: {
-      ...kenBurns,
-      panX: index % 2 === 0 ? 0 : (index % 4 < 2 ? 1 : -1) * 0.1,
-      panY: index % 3 === 0 ? 0 : (index % 3 === 1 ? 1 : -1) * 0.1,
-    },
-  }))
+  const renderSegments: RenderSegment[] = timeline.segments.map((seg, index) => {
+    const resolved = resolveBeatKenBurnsSettings(seg.kenBurns)
+    const kenBurns = resolved
+      ? rectToRenderKenBurns(resolved)
+      : {
+          ...kenBurnsFallback,
+          panX: index % 2 === 0 ? 0 : (index % 4 < 2 ? 1 : -1) * 0.1,
+          panY: index % 3 === 0 ? 0 : (index % 3 === 1 ? 1 : -1) * 0.1,
+        }
+    return {
+      segmentId: seg.segmentId,
+      imageUrl: seg.imageUrl,
+      startTime: seg.startTime,
+      duration: seg.duration,
+      kenBurns,
+    }
+  })
 
   const renderAudioClips: RenderAudioClip[] = timeline.audioClips.map((clip) => ({
     url: clip.url,

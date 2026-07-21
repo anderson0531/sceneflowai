@@ -8,6 +8,7 @@ import {
   ChevronUp,
   Clapperboard,
   Loader,
+  Move,
   MonitorPlay,
   Plus,
   RefreshCw,
@@ -36,6 +37,8 @@ import { resolveFrameEditCharacterReferences } from '@/lib/vision/resolveFrameEd
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { FrameMotionEditor } from './FrameMotionEditor'
+import type { BeatKenBurnsSettings } from '@/lib/storyboard/kenBurnsFrame'
 
 type EditingFrame =
   | { kind: 'establishing'; sceneIndex: number; imageUrl: string }
@@ -68,6 +71,7 @@ export interface SceneStoryboardFrameViewerProps {
   onUploadScene?: (file: File) => void
   onSaveEditedScene?: (imageUrl: string) => void
   onSaveEditedBeatFrame?: (beatId: string, imageUrl: string) => void
+  onSaveBeatKenBurns?: (beatId: string, settings: BeatKenBurnsSettings) => void
   onSaveEditedDialogueFrame?: (dialogueIndex: number, imageUrl: string) => void
   onSaveEditedCustomFrame?: (customFrameId: string, imageUrl: string) => void
   onExpressSceneGenerate?: (options?: ExpressSceneConfirmOptions) => void | Promise<void>
@@ -321,6 +325,7 @@ export function SceneStoryboardFrameViewer({
   onUploadScene,
   onSaveEditedScene,
   onSaveEditedBeatFrame,
+  onSaveBeatKenBurns,
   onSaveEditedDialogueFrame,
   onSaveEditedCustomFrame,
   onExpressSceneGenerate,
@@ -340,6 +345,7 @@ export function SceneStoryboardFrameViewer({
   const [generatingCustomFrames, setGeneratingCustomFrames] = useState<Set<string>>(new Set())
   const [expressSceneDialogOpen, setExpressSceneDialogOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
+  const [motionEditorOpen, setMotionEditorOpen] = useState(false)
   const [editingFrame, setEditingFrame] = useState<EditingFrame | null>(null)
   const thumbnailScrollRef = useRef<HTMLDivElement>(null)
   const thumbnailDragRef = useRef<{
@@ -372,6 +378,11 @@ export function SceneStoryboardFrameViewer({
     if (frameSlots.length === 0) return null
     return frameSlots.find((slot) => slot.key === selectedFrameKey) ?? frameSlots[0]
   }, [frameSlots, selectedFrameKey])
+
+  const previewBeatKenBurns = useMemo(() => {
+    if (!previewSlot?.beatId) return undefined
+    return sceneBeats.find((beat) => beat.beatId === previewSlot.beatId)?.kenBurns
+  }, [previewSlot?.beatId, sceneBeats])
 
   const editCharacterReferences = useMemo(
     () =>
@@ -860,6 +871,26 @@ export function SceneStoryboardFrameViewer({
                                 : 'Set as poster'}
                             </Button>
                           )}
+                        {onSaveBeatKenBurns &&
+                          previewSlot.beatId &&
+                          previewSlot.displayImageUrl &&
+                          !previewSlot.isMissing && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className={cn(
+                                'h-7 text-[10px] shrink-0',
+                                previewBeatKenBurns?.enabled
+                                  ? 'border-cyan-500/50 text-cyan-300 bg-cyan-500/10'
+                                  : 'border-slate-600/50 text-slate-300 hover:bg-slate-700/50'
+                              )}
+                              onClick={() => setMotionEditorOpen(true)}
+                            >
+                              <Move className="w-3 h-3 mr-0.5" />
+                              {previewBeatKenBurns?.enabled ? 'Motion on' : 'Motion'}
+                            </Button>
+                          )}
                       </div>
                       {previewSlot.storyboardImagePrompt?.trim() && (
                         <p
@@ -922,6 +953,17 @@ export function SceneStoryboardFrameViewer({
         }}
         title="Edit Frame"
       />
+
+      {onSaveBeatKenBurns && previewSlot?.beatId && previewSlot.displayImageUrl && (
+        <FrameMotionEditor
+          open={motionEditorOpen}
+          onOpenChange={setMotionEditorOpen}
+          imageUrl={previewSlot.displayImageUrl}
+          beatLabel={previewSlot.label}
+          value={previewBeatKenBurns}
+          onSave={(settings) => onSaveBeatKenBurns(previewSlot.beatId!, settings)}
+        />
+      )}
     </div>
     </TooltipProvider>
   )
