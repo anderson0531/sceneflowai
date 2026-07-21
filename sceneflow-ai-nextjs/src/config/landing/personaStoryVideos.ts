@@ -78,6 +78,11 @@ const PRODUCED_VIDEOS: Partial<
       src: vid('The Startup Provider (Hindi).mp4'),
     },
   },
+  educator: {
+    en: {
+      src: vid('Educator (English).mp4'),
+    },
+  },
 }
 
 export function getPersonaStoryVideoLocales(personaId: PersonaId): PersonaStoryLocale[] {
