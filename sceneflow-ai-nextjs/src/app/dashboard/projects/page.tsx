@@ -6,9 +6,14 @@ import { ProjectCard } from '../components/ProjectCard'
 import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/Button'
-import { Plus, Search, Grid3x3, List, FolderOpen, Star } from 'lucide-react'
+import { Plus, Search, Grid3x3, List, FolderOpen, Star, FileText } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { DeleteConfirmationDialog } from '@/components/ui/DeleteConfirmationDialog'
+import {
+  ScriptImportDialog,
+  type ScriptImportPayload,
+} from '@/components/blueprint/ScriptImportDialog'
 import { useSession } from 'next-auth/react'
 import { useEnhancedStore } from '@/store/enhancedStore'
 
@@ -70,8 +75,50 @@ export default function ProjectsPage() {
   const [projectToDelete, setProjectToDelete] = useState<{ id: string; title: string } | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [ownershipSynced, setOwnershipSynced] = useState(false)
-  
+  const [showScriptImportDialog, setShowScriptImportDialog] = useState(false)
+
+  const router = useRouter()
   const { data: session, status: authStatus } = useSession()
+
+  // Import a full screenplay: create a production project and jump to Vision.
+  const handleScriptImport = useCallback(async (result: ScriptImportPayload) => {
+    try {
+      if (authStatus !== 'authenticated' || !session?.user?.id) {
+        const { toast } = await import('sonner')
+        toast.error('Sign in to import a script')
+        return
+      }
+
+      const { toast } = await import('sonner')
+      toast.info('Importing script...')
+
+      const res = await fetch('/api/projects/from-script', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          parsedScript: result.parsedScript,
+          importCompletenessScore: result.importCompletenessScore,
+          importGapsResolved: result.importGapsResolved,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (data.success && data.project) {
+        toast.success(
+          `Script imported! ${data.project.metadata?.sceneCount || 0} scenes, ${data.project.metadata?.characterCount || 0} characters`
+        )
+        router.push(`/dashboard/workflow/vision/${data.project.id}`)
+      } else {
+        toast.error(data.error || 'Failed to import script')
+      }
+    } catch (e: unknown) {
+      console.error('Script import error:', e)
+      const { toast } = await import('sonner')
+      const message = e instanceof Error ? e.message : 'Unknown error'
+      toast.error('Failed to import script: ' + message)
+    }
+  }, [authStatus, session?.user?.id, router])
   
   // Selected project for dashboard display
   const selectedProjectId = useEnhancedStore((s: any) => s.selectedProjectId)
@@ -380,12 +427,22 @@ export default function ProjectsPage() {
         className="sticky top-0 z-40 w-full"
         stickyTop={0}
         primaryActions={
-          <Link href="/dashboard/studio/new-project">
-            <Button className="bg-sf-primary text-white hover:bg-sf-accent flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              Start Project
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowScriptImportDialog(true)}
+              className="flex items-center gap-2"
+            >
+              <FileText className="w-4 h-4" />
+              Import Script
             </Button>
-          </Link>
+            <Link href="/dashboard/studio/new-project">
+              <Button className="bg-sf-primary text-white hover:bg-sf-accent flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                Start Project
+              </Button>
+            </Link>
+          </div>
         }
         secondaryActions={
           <>
@@ -521,6 +578,12 @@ export default function ProjectsPage() {
         onConfirm={confirmDelete}
         projectTitle={projectToDelete?.title || ''}
         isDeleting={isDeleting}
+      />
+
+      <ScriptImportDialog
+        open={showScriptImportDialog}
+        onOpenChange={setShowScriptImportDialog}
+        onImport={handleScriptImport}
       />
     </div>
   )
