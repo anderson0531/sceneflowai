@@ -54,6 +54,11 @@ import {
   CROSSFADE_DURATION_MS,
   type GalleryImageEffectPrefs,
 } from '@/lib/storyboard/storyboardImageEffects'
+import {
+  computeFrameKenBurnsTransform,
+  computeFrameProgress,
+  resolveBeatKenBurnsSettings,
+} from '@/lib/storyboard/kenBurnsFrame'
 import { StoryboardImageEffectControl } from '@/components/vision/StoryboardImageEffectControl'
 import type { SceneProductionData } from '@/components/vision/scene-production/types'
 import type { FinalCutSelection } from '@/lib/types/finalCut'
@@ -664,6 +669,14 @@ export function AudioGalleryPlayer({
   }, [currentTime, currentVisualFrame?.startTime, currentVisualFrame?.duration, sceneDuration])
 
   const imageTransform = useMemo(() => {
+    const frameKenBurns = resolveBeatKenBurnsSettings(currentVisualFrame?.kenBurns)
+    if (frameKenBurns) {
+      const frameStart = currentVisualFrame?.startTime ?? 0
+      const frameDuration = Math.max(currentVisualFrame?.duration ?? sceneDuration, 2)
+      const progress = computeFrameProgress(frameStart, frameDuration, currentTime)
+      return computeFrameKenBurnsTransform(frameKenBurns, progress)
+    }
+
     switch (imageEffectPrefs.mode) {
       case 'kenBurns':
         return computeKenBurnsTransform({
@@ -689,6 +702,7 @@ export function AudioGalleryPlayer({
     visualFrameKey,
     currentVisualFrame?.startTime,
     currentVisualFrame?.duration,
+    currentVisualFrame?.kenBurns,
     currentTime,
     sceneDuration,
   ])

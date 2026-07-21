@@ -517,6 +517,26 @@ def build_image_watermark_filters(
     return [scale_f, ol]
 
 
+def rect_to_zoompan_xy(
+    rect: Dict[str, Any],
+    scaled_w: float,
+    scaled_h: float,
+) -> tuple:
+    """Map normalized cover-space viewport rect to zoompan z/x/y at frame 0."""
+    w = max(0.05, min(1.0, float(rect.get('width', 1.0))))
+    h = max(0.05, min(1.0, float(rect.get('height', 1.0))))
+    x = max(0.0, min(1.0 - w, float(rect.get('x', 0.0))))
+    y = max(0.0, min(1.0 - h, float(rect.get('y', 0.0))))
+    zoom = max(1.0 / w, 1.0 / h)
+    cx = x + w / 2.0
+    cy = y + h / 2.0
+    visible_w = scaled_w / zoom
+    visible_h = scaled_h / zoom
+    px = cx * scaled_w - visible_w / 2.0
+    py = cy * scaled_h - visible_h / 2.0
+    return zoom, px, py
+
+
 def build_ken_burns_filter(
     segment_index: int,
     duration_frames: int,
@@ -527,6 +547,8 @@ def build_ken_burns_filter(
     pan_y: float = 0.0,
     width: int = 1920,
     height: int = 1080,
+    start_rect: Optional[Dict[str, Any]] = None,
+    end_rect: Optional[Dict[str, Any]] = None,
 ) -> str:
     """
     Build FFmpeg zoompan filter for Ken Burns effect.
@@ -545,36 +567,40 @@ def build_ken_burns_filter(
     Returns:
         FFmpeg filter string for this segment
     """
-    # Calculate zoom rate per frame
-    zoom_diff = zoom_end - zoom_start
-    zoom_rate = zoom_diff / duration_frames if duration_frames > 0 else 0
-    
-    # Zoompan expression for zoom
-    # z = zoom_start + (frame_number * zoom_rate)
-    zoom_expr = f"'{zoom_start}+{zoom_rate}*on'"
-    
-    # Calculate pan expressions
-    # Center starts at middle, moves based on pan direction
-    # x position: starts at center, moves left or right
-    # Scaled image is 2x, so we have headroom to pan
     scaled_w = width * SCALE_FACTOR
     scaled_h = height * SCALE_FACTOR
-    
-    # Pan distance over the duration (as percentage of available headroom)
-    pan_headroom_x = (scaled_w - width) / 2
-    pan_headroom_y = (scaled_h - height) / 2
-    
-    # Calculate per-frame pan movement
-    pan_per_frame_x = (pan_x * pan_headroom_x) / duration_frames if duration_frames > 0 else 0
-    pan_per_frame_y = (pan_y * pan_headroom_y) / duration_frames if duration_frames > 0 else 0
-    
-    # Start at center of scaled image
-    center_x = (scaled_w - width) / 2
-    center_y = (scaled_h - height) / 2
-    
-    # x and y expressions: start at center, move based on pan direction
-    x_expr = f"'{center_x}+{pan_per_frame_x}*on'"
-    y_expr = f"'{center_y}+{pan_per_frame_y}*on'"
+
+    if start_rect and end_rect:
+        z0, x0, y0 = rect_to_zoompan_xy(start_rect, scaled_w, scaled_h)
+        z1, x1, y1 = rect_to_zoompan_xy(end_rect, scaled_w, scaled_h)
+        if duration_frames > 0:
+            zoom_expr = f"'{z0}+({z1}-{z0})*on/{duration_frames}'"
+            x_expr = f"'{x0}+({x1}-{x0})*on/{duration_frames}'"
+            y_expr = f"'{y0}+({y1}-{y0})*on/{duration_frames}'"
+        else:
+            zoom_expr = f"'{z0}'"
+            x_expr = f"'{x0}'"
+            y_expr = f"'{y0}'"
+    else:
+        # Calculate zoom rate per frame
+        zoom_diff = zoom_end - zoom_start
+        zoom_rate = zoom_diff / duration_frames if duration_frames > 0 else 0
+        
+        # Zoompan expression for zoom
+        zoom_expr = f"'{zoom_start}+{zoom_rate}*on'"
+        
+        # Pan distance over the duration (as percentage of available headroom)
+        pan_headroom_x = (scaled_w - width) / 2
+        pan_headroom_y = (scaled_h - height) / 2
+        
+        pan_per_frame_x = (pan_x * pan_headroom_x) / duration_frames if duration_frames > 0 else 0
+        pan_per_frame_y = (pan_y * pan_headroom_y) / duration_frames if duration_frames > 0 else 0
+        
+        center_x = (scaled_w - width) / 2
+        center_y = (scaled_h - height) / 2
+        
+        x_expr = f"'{center_x}+{pan_per_frame_x}*on'"
+        y_expr = f"'{center_y}+{pan_per_frame_y}*on'"
     
     # Build the zoompan filter
     # First scale to 2x for headroom, then apply zoompan
@@ -642,6 +668,8 @@ def build_ffmpeg_command(
         zoom_end = kb.get('zoomEnd', 1.05)
         pan_x = kb.get('panX', 0.0)
         pan_y = kb.get('panY', 0.0)
+        start_rect = kb.get('startRect')
+        end_rect = kb.get('endRect')
         
         filter_str = build_ken_burns_filter(
             segment_index=i,
@@ -653,6 +681,8 @@ def build_ffmpeg_command(
             pan_y=pan_y,
             width=width,
             height=height,
+            start_rect=start_rect,
+            end_rect=end_rect,
         )
         filter_parts.append(filter_str)
         video_concat_inputs.append(f"[v{i}]")

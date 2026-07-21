@@ -8,6 +8,13 @@
 /**
  * Ken Burns effect settings for image animation
  */
+export interface KenBurnsViewportRect {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
 export interface KenBurnsSettings {
   /** Starting zoom level (1.0 = no zoom, 1.5 = 50% zoom in) */
   zoomStart: number
@@ -17,6 +24,12 @@ export interface KenBurnsSettings {
   panX: number
   /** Pan Y direction (-1 = up, 0 = center, 1 = down) */
   panY: number
+  /** Optional authored pan-from viewport (normalized cover space). */
+  startRect?: KenBurnsViewportRect
+  /** Optional authored pan-to viewport (normalized cover space). */
+  endRect?: KenBurnsViewportRect
+  /** Easing curve for viewport interpolation during export. */
+  easing?: 'linear' | 'smooth' | 'drift' | 'push' | 'dramatic'
 }
 
 /**

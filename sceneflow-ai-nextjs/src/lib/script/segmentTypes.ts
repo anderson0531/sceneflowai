@@ -83,6 +83,8 @@ export interface SceneBeat {
   overlayText?: string
   /** Auto-positioned caption style in the Screening Room animatic. */
   overlayType?: BeatOverlayType
+  /** Per-beat Ken Burns pan-from / pan-to for Pre-Vis frames and animatic export. */
+  kenBurns?: import('@/lib/storyboard/kenBurnsFrame').BeatKenBurnsSettings
 }
 
 /**

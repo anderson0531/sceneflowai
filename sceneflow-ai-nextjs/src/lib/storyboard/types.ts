@@ -19,6 +19,7 @@ import { isValidStoryboardMediaUrl } from '@/lib/storyboard/mergeSceneMedia'
 import { buildStoryboardMusicClips, resolveSceneMusicFileDuration } from '@/lib/storyboard/musicPlayback'
 import { buildBeatAlignedStoryboardSfxClips } from '@/lib/storyboard/sfxPlayback'
 import { getBeatOverlayFields } from '@/lib/storyboard/beatCaption'
+import type { BeatKenBurnsSettings } from '@/lib/storyboard/kenBurnsFrame'
 import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
 
 const NARRATION_CLIP_BUFFER_SEC = 0.5
@@ -104,6 +105,8 @@ export interface StoryboardVisualFrame {
   isSceneEnd?: boolean
   /** True when this is the first beat in a scene (triggers fade-from-black at start). */
   isSceneStart?: boolean
+  /** Per-beat Ken Burns settings authored on the Frames tab. */
+  kenBurns?: BeatKenBurnsSettings
 }
 
 function createStoryboardFrameId(): string {
@@ -1369,6 +1372,7 @@ export function buildBeatFirstPlaybackTimeline(
     clipId: string
     overlayText?: string
     overlayType?: BeatOverlayType
+    kenBurns?: BeatKenBurnsSettings
   }> = []
 
   for (let beatIdx = 0; beatIdx < beats.length; beatIdx++) {
@@ -1436,6 +1440,7 @@ export function buildBeatFirstPlaybackTimeline(
         label: 'Action',
         line: beat.actionDescription,
         clipId: `action-${beat.beatId}`,
+        kenBurns: beat.kenBurns,
         ...overlay,
       })
       currentStartTime += duration + DIALOGUE_CLIP_BUFFER_SEC
@@ -1476,6 +1481,7 @@ export function buildBeatFirstPlaybackTimeline(
         line: beat.line,
         dialogueIndex: effectiveDialogueIndex,
         clipId,
+        kenBurns: beat.kenBurns,
         ...overlay,
       })
       currentStartTime += duration + DIALOGUE_CLIP_BUFFER_SEC
@@ -1515,6 +1521,7 @@ export function buildBeatFirstPlaybackTimeline(
       line: beat.line,
       dialogueIndex: effectiveDialogueIndex,
       clipId,
+      kenBurns: beat.kenBurns,
       ...getBeatOverlayFields(beat),
     })
 
@@ -1540,6 +1547,7 @@ export function buildBeatFirstPlaybackTimeline(
     overlayType: win.overlayType,
     isSceneEnd: win.isSceneEnd,
     isSceneStart: index === 0,
+    kenBurns: win.kenBurns,
   }))
 
   return {
@@ -1788,6 +1796,7 @@ export interface ProjectAnimaticRenderSegment {
   imageUrl: string
   startTime: number
   duration: number
+  kenBurns?: BeatKenBurnsSettings
 }
 
 export interface ProjectAnimaticAudioClip {
@@ -1908,6 +1917,7 @@ export function buildProjectAnimaticTimeline(
           imageUrl: frame.imageUrl,
           startTime: frameStart,
           duration: startDur,
+          kenBurns: frame.kenBurns,
         })
         segments.push({
           segmentId: `s${sceneIndex}-${frame.clipId}-end`,
@@ -1916,6 +1926,7 @@ export function buildProjectAnimaticTimeline(
           imageUrl: frame.endImageUrl,
           startTime: frameStart + startDur - crossfadeDur,
           duration: endDur,
+          kenBurns: frame.kenBurns,
         })
       } else {
         segments.push({
@@ -1925,6 +1936,7 @@ export function buildProjectAnimaticTimeline(
           imageUrl: frame.imageUrl,
           startTime: frameStart,
           duration: frameDuration,
+          kenBurns: frame.kenBurns,
         })
       }
     }

@@ -27,6 +27,8 @@ import type {
   KenBurnsIntensity,
 } from '@/components/vision/scene-production/types'
 import { calculateSourceHash } from '@/types/productionStreams'
+import { rectToRenderKenBurns, resolveBeatKenBurnsSettings } from '@/lib/storyboard/kenBurnsFrame'
+import type { BeatKenBurnsSettings } from '@/lib/storyboard/kenBurnsFrame'
 
 // ============================================================================
 // Types
@@ -45,6 +47,7 @@ export interface SceneAnimaticRequest {
     imageUrl: string
     startTime: number
     duration: number
+    kenBurns?: KenBurnsSettings
   }>
   /** Audio clips with timing */
   audioClips: Array<{
@@ -91,11 +94,30 @@ function getKenBurnsSettings(intensity: KenBurnsIntensity): KenBurnsSettings {
 // Build Render Job Spec
 // ============================================================================
 
+function resolveSegmentKenBurns(
+  beatKenBurns: BeatKenBurnsSettings | KenBurnsSettings | undefined,
+  fallback: KenBurnsSettings,
+  index: number
+): KenBurnsSettings {
+  if (beatKenBurns && 'zoomStart' in beatKenBurns) {
+    return beatKenBurns as KenBurnsSettings
+  }
+  const resolved = resolveBeatKenBurnsSettings(beatKenBurns as BeatKenBurnsSettings | undefined)
+  if (resolved) {
+    return rectToRenderKenBurns(resolved)
+  }
+  return {
+    ...fallback,
+    panX: index % 2 === 0 ? 0 : (index % 4 < 2 ? 1 : -1) * 0.1,
+    panY: index % 3 === 0 ? 0 : (index % 3 === 1 ? 1 : -1) * 0.1,
+  }
+}
+
 function buildSceneAnimaticJobSpec(
   jobId: string,
   request: SceneAnimaticRequest
 ): RenderJobSpec {
-  const kenBurns = getKenBurnsSettings(request.settings.kenBurnsIntensity)
+  const kenBurnsFallback = getKenBurnsSettings(request.settings.kenBurnsIntensity)
   
   // Build render segments with Ken Burns
   const renderSegments: RenderSegment[] = request.segments.map((seg, index) => ({
@@ -103,12 +125,7 @@ function buildSceneAnimaticJobSpec(
     imageUrl: seg.imageUrl,
     startTime: seg.startTime,
     duration: seg.duration,
-    kenBurns: {
-      ...kenBurns,
-      // Alternate pan direction for variety
-      panX: index % 2 === 0 ? 0 : (index % 4 < 2 ? 1 : -1) * 0.1,
-      panY: index % 3 === 0 ? 0 : (index % 3 === 1 ? 1 : -1) * 0.1,
-    },
+    kenBurns: resolveSegmentKenBurns(seg.kenBurns, kenBurnsFallback, index),
   }))
   
   // Build audio clips
