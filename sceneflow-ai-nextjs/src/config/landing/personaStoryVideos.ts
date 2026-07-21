@@ -77,6 +77,38 @@ const PRODUCED_VIDEOS: Partial<
     hi: {
       src: vid('The Startup Provider (Hindi).mp4'),
     },
+    zh: {
+      src: vid('The Startup Provider (Chinese).mp4', '20260720'),
+    },
+    ar: {
+      src: vid('The Startup Provider (Arabic).mp4', '20260720'),
+    },
+    th: {
+      src: vid('The Startup Provider (Thai).mp4', '20260720'),
+    },
+  },
+  enterprise: {
+    en: {
+      src: vid('Enterprise (English).mp4', '20260720'),
+    },
+    es: {
+      src: vid('Enterprise (Spanish).mp4', '20260720'),
+    },
+    pt: {
+      src: vid('Enterprise (Portuguese).mp4', '20260720'),
+    },
+    hi: {
+      src: vid('Enterprise (Hindi).mp4', '20260720'),
+    },
+    zh: {
+      src: vid('Enterprise (Chinese).mp4', '20260720'),
+    },
+    ar: {
+      src: vid('Enterprise (Arabic) .mp4', '20260720'),
+    },
+    th: {
+      src: vid('Enterprise (Thai).mp4', '20260720'),
+    },
   },
 }
 
