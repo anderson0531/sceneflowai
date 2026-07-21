@@ -90,6 +90,25 @@ export function resolveProductionFormat(genre?: string | null): ProductionFormat
   return GENRE_TO_FORMAT[key] ?? 'short_film'
 }
 
+/**
+ * Default production format for a content intent, used when Genre is free-form
+ * text that does not map to the GENRE_TO_FORMAT table. Keeps non-fiction intents
+ * out of the fiction-biased `short_film` default.
+ */
+export function defaultFormatForIntent(intent: ContentIntent): ProductionFormat {
+  switch (intent) {
+    case 'informational':
+      return 'documentary'
+    case 'commercial':
+      return 'explainer'
+    case 'conversational':
+      return 'podcast'
+    case 'fiction':
+    default:
+      return 'short_film'
+  }
+}
+
 export function isFictionIntent(intent: ContentIntent): boolean {
   return intent === 'fiction'
 }

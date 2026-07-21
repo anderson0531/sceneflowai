@@ -257,7 +257,8 @@ function autoDetectFilmStructure(
   input: string,
   coreConcept: CoreConceptData | null,
   format: string,
-  targetMinutes: number
+  targetMinutes: number,
+  contentIntent?: ContentIntent
 ): { structure: BeatStructureKey; confidence: number; reason: string } {
   const content = `${input} ${coreConcept?.input_synopsis || ''} ${coreConcept?.core_themes?.join(' ') || ''}`.toLowerCase()
   
@@ -325,7 +326,24 @@ function autoDetectFilmStructure(
     }
   }
   
-  // Default to three-act structure - the most versatile
+  // Intent-aware default: only fiction should fall back to three-act. Non-fiction
+  // intents must not be coerced into a cinematic storyline structure.
+  if (contentIntent && contentIntent !== 'fiction') {
+    if (contentIntent === 'commercial') {
+      return {
+        structure: 'instructional',
+        confidence: 0.7,
+        reason: 'Commercial intent defaults to problem/solution instructional structure',
+      }
+    }
+    return {
+      structure: 'mini_doc',
+      confidence: 0.7,
+      reason: `${contentIntent} intent defaults to documentary/segment structure (not three-act)`,
+    }
+  }
+
+  // Default to three-act structure - the most versatile for fiction
   return {
     structure: 'three_act',
     confidence: 0.7,
@@ -420,7 +438,7 @@ export async function POST(request: NextRequest) {
     let autoDetectedStructure: { structure: BeatStructureKey; confidence: number; reason: string } | null = null
     
     if (!effectiveBeatStructure) {
-      autoDetectedStructure = autoDetectFilmStructure(input, coreConcept, format, cappedTargetMinutes || 20)
+      autoDetectedStructure = autoDetectFilmStructure(input, coreConcept, format, cappedTargetMinutes || 20, contentIntent)
       effectiveBeatStructure = autoDetectedStructure.structure
       console.log(`[Film Treatment] Auto-detected structure: ${effectiveBeatStructure} (confidence: ${autoDetectedStructure.confidence}, reason: ${autoDetectedStructure.reason})`)
     }
