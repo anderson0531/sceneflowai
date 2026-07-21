@@ -77,7 +77,7 @@
   "pipeline": {
     "badge": "What is SceneFlow?",
     "title": "The 3-Pillar Pipeline Architecture",
-    "subtitle": "Three phases from first idea to publish-ready master — each pillar includes guided milestones so you know exactly how the studio works.",
+    "subtitle": "Three phases from first idea to publish-ready master — Series, Blueprint, and Production.",
     "ui": {
       "expandFullscreen": "View fullscreen",
       "closeFullscreen": "Close",

@@ -1,24 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import NextImage from 'next/image'
 import { useTranslations } from 'next-intl'
-import { Layers, ChevronDown } from 'lucide-react'
+import { Layers } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { StepImagePlaceholder } from '@/components/landing/StepImagePlaceholder'
 import { getPipelinePillarMedia } from '@/config/landing/pipelinePillarsMedia'
-import { cn } from '@/lib/utils'
 
 const SECTION_ID = 'pipeline'
-
-type Step = {
-  id: string
-  number: string
-  title: string
-  description: string
-  imagePlaceholder: string
-}
 
 type Pillar = {
   id: string
@@ -27,7 +16,6 @@ type Pillar = {
   title: string
   header: string
   body: string
-  steps?: Step[]
 }
 
 function PillarMedia({ pillarId, alt, eager }: { pillarId: string; alt: string; eager?: boolean }) {
@@ -80,77 +68,7 @@ function PillarHeader({ pillar }: { pillar: Pillar }) {
   )
 }
 
-function PillarSteps({ steps }: { steps: Step[] }) {
-  const [activeStepId, setActiveStepId] = useState(steps[0]?.id)
-  const activeStep = steps.find((s) => s.id === activeStepId) ?? steps[0]
-
-  if (!activeStep) return null
-
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap gap-2">
-        {steps.map((step) => {
-          const isActive = step.id === activeStep.id
-          return (
-            <button
-              key={step.id}
-              type="button"
-              onClick={() => setActiveStepId(step.id)}
-              aria-label={step.title}
-              aria-current={isActive}
-              className={cn(
-                'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-all',
-                isActive
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'bg-slate-800 text-slate-400 border border-slate-700 hover:text-white hover:border-indigo-400/40'
-              )}
-            >
-              {step.number}
-            </button>
-          )
-        })}
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeStep.id}
-          initial={{ opacity: 0, x: 12 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -12 }}
-          transition={{ duration: 0.25 }}
-          className="grid gap-5 md:grid-cols-2 md:gap-8 md:items-center"
-        >
-          <div className="space-y-3">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">
-              {activeStep.number}
-            </span>
-            <h4 className="text-lg sm:text-xl font-semibold text-white">{activeStep.title}</h4>
-            <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
-              {activeStep.description}
-            </p>
-          </div>
-
-          <StepImagePlaceholder
-            stepId={activeStep.id}
-            placeholderText={activeStep.imagePlaceholder}
-            alt={activeStep.title}
-          />
-        </motion.div>
-      </AnimatePresence>
-    </div>
-  )
-}
-
 function PillarTabContent({ pillar }: { pillar: Pillar }) {
-  const tUi = useTranslations('pipeline.ui')
-  const [howItWorksOpen, setHowItWorksOpen] = useState(false)
-
-  useEffect(() => {
-    setHowItWorksOpen(false)
-  }, [pillar.id])
-
-  const hasSteps = pillar.steps && pillar.steps.length > 0
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -159,39 +77,6 @@ function PillarTabContent({ pillar }: { pillar: Pillar }) {
       className="space-y-8"
     >
       <PillarHeader pillar={pillar} />
-
-      {hasSteps && (
-        <div className="border-t border-slate-800 pt-6">
-          <button
-            type="button"
-            onClick={() => setHowItWorksOpen((open) => !open)}
-            aria-expanded={howItWorksOpen}
-            className="inline-flex min-h-11 items-center gap-2 py-2 text-sm font-semibold uppercase tracking-wider text-indigo-300 transition-colors hover:text-indigo-200"
-          >
-            <ChevronDown
-              className={cn('h-4 w-4 transition-transform duration-300', howItWorksOpen && 'rotate-180')}
-            />
-            {howItWorksOpen ? tUi('hideHowItWorks') : tUi('showHowItWorks')}
-          </button>
-
-          <AnimatePresence initial={false}>
-            {howItWorksOpen && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.35, ease: [0.04, 0.62, 0.23, 0.98] }}
-                className="overflow-hidden"
-              >
-                <div className="pt-6">
-                  <PillarSteps steps={pillar.steps!} />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      )}
-
       <PillarMedia pillarId={pillar.id} alt={pillar.header} eager={pillar.id === 'series'} />
     </motion.div>
   )
