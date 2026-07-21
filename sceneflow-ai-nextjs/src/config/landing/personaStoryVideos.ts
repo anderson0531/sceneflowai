@@ -110,6 +110,11 @@ const PRODUCED_VIDEOS: Partial<
       src: vid('Enterprise (Thai).mp4', '20260720'),
     },
   },
+  educator: {
+    en: {
+      src: vid('Educator (English).mp4'),
+    },
+  },
 }
 
 export function getPersonaStoryVideoLocales(personaId: PersonaId): PersonaStoryLocale[] {
