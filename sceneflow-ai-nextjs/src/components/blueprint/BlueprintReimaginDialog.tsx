@@ -15,6 +15,7 @@ import {
   Clock,
   Users,
   Layers,
+  Upload,
   RefreshCw,
   Zap
 } from 'lucide-react'
@@ -30,6 +31,8 @@ import {
   DEFAULT_ASPECT_RATIO,
 } from '@/components/blueprint/BlueprintFoundationFields'
 import { ConceptDescriptionField } from '@/components/blueprint/ConceptDescriptionField'
+import { TreatmentImportDialog } from '@/components/blueprint/TreatmentImportDialog'
+import type { TreatmentImportResult } from '@/lib/blueprint/importTreatment'
 import { AudienceDescriptionField } from '@/components/audience/AudienceDescriptionField'
 import {
   createAudienceDefinition,
@@ -123,6 +126,17 @@ export function BlueprintReimaginDialog({
   const [audienceDef, setAudienceDef] = useState<AudienceDefinition>(() =>
     createAudienceDefinition({ description: '', source: 'blueprint' })
   )
+  const [treatmentImportOpen, setTreatmentImportOpen] = useState(false)
+
+  // Apply an imported treatment: set the description and prefill content type /
+  // genre / tone only when the user has not already provided them.
+  const applyTreatmentImport = (result: TreatmentImportResult) => {
+    if (result.synopsis) setSynopsis(result.synopsis)
+    if (result.contentIntent && !contentType) setContentType(result.contentIntent)
+    if (result.genre && !genre.trim()) setGenre(result.genre)
+    if (result.tone && !tone.trim()) setTone(result.tone)
+    toast.success('Treatment imported — review and generate your Blueprint.')
+  }
 
   // UI state
   const [isGenerating, setIsGenerating] = useState(false)
@@ -223,7 +237,7 @@ export function BlueprintReimaginDialog({
             ) : (
               <>
                 <Sparkles className="w-5 h-5 text-amber-400" />
-                <span>Create Blueprint</span>
+                <span>Start Project</span>
               </>
             )}
           </DialogTitle>
@@ -235,10 +249,20 @@ export function BlueprintReimaginDialog({
         <div className="space-y-6 py-4">
           {/* Main Input — project description with AI validate/enhance */}
           <div className="space-y-3">
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-300">
-              <Film className="w-4 h-4 text-cyan-400" />
-              Describe Your Project
-            </label>
+            <div className="flex items-center justify-between gap-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-300">
+                <Film className="w-4 h-4 text-cyan-400" />
+                Describe Your Project
+              </label>
+              <button
+                type="button"
+                onClick={() => setTreatmentImportOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-md border border-slate-600 px-2.5 py-1 text-[11px] font-medium text-slate-300 hover:bg-slate-800 hover:text-white"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                Import treatment
+              </button>
+            </div>
             <ConceptDescriptionField
               value={synopsis}
               onChange={setSynopsis}
@@ -383,6 +407,13 @@ export function BlueprintReimaginDialog({
           </Button>
         </div>
       </DialogContent>
+
+      <TreatmentImportDialog
+        open={treatmentImportOpen}
+        onOpenChange={setTreatmentImportOpen}
+        projectId={projectId}
+        onImported={applyTreatmentImport}
+      />
     </Dialog>
   )
 }

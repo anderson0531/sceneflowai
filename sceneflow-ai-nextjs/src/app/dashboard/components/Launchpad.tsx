@@ -65,7 +65,7 @@ export function Launchpad() {
               <h3 className="text-2xl font-bold mb-3 text-white">Start Project</h3>
 
               <p className="text-blue-100 text-base leading-relaxed font-medium">
-                Start blank, from a Creator Template, from an idea, or import a script.
+                Describe your project and generate a Blueprint with AI. Import a screenplay from the Projects page.
               </p>
             </div>
           </motion.div>

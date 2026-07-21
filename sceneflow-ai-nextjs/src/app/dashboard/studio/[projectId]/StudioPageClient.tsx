@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 import { Button } from "@/components/ui/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/Input";
-import { DownloadIcon, Edit, Settings, FileText, BarChart3, ChevronRight, Check, HelpCircle, Sparkles, PanelRight, PanelRightClose, RefreshCw, Wand2, Clapperboard } from "lucide-react";
+import { DownloadIcon, Edit, Settings, BarChart3, ChevronRight, Check, HelpCircle, Sparkles, PanelRight, PanelRightClose, RefreshCw, Wand2, Clapperboard } from "lucide-react";
 import { useGuideStore } from "@/store/useGuideStore";
 import { useStore } from '@/store/useStore'
 import { useCue } from "@/store/useCueStore";
@@ -19,10 +19,6 @@ import {
   resolveContentIntentFromMetadata,
   defaultFormatForIntent,
 } from '@/lib/content/contentIntent'
-import {
-  ScriptImportDialog,
-  type ScriptImportPayload,
-} from '@/components/blueprint/ScriptImportDialog'
 import { TreatmentHeroImage } from '@/components/treatment/TreatmentHeroImage'
 import { HeroImagePromptBuilder } from '@/components/treatment/HeroImagePromptBuilder'
 import { ImageEditModal } from '@/components/vision/ImageEditModal'
@@ -153,7 +149,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const [showFoundationReimagineDialog, setShowFoundationReimagineDialog] = useState(false)
   const [foundationFocus, setFoundationFocus] = useState<ReimagineFoundationField | undefined>()
   const returnProductionProjectIdRef = useRef<string | null>(null)
-  const [showScriptImportDialog, setShowScriptImportDialog] = useState(false)
+  const autoOpenBlueprintRef = useRef(false)
   const [isGen, setIsGen] = useState(false)
   const [genProgress, setGenProgress] = useState(0)
   const [isGeneratingHeroImage, setIsGeneratingHeroImage] = useState(false)
@@ -230,6 +226,22 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       router.replace(`/dashboard/studio/${projectId}`, { scroll: false })
     }
   }, [searchParams, activeTreatmentVariant, projectId, router])
+
+  // Route a fresh Start Project straight into the Blueprint (Start Project) dialog
+  // instead of the intermediate empty-state card. The primeBlueprint auto-generate
+  // path (series episodes) still bypasses the dialog and must not trigger this.
+  useEffect(() => {
+    if (autoOpenBlueprintRef.current) return
+    const isNewProject = projectId === 'new-project' || projectId?.startsWith('new-project')
+    if (!isNewProject) return
+    if (isGen) return
+    if (guide.treatmentVariants && guide.treatmentVariants.length > 0) return
+    const primeInput = (currentProject?.metadata as Record<string, unknown> | undefined)?.blueprintPrimeInput
+    if (primeInput) return
+    if (searchParams.get('primeBlueprint') === 'true') return
+    autoOpenBlueprintRef.current = true
+    setShowReimaginDialog(true)
+  }, [projectId, isGen, guide.treatmentVariants, currentProject, searchParams])
 
   const openBlueprintRefine = useCallback((opts?: OpenBlueprintRefineOptions) => {
     setBlueprintRefineRecs(opts?.resonanceRecommendations)
@@ -555,45 +567,6 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     savedBlueprintAR,
     handleAnalysisComplete,
   ])
-
-  const handleScriptImport = async (result: ScriptImportPayload) => {
-    try {
-      if (authStatus !== 'authenticated' || !session?.user?.id) {
-        const { toast } = await import('sonner')
-        toast.error('Sign in to import a script')
-        return
-      }
-
-      const { toast } = await import('sonner')
-      toast.info('Importing script...')
-
-      const res = await fetch('/api/projects/from-script', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          parsedScript: result.parsedScript,
-          importCompletenessScore: result.importCompletenessScore,
-          importGapsResolved: result.importGapsResolved,
-        }),
-      })
-
-      const data = await res.json()
-
-      if (data.success && data.project) {
-        toast.success(
-          `Script imported! ${data.project.metadata?.sceneCount || 0} scenes, ${data.project.metadata?.characterCount || 0} characters`
-        )
-        router.push(`/dashboard/workflow/vision/${data.project.id}`)
-      } else {
-        toast.error(data.error || 'Failed to import script')
-      }
-    } catch (e: unknown) {
-      console.error('Script import error:', e)
-      const { toast } = await import('sonner')
-      const message = e instanceof Error ? e.message : 'Unknown error'
-      toast.error('Failed to import script: ' + message)
-    }
-  }
 
   // Auto-generate hero image for treatment variant
   // Uses sessionStorage to prevent duplicate generation across navigation
@@ -1469,37 +1442,26 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                   </div>
                 )}
 
-                {/* Empty Blueprint State - Show prominent CTA when no Blueprint exists */}
+                {/* Empty Blueprint State - the Start Project dialog opens automatically;
+                    this slim CTA is the fallback to reopen it after dismissal. */}
                 {(!guide.treatmentVariants || guide.treatmentVariants.length === 0) && !isGen && (
                   <div className="rounded-2xl border-2 border-dashed border-cyan-500/30 bg-gradient-to-br from-cyan-500/5 to-purple-500/5 p-8 text-center">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center border border-cyan-500/30">
                       <Wand2 className="w-8 h-8 text-cyan-400" />
                     </div>
-                    <h3 className="text-xl font-semibold text-white mb-2">Create Your Blueprint</h3>
+                    <h3 className="text-xl font-semibold text-white mb-2">Start Your Project</h3>
                     <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">
-                      Generate a professional film treatment with AI-powered story structure, characters, and visual direction.
+                      Describe your project and generate a professional Blueprint with AI-powered story structure, characters, and visual direction.
                     </p>
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <div className="flex items-center justify-center">
                       <Button
                         onClick={() => setShowReimaginDialog(true)}
                         className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white px-6 py-3 text-base font-medium"
                       >
                         <Sparkles className="w-5 h-5 mr-2" />
-                        Generate Blueprint
-                      </Button>
-                      <span className="text-gray-500 text-sm">or</span>
-                      <Button
-                        variant="outline"
-                        onClick={() => setShowScriptImportDialog(true)}
-                        className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white px-6 py-3 text-base"
-                      >
-                        <FileText className="w-5 h-5 mr-2" />
-                        Import Script
+                        Start Project
                       </Button>
                     </div>
-                    <p className="text-gray-500 text-xs mt-4">
-                      Supports .txt, .md, .fountain, .fdx, .pdf, .docx formats
-                    </p>
                   </div>
                 )}
 
@@ -1680,12 +1642,6 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         }}
       />
 
-      <ScriptImportDialog
-        open={showScriptImportDialog}
-        onOpenChange={setShowScriptImportDialog}
-        onImport={handleScriptImport}
-      />
-      
       {/* Hero Image Prompt Drawer (legacy) */}
       {guide.treatmentVariants && guide.treatmentVariants[0] && (
         <ThumbnailPromptDrawer
