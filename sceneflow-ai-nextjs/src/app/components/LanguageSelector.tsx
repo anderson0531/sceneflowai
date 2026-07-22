@@ -13,7 +13,12 @@ import { useLandingLocale } from '@/i18n/useLandingLocale'
 
 const LANGUAGES = LANDING_TRANSLATE_LANGUAGES
 
-export function LanguageSelector() {
+type LanguageSelectorProps = {
+  /** Compact globe-only trigger for the mobile header bar. */
+  variant?: 'default' | 'icon'
+}
+
+export function LanguageSelector({ variant = 'default' }: LanguageSelectorProps) {
   const t = useTranslations('nav')
   const { locale: currentLang, switchLocale } = useLandingLocale()
   const [search, setSearch] = useState('')
@@ -38,13 +43,29 @@ export function LanguageSelector() {
     {} as Record<string, typeof LANGUAGES>
   )
 
+  const currentLanguageName =
+    LANGUAGES.find((l) => l.code === currentLang)?.name ?? currentLang
+  const isIcon = variant === 'icon'
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-1.5 px-3 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50">
-          <Globe className="w-4 h-4" />
-          <span className="hidden sm:inline uppercase text-sm">{currentLang}</span>
-          <ChevronDown className="w-3 h-3 text-gray-500" />
+        <button
+          type="button"
+          aria-label={currentLanguageName}
+          className={
+            isIcon
+              ? 'flex items-center justify-center p-2 text-gray-300 hover:text-white transition-colors cursor-pointer rounded-lg hover:bg-slate-800/50'
+              : 'flex items-center gap-1.5 px-3 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50'
+          }
+        >
+          <Globe className={isIcon ? 'w-6 h-6' : 'w-4 h-4'} />
+          {!isIcon && (
+            <>
+              <span className="hidden sm:inline uppercase text-sm">{currentLang}</span>
+              <ChevronDown className="w-3 h-3 text-gray-500" />
+            </>
+          )}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64 p-2 bg-slate-900 border-slate-800">
