@@ -129,6 +129,9 @@ const PRODUCED_VIDEOS: Partial<
     ar: {
       src: vid('The Educator (Arabic).mp4'),
     },
+    th: {
+      src: vid('The Educator (Thai).mp4'),
+    },
   },
 }
 
