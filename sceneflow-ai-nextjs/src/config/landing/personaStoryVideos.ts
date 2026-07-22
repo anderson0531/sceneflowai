@@ -120,6 +120,9 @@ const PRODUCED_VIDEOS: Partial<
     pt: {
       src: vid('The Educator (Portuguese).mp4'),
     },
+    hi: {
+      src: vid('The Educator (Hindi).mp4'),
+    },
   },
 }
 
