@@ -230,21 +230,25 @@ export function Header() {
 
           {/* Mobile Header - Consistent with App */}
           <div className="lg:hidden">
-            {/* Top Line - Logo and Mobile Menu Button */}
+            {/* Top Line - Logo, language globe, and menu button */}
             <div className="flex justify-between items-center h-16">
               <SceneFlowStudioBrand
                 href="/"
                 variant="landing"
                 nameClassName="text-white"
               />
-              
-              {/* Mobile Menu Button */}
-              <button 
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-2 text-gray-300 hover:text-white transition-colors"
-              >
-                {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-              </button>
+
+              <div className="flex items-center gap-1">
+                <LanguageSelector variant="icon" />
+                <button
+                  type="button"
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  className="p-2 text-gray-300 hover:text-white transition-colors"
+                  aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+                >
+                  {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                </button>
+              </div>
             </div>
             
             {/* Mobile Menu Dropdown */}
@@ -269,9 +273,6 @@ export function Header() {
                   
                   {/* Auth Section */}
                   <div className="flex flex-col space-y-2 pt-2">
-                    <div className="px-3 pb-2 flex justify-start">
-                      <LanguageSelector />
-                    </div>
                     {isAuthenticated ? (
                       <>
                         {/* User Info */}
