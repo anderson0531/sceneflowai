@@ -126,6 +126,9 @@ const PRODUCED_VIDEOS: Partial<
     zh: {
       src: vid('The Educator (Chinese).mp4'),
     },
+    ar: {
+      src: vid('The Educator (Arabic).mp4'),
+    },
   },
 }
 
