@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useTranslations } from 'next-intl'
 import {
   Sparkles,
@@ -17,6 +17,7 @@ import {
   Youtube,
   KeyRound,
   Wallet,
+  ChevronDown,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -25,10 +26,17 @@ const SECTION_ID = 'key-features'
 
 type CategoryId = 'create' | 'direct' | 'ship'
 
+type FeatureLearnMore = {
+  problem: string
+  solution: string
+  outcome: string
+}
+
 type FeatureData = {
   icon: string
   title: string
   description: string
+  learnMore?: FeatureLearnMore
 }
 
 type CategoryData = {
@@ -58,9 +66,37 @@ const CATEGORY_GRADIENTS: Record<CategoryId, string> = {
   ship: 'from-amber-500 to-orange-600',
 }
 
+function LearnMoreRow({
+  gradient,
+  label,
+  text,
+}: {
+  gradient: string
+  label: string
+  text: string
+}) {
+  return (
+    <div className="flex gap-3">
+      <div
+        className={cn(
+          'mt-1.5 h-2 w-2 shrink-0 rounded-full bg-gradient-to-br',
+          gradient
+        )}
+      />
+      <div>
+        <div className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+          {label}
+        </div>
+        <p className="text-gray-300 text-sm leading-relaxed">{text}</p>
+      </div>
+    </div>
+  )
+}
+
 export default function KeyFeaturesSection() {
   const t = useTranslations('keyFeatures')
   const [activeCategory, setActiveCategory] = useState<CategoryId>('create')
+  const [expandedFeature, setExpandedFeature] = useState<string | null>(null)
 
   const categories = useMemo(
     () => t.raw('categories') as CategoryData[],
@@ -68,6 +104,11 @@ export default function KeyFeaturesSection() {
   )
 
   const active = categories.find((c) => c.id === activeCategory) ?? categories[0]
+
+  const selectCategory = (id: CategoryId) => {
+    setActiveCategory(id)
+    setExpandedFeature(null)
+  }
 
   return (
     <section
@@ -106,7 +147,7 @@ export default function KeyFeaturesSection() {
                 <button
                   key={category.id}
                   type="button"
-                  onClick={() => setActiveCategory(category.id)}
+                  onClick={() => selectCategory(category.id)}
                   className={cn(
                     'flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300',
                     activeCategory === category.id
@@ -131,6 +172,8 @@ export default function KeyFeaturesSection() {
           {active?.features.map((feature, index) => {
             const Icon = FEATURE_ICONS[feature.icon] ?? Sparkles
             const gradient = CATEGORY_GRADIENTS[active.id]
+            const isExpanded = expandedFeature === feature.icon
+            const panelId = `key-feature-panel-${feature.icon}`
 
             return (
               <motion.div
@@ -138,7 +181,7 @@ export default function KeyFeaturesSection() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35, delay: index * 0.05 }}
-                className="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 hover:border-slate-700/80 hover:bg-slate-900/60 transition-colors"
+                className="flex flex-col rounded-2xl border border-slate-800 bg-slate-900/40 p-6 hover:border-slate-700/80 hover:bg-slate-900/60 transition-colors"
               >
                 <div
                   className={cn(
@@ -150,6 +193,63 @@ export default function KeyFeaturesSection() {
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
                 <p className="text-gray-400 text-sm leading-relaxed">{feature.description}</p>
+
+                {feature.learnMore && (
+                  <div className="mt-auto pt-4">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExpandedFeature(isExpanded ? null : feature.icon)
+                      }
+                      aria-expanded={isExpanded}
+                      aria-controls={panelId}
+                      className={cn(
+                        'inline-flex items-center gap-1.5 text-sm font-medium bg-gradient-to-r bg-clip-text text-transparent transition-opacity hover:opacity-80',
+                        gradient
+                      )}
+                    >
+                      {isExpanded ? t('showLessLabel') : t('learnMoreLabel')}
+                      <ChevronDown
+                        className={cn(
+                          'h-4 w-4 text-gray-400 transition-transform duration-300',
+                          isExpanded && 'rotate-180'
+                        )}
+                      />
+                    </button>
+
+                    <AnimatePresence initial={false}>
+                      {isExpanded && (
+                        <motion.div
+                          id={panelId}
+                          key="panel"
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3, ease: 'easeInOut' }}
+                          className="overflow-hidden"
+                        >
+                          <div className="mt-4 space-y-4 border-t border-slate-800 pt-4">
+                            <LearnMoreRow
+                              gradient={gradient}
+                              label={t('problemLabel')}
+                              text={feature.learnMore.problem}
+                            />
+                            <LearnMoreRow
+                              gradient={gradient}
+                              label={t('solutionLabel')}
+                              text={feature.learnMore.solution}
+                            />
+                            <LearnMoreRow
+                              gradient={gradient}
+                              label={t('outcomeLabel')}
+                              text={feature.learnMore.outcome}
+                            />
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
               </motion.div>
             )
           })}
