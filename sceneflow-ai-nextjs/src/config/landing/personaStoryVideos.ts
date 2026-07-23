@@ -51,7 +51,7 @@ const PRODUCED_VIDEOS: Partial<
 > = {
   youtubeCreator: {
     en: {
-      src: vid('YouTube Creator (English).mp4', '20260718'),
+      src: vid('YouTube Creator (English).mp4', '20260723'),
       poster: poster('youtube-creator-en-poster.jpg'),
     },
     es: {
