@@ -89,7 +89,7 @@ const PRODUCED_VIDEOS: Partial<
   },
   enterprise: {
     en: {
-      src: vid('Enterprise (English).mp4', '20260720'),
+      src: vid('Enterprise (English).mp4', '20260724'),
     },
     es: {
       src: vid('Enterprise (Spanish).mp4', '20260720'),
