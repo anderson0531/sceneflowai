@@ -112,7 +112,7 @@ const PRODUCED_VIDEOS: Partial<
   },
   educator: {
     en: {
-      src: vid('Educator (English).mp4'),
+      src: vid('The Educator (English) .mp4', '20260724'),
     },
     es: {
       src: vid('The Educator (Spanish).mp4'),
