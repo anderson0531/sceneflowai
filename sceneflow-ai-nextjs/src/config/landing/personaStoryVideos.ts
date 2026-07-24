@@ -66,7 +66,7 @@ const PRODUCED_VIDEOS: Partial<
   },
   startupProvider: {
     en: {
-      src: vid('Startup Provider (English).mp4'),
+      src: vid('The Startup Provider (English) .mp4', '20260724'),
     },
     es: {
       src: vid('The Startup Provider (Spanish).mp4'),
