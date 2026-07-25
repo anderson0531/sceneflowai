@@ -1,5 +1,12 @@
 # Use Case Demo Video Manifest
 
+> **The hashes below are not live on the landing page.** The sector browser that owned
+> them (`ProductionComparisonVisual`) was unmounted when `ProductionExamplesSection`
+> switched to the four-card production-style showcase. `#production-examples` still
+> resolves to the section, but `#use-cases-{categoryId}-{exampleId}` no longer selects
+> an example. Config, illustrations, and narration audio are retained so the browser can
+> be revived — see `production-examples-landing.plan.md`.
+
 Landing page use case examples support **one demo video per example** with shareable bookmark hashes.
 
 Hash format: `#use-cases-{categoryId}-{exampleId}`

@@ -263,6 +263,13 @@ interface ProductionComparisonVisualProps {
   initialCategoryId?: string
 }
 
+/**
+ * @deprecated Not rendered on the landing page. `ProductionExamplesSection` now
+ * ships the four-card production-style showcase instead of this sector browser,
+ * so the `#use-cases-{category}-{example}` deep links it owned are no longer
+ * live. Config, illustrations, and narration audio are intentionally retained.
+ * See production-examples-landing.plan.md before reviving.
+ */
 export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComparisonVisualProps) => {
   const tUi = useTranslations('useCases.ui');
   const tCategories = useTranslations('useCases');

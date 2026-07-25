@@ -37,6 +37,7 @@ import { EXTENDED_SCENES_COPY } from '@/config/landing/extendedScenesCopy'
 import { CORE_CAPABILITIES_COPY } from '@/config/landing/coreCapabilitiesCopy'
 import { CREATIVE_RANGE_COPY } from '@/config/landing/creativeRangeCopy'
 import { ENTERTAINMENT_STATS_COPY } from '@/config/landing/entertainmentStatsCopy'
+import { PRODUCTION_SHOWCASE_COPY } from '@/config/landing/productionShowcaseCopy'
 import { EXIT_INTENT_COPY } from '@/config/landing/exitIntentCopy'
 import {
   buildFeatureStoryboardMessageItems,
@@ -229,6 +230,7 @@ export function buildEnMessages() {
         })),
       })),
     },
+    productionShowcase: PRODUCTION_SHOWCASE_COPY,
     platformWalkthrough: {
       badge: 'Under the hood',
       title: 'Detailed Platform Walkthrough',
