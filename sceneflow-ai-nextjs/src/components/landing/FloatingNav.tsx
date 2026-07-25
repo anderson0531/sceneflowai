@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Layers, Rocket, DollarSign, Sparkles } from 'lucide-react'
+import { Layers, Rocket, DollarSign, Sparkles, Clapperboard } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useExpandLandingSection } from '@/components/landing/LandingSectionCollapse'
 
@@ -11,6 +11,7 @@ export function FloatingNav() {
   const sections = useMemo(
     () => [
       { id: 'use-cases', label: t('useCases'), icon: Rocket },
+      { id: 'production-examples', label: t('productionExamples'), icon: Clapperboard },
       { id: 'pipeline', label: t('pipeline'), icon: Layers },
       { id: 'key-features', label: t('keyFeatures'), icon: Sparkles },
       { id: 'pricing', label: t('pricing'), icon: DollarSign },
