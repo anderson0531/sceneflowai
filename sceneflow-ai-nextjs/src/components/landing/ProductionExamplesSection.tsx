@@ -10,14 +10,29 @@ import {
   type ProductionStyleCardData,
 } from '@/components/landing/ProductionStyleCard'
 import { SectionNarrationButton } from '@/components/landing/SectionNarrationButton'
-import { SECTION_NARRATION_AUDIO } from '@/config/landing/landingVisualMedia'
+import {
+  getProductionShowcaseVideoUrl,
+  SECTION_NARRATION_AUDIO,
+} from '@/config/landing/landingVisualMedia'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 
 export const PRODUCTION_EXAMPLES_SECTION_ID = 'production-examples'
 
 export default function ProductionExamplesSection() {
   const t = useTranslations('productionShowcase')
+  const tCommon = useTranslations('common')
   const cards = useMemo(() => t.raw('cards') as ProductionStyleCardData[], [t])
+
+  const videoAriaLabels = useMemo(
+    () => ({
+      play: tCommon('play'),
+      pause: tCommon('pause'),
+      mute: tCommon('mute'),
+      unmute: tCommon('unmute'),
+      expandVideo: tCommon('expandVideo'),
+    }),
+    [tCommon]
+  )
 
   return (
     <section
@@ -64,6 +79,8 @@ export default function ProductionExamplesSection() {
               workflowLabel={t('workflowLabel')}
               toolsLabel={t('toolsLabel')}
               ctaLabel={t('startProduction')}
+              videoSrc={getProductionShowcaseVideoUrl(card.id)}
+              videoAriaLabels={videoAriaLabels}
             />
           ))}
         </div>
