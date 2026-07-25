@@ -8,7 +8,11 @@ import {
   buildUseCaseExampleHash,
   parseUseCaseExampleHash,
 } from '@/config/landing/useCaseExamples'
-import { SECTION_NARRATION_AUDIO } from '@/config/landing/landingVisualMedia'
+import {
+  PRODUCTION_SHOWCASE_VIDEOS,
+  SECTION_NARRATION_AUDIO,
+  getProductionShowcaseVideoUrl,
+} from '@/config/landing/landingVisualMedia'
 
 const ROOT = path.resolve(__dirname, '../..')
 
@@ -141,6 +145,28 @@ describe('Production style CTAs', () => {
     // The in-flow button carries the CTA on touch; the overlay is desktop-only.
     expect(card).toContain('md:hidden')
     expect(card).toContain('md:group-hover:opacity-100')
+  })
+})
+
+describe('Production showcase videos', () => {
+  it('wires the Cinematic Drama demo from Blob storage', () => {
+    expect(PRODUCTION_SHOWCASE_VIDEOS.drama).toBe(
+      'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/The%20Cinematic%20Drama%20(English).mp4'
+    )
+    expect(getProductionShowcaseVideoUrl('drama')).toBe(PRODUCTION_SHOWCASE_VIDEOS.drama)
+    expect(getProductionShowcaseVideoUrl('animation')).toBeUndefined()
+  })
+
+  it('passes configured video URLs into ProductionStyleCard', () => {
+    const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
+    expect(section).toContain('getProductionShowcaseVideoUrl(card.id)')
+    expect(section).toContain('videoAriaLabels={videoAriaLabels}')
+  })
+
+  it('renders FeatureVideoPlayer when a card has video', () => {
+    const card = readSource('src/components/landing/ProductionStyleCard.tsx')
+    expect(card).toContain('FeatureVideoPlayer')
+    expect(card).toContain('hasVideo')
   })
 })
 

@@ -12,6 +12,10 @@ import {
   Target,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import {
+  FeatureVideoPlayer,
+  type VideoAriaLabels,
+} from '@/components/landing/FeatureVideoPlayer'
 import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
 
 export type ProductionStyleCardData = {
@@ -83,15 +87,20 @@ export function ProductionStyleCard({
   workflowLabel,
   toolsLabel,
   ctaLabel,
+  videoSrc,
+  videoAriaLabels,
 }: {
   card: ProductionStyleCardData
   index: number
   workflowLabel: string
   toolsLabel: string
   ctaLabel: string
+  videoSrc?: string
+  videoAriaLabels?: VideoAriaLabels
 }) {
   const style = CARD_STYLES[card.id] ?? FALLBACK_STYLE
   const Icon = style.icon
+  const hasVideo = Boolean(videoSrc && videoAriaLabels)
 
   const startProduction = () => {
     window.location.href = getLoginUrl({
@@ -127,6 +136,20 @@ export function ProductionStyleCard({
         </div>
       </div>
 
+      {hasVideo ? (
+        <div
+          className="mb-4 aspect-video overflow-hidden rounded-lg border border-white/10 bg-black"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <FeatureVideoPlayer
+            src={videoSrc!}
+            ariaLabels={videoAriaLabels!}
+            showExpand={false}
+            autoPlay={false}
+          />
+        </div>
+      ) : null}
+
       <div className="mb-4 space-y-2">
         <p className="text-xs uppercase tracking-wider text-gray-500">{workflowLabel}</p>
         <ol className="space-y-2">
@@ -155,15 +178,16 @@ export function ProductionStyleCard({
         </div>
       </div>
 
-      {/* Touch devices get the CTA in flow; pointer devices reveal it over the card. */}
+      {/* Cards with video keep the CTA in flow so playback is not blocked by hover overlay. */}
       <Button
         onClick={startProduction}
-        className={`mt-4 w-full bg-gradient-to-r text-white md:hidden ${style.ctaGradient}`}
+        className={`mt-4 w-full bg-gradient-to-r text-white ${hasVideo ? '' : 'md:hidden'} ${style.ctaGradient}`}
       >
         {ctaLabel}
         <ArrowRight className="ml-2 h-4 w-4" />
       </Button>
 
+      {!hasVideo ? (
       <div className="pointer-events-none absolute inset-0 hidden items-center justify-center rounded-2xl bg-gray-900/90 opacity-0 transition-opacity duration-300 focus-within:pointer-events-auto focus-within:opacity-100 md:flex md:group-hover:pointer-events-auto md:group-hover:opacity-100">
         <Button
           onClick={startProduction}
@@ -173,6 +197,7 @@ export function ProductionStyleCard({
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
+      ) : null}
     </motion.div>
   )
 }
