@@ -19,10 +19,11 @@
 5. [Section Architecture](#section-architecture)
 6. [Decision](#decision)
 7. [Implemented](#implemented)
-8. [Remaining Work](#remaining-work)
-9. [Key Files](#key-files)
-10. [Demo Video Status](#demo-video-status)
-11. [Version History](#version-history)
+8. [Asset Status](#asset-status)
+9. [Remaining Work](#remaining-work)
+10. [Key Files](#key-files)
+11. [Demo Video Status](#demo-video-status)
+12. [Version History](#version-history)
 
 ---
 
@@ -190,18 +191,41 @@ The hybrid was rejected for now: the persona section already sits directly above
 
 ---
 
+## Asset Status
+
+All assets the shipped section depends on are present and reachable:
+
+| Asset | Source | Status |
+|-------|--------|--------|
+| Example illustrations | `getUseCaseIllustrationUrl` → Vercel Blob | 29 / 29 reachable |
+| Example narration | `public/audio/use-case-narration/{category}/{example}.mp3` | 29 / 29 present |
+| “Hear the Story” audio | `public/audio/use-case-story/{category}/{example}.mp3` | 29 / 29 present |
+| Section narration | `public/audio/section-narration/use-cases.mp3` | Present |
+
+**Note on video:** `ProductionComparisonVisual` renders illustrations plus narration
+audio — it never reads `videoSrc`, `videoPosterSrc`, or `videoEnabled`. Those fields
+and `useCaseVideoStatus.ts` are defined in config but consumed by no component, so the
+“6 of 29 enabled” count in `USE_CASE_VIDEO_MANIFEST.md` does not affect this section.
+Demo-video playback would require adding a player to the component first.
+
+---
+
 ## Remaining Work
 
-1. **Demos:** upload real SceneFlow outputs per `USE_CASE_VIDEO_MANIFEST.md`; flip flags
-   in `useCaseVideoStatus.ts`. 23 of 29 examples still show a poster only.
-2. **Translations:** new nav and narration keys currently fall back to English.
+1. **Translations:** new nav and narration keys currently fall back to English.
    Run `npm run i18n:generate` when a translation pass is scheduled.
-3. **`messages/en.json` drift:** the committed file no longer matches
+2. **`messages/en.json` drift:** the committed file no longer matches
    `buildEnMessages.ts` output — regenerating drops live keys (`pipeline`,
    `useCasesShowcase`, `keyFeatures`, `landingSections`). Both files were updated by
    hand here; reconciling the generator is a separate task.
+3. **Dead video config:** either wire a player into `ProductionComparisonVisual` and use
+   `useCaseVideoStatus.ts`, or drop the unused `videoSrc` / `videoEnabled` fields.
 4. **Option A decision:** delete `TemplatesGallery.tsx` outright, or port its copy into
    i18n if the “pick a production style” angle is still wanted.
+5. **CI is blocked:** GitHub Actions has been failing repo-wide since at least
+   2026-07-24 with *“account is locked due to a billing issue”*, which also disables the
+   `deploy-prod.yml` Vercel deploy. Production currently updates through the Vercel Git
+   integration only.
 
 ---
 
@@ -226,6 +250,9 @@ The hybrid was rejected for now: the persona section already sits directly above
 ---
 
 ## Demo Video Status
+
+> Reference only — see [Asset Status](#asset-status). The shipped section does not
+> render these videos.
 
 Per `USE_CASE_VIDEO_MANIFEST.md` (as of plan creation):
 
@@ -265,3 +292,4 @@ Per `USE_CASE_VIDEO_MANIFEST.md` (as of plan creation):
 |------|---------|--------|
 | 2026-07-25 | 1.0.0 | Initial plan — consolidated from orphaned components, git history, and demo manifests |
 | 2026-07-25 | 2.0.0 | Option B implemented — sector browser shipped as `#production-examples` with nav entries, deep-link scrolling, and tests |
+| 2026-07-25 | 2.1.0 | Verified all 29 illustrations and 58 audio files resolve; corrected the video note (the section renders illustrations, not video) |
