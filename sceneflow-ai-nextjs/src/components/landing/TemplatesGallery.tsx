@@ -184,6 +184,12 @@ const ProductionCardComponent = ({ production, index }: { production: Production
   );
 };
 
+/**
+ * @deprecated Not rendered on the landing page. Superseded by
+ * ProductionExamplesSection, which uses the config-driven, fully localized
+ * sector browser; copy here is hardcoded English. See
+ * production-examples-landing.plan.md before reviving.
+ */
 export default function TemplatesGallery() {
   return (
     <section id="templates" className="py-24 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 relative overflow-hidden">
