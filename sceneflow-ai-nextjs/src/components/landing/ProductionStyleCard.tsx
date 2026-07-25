@@ -116,7 +116,8 @@ export function ProductionStyleCard({
         {card.badge}
       </div>
 
-      <div className="mb-4 flex items-start gap-4 pr-28">
+      {/* Narrow cards drop below the badge; wider ones reserve room beside it. */}
+      <div className="mb-4 flex items-start gap-4 pt-6 sm:pt-0 sm:pr-28">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gray-900/50">
           <Icon className={`h-6 w-6 ${style.accent}`} />
         </div>
