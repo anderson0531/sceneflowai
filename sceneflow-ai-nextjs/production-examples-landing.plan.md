@@ -5,7 +5,7 @@
 | **Project** | SceneFlow AI Landing Page |
 | **Version** | 2.0.0 |
 | **Date** | July 25, 2026 |
-| **Status** | Implemented — Option B shipped as `#production-examples` |
+| **Status** | Implemented — Option A shipped as `#production-examples` (reversed from Option B) |
 | **URL** | https://sceneflowai.studio |
 
 ---
@@ -37,7 +37,7 @@ Two related implementations existed in code but had been removed from the live l
 
 ## Goal
 
-Show visitors **concrete production types SceneFlow can deliver** — sector breadth across 29 verticals — positioned to support conversion without duplicating the persona showcase above it.
+Show visitors **concrete production types SceneFlow can deliver** — four end-to-end production styles with their workflow, tool chain, and payoff — positioned to support conversion without duplicating the persona showcase above it.
 
 ---
 
@@ -47,29 +47,29 @@ Show visitors **concrete production types SceneFlow can deliver** — sector bre
 
 1. Hero
 2. **`UseCasesSection`** (`#use-cases`) — persona tabs (YouTube Creator, Startup Provider, Enterprise, Educator) with story + Screening Room preview
-3. **`ProductionExamplesSection`** (`#production-examples`) — sector browser, 6 sectors / 29 examples
+3. **`ProductionExamplesSection`** (`#production-examples`) — 4 production-style cards
 4. **Pipeline Pillars** (`#pipeline`)
 5. **Key Features**
 6. **Pricing**
 
-The “4 production style cards” section (`TemplatesGallery`) remains off the page and is marked `@deprecated`.
+The sector browser (`ProductionComparisonVisual`) is now off the page and marked `@deprecated`. `TemplatesGallery` was deleted after its cards were ported into i18n.
 
 ---
 
 ## Implementations
 
-### Option A — Production Showcase (`TemplatesGallery.tsx`)
+### Option A — Production Showcase (4 cards)
 
 | Property | Value |
 |----------|-------|
-| **Anchor** | `#templates` |
-| **Badge** | Production Showcase |
+| **Anchor** | `#production-examples` |
+| **Badge** | Production Examples |
 | **Headline** | Start Any Production Style |
 | **Layout** | 2×2 grid of production-style cards |
-| **i18n** | Hardcoded English only (no `productionShowcase` namespace) |
-| **Status** | Not shipped — marked `@deprecated`, zero imports |
+| **i18n** | `productionShowcase` namespace, sourced from `productionShowcaseCopy.ts` |
+| **Status** | **Shipped** — rendered by `ProductionExamplesSection` |
 
-Built in commit `2984c8b3a` (*Transform Templates Gallery to Production Showcase*). Removed from landing in commit `fe26885e2` (*refactor(landing): rebuild narrative for non-technical creators*).
+Built in commit `2984c8b3a` (*Transform Templates Gallery to Production Showcase*) as `TemplatesGallery.tsx` under `#templates`. Removed from landing in commit `fe26885e2` (*refactor(landing): rebuild narrative for non-technical creators*). Ported into i18n and shipped under `#production-examples`; `TemplatesGallery.tsx` was then deleted.
 
 #### Cards
 
@@ -85,7 +85,8 @@ Each card includes:
 - Numbered workflow steps
 - Tools flow line
 - Benefit callout
-- Hover CTA **“Start This Production”** → signup with `?production={id}`
+- CTA **“Start This Production”** → `/early-access?checkoutTier=explorer&production={id}`
+  (hover-revealed on pointer devices, always visible on touch)
 
 ---
 
@@ -96,9 +97,9 @@ Each card includes:
 | **Hashes** | `#use-cases-{categoryId}-{exampleId}` |
 | **i18n** | `useCases` namespace in `messages/en.json` |
 | **Config** | `useCaseExamples.ts` — 6 sectors, 29 examples |
-| **Status** | **Shipped** — rendered by `ProductionExamplesSection` |
+| **Status** | Not shipped — marked `@deprecated`, zero imports |
 
-Previously lived inside the old `UseCasesSection`, below persona tabs. Removed in commit `119779a5d` (*Simplify the landing page into a focused $9 conversion funnel*), and revived as its own section.
+Previously lived inside the old `UseCasesSection`, below persona tabs. Removed in commit `119779a5d` (*Simplify the landing page into a focused $9 conversion funnel*), briefly revived as its own section in `025ea43be`, then unmounted again when Option A shipped. Config, illustrations, and narration audio are retained so it can be revived.
 
 #### Features
 
@@ -140,7 +141,7 @@ Hero
   ↓
 Use Cases (personas)          #use-cases           emotional hook + Screening Room
   ↓
-Production Examples           #production-examples sector browser, 6 sectors / 29 examples
+Production Examples           #production-examples 4 production-style cards
   ↓
 Pipeline Pillars              #pipeline
   ↓
@@ -151,78 +152,119 @@ Key Features → Pricing
 
 ## Decision
 
-**Option B (sector browser) shipped.** It was chosen over Option A and the hybrid because:
+**Reversed: Option A (4 production-style cards) shipped.**
 
-| Factor | Option B | Option A |
-|--------|----------|----------|
-| Localization | `useCases` namespace already translated across 38 locales | Hardcoded English |
-| Content source | Config-driven (`useCaseExamples.ts`) | Hardcoded component array |
-| Breadth | 29 examples across 6 sectors | 4 production styles |
-| Supporting infra | Poster thumbnails, narration, story audio, demo manifest | None |
-| Deep links | `#use-cases-{category}-{example}` bookmarks | None |
+Option B was shipped first and then rejected on review. The reason is the one thing the
+original decision matrix did not weigh: reusing the `useCases` namespace meant the
+section rendered *entirely* legacy use-case copy — badge “Use Case Examples”, headline
+“Whatever Video You Can Imagine, Build It in SceneFlow”, an internal “USE CASES” chip,
+and a “SELECT A USE CASE TO LEARN MORE” footer. Nothing on screen said “Production
+Examples”, and it sat directly beneath the persona section, so it read as a duplicate of
+the old use-case block rather than a new section.
 
-The hybrid was rejected for now: the persona section already sits directly above and covers the “who is this for” angle, so stacking both card sets would repeat the same pitch twice.
+The original objection to Option A — hardcoded English — cost almost nothing to remove:
+
+| Factor | Option A (shipped) | Option B (retired) |
+|--------|--------------------|--------------------|
+| Localization | `productionShowcase` namespace; English fallback covers all 38 locales | `useCases` namespace, already translated |
+| Content source | Config-driven (`productionShowcaseCopy.ts`) | Config-driven (`useCaseExamples.ts`) |
+| Identity | Reads as Production Examples | Read as the old use-case block |
+| Breadth | 4 production styles | 29 examples across 6 sectors |
+| Conversion | Per-card CTA into the `explorer` funnel | Narration playback, no per-example CTA |
+| Deep links | None | `#use-cases-{category}-{example}` bookmarks |
+
+`mergeMessages.ts` starts each locale from a full copy of `en.json`, so a namespace that
+exists only in English falls back to English everywhere without touching the 38 locale
+files. An MT pass via `npm run i18n:generate` can follow.
+
+The hybrid (Option C, both blocks stacked) is still available and unblocked — the sector
+browser was unmounted, not deleted.
 
 ---
 
 ## Implemented
 
-1. **`ProductionExamplesSection`** renders `ProductionComparisonVisual` under the
-   `#production-examples` anchor, using the existing `useCases` badge/title/subtitle
-   and qualifying statement.
-2. **Wired** into `LandingPageClient.tsx` between `UseCasesSection` and `PipelinePillarsSection`.
-3. **Nav:** entries added to `FloatingNav` and both the desktop and mobile header,
-   with new `nav.productionExamples` / `floatingNav.productionExamples` keys.
-4. **Deep links:** `#use-cases-{category}-{example}` now scrolls the section into view.
-   Previously the hash only selected an example, because no element carries the
-   example hash as an `id`.
-5. **i18n:** narration labels added under `useCases.ui`. Locale files deep-merge over
-   the English base (`src/i18n/mergeMessages.ts`), so new keys fall back to English
-   without touching all 38 locale files.
-6. **Cleanup:** `TemplatesGallery` marked `@deprecated` with a pointer to this plan.
+1. **Copy config:** `src/config/landing/productionShowcaseCopy.ts` holds the header
+   scalars and the four cards (`drama`, `animation`, `podcast`, `training`). Icons,
+   colors, and CTA gradients stay in TypeScript keyed by card id.
+2. **i18n:** `productionShowcase` added to `buildEnMessages.ts` and mirrored by hand into
+   `messages/en.json`. A test asserts the two stay byte-identical.
+3. **`ProductionExamplesSection`** reads only the `productionShowcase` namespace and
+   renders the branded header, the 2×2 card grid, and the bottom CTA strip under the
+   unchanged `#production-examples` anchor.
+4. **`ProductionStyleCard`** ports the card renderer with three fixes carried over from
+   `TemplatesGallery`:
+   - The CTA was inside a `opacity-0 group-hover:opacity-100` overlay, so it was
+     unreachable on touch. It is now in flow below `md` and hover-revealed above it,
+     with `pointer-events-none` plus `focus-within` so it is neither clickable while
+     invisible nor unreachable by keyboard.
+   - `bg.replace('/10','')` / `bg.replace('/5','')` emitted duplicated, conflicting
+     Tailwind gradient classes. Replaced with an explicit `ctaGradient` per card.
+   - The CTA now carries `checkoutTier=explorer` alongside `production={id}`, matching
+     the `getSignupUrlForTier` convention used by hero, pricing, and exit intent.
+     Previously `production` was the only param and nothing downstream reads it.
+5. **Nav:** unchanged — `FloatingNav` and both header navs still target
+   `#production-examples`.
+6. **Cleanup:** `TemplatesGallery.tsx` deleted; `ProductionComparisonVisual` marked
+   `@deprecated`; `USE_CASE_VIDEO_MANIFEST.md` carries a banner noting its hashes are no
+   longer live.
 
 ### Deliberately left alone
 
-- **Section height:** the browser is allowed to size to its content rather than being
-  boxed with its internal `overflow-y-auto` panes. Constraining it pushed the example
-  cards — the section's primary interaction — below an internal scroll fold.
-- **`LandingSectionCollapse`:** the new section is always expanded, matching every
-  other section on the live landing page.
+- **`LandingSectionCollapse`:** the section is always expanded, matching every other
+  section on the live landing page.
+- **Sector-browser assets:** the 29 illustrations, 58 audio files, and
+  `useCaseExamples.ts` config are all retained so Option B or C can be revived without
+  re-uploading anything.
 
 ---
 
 ## Asset Status
 
-All assets the shipped section depends on are present and reachable:
+The shipped card layout is icon-and-text only, so it depends on **no** image, video, or
+audio assets — apart from the section narration track.
 
 | Asset | Source | Status |
 |-------|--------|--------|
-| Example illustrations | `getUseCaseIllustrationUrl` → Vercel Blob | 29 / 29 reachable |
-| Example narration | `public/audio/use-case-narration/{category}/{example}.mp3` | 29 / 29 present |
-| “Hear the Story” audio | `public/audio/use-case-story/{category}/{example}.mp3` | 29 / 29 present |
-| Section narration | `public/audio/section-narration/use-cases.mp3` | Present |
+| Card icons | `lucide-react` (`Clapperboard`, `Palette`, `Mic`, `GraduationCap`) | In-bundle |
+| Section narration | `public/audio/section-narration/use-cases.mp3` | Present, **copy mismatch** |
 
-**Note on video:** `ProductionComparisonVisual` renders illustrations plus narration
-audio — it never reads `videoSrc`, `videoPosterSrc`, or `videoEnabled`. Those fields
-and `useCaseVideoStatus.ts` are defined in config but consumed by no component, so the
-“6 of 29 enabled” count in `USE_CASE_VIDEO_MANIFEST.md` does not affect this section.
-Demo-video playback would require adding a player to the component first.
+**Section narration mismatch:** the track still narrates the retired “Whatever Video You
+Can Imagine” copy, so it no longer matches the heading above it. The button is wired and
+functional; the audio needs re-recording against the new copy. See Remaining Work.
+
+### Retained but unused
+
+Everything the sector browser depended on is still in the repo and still resolves — 29
+Blob illustrations, 29 narration clips, 29 story clips, and `useCaseExamples.ts`. Nothing
+was deleted, so reviving Option B or C requires no re-upload.
 
 ---
 
 ## Remaining Work
 
-1. **Translations:** new nav and narration keys currently fall back to English.
-   Run `npm run i18n:generate` when a translation pass is scheduled.
-2. **`messages/en.json` drift:** the committed file no longer matches
+1. **Re-record section narration:** `public/audio/section-narration/use-cases.mp3`
+   narrates the retired headline. Either re-record against the new
+   `productionShowcase` copy or drop the button until new audio exists.
+2. **Translations:** the whole `productionShowcase` namespace plus the nav keys fall back
+   to English. Run `npm run i18n:generate` when a translation pass is scheduled.
+3. **`messages/en.json` drift:** the committed file still does not match
    `buildEnMessages.ts` output — regenerating drops live keys (`pipeline`,
-   `useCasesShowcase`, `keyFeatures`, `landingSections`). Both files were updated by
-   hand here; reconciling the generator is a separate task.
-3. **Dead video config:** either wire a player into `ProductionComparisonVisual` and use
-   `useCaseVideoStatus.ts`, or drop the unused `videoSrc` / `videoEnabled` fields.
-4. **Option A decision:** delete `TemplatesGallery.tsx` outright, or port its copy into
-   i18n if the “pick a production style” angle is still wanted.
-5. **CI is blocked:** GitHub Actions has been failing repo-wide since at least
+   `screeningRoom`, `useCasesShowcase`, `keyFeatures`). **Do not run
+   `npm run i18n:build-en`** until this is reconciled; `productionShowcase` was added to
+   both files by hand and a test guards that they agree.
+4. **`?production={id}` is still inert:** the param now rides alongside
+   `checkoutTier=explorer`, so the CTA does enter the funnel, but nothing reads
+   `production` after navigation. Either consume it to preselect a production style
+   during onboarding or drop it.
+5. **Retired sector-browser deep links:** the 29 `#use-cases-{category}-{example}`
+   bookmarks documented in `USE_CASE_VIDEO_MANIFEST.md` no longer select an example.
+   Decide whether to revive the browser (Option B or C), redirect those hashes, or
+   retire them.
+6. **Dead video config:** `videoSrc`, `videoPosterSrc`, `videoEnabled`, and
+   `useCaseVideoStatus.ts` are consumed by no rendered component. Drop them or wire a
+   player if the browser returns.
+7. **CI is blocked:** GitHub Actions has been failing repo-wide since at least
    2026-07-24 with *“account is locked due to a billing issue”*, which also disables the
    `deploy-prod.yml` Vercel deploy. Production currently updates through the Vercel Git
    integration only.
@@ -233,19 +275,22 @@ Demo-video playback would require adding a player to the component first.
 
 | File | Role |
 |------|------|
-| `src/components/landing/ProductionExamplesSection.tsx` | Section wrapper, anchor, deep-link scrolling |
+| `src/components/landing/ProductionExamplesSection.tsx` | Section wrapper, anchor, header, CTA strip |
+| `src/components/landing/ProductionStyleCard.tsx` | Card renderer, icon/color map, per-card CTA |
+| `src/config/landing/productionShowcaseCopy.ts` | Card + header copy (English source of truth) |
+| `src/i18n/buildEnMessages.ts` | Emits the `productionShowcase` namespace |
+| `messages/en.json` | `productionShowcase` keys (hand-mirrored) |
 | `src/app/LandingPageClient.tsx` | Landing section order |
-| `src/components/landing/ProductionComparisonVisual.tsx` | 29-example sector browser |
-| `src/components/landing/TemplatesGallery.tsx` | 4-card Production Showcase (deprecated) |
 | `src/components/landing/UseCasesSection.tsx` | Live persona showcase |
-| `src/__tests__/productionExamplesLanding.test.ts` | Wiring, i18n contract, hash round-trip |
+| `src/__tests__/productionExamplesLanding.test.ts` | Wiring, i18n contract, CTA + a11y guards |
+| `src/lib/auth/postLoginRedirect.ts` | `getLoginUrl` — builds the per-card signup URL |
+| `src/components/landing/ProductionComparisonVisual.tsx` | 29-example sector browser (deprecated) |
 | `src/components/landing/AudiencePathStrip.tsx` | Role path strip (orphaned) |
-| `src/config/landing/useCaseExamples.ts` | Example definitions |
-| `src/config/landing/useCaseVideoStatus.ts` | Playback whitelist |
-| `src/config/landing/landingVisualMedia.ts` | Illustrations, narration, story audio URLs |
-| `public/demo/USE_CASE_VIDEO_MANIFEST.md` | Demo upload paths + playback status |
+| `src/config/landing/useCaseExamples.ts` | Example definitions (retained, unused) |
+| `src/config/landing/useCaseVideoStatus.ts` | Playback whitelist (retained, unused) |
+| `src/config/landing/landingVisualMedia.ts` | Section narration + retained example media URLs |
+| `public/demo/USE_CASE_VIDEO_MANIFEST.md` | Demo upload paths; hashes no longer live |
 | `scripts/fetch-use-case-demos.mjs` | Pexels fetch + Blob upload automation |
-| `messages/en.json` | `useCases` and `useCasesShowcase` i18n keys |
 
 ---
 
@@ -293,3 +338,4 @@ Per `USE_CASE_VIDEO_MANIFEST.md` (as of plan creation):
 | 2026-07-25 | 1.0.0 | Initial plan — consolidated from orphaned components, git history, and demo manifests |
 | 2026-07-25 | 2.0.0 | Option B implemented — sector browser shipped as `#production-examples` with nav entries, deep-link scrolling, and tests |
 | 2026-07-25 | 2.1.0 | Verified all 29 illustrations and 58 audio files resolve; corrected the video note (the section renders illustrations, not video) |
+| 2026-07-25 | 3.0.0 | **Decision reversed to Option A.** Option B rendered entirely legacy `useCases` copy and read as the old use-case block. Ported the 4 production-style cards into a new `productionShowcase` namespace, fixed the touch-unreachable CTA and broken gradient classes, routed card CTAs through the `explorer` funnel, deleted `TemplatesGallery`, and deprecated the sector browser |

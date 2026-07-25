@@ -2,8 +2,8 @@ import { readFileSync } from 'fs'
 import path from 'path'
 import { describe, it, expect } from 'vitest'
 import enMessages from '../../messages/en.json'
+import { PRODUCTION_SHOWCASE_COPY } from '@/config/landing/productionShowcaseCopy'
 import {
-  USE_CASE_CATEGORY_IDS,
   VIDEO_CATEGORIES,
   buildUseCaseExampleHash,
   parseUseCaseExampleHash,
@@ -40,47 +40,112 @@ describe('Production Examples landing section', () => {
       expect(readSource(relativePath)).toContain('production-examples')
     }
   })
+
+  it('reads every string from the productionShowcase namespace', () => {
+    const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
+
+    expect(section).toContain("useTranslations('productionShowcase')")
+    // The legacy `useCases` copy is what made this section read as the old
+    // use-case block; it must not leak back in.
+    expect(section).not.toContain("useTranslations('useCases')")
+    expect(section).not.toContain("useTranslations('useCases.ui')")
+  })
+
+  it('no longer mounts the retired sector browser', () => {
+    const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
+    expect(section).not.toContain('ProductionComparisonVisual')
+  })
 })
 
 describe('Production Examples i18n contract', () => {
-  it('provides the section header copy the component reads', () => {
-    for (const key of ['badge', 'title', 'titleAccent', 'subtitle', 'qualifyingStatement'] as const) {
-      expect(enMessages.useCases[key]).toBeTruthy()
+  it('provides the section header and CTA copy the component reads', () => {
+    for (const key of [
+      'badge',
+      'title',
+      'titleAccent',
+      'subtitle',
+      'workflowLabel',
+      'toolsLabel',
+      'startProduction',
+      'cta',
+      'continuityNote',
+      'resonanceNote',
+      'playNarration',
+      'pauseNarration',
+      'narrationComingSoon',
+    ] as const) {
+      expect(enMessages.productionShowcase[key], `missing productionShowcase.${key}`).toBeTruthy()
     }
   })
 
-  it('provides narration labels under the useCases namespace', () => {
-    const { ui } = enMessages.useCases
-    expect(ui.playNarration).toBeTruthy()
-    expect(ui.pauseNarration).toBeTruthy()
-    expect(ui.narrationComingSoon).toBeTruthy()
+  it('brands the section as Production Examples rather than use cases', () => {
+    expect(enMessages.productionShowcase.badge).toBe('Production Examples')
   })
 
-  it('provides nav labels for the new anchor', () => {
-    expect(enMessages.nav.productionExamples).toBeTruthy()
-    expect(enMessages.floatingNav.productionExamples).toBeTruthy()
-  })
+  it('ships exactly four fully populated production cards', () => {
+    const { cards } = enMessages.productionShowcase
 
-  it('localizes every configured category and example', () => {
-    const localized = enMessages.useCases.categories
+    expect(cards).toHaveLength(4)
 
-    expect(localized.map((cat) => cat.id)).toEqual([...USE_CASE_CATEGORY_IDS])
-
-    for (const category of VIDEO_CATEGORIES) {
-      const match = localized.find((cat) => cat.id === category.id)
-      expect(match, `missing localized category ${category.id}`).toBeDefined()
-      expect(match!.examples.map((ex) => ex.id)).toEqual(category.examples.map((ex) => ex.id))
-
-      for (const example of match!.examples) {
-        expect(example.label, `${category.id}/${example.id} label`).toBeTruthy()
-        expect(example.description, `${category.id}/${example.id} description`).toBeTruthy()
+    for (const card of cards) {
+      for (const key of ['id', 'title', 'subtitle', 'badge', 'tools', 'benefit'] as const) {
+        expect(card[key], `${card.id} ${key}`).toBeTruthy()
+      }
+      expect(card.workflow, `${card.id} workflow`).toHaveLength(4)
+      for (const step of card.workflow) {
+        expect(step, `${card.id} workflow step`).toBeTruthy()
       }
     }
   })
+
+  it('keeps card ids stable so ?production= values do not silently change', () => {
+    expect(enMessages.productionShowcase.cards.map((card) => card.id)).toEqual([
+      'drama',
+      'animation',
+      'podcast',
+      'training',
+    ])
+  })
+
+  it('matches the generated English base, so i18n:build-en is a no-op here', () => {
+    expect(enMessages.productionShowcase).toEqual(
+      JSON.parse(JSON.stringify(PRODUCTION_SHOWCASE_COPY))
+    )
+  })
+
+  it('styles every card id the config declares', () => {
+    const cardStyles = readSource('src/components/landing/ProductionStyleCard.tsx')
+
+    for (const card of PRODUCTION_SHOWCASE_COPY.cards) {
+      expect(cardStyles, `missing style for ${card.id}`).toContain(`${card.id}: {`)
+    }
+  })
+
+  it('provides nav labels for the anchor', () => {
+    expect(enMessages.nav.productionExamples).toBeTruthy()
+    expect(enMessages.floatingNav.productionExamples).toBeTruthy()
+  })
 })
 
-describe('Production Examples deep links', () => {
-  it('round-trips every example hash', () => {
+describe('Production style CTAs', () => {
+  it('sends every card into the explorer checkout funnel with its production id', () => {
+    const card = readSource('src/components/landing/ProductionStyleCard.tsx')
+
+    expect(card).toContain("checkoutTier: 'explorer'")
+    expect(card).toContain('extra: { production: card.id }')
+  })
+
+  it('keeps the card CTA reachable without hover', () => {
+    const card = readSource('src/components/landing/ProductionStyleCard.tsx')
+
+    // The in-flow button carries the CTA on touch; the overlay is desktop-only.
+    expect(card).toContain('md:hidden')
+    expect(card).toContain('md:group-hover:opacity-100')
+  })
+})
+
+describe('Retired sector-browser deep links', () => {
+  it('still round-trips example hashes from config for a future revival', () => {
     const examples = VIDEO_CATEGORIES.flatMap((cat) =>
       cat.examples.map((ex) => ({ categoryId: cat.id, exampleId: ex.id }))
     )
