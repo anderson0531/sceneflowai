@@ -1,5 +1,6 @@
 'use server'
 
+import Link from 'next/link'
 import { authOptions } from '@/lib/auth'
 import { getServerSession } from 'next-auth'
 
@@ -31,6 +32,15 @@ export default async function AdminPage() {
           <h2 className="font-semibold mb-2">Users</h2>
           <p className="text-sf-text-secondary text-sm">Search users and adjust balances.</p>
         </section>
+        <Link
+          href="/admin/scripts/introduction-animatic"
+          className="rounded-xl border border-sf-border p-4 bg-sf-surface transition-colors hover:border-cyan-500/40 hover:bg-sf-surface-dark"
+        >
+          <h2 className="font-semibold mb-2">Introduction Animatic Script</h2>
+          <p className="text-sf-text-secondary text-sm">
+            Beat-by-beat narration and frame prompts in six languages, with Google Docs export.
+          </p>
+        </Link>
       </div>
     </div>
   ) as any
