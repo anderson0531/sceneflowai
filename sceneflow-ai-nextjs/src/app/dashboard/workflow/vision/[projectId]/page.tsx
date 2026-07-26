@@ -155,6 +155,7 @@ const ProductionStreamsManager = dynamic(
   { ssr: false }
 )
 import { NotificationCenter } from '@/components/notifications/NotificationCenter'
+import { useSession } from 'next-auth/react'
 import {
   getProjectStreams,
   type ProjectStream,
@@ -586,6 +587,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     setReferenceLibraryOpen(true)
   }, [])
   const router = useRouter()
+  const { data: session } = useSession()
   const { execute } = useProcessWithOverlay()
   const overlayStore = useOverlayStore()
   const [mounted, setMounted] = useState(false)
@@ -14055,16 +14057,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  // The session identity is the only one the server can resolve. Minting a
+  // random UUID here (the previous behaviour) produced an id that matched no
+  // user row, so server-written notifications could never be read back.
   const getUserId = () => {
+    const sessionUser = session?.user as { id?: string; email?: string } | undefined
+    const sessionKey = sessionUser?.id || sessionUser?.email
+    if (sessionKey) return sessionKey
     if (typeof window !== 'undefined') {
-      let userId = localStorage.getItem('authUserId')
-      if (!userId) {
-        userId = crypto.randomUUID()
-        localStorage.setItem('authUserId', userId)
-      }
-      return userId
+      return localStorage.getItem('authUserId') || ''
     }
-    return 'anonymous'
+    return ''
   }
 
   if (!mounted || !project || !initialLoadComplete) {
@@ -14158,7 +14161,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         </div>
         
         <div className="flex items-center gap-2">
-          <NotificationCenter userId={getUserId()} />
+          <NotificationCenter />
         </div>
       </header>
       

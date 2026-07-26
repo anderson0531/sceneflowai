@@ -8,6 +8,7 @@ import {
   getNextGeminiFallbackModel,
   isGeminiQuotaError,
 } from './geminiTextFallback'
+import { recordModelDowngrade } from './modelTelemetry'
 import { 
   getDefaultGeminiSafetySettings, 
   getImagenPersonGeneration,
@@ -84,6 +85,11 @@ export interface TextGenerationOptions {
    * Default: VERTEX_LOCATION env var or 'us-central1'
    */
   location?: string
+  /**
+   * Surface 404/429 as errors instead of silently retrying on an older model.
+   * Used by the model preflight probe, which needs the true per-model result.
+   */
+  disableModelFallback?: boolean
 }
 
 export interface TextGenerationResult {
@@ -92,10 +98,16 @@ export interface TextGenerationResult {
   safetyRatings?: Array<{ category: string; probability: string }>
   /** Resolved model id that produced the response (after any fallback). */
   modelId?: string
+  /** Model originally asked for, which differs from modelId after a fallback. */
+  requestedModelId?: string
+  /** True when a fallback ran, i.e. output did not come from the asked-for model. */
+  downgraded?: boolean
 }
 
 type InternalTextGenerationOptions = TextGenerationOptions & {
   _is404FallbackAttempt?: boolean
+  /** Preserved across fallbacks so the result can report the original ask. */
+  _requestedModel?: string
 }
 
 /**
@@ -107,17 +119,24 @@ export async function generateText(
   options: TextGenerationOptions = {}
 ): Promise<TextGenerationResult> {
   const model = (options.model || 'gemini-3.1-pro-preview').trim()
+  const requestedModel = (options as InternalTextGenerationOptions)._requestedModel || model
 
   try {
     return await generateTextWithModel(prompt, options, model)
   } catch (err) {
-    if (isGeminiQuotaError(err)) {
+    if (isGeminiQuotaError(err) && !options.disableModelFallback) {
       const nextModel = getNextGeminiFallbackModel(model)
       if (nextModel) {
-        console.warn(`[Vertex Gemini] 429 on ${model}. Falling back to ${nextModel}.`)
-        const fallbackOptions: TextGenerationOptions = {
+        recordModelDowngrade({
+          requestedModel,
+          resolvedModel: nextModel,
+          reason: 'quota_exhausted',
+          httpStatus: 429,
+        })
+        const fallbackOptions: InternalTextGenerationOptions = {
           ...options,
           model: nextModel,
+          _requestedModel: requestedModel,
         }
         if (nextModel.includes('2.5')) {
           fallbackOptions.thinkingLevel = 'low'
@@ -224,13 +243,25 @@ async function generateTextWithModel(
   if (!isOk) {
     const errorText = await response.text(); 
     
-    if (status === 404 && isGemini3 && !options._is404FallbackAttempt) {
-      console.warn(`[Vertex Gemini] 404 for ${model}. Falling back to 2.5-flash.`);
+    if (
+      status === 404 &&
+      isGemini3 &&
+      !options._is404FallbackAttempt &&
+      !options.disableModelFallback
+    ) {
+      const fallbackModel = GEMINI_TEXT_MODELS_PREVIOUS['2.5-flash'];
+      recordModelDowngrade({
+        requestedModel: options._requestedModel || model,
+        resolvedModel: fallbackModel,
+        reason: 'model_not_found',
+        httpStatus: 404,
+      });
       return generateText(prompt, {
         ...options,
-        model: GEMINI_TEXT_MODELS_PREVIOUS['2.5-flash'],
+        model: fallbackModel,
         thinkingLevel: 'low',
         _is404FallbackAttempt: true,
+        _requestedModel: options._requestedModel || model,
       } as InternalTextGenerationOptions);
     }
     
@@ -242,11 +273,15 @@ async function generateTextWithModel(
     ?.filter((part: any) => !part.thought)
     .map((part: any) => part.text).join('').trim();
 
+  const requestedModelId = options._requestedModel || model;
+
   return {
     text,
     safetyRatings: data.candidates?.[0]?.safetyRatings,
     finishReason: data.candidates?.[0]?.finishReason,
     modelId: model,
+    requestedModelId,
+    downgraded: requestedModelId !== model,
   };
 }
 

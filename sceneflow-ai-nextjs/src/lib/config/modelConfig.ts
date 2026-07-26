@@ -325,6 +325,26 @@ export function getGeminiTextModel(
   return 'gemini-3.1-flash-lite-preview';
 }
 
+/**
+ * Text model ids worth probing against Vertex, roughly best-first.
+ *
+ * Ranking rationale: newer generations lead, because a newer Flash generally
+ * beats an older Pro on reasoning while costing less. `gemini-3.0-flash` is
+ * included specifically because it is used widely in this codebase yet appears
+ * in no published catalog — the probe exists to settle whether Vertex serves it
+ * or whether those call sites have been silently downgrading to 2.5-flash.
+ */
+export const GEMINI_TEXT_MODEL_CANDIDATES = [
+  'gemini-3.6-flash',
+  'gemini-3.5-flash',
+  'gemini-3.1-pro-preview',
+  'gemini-3-pro-preview',
+  'gemini-3.1-flash-lite-preview',
+  'gemini-3.0-flash',
+  'gemini-3-flash',
+  'gemini-2.5-flash',
+] as const;
+
 
 export type GeminiModelFamily = '2.5' | '3.0';
 

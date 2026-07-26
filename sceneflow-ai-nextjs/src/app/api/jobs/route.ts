@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import '@/models'
-import { listJobsForUser } from '@/lib/jobs/jobService'
+import { getJobForUser, listJobsForUser } from '@/lib/jobs/jobService'
 import { createGenerationJob } from '@/lib/jobs/jobService'
-import { resolveUserId } from '@/lib/userHelper'
+import { getSessionUserId } from '@/lib/auth/sessionUser'
 import type { GenerationJobType } from '@/models/GenerationJob'
 import { inngest } from '@/inngest/client'
 
@@ -10,13 +10,26 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
   try {
-    const userIdParam = req.nextUrl.searchParams.get('userId')
-    const projectId = req.nextUrl.searchParams.get('projectId') || undefined
-    if (!userIdParam) {
-      return NextResponse.json({ error: 'userId required' }, { status: 400 })
+    // Session is authoritative — a client-supplied userId would let one
+    // account enumerate another's jobs.
+    const userId = await getSessionUserId()
+    if (!userId) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
-    const userId = await resolveUserId(userIdParam)
-    const jobs = await listJobsForUser(userId, projectId)
+
+    const jobId = req.nextUrl.searchParams.get('jobId')
+    const projectId = req.nextUrl.searchParams.get('projectId') || undefined
+
+    if (jobId) {
+      const job = await getJobForUser(jobId, userId)
+      if (!job) {
+        return NextResponse.json({ error: 'Job not found' }, { status: 404 })
+      }
+      return NextResponse.json({ job })
+    }
+
+    const activeOnly = req.nextUrl.searchParams.get('active') === 'true'
+    const jobs = await listJobsForUser(userId, projectId, { activeOnly })
     return NextResponse.json({ jobs })
   } catch (err: any) {
     return NextResponse.json({ error: err?.message }, { status: 500 })
@@ -26,25 +39,21 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const {
-      userId: userIdParam,
-      projectId,
-      jobType,
-      payload,
-      batch,
-    } = body as {
-      userId: string
+    const { projectId, jobType, payload, batch } = body as {
       projectId: string
       jobType: GenerationJobType
       payload?: Record<string, unknown>
       batch?: Record<string, unknown>[]
     }
 
-    if (!userIdParam || !projectId || !jobType) {
-      return NextResponse.json({ error: 'userId, projectId, jobType required' }, { status: 400 })
+    if (!projectId || !jobType) {
+      return NextResponse.json({ error: 'projectId, jobType required' }, { status: 400 })
     }
 
-    const userId = await resolveUserId(userIdParam)
+    const userId = await getSessionUserId()
+    if (!userId) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
 
     if (batch && Array.isArray(batch) && batch.length > 0) {
       const job = await createGenerationJob({

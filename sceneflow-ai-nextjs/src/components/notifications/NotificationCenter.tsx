@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useState } from 'react'
+import { useSession } from 'next-auth/react'
 import { Bell, Check, Loader2, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
@@ -15,43 +16,48 @@ type NotificationRow = {
   project_id?: string | null
 }
 
-export function NotificationCenter({ userId }: { userId?: string }) {
+/**
+ * Notification bell. Identity comes from the session on the server, so no
+ * userId prop is needed — passing one previously meant a locally-minted id
+ * could silently mismatch the account rows were written against.
+ */
+export function NotificationCenter() {
+  const { status } = useSession()
+  const authenticated = status === 'authenticated'
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [notifications, setNotifications] = useState<NotificationRow[]>([])
 
   const load = useCallback(async () => {
-    if (!userId) return
     setLoading(true)
     try {
-      const res = await fetch(`/api/notifications?userId=${encodeURIComponent(userId)}`)
+      const res = await fetch('/api/notifications')
       const data = await res.json()
       if (res.ok) setNotifications(data.notifications || [])
     } finally {
       setLoading(false)
     }
-  }, [userId])
+  }, [])
 
   useEffect(() => {
-    if (!userId) return
+    if (!authenticated) return
     void load()
     const interval = setInterval(load, 15000)
     return () => clearInterval(interval)
-  }, [userId, load])
+  }, [authenticated, load])
 
   const unread = notifications.filter((n) => !n.read).length
 
   const markAllRead = async () => {
-    if (!userId) return
     await fetch('/api/notifications', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, markAllRead: true }),
+      body: JSON.stringify({ markAllRead: true }),
     })
     void load()
   }
 
-  if (!userId) return null
+  if (!authenticated) return null
 
   return (
     <div className="relative">

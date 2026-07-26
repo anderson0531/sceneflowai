@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateTextCacheAware } from '@/lib/vertexai/gemini'
+import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import { logCacheEvent } from '@/lib/vertexai/cacheObservability'
 import { safeParseJsonFromText, strictJsonPromptSuffix } from '@/lib/safeJson'
 import {
@@ -17,7 +18,8 @@ import {
 } from '@/lib/script/structuredSceneRevision'
 import { attachCoGeneratedSceneDirection } from '@/lib/sceneGeneration/attachRevisedSceneDirection'
 
-export const maxDuration = 120
+// Pro-tier revision with medium thinking can exceed the previous 120s ceiling.
+export const maxDuration = 300
 export const runtime = 'nodejs'
 
 interface SceneRevisionRequest {
@@ -320,16 +322,18 @@ Now rewrite the scene following all the rules, constraints, and formatting requi
     // System instruction for the screenwriter persona
     const systemInstruction = `You are a professional screenwriter REWRITING a scene. Your task is to make SUBSTANTIVE changes—not cosmetic polishing. When recommendations call for change, CHANGE THE ACTUAL CONTENT, not just the wording.`
 
-    console.log('[Scene Revision] Calling Vertex AI Gemini (cache-aware, zone: script_doctor)...')
+    const revisionModel = getGeminiTextModel('pro')
+    console.log(`[Scene Revision] Calling ${revisionModel} (cache-aware, zone: script_doctor)...`)
     const _startTime = Date.now()
     const result = await generateTextCacheAware(userPrompt, {
       cacheZone: 'script_doctor',
       sceneflowProjectId: projectId,
       systemInstruction,
       cacheContextParts: [{ text: cacheableContext }],
-      model: 'gemini-2.5-flash',
+      model: revisionModel,
       temperature: 0.7,
       maxOutputTokens: 16384,
+      thinkingLevel: 'medium',
       responseMimeType: 'application/json',
       cacheTtlMinutes: 60
     })
@@ -346,7 +350,7 @@ Now rewrite the scene following all the rules, constraints, and formatting requi
       projectId,
       cacheHit: result.usedCache ?? false,
       cacheId: result.cacheEntry?.cacheId,
-      model: 'gemini-2.5-flash',
+      model: result.modelId ?? revisionModel,
       usageMetadata: result.usageMetadata,
       taskType: 'scene_revision',
       duration: Date.now() - _startTime,
@@ -355,6 +359,12 @@ Now rewrite the scene following all the rules, constraints, and formatting requi
 
 
   console.log('[Scene Revision] Response received, finishReason:', result.finishReason, 'length:', result.text?.length || 0)
+
+  if (result.downgraded) {
+    console.error(
+      `[Scene Revision] Ran on ${result.modelId} after falling back from ${result.requestedModelId}`
+    )
+  }
 
   if (result.finishReason === 'SAFETY') {
     throw new Error('Scene revision blocked by safety filters. Try rephrasing your direction.')

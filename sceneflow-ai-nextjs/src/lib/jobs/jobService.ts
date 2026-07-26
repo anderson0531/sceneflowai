@@ -143,13 +143,43 @@ export async function notifyUser(input: {
   })
 }
 
-export async function listJobsForUser(userId: string, projectId?: string) {
-  const where: Record<string, string> = { user_id: userId }
+/** Statuses that mean a job is still expected to produce a result. */
+export const ACTIVE_JOB_STATUSES: GenerationJobStatus[] = ['queued', 'processing']
+
+export async function listJobsForUser(
+  userId: string,
+  projectId?: string,
+  options: { activeOnly?: boolean } = {}
+) {
+  const where: Record<string, unknown> = { user_id: userId }
   if (projectId) where.project_id = projectId
+  if (options.activeOnly) where.status = ACTIVE_JOB_STATUSES
   return GenerationJob.findAll({
     where,
     order: [['created_at', 'DESC']],
     limit: 50,
+  })
+}
+
+/** Single job scoped to its owner, so one account cannot poll another's job. */
+export async function getJobForUser(jobId: string, userId: string) {
+  return GenerationJob.findOne({ where: { id: jobId, user_id: userId } })
+}
+
+/** Existing queued/processing job of a type, used to reject duplicate runs. */
+export async function findActiveJob(input: {
+  userId: string
+  projectId: string
+  jobType: GenerationJobType
+}) {
+  return GenerationJob.findOne({
+    where: {
+      user_id: input.userId,
+      project_id: input.projectId,
+      job_type: input.jobType,
+      status: ACTIVE_JOB_STATUSES,
+    },
+    order: [['created_at', 'DESC']],
   })
 }
 

@@ -79,6 +79,12 @@
     "src/app/api/vision/review-script/route.ts": {
       "maxDuration": 180
     },
+    "src/app/api/vision/revise-scene/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/admin/diagnostics/gemini-models/route.ts": {
+      "maxDuration": 120
+    },
     "src/app/api/scenes/[sceneId]/generate-segments/route.ts": {
       "maxDuration": 300
     },
