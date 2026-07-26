@@ -7,7 +7,6 @@ import { Loader, Eye, Check, Undo, Redo } from 'lucide-react'
 import { InstructionsPanel, type InstructionsPanelAudienceAnalysis } from './InstructionsPanel'
 import { PreviewPanel } from './PreviewPanel'
 import { SceneComparisonPanel } from './SceneComparisonPanel'
-import { useOverlayStore } from '@/store/useOverlayStore'
 import { toast } from 'sonner'
 import { waitForUiPaint } from '@/lib/ui/waitForUiPaint'
 import type { PreserveElement } from '@/lib/audio/cleanupAudio'
@@ -37,7 +36,20 @@ interface SceneEditorModalProps {
   ) => void | Promise<void>
   initialInstructions?: string
   audienceAnalysis?: InstructionsPanelAudienceAnalysis | null
+  /** Target audience profile, so revisions are written for a specific audience. */
+  targetDemographic?: string
+  /** Story-level context that keeps edits consistent with the whole script. */
+  logline?: string
+  scriptTitle?: string
 }
+
+type RevisionDepth = 'light' | 'moderate' | 'deep'
+
+const REVISION_DEPTHS: Array<{ value: RevisionDepth; label: string; hint: string }> = [
+  { value: 'light', label: 'Polish', hint: 'Refine wording, keep structure' },
+  { value: 'moderate', label: 'Rewrite', hint: 'Substantive changes to content and flow' },
+  { value: 'deep', label: 'Restructure', hint: 'Reimagine how the scene unfolds' },
+]
 
 export function SceneEditorModal({
   isOpen,
@@ -51,6 +63,9 @@ export function SceneEditorModal({
   onApplyChanges,
   initialInstructions = '',
   audienceAnalysis: audienceAnalysisProp,
+  targetDemographic,
+  logline,
+  scriptTitle,
 }: SceneEditorModalProps) {
   const [customInstruction, setCustomInstruction] = useState(initialInstructions)
   const [previewScene, setPreviewScene] = useState<any | null>(null)
@@ -73,6 +88,7 @@ export function SceneEditorModal({
   const [showComparison, setShowComparison] = useState(false)
 
   const [appliedRecommendationIds, setAppliedRecommendationIds] = useState<string[]>([])
+  const [revisionDepth, setRevisionDepth] = useState<RevisionDepth>('moderate')
 
   const MAX_INSTRUCTIONS = 5
 
@@ -131,6 +147,7 @@ export function SceneEditorModal({
       setPreserveSceneDirection(false)
       setPreserveBeatFrames(false)
       setDeselectedChanges(new Set())
+      setRevisionDepth('moderate')
     }
   }, [isOpen, scene, initialInstructions])
 
@@ -139,17 +156,16 @@ export function SceneEditorModal({
       return
     }
 
-    const overlayStore = useOverlayStore.getState()
-
     setIsGenerating(true)
-
-    overlayStore.show(`Revising Scene ${sceneIndex + 1}...`, 20, 'scene-revision')
 
     try {
       const preserveElements = buildPreserveElements()
 
-      overlayStore.setProgress(15)
-      overlayStore.setStatus('Revising scene content...')
+      // Revise from where the user actually is in the revision history. Always
+      // sending the original `scene` meant a second Generate Preview discarded
+      // the first revision and re-edited from scratch, which read as the AI
+      // making only small changes no matter how many times you asked.
+      const baseScene = revisionHistory[currentHistoryIndex] ?? scene
 
       const response = await fetch('/api/vision/revise-scene', {
         method: 'POST',
@@ -157,21 +173,22 @@ export function SceneEditorModal({
         body: JSON.stringify({
           projectId,
           sceneIndex,
-          currentScene: scene,
+          currentScene: baseScene,
           revisionMode: 'instruction',
           selectedRecommendations: [],
           customInstruction,
+          targetDemographic,
           preserveElements,
+          revisionDepth,
           context: {
             characters,
             previousScene,
-            nextScene
+            nextScene,
+            logline,
+            scriptTitle,
           }
         })
       })
-
-      overlayStore.setProgress(60)
-      overlayStore.setStatus('Finalizing beats...')
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
@@ -184,9 +201,6 @@ export function SceneEditorModal({
         throw new Error(apiError)
       }
 
-      overlayStore.setProgress(85)
-      overlayStore.setStatus('Preparing preview...')
-
       const data = await response.json()
       setPreviewScene(data.revisedScene)
       setDeselectedChanges(new Set())
@@ -195,12 +209,8 @@ export function SceneEditorModal({
       setRevisionHistory(newHistory)
       setCurrentHistoryIndex(newHistory.length - 1)
 
-      overlayStore.setProgress(100)
-      overlayStore.setStatus('Loading preview...')
-
       setShowPreview(true)
       await waitForUiPaint(50)
-      overlayStore.hide()
     } catch (error) {
       console.error('[Scene Editor] Failed to generate preview:', error)
       const message = error instanceof Error ? error.message : 'Failed to revise scene'
@@ -213,7 +223,6 @@ export function SceneEditorModal({
           ? 'Scene revision timed out — try again or preserve scene direction.'
           : message
       )
-      overlayStore.hide()
     } finally {
       setIsGenerating(false)
     }
@@ -330,6 +339,37 @@ export function SceneEditorModal({
                 }}
                 canAddMoreInstructions={canAddMoreInstructions}
               />
+
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  How far should the AI go?
+                </h4>
+                <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
+                  Pick Restructure when a scene needs reimagining rather than tightening.
+                </p>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  {REVISION_DEPTHS.map((depth) => (
+                    <button
+                      key={depth.value}
+                      type="button"
+                      onClick={() => setRevisionDepth(depth.value)}
+                      aria-pressed={revisionDepth === depth.value}
+                      className={`rounded-lg border p-2 text-left transition-colors ${
+                        revisionDepth === depth.value
+                          ? 'border-purple-500/60 bg-purple-500/10'
+                          : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                      }`}
+                    >
+                      <span className="block text-sm font-medium text-gray-800 dark:text-gray-200">
+                        {depth.label}
+                      </span>
+                      <span className="block text-[11px] text-gray-500 dark:text-gray-400">
+                        {depth.hint}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               <div className="border-t pt-4">
                 <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">

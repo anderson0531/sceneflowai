@@ -37,7 +37,40 @@ interface SceneRevisionRequest {
     characters: any[]
     previousScene?: any
     nextScene?: any
+    /** Logline/premise so edits stay consistent with the overall story. */
+    logline?: string
+    /** Script title, for tone. */
+    scriptTitle?: string
   }
+}
+
+/** Neighbour context beyond the heading, so edits can honour what surrounds them. */
+function formatNeighbourScene(scene: any, label: string): string {
+  if (!scene) return `${label}: None`
+  const parts = [`${label}: ${scene.heading || 'Untitled'}`]
+  if (scene.action) parts.push(`  Action: ${String(scene.action).slice(0, 400)}`)
+  const dialogue = (scene.dialogue || [])
+    .slice(0, 3)
+    .map((d: any) => `    ${d?.character || 'UNKNOWN'}: ${String(d?.line || d?.text || '').slice(0, 160)}`)
+    .join('\n')
+  if (dialogue) parts.push(`  Dialogue:\n${dialogue}`)
+  return parts.join('\n')
+}
+
+/** Character voice/role detail, so rewritten dialogue stays in character. */
+function formatCharacterProfiles(characters: any[]): string {
+  if (!characters?.length) return 'No characters'
+  return characters
+    .map((c: any) => {
+      const bits = [c?.name || 'UNKNOWN']
+      if (c?.role) bits.push(`role: ${c.role}`)
+      if (c?.description) bits.push(`description: ${String(c.description).slice(0, 240)}`)
+      if (c?.voiceProfile || c?.personality) {
+        bits.push(`voice: ${String(c.voiceProfile || c.personality).slice(0, 200)}`)
+      }
+      return `- ${bits.join(' | ')}`
+    })
+    .join('\n')
 }
 
 export async function POST(req: NextRequest) {
@@ -181,6 +214,7 @@ For each recommendation, make the necessary STRUCTURAL or CONTENT changes. Do NO
 
   const dialogueText = currentScene.dialogue?.map((d: any) => `${d.character}: ${d.line || d.text || ''}`).join('\n') || 'No dialogue'
   const characterNames = context.characters?.map((c: any) => c.name).join(', ') || 'No characters'
+  const characterProfiles = formatCharacterProfiles(context.characters)
   const currentBeats = getSceneBeats(currentScene)
   const beatsText = formatBeatsForRevisionPrompt(currentBeats)
 
@@ -206,12 +240,19 @@ ${dialogueText}
 Music: ${formatMusicForPrompt(currentScene.music)}
 SFX: ${formatSfxForPrompt(currentScene.sfx)}
 
-CONTEXT:
-Characters: ${characterNames}
-Previous Scene: ${context.previousScene?.heading || 'None'}
-Next Scene: ${context.nextScene?.heading || 'None'}
+STORY CONTEXT:
+${context.scriptTitle ? `Title: ${context.scriptTitle}` : ''}
+${context.logline ? `Logline: ${context.logline}` : ''}
 
-CRITICAL: Maintain EXACT character names from the character list. Do not abbreviate or modify names.
+CHARACTERS (keep every rewritten line true to these):
+${characterProfiles}
+
+SURROUNDING SCENES (do not rewrite these — use them to keep continuity, avoid
+repeating beats they already cover, and set up what comes next):
+${formatNeighbourScene(context.previousScene, 'Previous Scene')}
+${formatNeighbourScene(context.nextScene, 'Next Scene')}
+
+CRITICAL: Maintain EXACT character names from the character list (${characterNames}). Do not abbreviate or modify names.
 
 WHAT SUBSTANTIVE REWRITING MEANS:
 ✓ RESTRUCTURE dialogue: reorder lines, combine redundant exchanges, split long speeches, add/remove beats

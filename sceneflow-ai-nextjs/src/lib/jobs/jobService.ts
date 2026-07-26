@@ -6,6 +6,9 @@ import GenerationJob, {
 import Notification from '@/models/Notification'
 import { inngest } from '@/inngest/client'
 import { sequelize } from '@/config/database'
+import { ACTIVE_JOB_STATUSES } from '@/lib/jobs/jobStatus'
+
+export { ACTIVE_JOB_STATUSES }
 
 let notificationsSchemaInProgress = false
 let notificationsSchemaCompleted = false
@@ -142,9 +145,6 @@ export async function notifyUser(input: {
     read: false,
   })
 }
-
-/** Statuses that mean a job is still expected to produce a result. */
-export const ACTIVE_JOB_STATUSES: GenerationJobStatus[] = ['queued', 'processing']
 
 export async function listJobsForUser(
   userId: string,

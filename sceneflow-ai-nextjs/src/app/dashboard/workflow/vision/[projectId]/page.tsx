@@ -211,6 +211,7 @@ import Link from 'next/link'
 import {
   loadBlueprintARFromMetadata,
   createAudienceDefinition,
+  formatAudienceDefinitionForPrompt,
   type AudienceDefinition,
 } from '@/lib/types/audienceResonance'
 import type { CinematicScenePlan } from '@/components/vision/ScriptReviewModal'
@@ -14938,6 +14939,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           onApplyChanges={handleApplySceneChanges}
           initialInstructions={sceneEditorInitialInstructions}
           audienceAnalysis={editorAudienceAnalysis}
+          targetDemographic={
+            projectAudienceDefinition
+              ? formatAudienceDefinitionForPrompt(projectAudienceDefinition)
+              : undefined
+          }
+          logline={script?.logline}
+          scriptTitle={script?.title}
         />
       )}
 
