@@ -20,7 +20,7 @@ const PRODUCED_VIDEOS: Record<string, Partial<Record<VideoLocaleId, ProducedVide
     hi: { src: videoUrl('The Cinematic Drama (Hindi).mp4') },
     zh: { src: videoUrl('The Cinematic Drama (Chinese).mp4') },
     ar: { src: videoUrl('The Cinematic Drama (Arabic).mp4') },
-    // th dub pending — placeholder renders as "Soon".
+    th: { src: videoUrl('The Cinematic Drama (Thai).mp4') },
   },
 }
 
