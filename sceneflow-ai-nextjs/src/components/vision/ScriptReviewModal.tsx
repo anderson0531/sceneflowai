@@ -27,6 +27,7 @@ import {
   type AudienceDefinition,
 } from '@/lib/types/audienceResonance'
 import { AudienceDescriptionField } from '@/components/audience/AudienceDescriptionField'
+import { isStoredReviewStale } from '@/lib/script/audienceResonance/staleness'
 
 const SCRIPT_REVIEW_TARGET_AUDIENCE_KEY = 'sceneflow-script-review-target-audience'
 
@@ -390,6 +391,8 @@ interface ScriptReviewModalProps {
   existingCinematicScenes?: CinematicScenePlan[]
   /** Project-level audience from Blueprint (single source of truth) */
   audienceDefinition?: AudienceDefinition | null
+  /** Current script timestamp, used to detect a review that analysis outran. */
+  scriptUpdatedAt?: string | null
 }
 
 // ============================================================================
@@ -630,6 +633,7 @@ export default function ScriptReviewModal({
   onClose,
   directorReview, // No longer used - user is the director
   audienceReview,
+  scriptUpdatedAt,
   onRegenerate,
   isGenerating,
   onReviseScript,
@@ -1527,6 +1531,12 @@ export default function ScriptReviewModal({
 
   // Cast to AudienceResonanceReview for new features
   const review = audienceReview as AudienceResonanceReview | null
+  // Background analysis can finish after further edits, in which case scene
+  // numbers may no longer line up with what was scored.
+  const reviewIsStale = isStoredReviewStale(
+    review as { baseScriptUpdatedAt?: string | null; stale?: boolean } | null,
+    scriptUpdatedAt
+  )
   const deductions = review?.deductions || []
   // Use localSceneAnalysis if available (from dedicated API), otherwise fall back to review data
   const sceneAnalysis = localSceneAnalysis || review?.sceneAnalysis || []
@@ -1544,6 +1554,12 @@ export default function ScriptReviewModal({
               <Target className="w-5 h-5 text-purple-500" />
               <h2 className="text-xl font-semibold">Insights & Direction</h2>
               <span className="text-[11px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded ml-2">Analysis & Planning</span>
+              {reviewIsStale && (
+                <span className="ml-1 inline-flex items-center gap-1 rounded bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                  <AlertTriangle className="h-3 w-3" />
+                  Out of date
+                </span>
+              )}
             </div>
             <Button
               variant="ghost"
@@ -1557,6 +1573,25 @@ export default function ScriptReviewModal({
               <X className="w-4 h-4" />
             </Button>
           </div>
+
+          {reviewIsStale && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2">
+              <p className="text-xs text-amber-700 dark:text-amber-300">
+                Your script changed after this analysis started, so scene numbers and fixes may no
+                longer match.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isGenerating}
+                onClick={() => void handleRegenerate()}
+                className="h-7 border-amber-500/50 text-xs text-amber-700 dark:text-amber-300"
+              >
+                <RefreshCw className={`mr-1.5 h-3 w-3 ${isGenerating ? 'animate-spin' : ''}`} />
+                Re-run analysis
+              </Button>
+            </div>
+          )}
 
           {/* Bottom Line: Action Buttons & Playback Control */}
           <div className="flex items-center justify-between flex-wrap gap-4">

@@ -14582,6 +14582,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         script={script?.script}
         characters={characters}
         audienceDefinition={projectAudienceDefinition}
+        scriptUpdatedAt={
+          (project?.metadata?.visionPhase as Record<string, any> | undefined)?.scriptUpdatedAt ??
+          null
+        }
         scoreOutdated={reviewsOutdated}
         reviewHistory={project?.metadata?.visionPhase?.reviewHistory || []}
         onSceneAnalysisComplete={handleSceneAnalysisComplete}
