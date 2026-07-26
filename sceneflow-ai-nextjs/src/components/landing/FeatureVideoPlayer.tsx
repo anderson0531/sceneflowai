@@ -2,7 +2,6 @@
 
 import { useRef, useState } from 'react'
 import { Play, Pause, Volume2, VolumeX, Maximize, ExternalLink } from 'lucide-react'
-import { StudioVideoWatermark } from '@/components/landing/StudioVideoWatermark'
 
 export type VideoAriaLabels = {
   play: string
@@ -87,8 +86,6 @@ export function FeatureVideoPlayer({
         onContextMenu={(e) => e.preventDefault()}
         controlsList="nodownload"
       />
-
-      <StudioVideoWatermark />
 
       <div className="absolute inset-0 z-20 flex items-end opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
         <div className="w-full bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 flex items-center justify-between pointer-events-auto">

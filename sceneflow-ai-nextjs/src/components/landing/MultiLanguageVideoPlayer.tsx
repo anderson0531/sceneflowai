@@ -3,15 +3,12 @@
 import { useEffect, useState } from 'react'
 import { Languages, Video as VideoIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import type {
-  PersonaStoryLocale,
-  PersonaStoryLocaleId,
-} from '@/config/landing/personaStoryVideos'
+import type { VideoLocale, VideoLocaleId } from '@/config/landing/videoLocales'
 import { cn } from '@/lib/utils'
 
 type MultiLanguageVideoPlayerProps = {
-  locales: PersonaStoryLocale[]
-  defaultLocaleId: PersonaStoryLocaleId
+  locales: VideoLocale[]
+  defaultLocaleId: VideoLocaleId
   languagePromptLabel: string
   comingSoonLabel: string
   soonLabel: string
@@ -32,7 +29,7 @@ export function MultiLanguageVideoPlayer({
   className,
 }: MultiLanguageVideoPlayerProps) {
   const tHero = useTranslations('hero')
-  const [activeLocaleId, setActiveLocaleId] = useState<PersonaStoryLocaleId>(defaultLocaleId)
+  const [activeLocaleId, setActiveLocaleId] = useState<VideoLocaleId>(defaultLocaleId)
 
   useEffect(() => {
     setActiveLocaleId(defaultLocaleId)

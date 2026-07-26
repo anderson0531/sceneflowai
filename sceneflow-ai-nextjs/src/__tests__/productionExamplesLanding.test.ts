@@ -8,11 +8,13 @@ import {
   buildUseCaseExampleHash,
   parseUseCaseExampleHash,
 } from '@/config/landing/useCaseExamples'
+import { SECTION_NARRATION_AUDIO } from '@/config/landing/landingVisualMedia'
 import {
-  PRODUCTION_SHOWCASE_VIDEOS,
-  SECTION_NARRATION_AUDIO,
-  getProductionShowcaseVideoUrl,
-} from '@/config/landing/landingVisualMedia'
+  getDefaultProductionShowcaseLocale,
+  getProductionShowcaseVideoLocales,
+  hasProductionShowcaseVideo,
+} from '@/config/landing/productionShowcaseVideos'
+import { VIDEO_LOCALE_ORDER } from '@/config/landing/videoLocales'
 
 const ROOT = path.resolve(__dirname, '../..')
 
@@ -149,24 +151,85 @@ describe('Production style CTAs', () => {
 })
 
 describe('Production showcase videos', () => {
-  it('wires the Cinematic Drama demo from Blob storage', () => {
-    expect(PRODUCTION_SHOWCASE_VIDEOS.drama).toBe(
-      'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/The%20Cinematic%20Drama%20(English).mp4'
+  it('offers all seven dub languages for the Cinematic Drama card', () => {
+    const locales = getProductionShowcaseVideoLocales('drama')
+
+    expect(locales.map((locale) => locale.id)).toEqual(VIDEO_LOCALE_ORDER)
+    expect(locales.map((locale) => locale.id)).toEqual([
+      'en',
+      'es',
+      'pt',
+      'hi',
+      'zh',
+      'ar',
+      'th',
+    ])
+  })
+
+  it('marks English and Spanish produced and the rest as placeholders', () => {
+    const locales = getProductionShowcaseVideoLocales('drama')
+    const available = locales.filter((locale) => locale.available).map((locale) => locale.id)
+    const placeholders = locales.filter((locale) => !locale.available).map((locale) => locale.id)
+
+    expect(available).toEqual(['en', 'es'])
+    expect(placeholders).toEqual(['pt', 'hi', 'zh', 'ar', 'th'])
+
+    // Placeholders must carry no src, so the player shows "coming soon"
+    // rather than requesting a 404.
+    for (const locale of locales) {
+      if (!locale.available) expect(locale.src).toBe('')
+    }
+  })
+
+  it('points the produced locales at their Blob masters', () => {
+    const byId = Object.fromEntries(
+      getProductionShowcaseVideoLocales('drama').map((locale) => [locale.id, locale.src])
     )
-    expect(getProductionShowcaseVideoUrl('drama')).toBe(PRODUCTION_SHOWCASE_VIDEOS.drama)
-    expect(getProductionShowcaseVideoUrl('animation')).toBeUndefined()
+
+    expect(byId.en).toContain('The%20Cinematic%20Drama%20(English).mp4')
+    expect(byId.es).toContain('The%20Cinematic%20Drama%20(Spanish).mp4')
   })
 
-  it('passes configured video URLs into ProductionStyleCard', () => {
+  it('defaults to English and reports the card as having video', () => {
+    expect(getDefaultProductionShowcaseLocale('drama')).toBe('en')
+    expect(hasProductionShowcaseVideo('drama')).toBe(true)
+  })
+
+  it('leaves the other cards without a player until dubs exist', () => {
+    for (const cardId of ['animation', 'podcast', 'training']) {
+      expect(hasProductionShowcaseVideo(cardId), `${cardId} should have no video`).toBe(false)
+      expect(getProductionShowcaseVideoLocales(cardId)).toHaveLength(7)
+    }
+  })
+
+  it('renders the multi-language player and passes locale labels through', () => {
     const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
-    expect(section).toContain('getProductionShowcaseVideoUrl(card.id)')
-    expect(section).toContain('videoAriaLabels={videoAriaLabels}')
+    expect(section).toContain('getProductionShowcaseVideoLocales(card.id)')
+    expect(section).toContain('getDefaultProductionShowcaseLocale(card.id)')
+
+    const card = readSource('src/components/landing/ProductionStyleCard.tsx')
+    expect(card).toContain('MultiLanguageVideoPlayer')
   })
 
-  it('renders FeatureVideoPlayer when a card has video', () => {
-    const card = readSource('src/components/landing/ProductionStyleCard.tsx')
-    expect(card).toContain('FeatureVideoPlayer')
-    expect(card).toContain('hasVideo')
+  it('provides the video picker copy the section reads', () => {
+    for (const key of ['videoLanguagePrompt', 'videoComingSoon', 'videoSoon'] as const) {
+      expect(enMessages.productionShowcase[key], `missing productionShowcase.${key}`).toBeTruthy()
+    }
+  })
+})
+
+describe('Video player watermark', () => {
+  it('renders no watermark overlay in the landing video players', () => {
+    for (const relativePath of [
+      'src/components/landing/MultiLanguageVideoPlayer.tsx',
+      'src/components/landing/FeatureVideoPlayer.tsx',
+      'src/components/landing/LandingSampleVideo.tsx',
+      'src/components/landing/ProductionStyleCard.tsx',
+    ]) {
+      expect(readSource(relativePath), `${relativePath} still renders a watermark`).not.toContain(
+        'StudioVideoWatermark'
+      )
+    }
   })
 })
 

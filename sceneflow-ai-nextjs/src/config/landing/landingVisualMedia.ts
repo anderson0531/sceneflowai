@@ -283,12 +283,3 @@ export function getFeatureStoryboardScreenshot(
   }
   return FEATURE_STORYBOARD_MEDIA[id]?.screenshotUrl
 }
-
-/** Production Examples card demo videos (ProductionStyleCard). */
-export const PRODUCTION_SHOWCASE_VIDEOS = {
-  drama: blobUrl('The Cinematic Drama (English).mp4'),
-} as const satisfies Partial<Record<'drama' | 'animation' | 'podcast' | 'training', string>>
-
-export function getProductionShowcaseVideoUrl(cardId: string): string | undefined {
-  return PRODUCTION_SHOWCASE_VIDEOS[cardId as keyof typeof PRODUCTION_SHOWCASE_VIDEOS]
-}

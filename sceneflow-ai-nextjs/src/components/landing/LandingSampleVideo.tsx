@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Play, Pause, Volume2, VolumeX, Film, Maximize, Minimize } from 'lucide-react'
-import { StudioVideoWatermark } from '@/components/landing/StudioVideoWatermark'
 import { cn } from '@/lib/utils'
 
 interface LandingSampleVideoProps {
@@ -107,7 +106,6 @@ export function LandingSampleVideo({
         onContextMenu={(e) => e.preventDefault()}
         controlsList="nodownload"
       />
-      <StudioVideoWatermark />
       <div
         className={cn(
           'absolute inset-0 z-20 flex items-end opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none',
