@@ -166,13 +166,13 @@ describe('Production showcase videos', () => {
     ])
   })
 
-  it('marks English, Spanish, and Portuguese produced and the rest as placeholders', () => {
+  it('marks English, Spanish, Portuguese, and Hindi produced and the rest as placeholders', () => {
     const locales = getProductionShowcaseVideoLocales('drama')
     const available = locales.filter((locale) => locale.available).map((locale) => locale.id)
     const placeholders = locales.filter((locale) => !locale.available).map((locale) => locale.id)
 
-    expect(available).toEqual(['en', 'es', 'pt'])
-    expect(placeholders).toEqual(['hi', 'zh', 'ar', 'th'])
+    expect(available).toEqual(['en', 'es', 'pt', 'hi'])
+    expect(placeholders).toEqual(['zh', 'ar', 'th'])
 
     // Placeholders must carry no src, so the player shows "coming soon"
     // rather than requesting a 404.
@@ -189,6 +189,7 @@ describe('Production showcase videos', () => {
     expect(byId.en).toContain('The%20Cinematic%20Drama%20(English).mp4')
     expect(byId.es).toContain('The%20Cinematic%20Drama%20(Spanish).mp4')
     expect(byId.pt).toContain('The%20Cinematic%20Drama%20(Portuguese).mp4')
+    expect(byId.hi).toContain('The%20Cinematic%20Drama%20(Hindi).mp4')
   })
 
   it('defaults to English and reports the card as having video', () => {
