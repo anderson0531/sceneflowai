@@ -74,7 +74,8 @@
         "nativeLabel": "ไทย"
       }
     },
-    "soon": "Soon"
+    "soon": "Soon",
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "pipeline": {
     "badge": "What is SceneFlow?",

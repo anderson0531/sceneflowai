@@ -107,6 +107,7 @@ export function buildEnMessages() {
         HERO_VIDEO_LOCALES.map((l) => [l.id, { label: l.label, nativeLabel: l.nativeLabel }])
       ),
       soon: 'Soon',
+      videoLanguageCount: '{count, plural, =1 {# language} other {# languages}}',
     },
     valueProp: {
       pills: VP_STRIP_PILLS.map((p) => ({ label: p.label, detail: p.detail })),

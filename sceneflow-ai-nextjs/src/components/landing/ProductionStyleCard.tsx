@@ -151,6 +151,7 @@ export function ProductionStyleCard({
             title={card.title}
             accentGradient={style.ctaGradient}
             fullBleedOnMobile
+            compactPickerUpTo="lg"
           />
         </div>
       ) : null}

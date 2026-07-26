@@ -1,8 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Languages, Video as VideoIcon } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { Video as VideoIcon } from 'lucide-react'
+import {
+  VideoLanguagePicker,
+  type PickerCompactUpTo,
+} from '@/components/landing/VideoLanguagePicker'
 import type { VideoLocale, VideoLocaleId } from '@/config/landing/videoLocales'
 import { cn } from '@/lib/utils'
 
@@ -17,6 +20,8 @@ type MultiLanguageVideoPlayerProps = {
   accentGradient?: string
   /** Lets the video frame escape a padded container on phones so it plays wider. */
   fullBleedOnMobile?: boolean
+  /** Width below which the language pills collapse into a one-line dropdown. */
+  compactPickerUpTo?: PickerCompactUpTo
   className?: string
 }
 
@@ -29,9 +34,9 @@ export function MultiLanguageVideoPlayer({
   title,
   accentGradient = 'from-indigo-500 to-purple-600',
   fullBleedOnMobile = false,
+  compactPickerUpTo = 'sm',
   className,
 }: MultiLanguageVideoPlayerProps) {
-  const tHero = useTranslations('hero')
   const [activeLocaleId, setActiveLocaleId] = useState<VideoLocaleId>(defaultLocaleId)
 
   useEffect(() => {
@@ -43,50 +48,14 @@ export function MultiLanguageVideoPlayer({
 
   return (
     <div className={cn('w-full space-y-3', className)}>
-      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-300">
-        <Languages className="h-4 w-4" />
-        {languagePromptLabel}
-      </div>
-
-      <div
-        className="flex w-full min-w-0 flex-wrap items-center gap-2"
-        role="group"
-        aria-label={languagePromptLabel}
-      >
-        {locales.map((locale) => {
-          const isActive = locale.id === activeLocaleId && locale.available
-          const isDisabled = !locale.available
-          const label = tHero(`heroVideoLanguages.${locale.id}.label`)
-          const nativeLabel = tHero(`heroVideoLanguages.${locale.id}.nativeLabel`)
-
-          return (
-            <button
-              key={locale.id}
-              type="button"
-              disabled={isDisabled}
-              aria-pressed={isActive}
-              aria-label={isDisabled ? `${label} — ${soonLabel.toLowerCase()}` : label}
-              onClick={() => locale.available && setActiveLocaleId(locale.id)}
-              className={cn(
-                'shrink-0 rounded-full border px-3 py-2 text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-cyan-500/20 border-cyan-400/50 text-cyan-100'
-                  : 'bg-white/5 border-white/10 text-gray-300 hover:border-white/20 hover:text-white',
-                isDisabled &&
-                  'opacity-50 cursor-not-allowed hover:border-white/10 hover:text-gray-300'
-              )}
-            >
-              <span className="hidden sm:inline">{nativeLabel}</span>
-              <span className="sm:hidden">{label}</span>
-              {isDisabled && (
-                <span className="ml-1.5 text-[10px] uppercase tracking-wide text-gray-500">
-                  {soonLabel}
-                </span>
-              )}
-            </button>
-          )
-        })}
-      </div>
+      <VideoLanguagePicker
+        locales={locales}
+        activeLocaleId={activeLocaleId}
+        onSelect={setActiveLocaleId}
+        promptLabel={languagePromptLabel}
+        soonLabel={soonLabel}
+        compactUpTo={compactPickerUpTo}
+      />
 
       <div
         className={cn(

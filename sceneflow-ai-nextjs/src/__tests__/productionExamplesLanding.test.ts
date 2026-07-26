@@ -236,13 +236,45 @@ describe('Production showcase videos', () => {
   })
 
   it('wraps the language pills instead of hiding them in a scroller', () => {
-    const player = readSource('src/components/landing/MultiLanguageVideoPlayer.tsx')
+    const picker = readSource('src/components/landing/VideoLanguagePicker.tsx')
 
     // A nowrap row inside an invisible scrollbar left five of seven dubs
     // unreachable on a phone.
-    expect(player).not.toContain('flex-nowrap')
-    expect(player).not.toContain('overflow-x-auto')
-    expect(player).toContain('flex-wrap')
+    expect(picker).not.toContain('flex-nowrap')
+    expect(picker).not.toContain('overflow-x-auto')
+    expect(picker).toContain('flex-wrap')
+  })
+
+  it('collapses the pills into a one-line dropdown on narrow layouts', () => {
+    const picker = readSource('src/components/landing/VideoLanguagePicker.tsx')
+
+    // Seven pills wrap to four rows at 320px, pushing the video off screen.
+    expect(picker).toContain('DropdownMenuTrigger')
+    expect(picker).toContain('DropdownMenuRadioGroup')
+    expect(picker).toContain('DropdownMenuRadioItem')
+    // Unproduced dubs must stay unselectable in the menu, not just look faded.
+    expect(picker).toContain('disabled={!locale.available}')
+    // Both branches are mutually exclusive, so exactly one picker is visible.
+    expect(picker).toContain("sm: { compact: 'sm:hidden', expanded: 'hidden sm:block' }")
+    expect(picker).toContain("lg: { compact: 'lg:hidden', expanded: 'hidden lg:block' }")
+  })
+
+  it('keeps the production card compact until the pills have room', () => {
+    const card = readSource('src/components/landing/ProductionStyleCard.tsx')
+
+    // The card is only ~343px wide once the grid goes two-column at md, so
+    // pills should not return until lg.
+    expect(card).toContain('compactPickerUpTo="lg"')
+
+    const player = readSource('src/components/landing/MultiLanguageVideoPlayer.tsx')
+    expect(player).toContain('VideoLanguagePicker')
+    // The full-width persona player keeps the sm default.
+    expect(player).toContain("compactPickerUpTo = 'sm'")
+  })
+
+  it('offers a language count so the compact trigger still sells the dubs', () => {
+    expect(enMessages.hero.videoLanguageCount).toBeTruthy()
+    expect(enMessages.hero.videoLanguageCount).toContain('plural')
   })
 
   it('letterboxes rather than crops, whatever ratio a future dub ships at', () => {
