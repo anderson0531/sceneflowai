@@ -25,6 +25,12 @@ export type AnalysisProgress = {
   totalScenes: number
 }
 
+/**
+ * Wraps one unit of analysis work. Callers can supply a durable executor such
+ * as Inngest's `step.run` so a retry resumes mid-analysis instead of restarting.
+ */
+export type RunChunk = <T>(name: string, fn: () => Promise<T>) => Promise<T>
+
 export type RunAudienceResonanceInput = {
   script: AnalysisScript
   targetDemographic?: string
@@ -37,7 +43,7 @@ export type RunAudienceResonanceInput = {
   chunkSize?: number
   onProgress?: (progress: AnalysisProgress) => void | Promise<void>
   /** Runs one chunk. The Inngest worker supplies a durable step wrapper. */
-  runChunk?: <T>(name: string, fn: () => Promise<T>) => Promise<T>
+  runChunk?: RunChunk
 }
 
 /** Strips empty narration so it neither reaches the prompt nor skews Show vs Tell. */

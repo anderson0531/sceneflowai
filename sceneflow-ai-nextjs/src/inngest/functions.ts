@@ -16,6 +16,11 @@ import {
 import { getKlingLongTakeCredits } from '@/lib/credits/creditCosts'
 import { CreditService } from '@/services/CreditService'
 import type { KlingQuality } from '@/lib/kling/types'
+import { runAudienceResonance, type RunChunk } from '@/lib/script/audienceResonance/runner'
+import {
+  loadScriptForAnalysis,
+  persistAudienceReview,
+} from '@/lib/script/audienceResonance/persistReview'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -61,6 +66,9 @@ export const processGenerationJob = inngest.createFunction(
 
     if (jobType === 'kling_long_take') {
       return { ok: true, delegated: 'process-kling-long-take' }
+    }
+    if (jobType === 'script_analysis') {
+      return { ok: true, delegated: 'process-script-analysis' }
     }
 
     await step.run('mark-processing', async () => {
@@ -371,4 +379,115 @@ export const processKlingLongTake = inngest.createFunction(
   }
 )
 
-export const inngestFunctions = [processGenerationJob, processBatchGenerationJob, processKlingLongTake]
+/**
+ * Full-script Audience Resonance analysis.
+ *
+ * Each scene chunk runs as its own durable step, so a long script is no longer
+ * bounded by one function timeout or one response token budget. That is what
+ * lets every scene be analyzed instead of sampling roughly every 15th.
+ */
+export const processScriptAnalysis = inngest.createFunction(
+  {
+    id: 'process-script-analysis',
+    retries: 2,
+    triggers: [{ event: 'generation/job.queued', if: 'event.data.jobType == "script_analysis"' }],
+  },
+  async ({ event, step }) => {
+    const { jobId, userId, projectId, payload } = event.data as {
+      jobId: string
+      userId: string
+      projectId: string
+      payload: Record<string, unknown>
+    }
+
+    try {
+      const context = await step.run('load-script', async () => {
+        await updateGenerationJob(jobId, { status: 'processing', progress: 2 })
+        const loaded = await loadScriptForAnalysis(projectId)
+        if (!loaded) throw new Error('Project not found')
+        if (!loaded.script.scenes?.length) throw new Error('Script has no scenes to analyze')
+        return loaded
+      })
+
+      const review = await runAudienceResonance({
+        script: context.script,
+        targetDemographic:
+          (payload.targetDemographic as string | undefined) ?? context.targetDemographic,
+        format: context.format,
+        contentIntent: context.contentIntent,
+        treatment: context.treatment,
+        previousScores: context.previousScores,
+        baseScriptUpdatedAt:
+          (payload.baseScriptUpdatedAt as string | null | undefined) ?? context.scriptUpdatedAt,
+        chunkSize: (payload.chunkSize as number | undefined) ?? undefined,
+        // Durable per-chunk execution: a retry resumes at the failed chunk
+        // rather than restarting the whole analysis. step.run reports its
+        // result as Jsonify<T>, which is structurally identical here because
+        // every pass returns plain JSON data.
+        runChunk: ((name: string, fn: () => Promise<unknown>) =>
+          step.run(name, fn as () => Promise<Record<string, unknown>>)) as RunChunk,
+        onProgress: async (progress) => {
+          await updateGenerationJob(jobId, { progress: progress.progress })
+        },
+      })
+
+      const { stale } = await step.run('persist-review', async () =>
+        persistAudienceReview({ projectId, review })
+      )
+
+      await step.run('complete', async () => {
+        await updateGenerationJob(jobId, {
+          status: 'completed',
+          progress: 100,
+          result: {
+            overallScore: review.overallScore,
+            analyzedScenes: review.coverage?.analyzedScenes ?? review.sceneAnalysis.length,
+            totalScenes: review.coverage?.totalScenes ?? review.sceneAnalysis.length,
+            recommendationCount: review.sceneAnalysis.reduce(
+              (sum, scene) => sum + (scene.recommendations?.length || 0),
+              review.recommendations.length
+            ),
+            modelId: review.modelId,
+            requestedModelId: review.requestedModelId,
+            stale,
+          },
+        })
+        await notifyUser({
+          userId,
+          projectId,
+          jobId,
+          type: 'job_completed',
+          title: 'Script analysis ready',
+          message: stale
+            ? `Audience Resonance scored ${review.overallScore}. Your script changed while this ran, so results may be out of date.`
+            : `Audience Resonance scored ${review.overallScore} across ${review.coverage?.analyzedScenes ?? 0} scenes.`,
+          metadata: { overallScore: review.overallScore, stale, kind: 'script_analysis' },
+        })
+      })
+
+      return { ok: true, overallScore: review.overallScore, stale }
+    } catch (err: any) {
+      const message = err?.message || 'Script analysis failed'
+      await step.run('fail', async () => {
+        await updateGenerationJob(jobId, { status: 'failed', error: message })
+        await notifyUser({
+          userId,
+          projectId,
+          jobId,
+          type: 'job_failed',
+          title: 'Script analysis failed',
+          message,
+          metadata: { kind: 'script_analysis' },
+        })
+      })
+      throw err
+    }
+  }
+)
+
+export const inngestFunctions = [
+  processGenerationJob,
+  processBatchGenerationJob,
+  processKlingLongTake,
+  processScriptAnalysis,
+]

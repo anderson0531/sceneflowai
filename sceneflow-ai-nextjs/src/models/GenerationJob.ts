@@ -9,6 +9,7 @@ export type GenerationJobType =
   | 'production_render'
   | 'reference_library'
   | 'kling_long_take'
+  | 'script_analysis'
 
 export type GenerationJobStatus =
   | 'queued'
