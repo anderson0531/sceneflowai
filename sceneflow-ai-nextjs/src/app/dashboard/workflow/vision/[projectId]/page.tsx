@@ -156,6 +156,16 @@ const ProductionStreamsManager = dynamic(
 )
 import { NotificationCenter } from '@/components/notifications/NotificationCenter'
 import { useSession } from 'next-auth/react'
+import { useBackgroundJob } from '@/hooks/useBackgroundJob'
+import { BackgroundJobDock } from '@/components/vision/BackgroundJobDock'
+import {
+  BackgroundAnalysisHandoffDialog,
+  hasAcknowledgedAnalysisHandoff,
+} from '@/components/vision/BackgroundAnalysisHandoffDialog'
+import {
+  ensureBrowserNotificationPermission,
+  notifyIfHidden,
+} from '@/lib/notifications/browserNotification'
 import {
   getProjectStreams,
   type ProjectStream,
@@ -682,6 +692,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [isDismissingImportOnboarding, setIsDismissingImportOnboarding] = useState(false)
   const [isGeneratingReviews, setIsGeneratingReviews] = useState(false)
   const [reviewsOutdated, setReviewsOutdated] = useState(false)
+  // Background script analysis: the handoff dialog sets the expectation that
+  // the user will be notified, replacing the blocking overlay.
+  const [analysisHandoffOpen, setAnalysisHandoffOpen] = useState(false)
+  const [analysisStarting, setAnalysisStarting] = useState(false)
+  const [analysisEstimate, setAnalysisEstimate] = useState<number | undefined>(undefined)
+  const pendingAnalysisAudienceRef = useRef<string | undefined>(undefined)
 
   const projectAudienceDefinition = useMemo(() => {
     const own = project?.metadata
@@ -6273,191 +6289,168 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   ])
 
   // Script review functions
-  const handleGenerateReviews = async (targetDemographic?: string) => {
-    // Use ref to read latest script state — avoids stale closures when called
-    // immediately after setScript() (e.g. auto re-analyze after revision)
-    const currentScript = scriptRef.current || script
-    
-    if (!currentScript || !projectId) return
-    
-    setIsGeneratingReviews(true)
-    useStore.getState().setIsGeneratingReviews(true)
-    try {
-      await execute(async () => {
-        const currentAudienceReview = audienceReview
-        
-        // Build previous scores for hysteresis smoothing (stabilizes scores across re-analyses)
-        const previousScoresPayload = currentAudienceReview?.overallScore ? {
-          overallScore: currentAudienceReview.overallScore,
-          categories: currentAudienceReview.categories || []
-        } : undefined
-        
-        const filmTreatment = project?.metadata?.filmTreatmentVariant
-        const response = await fetch('/api/vision/review-script', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            projectId,
-            targetDemographic,
-            format:
-              project?.metadata?.format ||
-              filmTreatment?.format ||
-              'short-film',
-            contentIntent: project?.metadata?.contentIntent,
-            treatment: filmTreatment
-              ? {
-                  character_descriptions:
-                    filmTreatment.character_descriptions || characters,
-                }
-              : undefined,
-            script: {
-              title: currentScript.title,
-              logline: currentScript.logline,
-              scenes: currentScript.script?.scenes || [],
-              characters: characters
-            },
-            previousScores: previousScoresPayload
-          })
-        })
+  //
+  // Analysis of every scene exceeds a single request's budget on long scripts,
+  // so it runs as a durable background job. `handleGenerateReviews` therefore
+  // queues work and returns; results arrive via the job dock and a notification.
 
-        if (!response.ok) throw new Error('Failed to generate reviews')
-        
-        const data = await response.json()
-        
-        if (data.success) {
-          // New API returns audienceResonance as primary review, director is deprecated (null)
-          const audienceData = data.audienceResonance || data.audience
-          const isCached = data.cached === true
-          
-          console.log('[Script Review] Audience Resonance', isCached ? 'retrieved from cache' : 'generated successfully:', {
-            audienceScore: audienceData?.overallScore,
-            showVsTellRatio: audienceData?.showVsTellRatio,
-            deductionsCount: audienceData?.deductions?.length || 0,
-            cached: isCached
-          })
-          
-          // Save reviews to project metadata BEFORE updating local state
-          if (project) {
-            // Get existing review history (keep last 5 reviews)
-            const existingHistory = project.metadata?.visionPhase?.reviewHistory || []
-            const currentReview = project.metadata?.visionPhase?.reviews?.audience
-            
-            // Add current review to history if it exists and is different
-            let updatedHistory = [...existingHistory]
-            if (currentReview?.overallScore !== undefined) {
-              updatedHistory = [
-                {
-                  score: currentReview.overallScore,
-                  generatedAt: currentReview.generatedAt || project.metadata?.visionPhase?.reviews?.lastUpdated,
-                  dimensionalScores: currentReview.categories?.map((c: any) => ({ name: c.name, score: c.score })) || []
-                },
-                ...existingHistory
-              ].slice(0, 5) // Keep only last 5 reviews
-            }
-            
-            // Save full audienceResonance data (not the simplified 'audience' for backwards compat)
-            // This ensures all fields including deductions, scriptHash, etc are persisted
-            const fullAudienceData = data.audienceResonance || data.audience
-            
-            // RACE CONDITION FIX: Only send review-specific fields to the PUT endpoint.
-            // Previously, this spread the ENTIRE visionPhase (including `script`, `scenes`, 
-            // `characters`) from stale closure state, which overwrote freshly-saved script data.
-            // Now we isolate the review save to ONLY update review-related fields.
-            const currentProject = projectRef.current || project
-            const currentProjectMetadata = currentProject?.metadata || {}
-            const currentVisionPhase = currentProjectMetadata.visionPhase || {}
-            
-            // Build metadata that ONLY updates review fields — does NOT touch script/scenes/characters
-            const reviewOnlyMetadata = {
-              ...currentProjectMetadata,
-              visionPhase: {
-                ...currentVisionPhase,
-                reviews: {
-                  director: data.director,
-                  audience: fullAudienceData,
-                  lastUpdated: data.generatedAt
-                },
-                reviewHistory: updatedHistory
-                // INTENTIONALLY OMITTED: script, scenes, characters, narrationVoice
-                // These are NOT being changed by review generation, so don't send them
-                // Sending them with stale data was the root cause of the script reversion bug
-              }
-            }
-            
-            console.log('[Script Review] Saving reviews to database (review-only payload)...', {
-              audienceScore: fullAudienceData?.overallScore,
-              reviewOnlyFields: ['reviews', 'reviewHistory']
-            })
-            
-            const saveResponse = await serializedProjectSave({
-                metadata: reviewOnlyMetadata
-              }, 'handleGenerateReviews')
-            
-            if (!saveResponse.ok) {
-              const errorText = await saveResponse.text()
-              console.error('[Script Review] Failed to save reviews:', errorText)
-              throw new Error('Failed to save reviews to database')
-            }
-            
-            const saveData = await saveResponse.json()
-            console.log('[Script Review] Reviews saved successfully to database')
-            
-            // CRITICAL: Update project state with the new reviews using functional update
-            // This reads the LATEST project state (not stale closure) and only patches review fields
-            setProject(prev => {
-              if (!prev) return prev
-              const updated = {
-                ...prev,
-                metadata: {
-                  ...prev.metadata,
-                  visionPhase: {
-                    ...prev.metadata?.visionPhase,
-                    reviews: {
-                      director: data.director,
-                      audience: fullAudienceData,
-                      lastUpdated: data.generatedAt
-                    },
-                    reviewHistory: updatedHistory
-                  }
-                }
-              }
-              // Sync ref so concurrent operations see fresh state
-              projectRef.current = updated
-              return updated
-            })
-            
-            // Update local state only after successful save
-            // Director review is deprecated - user is the director
-            setDirectorReview(null)
-            setAudienceReview(data.audienceResonance || data.audience)
-            setReviewsOutdated(false)
-            
-            console.log('[Script Review] State updated with Audience Resonance:', {
-              audienceScore: (data.audienceResonance || data.audience)?.overallScore
-            })
-          } else {
-            // If no project in state, still update local state
-            setDirectorReview(null)
-            setAudienceReview(data.audienceResonance || data.audience)
-            setReviewsOutdated(false)
-          }
-          
-          try {
-            const { toast } = require('sonner')
-            toast.success('Script reviews generated and saved successfully!')
-          } catch {}
-        }
-      }, { message: 'Analyzing audience resonance...', estimatedDuration: 25, operationType: 'script-review' })
+  /** Pulls just the review fields back from the server after a job finishes. */
+  const refreshAudienceReviewFromServer = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/projects/${projectId}?lite=true&_t=${Date.now()}`, {
+        cache: 'no-store',
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      const reviews = data?.project?.metadata?.visionPhase?.reviews
+      const nextAudience = reviews?.audience
+      if (!nextAudience) return
+
+      setAudienceReview(nextAudience)
+      setDirectorReview(null)
+      setReviewsOutdated(false)
+      const nextHistory = data?.project?.metadata?.visionPhase?.reviewHistory
+      setProject((prev) => {
+        if (!prev) return prev
+        const prevVisionPhase = (prev.metadata?.visionPhase || {}) as Record<string, any>
+        const updated = {
+          ...prev,
+          metadata: {
+            ...prev.metadata,
+            visionPhase: {
+              ...prevVisionPhase,
+              reviews,
+              reviewHistory: nextHistory ?? prevVisionPhase.reviewHistory,
+            },
+          },
+        } as typeof prev
+        projectRef.current = updated
+        return updated
+      })
     } catch (error) {
-      console.error('[Script Review] Error:', error)
-      try {
-        const { toast } = require('sonner')
-        toast.error(error instanceof Error ? error.message : 'Failed to generate script reviews')
-      } catch {}
-    } finally {
+      console.error('[Script Review] Failed to refresh review after job:', error)
+    }
+  }, [projectId])
+
+  const scriptAnalysisJob = useBackgroundJob({
+    projectId,
+    jobType: 'script_analysis',
+    onCompleted: (job) => {
       setIsGeneratingReviews(false)
       useStore.getState().setIsGeneratingReviews(false)
+      void refreshAudienceReviewFromServer()
+
+      const score = job.result?.overallScore
+      const stale = job.result?.stale === true
+      const message = stale
+        ? 'Script changed while analysis ran — results may be out of date.'
+        : `Audience Resonance scored ${score ?? '—'}.`
+
+      toast.success('Script analysis ready', {
+        description: message,
+        duration: 10000,
+        action: { label: 'View results', onClick: () => setShowReviewModal(true) },
+      })
+      notifyIfHidden({
+        title: 'Script analysis ready',
+        body: message,
+        tag: `script-analysis-${job.id}`,
+      })
+    },
+    onFailed: (job) => {
+      setIsGeneratingReviews(false)
+      useStore.getState().setIsGeneratingReviews(false)
+      toast.error('Script analysis failed', {
+        description: job.error || 'Please try again.',
+        duration: 10000,
+      })
+      notifyIfHidden({
+        title: 'Script analysis failed',
+        body: job.error || 'Please try again.',
+        tag: `script-analysis-${job.id}`,
+      })
+    },
+  })
+
+  // Re-attaching to an in-flight job on mount keeps the button state honest
+  // after a reload.
+  useEffect(() => {
+    if (scriptAnalysisJob.isActive) {
+      setIsGeneratingReviews(true)
+      useStore.getState().setIsGeneratingReviews(true)
     }
+  }, [scriptAnalysisJob.isActive])
+
+  const startScriptAnalysis = useCallback(
+    async (targetDemographic?: string) => {
+      if (!projectId) return
+      setAnalysisStarting(true)
+      try {
+        const res = await fetch('/api/vision/review-script/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId, targetDemographic }),
+        })
+        const data = await res.json().catch(() => ({}))
+
+        if (!res.ok) {
+          throw new Error(data?.error || 'Failed to start analysis')
+        }
+
+        scriptAnalysisJob.track(data.jobId, {
+          status: data.status || 'queued',
+          progress: data.progress ?? 0,
+          payload: { sceneCount: data.sceneCount },
+        })
+        setIsGeneratingReviews(true)
+        useStore.getState().setIsGeneratingReviews(true)
+        setAnalysisHandoffOpen(false)
+
+        // Permission is requested here, on an explicit user action, so the
+        // browser prompt is tied to something the user just asked for.
+        void ensureBrowserNotificationPermission()
+
+        if (data.alreadyRunning) {
+          toast.info('Analysis already running', {
+            description: 'We will notify you when it finishes.',
+          })
+        } else {
+          toast.success('Analysis started', {
+            description: 'Keep working — we will notify you when it is ready.',
+            duration: 8000,
+          })
+        }
+      } catch (error) {
+        console.error('[Script Review] Failed to queue analysis:', error)
+        toast.error(error instanceof Error ? error.message : 'Failed to start analysis')
+        setAnalysisHandoffOpen(false)
+      } finally {
+        setAnalysisStarting(false)
+      }
+    },
+    [projectId, scriptAnalysisJob]
+  )
+
+  const handleGenerateReviews = async (targetDemographic?: string) => {
+    const currentScript = scriptRef.current || script
+    if (!currentScript || !projectId) return
+    if (scriptAnalysisJob.isActive) {
+      toast.info('Analysis already running', {
+        description: 'We will notify you when it finishes.',
+      })
+      return
+    }
+
+    const sceneCount = currentScript.script?.scenes?.length || 0
+    setAnalysisEstimate(sceneCount ? Math.round((sceneCount / 10) * 40 + 45) : undefined)
+    pendingAnalysisAudienceRef.current = targetDemographic
+
+    // First run explains the background handoff; afterwards the toast suffices.
+    if (hasAcknowledgedAnalysisHandoff()) {
+      await startScriptAnalysis(targetDemographic)
+      return
+    }
+    setAnalysisHandoffOpen(true)
   }
 
   const handleAudienceHeaderClick = useCallback(() => {
@@ -14897,6 +14890,29 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             console.error('[Cinematic] Failed to save cinematic scenes:', error)
             toast.error('Cinematic scenes added but failed to save to database')
           }
+        }}
+      />
+
+      {/* Background script analysis: handoff explanation + non-blocking status */}
+      <BackgroundAnalysisHandoffDialog
+        open={analysisHandoffOpen}
+        sceneCount={script?.script?.scenes?.length || 0}
+        estimatedSeconds={analysisEstimate}
+        starting={analysisStarting}
+        onConfirm={() => void startScriptAnalysis(pendingAnalysisAudienceRef.current)}
+        onCancel={() => setAnalysisHandoffOpen(false)}
+      />
+
+      <BackgroundJobDock
+        job={scriptAnalysisJob.job}
+        title="Audience Resonance analysis"
+        activeLabel={
+          scriptAnalysisJob.job?.status === 'queued' ? 'Queued' : 'Analyzing every scene'
+        }
+        onDismiss={scriptAnalysisJob.dismiss}
+        onViewResult={() => {
+          setShowReviewModal(true)
+          scriptAnalysisJob.dismiss()
         }}
       />
 
