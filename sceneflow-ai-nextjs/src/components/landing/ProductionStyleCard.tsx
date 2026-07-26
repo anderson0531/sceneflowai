@@ -12,10 +12,8 @@ import {
   Target,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import {
-  FeatureVideoPlayer,
-  type VideoAriaLabels,
-} from '@/components/landing/FeatureVideoPlayer'
+import { MultiLanguageVideoPlayer } from '@/components/landing/MultiLanguageVideoPlayer'
+import type { VideoLocale, VideoLocaleId } from '@/config/landing/videoLocales'
 import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
 
 export type ProductionStyleCardData = {
@@ -87,20 +85,26 @@ export function ProductionStyleCard({
   workflowLabel,
   toolsLabel,
   ctaLabel,
-  videoSrc,
-  videoAriaLabels,
+  videoLocales,
+  defaultVideoLocaleId,
+  videoLanguagePromptLabel,
+  videoComingSoonLabel,
+  videoSoonLabel,
 }: {
   card: ProductionStyleCardData
   index: number
   workflowLabel: string
   toolsLabel: string
   ctaLabel: string
-  videoSrc?: string
-  videoAriaLabels?: VideoAriaLabels
+  videoLocales?: VideoLocale[]
+  defaultVideoLocaleId?: VideoLocaleId
+  videoLanguagePromptLabel?: string
+  videoComingSoonLabel?: string
+  videoSoonLabel?: string
 }) {
   const style = CARD_STYLES[card.id] ?? FALLBACK_STYLE
   const Icon = style.icon
-  const hasVideo = Boolean(videoSrc && videoAriaLabels)
+  const hasVideo = Boolean(videoLocales?.some((locale) => locale.available))
 
   const startProduction = () => {
     window.location.href = getLoginUrl({
@@ -137,15 +141,15 @@ export function ProductionStyleCard({
       </div>
 
       {hasVideo ? (
-        <div
-          className="mb-4 aspect-video overflow-hidden rounded-lg border border-white/10 bg-black"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <FeatureVideoPlayer
-            src={videoSrc!}
-            ariaLabels={videoAriaLabels!}
-            showExpand={false}
-            autoPlay={false}
+        <div className="mb-4">
+          <MultiLanguageVideoPlayer
+            locales={videoLocales!}
+            defaultLocaleId={defaultVideoLocaleId ?? 'en'}
+            languagePromptLabel={videoLanguagePromptLabel ?? ''}
+            comingSoonLabel={videoComingSoonLabel ?? ''}
+            soonLabel={videoSoonLabel ?? ''}
+            title={card.title}
+            accentGradient={style.ctaGradient}
           />
         </div>
       ) : null}

@@ -15,6 +15,9 @@ export const PRODUCTION_SHOWCASE_COPY = {
   playNarration: 'Play narration',
   pauseNarration: 'Pause narration',
   narrationComingSoon: 'Narration coming soon',
+  videoLanguagePrompt: 'Watch this production in your language',
+  videoComingSoon: 'Dub coming soon',
+  videoSoon: 'Soon',
   cards: [
     {
       id: 'drama',

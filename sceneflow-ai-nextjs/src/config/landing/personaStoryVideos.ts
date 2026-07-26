@@ -5,26 +5,19 @@
  * Append #t=0.1 to skip a black first frame when supported.
  */
 
+import {
+  buildVideoLocales,
+  defaultVideoLocale,
+  videoUrl as vid,
+  VIDEO_LOCALE_ORDER,
+  type VideoLocale,
+  type VideoLocaleId,
+} from '@/config/landing/videoLocales'
+
 export type PersonaId = 'youtubeCreator' | 'startupProvider' | 'enterprise' | 'educator'
 
-export type PersonaStoryLocaleId = 'en' | 'es' | 'pt' | 'hi' | 'zh' | 'ar' | 'th'
-
-export type PersonaStoryLocale = {
-  id: PersonaStoryLocaleId
-  /** Public Blob URL; empty when not yet produced. */
-  src: string
-  /** JPG poster shown before playback; optional. */
-  poster?: string
-  available: boolean
-}
-
-const BLOB_HOST = 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com'
-
-function vid(path: string, version?: string): string {
-  const url = `${BLOB_HOST}/${encodeURI(path)}`
-  const versioned = version ? `${url}?v=${encodeURIComponent(version)}` : url
-  return `${versioned}#t=0.1`
-}
+export type PersonaStoryLocaleId = VideoLocaleId
+export type PersonaStoryLocale = VideoLocale
 
 /** Static poster in /public/landing/persona-stories (served at same path). */
 function poster(filename: string): string {
@@ -32,15 +25,7 @@ function poster(filename: string): string {
 }
 
 /** Display/selection order for the language pills (mirrors the hero locales). */
-export const PERSONA_STORY_LOCALE_ORDER: PersonaStoryLocaleId[] = [
-  'en',
-  'es',
-  'pt',
-  'hi',
-  'zh',
-  'ar',
-  'th',
-]
+export const PERSONA_STORY_LOCALE_ORDER: PersonaStoryLocaleId[] = VIDEO_LOCALE_ORDER
 
 /**
  * Produced videos only. A persona/locale absent here renders as a disabled
@@ -136,16 +121,7 @@ const PRODUCED_VIDEOS: Partial<
 }
 
 export function getPersonaStoryVideoLocales(personaId: PersonaId): PersonaStoryLocale[] {
-  const produced = PRODUCED_VIDEOS[personaId] ?? {}
-  return PERSONA_STORY_LOCALE_ORDER.map((id) => {
-    const entry = produced[id]
-    return {
-      id,
-      src: entry?.src ?? '',
-      poster: entry?.poster,
-      available: Boolean(entry?.src),
-    }
-  })
+  return buildVideoLocales(PRODUCED_VIDEOS[personaId])
 }
 
 export function hasPersonaStoryVideo(personaId: PersonaId): boolean {
@@ -153,6 +129,5 @@ export function hasPersonaStoryVideo(personaId: PersonaId): boolean {
 }
 
 export function getDefaultPersonaStoryLocale(personaId: PersonaId): PersonaStoryLocaleId {
-  const firstAvailable = getPersonaStoryVideoLocales(personaId).find((locale) => locale.available)
-  return firstAvailable?.id ?? 'en'
+  return defaultVideoLocale(getPersonaStoryVideoLocales(personaId))
 }
