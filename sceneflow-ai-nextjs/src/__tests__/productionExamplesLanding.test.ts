@@ -61,6 +61,17 @@ describe('Production Examples landing section', () => {
     const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
     expect(section).not.toContain('ProductionComparisonVisual')
   })
+
+  it('drops the header narration control', () => {
+    const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
+    expect(section).not.toContain('SectionNarrationButton')
+    expect(section).not.toContain('SECTION_NARRATION_AUDIO')
+  })
+
+  it('renders the tagline as its own paragraph under the subtitle', () => {
+    const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
+    expect(section).toContain("t('subtitleTagline')")
+  })
 })
 
 describe('Production Examples i18n contract', () => {
@@ -70,15 +81,13 @@ describe('Production Examples i18n contract', () => {
       'title',
       'titleAccent',
       'subtitle',
+      'subtitleTagline',
       'workflowLabel',
       'toolsLabel',
       'startProduction',
       'cta',
       'continuityNote',
       'resonanceNote',
-      'playNarration',
-      'pauseNarration',
-      'narrationComingSoon',
     ] as const) {
       expect(enMessages.productionShowcase[key], `missing productionShowcase.${key}`).toBeTruthy()
     }
@@ -86,6 +95,18 @@ describe('Production Examples i18n contract', () => {
 
   it('brands the section as Production Examples rather than use cases', () => {
     expect(enMessages.productionShowcase.badge).toBe('Production Examples')
+  })
+
+  it('leads with the concept-to-screen headline, accent half last', () => {
+    expect(enMessages.productionShowcase.title).toBe('From Concept to Screen:')
+    expect(enMessages.productionShowcase.titleAccent).toBe('Infinite Possibilities')
+  })
+
+  it('closes the intro with the one-platform tagline', () => {
+    expect(enMessages.productionShowcase.subtitleTagline).toBe(
+      'One platform. Infinite possibilities.'
+    )
+    expect(enMessages.productionShowcase.subtitle).toContain('SceneFlow AI Studio')
   })
 
   it('ships exactly four fully populated production cards', () => {
@@ -212,6 +233,33 @@ describe('Production showcase videos', () => {
 
     const card = readSource('src/components/landing/ProductionStyleCard.tsx')
     expect(card).toContain('MultiLanguageVideoPlayer')
+  })
+
+  it('wraps the language pills instead of hiding them in a scroller', () => {
+    const player = readSource('src/components/landing/MultiLanguageVideoPlayer.tsx')
+
+    // A nowrap row inside an invisible scrollbar left five of seven dubs
+    // unreachable on a phone.
+    expect(player).not.toContain('flex-nowrap')
+    expect(player).not.toContain('overflow-x-auto')
+    expect(player).toContain('flex-wrap')
+  })
+
+  it('letterboxes rather than crops, whatever ratio a future dub ships at', () => {
+    const player = readSource('src/components/landing/MultiLanguageVideoPlayer.tsx')
+    expect(player).toContain('object-contain')
+    expect(player).not.toContain('object-cover')
+  })
+
+  it('lets the frame escape the card padding on phones', () => {
+    const player = readSource('src/components/landing/MultiLanguageVideoPlayer.tsx')
+    expect(player).toContain('fullBleedOnMobile')
+
+    const card = readSource('src/components/landing/ProductionStyleCard.tsx')
+    expect(card).toContain('fullBleedOnMobile')
+    // Grid items default to min-width:auto, so a wide child could otherwise
+    // widen the whole column.
+    expect(card).toContain('min-w-0')
   })
 
   it('provides the video picker copy the section reads', () => {

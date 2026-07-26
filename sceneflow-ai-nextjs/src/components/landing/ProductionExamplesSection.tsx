@@ -9,8 +9,6 @@ import {
   ProductionStyleCard,
   type ProductionStyleCardData,
 } from '@/components/landing/ProductionStyleCard'
-import { SectionNarrationButton } from '@/components/landing/SectionNarrationButton'
-import { SECTION_NARRATION_AUDIO } from '@/config/landing/landingVisualMedia'
 import {
   getDefaultProductionShowcaseLocale,
   getProductionShowcaseVideoLocales,
@@ -41,22 +39,17 @@ export default function ProductionExamplesSection() {
             <span className="text-sm font-medium text-cyan-300">{t('badge')}</span>
           </div>
 
-          <div className="mb-4 flex items-center justify-center gap-3">
-            <h2 className="text-3xl font-bold text-white md:text-4xl lg:text-5xl">
-              {t('title')}{' '}
-              <span className="bg-gradient-to-r from-cyan-400 to-violet-400 bg-clip-text text-transparent">
-                {t('titleAccent')}
-              </span>
-            </h2>
-            <SectionNarrationButton
-              src={SECTION_NARRATION_AUDIO['use-cases']}
-              playLabel={t('playNarration')}
-              pauseLabel={t('pauseNarration')}
-              comingSoonLabel={t('narrationComingSoon')}
-            />
-          </div>
+          <h2 className="mx-auto mb-4 max-w-4xl text-balance text-3xl font-bold text-white md:text-4xl lg:text-5xl">
+            {t('title')}{' '}
+            <span className="bg-gradient-to-r from-cyan-400 to-violet-400 bg-clip-text text-transparent">
+              {t('titleAccent')}
+            </span>
+          </h2>
 
           <p className="mx-auto max-w-3xl text-lg text-gray-400">{t('subtitle')}</p>
+          <p className="mx-auto mt-4 max-w-3xl text-lg font-semibold text-white">
+            {t('subtitleTagline')}
+          </p>
         </motion.div>
 
         <div className="mb-12 grid gap-6 md:grid-cols-2">

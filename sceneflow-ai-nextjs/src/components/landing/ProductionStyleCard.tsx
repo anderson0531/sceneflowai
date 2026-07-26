@@ -116,7 +116,7 @@ export function ProductionStyleCard({
 
   return (
     <motion.div
-      className={`group relative flex flex-col rounded-2xl border bg-gradient-to-br p-6 backdrop-blur-sm transition-transform duration-300 md:hover:scale-[1.02] ${style.surface} ${style.border}`}
+      className={`group relative flex min-w-0 flex-col rounded-2xl border bg-gradient-to-br p-4 backdrop-blur-sm transition-transform duration-300 sm:p-6 md:hover:scale-[1.02] ${style.surface} ${style.border}`}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -141,7 +141,7 @@ export function ProductionStyleCard({
       </div>
 
       {hasVideo ? (
-        <div className="mb-4">
+        <div className="mb-4 min-w-0">
           <MultiLanguageVideoPlayer
             locales={videoLocales!}
             defaultLocaleId={defaultVideoLocaleId ?? 'en'}
@@ -150,6 +150,7 @@ export function ProductionStyleCard({
             soonLabel={videoSoonLabel ?? ''}
             title={card.title}
             accentGradient={style.ctaGradient}
+            fullBleedOnMobile
           />
         </div>
       ) : null}

@@ -15,6 +15,8 @@ type MultiLanguageVideoPlayerProps = {
   title?: string
   /** Tailwind gradient (e.g. "from-amber-500 to-orange-600") for the placeholder accent. */
   accentGradient?: string
+  /** Lets the video frame escape a padded container on phones so it plays wider. */
+  fullBleedOnMobile?: boolean
   className?: string
 }
 
@@ -26,6 +28,7 @@ export function MultiLanguageVideoPlayer({
   soonLabel,
   title,
   accentGradient = 'from-indigo-500 to-purple-600',
+  fullBleedOnMobile = false,
   className,
 }: MultiLanguageVideoPlayerProps) {
   const tHero = useTranslations('hero')
@@ -46,48 +49,53 @@ export function MultiLanguageVideoPlayer({
       </div>
 
       <div
-        className="w-full max-w-full overflow-x-auto overscroll-x-contain [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        className="flex w-full min-w-0 flex-wrap items-center gap-2"
         role="group"
         aria-label={languagePromptLabel}
       >
-        <div className="flex flex-nowrap items-center gap-2 min-w-min pb-0.5 sm:flex-wrap">
-          {locales.map((locale) => {
-            const isActive = locale.id === activeLocaleId && locale.available
-            const isDisabled = !locale.available
-            const label = tHero(`heroVideoLanguages.${locale.id}.label`)
-            const nativeLabel = tHero(`heroVideoLanguages.${locale.id}.nativeLabel`)
+        {locales.map((locale) => {
+          const isActive = locale.id === activeLocaleId && locale.available
+          const isDisabled = !locale.available
+          const label = tHero(`heroVideoLanguages.${locale.id}.label`)
+          const nativeLabel = tHero(`heroVideoLanguages.${locale.id}.nativeLabel`)
 
-            return (
-              <button
-                key={locale.id}
-                type="button"
-                disabled={isDisabled}
-                aria-pressed={isActive}
-                aria-label={isDisabled ? `${label} — ${soonLabel.toLowerCase()}` : label}
-                onClick={() => locale.available && setActiveLocaleId(locale.id)}
-                className={cn(
-                  'shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-cyan-500/20 border-cyan-400/50 text-cyan-100'
-                    : 'bg-white/5 border-white/10 text-gray-300 hover:border-white/20 hover:text-white',
-                  isDisabled &&
-                    'opacity-50 cursor-not-allowed hover:border-white/10 hover:text-gray-300'
-                )}
-              >
-                <span className="hidden sm:inline">{nativeLabel}</span>
-                <span className="sm:hidden">{label}</span>
-                {isDisabled && (
-                  <span className="ml-1.5 text-[10px] uppercase tracking-wide text-gray-500">
-                    {soonLabel}
-                  </span>
-                )}
-              </button>
-            )
-          })}
-        </div>
+          return (
+            <button
+              key={locale.id}
+              type="button"
+              disabled={isDisabled}
+              aria-pressed={isActive}
+              aria-label={isDisabled ? `${label} — ${soonLabel.toLowerCase()}` : label}
+              onClick={() => locale.available && setActiveLocaleId(locale.id)}
+              className={cn(
+                'shrink-0 rounded-full border px-3 py-2 text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-cyan-500/20 border-cyan-400/50 text-cyan-100'
+                  : 'bg-white/5 border-white/10 text-gray-300 hover:border-white/20 hover:text-white',
+                isDisabled &&
+                  'opacity-50 cursor-not-allowed hover:border-white/10 hover:text-gray-300'
+              )}
+            >
+              <span className="hidden sm:inline">{nativeLabel}</span>
+              <span className="sm:hidden">{label}</span>
+              {isDisabled && (
+                <span className="ml-1.5 text-[10px] uppercase tracking-wide text-gray-500">
+                  {soonLabel}
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
 
-      <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-black">
+      <div
+        className={cn(
+          'relative aspect-video w-full overflow-hidden border border-white/10 bg-black',
+          fullBleedOnMobile
+            ? '-mx-4 w-auto rounded-none border-x-0 sm:mx-0 sm:w-full sm:rounded-xl sm:border-x'
+            : 'rounded-xl'
+        )}
+      >
         {hasVideo ? (
           <video
             key={`${activeLocaleId}-${active!.src}`}
@@ -99,7 +107,7 @@ export function MultiLanguageVideoPlayer({
             controlsList="nodownload"
             onContextMenu={(e) => e.preventDefault()}
             aria-label={title}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-contain"
           />
         ) : (
           <div
