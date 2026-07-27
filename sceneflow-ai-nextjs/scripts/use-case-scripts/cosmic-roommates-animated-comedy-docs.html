@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Cosmic Roommates — Animated Comedy Showcase (Google Docs export)</title>
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 11pt; color: #111; max-width: 900px; margin: 2rem auto; line-height: 1.45; }
+    h1 { font-size: 20pt; margin-bottom: 0.25rem; }
+    h2 { font-size: 14pt; margin-top: 1.5rem; border-bottom: 1px solid #ccc; padding-bottom: 0.25rem; }
+    h3 { font-size: 12pt; margin-top: 1.25rem; }
+    table { border-collapse: collapse; width: 100%; margin: 0.75rem 0 1.25rem; }
+    th, td { border: 1px solid #999; padding: 6px; vertical-align: top; text-align: left; }
+    th { background: #f1f1f1; font-weight: 700; }
+    blockquote { border-left: 3px solid #999; margin: 0 0 12px; padding-left: 12px; font-style: italic; }
+    .meta p { margin: 0.35rem 0; }
+    .note { font-size: 10pt; color: #444; }
+    ol { padding-left: 1.5rem; }
+    li { margin: 0.35rem 0; }
+  </style>
+</head>
+<body>
+  <div dir="ltr" style="font-family:Arial,sans-serif;font-size:11pt;color:#111;">
+
+    <h1>COSMIC ROOMMATES — Animated Comedy Showcase</h1>
+    <p class="note">Video Script (Animated Comedy Demo — Production Examples <em>animation</em> card)</p>
+
+    <div class="meta">
+      <p><strong>Show:</strong> <em>Cosmic Roommates</em> — a human slacker and a compulsively formal four-armed alien share a one-bedroom apartment</p>
+      <p><strong>Runtime:</strong> 1:20 (8 blocks × 10s)</p>
+      <p><strong>Format:</strong> Freeze-frame animatic — each block generates ~6s of motion, then holds its final frame while the narration completes</p>
+      <p><strong>Narrator:</strong> Single VO, dry and confident, comedy-trailer register — plays it straight, never mugs for the joke</p>
+      <p><strong>Shipped style:</strong> Anime (90s) — blocks 01, 03, 07 are the finished look</p>
+    </div>
+
+    <h2>The Freeze-Frame Method</h2>
+    <p>Narration is not capped by clip length. Each block generates roughly six seconds of motion; the final frame then holds for the remainder while the voiceover finishes its thought. That buys a full ten seconds of narration per block instead of the six a moving clip would allow, so each block can land one complete idea rather than a fragment.</p>
+    <p>Two consequences the prompts below are written around:</p>
+    <ul>
+      <li><strong>The last frame of every clip is a held composition, not a throwaway.</strong> Each video prompt ends by naming the pose the shot must settle into. Treat that final frame as a deliberate storyboard panel.</li>
+      <li><strong>Narration spans motion and hold continuously.</strong> There is no pause at the freeze. The cut point should be inaudible — the viewer registers the image settling, not the animation stopping.</li>
+    </ul>
+    <p><strong>Assembly:</strong> generate each clip at 6s. Hold the final frame for the remaining 4s. Cross-dissolve 0.4s into the next block, overlapping the tail of the hold so the dissolve never interrupts a spoken word. Block 03 is the exception and is noted inline.</p>
+
+    <h2>Narration Budget</h2>
+    <p>Delivery is ~160 words per minute — comedy-trailer pace, faster than the documentary register used by the introduction animatic. Ten seconds is therefore <strong>26–28 words</strong>. Every block below is annotated with its count. Blocks carrying in-scene character dialogue split the ten seconds explicitly and are annotated per segment.</p>
+    <p>Rewriting a line? Keep the count. Going long forces the VO to rush the joke, and the jokes are the demo.</p>
+
+    <h2>Global Base Lock</h2>
+    <p>Append to every video prompt below, then append one style module:</p>
+    <blockquote>Animated comedy production shot, 16:9, expressive exaggerated character acting, bold readable silhouettes, bright key light with warm bounce, amber and orange accent palette, playful staging with comedic negative space, consistent with Reference Library character designs. No text overlays, watermarks, captions, or readable interface copy in frame.</blockquote>
+
+    <h2>Style Modules</h2>
+    <table border="1" cellspacing="0" cellpadding="6">
+      <thead>
+        <tr>
+          <th style="border:1px solid #999;padding:6px;background:#f1f1f1;">Token</th>
+          <th style="border:1px solid #999;padding:6px;background:#f1f1f1;">Module text</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="border:1px solid #999;padding:6px;"><code>STYLE_ANIME_90S</code></td>
+          <td style="border:1px solid #999;padding:6px;">1990s cel-animation aesthetic, visible ink lines, limited-frame animation feel, hand-painted background plates, slight film grain.</td>
+        </tr>
+        <tr>
+          <td style="border:1px solid #999;padding:6px;"><code>STYLE_GHIBLI</code></td>
+          <td style="border:1px solid #999;padding:6px;">Soft watercolour backgrounds, gentle rounded linework, naturalistic ambient light, warm pastoral palette, unhurried motion.</td>
+        </tr>
+        <tr>
+          <td style="border:1px solid #999;padding:6px;"><code>STYLE_COMIC</code></td>
+          <td style="border:1px solid #999;padding:6px;">Heavy black inked outlines, flat halftone shading, high-contrast primary colours, graphic panel-like compositions.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Reference Characters</h2>
+    <p class="note">Generate once — lock in Reference Library. Descriptions are rendering-agnostic on purpose — features only, no style words — so one sheet survives all three style modules.</p>
+
+    <p><strong>REF: CHAR_DEZ</strong><br />
+    Dez, 24, human, medium-brown skin, persistent bedhead of dark curls, heavy-lidded sleepy eyes, faint stubble, oversized mustard hoodie with a stretched neckline, mismatched socks. Posture permanently at forty-five degrees — leans on everything. Reference sheet: portrait plus three-quarter and full-body, neutral soft key light, plain background.</p>
+
+    <p><strong>REF: CHAR_VORP</strong><br />
+    Vorp-9, adult alien, translucent lavender skin with faint internal luminescence, tall narrow frame, four arms in two symmetrical pairs, three vertically stacked amber eyes, no hair, immaculate pressed grey cardigan buttoned to the throat. Posture rigidly vertical, hands clasped in pairs. Reference sheet: portrait plus three-quarter and full-body, all four arms clearly separated, neutral soft key light, plain background.</p>
+
+    <h2>Reference Locations &amp; Motifs</h2>
+    <p><strong>REF: LOC_APARTMENT</strong> — Cramped one-bedroom shared apartment: sagging plaid couch, one crooked lamp, a wall calendar hung perfectly level beside a leaning stack of pizza boxes. Half the room obsessively tidy, half chaotic, split down the middle. Wide establishing shot, no people.</p>
+    <p><strong>REF: LOC_SOCK_DRAWER</strong> — An open dresser drawer, socks folded into identical labelled rows with tiny divider cards, each row flagged with a colour tab. Absurdly over-organised. Close shot, no people.</p>
+    <p><strong>REF: UI_WRITERS_ROOM</strong> — Abstracted script surface rendered as animated comedy graphics: a column of soft-edged dialogue blocks, each tightening and snapping shorter in sequence. Shapes only, no readable text.</p>
+    <p><strong>REF: UI_RESONANCE_GAUGE</strong> — Abstracted circular gauge filling toward a high value, beside it a horizontal timing bar with one over-long segment visibly contracting. Shapes only, no readable text.</p>
+    <p><strong>REF: UI_SCREENING_ROOM</strong> — Abstracted darkened review room: one large glowing playback rectangle, slim scrubber beneath. Shapes only, no readable text.</p>
+    <p><strong>REF: LOGO_CARD</strong> — Centred SceneFlow mark on deep navy, thin amber-to-orange underline, wide symmetrical negative space. Lower third left clear for an overlay caption.</p>
+
+    <h2>Blocks</h2>
+
+    <h3>01 — Cold Open (0:00)</h3>
+    <p>Open inside the finished show. No logo, no setup, no narration until the joke has landed — the first thing the viewer hears is the product's actual output. The VO arrives only once they are already amused.</p>
+    <table border="1" cellspacing="0" cellpadding="6">
+      <tbody>
+        <tr><th style="border:1px solid #999;padding:6px;background:#f1f1f1;width:22%;">Field</th><th style="border:1px solid #999;padding:6px;background:#f1f1f1;">Content</th></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Timing</strong></td><td style="border:1px solid #999;padding:6px;">Motion 0:00–0:06 · Freeze 0:06–0:10</td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>In-scene</strong> (0:00–0:05)</td><td style="border:1px solid #999;padding:6px;"><strong>DEZ:</strong> "You alphabetised my socks."<br /><strong>VORP-9:</strong> "I alphabetised your <em>timeline</em>. The socks were symptomatic." <em>(12 words)</em></td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Narration</strong> (0:05–0:10)</td><td style="border:1px solid #999;padding:6px;">Nobody drew that. One person described a show, and SceneFlow built every frame. <em>(13 words)</em></td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Video prompt</strong></td><td style="border:1px solid #999;padding:6px;">LOC_APARTMENT interior, morning. CHAR_DEZ slumped on the plaid couch holding a single folded sock aloft, turning slowly toward CHAR_VORP with dawning alarm. CHAR_VORP stands rigidly beside the open LOC_SOCK_DRAWER, all four hands clasped in serene pairs, three amber eyes blinking out of sequence. Beat of stillness, then the sock drops from Dez's fingers. <strong>Settle on:</strong> Dez staring flatly at camera, sock mid-fall, Vorp-9 serene in the background. Base lock. STYLE_ANIME_90S.</td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Camera</strong></td><td style="border:1px solid #999;padding:6px;">Locked wide, quick 20% punch-in on the sock drop, hold on the two-shot</td></tr>
+      </tbody>
+    </table>
+
+    <h3>02 — Writer's Room (0:10)</h3>
+    <table border="1" cellspacing="0" cellpadding="6">
+      <tbody>
+        <tr><th style="border:1px solid #999;padding:6px;background:#f1f1f1;width:22%;">Field</th><th style="border:1px solid #999;padding:6px;background:#f1f1f1;">Content</th></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Timing</strong></td><td style="border:1px solid #999;padding:6px;">Motion 0:10–0:16 · Freeze 0:16–0:20</td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Narration</strong></td><td style="border:1px solid #999;padding:6px;">It starts in the Writer's Room. Describe the premise, and SceneFlow drafts the episode — then polishes every line, because a joke two beats too long isn't a joke. <em>(28 words)</em></td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Video prompt</strong></td><td style="border:1px solid #999;padding:6px;">UI_WRITERS_ROOM fills frame: a vertical column of dialogue blocks, each visibly tightening and snapping shorter in sequence down the column, an amber pulse travelling with every contraction. CHAR_DEZ silhouetted small at the lower frame edge, watching the column shrink. No readable text anywhere. <strong>Settle on:</strong> the fully tightened column, amber pulse resting at the base beside Dez's silhouette. Base lock. STYLE_ANIME_90S.</td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Camera</strong></td><td style="border:1px solid #999;padding:6px;">Slow pan down the column following the pulse, settle at the base</td></tr>
+      </tbody>
+    </table>
+
+    <h3>03 — Art Style (0:20)</h3>
+    <p>The money shot. The frame must be pinned so precisely that only the rendering appears to change — any drift in framing or pose destroys the effect and the block becomes a montage instead of a transformation.</p>
+    <table border="1" cellspacing="0" cellpadding="6">
+      <tbody>
+        <tr><th style="border:1px solid #999;padding:6px;background:#f1f1f1;width:22%;">Field</th><th style="border:1px solid #999;padding:6px;background:#f1f1f1;">Content</th></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Timing</strong></td><td style="border:1px solid #999;padding:6px;">Motion 0:20–0:28 continuous · Freeze 0:28–0:30 <em>(three swaps inside the motion, then hold on Comic Book)</em></td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Narration</strong></td><td style="border:1px solid #999;padding:6px;">Then pick the look — or let SceneFlow recommend one for your genre. Nineties anime. Ghibli-esque. Comic book. Same script, same performances, same timing, entirely repainted. Watch. <em>(26 words)</em></td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Video prompt</strong></td><td style="border:1px solid #999;padding:6px;">Held two-shot of CHAR_DEZ and CHAR_VORP in LOC_APARTMENT, identical pose, framing and lens throughout. Beneath the unchanged composition the rendering hard-cuts three times: STYLE_ANIME_90S, then STYLE_GHIBLI, then STYLE_COMIC. Character features, proportions, all four arms and eye placement remain exactly matched across all three. <strong>Settle on:</strong> the STYLE_COMIC render, held dead still. Base lock.</td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Camera</strong></td><td style="border:1px solid #999;padding:6px;">Absolutely locked — the frame must not move, so only the style reads as changing</td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Assembly note</strong></td><td style="border:1px solid #999;padding:6px;">Time the swaps so the third lands on the word "repainted"; "Watch." plays over the held comic-book frame</td></tr>
+      </tbody>
+    </table>
+
+    <h3>04 — Reference Library (0:30)</h3>
+    <table border="1" cellspacing="0" cellpadding="6">
+      <tbody>
+        <tr><th style="border:1px solid #999;padding:6px;background:#f1f1f1;width:22%;">Field</th><th style="border:1px solid #999;padding:6px;background:#f1f1f1;">Content</th></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Timing</strong></td><td style="border:1px solid #999;padding:6px;">Motion 0:30–0:36 · Freeze 0:36–0:40</td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Narration</strong></td><td style="border:1px solid #999;padding:6px;">Every character lives in the Reference Library. Build them once and they hold — same face, same three eyes, same four arms — in every style, every episode. <em>(26 words)</em></td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Video prompt</strong></td><td style="border:1px solid #999;padding:6px;">Triptych in one frame: CHAR_VORP rendered in STYLE_ANIME_90S, STYLE_GHIBLI and STYLE_COMIC side by side, all three performing the same slow four-armed shrug in perfect sync. Thin amber alignment lines draw on, connecting matching features across the panels — the three stacked eyes, each of the four shoulders. <strong>Settle on:</strong> all three mid-shrug at the identical pose, alignment lines complete and glowing. Base lock.</td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Camera</strong></td><td style="border:1px solid #999;padding:6px;">Hold with faint drift in; alignment lines draw on over 2s and remain lit through the freeze</td></tr>
+      </tbody>
+    </table>
+
+    <h3>05 — Audience Resonance (0:40)</h3>
+    <table border="1" cellspacing="0" cellpadding="6">
+      <tbody>
+        <tr><th style="border:1px solid #999;padding:6px;background:#f1f1f1;width:22%;">Field</th><th style="border:1px solid #999;padding:6px;background:#f1f1f1;">Content</th></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Timing</strong></td><td style="border:1px solid #999;padding:6px;">Motion 0:40–0:46 · Freeze 0:46–0:50</td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Narration</strong></td><td style="border:1px solid #999;padding:6px;">Audience Resonance scores the cut against your actual audience. It finds the beat that drags, the setup with no payoff, and tells you before anyone else sees it. <em>(28 words)</em></td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Video prompt</strong></td><td style="border:1px solid #999;padding:6px;">UI_RESONANCE_GAUGE centred, the circular gauge sweeping up toward a high value. Beside it the horizontal timing bar shows one conspicuously over-long segment contracting to match its neighbours, and the gauge ticks higher as it does. Small inset of CHAR_DEZ mid-laugh, arriving visibly earlier on the second pass. <strong>Settle on:</strong> gauge at its high value, timing bar even, Dez's laugh frozen at its peak. Base lock. STYLE_ANIME_90S.</td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Camera</strong></td><td style="border:1px solid #999;padding:6px;">Slow push-in on the gauge, whip to the timing bar, settle wide on both</td></tr>
+      </tbody>
+    </table>
+
+    <h3>06 — Screening Room (0:50)</h3>
+    <table border="1" cellspacing="0" cellpadding="6">
+      <tbody>
+        <tr><th style="border:1px solid #999;padding:6px;background:#f1f1f1;width:22%;">Field</th><th style="border:1px solid #999;padding:6px;background:#f1f1f1;">Content</th></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Timing</strong></td><td style="border:1px solid #999;padding:6px;">Motion 0:50–0:56 · Freeze 0:56–1:00</td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Narration</strong></td><td style="border:1px solid #999;padding:6px;">In the Screening Room you watch the animatic first — rough frames, real timing. Approve it, and only then does SceneFlow render and premiere the finished episode. <em>(26 words)</em></td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Video prompt</strong></td><td style="border:1px solid #999;padding:6px;">UI_SCREENING_ROOM: CHAR_DEZ and CHAR_VORP seated in silhouette before the glowing playback rectangle. Inside the rectangle, rough grey animatic frames of the sock-drawer scene resolve left to right into full-colour finished animation. <strong>Settle on:</strong> the rectangle fully resolved to finished colour, both silhouettes lit by its glow. Base lock. STYLE_ANIME_90S.</td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Camera</strong></td><td style="border:1px solid #999;padding:6px;">Slow zoom out from the rectangle to include both silhouettes, settle</td></tr>
+      </tbody>
+    </table>
+
+    <h3>07 — Payoff (1:00)</h3>
+    <p>The runner gag closes. Returning to the show after the pipeline explanation proves the finished thing actually works — and gives the viewer a second laugh right before the logo, which is what they will remember.</p>
+    <table border="1" cellspacing="0" cellpadding="6">
+      <tbody>
+        <tr><th style="border:1px solid #999;padding:6px;background:#f1f1f1;width:22%;">Field</th><th style="border:1px solid #999;padding:6px;background:#f1f1f1;">Content</th></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Timing</strong></td><td style="border:1px solid #999;padding:6px;">Motion 1:00–1:06 · Freeze 1:06–1:10</td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>In-scene</strong> (1:00–1:05)</td><td style="border:1px solid #999;padding:6px;"><strong>VORP-9:</strong> "Your socks are now chronological."<br /><strong>DEZ:</strong> "…Chronological."<br /><strong>VORP-9:</strong> "You will thank me in nineteen days." <em>(13 words)</em></td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Narration</strong> (1:05–1:10)</td><td style="border:1px solid #999;padding:6px;">That started as one sentence. Script to premiere, that is the entire pipeline. <em>(13 words)</em></td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Video prompt</strong></td><td style="border:1px solid #999;padding:6px;">LOC_APARTMENT interior, evening. CHAR_VORP presents the open LOC_SOCK_DRAWER with two of four arms, colour tabs now arranged in a precise gradient. CHAR_DEZ stares into it without moving, then slowly turns his head to camera, entirely deadpan. <strong>Settle on:</strong> Dez in flat close-up looking directly at camera, Vorp-9 beaming behind him, drawer glowing amber. Base lock. STYLE_ANIME_90S.</td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Camera</strong></td><td style="border:1px solid #999;padding:6px;">Two-shot, slow push-in to Dez's flat close-up, hold</td></tr>
+      </tbody>
+    </table>
+
+    <h3>08 — Close (1:10)</h3>
+    <table border="1" cellspacing="0" cellpadding="6">
+      <tbody>
+        <tr><th style="border:1px solid #999;padding:6px;background:#f1f1f1;width:22%;">Field</th><th style="border:1px solid #999;padding:6px;background:#f1f1f1;">Content</th></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Timing</strong></td><td style="border:1px solid #999;padding:6px;">Motion 1:10–1:16 · Freeze 1:16–1:20</td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Narration</strong></td><td style="border:1px solid #999;padding:6px;">Your show. Your style. Your cast, consistent to the last frame. SceneFlow AI Studio — envision the story, we handle the pipeline. <em>(21 words, deliberately under budget — delivered unhurried over the logo hold)</em></td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>On-screen text</strong></td><td style="border:1px solid #999;padding:6px;">SceneFlow AI Studio · sceneflowai.studio <em>(caption layer at assembly, not baked into the frame)</em></td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Video prompt</strong></td><td style="border:1px solid #999;padding:6px;">LOGO_CARD centred, thin amber-to-orange underline drawing in left to right, faint haze settling. Lower third clear. No people. <strong>Settle on:</strong> completed logo card, underline full width, haze at rest. Base lock.</td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;"><strong>Camera</strong></td><td style="border:1px solid #999;padding:6px;">Slow push-in, settle to hold</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Total:</strong> 8 × 10s = <strong>1:20</strong></p>
+
+    <h2>Audio Guide</h2>
+    <table border="1" cellspacing="0" cellpadding="6">
+      <thead>
+        <tr>
+          <th style="border:1px solid #999;padding:6px;background:#f1f1f1;">Layer</th>
+          <th style="border:1px solid #999;padding:6px;background:#f1f1f1;">Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="border:1px solid #999;padding:6px;">VO</td><td style="border:1px solid #999;padding:6px;">Single narrator, dry and confident, comedy-trailer register at ~160 wpm; plays it straight</td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;">Character VO</td><td style="border:1px solid #999;padding:6px;">Dez — flat, unbothered, young male. Vorp-9 — precise, over-articulated, no contractions, faintly resonant</td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;">Music</td><td style="border:1px solid #999;padding:6px;">Light plucked comedy bed; stings on the block 01 sock drop and the block 07 turn-to-camera; drops out entirely under block 03's style swaps so the visual carries alone</td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;">Ambience</td><td style="border:1px solid #999;padding:6px;">Room tone in LOC_APARTMENT blocks only; tool blocks stay dry</td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;">Comic timing</td><td style="border:1px solid #999;padding:6px;">Hold ~0.6s of silence before "…Chronological." — the gap is the joke. Do not let the VO crowd it</td></tr>
+        <tr><td style="border:1px solid #999;padding:6px;">Freeze transition</td><td style="border:1px solid #999;padding:6px;">No audio change at the motion/freeze cut; the seam must be inaudible</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Production Workflow (SceneFlow)</h2>
+    <p>Mirrors the five workflow steps on the <em>animation</em> card. Keep the two in sync — the card is the promise, this script is the proof.</p>
+    <ol>
+      <li><strong>Writer's Room</strong> — genre-aware sitcom script, then dialogue polish for rhythm and beat length</li>
+      <li><strong>Art style</strong> — accept the SceneFlow recommendation or toggle Anime (90s) / Ghibli-esque / Comic Book; ship Anime (90s) and keep the other two rendered for block 03</li>
+      <li><strong>Reference Library</strong> — lock CHAR_DEZ and CHAR_VORP once from rendering-agnostic sheets; verify all four arms and three stacked eyes survive each style module before generating blocks</li>
+      <li><strong>Audience Resonance™</strong> — score comedic timing against the target audience; trim the long beat flagged in block 05</li>
+      <li><strong>Screening Room</strong> — approve the animatic pre-vis, then premiere the full video</li>
+    </ol>
+
+    <h2>Runtime Note</h2>
+    <p>The shipped Cinematic Drama masters run 48–55s. This script is 1:20, because freeze-frame assembly trades runtime for narration clarity. To shorten:</p>
+    <ul>
+      <li><strong>70s</strong> — fold block 07's payoff into the head of block 08, keeping the callback and losing the logo hold</li>
+      <li><strong>60s</strong> — also merge blocks 02 and 03 into a single script-and-style block</li>
+    </ul>
+    <p>Blocks 01, 03 and 04 are the differentiators — the hook, the transformation, and the consistency proof — and should keep their full ten seconds in any trim.</p>
+    <p><strong>Landing excerpt (30s):</strong> blocks <strong>01, 03, 04, 08</strong></p>
+
+    <h2>Narration Only</h2>
+    <ol>
+      <li><strong>01</strong> [0:05–0:10] Nobody drew that. One person described a show, and SceneFlow built every frame.</li>
+      <li><strong>02</strong> [0:10–0:20] It starts in the Writer's Room. Describe the premise, and SceneFlow drafts the episode — then polishes every line, because a joke two beats too long isn't a joke.</li>
+      <li><strong>03</strong> [0:20–0:30] Then pick the look — or let SceneFlow recommend one for your genre. Nineties anime. Ghibli-esque. Comic book. Same script, same performances, same timing, entirely repainted. Watch.</li>
+      <li><strong>04</strong> [0:30–0:40] Every character lives in the Reference Library. Build them once and they hold — same face, same three eyes, same four arms — in every style, every episode.</li>
+      <li><strong>05</strong> [0:40–0:50] Audience Resonance scores the cut against your actual audience. It finds the beat that drags, the setup with no payoff, and tells you before anyone else sees it.</li>
+      <li><strong>06</strong> [0:50–1:00] In the Screening Room you watch the animatic first — rough frames, real timing. Approve it, and only then does SceneFlow render and premiere the finished episode.</li>
+      <li><strong>07</strong> [1:05–1:10] That started as one sentence. Script to premiere, that is the entire pipeline.</li>
+      <li><strong>08</strong> [1:10–1:20] Your show. Your style. Your cast, consistent to the last frame. SceneFlow AI Studio — envision the story, we handle the pipeline.</li>
+    </ol>
+
+  </div>
+</body>
+</html>
