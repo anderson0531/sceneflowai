@@ -118,7 +118,10 @@ describe('Production Examples i18n contract', () => {
       for (const key of ['id', 'title', 'subtitle', 'badge', 'tools', 'benefit'] as const) {
         expect(card[key], `${card.id} ${key}`).toBeTruthy()
       }
-      expect(card.workflow, `${card.id} workflow`).toHaveLength(4)
+      // Cards run four steps; the animated comedy adds a fifth for the
+      // Screening Room, matching its showcase script.
+      expect(card.workflow.length, `${card.id} workflow`).toBeGreaterThanOrEqual(4)
+      expect(card.workflow.length, `${card.id} workflow`).toBeLessThanOrEqual(5)
       for (const step of card.workflow) {
         expect(step, `${card.id} workflow step`).toBeTruthy()
       }
@@ -138,6 +141,47 @@ describe('Production Examples i18n contract', () => {
     expect(enMessages.productionShowcase).toEqual(
       JSON.parse(JSON.stringify(PRODUCTION_SHOWCASE_COPY))
     )
+  })
+})
+
+describe('Animated Comedy showcase script', () => {
+  const script = readSource('scripts/use-case-scripts/cosmic-roommates-animated-comedy.md')
+  const card = PRODUCTION_SHOWCASE_COPY.cards.find((entry) => entry.id === 'animation')!
+
+  it('walks the same five stages the card promises', () => {
+    expect(card.workflow).toHaveLength(5)
+
+    // The card is the promise and the script is the proof, so every stage the
+    // card advertises has to earn a block.
+    for (const stage of [
+      "Writer's Room",
+      'Art style',
+      'Reference Library',
+      'Audience Resonance',
+      'Screening Room',
+    ]) {
+      expect(script, `script is missing the ${stage} stage`).toContain(stage)
+    }
+  })
+
+  it('ends on the Screening Room stage the card now advertises', () => {
+    expect(card.workflow[4]).toContain('Screening Room')
+    expect(card.workflow[4]).toContain('premiere')
+  })
+
+  it('budgets seven ten-second blocks', () => {
+    const blocks = script.match(/^### \d\d — /gm) ?? []
+    expect(blocks).toHaveLength(7)
+    expect(script).toContain('7 × 10s = **1:10**')
+  })
+
+  it('keeps character sheets rendering-agnostic so they survive every style module', () => {
+    for (const token of ['CHAR_DEZ', 'CHAR_VORP']) {
+      expect(script).toContain(`REF: ${token}`)
+    }
+    for (const module of ['STYLE_ANIME_90S', 'STYLE_GHIBLI', 'STYLE_COMIC']) {
+      expect(script, `missing style module ${module}`).toContain(module)
+    }
   })
 
   it('styles every card id the config declares', () => {
