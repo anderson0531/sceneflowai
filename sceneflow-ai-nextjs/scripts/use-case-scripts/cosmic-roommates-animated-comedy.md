@@ -110,7 +110,7 @@ drift in framing or pose destroys the effect and the block becomes a montage ins
 
 | Field | Content |
 |-------|---------|
-| **Timing** | Motion 0:20–0:08 continuous · Freeze 0:28–0:30 *(three swaps inside the motion, then hold on Comic Book)* |
+| **Timing** | Motion 0:20–0:28 continuous · Freeze 0:28–0:30 *(three swaps inside the motion, then hold on Comic Book)* |
 | **Narration** | Then pick the look — or let SceneFlow recommend one for your genre. Nineties anime. Ghibli-esque. Comic book. Same script, same performances, same timing, entirely repainted. Watch. *(26 words)* |
 | **Video prompt** | Held two-shot of CHAR_DEZ and CHAR_VORP in LOC_APARTMENT, identical pose, framing and lens throughout. Beneath the unchanged composition the rendering hard-cuts three times: STYLE_ANIME_90S, then STYLE_GHIBLI, then STYLE_COMIC. Character features, proportions, all four arms and eye placement remain exactly matched across all three. **Settle on:** the STYLE_COMIC render, held dead still. Base lock. |
 | **Camera** | Absolutely locked — the frame must not move, so only the style reads as changing |
