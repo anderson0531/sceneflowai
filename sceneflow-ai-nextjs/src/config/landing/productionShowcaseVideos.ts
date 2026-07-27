@@ -22,6 +22,9 @@ const PRODUCED_VIDEOS: Record<string, Partial<Record<VideoLocaleId, ProducedVide
     ar: { src: videoUrl('The Cinematic Drama (Arabic).mp4') },
     th: { src: videoUrl('The Cinematic Drama (Thai).mp4') },
   },
+  animation: {
+    en: { src: videoUrl('The Animated Comedy (English).mp4') },
+  },
 }
 
 export function getProductionShowcaseVideoLocales(cardId: string): VideoLocale[] {

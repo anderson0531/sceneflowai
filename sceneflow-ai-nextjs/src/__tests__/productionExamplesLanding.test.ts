@@ -320,8 +320,27 @@ describe('Production showcase videos', () => {
     expect(hasProductionShowcaseVideo('drama')).toBe(true)
   })
 
-  it('leaves the other cards without a player until dubs exist', () => {
-    for (const cardId of ['animation', 'podcast', 'training']) {
+  it('offers English for the Animated Comedy card with other dubs coming soon', () => {
+    const locales = getProductionShowcaseVideoLocales('animation')
+    const available = locales.filter((locale) => locale.available).map((locale) => locale.id)
+    const placeholders = locales.filter((locale) => !locale.available).map((locale) => locale.id)
+
+    expect(locales.map((locale) => locale.id)).toEqual(VIDEO_LOCALE_ORDER)
+    expect(available).toEqual(['en'])
+    expect(placeholders).toEqual(['es', 'pt', 'hi', 'zh', 'ar', 'th'])
+
+    const english = locales.find((locale) => locale.id === 'en')
+    expect(english?.src).toContain('The%20Animated%20Comedy%20(English).mp4')
+    expect(getDefaultProductionShowcaseLocale('animation')).toBe('en')
+    expect(hasProductionShowcaseVideo('animation')).toBe(true)
+
+    for (const locale of locales) {
+      if (!locale.available) expect(locale.src).toBe('')
+    }
+  })
+
+  it('leaves podcast and training without a player until dubs exist', () => {
+    for (const cardId of ['podcast', 'training']) {
       expect(hasProductionShowcaseVideo(cardId), `${cardId} should have no video`).toBe(false)
       expect(getProductionShowcaseVideoLocales(cardId)).toHaveLength(7)
     }
