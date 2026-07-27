@@ -276,6 +276,33 @@ describe('Animated Comedy showcase script', () => {
     }
   })
 
+  it('keeps the Google Docs export in step with the script', () => {
+    // The export is hand-maintained rather than generated, so a line edited in
+    // one file and not the other is the failure mode worth catching.
+    const docs = readSource('scripts/use-case-scripts/cosmic-roommates-animated-comedy-docs.html')
+    const normalize = (value: string) =>
+      value
+        // Line breaks separate speakers; other tags wrap words and must not
+        // introduce whitespace the markdown emphasis markers would not.
+        .replace(/<br\s*\/?>/g, ' ')
+        .replace(/<[^>]+>/g, '')
+        .replace(/\*\*|\*|`/g, '')
+        .replace(/&amp;/g, '&')
+        .replace(/\s+/g, ' ')
+        .trim()
+
+    const spoken = (source: string, pattern: RegExp) =>
+      [...source.matchAll(pattern)].map((match) => normalize(match[1]))
+
+    expect(
+      spoken(docs, /<strong>Narration<\/strong> \(unlimited\)<\/td><td[^>]*>(.+?)<\/td>/g)
+    ).toEqual(spoken(script, /\|\s\*\*Narration\*\*\s\(unlimited\)\s\|\s(.+?)\s\|\s*$/gm))
+
+    expect(
+      spoken(docs, /<strong>In-scene<\/strong> \([^)]+\)<\/td><td[^>]*>(.+?)<\/td>/g)
+    ).toEqual(spoken(script, /\|\s\*\*In-scene\*\*\s\([^)]+\)\s\|\s(.+?)\s\|\s*$/gm))
+  })
+
   it('styles every card id the config declares', () => {
     const cardStyles = readSource('src/components/landing/ProductionStyleCard.tsx')
 
