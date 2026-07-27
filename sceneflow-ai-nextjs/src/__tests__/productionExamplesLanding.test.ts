@@ -169,10 +169,65 @@ describe('Animated Comedy showcase script', () => {
     expect(card.workflow[4]).toContain('premiere')
   })
 
-  it('budgets seven ten-second blocks', () => {
+  it('budgets eight ten-second blocks', () => {
     const blocks = script.match(/^### \d\d — /gm) ?? []
-    expect(blocks).toHaveLength(7)
-    expect(script).toContain('7 × 10s = **1:10**')
+    expect(blocks).toHaveLength(8)
+    expect(script).toContain('8 × 10s = **1:20**')
+  })
+
+  it('declares where motion ends and the hold begins in every block', () => {
+    // Narration outruns the generated clip, so each block has to say which
+    // frame it settles into and when.
+    const timings = script.match(/\*\*Timing\*\*/g) ?? []
+    expect(timings).toHaveLength(8)
+
+    const settles = script.match(/\*\*Settle on:\*\*/g) ?? []
+    expect(settles).toHaveLength(8)
+  })
+
+  it('keeps every spoken line inside the time it is given', () => {
+    const WORDS_PER_SECOND = 160 / 60
+    expect(script).toContain('160 words per minute')
+
+    const rows = [
+      ...script.matchAll(/\|\s\*\*(Narration|In-scene)\*\*(?:\s\(([^)]+)\))?\s\|\s(.+?)\s\|\s*$/gm),
+    ]
+    expect(rows.length).toBeGreaterThanOrEqual(8)
+
+    for (const [, kind, window, body] of rows) {
+      const claimed = body.match(/\*\((\d+) words/)
+      // A line without a count is a line nobody can time.
+      expect(claimed, `${kind} line is missing its word count`).toBeTruthy()
+
+      const spoken = body
+        .replace(/\*\([^)]*\)\*/g, '')
+        .replace(/<br>/g, ' ')
+        .replace(/\*\*[A-Z0-9-]+:\*\*/g, '')
+        .replace(/[*_]/g, '')
+        .split(/\s+/)
+        .filter(Boolean)
+        // Standalone dashes are punctuation, not spoken words.
+        .filter((token) => !/^[—–·-]+$/.test(token))
+
+      expect(spoken.length, `${kind} "${spoken.slice(0, 4).join(' ')}…" count drifted`).toBe(
+        Number(claimed![1])
+      )
+
+      // Default to the full block; segmented lines declare their own window.
+      let seconds = 10
+      if (window?.includes('–')) {
+        const [start, end] = window.split('–').map((stamp) => {
+          const [minutes, secs] = stamp.trim().split(':').map(Number)
+          return minutes * 60 + secs
+        })
+        seconds = end - start
+      }
+
+      expect(
+        spoken.length,
+        `${kind} "${spoken.slice(0, 4).join(' ')}…" overruns its ${seconds}s window`
+      ).toBeLessThanOrEqual(Math.round(seconds * WORDS_PER_SECOND) + 2)
+    }
   })
 
   it('keeps character sheets rendering-agnostic so they survive every style module', () => {
