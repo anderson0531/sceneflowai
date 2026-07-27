@@ -169,15 +169,17 @@ describe('Animated Comedy showcase script', () => {
     expect(card.workflow[4]).toContain('premiere')
   })
 
-  it('budgets eight ten-second blocks', () => {
+  it('generates eight ten-second motion blocks', () => {
     const blocks = script.match(/^### \d\d — /gm) ?? []
     expect(blocks).toHaveLength(8)
+
+    // 1:20 is the footage handed to the editor, not the finished cut — the
+    // holds are added afterwards and the ledger carries the real runtime.
     expect(script).toContain('8 × 10s = **1:20**')
+    expect(script).toContain('## BLOCK LEDGER')
   })
 
-  it('declares where motion ends and the hold begins in every block', () => {
-    // Narration outruns the generated clip, so each block has to say which
-    // frame it settles into and when.
+  it('names the frame the editor freezes on in every block', () => {
     const timings = script.match(/\*\*Timing\*\*/g) ?? []
     expect(timings).toHaveLength(8)
 
@@ -185,49 +187,84 @@ describe('Animated Comedy showcase script', () => {
     expect(settles).toHaveLength(8)
   })
 
-  it('keeps every spoken line inside the time it is given', () => {
-    const WORDS_PER_SECOND = 160 / 60
-    expect(script).toContain('160 words per minute')
+  const spokenWords = (body: string) =>
+    body
+      .replace(/\*\([^)]*\)\*/g, '')
+      .replace(/<br>/g, ' ')
+      .replace(/\*\*[A-Z0-9-]+:\*\*/g, '')
+      .replace(/[*_]/g, '')
+      .split(/\s+/)
+      .filter(Boolean)
+      // Standalone dashes are punctuation, not spoken words.
+      .filter((token) => !/^[—–·-]+$/.test(token))
 
-    const rows = [
-      ...script.matchAll(/\|\s\*\*(Narration|In-scene)\*\*(?:\s\(([^)]+)\))?\s\|\s(.+?)\s\|\s*$/gm),
-    ]
-    expect(rows.length).toBeGreaterThanOrEqual(8)
+  it('keeps in-scene dialogue playable inside its ten seconds', () => {
+    // In-scene dialogue is the only hard ceiling left: it has to fit the
+    // generated clip. 20 words leaves room for the pauses to breathe.
+    const MAX_IN_SCENE_WORDS = 20
+    expect(script).toContain('keep in-scene lines at or under 20 words')
 
-    for (const [, kind, window, body] of rows) {
-      const claimed = body.match(/\*\((\d+) words/)
+    const rows = [...script.matchAll(/\|\s\*\*In-scene\*\*\s\(([^)]+)\)\s\|\s(.+?)\s\|\s*$/gm)]
+    expect(rows).toHaveLength(7)
+
+    for (const [, window, body] of rows) {
+      const claimed = body.match(/\*\((\d+) words\)\*/)
       // A line without a count is a line nobody can time.
-      expect(claimed, `${kind} line is missing its word count`).toBeTruthy()
+      expect(claimed, `in-scene line at ${window} is missing its word count`).toBeTruthy()
 
-      const spoken = body
-        .replace(/\*\([^)]*\)\*/g, '')
-        .replace(/<br>/g, ' ')
-        .replace(/\*\*[A-Z0-9-]+:\*\*/g, '')
-        .replace(/[*_]/g, '')
-        .split(/\s+/)
-        .filter(Boolean)
-        // Standalone dashes are punctuation, not spoken words.
-        .filter((token) => !/^[—–·-]+$/.test(token))
-
-      expect(spoken.length, `${kind} "${spoken.slice(0, 4).join(' ')}…" count drifted`).toBe(
+      const spoken = spokenWords(body)
+      expect(spoken.length, `in-scene "${spoken.slice(0, 4).join(' ')}…" count drifted`).toBe(
         Number(claimed![1])
       )
-
-      // Default to the full block; segmented lines declare their own window.
-      let seconds = 10
-      if (window?.includes('–')) {
-        const [start, end] = window.split('–').map((stamp) => {
-          const [minutes, secs] = stamp.trim().split(':').map(Number)
-          return minutes * 60 + secs
-        })
-        seconds = end - start
-      }
-
       expect(
         spoken.length,
-        `${kind} "${spoken.slice(0, 4).join(' ')}…" overruns its ${seconds}s window`
-      ).toBeLessThanOrEqual(Math.round(seconds * WORDS_PER_SECOND) + 2)
+        `in-scene "${spoken.slice(0, 4).join(' ')}…" overruns its clip`
+      ).toBeLessThanOrEqual(MAX_IN_SCENE_WORDS)
     }
+  })
+
+  it('leaves narration unbudgeted and sizes the hold to the line instead', () => {
+    const WORDS_PER_SECOND = 160 / 60
+    expect(script).toContain('160 words per minute')
+    expect(script).toContain('narration has no word ceiling')
+
+    const rows = [...script.matchAll(/\|\s\*\*Narration\*\*\s\(([^)]+)\)\s\|\s(.+?)\s\|\s*$/gm)]
+    expect(rows).toHaveLength(8)
+
+    for (const [, window, body] of rows) {
+      // The freeze is added in the editor, so a word budget here would be
+      // reimposing a constraint the format removed.
+      expect(window, 'narration window should be unlimited').toBe('unlimited')
+      expect(body, 'narration must not claim a word budget').not.toMatch(/\(\d+ words\)/)
+
+      const hold = body.match(/\*\(~(\d+)s hold\)\*/)
+      expect(hold, 'narration line is missing its hold estimate').toBeTruthy()
+
+      // The estimate is what the editor cuts to, so it has to track the line.
+      const spoken = spokenWords(body)
+      expect(
+        Number(hold![1]),
+        `hold for "${spoken.slice(0, 4).join(' ')}…" does not match its length`
+      ).toBe(Math.round(spoken.length / WORDS_PER_SECOND))
+    }
+  })
+
+  it('adds up the ledger the editor assembles from', () => {
+    const rows = [
+      ...script.matchAll(/^\| \d\d [^|]+\| (\d+)s \| (\d+)s \| (\d+)s \| (\d+):(\d\d) \|$/gm),
+    ]
+    expect(rows).toHaveLength(8)
+
+    let running = 0
+    for (const [, motion, hold, length, minutes, seconds] of rows) {
+      expect(Number(motion)).toBe(10)
+      expect(Number(length)).toBe(Number(motion) + Number(hold))
+      running += Number(length)
+      expect(running).toBe(Number(minutes) * 60 + Number(seconds))
+    }
+
+    const total = `${Math.floor(running / 60)}:${String(running % 60).padStart(2, '0')}`
+    expect(script).toContain(`**Finished cut:** ~**${total}**`)
   })
 
   it('keeps character sheets rendering-agnostic so they survive every style module', () => {
@@ -237,6 +274,33 @@ describe('Animated Comedy showcase script', () => {
     for (const module of ['STYLE_ANIME_90S', 'STYLE_GHIBLI', 'STYLE_COMIC']) {
       expect(script, `missing style module ${module}`).toContain(module)
     }
+  })
+
+  it('keeps the Google Docs export in step with the script', () => {
+    // The export is hand-maintained rather than generated, so a line edited in
+    // one file and not the other is the failure mode worth catching.
+    const docs = readSource('scripts/use-case-scripts/cosmic-roommates-animated-comedy-docs.html')
+    const normalize = (value: string) =>
+      value
+        // Line breaks separate speakers; other tags wrap words and must not
+        // introduce whitespace the markdown emphasis markers would not.
+        .replace(/<br\s*\/?>/g, ' ')
+        .replace(/<[^>]+>/g, '')
+        .replace(/\*\*|\*|`/g, '')
+        .replace(/&amp;/g, '&')
+        .replace(/\s+/g, ' ')
+        .trim()
+
+    const spoken = (source: string, pattern: RegExp) =>
+      [...source.matchAll(pattern)].map((match) => normalize(match[1]))
+
+    expect(
+      spoken(docs, /<strong>Narration<\/strong> \(unlimited\)<\/td><td[^>]*>(.+?)<\/td>/g)
+    ).toEqual(spoken(script, /\|\s\*\*Narration\*\*\s\(unlimited\)\s\|\s(.+?)\s\|\s*$/gm))
+
+    expect(
+      spoken(docs, /<strong>In-scene<\/strong> \([^)]+\)<\/td><td[^>]*>(.+?)<\/td>/g)
+    ).toEqual(spoken(script, /\|\s\*\*In-scene\*\*\s\([^)]+\)\s\|\s(.+?)\s\|\s*$/gm))
   })
 
   it('styles every card id the config declares', () => {
