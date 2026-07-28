@@ -262,7 +262,13 @@ function StreamCard({
         ...renderSettings,
         upscale,
         upscaleSettings: upscale
-          ? { provider: 'topaz', model: 'auto', scale: 2 }
+          ? {
+              provider: 'topaz',
+              targetResolution: renderSettings.resolution === '4K' ? '4K' : '1080p',
+              enhanceDetails: true,
+              reducenoise: false,
+              deinterlace: false,
+            }
           : undefined,
       }
       void persistStream({ ...stream, renderSettings: nextSettings })

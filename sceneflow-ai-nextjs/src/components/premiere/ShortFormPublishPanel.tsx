@@ -139,12 +139,16 @@ export function ShortFormPublishPanel({
         </ul>
       )}
       {renderedUrl ? (
-        <Button size="sm" variant="outline" asChild className="border-emerald-500/30">
-          <a href={renderedUrl} target="_blank" rel="noopener noreferrer" download>
-            <Download className="w-3.5 h-3.5 mr-1" />
-            Download rendered trailer
-          </a>
-        </Button>
+        <a
+          href={renderedUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          download
+          className="inline-flex items-center rounded-md border border-emerald-500/30 px-3 py-1.5 text-xs font-medium text-emerald-200 hover:bg-emerald-500/10"
+        >
+          <Download className="w-3.5 h-3.5 mr-1" />
+          Download rendered trailer
+        </a>
       ) : null}
     </div>
   )

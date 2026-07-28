@@ -108,7 +108,7 @@ export function computePublishingReadiness(
       const coverage = resolveStreamCoverage(
         project,
         stream.language,
-        stream.format === 'animatic' ? 'animatic' : 'video',
+        stream.format,
         stream.finalCutSnapshot
       )
       if (coverage.missing > 0) {
