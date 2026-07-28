@@ -17,6 +17,7 @@ import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
+import { PRODUCTION_SECTION_DESCRIPTIONS, PRODUCTION_SECTION_LABELS } from '@/constants/productionSections'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
 import { SceneProductionDirector } from './scene-production/SceneProductionDirector'
@@ -2944,8 +2945,8 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                 className="flex items-center gap-2 border-purple-500/30 hover:border-purple-500/50 hover:bg-purple-500/10"
                 title={
                   audienceScore == null
-                    ? 'Analyze audience resonance for your script'
-                    : 'Audience resonance analysis and script insights'
+                    ? 'Run Audience Resonance Analysis on your script'
+                    : 'Audience Resonance Analysis and script insights'
                 }
               >
                 {isGeneratingReviews ? (
@@ -2953,7 +2954,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                 ) : (
                   <Target className="w-4 h-4 text-purple-400" />
                 )}
-                <span className="text-sm hidden sm:inline">Audience</span>
+                <span className="text-sm hidden sm:inline">Audience Resonance</span>
                 {audienceScore != null && !isGeneratingReviews && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-semibold tabular-nums">
                     {audienceScore}
@@ -4635,7 +4636,7 @@ function SceneCard({
   )
   
   // Helper: Check if all audio is complete for a specific language
-  // Script step auto-completes when narration + dialogue audio are generated
+  // Writer's Room step auto-completes when narration + dialogue audio are generated
   // Note: "description audio" is NOT checked — it's not part of the standard audio generation workflow
   const isSceneAudioCompleteForLanguage = useMemo(() => {
     return (lang: string): boolean => {
@@ -4692,7 +4693,7 @@ function SceneCard({
   // Completion status detection for workflow steps (combines auto-detection + manual overrides)
   const stepCompletion = useMemo(() => {
     // Auto-detected completions
-    // Script step: Auto-complete only when ALL audio is generated for selected language
+    // Writer's Room step: Auto-complete only when ALL audio is generated for selected language
     const dialogueActionAuto = isSceneAudioCompleteForLanguage(selectedLanguage)
     const directorsChairAuto = !!scene.sceneDirection
     const storyboardPreVizAuto = !!scene.imageUrl
@@ -4794,10 +4795,10 @@ function SceneCard({
   }
 
   const workflowTabs: Array<{ key: WorkflowStep; label: string; icon: React.ReactNode; description: string }> = useMemo(() => [
-    { key: 'dialogueAction', label: 'Script', icon: <FileText className="w-4 h-4" />, description: 'Write and edit your scene script' },
-    // Direction (directorsChair) is hidden - auto-generated from Script, accessible via Frame dialog and Export
-    // Frame (storyboardPreViz) merged into Action for unified production workflow
-    { key: 'callAction', label: 'Motion', icon: <Clapperboard className="w-4 h-4" />, description: 'Generate and edit the full-motion video for this scene' }
+    { key: 'dialogueAction', label: PRODUCTION_SECTION_LABELS.dialogueAction, icon: <FileText className="w-4 h-4" />, description: PRODUCTION_SECTION_DESCRIPTIONS.dialogueAction },
+    // Direction (directorsChair) is hidden - auto-generated from the script, accessible via Frame dialog and Export
+    // Frame (storyboardPreViz) merged into Motion for unified production workflow
+    { key: 'callAction', label: PRODUCTION_SECTION_LABELS.callAction, icon: <Clapperboard className="w-4 h-4" />, description: PRODUCTION_SECTION_DESCRIPTIONS.callAction }
   ], [])
   
   // Update active workflow tab when completions change if we haven't manually switched
@@ -5321,7 +5322,7 @@ function SceneCard({
                             </button>
                           </TooltipTrigger>
                           <TooltipContent className="bg-gray-900 text-white border border-gray-700">
-                            <p className="text-xs">Analyze scene for audience resonance</p>
+                            <p className="text-xs">Run Audience Resonance Analysis on this scene</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -5362,7 +5363,7 @@ function SceneCard({
           {/* Mark Done and Help controls */}
           {!isOutline && activeStep && (
             <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                {/* Play Audio Button - Only visible in Script tab */}
+                {/* Play Audio Button - Only visible in Writer's Room */}
                 {activeStep === 'dialogueAction' && onPlayScene && (
                   <button
                     onClick={handlePlay}
@@ -5594,7 +5595,7 @@ function SceneCard({
                 const isActive = activeWorkflowTab === tab.key
                 const status = getStepStatus(tab.key)
                 const tooltipText = tab.key === 'dialogueAction'
-                  ? 'Review script, generate narration, dialogue, music & SFX audio'
+                  ? 'Optimize the script with the Intelligent Assistant Writer, run Audience Resonance Analysis, and generate narration, dialogue, music & SFX audio'
                   : 'Build storyboard keyframes, generate video beats & render final scene'
                 
                 return (
@@ -5610,7 +5611,7 @@ function SceneCard({
                             }
                           }}
                           className={`
-                            flex-1 flex items-center justify-center gap-3 px-6 py-3 rounded-lg
+                            flex-1 flex items-center justify-center gap-2 lg:gap-3 px-3 lg:px-6 py-3 rounded-lg
                             transition-all duration-200 ease-out relative
                             ${isActive 
                               ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25' 
@@ -5625,7 +5626,7 @@ function SceneCard({
                           
                           {/* Large Section Title */}
                           <span className={`
-                            text-xl font-bold tracking-wide
+                            text-lg lg:text-xl font-bold tracking-wide whitespace-nowrap
                             ${isActive ? 'text-white' : ''}
                           `}>
                             {tab.label}
@@ -5648,7 +5649,7 @@ function SceneCard({
           </div>
         )}
 
-        {/* Next Step CTA Banner — contextual workflow guidance (Script tab only) */}
+        {/* Next Step CTA Banner — contextual workflow guidance (Writer's Room only) */}
         {!isOutline && isWorkflowOpen && activeWorkflowTab !== 'callAction' && (() => {
           const wfState: WorkflowState = buildWorkflowState(
             scene,
@@ -5847,7 +5848,7 @@ function SceneCard({
                                 Direct
                               </button>
                             </TooltipTrigger>
-                            <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Direct and revise scene script</TooltipContent>
+                            <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Direct and revise this scene with the Intelligent Assistant Writer</TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
                       )}
@@ -7204,7 +7205,7 @@ function SceneCard({
                           <Volume2 className="w-5 h-5 text-blue-400 flex-shrink-0" />
                           <div className="flex-1">
                             <p className="text-sm text-blue-200">{missingText} not generated yet — your animatic and renders will be silent.</p>
-                            <p className="text-xs text-blue-200/60 mt-0.5">Generate audio in the Script tab first for the best production quality.</p>
+                            <p className="text-xs text-blue-200/60 mt-0.5">Generate audio in the Writer&apos;s Room first for the best production quality.</p>
                           </div>
                           <button
                             onClick={(e) => {
@@ -7435,7 +7436,7 @@ function SceneCard({
                           onGenerateImage?.(sceneIdx)
                         }}
                         onNavigateToAudio={() => {
-                          // Navigate to Script tab for audio generation
+                          // Navigate to Writer's Room for audio generation
                           setActiveWorkflowTab('dialogueAction')
                         }}
                       />

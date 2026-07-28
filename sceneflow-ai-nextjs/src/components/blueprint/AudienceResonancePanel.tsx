@@ -1360,7 +1360,7 @@ function InsightCard({
                       {isScriptFix ? (
                         <>
                           <Film className="w-3 h-3" />
-                          Best addressed in Script phase
+                          Best addressed in the Writer&apos;s Room
                         </>
                       ) : (
                         <>

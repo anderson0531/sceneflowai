@@ -143,7 +143,7 @@ export function migrateProjectToSegmented(metadata: unknown): MigrateResult {
       buildResult
     )
 
-    // Reflect script-side segments into production state so the Action tab,
+    // Reflect script-side segments into production state so the Motion section,
     // Director's Console and Final Cut all see segments by stable segmentId
     // immediately after migration.
     if (sceneId) {

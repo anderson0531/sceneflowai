@@ -36,7 +36,7 @@ import type {
 // initialization card with a stepper-based production pipeline.
 // 
 // Architecture decision: FC1 (Extend SegmentBuilder)
-// - Wraps SegmentBuilder inline in the Action tab
+// - Wraps SegmentBuilder inline in the Motion section
 // - Provides production status bar and phase-gated progression
 // - Hard gates scene direction with inline CTA (FC2)
 // - Maintains backward compatibility with existing segments (FC3)

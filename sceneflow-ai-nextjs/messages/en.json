@@ -1104,18 +1104,18 @@
       {
         "id": "production",
         "stepLabel": "Production",
-        "subtitle": "Script to Screening Room",
-        "description": "Script and Shoot tabs guide Foundation → Pre-Vis → Footage → Mixer → Streams. Scene-by-scene checkpoints minimize redos; Screening Room handles preview, assembly, and publishing.",
+        "subtitle": "Writer's Room to Screening Room",
+        "description": "The Writer's Room and Motion sections guide Foundation → Pre-Vis → Footage → Mixer → Streams. Scene-by-scene checkpoints minimize redos; Screening Room handles preview, assembly, and publishing.",
         "keySteps": [
           "Lock script, voices, and scene audio",
           "Pre-Vis scene by scene — gallery and share for review",
-          "Shoot tab — Footage → Mixer → Streams per scene",
+          "Motion — Footage → Mixer → Streams per scene",
           "Screening Room — preview, assemble master, publish"
         ],
         "keyFeatures": [
-          "Foundation — script, voices, scene audio, Audience Resonance",
+          "Writer's Room — script, voices, scene audio, Audience Resonance Analysis",
           "Pre-Vis — direction, audio, and beat frames per scene with share links",
-          "Shoot — Footage, Mixer, and Streams without leaving Production",
+          "Motion — Footage, Mixer, and Streams without leaving Production",
           "Screening Room — scene preview, master assembly, screenings, and YouTube publish"
         ],
         "optional": false
@@ -1184,8 +1184,8 @@
       {
         "id": "shoot",
         "stepLabel": "Shoot your production",
-        "shortDescription": "Generate beat-level video, mix audio and overlays, and export full scene streams — Footage, Mixer, and Streams in one Shoot tab.",
-        "detailedDescription": "The Shoot tab in Production is your on-set: generate video from approved Pre-Vis frames (Footage), fine-tune timing, watermarks, and audio in the Mixer, then render complete scene MP4s in Streams.",
+        "shortDescription": "Generate beat-level video, mix audio and overlays, and export full scene streams — Footage, Mixer, and Streams in one Motion section.",
+        "detailedDescription": "The Motion section in Production is your on-set: generate video from approved Pre-Vis frames (Footage), fine-tune timing, watermarks, and audio in the Mixer, then render complete scene MP4s in Streams.",
         "media": "video",
         "subPoints": [
           "Footage — beat-by-beat video generation from Pre-Vis start and end frames",
@@ -1716,7 +1716,7 @@
       },
       {
         "id": "produce-publish",
-        "label": "Produce and publish — Shoot tab to Screening Room",
+        "label": "Produce and publish — Motion to Screening Room",
         "defaultExpanded": false
       }
     ],
@@ -1828,15 +1828,15 @@
       {
         "id": "11",
         "title": "Production Automation",
-        "description": "Script and Shoot tabs guide Foundation → Pre-Vis → Footage → Mixer → Streams. Scene-by-scene checkpoints minimize redos; Screening Room handles preview, assembly, and publishing.",
+        "description": "The Writer's Room and Motion sections guide Foundation → Pre-Vis → Footage → Mixer → Streams. Scene-by-scene checkpoints minimize redos; Screening Room handles preview, assembly, and publishing.",
         "keyFeatures": [
-          "Foundation — script, voices, scene audio, Audience Resonance",
+          "Writer's Room — script, voices, scene audio, Audience Resonance Analysis",
           "Pre-Vis — direction, audio, and beat frames per scene with share links",
-          "Shoot — Footage, Mixer, and Streams without leaving Production",
+          "Motion — Footage, Mixer, and Streams without leaving Production",
           "Screening Room — scene preview, master assembly, screenings, and YouTube publish"
         ],
-        "screenshotSlot": "Insert screenshot: Production dashboard showing Script tab, Shoot tab, and Pre-Vis",
-        "videoSlot": "Insert 00:60 clip: Lock script → Express Pre-vis per scene → Shoot Footage → Mixer → Streams"
+        "screenshotSlot": "Insert screenshot: Production dashboard showing Writer's Room, Motion, and Pre-Vis",
+        "videoSlot": "Insert 00:60 clip: Lock script → Express Pre-vis per scene → Motion Footage → Mixer → Streams"
       },
       {
         "id": "14",

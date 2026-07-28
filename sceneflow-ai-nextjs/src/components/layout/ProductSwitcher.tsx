@@ -17,13 +17,14 @@ import { cn } from '@/lib/utils'
 import { useStore } from '@/store/useStore'
 
 /**
- * ProductSwitcher - 4-Product Navigation Bar
+ * ProductSwitcher - 3-Product Navigation Bar
  * 
  * Provides clear navigation for SceneFlow's unbundled standalone products:
- * - Writer's Room: Script writing/development (Blueprint Phase)
+ * - Blueprint: Concept and story development (Blueprint Phase)
  * - Visualizer: Image/storyboard generation (Production Phase)
- * - Smart Editor: Video/timeline editing (Final Cut)
  * - Screening Room: Review/analytics (Dashboard)
+ *
+ * "Writer's Room" is the script section inside Production, not a product here.
  * 
  * Design: Google Workspace-style horizontal nav with icon + label
  * Active product indicated via border-b-2 border-primary pattern
@@ -43,9 +44,9 @@ export interface Product {
 
 export const products: Product[] = [
   {
-    id: 'writers-room',
-    name: "Writer's Room",
-    tagline: 'Script & Story',
+    id: 'blueprint',
+    name: 'Blueprint',
+    tagline: 'Concept & Story',
     icon: <PenTool className="w-5 h-5" />,
     href: '/dashboard/studio/new-project',
     color: 'text-amber-400',
@@ -182,9 +183,8 @@ export function ProductSwitcher({
                 layoutId="product-indicator"
                 className={cn(
                   'absolute -bottom-px left-3 right-3 h-0.5 rounded-full',
-                  product.id === 'writers-room' && 'bg-amber-400',
+                  product.id === 'blueprint' && 'bg-amber-400',
                   product.id === 'visualizer' && 'bg-blue-400',
-                  product.id === 'smart-editor' && 'bg-purple-400',
                   product.id === 'screening-room' && 'bg-emerald-400',
                 )}
                 transition={{ type: 'spring', stiffness: 500, damping: 30 }}

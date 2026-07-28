@@ -11,7 +11,7 @@ import { SegmentSfxCard } from './SegmentSfxCard'
  * Renders the segmented Production Script for one scene: each segment is a
  * card containing segment direction, ordered dialog/narrator lines, and
  * SFX cues. Replaces the flat `scene.dialogue.map()` block in the legacy
- * Script tab.
+ * Writer's Room.
  *
  * Narrator and character dialogue share a single visual list (with the
  * narrator badged + italic). Audio handlers are reused from the existing
