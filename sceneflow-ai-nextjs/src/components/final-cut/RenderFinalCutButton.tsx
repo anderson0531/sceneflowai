@@ -5,7 +5,8 @@ import { Download, Film, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
-import type { FinalCutSceneClip } from '@/lib/types/finalCut'
+import type { FinalCutSceneClip, UpscaleSettings } from '@/lib/types/finalCut'
+import type { StreamDeliveryResolution } from '@/types/publishingAssets'
 
 type RenderStatus = 'idle' | 'rendering' | 'uploading' | 'ready' | 'error'
 
@@ -24,6 +25,11 @@ export interface RenderFinalCutButtonProps {
   className?: string
   /** Navigate to Premiere after successful export. */
   onOpenPremiere?: () => void
+  /** Delivery resolution tier (720p / 1080p / 4K). */
+  resolution?: StreamDeliveryResolution
+  /** Request post-render upscale (Topaz when credentials available). */
+  upscale?: boolean
+  upscaleSettings?: UpscaleSettings
 }
 
 /**
@@ -43,6 +49,9 @@ export function RenderFinalCutButton({
   disabled = false,
   className,
   onOpenPremiere,
+  resolution = '1080p',
+  upscale = false,
+  upscaleSettings,
 }: RenderFinalCutButtonProps) {
   const [status, setStatus] = useState<RenderStatus>('idle')
   const [progress, setProgress] = useState(0)
@@ -95,7 +104,7 @@ export function RenderFinalCutButton({
             segments,
             audioClips: [],
             textOverlays: [],
-            resolution: '1080p',
+            resolution,
             fps: 30,
             totalDuration: cursor,
             exportFormat: 'mp4',
@@ -145,14 +154,16 @@ export function RenderFinalCutButton({
         finalFileUrl = uploaded.url
       } else {
         toast.loading(`Cloud stitching ${readyClips.length} scenes…`, { id: toastId })
-        const response = await fetch('/api/scene/final-cut/render', {
+        const response = await fetch('/api/publish/stream/render', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             projectId,
             sceneId: 'final-cut',
             sceneNumber: 0,
-            resolution: '1080p',
+            resolution,
+            upscale,
+            upscaleSettings,
             audioConfig: {
               includeNarration: false,
               includeDialogue: false,
@@ -197,7 +208,7 @@ export function RenderFinalCutButton({
           await new Promise((resolve) => setTimeout(resolve, 5000))
           attempts++
 
-          const pollRes = await fetch(`/api/scene/final-cut/render?jobId=${jobId}`)
+          const pollRes = await fetch(`/api/publish/stream/render?jobId=${jobId}`)
           if (!pollRes.ok) continue
 
           const data = await pollRes.json()

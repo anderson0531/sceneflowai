@@ -255,6 +255,15 @@ import { getScriptDirectionReadiness, isDirectionStale } from '@/lib/utils/conte
 import { DirectionReadinessBanner } from '@/components/vision/DirectionReadinessBanner'
 import { sanitizeReturnTo } from '@/lib/navigation/sanitizeReturnTo'
 import { ReferenceLibraryDialog, type ReferenceLibraryTab } from '@/components/vision/ReferenceLibraryDialog'
+import {
+  PublishingLibraryDialog,
+} from '@/components/publishing/PublishingLibraryDialog'
+import {
+  computePublishingReadiness,
+  getPublishingState,
+  upsertPublishingState,
+} from '@/lib/publish/publishingState'
+import type { PublishingLibraryTab } from '@/types/publishingAssets'
 import { VisualReference, VisualReferenceType, VisionReferencesPayload, LocationReference } from '@/types/visionReferences'
 import type { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from '@/components/vision/scene-production/types'
 import { applyIntelligentDefaults } from '@/lib/audio/anchoredTiming'
@@ -596,6 +605,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const openReferenceLibrary = useCallback((tab?: ReferenceLibraryTab) => {
     setReferenceLibraryInitialTab(tab)
     setReferenceLibraryOpen(true)
+  }, [])
+
+  // Publishing Library dialog
+  const [publishingLibraryOpen, setPublishingLibraryOpen] = useState(false)
+  const [publishingInitialTab, setPublishingInitialTab] = useState<PublishingLibraryTab | undefined>()
+  const openPublishing = useCallback((tab?: PublishingLibraryTab) => {
+    setPublishingInitialTab(tab)
+    setPublishingLibraryOpen(true)
   }, [])
   const router = useRouter()
   const { data: session } = useSession()
@@ -1458,6 +1475,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [project?.metadata]
   )
 
+  const publishingReadiness = useMemo(() => {
+    const state = getPublishingState(project?.metadata, project ? {
+      id: projectId,
+      metadata: project.metadata,
+      script: script?.script ?? script,
+    } : undefined)
+    return computePublishingReadiness(
+      project ? { id: projectId, metadata: project.metadata, script: script?.script ?? script } : undefined,
+      state.streams
+    )
+  }, [project, projectId, script])
+
   const handleSaveProjectStreams = useCallback(
     async (
       streams: ProjectStream[],
@@ -1465,23 +1494,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     ) => {
       try {
         const existingMetadata = project?.metadata || {}
-        const existingVisionPhase = existingMetadata.visionPhase || {}
+        const nextMetadata = upsertPublishingState(
+          {
+            ...existingMetadata,
+            ...(compat?.exportedVideoUrl ? { exportedVideoUrl: compat.exportedVideoUrl } : {}),
+            ...(compat?.exportedAnimaticUrl
+              ? { exportedAnimaticUrl: compat.exportedAnimaticUrl }
+              : {}),
+          } as Record<string, unknown>,
+          { streams }
+        )
 
         const response = await fetch(`/api/projects/${projectId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            metadata: {
-              ...existingMetadata,
-              ...(compat?.exportedVideoUrl ? { exportedVideoUrl: compat.exportedVideoUrl } : {}),
-              ...(compat?.exportedAnimaticUrl
-                ? { exportedAnimaticUrl: compat.exportedAnimaticUrl }
-                : {}),
-              visionPhase: {
-                ...existingVisionPhase,
-                streams,
-              },
-            },
+            metadata: nextMetadata,
           }),
         })
 
@@ -1493,17 +1521,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           if (!prev) return prev
           return {
             ...prev,
-            metadata: {
-              ...prev.metadata,
-              ...(compat?.exportedVideoUrl ? { exportedVideoUrl: compat.exportedVideoUrl } : {}),
-              ...(compat?.exportedAnimaticUrl
-                ? { exportedAnimaticUrl: compat.exportedAnimaticUrl }
-                : {}),
-              visionPhase: {
-                ...prev.metadata?.visionPhase,
-                streams,
-              },
-            },
+            metadata: nextMetadata,
           }
         })
       } catch (error) {
@@ -1512,6 +1530,29 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
     },
     [project, projectId]
+  )
+
+  const handleSavePublishingMetadata = useCallback(
+    async (metadataPatch: Record<string, unknown>) => {
+      try {
+        const response = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ metadata: metadataPatch }),
+        })
+        if (!response.ok) {
+          throw new Error('Failed to save publishing metadata')
+        }
+        setProject((prev) => {
+          if (!prev) return prev
+          return { ...prev, metadata: metadataPatch }
+        })
+      } catch (error) {
+        console.error('[VisionPage] Error saving publishing metadata:', error)
+        throw error
+      }
+    },
+    [projectId]
   )
 
   const reloadSceneProduction = useCallback(async () => {
@@ -6768,10 +6809,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       'production:screening-room': () => setProductionViewWithUrl('screening'),
       'production:streams': () => setProductionViewWithUrl('streams'),
       'production:render-all': () => setProductionViewWithUrl('streams'),
-      'production:publish': () => setProductionViewWithUrl('streams'),
+      'production:publish': () => openPublishing('youtube'),
       'screening-room:preview': () => setProductionViewWithUrl('screening'),
       'screening-room:assemble': () => setProductionViewWithUrl('streams'),
-      'screening-room:publish': () => setProductionViewWithUrl('streams'),
+      'screening-room:publish': () => openPublishing('youtube'),
+      'screening-room:create-screening': () => openPublishing('screening'),
       'production:update-reviews': () => handlersRef.current.generateReviews(),
       'production:review-analysis': () => setShowReviewModal(true),
       'production:assign-voices': () => openReferenceLibrary('cast'),
@@ -6808,7 +6850,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         window.removeEventListener(eventName, listener)
       })
     }
-  }, [openScreeningRoomFromVisionUi, openReferenceLibrary, setProductionViewWithUrl])
+  }, [openScreeningRoomFromVisionUi, openReferenceLibrary, openPublishing, setProductionViewWithUrl])
   // ============================================================================
 
   const loadProject = async (skipAutoGeneration: boolean = false) => {
@@ -14240,6 +14282,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 isGeneratingReviews={isGeneratingReviews}
                 onShowReviews={handleAudienceHeaderClick}
                 onOpenReferences={() => openReferenceLibrary()}
+                onOpenPublishing={() => openPublishing()}
+                publishingBlockerCount={publishingReadiness.blockers.length}
                 directionReadiness={directionReadiness}
                 onUpdateAllDirections={handleUpdateAllDirections}
                 isUpdatingAllDirections={isUpdatingAllDirections}
@@ -14544,6 +14588,29 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         generatingLocationId={generatingLocationId}
         onExpressGenerateReferences={handleExpressGenerateReferences}
         isExpressGeneratingReferences={isExpressGeneratingReferences}
+      />
+
+      <PublishingLibraryDialog
+        open={publishingLibraryOpen}
+        onOpenChange={(open) => {
+          setPublishingLibraryOpen(open)
+          if (!open) setPublishingInitialTab(undefined)
+        }}
+        initialTab={publishingInitialTab}
+        projectId={projectId}
+        projectTitle={project?.title || script?.title}
+        metadata={project?.metadata}
+        script={script}
+        userId={getUserId()}
+        streams={projectStreams}
+        onSaveStreams={handleSaveProjectStreams}
+        onSaveMetadata={handleSavePublishingMetadata}
+        onPreviewStream={handlePreviewStream}
+        sceneProductionState={sceneProductionState}
+        onOpenScreeningView={() => {
+          setPublishingLibraryOpen(false)
+          setProductionViewWithUrl('screening')
+        }}
       />
       
       {/* Generation Progress Indicator */}

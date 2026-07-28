@@ -47,6 +47,9 @@ export interface FinalCutStreamsPanelProps {
     onRendered?: (url: string) => Promise<void> | void
     lastRenderUrl?: string | null
     onOpenPremiere?: () => void
+    resolution?: import('@/types/publishingAssets').StreamDeliveryResolution
+    upscale?: boolean
+    upscaleSettings?: import('@/lib/types/finalCut').UpscaleSettings
   }
   isMixedFormat?: boolean
 }
@@ -115,6 +118,9 @@ export function FinalCutStreamsPanel({
             filenameLabel={renderButtonProps.filenameLabel}
             onRendered={renderButtonProps.onRendered}
             onOpenPremiere={renderButtonProps.onOpenPremiere}
+            resolution={renderButtonProps.resolution}
+            upscale={renderButtonProps.upscale}
+            upscaleSettings={renderButtonProps.upscaleSettings}
             disabled={disabled}
             className="w-full"
           />

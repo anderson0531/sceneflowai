@@ -1,3 +1,8 @@
+/**
+ * @deprecated Use PublishingLibraryDialog + PublishingManager tabs instead.
+ * This shell is not wired to the live Production page; screening/publish flows
+ * now open via openPublishing() from the vision page header.
+ */
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
