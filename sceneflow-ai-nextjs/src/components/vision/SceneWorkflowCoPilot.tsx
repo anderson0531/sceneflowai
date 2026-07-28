@@ -23,13 +23,13 @@ export const guidanceContent: Record<WorkflowStep, {
   tip: string
 }> = {
   dialogueAction: {
-    title: 'Script — Foundation',
+    title: "Writer's Room — Foundation",
     icon: <FileText className="w-5 h-5 text-sf-primary" />,
     goal: 'Finalize script, audio, and references before pre-vis and video production.',
-    whyItMatters: 'Foundation work happens here: writing, Audience Resonance review, voice casting, and timeline prep. Lock the script when ready so Express and production stay stable.',
+    whyItMatters: 'Foundation work happens here: writing, Audience Resonance Analysis, voice casting, and timeline prep. Lock the script when ready so Express and production stay stable.',
     howItWorks: [
-      'Edit narration, dialogue, and action in the Script tab',
-      'Run Audience Resonance (aim for 85+) and apply targeted fixes',
+      "Edit narration, dialogue, and action in the Writer's Room",
+      'Run Audience Resonance Analysis (aim for 85+) and apply targeted fixes with the Intelligent Assistant Writer',
       'Generate scene audio and assign voices from the Reference Library',
       'Use Screening Room — Preview (live) to review the animatic before exporting MP4s',
     ],
@@ -40,10 +40,10 @@ export const guidanceContent: Record<WorkflowStep, {
       'Screening Room = live preview; Production Streams = finished MP4 exports',
     ],
     bestPractice: 'Assign voices and key references before running Express — the Pre-Vis panel shows what is missing.',
-    tip: 'You only see Script and Action tabs — Direction, pre-vis, and Beat Frames live inside those phases.',
+    tip: "You only see Writer's Room and Motion — Direction, pre-vis, and Beat Frames live inside those phases.",
   },
   directorsChair: {
-    title: 'Direction (in Script phase)',
+    title: "Direction (in Writer's Room)",
     icon: <Film className="w-5 h-5 text-sf-primary" />,
     goal: 'Define cinematic direction that feeds pre-vis and Beat Frame generation.',
     whyItMatters: 'Direction is generated automatically during Express or from the script. It drives camera, lighting, and blocking for consistent pre-vis frames.',
@@ -53,7 +53,7 @@ export const guidanceContent: Record<WorkflowStep, {
       'Edit direction before re-running pre-vis generation',
     ],
     toolsAndTips: [
-      'Direction lives in the Script tab workflow — no separate tab',
+      "Direction lives in the Writer's Room workflow — no separate tab",
       'Changes to direction may require regenerating pre-vis frames',
     ],
     bestPractice: 'Confirm direction matches your vision before building pre-vis.',
@@ -63,7 +63,7 @@ export const guidanceContent: Record<WorkflowStep, {
     title: 'Pre-vis — Pre-visualization phase',
     icon: <Camera className="w-5 h-5 text-sf-primary" />,
     goal: 'Build pre-vis frames for every beat and share for approval.',
-    whyItMatters: 'Pre-vis frames are still images per beat — fast to change. Video and Beat Frames come later in the Action tab.',
+    whyItMatters: 'Pre-vis frames are still images per beat — fast to change. Video and Beat Frames come later in Motion.',
     howItWorks: [
       'Run Build Pre-vis (Express) at project level when script is locked',
       'Review frames in the pre-vis gallery; share link for stakeholder approval',
@@ -71,8 +71,8 @@ export const guidanceContent: Record<WorkflowStep, {
     ],
     toolsAndTips: [
       'Pre-vis Frame = still image for a beat (Express output)',
-      'Approve pre-vis before opening Action tab video work',
-      'Gallery is the single pre-vis truth — video production lives in Action',
+      'Approve pre-vis before opening Motion video work',
+      'Gallery is the single pre-vis truth — video production lives in Motion',
     ],
     bestPractice: 'Share pre-vis for review before investing in Beat Frames and video.',
     tip: 'Making pre-vis changes is fast; re-rendering MP4 streams is slow.',
@@ -85,17 +85,17 @@ export const guidanceContent: Record<WorkflowStep, {
     howItWorks: [
       'Beats are created from your script automatically',
       'Pre-vis frames attach to beats via Express',
-      'Action tab derives beat clips for Beat Frames and video generation',
+      'Motion derives beat clips for Beat Frames and video generation',
     ],
     toolsAndTips: [
       'Beat = script unit; Beat Frame = start/end pair for F2V',
-      'No separate Beats tab — work in Script and Action only',
+      "No separate Beats tab — work in Writer's Room and Motion only",
     ],
-    bestPractice: 'Edit the script in the Script tab if beat boundaries need to change at the source.',
+    bestPractice: "Edit the script in the Writer's Room if beat boundaries need to change at the source.",
     tip: 'Segment Builder is not a user-facing step in the simplified workflow.',
   },
   callAction: {
-    title: 'Action — Production phase',
+    title: 'Motion — Production phase',
     icon: <Clapperboard className="w-5 h-5 text-sf-primary" />,
     goal: 'Beat Frames → Mixer → Production Streams → Final Cut.',
     whyItMatters: 'This is canonical video production: Beat Frames for F2V, Director Console for beat video, Mixer for preview/export, Streams for finished MP4s.',
@@ -112,7 +112,7 @@ export const guidanceContent: Record<WorkflowStep, {
       'Baseline language drives timeline; other languages show duration delta',
     ],
     bestPractice: 'Complete Beat Frames before switching Output to Video. Gate video until start + end frames exist.',
-    tip: 'Do not use the gallery production panel — open Action tab for video work.',
+    tip: 'Do not use the gallery production panel — open Motion for video work.',
   },
 }
 

@@ -29,7 +29,7 @@ interface ScoreNarrativeProps {
 
 const PHASE_BADGES: Record<FixPhase, { label: string; icon: React.ComponentType<{ className?: string }>; color: string }> = {
   'blueprint': { label: 'Blueprint', icon: Lightbulb, color: 'text-cyan-400 bg-cyan-400/10 border-cyan-400/20' },
-  'script': { label: 'Script', icon: FileText, color: 'text-purple-400 bg-purple-400/10 border-purple-400/20' },
+  'script': { label: "Writer's Room", icon: FileText, color: 'text-purple-400 bg-purple-400/10 border-purple-400/20' },
   'both': { label: 'Both Phases', icon: Film, color: 'text-amber-400 bg-amber-400/10 border-amber-400/20' },
 }
 
@@ -73,7 +73,7 @@ export function ScoreNarrative({ scores, overallScore }: ScoreNarrativeProps) {
             <p className="text-sm text-gray-300">{summary}</p>
             {scriptFocus.length > 0 && (
               <p className="text-xs text-gray-500 mt-2">
-                Script phase focus: {scriptFocus.slice(0, 2).join('; ')}
+                Writer&apos;s Room focus: {scriptFocus.slice(0, 2).join('; ')}
               </p>
             )}
           </div>

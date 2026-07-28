@@ -34,15 +34,15 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
     id: 'welcome',
     title: 'Welcome to Production',
     description:
-      'SceneFlow is one continuous pipeline: Foundation → Pre-vis → Production → Final Cut. You work in two tabs — Script and Action — with a clear next step at every stage.',
+      "SceneFlow is one continuous pipeline: Foundation → Pre-vis → Production → Final Cut. You work in two sections — Writer's Room and Motion — with a clear next step at every stage.",
     icon: <Sparkles className="w-6 h-6" />,
     tip: 'The Production Progress dashboard and co-pilot always show where you are and what is next.',
   },
   {
     id: 'script-tab',
-    title: 'Step 1 - Foundation (Script tab)',
+    title: "Step 1 - Foundation (Writer's Room)",
     description:
-      'Write and refine your script, run Audience Resonance (85+ target), generate audio, and assign voices. The Pre-Visualization panel shows what you need before Express.',
+      'Optimize your script with the Intelligent Assistant Writer, run Audience Resonance Analysis (85+ target), generate audio, and assign voices. The Pre-Visualization panel shows what you need before Express.',
     icon: <FileText className="w-6 h-6" />,
     workflowStep: 'dialogueAction',
     tip: 'Pre-Vis ready requires character voices and at least one reference in the Reference Library.',
@@ -58,12 +58,12 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
   },
   {
     id: 'action-tab',
-    title: 'Step 3 - Production (Action tab)',
+    title: 'Step 3 - Production (Motion)',
     description:
       'Beat Frames (start/end pairs for F2V) → Director Console video beats → Production Mixer → Production Streams — Export (MP4). One Output control syncs Animatic, Video, and language.',
     icon: <Clapperboard className="w-6 h-6" />,
     workflowStep: 'callAction',
-    tip: 'Do video work only in Action — the pre-vis gallery no longer embeds a duplicate production panel.',
+    tip: 'Do video work only in Motion — the pre-vis gallery no longer embeds a duplicate production panel.',
   },
   {
     id: 'mixer-streams',

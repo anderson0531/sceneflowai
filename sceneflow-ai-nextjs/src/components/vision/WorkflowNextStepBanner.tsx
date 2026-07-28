@@ -45,7 +45,7 @@ interface NextStepAction {
 // ============================================================================
 
 function getNextStep(state: WorkflowState): NextStepAction | null {
-  // Script tab steps
+  // Writer's Room steps
   if (!state.hasScript) {
     return {
       label: 'Review & Edit Script',
@@ -68,7 +68,7 @@ function getNextStep(state: WorkflowState): NextStepAction | null {
     }
   }
 
-  // Action tab steps
+  // Motion steps
   if (!state.hasDirection) {
     return {
       label: 'Scene direction pending',
@@ -116,7 +116,7 @@ export function WorkflowNextStepBanner({
   if (!nextStep) return null
 
   // Hide the banner when the user is already on the tab the next step would navigate to.
-  // They already see the relevant UI (e.g., SceneProductionDirector on Action tab).
+  // They already see the relevant UI (e.g., SceneProductionDirector in Motion).
   if (nextStep.targetTab && nextStep.targetTab === workflowState.activeTab) return null
 
   const colors = ACCENT_COLORS[nextStep.accentColor] || ACCENT_COLORS.purple

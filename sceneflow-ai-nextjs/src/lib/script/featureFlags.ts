@@ -19,7 +19,7 @@ export const SCRIPT_SEGMENTS_V2 = true
  * SCRIPT_SEGMENTS_V2_HIDE_LEGACY_UI: when `true`, hide the standalone
  * Scene Narration card, the flat dialogue list, the per-scene Sound
  * Effects card, and the SegmentBuilder first-time onboarding for any
- * scene that already carries `segments[]`. The Script tab uses this flag
+ * scene that already carries `segments[]`. The Writer's Room uses this flag
  * (effectively `true`) to render the new Segment cards instead.
  */
 export const SCRIPT_SEGMENTS_V2_HIDE_LEGACY_UI = true

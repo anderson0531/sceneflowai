@@ -84,7 +84,7 @@ export interface SceneStoryboardFrameViewerProps {
   /** Key of the frame designated as this scene's Screening Room poster. */
   screeningPosterFrameKey?: string
   onSetScreeningPoster?: (slot: StoryboardFrameSlot | null) => void
-  /** When true, skip accordion header — used inside Script tab Pre-Vis panel */
+  /** When true, skip accordion header — used inside the Writer's Room Pre-Vis panel */
   hideOuterChrome?: boolean
 }
 

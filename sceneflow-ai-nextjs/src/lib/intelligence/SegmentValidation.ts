@@ -175,7 +175,7 @@ function validateCharacters(
               severity: 'warning',
               message: `"${match}" appears to be a character not in the scene bible`,
               field: 'prompt',
-              suggestion: `If this is a new character, add them in the Script tab first. Scene characters: ${Array.from(bibleCharacters).join(', ')}`,
+              suggestion: `If this is a new character, add them in the Writer's Room first. Scene characters: ${Array.from(bibleCharacters).join(', ')}`,
             })
           }
         }
@@ -217,7 +217,7 @@ function validateLocation(
               severity: 'warning',
               message: `Prompt suggests movement or location change: "${match}"`,
               field: 'prompt',
-              suggestion: `Scene location is: ${sceneBible.location}. Location changes should happen in the Script tab, not during segmentation.`,
+              suggestion: `Scene location is: ${sceneBible.location}. Location changes should happen in the Writer's Room, not during segmentation.`,
             })
           }
         }
@@ -265,7 +265,7 @@ function validateDialogue(
           severity: 'warning',
           message: `Dialogue "${cleanQuote.substring(0, 40)}..." not found in scene script`,
           field: 'prompt',
-          suggestion: `Only reference dialogue that exists in the scene. Add new dialogue in the Script tab.`,
+          suggestion: `Only reference dialogue that exists in the scene. Add new dialogue in the Writer's Room.`,
         })
       }
     })
