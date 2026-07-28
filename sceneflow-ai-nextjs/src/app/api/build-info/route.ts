@@ -14,12 +14,17 @@ export async function GET() {
   // Mirror the model logic used in /api/version
   const model = process.env.GEMINI_MODEL || 'gemini-3.0-flash'
 
-  // UI marker: Production section labels that must exist when this rename is live
+  // UI markers: Production section labels + Publishing Library entry point
   const uiMarker = {
     productionSections: [
       PRODUCTION_SECTION_LABELS.dialogueAction,
       PRODUCTION_SECTION_LABELS.callAction,
     ],
+    publishingLibrary: {
+      dialogTitle: 'Publishing Library',
+      headerButton: 'Publish',
+      tabs: ['Final Streams', 'Screening', 'Promo', 'YouTube'],
+    },
   }
 
   return NextResponse.json({ commit, model, uiMarker, ts: Date.now() })
