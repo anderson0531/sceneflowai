@@ -11,7 +11,7 @@ export const mainNav: GlobalNavItem[] = [
  * Product Navigation — Blueprint + Production + Screening Room
  */
 export const productNav: GlobalNavItem[] = [
-  { key: 'writers-room', label: "Writer's Room", href: '/dashboard/studio/new-project' },
+  { key: 'blueprint', label: 'Blueprint', href: '/dashboard/studio/new-project' },
   { key: 'visualizer', label: 'Visualizer', href: '/dashboard/workflow/pre-vis' },
   { key: 'screening-room', label: 'Screening Room', href: '/dashboard/workflow/screening-room' },
 ]

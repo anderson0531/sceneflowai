@@ -18,14 +18,16 @@ import Link from 'next/link'
 /**
  * QuickActionsGrid - Product-aligned quick actions
  * 
- * Top row: 4 standalone products (Writer's Room, Visualizer, Smart Editor, Screening Room)
+ * Top row: 4 standalone products (Blueprint, Visualizer, Production, Screening Room)
  * Bottom row: Core actions (New Project, My Projects, Buy Credits, Settings)
+ *
+ * "Writer's Room" is the script section inside Production, not this entry point.
  */
 
 const productActions = [
   { 
-    label: "Writer's Room", 
-    tagline: 'Script & Story',
+    label: 'Blueprint', 
+    tagline: 'Concept & Story',
     icon: <PenTool className="w-5 h-5" />, 
     href: '/dashboard/studio/new-project',
     color: 'bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 border border-amber-500/20'
