@@ -29,7 +29,7 @@ export const FEATURE_CHAPTERS = [
   },
   {
     id: 'produce-publish',
-    label: 'Produce and publish — Shoot tab to Screening Room',
+    label: 'Produce and publish — Motion to Screening Room',
     cardIds: [11, 14, 16],
     defaultExpanded: false,
   },
@@ -152,9 +152,9 @@ export function buildFeatureStoryboardMessageItems(): FeatureStoryboardMessageIt
       title: 'Production Automation',
       description: production.description,
       keyFeatures: [...production.keyFeatures],
-      screenshotSlot: 'Insert screenshot: Production dashboard showing Script tab, Shoot tab, and Pre-Vis',
+      screenshotSlot: "Insert screenshot: Production dashboard showing Writer's Room, Motion, and Pre-Vis",
       videoSlot:
-        'Insert 00:60 clip: Lock script → Express Pre-vis per scene → Shoot Footage → Mixer → Streams',
+        'Insert 00:60 clip: Lock script → Express Pre-vis per scene → Motion Footage → Mixer → Streams',
     },
     {
       id: 14,

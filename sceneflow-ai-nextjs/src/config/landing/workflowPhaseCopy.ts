@@ -54,19 +54,19 @@ export const WORKFLOW_PHASES: WorkflowPhaseCopy[] = [
   {
     id: 'production',
     stepLabel: 'Production',
-    subtitle: 'Script to Screening Room',
+    subtitle: "Writer's Room to Screening Room",
     description:
-      'Script and Shoot tabs guide Foundation → Pre-Vis → Footage → Mixer → Streams. Scene-by-scene checkpoints minimize redos; Screening Room handles preview, assembly, and publishing.',
+      "The Writer's Room and Motion sections guide Foundation → Pre-Vis → Footage → Mixer → Streams. Scene-by-scene checkpoints minimize redos; Screening Room handles preview, assembly, and publishing.",
     keySteps: [
       'Lock script, voices, and scene audio',
       'Pre-Vis scene by scene — gallery and share for review',
-      'Shoot tab — Footage → Mixer → Streams per scene',
+      'Motion — Footage → Mixer → Streams per scene',
       'Screening Room — preview, assemble master, publish',
     ],
     keyFeatures: [
-      'Foundation — script, voices, scene audio, Audience Resonance',
+      "Writer's Room — script, voices, scene audio, Audience Resonance Analysis",
       'Pre-Vis — direction, audio, and beat frames per scene with share links',
-      'Shoot — Footage, Mixer, and Streams without leaving Production',
+      'Motion — Footage, Mixer, and Streams without leaving Production',
       'Screening Room — scene preview, master assembly, screenings, and YouTube publish',
     ],
   },
