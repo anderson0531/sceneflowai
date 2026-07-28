@@ -2104,31 +2104,31 @@
   "keyFeatures": {
     "badge": "ฟีเจอร์หลัก",
     "title": "ฟีเจอร์ที่ทำให้ SceneFlow แตกต่าง",
-    "subtitle": "เหนือกว่า pipeline — ผู้ช่วยอัจฉริยะ การผลิตแบบ express และเครื่องมือกระจายระดับโลก ที่เปลี่ยน SceneFlow เป็นสตูดิโอครบ ไม่ใช่แค่อีกแท็บ AI",
+    "subtitle": "Create วางรากฐาน — คีย์ งบ Series และ Blueprint Direct คือที่ที่คุณเขียน อ้างอิง สร้าง และรีวิว Ship ส่งมอบ master เวอร์ชัน โปรโม และชุด YouTube ที่พร้อมเผยแพร่",
     "categories": [
       {
         "id": "create",
         "label": "สร้างสรรค์",
         "features": [
           {
-            "icon": "writer",
-            "title": "Intelligent Assistant Writer",
-            "description": "ไม่ต้องเริ่มจากหน้าว่าง SceneFlow สร้างเนื้อหา Series, Blueprint และ Script ระดับมืออาชีพจากแนวคิดหรือ outline กำกับ baseline ด้วยเสียงหรือข้อความ — ไม่ต้อง prompt engineering ซับซ้อน"
+            "icon": "byok",
+            "title": "Bring Your Own Key (BYOK)",
+            "description": "เชื่อม API key ส่วนตัวหรือองค์กรสำหรับผู้ให้บริการภาพและวิดีโอ ควบคุมต้นทุนโมเดลเมื่อขยายงาน พร้อมสตูดิโอแบบมีไกด์ครบ"
           },
           {
-            "icon": "ara",
-            "title": "Audience Resonance Analysis (ARA)",
-            "description": "กำหนดกลุ่มเป้าหมายและรับการวิเคราะห์พร้อมคะแนน คำแนะนำ และแก้ไขคลิกเดียว — ทั้ง Series, Blueprint และ Script ก่อนใช้งบ production"
+            "icon": "budget",
+            "title": "การจัดการงบ Production",
+            "description": "ตั้งงบเครดิตต่อโปรเจกต์ ติดตามการใช้จ่ายแบบเรียลไทม์ และรับคำแนะนำลดต้นทุนก่อนเรนเดอร์ — เฟรม draft ลดการสร้างวิดีโอ ซื้อเครดิตเพิ่มเมื่อต้องการ runway"
           },
           {
-            "icon": "referenceLibrary",
-            "title": "Reference Library",
-            "description": "สร้างอ้างอิงตัวละคร เครื่องแต่งกาย เสียง สถานที่ และอุปกรณ์ประกอบฉากที่สอดคล้องทั้ง Series ใช้ตัวละครจากสคริปต์หรือสร้างเองพร้อมสร้างเสียงอัตโนมัติจากภาพและบทบาท"
+            "icon": "series",
+            "title": "Series Studio",
+            "description": "กำหนดจักรวาลของคุณครั้งเดียว — อาร์กฤดูกาล นักแสดงประจำ และกฎความต่อเนื่อง โครงตอนซิงก์เข้า Blueprint และ Production ให้ทุกตอนคงรูปแบบ"
           },
           {
-            "icon": "workflowAssistant",
-            "title": "Intelligent Workflow Assistant",
-            "description": "SceneFlow ออกแบบให้ใช้งานง่ายและช่วยนำทางผ่านสคริปต์ Reference Library เสียง และภาพ — พร้อม checklist ทีละขั้นและผู้ช่วย Cue AI ทุก milestone"
+            "icon": "blueprint",
+            "title": "Blueprint",
+            "description": "เปลี่ยนแนวคิดเป็นเรื่องที่มีโครงสร้าง: บีต อาร์กตัวละคร กลุ่มเป้าหมาย และสไตล์ภาพที่ล็อก ผู้ร่วมงานรีวิวผ่านลิงก์แชร์ก่อนเข้า Production"
           }
         ]
       },
@@ -2137,24 +2137,39 @@
         "label": "กำกับ",
         "features": [
           {
-            "icon": "express",
-            "title": "Express Production",
-            "description": "สร้างเฟรมและวิดีโอในไม่กี่นาที ไม่ใช่หลายชั่วโมง ด้วยเอนจินประมวลผลแบบขนานของ SceneFlow — Express ประสานการสร้างเสียง ภาพ และวิดีโอพร้อมกันทุกฉาก"
+            "icon": "writersRoom",
+            "title": "Writer's Room",
+            "description": "แก้สคริปต์ทีละฉากด้วย Intelligent Assistant Writer และ Audience Resonance Analysis — ปรับบทสนทนา จังหวะ และโทนก่อนใช้งบเฟรมและวิดีโอ"
+          },
+          {
+            "icon": "ara",
+            "title": "Audience Resonance Analysis (ARA)",
+            "description": "ให้คะแนนเรื่องเทียบกลุ่มเป้าหมายที่กำหนด รับคำแนะนำเจาะจงและแก้ไขคลิกเดียวทั้งสคริปต์และโครงสร้าง ก่อนใช้งบ production"
+          },
+          {
+            "icon": "referenceLibrary",
+            "title": "Intelligent Reference Library",
+            "description": "ล็อกตัวละคร เสียง เครื่องแต่งกาย สถานที่ และอุปกรณ์ครั้งเดียว ทุกการสร้างดึงจากอ้างอิงเดียวกัน — ไม่มี drift ข้ามฉาก ตอน และซีรีส์"
           },
           {
             "icon": "iad",
             "title": "Intelligent Assistant Director (IAD)",
-            "description": "ไม่ต้องสุ่มสร้างใหม่ไม่รู้จบ กำกับการแก้เฟรมหรือวิดีโอด้วยเสียงหรือข้อความ — บอกให้เอาแก้วกาแฟออก IAD จัดการต่อด้วย Reference Library เพื่อความสอดคล้อง"
+            "description": "กำกับการแก้เฟรมหรือวิดีโอด้วยเสียงหรือข้อความ — ไม่ต้องสุ่มสร้างใหม่ IAD แก้แบบเจาะจงพร้อม Reference Library"
           },
           {
             "icon": "multilanguage",
             "title": "สตรีมหลายภาษา",
-            "description": "70+ ภาษา สร้างเสียงด้วย Express ในไม่กี่นาที จัดแนวอัตโนมัติกับ beat frames และวิดีโอ สร้างสตรีมพากย์หรือ lip-sync ให้ทุกตลาดได้ยินเรื่องราวแบบ native"
+            "description": "สร้างเสียง 70+ ภาษาด้วย Express จัดแนวอัตโนมัติกับ beat frames และวิดีโอ ส่งสตรีมพากย์หรือ lip-sync จาก master ที่อนุมัติแล้ว"
           },
           {
-            "icon": "versionControl",
-            "title": "การควบคุมเวอร์ชัน",
-            "description": "สร้างและจัดการหลายเวอร์ชันของแต่ละสตรีม เปรียบเทียบ take ปักหมุดรายการโปรด และ iterate โดยไม่สูญงานเก่า — ทุกฉากเก็บประวัติเวอร์ชันครบ"
+            "icon": "express",
+            "title": "Express Generation",
+            "description": "ประสานการสร้างเสียง เฟรม และวิดีโอพร้อมกันทุกฉาก โปรดักชัน 30 บีตใน ~30 นาที แทนการรอทีละงานหลายชั่วโมง"
+          },
+          {
+            "icon": "screeningRoom",
+            "title": "Screening Room",
+            "description": "พรีวิว animatic วิดีโอฉาก และสตรีมภาษา แชร์ลิงก์ screening สำหรับเล่นและฟีดแบ็กจากผู้รีวิวก่อนเผยแพร่"
           }
         ]
       },
@@ -2163,24 +2178,24 @@
         "label": "ส่งมอบ",
         "features": [
           {
-            "icon": "screeningRoom",
-            "title": "Screening Room",
-            "description": "ตรวจและแชร์ Animatic (เฟรมฉากพร้อมบทสนทนา SFX และดนตรี) Video (วิดีโอฉากพร้อมมิกซ์เสียงเต็ม) และ Streams (แต่ละภาษาที่ผลิต) ผู้ชมควบคุมการเล่นได้ ผู้รีวิวให้ฟีดแบ็กได้"
+            "icon": "upscale",
+            "title": "Delivery-Quality Upscale",
+            "description": "เรนเดอร์ master ระดับ 720p 1080p หรือ 4K — พร้อม Topaz upscaling เมื่อเชื่อม credentials stitch ครั้งเดียว คุณภาพพร้อม screening"
           },
           {
-            "icon": "autoPublish",
-            "title": "Auto Publish",
-            "description": "สร้าง thumbnail ชื่อเรื่อง คำอธิบาย และแทรกเสียงหลายภาษาอัตโนมัติ เผยแพร่ YouTube คลิกเดียว ส่งถึงผู้ชมนับพันล้านด้วย output ที่พร้อมเผยแพร่"
+            "icon": "versionControl",
+            "title": "การควบคุมเวอร์ชัน",
+            "description": "เก็บทุก take ต่อสตรีม เปรียบเทียบเวอร์ชัน ปักหมุดรายการโปรด และ iterate โดยไม่สูญเวอร์ชันที่ทุกคนชอบ"
           },
           {
-            "icon": "byok",
-            "title": "Bring Your Own Key (BYOK)",
-            "description": "ใส่ API key ส่วนตัวหรือองค์กรสำหรับประมวลผลภาพและวิดีโอ ลดต้นทุนแพลตฟอร์มด้วย BYOK สำหรับผู้ให้บริการที่รองรับ โดยยังควบคุมสตูดิโอได้เต็มที่"
+            "icon": "promoTrailer",
+            "title": "Promotion Trailers",
+            "description": "สร้างโปรโม 9:16 30–60 วินาทีจากบีตที่มี resonance สูง — ตัดแนวตั้งพร้อม Shorts Reels และ TikTok"
           },
           {
-            "icon": "budget",
-            "title": "การจัดการงบ Production",
-            "description": "คำนวณและติดตามงบเครดิตของแต่ละ production รับคำแนะนำลดต้นทุน — เฟรม draft ลดการสร้างวิดีโอ — และซื้อเครดิตเพิ่มเมื่อต้องการ runway มากขึ้น"
+            "icon": "youtubePublish",
+            "title": "YouTube Publishing",
+            "description": "ชุดต่อภาษา: ชื่อเรื่องและคำอธิบาย AI thumbnail การตั้งค่า privacy และ category และเผยแพร่เสียงหลายภาษา — จาก Publishing Library"
           }
         ]
       }

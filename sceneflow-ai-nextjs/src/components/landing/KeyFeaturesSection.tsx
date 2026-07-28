@@ -3,24 +3,9 @@
 import { useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useTranslations } from 'next-intl'
-import {
-  Sparkles,
-  PenLine,
-  Gauge,
-  Library,
-  Compass,
-  Zap,
-  Clapperboard,
-  Languages,
-  GitBranch,
-  MonitorPlay,
-  Youtube,
-  KeyRound,
-  Wallet,
-  ChevronDown,
-  type LucideIcon,
-} from 'lucide-react'
+import { Sparkles, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { FEATURE_ICONS } from './keyFeatureIcons'
 
 const SECTION_ID = 'key-features'
 
@@ -43,21 +28,6 @@ type CategoryData = {
   id: CategoryId
   label: string
   features: FeatureData[]
-}
-
-const FEATURE_ICONS: Record<string, LucideIcon> = {
-  writer: PenLine,
-  ara: Gauge,
-  referenceLibrary: Library,
-  workflowAssistant: Compass,
-  express: Zap,
-  iad: Clapperboard,
-  multilanguage: Languages,
-  versionControl: GitBranch,
-  screeningRoom: MonitorPlay,
-  autoPublish: Youtube,
-  byok: KeyRound,
-  budget: Wallet,
 }
 
 const CATEGORY_GRADIENTS: Record<CategoryId, string> = {
@@ -104,6 +74,7 @@ export default function KeyFeaturesSection() {
   )
 
   const active = categories.find((c) => c.id === activeCategory) ?? categories[0]
+  const featureCount = active?.features.length ?? 0
 
   const selectCategory = (id: CategoryId) => {
     setActiveCategory(id)
@@ -167,7 +138,10 @@ export default function KeyFeaturesSection() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
-          className="grid gap-5 sm:grid-cols-2 lg:grid-cols-2"
+          className={cn(
+            'grid gap-5 sm:grid-cols-2',
+            featureCount > 4 ? 'lg:grid-cols-3' : 'lg:grid-cols-2'
+          )}
         >
           {active?.features.map((feature, index) => {
             const Icon = FEATURE_ICONS[feature.icon] ?? Sparkles

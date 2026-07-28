@@ -14,7 +14,7 @@ export async function GET() {
   // Mirror the model logic used in /api/version
   const model = process.env.GEMINI_MODEL || 'gemini-3.0-flash'
 
-  // UI markers: Production section labels + Publishing Library entry point
+  // UI markers for deploy verification
   const uiMarker = {
     productionSections: [
       PRODUCTION_SECTION_LABELS.dialogueAction,
@@ -25,9 +25,12 @@ export async function GET() {
       headerButton: 'Publish',
       tabs: ['Final Streams', 'Screening', 'Promo', 'YouTube'],
     },
+    keyFeatures: {
+      pillars: ['Create', 'Direct', 'Ship'],
+      counts: { create: 4, direct: 7, ship: 4 },
+      shipHeadline: 'YouTube Publishing',
+    },
   }
 
   return NextResponse.json({ commit, model, uiMarker, ts: Date.now() })
 }
-
-
