@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils'
 import { useStore } from '@/store/useStore'
 
 /**
- * ProductSwitcher - 4-Product Navigation Bar
+ * ProductSwitcher - 3-Product Navigation Bar
  * 
  * Provides clear navigation for SceneFlow's unbundled standalone products:
  * - Blueprint: Concept and story development (Blueprint Phase)
@@ -185,7 +185,6 @@ export function ProductSwitcher({
                   'absolute -bottom-px left-3 right-3 h-0.5 rounded-full',
                   product.id === 'blueprint' && 'bg-amber-400',
                   product.id === 'visualizer' && 'bg-blue-400',
-                  product.id === 'smart-editor' && 'bg-purple-400',
                   product.id === 'screening-room' && 'bg-emerald-400',
                 )}
                 transition={{ type: 'spring', stiffness: 500, damping: 30 }}
