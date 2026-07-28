@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/Button'
 import { trackCta } from '@/lib/analytics'
 import { motion } from 'framer-motion'
-import { Menu, X, User, LogOut, Shield, Sparkles, ChevronDown, LayoutDashboard, Film, Building2, Clapperboard, ArrowRight } from 'lucide-react'
+import { Menu, X, User, LogOut, Shield, Sparkles, ChevronDown, LayoutDashboard, Building2, Clapperboard, ArrowRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import {
@@ -153,11 +153,11 @@ export function Header() {
               </button>
 
               <button
-                onClick={() => scrollToSection('pipeline')}
+                onClick={() => scrollToSection('key-features')}
                 className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
-                <Film className="w-4 h-4" />
-                {t('pipeline')}
+                <Sparkles className="w-4 h-4 text-sf-primary" />
+                {t('keyFeatures')}
               </button>
 
               <button
@@ -271,9 +271,9 @@ export function Header() {
                     <Clapperboard className="w-4 h-4" />
                     {t('productionExamples')}
                   </button>
-                  <button onClick={() => scrollToSection('pipeline')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
-                    <Film className="w-4 h-4" />
-                    {t('pipeline')}
+                  <button onClick={() => scrollToSection('key-features')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
+                    <Sparkles className="w-4 h-4 text-sf-primary" />
+                    {t('keyFeatures')}
                   </button>
                   <button onClick={() => scrollToSection('pricing')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Sparkles className="w-4 h-4 text-sf-primary" />

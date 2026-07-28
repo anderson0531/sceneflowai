@@ -5,10 +5,6 @@ import { Header } from './components/Header'
 import { HeroSection } from './components/HeroSection'
 import { LandingSectionCollapseProvider } from '@/components/landing/LandingSectionCollapse'
 
-const PipelinePillarsSection = dynamic(
-  () => import('@/components/landing/PipelinePillarsSection'),
-  { ssr: false }
-)
 const UseCasesSection = dynamic(() => import('@/components/landing/UseCasesSection'), { ssr: false })
 const ProductionExamplesSection = dynamic(
   () => import('@/components/landing/ProductionExamplesSection'),
@@ -36,7 +32,6 @@ export default function LandingPageClient() {
 
         <UseCasesSection />
         <ProductionExamplesSection />
-        <PipelinePillarsSection />
         <KeyFeaturesSection />
         <PricingCredits />
       </LandingSectionCollapseProvider>
