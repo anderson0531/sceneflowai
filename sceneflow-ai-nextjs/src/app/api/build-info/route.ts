@@ -30,6 +30,9 @@ export async function GET() {
       counts: { create: 4, direct: 7, ship: 4 },
       shipHeadline: 'YouTube Publishing',
     },
+    landingPage: {
+      pipelinePillarsRemoved: true,
+    },
   }
 
   return NextResponse.json({ commit, model, uiMarker, ts: Date.now() })

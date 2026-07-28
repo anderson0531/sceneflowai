@@ -31,8 +31,9 @@ describe('Production Examples landing section', () => {
       source.indexOf('<ProductionExamplesSection />')
     )
     expect(source.indexOf('<ProductionExamplesSection />')).toBeLessThan(
-      source.indexOf('<PipelinePillarsSection />')
+      source.indexOf('<KeyFeaturesSection />')
     )
+    expect(source).not.toContain('<PipelinePillarsSection />')
   })
 
   it('uses the production-examples anchor that the nav scrolls to', () => {
