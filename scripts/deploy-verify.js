@@ -7,6 +7,7 @@
     - model is set (from GEMINI_MODEL env or central config)
     - uiMarker.productionSections contains Writer's Room and Motion
     - uiMarker.publishingLibrary contains Publishing Library markers
+    - uiMarker.keyFeatures contains Create/Direct/Ship pillar markers
 */
 const { execSync } = require('node:child_process')
 const https = require('https')
@@ -69,6 +70,7 @@ async function main() {
       const model = String(json.model || '')
       const sections = (json.uiMarker && json.uiMarker.productionSections) || []
       const publishing = (json.uiMarker && json.uiMarker.publishingLibrary) || {}
+      const keyFeatures = (json.uiMarker && json.uiMarker.keyFeatures) || {}
 
       const commitMatches = commit.startsWith(headShort) || commit === headLong
       const modelOk = model && model.startsWith('gemini-')
@@ -81,12 +83,17 @@ async function main() {
         publishing.headerButton === 'Publish' &&
         Array.isArray(publishing.tabs) &&
         publishing.tabs.includes('YouTube')
+      const keyFeaturesOk =
+        Array.isArray(keyFeatures.pillars) &&
+        keyFeatures.pillars.join(',') === 'Create,Direct,Ship' &&
+        keyFeatures.counts?.direct === 7 &&
+        keyFeatures.shipHeadline === 'YouTube Publishing'
 
-      if (commitMatches && modelOk && sectionsOk && publishingOk) {
+      if (commitMatches && modelOk && sectionsOk && publishingOk && keyFeaturesOk) {
         console.log('[deploy-verify] ✅ Verified production deploy: commit, model, and UI markers match')
         process.exit(0)
       } else {
-        console.log('[deploy-verify] Not verified yet:', { commitMatches, modelOk, sectionsOk, publishingOk })
+        console.log('[deploy-verify] Not verified yet:', { commitMatches, modelOk, sectionsOk, publishingOk, keyFeaturesOk })
       }
     } catch (e) {
       console.log(`[deploy-verify] Attempt ${attempt} error: ${e.message}`)
