@@ -1,15 +1,17 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Smartphone, Loader2, Download, Sparkles } from 'lucide-react'
+import { Smartphone, Loader2, Download, Sparkles, Film } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import type { PromoTrailerBeatPlan } from '@/types/publishingAssets'
 
 interface ShortFormPublishPanelProps {
   projectId?: string
   videoUrl?: string
   durationSec?: number
+  beatPlan?: PromoTrailerBeatPlan[]
   className?: string
 }
 
@@ -23,6 +25,7 @@ export function ShortFormPublishPanel({
   projectId,
   videoUrl,
   durationSec = 120,
+  beatPlan,
   className,
 }: ShortFormPublishPanelProps) {
   const [selected, setSelected] = useState<Array<'youtube-shorts' | 'instagram-reels' | 'tiktok'>>([
@@ -31,7 +34,9 @@ export function ShortFormPublishPanel({
     'tiktok',
   ])
   const [loading, setLoading] = useState(false)
+  const [rendering, setRendering] = useState(false)
   const [clips, setClips] = useState<Array<{ id: string; platform: string; startSec: number; endSec: number; label: string }>>([])
+  const [renderedUrl, setRenderedUrl] = useState<string | null>(null)
 
   const toggle = (id: typeof selected[number]) => {
     setSelected((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]))
@@ -57,6 +62,34 @@ export function ShortFormPublishPanel({
     }
   }
 
+  const renderTrailer = async () => {
+    if (!projectId || !videoUrl || !beatPlan?.length) {
+      toast.error('Generate a beat plan in Publishing → Promo first.')
+      return
+    }
+    setRendering(true)
+    try {
+      const res = await fetch('/api/publish/trailer/render', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          videoUrl,
+          beatPlan,
+          targetDurationSec: 45,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Render failed')
+      setRenderedUrl(data.mp4Url)
+      toast.success('Trailer rendered')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Render failed')
+    } finally {
+      setRendering(false)
+    }
+  }
+
   return (
     <div className={cn('rounded-xl border border-zinc-700/70 bg-zinc-900/60 p-4', className)}>
       <h3 className="text-sm font-semibold text-white flex items-center gap-2 mb-3">
@@ -65,6 +98,7 @@ export function ShortFormPublishPanel({
       </h3>
       <p className="text-xs text-zinc-500 mb-3">
         Auto-detect highlight windows from your master for vertical platforms.
+        {beatPlan?.length ? ` Beat plan: ${beatPlan.length} beats ready to render.` : ''}
       </p>
       <div className="flex flex-wrap gap-2 mb-4">
         {PLATFORMS.map((p) => (
@@ -83,12 +117,20 @@ export function ShortFormPublishPanel({
           </button>
         ))}
       </div>
-      <Button size="sm" onClick={generate} disabled={loading || !videoUrl || !projectId} className="mb-4">
-        {loading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Sparkles className="w-4 h-4 mr-1" />}
-        Generate clip plan
-      </Button>
+      <div className="flex flex-wrap gap-2 mb-4">
+        <Button size="sm" onClick={generate} disabled={loading || !videoUrl || !projectId}>
+          {loading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Sparkles className="w-4 h-4 mr-1" />}
+          Generate clip plan
+        </Button>
+        {beatPlan?.length ? (
+          <Button size="sm" variant="outline" onClick={renderTrailer} disabled={rendering || !videoUrl}>
+            {rendering ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Film className="w-4 h-4 mr-1" />}
+            Render beat trailer
+          </Button>
+        ) : null}
+      </div>
       {clips.length > 0 && (
-        <ul className="space-y-2 text-xs">
+        <ul className="space-y-2 text-xs mb-4">
           {clips.map((c) => (
             <li key={c.id} className="rounded-lg border border-zinc-800 bg-zinc-950/60 px-3 py-2 text-zinc-300">
               {c.label} · {c.startSec}s–{c.endSec}s
@@ -96,6 +138,14 @@ export function ShortFormPublishPanel({
           ))}
         </ul>
       )}
+      {renderedUrl ? (
+        <Button size="sm" variant="outline" asChild className="border-emerald-500/30">
+          <a href={renderedUrl} target="_blank" rel="noopener noreferrer" download>
+            <Download className="w-3.5 h-3.5 mr-1" />
+            Download rendered trailer
+          </a>
+        </Button>
+      ) : null}
     </div>
   )
 }

@@ -34,15 +34,9 @@ export function getPublishingState(metadata: unknown, project?: ProjectLike): Pr
     : legacyStreams.map((s) => hydrateStreamRecord(s, raw?.streams))
 
   if (!raw) {
-    const youtubeByLanguage: Record<string, YoutubePublishBundle> = {}
-    for (const stream of mergedStreams) {
-      if (stream.language && (stream.publish?.youtubeUrl || stream.publish?.shareUrl)) {
-        youtubeByLanguage[stream.language] = buildYoutubeBundleFromStream(stream)
-      }
-    }
     return {
       streams: mergedStreams,
-      youtubeByLanguage,
+      youtubeByLanguage: buildYoutubeFromStreams(mergedStreams),
       promo: undefined,
       readiness: computePublishingReadiness(project, mergedStreams),
     }

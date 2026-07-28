@@ -3,12 +3,17 @@
  */
 
 import type { FinalCutSceneClip } from '@/lib/types/finalCut'
+import type { StreamDeliveryResolution } from '@/types/publishingAssets'
+import type { UpscaleSettings } from '@/lib/types/finalCut'
 
 export interface StitchFinalCutClipsArgs {
   projectId: string
   filenameLabel?: string
   clips: FinalCutSceneClip[]
   onProgress?: (message: string) => void
+  resolution?: StreamDeliveryResolution
+  upscale?: boolean
+  upscaleSettings?: UpscaleSettings
 }
 
 export async function stitchFinalCutClips({
@@ -16,6 +21,9 @@ export async function stitchFinalCutClips({
   filenameLabel,
   clips,
   onProgress,
+  resolution = '1080p',
+  upscale = false,
+  upscaleSettings,
 }: StitchFinalCutClipsArgs): Promise<string> {
   const readyClips = clips.filter((c) => c.status === 'ready' && c.url)
   if (readyClips.length === 0) {
@@ -51,7 +59,7 @@ export async function stitchFinalCutClips({
         segments,
         audioClips: [],
         textOverlays: [],
-        resolution: '1080p',
+        resolution,
         fps: 30,
         totalDuration: cursor,
         exportFormat: 'mp4',
@@ -85,14 +93,16 @@ export async function stitchFinalCutClips({
   }
 
   onProgress?.(`Cloud stitching ${readyClips.length} scenes…`)
-  const response = await fetch('/api/scene/final-cut/render', {
+  const response = await fetch('/api/publish/stream/render', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       projectId,
       sceneId: 'final-cut',
       sceneNumber: 0,
-      resolution: '1080p',
+      resolution,
+      upscale,
+      upscaleSettings,
       audioConfig: {
         includeNarration: false,
         includeDialogue: false,
@@ -132,7 +142,7 @@ export async function stitchFinalCutClips({
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     await new Promise((r) => setTimeout(r, 5000))
-    const pollRes = await fetch(`/api/scene/final-cut/render?jobId=${jobId}`)
+    const pollRes = await fetch(`/api/publish/stream/render?jobId=${jobId}`)
     if (!pollRes.ok) continue
     const data = await pollRes.json()
     if (data.status === 'COMPLETED') {
