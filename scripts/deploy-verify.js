@@ -9,6 +9,7 @@
     - uiMarker.publishingLibrary contains Publishing Library markers
     - uiMarker.keyFeatures contains Create/Direct/Ship pillar markers
     - uiMarker.landingPage.pipelinePillarsRemoved is true
+    - uiMarker.productionShowcase.animation.availableLocales includes es
 */
 const { execSync } = require('node:child_process')
 const https = require('https')
@@ -73,6 +74,7 @@ async function main() {
       const publishing = (json.uiMarker && json.uiMarker.publishingLibrary) || {}
       const keyFeatures = (json.uiMarker && json.uiMarker.keyFeatures) || {}
       const landingPage = (json.uiMarker && json.uiMarker.landingPage) || {}
+      const productionShowcase = (json.uiMarker && json.uiMarker.productionShowcase) || {}
 
       const commitMatches = commit.startsWith(headShort) || commit === headLong
       const modelOk = model && model.startsWith('gemini-')
@@ -91,12 +93,32 @@ async function main() {
         keyFeatures.counts?.direct === 7 &&
         keyFeatures.shipHeadline === 'YouTube Publishing'
       const landingPageOk = landingPage.pipelinePillarsRemoved === true
+      const animationShowcase =
+        productionShowcase.animation && productionShowcase.animation.availableLocales
+      const productionShowcaseOk =
+        Array.isArray(animationShowcase) && animationShowcase.includes('es')
 
-      if (commitMatches && modelOk && sectionsOk && publishingOk && keyFeaturesOk && landingPageOk) {
+      if (
+        commitMatches &&
+        modelOk &&
+        sectionsOk &&
+        publishingOk &&
+        keyFeaturesOk &&
+        landingPageOk &&
+        productionShowcaseOk
+      ) {
         console.log('[deploy-verify] ✅ Verified production deploy: commit, model, and UI markers match')
         process.exit(0)
       } else {
-        console.log('[deploy-verify] Not verified yet:', { commitMatches, modelOk, sectionsOk, publishingOk, keyFeaturesOk, landingPageOk })
+        console.log('[deploy-verify] Not verified yet:', {
+          commitMatches,
+          modelOk,
+          sectionsOk,
+          publishingOk,
+          keyFeaturesOk,
+          landingPageOk,
+          productionShowcaseOk,
+        })
       }
     } catch (e) {
       console.log(`[deploy-verify] Attempt ${attempt} error: ${e.message}`)

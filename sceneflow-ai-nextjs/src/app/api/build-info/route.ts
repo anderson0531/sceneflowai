@@ -33,6 +33,11 @@ export async function GET() {
     landingPage: {
       pipelinePillarsRemoved: true,
     },
+    productionShowcase: {
+      animation: {
+        availableLocales: ['en', 'es'],
+      },
+    },
   }
 
   return NextResponse.json({ commit, model, uiMarker, ts: Date.now() })
