@@ -2945,8 +2945,8 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                 className="flex items-center gap-2 border-purple-500/30 hover:border-purple-500/50 hover:bg-purple-500/10"
                 title={
                   audienceScore == null
-                    ? 'Analyze audience resonance for your script'
-                    : 'Audience resonance analysis and script insights'
+                    ? 'Run Audience Resonance Analysis on your script'
+                    : 'Audience Resonance Analysis and script insights'
                 }
               >
                 {isGeneratingReviews ? (
@@ -2954,7 +2954,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                 ) : (
                   <Target className="w-4 h-4 text-purple-400" />
                 )}
-                <span className="text-sm hidden sm:inline">Audience</span>
+                <span className="text-sm hidden sm:inline">Audience Resonance</span>
                 {audienceScore != null && !isGeneratingReviews && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-semibold tabular-nums">
                     {audienceScore}
@@ -5322,7 +5322,7 @@ function SceneCard({
                             </button>
                           </TooltipTrigger>
                           <TooltipContent className="bg-gray-900 text-white border border-gray-700">
-                            <p className="text-xs">Analyze scene for audience resonance</p>
+                            <p className="text-xs">Run Audience Resonance Analysis on this scene</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -5848,7 +5848,7 @@ function SceneCard({
                                 Direct
                               </button>
                             </TooltipTrigger>
-                            <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Direct and revise scene script</TooltipContent>
+                            <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Direct and revise this scene with the Intelligent Assistant Writer</TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
                       )}
