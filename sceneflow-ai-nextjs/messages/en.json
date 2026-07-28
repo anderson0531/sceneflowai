@@ -364,7 +364,7 @@
   "keyFeatures": {
     "badge": "Key Features",
     "title": "The Features That Set SceneFlow Apart",
-    "subtitle": "Beyond the pipeline — intelligent assistants, express production, and global distribution tools that turn SceneFlow into a complete studio, not another AI tab.",
+    "subtitle": "Create locks your foundation — keys, budget, series bible, and blueprint. Direct is where you write, reference, generate, and review. Ship delivers masters, versions, promos, and YouTube-ready bundles.",
     "learnMoreLabel": "Learn more",
     "showLessLabel": "Show less",
     "problemLabel": "The Problem",
@@ -376,121 +376,9 @@
         "label": "Create",
         "features": [
           {
-            "icon": "writer",
-            "title": "Intelligent Assistant Writer",
-            "description": "Never start from a blank page. SceneFlow builds professional Series, Blueprint, and Script copy from a concept or detailed outline. Direct the baseline with plain speech or typed direction — no complex prompt engineering.",
-            "learnMore": {
-              "problem": "The blank page is where most projects stall. Generic AI writing tools spit out bland, one-size-fits-all copy that ignores who you are actually talking to — so you spend hours rewriting, or worse, ship something that never connects with your audience.",
-              "solution": "The Intelligent Assistant Writer fuses your defined target audience with proven screenwriting and copywriting technique to draft on-brief Series, Blueprint, and Script copy. Steer every beat by plain voice or text — no prompt engineering, no rewriting from scratch.",
-              "outcome": "Audience-tuned, professional-grade writing in minutes, not hours or days — so you start every project with momentum instead of a blinking cursor."
-            }
-          },
-          {
-            "icon": "ara",
-            "title": "Audience Resonance Analysis (ARA)",
-            "description": "Define your target audience and get expert analysis with a score, detailed recommendations, and one-click revisions — across Series, Blueprint, and Script before you spend on production.",
-            "learnMore": {
-              "problem": "By the time you find out a story misses the mark, you have already burned hours and credits rendering audio, frames, and video. Creative guesswork is expensive, and reshoots are even more so.",
-              "solution": "ARA is a powerful engine that runs a test-audience screening on your copy before a single audio clip, frame, or video is generated. Get a resonance score, pinpointed recommendations, and one-click revisions across Series, Blueprint, and Script.",
-              "outcome": "De-risk every project up front — greenlight only the stories that will land, and stop paying to render ideas that were never going to work."
-            }
-          },
-          {
-            "icon": "referenceLibrary",
-            "title": "Reference Library",
-            "description": "Create consistent character, wardrobe, voice, location, and prop references across Series. Use scripted characters or build custom ones with auto voice generation based on character image and role.",
-            "learnMore": {
-              "problem": "AI video's dirty secret is drift: your hero's face, wardrobe, and settings mutate shot to shot and episode to episode, shattering the illusion and forcing endless re-rolls to stay on-model.",
-              "solution": "Build AI-assisted or fully custom characters, wardrobes, voices, locations, and props once, then reuse them everywhere. Every generation pulls from the same locked references — with auto voice generation matched to each character's image and role.",
-              "outcome": "Perfect consistency across scenes, productions, and entire series — zero character drift, so your audience stays immersed in the story instead of noticing the seams."
-            }
-          },
-          {
-            "icon": "workflowAssistant",
-            "title": "Intelligent Workflow Assistant",
-            "description": "SceneFlow is intuitively designed and guides you through script, Reference Library, audio, and visual production — with step-by-step checklists and the Cue AI assistant at every milestone.",
-            "learnMore": {
-              "problem": "Professional production tools are powerful but punishing — steep learning curves, easy-to-miss steps, and hours of tutorials before you produce anything worth watching.",
-              "solution": "SceneFlow guides you through the automated pipeline step by step, with guardrails that keep you on track — like completing your Reference Library before you generate frames. Click Start and let SceneFlow lead the way.",
-              "outcome": "Go from sign-up to shipping without a single tutorial. The right next step is always obvious, so nothing gets skipped and nothing gets wasted."
-            }
-          }
-        ]
-      },
-      {
-        "id": "direct",
-        "label": "Direct",
-        "features": [
-          {
-            "icon": "express",
-            "title": "Express Production",
-            "description": "Generate frames and videos in minutes, not hours, with SceneFlow's concurrent processing engine — Express orchestrates audio, image, and video generation in parallel across your scenes.",
-            "learnMore": {
-              "problem": "Generating a production one asset at a time turns a single project into an all-day wait — you queue a clip, watch it render, then repeat hundreds of times while momentum evaporates.",
-              "solution": "Express Production taps SceneFlow's dedicated cloud to run concurrent generations of audio, frames, and video across your entire production at once, instead of one slow job after another.",
-              "outcome": "A 30-beat production finishes in about 30 minutes instead of roughly 2.5 hours — so you iterate the same day and ship while the idea is still hot."
-            }
-          },
-          {
-            "icon": "iad",
-            "title": "Intelligent Assistant Director (IAD)",
-            "description": "No endless slot-machine generations. Direct frame or video revisions by speech or typed direction — remove the coffee mug from the table and IAD handles the rest, using your Reference Library for consistency.",
-            "learnMore": {
-              "problem": "Most AI tools force you to re-roll the entire shot and pray when you want one small change — a slot machine that wastes credits and rarely gives you exactly what you pictured.",
-              "solution": "IAD lets you direct precise frame or video revisions in plain speech or text — 'remove the coffee mug from the table' — and applies the edit while honoring your Reference Library for continuity.",
-              "outcome": "Get the exact shot you envisioned with surgical edits instead of random regenerations — less wasted spend, more creative control, faster final cuts."
-            }
-          },
-          {
-            "icon": "multilanguage",
-            "title": "Multilanguage Streams",
-            "description": "70+ languages. Express-generate audio in minutes, auto-aligned to animatic beat frames and video. Generate dubbed or lip-sync language streams so every market hears your story natively.",
-            "learnMore": {
-              "problem": "Reaching a global audience usually means re-recording voice talent, re-timing every scene, and rebuilding the project once per language — a cost and coordination nightmare that keeps most creators single-market.",
-              "solution": "Express-generate audio in 70+ languages in minutes, auto-aligned to your animatic beat frames and video. Produce dubbed or lip-synced streams from the same approved cut, no re-shoots required.",
-              "outcome": "Ship every story natively to 70+ markets from one production — multiply your reach and revenue without multiplying your workload."
-            }
-          },
-          {
-            "icon": "versionControl",
-            "title": "Version Control",
-            "description": "Generate and manage multiple versions of each production stream. Compare takes, pin favorites, and iterate without losing prior work — every scene keeps its full version history.",
-            "learnMore": {
-              "problem": "Creative iteration is messy: the best take gets overwritten, alternates vanish, and you can never quite get back to the version everyone loved two edits ago.",
-              "solution": "Version Control keeps every generated take for each stream. Compare versions side by side, pin favorites, and keep iterating — the full history of every scene stays intact.",
-              "outcome": "Explore boldly without fear of losing your best work — always recover the perfect take and make confident final decisions."
-            }
-          }
-        ]
-      },
-      {
-        "id": "ship",
-        "label": "Ship",
-        "features": [
-          {
-            "icon": "screeningRoom",
-            "title": "Screening Room",
-            "description": "Review and share Animatic (scene frames with dialogue, SFX, and music), Video (scene video with full audio mix), and Streams (each language produced). Viewers get playback controls; reviewers can leave feedback.",
-            "learnMore": {
-              "problem": "Getting sign-off usually means exporting rough files, emailing them around, and stitching together scattered feedback from a dozen threads — slow, messy, and easy to lose track of.",
-              "solution": "The Screening Room lets you review and share Animatics, full-audio Video, and per-language Streams from one link. Viewers get real playback controls; reviewers leave structured feedback right on the cut.",
-              "outcome": "Lock approvals faster with stakeholder feedback in one place — no premature exports, no lost notes, no version confusion."
-            }
-          },
-          {
-            "icon": "autoPublish",
-            "title": "Auto Publish",
-            "description": "Auto-create thumbnails, titles, descriptions, and multilanguage audio tracks for one-click YouTube publishing. Reach billions of viewers with distribution-ready output from your studio.",
-            "learnMore": {
-              "problem": "The work is not done when the video is — thumbnails, titles, descriptions, and language tracks are their own time sink standing between your finished cut and a live upload.",
-              "solution": "Auto Publish generates thumbnails, titles, descriptions, and multilanguage audio tracks, then pushes to YouTube in one click — distribution-ready output straight from your studio.",
-              "outcome": "Go from final render to published in minutes, reaching billions of viewers across languages without a separate packaging-and-upload marathon."
-            }
-          },
-          {
             "icon": "byok",
             "title": "Bring Your Own Key (BYOK)",
-            "description": "Provide your personal or corporate API key for image and video processing. Reduce platform costs with Bring Your Own Key for supported providers while keeping full studio control.",
+            "description": "Plug in your personal or corporate API keys for image and video providers. Control model costs at scale while keeping the full guided studio.",
             "learnMore": {
               "problem": "As you scale, per-generation platform fees stack up — and you have little control over the underlying model costs eating into every production's margin.",
               "solution": "BYOK lets you plug in your personal or corporate API key for image and video processing with supported providers, so generation runs on your own account while you keep the full SceneFlow studio experience.",
@@ -500,11 +388,153 @@
           {
             "icon": "budget",
             "title": "Production Budget Management",
-            "description": "Calculate and track each production's credit budget. Get guidance on reducing costs — draft frames, fewer video generations — and purchase add-on credits when you need more runway.",
+            "description": "Set a credit budget per project, track spend in real time, and get guidance to trim cost before you render — draft frames, fewer generations, add-on credits when you need runway.",
             "learnMore": {
               "problem": "Creative projects are notorious for silent budget overruns — you only discover you have blown through your credits after the fact, mid-production and out of runway.",
               "solution": "Production Budget Management calculates and tracks each production's credit budget in real time, with guidance on trimming costs — draft frames, fewer video generations — and add-on credits whenever you need more headroom.",
               "outcome": "Stay in full control of spend from first beat to final cut — no surprise overruns, no stalled productions, predictable costs every time."
+            }
+          },
+          {
+            "icon": "series",
+            "title": "Series Studio",
+            "description": "Define your universe once — season arcs, recurring cast, and continuity rules. Episode outlines sync into Blueprint and Production so every installment stays on-model.",
+            "learnMore": {
+              "problem": "Serialized content multiplies the work: every new episode means rebuilding context, re-establishing characters, and hoping continuity holds across a growing catalog.",
+              "solution": "Series Studio captures your universe — season arcs, cast, and continuity rules — once. Episode outlines flow automatically into Blueprint and Production, so each installment inherits the same locked foundation.",
+              "outcome": "Ship consistent episodes on schedule from one studio — scale your channel or franchise without scaling your chaos."
+            }
+          },
+          {
+            "icon": "blueprint",
+            "title": "Blueprint",
+            "description": "Turn a concept into a structured story: beats, character arcs, audience definition, and locked art style. Collaborators review via share links before you enter Production.",
+            "learnMore": {
+              "problem": "Jumping straight into production without a locked story structure leads to expensive rework — unclear beats, drifting tone, and stakeholder surprises after credits are already spent.",
+              "solution": "Blueprint transforms a concept into a structured treatment: story beats, character arcs, target audience, and locked visual style. Share links let collaborators review and approve before a single frame is generated.",
+              "outcome": "Greenlight with confidence — everyone aligns on the story and look before production spend begins."
+            }
+          }
+        ]
+      },
+      {
+        "id": "direct",
+        "label": "Direct",
+        "features": [
+          {
+            "icon": "writersRoom",
+            "title": "Writer's Room",
+            "description": "Revise scripts scene by scene with the Intelligent Assistant Writer and Audience Resonance Analysis — optimize dialogue, pacing, and tone before you spend on frames and video.",
+            "learnMore": {
+              "problem": "The blank page is where most projects stall. Generic AI writing tools spit out bland copy that ignores who you are actually talking to — so you spend hours rewriting, or worse, ship something that never connects.",
+              "solution": "Writer's Room fuses your target audience with proven screenwriting technique to draft and revise scene-by-scene script copy. Steer every beat by plain voice or text — with ARA scoring and one-click fixes built in.",
+              "outcome": "Audience-tuned, production-ready scripts in minutes — so you enter Pre-Vis and Motion with a story that already lands."
+            }
+          },
+          {
+            "icon": "ara",
+            "title": "Audience Resonance Analysis (ARA)",
+            "description": "Score your story against a defined target audience. Get pinpoint recommendations and one-click revisions across script and structure before production spend.",
+            "learnMore": {
+              "problem": "By the time you find out a story misses the mark, you have already burned hours and credits rendering audio, frames, and video. Creative guesswork is expensive, and reshoots are even more so.",
+              "solution": "ARA runs a test-audience screening on your copy before a single audio clip, frame, or video is generated. Get a resonance score, pinpointed recommendations, and one-click revisions across script and structure.",
+              "outcome": "De-risk every project up front — greenlight only the stories that will land, and stop paying to render ideas that were never going to work."
+            }
+          },
+          {
+            "icon": "referenceLibrary",
+            "title": "Intelligent Reference Library",
+            "description": "Lock characters, voices, wardrobes, locations, and props once. Every generation pulls from the same references — zero drift across scenes, episodes, and series.",
+            "learnMore": {
+              "problem": "AI video's dirty secret is drift: your hero's face, wardrobe, and settings mutate shot to shot and episode to episode, shattering the illusion and forcing endless re-rolls to stay on-model.",
+              "solution": "Build AI-assisted or fully custom characters, wardrobes, voices, locations, and props once, then reuse them everywhere. Every generation pulls from the same locked references — with auto voice generation matched to each character's image and role.",
+              "outcome": "Perfect consistency across scenes, productions, and entire series — zero character drift, so your audience stays immersed in the story instead of noticing the seams."
+            }
+          },
+          {
+            "icon": "iad",
+            "title": "Intelligent Assistant Director (IAD)",
+            "description": "Direct precise frame and video edits in plain speech or text — no slot-machine re-rolls. IAD applies surgical changes while honoring your Reference Library.",
+            "learnMore": {
+              "problem": "Most AI tools force you to re-roll the entire shot and pray when you want one small change — a slot machine that wastes credits and rarely gives you exactly what you pictured.",
+              "solution": "IAD lets you direct precise frame or video revisions in plain speech or text — 'remove the coffee mug from the table' — and applies the edit while honoring your Reference Library for continuity.",
+              "outcome": "Get the exact shot you envisioned with surgical edits instead of random regenerations — less wasted spend, more creative control, faster final cuts."
+            }
+          },
+          {
+            "icon": "multilanguage",
+            "title": "Multilanguage Streams",
+            "description": "Express-generate audio in 70+ languages, auto-aligned to beat frames and video. Ship dubbed or lip-synced language streams from one approved master cut.",
+            "learnMore": {
+              "problem": "Reaching a global audience usually means re-recording voice talent, re-timing every scene, and rebuilding the project once per language — a cost and coordination nightmare that keeps most creators single-market.",
+              "solution": "Express-generate audio in 70+ languages in minutes, auto-aligned to your animatic beat frames and video. Produce dubbed or lip-synced streams from the same approved cut, no re-shoots required.",
+              "outcome": "Ship every story natively to 70+ markets from one production — multiply your reach and revenue without multiplying your workload."
+            }
+          },
+          {
+            "icon": "express",
+            "title": "Express Generation",
+            "description": "Orchestrate concurrent audio, frame, and video generation across scenes. A 30-beat production in ~30 minutes instead of hours of sequential waiting.",
+            "learnMore": {
+              "problem": "Generating a production one asset at a time turns a single project into an all-day wait — you queue a clip, watch it render, then repeat hundreds of times while momentum evaporates.",
+              "solution": "Express Generation taps SceneFlow's dedicated cloud to run concurrent generations of audio, frames, and video across your entire production at once, instead of one slow job after another.",
+              "outcome": "A 30-beat production finishes in about 30 minutes instead of roughly 2.5 hours — so you iterate the same day and ship while the idea is still hot."
+            }
+          },
+          {
+            "icon": "screeningRoom",
+            "title": "Screening Room",
+            "description": "Preview animatics, scene video, and language streams. Share a screening link for playback and structured reviewer feedback before you publish.",
+            "learnMore": {
+              "problem": "Getting sign-off usually means exporting rough files, emailing them around, and stitching together scattered feedback from a dozen threads — slow, messy, and easy to lose track of.",
+              "solution": "The Screening Room lets you preview and share Animatics, full-audio Video, and per-language Streams from one link. Viewers get real playback controls; reviewers leave structured feedback right on the cut.",
+              "outcome": "Lock approvals faster with stakeholder feedback in one place — no premature exports, no lost notes, no version confusion."
+            }
+          }
+        ]
+      },
+      {
+        "id": "ship",
+        "label": "Ship",
+        "features": [
+          {
+            "icon": "upscale",
+            "title": "Delivery-Quality Upscale",
+            "description": "Render delivery masters at 720p, 1080p, or 4K — with optional Topaz upscaling when credentials are connected. One stitch, screening-ready quality.",
+            "learnMore": {
+              "problem": "Export quality is often an afterthought — you stitch a master at whatever resolution the pipeline defaulted to, then discover it is not sharp enough for YouTube, broadcast, or client delivery.",
+              "solution": "Choose a delivery tier — Draft (720p), Standard (1080p), or Premium (4K) — when you render your language master. Optional Topaz upscaling sharpens the final cut when your credentials are connected.",
+              "outcome": "Ship screening-ready masters at the quality your audience and platform expect — no re-stitching, no compromise."
+            }
+          },
+          {
+            "icon": "versionControl",
+            "title": "Version Control",
+            "description": "Keep every take for each stream. Compare versions, pin favorites, and iterate without losing the cut everyone loved two edits ago.",
+            "learnMore": {
+              "problem": "Creative iteration is messy: the best take gets overwritten, alternates vanish, and you can never quite get back to the version everyone loved two edits ago.",
+              "solution": "Version Control keeps every generated take for each stream. Compare versions side by side, pin favorites, and keep iterating — the full history of every scene stays intact.",
+              "outcome": "Explore boldly without fear of losing your best work — always recover the perfect take and make confident final decisions."
+            }
+          },
+          {
+            "icon": "promoTrailer",
+            "title": "Promotion Trailers",
+            "description": "Auto-weave a beat-selected 9:16 promo (30–60s) from your highest-resonance moments — vertical trailers ready for Shorts, Reels, and TikTok.",
+            "learnMore": {
+              "problem": "Cutting vertical promos by hand means scrubbing through your master, guessing highlight windows, and rebuilding the same story three times for Shorts, Reels, and TikTok.",
+              "solution": "SceneFlow selects your highest-resonance beats, weaves a 30–60 second 9:16 trailer automatically, and renders a vertical cut ready for social platforms — no manual timeline work.",
+              "outcome": "Launch every production with a scroll-stopping promo the same day your master is ready — multiply discovery without multiplying edit time."
+            }
+          },
+          {
+            "icon": "youtubePublish",
+            "title": "YouTube Publishing",
+            "description": "Per-language bundles: AI titles and descriptions, generated thumbnails, privacy and category settings, and multilanguage audio publish — from the Publishing Library.",
+            "learnMore": {
+              "problem": "The work is not done when the video is — thumbnails, titles, descriptions, and language tracks are their own time sink standing between your finished cut and a live upload.",
+              "solution": "The Publishing Library assembles per-language YouTube bundles: AI-generated titles and descriptions, custom thumbnails, privacy and category settings, and multilanguage audio tracks — then publishes in one flow.",
+              "outcome": "Go from final render to live on YouTube in minutes, reaching billions of viewers across languages without a separate packaging-and-upload marathon."
             }
           }
         ]
