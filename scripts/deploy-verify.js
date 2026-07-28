@@ -5,7 +5,7 @@
   - Polls DEPLOY_VERIFY_URL (e.g., https://yourdomain.com) /api/build-info to validate:
     - commit matches local HEAD (short or long)
     - model is set (from GEMINI_MODEL env or central config)
-    - uiMarker.tabs contains both labels
+    - uiMarker.productionSections contains Writer's Room and Motion
 */
 const { execSync } = require('node:child_process')
 const https = require('https')
@@ -66,17 +66,20 @@ async function main() {
       console.log(`[deploy-verify] Attempt ${attempt}:`, json)
       const commit = String(json.commit || '')
       const model = String(json.model || '')
-      const tabs = (json.uiMarker && json.uiMarker.tabs) || []
+      const sections = (json.uiMarker && json.uiMarker.productionSections) || []
 
       const commitMatches = commit.startsWith(headShort) || commit === headLong
       const modelOk = model && model.startsWith('gemini-')
-      const tabsOk = Array.isArray(tabs) && tabs.includes('Your Direction') && tabs.includes('Flow Direction')
+      const sectionsOk =
+        Array.isArray(sections) &&
+        sections.includes("Writer's Room") &&
+        sections.includes('Motion')
 
-      if (commitMatches && modelOk && tabsOk) {
+      if (commitMatches && modelOk && sectionsOk) {
         console.log('[deploy-verify] ✅ Verified production deploy: commit, model, and UI markers match')
         process.exit(0)
       } else {
-        console.log('[deploy-verify] Not verified yet:', { commitMatches, modelOk, tabsOk })
+        console.log('[deploy-verify] Not verified yet:', { commitMatches, modelOk, sectionsOk })
       }
     } catch (e) {
       console.log(`[deploy-verify] Attempt ${attempt} error: ${e.message}`)

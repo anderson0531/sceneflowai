@@ -100,4 +100,12 @@ describe('Production section labels', () => {
       expect(source).not.toContain('label: "Writer\'s Room"')
     }
   })
+
+  it('build-info exposes the production section labels for deploy verification', () => {
+    const route = readSource('src/app/api/build-info/route.ts')
+    expect(route).toContain('PRODUCTION_SECTION_LABELS')
+    expect(route).toContain('productionSections')
+    expect(route).not.toContain('Your Direction')
+    expect(route).not.toContain('Flow Direction')
+  })
 })

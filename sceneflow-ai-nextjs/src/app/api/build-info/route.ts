@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { PRODUCTION_SECTION_LABELS } from '@/constants/productionSections'
 
 export const runtime = 'nodejs'
 export const maxDuration = 10
@@ -13,9 +14,12 @@ export async function GET() {
   // Mirror the model logic used in /api/version
   const model = process.env.GEMINI_MODEL || 'gemini-3.0-flash'
 
-  // UI marker: strings that must exist in the built UI if our changes are present
+  // UI marker: Production section labels that must exist when this rename is live
   const uiMarker = {
-    tabs: ['Your Direction', 'Flow Direction'],
+    productionSections: [
+      PRODUCTION_SECTION_LABELS.dialogueAction,
+      PRODUCTION_SECTION_LABELS.callAction,
+    ],
   }
 
   return NextResponse.json({ commit, model, uiMarker, ts: Date.now() })
