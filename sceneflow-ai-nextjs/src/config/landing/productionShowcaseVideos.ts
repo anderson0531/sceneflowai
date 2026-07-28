@@ -24,6 +24,7 @@ const PRODUCED_VIDEOS: Record<string, Partial<Record<VideoLocaleId, ProducedVide
   },
   animation: {
     en: { src: videoUrl('The Animated Comedy (English).mp4') },
+    es: { src: videoUrl('The Animated Comedy (Spanish).mp4') },
   },
 }
 
