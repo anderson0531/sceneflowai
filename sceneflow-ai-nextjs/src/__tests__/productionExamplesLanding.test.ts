@@ -369,6 +369,8 @@ describe('Production showcase videos', () => {
     expect(picker).not.toContain('flex-wrap')
     expect(picker).not.toContain('flex-nowrap')
     expect(picker).not.toContain('videoLanguageCount')
+    expect(picker).toContain('onOpenChange')
+    expect(picker).toContain('onCloseAutoFocus')
 
     expect(player).toContain('VideoLanguageControl')
     expect(player).toContain('variant="overlay"')
@@ -379,6 +381,9 @@ describe('Production showcase videos', () => {
     expect(hero).not.toContain('HeroLanguagePills')
     expect(hero).not.toContain('multilangHint')
     expect(hero).not.toContain('languagePrompt')
+    expect(hero).toContain('suppressTheaterOpenUntilRef')
+    expect(hero).toContain('handleLanguageMenuOpenChange')
+    expect(hero).toContain('tryOpenTheater')
   })
 
   it('mounts the language control on the video frame for production cards', () => {
