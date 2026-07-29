@@ -3,20 +3,34 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Volume2, VolumeX, Pause, Play } from 'lucide-react'
-import { getHeroVideoLocale, type HeroVideoLocaleId } from '@/config/landing/heroVideoLocales'
+import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
+import {
+  getHeroVideoLocale,
+  getHeroVideoLocalesAsVideoLocales,
+  type HeroVideoLocaleId,
+} from '@/config/landing/heroVideoLocales'
 import { cn } from '@/lib/utils'
 
 type HeroTheaterModalProps = {
   open: boolean
   onClose: () => void
   activeLocale: HeroVideoLocaleId
+  onSelectLocale: (id: HeroVideoLocaleId) => void
+  soonLabel: string
 }
 
-export function HeroTheaterModal({ open, onClose, activeLocale }: HeroTheaterModalProps) {
+export function HeroTheaterModal({
+  open,
+  onClose,
+  activeLocale,
+  onSelectLocale,
+  soonLabel,
+}: HeroTheaterModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isPlaying, setIsPlaying] = useState(true)
   const [isMuted, setIsMuted] = useState(false)
   const activeEntry = getHeroVideoLocale(activeLocale)
+  const heroLocales = getHeroVideoLocalesAsVideoLocales()
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -102,6 +116,15 @@ export function HeroTheaterModal({ open, onClose, activeLocale }: HeroTheaterMod
               onClick={(e) => e.stopPropagation()}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
+            />
+
+            <VideoLanguageControl
+              locales={heroLocales}
+              activeLocaleId={activeLocale}
+              onSelect={(id) => onSelectLocale(id as HeroVideoLocaleId)}
+              soonLabel={soonLabel}
+              variant="overlay"
+              align="start"
             />
 
             <button

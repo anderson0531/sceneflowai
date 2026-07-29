@@ -3,6 +3,8 @@
  * Append #t=0.1 to skip black first frame when supported.
  */
 
+import type { VideoLocale } from '@/config/landing/videoLocales'
+
 export type HeroVideoLocaleId = 'en' | 'es' | 'pt' | 'hi' | 'zh' | 'ar' | 'th'
 
 export type HeroVideoLocale = {
@@ -81,6 +83,16 @@ export const HERO_VIDEO_UNMUTE_DISMISSED_KEY = 'sf-hero-unmute-dismissed'
 
 export function getHeroVideoLocale(id: HeroVideoLocaleId): HeroVideoLocale | undefined {
   return HERO_VIDEO_LOCALES.find((l) => l.id === id)
+}
+
+/** Map hero locale config into the shared video player model. */
+export function getHeroVideoLocalesAsVideoLocales(): VideoLocale[] {
+  return HERO_VIDEO_LOCALES.map(({ id, src, poster, available }) => ({
+    id,
+    src,
+    poster: poster || undefined,
+    available,
+  }))
 }
 
 export function getDefaultHeroVideoSrc(): string {

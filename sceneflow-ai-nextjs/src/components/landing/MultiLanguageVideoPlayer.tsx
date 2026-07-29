@@ -2,17 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { Video as VideoIcon } from 'lucide-react'
-import {
-  VideoLanguagePicker,
-  type PickerCompactUpTo,
-} from '@/components/landing/VideoLanguagePicker'
+import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
 import type { VideoLocale, VideoLocaleId } from '@/config/landing/videoLocales'
 import { cn } from '@/lib/utils'
 
 type MultiLanguageVideoPlayerProps = {
   locales: VideoLocale[]
   defaultLocaleId: VideoLocaleId
-  languagePromptLabel: string
   comingSoonLabel: string
   soonLabel: string
   title?: string
@@ -20,21 +16,17 @@ type MultiLanguageVideoPlayerProps = {
   accentGradient?: string
   /** Lets the video frame escape a padded container on phones so it plays wider. */
   fullBleedOnMobile?: boolean
-  /** Width below which the language pills collapse into a one-line dropdown. */
-  compactPickerUpTo?: PickerCompactUpTo
   className?: string
 }
 
 export function MultiLanguageVideoPlayer({
   locales,
   defaultLocaleId,
-  languagePromptLabel,
   comingSoonLabel,
   soonLabel,
   title,
   accentGradient = 'from-indigo-500 to-purple-600',
   fullBleedOnMobile = false,
-  compactPickerUpTo = 'sm',
   className,
 }: MultiLanguageVideoPlayerProps) {
   const [activeLocaleId, setActiveLocaleId] = useState<VideoLocaleId>(defaultLocaleId)
@@ -47,16 +39,7 @@ export function MultiLanguageVideoPlayer({
   const hasVideo = Boolean(active?.available && active.src)
 
   return (
-    <div className={cn('w-full space-y-3', className)}>
-      <VideoLanguagePicker
-        locales={locales}
-        activeLocaleId={activeLocaleId}
-        onSelect={setActiveLocaleId}
-        promptLabel={languagePromptLabel}
-        soonLabel={soonLabel}
-        compactUpTo={compactPickerUpTo}
-      />
-
+    <div className={cn('w-full', className)}>
       <div
         className={cn(
           'relative aspect-video w-full overflow-hidden border border-white/10 bg-black',
@@ -65,6 +48,15 @@ export function MultiLanguageVideoPlayer({
             : 'rounded-xl'
         )}
       >
+        <VideoLanguageControl
+          locales={locales}
+          activeLocaleId={activeLocaleId}
+          onSelect={setActiveLocaleId}
+          soonLabel={soonLabel}
+          variant="overlay"
+          align="start"
+        />
+
         {hasVideo ? (
           <video
             key={`${activeLocaleId}-${active!.src}`}

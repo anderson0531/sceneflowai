@@ -6,6 +6,7 @@ import {
   getAvailableHeroVideoLocales,
   getDefaultHeroVideoSrc,
   getHeroVideoLocale,
+  getHeroVideoLocalesAsVideoLocales,
 } from '@/config/landing/heroVideoLocales'
 import { VIDEO_LOCALE_ORDER } from '@/config/landing/videoLocales'
 
@@ -37,5 +38,12 @@ describe('Hero video locales', () => {
     expect(HERO_VIDEO_BLOB_PATHS.en).toBe('Hero Video (English).mp4')
     expect(HERO_VIDEO_BLOB_PATHS.es).toBe('Hero Video (Spanish).mp4')
     expect(HERO_VIDEO_BLOB_PATHS.th).toBe('Hero Video (Thai).mp4')
+  })
+
+  it('maps hero locales into the shared video player model', () => {
+    const locales = getHeroVideoLocalesAsVideoLocales()
+    expect(locales).toHaveLength(7)
+    expect(locales.find((locale) => locale.id === 'en')?.available).toBe(true)
+    expect(locales.find((locale) => locale.id === 'es')?.available).toBe(false)
   })
 })

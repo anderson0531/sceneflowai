@@ -9,7 +9,6 @@ import {
   Volume2,
   VolumeX,
   Maximize2,
-  Globe,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import {
@@ -17,12 +16,12 @@ import {
   HERO_VIDEO_LOCALE_STORAGE_KEY,
   HERO_VIDEO_UNMUTE_DISMISSED_KEY,
   getHeroVideoLocale,
+  getHeroVideoLocalesAsVideoLocales,
   getDefaultHeroVideoSrc,
   getDefaultHeroVideoPoster,
-  getSuggestedHeroLocaleFromBrowser,
   type HeroVideoLocaleId,
 } from '@/config/landing/heroVideoLocales'
-import { HeroLanguagePills } from '@/components/landing/HeroLanguagePills'
+import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
 import { HeroTheaterModal } from '@/components/landing/HeroTheaterModal'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 
@@ -68,8 +67,8 @@ export function HeroSection() {
   const [activeLocale, setActiveLocale] = useState<HeroVideoLocaleId>(DEFAULT_HERO_VIDEO_LOCALE)
   const [inlineVideoLocale, setInlineVideoLocale] =
     useState<HeroVideoLocaleId>(DEFAULT_HERO_VIDEO_LOCALE)
-  const [highlightLocale, setHighlightLocale] = useState<HeroVideoLocaleId | null>(null)
 
+  const heroLocales = getHeroVideoLocalesAsVideoLocales()
   const inlineEntry =
     getHeroVideoLocale(inlineVideoLocale) ?? getHeroVideoLocale(DEFAULT_HERO_VIDEO_LOCALE)!
   const videoSrc = inlineEntry.available ? inlineEntry.src : getDefaultHeroVideoSrc()
@@ -80,8 +79,6 @@ export function HeroSection() {
     if (stored) {
       setActiveLocale(stored)
       setInlineVideoLocale(stored)
-    } else {
-      setHighlightLocale(getSuggestedHeroLocaleFromBrowser())
     }
     setShowUnmutePrompt(!readUnmuteDismissed())
   }, [])
@@ -99,26 +96,20 @@ export function HeroSection() {
     }
   }, [])
 
-  const selectLocale = useCallback(
-    (id: HeroVideoLocaleId) => {
-      const entry = getHeroVideoLocale(id)
-      if (!entry?.available) return
+  const selectLocale = useCallback((id: HeroVideoLocaleId) => {
+    const entry = getHeroVideoLocale(id)
+    if (!entry?.available) return
 
-      setActiveLocale(id)
-      setHighlightLocale(null)
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(HERO_VIDEO_LOCALE_STORAGE_KEY, id)
-      }
+    setActiveLocale(id)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(HERO_VIDEO_LOCALE_STORAGE_KEY, id)
+    }
 
-      if (isTheaterOpen) return
-
-      setInlineVideoLocale(id)
-      const video = videoRef.current
-      if (!video) return
-      applyLocaleToVideo(video, id, true)
-    },
-    [isTheaterOpen]
-  )
+    setInlineVideoLocale(id)
+    const video = videoRef.current
+    if (!video) return
+    applyLocaleToVideo(video, id, true)
+  }, [])
 
   const scrollToCheckout = useCallback(() => {
     window.location.href = getSignupUrlForTier('explorer')
@@ -222,6 +213,16 @@ export function HeroSection() {
                   onPause={() => setIsPlaying(false)}
                 />
 
+                <VideoLanguageControl
+                  locales={heroLocales}
+                  activeLocaleId={activeLocale}
+                  onSelect={(id) => selectLocale(id as HeroVideoLocaleId)}
+                  soonLabel={t('soon')}
+                  variant="overlay"
+                  align="start"
+                  markAsHeroControl
+                />
+
                 {isMuted && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     {showUnmutePrompt ? (
@@ -306,22 +307,6 @@ export function HeroSection() {
                 </div>
               </div>
             </div>
-
-            <div className="relative z-10 mt-4 flex flex-col items-center gap-2 px-1">
-              <p className="flex flex-wrap items-center justify-center gap-1.5 text-xs text-gray-400 text-center">
-                <Globe className="h-3.5 w-3.5 text-cyan-400/80 shrink-0" aria-hidden />
-                {t('languagePrompt')}
-              </p>
-              <HeroLanguagePills
-                activeLocale={activeLocale}
-                onSelect={selectLocale}
-                highlightLocale={highlightLocale}
-                size="sm"
-              />
-              <p className="text-[10px] text-gray-500 max-w-lg text-center">
-                {t('multilangHint')}
-              </p>
-            </div>
           </motion.div>
 
           <div className="max-w-4xl mx-auto text-center mt-12 lg:mt-14">
@@ -374,6 +359,8 @@ export function HeroSection() {
         open={isTheaterOpen}
         onClose={closeTheater}
         activeLocale={activeLocale}
+        onSelectLocale={selectLocale}
+        soonLabel={t('soon')}
       />
     </>
   )
