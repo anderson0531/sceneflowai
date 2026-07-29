@@ -87,7 +87,6 @@ export function ProductionStyleCard({
   ctaLabel,
   videoLocales,
   defaultVideoLocaleId,
-  videoLanguagePromptLabel,
   videoComingSoonLabel,
   videoSoonLabel,
 }: {
@@ -98,7 +97,6 @@ export function ProductionStyleCard({
   ctaLabel: string
   videoLocales?: VideoLocale[]
   defaultVideoLocaleId?: VideoLocaleId
-  videoLanguagePromptLabel?: string
   videoComingSoonLabel?: string
   videoSoonLabel?: string
 }) {
@@ -145,13 +143,11 @@ export function ProductionStyleCard({
           <MultiLanguageVideoPlayer
             locales={videoLocales!}
             defaultLocaleId={defaultVideoLocaleId ?? 'en'}
-            languagePromptLabel={videoLanguagePromptLabel ?? ''}
             comingSoonLabel={videoComingSoonLabel ?? ''}
             soonLabel={videoSoonLabel ?? ''}
             title={card.title}
             accentGradient={style.ctaGradient}
             fullBleedOnMobile
-            compactPickerUpTo="lg"
           />
         </div>
       ) : null}

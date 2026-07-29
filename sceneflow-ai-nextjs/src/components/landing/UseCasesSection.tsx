@@ -162,7 +162,6 @@ export default function UseCasesSection() {
                     <MultiLanguageVideoPlayer
                       locales={getPersonaStoryVideoLocales(active.id)}
                       defaultLocaleId={getDefaultPersonaStoryLocale(active.id)}
-                      languagePromptLabel={t('videoLanguagePrompt')}
                       comingSoonLabel={t('videoComingSoon')}
                       soonLabel={t('videoSoon')}
                       title={active.headline}

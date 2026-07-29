@@ -11,6 +11,7 @@
     - uiMarker.landingPage.pipelinePillarsRemoved is true
     - uiMarker.productionShowcase.animation.availableLocales includes es
     - uiMarker.heroVideo.availableLocales is en-only with the new English Blob master
+    - uiMarker.landingPage.videoLanguageControl is overlay-dropdown
 */
 const { execSync } = require('node:child_process')
 const https = require('https')
@@ -94,7 +95,9 @@ async function main() {
         keyFeatures.pillars.join(',') === 'Create,Direct,Ship' &&
         keyFeatures.counts?.direct === 7 &&
         keyFeatures.shipHeadline === 'YouTube Publishing'
-      const landingPageOk = landingPage.pipelinePillarsRemoved === true
+      const landingPageOk =
+        landingPage.pipelinePillarsRemoved === true &&
+        landingPage.videoLanguageControl === 'overlay-dropdown'
       const animationShowcase =
         productionShowcase.animation && productionShowcase.animation.availableLocales
       const productionShowcaseOk =

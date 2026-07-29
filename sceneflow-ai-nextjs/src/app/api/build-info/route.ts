@@ -32,6 +32,7 @@ export async function GET() {
     },
     landingPage: {
       pipelinePillarsRemoved: true,
+      videoLanguageControl: 'overlay-dropdown',
     },
     productionShowcase: {
       animation: {

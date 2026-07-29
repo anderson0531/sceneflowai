@@ -63,7 +63,6 @@ export default function ProductionExamplesSection() {
               ctaLabel={t('startProduction')}
               videoLocales={getProductionShowcaseVideoLocales(card.id)}
               defaultVideoLocaleId={getDefaultProductionShowcaseLocale(card.id)}
-              videoLanguagePromptLabel={t('videoLanguagePrompt')}
               videoComingSoonLabel={t('videoComingSoon')}
               videoSoonLabel={t('videoSoon')}
             />
