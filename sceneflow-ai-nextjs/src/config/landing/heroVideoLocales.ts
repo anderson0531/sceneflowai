@@ -53,6 +53,7 @@ const HERO_VIDEO_LABELS: Record<HeroVideoLocaleId, { label: string; nativeLabel:
 const PRODUCED_HERO_VIDEOS: Partial<Record<HeroVideoLocaleId, { src: string; poster?: string }>> = {
   en: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.en) },
   es: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.es) },
+  pt: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.pt) },
 }
 
 export const HERO_VIDEO_LOCALES: HeroVideoLocale[] = (
