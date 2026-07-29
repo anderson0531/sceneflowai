@@ -30,7 +30,7 @@ export const HERO_VIDEO_BLOB_PATHS: Record<HeroVideoLocaleId, string> = {
   hi: 'Hero Video (Hindi).mp4',
   zh: 'Hero Video (Chinese).mp4',
   ar: 'Hero Video (Arabic) .mp4',
-  th: 'Hero Video (Thai).mp4',
+  th: 'Hero Video (Thai) .mp4',
 }
 
 function heroSrc(path: string): string {
@@ -57,6 +57,7 @@ const PRODUCED_HERO_VIDEOS: Partial<Record<HeroVideoLocaleId, { src: string; pos
   hi: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.hi) },
   zh: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.zh) },
   ar: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.ar) },
+  th: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.th) },
 }
 
 export const HERO_VIDEO_LOCALES: HeroVideoLocale[] = (
