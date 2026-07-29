@@ -25,7 +25,7 @@ const BLOB_HOST = 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com'
 /** Blob master filename for each locale once produced. */
 export const HERO_VIDEO_BLOB_PATHS: Record<HeroVideoLocaleId, string> = {
   en: 'Hero Video (English).mp4',
-  es: 'Hero Video (Spanish).mp4',
+  es: 'Hero Video (Spanish) .mp4',
   pt: 'Hero Video (Portuguese).mp4',
   hi: 'Hero Video (Hindi).mp4',
   zh: 'Hero Video (Chinese).mp4',
@@ -52,6 +52,7 @@ const HERO_VIDEO_LABELS: Record<HeroVideoLocaleId, { label: string; nativeLabel:
 /** Locales with a produced Blob master. Others render as disabled "Soon" pills. */
 const PRODUCED_HERO_VIDEOS: Partial<Record<HeroVideoLocaleId, { src: string; poster?: string }>> = {
   en: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.en) },
+  es: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.es) },
 }
 
 export const HERO_VIDEO_LOCALES: HeroVideoLocale[] = (

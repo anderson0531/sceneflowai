@@ -105,8 +105,9 @@ async function main() {
       const heroVideoLocales = heroVideo.availableLocales
       const heroVideoOk =
         Array.isArray(heroVideoLocales) &&
-        heroVideoLocales.join(',') === 'en' &&
-        heroVideo.englishBlob === 'Hero Video (English).mp4'
+        heroVideoLocales.join(',') === 'en,es' &&
+        heroVideo.englishBlob === 'Hero Video (English).mp4' &&
+        heroVideo.spanishBlob === 'Hero Video (Spanish) .mp4'
 
       if (
         commitMatches &&
