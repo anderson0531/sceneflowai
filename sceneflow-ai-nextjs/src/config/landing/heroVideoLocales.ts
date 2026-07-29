@@ -54,6 +54,7 @@ const PRODUCED_HERO_VIDEOS: Partial<Record<HeroVideoLocaleId, { src: string; pos
   en: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.en) },
   es: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.es) },
   pt: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.pt) },
+  hi: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.hi) },
 }
 
 export const HERO_VIDEO_LOCALES: HeroVideoLocale[] = (

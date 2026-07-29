@@ -40,10 +40,11 @@ export async function GET() {
       },
     },
     heroVideo: {
-      availableLocales: ['en', 'es', 'pt'],
+      availableLocales: ['en', 'es', 'pt', 'hi'],
       englishBlob: 'Hero Video (English).mp4',
       spanishBlob: 'Hero Video (Spanish) .mp4',
       portugueseBlob: 'Hero Video (Portuguese).mp4',
+      hindiBlob: 'Hero Video (Hindi).mp4',
     },
   }
 
