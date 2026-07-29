@@ -33,6 +33,10 @@ export async function GET() {
     landingPage: {
       pipelinePillarsRemoved: true,
       videoLanguageControl: 'overlay-dropdown',
+      heroCopy: {
+        headline: 'You Direct the Story. SceneFlow Automates the Studio.',
+        audienceMicroLineRemoved: true,
+      },
     },
     productionShowcase: {
       animation: {

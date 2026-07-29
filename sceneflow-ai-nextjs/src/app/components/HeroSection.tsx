@@ -360,20 +360,11 @@ export function HeroSection() {
               {t('subheadline')}
             </motion.p>
 
-            <motion.p
-              className="mt-4 max-w-xl mx-auto text-sm text-gray-500"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-            >
-              {t('audienceMicroLine')}
-            </motion.p>
-
             <motion.div
               className="mt-10 flex justify-center"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.35 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
             >
               <Button
                 size="lg"
