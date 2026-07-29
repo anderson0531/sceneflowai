@@ -3,11 +3,9 @@
  */
 
 export const HERO_COPY = {
-  headline: 'Envision the story. SceneFlow handles the pipeline.',
+  headline: 'You Direct the Story. SceneFlow Automates the Studio.',
   subheadline:
-    'Move past tedious prompting. Focus entirely on your creative intent with an automated, professional-grade production workflow.',
-  audienceMicroLine:
-    'Built for creators who want results, and teams who want to see how it works.',
+    'Focus entirely on your creative vision. Run your ideas through a seamless pipeline—from blueprint to master MP4—without the hassle of micro-prompting.',
   ctaSecondary: "Watch the 'What's Possible'",
   ctaToolStack: 'See how it replaces your tool stack',
 } as const

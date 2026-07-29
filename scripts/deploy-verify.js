@@ -97,7 +97,10 @@ async function main() {
         keyFeatures.shipHeadline === 'YouTube Publishing'
       const landingPageOk =
         landingPage.pipelinePillarsRemoved === true &&
-        landingPage.videoLanguageControl === 'overlay-dropdown'
+        landingPage.videoLanguageControl === 'overlay-dropdown' &&
+        landingPage.heroCopy?.headline ===
+          'You Direct the Story. SceneFlow Automates the Studio.' &&
+        landingPage.heroCopy?.audienceMicroLineRemoved === true
       const animationShowcase =
         productionShowcase.animation && productionShowcase.animation.availableLocales
       const productionShowcaseOk =
