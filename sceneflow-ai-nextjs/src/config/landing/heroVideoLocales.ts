@@ -20,74 +20,53 @@ export type HeroVideoLocale = {
 
 const BLOB_HOST = 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com'
 
+/** Blob master filename for each locale once produced. */
+export const HERO_VIDEO_BLOB_PATHS: Record<HeroVideoLocaleId, string> = {
+  en: 'Hero Video (English).mp4',
+  es: 'Hero Video (Spanish).mp4',
+  pt: 'Hero Video (Portuguese).mp4',
+  hi: 'Hero Video (Hindi).mp4',
+  zh: 'Hero Video (Chinese).mp4',
+  ar: 'Hero Video (Arabic).mp4',
+  th: 'Hero Video (Thai).mp4',
+}
+
 function heroSrc(path: string): string {
   return `${BLOB_HOST}/${encodeURI(path)}#t=0.1`
 }
 
-function heroPoster(path: string): string {
-  return `${BLOB_HOST}/${encodeURI(path)}`
-}
-
 export const DEFAULT_HERO_VIDEO_LOCALE: HeroVideoLocaleId = 'en'
 
-export const HERO_VIDEO_LOCALES: HeroVideoLocale[] = [
-  {
-    id: 'en',
-    label: 'English',
-    nativeLabel: 'English',
-    src: heroSrc('landing/hero/sceneflow-hero-en.mp4'),
-    poster: heroPoster('landing/hero/sceneflow-hero-en-poster.jpg'),
-    available: true,
-  },
-  {
-    id: 'es',
-    label: 'Spanish',
-    nativeLabel: 'Español',
-    src: heroSrc('landing/hero/sceneflow-hero-es.mp4'),
-    poster: heroPoster('landing/hero/sceneflow-hero-es-poster.jpg'),
-    available: true,
-  },
-  {
-    id: 'pt',
-    label: 'Portuguese',
-    nativeLabel: 'Português',
-    src: heroSrc('landing/hero/sceneflow-hero-pt.mp4'),
-    poster: heroPoster('landing/hero/sceneflow-hero-pt-poster.jpg'),
-    available: true,
-  },
-  {
-    id: 'hi',
-    label: 'Hindi',
-    nativeLabel: 'हिन्दी',
-    src: heroSrc('landing/hero/sceneflow-hero-hi.mp4'),
-    poster: heroPoster('landing/hero/sceneflow-hero-hi-poster.jpg'),
-    available: true,
-  },
-  {
-    id: 'zh',
-    label: 'Chinese',
-    nativeLabel: '中文',
-    src: heroSrc('landing/hero/sceneflow-hero-zh.mp4'),
-    poster: heroPoster('landing/hero/sceneflow-hero-zh-poster.jpg'),
-    available: true,
-  },
-  {
-    id: 'ar',
-    label: 'Arabic',
-    nativeLabel: 'العربية',
-    src: heroSrc('landing/hero/sceneflow-hero-ar.mp4'),
-    poster: heroPoster('landing/hero/sceneflow-hero-ar-poster.jpg'),
-    available: true,
-  },
-  {
-    id: 'th',
-    label: 'Thai',
-    nativeLabel: 'ไทย',
-    src: heroSrc('landing/hero/sceneflow-hero-th.mp4'),
-    poster: heroPoster('landing/hero/sceneflow-hero-th-poster.jpg'),
-    available: true,
-  },
-]
+const HERO_VIDEO_LABELS: Record<HeroVideoLocaleId, { label: string; nativeLabel: string }> = {
+  en: { label: 'English', nativeLabel: 'English' },
+  es: { label: 'Spanish', nativeLabel: 'Español' },
+  pt: { label: 'Portuguese', nativeLabel: 'Português' },
+  hi: { label: 'Hindi', nativeLabel: 'हिन्दी' },
+  zh: { label: 'Chinese', nativeLabel: '中文' },
+  ar: { label: 'Arabic', nativeLabel: 'العربية' },
+  th: { label: 'Thai', nativeLabel: 'ไทย' },
+}
+
+/** Locales with a produced Blob master. Others render as disabled "Soon" pills. */
+const PRODUCED_HERO_VIDEOS: Partial<Record<HeroVideoLocaleId, { src: string; poster?: string }>> = {
+  en: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.en) },
+}
+
+export const HERO_VIDEO_LOCALES: HeroVideoLocale[] = (
+  Object.keys(HERO_VIDEO_LABELS) as HeroVideoLocaleId[]
+).map((id) => {
+  const produced = PRODUCED_HERO_VIDEOS[id]
+  const { label, nativeLabel } = HERO_VIDEO_LABELS[id]
+
+  return {
+    id,
+    label,
+    nativeLabel,
+    src: produced?.src ?? '',
+    poster: produced?.poster ?? '',
+    available: Boolean(produced?.src),
+  }
+})
 
 export const HERO_VIDEO_MULTILANG_HINT =
   'Hero dubs in 7 languages — full pipeline supports 70+ in Production.'

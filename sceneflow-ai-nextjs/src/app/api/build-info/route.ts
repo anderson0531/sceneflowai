@@ -38,6 +38,10 @@ export async function GET() {
         availableLocales: ['en', 'es'],
       },
     },
+    heroVideo: {
+      availableLocales: ['en'],
+      englishBlob: 'Hero Video (English).mp4',
+    },
   }
 
   return NextResponse.json({ commit, model, uiMarker, ts: Date.now() })
