@@ -10,6 +10,7 @@
     - uiMarker.keyFeatures contains Create/Direct/Ship pillar markers
     - uiMarker.landingPage.pipelinePillarsRemoved is true
     - uiMarker.productionShowcase.animation.availableLocales includes es
+    - uiMarker.heroVideo.availableLocales is en-only with the new English Blob master
 */
 const { execSync } = require('node:child_process')
 const https = require('https')
@@ -75,6 +76,7 @@ async function main() {
       const keyFeatures = (json.uiMarker && json.uiMarker.keyFeatures) || {}
       const landingPage = (json.uiMarker && json.uiMarker.landingPage) || {}
       const productionShowcase = (json.uiMarker && json.uiMarker.productionShowcase) || {}
+      const heroVideo = (json.uiMarker && json.uiMarker.heroVideo) || {}
 
       const commitMatches = commit.startsWith(headShort) || commit === headLong
       const modelOk = model && model.startsWith('gemini-')
@@ -97,6 +99,11 @@ async function main() {
         productionShowcase.animation && productionShowcase.animation.availableLocales
       const productionShowcaseOk =
         Array.isArray(animationShowcase) && animationShowcase.includes('es')
+      const heroVideoLocales = heroVideo.availableLocales
+      const heroVideoOk =
+        Array.isArray(heroVideoLocales) &&
+        heroVideoLocales.join(',') === 'en' &&
+        heroVideo.englishBlob === 'Hero Video (English).mp4'
 
       if (
         commitMatches &&
@@ -105,7 +112,8 @@ async function main() {
         publishingOk &&
         keyFeaturesOk &&
         landingPageOk &&
-        productionShowcaseOk
+        productionShowcaseOk &&
+        heroVideoOk
       ) {
         console.log('[deploy-verify] ✅ Verified production deploy: commit, model, and UI markers match')
         process.exit(0)
@@ -118,6 +126,7 @@ async function main() {
           keyFeaturesOk,
           landingPageOk,
           productionShowcaseOk,
+          heroVideoOk,
         })
       }
     } catch (e) {
