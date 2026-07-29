@@ -67,6 +67,7 @@ export function HeroSection() {
   const [activeLocale, setActiveLocale] = useState<HeroVideoLocaleId>(DEFAULT_HERO_VIDEO_LOCALE)
   const [inlineVideoLocale, setInlineVideoLocale] =
     useState<HeroVideoLocaleId>(DEFAULT_HERO_VIDEO_LOCALE)
+  const suppressTheaterOpenUntilRef = useRef(0)
 
   const heroLocales = getHeroVideoLocalesAsVideoLocales()
   const inlineEntry =
@@ -96,7 +97,16 @@ export function HeroSection() {
     }
   }, [])
 
+  const markSuppressTheaterOpen = useCallback(() => {
+    suppressTheaterOpenUntilRef.current = performance.now() + 500
+  }, [])
+
+  const shouldSuppressTheaterOpen = useCallback(() => {
+    return performance.now() < suppressTheaterOpenUntilRef.current
+  }, [])
+
   const selectLocale = useCallback((id: HeroVideoLocaleId) => {
+    markSuppressTheaterOpen()
     const entry = getHeroVideoLocale(id)
     if (!entry?.available) return
 
@@ -109,7 +119,16 @@ export function HeroSection() {
     const video = videoRef.current
     if (!video) return
     applyLocaleToVideo(video, id, true)
-  }, [])
+  }, [markSuppressTheaterOpen])
+
+  const handleLanguageMenuOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) {
+        markSuppressTheaterOpen()
+      }
+    },
+    [markSuppressTheaterOpen]
+  )
 
   const scrollToCheckout = useCallback(() => {
     window.location.href = getSignupUrlForTier('explorer')
@@ -123,6 +142,20 @@ export function HeroSection() {
     }
     setIsTheaterOpen(true)
   }, [])
+
+  const tryOpenTheater = useCallback(() => {
+    if (shouldSuppressTheaterOpen()) return
+    openTheater()
+  }, [openTheater, shouldSuppressTheaterOpen])
+
+  const handleVideoContainerClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      const target = event.target as HTMLElement
+      if (target.closest('[data-hero-control]')) return
+      tryOpenTheater()
+    },
+    [tryOpenTheater]
+  )
 
   const closeTheater = useCallback(() => {
     setIsTheaterOpen(false)
@@ -182,15 +215,13 @@ export function HeroSection() {
             <div
               ref={containerRef}
               className="relative z-10 rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl bg-black group cursor-pointer"
-              onClick={(e) => {
-                const target = e.target as HTMLElement
-                if (target.closest('[data-hero-control]')) return
-                openTheater()
-              }}
+              onClick={handleVideoContainerClick}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
+                  const target = e.target as HTMLElement
+                  if (target.closest('[data-hero-control]')) return
                   e.preventDefault()
-                  openTheater()
+                  tryOpenTheater()
                 }
               }}
               role="button"
@@ -221,6 +252,7 @@ export function HeroSection() {
                   variant="overlay"
                   align="start"
                   markAsHeroControl
+                  onOpenChange={handleLanguageMenuOpenChange}
                 />
 
                 {isMuted && (

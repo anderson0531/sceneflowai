@@ -24,6 +24,8 @@ export type VideoLanguageControlProps = {
   className?: string
   /** Prevents hero video click-to-theater when interacting with the control */
   markAsHeroControl?: boolean
+  /** Called when the dropdown opens or closes (used to suppress click-through) */
+  onOpenChange?: (open: boolean) => void
 }
 
 /**
@@ -38,8 +40,18 @@ export function VideoLanguageControl({
   align = 'start',
   className,
   markAsHeroControl = false,
+  onOpenChange,
 }: VideoLanguageControlProps) {
   const tHero = useTranslations('hero')
+
+  const stopPointerPropagation = (event: React.SyntheticEvent) => {
+    event.stopPropagation()
+  }
+
+  const handleSelect = (value: string) => {
+    onOpenChange?.(false)
+    onSelect(value as VideoLocaleId)
+  }
 
   const nativeLabelOf = (id: VideoLocaleId) => tHero(`heroVideoLanguages.${id}.nativeLabel`)
   const labelOf = (id: VideoLocaleId) => tHero(`heroVideoLanguages.${id}.label`)
@@ -60,12 +72,16 @@ export function VideoLanguageControl({
         className
       )}
       {...(markAsHeroControl ? { 'data-hero-control': '' } : {})}
+      onPointerDown={stopPointerPropagation}
+      onClick={stopPointerPropagation}
     >
-      <DropdownMenu>
+      <DropdownMenu onOpenChange={onOpenChange}>
         <DropdownMenuTrigger asChild>
           <button
             type="button"
             aria-label={menuLabel}
+            onPointerDown={stopPointerPropagation}
+            onClick={stopPointerPropagation}
             className={cn(
               'flex items-center gap-1.5 rounded-lg border border-white/15 bg-black/50 px-2.5 py-1.5 text-xs font-medium text-gray-200 transition-colors hover:border-cyan-400/40 hover:text-white',
               variant === 'inline' && 'w-full max-w-xs'
@@ -80,14 +96,14 @@ export function VideoLanguageControl({
         <DropdownMenuContent
           align={align}
           className="w-60 border-white/10 bg-slate-900 text-gray-100"
+          onPointerDown={stopPointerPropagation}
+          onClick={stopPointerPropagation}
+          onCloseAutoFocus={(event) => event.preventDefault()}
         >
           <DropdownMenuLabel className="text-xs font-medium text-gray-400">
             {menuLabel}
           </DropdownMenuLabel>
-          <DropdownMenuRadioGroup
-            value={activeLocaleId}
-            onValueChange={(value) => onSelect(value as VideoLocaleId)}
-          >
+          <DropdownMenuRadioGroup value={activeLocaleId} onValueChange={handleSelect}>
             {locales.map((locale) => {
               const secondaryLabel = secondaryLabelOf(locale.id)
 
