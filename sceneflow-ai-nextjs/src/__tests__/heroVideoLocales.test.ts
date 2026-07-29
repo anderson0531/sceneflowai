@@ -15,15 +15,16 @@ describe('Hero video locales', () => {
     expect(HERO_VIDEO_LOCALES.map((locale) => locale.id)).toEqual(VIDEO_LOCALE_ORDER)
   })
 
-  it('plays the new English Blob master with other dubs marked Soon', () => {
+  it('plays English and Spanish Blob masters with other dubs marked Soon', () => {
     const available = getAvailableHeroVideoLocales().map((locale) => locale.id)
     const placeholders = HERO_VIDEO_LOCALES.filter((locale) => !locale.available).map(
       (locale) => locale.id
     )
 
-    expect(available).toEqual(['en'])
-    expect(placeholders).toEqual(['es', 'pt', 'hi', 'zh', 'ar', 'th'])
+    expect(available).toEqual(['en', 'es'])
+    expect(placeholders).toEqual(['pt', 'hi', 'zh', 'ar', 'th'])
     expect(getDefaultHeroVideoSrc()).toContain('Hero%20Video%20(English).mp4')
+    expect(getHeroVideoLocale('es')?.src).toContain('Hero%20Video%20(Spanish)%20.mp4')
     expect(getHeroVideoLocale(DEFAULT_HERO_VIDEO_LOCALE)?.available).toBe(true)
 
     for (const locale of HERO_VIDEO_LOCALES) {
@@ -36,7 +37,7 @@ describe('Hero video locales', () => {
 
   it('reserves predictable Blob paths for upcoming hero dubs', () => {
     expect(HERO_VIDEO_BLOB_PATHS.en).toBe('Hero Video (English).mp4')
-    expect(HERO_VIDEO_BLOB_PATHS.es).toBe('Hero Video (Spanish).mp4')
+    expect(HERO_VIDEO_BLOB_PATHS.es).toBe('Hero Video (Spanish) .mp4')
     expect(HERO_VIDEO_BLOB_PATHS.th).toBe('Hero Video (Thai).mp4')
   })
 
@@ -44,6 +45,6 @@ describe('Hero video locales', () => {
     const locales = getHeroVideoLocalesAsVideoLocales()
     expect(locales).toHaveLength(7)
     expect(locales.find((locale) => locale.id === 'en')?.available).toBe(true)
-    expect(locales.find((locale) => locale.id === 'es')?.available).toBe(false)
+    expect(locales.find((locale) => locale.id === 'es')?.available).toBe(true)
   })
 })
