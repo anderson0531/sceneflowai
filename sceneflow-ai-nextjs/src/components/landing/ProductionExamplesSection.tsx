@@ -69,8 +69,6 @@ export default function ProductionExamplesSection() {
               screeningRoomLabel={t('screeningRoomLabel')}
               frictionLabel={t('frictionLabel')}
               solutionPillarLabel={t('solutionPillarLabel')}
-              showMediaPanelLabel={t('showMediaPanel')}
-              hideMediaPanelLabel={t('hideMediaPanel')}
               showSolutionsSectionLabel={t('showSolutionsSection')}
               hideSolutionsSectionLabel={t('hideSolutionsSection')}
               screeningEmbedSlug={getProductionShowcaseScreeningSlug(card.id)}
