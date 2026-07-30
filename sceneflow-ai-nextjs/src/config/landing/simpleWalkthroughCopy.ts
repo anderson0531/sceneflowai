@@ -42,11 +42,11 @@ export const SIMPLE_WALKTHROUGH_STEPS: SimpleWalkthroughStep[] = [
   },
   {
     id: 'blueprint',
-    stepLabel: 'Optimize your concept with Blueprint',
+    stepLabel: 'Optimize your concept with Blueprint Studio',
     shortDescription:
       'Transform ideas into a structured treatment — logline, beats, characters, and tone — before heavy rendering.',
     detailedDescription:
-      'Blueprint automatically crafts a comprehensive story outline. Refine character arcs, plot beats, and narrative tone with intelligent suggestions. Collaborator share links let stakeholders review before Production.',
+      'Blueprint automatically crafts a comprehensive story outline. Refine character arcs, plot beats, and narrative tone with intelligent suggestions. Collaborator share links let stakeholders review before Production Studio.',
     media: 'video',
   },
   {

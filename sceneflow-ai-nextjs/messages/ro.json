@@ -573,7 +573,7 @@
       "tagline": "Un singur studio. Automatizare asistată – sau un volum mare de lucru, dacă stăpânești deja tehnologiile.",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "Plan structurat al poveștii"
         },
         {
@@ -639,7 +639,7 @@
       },
       {
         "id": "plan detaliat",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "Dezvoltarea poveștii",
         "description": "Transformă conceptele în tratamente structurate, incluzând logline, puncte narative (beats), personaje și ton. Rulează Audience Resonance și colaborează înainte de procesul intensiv de randare.",
         "keySteps": [

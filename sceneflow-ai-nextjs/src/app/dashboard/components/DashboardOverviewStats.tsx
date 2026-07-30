@@ -5,6 +5,7 @@ import { FolderOpen, Clapperboard, Library, Coins, Film } from 'lucide-react'
 import { StatCard, StatCardGrid } from '@/components/dashboard/ui/StatCard'
 import { DashboardCard } from '@/components/dashboard/ui/DashboardCard'
 import type { DashboardStats } from '@/hooks/useDashboardData'
+import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 
 interface DashboardOverviewStatsProps {
   stats: DashboardStats | null
@@ -58,7 +59,7 @@ export function DashboardOverviewStats({
           />
           <StatCard
             value={stats?.totalSeries ?? 0}
-            label="Series"
+            label={STUDIO_DISPLAY_NAMES.series}
             icon={<Library className="w-3.5 h-3.5" />}
             status="neutral"
           />

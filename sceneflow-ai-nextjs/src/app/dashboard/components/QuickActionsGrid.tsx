@@ -14,6 +14,7 @@ import {
   Telescope
 } from 'lucide-react'
 import Link from 'next/link'
+import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 
 /**
  * QuickActionsGrid - Product-aligned quick actions
@@ -26,7 +27,7 @@ import Link from 'next/link'
 
 const productActions = [
   { 
-    label: 'Blueprint', 
+    label: STUDIO_DISPLAY_NAMES.blueprint, 
     tagline: 'Concept & Story',
     icon: <PenTool className="w-5 h-5" />, 
     href: '/dashboard/studio/new-project',
@@ -40,7 +41,7 @@ const productActions = [
     color: 'bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 border border-blue-500/20'
   },
   { 
-    label: 'Production', 
+    label: STUDIO_DISPLAY_NAMES.production, 
     tagline: 'Render & Publish',
     icon: <Film className="w-5 h-5" />, 
     href: '/dashboard/workflow/storyboard',

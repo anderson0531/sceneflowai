@@ -7,7 +7,7 @@ export const CREATIVE_RANGE_COPY = {
   title: 'Every Style, Every Screen',
   titleAccent: 'Your creative DNA, locked in Blueprint',
   subtitle:
-    'Blueprint is where your creative DNA locks in—art style, aspect ratio, tone, and core narrative. SceneFlow feeds those choices into treatment, Audience Resonance, and script generation so scene directions match your frame and your look from beat one—not as last-minute export settings.',
+    'Blueprint Studio is where your creative DNA locks in—art style, aspect ratio, tone, and core narrative. SceneFlow feeds those choices into treatment, Audience Resonance, and script generation so scene directions match your frame and your look from beat one—not as last-minute export settings.',
   pillars: [
     {
       title: 'Form Follows Function (and Framing)',

@@ -16,7 +16,7 @@ export interface WorkflowPhaseCopy {
 export const WORKFLOW_PHASES: WorkflowPhaseCopy[] = [
   {
     id: 'series',
-    stepLabel: 'Series',
+    stepLabel: 'Series Studio',
     optional: true,
     subtitle: 'Showrunner Engine',
     description:
@@ -24,36 +24,36 @@ export const WORKFLOW_PHASES: WorkflowPhaseCopy[] = [
     keySteps: [
       'Define universe — characters, tone, and season arc',
       'Auto-generate episode outlines across the season',
-      'Sync into Blueprint and Production per episode',
+      'Sync into Blueprint Studio and Production Studio per episode',
     ],
     keyFeatures: [
       'Define your universe once — characters, tone, and season arc',
       'Cohesive episode outlines — auto-generated across the season',
       'Continuity tracking — multi-episode seasons in alignment',
-      'Series-to-episode sync — into Blueprint Studio and Production',
+      'Series-to-episode sync — into Blueprint Studio and Production Studio',
     ],
   },
   {
     id: 'blueprint',
-    stepLabel: 'Blueprint',
+    stepLabel: 'Blueprint Studio',
     subtitle: 'Story Development',
     description:
       'Transform concepts into structured treatments with logline, beats, characters, and tone. Run Audience Resonance and collaborate before heavy rendering.',
     keySteps: [
-      'Generate → Review → Iterate → Start Production',
+      'Generate → Review → Iterate → Open Production Studio',
       'Audience Resonance scoring with 80+ target',
       'Collaborator share links and export (PDF, Doc, PPTX)',
     ],
     keyFeatures: [
-      'Generate → Review → Iterate → Start Production workflow',
+      'Generate → Review → Iterate → Open Production Studio workflow',
       'Concept to structure in minutes — logline, beats, characters, and tone',
-      'Audience Resonance scoring with 80+ target before Production',
+      'Audience Resonance scoring with 80+ target before Production Studio',
       'Collaborator share links — feedback synthesis into guided revision',
     ],
   },
   {
     id: 'production',
-    stepLabel: 'Production',
+    stepLabel: 'Production Studio',
     subtitle: "Writer's Room to Screening Room",
     description:
       "The Writer's Room and Motion sections guide Foundation → Pre-Vis → Footage → Mixer → Streams. Scene-by-scene checkpoints minimize redos; Screening Room handles preview, assembly, and publishing.",
@@ -66,7 +66,7 @@ export const WORKFLOW_PHASES: WorkflowPhaseCopy[] = [
     keyFeatures: [
       "Writer's Room — script, voices, scene audio, Audience Resonance Analysis",
       'Pre-Vis — direction, audio, and beat frames per scene with share links',
-      'Motion — Footage, Mixer, and Streams without leaving Production',
+      'Motion — Footage, Mixer, and Streams without leaving Production Studio',
       'Screening Room — scene preview, master assembly, screenings, and YouTube publish',
     ],
   },

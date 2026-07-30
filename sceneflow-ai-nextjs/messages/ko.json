@@ -573,7 +573,7 @@
       "tagline": "하나의 스튜디오. 가이드가 제공되는 자동화, 또는 해당 기술 스택에 능숙하다면 압도적인 처리량까지.",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "체계적인 스토리 구성안"
         },
         {
@@ -639,7 +639,7 @@
       },
       {
         "id": "청사진",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "스토리 개발",
         "description": "로그라인, 비트, 캐릭터, 톤을 포함하여 콘셉트를 체계적인 트리트먼트로 발전시키세요. 본격적인 렌더링에 앞서 Audience Resonance를 실행하고 협업을 진행하세요.",
         "keySteps": [

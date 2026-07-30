@@ -573,7 +573,7 @@
       "tagline": "Yksi studio. Ohjattua automaatiota – tai valtavaa suorituskykyä, jos teknologiapino on jo tuttu.",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "Jäsennelty tarinasuunnitelma"
         },
         {
@@ -639,7 +639,7 @@
       },
       {
         "id": "piirustus",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "Tarinan kehittäminen",
         "description": "Muunna konseptit jäsennellyiksi käsikirjoitusluonnoksiksi, jotka sisältävät tiivistelmän (logline), juonenkäänteet, hahmot ja sävyn. Suorita Audience Resonance ja tee yhteistyötä ennen raskaiden renderöintien aloittamista.",
         "keySteps": [

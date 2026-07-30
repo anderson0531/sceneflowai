@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { BLUEPRINT_COPY } from '@/lib/blueprint/blueprintGlossary'
+import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 
 export interface TourStep {
   id: string
@@ -30,9 +31,9 @@ export interface TourStep {
 const BLUEPRINT_TOUR_STEPS: TourStep[] = [
   {
     id: 'welcome',
-    title: 'Welcome to Blueprint',
+    title: `Welcome to ${STUDIO_DISPLAY_NAMES.blueprint}`,
     description:
-      'Blueprint is your creative foundation: Generate → Review → Iterate → Start Production. One continuous workflow — not scattered editors.',
+      `${STUDIO_DISPLAY_NAMES.blueprint} is your creative foundation: Generate → Review → Iterate → Open Production Studio. One continuous workflow — not scattered editors.`,
     icon: <Sparkles className="w-6 h-6" />,
     tip: 'The sidebar workflow guide and co-pilot show your next step at every stage.',
   },

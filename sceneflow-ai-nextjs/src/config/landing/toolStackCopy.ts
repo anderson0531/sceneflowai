@@ -31,9 +31,9 @@ export const TOOL_STACK_COPY = {
     title: 'The SceneFlow Way',
     tagline: 'One studio. Guided automation — or serious throughput if you already know the stack.',
     stages: [
-      { label: 'Blueprint', detail: 'Structured story plan' },
+      { label: 'Blueprint Studio', detail: 'Structured story plan' },
       { label: 'References', detail: 'Consistent characters' },
-      { label: 'Production', detail: 'Voice + visuals' },
+      { label: 'Production Studio', detail: 'Voice + visuals' },
       { label: 'Publish', detail: 'One master MP4' },
     ],
     syncLabel: 'One project file — no tab juggling',

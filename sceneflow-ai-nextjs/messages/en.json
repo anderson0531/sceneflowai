@@ -40,7 +40,7 @@
     "ctaSecondary": "Watch the 'What's Possible'",
     "ctaToolStack": "See how it replaces your tool stack",
     "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production.",
+    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
     "playWithNarration": "Play with narration",
     "tapToHear": "Tap to hear",
     "fullscreen": "Fullscreen",
@@ -80,7 +80,7 @@
   "pipeline": {
     "badge": "What is SceneFlow?",
     "title": "The 3-Pillar Pipeline Architecture",
-    "subtitle": "Three phases from first idea to publish-ready master — Series, Blueprint, and Production.",
+    "subtitle": "Three phases from first idea to publish-ready master — Series Studio, Blueprint Studio, and Production Studio.",
     "ui": {
       "expandFullscreen": "View fullscreen",
       "closeFullscreen": "Close",
@@ -95,9 +95,9 @@
     "pillars": [
       {
         "id": "series",
-        "tabLabel": "Series",
+        "tabLabel": "Series Studio",
         "number": "01",
-        "title": "Series Generation",
+        "title": "Series Studio Generation",
         "header": "Build a Universe, Not a Clip",
         "body": "Describe your series or YouTube channel once, and SceneFlow builds the whole world — storyline, cast, and an unlimited episode slate — with a Shared Reference Library that keeps every episode on-brand.",
         "steps": [
@@ -126,7 +126,7 @@
             "id": "series-reference-library",
             "number": "4",
             "title": "Review the Reference Library",
-            "description": "Browse the shared Reference Library — characters, voices, wardrobe, locations, and props — created and maintained through Production and reused across every episode.",
+            "description": "Browse the shared Reference Library — characters, voices, wardrobe, locations, and props — created and maintained through Production Studio and reused across every episode.",
             "imagePlaceholder": "Shared Reference Library — characters, voices, locations, props"
           },
           {
@@ -140,18 +140,18 @@
             "id": "series-start-production",
             "number": "6",
             "title": "Start production in one click",
-            "description": "When an episode feels right, start its production with a single click and flow straight into the guided Production pipeline.",
+            "description": "When an episode feels right, start its production with a single click and flow straight into the guided Production Studio pipeline.",
             "imagePlaceholder": "One-click start production on a selected episode"
           }
         ]
       },
       {
         "id": "blueprint",
-        "tabLabel": "Blueprint",
+        "tabLabel": "Blueprint Studio",
         "number": "02",
-        "title": "Creative Blueprint",
+        "title": "Blueprint Studio",
         "header": "Your Creative DNA, Locked In",
-        "body": "Blueprint is your deep film treatment — synopsis, beats, characters, tone, and style — pre-scored by Audience Resonance Analysis so you approve a story that lands before a single frame renders.",
+        "body": "Blueprint Studio is your deep film treatment — synopsis, beats, characters, tone, and style — pre-scored by Audience Resonance Analysis so you approve a story that lands before a single frame renders.",
         "steps": [
           {
             "id": "blueprint-baseline",
@@ -179,17 +179,17 @@
             "number": "4",
             "title": "Start production when ready",
             "description": "Once the story sings, start production — and the entire pipeline inherits your approved creative DNA with no drift.",
-            "imagePlaceholder": "Start Production — readiness gate from an approved Blueprint"
+            "imagePlaceholder": "Open Production Studio — readiness gate from an approved blueprint"
           }
         ]
       },
       {
         "id": "production",
-        "tabLabel": "Production",
+        "tabLabel": "Production Studio",
         "number": "03",
-        "title": "Guided Production",
+        "title": "Production Studio",
         "header": "From Script to Published Master",
-        "body": "Production runs concurrent, multi-engine generation — script, audio, frames, and video — with the Intelligent Assistant Director, the Screening Room, and multilanguage streams carrying you from approved script to a published 4K master.",
+        "body": "Production Studio runs concurrent, multi-engine generation — script, audio, frames, and video — with the Intelligent Assistant Director, the Screening Room, and multilanguage streams carrying you from approved script to a published 4K master.",
         "steps": [
           {
             "id": "production-script-ara",
@@ -398,16 +398,16 @@
           {
             "icon": "series",
             "title": "Series Studio",
-            "description": "Define your universe once — season arcs, recurring cast, and continuity rules. Episode outlines sync into Blueprint and Production so every installment stays on-model.",
+            "description": "Define your universe once — season arcs, recurring cast, and continuity rules. Episode outlines sync into Blueprint Studio and Production Studio so every installment stays on-model.",
             "learnMore": {
               "problem": "Serialized content multiplies the work: every new episode means rebuilding context, re-establishing characters, and hoping continuity holds across a growing catalog.",
-              "solution": "Series Studio captures your universe — season arcs, cast, and continuity rules — once. Episode outlines flow automatically into Blueprint and Production, so each installment inherits the same locked foundation.",
+              "solution": "Series Studio captures your universe — season arcs, cast, and continuity rules — once. Episode outlines flow automatically into Blueprint Studio and Production Studio, so each installment inherits the same locked foundation.",
               "outcome": "Ship consistent episodes on schedule from one studio — scale your channel or franchise without scaling your chaos."
             }
           },
           {
             "icon": "blueprint",
-            "title": "Blueprint",
+            "title": "Blueprint Studio",
             "description": "Turn a concept into a structured story: beats, character arcs, audience definition, and locked art style. Collaborators review via share links before you enter Production.",
             "learnMore": {
               "problem": "Jumping straight into production without a locked story structure leads to expensive rework — unclear beats, drifting tone, and stakeholder surprises after credits are already spent.",
@@ -593,7 +593,7 @@
         "icon": "video",
         "label": "Creator",
         "outcome": "Ship on schedule — stop rebuilding in every tool",
-        "narrative": "You have the story, but every episode means re-exporting assets, re-prompting in new tabs, and hoping continuity holds. SceneFlow connects Series, Blueprint, and Production in one studio — so you approve the look in pre-vis, generate scene by scene, and ship consistent episodes on schedule instead of rebuilding from scratch.",
+        "narrative": "You have the story, but every episode means re-exporting assets, re-prompting in new tabs, and hoping continuity holds. SceneFlow connects Series Studio, Blueprint Studio, and Production Studio in one studio — so you approve the look in pre-vis, generate scene by scene, and ship consistent episodes on schedule instead of rebuilding from scratch.",
         "useCases": [
           "16:9 YouTube TV drama",
           "9:16 vertical mobile drama",
@@ -849,7 +849,7 @@
     "badge": "Creative Range",
     "title": "Every Style, Every Screen",
     "titleAccent": "Your creative DNA, locked in Blueprint",
-    "subtitle": "Blueprint is where your creative DNA locks in—art style, aspect ratio, tone, and core narrative. SceneFlow feeds those choices into treatment, Audience Resonance, and script generation so scene directions match your frame and your look from beat one—not as last-minute export settings.",
+    "subtitle": "Blueprint Studio is where your creative DNA locks in—art style, aspect ratio, tone, and core narrative. SceneFlow feeds those choices into treatment, Audience Resonance, and script generation so scene directions match your frame and your look from beat one—not as last-minute export settings.",
     "pillars": [
       {
         "title": "Form Follows Function (and Framing)",
@@ -1048,7 +1048,7 @@
       "tagline": "One studio. Guided automation — or serious throughput if you already know the stack.",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "Structured story plan"
         },
         {
@@ -1056,7 +1056,7 @@
           "detail": "Consistent characters"
         },
         {
-          "label": "Production",
+          "label": "Production Studio",
           "detail": "Voice + visuals"
         },
         {
@@ -1088,7 +1088,7 @@
   "howItWorks": {
     "title": "From concept to publish-ready video",
     "titleAccent": "One guided pipeline",
-    "subtitle": "Series is optional. The core path is Blueprint → Production → Screening Room — pre-vis, animatic, scene video, and master MP4 along the way.",
+    "subtitle": "Series is optional. The core path is Blueprint Studio → Production Studio → Screening Room — pre-vis, animatic, scene video, and master MP4 along the way.",
     "tagline": "Every step is expertly automated. Every step gives you full control.",
     "optionalBadge": "Optional",
     "optionalSuffix": " (optional)",
@@ -1097,43 +1097,43 @@
     "phases": [
       {
         "id": "series",
-        "stepLabel": "Series",
+        "stepLabel": "Series Studio",
         "subtitle": "Showrunner Engine",
         "description": "Define your universe once and generate cohesive multi-episode arcs. Shared Reference Library keeps characters and tone aligned across the season.",
         "keySteps": [
           "Define universe — characters, tone, and season arc",
           "Auto-generate episode outlines across the season",
-          "Sync into Blueprint and Production per episode"
+          "Sync into Blueprint Studio and Production Studio per episode"
         ],
         "keyFeatures": [
           "Define your universe once — characters, tone, and season arc",
           "Cohesive episode outlines — auto-generated across the season",
           "Continuity tracking — multi-episode seasons in alignment",
-          "Series-to-episode sync — into Blueprint Studio and Production"
+          "Series-to-episode sync — into Blueprint Studio and Production Studio"
         ],
         "optional": true
       },
       {
         "id": "blueprint",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "Story Development",
         "description": "Transform concepts into structured treatments with logline, beats, characters, and tone. Run Audience Resonance and collaborate before heavy rendering.",
         "keySteps": [
-          "Generate → Review → Iterate → Start Production",
+          "Generate → Review → Iterate → Open Production Studio",
           "Audience Resonance scoring with 80+ target",
           "Collaborator share links and export (PDF, Doc, PPTX)"
         ],
         "keyFeatures": [
-          "Generate → Review → Iterate → Start Production workflow",
+          "Generate → Review → Iterate → Open Production Studio workflow",
           "Concept to structure in minutes — logline, beats, characters, and tone",
-          "Audience Resonance scoring with 80+ target before Production",
+          "Audience Resonance scoring with 80+ target before Production Studio",
           "Collaborator share links — feedback synthesis into guided revision"
         ],
         "optional": false
       },
       {
         "id": "production",
-        "stepLabel": "Production",
+        "stepLabel": "Production Studio",
         "subtitle": "Writer's Room to Screening Room",
         "description": "The Writer's Room and Motion sections guide Foundation → Pre-Vis → Footage → Mixer → Streams. Scene-by-scene checkpoints minimize redos; Screening Room handles preview, assembly, and publishing.",
         "keySteps": [
@@ -1145,7 +1145,7 @@
         "keyFeatures": [
           "Writer's Room — script, voices, scene audio, Audience Resonance Analysis",
           "Pre-Vis — direction, audio, and beat frames per scene with share links",
-          "Motion — Footage, Mixer, and Streams without leaving Production",
+          "Motion — Footage, Mixer, and Streams without leaving Production Studio",
           "Screening Room — scene preview, master assembly, screenings, and YouTube publish"
         ],
         "optional": false
@@ -1192,9 +1192,9 @@
       },
       {
         "id": "blueprint",
-        "stepLabel": "Optimize your concept with Blueprint",
+        "stepLabel": "Optimize your concept with Blueprint Studio",
         "shortDescription": "Transform ideas into a structured treatment — logline, beats, characters, and tone — before heavy rendering.",
-        "detailedDescription": "Blueprint automatically crafts a comprehensive story outline. Refine character arcs, plot beats, and narrative tone with intelligent suggestions. Collaborator share links let stakeholders review before Production.",
+        "detailedDescription": "Blueprint automatically crafts a comprehensive story outline. Refine character arcs, plot beats, and narrative tone with intelligent suggestions. Collaborator share links let stakeholders review before Production Studio.",
         "media": "video"
       },
       {
@@ -1487,7 +1487,7 @@
           {
             "id": "episodic-youtube-series",
             "label": "Episodic YouTube Series",
-            "description": "Imagine auto-generated season arcs in Series Studio—episode outlines sync into Blueprint and Production so every face, voice, and beat stays aligned across a growing channel."
+            "description": "Imagine auto-generated season arcs in Series Studio—episode outlines sync into Blueprint Studio and Production Studio so every face, voice, and beat stays aligned across a growing channel."
           },
           {
             "id": "creator-reality-competition",
@@ -1801,13 +1801,13 @@
         "title": "Platform Overview",
         "description": "One studio from idea to publish-ready video. Same pipeline for training, podcasts, news, and cinematic series — approve pre-vis before final render spend.",
         "keyFeatures": [
-          "Series → Blueprint → Production → Screening Room",
+          "Series Studio → Blueprint Studio → Production Studio → Screening Room",
           "Beat-first approval — pre-vis and Beat Frames before F2V",
           "Google Vertex AI generation with native Veo extension chains",
           "Trust & Safety guardrails and signed provenance on delivery"
         ],
         "screenshotSlot": "Insert screenshot: Landing hero + simplified walkthrough strip",
-        "videoSlot": "Insert 01:30 clip: Hero → new project → Blueprint → Production Shoot → Screening Room → Publish"
+        "videoSlot": "Insert 01:30 clip: Hero → new project → Blueprint Studio → Production Studio Shoot → Screening Room → Publish"
       },
       {
         "id": "9",
@@ -1817,19 +1817,19 @@
           "Define your universe once — characters, tone, and season arc",
           "Cohesive episode outlines — auto-generated across the season",
           "Continuity tracking — multi-episode seasons in alignment",
-          "Series-to-episode sync — into Blueprint Studio and Production"
+          "Series-to-episode sync — into Blueprint Studio and Production Studio"
         ],
         "screenshotSlot": "Insert screenshot: Series overview with auto-generated episode arcs",
         "videoSlot": "Insert 00:30 clip: Concept expanding into a multi-episode season"
       },
       {
         "id": "10",
-        "title": "Blueprint Automation",
+        "title": "Blueprint Studio Automation",
         "description": "Transform concepts into structured treatments with logline, beats, characters, and tone. Run Audience Resonance and collaborate before heavy rendering.",
         "keyFeatures": [
-          "Generate → Review → Iterate → Start Production workflow",
+          "Generate → Review → Iterate → Open Production Studio workflow",
           "Concept to structure in minutes — logline, beats, characters, and tone",
-          "Audience Resonance scoring with 80+ target before Production",
+          "Audience Resonance scoring with 80+ target before Production Studio",
           "Collaborator share links — feedback synthesis into guided revision"
         ],
         "screenshotSlot": "Insert screenshot: Auto-generated Blueprint with story beats and character arcs",
@@ -1851,7 +1851,7 @@
       {
         "id": "7",
         "title": "Audience Resonance Analysis",
-        "description": "Determine your target audience to get instant scoring, analysis, and recommendations. Apply one-click fixes or use Guided Edits to perfectly optimize your Episodes, Blueprint, and Script for maximum impact.",
+        "description": "Determine your target audience to get instant scoring, analysis, and recommendations. Apply one-click fixes or use Guided Edits to perfectly optimize your Episodes, Blueprint Studio, and Script for maximum impact.",
         "keyFeatures": [
           "Target-audience scoring — with category breakdown",
           "Section-tied recommendations — fix the right part of your story",
@@ -1863,12 +1863,12 @@
       },
       {
         "id": "11",
-        "title": "Production Automation",
+        "title": "Production Studio Automation",
         "description": "The Writer's Room and Motion sections guide Foundation → Pre-Vis → Footage → Mixer → Streams. Scene-by-scene checkpoints minimize redos; Screening Room handles preview, assembly, and publishing.",
         "keyFeatures": [
           "Writer's Room — script, voices, scene audio, Audience Resonance Analysis",
           "Pre-Vis — direction, audio, and beat frames per scene with share links",
-          "Motion — Footage, Mixer, and Streams without leaving Production",
+          "Motion — Footage, Mixer, and Streams without leaving Production Studio",
           "Screening Room — scene preview, master assembly, screenings, and YouTube publish"
         ],
         "screenshotSlot": "Insert screenshot: Production dashboard showing Writer's Room, Motion, and Pre-Vis",
@@ -1991,12 +1991,12 @@
     "audienceResonance": {
       "badge": "Intelligence Layer",
       "title": "Audience Resonance Analysis",
-      "description": "Know your score before you invest in full renders. Target Audience Resonance scores Blueprint and script with actionable fixes — optimize every beat before Express and video generation.",
+      "description": "Know your score before you invest in full renders. Target Audience Resonance scores Blueprint Studio and script with actionable fixes — optimize every beat before Express and video generation.",
       "bullets": [
         "Determine your specific target audience",
         "Get real-time score, analysis, and recommendations",
         "One-click fixes to resolve narrative weaknesses",
-        "Guided Edit to optimize Episodes, Blueprint, and Script"
+        "Guided Edit to optimize Episodes, Blueprint Studio, and Script"
       ],
       "cta": "Analyze Your Script",
       "howWeScore": {
@@ -2300,7 +2300,7 @@
     "cta": "Launch Your Studio for $9"
   },
   "footer": {
-    "description": "End-to-end automated video production — from concept to publish-ready master. One guided studio: Blueprint → Production → Screening Room.",
+    "description": "End-to-end automated video production — from concept to publish-ready master. One guided studio: Blueprint Studio → Production Studio → Screening Room.",
     "product": "Product",
     "resources": "Resources",
     "legal": "Legal",

@@ -573,7 +573,7 @@
       "tagline": "単一のスタジオ環境。ガイド付きの自動化、あるいは、技術スタックを熟知しているなら圧倒的なスループットを実現します。",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "構成されたストーリー案"
         },
         {
@@ -639,7 +639,7 @@
       },
       {
         "id": "青写真",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "ストーリー開発",
         "description": "コンセプトを、ログライン、ビート、キャラクター、トーンを含む構成の整ったトリートメントへと具体化してください。負荷の高いレンダリングを行う前に、Audience Resonanceを実行し、共同作業を行ってください。",
         "keySteps": [

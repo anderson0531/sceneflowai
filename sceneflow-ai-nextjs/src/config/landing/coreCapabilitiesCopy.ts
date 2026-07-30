@@ -5,12 +5,12 @@ export const CORE_CAPABILITIES_COPY = {
     badge: 'Intelligence Layer',
     title: 'Audience Resonance Analysis',
     description:
-      'Know your score before you invest in full renders. Target Audience Resonance scores Blueprint and script with actionable fixes — optimize every beat before Express and video generation.',
+      'Know your score before you invest in full renders. Target Audience Resonance scores Blueprint Studio and script with actionable fixes — optimize every beat before Express and video generation.',
     bullets: [
       'Determine your specific target audience',
       'Get real-time score, analysis, and recommendations',
       'One-click fixes to resolve narrative weaknesses',
-      'Guided Edit to optimize Episodes, Blueprint, and Script',
+      'Guided Edit to optimize Episodes, Blueprint Studio, and Script',
     ],
     cta: 'Analyze Your Script',
     howWeScore: {

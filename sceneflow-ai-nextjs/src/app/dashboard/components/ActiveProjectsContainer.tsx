@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { formatRelativeTime, getPhaseDisplayName, getStepNumber, getTotalSteps } from '@/hooks/useDashboardData'
 import { getProjectCreditsUsed } from '@/lib/credits/projectBudgetShared'
 import { getProductionRoute, getResumeRouteForStep } from '@/constants/workflowRoutes'
+import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 
 // Types for project data from API
 interface DashboardProject {
@@ -69,22 +70,22 @@ function transformProject(project: DashboardProject, index: number) {
     const screeningRoomUrl = `/dashboard/workflow/screening-room?projectId=${project.id}`
     const stepConfig: Record<string, { name: string; description: string; url: string }> = {
       blueprint: {
-        name: 'Production',
+        name: STUDIO_DISPLAY_NAMES.production,
         description: 'Script, audio, frames, and video production',
         url: productionUrl,
       },
       vision: {
-        name: 'Production',
+        name: STUDIO_DISPLAY_NAMES.production,
         description: 'Render, screen, and publish your production',
         url: `${screeningRoomUrl}&tab=assemble`,
       },
       creation: {
-        name: 'Production',
+        name: STUDIO_DISPLAY_NAMES.production,
         description: 'Render, screen, and publish your production',
         url: `${screeningRoomUrl}&tab=assemble`,
       },
       polish: {
-        name: 'Production',
+        name: STUDIO_DISPLAY_NAMES.production,
         description: 'Screen and publish your production',
         url: `${screeningRoomUrl}&tab=publish`,
       },
@@ -94,32 +95,32 @@ function transformProject(project: DashboardProject, index: number) {
         url: `/dashboard/projects/${project.id}`,
       },
       ideation: {
-        name: 'Production',
+        name: STUDIO_DISPLAY_NAMES.production,
         description: 'Script, audio, frames, and video production',
         url: productionUrl,
       },
       storyboard: {
-        name: 'Production',
+        name: STUDIO_DISPLAY_NAMES.production,
         description: 'Script, audio, frames, and video production',
         url: productionUrl,
       },
       'scene-direction': {
-        name: 'Production',
+        name: STUDIO_DISPLAY_NAMES.production,
         description: 'Continue video and render workflow',
         url: productionUrl,
       },
       'video-generation': {
-        name: 'Production',
+        name: STUDIO_DISPLAY_NAMES.production,
         description: 'Continue video and render workflow',
         url: productionUrl,
       },
       review: {
-        name: 'Production',
+        name: STUDIO_DISPLAY_NAMES.production,
         description: 'Screen and publish your production',
         url: `${screeningRoomUrl}&tab=publish`,
       },
       optimization: {
-        name: 'Production',
+        name: STUDIO_DISPLAY_NAMES.production,
         description: 'Screen and publish your production',
         url: `${screeningRoomUrl}&tab=publish`,
       },

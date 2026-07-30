@@ -573,7 +573,7 @@
       "tagline": "Eén studio. Begeleide automatisering — of een hoge doorvoersnelheid als je de stack al kent.",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "Gestructureerd verhaalplan"
         },
         {
@@ -622,7 +622,7 @@
     "phases": [
       {
         "id": "serie",
-        "stepLabel": "Series",
+        "stepLabel": "Series Studio",
         "subtitle": "Showrunner Engine",
         "description": "Definieer je universum eenmalig en genereer samenhangende verhaallijnen die over meerdere afleveringen lopen. Dankzij gedeelde Reference Library blijven personages en toon gedurende het hele seizoen op elkaar afgestemd.",
         "keySteps": [
@@ -639,7 +639,7 @@
       },
       {
         "id": "blauwdruk",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "Verhaalontwikkeling",
         "description": "Zet concepten om in gestructureerde treatments, inclusief logline, verhaalmomenten, personages en toon. Voer Audience Resonance uit en werk samen voordat het zware renderproces begint.",
         "keySteps": [

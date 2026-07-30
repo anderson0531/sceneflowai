@@ -19,6 +19,7 @@ import {
   Share2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 
 export interface TourStep {
   id: string
@@ -32,9 +33,9 @@ export interface TourStep {
 const PRODUCTION_TOUR_STEPS: TourStep[] = [
   {
     id: 'welcome',
-    title: 'Welcome to Production',
+    title: `Welcome to ${STUDIO_DISPLAY_NAMES.production}`,
     description:
-      "SceneFlow is one continuous pipeline: Foundation → Pre-vis → Production → Final Cut. You work in two sections — Writer's Room and Motion — with a clear next step at every stage.",
+      `SceneFlow is one continuous pipeline: Foundation → Pre-vis → ${STUDIO_DISPLAY_NAMES.production} → Final Cut. You work in two sections — Writer's Room and Motion — with a clear next step at every stage.`,
     icon: <Sparkles className="w-6 h-6" />,
     tip: 'The Production Progress dashboard and co-pilot always show where you are and what is next.',
   },

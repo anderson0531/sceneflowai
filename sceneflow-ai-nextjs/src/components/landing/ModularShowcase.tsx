@@ -28,6 +28,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
+import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 
 const SIGNUP_URL = getLoginUrl({ mode: 'signup' })
 
@@ -60,7 +61,7 @@ const modules = [
   {
     id: 'writer',
     name: "Writer's Room",
-    phase: 'Blueprint',
+    phase: STUDIO_DISPLAY_NAMES.blueprint,
     icon: Pen,
     color: 'from-violet-500 to-purple-600',
     bgColor: 'bg-violet-500/10',
@@ -84,7 +85,7 @@ const modules = [
   {
     id: 'visualizer',
     name: 'Visualizer',
-    phase: 'Production',
+    phase: STUDIO_DISPLAY_NAMES.production,
     icon: ImageIcon,
     color: 'from-cyan-500 to-blue-600',
     bgColor: 'bg-cyan-500/10',

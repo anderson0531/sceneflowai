@@ -573,7 +573,7 @@
       "tagline": "Een ateljee. Begeleide automatisering – of hoë deurset as jy reeds die tegnologiestapel ken.",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "Gestruktureerde verhaalplan"
         },
         {
@@ -639,7 +639,7 @@
       },
       {
         "id": "bloudruk",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "Storie-ontwikkeling",
         "description": "Verander konsepte in gestruktureerde draaiboeksketse met 'n kernopsomming, narratiewe mylpale, karakters en toon. Voer Audience Resonance uit en werk saam voordat swaar weergawe (rendering) plaasvind.",
         "keySteps": [

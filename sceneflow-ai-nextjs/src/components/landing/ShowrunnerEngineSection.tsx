@@ -24,6 +24,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
+import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 
 const SIGNUP_URL = getLoginUrl({ mode: 'signup' })
 
@@ -136,7 +137,7 @@ const EpisodeCard = ({
   const statusConfig = {
     completed: { bg: 'bg-emerald-500/20', border: 'border-emerald-500/30', text: 'text-emerald-400', label: 'Completed' },
     'in-progress': { bg: 'bg-amber-500/20', border: 'border-amber-500/30', text: 'text-amber-400', label: 'In Progress' },
-    blueprint: { bg: 'bg-gray-500/20', border: 'border-gray-500/30', text: 'text-gray-400', label: 'Blueprint' },
+    blueprint: { bg: 'bg-gray-500/20', border: 'border-gray-500/30', text: 'text-gray-400', label: STUDIO_DISPLAY_NAMES.blueprint },
   }
   const config = statusConfig[status]
 
@@ -447,7 +448,7 @@ export function ShowrunnerEngineSection() {
                 <AudienceResonanceScore score={86} />
                 <div className="mt-4 flex items-center gap-2">
                   <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                  <span className="text-emerald-300 font-medium">Ready for Production</span>
+                  <span className="text-emerald-300 font-medium">Ready for {STUDIO_DISPLAY_NAMES.production}</span>
                 </div>
                 <p className="text-xs text-gray-500 mt-2 text-center">
                   Top 15% of scripts analyzed this month

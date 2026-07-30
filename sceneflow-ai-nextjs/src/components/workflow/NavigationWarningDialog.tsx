@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
 import { AlertTriangle, ArrowLeft, CheckCircle2, XCircle } from 'lucide-react'
+import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 
 interface NavigationWarningDialogProps {
   open: boolean
@@ -25,7 +26,7 @@ export function NavigationWarningDialog({
   open,
   onOpenChange,
   targetHref,
-  targetLabel = 'Blueprint',
+  targetLabel = STUDIO_DISPLAY_NAMES.blueprint,
   onConfirm,
 }: NavigationWarningDialogProps) {
   const router = useRouter()

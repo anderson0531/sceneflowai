@@ -573,7 +573,7 @@
       "tagline": "Ein Studio. Geführte Automatisierung – oder enormer Durchsatz, wenn Sie den Stack bereits beherrschen.",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "Strukturierter Handlungsplan"
         },
         {
@@ -639,7 +639,7 @@
       },
       {
         "id": "Bauplan",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "Geschichtenentwicklung",
         "description": "Wandeln Sie Konzepte in strukturierte Treatments um – inklusive Logline, Beats, Charakteren und Tonalität. Führen Sie Audience Resonance aus und arbeiten Sie gemeinsam am Projekt, bevor aufwendige Rendering-Prozesse starten.",
         "keySteps": [

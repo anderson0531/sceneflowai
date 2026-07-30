@@ -573,7 +573,7 @@
       "tagline": "Ett studio. Veiledet automatisering – eller høy gjennomstrømning hvis du allerede kjenner teknologistakken.",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "Strukturert historieplan"
         },
         {
@@ -639,7 +639,7 @@
       },
       {
         "id": "blåkopi",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "Historieutvikling",
         "description": "Transformer konsepter til strukturerte behandlinger med logline, narrative vendepunkter, karakterer og tone. Kjør Audience Resonance og samarbeid før omfattende rendering.",
         "keySteps": [

@@ -35,7 +35,7 @@ export const AUDIENCE_PATHS = [
     label: 'Creator',
     outcome: 'Ship on schedule — stop rebuilding in every tool',
     narrative:
-      'You have the story, but every episode means re-exporting assets, re-prompting in new tabs, and hoping continuity holds. SceneFlow connects Series, Blueprint, and Production in one studio — so you approve the look in pre-vis, generate scene by scene, and ship consistent episodes on schedule instead of rebuilding from scratch.',
+      'You have the story, but every episode means re-exporting assets, re-prompting in new tabs, and hoping continuity holds. SceneFlow connects Series Studio, Blueprint Studio, and Production Studio in one studio — so you approve the look in pre-vis, generate scene by scene, and ship consistent episodes on schedule instead of rebuilding from scratch.',
     useCases: [
       '16:9 YouTube TV drama',
       '9:16 vertical mobile drama',
@@ -173,7 +173,7 @@ export const HOW_IT_WORKS_HEADER = {
   title: 'From concept to publish-ready video',
   titleAccent: 'One guided pipeline',
   subtitle:
-    'Series is optional. The core path is Blueprint → Production → Screening Room — pre-vis, animatic, scene video, and master MP4 along the way.',
+    'Series is optional. The core path is Blueprint Studio → Production Studio → Screening Room — pre-vis, animatic, scene video, and master MP4 along the way.',
   tagline: 'Every step is expertly automated. Every step gives you full control.',
 } as const
 

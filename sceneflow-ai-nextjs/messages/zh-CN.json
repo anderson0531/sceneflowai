@@ -573,7 +573,7 @@
       "tagline": "统一开发环境。既提供引导式自动化功能，也能让熟悉技术栈的用户实现高效的大规模产出。",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "结构化故事大纲"
         },
         {
@@ -639,7 +639,7 @@
       },
       {
         "id": "蓝图",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "故事开发",
         "description": "将创意构思转化为包含故事梗概、关键节点、角色设定及基调的结构化剧本大纲。在进行重度渲染之前，请运行 Audience Resonance 并开展协作。",
         "keySteps": [

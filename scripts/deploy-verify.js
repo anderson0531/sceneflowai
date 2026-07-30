@@ -99,6 +99,9 @@ async function main() {
         landingPage.pipelinePillarsRemoved === true &&
         landingPage.videoLanguageControl === 'overlay-dropdown' &&
         landingPage.useCasesTabsRemoved === true &&
+        Array.isArray(landingPage.studioDisplayNames) &&
+        landingPage.studioDisplayNames.join(',') ===
+          'Blueprint Studio,Series Studio,Production Studio' &&
         landingPage.heroCopy?.headline ===
           'You Direct the Story. SceneFlow Automates the Studio.' &&
         landingPage.heroCopy?.audienceMicroLineRemoved === true

@@ -8,6 +8,7 @@ import {
   type AudienceDefinition,
   type PersistedBlueprintAudienceResonance,
 } from '@/lib/types/audienceResonance'
+import { BLUEPRINT_COPY } from '@/lib/blueprint/blueprintGlossary'
 
 export type BlueprintWorkflowStep = 'generate' | 'review' | 'iterate' | 'startProduction'
 
@@ -102,7 +103,7 @@ export function calculateBlueprintProgress(
         pendingRecs.length > 0
           ? 'Apply top Audience Resonance fix'
           : isAtTarget
-            ? 'Start Production'
+            ? BLUEPRINT_COPY.startProduction
             : 'Re-analyze or refine Blueprint'
       nextStepEvent =
         pendingRecs.length > 0
@@ -115,7 +116,7 @@ export function calculateBlueprintProgress(
     if (isAtTarget || (hasARRun && input.hasBlueprint && hasAudienceSaved)) {
       if (isAtTarget || pendingRecs.length === 0) {
         currentStep = 'startProduction'
-        nextStepLabel = isAtTarget ? 'Start Production' : 'Improve score or Start Production'
+        nextStepLabel = isAtTarget ? BLUEPRINT_COPY.startProduction : `Improve score or ${BLUEPRINT_COPY.startProduction}`
         nextStepEvent = 'blueprint:start-production'
       }
     }

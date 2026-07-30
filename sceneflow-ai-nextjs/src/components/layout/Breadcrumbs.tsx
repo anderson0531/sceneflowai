@@ -1,6 +1,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname, useParams } from 'next/navigation'
+import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 
 export function Breadcrumbs() {
   const pathname = usePathname()
@@ -10,7 +11,7 @@ export function Breadcrumbs() {
   const phase = pathname?.match(/\/phase\/(\d+)/)?.[1]
 
   const parts: Array<{ label: string; href?: string }> = []
-  if (seriesId) parts.push({ label: 'Series', href: `/series/${seriesId}/continuity` })
+  if (seriesId) parts.push({ label: STUDIO_DISPLAY_NAMES.series, href: `/series/${seriesId}/continuity` })
   if (episodeId) parts.push({ label: 'Episode', href: `/series/${seriesId}/episode/${episodeId}/phase/1` })
   if (phase) parts.push({ label: `Phase ${phase}` })
 

@@ -67,9 +67,9 @@ const helpSections: HelpSection[] = [
       {
         id: 'welcome',
         title: 'Welcome to SceneFlow AI',
-        content: 'SceneFlow AI is an AI-powered video production platform that helps you create professional video content from concept to final cut. Our workflow guides you through five phases: Series, Blueprint, Production, Final Cut, and Premiere.',
+        content: 'SceneFlow AI is an AI-powered video production platform that helps you create professional video content from concept to final cut. Our workflow guides you through five phases: Series Studio, Blueprint Studio, Production Studio, Final Cut, and Premiere.',
         steps: [
-          'Start with your idea or concept in the Blueprint phase',
+          'Start with your idea or concept in Blueprint Studio Studio phase',
           'Develop your script, characters, and visuals in Production',
           'Assemble and polish your video in Final Cut',
           'Share and publish in Premiere'
@@ -208,7 +208,7 @@ const helpSections: HelpSection[] = [
         title: 'Understanding Project Status',
         content: 'Each project shows its current phase and progress.',
         tips: [
-          'Blueprint: Initial concept and treatment phase',
+          'Blueprint Studio: Initial concept and treatment phase',
           'Production: Active development of script and assets',
           'Final Cut: Video assembly and editing',
           'Premiere: Ready for sharing and publishing'
@@ -240,14 +240,14 @@ const helpSections: HelpSection[] = [
   },
   {
     id: 'blueprint',
-    title: 'Blueprint Phase',
+    title: 'Blueprint Studio Phase',
     icon: <Lightbulb className="w-5 h-5" />,
     description: 'Transform your ideas into professional film treatments.',
     articles: [
       {
         id: 'blueprint-overview',
-        title: 'Blueprint Phase Overview',
-        content: 'The Blueprint phase is where your video journey begins. Enter your concept and let AI generate a complete film treatment including title, logline, story beats, characters, and more.',
+        title: 'Blueprint Studio Phase Overview',
+        content: 'The Blueprint Studio phase is where your video journey begins. Enter your concept and let AI generate a complete film treatment including title, logline, story beats, characters, and more.',
         steps: [
           'Enter your video concept, idea, or topic',
           'Click "Generate Blueprint" to create your treatment',
@@ -276,7 +276,7 @@ const helpSections: HelpSection[] = [
         title: 'Audience Resonance Analyzer',
         content: 'Optimize your blueprint for your target audience using the Audience Resonance feature.',
         steps: [
-          'Click "Analyze Resonance" in the Blueprint',
+          'Click "Analyze Resonance" in Blueprint Studio',
           'Select your target story type, audience, and theme',
           'Review your score and recommendations',
           'Apply quick fixes to improve your score',
@@ -338,9 +338,9 @@ const helpSections: HelpSection[] = [
     videos: [
       {
         id: 'blueprint-intro',
-        title: 'Blueprint Phase Walkthrough',
+        title: 'Blueprint Studio Phase Walkthrough',
         duration: '8:00',
-        description: 'Complete guide to the Blueprint phase from concept to production-ready treatment.'
+        description: 'Complete guide to the Blueprint Studio phase from concept to production-ready treatment.'
       },
       {
         id: 'treatment-generation',
@@ -370,14 +370,14 @@ const helpSections: HelpSection[] = [
   },
   {
     id: 'production',
-    title: 'Production Phase',
+    title: 'Production Studio Phase',
     icon: <Film className="w-5 h-5" />,
     description: 'Develop your script, characters, audio, and visuals.',
     articles: [
       {
         id: 'production-overview',
-        title: 'Production Phase Overview',
-        content: 'Production is where your blueprint comes to life. Develop your script scene by scene, create character visuals, assign voices, and generate scene frames.',
+        title: 'Production Studio Phase Overview',
+        content: 'Production Studio is where your blueprint comes to life. Develop your script scene by scene, create character visuals, assign voices, and generate scene frames.',
         steps: [
           'Start with script review and refinement',
           'Create character images and assign voices',
@@ -494,9 +494,9 @@ const helpSections: HelpSection[] = [
     videos: [
       {
         id: 'production-intro',
-        title: 'Production Phase Complete Guide',
+        title: 'Production Studio Phase Complete Guide',
         duration: '12:00',
-        description: 'Everything you need to know about the Production phase.'
+        description: 'Everything you need to know about the Production Studio phase.'
       },
       {
         id: 'script-editing-guide',

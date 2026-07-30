@@ -33,6 +33,7 @@ import {
   getCompletedSteps,
 } from '@/config/nav/workflowGuideConfig'
 import { type WorkflowPhase } from '@/config/nav/sidebarConfig'
+import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 
 // Icon map for dynamic rendering
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -279,8 +280,8 @@ export function WorkflowGuidePanel({
   
   // Phase display name
   const phaseDisplayName: Record<WorkflowPhase, string> = {
-    blueprint: 'Blueprint',
-    production: 'Production',
+    blueprint: STUDIO_DISPLAY_NAMES.blueprint,
+    production: STUDIO_DISPLAY_NAMES.production,
     'screening-room': 'Screening Room',
     'final-cut': 'Screening Room',
     premiere: 'Screening Room',

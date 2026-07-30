@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { type ProTip, type ProTipStatus, getProTipsForPhase } from '@/config/nav/proTipsConfig'
+import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 import { type WorkflowPhase } from '@/config/nav/sidebarConfig'
 
 interface ProTipItemProps {
@@ -156,8 +157,8 @@ export function ProTipsChecklist({
   
   // Get phase display name
   const phaseDisplayName = {
-    blueprint: 'Blueprint',
-    production: 'Production',
+    blueprint: STUDIO_DISPLAY_NAMES.blueprint,
+    production: STUDIO_DISPLAY_NAMES.production,
     'screening-room': 'Screening Room',
     'final-cut': 'Screening Room',
     premiere: 'Screening Room',

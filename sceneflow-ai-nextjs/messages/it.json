@@ -573,7 +573,7 @@
       "tagline": "Un unico studio. Automazione guidata, oppure una produttività elevata se conosci già lo stack.",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "Piano strutturato della storia"
         },
         {
@@ -639,7 +639,7 @@
       },
       {
         "id": "progetto",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "Sviluppo della storia",
         "description": "Trasforma i concetti in trattamenti strutturati comprensivi di logline, snodi narrativi, personaggi e tono. Esegui Audience Resonance e collabora prima di procedere al rendering pesante.",
         "keySteps": [
