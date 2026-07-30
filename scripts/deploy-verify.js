@@ -113,7 +113,7 @@ async function main() {
         Array.isArray(productionShowcase.screeningRoomPlaceholders) &&
         productionShowcase.screeningRoomPlaceholders.join(',') ===
           'drama,animation,podcast,training,scifi,documentary' &&
-        productionShowcase.mediaTabs === 'workflow-screening-room'
+        productionShowcase.mediaTabs === 'screening-room-only'
       const heroVideoLocales = heroVideo.availableLocales
       const heroVideoOk =
         Array.isArray(heroVideoLocales) &&

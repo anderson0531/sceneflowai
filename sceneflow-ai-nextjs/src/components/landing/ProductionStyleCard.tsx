@@ -23,10 +23,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { MultiLanguageVideoPlayer } from '@/components/landing/MultiLanguageVideoPlayer'
 import { ScreeningRoomPreview } from '@/components/landing/ScreeningRoomPreview'
-import type { VideoLocale, VideoLocaleId } from '@/config/landing/videoLocales'
 import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
 
 export type SolutionPillar = {
@@ -158,11 +155,6 @@ export function ProductionStyleCard({
   index,
   workflowLabel,
   ctaLabel,
-  videoLocales,
-  defaultVideoLocaleId,
-  videoComingSoonLabel,
-  videoSoonLabel,
-  introVideoLabel,
   screeningRoomLabel,
   frictionLabel,
   solutionPillarLabel,
@@ -174,11 +166,6 @@ export function ProductionStyleCard({
   index: number
   workflowLabel: string
   ctaLabel: string
-  videoLocales?: VideoLocale[]
-  defaultVideoLocaleId?: VideoLocaleId
-  videoComingSoonLabel?: string
-  videoSoonLabel?: string
-  introVideoLabel?: string
   screeningRoomLabel?: string
   frictionLabel?: string
   solutionPillarLabel?: string
@@ -188,7 +175,6 @@ export function ProductionStyleCard({
 }) {
   const style = CARD_STYLES[card.id] ?? FALLBACK_STYLE
   const Icon = style.icon
-  const [activeMediaTab, setActiveMediaTab] = useState<'workflow' | 'screening'>('workflow')
   const [mediaPanelOpen, setMediaPanelOpen] = useState(false)
 
   const startProduction = () => {
@@ -234,8 +220,8 @@ export function ProductionStyleCard({
         >
           <span>
             {mediaPanelOpen
-              ? (hideMediaPanelLabel ?? 'Hide Solutions & Screening Room')
-              : (showMediaPanelLabel ?? 'Show Solutions & Screening Room')}
+              ? (hideMediaPanelLabel ?? 'Hide Screening Room')
+              : (showMediaPanelLabel ?? 'Show Screening Room')}
           </span>
           {mediaPanelOpen ? (
             <ChevronUp className="h-4 w-4 shrink-0 text-gray-400" />
@@ -245,45 +231,15 @@ export function ProductionStyleCard({
         </button>
 
         {mediaPanelOpen ? (
-          <Tabs
-            value={activeMediaTab}
-            onValueChange={(value) => setActiveMediaTab(value as 'workflow' | 'screening')}
-            className="w-full"
-          >
-            <TabsList className="mb-3 flex h-auto w-full gap-1 border border-gray-700/50 bg-gray-900/60 p-1">
-              <TabsTrigger
-                value="workflow"
-                className="min-w-0 flex-1 truncate px-2 py-2 text-xs data-[state=active]:bg-indigo-600 data-[state=active]:text-white sm:text-sm"
-              >
-                {introVideoLabel ?? 'Solutions'}
-              </TabsTrigger>
-              <TabsTrigger
-                value="screening"
-                className="min-w-0 flex-1 truncate px-2 py-2 text-xs data-[state=active]:bg-indigo-600 data-[state=active]:text-white sm:text-sm"
-              >
-                {screeningRoomLabel ?? 'Screening Room'}
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="workflow" className="mt-0 focus-visible:outline-none">
-              <MultiLanguageVideoPlayer
-                locales={videoLocales ?? []}
-                defaultLocaleId={defaultVideoLocaleId ?? 'en'}
-                comingSoonLabel={videoComingSoonLabel ?? ''}
-                soonLabel={videoSoonLabel ?? ''}
-                title={card.title}
-                accentGradient={style.ctaGradient}
-                fullBleedOnMobile
-              />
-            </TabsContent>
-
-            <TabsContent value="screening" className="mt-0 focus-visible:outline-none">
-              <ScreeningRoomPreview
-                previewTitle={card.screeningRoomPreview}
-                embedSlug={screeningEmbedSlug}
-              />
-            </TabsContent>
-          </Tabs>
+          <div className="w-full">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+              {screeningRoomLabel ?? 'Screening Room'}
+            </p>
+            <ScreeningRoomPreview
+              previewTitle={card.screeningRoomPreview}
+              embedSlug={screeningEmbedSlug}
+            />
+          </div>
         ) : null}
       </div>
 
