@@ -109,7 +109,8 @@ async function main() {
         animationShowcase.includes('es') &&
         Array.isArray(productionShowcase.screeningRoomPlaceholders) &&
         productionShowcase.screeningRoomPlaceholders.join(',') ===
-          'drama,animation,podcast,training'
+          'drama,animation,podcast,training' &&
+        productionShowcase.mediaTabs === 'workflow-screening-room'
       const heroVideoLocales = heroVideo.availableLocales
       const heroVideoOk =
         Array.isArray(heroVideoLocales) &&
