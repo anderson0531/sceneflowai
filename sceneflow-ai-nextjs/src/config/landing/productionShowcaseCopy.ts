@@ -18,17 +18,51 @@ export const PRODUCTION_SHOWCASE_COPY = {
   videoSoon: 'Soon',
   introVideoLabel: 'Solutions',
   screeningRoomLabel: 'Screening Room',
+  frictionLabel: 'The Friction',
+  solutionPillarLabel: 'The SceneFlow Solution',
   cards: [
     {
       id: 'drama',
       title: 'The Cinematic Drama',
-      subtitle: '10-episode thriller with locked characters',
+      subtitle: 'Turn narrative vision into publish-ready films—without fighting the tools.',
       badge: 'Series-Ready',
-      workflow: [
-        'Series Studio locks protagonist across 10 episodes',
-        'Designer Mode: Photorealistic or Cinematic Noir',
-        'Reference Library ensures visual continuity',
-        'Export 4K Widescreen or 9:16 Social Thrillers',
+      solutionPillars: [
+        {
+          title: 'Visual & Character Consistency',
+          frictionHeadline: 'Character Drift & Wobbly Sets.',
+          friction:
+            'Generative models reset with every shot—causing character faces, outfits, and lighting to morph continuously across scene cuts.',
+          solutionHeadline: 'Locked Asset Blueprints.',
+          solution:
+            'Define master character profiles, environments, and visual styles up front in Blueprint Studio. SceneFlow enforces visual identity across every render to preserve narrative immersion.',
+        },
+        {
+          title: 'Narrative Pacing & Scene Control',
+          frictionHeadline: 'The 5-Second Clip Trap.',
+          friction:
+            'Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.',
+          solutionHeadline: 'Beat-First Storyboarding.',
+          solution:
+            'Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video.',
+        },
+        {
+          title: 'Dialogue & Audio Alignment',
+          frictionHeadline: 'Unconvincing Dialogue.',
+          friction:
+            'Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.',
+          solutionHeadline: 'Integrated Voice & Sync Engine.',
+          solution:
+            'Dynamic voice performance and precise lip-sync are baked directly into the video pipeline—delivering believable dialogue without external post-production passes.',
+        },
+        {
+          title: 'Workflow Friction & Reroll Fatigue',
+          frictionHeadline: 'Asset Chaos & Endless Rerolls.',
+          friction:
+            'Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.',
+          solutionHeadline: 'Automated Studio Pipeline.',
+          solution:
+            'From concept to final master MP4 in one unified platform. Blueprint Studio handles story setup, Production Studio automates rendering, and Screening Room delivers your final export.',
+        },
       ],
       tools: "Series Studio → Writer's Room → Visualizer",
       benefit: 'No character drift across episodes',

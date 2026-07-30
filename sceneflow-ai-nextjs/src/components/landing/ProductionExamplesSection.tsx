@@ -68,6 +68,8 @@ export default function ProductionExamplesSection() {
               videoSoonLabel={t('videoSoon')}
               introVideoLabel={t('introVideoLabel')}
               screeningRoomLabel={t('screeningRoomLabel')}
+              frictionLabel={t('frictionLabel')}
+              solutionPillarLabel={t('solutionPillarLabel')}
               screeningEmbedSlug={getProductionShowcaseScreeningSlug(card.id)}
             />
           ))}
