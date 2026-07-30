@@ -68,9 +68,9 @@ export const PRODUCTION_SHOWCASE_COPY = {
     },
     {
       id: 'animation',
-      title: 'The Animated Comedy Pipeline',
+      title: 'You Write the Joke. SceneFlow Animates the Punchline.',
       subtitle:
-        'Deliver wild slapstick, perfect comedic timing, and rock-solid cartoon styles.',
+        'Eliminate style drift, stiff movement, and broken timing. Turn hilarious scripts into fully animated, voice-synced comedy episodes in one seamless studio.',
       badge: 'Multi-Style',
       solutionPillars: [
         {

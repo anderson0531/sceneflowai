@@ -171,9 +171,9 @@ describe('Production Examples i18n contract', () => {
 
   it('uses problem-vs-solution pillars on the Animated Comedy card', () => {
     const animation = enMessages.productionShowcase.cards.find((card) => card.id === 'animation')!
-    expect(animation.title).toBe('The Animated Comedy Pipeline')
+    expect(animation.title).toBe('You Write the Joke. SceneFlow Animates the Punchline.')
     expect(animation.subtitle).toBe(
-      'Deliver wild slapstick, perfect comedic timing, and rock-solid cartoon styles.'
+      'Eliminate style drift, stiff movement, and broken timing. Turn hilarious scripts into fully animated, voice-synced comedy episodes in one seamless studio.'
     )
     expect(animation.solutionPillars).toHaveLength(4)
     expect(animation.solutionPillars?.[0]?.title).toBe('Stylistic Consistency')
