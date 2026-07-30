@@ -2104,11 +2104,11 @@
   "keyFeatures": {
     "badge": "ฟีเจอร์หลัก",
     "title": "ฟีเจอร์ที่ทำให้ SceneFlow แตกต่าง",
-    "subtitle": "Create วางรากฐาน — คีย์ งบ Series และ Blueprint Direct คือที่ที่คุณเขียน อ้างอิง สร้าง และรีวิว Ship ส่งมอบ master เวอร์ชัน โปรโม และชุด YouTube ที่พร้อมเผยแพร่",
+    "subtitle": "Plan วางรากฐาน — คีย์ งบ Series และ Blueprint Create คือที่ที่คุณเขียน อ้างอิง สร้าง และรีวิว Release ส่งมอบ master เวอร์ชัน โปรโม และชุด YouTube ที่พร้อมเผยแพร่",
     "categories": [
       {
         "id": "create",
-        "label": "สร้างสรรค์",
+        "label": "วางแผน",
         "features": [
           {
             "icon": "byok",
@@ -2134,7 +2134,7 @@
       },
       {
         "id": "direct",
-        "label": "กำกับ",
+        "label": "สร้างสรรค์",
         "features": [
           {
             "icon": "writersRoom",
@@ -2175,7 +2175,7 @@
       },
       {
         "id": "ship",
-        "label": "ส่งมอบ",
+        "label": "เผยแพร่",
         "features": [
           {
             "icon": "upscale",
