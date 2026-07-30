@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
+  AlertCircle,
   ArrowRight,
   Clapperboard,
   GraduationCap,
@@ -107,19 +108,22 @@ function SolutionPillarBody({
 }) {
   return (
     <div className="space-y-3 px-1 pb-1">
-      <div className="space-y-1.5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-rose-300/90">
+      <div className="rounded-xl border border-rose-500/20 bg-rose-500/[0.06] p-3">
+        <div className="mb-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-rose-300">
+          <AlertCircle className="h-4 w-4 shrink-0" />
           {frictionLabel}
-        </p>
+        </div>
         <p className="text-sm leading-relaxed text-gray-300">
           <span className="font-semibold text-white">{pillar.frictionHeadline}</span>{' '}
           {pillar.friction}
         </p>
       </div>
-      <div className="space-y-1.5 border-t border-gray-700/40 pt-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-indigo-300/90">
+
+      <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/[0.06] p-3">
+        <div className="mb-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-300">
+          <Sparkles className="h-4 w-4 shrink-0" />
           {solutionPillarLabel}
-        </p>
+        </div>
         <p className="text-sm leading-relaxed text-gray-300">
           <span className="font-semibold text-white">{pillar.solutionHeadline}</span>{' '}
           {pillar.solution}
