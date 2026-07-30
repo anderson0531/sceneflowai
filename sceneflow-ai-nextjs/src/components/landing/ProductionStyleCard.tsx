@@ -12,6 +12,12 @@ import {
   Target,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MultiLanguageVideoPlayer } from '@/components/landing/MultiLanguageVideoPlayer'
 import { ScreeningRoomPreview } from '@/components/landing/ScreeningRoomPreview'
@@ -91,20 +97,17 @@ const FALLBACK_STYLE: CardStyle = {
   ctaGradient: 'from-slate-500 to-slate-600',
 }
 
-function SolutionPillarBlock({
+function SolutionPillarBody({
   pillar,
   frictionLabel,
   solutionPillarLabel,
-  accentClassName,
 }: {
   pillar: SolutionPillar
   frictionLabel: string
   solutionPillarLabel: string
-  accentClassName: string
 }) {
   return (
-    <div className="space-y-2 rounded-lg border border-gray-700/30 bg-gray-900/40 p-3">
-      <p className={`text-sm font-semibold ${accentClassName}`}>{pillar.title}</p>
+    <div className="space-y-3 px-1 pb-1">
       <div className="space-y-1.5">
         <p className="text-xs font-semibold uppercase tracking-wide text-rose-300/90">
           {frictionLabel}
@@ -241,17 +244,28 @@ export function ProductionStyleCard({
       <div className="mb-4 space-y-2">
         <p className="text-xs uppercase tracking-wider text-gray-500">{workflowLabel}</p>
         {card.solutionPillars && card.solutionPillars.length > 0 ? (
-          <div className="space-y-3">
+          <Accordion type="single" collapsible className="space-y-2">
             {card.solutionPillars.map((pillar) => (
-              <SolutionPillarBlock
+              <AccordionItem
                 key={pillar.title}
-                pillar={pillar}
-                frictionLabel={frictionLabel ?? 'The Friction'}
-                solutionPillarLabel={solutionPillarLabel ?? 'The SceneFlow Solution'}
-                accentClassName={style.accent}
-              />
+                value={pillar.title}
+                className="overflow-hidden rounded-lg border border-gray-700/30 bg-gray-900/40 px-3 border-b-0"
+              >
+                <AccordionTrigger
+                  className={`py-3 text-sm font-semibold hover:no-underline ${style.accent}`}
+                >
+                  {pillar.title}
+                </AccordionTrigger>
+                <AccordionContent>
+                  <SolutionPillarBody
+                    pillar={pillar}
+                    frictionLabel={frictionLabel ?? 'The Friction'}
+                    solutionPillarLabel={solutionPillarLabel ?? 'The SceneFlow Solution'}
+                  />
+                </AccordionContent>
+              </AccordionItem>
             ))}
-          </div>
+          </Accordion>
         ) : (
           <ol className="space-y-2">
             {(card.workflow ?? []).map((step, stepIndex) => (

@@ -1733,7 +1733,7 @@
           },
           {
             "title": "Narrative Pacing & Scene Control",
-            "frictionHeadline": "The 5-Second Clip Trap.",
+            "frictionHeadline": "The 10-Second Clip Trap.",
             "friction": "Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.",
             "solutionHeadline": "Beat-First Storyboarding.",
             "solution": "Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video."

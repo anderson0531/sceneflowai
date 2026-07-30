@@ -38,7 +38,7 @@ export const PRODUCTION_SHOWCASE_COPY = {
         },
         {
           title: 'Narrative Pacing & Scene Control',
-          frictionHeadline: 'The 5-Second Clip Trap.',
+          frictionHeadline: 'The 10-Second Clip Trap.',
           friction:
             'Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.',
           solutionHeadline: 'Beat-First Storyboarding.',
