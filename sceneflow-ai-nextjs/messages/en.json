@@ -1719,8 +1719,8 @@
     "cards": [
       {
         "id": "drama",
-        "title": "The Cinematic Drama",
-        "subtitle": "Turn narrative vision into publish-ready films—without fighting the tools.",
+        "title": "Cinematic AI Drama. Zero Character Drift.",
+        "subtitle": "Eliminate the morphing characters, broken dialogue, and endless rerolls. Build seamless, multi-character long-form stories with complete visual continuity.",
         "badge": "Series-Ready",
         "solutionPillars": [
           {
@@ -1752,7 +1752,6 @@
             "solution": "From concept to final master MP4 in one unified platform. Blueprint Studio handles story setup, Production Studio automates rendering, and Screening Room delivers your final export."
           }
         ],
-        "benefit": "No character drift across episodes",
         "screeningRoomPreview": "The Cinematic Drama — Screening Room Preview"
       },
       {

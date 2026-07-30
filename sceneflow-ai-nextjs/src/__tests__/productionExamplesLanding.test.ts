@@ -124,10 +124,12 @@ describe('Production Examples i18n contract', () => {
         'title',
         'subtitle',
         'badge',
-        'benefit',
         'screeningRoomPreview',
       ] as const) {
         expect(card[key], `${card.id} ${key}`).toBeTruthy()
+      }
+      if (card.benefit) {
+        expect(card.benefit, `${card.id} benefit`).toBeTruthy()
       }
       if ('solutionPillars' in card && card.solutionPillars) {
         expect(card.solutionPillars.length, `${card.id} solutionPillars`).toBe(4)
@@ -156,13 +158,15 @@ describe('Production Examples i18n contract', () => {
 
   it('uses problem-vs-solution pillars on the Cinematic Drama card', () => {
     const drama = enMessages.productionShowcase.cards.find((card) => card.id === 'drama')!
+    expect(drama.title).toBe('Cinematic AI Drama. Zero Character Drift.')
     expect(drama.subtitle).toBe(
-      'Turn narrative vision into publish-ready films—without fighting the tools.'
+      'Eliminate the morphing characters, broken dialogue, and endless rerolls. Build seamless, multi-character long-form stories with complete visual continuity.'
     )
     expect(drama.solutionPillars).toHaveLength(4)
     expect(drama.solutionPillars?.[0]?.title).toBe('Visual & Character Consistency')
     expect(drama.solutionPillars?.[1]?.frictionHeadline).toBe('The 10-Second Clip Trap.')
     expect(drama).not.toHaveProperty('workflow')
+    expect(drama).not.toHaveProperty('benefit')
   })
 
   it('keeps card ids stable so ?production= values do not silently change', () => {
