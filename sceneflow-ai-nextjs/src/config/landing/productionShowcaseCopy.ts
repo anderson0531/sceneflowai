@@ -114,16 +114,48 @@ export const PRODUCTION_SHOWCASE_COPY = {
     },
     {
       id: 'podcast',
-      title: 'The AI-First Podcast',
-      subtitle: '20-episode educational series',
-      badge: 'Multi-Episode',
-      workflow: [
-        'Shared Reference Library for 20 episodes',
-        'Resonance tool identifies pacing issues',
-        'Concept Art or Digital Illustration backgrounds',
-        '800+ voices with cloning for your host',
+      title: 'You Host the Conversation. SceneFlow Produces the Show.',
+      subtitle:
+        'Eliminate static avatars and manual video editing. Transform scripts or raw audio into multi-angle, broadcast-ready video podcasts in one automated pipeline.',
+      badge: 'Broadcast-Ready',
+      solutionPillars: [
+        {
+          title: 'Multi-Speaker & Avatar Identity',
+          frictionHeadline: 'Robotic Avatars & Lost Identity',
+          friction:
+            'Generated hosts shift appearances mid-episode, stare blankly at the camera, or fail to exhibit natural human micro-expressions while listening.',
+          solutionHeadline: 'Locked Host & Guest Profiles',
+          solution:
+            'Establish persistent visual identities for your co-hosts and recurring guests. SceneFlow maintains speaker consistency, natural eye contact, and realistic conversational body language throughout long-form discussions.',
+        },
+        {
+          title: 'Multi-Camera Direction & Pacing',
+          frictionHeadline: 'Monotonous Single-Angles',
+          friction:
+            'Static talking-head shots lose audience retention quickly, while manual camera switching across a 30-minute timeline requires tedious frame-by-frame cuts.',
+          solutionHeadline: 'Automated Multi-Cam Switching',
+          solution:
+            'SceneFlow analyzes conversation flow to automatically toggle between host close-ups, guest reactions, and wide-angle studio shots, delivering professional broadcast pacing without manual timeline editing.',
+        },
+        {
+          title: 'Context-Aware B-Roll & Visuals',
+          frictionHeadline: 'Visual Monotony & B-Roll Bottlenecks',
+          friction:
+            'Finding, generating, and timing relevant visual aids or B-roll clips for every mentioned topic eats up hours of post-production.',
+          solutionHeadline: 'Auto-Generated B-Roll Cutaways',
+          solution:
+            'As your hosts discuss topics, SceneFlow automatically generates contextual cinematic visuals, graphics, and scene cutaways timed precisely to the audio transcript.',
+        },
+        {
+          title: 'Long-Form Audio & Video Sync',
+          frictionHeadline: 'Audio Drift & Long-Form Render Fatigue',
+          friction:
+            'Syncing generative video to 20+ minutes of raw audio leads to lip-sync drift, rendering errors, and fragmented file management.',
+          solutionHeadline: 'End-to-End Podcast Pipeline',
+          solution:
+            'Drop in your raw audio track or script, and SceneFlow handles avatar alignment, camera cuts, B-roll integration, and final master MP4 export in one smooth, automated studio pass.',
+        },
       ],
-      benefit: 'One voice, 20 episodes, zero drift',
       screeningRoomPreview: 'The AI-First Podcast — Screening Room Preview',
     },
     {

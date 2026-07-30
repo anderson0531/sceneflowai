@@ -182,6 +182,22 @@ describe('Production Examples i18n contract', () => {
     expect(animation).not.toHaveProperty('benefit')
   })
 
+  it('uses problem-vs-solution pillars on the AI-First Podcast card', () => {
+    const podcast = enMessages.productionShowcase.cards.find((card) => card.id === 'podcast')!
+    expect(podcast.title).toBe('You Host the Conversation. SceneFlow Produces the Show.')
+    expect(podcast.subtitle).toBe(
+      'Eliminate static avatars and manual video editing. Transform scripts or raw audio into multi-angle, broadcast-ready video podcasts in one automated pipeline.'
+    )
+    expect(podcast.solutionPillars).toHaveLength(4)
+    expect(podcast.solutionPillars?.[0]?.title).toBe('Multi-Speaker & Avatar Identity')
+    expect(podcast.solutionPillars?.[0]?.frictionHeadline).toBe('Robotic Avatars & Lost Identity')
+    expect(podcast.solutionPillars?.[0]?.solutionHeadline).toBe('Locked Host & Guest Profiles')
+    expect(podcast.solutionPillars?.[3]?.title).toBe('Long-Form Audio & Video Sync')
+    expect(podcast.solutionPillars?.[3]?.solutionHeadline).toBe('End-to-End Podcast Pipeline')
+    expect(podcast).not.toHaveProperty('workflow')
+    expect(podcast).not.toHaveProperty('benefit')
+  })
+
   it('keeps card ids stable so ?production= values do not silently change', () => {
     expect(enMessages.productionShowcase.cards.map((card) => card.id)).toEqual([
       'drama',
