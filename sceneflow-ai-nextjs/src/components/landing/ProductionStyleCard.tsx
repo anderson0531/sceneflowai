@@ -39,7 +39,6 @@ export type ProductionStyleCardData = {
   badge: string
   workflow?: string[]
   solutionPillars?: SolutionPillar[]
-  tools: string
   benefit: string
   screeningRoomPreview: string
 }
@@ -134,7 +133,6 @@ export function ProductionStyleCard({
   card,
   index,
   workflowLabel,
-  toolsLabel,
   ctaLabel,
   videoLocales,
   defaultVideoLocaleId,
@@ -149,7 +147,6 @@ export function ProductionStyleCard({
   card: ProductionStyleCardData
   index: number
   workflowLabel: string
-  toolsLabel: string
   ctaLabel: string
   videoLocales?: VideoLocale[]
   defaultVideoLocaleId?: VideoLocaleId
@@ -280,11 +277,6 @@ export function ProductionStyleCard({
             ))}
           </ol>
         )}
-      </div>
-
-      <div className="mb-4 rounded-lg border border-gray-700/30 bg-gray-900/50 px-3 py-2">
-        <p className="mb-1 text-xs text-gray-500">{toolsLabel}</p>
-        <p className={`text-xs font-medium ${style.accent}`}>{card.tools}</p>
       </div>
 
       <div className="mt-auto border-t border-white/10 pt-4">
