@@ -5,6 +5,8 @@ export const PRODUCTION_SHOWCASE_SCREENING_SLUGS = {
   animation: '',
   podcast: '',
   training: '',
+  scifi: '',
+  documentary: '',
 } as const
 
 export type ProductionShowcaseScreeningCardId =

@@ -1864,6 +1864,80 @@
           }
         ],
         "screeningRoomPreview": "The Corporate Training — Screening Room Preview"
+      },
+      {
+        "id": "scifi",
+        "title": "Build Impossible Worlds. Direct Uncompromised Sci-Fi.",
+        "subtitle": "Render complex visual effects, futuristic environments, and alien character designs with frame-by-frame visual continuity—all within a single automated pipeline.",
+        "badge": "VFX-Ready",
+        "solutionPillars": [
+          {
+            "title": "Environmental & Architecture Continuity",
+            "frictionHeadline": "Geometry & Scale Glitches",
+            "friction": "Futuristic cities, neon landscapes, and alien starships constantly warp, shift textures, or dissolve into random visual noise between camera cuts.",
+            "solutionHeadline": "World-State Locking",
+            "solution": "Define key architecture, lighting schemes, and environmental parameters in Blueprint Studio. SceneFlow locks spatial geometry so your setting stays consistent from wide establishing shots to tight corridor fights."
+          },
+          {
+            "title": "Alien & Creature Design Integrity",
+            "frictionHeadline": "Morphing Character Designs",
+            "friction": "Non-humanoid species, cyborgs, and heavy-prosthetic characters drift wildly in appearance every time a new angle or shot is generated.",
+            "solutionHeadline": "Locked Alien Asset Profiles",
+            "solution": "Anchor non-human anatomy, armor details, and mechanical accents. Maintain character recognition across every high-concept scene without custom 3D modeling pipelines."
+          },
+          {
+            "title": "VFX Action & High-Speed Physics",
+            "frictionHeadline": "Melting Motion in Action Sequences",
+            "friction": "High-speed space dogfights, energy weapon fires, and explosions often cause generative models to smear frames or produce messy visual artifacts.",
+            "solutionHeadline": "Action & FX Motion Anchoring",
+            "solution": "Direct dynamic choreography, fast camera movements, and particle-heavy action beats while preserving clean edges and realistic trajectory physics."
+          },
+          {
+            "title": "Audio-Visual World-Building",
+            "frictionHeadline": "Flat Audio in High-Concept Worlds",
+            "friction": "Futuristic weapons, ambient starship hums, and alien speech patterns feel disconnected when manually fitted over silent generated clips.",
+            "solutionHeadline": "Integrated World-Sound & Voice Sync",
+            "solution": "Align custom synthetic dialogue, alien vocalizations, and cinematic sound cues directly within the timeline for an immersive, release-ready master audio mix."
+          }
+        ],
+        "screeningRoomPreview": "Sci-Fi VFX Production — Screening Room Preview"
+      },
+      {
+        "id": "documentary",
+        "title": "Turn Archival Stories into Bestselling Documentaries.",
+        "subtitle": "Recreate historical events, re-enactments, and expert interview setups with authentic period detail, seamless voiceovers, and zero archive licensing fees.",
+        "badge": "Period-Accurate",
+        "solutionPillars": [
+          {
+            "title": "Era-Specific Visual Accuracy",
+            "frictionHeadline": "Anachronistic Artifacts",
+            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
+            "solutionHeadline": "Historical Style Guardrails",
+            "solution": "Set exact temporal parameters—from 1920s film grain to 18th-century wardrobe textures—so every generated scene stays historically authentic."
+          },
+          {
+            "title": "Archival Cutaways & B-Roll Engine",
+            "frictionHeadline": "Visual Monotony in Long Voiceovers",
+            "friction": "Pairing long-form narrator audio with static stock images leads to rapid viewer drop-off during deep dives.",
+            "solutionHeadline": "Transcript-Driven B-Roll Engine",
+            "solution": "As your narrator discusses historical facts, SceneFlow automatically generates timed cinematic re-enactments, document overlays, and archival-style cutaways tied directly to the audio transcript."
+          },
+          {
+            "title": "Interview & Talking-Head Realism",
+            "frictionHeadline": "Uncanny Expert Witnesses",
+            "friction": "Generated historians, investigators, or witnesses often look artificial, with floating jaw movements and unnatural eye contact.",
+            "solutionHeadline": "Locked Expert Profiles & Vocal Sync",
+            "solution": "Maintain realistic, trustworthy interview setups with natural micro-expressions, accurate lip-sync, and consistent expert identities across multi-part series."
+          },
+          {
+            "title": "Episodic Pacing & Narrative Continuity",
+            "frictionHeadline": "Fragmented Timeline Editing",
+            "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
+            "solutionHeadline": "Beat-First Documentary Pipeline",
+            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Studio, delivering a fully assembled master file in one seamless pass."
+          }
+        ],
+        "screeningRoomPreview": "Documentary Production — Screening Room Preview"
       }
     ]
   },

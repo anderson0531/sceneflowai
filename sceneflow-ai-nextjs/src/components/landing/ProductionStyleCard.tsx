@@ -6,9 +6,11 @@ import {
   AlertCircle,
   ArrowRight,
   Clapperboard,
+  Film,
   GraduationCap,
   Mic,
   Palette,
+  Rocket,
   Sparkles,
   Target,
 } from 'lucide-react'
@@ -85,6 +87,22 @@ const CARD_STYLES: Record<string, CardStyle> = {
     accent: 'text-emerald-400',
     badge: 'bg-emerald-500/20 text-emerald-400',
     ctaGradient: 'from-emerald-500 to-teal-500',
+  },
+  scifi: {
+    icon: Rocket,
+    surface: 'from-violet-500/10 to-indigo-500/5',
+    border: 'border-violet-500/30',
+    accent: 'text-violet-400',
+    badge: 'bg-violet-500/20 text-violet-400',
+    ctaGradient: 'from-violet-500 to-indigo-500',
+  },
+  documentary: {
+    icon: Film,
+    surface: 'from-rose-500/10 to-amber-500/5',
+    border: 'border-rose-500/30',
+    accent: 'text-rose-400',
+    badge: 'bg-rose-500/20 text-rose-400',
+    ctaGradient: 'from-rose-500 to-amber-500',
   },
 }
 

@@ -113,10 +113,10 @@ describe('Production Examples i18n contract', () => {
     expect(enMessages.productionShowcase.subtitle).toContain('SceneFlow AI Studio')
   })
 
-  it('ships exactly four fully populated production cards', () => {
+  it('ships exactly six fully populated production cards', () => {
     const { cards } = enMessages.productionShowcase
 
-    expect(cards).toHaveLength(4)
+    expect(cards).toHaveLength(6)
 
     for (const card of cards) {
       for (const key of [
@@ -216,12 +216,40 @@ describe('Production Examples i18n contract', () => {
     expect(training).not.toHaveProperty('benefit')
   })
 
+  it('uses problem-vs-solution pillars on the Sci-Fi card', () => {
+    const scifi = enMessages.productionShowcase.cards.find((card) => card.id === 'scifi')!
+    expect(scifi.title).toBe('Build Impossible Worlds. Direct Uncompromised Sci-Fi.')
+    expect(scifi.subtitle).toContain('frame-by-frame visual continuity')
+    expect(scifi.solutionPillars).toHaveLength(4)
+    expect(scifi.solutionPillars?.[0]?.title).toBe('Environmental & Architecture Continuity')
+    expect(scifi.solutionPillars?.[0]?.solutionHeadline).toBe('World-State Locking')
+    expect(scifi.solutionPillars?.[3]?.title).toBe('Audio-Visual World-Building')
+    expect(scifi.solutionPillars?.[3]?.solutionHeadline).toBe('Integrated World-Sound & Voice Sync')
+    expect(scifi).not.toHaveProperty('workflow')
+    expect(scifi).not.toHaveProperty('benefit')
+  })
+
+  it('uses problem-vs-solution pillars on the Documentary card', () => {
+    const documentary = enMessages.productionShowcase.cards.find((card) => card.id === 'documentary')!
+    expect(documentary.title).toBe('Turn Archival Stories into Bestselling Documentaries.')
+    expect(documentary.subtitle).toContain('zero archive licensing fees')
+    expect(documentary.solutionPillars).toHaveLength(4)
+    expect(documentary.solutionPillars?.[0]?.title).toBe('Era-Specific Visual Accuracy')
+    expect(documentary.solutionPillars?.[0]?.solutionHeadline).toBe('Historical Style Guardrails')
+    expect(documentary.solutionPillars?.[3]?.title).toBe('Episodic Pacing & Narrative Continuity')
+    expect(documentary.solutionPillars?.[3]?.solutionHeadline).toBe('Beat-First Documentary Pipeline')
+    expect(documentary).not.toHaveProperty('workflow')
+    expect(documentary).not.toHaveProperty('benefit')
+  })
+
   it('keeps card ids stable so ?production= values do not silently change', () => {
     expect(enMessages.productionShowcase.cards.map((card) => card.id)).toEqual([
       'drama',
       'animation',
       'podcast',
       'training',
+      'scifi',
+      'documentary',
     ])
   })
 
@@ -424,8 +452,8 @@ describe('Production showcase videos', () => {
     }
   })
 
-  it('leaves podcast and training without a player until dubs exist', () => {
-    for (const cardId of ['podcast', 'training']) {
+  it('leaves cards without produced dubs without a player until videos exist', () => {
+    for (const cardId of ['podcast', 'training', 'scifi', 'documentary']) {
       expect(hasProductionShowcaseVideo(cardId), `${cardId} should have no video`).toBe(false)
       expect(getProductionShowcaseVideoLocales(cardId)).toHaveLength(7)
     }
