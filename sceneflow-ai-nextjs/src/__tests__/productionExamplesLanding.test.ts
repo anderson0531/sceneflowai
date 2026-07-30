@@ -98,8 +98,6 @@ describe('Production Examples i18n contract', () => {
       'screeningRoomLabel',
       'frictionLabel',
       'solutionPillarLabel',
-      'showMediaPanel',
-      'hideMediaPanel',
       'showSolutionsSection',
       'hideSolutionsSection',
     ] as const) {
@@ -538,17 +536,15 @@ describe('Production showcase videos', () => {
     }
   })
 
-  it('mounts collapsible Solutions and Screening Room tabs on every production card', () => {
+  it('mounts always-visible Solutions and Screening Room tabs on every production card', () => {
     const card = readSource('src/components/landing/ProductionStyleCard.tsx')
     const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
 
-    expect(card).toContain('mediaPanelOpen')
+    expect(card).not.toContain('mediaPanelOpen')
     expect(card).toContain('solutionsSectionOpen')
-    expect(card).toContain('useState(false)')
-    expect(card).toContain('aria-expanded={mediaPanelOpen}')
     expect(card).toContain('aria-expanded={solutionsSectionOpen}')
-    expect(card).toContain('showMediaPanelLabel')
-    expect(card).toContain('hideMediaPanelLabel')
+    expect(card).not.toContain('showMediaPanelLabel')
+    expect(card).not.toContain('hideMediaPanelLabel')
     expect(card).toContain('showSolutionsSectionLabel')
     expect(card).toContain('hideSolutionsSectionLabel')
     expect(card).toContain('TabsTrigger')
@@ -566,8 +562,8 @@ describe('Production showcase videos', () => {
     expect(card).toContain('solutionPillars')
     expect(section).toContain('frictionLabel')
     expect(section).toContain('solutionPillarLabel')
-    expect(section).toContain("t('showMediaPanel')")
-    expect(section).toContain("t('hideMediaPanel')")
+    expect(section).not.toContain("t('showMediaPanel')")
+    expect(section).not.toContain("t('hideMediaPanel')")
     expect(section).toContain("t('showSolutionsSection')")
     expect(section).toContain("t('hideSolutionsSection')")
     expect(section).toContain('getProductionShowcaseScreeningSlug')
