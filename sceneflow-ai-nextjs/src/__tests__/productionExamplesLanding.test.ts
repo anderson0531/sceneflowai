@@ -474,6 +474,8 @@ describe('Production showcase videos', () => {
     expect(card).toContain('type="single"')
     expect(card).toContain('collapsible')
     expect(card).toContain('SolutionPillarBody')
+    expect(card).toContain('border-rose-500/20')
+    expect(card).toContain('border-indigo-500/20')
     expect(card).toContain('solutionPillars')
     expect(section).toContain('frictionLabel')
     expect(section).toContain('solutionPillarLabel')
