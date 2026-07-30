@@ -364,7 +364,7 @@
   "keyFeatures": {
     "badge": "Key Features",
     "title": "The Features That Set SceneFlow Apart",
-    "subtitle": "Create locks your foundation — keys, budget, series bible, and blueprint. Direct is where you write, reference, generate, and review. Ship delivers masters, versions, promos, and YouTube-ready bundles.",
+    "subtitle": "Plan locks your foundation — keys, budget, series bible, and blueprint. Create is where you write, reference, generate, and review. Release delivers masters, versions, promos, and YouTube-ready bundles.",
     "learnMoreLabel": "Learn more",
     "showLessLabel": "Show less",
     "problemLabel": "The Problem",
@@ -373,7 +373,7 @@
     "categories": [
       {
         "id": "create",
-        "label": "Create",
+        "label": "Plan",
         "features": [
           {
             "icon": "byok",
@@ -419,7 +419,7 @@
       },
       {
         "id": "direct",
-        "label": "Direct",
+        "label": "Create",
         "features": [
           {
             "icon": "writersRoom",
@@ -495,7 +495,7 @@
       },
       {
         "id": "ship",
-        "label": "Ship",
+        "label": "Release",
         "features": [
           {
             "icon": "upscale",

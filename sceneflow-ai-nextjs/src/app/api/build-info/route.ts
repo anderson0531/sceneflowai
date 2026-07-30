@@ -26,7 +26,7 @@ export async function GET() {
       tabs: ['Final Streams', 'Screening', 'Promo', 'YouTube'],
     },
     keyFeatures: {
-      pillars: ['Create', 'Direct', 'Ship'],
+      pillars: ['Plan', 'Create', 'Release'],
       counts: { create: 4, direct: 7, ship: 4 },
       shipHeadline: 'YouTube Publishing',
     },

@@ -92,7 +92,7 @@ async function main() {
         publishing.tabs.includes('YouTube')
       const keyFeaturesOk =
         Array.isArray(keyFeatures.pillars) &&
-        keyFeatures.pillars.join(',') === 'Create,Direct,Ship' &&
+        keyFeatures.pillars.join(',') === 'Plan,Create,Release' &&
         keyFeatures.counts?.direct === 7 &&
         keyFeatures.shipHeadline === 'YouTube Publishing'
       const landingPageOk =

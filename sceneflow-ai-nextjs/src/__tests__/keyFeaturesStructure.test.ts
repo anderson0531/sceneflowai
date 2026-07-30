@@ -41,8 +41,9 @@ const EXPECTED_TITLES: Record<string, string[]> = {
 describe('keyFeatures structure', () => {
   const categories = loadKeyFeaturesCategories()
 
-  it('has Create, Direct, and Ship categories in order', () => {
+  it('has Plan, Create, and Release category labels in order', () => {
     expect(categories.map((c) => c.id)).toEqual(['create', 'direct', 'ship'])
+    expect(categories.map((c) => c.label)).toEqual(['Plan', 'Create', 'Release'])
   })
 
   it('has 4, 7, and 4 features per category', () => {
