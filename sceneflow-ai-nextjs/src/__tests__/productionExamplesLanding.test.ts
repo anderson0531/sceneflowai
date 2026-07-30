@@ -74,10 +74,9 @@ describe('Production Examples landing section', () => {
     expect(section).toContain("t('subtitleTagline')")
   })
 
-  it('stacks production cards in a single column at every breakpoint', () => {
+  it('uses one column on mobile and two columns on wide screens', () => {
     const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
-    expect(section).toContain('grid grid-cols-1 gap-6')
-    expect(section).not.toContain('md:grid-cols-2')
+    expect(section).toContain('grid grid-cols-1 gap-6 md:grid-cols-2')
   })
 })
 
