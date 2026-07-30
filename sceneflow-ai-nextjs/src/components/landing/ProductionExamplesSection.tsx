@@ -53,7 +53,7 @@ export default function ProductionExamplesSection() {
           </p>
         </motion.div>
 
-        <div className="mb-12 grid grid-cols-1 gap-6">
+        <div className="mb-12 grid grid-cols-1 gap-6 md:grid-cols-2">
           {cards.map((card, index) => (
             <ProductionStyleCard
               key={card.id}
