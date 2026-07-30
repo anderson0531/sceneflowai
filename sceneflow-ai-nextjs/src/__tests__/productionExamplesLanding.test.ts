@@ -198,6 +198,24 @@ describe('Production Examples i18n contract', () => {
     expect(podcast).not.toHaveProperty('benefit')
   })
 
+  it('uses problem-vs-solution pillars on the Corporate Training card', () => {
+    const training = enMessages.productionShowcase.cards.find((card) => card.id === 'training')!
+    expect(training.title).toBe(
+      'Enterprise-Grade Training Videos. Pre-Vizualization Produced in Minutes.'
+    )
+    expect(training.subtitle).toBe(
+      'Turn manuals, slides, and compliance docs into engaging, multi-lingual video modules with locked brand identities, flawless lip-sync, and zero studio overhead.'
+    )
+    expect(training.solutionPillars).toHaveLength(4)
+    expect(training.solutionPillars?.[0]?.title).toBe('Presenter & Brand Consistency')
+    expect(training.solutionPillars?.[0]?.frictionHeadline).toBe('Uncanny Avatars & Brand Drift')
+    expect(training.solutionPillars?.[0]?.solutionHeadline).toBe('Locked Executive & Trainer Profiles')
+    expect(training.solutionPillars?.[3]?.title).toBe('Rapid Content Updating')
+    expect(training.solutionPillars?.[3]?.solutionHeadline).toBe('Modular Script Updates')
+    expect(training).not.toHaveProperty('workflow')
+    expect(training).not.toHaveProperty('benefit')
+  })
+
   it('keeps card ids stable so ?production= values do not silently change', () => {
     expect(enMessages.productionShowcase.cards.map((card) => card.id)).toEqual([
       'drama',

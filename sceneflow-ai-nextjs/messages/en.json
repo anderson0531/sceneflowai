@@ -1830,16 +1830,39 @@
       },
       {
         "id": "training",
-        "title": "The Corporate Training",
-        "subtitle": "Research outline to 15-part series",
+        "title": "Enterprise-Grade Training Videos. Pre-Vizualization Produced in Minutes.",
+        "subtitle": "Turn manuals, slides, and compliance docs into engaging, multi-lingual video modules with locked brand identities, flawless lip-sync, and zero studio overhead.",
         "badge": "Global Deploy",
-        "workflow": [
-          "Convert research outline into training modules",
-          "Series Studio manages 15-part curriculum",
-          "70+ language dubbing with automated lip-sync",
-          "One-click global deployment"
+        "solutionPillars": [
+          {
+            "title": "Presenter & Brand Consistency",
+            "frictionHeadline": "Uncanny Avatars & Brand Drift",
+            "friction": "Cheap AI presenters feel robotic and unapproachable, while brand logos, colors, and presenter appearances shift inconsistently across different training modules.",
+            "solutionHeadline": "Locked Executive & Trainer Profiles",
+            "solution": "Establish persistent, natural-looking corporate presenters and lock your brand guidelines. SceneFlow maintains visual identity, corporate styling, and professional delivery across your entire course library."
+          },
+          {
+            "title": "Seamless Global Localization",
+            "frictionHeadline": "Broken Translations & Bad Lip-Sync",
+            "friction": "Localizing training content into 10+ languages usually creates awkward mouth-syncing, robotic voice tracks, and massive re-editing bottlenecks.",
+            "solutionHeadline": "Native Multilingual Sync Engine",
+            "solution": "Translate your entire training series into dozens of languages with natural voice tone, localized text callouts, and frame-accurate lip-syncing—all in a single click."
+          },
+          {
+            "title": "Integrated Visual Aids & Diagrams",
+            "frictionHeadline": "Text-Heavy Bore",
+            "friction": "Videos that are just talking heads quickly lose employee attention, while manually animating process diagrams, screen captures, and bullet callouts takes hours in an editor.",
+            "solutionHeadline": "Contextual Visual & Graphic Overlay",
+            "solution": "As your presenter explains complex workflows or compliance steps, SceneFlow automatically generates timed diagrams, key takeaways, and visual aids directly on screen."
+          },
+          {
+            "title": "Rapid Content Updating",
+            "frictionHeadline": "Expensive Re-Shoots & Render Traps",
+            "friction": "When company policy or product specs change, updating a 2-minute section of a video usually requires rebuilding and re-rendering the entire file.",
+            "solutionHeadline": "Modular Script Updates",
+            "solution": "Edit text directly in the script blueprint to update policies or procedures instantly. SceneFlow re-renders only the changed section while preserving surrounding timing and video style."
+          }
         ],
-        "benefit": "Train worldwide teams instantly",
         "screeningRoomPreview": "The Corporate Training — Screening Room Preview"
       }
     ]
