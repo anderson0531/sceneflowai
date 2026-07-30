@@ -39,11 +39,38 @@ const PERSONA_GRADIENTS: Record<PersonaId, string> = {
   educator: 'from-emerald-500 to-teal-600',
 }
 
+const STORY_BULLET_MARKERS: Record<'problem' | 'solution' | 'outcome', string> = {
+  problem: 'text-rose-400',
+  solution: 'text-indigo-400',
+  outcome: 'text-emerald-400',
+}
+
+function StoryBulletList({
+  items,
+  markerClassName,
+}: {
+  items: string[]
+  markerClassName: string
+}) {
+  return (
+    <ul role="list" className="space-y-2.5 text-sm md:text-base text-gray-300 leading-relaxed">
+      {items.map((item) => (
+        <li key={item} className="flex gap-2.5">
+          <span
+            aria-hidden="true"
+            className={cn('mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-current', markerClassName)}
+          />
+          <span>{item}</span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 type PersonaStory = {
-  problem: string
-  solution: string
-  outcome: string
-  metric?: { before: string; after: string }
+  problem: string[]
+  solution: string[]
+  outcome: string[]
 }
 
 type PersonaData = {
@@ -143,9 +170,10 @@ export default function UseCasesSection() {
                       <AlertCircle className="h-4 w-4" />
                       {t('problemLabel')}
                     </div>
-                    <p className="text-sm md:text-base text-gray-300 leading-relaxed">
-                      {active.story.problem}
-                    </p>
+                    <StoryBulletList
+                      items={active.story.problem}
+                      markerClassName={STORY_BULLET_MARKERS.problem}
+                    />
                   </div>
 
                   <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/[0.06] p-5">
@@ -153,9 +181,10 @@ export default function UseCasesSection() {
                       <Sparkles className="h-4 w-4" />
                       {t('solutionLabel')}
                     </div>
-                    <p className="text-sm md:text-base text-gray-300 leading-relaxed">
-                      {active.story.solution}
-                    </p>
+                    <StoryBulletList
+                      items={active.story.solution}
+                      markerClassName={STORY_BULLET_MARKERS.solution}
+                    />
                   </div>
 
                   <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-5">
@@ -163,20 +192,10 @@ export default function UseCasesSection() {
                       <TrendingUp className="h-4 w-4" />
                       {t('outcomeLabel')}
                     </div>
-                    <p className="text-sm md:text-base text-gray-300 leading-relaxed">
-                      {active.story.outcome}
-                    </p>
-                    {active.story.metric && (
-                      <div className="mt-4 flex items-center gap-2 text-sm font-semibold">
-                        <span className="rounded-md bg-slate-800/80 px-2 py-1 text-gray-400 line-through decoration-rose-400/60">
-                          {active.story.metric.before}
-                        </span>
-                        <ArrowRight className="h-4 w-4 text-emerald-400" />
-                        <span className="rounded-md bg-emerald-500/15 px-2 py-1 text-emerald-300">
-                          {active.story.metric.after}
-                        </span>
-                      </div>
-                    )}
+                    <StoryBulletList
+                      items={active.story.outcome}
+                      markerClassName={STORY_BULLET_MARKERS.outcome}
+                    />
                   </div>
                 </div>
               </div>
