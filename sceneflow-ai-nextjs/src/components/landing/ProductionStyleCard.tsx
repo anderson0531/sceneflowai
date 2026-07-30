@@ -18,12 +18,21 @@ import { ScreeningRoomPreview } from '@/components/landing/ScreeningRoomPreview'
 import type { VideoLocale, VideoLocaleId } from '@/config/landing/videoLocales'
 import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
 
+export type SolutionPillar = {
+  title: string
+  frictionHeadline: string
+  friction: string
+  solutionHeadline: string
+  solution: string
+}
+
 export type ProductionStyleCardData = {
   id: string
   title: string
   subtitle: string
   badge: string
-  workflow: string[]
+  workflow?: string[]
+  solutionPillars?: SolutionPillar[]
   tools: string
   benefit: string
   screeningRoomPreview: string
@@ -82,6 +91,42 @@ const FALLBACK_STYLE: CardStyle = {
   ctaGradient: 'from-slate-500 to-slate-600',
 }
 
+function SolutionPillarBlock({
+  pillar,
+  frictionLabel,
+  solutionPillarLabel,
+  accentClassName,
+}: {
+  pillar: SolutionPillar
+  frictionLabel: string
+  solutionPillarLabel: string
+  accentClassName: string
+}) {
+  return (
+    <div className="space-y-2 rounded-lg border border-gray-700/30 bg-gray-900/40 p-3">
+      <p className={`text-sm font-semibold ${accentClassName}`}>{pillar.title}</p>
+      <div className="space-y-1.5">
+        <p className="text-xs font-semibold uppercase tracking-wide text-rose-300/90">
+          {frictionLabel}
+        </p>
+        <p className="text-sm leading-relaxed text-gray-300">
+          <span className="font-semibold text-white">{pillar.frictionHeadline}</span>{' '}
+          {pillar.friction}
+        </p>
+      </div>
+      <div className="space-y-1.5 border-t border-gray-700/40 pt-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-indigo-300/90">
+          {solutionPillarLabel}
+        </p>
+        <p className="text-sm leading-relaxed text-gray-300">
+          <span className="font-semibold text-white">{pillar.solutionHeadline}</span>{' '}
+          {pillar.solution}
+        </p>
+      </div>
+    </div>
+  )
+}
+
 export function ProductionStyleCard({
   card,
   index,
@@ -94,6 +139,8 @@ export function ProductionStyleCard({
   videoSoonLabel,
   introVideoLabel,
   screeningRoomLabel,
+  frictionLabel,
+  solutionPillarLabel,
   screeningEmbedSlug,
 }: {
   card: ProductionStyleCardData
@@ -107,6 +154,8 @@ export function ProductionStyleCard({
   videoSoonLabel?: string
   introVideoLabel?: string
   screeningRoomLabel?: string
+  frictionLabel?: string
+  solutionPillarLabel?: string
   screeningEmbedSlug?: string | null
 }) {
   const style = CARD_STYLES[card.id] ?? FALLBACK_STYLE
@@ -191,18 +240,32 @@ export function ProductionStyleCard({
 
       <div className="mb-4 space-y-2">
         <p className="text-xs uppercase tracking-wider text-gray-500">{workflowLabel}</p>
-        <ol className="space-y-2">
-          {card.workflow.map((step, stepIndex) => (
-            <li key={step} className="flex items-start gap-2 text-sm">
-              <span
-                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${style.badge}`}
-              >
-                {stepIndex + 1}
-              </span>
-              <span className="text-gray-300">{step}</span>
-            </li>
-          ))}
-        </ol>
+        {card.solutionPillars && card.solutionPillars.length > 0 ? (
+          <div className="space-y-3">
+            {card.solutionPillars.map((pillar) => (
+              <SolutionPillarBlock
+                key={pillar.title}
+                pillar={pillar}
+                frictionLabel={frictionLabel ?? 'The Friction'}
+                solutionPillarLabel={solutionPillarLabel ?? 'The SceneFlow Solution'}
+                accentClassName={style.accent}
+              />
+            ))}
+          </div>
+        ) : (
+          <ol className="space-y-2">
+            {(card.workflow ?? []).map((step, stepIndex) => (
+              <li key={step} className="flex items-start gap-2 text-sm">
+                <span
+                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${style.badge}`}
+                >
+                  {stepIndex + 1}
+                </span>
+                <span className="text-gray-300">{step}</span>
+              </li>
+            ))}
+          </ol>
+        )}
       </div>
 
       <div className="mb-4 rounded-lg border border-gray-700/30 bg-gray-900/50 px-3 py-2">

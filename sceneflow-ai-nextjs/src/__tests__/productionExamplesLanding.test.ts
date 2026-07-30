@@ -91,6 +91,8 @@ describe('Production Examples i18n contract', () => {
       'resonanceNote',
       'introVideoLabel',
       'screeningRoomLabel',
+      'frictionLabel',
+      'solutionPillarLabel',
     ] as const) {
       expect(enMessages.productionShowcase[key], `missing productionShowcase.${key}`).toBeTruthy()
     }
@@ -129,14 +131,39 @@ describe('Production Examples i18n contract', () => {
       ] as const) {
         expect(card[key], `${card.id} ${key}`).toBeTruthy()
       }
-      // Cards run four steps; the animated comedy adds a fifth for the
-      // Screening Room, matching its showcase script.
-      expect(card.workflow.length, `${card.id} workflow`).toBeGreaterThanOrEqual(4)
-      expect(card.workflow.length, `${card.id} workflow`).toBeLessThanOrEqual(5)
-      for (const step of card.workflow) {
-        expect(step, `${card.id} workflow step`).toBeTruthy()
+      if ('solutionPillars' in card && card.solutionPillars) {
+        expect(card.solutionPillars.length, `${card.id} solutionPillars`).toBe(4)
+        for (const pillar of card.solutionPillars) {
+          for (const key of [
+            'title',
+            'frictionHeadline',
+            'friction',
+            'solutionHeadline',
+            'solution',
+          ] as const) {
+            expect(pillar[key], `${card.id} pillar ${key}`).toBeTruthy()
+          }
+        }
+      } else {
+        // Cards run four steps; the animated comedy adds a fifth for the
+        // Screening Room, matching its showcase script.
+        expect(card.workflow?.length, `${card.id} workflow`).toBeGreaterThanOrEqual(4)
+        expect(card.workflow?.length, `${card.id} workflow`).toBeLessThanOrEqual(5)
+        for (const step of card.workflow ?? []) {
+          expect(step, `${card.id} workflow step`).toBeTruthy()
+        }
       }
     }
+  })
+
+  it('uses problem-vs-solution pillars on the Cinematic Drama card', () => {
+    const drama = enMessages.productionShowcase.cards.find((card) => card.id === 'drama')!
+    expect(drama.subtitle).toBe(
+      'Turn narrative vision into publish-ready films—without fighting the tools.'
+    )
+    expect(drama.solutionPillars).toHaveLength(4)
+    expect(drama.solutionPillars?.[0]?.title).toBe('Visual & Character Consistency')
+    expect(drama).not.toHaveProperty('workflow')
   })
 
   it('keeps card ids stable so ?production= values do not silently change', () => {
@@ -444,6 +471,10 @@ describe('Production showcase videos', () => {
     expect(card).toContain('ScreeningRoomPreview')
     expect(card).toContain('screeningRoomPreview')
     expect(card).toContain('screeningEmbedSlug')
+    expect(card).toContain('SolutionPillarBlock')
+    expect(card).toContain('solutionPillars')
+    expect(section).toContain('frictionLabel')
+    expect(section).toContain('solutionPillarLabel')
     expect(section).toContain('getProductionShowcaseScreeningSlug')
   })
 })
