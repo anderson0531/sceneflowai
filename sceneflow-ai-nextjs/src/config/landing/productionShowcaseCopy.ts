@@ -8,7 +8,7 @@ export const PRODUCTION_SHOWCASE_COPY = {
     'With SceneFlow AI Studio, your vision is the only starting line you need. Simply define your concept, and let SceneFlow handle the heavy lifting—automating scriptwriting, character design, multi-language audio, scene visualization, video production, and final publishing.',
   subtitleTagline: 'One platform. Infinite possibilities.',
   workflowLabel: 'Solutions',
-  startProduction: 'Start This Production',
+  startProduction: 'Start Your Production',
   cta: 'Start Your Production',
   continuityNote: 'Series Studio manages continuity',
   resonanceNote: 'Audience Resonance™ optimizes scripts',
