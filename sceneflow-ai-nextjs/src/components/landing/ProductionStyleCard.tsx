@@ -158,7 +158,7 @@ export function ProductionStyleCard({
               value="workflow"
               className="min-w-0 flex-1 truncate px-2 py-2 text-xs data-[state=active]:bg-indigo-600 data-[state=active]:text-white sm:text-sm"
             >
-              {introVideoLabel ?? 'Workflow'}
+              {introVideoLabel ?? 'Solutions'}
             </TabsTrigger>
             <TabsTrigger
               value="screening"

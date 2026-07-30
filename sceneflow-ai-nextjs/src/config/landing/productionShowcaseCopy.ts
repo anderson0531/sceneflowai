@@ -7,7 +7,7 @@ export const PRODUCTION_SHOWCASE_COPY = {
   subtitle:
     'With SceneFlow AI Studio, your vision is the only starting line you need. Simply define your concept, and let SceneFlow handle the heavy lifting—automating scriptwriting, character design, multi-language audio, scene visualization, video production, and final publishing.',
   subtitleTagline: 'One platform. Infinite possibilities.',
-  workflowLabel: 'Production Workflow',
+  workflowLabel: 'Solutions',
   toolsLabel: 'Tools',
   startProduction: 'Start This Production',
   cta: 'Start Your Production',
@@ -16,7 +16,7 @@ export const PRODUCTION_SHOWCASE_COPY = {
   videoLanguagePrompt: 'Watch this production in your language',
   videoComingSoon: 'Dub coming soon',
   videoSoon: 'Soon',
-  introVideoLabel: 'Workflow',
+  introVideoLabel: 'Solutions',
   screeningRoomLabel: 'Screening Room',
   cards: [
     {
