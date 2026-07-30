@@ -60,7 +60,6 @@ export default function ProductionExamplesSection() {
               card={card}
               index={index}
               workflowLabel={t('workflowLabel')}
-              toolsLabel={t('toolsLabel')}
               ctaLabel={t('startProduction')}
               videoLocales={getProductionShowcaseVideoLocales(card.id)}
               defaultVideoLocaleId={getDefaultProductionShowcaseLocale(card.id)}

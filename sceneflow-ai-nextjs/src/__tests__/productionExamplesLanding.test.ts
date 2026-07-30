@@ -84,7 +84,6 @@ describe('Production Examples i18n contract', () => {
       'subtitle',
       'subtitleTagline',
       'workflowLabel',
-      'toolsLabel',
       'startProduction',
       'cta',
       'continuityNote',
@@ -125,7 +124,6 @@ describe('Production Examples i18n contract', () => {
         'title',
         'subtitle',
         'badge',
-        'tools',
         'benefit',
         'screeningRoomPreview',
       ] as const) {
