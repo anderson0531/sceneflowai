@@ -573,7 +573,7 @@
       "tagline": "Ét studio. Guidet automatisering – eller høj produktivitet, hvis du allerede kender teknologistakken.",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "Struktureret historieplan"
         },
         {
@@ -639,7 +639,7 @@
       },
       {
         "id": "blåtryk",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "Historieudvikling",
         "description": "Omdan koncepter til strukturerede treatments med logline, beats, karakterer og tone. Kør Audience Resonance, og samarbejd, før der foretages tung rendering.",
         "keySteps": [

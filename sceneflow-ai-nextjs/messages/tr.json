@@ -573,7 +573,7 @@
       "tagline": "Tek bir stüdyo. Rehberli otomasyon; ya da teknoloji yığınına zaten hakimseniz, yüksek iş hacmi.",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "Yapılandırılmış hikâye planı"
         },
         {
@@ -639,7 +639,7 @@
       },
       {
         "id": "mavi kopya",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "Hikâye Geliştirme",
         "description": "Konseptleri; logline, hikâye akışı (beats), karakterler ve tonu içeren yapılandırılmış taslaklara (treatment) dönüştürün. Yoğun render işleminden önce Audience Resonance'yı çalıştırın ve iş birliği yapın.",
         "keySteps": [

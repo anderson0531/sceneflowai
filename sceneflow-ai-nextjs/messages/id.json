@@ -573,7 +573,7 @@
       "tagline": "Satu studio. Otomatisasi terpandu — atau produktivitas tinggi jika Anda sudah menguasai *stack* tersebut.",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "Rencana cerita yang terstruktur"
         },
         {
@@ -639,7 +639,7 @@
       },
       {
         "id": "cetak biru",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "Pengembangan Cerita",
         "description": "Ubah konsep menjadi *treatment* terstruktur yang mencakup *logline*, *beat*, karakter, dan nada. Jalankan Audience Resonance dan lakukan kolaborasi sebelum proses *rendering* berat.",
         "keySteps": [

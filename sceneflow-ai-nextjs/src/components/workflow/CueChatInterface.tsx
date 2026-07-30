@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import React from 'react'
+import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 
 interface CueMessage {
   id: string
@@ -100,7 +101,7 @@ export function CueChatInterface({ onConceptUpdate, onGenerateIdeas, onSceneIter
       const welcomeMessage: CueMessage = {
         id: 'welcome',
         type: 'assistant',
-        content: `Welcome to ${isStoryboardMode ? 'Production' : 'Blueprint'}! I'm Cue, your AI creative partner. ${context.context}`,
+        content: `Welcome to ${isStoryboardMode ? STUDIO_DISPLAY_NAMES.production : STUDIO_DISPLAY_NAMES.blueprint}! I'm Cue, your AI creative partner. ${context.context}`,
         timestamp: new Date(),
         suggestions: suggestions,
         completeness_score: 0.1,

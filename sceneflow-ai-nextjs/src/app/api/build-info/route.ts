@@ -34,6 +34,7 @@ export async function GET() {
       pipelinePillarsRemoved: true,
       videoLanguageControl: 'overlay-dropdown',
       useCasesTabsRemoved: true,
+      studioDisplayNames: ['Blueprint Studio', 'Series Studio', 'Production Studio'],
       heroCopy: {
         headline: 'You Direct the Story. SceneFlow Automates the Studio.',
         audienceMicroLineRemoved: true,

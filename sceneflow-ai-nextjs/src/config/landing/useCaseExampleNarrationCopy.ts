@@ -31,7 +31,7 @@ export const USE_CASE_EXAMPLE_NARRATIONS: UseCaseExampleNarration[] = [
     exampleId: 'episodic-youtube-series',
     label: 'Episodic YouTube Series',
     script:
-      "Here's how it works. You define your season arcs in Series Studio, and SceneFlow syncs those outlines into Blueprint and Production automatically. Every face, voice, and story beat stays aligned as your channel grows — no drift between episodes, no manual handoffs. What you get is a serialized YouTube series that scales with your audience, produced from one guided studio instead of a patchwork of disconnected apps.",
+      "Here's how it works. You define your season arcs in Series Studio, and SceneFlow syncs those outlines into Blueprint Studio and Production Studio automatically. Every face, voice, and story beat stays aligned as your channel grows — no drift between episodes, no manual handoffs. What you get is a serialized YouTube series that scales with your audience, produced from one guided studio instead of a patchwork of disconnected apps.",
   },
   {
     categoryId: 'entertainment',

@@ -573,7 +573,7 @@
       "tagline": "Một studio duy nhất. Tự động hóa có hướng dẫn — hoặc hiệu suất xử lý vượt trội nếu bạn đã am hiểu về nền tảng công nghệ này.",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "Kế hoạch cốt truyện có cấu trúc"
         },
         {
@@ -639,7 +639,7 @@
       },
       {
         "id": "bản thiết kế",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "Phát triển cốt truyện",
         "description": "Chuyển đổi các ý tưởng thành bản phác thảo có cấu trúc, bao gồm tóm tắt cốt truyện (logline), các nhịp truyện (beats), nhân vật và tông giọng. Hãy chạy Audience Resonance và phối hợp thực hiện trước khi tiến hành kết xuất (render) nặng.",
         "keySteps": [

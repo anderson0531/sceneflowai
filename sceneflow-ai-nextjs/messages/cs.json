@@ -573,7 +573,7 @@
       "tagline": "Jedno studio. Automatizace s průvodcem – nebo vysoký výkon, pokud už daný technologický stack ovládáte.",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "Strukturovaný plán příběhu"
         },
         {
@@ -639,7 +639,7 @@
       },
       {
         "id": "plán",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "Rozvoj příběhu",
         "description": "Převeďte koncepty na strukturované náměty (treatments) zahrnující logline, klíčové momenty, postavy a tón. Spusťte Audience Resonance a spolupracujte ještě před náročným renderováním.",
         "keySteps": [

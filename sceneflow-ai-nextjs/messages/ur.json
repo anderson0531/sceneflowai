@@ -573,7 +573,7 @@
       "tagline": "ایک ہی اسٹوڈیو۔ رہنمائی کے ساتھ آٹومیشن — یا اگر آپ 'اسٹیک' (stack) سے پہلے ہی واقف ہیں، تو زبردست تھرو پٹ (throughput)۔",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "منظم کہانی کا خاکہ"
         },
         {
@@ -639,7 +639,7 @@
       },
       {
         "id": "منصوبہِ کار",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "کہانی کی تشکیل",
         "description": "تصورات کو لاگ لائن، بیٹس (beats)، کرداروں اور ٹون (tone) کے ساتھ منظم ٹریٹمنٹس میں تبدیل کریں۔ بھاری رینڈرنگ (heavy rendering) سے پہلے Audience Resonance چلائیں اور باہمی اشتراک کریں۔",
         "keySteps": [

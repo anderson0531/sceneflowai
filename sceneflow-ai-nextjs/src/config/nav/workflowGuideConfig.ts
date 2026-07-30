@@ -84,7 +84,7 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
   },
   {
     id: 'production-shoot',
-    title: 'Production — Motion',
+    title: 'Production Studio — Motion',
     icon: 'Video',
     iconColor: 'text-red-500',
     steps: [
@@ -249,15 +249,15 @@ export const blueprintWorkflowGroups: WorkflowGroup[] = [
   },
   {
     id: 'start-production',
-    title: 'Ready for Production',
+    title: 'Ready for Production Studio',
     icon: 'ArrowRight',
     iconColor: 'text-green-500',
     collapsed: true,
     steps: [
       { 
         id: 'start-production', 
-        label: 'Start Production', 
-        description: 'Generate script and begin production',
+        label: 'Open Production Studio', 
+        description: 'Generate script and open Production Studio',
         actionEventName: 'blueprint:start-production' 
       },
     ],

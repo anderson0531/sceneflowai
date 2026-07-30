@@ -573,7 +573,7 @@
       "tagline": "Un seul studio. Une automatisation guidée — ou une productivité élevée si vous maîtrisez déjà la stack.",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "Plan narratif structuré"
         },
         {
@@ -581,7 +581,7 @@
           "detail": "Personnages cohérents"
         },
         {
-          "label": "Production",
+          "label": "Production Studio",
           "detail": "Voix + visuels"
         },
         {
@@ -639,7 +639,7 @@
       },
       {
         "id": "plan directeur",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "Développement de l'histoire",
         "description": "Transformez les concepts en traitements structurés incluant logline, étapes clés, personnages et ton. Exécutez Audience Resonance et collaborez avant le rendu lourd.",
         "keySteps": [
@@ -656,7 +656,7 @@
       },
       {
         "id": "production",
-        "stepLabel": "Production",
+        "stepLabel": "Production Studio",
         "subtitle": "Script vers Screening Room",
         "description": "Les onglets « Script » et « Shoot » structurent le flux : Base → Prévisualisation → Prises de vues → Mixage → Flux de diffusion. Des points de contrôle scène par scène réduisent les reprises, tandis que Screening Room gère la prévisualisation, le montage et la publication.",
         "keySteps": [

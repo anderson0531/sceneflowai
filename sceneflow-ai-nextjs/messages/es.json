@@ -573,7 +573,7 @@
       "tagline": "Un único estudio. Automatización guiada, o un alto rendimiento si ya dominas el stack tecnológico.",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "Plan estructurado de la historia"
         },
         {
@@ -634,12 +634,12 @@
           "Define tu universo una sola vez: personajes, tono y arco de la temporada.",
           "Esquemas de episodios coherentes, generados automáticamente para toda la temporada.",
           "Seguimiento de la continuidad: alineación de temporadas de varios episodios",
-          "Sincronización de serie a episodio — en Blueprint Studio and Production"
+          "Sincronización de serie a episodio — en Blueprint Studio and Production Studio"
         ]
       },
       {
         "id": "plano",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "Desarrollo de la historia",
         "description": "Transforma conceptos en tratamientos estructurados que incluyan logline, puntos clave de la trama, personajes y tono. Ejecuta Audience Resonance y colabora antes de realizar el renderizado pesado.",
         "keySteps": [
@@ -1251,7 +1251,7 @@
           "Define tu universo una sola vez: personajes, tono y arco de la temporada.",
           "Esquemas de episodios coherentes, generados automáticamente para toda la temporada.",
           "Seguimiento de la continuidad: alineación de temporadas de varios episodios",
-          "Sincronización de serie a episodio — en Blueprint Studio and Production"
+          "Sincronización de serie a episodio — en Blueprint Studio and Production Studio"
         ],
         "screenshotSlot": "Insertar captura de pantalla: Resumen de la serie con arcos argumentales de los episodios generados automáticamente",
         "videoSlot": "Insertar clip de 30 segundos: concepto que se expande a una temporada de varios episodios."

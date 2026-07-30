@@ -573,7 +573,7 @@
       "tagline": "Egyetlen stúdió. Irányított automatizálás – vagy hatalmas átbocsátóképesség, ha már ismered a technológiai környezetet.",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "Strukturált történetvázlat"
         },
         {
@@ -639,7 +639,7 @@
       },
       {
         "id": "tervrajz",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "Történetfejlesztés",
         "description": "Alakítsd át az ötleteket strukturált vázlatokká, amelyek tartalmazzák a logline-t, a történeti csomópontokat, a karaktereket és a hangvételt. Futtasd az Audience Resonance-ot, és működj együtt másokkal az erőforrásigényes renderelés előtt.",
         "keySteps": [

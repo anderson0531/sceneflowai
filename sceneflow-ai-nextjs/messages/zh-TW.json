@@ -573,7 +573,7 @@
       "tagline": "單一開發環境。既提供引導式自動化功能，若您已熟悉相關技術堆疊，也能實現極高的處理效能。",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "結構化故事大綱"
         },
         {
@@ -639,7 +639,7 @@
       },
       {
         "id": "藍圖",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "故事發展",
         "description": "將構想轉化為包含故事大綱、劇情節點、角色與基調的結構化劇本大綱。在進行繁重的渲染作業前，請執行 Audience Resonance 並進行協作。",
         "keySteps": [

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useStore } from '@/store/useStore'
+import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 
 /**
  * ProductSwitcher - 3-Product Navigation Bar
@@ -45,7 +46,7 @@ export interface Product {
 export const products: Product[] = [
   {
     id: 'blueprint',
-    name: 'Blueprint',
+    name: STUDIO_DISPLAY_NAMES.blueprint,
     tagline: 'Concept & Story',
     icon: <PenTool className="w-5 h-5" />,
     href: '/dashboard/studio/new-project',

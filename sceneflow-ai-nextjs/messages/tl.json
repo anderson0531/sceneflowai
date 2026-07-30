@@ -573,7 +573,7 @@
       "tagline": "Isang studio. May gabay na automation — o kaya naman ay mataas na antas ng output kung gamay mo na ang stack.",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "Balangkas ng kuwento"
         },
         {
@@ -639,7 +639,7 @@
       },
       {
         "id": "blueprint",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "Pagbuo ng Kuwento",
         "description": "Gawing mga estrukturadong treatment ang mga konsepto, na kinabibilangan ng logline, beats, mga karakter, at tono. Patakbuhin ang Audience Resonance at makipagtulungan bago ang mabigat na rendering.",
         "keySteps": [

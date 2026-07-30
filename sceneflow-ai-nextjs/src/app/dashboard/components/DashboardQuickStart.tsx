@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { ProductSection } from '@/components/product'
 import { Plus, FolderOpen, Library, CreditCard, Settings } from 'lucide-react'
+import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 
 const actions = [
   {
@@ -19,7 +20,7 @@ const actions = [
     icon: FolderOpen,
   },
   {
-    label: 'Series',
+    label: STUDIO_DISPLAY_NAMES.series,
     description: 'Multi-episode shows',
     href: '/dashboard/series',
     icon: Library,

@@ -573,7 +573,7 @@
       "tagline": "En enda studio. Guidad automatisering – eller hög kapacitet om du redan behärskar teknikstacken.",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "Strukturerad berättelseplan"
         },
         {
@@ -639,7 +639,7 @@
       },
       {
         "id": "ritning",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "Berättarutveckling",
         "description": "Omvandla koncept till strukturerade synopsis med logline, narrativa vändpunkter, karaktärer och ton. Kör Audience Resonance och samarbeta innan tung rendering påbörjas.",
         "keySteps": [

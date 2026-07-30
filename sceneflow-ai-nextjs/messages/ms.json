@@ -573,7 +573,7 @@
       "tagline": "Satu studio. Automasi berpandu — atau daya pemprosesan tinggi jika anda sudah menguasai *stack* tersebut.",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "Pelan cerita yang tersusun"
         },
         {
@@ -639,7 +639,7 @@
       },
       {
         "id": "pelan induk",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "Pembangunan Cerita",
         "description": "Ubah konsep menjadi draf awal berstruktur yang merangkumi logline, rentak cerita, watak, dan nada. Jalankan Audience Resonance dan lakukan kerjasama sebelum proses rendering yang berat.",
         "keySteps": [

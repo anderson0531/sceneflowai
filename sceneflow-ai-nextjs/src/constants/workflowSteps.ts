@@ -1,4 +1,5 @@
 import type { WorkflowStep } from '@/types/enhanced-project'
+import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 
 export const WORKFLOW_STEPS: WorkflowStep[] = [
   'blueprint',
@@ -9,11 +10,11 @@ export const WORKFLOW_STEPS: WorkflowStep[] = [
 ]
 
 export const WORKFLOW_STEP_LABELS: Record<WorkflowStep, string> = {
-  blueprint: 'Blueprint',
-  vision: 'Production',
-  creation: 'Production',
-  polish: 'Production',
-  launch: 'Production',
+  blueprint: STUDIO_DISPLAY_NAMES.blueprint,
+  vision: STUDIO_DISPLAY_NAMES.production,
+  creation: STUDIO_DISPLAY_NAMES.production,
+  polish: STUDIO_DISPLAY_NAMES.production,
+  launch: STUDIO_DISPLAY_NAMES.production,
 }
 
 const LEGACY_STEP_ALIASES: Record<string, WorkflowStep> = {

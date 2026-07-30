@@ -26,6 +26,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import { ProductSwitcher } from './ProductSwitcher'
+import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 
 const DirectorChairIcon: React.FC<React.SVGProps<SVGSVGElement> & { size?: number }> = ({ size = 24, className, ...props }) => (
   <svg
@@ -48,13 +49,13 @@ const DirectorChairIcon: React.FC<React.SVGProps<SVGSVGElement> & { size?: numbe
 const mainNav = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Projects', href: '/dashboard/projects', icon: FolderOpen },
-  { name: 'Series', href: '/dashboard/series', icon: Library },
+  { name: STUDIO_DISPLAY_NAMES.series, href: '/dashboard/series', icon: Library },
   { name: 'Start Project', href: '/dashboard/studio/new-project', icon: Sparkles },
 ]
 
 const workflowNav = [
   { 
-    name: 'Blueprint', 
+    name: STUDIO_DISPLAY_NAMES.blueprint, 
     href: '/dashboard/studio/new-project', 
     icon: Sparkles,
     description: 'Ideation & Scripting',
@@ -63,7 +64,7 @@ const workflowNav = [
     credits: 'Uses Analysis Credits'
   },
   { 
-    name: 'Production', 
+    name: STUDIO_DISPLAY_NAMES.production, 
     href: '/dashboard/workflow/vision', 
     icon: DirectorChairIcon,
     description: 'Script, video, render & publish',
@@ -140,8 +141,8 @@ export function Sidebar() {
 
   // Group workflow steps by phase
   const phase1Steps = workflowNav.filter(item => item.phase === 1).map(item => {
-    if (item.name === 'Blueprint') return { ...item, href: studioHref }
-    if (item.name === 'Production') return { ...item, href: projectVisionHref }
+    if (item.name === STUDIO_DISPLAY_NAMES.blueprint) return { ...item, href: studioHref }
+    if (item.name === STUDIO_DISPLAY_NAMES.production) return { ...item, href: projectVisionHref }
     return item
   })
   const phase2Steps = workflowNav.filter(item => item.phase === 2)

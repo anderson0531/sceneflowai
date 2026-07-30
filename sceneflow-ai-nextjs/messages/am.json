@@ -573,7 +573,7 @@
       "tagline": "አንድ ስቱዲዮ። የሚመራ አውቶሜሽን፤ ወይም ቴክኖሎጂውን አስቀድመው የሚያውቁት ከሆነ ከፍተኛ የምርታማነት መጠን።",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "የተደራጀ የታሪክ እቅድ"
         },
         {
@@ -639,7 +639,7 @@
       },
       {
         "id": "የሥራ ዕቅድ / የንድፍ ካርታ",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "የታሪክ ዝግጅት",
         "description": "ሃሳቦችን በሎግላይን (logline)፣ በታሪክ ክፍሎች (beats)፣ በገጸ-ባህሪያት እና በስሜት/ድምጸት (tone) የተዋቀሩ ረቂቅ ታሪኮች (treatments) አድርገው ይቅረጹ። ከባድ የሬንደሪንግ (rendering) ሥራ ከመጀመርዎ በፊት Audience Resonanceን ያሂዱ እና የጋራ ትብብር ያድርጉ።",
         "keySteps": [

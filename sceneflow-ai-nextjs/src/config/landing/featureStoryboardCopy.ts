@@ -94,14 +94,14 @@ export function buildFeatureStoryboardMessageItems(): FeatureStoryboardMessageIt
       description:
         'One studio from idea to publish-ready video. Same pipeline for training, podcasts, news, and cinematic series — approve pre-vis before final render spend.',
       keyFeatures: [
-        'Series → Blueprint → Production → Screening Room',
+        'Series Studio → Blueprint Studio → Production Studio → Screening Room',
         'Beat-first approval — pre-vis and Beat Frames before F2V',
         'Google Vertex AI generation with native Veo extension chains',
         'Trust & Safety guardrails and signed provenance on delivery',
       ],
       screenshotSlot: 'Insert screenshot: Landing hero + simplified walkthrough strip',
       videoSlot:
-        'Insert 01:30 clip: Hero → new project → Blueprint → Production Shoot → Screening Room → Publish',
+        'Insert 01:30 clip: Hero → new project → Blueprint Studio → Production Studio Shoot → Screening Room → Publish',
     },
     {
       id: 9,
@@ -113,7 +113,7 @@ export function buildFeatureStoryboardMessageItems(): FeatureStoryboardMessageIt
     },
     {
       id: 10,
-      title: 'Blueprint Automation',
+      title: 'Blueprint Studio Automation',
       description: blueprint.description,
       keyFeatures: [...blueprint.keyFeatures],
       screenshotSlot: 'Insert screenshot: Auto-generated Blueprint with story beats and character arcs',
@@ -137,7 +137,7 @@ export function buildFeatureStoryboardMessageItems(): FeatureStoryboardMessageIt
       id: 7,
       title: 'Audience Resonance Analysis',
       description:
-        'Determine your target audience to get instant scoring, analysis, and recommendations. Apply one-click fixes or use Guided Edits to perfectly optimize your Episodes, Blueprint, and Script for maximum impact.',
+        'Determine your target audience to get instant scoring, analysis, and recommendations. Apply one-click fixes or use Guided Edits to perfectly optimize your Episodes, Blueprint Studio, and Script for maximum impact.',
       keyFeatures: [
         'Target-audience scoring — with category breakdown',
         'Section-tied recommendations — fix the right part of your story',
@@ -149,7 +149,7 @@ export function buildFeatureStoryboardMessageItems(): FeatureStoryboardMessageIt
     },
     {
       id: 11,
-      title: 'Production Automation',
+      title: 'Production Studio Automation',
       description: production.description,
       keyFeatures: [...production.keyFeatures],
       screenshotSlot: "Insert screenshot: Production dashboard showing Writer's Room, Motion, and Pre-Vis",

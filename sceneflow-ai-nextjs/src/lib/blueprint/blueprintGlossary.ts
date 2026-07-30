@@ -2,6 +2,8 @@
  * User-facing Blueprint terminology — keep UI copy aligned with the Studio workflow.
  */
 
+import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
+
 export interface GlossaryTerm {
   term: string
   definition: string
@@ -10,11 +12,11 @@ export interface GlossaryTerm {
 export const BLUEPRINT_GLOSSARY: Record<string, GlossaryTerm> = {
   blueprint: {
     term: 'Blueprint',
-    definition: 'Your structured film treatment — logline, beats, characters, and tone before Production.',
+    definition: `Your structured film treatment — logline, beats, characters, and tone before ${STUDIO_DISPLAY_NAMES.production}.`,
   },
   production: {
-    term: 'Production',
-    definition: 'The script, storyboard, and video phase after your Blueprint is ready.',
+    term: STUDIO_DISPLAY_NAMES.production,
+    definition: `The script, storyboard, and video phase after your Blueprint is ready in ${STUDIO_DISPLAY_NAMES.blueprint}.`,
   },
   audienceResonance: {
     term: 'Audience Resonance',
@@ -29,8 +31,8 @@ export const BLUEPRINT_GLOSSARY: Record<string, GlossaryTerm> = {
     definition: 'Scoped AI edits to core info, story, tone, beats, or characters.',
   },
   startProduction: {
-    term: 'Start Production',
-    definition: 'Hand off your Blueprint to generate script and begin the Production pipeline.',
+    term: 'Open Production Studio',
+    definition: `Hand off your Blueprint to generate script and begin the ${STUDIO_DISPLAY_NAMES.production} pipeline.`,
   },
 }
 
@@ -41,15 +43,15 @@ export function blueprintGlossaryTooltip(key: keyof typeof BLUEPRINT_GLOSSARY): 
 
 /** Legacy copy → canonical user-facing labels */
 export const BLUEPRINT_COPY = {
-  phaseTitle: 'Blueprint',
-  productionPhase: 'Production',
+  phaseTitle: STUDIO_DISPLAY_NAMES.blueprint,
+  productionPhase: STUDIO_DISPLAY_NAMES.production,
   audienceResonance: 'Audience Resonance',
   scoreCard: 'Audience Resonance',
-  startingProduction: 'Starting Production…',
-  blueprintSavedOpeningProduction: 'Blueprint saved — opening Production',
-  creatingVision: 'Starting Production…',
+  startingProduction: `Opening ${STUDIO_DISPLAY_NAMES.production}…`,
+  blueprintSavedOpeningProduction: `Blueprint saved — opening ${STUDIO_DISPLAY_NAMES.production}`,
+  creatingVision: `Opening ${STUDIO_DISPLAY_NAMES.production}…`,
   reimagine: 'Regenerate Blueprint',
   editBlueprint: 'Edit Blueprint',
-  startProduction: 'Start Production',
-  startProductionTooltip: 'Start Production — generate script and begin the Production pipeline',
+  startProduction: 'Open Production Studio',
+  startProductionTooltip: `Open Production Studio — generate script and begin the ${STUDIO_DISPLAY_NAMES.production} pipeline`,
 } as const

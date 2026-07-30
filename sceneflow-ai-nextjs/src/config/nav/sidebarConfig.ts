@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 
 /**
  * Workflow phase identifiers matching the production pipeline
@@ -103,8 +104,8 @@ function makeWorkflowSteps(
   currentPhase: 'blueprint' | 'production'
 ): WorkflowStep[] {
   const phases: { id: string; label: string; href: (pid: string) => string }[] = [
-    { id: 'blueprint', label: 'Blueprint', href: (pid) => `/dashboard/studio/${pid}` },
-    { id: 'production', label: 'Production', href: (pid) => `/dashboard/workflow/vision/${pid}` },
+    { id: 'blueprint', label: STUDIO_DISPLAY_NAMES.blueprint, href: (pid) => `/dashboard/studio/${pid}` },
+    { id: 'production', label: STUDIO_DISPLAY_NAMES.production, href: (pid) => `/dashboard/workflow/vision/${pid}` },
   ]
   const currentIndex = phases.findIndex((p) => p.id === currentPhase)
   return phases.map((p, i) => ({

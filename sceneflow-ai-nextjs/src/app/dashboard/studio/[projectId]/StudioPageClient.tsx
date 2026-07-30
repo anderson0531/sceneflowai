@@ -53,6 +53,7 @@ const TreatmentCard = dynamic(
 import TopProgressBar from '@/components/ui/TopProgressBar'
 import GeneratingOverlay from '@/components/ui/GeneratingOverlay'
 import { BlueprintOnboarding } from '@/components/blueprint/BlueprintOnboarding'
+import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 import { ProductEmptyState } from '@/components/product'
 import { BlueprintResonanceStrip } from '@/components/blueprint/BlueprintResonanceStrip'
 import { BlueprintNextStepBanner } from '@/components/blueprint/BlueprintNextStepBanner'
@@ -203,11 +204,11 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           }),
         })
         if (!res.ok) throw new Error('Failed to sync variant to Production')
-        toast.success('Blueprint synced to Production — regenerate your script when ready.')
+        toast.success(`Blueprint synced to ${STUDIO_DISPLAY_NAMES.production} — regenerate your script when ready.`)
         router.push(`/dashboard/workflow/vision/${productionProjectId}`)
       } catch (error) {
         console.error('[StudioPage] Production sync failed:', error)
-        toast.error('Blueprint updated, but Production sync failed')
+        toast.error(`Blueprint updated, but ${STUDIO_DISPLAY_NAMES.production} sync failed`)
       }
     },
     [router]
@@ -1288,7 +1289,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               <div className="px-6 py-4 border-b border-white/10 bg-slate-900/70 backdrop-blur rounded-t-3xl">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <h3 className="text-xl font-bold text-white">Blueprint</h3>
+                    <h3 className="text-xl font-bold text-white">{STUDIO_DISPLAY_NAMES.blueprint}</h3>
                     {/* Series Episode Badge */}
                     {seriesContext && (
                       <a 

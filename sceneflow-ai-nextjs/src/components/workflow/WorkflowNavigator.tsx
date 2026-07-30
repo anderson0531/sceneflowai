@@ -4,11 +4,12 @@ import { useEnhancedStore } from '@/store/enhancedStore'
 import { WorkflowStep } from '@/types/enhanced-project'
 // Removed unused cn import
 import { Lightbulb, Layout, Video, Film, CheckCircle2, Lock, Wrench } from 'lucide-react'
+import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 
 const workflowSteps = [
   {
     id: 'ideation' as WorkflowStep,
-    title: 'Blueprint',
+    title: STUDIO_DISPLAY_NAMES.blueprint,
     description: 'Ideation & Brainstorming',
     icon: Lightbulb,
     color: 'from-blue-500 to-blue-600',
@@ -17,7 +18,7 @@ const workflowSteps = [
   },
   {
     id: 'storyboard' as WorkflowStep,
-    title: 'Production',
+    title: STUDIO_DISPLAY_NAMES.production,
     description: 'Produce, render & publish',
     icon: Layout,
     color: 'from-purple-500 to-purple-600',

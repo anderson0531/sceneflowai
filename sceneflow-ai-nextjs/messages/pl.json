@@ -573,7 +573,7 @@
       "tagline": "Jedno studio. Automatyzacja z przewodnikiem – lub ogromna wydajność, jeśli znasz już ten stos technologiczny.",
       "stages": [
         {
-          "label": "Blueprint",
+          "label": "Blueprint Studio",
           "detail": "Ustrukturyzowany plan historii"
         },
         {
@@ -634,12 +634,12 @@
           "Zdefiniuj swoje uniwersum raz – postacie, ton i wątek przewodni sezonu.",
           "Spójne zarysy odcinków – automatycznie generowane dla całego sezonu",
           "Śledzenie ciągłości – spójność wieloodcinkowych sezonów",
-          "Synchronizacja serii z odcinkami — w systemie Blueprint Studio and Production"
+          "Synchronizacja serii z odcinkami — w systemie Blueprint Studio and Production Studio"
         ]
       },
       {
         "id": "plan",
-        "stepLabel": "Blueprint",
+        "stepLabel": "Blueprint Studio",
         "subtitle": "Rozwój historii",
         "description": "Przekształć koncepcje w uporządkowane szkice scenariusza (treatments), uwzględniając logline, kluczowe punkty fabuły, postacie oraz tonację. Uruchom Audience Resonance i podejmij współpracę przed rozpoczęciem czasochłonnego renderowania.",
         "keySteps": [
@@ -1251,7 +1251,7 @@
           "Zdefiniuj swoje uniwersum raz – postacie, ton i wątek przewodni sezonu.",
           "Spójne zarysy odcinków – automatycznie generowane dla całego sezonu",
           "Śledzenie ciągłości – spójność wieloodcinkowych sezonów",
-          "Synchronizacja serii z odcinkami — w systemie Blueprint Studio and Production"
+          "Synchronizacja serii z odcinkami — w systemie Blueprint Studio and Production Studio"
         ],
         "screenshotSlot": "Wstaw zrzut ekranu: przegląd serii z automatycznie wygenerowanymi wątkami odcinków",
         "videoSlot": "Wstawienie 30-sekundowego materiału: koncepcja rozszerzona do formatu wieloodcinkowego sezonu"
