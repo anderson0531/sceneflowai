@@ -1669,6 +1669,8 @@
     "videoLanguagePrompt": "Watch this production in your language",
     "videoComingSoon": "Dub coming soon",
     "videoSoon": "Soon",
+    "introVideoLabel": "Introduction",
+    "screeningRoomLabel": "Screening Room",
     "cards": [
       {
         "id": "drama",
@@ -1682,7 +1684,8 @@
           "Export 4K Widescreen or 9:16 Social Thrillers"
         ],
         "tools": "Series Studio → Writer's Room → Visualizer",
-        "benefit": "No character drift across episodes"
+        "benefit": "No character drift across episodes",
+        "screeningRoomPreview": "The Cinematic Drama — Screening Room Preview"
       },
       {
         "id": "animation",
@@ -1697,7 +1700,8 @@
           "Screening Room: Animatic pre-vis, then premiere the full video"
         ],
         "tools": "Writer's Room → Visualizer → Screening Room",
-        "benefit": "Consistent characters in any style"
+        "benefit": "Consistent characters in any style",
+        "screeningRoomPreview": "The Animated Comedy — Screening Room Preview"
       },
       {
         "id": "podcast",
@@ -1711,7 +1715,8 @@
           "800+ voices with cloning for your host"
         ],
         "tools": "Series Studio → Smart Editor → Screening Room",
-        "benefit": "One voice, 20 episodes, zero drift"
+        "benefit": "One voice, 20 episodes, zero drift",
+        "screeningRoomPreview": "The AI-First Podcast — Screening Room Preview"
       },
       {
         "id": "training",
@@ -1725,7 +1730,8 @@
           "One-click global deployment"
         ],
         "tools": "Series Studio → Smart Editor → Export",
-        "benefit": "Train worldwide teams instantly"
+        "benefit": "Train worldwide teams instantly",
+        "screeningRoomPreview": "The Corporate Training — Screening Room Preview"
       }
     ]
   },

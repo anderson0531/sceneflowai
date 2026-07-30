@@ -13,6 +13,7 @@ import {
   getDefaultProductionShowcaseLocale,
   getProductionShowcaseVideoLocales,
 } from '@/config/landing/productionShowcaseVideos'
+import { getProductionShowcaseScreeningSlug } from '@/config/landing/productionShowcaseScreening'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 
 export const PRODUCTION_EXAMPLES_SECTION_ID = 'production-examples'
@@ -65,6 +66,9 @@ export default function ProductionExamplesSection() {
               defaultVideoLocaleId={getDefaultProductionShowcaseLocale(card.id)}
               videoComingSoonLabel={t('videoComingSoon')}
               videoSoonLabel={t('videoSoon')}
+              introVideoLabel={t('introVideoLabel')}
+              screeningRoomLabel={t('screeningRoomLabel')}
+              screeningEmbedSlug={getProductionShowcaseScreeningSlug(card.id)}
             />
           ))}
         </div>
