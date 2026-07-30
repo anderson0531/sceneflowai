@@ -309,10 +309,21 @@
         "headline": "From Concept to Cinematic Series — No Prompt Engineering",
         "intro": "Start with a concept or a detailed series description. SceneFlow builds the series universe, characters, and unlimited episodes, then uses Express to render audio, frames, and video concurrently. You create and direct with plain text or voice; SceneFlow builds the vision — no prompt engineering, no slot-machine retakes.",
         "story": {
-          "problem": "Making one polished video today usually means paying for and learning half a dozen separate AI apps — one for the script, then others for images, voices, video, music, and editing — and re-generating each one over and over hoping for a usable result. It's costly, technical, and can eat an entire weekend, and your characters still look different from scene to scene.",
-          "solution": "SceneFlow replaces that entire stack with one guided studio. Describe your idea in plain words and it writes the series, designs the cast, and renders the audio, frames, and video together, while a shared Reference Library keeps every character consistent across episodes — no prompt engineering and no re-rolling.",
-          "outcome": "You move from an all-weekend, many-app ordeal to a steady upload rhythm you can actually sustain.",
-          "metric": { "before": "8-40 hrs", "after": "30-180 min" }
+          "problem": [
+            "You juggle separate tools for script, images, voice, video, music, and editing.",
+            "You re-generate each piece over and over, hoping for a usable result.",
+            "Characters still look different from scene to scene."
+          ],
+          "solution": [
+            "One guided studio replaces the whole tool stack.",
+            "Describe your idea in plain words — SceneFlow writes the series and designs the cast.",
+            "Express renders audio, frames, and video together while a Reference Library keeps characters consistent."
+          ],
+          "outcome": [
+            "Stop losing weekends to fragmented tools.",
+            "Publish on a steady rhythm you can actually keep up with.",
+            "Keep every episode on-brand without re-rolling for consistency."
+          ]
         },
         "screeningRoomHook": "Visualize the story as an animatic before motion video, review scenes before finalizing streams, and share multilanguage streams (70+ languages) for pre-release feedback.",
         "screeningRoomPreview": "The Unseen Archive: The Grand Illusion: The Chicago World's Fair Deception"
@@ -323,10 +334,21 @@
         "headline": "Run a Global Video Studio — Without Building One",
         "intro": "Deliver polished, localized video to small businesses that can't afford an agency. Express renders whole client packages concurrently, Mixer adds brand overlays, watermarks, and timing, and auto-aligned dub/lip-sync ships every deliverable in your client's market language — all from one predictable pipeline.",
         "story": {
-          "problem": "Your small-business clients can't afford a traditional video agency, but producing it yourself means buying and juggling many tools, redoing the work for every client, and manually recreating each video again for every language — costs and hours that make the service hard to scale.",
-          "solution": "SceneFlow gives you one predictable pipeline: it renders a client's whole video package at once, adds each client's branding, overlays, and watermark, and automatically dubs and lip-syncs every video into the customer's market language.",
-          "outcome": "You can run a global, multi-language video studio for many clients without hiring a crew or building infrastructure.",
-          "metric": { "before": "1 market", "after": "70+ languages" }
+          "problem": [
+            "Small-business clients can't afford a traditional video agency.",
+            "You buy and juggle many tools, redoing the work for every client.",
+            "Each new language means rebuilding the video from scratch."
+          ],
+          "solution": [
+            "One predictable pipeline for every client project.",
+            "Render a full video package at once — audio, frames, and video together.",
+            "Add branding, overlays, and watermarks, then auto dub and lip-sync into the client's market language."
+          ],
+          "outcome": [
+            "Serve many clients from one studio workflow.",
+            "Reach global markets in 70+ languages without rebuilding each video.",
+            "Scale the service without hiring a crew or building infrastructure."
+          ]
         },
         "screeningRoomHook": "Client-facing review of the animatic, scene sign-off before final streams, and shareable multilanguage previews for stakeholders abroad.",
         "screeningRoomPreview": "Main Street Rising: A Local Business Relaunch"
@@ -337,10 +359,21 @@
         "headline": "Compliant Training at the Speed of Policy Change",
         "intro": "Internal L&D and comms teams ship brand-locked, audit-ready modules without vendor cycles. Refine any frame or line with text or voice to stay on-message, finish with Mixer overlays and watermarks, and roll out auto-aligned dubbed or lip-synced versions to every region from a single approved master.",
         "story": {
-          "problem": "Internal training and communications usually wait weeks on outside vendors and cost a premium — and the moment a policy or product changes, the videos are outdated and off-brand, forcing another expensive round.",
-          "solution": "Teams produce brand-locked, audit-ready videos in-house. Update any line or frame with a typed or spoken instruction, review and approve before paying for the final render, and roll out one approved master to every region.",
-          "outcome": "Training and communications keep pace with policy changes instead of trailing weeks behind.",
-          "metric": { "before": "6-wk vendor backlog", "after": "same week" }
+          "problem": [
+            "Training and comms videos wait weeks on outside vendors and cost a premium.",
+            "When policy or product changes, videos go stale and off-brand.",
+            "Every update triggers another expensive production round."
+          ],
+          "solution": [
+            "Produce brand-locked, audit-ready videos in-house.",
+            "Change any line or frame with a typed or spoken instruction.",
+            "Review and approve before paying for the final render, then roll out one master to every region."
+          ],
+          "outcome": [
+            "Training and communications keep pace with policy changes.",
+            "Stay on-brand without waiting on vendor cycles.",
+            "Update once and distribute everywhere from a single approved cut."
+          ]
         },
         "screeningRoomHook": "Review scenes before streams go final and share private Screening Room links for cross-region feedback without exporting unfinished masters.",
         "screeningRoomPreview": "Shield Protocol: Global Cybersecurity Onboarding"
@@ -351,10 +384,21 @@
         "headline": "Turn Curriculum Into Lessons Students Actually Watch",
         "intro": "Large institutions convert dense chapters into localized, narrative video. Express builds full lessons fast, intelligent text/voice edits let faculty tune content without prompt engineering, and auto-aligned dub/lip-sync matches each cohort's language — then auto-publish ships localized titles and thumbnails to every channel.",
         "story": {
-          "problem": "Turning dense course material into engaging video normally takes weeks, specialized skills, or a production budget most institutions don't have — so lessons end up as slideshows students skip, and serving students in multiple languages multiplies the work.",
-          "solution": "SceneFlow builds full narrated lessons quickly, lets faculty adjust content by typing or speaking (no technical prompts), and automatically dubs and lip-syncs each lesson into every cohort's language before publishing with localized titles and thumbnails.",
-          "outcome": "Curriculum becomes video students actually watch — in every campus's language — without a production team.",
-          "metric": { "before": "weeks / lesson", "after": "< 1 hr" }
+          "problem": [
+            "Dense course material becomes video only after weeks, specialized skills, or a big budget.",
+            "Without that, lessons stay as slideshows students skip.",
+            "Serving students in multiple languages multiplies the work."
+          ],
+          "solution": [
+            "Build full narrated lessons quickly in one studio.",
+            "Faculty adjust content by typing or speaking — no technical prompts.",
+            "Auto dub, lip-sync, and publish with localized titles and thumbnails for every cohort."
+          ],
+          "outcome": [
+            "Turn curriculum into video students actually watch.",
+            "Reach every campus in their language without a production team.",
+            "Ship lessons faster than traditional video production allows."
+          ]
         },
         "screeningRoomHook": "Faculty preview the animatic before production spend, review lesson scenes, and share streams in 70+ languages for multi-campus feedback.",
         "screeningRoomPreview": "Renaissance Workshop: Seeing the Past in Motion"

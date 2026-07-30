@@ -460,6 +460,29 @@ describe('Use Cases landing section layout', () => {
     expect(section).not.toContain('ScreeningRoomPreview')
     expect(section).not.toContain('getLandingYoutubeCreatorScreeningSlug')
   })
+
+  it('renders story columns as accessible bullet lists without metric badges', () => {
+    const section = readSource('src/components/landing/UseCasesSection.tsx')
+
+    expect(section).toContain('StoryBulletList')
+    expect(section).toContain('role="list"')
+    expect(section).toContain('active.story.problem')
+    expect(section).toContain('active.story.solution')
+    expect(section).toContain('active.story.outcome')
+    expect(section).not.toContain('metric.before')
+    expect(section).not.toContain('line-through')
+  })
+
+  it('stores three story bullets per persona column in English messages', () => {
+    for (const persona of enMessages.useCasesShowcase.personas) {
+      const story = persona.story
+      expect(story, `${persona.id} missing story`).toBeDefined()
+      expect(story?.problem, `${persona.id} problem`).toHaveLength(3)
+      expect(story?.solution, `${persona.id} solution`).toHaveLength(3)
+      expect(story?.outcome, `${persona.id} outcome`).toHaveLength(3)
+      expect(story).not.toHaveProperty('metric')
+    }
+  })
 })
 
 describe('Video player watermark', () => {
