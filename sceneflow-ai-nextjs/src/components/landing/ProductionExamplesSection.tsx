@@ -9,6 +9,10 @@ import {
   ProductionStyleCard,
   type ProductionStyleCardData,
 } from '@/components/landing/ProductionStyleCard'
+import {
+  getDefaultProductionShowcaseLocale,
+  getProductionShowcaseVideoLocales,
+} from '@/config/landing/productionShowcaseVideos'
 import { getProductionShowcaseScreeningSlug } from '@/config/landing/productionShowcaseScreening'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 
@@ -57,11 +61,18 @@ export default function ProductionExamplesSection() {
               index={index}
               workflowLabel={t('workflowLabel')}
               ctaLabel={t('startProduction')}
+              videoLocales={getProductionShowcaseVideoLocales(card.id)}
+              defaultVideoLocaleId={getDefaultProductionShowcaseLocale(card.id)}
+              videoComingSoonLabel={t('videoComingSoon')}
+              videoSoonLabel={t('videoSoon')}
+              introVideoLabel={t('introVideoLabel')}
               screeningRoomLabel={t('screeningRoomLabel')}
               frictionLabel={t('frictionLabel')}
               solutionPillarLabel={t('solutionPillarLabel')}
               showMediaPanelLabel={t('showMediaPanel')}
               hideMediaPanelLabel={t('hideMediaPanel')}
+              showSolutionsSectionLabel={t('showSolutionsSection')}
+              hideSolutionsSectionLabel={t('hideSolutionsSection')}
               screeningEmbedSlug={getProductionShowcaseScreeningSlug(card.id)}
             />
           ))}

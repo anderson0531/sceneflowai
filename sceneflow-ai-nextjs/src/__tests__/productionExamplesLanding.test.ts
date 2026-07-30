@@ -100,6 +100,8 @@ describe('Production Examples i18n contract', () => {
       'solutionPillarLabel',
       'showMediaPanel',
       'hideMediaPanel',
+      'showSolutionsSection',
+      'hideSolutionsSection',
     ] as const) {
       expect(enMessages.productionShowcase[key], `missing productionShowcase.${key}`).toBeTruthy()
     }
@@ -467,14 +469,13 @@ describe('Production showcase videos', () => {
     }
   })
 
-  it('does not mount the demo video player on production example cards', () => {
+  it('renders the multi-language player and passes locale labels through', () => {
     const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
-    expect(section).not.toContain('getProductionShowcaseVideoLocales')
-    expect(section).not.toContain('getDefaultProductionShowcaseLocale')
-    expect(section).not.toContain('MultiLanguageVideoPlayer')
+    expect(section).toContain('getProductionShowcaseVideoLocales(card.id)')
+    expect(section).toContain('getDefaultProductionShowcaseLocale(card.id)')
 
     const card = readSource('src/components/landing/ProductionStyleCard.tsx')
-    expect(card).not.toContain('MultiLanguageVideoPlayer')
+    expect(card).toContain('MultiLanguageVideoPlayer')
   })
 
   it('uses a compact overlay language control instead of marketing pills', () => {
@@ -505,13 +506,13 @@ describe('Production showcase videos', () => {
     expect(hero).toContain('tryOpenTheater')
   })
 
-  it('keeps the overlay language control off production example cards', () => {
+  it('mounts the language control on the video frame for production cards', () => {
     const card = readSource('src/components/landing/ProductionStyleCard.tsx')
     const player = readSource('src/components/landing/MultiLanguageVideoPlayer.tsx')
 
-    expect(card).not.toContain('MultiLanguageVideoPlayer')
     expect(card).not.toContain('compactPickerUpTo')
     expect(card).not.toContain('videoLanguagePromptLabel')
+    expect(card).toContain('MultiLanguageVideoPlayer')
     expect(player).toContain('relative aspect-video')
     expect(player).toContain('variant="overlay"')
   })
@@ -522,12 +523,12 @@ describe('Production showcase videos', () => {
     expect(player).not.toContain('object-cover')
   })
 
-  it('lets the hero video frame escape card padding on phones without using it on cards', () => {
+  it('lets the frame escape the card padding on phones', () => {
     const player = readSource('src/components/landing/MultiLanguageVideoPlayer.tsx')
     expect(player).toContain('fullBleedOnMobile')
 
     const card = readSource('src/components/landing/ProductionStyleCard.tsx')
-    expect(card).not.toContain('fullBleedOnMobile')
+    expect(card).toContain('fullBleedOnMobile')
     expect(card).toContain('min-w-0')
   })
 
@@ -537,17 +538,22 @@ describe('Production showcase videos', () => {
     }
   })
 
-  it('mounts a collapsible Screening Room panel on every production card', () => {
+  it('mounts collapsible Solutions and Screening Room tabs on every production card', () => {
     const card = readSource('src/components/landing/ProductionStyleCard.tsx')
     const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
 
     expect(card).toContain('mediaPanelOpen')
+    expect(card).toContain('solutionsSectionOpen')
     expect(card).toContain('useState(false)')
     expect(card).toContain('aria-expanded={mediaPanelOpen}')
+    expect(card).toContain('aria-expanded={solutionsSectionOpen}')
     expect(card).toContain('showMediaPanelLabel')
     expect(card).toContain('hideMediaPanelLabel')
-    expect(card).not.toContain('TabsTrigger')
-    expect(card).not.toContain('MultiLanguageVideoPlayer')
+    expect(card).toContain('showSolutionsSectionLabel')
+    expect(card).toContain('hideSolutionsSectionLabel')
+    expect(card).toContain('TabsTrigger')
+    expect(card).toContain('TabsContent')
+    expect(card).toContain('MultiLanguageVideoPlayer')
     expect(card).toContain('ScreeningRoomPreview')
     expect(card).toContain('screeningRoomPreview')
     expect(card).toContain('screeningEmbedSlug')
@@ -562,6 +568,8 @@ describe('Production showcase videos', () => {
     expect(section).toContain('solutionPillarLabel')
     expect(section).toContain("t('showMediaPanel')")
     expect(section).toContain("t('hideMediaPanel')")
+    expect(section).toContain("t('showSolutionsSection')")
+    expect(section).toContain("t('hideSolutionsSection')")
     expect(section).toContain('getProductionShowcaseScreeningSlug')
   })
 })

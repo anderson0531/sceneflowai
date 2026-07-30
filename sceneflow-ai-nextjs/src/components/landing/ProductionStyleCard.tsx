@@ -23,7 +23,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { MultiLanguageVideoPlayer } from '@/components/landing/MultiLanguageVideoPlayer'
 import { ScreeningRoomPreview } from '@/components/landing/ScreeningRoomPreview'
+import type { VideoLocale, VideoLocaleId } from '@/config/landing/videoLocales'
 import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
 
 export type SolutionPillar = {
@@ -155,27 +158,43 @@ export function ProductionStyleCard({
   index,
   workflowLabel,
   ctaLabel,
+  videoLocales,
+  defaultVideoLocaleId,
+  videoComingSoonLabel,
+  videoSoonLabel,
+  introVideoLabel,
   screeningRoomLabel,
   frictionLabel,
   solutionPillarLabel,
   showMediaPanelLabel,
   hideMediaPanelLabel,
+  showSolutionsSectionLabel,
+  hideSolutionsSectionLabel,
   screeningEmbedSlug,
 }: {
   card: ProductionStyleCardData
   index: number
   workflowLabel: string
   ctaLabel: string
+  videoLocales?: VideoLocale[]
+  defaultVideoLocaleId?: VideoLocaleId
+  videoComingSoonLabel?: string
+  videoSoonLabel?: string
+  introVideoLabel?: string
   screeningRoomLabel?: string
   frictionLabel?: string
   solutionPillarLabel?: string
   showMediaPanelLabel?: string
   hideMediaPanelLabel?: string
+  showSolutionsSectionLabel?: string
+  hideSolutionsSectionLabel?: string
   screeningEmbedSlug?: string | null
 }) {
   const style = CARD_STYLES[card.id] ?? FALLBACK_STYLE
   const Icon = style.icon
+  const [activeMediaTab, setActiveMediaTab] = useState<'workflow' | 'screening'>('workflow')
   const [mediaPanelOpen, setMediaPanelOpen] = useState(false)
+  const [solutionsSectionOpen, setSolutionsSectionOpen] = useState(false)
 
   const startProduction = () => {
     window.location.href = getLoginUrl({
@@ -220,8 +239,8 @@ export function ProductionStyleCard({
         >
           <span>
             {mediaPanelOpen
-              ? (hideMediaPanelLabel ?? 'Hide Screening Room')
-              : (showMediaPanelLabel ?? 'Show Screening Room')}
+              ? (hideMediaPanelLabel ?? 'Hide Solutions & Screening Room')
+              : (showMediaPanelLabel ?? 'Show Solutions & Screening Room')}
           </span>
           {mediaPanelOpen ? (
             <ChevronUp className="h-4 w-4 shrink-0 text-gray-400" />
@@ -231,57 +250,109 @@ export function ProductionStyleCard({
         </button>
 
         {mediaPanelOpen ? (
-          <div className="w-full">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
-              {screeningRoomLabel ?? 'Screening Room'}
-            </p>
-            <ScreeningRoomPreview
-              previewTitle={card.screeningRoomPreview}
-              embedSlug={screeningEmbedSlug}
-            />
-          </div>
+          <Tabs
+            value={activeMediaTab}
+            onValueChange={(value) => setActiveMediaTab(value as 'workflow' | 'screening')}
+            className="w-full"
+          >
+            <TabsList className="mb-3 flex h-auto w-full gap-1 border border-gray-700/50 bg-gray-900/60 p-1">
+              <TabsTrigger
+                value="workflow"
+                className="min-w-0 flex-1 truncate px-2 py-2 text-xs data-[state=active]:bg-indigo-600 data-[state=active]:text-white sm:text-sm"
+              >
+                {introVideoLabel ?? 'Solutions'}
+              </TabsTrigger>
+              <TabsTrigger
+                value="screening"
+                className="min-w-0 flex-1 truncate px-2 py-2 text-xs data-[state=active]:bg-indigo-600 data-[state=active]:text-white sm:text-sm"
+              >
+                {screeningRoomLabel ?? 'Screening Room'}
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="workflow" className="mt-0 focus-visible:outline-none">
+              <MultiLanguageVideoPlayer
+                locales={videoLocales ?? []}
+                defaultLocaleId={defaultVideoLocaleId ?? 'en'}
+                comingSoonLabel={videoComingSoonLabel ?? ''}
+                soonLabel={videoSoonLabel ?? ''}
+                title={card.title}
+                accentGradient={style.ctaGradient}
+                fullBleedOnMobile
+              />
+            </TabsContent>
+
+            <TabsContent value="screening" className="mt-0 focus-visible:outline-none">
+              <ScreeningRoomPreview
+                previewTitle={card.screeningRoomPreview}
+                embedSlug={screeningEmbedSlug}
+              />
+            </TabsContent>
+          </Tabs>
         ) : null}
       </div>
 
-      <div className="mb-4 space-y-2">
-        <p className="text-xs uppercase tracking-wider text-gray-500">{workflowLabel}</p>
-        {card.solutionPillars && card.solutionPillars.length > 0 ? (
-          <Accordion type="single" collapsible className="space-y-2">
-            {card.solutionPillars.map((pillar) => (
-              <AccordionItem
-                key={pillar.title}
-                value={pillar.title}
-                className="overflow-hidden rounded-lg border border-gray-700/30 bg-gray-900/40 px-3 border-b-0"
-              >
-                <AccordionTrigger
-                  className={`py-3 text-sm font-semibold hover:no-underline ${style.accent}`}
-                >
-                  {pillar.title}
-                </AccordionTrigger>
-                <AccordionContent>
-                  <SolutionPillarBody
-                    pillar={pillar}
-                    frictionLabel={frictionLabel ?? 'The Friction'}
-                    solutionPillarLabel={solutionPillarLabel ?? 'The SceneFlow Solution'}
-                  />
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        ) : (
-          <ol className="space-y-2">
-            {(card.workflow ?? []).map((step, stepIndex) => (
-              <li key={step} className="flex items-start gap-2 text-sm">
-                <span
-                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${style.badge}`}
-                >
-                  {stepIndex + 1}
-                </span>
-                <span className="text-gray-300">{step}</span>
-              </li>
-            ))}
-          </ol>
-        )}
+      <div className="mb-4 min-w-0">
+        <button
+          type="button"
+          onClick={() => setSolutionsSectionOpen((open) => !open)}
+          aria-expanded={solutionsSectionOpen}
+          className={`mb-3 flex w-full items-center justify-between rounded-lg border border-gray-700/50 bg-gray-900/60 px-3 py-2 text-left text-sm font-medium text-gray-200 transition-colors hover:border-gray-600 hover:bg-gray-900/80 ${style.accent}`}
+        >
+          <span>
+            {solutionsSectionOpen
+              ? (hideSolutionsSectionLabel ?? 'Hide Solutions')
+              : (showSolutionsSectionLabel ?? 'Show Solutions')}
+          </span>
+          {solutionsSectionOpen ? (
+            <ChevronUp className="h-4 w-4 shrink-0 text-gray-400" />
+          ) : (
+            <ChevronDown className="h-4 w-4 shrink-0 text-gray-400" />
+          )}
+        </button>
+
+        {solutionsSectionOpen ? (
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-wider text-gray-500">{workflowLabel}</p>
+            {card.solutionPillars && card.solutionPillars.length > 0 ? (
+              <Accordion type="single" collapsible className="space-y-2">
+                {card.solutionPillars.map((pillar) => (
+                  <AccordionItem
+                    key={pillar.title}
+                    value={pillar.title}
+                    className="overflow-hidden rounded-lg border border-gray-700/30 bg-gray-900/40 px-3 border-b-0"
+                  >
+                    <AccordionTrigger
+                      className={`py-3 text-sm font-semibold hover:no-underline ${style.accent}`}
+                    >
+                      {pillar.title}
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <SolutionPillarBody
+                        pillar={pillar}
+                        frictionLabel={frictionLabel ?? 'The Friction'}
+                        solutionPillarLabel={solutionPillarLabel ?? 'The SceneFlow Solution'}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            ) : (
+              <ol className="space-y-2">
+                {(card.workflow ?? []).map((step, stepIndex) => (
+                  <li key={step} className="flex items-start gap-2 text-sm">
+                    <span
+                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${style.badge}`}
+                    >
+                      {stepIndex + 1}
+                    </span>
+                    <span className="text-gray-300">{step}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        ) : null}
       </div>
 
       {card.benefit ? (
