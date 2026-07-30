@@ -7,7 +7,7 @@
     - model is set (from GEMINI_MODEL env or central config)
     - uiMarker.productionSections contains Writer's Room and Motion
     - uiMarker.publishingLibrary contains Publishing Library markers
-    - uiMarker.keyFeatures contains Create/Direct/Ship pillar markers
+    - uiMarker.keyFeatures contains Plan/Create/Release pillar markers
     - uiMarker.landingPage.pipelinePillarsRemoved is true
     - uiMarker.productionShowcase.animation.availableLocales includes es
     - uiMarker.heroVideo.availableLocales is en-only with the new English Blob master
