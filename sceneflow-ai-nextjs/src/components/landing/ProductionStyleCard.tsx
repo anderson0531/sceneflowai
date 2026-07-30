@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   ArrowRight,
@@ -12,6 +12,7 @@ import {
   Target,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MultiLanguageVideoPlayer } from '@/components/landing/MultiLanguageVideoPlayer'
 import { ScreeningRoomPreview } from '@/components/landing/ScreeningRoomPreview'
 import type { VideoLocale, VideoLocaleId } from '@/config/landing/videoLocales'
@@ -110,7 +111,7 @@ export function ProductionStyleCard({
 }) {
   const style = CARD_STYLES[card.id] ?? FALLBACK_STYLE
   const Icon = style.icon
-  const hasVideo = Boolean(videoLocales?.some((locale) => locale.available))
+  const [activeMediaTab, setActiveMediaTab] = useState<'workflow' | 'screening'>('workflow')
 
   const startProduction = () => {
     window.location.href = getLoginUrl({
@@ -146,31 +147,46 @@ export function ProductionStyleCard({
         </div>
       </div>
 
-      {hasVideo ? (
-        <div className="mb-4 min-w-0">
-          {introVideoLabel ? (
-            <p className="mb-2 text-xs uppercase tracking-wider text-gray-500">{introVideoLabel}</p>
-          ) : null}
-          <MultiLanguageVideoPlayer
-            locales={videoLocales!}
-            defaultLocaleId={defaultVideoLocaleId ?? 'en'}
-            comingSoonLabel={videoComingSoonLabel ?? ''}
-            soonLabel={videoSoonLabel ?? ''}
-            title={card.title}
-            accentGradient={style.ctaGradient}
-            fullBleedOnMobile
-          />
-        </div>
-      ) : null}
-
       <div className="mb-4 min-w-0">
-        {screeningRoomLabel ? (
-          <p className="mb-2 text-xs uppercase tracking-wider text-gray-500">{screeningRoomLabel}</p>
-        ) : null}
-        <ScreeningRoomPreview
-          previewTitle={card.screeningRoomPreview}
-          embedSlug={screeningEmbedSlug}
-        />
+        <Tabs
+          value={activeMediaTab}
+          onValueChange={(value) => setActiveMediaTab(value as 'workflow' | 'screening')}
+          className="w-full"
+        >
+          <TabsList className="mb-3 flex h-auto w-full gap-1 border border-gray-700/50 bg-gray-900/60 p-1">
+            <TabsTrigger
+              value="workflow"
+              className="min-w-0 flex-1 truncate px-2 py-2 text-xs data-[state=active]:bg-indigo-600 data-[state=active]:text-white sm:text-sm"
+            >
+              {introVideoLabel ?? 'Workflow'}
+            </TabsTrigger>
+            <TabsTrigger
+              value="screening"
+              className="min-w-0 flex-1 truncate px-2 py-2 text-xs data-[state=active]:bg-indigo-600 data-[state=active]:text-white sm:text-sm"
+            >
+              {screeningRoomLabel ?? 'Screening Room'}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="workflow" className="mt-0 focus-visible:outline-none">
+            <MultiLanguageVideoPlayer
+              locales={videoLocales ?? []}
+              defaultLocaleId={defaultVideoLocaleId ?? 'en'}
+              comingSoonLabel={videoComingSoonLabel ?? ''}
+              soonLabel={videoSoonLabel ?? ''}
+              title={card.title}
+              accentGradient={style.ctaGradient}
+              fullBleedOnMobile
+            />
+          </TabsContent>
+
+          <TabsContent value="screening" className="mt-0 focus-visible:outline-none">
+            <ScreeningRoomPreview
+              previewTitle={card.screeningRoomPreview}
+              embedSlug={screeningEmbedSlug}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <div className="mb-4 space-y-2">
@@ -201,26 +217,13 @@ export function ProductionStyleCard({
         </div>
       </div>
 
-      {/* Cards with video keep the CTA in flow so playback is not blocked by hover overlay. */}
       <Button
         onClick={startProduction}
-        className={`mt-4 w-full bg-gradient-to-r text-white ${hasVideo ? '' : 'md:hidden'} ${style.ctaGradient}`}
+        className={`mt-4 w-full bg-gradient-to-r text-white ${style.ctaGradient}`}
       >
         {ctaLabel}
         <ArrowRight className="ml-2 h-4 w-4" />
       </Button>
-
-      {!hasVideo ? (
-      <div className="pointer-events-none absolute inset-0 hidden items-center justify-center rounded-2xl bg-gray-900/90 opacity-0 transition-opacity duration-300 focus-within:pointer-events-auto focus-within:opacity-100 md:flex md:group-hover:pointer-events-auto md:group-hover:opacity-100">
-        <Button
-          onClick={startProduction}
-          className={`bg-gradient-to-r px-6 py-3 text-white ${style.ctaGradient}`}
-        >
-          {ctaLabel}
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
-      </div>
-      ) : null}
     </motion.div>
   )
 }

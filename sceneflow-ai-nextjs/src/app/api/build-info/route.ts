@@ -44,6 +44,7 @@ export async function GET() {
         availableLocales: ['en', 'es'],
       },
       screeningRoomPlaceholders: ['drama', 'animation', 'podcast', 'training'],
+      mediaTabs: 'workflow-screening-room',
     },
     heroVideo: {
       availableLocales: ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'],

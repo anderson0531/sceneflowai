@@ -153,6 +153,11 @@ describe('Production Examples i18n contract', () => {
       JSON.parse(JSON.stringify(PRODUCTION_SHOWCASE_COPY))
     )
   })
+
+  it('uses Workflow and Screening Room as media tab labels', () => {
+    expect(enMessages.productionShowcase.introVideoLabel).toBe('Workflow')
+    expect(enMessages.productionShowcase.screeningRoomLabel).toBe('Screening Room')
+  })
 })
 
 describe('Animated Comedy showcase script', () => {
@@ -272,12 +277,12 @@ describe('Production style CTAs', () => {
     expect(card).toContain('extra: { production: card.id }')
   })
 
-  it('keeps the card CTA reachable without hover', () => {
+  it('keeps the card CTA in flow on every card (no hover overlay)', () => {
     const card = readSource('src/components/landing/ProductionStyleCard.tsx')
 
-    // The in-flow button carries the CTA on touch; the overlay is desktop-only.
-    expect(card).toContain('md:hidden')
-    expect(card).toContain('md:group-hover:opacity-100')
+    expect(card).toContain('mt-4 w-full bg-gradient-to-r text-white')
+    expect(card).not.toContain('md:group-hover:opacity-100')
+    expect(card).not.toContain('md:hidden')
   })
 })
 
@@ -429,10 +434,13 @@ describe('Production showcase videos', () => {
     }
   })
 
-  it('mounts Screening Room placeholders on every production card', () => {
+  it('mounts Workflow and Screening Room tabs on every production card', () => {
     const card = readSource('src/components/landing/ProductionStyleCard.tsx')
     const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
 
+    expect(card).toContain('TabsTrigger')
+    expect(card).toContain('TabsContent')
+    expect(card).toContain('MultiLanguageVideoPlayer')
     expect(card).toContain('ScreeningRoomPreview')
     expect(card).toContain('screeningRoomPreview')
     expect(card).toContain('screeningEmbedSlug')

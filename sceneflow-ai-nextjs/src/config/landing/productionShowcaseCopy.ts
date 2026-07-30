@@ -16,7 +16,7 @@ export const PRODUCTION_SHOWCASE_COPY = {
   videoLanguagePrompt: 'Watch this production in your language',
   videoComingSoon: 'Dub coming soon',
   videoSoon: 'Soon',
-  introVideoLabel: 'Introduction',
+  introVideoLabel: 'Workflow',
   screeningRoomLabel: 'Screening Room',
   cards: [
     {
