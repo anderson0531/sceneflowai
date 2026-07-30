@@ -169,6 +169,19 @@ describe('Production Examples i18n contract', () => {
     expect(drama).not.toHaveProperty('benefit')
   })
 
+  it('uses problem-vs-solution pillars on the Animated Comedy card', () => {
+    const animation = enMessages.productionShowcase.cards.find((card) => card.id === 'animation')!
+    expect(animation.title).toBe('The Animated Comedy Pipeline')
+    expect(animation.subtitle).toBe(
+      'Deliver wild slapstick, perfect comedic timing, and rock-solid cartoon styles.'
+    )
+    expect(animation.solutionPillars).toHaveLength(4)
+    expect(animation.solutionPillars?.[0]?.title).toBe('Stylistic Consistency')
+    expect(animation.solutionPillars?.[2]?.frictionHeadline).toBe('Ruined Punchlines.')
+    expect(animation).not.toHaveProperty('workflow')
+    expect(animation).not.toHaveProperty('benefit')
+  })
+
   it('keeps card ids stable so ?production= values do not silently change', () => {
     expect(enMessages.productionShowcase.cards.map((card) => card.id)).toEqual([
       'drama',
@@ -192,13 +205,8 @@ describe('Production Examples i18n contract', () => {
 
 describe('Animated Comedy showcase script', () => {
   const script = readSource('scripts/use-case-scripts/cosmic-roommates-animated-comedy.md')
-  const card = PRODUCTION_SHOWCASE_COPY.cards.find((entry) => entry.id === 'animation')!
 
-  it('walks the same five stages the card promises', () => {
-    expect(card.workflow).toHaveLength(5)
-
-    // The card is the promise and the script is the proof, so every stage the
-    // card advertises has to earn a block.
+  it('still covers the core comedy production stages in the script', () => {
     for (const stage of [
       "Writer's Room",
       'Art style',
@@ -208,11 +216,6 @@ describe('Animated Comedy showcase script', () => {
     ]) {
       expect(script, `script is missing the ${stage} stage`).toContain(stage)
     }
-  })
-
-  it('ends on the Screening Room stage the card now advertises', () => {
-    expect(card.workflow[4]).toContain('Screening Room')
-    expect(card.workflow[4]).toContain('premiere')
   })
 
   it('budgets eight ten-second blocks', () => {
