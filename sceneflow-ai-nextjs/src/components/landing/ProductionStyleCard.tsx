@@ -40,7 +40,7 @@ export type ProductionStyleCardData = {
   badge: string
   workflow?: string[]
   solutionPillars?: SolutionPillar[]
-  benefit: string
+  benefit?: string
   screeningRoomPreview: string
 }
 
@@ -283,12 +283,16 @@ export function ProductionStyleCard({
         )}
       </div>
 
-      <div className="mt-auto border-t border-white/10 pt-4">
-        <div className="flex items-center gap-2">
-          <Target className={`h-4 w-4 shrink-0 ${style.accent}`} />
-          <p className={`text-sm font-medium ${style.accent}`}>{card.benefit}</p>
+      {card.benefit ? (
+        <div className="mt-auto border-t border-white/10 pt-4">
+          <div className="flex items-center gap-2">
+            <Target className={`h-4 w-4 shrink-0 ${style.accent}`} />
+            <p className={`text-sm font-medium ${style.accent}`}>{card.benefit}</p>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="mt-auto" />
+      )}
 
       <Button
         onClick={startProduction}
