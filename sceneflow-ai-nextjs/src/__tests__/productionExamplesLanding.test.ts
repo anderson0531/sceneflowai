@@ -73,6 +73,12 @@ describe('Production Examples landing section', () => {
     const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
     expect(section).toContain("t('subtitleTagline')")
   })
+
+  it('stacks production cards in a single column at every breakpoint', () => {
+    const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
+    expect(section).toContain('grid grid-cols-1 gap-6')
+    expect(section).not.toContain('md:grid-cols-2')
+  })
 })
 
 describe('Production Examples i18n contract', () => {
@@ -92,6 +98,8 @@ describe('Production Examples i18n contract', () => {
       'screeningRoomLabel',
       'frictionLabel',
       'solutionPillarLabel',
+      'showMediaPanel',
+      'hideMediaPanel',
     ] as const) {
       expect(enMessages.productionShowcase[key], `missing productionShowcase.${key}`).toBeTruthy()
     }
@@ -533,6 +541,11 @@ describe('Production showcase videos', () => {
     const card = readSource('src/components/landing/ProductionStyleCard.tsx')
     const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
 
+    expect(card).toContain('mediaPanelOpen')
+    expect(card).toContain('useState(false)')
+    expect(card).toContain('aria-expanded={mediaPanelOpen}')
+    expect(card).toContain('showMediaPanelLabel')
+    expect(card).toContain('hideMediaPanelLabel')
     expect(card).toContain('TabsTrigger')
     expect(card).toContain('TabsContent')
     expect(card).toContain('MultiLanguageVideoPlayer')
@@ -548,6 +561,8 @@ describe('Production showcase videos', () => {
     expect(card).toContain('solutionPillars')
     expect(section).toContain('frictionLabel')
     expect(section).toContain('solutionPillarLabel')
+    expect(section).toContain("t('showMediaPanel')")
+    expect(section).toContain("t('hideMediaPanel')")
     expect(section).toContain('getProductionShowcaseScreeningSlug')
   })
 })

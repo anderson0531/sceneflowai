@@ -5,6 +5,8 @@ import { motion } from 'framer-motion'
 import {
   AlertCircle,
   ArrowRight,
+  ChevronDown,
+  ChevronUp,
   Clapperboard,
   Film,
   GraduationCap,
@@ -164,6 +166,8 @@ export function ProductionStyleCard({
   screeningRoomLabel,
   frictionLabel,
   solutionPillarLabel,
+  showMediaPanelLabel,
+  hideMediaPanelLabel,
   screeningEmbedSlug,
 }: {
   card: ProductionStyleCardData
@@ -178,11 +182,14 @@ export function ProductionStyleCard({
   screeningRoomLabel?: string
   frictionLabel?: string
   solutionPillarLabel?: string
+  showMediaPanelLabel?: string
+  hideMediaPanelLabel?: string
   screeningEmbedSlug?: string | null
 }) {
   const style = CARD_STYLES[card.id] ?? FALLBACK_STYLE
   const Icon = style.icon
   const [activeMediaTab, setActiveMediaTab] = useState<'workflow' | 'screening'>('workflow')
+  const [mediaPanelOpen, setMediaPanelOpen] = useState(false)
 
   const startProduction = () => {
     window.location.href = getLoginUrl({
@@ -219,45 +226,65 @@ export function ProductionStyleCard({
       </div>
 
       <div className="mb-4 min-w-0">
-        <Tabs
-          value={activeMediaTab}
-          onValueChange={(value) => setActiveMediaTab(value as 'workflow' | 'screening')}
-          className="w-full"
+        <button
+          type="button"
+          onClick={() => setMediaPanelOpen((open) => !open)}
+          aria-expanded={mediaPanelOpen}
+          className={`mb-3 flex w-full items-center justify-between rounded-lg border border-gray-700/50 bg-gray-900/60 px-3 py-2 text-left text-sm font-medium text-gray-200 transition-colors hover:border-gray-600 hover:bg-gray-900/80 ${style.accent}`}
         >
-          <TabsList className="mb-3 flex h-auto w-full gap-1 border border-gray-700/50 bg-gray-900/60 p-1">
-            <TabsTrigger
-              value="workflow"
-              className="min-w-0 flex-1 truncate px-2 py-2 text-xs data-[state=active]:bg-indigo-600 data-[state=active]:text-white sm:text-sm"
-            >
-              {introVideoLabel ?? 'Solutions'}
-            </TabsTrigger>
-            <TabsTrigger
-              value="screening"
-              className="min-w-0 flex-1 truncate px-2 py-2 text-xs data-[state=active]:bg-indigo-600 data-[state=active]:text-white sm:text-sm"
-            >
-              {screeningRoomLabel ?? 'Screening Room'}
-            </TabsTrigger>
-          </TabsList>
+          <span>
+            {mediaPanelOpen
+              ? (hideMediaPanelLabel ?? 'Hide Solutions & Screening Room')
+              : (showMediaPanelLabel ?? 'Show Solutions & Screening Room')}
+          </span>
+          {mediaPanelOpen ? (
+            <ChevronUp className="h-4 w-4 shrink-0 text-gray-400" />
+          ) : (
+            <ChevronDown className="h-4 w-4 shrink-0 text-gray-400" />
+          )}
+        </button>
 
-          <TabsContent value="workflow" className="mt-0 focus-visible:outline-none">
-            <MultiLanguageVideoPlayer
-              locales={videoLocales ?? []}
-              defaultLocaleId={defaultVideoLocaleId ?? 'en'}
-              comingSoonLabel={videoComingSoonLabel ?? ''}
-              soonLabel={videoSoonLabel ?? ''}
-              title={card.title}
-              accentGradient={style.ctaGradient}
-              fullBleedOnMobile
-            />
-          </TabsContent>
+        {mediaPanelOpen ? (
+          <Tabs
+            value={activeMediaTab}
+            onValueChange={(value) => setActiveMediaTab(value as 'workflow' | 'screening')}
+            className="w-full"
+          >
+            <TabsList className="mb-3 flex h-auto w-full gap-1 border border-gray-700/50 bg-gray-900/60 p-1">
+              <TabsTrigger
+                value="workflow"
+                className="min-w-0 flex-1 truncate px-2 py-2 text-xs data-[state=active]:bg-indigo-600 data-[state=active]:text-white sm:text-sm"
+              >
+                {introVideoLabel ?? 'Solutions'}
+              </TabsTrigger>
+              <TabsTrigger
+                value="screening"
+                className="min-w-0 flex-1 truncate px-2 py-2 text-xs data-[state=active]:bg-indigo-600 data-[state=active]:text-white sm:text-sm"
+              >
+                {screeningRoomLabel ?? 'Screening Room'}
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="screening" className="mt-0 focus-visible:outline-none">
-            <ScreeningRoomPreview
-              previewTitle={card.screeningRoomPreview}
-              embedSlug={screeningEmbedSlug}
-            />
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="workflow" className="mt-0 focus-visible:outline-none">
+              <MultiLanguageVideoPlayer
+                locales={videoLocales ?? []}
+                defaultLocaleId={defaultVideoLocaleId ?? 'en'}
+                comingSoonLabel={videoComingSoonLabel ?? ''}
+                soonLabel={videoSoonLabel ?? ''}
+                title={card.title}
+                accentGradient={style.ctaGradient}
+                fullBleedOnMobile
+              />
+            </TabsContent>
+
+            <TabsContent value="screening" className="mt-0 focus-visible:outline-none">
+              <ScreeningRoomPreview
+                previewTitle={card.screeningRoomPreview}
+                embedSlug={screeningEmbedSlug}
+              />
+            </TabsContent>
+          </Tabs>
+        ) : null}
       </div>
 
       <div className="mb-4 space-y-2">
