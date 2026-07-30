@@ -19,8 +19,10 @@ export const PRODUCTION_SHOWCASE_COPY = {
   screeningRoomLabel: 'Screening Room',
   frictionLabel: 'The Friction',
   solutionPillarLabel: 'The SceneFlow Solution',
-  showMediaPanel: 'Show Screening Room',
-  hideMediaPanel: 'Hide Screening Room',
+  showMediaPanel: 'Show Solutions & Screening Room',
+  hideMediaPanel: 'Hide Solutions & Screening Room',
+  showSolutionsSection: 'Show Solutions',
+  hideSolutionsSection: 'Hide Solutions',
   cards: [
     {
       id: 'drama',
