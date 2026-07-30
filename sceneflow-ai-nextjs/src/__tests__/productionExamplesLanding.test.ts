@@ -154,8 +154,8 @@ describe('Production Examples i18n contract', () => {
     )
   })
 
-  it('uses Workflow and Screening Room as media tab labels', () => {
-    expect(enMessages.productionShowcase.introVideoLabel).toBe('Workflow')
+  it('uses Solutions and Screening Room as media tab labels', () => {
+    expect(enMessages.productionShowcase.introVideoLabel).toBe('Solutions')
     expect(enMessages.productionShowcase.screeningRoomLabel).toBe('Screening Room')
   })
 })
@@ -434,7 +434,7 @@ describe('Production showcase videos', () => {
     }
   })
 
-  it('mounts Workflow and Screening Room tabs on every production card', () => {
+  it('mounts Solutions and Screening Room tabs on every production card', () => {
     const card = readSource('src/components/landing/ProductionStyleCard.tsx')
     const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
 
