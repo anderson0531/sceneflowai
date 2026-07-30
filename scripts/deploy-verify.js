@@ -98,13 +98,18 @@ async function main() {
       const landingPageOk =
         landingPage.pipelinePillarsRemoved === true &&
         landingPage.videoLanguageControl === 'overlay-dropdown' &&
+        landingPage.useCasesTabsRemoved === true &&
         landingPage.heroCopy?.headline ===
           'You Direct the Story. SceneFlow Automates the Studio.' &&
         landingPage.heroCopy?.audienceMicroLineRemoved === true
       const animationShowcase =
         productionShowcase.animation && productionShowcase.animation.availableLocales
       const productionShowcaseOk =
-        Array.isArray(animationShowcase) && animationShowcase.includes('es')
+        Array.isArray(animationShowcase) &&
+        animationShowcase.includes('es') &&
+        Array.isArray(productionShowcase.screeningRoomPlaceholders) &&
+        productionShowcase.screeningRoomPlaceholders.join(',') ===
+          'drama,animation,podcast,training'
       const heroVideoLocales = heroVideo.availableLocales
       const heroVideoOk =
         Array.isArray(heroVideoLocales) &&

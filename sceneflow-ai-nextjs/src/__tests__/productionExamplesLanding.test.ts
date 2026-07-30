@@ -89,6 +89,8 @@ describe('Production Examples i18n contract', () => {
       'cta',
       'continuityNote',
       'resonanceNote',
+      'introVideoLabel',
+      'screeningRoomLabel',
     ] as const) {
       expect(enMessages.productionShowcase[key], `missing productionShowcase.${key}`).toBeTruthy()
     }
@@ -116,7 +118,15 @@ describe('Production Examples i18n contract', () => {
     expect(cards).toHaveLength(4)
 
     for (const card of cards) {
-      for (const key of ['id', 'title', 'subtitle', 'badge', 'tools', 'benefit'] as const) {
+      for (const key of [
+        'id',
+        'title',
+        'subtitle',
+        'badge',
+        'tools',
+        'benefit',
+        'screeningRoomPreview',
+      ] as const) {
         expect(card[key], `${card.id} ${key}`).toBeTruthy()
       }
       // Cards run four steps; the animated comedy adds a fifth for the
@@ -417,6 +427,30 @@ describe('Production showcase videos', () => {
     for (const key of ['videoComingSoon', 'videoSoon'] as const) {
       expect(enMessages.productionShowcase[key], `missing productionShowcase.${key}`).toBeTruthy()
     }
+  })
+
+  it('mounts Screening Room placeholders on every production card', () => {
+    const card = readSource('src/components/landing/ProductionStyleCard.tsx')
+    const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
+
+    expect(card).toContain('ScreeningRoomPreview')
+    expect(card).toContain('screeningRoomPreview')
+    expect(card).toContain('screeningEmbedSlug')
+    expect(section).toContain('getProductionShowcaseScreeningSlug')
+  })
+})
+
+describe('Use Cases landing section layout', () => {
+  it('shows persona copy above navigation and drops Solution/Screening tabs', () => {
+    const section = readSource('src/components/landing/UseCasesSection.tsx')
+
+    expect(section).toContain("active?.headline")
+    expect(section).toContain("active?.intro")
+    expect(section).toContain('setActivePersona')
+    expect(section).not.toContain('TabsTrigger')
+    expect(section).not.toContain('tabScreening')
+    expect(section).not.toContain('ScreeningRoomPreview')
+    expect(section).not.toContain('getLandingYoutubeCreatorScreeningSlug')
   })
 })
 

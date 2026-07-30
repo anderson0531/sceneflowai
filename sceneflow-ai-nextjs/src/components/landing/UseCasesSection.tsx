@@ -14,10 +14,7 @@ import {
   Sparkles,
   TrendingUp,
 } from 'lucide-react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ScreeningRoomPreview } from './ScreeningRoomPreview'
 import { MultiLanguageVideoPlayer } from './MultiLanguageVideoPlayer'
-import { getLandingYoutubeCreatorScreeningSlug } from '@/config/landingSamples'
 import {
   getDefaultPersonaStoryLocale,
   getPersonaStoryVideoLocales,
@@ -62,7 +59,6 @@ type PersonaData = {
 export default function UseCasesSection() {
   const t = useTranslations('useCasesShowcase')
   const [activePersona, setActivePersona] = useState<PersonaId>('youtubeCreator')
-  const [activeTab, setActiveTab] = useState<'story' | 'screening'>('story')
 
   const personas = useMemo(
     () => t.raw('personas') as PersonaData[],
@@ -94,37 +90,6 @@ export default function UseCasesSection() {
           <p className="text-gray-400 max-w-2xl mx-auto text-lg">{t('subtitle')}</p>
         </motion.div>
 
-        <motion.div
-          className="flex justify-center mb-10 px-2"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-        >
-          <div className="inline-flex flex-wrap justify-center gap-1 p-1.5 rounded-2xl bg-slate-800/50 border border-slate-700/50 max-w-full">
-            {personas.map((persona) => {
-              const Icon = PERSONA_ICONS[persona.id]
-              const gradient = PERSONA_GRADIENTS[persona.id]
-              return (
-                <button
-                  key={persona.id}
-                  type="button"
-                  onClick={() => setActivePersona(persona.id)}
-                  className={cn(
-                    'flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-300 max-w-full',
-                    activePersona === persona.id
-                      ? `bg-gradient-to-r ${gradient} text-white shadow-lg`
-                      : 'text-gray-400 hover:text-white hover:bg-slate-700/50'
-                  )}
-                >
-                  <Icon className="w-4 h-4 shrink-0" />
-                  <span className="truncate">{persona.label}</span>
-                </button>
-              )
-            })}
-          </div>
-        </motion.div>
-
         <div className="flex flex-col gap-8 w-full">
           <motion.div
             key={activePersona}
@@ -136,103 +101,86 @@ export default function UseCasesSection() {
             <h3 className="text-2xl md:text-3xl font-bold text-white">{active?.headline}</h3>
             <p className="text-gray-400 text-lg leading-relaxed w-full">{active?.intro}</p>
 
-            <Tabs
-              value={activeTab}
-              onValueChange={(v) => setActiveTab(v as 'story' | 'screening')}
-              className="w-full pt-2"
-            >
-              <TabsList className="flex h-auto gap-1 p-1 w-full max-w-xl mx-auto mb-8 bg-slate-900/60 border-slate-700">
-                <TabsTrigger
-                  value="story"
-                  className="flex-1 min-w-0 px-2 sm:px-4 text-xs sm:text-sm py-2.5 truncate data-[state=active]:bg-indigo-600 data-[state=active]:text-white"
-                >
-                  {t('tabStory')}
-                </TabsTrigger>
-                <TabsTrigger
-                  value="screening"
-                  className="flex-1 min-w-0 px-2 sm:px-4 text-xs sm:text-sm py-2.5 truncate data-[state=active]:bg-indigo-600 data-[state=active]:text-white"
-                >
-                  {t('tabScreening')}
-                </TabsTrigger>
-              </TabsList>
+            <div className="flex justify-center pt-2 px-2">
+              <div className="inline-flex flex-wrap justify-center gap-1 p-1.5 rounded-2xl bg-slate-800/50 border border-slate-700/50 max-w-full">
+                {personas.map((persona) => {
+                  const Icon = PERSONA_ICONS[persona.id]
+                  const gradient = PERSONA_GRADIENTS[persona.id]
+                  return (
+                    <button
+                      key={persona.id}
+                      type="button"
+                      onClick={() => setActivePersona(persona.id)}
+                      className={cn(
+                        'flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-300 max-w-full',
+                        activePersona === persona.id
+                          ? `bg-gradient-to-r ${gradient} text-white shadow-lg`
+                          : 'text-gray-400 hover:text-white hover:bg-slate-700/50'
+                      )}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span className="truncate">{persona.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
 
-              <TabsContent value="story" className="mt-0 focus-visible:outline-none">
-                {active?.story && (
-                  <div className="space-y-6">
-                    <MultiLanguageVideoPlayer
-                      locales={getPersonaStoryVideoLocales(active.id)}
-                      defaultLocaleId={getDefaultPersonaStoryLocale(active.id)}
-                      comingSoonLabel={t('videoComingSoon')}
-                      soonLabel={t('videoSoon')}
-                      title={active.headline}
-                      accentGradient={PERSONA_GRADIENTS[active.id]}
-                    />
-
-                    <div className="grid gap-4 md:grid-cols-3 w-full">
-                      <div className="rounded-2xl border border-rose-500/20 bg-rose-500/[0.06] p-5">
-                        <div className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-rose-300">
-                          <AlertCircle className="h-4 w-4" />
-                          {t('problemLabel')}
-                        </div>
-                        <p className="text-sm md:text-base text-gray-300 leading-relaxed">
-                          {active.story.problem}
-                        </p>
-                      </div>
-
-                      <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/[0.06] p-5">
-                        <div className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-300">
-                          <Sparkles className="h-4 w-4" />
-                          {t('solutionLabel')}
-                        </div>
-                        <p className="text-sm md:text-base text-gray-300 leading-relaxed">
-                          {active.story.solution}
-                        </p>
-                      </div>
-
-                      <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-5">
-                        <div className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-300">
-                          <TrendingUp className="h-4 w-4" />
-                          {t('outcomeLabel')}
-                        </div>
-                        <p className="text-sm md:text-base text-gray-300 leading-relaxed">
-                          {active.story.outcome}
-                        </p>
-                        {active.story.metric && (
-                          <div className="mt-4 flex items-center gap-2 text-sm font-semibold">
-                            <span className="rounded-md bg-slate-800/80 px-2 py-1 text-gray-400 line-through decoration-rose-400/60">
-                              {active.story.metric.before}
-                            </span>
-                            <ArrowRight className="h-4 w-4 text-emerald-400" />
-                            <span className="rounded-md bg-emerald-500/15 px-2 py-1 text-emerald-300">
-                              {active.story.metric.after}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent
-                value="screening"
-                className="mt-0 focus-visible:outline-none space-y-4"
-              >
-                {active?.screeningRoomHook && (
-                  <p className="text-gray-500 text-base leading-relaxed w-full border-l-2 border-indigo-500/30 pl-4">
-                    {active.screeningRoomHook}
-                  </p>
-                )}
-                <ScreeningRoomPreview
-                  previewTitle={active?.screeningRoomPreview ?? ''}
-                  embedSlug={
-                    active?.id === 'youtubeCreator'
-                      ? getLandingYoutubeCreatorScreeningSlug()
-                      : null
-                  }
+            {active?.story && (
+              <div className="space-y-6 pt-2">
+                <MultiLanguageVideoPlayer
+                  locales={getPersonaStoryVideoLocales(active.id)}
+                  defaultLocaleId={getDefaultPersonaStoryLocale(active.id)}
+                  comingSoonLabel={t('videoComingSoon')}
+                  soonLabel={t('videoSoon')}
+                  title={active.headline}
+                  accentGradient={PERSONA_GRADIENTS[active.id]}
                 />
-              </TabsContent>
-            </Tabs>
+
+                <div className="grid gap-4 md:grid-cols-3 w-full">
+                  <div className="rounded-2xl border border-rose-500/20 bg-rose-500/[0.06] p-5">
+                    <div className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-rose-300">
+                      <AlertCircle className="h-4 w-4" />
+                      {t('problemLabel')}
+                    </div>
+                    <p className="text-sm md:text-base text-gray-300 leading-relaxed">
+                      {active.story.problem}
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/[0.06] p-5">
+                    <div className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-300">
+                      <Sparkles className="h-4 w-4" />
+                      {t('solutionLabel')}
+                    </div>
+                    <p className="text-sm md:text-base text-gray-300 leading-relaxed">
+                      {active.story.solution}
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-5">
+                    <div className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-300">
+                      <TrendingUp className="h-4 w-4" />
+                      {t('outcomeLabel')}
+                    </div>
+                    <p className="text-sm md:text-base text-gray-300 leading-relaxed">
+                      {active.story.outcome}
+                    </p>
+                    {active.story.metric && (
+                      <div className="mt-4 flex items-center gap-2 text-sm font-semibold">
+                        <span className="rounded-md bg-slate-800/80 px-2 py-1 text-gray-400 line-through decoration-rose-400/60">
+                          {active.story.metric.before}
+                        </span>
+                        <ArrowRight className="h-4 w-4 text-emerald-400" />
+                        <span className="rounded-md bg-emerald-500/15 px-2 py-1 text-emerald-300">
+                          {active.story.metric.after}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </motion.div>
         </div>
 

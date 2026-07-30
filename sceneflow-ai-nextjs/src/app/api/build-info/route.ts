@@ -33,6 +33,7 @@ export async function GET() {
     landingPage: {
       pipelinePillarsRemoved: true,
       videoLanguageControl: 'overlay-dropdown',
+      useCasesTabsRemoved: true,
       heroCopy: {
         headline: 'You Direct the Story. SceneFlow Automates the Studio.',
         audienceMicroLineRemoved: true,
@@ -42,6 +43,7 @@ export async function GET() {
       animation: {
         availableLocales: ['en', 'es'],
       },
+      screeningRoomPlaceholders: ['drama', 'animation', 'podcast', 'training'],
     },
     heroVideo: {
       availableLocales: ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'],

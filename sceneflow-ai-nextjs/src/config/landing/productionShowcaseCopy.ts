@@ -16,6 +16,8 @@ export const PRODUCTION_SHOWCASE_COPY = {
   videoLanguagePrompt: 'Watch this production in your language',
   videoComingSoon: 'Dub coming soon',
   videoSoon: 'Soon',
+  introVideoLabel: 'Introduction',
+  screeningRoomLabel: 'Screening Room',
   cards: [
     {
       id: 'drama',
@@ -30,6 +32,7 @@ export const PRODUCTION_SHOWCASE_COPY = {
       ],
       tools: "Series Studio → Writer's Room → Visualizer",
       benefit: 'No character drift across episodes',
+      screeningRoomPreview: 'The Cinematic Drama — Screening Room Preview',
     },
     {
       id: 'animation',
@@ -45,6 +48,7 @@ export const PRODUCTION_SHOWCASE_COPY = {
       ],
       tools: "Writer's Room → Visualizer → Screening Room",
       benefit: 'Consistent characters in any style',
+      screeningRoomPreview: 'The Animated Comedy — Screening Room Preview',
     },
     {
       id: 'podcast',
@@ -59,6 +63,7 @@ export const PRODUCTION_SHOWCASE_COPY = {
       ],
       tools: 'Series Studio → Smart Editor → Screening Room',
       benefit: 'One voice, 20 episodes, zero drift',
+      screeningRoomPreview: 'The AI-First Podcast — Screening Room Preview',
     },
     {
       id: 'training',
@@ -73,6 +78,7 @@ export const PRODUCTION_SHOWCASE_COPY = {
       ],
       tools: 'Series Studio → Smart Editor → Export',
       benefit: 'Train worldwide teams instantly',
+      screeningRoomPreview: 'The Corporate Training — Screening Room Preview',
     },
   ],
 } as const

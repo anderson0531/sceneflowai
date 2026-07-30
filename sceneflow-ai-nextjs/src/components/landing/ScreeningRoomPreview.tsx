@@ -3,7 +3,6 @@
 import { ExternalLink, Play } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { StoryboardEmbedPlayer } from '@/components/vision/StoryboardEmbedPlayer'
-import { getLandingYoutubeCreatorScreeningHref } from '@/config/landingSamples'
 
 interface ScreeningRoomPreviewProps {
   previewTitle: string
@@ -12,7 +11,7 @@ interface ScreeningRoomPreviewProps {
 
 export function ScreeningRoomPreview({ previewTitle, embedSlug }: ScreeningRoomPreviewProps) {
   const t = useTranslations('screeningRoom')
-  const screeningHref = embedSlug ? getLandingYoutubeCreatorScreeningHref() : null
+  const screeningHref = embedSlug ? `/${encodeURIComponent(embedSlug.trim())}` : null
 
   return (
     <div className="w-full">

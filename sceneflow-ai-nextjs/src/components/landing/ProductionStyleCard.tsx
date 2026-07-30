@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { MultiLanguageVideoPlayer } from '@/components/landing/MultiLanguageVideoPlayer'
+import { ScreeningRoomPreview } from '@/components/landing/ScreeningRoomPreview'
 import type { VideoLocale, VideoLocaleId } from '@/config/landing/videoLocales'
 import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
 
@@ -24,6 +25,7 @@ export type ProductionStyleCardData = {
   workflow: string[]
   tools: string
   benefit: string
+  screeningRoomPreview: string
 }
 
 type CardStyle = {
@@ -89,6 +91,9 @@ export function ProductionStyleCard({
   defaultVideoLocaleId,
   videoComingSoonLabel,
   videoSoonLabel,
+  introVideoLabel,
+  screeningRoomLabel,
+  screeningEmbedSlug,
 }: {
   card: ProductionStyleCardData
   index: number
@@ -99,6 +104,9 @@ export function ProductionStyleCard({
   defaultVideoLocaleId?: VideoLocaleId
   videoComingSoonLabel?: string
   videoSoonLabel?: string
+  introVideoLabel?: string
+  screeningRoomLabel?: string
+  screeningEmbedSlug?: string | null
 }) {
   const style = CARD_STYLES[card.id] ?? FALLBACK_STYLE
   const Icon = style.icon
@@ -140,6 +148,9 @@ export function ProductionStyleCard({
 
       {hasVideo ? (
         <div className="mb-4 min-w-0">
+          {introVideoLabel ? (
+            <p className="mb-2 text-xs uppercase tracking-wider text-gray-500">{introVideoLabel}</p>
+          ) : null}
           <MultiLanguageVideoPlayer
             locales={videoLocales!}
             defaultLocaleId={defaultVideoLocaleId ?? 'en'}
@@ -151,6 +162,16 @@ export function ProductionStyleCard({
           />
         </div>
       ) : null}
+
+      <div className="mb-4 min-w-0">
+        {screeningRoomLabel ? (
+          <p className="mb-2 text-xs uppercase tracking-wider text-gray-500">{screeningRoomLabel}</p>
+        ) : null}
+        <ScreeningRoomPreview
+          previewTitle={card.screeningRoomPreview}
+          embedSlug={screeningEmbedSlug}
+        />
+      </div>
 
       <div className="mb-4 space-y-2">
         <p className="text-xs uppercase tracking-wider text-gray-500">{workflowLabel}</p>
