@@ -68,17 +68,48 @@ export const PRODUCTION_SHOWCASE_COPY = {
     },
     {
       id: 'animation',
-      title: 'The Animated Comedy',
-      subtitle: 'Stylized art with perfect face recognition',
+      title: 'The Animated Comedy Pipeline',
+      subtitle:
+        'Deliver wild slapstick, perfect comedic timing, and rock-solid cartoon styles.',
       badge: 'Multi-Style',
-      workflow: [
-        "Writer's Room: Genre-aware script with dialogue polishing",
-        'Select any art style (SceneFlow recommends): Anime (90s), Ghibli-esque, Comic Book',
-        'Reference Library: Character consistency across all art styles',
-        'Audience Resonance™ optimizes comedic timing',
-        'Screening Room: Animatic pre-vis, then premiere the full video',
+      solutionPillars: [
+        {
+          title: 'Stylistic Consistency',
+          frictionHeadline: 'Style Meltdown.',
+          friction:
+            'Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.',
+          solutionHeadline: 'Locked Art Style Engine.',
+          solution:
+            'Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours.',
+        },
+        {
+          title: 'Exaggerated Animation & Physics',
+          frictionHeadline: 'Stiff & Glitchy Motion.',
+          friction:
+            'Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.',
+          solutionHeadline: 'Action & Pose Anchoring.',
+          solution:
+            'Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control.',
+        },
+        {
+          title: 'Comedic Timing & Rhythm',
+          frictionHeadline: 'Ruined Punchlines.',
+          friction:
+            'Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.',
+          solutionHeadline: 'Beat-Precision Editing.',
+          solution:
+            'Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render.',
+        },
+        {
+          title: 'High-Energy Dialogue & Vocal Sync',
+          frictionHeadline: 'Lifeless Puppet Mouths.',
+          friction:
+            'Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.',
+          solutionHeadline: 'Dynamic Voice & Expression Sync.',
+          solution:
+            'Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact.',
+        },
       ],
-      benefit: 'Consistent characters in any style',
       screeningRoomPreview: 'The Animated Comedy — Screening Room Preview',
     },
     {
