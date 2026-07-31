@@ -1,4 +1,5 @@
 import { eapCtaButton, eapEmailLayout } from './layout'
+import { EAP_COHORT_SHORT } from '@/config/landing/eapCopy'
 
 export function buildApplicationApprovedEmail(params: {
   fullName: string
@@ -16,7 +17,7 @@ export function buildApplicationApprovedEmail(params: {
   const text = `Congratulations ${fullName}! You've been approved for the SceneFlow Early Access Program. Choose your plan here: ${inviteUrl} (expires ${expiryDate}).`
 
   const body = `
-    <h1 style="margin:0 0 16px;font-size:22px;color:#ffffff;">You're in the August 2026 cohort</h1>
+    <h1 style="margin:0 0 16px;font-size:22px;color:#ffffff;">You're in the ${EAP_COHORT_SHORT}</h1>
     <p style="margin:0 0 16px;color:#cbd5e1;">Congratulations, ${fullName}!</p>
     <p style="margin:0 0 16px;color:#cbd5e1;">You've been approved for the SceneFlow Early Access Program. Click below to create your account and choose the plan that fits your production workflow.</p>
     ${eapCtaButton('Accept invite & choose plan', inviteUrl)}

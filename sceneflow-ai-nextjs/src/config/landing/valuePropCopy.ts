@@ -6,7 +6,9 @@ export const HERO_COPY = {
   headline: 'You Direct the Story. SceneFlow Automates the Studio.',
   subheadline:
     'Google-powered intelligence orchestrated on Google Cloud — with optional Google or Kling generation. Run your ideas through a seamless pipeline from blueprint to master MP4 without micro-prompting.',
-  ctaPrimaryLaunch: 'Launch Your Studio ($9)',
+  ctaPrimaryLaunch: 'Launch Your Studio ($9) — September Cohort',
+  ctaSupportingLine:
+    'Start with the $9 Explorer plan. September Early Access cohort now forming.',
   ctaSecondary: "Watch the 'What's Possible'",
   ctaToolStack: 'See how it replaces your tool stack',
 } as const
@@ -187,8 +189,8 @@ export const SLOT_MACHINE_HEADER = {
 export const FINAL_CTA_COPY = {
   title: 'Ready to test the full pipeline?',
   subtitle:
-    'Google-powered scripting and optimization, your choice of generation backend, and Screening Room review — all in one studio. Start with the $9 Explorer plan or apply for Founding Creator early access.',
-  cta: 'Launch Your Studio for $9',
+    'Google-powered scripting and optimization, your choice of generation backend, and Screening Room review — all in one studio. September Early Access cohort now forming — start with the $9 Explorer plan or apply for Founding Creator access.',
+  cta: 'Launch Your Studio ($9) — September Cohort',
   ctaSecondary: 'Apply for Founding Creator Access',
   ctaSecondaryHref: '/early-access',
 } as const
