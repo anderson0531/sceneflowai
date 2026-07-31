@@ -2,6 +2,7 @@
  * Canonical English landing messages — source of truth for MT pipeline.
  * Config files remain for IDs/structure; display strings live here for i18n.
  */
+import { LEGAL_FOOTER_ADDRESS } from '@/config/legal/legalCopy'
 import {
   AUDIENCE_PATHS,
   AUDIENCE_PATH_MODES,
@@ -314,8 +315,7 @@ export function buildEnMessages() {
       securePayments: 'Secure payments processed by Whop, our Merchant of Record',
       morLine: MOR_FOOTER_LINE,
       copyright: '© 2026 SceneFlow AI. All rights reserved.',
-      address:
-        'Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Contact: support@sfai.studio',
+      address: LEGAL_FOOTER_ADDRESS,
       poweredBy: 'Powered by Google Cloud',
     },
     floatingCta: {

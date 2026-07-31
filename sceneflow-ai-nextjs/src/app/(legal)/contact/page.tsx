@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { ArrowLeft, Shield, HelpCircle, CreditCard, Scale } from 'lucide-react'
 import {
   LEGAL_ABUSE_EMAIL,
+  LEGAL_ADDRESS,
+  LEGAL_COMPANY_NAME,
   LEGAL_LEGAL_EMAIL,
   LEGAL_SUPPORT_EMAIL,
   LEGAL_TRUST_EMAIL,
@@ -114,7 +116,7 @@ export default function ContactPage() {
           <section className="bg-gray-800/30 rounded-xl p-6 border border-gray-700">
             <h2 className="text-xl font-semibold text-white mb-4">Company Information</h2>
             <div className="space-y-3 text-gray-300">
-              <p><strong className="text-gray-200">Company Name:</strong> Life Focus, LLC</p>
+              <p><strong className="text-gray-200">Company Name:</strong> {LEGAL_COMPANY_NAME}</p>
               <p><strong className="text-gray-200">Website:</strong> sceneflowai.studio</p>
               <p><strong className="text-gray-200">Service:</strong> AI-Powered Video Production Platform</p>
             </div>
@@ -123,9 +125,8 @@ export default function ContactPage() {
           <section className="bg-gray-800/30 rounded-xl p-6 border border-gray-700">
             <h2 className="text-xl font-semibold text-white mb-4">Mailing Address</h2>
             <address className="text-gray-300 not-italic leading-relaxed">
-              Life Focus, LLC<br />
-              14205 N Mo Pac Expy Ste 570<br />
-              Austin, Texas 78728-6529<br />
+              {LEGAL_COMPANY_NAME}<br />
+              {LEGAL_ADDRESS}<br />
             </address>
             <p className="text-gray-400 text-sm mt-4">
               Please note that we do not accept walk-in visitors. For the fastest response, please use email.
