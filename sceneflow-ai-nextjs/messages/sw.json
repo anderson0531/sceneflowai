@@ -4,23 +4,26 @@
     "description": "Badilisha mawazo yako kuwa video za kitaalamu kwa kutumia mfumo wa otomatiki wa mtiririko wa kazi unaoendeshwa na AI."
   },
   "nav": {
-    "workflow": "Mtiririko wa Kazi",
-    "platformWalkthrough": "Mwongozo wa Matumizi ya Jukwaa",
-    "plansPricing": "Mipango na Bei",
-    "more": "Zaidi",
-    "useCases": "Visa vya Matumizi",
+    "workflow": "How It Works",
+    "platformWalkthrough": "Platform Walkthrough",
+    "plansPricing": "Plans & Pricing",
+    "more": "More",
+    "useCases": "Use Cases",
     "audienceResonance": "Audience Resonance",
-    "trustSafety": "Uaminifu na Usalama",
-    "platformTrust": "Jukwaa na Imani",
-    "signIn": "Ingia",
-    "startProject": "Anzisha mradi",
-    "dashboard": "Dashibodi",
-    "adminPanel": "Jopo la Usimamizi",
-    "signOut": "Ondoka",
-    "goToDashboard": "Nenda kwenye dashibodi",
-    "userFallback": "Mtumiaji",
-    "searchLanguages": "Tafuta lugha...",
-    "noLanguagesFound": "Hakuna lugha zilizopatikana"
+    "trustSafety": "Trust & Safety",
+    "platformTrust": "Platform & Trust",
+    "signIn": "Sign In",
+    "startProject": "Start a Project",
+    "dashboard": "Dashboard",
+    "adminPanel": "Admin Panel",
+    "signOut": "Sign Out",
+    "goToDashboard": "Go to Dashboard",
+    "userFallback": "User",
+    "searchLanguages": "Search languages...",
+    "noLanguagesFound": "No languages found",
+    "pipeline": "The Pipeline",
+    "productionExamples": "Examples",
+    "keyFeatures": "Features"
   },
   "floatingNav": {
     "compare": "Linganisha",
@@ -34,47 +37,50 @@
     "pricing": "Bei"
   },
   "hero": {
-    "headline": "Wazia kisa hicho. SceneFlow inashughulikia mchakato huo.",
-    "subheadline": "Acha kushughulika na hatua za kutoa maelekezo zinazochosha. Zingatia kikamilifu lengo lako la ubunifu ukitumia mfumo wa uzalishaji wa kiwango cha kitaalamu na unaojiendesha wenyewe.",
+    "headline": "You Direct the Story. SceneFlow Automates the Studio.",
+    "subheadline": "Google-powered intelligence orchestrated on Google Cloud — with optional Google or Kling generation. Run your ideas through a seamless pipeline from blueprint to master MP4 without micro-prompting.",
     "audienceMicroLine": "Imeundwa kwa ajili ya wabunifu wanaotaka matokeo, na timu zinazotaka kuona jinsi inavyofanya kazi.",
-    "ctaSecondary": "Tazama 'What's Possible'",
-    "ctaToolStack": "Ona jinsi inavyochukua nafasi ya mkusanyiko wako wa zana.",
-    "languagePrompt": "Msikilize shujaa katika lugha yako — mfumo uleule, masoko mapya.",
-    "multilangHint": "Hero hufanya dubbing katika lugha 7 — mfumo mzima wa uzalishaji unaweza kushughulikia zaidi ya lugha 70.",
-    "playWithNarration": "Cheza pamoja na simulizi",
-    "tapToHear": "Gusa ili kusikia",
-    "fullscreen": "Skrini nzima",
+    "ctaSecondary": "Watch the 'What's Possible'",
+    "ctaToolStack": "See how it replaces your tool stack",
+    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
+    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
+    "playWithNarration": "Play with narration",
+    "tapToHear": "Tap to hear",
+    "fullscreen": "Fullscreen",
     "heroVideoLanguages": {
       "en": {
-        "label": "Kiingereza",
-        "nativeLabel": "Kiingereza"
+        "label": "English",
+        "nativeLabel": "English"
       },
       "es": {
-        "label": "Kihispania",
-        "nativeLabel": "Kihispania"
+        "label": "Spanish",
+        "nativeLabel": "Español"
       },
       "pt": {
-        "label": "Kireno",
-        "nativeLabel": "Kireno"
+        "label": "Portuguese",
+        "nativeLabel": "Português"
       },
       "hi": {
-        "label": "Kihindi",
-        "nativeLabel": "Kihindi"
+        "label": "Hindi",
+        "nativeLabel": "हिन्दी"
       },
       "zh": {
-        "label": "Kichina",
-        "nativeLabel": "Kichina"
+        "label": "Chinese",
+        "nativeLabel": "中文"
       },
       "ar": {
-        "label": "Kiarabu",
-        "nativeLabel": "Kiarabu"
+        "label": "Arabic",
+        "nativeLabel": "العربية"
       },
       "th": {
-        "label": "Kithai",
-        "nativeLabel": "Thailand"
+        "label": "Thai",
+        "nativeLabel": "ไทย"
       }
     },
-    "soon": "Hivi karibuni"
+    "soon": "Soon",
+    "ctaPrimaryLaunch": "Launch Your Studio ($9) — September Cohort",
+    "ctaSupportingLine": "Start with the $9 Explorer plan. September Early Access cohort now forming.",
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "valueProp": {
     "pills": [
@@ -1501,260 +1507,269 @@
     "ctaSubtext": "Unganisha utengenezaji wa filamu wa jadi na AI ya uzalishaji"
   },
   "exitIntent": {
-    "title": "Subiri! Usiondoke mikono mitupu.",
-    "subtitle": "Pata fursa ya kipekee ya kuanza mapema na vidokezo vya utengenezaji wa filamu kwa kutumia AI.",
+    "title": "Wait! Don't leave empty-handed",
+    "subtitle": "Get exclusive early access and tips for AI-powered filmmaking",
     "benefits": [
-      "Mafunzo ya kila wiki ya utengenezaji wa filamu kwa kutumia AI",
-      "Upatikanaji wa mapema wa vipengele vipya",
-      "Punguzo la kipekee kwa wabunifu"
+      "Weekly AI filmmaking tutorials",
+      "Early access to new features",
+      "Exclusive creator discounts"
     ],
-    "emailPlaceholder": "Ingiza barua pepe yako",
-    "subscribe": "Pata fursa ya kutumia mapema",
-    "subscribing": "Inajiunga...",
-    "or": "au",
-    "startNow": "Anza kuunda sasa kwa $9 pekee →",
-    "privacy": "Hakuna barua taka, kamwe. Jiondoe wakati wowote.",
-    "successTitle": "Uko kwenye orodha!",
-    "successSubtitle": "Angalia kikasha chako cha barua pepe kwa vidokezo vya kipekee vya utengenezaji wa filamu na taarifa za kupata fursa hiyo kabla ya wengine.",
-    "ctaText": "Anza Kuchunguza — $9",
-    "closePopup": "Funga dirisha ibukizi"
+    "emailPlaceholder": "Enter your email",
+    "subscribe": "Get Early Access",
+    "subscribing": "Subscribing...",
+    "or": "or",
+    "startNow": "Start creating now for just $9 — September cohort forming →",
+    "privacy": "No spam, ever. Unsubscribe anytime.",
+    "successTitle": "You're on the list!",
+    "successSubtitle": "Check your inbox for exclusive filmmaking tips and early access updates.",
+    "ctaText": "Start Exploring — $9",
+    "closePopup": "Close popup"
   },
   "pricing": {
-    "badge": "Bei kulingana na matumizi",
-    "title": "Lipia unachokiumba",
-    "subtitle": "Mpango mmoja wa msingi wa kufikia mfumo. Salio kwa ajili ya uzalishaji wa maudhui kupitia AI. Ongeza salio unapohitaji zaidi. Udhibiti kamili, hakuna upotevu.",
+    "badge": "Simple Pricing",
+    "title": "Start with Explorer — $9",
+    "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
     "valueAnchor": {
-      "traditionalCost": "Zaidi ya $2,000",
-      "traditionalLabel": "Taswira ya awali ya kimapokeo",
-      "vs": "dhidi ya",
-      "sceneFlowCost": "$49–149",
-      "sceneFlowLabel": "SceneFlow ya kila mwezi",
-      "saveBadge": "Okoa zaidi ya 90% kwa kila mradi"
+      "traditionalCost": "$2,000+",
+      "traditionalLabel": "Traditional pre-vis",
+      "vs": "vs",
+      "sceneFlowCost": "$49-149",
+      "sceneFlowLabel": "SceneFlow monthly",
+      "saveBadge": "Save 90%+ per project"
     },
     "teamCta": {
-      "title": "Timu ya ndani au taasisi?",
-      "description": "Panga kikao cha kupitia mtiririko wa kazi kwa timu za mawasiliano, mafunzo na maendeleo (L&D), na masoko.",
-      "button": "Mwongozo wa Kitabu"
+      "title": "In-house team or institution?",
+      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
+      "button": "Book Walkthrough"
     },
     "agencyCta": {
-      "title": "Wakala au kampuni ya uzalishaji?",
-      "description": "Mikopo maalum, makubaliano ya kiwango cha huduma (SLA), na usaidizi maalum kwa kiwango kikubwa",
-      "button": "Wasiliana na Kitengo cha Mauzo"
+      "title": "Agency or production shop?",
+      "description": "Custom credits, SLA, and dedicated support at scale",
+      "button": "Contact Sales"
     },
     "byok": {
-      "title": "Leta Ufunguo Wako Mwenyewe",
-      "badge": "Mipango ya Pro na Studio",
-      "description": "Je, tayari una funguo za API kwa ajili ya Vertex AI au ElevenLabs? Zitumie pamoja na SceneFlow AI na uokoe hadi 80% ya gharama za mikopo ya jukwaa.",
-      "savingsHighlight": "80% kwenye mikopo ya jukwaa",
+      "title": "Bring Your Own Key",
+      "badge": "Pro & Studio Plans",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
-          "title": "Akiba ya Mikopo ya 80% SceneFlow",
-          "description": "Lipa ada ya jukwaa ya 20% pekee kwa ajili ya uratibu na zana."
+          "title": "80% SceneFlow Credit Savings",
+          "description": "Pay only a 20% platform fee for orchestration & tools"
         },
         {
-          "title": "Tumia vyema mipango ya shirika",
-          "description": "Tumia punguzo lako la bei ya jumla la Vertex AI au ElevenLabs lililopo."
+          "title": "Leverage Corporate Plans",
+          "description": "Use your existing Vertex AI or ElevenLabs volume discounts"
         },
         {
-          "title": "Udhibiti Kamili",
-          "description": "Funguo zako, malipo yako, udhibiti wa gharama zako"
+          "title": "Full Control",
+          "description": "Your keys, your billing, your cost management"
         }
       ],
-      "supportedProviders": "Watoa huduma wanaoungwa mkono",
+      "supportedProviders": "Supported Providers",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "Imagen 4 na Veo 3.1",
+      "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Ubadilishaji wa Maandishi kuwa Hotuba na Uigaji wa Sauti",
-      "savingsLabel": "Akiba ya 80%",
-      "onImagesVideo": "kwenye picha na video",
-      "onVoiceover": "katika simulizi ya sauti",
-      "note": "Akiba ya mikopo iliyoonyeshwa ni ile inayopatikana kupitia jukwaa la SceneFlow. Gharama zako halisi za jumla hutegemea bei ya API uliyokubaliana na kila mtoa huduma, iwe ni kwa ajili yako binafsi au kwa ajili ya kampuni."
+      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
+      "savingsLabel": "80% savings",
+      "onImagesVideo": "on images & video",
+      "onVoiceover": "on voiceover",
+      "note": "Credit savings shown are SceneFlow platform savings. Your actual total costs depend on your personal or corporate API pricing with each provider."
     },
     "creditTopUps": {
-      "title": "Je, unahitaji mikopo zaidi?",
-      "subtitle": "Ongeza salio wakati wowote. Salio halipotei muda wake.",
+      "title": "Need More Credits?",
+      "subtitle": "Top up anytime. Credits never expire.",
       "packs": [
         {
-          "label": "Kifurushi cha Kuanzia",
-          "description": "Inafaa kabisa kwa mapitio ya haraka"
+          "label": "Starter Pack",
+          "description": "Perfect for quick revisions"
         },
         {
-          "label": "Kifurushi cha Mandhari",
-          "description": "Kamilisha mradi mfupi"
+          "label": "Scene Pack",
+          "description": "Complete a short project"
         },
         {
-          "label": "Kifurushi cha Uzalishaji",
-          "description": "Sehemu muhimu ya filamu"
+          "label": "Production Pack",
+          "description": "Major film sequence"
         },
         {
-          "label": "Kifurushi cha Studio",
-          "description": "Uwezo kamili wa uzalishaji"
+          "label": "Studio Pack",
+          "description": "Full production capacity"
         }
       ],
-      "creditsUnit": "Walioshiriki"
+      "creditsUnit": "credits"
     },
     "calculator": {
-      "sectionTitle": "Fanya makadirio ya mradi wako",
-      "sectionSubtitle": "Jua hasa kiasi utakacholipa kabla ya kujifunga.",
-      "title": "Kikokotoo cha Bajeti ya Mradi",
-      "subtitle": "Kadiria mikopo kabla ya kuanza",
-      "customize": "Rekebisha vigezo",
-      "imagesLabel": "Picha za kutengeneza",
-      "videoClipsLabel": "Vipande vya video",
-      "voiceoverLabel": "Sauti (dakika)",
-      "byokTitle": "Lete Ufunguo Wako Mwenyewe (BYOK)",
-      "byokBadge": "Wataalamu na Studio",
-      "byokDescription": "Tumia funguo zako za API ili kuokoa hadi 80% kwenye salio la SceneFlow. Unawalipa watoa huduma za AI moja kwa moja kwa viwango vyao.",
-      "vertexToggle": "Vertex AI (Picha na Video)",
-      "elevenLabsToggle": "ElevenLabs (Sauti ya juu)",
-      "imageGeneration": "Uundaji wa Picha",
-      "videoGeneration": "Uundaji wa Video",
-      "voiceover": "Sauti ya juu",
+      "sectionTitle": "Estimate Your Project",
+      "sectionSubtitle": "Know exactly what you'll pay before you commit",
+      "title": "Project Budget Calculator",
+      "subtitle": "Estimate credits before you start",
+      "customize": "Customize parameters",
+      "imagesLabel": "Images to generate",
+      "videoClipsLabel": "Video clips",
+      "voiceoverLabel": "Voiceover (minutes)",
+      "byokTitle": "Bring Your Own Key (BYOK)",
+      "byokBadge": "Pro & Studio",
+      "byokDescription": "Use your own API keys to save up to 80% on SceneFlow credits. You pay the AI providers directly at their rates.",
+      "vertexToggle": "Vertex AI (Images & Video)",
+      "elevenLabsToggle": "ElevenLabs (Voiceover)",
+      "imageGeneration": "Image Generation",
+      "videoGeneration": "Video Generation",
+      "voiceover": "Voiceover",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Makadirio Yote",
-      "withTopUps": "pamoja na nyongeza",
-      "creditSavings": "SceneFlow akiba ya mikopo",
-      "savePercent": "Unaokoa {percent}% kwenye salio la SceneFlow",
-      "transparency": "Uwazi kamili: Utaona matumizi ya mikopo ya wakati halisi unapofanya kazi. Hakuna mshangao—rekebisha wigo wa mradi wako wakati wowote.",
-      "transparencyHighlight": "Uwazi kamili:",
-      "byokDisclaimer": "BYOK Kumbuka: Akiba ya mikopo inayoonyeshwa inaonyesha SceneFlow punguzo la mikopo ya jukwaa pekee. Gharama zako halisi hutegemea mipango yako ya bei ya Vertex AI na ElevenLabs. Mipango ya API ya shirika au ya kiwango cha juu inaweza kutoa akiba ya ziada.",
-      "byokDisclaimerHighlight": "BYOK Kumbuka:",
+      "totalEstimate": "Total Estimate",
+      "withTopUps": "with top-ups",
+      "creditSavings": "SceneFlow credit savings",
+      "savePercent": "You save {percent}% on SceneFlow credits",
+      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
+      "transparencyHighlight": "Full transparency:",
+      "byokDisclaimer": "BYOK Note: Credit savings shown reflect SceneFlow platform credit reductions only. Your actual costs depend on your Vertex AI and ElevenLabs pricing plans. Corporate or high-volume API plans may offer additional savings.",
+      "byokDisclaimerHighlight": "BYOK Note:",
       "presets": [
         {
-          "id": "kibiashara",
-          "name": "Biashara ya sekunde 30"
+          "id": "commercial",
+          "name": "30-sec Commercial"
         },
         {
-          "id": "fupi",
-          "name": "Filamu Fupi ya Dakika 2"
+          "id": "short",
+          "name": "2-min Short Film"
         },
         {
-          "id": "kipindi",
-          "name": "Kipindi cha dakika 10"
+          "id": "episode",
+          "name": "10-min Episode"
         },
         {
-          "id": "kipengele",
-          "name": "Kipengele cha dakika 90"
+          "id": "feature",
+          "name": "90-min Feature"
         }
       ],
-      "minSuffix": "dakika"
+      "minSuffix": "min"
     },
     "tierGrid": {
-      "productionTestFlight": "Ndege ya Jaribio la Uzalishaji",
-      "getStarted": "Anza",
-      "startTestFlight": "Anza Safari ya Jaribio",
-      "loading": "Inapakia...",
-      "mostPopular": "Maarufu Zaidi",
-      "creditsPerMonth": "Mikopo/mwezi",
-      "storage": "Hifadhi",
-      "perMonth": "/mwezi"
+      "productionTestFlight": "Production Test Flight",
+      "getStarted": "Get Started",
+      "startTestFlight": "Start Test Flight",
+      "loading": "Loading...",
+      "mostPopular": "Most Popular",
+      "creditsPerMonth": "Credits/mo",
+      "storage": "Storage",
+      "perMonth": "/month"
     },
     "trust": {
-      "cancelAnytime": "Ghairi wakati wowote",
-      "moneyBack": "Dhamana ya kurejeshewa pesa ya siku 14",
-      "creditsNeverExpire": "Mikopo haimaliziki kamwe (kifurushi cha Explorer)"
+      "cancelAnytime": "Cancel anytime",
+      "moneyBack": "14-day money-back guarantee",
+      "creditsNeverExpire": "Credits never expire (Explorer pack)"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "Ununuzi wa mara moja ili kujaribu",
+        "description": "One-time purchase to try it out",
         "features": [
-          "Ununuzi wa mara moja",
-          "Mikopo 750 (haiishii muda wake)",
-          "Hifadhi ya GB 5 (siku 30)",
-          "Ufikiaji kamili wa jukwaa",
-          "Uhamishaji wa MP4 (ubora wowote)",
-          "Sauti ya akili bandia (lugha 70+)"
+          "One-time purchase",
+          "750 credits (never expire)",
+          "5 GB storage (30 days)",
+          "Full platform access",
+          "MP4 export (any resolution)",
+          "AI voiceover (70+ languages)"
         ]
       },
       "subscriptions": [
         {
-          "id": "mwanzilishi",
-          "name": "Kianzilishi",
-          "description": "Kwa waundaji binafsi",
+          "id": "starter",
+          "name": "Starter",
+          "description": "For individual creators",
           "features": [
-            "Ufikiaji kamili wa jukwaa",
-            "Mikopo 4,500 kwa mwezi imejumuishwa",
-            "Hifadhi amilifu ya GB 25",
-            "Kutoa faili la MP4 (azimio lolote)",
-            "Sauti ya AI (lugha zaidi ya 70)",
-            "Usaidizi kwa barua pepe"
+            "Full platform access",
+            "4,500 credits/month included",
+            "25 GB active storage",
+            "MP4 export (any resolution)",
+            "AI voiceover (70+ languages)",
+            "Email support"
           ]
         },
         {
-          "id": "faida",
-          "name": "Kitaalamu",
-          "description": "Kwa wabunifu wa kitaalamu",
+          "id": "pro",
+          "name": "Pro",
+          "description": "For professional creators",
           "features": [
-            "Kila kitu kilichomo kwenye Starter, pamoja na:",
-            "Mikopo 15,000 kwa mwezi imejumuishwa",
-            "Hifadhi amilifu ya GB 100",
-            "Upatikanaji wa ubora wa Veo 3.1 (4K)",
-            "Mfumo wa Kudumisha Uthabiti wa Wahusika",
-            "Uigaji wa sauti",
-            "BYOK (Tumia Ufunguo Wako Mwenyewe)",
-            "Viti 3 vya timu",
-            "Usaidizi wa kipaumbele"
+            "Everything in Starter, plus:",
+            "15,000 credits/month included",
+            "100 GB active storage",
+            "Veo 3.1 Quality (4K) access",
+            "Character Consistency Engine",
+            "Voice cloning",
+            "BYOK (Bring Your Own Key)",
+            "3 team seats",
+            "Priority support"
           ]
         },
         {
           "id": "studio",
           "name": "Studio",
-          "description": "Kwa timu na mashirika",
+          "description": "For teams & agencies",
           "features": [
-            "Kila kitu kilichomo kwenye Pro, pamoja na:",
-            "Mikopo 75,000 kwa mwezi imejumuishwa",
-            "Hifadhi amilifu ya GB 500",
-            "Foleni ya Kipaumbele ya Veo 3.1 4K",
-            "Uthabiti wa Wahusika Usio na Kikomo",
-            "Mauzo ya nje ya bidhaa zisizo na chapa mahususi",
-            "Ufikiaji wa API",
-            "Viti 10 vya timu",
-            "Meneja wa akaunti aliyejitolea",
-            "Makubaliano ya Kiwango cha Huduma (SLA) kwa ajili ya mashirika makubwa yanapatikana kwa ombi."
+            "Everything in Pro, plus:",
+            "75,000 credits/month included",
+            "500 GB active storage",
+            "Veo 3.1 4K Priority Queue",
+            "Unlimited Character Consistency",
+            "White-label exports",
+            "API access",
+            "10 team seats",
+            "Dedicated account manager",
+            "Enterprise SLA available on request"
           ]
         }
       ]
-    }
+    },
+    "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
+    "trustBadges": [
+      "Google Cloud infrastructure",
+      "Vertex AI generation",
+      "Secure payments via Whop",
+      "14-day money-back guarantee"
+    ]
   },
   "landingSections": {
     "expandSection": "Onyesha sehemu",
     "collapseSection": "Ficha sehemu"
   },
   "finalCta": {
-    "title": "Je, uko tayari kujaribu mchakato mzima?",
-    "subtitle": "Tekeleza hatua zote—kuanzia dhana, taswira ya awali (pre-vis), na video hadi faili la mwisho la MP4—katika studio moja. Anza na kifurushi cha $9 (Explorer) na ujionee jinsi mtiririko wa kazi unaoanza na 'beat' unavyofanya kazi.",
-    "cta": "Anzisha studio yako kwa $9"
+    "title": "Ready to test the full pipeline?",
+    "subtitle": "Google-powered scripting and optimization, your choice of generation backend, and Screening Room review — all in one studio. September Early Access cohort now forming — start with the $9 Explorer plan or apply for Founding Creator access.",
+    "cta": "Launch Your Studio ($9) — September Cohort",
+    "ctaSecondary": "Apply for Founding Creator Access",
+    "ctaSecondaryHref": "/early-access"
   },
   "footer": {
-    "description": "Uzalishaji wa video otomatiki kuanzia mwanzo hadi mwisho — kutoka wazo hadi nakala ya mwisho iliyo tayari kuchapishwa. Studio moja yenye mwongozo: Blueprint → Uzalishaji → Screening Room.",
-    "product": "Bidhaa",
-    "resources": "Rasilimali",
-    "legal": "Kisheria",
+    "description": "End-to-end automated video production — from concept to publish-ready master. One guided studio: Series Studio → Blueprint Studio → Production Studio → Screening Room.",
+    "product": "Product",
+    "resources": "Resources",
+    "legal": "Legal",
     "links": {
-      "features": "Vipengele",
-      "pricing": "Bei",
-      "howItWorks": "Jinsi Inavyofanya Kazi",
-      "gettingStarted": "Kuanza",
-      "privacy": "Sera ya Faragha",
-      "terms": "Masharti ya Huduma",
-      "trustSafety": "Uaminifu na Usalama",
-      "refunds": "Sera ya Kurejesha Pesa",
-      "contact": "Wasiliana Nasi"
+      "features": "Features",
+      "pricing": "Pricing",
+      "howItWorks": "How It Works",
+      "gettingStarted": "Getting Started",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "trustSafety": "Trust & Safety",
+      "refunds": "Refund Policy",
+      "contact": "Contact Us"
     },
-    "tagline": "Imetengenezwa kwa ❤️ kwa ajili ya wabunifu",
-    "taglineSub": "Kuanzia Wazo hadi Video Iliyochapishwa",
-    "securePayments": "Malipo salama yanayoshughulikiwa na Whop, mfanyabiashara wetu rasmi wa rekodi",
-    "morLine": "Malipo salama, ukokotoaji wa kodi, na uzingatiaji wa kanuni vinashughulikiwa na Whop, Mfanyabiashara wetu Rasmi wa Rekodi, kwa niaba ya Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. Haki zote zimehifadhiwa.",
-    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • Mawasiliano: support@sceneflowai.studio",
-    "poweredBy": "Inaendeshwa na Google Cloud"
+    "tagline": "Made with ❤️ for creators",
+    "taglineSub": "From Idea to Published Video",
+    "securePayments": "Secure payments processed by Whop, our Merchant of Record",
+    "morLine": "Secure payments, tax calculation, and compliance are handled by Whop, our Merchant of Record, on behalf of Life Focus, LLC.",
+    "copyright": "© 2026 SceneFlow AI. All rights reserved.",
+    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • Contact: support@sceneflowai.studio",
+    "poweredBy": "Google-powered intelligence · Orchestrated on Google Cloud"
   },
   "floatingCta": {
-    "seePricing": "Angalia Bei",
-    "tryNine": "Jaribu $9",
-    "tryForNine": "Jaribu kwa $9",
-    "dismiss": "Ondoa"
+    "seePricing": "See Pricing",
+    "tryNine": "Try $9",
+    "tryForNine": "Try for $9",
+    "dismiss": "Dismiss"
   },
   "common": {
     "watermark": "SceneFlow AI Studio",
@@ -1763,5 +1778,121 @@
     "mute": "Zima sauti",
     "unmute": "Washa sauti",
     "expandVideo": "Panua video"
+  },
+  "useCasesShowcase": {
+    "badge": "Who is SceneFlow For?",
+    "title": "Who is SceneFlow For?",
+    "subtitle": "From concept to a Screening Room animatic to auto-published multilanguage video — one automated pipeline, four ways to ship.",
+    "cta": "Launch Your Studio ($9) — September Cohort",
+    "tabStory": "Solution",
+    "tabScreening": "Screening",
+    "problemLabel": "The Problem",
+    "solutionLabel": "The SceneFlow Solution",
+    "outcomeLabel": "The Outcome",
+    "videoLanguagePrompt": "Watch this journey in your language",
+    "videoComingSoon": "Walkthrough video coming soon",
+    "videoSoon": "Soon",
+    "personas": [
+      {
+        "id": "youtubeCreator",
+        "label": "The YouTube Creator",
+        "headline": "From Concept to Cinematic Series — No Prompt Engineering",
+        "intro": "Start with a concept or a detailed series description. SceneFlow builds the series universe, characters, and unlimited episodes, then uses Express to render audio, frames, and video concurrently. You create and direct with plain text or voice; SceneFlow builds the vision — no prompt engineering, no slot-machine retakes.",
+        "story": {
+          "problem": [
+            "You juggle separate tools for script, images, voice, video, music, and editing.",
+            "You re-generate each piece over and over, hoping for a usable result.",
+            "Characters still look different from scene to scene."
+          ],
+          "solution": [
+            "One guided studio replaces the whole tool stack.",
+            "Describe your idea in plain words — SceneFlow writes the series and designs the cast.",
+            "Express renders audio, frames, and video together while a Reference Library keeps characters consistent."
+          ],
+          "outcome": [
+            "Stop losing weekends to fragmented tools.",
+            "Publish on a steady rhythm you can actually keep up with.",
+            "Keep every episode on-brand without re-rolling for consistency."
+          ]
+        },
+        "screeningRoomHook": "Visualize the story as an animatic before motion video, review scenes before finalizing streams, and share multilanguage streams (70+ languages) for pre-release feedback.",
+        "screeningRoomPreview": "The Unseen Archive: The Grand Illusion: The Chicago World's Fair Deception"
+      },
+      {
+        "id": "startupProvider",
+        "label": "The Startup Provider",
+        "headline": "Run a Global Video Studio — Without Building One",
+        "intro": "Deliver polished, localized video to small businesses that can't afford an agency. Express renders whole client packages concurrently, Mixer adds brand overlays, watermarks, and timing, and auto-aligned dub/lip-sync ships every deliverable in your client's market language — all from one predictable pipeline.",
+        "story": {
+          "problem": [
+            "Small-business clients can't afford a traditional video agency.",
+            "You buy and juggle many tools, redoing the work for every client.",
+            "Each new language means rebuilding the video from scratch."
+          ],
+          "solution": [
+            "One predictable pipeline for every client project.",
+            "Render a full video package at once — audio, frames, and video together.",
+            "Add branding, overlays, and watermarks, then auto dub and lip-sync into the client's market language."
+          ],
+          "outcome": [
+            "Serve many clients from one studio workflow.",
+            "Reach global markets in 70+ languages without rebuilding each video.",
+            "Scale the service without hiring a crew or building infrastructure."
+          ]
+        },
+        "screeningRoomHook": "Client-facing review of the animatic, scene sign-off before final streams, and shareable multilanguage previews for stakeholders abroad.",
+        "screeningRoomPreview": "Main Street Rising: A Local Business Relaunch"
+      },
+      {
+        "id": "enterprise",
+        "label": "Enterprise & Institutions",
+        "headline": "Compliant Training at the Speed of Policy Change",
+        "intro": "Internal L&D and comms teams ship brand-locked, audit-ready modules without vendor cycles. Refine any frame or line with text or voice to stay on-message, finish with Mixer overlays and watermarks, and roll out auto-aligned dubbed or lip-synced versions to every region from a single approved master.",
+        "story": {
+          "problem": [
+            "Training and comms videos wait weeks on outside vendors and cost a premium.",
+            "When policy or product changes, videos go stale and off-brand.",
+            "Every update triggers another expensive production round."
+          ],
+          "solution": [
+            "Produce brand-locked, audit-ready videos in-house.",
+            "Change any line or frame with a typed or spoken instruction.",
+            "Review and approve before paying for the final render, then roll out one master to every region."
+          ],
+          "outcome": [
+            "Training and communications keep pace with policy changes.",
+            "Stay on-brand without waiting on vendor cycles.",
+            "Update once and distribute everywhere from a single approved cut."
+          ]
+        },
+        "screeningRoomHook": "Review scenes before streams go final and share private Screening Room links for cross-region feedback without exporting unfinished masters.",
+        "screeningRoomPreview": "Shield Protocol: Global Cybersecurity Onboarding"
+      },
+      {
+        "id": "educator",
+        "label": "The Educator",
+        "headline": "Turn Curriculum Into Lessons Students Actually Watch",
+        "intro": "Large institutions convert dense chapters into localized, narrative video. Express builds full lessons fast, intelligent text/voice edits let faculty tune content without prompt engineering, and auto-aligned dub/lip-sync matches each cohort's language — then auto-publish ships localized titles and thumbnails to every channel.",
+        "story": {
+          "problem": [
+            "Dense course material becomes video only after weeks, specialized skills, or a big budget.",
+            "Without that, lessons stay as slideshows students skip.",
+            "Serving students in multiple languages multiplies the work."
+          ],
+          "solution": [
+            "Build full narrated lessons quickly in one studio.",
+            "Faculty adjust content by typing or speaking — no technical prompts.",
+            "Auto dub, lip-sync, and publish with localized titles and thumbnails for every cohort."
+          ],
+          "outcome": [
+            "Turn curriculum into video students actually watch.",
+            "Reach every campus in their language without a production team.",
+            "Ship lessons faster than traditional video production allows."
+          ]
+        },
+        "screeningRoomHook": "Faculty preview the animatic before production spend, review lesson scenes, and share streams in 70+ languages for multi-campus feedback.",
+        "screeningRoomPreview": "Renaissance Workshop: Seeing the Past in Motion"
+      }
+    ]
   }
 }

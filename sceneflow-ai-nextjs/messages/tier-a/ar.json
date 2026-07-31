@@ -13,11 +13,6 @@
   "hero": {
     "ctaSecondary": "شاهد «ما هو ممكن»"
   },
-  "finalCta": {
-    "title": "هل أنت مستعد لاختبار pipeline الكامل؟",
-    "subtitle": "نفّذ concept → pre-vis → video → master MP4 في استوديو واحد. ابدأ بخطة Explorer بـ $9 وجرب beat-first workflow.",
-    "cta": "أطلق Studio الخاص بك مقابل $9"
-  },
   "preVisEngine": {
     "badge": "Creative Decision Engine",
     "title": "Pre-Visualization Engine",

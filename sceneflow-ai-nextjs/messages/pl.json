@@ -4,23 +4,26 @@
     "description": "Przekształć swoje pomysły w profesjonalne filmy dzięki automatyzacji procesu pracy opartej na sztucznej inteligencji."
   },
   "nav": {
-    "workflow": "Przepływ pracy",
-    "platformWalkthrough": "Przegląd platformy",
-    "plansPricing": "Plany i cennik",
+    "workflow": "Jak to działa",
+    "platformWalkthrough": "Animacja platformy",
+    "plansPricing": "Plany i ceny",
     "more": "Więcej",
-    "useCases": "Przypadki użycia",
+    "useCases": "Użyj przypadków",
     "audienceResonance": "Audience Resonance",
     "trustSafety": "Zaufanie i bezpieczeństwo",
     "platformTrust": "Platforma i zaufanie",
     "signIn": "Zaloguj się",
     "startProject": "Rozpocznij projekt",
-    "dashboard": "Panel",
+    "dashboard": "Pulpit",
     "adminPanel": "Panel administratora",
     "signOut": "Wyloguj się",
-    "goToDashboard": "Przejdź do pulpitu nawigacyjnego",
+    "goToDashboard": "Przejdź do kokpitu",
     "userFallback": "Użytkownik",
     "searchLanguages": "Wyszukaj języki...",
-    "noLanguagesFound": "Nie znaleziono języków"
+    "noLanguagesFound": "Nie znaleziono języków",
+    "pipeline": "W przygotowaniu",
+    "productionExamples": "Przykłady",
+    "keyFeatures": "Cechy"
   },
   "floatingNav": {
     "compare": "Porównaj",
@@ -34,47 +37,50 @@
     "pricing": "Cennik"
   },
   "hero": {
-    "headline": "Wyobraź sobie tę historię. SceneFlow obsługuje potok przetwarzania.",
-    "subheadline": "Porzuć żmudne tworzenie promptów. Skup się w pełni na swojej wizji twórczej dzięki zautomatyzowanemu procesowi produkcji klasy profesjonalnej.",
+    "headline": "Kierujesz historią. SceneFlow Automatyzuje studio.",
+    "subheadline": "Inteligencja oparta na Google zaaranżowana na Google Cloud — z opcjonalnym generowaniem Google lub Kling. Przepuść swoje pomysły przez płynny proces od planu do mistrza MP4 bez mikro-promowania.",
     "audienceMicroLine": "Stworzone z myślą o twórcach oczekujących wyników oraz zespołach chcących zobaczyć, jak to działa.",
-    "ctaSecondary": "Zobacz „What's Possible”",
-    "ctaToolStack": "Zobacz, jak zastępuje Twój zestaw narzędzi",
-    "languagePrompt": "Usłysz bohatera w swoim języku – ten sam proces, nowe rynki",
-    "multilangHint": "Dubbing głównych ról w 7 językach — pełny proces produkcyjny obsługuje ponad 70 języków.",
-    "playWithNarration": "Odtwórz z narracją",
+    "ctaSecondary": "Obejrzyj sekcję „Co jest możliwe”",
+    "ctaToolStack": "Zobacz, jak zastępuje Twój stos narzędzi",
+    "languagePrompt": "Posłuchaj bohatera w swoim języku — ten sam potok, nowe rynki",
+    "multilangHint": "Bohater dubbuje w 7 językach — pełny potok obsługuje ponad 70 w Production Studio.",
+    "playWithNarration": "Baw się narracją",
     "tapToHear": "Dotknij, aby posłuchać",
     "fullscreen": "Pełny ekran",
     "heroVideoLanguages": {
       "en": {
-        "label": "Angielski",
-        "nativeLabel": "Angielski"
+        "label": "angielski",
+        "nativeLabel": "angielski"
       },
       "es": {
-        "label": "Hiszpański",
-        "nativeLabel": "Hiszpański"
+        "label": "hiszpański",
+        "nativeLabel": "Español"
       },
       "pt": {
         "label": "portugalski",
-        "nativeLabel": "Portugalski"
+        "nativeLabel": "Português"
       },
       "hi": {
         "label": "hindi",
-        "nativeLabel": "hindi"
+        "nativeLabel": "हिन्दी"
       },
       "zh": {
         "label": "chiński",
-        "nativeLabel": "chiński"
+        "nativeLabel": "中文"
       },
       "ar": {
-        "label": "Język arabski",
-        "nativeLabel": "Arabski"
+        "label": "arabski",
+        "nativeLabel": "العربية"
       },
       "th": {
         "label": "tajski",
-        "nativeLabel": "Tajski"
+        "nativeLabel": "ไทย"
       }
     },
-    "soon": "Wkrótce"
+    "soon": "Wkrótce",
+    "ctaPrimaryLaunch": "Uruchom swoje studio ($ 9) — wrześniowa kohorta",
+    "ctaSupportingLine": "Zacznij od planu Explorer o wartości 9 $. We wrześniu tworzy się kohorta Early Access.",
+    "videoLanguageCount": "{count, plural, =1 {# język} other {# języków}}"
   },
   "valueProp": {
     "pills": [
@@ -1501,200 +1507,200 @@
     "ctaSubtext": "Połącz tradycyjną sztukę filmową z generatywną sztuczną inteligencją"
   },
   "exitIntent": {
-    "title": "Czekaj! Nie wychodź z pustymi rękami.",
-    "subtitle": "Zyskaj ekskluzywny, wcześniejszy dostęp oraz wskazówki dotyczące tworzenia filmów z wykorzystaniem sztucznej inteligencji.",
+    "title": "Czekaj! Nie wychodź z pustymi rękami",
+    "subtitle": "Uzyskaj ekskluzywny wczesny dostęp i wskazówki dotyczące tworzenia filmów opartych na sztucznej inteligencji",
     "benefits": [
-      "Cotygodniowe poradniki tworzenia filmów z wykorzystaniem AI",
-      "Wczesny dostęp do nowych funkcji",
+      "Cotygodniowe samouczki dotyczące tworzenia filmów AI",
+      "Wcześniejszy dostęp do nowych funkcji",
       "Ekskluzywne zniżki dla twórców"
     ],
-    "emailPlaceholder": "Wpisz swój adres e-mail",
-    "subscribe": "Uzyskaj wcześniejszy dostęp",
-    "subscribing": "Subskrybowanie...",
+    "emailPlaceholder": "Wprowadź swój adres e-mail",
+    "subscribe": "Uzyskaj wczesny dostęp! &#10;",
+    "subscribing": "Subskrypcja...",
     "or": "lub",
-    "startNow": "Zacznij tworzyć już teraz za jedyne 9 USD →",
-    "privacy": "Żadnego spamu. Wypisz się w dowolnym momencie.",
+    "startNow": "Zacznij tworzyć już teraz za jedyne 9 $ — wrześniowe tworzenie kohorty →",
+    "privacy": "Bez spamu. Anuluj subskrypcję w każdej chwili.",
     "successTitle": "Jesteś na liście!",
-    "successSubtitle": "Sprawdź swoją skrzynkę odbiorczą, aby otrzymać wyjątkowe wskazówki dotyczące tworzenia filmów oraz informacje o wcześniejszym dostępie.",
-    "ctaText": "Zacznij odkrywać — 9 USD",
-    "closePopup": "Zamknij okno wyskakujące"
+    "successSubtitle": "Sprawdź swoją skrzynkę odbiorczą, aby uzyskać ekskluzywne wskazówki dotyczące tworzenia filmów i aktualizacje dotyczące wcześniejszego dostępu.",
+    "ctaText": "Zacznij odkrywać — 9 $",
+    "closePopup": "zamknij popup"
   },
   "pricing": {
-    "badge": "Model cenowy oparty na zużyciu",
-    "title": "Płać za to, co tworzysz",
-    "subtitle": "Jeden plan podstawowy zapewniający dostęp do platformy. Kredyty na generowanie treści przez AI. Doładowania w razie potrzeby. Pełna kontrola, brak marnotrawstwa.",
+    "badge": "Prosta wycena",
+    "title": "Zacznij Z Explorer — $ 9",
+    "subtitle": "Wrześniowa kohorta Early Access. Przetestuj cały rurociąg za pomocą beztarciowego wejścia $ 9.",
     "valueAnchor": {
-      "traditionalCost": "Powyżej 2000 USD",
-      "traditionalLabel": "Tradycyjna wizualizacja wstępna",
-      "vs": "kontra",
-      "sceneFlowCost": "49–149 USD",
+      "traditionalCost": "2,000",
+      "traditionalLabel": "Tradycyjny pre-vis",
+      "vs": "vs",
+      "sceneFlowCost": "49/149",
       "sceneFlowLabel": "SceneFlow miesięcznie",
-      "saveBadge": "Oszczędź ponad 90% na projekcie"
+      "saveBadge": "Zaoszczędź ponad 90% na projekcie"
     },
     "teamCta": {
-      "title": "Zespół wewnętrzny czy instytucja?",
-      "description": "Umów się na prezentację przepływu pracy dla zespołów ds. komunikacji, L&D oraz marketingu",
-      "button": "Przegląd książki"
+      "title": "Wewnętrzny zespół lub instytucja?",
+      "description": "Zarezerwuj instruktaż przepływu pracy dla zespołów ds. komunikacji, L&D i marketingu",
+      "button": "Przewodnik po książce"
     },
     "agencyCta": {
-      "title": "Agencja czy dom produkcyjny?",
-      "description": "Indywidualne kredyty, SLA i dedykowane wsparcie na dużą skalę",
+      "title": "Agencja czy sklep produkcyjny?",
+      "description": "Niestandardowe kredyty, SLA i dedykowane wsparcie na dużą skalę",
       "button": "Kontakt z działem sprzedaży"
     },
     "byok": {
-      "title": "Użyj własnego klucza",
+      "title": "Przynieś własny klucz",
       "badge": "Plany Pro i Studio",
-      "description": "Masz już klucze API dla Vertex AI lub ElevenLabs? Użyj ich z SceneFlow AI i zaoszczędź do 80% na kredytach platformy.",
-      "savingsHighlight": "80% w postaci środków na platformie",
+      "description": "Masz już klucze API dla Vertex AI lub ElevenLabs? Użyj ich z SceneFlow AI i zaoszczędź do 80% na kredytach na platformie.",
+      "savingsHighlight": "80% kredytów na platformie",
       "benefits": [
         {
-          "title": "80% oszczędności na kredycie SceneFlow",
-          "description": "Płać jedynie 20% opłaty platformowej za orkiestrację i narzędzia."
+          "title": "80% oszczędności kredytowych SceneFlow",
+          "description": "Zapłać tylko 20% opłaty za platformę za orkiestrację i narzędzia"
         },
         {
           "title": "Wykorzystaj plany korporacyjne",
-          "description": "Skorzystaj z posiadanych rabatów ilościowych Vertex AI lub ElevenLabs"
+          "description": "Skorzystaj z istniejących rabatów ilościowych Vertex AI lub ElevenLabs"
         },
         {
           "title": "Pełna kontrola",
-          "description": "Twoje klucze, Twoje rozliczenia, Twoje zarządzanie kosztami"
+          "description": "Twoje klucze, rozliczenia, zarządzanie kosztami"
         }
       ],
       "supportedProviders": "Obsługiwani dostawcy",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "Imagen 4 i Veo 3.1",
+      "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Zamiana tekstu na mowę i klonowanie głosu",
+      "elevenLabsDetail": "Klonowanie tekstu na mowę i głosu",
       "savingsLabel": "80% oszczędności",
-      "onImagesVideo": "na obrazach i wideo",
-      "onVoiceover": "w komentarzu z offu",
-      "note": "Przedstawione oszczędności w zakresie kredytów dotyczą platformy SceneFlow. Rzeczywiste koszty całkowite zależą od indywidualnych lub firmowych stawek API u poszczególnych dostawców."
+      "onImagesVideo": "Zdjęcia i filmy",
+      "onVoiceover": "lektor",
+      "note": "Oszczędności kredytowe to oszczędności na platformie SceneFlow. Twoje rzeczywiste całkowite koszty zależą od osobistych lub korporacyjnych cen API u każdego dostawcy."
     },
     "creditTopUps": {
-      "title": "Potrzebujesz więcej kredytów?",
-      "subtitle": "Doładuj w dowolnym momencie. Środki nigdy nie tracą ważności.",
+      "title": "Potrzebujesz więcej punktów",
+      "subtitle": "Doładuj w dowolnym momencie. Kredyty nigdy nie tracą ważności.",
       "packs": [
         {
-          "label": "Pakiet startowy",
-          "description": "Idealne do szybkiej powtórki"
+          "label": "zestawu startowego",
+          "description": "Idealne do szybkich korekt"
         },
         {
-          "label": "Zestaw scen",
-          "description": "Zrealizuj krótki projekt"
+          "label": "Pakiet scen",
+          "description": "Ukończ krótki projekt"
         },
         {
           "label": "Pakiet produkcyjny",
-          "description": "Kluczowa sekwencja filmowa"
+          "description": "Główna sekwencja filmu"
         },
         {
-          "label": "Zestaw studyjny",
-          "description": "Pełna zdolność produkcyjna"
+          "label": "Pakiet Studio",
+          "description": "Pełne wykorzystanie zdolności wytwórczych"
         }
       ],
-      "creditsUnit": "twórcy"
+      "creditsUnit": "kredyty"
     },
     "calculator": {
-      "sectionTitle": "Oszacuj koszt swojego projektu",
-      "sectionSubtitle": "Dowiedz się dokładnie, ile zapłacisz, zanim się zdecydujesz.",
+      "sectionTitle": "Oszacuj swój projekt",
+      "sectionSubtitle": "Dowiedz się dokładnie, ile zapłacisz, zanim się zobowiążesz",
       "title": "Kalkulator budżetu projektu",
-      "subtitle": "Oszacuj liczbę punktów przed rozpoczęciem",
+      "subtitle": "Oszacuj kredyty przed rozpoczęciem",
       "customize": "Dostosuj parametry",
       "imagesLabel": "Obrazy do wygenerowania",
-      "videoClipsLabel": "Krótkie filmy",
+      "videoClipsLabel": "Klipy wideo",
       "voiceoverLabel": "Lektor (minuty)",
-      "byokTitle": "Własny klucz (BYOK)",
+      "byokTitle": "Przynieś własny klucz (BYOK)",
       "byokBadge": "Pro i Studio",
-      "byokDescription": "Użyj własnych kluczy API, aby zaoszczędzić do 80% na kredytach SceneFlow. Płacisz bezpośrednio dostawcom usług AI według ich stawek.",
-      "vertexToggle": "Vertex AI (Obrazy i wideo)",
-      "elevenLabsToggle": "ElevenLabs (Lektor)",
-      "imageGeneration": "Generowanie obrazów",
+      "byokDescription": "Użyj własnych kluczy API, aby zaoszczędzić do 80% na kredytach SceneFlow. Płacisz dostawcom sztucznej inteligencji bezpośrednio według ich stawek.",
+      "vertexToggle": "Vertex AI (obrazy i filmy)",
+      "elevenLabsToggle": "ElevenLabs (lektor)",
+      "imageGeneration": "Generowanie obrazu",
       "videoGeneration": "Generowanie wideo",
       "voiceover": "Lektor",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Całkowity szacunkowy koszt",
+      "totalEstimate": "Całkowite oszacowanie",
       "withTopUps": "z doładowaniami",
       "creditSavings": "SceneFlow oszczędności kredytowe",
       "savePercent": "Oszczędzasz {percent}% na kredytach SceneFlow",
-      "transparency": "Pełna przejrzystość: na bieżąco widzisz zużycie kredytów w trakcie pracy. Żadnych niespodzianek – w każdej chwili możesz dostosować zakres projektu.",
-      "transparencyHighlight": "Całkowita przejrzystość:",
-      "byokDisclaimer": "BYOK Uwaga: Przedstawione oszczędności w zakresie kredytów uwzględniają wyłącznie obniżki kredytów platformy SceneFlow. Rzeczywiste koszty zależą od posiadanych planów cenowych Vertex AI i ElevenLabs. Plany dla przedsiębiorstw lub plany API o dużym wolumenie mogą zapewniać dodatkowe oszczędności.",
+      "transparency": "Pełna przejrzystość: podczas pracy zobaczysz wykorzystanie kredytów w czasie rzeczywistym. Bez niespodzianek - dostosuj zakres projektu w dowolnym momencie.",
+      "transparencyHighlight": "Pełna przejrzystość",
+      "byokDisclaimer": "BYOK Uwaga: przedstawione oszczędności kredytowe odzwierciedlają wyłącznie zniżki kredytowe na platformie SceneFlow. Rzeczywiste koszty zależą od planów cenowych Vertex AI i ElevenLabs. Korporacyjne lub wysokonakładowe plany API mogą oferować dodatkowe oszczędności.",
       "byokDisclaimerHighlight": "BYOK Uwaga:",
       "presets": [
         {
-          "id": "reklama",
-          "name": "30-sekundowy spot reklamowy"
+          "id": "commercial",
+          "name": "30-sekundowe komercyjne"
         },
         {
-          "id": "krótki",
-          "name": "Dwuminutowy film krótkometrażowy"
+          "id": "short",
+          "name": "2-min Short Film"
         },
         {
-          "id": "odcinek",
+          "id": "episode",
           "name": "10-minutowy odcinek"
         },
         {
-          "id": "funkcja",
-          "name": "90-minutowy film pełnometrażowy"
+          "id": "feature",
+          "name": "Funkcja 90-minutowa"
         }
       ],
-      "minSuffix": "min."
+      "minSuffix": "min"
     },
     "tierGrid": {
-      "productionTestFlight": "Lot próbny egzemplarza produkcyjnego",
+      "productionTestFlight": "Próbny lot produkcyjny",
       "getStarted": "Rozpocznij",
       "startTestFlight": "Rozpocznij lot testowy",
       "loading": "Ładowanie...",
       "mostPopular": "Najpopularniejsze",
-      "creditsPerMonth": "Punkty/mies.",
-      "storage": "Magazynowanie",
+      "creditsPerMonth": "Kredyty/mies.",
+      "storage": "Magazyn",
       "perMonth": "/miesiąc"
     },
     "trust": {
-      "cancelAnytime": "Możesz zrezygnować w dowolnym momencie",
+      "cancelAnytime": "Zrezygnuj w dowolnym momencie.",
       "moneyBack": "14-dniowa gwarancja zwrotu pieniędzy",
-      "creditsNeverExpire": "Środki nie tracą ważności (pakiet Explorer)"
+      "creditsNeverExpire": "Kredyty nigdy nie tracą ważności (pakiet Explorer)"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "Jednorazowy zakup na próbę",
+        "description": "Jednorazowy zakup, aby go wypróbować",
         "features": [
-          "Zakup jednorazowy",
-          "750 kredytów (bezterminowych)",
-          "5 GB przestrzeni dyskowej (30 dni)",
+          "Jednorazowy zakup",
+          "750 kredytów (nigdy nie tracą ważności)",
+          "5 GB pamięci (30 dni)",
           "Pełny dostęp do platformy",
-          "Eksport do MP4 (dowolna rozdzielczość)",
+          "Eksport MP4 (dowolna rozdzielczość)",
           "Lektor AI (ponad 70 języków)"
         ]
       },
       "subscriptions": [
         {
-          "id": "przystawka",
-          "name": "Przystawka",
-          "description": "Dla indywidualnych twórców",
+          "id": "starter",
+          "name": "Rozrusznik",
+          "description": "Dla twórców indywidualnych",
           "features": [
             "Pełny dostęp do platformy",
-            "W cenie 4500 kredytów miesięcznie",
-            "25 GB aktywnej pamięci masowej",
-            "Eksport do MP4 (dowolna rozdzielczość)",
+            "W tym 4500 kredytów/miesiąc",
+            "25 GB pamięci aktywnej",
+            "Eksport MP4 (dowolna rozdzielczość)",
             "Lektor AI (ponad 70 języków)",
-            "Wsparcie mailowe"
+            "Pomoc techniczna poczty mailowej"
           ]
         },
         {
-          "id": "za",
+          "id": "pro",
           "name": "Pro",
           "description": "Dla profesjonalnych twórców",
           "features": [
-            "Wszystko z pakietu Starter oraz:",
-            "Wliczono 15 000 kredytów miesięcznie",
+            "Wszystko w Starterze, plus:",
+            "15 000 kredytów/miesiąc w cenie",
             "100 GB aktywnej pamięci masowej",
-            "Dostęp do jakości Veo 3.1 (4K)",
-            "Mechanizm zapewniania spójności postaci",
+            "Veo 3.1 Dostęp jakościowy (4K)",
+            "Mechanizm spójności znaków",
             "Klonowanie głosu",
-            "BYOK (Własny klucz)",
-            "3 miejsca dla zespołu",
-            "Priorytetowe wsparcie"
+            "BYOK (przynieś własny klucz)",
+            "3 miejsca dla drużyny",
+            "Wsparcie priorytetowe"
           ]
         },
         {
@@ -1702,58 +1708,67 @@
           "name": "Studio",
           "description": "Dla zespołów i agencji",
           "features": [
-            "Wszystko, co w wersji Pro, a dodatkowo:",
-            "W cenie 75 000 kredytów miesięcznie",
+            "Wszystko w Pro, plus:",
+            "W tym 75 000 kredytów/miesiąc",
             "500 GB aktywnej pamięci masowej",
-            "Kolejka priorytetowa Veo 3.1 4K",
-            "Nieograniczona spójność postaci",
-            "Eksport produktów typu white-label",
+            "Veo 3.1 Kolejka priorytetowa 4K",
+            "Nieograniczona spójność znaków",
+            "Eksport pod białą etykietą",
             "Dostęp do API",
-            "10 miejsc dla zespołu",
+            "10 miejsc dla drużyny",
             "Dedykowany opiekun klienta",
-            "Umowa SLA klasy enterprise dostępna na życzenie"
+            "Umowa SLA przedsiębiorstwa dostępna na żądanie"
           ]
         }
       ]
-    }
+    },
+    "explorerHighlight": "Najszybszy sposób na poznanie całego studia SceneFlow — od koncepcji po Screening Room.",
+    "trustBadges": [
+      "Google Cloud infrastruktura",
+      "Generacja Vertex AI",
+      "Bezpieczne płatności za pośrednictwem Whop",
+      "14-dniowa gwarancja zwrotu pieniędzy"
+    ]
   },
   "landingSections": {
     "expandSection": "Pokaż sekcję",
     "collapseSection": "Ukryj sekcję"
   },
   "finalCta": {
-    "title": "Gotowy do przetestowania pełnego potoku?",
-    "subtitle": "Zrealizuj cały proces – od koncepcji i prewizualizacji po finalne wideo w formacie MP4 – w jednym studiu. Zacznij od planu za 9 USD (kod: Explorer) i przekonaj się, jak działa proces twórczy oparty na rytmie.",
-    "cta": "Uruchom swoje studio za 9 USD"
+    "title": "Gotowy do przetestowania całego rurociągu?",
+    "subtitle": "Skrypty i optymalizacja oparte na Google, zaplecze do wyboru generacji i recenzja Screening Room — wszystko w jednym studiu. Utworzenie kohorty wczesnego dostępu we wrześniu — rozpocznij od planu Explorer o wartości 9 $ lub złóż wniosek o dostęp do Founding Creator.",
+    "cta": "Uruchom swoje studio ($ 9) — wrześniowa kohorta",
+    "ctaSecondary": "Złóż wniosek o dostęp dla twórców-fundatorów",
+    "ctaSecondaryHref": "/early-access"
   },
   "footer": {
-    "description": "W pełni zautomatyzowana produkcja wideo – od koncepcji po gotowy do publikacji materiał finalny. Jedno studio z prowadzeniem krok po kroku: Blueprint → Produkcja → Screening Room.",
+    "description": "Kompleksowa zautomatyzowana produkcja wideo — od koncepcji do gotowego do publikacji wzorca. Jedno studio z przewodnikiem: SFAISERIES_→STUDIOTERM Blueprint Studio → Production Studio → Screening Room.",
     "product": "Produkt",
     "resources": "Zasoby",
     "legal": "Informacje prawne",
     "links": {
-      "features": "Funkcje",
+      "features": "Cechy",
       "pricing": "Cennik",
       "howItWorks": "Jak to działa",
-      "gettingStarted": "Pierwsze kroki",
-      "privacy": "Polityka prywatności",
-      "terms": "Warunki świadczenia usług",
+      "gettingStarted": "Wprowadzenie",
+      "privacy": "Polityce prywatności",
+      "terms": "Regulamin",
       "trustSafety": "Zaufanie i bezpieczeństwo",
-      "refunds": "Polityka zwrotów",
-      "contact": "Skontaktuj się z nami"
+      "refunds": "Polityka zwrotu kosztów",
+      "contact": "Kontakt"
     },
-    "tagline": "Stworzone z ❤️ dla twórców",
+    "tagline": "Stworzone ❤️ dla twórców",
     "taglineSub": "Od pomysłu do opublikowanego filmu",
-    "securePayments": "Bezpieczne płatności realizowane przez Whop, naszego sprzedawcę (Merchant of Record)",
-    "morLine": "Bezpieczne płatności, obliczanie podatków oraz kwestie zgodności z przepisami są obsługiwane przez Whop – nasz podmiot odpowiedzialny za rozliczenia (Merchant of Record) – w imieniu Life Focus, LLC.",
+    "securePayments": "Bezpieczne płatności przetwarzane przez Whop, naszego zarejestrowanego sprzedawcę",
+    "morLine": "Bezpieczne płatności, obliczanie podatku i zgodność z przepisami są obsługiwane przez Whop, naszego zarejestrowanego sprzedawcę, w imieniu Life Focus, LLC.",
     "copyright": "© 2026 SceneFlow AI. Wszelkie prawa zastrzeżone.",
-    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • Kontakt: support@sceneflowai.studio",
-    "poweredBy": "Obsługiwane przez Google Cloud"
+    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, Stany Zjednoczone • Kontakt: support@sceneflowai.studio",
+    "poweredBy": "Inteligencja oparta na Google · Zaaranżowana na Google Cloud"
   },
   "floatingCta": {
     "seePricing": "Zobacz cennik",
-    "tryNine": "Wypróbuj za 9 USD",
-    "tryForNine": "Wypróbuj za 9 USD",
+    "tryNine": "Wypróbuj 9 $",
+    "tryForNine": "Wypróbuj za 9 $",
     "dismiss": "Odrzuć"
   },
   "common": {
@@ -1763,5 +1778,121 @@
     "mute": "Wycisz",
     "unmute": "Włącz dźwięk",
     "expandVideo": "Rozwiń wideo"
+  },
+  "useCasesShowcase": {
+    "badge": "Dla kogo SceneFlow?",
+    "title": "Dla kogo SceneFlow?",
+    "subtitle": "Od koncepcji do animacji Screening Room do automatycznie opublikowanego wielojęzycznego filmu — jeden zautomatyzowany potok, cztery sposoby wysyłki.",
+    "cta": "Uruchom swoje studio ($ 9) — wrześniowa kohorta",
+    "tabStory": "Rozwiązanie",
+    "tabScreening": "Badanie przesiewowe",
+    "problemLabel": "Problem",
+    "solutionLabel": "Rozwiązanie SceneFlow",
+    "outcomeLabel": "REZULTAT",
+    "videoLanguagePrompt": "Obejrzyj tę podróż w swoim języku",
+    "videoComingSoon": "Film instruktażowy już wkrótce",
+    "videoSoon": "Wkrótce",
+    "personas": [
+      {
+        "id": "youtubeCreator",
+        "label": "Twórca YouTube",
+        "headline": "Od koncepcji do serii kinowej — bez inżynierii podpowiedzi",
+        "intro": "Zacznij od koncepcji lub szczegółowego opisu serii. SceneFlow buduje wszechświat serii, postacie i nieograniczoną liczbę odcinków, a następnie używa Express do jednoczesnego renderowania dźwięku, klatek i wideo. Tworzysz i reżyserujesz zwykłym tekstem lub głosem; SceneFlow buduje wizję — bez szybkiej inżynierii, bez powtórzeń na automatach.",
+        "story": {
+          "problem": [
+            "Żonglujesz oddzielnymi narzędziami do skryptów, obrazów, głosu, wideo, muzyki i edycji.",
+            "Ponownie generujesz każdy element w kółko, mając nadzieję na użyteczny rezultat.",
+            "Postacie nadal wyglądają inaczej w zależności od sceny."
+          ],
+          "solution": [
+            "Jedno studio z przewodnikiem zastępuje cały stos narzędzi.",
+            "Opisz swój pomysł prostymi słowami — SceneFlow pisze serię i projektuje obsadę.",
+            "Express renderuje dźwięk, klatki i wideo razem, podczas gdy Reference Library utrzymuje spójność znaków."
+          ],
+          "outcome": [
+            "Przestań tracić weekendy na rozdrobnione narzędzia.",
+            "Publikuj w stałym rytmie, z którym możesz nadążyć.",
+            "Przechowuj każdy odcinek zgodnie z marką bez ponownego przewijania, aby zachować spójność."
+          ]
+        },
+        "screeningRoomHook": "Wizualizuj historię jako animację przed filmem, przeglądaj sceny przed finalizacją transmisji i udostępniaj strumienie w wielu językach (ponad 70 języków), aby uzyskać informacje zwrotne przed wydaniem.",
+        "screeningRoomPreview": "Niewidzialne archiwum: Wielka iluzja: Uczciwe oszustwo świata w Chicago"
+      },
+      {
+        "id": "startupProvider",
+        "label": "Startup Provider",
+        "headline": "Prowadź globalne studio wideo — bez budowania",
+        "intro": "Dostarczaj dopracowane, zlokalizowane filmy małym firmom, których nie stać na agencję. Express renderuje całe pakiety klientów jednocześnie, Mixer dodaje nakładki marki, znaki wodne i czas, a automatycznie wyrównane dub/lip-sync wysyła każdy produkt w języku rynkowym klienta — wszystko z jednego przewidywalnego strumienia.",
+        "story": {
+          "problem": [
+            "Klientów z małych firm nie stać na tradycyjną agencję wideo.",
+            "Kupujesz i żonglujesz wieloma narzędziami, przerabiając pracę dla każdego klienta.",
+            "Każdy nowy język oznacza odbudowę filmu od podstaw."
+          ],
+          "solution": [
+            "Jeden przewidywalny proces dla każdego projektu klienta.",
+            "Wyrenderuj pełny pakiet wideo jednocześnie — dźwięk, ramki i wideo razem.",
+            "Dodaj branding, nakładki i znaki wodne, a następnie automatycznie dubbinguj i synchronizuj usta w języku rynkowym klienta."
+          ],
+          "outcome": [
+            "Obsługuj wielu klientów z jednego przepływu pracy studia.",
+            "Dotrzyj do globalnych rynków w ponad 70 językach bez przebudowy każdego filmu.",
+            "Skaluj usługę bez zatrudniania załogi lub budowania infrastruktury."
+          ]
+        },
+        "screeningRoomHook": "Przegląd animacji skierowany do klienta, zatwierdzanie scen przed transmisjami końcowymi i udostępnianie wielojęzycznych podglądów dla interesariuszy za granicą.",
+        "screeningRoomPreview": "Main Street Rising: ponowne uruchomienie lokalnej firmy"
+      },
+      {
+        "id": "enterprise",
+        "label": "Przedsiębiorstwa i instytucje",
+        "headline": "Szkolenie zgodne z szybkością zmiany polityki",
+        "intro": "Wewnętrzne zespoły ds. L&D i komunikacji wysyłają zablokowane, gotowe do audytu moduły bez cykli dostawców. Dopracuj dowolną ramkę lub linię tekstem lub głosem, aby pozostać na wiadomości, zakończ nakładkami Mixer i znakami wodnymi i wprowadź automatycznie wyrównane wersje dubbingowane lub zsynchronizowane z ustami w każdym regionie od jednego zatwierdzonego wzorca.",
+        "story": {
+          "problem": [
+            "Filmy szkoleniowe i komunikacyjne czekają tygodnie na zewnętrznych dostawców i kosztują premium.",
+            "Gdy zasady lub produkty ulegają zmianie, filmy stają się nieaktualne i niemarkowe.",
+            "Każda aktualizacja uruchamia kolejną kosztowną rundę produkcyjną."
+          ],
+          "solution": [
+            "Twórz we własnym zakresie zablokowane przez markę, gotowe do audytu filmy.",
+            "Zmień dowolną linię lub ramkę za pomocą instrukcji pisanej lub mówionej.",
+            "Przejrzyj i zatwierdź przed zapłaceniem za ostateczny rendering, a następnie wprowadź jeden master do każdego regionu."
+          ],
+          "outcome": [
+            "Szkolenia i komunikacja nadążają za zmianami w polityce.",
+            "Pozostań na marce bez czekania na cykle dostawcy.",
+            "Zaktualizuj raz i rozpowszechnij wszędzie z jednego zatwierdzonego cięcia."
+          ]
+        },
+        "screeningRoomHook": "Przejrzyj sceny przed zakończeniem transmisji i udostępnij prywatne linki Screening Room, aby uzyskać informacje zwrotne między regionami bez eksportowania niedokończonych wzorców.",
+        "screeningRoomPreview": "Protokół Shield: Globalne wdrażanie cyberbezpieczeństwa"
+      },
+      {
+        "id": "educator",
+        "label": "Wychowawca",
+        "headline": "Zamień program nauczania w lekcje, które studenci oglądają",
+        "intro": "Duże instytucje przekształcają gęste rozdziały w zlokalizowane, narracyjne wideo. Express buduje pełne lekcje szybko, inteligentna edycja tekstu/głosu pozwala wydziałowi dostroić treść bez szybkiej inżynierii, a automatyczna synchronizacja dub/lip pasuje do języka każdej kohorty — następnie automatycznie publikuje zlokalizowane tytuły i miniatury statków na każdym kanale.",
+        "story": {
+          "problem": [
+            "Gęsty materiał szkoleniowy staje się filmem dopiero po tygodniach, specjalistycznych umiejętnościach lub dużym budżecie.",
+            "Bez tego lekcje pozostają w formie pokazów slajdów, które uczniowie pomijają.",
+            "Służenie uczniom w wielu językach zwielokrotnia pracę."
+          ],
+          "solution": [
+            "Szybko buduj pełne lekcje z narracją w jednym studiu.",
+            "Wydział dostosowuje treści poprzez wpisywanie lub mówienie — bez podpowiedzi technicznych.",
+            "Automatycznie dubuj, synchronizuj z ustami i publikuj ze zlokalizowanymi tytułami i miniaturami dla każdej kohorty."
+          ],
+          "outcome": [
+            "Zamień program nauczania w wideo, które studenci rzeczywiście oglądają.",
+            "Dotrzyj do każdego kampusu w jego języku bez zespołu produkcyjnego.",
+            "Wysyłaj lekcje szybciej niż pozwala na to tradycyjna produkcja wideo."
+          ]
+        },
+        "screeningRoomHook": "Podgląd animacji przed wydatkami produkcyjnymi, przegląd scen lekcji i udostępnianie strumieni w ponad 70 językach w celu uzyskania informacji zwrotnych z wielu kampusów.",
+        "screeningRoomPreview": "Warsztaty renesansowe: Widzenie przeszłości w ruchu"
+      }
+    ]
   }
 }

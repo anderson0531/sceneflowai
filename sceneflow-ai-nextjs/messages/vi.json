@@ -4,23 +4,26 @@
     "description": "Biến ý tưởng của bạn thành video chuyên nghiệp với quy trình làm việc tự động hóa được hỗ trợ bởi AI."
   },
   "nav": {
-    "workflow": "Quy trình làm việc",
+    "workflow": "Cách thức hoạt động",
     "platformWalkthrough": "Hướng dẫn sử dụng nền tảng",
-    "plansPricing": "Các gói & Bảng giá",
-    "more": "Xem thêm",
-    "useCases": "Các trường hợp sử dụng",
+    "plansPricing": "Gói dịch vụ &amp; Mức phí",
+    "more": "Chi tiết",
+    "useCases": "Các trường hợp sử dụng:",
     "audienceResonance": "Audience Resonance",
-    "trustSafety": "Tin cậy & An toàn",
-    "platformTrust": "Nền tảng & Niềm tin",
+    "trustSafety": "Độ tin cậy và an toàn",
+    "platformTrust": "Nền tảng & Tin cậy",
     "signIn": "Đăng nhập",
-    "startProject": "Bắt đầu dự án",
-    "dashboard": "Bảng điều khiển",
-    "adminPanel": "Bảng điều khiển quản trị",
-    "signOut": "Đăng xuất",
-    "goToDashboard": "Đi tới Bảng điều khiển",
+    "startProject": "Bắt đầu một dự án",
+    "dashboard": "Trang tổng quan",
+    "adminPanel": "Admin Panel",
+    "signOut": "Thoát",
+    "goToDashboard": "Về trang chủ",
     "userFallback": "Người dùng",
     "searchLanguages": "Tìm kiếm ngôn ngữ...",
-    "noLanguagesFound": "Không tìm thấy ngôn ngữ nào"
+    "noLanguagesFound": "Không tìm thấy ngôn ngữ",
+    "pipeline": "Đường ống",
+    "productionExamples": "Ví dụ thực hiện sáng chế",
+    "keyFeatures": "Tính năng"
   },
   "floatingNav": {
     "compare": "So sánh",
@@ -34,16 +37,16 @@
     "pricing": "Bảng giá"
   },
   "hero": {
-    "headline": "Hãy hình dung câu chuyện. SceneFlow đảm nhận quy trình xử lý.",
-    "subheadline": "Vượt qua các bước nhập lệnh (prompting) tẻ nhạt. Tập trung hoàn toàn vào ý tưởng sáng tạo của bạn với quy trình sản xuất tự động đạt chuẩn chuyên nghiệp.",
+    "headline": "Bạn chỉ đạo câu chuyện. SceneFlow Tự động hóa Studio.",
+    "subheadline": "Trí thông minh do Google cung cấp được phối hợp trên Google Cloud — với thế hệ Google hoặc Kling tùy chọn. Chạy ý tưởng của bạn thông qua một đường ống liền mạch từ kế hoạch chi tiết đến MP4 chính mà không cần nhắc nhở vi mô.",
     "audienceMicroLine": "Được xây dựng dành cho những nhà sáng tạo mong muốn đạt kết quả và các đội ngũ muốn tìm hiểu cách thức hoạt động.",
-    "ctaSecondary": "Xem video 'Những điều khả thi'",
-    "ctaToolStack": "Khám phá cách giải pháp này thay thế bộ công cụ hiện tại của bạn.",
-    "languagePrompt": "Lắng nghe người hùng bằng ngôn ngữ của bạn — cùng một quy trình, mở ra thị trường mới.",
-    "multilangHint": "Lồng tiếng chính bằng 7 ngôn ngữ — quy trình tổng thể hỗ trợ hơn 70 ngôn ngữ trong giai đoạn sản xuất.",
-    "playWithNarration": "Phát kèm lời dẫn",
+    "ctaSecondary": "Xem 'Những gì có thể'",
+    "ctaToolStack": "Xem cách nó thay thế ngăn xếp công cụ của bạn",
+    "languagePrompt": "Nghe anh hùng bằng ngôn ngữ của bạn — cùng một kênh, thị trường mới",
+    "multilangHint": "Hero lồng tiếng bằng 7 ngôn ngữ — đường ống đầy đủ hỗ trợ hơn70 ngôn ngữ trong Production Studio.",
+    "playWithNarration": "Chơi với tường thuật",
     "tapToHear": "Chạm để nghe",
-    "fullscreen": "Toàn màn hình",
+    "fullscreen": "Toàn Màn Hình",
     "heroVideoLanguages": {
       "en": {
         "label": "Tiếng Anh",
@@ -51,30 +54,33 @@
       },
       "es": {
         "label": "Tiếng Tây Ban Nha",
-        "nativeLabel": "Tiếng Tây Ban Nha"
+        "nativeLabel": "tiếng Tây Ban Nha"
       },
       "pt": {
         "label": "Tiếng Bồ Đào Nha",
-        "nativeLabel": "Tiếng Bồ Đào Nha"
+        "nativeLabel": "tiếng Bồ Đào Nha"
       },
       "hi": {
         "label": "Tiếng Hindi",
-        "nativeLabel": "Tiếng Hindi"
+        "nativeLabel": "् ््् ा"
       },
       "zh": {
-        "label": "Tiếng Trung",
-        "nativeLabel": "Tiếng Trung"
+        "label": "Tiếng Trung Quốc",
+        "nativeLabel": "中文"
       },
       "ar": {
         "label": "Tiếng Ả Rập",
-        "nativeLabel": "Tiếng Ả Rập"
+        "nativeLabel": "العربية"
       },
       "th": {
-        "label": "Tiếng Thái",
-        "nativeLabel": "Thái Lan"
+        "label": "Thái",
+        "nativeLabel": "tiếng Thái"
       }
     },
-    "soon": "Sớm thôi"
+    "soon": "ốc",
+    "ctaPrimaryLaunch": "Ra mắt Studio của bạn ($ 9) — Nhóm tháng 9",
+    "ctaSupportingLine": "Bắt đầu với gói Explorer $ 9. Nhóm Early Access tháng 9 hiện đang hình thành.",
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "valueProp": {
     "pills": [
@@ -1501,158 +1507,158 @@
     "ctaSubtext": "Kết nối giữa làm phim truyền thống và AI tạo sinh"
   },
   "exitIntent": {
-    "title": "Khoan đã! Đừng ra về tay không.",
-    "subtitle": "Nhận quyền truy cập sớm độc quyền và các bí quyết làm phim ứng dụng AI",
+    "title": "Chờ đã! Đừng để tay không",
+    "subtitle": "Nhận quyền truy cập sớm độc quyền và các mẹo để làm phim dựa trên AI",
     "benefits": [
-      "Hướng dẫn làm phim bằng AI hàng tuần",
-      "Quyền truy cập sớm vào các tính năng mới",
-      "Ưu đãi độc quyền dành cho nhà sáng tạo"
+      "Hướng dẫn làm phim AI hàng tuần",
+      "Tiếp cận sớm các tính năng mới",
+      "Giảm giá dành riêng cho người sáng tạo"
     ],
     "emailPlaceholder": "Nhập email của bạn",
-    "subscribe": "Nhận quyền truy cập sớm",
-    "subscribing": "Đang đăng ký...",
+    "subscribe": "Quyền truy cập sớm",
+    "subscribing": "Đăng ký",
     "or": "hoặc",
-    "startNow": "Bắt đầu sáng tạo ngay chỉ với $9 →",
-    "privacy": "Tuyệt đối không gửi thư rác. Hủy đăng ký bất cứ lúc nào.",
-    "successTitle": "Bạn có tên trong danh sách rồi!",
-    "successSubtitle": "Hãy kiểm tra hộp thư đến để nhận các bí quyết làm phim độc quyền và thông tin cập nhật về quyền truy cập sớm.",
-    "ctaText": "Bắt đầu khám phá — $9",
+    "startNow": "Bắt đầu tạo ngay bây giờ chỉ với $ 9 — hình thành đoàn hệ tháng 9 →",
+    "privacy": "Không spam, không bao giờ. Hủy đăng ký bất cứ lúc nào.",
+    "successTitle": "- Chấp nhận.",
+    "successSubtitle": "Kiểm tra hộp thư đến của bạn để biết các mẹo làm phim độc quyền và thông tin cập nhật về quyền truy cập sớm.",
+    "ctaText": "Bắt đầu khám phá — $ 9",
     "closePopup": "Đóng cửa sổ bật lên"
   },
   "pricing": {
-    "badge": "Định giá dựa trên mức sử dụng",
-    "title": "Trả phí cho những gì bạn tạo ra",
-    "subtitle": "Một gói cơ bản để truy cập nền tảng. Sử dụng credit để tạo nội dung bằng AI. Nạp thêm khi cần. Kiểm soát toàn diện, không lãng phí.",
+    "badge": "Định giá đơn giản",
+    "title": "Bắt đầu với Explorer — $ 9",
+    "subtitle": "Nhóm Early Access tháng 9 đang hình thành. Kiểm tra toàn bộ quy trình với mục nhập $ 9 không ma sát.",
     "valueAnchor": {
-      "traditionalCost": "Trên 2.000 USD",
-      "traditionalLabel": "Tiền hình ảnh hóa truyền thống",
-      "vs": "so với",
-      "sceneFlowCost": "$49–$149",
+      "traditionalCost": "2 000",
+      "traditionalLabel": "Trước khi nhìn thấy truyền thống",
+      "vs": "đấu với",
+      "sceneFlowCost": "$ 49-149",
       "sceneFlowLabel": "SceneFlow hàng tháng",
-      "saveBadge": "Tiết kiệm hơn 90% chi phí mỗi dự án"
+      "saveBadge": "Tiết kiệm 90%+ cho mỗi dự án"
     },
     "teamCta": {
-      "title": "Đội ngũ nội bộ hay tổ chức?",
-      "description": "Đặt lịch hướng dẫn quy trình làm việc cho các nhóm truyền thông, đào tạo & phát triển (L&D) và tiếp thị.",
-      "button": "Hướng dẫn chi tiết về cuốn sách"
+      "title": "Đội ngũ nội bộ hoặc tổ chức?",
+      "description": "Đặt lịch hướng dẫn quy trình làm việc cho các nhóm truyền thông, L&D và tiếp thị",
+      "button": "Hướng dẫn đặt phòng"
     },
     "agencyCta": {
-      "title": "Agency hay đơn vị sản xuất?",
-      "description": "Tín dụng tùy chỉnh, SLA và hỗ trợ chuyên biệt ở quy mô lớn",
-      "button": "Liên hệ bộ phận kinh doanh"
+      "title": "Đại lý hoặc cửa hàng sản xuất?",
+      "description": "Tín dụng tùy chỉnh, SLA và hỗ trợ chuyên dụng theo quy mô",
+      "button": "Liên hệ bán hàng"
     },
     "byok": {
-      "title": "Tự cung cấp khóa",
-      "badge": "Các gói Pro & Studio",
-      "description": "Bạn đã có khóa API cho Vertex AI hoặc ElevenLabs chưa? Hãy sử dụng chúng với SceneFlow AI và tiết kiệm tới 80% chi phí tín dụng nền tảng.",
-      "savingsHighlight": "80% giá trị dưới dạng tín dụng trên nền tảng",
+      "title": "Mang theo chìa khóa của riêng bạn",
+      "badge": "Gói Pro & Studio",
+      "description": "Bạn đã có khóa API cho Vertex AI hoặc ElevenLabs? Sử dụng chúng với SceneFlow AI và tiết kiệm tới 80% tín dụng nền tảng.",
+      "savingsHighlight": "80% trên điểm tín dụng nền tảng",
       "benefits": [
         {
           "title": "Tiết kiệm 80% tín dụng SceneFlow",
-          "description": "Chỉ trả phí nền tảng 20% cho các công cụ và giải pháp điều phối."
+          "description": "Chỉ trả phí nền tảng 20% cho việc điều phối & công cụ"
         },
         {
-          "title": "Tận dụng các kế hoạch của doanh nghiệp",
-          "description": "Sử dụng các mức chiết khấu theo số lượng hiện có của bạn cho Vertex AI hoặc ElevenLabs"
+          "title": "Tận dụng các kế hoạch doanh nghiệp",
+          "description": "Sử dụng các khoản giảm giá khối lượng Vertex AI hoặc ElevenLabs hiện có của bạn"
         },
         {
-          "title": "Toàn quyền kiểm soát",
-          "description": "Khóa của bạn, thanh toán của bạn, quản lý chi phí của bạn"
+          "title": "<g id=\"1\">Toàn quyền kiểm soát.</g> ",
+          "description": "Chìa khóa, hóa đơn, quản lý chi phí của bạn"
         }
       ],
-      "supportedProviders": "Các nhà cung cấp được hỗ trợ",
+      "supportedProviders": "Nhà cung cấp được hỗ trợ",
       "vertexName": "Google Vertex AI",
       "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Chuyển đổi văn bản thành giọng nói & Sao chép giọng nói",
+      "elevenLabsDetail": "Chuyển văn bản thành giọng nói & Nhân bản bằng giọng nói",
       "savingsLabel": "Tiết kiệm 80%",
-      "onImagesVideo": "trên hình ảnh và video",
-      "onVoiceover": "trong phần lời bình",
-      "note": "Các khoản tiết kiệm tín dụng được hiển thị là mức tiết kiệm trên nền tảng SceneFlow. Tổng chi phí thực tế của bạn phụ thuộc vào mức giá API dành cho cá nhân hoặc doanh nghiệp mà bạn áp dụng với từng nhà cung cấp."
+      "onImagesVideo": "trên hình ảnh & video",
+      "onVoiceover": "khi lồng tiếng",
+      "note": "Khoản tiết kiệm tín dụng được hiển thị là khoản tiết kiệm nền tảng SceneFlow. Tổng chi phí thực tế của bạn phụ thuộc vào giá API cá nhân hoặc doanh nghiệp của bạn với từng nhà cung cấp."
     },
     "creditTopUps": {
-      "title": "Bạn cần thêm tín dụng?",
-      "subtitle": "Nạp tiền bất cứ lúc nào. Số dư không bao giờ hết hạn.",
+      "title": "Bạn cần thêm điểm tín dụng?",
+      "subtitle": "Nạp tiền bất cứ lúc nào. Điểm tín dụng không bao giờ hết hạn.",
       "packs": [
         {
-          "label": "Bộ khởi đầu",
-          "description": "Hoàn hảo để ôn tập nhanh"
+          "label": "Gói Khởi động",
+          "description": "Hoàn hảo để chỉnh sửa nhanh"
         },
         {
-          "label": "Bộ sưu tập cảnh",
+          "label": "Gói Cảnh",
           "description": "Hoàn thành một dự án ngắn"
         },
         {
           "label": "Gói sản xuất",
-          "description": "Phân đoạn phim quan trọng"
+          "description": "Trình tự phim chính"
         },
         {
-          "label": "Bộ sản phẩm Studio",
-          "description": "Công suất sản xuất tối đa"
+          "label": "Gói Studio",
+          "description": "Năng lực sản xuất"
         }
       ],
-      "creditsUnit": "Danh sách thực hiện"
+      "creditsUnit": "tín dụng"
     },
     "calculator": {
-      "sectionTitle": "Ước tính chi phí dự án của bạn",
-      "sectionSubtitle": "Biết chính xác số tiền bạn sẽ phải trả trước khi cam kết.",
-      "title": "Công cụ tính ngân sách dự án",
-      "subtitle": "Ước tính số tín dụng trước khi bắt đầu",
-      "customize": "Tùy chỉnh các tham số",
+      "sectionTitle": "Ước tính dự án của bạn",
+      "sectionSubtitle": "Biết chính xác số tiền bạn sẽ trả trước khi cam kết",
+      "title": "Công cụ tính toán ngân sách dự án",
+      "subtitle": "Ước tính điểm tín dụng trước khi bạn bắt đầu",
+      "customize": "Tùy chỉnh thông số",
       "imagesLabel": "Hình ảnh cần tạo",
-      "videoClipsLabel": "Các đoạn video",
-      "voiceoverLabel": "Lời bình (phút)",
-      "byokTitle": "Tự cung cấp khóa (BYOK)",
-      "byokBadge": "Chuyên nghiệp & Studio",
-      "byokDescription": "Sử dụng khóa API của riêng bạn để tiết kiệm tới 80% chi phí tín dụng SceneFlow. Bạn thanh toán trực tiếp cho các nhà cung cấp AI theo mức giá của họ.",
+      "videoClipsLabel": "Đoạn video",
+      "voiceoverLabel": "Voiceover (phút)",
+      "byokTitle": "Mang theo chìa khóa riêng (BYOK)",
+      "byokBadge": "Pro & Studio",
+      "byokDescription": "Sử dụng khóa API của riêng bạn để tiết kiệm tới 80% điểm tín dụng SceneFlow. Bạn thanh toán trực tiếp cho các nhà cung cấp AI theo mức giá của họ.",
       "vertexToggle": "Vertex AI (Hình ảnh & Video)",
-      "elevenLabsToggle": "ElevenLabs (Lời bình)",
-      "imageGeneration": "Tạo ảnh",
+      "elevenLabsToggle": "ElevenLabs (Lồng tiếng)",
+      "imageGeneration": "Tạo hình ảnh",
       "videoGeneration": "Tạo video",
-      "voiceover": "Lời bình",
+      "voiceover": "Voiceover",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Tổng dự toán",
-      "withTopUps": "kèm theo các khoản nạp thêm",
-      "creditSavings": "SceneFlow tiết kiệm tín dụng",
-      "savePercent": "Bạn tiết kiệm {percent}% khi mua tín dụng SceneFlow",
-      "transparency": "Minh bạch tuyệt đối: Bạn có thể theo dõi mức sử dụng credit theo thời gian thực trong quá trình làm việc. Không lo phát sinh bất ngờ—bạn có thể điều chỉnh phạm vi dự án bất cứ lúc nào.",
-      "transparencyHighlight": "Hoàn toàn minh bạch:",
-      "byokDisclaimer": "BYOK Lưu ý: Mức tiết kiệm tín dụng được hiển thị chỉ phản ánh việc giảm tín dụng nền tảng SceneFlow. Chi phí thực tế của bạn phụ thuộc vào các gói định giá Vertex AI và ElevenLabs mà bạn sử dụng. Các gói dành cho doanh nghiệp hoặc gói API có lưu lượng lớn có thể mang lại mức tiết kiệm bổ sung.",
+      "totalEstimate": "Tổng ước tính",
+      "withTopUps": "có nạp tiền",
+      "creditSavings": "Tiết kiệm tín dụng SceneFlow",
+      "savePercent": "Bạn tiết kiệm được {percent}% điểm tín dụng SceneFlow",
+      "transparency": "Minh bạch hoàn toàn: Bạn sẽ thấy việc sử dụng tín dụng theo thời gian thực khi bạn làm việc. Không có gì bất ngờ - hãy điều chỉnh phạm vi dự án của bạn bất cứ lúc nào.",
+      "transparencyHighlight": "Minh bạch hoàn toàn:",
+      "byokDisclaimer": "BYOK Lưu ý: Khoản tiết kiệm tín dụng được hiển thị chỉ phản ánh việc giảm tín dụng trên nền tảng SceneFlow. Chi phí thực tế của bạn phụ thuộc vào các gói định giá Vertex AI và ElevenLabs của bạn. Các gói API doanh nghiệp hoặc khối lượng lớn có thể cung cấp thêm khoản tiết kiệm.",
       "byokDisclaimerHighlight": "BYOK Lưu ý:",
       "presets": [
         {
-          "id": "thương mại",
-          "name": "Quảng cáo dài 30 giây"
+          "id": "commercial",
+          "name": "30 giây Thương mại"
         },
         {
-          "id": "ngắn",
+          "id": "short",
           "name": "Phim ngắn 2 phút"
         },
         {
-          "id": "tập",
-          "name": "Tập phim dài 10 phút"
+          "id": "episode",
+          "name": "Tập 10 phút"
         },
         {
-          "id": "tính năng",
-          "name": "Phim dài 90 phút"
+          "id": "feature",
+          "name": "Tính năng 90 phút"
         }
       ],
-      "minSuffix": "tối thiểu"
+      "minSuffix": "phút"
     },
     "tierGrid": {
-      "productionTestFlight": "Chuyến bay thử nghiệm sản phẩm",
+      "productionTestFlight": "Chuyến bay thử nghiệm sản xuất",
       "getStarted": "Bắt đầu",
       "startTestFlight": "Bắt đầu chuyến bay thử nghiệm",
       "loading": "Đang tải...",
       "mostPopular": "Phổ biến nhất",
-      "creditsPerMonth": "Số tín dụng/tháng",
+      "creditsPerMonth": "Tín chỉ/tháng",
       "storage": "Lưu trữ",
       "perMonth": "/tháng"
     },
     "trust": {
       "cancelAnytime": "Hủy bất cứ lúc nào",
-      "moneyBack": "Đảm bảo hoàn tiền trong vòng 14 ngày",
-      "creditsNeverExpire": "Số dư không bao giờ hết hạn (gói Explorer)"
+      "moneyBack": "ĐẢM BẢO KIẾM TIỀN TRONG VÒNG 90 NGÀY",
+      "creditsNeverExpire": "Tín dụng không bao giờ hết hạn (gói Explorer)"
     },
     "plans": {
       "explorer": {
@@ -1660,100 +1666,109 @@
         "description": "Mua một lần để dùng thử",
         "features": [
           "Mua một lần",
-          "750 tín dụng (không bao giờ hết hạn)",
-          "Dung lượng lưu trữ 5 GB (30 ngày)",
-          "Toàn quyền truy cập nền tảng",
-          "Xuất file MP4 (mọi độ phân giải)",
-          "Lồng tiếng AI (hơn 70 ngôn ngữ)"
+          "750 điểm tín dụng (không bao giờ hết hạn)",
+          "Bộ nhớ 5 GB (30 ngày)",
+          "Truy cập nền tảng",
+          "Xuất MP4 (bất kỳ độ phân giải nào)",
+          "Lồng tiếng AI (hơn70 ngôn ngữ)"
         ]
       },
       "subscriptions": [
         {
-          "id": "món khai vị",
-          "name": "Món khai vị",
-          "description": "Dành cho nhà sáng tạo cá nhân",
+          "id": "starter",
+          "name": "Bộ khởi động",
+          "description": "Dành cho người sáng tạo cá nhân",
           "features": [
-            "Toàn quyền truy cập nền tảng",
-            "Bao gồm 4.500 tín dụng/tháng",
-            "25 GB dung lượng lưu trữ đang hoạt động",
-            "Xuất file MP4 (mọi độ phân giải)",
-            "Lồng tiếng AI (hơn 70 ngôn ngữ)",
+            "Truy cập nền tảng",
+            "Đã bao gồm 4.500 tín chỉ/tháng",
+            "25 GB dung lượng đang hoạt động",
+            "Xuất MP4 (bất kỳ độ phân giải nào)",
+            "Lồng tiếng AI (hơn70 ngôn ngữ)",
             "Hỗ trợ qua email"
           ]
         },
         {
-          "id": "chuyên nghiệp",
+          "id": "pro",
           "name": "Chuyên nghiệp",
-          "description": "Dành cho nhà sáng tạo chuyên nghiệp",
+          "description": "Dành cho người sáng tạo chuyên nghiệp",
           "features": [
-            "Tất cả các tính năng của gói Starter, cùng với:",
-            "Bao gồm 15.000 credit mỗi tháng",
-            "100 GB dung lượng lưu trữ đang hoạt động",
-            "Quyền truy cập chất lượng Veo 3.1 (4K)",
-            "Công cụ duy trì tính nhất quán của nhân vật",
-            "Sao chép giọng nói",
-            "BYOK (Tự cung cấp khóa)",
-            "3 chỗ ngồi cho đội",
+            "Tất cả mọi thứ trong Starter, cộng với:",
+            "Đã bao gồm 15.000 tín chỉ/tháng",
+            "100 GB dung lượng đang hoạt động",
+            "Veo 3.1 Truy cập chất lượng (4K)",
+            "Công cụ tính nhất quán của ký tự",
+            "Nhân bản giọng nói",
+            "BYOK (Mang theo chìa khóa riêng)",
+            "3 chỗ ngồi trong nhóm",
             "Hỗ trợ ưu tiên"
           ]
         },
         {
           "id": "studio",
-          "name": "Studio",
-          "description": "Dành cho các nhóm và công ty dịch vụ",
+          "name": "Phòng thu hình",
+          "description": "Dành cho các nhóm & cơ quan",
           "features": [
-            "Tất cả các tính năng của gói Pro, cùng với:",
-            "Bao gồm 75.000 credit/tháng",
+            "Mọi tính năng trong Pro, cộng thêm:",
+            "Bao gồm 75.000 tín chỉ/tháng",
             "500 GB dung lượng lưu trữ đang hoạt động",
             "Hàng đợi ưu tiên Veo 3.1 4K",
             "Tính nhất quán của nhân vật không giới hạn",
-            "Xuất khẩu sản phẩm nhãn trắng",
-            "Quyền truy cập API",
-            "10 chỗ ngồi cho nhóm",
-            "Quản lý khách hàng chuyên trách",
-            "SLA dành cho doanh nghiệp được cung cấp theo yêu cầu."
+            "Xuất khẩu nhãn trắng",
+            "truy cập api",
+            "10 chỗ ngồi trong nhóm",
+            "Quản lý tài khoản chuyên dụng",
+            "SLA doanh nghiệp có sẵn theo yêu cầu"
           ]
         }
       ]
-    }
+    },
+    "explorerHighlight": "Cách nhanh nhất để trải nghiệm studio SceneFlow hoàn chỉnh — từ concept đến Screening Room.",
+    "trustBadges": [
+      "Google Cloud CƠ SỞ HẠ tầng",
+      "Vertex AI Generation",
+      "Thanh toán an toàn qua Whop",
+      "ĐẢM BẢO KIẾM TIỀN TRONG VÒNG 90 NGÀY"
+    ]
   },
   "landingSections": {
     "expandSection": "Hiển thị phần",
     "collapseSection": "Ẩn phần này"
   },
   "finalCta": {
-    "title": "Đã sẵn sàng kiểm thử toàn bộ quy trình chưa?",
-    "subtitle": "Triển khai từ ý tưởng, dựng hình ảnh sơ bộ (pre-vis) và video cho đến xuất file MP4 hoàn chỉnh – tất cả trong cùng một studio. Hãy bắt đầu với gói 9 USD Explorer để trải nghiệm quy trình làm việc ưu tiên nhịp điệu (beat-first) ngay trong thực tế.",
-    "cta": "Ra mắt studio của bạn với giá 9 USD"
+    "title": "Bạn đã sẵn sàng để thử nghiệm toàn bộ quy trình?",
+    "subtitle": "Kịch bản và tối ưu hóa do Google hỗ trợ, lựa chọn phụ trợ thế hệ của bạn và đánh giá Screening Room — tất cả trong một studio. Nhóm Thử nghiệm trước tháng 9 hiện đang hình thành — hãy bắt đầu với gói $ 9 Explorer hoặc đăng ký quyền truy cập của Người sáng tạo sáng lập.",
+    "cta": "Ra mắt Studio của bạn ($ 9) — Nhóm tháng 9",
+    "ctaSecondary": "Đăng ký quyền truy cập của Người sáng tạo sáng lập",
+    "ctaSecondaryHref": "/early-access"
   },
   "footer": {
-    "description": "Quy trình sản xuất video tự động khép kín — từ ý tưởng đến bản hoàn thiện sẵn sàng phát hành. Một studio có hướng dẫn: Blueprint → Sản xuất → Screening Room.",
+    "description": "Sản xuất video tự động từ đầu đến cuối — từ ý tưởng đến tổng thể sẵn sàng xuất bản. Một studio được hướng dẫn: SFAISERIES_→STUDIOTERM SFAIBLUEPRINT_→STUDIOTERM Production Studio → Screening Room.",
     "product": "Sản phẩm",
-    "resources": "Tài nguyên",
-    "legal": "Pháp lý",
+    "resources": "Nguồn Tài Nguyên",
+    "legal": "Legal",
     "links": {
       "features": "Tính năng",
-      "pricing": "Bảng giá",
+      "pricing": "Giá",
       "howItWorks": "Cách thức hoạt động",
-      "gettingStarted": "Bắt đầu",
+      "gettingStarted": "Bắt Đầu",
       "privacy": "Chính sách quyền riêng tư",
-      "terms": "Điều khoản Dịch vụ",
-      "trustSafety": "Tin cậy & An toàn",
-      "refunds": "Chính sách hoàn tiền",
+      "terms": "Điều khoản dịch vụ",
+      "trustSafety": "Độ tin cậy và an toàn",
+      "refunds": "Chính sách Hoàn tiền",
       "contact": "Liên hệ với chúng tôi"
     },
-    "tagline": "Được tạo ra bằng cả trái tim ❤️ dành cho các nhà sáng tạo",
-    "taglineSub": "Từ ý tưởng đến video được xuất bản",
-    "securePayments": "Thanh toán an toàn được xử lý bởi Whop, đơn vị chịu trách nhiệm giao dịch (Merchant of Record) của chúng tôi.",
-    "morLine": "Việc thanh toán an toàn, tính toán thuế và đảm bảo tuân thủ quy định được thực hiện bởi Whop – đơn vị chịu trách nhiệm giao dịch (Merchant of Record) của chúng tôi – thay mặt cho Life Focus, LLC.",
+    "tagline": "Được thiết kế riêng ❤️ cho người sáng tạo",
+    "taglineSub": "Từ ý tưởng đến video đã xuất bản",
+    "securePayments": "Thanh toán an toàn được xử lý bởi Whop, Đơn vị chấp nhận thẻ của chúng tôi",
+    "morLine": "Các khoản thanh toán an toàn, tính toán thuế và tuân thủ được xử lý bởi Whop, Merchant of Record của chúng tôi, thay mặt cho Life Focus, LLC.",
     "copyright": "© 2026 SceneFlow AI. Bảo lưu mọi quyền.",
-    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • Liên hệ: support@sceneflowai.studio",
-    "poweredBy": "Được vận hành bởi Google Cloud"
+    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, Hoa Kỳ • Liên hệ: support@sceneflowai.studio",
+    "poweredBy": "Trí thông minh do Google cung cấp · Được phối hợp trên Google Cloud"
   },
   "floatingCta": {
-    "seePricing": "Xem bảng giá",
-    "tryNine": "Thử mức giá 9 đô la",
-    "tryForNine": "Dùng thử với giá 9 đô la",
+    "seePricing": "Xem giá",
+    "tryNine": "THỬ 9",
+    "tryForNine": "Thử với giá $ 9",
     "dismiss": "Bỏ qua"
   },
   "common": {
@@ -1763,5 +1778,121 @@
     "mute": "Tắt tiếng",
     "unmute": "Bật tiếng",
     "expandVideo": "Mở rộng video"
+  },
+  "useCasesShowcase": {
+    "badge": "SceneFlow dành cho ai?",
+    "title": "SceneFlow dành cho ai?",
+    "subtitle": "Từ ý tưởng đến Screening Room hoạt hình đến video đa ngôn ngữ được xuất bản tự động — một đường ống tự động, bốn cách để vận chuyển.",
+    "cta": "Ra mắt Studio của bạn ($ 9) — Nhóm tháng 9",
+    "tabStory": "Giải pháp",
+    "tabScreening": "Sàng lọc",
+    "problemLabel": "Đặt vấn đề",
+    "solutionLabel": "Giải pháp SceneFlow",
+    "outcomeLabel": "Kết quả",
+    "videoLanguagePrompt": "Xem hành trình này bằng ngôn ngữ của bạn",
+    "videoComingSoon": "Video hướng dẫn sắp ra mắt",
+    "videoSoon": "ốc",
+    "personas": [
+      {
+        "id": "youtubeCreator",
+        "label": "Nhà sáng tạo nội dung trên YouTube",
+        "headline": "Từ ý tưởng đến loạt phim điện ảnh — Không có kỹ thuật nhắc nhở",
+        "intro": "Bắt đầu với một khái niệm hoặc một mô tả chuỗi chi tiết. SceneFlow xây dựng vũ trụ, nhân vật và tập phim không giới hạn, sau đó sử dụng Express để hiển thị âm thanh, khung hình và video đồng thời. Bạn tạo và chỉ đạo bằng văn bản hoặc giọng nói đơn giản; SceneFlow xây dựng tầm nhìn — không có kỹ thuật nhanh chóng, không lấy lại máy đánh bạc.",
+        "story": {
+          "problem": [
+            "Bạn sắp xếp các công cụ riêng biệt cho kịch bản, hình ảnh, giọng nói, video, âm nhạc và chỉnh sửa.",
+            "Bạn tạo đi tạo lại từng phần, hy vọng kết quả có thể sử dụng được.",
+            "Các nhân vật vẫn trông khác nhau từ cảnh này sang cảnh khác."
+          ],
+          "solution": [
+            "Một studio có hướng dẫn sẽ thay thế toàn bộ ngăn xếp công cụ.",
+            "Mô tả ý tưởng của bạn bằng những từ đơn giản — SceneFlow viết series và thiết kế dàn diễn viên.",
+            "Express kết xuất âm thanh, khung hình và video cùng nhau trong khi Reference Library giữ cho các ký tự nhất quán."
+          ],
+          "outcome": [
+            "Ngừng mất cuối tuần cho các công cụ bị phân mảnh.",
+            "Đăng bài với nhịp điệu ổn định mà bạn thực sự có thể theo kịp.",
+            "Giữ mọi tập phim trên thương hiệu mà không cần quay lại để đảm bảo tính nhất quán."
+          ]
+        },
+        "screeningRoomHook": "Hình dung câu chuyện dưới dạng hoạt hình trước video chuyển động, xem lại các cảnh trước khi hoàn thiện các luồng và chia sẻ các luồng đa ngôn ngữ (hơn70 ngôn ngữ) để nhận phản hồi trước khi phát hành.",
+        "screeningRoomPreview": "The Unseen Archive: The Grand Illusion: The Chicago World's Fair Deception"
+      },
+      {
+        "id": "startupProvider",
+        "label": "Nhà cung cấp dịch vụ khởi nghiệp",
+        "headline": "Điều hành một Studio Video Toàn cầu — Không cần Xây dựng",
+        "intro": "Cung cấp video được đánh bóng, địa phương hóa cho các doanh nghiệp nhỏ không đủ khả năng chi trả cho một đại lý. Express đồng thời hiển thị toàn bộ gói khách hàng, Mixer bổ sung các lớp phủ thương hiệu, hình mờ và thời gian, đồng thời tự động sắp xếp dub/lip-sync cho mọi sản phẩm bằng ngôn ngữ thị trường của khách hàng của bạn — tất cả từ một đường ống có thể dự đoán được.",
+        "story": {
+          "problem": [
+            "Khách hàng doanh nghiệp nhỏ không đủ khả năng chi trả cho một công ty video truyền thống.",
+            "Bạn mua và sắp xếp nhiều công cụ, làm lại công việc cho mọi khách hàng.",
+            "Mỗi ngôn ngữ mới có nghĩa là xây dựng lại video từ đầu."
+          ],
+          "solution": [
+            "Một đường ống có thể dự đoán được cho mọi dự án của khách hàng.",
+            "Kết xuất một gói video đầy đủ cùng một lúc — âm thanh, khung hình và video cùng nhau.",
+            "Thêm thương hiệu, lớp phủ và hình mờ, sau đó tự động lồng tiếng và đồng bộ hóa môi vào ngôn ngữ thị trường của khách hàng."
+          ],
+          "outcome": [
+            "Phục vụ nhiều khách hàng từ một quy trình làm việc của studio.",
+            "Tiếp cận thị trường toàn cầu bằng hơn70 ngôn ngữ mà không cần xây dựng lại từng video.",
+            "Mở rộng quy mô dịch vụ mà không cần thuê nhân viên hoặc xây dựng cơ sở hạ tầng."
+          ]
+        },
+        "screeningRoomHook": "Đánh giá trực tiếp với khách hàng về hoạt ảnh, phê duyệt cảnh trước các luồng cuối cùng và các bản xem trước đa ngôn ngữ có thể chia sẻ cho các bên liên quan ở nước ngoài.",
+        "screeningRoomPreview": "Main Street Rising: Khởi động lại doanh nghiệp địa phương"
+      },
+      {
+        "id": "enterprise",
+        "label": "Doanh nghiệp & Tổ chức",
+        "headline": "Đào tạo tuân thủ với tốc độ thay đổi chính sách",
+        "intro": "Các nhóm L&D và truyền thông nội bộ vận chuyển các mô-đun sẵn sàng kiểm toán, khóa thương hiệu mà không có chu kỳ của nhà cung cấp. Tinh chỉnh bất kỳ khung hoặc đường thẳng nào bằng văn bản hoặc giọng nói để luôn cập nhật tin nhắn, kết thúc với lớp phủ và hình mờ Mixer, đồng thời tung ra các phiên bản được lồng tiếng hoặc đồng bộ hóa môi tự động cho mọi khu vực từ một bản gốc được phê duyệt duy nhất.",
+        "story": {
+          "problem": [
+            "Các video đào tạo và giao tiếp phải chờ hàng tuần đối với các nhà cung cấp bên ngoài và phải trả phí.",
+            "Khi chính sách hoặc sản phẩm thay đổi, video sẽ bị lỗi thời và mất thương hiệu.",
+            "Mỗi bản cập nhật kích hoạt một vòng sản xuất đắt tiền khác."
+          ],
+          "solution": [
+            "Sản xuất các video được khóa thương hiệu, sẵn sàng kiểm tra nội bộ.",
+            "Thay đổi bất kỳ dòng hoặc khung nào bằng hướng dẫn đánh máy hoặc nói.",
+            "Xem xét và phê duyệt trước khi thanh toán cho kết xuất cuối cùng, sau đó triển khai một master cho mọi khu vực."
+          ],
+          "outcome": [
+            "Đào tạo và truyền thông theo kịp những thay đổi chính sách.",
+            "Duy trì thương hiệu mà không cần chờ đợi chu kỳ của nhà cung cấp.",
+            "Cập nhật một lần và phân phối ở mọi nơi từ một lần cắt đã được phê duyệt."
+          ]
+        },
+        "screeningRoomHook": "Xem lại các cảnh trước khi phát trực tuyến cuối cùng và chia sẻ các liên kết Screening Room riêng tư để nhận phản hồi xuyên khu vực mà không xuất các bản gốc chưa hoàn thành.",
+        "screeningRoomPreview": "Giao thức lá chắn: Đào tạo nhập môn về an ninh mạng toàn cầu"
+      },
+      {
+        "id": "educator",
+        "label": "Nhà giáo dục",
+        "headline": "Biến chương trình giảng dạy thành bài học mà học sinh thực sự theo dõi",
+        "intro": "Các tổ chức lớn chuyển đổi các chương dày đặc thành video tường thuật được bản địa hóa. Express xây dựng các bài học đầy đủ nhanh chóng, chỉnh sửa văn bản/giọng nói thông minh cho phép giảng viên điều chỉnh nội dung mà không cần thiết kế nhanh chóng và dub/lip-sync tự động sắp xếp phù hợp với ngôn ngữ của từng nhóm — sau đó tự động xuất bản các tiêu đề và hình thu nhỏ được bản địa hóa cho mọi kênh.",
+        "story": {
+          "problem": [
+            "Tài liệu khóa học dày đặc chỉ trở thành video sau nhiều tuần, kỹ năng chuyên môn hoặc ngân sách lớn.",
+            "Nếu không có điều đó, các bài học sẽ được lưu lại dưới dạng trình chiếu mà học sinh bỏ qua.",
+            "Phục vụ học viên bằng nhiều ngôn ngữ sẽ làm tăng gấp bội công việc."
+          ],
+          "solution": [
+            "Xây dựng các bài học tường thuật đầy đủ một cách nhanh chóng trong một studio.",
+            "Khoa điều chỉnh nội dung bằng cách gõ hoặc nói — không cần nhắc nhở kỹ thuật.",
+            "Tự động lồng tiếng, đồng bộ môi và xuất bản với tiêu đề và hình thu nhỏ được bản địa hóa cho mỗi nhóm."
+          ],
+          "outcome": [
+            "Biến chương trình giảng dạy thành video mà học sinh thực sự xem.",
+            "Tiếp cận mọi cơ sở bằng ngôn ngữ của họ mà không cần đội ngũ sản xuất.",
+            "Vận chuyển bài học nhanh hơn so với sản xuất video truyền thống cho phép."
+          ]
+        },
+        "screeningRoomHook": "Giảng viên xem trước phim hoạt hình trước khi chi tiêu sản xuất, xem lại các cảnh bài học và chia sẻ các luồng bằng hơn70 ngôn ngữ để có phản hồi từ nhiều trường.",
+        "screeningRoomPreview": "Hội thảo Phục hưng: Nhìn thấy quá khứ trong chuyển động"
+      }
+    ]
   }
 }

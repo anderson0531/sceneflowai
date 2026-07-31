@@ -4,23 +4,26 @@
     "description": "Förvandla dina idéer till professionella videor med AI-driven arbetsflödesautomatisering"
   },
   "nav": {
-    "workflow": "Arbetsflödet",
-    "platformWalkthrough": "Genomgång av plattformen",
+    "workflow": "Hur det fungerar",
+    "platformWalkthrough": "Plattformsgenomgång",
     "plansPricing": "Abonnemang och priser",
     "more": "Mer",
-    "useCases": "Användningsområden",
+    "useCases": "Användningsfall",
     "audienceResonance": "Audience Resonance",
-    "trustSafety": "Tillit och säkerhet",
+    "trustSafety": "Förtroende och säkerhet",
     "platformTrust": "Plattform och förtroende",
     "signIn": "Logga in",
-    "startProject": "Starta ett projekt",
+    "startProject": "STARTA ETT PROJEKT",
     "dashboard": "Instrumentpanel",
-    "adminPanel": "Administrationspanel",
+    "adminPanel": "Administratörspanelen",
     "signOut": "Logga ut",
-    "goToDashboard": "Gå till instrumentpanelen",
+    "goToDashboard": "Gå till adminpanelen",
     "userFallback": "Användare",
-    "searchLanguages": "Sök bland språk...",
-    "noLanguagesFound": "Inga språk hittades"
+    "searchLanguages": "Sök språk",
+    "noLanguagesFound": "Inga språk hittades.",
+    "pipeline": "Inom den närmaste framtiden",
+    "productionExamples": "Exempel",
+    "keyFeatures": "Egenskaper"
   },
   "floatingNav": {
     "compare": "Jämför",
@@ -34,15 +37,15 @@
     "pricing": "Prissättning"
   },
   "hero": {
-    "headline": "Visualisera berättelsen. SceneFlow hanterar flödet.",
-    "subheadline": "Lämna tidskrävande prompting bakom dig. Fokusera helt på din kreativa vision med ett automatiserat produktionsflöde av professionell kvalitet.",
+    "headline": "Du regisserar berättelsen. SceneFlow automatiserar studion.",
+    "subheadline": "Google-driven intelligens orkestrerad på Google Cloud — med valfri Google- eller Kling-generation. Kör dina idéer genom en sömlös pipeline från ritning till master MP4 utan mikroprompting.",
     "audienceMicroLine": "Skapat för kreatörer som vill ha resultat och team som vill se hur det fungerar.",
-    "ctaSecondary": "Se ”What's Possible”",
-    "ctaToolStack": "Se hur det ersätter din verktygsuppsättning",
-    "languagePrompt": "Hör hjälten på ditt språk – samma pipeline, nya marknader",
-    "multilangHint": "Hero dubbas på 7 språk – hela produktionskedjan har stöd för över 70 språk.",
-    "playWithNarration": "Spela upp med berättarröst",
-    "tapToHear": "Tryck för att lyssna",
+    "ctaSecondary": "Titta på \"Vad är möjligt\"",
+    "ctaToolStack": "Se hur den ersätter din verktygsstack",
+    "languagePrompt": "Hör hjälten på ditt språk — samma pipeline, nya marknader",
+    "multilangHint": "Hero dubs på 7 språk — full pipeline stöder 70+ i Production Studio.",
+    "playWithNarration": "Lek med berättande",
+    "tapToHear": "Tryck för att höra",
     "fullscreen": "Helskärm",
     "heroVideoLanguages": {
       "en": {
@@ -59,22 +62,25 @@
       },
       "hi": {
         "label": "Hindi",
-        "nativeLabel": "Hindi"
+        "nativeLabel": "‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ¶"
       },
       "zh": {
         "label": "Kinesiska",
-        "nativeLabel": "Kinesiska"
+        "nativeLabel": "Kinesiska 中文 XXX"
       },
       "ar": {
         "label": "Arabiska",
-        "nativeLabel": "Arabiska"
+        "nativeLabel": "العربية"
       },
       "th": {
-        "label": "Thailändska",
-        "nativeLabel": "Thailand"
+        "label": "Thai",
+        "nativeLabel": "ไทย"
       }
     },
-    "soon": "Snart"
+    "soon": "Snart",
+    "ctaPrimaryLaunch": "Starta din studio (9 $) — septemberkohort",
+    "ctaSupportingLine": "Börja med $ 9 Explorer-planen. September Early Access-kohort bildas nu.",
+    "videoLanguageCount": "{count, plural, =1 {# language} andra {# languages}}"
   },
   "valueProp": {
     "pills": [
@@ -1501,82 +1507,82 @@
     "ctaSubtext": "Bygg en bro mellan traditionellt filmskapande och generativ AI"
   },
   "exitIntent": {
-    "title": "Vänta! Gå inte tomhänt därifrån.",
-    "subtitle": "Få exklusiv förtur och tips för AI-driven filmskapande",
+    "title": "Vänta! Lämna inte tomhänt",
+    "subtitle": "Få exklusiv tidig åtkomst och tips för AI-driven filmskapande",
     "benefits": [
-      "Veckovisa guider i AI-filmskapande",
+      "Veckovisa självstudiekurser i AI-filmskapande",
       "Tidig tillgång till nya funktioner",
-      "Exklusiva rabatter för kreatörer"
+      "Exklusiva kreatörsrabatter"
     ],
     "emailPlaceholder": "Ange din e-postadress",
-    "subscribe": "Få tidig tillgång",
-    "subscribing": "Prenumererar...",
-    "or": "eller",
-    "startNow": "Börja skapa nu för bara 9 $ →",
-    "privacy": "Ingen spam, någonsin. Avsluta prenumerationen när som helst.",
-    "successTitle": "Du står med på listan!",
-    "successSubtitle": "Håll utkik i inkorgen efter exklusiva tips om filmskapande och uppdateringar om tidig tillgång.",
-    "ctaText": "Börja utforska – 9 $",
-    "closePopup": "Stäng popup-fönstret"
+    "subscribe": "Få tidig tillgång! &#10;",
+    "subscribing": "Prenumererar",
+    "or": "xx",
+    "startNow": "Börja skapa nu för bara $ 9 — september-kohortformning →",
+    "privacy": "Ingen skräppost, någonsin. Avsluta prenumerationen när som helst.",
+    "successTitle": "Du är med på listan!",
+    "successSubtitle": "Kolla din inkorg för exklusiva tips om filmskapande och uppdateringar om tidig tillgång.",
+    "ctaText": "Börja utforska — 9 $",
+    "closePopup": "Stäng popup"
   },
   "pricing": {
-    "badge": "Användningsbaserad prissättning",
-    "title": "Betala för det du skapar",
-    "subtitle": "En grundplan för tillgång till plattformen. Krediter för AI-generering. Fyll på vid behov. Full kontroll, inget spill.",
+    "badge": "Enkel prissättning",
+    "title": "Börja med Explorer — $ 9",
+    "subtitle": "September Early Access-kohortbildning. Testa hela rörledningen med ett friktionsfritt inträde på $ 9.",
     "valueAnchor": {
-      "traditionalCost": "2 000 $ eller mer",
-      "traditionalLabel": "Traditionell förhandsvisualisering",
-      "vs": "mot",
-      "sceneFlowCost": "49–149 $",
-      "sceneFlowLabel": "SceneFlow månatlig",
-      "saveBadge": "Spara mer än 90 % per projekt"
+      "traditionalCost": "2 000",
+      "traditionalLabel": "Traditionell pre-vis",
+      "vs": "vs",
+      "sceneFlowCost": "49-149 $",
+      "sceneFlowLabel": "SceneFlow månadsvis",
+      "saveBadge": "Spara över90% per projekt"
     },
     "teamCta": {
       "title": "Internt team eller institution?",
-      "description": "Boka en genomgång av arbetsflödet för team inom kommunikation, kompetensutveckling och marknadsföring",
-      "button": "Genomgång av boken"
+      "description": "Boka en genomgång av arbetsflödet för kommunikations-, L&D- och marknadsföringsteam",
+      "button": "Bokgenomgång"
     },
     "agencyCta": {
-      "title": "Byrå eller produktionsbolag?",
-      "description": "Skräddarsydda krediter, SLA och dedikerad support i stor skala",
-      "button": "Kontakta säljavdelningen"
+      "title": "Byrå eller produktionsbutik?",
+      "description": "Anpassade krediter, SLA och dedikerad support i stor skala",
+      "button": "Kontakta försäljningen"
     },
     "byok": {
-      "title": "Ta med egen nyckel",
-      "badge": "Pro- och Studio-abonnemang",
-      "description": "Har du redan API-nycklar för Vertex AI eller ElevenLabs? Använd dem med SceneFlow AI och spara upp till 80 % på plattformskrediter.",
-      "savingsHighlight": "80 % i plattformskrediter",
+      "title": "Ta med dina egna. ",
+      "badge": "Proffs- och studioabonnemang",
+      "description": "Har du redan API-nycklar för Vertex AI eller ElevenLabs? Använd dem med SceneFlow AI och spara upp till 80% på plattformskrediter.",
+      "savingsHighlight": "80% på plattformskrediter",
       "benefits": [
         {
-          "title": "80 % SceneFlow Kreditbesparing",
-          "description": "Betala endast en plattformsavgift på 20 % för orkestrering och verktyg."
+          "title": "80% SceneFlow kreditbesparingar",
+          "description": "Betala endast en plattformsavgift på 20% för orkestrering och verktyg"
         },
         {
-          "title": "Utnyttja företagsplaner",
-          "description": "Utnyttja dina befintliga volymrabatter för Vertex AI eller ElevenLabs"
+          "title": "Hävstångseffekt på företagsplaner",
+          "description": "Använd dina befintliga volymrabatter på Vertex AI eller ElevenLabs"
         },
         {
-          "title": "Full kontroll",
+          "title": "Fullständig kontroll",
           "description": "Dina nycklar, din fakturering, din kostnadshantering"
         }
       ],
       "supportedProviders": "Leverantörer som stöds",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "Imagen 4 och Veo 3.1",
+      "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
       "elevenLabsDetail": "Text-till-tal och röstkloning",
-      "savingsLabel": "80 % besparing",
+      "savingsLabel": "80% besparingar",
       "onImagesVideo": "på bilder och video",
-      "onVoiceover": "som voiceover",
-      "note": "De redovisade kreditbesparingarna avser besparingar inom SceneFlow-plattformen. Dina faktiska totalkostnader beror på din personliga eller företagsspecifika API-prissättning hos respektive leverantör."
+      "onVoiceover": "på voiceover",
+      "note": "Kreditbesparingar som visas är besparingar på SceneFlow-plattformen. Dina faktiska totala kostnader beror på din personliga eller företags API-prissättning hos varje leverantör."
     },
     "creditTopUps": {
       "title": "Behöver du fler krediter?",
-      "subtitle": "Fyll på när som helst. Dina krediter går aldrig ut.",
+      "subtitle": "Fyll på när som helst. Krediter förfaller aldrig.",
       "packs": [
         {
           "label": "Startpaket",
-          "description": "Perfekt för snabb repetition"
+          "description": "Perfekt för snabba revisioner"
         },
         {
           "label": "Scenpaket",
@@ -1584,57 +1590,57 @@
         },
         {
           "label": "Produktionspaket",
-          "description": "Viktig filmsekvens"
+          "description": "Större filmsekvens"
         },
         {
-          "label": "Studiopaket",
+          "label": "Studio-paket",
           "description": "Full produktionskapacitet"
         }
       ],
-      "creditsUnit": "eftertexter"
+      "creditsUnit": "krediter"
     },
     "calculator": {
       "sectionTitle": "Uppskatta ditt projekt",
-      "sectionSubtitle": "Vet exakt vad du kommer att betala innan du binder dig",
-      "title": "Kalkylator för projektbudget",
-      "subtitle": "Uppskatta antalet poäng innan du börjar",
+      "sectionSubtitle": "Vet exakt vad du kommer att betala innan du förbinder dig",
+      "title": "Projektbudgetkalkylator",
+      "subtitle": "Beräkna krediter innan du börjar",
       "customize": "Anpassa parametrar",
       "imagesLabel": "Bilder att generera",
       "videoClipsLabel": "Videoklipp",
-      "voiceoverLabel": "Berättarröst (minuter)",
-      "byokTitle": "Ta med egen nyckel (BYOK)",
-      "byokBadge": "Pro & Studio",
-      "byokDescription": "Använd dina egna API-nycklar för att spara upp till 80 % på SceneFlow-krediter. Du betalar AI-leverantörerna direkt enligt deras priser.",
+      "voiceoverLabel": "Voiceover (minuter)",
+      "byokTitle": "Ta med din egen nyckel (BYOK)",
+      "byokBadge": "Proffs och studio",
+      "byokDescription": "Använd dina egna API-nycklar för att spara upp till 80% på SceneFlow-krediter. Du betalar AI-leverantörerna direkt till deras priser.",
       "vertexToggle": "Vertex AI (Bilder och video)",
-      "elevenLabsToggle": "ElevenLabs (Berättarröst)",
+      "elevenLabsToggle": "ElevenLabs (Voiceover)",
       "imageGeneration": "Bildgenerering",
       "videoGeneration": "Videogenerering",
       "voiceover": "Berättarröst",
       "byokTag": "(BYOK)",
       "totalEstimate": "Total uppskattning",
       "withTopUps": "med påfyllningar",
-      "creditSavings": "SceneFlow kreditsparande",
-      "savePercent": "Du sparar {percent} % på SceneFlow-poäng",
-      "transparency": "Full insyn: Du ser kreditförbrukningen i realtid medan du arbetar. Inga överraskningar – justera projektets omfattning när som helst.",
-      "transparencyHighlight": "Full transparens:",
-      "byokDisclaimer": "BYOK Obs: De visade kreditbesparingarna avser endast minskningar av plattformskrediter enligt SceneFlow. Dina faktiska kostnader beror på dina prisplaner för Vertex AI och ElevenLabs. Företagsplaner eller planer för stora API-volymer kan innebära ytterligare besparingar.",
+      "creditSavings": "SceneFlow kreditbesparingar",
+      "savePercent": "Du sparar {percent}% på SceneFlow-krediter",
+      "transparency": "Full transparens: Du kommer att se kreditanvändning i realtid när du arbetar. Inga överraskningar - justera projektets omfattning när som helst.",
+      "transparencyHighlight": "Full öppenhet",
+      "byokDisclaimer": "BYOK Obs: Kreditbesparingar som visas återspeglar endast kreditminskningar på SceneFlow-plattformen. Dina faktiska kostnader beror på dina prisplaner Vertex AI och ElevenLabs. Företags- eller högvolym API-planer kan erbjuda ytterligare besparingar.",
       "byokDisclaimerHighlight": "BYOK Obs:",
       "presets": [
         {
-          "id": "kommersiell",
-          "name": "30-sekundersreklam"
+          "id": "commercial",
+          "name": "30-sek Kommersiell"
         },
         {
-          "id": "kort",
-          "name": "Tvåminuterskortfilm"
+          "id": "short",
+          "name": "2 min kortfilm"
         },
         {
-          "id": "avsnitt",
-          "name": "10-minutersavsnitt"
+          "id": "episode",
+          "name": "10-min Avsnitt"
         },
         {
-          "id": "funktion",
-          "name": "Långfilm på 90 minuter"
+          "id": "feature",
+          "name": "90-min Funktion"
         }
       ],
       "minSuffix": "min"
@@ -1643,57 +1649,57 @@
       "productionTestFlight": "Produktionstestflygning",
       "getStarted": "Kom igång",
       "startTestFlight": "Starta testflygning",
-      "loading": "Läser in...",
+      "loading": "Laddar&#xA0;…",
       "mostPopular": "Mest populära",
-      "creditsPerMonth": "Krediter/månad",
-      "storage": "Förvaring",
+      "creditsPerMonth": "Krediter/mån",
+      "storage": "Storage",
       "perMonth": "/månad"
     },
     "trust": {
       "cancelAnytime": "Avbryt när som helst",
-      "moneyBack": "14 dagars pengarna-tillbaka-garanti",
-      "creditsNeverExpire": "Poängen går aldrig ut (paket Explorer)"
+      "moneyBack": "14 dagars pengarna tillbaka-garanti",
+      "creditsNeverExpire": "Krediter förfaller aldrig (Explorer-paket)"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "Engångsköp för att prova på",
+        "description": "Engångsköp för att prova",
         "features": [
-          "Engångsköp",
-          "750 krediter (går aldrig ut)",
+          "Köp en gång",
+          "750 krediter (upphör aldrig att gälla)",
           "5 GB lagringsutrymme (30 dagar)",
-          "Full tillgång till plattformen",
+          "Full plattformsåtkomst",
           "MP4-export (valfri upplösning)",
-          "AI-röstpålägg (över 70 språk)"
+          "AI voiceover (70+ språk)"
         ]
       },
       "subscriptions": [
         {
-          "id": "förrätt",
-          "name": "Förrätt",
+          "id": "starter",
+          "name": "Startare",
           "description": "För enskilda kreatörer",
           "features": [
-            "Full tillgång till plattformen",
-            "4 500 krediter/månad ingår",
-            "25 GB aktiv lagring",
+            "Full plattformsåtkomst",
+            "4500 krediter/månad ingår",
+            "25 GB aktivt lagringsutrymme",
             "MP4-export (valfri upplösning)",
-            "AI-röstpålägg (över 70 språk)",
-            "E-postsupport"
+            "AI voiceover (70+ språk)",
+            "Telefonsupport"
           ]
         },
         {
-          "id": "för",
+          "id": "pro",
           "name": "Pro",
           "description": "För professionella kreatörer",
           "features": [
             "Allt i Starter, plus:",
             "15 000 krediter/månad ingår",
-            "100 GB aktiv lagring",
-            "Tillgång till Veo 3.1-kvalitet (4K)",
-            "Motor för karaktärskonsistens",
+            "100 GB aktivt lagringsutrymme",
+            "Veo 3.1 Kvalitet (4K) åtkomst",
+            "Teckenkonsekvensmotor",
             "Röstkloning",
-            "BYOK (Ta med egen nyckel)",
-            "3 lagplatser",
+            "BYOK (Ta med din egen nyckel)",
+            "3 teamplatser",
             "Prioriterad support"
           ]
         },
@@ -1702,20 +1708,27 @@
           "name": "Studio",
           "description": "För team och byråer",
           "features": [
-            "Allt i Pro, plus:",
+            "Allt i Pro, Plus:",
             "75 000 krediter/månad ingår",
-            "500 GB aktiv lagring",
-            "Veo 3.1 4K-prioritetskö",
-            "Obegränsad karaktärskonsekvens",
-            "Export av white-label-produkter",
-            "API-åtkomst",
-            "10 platser för teamet",
-            "Dedikerad kundansvarig",
-            "SLA för företag tillgängligt på begäran"
+            "500 GB aktivt lagringsutrymme",
+            "Veo 3.1 4K Prioritetskö",
+            "Obegränsad teckenkonsekvens",
+            "White-label-exporter",
+            "API-åtkomst ",
+            "10 teamplatser",
+            "Dedikerad Account Manager",
+            "Enterprise SLA tillgängligt på begäran"
           ]
         }
       ]
-    }
+    },
+    "explorerHighlight": "Det snabbaste sättet att uppleva hela SceneFlow-studion — från koncept till Screening Room.",
+    "trustBadges": [
+      "Google Cloud infrastruktur",
+      "Vertex AI generation",
+      "Säkra betalningar via Whop",
+      "14 dagars pengarna tillbaka-garanti"
+    ]
   },
   "landingSections": {
     "expandSection": "Visa avsnitt",
@@ -1723,36 +1736,38 @@
   },
   "finalCta": {
     "title": "Redo att testa hela pipelinen?",
-    "subtitle": "Hantera allt från koncept och förhandsvisualisering till video och färdig MP4-fil i en och samma studio. Kom igång med abonnemanget för 9 $ (Explorer) och upplev arbetsflödet där takten står i centrum.",
-    "cta": "Starta din studio för 9 dollar"
+    "subtitle": "Google-driven skriptning och optimering, ditt val av generationsgränssnitt och Screening Room-granskning — allt i en studio. September Early Access-kohorten bildas nu — börja med $ 9 Explorer-planen eller ansök om tillgång till Founding Creator.",
+    "cta": "Starta din studio (9 $) — septemberkohort",
+    "ctaSecondary": "Ansök om tillgång till grundande kreatör",
+    "ctaSecondaryHref": "/early-access"
   },
   "footer": {
-    "description": "Helautomatiserad videoproduktion – från koncept till publiceringsklar master. En guidad studio: Blueprint → Produktion → Screening Room.",
+    "description": "End-to-end automatiserad videoproduktion — från koncept till publiceringsklar master. En guidad studio: Series Studio → Blueprint Studio → Production Studio → Screening Room.",
     "product": "Produkt",
     "resources": "Resurser",
-    "legal": "Juridisk information",
+    "legal": "Juridik",
     "links": {
-      "features": "Funktioner",
-      "pricing": "Prissättning",
-      "howItWorks": "Så fungerar det",
+      "features": "Egenskaper",
+      "pricing": "Priser",
+      "howItWorks": "Hur det fungerar",
       "gettingStarted": "Kom igång",
       "privacy": "Integritetspolicy",
-      "terms": "Användarvillkor",
-      "trustSafety": "Tillit och säkerhet",
+      "terms": "Villkor för användning",
+      "trustSafety": "Förtroende och säkerhet",
       "refunds": "Policy för återbetalning",
       "contact": "Kontakta oss"
     },
-    "tagline": "Skapat med ❤️ för kreatörer",
+    "tagline": "Made with ❤️ för kreatörer",
     "taglineSub": "Från idé till publicerad video",
-    "securePayments": "Säkra betalningar hanteras av Whop, vår betalningsansvariga partner (Merchant of Record).",
-    "morLine": "Säkra betalningar, skatteberäkning och regelefterlevnad hanteras av Whop, vår säljpart (Merchant of Record), på uppdrag av Life Focus, LLC.",
+    "securePayments": "Säkra betalningar som behandlas av Whop, vår registrerade handlare",
+    "morLine": "Säkra betalningar, skatteberäkning och efterlevnad hanteras av Whop, vår registrerade handlare, på uppdrag av Life Focus, LLC.",
     "copyright": "© 2026 SceneFlow AI. Alla rättigheter förbehållna.",
-    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • Kontakt: support@sceneflowai.studio",
-    "poweredBy": "Drivs av Google Cloud"
+    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, USA • Kontakt: support@sceneflowai.studio",
+    "poweredBy": "Google-driven intelligens · Orkestrerad på Google Cloud"
   },
   "floatingCta": {
-    "seePricing": "Se priser",
-    "tryNine": "Prova 9 dollar",
+    "seePricing": "Se prissättning",
+    "tryNine": "Prova på 9 $",
     "tryForNine": "Prova för 9 $",
     "dismiss": "Avfärda"
   },
@@ -1763,5 +1778,121 @@
     "mute": "Stäng av ljudet",
     "unmute": "Slå på ljudet",
     "expandVideo": "Expandera video"
+  },
+  "useCasesShowcase": {
+    "badge": "Vem är SceneFlow för?",
+    "title": "Vem är SceneFlow för?",
+    "subtitle": "Från koncept till en Screening Room animatic till automatisk publicerad flerspråkig video — en automatiserad pipeline, fyra sätt att skicka.",
+    "cta": "Starta din studio (9 $) — septemberkohort",
+    "tabStory": "Lösning",
+    "tabScreening": "Screening",
+    "problemLabel": "Problemet:",
+    "solutionLabel": "SceneFlow-lösningen",
+    "outcomeLabel": "Utfallet?",
+    "videoLanguagePrompt": "Se denna resa på ditt språk",
+    "videoComingSoon": "Genomgångsvideo kommer snart",
+    "videoSoon": "Snart",
+    "personas": [
+      {
+        "id": "youtubeCreator",
+        "label": "YouTube-skaparen",
+        "headline": "Från koncept till filmserie — ingen snabb teknik",
+        "intro": "Börja med ett koncept eller en detaljerad seriebeskrivning. SceneFlow bygger seriens universum, karaktärer och obegränsade episoder och använder sedan Express för att återge ljud, ramar och video samtidigt. Du skapar och dirigerar med vanlig text eller röst; SceneFlow bygger visionen — ingen snabb ingenjörskonst, inga omtagningar av spelautomater.",
+        "story": {
+          "problem": [
+            "Du jonglerar med separata verktyg för manus, bilder, röst, video, musik och redigering.",
+            "Du återgenererar varje del om och om igen i hopp om ett användbart resultat.",
+            "Karaktärerna ser fortfarande olika ut från scen till scen."
+          ],
+          "solution": [
+            "En guidad studio ersätter hela verktygsstacken.",
+            "Beskriv din idé med enkla ord — SceneFlow skriver serien och designar casten.",
+            "Express gör ljud, ramar och video tillsammans medan en Reference Library håller tecknen konsekventa."
+          ],
+          "outcome": [
+            "Sluta förlora helger till fragmenterade verktyg.",
+            "Publicera på en stadig rytm som du faktiskt kan hänga med i.",
+            "Håll varje avsnitt inom varumärket utan att rulla om för konsekvensens skull."
+          ]
+        },
+        "screeningRoomHook": "Visualisera berättelsen som en animatisk före-rörelsevideo, granska scener innan du slutför strömmar och dela flerspråkiga strömmar (70+ språk) för återkoppling före release.",
+        "screeningRoomPreview": "Det osynliga arkivet: Den stora illusionen: Chicago World's Fair Deception"
+      },
+      {
+        "id": "startupProvider",
+        "label": "Startup-leverantören",
+        "headline": "Kör en global videostudio — utan att bygga en",
+        "intro": "Leverera polerad, lokaliserad video till småföretag som inte har råd med en byrå. Express gör hela kundpaket samtidigt, Mixer lägger till varumärkesöverlägg, vattenstämplar och timing, och automatiskt justerad dubb/läppsynkronisering skickar varje leverans på din kunds marknadsspråk — allt från en förutsägbar pipeline.",
+        "story": {
+          "problem": [
+            "Småföretagskunder har inte råd med en traditionell videobyrå.",
+            "Du köper och jonglerar många verktyg och gör om arbetet för varje kund.",
+            "Varje nytt språk innebär att du bygger om videon från grunden."
+          ],
+          "solution": [
+            "En förutsägbar pipeline för varje kundprojekt.",
+            "Rendera ett komplett videopaket på en gång — ljud, ramar och video tillsammans.",
+            "Lägg till varumärken, överlägg och vattenstämplar, och synkronisera sedan automatiskt och läppsynkronisera till kundens marknadsspråk."
+          ],
+          "outcome": [
+            "Tjäna många kunder från ett arbetsflöde i studion.",
+            "Nå globala marknader på över70 språk utan att bygga om varje video.",
+            "Skala tjänsten utan att anställa en besättning eller byggnadsinfrastruktur."
+          ]
+        },
+        "screeningRoomHook": "Klientinriktad granskning av det animatiska, scenavstämning före slutliga strömmar och delbara flerspråkiga förhandsvisningar för intressenter utomlands.",
+        "screeningRoomPreview": "Main Street Rising: En lokal företagsrelansering"
+      },
+      {
+        "id": "enterprise",
+        "label": "Företag och institutioner",
+        "headline": "Kompatibel utbildning i takt med policyförändringar",
+        "intro": "Interna L&D- och COMMS-team skickar varumärkeslåsta, revisionsklara moduler utan leverantörscykler. Förfina valfri ram eller linje med text eller röst för att stanna kvar på meddelandet, avsluta med mixeröverlägg och vattenstämplar och rulla ut automatiskt justerade dubbade eller läppsynkade versioner till varje region från en enda godkänd master.",
+        "story": {
+          "problem": [
+            "Utbildnings- och kommunikationsvideor väntar veckor på externa leverantörer och kostar en premie.",
+            "När policy eller produkt ändras blir videor inaktuella och utanför varumärket.",
+            "Varje uppdatering utlöser ytterligare en dyr produktionsrunda."
+          ],
+          "solution": [
+            "Producera varumärkeslåsta, granskningsklara videor internt.",
+            "Ändra vilken linje eller ram som helst med en skriven eller talad instruktion.",
+            "Granska och godkänn innan du betalar för den slutliga renderingen och rulla sedan ut en master till varje region."
+          ],
+          "outcome": [
+            "Utbildning och kommunikation håller jämna steg med policyförändringar.",
+            "Håll dig till varumärket utan att vänta på leverantörscykler.",
+            "Uppdatera en gång och distribuera överallt från ett enda godkänt snitt."
+          ]
+        },
+        "screeningRoomHook": "Granska scener innan strömmarna går slutgiltiga och dela privata Screening Room-länkar för feedback mellan regioner utan att exportera oavslutade masters.",
+        "screeningRoomPreview": "SHIELD-protokollet: Global Cybersecurity Onboarding"
+      },
+      {
+        "id": "educator",
+        "label": "Pedagog",
+        "headline": "Förvandla läroplanen till lektioner som eleverna faktiskt tittar på",
+        "intro": "Stora institutioner omvandlar täta kapitel till lokaliserad, berättande video. Express bygger fullständiga lektioner snabbt, intelligenta text-/röstredigeringar låter fakulteten ställa in innehåll utan snabb teknik, och automatisk justerad dubbning/läppsynkronisering matchar varje kohorts språk — sedan skickar automatisk publicering lokaliserade titlar och miniatyrer till varje kanal.",
+        "story": {
+          "problem": [
+            "Tätt kursmaterial blir video först efter veckor, specialkunskaper eller en stor budget.",
+            "Utan det stannar lektionerna som bildspel studenter hoppar över.",
+            "Att betjäna elever på flera språk multiplicerar arbetet."
+          ],
+          "solution": [
+            "Bygg fullständiga berättade lektioner snabbt i en studio.",
+            "Fakulteten justerar innehållet genom att skriva eller tala — inga tekniska uppmaningar.",
+            "Automatisk dubbning, läppsynkronisering och publicering med lokaliserade titlar och miniatyrbilder för varje kohort."
+          ],
+          "outcome": [
+            "Förvandla läroplanen till videostudenter som faktiskt tittar.",
+            "Nå varje campus på deras språk utan ett produktionsteam.",
+            "Skicka lektioner snabbare än traditionell videoproduktion tillåter."
+          ]
+        },
+        "screeningRoomHook": "Fakulteten förhandsgranskar animatiken innan produktionen spenderas, granskar lektionsscener och delar strömmar på 70+ språk för feedback på flera campus.",
+        "screeningRoomPreview": "Renässansverkstad: Att se det förflutna i rörelse"
+      }
+    ]
   }
 }

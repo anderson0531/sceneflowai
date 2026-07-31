@@ -13,11 +13,6 @@
   "hero": {
     "ctaSecondary": "观看「可能性」"
   },
-  "finalCta": {
-    "title": "准备好测试完整流程了吗？",
-    "subtitle": "在一个 Studio 中完成概念 → 分镜 → 视频 → 主 MP4。从 $9 Explorer 方案开始，体验 beat-first 工作流。",
-    "cta": "以 $9 启动您的 Studio"
-  },
   "preVisEngine": {
     "badge": "Creative Decision Engine",
     "title": "Pre-Visualization Engine",

@@ -4,23 +4,26 @@
     "description": "Forvandl dine idéer til professionelle videoer med AI-drevet workflow-automatisering"
   },
   "nav": {
-    "workflow": "Arbejdsgangen",
-    "platformWalkthrough": "Gennemgang af platformen",
-    "plansPricing": "Abonnementer og priser",
-    "more": "Mere",
-    "useCases": "Anvendelsesscenarier",
+    "workflow": "Sådan virker det",
+    "platformWalkthrough": "Platformsgennemgang",
+    "plansPricing": "Planer og priser",
+    "more": "Flere",
+    "useCases": "Brugssager",
     "audienceResonance": "Audience Resonance",
     "trustSafety": "Tillid og sikkerhed",
     "platformTrust": "Platform og tillid",
     "signIn": "Log ind",
     "startProject": "Start et projekt",
-    "dashboard": "Dashboard",
-    "adminPanel": "Administrationspanel",
-    "signOut": "Log ud",
-    "goToDashboard": "Gå til betjeningspanel",
+    "dashboard": "Kontrolpanel",
+    "adminPanel": "Administrator Panel",
+    "signOut": "Log af",
+    "goToDashboard": "Gå til kontrol panelet",
     "userFallback": "Bruger",
-    "searchLanguages": "Søg efter sprog...",
-    "noLanguagesFound": "Ingen sprog fundet"
+    "searchLanguages": "Søg sprog...",
+    "noLanguagesFound": "Ingen sprog fundet",
+    "pipeline": "Næste skridt",
+    "productionExamples": "Eksempler",
+    "keyFeatures": "Funktioner"
   },
   "floatingNav": {
     "compare": "Sammenlign",
@@ -34,16 +37,16 @@
     "pricing": "Priser"
   },
   "hero": {
-    "headline": "Forestil dig historien. SceneFlow håndterer pipelinen.",
-    "subheadline": "Slip for besværlige prompts. Fokusér udelukkende på din kreative vision med et automatiseret produktionsworkflow af professionel kvalitet.",
+    "headline": "Du instruerer historien. SceneFlow automatiserer studiet.",
+    "subheadline": "Google-drevet intelligens orkestreret på Google Cloud - med valgfri Google- eller Kling-generation. Kør dine ideer gennem en problemfri pipeline fra blueprint til master MP4 uden mikroprompting.",
     "audienceMicroLine": "Skabt til kreative, der ønsker resultater, og teams, der vil se, hvordan det fungerer.",
-    "ctaSecondary": "Se \"What's Possible\"",
-    "ctaToolStack": "Se, hvordan det erstatter din værktøjspakke",
-    "languagePrompt": "Hør helten på dit sprog – samme pipeline, nye markeder",
-    "multilangHint": "Hoveddubbing på 7 sprog – den fulde pipeline understøtter mere end 70 i produktion.",
-    "playWithNarration": "Afspil med fortællerstemme",
-    "tapToHear": "Tryk for at lytte",
-    "fullscreen": "Fuldskærm",
+    "ctaSecondary": "Se 'Hvad er muligt'",
+    "ctaToolStack": "Se, hvordan den erstatter din værktøjsstak",
+    "languagePrompt": "Hør helten på dit sprog — samme pipeline, nye markeder",
+    "multilangHint": "Hero dubs på 7 sprog — fuld pipeline understøtter 70+ i Production Studio.",
+    "playWithNarration": "Leg med fortælling",
+    "tapToHear": "Tryk for at høre",
+    "fullscreen": "Fuld skærm",
     "heroVideoLanguages": {
       "en": {
         "label": "Engelsk",
@@ -51,30 +54,33 @@
       },
       "es": {
         "label": "Spansk",
-        "nativeLabel": "Spansk"
+        "nativeLabel": "Español"
       },
       "pt": {
         "label": "Portugisisk",
-        "nativeLabel": "Portugisisk"
+        "nativeLabel": "Português"
       },
       "hi": {
         "label": "Hindi",
-        "nativeLabel": "Hindi"
+        "nativeLabel": "‎ ‎ (henvisninger | redigér) ‎ ‎ (henvisninger | redigér)"
       },
       "zh": {
         "label": "Kinesisk",
-        "nativeLabel": "Kinesisk"
+        "nativeLabel": "Hjælp"
       },
       "ar": {
         "label": "Arabisk",
-        "nativeLabel": "Arabisk"
+        "nativeLabel": "العربية"
       },
       "th": {
-        "label": "Thai",
-        "nativeLabel": "Thailandsk"
+        "label": "Thailandsk",
+        "nativeLabel": "ไทย"
       }
     },
-    "soon": "Snart"
+    "soon": "Snart",
+    "ctaPrimaryLaunch": "Start dit studie ($ 9) — september-kohorte",
+    "ctaSupportingLine": "Start med $ 9 Explorer-abonnementet. September Early Access-kohorten er ved at blive dannet.",
+    "videoLanguageCount": "{count, plural, =1 {#language} other {#language}}"
   },
   "valueProp": {
     "pills": [
@@ -1501,62 +1507,62 @@
     "ctaSubtext": "Skab bro mellem traditionel filmproduktion og generativ AI"
   },
   "exitIntent": {
-    "title": "Vent! Gå ikke tomhændet derfra.",
+    "title": "Vent! Efterlad ikke tomhændet",
     "subtitle": "Få eksklusiv tidlig adgang og tips til AI-drevet filmproduktion",
     "benefits": [
-      "Ugentlige tutorials i AI-filmproduktion",
+      "Ugentlige AI-filmfremstillingsvejledninger",
       "Tidlig adgang til nye funktioner",
-      "Eksklusive rabatter til creators"
+      "Eksklusive kreatørrabatter"
     ],
-    "emailPlaceholder": "Indtast din e-mail",
-    "subscribe": "Få tidlig adgang",
-    "subscribing": "Abonnerer...",
+    "emailPlaceholder": "Indtast din e-mailadresse",
+    "subscribe": "Få tidlig adgang! &#10;",
+    "subscribing": "Abonnerer",
     "or": "eller",
-    "startNow": "Kom i gang med at skabe nu for kun 9 $ →",
+    "startNow": "Begynd at oprette nu for kun $ 9 — september-kohorteformning →",
     "privacy": "Ingen spam, nogensinde. Afmeld når som helst.",
-    "successTitle": "Du står på listen!",
-    "successSubtitle": "Hold øje med din indbakke for eksklusive tips om filmproduktion og opdateringer om tidlig adgang.",
-    "ctaText": "Begynd at udforske — 9 $",
-    "closePopup": "Luk pop-up"
+    "successTitle": "Du er på listen!",
+    "successSubtitle": "Tjek din indbakke for eksklusive filmtips og opdateringer om tidlig adgang.",
+    "ctaText": "Begynd at udforske — $ 9",
+    "closePopup": "Luk Popup"
   },
   "pricing": {
-    "badge": "Forbrugsbaseret prissætning",
-    "title": "Betal for det, du skaber",
-    "subtitle": "Én basisplan for adgang til platformen. Credits til AI-generering. Fyld op, når du har brug for mere. Fuld kontrol, intet spild.",
+    "badge": "Enkel prisfastsættelse",
+    "title": "Start med Explorer — $ 9",
+    "subtitle": "September Tidlig adgang kohorte dannelse. Test hele rørledningen med en friktionsfri indgang på $ 9.",
     "valueAnchor": {
-      "traditionalCost": "Over 2.000 $",
-      "traditionalLabel": "Traditionel prævisualisering",
+      "traditionalCost": "2+ (000)",
+      "traditionalLabel": "Traditionel pre-vis",
       "vs": "mod",
       "sceneFlowCost": "49-149 $",
-      "sceneFlowLabel": "SceneFlow månedlig",
-      "saveBadge": "Spar over 90 % pr. projekt"
+      "sceneFlowLabel": "SceneFlow månedligt",
+      "saveBadge": "Spar mere end90% pr. projekt"
     },
     "teamCta": {
       "title": "Internt team eller institution?",
-      "description": "Book en gennemgang af arbejdsgange for teams inden for kommunikation, L&D og marketing",
-      "button": "Gennemgang af bogen"
+      "description": "Book en workflow-gennemgang for kommunikations-, L&D- og marketingteams",
+      "button": "Boggennemgang"
     },
     "agencyCta": {
-      "title": "Bureau eller produktionshus?",
-      "description": "Skræddersyede kreditter, SLA og dedikeret support i stor skala",
+      "title": "Agentur eller produktionsbutik?",
+      "description": "Tilpassede kreditter, SLA og dedikeret support i stor skala",
       "button": "Kontakt salgsafdelingen"
     },
     "byok": {
-      "title": "Medbring din egen nøgle",
-      "badge": "Pro- og Studio-abonnementer",
-      "description": "Har du allerede API-nøgler til Vertex AI eller ElevenLabs? Brug dem sammen med SceneFlow AI, og spar op til 80 % på platformskreditter.",
-      "savingsHighlight": "80 % i platformskreditter",
+      "title": "Medbring dit eget. ",
+      "badge": "Pro- og studieabonnementer",
+      "description": "Har du allerede API-nøgler til Vertex AI eller ElevenLabs? Brug dem med SceneFlow AI, og spar op til 80% på platformskreditter.",
+      "savingsHighlight": "80% på platformskreditter",
       "benefits": [
         {
-          "title": "80 % besparelse på SceneFlow-kredit",
-          "description": "Betal kun et platformsgebyr på 20 % for orkestrering og værktøjer"
+          "title": "80% SceneFlow kreditbesparelser",
+          "description": "Betal kun et platformgebyr på 20% for orkestrering og værktøjer"
         },
         {
           "title": "Udnyt virksomhedsplaner",
-          "description": "Brug dine eksisterende Vertex AI- eller ElevenLabs-mængderabatter"
+          "description": "Brug dine eksisterende mængderabatter på Vertex AI eller ElevenLabs"
         },
         {
-          "title": "Fuld kontrol",
+          "title": "Få fuld kontrol",
           "description": "Dine nøgler, din fakturering, din omkostningsstyring"
         }
       ],
@@ -1564,19 +1570,19 @@
       "vertexName": "Google Vertex AI",
       "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Tekst-til-tale og stemmekloning",
-      "savingsLabel": "80 % besparelse",
+      "elevenLabsDetail": "Tekst-til-tale- og stemmekloning",
+      "savingsLabel": "80% besparelser",
       "onImagesVideo": "på billeder og video",
-      "onVoiceover": "som voiceover",
-      "note": "De viste kreditbesparelser er besparelser på SceneFlow-platformen. Dine faktiske samlede omkostninger afhænger af din personlige eller virksomhedsmæssige API-pris hos den enkelte udbyder."
+      "onVoiceover": "på voiceover",
+      "note": "De viste kreditbesparelser er besparelser på SceneFlow-platformen. Dine faktiske samlede omkostninger afhænger af dine personlige eller virksomhedens API-priser hos hver udbyder."
     },
     "creditTopUps": {
-      "title": "Har du brug for flere credits?",
-      "subtitle": "Fyld op når som helst. Dine credits udløber aldrig.",
+      "title": "Har du brug for flere kreditter?",
+      "subtitle": "Fyld op når som helst. Kreditter udløber aldrig.",
       "packs": [
         {
           "label": "Startpakke",
-          "description": "Perfekt til hurtig repetition"
+          "description": "Perfekt til hurtige revisioner"
         },
         {
           "label": "Scenepakke",
@@ -1584,57 +1590,57 @@
         },
         {
           "label": "Produktionspakke",
-          "description": "Vigtig filmsekvens"
+          "description": "Større filmsekvens"
         },
         {
-          "label": "Studiepakke",
+          "label": "Studiopakke",
           "description": "Fuld produktionskapacitet"
         }
       ],
-      "creditsUnit": "medvirkende"
+      "creditsUnit": "kredit"
     },
     "calculator": {
-      "sectionTitle": "Estimer dit projekt",
-      "sectionSubtitle": "Vid præcis, hvad du skal betale, før du binder dig.",
-      "title": "Beregner til projektbudget",
-      "subtitle": "Estimer antallet af credits, før du går i gang",
+      "sectionTitle": "Overslag over dit projekt",
+      "sectionSubtitle": "Ved præcis, hvad du betaler, før du forpligter dig",
+      "title": "Projektbudgetberegner",
+      "subtitle": "Anslå kreditter, før du starter",
       "customize": "Tilpas parametre",
       "imagesLabel": "Billeder, der skal genereres",
       "videoClipsLabel": "Videoklip",
       "voiceoverLabel": "Voiceover (minutter)",
       "byokTitle": "Medbring din egen nøgle (BYOK)",
-      "byokBadge": "Pro & Studio",
-      "byokDescription": "Brug dine egne API-nøgler for at spare op til 80 % på SceneFlow-kreditter. Du betaler AI-udbyderne direkte til deres gældende priser.",
-      "vertexToggle": "Vertex AI (Billeder og video)",
+      "byokBadge": "Pro og studie",
+      "byokDescription": "Brug dine egne API-nøgler til at spare op til 80% på SceneFlow-kreditter. Du betaler AI-udbyderne direkte til deres priser.",
+      "vertexToggle": "Vertex AI (billeder og video)",
       "elevenLabsToggle": "ElevenLabs (Voiceover)",
       "imageGeneration": "Billedgenerering",
       "videoGeneration": "Videogenerering",
-      "voiceover": "Voiceover",
+      "voiceover": "Voice-over",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Samlet overslag",
+      "totalEstimate": "Estimat i alt",
       "withTopUps": "med påfyldninger",
       "creditSavings": "SceneFlow kreditopsparing",
-      "savePercent": "Du sparer {percent} % på SceneFlow-point",
-      "transparency": "Fuld gennemsigtighed: Du kan følge dit kreditforbrug i realtid, mens du arbejder. Ingen overraskelser – du kan til enhver tid justere projektets omfang.",
+      "savePercent": "Du sparer {percent}% på SceneFlow-kreditter",
+      "transparency": "Fuld gennemsigtighed: Du kan se kreditforbrug i realtid, mens du arbejder. Ingen overraskelser - juster dit projektomfang når som helst.",
       "transparencyHighlight": "Fuld gennemsigtighed:",
-      "byokDisclaimer": "BYOK Bemærk: De viste besparelser på kreditter afspejler udelukkende reduktioner i SceneFlow-platformskreditter. Dine faktiske omkostninger afhænger af dine Vertex AI- og ElevenLabs-prisplaner. Virksomhedsplaner eller API-planer med højt volumen kan give yderligere besparelser.",
+      "byokDisclaimer": "BYOK Bemærk: De viste kreditbesparelser afspejler kun SceneFlow-platformens kreditreduktioner. Dine faktiske omkostninger afhænger af dine Vertex AI- og ElevenLabs-prisplaner. Virksomheds- eller højvolumen API-abonnementer kan tilbyde yderligere besparelser.",
       "byokDisclaimerHighlight": "BYOK Bemærk:",
       "presets": [
         {
-          "id": "reklame",
-          "name": "30-sekunders reklame"
+          "id": "commercial",
+          "name": "30-sek Commercial"
         },
         {
-          "id": "kort",
-          "name": "Kortfilm på 2 minutter"
+          "id": "short",
+          "name": "2 min. kortfilm"
         },
         {
           "id": "episode",
-          "name": "10-minutters episode"
+          "name": "10 min. episode"
         },
         {
-          "id": "funktion",
-          "name": "Spillefilm på 90 minutter"
+          "id": "feature",
+          "name": "90 minutters funktion"
         }
       ],
       "minSuffix": "min"
@@ -1643,54 +1649,54 @@
       "productionTestFlight": "Produktionstestflyvning",
       "getStarted": "Kom i gang",
       "startTestFlight": "Start testflyvning",
-      "loading": "Indlæser...",
-      "mostPopular": "Mest populære",
-      "creditsPerMonth": "Kreditter/md.",
+      "loading": "Indlæser ...",
+      "mostPopular": "Mest populær",
+      "creditsPerMonth": "Kreditter/måned",
       "storage": "Opbevaring",
-      "perMonth": "/måned"
+      "perMonth": "/mdr."
     },
     "trust": {
-      "cancelAnytime": "Opsig når som helst",
-      "moneyBack": "14 dages pengene-tilbage-garanti",
-      "creditsNeverExpire": "Credits udløber aldrig (Explorer-pakke)"
+      "cancelAnytime": "Annullér når som helst",
+      "moneyBack": "14 dages returret ",
+      "creditsNeverExpire": "Kreditter udløber aldrig (Explorer-pakke)"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "Engangskøb for at prøve det af",
+        "description": "Engangskøb for at prøve det",
         "features": [
           "Engangskøb",
-          "750 credits (udløber aldrig)",
+          "750 kreditter (udløber aldrig)",
           "5 GB lagerplads (30 dage)",
-          "Fuld adgang til platformen",
+          "Fuld platformadgang",
           "MP4-eksport (enhver opløsning)",
-          "AI-voiceover (70+ sprog)"
+          "AI voiceover (70+ sprog)"
         ]
       },
       "subscriptions": [
         {
-          "id": "forret",
-          "name": "Forret",
-          "description": "Til individuelle skabere",
+          "id": "starter",
+          "name": "Starter",
+          "description": "For individuelle kreatører",
           "features": [
-            "Fuld adgang til platformen",
-            "4.500 credits/måned inkluderet",
-            "25 GB aktiv lagring",
+            "Fuld platformadgang",
+            "4.500 kreditter/måned inkluderet",
+            "25 GB aktivt lager",
             "MP4-eksport (enhver opløsning)",
-            "AI-voiceover (70+ sprog)",
-            "E-mail-support"
+            "AI voiceover (70+ sprog)",
+            "Mailsupport"
           ]
         },
         {
           "id": "pro",
           "name": "Pro",
-          "description": "Til professionelle skabere",
+          "description": "For professionelle kreatører",
           "features": [
-            "Alt i Starter samt:",
-            "15.000 credits/måned inkluderet",
-            "100 GB aktiv lagring",
-            "Adgang til Veo 3.1-kvalitet (4K)",
-            "Motor til sikring af karakterkonsistens",
+            "Alt i Starter, plus:",
+            "15.000 kreditter/måned inkluderet",
+            "100 GB aktivt lager",
+            "Veo 3.1 Kvalitet (4K) adgang",
+            "Tegnkonsistensmotor",
             "Stemmekloning",
             "BYOK (Medbring din egen nøgle)",
             "3 holdpladser",
@@ -1698,62 +1704,71 @@
           ]
         },
         {
-          "id": "studie",
+          "id": "studio",
           "name": "Studie",
           "description": "Til teams og bureauer",
           "features": [
-            "Alt i Pro samt:",
-            "75.000 credits/måned inkluderet",
-            "500 GB aktiv lagring",
-            "Veo 3.1 4K-prioritetskø",
-            "Ubegrænset karakterkonsistens",
-            "Eksport af white-label-produkter",
-            "API-adgang",
-            "10 pladser til teamet",
-            "Dedikeret kundeansvarlig",
-            "Enterprise-SLA kan fås på forespørgsel"
+            "Alt i Pro, plus:",
+            "75.000 kreditter/måned inkluderet",
+            "500 GB aktivt lager",
+            "Veo 3.1 4K Prioritetskø",
+            "Ubegrænset tegnkonsistens",
+            "White-label-eksport",
+            "API-adgang ",
+            "10 holdpladser",
+            "Dedikeret Key Account Manager",
+            "Enterprise SLA tilgængelig på anmodning"
           ]
         }
       ]
-    }
+    },
+    "explorerHighlight": "Den hurtigste måde at opleve det komplette SceneFlow-studie på — fra koncept til Screening Room.",
+    "trustBadges": [
+      "Google Cloud infrastruktur",
+      "Vertex AI generation",
+      "Sikre betalinger via Whop",
+      "14 dages returret "
+    ]
   },
   "landingSections": {
     "expandSection": "Vis afsnit",
     "collapseSection": "Skjul afsnit"
   },
   "finalCta": {
-    "title": "Klar til at teste hele pipelinen?",
-    "subtitle": "Håndter alt fra koncept og pre-vis til video og master-MP4 i ét studie. Start med planen til $9 (Explorer), og oplev \"beat-first\"-arbejdsgangen i praksis.",
-    "cta": "Start dit studie for 9 $"
+    "title": "Er du klar til at teste hele pipelinen?",
+    "subtitle": "Google-drevet scripting og optimering, dit valg af generations-backend og Screening Room-gennemgang - alt sammen i ét studie. September Early Access-kohorten dannes nu — start med $ 9 Explorer-abonnementet, eller ansøg om Founding Creator-adgang.",
+    "cta": "Start dit studie ($ 9) — september-kohorte",
+    "ctaSecondary": "Ansøg om grundlæggende kreatøradgang",
+    "ctaSecondaryHref": "/early-access"
   },
   "footer": {
-    "description": "Fuldautomatiseret videoproduktion – fra koncept til udgivelsesklart master-output. Ét guidet studie: Blueprint → Produktion → Screening Room.",
+    "description": "Ende-til-ende automatiseret videoproduktion — fra koncept til publiceringsklar master. Et guidet studie→: Series Studio → Blueprint Studio → Production Studio Screening Room.",
     "product": "Produkt",
     "resources": "Ressourcer",
-    "legal": "Juridisk",
+    "legal": "Jura",
     "links": {
       "features": "Funktioner",
       "pricing": "Priser",
-      "howItWorks": "Sådan fungerer det",
-      "gettingStarted": "Kom godt i gang",
-      "privacy": "Privatlivspolitik",
-      "terms": "Servicevilkår",
+      "howItWorks": "Sådan virker det",
+      "gettingStarted": "Kom igang",
+      "privacy": "Fortrolighedspolitik",
+      "terms": "Servicebetingelser",
       "trustSafety": "Tillid og sikkerhed",
-      "refunds": "Refusionspolitik",
+      "refunds": "Refunderingspolitik",
       "contact": "Kontakt os"
     },
-    "tagline": "Lavet med ❤️ til skabere",
-    "taglineSub": "Fra idé til udgivet video",
-    "securePayments": "Sikre betalinger behandlet af Whop, vores Merchant of Record",
-    "morLine": "Sikre betalinger, skatteberegning og overholdelse af regler håndteres af Whop, vores Merchant of Record, på vegne af Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. Alle rettigheder forbeholdes.",
-    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • Kontakt: support@sceneflowai.studio",
-    "poweredBy": "Drevet af Google Cloud"
+    "tagline": "Lavet med ❤️ til kreatører",
+    "taglineSub": "Fra idé til offentliggjort video",
+    "securePayments": "Sikre betalinger behandlet af Whop, vores registrerede forhandler",
+    "morLine": "Sikre betalinger, skatteberegning og overholdelse håndteres af Whop, vores registrerede forhandler, på vegne af Life Focus, LLC.",
+    "copyright": "©2026 SceneFlow AI. Alle rettigheder forbeholdes.",
+    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, USA • Kontakt: support@sceneflowai.studio",
+    "poweredBy": "Google-drevet intelligens · Orkestreret på Google Cloud"
   },
   "floatingCta": {
     "seePricing": "Se priser",
-    "tryNine": "Prøv med 9 $",
-    "tryForNine": "Prøv det for 9 $",
+    "tryNine": "Prøv $ 9",
+    "tryForNine": "Prøv for 9 $",
     "dismiss": "Afvis"
   },
   "common": {
@@ -1763,5 +1778,121 @@
     "mute": "Slå lyd fra",
     "unmute": "Slå lyden til",
     "expandVideo": "Udvid video"
+  },
+  "useCasesShowcase": {
+    "badge": "Hvem er SceneFlow til?",
+    "title": "Hvem er SceneFlow til?",
+    "subtitle": "Fra koncept til en Screening Room animatisk til automatisk offentliggjort flersproget video — en automatiseret pipeline, fire måder at sende på.",
+    "cta": "Start dit studie ($ 9) — september-kohorte",
+    "tabStory": "Losning:",
+    "tabScreening": "Screening",
+    "problemLabel": "PROBLEMET",
+    "solutionLabel": "SceneFlow-løsningen",
+    "outcomeLabel": "Resultaterne",
+    "videoLanguagePrompt": "Se denne rejse på dit sprog",
+    "videoComingSoon": "Gennemgangsvideo kommer snart",
+    "videoSoon": "Snart",
+    "personas": [
+      {
+        "id": "youtubeCreator",
+        "label": "YouTube-skaberen",
+        "headline": "Fra koncept til filmisk serie — ingen hurtig teknik",
+        "intro": "Start med et koncept eller en detaljeret seriebeskrivelse. SceneFlow bygger seriens univers, karakterer og ubegrænsede episoder og bruger derefter Express til at gengive lyd, rammer og video samtidigt. Du opretter og dirigerer med almindelig tekst eller stemme; SceneFlow bygger visionen — ingen hurtig teknik, ingen genindspilning af slot-maskine.",
+        "story": {
+          "problem": [
+            "Du jonglerer med separate værktøjer til manuskript, billeder, stemme, video, musik og redigering.",
+            "Du genererer hvert stykke igen og igen i håb om et brugbart resultat.",
+            "Karakterer ser stadig forskellige ud fra scene til scene."
+          ],
+          "solution": [
+            "Ét guidet studie erstatter hele værktøjsstakken.",
+            "Beskriv din idé med klare ord — SceneFlow skriver serien og designer castet.",
+            "Express gengiver lyd, rammer og video sammen, mens en Reference Library holder tegnene konsistente."
+          ],
+          "outcome": [
+            "Stop med at miste weekender til fragmenterede værktøjer.",
+            "Udgiv på en stabil rytme, du faktisk kan følge med i.",
+            "Hold alle episoder på mærket uden at rulle igen for konsistens."
+          ]
+        },
+        "screeningRoomHook": "Visualiser historien som en animatisk før-bevægelsesvideo, gennemgå scener, før du færdiggør streams, og del flersprogede streams (70+ sprog) for feedback før udgivelsen.",
+        "screeningRoomPreview": "Det usynlige arkiv: Den store illusion: Chicago World's Fair Deception"
+      },
+      {
+        "id": "startupProvider",
+        "label": "Startudbyderen",
+        "headline": "Kør et globalt videostudie - uden at bygge et",
+        "intro": "Lever poleret, lokaliseret video til små virksomheder, der ikke har råd til et bureau. Express gengiver hele kundepakker samtidigt, Mixer tilføjer brandoverlejringer, vandmærker og timing, og automatisk justeret DUB/LIP-SYNC sender alle leverancer på din kundes markedssprog — alt sammen fra en forudsigelig pipeline.",
+        "story": {
+          "problem": [
+            "Små virksomhedskunder har ikke råd til et traditionelt videobureau.",
+            "Du køber og jonglerer mange værktøjer og gør arbejdet om for hver kunde.",
+            "Hvert nyt sprog betyder at genopbygge videoen fra bunden."
+          ],
+          "solution": [
+            "Én forudsigelig pipeline for hvert kundeprojekt.",
+            "Gengiv en fuld videopakke på én gang — lyd, rammer og video sammen.",
+            "Tilføj branding, overlejringer og vandmærker, og synkroniser derefter automatisk og lip-sync til kundens markedssprog."
+          ],
+          "outcome": [
+            "Tjen mange kunder fra én arbejdsgang i studiet.",
+            "Nå ud til globale markeder på mereend 70 sprog uden at genopbygge hver video.",
+            "Skaler servicen uden at ansætte en besætning eller bygningsinfrastruktur."
+          ]
+        },
+        "screeningRoomHook": "Kundeorienteret gennemgang af det animerede, scenegodkendelse før endelige streams og delbare flersprogede forhåndsvisninger for interessenter i udlandet.",
+        "screeningRoomPreview": "Main Street Rising: En relancering af den lokale virksomhed"
+      },
+      {
+        "id": "enterprise",
+        "label": "Virksomheder og institutioner",
+        "headline": "Overensstemmende uddannelse med den hastighed, hvor politikændringen sker",
+        "intro": "Interne L&D- og COMMS-teams sender brandlåste, revisionsklare moduler uden leverandørcyklusser. Forfin enhver ramme eller linje med tekst eller stemme for at forblive på besked, afslut med Mixer-overlejringer og vandmærker, og udrul automatisk justerede dubbede eller læbesynkroniserede versioner til hver region fra en enkelt godkendt master.",
+        "story": {
+          "problem": [
+            "Uddannelses- og kommunikationsvideoer venter i ugevis på eksterne leverandører og koster en præmie.",
+            "Når politik eller produkt ændres, bliver videoer forældede og ikke-brandede.",
+            "Hver opdatering udløser endnu en dyr produktionsrunde."
+          ],
+          "solution": [
+            "Producer brandlåste, revisionsklare videoer internt.",
+            "Skift enhver linje eller ramme med en indtastet eller talt instruktion.",
+            "Gennemgå og godkend, før du betaler for den endelige gengivelse, og udrul derefter en master til hver region."
+          ],
+          "outcome": [
+            "Uddannelse og kommunikation holder trit med ændringer i politikken.",
+            "Bliv på mærket uden at vente på leverandørcyklusser.",
+            "Opdater én gang, og fordel overalt fra et enkelt godkendt snit."
+          ]
+        },
+        "screeningRoomHook": "Gennemgå scener, før streams afsluttes, og del private Screening Room-links for feedback på tværs af regioner uden at eksportere ufærdige mestre.",
+        "screeningRoomPreview": "SHIELD-protokol: Global onboarding af cybersikkerhed"
+      },
+      {
+        "id": "educator",
+        "label": "Underviseren",
+        "headline": "Gør pensum til lektioner, som eleverne rent faktisk ser",
+        "intro": "Store institutioner konverterer tætte kapitler til lokaliseret, fortællende video. Express bygger fulde lektioner hurtigt, intelligente tekst-/stemmeredigeringer gør det muligt for fakultetet at indstille indhold uden hurtig teknik, og automatisk justeret DUB/LIP-SYNC matcher hver kohorts sprog — derefter sender automatisk lokaliserede titler og miniaturer til alle kanaler.",
+        "story": {
+          "problem": [
+            "Tæt kursusmateriale bliver først video efter uger, specialiserede færdigheder eller et stort budget.",
+            "Uden det forbliver lektionerne som diasshows, eleverne springer over.",
+            "At betjene elever på flere sprog multiplicerer arbejdet."
+          ],
+          "solution": [
+            "Byg fulde fortællede lektioner hurtigt i et studie.",
+            "Fakultetet justerer indholdet ved at skrive eller tale — ingen tekniske meddelelser.",
+            "Automatisk dub, læbesynkronisering og offentliggørelse med lokaliserede titler og miniaturer for hver kohorte."
+          ],
+          "outcome": [
+            "Gør pensum til video, som eleverne rent faktisk ser.",
+            "Nå ud til alle campusser på deres eget sprog uden et produktionsteam.",
+            "Send lektioner hurtigere end traditionel videoproduktion tillader."
+          ]
+        },
+        "screeningRoomHook": "Fakultetet får vist en forhåndsvisning af animationen før produktionsudgifterne, gennemgår lektionsscener og deler streams på mere end70 sprog for feedback fra flere campuser.",
+        "screeningRoomPreview": "Renæssanceværksted: At se fortiden i bevægelse"
+      }
+    ]
   }
 }

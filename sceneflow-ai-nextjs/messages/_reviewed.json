@@ -28,7 +28,15 @@
   "locales": {
     "th": {
       "tier": "A-reviewed",
-      "mt": true
+      "mt": true,
+      "scope": "landing-critical"
     }
+  },
+  "landingSync": {
+    "provider": "mymemory",
+    "scope": "landing-namespaces",
+    "batchSize": null,
+    "batchNumber": null,
+    "syncedAt": "2026-07-31T15:18:42.781Z"
   }
 }

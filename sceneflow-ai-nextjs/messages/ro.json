@@ -4,7 +4,7 @@
     "description": "Transformă-ți ideile în videoclipuri profesionale cu automatizarea fluxului de lucru bazată pe inteligență artificială."
   },
   "nav": {
-    "workflow": "Fluxul de lucru",
+    "workflow": "CUM FUNCTIONEAZA",
     "platformWalkthrough": "Prezentare generală a platformei",
     "plansPricing": "Planuri și prețuri",
     "more": "Mai mult",
@@ -12,15 +12,18 @@
     "audienceResonance": "Audience Resonance",
     "trustSafety": "Încredere și siguranță",
     "platformTrust": "Platformă și încredere",
-    "signIn": "Conectare",
-    "startProject": "Începe un proiect",
-    "dashboard": "Tablou de bord",
-    "adminPanel": "Panou de administrare",
-    "signOut": "Deconectare",
-    "goToDashboard": "Mergi la tabloul de bord",
+    "signIn": "Autentificare",
+    "startProject": "demararea proiectului.",
+    "dashboard": "Panou principal",
+    "adminPanel": "Panou Administrator",
+    "signOut": "Log Out",
+    "goToDashboard": "Înapoi la panoul de Control",
     "userFallback": "Utilizator",
-    "searchLanguages": "Caută limbi...",
-    "noLanguagesFound": "Nu s-au găsit limbi"
+    "searchLanguages": "Caută limbi",
+    "noLanguagesFound": "Nu s-au găsit limbi",
+    "pipeline": "În curs de realizare",
+    "productionExamples": "Exemple",
+    "keyFeatures": "Caracteristici"
   },
   "floatingNav": {
     "compare": "Compară",
@@ -34,15 +37,15 @@
     "pricing": "Prețuri"
   },
   "hero": {
-    "headline": "Vizualizează povestea. SceneFlow se ocupă de fluxul de lucru.",
-    "subheadline": "Depășește etapa solicitantă a redactării prompturilor. Concentrează-te în întregime pe intenția ta creativă, beneficiind de un flux de lucru automatizat, de nivel profesional.",
+    "headline": "Tu conduci povestea. SceneFlow automatizează studioul.",
+    "subheadline": "Inteligența bazată pe Google orchestrată pe Google Cloud — cu generația opțională Google sau Kling. Rulați ideile printr-o conductă fără sudură, de la schiță la MP4 master, fără a face micro-prompting.",
     "audienceMicroLine": "Creat pentru creatorii care doresc rezultate și pentru echipele care vor să vadă cum funcționează.",
-    "ctaSecondary": "Urmărește „Ce este posibil”",
-    "ctaToolStack": "Vezi cum înlocuiește setul tău de instrumente",
-    "languagePrompt": "Ascultă eroul în limba ta — același flux de lucru, piețe noi",
-    "multilangHint": "Dublaje principale în 7 limbi — fluxul complet de producție suportă peste 70 de limbi.",
-    "playWithNarration": "Redare cu narațiune",
-    "tapToHear": "Apasă pentru a asculta",
+    "ctaSecondary": "Urmăriți „Ce este posibil”",
+    "ctaToolStack": "Vedeți cum vă înlocuiește stiva de scule",
+    "languagePrompt": "Ascultați eroul în limba dvs. — aceeași conductă, piețe noi",
+    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
+    "playWithNarration": "Joacă-te cu narațiunea",
+    "tapToHear": "Apasă pentru a afla",
     "fullscreen": "Ecran complet",
     "heroVideoLanguages": {
       "en": {
@@ -51,7 +54,7 @@
       },
       "es": {
         "label": "Spaniolă",
-        "nativeLabel": "Spaniolă"
+        "nativeLabel": "Español"
       },
       "pt": {
         "label": "Portugheză",
@@ -59,22 +62,25 @@
       },
       "hi": {
         "label": "Hindi",
-        "nativeLabel": "Hindi"
+        "nativeLabel": "<g id=\"267\">'</g><g id=\"268\">हिन्दी</g><g id=\"269\">',</g>"
       },
       "zh": {
-        "label": "Chineză",
-        "nativeLabel": "Chineză"
+        "label": "Chinese",
+        "nativeLabel": "中文"
       },
       "ar": {
-        "label": "Arabă",
-        "nativeLabel": "Arabă"
+        "label": "Arabic",
+        "nativeLabel": "العربية"
       },
       "th": {
-        "label": "Thailandez",
-        "nativeLabel": "Thailandeză"
+        "label": "Tailandeză",
+        "nativeLabel": "ไทย"
       }
     },
-    "soon": "În curând"
+    "soon": "În curând",
+    "ctaPrimaryLaunch": "Lansează-ți studioul ($ 9) — Cohorta din septembrie",
+    "ctaSupportingLine": "Începeți cu planul $ 9 Explorer. Se formează acum cohorta Acces anticipat septembrie.",
+    "videoLanguageCount": "{count, plural, =1 {# language} alte {# languages}}"
   },
   "valueProp": {
     "pills": [
@@ -1501,181 +1507,181 @@
     "ctaSubtext": "Conectează cinematografia tradițională cu inteligența artificială generativă"
   },
   "exitIntent": {
-    "title": "Stai! Nu pleca cu mâna goală.",
-    "subtitle": "Obține acces anticipat exclusiv și sfaturi pentru realizarea de filme cu ajutorul inteligenței artificiale",
+    "title": "Așteptați! Nu plecați cu mâna goală",
+    "subtitle": "Obține acces timpuriu exclusiv și sfaturi pentru realizarea de filme cu inteligență artificială",
     "benefits": [
-      "Tutoriale săptămânale de realizare a filmelor cu AI",
-      "Acces anticipat la funcționalități noi",
-      "reduceri exclusive pentru creatori"
+      "Tutoriale săptămânale de filmare AI",
+      "Acces anticipat la funcții noi",
+      "Reduceri exclusive pentru creatori"
     ],
-    "emailPlaceholder": "Introdu adresa de e-mail",
-    "subscribe": "Obține acces anticipat",
-    "subscribing": "Se abonează...",
+    "emailPlaceholder": "Introdu e-mailul tău",
+    "subscribe": "Obțineți acces anticipat",
+    "subscribing": "Abonare în curs",
     "or": "sau",
-    "startNow": "Începe să creezi acum pentru doar 9 $ →",
-    "privacy": "Fără spam, niciodată. Te poți dezabona oricând.",
+    "startNow": "Începeți să creați acum pentru doar $ 9 — formarea cohortelor din septembrie →",
+    "privacy": "Fără spam, niciodată. Dezabonează-te oricând.",
     "successTitle": "Ești pe listă!",
-    "successSubtitle": "Verifică-ți inboxul pentru sfaturi exclusive despre realizarea de filme și noutăți privind accesul anticipat.",
-    "ctaText": "Începe explorarea — 9 $",
-    "closePopup": "Închide fereastra pop-up"
+    "successSubtitle": "Verifică-ți inbox-ul pentru sugestii exclusive de realizare a filmelor și actualizări privind accesul anticipat.",
+    "ctaText": "Începe să explorezi — $ 9",
+    "closePopup": "Închideți fereastra pop-up"
   },
   "pricing": {
-    "badge": "Tarifare bazată pe utilizare",
-    "title": "Plătește pentru ceea ce creezi",
-    "subtitle": "Un plan de bază pentru accesul la platformă. Credite pentru generarea prin AI. Reîncarcă atunci când ai nevoie de mai multe. Control total, zero risipă.",
+    "badge": "Metodă simplă de stabilire a prețului",
+    "title": "Începeți cu Explorer — $ 9",
+    "subtitle": "Se formează o cohortă de acces anticipat în septembrie. Testați întreaga conductă cu o intrare de 9 $ fără frecare.",
     "valueAnchor": {
-      "traditionalCost": "Peste 2.000 $",
+      "traditionalCost": "2 000",
       "traditionalLabel": "Previzualizare tradițională",
-      "vs": "vs.",
-      "sceneFlowCost": "49–149 $",
+      "vs": "contra",
+      "sceneFlowCost": "$ 49-149",
       "sceneFlowLabel": "SceneFlow lunar",
-      "saveBadge": "Economisiți peste 90% per proiect"
+      "saveBadge": "Economisiți peste 90% pe proiect"
     },
     "teamCta": {
-      "title": "Echipă internă sau instituție?",
-      "description": "Programează o prezentare a fluxului de lucru pentru echipele de comunicare, L&D și marketing",
-      "button": "Prezentare detaliată a cărții"
+      "title": "Echipa sau instituția internă?",
+      "description": "Rezervați o prezentare a fluxului de lucru pentru echipele de comunicații, L&D și marketing",
+      "button": "Rezervă o prezentare"
     },
     "agencyCta": {
-      "title": "Agenție sau casă de producție?",
-      "description": "Credite personalizate, SLA și asistență dedicată la scară largă",
-      "button": "Contactează departamentul de vânzări"
+      "title": "Agenție sau atelier de producție?",
+      "description": "Credite personalizate, SLA și asistență dedicată la scară",
+      "button": "Contactați departamentul de vânzări"
     },
     "byok": {
-      "title": "Aduceți propria cheie",
+      "title": "Aduceți-le pe ale voastre. ",
       "badge": "Planuri Pro și Studio",
-      "description": "Ai deja chei API pentru Vertex AI sau ElevenLabs? Folosește-le cu SceneFlow AI și economisește până la 80% din costul creditelor pentru platformă.",
-      "savingsHighlight": "80% sub formă de credite pe platformă",
+      "description": "Aveți deja chei API pentru Vertex AI sau ElevenLabs? Utilizați-le cu SceneFlow AI și economisiți până la 80% la creditele platformei.",
+      "savingsHighlight": "80% la creditele platformei",
       "benefits": [
         {
-          "title": "Economii de 80% la credite SceneFlow",
-          "description": "Plătiți doar o taxă de platformă de 20% pentru orchestrare și instrumente."
+          "title": "80% economii de credit SceneFlow",
+          "description": "Plătiți doar o taxă de platformă de 20% pentru orchestrare și instrumente"
         },
         {
-          "title": "Valorifică planurile corporative",
+          "title": "Profitați de planurile corporative",
           "description": "Utilizați reducerile de volum existente Vertex AI sau ElevenLabs"
         },
         {
           "title": "Control total",
-          "description": "Cheile tale, facturarea ta, gestionarea costurilor tale"
+          "description": "Cheile dvs., facturarea dvs., gestionarea costurilor"
         }
       ],
       "supportedProviders": "Furnizori acceptați",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "Imagen 4 și Veo 3.1",
+      "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Conversia textului în vorbire și clonarea vocii",
+      "elevenLabsDetail": "Text-la-vorbire și clonare vocală",
       "savingsLabel": "Economii de 80%",
-      "onImagesVideo": "pe imagini și videoclipuri",
-      "onVoiceover": "pe voce din off",
-      "note": "Economiile de credite indicate reprezintă economiile realizate prin platforma SceneFlow. Costurile totale efective depind de tarifele API personale sau corporative aplicabile în cazul fiecărui furnizor."
+      "onImagesVideo": "pe imagini și video",
+      "onVoiceover": "pe voiceover",
+      "note": "Economiile de credit afișate sunt economiile platformei SceneFlow. Costurile totale reale depind de prețurile API personale sau corporative cu fiecare furnizor."
     },
     "creditTopUps": {
       "title": "Ai nevoie de mai multe credite?",
-      "subtitle": "Reîncarcă oricând. Creditele nu expiră niciodată.",
+      "subtitle": "Încarcă oricând. Creditele nu expiră niciodată.",
       "packs": [
         {
-          "label": "Pachet de început",
-          "description": "Perfect pentru recapitulări rapide"
+          "label": "Pachet de pornire",
+          "description": "Perfect pentru revizii rapide"
         },
         {
-          "label": "Pachet de scene",
+          "label": "Pachet scenă",
           "description": "Finalizează un proiect scurt"
         },
         {
           "label": "Pachet de producție",
-          "description": "Secvență cinematografică importantă"
+          "description": "Secvență majoră de film"
         },
         {
           "label": "Pachet Studio",
-          "description": "Capacitate maximă de producție"
+          "description": "Capacitate de producţie"
         }
       ],
       "creditsUnit": "credite"
     },
     "calculator": {
-      "sectionTitle": "Estimează-ți proiectul",
-      "sectionSubtitle": "Află exact cât vei plăti înainte de a te angaja.",
-      "title": "Calculator pentru bugetul proiectului",
-      "subtitle": "Estimează creditele înainte de a începe",
-      "customize": "Personalizează parametrii",
+      "sectionTitle": "Estimați-vă proiectul",
+      "sectionSubtitle": "Știți exact ce veți plăti înainte de a vă angaja",
+      "title": "Calculator buget proiect",
+      "subtitle": "Estimați creditele înainte de a începe",
+      "customize": "Personalizați parametrii",
       "imagesLabel": "Imagini de generat",
-      "videoClipsLabel": "Clipuri video",
-      "voiceoverLabel": "Voice-over (minute)",
-      "byokTitle": "Aduceți propria cheie (BYOK)",
-      "byokBadge": "Pro și Studio",
-      "byokDescription": "Folosește propriile chei API pentru a economisi până la 80% la creditele SceneFlow. Plătești direct furnizorii de AI, la tarifele acestora.",
+      "videoClipsLabel": "videoclipuri",
+      "voiceoverLabel": "Voiceover (minute)",
+      "byokTitle": "Adu-ți propria cheie (BYOK)",
+      "byokBadge": "Pro & Studio",
+      "byokDescription": "Utilizați propriile chei API pentru a economisi până la 80% din creditele SceneFlow. Plătești furnizorii de IA direct la tarifele lor.",
       "vertexToggle": "Vertex AI (Imagini și video)",
-      "elevenLabsToggle": "ElevenLabs (Voce din off)",
-      "imageGeneration": "Generare de imagini",
+      "elevenLabsToggle": "ElevenLabs (Voiceover)",
+      "imageGeneration": "Generarea de imagini AI",
       "videoGeneration": "Generare video",
-      "voiceover": "Voice-over",
+      "voiceover": "Voiceover",
       "byokTag": "(BYOK)",
       "totalEstimate": "Estimare totală",
       "withTopUps": "cu reîncărcări",
-      "creditSavings": "SceneFlow economii pe bază de credit",
+      "creditSavings": "Economii DE credit SceneFlow",
       "savePercent": "Economisești {percent}% la creditele SceneFlow",
-      "transparency": "Transparență totală: Vei vedea consumul de credite în timp real pe măsură ce lucrezi. Fără surprize – poți ajusta oricând anvergura proiectului.",
-      "transparencyHighlight": "Transparență totală:",
-      "byokDisclaimer": "BYOK Notă: Economiile de credite afișate reflectă doar reducerile de credite pe platforma SceneFlow. Costurile dumneavoastră efective depind de planurile de tarifare Vertex AI și ElevenLabs. Planurile pentru companii sau cele pentru volume mari de utilizare API pot oferi economii suplimentare.",
+      "transparency": "Transparență totală: veți vedea utilizarea creditului în timp real pe măsură ce lucrați. Fără surprize - ajustați oricând domeniul de aplicare al proiectului.",
+      "transparencyHighlight": "Transparență deplină",
+      "byokDisclaimer": "BYOK Notă: Economiile de credit afișate reflectă numai reducerile de credit ale platformei SceneFlow. Costurile reale depind de planurile dvs. de tarifare Vertex AI și ElevenLabs. Planurile API corporative sau de mare volum pot oferi economii suplimentare.",
       "byokDisclaimerHighlight": "BYOK Notă:",
       "presets": [
         {
-          "id": "comercial",
-          "name": "Spot publicitar de 30 de secunde"
+          "id": "commercial",
+          "name": "30-sec Comercial"
         },
         {
-          "id": "scurt",
-          "name": "Scurtmetraj de 2 minute"
+          "id": "short",
+          "name": "Film de scurt metraj de 2 minute"
         },
         {
-          "id": "episod",
+          "id": "episode",
           "name": "Episod de 10 minute"
         },
         {
-          "id": "funcționalitate",
-          "name": "Lungmetraj de 90 de minute"
+          "id": "feature",
+          "name": "Caracteristică de 90 de minute"
         }
       ],
-      "minSuffix": "min."
+      "minSuffix": "min"
     },
     "tierGrid": {
-      "productionTestFlight": "Zbor de testare de producție",
-      "getStarted": "Începe",
-      "startTestFlight": "Începe zborul de test",
+      "productionTestFlight": "Zbor de testare a producției",
+      "getStarted": "Să începem!",
+      "startTestFlight": "Începeți zborul de testare",
       "loading": "Se încarcă...",
-      "mostPopular": "Cele mai populare",
+      "mostPopular": "Cele mai Apreciate",
       "creditsPerMonth": "Credite/lună",
       "storage": "Depozitare",
-      "perMonth": "/lună"
+      "perMonth": "Lună"
     },
     "trust": {
       "cancelAnytime": "Anulează oricând",
-      "moneyBack": "Garanție de returnare a banilor în 14 zile",
+      "moneyBack": "Garanția de returnare a banilor de 90 de zile",
       "creditsNeverExpire": "Creditele nu expiră niciodată (pachetul Explorer)"
     },
     "plans": {
       "explorer": {
-        "name": "Explorer",
-        "description": "Achiziție unică pentru a-l încerca",
+        "name": "SFAIEXPLORTERM",
+        "description": "Achiziție unică pentru a o încerca",
         "features": [
-          "Achiziție unică",
+          "Achiziție cu o singură cumpărare",
           "750 de credite (nu expiră niciodată)",
-          "Stocare de 5 GB (30 de zile)",
-          "Acces complet la platformă",
+          "Spațiu de stocare de 5 GB (30 de zile)",
+          "Acces platformă",
           "Export MP4 (orice rezoluție)",
           "Voiceover AI (peste 70 de limbi)"
         ]
       },
       "subscriptions": [
         {
-          "id": "aperitiv",
-          "name": "Apetizer",
+          "id": "starter",
+          "name": "Start",
           "description": "Pentru creatori individuali",
           "features": [
-            "Acces complet la platformă",
-            "4.500 de credite/lună incluse",
-            "Stocare activă de 25 GB",
+            "Acces platformă",
+            "4.500 credite/lună incluse",
+            "Spațiu de stocare activ de 25 GB",
             "Export MP4 (orice rezoluție)",
             "Voiceover AI (peste 70 de limbi)",
             "Asistență prin e-mail"
@@ -1686,15 +1692,15 @@
           "name": "Pro",
           "description": "Pentru creatori profesioniști",
           "features": [
-            "Tot ce este inclus în pachetul Starter, plus:",
-            "15.000 de credite/lună incluse",
-            "100 GB stocare activă",
-            "Acces la calitate Veo 3.1 (4K)",
-            "Motor de consistență a personajelor",
+            "Totul în Starter, plus:",
+            "15.000 credite/lună incluse",
+            "Spațiu de stocare activ de 100 GB",
+            "Acces la calitate (4K) Veo 3.1",
+            "Motor de consecvență a caracterelor",
             "Clonarea vocii",
-            "BYOK (Aduceți propria cheie)",
-            "3 locuri pentru echipă",
-            "Asistență prioritară"
+            "BYOK (Adu-ți propria cheie)",
+            "3 locuri în echipă",
+            "Asistență prioritară."
           ]
         },
         {
@@ -1702,59 +1708,68 @@
           "name": "Studio",
           "description": "Pentru echipe și agenții",
           "features": [
-            "Tot ce include varianta Pro, plus:",
-            "75.000 de credite/lună incluse",
-            "Stocare activă de 500 GB",
-            "Coadă de prioritate Veo 3.1 4K",
-            "Consecvență nelimitată a personajelor",
-            "Exporturi în regim white-label",
-            "Acces API",
-            "10 locuri pentru echipă",
+            "Totul în Pro, plus:",
+            "75.000 credite/lună incluse",
+            "Spațiu de stocare activ de 500 GB",
+            "Coadă prioritară Veo 3.1 4K",
+            "Consistență nelimitată a caracterelor",
+            "Exporturi cu etichetă albă",
+            "Acces API ",
+            "10 locuri în echipă",
             "Manager de cont dedicat",
-            "SLA pentru companii disponibil la cerere"
+            "SLA Enterprise disponibil la cerere"
           ]
         }
       ]
-    }
+    },
+    "explorerHighlight": "Cel mai rapid mod de a experimenta studioul complet SceneFlow — de la concept la Screening Room.",
+    "trustBadges": [
+      "Infrastructura Google Cloud",
+      "Generare Vertex AI",
+      "Plăți securizate prin Whop",
+      "Garanția de returnare a banilor de 90 de zile"
+    ]
   },
   "landingSections": {
     "expandSection": "Afișează secțiunea",
     "collapseSection": "Ascunde secțiunea"
   },
   "finalCta": {
-    "title": "Ești gata să testezi întregul flux de lucru?",
-    "subtitle": "Realizează totul – de la concept și pre-vizualizare până la video și fișierul MP4 final – într-un singur studio. Începe cu abonamentul de 9 $ Explorer și descoperă în practică fluxul de lucru care pune accent pe beat.",
-    "cta": "Lansează-ți studioul pentru 9 $"
+    "title": "Sunteți gata să testați întreaga conductă?",
+    "subtitle": "Scripting și optimizare pe Google, platforma de generare aleasă de tine și recenzia Screening Room — toate într-un singur studio. Se formează acum cohorta Acces anticipat în septembrie — începeți cu planul Explorer în valoare de $ 9 sau solicitați accesul Creatorului Fondator.",
+    "cta": "Lansează-ți studioul ($ 9) — Cohorta din septembrie",
+    "ctaSecondary": "Solicită accesul creatorului fondator",
+    "ctaSecondaryHref": "/early-access"
   },
   "footer": {
-    "description": "Producție video automatizată, de la cap la coadă — de la concept până la materialul final gata de publicare. Un studio asistat: Blueprint → Producție → Screening Room.",
+    "description": "Producție video automată end-to-end — de la concept la master gata de publicare. Un studio ghidat: Series Studio → Blueprint Studio → Production Studio → Screening Room.",
     "product": "Produs",
-    "resources": "Resurse",
-    "legal": "Informații juridice",
+    "resources": "Resurselor",
+    "legal": "Juridic",
     "links": {
       "features": "Caracteristici",
       "pricing": "Prețuri",
-      "howItWorks": "Cum funcționează",
-      "gettingStarted": "Primii pași",
-      "privacy": "Politica de confidențialitate",
-      "terms": "Termeni și condiții",
+      "howItWorks": "CUM FUNCTIONEAZA",
+      "gettingStarted": "Pregătirea pentru administrare",
+      "privacy": "Politica de Confidențialitate a acestui site.",
+      "terms": "Condiţiile de furnizare a serviciului",
       "trustSafety": "Încredere și siguranță",
       "refunds": "Politica de rambursare",
       "contact": "Contactați-ne"
     },
-    "tagline": "Creat cu ❤️ pentru creatori",
+    "tagline": "Realizat cu ❤️ pentru creatori",
     "taglineSub": "De la idee la videoclip publicat",
     "securePayments": "Plăți securizate procesate de Whop, comerciantul nostru oficial",
-    "morLine": "Plățile securizate, calculul taxelor și conformitatea sunt gestionate de Whop, comerciantul nostru oficial (Merchant of Record), în numele Life Focus, LLC.",
+    "morLine": "Plățile sigure, calculul impozitelor și conformitatea sunt gestionate de Whop, comerciantul nostru înregistrat, în numele Life Focus, LLC.",
     "copyright": "© 2026 SceneFlow AI. Toate drepturile rezervate.",
-    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • Contact: support@sceneflowai.studio",
-    "poweredBy": "Susținut de Google Cloud"
+    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, Statele Unite • Contact: support@sceneflowai.studio",
+    "poweredBy": "Inteligență susținută de Google · Orchestrată pe Google Cloud"
   },
   "floatingCta": {
-    "seePricing": "Vezi prețurile",
-    "tryNine": "Încearcă pentru 9 $",
-    "tryForNine": "Încearcă pentru 9 $",
-    "dismiss": "Închide"
+    "seePricing": "Afișează prețurile",
+    "tryNine": "Încearcă $ 9",
+    "tryForNine": "Încercați pentru $ 9",
+    "dismiss": "Renunță"
   },
   "common": {
     "watermark": "SceneFlow AI Studio",
@@ -1763,5 +1778,121 @@
     "mute": "Mut",
     "unmute": "Activează sunetul",
     "expandVideo": "Extinde videoclipul"
+  },
+  "useCasesShowcase": {
+    "badge": "Pentru cine este SceneFlow?",
+    "title": "Pentru cine este SceneFlow?",
+    "subtitle": "De la concept la un Screening Room animatic la un videoclip multilingv publicat automat — o conductă automată, patru moduri de expediere.",
+    "cta": "Lansează-ți studioul ($ 9) — Cohorta din septembrie",
+    "tabStory": "Soluție",
+    "tabScreening": "Analiză",
+    "problemLabel": "Problema",
+    "solutionLabel": "Soluția SceneFlow",
+    "outcomeLabel": "Rezultatul",
+    "videoLanguagePrompt": "Urmărește această călătorie în limba ta",
+    "videoComingSoon": "Videoclipul de prezentare va fi disponibil în curând",
+    "videoSoon": "În curând",
+    "personas": [
+      {
+        "id": "youtubeCreator",
+        "label": "Creatorul YouTube",
+        "headline": "De la concept la serie cinematografică — fără inginerie promptă",
+        "intro": "Începeți cu un concept sau o descriere detaliată a seriei. SceneFlow construiește universul seriei, personajele și episoadele nelimitate, apoi utilizează Express pentru a reda simultan audio, cadre și video. Creați și direcționați cu text simplu sau voce; SceneFlow construiește viziunea — fără inginerie promptă, fără reluări de slot-machine.",
+        "story": {
+          "problem": [
+            "Jonglezi cu instrumente separate pentru script, imagini, voce, video, muzică și editare.",
+            "Re-generați fiecare piesă din nou și din nou, sperând la un rezultat utilizabil.",
+            "Personajele încă arată diferit de la o scenă la alta."
+          ],
+          "solution": [
+            "Un studio ghidat înlocuiește întreaga stivă de scule.",
+            "Descrieți-vă ideea în cuvinte simple — SceneFlow scrie seria și proiectează distribuția.",
+            "Expresul redă audio, cadre și video împreună, în timp ce Reference Library păstrează caracterele consecvente."
+          ],
+          "outcome": [
+            "Nu mai pierde weekendurile din cauza instrumentelor fragmentate.",
+            "Publicați într-un ritm constant cu care puteți ține pasul.",
+            "Păstrați fiecare episod on-brand fără a re-rulare pentru consecvență."
+          ]
+        },
+        "screeningRoomHook": "Vizualizați povestea ca un videoclip animat înainte de mișcare, examinați scenele înainte de finalizarea fluxurilor și partajați fluxuri multilingve (peste 70 de limbi) pentru feedback înainte de lansare.",
+        "screeningRoomPreview": "Arhiva nevăzută: The Grand Illusion: The Chicago World's Fair Deception"
+      },
+      {
+        "id": "startupProvider",
+        "label": "Furnizorul de pornire",
+        "headline": "Rulați un studio video global — fără a construi unul",
+        "intro": "Livrează videoclipuri rafinate, localizate, întreprinderilor mici care nu își pot permite o agenție. Express redă simultan pachete întregi de clienți, Mixer adaugă suprapuneri de marcă, filigrane și sincronizare, iar dublajul/sincronizarea automată livrează fiecare livrabil în limba de piață a clientului dvs. — toate dintr-o singură conductă previzibilă.",
+        "story": {
+          "problem": [
+            "Clienții cu afaceri mici nu își pot permite o agenție video tradițională.",
+            "Cumperi și jonglezi cu multe instrumente, refăcând munca pentru fiecare client.",
+            "Fiecare limbă nouă înseamnă reconstruirea videoclipului de la zero."
+          ],
+          "solution": [
+            "O conductă previzibilă pentru fiecare proiect al clientului.",
+            "Redați simultan un pachet video complet — audio, cadre și video împreună.",
+            "Adăugați branding, suprapuneri și filigrane, apoi dublați automat și sincronizați buzele în limba de piață a clientului."
+          ],
+          "outcome": [
+            "Serviți mai mulți clienți dintr-un singur flux de lucru al studioului.",
+            "Ajungeți pe piețele globale în peste 70 de limbi, fără a reconstrui fiecare videoclip.",
+            "Scalați serviciul fără a angaja un echipaj sau a construi infrastructura."
+          ]
+        },
+        "screeningRoomHook": "Revizuirea orientată spre client a animației, aprobarea scenei înainte de fluxurile finale și previzualizări multilingve partajabile pentru părțile interesate din străinătate.",
+        "screeningRoomPreview": "Main Street Rising: o relansare a afacerilor locale"
+      },
+      {
+        "id": "enterprise",
+        "label": "Întreprinderi și instituții",
+        "headline": "Instruire conformă în ritmul modificării politicii",
+        "intro": "Echipele interne de L&D și comms livrează module blocate de marcă, pregătite pentru audit, fără cicluri de furnizori. Rafinați orice cadru sau linie cu text sau voce pentru a rămâne conectat la mesaj, finisați cu suprapuneri și filigrane Mixer și lansați versiuni dublate sau sincronizate automat în fiecare regiune de la un singur master aprobat.",
+        "story": {
+          "problem": [
+            "Videoclipurile de instruire și comunicații așteaptă săptămâni întregi pe furnizorii externi și costă o primă.",
+            "Atunci când politica sau produsul se modifică, videoclipurile devin învechite și în afara mărcii.",
+            "Fiecare actualizare declanșează o altă rundă de producție costisitoare."
+          ],
+          "solution": [
+            "Produceți videoclipuri blocate de marcă, pregătite pentru audit.",
+            "Schimbați orice linie sau cadru cu o instrucțiune dactilografiată sau vorbită.",
+            "Revizuiți și aprobați înainte de a plăti pentru randarea finală, apoi lansați un master în fiecare regiune."
+          ],
+          "outcome": [
+            "Formarea și comunicarea țin pasul cu schimbările de politică.",
+            "Rămâneți fidel mărcii fără a aștepta ciclurile furnizorilor.",
+            "Actualizați o dată și distribuiți peste tot de la o singură tăiere aprobată."
+          ]
+        },
+        "screeningRoomHook": "Examinați scenele înainte ca fluxurile să ajungă la final și partajați linkuri private Screening Room pentru feedback transregional fără a exporta master-uri neterminate.",
+        "screeningRoomPreview": "Protocolul Shield: Integrarea globală în securitatea cibernetică"
+      },
+      {
+        "id": "educator",
+        "label": "Educatorul",
+        "headline": "Transformați programa în lecții pe care elevii le urmăresc de fapt",
+        "intro": "Instituțiile mari convertesc capitolele dense în videoclipuri narative localizate. Express construiește lecții complete rapid, editările inteligente de text/voce permit facultății să regleze conținutul fără inginerie promptă, iar sincronizarea dub/lip auto-aliniată se potrivește cu limba fiecărei cohorte — apoi publică automat titlurile și miniaturile localizate pe fiecare canal.",
+        "story": {
+          "problem": [
+            "Materialul dens al cursului devine video numai după săptămâni, abilități de specialitate sau un buget mare.",
+            "Fără aceasta, lecțiile rămân ca prezentări de diapozitive pe care elevii le ignoră.",
+            "Deservirea elevilor în mai multe limbi multiplică munca."
+          ],
+          "solution": [
+            "Construiți rapid lecții narate complet într-un singur studio.",
+            "Facultatea ajustează conținutul tastând sau vorbind — fără solicitări tehnice.",
+            "Dublarea automată, sincronizarea buzelor și publicarea cu titluri și miniaturi localizate pentru fiecare cohortă."
+          ],
+          "outcome": [
+            "Transformați curriculumul în video pe care elevii îl vizionează de fapt.",
+            "Ajungeți în fiecare campus în limba lor fără o echipă de producție.",
+            "Expediați lecții mai rapid decât permite producția video tradițională."
+          ]
+        },
+        "screeningRoomHook": "Facultatea examinează animația înainte de cheltuielile de producție, examinează scenele de lecție și partajează fluxuri în peste 70 de limbi pentru feedback din mai multe campusuri.",
+        "screeningRoomPreview": "Atelier renascentist: Văzând trecutul în mișcare"
+      }
+    ]
   }
 }

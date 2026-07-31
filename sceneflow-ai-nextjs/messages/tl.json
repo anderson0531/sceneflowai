@@ -4,23 +4,26 @@
     "description": "Gawing mga propesyonal na video ang iyong mga ideya gamit ang workflow automation na pinapagana ng AI."
   },
   "nav": {
-    "workflow": "Ang Daloy ng Trabaho",
-    "platformWalkthrough": "Gabay sa Paggamit ng Platform",
-    "plansPricing": "Mga Plano at Presyo",
+    "workflow": "Paano Ito Gumagana",
+    "platformWalkthrough": "Walkthrough ng Platform",
+    "plansPricing": "Mga Plano at Pagpepresyo",
     "more": "Higit pa",
-    "useCases": "Mga Kaso ng Paggamit",
-    "audienceResonance": "Audience Resonance",
+    "useCases": "ay Gumagamit ng mga Lalagyan",
+    "audienceResonance": "Email: info@resonanceterm.com",
     "trustSafety": "Tiwala at Kaligtasan",
     "platformTrust": "Platform at Tiwala",
-    "signIn": "Mag-sign in",
-    "startProject": "Magsimula ng Proyekto",
+    "signIn": "Mag-sign In",
+    "startProject": "Magsimula ng isang Proyekto",
     "dashboard": "Dashboard",
-    "adminPanel": "Panel ng Admin",
+    "adminPanel": "Admin Panel",
     "signOut": "Mag-sign out",
-    "goToDashboard": "Punta sa Dashboard",
-    "userFallback": "Gumagamit",
+    "goToDashboard": "Pumunta sa Dashboard",
+    "userFallback": "User",
     "searchLanguages": "Maghanap ng mga wika...",
-    "noLanguagesFound": "Walang nahanap na mga wika"
+    "noLanguagesFound": "Walang nahanap na wika",
+    "pipeline": "Ang Pipeline",
+    "productionExamples": "Mga halimbawa",
+    "keyFeatures": "Mga Tampok"
   },
   "floatingNav": {
     "compare": "Ihambing",
@@ -34,47 +37,50 @@
     "pricing": "Pagpepresyo"
   },
   "hero": {
-    "headline": "Ilarawan sa isip ang kuwento. Ang SceneFlow ang namamahala sa pipeline.",
-    "subheadline": "Lagpasan na ang nakakapagod na pagbibigay ng mga prompt. Ituon nang lubos ang iyong atensyon sa iyong malikhaing layunin gamit ang isang awtomatiko at propesyonal na daloy ng trabaho sa produksyon.",
+    "headline": "Ikaw ang nagdidirek ng istorya. SceneFlow Automates ang Studio.",
+    "subheadline": "Ang katalinuhan na pinapatakbo ng Google na inorganisa sa Google Cloud - na may opsyonal na henerasyon ng Google o Kling. Patakbuhin ang iyong mga ideya sa pamamagitan ng isang tuluy - tuloy na pipeline mula sa blueprint sa master MP4 nang walang micro - pag - promote.",
     "audienceMicroLine": "Ginawa para sa mga creator na nagnanais ng resulta, at sa mga team na gustong makita kung paano ito gumagana.",
     "ctaSecondary": "Panoorin ang 'What's Possible'",
-    "ctaToolStack": "Tingnan kung paano nito pinapalitan ang iyong tool stack.",
-    "languagePrompt": "Pakinggan ang bida sa sarili mong wika — parehong proseso, mga bagong merkado",
-    "multilangHint": "Nag-a-dub ang Hero sa 7 wika — sinusuportahan ng buong pipeline ang mahigit 70 wika sa produksyon.",
-    "playWithNarration": "I-play nang may pagsasalaysay",
-    "tapToHear": "Pindutin para makinig",
-    "fullscreen": "Buong screen",
+    "ctaToolStack": "Tingnan kung paano ito pumapalit sa iyong tool stack",
+    "languagePrompt": "Pakinggan ang bayani sa iyong wika — parehong pipeline, bagong mga merkado",
+    "multilangHint": "Hero dubs sa 7 wika — full pipeline ay sumusuporta sa 70+ sa Production Studio.",
+    "playWithNarration": "Makipaglaro sa pagsasalaysay",
+    "tapToHear": "I - tap para marinig",
+    "fullscreen": "Fullscreen",
     "heroVideoLanguages": {
       "en": {
-        "label": "Ingles",
-        "nativeLabel": "Ingles"
+        "label": "English",
+        "nativeLabel": "English"
       },
       "es": {
-        "label": "Espanyol",
-        "nativeLabel": "Espanyol"
+        "label": "Kastila",
+        "nativeLabel": "Mosta po"
       },
       "pt": {
-        "label": "Portuges",
-        "nativeLabel": "Portuges"
+        "label": "Portuguese",
+        "nativeLabel": "ano ang ibig sabihin ng oblique"
       },
       "hi": {
-        "label": "Hindi",
-        "nativeLabel": "Hindi"
+        "label": "alangan naman ako",
+        "nativeLabel": "<g id=\"267\">'</g><g id=\"268\">हिन्दी</g><g id=\"269\">',</g>"
       },
       "zh": {
-        "label": "Tsino",
-        "nativeLabel": "Tsino"
+        "label": "Intsik",
+        "nativeLabel": "中文"
       },
       "ar": {
-        "label": "Arabe",
-        "nativeLabel": "Arabe"
+        "label": "Maranao",
+        "nativeLabel": "العربية"
       },
       "th": {
         "label": "Thai",
-        "nativeLabel": "Thailand"
+        "nativeLabel": "ไทย"
       }
     },
-    "soon": "Malapit na"
+    "soon": "gagawin ko iyon sa lalong madaling panahon",
+    "ctaPrimaryLaunch": "Ilunsad ang Iyong Studio ($ 9) — Setyembre Cohort",
+    "ctaSupportingLine": "Magsimula sa plano ng $ 9 Explorer. Setyembre Maagang Access cohort ngayon bumubuo.",
+    "videoLanguageCount": "{count, plural, =1 {# language} iba pang {# languages}}"
   },
   "valueProp": {
     "pills": [
@@ -1501,260 +1507,269 @@
     "ctaSubtext": "Pag-ugnayin ang tradisyonal na paggawa ng pelikula at generative AI"
   },
   "exitIntent": {
-    "title": "Sandali! Huwag kang umalis nang walang dala.",
-    "subtitle": "Makakuha ng eksklusibong maagang access at mga tip para sa paggawa ng pelikulang gumagamit ng AI",
+    "title": "Maghintay! Huwag mag - iwan ng walang laman",
+    "subtitle": "Kumuha ng eksklusibong maagang pag - access at mga tip para sa paggawa ng pelikula na pinapatakbo ng AI",
     "benefits": [
-      "Lingguhang tutorial sa paggawa ng pelikula gamit ang AI",
+      "Lingguhang mga tutorial sa paggawa ng pelikula ng AI",
       "Maagang access sa mga bagong feature",
-      "Mga eksklusibong diskwento para sa mga creator"
+      "Mga eksklusibong diskuwento para sa creator"
     ],
     "emailPlaceholder": "Ilagay ang iyong email",
-    "subscribe": "Makakuha ng maagang access",
-    "subscribing": "Nagsu-subscribe...",
-    "or": "o",
-    "startNow": "Simulan nang lumikha sa halagang $9 lamang →",
-    "privacy": "Walang spam, kailanman. Maaaring mag-unsubscribe anumang oras.",
+    "subscribe": "Makakuha ng Maagang Access",
+    "subscribing": "pag-subscribe",
+    "or": "o ",
+    "startNow": "Simulan ang paglikha ngayon para lamang sa $ 9 — Septiyembre cohort bumubuo →",
+    "privacy": "Walang spam, kailanman. Mag - unsubscribe anumang oras.",
     "successTitle": "Kasama ka sa listahan!",
-    "successSubtitle": "Tingnan ang iyong inbox para sa mga eksklusibong tip sa paggawa ng pelikula at mga update tungkol sa maagang access.",
-    "ctaText": "Simulang Mag-explore — $9",
+    "successSubtitle": "Suriin ang iyong inbox para sa mga eksklusibong tip sa paggawa ng pelikula at mga update sa maagang pag - access.",
+    "ctaText": "Simulan ang Paggalugad — $ 9",
     "closePopup": "Isara ang popup"
   },
   "pricing": {
-    "badge": "Pagpepresyong nakabatay sa paggamit",
-    "title": "Magbayad para sa iyong nilikha",
-    "subtitle": "Isang base plan para sa access sa platform. Mga credit para sa AI generation. Mag-top up kapag kailangan mo pa. Ganap na kontrol, walang nasasayang.",
+    "badge": "Simpleng Pagpepresyo",
+    "title": "Magsimula sa Explorer — $ 9",
+    "subtitle": "Setyembre Maagang Access cohort bumubuo. Subukan ang buong pipeline na may isang frictionless $ 9 entry.",
     "valueAnchor": {
-      "traditionalCost": "Mahigit $2,000",
-      "traditionalLabel": "Tradisyonal na pre-visualization",
+      "traditionalCost": "$ 2,000+",
+      "traditionalLabel": "Tradisyonal na pre - vis",
       "vs": "laban sa",
-      "sceneFlowCost": "$49–149",
-      "sceneFlowLabel": "SceneFlow buwanan",
-      "saveBadge": "Makatipid ng mahigit 90% bawat proyekto"
+      "sceneFlowCost": "$ 49 -149",
+      "sceneFlowLabel": "SceneFlow buwanang",
+      "saveBadge": "I - save ang 90%+ bawat proyekto"
     },
     "teamCta": {
-      "title": "In-house na team o institusyon?",
-      "description": "Mag-schedule ng walkthrough ng workflow para sa mga team ng communications, L&D, at marketing.",
-      "button": "Gabay sa Pagtalakay sa Libro"
+      "title": "In - house team o institusyon?",
+      "description": "Mag - book ng walkthrough sa daloy ng trabaho para sa mga comms, L&D, at mga team sa marketing",
+      "button": "Mag - book ng Walkthrough"
     },
     "agencyCta": {
-      "title": "Agency o production shop?",
-      "description": "Mga custom credit, SLA, at nakalaang suporta sa malawakang antas",
-      "button": "Makipag-ugnayan sa Sales"
+      "title": "Ahensya o tindahan ng produksyon?",
+      "description": "Mga iniangkop na credit, SLA, at nakalaang suporta sa sukat",
+      "button": "Makipag-ugnayan sa sales"
     },
     "byok": {
-      "title": "Dalhin ang Sariling Susi",
-      "badge": "Mga Planong Pro at Studio",
-      "description": "Mayroon ka na bang mga API key para sa Vertex AI o ElevenLabs? Gamitin ang mga ito kasama ng SceneFlow AI at makatipid nang hanggang 80% sa mga platform credit.",
-      "savingsHighlight": "80% sa mga platform credit",
+      "title": "Bring your own",
+      "badge": "Mga Plano para sa Pro & Studio",
+      "description": "Mayroon nang mga API key para sa Vertex AI o ElevenLabs? Gamitin ang mga ito sa SceneFlow AI at makatipid ng hanggang 80% sa mga kredito sa platform.",
+      "savingsHighlight": "80% sa mga kredito ng platform",
       "benefits": [
         {
-          "title": "80% SceneFlow Tipid sa Credit",
-          "description": "Magbayad lamang ng 20% na platform fee para sa orchestration at mga tool."
+          "title": "80% SceneFlow Mga Pagtitipid sa Kredito",
+          "description": "Magbayad lamang ng 20% na bayad sa platform para sa orchestration at mga tool"
         },
         {
-          "title": "Gamitin ang mga plano ng korporasyon",
-          "description": "Gamitin ang iyong mga kasalukuyang volume discount na Vertex AI o ElevenLabs"
+          "title": "Mga Plano sa Korporasyon ng Leverage",
+          "description": "Gamitin ang iyong umiiral na Vertex AI o mga diskwento sa dami ng ElevenLabs"
         },
         {
-          "title": "Ganap na Kontrol",
-          "description": "Ang iyong mga susi, ang iyong pagsingil, ang iyong pamamahala sa gastos"
+          "title": "Buong Kontrol",
+          "description": "Ang iyong mga susi, ang iyong pagsingil, ang iyong pamamahala ng gastos"
         }
       ],
-      "supportedProviders": "Mga Sinusuportahang Provider",
-      "vertexName": "Google Vertex AI",
-      "vertexDetail": "Imagen 4 at Veo 3.1",
+      "supportedProviders": "Mga Suportadong Provider",
+      "vertexName": "Email: info@aiterm.com",
+      "vertexDetail": "Download APK (8.9 MB)",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Text-to-Speech at Voice Cloning",
-      "savingsLabel": "80% na matitipid",
-      "onImagesVideo": "sa mga larawan at video",
-      "onVoiceover": "habang nagsasalita sa voiceover",
-      "note": "Ang mga ipinapakitang matitipid sa credit ay mula sa platform na SceneFlow. Ang iyong aktwal na kabuuang gastos ay nakadepende sa iyong personal o pang-korporasyong presyo ng API sa bawat provider."
+      "elevenLabsDetail": "Text - to - Speech at Pag - clone ng Voice",
+      "savingsLabel": "80% na pagtitipid",
+      "onImagesVideo": "sa mga larawan & video",
+      "onVoiceover": "sa voiceover",
+      "note": "Credit savings na ipinapakita ay SceneFlow platform savings. Ang iyong aktwal na kabuuang gastos ay nakasalalay sa iyong personal o corporate API pricing sa bawat provider."
     },
     "creditTopUps": {
-      "title": "Kailangan mo ba ng karagdagang credits?",
-      "subtitle": "Mag-top up anumang oras. Hindi nag-e-expire ang mga credit.",
+      "title": "Kailangan mo ng Higit pang mga Credit?",
+      "subtitle": "Mag - top up anumang oras. Hindi nag - e - expire ang mga credit.",
       "packs": [
         {
-          "label": "Starter Pack",
-          "description": "Tamang-tama para sa mabilisang rebisyon"
+          "label": "Starter Pack!",
+          "description": "Perpekto para sa mga mabilisang rebisyon"
         },
         {
-          "label": "Koleksyon ng mga Eksena",
-          "description": "Tapusin ang isang maikling proyekto"
+          "label": "Pakete ng Eksena",
+          "description": "Kumpletuhin ang isang maikling proyekto"
         },
         {
-          "label": "Production Pack",
-          "description": "Mahalagang bahagi ng pelikula"
+          "label": "Produksyon ng Pack",
+          "description": "Pangunahing pagkakasunud - sunod ng pelikula"
         },
         {
           "label": "Studio Pack",
           "description": "Buong kapasidad ng produksyon"
         }
       ],
-      "creditsUnit": "mga kinilala"
+      "creditsUnit": "banggit-pasasalamat"
     },
     "calculator": {
-      "sectionTitle": "Tantiyahin ang iyong proyekto",
-      "sectionSubtitle": "Alamin nang eksakto kung magkano ang babayaran mo bago ka mag-commit.",
-      "title": "Calculator ng Badyet ng Proyekto",
-      "subtitle": "Tantyahin ang mga credit bago ka magsimula.",
-      "customize": "I-customize ang mga parameter",
-      "imagesLabel": "Mga larawang bubuuin",
+      "sectionTitle": "Tantyahin ang Iyong Proyekto",
+      "sectionSubtitle": "Alamin kung ano mismo ang babayaran mo bago ka mangako",
+      "title": "Kalkulador ng Badyet ng Proyekto",
+      "subtitle": "Tantyahin ang mga credit bago ka magsimula",
+      "customize": "I - customize ang mga parameter",
+      "imagesLabel": "Mga larawang bubuo",
       "videoClipsLabel": "Mga video clip",
       "voiceoverLabel": "Voiceover (mga minuto)",
-      "byokTitle": "Dalhin ang Sarili Mong Susi (BYOK)",
-      "byokBadge": "Pro at Studio",
-      "byokDescription": "Gamitin ang sarili mong mga API key para makatipid nang hanggang 80% sa mga SceneFlow credit. Direktang magbabayad ka sa mga provider ng AI batay sa kanilang mga rate.",
+      "byokTitle": "Dalhin ang Iyong Sariling Key (BYOK)",
+      "byokBadge": "Username or email address *",
+      "byokDescription": "Gamitin ang iyong sariling mga API key upang makatipid ng hanggang sa 80% sa SceneFlow credits. Binabayaran mo ang mga provider ng AI nang direkta sa kanilang mga rate.",
       "vertexToggle": "Vertex AI (Mga Larawan at Video)",
       "elevenLabsToggle": "ElevenLabs (Voiceover)",
       "imageGeneration": "Pagbuo ng Imahe",
       "videoGeneration": "Pagbuo ng Video",
-      "voiceover": "Voiceover",
+      "voiceover": "Vkontakte",
       "byokTag": "(BYOK)",
       "totalEstimate": "Kabuuang Tantya",
-      "withTopUps": "may mga karagdagang load o pondo",
-      "creditSavings": "SceneFlow ipon sa credit",
-      "savePercent": "Makakatipid ka ng {percent}% sa mga credit ng SceneFlow",
-      "transparency": "Ganap na transparency: Makikita mo ang real-time na paggamit ng credits habang nagtatrabaho ka. Walang mga sorpresang hindi inaasahan—maaari mong i-adjust ang saklaw ng iyong proyekto anumang oras.",
-      "transparencyHighlight": "Lubos na katapatan:",
-      "byokDisclaimer": "BYOK Paalala: Ang ipinapakitang matitipid sa credit ay tumutukoy lamang sa mga bawas sa credit ng SceneFlow platform. Ang iyong aktwal na mga gastusin ay nakadepende sa iyong mga pricing plan na Vertex AI at ElevenLabs. Maaaring mag-alok ng karagdagang matitipid ang mga corporate plan o mga plan na may mataas na volume ng API.",
-      "byokDisclaimerHighlight": "BYOK Paalala:",
+      "withTopUps": "gamit ang mga top - up",
+      "creditSavings": "SceneFlow pagtitipid sa kredito",
+      "savePercent": "Makatipid ka ng {percent}% sa mga credit sa SceneFlow",
+      "transparency": "Ganap na transparency: Makakakita ka ng real - time na paggamit ng credit habang nagtatrabaho ka. Walang sorpresa - ayusin ang saklaw ng iyong proyekto anumang oras.",
+      "transparencyHighlight": "Buong transparency:",
+      "byokDisclaimer": "BYOK Tandaan: Credit savings ipinapakita sumasalamin SceneFlow platform credit reductions lamang. Nakadepende ang iyong aktwal na mga gastos sa iyong Vertex AI at ElevenLabs mga plano sa pagpepresyo. Maaaring mag - alok ng karagdagang pagtitipid ang mga corporate o high - volume API plan.",
+      "byokDisclaimerHighlight": "BYOK Tandaan:",
       "presets": [
         {
-          "id": "komersyal",
-          "name": "30-segundong patalastas"
+          "id": "commercial",
+          "name": "30 - seg Komersyal"
         },
         {
-          "id": "maikli",
-          "name": "Maikling Pelikulang May Tagal na Dalawang Minuto"
+          "id": "short",
+          "name": "2 - minutong Maikling Pelikula"
         },
         {
-          "id": "episodyo",
-          "name": "10-minutong Episode"
+          "id": "episode",
+          "name": "10 - minutong Episode"
         },
         {
-          "id": "tampok",
-          "name": "90-minutong pelikula"
+          "id": "feature",
+          "name": "90 - min na Feature"
         }
       ],
       "minSuffix": "min"
     },
     "tierGrid": {
-      "productionTestFlight": "Paglipad na Pagsubok sa Produksyon",
+      "productionTestFlight": "Produksyon ng Test Flight",
       "getStarted": "Magsimula",
       "startTestFlight": "Simulan ang Test Flight",
       "loading": "Naglo-load...",
-      "mostPopular": "Pinakasikat",
-      "creditsPerMonth": "Mga credit/buwan",
+      "mostPopular": "Pinakapopular",
+      "creditsPerMonth": "Credits/mo",
       "storage": "Imbakan",
       "perMonth": "/buwan"
     },
     "trust": {
-      "cancelAnytime": "Maaaring kanselahin anumang oras",
-      "moneyBack": "Garantiya ng pagbabalik ng pera sa loob ng 14 na araw",
-      "creditsNeverExpire": "Hindi nag-e-expire ang mga credit (pack na Explorer)"
+      "cancelAnytime": "Magkansela sa anumang oras",
+      "moneyBack": "MAY 90-ARAW NA GARANTIYA SA PAGSASAULI NG IBINAYAD",
+      "creditsNeverExpire": "Hindi nag - e - expire ang mga kredito (Explorer pack)"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
         "description": "Isang beses na pagbili para subukan ito",
         "features": [
-          "Isahang pagbili",
-          "750 credits (hindi mawawalan ng bisa)",
-          "5 GB na storage (30 araw)",
-          "Ganap na access sa platform",
-          "Pag-export bilang MP4 (anumang resolution)",
-          "AI voiceover (higit sa 70 wika)"
+          "Isang beses na pagbili",
+          "750 mga kredito (hindi kailanman mag - expire)",
+          "5 GB na imbakan (30 araw)",
+          "Access sa buong platform",
+          "MP4 export (anumang resolution)",
+          "AI voiceover (70+ na mga wika)"
         ]
       },
       "subscriptions": [
         {
-          "id": "pampasimula",
-          "name": "Pampagana",
+          "id": "starter",
+          "name": "magandang simula",
           "description": "Para sa mga indibidwal na creator",
           "features": [
-            "Ganap na access sa platform",
-            "Kasama ang 4,500 credits bawat buwan",
-            "25 GB na aktibong storage",
-            "Pag-export bilang MP4 (anumang resolution)",
-            "AI voiceover (higit sa 70 wika)",
-            "Suporta sa pamamagitan ng email"
+            "Access sa buong platform",
+            "4,500 mga kredito/buwan kasama",
+            "25 GB aktibong imbakan",
+            "MP4 export (anumang resolution)",
+            "AI voiceover (70+ na mga wika)",
+            "Suporta sa email"
           ]
         },
         {
-          "id": "pabor",
-          "name": "Pabor",
+          "id": "pro",
+          "name": "Pro",
           "description": "Para sa mga propesyonal na creator",
           "features": [
-            "Lahat ng nasa Starter, pati na rin ang:",
-            "Kasama ang 15,000 credits bawat buwan",
-            "100 GB na aktibong storage",
-            "Access sa Veo 3.1 Quality (4K)",
-            "Sistema para sa Pagpapanatili ng Pagkakapare-pareho ng Karakter",
-            "Pagkopya ng boses",
-            "BYOK (Dalhin ang Sarili Mong Susi)",
-            "3 upuan para sa team",
+            "Lahat ng bagay sa Starter, plus:",
+            "15,000 credits/buwan ang kasama",
+            "100 GB aktibong imbakan",
+            "Veo 3.1 Kalidad (4K) access",
+            "Character Consistency Engine",
+            "Pag - clone ng boses",
+            "BYOK (Dalhin ang Iyong Sariling Key)",
+            "3 upuan ng team",
             "Prayoridad na suporta"
           ]
         },
         {
-          "id": "istudyo",
+          "id": "studio",
           "name": "Studio",
           "description": "Para sa mga team at ahensya",
           "features": [
-            "Lahat ng nasa Pro, pati na rin ang:",
-            "Kasama ang 75,000 credits bawat buwan",
-            "500 GB na aktibong storage",
-            "Veo 3.1 4K Priority Queue",
-            "Walang-limitasyong Pagpapanatili ng Konsistensi ng Karakter",
-            "Mga produktong white-label na iniluluwas",
-            "Access sa API",
-            "10 upuan para sa koponan",
-            "Nakatalagang account manager",
-            "Available ang Enterprise SLA sa kahilingan."
+            "Lahat ng bagay sa Pro, plus:",
+            "75,000 mga kredito/buwan kasama",
+            "500 GB aktibong imbakan",
+            "Email: info@sportbenzin.ch",
+            "Walang limitasyong Pagkakapare - pareho ng Karakter",
+            "Mga pag - export ng puting label",
+            "Pag - access sa API",
+            "10 upuan ng koponan",
+            "Nakatuon na account manager",
+            "Available ang Enterprise SLA kapag hiniling"
           ]
         }
       ]
-    }
+    },
+    "explorerHighlight": "Ang pinakamabilis na paraan upang maranasan ang kumpletong SceneFlow studio — mula sa konsepto sa SFAISCREENING_ROMTERM.",
+    "trustBadges": [
+      "Email: info@cloudterm.com",
+      "Email: info@sfaiverex.com",
+      "Whop SA",
+      "MAY 90-ARAW NA GARANTIYA SA PAGSASAULI NG IBINAYAD"
+    ]
   },
   "landingSections": {
     "expandSection": "Ipakita ang seksyon",
     "collapseSection": "Itago ang seksyon"
   },
   "finalCta": {
-    "title": "Handa na bang subukan ang buong pipeline?",
-    "subtitle": "Isagawa ang lahat—mula sa konsepto, pre-vis, at video, hanggang sa master MP4—sa iisang studio. Magsimula sa $9 na planong Explorer at subukan mismo ang \"beat-first\" na daloy ng trabaho.",
-    "cta": "Ilunsad ang iyong studio sa halagang $9"
+    "title": "Handa nang subukan ang buong pipeline?",
+    "subtitle": "Google - powered scripting at pag - optimize, ang iyong pagpili ng henerasyon backend, at SFAISCREENING_ROMTERM review — lahat sa isang studio. Setyembre Maagang Access cohort ngayon bumubuo — magsimula sa $ 9 Explorer plano o mag - aplay para sa Founding Creator access.",
+    "cta": "Ilunsad ang Iyong Studio ($ 9) — Setyembre Cohort",
+    "ctaSecondary": "Mag - apply para sa Access ng Founding Creator",
+    "ctaSecondaryHref": "/early-access"
   },
   "footer": {
-    "description": "Awtomatikong produksyon ng video mula simula hanggang katapusan — mula konsepto hanggang sa master na handa nang i-publish. Isang guided studio: Blueprint → Produksyon → Screening Room.",
+    "description": "End - to - end automated na produksyon ng video — mula sa konsepto hanggang sa pag - publish - ready master. One guided studio→: Series Studio → Blueprint Studio → Production Studio SFAISCREENING_ROMTERM.",
     "product": "Produkto",
     "resources": "Mga Mapagkukunan",
     "legal": "Legal",
     "links": {
       "features": "Mga Tampok",
-      "pricing": "Pagpepresyo",
+      "pricing": "Presyo",
       "howItWorks": "Paano Ito Gumagana",
       "gettingStarted": "Pagsisimula",
-      "privacy": "Patakaran sa Privacy",
+      "privacy": "Patakaran sa Pagkapribado",
       "terms": "Mga Tuntunin ng Serbisyo",
       "trustSafety": "Tiwala at Kaligtasan",
-      "refunds": "Patakaran sa Pagsasauli ng Bayad",
+      "refunds": "Patakaran sa Pag - refund",
       "contact": "Makipag-ugnayan sa Amin"
     },
-    "tagline": "Ginawa nang may ❤️ para sa mga creator",
-    "taglineSub": "Mula sa Ideya Hanggang sa Na-publish na Video",
-    "securePayments": "Mga ligtas na pagbabayad na pinoproseso ng Whop, ang aming Merchant of Record",
-    "morLine": "Ang mga ligtas na pagbabayad, pagkalkula ng buwis, at pagsunod sa mga regulasyon ay pinangangasiwaan ng Whop, ang aming Merchant of Record, para sa Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. Nakalaan ang lahat ng karapatan.",
-    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • Makipag-ugnayan sa: support@sceneflowai.studio",
-    "poweredBy": "Pinapagana ng Google Cloud"
+    "tagline": "Ginawa gamit ang ❤️ para sa mga creator",
+    "taglineSub": "Mula sa Ideya hanggang sa Na - publish na Video",
+    "securePayments": "Secure na mga pagbabayad na naproseso ng Whop, ang aming Merchant of Record",
+    "morLine": "Ang mga secure na pagbabayad, pagkalkula ng buwis, at pagsunod ay hinahawakan ng Whop, ang aming Merchant of Record, sa ngalan ng Life Focus, LLC.",
+    "copyright": "Email: info@sfaisceneflow.com Nakalaan ang lahat ng karapatan.",
+    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, Estados Unidos • Makipag - ugnay sa: support@sceneflowai.studio",
+    "poweredBy": "FacebookTwitterLinkedInRedditWhatsappGoogle + TumblrPinterestVkEmail"
   },
   "floatingCta": {
-    "seePricing": "Tingnan ang Presyo",
-    "tryNine": "Subukan ang $9",
-    "tryForNine": "Subukan sa halagang $9",
-    "dismiss": "Ibasura"
+    "seePricing": "Tingnan ang Pagpepresyo",
+    "tryNine": "Subukan ang $ 9",
+    "tryForNine": "Subukan para sa $ 9",
+    "dismiss": "Balewalain"
   },
   "common": {
     "watermark": "SceneFlow AI Studio",
@@ -1763,5 +1778,121 @@
     "mute": "I-mute",
     "unmute": "I-unmute",
     "expandVideo": "Palakihin ang video"
+  },
+  "useCasesShowcase": {
+    "badge": "Sino ang SceneFlow Para sa?",
+    "title": "Sino ang SceneFlow Para sa?",
+    "subtitle": "Mula sa konsepto sa isang SFAISCREENING_ROMTERM animatic sa auto - publish multilanguage video — isang automated pipeline, apat na paraan upang ipadala.",
+    "cta": "Ilunsad ang Iyong Studio ($ 9) — Setyembre Cohort",
+    "tabStory": "Solution",
+    "tabScreening": "Pagskreen",
+    "problemLabel": "Ang problema? ",
+    "solutionLabel": "Ang SceneFlow Solusyon",
+    "outcomeLabel": "ang kinalabasan",
+    "videoLanguagePrompt": "Panoorin ang paglalakbay na ito sa iyong wika",
+    "videoComingSoon": "Paparating na ang walkthrough video",
+    "videoSoon": "gagawin ko iyon sa lalong madaling panahon",
+    "personas": [
+      {
+        "id": "youtubeCreator",
+        "label": "Ang Tagalikha ng YouTube",
+        "headline": "Mula sa Konsepto sa Cinematic Series — Walang Prompt Engineering",
+        "intro": "Magsimula sa isang konsepto o isang detalyadong paglalarawan ng serye. Ang SceneFlow ay nagtatayo ng serye ng uniberso, mga character, at walang limitasyong mga episode, pagkatapos ay gumagamit ng Express upang mag - render ng audio, mga frame, at video nang sabay - sabay. Lumilikha ka at idirekta gamit ang plain text o boses; binubuo ng SceneFlow ang pangitain — walang prompt engineering, walang slot - machine retakes.",
+        "story": {
+          "problem": [
+            "I - juggle mo ang hiwalay na mga tool para sa script, mga imahe, boses, video, musika, at pag - edit.",
+            "Muli mong binubuo ang bawat piraso nang paulit - ulit, umaasa sa isang kapaki - pakinabang na resulta.",
+            "Magkaiba pa rin ang hitsura ng mga character sa eksena sa eksena."
+          ],
+          "solution": [
+            "Ang isang guided studio ay pumapalit sa buong tool stack.",
+            "Ilarawan ang iyong ideya sa plain words — SceneFlow writes ang serye at disenyo ng cast.",
+            "Pinagsasama - sama ng Express ang audio, mga frame, at video habang pinapanatili ng Reference Library ang mga character na pare - pareho."
+          ],
+          "outcome": [
+            "Huwag nang mawalan ng weekend sa mga fragmented tools.",
+            "I - publish sa isang matatag na ritmo maaari mong aktwal na makasabay sa.",
+            "Panatilihin ang bawat episode on - brand nang walang re - rolling para sa pagkakapare - pareho."
+          ]
+        },
+        "screeningRoomHook": "Isipin ang kuwento bilang animatiko bago ang paggalaw ng video, suriin ang mga eksena bago tapusin ang mga stream, at magbahagi ng mga multilanguage stream (70+ wika) para sa pre - release na feedback.",
+        "screeningRoomPreview": "Ang napili ng mga taga - hanga: The Great Illusion: The Chicago World's Fair Deception"
+      },
+      {
+        "id": "startupProvider",
+        "label": "Ang Tagapagbigay ng Startup",
+        "headline": "Magpatakbo ng isang Global Video Studio — Walang Building One",
+        "intro": "Maghatid ng makintab, naisalokal na video sa mga maliliit na negosyo na hindi kayang bayaran ang isang ahensya. Nag - render ang Express ng mga pakete ng buong kliyente nang sabay - sabay, ang Mixer ay nagdaragdag ng mga overlay ng tatak, watermark, at timing, at auto - aligned dub/lip - sync ships bawat deliverable sa wika ng merkado ng iyong kliyente — lahat mula sa isang predictable pipeline.",
+        "story": {
+          "problem": [
+            "Ang mga kliyente ng maliit na negosyo ay hindi kayang bayaran ang isang tradisyunal na ahensya ng video.",
+            "Bumili ka at mag - juggle ng maraming mga tool, muling gawin ang trabaho para sa bawat kliyente.",
+            "Ang bawat bagong wika ay nangangahulugan ng muling pagtatayo ng video mula sa simula."
+          ],
+          "solution": [
+            "Isang predictable pipeline para sa bawat proyekto ng kliyente.",
+            "Mag - render ng isang buong pakete ng video nang sabay — sabay — sabay — audio, mga frame, at video.",
+            "Magdagdag ng mga branding, overlay, at watermark, pagkatapos ay i - auto dub at lip - sync sa wika ng merkado ng kliyente."
+          ],
+          "outcome": [
+            "Maglingkod sa maraming mga kliyente mula sa isang daloy ng trabaho sa studio.",
+            "Maabot ang mga pandaigdigang merkado sa 70+ wika nang hindi muling itinayo ang bawat video.",
+            "I - scale ang serbisyo nang walang pagkuha ng crew o imprastraktura ng gusali."
+          ]
+        },
+        "screeningRoomHook": "Ang client - facing review ng animatic, scene sign - off bago ang pangwakas na mga stream, at maibabahaging mga preview ng multilanguage para sa mga stakeholder sa ibang bansa.",
+        "screeningRoomPreview": "Main Street Rising: Isang Lokal na Negosyo Ilunsad muli"
+      },
+      {
+        "id": "enterprise",
+        "label": "Username or email address *",
+        "headline": "Compliant Training sa Bilis ng Pagbabago ng Patakaran",
+        "intro": "Ang mga panloob na L & D at comms team ay nagpapadala ng mga naka - lock na tatak, mga module na handa sa pag - audit nang walang mga siklo ng vendor. Pinuhin ang anumang frame o linya na may teksto o boses upang manatili sa mensahe, tapusin ang mga overlay at watermark ng Mixer, at i - roll out ang mga awtomatikong naka - align na naka - dub o naka - sync na mga bersyon sa bawat rehiyon mula sa isang solong naaprubahang master.",
+        "story": {
+          "problem": [
+            "Ang mga video ng pagsasanay at comms ay naghihintay ng ilang linggo sa mga vendor sa labas at nagkakahalaga ng premium.",
+            "Kapag nagbago ang patakaran o produkto, ang mga video ay hindi na ginagamit at off - brand.",
+            "Ang bawat pag - update ay nag - trigger ng isa pang mahal na pag - ikot ng produksyon."
+          ],
+          "solution": [
+            "Gumawa ng mga in - house na naka - lock na video na handa para sa pag - audit.",
+            "Baguhin ang anumang linya o frame gamit ang isang nai - type o pasalitang pagtuturo.",
+            "Suriin at aprubahan bago magbayad para sa pangwakas na render, pagkatapos ay i - roll out ang isang master sa bawat rehiyon."
+          ],
+          "outcome": [
+            "Ang pagsasanay at komunikasyon ay nakakasabay sa mga pagbabago sa patakaran.",
+            "Manatiling on - brand nang hindi naghihintay sa mga siklo ng vendor.",
+            "I - update nang isang beses at ipamahagi sa lahat ng dako mula sa isang solong aprubadong hiwa."
+          ]
+        },
+        "screeningRoomHook": "Suriin ang mga eksena bago magwakas ang mga stream at magbahagi ng mga pribadong Screening Room link para sa cross - region na feedback nang hindi nag - e - export ng mga hindi pa tapos na master.",
+        "screeningRoomPreview": "Shield Protocol: Global Cybersecurity Onboarding"
+      },
+      {
+        "id": "educator",
+        "label": "Ang Tagapagturo",
+        "headline": "I - on ang Kurikulum Sa Mga Aralin Mga Mag - aaral Talagang Panoorin",
+        "intro": "Ang mga malalaking institusyon ay nag - convert ng mga siksik na kabanata sa localized, narrative video. Ang Express ay nagtatayo ng buong mga aralin nang mabilis, matalinong pag - edit ng teksto/boses na hinahayaan ang nilalaman ng faculty na mag - tune nang walang prompt engineering, at awtomatikong nakahanay na dub/lip - sync ay tumutugma sa wika ng bawat pangkat — pagkatapos ay awtomatikong i — publish ang mga barko na naka - localize na mga pamagat at mga thumbnail sa bawat channel.",
+        "story": {
+          "problem": [
+            "Ang makapal na materyal ng kurso ay nagiging video lamang pagkatapos ng mga linggo, mga dalubhasang kasanayan, o isang malaking badyet.",
+            "Kung wala iyon, ang mga aralin ay mananatili bilang mga slideshow na laktawan ng mga mag - aaral.",
+            "Ang paglilingkod sa mga mag - aaral sa maraming wika ay nagpaparami sa trabaho."
+          ],
+          "solution": [
+            "Bumuo ng mga buong isinalaysay na aralin nang mabilis sa isang studio.",
+            "Faculty ayusin ang nilalaman sa pamamagitan ng pag - type o pagsasalita — walang mga teknikal na prompt.",
+            "Auto dub, lip - sync, at i - publish na may mga localized na pamagat at mga thumbnail para sa bawat pangkat."
+          ],
+          "outcome": [
+            "Gawing video ang kurikulum na talagang pinapanood ng mga mag - aaral.",
+            "Abutin ang bawat campus sa kanilang wika nang walang isang koponan ng produksyon.",
+            "Ang mga aralin sa barko ay mas mabilis kaysa sa tradisyonal na produksyon ng video ay nagbibigay - daan."
+          ]
+        },
+        "screeningRoomHook": "I - preview ng Faculty ang animatic bago ang paggastos ng produksyon, suriin ang mga eksena sa aralin, at ibahagi ang mga stream sa 70+ na mga wika para sa feedback ng multi - campus.",
+        "screeningRoomPreview": "Renaissance Workshop: Nakikita ang Nakaraan sa Paggalaw"
+      }
+    ]
   }
 }
