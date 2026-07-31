@@ -414,6 +414,8 @@
     "problemLabel": "The Problem",
     "solutionLabel": "The Solution",
     "outcomeLabel": "The Payoff",
+    "videoComingSoon": "Feature demo coming soon",
+    "videoSoon": "Soon",
     "categories": [
       {
         "id": "create",
