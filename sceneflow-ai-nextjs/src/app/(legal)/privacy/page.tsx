@@ -2,6 +2,15 @@
 
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
+import {
+  LEGAL_ADDRESS,
+  LEGAL_COMPANY_NAME,
+  LEGAL_LAST_UPDATED,
+  LEGAL_SERVICE_NAME,
+  LEGAL_SUPPORT_EMAIL,
+  LEGAL_WEBSITE,
+  WHOP_MOR_NAME,
+} from '@/config/legal/legalCopy'
 
 export default function PrivacyPolicyPage() {
   return (
@@ -16,13 +25,13 @@ export default function PrivacyPolicyPage() {
         </Link>
         
         <h1 className="text-4xl font-bold text-white mb-2">Privacy Policy</h1>
-        <p className="text-gray-400 mb-8">Last updated: May 6, 2026</p>
+        <p className="text-gray-400 mb-8">Last updated: {LEGAL_LAST_UPDATED}</p>
         
         <div className="prose prose-invert prose-purple max-w-none space-y-8">
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">1. Introduction</h2>
             <p className="text-gray-300 leading-relaxed">
-              SceneFlow AI Inc. (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) respects your privacy and is committed to protecting your personal data. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our Service at sceneflowai.studio.
+              {LEGAL_COMPANY_NAME} (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) operates {LEGAL_SERVICE_NAME} and respects your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our Service at sceneflowai.studio.
             </p>
           </section>
 
@@ -103,7 +112,7 @@ export default function PrivacyPolicyPage() {
             
             <h3 className="text-xl font-medium text-white mb-3 mt-6">4.1 Law Enforcement & Content Attribution</h3>
             <p className="text-gray-300 leading-relaxed">
-              We may disclose generation audit logs (user ID, prompts, content hashes, timestamps, moderation events) to law enforcement agencies upon valid legal request. Segment video may include SceneFlow provenance records for attribution. Studio content validation surfaces informational risk signals—it does not replace your responsibility for how content is published. We also retain violation counters and suspension timestamps for enforcement actions and Merchant of Record audit purposes.
+              We may disclose generation audit logs (user ID, prompts, content hashes, timestamps, moderation events) to law enforcement agencies upon valid legal request. Segment video may include SceneFlow provenance records for attribution. Studio content validation surfaces informational risk signals—it does not replace your responsibility for how content is published. We also retain violation counters and suspension timestamps for enforcement actions and {WHOP_MOR_NAME}, our Merchant of Record, audit purposes.
             </p>
           </section>
 
@@ -146,7 +155,7 @@ export default function PrivacyPolicyPage() {
               <li><strong>Restriction:</strong> Request restriction of processing</li>
             </ul>
             <p className="text-gray-300 leading-relaxed mt-4">
-              To exercise these rights, email <strong>brian@sfai.studio</strong>.
+              To exercise these rights, email <strong>{LEGAL_SUPPORT_EMAIL}</strong>.
             </p>
           </section>
 
@@ -187,8 +196,10 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">12. Contact Us</h2>
             <p className="text-gray-300">
-              <strong>Support and Privacy Inquiries:</strong> brian@sfai.studio<br />
-              <strong>Website:</strong> https://sceneflowai.studio
+              <strong>{LEGAL_COMPANY_NAME}</strong><br />
+              {LEGAL_ADDRESS}<br />
+              <strong>Support and Privacy Inquiries:</strong> {LEGAL_SUPPORT_EMAIL}<br />
+              <strong>Website:</strong> {LEGAL_WEBSITE}
             </p>
           </section>
         </div>

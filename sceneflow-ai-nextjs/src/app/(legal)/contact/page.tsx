@@ -1,25 +1,51 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowLeft, Mail, MessageSquare, Shield, HelpCircle, CreditCard, Scale } from 'lucide-react'
+import { ArrowLeft, Shield, HelpCircle, CreditCard, Scale } from 'lucide-react'
+import {
+  LEGAL_ABUSE_EMAIL,
+  LEGAL_LEGAL_EMAIL,
+  LEGAL_SUPPORT_EMAIL,
+  LEGAL_TRUST_EMAIL,
+} from '@/config/legal/legalCopy'
 
 export default function ContactPage() {
   const contactChannels = [
     {
+      id: 'support',
       icon: HelpCircle,
       title: 'Support and General Inquiries',
-      email: 'brian@sfai.studio',
-      description: 'Help with using SceneFlow AI, technical issues, feature questions, and general inquiries.',
+      email: LEGAL_SUPPORT_EMAIL,
+      description: 'Help with using SceneFlow AI, technical issues, feature questions, privacy requests, and billing.',
       responseTime: 'Within 24 hours',
       color: 'purple'
     },
     {
+      id: 'trust',
       icon: Shield,
       title: 'Trust & Safety',
-      email: 'brian@sfai.studio',
+      email: LEGAL_TRUST_EMAIL,
       description: 'Report misuse of our platform, content violations, voice verification issues, or safety concerns.',
       responseTime: 'Within 24 hours',
       color: 'red'
+    },
+    {
+      id: 'abuse',
+      icon: Scale,
+      title: 'Abuse Reports and Appeals',
+      email: LEGAL_ABUSE_EMAIL,
+      description: 'Report abuse, submit suspension appeals, or escalate enforcement decisions.',
+      responseTime: 'Within 24 hours',
+      color: 'amber'
+    },
+    {
+      id: 'legal',
+      icon: CreditCard,
+      title: 'Legal Inquiries',
+      email: LEGAL_LEGAL_EMAIL,
+      description: 'Law enforcement requests, legal notices, and other formal legal correspondence.',
+      responseTime: 'Within 2 business days',
+      color: 'blue'
     }
   ]
 
@@ -58,7 +84,7 @@ export default function ContactPage() {
               
               return (
                 <div 
-                  key={channel.email}
+                  key={channel.id}
                   className={`bg-gray-800/50 rounded-xl p-6 border ${colors.border} hover:border-opacity-60 transition-all duration-200`}
                 >
                   <div className="flex items-start gap-4">

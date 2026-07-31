@@ -31,7 +31,7 @@ export function Footer() {
   }
 
   const socialLinks = [
-    { name: 'Email', icon: Mail, href: 'mailto:brian@sfai.studio' },
+    { name: 'Email', icon: Mail, href: 'mailto:support@sfai.studio' },
     {
       name: 'YouTube',
       icon: Youtube,

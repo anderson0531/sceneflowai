@@ -2,6 +2,15 @@
 
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
+import {
+  LEGAL_ADDRESS,
+  LEGAL_COMPANY_NAME,
+  LEGAL_LAST_UPDATED,
+  LEGAL_SERVICE_NAME,
+  LEGAL_SUPPORT_EMAIL,
+  LEGAL_WEBSITE,
+  WHOP_MOR_NAME,
+} from '@/config/legal/legalCopy'
 
 export default function TermsOfServicePage() {
   return (
@@ -16,13 +25,13 @@ export default function TermsOfServicePage() {
         </Link>
         
         <h1 className="text-4xl font-bold text-white mb-2">Terms of Service</h1>
-        <p className="text-gray-400 mb-8">Last updated: June 5, 2026</p>
+        <p className="text-gray-400 mb-8">Last updated: {LEGAL_LAST_UPDATED}</p>
         
         <div className="prose prose-invert prose-purple max-w-none space-y-8">
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">1. Agreement to Terms</h2>
             <p className="text-gray-300 leading-relaxed">
-              By accessing or using SceneFlow AI ("Service"), operated by Life Focus, LLC ("Company," "we," "us," or "our"), you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use the Service.
+              By accessing or using {LEGAL_SERVICE_NAME} (&quot;Service&quot;), operated by {LEGAL_COMPANY_NAME} (&quot;Company,&quot; &quot;we,&quot; &quot;us,&quot; or &quot;our&quot;), you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use the Service.
             </p>
           </section>
 
@@ -80,7 +89,7 @@ export default function TermsOfServicePage() {
             </p>
             <h3 className="text-xl font-medium text-white mb-3">Our Content</h3>
             <p className="text-gray-300 leading-relaxed">
-              The Service, including its design, features, and technology, is owned by Life Focus, LLC and protected by intellectual property laws.
+              The Service, including its design, features, and technology, is owned by {LEGAL_COMPANY_NAME} and protected by intellectual property laws.
             </p>
           </section>
 
@@ -173,14 +182,14 @@ export default function TermsOfServicePage() {
             <h2 className="text-2xl font-semibold text-white mb-4">12. Limitation of Liability</h2>
             <h3 className="text-xl font-medium text-white mb-3">12.1 Limitation of Liability</h3>
             <p className="text-gray-300 leading-relaxed mb-4">
-              TO THE MAXIMUM EXTENT PERMITTED BY LAW, SCENEFLOW AI AND LIFE FOCUS, LLC SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES. OUR TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNT YOU PAID US IN THE 12 MONTHS PRECEDING THE CLAIM.
+              TO THE MAXIMUM EXTENT PERMITTED BY LAW, SCENEFLOW AI AND {LEGAL_COMPANY_NAME.toUpperCase()} SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES. OUR TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNT YOU PAID US IN THE 12 MONTHS PRECEDING THE CLAIM.
             </p>
             <p className="text-gray-300 leading-relaxed mb-4">
               <strong>Service-Delivered Output Only.</strong> TO THE MAXIMUM EXTENT PERMITTED BY LAW, OUR OBLIGATIONS, WARRANTIES, AND LIABILITY RELATE ONLY TO CONTENT AS DELIVERED BY THE SERVICE AT THE TIME OF EXPORT OR DOWNLOAD. WE ARE NOT RESPONSIBLE FOR CLAIMS, HARM, OR LIABILITY ARISING FROM MODIFICATIONS, EDITS, COMBINATIONS, OR REPUBLICATION OF OUTPUT AFTER IT LEAVES THE SERVICE, INCLUDING VIA THIRD-PARTY EDITING OR PUBLISHING TOOLS (E.G., CAPCUT, ADOBE PREMIERE, SOCIAL PLATFORM EDITORS).
             </p>
             <h3 className="text-xl font-medium text-white mb-3">12.2 User Responsibility, Representations &amp; Indemnification</h3>
             <p className="text-gray-300 leading-relaxed">
-              YOU ARE SOLELY RESPONSIBLE FOR ALL CONTENT YOU GENERATE, EXPORT, PUBLISH, OR DISTRIBUTE USING THE SERVICE, <strong>INCLUDING ANY SUBSEQUENT MODIFICATIONS, EDITS, OR ALTERATIONS YOU OR THIRD PARTIES MAKE AFTER EXPORT.</strong> You agree to indemnify, defend, and hold harmless Life Focus, LLC, its officers, directors, employees, and Merchant of Record partners from any claims, damages, losses, or legal actions arising from your content or its use, including defamation, copyright infringement, privacy violations, fraud, impersonation, and misrepresentation of the synthetic nature of media. <strong>You represent that you will not represent edited or composite content as unaltered Service output without clear disclosure to recipients.</strong> Provenance records and audit logs, where available, reflect Service-delivered state only. This indemnification is a material condition of your use of the Service.
+              YOU ARE SOLELY RESPONSIBLE FOR ALL CONTENT YOU GENERATE, EXPORT, PUBLISH, OR DISTRIBUTE USING THE SERVICE, <strong>INCLUDING ANY SUBSEQUENT MODIFICATIONS, EDITS, OR ALTERATIONS YOU OR THIRD PARTIES MAKE AFTER EXPORT.</strong> You agree to indemnify, defend, and hold harmless {LEGAL_COMPANY_NAME}, its officers, directors, employees, and {WHOP_MOR_NAME}, our Merchant of Record, from any claims, damages, losses, or legal actions arising from your content or its use, including defamation, copyright infringement, privacy violations, fraud, impersonation, and misrepresentation of the synthetic nature of media. <strong>You represent that you will not represent edited or composite content as unaltered Service output without clear disclosure to recipients.</strong> Provenance records and audit logs, where available, reflect Service-delivered state only. This indemnification is a material condition of your use of the Service.
             </p>
           </section>
 
@@ -211,8 +220,10 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">16. Contact</h2>
             <p className="text-gray-300">
-              <strong>Email:</strong> brian@sfai.studio<br />
-              <strong>Website:</strong> https://sceneflowai.studio
+              <strong>{LEGAL_COMPANY_NAME}</strong><br />
+              {LEGAL_ADDRESS}<br />
+              <strong>Email:</strong> {LEGAL_SUPPORT_EMAIL}<br />
+              <strong>Website:</strong> {LEGAL_WEBSITE}
             </p>
           </section>
         </div>

@@ -2,6 +2,15 @@
 
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
+import {
+  LEGAL_ADDRESS,
+  LEGAL_COMPANY_NAME,
+  LEGAL_LAST_UPDATED,
+  LEGAL_SERVICE_NAME,
+  LEGAL_SUPPORT_EMAIL,
+  LEGAL_WEBSITE,
+  WHOP_MOR_FULL,
+} from '@/config/legal/legalCopy'
 
 export default function RefundPolicyPage() {
   return (
@@ -16,17 +25,17 @@ export default function RefundPolicyPage() {
         </Link>
         
         <h1 className="text-4xl font-bold text-white mb-2">Refund Policy</h1>
-        <p className="text-gray-400 mb-8">Last updated: May 6, 2026</p>
+        <p className="text-gray-400 mb-8">Last updated: {LEGAL_LAST_UPDATED}</p>
         
         <div className="prose prose-invert prose-purple max-w-none space-y-8">
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">1. Overview</h2>
             <p className="text-gray-300 leading-relaxed">
-              SceneFlow AI wants you to be completely satisfied with your purchase. This Refund Policy outlines when and how you can request a refund.
+              {LEGAL_COMPANY_NAME} operates {LEGAL_SERVICE_NAME} and wants you to be completely satisfied with your purchase. This Refund Policy outlines when and how you can request a refund.
             </p>
             <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4 mt-4">
               <p className="text-gray-300 text-sm">
-                <strong className="text-purple-400">Payment Processing:</strong> All payments and refunds are processed by Whop, our Merchant of Record, who handles payment processing, tax calculation, and compliance on our behalf. Sales tax, VAT, or GST collected at the time of purchase will be refunded proportionally with any approved refund.
+                <strong className="text-purple-400">Payment Processing:</strong> All payments and refunds are processed by {WHOP_MOR_FULL} Sales tax, VAT, or GST collected at the time of purchase will be refunded proportionally with any approved refund.
               </p>
             </div>
           </section>
@@ -80,13 +89,13 @@ export default function RefundPolicyPage() {
             <h2 className="text-2xl font-semibold text-white mb-4">5. How to Request a Refund</h2>
             <p className="text-gray-300 leading-relaxed mb-4">To request a refund:</p>
             <ol className="list-decimal pl-6 text-gray-300 space-y-2">
-              <li>Email <strong>brian@sfai.studio</strong> with subject line &quot;Refund Request&quot;</li>
+              <li>Email <strong>{LEGAL_SUPPORT_EMAIL}</strong> with subject line &quot;Refund Request&quot;</li>
               <li>Include your account email address and order/transaction ID</li>
               <li>Briefly explain the reason for your refund request</li>
               <li>We will respond within 2 business days</li>
             </ol>
             <p className="text-gray-300 leading-relaxed mt-4">
-              Alternatively, you can request a refund directly through the payment processor&apos;s customer portal if you received an invoice link.
+              Alternatively, you can request a refund directly through the Whop customer portal if you received an invoice link from Whop.
             </p>
           </section>
 
@@ -116,22 +125,24 @@ export default function RefundPolicyPage() {
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">8. Exceptions and Disputes</h2>
             <p className="text-gray-300 leading-relaxed">
-              If you believe you are entitled to a refund outside of these guidelines due to technical issues or service outages, please contact us with details. We review each case individually. For payment disputes, our payment processor handles chargebacks per their policies.
+              If you believe you are entitled to a refund outside of these guidelines due to technical issues or service outages, please contact us with details. We review each case individually. For payment disputes, Whop, our Merchant of Record, handles chargebacks per its policies.
             </p>
           </section>
 
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">9. Contact</h2>
             <p className="text-gray-300">
-              <strong>Support and Billing Inquiries:</strong> brian@sfai.studio<br />
-              <strong>Website:</strong> https://sceneflowai.studio
+              <strong>{LEGAL_COMPANY_NAME}</strong><br />
+              {LEGAL_ADDRESS}<br />
+              <strong>Support and Billing Inquiries:</strong> {LEGAL_SUPPORT_EMAIL}<br />
+              <strong>Website:</strong> {LEGAL_WEBSITE}
             </p>
           </section>
         </div>
 
         <div className="mt-12 pt-8 border-t border-gray-800">
           <p className="text-gray-400 text-sm">
-            See also: <Link href="/terms" className="text-purple-400 hover:text-purple-300">Terms of Service</Link> | <Link href="/privacy" className="text-purple-400 hover:text-purple-300">Privacy Policy</Link>
+            See also: <Link href="/terms" className="text-purple-400 hover:text-purple-300">Terms of Service</Link> | <Link href="/privacy" className="text-purple-400 hover:text-purple-300">Privacy Policy</Link> | <Link href="/trust-safety" className="text-purple-400 hover:text-purple-300">Trust & Safety</Link>
           </p>
         </div>
       </div>
