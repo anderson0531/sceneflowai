@@ -1747,7 +1747,7 @@
     "securePayments": "当社が指定する決済代行業者（Merchant of Record）である Whop による安全な決済処理",
     "morLine": "安全な決済、税金の計算、およびコンプライアンスへの対応は、Life Focus, LLCに代わり、当社のマーチャント・オブ・レコード（販売主体）であるWhopが担当します。",
     "copyright": "© 2026 SceneFlow AI. All rights reserved.",
-    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • 連絡先: support@sfai.studio",
+    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • 連絡先: support@sceneflowai.studio",
     "poweredBy": "Google Cloud 搭載"
   },
   "floatingCta": {

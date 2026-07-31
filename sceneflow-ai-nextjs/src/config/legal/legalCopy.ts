@@ -5,10 +5,12 @@ export const LEGAL_LAST_UPDATED = 'July 31, 2026'
 export const LEGAL_WEBSITE = 'https://sceneflowai.studio'
 export const LEGAL_ADDRESS = '2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States'
 
-export const LEGAL_SUPPORT_EMAIL = 'support@sfai.studio'
-export const LEGAL_ABUSE_EMAIL = 'abuse@sfai.com'
-export const LEGAL_TRUST_EMAIL = 'trust@sfai.com'
-export const LEGAL_LEGAL_EMAIL = 'legal@sfai.com'
+export const LEGAL_EMAIL_DOMAIN = 'sceneflowai.studio'
+export const LEGAL_SUPPORT_EMAIL = 'support@sceneflowai.studio'
+export const LEGAL_ABUSE_EMAIL = 'abuse@sceneflowai.studio'
+export const LEGAL_TRUST_EMAIL = 'trust@sceneflowai.studio'
+export const LEGAL_LEGAL_EMAIL = 'legal@sceneflowai.studio'
+export const LEGAL_NOREPLY_EMAIL = 'noreply@sceneflowai.studio'
 
 export const LEGAL_FOOTER_ADDRESS = `${LEGAL_COMPANY_NAME} • ${LEGAL_ADDRESS} • Contact: ${LEGAL_SUPPORT_EMAIL}`
 

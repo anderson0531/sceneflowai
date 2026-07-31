@@ -19,12 +19,12 @@ export function getBrandBadgeUrl(): string {
   return `${getAppBaseUrl()}${BRAND.badge.src}`
 }
 
-const DEFAULT_RESEND_FROM = 'SceneFlow AI Studio <noreply@sfai.studio>'
+const DEFAULT_RESEND_FROM = 'SceneFlow AI Studio <noreply@sceneflowai.studio>'
 
-/** Resend From header; prefers env when it uses noreply@sfai.studio, else canonical default. */
+/** Resend From header; prefers env when it uses noreply@sceneflowai.studio, else canonical default. */
 export function getResendFromEmail(): string {
   const configured = process.env.RESEND_FROM_EMAIL?.trim()
-  if (configured?.includes('noreply@sfai.studio')) return configured
+  if (configured?.includes('noreply@sceneflowai.studio')) return configured
   return DEFAULT_RESEND_FROM
 }
 

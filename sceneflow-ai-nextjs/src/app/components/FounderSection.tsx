@@ -97,7 +97,7 @@ export function FounderSection() {
                       <Linkedin className="w-5 h-5" />
                     </a>
                     <a
-                      href="mailto:brian@sfai.studio"
+                      href="mailto:support@sceneflowai.studio"
                       className="w-10 h-10 bg-slate-700/50 hover:bg-cyan-600/50 rounded-lg flex items-center justify-center text-gray-400 hover:text-white transition-all border border-slate-600/50 hover:border-cyan-500/50"
                       aria-label="Email Contact"
                     >
