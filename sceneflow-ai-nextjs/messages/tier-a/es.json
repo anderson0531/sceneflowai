@@ -13,11 +13,6 @@
   "hero": {
     "ctaSecondary": "Ver 'Qué es posible'"
   },
-  "finalCta": {
-    "title": "¿Listo para probar el pipeline completo?",
-    "subtitle": "Ejecuta concepto → pre-vis → video → master MP4 en un solo estudio. Empieza con el plan Explorer de $9 y prueba el flujo beat-first en acción.",
-    "cta": "Lanza tu Studio por $9"
-  },
   "preVisEngine": {
     "badge": "Creative Decision Engine",
     "title": "Pre-Visualization Engine",

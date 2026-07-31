@@ -4,23 +4,26 @@
     "description": "Proměňte své nápady v profesionální videa díky automatizaci pracovních postupů řízené umělou inteligencí."
   },
   "nav": {
-    "workflow": "Pracovní postup",
-    "platformWalkthrough": "Průvodce platformou",
-    "plansPricing": "Plány a ceny",
+    "workflow": "Jak to funguje",
+    "platformWalkthrough": "Prohlídka platformy",
+    "plansPricing": "Tarify a ceny",
     "more": "Více",
-    "useCases": "Případy užití",
+    "useCases": "Use case",
     "audienceResonance": "Audience Resonance",
     "trustSafety": "Důvěra a bezpečnost",
     "platformTrust": "Platforma a důvěra",
     "signIn": "Přihlásit se",
     "startProject": "Zahájit projekt",
-    "dashboard": "Řídicí panel",
-    "adminPanel": "Administrátorský panel",
+    "dashboard": "Nástěnka",
+    "adminPanel": "Panel správce",
     "signOut": "Odhlásit se",
-    "goToDashboard": "Přejít na nástěnku",
+    "goToDashboard": "Zpět na Domovskou stránku",
     "userFallback": "Uživatel",
-    "searchLanguages": "Hledat jazyky...",
-    "noLanguagesFound": "Nebyly nalezeny žádné jazyky"
+    "searchLanguages": "Hledat jazyk",
+    "noLanguagesFound": "Nebyly nalezeny žádné jazyky",
+    "pipeline": "Co se chystá",
+    "productionExamples": "Příklady",
+    "keyFeatures": "Vlasnosti"
   },
   "floatingNav": {
     "compare": "Porovnat",
@@ -34,47 +37,50 @@
     "pricing": "Ceny"
   },
   "hero": {
-    "headline": "Představte si ten příběh. SceneFlow zajišťuje zpracovatelský řetězec.",
-    "subheadline": "Zbavte se zdlouhavého zadávání příkazů. Soustřeďte se plně na svůj tvůrčí záměr díky automatizovanému produkčnímu procesu na profesionální úrovni.",
+    "headline": "Příběh režírujete vy. SceneFlow zautomatizuje studio.",
+    "subheadline": "Inteligence poháněná Googlem byla zorganizována na Google Cloud — s volitelnou generací Google nebo Kling. Proveďte své nápady plynulým procesem od návrhu až po zvládnutí MP4 bez mikropodnětů.",
     "audienceMicroLine": "Vytvořeno pro tvůrce, kteří chtějí výsledky, a týmy, které chtějí vidět, jak to funguje.",
-    "ctaSecondary": "Podívejte se na „What's Possible“",
-    "ctaToolStack": "Podívejte se, jak nahradí vaši sadu nástrojů.",
-    "languagePrompt": "Uslyšte hrdinu ve svém jazyce – stejný proces, nové trhy",
-    "multilangHint": "Klíčový dabing v 7 jazycích – kompletní produkční proces podporuje více než 70 jazyků.",
-    "playWithNarration": "Přehrát s komentářem",
-    "tapToHear": "Klepnutím si poslechnete",
+    "ctaSecondary": "Podívejte se na „Co je možné“",
+    "ctaToolStack": "Podívejte se, jak nahrazuje váš zásobník nástrojů",
+    "languagePrompt": "Poslechněte si hrdinu ve vašem jazyce — stejný kanál, nové trhy",
+    "multilangHint": "Hero dubs v 7 jazycích — full pipeline podporuje 70+ v Production Studio.",
+    "playWithNarration": "Hrát si s vyprávěním",
+    "tapToHear": "Klepnutím uslyšíte",
     "fullscreen": "Celá obrazovka",
     "heroVideoLanguages": {
       "en": {
-        "label": "Angličtina",
-        "nativeLabel": "Angličtina"
+        "label": "anglický jazyk",
+        "nativeLabel": "anglický jazyk"
       },
       "es": {
-        "label": "Španělština",
+        "label": "španělština",
         "nativeLabel": "Španělština"
       },
       "pt": {
-        "label": "Portugalština",
+        "label": "portugalština",
         "nativeLabel": "Portugalština"
       },
       "hi": {
         "label": "hindština",
-        "nativeLabel": "hindština"
+        "nativeLabel": "* * * *"
       },
       "zh": {
-        "label": "Čínština",
+        "label": "čínština",
         "nativeLabel": "Čínština"
       },
       "ar": {
-        "label": "Arabština",
+        "label": "arabština",
         "nativeLabel": "Arabština"
       },
       "th": {
-        "label": "Thajský",
-        "nativeLabel": "Thajsko"
+        "label": "thajština",
+        "nativeLabel": "ไทย"
       }
     },
-    "soon": "Brzy"
+    "soon": "Brzy",
+    "ctaPrimaryLaunch": "Spusťte své studio (9 $) — zářijová kohorta",
+    "ctaSupportingLine": "Začněte s plánem Explorer za 9 $. Zářijová kohorta předčasného přístupu se nyní vytváří.",
+    "videoLanguageCount": "{count, plural, =1 {# language} ostatní {# languages}}"
   },
   "valueProp": {
     "pills": [
@@ -1501,183 +1507,183 @@
     "ctaSubtext": "Propojte tradiční filmovou tvorbu s generativní AI"
   },
   "exitIntent": {
-    "title": "Počkejte! Neodcházejte s prázdnou.",
-    "subtitle": "Získejte exkluzivní přednostní přístup a tipy pro tvorbu filmů s využitím AI.",
+    "title": "Počkej! Neodcházej s prázdnýma rukama",
+    "subtitle": "Získejte exkluzivní přednostní přístup a tipy pro tvorbu filmů s umělou inteligencí",
     "benefits": [
-      "Týdenní návody na tvorbu filmů pomocí AI",
+      "Týdenní instruktážní filmy o umělé inteligenci",
       "Přednostní přístup k novým funkcím",
       "Exkluzivní slevy pro tvůrce"
     ],
-    "emailPlaceholder": "Zadejte svůj e-mail",
-    "subscribe": "Získejte přednostní přístup",
-    "subscribing": "Probíhá přihlašování k odběru...",
+    "emailPlaceholder": "Zadejte svůj email",
+    "subscribe": "Chci předběžný přístup",
+    "subscribing": "Přihlášení k odběru",
     "or": "nebo",
-    "startNow": "Začněte tvořit hned teď jen za 9 $ →",
-    "privacy": "Žádný spam. Odhlásit se můžete kdykoli.",
-    "successTitle": "Jste na seznamu!",
-    "successSubtitle": "Sledujte svou e-mailovou schránku, kde najdete exkluzivní tipy pro filmaře a novinky o přednostním přístupu.",
-    "ctaText": "Začněte objevovat — 9 $",
-    "closePopup": "Zavřít vyskakovací okno"
+    "startNow": "Začněte tvořit již nyní za pouhých 9 $ — vytvoření kohorty v září →",
+    "privacy": "Nikdy žádný spam. Odhlásit se můžete kdykoliv.",
+    "successTitle": "Jsi na seznamu!",
+    "successSubtitle": "V doručených zprávách najdeš exkluzivní tipy pro natáčení filmů a aktualizace předčasného přístupu.",
+    "ctaText": "Začni objevovat — 9 $",
+    "closePopup": "Zavřít popup"
   },
   "pricing": {
-    "badge": "Cenotvorba podle míry využití",
-    "title": "Plaťte za to, co vytvoříte",
-    "subtitle": "Jeden základní tarif pro přístup k platformě. Kredity na generování pomocí AI. Dobití podle potřeby. Plná kontrola, žádné zbytečné výdaje.",
+    "badge": "Jednoduchá cenotvorba",
+    "title": "Začněte s Explorer — 9 $",
+    "subtitle": "Formování kohorty předčasného přístupu v září. Otestujte celý potrubí s vstupem bez tření $ 9.",
     "valueAnchor": {
-      "traditionalCost": "Více než 2 000 USD",
-      "traditionalLabel": "Tradiční pre-vizualizace",
+      "traditionalCost": "2 000",
+      "traditionalLabel": "Tradiční previs",
       "vs": "vs.",
-      "sceneFlowCost": "49–149 USD",
+      "sceneFlowCost": "49-149 $",
       "sceneFlowLabel": "SceneFlow měsíčně",
-      "saveBadge": "Ušetřete více než 90 % na projekt"
+      "saveBadge": "Ušetřete více než90% na projektu"
     },
     "teamCta": {
-      "title": "Interní tým, nebo instituce?",
-      "description": "Rezervujte si prohlídku pracovních postupů pro týmy komunikace, vzdělávání a rozvoje (L&D) a marketingu.",
-      "button": "Průvodce knihou"
+      "title": "Interní tým nebo instituce?",
+      "description": "Rezervuj si pracovní postup pro komunikační, L&D a marketingové týmy",
+      "button": "Návod k rezervování"
     },
     "agencyCta": {
-      "title": "Agentura, nebo produkční studio?",
-      "description": "Kredit na míru, SLA a vyhrazená podpora ve velkém měřítku",
-      "button": "Kontaktovat obchodní oddělení"
+      "title": "Agenturní nebo výrobní prodejna?",
+      "description": "Vlastní kredity, SLA a specializovaná podpora ve velkém měřítku",
+      "button": "Kontaktujte oddělení prodeje"
     },
     "byok": {
-      "title": "Použití vlastního klíče",
-      "badge": "Plány Pro a Studio",
-      "description": "Máte již API klíče pro Vertex AI nebo ElevenLabs? Použijte je s SceneFlow AI a ušetřete až 80 % za kredity platformy.",
-      "savingsHighlight": "80 % ve formě kreditů na platformě",
+      "title": "Přineste si vlastní klíč",
+      "badge": "Profesionální a studiové plány",
+      "description": "Už máte API klíče pro Vertex AI nebo ElevenLabs? Použijte je s SceneFlow AI a ušetřete až 80% na kreditech na platformě.",
+      "savingsHighlight": "80% z kreditů na platformě",
       "benefits": [
         {
-          "title": "80% úspora kreditů SceneFlow",
-          "description": "Za orchestraci a nástroje zaplatíte pouze 20% poplatek za platformu."
+          "title": "80% úspora kreditu SceneFlow",
+          "description": "Zaplatit pouze 20% poplatek za platformu za orchestraci a nástroje"
         },
         {
           "title": "Využijte firemní plány",
-          "description": "Využijte své stávající množstevní slevy Vertex AI nebo ElevenLabs"
+          "description": "Využijte stávající množstevní slevy Vertex AI nebo ElevenLabs"
         },
         {
-          "title": "Plná kontrola",
-          "description": "Vaše klíče, vaše fakturace, vaše řízení nákladů"
+          "title": "Plné ovládání - 0",
+          "description": "Vaše klíče, fakturace, správa nákladů"
         }
       ],
       "supportedProviders": "Podporovaní poskytovatelé",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "Imagen 4 a Veo 3.1",
+      "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
       "elevenLabsDetail": "Převod textu na řeč a klonování hlasu",
       "savingsLabel": "80% úspora",
       "onImagesVideo": "na obrázcích a videu",
-      "onVoiceover": "v komentáři",
-      "note": "Uvedené úspory kreditů představují úspory v rámci platformy SceneFlow. Vaše skutečné celkové náklady závisí na vašich individuálních nebo firemních cenových podmínkách pro API u jednotlivých poskytovatelů."
+      "onVoiceover": "při hlasovém komentáři",
+      "note": "Zobrazené kreditní úspory jsou úspory na platformě SceneFlow. Vaše skutečné celkové náklady závisí na vašich osobních nebo firemních cenách API u každého poskytovatele."
     },
     "creditTopUps": {
       "title": "Potřebujete více kreditů?",
-      "subtitle": "Dobijte si kdykoli. Kredit nikdy nepropadá.",
+      "subtitle": "Dobijte kdykoli. Kredity nikdy nevyprší.",
       "packs": [
         {
-          "label": "Startovací balíček",
-          "description": "Ideální pro rychlé zopakování"
+          "label": "starter pack",
+          "description": "Ideální pro rychlé revize"
         },
         {
           "label": "Balíček scén",
-          "description": "Dokončete krátký projekt"
+          "description": "Dokončit krátký projekt"
         },
         {
-          "label": "Produkční balíček",
-          "description": "Významná filmová sekvence"
+          "label": "Výrobní balíček",
+          "description": "Hlavní filmová sekvence"
         },
         {
-          "label": "Studio Pack",
-          "description": "Plná výrobní kapacita"
+          "label": "Studiový balíček",
+          "description": "Úplná výrobní kapacita"
         }
       ],
-      "creditsUnit": "titulky"
+      "creditsUnit": "kreditů"
     },
     "calculator": {
-      "sectionTitle": "Odhadněte náklady na svůj projekt",
-      "sectionSubtitle": "Zjistěte přesně, kolik zaplatíte, než se zavážete.",
+      "sectionTitle": "Odhadněte svůj projekt",
+      "sectionSubtitle": "Než se zavážeš, budeš přesně vědět, kolik zaplatíš",
       "title": "Kalkulačka rozpočtu projektu",
-      "subtitle": "Před zahájením odhadněte počet kreditů.",
+      "subtitle": "Odhadněte kredity před zahájením",
       "customize": "Přizpůsobit parametry",
       "imagesLabel": "Obrázky k vygenerování",
-      "videoClipsLabel": "Videoklipy",
-      "voiceoverLabel": "Komentář (minuty)",
-      "byokTitle": "Vlastní šifrovací klíč (BYOK)",
-      "byokBadge": "Pro a Studio",
-      "byokDescription": "Použijte vlastní API klíče a ušetřete až 80 % za kredity SceneFlow. Poskytovatelům AI platíte přímo podle jejich sazeb.",
-      "vertexToggle": "Vertex AI (Obrázky a video)",
-      "elevenLabsToggle": "ElevenLabs (Komentář)",
+      "videoClipsLabel": "Filmy",
+      "voiceoverLabel": "Hlasový komentář (minuty)",
+      "byokTitle": "Přineste si vlastní klíč (BYOK)",
+      "byokBadge": "Pro & Studio",
+      "byokDescription": "Použijte své vlastní klíče API a ušetřete až 80% na kreditech SceneFlow. Poskytovatelům umělé inteligence platíte přímo jejich sazbami.",
+      "vertexToggle": "Vertex AI (obrázky a video)",
+      "elevenLabsToggle": "ElevenLabs (Hlasový komentář)",
       "imageGeneration": "Generování obrázků",
       "videoGeneration": "Generování videa",
-      "voiceover": "Komentář",
+      "voiceover": "Voiceover",
       "byokTag": "(BYOK)",
       "totalEstimate": "Celkový odhad",
       "withTopUps": "s dobíjením",
-      "creditSavings": "SceneFlow úvěrové spoření",
-      "savePercent": "Ušetříte {percent} % za kredity SceneFlow",
-      "transparency": "Naprostá transparentnost: Spotřebu kreditů uvidíte v reálném čase přímo při práci. Žádná překvapení – rozsah projektu můžete kdykoli upravit.",
-      "transparencyHighlight": "Naprostá transparentnost:",
-      "byokDisclaimer": "BYOK Poznámka: Uvedené úspory kreditů odrážejí pouze snížení počtu kreditů na platformě SceneFlow. Vaše skutečné náklady závisí na vašich cenových plánech Vertex AI a ElevenLabs. Firemní plány nebo plány s vysokým objemem využití API mohou nabízet další úspory.",
+      "creditSavings": "Úvěrové úspory SceneFlow",
+      "savePercent": "Ušetříte {percent}% na kreditech SceneFlow",
+      "transparency": "Plná transparentnost: Při práci uvidíte využití kreditu v reálném čase. Žádná překvapení - kdykoli upravte rozsah projektu.",
+      "transparencyHighlight": "Úplná transparentnost:",
+      "byokDisclaimer": "BYOK Poznámka: Zobrazené kreditní úspory odrážejí pouze snížení kreditů na platformě SceneFlow. Vaše skutečné náklady závisí na vašich cenových plánech Vertex AI a ElevenLabs. Firemní nebo velkoobjemové plány API mohou nabídnout další úspory.",
       "byokDisclaimerHighlight": "BYOK Poznámka:",
       "presets": [
         {
-          "id": "reklama",
-          "name": "Třicetisekundový reklamní spot"
+          "id": "commercial",
+          "name": "30sekundová komerční"
         },
         {
-          "id": "krátký",
-          "name": "Dvouminutový krátký film"
+          "id": "short",
+          "name": "2minutový krátký film"
         },
         {
-          "id": "epizoda",
-          "name": "Desetiminutová epizoda"
+          "id": "episode",
+          "name": "10minutová epizoda"
         },
         {
-          "id": "funkce",
-          "name": "90minutový celovečerní film"
+          "id": "feature",
+          "name": "Funkce 90 minut"
         }
       ],
-      "minSuffix": "min."
+      "minSuffix": "min"
     },
     "tierGrid": {
       "productionTestFlight": "Výrobní zkušební let",
-      "getStarted": "Začít",
+      "getStarted": "Začínáme",
       "startTestFlight": "Zahájit zkušební let",
-      "loading": "Načítání...",
-      "mostPopular": "Nejoblíbenější",
+      "loading": "Načítání…",
+      "mostPopular": "Nejvíce populární",
       "creditsPerMonth": "Kredity/měsíc",
       "storage": "Skladování",
       "perMonth": "/měsíc"
     },
     "trust": {
-      "cancelAnytime": "Zrušit můžete kdykoli",
+      "cancelAnytime": "Skončit můžete kdykoli",
       "moneyBack": "Záruka vrácení peněz do 14 dnů",
-      "creditsNeverExpire": "Kredity nikdy nepropadají (balíček Explorer)"
+      "creditsNeverExpire": "Kredity nikdy nevyprší (balíček Explorer)"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "Jednorázový nákup na vyzkoušení",
+        "description": "Jednorázový nákup pro vyzkoušení",
         "features": [
           "Jednorázový nákup",
-          "750 kreditů (platnost nikdy nevyprší)",
+          "750 kreditů (nikdy nevyprší)",
           "5 GB úložiště (30 dní)",
-          "Plný přístup k platformě",
-          "Export do MP4 (jakékoli rozlišení)",
-          "AI komentář (více než 70 jazyků)"
+          "Plný přístup na platformu",
+          "Export MP4 (libovolné rozlišení)",
+          "Hlasový komentář AI (70+ jazyků)"
         ]
       },
       "subscriptions": [
         {
-          "id": "předkrm",
-          "name": "Předkrm",
-          "description": "Pro individuální tvůrce",
+          "id": "starter",
+          "name": "Spouštěč",
+          "description": "Pro jednotlivé tvůrce",
           "features": [
-            "Plný přístup k platformě",
-            "4 500 kreditů měsíčně v ceně",
+            "Plný přístup na platformu",
+            "Včetně 4 500 kreditů/měsíc",
             "25 GB aktivního úložiště",
-            "Export do MP4 (jakékoli rozlišení)",
-            "AI komentář (více než 70 jazyků)",
+            "Export MP4 (libovolné rozlišení)",
+            "Hlasový komentář AI (70+ jazyků)",
             "E-mailová podpora"
           ]
         },
@@ -1686,75 +1692,84 @@
           "name": "Pro",
           "description": "Pro profesionální tvůrce",
           "features": [
-            "Vše z tarifu Starter a navíc:",
-            "V ceně je zahrnuto 15 000 kreditů měsíčně.",
+            "Vše v programu Starter a navíc:",
+            "Včetně 15 000 kreditů/měsíc",
             "100 GB aktivního úložiště",
-            "Přístup ke kvalitě Veo 3.1 (4K)",
-            "Systém pro zajištění konzistence postav",
+            "Veo 3.1 Kvalitní (4K) přístup",
+            "Motor konzistence znaků",
             "Klonování hlasu",
-            "BYOK (Vlastní šifrovací klíč)",
+            "BYOK (Přineste si vlastní klíč)",
             "3 týmová sedadla",
-            "Prioritní podpora"
+            "Přednostní podpora"
           ]
         },
         {
           "id": "studio",
-          "name": "Studio",
+          "name": "Ateliér",
           "description": "Pro týmy a agentury",
           "features": [
-            "Vše z verze Pro a navíc:",
-            "V ceně je zahrnuto 75 000 kreditů měsíčně",
+            "Vše v Pro a navíc:",
+            "Včetně 75 000 kreditů/měsíc",
             "500 GB aktivního úložiště",
-            "Prioritní fronta pro Veo 3.1 4K",
-            "Neomezená konzistence postav",
-            "Export produktů pod vlastní značkou odběratele (white-label)",
-            "Přístup k API",
-            "10 míst pro tým",
-            "Vyhrazený manažer pro správu klienta",
-            "SLA pro podniky k dispozici na vyžádání"
+            "Veo 3.1 4K Prioritní fronta",
+            "Neomezená konzistence znaků",
+            "Vývoz s bílou značkou",
+            "Přístup k rozhraní API ",
+            "10 týmových míst",
+            "Vyhrazený správce účtu",
+            "Enterprise SLA k dispozici na vyžádání"
           ]
         }
       ]
-    }
+    },
+    "explorerHighlight": "Nejrychlejší způsob, jak zažít kompletní studio SceneFlow — od konceptu až po Screening Room.",
+    "trustBadges": [
+      "Google Cloud infrastruktura",
+      "Vertex AI generace",
+      "Bezpečné platby prostřednictvím Whop",
+      "Záruka vrácení peněz do 14 dnů"
+    ]
   },
   "landingSections": {
     "expandSection": "Zobrazit sekci",
     "collapseSection": "Skrýt sekci"
   },
   "finalCta": {
-    "title": "Jste připraveni otestovat celou pipeline?",
-    "subtitle": "Realizujte vše od konceptu přes pre-vizualizaci a video až po finální MP4 v jediném studiu. Začněte s tarifem za 9 $ Explorer a vyzkoušejte si v praxi pracovní postup, který klade důraz na rytmus.",
-    "cta": "Spusťte své studio za 9 $"
+    "title": "Jste připraveni otestovat celý ropovod?",
+    "subtitle": "Skriptování a optimalizace poháněné Googlem, vaše volba generačního backendu a recenze Screening Room — vše v jednom studiu. Zářijová kohorta předčasného přístupu se nyní vytváří — začněte s plánem Explorer za 9 $ nebo požádejte o zakládající přístup tvůrce.",
+    "cta": "Spusťte své studio (9 $) — zářijová kohorta",
+    "ctaSecondary": "Požádat o zakládající přístup pro tvůrce",
+    "ctaSecondaryHref": "/early-access"
   },
   "footer": {
-    "description": "Komplexní automatizovaná produkce videa – od konceptu až po finální verzi připravenou k publikaci. Jedno studio s průvodcem: Blueprint → Produkce → Screening Room.",
+    "description": "Kompletní automatizovaná tvorba videa — od konceptu až po master připravený k publikování. Jedno vedené studio: Series Studio → Blueprint Studio → Production Studio → Screening Room.",
     "product": "Produkt",
     "resources": "Zdroje",
-    "legal": "Právní informace",
+    "legal": "Právo",
     "links": {
-      "features": "Funkce",
-      "pricing": "Ceny",
+      "features": "Vlasnosti",
+      "pricing": "Ceník",
       "howItWorks": "Jak to funguje",
       "gettingStarted": "Začínáme",
       "privacy": "Zásady ochrany osobních údajů",
-      "terms": "Podmínky služby",
+      "terms": "Pravidla používání služby",
       "trustSafety": "Důvěra a bezpečnost",
-      "refunds": "Zásady vracení peněz",
+      "refunds": "Zásady pro vracení peněz",
       "contact": "Kontaktujte nás"
     },
-    "tagline": "Vytvořeno s ❤️ pro tvůrce",
-    "taglineSub": "Od nápadu po zveřejněné video",
-    "securePayments": "Bezpečné platby zpracovávané společností Whop, naším oficiálním prodejcem (Merchant of Record)",
-    "morLine": "Bezpečné platby, výpočet daní a zajištění souladu s předpisy zajišťuje společnost Whop, náš oficiální prodejce (Merchant of Record), jménem společnosti Life Focus, LLC.",
+    "tagline": "Vytvořeno ❤️ pro tvůrce",
+    "taglineSub": "Od nápadu k publikovanému videu",
+    "securePayments": "Bezpečné platby zpracovávané Whop, naším obchodním partnerem",
+    "morLine": "Bezpečné platby, výpočet daní a dodržování předpisů zpracovává Whop, náš obchodník záznamu, jménem společnosti Life Focus, LLC.",
     "copyright": "© 2026 SceneFlow AI. Všechna práva vyhrazena.",
-    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • Kontakt: support@sceneflowai.studio",
-    "poweredBy": "Poháněno systémem Google Cloud"
+    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, Spojené státy • Kontakt: support@sceneflowai.studio",
+    "poweredBy": "Inteligence poháněná Googlem · Orchestrováno na Google Cloud"
   },
   "floatingCta": {
-    "seePricing": "Zobrazit ceník",
-    "tryNine": "Vyzkoušejte za 9 $",
-    "tryForNine": "Vyzkoušejte za 9 $",
-    "dismiss": "Zavřít"
+    "seePricing": "Zobrazit ceny",
+    "tryNine": "Vyzkoušej 9 $",
+    "tryForNine": "Vyzkoušej za 9 $",
+    "dismiss": "Zamítnout"
   },
   "common": {
     "watermark": "SceneFlow AI Studio",
@@ -1763,5 +1778,121 @@
     "mute": "Ztlumit",
     "unmute": "Zapnout zvuk",
     "expandVideo": "Rozbalit video"
+  },
+  "useCasesShowcase": {
+    "badge": "Pro koho je SceneFlow?",
+    "title": "Pro koho je SceneFlow?",
+    "subtitle": "Od konceptu k Screening Room animatickému až po auto-publikované vícejazyčné video — jeden automatizovaný kanál, čtyři způsoby odeslání.",
+    "cta": "Spusťte své studio (9 $) — zářijová kohorta",
+    "tabStory": "Řešení",
+    "tabScreening": "Screening",
+    "problemLabel": "Popis problému",
+    "solutionLabel": "Řešení SceneFlow",
+    "outcomeLabel": "Co vznikne",
+    "videoLanguagePrompt": "Sleduj tuto cestu ve svém jazyce",
+    "videoComingSoon": "Video s návodem již brzy",
+    "videoSoon": "Brzy",
+    "personas": [
+      {
+        "id": "youtubeCreator",
+        "label": "Tvůrce YouTube",
+        "headline": "Od konceptu k filmovému seriálu — žádné rychlé inženýrství",
+        "intro": "Začněte konceptem nebo podrobným popisem série. SceneFlow vytváří vesmír seriálu, postavy a neomezené epizody a pak používá Express k současnému vykreslování zvuku, snímků a videa. Vytváříte a řídíte prostým textem nebo hlasem; SceneFlow buduje vizi — žádné rychlé inženýrství, žádné opakování automatů.",
+        "story": {
+          "problem": [
+            "Žongluješ se samostatnými nástroji pro scénář, obrázky, hlas, video, hudbu a úpravy.",
+            "Znovu a znovu generujete každý kus a doufáte v použitelný výsledek.",
+            "Postavy stále vypadají v každé scéně jinak."
+          ],
+          "solution": [
+            "Celou sadu nástrojů nahrazuje jedno vedené studio.",
+            "Popište svůj nápad prostými slovy — SceneFlow napíše seriál a navrhne obsazení.",
+            "Express vykresluje zvuk, snímky a video společně, zatímco Reference Library udržuje znaky konzistentní."
+          ],
+          "outcome": [
+            "Přestaňte ztrácet víkendy s roztříštěnými nástroji.",
+            "Publikujte v ustáleném rytmu, se kterým dokážete držet krok.",
+            "Udržujte každou epizodu na značce bez opakování pro konzistenci."
+          ]
+        },
+        "screeningRoomHook": "Představte si příběh jako animovaný před pohyblivým videem, prohlédněte si scény před dokončením streamů a sdílejte vícejazyčné streamy (více než 70 jazyků) pro předběžnou zpětnou vazbu.",
+        "screeningRoomPreview": "Neviditelný archiv: Velká iluze: Světový podvod v Chicagu"
+      },
+      {
+        "id": "startupProvider",
+        "label": "Poskytovatel spouštění",
+        "headline": "Spusťte globální video studio — aniž byste ho budovali",
+        "intro": "Poskytujte leštěné lokalizované video malým firmám, které si nemohou dovolit agenturu. Express vykresluje současně celé balíčky klientů, Mixer přidává překryvy značek, vodoznaky a načasování a automaticky zarovnané dub/lip-sync dodává každý výstup v tržním jazyce vašeho klienta — to vše z jednoho předvídatelného kanálu.",
+        "story": {
+          "problem": [
+            "Klienti z řad malých firem si tradiční video agenturu nemohou dovolit.",
+            "Nakupujete a žonglujete s mnoha nástroji, předěláváte práci pro každého klienta.",
+            "Každý nový jazyk znamená přestavbu videa od nuly."
+          ],
+          "solution": [
+            "Jeden předvídatelný kanál pro každý klientský projekt.",
+            "Vykreslete celý video balíček najednou — zvuk, rámečky a video dohromady.",
+            "Přidejte branding, překryvy a vodoznaky, pak auto dub a lip-sync do tržního jazyka klienta."
+          ],
+          "outcome": [
+            "Obsluhujte mnoho klientů z jednoho studiového workflow.",
+            "Oslovte globální trhy ve více než70 jazycích, aniž byste museli každé video znovu sestavovat.",
+            "Škálujte službu bez najímání posádky nebo budování infrastruktury."
+          ]
+        },
+        "screeningRoomHook": "Přehled animace orientovaný na klienta, odhlášení scény před konečnými streamy a sdílené vícejazyčné náhledy pro zúčastněné strany v zahraničí.",
+        "screeningRoomPreview": "Main Street Rising: Opětovné spuštění místní firmy"
+      },
+      {
+        "id": "enterprise",
+        "label": "Podniky a instituce",
+        "headline": "Školení v souladu s rychlostí změny zásad",
+        "intro": "Interní týmy L&D a komunikace dodávají značkové moduly připravené k auditu bez cyklů dodavatelů. Vylepšete libovolný snímek nebo řádek textem nebo hlasem, abyste zůstali ve zprávě, dokončete překryvnými vrstvami a vodoznaky Mixeru a rozbalte automaticky zarovnané dabované nebo synchronizované verze do každé oblasti od jediného schváleného předlohy.",
+        "story": {
+          "problem": [
+            "Videa ze školení a komunikace čekají týdny u externích dodavatelů a stojí prémii.",
+            "Když se změní zásady nebo produkt, videa jsou zastaralá a neznačková.",
+            "Každá aktualizace spustí další nákladné výrobní kolo."
+          ],
+          "solution": [
+            "Vytvářejte interně značková videa připravená k auditu.",
+            "Změňte libovolný řádek nebo rámeček pomocí psané nebo mluvené instrukce.",
+            "Před zaplacením konečného vykreslení zkontrolujte a schválte a poté do každé oblasti rozjeďte jednu předlohu."
+          ],
+          "outcome": [
+            "Školení a komunikace drží krok se změnami zásad.",
+            "Zůstaňte ve značce, aniž byste čekali na cykly prodejců.",
+            "Aktualizujte jednou a distribuujte všude z jednoho schváleného řezu."
+          ]
+        },
+        "screeningRoomHook": "Zkontrolujte scény před dokončením streamů a sdílejte soukromé odkazy Screening Room pro zpětnou vazbu mezi regiony, aniž byste exportovali nedokončené předlohy.",
+        "screeningRoomPreview": "Shield Protocol: Global Cybersecurity Onboarding"
+      },
+      {
+        "id": "educator",
+        "label": "Pedagog",
+        "headline": "Proměňte učební plán v lekce, které studenti skutečně sledují",
+        "intro": "Velké instituce převádějí husté kapitoly do lokalizovaného, narativního videa. Express vytváří plné lekce rychle, inteligentní úpravy textu/hlasu umožňují fakultě vyladit obsah bez rychlého inženýrství a automaticky zarovnaný dub/lip-sync odpovídá jazyku každé kohorty — pak automaticky publikuje lokalizované tituly a miniatury pro každý kanál.",
+        "story": {
+          "problem": [
+            "Hustý studijní materiál se stává videem až po týdnech, specializovaných dovednostech nebo velkém rozpočtu.",
+            "Bez toho lekce zůstanou jako prezentace, které studenti přeskočí.",
+            "Sloužit studentům ve více jazycích znásobuje práci."
+          ],
+          "solution": [
+            "Rychle sestavte celé vyprávěné lekce v jednom studiu.",
+            "Fakulta upravuje obsah psaním nebo mluvením — bez technických výzev.",
+            "Automatický dub, synchronizace rtů a publikování s lokalizovanými názvy a miniaturami pro každou kohortu."
+          ],
+          "outcome": [
+            "Proměňte učební plán na video, které studenti skutečně sledují.",
+            "Oslovte každý kampus v jejich jazyce bez produkčního týmu.",
+            "Odesílejte lekce rychleji, než umožňuje tradiční produkce videa."
+          ]
+        },
+        "screeningRoomHook": "Fakulta si před produkcí prohlédne animovaný film, prohlédne si scény lekcí a sdílí streamy ve více než 70 jazycích pro zpětnou vazbu z více kampusů.",
+        "screeningRoomPreview": "Renesanční workshop: Vidět minulost v pohybu"
+      }
+    ]
   }
 }

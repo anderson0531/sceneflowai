@@ -13,11 +13,6 @@
   "hero": {
     "ctaSecondary": "ดู 'What's Possible'"
   },
-  "finalCta": {
-    "title": "พร้อมทดสอบ pipeline เต็มรูปแบบหรือยัง?",
-    "subtitle": "รัน concept → pre-vis → video → master MP4 ในสตูดิโอเดียว เริ่มด้วยแผน Explorer $9 และดู beat-first workflow",
-    "cta": "เปิด Studio ของคุณใน $9"
-  },
   "preVisEngine": {
     "badge": "Creative Decision Engine",
     "title": "Pre-Visualization Engine",

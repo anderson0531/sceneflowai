@@ -4,23 +4,26 @@
     "description": "Zet je ideeën om in professionele video's met workflowautomatisering op basis van AI."
   },
   "nav": {
-    "workflow": "De workflow",
-    "platformWalkthrough": "Rondleiding door het platform",
-    "plansPricing": "Abonnementen & prijzen",
+    "workflow": "Hoe het werkt",
+    "platformWalkthrough": "Platform Walkthrough",
+    "plansPricing": "Pakketten &amp; Prijzen",
     "more": "Meer",
-    "useCases": "Toepassingen",
+    "useCases": "Use Cases",
     "audienceResonance": "Audience Resonance",
-    "trustSafety": "Vertrouwen en veiligheid",
-    "platformTrust": "Platform & vertrouwen",
-    "signIn": "Inloggen",
+    "trustSafety": "trust &amp; safety",
+    "platformTrust": "Platform & Vertrouwen",
+    "signIn": "Aanmelden",
     "startProject": "Een project starten",
-    "dashboard": "Dashboard",
-    "adminPanel": "Beheerpaneel",
+    "dashboard": "Gösterge Paneli",
+    "adminPanel": "Admin Paneel",
     "signOut": "Uitloggen",
-    "goToDashboard": "Ga naar het dashboard",
+    "goToDashboard": "Ga naar dashboard",
     "userFallback": "Gebruiker",
-    "searchLanguages": "Talen doorzoeken...",
-    "noLanguagesFound": "Geen talen gevonden"
+    "searchLanguages": "Talen zoeken...",
+    "noLanguagesFound": "Geen talen gevonden",
+    "pipeline": "In de pijplijn",
+    "productionExamples": "Voorbeelden",
+    "keyFeatures": "Kenmerken"
   },
   "floatingNav": {
     "compare": "Vergelijken",
@@ -34,16 +37,16 @@
     "pricing": "Prijzen"
   },
   "hero": {
-    "headline": "Stel je het verhaal voor. SceneFlow verzorgt de pipeline.",
-    "subheadline": "Laat tijdrovend prompten achter je. Richt je volledig op je creatieve visie met een geautomatiseerde, professionele productieworkflow.",
+    "headline": "Jij regisseert het verhaal. SceneFlow automatiseert de studio.",
+    "subheadline": "Door Google aangedreven intelligentie georkestreerd op Google Cloud — met optionele Google- of Kling-generatie. Voer uw ideeën door een naadloze pijplijn van blauwdruk naar master MP4 zonder microprompting.",
     "audienceMicroLine": "Ontwikkeld voor makers die resultaten willen en teams die willen zien hoe het werkt.",
-    "ctaSecondary": "Bekijk 'What's Possible'",
-    "ctaToolStack": "Ontdek hoe het je toolstack vervangt",
-    "languagePrompt": "Hoor de held in jouw taal — hetzelfde proces, nieuwe markten",
-    "multilangHint": "Hoofddubs in 7 talen — de volledige pipeline ondersteunt er meer dan 70 in productie.",
-    "playWithNarration": "Afspelen met vertelling",
+    "ctaSecondary": "Bekijk de 'What's Possible'",
+    "ctaToolStack": "Bekijk hoe het uw gereedschapsstapel vervangt",
+    "languagePrompt": "Hoor de held in jouw taal — dezelfde pijplijn, nieuwe markten",
+    "multilangHint": "Hero dubs in 7 talen — volledige pijplijn ondersteunt 70+ in Production Studio.",
+    "playWithNarration": "Speel met gesproken tekst",
     "tapToHear": "Tik om te horen",
-    "fullscreen": "Volledig scherm",
+    "fullscreen": "Schermvullend maken",
     "heroVideoLanguages": {
       "en": {
         "label": "Engels",
@@ -59,22 +62,25 @@
       },
       "hi": {
         "label": "Hindi",
-        "nativeLabel": "Hindi"
+        "nativeLabel": "∅∅∅∅ З ∅"
       },
       "zh": {
-        "label": "Chinees",
-        "nativeLabel": "Chinees"
+        "label": "Chinese",
+        "nativeLabel": "中文"
       },
       "ar": {
         "label": "Arabisch",
-        "nativeLabel": "Arabisch"
+        "nativeLabel": "العربية"
       },
       "th": {
-        "label": "Thais",
-        "nativeLabel": "Thais"
+        "label": "Thai",
+        "nativeLabel": "ไทย"
       }
     },
-    "soon": "Binnenkort"
+    "soon": "Vervalt weldra",
+    "ctaPrimaryLaunch": "Start je studio ($ 9) — september-cohort",
+    "ctaSupportingLine": "Begin met het $ 9 Explorer-plan. September Early Access-cohort vormt zich nu.",
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "valueProp": {
     "pills": [
@@ -1501,184 +1507,184 @@
     "ctaSubtext": "Een brug slaan tussen traditionele filmproductie en generatieve AI"
   },
   "exitIntent": {
-    "title": "Wacht! Ga niet met lege handen weg.",
-    "subtitle": "Krijg exclusieve vroege toegang en tips voor AI-gestuurde filmproductie",
+    "title": "Wacht! Ga niet met lege handen weg",
+    "subtitle": "Krijg exclusieve vroege toegang en tips voor het maken van AI-films",
     "benefits": [
-      "Wekelijkse tutorials over AI-filmmaken",
+      "Wekelijkse tutorials voor het maken van AI-films",
       "Vroege toegang tot nieuwe functies",
-      "Exclusieve kortingen voor creators"
+      "Exclusieve makerskortingen"
     ],
-    "emailPlaceholder": "Voer uw e-mailadres in",
-    "subscribe": "Krijg vroege toegang",
-    "subscribing": "Bezig met abonneren...",
+    "emailPlaceholder": "Voer je e-mail in",
+    "subscribe": "Early Access",
+    "subscribing": "Abonneren...",
     "or": "of",
-    "startNow": "Begin nu met creëren voor slechts $9 →",
-    "privacy": "Nooit spam. Je kunt je op elk moment afmelden.",
+    "startNow": "Begin nu met het maken voor slechts $ 9 — cohortvorming in september →",
+    "privacy": "Geen spam, ooit. Abonnement op elk moment opzeggen.",
     "successTitle": "Je staat op de lijst!",
-    "successSubtitle": "Bekijk je inbox voor exclusieve tips over filmmaken en updates over vroege toegang.",
-    "ctaText": "Begin met ontdekken — $9",
-    "closePopup": "Pop-up sluiten"
+    "successSubtitle": "Controleer je inbox voor exclusieve filmtips en updates over vroege toegang.",
+    "ctaText": "Begin met verkennen — $ 9",
+    "closePopup": "Açılır pencereyi kapat"
   },
   "pricing": {
-    "badge": "Prijsstelling op basis van gebruik",
-    "title": "Betaal voor wat je creëert",
-    "subtitle": "Eén basisabonnement voor toegang tot het platform. Credits voor AI-generatie. Waardeer bij wanneer je meer nodig hebt. Volledige controle, geen verspilling.",
+    "badge": "Eenvoudige prijsstelling",
+    "title": "Begin met Explorer — $ 9",
+    "subtitle": "September Early Access-cohortvorming. Test de volledige pijpleiding met een wrijvingsloze invoer van $ 9.",
     "valueAnchor": {
-      "traditionalCost": "Meer dan $2.000",
+      "traditionalCost": "$2 000",
       "traditionalLabel": "Traditionele pre-vis",
-      "vs": "tegen",
-      "sceneFlowCost": "$49–149",
+      "vs": "vs",
+      "sceneFlowCost": "$ 49-149",
       "sceneFlowLabel": "SceneFlow maandelijks",
-      "saveBadge": "Bespaar meer dan 90% per project"
+      "saveBadge": "Bespaar 90%+ per project"
     },
     "teamCta": {
-      "title": "Intern team of instelling?",
-      "description": "Plan een workflow-demonstratie voor communicatie-, L&D- en marketingteams",
-      "button": "Rondleiding door het boek"
+      "title": "In-house team of instelling?",
+      "description": "Boek een workflow doorloop voor communicatie-, L&D- en marketingteams",
+      "button": "Boek doorloop"
     },
     "agencyCta": {
-      "title": "Bureau of productiehuis?",
-      "description": "Op maat gemaakte tegoeden, SLA en toegewijde ondersteuning op grote schaal",
-      "button": "Contact opnemen met Sales"
+      "title": "Bureau of productiewinkel?",
+      "description": "Aangepaste credits, sla en toegewijde ondersteuning op schaal",
+      "button": "Neem contact op met Verkoop"
     },
     "byok": {
-      "title": "Bring Your Own Key",
-      "badge": "Pro- en Studio-abonnementen",
-      "description": "Heb je al API-sleutels voor Vertex AI of ElevenLabs? Gebruik ze met SceneFlow AI en bespaar tot 80% op platformcredits.",
-      "savingsHighlight": "80% op platformtegoed",
+      "title": "Bring Your Own",
+      "badge": "Pro- en studiopakketten",
+      "description": "Heb je al API-sleutels voor Vertex AI of ElevenLabs? Gebruik ze met SceneFlow AI en bespaar tot 80% op platformtegoed.",
+      "savingsHighlight": "80% op platformkredieten",
       "benefits": [
         {
-          "title": "80% SceneFlow-tegoedbesparing",
-          "description": "Betaal slechts 20% platformkosten voor orkestratie en tools."
+          "title": "80% SceneFlow Kredietbesparingen",
+          "description": "Betaal slechts 20% platformkosten voor orkestratie en tools"
         },
         {
-          "title": "Benut bedrijfsplannen",
-          "description": "Gebruik uw bestaande Vertex AI- of ElevenLabs-volumekortingen"
+          "title": "Maak gebruik van bedrijfsplannen",
+          "description": "Gebruik uw bestaande Vertex AI of ElevenLabs volumekortingen"
         },
         {
           "title": "Volledige controle",
           "description": "Uw sleutels, uw facturering, uw kostenbeheer"
         }
       ],
-      "supportedProviders": "Ondersteunde aanbieders",
+      "supportedProviders": "Ondersteunde providers",
       "vertexName": "Google Vertex AI",
       "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Tekst-naar-spraak & stemklonen",
+      "elevenLabsDetail": "Klonen van tekst naar spraak en spraak",
       "savingsLabel": "80% besparing",
       "onImagesVideo": "op afbeeldingen en video",
-      "onVoiceover": "als voice-over",
-      "note": "De weergegeven besparingen op credits zijn besparingen binnen het SceneFlow-platform. Uw werkelijke totale kosten zijn afhankelijk van de API-tarieven die voor u persoonlijk of voor uw organisatie gelden bij de betreffende aanbieders."
+      "onVoiceover": "op voice-over",
+      "note": "Kredietbesparingen zijn SceneFlow-platformbesparingen. Je werkelijke totale kosten zijn afhankelijk van je persoonlijke of zakelijke API-prijzen bij elke provider."
     },
     "creditTopUps": {
       "title": "Meer credits nodig?",
-      "subtitle": "Op elk moment opwaarderen. Tegoed vervalt nooit.",
+      "subtitle": "Opwaarderen kan altijd. Tegoed verloopt nooit.",
       "packs": [
         {
           "label": "Starterspakket",
-          "description": "Perfect voor een snelle herhaling"
+          "description": "Perfect voor snelle revisies"
         },
         {
           "label": "Scènepakket",
-          "description": "Een kort project afronden"
+          "description": "Voltooi een kort project"
         },
         {
           "label": "Productiepakket",
-          "description": "Belangrijke filmsequentie"
+          "description": "Grote filmsequentie"
         },
         {
-          "label": "Studiopakket",
+          "label": "Studio Pack",
           "description": "Volledige productiecapaciteit"
         }
       ],
-      "creditsUnit": "credits"
+      "creditsUnit": "generiek"
     },
     "calculator": {
-      "sectionTitle": "Schat de kosten van uw project",
-      "sectionSubtitle": "Weet precies wat je betaalt voordat je je vastlegt.",
+      "sectionTitle": "Schat uw project in",
+      "sectionSubtitle": "Weet precies wat je betaalt voordat je je vastlegt",
       "title": "Projectbudgetcalculator",
-      "subtitle": "Schat het aantal credits in voordat je begint.",
+      "subtitle": "Tegoed inschatten voordat je begint",
       "customize": "Parameters aanpassen",
-      "imagesLabel": "Te genereren afbeeldingen",
+      "imagesLabel": "Afbeeldingen om te genereren",
       "videoClipsLabel": "Videoclips",
       "voiceoverLabel": "Voice-over (minuten)",
-      "byokTitle": "Bring Your Own Key (BYOK)",
+      "byokTitle": "Breng je eigen sleutel mee (BYOK)",
       "byokBadge": "Pro & Studio",
-      "byokDescription": "Gebruik je eigen API-sleutels om tot 80% te besparen op SceneFlow-credits. Je betaalt de AI-aanbieders rechtstreeks tegen hun tarieven.",
-      "vertexToggle": "Vertex AI (Afbeeldingen & video)",
+      "byokDescription": "Gebruik je eigen API-sleutels om tot 80% te besparen op SceneFlow-credits. U betaalt de AI-aanbieders rechtstreeks tegen hun tarieven.",
+      "vertexToggle": "Vertex AI (afbeeldingen en video)",
       "elevenLabsToggle": "ElevenLabs (Voice-over)",
-      "imageGeneration": "Afbeeldingsgeneratie",
-      "videoGeneration": "Videogeneratie",
+      "imageGeneration": "Beeldgeneratie",
+      "videoGeneration": "Video-generatie",
       "voiceover": "Voice-over",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Totale schatting",
+      "totalEstimate": "Totaal geschatte kosten:",
       "withTopUps": "met opwaarderingen",
-      "creditSavings": "SceneFlow kredietsparen",
-      "savePercent": "Je bespaart {percent}% op SceneFlow-credits",
-      "transparency": "Volledige transparantie: je ziet het kredietverbruik in realtime terwijl je werkt. Geen verrassingen: pas de omvang van je project op elk gewenst moment aan.",
-      "transparencyHighlight": "Volledige transparantie:",
-      "byokDisclaimer": "BYOK Opmerking: De weergegeven besparingen op credits hebben uitsluitend betrekking op de verlagingen van platformcredits (SceneFlow). Uw werkelijke kosten zijn afhankelijk van uw prijsplannen voor Vertex AI en ElevenLabs. Zakelijke plannen of plannen voor grote API-volumes kunnen extra besparingen opleveren.",
+      "creditSavings": "SceneFlow Kredietsparen",
+      "savePercent": "Je bespaart {percent}% op SceneFlow-tegoeden",
+      "transparency": "Volledige transparantie: je ziet realtime kredietgebruik terwijl je werkt. Geen verrassingen - pas uw projectbereik op elk gewenst moment aan.",
+      "transparencyHighlight": "Volledige transparentie:",
+      "byokDisclaimer": "BYOK Opmerking: De weergegeven tegoedbesparingen weerspiegelen alleen de tegoedverminderingen op het SceneFlow-platform. Uw werkelijke kosten zijn afhankelijk van uw Vertex AI en ElevenLabs prijsplannen. API-abonnementen voor bedrijven of grote volumes kunnen extra besparingen opleveren.",
       "byokDisclaimerHighlight": "BYOK Opmerking:",
       "presets": [
         {
-          "id": "reclame",
-          "name": "Commercial van 30 seconden"
+          "id": "commercial",
+          "name": "Commercieel van 30 seconden"
         },
         {
-          "id": "kort",
-          "name": "Korte film van 2 minuten"
+          "id": "short",
+          "name": "Korte film van 2 min"
         },
         {
-          "id": "aflevering",
+          "id": "episode",
           "name": "Aflevering van 10 minuten"
         },
         {
-          "id": "functie",
-          "name": "Speelfilm van 90 minuten"
+          "id": "feature",
+          "name": "90-min Feature"
         }
       ],
-      "minSuffix": "min."
+      "minSuffix": "min"
     },
     "tierGrid": {
       "productionTestFlight": "Productietestvlucht",
-      "getStarted": "Aan de slag",
+      "getStarted": "Beginnen",
       "startTestFlight": "Testvlucht starten",
-      "loading": "Laden...",
+      "loading": "Aan het laden...",
       "mostPopular": "Populairst",
-      "creditsPerMonth": "Credits/maand",
+      "creditsPerMonth": "Credits/mnd",
       "storage": "Opslag",
       "perMonth": "/maand"
     },
     "trust": {
-      "cancelAnytime": "Op elk moment opzeggen",
-      "moneyBack": "14 dagen geld-terug-garantie",
-      "creditsNeverExpire": "Credits vervallen nooit (pakket Explorer)"
+      "cancelAnytime": "Annuleer wanneer u wilt",
+      "moneyBack": "30 dagen geld-terug-garantie",
+      "creditsNeverExpire": "Credits verlopen nooit (Explorer Pack)"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "Eenmalige aankoop om het uit te proberen",
+        "description": "Eenmalige aankoop om uit te proberen",
         "features": [
           "Eenmalige aankoop",
-          "750 credits (vervallen nooit)",
+          "750 credits (verloopt nooit)",
           "5 GB opslag (30 dagen)",
-          "Volledige toegang tot het platform",
+          "Platform toegang",
           "MP4-export (elke resolutie)",
-          "AI-voice-over (meer dan 70 talen)"
+          "AI voice-over (70+ talen)"
         ]
       },
       "subscriptions": [
         {
-          "id": "voorgerecht",
-          "name": "Voorgerecht",
+          "id": "starter",
+          "name": "Starter",
           "description": "Voor individuele makers",
           "features": [
-            "Volledige toegang tot het platform",
-            "4.500 credits per maand inbegrepen",
+            "Platform toegang",
+            "4.500 credits/maand inbegrepen",
             "25 GB actieve opslag",
             "MP4-export (elke resolutie)",
-            "AI-voice-over (meer dan 70 talen)",
-            "E-mailondersteuning"
+            "AI voice-over (70+ talen)",
+            "Support via e-mail"
           ]
         },
         {
@@ -1687,14 +1693,14 @@
           "description": "Voor professionele makers",
           "features": [
             "Alles in Starter, plus:",
-            "15.000 credits per maand inbegrepen",
+            "15.000 credits/maand inbegrepen",
             "100 GB actieve opslag",
-            "Toegang tot Veo 3.1-kwaliteit (4K)",
-            "Engine voor personageconsistentie",
-            "Stemklonen",
-            "BYOK (Bring Your Own Key)",
+            "Veo 3.1 Kwaliteit (4K) toegang",
+            "Karakterconsistentie-engine",
+            "Stem klonen",
+            "BYOK (Breng je eigen sleutel mee)",
             "3 teamstoelen",
-            "Prioriteitsondersteuning"
+            "Voorrangsondersteuning"
           ]
         },
         {
@@ -1703,33 +1709,42 @@
           "description": "Voor teams & bureaus",
           "features": [
             "Alles in Pro, plus:",
-            "75.000 credits per maand inbegrepen",
+            "75.000 credits/maand inbegrepen",
             "500 GB actieve opslag",
-            "Veo 3.1 4K-prioriteitswachtrij",
-            "Onbeperkte consistentie van personages",
-            "White-label-export",
+            "Veo 3.1 4K Prioriteitswachtrij",
+            "Onbeperkte tekenconsistentie",
+            "White-label export",
             "API-toegang",
-            "10 teamplaatsen",
-            "Vaste accountmanager",
-            "Enterprise-SLA op aanvraag beschikbaar"
+            "10 teamstoelen",
+            "Toegewijde Account Manager",
+            "Enterprise sla op aanvraag beschikbaar"
           ]
         }
       ]
-    }
+    },
+    "explorerHighlight": "De snelste manier om de complete SceneFlow studio te ervaren — van concept tot Screening Room.",
+    "trustBadges": [
+      "Google Cloud infrastructuur",
+      "Vertex AI generatie",
+      "Veilige betalingen via Whop",
+      "30 dagen geld-terug-garantie"
+    ]
   },
   "landingSections": {
     "expandSection": "Toon sectie",
     "collapseSection": "Sectie verbergen"
   },
   "finalCta": {
-    "title": "Klaar om de volledige pipeline te testen?",
-    "subtitle": "Doorloop het hele proces – van concept en pre-vis tot video en master-MP4 – in één studio. Begin met het abonnement van $9 (Explorer) en ervaar de 'beat-first'-workflow in de praktijk.",
-    "cta": "Start je studio voor $9"
+    "title": "Klaar om de volledige pijpleiding te testen?",
+    "subtitle": "Google-aangedreven scripting en optimalisatie, uw keuze van generatie backend en Screening Room review — allemaal in één studio. September Early Access-cohort vormt zich nu — begin met het $ 9 Explorer-plan of vraag Founding Creator-toegang aan.",
+    "cta": "Start je studio ($ 9) — september-cohort",
+    "ctaSecondary": "Toegang voor oprichters aanvragen",
+    "ctaSecondaryHref": "/early-access"
   },
   "footer": {
-    "description": "Volledig geautomatiseerde videoproductie — van concept tot publicatieklare master. Eén begeleide studio: Blueprint → Productie → Screening Room.",
+    "description": "End-to-end geautomatiseerde videoproductie — van concept tot publicatieklare master. Eén begeleid atelier: Series Studio → Blueprint Studio → Production Studio → Screening Room.",
     "product": "Product",
-    "resources": "Bronnen",
+    "resources": "Hulpmiddelen",
     "legal": "Juridisch",
     "links": {
       "features": "Kenmerken",
@@ -1738,23 +1753,23 @@
       "gettingStarted": "Aan de slag",
       "privacy": "Privacybeleid",
       "terms": "Servicevoorwaarden",
-      "trustSafety": "Vertrouwen en veiligheid",
+      "trustSafety": "trust &amp; safety",
       "refunds": "Terugbetalingsbeleid",
       "contact": "Neem contact met ons op"
     },
-    "tagline": "Met ❤️ gemaakt voor creators",
-    "taglineSub": "Van idee tot gepubliceerde video",
+    "tagline": "Gemaakt met ❤️ voor makers",
+    "taglineSub": "Van idee naar gepubliceerde video",
     "securePayments": "Veilige betalingen verwerkt door Whop, onze Merchant of Record",
     "morLine": "Veilige betalingen, belastingberekening en naleving worden afgehandeld door Whop, onze Merchant of Record, namens Life Focus, LLC.",
     "copyright": "© 2026 SceneFlow AI. Alle rechten voorbehouden.",
-    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • Contact: support@sceneflowai.studio",
-    "poweredBy": "Mogelijk gemaakt door Google Cloud"
+    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, Verenigde Staten • Contact: support@sceneflowai.studio",
+    "poweredBy": "Door Google aangedreven intelligentie · Georkestreerd op Google Cloud"
   },
   "floatingCta": {
-    "seePricing": "Bekijk de prijzen",
-    "tryNine": "Probeer $9",
-    "tryForNine": "Probeer het voor $9",
-    "dismiss": "Sluiten"
+    "seePricing": "Bekijk onze tarieven",
+    "tryNine": "Probeer $ 9",
+    "tryForNine": "Probeer voor $ 9",
+    "dismiss": "Afwijzen"
   },
   "common": {
     "watermark": "SceneFlow AI Studio",
@@ -1763,5 +1778,121 @@
     "mute": "Dempen",
     "unmute": "Geluid inschakelen",
     "expandVideo": "Video uitvouwen"
+  },
+  "useCasesShowcase": {
+    "badge": "Voor wie is SceneFlow bedoeld?",
+    "title": "Voor wie is SceneFlow bedoeld?",
+    "subtitle": "Van concept tot een Screening Room animatic tot automatisch gepubliceerde meertalige video — één geautomatiseerde pijplijn, vier manieren om te verzenden.",
+    "cta": "Start je studio ($ 9) — september-cohort",
+    "tabStory": "Oplossing",
+    "tabScreening": "Screening",
+    "problemLabel": "Het Probleem",
+    "solutionLabel": "DE SceneFlow-oplossing",
+    "outcomeLabel": "Het Gevolg",
+    "videoLanguagePrompt": "Bekijk deze reis in jouw taal",
+    "videoComingSoon": "Walkthrough-video binnenkort beschikbaar",
+    "videoSoon": "Vervalt weldra",
+    "personas": [
+      {
+        "id": "youtubeCreator",
+        "label": "De YouTube-maker",
+        "headline": "Van concept tot filmische serie — geen snelle engineering",
+        "intro": "Begin met een concept of een gedetailleerde seriebeschrijving. SceneFlow bouwt het serie-universum, personages en onbeperkte afleveringen en gebruikt vervolgens Express om tegelijkertijd audio, frames en video weer te geven. U maakt en regisseert met platte tekst of spraak; SceneFlow bouwt de visie — geen snelle engineering, geen slot-machine herkansingen.",
+        "story": {
+          "problem": [
+            "Je jongleert met afzonderlijke tools voor script, afbeeldingen, stem, video, muziek en bewerking.",
+            "Je genereert elk stuk steeds opnieuw, in de hoop op een bruikbaar resultaat.",
+            "Karakters zien er nog steeds verschillend uit van scène tot scène."
+          ],
+          "solution": [
+            "Eén begeleide studio vervangt de hele gereedschapsstapel.",
+            "Beschrijf uw idee in duidelijke woorden — SceneFlow schrijft de serie en ontwerpt de cast.",
+            "Express geeft audio, frames en video samen weer, terwijl een Reference Library tekens consistent houdt."
+          ],
+          "outcome": [
+            "Stop met het verliezen van weekenden aan gefragmenteerde tools",
+            "Publiceer op een vast ritme dat je eigenlijk bij kunt houden.",
+            "Houd elke aflevering on-brand zonder opnieuw te rollen voor consistentie."
+          ]
+        },
+        "screeningRoomHook": "Visualiseer het verhaal als een animatic voor bewegingsvideo, bekijk scènes voordat je streams afrondt en deel meertalige streams (70+ talen) voor feedback voorafgaand aan de release.",
+        "screeningRoomPreview": "Het onzichtbare archief: The Grand Illusion: The Chicago World's Fair Deception"
+      },
+      {
+        "id": "startupProvider",
+        "label": "De Opstartprovider",
+        "headline": "Een wereldwijde videostudio runnen — zonder er een te bouwen",
+        "intro": "Lever gepolijste, gelokaliseerde video aan kleine bedrijven die zich geen agentschap kunnen veroorloven. Express geeft hele klantpakketten tegelijkertijd weer, Mixer voegt merkoverlays, watermerken en timing toe en automatisch uitgelijnde dub/lip-sync verzendt elke deliverable in de markttaal van uw klant — allemaal vanuit één voorspelbare pijplijn.",
+        "story": {
+          "problem": [
+            "Klanten van kleine bedrijven kunnen zich geen traditioneel videobureau veroorloven.",
+            "Je koopt en jongleert veel tools en doet het werk voor elke klant opnieuw.",
+            "Elke nieuwe taal betekent dat je de video helemaal opnieuw moet opbouwen."
+          ],
+          "solution": [
+            "Eén voorspelbare pijplijn voor elk klantproject.",
+            "Render een volledig videopakket in één keer — audio, frames en video samen.",
+            "Voeg branding, overlays en watermerken toe en synchroniseer vervolgens automatisch met dub en lip in de markttaal van de klant."
+          ],
+          "outcome": [
+            "Bedien veel klanten vanuit één studioworkflow.",
+            "Bereik wereldwijde markten in meer dan70 talen zonder elke video opnieuw op te bouwen.",
+            "Schaal de service op zonder een team in te huren of infrastructuur te bouwen."
+          ]
+        },
+        "screeningRoomHook": "Klantgerichte beoordeling van de animatic, scèneaftekening vóór de laatste streams en deelbare meertalige previews voor belanghebbenden in het buitenland.",
+        "screeningRoomPreview": "Main Street Rising: een lokale zakelijke herlancering"
+      },
+      {
+        "id": "enterprise",
+        "label": "Ondernemingen en instellingen",
+        "headline": "Conforme training met de snelheid van beleidswijziging",
+        "intro": "Interne L&D- en communicatieteams verzenden merkvergrendelde, auditklare modules zonder leverancierscycli. Verfijn elk frame of elke lijn met tekst of spraak om bij het bericht te blijven, eindig met Mixer-overlays en watermerken en rol automatisch uitgelijnde nagesynchroniseerde of lipgesynchroniseerde versies uit naar elke regio vanuit een enkele goedgekeurde master.",
+        "story": {
+          "problem": [
+            "Trainings- en communicatievideo's wachten weken op externe leveranciers en kosten een premie.",
+            "Wanneer het beleid of het product verandert, worden video's ouderwets en off-brand.",
+            "Elke update triggert weer een dure productieronde."
+          ],
+          "solution": [
+            "Produceer in-house brand-locked, audit-ready video's.",
+            "Wijzig een regel of frame met een getypte of gesproken instructie.",
+            "Controleer en keur goed voordat u betaalt voor de uiteindelijke weergave en implementeer vervolgens één master voor elke regio."
+          ],
+          "outcome": [
+            "Training en communicatie houden gelijke tred met beleidswijzigingen.",
+            "Blijf on-brand zonder te wachten op leverancierscycli.",
+            "Eenmaal bijwerken en overal distribueren vanaf een enkele goedgekeurde snede."
+          ]
+        },
+        "screeningRoomHook": "Bekijk scènes voordat streams definitief worden en deel privé Screening Room-links voor regionale feedback zonder onvoltooide masters te exporteren.",
+        "screeningRoomPreview": "Shield-protocol: wereldwijde onboarding voor cyberbeveiliging"
+      },
+      {
+        "id": "educator",
+        "label": "De opvoeder",
+        "headline": "Leerplan omzetten in lessen die studenten daadwerkelijk bekijken",
+        "intro": "Grote instellingen zetten dichte hoofdstukken om in gelokaliseerde, verhalende video. Express bouwt volledige lessen snel, intelligente tekst-/spraakbewerkingen laten faculteiten inhoud afstemmen zonder prompt engineering, en automatisch uitgelijnde dub/lip-synchronisatie komt overeen met de taal van elk cohort — en vervolgens automatisch publiceren verzendt gelokaliseerde titels en miniaturen naar elk kanaal.",
+        "story": {
+          "problem": [
+            "Dicht cursusmateriaal wordt pas na weken, gespecialiseerde vaardigheden of een groot budget video.",
+            "Zonder dat blijven de lessen zoals diavoorstellingen die studenten overslaan.",
+            "Het bedienen van studenten in meerdere talen vermenigvuldigt het werk."
+          ],
+          "solution": [
+            "Bouw snel volledige gesproken lessen in één studio.",
+            "Faculteit past inhoud aan door te typen of te spreken — geen technische aanwijzingen.",
+            "Automatisch dubgen, lip-synchroniseren en publiceren met gelokaliseerde titels en miniaturen voor elk cohort."
+          ],
+          "outcome": [
+            "Zet het curriculum om in video's die studenten daadwerkelijk bekijken.",
+            "Bereik elke campus in hun taal zonder een productieteam.",
+            "Verzend lessen sneller dan traditionele videoproductie mogelijk maakt."
+          ]
+        },
+        "screeningRoomHook": "Faculteit geeft een voorbeeld van de animatic voor productie-uitgaven, bekijkt lesscènes en deelt streams in meer dan70 talen voor feedback op meerdere campussen.",
+        "screeningRoomPreview": "Workshop Renaissance: het verleden in beweging zien"
+      }
+    ]
   }
 }

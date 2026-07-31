@@ -4,23 +4,26 @@
     "description": "Muuta ideasi ammattimaisiksi videoiksi tekoälypohjaisen työnkulun automatisoinnin avulla."
   },
   "nav": {
-    "workflow": "Työnkulku",
+    "workflow": "Miten se toimii",
     "platformWalkthrough": "Alustan esittely",
-    "plansPricing": "Paketit ja hinnat",
+    "plansPricing": "Suunnitelmat ja hinnoittelu",
     "more": "Lisää",
-    "useCases": "Käyttötapaukset",
+    "useCases": "Käyttätapoja",
     "audienceResonance": "Audience Resonance",
-    "trustSafety": "Luottamus ja turvallisuus",
+    "trustSafety": "Luottamus &amp; turvallisuus",
     "platformTrust": "Alusta ja luottamus",
     "signIn": "Kirjaudu sisään",
-    "startProject": "Aloita projekti",
-    "dashboard": "Kojelauta",
-    "adminPanel": "Hallintapaneeli",
+    "startProject": "Aloita uusi projekti",
+    "dashboard": "Koontinäyttö",
+    "adminPanel": "Ylläpito",
     "signOut": "Kirjaudu ulos",
-    "goToDashboard": "Siirry hallintapaneeliin",
+    "goToDashboard": "Siirry työpöydälle",
     "userFallback": "Käyttäjä",
-    "searchLanguages": "Etsi kieliä...",
-    "noLanguagesFound": "Kieliä ei löytynyt"
+    "searchLanguages": "Hae kieliä",
+    "noLanguagesFound": "Kieliä ei löytynyt",
+    "pipeline": "Valmisteilla olevat toimet",
+    "productionExamples": "Esimerkit",
+    "keyFeatures": "Ominaisuudet"
   },
   "floatingNav": {
     "compare": "Vertaa",
@@ -34,16 +37,16 @@
     "pricing": "Hinnoittelu"
   },
   "hero": {
-    "headline": "Hahmottele tarina. SceneFlow hoitaa prosessiketjun.",
-    "subheadline": "Jätä työläät kehotteet taaksesi. Keskity täysin luovaan visioosi automatisoidun, ammattilaistason tuotantoprosessin avulla.",
+    "headline": "Sinä ohjaat tarinaa. SceneFlow Automatisoi Studion.",
+    "subheadline": "Google-pohjainen älykkyys, joka on järjestetty Google Cloud-palvelussa — valinnaisella Google- tai Kling-sukupolvella. Vie ideasi saumattoman putken läpi piirustuksista MP4: n hallintaan ilman mikropromppausta.",
     "audienceMicroLine": "Suunniteltu tekijöille, jotka haluavat tuloksia, ja tiimeille, jotka haluavat nähdä, miten se toimii.",
-    "ctaSecondary": "Katso ”What’s Possible”",
-    "ctaToolStack": "Katso, miten se korvaa nykyisen työkalukokonaisuutesi.",
-    "languagePrompt": "Kuule sankari omalla kielelläsi – sama tuotantoprosessi, uudet markkinat",
-    "multilangHint": "Pääasiallinen dubbaus seitsemällä kielellä – koko tuotantoprosessi tukee yli 70:tä kieltä.",
-    "playWithNarration": "Toista kerronnan kera",
+    "ctaSecondary": "Katso \"Mikä on mahdollista\"",
+    "ctaToolStack": "Katso, miten se korvaa työkalupinosi",
+    "languagePrompt": "Kuule sankari omalla kielelläsi — sama myyntiputki, uudet markkinat",
+    "multilangHint": "Sankarikopiot 7 kielellä — täysi putki tukee yli 70: tä Production Studioissa.",
+    "playWithNarration": "Leiki kerronnalla",
     "tapToHear": "Napauta kuullaksesi",
-    "fullscreen": "Koko näyttö",
+    "fullscreen": "Koko näytön tila",
     "heroVideoLanguages": {
       "en": {
         "label": "Englanti",
@@ -51,30 +54,33 @@
       },
       "es": {
         "label": "Espanja",
-        "nativeLabel": "Espanja"
+        "nativeLabel": "Español"
       },
       "pt": {
         "label": "Portugali",
-        "nativeLabel": "Portugali"
+        "nativeLabel": "Português"
       },
       "hi": {
         "label": "Hindi",
-        "nativeLabel": "hindi"
+        "nativeLabel": "ŘŘŘŘŘĮ"
       },
       "zh": {
-        "label": "kiina",
-        "nativeLabel": "kiina"
+        "label": "Kiina",
+        "nativeLabel": "中文"
       },
       "ar": {
         "label": "Arabia",
-        "nativeLabel": "Arabia"
+        "nativeLabel": "Arabian kieli"
       },
       "th": {
         "label": "Thai",
-        "nativeLabel": "Thaimaa"
+        "nativeLabel": "ไทย"
       }
     },
-    "soon": "Pian"
+    "soon": "Pian",
+    "ctaPrimaryLaunch": "Julkaise studiosi (9 $) — syyskuun kohortti",
+    "ctaSupportingLine": "Aloita $ 9 Explorer-tilauksella. Syyskuun Early Access -kohortti on nyt muodostumassa.",
+    "videoLanguageCount": "{count, plural, =1 {# language} muu {# languages}}"
   },
   "valueProp": {
     "pills": [
@@ -1501,200 +1507,200 @@
     "ctaSubtext": "Yhdistä perinteinen elokuvanteko ja generatiivinen tekoäly"
   },
   "exitIntent": {
-    "title": "Odota! Älä lähde tyhjin käsin.",
-    "subtitle": "Saat ainutlaatuisen ennakkopääsyn ja vinkkejä tekoälyavusteiseen elokuvantekoon.",
+    "title": "Odota! Älä lähde tyhjin käsin",
+    "subtitle": "Hanki eksklusiivinen ennakkojulkaisu ja vinkkejä tekoälyä hyödyntävään elokuvantekoon",
     "benefits": [
-      "Viikoittaiset tekoälyelokuvanteon opetusvideot",
-      "Ennakkopääsy uusiin ominaisuuksiin",
-      "Sisällöntuottajien eksklusiiviset alennukset"
+      "Viikoittaiset tekoälyelokuvaoppaat",
+      "Uusien ominaisuuksien ennakkokäyttö",
+      "Eksklusiiviset tekijän alennukset"
     ],
-    "emailPlaceholder": "Syötä sähköpostiosoitteesi",
-    "subscribe": "Hanki ennakkopääsy",
-    "subscribing": "Tilataan...",
+    "emailPlaceholder": "Anna sähköpostiosoite",
+    "subscribe": "Saat varhaisen pääsyn! &#10;",
+    "subscribing": "Tilattu",
     "or": "tai",
-    "startNow": "Aloita luominen nyt vain 9 dollarilla →",
-    "privacy": "Ei koskaan roskapostia. Voit peruuttaa tilauksen milloin tahansa.",
+    "startNow": "Aloita luominen nyt vain 9 $: lla — syyskuun kohortin muodostaminen →",
+    "privacy": "Ei roskapostia koskaan. Peruuta tilaus milloin tahansa.",
     "successTitle": "Olet listalla!",
-    "successSubtitle": "Tarkista sähköpostisi: luvassa on ainutlaatuisia elokuvantekovinkkejä ja tietoa ennakkokäyttömahdollisuuksista.",
-    "ctaText": "Aloita tutkiminen – 9 $",
+    "successSubtitle": "Tarkista postilaatikostasi eksklusiiviset elokuvavinkit ja ennakkotiedot.",
+    "ctaText": "Ala etsiä — 9 $",
     "closePopup": "Sulje ponnahdusikkuna"
   },
   "pricing": {
-    "badge": "Käyttöperusteinen hinnoittelu",
-    "title": "Maksa siitä, mitä luot",
-    "subtitle": "Yksi peruspaketti alustan käyttöön. Kreditit tekoälysisällön luomiseen. Lisää saldoa tarvittaessa. Täysi hallinta, ei hukkaa.",
+    "badge": "Yksinkertainen hinnoittelu",
+    "title": "Aloita ExplorerIN avulla — 9 $",
+    "subtitle": "Syyskuun Early Access -kohortin muodostaminen. Testaa koko putki kitkattomalla $ 9 -merkinnällä.",
     "valueAnchor": {
-      "traditionalCost": "Yli 2 000 $",
-      "traditionalLabel": "Perinteinen esivisualisointi",
-      "vs": "vs.",
-      "sceneFlowCost": "49–149 $",
+      "traditionalCost": "2 000",
+      "traditionalLabel": "Perinteinen pre-visio",
+      "vs": "vastaan",
+      "sceneFlowCost": "49-149 $",
       "sceneFlowLabel": "SceneFlow kuukausittain",
-      "saveBadge": "Säästä yli 90 % projektia kohden"
+      "saveBadge": "Säästä yli 90% projektia kohden"
     },
     "teamCta": {
-      "title": "Sisäinen tiimi vai instituutio?",
-      "description": "Varaa työnkulun läpikäynti viestintä-, koulutus- ja markkinointitiimeille",
-      "button": "Kirjan läpikäynti"
+      "title": "Oma tiimi tai laitos?",
+      "description": "Varaa työnkulun läpikäynti viestintä-, L&D- ja markkinointitiimeille",
+      "button": "Varaa esittely"
     },
     "agencyCta": {
-      "title": "Mainostoimisto vai tuotantotalo?",
-      "description": "Räätälöidyt krediitit, palvelutasosopimus (SLA) ja omistettu tuki laajassa mittakaavassa",
+      "title": "Toimisto vai tuotantoliike?",
+      "description": "Mukautetut krediitit, palvelutasosopimus ja oma tuki mittakaavassa",
       "button": "Ota yhteyttä myyntiin"
     },
     "byok": {
-      "title": "Käytä omaa avainta",
-      "badge": "Pro- ja Studio-paketit",
-      "description": "Onko sinulla jo API-avaimet versioille Vertex AI tai ElevenLabs? Käytä niitä version SceneFlow AI kanssa ja säästä jopa 80 % alustapisteiden kustannuksissa.",
-      "savingsHighlight": "80 % alustahyvityksinä",
+      "title": "Tuo omasi. ",
+      "badge": "Ammattilais- ja studiosuunnitelmat",
+      "description": "Onko sinulla jo API-avaimet Vertex AIille tai ElevenLabsille? Käytä niitä SceneFlow AIin kanssa ja säästä jopa 80% alustan krediiteistä.",
+      "savingsHighlight": "80% alustakrediiteistä",
       "benefits": [
         {
-          "title": "80 %:n SceneFlow-luottosäästö",
-          "description": "Maksa vain 20 %:n alustamaksu orkestroinnista ja työkaluista."
+          "title": "80% SceneFlow-krediittisäästöt",
+          "description": "Maksat vain 20% alustamaksun orkestroinnista ja työkaluista"
         },
         {
           "title": "Hyödynnä yrityssuunnitelmia",
-          "description": "Hyödynnä nykyisiä Vertex AI- tai ElevenLabs-määräalennuksiasi"
+          "description": "Käytä olemassa olevia Vertex AI- tai ElevenLabs-volyymialennuksiasi"
         },
         {
           "title": "Täysi hallinta",
-          "description": "Avaimesi, laskutuksesi, kustannusten hallintasi"
+          "description": "Avaimesi, laskutuksesi, kulujenhallintasi"
         }
       ],
       "supportedProviders": "Tuetut palveluntarjoajat",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "Imagen 4 ja Veo 3.1",
+      "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Tekstistä puheeksi -teknologia ja äänen kloonaus",
-      "savingsLabel": "80 %:n säästö",
+      "elevenLabsDetail": "Teksti puheeksi ja äänen kloonaus",
+      "savingsLabel": "80%: n säästöt",
       "onImagesVideo": "kuvissa ja videoissa",
-      "onVoiceover": "selostuksessa",
-      "note": "Esitetyt krediittisäästöt ovat SceneFlow-alustan säästöjä. Todelliset kokonaiskustannuksesi riippuvat kunkin palveluntarjoajan kanssa sovituista henkilökohtaisista tai yrityskohtaisista API-hinnoista."
+      "onVoiceover": "voiceoverissa",
+      "note": "Näytetyt luottosäästöt ovat SceneFlow-alustan säästöjä. Todelliset kokonaiskustannuksesi riippuvat henkilökohtaisesta tai yrityksen API-hinnoittelusta kunkin palveluntarjoajan kanssa."
     },
     "creditTopUps": {
       "title": "Tarvitsetko lisää krediittejä?",
-      "subtitle": "Lisää saldoa milloin tahansa. Saldo ei vanhene koskaan.",
+      "subtitle": "Tankkaa koska tahansa. Krediitit eivät vanhene koskaan.",
       "packs": [
         {
           "label": "Aloituspakkaus",
-          "description": "Täydellinen nopeaan kertaukseen"
+          "description": "Täydellinen nopeisiin korjauksiin"
         },
         {
-          "label": "Kohtauspaketti",
+          "label": "Maisemapaketti",
           "description": "Suorita lyhyt projekti"
         },
         {
           "label": "Tuotantopaketti",
-          "description": "Elokuvan keskeinen jakso"
+          "description": "Pääkalvosekvenssi"
         },
         {
           "label": "Studiopaketti",
           "description": "Täysi tuotantokapasiteetti"
         }
       ],
-      "creditsUnit": "tekijätiedot"
+      "creditsUnit": "opintopisteinä"
     },
     "calculator": {
       "sectionTitle": "Arvioi projektisi",
-      "sectionSubtitle": "Tiedä tarkalleen, mitä maksat, ennen kuin sitoudut.",
+      "sectionSubtitle": "Tiedä tarkalleen, mitä maksat, ennen kuin sitoudut",
       "title": "Projektin budjettilaskuri",
-      "subtitle": "Arvioi krediitit ennen aloittamista",
-      "customize": "Mukauta parametreja",
+      "subtitle": "Arvioi matkustuspisteet ennen kuin aloitat",
+      "customize": "Muokkaa parametreja",
       "imagesLabel": "Luotavat kuvat",
-      "videoClipsLabel": "Videopätkät",
-      "voiceoverLabel": "Selostus (minuutteina)",
-      "byokTitle": "Oma avain (BYOK)",
-      "byokBadge": "Pro ja studio",
-      "byokDescription": "Käytä omia API-avaimiasi ja säästä jopa 80 % SceneFlow-krediiteissä. Maksat tekoälypalveluntarjoajille suoraan niiden hinnoilla.",
-      "vertexToggle": "Vertex AI (Kuvat ja video)",
-      "elevenLabsToggle": "ElevenLabs (Kertojaääni)",
-      "imageGeneration": "Kuvien luominen",
-      "videoGeneration": "Videoiden luominen",
-      "voiceover": "Kertojaääni",
+      "videoClipsLabel": "Videoleikkeet",
+      "voiceoverLabel": "Voiceover (minuuttia)",
+      "byokTitle": "Tuo oma avain (BYOK)",
+      "byokBadge": "Pro & Studio",
+      "byokDescription": "Käytä omia API-avaimiasi säästääksesi jopa 80% SceneFlow-krediiteistä. Maksat tekoälyn tarjoajille suoraan heidän hinnoillaan.",
+      "vertexToggle": "Vertex AI (kuvat ja video)",
+      "elevenLabsToggle": "ElevenLabs (Voiceover)",
+      "imageGeneration": "Kuvan luonti",
+      "videoGeneration": "Videon luonti",
+      "voiceover": "Voiceover",
       "byokTag": "(BYOK)",
       "totalEstimate": "Kokonaisarvio",
-      "withTopUps": "lisäyksillä",
-      "creditSavings": "SceneFlow luottosäästöt",
-      "savePercent": "Säästät {percent} % SceneFlow-opintopisteistä",
-      "transparency": "Täysi läpinäkyvyys: Näet krediittien käytön reaaliajassa työskentelyn aikana. Ei yllätyksiä – voit muuttaa projektin laajuutta milloin tahansa.",
-      "transparencyHighlight": "Täysi avoimuus:",
-      "byokDisclaimer": "BYOK Huomautus: Esitetyt krediittisäästöt koskevat vain SceneFlow-alustan krediittivähennyksiä. Todelliset kustannuksesi määräytyvät Vertex AI- ja ElevenLabs-hinnoittelusuunnitelmiesi perusteella. Yritystason tai suuren käyttömäärän API-sopimukset voivat tarjota lisäsäästöjä.",
-      "byokDisclaimerHighlight": "BYOK Huomautus:",
+      "withTopUps": "täydennyksillä",
+      "creditSavings": "SceneFlow-LUOTTOSÄÄSTÖT",
+      "savePercent": "Säästät {percent}% SceneFlow-krediiteistä",
+      "transparency": "Täysi läpinäkyvyys: Näet reaaliaikaisen matkustuspisteiden käytön työskennellessäsi. Ei yllätyksiä - muuta projektin laajuutta milloin tahansa.",
+      "transparencyHighlight": "Täysi läpinäkyvyys:",
+      "byokDisclaimer": "BYOK Huomaa: näytetyt luottosäästöt heijastavat vain SceneFlow-alustan hyvitysalennuksia. Todelliset kustannuksesi riippuvat Vertex AI- ja ElevenLabs-hinnoittelusuunnitelmistasi. Yrityksen tai suuren määrän API-suunnitelmat voivat tarjota lisäsäästöjä.",
+      "byokDisclaimerHighlight": "BYOK-huomautus:",
       "presets": [
         {
-          "id": "kaupallinen",
-          "name": "30 sekunnin mainos"
+          "id": "commercial",
+          "name": "30 sekunnin kaupallinen"
         },
         {
-          "id": "lyhyt",
+          "id": "short",
           "name": "2 minuutin lyhytelokuva"
         },
         {
-          "id": "jakso",
+          "id": "episode",
           "name": "10 minuutin jakso"
         },
         {
-          "id": "ominaisuus",
-          "name": "90-minuuttinen elokuva"
+          "id": "feature",
+          "name": "90 minuutin ominaisuus"
         }
       ],
-      "minSuffix": "min"
+      "minSuffix": "min."
     },
     "tierGrid": {
       "productionTestFlight": "Tuotannon koelento",
       "getStarted": "Aloita",
-      "startTestFlight": "Aloita koelento",
+      "startTestFlight": "Aloita testilento",
       "loading": "Ladataan...",
       "mostPopular": "Suosituimmat",
-      "creditsPerMonth": "Pistettä/kk",
+      "creditsPerMonth": "Krediittiä/kk",
       "storage": "Varastointi",
       "perMonth": "/kk"
     },
     "trust": {
-      "cancelAnytime": "Peruuta milloin tahansa",
+      "cancelAnytime": "Peruuta milloin tahansa ",
       "moneyBack": "14 päivän rahat takaisin -takuu",
-      "creditsNeverExpire": "Saldo ei vanhene koskaan (Explorer-paketti)"
+      "creditsNeverExpire": "Krediitit eivät vanhene koskaan (Explorer-paketti)"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "Kertahankinta kokeilua varten",
+        "description": "Kertaostos kokeiltavaksi",
         "features": [
-          "Kertahankinta",
-          "750 krediittiä (eivät vanhene koskaan)",
+          "Kertaluontoinen ostos",
+          "750 krediittiä (ei vanhene koskaan)",
           "5 Gt tallennustilaa (30 päivää)",
-          "Täysi pääsy alustalle",
+          "Pääsy koko alustalle",
           "MP4-vienti (mikä tahansa resoluutio)",
-          "Tekoälypohjainen selostus (yli 70 kieltä)"
+          "AI voiceover (yli 70 kieltä)"
         ]
       },
       "subscriptions": [
         {
-          "id": "alkuruoka",
-          "name": "Alkuruoka",
-          "description": "Yksittäisille sisällöntuottajille",
+          "id": "starter",
+          "name": "Starter",
+          "description": "Yksittäisille tekijöille",
           "features": [
-            "Täysi pääsy alustalle",
+            "Pääsy koko alustalle",
             "Sisältää 4 500 krediittiä kuukaudessa",
             "25 Gt aktiivista tallennustilaa",
             "MP4-vienti (mikä tahansa resoluutio)",
-            "Tekoälypohjainen selostus (yli 70 kieltä)",
+            "AI voiceover (yli 70 kieltä)",
             "Sähköpostituki"
           ]
         },
         {
-          "id": "ammattilainen",
+          "id": "pro",
           "name": "Pro",
-          "description": "Ammattimaisille sisällöntuottajille",
+          "description": "Ammattimaisille tekijöille",
           "features": [
-            "Kaikki Starter-paketin sisältö sekä:",
-            "Sisältää 15 000 krediittiä kuukaudessa",
+            "Kaikki Starterissa ja lisäksi:",
+            "15 000 krediittiä kuukaudessa sisältyy hintaan",
             "100 Gt aktiivista tallennustilaa",
-            "Pääsy Veo 3.1 -laatuun (4K)",
-            "Hahmojen yhdenmukaisuuden moottori",
+            "VEO 3.1 Laatu (4K) pääsy",
+            "Merkkien yhdenmukaisuusmoottori",
             "Äänen kloonaus",
-            "BYOK (Oma salausavain)",
-            "3 paikkaa tiimille",
-            "Priorisoitu tuki"
+            "BYOK (tuo oma avain)",
+            "3 joukkuepaikkaa",
+            "Nopea tuotetuki"
           ]
         },
         {
@@ -1702,58 +1708,67 @@
           "name": "Studio",
           "description": "Tiimeille ja toimistoille",
           "features": [
-            "Kaikki Pro-versiossa oleva sekä lisäksi:",
+            "Kaikki Prolla ja lisäksi:",
             "Sisältää 75 000 krediittiä kuukaudessa",
             "500 Gt aktiivista tallennustilaa",
-            "Veo 3.1 4K -prioriteettijono",
-            "Rajoittamaton hahmojen yhdenmukaisuus",
-            "White-label-viennit",
-            "API-käyttöoikeus",
-            "10 paikkaa tiimille",
-            "Oma asiakkuusvastaava",
-            "Yritystason palvelutasosopimus (SLA) saatavilla pyynnöstä"
+            "VEO 3.1 4K prioriteettijono",
+            "Rajoittamaton merkkien yhdenmukaisuus",
+            "White label -vienti",
+            "API-pääsy",
+            "10 joukkuepaikkaa",
+            "Henkilökohtainen avainasiakaspäällikkö",
+            "Yrityksen palvelutasosopimus saatavilla pyynnöstä"
           ]
         }
       ]
-    }
+    },
+    "explorerHighlight": "Nopein tapa kokea täydellinen SceneFlow-studio — konseptista Screening Roomiin.",
+    "trustBadges": [
+      "Google Cloud-infrastruktuuri",
+      "Vertex AI-sukupolvi",
+      "Suojatut maksut WhopIN kautta",
+      "14 päivän rahat takaisin -takuu"
+    ]
   },
   "landingSections": {
     "expandSection": "Näytä osio",
     "collapseSection": "Piilota osio"
   },
   "finalCta": {
-    "title": "Oletko valmis testaamaan koko putken?",
-    "subtitle": "Toteuta konsepti, esivisualisointi, video ja MP4-masterointi yhdessä studiossa. Aloita 9 dollarin Explorer-paketilla ja näe ”biitti edellä” -työnkulku käytännössä.",
-    "cta": "Käynnistä studiosi 9 dollarilla"
+    "title": "Oletko valmis testaamaan koko putkea?",
+    "subtitle": "Google-pohjainen skriptaus ja optimointi, valitsemasi sukupolven taustaosa ja Screening Room-arvostelu — kaikki yhdessä studiossa. Syyskuun Early Access -kohortti on nyt muodostumassa — aloita 9 $: n Explorer-suunnitelmalla tai hae perustavan tekijän käyttöoikeutta.",
+    "cta": "Julkaise studiosi (9 $) — syyskuun kohortti",
+    "ctaSecondary": "Hae perustajan sisällöntuottajan käyttöoikeutta",
+    "ctaSecondaryHref": "/early-access"
   },
   "footer": {
-    "description": "Kokonaisvaltaisesti automatisoitu videotuotanto – konseptista julkaisuvalmiiseen master-versioon. Yksi ohjattu studio: Blueprint → Tuotanto → Screening Room.",
+    "description": "Täysin automatisoitu videotuotanto — konseptista julkaisuvalmiiseen masteriin. Yksi opastettu studio: Series Studio → Blueprint Studio → Production Studio → Screening Room.",
     "product": "Tuote",
     "resources": "Resurssit",
-    "legal": "Oikeudelliset tiedot",
+    "legal": "Lakimies",
     "links": {
       "features": "Ominaisuudet",
-      "pricing": "Hinnoittelu",
-      "howItWorks": "Näin se toimii",
+      "pricing": "Hinnat",
+      "howItWorks": "Miten se toimii",
       "gettingStarted": "Aloittaminen",
-      "privacy": "Tietosuojakäytäntö",
+      "privacy": "Tietosuojakäytäntömme",
       "terms": "Käyttöehdot",
-      "trustSafety": "Luottamus ja turvallisuus",
-      "refunds": "Hyvityskäytäntö",
+      "trustSafety": "Luottamus &amp; turvallisuus",
+      "refunds": "Palautusoikeus",
       "contact": "Ota yhteyttä"
     },
-    "tagline": "Tehty ❤️:lla tekijöille",
-    "taglineSub": "Ideasta julkaistuksi videoksi",
-    "securePayments": "Turvalliset maksut käsittelee Whop, virallinen myyjämme (Merchant of Record)",
-    "morLine": "Turvalliset maksut, verojen laskenta ja säädösten noudattaminen hoidetaan Life Focus, LLC:n puolesta Whop:n – virallisen myyjämme (Merchant of Record) – toimesta.",
+    "tagline": "Tehty ❤️ tekijöille",
+    "taglineSub": "Ideasta julkaistuun videoon",
+    "securePayments": "Rekisterinpitäjämme Whop käsittelee suojatut maksut",
+    "morLine": "Tietuekauppiaamme Whop hoitaa suojatut maksut, verojen laskennan ja vaatimustenmukaisuuden Life Focus, LLC: n puolesta.",
     "copyright": "© 2026 SceneFlow AI. Kaikki oikeudet pidätetään.",
-    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • Yhteystiedot: support@sceneflowai.studio",
-    "poweredBy": "Käyttövoimana Google Cloud"
+    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, Yhdysvallat • Ota yhteyttä: support@sceneflowai.studio",
+    "poweredBy": "Google-pohjainen älykkyys · Järjestetty Google Cloud-palvelussa"
   },
   "floatingCta": {
-    "seePricing": "Katso hinnat",
-    "tryNine": "Kokeile 9 dollarilla",
-    "tryForNine": "Kokeile 9 dollarilla",
+    "seePricing": "Katso hinnoittelu",
+    "tryNine": "Kokeile 9 $",
+    "tryForNine": "Kokeile hintaan 9 $",
     "dismiss": "Hylkää"
   },
   "common": {
@@ -1763,5 +1778,121 @@
     "mute": "Mykistä",
     "unmute": "Poista mykistys",
     "expandVideo": "Laajenna video"
+  },
+  "useCasesShowcase": {
+    "badge": "Kenelle SceneFlow on tarkoitettu?",
+    "title": "Kenelle SceneFlow on tarkoitettu?",
+    "subtitle": "Konseptista Screening Room ANIMATICiin ja automaattisesti julkaistavaan monikieliseen videoon — yksi automatisoitu putki, neljä toimitustapaa.",
+    "cta": "Julkaise studiosi (9 $) — syyskuun kohortti",
+    "tabStory": "Ratkaisu",
+    "tabScreening": "Seulonta",
+    "problemLabel": "Ongelma",
+    "solutionLabel": "SceneFlow-ratkaisu",
+    "outcomeLabel": "Käsittelyn päättäminen",
+    "videoLanguagePrompt": "Katso tämä matka omalla kielelläsi",
+    "videoComingSoon": "Läpikäyntivideo tulossa pian",
+    "videoSoon": "Pian",
+    "personas": [
+      {
+        "id": "youtubeCreator",
+        "label": "YouTube-sisällöntuottaja",
+        "headline": "Konseptista elokuvamaiseen sarjaan — ei nopeaa suunnittelua",
+        "intro": "Aloita konseptista tai yksityiskohtaisesta sarjan kuvauksesta. SceneFlow rakentaa sarjan universumin, hahmot ja rajoittamattomat jaksot ja käyttää sitten Expressiä äänen, kehysten ja videon esittämiseen samanaikaisesti. Luot ja ohjaat pelkällä tekstillä tai äänellä; SceneFlow rakentaa vision — ei nopeaa suunnittelua, ei kolikkopelien uusintaottoja.",
+        "story": {
+          "problem": [
+            "Jonglööraat erillisiä työkaluja käsikirjoitukseen, kuviin, ääneen, videoon, musiikkiin ja muokkaukseen.",
+            "Luot jokaisen kappaleen uudelleen ja uudelleen toivoen käyttökelpoista tulosta.",
+            "Hahmot näyttävät edelleen erilaisilta kohtauksesta toiseen."
+          ],
+          "solution": [
+            "Yksi ohjattu studio korvaa koko työkalupinon.",
+            "Kuvaile ideaasi yksinkertaisin sanoin — SceneFlow kirjoittaa sarjan ja suunnittelee näyttelijät.",
+            "Express renderöi äänen, kehykset ja videon yhdessä, kun taas Reference Library pitää merkit yhdenmukaisina."
+          ],
+          "outcome": [
+            "Älä menetä viikonloppuja hajanaisille työkaluille.",
+            "Julkaise tasaisella rytmillä, jota voit todella seurata.",
+            "Pidä jokainen jakso tuotemerkillä rullaamatta sitä uudelleen johdonmukaisuuden vuoksi."
+          ]
+        },
+        "screeningRoomHook": "Visualisoi tarina animaationa ennen liikevideota, tarkista kohtaukset ennen striimien viimeistelyä ja jaa monikielisiä striimejä (yli 70 kieltä) ennen julkaisua annettavaa palautetta varten.",
+        "screeningRoomPreview": "Näkymätön arkisto: The Grand Illusion: The Chicago World's Fair Deception"
+      },
+      {
+        "id": "startupProvider",
+        "label": "Startup-palveluntarjoaja",
+        "headline": "Suorita maailmanlaajuinen videostudio - ilman rakennusta",
+        "intro": "Toimita kiillotettua, lokalisoitua videota pienyrityksille, joilla ei ole varaa toimistoon. Express tekee kokonaisista asiakaspaketeista samanaikaisesti, Mixer lisää tuotemerkin peittokuvia, vesileimoja ja ajoituksen, ja automaattisesti tasattu dub/lip-sync toimittaa kaikki toimitukset asiakkaasi markkinakielellä — kaikki yhdestä ennustettavasta putkesta.",
+        "story": {
+          "problem": [
+            "Pienyritysasiakkailla ei ole varaa perinteiseen videotoimistoon.",
+            "Ostat ja jongleeraat monia työkaluja, tehden työn uudelleen jokaiselle asiakkaalle.",
+            "Jokainen uusi kieli tarkoittaa videon rakentamista uudelleen tyhjästä."
+          ],
+          "solution": [
+            "Yksi ennustettava putki jokaiselle asiakasprojektille.",
+            "Renderöi täydellinen videopaketti kerralla — ääni, kehykset ja video yhdessä.",
+            "Lisää brändäys, peittokuvat ja vesileimat ja dubaa ja huulisynkronoi automaattisesti asiakkaan markkinakielelle."
+          ],
+          "outcome": [
+            "Palvele monia asiakkaita yhdestä studion työnkulusta.",
+            "Saavuta maailmanlaajuiset markkinat yli 70 kielellä rakentamatta jokaista videota uudelleen.",
+            "Skaalaa palvelua palkkaamatta miehistöä tai rakentamatta infrastruktuuria."
+          ]
+        },
+        "screeningRoomHook": "Animaation asiakaslähtöinen tarkastelu, kohtauksen hyväksyminen ennen viimeisiä suoratoistoja ja jaettavat monikieliset esikatselut ulkomaisille sidosryhmille.",
+        "screeningRoomPreview": "Main Street Rising: Paikallisen liiketoiminnan uudelleenkäynnistys"
+      },
+      {
+        "id": "enterprise",
+        "label": "Yritys ja laitokset",
+        "headline": "Vaatimustenmukainen koulutus käytännön muutoksen nopeudella",
+        "intro": "Sisäiset L&D- ja viestintätiimit toimittavat tuotemerkkilukittuja, auditointivalmiita moduuleja ilman toimittajasyklejä. Tarkenna mitä tahansa kehystä tai viivaa tekstillä tai äänellä pysyäksesi viestissä, viimeistele sekoitinpeitteillä ja vesileimoilla ja tuo automaattisesti tasatut kaksois- tai huulisynkronoidut versiot kaikille alueille yhdestä hyväksytystä master-versiosta.",
+        "story": {
+          "problem": [
+            "Koulutus- ja viestintävideot odottavat viikkoja ulkopuolisilla myyjillä ja maksavat palkkion.",
+            "Kun käytäntö tai tuote muuttuu, videoista tulee vanhentuneita ja brändin ulkopuolisia.",
+            "Jokainen päivitys käynnistää uuden kalliin tuotantokierroksen."
+          ],
+          "solution": [
+            "Tuota brändilukittuja, auditointivalmiita videoita talon sisällä.",
+            "Muuta mitä tahansa viivaa tai kehystä kirjoitetulla tai puhutulla käskyllä.",
+            "Tarkista ja hyväksy ennen lopullisen renderöinnin maksamista ja ota sitten käyttöön yksi master jokaiselle alueelle."
+          ],
+          "outcome": [
+            "Koulutus ja viestintä pysyvät politiikan muutosten tahdissa.",
+            "Pysy tuotemerkissä odottamatta toimittajan syklejä.",
+            "Päivitä kerran ja jaa kaikkialle yhdestä hyväksytystä leikkauksesta."
+          ]
+        },
+        "screeningRoomHook": "Tarkista kohtaukset ennen kuin suorat lähetykset päättyvät ja jaa yksityiset Screening Room-linkit alueiden välisen palautteen saamiseksi ilman keskeneräisten masterien vientiä.",
+        "screeningRoomPreview": "Shield Protocol: Global Cybersecurity Onboarding"
+      },
+      {
+        "id": "educator",
+        "label": "Kouluttaja",
+        "headline": "Muuta opetussuunnitelma oppitunneiksi, joita opiskelijat todella katsovat",
+        "intro": "Suuret instituutiot muuttavat tiheät luvut lokalisoiduksi, kerronnalliseksi videoksi. Express rakentaa täydet oppitunnit nopeasti, älykkäät teksti-/äänimuokkaukset antavat opettajien virittää sisältöä ilman nopeaa suunnittelua, ja automaattisesti tasattu dub/huulisynkronointi vastaa kunkin kohortin kieltä. Julkaise sitten automaattisesti alusten lokalisoidut otsikot ja pikkukuvat jokaiselle kanavalle.",
+        "story": {
+          "problem": [
+            "Tiheästä kurssimateriaalista tulee video vasta viikkojen, erikoisosaamisen tai suuren budjetin jälkeen.",
+            "Ilman sitä oppitunnit pysyvät diaesityksinä, joissa opiskelijat ohittavat.",
+            "Opiskelijoiden palveleminen useilla kielillä moninkertaistaa työn."
+          ],
+          "solution": [
+            "Rakenna kokonaisia kerrottuja oppitunteja nopeasti yhdessä studiossa.",
+            "Tiedekunta säätää sisältöä kirjoittamalla tai puhumalla — ei teknisiä kehotteita.",
+            "Automaattisynkronointi, lip-synkronointi ja julkaiseminen lokalisoiduilla nimikkeillä ja pikkukuvilla jokaiselle kohortille."
+          ],
+          "outcome": [
+            "Muuta opetussuunnitelma videoiksi, joita opiskelijat todella katsovat.",
+            "Tavoita jokainen kampus omalla kielellään ilman tuotantotiimiä.",
+            "Lähetä oppitunnit nopeammin kuin perinteinen videotuotanto sallii."
+          ]
+        },
+        "screeningRoomHook": "Tiedekunta esikatsele animaatiota ennen tuotantokustannuksia, tarkastele oppituntikohtauksia ja jaa striimejä yli 70 kielellä saadaksesi monikampuksista palautetta.",
+        "screeningRoomPreview": "Renessanssityöpaja: Menneisyyden näkeminen liikkeessä"
+      }
+    ]
   }
 }
