@@ -33,6 +33,11 @@ export function FinalCTA() {
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
+            <Link href={t('ctaSecondaryHref')} className="w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto border-purple-500/40 text-purple-300 hover:bg-purple-500/10">
+                {t('ctaSecondary')}
+              </Button>
+            </Link>
           </div>
         </motion.div>
       </div>

@@ -5,8 +5,15 @@ export const PRODUCTION_SHOWCASE_COPY = {
   title: 'From Concept to Screen:',
   titleAccent: 'Infinite Possibilities',
   subtitle:
-    'With SceneFlow AI Studio, your vision is the only starting line you need. Simply define your concept, and let SceneFlow handle the heavy lifting—automating scriptwriting, character design, multi-language audio, scene visualization, video production, and final publishing.',
+    'Six public productions prove the full pipeline — pre-vis, scene video, and Screening Room review. Define your concept and let SceneFlow handle scriptwriting, character design, multi-language audio, visualization, video production, and publishing.',
   subtitleTagline: 'One platform. Infinite possibilities.',
+  publicProductionsNote:
+    'Each card below is a complete public production — switch Solutions and Screening Room tabs to walk the pipeline.',
+  languagesBanner:
+    'Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.',
+  explorePipelineCta: 'Explore a full production',
+  explorePipelineHint:
+    'Start with Cinematic Drama below — Solutions for the demo reel, Screening Room for the full review workflow.',
   workflowLabel: 'Solutions',
   startProduction: 'Start Your Production',
   cta: 'Start Your Production',

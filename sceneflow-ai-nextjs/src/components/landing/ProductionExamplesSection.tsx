@@ -51,6 +51,22 @@ export default function ProductionExamplesSection() {
           <p className="mx-auto mt-4 max-w-3xl text-lg font-semibold text-white">
             {t('subtitleTagline')}
           </p>
+          <p className="mx-auto mt-4 max-w-3xl text-base text-cyan-200/90">{t('publicProductionsNote')}</p>
+          <p className="mx-auto mt-3 max-w-3xl text-sm text-gray-400">{t('languagesBanner')}</p>
+          <div className="mx-auto mt-6 flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
+            <Button
+              variant="outline"
+              className="border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/10"
+              onClick={() => {
+                document
+                  .getElementById('production-showcase-drama')
+                  ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }}
+            >
+              {t('explorePipelineCta')}
+            </Button>
+            <p className="max-w-md text-xs text-gray-500">{t('explorePipelineHint')}</p>
+          </div>
         </motion.div>
 
         <div className="mb-12 grid grid-cols-1 gap-6 md:grid-cols-2">

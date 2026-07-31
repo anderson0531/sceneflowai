@@ -72,6 +72,10 @@ describe('Production Examples landing section', () => {
   it('renders the tagline as its own paragraph under the subtitle', () => {
     const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
     expect(section).toContain("t('subtitleTagline')")
+    expect(section).toContain("t('publicProductionsNote')")
+    expect(section).toContain("t('languagesBanner')")
+    expect(section).toContain("t('explorePipelineCta')")
+    expect(section).toContain('production-showcase-drama')
   })
 
   it('uses one column on mobile and two columns on wide screens', () => {
@@ -88,6 +92,10 @@ describe('Production Examples i18n contract', () => {
       'titleAccent',
       'subtitle',
       'subtitleTagline',
+      'publicProductionsNote',
+      'languagesBanner',
+      'explorePipelineCta',
+      'explorePipelineHint',
       'workflowLabel',
       'startProduction',
       'cta',
@@ -113,11 +121,12 @@ describe('Production Examples i18n contract', () => {
     expect(enMessages.productionShowcase.titleAccent).toBe('Infinite Possibilities')
   })
 
-  it('closes the intro with the one-platform tagline', () => {
+  it('closes the intro with the one-platform tagline and public production framing', () => {
     expect(enMessages.productionShowcase.subtitleTagline).toBe(
       'One platform. Infinite possibilities.'
     )
-    expect(enMessages.productionShowcase.subtitle).toContain('SceneFlow AI Studio')
+    expect(enMessages.productionShowcase.subtitle).toContain('Six public productions')
+    expect(enMessages.productionShowcase.publicProductionsNote).toContain('Screening Room')
   })
 
   it('ships exactly six fully populated production cards', () => {

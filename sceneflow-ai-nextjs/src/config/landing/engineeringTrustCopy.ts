@@ -52,7 +52,7 @@ export const ENGINEERING_TRUST_COPY = {
   ],
   vertexSection: {
     title: 'Why Google Vertex AI?',
-    subtitle: 'The technical moat that matters',
+    subtitle: 'Google-exclusive intelligence — optional Google or Kling generation',
     cards: [
       {
         title: 'Data Privacy',
@@ -73,10 +73,9 @@ export const ENGINEERING_TRUST_COPY = {
     ],
   },
   partnership: {
-    poweredBy:
-      'Powered by Google Cloud with Vertex AI, Cloud Storage, and translation tooling',
+    poweredBy: 'Google-powered intelligence · Orchestrated on Google Cloud',
     footnote:
-      'SceneFlow AI runs on scalable Google Cloud infrastructure designed for startup growth and enterprise expectations.',
+      'Intelligence (scripting, optimization, analysis) runs on Google Vertex AI. Frame and video generation can use Google models or Kling — always with SceneFlow trust and provenance on Google Cloud.',
   },
   trustSafeguardLink:
     'Layered trust: Google Vertex safety plus SceneFlow guardrails, validation, and provenance — see Trust & Safety below.',

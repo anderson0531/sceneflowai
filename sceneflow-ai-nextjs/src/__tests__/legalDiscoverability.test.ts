@@ -80,4 +80,12 @@ describe('legal page discoverability', () => {
       'sitemap.xml'
     )
   })
+
+  it('redirects legacy sfai.studio hostnames to sceneflowai.studio', () => {
+    const nextConfig = readFileSync(join(process.cwd(), 'next.config.mjs'), 'utf8')
+    expect(nextConfig).toContain("value: \"sfai.studio\"")
+    expect(nextConfig).toContain("value: \"www.sfai.studio\"")
+    expect(nextConfig).toContain('https://sceneflowai.studio/:path*')
+    expect(nextConfig).toContain('permanent: true')
+  })
 })

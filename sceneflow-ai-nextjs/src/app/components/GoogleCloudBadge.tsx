@@ -30,7 +30,7 @@ export function GoogleCloudBadge() {
                 width={32} 
                 height={32}
               />
-              <span className="text-white font-semibold text-lg">Powered by Google Cloud</span>
+              <span className="text-white font-semibold text-lg">Google-powered intelligence · Orchestrated on Google Cloud</span>
             </div>
           </div>
           
@@ -38,8 +38,7 @@ export function GoogleCloudBadge() {
             Built on Google&apos;s Most Advanced AI
           </h3>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            SceneFlow AI is the commercial showcase for Google&apos;s generative AI video capabilities. 
-            Our success directly validates Veo 3.1, Imagen 3 (and roadmapped Imagen 4), and Gemini 3.1 Pro as production-ready creative tools.
+            SceneFlow runs Google-exclusive intelligence for scripting, optimization, and analysis — orchestrated on Google Cloud with optional Google or Kling generation paths and layered trust &amp; provenance.
           </p>
         </motion.div>
 

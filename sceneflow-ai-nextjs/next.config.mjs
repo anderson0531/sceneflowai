@@ -64,6 +64,18 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: "/:path*",
+        has: [{ type: "host", value: "sfai.studio" }],
+        destination: "https://sceneflowai.studio/:path*",
+        permanent: true,
+      },
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.sfai.studio" }],
+        destination: "https://sceneflowai.studio/:path*",
+        permanent: true,
+      },
+      {
         source: "/signup",
         destination: "/early-access",
         permanent: false,
