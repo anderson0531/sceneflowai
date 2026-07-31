@@ -17,8 +17,8 @@ export const EAP_COHORT_SECTION_TITLE = 'The September 2026 Cohort'
 
 export const EAP_MILESTONES = [
   'Early September 2026: Early Access opens — Founding Creator spots available',
+  'September 15, 2026: Application window closes; Mid-EAP Engineering Roundtable',
   'Mid-September 2026: Cohort onboarding and full studio access begins',
-  'Late September / Early October 2026: First Engineering Roundtable with the engineering team',
   'Ongoing: Priority access to new intelligence features',
 ] as const
 
@@ -54,7 +54,7 @@ export const EAP_EXPLORER_BOX_CTA = 'Launch Your Studio ($9) — September Cohor
 export const EAP_FOUNDING_FORM_TITLE = 'Founding Creator — reserve your spot'
 
 export const EAP_FOUNDING_FORM_INTRO =
-  'Complete a short director profile so we can onboard you when the September cohort opens. Email verification required.'
+  'Complete a short director profile so we can onboard you when the September cohort opens. Founding Creator applications close September 15, 2026. Email verification required.'
 
 export function eapWizardStepLabel(step: number, total: number, stepTitle: string): string {
   return `Step ${step} of ${total} — reserve your September cohort spot · ${stepTitle}`

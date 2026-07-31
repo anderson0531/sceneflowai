@@ -29,8 +29,10 @@ describe('EAP September 2026 copy', () => {
     expect(EAP_COHORT_LABEL).toContain('September 2026')
     expect(EAP_COHORT_SHORT).toBe('September 2026 cohort')
     expect(EAP_MILESTONES.length).toBeGreaterThanOrEqual(4)
+    expect(EAP_MILESTONES.join('\n')).toContain('September 15, 2026')
+    expect(EAP_MILESTONES.join('\n')).toContain('Application window closes')
     for (const milestone of EAP_MILESTONES) {
-      expect(milestone).toMatch(/September|October|Ongoing/)
+      expect(milestone).toMatch(/September|Ongoing/)
     }
     for (const pattern of OUTDATED_PATTERNS) {
       expect(EAP_MILESTONES.join('\n')).not.toContain(pattern)
