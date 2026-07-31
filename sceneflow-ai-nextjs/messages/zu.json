@@ -74,7 +74,9 @@
         "nativeLabel": "I-Thailand"
       }
     },
-    "soon": "Maduze"
+    "soon": "Maduze",
+    "ctaPrimaryLaunch": "Launch Your Studio ($9) — September Cohort",
+    "ctaSupportingLine": "Start with the $9 Explorer plan. September Early Access cohort now forming."
   },
   "valueProp": {
     "pills": [
@@ -1512,7 +1514,7 @@
     "subscribe": "Thola ukufinyelela kusenesikhathi",
     "subscribing": "Ngiyabhalisa...",
     "or": "noma",
-    "startNow": "Qala ukudala manje ngo-$9 kuphela →",
+    "startNow": "Start creating now for just $9 — September cohort forming →",
     "privacy": "Ayikho imiyalezo engafuneki, nhlobo. Ungazikhipha ohlwini noma nini.",
     "successTitle": "Usohlwini!",
     "successSubtitle": "Bheka ibhokisi lakho lemiyalezo ukuze uthole amathiphu akhethekile okwenza amafilimu kanye nezibuyekezo zokuthola ukufinyelela kusenesikhathi.",
@@ -1521,8 +1523,8 @@
   },
   "pricing": {
     "badge": "Intengo Ngokusekelwe Ekusetshenzisweni",
-    "title": "Khokhela lokho okudalayo",
-    "subtitle": "Uhlelo olulodwa oluyisisekelo lokufinyelela inkundla. Amakhredithi okukhiqiza okuqukethwe nge-AI. Engeza amakhredithi uma udinga engeziwe. Ukulawula okuphelele, akukho okumoshekayo.",
+    "title": "Start with Explorer — $9",
+    "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
     "valueAnchor": {
       "traditionalCost": "Ngaphezu kuka-$2,000",
       "traditionalLabel": "Ukubona kusengaphambili ngendlela evamile",
@@ -1715,7 +1717,13 @@
           ]
         }
       ]
-    }
+    },
+    "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
+    "trustBadges": [
+      "Google Cloud infrastructure",
+      "Vertex AI generation",
+      "Secure payments via Whop"
+    ]
   },
   "landingSections": {
     "expandSection": "Bonisa isigaba",
@@ -1723,8 +1731,9 @@
   },
   "finalCta": {
     "title": "Usukulungele ukuhlola uhlelo lokusebenza oluphelele?",
-    "subtitle": "Yenza yonke inqubo—kusukela emcabangweni, ekubukezweni kwangaphambili (pre-vis) nasekukhiqizweni kwevidiyo kuya ekugcinweni kwefayela le-MP4—esitudiyweni esisodwa. Qala ngohlelo olubiza u-$9 Explorer ukuze ubone indlela yokusebenza ebeka isigqi (beat) phambili isebenza ngempela.",
-    "cta": "Qala isitudiyo sakho ngo-$9"
+    "subtitle": "Google-powered scripting and optimization, your choice of generation backend, and Screening Room review — all in one studio. September Early Access cohort now forming — start with the $9 Explorer plan or apply for Founding Creator access.",
+    "cta": "Launch Your Studio ($9) — September Cohort",
+    "ctaSecondary": "Apply for Founding Creator Access"
   },
   "footer": {
     "description": "Ukukhiqizwa kwamavidiyo okuzenzakalelayo okuphelele — kusukela emcabangweni kuya kumkhiqizo wokugcina osekulungele ukushicilelwa. Isitudiyo esisodwa esiqondiswayo: Blueprint → Ukukhiqiza → Screening Room.",
@@ -1763,5 +1772,11 @@
     "mute": "Thulisa",
     "unmute": "Vula umsindo",
     "expandVideo": "Khulisa ividiyo"
+  },
+  "useCasesShowcase": {
+    "badge": "Who is SceneFlow For?",
+    "title": "Who is SceneFlow For?",
+    "subtitle": "From concept to a Screening Room animatic to auto-published multilanguage video — one automated pipeline, four ways to ship.",
+    "cta": "Launch Your Studio ($9) — September Cohort"
   }
 }

@@ -8,19 +8,22 @@
     "platformWalkthrough": "平台导览",
     "plansPricing": "方案与定价",
     "more": "更多",
-    "useCases": "应用场景",
+    "useCases": "使用案例",
     "audienceResonance": "Audience Resonance",
     "trustSafety": "信任与安全",
-    "platformTrust": "平台与信任",
+    "platformTrust": "平台信托基金",
     "signIn": "登录",
     "startProject": "开始项目",
-    "dashboard": "仪表盘",
-    "adminPanel": "管理面板",
-    "signOut": "退出",
-    "goToDashboard": "前往仪表盘",
+    "dashboard": "仪表板",
+    "adminPanel": "管理",
+    "signOut": "注销",
+    "goToDashboard": "转到仪表板",
     "userFallback": "用户",
-    "searchLanguages": "搜索语言……",
-    "noLanguagesFound": "未找到语言"
+    "searchLanguages": "搜索语言",
+    "noLanguagesFound": "找不到语言",
+    "pipeline": "管道",
+    "productionExamples": "示例",
+    "keyFeatures": "特点"
   },
   "floatingNav": {
     "compare": "比较",
@@ -34,47 +37,50 @@
     "pricing": "定价"
   },
   "hero": {
-    "headline": "构想故事。SceneFlow 负责处理流程。",
-    "subheadline": "摆脱繁琐的提示词输入，借助自动化、专业级的制作工作流，全心专注于您的创作意图。",
+    "headline": "由您来主导故事。SceneFlow自动化工作室。",
+    "subheadline": "在SFAIGOGLE_CLOUDTERM上精心策划的由Google提供支持的情报—使用可选的Google或Kling生成。无需微提示，即可通过从蓝图到主MP4的无缝管道运行您的创意。",
     "audienceMicroLine": "专为追求成效的创作者，以及希望了解运作方式的团队而打造。",
     "ctaSecondary": "观看「可能性」",
-    "ctaToolStack": "了解它如何替代您现有的工具栈",
-    "languagePrompt": "用您的语言聆听英雄之声——同一制作流程，开拓全新市场",
-    "multilangHint": "主打配音涵盖 7 种语言——完整生产管线支持 70 多种语言。",
-    "playWithNarration": "带旁白播放",
-    "tapToHear": "点击收听",
+    "ctaToolStack": "了解它如何替换您的工具堆栈",
+    "languagePrompt": "用您的语言聆听英雄的声音—相同的渠道，新的市场",
+    "multilangHint": "7种语言的Hero配音— Production Studio中的完整管道支持70多种语言。",
+    "playWithNarration": "播放旁白",
+    "tapToHear": "轻触以聆听",
     "fullscreen": "全屏",
     "heroVideoLanguages": {
       "en": {
-        "label": "英语",
-        "nativeLabel": "英语"
+        "label": "中文",
+        "nativeLabel": "中文"
       },
       "es": {
-        "label": "西班牙语",
-        "nativeLabel": "西班牙语"
+        "label": "西班牙",
+        "nativeLabel": "Peru / Español"
       },
       "pt": {
         "label": "葡萄牙语",
-        "nativeLabel": "葡萄牙语"
+        "nativeLabel": "Português"
       },
       "hi": {
         "label": "印地语",
-        "nativeLabel": "印地语"
+        "nativeLabel": "<g id=\"267\">'</g><g id=\"268\">हिन्दी</g><g id=\"269\">',</g>"
       },
       "zh": {
-        "label": "中文",
+        "label": "Chinese",
         "nativeLabel": "中文"
       },
       "ar": {
         "label": "阿拉伯语",
-        "nativeLabel": "阿拉伯语"
+        "nativeLabel": "العربية"
       },
       "th": {
-        "label": "泰国",
-        "nativeLabel": "泰国"
+        "label": "泰语",
+        "nativeLabel": "ไทย"
       }
     },
-    "soon": "很快"
+    "soon": "很快",
+    "ctaPrimaryLaunch": "推出您的单间公寓（ $ 9 ） — 9月群体",
+    "ctaSupportingLine": "从$ 9 Explorer计划开始。9月抢先体验队列正在形成。",
+    "videoLanguageCount": "{count, plural, = 1 {#语言} other {#语言}}"
   },
   "valueProp": {
     "pills": [
@@ -1501,260 +1507,269 @@
     "ctaSubtext": "Bridge traditional filmmaking and generative AI"
   },
   "exitIntent": {
-    "title": "等等！别空手而归。",
-    "subtitle": "获取 AI 赋能电影制作的独家抢先体验与实用技巧",
+    "title": "等等，不要空手而归",
+    "subtitle": "获取人工智能电影制作的独家抢先体验和提示",
     "benefits": [
-      "每周 AI 电影制作教程",
+      "每周人工智能电影制作教程",
       "抢先体验新功能",
-      "创作者专属折扣"
+      "创作者专享折扣"
     ],
-    "emailPlaceholder": "输入您的电子邮件",
-    "subscribe": "获取抢先体验",
-    "subscribing": "正在订阅……",
-    "or": "或",
-    "startNow": "立即开始创作，仅需 9 美元 →",
-    "privacy": "绝无垃圾邮件。随时可退订。",
-    "successTitle": "你在名单上了！",
-    "successSubtitle": "请查收您的收件箱，获取独家电影制作技巧及抢先体验资讯。",
-    "ctaText": "开启探索之旅 — $9",
+    "emailPlaceholder": "请输入您的电子邮箱",
+    "subscribe": "获得优先访问权",
+    "subscribing": "訂閱",
+    "or": "或者",
+    "startNow": "现在就开始创作，只需$ 9 — 9月组队 →",
+    "privacy": "永远不会有垃圾邮件。随时取消订阅。",
+    "successTitle": "您已上榜！",
+    "successSubtitle": "请查看收件箱，了解独家电影制作技巧和抢先体验最新动态。",
+    "ctaText": "开始探索— $ 9",
     "closePopup": "关闭弹窗"
   },
   "pricing": {
-    "badge": "按使用量计费",
-    "title": "为你的创作付费",
-    "subtitle": "一项用于访问平台的基础方案，搭配 AI 生成所需的点数。按需充值，完全自主，杜绝浪费。",
+    "badge": "定价简单",
+    "title": "从Explorer开始— $ 9",
+    "subtitle": "9月抢先体验队列形成。使用无摩擦的$ 9入口测试整个管道。",
     "valueAnchor": {
-      "traditionalCost": "2,000美元以上",
-      "traditionalLabel": "传统预演",
-      "vs": "对阵",
-      "sceneFlowCost": "49-149美元",
-      "sceneFlowLabel": "SceneFlow 按月",
-      "saveBadge": "每个项目节省 90% 以上"
+      "traditionalCost": "2 000",
+      "traditionalLabel": "传统前期访视",
+      "vs": "vs",
+      "sceneFlowCost": "$ 49-149",
+      "sceneFlowLabel": "SceneFlow MONTHLY",
+      "saveBadge": "每个项目节省90%以上"
     },
     "teamCta": {
-      "title": "内部团队还是外部机构？",
-      "description": "为传播、学习与发展（L&D）及市场营销团队预约工作流程演示",
-      "button": "全书导读"
+      "title": "内部团队或机构？",
+      "description": "为通讯、L&D和营销团队预订工作流程演练",
+      "button": "书籍演练"
     },
     "agencyCta": {
-      "title": "代理公司还是制作公司？",
-      "description": "定制化额度、SLA 及大规模专属支持",
-      "button": "联系销售"
+      "title": "代理商还是生产车间？",
+      "description": "定制积分、SLA和专属支持",
+      "button": "联系销售部门"
     },
     "byok": {
-      "title": "自带密钥",
-      "badge": "专业版与工作室版方案",
-      "description": "已有 Vertex AI 或 ElevenLabs 的 API 密钥？将其用于 SceneFlow AI，平台额度费用最高可节省 80%。",
-      "savingsHighlight": "80% 平台额度",
+      "title": "自带钥匙",
+      "badge": "专业和工作室套餐",
+      "description": "已有Vertex AI或ElevenLabs的API密钥？使用SceneFlow AI ，平台消费金最高可节省80%。",
+      "savingsHighlight": "80%的平台消费金",
       "benefits": [
         {
-          "title": "80% SceneFlow 额度节省",
-          "description": "仅需为编排与工具支付 20% 的平台费用"
+          "title": "80% SceneFlow积分节省",
+          "description": "只需为编排和工具支付20%的平台费"
         },
         {
           "title": "利用企业计划",
-          "description": "使用您现有的 Vertex AI 或 ElevenLabs 批量折扣"
+          "description": "使用您现有的Vertex AI或ElevenLabs批量折扣"
         },
         {
-          "title": "完全控制",
-          "description": "您的密钥、您的账单、您的成本管理"
+          "title": "完全掌控",
+          "description": "您的钥匙、账单、成本管理"
         }
       ],
       "supportedProviders": "支持的提供商",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "Imagen 4 与 Veo 3.1",
+      "vertexDetail": "Imagen 4 & VEO 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "文本转语音与语音克隆",
-      "savingsLabel": "节省 80%",
-      "onImagesVideo": "针对图像与视频",
-      "onVoiceover": "伴随画外音",
-      "note": "显示的额度节省金额为 SceneFlow 平台节省的费用。您的实际总成本取决于您与各服务提供商约定的个人或企业 API 定价。"
+      "elevenLabsDetail": "文字转语音和语音克隆",
+      "savingsLabel": "节省80%",
+      "onImagesVideo": "在图片和视频上",
+      "onVoiceover": "在画外音上",
+      "note": "显示的旅行基金节省是SceneFlow平台节省。您的实际总费用取决于您与每个提供商的个人或企业API定价。"
     },
     "creditTopUps": {
-      "title": "需要更多点数吗？",
-      "subtitle": "随时充值，余额永不过期。",
+      "title": "需要更多消费金？",
+      "subtitle": "随时充值。消费金永不过期。",
       "packs": [
         {
           "label": "新手礼包",
-          "description": "非常适合快速复习"
+          "description": "非常适合快速修改"
         },
         {
-          "label": "场景包",
-          "description": "完成一个短期项目"
+          "label": "场景礼包",
+          "description": "完成一个简短的项目"
         },
         {
-          "label": "制作包",
-          "description": "电影中的重头戏"
+          "label": "生产礼包",
+          "description": "主胶片顺序"
         },
         {
-          "label": "工作室套装",
-          "description": "满负荷生产能力"
+          "label": "工作室礼包",
+          "description": "生产能力"
         }
       ],
-      "creditsUnit": "制作人员名单"
+      "creditsUnit": "credits"
     },
     "calculator": {
-      "sectionTitle": "估算您的项目",
-      "sectionSubtitle": "在做出决定前，确切了解您需要支付的费用。",
+      "sectionTitle": "评估您的项目",
+      "sectionSubtitle": "在承诺之前确切了解您需要支付的金额",
       "title": "项目预算计算器",
-      "subtitle": "开始前估算所需点数",
+      "subtitle": "开始之前预估消费金",
       "customize": "自定义参数",
-      "imagesLabel": "待生成的图像",
-      "videoClipsLabel": "视频片段",
-      "voiceoverLabel": "旁白（分钟）",
-      "byokTitle": "自带密钥 (BYOK)",
-      "byokBadge": "专业版与工作室版",
-      "byokDescription": "使用您自己的 API 密钥，最高可节省 80% 的 SceneFlow 额度费用。您将直接按 AI 服务商的费率进行支付。",
-      "vertexToggle": "Vertex AI（图像与视频）",
-      "elevenLabsToggle": "ElevenLabs （旁白）",
-      "imageGeneration": "图像生成",
+      "imagesLabel": "要生成的图像",
+      "videoClipsLabel": "视频剪辑",
+      "voiceoverLabel": "画外音（分钟）",
+      "byokTitle": "自带钥匙（ BYOK ）",
+      "byokBadge": "专业和工作室",
+      "byokDescription": "使用您自己的API密钥可节省高达80 ％的SceneFlow积分。您可以直接向人工智能提供商按其费率付款。",
+      "vertexToggle": "Vertex AI （图片和视频）",
+      "elevenLabsToggle": "ElevenLabs （配音）",
+      "imageGeneration": "AI图像生成",
       "videoGeneration": "视频生成",
-      "voiceover": "旁白",
-      "byokTag": "(BYOK)",
-      "totalEstimate": "总估算",
-      "withTopUps": "包含充值",
-      "creditSavings": "SceneFlow 学分结余",
-      "savePercent": "购买 SceneFlow 积分可节省 {percent}%",
-      "transparency": "完全透明：您在工作时可实时查看额度使用情况。无需担心意外超支——您可以随时调整项目范围。",
-      "transparencyHighlight": "完全透明：",
-      "byokDisclaimer": "BYOK 注意：显示的额度节省仅反映 SceneFlow 平台额度消耗的减少。您的实际成本取决于您的 Vertex AI 和 ElevenLabs 定价方案。企业级方案或高用量 API 方案可能会提供额外的节省。",
-      "byokDisclaimerHighlight": "BYOK 注：",
+      "voiceover": "Voiceover",
+      "byokTag": "（ BYOK ）",
+      "totalEstimate": "估计数共计",
+      "withTopUps": "充值",
+      "creditSavings": "SceneFlow旅行基金节省",
+      "savePercent": "您在SceneFlow积分上节省了{percent} %",
+      "transparency": "完全透明：您在工作时会看到实时旅行基金使用情况。没有意外--随时调整您的项目范围。",
+      "transparencyHighlight": "全透明",
+      "byokDisclaimer": "BYOK注意：显示的旅行基金节省仅反映SceneFlow平台旅行基金的减少。您的实际费用取决于您的Vertex AI和ElevenLabs定价计划。企业或大批量API套餐可能会带来额外的节省。",
+      "byokDisclaimerHighlight": "BYOK注意：",
       "presets": [
         {
-          "id": "商业的；广告",
+          "id": "commercial",
           "name": "30秒广告"
         },
         {
-          "id": "短",
+          "id": "short",
           "name": "2分钟短片"
         },
         {
-          "id": "一集；插曲；片段",
+          "id": "episode",
           "name": "10分钟剧集"
         },
         {
-          "id": "功能",
-          "name": "90分钟长片"
+          "id": "feature",
+          "name": "90分钟功能"
         }
       ],
-      "minSuffix": "分钟"
+      "minSuffix": "分"
     },
     "tierGrid": {
       "productionTestFlight": "生产试飞",
-      "getStarted": "开始使用",
+      "getStarted": "开始",
       "startTestFlight": "开始试飞",
-      "loading": "正在加载……",
-      "mostPopular": "最受欢迎",
-      "creditsPerMonth": "每月点数",
-      "storage": "存储",
+      "loading": "正在載入...",
+      "mostPopular": "最熱門",
+      "creditsPerMonth": "消费金/月",
+      "storage": "收纳",
       "perMonth": "/月"
     },
     "trust": {
       "cancelAnytime": "随时取消",
-      "moneyBack": "14天退款保证",
-      "creditsNeverExpire": "点数永不过期（Explorer 套餐）"
+      "moneyBack": "30天退款保证",
+      "creditsNeverExpire": "积分永不过期（ Explorer礼包）"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "一次性购买以进行试用",
+        "description": "一次性购买即可试用",
         "features": [
           "一次性购买",
-          "750 点数（永久有效）",
-          "5 GB 存储空间（30 天）",
-          "平台全面访问权限",
-          "MP4 导出（任意分辨率）",
-          "AI 配音（70 多种语言）"
+          "750学分（永不过期）",
+          "5 GB存储空间（ 30天）",
+          "平台访问",
+          "MP4导出（任何分辨率）",
+          "AI画外音（ 70多种语言）"
         ]
       },
       "subscriptions": [
         {
-          "id": "开胃菜；起动器；（赛跑的）发令员",
+          "id": "starter",
           "name": "开胃菜",
-          "description": "面向个人创作者",
+          "description": "针对个人创作者",
           "features": [
-            "平台全面访问权限",
-            "每月包含 4,500 点额度",
-            "25 GB 活动存储空间",
-            "MP4 导出（任意分辨率）",
-            "AI 配音（70 多种语言）",
+            "平台访问",
+            "包含每月4,500个消费金",
+            "25 GB活动存储空间",
+            "MP4导出（任何分辨率）",
+            "AI画外音（ 70多种语言）",
             "电子邮件支持"
           ]
         },
         {
-          "id": "专业人士；赞成；优势",
-          "name": "专业版",
+          "id": "pro",
+          "name": "专业",
           "description": "面向专业创作者",
           "features": [
-            "包含 Starter 版本的所有内容，以及：",
-            "每月包含 15,000 点额度",
-            "100 GB 活动存储空间",
-            "Veo 3.1 高画质 (4K) 访问权限",
+            "Starter中的所有功能，以及：",
+            "含15,000点数/月",
+            "100 GB活动存储空间",
+            "Veo 3.1质量（ 4K ）访问",
             "角色一致性引擎",
-            "语音克隆",
-            "BYOK（自带密钥）",
+            "声音克隆",
+            "BYOK （自带钥匙）",
             "3个团队席位",
             "优先支持"
           ]
         },
         {
-          "id": "工作室",
+          "id": "studio",
           "name": "工作室",
-          "description": "面向团队与代理机构",
+          "description": "适用于团队和机构",
           "features": [
-            "包含 Pro 版的所有功能，外加：",
-            "每月包含 75,000 点额度",
-            "500 GB 活动存储空间",
-            "Veo 3.1 4K 优先队列",
-            "无限角色一致性",
+            "专业版中的所有功能，以及：",
+            "含75,000点数/月",
+            "500 GB活动存储空间",
+            "VEO 3.1 4K优先级队列",
+            "无限字符一致性",
             "白标出口",
             "API 访问",
             "10个团队席位",
             "专属客户经理",
-            "可应要求提供企业级 SLA"
+            "可根据要求提供企业SLA"
           ]
         }
       ]
-    }
+    },
+    "explorerHighlight": "体验完整SceneFlow工作室的最快方式—从概念到Screening Room。",
+    "trustBadges": [
+      "Google Cloud基础设施",
+      "Vertex AI生成",
+      "通过Whop安全付款",
+      "30天退款保证"
+    ]
   },
   "landingSections": {
     "expandSection": "显示部分",
     "collapseSection": "隐藏部分"
   },
   "finalCta": {
-    "title": "准备好测试完整流程了吗？",
-    "subtitle": "在一个 Studio 中完成概念 → 分镜 → 视频 → 主 MP4。从 $9 Explorer 方案开始，体验 beat-first 工作流。",
-    "cta": "以 $9 启动您的 Studio"
+    "title": "准备好测试整个管道了吗？",
+    "subtitle": "Google支持的脚本和优化、您选择的生成后端以及Screening Room评论—所有这些都在一个工作室中。9月抢先体验组群正在形成--从$ 9 Explorer计划开始，或申请初代创作者访问权限。",
+    "cta": "推出您的单间公寓（ $ 9 ） — 9月群体",
+    "ctaSecondary": "申请初代创作者访问权限",
+    "ctaSecondaryHref": "/early-access"
   },
   "footer": {
-    "description": "端到端自动化视频制作——从构思到可发布的成片。一体化引导式工作空间：Blueprint → 制作 → Screening Room。",
+    "description": "端到端自动化视频制作—从概念到发布就绪。一个导游工作室： SFAISERIES_→STUDIOTERM Blueprint Studio → Production Studio → Screening Room。",
     "product": "产品",
     "resources": "资源",
-    "legal": "法律",
+    "legal": "法务",
     "links": {
-      "features": "功能特点",
-      "pricing": "定价",
-      "howItWorks": "运作原理",
-      "gettingStarted": "入门指南",
-      "privacy": "隐私政策",
-      "terms": "服务条款",
+      "features": "特点",
+      "pricing": "价格",
+      "howItWorks": "工作原理",
+      "gettingStarted": "开始",
+      "privacy": "隐私条款",
+      "terms": "服務條款",
       "trustSafety": "信任与安全",
       "refunds": "退款政策",
-      "contact": "联系我们"
+      "contact": "联系我們"
     },
-    "tagline": "为创作者倾心打造",
-    "taglineSub": "从创意到视频发布",
-    "securePayments": "由我们的名义商户 Whop 处理的安全支付",
-    "morLine": "安全支付、税务计算及合规事宜由我们的名义商户 Whop 代表 Life Focus, LLC 负责处理。",
+    "tagline": "专❤️ 为创作者打造",
+    "taglineSub": "从创意到已发布的视频",
+    "securePayments": "由我们的记录商家Whop处理的安全付款",
+    "morLine": "安全付款、税务计算和合规性由我们的记录商家Whop代表Life Focus, LLC处理。",
     "copyright": "© 2026 SceneFlow AI。保留所有权利。",
-    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • 联系方式：support@sceneflowai.studio",
-    "poweredBy": "由 Google Cloud 驱动"
+    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States •联系方式： support@sceneflowai.studio",
+    "poweredBy": "Google驱动的情报·在SFAIGOGLE_CLOUDTERM上编排"
   },
   "floatingCta": {
-    "seePricing": "查看价格",
-    "tryNine": "试试 9 美元",
-    "tryForNine": "仅需 9 美元即可试用",
-    "dismiss": "关闭"
+    "seePricing": "查看定价",
+    "tryNine": "尝试$ 9",
+    "tryForNine": "尝试$ 9",
+    "dismiss": "解散"
   },
   "common": {
     "watermark": "SceneFlow AI Studio",
@@ -1763,5 +1778,121 @@
     "mute": "静音",
     "unmute": "取消静音",
     "expandVideo": "展开视频"
+  },
+  "useCasesShowcase": {
+    "badge": "SceneFlow针对谁？",
+    "title": "SceneFlow针对谁？",
+    "subtitle": "从概念到Screening Room动画到自动发布的多语言视频—一个自动化管道，四种发货方式。",
+    "cta": "推出您的单间公寓（ $ 9 ） — 9月群体",
+    "tabStory": "解决方案",
+    "tabScreening": "审查",
+    "problemLabel": "问题",
+    "solutionLabel": "SceneFlow解决方案",
+    "outcomeLabel": "成果",
+    "videoLanguagePrompt": "用您的语言观看这段旅程",
+    "videoComingSoon": "演练视频即将推出",
+    "videoSoon": "很快",
+    "personas": [
+      {
+        "id": "youtubeCreator",
+        "label": "YouTube创作者",
+        "headline": "从概念到电影系列—无提示工程",
+        "intro": "从概念或详细的系列描述开始。SceneFlow构建系列宇宙、角色和无限剧集，然后使用Express同时渲染音频、帧和视频。您可以用纯文本或语音创建和指导； SceneFlow构建愿景—没有提示工程，没有槽机重拍。",
+        "story": {
+          "problem": [
+            "您可以分别使用脚本、图像、语音、视频、音乐和编辑工具。",
+            "您一遍又一遍地重新生成每个部分，希望得到可用的结果。",
+            "角色看起来仍然因场景而异。"
+          ],
+          "solution": [
+            "一个引导式工作室取代了整个工具堆栈。",
+            "用简单的语言描述您的想法— SceneFlow撰写系列并设计演员阵容。",
+            "Express将音频、帧和视频渲染在一起，而Reference Library保持字符一致。"
+          ],
+          "outcome": [
+            "不要把周末浪费在零散的工具上。",
+            "以您实际上可以跟上的稳定节奏发布。",
+            "在品牌上保留每集，无需重新滚动以保持一致性。"
+          ]
+        },
+        "screeningRoomHook": "在动画视频之前将故事可视化为动画，在最终确定流之前查看场景，并共享多语言流（ 70多种语言）以获得预发布反馈。",
+        "screeningRoomPreview": "看不见的档案：大幻觉：芝加哥世界博览会欺骗"
+      },
+      {
+        "id": "startupProvider",
+        "label": "启动提供程序",
+        "headline": "运行全球视频工作室—无需构建",
+        "intro": "为买不起代理的小型企业提供精美的本地化视频。Express同时渲染整个客户端包， Mixer添加品牌叠加、水印和计时，并以客户的市场语言自动对齐配音/唇形同步运送每个可交付成果—所有这些都来自一个可预测的管道。",
+        "story": {
+          "problem": [
+            "小型企业客户负担不起传统的视频代理商。",
+            "您购买和玩弄许多工具，为每个客户重做工作。",
+            "每种新语言都意味着从头开始重建视频。"
+          ],
+          "solution": [
+            "为每个客户项目提供一个可预测的管道。",
+            "一次渲染完整的视频包—音频，帧和视频在一起。",
+            "添加品牌、叠加层和水印，然后自动配音和唇形同步到客户的市场语言中。"
+          ],
+          "outcome": [
+            "在一个工作室工作流程中为许多客户提供服务。",
+            "无需重新构建每个视频，即可使用70多种语言覆盖全球市场。",
+            "无需雇佣工作人员或建设基础设施，即可扩展服务。"
+          ]
+        },
+        "screeningRoomHook": "面向客户审核动画，在最终流之前签核场景，并为海外利益相关者提供可共享的多语言预览。",
+        "screeningRoomPreview": "主街崛起：重新启动本地业务"
+      },
+      {
+        "id": "enterprise",
+        "label": "企业和机构",
+        "headline": "以政策变化的速度提供合规培训",
+        "intro": "内部L&D和通信团队无需供应商周期即可交付品牌锁定、可审计的模块。使用文本或语音细化任何框架或线条以保持消息，使用Mixer叠加层和水印完成，并将自动对齐的配音或唇形同步版本从单个批准的主站推出到每个区域。",
+        "story": {
+          "problem": [
+            "培训和通讯视频在外部供应商上等待数周，成本高昂。",
+            "当政策或产品发生变化时，视频会过时并脱离品牌。",
+            "每次更新都会触发另一轮昂贵的生产。"
+          ],
+          "solution": [
+            "在内部制作品牌锁定、可供审核的视频。",
+            "使用键入或口头说明更改任何行或框架。",
+            "在支付最终渲染之前进行审核和批准，然后向每个区域推出一个主渲染。"
+          ],
+          "outcome": [
+            "培训和沟通与政策变化保持同步。",
+            "保持品牌不变，无需等待供应商周期。",
+            "更新一次，并从单个批准的切口分发到任何地方。"
+          ]
+        },
+        "screeningRoomHook": "在流进入决赛之前查看场景，并共享私人Screening Room链接以获得跨区域反馈，而无需导出未完成的主控形状。",
+        "screeningRoomPreview": "SHIELD协议：全球网络安全入门"
+      },
+      {
+        "id": "educator",
+        "label": "教育工作者",
+        "headline": "将课程转化为课程学生实际观看",
+        "intro": "大型机构将密集的章节转换为本地化的叙事视频。Express快速构建完整的课程，智能文本/语音编辑让教师无需提示工程即可调整内容，并自动对齐配音/唇形同步匹配每个队列的语言—然后自动将本地化标题和缩略图发布到每个频道。",
+        "story": {
+          "problem": [
+            "密集的课程材料只有在数周、专业技能或大量预算后才会成为视频。",
+            "否则，课程将保持为幻灯片学生跳过。",
+            "用多种语言为学生提供服务会增加工作量。"
+          ],
+          "solution": [
+            "在一个工作室中快速构建完整的讲解课程。",
+            "教师通过键入或说话来调整内容—没有技术提示。",
+            "为每个队列自动配音、同步和发布本地化标题和缩略图。"
+          ],
+          "outcome": [
+            "将课程转化为学生实际观看的视频。",
+            "在没有制作团队的情况下，以他们的语言到达每个校园。",
+            "比传统视频制作更快地运送课程。"
+          ]
+        },
+        "screeningRoomHook": "教师在制作支出之前预览动画，查看课程场景，并以70多种语言共享流，以获得多校园反馈。",
+        "screeningRoomPreview": "文艺复兴工作坊：感受过去"
+      }
+    ]
   }
 }

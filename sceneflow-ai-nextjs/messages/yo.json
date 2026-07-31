@@ -74,7 +74,9 @@
         "nativeLabel": "Thailand"
       }
     },
-    "soon": "Laipẹ"
+    "soon": "Laipẹ",
+    "ctaPrimaryLaunch": "Launch Your Studio ($9) — September Cohort",
+    "ctaSupportingLine": "Start with the $9 Explorer plan. September Early Access cohort now forming."
   },
   "valueProp": {
     "pills": [
@@ -1512,7 +1514,7 @@
     "subscribe": "Gba àǹfààní láti wọlé ní kíákíá",
     "subscribing": "Níní ìforúkọsílẹ̀...",
     "or": "tàbí",
-    "startNow": "Bẹ̀rẹ̀ sí ní ṣẹ̀dá báyìí fún $9 péré →",
+    "startNow": "Start creating now for just $9 — September cohort forming →",
     "privacy": "A kì í fi àwọn ìfitónilétí tí kò wúlò ránṣẹ́ sí ọ rárá. O lè jáwọ́ nínú rẹ̀ nígbàkigbà.",
     "successTitle": "O wa ninu atokọ naa!",
     "successSubtitle": "Ṣayẹ̀wò àpótí-ìfìránṣẹ́ rẹ fún àwọn ìmọ̀ràn pàtàkì nípa ṣíṣe fíìmù àti àwọn ìròyìn nípa àǹfààní láti kọ́kọ́ rí àwọn nǹkan tuntun gbà.",
@@ -1521,8 +1523,8 @@
   },
   "pricing": {
     "badge": "Iye owo ti o da lori bi a ṣe lo nkan",
-    "title": "Sanwo fún ohun tí o dá sílẹ̀",
-    "subtitle": "Ètò kan ṣoṣo láti ní àǹfààní sí pèpéle náà. Àwọn kírédítì fún lílo ìmọ̀-ẹ̀rọ AI. Fi kún un nígbà tí o bá nílò àfikún. Ìṣàkóso tó péye, láìsí àdánù kankan.",
+    "title": "Start with Explorer — $9",
+    "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
     "valueAnchor": {
       "traditionalCost": "Ju $2,000 lọ",
       "traditionalLabel": "Àwòrán àkọ́kọ́lọ́lẹ̀ ti ìgbàanì",
@@ -1715,7 +1717,13 @@
           ]
         }
       ]
-    }
+    },
+    "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
+    "trustBadges": [
+      "Google Cloud infrastructure",
+      "Vertex AI generation",
+      "Secure payments via Whop"
+    ]
   },
   "landingSections": {
     "expandSection": "Fi apá kan hàn",
@@ -1723,8 +1731,9 @@
   },
   "finalCta": {
     "title": "Ṣé o ti ṣetán láti dán gbogbo ìlànà iṣẹ́ náà wò?",
-    "subtitle": "Ṣe gbogbo ilana—lati imọran, aworan afihan (pre-vis), ati fidio, titi de ipele ikẹhin (master MP4)—ni ile-iṣẹ kan ṣoṣo. Bẹrẹ pẹlu ètò $9 Explorer ki o si ri bi ilana iṣẹ ti o bẹrẹ pẹlu orin (beat-first workflow) ṣe n ṣiṣẹ ni gidi.",
-    "cta": "Bẹ̀rẹ̀ ilé-iṣẹ́ rẹ fún $9"
+    "subtitle": "Google-powered scripting and optimization, your choice of generation backend, and Screening Room review — all in one studio. September Early Access cohort now forming — start with the $9 Explorer plan or apply for Founding Creator access.",
+    "cta": "Launch Your Studio ($9) — September Cohort",
+    "ctaSecondary": "Apply for Founding Creator Access"
   },
   "footer": {
     "description": "Ṣíṣe fídíò nípasẹ̀ ẹ̀rọ láti ìbẹ̀rẹ̀ dé òpin — láti ìpele èrò títí dé fídíò tó ti péye fún gbígbé jáde. Ilé-iṣẹ́ kan tó ní ìtọ́sọ́nà: Blueprint → Ṣíṣe Fídíò → Screening Room.",
@@ -1763,5 +1772,11 @@
     "mute": "Pa ohùn",
     "unmute": "Mu ohùn pada",
     "expandVideo": "Mu Fidio Tobi"
+  },
+  "useCasesShowcase": {
+    "badge": "Who is SceneFlow For?",
+    "title": "Who is SceneFlow For?",
+    "subtitle": "From concept to a Screening Room animatic to auto-published multilanguage video — one automated pipeline, four ways to ship.",
+    "cta": "Launch Your Studio ($9) — September Cohort"
   }
 }

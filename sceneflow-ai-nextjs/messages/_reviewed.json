@@ -26,57 +26,17 @@
     "Google Flow"
   ],
   "locales": {
-    "pl": {
-      "tier": "B-mt",
+    "th": {
+      "tier": "A-reviewed",
       "mt": true,
-      "scope": "landing-priority"
-    },
-    "ru": {
-      "tier": "B-mt",
-      "mt": true,
-      "scope": "landing-priority"
-    },
-    "uk": {
-      "tier": "B-mt",
-      "mt": true,
-      "scope": "landing-priority"
-    },
-    "cs": {
-      "tier": "B-mt",
-      "mt": true,
-      "scope": "landing-priority"
-    },
-    "sv": {
-      "tier": "B-mt",
-      "mt": true,
-      "scope": "landing-priority"
-    },
-    "da": {
-      "tier": "B-mt",
-      "mt": true,
-      "scope": "landing-priority"
-    },
-    "no": {
-      "tier": "B-mt",
-      "mt": true,
-      "scope": "landing-priority"
-    },
-    "fi": {
-      "tier": "B-mt",
-      "mt": true,
-      "scope": "landing-priority"
-    },
-    "el": {
-      "tier": "B-mt",
-      "mt": true,
-      "scope": "landing-priority"
+      "scope": "landing-critical"
     }
   },
   "landingSync": {
     "provider": "mymemory",
-    "scope": "landing-priority-namespaces",
-    "batchSize": 15,
-    "batchNumber": 1,
-    "syncedAt": "2026-07-31T10:18:53.236Z"
+    "scope": "landing-namespaces",
+    "batchSize": null,
+    "batchNumber": null,
+    "syncedAt": "2026-07-31T15:18:42.781Z"
   }
 }

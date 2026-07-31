@@ -339,6 +339,41 @@ export const PRIORITY_LANDING_NAMESPACES = [
   'footer',
 ] as const
 
+export const CRITICAL_LANDING_PATHS = [
+  'hero.ctaPrimaryLaunch',
+  'hero.ctaSupportingLine',
+  'useCasesShowcase.badge',
+  'useCasesShowcase.title',
+  'useCasesShowcase.subtitle',
+  'useCasesShowcase.cta',
+  'pricing.title',
+  'pricing.subtitle',
+  'pricing.explorerHighlight',
+  'pricing.trustBadges.0',
+  'pricing.trustBadges.1',
+  'pricing.trustBadges.2',
+  'exitIntent.startNow',
+  'finalCta.cta',
+  'finalCta.subtitle',
+  'finalCta.ctaSecondary',
+] as const
+
+function getAtPath(obj: unknown, path: string): unknown {
+  return path.split('.').reduce<unknown>((current, part) => {
+    if (current == null || typeof current !== 'object') return undefined
+    return (current as Record<string, unknown>)[part]
+  }, obj)
+}
+
+export function extractCriticalLandingFlat(en: Record<string, unknown>): Record<string, string> {
+  const flat: Record<string, string> = {}
+  for (const path of CRITICAL_LANDING_PATHS) {
+    const value = getAtPath(en, path)
+    if (typeof value === 'string') flat[path] = value
+  }
+  return flat
+}
+
 export function extractLandingMessages(
   en: Record<string, unknown>,
   namespaces: readonly string[] = LANDING_NAMESPACES

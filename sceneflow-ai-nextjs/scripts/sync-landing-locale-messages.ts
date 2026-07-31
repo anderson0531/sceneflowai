@@ -20,6 +20,7 @@ import { LANDING_TRANSLATE_LANGUAGES } from '../src/config/landingTranslateLangu
 import { TIER_A_HERO_LOCALES } from '../src/i18n/locale'
 import {
   deepMerge,
+  extractCriticalLandingFlat,
   extractLandingMessages,
   flattenMessages,
   LANDING_NAMESPACES,
@@ -40,10 +41,12 @@ async function syncLocale(
   en: Record<string, unknown>,
   locale: string,
   provider: TranslateProvider,
-  namespaces: readonly string[]
+  namespaces: readonly string[],
+  criticalOnly: boolean
 ): Promise<Record<string, unknown>> {
-  const landingEn = extractLandingMessages(en, namespaces)
-  const landingFlat = flattenMessages(landingEn)
+  const landingFlat = criticalOnly
+    ? extractCriticalLandingFlat(en)
+    : flattenMessages(extractLandingMessages(en, namespaces))
   const translatedFlat = await translateFlatMessages(landingFlat, locale, provider)
   const translatedLanding = unflattenMessages(translatedFlat)
 
@@ -88,7 +91,12 @@ async function main() {
   const providerArg = process.argv.find((a) => a.startsWith('--provider='))?.split('=')[1]
   const provider = (providerArg ?? 'auto') as TranslateProvider
   const priorityOnly = process.argv.includes('--priority-only')
-  const namespaces = priorityOnly ? PRIORITY_LANDING_NAMESPACES : LANDING_NAMESPACES
+  const criticalOnly = process.argv.includes('--critical-only')
+  const namespaces = criticalOnly
+    ? []
+    : priorityOnly
+      ? PRIORITY_LANDING_NAMESPACES
+      : LANDING_NAMESPACES
 
   const en = JSON.parse(readFileSync(enPath, 'utf8')) as Record<string, unknown>
   const localeArgIndex = process.argv.indexOf('--locale')
@@ -145,7 +153,7 @@ async function main() {
 
     console.log(`\n=== ${locale} ===`)
     try {
-      const messages = await syncLocale(en, locale, provider, namespaces)
+      const messages = await syncLocale(en, locale, provider, namespaces, criticalOnly)
       writeFileSync(join(MESSAGES_DIR, `${locale}.json`), `${JSON.stringify(messages, null, 2)}\n`)
 
       const tierAPath = join(MESSAGES_DIR, 'tier-a', `${locale}.json`)
@@ -156,7 +164,7 @@ async function main() {
             : 'A-pending-review'
           : 'B-mt',
         mt: true,
-        scope: priorityOnly ? 'landing-priority' : 'landing',
+        scope: criticalOnly ? 'landing-critical' : priorityOnly ? 'landing-priority' : 'landing',
       }
       console.log(`Wrote messages/${locale}.json (landing namespaces synced)`)
     } catch (err) {

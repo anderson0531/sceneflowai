@@ -4,23 +4,26 @@
     "description": "AIを活用したワークフローの自動化で、アイデアをプロ品質の動画に。"
   },
   "nav": {
-    "workflow": "ワークフロー",
-    "platformWalkthrough": "プラットフォームの概要と操作ガイド",
-    "plansPricing": "プランと料金",
-    "more": "さらに表示",
-    "useCases": "ユースケース",
+    "workflow": "仕組み",
+    "platformWalkthrough": "プラットフォームのウォークスルー",
+    "plansPricing": "プランと価格",
+    "more": "その他",
+    "useCases": "使用事例",
     "audienceResonance": "Audience Resonance",
-    "trustSafety": "信頼と安全",
+    "trustSafety": "信頼性＆安全性",
     "platformTrust": "プラットフォームと信頼",
     "signIn": "サインイン",
     "startProject": "プロジェクトを開始する",
     "dashboard": "ダッシュボード",
-    "adminPanel": "管理パネル",
+    "adminPanel": "管理画面",
     "signOut": "サインアウト",
-    "goToDashboard": "ダッシュボードに移動",
+    "goToDashboard": "ダッシュボードへ移動",
     "userFallback": "ユーザー",
-    "searchLanguages": "言語を検索...",
-    "noLanguagesFound": "言語が見つかりませんでした"
+    "searchLanguages": "言語を検索",
+    "noLanguagesFound": "言語が見つかりません",
+    "pipeline": "パイプライン",
+    "productionExamples": "例",
+    "keyFeatures": "特長"
   },
   "floatingNav": {
     "compare": "比較する",
@@ -34,20 +37,20 @@
     "pricing": "料金"
   },
   "hero": {
-    "headline": "ストーリーを思い描いてください。パイプラインは SceneFlow が担います。",
-    "subheadline": "煩雑なプロンプト入力からは解放されましょう。自動化されたプロ仕様の制作ワークフローにより、クリエイティブな意図の実現に全面的に集中できます。",
+    "headline": "ストーリーはあなたが演出します。SceneFlowはスタジオを自動化します。",
+    "subheadline": "オプションのGoogleまたはKling生成を使用して、SFAIGOGLE_CLOUDTERMでオーケストレーションされたGoogle搭載のインテリジェンス。ブループリントからマスターMP 4まで、マイクロプロンプトなしでシームレスなパイプラインを通してアイデアを実行します。",
     "audienceMicroLine": "成果を求めるクリエイターと、仕組みを確かめたいチームのために作られました。",
-    "ctaSecondary": "「What's Possible（可能性）」をご覧ください",
-    "ctaToolStack": "既存のツールスタックをどのように置き換えられるかをご覧ください。",
-    "languagePrompt": "ヒーローの声を、あなたの言語で — 既存のパイプラインで、新たな市場へ",
-    "multilangHint": "主要な吹き替えは7言語に対応 — 本番環境のフルパイプラインでは70以上の言語をサポート。",
-    "playWithNarration": "ナレーション付きで再生する",
+    "ctaSecondary": "「何が可能か」をご覧ください",
+    "ctaToolStack": "ツールスタックを置き換える方法をご覧ください",
+    "languagePrompt": "あなたの言語でヒーローの声を聞く—同じパイプライン、新しい市場",
+    "multilangHint": "7つの言語でヒーローダブ—フルパイプラインはProduction Studioで70以上をサポートしています。",
+    "playWithNarration": "ナレーションで遊ぶ",
     "tapToHear": "タップして聞く",
     "fullscreen": "フルスクリーン",
     "heroVideoLanguages": {
       "en": {
-        "label": "英語",
-        "nativeLabel": "英語"
+        "label": "Japanese",
+        "nativeLabel": "Japanese"
       },
       "es": {
         "label": "スペイン語",
@@ -59,7 +62,7 @@
       },
       "hi": {
         "label": "ヒンディー語",
-        "nativeLabel": "ヒンディー語"
+        "nativeLabel": "快感、快感、快感、快感、快感"
       },
       "zh": {
         "label": "中国語",
@@ -67,14 +70,17 @@
       },
       "ar": {
         "label": "アラビア語",
-        "nativeLabel": "アラビア語"
+        "nativeLabel": "العربية"
       },
       "th": {
         "label": "タイ語",
-        "nativeLabel": "タイ"
+        "nativeLabel": "ไทย"
       }
     },
-    "soon": "まもなく"
+    "soon": "すぐに",
+    "ctaPrimaryLaunch": "スタジオを立ち上げる（ $ 9 ） — 9月のコホート",
+    "ctaSupportingLine": "$ 9 Explorerプランから始めましょう。9月の早期アクセスコーホートが形成されています。",
+    "videoLanguageCount": "{count, plural, = 1 {#言語} other {#言語}}"
   },
   "valueProp": {
     "pills": [
@@ -1501,260 +1507,269 @@
     "ctaSubtext": "伝統的な映画制作と生成AIの架け橋となる"
   },
   "exitIntent": {
-    "title": "ちょっと待って！手ぶらで帰らないでください。",
-    "subtitle": "AIを活用した映像制作に関する限定的な先行アクセスとヒントを手に入れましょう。",
+    "title": "待ってください！空いたままにしないでください",
+    "subtitle": "AIを活用した映画制作のための限定早期アクセスとヒントを手に入れよう",
     "benefits": [
-      "毎週配信のAI映像制作チュートリアル",
-      "新機能への早期アクセス",
+      "毎週のAI映画制作チュートリアル",
+      "新機能への先行アクセス",
       "クリエイター限定割引"
     ],
-    "emailPlaceholder": "メールアドレスを入力してください",
-    "subscribe": "早期アクセスを入手する",
-    "subscribing": "登録中...",
+    "emailPlaceholder": "電子メールアドレスを入力してください",
+    "subscribe": "早期アクセス",
+    "subscribing": "フォローしています...",
     "or": "または",
-    "startNow": "たったの9ドルで、今すぐ制作を始めましょう →",
-    "privacy": "スパムは一切送信しません。いつでも配信停止が可能です。",
-    "successTitle": "リストに載っていますよ！",
-    "successSubtitle": "映像制作に関する限定のヒントや、先行アクセスに関する最新情報をメールでご確認ください。",
-    "ctaText": "探索を始める — $9",
+    "startNow": "わずか$ 9 — 9月のコホート形成のために今すぐ作成を始めましょう →",
+    "privacy": "スパムは絶対にありません。いつでも購読を解除できます。",
+    "successTitle": "あなたはリストに載っています！",
+    "successSubtitle": "限定の映画制作のヒントや先行公開の最新情報については、受信トレイをご確認ください。",
+    "ctaText": "探索を始める— $ 9",
     "closePopup": "ポップアップを閉じる"
   },
   "pricing": {
-    "badge": "従量課金",
-    "title": "自分が作り出したものの対価を支払う",
-    "subtitle": "プラットフォーム利用のための基本プランと、AI生成用のクレジット。必要な時に追加購入できるため、無駄なく柔軟に管理できます。",
+    "badge": "わかりやすい料金体系。",
+    "title": "Explorerから始める— $ 9",
+    "subtitle": "9月の早期アクセスコホート形成。摩擦のない$ 9エントリーでパイプライン全体をテストします。",
     "valueAnchor": {
-      "traditionalCost": "2,000ドル以上",
-      "traditionalLabel": "従来のプリビジュアライゼーション",
+      "traditionalCost": "$ 2,000 +",
+      "traditionalLabel": "従来の事前訪問",
       "vs": "対",
-      "sceneFlowCost": "49〜149ドル",
-      "sceneFlowLabel": "SceneFlow 月次",
-      "saveBadge": "プロジェクトごとに90%以上のコストを削減"
+      "sceneFlowCost": "$ 49 -149",
+      "sceneFlowLabel": "SceneFlow MONTHLY",
+      "saveBadge": "プロジェクトごとに90%以上節約"
     },
     "teamCta": {
-      "title": "社内チーム、それとも外部機関ですか？",
-      "description": "コミュニケーション、L&D、マーケティングチーム向けのワークフロー・ウォークスルーを予約する",
-      "button": "書籍の概要・解説"
+      "title": "社内チームですか、それとも機関ですか？",
+      "description": "コミュニケーションチーム、L&Dチーム、マーケティングチーム向けのワークフローウォークスルーを予約する",
+      "button": "本のチュートリアル"
     },
     "agencyCta": {
-      "title": "エージェンシーですか、それとも制作会社ですか？",
-      "description": "大規模利用向けのカスタムクレジット、SLA、および専任サポート",
+      "title": "代理店ですか、それともプロダクションショップですか？",
+      "description": "大規模なカスタムクレジット、SLA、専用サポート",
       "button": "営業へのお問い合わせ"
     },
     "byok": {
-      "title": "独自の鍵の持ち込み",
-      "badge": "ProおよびStudioプラン",
-      "description": "Vertex AI または ElevenLabs の API キーをすでにお持ちですか？それらを SceneFlow AI で使用することで、プラットフォームクレジットを最大 80% 節約できます。",
-      "savingsHighlight": "プラットフォームクレジットの80%",
+      "title": "自分の鍵を持参する",
+      "badge": "プロとスタジオプラン",
+      "description": "すでにVertex AIまたはElevenLabsのAPIキーをお持ちですか？ SceneFlow AIでご利用いただくと、プラットフォームクレジットが最大80%割引になります。",
+      "savingsHighlight": "プラットフォームクレジットの80 ％",
       "benefits": [
         {
-          "title": "SceneFlow クレジット利用による80%の節約",
-          "description": "オーケストレーションとツールに対しては、20%のプラットフォーム手数料のみをお支払いいただきます。"
+          "title": "80% SceneFlowクレジット節約",
+          "description": "オーケストレーションとツールのための20 ％のプラットフォーム料金のみを支払う"
         },
         {
-          "title": "法人向けプランを活用する",
-          "description": "既存の Vertex AI または ElevenLabs ボリュームディスカウントをご利用ください。"
+          "title": "コーポレートプランを活用する",
+          "description": "既存のVertex AIまたはElevenLabsボリュームディスカウントを使用する"
         },
         {
-          "title": "完全な制御",
-          "description": "お客様のキー、請求、コスト管理"
+          "title": "フルコントロール",
+          "description": "キー、請求、コスト管理"
         }
       ],
-      "supportedProviders": "対応プロバイダー",
+      "supportedProviders": "サポートされているプロバイダー",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "Imagen 4 および Veo 3.1",
+      "vertexDetail": "Imagen 4 & VEO 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "テキスト読み上げ・音声クローニング",
-      "savingsLabel": "80%の節約",
-      "onImagesVideo": "画像と動画について",
-      "onVoiceover": "ナレーションで",
-      "note": "表示されているクレジットの節約額は、SceneFlowプラットフォームにおける節約分です。実際の総コストは、各プロバイダーとの個人または法人向けAPI価格設定によって異なります。"
+      "elevenLabsDetail": "テキスト読み上げと音声クローニング",
+      "savingsLabel": "80%オフ",
+      "onImagesVideo": "画像とビデオで",
+      "onVoiceover": "ボイスオーバーで",
+      "note": "表示されているクレジット節約額は、SceneFlowプラットフォームの節約額です。実際の合計費用は、各プロバイダーの個人または企業のAPI価格によって異なります。"
     },
     "creditTopUps": {
-      "title": "クレジットがもっと必要ですか？",
-      "subtitle": "いつでもチャージ可能。クレジットの有効期限はありません。",
+      "title": "もっとクレジットが必要ですか？",
+      "subtitle": "いつでもチャージできます。クレジットの有効期限はありません。",
       "packs": [
         {
-          "label": "スターターパック",
-          "description": "手軽な復習に最適"
+          "label": "入門パック",
+          "description": "素早いリビジョンに最適"
         },
         {
           "label": "シーンパック",
-          "description": "短期プロジェクトを完了させる"
+          "description": "短いプロジェクトを完了する"
         },
         {
           "label": "プロダクションパック",
-          "description": "映画の主要なシークエンス"
+          "description": "主なフィルムシーケンス"
         },
         {
           "label": "スタジオパック",
-          "description": "フル生産能力"
+          "description": "生産能力"
         }
       ],
-      "creditsUnit": "クレジット"
+      "creditsUnit": "credits"
     },
     "calculator": {
       "sectionTitle": "プロジェクトの見積もり",
-      "sectionSubtitle": "契約する前に、支払う金額を正確に把握しましょう。",
-      "title": "プロジェクト予算計算ツール",
-      "subtitle": "開始前にクレジットを見積もってください",
-      "customize": "パラメータをカスタマイズする",
+      "sectionSubtitle": "コミットする前に支払う金額を正確に把握する",
+      "title": "プロジェクト予算計算機",
+      "subtitle": "開始前にクレジットを見積もる",
+      "customize": "パラメータのカスタマイズ",
       "imagesLabel": "生成する画像",
-      "videoClipsLabel": "動画クリップ",
-      "voiceoverLabel": "ナレーション（分）",
-      "byokTitle": "独自の鍵の持ち込み (BYOK)",
-      "byokBadge": "プロ＆スタジオ",
-      "byokDescription": "独自のAPIキーを使用することで、SceneFlowのクレジット費用を最大80%節約できます。AIプロバイダーへの支払いは、各社の料金に基づき直接行われます。",
-      "vertexToggle": "Vertex AI (画像・動画)",
+      "videoClipsLabel": "ビデオ クリップ",
+      "voiceoverLabel": "ボイスオーバー（分）",
+      "byokTitle": "自分の鍵を持参する（ BYOK ）",
+      "byokBadge": "プロとスタジオ",
+      "byokDescription": "独自のAPIキーを使用して、SceneFlowクレジットを最大80 ％節約しましょう。AIプロバイダーには、その料金で直接支払います。",
+      "vertexToggle": "Vertex AI （画像とビデオ）",
       "elevenLabsToggle": "ElevenLabs （ナレーション）",
-      "imageGeneration": "画像生成",
-      "videoGeneration": "動画生成",
-      "voiceover": "ナレーション",
-      "byokTag": "(BYOK)",
-      "totalEstimate": "見積もり合計",
-      "withTopUps": "追加チャージ付きで",
-      "creditSavings": "SceneFlow クレジット貯蓄",
-      "savePercent": "SceneFlowクレジットが{percent}%お得になります",
-      "transparency": "完全な透明性：作業中、クレジットの消費状況をリアルタイムで確認できます。予期せぬ事態は起こりません。プロジェクトの範囲はいつでも調整可能です。",
-      "transparencyHighlight": "包み隠さず申し上げますと、",
-      "byokDisclaimer": "BYOK 注：表示されているクレジットの節約額は、SceneFlow プラットフォームクレジットの削減分のみを反映しています。実際の費用は、お客様の Vertex AI および ElevenLabs の料金プランによって異なります。法人向けプランや大量利用向けのAPIプランでは、さらなる節約が可能になる場合があります。",
-      "byokDisclaimerHighlight": "BYOK 注：",
+      "imageGeneration": "画像の生成に失敗しました",
+      "videoGeneration": "ビデオ生成",
+      "voiceover": "ボイスオーバー",
+      "byokTag": "（ BYOK ）",
+      "totalEstimate": "合計見積もり額",
+      "withTopUps": "チャージ付き",
+      "creditSavings": "SceneFlowクレジットの節約",
+      "savePercent": "SceneFlowクレジットが{percent }%オフ",
+      "transparency": "完全な透明性：作業中にリアルタイムのクレジット使用状況が表示されます。驚くことはありません。プロジェクトスコープはいつでも調整できます。",
+      "transparencyHighlight": "完全な透明性：",
+      "byokDisclaimer": "BYOK注：表示されているクレジット節減額は、SceneFlowプラットフォームのクレジット削減額のみを反映しています。実際の費用は、Vertex AIとElevenLabsの価格プランによって異なります。法人向けまたは大容量のAPIプランでは、さらに節約できる場合があります。",
+      "byokDisclaimerHighlight": "BYOK注意：",
       "presets": [
         {
-          "id": "商業用",
-          "name": "30秒CM"
+          "id": "commercial",
+          "name": "30秒コマーシャル"
         },
         {
-          "id": "短い",
-          "name": "2分間の短編映画"
+          "id": "short",
+          "name": "2分のショートフィルム"
         },
         {
-          "id": "エピソード",
+          "id": "episode",
           "name": "10分間のエピソード"
         },
         {
-          "id": "機能",
-          "name": "90分長編作品"
+          "id": "feature",
+          "name": "90分機能"
         }
       ],
       "minSuffix": "分"
     },
     "tierGrid": {
-      "productionTestFlight": "量産機試験飛行",
-      "getStarted": "始める",
-      "startTestFlight": "テストフライトを開始する",
+      "productionTestFlight": "本番テスト飛行",
+      "getStarted": "開始",
+      "startTestFlight": "テスト飛行を開始",
       "loading": "読み込み中...",
       "mostPopular": "最も人気",
       "creditsPerMonth": "クレジット/月",
-      "storage": "ストレージ",
+      "storage": "倉庫",
       "perMonth": "/月"
     },
     "trust": {
-      "cancelAnytime": "いつでもキャンセル可能",
-      "moneyBack": "14日間返金保証",
-      "creditsNeverExpire": "クレジットの有効期限はありません（Explorerパック）"
+      "cancelAnytime": "いつでもキャンセル可",
+      "moneyBack": "14日間の返金保証",
+      "creditsNeverExpire": "クレジットの有効期限はありません（ Explorerパック）"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "お試し用の単発購入",
+        "description": "1回限りの購入でお試しください",
         "features": [
-          "買い切り",
-          "750クレジット（有効期限なし）",
-          "5 GBのストレージ（30日間）",
-          "プラットフォームへの完全なアクセス",
-          "MP4書き出し（任意の解像度）",
-          "AI音声ナレーション（70以上の言語）"
+          "1 回限りの購入",
+          "クレジットに有効期限はありません",
+          "5 GBのストレージ（ 30日間）",
+          "プラットフォームへのフルアクセス",
+          "MP 4エクスポート（任意の解像度）",
+          "AIボイスオーバー（ 70以上の言語）"
         ]
       },
       "subscriptions": [
         {
-          "id": "スターター",
+          "id": "starter",
           "name": "スターター",
-          "description": "個人クリエイター向け",
+          "description": "個々のクリエイター向け",
           "features": [
-            "プラットフォームへの完全なアクセス",
-            "月間4,500クレジットが含まれています",
+            "プラットフォームへのフルアクセス",
+            "4,500クレジット/月を含む",
             "25 GBのアクティブストレージ",
-            "MP4書き出し（任意の解像度）",
-            "AI音声ナレーション（70以上の言語）",
+            "MP 4エクスポート（任意の解像度）",
+            "AIボイスオーバー（ 70以上の言語）",
             "メールサポート"
           ]
         },
         {
-          "id": "プロ",
-          "name": "プロ",
+          "id": "pro",
+          "name": "プロ版",
           "description": "プロのクリエイター向け",
           "features": [
-            "Starterの全機能に加え、以下が含まれます：",
-            "月間15,000クレジット込み",
+            "スターターのすべてに加えて：",
+            "15,000クレジット/月を含む",
             "100 GBのアクティブストレージ",
-            "Veo 3.1 高画質（4K）へのアクセス",
+            "VEO 3.1品質（ 4 K ）アクセス",
             "キャラクター一貫性エンジン",
             "音声クローニング",
-            "BYOK (独自の鍵の持ち込み)",
-            "チーム用シート3席",
+            "BYOK （自分の鍵を持参する）",
+            "3チームライセンス",
             "優先サポート"
           ]
         },
         {
-          "id": "スタジオ",
+          "id": "studio",
           "name": "スタジオ",
-          "description": "チーム・エージェンシー向け",
+          "description": "チームとエージェンシー向け",
           "features": [
-            "Proの全機能に加え、以下が含まれます：",
-            "月間75,000クレジットが含まれています",
+            "Proのすべてに加えて：",
+            "75,000クレジット/月を含む",
             "500 GBのアクティブストレージ",
-            "Veo 3.1 4K 優先キュー",
+            "VEO 3.1 4 Kプライオリティキュー",
             "無制限のキャラクターの一貫性",
-            "ホワイトラベル輸出",
+            "ホワイトラベルのエクスポート",
             "APIアクセス",
-            "チーム用10席",
-            "専任のアカウントマネージャー",
-            "ご要望に応じて、エンタープライズ向けSLAをご提供します。"
+            "10チームライセンス",
+            "専用アカウントマネージャー",
+            "要求に応じて利用可能なエンタープライズSLA"
           ]
         }
       ]
-    }
+    },
+    "explorerHighlight": "コンセプトからScreening Roomまで、完全なSceneFlowスタジオを体験する最速の方法。",
+    "trustBadges": [
+      "SFAIGOGLE_CLOUDTERMインフラストラクチャ",
+      "Vertex AI生成",
+      "Whopによる安全な支払い",
+      "14日間の返金保証"
+    ]
   },
   "landingSections": {
     "expandSection": "セクションを表示",
     "collapseSection": "セクションを非表示にする"
   },
   "finalCta": {
-    "title": "完全なパイプラインをテストする準備はできていますか？",
-    "subtitle": "コンセプトからプリビズ、動画制作、そしてマスターMP4の書き出しまで、すべてを一つのスタジオで完結させましょう。まずは9ドルのプラン（SFTERM18）から始めて、「ビート先行型」のワークフローを実際に体験してみてください。",
-    "cta": "9ドルでスタジオを立ち上げましょう"
+    "title": "パイプライン全体をテストする準備はできましたか？",
+    "subtitle": "Googleが提供するスクリプトと最適化、選択した生成バックエンド、およびScreening Roomレビュー—すべてを1つのスタジオで。9月の早期アクセスコホートが形成されています。$ 9 Explorerプランから始めるか、初代クリエイターアクセスを申請してください。",
+    "cta": "スタジオを立ち上げる（ $ 9 ） — 9月のコホート",
+    "ctaSecondary": "ファウンディングクリエイターアクセスを申請する",
+    "ctaSecondaryHref": "/early-access"
   },
   "footer": {
-    "description": "コンセプトから公開可能なマスターまで、一貫した自動動画制作。ガイド付きの統合スタジオ：Blueprint → 制作 → Screening Room。",
+    "description": "コンセプトから出版可能なマスターまで、エンドツーエンドの自動ビデオ制作。ONE GUIDED STUDIO ： Series Studio → Blueprint Studio → Production Studio → Screening Room。",
     "product": "製品",
     "resources": "リソース",
-    "legal": "法的事項",
+    "legal": "法律関係",
     "links": {
-      "features": "特徴",
-      "pricing": "料金",
+      "features": "特長",
+      "pricing": "価格設定",
       "howItWorks": "仕組み",
-      "gettingStarted": "はじめに",
+      "gettingStarted": "ご利用開始方法",
       "privacy": "プライバシーポリシー",
       "terms": "利用規約",
-      "trustSafety": "信頼と安全",
+      "trustSafety": "信頼性＆安全性",
       "refunds": "返金ポリシー",
-      "contact": "お問い合わせ"
+      "contact": "お問合せ"
     },
-    "tagline": "クリエイターのために、愛を込めて作りました",
-    "taglineSub": "アイデアから動画の公開まで",
-    "securePayments": "当社が指定する決済代行業者（Merchant of Record）である Whop による安全な決済処理",
-    "morLine": "安全な決済、税金の計算、およびコンプライアンスへの対応は、Life Focus, LLCに代わり、当社のマーチャント・オブ・レコード（販売主体）であるWhopが担当します。",
-    "copyright": "© 2026 SceneFlow AI. All rights reserved.",
-    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • 連絡先: support@sceneflowai.studio",
-    "poweredBy": "Google Cloud 搭載"
+    "tagline": "クリエイター❤️ のために作られた",
+    "taglineSub": "アイデアから公開されたビデオへ",
+    "securePayments": "登録業者であるWhopが処理する安全な支払い",
+    "morLine": "安全な支払い、税金の計算、およびコンプライアンスは、Life Focus, LLCに代わって、登録商人であるWhopによって処理されます。",
+    "copyright": "© 2026 SceneFlow AI.無断複写・転載を禁じます。",
+    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C 200, Austin, TX 78757, United States •連絡先: support@sceneflowai.studio",
+    "poweredBy": "Google搭載のインテリジェンス· SFAIGOGLE_CLOUDTERMでオーケストレーション"
   },
   "floatingCta": {
-    "seePricing": "料金を見る",
-    "tryNine": "9ドルを試してみてください",
-    "tryForNine": "9ドルで試す",
-    "dismiss": "閉じる"
+    "seePricing": "価格を表示",
+    "tryNine": "$ 9をお試しください",
+    "tryForNine": "$ 9でお試しください",
+    "dismiss": "却下"
   },
   "common": {
     "watermark": "SceneFlow AI Studio",
@@ -1763,5 +1778,121 @@
     "mute": "ミュート",
     "unmute": "ミュートを解除",
     "expandVideo": "動画を拡大する"
+  },
+  "useCasesShowcase": {
+    "badge": "SceneFlowは誰のためのものですか？",
+    "title": "SceneFlowは誰のためのものですか？",
+    "subtitle": "コンセプトからScreening Roomアニメーションから自動公開された多言語ビデオまで、1つの自動パイプライン、4つの出荷方法。",
+    "cta": "スタジオを立ち上げる（ $ 9 ） — 9月のコホート",
+    "tabStory": "解決方法",
+    "tabScreening": "スクリーニング",
+    "problemLabel": "問題",
+    "solutionLabel": "SceneFlowソリューション",
+    "outcomeLabel": "ほんで",
+    "videoLanguagePrompt": "このジャーニーをあなたの言語で視聴しましょう",
+    "videoComingSoon": "ウォークスルー動画は近日公開予定です",
+    "videoSoon": "すぐに",
+    "personas": [
+      {
+        "id": "youtubeCreator",
+        "label": "YouTubeクリエイター",
+        "headline": "コンセプトからシネマティックシリーズまで-プロンプトエンジニアリングなし",
+        "intro": "コンセプトまたは詳細なシリーズの説明から始めます。SceneFlowは、シリーズのユニバース、キャラクター、無制限のエピソードを構築し、Expressを使用してオーディオ、フレーム、ビデオを同時にレンダリングします。プレーンテキストまたはボイスで作成して指示します。SceneFlowはビジョンを構築します。プロンプトエンジニアリングやスロットマシンのリテイクはありません。",
+        "story": {
+          "problem": [
+            "スクリプト、画像、音声、ビデオ、音楽、編集のための別々のツールを操作します。",
+            "使用可能な結果を期待して、各ピースを何度も再生成します。",
+            "キャラクターはシーンによって異なります。"
+          ],
+          "solution": [
+            "1つのガイド付きスタジオがツールスタック全体を置き換えます。",
+            "簡単な言葉であなたのアイデアを説明してください— SceneFlowはシリーズを書き、キャストをデザインします。",
+            "Expressはオーディオ、フレーム、ビデオを一緒にレンダリングし、Reference Libraryは文字を一貫させます。"
+          ],
+          "outcome": [
+            "細分化されたツールに週末を無駄にするのはやめましょう。",
+            "実際に追いつくことができる安定したリズムで公開します。",
+            "一貫性を保つために再ローリングすることなく、すべてのエピソードをブランド内に保ちます。"
+          ]
+        },
+        "screeningRoomHook": "モーションビデオの前にストーリーをアニメーションとして視覚化し、ストリームを確定する前にシーンを確認し、プレリリースフィードバックのために多言語ストリーム（ 70以上の言語）を共有します。",
+        "screeningRoomPreview": "The Unseen Archive: The Grand Illusion: The Chicago World's Fair Deception"
+      },
+      {
+        "id": "startupProvider",
+        "label": "スタートアッププロバイダー",
+        "headline": "グローバルビデオスタジオを運営しよう— 1つを構築せずに",
+        "intro": "代理店の余裕がない中小企業に、洗練されたローカライズされたビデオを提供します。Expressはクライアントパッケージ全体を同時にレンダリングし、Mixerはブランドオーバーレイ、ウォーターマーク、タイミングを追加し、自動調整されたダブ/リップシンクはクライアントの市場言語ですべての成果物を出荷します。すべてを1つの予測可能なパイプラインから行います。",
+        "story": {
+          "problem": [
+            "中小企業のクライアントは、従来のビデオエージェンシーを買う余裕がありません。",
+            "あなたは多くのツールを購入してジャグリングし、すべてのクライアントのために仕事をやり直します。",
+            "それぞれの新しい言語は、ビデオをゼロから再構築することを意味します。"
+          ],
+          "solution": [
+            "すべてのクライアントプロジェクトに1つの予測可能なパイプライン。",
+            "オーディオ、フレーム、ビデオをまとめて、フルビデオパッケージを一度にレンダリングします。",
+            "ブランディング、オーバーレイ、ウォーターマークを追加し、クライアントの市場言語に自動ダブとリップシンクを追加します。"
+          ],
+          "outcome": [
+            "1つのスタジオワークフローから多くのクライアントにサービスを提供します。",
+            "各ビデオを再構築することなく、70以上の言語でグローバル市場にリーチします。",
+            "クルーを雇ったり、インフラを構築したりすることなく、サービスを拡張できます。"
+          ]
+        },
+        "screeningRoomHook": "アニメーションのクライアント対応レビュー、最終ストリーム前のシーンサインオフ、海外のステークホルダー向けの共有可能な多言語プレビュー。",
+        "screeningRoomPreview": "メインストリートライジング：ローカルビジネスリニューアル"
+      },
+      {
+        "id": "enterprise",
+        "label": "エンタープライズおよび機関",
+        "headline": "ポリシー変更のスピードでのコンプライアンストレーニング",
+        "intro": "社内のL&Dおよびコミュニケーションチームは、ベンダーサイクルなしでブランドロックされた監査対応モジュールを出荷します。テキストや音声で任意のフレームやラインを絞り込んでメッセージを維持し、ミキサーのオーバーレイとウォーターマークで仕上げ、1つの承認されたマスターからすべての地域に自動配置された吹き替えまたはリップシンクされたバージョンを展開します。",
+        "story": {
+          "problem": [
+            "トレーニングとコミュニケーションのビデオは、外部ベンダーでは数週間待たされ、プレミアム料金がかかります。",
+            "ポリシーや製品が変更されると、動画は古くなり、ブランド外になります。",
+            "アップデートするたびに、高価な生産ラウンドが発生します。"
+          ],
+          "solution": [
+            "ブランドロックされた、監査可能なビデオを社内で制作します。",
+            "タイプされた指示または音声指示を使用して、行またはフレームを変更します。",
+            "最終的なレンダリングを支払う前にレビューと承認を行い、すべての地域に1つのマスターを展開します。"
+          ],
+          "outcome": [
+            "トレーニングとコミュニケーションは、ポリシーの変更に合わせて進められています。",
+            "ベンダーサイクルを待たずにブランドを維持します。",
+            "一度更新すると、承認された1つのカットからすべての場所に配布されます。"
+          ]
+        },
+        "screeningRoomHook": "ストリームが最終になる前にシーンを確認し、未完成のマスターをエクスポートせずに、クロスリージョンのフィードバックのためのプライベートScreening Roomリンクを共有します。",
+        "screeningRoomPreview": "シールドプロトコル：グローバルサイバーセキュリティオンボーディング"
+      },
+      {
+        "id": "educator",
+        "label": "教育者",
+        "headline": "カリキュラムをレッスンに変える生徒が実際に見ている",
+        "intro": "大規模な機関は、高密度の章をローカライズされたナラティブビデオに変換します。Expressは完全なレッスンを迅速に構築し、インテリジェントなテキスト/音声編集により、教員は迅速なエンジニアリングなしでコンテンツを調整でき、自動調整されたdub/lip — syncは各コホートの言語に一致します。その後、ローカライズされたタイトルとサムネイルをすべてのチャンネルに自動公開します。",
+        "story": {
+          "problem": [
+            "高密度のコース教材は、数週間、専門的なスキル、または大きな予算の後にのみビデオになります。",
+            "それがなければ、レッスンはスライドショーの生徒がスキップしたままになります。",
+            "複数の言語で生徒にサービスを提供することで、仕事を増やすことができます。"
+          ],
+          "solution": [
+            "1つのスタジオで完全なナレーション付きレッスンをすばやく作成できます。",
+            "教員は、入力または話すことによって内容を調整します。技術的なプロンプトはありません。",
+            "すべてのコホートのローカライズされたタイトルとサムネイルで、自動ダブ、リップシンク、パブリッシュ。"
+          ],
+          "outcome": [
+            "カリキュラムを生徒が実際に視聴するビデオに変換します。",
+            "制作チームなしで、それぞれの言語ですべてのキャンパスにアクセスできます。",
+            "従来のビデオ制作よりも速くレッスンを出荷します。"
+          ]
+        },
+        "screeningRoomHook": "教員は、制作費の前にアニメーションをプレビューし、レッスンシーンをレビューし、マルチキャンパスフィードバックのために70以上の言語でストリームを共有します。",
+        "screeningRoomPreview": "ルネッサンスワークショップ：動きながら過去を見る"
+      }
+    ]
   }
 }

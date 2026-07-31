@@ -4,23 +4,26 @@
     "description": "Yapay zeka destekli iş akışı otomasyonuyla fikirlerinizi profesyonel videolara dönüştürün."
   },
   "nav": {
-    "workflow": "İş Akışı",
-    "platformWalkthrough": "Platform Tanıtımı",
-    "plansPricing": "Planlar ve Fiyatlandırma",
+    "workflow": "Nasıl Çalışır",
+    "platformWalkthrough": "Platform İncelemesi",
+    "plansPricing": "Planlar & Fiyatlandırmalar",
     "more": "Daha fazla",
-    "useCases": "Kullanım Senaryoları",
+    "useCases": "Kullanım Gereklilikleri",
     "audienceResonance": "Audience Resonance",
-    "trustSafety": "Güven ve Güvenlik",
+    "trustSafety": "Güven ve İtibar",
     "platformTrust": "Platform ve Güven",
-    "signIn": "Oturum Aç",
-    "startProject": "Bir Proje Başlat",
-    "dashboard": "Gösterge Paneli",
+    "signIn": "Oturum Açma",
+    "startProject": "Bir Proje Başlatın",
+    "dashboard": "Kontrol Paneli",
     "adminPanel": "Yönetici Paneli",
-    "signOut": "Oturumu Kapat",
+    "signOut": "Çıkış yap",
     "goToDashboard": "Kontrol Paneline Git",
     "userFallback": "Kullanıcı",
-    "searchLanguages": "Dillerde ara...",
-    "noLanguagesFound": "Hiçbir dil bulunamadı"
+    "searchLanguages": "Dil Ara",
+    "noLanguagesFound": "Dil bulunamadı",
+    "pipeline": "Boru Hattı",
+    "productionExamples": "Örnekler",
+    "keyFeatures": "Özellikler"
   },
   "floatingNav": {
     "compare": "Karşılaştır",
@@ -34,14 +37,14 @@
     "pricing": "Fiyatlandırma"
   },
   "hero": {
-    "headline": "Hikâyeyi gözünüzde canlandırın. SceneFlow iş akışını yönetir.",
-    "subheadline": "Zahmetli komut yazma süreçlerini geride bırakın. Otomatik ve profesyonel düzeyde bir üretim iş akışıyla tamamen yaratıcı vizyonunuza odaklanın.",
+    "headline": "Sen Hikayeyi Yönet. SceneFlow Stüdyoyu Otomatikleştirir.",
+    "subheadline": "İsteğe bağlı Google veya Kling nesli ile Google Cloud'de düzenlenen Google destekli istihbarat. Fikirlerinizi mikro komut istemi olmadan plandan ana MP4 'e kadar kesintisiz bir iş hattında çalıştırın.",
     "audienceMicroLine": "Sonuç odaklı içerik üreticileri ve sistemin nasıl işlediğini görmek isteyen ekipler için geliştirildi.",
-    "ctaSecondary": "'Nelerin Mümkün Olduğunu' İzleyin",
-    "ctaToolStack": "Mevcut araç setinizin yerini nasıl aldığını görün.",
-    "languagePrompt": "Kahramanın sesini kendi dilinizde duyun — aynı iş akışı, yeni pazarlar",
-    "multilangHint": "Hero 7 dilde seslendirme yapıyor; tam kapsamlı üretim süreci ise 70'ten fazla dili destekliyor.",
-    "playWithNarration": "Anlatımlı oynat",
+    "ctaSecondary": "'Neyin Mümkün Olduğunu' İzleyin",
+    "ctaToolStack": "Alet takımınızın yerini nasıl aldığını görün",
+    "languagePrompt": "Kahramanı kendi dilinizde dinleyin — aynı iletişim hattı, yeni pazarlar",
+    "multilangHint": "7 dilde Hero dublajları — tam boru hattı Production Studio'de 70 'den fazla desteği destekler.",
+    "playWithNarration": "Anlatımla oyna",
     "tapToHear": "Duymak için dokunun",
     "fullscreen": "Tam ekran",
     "heroVideoLanguages": {
@@ -58,23 +61,26 @@
         "nativeLabel": "Portekizce"
       },
       "hi": {
-        "label": "Hindi",
-        "nativeLabel": "Hintçe"
+        "label": "Hintçe",
+        "nativeLabel": "हिन्दी"
       },
       "zh": {
         "label": "Çince",
-        "nativeLabel": "Çince"
+        "nativeLabel": "中文"
       },
       "ar": {
         "label": "Arapça",
-        "nativeLabel": "Arapça"
+        "nativeLabel": "العربية"
       },
       "th": {
-        "label": "Taylandlı",
-        "nativeLabel": "Tayland"
+        "label": "Tayca",
+        "nativeLabel": "ไทย"
       }
     },
-    "soon": "Yakında"
+    "soon": "Yakında",
+    "ctaPrimaryLaunch": "Stüdyonuzu Başlatın (9 $) — Eylül Kohortu",
+    "ctaSupportingLine": "9 $ SFAIEXPLORERM planıyla başlayın. Eylül Erken Erişim kohortu şimdi oluşturuluyor.",
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "valueProp": {
     "pills": [
@@ -1501,55 +1507,55 @@
     "ctaSubtext": "Geleneksel film yapımı ile üretken yapay zeka arasında köprü kurun"
   },
   "exitIntent": {
-    "title": "Bekle! Eli boş ayrılma.",
-    "subtitle": "Yapay zeka destekli film yapımı için özel erken erişim ve ipuçları edinin",
+    "title": "Bekleyin! Eliniz boş gitmeyin.",
+    "subtitle": "Yapay zeka destekli film yapımı için özel erken erişim ve ipuçları alın",
     "benefits": [
-      "Haftalık yapay zeka destekli film yapımı eğitimleri",
+      "Haftalık yapay zeka film yapımı eğitimleri",
       "Yeni özelliklere erken erişim",
-      "İçerik üreticilerine özel indirimler"
+      "Özel yaratıcı indirimleri"
     ],
-    "emailPlaceholder": "E-postanızı girin",
-    "subscribe": "Erken Erişim Sağla",
-    "subscribing": "Abone olunuyor...",
+    "emailPlaceholder": "E-postanızı giriniz",
+    "subscribe": "Erken Erişim",
+    "subscribing": "Üye olunuyor",
     "or": "veya",
-    "startNow": "Sadece 9$'a hemen oluşturmaya başlayın →",
-    "privacy": "Asla spam yok. İstediğiniz zaman abonelikten çıkabilirsiniz.",
-    "successTitle": "Listedesiniz!",
-    "successSubtitle": "Film yapımına dair özel ipuçları ve erken erişim güncellemeleri için gelen kutunuzu kontrol edin.",
-    "ctaText": "Keşfetmeye Başlayın — 9 $",
+    "startNow": "Sadece 9 $ karşılığında hemen oluşturmaya başla — Eylül kohortu oluşturma →",
+    "privacy": "Spam yok, asla. İstediğiniz zaman aboneliğinizi iptal edin.",
+    "successTitle": "Listedesin.",
+    "successSubtitle": "Özel film yapımı ipuçları ve erken erişim güncellemeleri için gelen kutunuzu kontrol edin.",
+    "ctaText": "Araştırmaya Başlayın — 9 $",
     "closePopup": "Açılır pencereyi kapat"
   },
   "pricing": {
-    "badge": "Kullanım Bazlı Fiyatlandırma",
-    "title": "Yarattığınız Şey İçin Ödeme Yapın",
-    "subtitle": "Platform erişimi için tek bir temel plan. Yapay zeka üretimi için krediler. Daha fazlasına ihtiyaç duyduğunuzda yükleme yapın. Tam kontrol, sıfır israf.",
+    "badge": "Basit Fiyatlandırma",
+    "title": "Explorer ile başlayın — 9 $",
+    "subtitle": "Eylül Erken Erişim kohortu oluşturuluyor. Tüm boru hattını sürtünmesiz 9 $ girişle test edin.",
     "valueAnchor": {
-      "traditionalCost": "2.000 $ ve üzeri",
-      "traditionalLabel": "Geleneksel ön görselleştirme",
-      "vs": "karşı",
-      "sceneFlowCost": "49-149 $",
+      "traditionalCost": "2 000",
+      "traditionalLabel": "Geleneksel ziyaret öncesi",
+      "vs": "-",
+      "sceneFlowCost": "49 -149 $",
       "sceneFlowLabel": "SceneFlow aylık",
-      "saveBadge": "Proje başına %90'ın üzerinde tasarruf edin"
+      "saveBadge": "Proje başına % 90 'dan fazla tasarruf edin"
     },
     "teamCta": {
-      "title": "Kurum içi ekip mi, yoksa kurum mu?",
-      "description": "İletişim, L&D ve pazarlama ekipleri için bir iş akışı inceleme oturumu planlayın.",
-      "button": "Kitap İncelemesi ve Rehberi"
+      "title": "Kurum içi ekip veya kurum?",
+      "description": "İletişim, L&D ve pazarlama ekipleri için bir iş akışı incelemesi rezerve edin",
+      "button": "Kitap İncelemesi"
     },
     "agencyCta": {
-      "title": "Ajans mı, prodüksiyon şirketi mi?",
-      "description": "Ölçekli düzeyde özel krediler, SLA ve özel destek",
-      "button": "Satış Ekibiyle İletişime Geçin"
+      "title": "Ajans mı üretim mağazası mı?",
+      "description": "Geniş ölçekte özel krediler, SLA ve özel destek",
+      "button": "İletişime Geç"
     },
     "byok": {
-      "title": "Kendi Anahtarını Getir",
-      "badge": "Pro ve Studio Planları",
-      "description": "Vertex AI veya ElevenLabs için halihazırda API anahtarlarınız var mı? Bunları SceneFlow AI ile kullanın ve platform kredilerinde %80'e varan tasarruf edin.",
-      "savingsHighlight": "Platform kredilerinde %80",
+      "title": "Kendi tuvalet malzemelerinizi getirin. ",
+      "badge": "Profesyonel ve Stüdyo Planları",
+      "description": "Vertex AI veya ElevenLabs için zaten API anahtarlarınız var mı? Bunları SceneFlow AI ile kullanın ve platform kredilerinde % 80 'e kadar tasarruf edin.",
+      "savingsHighlight": "Platform kredilerinde % 80",
       "benefits": [
         {
-          "title": "%80 SceneFlow Kredi Tasarrufu",
-          "description": "Orkestrasyon ve araçlar için yalnızca %20'lik bir platform ücreti ödeyin."
+          "title": "% 80 SceneFlow Kredi Tasarrufu",
+          "description": "Orkestrasyon ve araçlar için yalnızca % 20 platform ücreti ödeyin"
         },
         {
           "title": "Kurumsal Planlardan Yararlanın",
@@ -1562,199 +1568,208 @@
       ],
       "supportedProviders": "Desteklenen Sağlayıcılar",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "Imagen 4 ve Veo 3.1",
+      "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Metinden Konuşmaya Dönüştürme ve Ses Klonlama",
-      "savingsLabel": "%80 tasarruf",
-      "onImagesVideo": "görseller ve video üzerinde",
+      "elevenLabsDetail": "Metin Okuma ve Ses Klonlama",
+      "savingsLabel": "% 80 tasarruf",
+      "onImagesVideo": "görüntülerde ve videoda",
       "onVoiceover": "seslendirmede",
-      "note": "Gösterilen kredi tasarrufları, SceneFlow platformu kapsamındaki tasarruflardır. Gerçek toplam maliyetleriniz, her bir sağlayıcıdaki kişisel veya kurumsal API fiyatlandırmanıza bağlıdır."
+      "note": "Gösterilen kredi tasarrufları SceneFlow platform tasarruflarıdır. Gerçekleşen toplam maliyetleriniz, her sağlayıcıdaki kişisel veya kurumsal API fiyatlandırmanıza bağlıdır."
     },
     "creditTopUps": {
       "title": "Daha fazla krediye mi ihtiyacınız var?",
-      "subtitle": "Dilediğiniz zaman yükleme yapın. Kredilerin süresi asla dolmaz.",
+      "subtitle": "İstediğiniz zaman para ekleyin. Kredilerin süresi asla dolmaz.",
       "packs": [
         {
           "label": "Başlangıç Paketi",
-          "description": "Hızlı tekrarlar için mükemmel"
+          "description": "Hızlı revizyonlar için mükemmel"
         },
         {
           "label": "Sahne Paketi",
           "description": "Kısa bir projeyi tamamlayın"
         },
         {
-          "label": "Prodüksiyon Paketi",
-          "description": "Önemli film sekansı"
+          "label": "Üretim Paketi",
+          "description": "Ana film sekansı"
         },
         {
           "label": "Stüdyo Paketi",
-          "description": "Tam üretim kapasitesi"
+          "description": "üretim kapasitesi"
         }
       ],
-      "creditsUnit": "katkıda bulunanlar"
+      "creditsUnit": "Kredi"
     },
     "calculator": {
-      "sectionTitle": "Projeniz için tahmini maliyet hesaplayın",
-      "sectionSubtitle": "Taahhütte bulunmadan önce tam olarak ne kadar ödeyeceğinizi bilin.",
-      "title": "Proje Bütçesi Hesaplayıcı",
+      "sectionTitle": "Projenizi Tahmin Edin",
+      "sectionSubtitle": "Taahhütte bulunmadan önce tam olarak ne ödeyeceğinizi bilin",
+      "title": "Proje Bütçe Hesaplayıcısı",
       "subtitle": "Başlamadan önce kredileri tahmin edin",
-      "customize": "Parametreleri özelleştirin",
-      "imagesLabel": "Oluşturulacak görseller",
-      "videoClipsLabel": "Video klipleri",
-      "voiceoverLabel": "Seslendirme (dakika)",
-      "byokTitle": "Kendi Anahtarını Getir (BYOK)",
-      "byokBadge": "Pro ve Stüdyo",
-      "byokDescription": "SceneFlow kredilerinde %80'e varan tasarruf sağlamak için kendi API anahtarlarınızı kullanın. Ödemeyi, doğrudan AI sağlayıcılarına kendi tarifeleri üzerinden yaparsınız.",
-      "vertexToggle": "Vertex AI (Görseller ve Video)",
-      "elevenLabsToggle": "ElevenLabs (Dış ses)",
-      "imageGeneration": "Görsel Oluşturma",
+      "customize": "Parametreleri özelleştir",
+      "imagesLabel": "Oluşturulacak resimler",
+      "videoClipsLabel": "Video klipler",
+      "voiceoverLabel": "Dış ses (dakika)",
+      "byokTitle": "Kendi Anahtarınızı Getirin (BYOK)",
+      "byokBadge": "Profesyonel ve Stüdyo",
+      "byokDescription": "SceneFlow kredilerinde % 80 'e kadar tasarruf etmek için kendi API anahtarlarınızı kullanın. Yapay zeka sağlayıcılarına doğrudan ücretleri üzerinden ödeme yaparsınız.",
+      "vertexToggle": "Vertex AI (Görüntüler ve Video)",
+      "elevenLabsToggle": "ElevenLabs (Dış Ses)",
+      "imageGeneration": "Görüntü Oluşturma",
       "videoGeneration": "Video Oluşturma",
-      "voiceover": "Dış ses",
+      "voiceover": "Seslendirme",
       "byokTag": "(BYOK)",
       "totalEstimate": "Toplam Tahmin",
-      "withTopUps": "ek yüklemelerle",
-      "creditSavings": "SceneFlow kredi tasarrufu",
-      "savePercent": "SceneFlow kredilerinde %{percent} tasarruf edersiniz.",
-      "transparency": "Tam şeffaflık: Çalışırken kredi kullanımınızı gerçek zamanlı olarak görürsünüz. Sürprizlere yer yok; proje kapsamınızı dilediğiniz zaman ayarlayabilirsiniz.",
-      "transparencyHighlight": "Tam şeffaflık:",
-      "byokDisclaimer": "BYOK Not: Gösterilen kredi tasarrufları yalnızca SceneFlow platformu kredi indirimlerini yansıtmaktadır. Gerçek maliyetleriniz, Vertex AI ve ElevenLabs fiyatlandırma planlarınıza bağlıdır. Kurumsal veya yüksek hacimli API planları ek tasarruflar sağlayabilir.",
+      "withTopUps": "doldurma ile",
+      "creditSavings": "SceneFlow kredi tasarrufları",
+      "savePercent": "SceneFlow kredilerinde %{percent} tasarruf edersiniz",
+      "transparency": "Tam şeffaflık: Çalışırken gerçek zamanlı kredi kullanımını göreceksiniz. Sürpriz yok - proje kapsamınızı istediğiniz zaman ayarlayın.",
+      "transparencyHighlight": "Tam şeffaflık",
+      "byokDisclaimer": "BYOK Not: Gösterilen kredi tasarrufları yalnızca SceneFlow platformu kredi indirimlerini yansıtır. Gerçek maliyetleriniz Vertex AI ve ElevenLabs fiyatlandırma planlarınıza bağlıdır. Kurumsal veya yüksek hacimli API planları ek tasarruf sağlayabilir.",
       "byokDisclaimerHighlight": "BYOK Not:",
       "presets": [
         {
-          "id": "ticari",
-          "name": "30 Saniyelik Reklam"
+          "id": "commercial",
+          "name": "30 sn Ticari"
         },
         {
-          "id": "kısa",
-          "name": "2 Dakikalık Kısa Film"
+          "id": "short",
+          "name": "2 dakikalık Kısa Film"
         },
         {
-          "id": "bölüm",
-          "name": "10 dakikalık bölüm"
+          "id": "episode",
+          "name": "10 dakikalık Bölüm"
         },
         {
-          "id": "özellik",
-          "name": "90 Dakikalık Uzun Metrajlı Film"
+          "id": "feature",
+          "name": "90 dk Özelliği"
         }
       ],
-      "minSuffix": "dak."
+      "minSuffix": "dk"
     },
     "tierGrid": {
       "productionTestFlight": "Üretim Test Uçuşu",
-      "getStarted": "Başlayın",
+      "getStarted": "Hemen Başlayın",
       "startTestFlight": "Test Uçuşunu Başlat",
-      "loading": "Yükleniyor...",
+      "loading": "Yükleniyor... Lütfen bekleyin...",
       "mostPopular": "En Popüler",
       "creditsPerMonth": "Kredi/ay",
       "storage": "Depolama",
-      "perMonth": "/ay"
+      "perMonth": "/ Aylık"
     },
     "trust": {
       "cancelAnytime": "İstediğiniz zaman iptal edin",
-      "moneyBack": "14 günlük para iade garantisi",
-      "creditsNeverExpire": "Kredilerin geçerlilik süresi dolmaz (Explorer paketi)"
+      "moneyBack": "14 Gün Para İade Garantisi",
+      "creditsNeverExpire": "Kredilerin süresi asla dolmaz (SFAIEXPLORERM paketi)"
     },
     "plans": {
       "explorer": {
-        "name": "Explorer",
+        "name": "SFAIEXPLORERM",
         "description": "Denemek için tek seferlik satın alma",
         "features": [
-          "Tek seferlik satın alma",
-          "750 kredi (süresi asla dolmaz)",
-          "5 GB depolama alanı (30 gün)",
-          "Tam platform erişimi",
+          "Tek seferlik satın alım",
+          "750 kredi (asla süresi dolmaz)",
+          "5 GB depolama (30 gün)",
+          "Platforma erişim",
           "MP4 dışa aktarma (herhangi bir çözünürlük)",
-          "Yapay zeka seslendirmesi (70'ten fazla dil)"
+          "Yapay zeka seslendirmesi (70 'tenfazla dil)"
         ]
       },
       "subscriptions": [
         {
-          "id": "başlangıç",
+          "id": "starter",
           "name": "Başlangıç",
-          "description": "Bireysel içerik üreticileri için",
+          "description": "Bireysel yaratıcılar için",
           "features": [
-            "Tam platform erişimi",
-            "Ayda 4.500 kredi dahildir",
-            "25 GB aktif depolama alanı",
+            "Platforma erişim",
+            "4.500 kredi/ay dahil",
+            "25 GB aktif depolama",
             "MP4 dışa aktarma (herhangi bir çözünürlük)",
-            "Yapay zeka seslendirmesi (70'ten fazla dil)",
+            "Yapay zeka seslendirmesi (70 'tenfazla dil)",
             "E-posta desteği"
           ]
         },
         {
-          "id": "profesyonel",
-          "name": "Profesyonel",
-          "description": "Profesyonel içerik üreticileri için",
+          "id": "pro",
+          "name": "Pro",
+          "description": "Profesyonel yaratıcılar için",
           "features": [
-            "Starter paketindeki her şeye ek olarak:",
-            "Ayda 15.000 kredi dahildir",
-            "100 GB aktif depolama alanı",
+            "Starter'daki her şey, ayrıca:",
+            "15.000 kredi/ay dahil",
+            "100 GB aktif depolama",
             "Veo 3.1 Kalite (4K) erişimi",
             "Karakter Tutarlılığı Motoru",
-            "Ses kopyalama",
+            "Ses klonlama",
             "BYOK (Kendi Anahtarını Getir)",
             "3 takım koltuğu",
             "Öncelikli destek"
           ]
         },
         {
-          "id": "stüdyo",
-          "name": "Stüdyo",
+          "id": "studio",
+          "name": "STÜDYO",
           "description": "Ekipler ve ajanslar için",
           "features": [
-            "Pro'daki her şeye ek olarak:",
-            "Ayda 75.000 kredi dahil",
-            "500 GB aktif depolama alanı",
+            "PRO'daki her şey, artı:",
+            "75.000 kredi/ay dahil",
+            "500 GB aktif depolama",
             "Veo 3.1 4K Öncelik Kuyruğu",
             "Sınırsız Karakter Tutarlılığı",
-            "White-label ihracatı",
+            "Beyaz etiket ihracatı",
             "API erişimi",
-            "10 kişilik ekip yeri",
-            "Özel müşteri yöneticisi",
-            "Kurumsal SLA talep üzerine sağlanır"
+            "10 takım koltuğu",
+            "Özel Hesap Yöneticisi",
+            "Kurumsal SLA istek üzerine sunulur"
           ]
         }
       ]
-    }
+    },
+    "explorerHighlight": "Konseptten Screening Room'e kadar tüm SceneFlow STUDIO'yu deneyimlemenin en hızlı yolu.",
+    "trustBadges": [
+      "Google Cloud altyapısı",
+      "Vertex AI nesil",
+      "Whop ile güvenli ödemeler",
+      "14 Gün Para İade Garantisi"
+    ]
   },
   "landingSections": {
     "expandSection": "Bölümü göster",
     "collapseSection": "Bölümü gizle"
   },
   "finalCta": {
-    "title": "Tüm işlem hattını test etmeye hazır mısınız?",
-    "subtitle": "Konsept, ön görselleştirme, video ve nihai MP4 üretim süreçlerini tek bir stüdyoda gerçekleştirin. 9 dolarlık Explorer planıyla başlayın ve \"önce ritim\" (beat-first) iş akışını bizzat deneyimleyin.",
-    "cta": "Stüdyonuzu 9$'a hayata geçirin"
+    "title": "Tüm iş hattını test etmeye hazır mısınız?",
+    "subtitle": "Google destekli komut dosyası ve optimizasyon, seçtiğiniz nesil arka uç ve Screening Room incelemesi — hepsi tek bir stüdyoda. Eylül Erken Erişim kohortu şimdi oluşturuluyor — 9 $ Explorer planıyla başlayın veya Kurucu Yaratıcı erişimi için başvurun.",
+    "cta": "Stüdyonuzu Başlatın (9 $) — Eylül Kohortu",
+    "ctaSecondary": "Kurucu Yaratıcı Erişimi için başvurun",
+    "ctaSecondaryHref": "/early-access"
   },
   "footer": {
-    "description": "Konseptten yayına hazır nihai videoya kadar uçtan uca otomatik video prodüksiyonu. Tek bir rehberli stüdyo: Blueprint → Prodüksiyon → Screening Room.",
+    "description": "Konseptten yayınlanmaya hazır mastera kadar uçtan uca otomatik video prodüksiyonu. Bir rehberli stüdyo→: Series Studio → Blueprint Studio → Production Studio Screening Room.",
     "product": "Ürün",
     "resources": "Kaynaklar",
     "legal": "Yasal",
     "links": {
       "features": "Özellikler",
       "pricing": "Fiyatlandırma",
-      "howItWorks": "Nasıl Çalışır?",
-      "gettingStarted": "Başlarken",
+      "howItWorks": "Nasıl Çalışır",
+      "gettingStarted": "Başlangıç",
       "privacy": "Gizlilik Politikası",
-      "terms": "Hizmet Şartları",
-      "trustSafety": "Güven ve Güvenlik",
+      "terms": "Hizmet Maddeleri",
+      "trustSafety": "Güven ve İtibar",
       "refunds": "İade Politikası",
-      "contact": "Bize Ulaşın"
+      "contact": "Bizimle İrtibata Geçin"
     },
-    "tagline": "İçerik üreticileri için ❤️ ile hazırlandı",
-    "taglineSub": "Fikirden Yayınlanmış Videoya",
-    "securePayments": "Yetkili ödeme işleyicimiz Whop tarafından gerçekleştirilen güvenli ödemeler",
-    "morLine": "Güvenli ödemeler, vergi hesaplaması ve mevzuata uyum süreçleri, Life Focus, LLC adına Yetkili Satıcımız (Merchant of Record) olan Whop tarafından yürütülmektedir.",
+    "tagline": "Ile yaratıcılar ❤️ için üretildi",
+    "taglineSub": "Fikirden Yayınlanan Videoya",
+    "securePayments": "Kayıtlı Tüccarımız Whop tarafından işlenen güvenli ödemeler",
+    "morLine": "Güvenli ödemeler, vergi hesaplaması ve uyumluluk, Life Focus, LLC adına Kayıtlı Tüccarımız Whop tarafından gerçekleştirilir.",
     "copyright": "© 2026 SceneFlow AI. Tüm hakları saklıdır.",
-    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • İletişim: support@sceneflowai.studio",
-    "poweredBy": "Google Cloud tarafından desteklenmektedir"
+    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, ABD • İletişim: support@sceneflowai.studio",
+    "poweredBy": "Google destekli zeka · Google Cloud'de düzenlenmiştir"
   },
   "floatingCta": {
-    "seePricing": "Fiyatları Görüntüle",
-    "tryNine": "9$'ı deneyin",
-    "tryForNine": "9$ karşılığında deneyin",
-    "dismiss": "Kapat"
+    "seePricing": "See pricing",
+    "tryNine": "9 TL $",
+    "tryForNine": "9 $ karşılığında deneyin",
+    "dismiss": "Yok say"
   },
   "common": {
     "watermark": "SceneFlow AI Studio",
@@ -1763,5 +1778,121 @@
     "mute": "Sessize al",
     "unmute": "Sesi aç",
     "expandVideo": "Videoyu Genişlet"
+  },
+  "useCasesShowcase": {
+    "badge": "SceneFlow kimler içindir?",
+    "title": "SceneFlow kimler içindir?",
+    "subtitle": "Konseptten Screening Room animatiğe ve otomatik olarak yayınlanan çok dilli videoya — bir otomatik boru hattı, gönderim için dört yol.",
+    "cta": "Stüdyonuzu Başlatın (9 $) — Eylül Kohortu",
+    "tabStory": "Çözüm",
+    "tabScreening": "Tarama",
+    "problemLabel": "Sorun",
+    "solutionLabel": "SceneFlow Çözümü",
+    "outcomeLabel": "Sonuç olumluydu:",
+    "videoLanguagePrompt": "Bu yolculuğu kendi dilinizde izleyin",
+    "videoComingSoon": "Tanıtım videosu çok yakında",
+    "videoSoon": "Yakında",
+    "personas": [
+      {
+        "id": "youtubeCreator",
+        "label": "YouTube Oluşturucu",
+        "headline": "Konseptten Sinematik Diziye — Hızlı Mühendislik Yok",
+        "intro": "Bir konsept veya ayrıntılı bir seri açıklaması ile başlayın. SceneFlow, dizi evrenini, karakterleri ve sınırsız bölümleri oluşturur, ardından ses, kare ve videoyu eşzamanlı olarak işlemek için Express'i kullanır. Düz metin veya sesle yaratır ve yönlendirirsiniz; SceneFlow vizyonu oluşturur — hızlı mühendislik yok, slot makinesi yeniden çekimi yok.",
+        "story": {
+          "problem": [
+            "Senaryo, resim, ses, video, müzik ve düzenleme için ayrı araçları dengelersiniz.",
+            "Kullanılabilir bir sonuç umuduyla her parçayı tekrar tekrar oluşturursunuz.",
+            "Karakterler hala sahneden sahneye farklı görünüyor."
+          ],
+          "solution": [
+            "Bir rehberli stüdyo, tüm araç yığınının yerini alır.",
+            "Fikrinizi basit kelimelerle açıklayın — SceneFlow seriyi yazar ve oyuncu kadrosunu tasarlar.",
+            "Bir Reference Library karakterleri tutarlı tutarken Express ses, kare ve videoyu birlikte oluşturur."
+          ],
+          "outcome": [
+            "Hafta sonlarını parçalanmış araçlara kaptırmaktan vazgeçin.",
+            "Gerçekten ayak uydurabileceğiniz sabit bir ritimde yayınlayın.",
+            "Tutarlılık için yeniden yuvarlamadan her bölümü markada tutun."
+          ]
+        },
+        "screeningRoomHook": "Hikayeyi hareketli videodan önce bir animasyon olarak görselleştirin, akışları sonlandırmadan önce sahneleri gözden geçirin ve yayın öncesi geri bildirim için çok dilli akışları (70 'tenfazla dil) paylaşın.",
+        "screeningRoomPreview": "Görünmeyen Arşiv: Büyük Yanılsama: Chicago Dünyasının Adil Aldatmacası"
+      },
+      {
+        "id": "startupProvider",
+        "label": "Başlangıç Sağlayıcısı",
+        "headline": "Global bir Video Stüdyosu Çalıştırın — Bir tane oluşturmadan",
+        "intro": "Bir ajansı karşılayamayan küçük işletmelere cilalı, yerelleştirilmiş video sunun. Express, tüm müşteri paketlerini eşzamanlı olarak oluşturur, Mixer marka bindirmeleri, filigranlar ve zamanlama ekler ve otomatik olarak hizalanmış dub/dudak senkronizasyonu, her teslimatı müşterinizin pazar dilinde — hepsi öngörülebilir bir iş hattından - gönderir.",
+        "story": {
+          "problem": [
+            "Küçük işletme müşterileri geleneksel bir video ajansını karşılayamaz.",
+            "Her müşteri için işi yeniden yaparak birçok alet satın alır ve hokkabazlık yaparsınız.",
+            "Her yeni dil, videoyu sıfırdan yeniden oluşturmak anlamına gelir."
+          ],
+          "solution": [
+            "Her müşteri projesi için öngörülebilir bir iş hattı.",
+            "Bir kerede tam bir video paketi oluşturun — ses, kareler ve video birlikte.",
+            "Markalama, yer paylaşımları ve filigranlar ekleyin, ardından müşterinin pazar diline otomatik dublaj ve dudak senkronizasyonu yapın."
+          ],
+          "outcome": [
+            "Tek bir stüdyo iş akışından birçok müşteriye hizmet verin.",
+            "Her videoyu yeniden oluşturmadan 70 'tenfazla dilde küresel pazarlara ulaşın.",
+            "Bir ekip işe almadan veya altyapı oluşturmadan hizmeti ölçeklendirin."
+          ]
+        },
+        "screeningRoomHook": "Animatiğin müşteriye yönelik incelemesi, son akışlardan önce scene onayı ve yurtdışındaki paydaşlar için paylaşılabilir çok dilli önizlemeler.",
+        "screeningRoomPreview": "Main Street Rising: Yerel Bir İş Dünyası Lansmanı"
+      },
+      {
+        "id": "enterprise",
+        "label": "Kurumsal ve Kurumlar",
+        "headline": "Politika Değişikliği Hızında Uyumlu Eğitim",
+        "intro": "Dahili L&D ve iletişim ekipleri, satıcı döngüleri olmadan marka kilitli, denetime hazır modüller gönderir. Mesajda kalmak için herhangi bir çerçeveyi veya satırı metin veya sesle iyileştirin, Mixer bindirmeleri ve filigranlarla bitirin ve otomatik hizalanmış dublajlı veya dudak senkronize sürümleri her bölgeye tek bir onaylı master'dan yayınlayın.",
+        "story": {
+          "problem": [
+            "Eğitim ve iletişim videoları harici satıcılarda haftalarca bekler ve bir prime mal olur.",
+            "Politika veya ürün değiştiğinde, videolar eski ve marka dışı hale gelir.",
+            "Her güncelleme başka bir pahalı üretim turunu tetikler."
+          ],
+          "solution": [
+            "Marka kilitli, denetime hazır videoları şirket içinde üretin.",
+            "Herhangi bir satırı veya çerçeveyi yazılı veya sözlü bir talimatla değiştirin.",
+            "Son render için ödeme yapmadan önce inceleyin ve onaylayın, ardından her bölgeye bir master dağıtın."
+          ],
+          "outcome": [
+            "Eğitim ve iletişim politika değişikliklerine ayak uydurur.",
+            "Satıcı döngülerini beklemeden markayı takip edin.",
+            "Bir kez güncelleyin ve onaylanmış tek bir kesimden her yere dağıtın."
+          ]
+        },
+        "screeningRoomHook": "Akışlar sona ermeden önce sahneleri gözden geçirin ve tamamlanmamış ana verileri dışa aktarmadan bölgeler arası geri bildirim için özel Screening Room bağlantılarını paylaşın.",
+        "screeningRoomPreview": "Kalkan Protokolü: Küresel Siber Güvenlik İşe Alıştırma"
+      },
+      {
+        "id": "educator",
+        "label": "Eğitimci",
+        "headline": "Müfredatı Öğrencilerin Gerçekten İzlediği Derslere Dönüştürün",
+        "intro": "Büyük kurumlar yoğun bölümleri yerelleştirilmiş, anlatı videosuna dönüştürür. Express tam dersleri hızlı bir şekilde oluşturur, akıllı metin/ses düzenlemeleri, fakülte içeriğinin hızlı mühendislik olmadan ayarlanmasını sağlar ve otomatik olarak hizalanmış dub/dudak senkronizasyonu her kohortun diliyle eşleşir — daha sonra yerelleştirilmiş başlıkları ve küçük resimleri her kanala otomatik olarak yayınlar.",
+        "story": {
+          "problem": [
+            "Yoğun kurs materyali ancak haftalar, özel beceriler veya büyük bir bütçeden sonra videoya dönüşür.",
+            "Bu olmadan, dersler öğrencilerin atladığı slayt gösterileri olarak kalır.",
+            "Öğrencilere birden fazla dilde hizmet vermek işi çoğaltır."
+          ],
+          "solution": [
+            "Tek bir stüdyoda hızlı bir şekilde tam anlatımlı dersler oluşturun.",
+            "Fakülte, içeriği yazarak veya konuşarak ayarlar — teknik bilgi istemi yoktur.",
+            "Her grup için yerelleştirilmiş başlıklar ve küçük resimlerle otomatik dublaj, dudak senkronizasyonu ve yayınlama."
+          ],
+          "outcome": [
+            "Müfredatı öğrencilerin gerçekten izlediği videoya dönüştürün.",
+            "Üretim ekibi olmadan her kampüse kendi dillerinde ulaşın.",
+            "Dersleri geleneksel video prodüksiyonunun izin verdiğinden daha hızlı gönderin."
+          ]
+        },
+        "screeningRoomHook": "Fakülte, üretim harcamasından önce animatiği önizler, ders sahnelerini gözden geçirir ve çoklu kampüs geri bildirimi için 70 'tenfazla dilde akışları paylaşır.",
+        "screeningRoomPreview": "Rönesans Atölyesi: Geçmişi Hareketli Görmek"
+      }
+    ]
   }
 }

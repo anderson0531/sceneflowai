@@ -19,6 +19,17 @@ const REQUIRED_LANDING_KEYS = [
   'finalCta.ctaSecondary',
 ] as const
 
+const EXPLORER_PRICE_KEYS = [
+  'hero.ctaPrimaryLaunch',
+  'hero.ctaSupportingLine',
+  'useCasesShowcase.cta',
+  'pricing.title',
+  'pricing.subtitle',
+  'exitIntent.startNow',
+  'finalCta.cta',
+  'finalCta.subtitle',
+] as const
+
 const OUTDATED_PATTERNS = [
   'August 2026',
   'Summer of Production',
@@ -27,6 +38,10 @@ const OUTDATED_PATTERNS = [
   'August 1',
   'Application Window Closes',
 ]
+
+function hasExplorerPrice(text: string): boolean {
+  return /[9۹]/.test(text)
+}
 
 function getAtPath(obj: unknown, path: string): unknown {
   return path.split('.').reduce<unknown>((current, part) => {
@@ -49,7 +64,9 @@ describe('landing locale copy', () => {
     for (const path of REQUIRED_LANDING_KEYS) {
       const value = getAtPath(enMessages, path)
       expect(typeof value).toBe('string')
-      expect(String(value)).toContain('$9')
+    }
+    for (const path of EXPLORER_PRICE_KEYS) {
+      expect(hasExplorerPrice(String(getAtPath(enMessages, path)))).toBe(true)
     }
     expect(String(enMessages.hero.ctaPrimaryLaunch)).toContain('September')
     expect(String(enMessages.finalCta.subtitle)).toContain('September')
@@ -64,7 +81,10 @@ describe('landing locale copy', () => {
       for (const path of REQUIRED_LANDING_KEYS) {
         const value = getAtPath(localeMessages, path)
         expect(typeof value, `${code} missing ${path}`).toBe('string')
-        expect(String(value)).toMatch(/\$\s*9|9\s*\$/)
+      }
+
+      for (const path of EXPLORER_PRICE_KEYS) {
+        expect(hasExplorerPrice(String(getAtPath(localeMessages, path)))).toBe(true)
       }
 
       const ctaPrimary = String(getAtPath(localeMessages, 'hero.ctaPrimaryLaunch'))

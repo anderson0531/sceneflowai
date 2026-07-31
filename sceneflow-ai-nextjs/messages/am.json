@@ -74,7 +74,9 @@
         "nativeLabel": "ታይላንድ"
       }
     },
-    "soon": "በቅርቡ"
+    "soon": "በቅርቡ",
+    "ctaPrimaryLaunch": "Launch Your Studio ($9) — September Cohort",
+    "ctaSupportingLine": "Start with the $9 Explorer plan. September Early Access cohort now forming."
   },
   "valueProp": {
     "pills": [
@@ -1512,7 +1514,7 @@
     "subscribe": "ቀድመው የማግኘት እድል ያግኙ",
     "subscribing": "ደንበኝነት በመመዝገብ ላይ...",
     "or": "ወይም",
-    "startNow": "በ9 ዶላር ብቻ አሁን መፍጠር ይጀምሩ →",
+    "startNow": "Start creating now for just $9 — September cohort forming →",
     "privacy": "አላስፈላጊ መልዕክቶች (ስፓም) በፍጹም አይላኩም። በማንኛውም ጊዜ ምዝገባዎን መሰረዝ ይችላሉ።",
     "successTitle": "በዝርዝሩ ውስጥ ተካተሃል!",
     "successSubtitle": "ልዩ የፊልም ስራ ምክሮችን እና ቀድሞ የማግኘት እድል የሚሰጡ መረጃዎችን ለማግኘት የኢሜይል መልእክት ሳጥንዎን ይመልከቱ።",
@@ -1521,8 +1523,8 @@
   },
   "pricing": {
     "badge": "በአጠቃቀም ላይ የተመሰረተ የዋጋ አወጣጥ",
-    "title": "ለፈጠሩት ነገር ይክፈሉ።",
-    "subtitle": "ለፕላትፎርሙ አገልግሎት የሚሆን አንድ መሰረታዊ እቅድ፤ ለAI ማመንጫ አገልግሎት የሚውሉ ክሬዲቶች፤ ተጨማሪ ሲያስፈልግዎ በቀላሉ የመሙላት አማራጭ፤ ሙሉ ቁጥጥር እና ምንም አይነት ብክነት የለም።",
+    "title": "Start with Explorer — $9",
+    "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
     "valueAnchor": {
       "traditionalCost": "ከ2,000 ዶላር በላይ",
       "traditionalLabel": "ባህላዊ ቅድመ-ምስላዊነት",
@@ -1715,7 +1717,13 @@
           ]
         }
       ]
-    }
+    },
+    "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
+    "trustBadges": [
+      "Google Cloud infrastructure",
+      "Vertex AI generation",
+      "Secure payments via Whop"
+    ]
   },
   "landingSections": {
     "expandSection": "ክፍሉን አሳይ",
@@ -1723,8 +1731,9 @@
   },
   "finalCta": {
     "title": "ሙሉውን የስራ ሂደት (pipeline) ለመፈተሽ ዝግጁ ነዎት?",
-    "subtitle": "ከሃሳብ (concept) ጀምሮ እስከ ቅድመ-እይታ (pre-vis)፣ ቪዲዮ እና የመጨረሻው MP4 ፋይል ድረስ ያሉትን ሂደቶች በአንድ ስቱዲዮ ውስጥ ያከናውኑ። በ$9 Explorer ጥቅል ይጀምሩና \"ቢት-ቀዳሚ\" (beat-first) የሆነውን የስራ ሂደት በተግባር ይመልከቱ።",
-    "cta": "ስቱዲዮዎን በ9 ዶላር ይጀምሩ"
+    "subtitle": "Google-powered scripting and optimization, your choice of generation backend, and Screening Room review — all in one studio. September Early Access cohort now forming — start with the $9 Explorer plan or apply for Founding Creator access.",
+    "cta": "Launch Your Studio ($9) — September Cohort",
+    "ctaSecondary": "Apply for Founding Creator Access"
   },
   "footer": {
     "description": "ከሃሳብ ጀምሮ ለህትመት ዝግጁ እስከሆነ የመጨረሻ ውጤት ድረስ፣ ሙሉ በሙሉ በራስ-ሰር የሚከናወን የቪዲዮ ምርት። አንድ የተቀናጀ የስቱዲዮ ሂደት፡ Blueprint → ምርት → Screening Room።",
@@ -1763,5 +1772,11 @@
     "mute": "ድምፅ አጥፋ",
     "unmute": "ድምፅን መልሶ ማብራት",
     "expandVideo": "ቪዲዮውን አስፋ"
+  },
+  "useCasesShowcase": {
+    "badge": "Who is SceneFlow For?",
+    "title": "Who is SceneFlow For?",
+    "subtitle": "From concept to a Screening Room animatic to auto-published multilanguage video — one automated pipeline, four ways to ship.",
+    "cta": "Launch Your Studio ($9) — September Cohort"
   }
 }

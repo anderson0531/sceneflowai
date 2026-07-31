@@ -4,23 +4,26 @@
     "description": "Alakítsa ötleteit professzionális videókká mesterséges intelligencián alapuló munkafolyamat-automatizálással."
   },
   "nav": {
-    "workflow": "A munkafolyamat",
-    "platformWalkthrough": "Platform-ismertető",
-    "plansPricing": "Csomagok és árak",
-    "more": "Több",
-    "useCases": "Felhasználási esetek",
+    "workflow": "Hogyan működik?",
+    "platformWalkthrough": "Platformbemutató",
+    "plansPricing": "Tervek és árképzés",
+    "more": "Továbbiak",
+    "useCases": "Használati esetek",
     "audienceResonance": "Audience Resonance",
     "trustSafety": "Bizalom és biztonság",
     "platformTrust": "Platform és bizalom",
     "signIn": "Bejelentkezés",
     "startProject": "Projekt indítása",
-    "dashboard": "Irányítópult",
-    "adminPanel": "Adminisztrációs felület",
+    "dashboard": "Vezérlőpult",
+    "adminPanel": "Admin",
     "signOut": "Kijelentkezés",
-    "goToDashboard": "Ugrás az irányítópultra",
+    "goToDashboard": "Ugrás az irányítópulthoz",
     "userFallback": "Felhasználó",
     "searchLanguages": "Nyelvek keresése...",
-    "noLanguagesFound": "Nem található nyelv"
+    "noLanguagesFound": "Nem található nyelv",
+    "pipeline": "Ami folyamatban van",
+    "productionExamples": "Példák",
+    "keyFeatures": "Felhasználhatóság"
   },
   "floatingNav": {
     "compare": "Összehasonlítás",
@@ -34,47 +37,50 @@
     "pricing": "Árazás"
   },
   "hero": {
-    "headline": "Képzeld el a történetet. Az SceneFlow kezeli a folyamatot.",
-    "subheadline": "Hagyja maga mögött a fárasztó promptolást. Koncentráljon teljes mértékben kreatív elképzelésére egy automatizált, professzionális szintű gyártási munkafolyamat segítségével.",
+    "headline": "Te irányítod a történetet. A SceneFlow automatizálja a stúdiót.",
+    "subheadline": "A Google által működtetett intelligencia a Google Cloud-en — opcionális Google vagy Kling generációval. Futtassa ötleteit egy zökkenőmentes csővezetéken a tervrajztól a mester MP4-ig mikro-promptolás nélkül.",
     "audienceMicroLine": "Azoknak az alkotóknak készült, akik eredményeket várnak, és azoknak a csapatoknak, amelyek látni akarják, hogyan működik.",
-    "ctaSecondary": "Nézze meg a „What's Possible” című videót",
-    "ctaToolStack": "Nézze meg, hogyan váltja ki a jelenlegi eszközkészletét.",
-    "languagePrompt": "Hallja a hőst a saját nyelvén – ugyanaz a folyamat, új piacok",
-    "multilangHint": "Főszereplői szinkron 7 nyelven – a teljes gyártási folyamat több mint 70 nyelvet támogat.",
-    "playWithNarration": "Lejátszás narrációval",
-    "tapToHear": "Koppintson a meghallgatáshoz",
-    "fullscreen": "Teljes képernyő",
+    "ctaSecondary": "Nézd meg a „What's Possible”",
+    "ctaToolStack": "Nézd meg, hogyan cseréli le a szerszámkészletet",
+    "languagePrompt": "Hallgassa meg a hőst a saját nyelvén — ugyanaz a folyamat, új piacok",
+    "multilangHint": "A Hero 7 nyelven érhető el — a Production Studio több mint70 nyelvet támogat.",
+    "playWithNarration": "Játék narrációval",
+    "tapToHear": "Koppintással meghallgathatod",
+    "fullscreen": "Teljes képernyős",
     "heroVideoLanguages": {
       "en": {
-        "label": "Angol",
-        "nativeLabel": "Angol"
+        "label": "angol",
+        "nativeLabel": "angol"
       },
       "es": {
-        "label": "Spanyol",
-        "nativeLabel": "Spanyol"
+        "label": "spanyol",
+        "nativeLabel": "Español"
       },
       "pt": {
-        "label": "Portugál",
-        "nativeLabel": "Portugál"
+        "label": "portugál",
+        "nativeLabel": "portugál"
       },
       "hi": {
-        "label": "Hindi",
-        "nativeLabel": "Hindi"
+        "label": "HIDE",
+        "nativeLabel": "हिन्दी"
       },
       "zh": {
-        "label": "Kínai",
-        "nativeLabel": "Kínai"
+        "label": "X - kínai",
+        "nativeLabel": "a"
       },
       "ar": {
-        "label": "Arab",
-        "nativeLabel": "Arab"
+        "label": "arab",
+        "nativeLabel": "العربية"
       },
       "th": {
-        "label": "Thai",
-        "nativeLabel": "Thai"
+        "label": "X - thai",
+        "nativeLabel": "한국어"
       }
     },
-    "soon": "Hamarosan"
+    "soon": "hamarosan",
+    "ctaPrimaryLaunch": "Indítsd el a stúdiódat ($ 9) — szeptemberi kohorsz",
+    "ctaSupportingLine": "Kezdje a $ 9 Explorer csomaggal. Szeptemberi korai hozzáférésű kohorsz alakul.",
+    "videoLanguageCount": "{count, plural, =1 {# language} egyéb {# languages}}"
   },
   "valueProp": {
     "pills": [
@@ -1501,63 +1507,63 @@
     "ctaSubtext": "Teremtsünk hidat a hagyományos filmkészítés és a generatív MI között."
   },
   "exitIntent": {
-    "title": "Várjon! Ne távozzon üres kézzel.",
-    "subtitle": "Szerezzen exkluzív korai hozzáférést és tippeket a mesterséges intelligenciával támogatott filmkészítéshez.",
+    "title": "Várjon! Ne hagyja üres kézzel",
+    "subtitle": "Exkluzív korai hozzáférés és tippek az AI-alapú filmkészítéshez",
     "benefits": [
-      "Heti AI-alapú filmkészítési oktatóanyagok",
+      "Heti AI-filmkészítési útmutatók",
       "Korai hozzáférés az új funkciókhoz",
-      "Exkluzív kedvezmények alkotóknak"
+      "Exkluzív alkotói kedvezmények"
     ],
-    "emailPlaceholder": "Adja meg e-mail-címét",
-    "subscribe": "Szerezzen korai hozzáférést",
+    "emailPlaceholder": "Add meg az email címedet",
+    "subscribe": "Korai hozzáférés kérése",
     "subscribing": "Feliratkozás...",
     "or": "vagy",
-    "startNow": "Kezdj el alkotni most, mindössze 9 dollárért →",
-    "privacy": "Soha nem küldünk spamet. Bármikor leiratkozhatsz.",
+    "startNow": "Kezdj el alkotni most mindössze 9 $ — szeptemberi kohorsz képzésért →",
+    "privacy": "Nincs spam, soha. Leiratkozás bármikor.",
     "successTitle": "Rajta vagy a listán!",
-    "successSubtitle": "Ellenőrizd a postafiókodat exkluzív filmes tippekért és a korai hozzáféréssel kapcsolatos hírekért.",
-    "ctaText": "Kezdd el a felfedezést – 9 $",
+    "successSubtitle": "Nézd meg a postafiókodat az exkluzív filmkészítési tippekért és a korai hozzáféréssel kapcsolatos frissítésekért.",
+    "ctaText": "Induljon a felfedezés — 9 $",
     "closePopup": "Felugró ablak bezárása"
   },
   "pricing": {
-    "badge": "Használat alapú árazás",
-    "title": "Fizess azért, amit létrehozol",
-    "subtitle": "Egyetlen alapcsomag a platformhoz való hozzáféréshez. Kreditek az MI-alapú generáláshoz. Feltöltés igény szerint. Teljes körű kontroll, nulla pazarlás.",
+    "badge": "Egyszerű árképzés",
+    "title": "Kezdje a Explorer-mel — $ 9",
+    "subtitle": "Szeptemberi korai hozzáférésű kohorsz kialakulása. Tesztelje a teljes csővezetéket egy súrlódásmentes $ 9 belépéssel.",
     "valueAnchor": {
-      "traditionalCost": "2000 dollár felett",
-      "traditionalLabel": "Hagyományos elővizualizáció",
-      "vs": "ellen",
-      "sceneFlowCost": "49–149 dollár",
-      "sceneFlowLabel": "SceneFlow havi",
-      "saveBadge": "Projektenként több mint 90%-ot takaríthat meg"
+      "traditionalCost": "2000",
+      "traditionalLabel": "Hagyományos előnézet",
+      "vs": "vs",
+      "sceneFlowCost": "$ 49-149",
+      "sceneFlowLabel": "SceneFlow havonta",
+      "saveBadge": "90%+ megtakarítás projektenként"
     },
     "teamCta": {
-      "title": "Belső csapat vagy intézmény?",
-      "description": "Foglaljon időpontot munkafolyamat-ismertetőre kommunikációs, L&D- és marketingcsapatok számára",
-      "button": "Könyvismertető"
+      "title": "Házon belüli csapat vagy intézmény?",
+      "description": "Foglald le a munkafolyamat áttekintését a kommunikációs, L&D és marketing csapatok számára",
+      "button": "Könyvbemutató"
     },
     "agencyCta": {
-      "title": "Ügynökség vagy produkciós cég?",
-      "description": "Egyedi kreditek, SLA és dedikált támogatás nagy léptékben",
-      "button": "Kapcsolatfelvétel az értékesítéssel"
+      "title": "Ügynökség vagy gyártóüzem?",
+      "description": "Egyéni kreditek, SLA és dedikált támogatás skálán",
+      "button": "Vegye fel a kapcsolatot az értékesítési csoporttal"
     },
     "byok": {
-      "title": "Saját kulcs használata",
-      "badge": "Pro és Studio csomagok",
-      "description": "Rendelkezik már API-kulcsokkal a Vertex AI vagy a ElevenLabs számára? Használja őket a SceneFlow AI szolgáltatással, és takarítson meg akár 80%-ot a platformkrediteken.",
-      "savingsHighlight": "80% platformkredit formájában",
+      "title": "Hozz saját piperecikkeket! ",
+      "badge": "Pro- és stúdiócsomagok",
+      "description": "Már rendelkezik API-kulcsokkal a Vertex AI vagy a ElevenLabs számára? Használja őket a SceneFlow AI segítségével, és akár 80% -ot takaríthat meg a platform kreditjein.",
+      "savingsHighlight": "80% a platform kreditekre",
       "benefits": [
         {
-          "title": "80%-os SceneFlow kreditmegtakarítás",
-          "description": "Mindössze 20%-os platformdíjat fizessen az orkesztrációért és az eszközökért."
+          "title": "80% -os SceneFlow hitelmegtakarítás",
+          "description": "Csak 20% -os platformdíjat fizess a hangszerelésért és az eszközökért"
         },
         {
-          "title": "Használja ki a vállalati terveket",
-          "description": "Használja fel meglévő Vertex AI vagy ElevenLabs mennyiségi kedvezményeit."
+          "title": "Vállalati tervek kihasználása",
+          "description": "Használja meglévő Vertex AI vagy ElevenLabs mennyiségi kedvezményeit"
         },
         {
-          "title": "Teljes körű irányítás",
-          "description": "Az Ön kulcsai, az Ön számlázása, az Ön költségkezelése"
+          "title": "Teljes ellenőrzés",
+          "description": "A kulcsaid, a számlázásod, a költségkezelésed"
         }
       ],
       "supportedProviders": "Támogatott szolgáltatók",
@@ -1565,83 +1571,83 @@
       "vertexDetail": "Imagen 4 és Veo 3.1",
       "elevenLabsName": "ElevenLabs",
       "elevenLabsDetail": "Szövegfelolvasás és hangklónozás",
-      "savingsLabel": "80%-os megtakarítás",
+      "savingsLabel": "80% megtakarítás",
       "onImagesVideo": "képeken és videókon",
-      "onVoiceover": "narráció alatt",
-      "note": "A feltüntetett kreditmegtakarítások a SceneFlow platformon elérhető megtakarításokat jelentik. A tényleges összköltség az egyes szolgáltatóknál érvényes egyéni vagy vállalati API-díjszabástól függ."
+      "onVoiceover": "a hangalámondáson",
+      "note": "A feltüntetett hitelmegtakarítások a SceneFlow platform megtakarításai. A tényleges teljes költséged az egyes szolgáltatóknál alkalmazott személyes vagy vállalati API-áradtól függ."
     },
     "creditTopUps": {
       "title": "További kreditekre van szükséged?",
-      "subtitle": "Bármikor feltöltheti. Az egyenleg nem jár le.",
+      "subtitle": "Bármikor feltöltheted. A kreditek soha nem járnak le.",
       "packs": [
         {
-          "label": "Kezdőcsomag",
-          "description": "Tökéletes gyors átismétléshez"
+          "label": "Kezdő csomag",
+          "description": "Tökéletes a gyors felülvizsgálatokhoz"
         },
         {
           "label": "Jelenetcsomag",
           "description": "Végezz el egy rövid projektet"
         },
         {
-          "label": "Gyártási csomag",
-          "description": "Jelentős filmszekvencia"
+          "label": "Termelési csomag",
+          "description": "Fő filmszekvencia"
         },
         {
           "label": "Stúdiócsomag",
-          "description": "Teljes termelési kapacitás"
+          "description": "Teljes gyártási kapacitás"
         }
       ],
-      "creditsUnit": "stáblista"
+      "creditsUnit": "kreditek"
     },
     "calculator": {
-      "sectionTitle": "Becsülje meg projektje költségeit",
-      "sectionSubtitle": "Tudd pontosan, mennyit fogsz fizetni, mielőtt elköteleznéd magad.",
-      "title": "Projektköltség-kalkulátor",
-      "subtitle": "Becsülje meg a krediteket a kezdés előtt",
+      "sectionTitle": "Becsülje meg projektjét",
+      "sectionSubtitle": "Tudd meg pontosan, mennyit fogsz fizetni, mielőtt elköteleznéd magad",
+      "title": "Projektköltségvetés kalkulátor",
+      "subtitle": "Becsült kreditek a kezdés előtt",
       "customize": "Paraméterek testreszabása",
-      "imagesLabel": "Generálandó képek",
-      "videoClipsLabel": "Videóklipek",
-      "voiceoverLabel": "Narráció (perc)",
-      "byokTitle": "Saját kulcs használata (BYOK)",
-      "byokBadge": "Pro és stúdió",
-      "byokDescription": "Használja saját API-kulcsait, és takarítson meg akár 80%-ot a SceneFlow-krediteken. A szolgáltatásokért közvetlenül az AI-szolgáltatóknak fizet, az általuk meghatározott díjakon.",
-      "vertexToggle": "Vertex AI (Képek és videók)",
-      "elevenLabsToggle": "ElevenLabs (Narráció)",
+      "imagesLabel": "Létrehozandó képek",
+      "videoClipsLabel": "Videoklipek",
+      "voiceoverLabel": "Hangfelvétel (perc)",
+      "byokTitle": "Hozza magával a saját kulcsát (BYOK)",
+      "byokBadge": "Profi és Stúdió",
+      "byokDescription": "Saját API-kulcsaival akár 80% -ot is megtakaríthat a SceneFlow kreditjein. Közvetlenül az AI-szolgáltatóknak fizetsz az áraikkal.",
+      "vertexToggle": "Vertex AI (képek és videó)",
+      "elevenLabsToggle": "ElevenLabs (Voiceover)",
       "imageGeneration": "Képgenerálás",
       "videoGeneration": "Videógenerálás",
-      "voiceover": "Narráció",
+      "voiceover": "Voiceover: ",
       "byokTag": "(BYOK)",
       "totalEstimate": "Teljes becslés",
       "withTopUps": "feltöltésekkel",
-      "creditSavings": "SceneFlow hitelcélú megtakarítás",
-      "savePercent": "{percent}%-ot takarít meg a SceneFlow krediteken",
-      "transparency": "Teljes átláthatóság: munka közben valós időben követheted a kreditfelhasználást. Nincsenek meglepetések – bármikor módosíthatod a projekt terjedelmét.",
-      "transparencyHighlight": "Teljes átláthatóság:",
-      "byokDisclaimer": "BYOK Megjegyzés: A feltüntetett kreditmegtakarítások kizárólag a SceneFlow platform kreditcsökkentéseit tükrözik. A tényleges költségek az Ön Vertex AI és ElevenLabs díjcsomagjaitól függnek. A vállalati vagy nagy volumenű API-csomagok további megtakarítási lehetőségeket kínálhatnak.",
+      "creditSavings": "SceneFlow hitelmegtakarítások",
+      "savePercent": "{percent}% -ot spórolhatsz a SceneFlow kreditjeiden",
+      "transparency": "Teljes átláthatóság: Munka közben láthatja a valós idejű kreditfelhasználást. Nincsenek meglepetések - bármikor módosíthatja a projekt hatókörét.",
+      "transparencyHighlight": "Teljes átláthatóság",
+      "byokDisclaimer": "BYOK Megjegyzés: A megjelenített hitelmegtakarítások csak a SceneFlow platform hitelcsökkentéseit tükrözik. A tényleges költségek a Vertex AI és a ElevenLabs árképzési terveitől függenek. A vállalati vagy nagy volumenű API-csomagok további megtakarításokat kínálhatnak.",
       "byokDisclaimerHighlight": "BYOK Megjegyzés:",
       "presets": [
         {
-          "id": "reklám",
-          "name": "30 másodperces reklám"
+          "id": "commercial",
+          "name": "30 másodperces kereskedelmi"
         },
         {
-          "id": "rövid",
+          "id": "short",
           "name": "2 perces rövidfilm"
         },
         {
-          "id": "epizód",
+          "id": "episode",
           "name": "10 perces epizód"
         },
         {
-          "id": "funkció",
-          "name": "90 perces nagyjátékfilm"
+          "id": "feature",
+          "name": "90 perces funkció"
         }
       ],
       "minSuffix": "perc"
     },
     "tierGrid": {
-      "productionTestFlight": "Sorozatgyártás utáni berepülés",
-      "getStarted": "Kezdés",
+      "productionTestFlight": "Termelési tesztrepülés",
+      "getStarted": "Kezdés ",
       "startTestFlight": "Tesztrepülés indítása",
       "loading": "Betöltés...",
       "mostPopular": "Legnépszerűbb",
@@ -1650,9 +1656,9 @@
       "perMonth": "/hó"
     },
     "trust": {
-      "cancelAnytime": "Bármikor lemondható",
+      "cancelAnytime": "Bármikor lemondható.",
       "moneyBack": "14 napos pénzvisszafizetési garancia",
-      "creditsNeverExpire": "A kreditek nem járnak le (Explorer csomag)"
+      "creditsNeverExpire": "A kreditek soha nem járnak le (Explorer csomag)"
     },
     "plans": {
       "explorer": {
@@ -1660,100 +1666,109 @@
         "description": "Egyszeri vásárlás a kipróbáláshoz",
         "features": [
           "Egyszeri vásárlás",
-          "750 kredit (nem jár le)",
+          "750 kredit (soha ne járjon le)",
           "5 GB tárhely (30 nap)",
-          "Teljes körű hozzáférés a platformhoz",
-          "MP4-exportálás (bármilyen felbontás)",
-          "MI-alapú narráció (több mint 70 nyelven)"
+          "Teljes platformhozzáférés",
+          "MP4 export (bármilyen felbontás)",
+          "AI-hangfelvétel (70+ nyelv)"
         ]
       },
       "subscriptions": [
         {
-          "id": "előétel",
-          "name": "Előétel",
-          "description": "Egyéni alkotók számára",
+          "id": "starter",
+          "name": "Indítóanyag",
+          "description": "Egyéni alkotóknak",
           "features": [
-            "Teljes körű hozzáférés a platformhoz",
-            "Havi 4500 kreditet tartalmaz",
+            "Teljes platformhozzáférés",
+            "4500 kredit/hó az árban",
             "25 GB aktív tárhely",
-            "MP4-exportálás (bármilyen felbontás)",
-            "MI-alapú narráció (több mint 70 nyelven)",
-            "E-mail-alapú ügyfélszolgálat"
+            "MP4 export (bármilyen felbontás)",
+            "AI-hangfelvétel (70+ nyelv)",
+            "E-mailes támogatás"
           ]
         },
         {
           "id": "pro",
-          "name": "Pro",
-          "description": "Professzionális alkotók számára",
+          "name": "Fizetős",
+          "description": "Profi alkotóknak",
           "features": [
-            "Minden, ami a Starter csomagban benne van, plusz:",
-            "Havi 15 000 kreditet tartalmaz",
+            "Minden a Starterben, plusz:",
+            "15 000 kredit/hó az árban",
             "100 GB aktív tárhely",
-            "Hozzáférés a Veo 3.1 minőséghez (4K)",
-            "Karakterkonzisztencia-motor",
+            "Veo 3.1 Minőségi (4K) hozzáférés",
+            "Karakterkonzisztencia motor",
             "Hangklónozás",
-            "BYOK (Saját kulcs használata)",
-            "3 csapatszék",
-            "Elsőbbségi támogatás"
+            "BYOK (Hozd a saját kulcsodat)",
+            "3 csapatülés",
+            "<b>Elsőbbség</b> Támogat"
           ]
         },
         {
-          "id": "stúdió",
+          "id": "studio",
           "name": "Stúdió",
-          "description": "Csapatok és ügynökségek számára",
+          "description": "Csapatoknak és ügynökségeknek",
           "features": [
-            "Minden, ami a Pro csomagban benne van, plusz:",
-            "Havi 75 000 kreditet tartalmaz",
+            "Minden a Pro-ban, plusz:",
+            "75 000 kredit/hó az árban",
             "500 GB aktív tárhely",
-            "Veo 3.1 4K prioritásos sor",
+            "Veo 3.1 4K elsőbbségi sor",
             "Korlátlan karakterkonzisztencia",
-            "White-label export",
-            "API-hozzáférés",
-            "10 csapathely",
-            "Kijelölt ügyfélkapcsolati menedzser",
-            "Vállalati szintű SLA kérésre elérhető"
+            "Fehércímkés export",
+            "API-hozzáférés ",
+            "10 csapatülés",
+            "Elkötelezett fiókkezelő. ",
+            "Vállalati SLA kérésre elérhető"
           ]
         }
       ]
-    }
+    },
+    "explorerHighlight": "A leggyorsabb módja a teljes SceneFlow stúdió megtapasztalásának — a koncepciótól a Screening Room-ig.",
+    "trustBadges": [
+      "Google Cloud infrastruktúra",
+      "Vertex AI generáció",
+      "Biztonságos fizetés a Whop-en keresztül",
+      "14 napos pénzvisszafizetési garancia"
+    ]
   },
   "landingSections": {
     "expandSection": "Szakasz megjelenítése",
     "collapseSection": "Szakasz elrejtése"
   },
   "finalCta": {
-    "title": "Készen állsz a teljes folyamat tesztelésére?",
-    "subtitle": "Koncepció, elővizualizáció, videó és végső MP4 – mindez egyetlen stúdióban. Kezdj a 9 dolláros Explorer csomaggal, és tapasztald meg a gyakorlatban a „beat-first” (ütemközpontú) munkafolyamatot.",
-    "cta": "Indítsd el stúdiódat 9 dollárért"
+    "title": "Készen áll a teljes csővezeték tesztelésére?",
+    "subtitle": "A Google által működtetett szkriptek és optimalizálás, az Ön által választott generációs backend és a Screening Room felülvizsgálata — mindez egyetlen stúdióban. Szeptemberi korai hozzáférésű kohorsz — kezdd a $ 9 Explorer tervvel, vagy igényelj Alapító Alkotói hozzáférést.",
+    "cta": "Indítsd el a stúdiódat ($ 9) — szeptemberi kohorsz",
+    "ctaSecondary": "Jelentkezés az alapító alkotó hozzáférésére",
+    "ctaSecondaryHref": "/early-access"
   },
   "footer": {
-    "description": "Teljes körűen automatizált videógyártás – a koncepciótól a közzétételre kész mesterpéldányig. Egyetlen irányított stúdió: Blueprint → Gyártás → Screening Room.",
+    "description": "Teljes körű automatizált videogyártás — a koncepciótól a közzétételre kész mesterig. Egy vezetett stúdió: Series Studio → Blueprint Studio → Production Studio → Screening Room.",
     "product": "Termék",
-    "resources": "Források",
-    "legal": "Jogi",
+    "resources": "Erőforrások",
+    "legal": "Jogi terület",
     "links": {
-      "features": "Jellemzők",
-      "pricing": "Árazás",
-      "howItWorks": "Hogyan működik",
-      "gettingStarted": "Első lépések",
-      "privacy": "Adatvédelmi tájékoztató",
+      "features": "Felhasználhatóság",
+      "pricing": "Árak",
+      "howItWorks": "Hogyan működik?",
+      "gettingStarted": "Az első lépések",
+      "privacy": "Adatvédelmi szabályzat",
       "terms": "Szolgáltatási feltételek",
       "trustSafety": "Bizalom és biztonság",
-      "refunds": "Visszatérítési szabályzat",
-      "contact": "Lépjen kapcsolatba velünk"
+      "refunds": "Pénzvisszatérítési irányelv",
+      "contact": "Kapcsolat"
     },
-    "tagline": "Alkotóknak, ❤️-gal készítve",
+    "tagline": "Alkotóknak ❤️ készült",
     "taglineSub": "Az ötlettől a közzétett videóig",
-    "securePayments": "Biztonságos fizetés a Whop – a hivatalos értékesítő partnerünk – közreműködésével",
-    "morLine": "A biztonságos fizetést, az adószámítást és a jogszabályi megfelelést a Life Focus, LLC megbízásából a Whop – mint hivatalos értékesítő partner (Merchant of Record) – végzi.",
+    "securePayments": "A Whop, a nyilvántartó kereskedőnk által feldolgozott biztonságos fizetések",
+    "morLine": "A biztonságos kifizetéseket, az adószámítást és a megfelelést az Whop, a nyilvántartó kereskedőnk kezeli a Life Focus, LLC nevében.",
     "copyright": "© 2026 SceneFlow AI. Minden jog fenntartva.",
-    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • Kapcsolat: support@sceneflowai.studio",
-    "poweredBy": "Üzemeltető: Google Cloud"
+    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, Egyesült Államok • Kapcsolat: support@sceneflowai.studio",
+    "poweredBy": "Google által működtetett intelligencia · Google Cloud-en hangszerelve"
   },
   "floatingCta": {
     "seePricing": "Árak megtekintése",
-    "tryNine": "Próbáld ki 9 dollárért",
-    "tryForNine": "Próbáld ki 9 dollárért",
+    "tryNine": "Próbáld ki a (z) 9 $ -t",
+    "tryForNine": "Próbáld ki 9 $ -ért",
     "dismiss": "Elvetés"
   },
   "common": {
@@ -1763,5 +1778,121 @@
     "mute": "Némítás",
     "unmute": "Némítás feloldása",
     "expandVideo": "Videó nagyítása"
+  },
+  "useCasesShowcase": {
+    "badge": "Kinek szól a SceneFlow?",
+    "title": "Kinek szól a SceneFlow?",
+    "subtitle": "A koncepciótól a Screening Room animációig az automatikusan közzétett többnyelvű videóig — egy automatizált csővezeték, négyféle szállítási mód.",
+    "cta": "Indítsd el a stúdiódat ($ 9) — szeptemberi kohorsz",
+    "tabStory": "Megoldás",
+    "tabScreening": "Szűrés",
+    "problemLabel": "Problémameghatározás",
+    "solutionLabel": "A SceneFlow megoldás",
+    "outcomeLabel": "Az eredmény",
+    "videoLanguagePrompt": "Nézd meg ezt az utat a saját nyelveden",
+    "videoComingSoon": "Bemutató videó hamarosan",
+    "videoSoon": "hamarosan",
+    "personas": [
+      {
+        "id": "youtubeCreator",
+        "label": "A YouTube alkotója",
+        "headline": "A koncepciótól a filmes sorozatig — Nincs azonnali mérnöki munka",
+        "intro": "Kezdje egy koncepcióval vagy egy részletes sorozatleírással. A SceneFlow felépíti a sorozat univerzumát, karaktereit és korlátlan epizódjait, majd az Express segítségével egyidejűleg rendereli a hangot, a kereteket és a videót. Egyszerű szöveggel vagy hanggal hoz létre és irányít; a SceneFlow építi fel a jövőképet — nincs azonnali tervezés, nincs nyerőgép-újrafelvétel.",
+        "story": {
+          "problem": [
+            "Külön-külön zsonglőrködsz a forgatókönyv, a képek, a hang, a videó, a zene és a szerkesztés eszközeivel.",
+            "Újra és újra létrehozza az egyes darabokat, remélve, hogy használható eredményt kap.",
+            "A karakterek még mindig jelenetről jelenetre máshogy néznek ki."
+          ],
+          "solution": [
+            "Egy vezetett stúdió helyettesíti az egész szerszámcsomagot.",
+            "Írd le egyszerű szavakkal az ötletedet — a SceneFlow megírja a sorozatot és megtervezi a szereposztást.",
+            "Az Express együtt jeleníti meg a hangot, a kereteket és a videót, míg a Reference Library konzisztensen tartja a karaktereket."
+          ],
+          "outcome": [
+            "Ne veszítse el a hétvégéket a széttöredezett eszközök miatt.",
+            "Közzététel egyenletes ritmusban, amellyel valóban lépést tudsz tartani.",
+            "Tartson minden epizódot márkanéven anélkül, hogy újra görgetne a következetesség érdekében."
+          ]
+        },
+        "screeningRoomHook": "Képzeld el a történetet animációs mozgóképként, tekintsd át a jeleneteket a streamek véglegesítése előtt, és oszd meg a többnyelvű streameket (70+ nyelven) a kiadás előtti visszajelzés érdekében.",
+        "screeningRoomPreview": "A láthatatlan archívum: A nagy illúzió: a chicagói világ tisztességes megtévesztése"
+      },
+      {
+        "id": "startupProvider",
+        "label": "Az indítási szolgáltató",
+        "headline": "Globális videostúdió működtetése — az első épület nélkül",
+        "intro": "Csiszolt, lokalizált videót szállíthatsz olyan kisvállalkozásoknak, amelyek nem engedhetnek meg maguknak egy ügynökséget. Az Express egyszerre teszi lehetővé a teljes ügyfélcsomagok megjelenítését, a Mixer hozzáadja a márka átfedéseket, a vízjeleket és az időzítést, és az automatikusan igazított dub/ajak-szinkronizálás az ügyfél piaci nyelvén szállítja az összes szállítandó terméket — mindezt egy kiszámítható csővezetékből.",
+        "story": {
+          "problem": [
+            "A kisvállalkozások ügyfelei nem engedhetnek meg maguknak egy hagyományos videoügynökséget.",
+            "Sok eszközt vásárol és zsonglőrködik, minden ügyfél számára újra elvégzi a munkát.",
+            "Minden új nyelv a videó nulláról történő újraépítését jelenti."
+          ],
+          "solution": [
+            "Egy kiszámítható folyamat minden ügyfélprojekthez.",
+            "Rendeljen egy teljes videócsomagot egyszerre — hangot, kereteket és videót együtt.",
+            "Adjon hozzá márkajelzést, átfedéseket és vízjeleket, majd automatikus dubot és ajakszinkronizálást az ügyfél piaci nyelvéhez."
+          ],
+          "outcome": [
+            "Szolgáljon ki sok ügyfelet egy stúdió munkafolyamatból.",
+            "Érje el a globális piacokat több mint70 nyelven anélkül, hogy újraépítené az egyes videókat.",
+            "Méretezze a szolgáltatást anélkül, hogy személyzetet bérelne vagy infrastruktúrát építene."
+          ]
+        },
+        "screeningRoomHook": "Az animáció ügyféllel szembeni áttekintése, a helyszín jóváhagyása a végső adatfolyamok előtt, valamint megosztható többnyelvű előnézetek a külföldi érdekelt felek számára.",
+        "screeningRoomPreview": "Fő utcai felkelés: Helyi vállalkozás újraindítása"
+      },
+      {
+        "id": "enterprise",
+        "label": "Vállalkozások és intézmények",
+        "headline": "Megfelelő képzés a szabályzatváltozás sebességével",
+        "intro": "A belső L&D és kommunikációs csapatok márkajelzéssel ellátott, auditkész modulokat szállítanak szállítói ciklusok nélkül. Finomítson bármilyen keretet vagy vonalat szöveggel vagy hanggal, hogy az üzenetben maradjon, fejezze be a keverőfedvényekkel és vízjelekkel, és egyetlen jóváhagyott mesterről indítsa el az automatikusan igazított szinkronizált vagy ajakszinkronizált verziókat minden régióban.",
+        "story": {
+          "problem": [
+            "A képzési és kommunikációs videók heteket várnak a külső beszállítókra, és prémiumba kerülnek.",
+            "Amikor a szabályzat vagy a termék módosul, a videók elavulttá és márkátlanná válnak.",
+            "Minden frissítés egy újabb drága gyártási fordulót indít el."
+          ],
+          "solution": [
+            "Készíts márkanévvel védett, auditra kész videókat házon belül.",
+            "Változtasson meg bármilyen sort vagy keretet egy gépelt vagy kimondott utasítással.",
+            "Tekintse át és hagyja jóvá a végső renderelés kifizetése előtt, majd vezessen be egy mestert minden régióba."
+          ],
+          "outcome": [
+            "A képzés és a kommunikáció lépést tart a politikai változásokkal.",
+            "Maradjon a márkán anélkül, hogy megvárná a szállítói ciklusokat.",
+            "Frissíts egyszer, és terjeszd mindenhol egyetlen jóváhagyott vágásból."
+          ]
+        },
+        "screeningRoomHook": "Tekintse át a jeleneteket, mielőtt a streamek véglegessé válnak, és ossza meg a privát Screening Room linkeket a régiók közötti visszajelzésekhez a befejezetlen mesterek exportálása nélkül.",
+        "screeningRoomPreview": "Shield Protocol: Globális kiberbiztonsági bevezetés"
+      },
+      {
+        "id": "educator",
+        "label": "Az oktató",
+        "headline": "Fordítsd a tantervet leckékké, amelyeket a hallgatók ténylegesen megnéznek",
+        "intro": "A nagy intézmények a sűrű fejezeteket lokalizált, narratív videóvá alakítják. Az Express gyorsan felépíti a teljes leckéket, az intelligens szöveg-/hangszerkesztések lehetővé teszik a kar számára, hogy a tartalmat azonnali tervezés nélkül hangolják be, és az automatikusan igazított dub/ajak-szinkronizálás megfelel az egyes kohorszok nyelvének — majd automatikusan közzéteszi a hajók lokalizált címeit és miniatűrjeit minden csatornára.",
+        "story": {
+          "problem": [
+            "A sűrű tananyag csak hetek, speciális készségek vagy nagy költségvetés után válik videóvá.",
+            "Enélkül az órák diavetítésekként maradnak, amelyeket a diákok kihagynak.",
+            "A diákok több nyelven történő kiszolgálása megsokszorozza a munkát."
+          ],
+          "solution": [
+            "Gyorsan felépítheted a teljes elbeszélős leckéket egy stúdióban.",
+            "A kar gépeléssel vagy beszéddel módosítja a tartalmat — nincs technikai utasítás.",
+            "Automatikus szinkronizálás, szinkronizálás és közzététel honosított címekkel és miniatűrökkel minden kohorsz számára."
+          ],
+          "outcome": [
+            "Változtassa a tantervet videós hallgatókká, akik ténylegesen nézik.",
+            "Érj el minden kampuszt a saját nyelvükön, produkciós csapat nélkül.",
+            "Szállítási leckék gyorsabban, mint a hagyományos videokészítés lehetővé teszi."
+          ]
+        },
+        "screeningRoomHook": "A kar megtekintheti az animációt a produkciós kiadások előtt, áttekintheti az órai jeleneteket, és megoszthatja a streameket több mint 70 nyelven a több kampuszos visszajelzés érdekében.",
+        "screeningRoomPreview": "Reneszánsz workshop: Mozgásban a múlt"
+      }
+    ]
   }
 }
