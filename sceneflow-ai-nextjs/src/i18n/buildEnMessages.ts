@@ -315,7 +315,7 @@ export function buildEnMessages() {
       morLine: MOR_FOOTER_LINE,
       copyright: '© 2026 SceneFlow AI. All rights reserved.',
       address:
-        'Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Contact: brian@sfai.studio',
+        'Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Contact: support@sfai.studio',
       poweredBy: 'Powered by Google Cloud',
     },
     floatingCta: {

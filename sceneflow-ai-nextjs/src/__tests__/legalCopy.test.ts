@@ -2,8 +2,12 @@ import { readFileSync } from 'fs'
 import { join } from 'path'
 import { describe, it, expect } from 'vitest'
 import {
+  LEGAL_ABUSE_EMAIL,
   LEGAL_COMPANY_NAME,
+  LEGAL_LEGAL_EMAIL,
   LEGAL_SERVICE_NAME,
+  LEGAL_SUPPORT_EMAIL,
+  LEGAL_TRUST_EMAIL,
   WHOP_MOR_NAME,
 } from '@/config/legal/legalCopy'
 
@@ -24,9 +28,13 @@ describe('legal document consistency', () => {
     }
   })
 
-  it('exports the expected legal entity and MoR names', () => {
+  it('exports the expected legal entity, MoR, and contact emails', () => {
     expect(LEGAL_COMPANY_NAME).toBe('Life Focus, LLC')
     expect(LEGAL_SERVICE_NAME).toBe('SceneFlow AI')
     expect(WHOP_MOR_NAME).toBe('Whop')
+    expect(LEGAL_SUPPORT_EMAIL).toBe('support@sfai.studio')
+    expect(LEGAL_ABUSE_EMAIL).toBe('abuse@sfai.com')
+    expect(LEGAL_TRUST_EMAIL).toBe('trust@sfai.com')
+    expect(LEGAL_LEGAL_EMAIL).toBe('legal@sfai.com')
   })
 })
