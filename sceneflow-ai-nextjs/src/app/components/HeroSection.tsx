@@ -361,7 +361,7 @@ export function HeroSection() {
             </motion.p>
 
             <motion.div
-              className="mt-10 flex justify-center"
+              className="mt-10 flex flex-col items-center justify-center gap-3"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
@@ -373,6 +373,9 @@ export function HeroSection() {
               >
                 {t('ctaPrimaryLaunch')}
               </Button>
+              {t('ctaSupportingLine') && (
+                <p className="max-w-md text-sm text-gray-400">{t('ctaSupportingLine')}</p>
+              )}
             </motion.div>
           </div>
         </div>

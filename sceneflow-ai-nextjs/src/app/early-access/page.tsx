@@ -5,6 +5,25 @@ import Link from 'next/link'
 import { ArrowLeft, ArrowRight, Send, CheckCircle2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { SceneFlowStudioBrand } from '@/components/layout/SceneFlowStudioBrand'
+import {
+  EAP_COHORT_SECTION_TITLE,
+  EAP_EXPLORER_BOX_CTA,
+  EAP_EXPLORER_BOX_DESCRIPTION,
+  EAP_EXPLORER_BOX_TITLE,
+  EAP_EXPLORER_NOTE,
+  EAP_FOUNDING_CREATOR_BENEFITS,
+  EAP_FOUNDING_FORM_INTRO,
+  EAP_FOUNDING_FORM_TITLE,
+  EAP_HERO_BADGE,
+  EAP_HERO_DESCRIPTION,
+  EAP_HERO_HEADLINE,
+  EAP_JOIN_SECTION_INTRO,
+  EAP_JOIN_SECTION_TITLE,
+  EAP_MILESTONES,
+  EAP_WHAT_YOU_WILL_TEST,
+  eapWizardStepLabel,
+} from '@/config/landing/eapCopy'
+import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 
 type FormState = {
   fullName: string
@@ -49,30 +68,6 @@ const WIZARD_STEPS = [
   { id: 2, title: 'Production scale', subtitle: 'Volume & fit' },
   { id: 3, title: 'Feature testing', subtitle: 'Technical alignment' },
   { id: 4, title: 'Creative challenge', subtitle: 'Your series vision' },
-]
-
-const MILESTONES = [
-  'July 15: Application Window Closes',
-  'July 22: Selection Notifications & Onboarding Materials Sent',
-  'August 1: Foundational Cohort Launch. Full access to the SceneFlow environment',
-  'September 15: Mid-EAP Virtual Roundtable with the Engineering Team',
-]
-
-const WHAT_YOU_WILL_TEST = [
-  'Google-powered intelligence: scripting, Audience Resonance, and optimization on Vertex AI — exclusive to Google.',
-  'Multi-model generation: choose Google (Imagen/Veo) or Kling for frame and video synthesis, orchestrated on Google Cloud.',
-  'Persistent DNA: lock character wardrobes, prop geometry, and location physics across an entire season.',
-  'Global Resonance: deploy content in 75+ languages with localized dubbing that maintains emotional tone.',
-  'One-Take Accuracy: master the F2V (Frame-to-Video) workflow for scenes with unprecedented control.',
-  'Screening Room review: walk pre-vis → animatic → scene video → final master with structured feedback.',
-]
-
-const FOUNDING_CREATOR_BENEFITS = [
-  'Higher credit allocation and priority generation queue',
-  'Direct feedback channel to founder and engineering',
-  'Early access to new intelligence features',
-  'Credit carry-over or discount when public pricing launches',
-  'Limited cohort — help shape the SceneFlow roadmap',
 ]
 
 export default function EarlyAccessPage() {
@@ -291,43 +286,68 @@ export default function EarlyAccessPage() {
         </div>
 
         <section className="mt-8 rounded-2xl border border-cyan-500/20 bg-gradient-to-b from-slate-950 to-slate-900 p-6 sm:p-10">
-          <p className="text-xs uppercase tracking-wider text-cyan-300">Early Access Program · Founding Creator Cohort</p>
-          <h1 className="mt-3 text-4xl sm:text-5xl font-bold leading-tight">Stop Generating. Start Architecting.</h1>
-          <p className="mt-5 text-lg text-slate-300 max-w-3xl">
-            Join the SceneFlow Early Access Program — Google-powered intelligence with your choice of Google or Kling generation, consistency controls, multi-language delivery, and Screening Room review. Shape the roadmap as a paid beta partner.
-          </p>
-          <p className="mt-4 text-sm text-slate-400 max-w-3xl">
-            Prefer low-friction entry? Start with the $9 Explorer plan on the homepage — full pipeline access with limited credits.
-          </p>
+          <p className="text-xs uppercase tracking-wider text-cyan-300">{EAP_HERO_BADGE}</p>
+          <h1 className="mt-3 text-4xl sm:text-5xl font-bold leading-tight">{EAP_HERO_HEADLINE}</h1>
+          <p className="mt-5 text-lg text-slate-300 max-w-3xl">{EAP_HERO_DESCRIPTION}</p>
+          <p className="mt-4 text-sm text-slate-400 max-w-3xl">{EAP_EXPLORER_NOTE}</p>
         </section>
 
         <section className="mt-8 rounded-2xl border border-purple-500/20 bg-purple-500/5 p-6">
           <h3 className="text-2xl font-semibold">Founding Creator benefits</h3>
           <ul className="mt-4 space-y-2 text-slate-200 list-disc pl-6">
-            {FOUNDING_CREATOR_BENEFITS.map((item) => (
+            {EAP_FOUNDING_CREATOR_BENEFITS.map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ul>
         </section>
 
         <section className="mt-8 rounded-2xl border border-slate-700 bg-slate-900/60 p-6">
-          <h3 className="text-2xl font-semibold">The August 2026 Cohort</h3>
+          <h3 className="text-2xl font-semibold">{EAP_COHORT_SECTION_TITLE}</h3>
           <ul className="mt-4 space-y-2 text-slate-200 list-disc pl-6">
-            {WHAT_YOU_WILL_TEST.map((item) => (
+            {EAP_WHAT_YOU_WILL_TEST.map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ul>
           <h4 className="mt-6 text-lg font-semibold">Program Milestones</h4>
           <ul className="mt-2 space-y-2 text-slate-300">
-            {MILESTONES.map((m) => (
+            {EAP_MILESTONES.map((m) => (
               <li key={m}>- {m}</li>
             ))}
           </ul>
         </section>
 
         <section className="mt-8 rounded-2xl border border-slate-700 bg-slate-900 p-6 sm:p-8">
-          <h2 className="text-2xl sm:text-3xl font-bold">Early Access Application</h2>
-          <p className="mt-2 text-slate-300">Step {currentStep + 1} of {WIZARD_STEPS.length}: {WIZARD_STEPS[currentStep].title}</p>
+          <h2 className="text-2xl sm:text-3xl font-bold">{EAP_JOIN_SECTION_TITLE}</h2>
+          <p className="mt-3 text-slate-300 max-w-3xl">{EAP_JOIN_SECTION_INTRO}</p>
+
+          <div className="mt-6 rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-5 sm:flex sm:items-center sm:justify-between sm:gap-6">
+            <div>
+              <h3 className="text-lg font-semibold text-white">{EAP_EXPLORER_BOX_TITLE}</h3>
+              <p className="mt-2 text-sm text-slate-300">{EAP_EXPLORER_BOX_DESCRIPTION}</p>
+            </div>
+            <Button
+              type="button"
+              className="mt-4 w-full shrink-0 bg-gradient-to-r from-indigo-600 to-purple-600 sm:mt-0 sm:w-auto"
+              onClick={() => {
+                window.location.href = getSignupUrlForTier('explorer')
+              }}
+            >
+              {EAP_EXPLORER_BOX_CTA}
+            </Button>
+          </div>
+
+          <div className="mt-8 border-t border-slate-700 pt-8">
+            <h3 className="text-xl font-semibold">{EAP_FOUNDING_FORM_TITLE}</h3>
+            <p className="mt-2 text-sm text-slate-400">{EAP_FOUNDING_FORM_INTRO}</p>
+          </div>
+
+          <p className="mt-6 text-slate-300">
+            {eapWizardStepLabel(
+              currentStep + 1,
+              WIZARD_STEPS.length,
+              WIZARD_STEPS[currentStep].title
+            )}
+          </p>
 
           <div className="mt-6 flex gap-2">
             {WIZARD_STEPS.map((step, index) => (

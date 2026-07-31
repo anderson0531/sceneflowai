@@ -36,7 +36,8 @@
   "hero": {
     "headline": "You Direct the Story. SceneFlow Automates the Studio.",
     "subheadline": "Google-powered intelligence orchestrated on Google Cloud — with optional Google or Kling generation. Run your ideas through a seamless pipeline from blueprint to master MP4 without micro-prompting.",
-    "ctaPrimaryLaunch": "Launch Your Studio ($9)",
+    "ctaPrimaryLaunch": "Launch Your Studio ($9) — September Cohort",
+    "ctaSupportingLine": "Start with the $9 Explorer plan. September Early Access cohort now forming.",
     "ctaSecondary": "Watch the 'What's Possible'",
     "ctaToolStack": "See how it replaces your tool stack",
     "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
@@ -2292,7 +2293,7 @@
     "subscribe": "Get Early Access",
     "subscribing": "Subscribing...",
     "or": "or",
-    "startNow": "Start creating now for just $9 →",
+    "startNow": "Start creating now for just $9 — September cohort forming →",
     "privacy": "No spam, ever. Unsubscribe anytime.",
     "successTitle": "You're on the list!",
     "successSubtitle": "Check your inbox for exclusive filmmaking tips and early access updates.",
@@ -2302,7 +2303,7 @@
   "pricing": {
     "badge": "Simple Pricing",
     "title": "Start with Explorer — $9",
-    "subtitle": "Test the full pipeline with a frictionless entry point. Scale when you're ready.",
+    "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
     "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
     "trustBadges": [
       "Google Cloud infrastructure",
@@ -2510,8 +2511,8 @@
   },
   "finalCta": {
     "title": "Ready to test the full pipeline?",
-    "subtitle": "Google-powered scripting and optimization, your choice of generation backend, and Screening Room review — all in one studio. Start with the $9 Explorer plan or apply for Founding Creator early access.",
-    "cta": "Launch Your Studio for $9",
+    "subtitle": "Google-powered scripting and optimization, your choice of generation backend, and Screening Room review — all in one studio. September Early Access cohort now forming — start with the $9 Explorer plan or apply for Founding Creator access.",
+    "cta": "Launch Your Studio ($9) — September Cohort",
     "ctaSecondary": "Apply for Founding Creator Access",
     "ctaSecondaryHref": "/early-access"
   },

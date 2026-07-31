@@ -12,7 +12,7 @@ export const EXIT_INTENT_COPY = {
   subscribe: 'Get Early Access',
   subscribing: 'Subscribing...',
   or: 'or',
-  startNow: 'Start creating now for just $9 →',
+  startNow: 'Start creating now for just $9 — September cohort forming →',
   privacy: 'No spam, ever. Unsubscribe anytime.',
   successTitle: 'You\'re on the list!',
   successSubtitle: 'Check your inbox for exclusive filmmaking tips and early access updates.',

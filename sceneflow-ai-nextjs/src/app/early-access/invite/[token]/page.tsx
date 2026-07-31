@@ -1,5 +1,7 @@
 'use client'
 
+import { EAP_COHORT_SHORT } from '@/config/landing/eapCopy'
+
 import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
@@ -182,7 +184,7 @@ export default function EarlyAccessInvitePage() {
                 Welcome, {invite.fullName}
               </h1>
               <p className="mt-4 text-slate-300">
-                You're in the August 2026 cohort. Create your account, then choose the plan that fits your production workflow.
+                You're in the {EAP_COHORT_SHORT}. Create your account, then choose the plan that fits your production workflow.
               </p>
               <p className="mt-2 text-sm text-slate-400">
                 Approved email: {invite.emailMasked} · Expires {new Date(invite.expiresAt).toLocaleDateString()}

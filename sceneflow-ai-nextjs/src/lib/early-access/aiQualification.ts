@@ -1,6 +1,7 @@
 import { generateText } from '@/lib/vertexai/gemini'
 import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import type { EapApplicationRecord } from '@/lib/early-access/applications'
+import { EAP_COHORT_SHORT } from '@/config/landing/eapCopy'
 
 export interface EapAiAssessment {
   recommendedStatus: 'approve' | 'waitlist' | 'reject' | 'needs_review'
@@ -35,7 +36,7 @@ const ASSESSMENT_SCHEMA = `{
 }`
 
 function buildAssessmentPrompt(application: EapApplicationRecord): string {
-  return `You are qualifying applicants for SceneFlow AI Studio's Early Access Program (August 2026 cohort).
+  return `You are qualifying applicants for SceneFlow AI Studio's Early Access Program (${EAP_COHORT_SHORT}).
 
 SceneFlow is a production stack for automated, consistent, global-scale cinema built on Google Cloud and Vertex AI. Ideal cohort members are serious producers who will commit weekly feedback and help shape the product.
 
