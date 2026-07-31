@@ -69,4 +69,4 @@ After recording replacements, upload with `--id` and update `featureStoryboardMe
 
 - Walkthrough: `https://sceneflowai.studio/#feature-storyboard`
 - Trust: `https://sceneflowai.studio/#trust-safety`
-- Admin email: `brian@sfai.studio`
+- Admin email: `brian@sceneflowai.studio`

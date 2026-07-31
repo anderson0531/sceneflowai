@@ -4,7 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 RESEND_API_KEY="${RESEND_API_KEY:?Set RESEND_API_KEY before running}"
-RESEND_FROM_EMAIL="${RESEND_FROM_EMAIL:-SceneFlow AI Studio <noreply@sfai.studio>}"
+RESEND_FROM_EMAIL="${RESEND_FROM_EMAIL:-SceneFlow AI Studio <noreply@sceneflowai.studio>}"
 
 for env in production preview development; do
   printf '%s' "$RESEND_API_KEY" | npx vercel env add RESEND_API_KEY "$env"

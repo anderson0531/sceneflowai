@@ -7,7 +7,7 @@
 **Industry:** AI-Powered Content Creation / Creator Economy  
 **Funding Sought:** Google for Startups Cloud Credits + Program Support  
 **Website:** https://sceneflowai.studio  
-**Admin / contact email:** brian@sfai.studio
+**Admin / contact email:** brian@sceneflowai.studio
 
 ---
 
@@ -183,7 +183,7 @@ Google Cloud customer story co-marketing where appropriate
 
 **Brian Anderson**  
 Founder, SceneFlow AI (Life Focus, LLC)  
-📧 brian@sfai.studio  
+📧 brian@sceneflowai.studio  
 🌐 https://sceneflowai.studio  
 📍 Austin, Texas area
 

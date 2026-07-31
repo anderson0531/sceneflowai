@@ -6,6 +6,7 @@ import { SceneFlowStudioBrand } from '@/components/layout/SceneFlowStudioBrand'
 import { useTranslations } from 'next-intl'
 import { useLocale } from 'next-intl'
 import { getLandingLocalePath } from '@/i18n/locale'
+import { LEGAL_SUPPORT_EMAIL } from '@/config/legal/legalCopy'
 
 export function Footer() {
   const t = useTranslations('footer')
@@ -31,7 +32,7 @@ export function Footer() {
   }
 
   const socialLinks = [
-    { name: 'Email', icon: Mail, href: 'mailto:support@sfai.studio' },
+    { name: 'Email', icon: Mail, href: `mailto:${LEGAL_SUPPORT_EMAIL}` },
     {
       name: 'YouTube',
       icon: Youtube,

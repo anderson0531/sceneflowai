@@ -1747,7 +1747,7 @@
     "securePayments": "مدفوعات آمنة تتم معالجتها بواسطة Whop، بصفتها التاجر المسؤول عن المعاملة (Merchant of Record).",
     "morLine": "تتولى Whop —بصفتها التاجر المسؤول (Merchant of Record)— عمليات الدفع الآمنة، وحساب الضرائب، والامتثال التنظيمي، وذلك نيابةً عن شركة Life Focus, LLC.",
     "copyright": "© 2026 SceneFlow AI. جميع الحقوق محفوظة.",
-    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • للتواصل: support@sfai.studio",
+    "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • للتواصل: support@sceneflowai.studio",
     "poweredBy": "مدعوم بواسطة Google Cloud"
   },
   "floatingCta": {
