@@ -1,7 +1,6 @@
-'use client'
-
+import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowLeft, Shield, HelpCircle, CreditCard, Scale } from 'lucide-react'
+import { Shield, HelpCircle, CreditCard, Scale } from 'lucide-react'
 import {
   LEGAL_ABUSE_EMAIL,
   LEGAL_ADDRESS,
@@ -10,9 +9,11 @@ import {
   LEGAL_SUPPORT_EMAIL,
   LEGAL_TRUST_EMAIL,
 } from '@/config/legal/legalCopy'
+import { buildLegalMetadata, getLegalPageById } from '@/config/legal/legalPages'
 
-export default function ContactPage() {
-  const contactChannels = [
+export const metadata: Metadata = buildLegalMetadata(getLegalPageById('contact'))
+
+const contactChannels = [
     {
       id: 'support',
       icon: HelpCircle,
@@ -49,9 +50,9 @@ export default function ContactPage() {
       responseTime: 'Within 2 business days',
       color: 'blue'
     }
-  ]
+]
 
-  const getColorClasses = (color: string) => {
+function getColorClasses(color: string) {
     const colors: Record<string, { bg: string; border: string; icon: string; text: string }> = {
       purple: { bg: 'bg-purple-500/20', border: 'border-purple-500/30', icon: 'text-purple-400', text: 'text-purple-300' },
       emerald: { bg: 'bg-emerald-500/20', border: 'border-emerald-500/30', icon: 'text-emerald-400', text: 'text-emerald-300' },
@@ -60,20 +61,12 @@ export default function ContactPage() {
       cyan: { bg: 'bg-cyan-500/20', border: 'border-cyan-500/30', icon: 'text-cyan-400', text: 'text-cyan-300' },
       blue: { bg: 'bg-blue-500/20', border: 'border-blue-500/30', icon: 'text-blue-400', text: 'text-blue-300' }
     }
-    return colors[color] || colors.purple
-  }
+  return colors[color] || colors.purple
+}
 
+export default function ContactPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950">
-      <div className="max-w-4xl mx-auto px-4 py-16">
-        <Link 
-          href="/" 
-          className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 mb-8"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Home
-        </Link>
-        
+    <>
         <h1 className="text-4xl font-bold text-white mb-2">Contact Us</h1>
         <p className="text-gray-400 mb-8">We&apos;re here to help. Choose the right channel for your inquiry.</p>
         
@@ -184,7 +177,6 @@ export default function ContactPage() {
             </div>
           </section>
         </div>
-      </div>
-    </div>
+    </>
   )
 }
