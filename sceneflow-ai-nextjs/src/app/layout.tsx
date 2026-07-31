@@ -14,6 +14,13 @@ import { CreditsPaywallHost } from '@/components/credits/CreditsPaywallHost'
 import { CookieConsent } from '@/components/ui/CookieConsent'
 import { GlobalErrorGuard } from '@/components/providers/GlobalErrorGuard'
 import AudioPlayerProvider from '@/context/AudioPlayerProvider'
+import {
+  LEGAL_COMPANY_NAME,
+  LEGAL_SERVICE_NAME,
+  LEGAL_SUPPORT_EMAIL,
+  LEGAL_WEBSITE,
+} from '@/config/legal/legalCopy'
+import { LEGAL_HUB_PAGE, LEGAL_PAGES } from '@/config/legal/legalPages'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -106,6 +113,47 @@ const structuredData = {
   },
 }
 
+const organizationStructuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: LEGAL_COMPANY_NAME,
+  legalName: LEGAL_COMPANY_NAME,
+  brand: {
+    '@type': 'Brand',
+    name: LEGAL_SERVICE_NAME,
+  },
+  url: LEGAL_WEBSITE,
+  email: LEGAL_SUPPORT_EMAIL,
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: '2900 W Anderson Ln, Suite C200',
+    addressLocality: 'Austin',
+    addressRegion: 'TX',
+    postalCode: '78757',
+    addressCountry: 'US',
+  },
+  contactPoint: [
+    {
+      '@type': 'ContactPoint',
+      contactType: 'customer support',
+      email: LEGAL_SUPPORT_EMAIL,
+      url: `${LEGAL_WEBSITE}/contact`,
+    },
+  ],
+  hasPart: [
+    ...LEGAL_PAGES.map((page) => ({
+      '@type': 'WebPage',
+      name: page.title,
+      url: `${LEGAL_WEBSITE}${page.href}`,
+    })),
+    {
+      '@type': 'WebPage',
+      name: LEGAL_HUB_PAGE.title,
+      url: `${LEGAL_WEBSITE}${LEGAL_HUB_PAGE.href}`,
+    },
+  ],
+}
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
@@ -180,6 +228,10 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationStructuredData) }}
         />
       </head>
       <body

@@ -4,7 +4,7 @@
  */
 
 // Exact match routes (no navigation)
-export const PUBLIC_ROUTES = ['/', '/login', '/early-access', '/pricing', '/terms', '/privacy', '/refunds', '/trust-safety', '/contact'] as const;
+export const PUBLIC_ROUTES = ['/', '/login', '/early-access', '/pricing', '/terms', '/privacy', '/refunds', '/trust-safety', '/contact', '/legal'] as const;
 
 /** Landing locale path prefixes treated as public (e.g. /es, /zh-CN). */
 export const LANDING_LOCALE_ROUTE_PATTERN =

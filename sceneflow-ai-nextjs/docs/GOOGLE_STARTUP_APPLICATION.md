@@ -16,9 +16,13 @@
 | Resource | URL |
 |----------|-----|
 | Platform walkthrough (10 clips) | https://sceneflowai.studio/#feature-pre-vis |
-| Trust & Safety | https://sceneflowai.studio/#trust-safety |
-| Terms & enforcement | https://sceneflowai.studio/terms |
-| Trust policy | https://sceneflowai.studio/trust-safety |
+| Trust & Safety (landing section) | https://sceneflowai.studio/#trust-safety |
+| Legal hub | https://sceneflowai.studio/legal |
+| Privacy Policy | https://sceneflowai.studio/privacy |
+| Terms of Service | https://sceneflowai.studio/terms |
+| Trust & Safety Policy | https://sceneflowai.studio/trust-safety |
+| Refund Policy | https://sceneflowai.studio/refunds |
+| Contact Us | https://sceneflowai.studio/contact |
 
 Walkthrough manifest: [`public/demo/WALKTHROUGH_VIDEO_MANIFEST.md`](../public/demo/WALKTHROUGH_VIDEO_MANIFEST.md)
 

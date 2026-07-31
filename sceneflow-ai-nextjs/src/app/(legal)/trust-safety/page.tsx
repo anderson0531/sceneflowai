@@ -1,7 +1,6 @@
-'use client'
-
+import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowLeft, Shield, Mic, FileSearch, Users, Fingerprint } from 'lucide-react'
+import { Shield, Mic, FileSearch, Users, Fingerprint } from 'lucide-react'
 import {
   LEGAL_ABUSE_EMAIL,
   LEGAL_ADDRESS,
@@ -13,19 +12,13 @@ import {
   LEGAL_WEBSITE,
   WHOP_MOR_NAME,
 } from '@/config/legal/legalCopy'
+import { buildLegalMetadata, getLegalPageById } from '@/config/legal/legalPages'
+
+export const metadata: Metadata = buildLegalMetadata(getLegalPageById('trust-safety'))
 
 export default function TrustSafetyPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950">
-      <div className="max-w-4xl mx-auto px-4 py-16">
-        <Link 
-          href="/" 
-          className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 mb-8"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Home
-        </Link>
-        
+    <>
         <div className="flex items-center gap-3 mb-2">
           <Shield className="w-8 h-8 text-purple-400" />
           <h1 className="text-4xl font-bold text-white">Trust & Safety Policy</h1>
@@ -318,13 +311,6 @@ export default function TrustSafetyPage() {
             </p>
           </section>
         </div>
-
-        <div className="mt-12 pt-8 border-t border-gray-800">
-          <p className="text-gray-400 text-sm">
-            See also: <Link href="/terms" className="text-purple-400 hover:text-purple-300">Terms of Service</Link> | <Link href="/privacy" className="text-purple-400 hover:text-purple-300">Privacy Policy</Link> | <Link href="/refunds" className="text-purple-400 hover:text-purple-300">Refund Policy</Link>
-          </p>
-        </div>
-      </div>
-    </div>
+    </>
   )
 }

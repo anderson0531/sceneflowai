@@ -2,6 +2,7 @@ import { NextIntlClientProvider } from 'next-intl'
 import { getMessages, setRequestLocale } from 'next-intl/server'
 import { cookies } from 'next/headers'
 import LandingPageClient from './LandingPageClient'
+import { LandingLegalNav } from '@/components/legal/LandingLegalNav'
 import {
   DEFAULT_LANDING_LOCALE,
   getLandingLocaleDirection,
@@ -30,6 +31,7 @@ export default async function LandingPage() {
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
       <div lang={locale} dir={dir} className={dir === 'rtl' ? 'rtl' : undefined}>
+        <LandingLegalNav />
         <LandingPageClient />
       </div>
     </NextIntlClientProvider>
