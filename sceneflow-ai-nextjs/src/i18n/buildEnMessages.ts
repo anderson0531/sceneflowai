@@ -294,7 +294,7 @@ export function buildEnMessages() {
     finalCta: FINAL_CTA_COPY,
     footer: {
       description:
-        'End-to-end automated video production — from concept to publish-ready master. One guided studio: Blueprint → Production → Screening Room.',
+        'End-to-end automated video production — from concept to publish-ready master. One guided studio: Series Studio → Blueprint Studio → Production Studio → Screening Room.',
       product: 'Product',
       resources: 'Resources',
       legal: 'Legal',
