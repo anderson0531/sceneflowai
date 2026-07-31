@@ -201,7 +201,8 @@ export function ProductionStyleCard({
 
   return (
     <motion.div
-      className={`group relative flex min-w-0 flex-col rounded-2xl border bg-gradient-to-br p-4 backdrop-blur-sm transition-transform duration-300 sm:p-6 md:hover:scale-[1.02] ${style.surface} ${style.border}`}
+      id={`production-showcase-${card.id}`}
+      className={`group relative flex min-w-0 scroll-mt-24 flex-col rounded-2xl border bg-gradient-to-br p-4 backdrop-blur-sm transition-transform duration-300 sm:p-6 md:hover:scale-[1.02] ${style.surface} ${style.border}`}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}

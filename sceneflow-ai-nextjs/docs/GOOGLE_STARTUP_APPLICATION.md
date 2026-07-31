@@ -7,7 +7,17 @@
 **Industry:** AI-Powered Content Creation / Creator Economy  
 **Funding Sought:** Google for Startups Cloud Credits + Program Support  
 **Website:** https://sceneflowai.studio  
-**Admin / contact email:** brian@sceneflowai.studio
+**Admin / contact email:** support@sceneflowai.studio (billing account aligned with @sceneflowai.studio domain)
+
+---
+
+## Architecture (internal + external consistency)
+
+| Layer | Stack | Notes |
+|-------|-------|-------|
+| **Intelligence** | Google Vertex AI (Gemini) exclusive | Scripting, optimization, analysis, Audience Resonance, automation |
+| **Frame & video generation** | Google (Imagen/Veo) or Kling optional | Creator choice; SceneFlow orchestrates either path |
+| **Platform** | Google Cloud | Cloud Run assembly, GCS media, trust & provenance regardless of generation backend |
 
 ---
 
@@ -43,9 +53,10 @@ The creator economy is exploding—projected to reach $480 billion by 2027. Shor
 
 ### Why Now?
 
-1. **Google Vertex AI quality:** Gemini, Imagen, and Veo on Vertex AI deliver commercial-grade text, image, and video generation
-2. **Beat-first workflows:** Approve storyboards and Beat Frames before final render spend—reducing wasted generations
-3. **Cloud economics:** Serverless rendering (Cloud Run) and GCS media storage enable production at startup-friendly unit economics
+1. **Google-powered intelligence:** Gemini on Vertex AI drives scripting, optimization, and Audience Resonance — exclusive to Google
+2. **Optional generation paths:** Google Imagen/Veo or Kling for frame and video synthesis, orchestrated on Google Cloud
+3. **Beat-first workflows:** Approve storyboards and Beat Frames before final render spend—reducing wasted generations
+4. **Cloud economics:** Serverless rendering (Cloud Run) and GCS media storage enable production at startup-friendly unit economics
 
 ---
 
@@ -100,12 +111,13 @@ Google Vertex AI safety on all generation paths; Extended Creative Services with
 
 SceneFlow is built as a **Google Cloud showcase**:
 
-- **Vertex-first generation:** Primary path for Imagen, Veo, and Gemini
+- **Google-exclusive intelligence:** Gemini for scripting, optimization, analysis, and resonance — not shared with alternate backends
+- **Vertex-first generation (optional):** Primary path for Imagen, Veo, and Gemini synthesis; Kling available as an alternate generation backend
 - **Production-tuned safety:** Google-native RAI with SceneFlow guardrails on top
 - **Serverless assembly:** Cloud Run FFmpeg pipeline for master exports
 - **Audit trail:** Provenance hashes and moderation event logs for platform accountability
 
-**Every approved beat we render is a Vertex AI success story.**
+**Every approved beat we render validates Google Cloud orchestration — with intelligence that stays Google-exclusive.**
 
 ---
 
@@ -166,8 +178,8 @@ Credit-based subscriptions and packs via Whop (Merchant of Record). See https://
 
 ### From Google for Startups
 
-**1. Cloud Credits**  
-Primary use: Vertex AI (Gemini, Imagen, Veo), Cloud Run rendering, GCS media storage
+**1. Cloud Credits ($2k Start Tier)**  
+Primary use: Vertex AI intelligence (Gemini), optional Imagen/Veo generation testing, Cloud Run rendering, GCS media storage, and infrastructure for multi-language + Screening Room workflows
 
 **2. Technical Mentorship**  
 Vertex AI best practices, Veo EXT workflows, production safety tuning
@@ -187,7 +199,7 @@ Google Cloud customer story co-marketing where appropriate
 
 **Brian Anderson**  
 Founder, SceneFlow AI (Life Focus, LLC)  
-📧 brian@sceneflowai.studio  
+📧 support@sceneflowai.studio  
 🌐 https://sceneflowai.studio  
 📍 Austin, Texas area
 

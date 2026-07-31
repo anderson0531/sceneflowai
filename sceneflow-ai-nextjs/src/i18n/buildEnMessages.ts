@@ -316,7 +316,7 @@ export function buildEnMessages() {
       morLine: MOR_FOOTER_LINE,
       copyright: '© 2026 SceneFlow AI. All rights reserved.',
       address: LEGAL_FOOTER_ADDRESS,
-      poweredBy: 'Powered by Google Cloud',
+      poweredBy: 'Google-powered intelligence · Orchestrated on Google Cloud',
     },
     floatingCta: {
       seePricing: 'See Pricing',

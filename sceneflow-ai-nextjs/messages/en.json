@@ -35,7 +35,7 @@
   },
   "hero": {
     "headline": "You Direct the Story. SceneFlow Automates the Studio.",
-    "subheadline": "Focus entirely on your creative vision. Run your ideas through a seamless pipeline—from blueprint to master MP4—without the hassle of micro-prompting.",
+    "subheadline": "Google-powered intelligence orchestrated on Google Cloud — with optional Google or Kling generation. Run your ideas through a seamless pipeline from blueprint to master MP4 without micro-prompting.",
     "ctaPrimaryLaunch": "Launch Your Studio ($9)",
     "ctaSecondary": "Watch the 'What's Possible'",
     "ctaToolStack": "See how it replaces your tool stack",
@@ -1702,8 +1702,12 @@
     "badge": "Production Examples",
     "title": "From Concept to Screen:",
     "titleAccent": "Infinite Possibilities",
-    "subtitle": "With SceneFlow AI Studio, your vision is the only starting line you need. Simply define your concept, and let SceneFlow handle the heavy lifting—automating scriptwriting, character design, multi-language audio, scene visualization, video production, and final publishing.",
+    "subtitle": "Six public productions prove the full pipeline — pre-vis, scene video, and Screening Room review. Define your concept and let SceneFlow handle scriptwriting, character design, multi-language audio, visualization, video production, and publishing.",
     "subtitleTagline": "One platform. Infinite possibilities.",
+    "publicProductionsNote": "Each card below is a complete public production — switch Solutions and Screening Room tabs to walk the pipeline.",
+    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
+    "explorePipelineCta": "Explore a full production",
+    "explorePipelineHint": "Start with Cinematic Drama below — Solutions for the demo reel, Screening Room for the full review workflow.",
     "workflowLabel": "Solutions",
     "startProduction": "Start Your Production",
     "cta": "Start Your Production",
@@ -2171,7 +2175,7 @@
     ],
     "vertexSection": {
       "title": "Why Google Vertex AI?",
-      "subtitle": "The technical moat that matters",
+      "subtitle": "Google-exclusive intelligence — optional Google or Kling generation",
       "cards": [
         {
           "title": "Data Privacy",
@@ -2189,8 +2193,8 @@
       ]
     },
     "partnership": {
-      "poweredBy": "Powered by Google Cloud with Vertex AI, Cloud Storage, and translation tooling",
-      "footnote": "SceneFlow AI runs on scalable Google Cloud infrastructure designed for startup growth and enterprise expectations."
+      "poweredBy": "Google-powered intelligence · Orchestrated on Google Cloud",
+      "footnote": "Intelligence (scripting, optimization, analysis) runs on Google Vertex AI. Frame and video generation can use Google models or Kling — always with SceneFlow trust and provenance on Google Cloud."
     },
     "trustSafeguardLink": "Layered trust: Google Vertex safety plus SceneFlow guardrails, validation, and provenance — see Trust & Safety below.",
     "attribution": "— The SceneFlow Engineering Team"
@@ -2504,8 +2508,10 @@
   },
   "finalCta": {
     "title": "Ready to test the full pipeline?",
-    "subtitle": "Run concept → pre-vis → video → master MP4 in one studio. Start with the $9 Explorer plan and see the beat-first workflow in action.",
-    "cta": "Launch Your Studio for $9"
+    "subtitle": "Google-powered scripting and optimization, your choice of generation backend, and Screening Room review — all in one studio. Start with the $9 Explorer plan or apply for Founding Creator early access.",
+    "cta": "Launch Your Studio for $9",
+    "ctaSecondary": "Apply for Founding Creator Access",
+    "ctaSecondaryHref": "/early-access"
   },
   "footer": {
     "description": "End-to-end automated video production — from concept to publish-ready master. One guided studio: Series Studio → Blueprint Studio → Production Studio → Screening Room.",
@@ -2529,7 +2535,7 @@
     "morLine": "Secure payments, tax calculation, and compliance are handled by Whop, our Merchant of Record, on behalf of Life Focus, LLC.",
     "copyright": "© 2026 SceneFlow AI. All rights reserved.",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States • Contact: support@sceneflowai.studio",
-    "poweredBy": "Powered by Google Cloud"
+    "poweredBy": "Google-powered intelligence · Orchestrated on Google Cloud"
   },
   "floatingCta": {
     "seePricing": "See Pricing",

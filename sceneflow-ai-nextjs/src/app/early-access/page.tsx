@@ -59,10 +59,20 @@ const MILESTONES = [
 ]
 
 const WHAT_YOU_WILL_TEST = [
-  'Persistent DNA: Lock character wardrobes, prop geometry, and location physics across an entire season.',
-  'Global Resonance: Deploy content in 75+ languages with localized dubbing that maintains emotional tone.',
-  'One-Take Accuracy: Master the F2V (Frame-to-Video) workflow for 4K scenes with unprecedented control.',
-  'Intelligence-Driven Scripts: Use Vertex AI to optimize your script for specific audience segments before a single frame is rendered.',
+  'Google-powered intelligence: scripting, Audience Resonance, and optimization on Vertex AI — exclusive to Google.',
+  'Multi-model generation: choose Google (Imagen/Veo) or Kling for frame and video synthesis, orchestrated on Google Cloud.',
+  'Persistent DNA: lock character wardrobes, prop geometry, and location physics across an entire season.',
+  'Global Resonance: deploy content in 75+ languages with localized dubbing that maintains emotional tone.',
+  'One-Take Accuracy: master the F2V (Frame-to-Video) workflow for scenes with unprecedented control.',
+  'Screening Room review: walk pre-vis → animatic → scene video → final master with structured feedback.',
+]
+
+const FOUNDING_CREATOR_BENEFITS = [
+  'Higher credit allocation and priority generation queue',
+  'Direct feedback channel to founder and engineering',
+  'Early access to new intelligence features',
+  'Credit carry-over or discount when public pricing launches',
+  'Limited cohort — help shape the SceneFlow roadmap',
 ]
 
 export default function EarlyAccessPage() {
@@ -281,11 +291,23 @@ export default function EarlyAccessPage() {
         </div>
 
         <section className="mt-8 rounded-2xl border border-cyan-500/20 bg-gradient-to-b from-slate-950 to-slate-900 p-6 sm:p-10">
-          <p className="text-xs uppercase tracking-wider text-cyan-300">Summer of Production · August 2026 Cohort</p>
+          <p className="text-xs uppercase tracking-wider text-cyan-300">Early Access Program · Founding Creator Cohort</p>
           <h1 className="mt-3 text-4xl sm:text-5xl font-bold leading-tight">Stop Generating. Start Architecting.</h1>
           <p className="mt-5 text-lg text-slate-300 max-w-3xl">
-            Join the SceneFlow Early Access Program — an elite cohort shaping automated, consistent, global-scale cinema.
+            Join the SceneFlow Early Access Program — Google-powered intelligence with your choice of Google or Kling generation, consistency controls, multi-language delivery, and Screening Room review. Shape the roadmap as a paid beta partner.
           </p>
+          <p className="mt-4 text-sm text-slate-400 max-w-3xl">
+            Prefer low-friction entry? Start with the $9 Explorer plan on the homepage — full pipeline access with limited credits.
+          </p>
+        </section>
+
+        <section className="mt-8 rounded-2xl border border-purple-500/20 bg-purple-500/5 p-6">
+          <h3 className="text-2xl font-semibold">Founding Creator benefits</h3>
+          <ul className="mt-4 space-y-2 text-slate-200 list-disc pl-6">
+            {FOUNDING_CREATOR_BENEFITS.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
         </section>
 
         <section className="mt-8 rounded-2xl border border-slate-700 bg-slate-900/60 p-6">
