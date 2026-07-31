@@ -6,6 +6,11 @@ import { useTranslations } from 'next-intl'
 import { Sparkles, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { FEATURE_ICONS } from './keyFeatureIcons'
+import { MultiLanguageVideoPlayer } from '@/components/landing/MultiLanguageVideoPlayer'
+import {
+  getDefaultKeyFeatureVideoLocale,
+  getKeyFeatureVideoLocales,
+} from '@/config/landing/keyFeatureVideos'
 
 const SECTION_ID = 'key-features'
 
@@ -167,6 +172,18 @@ export default function KeyFeaturesSection() {
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
                 <p className="text-gray-400 text-sm leading-relaxed">{feature.description}</p>
+
+                <div className="mt-4 min-w-0">
+                  <MultiLanguageVideoPlayer
+                    locales={getKeyFeatureVideoLocales(feature.icon)}
+                    defaultLocaleId={getDefaultKeyFeatureVideoLocale(feature.icon)}
+                    comingSoonLabel={t('videoComingSoon')}
+                    soonLabel={t('videoSoon')}
+                    title={feature.title}
+                    accentGradient={gradient}
+                    fullBleedOnMobile
+                  />
+                </div>
 
                 {feature.learnMore && (
                   <div className="mt-auto pt-4">

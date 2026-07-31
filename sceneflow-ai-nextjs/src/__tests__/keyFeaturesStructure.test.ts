@@ -75,4 +75,15 @@ describe('keyFeatures structure', () => {
       }
     }
   })
+
+  it('mounts a multi-language video player on every feature card', () => {
+    const section = readFileSync(
+      path.join(ROOT, 'src/components/landing/KeyFeaturesSection.tsx'),
+      'utf8'
+    )
+    expect(section).toContain('MultiLanguageVideoPlayer')
+    expect(section).toContain('getKeyFeatureVideoLocales(feature.icon)')
+    expect(section).toContain("t('videoComingSoon')")
+    expect(section).toContain("t('videoSoon')")
+  })
 })
