@@ -95,8 +95,9 @@ function buildHtml(bundles) {
 <section class="locale" id="${b.locale}">
   <h2>${b.locale.toUpperCase()} — ${escapeHtml(b.title)}</h2>
   <div class="links">
-    <a href="${escapeHtml(b.videoUrl)}" download>Download MP4</a>
-    <a href="${escapeHtml(b.thumbnailUrl)}" download>Download thumbnail</a>
+    <a href="${b.videoUrl}" download>Download MP4</a>
+    <a href="${b.locale}/sceneflow-hero-${b.locale}-poster.jpg" download>Download thumbnail (from current hero video)</a>
+    <a href="${escapeHtml(b.thumbnailUrl)}" target="_blank" rel="noopener">Blob thumbnail URL</a>
   </div>
   <label>Title <button type="button" onclick="copy('title-${b.locale}')">Copy</button></label>
   <textarea id="title-${b.locale}" readonly rows="2">${escapeHtml(b.title)}</textarea>

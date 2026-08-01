@@ -35,7 +35,8 @@
                 "i18n:translate-th": "tsx scripts/build-landing-messages.ts && tsx scripts/offline-translate-locale.ts --locale th",
                 "youtube:oauth": "node scripts/youtube-oauth-token.mjs",
                 "youtube:publish-hero": "node scripts/publish-hero-videos-youtube.mjs",
-                "youtube:hero-upload-pack": "node scripts/generate-hero-youtube-upload-pack.mjs"
+                "youtube:hero-upload-pack": "node scripts/generate-hero-youtube-upload-pack.mjs",
+                "youtube:hero-posters": "node scripts/regenerate-hero-posters.mjs"
         },
         "dependencies": {
                 "@ai-sdk/google": "^3.0.57",

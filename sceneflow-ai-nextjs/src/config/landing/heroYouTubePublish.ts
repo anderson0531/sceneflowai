@@ -70,6 +70,11 @@ function heroPosterUrl(locale: HeroVideoLocaleId): string {
   return `${HERO_YOUTUBE_BLOB_HOST}/landing/hero/sceneflow-hero-${locale}-poster.jpg`
 }
 
+/** Public poster path on site (matches regenerate-hero-posters.mjs output) */
+export function getHeroYouTubeThumbnailPublicPath(locale: HeroVideoLocaleId): string {
+  return `/landing/hero/sceneflow-hero-${locale}-poster.jpg`
+}
+
 function heroVideoUploadUrl(locale: HeroVideoLocaleId): string {
   return `${HERO_YOUTUBE_BLOB_HOST}/${encodeURI(HERO_VIDEO_BLOB_PATHS[locale])}`
 }
@@ -107,6 +112,7 @@ export function getHeroYouTubePublishBundle(locale: HeroVideoLocaleId): HeroYouT
     description: buildHeroYouTubeDescription(locale),
     tags: [...BASE_TAGS, ...LOCALE_TAGS[locale]],
     videoUrl: heroVideoUploadUrl(locale),
+/** Blob URL (updated when running regenerate-hero-posters.mjs --upload) */
     thumbnailUrl: heroPosterUrl(locale),
     language: locale,
     categoryId: HERO_YOUTUBE_CATEGORY_ID,

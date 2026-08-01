@@ -41,6 +41,9 @@ yarn-error.log*
 # YouTube publish run manifests (video IDs from automated upload)
 /scripts/output/
 
+# Large binaries if someone runs generate-hero-youtube-upload-pack --download
+/content/youtube-hero-upload-pack/**/*.mp4
+
 # vercel
 .vercel
 

@@ -28,6 +28,11 @@ function heroPoster(locale: HeroVideoLocaleId): string {
   return `${BLOB_HOST}/landing/hero/sceneflow-hero-${locale}-poster.jpg`
 }
 
+/** Site-served poster (regenerated from current Hero Video masters via regenerate-hero-posters.mjs) */
+export function getHeroVideoPosterPath(locale: HeroVideoLocaleId): string {
+  return `/landing/hero/sceneflow-hero-${locale}-poster.jpg`
+}
+
 /** Blob master filename for each locale once produced. */
 export const HERO_VIDEO_BLOB_PATHS: Record<HeroVideoLocaleId, string> = {
   en: 'Hero Video (English).mp4',
@@ -57,13 +62,13 @@ const HERO_VIDEO_LABELS: Record<HeroVideoLocaleId, { label: string; nativeLabel:
 
 /** Locales with a produced Blob master. Others render as disabled "Soon" pills. */
 const PRODUCED_HERO_VIDEOS: Partial<Record<HeroVideoLocaleId, { src: string; poster: string }>> = {
-  en: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.en), poster: heroPoster('en') },
-  es: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.es), poster: heroPoster('es') },
-  pt: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.pt), poster: heroPoster('pt') },
-  hi: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.hi), poster: heroPoster('hi') },
-  zh: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.zh), poster: heroPoster('zh') },
-  ar: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.ar), poster: heroPoster('ar') },
-  th: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.th), poster: heroPoster('th') },
+  en: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.en), poster: getHeroVideoPosterPath('en') },
+  es: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.es), poster: getHeroVideoPosterPath('es') },
+  pt: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.pt), poster: getHeroVideoPosterPath('pt') },
+  hi: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.hi), poster: getHeroVideoPosterPath('hi') },
+  zh: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.zh), poster: getHeroVideoPosterPath('zh') },
+  ar: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.ar), poster: getHeroVideoPosterPath('ar') },
+  th: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.th), poster: getHeroVideoPosterPath('th') },
 }
 
 export const HERO_VIDEO_LOCALES: HeroVideoLocale[] = (
@@ -77,7 +82,7 @@ export const HERO_VIDEO_LOCALES: HeroVideoLocale[] = (
     label,
     nativeLabel,
     src: produced?.src ?? '',
-    poster: produced?.poster ?? (produced?.src ? heroPoster(id) : ''),
+    poster: produced?.poster ?? (produced?.src ? getHeroVideoPosterPath(id) : ''),
     available: Boolean(produced?.src),
   }
 })

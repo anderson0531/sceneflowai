@@ -56,15 +56,15 @@ const LOCALE_BLOB_PATHS = {
   pt: 'landing/hero/sceneflow-hero-pt.mp4',
 }
 
-/** Root Blob source MP4s — never watermark from landing/hero/* (double-burn). */
+/** Root Blob source MP4s — must match HERO_VIDEO_BLOB_PATHS in heroVideoLocales.ts */
 const LOCALE_SOURCE_PATHS = {
-  en: 'SceneFlow Hero.mp4',
-  es: 'SceneFlow Hero (Spanish).mp4',
-  pt: 'SceneFlow Hero (Portugese).mp4',
-  hi: 'SceneFlow Hero (Hindi) .mp4',
-  zh: 'SceneFlow Hero (Chinese).mp4',
-  ar: 'SceneFlow Hero (Arabic).mp4',
-  th: 'SceneFlow Hero (Thai).mp4',
+  en: 'Hero Video (English).mp4',
+  es: 'Hero Video (Spanish) .mp4',
+  pt: 'Hero Video (Portuguese).mp4',
+  hi: 'Hero Video (Hindi).mp4',
+  zh: 'Hero Video (Chinese).mp4',
+  ar: 'Hero Video (Arabic) .mp4',
+  th: 'Hero Video (Thai) .mp4',
 }
 
 const ALL_LOCALES = Object.keys(LOCALE_BLOB_PATHS)
