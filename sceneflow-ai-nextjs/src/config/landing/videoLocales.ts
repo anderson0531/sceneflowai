@@ -48,3 +48,22 @@ export function buildVideoLocales(
 export function defaultVideoLocale(locales: VideoLocale[]): VideoLocaleId {
   return locales.find((locale) => locale.available)?.id ?? 'en'
 }
+
+/** Map landing UI locale to the nearest dubbed video locale (7 options). */
+export function landingLocaleToVideoLocale(landingLocale: string): VideoLocaleId {
+  if (landingLocale === 'zh-CN' || landingLocale === 'zh-TW') return 'zh'
+  if (VIDEO_LOCALE_ORDER.includes(landingLocale as VideoLocaleId)) {
+    return landingLocale as VideoLocaleId
+  }
+  return 'en'
+}
+
+/** Pick video dub for a player: mapped locale when produced, else first available. */
+export function resolveVideoLocaleForPlayer(
+  landingLocale: string,
+  locales: VideoLocale[]
+): VideoLocaleId {
+  const mapped = landingLocaleToVideoLocale(landingLocale)
+  const match = locales.find((locale) => locale.id === mapped && locale.available)
+  return match?.id ?? defaultVideoLocale(locales)
+}

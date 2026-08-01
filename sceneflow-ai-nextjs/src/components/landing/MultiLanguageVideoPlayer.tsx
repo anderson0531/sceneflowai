@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Video as VideoIcon } from 'lucide-react'
 import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
 import type { VideoLocale, VideoLocaleId } from '@/config/landing/videoLocales'
+import { useLandingVideoLocale } from '@/i18n/useLandingVideoLocale'
 import { cn } from '@/lib/utils'
 
 type MultiLanguageVideoPlayerProps = {
@@ -29,11 +30,12 @@ export function MultiLanguageVideoPlayer({
   fullBleedOnMobile = false,
   className,
 }: MultiLanguageVideoPlayerProps) {
-  const [activeLocaleId, setActiveLocaleId] = useState<VideoLocaleId>(defaultLocaleId)
+  const syncedLocaleId = useLandingVideoLocale(locales)
+  const [activeLocaleId, setActiveLocaleId] = useState<VideoLocaleId>(syncedLocaleId)
 
   useEffect(() => {
-    setActiveLocaleId(defaultLocaleId)
-  }, [defaultLocaleId])
+    setActiveLocaleId(syncedLocaleId)
+  }, [syncedLocaleId, defaultLocaleId])
 
   const active = locales.find((locale) => locale.id === activeLocaleId)
   const hasVideo = Boolean(active?.available && active.src)
