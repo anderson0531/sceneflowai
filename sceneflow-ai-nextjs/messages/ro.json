@@ -1662,7 +1662,7 @@
     },
     "plans": {
       "explorer": {
-        "name": "SFAIEXPLORTERM",
+        "name": "Explorer",
         "description": "Achiziție unică pentru a o încerca",
         "features": [
           "Achiziție cu o singură cumpărare",
@@ -1892,6 +1892,255 @@
         },
         "screeningRoomHook": "Facultatea examinează animația înainte de cheltuielile de producție, examinează scenele de lecție și partajează fluxuri în peste 70 de limbi pentru feedback din mai multe campusuri.",
         "screeningRoomPreview": "Atelier renascentist: Văzând trecutul în mișcare"
+      }
+    ]
+  },
+  "productionShowcase": {
+    "badge": "Exemple de producție",
+    "title": "Din partner la Ecran:",
+    "titleAccent": "Posibilități infinite",
+    "subtitle": "Şase producţii publice dovedesc întreaga conductă de pre-vizionare, video scene, şi SAISCREENING ROOMTERM revizuire. Defineşte-ţi conceptul şi lasă Google Flow să se ocupe de scriere, design de caracter, audio multi-limbă, vizualizare, producţie video, şi publicarea.",
+    "subtitleTagline": "O platformă. Posibilităţi infinite.",
+    "publicProductionsNote": "Fiecare carte de mai jos este o producție publică completă .",
+    "languagesBanner": "Exemple de exemplu, în 7 limbi în 7 limbi: Engle, roman, roman..",
+    "explorePipelineCta": "Explorează o producție completă",
+    "explorePipelineHint": "Începeți cu Drama Cinematică deAGE mai jos .",
+    "workflowLabel": "Soluţii",
+    "startProduction": "Începeţi producţia",
+    "cta": "Începeţi producţia",
+    "continuityNote": "SAISEries STUDIOTERM gestionează continuitatea",
+    "resonanceNote": "SAIAUDIENCE RESONANCETERMTM optimizează scripturile",
+    "videoLanguagePrompt": "Urmăriți această producție în limba dumneavoastră",
+    "videoComingSoon": "Dub vine în curând",
+    "videoSoon": "În curând",
+    "introVideoLabel": "Soluţii",
+    "screeningRoomLabel": "Screening Room",
+    "frictionLabel": "Frecarea",
+    "solutionPillarLabel": "Soluția SFASCENEFLOWTERM",
+    "showSolutionsSection": "Afișează soluțiile",
+    "hideSolutionsSection": "Ascunde soluţiile",
+    "cards": [
+      {
+        "id": "drama",
+        "title": "Drama cinematografică. Zero caracter Drift.",
+        "subtitle": "Elimina personajele de morfografie, dialog rupt, și reroll-uri fără sfârșit. Construi povești fără sudură, multi-personaje de lungă formă, cu continuitate vizuală completă.",
+        "badge": "Ready Serie",
+        "solutionPillars": [
+          {
+            "title": "Coerență vizuală și caracteristică",
+            "frictionHeadline": "Personaj Drift & Wobbly Sets.",
+            "friction": "Modele generatoare se resetează cu fiecare fotografie de caractere, costume, și iluminat pentru a se transforma continuu peste tăieturi scena.",
+            "solutionHeadline": "\"Active blocate.\".",
+            "solution": "Defineşte profilurile de caractere master, mediile şi stilurile vizuale în faţă în SAIBLUEPRINT STUDIOTERM. SPAISCENEFLOWTERM aplică identitatea vizuală în fiecare redă pentru a păstra imersie narativă."
+          },
+          {
+            "title": "Controlul narativ al pacingului și al scenei",
+            "frictionHeadline": "Capcana 10-Second Clip.",
+            "friction": "Construirea unui film dintr-un micro-prompts deconectat creează mişcări agitate, emoţii plate şi editarea manuală fără sfârşit.",
+            "solutionHeadline": "Beat-First Storyboarding.",
+            "solution": "Direct la nivelul scenei, nu nivelul prompt. Structure dramatic beats, miscari camera, și arce poveste vizual înainte de a genera un singur cadru de video."
+          },
+          {
+            "title": "Dialog și aliniere audio",
+            "frictionHeadline": "Dialog neconvingător.",
+            "friction": "Mismatched buze-sincronizare, mișcări ale gurii plutitoare, și piese de voce desprinse trage imediat telespectatori din dramă.",
+            "solutionHeadline": "Motor.",
+            "solution": "Tongue."
+          },
+          {
+            "title": "Derrtorile de derr de de de der de de de de der de de de de der de de de der de de de der de de de der de de de de der de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de în de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de",
+            "frictionHeadline": "Haos de active & Reroll-uri fără sfârșit.",
+            "friction": "Generarea unui film scurt înseamnă, de obicei, jonglarea 200+ fișiere video brute, urcare manuală, și zeci de generații irosite.",
+            "solutionHeadline": "Conducta Studio Automat.",
+            "solution": "De la concept la ultimul maestru MP4 într-o singură platformă unificată. SAIBLUEPRINT STUDIOTERM se ocupă de configurarea poveștii, Production Studio AUTOMATE de redare, și SAISCREENING ROOMTERM livrează exportul final."
+          }
+        ],
+        "screeningRoomPreview": "Drama cinematică Screening Room Previzualizare"
+      },
+      {
+        "id": "animation",
+        "title": "Tu scrii gluma. Google Flow Animează linia Punch.",
+        "subtitle": "Elimina drift stil, mișcare rigidă, și calendarul rupt. Transformă scenarii hilare în episoade de comedie într-un studio perfect.",
+        "badge": "Multistiluri",
+        "solutionPillars": [
+          {
+            "title": "Coerența stilistică",
+            "frictionHeadline": "Style Meltdown.",
+            "friction": "Stiluri de desene animate și anime warp în mod constant între fotografii, notează arta liniei de schimbare, spargerea paletelor de culoare, și transformarea personajelor în slop fotorealist straniu.",
+            "solutionHeadline": "Motorul cu stil de artă blocat.",
+            "solution": "Îngheaţă-ţi estetica de la primul cadru. FAISCENEefficientLOWTERM blochează modele de caractere, greutăți linie, și modele umbrire pe tot parcursul episodului astfel încât personajele să rămână unic ale tale."
+          },
+          {
+            "title": "Animație și fizică exagerate",
+            "frictionHeadline": "Stiff & Glitchy Motion.",
+            "friction": "Modelele generatoare se luptă cu slapsstick rapid, duble-takes, și desene animate squishy fizica, transformarea gag-uri de mare energie în artefacte de topire.",
+            "solutionHeadline": "Ancorare inexacte Acţiune & Pose Ancorare.",
+            "solution": "Drive mișcare dinamică caracter și prezintă collisione expresive fără a rupe geometrie. Comedie fizică directă, cutways brusc, și expresii sălbatice cu control complet al mișcării."
+          },
+          {
+            "title": "Comedic Timing & Rhythm",
+            "frictionHeadline": "Punchline stricate.",
+            "friction": "Umorul trăieşte în pauze şi bătăi. Buclele generative standard de 5 secunde forţează ritmul ciudat care distruge livrarea glumelor.",
+            "solutionHeadline": "Editare beat-precizie.",
+            "solution": "Scena de control se apropie de cadru. Reglați pauze dramatice, setup-to-punchline sincronizare, și fotografii de reacție rapidă direct în interiorul bate-prima cronologie înainte de red final."
+          },
+          {
+            "title": "Dialog de înaltă energie și sincronizare vocală",
+            "frictionHeadline": "Nemărginită Marionetă Cornilescu.",
+            "friction": "Dialogul generic AI se simte plat și mecanic, distrugând energia necesară pentru tachinare sitcom rapid.",
+            "solutionHeadline": "Name.",
+            "solution": "Harta de livrare vocala direct la performanta faciala energetica. Dialog, forme de gură expresivă, și piese de voce comic meci perfect pentru impact comic maxim."
+          }
+        ],
+        "screeningRoomPreview": "Comedia animată SFASCREENING ROOMTERM Previzualizare"
+      },
+      {
+        "id": "podcast",
+        "title": "Tu gazduiesti conversatia. SFAISCENFEFLOW Yugoslav și Produce spectacolul.",
+        "subtitle": "ElimiITATEA avatarelor statice și editarea manuală a videoclipurilor. Transforma scripturile sau audio brut în multi-unghi, podcasturi video gata de difuzare într-o singură conductă automată.",
+        "badge": "Readcast-ul este gata pentru a fi difuzat",
+        "solutionPillars": [
+          {
+            "title": "Identitate cling",
+            "frictionHeadline": "Avatare robotice și identitate pierdută",
+            "friction": "Gazdele generate schimbă aparenţele la mijlocul episodului, se holbează orbeşte la cameră sau nu prezintă micro-expresii umane naturale în timp ce ascultă.",
+            "solutionHeadline": "Profiluri de gazdă & oaspete blocate",
+            "solution": "Stabilește identități vizuale persistente pentru co-hosts și oaspeți recurente. FAISCENEFLOWTERM menține consistența vorbitorului, contactul vizual natural, și realist limbajul corpului conversațional pe parcursul discuțiilor de lungă formă."
+          },
+          {
+            "title": "Direcție și pacing multicameră",
+            "frictionHeadline": "Monotones Unic-Angles",
+            "friction": "Fotografii statice cu cap vorbitor pierd rapid reţinerea audienţei, în timp ce schimbarea manuală a camerei într-o linie temporală de 30 de minute necesită tăieri obositoare de cadru cu cadru.",
+            "solutionHeadline": "Comutare automată multicameră",
+            "solution": "FAISCENEFLOWTERM analizează fluxul de conversație Civilian pentru a comuta automat între close-up-uri gazdă, reacțiile invitaților, și fotografii studio cu unghi larg, furnizarea de pacing de difuzare profesională fără editarea manuala a timpului."
+          },
+          {
+            "title": "Context-Aware B-Roll & Visuals",
+            "frictionHeadline": "Monotonia vizuală & B- Roll Bottlenecks",
+            "friction": "Găsirea, generarea și sincronizarea adjuvanților vizuali relevanți sau clipurilor B-roll pentru fiecare subiect menționat mănâncă ore post-producție.",
+            "solutionHeadline": "Auto-generate B-Roll Cutaways",
+            "solution": "În timp ce gazdele dumneavoastră discută subiecte, FAISCENEFLOWTERM generează automat imagini cinematice contextuale, grafică beet, și scene cutways cronometrate exact la transcrierea audio."
+          },
+          {
+            "title": "LONG-Form Audio & Video Sync",
+            "frictionHeadline": "Oboseală în derivă audio & lungă",
+            "friction": "Sincronizarea video Generative la 20+ minute de audio brut duce la drifturi de buze-sincronizare, erori de redare, și gestionarea fragmentată a fișierelor.",
+            "solutionHeadline": "Conductă de la un capăt la altul",
+            "solution": "Drop în piesa audio sau script-ul brut, și FAISCENEFLOWTERM se ocupă de alinierea avatarului, taieturi de camera, integrarea B-roll, și ultimul MP4 master export într-o pasă netedă, automat studio."
+          }
+        ],
+        "screeningRoomPreview": "Primul podcast al AI-ului  Previzualizare"
+      },
+      {
+        "id": "training",
+        "title": "Enterprise-Grade Training Videos. Pre-vizualizare produs în minute.",
+        "subtitle": "Transformă manualeleprecum, diapozitivele și documentele de conformitate în module video multilinguale cu identități de marcă blocate, buza-sincronizare perfectă și studioul zero deasupra capului.",
+        "badge": "Deplasări globale",
+        "solutionPillars": [
+          {
+            "title": "Coerența prezentatorului și mărcii",
+            "frictionHeadline": "Uncanny Avatars & Brand Drift",
+            "friction": "Prezentii ieftini AI se simt robotici si neabordabili, in timp ce logo-urile brandului, culorile si aparitiile prezentatorilor se schimba inconsistent in diferite module de formare.",
+            "solutionHeadline": "Profiluri de executiv și trainer blocate",
+            "solution": "Stabilește prezentatori corporative persistente, cu aspect natural și blocați liniile directoare de brand. FAISCENEFLOWTERM menține identitatea vizuală, styling corporative, și livrare profesională în întreaga cubes bibliotec echipate cu curs."
+          },
+          {
+            "title": "Localizare globală fără sudură",
+            "frictionHeadline": "Traducere ruptă și Lip-Sync rău",
+            "friction": "Localizarea conținutului de formare în 10+ limbi creează, de obicei, stânjenitoare gură-sincronizare, piese vocale robotice, și blocaje masive re-editare.",
+            "solutionHeadline": "Motor de sincronizare multilingual nativ",
+            "solution": "Traduceţi întreaga serie de antrenamente în zeci de limbi cu ton de voce naturală, apeluri text localizate, şi cadru-acurate buze-sincronizare toate într-un singur click."
+          },
+          {
+            "title": "Ajutoare și diagrame vizuale integrate",
+            "frictionHeadline": "Text-Heavy Bore",
+            "friction": "Videoclipurile care sunt doar capete vorbitoare pierd rapid atenția angajaților, în timp ce animarea manuală diagrame de proces, capturi de ecran, și apeluri glonț durează ore într-un editor.",
+            "solutionHeadline": "Suprafață vizuală și grafică contextuală",
+            "solution": "După cum explică prezentatorul dvs. fluxuri de lucru complexe sau etape de conformitate, FAISCENEFLOWTERM generează automat diagrame temporizate, takeaway-uri cheie, și SIDA vizuale direct pe ecran."
+          },
+          {
+            "title": "Actualizare rapidă a conținutului",
+            "frictionHeadline": "Tra tie scumpe Re-Trage & Render",
+            "friction": "Atunci când s-a schimbat generarea sau specii de produse, redă o secţiune de 2 minute dintr-un videoclip, de obicei, are nevoie de recâştigare şi de predare a dosarului.",
+            "solutionHeadline": "Actualizări modulare script",
+            "solution": "Editează textul direct în planul de scenariu pentru a actualiza politicile sau procedurile instantaneu. SPAISCENEFLOWTTERM re-remite doar secțiunea modificată în timp ce păstrează calendarul înconjurător și stilul video."
+          }
+        ],
+        "screeningRoomPreview": "Instruirea corporatistă SFASCREENING ROOMTERM Previzualizare"
+      },
+      {
+        "id": "scifi",
+        "title": "Construieşte lumi imposibile. Direct fără compromis Sci-Fi.",
+        "subtitle": "Render efecte vizuale complexe, medii futuriste, și modele de caractere extraterestre cu continuitate vizuală cadru cu cadru toate într-o singură conductă automată.",
+        "badge": "VFX- Gata",
+        "solutionPillars": [
+          {
+            "title": "O mai inal    ic                                                                                                                                                                                                                                                       ",
+            "frictionHeadline": "Glitch- uri Geometrie & scala",
+            "friction": "Orașe futuriste, peisaje neon, și nave stelare străine în mod constant warp, schimba texturi, sau dizolva în zgomot vizual aleator între tăieturi aparat de fotografiat.",
+            "solutionHeadline": "Blocarea statului mondial",
+            "solution": "Definește parametrii cheie de arhitectură, sisteme de iluminat și de mediu în Blueprint Studio. Rye FAISCENEFLOWTERM blochează geometria spaţială astfel încât setarea ta să rămână consistentă de la focuri mari de stabilire până la lupte strânse pe coridor."
+          },
+          {
+            "title": "Integritatea designului extraterestru și creator",
+            "frictionHeadline": "Design pentru design pentru de a se se se se se se se se se se  se se se se se se se se se se se se se se se se se se se se se se se se se se se se se se se se se se se se se se se se se se se se se",
+            "friction": "Specii non-umanoide, cyborgi și personaje protetice grele plutesc sălbatic în aparență de fiecare dată când se generează un nou unghi sau o nouă lovitură.",
+            "solutionHeadline": "Profiluri de activ străin blocat",
+            "solution": "Anatomia non-umană, detalii despre armură şi accente mecanice. Menţineţi recunoaşterea caracterelor pe fiecare scenă de înaltă concepţie fără conducte de modelare 3D personalizate."
+          },
+          {
+            "title": "Acţiune VFX & Fizică de mare viteză",
+            "frictionHeadline": "Secvenţe în acţiune",
+            "friction": "Luptele cu câini spaţiali de mare viteză, incendiile cu arme energetice şi exploziile cauzează adesea modele genetice pentru a păta rame sau pentru a produce artefacte vizuale dezordonate.",
+            "solutionHeadline": "Ancorare acțiune & FX mișcare",
+            "solution": "Coregrafie dinamică directă, mişcări rapide ale camerei şi acţiune cu particule grele bate în timp ce păstrează margini curate şi traiectorie realistă fizică."
+          },
+          {
+            "title": "Construcţie audio-vizuală mondială",
+            "frictionHeadline": "Audio plat în lumi înalte de",
+            "friction": "Armele futuriste, navele stelare ambientale zumzăie, şi modelele de vorbire extraterestre se simt deconectate atunci când sunt montate manual peste clipuri generate silenţioase.",
+            "solutionHeadline": "Traducerea şi adaptarea:",
+            "solution": "Aliniază dialogurile sintetice personalizate, vocalizele extraterestre și sunetele cinematice direct în cronologie pentru un mix audio captivant, gata de lansare."
+          }
+        ],
+        "screeningRoomPreview": "Sci-Fi VFX Production  Previzualizare"
+      },
+      {
+        "id": "documentary",
+        "title": "Transformați Poveștile Arhivale în Documentare Bestselling.",
+        "subtitle": "Recrea evenimente istorice, re-enactments, și setup-uri de interviu expert cu detalii autentice perioadă, Voceovers fără sudură, și zero taxe de licență arhivă.",
+        "badge": "Perioada de valabilitate",
+        "solutionPillars": [
+          {
+            "title": "Precizia vizuală specifică epocii",
+            "frictionHeadline": "Artefacte anacronice",
+            "friction": "Modele genetice standard sângerează în mod obișnuit obiecte moderne, ecrane smartphone, sau haine incorecte perioadă în reactivări istorice.",
+            "solutionHeadline": "Balustrade istorice stil",
+            "solution": "Setează parametrii temporali exacti din anii 1920 până în secolul al XVIII-lea texturi garderoba astfel încât fiecare scenă generată rămâne istoric autentic."
+          },
+          {
+            "title": "Archival Cutaways & B-Roll Engine",
+            "frictionHeadline": "Monotonia vizuală în Vocea Lungă",
+            "friction": "Perechea Narator de lunga forma audio cu imagini stoc statice duce la vizualizare rapidă drop-off în timpul scufundărilor profunde.",
+            "solutionHeadline": "Transcript- Driven B-Roll Engine",
+            "solution": "În timp ce naratorul tău discută despre fapte istorice, FAISCENEFLOWTERM generează automat reactivări cinematice cronometrate, reportaje de documente şi cutaway-uri în stil arhival legate direct de transcrierea audio."
+          },
+          {
+            "title": "Realismul intervievării și vorbirii",
+            "frictionHeadline": "Martori experţi nedrepţi",
+            "friction": "Istoricii, anchetatorii sau martorii generaţi par adesea artificiali, cu mişcări plutitoare ale maxilarului şi contact vizual nefiresc.",
+            "solutionHeadline": "Profiluri de expert blocate & Sincronizare vocală",
+            "solution": "Mențineți setup-uri realiste și de încredere de interviu cu micro-expresii naturale, buze-sincronizare exactă, și identități experte consistente în mai multe serii."
+          },
+          {
+            "title": "Continuitate Episodică Pacing & Narativă",
+            "frictionHeadline": "Editare fragmentată a calendarului",
+            "friction": "Balance narator audio, re-enactments, dovezi dezvăluie, și pauzele de tensiune-construire pe un episod de 40 de minute, de obicei, ia săptămâni în NLE tradiționale.",
+            "solutionHeadline": "Prima conductă documentară",
+            "solution": "Structură de tensiune dramatică, pauze suspans, și dovezi dezvăluie vizual în interiorul SAIBLUEPRINT STUDIOTERM, oferind un fișier master complet asamblat într-o singură trecere fără sudură."
+          }
+        ],
+        "screeningRoomPreview": "Producție documentară  Previzualizare"
       }
     ]
   }

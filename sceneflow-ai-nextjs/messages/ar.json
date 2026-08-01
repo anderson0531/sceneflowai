@@ -79,7 +79,7 @@
     },
     "soon": "Soon",
     "ctaPrimaryLaunch": "إطلاق الاستوديو الخاص بك ($ 9) — مجموعة",
-    "ctaSupportingLine": "ابدأ بخطة $ 9 SFAIEXPLORTERM. مجموعة الوصول المبكر لشهر سبتمبر تتشكل الآن.",
+    "ctaSupportingLine": "ابدأ بخطة $ 9 Explorer. مجموعة الوصول المبكر لشهر سبتمبر تتشكل الآن.",
     "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "valueProp": {
@@ -1736,7 +1736,7 @@
   },
   "finalCta": {
     "title": "هل أنت مستعد لاختبار خط الأنابيب بالكامل ؟",
-    "subtitle": "البرمجة النصية والتحسين المدعوم من Google، واختيارك للجيل الخلفي، ومراجعة Screening Room — كل ذلك في استوديو واحد. تتشكل مجموعة الوصول المبكر لشهر الآن — ابدأ بخطة SFAIEXPLORTERM بقيمة 9 $ أو تقدم بطلب للوصول إلى منشئ المحتوى المؤسس.",
+    "subtitle": "البرمجة النصية والتحسين المدعوم من Google، واختيارك للجيل الخلفي، ومراجعة Screening Room — كل ذلك في استوديو واحد. تتشكل مجموعة الوصول المبكر لشهر الآن — ابدأ بخطة Explorer بقيمة 9 $ أو تقدم بطلب للوصول إلى منشئ المحتوى المؤسس.",
     "cta": "إطلاق الاستوديو الخاص بك ($ 9) — مجموعة",
     "ctaSecondary": "التقدم بطلب للحصول على وصول المنشئ المؤسس",
     "ctaSecondaryHref": "/early-access"
@@ -1892,6 +1892,255 @@
         },
         "screeningRoomHook": "يقوم أعضاء هيئة التدريس بمعاينة الرسوم المتحركة قبل الإنفاق على الإنتاج، ومراجعة مشاهد الدرس، ومشاركة التدفقات بأكثر من 70 لغة للحصول على تعليقات متعددة داخل الحرم الجامعي.",
         "screeningRoomPreview": "ورشة عمل عصر النهضة: رؤية الماضي في الحركة"
+      }
+    ]
+  },
+  "productionShowcase": {
+    "badge": "أمثلة على الإنتاج",
+    "title": "من مفهوم إلى سكرين:",
+    "titleAccent": "إمكانيات محدودة",
+    "subtitle": "وتثبت ستة إنتاجات عامة خط الأنابيب الكامل - أي ما قبل العرض، والفيديو المشاهد، واستعراض \" سوفيسكريننغ \" . Define your concept and let SceneFlow handle scriptwriting, character design, multi-language audio, visualization, video production, and publishing.",
+    "subtitleTagline": "منصة واحدة الاحتمالات النهائية.",
+    "publicProductionsNote": "فكل بطاقة من البطاقات الواردة أدناه هي إنتاج عام كامل - تبديل الحلول وتصنيفات البرمجيات من أجل السير على خط الأنابيب.",
+    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
+    "explorePipelineCta": "استكشاف الإنتاج الكامل",
+    "explorePipelineHint": "ابدؤوا بالدراما السينمائية الواردة أدناه - حلول للرياح المهجور، البرمجيات الحرة لتدفق عمل الاستعراض الكامل.",
+    "workflowLabel": "الحلول",
+    "startProduction": "ابدأ إنتاجك",
+    "cta": "ابدأ إنتاجك",
+    "continuityNote": "Series Studio manages continuity",
+    "resonanceNote": "Audience ResonanceTM optimizes scripts",
+    "videoLanguagePrompt": "مشاهدة هذا الإنتاج في لغتك",
+    "videoComingSoon": "(دوب) سيأتي قريباً",
+    "videoSoon": "قريبا",
+    "introVideoLabel": "الحلول",
+    "screeningRoomLabel": "Screening Room",
+    "frictionLabel": "The Friction",
+    "solutionPillarLabel": "The SceneFlow Solution",
+    "showSolutionsSection": "حلول العرض",
+    "hideSolutionsSection": "الحلول الخفية",
+    "cards": [
+      {
+        "id": "drama",
+        "title": "(سينتيم آي دراما) (صفر درافت).",
+        "subtitle": "القضاء على شخصيات المورفين، الحوار المكسور، وإعادة التدوير لا نهاية لها. بناء قصص غير مرئية متعددة المفاعلات ذات استمرارية مرئية كاملة.",
+        "badge": "سلسلة - استعراض",
+        "solutionPillars": [
+          {
+            "title": "اليقظة",
+            "frictionHeadline": "سمسار (دريفت).",
+            "friction": "نماذج عبقرية تُعاد مع كل وجوه وملابس وضوء إلى مورف باستمرار عبر قطع المشهد.",
+            "solutionHeadline": "الأصول المغلقة Blueprints.",
+            "solution": "Define master character profiles, environments, and visual fashions up front in Blueprint Studio. ويفرض نظام \" SceneFlow \" الهوية المرئية في كل إصدار للحفاظ على الاختراق السردي."
+          },
+          {
+            "title": "السيطرة على المشهد",
+            "frictionHeadline": "مضيق الشفاه العشرة.",
+            "friction": "بناء فيلم من الجراثيم المفصّلة يخلق تسارعاً مقطعياً، عاطفة مسطحة، تحرير جدول زمني لا نهاية.",
+            "solutionHeadline": "ركوب الدراجة.",
+            "solution": "مباشرة على مستوى المشهد، وليس على المستوى السريع. هيكل الضربات الدرامية، تحركات الكاميرات، وقوس القصّة بصرياً قبل أن يُحدث إطاراً واحداً من الفيديو."
+          },
+          {
+            "title": "الحوار",
+            "frictionHeadline": "حوار غير مقنع.",
+            "friction": "حركات الفم العائمة، ومسارات الصوت المقطعة تسحب المشاهدين من الدراما.",
+            "solutionHeadline": "محرك الصوت المتكامل.",
+            "solution": "ويُخصَّص أداء الصوت الديناميكي وسلسلة الشفاه بدقة مباشرة في الحوار الذي يُقدِّم عنابر الفيديو دون تصاريح خارجية بعد الإنتاج."
+          },
+          {
+            "title": "مجلة \" Reroll Fatigue \"",
+            "frictionHeadline": "الأصول التي لا نهاية لها.",
+            "friction": "إن إنتاج فيلم قصير يعني عادة تقريب 200 ملف فيديو خام، وتصعيد يدوي، وعشرات الأجيال المهدرة.",
+            "solutionHeadline": "(بيبلين) الاستوديو الآلي.",
+            "solution": "من المفهوم إلى المعلم النهائي MP4 في منبر موحد واحد. Blueprint Studio handles story setup, Production Studio automates rendering, and Screening Room يوصل تصديرك النهائي."
+          }
+        ],
+        "screeningRoomPreview": "The Cinematic Drama - SFAISCREENING -ROOMTERM Preview"
+      },
+      {
+        "id": "animation",
+        "title": "أنت تكتب المزحة SFAISCENEFLOWTER يُحيّزُ الجريدةَ.",
+        "subtitle": "ازالة أسلوب الانجراف والحركة الحادة والتوقيت المكسور تحويل النصوص المضحكة إلى حلقات كوميدي متحركة بشكل كامل في استوديو واحد لامع.",
+        "badge": "متعددة الجوانب",
+        "solutionPillars": [
+          {
+            "title": "سادس عشر -",
+            "frictionHeadline": "(ستايل ميلتون).",
+            "friction": "الكارتون و اساليب الأنيمية تدور بشكل مستمر بين الطلقات و الفن المحوّل.",
+            "solutionHeadline": "(مهندس (أرت ستيل.",
+            "solution": "تجمدي من أول إطار يغلق (سافايس) تصاميم الشخصية، أوزان خطية، ونماذج مظلة عبر كامل الحلقة."
+          },
+          {
+            "title": "الفيزياء المفرطة",
+            "frictionHeadline": "\"حركة \"ستيف.",
+            "friction": "النماذج النبيلة تكافح مع العصيان السريع، المضاعفات، و الفيزياء الكارتونية الرخيصة،.",
+            "solutionHeadline": "ابدأوا.",
+            "solution": "قيادة الحركة الديناميكية للطبيعة والتشكيلات الصريحة بدون كسر الهندسة كوميدي بدني مباشر، قطع مفاجئة، وتعبيرات برية مع السيطرة الكاملة على الحركة."
+          },
+          {
+            "title": "التوقيت الكوميدي",
+            "frictionHeadline": "مُخدرات.",
+            "friction": "الهمور يعيش في التوقفات وضربات الحلقـات الـ 5 الثانـيـة المـُتـعـيـدة تـُـقـوم بـمـرحـة الحـارجـة التي تـُـدمـر النكـات.",
+            "solutionHeadline": "(إدينغ).",
+            "solution": "مشهد التحكم يقترب من الإطار مجرد توقف درامي، وتوقيت من البداية إلى الصفر، وطلقات رد الفعل السريع مباشرة داخل الجدول الزمني الأول قبل النهائي."
+          },
+          {
+            "title": "الحوار الرفيع المستوى المعني بالطاقة",
+            "frictionHeadline": "دمية بلا حياة.",
+            "friction": "ويشعر الحوار العام للمبادرة بالراحة والميكانيكية، مما يدمر الطاقة اللازمة لافتة المظلة.",
+            "solutionHeadline": "صوت الديناميكية \"الإعراب سينك\".",
+            "solution": "تقديم الخرائط مباشرة إلى أداء الوجه الحاجز. الحوار، وتشكيلات الفم الصريحة، وتتبعات الصوت الكوميدي متطابقة بلا هوادة من أجل التأثير الكوميدي الأقصى."
+          }
+        ],
+        "screeningRoomPreview": "الكوميديا المتحركة Preview"
+      },
+      {
+        "id": "podcast",
+        "title": "لقد قمت باستضافة الحوار SFAISCENEFLOWTER يُنتج العرض.",
+        "subtitle": "القضاء على الآفاتار الثابتة وتحرير الفيديو اليدوي. حوّل النصوص أو الصوت الخام إلى مقاطع فيديو متعددة الزوايا وجاهزة للبث في خط واحد آلي.",
+        "badge": "الإذاعة والتلفزيون",
+        "solutionPillars": [
+          {
+            "title": "Multi-Speaker \" Avatar Identity",
+            "frictionHeadline": "...",
+            "friction": "المستضيفون المولدون يتحولون إلى مظهر في منتصف الحلبة، ويحدقون بشكل فارغ في الكاميرا، أو يفشلون في إظهار الضغطات البشرية الدقيقة الطبيعية أثناء الاستماع.",
+            "solutionHeadline": "ملامح ضيوف مقفلة",
+            "solution": "اصنع هويات بصرية دائمة لضيوفك و ضيوفك المتكررين ويحافظ النظام على الاتساق بين المتكلمين، والاتصال بالعين الطبيعية، واللغة الواقعية للأعضاء في المحادثات طوال المناقشات الطويلة."
+          },
+          {
+            "title": "Multi-Camera Direction \" Pacing",
+            "frictionHeadline": "فصيلة واحدة",
+            "friction": "وتفقد طلقات الرأس المتحركة استبقاء الجمهور بسرعة، في حين أن كاميرا يدوية تحوّل عبر خط زمني مدته 30 دقيقة تتطلب إجراء تخفيضات مضللة في الإطار الواحد.",
+            "solutionHeadline": "التبديل الآلي المتعدد الأطراف",
+            "solution": "ويحلل نظام \" SceneFlow \" الحوارات التي تتدفق تلقائياً بين المقربين، وردود فعل الضيوف، والطلقات الاستوديوية ذات الزوايا الواسعة، وبث البث المهني دون تحرير جدول زمني يدوي."
+          },
+          {
+            "title": "Context-Aware B-Roll ' Visuals",
+            "frictionHeadline": "Visual Monotony \" B-Roll Bottlenecks",
+            "friction": "ويستغرق البحث عن المعينات البصرية ذات الصلة أو مشبكات \" B-roll \" ، وتوليدها، وتوقيتها، بالنسبة لكل موضوع مذكور، ساعات في مرحلة ما بعد الإنتاج.",
+            "solutionHeadline": "Auto-Generated B-Roll Cutaways",
+            "solution": "وبينما يناقش مضيفوكم المواضيع، فإن نظام \" SceneFlow \" يولد تلقائياً صوراً سينمائية سياقية، ورسوم بيانية، ومسارات مشاهد موقوتة تماماً على النصوص السمعية."
+          },
+          {
+            "title": "Long-Form Audio ' Video Sync",
+            "frictionHeadline": "Audio Drift \" Long-Form Render Fatigue",
+            "friction": "إن بث الفيديو الجمركي إلى 20 دقيقة من الصوت الخام يؤدي إلى إنجراف نظام الشفاه، وإحداث الأخطاء، وإدارة الملفات المجزأة.",
+            "solutionHeadline": "End-to-End Podcast Pipeline",
+            "solution": "تسقط في مسارك الصوتي الخام أو السيناريو، وتتعامل شركة (SceneFlow) مع مواءمتها مع الآفاتار، وقطع الكاميرات، ودمجها في نظام B-roll، والصادرات النهائية للسيارات M4 في بطاقة دخول سلسة وآلية واحدة."
+          }
+        ],
+        "screeningRoomPreview": "The AI-First Podcast - SFAISCREENING -ROOMTERM Preview"
+      },
+      {
+        "id": "training",
+        "title": "\"فيديو التدريب على \"إنتربرايز-جراد Pre-Vizualization Produced in Minutes.",
+        "subtitle": "حوّل الأدلّة، الشرائح، و أطباء الإمتثال إلى المشاركة، نمائط فيديو متعددة اللغات بها هويات تجارية مقفلة، نسيج شفاه لا تشوبه عيوب، و صفر رأس إستوديو.",
+        "badge": "النشر العالمي",
+        "solutionPillars": [
+          {
+            "title": "Presenter \" Brand Consistency",
+            "frictionHeadline": "Uncanny Avatars \" Brand Drift",
+            "friction": "ويشعر مقدمو الكيماويات بالآليات وغير قابلين للتطبيق، في حين تتحول الشعارات التجارية واللونات وظهور مقدمي العروض بشكل غير متسق عبر وحدات تدريبية مختلفة.",
+            "solutionHeadline": "ملامح السلطة التنفيذية المغلقة",
+            "solution": "اصنعوا مُقدّمي الشركات المُثابرين و المُظهر الطبيعي وأغلقوا مبادئكم التوجيهية (سايد سيبنفروترم) يحافظ على الهوية المرئية، وضع الشركات، والتسليم المهني عبر مكتبة الدورة بأكملها."
+          },
+          {
+            "title": "عالم بلا هوادة",
+            "frictionHeadline": "Translations \" Bad Lip-Sync",
+            "friction": "وعادة ما يؤدي إضفاء الطابع المحلي على محتوى التدريب إلى 10 لغات + إلى إحداث تزامن حرج بين الفم والأصوات الروبوتية والاختناقات الهائلة لإعادة التحرير.",
+            "solutionHeadline": "Native Multilingual Engine",
+            "solution": "ترجمة مجموعتك التدريبية بأكملها إلى عشرات اللغات ذات نبرة صوتية طبيعية، وأجهزة تليفزيونية محلية،."
+          },
+          {
+            "title": "أشعة متكاملة للمعونات",
+            "frictionHeadline": "النص الثقيل",
+            "friction": "فالأفكار التي تتحدث فقط تخسر اهتمام الموظفين بسرعة، في حين أن رسم مخططات عملية التقييم يدوياً، وصور الشاشة، وأجهزة إطلاق النار تستغرق ساعات في محرر.",
+            "solutionHeadline": "النفقة العرضية",
+            "solution": "As your presenter explains complex workflows or compliance steps, SceneFlow automatically generates timed diagrams, key takeaways, and visual aids directly on screen."
+          },
+          {
+            "title": "تحديث الوحدات السريعة",
+            "frictionHeadline": "Re-Shoots Expensive Render Traps",
+            "friction": "وعندما تتغير سياسات الشركة أو مواصفات المنتجات، فإن تحديث جزء من شريط فيديو مدته دقيقتان يتطلب عادة إعادة بناء وإحالة الملف بأكمله.",
+            "solutionHeadline": "تحديثات السرقات الموحدة",
+            "solution": "وترسل الشركة نصاً مباشراً في المخطط الأولي لتحديث السياسات أو الإجراءات على الفور. ويعيد الاتحاد إعادة ترتيب القسم المتغير مع الحفاظ على التوقيت المحيط وأسلوب الفيديو."
+          }
+        ],
+        "screeningRoomPreview": "التدريب في مجال الشركات - التدريب في مجال الشركات Preview"
+      },
+      {
+        "id": "scifi",
+        "title": "بناء عالم مستحيل Sci-Fi غير محمي مباشرة.",
+        "subtitle": "Render complex visual effects, futuristic environments, and alien character designs with frame-by-frame visual continuity-all within a single automated pipeline.",
+        "badge": "VFX-Ready",
+        "solutionPillars": [
+          {
+            "title": "Environmental \" Architecture Continuity",
+            "frictionHeadline": "Geometry ' Scale Glitches",
+            "friction": "المدن الدوارة، المناظر الطبيعية، والسفن الفضائية النجمية باستمرار، النوبات النسيجية، أو تذوب في الضوضاء البصرية العشوائية بين قطع الكاميرات.",
+            "solutionHeadline": "World-State Locking",
+            "solution": "Define key structure, lighting schemes, and environmental parameters in Blueprint Studio. SceneFlow locks spatial geometry so your setting stays consistent from wide establishing shots to tight corridor fights."
+          },
+          {
+            "title": "Alien \" Creature Design Integrity",
+            "frictionHeadline": "تصميمات المواد المورفة",
+            "friction": "إن الأنواع غير البشرية، والسايبورغ، والشخصيات ذات القدرة على الصنعية الثقيلة تنجرف بشكل جامح في كل مرة تولد زاوية أو طلقة جديدة.",
+            "solutionHeadline": "ملامح الأصول الجاهزة",
+            "solution": "تشريح غير بشري، تفاصيل الدروع، لكنات ميكانيكية الحفاظ على التعرف على الشخصية عبر كل مشهد من المشاهد العالية دون خطوط أنابيب نموذج 3D العرف."
+          },
+          {
+            "title": "VFX Action \" High-Speed Physics",
+            "frictionHeadline": "ترجمة:",
+            "friction": "وكثيراً ما تتسبب عمليات الاقتتال ذات السرعة العالية بين الكلاب الفضائية، وحرائق أسلحة الطاقة، والتفجيرات في نماذج سخية لتلفيق الأطار أو إنتاج قطع أثرية بصرية فوضوية.",
+            "solutionHeadline": "الإجراء \" FX Motion Anchoring",
+            "solution": "تصوّرات دينامية مباشرة، حركات كاميرا سريعة، وعمل ثقيل الجسيمات يضرب بينما يحافظ على الحواف النظيفة وفيزياء المسار الواقعي."
+          },
+          {
+            "title": "Audio-Visual World-Building",
+            "frictionHeadline": "Flat Audio in High-Concept Worlds",
+            "friction": "إن الأسلحة التغذوية، والهزات النجمية المحيطة، وأنماط الخطابات الأجنبية تشعر بالقطع عندما تكون مجهزة يدويا على مقاطع صامتة.",
+            "solutionHeadline": "مركز الصوت العالمي المتكامل",
+            "solution": "الحوار الاصطناعي التقليدي، والاستفزازات الأجنبية، وأجهزة الصوت السينمائي مباشرة في حدود الجدول الزمني لمزيج صوتي رئيسي غير متجانس وخفي."
+          }
+        ],
+        "screeningRoomPreview": "Sci-Fi VFX Production - Screening Room Preview"
+      },
+      {
+        "id": "documentary",
+        "title": "حوّلْ قصصَ المحفوظاتَ إلى الوثائقياتِ الأفضلِ.",
+        "subtitle": "Recreate historical events, re-enactments, and expert interview setups with authentic period detail, seamless voiceover, and zero archive licensing fees.",
+        "badge": "الفترة - الدقيقة",
+        "solutionPillars": [
+          {
+            "title": "Era-Specific Visual Accuracy",
+            "frictionHeadline": "الآثار الضارة",
+            "friction": "النماذج الوراثية القياسية تنزف بشكل روتيني الأجسام الحديثة، وشاشات الهواتف الذكية، أو الملابس غير الصحيحة في فترات إعادة التصنيع التاريخية.",
+            "solutionHeadline": "الحرس التاريخي",
+            "solution": "وضع بارامترات زمنية بالضبط من 20 حبة سينمائية إلى نسيج خزانة ملابس القرن الثامن عشر."
+          },
+          {
+            "title": "الهندسة المعمارية",
+            "frictionHeadline": "Monotony Visual Monotony in Long Voiceovers",
+            "friction": "الصوت الصوتي لجهاز التحكم المطوّل مع صور مخزون ثابت يؤدي إلى سرعة سقوط المشاهدين أثناء الغوصات العميقة.",
+            "solutionHeadline": "مهندس متدرب - دريفن",
+            "solution": "وبينما يناقش مديركم الحقائق التاريخية، يولد نظام \" SceneFlow \" تلقائياً من جديد سينمائي موقوت، وتأخيرات في الوثائق، وقطعات على شكل المحفوظات ترتبط مباشرة بالمحاضر الصوتية."
+          },
+          {
+            "title": "Interview \" speakinging-Head Realism",
+            "frictionHeadline": "الشهود الخبراء غير المهرة",
+            "friction": "في كثير من الأحيان يبدو المؤرخون المولدون أو المحققون أو الشهود اصطناعيين مع حركات فك عائمة وملامسة عين غير طبيعية.",
+            "solutionHeadline": "ملامح الخبراء المغلقة",
+            "solution": "الحفاظ على تركيبات مقابلة واقعية جديرة بالثقة مع الاكتئاب المجهري الطبيعي، وضبط دقيق للفيديو، وثبات هويات الخبراء عبر السلسلة المتعددة الأطراف."
+          },
+          {
+            "title": "' ' استمرارية التأديب``",
+            "frictionHeadline": "Fragmented Timeline Editing",
+            "friction": "وعادة ما يستغرق الموازنة بين الأصوات الصوتية، وإعادة التصنيع، والأدلة، وتوقف بناء التوتر عبر حلقة مدتها 40 دقيقة أسابيع في المستويات الوطنية التقليدية.",
+            "solutionHeadline": "Pipeline",
+            "solution": "هيكل التوترات المأساوية، والتوقفات المخففة، والأدلة تكشف بصرية داخل Blueprint Studio، تسليم ملف رئيسي مجمّع بالكامل في تمرير غير مسموع."
+          }
+        ],
+        "screeningRoomPreview": "الانتاج الوثائــقي - الفضاء الخارجي Preview"
       }
     ]
   }

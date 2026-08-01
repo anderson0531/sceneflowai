@@ -1894,5 +1894,254 @@
         "screeningRoomPreview": "Reneszánsz workshop: Mozgásban a múlt"
       }
     ]
+  },
+  "productionShowcase": {
+    "badge": "Termelési példaiming ások",
+    "title": "A koncepciótól a képernychemicals ig:",
+    "titleAccent": "Végtelen lehetőségek",
+    "subtitle": "Hat nyilvános produkció bizonyítja a Customs A teljes csővezeték - pre- vis, jelenet videó, és Screening Room felülvizsgálat. Definiálja a koncepciót, és hagyja, hogy a SceneFlow kezelni ÉSÉNEK scriptriting, karakter design, többnyelvű audio, vizualizáció, videó gyártás, és kiadás.",
+    "subtitleTagline": "Egy platform. Végtelen lehetőségek.",
+    "publicProductionsNote": "Minden lap az alábbi egy teljes nyilvános termelés - switch Solutions és Screening Room fülek járni a csővezetéket.",
+    "languagesBanner": "Közhasználatú példák 7 nyelven: angol, spanyol, portugál, hindi, kínai, arab és thai.",
+    "explorePipelineCta": "Teljes termelés feltárása",
+    "explorePipelineHint": "Kezdje a Cinematic Drama alább - Megoldások a demó tárcsa, Screening Room a teljes felülvizsgálat munka.",
+    "workflowLabel": "Megoldások",
+    "startProduction": "A produkció megkezdése",
+    "cta": "A produkció megkezdése",
+    "continuityNote": "Series Studio kezeli folytonosság",
+    "resonanceNote": "SFIAAUDIENCE _ RESONANCETERM ™ optimalizálja a szkripteket",
+    "videoLanguagePrompt": "Nézd meg ezt a produkciót a nyelveden",
+    "videoComingSoon": "Hamarosan jön a Dub",
+    "videoSoon": "Hamarosan",
+    "introVideoLabel": "Megoldások",
+    "screeningRoomLabel": "Screening Room",
+    "frictionLabel": "A súrlódás",
+    "solutionPillarLabel": "A SceneFlow megoldás",
+    "showSolutionsSection": "Megoldások megjelenítése",
+    "hideSolutionsSection": "Megoldások elrejtése",
+    "cards": [
+      {
+        "id": "drama",
+        "title": "Mozi AI dráma. Zero Character Drift.",
+        "subtitle": "Eltávolítjuk a morfing karakterek, megtört párbeszéd, és a végtelen ismétlések. Építs zökkenőmentes, többkarakteres hosszú-forma történetek teljes vizuális folytonosság.",
+        "badge": "Series- Ready",
+        "solutionPillars": [
+          {
+            "title": "Visual & Character konzisztencia",
+            "frictionHeadline": "Watched Character Dextremely ft & Wobbly Sets.",
+            "friction": "Generatív modellek cheerad minden lövés - okozza karakter arcok, ruhák, és a világítás folyamatosan morph a jelenet vágások.",
+            "solutionHeadline": "Zárolt vagyontárgy SMAIBLUEPRINTTERM.",
+            "solution": "Definiálja master karakter profilok, környezet, és vizuális stílusok előre Blueprint Studio. A SceneFlow lehetővé teszi a vizuális identitást minden renderen, hogy megőrizze az elmerülést."
+          },
+          {
+            "title": "Narratív helyzetellenőrzés",
+            "frictionHeadline": "A 10-Second Clip Csapda.",
+            "friction": "Egy filmet építeni a kikapcsolt mikrofonokból, felkavaró tempót, lapos érzelmeket és végtelen manuális idővonal szerkesztést hoz létre.",
+            "solutionHeadline": "Beat-First Storyboard.",
+            "solution": "Közvetlenül a helyszínen, nem azonnal. Structure dramatic beats, camera movements, and story arcs vizuálisan, mielőtt létrehoz egy képkockát."
+          },
+          {
+            "title": "Párbeszéd és hangbeállítás",
+            "frictionHeadline": "Nem meggyőző párbeszéd.",
+            "friction": "Hibás lip- sync, lebegő száj mozgások, és levált hang nyomok azonnal húzza ki a nézőket a drámából.",
+            "solutionHeadline": "Integrált Hang & Sync Engine.",
+            "solution": "A dinamikus hangteljesítményt és a pontos lip- sync-et közvetlenül a videó csővezetékbe sütötték - hihető párbeszédet eredményezve a gyártás utáni külső belépők nélkül."
+          },
+          {
+            "title": "Workflow Friction & Reroll Fáradtság",
+            "frictionHeadline": "Asset Chaos & Endless Rerolls.",
+            "friction": "Egy rövid film generálása általában 200 + nyers videó fájlok zsonglőrzését, manuális bővítést és több tucat elpazarolt generációt jelent.",
+            "solutionHeadline": "Automata Stúdió Pipeline.",
+            "solution": "A koncepciótól a ecting ező MP4-ig egy egységes platformon. Blueprint Studio kezek történet beállítás, Production Studio automatizálja rendering, és Screening Room a végső exportot. ecting űk."
+          }
+        ],
+        "screeningRoomPreview": "The Cinematic Drama - Screening Room Előnézet"
+      },
+      {
+        "id": "animation",
+        "title": "Te írod a viccet ÖVŐBEN. SFAISCENÖVEWTERM A Punchline ÖVEZETE.",
+        "subtitle": "Távolítsa el a stílus drift, merev mozgás, és a törött időzítés. A vicces forgatókönyveket teljesen animációs, hang-szinkronizált vígjátékrészekké alakítjuk egy varrat nélküli stúdióban.",
+        "badge": "Multi- stílus",
+        "solutionPillars": [
+          {
+            "title": "Stilisztikus konzisztencia",
+            "frictionHeadline": "Stílus olvadás.",
+            "friction": "Cartoon és anime stílusok folyamatosan görbül a képek között, változó vonal művészet, törés színes paletta, és a morfing karakterek fotorealista hátborzongató moslék.",
+            "solutionHeadline": "Bezárt Art Style Engine.",
+            "solution": "Fagyassza meg az esztétikai az első keretből. SceneFlow blokkolja karakter tervek, vonal súlyok, és árnyékoló modellek az egész epizód, így a karakterek egyedileg a tiéd."
+          },
+          {
+            "title": "Extendált animáció és fizika",
+            "frictionHeadline": "Stiff & Glitchy Motion.",
+            "friction": "Generatív modellek küzdenek gyors slapstick, dupla-take, és sunyi rajzfilm fizika, fordult magas-energia gag olvadó leletek.",
+            "solutionHeadline": "Akció & Pose horgonyzás.",
+            "solution": "Drive dinamikus karakter mozgás és kifejező pózok törés nélkül geometria. Közvetlen puncsos fizikai vígjáték, hirtelen fordulatok, és vad kifejezések teljes mozgászenekarral. geometric cs."
+          },
+          {
+            "title": "Comedic Timing japan",
+            "frictionHeadline": "Romlott Punchline.",
+            "friction": "A humor a szünetekben él. A szokásos 5 másodperces generatív hurkok kényszerítik a furcsa járkálást, ami tönkreteszi a viccszülést.",
+            "solutionHeadline": "Beat- Precision Editing.",
+            "solution": "Irányító jelenet halad lefelé a keretig. Állítsa be a drámai szüneteket, setup- to-punchline szemináriumot, és a gyors reakció képeket közvetlenül a beat-first idősíkon belül, mielőtt a végleges render."
+          },
+          {
+            "title": "Magas- Energia párbeszéd ape on",
+            "frictionHeadline": "Élettelen Puppet Mouths.",
+            "friction": "Generikus AI párbeszéd úgy érzi, lapos és mechanikus, elpusztítja az energia szükséges sitcom ugratás.",
+            "solutionHeadline": "Dinamikus Hang & Exchallenge szinkronizálás.",
+            "solution": "Térképek hanghordozás közvetlenül az energetikai arc teljesítmény. A párbeszéd, a kifejező szájformák és a komikus hangnyomok zökkenőmentesen illeszkednek a maximális komikus hatáshoz."
+          }
+        ],
+        "screeningRoomPreview": "The Animated Comedy - Screening Room Előnézet"
+      },
+      {
+        "id": "podcast",
+        "title": "Maga vezeti a beszélgetést. SceneFlow A Show producere.",
+        "subtitle": "Távolítsa el a statikus avatarokat és a kézi videó szerkesztést. Átalakmotherolja szkripslow ak vagy nyers audio többszögből, broadcast- kész videó podcastok egy automatizált csővezetékben.",
+        "badge": "Broadcast- Ready",
+        "solutionPillars": [
+          {
+            "title": "Többhangszóró és Avatár azonosító",
+            "frictionHeadline": "Robotikus Avatars & elveszett identitás",
+            "friction": "A generált házigazdák a megjelenést félidőben változtatják, a kamerát bámulják, vagy nem mutatnak természetes emberi mikrokifejezéseket hallgatás közben.",
+            "solutionHeadline": "Zárolt Host & Vendég profilok",
+            "solution": "Hozzon létre állandó vizuális identitást a társházigazdák és visszatérő vendégek számára. SceneFlow fenntartja a hangszóró konzisztencia, természetes szemkontaktus, és realisztikus társalgási testbeszéd hosszas beszélgetpengetések során."
+          },
+          {
+            "title": "Multi- Camera Direction & Patching",
+            "frictionHeadline": "Egypontos szögek",
+            "friction": "Statikus beszélgetés-fej lövés elveszíti a közönség visszatartás gyorsan, míg manuális kamera átkapcsol egy 30 perces idővonal igényel unalmas keret-by-frame vágások.",
+            "solutionHeadline": "Automatizált Multi- Cam váltás",
+            "solution": "A SceneFlow elemzi a társalgást, hogy automatikusan átkutassa a host closeups, a vendégek reakcióit, és a wide- zugos stúdióképeket, professzionális műsorszórást végezve kézi idővonal szerkesztés nélkül."
+          },
+          {
+            "title": "Context-Aware B-Roll & Visuals",
+            "frictionHeadline": "Visual Monotony & B- Roll botbilecks",
+            "friction": "A megfelelő vizuális segédeszközök vagy B-tekercs megtalálása, generálása és időzítése minden említett téma esetében több órányi utótermelést tesz lehetővé.",
+            "solutionHeadline": "Auto-generált B-Roll kutaway",
+            "solution": "Ahogy a házigazdák megvitatják témák, SceneFlow automatikusan generál contextual mozi vizuálisreducing ek, grafika, és a jelenet kutaways időzített pontosan az audio transcript."
+          },
+          {
+            "title": "Long- Form Audio & Video Sync",
+            "frictionHeadline": "Audio Drift & Lszépség- Form Render fáradtság",
+            "friction": "A generatív videó szinkronconditions a 20 + perc nyers audio vezet lip- sync drift, rendering hibák, és töredezett fájlkezelés.",
+            "solutionHeadline": "End-to- End Podcast Pipeline",
+            "solution": "SceneFlow kezeli az Avatar beállítást, kamera vágásokat, B-roll integrációt, és a végső mester MP4 export egy sima, automatizált stúdió belépőt."
+          }
+        ],
+        "screeningRoomPreview": "The AI- First Podcast - Screening Room Előnézet"
+      },
+      {
+        "id": "training",
+        "title": "Enterprise- Grade képzési videók. A Vizualization előtt készült.",
+        "subtitle": "A kézikönyvek, a diák és a megfelelõ dokumentumok legyenek bekapcsoló, többnyelvű videó modulok zárt márkájú, hibátlan lip- sync és zéró stúdióval.",
+        "badge": "Global Deploy",
+        "solutionPillars": [
+          {
+            "title": "Presenter & Brand konzisztencia",
+            "frictionHeadline": "Uncanny Avatars & Brand Drift",
+            "friction": "Olcsó AI presenterek érzi robotic és megközelíthetetlen, míg márka logók, színek, és a presenter megjelenések inkonzisztens eltolódik különböző képzési modulok.",
+            "solutionHeadline": "Zárolt executive & Trainer profilok",
+            "solution": "Hozzon létre állandó, természetesnek látszó vállalati prezentációkat, és zárja be a márka irányelvek. SceneFlow fenntartja vizuális identitás, vállalati stílus, és a professzionális szállítás az egész kurzus könyvtár."
+          },
+          {
+            "title": "Seamless Global Lokalizáció",
+            "frictionHeadline": "Breaked Translations & Bad Lip- Sync",
+            "friction": "A képzési tartalmak 10 + nyelvre történő lokalizálása általában kínos szájszintézist, robotos hangsávokat és hatalmas átszerkesztési szűk keresztmetszeteket eredményez.",
+            "solutionHeadline": "Natív többnyelvű szinkronizálás",
+            "solution": "Fordítsa át az egész képzési sorozat több tucat nyelv természetes hang hang, lokalizált szöveges hívások, és frame- pontos lip- szinkronizálás - minden egy kattintással."
+          },
+          {
+            "title": "Integrált vizuális TELJstopping fesztivált",
+            "frictionHeadline": "Text- Heavy Tore",
+            "friction": "Videók, amelyek csak beszél fejek gyorsan elveszíti a munkavállalók figyelmét, miközben kézzel animációs folyamat diagramok, képernyőfelvételek, és golyó hívások órákig tart egy szerkesztő.",
+            "solutionHeadline": "Kontextuális vizuális és graANT lefedettség",
+            "solution": "Mivel a beállító komplex munkafolyamatokat vagy megfelelési lépéseket fejt ki, a SceneFlow automatikusan időbeosztásos diagramokat, kulcsfogásokat és vizuális segédeszközöket generál közvetlenül a képernyőn."
+          },
+          {
+            "title": "Gyors tartalom frissítése",
+            "frictionHeadline": "Drága Repensted - Shoots & Render Csapdák",
+            "friction": "Amikor a vállalati politika vagy a termék specifikációi változnak, a videó egy 2 perces szakaszának frissítése általában az egész fájl újjáépítését és újraalakítását igényli.",
+            "solutionHeadline": "Moduláris szkript frissítések",
+            "solution": "A szöveg szerkesztése közvetlenül a szkripoffered, hogy frissítse politikák vagy eljárások azonnal. A SceneFlow csak a megváltozott részt adja vissza, miközben megőrzi a környező időzítést és videó stílust."
+          }
+        ],
+        "screeningRoomPreview": "A vállalati képzés - Screening Room Előnézet"
+      },
+      {
+        "id": "scifi",
+        "title": "Lehetetlen világok építése. Közvetlen, kompromittáló Sci- Fi.",
+        "subtitle": "Render komplex vizuális hatások, futurisztikus környezetek, és idegen karakter tervek keret-by-frame vizuális folytonosság - mind egy automatizált csővezeték.",
+        "badge": "VFX - Kész",
+        "solutionPillars": [
+          {
+            "title": "Környezeti és építészeti folytonosság",
+            "frictionHeadline": "Geometria & Méret Glitpályahálózat",
+            "friction": "Futurisztikus városok, neon tájak, és idegen csillaghajók folyamatosan görbülnek, eltolódnak textúrák, vagy feloldódnak véletlenszerű vizuális zaj között kamera vágások.",
+            "solutionHeadline": "World- State Locking",
+            "solution": "Határozza meg a Blueprint Studio legfontosabb architektúráit, világítási rendszereit és környezeti paramétereit. SceneFlow reteszeli a térgeometriát, így a beállítás állandó marad a széleskörű alapítástól a szűk folyosós harcokig."
+          },
+          {
+            "title": "Alien & Creature Design Integrity",
+            "frictionHeadline": "Morphing Charpitch balhét ábrázoló ábrák",
+            "friction": "Nem-humanoid fajok, cyborgok, és nehézprotézis karakterek sodródik vadul megjelenés minden alkalommal, amikor egy új szög vagy lövés keletkezik.",
+            "solutionHeadline": "ZárZárolt idegen eszközprofilok",
+            "solution": "Horgonylépcső nem-emberi anatómia, páncél részletek, és a mechanikai akcentusok. A karakterfelismerés fenntartása minden magas szintű jelenetben egyedi 3D modellcsővezetékek nélkül."
+          },
+          {
+            "title": "VFX Akció és magas sebességű fizika",
+            "frictionHeadline": "Olvadási indítványok akciószekvenciákban",
+            "friction": "Nagy sebességű tér kutyaviadal, energia fegyver tüzek, és robbanások gyakran okoz generatív modellek bemocskolják kereteket vagy termelnek zavaros vizuális leletek.",
+            "solutionHeadline": "Akció & FX Motion",
+            "solution": "Közvetlen dinamikus koreográfia, gyors kameramozgások, és különösen nehéz akciók ütnek, miközben a tiszta éleket és a reális röppálya fizikát őrzik."
+          },
+          {
+            "title": "Audio- Visual World- Building",
+            "frictionHeadline": "Flat Audio a magas- koncepció világok",
+            "friction": "Futurisztikus fegyverek, környezeti csillaghajó humusz, és idegen beszédminták úgy érzik, nem kapcsolható, ha kézzel szerelik fel csendes generált klippek.",
+            "solutionHeadline": "Integrált World- hang szinkronizálás",
+            "solution": "Egyesítse egyéni szintetikus párbeszéd, idegen vokalizálás, és a mozi hang utalások közvetlenül az idősíkon belül egy merülő, felszabadító-kész mester audió mix."
+          }
+        ],
+        "screeningRoomPreview": "Sci- Fi VFX Production - SFAISCREENING _ ROOMTERstopped Előnézet"
+      },
+      {
+        "id": "documentary",
+        "title": "Az Archival Stories-t bestseller dokumentumfilmekké alakítja.",
+        "subtitle": "ÚjratöltÚjratöltése történelmi események TÁRGYALÁS, újranépesítések, és szakértői interjú szetteket hiteles időszak részletei, zökkenőmentes voiceover, és zéró archivum licencek.",
+        "badge": "Period- pontos",
+        "solutionPillars": [
+          {
+            "title": "Era- specifikus vizuális pontosság",
+            "frictionHeadline": "Anakronisztikus műtárgyak",
+            "friction": "Szabványos generatív modellek rutinszerűen kivéreztetik a modern tárgyakat, okostelefon képernyőket, vagy helytelen időtartamú ruházatot a történeti rekonstrukciókba.",
+            "solutionHeadline": "Történelmi stílus Guardrails",
+            "solution": "Állítsa be a pontos időbeli paramétereket - az 1920-as évektől a 18. századi ruhatextúrákig - így minden generált jelenet történelmileg hiteles marad."
+          },
+          {
+            "title": "Archival Cutaways & B-Roll Engine",
+            "frictionHeadline": "Visual Monotony in Long Voiceover",
+            "friction": "A hosszú-formájú narrátor hang párosítása statikus készletképekkel gyors képleeséshez vezet mélymerülés közben.",
+            "solutionHeadline": "Transzkript- Driven B - Roll motor",
+            "solution": "Ahogy a narrátorod a történelmi tényeket tárgyalja, a SceneFlow automatikusan létrehozza az időzített filmrekonstrukciókat, dokumentumborítókat és archival- stílusú kutawayeket, amelyek közvetlenül kapcsolódnak az audió-átirathoz."
+          },
+          {
+            "title": "Interjú és beszélgetés - Head Realizmus",
+            "frictionHeadline": "Szakértők",
+            "friction": "A generált történészek, nyomozók vagy tanúk gyakran néznek mesterséges, lebegő állkapocs mozgás és természetellenes szemkontaktus.",
+            "solutionHeadline": "Zárt Profilok és Vocal szinkronizálás",
+            "solution": "Fenntartani a realisztikus, megbízható happy p szetteket természetes micro- kifejezésekkel, pontos lip- sync, és következetes szakértői identitásokat több részsorozatban."
+          },
+          {
+            "title": "Episodic Pecing & Narratív folytonosság",
+            "frictionHeadline": "Törött idővonal szerkesztés",
+            "friction": "Kiegyensúlyozni a narrátor hangjait, újrajátszását, bizonyítékait, és a feszültség-építés szüneteit egy 40 perces epizódban általában hetekig tart a hagyományos NLE-kben.",
+            "solutionHeadline": "Beat- First Documentary Pipeline",
+            "solution": "Struktúra drámai feszültség, izgalmas brings ok, és bizonyítékok tárják fel vizuálisan belül Blueprint Studio, így egy teljesen összeszerelt master file egy varratmentes pass."
+          }
+        ],
+        "screeningRoomPreview": "Dokumentumgyártás - Screening Room Előnézet"
+      }
+    ]
   }
 }

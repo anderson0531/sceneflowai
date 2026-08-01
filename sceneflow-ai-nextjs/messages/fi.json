@@ -1894,5 +1894,254 @@
         "screeningRoomPreview": "Renessanssityöpaja: Menneisyyden näkeminen liikkeessä"
       }
     ]
+  },
+  "productionShowcase": {
+    "badge": "普通话",
+    "title": "Konseptista näytölle:",
+    "titleAccent": "Rajattomat mahdollisuudet",
+    "subtitle": "Kuusi julkista tuotantoa todistaa koko putkiston pre-vis, kohtaus video, ja SCAISCREENING ROOMTERM tarkastelu. Määrittele konseptisi ja anna SCAISCENEFLOWTERMin käsitellä käsikirjoitusta, luonnesuunnittelua, monikielistä ääntä, visualisointia, videotuotantoa ja julkaisu.",
+    "subtitleTagline": "Yksi taso. Loputtomat mahdollisuudet.",
+    "publicProductionsNote": "Jokainen alla oleva kortti on täydellinen julkinen tuotanto.",
+    "languagesBanner": "Julkiset esimerkit 7 kielellä: Englanti, espanja, portugali, hindi, kiina, arabia ja thai.",
+    "explorePipelineCta": "Tutki koko tuotantoa",
+    "explorePipelineHint": "Aloitä Cinematic Draama alla ... Ratkaisut demokelaan, SCAISCREENING ROOMTERM for the full review workflow.",
+    "workflowLabel": "Ratkaisut",
+    "startProduction": "Aloita tuotanto",
+    "cta": "Aloita tuotanto",
+    "continuityNote": "FAIS",
+    "resonanceNote": "SFAAUDIENCE RESONANCETERMTM optimoi skriptejä",
+    "videoLanguagePrompt": "Katso tätä tuotantoa omalla kielelläsi",
+    "videoComingSoon": "Dub tulee pian",
+    "videoSoon": "Pian",
+    "introVideoLabel": "Ratkaisut",
+    "screeningRoomLabel": "FAISCREENING RO HEITETTY",
+    "frictionLabel": "Rajoitus",
+    "solutionPillarLabel": "STAISCENEFLOWTERM ratkaisu",
+    "showSolutionsSection": "Näytä ratkaisut",
+    "hideSolutionsSection": "Piilota ratkaisut",
+    "cards": [
+      {
+        "id": "drama",
+        "title": "Elokuvallinen tekoälydraama. Nollamerkki Drift.",
+        "subtitle": "Poistaa morfoiva merkkiä, rikki dialogi, ja loputon rerolls. Rakenna saumattomia, monimerkkisiä pitkämuotoisia tarinoita, joissa on täydellinen visuaalinen jatkuvuus.",
+        "badge": "Sarja valmis",
+        "solutionPillars": [
+          {
+            "title": "Visual & Character Johdonmukaisuus",
+            "frictionHeadline": "Merkki Drift & Wobbly Setit.",
+            "friction": "Generatiiviset mallit nollataan jokaisella laukauksella. Aiheuttaen luonteen kasvot, asut, ja valaistus morf jatkuvasti yli kohtaus viiltoja.",
+            "solutionHeadline": "Lukitut varat.",
+            "solution": "Määrittele mestari  kuljetetaan hahmoprofiilit, ympäristöt ja visuaaliset tyylit edessä SFAIBLU PRINT TUDIOTERM. STAISCENEFLOWTERM valvoo visuaalista identiteettiä jokaisessa renderöinnissä säilyttääkseen narratiivin upotuksen."
+          },
+          {
+            "title": "Paikannus- ja paikannin",
+            "frictionHeadline": "10 sekunnin ansa.",
+            "friction": "Elokuvan rakentaminen irti irrotetuista mikroprompeista luo leikkelyä, tasaista tunnetta ja loputonta manuaalista aikajanaeditointia.",
+            "solutionHeadline": "Beat-First Storyboarding.",
+            "solution": "Suoraan paikalla, ei nopeasti. Structure dramaattinen rytmit, kameran liikkeet, ja tarina kaaret visuaalisesti ennen kuin tuottaa yhden kehyksen video."
+          },
+          {
+            "title": "Vuoropuhelun ja äänen yhdenmukaistaminen",
+            "frictionHeadline": "Epäuskottava vuoropuhelu.",
+            "friction": "Väärät huulisynkkiset, kelluvat suun liikkeet ja äänet vetävät katsojat pois draamasta.",
+            "solutionHeadline": "Integroitu Voice & Sync Engine.",
+            "solution": "Dynaaminen äänen suorituskyky ja tarkka huulisynkki leivotaan suoraan videoputkeen."
+          },
+          {
+            "title": "Työnkulku Kitka ja väsymys",
+            "frictionHeadline": "Asset Chaos & Londless Rerol -.",
+            "friction": "Lyhytelokuvan luominen tarkoittaa yleensä 200+-videotiedostojen jongleerausta, manuaalista suurentamista ja kymmeniä hukkaan heitettyjä sukupolvia.",
+            "solutionHeadline": "Automaattinen studioputkisto.",
+            "solution": "Konseptista viimeiseen mestari MP4:ään yhdellä yhtenäisellä alustalla vakuuttuneena. FAIBLUEPRINT TUDIOTERM käsittelee tarinan asetukset, STAIPRODUCTION TUDIOTERMin automatisoinnin ja STAISCREENING ROOMTERMin toimittaa lopullisen vientisi."
+          }
+        ],
+        "screeningRoomPreview": "The Cinematic Draama Esikatselu"
+      },
+      {
+        "id": "animation",
+        "title": "Kirjoita sinä se. FAIDSKELUAIKA Animoi Punchlinen.",
+        "subtitle": "Poista tyyli ajelehti mahdoton, jäykkä liike, ja rikki ajoitus. Muuta hulvattomat käsikirjoitukset täysin animoiduiksi, äänekkääksi komediajaksoiksi yhdessä saumattomassa studiossa.",
+        "badge": "Monityylinen",
+        "solutionPillars": [
+          {
+            "title": "- Ei",
+            "frictionHeadline": "Style Meltdown.",
+            "friction": "Sarjakuva ja anime tyylejä jatkuvasti poimu välillä laukausta, siirtämällä linja taidetta, rikkomalla väri paletteja, ja muuttaa merkkejä fotorealistinen uskomaton slop.",
+            "solutionHeadline": "Lukittu taidetyylinen moottori.",
+            "solution": "Pysäytä esteettisyys ensimmäisestä kuvasta. SceneFlow lukitsee luonne malleja, rivipainot, ja varjostusĆ malleja koko episodin niin hahmot pysyvät ainutlaatuisesti sinun."
+          },
+          {
+            "title": "Liiallinen animaatio ja fysiikka",
+            "frictionHeadline": "Stiff & Glitchy Motion.",
+            "friction": "Generatiiviset mallit kamppailevat nopeat slapstit, tupla-takes, ja limainen sarjakuva fysiikka, muuttaa korkean energian gags sulaa esineitä.",
+            "solutionHeadline": "Action & Pose Anchoring.",
+            "solution": "Aja Dynaamisen luonteen liikettä ja ilmeisiä asentoja rikkomatta geometriaa.如何簡化你的生活 suora isku autamaan fyysistä komediaa, äkillisiä katkaisuja ja villiä ilmettä täydellä liikkeenohjauksella."
+          },
+          {
+            "title": "Komedian ajoitus ja rytmi",
+            "frictionHeadline": "Pilasit nyrkkeilylinjat.",
+            "friction": "Huumori elää tauoissa ja hakkaamisissa. Normaali viiden sekunnin regeneratiiviset  helpottu pehmeät aallot, jotka tuhoavat vitsin toimittamisen.",
+            "solutionHeadline": "Beat-Please Editing.",
+            "solution": "Hallintapaikka lähestyy. Säädä dramaattinen taukoja, setup-to-punchline ajoitus, ja nopea reaktio laukausta suoraan sisällä beat-ensimmäinen aikajana ennen lopullista renderöintiä."
+          },
+          {
+            "title": "Korkea-Energy Dialogue & Vocal Sync",
+            "frictionHeadline": "Elottomia nukkeja --.",
+            "friction": "Yleinen tekoäly dialogi tuntuu tasainen ja mekaaninen, tuhoaa energiaa tarvitaan snappy sitcom-vitsi.",
+            "solutionHeadline": "Dynamic Voice & Expression Sync.",
+            "solution": "Karttalaulun toimitus suoraan energiseen kasvojen suorituskykyyn joutui. Vuoropuhelu, ilmeisiä suun muotoja, ja komedia ääniraidat vastaavat saumattomasti maksimaalisen comedic iskun."
+          }
+        ],
+        "screeningRoomPreview": "Animoitu komedia Esikatselu"
+      },
+      {
+        "id": "podcast",
+        "title": "Sinä johdat keskustelua. FAISKESKERTÄÄMME Tuottaa show'n.",
+        "subtitle": "Poista staattiset avatarit ja manuaalinen videoeditointi. Muuntaa skriptit tai raaka ääni multi-angle, lähetys-valmiita videopodcasts yhdessä automatisoidussa putkistossa.",
+        "badge": "Lähetysvalmis",
+        "solutionPillars": [
+          {
+            "title": "Multi- kaiuttimen ja avatarin henkilöllisyys",
+            "frictionHeadline": "Robottiset avatarit ja kadonnut henkilöllisyys",
+            "friction": "Luodut isä isännät siirtää esiintymisiä keskellä episodia, tuijottaa tyhjin käsin kameraan, tai ei esiinny luonnollisia ihmisen mikro-ilmeitä kuunnellessaan.",
+            "solutionHeadline": "Lukitut isäntä- ja vierasprofiilit",
+            "solution": "Luo sitkeitä visuaalisia henkilöllisyyksiä. STAISCENEFLOWTER sovelias, luonnollinen katsekontakti, ja realistinen keskustelullinen kehon kieli kaikissa pitkän muotoinen keskusteluja."
+          },
+          {
+            "title": "Monikameran suunta ja tahdistus",
+            "frictionHeadline": "Yksitoikkoiset single-lenkit",
+            "friction": "Staattiset puhepääkuvat menettävät yleisön retention nopeasti, kun taas manuaalinen kameran vaihtaminen 30 minuutin aikajanan yli vaatii tylsiä runkoja.",
+            "solutionHeadline": "Automaattinen monikameravaihde",
+            "solution": "SceneFlow analysoi keskustelun virtaus automaattisesti vaihtaa isäntä lähikuvat, vieras reaktiot, ja laajakulma  tarvinnut studiokuvia,▲ professional broadcasting pacing ilman manuaalinen aikajana editointi."
+          },
+          {
+            "title": "Kontekstitietoinen B- Roll & Visuals",
+            "frictionHeadline": "Visuaaliset monotoniset ja B- roll- pullonkaulat",
+            "friction": "Jokaisen mainitun aiheen visuaalisten apuvälineiden tai B-rullaleikkeiden löytäminen, tuottaminen ja ajoitus syövät tuntikausia jälkituotantoa.",
+            "solutionHeadline": "Autogeneroidut B-Roll- cutawayt",
+            "solution": "Kun isännät keskustelevat aiheista, SCAISCENEFLOWTERM automaattisesti tuottaa kontekstielokuvallisia visuaaleja, grafiikkaa ja kohtaus cutaways ajoitettu juuri audio transkriptio. kauhistuttaa."
+          },
+          {
+            "title": "Long- Form Audio & Video Sync",
+            "frictionHeadline": "Äänihuijaus ja pitkäform Render Väsymys",
+            "friction": "Regener häiriintySEN videon synkronointi 20+ minuutiksi johtaa huuli-synktioon, renderointivirheisiin ja tiukennettuun tiedostojen hallintaan.",
+            "solutionHeadline": "Podcast-putkisto",
+            "solution": "Pudota raaka ääniraita tai skripti, ja SCAISCENEFLOWTERM käsittelee avatar linjaus, kameran leikkaukset, B-roll integrointi, ja lopullinen master MP4 vienti yhdellä sujuva, automaattinen studiopassi."
+          }
+        ],
+        "screeningRoomPreview": "Tekoälyn ensimmäinen podcast väkivaltaisuus"
+      },
+      {
+        "id": "training",
+        "title": "Enterprise-Grade Training Videot. Pre-visualization Tuotettu minuuttia.",
+        "subtitle": "Muuta manuaalit, diat ja compliance-dokumentit mukaansatempaaviksi, monikielisiksi videomoduuleiksi, joissa on lukitut bränditunnukset, virheetön huulisynkki ja nolla studio yläpuolella.",
+        "badge": "Maailmanlaajuinen",
+        "solutionPillars": [
+          {
+            "title": "Esittäjä löytänyt tuotemerkin",
+            "frictionHeadline": "Uncanny Avatars & Brand Drift",
+            "friction": "Halvat tekoälyn esittäjät tuntevat olonsa robottisiksi ja lähestymättömiksi, kun taas brändin logot, värit ja esiintyjän ulkoasut siirtyvät epätasaisesti eri koulutusmoduuleihin.",
+            "solutionHeadline": "Lukitut Executive & Trainer -profiilit",
+            "solution": "Luo itsepintainen, luonnollisen näköinen yritys juontajat ja lukitse brändin ohjeet konkretisoinnin. STAISCENEFLOWTERM ylläpitää visuaalista identiteettiä, yritysten muotoilua ja ammattimaista toimitusta koko kurssikirjastossa."
+          },
+          {
+            "title": "Saumaton maailmanlaajuinen lokalisointi",
+            "frictionHeadline": "≠ BAR  Rikkoutuneet käännökset & Huono Lip- Sync",
+            "friction": "Koulutuksen sisällön paikallistaminen 10 konkreettisesti yli kieliksi luo yleensä kiusallisia suusynkronoivia, robottiääniraitoja ja massiivisia uudelleenmuokattavia pullonkauloja.",
+            "solutionHeadline": "Native Monikielinen Sync Engine",
+            "solution": "Käännä koko koulutus toteutuu kymmeniä kieliä luonnollinen ääni sävy, lokalisoitu teksti huuli-syncing, ja kehys-tarkka huuli-syncing."
+          },
+          {
+            "title": "Integroidut visuaaliset apuvälineet epävakaita",
+            "frictionHeadline": "Tekstikylki",
+            "friction": "Videot, jotka vain puhuvat päät nopeasti menettää työntekijöiden huomion, kun manuaalisesti animointi prosessi kaavioita, näytön kaappaa, ja luodin kutsut kestää tunteja editori.",
+            "solutionHeadline": "Konteksti Visual & Graphic Overlay",
+            "solution": "Kuten juontajasi selittää monimutkaisia työnkulku- tai compliance-vaiheita, SCAISCENEFLOWTER tuottaa automaattisesti ajastettuja kaavioita, keskeisiä sisäänottoja ja visuaalisia apuvälineitä suoraan näytölle."
+          },
+          {
+            "title": "Nopea sisältö Päivittäminen",
+            "frictionHeadline": "Kallis Re-Shoots & Render Traps",
+            "friction": "Kun yrityksen politiikka tai tuotetiedot muuttuvat, videon 2 minuutin jakson päivittäminen vaatii yleensä koko tiedoston uudelleenrakentamista ja uudelleenkäsittelyä.",
+            "solutionHeadline": "Modulaarinen komentosarjan päivitys",
+            "solution": "Muokkaa tekstiä suoraan skriptikaaviossa päivittää käytäntöjä tai menettelyjä välittömästi. SFAUSCENEFLOWTERM renders vain muuttunut osa säilyttäen ympäröivä ajoitus ja video tyyli."
+          }
+        ],
+        "screeningRoomPreview": "Yrityskoulutus Esikatselu"
+      },
+      {
+        "id": "scifi",
+        "title": "Rakenna mahdottomia maailmoja. Suora tinkimätön Sci-Fi.",
+        "subtitle": "Rinder monimutkaisia visuaalisia efektejä, futuristisia ympäristöjä, ja ulkomaalainen luonne suunnittelee frame-by-frame visuaalinen jatkuvuus.",
+        "badge": "VFX-valmis",
+        "solutionPillars": [
+          {
+            "title": "Ympäristö & arkkitehtuurin jatkuvuus",
+            "frictionHeadline": "Geometria ja mittakaavan häiriöt",
+            "friction": "Futuristiset kaupungit, neonmaisemat ja muukalaiset tähtialuksetvakuutuksesta poimuavat jatkuvasti, muuttavat tekstuuria tai liukenevat satunnaiseksiŢ kameran viiltojen visuaaliseksi meluksi.",
+            "solutionHeadline": "Maailman valtion lukitus",
+            "solution": "Määrittele avainarkkitehtuuri, valaistusjärjestelmät ja ympäristöparametrit STABLUEPRINT TUDIOTERMissa. SceneFlow lukitoimeksiannot spatiaalinen geometria, joten asetus pysyy yhtenäisenä laajasta perustamisesta laukausta tiukka käytävä taistelut."
+          },
+          {
+            "title": "Muukalaisten & olentojen suunnittelun eheys",
+            "frictionHeadline": "Morphing Character Designs",
+            "friction": "Ei-humanoidit lajit, kyborgit, ja raskas proteesihahmot ajelehtivat villisti ulkonäöltään aina kun uusi kulma tai laukaus syntyy.",
+            "solutionHeadline": "Locked Alien Asset Profiles",
+            "solution": "Ankkuri ei-ihmisen anatomia, panssari yksityiskohtia, ja mekaaninen aksentti. Säilytä luonteentunnistus kaikissa korkean konseptin kohtauksissa ilman mukautettuja 3D mallinnus putkistoja."
+          },
+          {
+            "title": "VFX-toiminta ja nopea fysiikka",
+            "frictionHeadline": "Toimintaesityksen sulattaminen",
+            "friction": "Nopeat avaruuskoirataistelut, energia-asepalot ja räjähdykset aiheuttavat usein malleja, jotka sotkevat kehyksiä tai tuottavat sotkuisia visuaalisia esineitä.",
+            "solutionHeadline": "Action & FX Motion Anchoring",
+            "solution": "Suora dynaaminen koreografia, nopea kameran oikeassa liikkeissä, ja hiukkas-raskas toiminta lyö samalla säilyttää puhtaat reunat ja realistinen lentorata fysiikka."
+          },
+          {
+            "title": "Audio-Visual World-Building",
+            "frictionHeadline": "Flat Audio High-Concept Worlds",
+            "friction": "Hitaasti syttyvät aseet, täysi-ikäisyysŐ ja täysi-ikäinen esi-ikäisyys.",
+            "solutionHeadline": "Integroitu World-Sound & Voice Sync",
+            "solution": "Säädä26 huoliteltu synteettinen dialogi, ulkomaalainen laulu, ja elokuvallinen ääni vihj rajoittavan, release-valmiin audio sekoitus."
+          }
+        ],
+        "screeningRoomPreview": "Sci-Fi VFX tuotanto ... Esikatselu"
+      },
+      {
+        "id": "documentary",
+        "title": "Muuta Arkistotarinat myydyiksi dokumenteiksi.",
+        "subtitle": "Luo arvonoikaisut, uudelleen näytökset ja asiantuntijahaastatteluasetukset, joissa on aitoa aikaa koskevat yksityiskohdat, saumaton puhelu ja nolla arkiston lisenssimaksut.",
+        "badge": "Tarkka ajanjakso",
+        "solutionPillars": [
+          {
+            "title": "Era-spesifinen visu murskaustarkkuus",
+            "frictionHeadline": "Anakroniset esineet",
+            "friction": "Normaalit generatiiviset mallit vuotavat rutiininomaisesti nykyaikaisia esineitä, älypuhelinten näyttöjä tai virheellisen ajan vaatteita historiallisiin uudelleen näytöksiin.",
+            "solutionHeadline": "Historialliset tyylit",
+            "solution": "Aseta tarkat ajalliset parametrit 1920-luvun elokuvan viljasta 1800-luvun vaatekaapin tekstuuriin."
+          },
+          {
+            "title": "Archival Cutaways & B- Roll Engine",
+            "frictionHeadline": "Visual Monotony Long Voiceovers",
+            "friction": "Pitkämuotoisen kertojan äänen parittaminen staattisilla kantakuvilla johtaa nopeaan katsojan pudotukseen syvien sukeltajien aikana.",
+            "solutionHeadline": "Transcript-Driven B-Roll Engine",
+            "solution": "Kun kertojasi keskustelee historiallisista faktoista, SCAISC uhan TERM nähtyäsi luo automaattisesti ajastettuja elokuvateoksia, dokumenttipäätteitä ja arkiston tyylisiä cutaway-sarjoja, jotka on sidottu suoraan äänitoistoon."
+          },
+          {
+            "title": "Hei, hei",
+            "frictionHeadline": "Hämmästyttävät asiantuntijat",
+            "friction": "Luodut historioƑat, tutkijat tai todistajat näyttävät usein keinotekoisia, kelluva leuan liikkeet ja luonnoton katsekontakti.",
+            "solutionHeadline": "Lukitut asiantuntijaprofiilit ja äänien synkronointi",
+            "solution": "Säilytä realistiset, luotettavat haastatteluasetukset luonnollisilla mikroilmeillä, tarkalla huulisynkillä ja johdonmukaisilla asiantuntija-identiteeteillä moniosaisessa sarjassa."
+          },
+          {
+            "title": "Episodic Pacing & Narratiivinen jatkuvuus",
+            "frictionHeadline": "Hajautettu aikajanan muokkaus",
+            "friction": "Tasapainotus kertoja ääni, uudelleen tähtääminen, todisteet paljastaa, ja jännitys-building taukoja yli 40 minuutin jakson yleensä kestää viikkoja perinteisissä NLEs.",
+            "solutionHeadline": "Beat-First Documentary PipeliMENOT",
+            "solution": "Structure Dr KOULUTUS jännitys, jännittäviä taukoja, ja näyttö paljastaa visuaalisesti sisällä SCABLUEPRINT TUDIOTERM, joka toimittaa täysin koottu päätiedosto yhdellä saumattomalla sola."
+          }
+        ],
+        "screeningRoomPreview": "Dokumentaarinen tuotanto Esikatselu"
+      }
+    ]
   }
 }
