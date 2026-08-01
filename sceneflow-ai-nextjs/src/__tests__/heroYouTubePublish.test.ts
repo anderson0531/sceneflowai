@@ -19,13 +19,15 @@ describe('Hero YouTube publish metadata', () => {
     }
   })
 
-  it('includes video, thumbnail, tags, and localized description', () => {
+  it('includes video, thumbnail, tags, and conversion-focused description', () => {
     for (const bundle of HERO_YOUTUBE_PUBLISH_BUNDLES) {
       expect(bundle.videoUrl).toMatch(/\.mp4$/)
       expect(bundle.thumbnailUrl).toMatch(/sceneflow-hero-.*-poster\.jpg$/)
       expect(bundle.tags.length).toBeGreaterThan(3)
       expect(bundle.description).toContain('sceneflow.ai')
+      expect(bundle.description).toContain('https://www.youtube.com/@sceneflowaistudio')
       expect(bundle.description).toContain('#SceneFlow')
+      expect(bundle.description).toContain('•')
       expect(bundle.categoryId).toBe('28')
     }
   })

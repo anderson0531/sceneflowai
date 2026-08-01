@@ -1,6 +1,23 @@
+Você dirige a história. SceneFlow Automatiza o Estúdio.
+
 Inteligência alimentada pelo Google orquestrada em Google Cloud — com geração opcional do Google ou Kling. Execute suas ideias por meio de um pipeline contínuo, do blueprint ao MP4 master, sem microprompting.
 
-🔗 Start your production: https://sceneflow.ai
-📺 Subscribe: https://www.youtube.com/@sceneflowaistudio
+▶ O QUE É SCENEFLOW?
+Três fases da primeira ideia ao mestre pronto para publicação — Series Studio, Blueprint Studio e Production Studio.
 
-#SceneFlow #AIVideo #VideoProduction #Português
+✅ POR QUE OS CRIADORES MIGRAM
+• One Studio — Conceito para publicar num só lugar
+• Aprovar antes do vídeo final — Revise as batidas pré-vis antes de renderizar
+• Teste a sua história primeiro — Saiba o que pousa antes de gastos pesados
+• Saída pronta para publicação — Pacotes principais de distribuição MP4 +
+
+Dubs Hero em 7 idiomas — o pipeline completo suporta mais de 70 no Production Studio.
+
+🚀 INICIE A SUA PRODUÇÃO
+→ https://sceneflow.ai
+Inicie a sua produção
+Comece com o plano $ 9 Explorer. Coorte de Acesso Antecipado de Setembro agora em formação.
+
+📺 Mais demos e produções de exemplo no nosso canal: https://www.youtube.com/@sceneflowaistudio
+
+#SceneFlow #AIVideo #VideoProduction #Criadores #Português
