@@ -78,7 +78,7 @@
       }
     },
     "soon": "În curând",
-    "ctaPrimaryLaunch": "Lansează-ți studioul ($ 9) — Cohorta din septembrie",
+    "ctaPrimaryLaunch": "Începeţi producţia",
     "ctaSupportingLine": "Începeți cu planul $ 9 Explorer. Se formează acum cohorta Acces anticipat septembrie.",
     "videoLanguageCount": "{count, plural, =1 {# language} alte {# languages}}"
   },
@@ -1737,7 +1737,7 @@
   "finalCta": {
     "title": "Sunteți gata să testați întreaga conductă?",
     "subtitle": "Scripting și optimizare pe Google, platforma de generare aleasă de tine și recenzia Screening Room — toate într-un singur studio. Se formează acum cohorta Acces anticipat în septembrie — începeți cu planul Explorer în valoare de $ 9 sau solicitați accesul Creatorului Fondator.",
-    "cta": "Lansează-ți studioul ($ 9) — Cohorta din septembrie",
+    "cta": "Începeţi producţia",
     "ctaSecondary": "Solicită accesul creatorului fondator",
     "ctaSecondaryHref": "/early-access"
   },
@@ -1783,7 +1783,7 @@
     "badge": "Pentru cine este SceneFlow?",
     "title": "Pentru cine este SceneFlow?",
     "subtitle": "De la concept la un Screening Room animatic la un videoclip multilingv publicat automat — o conductă automată, patru moduri de expediere.",
-    "cta": "Lansează-ți studioul ($ 9) — Cohorta din septembrie",
+    "cta": "Începeţi producţia",
     "tabStory": "Soluție",
     "tabScreening": "Analiză",
     "problemLabel": "Problema",
@@ -2143,5 +2143,8 @@
         "screeningRoomPreview": "Producție documentară  Previzualizare"
       }
     ]
+  },
+  "keyFeatures": {
+    "landingUiLanguagesLabel": "Pagina de destinație disponibilă în 39 de limbi:"
   }
 }

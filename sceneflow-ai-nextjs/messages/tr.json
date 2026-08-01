@@ -78,7 +78,7 @@
       }
     },
     "soon": "Yakında",
-    "ctaPrimaryLaunch": "Stüdyonuzu Başlatın (9 $) — Eylül Kohortu",
+    "ctaPrimaryLaunch": "Üretiminize Başlayın",
     "ctaSupportingLine": "9 $ SFAIEXPLORERM planıyla başlayın. Eylül Erken Erişim kohortu şimdi oluşturuluyor.",
     "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
@@ -1737,7 +1737,7 @@
   "finalCta": {
     "title": "Tüm iş hattını test etmeye hazır mısınız?",
     "subtitle": "Google destekli komut dosyası ve optimizasyon, seçtiğiniz nesil arka uç ve Screening Room incelemesi — hepsi tek bir stüdyoda. Eylül Erken Erişim kohortu şimdi oluşturuluyor — 9 $ Explorer planıyla başlayın veya Kurucu Yaratıcı erişimi için başvurun.",
-    "cta": "Stüdyonuzu Başlatın (9 $) — Eylül Kohortu",
+    "cta": "Üretiminize Başlayın",
     "ctaSecondary": "Kurucu Yaratıcı Erişimi için başvurun",
     "ctaSecondaryHref": "/early-access"
   },
@@ -1783,7 +1783,7 @@
     "badge": "SceneFlow kimler içindir?",
     "title": "SceneFlow kimler içindir?",
     "subtitle": "Konseptten Screening Room animatiğe ve otomatik olarak yayınlanan çok dilli videoya — bir otomatik boru hattı, gönderim için dört yol.",
-    "cta": "Stüdyonuzu Başlatın (9 $) — Eylül Kohortu",
+    "cta": "Üretiminize Başlayın",
     "tabStory": "Çözüm",
     "tabScreening": "Tarama",
     "problemLabel": "Sorun",
@@ -2143,5 +2143,8 @@
         "screeningRoomPreview": "Belgesel üretimi – Screening Room Öpün"
       }
     ]
+  },
+  "keyFeatures": {
+    "landingUiLanguagesLabel": "Açılış sayfası 39 dilde mevcuttur:"
   }
 }

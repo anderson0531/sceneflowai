@@ -99,10 +99,11 @@ function isLocaleSynced(existing: Record<string, unknown>, syncScope: string): b
 
   const showcase = existing.useCasesShowcase as Record<string, unknown> | undefined
   const hero = existing.hero as Record<string, unknown> | undefined
+  const launchCta = String(hero?.ctaPrimaryLaunch ?? '')
   return Boolean(
     showcase?.cta &&
       hero?.ctaPrimaryLaunch &&
-      /\$\s*9|9\s*\$|[9۹]/.test(String(hero.ctaPrimaryLaunch))
+      !launchCta.includes('Launch Your Studio ($9)')
   )
 }
 

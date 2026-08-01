@@ -78,7 +78,7 @@
       }
     },
     "soon": "Vervalt weldra",
-    "ctaPrimaryLaunch": "Start je studio ($ 9) — september-cohort",
+    "ctaPrimaryLaunch": "Start uw productie",
     "ctaSupportingLine": "Begin met het $ 9 Explorer-plan. September Early Access-cohort vormt zich nu.",
     "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
@@ -1737,7 +1737,7 @@
   "finalCta": {
     "title": "Klaar om de volledige pijpleiding te testen?",
     "subtitle": "Google-aangedreven scripting en optimalisatie, uw keuze van generatie backend en Screening Room review — allemaal in één studio. September Early Access-cohort vormt zich nu — begin met het $ 9 Explorer-plan of vraag Founding Creator-toegang aan.",
-    "cta": "Start je studio ($ 9) — september-cohort",
+    "cta": "Start uw productie",
     "ctaSecondary": "Toegang voor oprichters aanvragen",
     "ctaSecondaryHref": "/early-access"
   },
@@ -1783,7 +1783,7 @@
     "badge": "Voor wie is SceneFlow bedoeld?",
     "title": "Voor wie is SceneFlow bedoeld?",
     "subtitle": "Van concept tot een Screening Room animatic tot automatisch gepubliceerde meertalige video — één geautomatiseerde pijplijn, vier manieren om te verzenden.",
-    "cta": "Start je studio ($ 9) — september-cohort",
+    "cta": "Start uw productie",
     "tabStory": "Oplossing",
     "tabScreening": "Screening",
     "problemLabel": "Het Probleem",
@@ -2143,5 +2143,8 @@
         "screeningRoomPreview": "Documentaire productie  Voorbeeld"
       }
     ]
+  },
+  "keyFeatures": {
+    "landingUiLanguagesLabel": "Landingspagina beschikbaar in 39 talen:"
   }
 }

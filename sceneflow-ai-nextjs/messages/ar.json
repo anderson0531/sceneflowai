@@ -78,7 +78,7 @@
       }
     },
     "soon": "Soon",
-    "ctaPrimaryLaunch": "إطلاق الاستوديو الخاص بك ($ 9) — مجموعة",
+    "ctaPrimaryLaunch": "ابدأ إنتاجك",
     "ctaSupportingLine": "ابدأ بخطة $ 9 Explorer. مجموعة الوصول المبكر لشهر سبتمبر تتشكل الآن.",
     "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
@@ -1737,7 +1737,7 @@
   "finalCta": {
     "title": "هل أنت مستعد لاختبار خط الأنابيب بالكامل ؟",
     "subtitle": "البرمجة النصية والتحسين المدعوم من Google، واختيارك للجيل الخلفي، ومراجعة Screening Room — كل ذلك في استوديو واحد. تتشكل مجموعة الوصول المبكر لشهر الآن — ابدأ بخطة Explorer بقيمة 9 $ أو تقدم بطلب للوصول إلى منشئ المحتوى المؤسس.",
-    "cta": "إطلاق الاستوديو الخاص بك ($ 9) — مجموعة",
+    "cta": "ابدأ إنتاجك",
     "ctaSecondary": "التقدم بطلب للحصول على وصول المنشئ المؤسس",
     "ctaSecondaryHref": "/early-access"
   },
@@ -1783,7 +1783,7 @@
     "badge": "لمن يكون SceneFlow ؟",
     "title": "لمن يكون SceneFlow ؟",
     "subtitle": "من المفهوم إلى الرسوم المتحركة Screening Room إلى الفيديو متعدد اللغات الذي يتم نشره تلقائيًا — خط أنابيب آلي واحد، أربع طرق للشحن.",
-    "cta": "إطلاق الاستوديو الخاص بك ($ 9) — مجموعة",
+    "cta": "ابدأ إنتاجك",
     "tabStory": "الحل",
     "tabScreening": "التقييم",
     "problemLabel": "الإشكالية",
@@ -2143,5 +2143,8 @@
         "screeningRoomPreview": "الانتاج الوثائــقي - الفضاء الخارجي Preview"
       }
     ]
+  },
+  "keyFeatures": {
+    "landingUiLanguagesLabel": "الصفحة المقصودة متاحة بـ 39 لغة:"
   }
 }

@@ -37,13 +37,13 @@
     "pricing": "Precios"
   },
   "hero": {
-    "headline": "Tú diriges la historia. SceneFlow Automatiza el estudio.",
-    "subheadline": "Inteligencia impulsada por Google orquestada en Google Cloud — con generación opcional de Google o Kling. Ejecute sus ideas a través de una canalización perfecta desde el plano hasta el MP4 maestro sin micro-promoción.",
+    "headline": "You Direct the Story. SceneFlow Automates the Studio.",
+    "subheadline": "Google-powered intelligence orchestrated on Google Cloud — with optional Google or Kling generation. Run your ideas through a seamless pipeline from blueprint to master MP4 without micro-prompting.",
     "audienceMicroLine": "Creado para creadores que buscan resultados y equipos que quieren ver cómo funciona.",
     "ctaSecondary": "Ver 'Qué es posible'",
     "ctaToolStack": "Vea cómo reemplaza su pila de herramientas",
     "languagePrompt": "Escucha al héroe en tu idioma: mismo canal, nuevos mercados",
-    "multilangHint": "Hero dobla en 7 idiomas: el canal completo admite más de 70 en Production Studio.",
+    "multilangHint": "Hero dobla en 7 idiomas: el pipeline completo admite más de 70 en Production Studio.",
     "playWithNarration": "Juega con la narración",
     "tapToHear": "Tocá acá para escuchar",
     "fullscreen": "Pantalla completa",
@@ -78,8 +78,8 @@
       }
     },
     "soon": "Pronto",
-    "ctaPrimaryLaunch": "Lanzar su estudio ($ 9) — Cohorte de septiembre",
-    "ctaSupportingLine": "Comienza con el plan de $ 9 Explorer. Septiembre Se está formando la cohorte de Acceso Anticipado.",
+    "ctaPrimaryLaunch": "Inicie su producción",
+    "ctaSupportingLine": "Comience con el plan Explorer de $ 9. Septiembre Se está formando la cohorte de Acceso Anticipado.",
     "videoLanguageCount": "{count, plural, =1 {# idioma} other {# idiomas}}"
   },
   "valueProp": {
@@ -1736,8 +1736,8 @@
   },
   "finalCta": {
     "title": "¿Listo para probar el pipeline completo?",
-    "subtitle": "Scripting y optimización impulsados por Google, su elección de backend de generación y revisión de Screening Room, todo en un solo estudio. Cohorte de acceso anticipado de septiembre que se está formando: comienza con el plan $ 9 Explorer o solicita el acceso de creador fundador.",
-    "cta": "Lanzar su estudio ($ 9) — Cohorte de septiembre",
+    "subtitle": "Scripting y optimización impulsados por Google, su elección de backend de generación y revisión de Screening Room, todo en un solo estudio. Cohorte de acceso anticipado de septiembre que se está formando: comience con el plan Explorer de $ 9 o solicite el acceso de creador fundador.",
+    "cta": "Inicie su producción",
     "ctaSecondary": "Solicita el acceso de creador fundador",
     "ctaSecondaryHref": "/early-access"
   },
@@ -1782,8 +1782,8 @@
   "useCasesShowcase": {
     "badge": "¿Para quién es SceneFlow?",
     "title": "¿Para quién es SceneFlow?",
-    "subtitle": "Desde el concepto hasta un vídeo multilingüe Screening Room animático y autopublicado: un canal automatizado, cuatro formas de enviar.",
-    "cta": "Lanzar su estudio ($ 9) — Cohorte de septiembre",
+    "subtitle": "Del concepto a un vídeo animático Screening Room a la publicación automática en varios idiomas: un canal automatizado, cuatro formas de enviar.",
+    "cta": "Inicie su producción",
     "tabStory": "Solución",
     "tabScreening": "Detección",
     "problemLabel": "El problema",
@@ -1797,7 +1797,7 @@
         "id": "youtubeCreator",
         "label": "El creador de YouTube",
         "headline": "Del concepto a la serie cinematográfica: ingeniería sin prontitud",
-        "intro": "Comienza con un concepto o una descripción detallada de la serie. SceneFlow construye el universo de la serie, los personajes y los episodios ilimitados, y luego usa Express para renderizar audio, fotogramas y video al mismo tiempo. Creas y diriges con texto sin formato o voz; SceneFlow construye la visión: sin ingeniería rápida, sin repeticiones de máquinas tragamonedas.",
+        "intro": "Comienza con un concepto o una descripción detallada de la serie. SceneFlow construye el universo de la serie, los personajes y los episodios ilimitados, y luego usa Express para renderizar audio, fotogramas y video simultáneamente. Usted crea y dirige con texto sin formato o voz; SceneFlow construye la visión: sin ingeniería rápida, sin repeticiones de máquinas tragamonedas.",
         "story": {
           "problem": [
             "Haces malabares con herramientas separadas para el guión, las imágenes, la voz, el vídeo, la música y la edición.",
@@ -1806,8 +1806,8 @@
           ],
           "solution": [
             "Un estudio guiado reemplaza toda la pila de herramientas.",
-            "Describe tu idea con palabras sencillas: SceneFlow escribe la serie y diseña el reparto.",
-            "Express reproduce audio, fotogramas y vídeo juntos, mientras que un Reference Library mantiene la coherencia de los caracteres."
+            "Describe tu idea con palabras sencillas: SceneFlow escribe la serie y diseña el elenco.",
+            "Express reproduce audio, fotogramas y vídeo juntos, mientras que Reference Library mantiene la coherencia de los caracteres."
           ],
           "outcome": [
             "Deja de perder los fines de semana con herramientas fragmentadas.",
@@ -1865,7 +1865,7 @@
             "Actualice una vez y distribuya en todas partes desde un solo corte aprobado."
           ]
         },
-        "screeningRoomHook": "Revisa las escenas antes de que las transmisiones se finalicen y comparte enlaces privados de Screening Room para obtener comentarios entre regiones sin exportar másters sin terminar.",
+        "screeningRoomHook": "Revise las escenas antes de que las transmisiones se finalicen y comparta enlaces privados de Screening Room para obtener comentarios entre regiones sin exportar maestros inacabados.",
         "screeningRoomPreview": "Protocolo Shield: Incorporación de ciberseguridad global"
       },
       {
@@ -2324,7 +2324,8 @@
           }
         ]
       }
-    ]
+    ],
+    "landingUiLanguagesLabel": "Página de inicio disponible en 39 idiomas:"
   },
   "pipeline": {
     "badge": "¿Qué es SceneFlow?",

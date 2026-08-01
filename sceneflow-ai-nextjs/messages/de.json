@@ -78,7 +78,7 @@
       }
     },
     "soon": "Bald",
-    "ctaPrimaryLaunch": "Starten Sie Ihr Studio ($ 9) — September-Kohorte",
+    "ctaPrimaryLaunch": "Starten Sie Ihre Produktion",
     "ctaSupportingLine": "Beginnen Sie mit dem $ 9 Explorer-Plan. September Early Access-Kohorte bildet sich jetzt.",
     "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
@@ -1737,7 +1737,7 @@
   "finalCta": {
     "title": "Sind Sie bereit, die gesamte Pipeline zu testen?",
     "subtitle": "Google-gestütztes Scripting und Optimierung, Ihre Wahl des Generation Backends und Screening Room Review — alles in einem Studio. September Early Access-Kohorte bildet sich jetzt — beginnen Sie mit dem $ 9 Explorer-Plan oder beantragen Sie den Zugang zu Founding Creator.",
-    "cta": "Starten Sie Ihr Studio ($ 9) — September-Kohorte",
+    "cta": "Starten Sie Ihre Produktion",
     "ctaSecondary": "Beantragen Sie den Gründungszugang für Kreative",
     "ctaSecondaryHref": "/early-access"
   },
@@ -1783,7 +1783,7 @@
     "badge": "Für wen ist SceneFlow?",
     "title": "Für wen ist SceneFlow?",
     "subtitle": "Vom Konzept über eine Screening Room-Animation bis hin zu automatisch veröffentlichten mehrsprachigen Videos — eine automatisierte Pipeline, vier Versandmöglichkeiten.",
-    "cta": "Starten Sie Ihr Studio ($ 9) — September-Kohorte",
+    "cta": "Starten Sie Ihre Produktion",
     "tabStory": "Abhilfe",
     "tabScreening": "Voruntersuchung",
     "problemLabel": "Das Problem",
@@ -2324,7 +2324,8 @@
           }
         ]
       }
-    ]
+    ],
+    "landingUiLanguagesLabel": "Landingpage in 39 Sprachen verfügbar:"
   },
   "pipeline": {
     "badge": "Was ist SceneFlow?",

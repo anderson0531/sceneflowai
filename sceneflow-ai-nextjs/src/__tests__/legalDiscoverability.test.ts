@@ -6,6 +6,7 @@ import {
   LEGAL_PAGES,
   LEGAL_SITEMAP_PATHS,
 } from '@/config/legal/legalPages'
+import enMessages from '../../messages/en.json'
 
 describe('legal page discoverability', () => {
   it('registers all required policy routes', () => {
@@ -29,12 +30,18 @@ describe('legal page discoverability', () => {
     expect(LEGAL_SITEMAP_PATHS).toContain(LEGAL_HUB_PAGE.href)
   })
 
-  it('renders server-side legal links on the landing page', () => {
+  it('does not render top-of-page legal nav on the landing page', () => {
     const landingPage = readFileSync(
       join(process.cwd(), 'src/app/page.tsx'),
       'utf8'
     )
-    expect(landingPage).toContain('LandingLegalNav')
+    expect(landingPage).not.toContain('LandingLegalNav')
+  })
+
+  it('keeps Trust & Safety in the landing footer', () => {
+    const footer = enMessages.footer as { legal?: string; links?: { trustSafety?: string } }
+    expect(footer.legal).toBe('Trust & Safety')
+    expect(footer.links?.trustSafety).toBe('Trust & Safety')
   })
 
   it('exposes English policy labels in landing legal nav', () => {

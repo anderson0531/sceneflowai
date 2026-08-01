@@ -75,7 +75,7 @@
       }
     },
     "soon": "በቅርቡ",
-    "ctaPrimaryLaunch": "Launch Your Studio ($9) — September Cohort",
+    "ctaPrimaryLaunch": "ምርትዎን ይጀምሩ",
     "ctaSupportingLine": "Start with the $9 Explorer plan. September Early Access cohort now forming."
   },
   "valueProp": {
@@ -1732,7 +1732,7 @@
   "finalCta": {
     "title": "ሙሉውን የስራ ሂደት (pipeline) ለመፈተሽ ዝግጁ ነዎት?",
     "subtitle": "Google-powered scripting and optimization, your choice of generation backend, and Screening Room review — all in one studio. September Early Access cohort now forming — start with the $9 Explorer plan or apply for Founding Creator access.",
-    "cta": "Launch Your Studio ($9) — September Cohort",
+    "cta": "ምርትዎን ይጀምሩ",
     "ctaSecondary": "Apply for Founding Creator Access"
   },
   "footer": {
@@ -1777,7 +1777,7 @@
     "badge": "Who is SceneFlow For?",
     "title": "Who is SceneFlow For?",
     "subtitle": "From concept to a Screening Room animatic to auto-published multilanguage video — one automated pipeline, four ways to ship.",
-    "cta": "Launch Your Studio ($9) — September Cohort"
+    "cta": "ምርትዎን ይጀምሩ"
   },
   "productionShowcase": {
     "badge": "የምርት ምሳሌዎች",
@@ -2027,5 +2027,8 @@
         "screeningRoomPreview": "ዘጋቢ ፊልም - Screening Room ቅድመ እይታ"
       }
     ]
+  },
+  "keyFeatures": {
+    "landingUiLanguagesLabel": "ማረፊያ ገጽ በ39 ቋንቋዎች ይገኛል፡-"
   }
 }

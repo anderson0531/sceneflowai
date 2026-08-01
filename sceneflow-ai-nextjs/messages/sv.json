@@ -78,7 +78,7 @@
       }
     },
     "soon": "Snart",
-    "ctaPrimaryLaunch": "Starta din studio (9 $) — septemberkohort",
+    "ctaPrimaryLaunch": "Starta din produktion",
     "ctaSupportingLine": "Börja med $ 9 Explorer-planen. September Early Access-kohort bildas nu.",
     "videoLanguageCount": "{count, plural, =1 {# language} andra {# languages}}"
   },
@@ -1737,7 +1737,7 @@
   "finalCta": {
     "title": "Redo att testa hela pipelinen?",
     "subtitle": "Google-driven skriptning och optimering, ditt val av generationsgränssnitt och Screening Room-granskning — allt i en studio. September Early Access-kohorten bildas nu — börja med $ 9 Explorer-planen eller ansök om tillgång till Founding Creator.",
-    "cta": "Starta din studio (9 $) — septemberkohort",
+    "cta": "Starta din produktion",
     "ctaSecondary": "Ansök om tillgång till grundande kreatör",
     "ctaSecondaryHref": "/early-access"
   },
@@ -1783,7 +1783,7 @@
     "badge": "Vem är SceneFlow för?",
     "title": "Vem är SceneFlow för?",
     "subtitle": "Från koncept till en Screening Room animatic till automatisk publicerad flerspråkig video — en automatiserad pipeline, fyra sätt att skicka.",
-    "cta": "Starta din studio (9 $) — septemberkohort",
+    "cta": "Starta din produktion",
     "tabStory": "Lösning",
     "tabScreening": "Screening",
     "problemLabel": "Problemet:",
@@ -2143,5 +2143,8 @@
         "screeningRoomPreview": "Dokumentärproduktion - Screening Room Förhandsgranskning"
       }
     ]
+  },
+  "keyFeatures": {
+    "landingUiLanguagesLabel": "Målsida tillgänglig på 39 språk:"
   }
 }

@@ -78,7 +78,7 @@
       }
     },
     "soon": "很快",
-    "ctaPrimaryLaunch": "推出您的单间公寓（ $ 9 ） — 9月群体",
+    "ctaPrimaryLaunch": "开始您的制作",
     "ctaSupportingLine": "从$ 9 Explorer计划开始。9月抢先体验队列正在形成。",
     "videoLanguageCount": "{count, plural, = 1 {#语言} other {#语言}}"
   },
@@ -1737,7 +1737,7 @@
   "finalCta": {
     "title": "准备好测试整个管道了吗？",
     "subtitle": "Google支持的脚本和优化、您选择的生成后端以及Screening Room评论—所有这些都在一个工作室中。9月抢先体验组群正在形成--从$ 9 Explorer计划开始，或申请初代创作者访问权限。",
-    "cta": "推出您的单间公寓（ $ 9 ） — 9月群体",
+    "cta": "开始您的制作",
     "ctaSecondary": "申请初代创作者访问权限",
     "ctaSecondaryHref": "/early-access"
   },
@@ -1783,7 +1783,7 @@
     "badge": "SceneFlow针对谁？",
     "title": "SceneFlow针对谁？",
     "subtitle": "从概念到Screening Room动画到自动发布的多语言视频—一个自动化管道，四种发货方式。",
-    "cta": "推出您的单间公寓（ $ 9 ） — 9月群体",
+    "cta": "开始您的制作",
     "tabStory": "解决方案",
     "tabScreening": "审查",
     "problemLabel": "问题",
@@ -2143,5 +2143,8 @@
         "screeningRoomPreview": "纪录片制作——Screening Room 预览"
       }
     ]
+  },
+  "keyFeatures": {
+    "landingUiLanguagesLabel": "登陆页面有 39 种语言版本："
   }
 }
