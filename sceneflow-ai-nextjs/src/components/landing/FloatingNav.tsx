@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Rocket, DollarSign, Sparkles, Clapperboard } from 'lucide-react'
+import { Rocket, DollarSign, Sparkles, Clapperboard, Shield } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useExpandLandingSection } from '@/components/landing/LandingSectionCollapse'
 
@@ -14,6 +14,7 @@ export function FloatingNav() {
       { id: 'production-examples', label: t('productionExamples'), icon: Clapperboard },
       { id: 'key-features', label: t('keyFeatures'), icon: Sparkles },
       { id: 'pricing', label: t('pricing'), icon: DollarSign },
+      { id: 'trust-safety', label: t('trustSafety'), icon: Shield },
     ],
     [t]
   )

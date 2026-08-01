@@ -167,6 +167,14 @@ export function Header() {
                 <Sparkles className="w-4 h-4 text-sf-primary" />
                 {t('plansPricing')}
               </button>
+
+              <button
+                onClick={() => scrollToSection('trust-safety')}
+                className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
+              >
+                <Shield className="w-4 h-4" />
+                {t('trustSafety')}
+              </button>
             </nav>
             
             {/* CTA Buttons - Right */}
@@ -278,6 +286,10 @@ export function Header() {
                   <button onClick={() => scrollToSection('pricing')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Sparkles className="w-4 h-4 text-sf-primary" />
                     {t('plansPricing')}
+                  </button>
+                  <button onClick={() => scrollToSection('trust-safety')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
+                    <Shield className="w-4 h-4" />
+                    {t('trustSafety')}
                   </button>
                   
                   {/* Divider */}
