@@ -298,7 +298,7 @@ export function buildEnMessages() {
         'End-to-end automated video production — from concept to publish-ready master. One guided studio: Series Studio → Blueprint Studio → Production Studio → Screening Room.',
       product: 'Product',
       resources: 'Resources',
-      legal: 'Legal',
+      legal: 'Trust & Safety',
       links: {
         features: 'Features',
         pricing: 'Pricing',

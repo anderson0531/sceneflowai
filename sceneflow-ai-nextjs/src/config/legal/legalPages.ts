@@ -58,9 +58,9 @@ export const LEGAL_PAGES: readonly LegalPageEntry[] = [
 export const LEGAL_HUB_PAGE: LegalPageEntry = {
   id: 'legal',
   href: '/legal',
-  title: 'Legal',
-  label: 'Legal',
-  description: `Legal documents, policies, and contact information for ${LEGAL_SERVICE_NAME}.`,
+  title: 'Trust & Safety',
+  label: 'Trust & Safety',
+  description: `Policies, trust and safety, and contact information for ${LEGAL_SERVICE_NAME}.`,
 }
 
 export const LEGAL_SITEMAP_PATHS = ['/', ...LEGAL_PAGES.map((page) => page.href), LEGAL_HUB_PAGE.href] as const

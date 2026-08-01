@@ -15,7 +15,7 @@ export function LegalLinksNav({
   activeLinkClassName = 'text-purple-300 font-medium underline',
 }: LegalLinksNavProps) {
   return (
-    <nav aria-label="Legal" className={className}>
+    <nav aria-label="Trust & Safety" className={className}>
       {LEGAL_PAGES.map((page) => {
         const isActive = activeHref === page.href
         return (

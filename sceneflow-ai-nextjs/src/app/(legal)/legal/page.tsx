@@ -10,7 +10,8 @@ export default function LegalHubPage() {
     <>
       <h1 className="text-4xl font-bold text-white mb-2">{LEGAL_HUB_PAGE.title}</h1>
       <p className="text-gray-400 mb-8">
-        Legal documents and contact information for {LEGAL_SERVICE_NAME}, operated by {LEGAL_COMPANY_NAME}.
+        Policies, trust and safety, and contact information for {LEGAL_SERVICE_NAME}, operated by{' '}
+        {LEGAL_COMPANY_NAME}.
       </p>
 
       <div className="space-y-4">
