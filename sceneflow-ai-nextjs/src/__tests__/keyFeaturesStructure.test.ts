@@ -92,6 +92,10 @@ describe('keyFeatures structure', () => {
       path.join(ROOT, 'src/components/landing/KeyFeaturesSection.tsx'),
       'utf8'
     )
+    const en = JSON.parse(readFileSync(path.join(ROOT, 'messages/en.json'), 'utf8'))
+    expect(en.keyFeatures.landingUiLanguagesLabel).toBe(
+      'UI and Productions Available in 39 Languages'
+    )
     expect(section).toContain('LANDING_TRANSLATE_LANGUAGES')
     expect(section).toContain("feature.icon === 'multilanguage'")
     expect(section).toContain("t('landingUiLanguagesLabel')")
