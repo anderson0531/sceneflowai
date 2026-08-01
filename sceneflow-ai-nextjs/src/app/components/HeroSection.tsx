@@ -10,10 +10,9 @@ import {
   VolumeX,
   Maximize2,
 } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import {
   DEFAULT_HERO_VIDEO_LOCALE,
-  HERO_VIDEO_LOCALE_STORAGE_KEY,
   HERO_VIDEO_UNMUTE_DISMISSED_KEY,
   getHeroVideoLocale,
   getHeroVideoLocalesAsVideoLocales,
@@ -21,18 +20,10 @@ import {
   getDefaultHeroVideoPoster,
   type HeroVideoLocaleId,
 } from '@/config/landing/heroVideoLocales'
+import { landingLocaleToVideoLocale } from '@/config/landing/videoLocales'
 import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
 import { HeroTheaterModal } from '@/components/landing/HeroTheaterModal'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
-
-function readStoredLocale(): HeroVideoLocaleId | null {
-  if (typeof window === 'undefined') return null
-  const stored = localStorage.getItem(HERO_VIDEO_LOCALE_STORAGE_KEY)
-  if (stored && getHeroVideoLocale(stored as HeroVideoLocaleId)?.available) {
-    return stored as HeroVideoLocaleId
-  }
-  return null
-}
 
 function readUnmuteDismissed(): boolean {
   if (typeof window === 'undefined') return false
@@ -58,15 +49,17 @@ function applyLocaleToVideo(
 
 export function HeroSection() {
   const t = useTranslations('hero')
+  const landingLocale = useLocale()
+  const syncedVideoLocale = landingLocaleToVideoLocale(landingLocale) as HeroVideoLocaleId
   const videoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [isPlaying, setIsPlaying] = useState(true)
   const [isMuted, setIsMuted] = useState(true)
   const [showUnmutePrompt, setShowUnmutePrompt] = useState(true)
   const [isTheaterOpen, setIsTheaterOpen] = useState(false)
-  const [activeLocale, setActiveLocale] = useState<HeroVideoLocaleId>(DEFAULT_HERO_VIDEO_LOCALE)
+  const [activeLocale, setActiveLocale] = useState<HeroVideoLocaleId>(syncedVideoLocale)
   const [inlineVideoLocale, setInlineVideoLocale] =
-    useState<HeroVideoLocaleId>(DEFAULT_HERO_VIDEO_LOCALE)
+    useState<HeroVideoLocaleId>(syncedVideoLocale)
   const suppressTheaterOpenUntilRef = useRef(0)
 
   const heroLocales = getHeroVideoLocalesAsVideoLocales()
@@ -76,13 +69,21 @@ export function HeroSection() {
   const videoPoster = inlineEntry.available ? inlineEntry.poster : getDefaultHeroVideoPoster()
 
   useEffect(() => {
-    const stored = readStoredLocale()
-    if (stored) {
-      setActiveLocale(stored)
-      setInlineVideoLocale(stored)
-    }
     setShowUnmutePrompt(!readUnmuteDismissed())
   }, [])
+
+  useEffect(() => {
+    const entry = getHeroVideoLocale(syncedVideoLocale)
+    if (!entry?.available) return
+
+    setActiveLocale(syncedVideoLocale)
+    setInlineVideoLocale(syncedVideoLocale)
+
+    const video = videoRef.current
+    if (video) {
+      applyLocaleToVideo(video, syncedVideoLocale, !video.paused)
+    }
+  }, [syncedVideoLocale])
 
   const unmuteWithSound = useCallback(() => {
     const video = videoRef.current
@@ -111,9 +112,6 @@ export function HeroSection() {
     if (!entry?.available) return
 
     setActiveLocale(id)
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(HERO_VIDEO_LOCALE_STORAGE_KEY, id)
-    }
 
     setInlineVideoLocale(id)
     const video = videoRef.current
