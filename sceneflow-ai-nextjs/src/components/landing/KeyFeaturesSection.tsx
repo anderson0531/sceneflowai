@@ -52,7 +52,7 @@ const LANDING_UI_LANGUAGES_BY_REGION = LANDING_TRANSLATE_LANGUAGES.reduce<
 
 function LandingUiLanguagesBlock({ label }: { label: string }) {
   return (
-    <div className="mt-4 rounded-xl border border-slate-800/80 bg-slate-950/40 p-4">
+    <div className="border-t border-slate-800 pt-4">
       <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">
         {label}
       </p>
@@ -209,10 +209,6 @@ export default function KeyFeaturesSection() {
                 <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
                 <p className="text-gray-400 text-sm leading-relaxed">{feature.description}</p>
 
-                {feature.icon === 'multilanguage' ? (
-                  <LandingUiLanguagesBlock label={t('landingUiLanguagesLabel')} />
-                ) : null}
-
                 <div className="mt-4 min-w-0">
                   <MultiLanguageVideoPlayer
                     locales={getKeyFeatureVideoLocales(feature.icon)}
@@ -275,6 +271,9 @@ export default function KeyFeaturesSection() {
                               label={t('outcomeLabel')}
                               text={feature.learnMore.outcome}
                             />
+                            {feature.icon === 'multilanguage' ? (
+                              <LandingUiLanguagesBlock label={t('landingUiLanguagesLabel')} />
+                            ) : null}
                           </div>
                         </motion.div>
                       )}

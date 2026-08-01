@@ -87,7 +87,7 @@ describe('keyFeatures structure', () => {
     expect(section).toContain("t('videoSoon')")
   })
 
-  it('lists landing UI languages on the multilanguage feature card', () => {
+  it('lists landing UI languages inside the multilanguage Learn more panel', () => {
     const section = readFileSync(
       path.join(ROOT, 'src/components/landing/KeyFeaturesSection.tsx'),
       'utf8'
@@ -95,5 +95,15 @@ describe('keyFeatures structure', () => {
     expect(section).toContain('LANDING_TRANSLATE_LANGUAGES')
     expect(section).toContain("feature.icon === 'multilanguage'")
     expect(section).toContain("t('landingUiLanguagesLabel')")
+    expect(section).toContain("t('outcomeLabel')")
+
+    const descriptionEnd = section.indexOf('{feature.description}')
+    const videoStart = section.indexOf('<MultiLanguageVideoPlayer')
+    const languagesBlock = section.indexOf('<LandingUiLanguagesBlock')
+    expect(descriptionEnd).toBeGreaterThan(-1)
+    expect(videoStart).toBeGreaterThan(descriptionEnd)
+    expect(languagesBlock).toBeGreaterThan(section.indexOf("t('outcomeLabel')"))
+    const betweenDescriptionAndVideo = section.slice(descriptionEnd, videoStart)
+    expect(betweenDescriptionAndVideo).not.toContain('LandingUiLanguagesBlock')
   })
 })
