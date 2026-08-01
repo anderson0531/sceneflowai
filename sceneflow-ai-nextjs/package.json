@@ -31,6 +31,7 @@
                 "i18n:generate:offline": "tsx scripts/build-landing-messages.ts && tsx scripts/generate-landing-locale-messages.ts --offline",
                 "i18n:sync-landing": "npx tsx scripts/sync-landing-locale-messages.ts",
                 "i18n:sync-landing:batches": "npx tsx scripts/run-landing-locale-batches.ts --priority-only --skip-existing --batch-size 15 --locale-delay-ms 5000 --batch-cooldown-ms 90000",
+                "i18n:sync-production-showcase": "npx tsx scripts/run-landing-locale-batches.ts --production-showcase-only --skip-existing --batch-size 10 --locale-delay-ms 8000 --batch-cooldown-ms 120000",
                 "i18n:translate-th": "tsx scripts/build-landing-messages.ts && tsx scripts/offline-translate-locale.ts --locale th"
         },
         "dependencies": {

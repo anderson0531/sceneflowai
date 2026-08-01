@@ -10,6 +10,8 @@
  *   npx tsx scripts/sync-landing-locale-messages.ts --provider mymemory
  *   npx tsx scripts/sync-landing-locale-messages.ts --batch-size 15 --batch 1
  *   npx tsx scripts/sync-landing-locale-messages.ts --batch-size 15 --batch 2 --skip-existing
+ *   npx tsx scripts/sync-landing-locale-messages.ts --production-showcase-only --locale th
+ *   npx tsx scripts/sync-landing-locale-messages.ts --namespaces=productionShowcase --batch-size 10 --batch 1
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
@@ -71,13 +73,36 @@ function parsePositiveInt(value: string | undefined, fallback: number): number {
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback
 }
 
-function isLocaleSynced(existing: Record<string, unknown>): boolean {
+function parseNamespacesArg(): readonly string[] | null {
+  const fromEquals = process.argv.find((a) => a.startsWith('--namespaces='))?.split('=')[1]
+  const fromFlag =
+    process.argv.includes('--namespaces') && process.argv.indexOf('--namespaces') >= 0
+      ? process.argv[process.argv.indexOf('--namespaces') + 1]
+      : undefined
+  const raw = fromEquals ?? fromFlag
+  if (!raw) return null
+  return raw.split(',').map((ns) => ns.trim()).filter(Boolean)
+}
+
+function isLocaleSynced(existing: Record<string, unknown>, syncScope: string): boolean {
+  if (syncScope === 'productionShowcase') {
+    const showcase = existing.productionShowcase as Record<string, unknown> | undefined
+    const badge = showcase?.badge
+    return Boolean(
+      badge &&
+        typeof badge === 'string' &&
+        badge !== 'Production Examples' &&
+        Array.isArray(showcase?.cards) &&
+        showcase.cards.length === 6
+    )
+  }
+
   const showcase = existing.useCasesShowcase as Record<string, unknown> | undefined
   const hero = existing.hero as Record<string, unknown> | undefined
   return Boolean(
     showcase?.cta &&
       hero?.ctaPrimaryLaunch &&
-      /\$\s*9|9\s*\$/.test(String(hero.ctaPrimaryLaunch))
+      /\$\s*9|9\s*\$|[9۹]/.test(String(hero.ctaPrimaryLaunch))
   )
 }
 
@@ -92,11 +117,26 @@ async function main() {
   const provider = (providerArg ?? 'auto') as TranslateProvider
   const priorityOnly = process.argv.includes('--priority-only')
   const criticalOnly = process.argv.includes('--critical-only')
+  const productionShowcaseOnly = process.argv.includes('--production-showcase-only')
+  const customNamespaces = parseNamespacesArg()
   const namespaces = criticalOnly
     ? []
-    : priorityOnly
-      ? PRIORITY_LANDING_NAMESPACES
-      : LANDING_NAMESPACES
+    : customNamespaces
+      ? customNamespaces
+      : productionShowcaseOnly
+        ? (['productionShowcase'] as readonly string[])
+        : priorityOnly
+          ? PRIORITY_LANDING_NAMESPACES
+          : LANDING_NAMESPACES
+  const syncScope = criticalOnly
+    ? 'landing-critical'
+    : customNamespaces?.length === 1 && customNamespaces[0] === 'productionShowcase'
+      ? 'productionShowcase'
+      : productionShowcaseOnly
+        ? 'productionShowcase'
+        : priorityOnly
+          ? 'landing-priority'
+          : 'landing'
 
   const en = JSON.parse(readFileSync(enPath, 'utf8')) as Record<string, unknown>
   const localeArgIndex = process.argv.indexOf('--locale')
@@ -144,9 +184,9 @@ async function main() {
     const localePath = join(MESSAGES_DIR, `${locale}.json`)
     if (skipExisting && existsSync(localePath)) {
       const existing = JSON.parse(readFileSync(localePath, 'utf8')) as Record<string, unknown>
-      if (isLocaleSynced(existing)) {
+      if (isLocaleSynced(existing, syncScope)) {
         console.log(`\n=== ${locale} ===`)
-        console.log('  Skipped (landing already synced)')
+        console.log(`  Skipped (${syncScope} already synced)`)
         continue
       }
     }
@@ -164,7 +204,7 @@ async function main() {
             : 'A-pending-review'
           : 'B-mt',
         mt: true,
-        scope: criticalOnly ? 'landing-critical' : priorityOnly ? 'landing-priority' : 'landing',
+        scope: syncScope,
       }
       console.log(`Wrote messages/${locale}.json (landing namespaces synced)`)
     } catch (err) {
@@ -188,9 +228,10 @@ async function main() {
     `${JSON.stringify(
       {
         ...existingReviewed,
-        landingSync: {
+        productionShowcaseSync: {
           provider,
-          scope: priorityOnly ? 'landing-priority-namespaces' : 'landing-namespaces',
+          scope: syncScope,
+          namespaces: criticalOnly ? [] : [...namespaces],
           batchSize: batchSize || null,
           batchNumber: batchSize > 0 ? batchNumber : null,
           syncedAt: new Date().toISOString(),

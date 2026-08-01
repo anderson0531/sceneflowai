@@ -5,6 +5,7 @@
  * Usage:
  *   npx tsx scripts/run-landing-locale-batches.ts
  *   npx tsx scripts/run-landing-locale-batches.ts --batch-size 15 --from-batch 2
+ *   npx tsx scripts/run-landing-locale-batches.ts --production-showcase-only --batch-size 10
  */
 
 import { spawnSync } from 'child_process'
@@ -25,30 +26,20 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+function getArgValue(flag: string, prefix: string): string | undefined {
+  const fromEquals = process.argv.find((a) => a.startsWith(`${prefix}=`))?.split('=')[1]
+  const fromFlag = process.argv.includes(flag) ? process.argv[process.argv.indexOf(flag) + 1] : undefined
+  return fromEquals ?? fromFlag
+}
+
 async function main() {
-  const batchSize = parsePositiveInt(
-    process.argv.find((a) => a.startsWith('--batch-size='))?.split('=')[1] ??
-      (process.argv.includes('--batch-size')
-        ? process.argv[process.argv.indexOf('--batch-size') + 1]
-        : undefined),
-    15
-  )
-  const fromBatch = parsePositiveInt(
-    process.argv.find((a) => a.startsWith('--from-batch='))?.split('=')[1] ??
-      (process.argv.includes('--from-batch')
-        ? process.argv[process.argv.indexOf('--from-batch') + 1]
-        : undefined),
-    1
-  )
-  const batchCooldownMs = parsePositiveInt(
-    process.argv.find((a) => a.startsWith('--batch-cooldown-ms='))?.split('=')[1],
-    90000
-  )
-  const localeDelayMs = parsePositiveInt(
-    process.argv.find((a) => a.startsWith('--locale-delay-ms='))?.split('=')[1],
-    5000
-  )
+  const batchSize = parsePositiveInt(getArgValue('--batch-size', '--batch-size'), 15)
+  const fromBatch = parsePositiveInt(getArgValue('--from-batch', '--from-batch'), 1)
+  const batchCooldownMs = parsePositiveInt(getArgValue('--batch-cooldown-ms', '--batch-cooldown-ms'), 90000)
+  const localeDelayMs = parsePositiveInt(getArgValue('--locale-delay-ms', '--locale-delay-ms'), 5000)
   const priorityOnly = process.argv.includes('--priority-only')
+  const productionShowcaseOnly = process.argv.includes('--production-showcase-only')
+  const namespaces = getArgValue('--namespaces', '--namespaces')
   const skipExisting = !process.argv.includes('--no-skip-existing')
 
   const localeCount = LANDING_TRANSLATE_LANGUAGES.filter((l) => l.code !== 'en').length
@@ -68,6 +59,8 @@ async function main() {
       `--locale-delay-ms=${localeDelayMs}`,
     ]
     if (priorityOnly) args.push('--priority-only')
+    if (productionShowcaseOnly) args.push('--production-showcase-only')
+    if (namespaces) args.push(`--namespaces=${namespaces}`)
     if (skipExisting) args.push('--skip-existing')
 
     const result = spawnSync('npx', ['tsx', ...args], {
