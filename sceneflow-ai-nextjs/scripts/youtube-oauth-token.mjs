@@ -7,9 +7,10 @@
  *   - OAuth client (Desktop app or Web) with redirect URI http://localhost:8765/oauth2callback
  *
  * Usage:
- *   GOOGLE_CLIENT_ID=... GOOGLE_CLIENT_SECRET=... node scripts/youtube-oauth-token.mjs
- *
- * Opens a browser URL, paste the redirect URL after consent, prints refresh_token.
+ *   node scripts/youtube-oauth-token.mjs
+ *   node scripts/youtube-oauth-token.mjs --print-url
+ *   node scripts/youtube-oauth-token.mjs --code "AUTH_CODE_FROM_REDIRECT_URL"
+ *   node scripts/youtube-oauth-token.mjs --redirect-url "http://localhost:8765/oauth2callback?code=..."
  */
 
 import http from 'http'
@@ -54,7 +55,51 @@ async function exchangeCode(code, clientId, clientSecret) {
   return res.json()
 }
 
+function printTokens(tokens) {
+  console.log('\n=== Tokens ===')
+  console.log('access_token:', tokens.access_token ? '(received)' : '(missing)')
+  console.log('\nAdd to .env.local:\n')
+  console.log(`YOUTUBE_REFRESH_TOKEN=${tokens.refresh_token || ''}`)
+  if (!tokens.refresh_token) {
+    console.warn('\nNo refresh_token returned. Revoke prior access and retry with prompt=consent.')
+  }
+}
+
+function buildAuthUrl(clientId) {
+  const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
+  authUrl.searchParams.set('client_id', clientId)
+  authUrl.searchParams.set('redirect_uri', REDIRECT_URI)
+  authUrl.searchParams.set('response_type', 'code')
+  authUrl.searchParams.set('scope', SCOPES)
+  authUrl.searchParams.set('access_type', 'offline')
+  authUrl.searchParams.set('prompt', 'consent')
+  return authUrl
+}
+
+function parseArgs(argv) {
+  let printUrl = false
+  let code = null
+  let redirectUrl = null
+
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i]
+    if (arg === '--print-url') printUrl = true
+    else if (arg === '--code' && argv[i + 1]) code = argv[++i]
+    else if (arg === '--redirect-url' && argv[i + 1]) redirectUrl = argv[++i]
+  }
+
+  return { printUrl, code, redirectUrl }
+}
+
+function extractCode({ code, redirectUrl }) {
+  if (code) return code
+  if (!redirectUrl) return null
+  const url = new URL(redirectUrl)
+  return url.searchParams.get('code')
+}
+
 async function main() {
+  const { printUrl, code, redirectUrl } = parseArgs(process.argv.slice(2))
   const clientId = process.env.GOOGLE_CLIENT_ID || process.env.GOOGLE_OAUTH_CLIENT_ID
   const clientSecret =
     process.env.GOOGLE_CLIENT_SECRET || process.env.GOOGLE_OAUTH_CLIENT_SECRET
@@ -64,17 +109,26 @@ async function main() {
     process.exit(1)
   }
 
-  const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
-  authUrl.searchParams.set('client_id', clientId)
-  authUrl.searchParams.set('redirect_uri', REDIRECT_URI)
-  authUrl.searchParams.set('response_type', 'code')
-  authUrl.searchParams.set('scope', SCOPES)
-  authUrl.searchParams.set('access_type', 'offline')
-  authUrl.searchParams.set('prompt', 'consent')
+  const authCode = extractCode({ code, redirectUrl })
+  if (authCode) {
+    const tokens = await exchangeCode(authCode, clientId, clientSecret)
+    printTokens(tokens)
+    return
+  }
+
+  const authUrl = buildAuthUrl(clientId)
+
+  if (printUrl) {
+    console.log(authUrl.toString())
+    console.log('\nAfter consent, copy the `code` query param from the redirect URL and run:')
+    console.log('  node scripts/youtube-oauth-token.mjs --code "YOUR_CODE"')
+    return
+  }
 
   console.log('\n1. Open this URL in a browser signed in as @sceneflowaistudio:\n')
   console.log(authUrl.toString())
   console.log('\n2. Waiting for redirect on', REDIRECT_URI, '...\n')
+  console.log('   (Or copy the code from the redirect URL and run with --code)\n')
 
   await new Promise((resolve, reject) => {
     const server = http.createServer(async (req, res) => {
@@ -106,13 +160,7 @@ async function main() {
         res.writeHead(200, { 'Content-Type': 'text/html' })
         res.end('<h1>Success</h1><p>You can close this tab.</p>')
 
-        console.log('\n=== Tokens ===')
-        console.log('access_token:', tokens.access_token ? '(received)' : '(missing)')
-        console.log('\nAdd to .env.local:\n')
-        console.log(`YOUTUBE_REFRESH_TOKEN=${tokens.refresh_token || ''}`)
-        if (!tokens.refresh_token) {
-          console.warn('\nNo refresh_token returned. Revoke prior access and retry with prompt=consent.')
-        }
+        printTokens(tokens)
 
         server.close()
         resolve(undefined)
