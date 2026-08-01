@@ -14,7 +14,7 @@
 รองรับการพากย์เสียงตัวละครหลักใน 7 ภาษา และมีกระบวนการทำงานที่รองรับได้มากกว่า 70 ภาษาในขั้นตอนการผลิตจริง
 
 🚀 เริ่มการผลิตของคุณ
-→ https://sceneflow.ai
+→ https://sceneflowai.studio
 เริ่มการผลิตของคุณ
 Start with the $9 Explorer plan. September Early Access cohort now forming.
 

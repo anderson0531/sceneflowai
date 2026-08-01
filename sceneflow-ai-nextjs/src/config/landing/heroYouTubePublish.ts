@@ -18,7 +18,7 @@ import {
 } from '@/config/landing/heroVideoLocales'
 
 export const HERO_YOUTUBE_BLOB_HOST = 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com'
-export const HERO_YOUTUBE_SITE_URL = 'https://sceneflow.ai'
+export const HERO_YOUTUBE_SITE_URL = 'https://sceneflowai.studio'
 
 export const HERO_YOUTUBE_CHANNEL_HANDLE = 'sceneflowaistudio'
 export const HERO_YOUTUBE_CHANNEL_ID = 'UCSXGf2gMfCRtktBCrFBDc0g'

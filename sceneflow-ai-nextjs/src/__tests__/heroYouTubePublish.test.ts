@@ -24,7 +24,7 @@ describe('Hero YouTube publish metadata', () => {
       expect(bundle.videoUrl).toMatch(/\.mp4$/)
       expect(bundle.thumbnailUrl).toMatch(/sceneflow-hero-.*-poster\.jpg$/)
       expect(bundle.tags.length).toBeGreaterThan(3)
-      expect(bundle.description).toContain('sceneflow.ai')
+      expect(bundle.description).toContain('sceneflowai.studio')
       expect(bundle.description).toContain('https://www.youtube.com/@sceneflowaistudio')
       expect(bundle.description).toContain('#SceneFlow')
       expect(bundle.description).toContain('•')
