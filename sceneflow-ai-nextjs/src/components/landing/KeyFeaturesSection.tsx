@@ -11,6 +11,7 @@ import {
   getDefaultKeyFeatureVideoLocale,
   getKeyFeatureVideoLocales,
 } from '@/config/landing/keyFeatureVideos'
+import { LANDING_TRANSLATE_LANGUAGES } from '@/config/landingTranslateLanguages'
 
 const SECTION_ID = 'key-features'
 
@@ -39,6 +40,41 @@ const CATEGORY_GRADIENTS: Record<CategoryId, string> = {
   create: 'from-indigo-500 to-violet-600',
   direct: 'from-emerald-500 to-teal-600',
   ship: 'from-amber-500 to-orange-600',
+}
+
+const LANDING_UI_LANGUAGES_BY_REGION = LANDING_TRANSLATE_LANGUAGES.reduce<
+  Record<string, string[]>
+>((groups, language) => {
+  if (!groups[language.region]) groups[language.region] = []
+  groups[language.region].push(language.name)
+  return groups
+}, {})
+
+function LandingUiLanguagesBlock({ label }: { label: string }) {
+  return (
+    <div className="mt-4 rounded-xl border border-slate-800/80 bg-slate-950/40 p-4">
+      <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">
+        {label}
+      </p>
+      <div className="space-y-3">
+        {Object.entries(LANDING_UI_LANGUAGES_BY_REGION).map(([region, names]) => (
+          <div key={region}>
+            <p className="text-[11px] font-medium text-emerald-400/90 mb-1.5">{region}</p>
+            <div className="flex flex-wrap gap-1.5">
+              {names.map((name) => (
+                <span
+                  key={name}
+                  className="rounded-md border border-slate-700/80 bg-slate-800/60 px-2 py-0.5 text-xs text-gray-300"
+                >
+                  {name}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 function LearnMoreRow({
@@ -172,6 +208,10 @@ export default function KeyFeaturesSection() {
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
                 <p className="text-gray-400 text-sm leading-relaxed">{feature.description}</p>
+
+                {feature.icon === 'multilanguage' ? (
+                  <LandingUiLanguagesBlock label={t('landingUiLanguagesLabel')} />
+                ) : null}
 
                 <div className="mt-4 min-w-0">
                   <MultiLanguageVideoPlayer

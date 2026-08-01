@@ -78,7 +78,7 @@
       }
     },
     "soon": "בחנות",
-    "ctaPrimaryLaunch": "השקת הסטודיו שלך (9 $) — עוקבת ספטמבר",
+    "ctaPrimaryLaunch": "התחל את הייצור שלך",
     "ctaSupportingLine": "התחילו עם התוכנית $ 9 Explorer. עוקבת הגישה המוקדמת לספטמבר נוצרת כעת.",
     "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
@@ -1737,7 +1737,7 @@
   "finalCta": {
     "title": "מוכנים לבדוק את הצינור המלא?",
     "subtitle": "סקריפטים ואופטימיזציה המופעלים על ידי Google, ממשק הדור שבחרת וסקירת Screening Room — הכל בסטודיו אחד. עוקבת הגישה המוקדמת לספטמבר נוצרת כעת — התחילו עם התוכנית $ 9 Explorer או הגישו בקשה לגישה ליוצרים מייסדים.",
-    "cta": "השקת הסטודיו שלך (9 $) — עוקבת ספטמבר",
+    "cta": "התחל את הייצור שלך",
     "ctaSecondary": "הגשת בקשה לגישה ליוצרים מייסדים",
     "ctaSecondaryHref": "/early-access"
   },
@@ -1783,7 +1783,7 @@
     "badge": "למי מיועד SceneFlow?",
     "title": "למי מיועד SceneFlow?",
     "subtitle": "מקונספט ל - Screening Room אנימציה לסרטון רב - לשוני שפורסם באופן אוטומטי — צנרת אוטומטית אחת, ארבע דרכים למשלוח.",
-    "cta": "השקת הסטודיו שלך (9 $) — עוקבת ספטמבר",
+    "cta": "התחל את הייצור שלך",
     "tabStory": "פתרון",
     "tabScreening": "‎Screening‎",
     "problemLabel": "הבעיה",
@@ -2143,5 +2143,8 @@
         "screeningRoomPreview": "הפקה: SFAISCREENING ROOMTER ביקורת"
       }
     ]
+  },
+  "keyFeatures": {
+    "landingUiLanguagesLabel": "דף הנחיתה זמין ב -39 שפות:"
   }
 }

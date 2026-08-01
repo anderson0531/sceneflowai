@@ -36,7 +36,7 @@
   "hero": {
     "headline": "You Direct the Story. SceneFlow Automates the Studio.",
     "subheadline": "Google-powered intelligence orchestrated on Google Cloud — with optional Google or Kling generation. Run your ideas through a seamless pipeline from blueprint to master MP4 without micro-prompting.",
-    "ctaPrimaryLaunch": "Launch Your Studio ($9) — September Cohort",
+    "ctaPrimaryLaunch": "Start Your Production",
     "ctaSupportingLine": "Start with the $9 Explorer plan. September Early Access cohort now forming.",
     "ctaSecondary": "Watch the 'What's Possible'",
     "ctaToolStack": "See how it replaces your tool stack",
@@ -294,7 +294,7 @@
     "badge": "Who is SceneFlow For?",
     "title": "Who is SceneFlow For?",
     "subtitle": "From concept to a Screening Room animatic to auto-published multilanguage video — one automated pipeline, four ways to ship.",
-    "cta": "Launch Your Studio ($9) — September Cohort",
+    "cta": "Start Your Production",
     "tabStory": "Solution",
     "tabScreening": "Screening",
     "problemLabel": "The Problem",
@@ -417,6 +417,7 @@
     "outcomeLabel": "The Payoff",
     "videoComingSoon": "Feature demo coming soon",
     "videoSoon": "Soon",
+    "landingUiLanguagesLabel": "Landing page available in 39 languages:",
     "categories": [
       {
         "id": "create",
@@ -2512,7 +2513,7 @@
   "finalCta": {
     "title": "Ready to test the full pipeline?",
     "subtitle": "Google-powered scripting and optimization, your choice of generation backend, and Screening Room review — all in one studio. September Early Access cohort now forming — start with the $9 Explorer plan or apply for Founding Creator access.",
-    "cta": "Launch Your Studio ($9) — September Cohort",
+    "cta": "Start Your Production",
     "ctaSecondary": "Apply for Founding Creator Access",
     "ctaSecondaryHref": "/early-access"
   },

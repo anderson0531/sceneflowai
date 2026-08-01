@@ -20,13 +20,10 @@ const REQUIRED_LANDING_KEYS = [
 ] as const
 
 const EXPLORER_PRICE_KEYS = [
-  'hero.ctaPrimaryLaunch',
   'hero.ctaSupportingLine',
-  'useCasesShowcase.cta',
   'pricing.title',
   'pricing.subtitle',
   'exitIntent.startNow',
-  'finalCta.cta',
   'finalCta.subtitle',
 ] as const
 
@@ -68,7 +65,9 @@ describe('landing locale copy', () => {
     for (const path of EXPLORER_PRICE_KEYS) {
       expect(hasExplorerPrice(String(getAtPath(enMessages, path)))).toBe(true)
     }
-    expect(String(enMessages.hero.ctaPrimaryLaunch)).toContain('September')
+    expect(String(enMessages.hero.ctaPrimaryLaunch)).toBe('Start Your Production')
+    expect(String(enMessages.useCasesShowcase.cta)).toBe('Start Your Production')
+    expect(String(enMessages.finalCta.cta)).toBe('Start Your Production')
     expect(String(enMessages.finalCta.subtitle)).toContain('September')
   })
 
@@ -98,7 +97,7 @@ describe('landing locale copy', () => {
       const finalSubtitle = String(getAtPath(localeMessages, 'finalCta.subtitle'))
       const pricingSubtitle = String(getAtPath(localeMessages, 'pricing.subtitle'))
 
-      expect(ctaPrimary.length).toBeGreaterThan(10)
+      expect(ctaPrimary.length).toBeGreaterThan(4)
       expect(finalSubtitle.length).toBeGreaterThan(20)
       expect(pricingSubtitle.length).toBeGreaterThan(20)
 

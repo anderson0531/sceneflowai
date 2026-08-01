@@ -78,7 +78,7 @@
       }
     },
     "soon": "Brzy",
-    "ctaPrimaryLaunch": "Spusťte své studio (9 $) — zářijová kohorta",
+    "ctaPrimaryLaunch": "Spustit výrobu",
     "ctaSupportingLine": "Začněte s plánem Explorer za 9 $. Zářijová kohorta předčasného přístupu se nyní vytváří.",
     "videoLanguageCount": "{count, plural, =1 {# language} ostatní {# languages}}"
   },
@@ -1737,7 +1737,7 @@
   "finalCta": {
     "title": "Jste připraveni otestovat celý ropovod?",
     "subtitle": "Skriptování a optimalizace poháněné Googlem, vaše volba generačního backendu a recenze Screening Room — vše v jednom studiu. Zářijová kohorta předčasného přístupu se nyní vytváří — začněte s plánem Explorer za 9 $ nebo požádejte o zakládající přístup tvůrce.",
-    "cta": "Spusťte své studio (9 $) — zářijová kohorta",
+    "cta": "Spustit výrobu",
     "ctaSecondary": "Požádat o zakládající přístup pro tvůrce",
     "ctaSecondaryHref": "/early-access"
   },
@@ -1783,7 +1783,7 @@
     "badge": "Pro koho je SceneFlow?",
     "title": "Pro koho je SceneFlow?",
     "subtitle": "Od konceptu k Screening Room animatickému až po auto-publikované vícejazyčné video — jeden automatizovaný kanál, čtyři způsoby odeslání.",
-    "cta": "Spusťte své studio (9 $) — zářijová kohorta",
+    "cta": "Spustit výrobu",
     "tabStory": "Řešení",
     "tabScreening": "Screening",
     "problemLabel": "Popis problému",
@@ -2143,5 +2143,8 @@
         "screeningRoomPreview": "Výroba dokumentů - Screening Room Náhled"
       }
     ]
+  },
+  "keyFeatures": {
+    "landingUiLanguagesLabel": "Vstupní stránka je k dispozici ve 39 jazycích:"
   }
 }

@@ -78,7 +78,7 @@
       }
     },
     "soon": "即將",
-    "ctaPrimaryLaunch": "推出您的工作室（ $ 9 ） — 9月份羣組",
+    "ctaPrimaryLaunch": "開始你的作品",
     "ctaSupportingLine": "從$ 9 Explorer方案開始。9月搶先體驗組別正在組建中。",
     "videoLanguageCount": "{count, plural, = 1 {#語言} other {#語言}}"
   },
@@ -1737,7 +1737,7 @@
   "finalCta": {
     "title": "準備好測試完整管線了嗎？",
     "subtitle": "Google支援的腳本和優化、您選擇的生成後端以及Screening Room評論—都在一個工作室中。9月搶先試用羣組現正形成：從$ 9 Explorer計劃開始，或申請初代創作人權限。",
-    "cta": "推出您的工作室（ $ 9 ） — 9月份羣組",
+    "cta": "開始你的作品",
     "ctaSecondary": "申請初代創作人存取權限",
     "ctaSecondaryHref": "/early-access"
   },
@@ -1783,7 +1783,7 @@
     "badge": "SceneFlow代表誰？",
     "title": "SceneFlow代表誰？",
     "subtitle": "從概念到Screening Room動畫，再到自動發佈的多語言影片—一個自動化管道，四種運送方式。",
-    "cta": "推出您的工作室（ $ 9 ） — 9月份羣組",
+    "cta": "開始你的作品",
     "tabStory": "解決方法",
     "tabScreening": "甄別",
     "problemLabel": "問題",
@@ -2143,5 +2143,8 @@
         "screeningRoomPreview": "制片人:Screening Room 預覽"
       }
     ]
+  },
+  "keyFeatures": {
+    "landingUiLanguagesLabel": "登陸頁有 39 種語言版本："
   }
 }

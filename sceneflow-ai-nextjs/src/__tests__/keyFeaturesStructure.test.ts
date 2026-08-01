@@ -86,4 +86,14 @@ describe('keyFeatures structure', () => {
     expect(section).toContain("t('videoComingSoon')")
     expect(section).toContain("t('videoSoon')")
   })
+
+  it('lists landing UI languages on the multilanguage feature card', () => {
+    const section = readFileSync(
+      path.join(ROOT, 'src/components/landing/KeyFeaturesSection.tsx'),
+      'utf8'
+    )
+    expect(section).toContain('LANDING_TRANSLATE_LANGUAGES')
+    expect(section).toContain("feature.icon === 'multilanguage'")
+    expect(section).toContain("t('landingUiLanguagesLabel')")
+  })
 })

@@ -78,7 +78,7 @@
       }
     },
     "soon": "곧",
-    "ctaPrimaryLaunch": "스튜디오 시작 ($ 9) — 9월 코호트",
+    "ctaPrimaryLaunch": "당신의 생산 시작",
     "ctaSupportingLine": "$ 9 Explorer 요금제로 시작하세요. 9월 얼리 액세스 코호트가 형성됩니다.",
     "videoLanguageCount": "{count, plural, = 1 {# language} 기타 {# languages}}"
   },
@@ -1737,7 +1737,7 @@
   "finalCta": {
     "title": "전체 파이프라인을 테스트할 준비가 되셨나요?",
     "subtitle": "하나의 스튜디오에서 Google 기반 스크립팅 및 최적화, 세대 백엔드 선택, Screening Room 검토를 모두 수행할 수 있습니다. 9월 선공개 코호트 구성 — $ 9 Explorer 플랜으로 시작하거나 초기 크리에이터 이용을 신청하세요.",
-    "cta": "스튜디오 시작 ($ 9) — 9월 코호트",
+    "cta": "당신의 생산 시작",
     "ctaSecondary": "초기 크리에이터 액세스 신청하기",
     "ctaSecondaryHref": "/early-access"
   },
@@ -1783,7 +1783,7 @@
     "badge": "SceneFlow은 누구를 위한 것인가요?",
     "title": "SceneFlow은 누구를 위한 것인가요?",
     "subtitle": "컨셉부터 Screening Room 애니메이션, 자동 게시된 다국어 동영상까지, 하나의 자동 파이프라인으로 4가지 배송 방법을 제공합니다.",
-    "cta": "스튜디오 시작 ($ 9) — 9월 코호트",
+    "cta": "당신의 생산 시작",
     "tabStory": "솔루션",
     "tabScreening": "화면",
     "problemLabel": "문제",
@@ -2143,5 +2143,8 @@
         "screeningRoomPreview": "다큐멘터리 제작 — Screening Room 다운로드"
       }
     ]
+  },
+  "keyFeatures": {
+    "landingUiLanguagesLabel": "39개 언어로 제공되는 랜딩 페이지:"
   }
 }

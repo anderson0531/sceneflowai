@@ -78,7 +78,7 @@
       }
     },
     "soon": "すぐに",
-    "ctaPrimaryLaunch": "スタジオを立ち上げる（ $ 9 ） — 9月のコホート",
+    "ctaPrimaryLaunch": "生産を開始",
     "ctaSupportingLine": "$ 9 Explorerプランから始めましょう。9月の早期アクセスコーホートが形成されています。",
     "videoLanguageCount": "{count, plural, = 1 {#言語} other {#言語}}"
   },
@@ -1737,7 +1737,7 @@
   "finalCta": {
     "title": "パイプライン全体をテストする準備はできましたか？",
     "subtitle": "Googleが提供するスクリプトと最適化、選択した生成バックエンド、およびScreening Roomレビュー—すべてを1つのスタジオで。9月の早期アクセスコホートが形成されています。$ 9 Explorerプランから始めるか、初代クリエイターアクセスを申請してください。",
-    "cta": "スタジオを立ち上げる（ $ 9 ） — 9月のコホート",
+    "cta": "生産を開始",
     "ctaSecondary": "ファウンディングクリエイターアクセスを申請する",
     "ctaSecondaryHref": "/early-access"
   },
@@ -1783,7 +1783,7 @@
     "badge": "SceneFlowは誰のためのものですか？",
     "title": "SceneFlowは誰のためのものですか？",
     "subtitle": "コンセプトからScreening Roomアニメーションから自動公開された多言語ビデオまで、1つの自動パイプライン、4つの出荷方法。",
-    "cta": "スタジオを立ち上げる（ $ 9 ） — 9月のコホート",
+    "cta": "生産を開始",
     "tabStory": "解決方法",
     "tabScreening": "スクリーニング",
     "problemLabel": "問題",
@@ -2143,5 +2143,8 @@
         "screeningRoomPreview": "ドキュメンタリー制作 — Screening Room プレビュー"
       }
     ]
+  },
+  "keyFeatures": {
+    "landingUiLanguagesLabel": "ランディング ページは 39 言語で利用可能:"
   }
 }

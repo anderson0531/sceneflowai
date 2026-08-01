@@ -78,7 +78,7 @@
       }
     },
     "soon": "hamarosan",
-    "ctaPrimaryLaunch": "Indítsd el a stúdiódat ($ 9) — szeptemberi kohorsz",
+    "ctaPrimaryLaunch": "A produkció megkezdése",
     "ctaSupportingLine": "Kezdje a $ 9 Explorer csomaggal. Szeptemberi korai hozzáférésű kohorsz alakul.",
     "videoLanguageCount": "{count, plural, =1 {# language} egyéb {# languages}}"
   },
@@ -1737,7 +1737,7 @@
   "finalCta": {
     "title": "Készen áll a teljes csővezeték tesztelésére?",
     "subtitle": "A Google által működtetett szkriptek és optimalizálás, az Ön által választott generációs backend és a Screening Room felülvizsgálata — mindez egyetlen stúdióban. Szeptemberi korai hozzáférésű kohorsz — kezdd a $ 9 Explorer tervvel, vagy igényelj Alapító Alkotói hozzáférést.",
-    "cta": "Indítsd el a stúdiódat ($ 9) — szeptemberi kohorsz",
+    "cta": "A produkció megkezdése",
     "ctaSecondary": "Jelentkezés az alapító alkotó hozzáférésére",
     "ctaSecondaryHref": "/early-access"
   },
@@ -1783,7 +1783,7 @@
     "badge": "Kinek szól a SceneFlow?",
     "title": "Kinek szól a SceneFlow?",
     "subtitle": "A koncepciótól a Screening Room animációig az automatikusan közzétett többnyelvű videóig — egy automatizált csővezeték, négyféle szállítási mód.",
-    "cta": "Indítsd el a stúdiódat ($ 9) — szeptemberi kohorsz",
+    "cta": "A produkció megkezdése",
     "tabStory": "Megoldás",
     "tabScreening": "Szűrés",
     "problemLabel": "Problémameghatározás",
@@ -2143,5 +2143,8 @@
         "screeningRoomPreview": "Dokumentumgyártás - Screening Room Előnézet"
       }
     ]
+  },
+  "keyFeatures": {
+    "landingUiLanguagesLabel": "A nyitóoldal 39 nyelven érhető el:"
   }
 }

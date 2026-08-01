@@ -78,7 +78,7 @@
       }
     },
     "soon": "Pouco tempo depois",
-    "ctaPrimaryLaunch": "Inicie Seu Estúdio ($ 9) — Grupo de Setembro",
+    "ctaPrimaryLaunch": "Inicie a sua produção",
     "ctaSupportingLine": "Comece com o plano $ 9 Explorer. Coorte de Acesso Antecipado de Setembro agora em formação.",
     "videoLanguageCount": "{count, plural, =1 {# idioma} other {# idiomas}}"
   },
@@ -1737,7 +1737,7 @@
   "finalCta": {
     "title": "Pronto para testar todo o pipeline?",
     "subtitle": "Scripts e otimização baseados no Google, sua escolha de back-end de geração e revisão Screening Room — tudo em um único estúdio. Grupo de Acesso Antecipado de setembro em formação — comece com o plano $ 9 Explorer ou candidate-se ao acesso de Criador Fundador.",
-    "cta": "Inicie Seu Estúdio ($ 9) — Grupo de Setembro",
+    "cta": "Inicie a sua produção",
     "ctaSecondary": "Candidate-se ao Acesso de Criador Fundador",
     "ctaSecondaryHref": "/early-access"
   },
@@ -1783,7 +1783,7 @@
     "badge": "Para quem é o SceneFlow?",
     "title": "Para quem é o SceneFlow?",
     "subtitle": "Do conceito a um Screening Room animatic a um vídeo multilíngue publicado automaticamente — um pipeline automatizado, quatro maneiras de enviar.",
-    "cta": "Inicie Seu Estúdio ($ 9) — Grupo de Setembro",
+    "cta": "Inicie a sua produção",
     "tabStory": "Solução",
     "tabScreening": "Avaliação",
     "problemLabel": "O problema",
@@ -2324,7 +2324,8 @@
           }
         ]
       }
-    ]
+    ],
+    "landingUiLanguagesLabel": "Página de destino disponível em 39 idiomas:"
   },
   "pipeline": {
     "badge": "O que é SceneFlow?",

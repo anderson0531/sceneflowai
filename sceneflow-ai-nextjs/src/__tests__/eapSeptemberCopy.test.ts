@@ -39,11 +39,11 @@ describe('EAP September 2026 copy', () => {
     }
   })
 
-  it('uses September timing and $9 in hero and final CTAs', () => {
-    expect(HERO_COPY.ctaPrimaryLaunch).toContain('September')
-    expect(HERO_COPY.ctaPrimaryLaunch).toContain('$9')
+  it('uses September timing and $9 in supporting copy, not primary button CTAs', () => {
+    expect(HERO_COPY.ctaPrimaryLaunch).toBe('Start Your Production')
+    expect(FINAL_CTA_COPY.cta).toBe('Start Your Production')
     expect(HERO_COPY.ctaSupportingLine).toContain('September')
-    expect(FINAL_CTA_COPY.cta).toContain('September')
+    expect(HERO_COPY.ctaSupportingLine).toContain('$9')
     expect(FINAL_CTA_COPY.subtitle).toContain('September')
   })
 

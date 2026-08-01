@@ -78,7 +78,7 @@
       }
     },
     "soon": "Tidak lama lagi",
-    "ctaPrimaryLaunch": "Lancarkan Studio Anda ($ 9) — Kohort September",
+    "ctaPrimaryLaunch": "Mula Produksi Anda",
     "ctaSupportingLine": "Mulakan dengan pelan Explorer $ 9. Kohort Akses Awal September kini terbentuk.",
     "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
@@ -1737,7 +1737,7 @@
   "finalCta": {
     "title": "Bersedia untuk menguji saluran paip penuh?",
     "subtitle": "Skrip dan pengoptimuman berkuasa Google, backend penjanaan pilihan anda, dan ulasan Screening Room — semuanya dalam satu studio. Kohort Akses Awal September kini terbentuk — mulakan dengan pelan Explorer $ 9 atau mohon akses Pengkarya Pengasas.",
-    "cta": "Lancarkan Studio Anda ($ 9) — Kohort September",
+    "cta": "Mula Produksi Anda",
     "ctaSecondary": "Mohon Akses Pengkarya Pengasas",
     "ctaSecondaryHref": "/early-access"
   },
@@ -1783,7 +1783,7 @@
     "badge": "Untuk siapa SceneFlow?",
     "title": "Untuk siapa SceneFlow?",
     "subtitle": "Daripada konsep kepada animasi Screening Room kepada video pelbagai bahasa yang diterbitkan secara automatik — satu saluran paip automatik, empat cara untuk menghantar.",
-    "cta": "Lancarkan Studio Anda ($ 9) — Kohort September",
+    "cta": "Mula Produksi Anda",
     "tabStory": "Penyelesaian",
     "tabScreening": "Penapisan",
     "problemLabel": "masalah",
@@ -2143,5 +2143,8 @@
         "screeningRoomPreview": "Produksi Dokumenter Dokumenter — Screening Room Pratonton"
       }
     ]
+  },
+  "keyFeatures": {
+    "landingUiLanguagesLabel": "Halaman pendaratan tersedia dalam 39 bahasa:"
   }
 }

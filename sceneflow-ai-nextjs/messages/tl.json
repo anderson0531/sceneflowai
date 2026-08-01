@@ -78,7 +78,7 @@
       }
     },
     "soon": "gagawin ko iyon sa lalong madaling panahon",
-    "ctaPrimaryLaunch": "Ilunsad ang Iyong Studio ($ 9) — Setyembre Cohort",
+    "ctaPrimaryLaunch": "Magsimula sa Iyong Produksiyon",
     "ctaSupportingLine": "Magsimula sa plano ng $ 9 Explorer. Setyembre Maagang Access cohort ngayon bumubuo.",
     "videoLanguageCount": "{count, plural, =1 {# language} iba pang {# languages}}"
   },
@@ -1737,7 +1737,7 @@
   "finalCta": {
     "title": "Handa nang subukan ang buong pipeline?",
     "subtitle": "Google - powered scripting at pag - optimize, ang iyong pagpili ng henerasyon backend, at Screening Room review — lahat sa isang studio. Setyembre Maagang Access cohort ngayon bumubuo — magsimula sa $ 9 Explorer plano o mag - aplay para sa Founding Creator access.",
-    "cta": "Ilunsad ang Iyong Studio ($ 9) — Setyembre Cohort",
+    "cta": "Magsimula sa Iyong Produksiyon",
     "ctaSecondary": "Mag - apply para sa Access ng Founding Creator",
     "ctaSecondaryHref": "/early-access"
   },
@@ -1783,7 +1783,7 @@
     "badge": "Sino ang SceneFlow Para sa?",
     "title": "Sino ang SceneFlow Para sa?",
     "subtitle": "Mula sa konsepto sa isang Screening Room animatic sa auto - publish multilanguage video — isang automated pipeline, apat na paraan upang ipadala.",
-    "cta": "Ilunsad ang Iyong Studio ($ 9) — Setyembre Cohort",
+    "cta": "Magsimula sa Iyong Produksiyon",
     "tabStory": "Solution",
     "tabScreening": "Pagskreen",
     "problemLabel": "Ang problema? ",
@@ -2143,5 +2143,8 @@
         "screeningRoomPreview": "Dokumentaryong Produksiyon — PAGSUSULONG ROOMTERM Patiunang Pag - isipan"
       }
     ]
+  },
+  "keyFeatures": {
+    "landingUiLanguagesLabel": "Available ang landing page sa 39 na wika:"
   }
 }

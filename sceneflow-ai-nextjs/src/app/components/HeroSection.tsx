@@ -9,6 +9,7 @@ import {
   Volume2,
   VolumeX,
   Maximize2,
+  ArrowRight,
 } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
 import {
@@ -370,6 +371,7 @@ export function HeroSection() {
                 onClick={scrollToCheckout}
               >
                 {t('ctaPrimaryLaunch')}
+                <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
               {t('ctaSupportingLine') && (
                 <p className="max-w-md text-sm text-gray-400">{t('ctaSupportingLine')}</p>

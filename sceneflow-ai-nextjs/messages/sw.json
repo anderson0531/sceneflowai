@@ -78,7 +78,7 @@
       }
     },
     "soon": "Soon",
-    "ctaPrimaryLaunch": "Launch Your Studio ($9) — September Cohort",
+    "ctaPrimaryLaunch": "Kuanza uzalishaji wako",
     "ctaSupportingLine": "Start with the $9 Explorer plan. September Early Access cohort now forming.",
     "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
@@ -1737,7 +1737,7 @@
   "finalCta": {
     "title": "Ready to test the full pipeline?",
     "subtitle": "Google-powered scripting and optimization, your choice of generation backend, and Screening Room review — all in one studio. September Early Access cohort now forming — start with the $9 Explorer plan or apply for Founding Creator access.",
-    "cta": "Launch Your Studio ($9) — September Cohort",
+    "cta": "Kuanza uzalishaji wako",
     "ctaSecondary": "Apply for Founding Creator Access",
     "ctaSecondaryHref": "/early-access"
   },
@@ -1783,7 +1783,7 @@
     "badge": "Who is SceneFlow For?",
     "title": "Who is SceneFlow For?",
     "subtitle": "From concept to a Screening Room animatic to auto-published multilanguage video — one automated pipeline, four ways to ship.",
-    "cta": "Launch Your Studio ($9) — September Cohort",
+    "cta": "Kuanza uzalishaji wako",
     "tabStory": "Solution",
     "tabScreening": "Screening",
     "problemLabel": "The Problem",
@@ -2143,5 +2143,8 @@
         "screeningRoomPreview": "Uzalishaji wa filamu: Screening Room Preview Preview Preview Preview"
       }
     ]
+  },
+  "keyFeatures": {
+    "landingUiLanguagesLabel": "Ukurasa wa kuingia unapatikana katika lugha 39:"
   }
 }

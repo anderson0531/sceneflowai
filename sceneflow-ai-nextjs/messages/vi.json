@@ -78,7 +78,7 @@
       }
     },
     "soon": "ốc",
-    "ctaPrimaryLaunch": "Ra mắt Studio của bạn ($ 9) — Nhóm tháng 9",
+    "ctaPrimaryLaunch": "Bắt đầu sản xuất",
     "ctaSupportingLine": "Bắt đầu với gói Explorer $ 9. Nhóm Early Access tháng 9 hiện đang hình thành.",
     "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
@@ -1737,7 +1737,7 @@
   "finalCta": {
     "title": "Bạn đã sẵn sàng để thử nghiệm toàn bộ quy trình?",
     "subtitle": "Kịch bản và tối ưu hóa do Google hỗ trợ, lựa chọn phụ trợ thế hệ của bạn và đánh giá Screening Room — tất cả trong một studio. Nhóm Thử nghiệm trước tháng 9 hiện đang hình thành — hãy bắt đầu với gói $ 9 Explorer hoặc đăng ký quyền truy cập của Người sáng tạo sáng lập.",
-    "cta": "Ra mắt Studio của bạn ($ 9) — Nhóm tháng 9",
+    "cta": "Bắt đầu sản xuất",
     "ctaSecondary": "Đăng ký quyền truy cập của Người sáng tạo sáng lập",
     "ctaSecondaryHref": "/early-access"
   },
@@ -1783,7 +1783,7 @@
     "badge": "SceneFlow dành cho ai?",
     "title": "SceneFlow dành cho ai?",
     "subtitle": "Từ ý tưởng đến Screening Room hoạt hình đến video đa ngôn ngữ được xuất bản tự động — một đường ống tự động, bốn cách để vận chuyển.",
-    "cta": "Ra mắt Studio của bạn ($ 9) — Nhóm tháng 9",
+    "cta": "Bắt đầu sản xuất",
     "tabStory": "Giải pháp",
     "tabScreening": "Sàng lọc",
     "problemLabel": "Đặt vấn đề",
@@ -2143,5 +2143,8 @@
         "screeningRoomPreview": "Sản xuất tài liệu — SceneFlow AI Xem thử"
       }
     ]
+  },
+  "keyFeatures": {
+    "landingUiLanguagesLabel": "Trang đích có sẵn bằng 39 ngôn ngữ:"
   }
 }
