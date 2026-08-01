@@ -51,9 +51,10 @@ async function main() {
 
   for (let batch = fromBatch; batch <= totalBatches; batch++) {
     console.log(`\n########## Batch ${batch}/${totalBatches} ##########`)
+    const providerArg = getArgValue('--provider', '--provider') ?? 'auto'
     const args = [
       SYNC_SCRIPT,
-      '--provider=mymemory',
+      `--provider=${providerArg}`,
       `--batch-size=${batchSize}`,
       `--batch=${batch}`,
       `--locale-delay-ms=${localeDelayMs}`,
@@ -66,7 +67,10 @@ async function main() {
     const result = spawnSync('npx', ['tsx', ...args], {
       cwd: ROOT,
       stdio: 'inherit',
-      env: process.env,
+      env: {
+        ...process.env,
+        USE_LIBRETRANSLATE: process.env.USE_LIBRETRANSLATE ?? '1',
+      },
     })
 
     if (result.status !== 0) {

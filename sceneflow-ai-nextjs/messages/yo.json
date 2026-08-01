@@ -1778,5 +1778,254 @@
     "title": "Who is SceneFlow For?",
     "subtitle": "From concept to a Screening Room animatic to auto-published multilanguage video — one automated pipeline, four ways to ship.",
     "cta": "Launch Your Studio ($9) — September Cohort"
+  },
+  "productionShowcase": {
+    "badge": "Awọn apẹẹrẹ iṣelọpọ",
+    "title": "Lati Ero si Iboju:",
+    "titleAccent": "Awọn aye ailopin",
+    "subtitle": "Awọn iṣelọpọ gbangba mẹfa ṣe afihan opo gigun ti epo - pre-vis, fidio iwoye, ati atunyẹwo Screening Room. Ṣetumo ero rẹ ki o jẹ ki SceneFlow mu kikọ iwe afọwọkọ, apẹrẹ ohun kikọ, ohun ti o ni ede pupọ, wiwo, iṣelọpọ fidio, ati titẹjade.",
+    "subtitleTagline": "Syeed kan. Awọn aye ailopin.",
+    "publicProductionsNote": "Kaadi kọọkan ti o wa ni isalẹ jẹ iṣelọpọ ti gbogbo eniyan ni pipe - yipada Awọn solusan ati awọn taabu Screening Room lati rin opo gigun ti epo.",
+    "languagesBanner": "Awọn apẹẹrẹ ti gbogbo eniyan gbe ni awọn ede 7: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
+    "explorePipelineCta": "Ye kan ni kikun gbóògì",
+    "explorePipelineHint": "Bẹrẹ pẹlu eré Cinematic ni isalẹ - Awọn ojutu fun demo reel, Screening Room fun ṣiṣayẹwo atunyẹwo kikun.",
+    "workflowLabel": "Awọn ojutu",
+    "startProduction": "Bẹrẹ iṣelọpọ rẹ",
+    "cta": "Bẹrẹ iṣelọpọ rẹ",
+    "continuityNote": "Series Studio n ṣakoso ilọsiwaju",
+    "resonanceNote": "Audience Resonance™ nmu awọn iwe afọwọkọ ṣiṣẹ",
+    "videoLanguagePrompt": "Wo iṣelọpọ yii ni ede rẹ",
+    "videoComingSoon": "Dub nbo laipe",
+    "videoSoon": "Laipe",
+    "introVideoLabel": "Awọn ojutu",
+    "screeningRoomLabel": "Screening Room",
+    "frictionLabel": "The edekoyede",
+    "solutionPillarLabel": "Ojutu SceneFlow",
+    "showSolutionsSection": "Ṣe afihan Awọn solusan",
+    "hideSolutionsSection": "Tọju Awọn ojutu",
+    "cards": [
+      {
+        "id": "drama",
+        "title": "Cinematic AI Drama. Odo kikọ fiseete.",
+        "subtitle": "Imukuro awọn ohun kikọ morphing, ọrọ sisọ ti bajẹ, ati awọn yipo ailopin. Kọ awọn itan-fọọmu gigun-gigun ti ohun kikọ silẹ ti o ni ailopin, pẹlu ilosiwaju wiwo pipe.",
+        "badge": "Series-Ṣetan",
+        "solutionPillars": [
+          {
+            "title": "Visual & Iduroṣinṣin ihuwasi",
+            "frictionHeadline": "Ohun kikọ Drift & Wobbly Eto.",
+            "friction": "Awọn awoṣe ipilẹṣẹ tunto pẹlu gbogbo ibọn-nfa awọn oju ihuwasi, awọn aṣọ, ati ina lati morph nigbagbogbo kọja awọn gige iwoye.",
+            "solutionHeadline": "Titiipa dukia Blueprints.",
+            "solution": "Ṣetumo awọn profaili ihuwasi titunto si, awọn agbegbe, ati awọn ara wiwo ni iwaju ni Blueprint Studio. SceneFlow fi agbara mu idanimọ wiwo kọja gbogbo ṣiṣe lati ṣe itọju ibọmi itan."
+          },
+          {
+            "title": "Pacing itan & Iṣakoso Iwoye",
+            "frictionHeadline": "Pakute Agekuru 10-keji.",
+            "friction": "Ṣiṣe fiimu kan kuro ninu awọn ifọrọwerọ-kekere ti a ti ge asopọ ṣẹda pacing choppy, imolara alapin, ati ṣiṣatunṣe aago afọwọṣe ailopin.",
+            "solutionHeadline": "Lu-First Storyboarding.",
+            "solution": "Taara ni ipele ipele, kii ṣe ipele kiakia. Ṣeto awọn lilu iyalẹnu, awọn agbeka kamẹra, ati awọn arcs itan ni wiwo ṣaaju ṣiṣe ipilẹṣẹ fireemu kan ti fidio."
+          },
+          {
+            "title": "Ifọrọwọrọ & Iṣatunṣe Ohun",
+            "frictionHeadline": "Ifọrọwọrọ ti ko ni idaniloju.",
+            "friction": "Imuṣiṣẹpọ ete ti ko baamu, awọn agbeka ẹnu lilefoofo, ati awọn orin ohun ti o ya sọtọ lẹsẹkẹsẹ fa awọn oluwo jade kuro ninu eré naa.",
+            "solutionHeadline": "Ohùn Iṣọkan & Ẹrọ Amuṣiṣẹpọ.",
+            "solution": "Iṣe ohun ti o ni agbara ati imuṣiṣẹpọ ete kongẹ ni a yan taara sinu opo gigun ti epo fidio—fifiranṣẹ ifọrọwerọ igbagbọ laisi awọn gbigbejade igbejade ita ita."
+          },
+          {
+            "title": "Idakeji bisesenlo & Reroll Reroll",
+            "frictionHeadline": "Idarudapọ Dukia & Awọn Yipo Ailopin.",
+            "friction": "Ṣiṣẹda fiimu kukuru nigbagbogbo tumọ si juggling 200+ awọn faili fidio aise, igbega afọwọṣe, ati awọn dosinni ti awọn iran asonu.",
+            "solutionHeadline": "Aládàáṣiṣẹ Studio Pipeline.",
+            "solution": "Lati imọran si MP4 titunto si ipari ni pẹpẹ iṣọkan kan. Blueprint Studio n ṣakoso iṣeto itan, Production Studio ṣe adaṣe adaṣe, ati Screening Room ṣe jiṣẹ okeere okeere rẹ ti o kẹhin."
+          }
+        ],
+        "screeningRoomPreview": "Ere Cinematic — Screening Room Awotẹlẹ"
+      },
+      {
+        "id": "animation",
+        "title": "O Kọ Awada naa. SceneFlow Ṣe ere Punchline naa.",
+        "subtitle": "Mu yiyọ ara kuro, gbigbe lile, ati akoko fifọ. Yipada awọn iwe afọwọkọ panilerin sinu ere idaraya ni kikun, awọn iṣẹlẹ awada ti a muṣiṣẹpọ pẹlu ohun ni ile-iṣere alailẹgbẹ kan.",
+        "badge": "Olona-ara",
+        "solutionPillars": [
+          {
+            "title": "Iduroṣinṣin Stylistic",
+            "frictionHeadline": "Style Meltdown.",
+            "friction": "Cartoons ati awọn aza anime nigbagbogbo n ja laarin awọn iyaworan, aworan laini iyipada, awọn paleti awọ fifọ, ati awọn ohun kikọ morphing sinu slop aibikita aworan gidi.",
+            "solutionHeadline": "Titiipa Art Style Engine.",
+            "solution": "Di rẹ darapupo lati akọkọ fireemu. SceneFlow ṣe titiipa awọn apẹrẹ ohun kikọ, awọn iwuwo laini, ati awọn awoṣe iboji kọja gbogbo iṣẹlẹ ki awọn ohun kikọ rẹ duro ni iyasọtọ tirẹ."
+          },
+          {
+            "title": "abumọ Animation & Fisiksi",
+            "frictionHeadline": "Gan & Glitchy išipopada.",
+            "friction": "Awọn awoṣe ti ipilẹṣẹ n tiraka pẹlu iyara slapstick, awọn mimu-meji, ati fisiksi cartoon squishy, ​​titan awọn gags agbara-giga sinu awọn ohun-ọṣọ yo.",
+            "solutionHeadline": "Action & duro Anchoring.",
+            "solution": "Wakọ gbigbe ohun kikọ ti o ni agbara ati awọn iduro asọye laisi fifọ geometry. Taara punchy ti ara awada, lojiji cutaways, ati egan expressions pẹlu ni kikun išipopada Iṣakoso."
+          },
+          {
+            "title": "Apanilẹrin Time & Rhythm",
+            "frictionHeadline": "Punchlines ti bajẹ.",
+            "friction": "Apanilẹrin ngbe ni awọn idaduro ati awọn gige-lilu. Standard 5-keji ti ipilẹṣẹ yipo ipa àìrọrùn pacing ti o run awada ifijiṣẹ.",
+            "solutionHeadline": "Lu-konge Editing.",
+            "solution": "Iṣakoso si nmu pacing si isalẹ lati awọn fireemu. Ṣatunṣe awọn idaduro to yanilenu, iṣeto-si-punchline, ati awọn iyaworan iyara taara inu akoko lilu-akọkọ ṣaaju ṣiṣe ipari."
+          },
+          {
+            "title": "Ifọrọwerọ Agbara-giga & Amuṣiṣẹpọ ohun",
+            "frictionHeadline": "Awọn Ẹnu Puppet ti ko ni aye.",
+            "friction": "Generic AI dialogue kan lara alapin ati darí, dabaru agbara nilo fun snappy sitcom banter.",
+            "solutionHeadline": "Ohun Yiyi & Imuṣiṣẹpọ Ikosile.",
+            "solution": "Ifijiṣẹ ohun maapu taara si iṣẹ oju agbara. Ifọrọwanilẹnuwo, awọn apẹrẹ ẹnu ikosile, ati awọn orin ohun apanilẹrin baramu lainidi fun ipa apanilẹrin ti o pọ julọ."
+          }
+        ],
+        "screeningRoomPreview": "Awada ti ere idaraya — Awotẹlẹ Screening Room"
+      },
+      {
+        "id": "podcast",
+        "title": "O Gbalejo Ifọrọranṣẹ naa. SceneFlow Ṣe agbejade Ifihan naa.",
+        "subtitle": "Yọ awọn avatars aimi kuro ati ṣiṣatunṣe fidio afọwọṣe. Yi awọn iwe afọwọkọ pada tabi ohun aise sinu igun-ọpọlọpọ, awọn adarọ-ese fidio ti o ti ṣetan ni opo gigun ti epo adaṣe kan.",
+        "badge": "Broadcast-Ṣetan",
+        "solutionPillars": [
+          {
+            "title": "Olona-Gbọrọsọ & Afata Idanimọ",
+            "frictionHeadline": "Robotic Avatars & Ti sọnu Idanimọ",
+            "friction": "Awọn agbalejo ti ipilẹṣẹ yipada awọn ifarahan aarin-iṣẹlẹ, wo kamẹra ni ṣofo, tabi kuna lati ṣafihan awọn ifihan micro-micro eniyan ti ara nigba gbigbọ.",
+            "solutionHeadline": "Titiipa Alejo & Awọn profaili alejo",
+            "solution": "Ṣeto idamọ wiwo itẹramọṣẹ fun awọn agbalejo rẹ ati awọn alejo loorekoore. SceneFlow n ṣetọju aitasera agbọrọsọ, olubasọrọ oju adayeba, ati ede ara ibaraẹnisọrọ gidi jakejado awọn ijiroro fọọmu gigun."
+          },
+          {
+            "title": "Itọsọna Kamẹra pupọ & Pacing",
+            "frictionHeadline": "monotonous Nikan-igun",
+            "friction": "Awọn Asokagba-ori sisọ-ọrọ aimi padanu idaduro awọn olugbo ni kiakia, lakoko ti o yipada kamẹra afọwọṣe kọja aago iṣẹju 30 nilo awọn gige-fireemu ti o nira.",
+            "solutionHeadline": "Aládàáṣiṣẹ Olona-Kame.awo-ori Yipada",
+            "solution": "SceneFlow ṣe itupalẹ ṣiṣan ibaraẹnisọrọ lati yipada laifọwọyi laarin awọn isunmọ ogun, awọn aati alejo, ati awọn iyaworan ile-iṣere igun jakejado, jiṣẹ gbigbe igbohunsafefe ọjọgbọn laisi ṣiṣatunṣe aago akoko afọwọṣe."
+          },
+          {
+            "title": "Ọrọ-Aware B-Roll & Awọn wiwo",
+            "frictionHeadline": "Visual Monotony & B-Roll Bottlenecks",
+            "friction": "Wiwa, ipilẹṣẹ, ati akoko awọn iranlọwọ wiwo ti o yẹ tabi awọn agekuru B-roll fun gbogbo koko-ọrọ ti a mẹnuba njẹ awọn wakati ti iṣelọpọ lẹhin.",
+            "solutionHeadline": "Laifọwọyi-ti ipilẹṣẹ B-eerun Cutaways",
+            "solution": "Bi awọn agbalejo rẹ ṣe n jiroro lori awọn koko-ọrọ, SceneFlow laifọwọyi n ṣe ipilẹṣẹ awọn iwo kinematic ọrọ-ọrọ, awọn aworan aworan, ati awọn ọna oju iṣẹlẹ ti a ṣeto ni deede si kikowe ohun naa."
+          },
+          {
+            "title": "Ohun Fọọmu Gigun & Ṣiṣẹpọ Fidio",
+            "frictionHeadline": "Drift Audio & Fọọmu Gigun Ṣe Arẹwẹsi",
+            "friction": "Fidio ti ipilẹṣẹ mimuuṣiṣẹpọ si awọn iṣẹju 20+ ti ohun aise yoo yori si fiseete-ìsiṣẹpọ ete, awọn aṣiṣe ti n ṣe, ati iṣakoso faili pipin.",
+            "solutionHeadline": "Opin-si-Ipari Pipeline adarọ ese",
+            "solution": "Ju silẹ ninu orin ohun afetigbọ aise rẹ tabi iwe afọwọkọ, ati SceneFlow ṣe mimu titete avatar, awọn gige kamẹra, iṣọpọ B-roll, ati okeere MP4 titunto si ipari ni didan kan, adaṣe adaṣe adaṣe."
+          }
+        ],
+        "screeningRoomPreview": "Adarọ ese AI-akọkọ - Awotẹlẹ Screening Room"
+      },
+      {
+        "id": "training",
+        "title": "Awọn fidio Idanileko Ipele-iṣẹ. Pre-Vizualization Ti ṣelọpọ ni Awọn iṣẹju.",
+        "subtitle": "Yipada awọn iwe afọwọkọ, awọn ifaworanhan, ati awọn iwe aṣẹ ibamu sinu ikopa, awọn modulu fidio ti o ni ede pupọ pẹlu awọn idamọ ami iyasọtọ titiipa, imuṣiṣẹpọ ète alailabawọn, ati ile-iṣere odo lori oke.",
+        "badge": "Agbaye ransogun",
+        "solutionPillars": [
+          {
+            "title": "Olupese & Aitasera Brand",
+            "frictionHeadline": "Uncanny Avatars & Brand Drift",
+            "friction": "Awọn olufihan AI ti ko gbowolori ni imọlara roboti ati aisunmọ, lakoko ti awọn aami ami iyasọtọ, awọn awọ, ati awọn ifarahan olutayo yipada ni aisedede kọja awọn modulu ikẹkọ oriṣiriṣi.",
+            "solutionHeadline": "Titiipa Alase & Awọn profaili Olukọni",
+            "solution": "Ṣe agbekalẹ awọn olufojusi ile-iṣẹ ti o ni itẹramọṣẹ ati tiipa awọn itọsọna ami iyasọtọ rẹ. SceneFlow n ṣetọju idanimọ wiwo, aṣa ile-iṣẹ, ati ifijiṣẹ alamọdaju kọja gbogbo ile-ikawe iṣẹ ikẹkọ rẹ."
+          },
+          {
+            "title": "Ailopin Agbaye",
+            "frictionHeadline": "Awọn itumọ ti o bajẹ & Amuṣiṣẹpọ Ète Buburu",
+            "friction": "Sisọ akoonu ikẹkọ agbegbe si awọn ede 10+ nigbagbogbo n ṣẹda mimuṣiṣẹpọ ẹnu ti o buruju, awọn orin ohun roboti, ati awọn igo ṣiṣatunṣe nla nla.",
+            "solutionHeadline": "Native Multilingual Sync Engine",
+            "solution": "Tumọ gbogbo jara ikẹkọ rẹ si awọn dosinni ti awọn ede pẹlu ohun orin adayeba, awọn ipe ọrọ ti agbegbe, ati mimuṣiṣẹpọ ete-deede—gbogbo rẹ ni titẹ ẹyọkan."
+          },
+          {
+            "title": "Iṣọkan Visual Eedi & Awọn aworan atọka",
+            "frictionHeadline": "Ọrọ-Heavy Bore",
+            "friction": "Awọn fidio ti o kan sọrọ awọn olori ni kiakia padanu akiyesi oṣiṣẹ, lakoko ti o n ṣe ere awọn aworan ilana pẹlu ọwọ, awọn yiya iboju, ati awọn ipe bullet gba awọn wakati ni olootu kan.",
+            "solutionHeadline": "Iwoye Itumọ & Apọju ayaworan",
+            "solution": "Bi olutayo rẹ ṣe n ṣalaye ṣiṣan iṣẹ ṣiṣe idiju tabi awọn igbesẹ ibamu, SceneFlow n ṣe agbejade awọn aworan akoko laifọwọyi, awọn ọna gbigbe bọtini, ati awọn iranlọwọ wiwo taara loju iboju."
+          },
+          {
+            "title": "Dekun akoonu Update",
+            "frictionHeadline": "Gbowolori Tun-Abereyo & Mu Ẹgẹ",
+            "friction": "Nigbati eto imulo ile-iṣẹ tabi awọn alaye lẹkunrẹrẹ ọja ba yipada, mimu dojuiwọn abala iṣẹju 2 kan ti fidio nigbagbogbo nilo atunṣe ati tun-ṣiṣẹsẹhin gbogbo faili naa.",
+            "solutionHeadline": "Awọn imudojuiwọn iwe afọwọkọ apọjuwọn",
+            "solution": "Ṣatunkọ ọrọ taara ni iwe afọwọkọ iwe afọwọkọ lati ṣe imudojuiwọn awọn eto imulo tabi ilana lesekese. SceneFlow tun ṣe abala ti o yipada nikan lakoko titọju akoko agbegbe ati ara fidio."
+          }
+        ],
+        "screeningRoomPreview": "Ikẹkọ Ile-iṣẹ naa - Awotẹlẹ Screening Room"
+      },
+      {
+        "id": "scifi",
+        "title": "Kọ Awọn Agbaye ti ko ṣeeṣe. Taara Uncompromised Sci-Fi.",
+        "subtitle": "Ṣe awọn ipa wiwo idiju, awọn agbegbe ọjọ iwaju, ati awọn apẹrẹ ihuwasi ajeji pẹlu itesiwaju wiwo fireemu-nipasẹ-gbogbo rẹ laarin opo gigun ti epo adaṣe kan ṣoṣo.",
+        "badge": "VFX-Ṣetan",
+        "solutionPillars": [
+          {
+            "title": "Ayika & Ilọsiwaju faaji",
+            "frictionHeadline": "Jiometirika & Awọn abawọn iwọn",
+            "friction": "Awọn ilu ti ọjọ iwaju, awọn oju-ilẹ neon, ati awọn irawọ ajeji ajeji nigbagbogbo ma ja, awọn awoara iyipada, tabi tu sinu ariwo wiwo laileto laarin awọn gige kamẹra.",
+            "solutionHeadline": "Titiipa Ipinle-aye",
+            "solution": "Ṣe alaye faaji bọtini, awọn ero ina, ati awọn aye ayika ni Blueprint Studio. SceneFlow ṣe titiipa geometry aye ki eto rẹ duro ni ibamu lati awọn iyaworan idasile jakejado si awọn ija ọdẹdẹ."
+          },
+          {
+            "title": "Alien & Creature Design iyege",
+            "frictionHeadline": "Awọn apẹrẹ ohun kikọ Morphing",
+            "friction": "Awọn eya ti kii ṣe eda eniyan, awọn cyborgs, ati awọn ohun kikọ ti o wuwo-prosthetic ti n lọ kiri ni irisi ni gbogbo igba ti igun tuntun tabi ibọn ba wa ni ipilẹṣẹ.",
+            "solutionHeadline": "Titiipa Awọn profaili Dukia Ajeeji",
+            "solution": "Anchor ti kii ṣe eniyan anatomi, awọn alaye ihamọra, ati awọn asẹnti ẹrọ. Ṣe itọju idanimọ ohun kikọ kọja gbogbo aaye ero-giga laisi awọn opo gigun ti awoṣe 3D aṣa."
+          },
+          {
+            "title": "VFX Action & Ga-iyara Physics",
+            "frictionHeadline": "Yiyo išipopada ni Action lesese",
+            "friction": "Awọn ija aja ti aaye iyara to gaju, awọn ina ohun ija agbara, ati awọn bugbamu nigbagbogbo nfa awọn awoṣe ipilẹṣẹ lati smear awọn fireemu tabi ṣe agbejade awọn ohun-ọṣọ wiwo idoti.",
+            "solutionHeadline": "Action & FX išipopada Anchoring",
+            "solution": "Choreography ti o ni agbara taara, awọn agbeka kamẹra iyara, ati awọn lilu igbese ti o wuwo lakoko titọju awọn egbegbe mimọ ati fisiksi ojulowo ojulowo."
+          },
+          {
+            "title": "Audio-Visual World-Building",
+            "frictionHeadline": "Alapin Audio ni Ga-Erongba yeyin",
+            "friction": "Awọn ohun ija ọjọ iwaju, awọn hums starship ibaramu, ati awọn ilana ọrọ ọrọ ajeji ni rilara ti ge asopọ nigbati o ba ni ibamu pẹlu ọwọ lori awọn agekuru ipilẹṣẹ ipalọlọ.",
+            "solutionHeadline": "Iṣọkan Agbaye-Ohun & Amuṣiṣẹpọ ohun",
+            "solution": "Ṣe afiwe ibaraẹnisọrọ sintetiki aṣa, awọn asọye ajeji, ati awọn ifẹnukonu ohun sinima taara laarin aago fun immersive kan, idasile ohun afetigbọ titunto si."
+          }
+        ],
+        "screeningRoomPreview": "Sci-Fi VFX Gbóògì — Screening Room Awotẹlẹ"
+      },
+      {
+        "id": "documentary",
+        "title": "Yipada Awọn itan Ile-ipamọ sinu Awọn iwe-ipamọ Titaja julọ.",
+        "subtitle": "Ṣe atunto awọn iṣẹlẹ itan, awọn atunbere, ati awọn iṣeto ifọrọwanilẹnuwo amoye pẹlu awọn alaye akoko gidi, awọn ohun asan, ati awọn idiyele iwe-aṣẹ pamosi odo.",
+        "badge": "Akoko-Deede",
+        "solutionPillars": [
+          {
+            "title": "Ipese Oju-ipe Kan pato",
+            "frictionHeadline": "Anachronistic Artifacts",
+            "friction": "Standard generative si dede sáábà ẹjẹ awọn ohun igbalode, foonuiyara iboju, tabi ti ko tọ akoko aso sinu itan tun-enactments.",
+            "solutionHeadline": "Itan Style Guardrails",
+            "solution": "Ṣeto awọn aye akoko deede-lati ọdun 1920 ọkà fiimu si awọn awoara aṣọ ile-iṣọ ti ọrundun 18th-nitorinaa gbogbo iṣẹlẹ ti ipilẹṣẹ jẹ otitọ ti itan."
+          },
+          {
+            "title": "Archival Cutaways & B-eerun Engine",
+            "frictionHeadline": "Visual monotony ni Long Voiceovers",
+            "friction": "Pipọpọ ohun afetigbọ olofofo gigun pẹlu awọn aworan iṣura aimi yori si sisọ silẹ oluwo ni iyara lakoko awọn omi nla.",
+            "solutionHeadline": "Tiransikiripiti-Driven B-eerun Engine",
+            "solution": "Bi olutọpa rẹ ṣe n jiroro lori awọn ododo itan, SceneFlow laifọwọyi n ṣe agbekalẹ awọn atunṣe-iṣe sinima akoko ti akoko, awọn iṣagbesori iwe, ati awọn ọna pamosi-ara-ara ti a so taara si iwe afọwọkọ ohun."
+          },
+          {
+            "title": "Lodo & Sọrọ-Ori otito",
+            "frictionHeadline": "Uncanny Amoye Ẹlẹrìí",
+            "friction": "Awọn onimọ-itan ti ipilẹṣẹ, awọn oniwadi, tabi awọn ẹlẹri nigbagbogbo dabi atọwọda, pẹlu awọn agbeka bakan lilefoofo ati ifarakan oju aibikita.",
+            "solutionHeadline": "Titiipa Awọn profaili Amoye & Amuṣiṣẹpọ ohun",
+            "solution": "Ṣe itọju ojulowo, awọn iṣeto ifọrọwanilẹnuwo igbẹkẹle pẹlu awọn asọye micro-adayeba, mimuuṣiṣẹpọ ete, ati awọn idanimọ alamọja ti o ni ibamu laarin jara ọpọlọpọ apakan."
+          },
+          {
+            "title": "Episodic Pacing & Ilọsiwaju Itan-akọọlẹ",
+            "frictionHeadline": "Fragmented Ago Ṣatunkọ",
+            "friction": "Iwontunwonsi ohun afetigbọ arosọ, awọn atunwi, awọn ifihan ẹri, ati awọn idaduro ile ẹdọfu kọja iṣẹlẹ iṣẹju 40 nigbagbogbo n gba awọn ọsẹ ni awọn NLE ibile.",
+            "solutionHeadline": "Lu-First Iwe Iroyin Pipeline",
+            "solution": "Iṣagbekalẹ ẹdọfu iyalẹnu, awọn idaduro ifura, ati ẹri n ṣafihan ni wiwo inu Blueprint Studio, jiṣẹ faili titunto si ni kikun ti o pejọ ni iwe-iwọle alailẹgbẹ kan."
+          }
+        ],
+        "screeningRoomPreview": "Ṣiṣejade iwe-kikọ - Awotẹlẹ Screening Room"
+      }
+    ]
   }
 }

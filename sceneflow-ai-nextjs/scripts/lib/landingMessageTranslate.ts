@@ -39,6 +39,8 @@ function glossarySlug(term: string): string {
   return term.replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '').toUpperCase()
 }
 
+export { glossarySlug }
+
 export function protectGlossary(text: string): { protectedText: string; map: Map<string, string> } {
   const map = new Map<string, string>()
   let protectedText = text
@@ -156,6 +158,19 @@ export function toGoogleTarget(code: string): string {
   return code.split('-')[0]
 }
 
+/** Argos/LibreTranslate language codes differ from our locale selector in a few cases. */
+export function toLibreTranslateTarget(code: string): string {
+  if (code === 'zh-CN') return 'zh'
+  if (code === 'zh-TW') return 'zt'
+  if (code === 'no') return 'nb'
+  return code.split('-')[0]
+}
+
+const LIBRETRANSLATE_URL = (process.env.LIBRETRANSLATE_URL || 'http://127.0.0.1:5000').replace(/\/$/, '')
+
+/** Locales without Argos models — translated via deep-translator (Google) instead. */
+export const DEEP_TRANSLATOR_LOCALES = new Set(['am', 'yo', 'zu', 'af'])
+
 function shouldSkipTranslation(path: string, value: string): boolean {
   if (path.endsWith('.id')) return true
   if (/^https?:\/\//.test(value)) return true
@@ -163,12 +178,20 @@ function shouldSkipTranslation(path: string, value: string): boolean {
   return false
 }
 
-export type TranslateProvider = 'auto' | 'vertex' | 'google-rest' | 'mymemory'
+export type TranslateProvider =
+  | 'auto'
+  | 'vertex'
+  | 'google-rest'
+  | 'mymemory'
+  | 'libretranslate'
+  | 'deep-translator'
 
-function resolveProvider(requested: TranslateProvider): TranslateProvider {
+function resolveProvider(requested: TranslateProvider, target?: string): TranslateProvider {
   if (requested !== 'auto') return requested
+  if (target && DEEP_TRANSLATOR_LOCALES.has(target)) return 'deep-translator'
   if (process.env.VERTEX_PROJECT_ID || process.env.GCP_PROJECT_ID) return 'vertex'
   if (process.env.GOOGLE_TRANSLATE_API_KEY || process.env.GOOGLE_API_KEY) return 'google-rest'
+  if (process.env.LIBRETRANSLATE_URL || process.env.USE_LIBRETRANSLATE === '1') return 'libretranslate'
   return 'mymemory'
 }
 
@@ -199,6 +222,67 @@ async function translateBatchGoogleRest(
     const raw = translations[i]?.translatedText ?? original
     return restoreGlossary(raw, protectedEntries[i].map)
   })
+}
+
+async function translateBatchLibreTranslate(texts: string[], target: string): Promise<string[]> {
+  const ltTarget = toLibreTranslateTarget(target)
+  const results: string[] = []
+
+  for (const text of texts) {
+    const { protectedText, map } = protectGlossary(text)
+    const response = await fetch(`${LIBRETRANSLATE_URL}/translate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ q: protectedText, source: 'en', target: ltTarget, format: 'text' }),
+    })
+
+    if (!response.ok) {
+      const err = await response.text()
+      throw new Error(`LibreTranslate ${response.status}: ${err.slice(0, 200)}`)
+    }
+
+    const data = (await response.json()) as { translatedText?: string; error?: string }
+    if (data.error) {
+      throw new Error(`LibreTranslate: ${data.error}`)
+    }
+
+    results.push(restoreGlossary(data.translatedText ?? text, map))
+    await new Promise((r) => setTimeout(r, 50))
+  }
+
+  return results
+}
+
+async function translateBatchDeepTranslator(texts: string[], target: string): Promise<string[]> {
+  const { spawnSync } = await import('child_process')
+  const { dirname, join } = await import('path')
+  const { fileURLToPath } = await import('url')
+  const scriptDir = dirname(fileURLToPath(import.meta.url))
+  const helper = join(scriptDir, 'deepTranslateBatch.py')
+  const protectedEntries = texts.map((t) => protectGlossary(t))
+  const payload = JSON.stringify({
+    target: toGoogleTarget(target),
+    texts: protectedEntries.map((e) => e.protectedText),
+  })
+
+  const result = spawnSync('python3', [helper], {
+    input: payload,
+    encoding: 'utf8',
+    maxBuffer: 50 * 1024 * 1024,
+  })
+
+  if (result.status !== 0) {
+    throw new Error(result.stderr?.trim() || 'deep-translator batch failed')
+  }
+
+  const parsed = JSON.parse(result.stdout) as { translations?: string[] }
+  if (!parsed.translations || parsed.translations.length !== texts.length) {
+    throw new Error('deep-translator returned unexpected batch size')
+  }
+
+  return texts.map((original, i) =>
+    restoreGlossary(parsed.translations![i] ?? original, protectedEntries[i].map)
+  )
 }
 
 async function translateBatchMyMemory(texts: string[], target: string): Promise<string[]> {
@@ -262,7 +346,7 @@ export async function translateBatch(
   target: string,
   provider: TranslateProvider = 'auto'
 ): Promise<string[]> {
-  const resolved = resolveProvider(provider)
+  const resolved = resolveProvider(provider, target)
 
   if (resolved === 'vertex') {
     const protectedEntries = texts.map((t) => protectGlossary(t))
@@ -275,6 +359,14 @@ export async function translateBatch(
     const apiKey = process.env.GOOGLE_TRANSLATE_API_KEY || process.env.GOOGLE_API_KEY
     if (!apiKey) throw new Error('GOOGLE_TRANSLATE_API_KEY not configured')
     return translateBatchGoogleRest(texts, target, apiKey)
+  }
+
+  if (resolved === 'libretranslate') {
+    return translateBatchLibreTranslate(texts, target)
+  }
+
+  if (resolved === 'deep-translator') {
+    return translateBatchDeepTranslator(texts, target)
   }
 
   return translateBatchMyMemory(texts, target)
@@ -299,7 +391,8 @@ export async function translateFlatMessages(
     chunk.forEach((original, idx) => {
       valueCache.set(original, result[idx])
     })
-    if (resolveProvider(provider) !== 'mymemory') {
+    const resolved = resolveProvider(provider, target)
+    if (resolved !== 'mymemory' && resolved !== 'libretranslate') {
       await new Promise((r) => setTimeout(r, 400))
     }
   }

@@ -1894,5 +1894,254 @@
         "screeningRoomPreview": "Rönesans Atölyesi: Geçmişi Hareketli Görmek"
       }
     ]
+  },
+  "productionShowcase": {
+    "badge": "Üretim Örnekleri",
+    "title": "Kavramdan Ekrana:",
+    "titleAccent": "Sonsuz Olasılıklar",
+    "subtitle": "Altı kamu prodüksiyonu tam boru hattını kanıtlıyor - öncesi, sahne videosu ve Screening Room incelemesi. Konseptinizi tanımlayın ve SceneFlow'in senaryo yazımı, karakter tasarımı, çok dilli ses, görselleştirme, video üretimi ve yayınlamasına izin verin.",
+    "subtitleTagline": "Bir platform. Sonsuz olasılıklar.",
+    "publicProductionsNote": "Aşağıdaki her kart tam bir kamu üretimidir - Çözümleri ve Screening Room sekmelerini boru hattına yürümek için değiştirin.",
+    "languagesBanner": "7 dilde açık örnekler: İngilizce, İspanyolca, Portekiz, Hindi, Çince, Arapça ve Tayland.",
+    "explorePipelineCta": "Tam bir üretim keşfedin",
+    "explorePipelineHint": "Aşağıdaki Cinematic Drama ile başlayın - Demo makara için çözümler, Screening Room tam inceleme akışı için.",
+    "workflowLabel": "Çözümleri",
+    "startProduction": "Üretiminize Başlayın",
+    "cta": "Üretiminize Başlayın",
+    "continuityNote": "Series Studio sürekliliği yönetiyor",
+    "resonanceNote": "Audience ResonanceTM senaryoları optimize eder",
+    "videoLanguagePrompt": "Bu üretimi dilinizde izleyin",
+    "videoComingSoon": "Dub yakında geliyor",
+    "videoSoon": "Yakında",
+    "introVideoLabel": "Çözümleri",
+    "screeningRoomLabel": "Screening Room",
+    "frictionLabel": "Friction",
+    "solutionPillarLabel": "SceneFlow Çözümü",
+    "showSolutionsSection": "Show Solutions",
+    "hideSolutionsSection": "Hide Solutions",
+    "cards": [
+      {
+        "id": "drama",
+        "title": "Cinematic AI Drama. Zero Character Drift.",
+        "subtitle": "Morflama karakterleri, kırık diyalog ve sonsuz rerolls. Tamamen görsel süreklilik ile sorunsuz, multi-character uzun süreli hikayeler oluşturun.",
+        "badge": "Series-Ready",
+        "solutionPillars": [
+          {
+            "title": "Visual & Character Consistency",
+            "frictionHeadline": "Karakter Drift & Wobbly Setleri.",
+            "friction": "Generative modeller her atışla sıfırlanıyor - karakter yüzlerine, kıyafetlere ve sahne kesintilerine sürekli aydınlatmaya neden oluyor.",
+            "solutionHeadline": "Locked Asset Blueprints.",
+            "solution": "Ana karakter profillerini, ortamları ve görsel stilleri Blueprint Studio'de ön. SceneFlow, anlatı immersion korumak için her türlü görsel kimlik uygular."
+          },
+          {
+            "title": "Anlatıcı Pacing & Sahne Kontrolü",
+            "frictionHeadline": "10İkinci Video Tuzağı.",
+            "friction": "Kesilmiş mikro-promptlardan bir film inşa etmek, doğranma, düz duygular ve sonsuz manuel zaman çizelgesi düzenleme oluşturur.",
+            "solutionHeadline": "Beat-First Storyboarding.",
+            "solution": "Sahne seviyesinde doğrudan, hızlı seviye değil. Yapı dramatik vuruşlar, kamera hareketleri ve hikaye yayları, tek bir video çerçevesini oluşturmadan önce görsel."
+          },
+          {
+            "title": "Diyalog & Audio",
+            "frictionHeadline": "Unconvincing Dialogue.",
+            "friction": "Yanlış dudak-sen, yüzen ağız hareketleri ve detached ses parçaları hemen izleyicileri dramadan çıkarır.",
+            "solutionHeadline": "Bütünleşik Ses & Sync Engine.",
+            "solution": "Dinamik ses performansı ve hassas dudak-sen doğrudan video boru hattına pişirilir - dış post-prodüksiyon olmadan believlenebilir diyaloğu yaşamak."
+          },
+          {
+            "title": "İş Akışı Friction & Reroll Fatigue",
+            "frictionHeadline": "Zengin Kaos ve Endless Rerolls.",
+            "friction": "Kısa bir film yazmak genellikle 200+ ham video dosyaları, el elektr ve düzinelerce boşanmış nesiller anlamına gelir.",
+            "solutionHeadline": "Otomatik Stüdyo Boru Hattı.",
+            "solution": "Kavramdan, bir birleşik platformda nihai master MP4'e kadar. Blueprint Studio hikaye kurulumu, Production Studio otomatikleme ve Screening Room Son ihracatınızı sunar."
+          }
+        ],
+        "screeningRoomPreview": "Sinema Draması – Screening Room Öpün"
+      },
+      {
+        "id": "animation",
+        "title": "Şaka yaz. SceneFlow Tavşanlıları anlayın.",
+        "subtitle": "Eliminate tarzı sürükler, sert hareket ve kırık zaman. Hilarious scripts into completely animasyon, voice-synced komedi bölümlerini bir sorunsuz stüdyoda açın.",
+        "badge": "Multi-Style",
+        "solutionPillars": [
+          {
+            "title": "Stylistic Consistency",
+            "frictionHeadline": "Style Meltdown.",
+            "friction": "Cartoon ve anime stilleri sürekli çekimler arasında savaşıyor, çizgi sanatını değiştiriyor, renkli paletleri kırıyor ve karakterleri fotorealist uncanny slop'a dönüştürüyor.",
+            "solutionHeadline": "Locked Art Style Engine.",
+            "solution": "Estetikinizi ilk çerçeveden çıkarın. SceneFlow karakter tasarımları, çizgi ağırlıkları ve tüm bölüm boyunca gölgeleme modelleri böylece karakterleriniz eşsiz bir şekilde yours kalıyor."
+          },
+          {
+            "title": "Exaggerated Animation & Physics",
+            "frictionHeadline": "Stiff & Glitchy Hareketi.",
+            "friction": "Generative modeller hızlı slapstick, double-takes ve squishy karikatür fiziği ile mücadele eder, yüksek enerjili gags'i eserlerle eritmeye başlar.",
+            "solutionHeadline": "Action & Pose Anchoring.",
+            "solution": "Dinamik karakter hareketine ve geometriyi bozmadan ifade eder. Doğrudan yumruklı fiziksel komedi, aniden kesintiler ve tam hareket kontrolü ile vahşi ifadeler."
+          },
+          {
+            "title": "Comedic Timing & Rhythm",
+            "frictionHeadline": "Ruined Punchlines.",
+            "friction": "Humor duraklarda yaşar ve vuruşlar. Standart 5 saniyelik jeneratif döngüler, şaka teslimatını yok eden garip pacing gücüdür.",
+            "solutionHeadline": "Beat-Precision Editing.",
+            "solution": "Kontrol sahne çerçeveye küçülür. Dramatik duraklar, kurulum-to-punchline zamanlaması ve son vermeden önce ilk zaman içinde hızlı reaksiyon atışları."
+          },
+          {
+            "title": "Yüksek Enerji Diyaloğu & Vocal Sync",
+            "frictionHeadline": "Lifeless Puppet Mouths.",
+            "friction": "Generic AI diyalogu düz ve mekanik hissediyor, buharlı sitcom kaset için gerekli enerjiyi yok ediyor.",
+            "solutionHeadline": "Dinamik Voice & Expression Sync.",
+            "solution": "Harita vokal teslim doğrudan enerjik yüz performansına. Diyalog, ifade edici ağız şekilleri ve ortaya çıkan ses parçaları, maksimum komedyen etkisi için sorunsuz bir şekilde eşleştirir."
+          }
+        ],
+        "screeningRoomPreview": "Animasyon Komedi – Screening Room Preview Preview Preview"
+      },
+      {
+        "id": "podcast",
+        "title": "Konuşmaya ev sahipliği yaptın. SceneFlow Gösteriyi üretir.",
+        "subtitle": "Statik avatarlar ve manuel video düzenleme. Senaryoları veya ham seslerini çok bok, bir otomatik boru hattında yayın-okuy video podcastleri dönüştürür.",
+        "badge": "Yayıncı-Ready",
+        "solutionPillars": [
+          {
+            "title": "Çok konuşan ve Avatar Kimlik",
+            "frictionHeadline": "Robotik Avatarlar ve Kayıp Kimlik",
+            "friction": "Genrated ev değişimi orta-episode, kamerada boş bir şekilde ortaya çıkıyor veya doğal insan mikro ifadelerini dinlerken sergileyemez.",
+            "solutionHeadline": "Locked Host & Konuk Profilleri",
+            "solution": "Co-hosts ve tekrarlayan konuklar için kalıcı görsel kimlikler oluşturun. SceneFlow konuşmacı tutarlılığı, doğal göz teması ve uzun vadeli tartışmalar boyunca gerçekçi konuşma organı dili koruyor."
+          },
+          {
+            "title": "Multi-Camera Direction & Pacing",
+            "frictionHeadline": "Monotonous Single-Angles",
+            "friction": "Statik konuşma sonrası çekimler seyircileri hızla kaybederken, 30 dakikalık bir süre boyunca manuel kamera geçişi tartışmalı bir çerçeve kesinti gerektirir.",
+            "solutionHeadline": "Otomatik Multi-Cam Anahtarlama",
+            "solution": "SceneFlow, sohbet akışını otomatik olarak ev sahibi yakın havuzlar, misafir reaksiyonları ve geniş ekran stüdyo çekimleri arasında bölmek için analiz eder, manuel zamanlı düzenleme olmadan profesyonel yayın pacing sağlar."
+          },
+          {
+            "title": "Context-Aware B-Roll & Visuals",
+            "frictionHeadline": "Görsel Monotony & B-Roll Şişenecks",
+            "friction": "Her söz konusu konu için ilgili görsel yardımlar veya B-roll klipleri bulmak, üretmek ve zamanlama ile ilgili görsel yardımlar veya B-roll klipleri post-prodüksiyon saatleri yiyor.",
+            "solutionHeadline": "Auto-Generated B-Roll Cutaways",
+            "solution": "Eviniz konuları tartışırken, SceneFlow otomatik olarak bağlamsal sinematik görseller, grafikler ve sahne kesme zamanı tam olarak ses transkriptine yol açtı."
+          },
+          {
+            "title": "Long-Form Audio & Video Sen",
+            "frictionHeadline": "Ses Drift & Long-Form Render Fatigue",
+            "friction": "Sening jeneratif video 20+ dakika ham ses dudak-sen sürükleme, hataları ve parçalanmış dosya yönetimine yol açar.",
+            "solutionHeadline": "End-to-Bit Podcast Boru Hattı",
+            "solution": "Çiğ sesinizdeki veya senaryonuzda bırakın ve SceneFlow, avatar hizasını, kamera kesintilerini, B-roll entegrasyonunu ve son master MP4 ihracatını tek bir pürüzsüz, otomatik stüdyoda geç."
+          }
+        ],
+        "screeningRoomPreview": "AI-First Podcast – Screening Room Öpün"
+      },
+      {
+        "id": "training",
+        "title": "Enterprise-Grade Eğitim Videoları. Pre-Vizualization made in Minutes.",
+        "subtitle": "Ellileri, kaydırakları ve uyumlu doksanları kilitli marka kimlikleri, kusursuz dudak-sen ve sıfır stüdyo yükü ile çok yönlü video modüllerine dönüştürür.",
+        "badge": "Global Deploy",
+        "solutionPillars": [
+          {
+            "title": "Presenter & Brand Consistency",
+            "frictionHeadline": "Uncanny Avatars & Brand Drift",
+            "friction": "Ucuz AI senters robotik ve yetersiz hissediyor, marka logoları, renkler ve şimdiki görünüşler farklı eğitim modüllerine karşı çelişkili bir şekilde değişiyor.",
+            "solutionHeadline": "Locked Executive & Trainer Profilleri",
+            "solution": "Sürekli, doğal görünümlü şirket teklifleri oluşturun ve marka yönergelerinizi kilitle. SceneFlow, görsel kimlik, şirket stili ve tüm kurs kütüphanenizde profesyonel teslimatları sürdürüyor."
+          },
+          {
+            "title": "Sorun Global Localization",
+            "frictionHeadline": "Broken Translations & Bad Lip-Sync",
+            "friction": "Eğitim içeriğine 10+ dilde yerelleştirilmesi genellikle garip bir ağızdan, robotik ses parçaları ve büyük re-editing şişenecks yaratır.",
+            "solutionHeadline": "Yerli Sync Sync Engine",
+            "solution": "Tüm eğitim serisini doğal ses ton ile onlarca dilde çevirin, yerelleştirilmiş metin çağrıları ve çerçeve-akcurate lip-syncing-all in a single click."
+          },
+          {
+            "title": "Bütünleşik Görsel Aids & Diagrams",
+            "frictionHeadline": "Text-Heavy Bore",
+            "friction": "Sadece kafaları hızlıca çalışan dikkatini çeken videolar, manuel olarak animating process diagramları, ekran yakalamaları ve mermi çağrıları bir editörde saatler alır.",
+            "solutionHeadline": "Contextual Visual & Grafik Overlay",
+            "solution": "Şimdikicınız karmaşık iş akışlarını veya uyumluluk adımlarını açıkladığı gibi, SceneFlow otomatik olarak zamanlanmış diyagramlar, anahtar taksiler ve doğrudan ekranda görsel yardımlar üretir."
+          },
+          {
+            "title": "Hızlı İçerik",
+            "frictionHeadline": "Pahalı Re-Shoots & Render Tuzları",
+            "friction": "Şirket politikası veya ürün spektralleri değiştiğinde, bir videonun 2 dakikalık bölümünü güncellemek genellikle tüm dosyayı yeniden inşa etmek ve tekrarlamak gerektirir.",
+            "solutionHeadline": "Modüler script Updates",
+            "solution": "Doğrudan senaryoda, politika veya prosedürleri anında güncellemek için metin. SceneFlow re-renders sadece zamanlama ve video stilini korurken değişen bölüm."
+          }
+        ],
+        "screeningRoomPreview": "Kurumsal Eğitim - Screening Room Öpün"
+      },
+      {
+        "id": "scifi",
+        "title": "İmkansız Dünyalar Oluşturun. Doğrudan Uncompromized Sci-Fi.",
+        "subtitle": "Karmaşık görsel etkiler, futuristic ortamlar ve uzaylı karakter tasarımlarını çerçeve-by-frame görsel süreklilik ile - hepsi tek bir otomatik boru hattı içinde.",
+        "badge": "VFX-Ready",
+        "solutionPillars": [
+          {
+            "title": "Çevre ve Mimari Süreklilik",
+            "frictionHeadline": "Geometry & Scale Glitches",
+            "friction": "Futuristic şehirler, neon manzaraları ve yabancı yıldız gemileri sürekli olarak savaşıyor, dokular değiştiriyor veya kamera kesintileri arasındaki rastgele görsel gürültüyü çözüyor.",
+            "solutionHeadline": "World-State Locking",
+            "solution": "Blueprint Studio'deki anahtar mimari, aydınlatma şemaları ve çevresel parametreleri tanımlayın. SceneFlow uzaysal geometriyi kilitler, böylece ayarınız sıkı koridor dövüşlerine yönelik geniş çaplı çekimlerden tutarlı kalır."
+          },
+          {
+            "title": "Alien & Yaratık Design Integrity",
+            "frictionHeadline": "Morphing Character Designs",
+            "friction": "İnsanlık dışı türler, cyborgs ve ağır-prosthetic karakterler her seferinde yeni bir açı veya atış oluşturulur.",
+            "solutionHeadline": "Locked Alien Asset Profilleri",
+            "solution": "Anchor non-insan anatomisi, zırh detayları ve mekanik aksanlar. Özel 3D modelleme boru hatları olmadan her yüksek algı sahne boyunca karakter tanımasını sağlayın."
+          },
+          {
+            "title": "VFX Action & High-Speed Physics",
+            "frictionHeadline": "Kimyasal Hareket Action Sequences",
+            "friction": "Yüksek hızlı uzay köpeği dövüşüyor, enerji silah yangınları ve patlamalar genellikle jeneratif modellerin smear çerçevelerine veya dağınık görsel eserler üretmesine neden oluyor.",
+            "solutionHeadline": "Action & FX Motion Anchoring",
+            "solution": "Doğrudan dinamik koreografi, hızlı kamera hareketleri ve parçacık-heavy eylemi temiz kenarlar ve gerçekçi yörünge fiziği korurken yenmektedir."
+          },
+          {
+            "title": "Audio-Visual World-Building",
+            "frictionHeadline": "Flat Audio in High-Concept Worlds",
+            "friction": "Futuristic silahlar, ortam yıldızlığı hums ve yabancı konuşma desenleri, elle sessiz üretilen klipler üzerine takıldığında kesintiye uğrar.",
+            "solutionHeadline": "Bütünleşik Dünya-Sound & Voice You",
+            "solution": "Align özel sentetik diyalog, yabancı seslendirmeler ve sinematik ses cues doğrudan bir immersive, release-ready master ses karışımı için zaman içinde."
+          }
+        ],
+        "screeningRoomPreview": "Sci-Fi VFX Production – Screening Room Öpün"
+      },
+      {
+        "id": "documentary",
+        "title": "Archival Stories'i en iyi satan belgesellere dönüştürün.",
+        "subtitle": "Tarihi olayları yeniden yaratmak ve uzman röportajları gerçek dönem detayı, sorunsuz seslendirmeler ve sıfır arşiv lisans ücretleri ile yeniden yaratmak.",
+        "badge": "Süre-Accurate",
+        "solutionPillars": [
+          {
+            "title": "Era-Specific Visual Balance",
+            "frictionHeadline": "Anachronistic Artifacts",
+            "friction": "Standart jeneratif modeller rutin olarak modern nesneler, akıllı ekranlar veya yanlış dönem kıyafetleri tarihsel yeniden etkinleştirir.",
+            "solutionHeadline": "Historical Style Guardrails",
+            "solution": "Tam zaman parametreleri ayarla - 1920'lerden film tahıl 18. yüzyıl garson dokularına - her üretilen sahne tarihsel olarak otantik kalır."
+          },
+          {
+            "title": "Archival Cutaways & B-Roll Engine",
+            "frictionHeadline": "Visual Monotony in Long Voiceovers",
+            "friction": "Statik stok görüntüleri ile uzun süreli narrator ses, derin atlar sırasında hızlı görüntülemeye yol açıyor.",
+            "solutionHeadline": "Transcript-Driven B-Roll Engine",
+            "solution": "Narratorunuz tarihsel gerçekleri tartışırken, SceneFlow otomatik olarak zamanlanmış sinematik re-enactments, document overlays ve Archival-style Cutaways doğrudan ses transkriptine bağlanır."
+          },
+          {
+            "title": "Röportaj ve Konuşma-Head Realism",
+            "frictionHeadline": "Uncanny Uzman Şahitleri",
+            "friction": "Gened tarihçiler, araştırmacılar veya tanıklar genellikle yapay görünüyor, yüzen çene hareketleri ve doğal olmayan göz temasıyla.",
+            "solutionHeadline": "Kilitli Uzman Profilleri ve Vocal Sync",
+            "solution": "Gerçek, güvenilir röportajı doğal mikro ifadelerle, doğru dudak-seni ve çok sayıda serideki tutarlı uzman kimliklerle yapılandırın."
+          },
+          {
+            "title": "Episodic Pacing & Anlatıcı Süreklilik",
+            "frictionHeadline": "Bölüm Adı",
+            "friction": "Balancing narrator audio, re-enactments, kanıtlar ortaya çıkıyor ve 40 dakikalık bir bölüm boyunca gerilimler genellikle geleneksel NLE'lerde haftalar alıyor.",
+            "solutionHeadline": "Beat-First Belgesel Boru Hattı",
+            "solution": "Grafiksel gerilim, suspenseful duraklar ve kanıtlar görsel olarak Blueprint Studio'de ortaya çıkıyor, tam bir usta dosyayı sorunsuz bir şekilde teslim ediyor."
+          }
+        ],
+        "screeningRoomPreview": "Belgesel üretimi – Screening Room Öpün"
+      }
+    ]
   }
 }

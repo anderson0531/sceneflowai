@@ -1763,7 +1763,7 @@
     "morLine": "安全付款、稅務計算和合規性由我們的記錄商家Whop代表Life Focus, LLC處理。",
     "copyright": "© 2026 SceneFlow AI。版權所有。",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States •聯系方式： support@sceneflowai.studio",
-    "poweredBy": "Google驅動的情報·在SFAIGOGLE_CLOUDTERM上編排"
+    "poweredBy": "Google驅動的情報·在Google Cloud上編排"
   },
   "floatingCta": {
     "seePricing": "查看價格",
@@ -1892,6 +1892,255 @@
         },
         "screeningRoomHook": "教職員工在製作支出之前預覽動畫，查看課程場景，並以70多種語言分享串流，以獲得多校園回饋。",
         "screeningRoomPreview": "文藝復興工作坊：運動中的過去"
+      }
+    ]
+  },
+  "productionShowcase": {
+    "badge": "制作示例",
+    "title": "從概念到螢幕 :",
+    "titleAccent": "无限的可能性",
+    "subtitle": "以及Screening Room評論。 讓SceneFlow處理文稿寫作、人物設計、多語語音效、視覺化、影片製作及出版.",
+    "subtitleTagline": "一個平台 无限的可能性.",
+    "publicProductionsNote": "每張卡片都是完全公開製作.",
+    "languagesBanner": "以英文、西班牙文、葡萄牙文、印地文、中文、阿拉伯文和泰文為主題.",
+    "explorePipelineCta": "探索完整的作品",
+    "explorePipelineHint": "從以下影片劇情開始.",
+    "workflowLabel": "溶液",
+    "startProduction": "開始你的作品",
+    "cta": "開始你的作品",
+    "continuityNote": "Series Studio 管理连续性",
+    "resonanceNote": "SFAIAUDIENCE RESONANCETTMM 优化腳本",
+    "videoLanguagePrompt": "用你的語言看這個作品",
+    "videoComingSoon": "杜伯快來了",
+    "videoSoon": "很快",
+    "introVideoLabel": "溶液",
+    "screeningRoomLabel": "滑雪",
+    "frictionLabel": "摩擦",
+    "solutionPillarLabel": "SceneFlow解决方案",
+    "showSolutionsSection": "顯示溶液",
+    "hideSolutionsSection": "隱藏解析程式",
+    "cards": [
+      {
+        "id": "drama",
+        "title": "愛爾蘭電影劇院 零字符漂流.",
+        "subtitle": "移除變形的字元, 破碎的對話框和無盡的翻譯 。 編造無缝,多特征的長形故事,具有完整的視力连续性.",
+        "badge": "系列",
+        "solutionPillars": [
+          {
+            "title": "視覺字元一致性( C)",
+            "frictionHeadline": "字符漂移 & Wobbly 設定 .",
+            "friction": "傳統型態重新設置, 每一次引起人物面孔、裝束和照明.",
+            "solutionHeadline": "被鎖定的資產BlueprintS.",
+            "solution": "在 Blueprint Studio 中定义主字元描述、環境和視覺樣式。 SceneFlow在每個變化中強調視覺身份."
+          },
+          {
+            "title": "描述性平板和景色控制",
+            "frictionHeadline": "十秒陷阱.",
+            "friction": "製造一部由互不接觸的微速影片.",
+            "solutionHeadline": "拍第一集.",
+            "solution": "直接到現場,而不是即時 拍攝、攝影機動作、故事弧."
+          },
+          {
+            "title": "對話框音效對齊( A)",
+            "frictionHeadline": "無法相信對話框 .",
+            "friction": "相當不合的唇語, 浮著的嘴.",
+            "solutionHeadline": "集成聲效同步引擎( S) .",
+            "solution": "動力的聲音性能和精確的唇語同步直接被烤進影片管道中."
+          },
+          {
+            "title": "Fatigue 工作流",
+            "frictionHeadline": "畔波士頓抒情.",
+            "friction": "製作一部短片通常意味著把200+原始影片文件拼凑起來.",
+            "solutionHeadline": "自动工作室管道.",
+            "solution": "從概念到一個统一的平台的 MP4 最後主機 Blueprint Studio 處理故事設定, Production Studio 自动渲染, 以及 Screening Room 提供您最後的匯出 ."
+          }
+        ],
+        "screeningRoomPreview": "預覽"
+      },
+      {
+        "id": "animation",
+        "title": "你寫小丑 斯菲斯中心 動畫Punchline.",
+        "subtitle": "外放 在一個無缝的攝影棚里 把搞笑的剧本改编成 完全向前推进的.",
+        "badge": "多型態",
+        "solutionPillars": [
+          {
+            "title": "定型一致性",
+            "frictionHeadline": "風格融化.",
+            "friction": "動畫和動畫的風格 不停地在拍攝中扭曲 移動線的藝術 打破彩色調色板 以及把角色化為 照片現實化的無奇不有.",
+            "solutionHeadline": "已鎖定的藝術樣式引擎 .",
+            "solution": "把你的美學從第一個畫框上固定住 SceneFlow 鎖定角色設計,排行重量, 和遮蔽模型 整個集,所以你的角色保持獨特."
+          },
+          {
+            "title": "夸張的動畫與物理",
+            "frictionHeadline": "Stiff & Glitchy 動態 .",
+            "friction": "基因模型用快速的 slap棒、雙擊和粗糙的卡通物理作戰.",
+            "solutionHeadline": "動作酩酊大蛇.",
+            "solution": "在不打破几何形狀的前提下, 被指定为動態性格動態和表情性格 。 直接的拳打腳踢的物理喜劇 促进可持续的運動."
+          },
+          {
+            "title": "旋呗",
+            "frictionHeadline": "破碎的粉絲.",
+            "friction": "幽默住在暫停和砍傷中 標準的5秒基因回路 造成尷尬的間距 破壞了玩笑的交付.",
+            "solutionHeadline": "精密的剪輯.",
+            "solution": "控制場面向下到框架 調整劇性暫停 設置到平線的時間 以及快速反應的拍攝."
+          },
+          {
+            "title": "高能對話框與 Vocal 同步",
+            "frictionHeadline": "命命偶口.",
+            "friction": "通常的AI對話會感到平坦而机械化.",
+            "solutionHeadline": "动态聲效同步 我刚說.",
+            "solution": "直截了當的地圖發聲 和喜劇的聲音音軌 完全吻合到 最大的喜劇效果."
+          }
+        ],
+        "screeningRoomPreview": "動畫喜劇——Screening Room 預覽"
+      },
+      {
+        "id": "podcast",
+        "title": "翎客的主人翎 流 音翎出秀.",
+        "subtitle": "移除靜態的影像與手動編輯。 將文稿或原始音效轉換成多角、可播的影片播客.",
+        "badge": "播送 - ready",
+        "solutionPillars": [
+          {
+            "title": "多 兄弟",
+            "frictionHeadline": "机器人神通和失蹤身份",
+            "friction": "製作的主机會轉移外表.",
+            "solutionHeadline": "已鎖定的主機和來賓設定檔",
+            "solution": "為你們的共同主播和经常性的客人建立持久的視覺身份。 SceneFlow在長式討論中保持語言的连贯性、自然的眼神接觸."
+          },
+          {
+            "title": "多相對方向與安裝",
+            "frictionHeadline": "單角",
+            "friction": "而手動攝影機在30分鐘內轉移.",
+            "solutionHeadline": "自動多關卡切換",
+            "solution": "SceneFlow 分析對話流量."
+          },
+          {
+            "title": "背景- Aware B- Roll 視覺",
+            "frictionHeadline": "視覺 Monotony & B- Roll Botlenecks 元件",
+            "friction": "尋找、產生與時刻相關的視覺辅助工具或B卷片段.",
+            "solutionHeadline": "自動 太棒了",
+            "solution": "SceneFlow自動產生背景影院影視、圖片和戲劇剪接."
+          },
+          {
+            "title": "長格式音效和影片同步",
+            "frictionHeadline": "音效漂流與長格式 Render Fatigue",
+            "friction": "將基因影片同步到20+分鐘的原始音效.",
+            "solutionHeadline": "末端至末端播客管道",
+            "solution": "SceneFlow 處理Avatar對齊、相機剪接、B卷集成."
+          }
+        ],
+        "screeningRoomPreview": "人工智能第一播客 社会性别问题"
+      },
+      {
+        "id": "training",
+        "title": "企業級訓練錄影帶 以分鐘制成.",
+        "subtitle": "翻譯手冊、幻灯片、遵守文件.",
+        "badge": "全球部署",
+        "solutionPillars": [
+          {
+            "title": "展示者與品牌一致性",
+            "frictionHeadline": "不迷人的神通和品牌漂流",
+            "friction": "而品牌標誌、顏色和展示者外表在不同的訓練模組中不一而足.",
+            "solutionHeadline": "已鎖定的執行員與教練設定檔",
+            "solution": "建立持續的,天然的 公司介紹人 并鎖定您的品牌指南。 SceneFlow保持視象身份."
+          },
+          {
+            "title": "无缝全球本地化",
+            "frictionHeadline": "已斷斷的翻譯 & 壞唇同步",
+            "friction": "將訓練內容本地化成10+語言, 通常會產生尷尬的口音同步、機器語音軌.",
+            "solutionHeadline": "原生多語同步引擎",
+            "solution": "將整個訓練系列翻譯成數十種語言."
+          },
+          {
+            "title": "集成視覺援助和圖表",
+            "frictionHeadline": "文字堆",
+            "friction": "影片只會說話.",
+            "solutionHeadline": "背景影像覆寫( G)",
+            "solution": "SceneFlow自動在屏幕上直接產生定時圖、金鑰外賣和視覺辅助工具."
+          },
+          {
+            "title": "快速更新內容",
+            "frictionHeadline": "貴重重ث重射陷阱( R)",
+            "friction": "當公司政策或產品规格改變時, 更新一段2分鐘的影片通常协助发展中国家重建並重新交出整個檔案.",
+            "solutionHeadline": "模組文稿更新",
+            "solution": "直接在文稿蓝图中編輯文字以立即更新政策或程序 。 SFAISCENEFLOW能够获得的只是變更的部分."
+          }
+        ],
+        "screeningRoomPreview": ",."
+      },
+      {
+        "id": "scifi",
+        "title": "建造不可能的世界 。 直接不折不扣的Sci -Fi.",
+        "subtitle": "以及外星人物的設計.",
+        "badge": "VFX 備用",
+        "solutionPillars": [
+          {
+            "title": "環境與建築连续性",
+            "frictionHeadline": "几何大小( S)",
+            "friction": "未來的城市 霓虹海景 外星飛船 不停的扭曲 移動纹理 或溶解成相機截面之間的隨機視覺噪音.",
+            "solutionHeadline": "(d) 确定国家特征",
+            "solution": "在 Blueprint Studio 中定義關鍵建構、照明計劃及環境參數。 SceneFlow 鎖住空間几何 讓你的設置從大開槍到緊固的走廊戰持平."
+          },
+          {
+            "title": "异形與生佑設計完整性",
+            "frictionHeadline": "翻譯字元設計",
+            "friction": "非人種, 機器人.",
+            "solutionHeadline": "鎖定的外星資產設定檔",
+            "solution": "機械口音 被拒绝的被拒绝的被拒绝的被拒绝的被反对的被拒绝的被拒绝的被拒绝的被拒绝更加有效地被拒绝的被不拒绝的被拒绝的被拒绝的被拒绝的被拒绝的被拒绝的被拒绝的被拒绝的被拒绝的被拒绝的被拒绝的被拒绝的被拒绝的被拒绝的被拒绝的被拒绝的被拒绝的被拒绝的被拒绝的被拒绝的被拒绝的被拒绝的被拒绝的被拒绝的被拒绝的被拒绝的被的被的被的被的拒绝的拒绝的被的拒绝的被汇聚的被的被其目的在于的拒绝的拒绝的拒绝的被的被的被的被的拒绝的被的被的被的拒绝的被的被的被的拒绝的被的被的被的拒绝的拒绝的被的被的拒绝的拒绝的拒绝的被的拒绝的被的被的被的拒绝的被的被的被的被的被的被的被的拒绝的被的拒绝的被的被的被的被的被的被的被的拒绝的 我们在的被的被的被的拒绝的被的被的被的被的拒绝的被的."
+          },
+          {
+            "title": "VFX 動作與高端物理",
+            "frictionHeadline": "在動作序列中熔化動態",
+            "friction": "高速太空犬搏斗、能源武器大火、爆炸等.",
+            "solutionHeadline": "動作 & FX 動態安打",
+            "solution": "直接動力的舞蹈 攝影機的快速移動 粒子重力的動作."
+          },
+          {
+            "title": "视听世界建设",
+            "frictionHeadline": "高視覺世界在这一问题上的平坦音效",
+            "friction": "未來武器 環境中的星艦 和外星語言模式 娇小的手動裝配到無聲的片段上時 會感覺不一樣.",
+            "solutionHeadline": "集成的世界音效同步( V)",
+            "solution": "調整自訂的合成對話框、外星聲調和影音提示."
+          }
+        ],
+        "screeningRoomPreview": "Sci-Fi VFX 製作 —— SFISCREING ROOMTERM 我们要先預覽"
+      },
+      {
+        "id": "documentary",
+        "title": "翻譯成最佳銷售紀錄片.",
+        "subtitle": "重新創造歷史事件、重新啟動 正經的時期細節、無缝的語音和零檔授權費.",
+        "badge": "期間精确度",
+        "solutionPillars": [
+          {
+            "title": "大纪元視力準確度",
+            "frictionHeadline": "古老的藝術",
+            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
+            "solutionHeadline": "歷史樣under",
+            "solution": "從1920年代到18世紀的衣櫃纹理."
+          },
+          {
+            "title": "存档剪切器 & B- Roll 引擎",
+            "frictionHeadline": "長聲道的視覺摩諾托尼",
+            "friction": "配對長形旁白的音效 和靜息的股體影像 導致深度潛水時的觀眾迅速下水.",
+            "solutionHeadline": "翻譯的 B- Roll 引擎",
+            "solution": "S FFISCENEFLOWTERM自動產生時間化的影院重啟、文件覆寫、以及直接與音效記錄片捆綁的檔案式剪接."
+          },
+          {
+            "title": "面試( T)",
+            "frictionHeadline": "奇是要專家證人",
+            "friction": "產生的歷史學家、調查員或目擊者常常看起來是人造的.",
+            "solutionHeadline": "已鎖定的專家設定檔( V)",
+            "solution": "保持實際性、可信任的訪談設計."
+          },
+          {
+            "title": "描述性连续性",
+            "frictionHeadline": "破碎的時啪",
+            "friction": "在傳統的NLEs中通常需要數周.",
+            "solutionHeadline": "Beat-祗第一文件管道",
+            "solution": "在Blueprint Studio體內, 傳送一個完整組裝的主檔案."
+          }
+        ],
+        "screeningRoomPreview": "制片人:Screening Room 預覽"
       }
     ]
   }

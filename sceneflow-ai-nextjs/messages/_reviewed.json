@@ -26,10 +26,10 @@
     "Google Flow"
   ],
   "locales": {
-    "th": {
-      "tier": "A-reviewed",
+    "el": {
+      "tier": "B-mt",
       "mt": true,
-      "scope": "landing-critical"
+      "scope": "productionShowcase"
     }
   },
   "landingSync": {
@@ -38,5 +38,15 @@
     "batchSize": null,
     "batchNumber": null,
     "syncedAt": "2026-07-31T15:18:42.781Z"
+  },
+  "productionShowcaseSync": {
+    "provider": "deep-translator",
+    "scope": "productionShowcase",
+    "namespaces": [
+      "productionShowcase"
+    ],
+    "batchSize": null,
+    "batchNumber": null,
+    "syncedAt": "2026-08-01T07:59:52.262Z"
   }
 }
