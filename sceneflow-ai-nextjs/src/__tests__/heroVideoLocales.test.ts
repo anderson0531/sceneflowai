@@ -31,6 +31,8 @@ describe('Hero video locales', () => {
     for (const locale of HERO_VIDEO_LOCALES) {
       expect(locale.available).toBe(true)
       expect(locale.src).toBeTruthy()
+      expect(locale.poster).toContain('sceneflow-hero-')
+      expect(locale.poster).toContain('-poster.jpg')
     }
   })
 

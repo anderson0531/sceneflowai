@@ -20,7 +20,13 @@ export type HeroVideoLocale = {
   available: boolean
 }
 
-const BLOB_HOST = 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com'
+export const HERO_VIDEO_BLOB_HOST = 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com'
+
+const BLOB_HOST = HERO_VIDEO_BLOB_HOST
+
+function heroPoster(locale: HeroVideoLocaleId): string {
+  return `${BLOB_HOST}/landing/hero/sceneflow-hero-${locale}-poster.jpg`
+}
 
 /** Blob master filename for each locale once produced. */
 export const HERO_VIDEO_BLOB_PATHS: Record<HeroVideoLocaleId, string> = {
@@ -50,14 +56,14 @@ const HERO_VIDEO_LABELS: Record<HeroVideoLocaleId, { label: string; nativeLabel:
 }
 
 /** Locales with a produced Blob master. Others render as disabled "Soon" pills. */
-const PRODUCED_HERO_VIDEOS: Partial<Record<HeroVideoLocaleId, { src: string; poster?: string }>> = {
-  en: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.en) },
-  es: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.es) },
-  pt: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.pt) },
-  hi: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.hi) },
-  zh: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.zh) },
-  ar: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.ar) },
-  th: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.th) },
+const PRODUCED_HERO_VIDEOS: Partial<Record<HeroVideoLocaleId, { src: string; poster: string }>> = {
+  en: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.en), poster: heroPoster('en') },
+  es: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.es), poster: heroPoster('es') },
+  pt: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.pt), poster: heroPoster('pt') },
+  hi: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.hi), poster: heroPoster('hi') },
+  zh: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.zh), poster: heroPoster('zh') },
+  ar: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.ar), poster: heroPoster('ar') },
+  th: { src: heroSrc(HERO_VIDEO_BLOB_PATHS.th), poster: heroPoster('th') },
 }
 
 export const HERO_VIDEO_LOCALES: HeroVideoLocale[] = (
@@ -71,7 +77,7 @@ export const HERO_VIDEO_LOCALES: HeroVideoLocale[] = (
     label,
     nativeLabel,
     src: produced?.src ?? '',
-    poster: produced?.poster ?? '',
+    poster: produced?.poster ?? (produced?.src ? heroPoster(id) : ''),
     available: Boolean(produced?.src),
   }
 })

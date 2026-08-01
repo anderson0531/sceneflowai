@@ -97,6 +97,37 @@ export async function getAuthorizedYouTubeClient(userId: string): Promise<OAuth2
   return client
 }
 
+export async function uploadYouTubeThumbnail(
+  accessToken: string,
+  videoId: string,
+  thumbnailUrl: string
+): Promise<void> {
+  const thumbRes = await fetch(thumbnailUrl)
+  if (!thumbRes.ok) {
+    throw new Error(`Failed to fetch thumbnail: ${thumbRes.status}`)
+  }
+
+  const contentType = thumbRes.headers.get('content-type') || 'image/jpeg'
+  const thumbBuffer = Buffer.from(await thumbRes.arrayBuffer())
+
+  const setRes = await fetch(
+    `https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=${videoId}`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': contentType,
+      },
+      body: thumbBuffer,
+    }
+  )
+
+  if (!setRes.ok) {
+    const errText = await setRes.text()
+    throw new Error(`YouTube thumbnail upload failed: ${setRes.status} ${errText}`)
+  }
+}
+
 export async function uploadVideoToYouTube(
   userId: string,
   options: {
@@ -105,8 +136,11 @@ export async function uploadVideoToYouTube(
     description: string
     privacyStatus: 'private' | 'unlisted' | 'public'
     language?: string
+    tags?: string[]
+    categoryId?: string
+    thumbnailUrl?: string
   }
-): Promise<{ videoId: string; url: string }> {
+): Promise<{ videoId: string; url: string; thumbnailUploaded: boolean }> {
   const client = await getAuthorizedYouTubeClient(userId)
   if (!client) {
     throw new Error('YouTube account not connected. Please authorize first.')
@@ -135,6 +169,8 @@ export async function uploadVideoToYouTube(
         snippet: {
           title: options.title,
           description: options.description,
+          tags: options.tags,
+          categoryId: options.categoryId || '28',
           defaultLanguage: options.language || 'en',
         },
         status: {
@@ -171,9 +207,20 @@ export async function uploadVideoToYouTube(
   const videoId = data.id
   if (!videoId) throw new Error('YouTube upload succeeded but no video ID returned')
 
+  let thumbnailUploaded = false
+  if (options.thumbnailUrl) {
+    try {
+      await uploadYouTubeThumbnail(token, videoId, options.thumbnailUrl)
+      thumbnailUploaded = true
+    } catch (err) {
+      console.warn('[YouTube Upload] Thumbnail upload failed:', err)
+    }
+  }
+
   return {
     videoId,
     url: `https://www.youtube.com/watch?v=${videoId}`,
+    thumbnailUploaded,
   }
 }
 
