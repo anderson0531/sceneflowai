@@ -44,6 +44,23 @@ describe('legal page discoverability', () => {
     expect(footer.links?.trustSafety).toBe('Trust & Safety')
   })
 
+  it('includes Trust & Safety in the landing header and floating nav menus', () => {
+    const header = readFileSync(
+      join(process.cwd(), 'src/app/components/Header.tsx'),
+      'utf8'
+    )
+    const floatingNav = readFileSync(
+      join(process.cwd(), 'src/components/landing/FloatingNav.tsx'),
+      'utf8'
+    )
+    expect(header).toContain("scrollToSection('trust-safety')")
+    expect(header).toContain("t('trustSafety')")
+    expect(floatingNav).toContain("'trust-safety'")
+    expect(floatingNav).toContain("t('trustSafety')")
+    expect(enMessages.nav.trustSafety).toBe('Trust & Safety')
+    expect(enMessages.floatingNav.trustSafety).toBe('Trust & Safety')
+  })
+
   it('exposes English policy labels in landing legal nav', () => {
     expect(LEGAL_HUB_PAGE.label).toBe('Trust & Safety')
     expect(LEGAL_HUB_PAGE.title).toBe('Trust & Safety')
