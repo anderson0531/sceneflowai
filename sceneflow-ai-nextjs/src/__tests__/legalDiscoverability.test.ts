@@ -38,6 +38,9 @@ describe('legal page discoverability', () => {
   })
 
   it('exposes English policy labels in landing legal nav', () => {
+    expect(LEGAL_HUB_PAGE.label).toBe('Trust & Safety')
+    expect(LEGAL_HUB_PAGE.title).toBe('Trust & Safety')
+
     const labels = LEGAL_PAGES.map((page) => page.label)
     expect(labels).toContain('Privacy Policy')
     expect(labels).toContain('Terms of Service')
@@ -50,7 +53,7 @@ describe('legal page discoverability', () => {
       'utf8'
     )
     expect(landingNav).toContain('LEGAL_PAGES')
-    expect(landingNav).toContain('aria-label="Legal policies and contact"')
+    expect(landingNav).toContain('aria-label="Trust & Safety policies and contact"')
   })
 
   it('wraps legal pages with shared chrome and nav', () => {

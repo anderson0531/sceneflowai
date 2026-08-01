@@ -72,6 +72,13 @@ describe('landing locale copy', () => {
     expect(String(enMessages.finalCta.subtitle)).toContain('September')
   })
 
+  it('names the footer trust section Trust & Safety in English', () => {
+    const footer = enMessages.footer as { legal?: string; links?: { trustSafety?: string } }
+    expect(footer.legal).toBe('Trust & Safety')
+    expect(footer.legal).not.toBe('Legal')
+    expect(footer.links?.trustSafety).toBe('Trust & Safety')
+  })
+
   for (const code of localeCodes) {
     it(`syncs September landing keys for ${code}`, () => {
       const localeMessages = JSON.parse(
@@ -101,6 +108,11 @@ describe('landing locale copy', () => {
       for (const pattern of OUTDATED_PATTERNS) {
         expect(allStrings).not.toContain(pattern)
       }
+
+      const footer = localeMessages.footer as { legal?: string; links?: { trustSafety?: string } }
+      expect(footer.legal, `${code} footer.legal`).toBeTruthy()
+      expect(footer.links?.trustSafety, `${code} footer.links.trustSafety`).toBeTruthy()
+      expect(footer.legal).toBe(footer.links?.trustSafety)
     })
   }
 })
