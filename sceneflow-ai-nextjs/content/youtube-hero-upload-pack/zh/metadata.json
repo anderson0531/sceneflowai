@@ -1,0 +1,28 @@
+{
+  "locale": "zh",
+  "title": "SceneFlow AI Studio — 由您来主导故事。SceneFlow自动化工作室。",
+  "description": "在Google Cloud上精心策划的由Google提供支持的情报—使用可选的Google或Kling生成。无需微提示，即可通过从蓝图到主MP4的无缝管道运行您的创意。\n\n🔗 Start your production: https://sceneflow.ai\n📺 Subscribe: https://www.youtube.com/@sceneflowaistudio\n\n#SceneFlow #AIVideo #VideoProduction #中文",
+  "tags": [
+    "SceneFlow",
+    "SceneFlow AI",
+    "AI video",
+    "video production",
+    "video studio",
+    "Chinese",
+    "中文"
+  ],
+  "videoUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Hero%20Video%20(Chinese).mp4",
+  "thumbnailUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/hero/sceneflow-hero-zh-poster.jpg",
+  "categoryId": "28",
+  "language": "zh",
+  "youtubeStudioChecklist": [
+    "Upload video file (sceneflow-hero-{locale}.mp4)",
+    "Paste title from title.txt",
+    "Paste description from description.txt",
+    "Upload thumbnail (sceneflow-hero-{locale}-poster.jpg)",
+    "Add tags from tags.txt",
+    "Category: Science & Technology",
+    "Language: match locale",
+    "Visibility: Public"
+  ]
+}

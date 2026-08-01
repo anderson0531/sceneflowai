@@ -34,7 +34,8 @@
                 "i18n:sync-production-showcase": "USE_LIBRETRANSLATE=1 npx tsx scripts/run-landing-locale-batches.ts --production-showcase-only --skip-existing --provider=auto --batch-size 5 --locale-delay-ms 2000 --batch-cooldown-ms 10000",
                 "i18n:translate-th": "tsx scripts/build-landing-messages.ts && tsx scripts/offline-translate-locale.ts --locale th",
                 "youtube:oauth": "node scripts/youtube-oauth-token.mjs",
-                "youtube:publish-hero": "node scripts/publish-hero-videos-youtube.mjs"
+                "youtube:publish-hero": "node scripts/publish-hero-videos-youtube.mjs",
+                "youtube:hero-upload-pack": "node scripts/generate-hero-youtube-upload-pack.mjs"
         },
         "dependencies": {
                 "@ai-sdk/google": "^3.0.57",

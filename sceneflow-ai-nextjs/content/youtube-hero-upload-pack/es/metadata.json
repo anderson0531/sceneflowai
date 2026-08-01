@@ -1,0 +1,28 @@
+{
+  "locale": "es",
+  "title": "SceneFlow AI Studio — You Direct the Story. SceneFlow Automates the Studio.",
+  "description": "Google-powered intelligence orchestrated on Google Cloud — with optional Google or Kling generation. Run your ideas through a seamless pipeline from blueprint to master MP4 without micro-prompting.\n\n🔗 Start your production: https://sceneflow.ai\n📺 Subscribe: https://www.youtube.com/@sceneflowaistudio\n\n#SceneFlow #AIVideo #VideoProduction #Español",
+  "tags": [
+    "SceneFlow",
+    "SceneFlow AI",
+    "AI video",
+    "video production",
+    "video studio",
+    "Spanish",
+    "Español"
+  ],
+  "videoUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Hero%20Video%20(Spanish)%20.mp4",
+  "thumbnailUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/hero/sceneflow-hero-es-poster.jpg",
+  "categoryId": "28",
+  "language": "es",
+  "youtubeStudioChecklist": [
+    "Upload video file (sceneflow-hero-{locale}.mp4)",
+    "Paste title from title.txt",
+    "Paste description from description.txt",
+    "Upload thumbnail (sceneflow-hero-{locale}-poster.jpg)",
+    "Add tags from tags.txt",
+    "Category: Science & Technology",
+    "Language: match locale",
+    "Visibility: Public"
+  ]
+}

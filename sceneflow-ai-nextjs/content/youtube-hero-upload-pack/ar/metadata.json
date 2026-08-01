@@ -1,0 +1,28 @@
+{
+  "locale": "ar",
+  "title": "SceneFlow AI Studio — أنت توجه القصة. يقوم SceneFlow بأتمتة الاستوديو.",
+  "description": "تم تنسيق الذكاء المدعوم من Google على Google Cloud — مع جيل اختياري من Google أو Kling. قم بتشغيل أفكارك من خلال خط أنابيب سلس من المخطط إلى إتقان MP4 دون تحفيز دقيق.\n\n🔗 Start your production: https://sceneflow.ai\n📺 Subscribe: https://www.youtube.com/@sceneflowaistudio\n\n#SceneFlow #AIVideo #VideoProduction #العربية",
+  "tags": [
+    "SceneFlow",
+    "SceneFlow AI",
+    "AI video",
+    "video production",
+    "video studio",
+    "Arabic",
+    "العربية"
+  ],
+  "videoUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Hero%20Video%20(Arabic)%20.mp4",
+  "thumbnailUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/hero/sceneflow-hero-ar-poster.jpg",
+  "categoryId": "28",
+  "language": "ar",
+  "youtubeStudioChecklist": [
+    "Upload video file (sceneflow-hero-{locale}.mp4)",
+    "Paste title from title.txt",
+    "Paste description from description.txt",
+    "Upload thumbnail (sceneflow-hero-{locale}-poster.jpg)",
+    "Add tags from tags.txt",
+    "Category: Science & Technology",
+    "Language: match locale",
+    "Visibility: Public"
+  ]
+}

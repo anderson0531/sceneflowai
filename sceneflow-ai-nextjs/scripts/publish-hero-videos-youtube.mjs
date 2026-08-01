@@ -8,10 +8,9 @@
  *   node scripts/publish-hero-videos-youtube.mjs --locale en --privacy unlisted
  *   node scripts/publish-hero-videos-youtube.mjs --all --skip-existing
  *
- * Required env (unless --dry-run):
- *   GOOGLE_CLIENT_ID
- *   GOOGLE_CLIENT_SECRET
- *   YOUTUBE_REFRESH_TOKEN
+ * Required env (unless --dry-run) — one of:
+ *   YOUTUBE_ACCESS_TOKEN (short-lived, e.g. from OAuth Playground)
+ *   OR GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET + YOUTUBE_REFRESH_TOKEN
  *
  * Optional env:
  *   GOOGLE_API_KEY
@@ -71,7 +70,10 @@ function loadBundles() {
   return JSON.parse(result.stdout.trim())
 }
 
-async function refreshAccessToken() {
+async function getAccessToken() {
+  const direct = process.env.YOUTUBE_ACCESS_TOKEN?.trim()
+  if (direct) return direct
+
   const clientId = process.env.GOOGLE_CLIENT_ID || process.env.GOOGLE_OAUTH_CLIENT_ID
   const clientSecret =
     process.env.GOOGLE_CLIENT_SECRET || process.env.GOOGLE_OAUTH_CLIENT_SECRET
@@ -79,7 +81,7 @@ async function refreshAccessToken() {
 
   if (!clientId || !clientSecret || !refreshToken) {
     throw new Error(
-      'Missing GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, or YOUTUBE_REFRESH_TOKEN'
+      'Set YOUTUBE_ACCESS_TOKEN, or GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET + YOUTUBE_REFRESH_TOKEN'
     )
   }
 
@@ -318,7 +320,7 @@ async function main() {
     return
   }
 
-  const accessToken = await refreshAccessToken()
+  const accessToken = await getAccessToken()
   await verifyChannel(accessToken)
 
   const manifest = readManifest()
