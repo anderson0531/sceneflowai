@@ -38,5 +38,8 @@ describe('hero section copy and UI', () => {
     expect(hero).toContain("t.raw('pipelineSteps')")
     expect(hero).toContain('scrollToHowItWorks')
     expect(hero).toContain('key-features')
+    expect(hero).toContain('getVideoPreloadStrategy')
+    expect(hero).toContain('useAdaptiveVideoSource')
+    expect(hero).not.toContain('key={inlineVideoLocale}')
   })
 })

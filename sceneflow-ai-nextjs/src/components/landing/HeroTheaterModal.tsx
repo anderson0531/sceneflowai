@@ -1,14 +1,17 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Volume2, VolumeX, Pause, Play } from 'lucide-react'
+import { X, Volume2, VolumeX, Pause, Play, Loader2 } from 'lucide-react'
 import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
 import {
   getHeroVideoLocale,
   getHeroVideoLocalesAsVideoLocales,
+  getHeroVideoPlaybackSources,
   type HeroVideoLocaleId,
 } from '@/config/landing/heroVideoLocales'
+import { getModalVideoPreload } from '@/lib/landing/videoPreload'
+import { useAdaptiveVideoSource } from '@/lib/landing/useAdaptiveVideoSource'
 import { cn } from '@/lib/utils'
 
 type HeroTheaterModalProps = {
@@ -29,8 +32,19 @@ export function HeroTheaterModal({
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isPlaying, setIsPlaying] = useState(true)
   const [isMuted, setIsMuted] = useState(false)
+  const [isBuffering, setIsBuffering] = useState(true)
   const activeEntry = getHeroVideoLocale(activeLocale)
   const heroLocales = getHeroVideoLocalesAsVideoLocales()
+  const playbackSources = useMemo(
+    () => (activeEntry ? getHeroVideoPlaybackSources(activeLocale) : null),
+    [activeEntry, activeLocale]
+  )
+
+  useAdaptiveVideoSource(
+    videoRef,
+    playbackSources ?? { mp4Src: '' },
+    open && Boolean(playbackSources?.mp4Src)
+  )
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -41,6 +55,7 @@ export function HeroTheaterModal({
       document.body.style.overflow = 'hidden'
       setIsMuted(false)
       setIsPlaying(true)
+      setIsBuffering(true)
     } else {
       document.body.style.overflow = 'unset'
       const video = videoRef.current
@@ -58,12 +73,12 @@ export function HeroTheaterModal({
   useEffect(() => {
     if (!open) return
     const video = videoRef.current
-    if (!video || !activeEntry) return
+    if (!video || !playbackSources) return
 
     video.muted = isMuted
-    video.load()
+    video.poster = playbackSources.poster
     void video.play().catch(() => {})
-  }, [open, activeLocale, activeEntry, isMuted])
+  }, [open, activeLocale, playbackSources, isMuted])
 
   const toggleMute = useCallback(() => {
     const video = videoRef.current
@@ -85,7 +100,7 @@ export function HeroTheaterModal({
     }
   }, [])
 
-  if (!activeEntry) return null
+  if (!activeEntry || !playbackSources) return null
 
   return (
     <AnimatePresence>
@@ -105,18 +120,28 @@ export function HeroTheaterModal({
           >
             <video
               ref={videoRef}
-              key={activeLocale}
-              src={activeEntry.src}
-              poster={activeEntry.poster}
+              poster={playbackSources.poster}
               loop
               playsInline
-              preload="auto"
+              preload={getModalVideoPreload(open)}
               muted={isMuted}
               className="absolute inset-0 h-full w-full object-contain"
               onClick={(e) => e.stopPropagation()}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
+              onWaiting={() => setIsBuffering(true)}
+              onCanPlay={() => setIsBuffering(false)}
+              onPlaying={() => setIsBuffering(false)}
             />
+
+            {isBuffering && (
+              <div
+                className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/50"
+                aria-hidden
+              >
+                <Loader2 className="h-12 w-12 animate-spin text-cyan-400/80" />
+              </div>
+            )}
 
             <VideoLanguageControl
               locales={heroLocales}

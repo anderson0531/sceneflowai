@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import {
   Play,
   Pause,
@@ -14,6 +14,7 @@ import {
   Zap,
   MessageSquare,
   ChevronRight,
+  Loader2,
 } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
 import {
@@ -21,35 +22,19 @@ import {
   HERO_VIDEO_UNMUTE_DISMISSED_KEY,
   getHeroVideoLocale,
   getHeroVideoLocalesAsVideoLocales,
-  getDefaultHeroVideoSrc,
-  getDefaultHeroVideoPoster,
+  getHeroVideoPlaybackSources,
   type HeroVideoLocaleId,
 } from '@/config/landing/heroVideoLocales'
 import { landingLocaleToVideoLocale } from '@/config/landing/videoLocales'
 import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
 import { HeroTheaterModal } from '@/components/landing/HeroTheaterModal'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
+import { getVideoPreloadStrategy, type VideoPreloadValue } from '@/lib/landing/videoPreload'
+import { useAdaptiveVideoSource } from '@/lib/landing/useAdaptiveVideoSource'
 
 function readUnmuteDismissed(): boolean {
   if (typeof window === 'undefined') return false
   return localStorage.getItem(HERO_VIDEO_UNMUTE_DISMISSED_KEY) === '1'
-}
-
-function applyLocaleToVideo(
-  video: HTMLVideoElement,
-  id: HeroVideoLocaleId,
-  shouldPlay: boolean
-) {
-  const entry = getHeroVideoLocale(id)
-  if (!entry?.available) return
-
-  const wasPlaying = !video.paused
-  video.src = entry.src
-  video.poster = entry.poster
-  video.load()
-  if (shouldPlay && wasPlaying) {
-    void video.play().catch(() => {})
-  }
 }
 
 export function HeroSection() {
@@ -68,13 +53,30 @@ export function HeroSection() {
   const [activeLocale, setActiveLocale] = useState<HeroVideoLocaleId>(syncedVideoLocale)
   const [inlineVideoLocale, setInlineVideoLocale] =
     useState<HeroVideoLocaleId>(syncedVideoLocale)
+  const [videoPreload, setVideoPreload] = useState<VideoPreloadValue>('metadata')
+  const [isBuffering, setIsBuffering] = useState(true)
   const suppressTheaterOpenUntilRef = useRef(0)
 
   const heroLocales = getHeroVideoLocalesAsVideoLocales()
-  const inlineEntry =
-    getHeroVideoLocale(inlineVideoLocale) ?? getHeroVideoLocale(DEFAULT_HERO_VIDEO_LOCALE)!
-  const videoSrc = inlineEntry.available ? inlineEntry.src : getDefaultHeroVideoSrc()
-  const videoPoster = inlineEntry.available ? inlineEntry.poster : getDefaultHeroVideoPoster()
+  const playbackSources = useMemo(
+    () =>
+      getHeroVideoPlaybackSources(inlineVideoLocale) ??
+      getHeroVideoPlaybackSources(DEFAULT_HERO_VIDEO_LOCALE)!,
+    [inlineVideoLocale]
+  )
+
+  useAdaptiveVideoSource(
+    videoRef,
+    {
+      hlsSrc: playbackSources.hlsSrc,
+      mp4Src: playbackSources.mp4Src,
+    },
+    !isTheaterOpen
+  )
+
+  useEffect(() => {
+    setVideoPreload(getVideoPreloadStrategy())
+  }, [])
 
   useEffect(() => {
     setShowUnmutePrompt(!readUnmuteDismissed())
@@ -86,12 +88,17 @@ export function HeroSection() {
 
     setActiveLocale(syncedVideoLocale)
     setInlineVideoLocale(syncedVideoLocale)
-
-    const video = videoRef.current
-    if (video) {
-      applyLocaleToVideo(video, syncedVideoLocale, !video.paused)
-    }
+    setIsBuffering(true)
   }, [syncedVideoLocale])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || isTheaterOpen) return
+    video.poster = playbackSources.poster
+    if (isPlaying) {
+      void video.play().catch(() => {})
+    }
+  }, [playbackSources.poster, isPlaying, isTheaterOpen])
 
   const unmuteWithSound = useCallback(() => {
     const video = videoRef.current
@@ -114,18 +121,23 @@ export function HeroSection() {
     return performance.now() < suppressTheaterOpenUntilRef.current
   }, [])
 
-  const selectLocale = useCallback((id: HeroVideoLocaleId) => {
-    markSuppressTheaterOpen()
-    const entry = getHeroVideoLocale(id)
-    if (!entry?.available) return
+  const selectLocale = useCallback(
+    (id: HeroVideoLocaleId) => {
+      markSuppressTheaterOpen()
+      const entry = getHeroVideoLocale(id)
+      if (!entry?.available) return
 
-    setActiveLocale(id)
+      setActiveLocale(id)
+      setInlineVideoLocale(id)
+      setIsBuffering(true)
 
-    setInlineVideoLocale(id)
-    const video = videoRef.current
-    if (!video) return
-    applyLocaleToVideo(video, id, true)
-  }, [markSuppressTheaterOpen])
+      const video = videoRef.current
+      if (video) {
+        void video.play().catch(() => {})
+      }
+    },
+    [markSuppressTheaterOpen]
+  )
 
   const handleLanguageMenuOpenChange = useCallback(
     (open: boolean) => {
@@ -170,11 +182,11 @@ export function HeroSection() {
   const closeTheater = useCallback(() => {
     setIsTheaterOpen(false)
     setInlineVideoLocale(activeLocale)
+    setIsBuffering(true)
 
     const video = videoRef.current
     if (!video) return
 
-    applyLocaleToVideo(video, activeLocale, isPlaying)
     video.muted = isMuted
     if (isPlaying) {
       void video.play().catch(() => {})
@@ -241,18 +253,28 @@ export function HeroSection() {
               <div className="relative aspect-video w-full h-full">
                 <video
                   ref={videoRef}
-                  key={inlineVideoLocale}
-                  src={videoSrc}
-                  poster={videoPoster}
+                  poster={playbackSources.poster}
                   autoPlay
                   loop
                   muted={isMuted}
                   playsInline
-                  preload="auto"
+                  preload={videoPreload}
                   className="absolute inset-0 h-full w-full object-cover"
                   onPlay={() => setIsPlaying(true)}
                   onPause={() => setIsPlaying(false)}
+                  onWaiting={() => setIsBuffering(true)}
+                  onCanPlay={() => setIsBuffering(false)}
+                  onPlaying={() => setIsBuffering(false)}
                 />
+
+                {isBuffering && (
+                  <div
+                    className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/40"
+                    aria-hidden
+                  >
+                    <Loader2 className="h-10 w-10 animate-spin text-cyan-400/80" />
+                  </div>
+                )}
 
                 <VideoLanguageControl
                   locales={heroLocales}
@@ -265,7 +287,7 @@ export function HeroSection() {
                   onOpenChange={handleLanguageMenuOpenChange}
                 />
 
-                {isMuted && (
+                {isMuted && !isBuffering && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     {showUnmutePrompt ? (
                       <button

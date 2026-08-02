@@ -93,6 +93,7 @@
                 "fountain-js": "^1.2.4",
                 "framer-motion": "^12.23.12",
                 "google-auth-library": "^10.9.0",
+                "hls.js": "^1.6.16",
                 "idb": "^8.0.3",
                 "inngest": "^4.2.6",
                 "jsonwebtoken": "^9.0.2",
