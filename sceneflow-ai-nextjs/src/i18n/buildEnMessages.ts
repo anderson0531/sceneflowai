@@ -8,6 +8,8 @@ import {
   AUDIENCE_PATH_MODES,
   FINAL_CTA_COPY,
   HERO_COPY,
+  HERO_PIPELINE_STEPS,
+  HERO_VALUE_CHIPS,
   HOW_IT_WORKS_HEADER,
   MOR_FOOTER_LINE,
   ONE_TAKE_PIPELINE,
@@ -103,6 +105,8 @@ export function buildEnMessages() {
     },
     hero: {
       ...HERO_COPY,
+      chips: HERO_VALUE_CHIPS.map((chip) => ({ label: chip.label, detail: chip.detail })),
+      pipelineSteps: [...HERO_PIPELINE_STEPS],
       languagePrompt: HERO_VIDEO_LANGUAGE_PROMPT,
       multilangHint: HERO_VIDEO_MULTILANG_HINT,
       playWithNarration: 'Play with narration',

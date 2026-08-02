@@ -23,14 +23,13 @@ describe('two modes landing section', () => {
   })
 
   it('keeps GCP and pipeline jargon out of hero namespace', () => {
-    const hero = enMessages.hero as Record<string, string>
-    const heroText = Object.values(hero).join('\n')
+    const heroText = JSON.stringify(enMessages.hero)
     expect(heroText).not.toContain('Google Cloud')
     expect(heroText).not.toContain('Vertex AI')
     expect(heroText).not.toContain('blueprint to master MP4')
-    expect(hero.headline).toBe(HERO_COPY.headline)
-    expect(hero.ctaPrimaryLaunch).toBe('Start with Go Mode')
-    expect(hero.ctaSecondary).toBe('Explore Director Mode')
+    expect(enMessages.hero.headline).toBe(HERO_COPY.headline)
+    expect(enMessages.hero.ctaPrimaryLaunch).toBe('Start Your Production')
+    expect(enMessages.hero.ctaSecondary).toBe('Explore How It Works')
   })
 
   it('renders section with anchor id and dual hero CTAs', () => {
@@ -46,7 +45,7 @@ describe('two modes landing section', () => {
     expect(twoModes).toContain("t('go.cta')")
     expect(twoModes).toContain("t('director.cta')")
     expect(hero).toContain("t('ctaSecondary')")
-    expect(hero).toContain('scrollToTwoModes')
+    expect(hero).toContain('scrollToHowItWorks')
   })
 
   it('moves infrastructure copy to dedicated bottom section', () => {

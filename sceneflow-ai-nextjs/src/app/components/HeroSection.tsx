@@ -10,6 +10,10 @@ import {
   VolumeX,
   Maximize2,
   ArrowRight,
+  FileText,
+  Zap,
+  MessageSquare,
+  ChevronRight,
 } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
 import {
@@ -50,6 +54,9 @@ function applyLocaleToVideo(
 
 export function HeroSection() {
   const t = useTranslations('hero')
+  const chips = t.raw('chips') as Array<{ label: string; detail: string }>
+  const pipelineSteps = t.raw('pipelineSteps') as string[]
+  const chipIcons = [FileText, Zap, MessageSquare]
   const landingLocale = useLocale()
   const syncedVideoLocale = landingLocaleToVideoLocale(landingLocale) as HeroVideoLocaleId
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -133,8 +140,8 @@ export function HeroSection() {
     window.location.href = getSignupUrlForTier('explorer')
   }, [])
 
-  const scrollToTwoModes = useCallback(() => {
-    document.getElementById('two-modes')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  const scrollToHowItWorks = useCallback(() => {
+    document.getElementById('key-features')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [])
 
   const openTheater = useCallback(() => {
@@ -344,6 +351,25 @@ export function HeroSection() {
             </div>
           </motion.div>
 
+          {pipelineSteps.length > 0 && (
+            <motion.div
+              className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm text-gray-400"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              aria-label="Studio pipeline flow"
+            >
+              {pipelineSteps.map((step, index) => (
+                <span key={step} className="inline-flex items-center gap-2">
+                  <span className="font-medium text-gray-300">{step}</span>
+                  {index < pipelineSteps.length - 1 && (
+                    <ChevronRight className="h-3.5 w-3.5 text-gray-500" aria-hidden />
+                  )}
+                </span>
+              ))}
+            </motion.div>
+          )}
+
           <div className="max-w-4xl mx-auto text-center mt-12 lg:mt-14">
             <motion.h1
               className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter leading-tight bg-gradient-to-r from-white via-gray-300 to-gray-400 text-transparent bg-clip-text"
@@ -355,7 +381,7 @@ export function HeroSection() {
             </motion.h1>
 
             <motion.p
-              className="mt-6 max-w-2xl mx-auto text-base sm:text-lg text-gray-300"
+              className="mt-6 max-w-3xl mx-auto text-base sm:text-lg text-gray-300"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.25 }}
@@ -364,10 +390,35 @@ export function HeroSection() {
             </motion.p>
 
             <motion.div
+              className="mt-8 flex flex-col lg:flex-row items-stretch justify-center gap-3 max-w-5xl mx-auto"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.28 }}
+            >
+              {chips.map((chip, index) => {
+                const Icon = chipIcons[index] ?? FileText
+                return (
+                  <div
+                    key={chip.label}
+                    className="flex-1 rounded-xl border border-white/10 bg-slate-900/50 px-4 py-3 text-left"
+                  >
+                    <div className="mb-2 flex items-center gap-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-500/20 bg-cyan-500/10">
+                        <Icon className="h-4 w-4 text-cyan-400" aria-hidden />
+                      </div>
+                      <p className="text-sm font-semibold text-white">{chip.label}</p>
+                    </div>
+                    <p className="text-sm text-gray-400 leading-relaxed">{chip.detail}</p>
+                  </div>
+                )
+              })}
+            </motion.div>
+
+            <motion.div
               className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
+              transition={{ duration: 0.8, delay: 0.32 }}
             >
               <Button
                 size="lg"
@@ -381,7 +432,7 @@ export function HeroSection() {
                 size="lg"
                 variant="outline"
                 className="w-full sm:w-auto border-purple-500/40 text-purple-300 hover:bg-purple-500/10"
-                onClick={scrollToTwoModes}
+                onClick={scrollToHowItWorks}
               >
                 {t('ctaSecondary')}
               </Button>

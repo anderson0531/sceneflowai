@@ -442,6 +442,8 @@ export const CRITICAL_LANDING_PATHS = [
   'hero.ctaPrimaryLaunch',
   'hero.ctaSecondary',
   'hero.ctaSupportingLine',
+  'hero.chips.0.label',
+  'hero.chips.0.detail',
   'twoModes.title',
   'twoModes.go.cta',
   'twoModes.director.cta',

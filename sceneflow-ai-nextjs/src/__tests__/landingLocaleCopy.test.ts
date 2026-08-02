@@ -10,6 +10,8 @@ const REQUIRED_LANDING_KEYS = [
   'hero.ctaPrimaryLaunch',
   'hero.ctaSecondary',
   'hero.ctaSupportingLine',
+  'hero.chips.0.label',
+  'hero.chips.0.detail',
   'twoModes.title',
   'twoModes.go.cta',
   'twoModes.director.cta',
@@ -69,7 +71,7 @@ describe('landing locale copy', () => {
     for (const path of EXPLORER_PRICE_KEYS) {
       expect(hasExplorerPrice(String(getAtPath(enMessages, path)))).toBe(true)
     }
-    expect(String(enMessages.hero.ctaPrimaryLaunch)).toBe('Start with Go Mode')
+    expect(String(enMessages.hero.ctaPrimaryLaunch)).toBe('Start Your Production')
     expect(String(enMessages.useCasesShowcase.cta)).toBe('Start Your Production')
     expect(String(enMessages.finalCta.cta)).toBe('Start with Go Mode')
     expect(String(enMessages.finalCta.subtitle)).toContain('$9')
