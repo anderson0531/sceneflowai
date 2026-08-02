@@ -133,6 +133,10 @@ export function HeroSection() {
     window.location.href = getSignupUrlForTier('explorer')
   }, [])
 
+  const scrollToTwoModes = useCallback(() => {
+    document.getElementById('two-modes')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [])
+
   const openTheater = useCallback(() => {
     const video = videoRef.current
     if (video) {
@@ -360,7 +364,7 @@ export function HeroSection() {
             </motion.p>
 
             <motion.div
-              className="mt-10 flex flex-col items-center justify-center gap-3"
+              className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
@@ -372,6 +376,14 @@ export function HeroSection() {
               >
                 {t('ctaPrimaryLaunch')}
                 <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full sm:w-auto border-purple-500/40 text-purple-300 hover:bg-purple-500/10"
+                onClick={scrollToTwoModes}
+              >
+                {t('ctaSecondary')}
               </Button>
               {t('ctaSupportingLine') && (
                 <p className="max-w-md text-sm text-gray-400">{t('ctaSupportingLine')}</p>

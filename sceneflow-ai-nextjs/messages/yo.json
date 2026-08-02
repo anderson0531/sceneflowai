@@ -23,60 +23,64 @@
     "noLanguagesFound": "A kò rí èdè kankan"
   },
   "floatingNav": {
-    "compare": "Fi wé",
-    "looksAndFormats": "Ìrísí àti Ìṣesí",
-    "howItWorks": "Bí ó ṣe ń ṣiṣẹ́",
-    "useCases": "Àwọn Àpẹẹrẹ Lílo",
-    "preVisEngine": "Ètò Àgbékalẹ̀ Àwòrán Àkọ́kọ́",
-    "platformWalkthrough": "Ìtọ́sọ́nà lórí bí a ṣe ń lo pèpéle náà",
-    "trustSafety": "Ìgbẹ́kẹ̀lé àti Ààbò",
-    "platform": "Pẹpẹ",
-    "pricing": "Ètò iye owó"
+    "compare": "Compare",
+    "looksAndFormats": "Looks & Formats",
+    "howItWorks": "How It Works",
+    "useCases": "Use Cases",
+    "preVisEngine": "Pre-Vis Engine",
+    "platformWalkthrough": "Platform Walkthrough",
+    "trustSafety": "Trust & Safety",
+    "platform": "Platform",
+    "pricing": "Pricing",
+    "productionExamples": "Examples",
+    "twoModes": "Go vs Director",
+    "keyFeatures": "Key Features"
   },
   "hero": {
-    "headline": "Fojú inú wo ìtàn náà. SceneFlow ló ń bójú tó ìlànà iṣẹ́ náà.",
-    "subheadline": "Fi ilana fifunni ni itọsọna ti o n gba akoko silẹ. Tẹdo gbogbo akiyesi rẹ si ohun ti o fẹ ṣẹda, pẹlu ilana iṣẹ ti o n ṣiṣẹ funra rẹ ti o si wa ni ipele ti awọn alamọdaju.",
+    "headline": "Click Go and take a coffee break — or step through every scene as creative director.",
+    "subheadline": "Full automation when you want speed. Complete control when you want authorship. SceneFlow delivers concept-to-master animatics in two intentional modes.",
     "audienceMicroLine": "A ṣe é fún àwọn tó ń dá nǹkan sílẹ̀ tí wọ́n sì fẹ́ rí àbájáde, àti fún àwọn ẹgbẹ́ tó fẹ́ rí bí ó ṣe ń ṣiṣẹ́.",
-    "ctaSecondary": "Wo 'Ohun ti o ṣee ṣe'",
-    "ctaToolStack": "Wo bí ó ṣe ń rọ́pò àwọn irin-iṣẹ́ rẹ.",
-    "languagePrompt": "Gbọ́ ohùn akọni náà ní èdè rẹ — ọ̀nà ìpèsè kan náà, àwọn ọjà tuntun.",
-    "multilangHint": "Hero n ṣe àtúntò ohùn ní èdè méje — gbogbo ètò iṣẹ́ náà sì ṣe àtìlẹ́yìn fún èdè tó lé ní àádọ́rin nígbà tí a bá ń ṣe iṣẹ́ gidi.",
-    "playWithNarration": "Mu ṣiṣẹ pẹlu alaye",
-    "tapToHear": "Fọwọ́ kàn án láti gbọ́",
-    "fullscreen": "Ibòjú-kíkún",
+    "ctaSecondary": "Explore Director Mode",
+    "ctaToolStack": "See how it replaces your tool stack",
+    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
+    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
+    "playWithNarration": "Play with narration",
+    "tapToHear": "Tap to hear",
+    "fullscreen": "Fullscreen",
     "heroVideoLanguages": {
       "en": {
-        "label": "Gẹ̀ẹ́sì",
-        "nativeLabel": "Gẹ̀ẹ́sì"
+        "label": "English",
+        "nativeLabel": "English"
       },
       "es": {
-        "label": "Èdè Sípéènì",
-        "nativeLabel": "Èdè Sípáníìṣì"
+        "label": "Spanish",
+        "nativeLabel": "Español"
       },
       "pt": {
-        "label": "Pọtugisi",
-        "nativeLabel": "Pọtugisi"
+        "label": "Portuguese",
+        "nativeLabel": "Português"
       },
       "hi": {
         "label": "Hindi",
-        "nativeLabel": "Hindi"
+        "nativeLabel": "हिन्दी"
       },
       "zh": {
-        "label": "Ti ilẹ̀ China",
-        "nativeLabel": "Èdè Ṣáínà"
+        "label": "Chinese",
+        "nativeLabel": "中文"
       },
       "ar": {
-        "label": "Èdè Lárúbáwá",
-        "nativeLabel": "Èdè Lárúbáwá"
+        "label": "Arabic",
+        "nativeLabel": "العربية"
       },
       "th": {
-        "label": "Ti ilẹ̀ Thailand",
-        "nativeLabel": "Thailand"
+        "label": "Thai",
+        "nativeLabel": "ไทย"
       }
     },
-    "soon": "Laipẹ",
-    "ctaPrimaryLaunch": "Bẹrẹ iṣelọpọ rẹ",
-    "ctaSupportingLine": "Start with the $9 Explorer plan. September Early Access cohort now forming."
+    "soon": "Soon",
+    "ctaPrimaryLaunch": "Start with Go Mode",
+    "ctaSupportingLine": "",
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "valueProp": {
     "pills": [
@@ -1522,207 +1526,208 @@
     "closePopup": "Pa fèrésé kékeré náà"
   },
   "pricing": {
-    "badge": "Iye owo ti o da lori bi a ṣe lo nkan",
+    "badge": "Simple Pricing",
     "title": "Start with Explorer — $9",
     "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
     "valueAnchor": {
-      "traditionalCost": "Ju $2,000 lọ",
-      "traditionalLabel": "Àwòrán àkọ́kọ́lọ́lẹ̀ ti ìgbàanì",
-      "vs": "lodi si",
-      "sceneFlowCost": "$49–$149",
-      "sceneFlowLabel": "SceneFlow ti oṣooṣu",
-      "saveBadge": "Fi owo ti o ju 90% pamọ fun iṣẹ akanṣe kọọkan"
+      "traditionalCost": "$2,000+",
+      "traditionalLabel": "Traditional pre-vis",
+      "vs": "vs",
+      "sceneFlowCost": "$49-149",
+      "sceneFlowLabel": "SceneFlow monthly",
+      "saveBadge": "Save 90%+ per project"
     },
     "teamCta": {
-      "title": "Ẹgbẹ́ ti inú ilé tàbí ilé-iṣẹ́?",
-      "description": "Ṣe ètò àkókò láti ṣàlàyé bí iṣẹ́ ṣe ń lọ fún àwọn ẹgbẹ́ tó ń rí sí ìbánisọ̀rọ̀, ẹ̀kọ́ àti ìdàgbàsókè (L&D), àti títà ọjà.",
-      "button": "Àlàyé lórí ìwé"
+      "title": "In-house team or institution?",
+      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
+      "button": "Book Walkthrough"
     },
     "agencyCta": {
-      "title": "Ile-iṣẹ́ aṣojú tàbí ibi iṣẹ́ ìgbéjáde?",
-      "description": "Awọn kirẹditi ti a ṣe ni pataki, adehun ipele iṣẹ (SLA), ati atilẹyin iyasọtọ fun iṣẹ ti o gbooro",
-      "button": "Kan si Ẹka Tita"
+      "title": "Agency or production shop?",
+      "description": "Custom credits, SLA, and dedicated support at scale",
+      "button": "Contact Sales"
     },
     "byok": {
-      "title": "Mu Kọ́kọ́rọ́ Tirẹ Wá",
-      "badge": "Awọn Eto Pro ati Studio",
-      "description": "Ṣé o ti ní àwọn kọ́ọ̀kì API fún Vertex AI tàbí ElevenLabs? Lo wọ́n pẹ̀lú SceneFlow AI kí o sì fi ìwọ̀n tó tó 80% pamọ́ lórí àwọn kírédítì plátfọ́ọ̀mù náà.",
-      "savingsHighlight": "80% lori awọn kirediti pẹpẹ",
+      "title": "Bring Your Own Key",
+      "badge": "Pro & Studio Plans",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
-          "title": "Ìfọ́nkùn owó 80% lórí Kírédítì SceneFlow",
-          "description": "San owo pẹpẹ ti o jẹ 20% nikan fun iṣakoso eto ati awọn irinṣẹ."
+          "title": "80% SceneFlow Credit Savings",
+          "description": "Pay only a 20% platform fee for orchestration & tools"
         },
         {
-          "title": "Lo àwọn ètò ilé-iṣẹ́ láǹfààní",
-          "description": "Lo awọn ẹdinwo rẹ ti o wa tẹlẹ fun rira ni iye nla, eyini ni Vertex AI tabi ElevenLabs."
+          "title": "Leverage Corporate Plans",
+          "description": "Use your existing Vertex AI or ElevenLabs volume discounts"
         },
         {
-          "title": "Àkóso Pípé",
-          "description": "Awọn bọtini rẹ, eto sisanwo rẹ, iṣakoso inawo rẹ"
+          "title": "Full Control",
+          "description": "Your keys, your billing, your cost management"
         }
       ],
-      "supportedProviders": "Awọn Olupese ti a n ṣe atilẹyin fun",
+      "supportedProviders": "Supported Providers",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "Imagen 4 àti Veo 3.1",
+      "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Yíyí Ọ̀rọ̀ Kíkọ̀padà sí Ohùn àti Ṣíṣe Àwòkọ́ṣe Ohùn",
-      "savingsLabel": "Fifipamọ́ 80%",
-      "onImagesVideo": "lori awọn aworan ati fidio",
-      "onVoiceover": "nípa ohùn tí a gbọ́",
-      "note": "Awọn ifowopamọ kirẹditi ti a fihan jẹ awọn ifowopamọ lori pẹpẹ SceneFlow. Iye owo gangan ti iwọ yoo san da lori iye owo API ti iwọ tabi ile-iṣẹ rẹ ti gba pẹlu olupese kọọkan."
+      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
+      "savingsLabel": "80% savings",
+      "onImagesVideo": "on images & video",
+      "onVoiceover": "on voiceover",
+      "note": "Credit savings shown are SceneFlow platform savings. Your actual total costs depend on your personal or corporate API pricing with each provider."
     },
     "creditTopUps": {
-      "title": "Ṣé o nílò àfikún àwọn kírédítì?",
-      "subtitle": "Fi owó kun un nígbàkígbà. Àwọn kirediti náà kì í parí.",
+      "title": "Need More Credits?",
+      "subtitle": "Top up anytime. Credits never expire.",
       "packs": [
         {
-          "label": "Àkópọ̀ fún Bíbẹ̀rẹ̀",
-          "description": "O dara julọ fun atunyẹwo ti ko gba akoko pupọ"
+          "label": "Starter Pack",
+          "description": "Perfect for quick revisions"
         },
         {
-          "label": "Àkópọ̀ Àwọn Ojú-ìṣẹ̀lẹ̀",
-          "description": "Parí iṣẹ́ kékeré kan"
+          "label": "Scene Pack",
+          "description": "Complete a short project"
         },
         {
-          "label": "Àkópọ̀ fún Ìgbéjáde",
-          "description": "Apá pàtàkì nínú fíìmù"
+          "label": "Production Pack",
+          "description": "Major film sequence"
         },
         {
-          "label": "Àkopọ̀ Ohun Èlò Studio",
-          "description": "Agbára ìṣelọ́pọ̀ tó kúnjú ìwọ̀n"
+          "label": "Studio Pack",
+          "description": "Full production capacity"
         }
       ],
-      "creditsUnit": "Àwọn tó kópa"
+      "creditsUnit": "credits"
     },
     "calculator": {
-      "sectionTitle": "Ṣe iṣiro iye owo iṣẹ́ rẹ",
-      "sectionSubtitle": "Mọ iye gangan ti iwọ yoo san ki o to ṣe ipinnu lati tẹsiwaju.",
-      "title": "Ẹ̀rọ ìṣirò ìṣúnná owó iṣẹ́-àkànṣe",
-      "subtitle": "Ṣe iṣiro awọn kirediti ṣaaju ki o to bẹrẹ.",
-      "customize": "Ṣe àtúnṣe àwọn ànímọ́",
-      "imagesLabel": "Àwọn àwòrán láti dá",
-      "videoClipsLabel": "Àwọn àkópọ̀ fídíò",
-      "voiceoverLabel": "Ohùn (iṣẹ́jú)",
-      "byokTitle": "Mu Bọtini Tirẹ Wa (BYOK)",
-      "byokBadge": "Ọjọgbọn & Ile-iṣẹ́ Iṣẹ́-ọnà",
-      "byokDescription": "Lo awọn bọtini API tirẹ lati fi owo pamọ to 80% lori awọn kirediti SceneFlow. Iwọ yoo sanwo taara fun awọn olupese AI ni ibamu pẹlu awọn idiyele wọn.",
-      "vertexToggle": "Vertex AI (Àwọn àwòrán àti fídíò)",
-      "elevenLabsToggle": "ElevenLabs (Ohùn lẹ́yìn ìran)",
-      "imageGeneration": "Ṣíṣe àwòrán",
-      "videoGeneration": "Ṣíṣe Fídíò",
-      "voiceover": "Ohùn àfikún",
+      "sectionTitle": "Estimate Your Project",
+      "sectionSubtitle": "Know exactly what you'll pay before you commit",
+      "title": "Project Budget Calculator",
+      "subtitle": "Estimate credits before you start",
+      "customize": "Customize parameters",
+      "imagesLabel": "Images to generate",
+      "videoClipsLabel": "Video clips",
+      "voiceoverLabel": "Voiceover (minutes)",
+      "byokTitle": "Bring Your Own Key (BYOK)",
+      "byokBadge": "Pro & Studio",
+      "byokDescription": "Use your own API keys to save up to 80% on SceneFlow credits. You pay the AI providers directly at their rates.",
+      "vertexToggle": "Vertex AI (Images & Video)",
+      "elevenLabsToggle": "ElevenLabs (Voiceover)",
+      "imageGeneration": "Image Generation",
+      "videoGeneration": "Video Generation",
+      "voiceover": "Voiceover",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Àpapọ̀ ìṣirò",
-      "withTopUps": "pẹlu awọn afikun",
-      "creditSavings": "SceneFlow ifowopamọ pẹlu ẹtọ awin",
-      "savePercent": "O n fipamọ {percent}% lori awọn kirediti SceneFlow.",
-      "transparency": "Ohun gbogbo han kedere: Wàá máa rí bí o ṣe ń lo àwọn kirediti rẹ ní àkókò gangan bí o ṣe ń ṣiṣẹ́ lọ́wọ́. Kò sí àwọn nǹkan àìròtẹ́lẹ̀—o lè yí ìwọ̀n iṣẹ́ rẹ padà nígbàkigbà.",
-      "transparencyHighlight": "Láti sọ gbogbo òtítọ́ kedere:",
-      "byokDisclaimer": "BYOK Akiyesi: Awọn ifowopamọ kirediti ti a fihan n tọka si awọn idinku kirediti lori pẹpẹ SceneFlow nikan. Iye owo gangan ti iwọ yoo san da lori awọn eto idiyele Vertex AI ati ElevenLabs rẹ. Awọn eto API fun awọn ile-iṣẹ nla tabi awọn ti n lo iye nla le funni ni awọn ifowopamọ afikun.",
-      "byokDisclaimerHighlight": "BYOK Àkíyèsí:",
+      "totalEstimate": "Total Estimate",
+      "withTopUps": "with top-ups",
+      "creditSavings": "SceneFlow credit savings",
+      "savePercent": "You save {percent}% on SceneFlow credits",
+      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
+      "transparencyHighlight": "Full transparency:",
+      "byokDisclaimer": "BYOK Note: Credit savings shown reflect SceneFlow platform credit reductions only. Your actual costs depend on your Vertex AI and ElevenLabs pricing plans. Corporate or high-volume API plans may offer additional savings.",
+      "byokDisclaimerHighlight": "BYOK Note:",
       "presets": [
         {
-          "id": "ti iṣowo",
-          "name": "Ìpolówó ọjà tí ó gba ìṣẹ́jú-àáyá 30"
+          "id": "commercial",
+          "name": "30-sec Commercial"
         },
         {
-          "id": "kúrú",
-          "name": "Fidio kúkúrú oní-ìṣẹ́jú méjì"
+          "id": "short",
+          "name": "2-min Short Film"
         },
         {
-          "id": "apá",
-          "name": "Ìpín tó gba ìṣẹ́jú mẹ́wàá"
+          "id": "episode",
+          "name": "10-min Episode"
         },
         {
-          "id": "àbùdá",
-          "name": "Fiimu gigun iṣẹ́jú 90"
+          "id": "feature",
+          "name": "90-min Feature"
         }
       ],
-      "minSuffix": "iṣẹ́jú"
+      "minSuffix": "min"
     },
     "tierGrid": {
-      "productionTestFlight": "Ìrìn-àjò Òfuurufú fún Àyẹ̀wò Ọjà Tí A Ṣẹ̀ṣẹ̀ Ṣe",
-      "getStarted": "Bẹ̀rẹ̀",
-      "startTestFlight": "Bẹ̀rẹ̀ Ìfò-ìdánwò",
-      "loading": "Ó ń gbé ètò wọlé...",
-      "mostPopular": "Èyí tí ó gbajúmọ̀ jùlọ",
-      "creditsPerMonth": "Àwọn kirediti/oṣù",
-      "storage": "Ibi-ipamọ",
-      "perMonth": "/oṣù"
+      "productionTestFlight": "Production Test Flight",
+      "getStarted": "Get Started",
+      "startTestFlight": "Start Test Flight",
+      "loading": "Loading...",
+      "mostPopular": "Most Popular",
+      "creditsPerMonth": "Credits/mo",
+      "storage": "Storage",
+      "perMonth": "/month"
     },
     "trust": {
-      "cancelAnytime": "Fagile nígbàkígbà",
-      "moneyBack": "Ìdánilójú láti gba owó padà láàárín ọjọ́ mẹ́rìnlá",
-      "creditsNeverExpire": "Àwọn kirediti kì í parí (àkópọ̀ Explorer)"
+      "cancelAnytime": "Cancel anytime",
+      "moneyBack": "14-day money-back guarantee",
+      "creditsNeverExpire": "Credits never expire (Explorer pack)"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "Rira lẹ́ẹ̀kan ṣoṣo láti dán an wò",
+        "description": "One-time purchase to try it out",
         "features": [
-          "Rira lẹ́ẹ̀kan ṣoṣo",
-          "Àwọn kirediti 750 (tí wọn kì í parí)",
-          "Ààyè ìpamọ́ 5 GB (ọjọ́ 30)",
-          "Ààyè sí gbogbo apá pètẹpètè náà",
-          "Fi ranṣẹ jade gẹgẹbi MP4 (iwọn didara eyikeyi)",
-          "Ohùn AI (àwọn èdè tó lé ní 70)"
+          "One-time purchase",
+          "750 credits (never expire)",
+          "5 GB storage (30 days)",
+          "Full platform access",
+          "MP4 export (any resolution)",
+          "AI voiceover (70+ languages)"
         ]
       },
       "subscriptions": [
         {
-          "id": "ohun ìbẹ̀rẹ̀",
-          "name": "Oúnjẹ ìbẹ̀rẹ̀",
-          "description": "Fún àwọn olùṣẹ̀dá kọ̀ọ̀kan",
+          "id": "starter",
+          "name": "Starter",
+          "description": "For individual creators",
           "features": [
-            "Ààyè sí gbogbo apá pètẹpètè náà",
-            "Awọn kirediti 4,500 fun oṣu kan wa ninu rẹ",
-            "Ààyè ìpamọ́ 25 GB tí a ń lò",
-            "Fi ranṣẹ jade gẹgẹbi MP4 (iwọn didara eyikeyi)",
-            "Ohùn AI (àwọn èdè tó lé ní 70)",
-            "Ìtìlẹ́yìn nípasẹ̀ ìfìwéránṣẹ́-eléèlítróníìkì"
+            "Full platform access",
+            "4,500 credits/month included",
+            "25 GB active storage",
+            "MP4 export (any resolution)",
+            "AI voiceover (70+ languages)",
+            "Email support"
           ]
         },
         {
-          "id": "olùgbèjà",
-          "name": "Oníṣẹ́-ọ̀jọ̀gbọ́n",
-          "description": "Fun awọn olupilẹṣẹ ti o jẹ alamọdaju",
+          "id": "pro",
+          "name": "Pro",
+          "description": "For professional creators",
           "features": [
-            "Gbogbo ohun tó wà nínú ètò Starter, pẹ̀lú:",
-            "Awọn kirediti 15,000 fun oṣu kan wa ninu rẹ",
-            "Ààyè ìpamọ́ 100 GB tí ń ṣiṣẹ́",
-            "Àǹfàní láti lo Veo 3.1 pẹ̀lú àwòrán tó dára gan-an (4K)",
-            "Ètò Ìmúnídánilójú Ìdúróṣinṣin Àwọn Ohun-ìwà",
-            "Ṣíṣe àwòkọ ohùn",
-            "BYOK (Mu Kọ́ọ̀kì Tirẹ Wá)",
-            "Àwọn àpóró ìjókòó mẹ́ta fún ẹgbẹ́",
-            "Àtìlẹ́yìn pàtàkì"
+            "Everything in Starter, plus:",
+            "15,000 credits/month included",
+            "100 GB active storage",
+            "Veo 3.1 Quality (4K) access",
+            "Character Consistency Engine",
+            "Voice cloning",
+            "BYOK (Bring Your Own Key)",
+            "3 team seats",
+            "Priority support"
           ]
         },
         {
-          "id": "ilé-iṣẹ́ ìṣẹ̀dá",
-          "name": "Ilé-iṣẹ́ ìṣesí",
-          "description": "Fun àwọn ẹgbẹ́ àti àwọn ilé-iṣẹ́",
+          "id": "studio",
+          "name": "Studio",
+          "description": "For teams & agencies",
           "features": [
-            "Gbogbo ohun tó wà nínú Pro, pẹ̀lú:",
-            "Awọn kirediti 75,000 fun oṣu kan wa ninu rẹ",
-            "Ààyè ìpamọ́ 500 GB tí ó wà ní lílò",
-            "Àtòjọ Àkọ́kọ́-láti-ṣe ti Veo 3.1 4K",
-            "Ìdúróṣinṣin Àkọsílẹ̀ Láìlópin",
-            "Àwọn ọjà tí a gbé jáde láìsí àmì-ìdánimọ̀ olùṣe",
-            "Àǹfààní láti lo API",
-            "Ààyè ìjóko mẹ́wàá fún ẹgbẹ́",
-            "Olùtọ́jú àkọọ́lẹ̀ tí a yà sọ́tọ̀ fún iṣẹ́ náà",
-            "Àdéhùn ìpele iṣẹ́ (SLA) fún àwọn ilé-iṣẹ́ ńlá wà ní ìbéèrè."
+            "Everything in Pro, plus:",
+            "75,000 credits/month included",
+            "500 GB active storage",
+            "Veo 3.1 4K Priority Queue",
+            "Unlimited Character Consistency",
+            "White-label exports",
+            "API access",
+            "10 team seats",
+            "Dedicated account manager",
+            "Enterprise SLA available on request"
           ]
         }
       ]
     },
     "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
     "trustBadges": [
-      "Google Cloud infrastructure",
-      "Vertex AI generation",
-      "Secure payments via Whop"
+      "Secure payments via Whop",
+      "14-day money-back guarantee",
+      "Credits never expire (Explorer pack)",
+      "Cancel anytime"
     ]
   },
   "landingSections": {
@@ -1730,10 +1735,11 @@
     "collapseSection": "Fi apá yìí pamọ́"
   },
   "finalCta": {
-    "title": "Ṣé o ti ṣetán láti dán gbogbo ìlànà iṣẹ́ náà wò?",
-    "subtitle": "Google-powered scripting and optimization, your choice of generation backend, and Screening Room review — all in one studio. September Early Access cohort now forming — start with the $9 Explorer plan or apply for Founding Creator access.",
-    "cta": "Bẹrẹ iṣelọpọ rẹ",
-    "ctaSecondary": "Apply for Founding Creator Access"
+    "title": "Ready to create in Go or Director Mode?",
+    "subtitle": "Pick Go for speed or Director for control — start from the $9 Explorer plan or apply for Founding Creator access.",
+    "cta": "Start with Go Mode",
+    "ctaSecondary": "Apply for Founding Creator Access",
+    "ctaSecondaryHref": "/early-access"
   },
   "footer": {
     "description": "Ṣíṣe fídíò nípasẹ̀ ẹ̀rọ láti ìbẹ̀rẹ̀ dé òpin — láti ìpele èrò títí dé fídíò tó ti péye fún gbígbé jáde. Ilé-iṣẹ́ kan tó ní ìtọ́sọ́nà: Blueprint → Ṣíṣe Fídíò → Screening Room.",
@@ -2030,5 +2036,40 @@
   },
   "keyFeatures": {
     "landingUiLanguagesLabel": "UI ati Awọn iṣelọpọ Wa ni Awọn ede 39"
+  },
+  "twoModes": {
+    "title": "One Platform. Two Experiences.",
+    "go": {
+      "name": "SceneFlow Go",
+      "tagline": "Concept to animatic in minutes.",
+      "points": [
+        "Full intelligence and automation.",
+        "Enter a concept or script, click Go, and take a break.",
+        "Automatically handles Blueprint, structure, references, frames, audio, and animatic assembly.",
+        "Complete animatic ready in under 10 minutes.",
+        "Light natural-language revisions available on demand."
+      ],
+      "cta": "Try Go Mode"
+    },
+    "director": {
+      "name": "SceneFlow Studio",
+      "subtitle": "Director Mode",
+      "tagline": "Every visual, emotion, line, and note under your direction.",
+      "points": [
+        "Same powerful underlying AI pipeline with complete manual authorship.",
+        "Granular step-by-step control across every scene and beat.",
+        "Fine-tune visuals, character emotion, dialogue timing, and music choices.",
+        "Complete pre-visualization and master production workflow."
+      ],
+      "cta": "Launch Studio ($9)"
+    }
+  },
+  "infrastructure": {
+    "title": "Enterprise-Grade Infrastructure & Security",
+    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   }
 }

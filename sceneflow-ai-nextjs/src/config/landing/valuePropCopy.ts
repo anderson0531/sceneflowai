@@ -3,13 +3,13 @@
  */
 
 export const HERO_COPY = {
-  headline: 'You Direct the Story. SceneFlow Automates the Studio.',
+  headline:
+    'Click Go and take a coffee break — or step through every scene as creative director.',
   subheadline:
-    'Google-powered intelligence orchestrated on Google Cloud — with optional Google or Kling generation. Run your ideas through a seamless pipeline from blueprint to master MP4 without micro-prompting.',
-  ctaPrimaryLaunch: 'Start Your Production',
-  ctaSupportingLine:
-    'Start with the $9 Explorer plan. September Early Access cohort now forming.',
-  ctaSecondary: "Watch the 'What's Possible'",
+    'Full automation when you want speed. Complete control when you want authorship. SceneFlow delivers concept-to-master animatics in two intentional modes.',
+  ctaPrimaryLaunch: 'Start with Go Mode',
+  ctaSupportingLine: '',
+  ctaSecondary: 'Explore Director Mode',
   ctaToolStack: 'See how it replaces your tool stack',
 } as const
 
@@ -187,10 +187,10 @@ export const SLOT_MACHINE_HEADER = {
 } as const
 
 export const FINAL_CTA_COPY = {
-  title: 'Ready to test the full pipeline?',
+  title: 'Ready to create in Go or Director Mode?',
   subtitle:
-    'Google-powered scripting and optimization, your choice of generation backend, and Screening Room review — all in one studio. September Early Access cohort now forming — start with the $9 Explorer plan or apply for Founding Creator access.',
-  cta: 'Start Your Production',
+    'Pick Go for speed or Director for control — start from the $9 Explorer plan or apply for Founding Creator access.',
+  cta: 'Start with Go Mode',
   ctaSecondary: 'Apply for Founding Creator Access',
   ctaSecondaryHref: '/early-access',
 } as const

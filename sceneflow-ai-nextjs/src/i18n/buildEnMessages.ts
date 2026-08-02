@@ -32,7 +32,9 @@ import {
   USE_CASE_PERSONA_UI,
   USE_CASE_SEGMENT_CTAS,
 } from '@/config/landing/useCasePersonasCopy'
+import { INFRASTRUCTURE_COPY } from '@/config/landing/infrastructureCopy'
 import { ENGINEERING_TRUST_COPY } from '@/config/landing/engineeringTrustCopy'
+import { TWO_MODES_COPY } from '@/config/landing/twoModesCopy'
 import { TRUST_SAFEGUARD_COPY } from '@/config/landing/trustSafeguardCopy'
 import { EXTENDED_SCENES_COPY } from '@/config/landing/extendedScenesCopy'
 import { CORE_CAPABILITIES_COPY } from '@/config/landing/coreCapabilitiesCopy'
@@ -91,6 +93,8 @@ export function buildEnMessages() {
       howItWorks: 'How It Works',
       useCases: 'Use Cases',
       productionExamples: 'Examples',
+      twoModes: 'Go vs Director',
+      keyFeatures: 'Key Features',
       preVisEngine: 'Pre-Vis Engine',
       platformWalkthrough: 'Platform Walkthrough',
       trustSafety: 'Trust & Safety',
@@ -109,6 +113,27 @@ export function buildEnMessages() {
       ),
       soon: 'Soon',
       videoLanguageCount: '{count, plural, =1 {# language} other {# languages}}',
+    },
+    twoModes: {
+      title: TWO_MODES_COPY.title,
+      go: {
+        name: TWO_MODES_COPY.go.name,
+        tagline: TWO_MODES_COPY.go.tagline,
+        points: [...TWO_MODES_COPY.go.points],
+        cta: TWO_MODES_COPY.go.cta,
+      },
+      director: {
+        name: TWO_MODES_COPY.director.name,
+        subtitle: TWO_MODES_COPY.director.subtitle,
+        tagline: TWO_MODES_COPY.director.tagline,
+        points: [...TWO_MODES_COPY.director.points],
+        cta: TWO_MODES_COPY.director.cta,
+      },
+    },
+    infrastructure: {
+      title: INFRASTRUCTURE_COPY.title,
+      description: INFRASTRUCTURE_COPY.description,
+      badges: { ...INFRASTRUCTURE_COPY.badges },
     },
     valueProp: {
       pills: VP_STRIP_PILLS.map((p) => ({ label: p.label, detail: p.detail })),

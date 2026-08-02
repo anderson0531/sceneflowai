@@ -1,7 +1,6 @@
 'use client'
 
 import { Mail, ExternalLink, Youtube } from 'lucide-react'
-import Image from 'next/image'
 import { SceneFlowStudioBrand } from '@/components/layout/SceneFlowStudioBrand'
 import { useTranslations } from 'next-intl'
 import { useLocale } from 'next-intl'
@@ -151,17 +150,6 @@ export function Footer() {
             <div className="text-center md:text-left">
               <p className="text-gray-500 text-sm">{t('copyright')}</p>
               <p className="text-gray-600 text-xs mt-1">{t('address')}</p>
-            </div>
-            <div className="flex items-center gap-4 mt-4 md:mt-0">
-              <div className="flex items-center gap-2">
-                <Image
-                  src="/images/google-cloud-logo.png"
-                  alt="Google Cloud"
-                  width={16}
-                  height={16}
-                />
-                <span className="text-xs text-gray-400">{t('poweredBy')}</span>
-              </div>
             </div>
           </div>
         </div>

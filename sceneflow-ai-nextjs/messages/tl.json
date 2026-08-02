@@ -26,26 +26,29 @@
     "keyFeatures": "Mga Tampok"
   },
   "floatingNav": {
-    "compare": "Ihambing",
-    "looksAndFormats": "Hitsura at mga Format",
-    "howItWorks": "Paano Ito Gumagana",
-    "useCases": "Mga Kaso ng Paggamit",
-    "preVisEngine": "Pre-visualization Engine",
-    "platformWalkthrough": "Gabay sa Paggamit ng Platform",
-    "trustSafety": "Tiwala at Kaligtasan",
+    "compare": "Compare",
+    "looksAndFormats": "Looks & Formats",
+    "howItWorks": "How It Works",
+    "useCases": "Use Cases",
+    "preVisEngine": "Pre-Vis Engine",
+    "platformWalkthrough": "Platform Walkthrough",
+    "trustSafety": "Trust & Safety",
     "platform": "Platform",
-    "pricing": "Pagpepresyo"
+    "pricing": "Pricing",
+    "productionExamples": "Examples",
+    "twoModes": "Go vs Director",
+    "keyFeatures": "Key Features"
   },
   "hero": {
-    "headline": "Ikaw ang nagdidirek ng istorya. SceneFlow Automates ang Studio.",
-    "subheadline": "Ang katalinuhan na pinapatakbo ng Google na inorganisa sa Google Cloud - na may opsyonal na henerasyon ng Google o Kling. Patakbuhin ang iyong mga ideya sa pamamagitan ng isang tuluy - tuloy na pipeline mula sa blueprint sa master MP4 nang walang micro - pag - promote.",
+    "headline": "Click Go and take a coffee break — or step through every scene as creative director.",
+    "subheadline": "Full automation when you want speed. Complete control when you want authorship. SceneFlow delivers concept-to-master animatics in two intentional modes.",
     "audienceMicroLine": "Ginawa para sa mga creator na nagnanais ng resulta, at sa mga team na gustong makita kung paano ito gumagana.",
-    "ctaSecondary": "Panoorin ang 'What's Possible'",
-    "ctaToolStack": "Tingnan kung paano ito pumapalit sa iyong tool stack",
-    "languagePrompt": "Pakinggan ang bayani sa iyong wika — parehong pipeline, bagong mga merkado",
-    "multilangHint": "Hero dubs sa 7 wika — full pipeline ay sumusuporta sa 70+ sa Production Studio.",
-    "playWithNarration": "Makipaglaro sa pagsasalaysay",
-    "tapToHear": "I - tap para marinig",
+    "ctaSecondary": "Explore Director Mode",
+    "ctaToolStack": "See how it replaces your tool stack",
+    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
+    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
+    "playWithNarration": "Play with narration",
+    "tapToHear": "Tap to hear",
     "fullscreen": "Fullscreen",
     "heroVideoLanguages": {
       "en": {
@@ -53,23 +56,23 @@
         "nativeLabel": "English"
       },
       "es": {
-        "label": "Kastila",
-        "nativeLabel": "Mosta po"
+        "label": "Spanish",
+        "nativeLabel": "Español"
       },
       "pt": {
         "label": "Portuguese",
-        "nativeLabel": "ano ang ibig sabihin ng oblique"
+        "nativeLabel": "Português"
       },
       "hi": {
-        "label": "alangan naman ako",
-        "nativeLabel": "<g id=\"267\">'</g><g id=\"268\">हिन्दी</g><g id=\"269\">',</g>"
+        "label": "Hindi",
+        "nativeLabel": "हिन्दी"
       },
       "zh": {
-        "label": "Intsik",
+        "label": "Chinese",
         "nativeLabel": "中文"
       },
       "ar": {
-        "label": "Maranao",
+        "label": "Arabic",
         "nativeLabel": "العربية"
       },
       "th": {
@@ -77,10 +80,10 @@
         "nativeLabel": "ไทย"
       }
     },
-    "soon": "gagawin ko iyon sa lalong madaling panahon",
-    "ctaPrimaryLaunch": "Magsimula sa Iyong Produksiyon",
-    "ctaSupportingLine": "Magsimula sa plano ng $ 9 Explorer. Setyembre Maagang Access cohort ngayon bumubuo.",
-    "videoLanguageCount": "{count, plural, =1 {# language} iba pang {# languages}}"
+    "soon": "Soon",
+    "ctaPrimaryLaunch": "Start with Go Mode",
+    "ctaSupportingLine": "",
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "valueProp": {
     "pills": [
@@ -1526,208 +1529,208 @@
     "closePopup": "Isara ang popup"
   },
   "pricing": {
-    "badge": "Simpleng Pagpepresyo",
-    "title": "Magsimula sa Explorer — $ 9",
-    "subtitle": "Setyembre Maagang Access cohort bumubuo. Subukan ang buong pipeline na may isang frictionless $ 9 entry.",
+    "badge": "Simple Pricing",
+    "title": "Start with Explorer — $9",
+    "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
     "valueAnchor": {
-      "traditionalCost": "$ 2,000+",
-      "traditionalLabel": "Tradisyonal na pre - vis",
-      "vs": "laban sa",
-      "sceneFlowCost": "$ 49 -149",
-      "sceneFlowLabel": "SceneFlow buwanang",
-      "saveBadge": "I - save ang 90%+ bawat proyekto"
+      "traditionalCost": "$2,000+",
+      "traditionalLabel": "Traditional pre-vis",
+      "vs": "vs",
+      "sceneFlowCost": "$49-149",
+      "sceneFlowLabel": "SceneFlow monthly",
+      "saveBadge": "Save 90%+ per project"
     },
     "teamCta": {
-      "title": "In - house team o institusyon?",
-      "description": "Mag - book ng walkthrough sa daloy ng trabaho para sa mga comms, L&D, at mga team sa marketing",
-      "button": "Mag - book ng Walkthrough"
+      "title": "In-house team or institution?",
+      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
+      "button": "Book Walkthrough"
     },
     "agencyCta": {
-      "title": "Ahensya o tindahan ng produksyon?",
-      "description": "Mga iniangkop na credit, SLA, at nakalaang suporta sa sukat",
-      "button": "Makipag-ugnayan sa sales"
+      "title": "Agency or production shop?",
+      "description": "Custom credits, SLA, and dedicated support at scale",
+      "button": "Contact Sales"
     },
     "byok": {
-      "title": "Bring your own",
-      "badge": "Mga Plano para sa Pro & Studio",
-      "description": "Mayroon nang mga API key para sa Vertex AI o ElevenLabs? Gamitin ang mga ito sa SceneFlow AI at makatipid ng hanggang 80% sa mga kredito sa platform.",
-      "savingsHighlight": "80% sa mga kredito ng platform",
+      "title": "Bring Your Own Key",
+      "badge": "Pro & Studio Plans",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
-          "title": "80% SceneFlow Mga Pagtitipid sa Kredito",
-          "description": "Magbayad lamang ng 20% na bayad sa platform para sa orchestration at mga tool"
+          "title": "80% SceneFlow Credit Savings",
+          "description": "Pay only a 20% platform fee for orchestration & tools"
         },
         {
-          "title": "Mga Plano sa Korporasyon ng Leverage",
-          "description": "Gamitin ang iyong umiiral na Vertex AI o mga diskwento sa dami ng ElevenLabs"
+          "title": "Leverage Corporate Plans",
+          "description": "Use your existing Vertex AI or ElevenLabs volume discounts"
         },
         {
-          "title": "Buong Kontrol",
-          "description": "Ang iyong mga susi, ang iyong pagsingil, ang iyong pamamahala ng gastos"
+          "title": "Full Control",
+          "description": "Your keys, your billing, your cost management"
         }
       ],
-      "supportedProviders": "Mga Suportadong Provider",
-      "vertexName": "Email: info@aiterm.com",
-      "vertexDetail": "Download APK (8.9 MB)",
+      "supportedProviders": "Supported Providers",
+      "vertexName": "Google Vertex AI",
+      "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Text - to - Speech at Pag - clone ng Voice",
-      "savingsLabel": "80% na pagtitipid",
-      "onImagesVideo": "sa mga larawan & video",
-      "onVoiceover": "sa voiceover",
-      "note": "Credit savings na ipinapakita ay SceneFlow platform savings. Ang iyong aktwal na kabuuang gastos ay nakasalalay sa iyong personal o corporate API pricing sa bawat provider."
+      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
+      "savingsLabel": "80% savings",
+      "onImagesVideo": "on images & video",
+      "onVoiceover": "on voiceover",
+      "note": "Credit savings shown are SceneFlow platform savings. Your actual total costs depend on your personal or corporate API pricing with each provider."
     },
     "creditTopUps": {
-      "title": "Kailangan mo ng Higit pang mga Credit?",
-      "subtitle": "Mag - top up anumang oras. Hindi nag - e - expire ang mga credit.",
+      "title": "Need More Credits?",
+      "subtitle": "Top up anytime. Credits never expire.",
       "packs": [
         {
-          "label": "Starter Pack!",
-          "description": "Perpekto para sa mga mabilisang rebisyon"
+          "label": "Starter Pack",
+          "description": "Perfect for quick revisions"
         },
         {
-          "label": "Pakete ng Eksena",
-          "description": "Kumpletuhin ang isang maikling proyekto"
+          "label": "Scene Pack",
+          "description": "Complete a short project"
         },
         {
-          "label": "Produksyon ng Pack",
-          "description": "Pangunahing pagkakasunud - sunod ng pelikula"
+          "label": "Production Pack",
+          "description": "Major film sequence"
         },
         {
           "label": "Studio Pack",
-          "description": "Buong kapasidad ng produksyon"
+          "description": "Full production capacity"
         }
       ],
-      "creditsUnit": "banggit-pasasalamat"
+      "creditsUnit": "credits"
     },
     "calculator": {
-      "sectionTitle": "Tantyahin ang Iyong Proyekto",
-      "sectionSubtitle": "Alamin kung ano mismo ang babayaran mo bago ka mangako",
-      "title": "Kalkulador ng Badyet ng Proyekto",
-      "subtitle": "Tantyahin ang mga credit bago ka magsimula",
-      "customize": "I - customize ang mga parameter",
-      "imagesLabel": "Mga larawang bubuo",
-      "videoClipsLabel": "Mga video clip",
-      "voiceoverLabel": "Voiceover (mga minuto)",
-      "byokTitle": "Dalhin ang Iyong Sariling Key (BYOK)",
-      "byokBadge": "Username or email address *",
-      "byokDescription": "Gamitin ang iyong sariling mga API key upang makatipid ng hanggang sa 80% sa SceneFlow credits. Binabayaran mo ang mga provider ng AI nang direkta sa kanilang mga rate.",
-      "vertexToggle": "Vertex AI (Mga Larawan at Video)",
+      "sectionTitle": "Estimate Your Project",
+      "sectionSubtitle": "Know exactly what you'll pay before you commit",
+      "title": "Project Budget Calculator",
+      "subtitle": "Estimate credits before you start",
+      "customize": "Customize parameters",
+      "imagesLabel": "Images to generate",
+      "videoClipsLabel": "Video clips",
+      "voiceoverLabel": "Voiceover (minutes)",
+      "byokTitle": "Bring Your Own Key (BYOK)",
+      "byokBadge": "Pro & Studio",
+      "byokDescription": "Use your own API keys to save up to 80% on SceneFlow credits. You pay the AI providers directly at their rates.",
+      "vertexToggle": "Vertex AI (Images & Video)",
       "elevenLabsToggle": "ElevenLabs (Voiceover)",
-      "imageGeneration": "Pagbuo ng Imahe",
-      "videoGeneration": "Pagbuo ng Video",
-      "voiceover": "Vkontakte",
+      "imageGeneration": "Image Generation",
+      "videoGeneration": "Video Generation",
+      "voiceover": "Voiceover",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Kabuuang Tantya",
-      "withTopUps": "gamit ang mga top - up",
-      "creditSavings": "SceneFlow pagtitipid sa kredito",
-      "savePercent": "Makatipid ka ng {percent}% sa mga credit sa SceneFlow",
-      "transparency": "Ganap na transparency: Makakakita ka ng real - time na paggamit ng credit habang nagtatrabaho ka. Walang sorpresa - ayusin ang saklaw ng iyong proyekto anumang oras.",
-      "transparencyHighlight": "Buong transparency:",
-      "byokDisclaimer": "BYOK Tandaan: Credit savings ipinapakita sumasalamin SceneFlow platform credit reductions lamang. Nakadepende ang iyong aktwal na mga gastos sa iyong Vertex AI at ElevenLabs mga plano sa pagpepresyo. Maaaring mag - alok ng karagdagang pagtitipid ang mga corporate o high - volume API plan.",
-      "byokDisclaimerHighlight": "BYOK Tandaan:",
+      "totalEstimate": "Total Estimate",
+      "withTopUps": "with top-ups",
+      "creditSavings": "SceneFlow credit savings",
+      "savePercent": "You save {percent}% on SceneFlow credits",
+      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
+      "transparencyHighlight": "Full transparency:",
+      "byokDisclaimer": "BYOK Note: Credit savings shown reflect SceneFlow platform credit reductions only. Your actual costs depend on your Vertex AI and ElevenLabs pricing plans. Corporate or high-volume API plans may offer additional savings.",
+      "byokDisclaimerHighlight": "BYOK Note:",
       "presets": [
         {
           "id": "commercial",
-          "name": "30 - seg Komersyal"
+          "name": "30-sec Commercial"
         },
         {
           "id": "short",
-          "name": "2 - minutong Maikling Pelikula"
+          "name": "2-min Short Film"
         },
         {
           "id": "episode",
-          "name": "10 - minutong Episode"
+          "name": "10-min Episode"
         },
         {
           "id": "feature",
-          "name": "90 - min na Feature"
+          "name": "90-min Feature"
         }
       ],
       "minSuffix": "min"
     },
     "tierGrid": {
-      "productionTestFlight": "Produksyon ng Test Flight",
-      "getStarted": "Magsimula",
-      "startTestFlight": "Simulan ang Test Flight",
-      "loading": "Naglo-load...",
-      "mostPopular": "Pinakapopular",
+      "productionTestFlight": "Production Test Flight",
+      "getStarted": "Get Started",
+      "startTestFlight": "Start Test Flight",
+      "loading": "Loading...",
+      "mostPopular": "Most Popular",
       "creditsPerMonth": "Credits/mo",
-      "storage": "Imbakan",
-      "perMonth": "/buwan"
+      "storage": "Storage",
+      "perMonth": "/month"
     },
     "trust": {
-      "cancelAnytime": "Magkansela sa anumang oras",
-      "moneyBack": "MAY 90-ARAW NA GARANTIYA SA PAGSASAULI NG IBINAYAD",
-      "creditsNeverExpire": "Hindi nag - e - expire ang mga kredito (Explorer pack)"
+      "cancelAnytime": "Cancel anytime",
+      "moneyBack": "14-day money-back guarantee",
+      "creditsNeverExpire": "Credits never expire (Explorer pack)"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "Isang beses na pagbili para subukan ito",
+        "description": "One-time purchase to try it out",
         "features": [
-          "Isang beses na pagbili",
-          "750 mga kredito (hindi kailanman mag - expire)",
-          "5 GB na imbakan (30 araw)",
-          "Access sa buong platform",
-          "MP4 export (anumang resolution)",
-          "AI voiceover (70+ na mga wika)"
+          "One-time purchase",
+          "750 credits (never expire)",
+          "5 GB storage (30 days)",
+          "Full platform access",
+          "MP4 export (any resolution)",
+          "AI voiceover (70+ languages)"
         ]
       },
       "subscriptions": [
         {
           "id": "starter",
-          "name": "magandang simula",
-          "description": "Para sa mga indibidwal na creator",
+          "name": "Starter",
+          "description": "For individual creators",
           "features": [
-            "Access sa buong platform",
-            "4,500 mga kredito/buwan kasama",
-            "25 GB aktibong imbakan",
-            "MP4 export (anumang resolution)",
-            "AI voiceover (70+ na mga wika)",
-            "Suporta sa email"
+            "Full platform access",
+            "4,500 credits/month included",
+            "25 GB active storage",
+            "MP4 export (any resolution)",
+            "AI voiceover (70+ languages)",
+            "Email support"
           ]
         },
         {
           "id": "pro",
           "name": "Pro",
-          "description": "Para sa mga propesyonal na creator",
+          "description": "For professional creators",
           "features": [
-            "Lahat ng bagay sa Starter, plus:",
-            "15,000 credits/buwan ang kasama",
-            "100 GB aktibong imbakan",
-            "Veo 3.1 Kalidad (4K) access",
+            "Everything in Starter, plus:",
+            "15,000 credits/month included",
+            "100 GB active storage",
+            "Veo 3.1 Quality (4K) access",
             "Character Consistency Engine",
-            "Pag - clone ng boses",
-            "BYOK (Dalhin ang Iyong Sariling Key)",
-            "3 upuan ng team",
-            "Prayoridad na suporta"
+            "Voice cloning",
+            "BYOK (Bring Your Own Key)",
+            "3 team seats",
+            "Priority support"
           ]
         },
         {
           "id": "studio",
           "name": "Studio",
-          "description": "Para sa mga team at ahensya",
+          "description": "For teams & agencies",
           "features": [
-            "Lahat ng bagay sa Pro, plus:",
-            "75,000 mga kredito/buwan kasama",
-            "500 GB aktibong imbakan",
-            "Email: info@sportbenzin.ch",
-            "Walang limitasyong Pagkakapare - pareho ng Karakter",
-            "Mga pag - export ng puting label",
-            "Pag - access sa API",
-            "10 upuan ng koponan",
-            "Nakatuon na account manager",
-            "Available ang Enterprise SLA kapag hiniling"
+            "Everything in Pro, plus:",
+            "75,000 credits/month included",
+            "500 GB active storage",
+            "Veo 3.1 4K Priority Queue",
+            "Unlimited Character Consistency",
+            "White-label exports",
+            "API access",
+            "10 team seats",
+            "Dedicated account manager",
+            "Enterprise SLA available on request"
           ]
         }
       ]
     },
-    "explorerHighlight": "Ang pinakamabilis na paraan upang maranasan ang kumpletong SceneFlow studio — mula sa konsepto sa Screening Room.",
+    "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
     "trustBadges": [
-      "Email: info@cloudterm.com",
-      "Email: info@sfaiverex.com",
-      "Whop SA",
-      "MAY 90-ARAW NA GARANTIYA SA PAGSASAULI NG IBINAYAD"
+      "Secure payments via Whop",
+      "14-day money-back guarantee",
+      "Credits never expire (Explorer pack)",
+      "Cancel anytime"
     ]
   },
   "landingSections": {
@@ -1735,10 +1738,10 @@
     "collapseSection": "Itago ang seksyon"
   },
   "finalCta": {
-    "title": "Handa nang subukan ang buong pipeline?",
-    "subtitle": "Google - powered scripting at pag - optimize, ang iyong pagpili ng henerasyon backend, at Screening Room review — lahat sa isang studio. Setyembre Maagang Access cohort ngayon bumubuo — magsimula sa $ 9 Explorer plano o mag - aplay para sa Founding Creator access.",
-    "cta": "Magsimula sa Iyong Produksiyon",
-    "ctaSecondary": "Mag - apply para sa Access ng Founding Creator",
+    "title": "Ready to create in Go or Director Mode?",
+    "subtitle": "Pick Go for speed or Director for control — start from the $9 Explorer plan or apply for Founding Creator access.",
+    "cta": "Start with Go Mode",
+    "ctaSecondary": "Apply for Founding Creator Access",
     "ctaSecondaryHref": "/early-access"
   },
   "footer": {
@@ -2146,5 +2149,40 @@
   },
   "keyFeatures": {
     "landingUiLanguagesLabel": "UI at Mga Produksyon Magagamit sa 39 Mga Wika"
+  },
+  "twoModes": {
+    "title": "One Platform. Two Experiences.",
+    "go": {
+      "name": "SceneFlow Go",
+      "tagline": "Concept to animatic in minutes.",
+      "points": [
+        "Full intelligence and automation.",
+        "Enter a concept or script, click Go, and take a break.",
+        "Automatically handles Blueprint, structure, references, frames, audio, and animatic assembly.",
+        "Complete animatic ready in under 10 minutes.",
+        "Light natural-language revisions available on demand."
+      ],
+      "cta": "Try Go Mode"
+    },
+    "director": {
+      "name": "SceneFlow Studio",
+      "subtitle": "Director Mode",
+      "tagline": "Every visual, emotion, line, and note under your direction.",
+      "points": [
+        "Same powerful underlying AI pipeline with complete manual authorship.",
+        "Granular step-by-step control across every scene and beat.",
+        "Fine-tune visuals, character emotion, dialogue timing, and music choices.",
+        "Complete pre-visualization and master production workflow."
+      ],
+      "cta": "Launch Studio ($9)"
+    }
+  },
+  "infrastructure": {
+    "title": "Enterprise-Grade Infrastructure & Security",
+    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   }
 }

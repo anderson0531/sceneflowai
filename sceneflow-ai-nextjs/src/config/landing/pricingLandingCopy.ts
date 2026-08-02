@@ -1,10 +1,18 @@
 /** Pricing section — display strings for landing i18n. */
 
 export const PRICING_LANDING_COPY = {
-  badge: 'Usage-Based Pricing',
-  title: 'Pay for What You Create',
+  badge: 'Simple Pricing',
+  title: 'Start with Explorer — $9',
   subtitle:
-    'One base plan for platform access. Credits for AI generation. Top up when you need more. Full control, zero waste.',
+    'September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.',
+  explorerHighlight:
+    'The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.',
+  trustBadges: [
+    'Secure payments via Whop',
+    '14-day money-back guarantee',
+    'Credits never expire (Explorer pack)',
+    'Cancel anytime',
+  ],
   valueAnchor: {
     traditionalCost: '$2,000+',
     traditionalLabel: 'Traditional pre-vis',

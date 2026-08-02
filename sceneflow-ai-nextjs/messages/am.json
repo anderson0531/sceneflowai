@@ -23,60 +23,64 @@
     "noLanguagesFound": "ምንም ቋንቋዎች አልተገኙም"
   },
   "floatingNav": {
-    "compare": "አወዳድር",
-    "looksAndFormats": "መልክ እና ቅርጸቶች",
-    "howItWorks": "አሰራሩ",
-    "useCases": "የአጠቃቀም ሁኔታዎች",
-    "preVisEngine": "የቅድመ-እይታ ሞተር",
-    "platformWalkthrough": "የመድረኩ አጠቃላይ ጉብኝት",
-    "trustSafety": "እምነት እና ደህንነት",
-    "platform": "መድረክ",
-    "pricing": "የዋጋ አወጣጥ"
+    "compare": "Compare",
+    "looksAndFormats": "Looks & Formats",
+    "howItWorks": "How It Works",
+    "useCases": "Use Cases",
+    "preVisEngine": "Pre-Vis Engine",
+    "platformWalkthrough": "Platform Walkthrough",
+    "trustSafety": "Trust & Safety",
+    "platform": "Platform",
+    "pricing": "Pricing",
+    "productionExamples": "Examples",
+    "twoModes": "Go vs Director",
+    "keyFeatures": "Key Features"
   },
   "hero": {
-    "headline": "ታሪኩን በዓይነ ሕሊናህ አስብ። SceneFlow የስራ ፍሰቱን (pipeline) ያስተዳድራል።",
-    "subheadline": "አድካሚ የሆኑ የማዘዣ (prompting) ሂደቶችን ይለፉ። በራስ-ሰር የሚሰራ እና በሙያዊ ደረጃ የተደራጀ የምርት ሂደት በመጠቀም፣ ትኩረትዎን ሙሉ በሙሉ በፈጠራ ዓላማዎ ላይ ያድርጉ።",
+    "headline": "Click Go and take a coffee break — or step through every scene as creative director.",
+    "subheadline": "Full automation when you want speed. Complete control when you want authorship. SceneFlow delivers concept-to-master animatics in two intentional modes.",
     "audienceMicroLine": "ውጤት ለሚፈልጉ ፈጣሪዎች እና አሰራሩን ማየት ለሚፈልጉ ቡድኖች የተዘጋጀ።",
-    "ctaSecondary": "'ምን ማድረግ ይቻላል' (What's Possible) የሚለውን ይመልከቱ",
-    "ctaToolStack": "የአሁኑን የመሳሪያዎች ስብስብዎ እንዴት እንደሚተካ ይመልከቱ።",
-    "languagePrompt": "ጀግናውን በራስዎ ቋንቋ ያዳምጡ — ያው የአሰራር ሂደት፣ አዳዲስ ገበያዎች",
-    "multilangHint": "Hero በ7 ቋንቋዎች ድምፅ ይተካል (dubbing)፤ አጠቃላይ የስራ ሂደቱ (pipeline) በምርት ደረጃ ከ70 በላይ ቋንቋዎችን ይደግፋል።",
-    "playWithNarration": "በተረክ አጫውት",
-    "tapToHear": "ለመስማት ይጫኑ",
-    "fullscreen": "ሙሉ ማያ ገጽ",
+    "ctaSecondary": "Explore Director Mode",
+    "ctaToolStack": "See how it replaces your tool stack",
+    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
+    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
+    "playWithNarration": "Play with narration",
+    "tapToHear": "Tap to hear",
+    "fullscreen": "Fullscreen",
     "heroVideoLanguages": {
       "en": {
-        "label": "እንግሊዝኛ",
-        "nativeLabel": "እንግሊዝኛ"
+        "label": "English",
+        "nativeLabel": "English"
       },
       "es": {
-        "label": "ስፓኒሽ",
-        "nativeLabel": "ስፓኒሽ"
+        "label": "Spanish",
+        "nativeLabel": "Español"
       },
       "pt": {
-        "label": "ፖርቱጋልኛ",
-        "nativeLabel": "ፖርቱጋልኛ"
+        "label": "Portuguese",
+        "nativeLabel": "Português"
       },
       "hi": {
-        "label": "ሂንዲ",
-        "nativeLabel": "ሂንዲ"
+        "label": "Hindi",
+        "nativeLabel": "हिन्दी"
       },
       "zh": {
-        "label": "ቻይንኛ",
-        "nativeLabel": "ቻይንኛ"
+        "label": "Chinese",
+        "nativeLabel": "中文"
       },
       "ar": {
-        "label": "አረብኛ",
-        "nativeLabel": "አረብኛ"
+        "label": "Arabic",
+        "nativeLabel": "العربية"
       },
       "th": {
-        "label": "ታይ",
-        "nativeLabel": "ታይላንድ"
+        "label": "Thai",
+        "nativeLabel": "ไทย"
       }
     },
-    "soon": "በቅርቡ",
-    "ctaPrimaryLaunch": "ምርትዎን ይጀምሩ",
-    "ctaSupportingLine": "Start with the $9 Explorer plan. September Early Access cohort now forming."
+    "soon": "Soon",
+    "ctaPrimaryLaunch": "Start with Go Mode",
+    "ctaSupportingLine": "",
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "valueProp": {
     "pills": [
@@ -1522,207 +1526,208 @@
     "closePopup": "ብቅ-ባይ መስኮቱን ይዝጉ"
   },
   "pricing": {
-    "badge": "በአጠቃቀም ላይ የተመሰረተ የዋጋ አወጣጥ",
+    "badge": "Simple Pricing",
     "title": "Start with Explorer — $9",
     "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
     "valueAnchor": {
-      "traditionalCost": "ከ2,000 ዶላር በላይ",
-      "traditionalLabel": "ባህላዊ ቅድመ-ምስላዊነት",
-      "vs": "ከ",
-      "sceneFlowCost": "$49–149",
-      "sceneFlowLabel": "SceneFlow በወር",
-      "saveBadge": "በእያንዳንዱ ፕሮጀክት ከ90% በላይ ይቆጥቡ"
+      "traditionalCost": "$2,000+",
+      "traditionalLabel": "Traditional pre-vis",
+      "vs": "vs",
+      "sceneFlowCost": "$49-149",
+      "sceneFlowLabel": "SceneFlow monthly",
+      "saveBadge": "Save 90%+ per project"
     },
     "teamCta": {
-      "title": "የውስጥ ቡድን ወይስ ተቋም?",
-      "description": "ለኮሙኒኬሽን፣ ለL&D (የሰራተኞች ትምህርትና ልማት) እና ለማርኬቲንግ ቡድኖች የስራ ፍሰት ማብራሪያ ቀጠሮ ይያዙ።",
-      "button": "የመጽሐፍ አጠቃላይ ቅኝት"
+      "title": "In-house team or institution?",
+      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
+      "button": "Book Walkthrough"
     },
     "agencyCta": {
-      "title": "ኤጀንሲ ወይስ የምርት ስራ ተቋም?",
-      "description": "ለፍላጎት የተዘጋጁ ክሬዲቶች፣ የአገልግሎት ደረጃ ስምምነት (SLA) እና በስፋት የሚሰጥ ልዩ የድጋፍ አገልግሎት",
-      "button": "የሽያጭ ክፍልን ያግኙ"
+      "title": "Agency or production shop?",
+      "description": "Custom credits, SLA, and dedicated support at scale",
+      "button": "Contact Sales"
     },
     "byok": {
-      "title": "የራስዎን ቁልፍ ይዘው ይምጡ",
-      "badge": "የፕሮ እና ስቱዲዮ ዕቅዶች",
-      "description": "ለVertex AI ወይም ለElevenLabs የAPI ቁልፎች አሉዎት? ከSceneFlow AI ጋር ይጠቀሙባቸው እና በመድረክ ክሬዲቶች (platform credits) ላይ እስከ 80% ይቆጥቡ።",
-      "savingsHighlight": "በፕላትፎርም ክሬዲቶች ላይ 80%",
+      "title": "Bring Your Own Key",
+      "badge": "Pro & Studio Plans",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
-          "title": "80% SceneFlow የክሬዲት ቅናሽ",
-          "description": "ለኦርኬስትሬሽን (orchestration) እና ለመሳሪያዎች 20% የመድረክ ክፍያ ብቻ ይክፈሉ።"
+          "title": "80% SceneFlow Credit Savings",
+          "description": "Pay only a 20% platform fee for orchestration & tools"
         },
         {
-          "title": "የድርጅት ዕቅዶችን በአግባቡ መጠቀም",
-          "description": "ያሉዎትን የVertex AI ወይም የElevenLabs የብዛት ቅናሾች ይጠቀሙ።"
+          "title": "Leverage Corporate Plans",
+          "description": "Use your existing Vertex AI or ElevenLabs volume discounts"
         },
         {
-          "title": "ሙሉ ቁጥጥር",
-          "description": "ቁልፎችዎ፣ የክፍያ ዝግጅትዎ፣ የወጪ አስተዳደርዎ"
+          "title": "Full Control",
+          "description": "Your keys, your billing, your cost management"
         }
       ],
-      "supportedProviders": "የሚደገፉ አቅራቢዎች",
+      "supportedProviders": "Supported Providers",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "Imagen 4 እና Veo 3.1",
+      "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "ከጽሑፍ ወደ ንግግር እና የድምፅ ቅጂ መኮረጅ",
-      "savingsLabel": "80% ቁጠባ",
-      "onImagesVideo": "በምስሎች እና በቪዲዮ ላይ",
-      "onVoiceover": "በድምፅ አስተያየት",
-      "note": "የሚታዩት የክሬዲት ቁጠባዎች የSceneFlow መድረክ ቁጠባዎች ናቸው። ትክክለኛው አጠቃላይ ወጪዎ የሚወሰነው ከእያንዳንዱ አቅራቢ ጋር ባለው የግል ወይም የድርጅት የኤፒአይ (API) ዋጋ አወጣጥ ላይ ነው።"
+      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
+      "savingsLabel": "80% savings",
+      "onImagesVideo": "on images & video",
+      "onVoiceover": "on voiceover",
+      "note": "Credit savings shown are SceneFlow platform savings. Your actual total costs depend on your personal or corporate API pricing with each provider."
     },
     "creditTopUps": {
-      "title": "ተጨማሪ ክሬዲቶች ያስፈልጉዎታል?",
-      "subtitle": "በማንኛውም ጊዜ ሂሳብዎን መሙላት ይችላሉ፤ ክሬዲቱ ጊዜው አያልፍበትም።",
+      "title": "Need More Credits?",
+      "subtitle": "Top up anytime. Credits never expire.",
       "packs": [
         {
-          "label": "የመጀመሪያ ደረጃ ጥቅል",
-          "description": "ለፈጣን ድግግሞሽ ፍጹም ነው።"
+          "label": "Starter Pack",
+          "description": "Perfect for quick revisions"
         },
         {
-          "label": "የትዕይንት ስብስብ",
-          "description": "አጭር ፕሮጀክት ያጠናቅቁ"
+          "label": "Scene Pack",
+          "description": "Complete a short project"
         },
         {
-          "label": "የምርት ስብስብ",
-          "description": "ዋና የፊልም ክፍል"
+          "label": "Production Pack",
+          "description": "Major film sequence"
         },
         {
-          "label": "የስቱዲዮ ጥቅል",
-          "description": "ሙሉ የምርት አቅም"
+          "label": "Studio Pack",
+          "description": "Full production capacity"
         }
       ],
-      "creditsUnit": "ክሬዲቶች"
+      "creditsUnit": "credits"
     },
     "calculator": {
-      "sectionTitle": "የፕሮጀክትዎን ወጪ ይገምቱ",
-      "sectionSubtitle": "ውሳኔ ከማሳለፍዎ በፊት ምን ያህል እንደሚከፍሉ በትክክል ይወቁ።",
-      "title": "የፕሮጀክት በጀት ማስያ",
-      "subtitle": "ከመጀመርዎ በፊት ክሬዲቶችን ይገምቱ።",
-      "customize": "መለኪያዎችን ማበጀት",
-      "imagesLabel": "የሚፈጠሩ ምስሎች",
-      "videoClipsLabel": "የቪዲዮ ክሊፖች",
-      "voiceoverLabel": "የድምፅ ትረካ (ደቂቃዎች)",
-      "byokTitle": "የራስዎን ቁልፍ ይዘው ይምጡ (BYOK)",
-      "byokBadge": "ፕሮ እና ስቱዲዮ",
-      "byokDescription": "በSceneFlow ክሬዲቶች ላይ እስከ 80% የሚደርስ ወጪ ለመቆጠብ የራስዎን የAPI ቁልፎች ይጠቀሙ። ክፍያውን በቀጥታ ለAI አገልግሎት አቅራቢዎች፣ በእነሱ ተመን መሰረት ይፈጽማሉ።",
-      "vertexToggle": "Vertex AI (ምስሎች እና ቪዲዮ)",
-      "elevenLabsToggle": "ElevenLabs (የድምፅ አስተያየት)",
-      "imageGeneration": "ምስል ማመንጨት",
-      "videoGeneration": "ቪዲዮ ማመንጨት",
-      "voiceover": "የድምፅ ትረካ",
+      "sectionTitle": "Estimate Your Project",
+      "sectionSubtitle": "Know exactly what you'll pay before you commit",
+      "title": "Project Budget Calculator",
+      "subtitle": "Estimate credits before you start",
+      "customize": "Customize parameters",
+      "imagesLabel": "Images to generate",
+      "videoClipsLabel": "Video clips",
+      "voiceoverLabel": "Voiceover (minutes)",
+      "byokTitle": "Bring Your Own Key (BYOK)",
+      "byokBadge": "Pro & Studio",
+      "byokDescription": "Use your own API keys to save up to 80% on SceneFlow credits. You pay the AI providers directly at their rates.",
+      "vertexToggle": "Vertex AI (Images & Video)",
+      "elevenLabsToggle": "ElevenLabs (Voiceover)",
+      "imageGeneration": "Image Generation",
+      "videoGeneration": "Video Generation",
+      "voiceover": "Voiceover",
       "byokTag": "(BYOK)",
-      "totalEstimate": "ጠቅላላ ግምት",
-      "withTopUps": "በተጨማሪ ክፍያዎች",
-      "creditSavings": "SceneFlow የብድር ቁጠባ",
-      "savePercent": "በSceneFlow ክሬዲቶች ላይ {percent}% ይቆጥባሉ።",
-      "transparency": "ሙሉ ግልጽነት፡ በስራ ሂደትዎ ወቅት የክሬዲት አጠቃቀምዎን በቅጽበት ማየት ይችላሉ። ያልተጠበቁ ነገሮች አይኖሩም፤ የፕሮጀክትዎን ወሰን በማንኛውም ጊዜ ማስተካከል ይችላሉ።",
-      "transparencyHighlight": "ሙሉ ግልጽነት፦",
-      "byokDisclaimer": "BYOK ማሳሰቢያ፡ የሚታዩት የክሬዲት ቅናሾች የሚያንፀባርቁት የSceneFlow መድረክ የክሬዲት ቅነሳዎችን ብቻ ነው። ትክክለኛው ወጪዎ የሚወሰነው በVertex AI እና ElevenLabs የዋጋ አወጣጥ ዕቅዶችዎ ላይ ነው። የኮርፖሬት ወይም ከፍተኛ መጠን ያለው አገልግሎት የሚሰጡ የAPI ዕቅዶች ተጨማሪ የዋጋ ቅናሾችን ሊያቀርቡ ይችላሉ።",
-      "byokDisclaimerHighlight": "BYOK ማስታወሻ፦",
+      "totalEstimate": "Total Estimate",
+      "withTopUps": "with top-ups",
+      "creditSavings": "SceneFlow credit savings",
+      "savePercent": "You save {percent}% on SceneFlow credits",
+      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
+      "transparencyHighlight": "Full transparency:",
+      "byokDisclaimer": "BYOK Note: Credit savings shown reflect SceneFlow platform credit reductions only. Your actual costs depend on your Vertex AI and ElevenLabs pricing plans. Corporate or high-volume API plans may offer additional savings.",
+      "byokDisclaimerHighlight": "BYOK Note:",
       "presets": [
         {
-          "id": "ንግዳዊ",
-          "name": "የ30 ሰከንድ ማስታወቂያ"
+          "id": "commercial",
+          "name": "30-sec Commercial"
         },
         {
-          "id": "አጭር",
-          "name": "የ2 ደቂቃ አጭር ፊልም"
+          "id": "short",
+          "name": "2-min Short Film"
         },
         {
-          "id": "ክፍል",
-          "name": "የ10 ደቂቃ ክፍል"
+          "id": "episode",
+          "name": "10-min Episode"
         },
         {
-          "id": "ባህሪ",
-          "name": "የ90 ደቂቃ ፊልም"
+          "id": "feature",
+          "name": "90-min Feature"
         }
       ],
-      "minSuffix": "ደቂቃ"
+      "minSuffix": "min"
     },
     "tierGrid": {
-      "productionTestFlight": "የምርት ደረጃ የሙከራ በረራ",
-      "getStarted": "ጀምር",
-      "startTestFlight": "የሙከራ በረራን ይጀምሩ",
-      "loading": "በመጫን ላይ...",
-      "mostPopular": "በጣም ታዋቂ",
-      "creditsPerMonth": "ክሬዲቶች/ወር",
-      "storage": "ማከማቻ",
-      "perMonth": "/ወር"
+      "productionTestFlight": "Production Test Flight",
+      "getStarted": "Get Started",
+      "startTestFlight": "Start Test Flight",
+      "loading": "Loading...",
+      "mostPopular": "Most Popular",
+      "creditsPerMonth": "Credits/mo",
+      "storage": "Storage",
+      "perMonth": "/month"
     },
     "trust": {
-      "cancelAnytime": "በማንኛውም ጊዜ መሰረዝ ይችላሉ",
-      "moneyBack": "የ14 ቀናት ገንዘብ የመመለስ ዋስትና",
-      "creditsNeverExpire": "ክሬዲቶች ጊዜያቸው አያበቃም (የExplorer ጥቅል)"
+      "cancelAnytime": "Cancel anytime",
+      "moneyBack": "14-day money-back guarantee",
+      "creditsNeverExpire": "Credits never expire (Explorer pack)"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "ለመሞከር የሚደረግ የአንድ ጊዜ ግዢ",
+        "description": "One-time purchase to try it out",
         "features": [
-          "አንድ ጊዜ የሚደረግ ግዢ",
-          "750 ክሬዲቶች (ጊዜው አያበቃም)",
-          "5 ጊጋባይት የማከማቻ ቦታ (30 ቀናት)",
-          "ወደ መድረኩ ሙሉ መዳረሻ",
-          "MP4 ወደ ውጭ መላክ (ማንኛውም ጥራት)",
-          "በአርቴፊሻል ኢንተለጀንስ (AI) የሚሰጥ የድምፅ ትረካ (ከ70 በላይ ቋንቋዎች)"
+          "One-time purchase",
+          "750 credits (never expire)",
+          "5 GB storage (30 days)",
+          "Full platform access",
+          "MP4 export (any resolution)",
+          "AI voiceover (70+ languages)"
         ]
       },
       "subscriptions": [
         {
-          "id": "መነሻ",
-          "name": "መነሻ ምግብ",
-          "description": "ለግለሰብ ፈጣሪዎች",
+          "id": "starter",
+          "name": "Starter",
+          "description": "For individual creators",
           "features": [
-            "ወደ መድረኩ ሙሉ መዳረሻ",
-            "በወር 4,500 ክሬዲቶች ተካተዋል",
-            "25 ጊጋባይት ንቁ ማከማቻ",
-            "MP4 ወደ ውጭ መላክ (ማንኛውም ጥራት)",
-            "በአርቴፊሻል ኢንተለጀንስ (AI) የሚሰጥ የድምፅ ትረካ (ከ70 በላይ ቋንቋዎች)",
-            "በኢሜይል የሚሰጥ ድጋፍ"
+            "Full platform access",
+            "4,500 credits/month included",
+            "25 GB active storage",
+            "MP4 export (any resolution)",
+            "AI voiceover (70+ languages)",
+            "Email support"
           ]
         },
         {
-          "id": "ደጋፊ",
-          "name": "ፕሮ",
-          "description": "ለሙያተኛ ፈጣሪዎች",
+          "id": "pro",
+          "name": "Pro",
+          "description": "For professional creators",
           "features": [
-            "በ'Starter' ጥቅል ውስጥ ያሉት ሁሉም ነገሮች፣ በተጨማሪም፦",
-            "በወር 15,000 ክሬዲቶች ተካተዋል",
-            "100 ጊጋባይት ንቁ ማከማቻ",
-            "የVeo 3.1 ጥራት (4K) ተደራሽነት",
-            "የገጸ-ባህሪ ወጥነት ማስጠበቂያ ስርዓት",
-            "የድምፅ ቅጂ መኮረጅ",
-            "BYOK (የራስዎን ቁልፍ ይዘው ይምጡ)",
-            "ለቡድን አባላት 3 መቀመጫዎች",
-            "ቅድሚያ የሚሰጠው ድጋፍ"
+            "Everything in Starter, plus:",
+            "15,000 credits/month included",
+            "100 GB active storage",
+            "Veo 3.1 Quality (4K) access",
+            "Character Consistency Engine",
+            "Voice cloning",
+            "BYOK (Bring Your Own Key)",
+            "3 team seats",
+            "Priority support"
           ]
         },
         {
-          "id": "ስቱዲዮ",
-          "name": "ስቱዲዮ",
-          "description": "ለቡድኖች እና ኤጀንሲዎች",
+          "id": "studio",
+          "name": "Studio",
+          "description": "For teams & agencies",
           "features": [
-            "በPro ውስጥ ያሉት ሁሉም ነገሮች፣ በተጨማሪም፦",
-            "በወር 75,000 ክሬዲቶች ተካተዋል",
-            "500 ጊጋባይት ንቁ ማከማቻ",
-            "Veo 3.1 4K ቅድሚያ የሚሰጠው ወረፋ",
-            "ያልተገደበ የባህሪ ወጥነት",
-            "ያልተሰየሙ ምርቶች ወደ ውጭ መላክ",
-            "የAPI መዳረሻ",
-            "ለቡድን አባላት 10 መቀመጫዎች",
-            "ለአንድ የተወሰነ ደንበኛ የተመደበ የአካውንት ሥራ አስኪያጅ",
-            "ለድርጅቶች የሚሆን የአገልግሎት ደረጃ ስምምነት (SLA) ሲጠየቅ ይገኛል።"
+            "Everything in Pro, plus:",
+            "75,000 credits/month included",
+            "500 GB active storage",
+            "Veo 3.1 4K Priority Queue",
+            "Unlimited Character Consistency",
+            "White-label exports",
+            "API access",
+            "10 team seats",
+            "Dedicated account manager",
+            "Enterprise SLA available on request"
           ]
         }
       ]
     },
     "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
     "trustBadges": [
-      "Google Cloud infrastructure",
-      "Vertex AI generation",
-      "Secure payments via Whop"
+      "Secure payments via Whop",
+      "14-day money-back guarantee",
+      "Credits never expire (Explorer pack)",
+      "Cancel anytime"
     ]
   },
   "landingSections": {
@@ -1730,10 +1735,11 @@
     "collapseSection": "ክፍሉን ደብቅ"
   },
   "finalCta": {
-    "title": "ሙሉውን የስራ ሂደት (pipeline) ለመፈተሽ ዝግጁ ነዎት?",
-    "subtitle": "Google-powered scripting and optimization, your choice of generation backend, and Screening Room review — all in one studio. September Early Access cohort now forming — start with the $9 Explorer plan or apply for Founding Creator access.",
-    "cta": "ምርትዎን ይጀምሩ",
-    "ctaSecondary": "Apply for Founding Creator Access"
+    "title": "Ready to create in Go or Director Mode?",
+    "subtitle": "Pick Go for speed or Director for control — start from the $9 Explorer plan or apply for Founding Creator access.",
+    "cta": "Start with Go Mode",
+    "ctaSecondary": "Apply for Founding Creator Access",
+    "ctaSecondaryHref": "/early-access"
   },
   "footer": {
     "description": "ከሃሳብ ጀምሮ ለህትመት ዝግጁ እስከሆነ የመጨረሻ ውጤት ድረስ፣ ሙሉ በሙሉ በራስ-ሰር የሚከናወን የቪዲዮ ምርት። አንድ የተቀናጀ የስቱዲዮ ሂደት፡ Blueprint → ምርት → Screening Room።",
@@ -2030,5 +2036,40 @@
   },
   "keyFeatures": {
     "landingUiLanguagesLabel": "UI እና ምርቶች በ39 ቋንቋዎች ይገኛሉ"
+  },
+  "twoModes": {
+    "title": "One Platform. Two Experiences.",
+    "go": {
+      "name": "SceneFlow Go",
+      "tagline": "Concept to animatic in minutes.",
+      "points": [
+        "Full intelligence and automation.",
+        "Enter a concept or script, click Go, and take a break.",
+        "Automatically handles Blueprint, structure, references, frames, audio, and animatic assembly.",
+        "Complete animatic ready in under 10 minutes.",
+        "Light natural-language revisions available on demand."
+      ],
+      "cta": "Try Go Mode"
+    },
+    "director": {
+      "name": "SceneFlow Studio",
+      "subtitle": "Director Mode",
+      "tagline": "Every visual, emotion, line, and note under your direction.",
+      "points": [
+        "Same powerful underlying AI pipeline with complete manual authorship.",
+        "Granular step-by-step control across every scene and beat.",
+        "Fine-tune visuals, character emotion, dialogue timing, and music choices.",
+        "Complete pre-visualization and master production workflow."
+      ],
+      "cta": "Launch Studio ($9)"
+    }
+  },
+  "infrastructure": {
+    "title": "Enterprise-Grade Infrastructure & Security",
+    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   }
 }

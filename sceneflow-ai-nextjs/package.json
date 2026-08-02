@@ -32,7 +32,11 @@
                 "i18n:sync-landing": "npx tsx scripts/sync-landing-locale-messages.ts",
                 "i18n:sync-landing:batches": "npx tsx scripts/run-landing-locale-batches.ts --priority-only --skip-existing --batch-size 15 --locale-delay-ms 5000 --batch-cooldown-ms 90000",
                 "i18n:sync-production-showcase": "USE_LIBRETRANSLATE=1 npx tsx scripts/run-landing-locale-batches.ts --production-showcase-only --skip-existing --provider=auto --batch-size 5 --locale-delay-ms 2000 --batch-cooldown-ms 10000",
-                "i18n:translate-th": "tsx scripts/build-landing-messages.ts && tsx scripts/offline-translate-locale.ts --locale th"
+                "i18n:translate-th": "tsx scripts/build-landing-messages.ts && tsx scripts/offline-translate-locale.ts --locale th",
+                "youtube:oauth": "node scripts/youtube-oauth-token.mjs",
+                "youtube:publish-hero": "node scripts/publish-hero-videos-youtube.mjs",
+                "youtube:hero-upload-pack": "node scripts/generate-hero-youtube-upload-pack.mjs",
+                "youtube:hero-posters": "node scripts/regenerate-hero-posters.mjs"
         },
         "dependencies": {
                 "@ai-sdk/google": "^3.0.57",

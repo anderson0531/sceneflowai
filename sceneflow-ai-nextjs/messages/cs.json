@@ -26,61 +26,64 @@
     "keyFeatures": "Vlasnosti"
   },
   "floatingNav": {
-    "compare": "Porovnat",
-    "looksAndFormats": "Vzhled a formáty",
-    "howItWorks": "Jak to funguje",
-    "useCases": "Případy užití",
-    "preVisEngine": "Engine pro předběžnou vizualizaci",
-    "platformWalkthrough": "Průvodce platformou",
-    "trustSafety": "Důvěra a bezpečnost",
-    "platform": "Platforma",
-    "pricing": "Ceny"
+    "compare": "Compare",
+    "looksAndFormats": "Looks & Formats",
+    "howItWorks": "How It Works",
+    "useCases": "Use Cases",
+    "preVisEngine": "Pre-Vis Engine",
+    "platformWalkthrough": "Platform Walkthrough",
+    "trustSafety": "Trust & Safety",
+    "platform": "Platform",
+    "pricing": "Pricing",
+    "productionExamples": "Examples",
+    "twoModes": "Go vs Director",
+    "keyFeatures": "Key Features"
   },
   "hero": {
-    "headline": "Příběh režírujete vy. SceneFlow zautomatizuje studio.",
-    "subheadline": "Inteligence poháněná Googlem byla zorganizována na Google Cloud — s volitelnou generací Google nebo Kling. Proveďte své nápady plynulým procesem od návrhu až po zvládnutí MP4 bez mikropodnětů.",
+    "headline": "Click Go and take a coffee break — or step through every scene as creative director.",
+    "subheadline": "Full automation when you want speed. Complete control when you want authorship. SceneFlow delivers concept-to-master animatics in two intentional modes.",
     "audienceMicroLine": "Vytvořeno pro tvůrce, kteří chtějí výsledky, a týmy, které chtějí vidět, jak to funguje.",
-    "ctaSecondary": "Podívejte se na „Co je možné“",
-    "ctaToolStack": "Podívejte se, jak nahrazuje váš zásobník nástrojů",
-    "languagePrompt": "Poslechněte si hrdinu ve vašem jazyce — stejný kanál, nové trhy",
-    "multilangHint": "Hero dubs v 7 jazycích — full pipeline podporuje 70+ v Production Studio.",
-    "playWithNarration": "Hrát si s vyprávěním",
-    "tapToHear": "Klepnutím uslyšíte",
-    "fullscreen": "Celá obrazovka",
+    "ctaSecondary": "Explore Director Mode",
+    "ctaToolStack": "See how it replaces your tool stack",
+    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
+    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
+    "playWithNarration": "Play with narration",
+    "tapToHear": "Tap to hear",
+    "fullscreen": "Fullscreen",
     "heroVideoLanguages": {
       "en": {
-        "label": "anglický jazyk",
-        "nativeLabel": "anglický jazyk"
+        "label": "English",
+        "nativeLabel": "English"
       },
       "es": {
-        "label": "španělština",
-        "nativeLabel": "Španělština"
+        "label": "Spanish",
+        "nativeLabel": "Español"
       },
       "pt": {
-        "label": "portugalština",
-        "nativeLabel": "Portugalština"
+        "label": "Portuguese",
+        "nativeLabel": "Português"
       },
       "hi": {
-        "label": "hindština",
-        "nativeLabel": "* * * *"
+        "label": "Hindi",
+        "nativeLabel": "हिन्दी"
       },
       "zh": {
-        "label": "čínština",
-        "nativeLabel": "Čínština"
+        "label": "Chinese",
+        "nativeLabel": "中文"
       },
       "ar": {
-        "label": "arabština",
-        "nativeLabel": "Arabština"
+        "label": "Arabic",
+        "nativeLabel": "العربية"
       },
       "th": {
-        "label": "thajština",
+        "label": "Thai",
         "nativeLabel": "ไทย"
       }
     },
-    "soon": "Brzy",
-    "ctaPrimaryLaunch": "Spustit výrobu",
-    "ctaSupportingLine": "Začněte s plánem Explorer za 9 $. Zářijová kohorta předčasného přístupu se nyní vytváří.",
-    "videoLanguageCount": "{count, plural, =1 {# language} ostatní {# languages}}"
+    "soon": "Soon",
+    "ctaPrimaryLaunch": "Start with Go Mode",
+    "ctaSupportingLine": "",
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "valueProp": {
     "pills": [
@@ -1526,208 +1529,208 @@
     "closePopup": "Zavřít popup"
   },
   "pricing": {
-    "badge": "Jednoduchá cenotvorba",
-    "title": "Začněte s Explorer — 9 $",
-    "subtitle": "Formování kohorty předčasného přístupu v září. Otestujte celý potrubí s vstupem bez tření $ 9.",
+    "badge": "Simple Pricing",
+    "title": "Start with Explorer — $9",
+    "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
     "valueAnchor": {
-      "traditionalCost": "2 000",
-      "traditionalLabel": "Tradiční previs",
-      "vs": "vs.",
-      "sceneFlowCost": "49-149 $",
-      "sceneFlowLabel": "SceneFlow měsíčně",
-      "saveBadge": "Ušetřete více než90% na projektu"
+      "traditionalCost": "$2,000+",
+      "traditionalLabel": "Traditional pre-vis",
+      "vs": "vs",
+      "sceneFlowCost": "$49-149",
+      "sceneFlowLabel": "SceneFlow monthly",
+      "saveBadge": "Save 90%+ per project"
     },
     "teamCta": {
-      "title": "Interní tým nebo instituce?",
-      "description": "Rezervuj si pracovní postup pro komunikační, L&D a marketingové týmy",
-      "button": "Návod k rezervování"
+      "title": "In-house team or institution?",
+      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
+      "button": "Book Walkthrough"
     },
     "agencyCta": {
-      "title": "Agenturní nebo výrobní prodejna?",
-      "description": "Vlastní kredity, SLA a specializovaná podpora ve velkém měřítku",
-      "button": "Kontaktujte oddělení prodeje"
+      "title": "Agency or production shop?",
+      "description": "Custom credits, SLA, and dedicated support at scale",
+      "button": "Contact Sales"
     },
     "byok": {
-      "title": "Přineste si vlastní klíč",
-      "badge": "Profesionální a studiové plány",
-      "description": "Už máte API klíče pro Vertex AI nebo ElevenLabs? Použijte je s SceneFlow AI a ušetřete až 80% na kreditech na platformě.",
-      "savingsHighlight": "80% z kreditů na platformě",
+      "title": "Bring Your Own Key",
+      "badge": "Pro & Studio Plans",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
-          "title": "80% úspora kreditu SceneFlow",
-          "description": "Zaplatit pouze 20% poplatek za platformu za orchestraci a nástroje"
+          "title": "80% SceneFlow Credit Savings",
+          "description": "Pay only a 20% platform fee for orchestration & tools"
         },
         {
-          "title": "Využijte firemní plány",
-          "description": "Využijte stávající množstevní slevy Vertex AI nebo ElevenLabs"
+          "title": "Leverage Corporate Plans",
+          "description": "Use your existing Vertex AI or ElevenLabs volume discounts"
         },
         {
-          "title": "Plné ovládání - 0",
-          "description": "Vaše klíče, fakturace, správa nákladů"
+          "title": "Full Control",
+          "description": "Your keys, your billing, your cost management"
         }
       ],
-      "supportedProviders": "Podporovaní poskytovatelé",
+      "supportedProviders": "Supported Providers",
       "vertexName": "Google Vertex AI",
       "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Převod textu na řeč a klonování hlasu",
-      "savingsLabel": "80% úspora",
-      "onImagesVideo": "na obrázcích a videu",
-      "onVoiceover": "při hlasovém komentáři",
-      "note": "Zobrazené kreditní úspory jsou úspory na platformě SceneFlow. Vaše skutečné celkové náklady závisí na vašich osobních nebo firemních cenách API u každého poskytovatele."
+      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
+      "savingsLabel": "80% savings",
+      "onImagesVideo": "on images & video",
+      "onVoiceover": "on voiceover",
+      "note": "Credit savings shown are SceneFlow platform savings. Your actual total costs depend on your personal or corporate API pricing with each provider."
     },
     "creditTopUps": {
-      "title": "Potřebujete více kreditů?",
-      "subtitle": "Dobijte kdykoli. Kredity nikdy nevyprší.",
+      "title": "Need More Credits?",
+      "subtitle": "Top up anytime. Credits never expire.",
       "packs": [
         {
-          "label": "starter pack",
-          "description": "Ideální pro rychlé revize"
+          "label": "Starter Pack",
+          "description": "Perfect for quick revisions"
         },
         {
-          "label": "Balíček scén",
-          "description": "Dokončit krátký projekt"
+          "label": "Scene Pack",
+          "description": "Complete a short project"
         },
         {
-          "label": "Výrobní balíček",
-          "description": "Hlavní filmová sekvence"
+          "label": "Production Pack",
+          "description": "Major film sequence"
         },
         {
-          "label": "Studiový balíček",
-          "description": "Úplná výrobní kapacita"
+          "label": "Studio Pack",
+          "description": "Full production capacity"
         }
       ],
-      "creditsUnit": "kreditů"
+      "creditsUnit": "credits"
     },
     "calculator": {
-      "sectionTitle": "Odhadněte svůj projekt",
-      "sectionSubtitle": "Než se zavážeš, budeš přesně vědět, kolik zaplatíš",
-      "title": "Kalkulačka rozpočtu projektu",
-      "subtitle": "Odhadněte kredity před zahájením",
-      "customize": "Přizpůsobit parametry",
-      "imagesLabel": "Obrázky k vygenerování",
-      "videoClipsLabel": "Filmy",
-      "voiceoverLabel": "Hlasový komentář (minuty)",
-      "byokTitle": "Přineste si vlastní klíč (BYOK)",
+      "sectionTitle": "Estimate Your Project",
+      "sectionSubtitle": "Know exactly what you'll pay before you commit",
+      "title": "Project Budget Calculator",
+      "subtitle": "Estimate credits before you start",
+      "customize": "Customize parameters",
+      "imagesLabel": "Images to generate",
+      "videoClipsLabel": "Video clips",
+      "voiceoverLabel": "Voiceover (minutes)",
+      "byokTitle": "Bring Your Own Key (BYOK)",
       "byokBadge": "Pro & Studio",
-      "byokDescription": "Použijte své vlastní klíče API a ušetřete až 80% na kreditech SceneFlow. Poskytovatelům umělé inteligence platíte přímo jejich sazbami.",
-      "vertexToggle": "Vertex AI (obrázky a video)",
-      "elevenLabsToggle": "ElevenLabs (Hlasový komentář)",
-      "imageGeneration": "Generování obrázků",
-      "videoGeneration": "Generování videa",
+      "byokDescription": "Use your own API keys to save up to 80% on SceneFlow credits. You pay the AI providers directly at their rates.",
+      "vertexToggle": "Vertex AI (Images & Video)",
+      "elevenLabsToggle": "ElevenLabs (Voiceover)",
+      "imageGeneration": "Image Generation",
+      "videoGeneration": "Video Generation",
       "voiceover": "Voiceover",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Celkový odhad",
-      "withTopUps": "s dobíjením",
-      "creditSavings": "Úvěrové úspory SceneFlow",
-      "savePercent": "Ušetříte {percent}% na kreditech SceneFlow",
-      "transparency": "Plná transparentnost: Při práci uvidíte využití kreditu v reálném čase. Žádná překvapení - kdykoli upravte rozsah projektu.",
-      "transparencyHighlight": "Úplná transparentnost:",
-      "byokDisclaimer": "BYOK Poznámka: Zobrazené kreditní úspory odrážejí pouze snížení kreditů na platformě SceneFlow. Vaše skutečné náklady závisí na vašich cenových plánech Vertex AI a ElevenLabs. Firemní nebo velkoobjemové plány API mohou nabídnout další úspory.",
-      "byokDisclaimerHighlight": "BYOK Poznámka:",
+      "totalEstimate": "Total Estimate",
+      "withTopUps": "with top-ups",
+      "creditSavings": "SceneFlow credit savings",
+      "savePercent": "You save {percent}% on SceneFlow credits",
+      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
+      "transparencyHighlight": "Full transparency:",
+      "byokDisclaimer": "BYOK Note: Credit savings shown reflect SceneFlow platform credit reductions only. Your actual costs depend on your Vertex AI and ElevenLabs pricing plans. Corporate or high-volume API plans may offer additional savings.",
+      "byokDisclaimerHighlight": "BYOK Note:",
       "presets": [
         {
           "id": "commercial",
-          "name": "30sekundová komerční"
+          "name": "30-sec Commercial"
         },
         {
           "id": "short",
-          "name": "2minutový krátký film"
+          "name": "2-min Short Film"
         },
         {
           "id": "episode",
-          "name": "10minutová epizoda"
+          "name": "10-min Episode"
         },
         {
           "id": "feature",
-          "name": "Funkce 90 minut"
+          "name": "90-min Feature"
         }
       ],
       "minSuffix": "min"
     },
     "tierGrid": {
-      "productionTestFlight": "Výrobní zkušební let",
-      "getStarted": "Začínáme",
-      "startTestFlight": "Zahájit zkušební let",
-      "loading": "Načítání…",
-      "mostPopular": "Nejvíce populární",
-      "creditsPerMonth": "Kredity/měsíc",
-      "storage": "Skladování",
-      "perMonth": "/měsíc"
+      "productionTestFlight": "Production Test Flight",
+      "getStarted": "Get Started",
+      "startTestFlight": "Start Test Flight",
+      "loading": "Loading...",
+      "mostPopular": "Most Popular",
+      "creditsPerMonth": "Credits/mo",
+      "storage": "Storage",
+      "perMonth": "/month"
     },
     "trust": {
-      "cancelAnytime": "Skončit můžete kdykoli",
-      "moneyBack": "Záruka vrácení peněz do 14 dnů",
-      "creditsNeverExpire": "Kredity nikdy nevyprší (balíček Explorer)"
+      "cancelAnytime": "Cancel anytime",
+      "moneyBack": "14-day money-back guarantee",
+      "creditsNeverExpire": "Credits never expire (Explorer pack)"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "Jednorázový nákup pro vyzkoušení",
+        "description": "One-time purchase to try it out",
         "features": [
-          "Jednorázový nákup",
-          "750 kreditů (nikdy nevyprší)",
-          "5 GB úložiště (30 dní)",
-          "Plný přístup na platformu",
-          "Export MP4 (libovolné rozlišení)",
-          "Hlasový komentář AI (70+ jazyků)"
+          "One-time purchase",
+          "750 credits (never expire)",
+          "5 GB storage (30 days)",
+          "Full platform access",
+          "MP4 export (any resolution)",
+          "AI voiceover (70+ languages)"
         ]
       },
       "subscriptions": [
         {
           "id": "starter",
-          "name": "Spouštěč",
-          "description": "Pro jednotlivé tvůrce",
+          "name": "Starter",
+          "description": "For individual creators",
           "features": [
-            "Plný přístup na platformu",
-            "Včetně 4 500 kreditů/měsíc",
-            "25 GB aktivního úložiště",
-            "Export MP4 (libovolné rozlišení)",
-            "Hlasový komentář AI (70+ jazyků)",
-            "E-mailová podpora"
+            "Full platform access",
+            "4,500 credits/month included",
+            "25 GB active storage",
+            "MP4 export (any resolution)",
+            "AI voiceover (70+ languages)",
+            "Email support"
           ]
         },
         {
           "id": "pro",
           "name": "Pro",
-          "description": "Pro profesionální tvůrce",
+          "description": "For professional creators",
           "features": [
-            "Vše v programu Starter a navíc:",
-            "Včetně 15 000 kreditů/měsíc",
-            "100 GB aktivního úložiště",
-            "Veo 3.1 Kvalitní (4K) přístup",
-            "Motor konzistence znaků",
-            "Klonování hlasu",
-            "BYOK (Přineste si vlastní klíč)",
-            "3 týmová sedadla",
-            "Přednostní podpora"
+            "Everything in Starter, plus:",
+            "15,000 credits/month included",
+            "100 GB active storage",
+            "Veo 3.1 Quality (4K) access",
+            "Character Consistency Engine",
+            "Voice cloning",
+            "BYOK (Bring Your Own Key)",
+            "3 team seats",
+            "Priority support"
           ]
         },
         {
           "id": "studio",
-          "name": "Ateliér",
-          "description": "Pro týmy a agentury",
+          "name": "Studio",
+          "description": "For teams & agencies",
           "features": [
-            "Vše v Pro a navíc:",
-            "Včetně 75 000 kreditů/měsíc",
-            "500 GB aktivního úložiště",
-            "Veo 3.1 4K Prioritní fronta",
-            "Neomezená konzistence znaků",
-            "Vývoz s bílou značkou",
-            "Přístup k rozhraní API ",
-            "10 týmových míst",
-            "Vyhrazený správce účtu",
-            "Enterprise SLA k dispozici na vyžádání"
+            "Everything in Pro, plus:",
+            "75,000 credits/month included",
+            "500 GB active storage",
+            "Veo 3.1 4K Priority Queue",
+            "Unlimited Character Consistency",
+            "White-label exports",
+            "API access",
+            "10 team seats",
+            "Dedicated account manager",
+            "Enterprise SLA available on request"
           ]
         }
       ]
     },
-    "explorerHighlight": "Nejrychlejší způsob, jak zažít kompletní studio SceneFlow — od konceptu až po Screening Room.",
+    "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
     "trustBadges": [
-      "Google Cloud infrastruktura",
-      "Vertex AI generace",
-      "Bezpečné platby prostřednictvím Whop",
-      "Záruka vrácení peněz do 14 dnů"
+      "Secure payments via Whop",
+      "14-day money-back guarantee",
+      "Credits never expire (Explorer pack)",
+      "Cancel anytime"
     ]
   },
   "landingSections": {
@@ -1735,10 +1738,10 @@
     "collapseSection": "Skrýt sekci"
   },
   "finalCta": {
-    "title": "Jste připraveni otestovat celý ropovod?",
-    "subtitle": "Skriptování a optimalizace poháněné Googlem, vaše volba generačního backendu a recenze Screening Room — vše v jednom studiu. Zářijová kohorta předčasného přístupu se nyní vytváří — začněte s plánem Explorer za 9 $ nebo požádejte o zakládající přístup tvůrce.",
-    "cta": "Spustit výrobu",
-    "ctaSecondary": "Požádat o zakládající přístup pro tvůrce",
+    "title": "Ready to create in Go or Director Mode?",
+    "subtitle": "Pick Go for speed or Director for control — start from the $9 Explorer plan or apply for Founding Creator access.",
+    "cta": "Start with Go Mode",
+    "ctaSecondary": "Apply for Founding Creator Access",
     "ctaSecondaryHref": "/early-access"
   },
   "footer": {
@@ -2146,5 +2149,40 @@
   },
   "keyFeatures": {
     "landingUiLanguagesLabel": "Uživatelské rozhraní a produkce k dispozici v 39 jazycích"
+  },
+  "twoModes": {
+    "title": "One Platform. Two Experiences.",
+    "go": {
+      "name": "SceneFlow Go",
+      "tagline": "Concept to animatic in minutes.",
+      "points": [
+        "Full intelligence and automation.",
+        "Enter a concept or script, click Go, and take a break.",
+        "Automatically handles Blueprint, structure, references, frames, audio, and animatic assembly.",
+        "Complete animatic ready in under 10 minutes.",
+        "Light natural-language revisions available on demand."
+      ],
+      "cta": "Try Go Mode"
+    },
+    "director": {
+      "name": "SceneFlow Studio",
+      "subtitle": "Director Mode",
+      "tagline": "Every visual, emotion, line, and note under your direction.",
+      "points": [
+        "Same powerful underlying AI pipeline with complete manual authorship.",
+        "Granular step-by-step control across every scene and beat.",
+        "Fine-tune visuals, character emotion, dialogue timing, and music choices.",
+        "Complete pre-visualization and master production workflow."
+      ],
+      "cta": "Launch Studio ($9)"
+    }
+  },
+  "infrastructure": {
+    "title": "Enterprise-Grade Infrastructure & Security",
+    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   }
 }

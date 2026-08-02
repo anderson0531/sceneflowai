@@ -26,20 +26,25 @@
     "noLanguagesFound": "No languages found"
   },
   "floatingNav": {
-    "pipeline": "Pipeline",
+    "compare": "Compare",
+    "looksAndFormats": "Looks & Formats",
     "howItWorks": "How It Works",
     "useCases": "Use Cases",
     "productionExamples": "Examples",
-    "keyFeatures": "Features",
-    "pricing": "Pricing",
-    "trustSafety": "Trust & Safety"
+    "twoModes": "Go vs Director",
+    "keyFeatures": "Key Features",
+    "preVisEngine": "Pre-Vis Engine",
+    "platformWalkthrough": "Platform Walkthrough",
+    "trustSafety": "Trust & Safety",
+    "platform": "Platform",
+    "pricing": "Pricing"
   },
   "hero": {
-    "headline": "You Direct the Story. SceneFlow Automates the Studio.",
-    "subheadline": "Google-powered intelligence orchestrated on Google Cloud — with optional Google or Kling generation. Run your ideas through a seamless pipeline from blueprint to master MP4 without micro-prompting.",
-    "ctaPrimaryLaunch": "Start Your Production",
-    "ctaSupportingLine": "Start with the $9 Explorer plan. September Early Access cohort now forming.",
-    "ctaSecondary": "Watch the 'What's Possible'",
+    "headline": "Click Go and take a coffee break — or step through every scene as creative director.",
+    "subheadline": "Full automation when you want speed. Complete control when you want authorship. SceneFlow delivers concept-to-master animatics in two intentional modes.",
+    "ctaPrimaryLaunch": "Start with Go Mode",
+    "ctaSupportingLine": "",
+    "ctaSecondary": "Explore Director Mode",
     "ctaToolStack": "See how it replaces your tool stack",
     "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
     "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
@@ -278,16 +283,45 @@
     "badge": "Interactive Screening Room — Animatic Preview Available",
     "languagePrompt": "Hear the pipeline in your target market:",
     "languages": [
-      { "id": "en", "label": "English", "flag": "🇺🇸" },
-      { "id": "es", "label": "Español", "flag": "🇪🇸" },
-      { "id": "pt", "label": "Português", "flag": "🇧🇷" },
-      { "id": "hi", "label": "हिन्दी", "flag": "🇮🇳" },
-      { "id": "zh", "label": "中文", "flag": "🇨🇳" }
+      {
+        "id": "en",
+        "label": "English",
+        "flag": "🇺🇸"
+      },
+      {
+        "id": "es",
+        "label": "Español",
+        "flag": "🇪🇸"
+      },
+      {
+        "id": "pt",
+        "label": "Português",
+        "flag": "🇧🇷"
+      },
+      {
+        "id": "hi",
+        "label": "हिन्दी",
+        "flag": "🇮🇳"
+      },
+      {
+        "id": "zh",
+        "label": "中文",
+        "flag": "🇨🇳"
+      }
     ],
     "steps": [
-      { "id": "concept", "label": "Concept & Script Optimization" },
-      { "id": "animatic", "label": "30-Min Animatic Review" },
-      { "id": "video", "label": "Full Motion Express Video Renders" }
+      {
+        "id": "concept",
+        "label": "Concept & Script Optimization"
+      },
+      {
+        "id": "animatic",
+        "label": "30-Min Animatic Review"
+      },
+      {
+        "id": "video",
+        "label": "Full Motion Express Video Renders"
+      }
     ],
     "previewLabel": "Preview"
   },
@@ -2308,10 +2342,10 @@
     "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
     "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
     "trustBadges": [
-      "Google Cloud infrastructure",
-      "Vertex AI generation",
       "Secure payments via Whop",
-      "14-day money-back guarantee"
+      "14-day money-back guarantee",
+      "Credits never expire (Explorer pack)",
+      "Cancel anytime"
     ],
     "valueAnchor": {
       "traditionalCost": "$2,000+",
@@ -2512,9 +2546,9 @@
     "collapseSection": "Hide section"
   },
   "finalCta": {
-    "title": "Ready to test the full pipeline?",
-    "subtitle": "Google-powered scripting and optimization, your choice of generation backend, and Screening Room review — all in one studio. September Early Access cohort now forming — start with the $9 Explorer plan or apply for Founding Creator access.",
-    "cta": "Start Your Production",
+    "title": "Ready to create in Go or Director Mode?",
+    "subtitle": "Pick Go for speed or Director for control — start from the $9 Explorer plan or apply for Founding Creator access.",
+    "cta": "Start with Go Mode",
     "ctaSecondary": "Apply for Founding Creator Access",
     "ctaSecondaryHref": "/early-access"
   },
@@ -2555,5 +2589,40 @@
     "mute": "Mute",
     "unmute": "Unmute",
     "expandVideo": "Expand Video"
+  },
+  "twoModes": {
+    "title": "One Platform. Two Experiences.",
+    "go": {
+      "name": "SceneFlow Go",
+      "tagline": "Concept to animatic in minutes.",
+      "points": [
+        "Full intelligence and automation.",
+        "Enter a concept or script, click Go, and take a break.",
+        "Automatically handles Blueprint, structure, references, frames, audio, and animatic assembly.",
+        "Complete animatic ready in under 10 minutes.",
+        "Light natural-language revisions available on demand."
+      ],
+      "cta": "Try Go Mode"
+    },
+    "director": {
+      "name": "SceneFlow Studio",
+      "subtitle": "Director Mode",
+      "tagline": "Every visual, emotion, line, and note under your direction.",
+      "points": [
+        "Same powerful underlying AI pipeline with complete manual authorship.",
+        "Granular step-by-step control across every scene and beat.",
+        "Fine-tune visuals, character emotion, dialogue timing, and music choices.",
+        "Complete pre-visualization and master production workflow."
+      ],
+      "cta": "Launch Studio ($9)"
+    }
+  },
+  "infrastructure": {
+    "title": "Enterprise-Grade Infrastructure & Security",
+    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   }
 }

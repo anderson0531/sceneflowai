@@ -8,6 +8,7 @@ import {
   EAP_MILESTONES,
 } from '@/config/landing/eapCopy'
 import { FINAL_CTA_COPY, HERO_COPY } from '@/config/landing/valuePropCopy'
+import { TWO_MODES_COPY } from '@/config/landing/twoModesCopy'
 import { LEGAL_SUPPORT_EMAIL } from '@/config/legal/legalCopy'
 
 const ROOT = join(process.cwd())
@@ -39,19 +40,22 @@ describe('EAP September 2026 copy', () => {
     }
   })
 
-  it('uses September timing and $9 in supporting copy, not primary button CTAs', () => {
-    expect(HERO_COPY.ctaPrimaryLaunch).toBe('Start Your Production')
-    expect(FINAL_CTA_COPY.cta).toBe('Start Your Production')
-    expect(HERO_COPY.ctaSupportingLine).toContain('September')
-    expect(HERO_COPY.ctaSupportingLine).toContain('$9')
-    expect(FINAL_CTA_COPY.subtitle).toContain('September')
+  it('uses dual-mode hero CTAs and $9 in director card / pricing, not hero supporting line', () => {
+    expect(HERO_COPY.ctaPrimaryLaunch).toBe('Start with Go Mode')
+    expect(HERO_COPY.ctaSecondary).toBe('Explore Director Mode')
+    expect(HERO_COPY.ctaSupportingLine).toBe('')
+    expect(FINAL_CTA_COPY.cta).toBe('Start with Go Mode')
+    expect(TWO_MODES_COPY.director.cta).toContain('$9')
+    expect(FINAL_CTA_COPY.subtitle).toContain('$9')
+    expect(enMessages.pricing.subtitle).toContain('September')
   })
 
   it('mirrors hero and final CTA strings in English messages', () => {
     expect(enMessages.hero.ctaPrimaryLaunch).toBe(HERO_COPY.ctaPrimaryLaunch)
+    expect(enMessages.hero.ctaSecondary).toBe(HERO_COPY.ctaSecondary)
     expect(enMessages.hero.ctaSupportingLine).toBe(HERO_COPY.ctaSupportingLine)
     expect(enMessages.finalCta.cta).toBe(FINAL_CTA_COPY.cta)
-    expect(enMessages.finalCta.subtitle).toContain('September')
+    expect(enMessages.finalCta.subtitle).toContain('$9')
     expect(enMessages.pricing.subtitle).toContain('September')
   })
 
@@ -67,9 +71,10 @@ describe('EAP September 2026 copy', () => {
     expect(page).not.toContain('Early Access Application')
   })
 
-  it('renders hero supporting line under primary CTA', () => {
+  it('renders hero secondary CTA for Director Mode exploration', () => {
     const hero = readSource('src/app/components/HeroSection.tsx')
-    expect(hero).toContain("t('ctaSupportingLine')")
+    expect(hero).toContain("t('ctaSecondary')")
+    expect(hero).toContain('scrollToTwoModes')
   })
 
   it('uses September cohort in EAP emails and qualification', () => {

@@ -46,6 +46,9 @@ export async function POST(req: NextRequest) {
       privacyStatus = 'private',
       language = 'en',
       audioTracks = [],
+      thumbnailUrl,
+      tags,
+      categoryId,
     } = body as {
       userId?: string
       videoUrl?: string
@@ -54,6 +57,9 @@ export async function POST(req: NextRequest) {
       privacyStatus?: 'private' | 'unlisted' | 'public'
       language?: string
       audioTracks?: Array<{ languageCode: string; audioUrl: string }>
+      thumbnailUrl?: string
+      tags?: string[]
+      categoryId?: string
     }
 
     if (!userIdParam || !videoUrl || !title) {
@@ -67,6 +73,9 @@ export async function POST(req: NextRequest) {
       description: description || '',
       privacyStatus,
       language,
+      thumbnailUrl,
+      tags,
+      categoryId,
     })
 
     const trackResults: AudioTrackResult[] = []

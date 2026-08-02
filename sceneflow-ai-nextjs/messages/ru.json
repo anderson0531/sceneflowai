@@ -26,34 +26,37 @@
     "keyFeatures": "Характеристики"
   },
   "floatingNav": {
-    "compare": "Сравнить",
-    "looksAndFormats": "Внешний вид и форматы",
-    "howItWorks": "Как это работает",
-    "useCases": "Варианты использования",
-    "preVisEngine": "Система превизуализации",
-    "platformWalkthrough": "Обзор платформы",
-    "trustSafety": "доверия и безопасности",
-    "platform": "Платформа",
-    "pricing": "Цены"
+    "compare": "Compare",
+    "looksAndFormats": "Looks & Formats",
+    "howItWorks": "How It Works",
+    "useCases": "Use Cases",
+    "preVisEngine": "Pre-Vis Engine",
+    "platformWalkthrough": "Platform Walkthrough",
+    "trustSafety": "Trust & Safety",
+    "platform": "Platform",
+    "pricing": "Pricing",
+    "productionExamples": "Examples",
+    "twoModes": "Go vs Director",
+    "keyFeatures": "Key Features"
   },
   "hero": {
-    "headline": "Вы направляете историю. SceneFlow Автоматизирует студию.",
-    "subheadline": "Интеллект на базе Google, организованный на Google Cloud — с необязательной генерацией Google или Kling. Запустите свои идеи по бесшовному конвейеру от чертежа до мастер MP4 без микро-подсказки.",
+    "headline": "Click Go and take a coffee break — or step through every scene as creative director.",
+    "subheadline": "Full automation when you want speed. Complete control when you want authorship. SceneFlow delivers concept-to-master animatics in two intentional modes.",
     "audienceMicroLine": "Создано для авторов, нацеленных на результат, и команд, желающих увидеть, как это работает.",
-    "ctaSecondary": "Посмотрите «Что возможно»",
-    "ctaToolStack": "Посмотрите, как он заменяет ваш стек инструментов",
-    "languagePrompt": "Услышьте героя на своем языке — тот же конвейер, новые рынки",
-    "multilangHint": "Дубляж Hero на 7 языках — полный конвейер поддерживает 70+ в Production Studio.",
-    "playWithNarration": "Играйте с повествованием",
-    "tapToHear": "Нажмите, чтобы прослушать",
-    "fullscreen": "Полноэкранный режим",
+    "ctaSecondary": "Explore Director Mode",
+    "ctaToolStack": "See how it replaces your tool stack",
+    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
+    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
+    "playWithNarration": "Play with narration",
+    "tapToHear": "Tap to hear",
+    "fullscreen": "Fullscreen",
     "heroVideoLanguages": {
       "en": {
-        "label": "Великобритания",
-        "nativeLabel": "Великобритания"
+        "label": "English",
+        "nativeLabel": "English"
       },
       "es": {
-        "label": "Испанский",
+        "label": "Spanish",
         "nativeLabel": "Español"
       },
       "pt": {
@@ -61,25 +64,25 @@
         "nativeLabel": "Português"
       },
       "hi": {
-        "label": "Хинди",
+        "label": "Hindi",
         "nativeLabel": "हिन्दी"
       },
       "zh": {
         "label": "Chinese",
-        "nativeLabel": "Китайский язык"
+        "nativeLabel": "中文"
       },
       "ar": {
-        "label": "Арабские страны",
+        "label": "Arabic",
         "nativeLabel": "العربية"
       },
       "th": {
-        "label": "Тайский",
+        "label": "Thai",
         "nativeLabel": "ไทย"
       }
     },
-    "soon": "Скоро",
-    "ctaPrimaryLaunch": "Начните свое производство",
-    "ctaSupportingLine": "Начните с плана Explorer стоимостью $ 9. Сентябрь Когорта раннего доступа уже формируется.",
+    "soon": "Soon",
+    "ctaPrimaryLaunch": "Start with Go Mode",
+    "ctaSupportingLine": "",
     "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "valueProp": {
@@ -1526,208 +1529,208 @@
     "closePopup": "Закрыть всплывающее окно"
   },
   "pricing": {
-    "badge": "Простая ценовая политика",
-    "title": "Начните с Explorer — $ 9",
-    "subtitle": "Сентябрь Формирование когорты раннего доступа. Протестируйте весь трубопровод без трения с входом $ 9.",
+    "badge": "Simple Pricing",
+    "title": "Start with Explorer — $9",
+    "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
     "valueAnchor": {
-      "traditionalCost": "2 000+",
-      "traditionalLabel": "Традиционный previs",
-      "vs": "ИЛИ",
-      "sceneFlowCost": "$ 49-149",
-      "sceneFlowLabel": "SceneFlow ежемесячно",
-      "saveBadge": "Сэкономьте 90%+ на проекте"
+      "traditionalCost": "$2,000+",
+      "traditionalLabel": "Traditional pre-vis",
+      "vs": "vs",
+      "sceneFlowCost": "$49-149",
+      "sceneFlowLabel": "SceneFlow monthly",
+      "saveBadge": "Save 90%+ per project"
     },
     "teamCta": {
-      "title": "Внутренняя команда или учреждение?",
-      "description": "Забронируйте пошаговое руководство по рабочему процессу для отдела связи, отдела исследований и разработок и отдела маркетинга",
-      "button": "Пошаговое руководство по бронированию"
+      "title": "In-house team or institution?",
+      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
+      "button": "Book Walkthrough"
     },
     "agencyCta": {
-      "title": "Агентство или производственный цех?",
-      "description": "Пользовательские кредиты, SLA и специализированная поддержка в масштабе",
-      "button": "Свяжитесь с отделом продаж"
+      "title": "Agency or production shop?",
+      "description": "Custom credits, SLA, and dedicated support at scale",
+      "button": "Contact Sales"
     },
     "byok": {
-      "title": "Принести свои собственные",
-      "badge": "Профессиональные и студийные планы",
-      "description": "Уже есть API-ключи для Vertex AI или ElevenLabs? Используйте их с SceneFlow AI и сэкономьте до 80% на кредитах платформы.",
-      "savingsHighlight": "80% на кредиты платформы",
+      "title": "Bring Your Own Key",
+      "badge": "Pro & Studio Plans",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
-          "title": "Сбережения по кредитам SceneFlow на 80%",
-          "description": "Заплатите только 20% комиссии платформы за оркестровку и инструменты"
+          "title": "80% SceneFlow Credit Savings",
+          "description": "Pay only a 20% platform fee for orchestration & tools"
         },
         {
-          "title": "Использование корпоративных планов",
-          "description": "Используйте существующие скидки Vertex AI или ElevenLabs"
+          "title": "Leverage Corporate Plans",
+          "description": "Use your existing Vertex AI or ElevenLabs volume discounts"
         },
         {
-          "title": "Полное управление",
-          "description": "Ваши ключи, выставление счетов, управление расходами"
+          "title": "Full Control",
+          "description": "Your keys, your billing, your cost management"
         }
       ],
-      "supportedProviders": "Поддерживаемые провайдеры",
+      "supportedProviders": "Supported Providers",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "Imagen 4 и Veo 3.1",
+      "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Преобразование текста в речь и клонирование голоса",
-      "savingsLabel": "Экономия 80%",
-      "onImagesVideo": "на изображениях и видео",
-      "onVoiceover": "при закадровом закадровом зака",
-      "note": "Показанные кредитные сбережения - это сбережения платформы SceneFlow. Ваши фактические общие расходы зависят от ваших личных или корпоративных цен API с каждым провайдером."
+      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
+      "savingsLabel": "80% savings",
+      "onImagesVideo": "on images & video",
+      "onVoiceover": "on voiceover",
+      "note": "Credit savings shown are SceneFlow platform savings. Your actual total costs depend on your personal or corporate API pricing with each provider."
     },
     "creditTopUps": {
-      "title": "Нужно больше кредитов?",
-      "subtitle": "Пополните счет в любое время. Срок действия кредитов не истекает.",
+      "title": "Need More Credits?",
+      "subtitle": "Top up anytime. Credits never expire.",
       "packs": [
         {
-          "label": "Начальный пакет",
-          "description": "Идеально подходит для быстрого редактирования"
+          "label": "Starter Pack",
+          "description": "Perfect for quick revisions"
         },
         {
-          "label": "Набор сцен",
-          "description": "Завершить короткий проект"
+          "label": "Scene Pack",
+          "description": "Complete a short project"
         },
         {
-          "label": "Производственный пакет",
-          "description": "Основная последовательность фильмов"
+          "label": "Production Pack",
+          "description": "Major film sequence"
         },
         {
           "label": "Studio Pack",
-          "description": "Производственная мощность"
+          "description": "Full production capacity"
         }
       ],
-      "creditsUnit": "благодарности"
+      "creditsUnit": "credits"
     },
     "calculator": {
-      "sectionTitle": "Оцените свой проект",
-      "sectionSubtitle": "Точно знайте, сколько вы заплатите, прежде чем совершить покупку",
-      "title": "Калькулятор бюджета проекта",
-      "subtitle": "Оцените кредиты, прежде чем начать",
-      "customize": "Настроить параметры",
-      "imagesLabel": "Изображения для создания",
+      "sectionTitle": "Estimate Your Project",
+      "sectionSubtitle": "Know exactly what you'll pay before you commit",
+      "title": "Project Budget Calculator",
+      "subtitle": "Estimate credits before you start",
+      "customize": "Customize parameters",
+      "imagesLabel": "Images to generate",
       "videoClipsLabel": "Video clips",
-      "voiceoverLabel": "Озвучка (минуты)",
-      "byokTitle": "Принесите свой ключ (BYOK)",
-      "byokBadge": "Pro Studio",
-      "byokDescription": "Используйте собственные API-ключи, чтобы сэкономить до 80% на кредитах SceneFlow. Вы платите ИИ-провайдерам напрямую по их тарифам.",
-      "vertexToggle": "Vertex AI (Изображения и видео)",
-      "elevenLabsToggle": "ElevenLabs (озвучка)",
-      "imageGeneration": "Генерация изображений",
-      "videoGeneration": "Генерация видео",
-      "voiceover": "Голос за кадром ",
+      "voiceoverLabel": "Voiceover (minutes)",
+      "byokTitle": "Bring Your Own Key (BYOK)",
+      "byokBadge": "Pro & Studio",
+      "byokDescription": "Use your own API keys to save up to 80% on SceneFlow credits. You pay the AI providers directly at their rates.",
+      "vertexToggle": "Vertex AI (Images & Video)",
+      "elevenLabsToggle": "ElevenLabs (Voiceover)",
+      "imageGeneration": "Image Generation",
+      "videoGeneration": "Video Generation",
+      "voiceover": "Voiceover",
       "byokTag": "(BYOK)",
-      "totalEstimate": "ОБЩАЯ ОЦЕНКА",
-      "withTopUps": "с пополнениями",
-      "creditSavings": "Кредитные сбережения SceneFlow",
-      "savePercent": "Вы экономите {percent}% на кредитах SceneFlow",
-      "transparency": "Полная прозрачность: во время работы вы будете видеть использование кредитов в режиме реального времени. Никаких сюрпризов - корректируйте масштаб вашего проекта в любое время.",
-      "transparencyHighlight": "Прозрачность",
-      "byokDisclaimer": "Примечание BYOK: показанные сбережения по кредитам отражают только снижение кредитования платформы SceneFlow. Фактические расходы зависят от тарифных планов Vertex AI и ElevenLabs. Корпоративные или крупные планы API могут обеспечить дополнительную экономию.",
-      "byokDisclaimerHighlight": "BYOK Примечание:",
+      "totalEstimate": "Total Estimate",
+      "withTopUps": "with top-ups",
+      "creditSavings": "SceneFlow credit savings",
+      "savePercent": "You save {percent}% on SceneFlow credits",
+      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
+      "transparencyHighlight": "Full transparency:",
+      "byokDisclaimer": "BYOK Note: Credit savings shown reflect SceneFlow platform credit reductions only. Your actual costs depend on your Vertex AI and ElevenLabs pricing plans. Corporate or high-volume API plans may offer additional savings.",
+      "byokDisclaimerHighlight": "BYOK Note:",
       "presets": [
         {
           "id": "commercial",
-          "name": "30-секундный коммерческий"
+          "name": "30-sec Commercial"
         },
         {
           "id": "short",
-          "name": "2-минутная короткая пленка"
+          "name": "2-min Short Film"
         },
         {
           "id": "episode",
-          "name": "10-минутный эпизод"
+          "name": "10-min Episode"
         },
         {
           "id": "feature",
-          "name": "90-минутная функция"
+          "name": "90-min Feature"
         }
       ],
-      "minSuffix": "мин"
+      "minSuffix": "min"
     },
     "tierGrid": {
-      "productionTestFlight": "Производственный испытательный полет",
-      "getStarted": "Начало работы",
-      "startTestFlight": "Начать испытательный полет",
-      "loading": "Загрузка...",
-      "mostPopular": "Самые популярные",
-      "creditsPerMonth": "Кредиты/мес",
-      "storage": "Хранение",
-      "perMonth": "/месяц"
+      "productionTestFlight": "Production Test Flight",
+      "getStarted": "Get Started",
+      "startTestFlight": "Start Test Flight",
+      "loading": "Loading...",
+      "mostPopular": "Most Popular",
+      "creditsPerMonth": "Credits/mo",
+      "storage": "Storage",
+      "perMonth": "/month"
     },
     "trust": {
-      "cancelAnytime": "Возможность отмены в любое время",
-      "moneyBack": "14-дневная гарантия возврата денег",
-      "creditsNeverExpire": "Срок действия кредитов не истекает (пакет Explorer)"
+      "cancelAnytime": "Cancel anytime",
+      "moneyBack": "14-day money-back guarantee",
+      "creditsNeverExpire": "Credits never expire (Explorer pack)"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "Разовая покупка, чтобы попробовать",
+        "description": "One-time purchase to try it out",
         "features": [
-          "Разовая покупка",
-          "Кредиты никогда не истекают.",
-          "Хранение 5 ГБ (30 дней)",
-          "Доступ к платформе",
-          "Экспорт MP4 (любое разрешение)",
-          "ИИ озвучивание (более70 языков)"
+          "One-time purchase",
+          "750 credits (never expire)",
+          "5 GB storage (30 days)",
+          "Full platform access",
+          "MP4 export (any resolution)",
+          "AI voiceover (70+ languages)"
         ]
       },
       "subscriptions": [
         {
           "id": "starter",
-          "name": "Стартер",
-          "description": "Для отдельных креаторов",
+          "name": "Starter",
+          "description": "For individual creators",
           "features": [
-            "Доступ к платформе",
-            "Включено 4500 кредитов/месяц",
-            "25 ГБ активного хранилища",
-            "Экспорт MP4 (любое разрешение)",
-            "ИИ озвучивание (более70 языков)",
-            "Поддержка по эл. почте"
+            "Full platform access",
+            "4,500 credits/month included",
+            "25 GB active storage",
+            "MP4 export (any resolution)",
+            "AI voiceover (70+ languages)",
+            "Email support"
           ]
         },
         {
           "id": "pro",
           "name": "Pro",
-          "description": "Для профессиональных креаторов",
+          "description": "For professional creators",
           "features": [
-            "Все в Starter, плюс:",
-            "15 000 кредитов в месяц включительно",
-            "100 ГБ активного хранилища",
-            "Доступ к VEO 3.1 Quality (4K)",
-            "Механизм согласованности символов",
-            "Клонирование голоса",
-            "BYOK (Принесите свой собственный ключ)",
-            "3 места в команде",
-            "Приоритетная поддержка"
+            "Everything in Starter, plus:",
+            "15,000 credits/month included",
+            "100 GB active storage",
+            "Veo 3.1 Quality (4K) access",
+            "Character Consistency Engine",
+            "Voice cloning",
+            "BYOK (Bring Your Own Key)",
+            "3 team seats",
+            "Priority support"
           ]
         },
         {
           "id": "studio",
-          "name": "Студия",
-          "description": "Для команд и агентств",
+          "name": "Studio",
+          "description": "For teams & agencies",
           "features": [
-            "Все в Pro, плюс:",
-            "75 000 кредитов в месяц включительно",
-            "500 ГБ активного хранилища",
-            "Приоритетная очередь 4K VEO 3.1",
-            "Неограниченная согласованность символов",
-            "Экспорт White Label",
-            "Доступ к API",
-            "10 мест в команде",
-            "Персональный администратор счета",
-            "Корпоративное соглашение об уровне обслуживания доступно по запросу"
+            "Everything in Pro, plus:",
+            "75,000 credits/month included",
+            "500 GB active storage",
+            "Veo 3.1 4K Priority Queue",
+            "Unlimited Character Consistency",
+            "White-label exports",
+            "API access",
+            "10 team seats",
+            "Dedicated account manager",
+            "Enterprise SLA available on request"
           ]
         }
       ]
     },
-    "explorerHighlight": "Самый быстрый способ испытать полную студию SceneFlow — от концепции до Screening Room.",
+    "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
     "trustBadges": [
-      "Инфраструктура Google Cloud",
-      "Генерация Vertex AI",
-      "Безопасные платежи через Whop",
-      "14-дневная гарантия возврата денег"
+      "Secure payments via Whop",
+      "14-day money-back guarantee",
+      "Credits never expire (Explorer pack)",
+      "Cancel anytime"
     ]
   },
   "landingSections": {
@@ -1735,10 +1738,10 @@
     "collapseSection": "Скрыть раздел"
   },
   "finalCta": {
-    "title": "Готовы протестировать весь трубопровод?",
-    "subtitle": "Google-powered scripting and optimization, ваш выбор бэкенда поколения и обзор Screening Room — все в одной студии. Сентябрь Когорта раннего доступа уже формируется — начните с плана Explorer за $ 9 или подайте заявку на доступ к автору-основателю.",
-    "cta": "Начните свое производство",
-    "ctaSecondary": "Подать заявку на доступ к креатору-учредителю",
+    "title": "Ready to create in Go or Director Mode?",
+    "subtitle": "Pick Go for speed or Director for control — start from the $9 Explorer plan or apply for Founding Creator access.",
+    "cta": "Start with Go Mode",
+    "ctaSecondary": "Apply for Founding Creator Access",
     "ctaSecondaryHref": "/early-access"
   },
   "footer": {
@@ -2146,5 +2149,40 @@
   },
   "keyFeatures": {
     "landingUiLanguagesLabel": "Пользовательский интерфейс и продукты доступны на 39 языках"
+  },
+  "twoModes": {
+    "title": "One Platform. Two Experiences.",
+    "go": {
+      "name": "SceneFlow Go",
+      "tagline": "Concept to animatic in minutes.",
+      "points": [
+        "Full intelligence and automation.",
+        "Enter a concept or script, click Go, and take a break.",
+        "Automatically handles Blueprint, structure, references, frames, audio, and animatic assembly.",
+        "Complete animatic ready in under 10 minutes.",
+        "Light natural-language revisions available on demand."
+      ],
+      "cta": "Try Go Mode"
+    },
+    "director": {
+      "name": "SceneFlow Studio",
+      "subtitle": "Director Mode",
+      "tagline": "Every visual, emotion, line, and note under your direction.",
+      "points": [
+        "Same powerful underlying AI pipeline with complete manual authorship.",
+        "Granular step-by-step control across every scene and beat.",
+        "Fine-tune visuals, character emotion, dialogue timing, and music choices.",
+        "Complete pre-visualization and master production workflow."
+      ],
+      "cta": "Launch Studio ($9)"
+    }
+  },
+  "infrastructure": {
+    "title": "Enterprise-Grade Infrastructure & Security",
+    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   }
 }

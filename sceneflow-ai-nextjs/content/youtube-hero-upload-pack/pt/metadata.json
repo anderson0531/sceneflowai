@@ -1,0 +1,28 @@
+{
+  "locale": "pt",
+  "title": "SceneFlow AI Studio — Você dirige a história. SceneFlow Automatiza o Estúdio.",
+  "description": "Você dirige a história. SceneFlow Automatiza o Estúdio.\n\nInteligência alimentada pelo Google orquestrada em Google Cloud — com geração opcional do Google ou Kling. Execute suas ideias por meio de um pipeline contínuo, do blueprint ao MP4 master, sem microprompting.\n\n▶ O QUE É SCENEFLOW?\nTrês fases da primeira ideia ao mestre pronto para publicação — Series Studio, Blueprint Studio e Production Studio.\n\n✅ POR QUE OS CRIADORES MIGRAM\n• One Studio — Conceito para publicar num só lugar\n• Aprovar antes do vídeo final — Revise as batidas pré-vis antes de renderizar\n• Teste a sua história primeiro — Saiba o que pousa antes de gastos pesados\n• Saída pronta para publicação — Pacotes principais de distribuição MP4 +\n\nDubs Hero em 7 idiomas — o pipeline completo suporta mais de 70 no Production Studio.\n\n🚀 INICIE A SUA PRODUÇÃO\n→ https://sceneflowai.studio\nInicie a sua produção\nComece com o plano $ 9 Explorer. Coorte de Acesso Antecipado de Setembro agora em formação.\n\n📺 Mais demos e produções de exemplo no nosso canal: https://www.youtube.com/@sceneflowaistudio\n\n#SceneFlow #AIVideo #VideoProduction #Criadores #Português",
+  "tags": [
+    "SceneFlow",
+    "SceneFlow AI",
+    "AI video",
+    "video production",
+    "video studio",
+    "Portuguese",
+    "Português"
+  ],
+  "videoUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Hero%20Video%20(Portuguese).mp4",
+  "thumbnailUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/hero/sceneflow-hero-pt-poster.jpg",
+  "categoryId": "28",
+  "language": "pt",
+  "youtubeStudioChecklist": [
+    "Upload video file (sceneflow-hero-{locale}.mp4)",
+    "Paste title from title.txt",
+    "Paste description from description.txt",
+    "Upload thumbnail (sceneflow-hero-{locale}-poster.jpg)",
+    "Add tags from tags.txt",
+    "Category: Science & Technology",
+    "Language: match locale",
+    "Visibility: Public"
+  ]
+}

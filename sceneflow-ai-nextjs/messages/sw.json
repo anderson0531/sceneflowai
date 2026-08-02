@@ -26,21 +26,24 @@
     "keyFeatures": "Features"
   },
   "floatingNav": {
-    "compare": "Linganisha",
-    "looksAndFormats": "Muonekano na Miundo",
-    "howItWorks": "Jinsi Inavyofanya Kazi",
-    "useCases": "Visa vya Matumizi",
-    "preVisEngine": "Injini ya Taswira ya Awali",
-    "platformWalkthrough": "Mwongozo wa Matumizi ya Jukwaa",
+    "compare": "Compare",
+    "looksAndFormats": "Looks & Formats",
+    "howItWorks": "How It Works",
+    "useCases": "Use Cases",
+    "preVisEngine": "Pre-Vis Engine",
+    "platformWalkthrough": "Platform Walkthrough",
     "trustSafety": "Trust & Safety",
-    "platform": "Jukwaa",
-    "pricing": "Bei"
+    "platform": "Platform",
+    "pricing": "Pricing",
+    "productionExamples": "Examples",
+    "twoModes": "Go vs Director",
+    "keyFeatures": "Key Features"
   },
   "hero": {
-    "headline": "You Direct the Story. SceneFlow Automates the Studio.",
-    "subheadline": "Google-powered intelligence orchestrated on Google Cloud — with optional Google or Kling generation. Run your ideas through a seamless pipeline from blueprint to master MP4 without micro-prompting.",
+    "headline": "Click Go and take a coffee break — or step through every scene as creative director.",
+    "subheadline": "Full automation when you want speed. Complete control when you want authorship. SceneFlow delivers concept-to-master animatics in two intentional modes.",
     "audienceMicroLine": "Imeundwa kwa ajili ya wabunifu wanaotaka matokeo, na timu zinazotaka kuona jinsi inavyofanya kazi.",
-    "ctaSecondary": "Watch the 'What's Possible'",
+    "ctaSecondary": "Explore Director Mode",
     "ctaToolStack": "See how it replaces your tool stack",
     "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
     "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
@@ -78,8 +81,8 @@
       }
     },
     "soon": "Soon",
-    "ctaPrimaryLaunch": "Kuanza uzalishaji wako",
-    "ctaSupportingLine": "Start with the $9 Explorer plan. September Early Access cohort now forming.",
+    "ctaPrimaryLaunch": "Start with Go Mode",
+    "ctaSupportingLine": "",
     "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "valueProp": {
@@ -1724,10 +1727,10 @@
     },
     "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
     "trustBadges": [
-      "Google Cloud infrastructure",
-      "Vertex AI generation",
       "Secure payments via Whop",
-      "14-day money-back guarantee"
+      "14-day money-back guarantee",
+      "Credits never expire (Explorer pack)",
+      "Cancel anytime"
     ]
   },
   "landingSections": {
@@ -1735,9 +1738,9 @@
     "collapseSection": "Ficha sehemu"
   },
   "finalCta": {
-    "title": "Ready to test the full pipeline?",
-    "subtitle": "Google-powered scripting and optimization, your choice of generation backend, and Screening Room review — all in one studio. September Early Access cohort now forming — start with the $9 Explorer plan or apply for Founding Creator access.",
-    "cta": "Kuanza uzalishaji wako",
+    "title": "Ready to create in Go or Director Mode?",
+    "subtitle": "Pick Go for speed or Director for control — start from the $9 Explorer plan or apply for Founding Creator access.",
+    "cta": "Start with Go Mode",
     "ctaSecondary": "Apply for Founding Creator Access",
     "ctaSecondaryHref": "/early-access"
   },
@@ -2146,5 +2149,40 @@
   },
   "keyFeatures": {
     "landingUiLanguagesLabel": "UI na Maonyesho Yanayopatikana katika Lugha 39"
+  },
+  "twoModes": {
+    "title": "One Platform. Two Experiences.",
+    "go": {
+      "name": "SceneFlow Go",
+      "tagline": "Concept to animatic in minutes.",
+      "points": [
+        "Full intelligence and automation.",
+        "Enter a concept or script, click Go, and take a break.",
+        "Automatically handles Blueprint, structure, references, frames, audio, and animatic assembly.",
+        "Complete animatic ready in under 10 minutes.",
+        "Light natural-language revisions available on demand."
+      ],
+      "cta": "Try Go Mode"
+    },
+    "director": {
+      "name": "SceneFlow Studio",
+      "subtitle": "Director Mode",
+      "tagline": "Every visual, emotion, line, and note under your direction.",
+      "points": [
+        "Same powerful underlying AI pipeline with complete manual authorship.",
+        "Granular step-by-step control across every scene and beat.",
+        "Fine-tune visuals, character emotion, dialogue timing, and music choices.",
+        "Complete pre-visualization and master production workflow."
+      ],
+      "cta": "Launch Studio ($9)"
+    }
+  },
+  "infrastructure": {
+    "title": "Enterprise-Grade Infrastructure & Security",
+    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   }
 }

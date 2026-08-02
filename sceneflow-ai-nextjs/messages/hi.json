@@ -26,60 +26,63 @@
     "keyFeatures": "विशेषताएँ "
   },
   "floatingNav": {
-    "compare": "तुलना करें",
-    "looksAndFormats": "दिखावट और फ़ॉर्मैट",
-    "howItWorks": "यह कैसे काम करता है",
-    "useCases": "उपयोग के मामले",
-    "preVisEngine": "प्री-विज़ इंजन",
-    "platformWalkthrough": "प्लेटफ़ॉर्म का परिचय",
-    "trustSafety": "भरोसा और सुरक्षा",
-    "platform": "प्लेटफ़ॉर्म",
-    "pricing": "कीमत"
+    "compare": "Compare",
+    "looksAndFormats": "Looks & Formats",
+    "howItWorks": "How It Works",
+    "useCases": "Use Cases",
+    "preVisEngine": "Pre-Vis Engine",
+    "platformWalkthrough": "Platform Walkthrough",
+    "trustSafety": "Trust & Safety",
+    "platform": "Platform",
+    "pricing": "Pricing",
+    "productionExamples": "Examples",
+    "twoModes": "Go vs Director",
+    "keyFeatures": "Key Features"
   },
   "hero": {
-    "headline": "आप कहानी को निर्देशित करते हैं। SceneFlow स्टूडियो को स्वचालित करता है।",
-    "subheadline": "Google द्वारा संचालित इंटेलिजेंस Google Cloud पर ऑर्केस्ट्रेटेड - वैकल्पिक Google या Kling पीढ़ी के साथ। माइक्रो - प्रॉम्प्टिंग के बिना ब्लूप्रिंट से मास्टर MP4 तक एक निर्बाध पाइपलाइन के माध्यम से अपने विचारों को चलाएं।",
+    "headline": "Click Go and take a coffee break — or step through every scene as creative director.",
+    "subheadline": "Full automation when you want speed. Complete control when you want authorship. SceneFlow delivers concept-to-master animatics in two intentional modes.",
     "audienceMicroLine": "इसे उन क्रिएटर्स के लिए बनाया गया है जो नतीजे चाहते हैं, और उन टीमों के लिए जो यह देखना चाहती हैं कि यह कैसे काम करता है।",
     "ctaSecondary": "'What's Possible' देखें",
-    "ctaToolStack": "देखें कि यह आपके टूल स्टैक को कैसे बदलता है",
-    "languagePrompt": "अपनी भाषा में नायक को सुनें — वही पाइपलाइन, नए बाजार",
-    "multilangHint": "7 भाषाओं में हीरो डब — पूर्ण पाइपलाइन Production Studio में 70+ का समर्थन करती है।",
-    "playWithNarration": "कथन के साथ खेलें",
-    "tapToHear": "सुनने के लिए टैप करें",
-    "fullscreen": "पूर्ण स्क्रीन",
+    "ctaToolStack": "See how it replaces your tool stack",
+    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
+    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
+    "playWithNarration": "Play with narration",
+    "tapToHear": "Tap to hear",
+    "fullscreen": "Fullscreen",
     "heroVideoLanguages": {
       "en": {
-        "label": "अंग्रेज़ी",
-        "nativeLabel": "अंग्रेज़ी"
+        "label": "English",
+        "nativeLabel": "English"
       },
       "es": {
-        "label": "स्पैनिश",
+        "label": "Spanish",
         "nativeLabel": "Español"
       },
       "pt": {
-        "label": "पुर्तगाली",
-        "nativeLabel": ""
+        "label": "Portuguese",
+        "nativeLabel": "Português"
       },
       "hi": {
-        "label": "हिंदी",
-        "nativeLabel": "म"
+        "label": "Hindi",
+        "nativeLabel": "हिन्दी"
       },
       "zh": {
-        "label": "Tamil",
-        "nativeLabel": ""
+        "label": "Chinese",
+        "nativeLabel": "中文"
       },
       "ar": {
-        "label": "अरबी",
+        "label": "Arabic",
         "nativeLabel": "العربية"
       },
       "th": {
-        "label": "थाई",
-        "nativeLabel": ""
+        "label": "Thai",
+        "nativeLabel": "ไทย"
       }
     },
     "soon": "Soon",
-    "ctaPrimaryLaunch": "अपना उत्पादन शुरू करें",
-    "ctaSupportingLine": "$ 9 Explorer प्लान के साथ शुरुआत करें। सितंबर अर्ली एक्सेस समूह अब बन रहा है।",
+    "ctaPrimaryLaunch": "Start with Go Mode",
+    "ctaSupportingLine": "",
     "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "valueProp": {
@@ -1526,208 +1529,208 @@
     "closePopup": "पॉपअप बंद करें"
   },
   "pricing": {
-    "badge": "साधारण किराया",
-    "title": "Explorer से शुरू करें — $ 9",
-    "subtitle": "सितंबर अर्ली एक्सेस कोहोर्ट फॉर्मिंग। घर्षण रहित $ 9 प्रविष्टि के साथ पूरी पाइपलाइन का परीक्षण करें।",
+    "badge": "Simple Pricing",
+    "title": "Start with Explorer — $9",
+    "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
     "valueAnchor": {
-      "traditionalCost": "$ 2,000+",
-      "traditionalLabel": "परंपरागत प्री - विज़",
-      "vs": "बनाम",
-      "sceneFlowCost": "$ 49 -149",
-      "sceneFlowLabel": "SceneFlow मासिक",
-      "saveBadge": "हर प्रोजेक्ट पर 90% से ज़्यादा की बचत करें"
+      "traditionalCost": "$2,000+",
+      "traditionalLabel": "Traditional pre-vis",
+      "vs": "vs",
+      "sceneFlowCost": "$49-149",
+      "sceneFlowLabel": "SceneFlow monthly",
+      "saveBadge": "Save 90%+ per project"
     },
     "teamCta": {
-      "title": "इन - हाउस टीम या संस्थान?",
-      "description": "कॉम, एलएंडडी और मार्केटिंग टीमों के लिए वर्कफ़्लो वॉकथ्रू बुक करें",
-      "button": "वॉकथ्रू बुक करें"
+      "title": "In-house team or institution?",
+      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
+      "button": "Book Walkthrough"
     },
     "agencyCta": {
-      "title": "एजेंसी या प्रोडक्शन शॉप?",
-      "description": "कस्टम क्रेडिट, SLA और बड़े पैमाने पर समर्पित सहायता",
-      "button": "बिक्री विभाग से संपर्क करें"
+      "title": "Agency or production shop?",
+      "description": "Custom credits, SLA, and dedicated support at scale",
+      "button": "Contact Sales"
     },
     "byok": {
-      "title": "अपनी खुद की चाबी लाएँ",
-      "badge": "प्रो और स्टूडियो प्लान",
-      "description": "पहले से ही Vertex AI या ElevenLabs के लिए API कुंजी है? SceneFlow AI के साथ उनका उपयोग करें और प्लेटफ़ॉर्म क्रेडिट पर 80% तक की बचत करें।",
-      "savingsHighlight": "प्लैटफ़ॉर्म क्रेडिट पर 80%",
+      "title": "Bring Your Own Key",
+      "badge": "Pro & Studio Plans",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
-          "title": "80% SceneFlow क्रेडिट बचत",
-          "description": "ऑर्केस्ट्रेशन और टूल्स के लिए सिर्फ़ 20% प्लैटफ़ॉर्म शुल्क का भुगतान करें"
+          "title": "80% SceneFlow Credit Savings",
+          "description": "Pay only a 20% platform fee for orchestration & tools"
         },
         {
-          "title": "कॉर्पोरेट प्लान्स का लाभ उठाएँ",
-          "description": "अपने मौजूदा Vertex AI या ElevenLabs वॉल्यूम छूट का उपयोग करें"
+          "title": "Leverage Corporate Plans",
+          "description": "Use your existing Vertex AI or ElevenLabs volume discounts"
         },
         {
-          "title": "पूर्ण नियंत्रण",
-          "description": "आपकी चाबियाँ, आपकी बिलिंग, आपका लागत प्रबंधन"
+          "title": "Full Control",
+          "description": "Your keys, your billing, your cost management"
         }
       ],
-      "supportedProviders": "समर्थित प्रदाता",
+      "supportedProviders": "Supported Providers",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "इमेजन 4 और वीईओ 3.1",
+      "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "टेक्स्ट - टू - स्पीच और वॉयस क्लोनिंग",
-      "savingsLabel": "80% की बचत",
-      "onImagesVideo": "छवियों और वीडियो पर",
-      "onVoiceover": "वॉइसओवर पर",
-      "note": "दिखाए गए क्रेडिट सेविंग्स SceneFlow प्लैटफ़ॉर्म सेविंग्स हैं। आपकी वास्तविक कुल लागत हर प्रोवाइडर के साथ आपके निजी या कॉर्पोरेट एपीआई (API) किराए पर निर्भर करती है।"
+      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
+      "savingsLabel": "80% savings",
+      "onImagesVideo": "on images & video",
+      "onVoiceover": "on voiceover",
+      "note": "Credit savings shown are SceneFlow platform savings. Your actual total costs depend on your personal or corporate API pricing with each provider."
     },
     "creditTopUps": {
-      "title": "और क्रेडिट चाहिए?",
-      "subtitle": "कभी भी टॉप अप करें। क्रेडिट की समय - सीमा कभी खत्म नहीं होती।",
+      "title": "Need More Credits?",
+      "subtitle": "Top up anytime. Credits never expire.",
       "packs": [
         {
-          "label": "शुरुआती पैक",
-          "description": "त्वरित संशोधनों के लिए बिल्कुल सही"
+          "label": "Starter Pack",
+          "description": "Perfect for quick revisions"
         },
         {
-          "label": "सीन पैक",
-          "description": "एक छोटा प्रोजेक्ट पूरा करें"
+          "label": "Scene Pack",
+          "description": "Complete a short project"
         },
         {
-          "label": "प्रोडक्शन पैक",
-          "description": "प्रमुख फ़िल्म अनुक्रम"
+          "label": "Production Pack",
+          "description": "Major film sequence"
         },
         {
-          "label": "स्टूडियो पैक",
-          "description": "पूरी उत्पादन क्षमता"
+          "label": "Studio Pack",
+          "description": "Full production capacity"
         }
       ],
-      "creditsUnit": "क्रेडिट"
+      "creditsUnit": "credits"
     },
     "calculator": {
-      "sectionTitle": "अपने प्रोजेक्ट का अनुमान लगाएँ",
-      "sectionSubtitle": "कमिट करने से पहले यह जान लें कि आप कितना भुगतान करेंगे",
-      "title": "प्रोजेक्ट बजट कैलकुलेटर",
-      "subtitle": "शुरू करने से पहले क्रेडिट का अनुमान लगाएँ",
-      "customize": "पैरामीटर कस्टमाइज़ करें",
-      "imagesLabel": "जनरेट करने के लिए फ़ोटो",
-      "videoClipsLabel": "वीडियो क्लिप",
-      "voiceoverLabel": "वॉयसओवर (मिनट)",
-      "byokTitle": "अपनी खुद की चाबी लाओ (BYOK)",
-      "byokBadge": "प्रो और स्टूडियो",
-      "byokDescription": "SceneFlow क्रेडिट पर 80% तक की बचत करने के लिए अपनी API कुंजियों का इस्तेमाल करें। आप AI प्रदाताओं को सीधे उनकी दरों पर भुगतान करते हैं।",
-      "vertexToggle": "Vertex AI (छवियां और वीडियो)",
-      "elevenLabsToggle": "ElevenLabs (वॉयसओवर)",
-      "imageGeneration": "इमेज जनरेशन",
-      "videoGeneration": "वीडियो जनरेशन",
-      "voiceover": "पार्श्व स्वर",
+      "sectionTitle": "Estimate Your Project",
+      "sectionSubtitle": "Know exactly what you'll pay before you commit",
+      "title": "Project Budget Calculator",
+      "subtitle": "Estimate credits before you start",
+      "customize": "Customize parameters",
+      "imagesLabel": "Images to generate",
+      "videoClipsLabel": "Video clips",
+      "voiceoverLabel": "Voiceover (minutes)",
+      "byokTitle": "Bring Your Own Key (BYOK)",
+      "byokBadge": "Pro & Studio",
+      "byokDescription": "Use your own API keys to save up to 80% on SceneFlow credits. You pay the AI providers directly at their rates.",
+      "vertexToggle": "Vertex AI (Images & Video)",
+      "elevenLabsToggle": "ElevenLabs (Voiceover)",
+      "imageGeneration": "Image Generation",
+      "videoGeneration": "Video Generation",
+      "voiceover": "Voiceover",
       "byokTag": "(BYOK)",
-      "totalEstimate": "कुल अनुमान",
-      "withTopUps": "टॉप - अप के साथ",
-      "creditSavings": "SceneFlow क्रेडिट बचत",
-      "savePercent": "आप SceneFlow क्रेडिट पर {percent }% की बचत करते हैं",
-      "transparency": "पूरी पारदर्शिता: काम करते समय आपको रीयल - टाइम क्रेडिट का इस्तेमाल दिखाई देगा। कोई आश्चर्य नहीं - किसी भी समय अपने प्रोजेक्ट के दायरे को एडजस्ट करें।",
-      "transparencyHighlight": "पूरी पारदर्शिता:",
-      "byokDisclaimer": "BYOK नोट: दिखाए गए क्रेडिट बचत केवल SceneFlow प्लेटफ़ॉर्म क्रेडिट कटौती को दर्शाते हैं। आपकी वास्तविक लागत आपके Vertex AI और ElevenLabs मूल्य निर्धारण योजनाओं पर निर्भर करती है। कॉर्पोरेट या हाई - वॉल्यूम API प्लान अतिरिक्त बचत की पेशकश कर सकते हैं।",
-      "byokDisclaimerHighlight": "BYOK ध्यान दें:",
+      "totalEstimate": "Total Estimate",
+      "withTopUps": "with top-ups",
+      "creditSavings": "SceneFlow credit savings",
+      "savePercent": "You save {percent}% on SceneFlow credits",
+      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
+      "transparencyHighlight": "Full transparency:",
+      "byokDisclaimer": "BYOK Note: Credit savings shown reflect SceneFlow platform credit reductions only. Your actual costs depend on your Vertex AI and ElevenLabs pricing plans. Corporate or high-volume API plans may offer additional savings.",
+      "byokDisclaimerHighlight": "BYOK Note:",
       "presets": [
         {
           "id": "commercial",
-          "name": "30 - सेकंड का कमर्शियल"
+          "name": "30-sec Commercial"
         },
         {
           "id": "short",
-          "name": "2 मिनट की लघु फिल्म"
+          "name": "2-min Short Film"
         },
         {
           "id": "episode",
-          "name": "10 मिनट का एपिसोड"
+          "name": "10-min Episode"
         },
         {
           "id": "feature",
-          "name": "90 मिनट की सुविधा"
+          "name": "90-min Feature"
         }
       ],
-      "minSuffix": "न्यूनतम"
+      "minSuffix": "min"
     },
     "tierGrid": {
-      "productionTestFlight": "उत्पादन परीक्षण उड़ान",
-      "getStarted": "प्रारंभ करें",
-      "startTestFlight": "टेस्ट फ़्लाइट शुरू करें",
-      "loading": "लोड कर रहा है...",
-      "mostPopular": "सबसे लोकप्रिय",
-      "creditsPerMonth": "क्रेडिट/महीना",
-      "storage": "स्टोरेज",
-      "perMonth": "महीना"
+      "productionTestFlight": "Production Test Flight",
+      "getStarted": "Get Started",
+      "startTestFlight": "Start Test Flight",
+      "loading": "Loading...",
+      "mostPopular": "Most Popular",
+      "creditsPerMonth": "Credits/mo",
+      "storage": "Storage",
+      "perMonth": "/month"
     },
     "trust": {
-      "cancelAnytime": "कभी भी रद्द करें",
-      "moneyBack": "30-दिन की पैसा वापस की गारंटी",
-      "creditsNeverExpire": "क्रेडिट की समय - सीमा कभी खत्म नहीं होती (Explorer PACK)"
+      "cancelAnytime": "Cancel anytime",
+      "moneyBack": "14-day money-back guarantee",
+      "creditsNeverExpire": "Credits never expire (Explorer pack)"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "इसे आज़माने के लिए एक बार खरीदारी करें",
+        "description": "One-time purchase to try it out",
         "features": [
-          "एक-बार खरीदी",
-          "750 क्रेडिट (कभी खत्म नहीं होंगे)",
-          "5 जीबी स्टोरेज (30 दिन)",
-          "प्लैटफ़ॉर्म का पूरा ऐक्सेस",
-          "MP4 निर्यात (कोई भी रिज़ॉल्यूशन)",
-          "AI वॉइसओवर (70+ भाषाएँ)"
+          "One-time purchase",
+          "750 credits (never expire)",
+          "5 GB storage (30 days)",
+          "Full platform access",
+          "MP4 export (any resolution)",
+          "AI voiceover (70+ languages)"
         ]
       },
       "subscriptions": [
         {
           "id": "starter",
-          "name": "स्टार्टर",
-          "description": "अलग - अलग क्रिएटर के लिए",
+          "name": "Starter",
+          "description": "For individual creators",
           "features": [
-            "प्लैटफ़ॉर्म का पूरा ऐक्सेस",
-            "4,500 क्रेडिट/महीना शामिल है",
-            "25 GB का ऐक्टिव स्टोरेज",
-            "MP4 निर्यात (कोई भी रिज़ॉल्यूशन)",
-            "AI वॉइसओवर (70+ भाषाएँ)",
-            "ईमेल सपोर्ट"
+            "Full platform access",
+            "4,500 credits/month included",
+            "25 GB active storage",
+            "MP4 export (any resolution)",
+            "AI voiceover (70+ languages)",
+            "Email support"
           ]
         },
         {
           "id": "pro",
-          "name": "प्रो",
-          "description": "पेशेवर क्रिएटर्स के लिए",
+          "name": "Pro",
+          "description": "For professional creators",
           "features": [
-            "स्टार्टर में सबकुछ, साथ ही:",
-            "15,000 क्रेडिट/महीना शामिल है",
-            "100 GB का ऐक्टिव स्टोरेज",
-            "VEO 3.1 क्वालिटी (4K) एक्सेस",
-            "कैरेक्टर कंसिस्टेंसी इंजन",
-            "वॉइस क्लोनिंग",
-            "BYOK (अपनी खुद की चाबी लाएं)",
-            "3 टीम सीटें",
-            "प्रायॉरिटी सपोर्ट"
+            "Everything in Starter, plus:",
+            "15,000 credits/month included",
+            "100 GB active storage",
+            "Veo 3.1 Quality (4K) access",
+            "Character Consistency Engine",
+            "Voice cloning",
+            "BYOK (Bring Your Own Key)",
+            "3 team seats",
+            "Priority support"
           ]
         },
         {
           "id": "studio",
-          "name": "स्टूडियो",
-          "description": "टीमों और एजेंसियों के लिए",
+          "name": "Studio",
+          "description": "For teams & agencies",
           "features": [
-            "Pro में सबकुछ, साथ ही:",
-            "75,000 क्रेडिट/महीना शामिल है",
-            "500 GB का ऐक्टिव स्टोरेज",
-            "VEO 3.1 4K प्रायॉरिटी कतार",
-            "असीमित चरित्र स्थिरता",
-            "व्हाइट - लेबल निर्यात",
-            "एपीआई (API) एक्सेस",
-            "टीम की 10 सीटें",
-            "डेडिकेटेड अकाउंट मैनेजर",
-            "अनुरोध पर एंटरप्राइज़ SLA उपलब्ध है"
+            "Everything in Pro, plus:",
+            "75,000 credits/month included",
+            "500 GB active storage",
+            "Veo 3.1 4K Priority Queue",
+            "Unlimited Character Consistency",
+            "White-label exports",
+            "API access",
+            "10 team seats",
+            "Dedicated account manager",
+            "Enterprise SLA available on request"
           ]
         }
       ]
     },
-    "explorerHighlight": "पूरे SceneFlow स्टूडियो का अनुभव करने का सबसे तेज़ तरीका — कॉन्सेप्ट से Screening Room तक।",
+    "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
     "trustBadges": [
-      "Google Cloud बुनियादी ढांचा",
-      "Vertex AI जनरेशन",
-      "Whop के माध्यम से सुरक्षित भुगतान",
-      "30-दिन की पैसा वापस की गारंटी"
+      "Secure payments via Whop",
+      "14-day money-back guarantee",
+      "Credits never expire (Explorer pack)",
+      "Cancel anytime"
     ]
   },
   "landingSections": {
@@ -1735,10 +1738,10 @@
     "collapseSection": "सेक्शन छिपाएँ"
   },
   "finalCta": {
-    "title": "पूरी पाइपलाइन का परीक्षण करने के लिए तैयार हैं?",
-    "subtitle": "Google द्वारा संचालित स्क्रिप्टिंग और ऑप्टिमाइज़ेशन, जनरेशन बैकएंड की आपकी पसंद, और Screening Room समीक्षा — सभी एक स्टूडियो में। सितंबर अर्ली एक्सेस कोहोर्ट अब बन रहा है — $ 9 Explorer प्लान से शुरू करें या फ़ाउंडिंग क्रिएटर एक्सेस के लिए आवेदन करें।",
-    "cta": "अपना उत्पादन शुरू करें",
-    "ctaSecondary": "संस्थापक क्रिएटर एक्सेस के लिए आवेदन करें",
+    "title": "Ready to create in Go or Director Mode?",
+    "subtitle": "Pick Go for speed or Director for control — start from the $9 Explorer plan or apply for Founding Creator access.",
+    "cta": "Start with Go Mode",
+    "ctaSecondary": "Apply for Founding Creator Access",
     "ctaSecondaryHref": "/early-access"
   },
   "footer": {
@@ -2146,5 +2149,40 @@
   },
   "keyFeatures": {
     "landingUiLanguagesLabel": "यूआई और प्रोडक्शंस 39 भाषाओं में उपलब्ध हैं"
+  },
+  "twoModes": {
+    "title": "One Platform. Two Experiences.",
+    "go": {
+      "name": "SceneFlow Go",
+      "tagline": "Concept to animatic in minutes.",
+      "points": [
+        "Full intelligence and automation.",
+        "Enter a concept or script, click Go, and take a break.",
+        "Automatically handles Blueprint, structure, references, frames, audio, and animatic assembly.",
+        "Complete animatic ready in under 10 minutes.",
+        "Light natural-language revisions available on demand."
+      ],
+      "cta": "Try Go Mode"
+    },
+    "director": {
+      "name": "SceneFlow Studio",
+      "subtitle": "Director Mode",
+      "tagline": "Every visual, emotion, line, and note under your direction.",
+      "points": [
+        "Same powerful underlying AI pipeline with complete manual authorship.",
+        "Granular step-by-step control across every scene and beat.",
+        "Fine-tune visuals, character emotion, dialogue timing, and music choices.",
+        "Complete pre-visualization and master production workflow."
+      ],
+      "cta": "Launch Studio ($9)"
+    }
+  },
+  "infrastructure": {
+    "title": "Enterprise-Grade Infrastructure & Security",
+    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   }
 }
