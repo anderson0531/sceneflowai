@@ -31,7 +31,9 @@ describe('Hero video locales', () => {
     for (const locale of HERO_VIDEO_LOCALES) {
       expect(locale.available).toBe(true)
       expect(locale.src).toBeTruthy()
-      expect(locale.poster).toBe(`/landing/hero/sceneflow-hero-${locale.id}-poster.jpg`)
+      expect(locale.poster).toBe(
+        `https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/hero/sceneflow-hero-${locale.id}-poster.jpg`
+      )
     }
   })
 
