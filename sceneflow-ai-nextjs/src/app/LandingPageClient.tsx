@@ -44,10 +44,9 @@ export default function LandingPageClient() {
         <ProductionExamplesSection />
         <KeyFeaturesSection />
         <PricingCredits />
+        <InfrastructureSection />
+        <TrustSafeguardSection />
       </LandingSectionCollapseProvider>
-
-      <InfrastructureSection />
-      <TrustSafeguardSection />
 
       <FinalCTA />
 
