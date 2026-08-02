@@ -40,11 +40,31 @@
     "keyFeatures": "Key Features"
   },
   "hero": {
-    "headline": "Click Go and take a coffee break — or step through every scene as creative director.",
-    "subheadline": "Full automation when you want intelligence and speed. Complete control when you want review and director authorship. SceneFlow delivers concept-to-master video productions in two intentional modes.",
-    "audienceMicroLine": "專為追求成效的創作者，以及希望了解運作方式的團隊而打造。",
-    "ctaSecondary": "Explore Director Mode",
+    "headline": "Envision the Story. Let SceneFlow Run the Production.",
+    "subheadline": "Quickly Turn simple concepts or full film treatments into complete multi-scene videos automatically — or step in at any stage to direct scenes using natural language.",
+    "ctaPrimaryLaunch": "Start Your Production",
+    "ctaSupportingLine": "",
+    "ctaSecondary": "Explore How It Works",
     "ctaToolStack": "See how it replaces your tool stack",
+    "chips": [
+      {
+        "label": "Flexible Inputs",
+        "detail": "Simple concepts or detailed film treatments."
+      },
+      {
+        "label": "Automated Production",
+        "detail": "Hands-free generation of scripts, animatics, and master video."
+      },
+      {
+        "label": "Natural Control",
+        "detail": "Refine shots, dialogue, and props without prompt engineering."
+      }
+    ],
+    "pipelineSteps": [
+      "Blueprint",
+      "Production",
+      "Screening Room"
+    ],
     "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
     "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
     "playWithNarration": "Play with narration",
@@ -81,8 +101,6 @@
       }
     },
     "soon": "Soon",
-    "ctaPrimaryLaunch": "Start with Go Mode",
-    "ctaSupportingLine": "",
     "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "valueProp": {

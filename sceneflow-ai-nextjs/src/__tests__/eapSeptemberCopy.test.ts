@@ -40,9 +40,9 @@ describe('EAP September 2026 copy', () => {
     }
   })
 
-  it('uses dual-mode hero CTAs and $9 in director card / pricing, not hero supporting line', () => {
-    expect(HERO_COPY.ctaPrimaryLaunch).toBe('Start with Go Mode')
-    expect(HERO_COPY.ctaSecondary).toBe('Explore Director Mode')
+  it('uses production hero CTAs and $9 in director card / pricing, not hero supporting line', () => {
+    expect(HERO_COPY.ctaPrimaryLaunch).toBe('Start Your Production')
+    expect(HERO_COPY.ctaSecondary).toBe('Explore How It Works')
     expect(HERO_COPY.ctaSupportingLine).toBe('')
     expect(FINAL_CTA_COPY.cta).toBe('Start with Go Mode')
     expect(TWO_MODES_COPY.director.cta).toContain('$9')
@@ -71,10 +71,11 @@ describe('EAP September 2026 copy', () => {
     expect(page).not.toContain('Early Access Application')
   })
 
-  it('renders hero secondary CTA for Director Mode exploration', () => {
+  it('renders hero secondary CTA for How It Works exploration', () => {
     const hero = readSource('src/app/components/HeroSection.tsx')
     expect(hero).toContain("t('ctaSecondary')")
-    expect(hero).toContain('scrollToTwoModes')
+    expect(hero).toContain('scrollToHowItWorks')
+    expect(hero).toContain("t.raw('chips')")
   })
 
   it('uses September cohort in EAP emails and qualification', () => {

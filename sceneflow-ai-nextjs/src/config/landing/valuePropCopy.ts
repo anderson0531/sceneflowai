@@ -3,15 +3,31 @@
  */
 
 export const HERO_COPY = {
-  headline:
-    'Click Go and take a coffee break — or step through every scene as creative director.',
+  headline: 'Envision the Story. Let SceneFlow Run the Production.',
   subheadline:
-    'Full automation when you want intelligence and speed. Complete control when you want review and director authorship. SceneFlow delivers concept-to-master video productions in two intentional modes.',
-  ctaPrimaryLaunch: 'Start with Go Mode',
+    'Quickly Turn simple concepts or full film treatments into complete multi-scene videos automatically — or step in at any stage to direct scenes using natural language.',
+  ctaPrimaryLaunch: 'Start Your Production',
   ctaSupportingLine: '',
-  ctaSecondary: 'Explore Director Mode',
+  ctaSecondary: 'Explore How It Works',
   ctaToolStack: 'See how it replaces your tool stack',
 } as const
+
+export const HERO_VALUE_CHIPS = [
+  {
+    label: 'Flexible Inputs',
+    detail: 'Simple concepts or detailed film treatments.',
+  },
+  {
+    label: 'Automated Production',
+    detail: 'Hands-free generation of scripts, animatics, and master video.',
+  },
+  {
+    label: 'Natural Control',
+    detail: 'Refine shots, dialogue, and props without prompt engineering.',
+  },
+] as const
+
+export const HERO_PIPELINE_STEPS = ['Blueprint', 'Production', 'Screening Room'] as const
 
 export const AUDIENCE_PATH_MODES = {
   automate: {
