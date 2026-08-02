@@ -8,7 +8,11 @@ const ROOT = join(process.cwd(), 'messages')
 
 const REQUIRED_LANDING_KEYS = [
   'hero.ctaPrimaryLaunch',
+  'hero.ctaSecondary',
   'hero.ctaSupportingLine',
+  'twoModes.title',
+  'twoModes.go.cta',
+  'twoModes.director.cta',
   'useCasesShowcase.cta',
   'pricing.title',
   'pricing.subtitle',
@@ -20,7 +24,7 @@ const REQUIRED_LANDING_KEYS = [
 ] as const
 
 const EXPLORER_PRICE_KEYS = [
-  'hero.ctaSupportingLine',
+  'twoModes.director.cta',
   'pricing.title',
   'pricing.subtitle',
   'exitIntent.startNow',
@@ -65,10 +69,10 @@ describe('landing locale copy', () => {
     for (const path of EXPLORER_PRICE_KEYS) {
       expect(hasExplorerPrice(String(getAtPath(enMessages, path)))).toBe(true)
     }
-    expect(String(enMessages.hero.ctaPrimaryLaunch)).toBe('Start Your Production')
+    expect(String(enMessages.hero.ctaPrimaryLaunch)).toBe('Start with Go Mode')
     expect(String(enMessages.useCasesShowcase.cta)).toBe('Start Your Production')
-    expect(String(enMessages.finalCta.cta)).toBe('Start Your Production')
-    expect(String(enMessages.finalCta.subtitle)).toContain('September')
+    expect(String(enMessages.finalCta.cta)).toBe('Start with Go Mode')
+    expect(String(enMessages.finalCta.subtitle)).toContain('$9')
   })
 
   it('names the footer trust section Trust & Safety in English', () => {

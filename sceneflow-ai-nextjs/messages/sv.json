@@ -26,50 +26,53 @@
     "keyFeatures": "Egenskaper"
   },
   "floatingNav": {
-    "compare": "Jämför",
-    "looksAndFormats": "Utseende och format",
-    "howItWorks": "Så fungerar det",
-    "useCases": "Användningsområden",
-    "preVisEngine": "Motor för förhandsvisualisering",
-    "platformWalkthrough": "Genomgång av plattformen",
-    "trustSafety": "Förtroende och säkerhet",
-    "platform": "Plattform",
-    "pricing": "Prissättning"
+    "compare": "Compare",
+    "looksAndFormats": "Looks & Formats",
+    "howItWorks": "How It Works",
+    "useCases": "Use Cases",
+    "preVisEngine": "Pre-Vis Engine",
+    "platformWalkthrough": "Platform Walkthrough",
+    "trustSafety": "Trust & Safety",
+    "platform": "Platform",
+    "pricing": "Pricing",
+    "productionExamples": "Examples",
+    "twoModes": "Go vs Director",
+    "keyFeatures": "Key Features"
   },
   "hero": {
-    "headline": "Du regisserar berättelsen. SceneFlow automatiserar studion.",
-    "subheadline": "Google-driven intelligens orkestrerad på Google Cloud — med valfri Google- eller Kling-generation. Kör dina idéer genom en sömlös pipeline från ritning till master MP4 utan mikroprompting.",
+    "headline": "Click Go and take a coffee break — or step through every scene as creative director.",
+    "subheadline": "Full automation when you want speed. Complete control when you want authorship. SceneFlow delivers concept-to-master animatics in two intentional modes.",
     "audienceMicroLine": "Skapat för kreatörer som vill ha resultat och team som vill se hur det fungerar.",
-    "ctaSecondary": "Titta på \"Vad är möjligt\"",
-    "ctaToolStack": "Se hur den ersätter din verktygsstack",
-    "languagePrompt": "Hör hjälten på ditt språk — samma pipeline, nya marknader",
-    "multilangHint": "Hero dubs på 7 språk — full pipeline stöder 70+ i Production Studio.",
-    "playWithNarration": "Lek med berättande",
-    "tapToHear": "Tryck för att höra",
-    "fullscreen": "Helskärm",
+    "ctaSecondary": "Explore Director Mode",
+    "ctaToolStack": "See how it replaces your tool stack",
+    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
+    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
+    "playWithNarration": "Play with narration",
+    "tapToHear": "Tap to hear",
+    "fullscreen": "Fullscreen",
     "heroVideoLanguages": {
       "en": {
-        "label": "Engelska",
-        "nativeLabel": "Engelska"
+        "label": "English",
+        "nativeLabel": "English"
       },
       "es": {
-        "label": "Spanska",
-        "nativeLabel": "Spanska"
+        "label": "Spanish",
+        "nativeLabel": "Español"
       },
       "pt": {
-        "label": "Portugisiska",
-        "nativeLabel": "Portugisiska"
+        "label": "Portuguese",
+        "nativeLabel": "Português"
       },
       "hi": {
         "label": "Hindi",
-        "nativeLabel": "‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ¶"
+        "nativeLabel": "हिन्दी"
       },
       "zh": {
-        "label": "Kinesiska",
-        "nativeLabel": "Kinesiska 中文 XXX"
+        "label": "Chinese",
+        "nativeLabel": "中文"
       },
       "ar": {
-        "label": "Arabiska",
+        "label": "Arabic",
         "nativeLabel": "العربية"
       },
       "th": {
@@ -77,10 +80,10 @@
         "nativeLabel": "ไทย"
       }
     },
-    "soon": "Snart",
-    "ctaPrimaryLaunch": "Starta din produktion",
-    "ctaSupportingLine": "Börja med $ 9 Explorer-planen. September Early Access-kohort bildas nu.",
-    "videoLanguageCount": "{count, plural, =1 {# language} andra {# languages}}"
+    "soon": "Soon",
+    "ctaPrimaryLaunch": "Start with Go Mode",
+    "ctaSupportingLine": "",
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "valueProp": {
     "pills": [
@@ -1526,208 +1529,208 @@
     "closePopup": "Stäng popup"
   },
   "pricing": {
-    "badge": "Enkel prissättning",
-    "title": "Börja med Explorer — $ 9",
-    "subtitle": "September Early Access-kohortbildning. Testa hela rörledningen med ett friktionsfritt inträde på $ 9.",
+    "badge": "Simple Pricing",
+    "title": "Start with Explorer — $9",
+    "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
     "valueAnchor": {
-      "traditionalCost": "2 000",
-      "traditionalLabel": "Traditionell pre-vis",
+      "traditionalCost": "$2,000+",
+      "traditionalLabel": "Traditional pre-vis",
       "vs": "vs",
-      "sceneFlowCost": "49-149 $",
-      "sceneFlowLabel": "SceneFlow månadsvis",
-      "saveBadge": "Spara över90% per projekt"
+      "sceneFlowCost": "$49-149",
+      "sceneFlowLabel": "SceneFlow monthly",
+      "saveBadge": "Save 90%+ per project"
     },
     "teamCta": {
-      "title": "Internt team eller institution?",
-      "description": "Boka en genomgång av arbetsflödet för kommunikations-, L&D- och marknadsföringsteam",
-      "button": "Bokgenomgång"
+      "title": "In-house team or institution?",
+      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
+      "button": "Book Walkthrough"
     },
     "agencyCta": {
-      "title": "Byrå eller produktionsbutik?",
-      "description": "Anpassade krediter, SLA och dedikerad support i stor skala",
-      "button": "Kontakta försäljningen"
+      "title": "Agency or production shop?",
+      "description": "Custom credits, SLA, and dedicated support at scale",
+      "button": "Contact Sales"
     },
     "byok": {
-      "title": "Ta med dina egna. ",
-      "badge": "Proffs- och studioabonnemang",
-      "description": "Har du redan API-nycklar för Vertex AI eller ElevenLabs? Använd dem med SceneFlow AI och spara upp till 80% på plattformskrediter.",
-      "savingsHighlight": "80% på plattformskrediter",
+      "title": "Bring Your Own Key",
+      "badge": "Pro & Studio Plans",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
-          "title": "80% SceneFlow kreditbesparingar",
-          "description": "Betala endast en plattformsavgift på 20% för orkestrering och verktyg"
+          "title": "80% SceneFlow Credit Savings",
+          "description": "Pay only a 20% platform fee for orchestration & tools"
         },
         {
-          "title": "Hävstångseffekt på företagsplaner",
-          "description": "Använd dina befintliga volymrabatter på Vertex AI eller ElevenLabs"
+          "title": "Leverage Corporate Plans",
+          "description": "Use your existing Vertex AI or ElevenLabs volume discounts"
         },
         {
-          "title": "Fullständig kontroll",
-          "description": "Dina nycklar, din fakturering, din kostnadshantering"
+          "title": "Full Control",
+          "description": "Your keys, your billing, your cost management"
         }
       ],
-      "supportedProviders": "Leverantörer som stöds",
+      "supportedProviders": "Supported Providers",
       "vertexName": "Google Vertex AI",
       "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Text-till-tal och röstkloning",
-      "savingsLabel": "80% besparingar",
-      "onImagesVideo": "på bilder och video",
-      "onVoiceover": "på voiceover",
-      "note": "Kreditbesparingar som visas är besparingar på SceneFlow-plattformen. Dina faktiska totala kostnader beror på din personliga eller företags API-prissättning hos varje leverantör."
+      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
+      "savingsLabel": "80% savings",
+      "onImagesVideo": "on images & video",
+      "onVoiceover": "on voiceover",
+      "note": "Credit savings shown are SceneFlow platform savings. Your actual total costs depend on your personal or corporate API pricing with each provider."
     },
     "creditTopUps": {
-      "title": "Behöver du fler krediter?",
-      "subtitle": "Fyll på när som helst. Krediter förfaller aldrig.",
+      "title": "Need More Credits?",
+      "subtitle": "Top up anytime. Credits never expire.",
       "packs": [
         {
-          "label": "Startpaket",
-          "description": "Perfekt för snabba revisioner"
+          "label": "Starter Pack",
+          "description": "Perfect for quick revisions"
         },
         {
-          "label": "Scenpaket",
-          "description": "Slutför ett kort projekt"
+          "label": "Scene Pack",
+          "description": "Complete a short project"
         },
         {
-          "label": "Produktionspaket",
-          "description": "Större filmsekvens"
+          "label": "Production Pack",
+          "description": "Major film sequence"
         },
         {
-          "label": "Studio-paket",
-          "description": "Full produktionskapacitet"
+          "label": "Studio Pack",
+          "description": "Full production capacity"
         }
       ],
-      "creditsUnit": "krediter"
+      "creditsUnit": "credits"
     },
     "calculator": {
-      "sectionTitle": "Uppskatta ditt projekt",
-      "sectionSubtitle": "Vet exakt vad du kommer att betala innan du förbinder dig",
-      "title": "Projektbudgetkalkylator",
-      "subtitle": "Beräkna krediter innan du börjar",
-      "customize": "Anpassa parametrar",
-      "imagesLabel": "Bilder att generera",
-      "videoClipsLabel": "Videoklipp",
-      "voiceoverLabel": "Voiceover (minuter)",
-      "byokTitle": "Ta med din egen nyckel (BYOK)",
-      "byokBadge": "Proffs och studio",
-      "byokDescription": "Använd dina egna API-nycklar för att spara upp till 80% på SceneFlow-krediter. Du betalar AI-leverantörerna direkt till deras priser.",
-      "vertexToggle": "Vertex AI (Bilder och video)",
+      "sectionTitle": "Estimate Your Project",
+      "sectionSubtitle": "Know exactly what you'll pay before you commit",
+      "title": "Project Budget Calculator",
+      "subtitle": "Estimate credits before you start",
+      "customize": "Customize parameters",
+      "imagesLabel": "Images to generate",
+      "videoClipsLabel": "Video clips",
+      "voiceoverLabel": "Voiceover (minutes)",
+      "byokTitle": "Bring Your Own Key (BYOK)",
+      "byokBadge": "Pro & Studio",
+      "byokDescription": "Use your own API keys to save up to 80% on SceneFlow credits. You pay the AI providers directly at their rates.",
+      "vertexToggle": "Vertex AI (Images & Video)",
       "elevenLabsToggle": "ElevenLabs (Voiceover)",
-      "imageGeneration": "Bildgenerering",
-      "videoGeneration": "Videogenerering",
-      "voiceover": "Berättarröst",
+      "imageGeneration": "Image Generation",
+      "videoGeneration": "Video Generation",
+      "voiceover": "Voiceover",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Total uppskattning",
-      "withTopUps": "med påfyllningar",
-      "creditSavings": "SceneFlow kreditbesparingar",
-      "savePercent": "Du sparar {percent}% på SceneFlow-krediter",
-      "transparency": "Full transparens: Du kommer att se kreditanvändning i realtid när du arbetar. Inga överraskningar - justera projektets omfattning när som helst.",
-      "transparencyHighlight": "Full öppenhet",
-      "byokDisclaimer": "BYOK Obs: Kreditbesparingar som visas återspeglar endast kreditminskningar på SceneFlow-plattformen. Dina faktiska kostnader beror på dina prisplaner Vertex AI och ElevenLabs. Företags- eller högvolym API-planer kan erbjuda ytterligare besparingar.",
-      "byokDisclaimerHighlight": "BYOK Obs:",
+      "totalEstimate": "Total Estimate",
+      "withTopUps": "with top-ups",
+      "creditSavings": "SceneFlow credit savings",
+      "savePercent": "You save {percent}% on SceneFlow credits",
+      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
+      "transparencyHighlight": "Full transparency:",
+      "byokDisclaimer": "BYOK Note: Credit savings shown reflect SceneFlow platform credit reductions only. Your actual costs depend on your Vertex AI and ElevenLabs pricing plans. Corporate or high-volume API plans may offer additional savings.",
+      "byokDisclaimerHighlight": "BYOK Note:",
       "presets": [
         {
           "id": "commercial",
-          "name": "30-sek Kommersiell"
+          "name": "30-sec Commercial"
         },
         {
           "id": "short",
-          "name": "2 min kortfilm"
+          "name": "2-min Short Film"
         },
         {
           "id": "episode",
-          "name": "10-min Avsnitt"
+          "name": "10-min Episode"
         },
         {
           "id": "feature",
-          "name": "90-min Funktion"
+          "name": "90-min Feature"
         }
       ],
       "minSuffix": "min"
     },
     "tierGrid": {
-      "productionTestFlight": "Produktionstestflygning",
-      "getStarted": "Kom igång",
-      "startTestFlight": "Starta testflygning",
-      "loading": "Laddar&#xA0;…",
-      "mostPopular": "Mest populära",
-      "creditsPerMonth": "Krediter/mån",
+      "productionTestFlight": "Production Test Flight",
+      "getStarted": "Get Started",
+      "startTestFlight": "Start Test Flight",
+      "loading": "Loading...",
+      "mostPopular": "Most Popular",
+      "creditsPerMonth": "Credits/mo",
       "storage": "Storage",
-      "perMonth": "/månad"
+      "perMonth": "/month"
     },
     "trust": {
-      "cancelAnytime": "Avbryt när som helst",
-      "moneyBack": "14 dagars pengarna tillbaka-garanti",
-      "creditsNeverExpire": "Krediter förfaller aldrig (Explorer-paket)"
+      "cancelAnytime": "Cancel anytime",
+      "moneyBack": "14-day money-back guarantee",
+      "creditsNeverExpire": "Credits never expire (Explorer pack)"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "Engångsköp för att prova",
+        "description": "One-time purchase to try it out",
         "features": [
-          "Köp en gång",
-          "750 krediter (upphör aldrig att gälla)",
-          "5 GB lagringsutrymme (30 dagar)",
-          "Full plattformsåtkomst",
-          "MP4-export (valfri upplösning)",
-          "AI voiceover (70+ språk)"
+          "One-time purchase",
+          "750 credits (never expire)",
+          "5 GB storage (30 days)",
+          "Full platform access",
+          "MP4 export (any resolution)",
+          "AI voiceover (70+ languages)"
         ]
       },
       "subscriptions": [
         {
           "id": "starter",
-          "name": "Startare",
-          "description": "För enskilda kreatörer",
+          "name": "Starter",
+          "description": "For individual creators",
           "features": [
-            "Full plattformsåtkomst",
-            "4500 krediter/månad ingår",
-            "25 GB aktivt lagringsutrymme",
-            "MP4-export (valfri upplösning)",
-            "AI voiceover (70+ språk)",
-            "Telefonsupport"
+            "Full platform access",
+            "4,500 credits/month included",
+            "25 GB active storage",
+            "MP4 export (any resolution)",
+            "AI voiceover (70+ languages)",
+            "Email support"
           ]
         },
         {
           "id": "pro",
           "name": "Pro",
-          "description": "För professionella kreatörer",
+          "description": "For professional creators",
           "features": [
-            "Allt i Starter, plus:",
-            "15 000 krediter/månad ingår",
-            "100 GB aktivt lagringsutrymme",
-            "Veo 3.1 Kvalitet (4K) åtkomst",
-            "Teckenkonsekvensmotor",
-            "Röstkloning",
-            "BYOK (Ta med din egen nyckel)",
-            "3 teamplatser",
-            "Prioriterad support"
+            "Everything in Starter, plus:",
+            "15,000 credits/month included",
+            "100 GB active storage",
+            "Veo 3.1 Quality (4K) access",
+            "Character Consistency Engine",
+            "Voice cloning",
+            "BYOK (Bring Your Own Key)",
+            "3 team seats",
+            "Priority support"
           ]
         },
         {
           "id": "studio",
           "name": "Studio",
-          "description": "För team och byråer",
+          "description": "For teams & agencies",
           "features": [
-            "Allt i Pro, Plus:",
-            "75 000 krediter/månad ingår",
-            "500 GB aktivt lagringsutrymme",
-            "Veo 3.1 4K Prioritetskö",
-            "Obegränsad teckenkonsekvens",
-            "White-label-exporter",
-            "API-åtkomst ",
-            "10 teamplatser",
-            "Dedikerad Account Manager",
-            "Enterprise SLA tillgängligt på begäran"
+            "Everything in Pro, plus:",
+            "75,000 credits/month included",
+            "500 GB active storage",
+            "Veo 3.1 4K Priority Queue",
+            "Unlimited Character Consistency",
+            "White-label exports",
+            "API access",
+            "10 team seats",
+            "Dedicated account manager",
+            "Enterprise SLA available on request"
           ]
         }
       ]
     },
-    "explorerHighlight": "Det snabbaste sättet att uppleva hela SceneFlow-studion — från koncept till Screening Room.",
+    "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
     "trustBadges": [
-      "Google Cloud infrastruktur",
-      "Vertex AI generation",
-      "Säkra betalningar via Whop",
-      "14 dagars pengarna tillbaka-garanti"
+      "Secure payments via Whop",
+      "14-day money-back guarantee",
+      "Credits never expire (Explorer pack)",
+      "Cancel anytime"
     ]
   },
   "landingSections": {
@@ -1735,10 +1738,10 @@
     "collapseSection": "Dölj avsnitt"
   },
   "finalCta": {
-    "title": "Redo att testa hela pipelinen?",
-    "subtitle": "Google-driven skriptning och optimering, ditt val av generationsgränssnitt och Screening Room-granskning — allt i en studio. September Early Access-kohorten bildas nu — börja med $ 9 Explorer-planen eller ansök om tillgång till Founding Creator.",
-    "cta": "Starta din produktion",
-    "ctaSecondary": "Ansök om tillgång till grundande kreatör",
+    "title": "Ready to create in Go or Director Mode?",
+    "subtitle": "Pick Go for speed or Director for control — start from the $9 Explorer plan or apply for Founding Creator access.",
+    "cta": "Start with Go Mode",
+    "ctaSecondary": "Apply for Founding Creator Access",
     "ctaSecondaryHref": "/early-access"
   },
   "footer": {
@@ -2146,5 +2149,40 @@
   },
   "keyFeatures": {
     "landingUiLanguagesLabel": "Användargränssnitt och produktioner finns på 39 språk"
+  },
+  "twoModes": {
+    "title": "One Platform. Two Experiences.",
+    "go": {
+      "name": "SceneFlow Go",
+      "tagline": "Concept to animatic in minutes.",
+      "points": [
+        "Full intelligence and automation.",
+        "Enter a concept or script, click Go, and take a break.",
+        "Automatically handles Blueprint, structure, references, frames, audio, and animatic assembly.",
+        "Complete animatic ready in under 10 minutes.",
+        "Light natural-language revisions available on demand."
+      ],
+      "cta": "Try Go Mode"
+    },
+    "director": {
+      "name": "SceneFlow Studio",
+      "subtitle": "Director Mode",
+      "tagline": "Every visual, emotion, line, and note under your direction.",
+      "points": [
+        "Same powerful underlying AI pipeline with complete manual authorship.",
+        "Granular step-by-step control across every scene and beat.",
+        "Fine-tune visuals, character emotion, dialogue timing, and music choices.",
+        "Complete pre-visualization and master production workflow."
+      ],
+      "cta": "Launch Studio ($9)"
+    }
+  },
+  "infrastructure": {
+    "title": "Enterprise-Grade Infrastructure & Security",
+    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   }
 }

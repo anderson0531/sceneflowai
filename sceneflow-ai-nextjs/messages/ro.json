@@ -26,43 +26,46 @@
     "keyFeatures": "Caracteristici"
   },
   "floatingNav": {
-    "compare": "Compară",
-    "looksAndFormats": "Aspect și formate",
-    "howItWorks": "Cum funcționează",
-    "useCases": "Cazuri de utilizare",
-    "preVisEngine": "Motor de pre-vizualizare",
-    "platformWalkthrough": "Prezentare generală a platformei",
-    "trustSafety": "Încredere și siguranță",
-    "platform": "Platformă",
-    "pricing": "Prețuri"
+    "compare": "Compare",
+    "looksAndFormats": "Looks & Formats",
+    "howItWorks": "How It Works",
+    "useCases": "Use Cases",
+    "preVisEngine": "Pre-Vis Engine",
+    "platformWalkthrough": "Platform Walkthrough",
+    "trustSafety": "Trust & Safety",
+    "platform": "Platform",
+    "pricing": "Pricing",
+    "productionExamples": "Examples",
+    "twoModes": "Go vs Director",
+    "keyFeatures": "Key Features"
   },
   "hero": {
-    "headline": "Tu conduci povestea. SceneFlow automatizează studioul.",
-    "subheadline": "Inteligența bazată pe Google orchestrată pe Google Cloud — cu generația opțională Google sau Kling. Rulați ideile printr-o conductă fără sudură, de la schiță la MP4 master, fără a face micro-prompting.",
+    "headline": "Click Go and take a coffee break — or step through every scene as creative director.",
+    "subheadline": "Full automation when you want speed. Complete control when you want authorship. SceneFlow delivers concept-to-master animatics in two intentional modes.",
     "audienceMicroLine": "Creat pentru creatorii care doresc rezultate și pentru echipele care vor să vadă cum funcționează.",
-    "ctaSecondary": "Urmăriți „Ce este posibil”",
-    "ctaToolStack": "Vedeți cum vă înlocuiește stiva de scule",
-    "languagePrompt": "Ascultați eroul în limba dvs. — aceeași conductă, piețe noi",
+    "ctaSecondary": "Explore Director Mode",
+    "ctaToolStack": "See how it replaces your tool stack",
+    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
     "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
-    "playWithNarration": "Joacă-te cu narațiunea",
-    "tapToHear": "Apasă pentru a afla",
-    "fullscreen": "Ecran complet",
+    "playWithNarration": "Play with narration",
+    "tapToHear": "Tap to hear",
+    "fullscreen": "Fullscreen",
     "heroVideoLanguages": {
       "en": {
-        "label": "Engleză",
-        "nativeLabel": "Engleză"
+        "label": "English",
+        "nativeLabel": "English"
       },
       "es": {
-        "label": "Spaniolă",
+        "label": "Spanish",
         "nativeLabel": "Español"
       },
       "pt": {
-        "label": "Portugheză",
-        "nativeLabel": "Portugheză"
+        "label": "Portuguese",
+        "nativeLabel": "Português"
       },
       "hi": {
         "label": "Hindi",
-        "nativeLabel": "<g id=\"267\">'</g><g id=\"268\">हिन्दी</g><g id=\"269\">',</g>"
+        "nativeLabel": "हिन्दी"
       },
       "zh": {
         "label": "Chinese",
@@ -73,14 +76,14 @@
         "nativeLabel": "العربية"
       },
       "th": {
-        "label": "Tailandeză",
+        "label": "Thai",
         "nativeLabel": "ไทย"
       }
     },
-    "soon": "În curând",
-    "ctaPrimaryLaunch": "Începeţi producţia",
-    "ctaSupportingLine": "Începeți cu planul $ 9 Explorer. Se formează acum cohorta Acces anticipat septembrie.",
-    "videoLanguageCount": "{count, plural, =1 {# language} alte {# languages}}"
+    "soon": "Soon",
+    "ctaPrimaryLaunch": "Start with Go Mode",
+    "ctaSupportingLine": "",
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "valueProp": {
     "pills": [
@@ -1526,208 +1529,208 @@
     "closePopup": "Închideți fereastra pop-up"
   },
   "pricing": {
-    "badge": "Metodă simplă de stabilire a prețului",
-    "title": "Începeți cu Explorer — $ 9",
-    "subtitle": "Se formează o cohortă de acces anticipat în septembrie. Testați întreaga conductă cu o intrare de 9 $ fără frecare.",
+    "badge": "Simple Pricing",
+    "title": "Start with Explorer — $9",
+    "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
     "valueAnchor": {
-      "traditionalCost": "2 000",
-      "traditionalLabel": "Previzualizare tradițională",
-      "vs": "contra",
-      "sceneFlowCost": "$ 49-149",
-      "sceneFlowLabel": "SceneFlow lunar",
-      "saveBadge": "Economisiți peste 90% pe proiect"
+      "traditionalCost": "$2,000+",
+      "traditionalLabel": "Traditional pre-vis",
+      "vs": "vs",
+      "sceneFlowCost": "$49-149",
+      "sceneFlowLabel": "SceneFlow monthly",
+      "saveBadge": "Save 90%+ per project"
     },
     "teamCta": {
-      "title": "Echipa sau instituția internă?",
-      "description": "Rezervați o prezentare a fluxului de lucru pentru echipele de comunicații, L&D și marketing",
-      "button": "Rezervă o prezentare"
+      "title": "In-house team or institution?",
+      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
+      "button": "Book Walkthrough"
     },
     "agencyCta": {
-      "title": "Agenție sau atelier de producție?",
-      "description": "Credite personalizate, SLA și asistență dedicată la scară",
-      "button": "Contactați departamentul de vânzări"
+      "title": "Agency or production shop?",
+      "description": "Custom credits, SLA, and dedicated support at scale",
+      "button": "Contact Sales"
     },
     "byok": {
-      "title": "Aduceți-le pe ale voastre. ",
-      "badge": "Planuri Pro și Studio",
-      "description": "Aveți deja chei API pentru Vertex AI sau ElevenLabs? Utilizați-le cu SceneFlow AI și economisiți până la 80% la creditele platformei.",
-      "savingsHighlight": "80% la creditele platformei",
+      "title": "Bring Your Own Key",
+      "badge": "Pro & Studio Plans",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
-          "title": "80% economii de credit SceneFlow",
-          "description": "Plătiți doar o taxă de platformă de 20% pentru orchestrare și instrumente"
+          "title": "80% SceneFlow Credit Savings",
+          "description": "Pay only a 20% platform fee for orchestration & tools"
         },
         {
-          "title": "Profitați de planurile corporative",
-          "description": "Utilizați reducerile de volum existente Vertex AI sau ElevenLabs"
+          "title": "Leverage Corporate Plans",
+          "description": "Use your existing Vertex AI or ElevenLabs volume discounts"
         },
         {
-          "title": "Control total",
-          "description": "Cheile dvs., facturarea dvs., gestionarea costurilor"
+          "title": "Full Control",
+          "description": "Your keys, your billing, your cost management"
         }
       ],
-      "supportedProviders": "Furnizori acceptați",
+      "supportedProviders": "Supported Providers",
       "vertexName": "Google Vertex AI",
       "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Text-la-vorbire și clonare vocală",
-      "savingsLabel": "Economii de 80%",
-      "onImagesVideo": "pe imagini și video",
-      "onVoiceover": "pe voiceover",
-      "note": "Economiile de credit afișate sunt economiile platformei SceneFlow. Costurile totale reale depind de prețurile API personale sau corporative cu fiecare furnizor."
+      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
+      "savingsLabel": "80% savings",
+      "onImagesVideo": "on images & video",
+      "onVoiceover": "on voiceover",
+      "note": "Credit savings shown are SceneFlow platform savings. Your actual total costs depend on your personal or corporate API pricing with each provider."
     },
     "creditTopUps": {
-      "title": "Ai nevoie de mai multe credite?",
-      "subtitle": "Încarcă oricând. Creditele nu expiră niciodată.",
+      "title": "Need More Credits?",
+      "subtitle": "Top up anytime. Credits never expire.",
       "packs": [
         {
-          "label": "Pachet de pornire",
-          "description": "Perfect pentru revizii rapide"
+          "label": "Starter Pack",
+          "description": "Perfect for quick revisions"
         },
         {
-          "label": "Pachet scenă",
-          "description": "Finalizează un proiect scurt"
+          "label": "Scene Pack",
+          "description": "Complete a short project"
         },
         {
-          "label": "Pachet de producție",
-          "description": "Secvență majoră de film"
+          "label": "Production Pack",
+          "description": "Major film sequence"
         },
         {
-          "label": "Pachet Studio",
-          "description": "Capacitate de producţie"
+          "label": "Studio Pack",
+          "description": "Full production capacity"
         }
       ],
-      "creditsUnit": "credite"
+      "creditsUnit": "credits"
     },
     "calculator": {
-      "sectionTitle": "Estimați-vă proiectul",
-      "sectionSubtitle": "Știți exact ce veți plăti înainte de a vă angaja",
-      "title": "Calculator buget proiect",
-      "subtitle": "Estimați creditele înainte de a începe",
-      "customize": "Personalizați parametrii",
-      "imagesLabel": "Imagini de generat",
-      "videoClipsLabel": "videoclipuri",
-      "voiceoverLabel": "Voiceover (minute)",
-      "byokTitle": "Adu-ți propria cheie (BYOK)",
+      "sectionTitle": "Estimate Your Project",
+      "sectionSubtitle": "Know exactly what you'll pay before you commit",
+      "title": "Project Budget Calculator",
+      "subtitle": "Estimate credits before you start",
+      "customize": "Customize parameters",
+      "imagesLabel": "Images to generate",
+      "videoClipsLabel": "Video clips",
+      "voiceoverLabel": "Voiceover (minutes)",
+      "byokTitle": "Bring Your Own Key (BYOK)",
       "byokBadge": "Pro & Studio",
-      "byokDescription": "Utilizați propriile chei API pentru a economisi până la 80% din creditele SceneFlow. Plătești furnizorii de IA direct la tarifele lor.",
-      "vertexToggle": "Vertex AI (Imagini și video)",
+      "byokDescription": "Use your own API keys to save up to 80% on SceneFlow credits. You pay the AI providers directly at their rates.",
+      "vertexToggle": "Vertex AI (Images & Video)",
       "elevenLabsToggle": "ElevenLabs (Voiceover)",
-      "imageGeneration": "Generarea de imagini AI",
-      "videoGeneration": "Generare video",
+      "imageGeneration": "Image Generation",
+      "videoGeneration": "Video Generation",
       "voiceover": "Voiceover",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Estimare totală",
-      "withTopUps": "cu reîncărcări",
-      "creditSavings": "Economii DE credit SceneFlow",
-      "savePercent": "Economisești {percent}% la creditele SceneFlow",
-      "transparency": "Transparență totală: veți vedea utilizarea creditului în timp real pe măsură ce lucrați. Fără surprize - ajustați oricând domeniul de aplicare al proiectului.",
-      "transparencyHighlight": "Transparență deplină",
-      "byokDisclaimer": "BYOK Notă: Economiile de credit afișate reflectă numai reducerile de credit ale platformei SceneFlow. Costurile reale depind de planurile dvs. de tarifare Vertex AI și ElevenLabs. Planurile API corporative sau de mare volum pot oferi economii suplimentare.",
-      "byokDisclaimerHighlight": "BYOK Notă:",
+      "totalEstimate": "Total Estimate",
+      "withTopUps": "with top-ups",
+      "creditSavings": "SceneFlow credit savings",
+      "savePercent": "You save {percent}% on SceneFlow credits",
+      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
+      "transparencyHighlight": "Full transparency:",
+      "byokDisclaimer": "BYOK Note: Credit savings shown reflect SceneFlow platform credit reductions only. Your actual costs depend on your Vertex AI and ElevenLabs pricing plans. Corporate or high-volume API plans may offer additional savings.",
+      "byokDisclaimerHighlight": "BYOK Note:",
       "presets": [
         {
           "id": "commercial",
-          "name": "30-sec Comercial"
+          "name": "30-sec Commercial"
         },
         {
           "id": "short",
-          "name": "Film de scurt metraj de 2 minute"
+          "name": "2-min Short Film"
         },
         {
           "id": "episode",
-          "name": "Episod de 10 minute"
+          "name": "10-min Episode"
         },
         {
           "id": "feature",
-          "name": "Caracteristică de 90 de minute"
+          "name": "90-min Feature"
         }
       ],
       "minSuffix": "min"
     },
     "tierGrid": {
-      "productionTestFlight": "Zbor de testare a producției",
-      "getStarted": "Să începem!",
-      "startTestFlight": "Începeți zborul de testare",
-      "loading": "Se încarcă...",
-      "mostPopular": "Cele mai Apreciate",
-      "creditsPerMonth": "Credite/lună",
-      "storage": "Depozitare",
-      "perMonth": "Lună"
+      "productionTestFlight": "Production Test Flight",
+      "getStarted": "Get Started",
+      "startTestFlight": "Start Test Flight",
+      "loading": "Loading...",
+      "mostPopular": "Most Popular",
+      "creditsPerMonth": "Credits/mo",
+      "storage": "Storage",
+      "perMonth": "/month"
     },
     "trust": {
-      "cancelAnytime": "Anulează oricând",
-      "moneyBack": "Garanția de returnare a banilor de 90 de zile",
-      "creditsNeverExpire": "Creditele nu expiră niciodată (pachetul Explorer)"
+      "cancelAnytime": "Cancel anytime",
+      "moneyBack": "14-day money-back guarantee",
+      "creditsNeverExpire": "Credits never expire (Explorer pack)"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "Achiziție unică pentru a o încerca",
+        "description": "One-time purchase to try it out",
         "features": [
-          "Achiziție cu o singură cumpărare",
-          "750 de credite (nu expiră niciodată)",
-          "Spațiu de stocare de 5 GB (30 de zile)",
-          "Acces platformă",
-          "Export MP4 (orice rezoluție)",
-          "Voiceover AI (peste 70 de limbi)"
+          "One-time purchase",
+          "750 credits (never expire)",
+          "5 GB storage (30 days)",
+          "Full platform access",
+          "MP4 export (any resolution)",
+          "AI voiceover (70+ languages)"
         ]
       },
       "subscriptions": [
         {
           "id": "starter",
-          "name": "Start",
-          "description": "Pentru creatori individuali",
+          "name": "Starter",
+          "description": "For individual creators",
           "features": [
-            "Acces platformă",
-            "4.500 credite/lună incluse",
-            "Spațiu de stocare activ de 25 GB",
-            "Export MP4 (orice rezoluție)",
-            "Voiceover AI (peste 70 de limbi)",
-            "Asistență prin e-mail"
+            "Full platform access",
+            "4,500 credits/month included",
+            "25 GB active storage",
+            "MP4 export (any resolution)",
+            "AI voiceover (70+ languages)",
+            "Email support"
           ]
         },
         {
           "id": "pro",
           "name": "Pro",
-          "description": "Pentru creatori profesioniști",
+          "description": "For professional creators",
           "features": [
-            "Totul în Starter, plus:",
-            "15.000 credite/lună incluse",
-            "Spațiu de stocare activ de 100 GB",
-            "Acces la calitate (4K) Veo 3.1",
-            "Motor de consecvență a caracterelor",
-            "Clonarea vocii",
-            "BYOK (Adu-ți propria cheie)",
-            "3 locuri în echipă",
-            "Asistență prioritară."
+            "Everything in Starter, plus:",
+            "15,000 credits/month included",
+            "100 GB active storage",
+            "Veo 3.1 Quality (4K) access",
+            "Character Consistency Engine",
+            "Voice cloning",
+            "BYOK (Bring Your Own Key)",
+            "3 team seats",
+            "Priority support"
           ]
         },
         {
           "id": "studio",
           "name": "Studio",
-          "description": "Pentru echipe și agenții",
+          "description": "For teams & agencies",
           "features": [
-            "Totul în Pro, plus:",
-            "75.000 credite/lună incluse",
-            "Spațiu de stocare activ de 500 GB",
-            "Coadă prioritară Veo 3.1 4K",
-            "Consistență nelimitată a caracterelor",
-            "Exporturi cu etichetă albă",
-            "Acces API ",
-            "10 locuri în echipă",
-            "Manager de cont dedicat",
-            "SLA Enterprise disponibil la cerere"
+            "Everything in Pro, plus:",
+            "75,000 credits/month included",
+            "500 GB active storage",
+            "Veo 3.1 4K Priority Queue",
+            "Unlimited Character Consistency",
+            "White-label exports",
+            "API access",
+            "10 team seats",
+            "Dedicated account manager",
+            "Enterprise SLA available on request"
           ]
         }
       ]
     },
-    "explorerHighlight": "Cel mai rapid mod de a experimenta studioul complet SceneFlow — de la concept la Screening Room.",
+    "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
     "trustBadges": [
-      "Infrastructura Google Cloud",
-      "Generare Vertex AI",
-      "Plăți securizate prin Whop",
-      "Garanția de returnare a banilor de 90 de zile"
+      "Secure payments via Whop",
+      "14-day money-back guarantee",
+      "Credits never expire (Explorer pack)",
+      "Cancel anytime"
     ]
   },
   "landingSections": {
@@ -1735,10 +1738,10 @@
     "collapseSection": "Ascunde secțiunea"
   },
   "finalCta": {
-    "title": "Sunteți gata să testați întreaga conductă?",
-    "subtitle": "Scripting și optimizare pe Google, platforma de generare aleasă de tine și recenzia Screening Room — toate într-un singur studio. Se formează acum cohorta Acces anticipat în septembrie — începeți cu planul Explorer în valoare de $ 9 sau solicitați accesul Creatorului Fondator.",
-    "cta": "Începeţi producţia",
-    "ctaSecondary": "Solicită accesul creatorului fondator",
+    "title": "Ready to create in Go or Director Mode?",
+    "subtitle": "Pick Go for speed or Director for control — start from the $9 Explorer plan or apply for Founding Creator access.",
+    "cta": "Start with Go Mode",
+    "ctaSecondary": "Apply for Founding Creator Access",
     "ctaSecondaryHref": "/early-access"
   },
   "footer": {
@@ -2146,5 +2149,40 @@
   },
   "keyFeatures": {
     "landingUiLanguagesLabel": "UI și producții disponibile în 39 de limbi"
+  },
+  "twoModes": {
+    "title": "One Platform. Two Experiences.",
+    "go": {
+      "name": "SceneFlow Go",
+      "tagline": "Concept to animatic in minutes.",
+      "points": [
+        "Full intelligence and automation.",
+        "Enter a concept or script, click Go, and take a break.",
+        "Automatically handles Blueprint, structure, references, frames, audio, and animatic assembly.",
+        "Complete animatic ready in under 10 minutes.",
+        "Light natural-language revisions available on demand."
+      ],
+      "cta": "Try Go Mode"
+    },
+    "director": {
+      "name": "SceneFlow Studio",
+      "subtitle": "Director Mode",
+      "tagline": "Every visual, emotion, line, and note under your direction.",
+      "points": [
+        "Same powerful underlying AI pipeline with complete manual authorship.",
+        "Granular step-by-step control across every scene and beat.",
+        "Fine-tune visuals, character emotion, dialogue timing, and music choices.",
+        "Complete pre-visualization and master production workflow."
+      ],
+      "cta": "Launch Studio ($9)"
+    }
+  },
+  "infrastructure": {
+    "title": "Enterprise-Grade Infrastructure & Security",
+    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   }
 }

@@ -26,61 +26,64 @@
     "keyFeatures": "ویژگی‌ها"
   },
   "floatingNav": {
-    "compare": "مقایسه کنید",
-    "looksAndFormats": "ظاهر و قالب‌ها",
-    "howItWorks": "نحوه عملکرد",
-    "useCases": "موارد استفاده",
-    "preVisEngine": "موتور پیش‌تجسم‌سازی",
-    "platformWalkthrough": "راهنمای گام‌به‌گام پلتفرم",
-    "trustSafety": "اعتماد و ایمنی",
-    "platform": "پلتفرم",
-    "pricing": "قیمت‌گذاری"
+    "compare": "Compare",
+    "looksAndFormats": "Looks & Formats",
+    "howItWorks": "How It Works",
+    "useCases": "Use Cases",
+    "preVisEngine": "Pre-Vis Engine",
+    "platformWalkthrough": "Platform Walkthrough",
+    "trustSafety": "Trust & Safety",
+    "platform": "Platform",
+    "pricing": "Pricing",
+    "productionExamples": "Examples",
+    "twoModes": "Go vs Director",
+    "keyFeatures": "Key Features"
   },
   "hero": {
-    "headline": "شما داستان را کارگردانی می‌کنید. SceneFlow استودیو را خودکار می‌کند.",
-    "subheadline": "هوش مبتنی بر گوگل که در Google Cloud هماهنگ شده است - با امکان تولید اختیاری گوگل یا کلینگ. ایده‌های خود را از طریق یک خط لوله یکپارچه از طرح اولیه تا MP4 اصلی بدون نیاز به ریزراهنمایی اجرا کنید.",
+    "headline": "Click Go and take a coffee break — or step through every scene as creative director.",
+    "subheadline": "Full automation when you want speed. Complete control when you want authorship. SceneFlow delivers concept-to-master animatics in two intentional modes.",
     "audienceMicroLine": "ساخته‌شده برای تولیدکنندگانی که خواهان نتیجه هستند و تیم‌هایی که می‌خواهند نحوه عملکرد آن را ببینند.",
-    "ctaSecondary": "«آنچه ممکن است» را تماشا کنید",
-    "ctaToolStack": "ببینید چطور جایگزین دسته ابزار شما می‌شود",
-    "languagePrompt": "قهرمان را از زبان خودتان بشنوید - همان خط تولید، بازارهای جدید",
-    "multilangHint": "دوبله‌های قهرمانانه به ۷ زبان - پشتیبانی کامل از بیش از ۷۰ زبان در Production Studio.",
-    "playWithNarration": "بازی با روایت",
-    "tapToHear": "برای شنیدن لمس کنید",
-    "fullscreen": "فول اسکرین",
+    "ctaSecondary": "Explore Director Mode",
+    "ctaToolStack": "See how it replaces your tool stack",
+    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
+    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
+    "playWithNarration": "Play with narration",
+    "tapToHear": "Tap to hear",
+    "fullscreen": "Fullscreen",
     "heroVideoLanguages": {
       "en": {
-        "label": "انگلیسی",
-        "nativeLabel": "انگلیسی"
+        "label": "English",
+        "nativeLabel": "English"
       },
       "es": {
-        "label": "اسپانیایی ",
-        "nativeLabel": "اسپانیایی"
+        "label": "Spanish",
+        "nativeLabel": "Español"
       },
       "pt": {
-        "label": "پرتغالی",
-        "nativeLabel": "پرتغالی"
+        "label": "Portuguese",
+        "nativeLabel": "Português"
       },
       "hi": {
-        "label": "هند",
+        "label": "Hindi",
         "nativeLabel": "हिन्दी"
       },
       "zh": {
-        "label": "چینی ",
+        "label": "Chinese",
         "nativeLabel": "中文"
       },
       "ar": {
-        "label": "عربی",
-        "nativeLabel": "<g id=\"1\"> عربي </g> "
+        "label": "Arabic",
+        "nativeLabel": "العربية"
       },
       "th": {
-        "label": "تایلند",
-        "nativeLabel": "<g id=\"1\"><g id=\"2\">ไทย</g></g>"
+        "label": "Thai",
+        "nativeLabel": "ไทย"
       }
     },
-    "soon": "به زودی",
-    "ctaPrimaryLaunch": "تولید خود را شروع کنید",
-    "ctaSupportingLine": "با طرح ۹ دلاری Explorer شروع کنید. گروه دسترسی زودهنگام ماه سپتامبر اکنون در حال شکل‌گیری است.",
-    "videoLanguageCount": "{تعداد، جمع، =1 {# زبان} سایر {# زبان}}"
+    "soon": "Soon",
+    "ctaPrimaryLaunch": "Start with Go Mode",
+    "ctaSupportingLine": "",
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "valueProp": {
     "pills": [
@@ -1526,208 +1529,208 @@
     "closePopup": "بستن پاپ آپ"
   },
   "pricing": {
-    "badge": "قیمت گذاری ساده",
-    "title": "با Explorer شروع کنید — 9 دلار",
-    "subtitle": "تشکیل گروه دسترسی زودهنگام در ماه سپتامبر. با یک ورودی ۹ دلاری بدون مشکل، کل خط لوله را آزمایش کنید.",
+    "badge": "Simple Pricing",
+    "title": "Start with Explorer — $9",
+    "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
     "valueAnchor": {
-      "traditionalCost": "2000",
-      "traditionalLabel": "پیش بازدید سنتی",
-      "vs": "مقابل",
-      "sceneFlowCost": "۴۹-۱۴۹ دلار",
-      "sceneFlowLabel": "ماهانه SceneFlow",
-      "saveBadge": "بیش از ۹۰٪ در هر پروژه صرفه‌جویی کنید"
+      "traditionalCost": "$2,000+",
+      "traditionalLabel": "Traditional pre-vis",
+      "vs": "vs",
+      "sceneFlowCost": "$49-149",
+      "sceneFlowLabel": "SceneFlow monthly",
+      "saveBadge": "Save 90%+ per project"
     },
     "teamCta": {
-      "title": "تیم یا موسسه داخلی؟",
-      "description": "یک راهنمای گردش کار برای تیم‌های ارتباطات، آموزش و توسعه و بازاریابی رزرو کنید",
-      "button": "راهنمای کتاب"
+      "title": "In-house team or institution?",
+      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
+      "button": "Book Walkthrough"
     },
     "agencyCta": {
-      "title": "آژانس یا کارگاه تولیدی؟",
-      "description": "اعتبارات سفارشی، SLA و پشتیبانی اختصاصی در مقیاس بزرگ",
-      "button": "با فروش تماس بگیرید"
+      "title": "Agency or production shop?",
+      "description": "Custom credits, SLA, and dedicated support at scale",
+      "button": "Contact Sales"
     },
     "byok": {
-      "title": "لوازم خودتون رو همراه داشته باشید. ",
-      "badge": "پلن‌های حرفه‌ای و استودیویی",
-      "description": "از قبل کلیدهای API برای Vertex AI یا ElevenLabs دارید؟ از آنها به همراه SceneFlow AI استفاده کنید و تا ۸۰٪ در اعتبار پلتفرم صرفه‌جویی کنید.",
-      "savingsHighlight": "۸۰٪ اعتبار پلتفرم",
+      "title": "Bring Your Own Key",
+      "badge": "Pro & Studio Plans",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
-          "title": "۸۰٪ صرفه‌جویی در اعتبار SceneFlow",
-          "description": "فقط 20٪ هزینه پلتفرم را برای تنظیم و ابزارها پرداخت کنید"
+          "title": "80% SceneFlow Credit Savings",
+          "description": "Pay only a 20% platform fee for orchestration & tools"
         },
         {
-          "title": "طرح‌های شرکتی اهرمی",
-          "description": "از تخفیف‌های حجمی Vertex AI یا ElevenLabs موجود خود استفاده کنید"
+          "title": "Leverage Corporate Plans",
+          "description": "Use your existing Vertex AI or ElevenLabs volume discounts"
         },
         {
-          "title": "کنترل کامل",
-          "description": "کلیدهای شما، صورتحساب شما، مدیریت هزینه‌های شما"
+          "title": "Full Control",
+          "description": "Your keys, your billing, your cost management"
         }
       ],
-      "supportedProviders": "ارائه دهندگان پشتیبانی شده",
-      "vertexName": "گوگل Vertex AI",
-      "vertexDetail": "ایمیجن ۴ و وئو ۳.۱",
-      "elevenLabsName": "اسفایِلِوِن‌لَبسترم",
-      "elevenLabsDetail": "تبدیل متن به گفتار و شبیه‌سازی صدا",
-      "savingsLabel": "۸۰٪ صرفه‌جویی",
-      "onImagesVideo": "روی تصاویر و ویدیوها",
-      "onVoiceover": "در صداگذاری",
-      "note": "صرفه‌جویی‌های اعتباری نشان داده شده، صرفه‌جویی‌های پلتفرم SceneFlow هستند. کل هزینه‌های واقعی شما به قیمت‌گذاری API شخصی یا شرکتی شما با هر ارائه‌دهنده بستگی دارد."
+      "supportedProviders": "Supported Providers",
+      "vertexName": "Google Vertex AI",
+      "vertexDetail": "Imagen 4 & Veo 3.1",
+      "elevenLabsName": "ElevenLabs",
+      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
+      "savingsLabel": "80% savings",
+      "onImagesVideo": "on images & video",
+      "onVoiceover": "on voiceover",
+      "note": "Credit savings shown are SceneFlow platform savings. Your actual total costs depend on your personal or corporate API pricing with each provider."
     },
     "creditTopUps": {
-      "title": "به اعتبار بیشتری نیاز دارید؟",
-      "subtitle": "هر زمان که بخواهید شارژ کنید. اعتبار هرگز منقضی نمی‌شود.",
+      "title": "Need More Credits?",
+      "subtitle": "Top up anytime. Credits never expire.",
       "packs": [
         {
-          "label": "استارت پک",
-          "description": "مناسب برای مرور سریع"
+          "label": "Starter Pack",
+          "description": "Perfect for quick revisions"
         },
         {
-          "label": "بسته صحنه",
-          "description": "تکمیل یک پروژه کوتاه"
+          "label": "Scene Pack",
+          "description": "Complete a short project"
         },
         {
-          "label": "بسته تولیدی",
-          "description": "سکانس اصلی فیلم"
+          "label": "Production Pack",
+          "description": "Major film sequence"
         },
         {
-          "label": "استودیو پک",
-          "description": "ظلرفیت تولید"
+          "label": "Studio Pack",
+          "description": "Full production capacity"
         }
       ],
-      "creditsUnit": "اعتبار"
+      "creditsUnit": "credits"
     },
     "calculator": {
-      "sectionTitle": "پروژه خود را تخمین بزنید",
-      "sectionSubtitle": "قبل از انجام تعهد، دقیقاً بدانید که چه مبلغی را پرداخت خواهید کرد",
-      "title": "ماشین حساب بودجه پروژه",
-      "subtitle": "قبل از شروع، اعتبار را تخمین بزنید",
-      "customize": "سفارشی‌سازی پارامترها",
-      "imagesLabel": "تصاویر برای تولید",
-      "videoClipsLabel": "ویدئو ها",
-      "voiceoverLabel": "صداگذاری (دقیقه)",
-      "byokTitle": "کلید خودتان را بیاورید (BYOK)",
-      "byokBadge": "حرفه‌ای و استودیویی",
-      "byokDescription": "از کلیدهای API خودتان استفاده کنید تا تا ۸۰٪ در اعتبار SceneFlow صرفه‌جویی کنید. شما مستقیماً به ارائه‌دهندگان هوش مصنوعی، نرخ‌های آنها را پرداخت می‌کنید.",
-      "vertexToggle": "Vertex AI (تصاویر و ویدیو)",
-      "elevenLabsToggle": "ElevenLabs (صداپیشه)",
-      "imageGeneration": "تولید تصویر",
-      "videoGeneration": "تولید ویدئو",
-      "voiceover": "صداگذاری",
-      "byokTag": "(سفایبیوکترم)",
-      "totalEstimate": "برآورد کل",
-      "withTopUps": "با شارژ مجدد",
-      "creditSavings": "صرفه‌جویی در اعتبار SceneFlow",
-      "savePercent": "شما {درصد}٪ در اعتبار SceneFlow صرفه‌جویی می‌کنید",
-      "transparency": "شفافیت کامل: شما می‌توانید میزان استفاده از اعتبار را به صورت آنی در حین کار مشاهده کنید. جای تعجب نیست - می‌توانید هر زمان که خواستید، محدوده پروژه خود را تنظیم کنید.",
-      "transparencyHighlight": "شفافیت کامل:",
-      "byokDisclaimer": "توجه: صرفه‌جویی‌های اعتباری نشان داده شده فقط نشان‌دهنده کاهش اعتبار پلتفرم SceneFlow است. هزینه‌های واقعی شما به طرح‌های قیمت‌گذاری Vertex AI و ElevenLabs شما بستگی دارد. طرح‌های API شرکتی یا با حجم بالا ممکن است صرفه‌جویی‌های بیشتری ارائه دهند.",
-      "byokDisclaimerHighlight": "نکته BYOK:",
+      "sectionTitle": "Estimate Your Project",
+      "sectionSubtitle": "Know exactly what you'll pay before you commit",
+      "title": "Project Budget Calculator",
+      "subtitle": "Estimate credits before you start",
+      "customize": "Customize parameters",
+      "imagesLabel": "Images to generate",
+      "videoClipsLabel": "Video clips",
+      "voiceoverLabel": "Voiceover (minutes)",
+      "byokTitle": "Bring Your Own Key (BYOK)",
+      "byokBadge": "Pro & Studio",
+      "byokDescription": "Use your own API keys to save up to 80% on SceneFlow credits. You pay the AI providers directly at their rates.",
+      "vertexToggle": "Vertex AI (Images & Video)",
+      "elevenLabsToggle": "ElevenLabs (Voiceover)",
+      "imageGeneration": "Image Generation",
+      "videoGeneration": "Video Generation",
+      "voiceover": "Voiceover",
+      "byokTag": "(BYOK)",
+      "totalEstimate": "Total Estimate",
+      "withTopUps": "with top-ups",
+      "creditSavings": "SceneFlow credit savings",
+      "savePercent": "You save {percent}% on SceneFlow credits",
+      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
+      "transparencyHighlight": "Full transparency:",
+      "byokDisclaimer": "BYOK Note: Credit savings shown reflect SceneFlow platform credit reductions only. Your actual costs depend on your Vertex AI and ElevenLabs pricing plans. Corporate or high-volume API plans may offer additional savings.",
+      "byokDisclaimerHighlight": "BYOK Note:",
       "presets": [
         {
           "id": "commercial",
-          "name": "تبلیغات ۳۰ ثانیه‌ای"
+          "name": "30-sec Commercial"
         },
         {
           "id": "short",
-          "name": "فیلم کوتاه ۲ دقیقه‌ای"
+          "name": "2-min Short Film"
         },
         {
           "id": "episode",
-          "name": "قسمت 10 دقیقه ای"
+          "name": "10-min Episode"
         },
         {
           "id": "feature",
-          "name": "فیلم بلند ۹۰ دقیقه‌ای"
+          "name": "90-min Feature"
         }
       ],
-      "minSuffix": "دقیقه"
+      "minSuffix": "min"
     },
     "tierGrid": {
-      "productionTestFlight": "پرواز آزمایشی تولید",
-      "getStarted": "شروع کنید",
-      "startTestFlight": "شروع پرواز آزمایشی",
-      "loading": "در حال بارگذاری...",
-      "mostPopular": "محبوبترین",
-      "creditsPerMonth": "اعتبار/ماه",
-      "storage": "ذخیره‌سازی",
-      "perMonth": "/ماه"
+      "productionTestFlight": "Production Test Flight",
+      "getStarted": "Get Started",
+      "startTestFlight": "Start Test Flight",
+      "loading": "Loading...",
+      "mostPopular": "Most Popular",
+      "creditsPerMonth": "Credits/mo",
+      "storage": "Storage",
+      "perMonth": "/month"
     },
     "trust": {
-      "cancelAnytime": "در هر زمان لغو کنید",
-      "moneyBack": "ضمانت بازگشت وجه برای سی روز",
-      "creditsNeverExpire": "اعتبارها هرگز منقضی نمی‌شوند (بسته Explorer)"
+      "cancelAnytime": "Cancel anytime",
+      "moneyBack": "14-day money-back guarantee",
+      "creditsNeverExpire": "Credits never expire (Explorer pack)"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "خرید یکباره برای امتحان کردن",
+        "description": "One-time purchase to try it out",
         "features": [
-          "خرید یکباره",
-          "۷۵۰ اعتبار (هرگز منقضی نمی‌شود)",
-          "۵ گیگابایت فضای ذخیره‌سازی (۳۰ روز)",
-          "دسترسی کامل به پلتفرم",
-          "خروجی MP4 (هر رزولوشنی)",
-          "صداگذاری هوش مصنوعی (بیش از ۷۰ زبان)"
+          "One-time purchase",
+          "750 credits (never expire)",
+          "5 GB storage (30 days)",
+          "Full platform access",
+          "MP4 export (any resolution)",
+          "AI voiceover (70+ languages)"
         ]
       },
       "subscriptions": [
         {
           "id": "starter",
-          "name": "شروع کننده",
-          "description": "برای خالقان فردی",
+          "name": "Starter",
+          "description": "For individual creators",
           "features": [
-            "دسترسی کامل به پلتفرم",
-            "شامل ۴۵۰۰ واحد/ماه",
-            "۲۵ گیگابایت فضای ذخیره‌سازی فعال",
-            "خروجی MP4 (هر رزولوشنی)",
-            "صداگذاری هوش مصنوعی (بیش از ۷۰ زبان)",
-            "ایمیل پشتیبانی"
+            "Full platform access",
+            "4,500 credits/month included",
+            "25 GB active storage",
+            "MP4 export (any resolution)",
+            "AI voiceover (70+ languages)",
+            "Email support"
           ]
         },
         {
           "id": "pro",
-          "name": "پرو",
-          "description": "برای سازندگان حرفه‌ای",
+          "name": "Pro",
+          "description": "For professional creators",
           "features": [
-            "همه چیز در استارتر، به علاوه:",
-            "شامل ۱۵۰۰۰ اعتبار در ماه",
-            "۱۰۰ گیگابایت فضای ذخیره‌سازی فعال",
-            "دسترسی به کیفیت Veo 3.1 (4K)",
-            "موتور سازگاری کاراکتر",
-            "شبیه‌سازی صدا",
-            "کلید خودتان را بیاورید (SFAIBIOKTERM)",
-            "۳ صندلی تیمی",
-            "پشتیبانی اولویت دار"
+            "Everything in Starter, plus:",
+            "15,000 credits/month included",
+            "100 GB active storage",
+            "Veo 3.1 Quality (4K) access",
+            "Character Consistency Engine",
+            "Voice cloning",
+            "BYOK (Bring Your Own Key)",
+            "3 team seats",
+            "Priority support"
           ]
         },
         {
           "id": "studio",
-          "name": "استودیو",
-          "description": "برای تیم‌ها و آژانس‌ها",
+          "name": "Studio",
+          "description": "For teams & agencies",
           "features": [
-            "همه چیز در نسخه پرو، به علاوه:",
-            "شامل ۷۵۰۰۰ اعتبار در ماه",
-            "۵۰۰ گیگابایت فضای ذخیره‌سازی فعال",
-            "صف اولویت‌دار Veo 3.1 4K",
-            "سازگاری نامحدود کاراکتر",
-            "صادرات برچسب سفید",
-            "دسترسی API",
-            "۱۰ صندلی تیمی",
-            "مدیر حساب اختصاصی",
-            "SLA سازمانی بنا به درخواست موجود است"
+            "Everything in Pro, plus:",
+            "75,000 credits/month included",
+            "500 GB active storage",
+            "Veo 3.1 4K Priority Queue",
+            "Unlimited Character Consistency",
+            "White-label exports",
+            "API access",
+            "10 team seats",
+            "Dedicated account manager",
+            "Enterprise SLA available on request"
           ]
         }
       ]
     },
-    "explorerHighlight": "سریع‌ترین راه برای تجربه کامل استودیوی SceneFlow — از ایده تا Screening Room.",
+    "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
     "trustBadges": [
-      "زیرساخت Google Cloud",
-      "نسل Vertex AI",
-      "پرداخت‌های امن از طریق SFAIWOPTERM",
-      "ضمانت بازگشت وجه برای سی روز"
+      "Secure payments via Whop",
+      "14-day money-back guarantee",
+      "Credits never expire (Explorer pack)",
+      "Cancel anytime"
     ]
   },
   "landingSections": {
@@ -1735,10 +1738,10 @@
     "collapseSection": "پنهان‌سازی بخش"
   },
   "finalCta": {
-    "title": "آماده‌اید کل خط لوله را آزمایش کنید؟",
-    "subtitle": "اسکریپت‌نویسی و بهینه‌سازی با قدرت گوگل، انتخاب نسل بعدی توسط شما، و بررسی Screening Room - همه در یک استودیو. گروه دسترسی زودهنگام ماه سپتامبر اکنون در حال تشکیل است - با طرح 9 دلاری Explorer شروع کنید یا برای دسترسی Founding Creator درخواست دهید.",
-    "cta": "تولید خود را شروع کنید",
-    "ctaSecondary": "برای دسترسی به خالق موسس درخواست دهید",
+    "title": "Ready to create in Go or Director Mode?",
+    "subtitle": "Pick Go for speed or Director for control — start from the $9 Explorer plan or apply for Founding Creator access.",
+    "cta": "Start with Go Mode",
+    "ctaSecondary": "Apply for Founding Creator Access",
     "ctaSecondaryHref": "/early-access"
   },
   "footer": {
@@ -2146,5 +2149,40 @@
   },
   "keyFeatures": {
     "landingUiLanguagesLabel": "رابط کاربری و محصولات به ۳۹ زبان موجود است"
+  },
+  "twoModes": {
+    "title": "One Platform. Two Experiences.",
+    "go": {
+      "name": "SceneFlow Go",
+      "tagline": "Concept to animatic in minutes.",
+      "points": [
+        "Full intelligence and automation.",
+        "Enter a concept or script, click Go, and take a break.",
+        "Automatically handles Blueprint, structure, references, frames, audio, and animatic assembly.",
+        "Complete animatic ready in under 10 minutes.",
+        "Light natural-language revisions available on demand."
+      ],
+      "cta": "Try Go Mode"
+    },
+    "director": {
+      "name": "SceneFlow Studio",
+      "subtitle": "Director Mode",
+      "tagline": "Every visual, emotion, line, and note under your direction.",
+      "points": [
+        "Same powerful underlying AI pipeline with complete manual authorship.",
+        "Granular step-by-step control across every scene and beat.",
+        "Fine-tune visuals, character emotion, dialogue timing, and music choices.",
+        "Complete pre-visualization and master production workflow."
+      ],
+      "cta": "Launch Studio ($9)"
+    }
+  },
+  "infrastructure": {
+    "title": "Enterprise-Grade Infrastructure & Security",
+    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   }
 }

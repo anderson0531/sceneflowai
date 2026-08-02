@@ -26,50 +26,53 @@
     "keyFeatures": "Kenmerken"
   },
   "floatingNav": {
-    "compare": "Vergelijken",
-    "looksAndFormats": "Uitstraling & Formaten",
-    "howItWorks": "Hoe het werkt",
-    "useCases": "Toepassingen",
-    "preVisEngine": "Pre-vis-engine",
-    "platformWalkthrough": "Rondleiding door het platform",
-    "trustSafety": "trust &amp; safety",
+    "compare": "Compare",
+    "looksAndFormats": "Looks & Formats",
+    "howItWorks": "How It Works",
+    "useCases": "Use Cases",
+    "preVisEngine": "Pre-Vis Engine",
+    "platformWalkthrough": "Platform Walkthrough",
+    "trustSafety": "Trust & Safety",
     "platform": "Platform",
-    "pricing": "Prijzen"
+    "pricing": "Pricing",
+    "productionExamples": "Examples",
+    "twoModes": "Go vs Director",
+    "keyFeatures": "Key Features"
   },
   "hero": {
-    "headline": "Jij regisseert het verhaal. SceneFlow automatiseert de studio.",
-    "subheadline": "Door Google aangedreven intelligentie georkestreerd op Google Cloud — met optionele Google- of Kling-generatie. Voer uw ideeën door een naadloze pijplijn van blauwdruk naar master MP4 zonder microprompting.",
+    "headline": "Click Go and take a coffee break — or step through every scene as creative director.",
+    "subheadline": "Full automation when you want speed. Complete control when you want authorship. SceneFlow delivers concept-to-master animatics in two intentional modes.",
     "audienceMicroLine": "Ontwikkeld voor makers die resultaten willen en teams die willen zien hoe het werkt.",
-    "ctaSecondary": "Bekijk de 'What's Possible'",
-    "ctaToolStack": "Bekijk hoe het uw gereedschapsstapel vervangt",
-    "languagePrompt": "Hoor de held in jouw taal — dezelfde pijplijn, nieuwe markten",
-    "multilangHint": "Hero dubs in 7 talen — volledige pijplijn ondersteunt 70+ in Production Studio.",
-    "playWithNarration": "Speel met gesproken tekst",
-    "tapToHear": "Tik om te horen",
-    "fullscreen": "Schermvullend maken",
+    "ctaSecondary": "Explore Director Mode",
+    "ctaToolStack": "See how it replaces your tool stack",
+    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
+    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
+    "playWithNarration": "Play with narration",
+    "tapToHear": "Tap to hear",
+    "fullscreen": "Fullscreen",
     "heroVideoLanguages": {
       "en": {
-        "label": "Engels",
-        "nativeLabel": "Engels"
+        "label": "English",
+        "nativeLabel": "English"
       },
       "es": {
-        "label": "Spaans",
-        "nativeLabel": "Spaans"
+        "label": "Spanish",
+        "nativeLabel": "Español"
       },
       "pt": {
-        "label": "Portugees",
-        "nativeLabel": "Portugees"
+        "label": "Portuguese",
+        "nativeLabel": "Português"
       },
       "hi": {
         "label": "Hindi",
-        "nativeLabel": "∅∅∅∅ З ∅"
+        "nativeLabel": "हिन्दी"
       },
       "zh": {
         "label": "Chinese",
         "nativeLabel": "中文"
       },
       "ar": {
-        "label": "Arabisch",
+        "label": "Arabic",
         "nativeLabel": "العربية"
       },
       "th": {
@@ -77,9 +80,9 @@
         "nativeLabel": "ไทย"
       }
     },
-    "soon": "Vervalt weldra",
-    "ctaPrimaryLaunch": "Start uw productie",
-    "ctaSupportingLine": "Begin met het $ 9 Explorer-plan. September Early Access-cohort vormt zich nu.",
+    "soon": "Soon",
+    "ctaPrimaryLaunch": "Start with Go Mode",
+    "ctaSupportingLine": "",
     "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "valueProp": {
@@ -1526,117 +1529,117 @@
     "closePopup": "Açılır pencereyi kapat"
   },
   "pricing": {
-    "badge": "Eenvoudige prijsstelling",
-    "title": "Begin met Explorer — $ 9",
-    "subtitle": "September Early Access-cohortvorming. Test de volledige pijpleiding met een wrijvingsloze invoer van $ 9.",
+    "badge": "Simple Pricing",
+    "title": "Start with Explorer — $9",
+    "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
     "valueAnchor": {
-      "traditionalCost": "$2 000",
-      "traditionalLabel": "Traditionele pre-vis",
+      "traditionalCost": "$2,000+",
+      "traditionalLabel": "Traditional pre-vis",
       "vs": "vs",
-      "sceneFlowCost": "$ 49-149",
-      "sceneFlowLabel": "SceneFlow maandelijks",
-      "saveBadge": "Bespaar 90%+ per project"
+      "sceneFlowCost": "$49-149",
+      "sceneFlowLabel": "SceneFlow monthly",
+      "saveBadge": "Save 90%+ per project"
     },
     "teamCta": {
-      "title": "In-house team of instelling?",
-      "description": "Boek een workflow doorloop voor communicatie-, L&D- en marketingteams",
-      "button": "Boek doorloop"
+      "title": "In-house team or institution?",
+      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
+      "button": "Book Walkthrough"
     },
     "agencyCta": {
-      "title": "Bureau of productiewinkel?",
-      "description": "Aangepaste credits, sla en toegewijde ondersteuning op schaal",
-      "button": "Neem contact op met Verkoop"
+      "title": "Agency or production shop?",
+      "description": "Custom credits, SLA, and dedicated support at scale",
+      "button": "Contact Sales"
     },
     "byok": {
-      "title": "Bring Your Own",
-      "badge": "Pro- en studiopakketten",
-      "description": "Heb je al API-sleutels voor Vertex AI of ElevenLabs? Gebruik ze met SceneFlow AI en bespaar tot 80% op platformtegoed.",
-      "savingsHighlight": "80% op platformkredieten",
+      "title": "Bring Your Own Key",
+      "badge": "Pro & Studio Plans",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
-          "title": "80% SceneFlow Kredietbesparingen",
-          "description": "Betaal slechts 20% platformkosten voor orkestratie en tools"
+          "title": "80% SceneFlow Credit Savings",
+          "description": "Pay only a 20% platform fee for orchestration & tools"
         },
         {
-          "title": "Maak gebruik van bedrijfsplannen",
-          "description": "Gebruik uw bestaande Vertex AI of ElevenLabs volumekortingen"
+          "title": "Leverage Corporate Plans",
+          "description": "Use your existing Vertex AI or ElevenLabs volume discounts"
         },
         {
-          "title": "Volledige controle",
-          "description": "Uw sleutels, uw facturering, uw kostenbeheer"
+          "title": "Full Control",
+          "description": "Your keys, your billing, your cost management"
         }
       ],
-      "supportedProviders": "Ondersteunde providers",
+      "supportedProviders": "Supported Providers",
       "vertexName": "Google Vertex AI",
       "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Klonen van tekst naar spraak en spraak",
-      "savingsLabel": "80% besparing",
-      "onImagesVideo": "op afbeeldingen en video",
-      "onVoiceover": "op voice-over",
-      "note": "Kredietbesparingen zijn SceneFlow-platformbesparingen. Je werkelijke totale kosten zijn afhankelijk van je persoonlijke of zakelijke API-prijzen bij elke provider."
+      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
+      "savingsLabel": "80% savings",
+      "onImagesVideo": "on images & video",
+      "onVoiceover": "on voiceover",
+      "note": "Credit savings shown are SceneFlow platform savings. Your actual total costs depend on your personal or corporate API pricing with each provider."
     },
     "creditTopUps": {
-      "title": "Meer credits nodig?",
-      "subtitle": "Opwaarderen kan altijd. Tegoed verloopt nooit.",
+      "title": "Need More Credits?",
+      "subtitle": "Top up anytime. Credits never expire.",
       "packs": [
         {
-          "label": "Starterspakket",
-          "description": "Perfect voor snelle revisies"
+          "label": "Starter Pack",
+          "description": "Perfect for quick revisions"
         },
         {
-          "label": "Scènepakket",
-          "description": "Voltooi een kort project"
+          "label": "Scene Pack",
+          "description": "Complete a short project"
         },
         {
-          "label": "Productiepakket",
-          "description": "Grote filmsequentie"
+          "label": "Production Pack",
+          "description": "Major film sequence"
         },
         {
           "label": "Studio Pack",
-          "description": "Volledige productiecapaciteit"
+          "description": "Full production capacity"
         }
       ],
-      "creditsUnit": "generiek"
+      "creditsUnit": "credits"
     },
     "calculator": {
-      "sectionTitle": "Schat uw project in",
-      "sectionSubtitle": "Weet precies wat je betaalt voordat je je vastlegt",
-      "title": "Projectbudgetcalculator",
-      "subtitle": "Tegoed inschatten voordat je begint",
-      "customize": "Parameters aanpassen",
-      "imagesLabel": "Afbeeldingen om te genereren",
-      "videoClipsLabel": "Videoclips",
-      "voiceoverLabel": "Voice-over (minuten)",
-      "byokTitle": "Breng je eigen sleutel mee (BYOK)",
+      "sectionTitle": "Estimate Your Project",
+      "sectionSubtitle": "Know exactly what you'll pay before you commit",
+      "title": "Project Budget Calculator",
+      "subtitle": "Estimate credits before you start",
+      "customize": "Customize parameters",
+      "imagesLabel": "Images to generate",
+      "videoClipsLabel": "Video clips",
+      "voiceoverLabel": "Voiceover (minutes)",
+      "byokTitle": "Bring Your Own Key (BYOK)",
       "byokBadge": "Pro & Studio",
-      "byokDescription": "Gebruik je eigen API-sleutels om tot 80% te besparen op SceneFlow-credits. U betaalt de AI-aanbieders rechtstreeks tegen hun tarieven.",
-      "vertexToggle": "Vertex AI (afbeeldingen en video)",
-      "elevenLabsToggle": "ElevenLabs (Voice-over)",
-      "imageGeneration": "Beeldgeneratie",
-      "videoGeneration": "Video-generatie",
-      "voiceover": "Voice-over",
+      "byokDescription": "Use your own API keys to save up to 80% on SceneFlow credits. You pay the AI providers directly at their rates.",
+      "vertexToggle": "Vertex AI (Images & Video)",
+      "elevenLabsToggle": "ElevenLabs (Voiceover)",
+      "imageGeneration": "Image Generation",
+      "videoGeneration": "Video Generation",
+      "voiceover": "Voiceover",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Totaal geschatte kosten:",
-      "withTopUps": "met opwaarderingen",
-      "creditSavings": "SceneFlow Kredietsparen",
-      "savePercent": "Je bespaart {percent}% op SceneFlow-tegoeden",
-      "transparency": "Volledige transparantie: je ziet realtime kredietgebruik terwijl je werkt. Geen verrassingen - pas uw projectbereik op elk gewenst moment aan.",
-      "transparencyHighlight": "Volledige transparentie:",
-      "byokDisclaimer": "BYOK Opmerking: De weergegeven tegoedbesparingen weerspiegelen alleen de tegoedverminderingen op het SceneFlow-platform. Uw werkelijke kosten zijn afhankelijk van uw Vertex AI en ElevenLabs prijsplannen. API-abonnementen voor bedrijven of grote volumes kunnen extra besparingen opleveren.",
-      "byokDisclaimerHighlight": "BYOK Opmerking:",
+      "totalEstimate": "Total Estimate",
+      "withTopUps": "with top-ups",
+      "creditSavings": "SceneFlow credit savings",
+      "savePercent": "You save {percent}% on SceneFlow credits",
+      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
+      "transparencyHighlight": "Full transparency:",
+      "byokDisclaimer": "BYOK Note: Credit savings shown reflect SceneFlow platform credit reductions only. Your actual costs depend on your Vertex AI and ElevenLabs pricing plans. Corporate or high-volume API plans may offer additional savings.",
+      "byokDisclaimerHighlight": "BYOK Note:",
       "presets": [
         {
           "id": "commercial",
-          "name": "Commercieel van 30 seconden"
+          "name": "30-sec Commercial"
         },
         {
           "id": "short",
-          "name": "Korte film van 2 min"
+          "name": "2-min Short Film"
         },
         {
           "id": "episode",
-          "name": "Aflevering van 10 minuten"
+          "name": "10-min Episode"
         },
         {
           "id": "feature",
@@ -1646,88 +1649,88 @@
       "minSuffix": "min"
     },
     "tierGrid": {
-      "productionTestFlight": "Productietestvlucht",
-      "getStarted": "Beginnen",
-      "startTestFlight": "Testvlucht starten",
-      "loading": "Aan het laden...",
-      "mostPopular": "Populairst",
-      "creditsPerMonth": "Credits/mnd",
-      "storage": "Opslag",
-      "perMonth": "/maand"
+      "productionTestFlight": "Production Test Flight",
+      "getStarted": "Get Started",
+      "startTestFlight": "Start Test Flight",
+      "loading": "Loading...",
+      "mostPopular": "Most Popular",
+      "creditsPerMonth": "Credits/mo",
+      "storage": "Storage",
+      "perMonth": "/month"
     },
     "trust": {
-      "cancelAnytime": "Annuleer wanneer u wilt",
-      "moneyBack": "30 dagen geld-terug-garantie",
-      "creditsNeverExpire": "Credits verlopen nooit (Explorer Pack)"
+      "cancelAnytime": "Cancel anytime",
+      "moneyBack": "14-day money-back guarantee",
+      "creditsNeverExpire": "Credits never expire (Explorer pack)"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "Eenmalige aankoop om uit te proberen",
+        "description": "One-time purchase to try it out",
         "features": [
-          "Eenmalige aankoop",
-          "750 credits (verloopt nooit)",
-          "5 GB opslag (30 dagen)",
-          "Platform toegang",
-          "MP4-export (elke resolutie)",
-          "AI voice-over (70+ talen)"
+          "One-time purchase",
+          "750 credits (never expire)",
+          "5 GB storage (30 days)",
+          "Full platform access",
+          "MP4 export (any resolution)",
+          "AI voiceover (70+ languages)"
         ]
       },
       "subscriptions": [
         {
           "id": "starter",
           "name": "Starter",
-          "description": "Voor individuele makers",
+          "description": "For individual creators",
           "features": [
-            "Platform toegang",
-            "4.500 credits/maand inbegrepen",
-            "25 GB actieve opslag",
-            "MP4-export (elke resolutie)",
-            "AI voice-over (70+ talen)",
-            "Support via e-mail"
+            "Full platform access",
+            "4,500 credits/month included",
+            "25 GB active storage",
+            "MP4 export (any resolution)",
+            "AI voiceover (70+ languages)",
+            "Email support"
           ]
         },
         {
           "id": "pro",
           "name": "Pro",
-          "description": "Voor professionele makers",
+          "description": "For professional creators",
           "features": [
-            "Alles in Starter, plus:",
-            "15.000 credits/maand inbegrepen",
-            "100 GB actieve opslag",
-            "Veo 3.1 Kwaliteit (4K) toegang",
-            "Karakterconsistentie-engine",
-            "Stem klonen",
-            "BYOK (Breng je eigen sleutel mee)",
-            "3 teamstoelen",
-            "Voorrangsondersteuning"
+            "Everything in Starter, plus:",
+            "15,000 credits/month included",
+            "100 GB active storage",
+            "Veo 3.1 Quality (4K) access",
+            "Character Consistency Engine",
+            "Voice cloning",
+            "BYOK (Bring Your Own Key)",
+            "3 team seats",
+            "Priority support"
           ]
         },
         {
           "id": "studio",
           "name": "Studio",
-          "description": "Voor teams & bureaus",
+          "description": "For teams & agencies",
           "features": [
-            "Alles in Pro, plus:",
-            "75.000 credits/maand inbegrepen",
-            "500 GB actieve opslag",
-            "Veo 3.1 4K Prioriteitswachtrij",
-            "Onbeperkte tekenconsistentie",
-            "White-label export",
-            "API-toegang",
-            "10 teamstoelen",
-            "Toegewijde Account Manager",
-            "Enterprise sla op aanvraag beschikbaar"
+            "Everything in Pro, plus:",
+            "75,000 credits/month included",
+            "500 GB active storage",
+            "Veo 3.1 4K Priority Queue",
+            "Unlimited Character Consistency",
+            "White-label exports",
+            "API access",
+            "10 team seats",
+            "Dedicated account manager",
+            "Enterprise SLA available on request"
           ]
         }
       ]
     },
-    "explorerHighlight": "De snelste manier om de complete SceneFlow studio te ervaren — van concept tot Screening Room.",
+    "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
     "trustBadges": [
-      "Google Cloud infrastructuur",
-      "Vertex AI generatie",
-      "Veilige betalingen via Whop",
-      "30 dagen geld-terug-garantie"
+      "Secure payments via Whop",
+      "14-day money-back guarantee",
+      "Credits never expire (Explorer pack)",
+      "Cancel anytime"
     ]
   },
   "landingSections": {
@@ -1735,10 +1738,10 @@
     "collapseSection": "Sectie verbergen"
   },
   "finalCta": {
-    "title": "Klaar om de volledige pijpleiding te testen?",
-    "subtitle": "Google-aangedreven scripting en optimalisatie, uw keuze van generatie backend en Screening Room review — allemaal in één studio. September Early Access-cohort vormt zich nu — begin met het $ 9 Explorer-plan of vraag Founding Creator-toegang aan.",
-    "cta": "Start uw productie",
-    "ctaSecondary": "Toegang voor oprichters aanvragen",
+    "title": "Ready to create in Go or Director Mode?",
+    "subtitle": "Pick Go for speed or Director for control — start from the $9 Explorer plan or apply for Founding Creator access.",
+    "cta": "Start with Go Mode",
+    "ctaSecondary": "Apply for Founding Creator Access",
     "ctaSecondaryHref": "/early-access"
   },
   "footer": {
@@ -2146,5 +2149,40 @@
   },
   "keyFeatures": {
     "landingUiLanguagesLabel": "Gebruikersinterface en producties beschikbaar in 39 talen"
+  },
+  "twoModes": {
+    "title": "One Platform. Two Experiences.",
+    "go": {
+      "name": "SceneFlow Go",
+      "tagline": "Concept to animatic in minutes.",
+      "points": [
+        "Full intelligence and automation.",
+        "Enter a concept or script, click Go, and take a break.",
+        "Automatically handles Blueprint, structure, references, frames, audio, and animatic assembly.",
+        "Complete animatic ready in under 10 minutes.",
+        "Light natural-language revisions available on demand."
+      ],
+      "cta": "Try Go Mode"
+    },
+    "director": {
+      "name": "SceneFlow Studio",
+      "subtitle": "Director Mode",
+      "tagline": "Every visual, emotion, line, and note under your direction.",
+      "points": [
+        "Same powerful underlying AI pipeline with complete manual authorship.",
+        "Granular step-by-step control across every scene and beat.",
+        "Fine-tune visuals, character emotion, dialogue timing, and music choices.",
+        "Complete pre-visualization and master production workflow."
+      ],
+      "cta": "Launch Studio ($9)"
+    }
+  },
+  "infrastructure": {
+    "title": "Enterprise-Grade Infrastructure & Security",
+    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   }
 }

@@ -26,60 +26,63 @@
     "keyFeatures": "Tính năng"
   },
   "floatingNav": {
-    "compare": "So sánh",
-    "looksAndFormats": "Diện mạo & Định dạng",
-    "howItWorks": "Cách thức hoạt động",
-    "useCases": "Các trường hợp sử dụng",
-    "preVisEngine": "Công cụ tiền hình ảnh hóa",
-    "platformWalkthrough": "Hướng dẫn sử dụng nền tảng",
-    "trustSafety": "Độ tin cậy và an toàn",
-    "platform": "Nền tảng",
-    "pricing": "Bảng giá"
+    "compare": "Compare",
+    "looksAndFormats": "Looks & Formats",
+    "howItWorks": "How It Works",
+    "useCases": "Use Cases",
+    "preVisEngine": "Pre-Vis Engine",
+    "platformWalkthrough": "Platform Walkthrough",
+    "trustSafety": "Trust & Safety",
+    "platform": "Platform",
+    "pricing": "Pricing",
+    "productionExamples": "Examples",
+    "twoModes": "Go vs Director",
+    "keyFeatures": "Key Features"
   },
   "hero": {
-    "headline": "Bạn chỉ đạo câu chuyện. SceneFlow Tự động hóa Studio.",
-    "subheadline": "Trí thông minh do Google cung cấp được phối hợp trên Google Cloud — với thế hệ Google hoặc Kling tùy chọn. Chạy ý tưởng của bạn thông qua một đường ống liền mạch từ kế hoạch chi tiết đến MP4 chính mà không cần nhắc nhở vi mô.",
+    "headline": "Click Go and take a coffee break — or step through every scene as creative director.",
+    "subheadline": "Full automation when you want speed. Complete control when you want authorship. SceneFlow delivers concept-to-master animatics in two intentional modes.",
     "audienceMicroLine": "Được xây dựng dành cho những nhà sáng tạo mong muốn đạt kết quả và các đội ngũ muốn tìm hiểu cách thức hoạt động.",
-    "ctaSecondary": "Xem 'Những gì có thể'",
-    "ctaToolStack": "Xem cách nó thay thế ngăn xếp công cụ của bạn",
-    "languagePrompt": "Nghe anh hùng bằng ngôn ngữ của bạn — cùng một kênh, thị trường mới",
-    "multilangHint": "Hero lồng tiếng bằng 7 ngôn ngữ — đường ống đầy đủ hỗ trợ hơn70 ngôn ngữ trong Production Studio.",
-    "playWithNarration": "Chơi với tường thuật",
-    "tapToHear": "Chạm để nghe",
-    "fullscreen": "Toàn Màn Hình",
+    "ctaSecondary": "Explore Director Mode",
+    "ctaToolStack": "See how it replaces your tool stack",
+    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
+    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
+    "playWithNarration": "Play with narration",
+    "tapToHear": "Tap to hear",
+    "fullscreen": "Fullscreen",
     "heroVideoLanguages": {
       "en": {
-        "label": "Tiếng Anh",
-        "nativeLabel": "Tiếng Anh"
+        "label": "English",
+        "nativeLabel": "English"
       },
       "es": {
-        "label": "Tiếng Tây Ban Nha",
-        "nativeLabel": "tiếng Tây Ban Nha"
+        "label": "Spanish",
+        "nativeLabel": "Español"
       },
       "pt": {
-        "label": "Tiếng Bồ Đào Nha",
-        "nativeLabel": "tiếng Bồ Đào Nha"
+        "label": "Portuguese",
+        "nativeLabel": "Português"
       },
       "hi": {
-        "label": "Tiếng Hindi",
-        "nativeLabel": "् ््् ा"
+        "label": "Hindi",
+        "nativeLabel": "हिन्दी"
       },
       "zh": {
-        "label": "Tiếng Trung Quốc",
+        "label": "Chinese",
         "nativeLabel": "中文"
       },
       "ar": {
-        "label": "Tiếng Ả Rập",
+        "label": "Arabic",
         "nativeLabel": "العربية"
       },
       "th": {
-        "label": "Thái",
-        "nativeLabel": "tiếng Thái"
+        "label": "Thai",
+        "nativeLabel": "ไทย"
       }
     },
-    "soon": "ốc",
-    "ctaPrimaryLaunch": "Bắt đầu sản xuất",
-    "ctaSupportingLine": "Bắt đầu với gói Explorer $ 9. Nhóm Early Access tháng 9 hiện đang hình thành.",
+    "soon": "Soon",
+    "ctaPrimaryLaunch": "Start with Go Mode",
+    "ctaSupportingLine": "",
     "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "valueProp": {
@@ -1526,208 +1529,208 @@
     "closePopup": "Đóng cửa sổ bật lên"
   },
   "pricing": {
-    "badge": "Định giá đơn giản",
-    "title": "Bắt đầu với Explorer — $ 9",
-    "subtitle": "Nhóm Early Access tháng 9 đang hình thành. Kiểm tra toàn bộ quy trình với mục nhập $ 9 không ma sát.",
+    "badge": "Simple Pricing",
+    "title": "Start with Explorer — $9",
+    "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
     "valueAnchor": {
-      "traditionalCost": "2 000",
-      "traditionalLabel": "Trước khi nhìn thấy truyền thống",
-      "vs": "đấu với",
-      "sceneFlowCost": "$ 49-149",
-      "sceneFlowLabel": "SceneFlow hàng tháng",
-      "saveBadge": "Tiết kiệm 90%+ cho mỗi dự án"
+      "traditionalCost": "$2,000+",
+      "traditionalLabel": "Traditional pre-vis",
+      "vs": "vs",
+      "sceneFlowCost": "$49-149",
+      "sceneFlowLabel": "SceneFlow monthly",
+      "saveBadge": "Save 90%+ per project"
     },
     "teamCta": {
-      "title": "Đội ngũ nội bộ hoặc tổ chức?",
-      "description": "Đặt lịch hướng dẫn quy trình làm việc cho các nhóm truyền thông, L&D và tiếp thị",
-      "button": "Hướng dẫn đặt phòng"
+      "title": "In-house team or institution?",
+      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
+      "button": "Book Walkthrough"
     },
     "agencyCta": {
-      "title": "Đại lý hoặc cửa hàng sản xuất?",
-      "description": "Tín dụng tùy chỉnh, SLA và hỗ trợ chuyên dụng theo quy mô",
-      "button": "Liên hệ bán hàng"
+      "title": "Agency or production shop?",
+      "description": "Custom credits, SLA, and dedicated support at scale",
+      "button": "Contact Sales"
     },
     "byok": {
-      "title": "Mang theo chìa khóa của riêng bạn",
-      "badge": "Gói Pro & Studio",
-      "description": "Bạn đã có khóa API cho Vertex AI hoặc ElevenLabs? Sử dụng chúng với SceneFlow AI và tiết kiệm tới 80% tín dụng nền tảng.",
-      "savingsHighlight": "80% trên điểm tín dụng nền tảng",
+      "title": "Bring Your Own Key",
+      "badge": "Pro & Studio Plans",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
-          "title": "Tiết kiệm 80% tín dụng SceneFlow",
-          "description": "Chỉ trả phí nền tảng 20% cho việc điều phối & công cụ"
+          "title": "80% SceneFlow Credit Savings",
+          "description": "Pay only a 20% platform fee for orchestration & tools"
         },
         {
-          "title": "Tận dụng các kế hoạch doanh nghiệp",
-          "description": "Sử dụng các khoản giảm giá khối lượng Vertex AI hoặc ElevenLabs hiện có của bạn"
+          "title": "Leverage Corporate Plans",
+          "description": "Use your existing Vertex AI or ElevenLabs volume discounts"
         },
         {
-          "title": "<g id=\"1\">Toàn quyền kiểm soát.</g> ",
-          "description": "Chìa khóa, hóa đơn, quản lý chi phí của bạn"
+          "title": "Full Control",
+          "description": "Your keys, your billing, your cost management"
         }
       ],
-      "supportedProviders": "Nhà cung cấp được hỗ trợ",
+      "supportedProviders": "Supported Providers",
       "vertexName": "Google Vertex AI",
       "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Chuyển văn bản thành giọng nói & Nhân bản bằng giọng nói",
-      "savingsLabel": "Tiết kiệm 80%",
-      "onImagesVideo": "trên hình ảnh & video",
-      "onVoiceover": "khi lồng tiếng",
-      "note": "Khoản tiết kiệm tín dụng được hiển thị là khoản tiết kiệm nền tảng SceneFlow. Tổng chi phí thực tế của bạn phụ thuộc vào giá API cá nhân hoặc doanh nghiệp của bạn với từng nhà cung cấp."
+      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
+      "savingsLabel": "80% savings",
+      "onImagesVideo": "on images & video",
+      "onVoiceover": "on voiceover",
+      "note": "Credit savings shown are SceneFlow platform savings. Your actual total costs depend on your personal or corporate API pricing with each provider."
     },
     "creditTopUps": {
-      "title": "Bạn cần thêm điểm tín dụng?",
-      "subtitle": "Nạp tiền bất cứ lúc nào. Điểm tín dụng không bao giờ hết hạn.",
+      "title": "Need More Credits?",
+      "subtitle": "Top up anytime. Credits never expire.",
       "packs": [
         {
-          "label": "Gói Khởi động",
-          "description": "Hoàn hảo để chỉnh sửa nhanh"
+          "label": "Starter Pack",
+          "description": "Perfect for quick revisions"
         },
         {
-          "label": "Gói Cảnh",
-          "description": "Hoàn thành một dự án ngắn"
+          "label": "Scene Pack",
+          "description": "Complete a short project"
         },
         {
-          "label": "Gói sản xuất",
-          "description": "Trình tự phim chính"
+          "label": "Production Pack",
+          "description": "Major film sequence"
         },
         {
-          "label": "Gói Studio",
-          "description": "Năng lực sản xuất"
+          "label": "Studio Pack",
+          "description": "Full production capacity"
         }
       ],
-      "creditsUnit": "tín dụng"
+      "creditsUnit": "credits"
     },
     "calculator": {
-      "sectionTitle": "Ước tính dự án của bạn",
-      "sectionSubtitle": "Biết chính xác số tiền bạn sẽ trả trước khi cam kết",
-      "title": "Công cụ tính toán ngân sách dự án",
-      "subtitle": "Ước tính điểm tín dụng trước khi bạn bắt đầu",
-      "customize": "Tùy chỉnh thông số",
-      "imagesLabel": "Hình ảnh cần tạo",
-      "videoClipsLabel": "Đoạn video",
-      "voiceoverLabel": "Voiceover (phút)",
-      "byokTitle": "Mang theo chìa khóa riêng (BYOK)",
+      "sectionTitle": "Estimate Your Project",
+      "sectionSubtitle": "Know exactly what you'll pay before you commit",
+      "title": "Project Budget Calculator",
+      "subtitle": "Estimate credits before you start",
+      "customize": "Customize parameters",
+      "imagesLabel": "Images to generate",
+      "videoClipsLabel": "Video clips",
+      "voiceoverLabel": "Voiceover (minutes)",
+      "byokTitle": "Bring Your Own Key (BYOK)",
       "byokBadge": "Pro & Studio",
-      "byokDescription": "Sử dụng khóa API của riêng bạn để tiết kiệm tới 80% điểm tín dụng SceneFlow. Bạn thanh toán trực tiếp cho các nhà cung cấp AI theo mức giá của họ.",
-      "vertexToggle": "Vertex AI (Hình ảnh & Video)",
-      "elevenLabsToggle": "ElevenLabs (Lồng tiếng)",
-      "imageGeneration": "Tạo hình ảnh",
-      "videoGeneration": "Tạo video",
+      "byokDescription": "Use your own API keys to save up to 80% on SceneFlow credits. You pay the AI providers directly at their rates.",
+      "vertexToggle": "Vertex AI (Images & Video)",
+      "elevenLabsToggle": "ElevenLabs (Voiceover)",
+      "imageGeneration": "Image Generation",
+      "videoGeneration": "Video Generation",
       "voiceover": "Voiceover",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Tổng ước tính",
-      "withTopUps": "có nạp tiền",
-      "creditSavings": "Tiết kiệm tín dụng SceneFlow",
-      "savePercent": "Bạn tiết kiệm được {percent}% điểm tín dụng SceneFlow",
-      "transparency": "Minh bạch hoàn toàn: Bạn sẽ thấy việc sử dụng tín dụng theo thời gian thực khi bạn làm việc. Không có gì bất ngờ - hãy điều chỉnh phạm vi dự án của bạn bất cứ lúc nào.",
-      "transparencyHighlight": "Minh bạch hoàn toàn:",
-      "byokDisclaimer": "BYOK Lưu ý: Khoản tiết kiệm tín dụng được hiển thị chỉ phản ánh việc giảm tín dụng trên nền tảng SceneFlow. Chi phí thực tế của bạn phụ thuộc vào các gói định giá Vertex AI và ElevenLabs của bạn. Các gói API doanh nghiệp hoặc khối lượng lớn có thể cung cấp thêm khoản tiết kiệm.",
-      "byokDisclaimerHighlight": "BYOK Lưu ý:",
+      "totalEstimate": "Total Estimate",
+      "withTopUps": "with top-ups",
+      "creditSavings": "SceneFlow credit savings",
+      "savePercent": "You save {percent}% on SceneFlow credits",
+      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
+      "transparencyHighlight": "Full transparency:",
+      "byokDisclaimer": "BYOK Note: Credit savings shown reflect SceneFlow platform credit reductions only. Your actual costs depend on your Vertex AI and ElevenLabs pricing plans. Corporate or high-volume API plans may offer additional savings.",
+      "byokDisclaimerHighlight": "BYOK Note:",
       "presets": [
         {
           "id": "commercial",
-          "name": "30 giây Thương mại"
+          "name": "30-sec Commercial"
         },
         {
           "id": "short",
-          "name": "Phim ngắn 2 phút"
+          "name": "2-min Short Film"
         },
         {
           "id": "episode",
-          "name": "Tập 10 phút"
+          "name": "10-min Episode"
         },
         {
           "id": "feature",
-          "name": "Tính năng 90 phút"
+          "name": "90-min Feature"
         }
       ],
-      "minSuffix": "phút"
+      "minSuffix": "min"
     },
     "tierGrid": {
-      "productionTestFlight": "Chuyến bay thử nghiệm sản xuất",
-      "getStarted": "Bắt đầu",
-      "startTestFlight": "Bắt đầu chuyến bay thử nghiệm",
-      "loading": "Đang tải...",
-      "mostPopular": "Phổ biến nhất",
-      "creditsPerMonth": "Tín chỉ/tháng",
-      "storage": "Lưu trữ",
-      "perMonth": "/tháng"
+      "productionTestFlight": "Production Test Flight",
+      "getStarted": "Get Started",
+      "startTestFlight": "Start Test Flight",
+      "loading": "Loading...",
+      "mostPopular": "Most Popular",
+      "creditsPerMonth": "Credits/mo",
+      "storage": "Storage",
+      "perMonth": "/month"
     },
     "trust": {
-      "cancelAnytime": "Hủy bất cứ lúc nào",
-      "moneyBack": "ĐẢM BẢO KIẾM TIỀN TRONG VÒNG 90 NGÀY",
-      "creditsNeverExpire": "Tín dụng không bao giờ hết hạn (gói Explorer)"
+      "cancelAnytime": "Cancel anytime",
+      "moneyBack": "14-day money-back guarantee",
+      "creditsNeverExpire": "Credits never expire (Explorer pack)"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "Mua một lần để dùng thử",
+        "description": "One-time purchase to try it out",
         "features": [
-          "Mua một lần",
-          "750 điểm tín dụng (không bao giờ hết hạn)",
-          "Bộ nhớ 5 GB (30 ngày)",
-          "Truy cập nền tảng",
-          "Xuất MP4 (bất kỳ độ phân giải nào)",
-          "Lồng tiếng AI (hơn70 ngôn ngữ)"
+          "One-time purchase",
+          "750 credits (never expire)",
+          "5 GB storage (30 days)",
+          "Full platform access",
+          "MP4 export (any resolution)",
+          "AI voiceover (70+ languages)"
         ]
       },
       "subscriptions": [
         {
           "id": "starter",
-          "name": "Bộ khởi động",
-          "description": "Dành cho người sáng tạo cá nhân",
+          "name": "Starter",
+          "description": "For individual creators",
           "features": [
-            "Truy cập nền tảng",
-            "Đã bao gồm 4.500 tín chỉ/tháng",
-            "25 GB dung lượng đang hoạt động",
-            "Xuất MP4 (bất kỳ độ phân giải nào)",
-            "Lồng tiếng AI (hơn70 ngôn ngữ)",
-            "Hỗ trợ qua email"
+            "Full platform access",
+            "4,500 credits/month included",
+            "25 GB active storage",
+            "MP4 export (any resolution)",
+            "AI voiceover (70+ languages)",
+            "Email support"
           ]
         },
         {
           "id": "pro",
-          "name": "Chuyên nghiệp",
-          "description": "Dành cho người sáng tạo chuyên nghiệp",
+          "name": "Pro",
+          "description": "For professional creators",
           "features": [
-            "Tất cả mọi thứ trong Starter, cộng với:",
-            "Đã bao gồm 15.000 tín chỉ/tháng",
-            "100 GB dung lượng đang hoạt động",
-            "Veo 3.1 Truy cập chất lượng (4K)",
-            "Công cụ tính nhất quán của ký tự",
-            "Nhân bản giọng nói",
-            "BYOK (Mang theo chìa khóa riêng)",
-            "3 chỗ ngồi trong nhóm",
-            "Hỗ trợ ưu tiên"
+            "Everything in Starter, plus:",
+            "15,000 credits/month included",
+            "100 GB active storage",
+            "Veo 3.1 Quality (4K) access",
+            "Character Consistency Engine",
+            "Voice cloning",
+            "BYOK (Bring Your Own Key)",
+            "3 team seats",
+            "Priority support"
           ]
         },
         {
           "id": "studio",
-          "name": "Phòng thu hình",
-          "description": "Dành cho các nhóm & cơ quan",
+          "name": "Studio",
+          "description": "For teams & agencies",
           "features": [
-            "Mọi tính năng trong Pro, cộng thêm:",
-            "Bao gồm 75.000 tín chỉ/tháng",
-            "500 GB dung lượng lưu trữ đang hoạt động",
-            "Hàng đợi ưu tiên Veo 3.1 4K",
-            "Tính nhất quán của nhân vật không giới hạn",
-            "Xuất khẩu nhãn trắng",
-            "truy cập api",
-            "10 chỗ ngồi trong nhóm",
-            "Quản lý tài khoản chuyên dụng",
-            "SLA doanh nghiệp có sẵn theo yêu cầu"
+            "Everything in Pro, plus:",
+            "75,000 credits/month included",
+            "500 GB active storage",
+            "Veo 3.1 4K Priority Queue",
+            "Unlimited Character Consistency",
+            "White-label exports",
+            "API access",
+            "10 team seats",
+            "Dedicated account manager",
+            "Enterprise SLA available on request"
           ]
         }
       ]
     },
-    "explorerHighlight": "Cách nhanh nhất để trải nghiệm studio SceneFlow hoàn chỉnh — từ concept đến Screening Room.",
+    "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
     "trustBadges": [
-      "Google Cloud CƠ SỞ HẠ tầng",
-      "Vertex AI Generation",
-      "Thanh toán an toàn qua Whop",
-      "ĐẢM BẢO KIẾM TIỀN TRONG VÒNG 90 NGÀY"
+      "Secure payments via Whop",
+      "14-day money-back guarantee",
+      "Credits never expire (Explorer pack)",
+      "Cancel anytime"
     ]
   },
   "landingSections": {
@@ -1735,10 +1738,10 @@
     "collapseSection": "Ẩn phần này"
   },
   "finalCta": {
-    "title": "Bạn đã sẵn sàng để thử nghiệm toàn bộ quy trình?",
-    "subtitle": "Kịch bản và tối ưu hóa do Google hỗ trợ, lựa chọn phụ trợ thế hệ của bạn và đánh giá Screening Room — tất cả trong một studio. Nhóm Thử nghiệm trước tháng 9 hiện đang hình thành — hãy bắt đầu với gói $ 9 Explorer hoặc đăng ký quyền truy cập của Người sáng tạo sáng lập.",
-    "cta": "Bắt đầu sản xuất",
-    "ctaSecondary": "Đăng ký quyền truy cập của Người sáng tạo sáng lập",
+    "title": "Ready to create in Go or Director Mode?",
+    "subtitle": "Pick Go for speed or Director for control — start from the $9 Explorer plan or apply for Founding Creator access.",
+    "cta": "Start with Go Mode",
+    "ctaSecondary": "Apply for Founding Creator Access",
     "ctaSecondaryHref": "/early-access"
   },
   "footer": {
@@ -2146,5 +2149,40 @@
   },
   "keyFeatures": {
     "landingUiLanguagesLabel": "Giao diện người dùng và sản phẩm có sẵn bằng 39 ngôn ngữ"
+  },
+  "twoModes": {
+    "title": "One Platform. Two Experiences.",
+    "go": {
+      "name": "SceneFlow Go",
+      "tagline": "Concept to animatic in minutes.",
+      "points": [
+        "Full intelligence and automation.",
+        "Enter a concept or script, click Go, and take a break.",
+        "Automatically handles Blueprint, structure, references, frames, audio, and animatic assembly.",
+        "Complete animatic ready in under 10 minutes.",
+        "Light natural-language revisions available on demand."
+      ],
+      "cta": "Try Go Mode"
+    },
+    "director": {
+      "name": "SceneFlow Studio",
+      "subtitle": "Director Mode",
+      "tagline": "Every visual, emotion, line, and note under your direction.",
+      "points": [
+        "Same powerful underlying AI pipeline with complete manual authorship.",
+        "Granular step-by-step control across every scene and beat.",
+        "Fine-tune visuals, character emotion, dialogue timing, and music choices.",
+        "Complete pre-visualization and master production workflow."
+      ],
+      "cta": "Launch Studio ($9)"
+    }
+  },
+  "infrastructure": {
+    "title": "Enterprise-Grade Infrastructure & Security",
+    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   }
 }

@@ -26,61 +26,64 @@
     "keyFeatures": "Felhasználhatóság"
   },
   "floatingNav": {
-    "compare": "Összehasonlítás",
-    "looksAndFormats": "Megjelenés és formátumok",
-    "howItWorks": "Hogyan működik",
-    "useCases": "Felhasználási esetek",
-    "preVisEngine": "Elővizualizációs motor",
-    "platformWalkthrough": "Platform-ismertető",
-    "trustSafety": "Bizalom és biztonság",
+    "compare": "Compare",
+    "looksAndFormats": "Looks & Formats",
+    "howItWorks": "How It Works",
+    "useCases": "Use Cases",
+    "preVisEngine": "Pre-Vis Engine",
+    "platformWalkthrough": "Platform Walkthrough",
+    "trustSafety": "Trust & Safety",
     "platform": "Platform",
-    "pricing": "Árazás"
+    "pricing": "Pricing",
+    "productionExamples": "Examples",
+    "twoModes": "Go vs Director",
+    "keyFeatures": "Key Features"
   },
   "hero": {
-    "headline": "Te irányítod a történetet. A SceneFlow automatizálja a stúdiót.",
-    "subheadline": "A Google által működtetett intelligencia a Google Cloud-en — opcionális Google vagy Kling generációval. Futtassa ötleteit egy zökkenőmentes csővezetéken a tervrajztól a mester MP4-ig mikro-promptolás nélkül.",
+    "headline": "Click Go and take a coffee break — or step through every scene as creative director.",
+    "subheadline": "Full automation when you want speed. Complete control when you want authorship. SceneFlow delivers concept-to-master animatics in two intentional modes.",
     "audienceMicroLine": "Azoknak az alkotóknak készült, akik eredményeket várnak, és azoknak a csapatoknak, amelyek látni akarják, hogyan működik.",
-    "ctaSecondary": "Nézd meg a „What's Possible”",
-    "ctaToolStack": "Nézd meg, hogyan cseréli le a szerszámkészletet",
-    "languagePrompt": "Hallgassa meg a hőst a saját nyelvén — ugyanaz a folyamat, új piacok",
-    "multilangHint": "A Hero 7 nyelven érhető el — a Production Studio több mint70 nyelvet támogat.",
-    "playWithNarration": "Játék narrációval",
-    "tapToHear": "Koppintással meghallgathatod",
-    "fullscreen": "Teljes képernyős",
+    "ctaSecondary": "Explore Director Mode",
+    "ctaToolStack": "See how it replaces your tool stack",
+    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
+    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
+    "playWithNarration": "Play with narration",
+    "tapToHear": "Tap to hear",
+    "fullscreen": "Fullscreen",
     "heroVideoLanguages": {
       "en": {
-        "label": "angol",
-        "nativeLabel": "angol"
+        "label": "English",
+        "nativeLabel": "English"
       },
       "es": {
-        "label": "spanyol",
+        "label": "Spanish",
         "nativeLabel": "Español"
       },
       "pt": {
-        "label": "portugál",
-        "nativeLabel": "portugál"
+        "label": "Portuguese",
+        "nativeLabel": "Português"
       },
       "hi": {
-        "label": "HIDE",
+        "label": "Hindi",
         "nativeLabel": "हिन्दी"
       },
       "zh": {
-        "label": "X - kínai",
-        "nativeLabel": "a"
+        "label": "Chinese",
+        "nativeLabel": "中文"
       },
       "ar": {
-        "label": "arab",
+        "label": "Arabic",
         "nativeLabel": "العربية"
       },
       "th": {
-        "label": "X - thai",
-        "nativeLabel": "한국어"
+        "label": "Thai",
+        "nativeLabel": "ไทย"
       }
     },
-    "soon": "hamarosan",
-    "ctaPrimaryLaunch": "A produkció megkezdése",
-    "ctaSupportingLine": "Kezdje a $ 9 Explorer csomaggal. Szeptemberi korai hozzáférésű kohorsz alakul.",
-    "videoLanguageCount": "{count, plural, =1 {# language} egyéb {# languages}}"
+    "soon": "Soon",
+    "ctaPrimaryLaunch": "Start with Go Mode",
+    "ctaSupportingLine": "",
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "valueProp": {
     "pills": [
@@ -1526,208 +1529,208 @@
     "closePopup": "Felugró ablak bezárása"
   },
   "pricing": {
-    "badge": "Egyszerű árképzés",
-    "title": "Kezdje a Explorer-mel — $ 9",
-    "subtitle": "Szeptemberi korai hozzáférésű kohorsz kialakulása. Tesztelje a teljes csővezetéket egy súrlódásmentes $ 9 belépéssel.",
+    "badge": "Simple Pricing",
+    "title": "Start with Explorer — $9",
+    "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
     "valueAnchor": {
-      "traditionalCost": "2000",
-      "traditionalLabel": "Hagyományos előnézet",
+      "traditionalCost": "$2,000+",
+      "traditionalLabel": "Traditional pre-vis",
       "vs": "vs",
-      "sceneFlowCost": "$ 49-149",
-      "sceneFlowLabel": "SceneFlow havonta",
-      "saveBadge": "90%+ megtakarítás projektenként"
+      "sceneFlowCost": "$49-149",
+      "sceneFlowLabel": "SceneFlow monthly",
+      "saveBadge": "Save 90%+ per project"
     },
     "teamCta": {
-      "title": "Házon belüli csapat vagy intézmény?",
-      "description": "Foglald le a munkafolyamat áttekintését a kommunikációs, L&D és marketing csapatok számára",
-      "button": "Könyvbemutató"
+      "title": "In-house team or institution?",
+      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
+      "button": "Book Walkthrough"
     },
     "agencyCta": {
-      "title": "Ügynökség vagy gyártóüzem?",
-      "description": "Egyéni kreditek, SLA és dedikált támogatás skálán",
-      "button": "Vegye fel a kapcsolatot az értékesítési csoporttal"
+      "title": "Agency or production shop?",
+      "description": "Custom credits, SLA, and dedicated support at scale",
+      "button": "Contact Sales"
     },
     "byok": {
-      "title": "Hozz saját piperecikkeket! ",
-      "badge": "Pro- és stúdiócsomagok",
-      "description": "Már rendelkezik API-kulcsokkal a Vertex AI vagy a ElevenLabs számára? Használja őket a SceneFlow AI segítségével, és akár 80% -ot takaríthat meg a platform kreditjein.",
-      "savingsHighlight": "80% a platform kreditekre",
+      "title": "Bring Your Own Key",
+      "badge": "Pro & Studio Plans",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
-          "title": "80% -os SceneFlow hitelmegtakarítás",
-          "description": "Csak 20% -os platformdíjat fizess a hangszerelésért és az eszközökért"
+          "title": "80% SceneFlow Credit Savings",
+          "description": "Pay only a 20% platform fee for orchestration & tools"
         },
         {
-          "title": "Vállalati tervek kihasználása",
-          "description": "Használja meglévő Vertex AI vagy ElevenLabs mennyiségi kedvezményeit"
+          "title": "Leverage Corporate Plans",
+          "description": "Use your existing Vertex AI or ElevenLabs volume discounts"
         },
         {
-          "title": "Teljes ellenőrzés",
-          "description": "A kulcsaid, a számlázásod, a költségkezelésed"
+          "title": "Full Control",
+          "description": "Your keys, your billing, your cost management"
         }
       ],
-      "supportedProviders": "Támogatott szolgáltatók",
+      "supportedProviders": "Supported Providers",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "Imagen 4 és Veo 3.1",
+      "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Szövegfelolvasás és hangklónozás",
-      "savingsLabel": "80% megtakarítás",
-      "onImagesVideo": "képeken és videókon",
-      "onVoiceover": "a hangalámondáson",
-      "note": "A feltüntetett hitelmegtakarítások a SceneFlow platform megtakarításai. A tényleges teljes költséged az egyes szolgáltatóknál alkalmazott személyes vagy vállalati API-áradtól függ."
+      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
+      "savingsLabel": "80% savings",
+      "onImagesVideo": "on images & video",
+      "onVoiceover": "on voiceover",
+      "note": "Credit savings shown are SceneFlow platform savings. Your actual total costs depend on your personal or corporate API pricing with each provider."
     },
     "creditTopUps": {
-      "title": "További kreditekre van szükséged?",
-      "subtitle": "Bármikor feltöltheted. A kreditek soha nem járnak le.",
+      "title": "Need More Credits?",
+      "subtitle": "Top up anytime. Credits never expire.",
       "packs": [
         {
-          "label": "Kezdő csomag",
-          "description": "Tökéletes a gyors felülvizsgálatokhoz"
+          "label": "Starter Pack",
+          "description": "Perfect for quick revisions"
         },
         {
-          "label": "Jelenetcsomag",
-          "description": "Végezz el egy rövid projektet"
+          "label": "Scene Pack",
+          "description": "Complete a short project"
         },
         {
-          "label": "Termelési csomag",
-          "description": "Fő filmszekvencia"
+          "label": "Production Pack",
+          "description": "Major film sequence"
         },
         {
-          "label": "Stúdiócsomag",
-          "description": "Teljes gyártási kapacitás"
+          "label": "Studio Pack",
+          "description": "Full production capacity"
         }
       ],
-      "creditsUnit": "kreditek"
+      "creditsUnit": "credits"
     },
     "calculator": {
-      "sectionTitle": "Becsülje meg projektjét",
-      "sectionSubtitle": "Tudd meg pontosan, mennyit fogsz fizetni, mielőtt elköteleznéd magad",
-      "title": "Projektköltségvetés kalkulátor",
-      "subtitle": "Becsült kreditek a kezdés előtt",
-      "customize": "Paraméterek testreszabása",
-      "imagesLabel": "Létrehozandó képek",
-      "videoClipsLabel": "Videoklipek",
-      "voiceoverLabel": "Hangfelvétel (perc)",
-      "byokTitle": "Hozza magával a saját kulcsát (BYOK)",
-      "byokBadge": "Profi és Stúdió",
-      "byokDescription": "Saját API-kulcsaival akár 80% -ot is megtakaríthat a SceneFlow kreditjein. Közvetlenül az AI-szolgáltatóknak fizetsz az áraikkal.",
-      "vertexToggle": "Vertex AI (képek és videó)",
+      "sectionTitle": "Estimate Your Project",
+      "sectionSubtitle": "Know exactly what you'll pay before you commit",
+      "title": "Project Budget Calculator",
+      "subtitle": "Estimate credits before you start",
+      "customize": "Customize parameters",
+      "imagesLabel": "Images to generate",
+      "videoClipsLabel": "Video clips",
+      "voiceoverLabel": "Voiceover (minutes)",
+      "byokTitle": "Bring Your Own Key (BYOK)",
+      "byokBadge": "Pro & Studio",
+      "byokDescription": "Use your own API keys to save up to 80% on SceneFlow credits. You pay the AI providers directly at their rates.",
+      "vertexToggle": "Vertex AI (Images & Video)",
       "elevenLabsToggle": "ElevenLabs (Voiceover)",
-      "imageGeneration": "Képgenerálás",
-      "videoGeneration": "Videógenerálás",
-      "voiceover": "Voiceover: ",
+      "imageGeneration": "Image Generation",
+      "videoGeneration": "Video Generation",
+      "voiceover": "Voiceover",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Teljes becslés",
-      "withTopUps": "feltöltésekkel",
-      "creditSavings": "SceneFlow hitelmegtakarítások",
-      "savePercent": "{percent}% -ot spórolhatsz a SceneFlow kreditjeiden",
-      "transparency": "Teljes átláthatóság: Munka közben láthatja a valós idejű kreditfelhasználást. Nincsenek meglepetések - bármikor módosíthatja a projekt hatókörét.",
-      "transparencyHighlight": "Teljes átláthatóság",
-      "byokDisclaimer": "BYOK Megjegyzés: A megjelenített hitelmegtakarítások csak a SceneFlow platform hitelcsökkentéseit tükrözik. A tényleges költségek a Vertex AI és a ElevenLabs árképzési terveitől függenek. A vállalati vagy nagy volumenű API-csomagok további megtakarításokat kínálhatnak.",
-      "byokDisclaimerHighlight": "BYOK Megjegyzés:",
+      "totalEstimate": "Total Estimate",
+      "withTopUps": "with top-ups",
+      "creditSavings": "SceneFlow credit savings",
+      "savePercent": "You save {percent}% on SceneFlow credits",
+      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
+      "transparencyHighlight": "Full transparency:",
+      "byokDisclaimer": "BYOK Note: Credit savings shown reflect SceneFlow platform credit reductions only. Your actual costs depend on your Vertex AI and ElevenLabs pricing plans. Corporate or high-volume API plans may offer additional savings.",
+      "byokDisclaimerHighlight": "BYOK Note:",
       "presets": [
         {
           "id": "commercial",
-          "name": "30 másodperces kereskedelmi"
+          "name": "30-sec Commercial"
         },
         {
           "id": "short",
-          "name": "2 perces rövidfilm"
+          "name": "2-min Short Film"
         },
         {
           "id": "episode",
-          "name": "10 perces epizód"
+          "name": "10-min Episode"
         },
         {
           "id": "feature",
-          "name": "90 perces funkció"
+          "name": "90-min Feature"
         }
       ],
-      "minSuffix": "perc"
+      "minSuffix": "min"
     },
     "tierGrid": {
-      "productionTestFlight": "Termelési tesztrepülés",
-      "getStarted": "Kezdés ",
-      "startTestFlight": "Tesztrepülés indítása",
-      "loading": "Betöltés...",
-      "mostPopular": "Legnépszerűbb",
-      "creditsPerMonth": "Kredit/hó",
-      "storage": "Tárolás",
-      "perMonth": "/hó"
+      "productionTestFlight": "Production Test Flight",
+      "getStarted": "Get Started",
+      "startTestFlight": "Start Test Flight",
+      "loading": "Loading...",
+      "mostPopular": "Most Popular",
+      "creditsPerMonth": "Credits/mo",
+      "storage": "Storage",
+      "perMonth": "/month"
     },
     "trust": {
-      "cancelAnytime": "Bármikor lemondható.",
-      "moneyBack": "14 napos pénzvisszafizetési garancia",
-      "creditsNeverExpire": "A kreditek soha nem járnak le (Explorer csomag)"
+      "cancelAnytime": "Cancel anytime",
+      "moneyBack": "14-day money-back guarantee",
+      "creditsNeverExpire": "Credits never expire (Explorer pack)"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "Egyszeri vásárlás a kipróbáláshoz",
+        "description": "One-time purchase to try it out",
         "features": [
-          "Egyszeri vásárlás",
-          "750 kredit (soha ne járjon le)",
-          "5 GB tárhely (30 nap)",
-          "Teljes platformhozzáférés",
-          "MP4 export (bármilyen felbontás)",
-          "AI-hangfelvétel (70+ nyelv)"
+          "One-time purchase",
+          "750 credits (never expire)",
+          "5 GB storage (30 days)",
+          "Full platform access",
+          "MP4 export (any resolution)",
+          "AI voiceover (70+ languages)"
         ]
       },
       "subscriptions": [
         {
           "id": "starter",
-          "name": "Indítóanyag",
-          "description": "Egyéni alkotóknak",
+          "name": "Starter",
+          "description": "For individual creators",
           "features": [
-            "Teljes platformhozzáférés",
-            "4500 kredit/hó az árban",
-            "25 GB aktív tárhely",
-            "MP4 export (bármilyen felbontás)",
-            "AI-hangfelvétel (70+ nyelv)",
-            "E-mailes támogatás"
+            "Full platform access",
+            "4,500 credits/month included",
+            "25 GB active storage",
+            "MP4 export (any resolution)",
+            "AI voiceover (70+ languages)",
+            "Email support"
           ]
         },
         {
           "id": "pro",
-          "name": "Fizetős",
-          "description": "Profi alkotóknak",
+          "name": "Pro",
+          "description": "For professional creators",
           "features": [
-            "Minden a Starterben, plusz:",
-            "15 000 kredit/hó az árban",
-            "100 GB aktív tárhely",
-            "Veo 3.1 Minőségi (4K) hozzáférés",
-            "Karakterkonzisztencia motor",
-            "Hangklónozás",
-            "BYOK (Hozd a saját kulcsodat)",
-            "3 csapatülés",
-            "<b>Elsőbbség</b> Támogat"
+            "Everything in Starter, plus:",
+            "15,000 credits/month included",
+            "100 GB active storage",
+            "Veo 3.1 Quality (4K) access",
+            "Character Consistency Engine",
+            "Voice cloning",
+            "BYOK (Bring Your Own Key)",
+            "3 team seats",
+            "Priority support"
           ]
         },
         {
           "id": "studio",
-          "name": "Stúdió",
-          "description": "Csapatoknak és ügynökségeknek",
+          "name": "Studio",
+          "description": "For teams & agencies",
           "features": [
-            "Minden a Pro-ban, plusz:",
-            "75 000 kredit/hó az árban",
-            "500 GB aktív tárhely",
-            "Veo 3.1 4K elsőbbségi sor",
-            "Korlátlan karakterkonzisztencia",
-            "Fehércímkés export",
-            "API-hozzáférés ",
-            "10 csapatülés",
-            "Elkötelezett fiókkezelő. ",
-            "Vállalati SLA kérésre elérhető"
+            "Everything in Pro, plus:",
+            "75,000 credits/month included",
+            "500 GB active storage",
+            "Veo 3.1 4K Priority Queue",
+            "Unlimited Character Consistency",
+            "White-label exports",
+            "API access",
+            "10 team seats",
+            "Dedicated account manager",
+            "Enterprise SLA available on request"
           ]
         }
       ]
     },
-    "explorerHighlight": "A leggyorsabb módja a teljes SceneFlow stúdió megtapasztalásának — a koncepciótól a Screening Room-ig.",
+    "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
     "trustBadges": [
-      "Google Cloud infrastruktúra",
-      "Vertex AI generáció",
-      "Biztonságos fizetés a Whop-en keresztül",
-      "14 napos pénzvisszafizetési garancia"
+      "Secure payments via Whop",
+      "14-day money-back guarantee",
+      "Credits never expire (Explorer pack)",
+      "Cancel anytime"
     ]
   },
   "landingSections": {
@@ -1735,10 +1738,10 @@
     "collapseSection": "Szakasz elrejtése"
   },
   "finalCta": {
-    "title": "Készen áll a teljes csővezeték tesztelésére?",
-    "subtitle": "A Google által működtetett szkriptek és optimalizálás, az Ön által választott generációs backend és a Screening Room felülvizsgálata — mindez egyetlen stúdióban. Szeptemberi korai hozzáférésű kohorsz — kezdd a $ 9 Explorer tervvel, vagy igényelj Alapító Alkotói hozzáférést.",
-    "cta": "A produkció megkezdése",
-    "ctaSecondary": "Jelentkezés az alapító alkotó hozzáférésére",
+    "title": "Ready to create in Go or Director Mode?",
+    "subtitle": "Pick Go for speed or Director for control — start from the $9 Explorer plan or apply for Founding Creator access.",
+    "cta": "Start with Go Mode",
+    "ctaSecondary": "Apply for Founding Creator Access",
     "ctaSecondaryHref": "/early-access"
   },
   "footer": {
@@ -2146,5 +2149,40 @@
   },
   "keyFeatures": {
     "landingUiLanguagesLabel": "A felhasználói felület és a produkciók 39 nyelven érhetők el"
+  },
+  "twoModes": {
+    "title": "One Platform. Two Experiences.",
+    "go": {
+      "name": "SceneFlow Go",
+      "tagline": "Concept to animatic in minutes.",
+      "points": [
+        "Full intelligence and automation.",
+        "Enter a concept or script, click Go, and take a break.",
+        "Automatically handles Blueprint, structure, references, frames, audio, and animatic assembly.",
+        "Complete animatic ready in under 10 minutes.",
+        "Light natural-language revisions available on demand."
+      ],
+      "cta": "Try Go Mode"
+    },
+    "director": {
+      "name": "SceneFlow Studio",
+      "subtitle": "Director Mode",
+      "tagline": "Every visual, emotion, line, and note under your direction.",
+      "points": [
+        "Same powerful underlying AI pipeline with complete manual authorship.",
+        "Granular step-by-step control across every scene and beat.",
+        "Fine-tune visuals, character emotion, dialogue timing, and music choices.",
+        "Complete pre-visualization and master production workflow."
+      ],
+      "cta": "Launch Studio ($9)"
+    }
+  },
+  "infrastructure": {
+    "title": "Enterprise-Grade Infrastructure & Security",
+    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   }
 }

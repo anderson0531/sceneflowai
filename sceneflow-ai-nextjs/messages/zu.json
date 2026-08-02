@@ -23,60 +23,64 @@
     "noLanguagesFound": "Azikho izilimi ezitholakele"
   },
   "floatingNav": {
-    "compare": "Qhathanisa",
-    "looksAndFormats": "Ukubukeka Namafomethi",
-    "howItWorks": "Indlela okusebenza ngayo",
-    "useCases": "Izimo Zokusetshenziswa",
-    "preVisEngine": "Uhlelo Lokubona Ngaphambili",
-    "platformWalkthrough": "Umhlahlandlela Wenkundla",
-    "trustSafety": "Ukuthembeka Nokuphepha",
-    "platform": "Inkundla",
-    "pricing": "Amanani"
+    "compare": "Compare",
+    "looksAndFormats": "Looks & Formats",
+    "howItWorks": "How It Works",
+    "useCases": "Use Cases",
+    "preVisEngine": "Pre-Vis Engine",
+    "platformWalkthrough": "Platform Walkthrough",
+    "trustSafety": "Trust & Safety",
+    "platform": "Platform",
+    "pricing": "Pricing",
+    "productionExamples": "Examples",
+    "twoModes": "Go vs Director",
+    "keyFeatures": "Key Features"
   },
   "hero": {
-    "headline": "Cabanga ngendaba. I-SceneFlow iphatha uhlelo lokusebenza olulandelanayo.",
-    "subheadline": "Dlulela ngale kokunikeza imiyalelo edinisayo. Gxila ngokuphelele embonweni wakho wobuciko usebenzisa inqubo yokukhiqiza ezenzakalelayo neyizinga lobungcweti.",
+    "headline": "Click Go and take a coffee break — or step through every scene as creative director.",
+    "subheadline": "Full automation when you want speed. Complete control when you want authorship. SceneFlow delivers concept-to-master animatics in two intentional modes.",
     "audienceMicroLine": "Yakhelwe abadali abafuna imiphumela, kanye namaqembu afuna ukubona ukuthi isebenza kanjani.",
-    "ctaSecondary": "Buka okuthi 'Yini Engenzeka'",
-    "ctaToolStack": "Bona indlela okuthatha ngayo indawo yeqoqo lakho lamathuluzi.",
-    "languagePrompt": "Izwa iqhawe ngolimi lwakho — inqubo efanayo, izimakethe ezintsha",
-    "multilangHint": "I-Hero yenza ukufakwa kwamazwi ngezilimi eziyi-7 — uhlelo oluphelele lusekela izilimi ezingaphezu kuka-70 esigabeni sokukhiqiza.",
-    "playWithNarration": "Dlala ngokulandisa",
-    "tapToHear": "Thepha ukuze uzwe",
-    "fullscreen": "Isikrini esigcwele",
+    "ctaSecondary": "Explore Director Mode",
+    "ctaToolStack": "See how it replaces your tool stack",
+    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
+    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
+    "playWithNarration": "Play with narration",
+    "tapToHear": "Tap to hear",
+    "fullscreen": "Fullscreen",
     "heroVideoLanguages": {
       "en": {
-        "label": "IsiNgisi",
-        "nativeLabel": "IsiNgisi"
+        "label": "English",
+        "nativeLabel": "English"
       },
       "es": {
-        "label": "IsiSpanish",
-        "nativeLabel": "IsiSpanish"
+        "label": "Spanish",
+        "nativeLabel": "Español"
       },
       "pt": {
-        "label": "IsiPutukezi",
-        "nativeLabel": "IsiPutukezi"
+        "label": "Portuguese",
+        "nativeLabel": "Português"
       },
       "hi": {
-        "label": "isiHindi",
-        "nativeLabel": "isiHindi"
+        "label": "Hindi",
+        "nativeLabel": "हिन्दी"
       },
       "zh": {
-        "label": "IsiShayina",
-        "nativeLabel": "IsiShayina"
+        "label": "Chinese",
+        "nativeLabel": "中文"
       },
       "ar": {
-        "label": "Isi-Arabhu",
-        "nativeLabel": "Isi-Arabhu"
+        "label": "Arabic",
+        "nativeLabel": "العربية"
       },
       "th": {
-        "label": "waseThailand",
-        "nativeLabel": "I-Thailand"
+        "label": "Thai",
+        "nativeLabel": "ไทย"
       }
     },
-    "soon": "Maduze",
-    "ctaPrimaryLaunch": "Qala Ukukhiqiza Kwakho",
-    "ctaSupportingLine": "Start with the $9 Explorer plan. September Early Access cohort now forming."
+    "soon": "Soon",
+    "ctaPrimaryLaunch": "Start with Go Mode",
+    "ctaSupportingLine": "",
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "valueProp": {
     "pills": [
@@ -1522,207 +1526,208 @@
     "closePopup": "Vala iwindi elivelayo"
   },
   "pricing": {
-    "badge": "Intengo Ngokusekelwe Ekusetshenzisweni",
+    "badge": "Simple Pricing",
     "title": "Start with Explorer — $9",
     "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
     "valueAnchor": {
-      "traditionalCost": "Ngaphezu kuka-$2,000",
-      "traditionalLabel": "Ukubona kusengaphambili ngendlela evamile",
-      "vs": "vs.",
-      "sceneFlowCost": "$49–149",
-      "sceneFlowLabel": "SceneFlow njalo ngenyanga",
-      "saveBadge": "Yonga u-90% noma ngaphezulu kuphrojekthi ngayinye"
+      "traditionalCost": "$2,000+",
+      "traditionalLabel": "Traditional pre-vis",
+      "vs": "vs",
+      "sceneFlowCost": "$49-149",
+      "sceneFlowLabel": "SceneFlow monthly",
+      "saveBadge": "Save 90%+ per project"
     },
     "teamCta": {
-      "title": "Ithimba langaphakathi noma isikhungo?",
-      "description": "Bhukha iseshini yokubuka inqubo yokusebenza yamaqembu ezokuxhumana, ezokuthuthukiswa kwabasebenzi (L&D), kanye nawokumaketha.",
-      "button": "Ukubuka Okuningiliziwe Kwencwadi"
+      "title": "In-house team or institution?",
+      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
+      "button": "Book Walkthrough"
     },
     "agencyCta": {
-      "title": "I-ejensi noma indawo yokukhiqiza?",
-      "description": "Amakhredithi enzelwe izidingo zakho, i-SLA, kanye nokwesekwa okuzinikele ngezinga elikhulu",
-      "button": "Xhumana nabezokuthengisa"
+      "title": "Agency or production shop?",
+      "description": "Custom credits, SLA, and dedicated support at scale",
+      "button": "Contact Sales"
     },
     "byok": {
-      "title": "Letha Ukhiye Wakho",
-      "badge": "Izinhlelo ze-Pro ne-Studio",
-      "description": "Ingabe usunazo kakade izinkinobho ze-API ze-Vertex AI noma ze-ElevenLabs? Zisebenzise ne-SceneFlow AI ukuze wonge kufika ku-80% kumakhredithi enkundla.",
-      "savingsHighlight": "u-80% kumakhredithi enkundla",
+      "title": "Bring Your Own Key",
+      "badge": "Pro & Studio Plans",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
-          "title": "Ukonga okungu-80% esikweletini se-SceneFlow",
-          "description": "Khokha kuphela imali yesikhulumi engu-20% yokuhlanganisa nokulawula izinqubo kanye namathuluzi."
+          "title": "80% SceneFlow Credit Savings",
+          "description": "Pay only a 20% platform fee for orchestration & tools"
         },
         {
-          "title": "Sebenzisa izinhlelo zenkampani ukuze uzuze",
-          "description": "Sebenzisa izaphulelo zakho ezikhona zamanani amakhulu ze-Vertex AI noma ze-ElevenLabs"
+          "title": "Leverage Corporate Plans",
+          "description": "Use your existing Vertex AI or ElevenLabs volume discounts"
         },
         {
-          "title": "Ukulawula okuphelele",
-          "description": "Izikhiye zakho, ukukhokhiswa kwakho, ukuphathwa kwezindleko zakho"
+          "title": "Full Control",
+          "description": "Your keys, your billing, your cost management"
         }
       ],
-      "supportedProviders": "Abahlinzeki Abasekelwayo",
+      "supportedProviders": "Supported Providers",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "Imagen 4 ne-Veo 3.1",
+      "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Ukuguqulwa kombhalo ube yinkulumo nokukopisha izwi",
-      "savingsLabel": "Ukonga okungama-80%",
-      "onImagesVideo": "ezithombeni nakumavidiyo",
-      "onVoiceover": "ngokukhuluma okungabonakali esikrinini",
-      "note": "Ukonga okukhonjisiwe kuncike ekongeni okwenziwa yinkundla ye-SceneFlow. Izindleko zakho eziphelele zangempela zincike ezintengo ze-API zakho siqu noma zenkampani yakho kumhlinzeki ngamunye."
+      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
+      "savingsLabel": "80% savings",
+      "onImagesVideo": "on images & video",
+      "onVoiceover": "on voiceover",
+      "note": "Credit savings shown are SceneFlow platform savings. Your actual total costs depend on your personal or corporate API pricing with each provider."
     },
     "creditTopUps": {
-      "title": "Udinga amakhredithi engeziwe?",
-      "subtitle": "Faka imali noma nini. Amakhredithi awaphelelwa yisikhathi.",
+      "title": "Need More Credits?",
+      "subtitle": "Top up anytime. Credits never expire.",
       "packs": [
         {
-          "label": "Iphakethe Lokuqala",
-          "description": "Ilungele ukubuyekeza okusheshayo"
+          "label": "Starter Pack",
+          "description": "Perfect for quick revisions"
         },
         {
-          "label": "Iphakethe Lezigcawu",
-          "description": "Qedela iphrojekthi emfushane"
+          "label": "Scene Pack",
+          "description": "Complete a short project"
         },
         {
-          "label": "Iphakethe Lokukhiqiza",
-          "description": "Isigaba esikhulu sefilimu"
+          "label": "Production Pack",
+          "description": "Major film sequence"
         },
         {
-          "label": "Iphakethe Le-Studio",
-          "description": "Umthamo ophelele wokukhiqiza"
+          "label": "Studio Pack",
+          "description": "Full production capacity"
         }
       ],
-      "creditsUnit": "Ababambe iqhaza"
+      "creditsUnit": "credits"
     },
     "calculator": {
-      "sectionTitle": "Linganisela izindleko zephrojekthi yakho",
-      "sectionSubtitle": "Yazi kahle ukuthi uzokhokha malini ngaphambi kokuba uzibophezele.",
-      "title": "Isibali Sesabelomali Sephrojekthi",
-      "subtitle": "Linganisela amakhredithi ngaphambi kokuba uqale.",
-      "customize": "Lungisa amapharamitha ngokwezidingo",
-      "imagesLabel": "Izithombe okufanele zenziwe",
-      "videoClipsLabel": "Iziqeshana zevidiyo",
-      "voiceoverLabel": "Ukuphawula ngezwi (imizuzu)",
-      "byokTitle": "Letha Ukhiye Wakho (BYOK)",
-      "byokBadge": "Ochwepheshe neStudio",
-      "byokDescription": "Sebenzisa okhiye bakho be-API ukuze wonge kufika ku-80% kumakhredithi e-SceneFlow. Ukhokhela abahlinzeki be-AI ngqo ngamanani abo.",
-      "vertexToggle": "Vertex AI (Izithombe nevidiyo)",
-      "elevenLabsToggle": "ElevenLabs (Izwi elingemuva)",
-      "imageGeneration": "Ukukhiqizwa kwezithombe",
-      "videoGeneration": "Ukukhiqizwa kwevidiyo",
-      "voiceover": "Izwi elingemuva",
+      "sectionTitle": "Estimate Your Project",
+      "sectionSubtitle": "Know exactly what you'll pay before you commit",
+      "title": "Project Budget Calculator",
+      "subtitle": "Estimate credits before you start",
+      "customize": "Customize parameters",
+      "imagesLabel": "Images to generate",
+      "videoClipsLabel": "Video clips",
+      "voiceoverLabel": "Voiceover (minutes)",
+      "byokTitle": "Bring Your Own Key (BYOK)",
+      "byokBadge": "Pro & Studio",
+      "byokDescription": "Use your own API keys to save up to 80% on SceneFlow credits. You pay the AI providers directly at their rates.",
+      "vertexToggle": "Vertex AI (Images & Video)",
+      "elevenLabsToggle": "ElevenLabs (Voiceover)",
+      "imageGeneration": "Image Generation",
+      "videoGeneration": "Video Generation",
+      "voiceover": "Voiceover",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Isilinganiso Esiphelele",
-      "withTopUps": "ngokwengezwa kwesikweletu",
-      "creditSavings": "SceneFlow ukonga okusekelwe esikweletini",
-      "savePercent": "Ungaonga u-{percent}% kuma-credit e-SceneFlow",
-      "transparency": "Ukucaca okuphelele: Uzobona ukusetshenziswa kwamakhredithi ngesikhathi sangempela njengoba usebenza. Akukho okuzokumangaza—ungashintsha ububanzi bephrojekthi yakho noma nini.",
-      "transparencyHighlight": "Ukukhanya okuphelele:",
-      "byokDisclaimer": "BYOK Qaphela: Ukonga okukhonjisiwe kukhombisa kuphela ukuncishiswa kwesikweletu senkundla ye-SceneFlow. Izindleko zakho zangempela zincike ezinhlelweni zakho zamanani ze-Vertex AI ne-ElevenLabs. Izinhlelo zezinkampani noma ezihilela umthamo ophezulu we-API zingahlinzeka ngokonga okwengeziwe.",
-      "byokDisclaimerHighlight": "BYOK Qaphela:",
+      "totalEstimate": "Total Estimate",
+      "withTopUps": "with top-ups",
+      "creditSavings": "SceneFlow credit savings",
+      "savePercent": "You save {percent}% on SceneFlow credits",
+      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
+      "transparencyHighlight": "Full transparency:",
+      "byokDisclaimer": "BYOK Note: Credit savings shown reflect SceneFlow platform credit reductions only. Your actual costs depend on your Vertex AI and ElevenLabs pricing plans. Corporate or high-volume API plans may offer additional savings.",
+      "byokDisclaimerHighlight": "BYOK Note:",
       "presets": [
         {
-          "id": "okwezohwebo",
-          "name": "Isikhangiso semizuzwana engu-30"
+          "id": "commercial",
+          "name": "30-sec Commercial"
         },
         {
-          "id": "mfushane",
-          "name": "Ifilimu emfushane yemizuzu emibili"
+          "id": "short",
+          "name": "2-min Short Film"
         },
         {
-          "id": "isiqephu",
-          "name": "Isiqephu semizuzu eyi-10"
+          "id": "episode",
+          "name": "10-min Episode"
         },
         {
-          "id": "isici",
-          "name": "Ifilimu ende yemizuzu engama-90"
+          "id": "feature",
+          "name": "90-min Feature"
         }
       ],
-      "minSuffix": "imizuzu"
+      "minSuffix": "min"
     },
     "tierGrid": {
-      "productionTestFlight": "Indiza Yokuhlola Ngemuva Kokukhiqizwa",
-      "getStarted": "Qala",
-      "startTestFlight": "Qala Indiza Yokuhlola",
-      "loading": "Iyalayisha...",
-      "mostPopular": "Okuthandwa kakhulu",
-      "creditsPerMonth": "Amakhredithi/ngenyanga",
-      "storage": "Indawo yokugcina",
-      "perMonth": "/ngenyanga"
+      "productionTestFlight": "Production Test Flight",
+      "getStarted": "Get Started",
+      "startTestFlight": "Start Test Flight",
+      "loading": "Loading...",
+      "mostPopular": "Most Popular",
+      "creditsPerMonth": "Credits/mo",
+      "storage": "Storage",
+      "perMonth": "/month"
     },
     "trust": {
-      "cancelAnytime": "Khansela noma nini",
-      "moneyBack": "Isiqinisekiso sokubuyiselwa imali ezinsukwini ezingu-14",
-      "creditsNeverExpire": "Amakhredithi awaphelelwa yisikhathi (iphakethe le-Explorer)"
+      "cancelAnytime": "Cancel anytime",
+      "moneyBack": "14-day money-back guarantee",
+      "creditsNeverExpire": "Credits never expire (Explorer pack)"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "Ukuthenga kanye ukuze ukuzame",
+        "description": "One-time purchase to try it out",
         "features": [
-          "Ukuthenga kanye",
-          "Amakhredithi angu-750 (awapheli)",
-          "Isikhala sokugcina esingu-5 GB (izinsuku ezingama-30)",
-          "Ukufinyelela okugcwele enkundleni",
-          "Ukukhipha ifayela le-MP4 (noma yiluphi uhlobo lwekhwalithi yesithombe)",
-          "Ukuqoshwa kwezwi nge-AI (izilimi ezingaphezu kuka-70)"
+          "One-time purchase",
+          "750 credits (never expire)",
+          "5 GB storage (30 days)",
+          "Full platform access",
+          "MP4 export (any resolution)",
+          "AI voiceover (70+ languages)"
         ]
       },
       "subscriptions": [
         {
-          "id": "isiqalo",
-          "name": "Isidlo sokuqala",
-          "description": "Kwabadali ngabanye",
+          "id": "starter",
+          "name": "Starter",
+          "description": "For individual creators",
           "features": [
-            "Ukufinyelela okugcwele enkundleni",
-            "Kufakwe amakhredithi angu-4 500 ngenyanga",
-            "Isitoreji esisebenzayo esingu-25 GB",
-            "Ukukhipha ifayela le-MP4 (noma yiluphi uhlobo lwekhwalithi yesithombe)",
-            "Ukuqoshwa kwezwi nge-AI (izilimi ezingaphezu kuka-70)",
-            "Ukusekelwa nge-imeyili"
+            "Full platform access",
+            "4,500 credits/month included",
+            "25 GB active storage",
+            "MP4 export (any resolution)",
+            "AI voiceover (70+ languages)",
+            "Email support"
           ]
         },
         {
-          "id": "umsekeli",
-          "name": "Ochwepheshe",
-          "description": "Kwabadali abangongoti",
+          "id": "pro",
+          "name": "Pro",
+          "description": "For professional creators",
           "features": [
-            "Konke okukuhlelo lwe-Starter, kanye nalokhu:",
-            "Kufakwe amakhredithi angu-15 000 ngenyanga",
-            "Isitoreji esisebenzayo esingu-100 GB",
-            "Ukufinyelela kwikhwalithi ye-Veo 3.1 (4K)",
-            "Uhlelo Lokuqinisekisa Ukungaguquguquki Komlingiswa",
-            "Ukukopisha izwi",
-            "BYOK (Letha Ukhiye Wakho)",
-            "Izihlalo ezintathu zethimba",
-            "Ukusekelwa okubekwe phambili"
+            "Everything in Starter, plus:",
+            "15,000 credits/month included",
+            "100 GB active storage",
+            "Veo 3.1 Quality (4K) access",
+            "Character Consistency Engine",
+            "Voice cloning",
+            "BYOK (Bring Your Own Key)",
+            "3 team seats",
+            "Priority support"
           ]
         },
         {
-          "id": "isitudiyo",
-          "name": "Isitudiyo",
-          "description": "Okwamaqembu nezinhlangano",
+          "id": "studio",
+          "name": "Studio",
+          "description": "For teams & agencies",
           "features": [
-            "Konke okukwi-Pro, kanye nalokhu:",
-            "Kufakwe amakhredithi angu-75 000 ngenyanga",
-            "Isitoreji esisebenzayo esingu-500 GB",
-            "Umugqa Wokubeka Phambili we-Veo 3.1 4K",
-            "Ukungaguquguquki Komlingiswa Okungenamkhawulo",
-            "Ukuthunyelwa kwempahla ngaphandle kophawu lomkhiqizi",
-            "Ukufinyelela ku-API",
-            "Izihlalo eziyi-10 zethimba",
-            "Umphathi we-akhawunti ozinikele",
-            "Isivumelwano sezinga lenkonzo (SLA) samabhizinisi amakhulu siyatholakala uma siceliwe."
+            "Everything in Pro, plus:",
+            "75,000 credits/month included",
+            "500 GB active storage",
+            "Veo 3.1 4K Priority Queue",
+            "Unlimited Character Consistency",
+            "White-label exports",
+            "API access",
+            "10 team seats",
+            "Dedicated account manager",
+            "Enterprise SLA available on request"
           ]
         }
       ]
     },
     "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
     "trustBadges": [
-      "Google Cloud infrastructure",
-      "Vertex AI generation",
-      "Secure payments via Whop"
+      "Secure payments via Whop",
+      "14-day money-back guarantee",
+      "Credits never expire (Explorer pack)",
+      "Cancel anytime"
     ]
   },
   "landingSections": {
@@ -1730,10 +1735,11 @@
     "collapseSection": "Fihla isigaba"
   },
   "finalCta": {
-    "title": "Usukulungele ukuhlola uhlelo lokusebenza oluphelele?",
-    "subtitle": "Google-powered scripting and optimization, your choice of generation backend, and Screening Room review — all in one studio. September Early Access cohort now forming — start with the $9 Explorer plan or apply for Founding Creator access.",
-    "cta": "Qala Ukukhiqiza Kwakho",
-    "ctaSecondary": "Apply for Founding Creator Access"
+    "title": "Ready to create in Go or Director Mode?",
+    "subtitle": "Pick Go for speed or Director for control — start from the $9 Explorer plan or apply for Founding Creator access.",
+    "cta": "Start with Go Mode",
+    "ctaSecondary": "Apply for Founding Creator Access",
+    "ctaSecondaryHref": "/early-access"
   },
   "footer": {
     "description": "Ukukhiqizwa kwamavidiyo okuzenzakalelayo okuphelele — kusukela emcabangweni kuya kumkhiqizo wokugcina osekulungele ukushicilelwa. Isitudiyo esisodwa esiqondiswayo: Blueprint → Ukukhiqiza → Screening Room.",
@@ -2030,5 +2036,40 @@
   },
   "keyFeatures": {
     "landingUiLanguagesLabel": "I-UI Nemikhiqizo Itholakala Ngezilimi ezingama-39"
+  },
+  "twoModes": {
+    "title": "One Platform. Two Experiences.",
+    "go": {
+      "name": "SceneFlow Go",
+      "tagline": "Concept to animatic in minutes.",
+      "points": [
+        "Full intelligence and automation.",
+        "Enter a concept or script, click Go, and take a break.",
+        "Automatically handles Blueprint, structure, references, frames, audio, and animatic assembly.",
+        "Complete animatic ready in under 10 minutes.",
+        "Light natural-language revisions available on demand."
+      ],
+      "cta": "Try Go Mode"
+    },
+    "director": {
+      "name": "SceneFlow Studio",
+      "subtitle": "Director Mode",
+      "tagline": "Every visual, emotion, line, and note under your direction.",
+      "points": [
+        "Same powerful underlying AI pipeline with complete manual authorship.",
+        "Granular step-by-step control across every scene and beat.",
+        "Fine-tune visuals, character emotion, dialogue timing, and music choices.",
+        "Complete pre-visualization and master production workflow."
+      ],
+      "cta": "Launch Studio ($9)"
+    }
+  },
+  "infrastructure": {
+    "title": "Enterprise-Grade Infrastructure & Security",
+    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   }
 }

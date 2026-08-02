@@ -26,60 +26,63 @@
     "keyFeatures": "Özellikler"
   },
   "floatingNav": {
-    "compare": "Karşılaştır",
-    "looksAndFormats": "Görünüm ve Formatlar",
-    "howItWorks": "Nasıl Çalışır?",
-    "useCases": "Kullanım Senaryoları",
-    "preVisEngine": "Ön Görselleştirme Motoru",
-    "platformWalkthrough": "Platform Tanıtımı",
-    "trustSafety": "Güven ve İtibar",
+    "compare": "Compare",
+    "looksAndFormats": "Looks & Formats",
+    "howItWorks": "How It Works",
+    "useCases": "Use Cases",
+    "preVisEngine": "Pre-Vis Engine",
+    "platformWalkthrough": "Platform Walkthrough",
+    "trustSafety": "Trust & Safety",
     "platform": "Platform",
-    "pricing": "Fiyatlandırma"
+    "pricing": "Pricing",
+    "productionExamples": "Examples",
+    "twoModes": "Go vs Director",
+    "keyFeatures": "Key Features"
   },
   "hero": {
-    "headline": "Sen Hikayeyi Yönet. SceneFlow Stüdyoyu Otomatikleştirir.",
-    "subheadline": "İsteğe bağlı Google veya Kling nesli ile Google Cloud'de düzenlenen Google destekli istihbarat. Fikirlerinizi mikro komut istemi olmadan plandan ana MP4 'e kadar kesintisiz bir iş hattında çalıştırın.",
+    "headline": "Click Go and take a coffee break — or step through every scene as creative director.",
+    "subheadline": "Full automation when you want speed. Complete control when you want authorship. SceneFlow delivers concept-to-master animatics in two intentional modes.",
     "audienceMicroLine": "Sonuç odaklı içerik üreticileri ve sistemin nasıl işlediğini görmek isteyen ekipler için geliştirildi.",
-    "ctaSecondary": "'Neyin Mümkün Olduğunu' İzleyin",
-    "ctaToolStack": "Alet takımınızın yerini nasıl aldığını görün",
-    "languagePrompt": "Kahramanı kendi dilinizde dinleyin — aynı iletişim hattı, yeni pazarlar",
-    "multilangHint": "7 dilde Hero dublajları — tam boru hattı Production Studio'de 70 'den fazla desteği destekler.",
-    "playWithNarration": "Anlatımla oyna",
-    "tapToHear": "Duymak için dokunun",
-    "fullscreen": "Tam ekran",
+    "ctaSecondary": "Explore Director Mode",
+    "ctaToolStack": "See how it replaces your tool stack",
+    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
+    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
+    "playWithNarration": "Play with narration",
+    "tapToHear": "Tap to hear",
+    "fullscreen": "Fullscreen",
     "heroVideoLanguages": {
       "en": {
-        "label": "İngilizce",
-        "nativeLabel": "İngilizce"
+        "label": "English",
+        "nativeLabel": "English"
       },
       "es": {
-        "label": "İspanyolca",
-        "nativeLabel": "İspanyolca"
+        "label": "Spanish",
+        "nativeLabel": "Español"
       },
       "pt": {
-        "label": "Portekizce",
-        "nativeLabel": "Portekizce"
+        "label": "Portuguese",
+        "nativeLabel": "Português"
       },
       "hi": {
-        "label": "Hintçe",
+        "label": "Hindi",
         "nativeLabel": "हिन्दी"
       },
       "zh": {
-        "label": "Çince",
+        "label": "Chinese",
         "nativeLabel": "中文"
       },
       "ar": {
-        "label": "Arapça",
+        "label": "Arabic",
         "nativeLabel": "العربية"
       },
       "th": {
-        "label": "Tayca",
+        "label": "Thai",
         "nativeLabel": "ไทย"
       }
     },
-    "soon": "Yakında",
-    "ctaPrimaryLaunch": "Üretiminize Başlayın",
-    "ctaSupportingLine": "9 $ SFAIEXPLORERM planıyla başlayın. Eylül Erken Erişim kohortu şimdi oluşturuluyor.",
+    "soon": "Soon",
+    "ctaPrimaryLaunch": "Start with Go Mode",
+    "ctaSupportingLine": "",
     "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "valueProp": {
@@ -1526,208 +1529,208 @@
     "closePopup": "Açılır pencereyi kapat"
   },
   "pricing": {
-    "badge": "Basit Fiyatlandırma",
-    "title": "Explorer ile başlayın — 9 $",
-    "subtitle": "Eylül Erken Erişim kohortu oluşturuluyor. Tüm boru hattını sürtünmesiz 9 $ girişle test edin.",
+    "badge": "Simple Pricing",
+    "title": "Start with Explorer — $9",
+    "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
     "valueAnchor": {
-      "traditionalCost": "2 000",
-      "traditionalLabel": "Geleneksel ziyaret öncesi",
-      "vs": "-",
-      "sceneFlowCost": "49 -149 $",
-      "sceneFlowLabel": "SceneFlow aylık",
-      "saveBadge": "Proje başına % 90 'dan fazla tasarruf edin"
+      "traditionalCost": "$2,000+",
+      "traditionalLabel": "Traditional pre-vis",
+      "vs": "vs",
+      "sceneFlowCost": "$49-149",
+      "sceneFlowLabel": "SceneFlow monthly",
+      "saveBadge": "Save 90%+ per project"
     },
     "teamCta": {
-      "title": "Kurum içi ekip veya kurum?",
-      "description": "İletişim, L&D ve pazarlama ekipleri için bir iş akışı incelemesi rezerve edin",
-      "button": "Kitap İncelemesi"
+      "title": "In-house team or institution?",
+      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
+      "button": "Book Walkthrough"
     },
     "agencyCta": {
-      "title": "Ajans mı üretim mağazası mı?",
-      "description": "Geniş ölçekte özel krediler, SLA ve özel destek",
-      "button": "İletişime Geç"
+      "title": "Agency or production shop?",
+      "description": "Custom credits, SLA, and dedicated support at scale",
+      "button": "Contact Sales"
     },
     "byok": {
-      "title": "Kendi tuvalet malzemelerinizi getirin. ",
-      "badge": "Profesyonel ve Stüdyo Planları",
-      "description": "Vertex AI veya ElevenLabs için zaten API anahtarlarınız var mı? Bunları SceneFlow AI ile kullanın ve platform kredilerinde % 80 'e kadar tasarruf edin.",
-      "savingsHighlight": "Platform kredilerinde % 80",
+      "title": "Bring Your Own Key",
+      "badge": "Pro & Studio Plans",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
-          "title": "% 80 SceneFlow Kredi Tasarrufu",
-          "description": "Orkestrasyon ve araçlar için yalnızca % 20 platform ücreti ödeyin"
+          "title": "80% SceneFlow Credit Savings",
+          "description": "Pay only a 20% platform fee for orchestration & tools"
         },
         {
-          "title": "Kurumsal Planlardan Yararlanın",
-          "description": "Mevcut Vertex AI veya ElevenLabs hacim indirimlerinizi kullanın"
+          "title": "Leverage Corporate Plans",
+          "description": "Use your existing Vertex AI or ElevenLabs volume discounts"
         },
         {
-          "title": "Tam Kontrol",
-          "description": "Anahtarlarınız, faturalandırmanız, maliyet yönetiminiz"
+          "title": "Full Control",
+          "description": "Your keys, your billing, your cost management"
         }
       ],
-      "supportedProviders": "Desteklenen Sağlayıcılar",
+      "supportedProviders": "Supported Providers",
       "vertexName": "Google Vertex AI",
       "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Metin Okuma ve Ses Klonlama",
-      "savingsLabel": "% 80 tasarruf",
-      "onImagesVideo": "görüntülerde ve videoda",
-      "onVoiceover": "seslendirmede",
-      "note": "Gösterilen kredi tasarrufları SceneFlow platform tasarruflarıdır. Gerçekleşen toplam maliyetleriniz, her sağlayıcıdaki kişisel veya kurumsal API fiyatlandırmanıza bağlıdır."
+      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
+      "savingsLabel": "80% savings",
+      "onImagesVideo": "on images & video",
+      "onVoiceover": "on voiceover",
+      "note": "Credit savings shown are SceneFlow platform savings. Your actual total costs depend on your personal or corporate API pricing with each provider."
     },
     "creditTopUps": {
-      "title": "Daha fazla krediye mi ihtiyacınız var?",
-      "subtitle": "İstediğiniz zaman para ekleyin. Kredilerin süresi asla dolmaz.",
+      "title": "Need More Credits?",
+      "subtitle": "Top up anytime. Credits never expire.",
       "packs": [
         {
-          "label": "Başlangıç Paketi",
-          "description": "Hızlı revizyonlar için mükemmel"
+          "label": "Starter Pack",
+          "description": "Perfect for quick revisions"
         },
         {
-          "label": "Sahne Paketi",
-          "description": "Kısa bir projeyi tamamlayın"
+          "label": "Scene Pack",
+          "description": "Complete a short project"
         },
         {
-          "label": "Üretim Paketi",
-          "description": "Ana film sekansı"
+          "label": "Production Pack",
+          "description": "Major film sequence"
         },
         {
-          "label": "Stüdyo Paketi",
-          "description": "üretim kapasitesi"
+          "label": "Studio Pack",
+          "description": "Full production capacity"
         }
       ],
-      "creditsUnit": "Kredi"
+      "creditsUnit": "credits"
     },
     "calculator": {
-      "sectionTitle": "Projenizi Tahmin Edin",
-      "sectionSubtitle": "Taahhütte bulunmadan önce tam olarak ne ödeyeceğinizi bilin",
-      "title": "Proje Bütçe Hesaplayıcısı",
-      "subtitle": "Başlamadan önce kredileri tahmin edin",
-      "customize": "Parametreleri özelleştir",
-      "imagesLabel": "Oluşturulacak resimler",
-      "videoClipsLabel": "Video klipler",
-      "voiceoverLabel": "Dış ses (dakika)",
-      "byokTitle": "Kendi Anahtarınızı Getirin (BYOK)",
-      "byokBadge": "Profesyonel ve Stüdyo",
-      "byokDescription": "SceneFlow kredilerinde % 80 'e kadar tasarruf etmek için kendi API anahtarlarınızı kullanın. Yapay zeka sağlayıcılarına doğrudan ücretleri üzerinden ödeme yaparsınız.",
-      "vertexToggle": "Vertex AI (Görüntüler ve Video)",
-      "elevenLabsToggle": "ElevenLabs (Dış Ses)",
-      "imageGeneration": "Görüntü Oluşturma",
-      "videoGeneration": "Video Oluşturma",
-      "voiceover": "Seslendirme",
+      "sectionTitle": "Estimate Your Project",
+      "sectionSubtitle": "Know exactly what you'll pay before you commit",
+      "title": "Project Budget Calculator",
+      "subtitle": "Estimate credits before you start",
+      "customize": "Customize parameters",
+      "imagesLabel": "Images to generate",
+      "videoClipsLabel": "Video clips",
+      "voiceoverLabel": "Voiceover (minutes)",
+      "byokTitle": "Bring Your Own Key (BYOK)",
+      "byokBadge": "Pro & Studio",
+      "byokDescription": "Use your own API keys to save up to 80% on SceneFlow credits. You pay the AI providers directly at their rates.",
+      "vertexToggle": "Vertex AI (Images & Video)",
+      "elevenLabsToggle": "ElevenLabs (Voiceover)",
+      "imageGeneration": "Image Generation",
+      "videoGeneration": "Video Generation",
+      "voiceover": "Voiceover",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Toplam Tahmin",
-      "withTopUps": "doldurma ile",
-      "creditSavings": "SceneFlow kredi tasarrufları",
-      "savePercent": "SceneFlow kredilerinde %{percent} tasarruf edersiniz",
-      "transparency": "Tam şeffaflık: Çalışırken gerçek zamanlı kredi kullanımını göreceksiniz. Sürpriz yok - proje kapsamınızı istediğiniz zaman ayarlayın.",
-      "transparencyHighlight": "Tam şeffaflık",
-      "byokDisclaimer": "BYOK Not: Gösterilen kredi tasarrufları yalnızca SceneFlow platformu kredi indirimlerini yansıtır. Gerçek maliyetleriniz Vertex AI ve ElevenLabs fiyatlandırma planlarınıza bağlıdır. Kurumsal veya yüksek hacimli API planları ek tasarruf sağlayabilir.",
-      "byokDisclaimerHighlight": "BYOK Not:",
+      "totalEstimate": "Total Estimate",
+      "withTopUps": "with top-ups",
+      "creditSavings": "SceneFlow credit savings",
+      "savePercent": "You save {percent}% on SceneFlow credits",
+      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
+      "transparencyHighlight": "Full transparency:",
+      "byokDisclaimer": "BYOK Note: Credit savings shown reflect SceneFlow platform credit reductions only. Your actual costs depend on your Vertex AI and ElevenLabs pricing plans. Corporate or high-volume API plans may offer additional savings.",
+      "byokDisclaimerHighlight": "BYOK Note:",
       "presets": [
         {
           "id": "commercial",
-          "name": "30 sn Ticari"
+          "name": "30-sec Commercial"
         },
         {
           "id": "short",
-          "name": "2 dakikalık Kısa Film"
+          "name": "2-min Short Film"
         },
         {
           "id": "episode",
-          "name": "10 dakikalık Bölüm"
+          "name": "10-min Episode"
         },
         {
           "id": "feature",
-          "name": "90 dk Özelliği"
+          "name": "90-min Feature"
         }
       ],
-      "minSuffix": "dk"
+      "minSuffix": "min"
     },
     "tierGrid": {
-      "productionTestFlight": "Üretim Test Uçuşu",
-      "getStarted": "Hemen Başlayın",
-      "startTestFlight": "Test Uçuşunu Başlat",
-      "loading": "Yükleniyor... Lütfen bekleyin...",
-      "mostPopular": "En Popüler",
-      "creditsPerMonth": "Kredi/ay",
-      "storage": "Depolama",
-      "perMonth": "/ Aylık"
+      "productionTestFlight": "Production Test Flight",
+      "getStarted": "Get Started",
+      "startTestFlight": "Start Test Flight",
+      "loading": "Loading...",
+      "mostPopular": "Most Popular",
+      "creditsPerMonth": "Credits/mo",
+      "storage": "Storage",
+      "perMonth": "/month"
     },
     "trust": {
-      "cancelAnytime": "İstediğiniz zaman iptal edin",
-      "moneyBack": "14 Gün Para İade Garantisi",
-      "creditsNeverExpire": "Kredilerin süresi asla dolmaz (SFAIEXPLORERM paketi)"
+      "cancelAnytime": "Cancel anytime",
+      "moneyBack": "14-day money-back guarantee",
+      "creditsNeverExpire": "Credits never expire (Explorer pack)"
     },
     "plans": {
       "explorer": {
-        "name": "SFAIEXPLORERM",
-        "description": "Denemek için tek seferlik satın alma",
+        "name": "Explorer",
+        "description": "One-time purchase to try it out",
         "features": [
-          "Tek seferlik satın alım",
-          "750 kredi (asla süresi dolmaz)",
-          "5 GB depolama (30 gün)",
-          "Platforma erişim",
-          "MP4 dışa aktarma (herhangi bir çözünürlük)",
-          "Yapay zeka seslendirmesi (70 'tenfazla dil)"
+          "One-time purchase",
+          "750 credits (never expire)",
+          "5 GB storage (30 days)",
+          "Full platform access",
+          "MP4 export (any resolution)",
+          "AI voiceover (70+ languages)"
         ]
       },
       "subscriptions": [
         {
           "id": "starter",
-          "name": "Başlangıç",
-          "description": "Bireysel yaratıcılar için",
+          "name": "Starter",
+          "description": "For individual creators",
           "features": [
-            "Platforma erişim",
-            "4.500 kredi/ay dahil",
-            "25 GB aktif depolama",
-            "MP4 dışa aktarma (herhangi bir çözünürlük)",
-            "Yapay zeka seslendirmesi (70 'tenfazla dil)",
-            "E-posta desteği"
+            "Full platform access",
+            "4,500 credits/month included",
+            "25 GB active storage",
+            "MP4 export (any resolution)",
+            "AI voiceover (70+ languages)",
+            "Email support"
           ]
         },
         {
           "id": "pro",
           "name": "Pro",
-          "description": "Profesyonel yaratıcılar için",
+          "description": "For professional creators",
           "features": [
-            "Starter'daki her şey, ayrıca:",
-            "15.000 kredi/ay dahil",
-            "100 GB aktif depolama",
-            "Veo 3.1 Kalite (4K) erişimi",
-            "Karakter Tutarlılığı Motoru",
-            "Ses klonlama",
-            "BYOK (Kendi Anahtarını Getir)",
-            "3 takım koltuğu",
-            "Öncelikli destek"
+            "Everything in Starter, plus:",
+            "15,000 credits/month included",
+            "100 GB active storage",
+            "Veo 3.1 Quality (4K) access",
+            "Character Consistency Engine",
+            "Voice cloning",
+            "BYOK (Bring Your Own Key)",
+            "3 team seats",
+            "Priority support"
           ]
         },
         {
           "id": "studio",
-          "name": "STÜDYO",
-          "description": "Ekipler ve ajanslar için",
+          "name": "Studio",
+          "description": "For teams & agencies",
           "features": [
-            "PRO'daki her şey, artı:",
-            "75.000 kredi/ay dahil",
-            "500 GB aktif depolama",
-            "Veo 3.1 4K Öncelik Kuyruğu",
-            "Sınırsız Karakter Tutarlılığı",
-            "Beyaz etiket ihracatı",
-            "API erişimi",
-            "10 takım koltuğu",
-            "Özel Hesap Yöneticisi",
-            "Kurumsal SLA istek üzerine sunulur"
+            "Everything in Pro, plus:",
+            "75,000 credits/month included",
+            "500 GB active storage",
+            "Veo 3.1 4K Priority Queue",
+            "Unlimited Character Consistency",
+            "White-label exports",
+            "API access",
+            "10 team seats",
+            "Dedicated account manager",
+            "Enterprise SLA available on request"
           ]
         }
       ]
     },
-    "explorerHighlight": "Konseptten Screening Room'e kadar tüm SceneFlow STUDIO'yu deneyimlemenin en hızlı yolu.",
+    "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
     "trustBadges": [
-      "Google Cloud altyapısı",
-      "Vertex AI nesil",
-      "Whop ile güvenli ödemeler",
-      "14 Gün Para İade Garantisi"
+      "Secure payments via Whop",
+      "14-day money-back guarantee",
+      "Credits never expire (Explorer pack)",
+      "Cancel anytime"
     ]
   },
   "landingSections": {
@@ -1735,10 +1738,10 @@
     "collapseSection": "Bölümü gizle"
   },
   "finalCta": {
-    "title": "Tüm iş hattını test etmeye hazır mısınız?",
-    "subtitle": "Google destekli komut dosyası ve optimizasyon, seçtiğiniz nesil arka uç ve Screening Room incelemesi — hepsi tek bir stüdyoda. Eylül Erken Erişim kohortu şimdi oluşturuluyor — 9 $ Explorer planıyla başlayın veya Kurucu Yaratıcı erişimi için başvurun.",
-    "cta": "Üretiminize Başlayın",
-    "ctaSecondary": "Kurucu Yaratıcı Erişimi için başvurun",
+    "title": "Ready to create in Go or Director Mode?",
+    "subtitle": "Pick Go for speed or Director for control — start from the $9 Explorer plan or apply for Founding Creator access.",
+    "cta": "Start with Go Mode",
+    "ctaSecondary": "Apply for Founding Creator Access",
     "ctaSecondaryHref": "/early-access"
   },
   "footer": {
@@ -2146,5 +2149,40 @@
   },
   "keyFeatures": {
     "landingUiLanguagesLabel": "39 Dilde Kullanıcı Arayüzü ve Üretimler"
+  },
+  "twoModes": {
+    "title": "One Platform. Two Experiences.",
+    "go": {
+      "name": "SceneFlow Go",
+      "tagline": "Concept to animatic in minutes.",
+      "points": [
+        "Full intelligence and automation.",
+        "Enter a concept or script, click Go, and take a break.",
+        "Automatically handles Blueprint, structure, references, frames, audio, and animatic assembly.",
+        "Complete animatic ready in under 10 minutes.",
+        "Light natural-language revisions available on demand."
+      ],
+      "cta": "Try Go Mode"
+    },
+    "director": {
+      "name": "SceneFlow Studio",
+      "subtitle": "Director Mode",
+      "tagline": "Every visual, emotion, line, and note under your direction.",
+      "points": [
+        "Same powerful underlying AI pipeline with complete manual authorship.",
+        "Granular step-by-step control across every scene and beat.",
+        "Fine-tune visuals, character emotion, dialogue timing, and music choices.",
+        "Complete pre-visualization and master production workflow."
+      ],
+      "cta": "Launch Studio ($9)"
+    }
+  },
+  "infrastructure": {
+    "title": "Enterprise-Grade Infrastructure & Security",
+    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   }
 }

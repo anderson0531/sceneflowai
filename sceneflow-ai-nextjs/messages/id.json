@@ -26,50 +26,53 @@
     "keyFeatures": "Fitur"
   },
   "floatingNav": {
-    "compare": "Bandingkan",
-    "looksAndFormats": "Tampilan & Format",
-    "howItWorks": "Cara Kerjanya",
-    "useCases": "Kasus Penggunaan",
-    "preVisEngine": "Mesin Pra-visualisasi",
-    "platformWalkthrough": "Panduan Platform",
-    "trustSafety": "Kepercayaan &amp; Keselamatan",
+    "compare": "Compare",
+    "looksAndFormats": "Looks & Formats",
+    "howItWorks": "How It Works",
+    "useCases": "Use Cases",
+    "preVisEngine": "Pre-Vis Engine",
+    "platformWalkthrough": "Platform Walkthrough",
+    "trustSafety": "Trust & Safety",
     "platform": "Platform",
-    "pricing": "Harga"
+    "pricing": "Pricing",
+    "productionExamples": "Examples",
+    "twoModes": "Go vs Director",
+    "keyFeatures": "Key Features"
   },
   "hero": {
-    "headline": "Anda Mengarahkan Cerita. SceneFlow Mengotomatiskan Studio.",
-    "subheadline": "Kecerdasan bertenaga Google diatur pada Google Cloud - dengan generasi Google atau Kling opsional. Jalankan ide - ide Anda melalui pipa mulus dari cetak biru untuk menguasai MP4 tanpa mikro - prompting.",
+    "headline": "Click Go and take a coffee break — or step through every scene as creative director.",
+    "subheadline": "Full automation when you want speed. Complete control when you want authorship. SceneFlow delivers concept-to-master animatics in two intentional modes.",
     "audienceMicroLine": "Dibuat untuk kreator yang menginginkan hasil, dan tim yang ingin melihat cara kerjanya.",
-    "ctaSecondary": "Tonton 'Apa yang Mungkin'",
-    "ctaToolStack": "Lihat bagaimana alat ini menggantikan tumpukan alat Anda",
-    "languagePrompt": "Dengarkan pahlawan dalam bahasa Anda — saluran pipa yang sama, pasar baru",
-    "multilangHint": "Dub pahlawan dalam 7 bahasa — pipeline lengkap mendukung 70+ dalam Production Studio.",
-    "playWithNarration": "Bermain dengan narasi",
-    "tapToHear": "Ketuk untuk mendengar",
-    "fullscreen": "Layar Penuh",
+    "ctaSecondary": "Explore Director Mode",
+    "ctaToolStack": "See how it replaces your tool stack",
+    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
+    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
+    "playWithNarration": "Play with narration",
+    "tapToHear": "Tap to hear",
+    "fullscreen": "Fullscreen",
     "heroVideoLanguages": {
       "en": {
         "label": "English",
         "nativeLabel": "English"
       },
       "es": {
-        "label": "Spanyol",
-        "nativeLabel": "Spanyol"
+        "label": "Spanish",
+        "nativeLabel": "Español"
       },
       "pt": {
-        "label": "Portugis",
-        "nativeLabel": "Portugis"
+        "label": "Portuguese",
+        "nativeLabel": "Português"
       },
       "hi": {
         "label": "Hindi",
-        "nativeLabel": ""
+        "nativeLabel": "हिन्दी"
       },
       "zh": {
-        "label": "Cina",
+        "label": "Chinese",
         "nativeLabel": "中文"
       },
       "ar": {
-        "label": "Arab",
+        "label": "Arabic",
         "nativeLabel": "العربية"
       },
       "th": {
@@ -77,9 +80,9 @@
         "nativeLabel": "ไทย"
       }
     },
-    "soon": "Segera",
-    "ctaPrimaryLaunch": "Mulai Produksi Anda",
-    "ctaSupportingLine": "Mulailah dengan paket Explorer $ 9. Kohort Akses Awal September sekarang terbentuk.",
+    "soon": "Soon",
+    "ctaPrimaryLaunch": "Start with Go Mode",
+    "ctaSupportingLine": "",
     "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "valueProp": {
@@ -1526,208 +1529,208 @@
     "closePopup": "Tutup popup"
   },
   "pricing": {
-    "badge": "Harga Sederhana",
-    "title": "Mulai dengan Explorer — $ 9",
-    "subtitle": "Pembentukan kohort Akses Awal September. Uji pipa penuh dengan entri $ 9 tanpa gesekan.",
+    "badge": "Simple Pricing",
+    "title": "Start with Explorer — $9",
+    "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
     "valueAnchor": {
-      "traditionalCost": "2 000",
-      "traditionalLabel": "Pra - vis tradisional",
+      "traditionalCost": "$2,000+",
+      "traditionalLabel": "Traditional pre-vis",
       "vs": "vs",
-      "sceneFlowCost": "$ 49 -149",
-      "sceneFlowLabel": "SceneFlow bulanan",
-      "saveBadge": "Hemat 90%+ per proyek"
+      "sceneFlowCost": "$49-149",
+      "sceneFlowLabel": "SceneFlow monthly",
+      "saveBadge": "Save 90%+ per project"
     },
     "teamCta": {
-      "title": "Tim atau institusi internal?",
-      "description": "Pesan panduan alur kerja untuk tim komunikasi, L&D, dan pemasaran",
-      "button": "Pesan Peninjauan"
+      "title": "In-house team or institution?",
+      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
+      "button": "Book Walkthrough"
     },
     "agencyCta": {
-      "title": "Agensi atau toko produksi?",
-      "description": "Kredit khusus, SLA, dan dukungan khusus dalam skala besar",
-      "button": "Hubungi penjualan"
+      "title": "Agency or production shop?",
+      "description": "Custom credits, SLA, and dedicated support at scale",
+      "button": "Contact Sales"
     },
     "byok": {
-      "title": "Bawa kuncimu sendiri",
-      "badge": "Paket Pro & Studio",
-      "description": "Sudah memiliki kunci api untuk Vertex AI atau ElevenLabs? Gunakan dengan SceneFlow AI dan hemat hingga 80% untuk kredit platform.",
-      "savingsHighlight": "80% untuk kredit platform",
+      "title": "Bring Your Own Key",
+      "badge": "Pro & Studio Plans",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
-          "title": "Penghematan Kredit SceneFlow 80%",
-          "description": "Hanya membayar biaya platform 20% untuk orkestrasi & perangkat"
+          "title": "80% SceneFlow Credit Savings",
+          "description": "Pay only a 20% platform fee for orchestration & tools"
         },
         {
-          "title": "Memanfaatkan Rencana Perusahaan",
-          "description": "Gunakan diskon volume Vertex AI atau ElevenLabs yang ada"
+          "title": "Leverage Corporate Plans",
+          "description": "Use your existing Vertex AI or ElevenLabs volume discounts"
         },
         {
-          "title": "Kontrol penuh",
-          "description": "Kunci Anda, tagihan Anda, manajemen biaya Anda"
+          "title": "Full Control",
+          "description": "Your keys, your billing, your cost management"
         }
       ],
-      "supportedProviders": "Penyedia yang Didukung",
+      "supportedProviders": "Supported Providers",
       "vertexName": "Google Vertex AI",
       "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Kloning Teks - ke - Bicara & Suara",
-      "savingsLabel": "Penghematan 80%",
-      "onImagesVideo": "pada gambar & video",
-      "onVoiceover": "pada sulih suara",
-      "note": "Penghematan kredit yang ditampilkan adalah penghematan platform SceneFlow. Total biaya aktual Anda bergantung pada harga api pribadi atau perusahaan Anda dengan masing - masing penyedia."
+      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
+      "savingsLabel": "80% savings",
+      "onImagesVideo": "on images & video",
+      "onVoiceover": "on voiceover",
+      "note": "Credit savings shown are SceneFlow platform savings. Your actual total costs depend on your personal or corporate API pricing with each provider."
     },
     "creditTopUps": {
-      "title": "Perlu Lebih Banyak Kredit?",
-      "subtitle": "Isi ulang kapan saja. Kredit tidak pernah kedaluwarsa.",
+      "title": "Need More Credits?",
+      "subtitle": "Top up anytime. Credits never expire.",
       "packs": [
         {
-          "label": "PAKET AWAL",
-          "description": "Sempurna untuk revisi cepat"
+          "label": "Starter Pack",
+          "description": "Perfect for quick revisions"
         },
         {
-          "label": "Paket Adegan",
-          "description": "Selesaikan proyek singkat"
+          "label": "Scene Pack",
+          "description": "Complete a short project"
         },
         {
-          "label": "Paket Produksi",
-          "description": "Urutan film utama"
+          "label": "Production Pack",
+          "description": "Major film sequence"
         },
         {
-          "label": "Paket Studio",
-          "description": "Kapasitas Produksi"
+          "label": "Studio Pack",
+          "description": "Full production capacity"
         }
       ],
-      "creditsUnit": "saldo"
+      "creditsUnit": "credits"
     },
     "calculator": {
-      "sectionTitle": "Perkirakan Proyek Anda",
-      "sectionSubtitle": "Ketahui dengan pasti berapa yang akan Anda bayarkan sebelum Anda berkomitmen",
-      "title": "Kalkulator Anggaran Proyek",
-      "subtitle": "Perkirakan kredit sebelum Anda mulai",
-      "customize": "Sesuaikan parameter",
-      "imagesLabel": "Gambar yang akan dihasilkan",
-      "videoClipsLabel": "Klip video",
-      "voiceoverLabel": "Voiceover (menit)",
-      "byokTitle": "Bawa Kunci Anda Sendiri (BYOK)",
+      "sectionTitle": "Estimate Your Project",
+      "sectionSubtitle": "Know exactly what you'll pay before you commit",
+      "title": "Project Budget Calculator",
+      "subtitle": "Estimate credits before you start",
+      "customize": "Customize parameters",
+      "imagesLabel": "Images to generate",
+      "videoClipsLabel": "Video clips",
+      "voiceoverLabel": "Voiceover (minutes)",
+      "byokTitle": "Bring Your Own Key (BYOK)",
       "byokBadge": "Pro & Studio",
-      "byokDescription": "Gunakan kunci api Anda sendiri untuk menghemat hingga 80% pada kredit SceneFlow. Anda membayar penyedia AI secara langsung sesuai tarif mereka.",
-      "vertexToggle": "Vertex AI (Gambar & Video)",
-      "elevenLabsToggle": "ElevenLabs (Pengisi Suara)",
-      "imageGeneration": "Pembuatan Gambar",
-      "videoGeneration": "Pembuatan Video",
+      "byokDescription": "Use your own API keys to save up to 80% on SceneFlow credits. You pay the AI providers directly at their rates.",
+      "vertexToggle": "Vertex AI (Images & Video)",
+      "elevenLabsToggle": "ElevenLabs (Voiceover)",
+      "imageGeneration": "Image Generation",
+      "videoGeneration": "Video Generation",
       "voiceover": "Voiceover",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Estimasi Total",
-      "withTopUps": "dengan top - up",
-      "creditSavings": "Penghematan kredit SceneFlow",
-      "savePercent": "Anda menghemat {percent }% untuk kredit SceneFlow",
-      "transparency": "Transparansi penuh: Anda akan melihat penggunaan kredit real - time saat bekerja. Tidak ada kejutan - sesuaikan ruang lingkup proyek Anda kapan saja.",
-      "transparencyHighlight": "Transparansi penuh:",
-      "byokDisclaimer": "Catatan BYOK: Penghematan kredit yang ditampilkan hanya mencerminkan pengurangan kredit platform SceneFlow. Biaya aktual Anda bergantung pada paket harga Vertex AI dan ElevenLabs Anda. Paket api perusahaan atau volume tinggi dapat menawarkan penghematan tambahan.",
-      "byokDisclaimerHighlight": "Catatan BYOK:",
+      "totalEstimate": "Total Estimate",
+      "withTopUps": "with top-ups",
+      "creditSavings": "SceneFlow credit savings",
+      "savePercent": "You save {percent}% on SceneFlow credits",
+      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
+      "transparencyHighlight": "Full transparency:",
+      "byokDisclaimer": "BYOK Note: Credit savings shown reflect SceneFlow platform credit reductions only. Your actual costs depend on your Vertex AI and ElevenLabs pricing plans. Corporate or high-volume API plans may offer additional savings.",
+      "byokDisclaimerHighlight": "BYOK Note:",
       "presets": [
         {
           "id": "commercial",
-          "name": "Komersial 30 detik"
+          "name": "30-sec Commercial"
         },
         {
           "id": "short",
-          "name": "Film Pendek 2 menit"
+          "name": "2-min Short Film"
         },
         {
           "id": "episode",
-          "name": "Episode 10 menit"
+          "name": "10-min Episode"
         },
         {
           "id": "feature",
-          "name": "Fitur 90 menit"
+          "name": "90-min Feature"
         }
       ],
-      "minSuffix": "mnt"
+      "minSuffix": "min"
     },
     "tierGrid": {
-      "productionTestFlight": "Penerbangan Uji Produksi",
-      "getStarted": "Mulailah",
-      "startTestFlight": "Mulai Uji Penerbangan",
-      "loading": "Memuat...",
-      "mostPopular": "Terpopuler",
-      "creditsPerMonth": "Kredit/bln",
-      "storage": "Penampungan",
-      "perMonth": "/bulan"
+      "productionTestFlight": "Production Test Flight",
+      "getStarted": "Get Started",
+      "startTestFlight": "Start Test Flight",
+      "loading": "Loading...",
+      "mostPopular": "Most Popular",
+      "creditsPerMonth": "Credits/mo",
+      "storage": "Storage",
+      "perMonth": "/month"
     },
     "trust": {
-      "cancelAnytime": "Batalkan kapan saja.",
-      "moneyBack": "JAMINAN UANG KEMBALI 90 HARI",
-      "creditsNeverExpire": "Kredit tidak pernah kedaluwarsa (paket Explorer)"
+      "cancelAnytime": "Cancel anytime",
+      "moneyBack": "14-day money-back guarantee",
+      "creditsNeverExpire": "Credits never expire (Explorer pack)"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "Pembelian satu kali untuk mencobanya",
+        "description": "One-time purchase to try it out",
         "features": [
-          "- $4 Pembelian Satu Kali",
-          "750 sks (tidak pernah kedaluwarsa)",
-          "Penyimpanan 5 GB (30 hari)",
-          "Akses platform penuh",
-          "Ekspor MP4 (resolusi apa pun)",
-          "Pengisi suara AI (70+ bahasa)"
+          "One-time purchase",
+          "750 credits (never expire)",
+          "5 GB storage (30 days)",
+          "Full platform access",
+          "MP4 export (any resolution)",
+          "AI voiceover (70+ languages)"
         ]
       },
       "subscriptions": [
         {
           "id": "starter",
-          "name": "Memulai",
-          "description": "Untuk masing - masing kreator",
+          "name": "Starter",
+          "description": "For individual creators",
           "features": [
-            "Akses platform penuh",
-            "Termasuk 4.500 sks/bulan",
-            "Penyimpanan aktif 25 GB",
-            "Ekspor MP4 (resolusi apa pun)",
-            "Pengisi suara AI (70+ bahasa)",
-            "Dukungan email"
+            "Full platform access",
+            "4,500 credits/month included",
+            "25 GB active storage",
+            "MP4 export (any resolution)",
+            "AI voiceover (70+ languages)",
+            "Email support"
           ]
         },
         {
           "id": "pro",
           "name": "Pro",
-          "description": "Untuk kreator profesional",
+          "description": "For professional creators",
           "features": [
-            "Semua yang ada di Starter, plus:",
-            "Termasuk 15.000 sks/bulan",
-            "Penyimpanan aktif 100 GB",
-            "Akses Veo 3.1 Quality (4K)",
-            "Mesin Konsistensi Karakter",
-            "Kloning suara",
-            "BYOK (Bawa Kunci Sendiri)",
-            "3 kursi tim",
-            "Dukungan prioritas"
+            "Everything in Starter, plus:",
+            "15,000 credits/month included",
+            "100 GB active storage",
+            "Veo 3.1 Quality (4K) access",
+            "Character Consistency Engine",
+            "Voice cloning",
+            "BYOK (Bring Your Own Key)",
+            "3 team seats",
+            "Priority support"
           ]
         },
         {
           "id": "studio",
           "name": "Studio",
-          "description": "Untuk tim & agensi",
+          "description": "For teams & agencies",
           "features": [
-            "Semua yang ada di Pro, plus:",
-            "Termasuk 75.000 sks/bulan",
-            "Penyimpanan aktif 500 GB",
-            "Antrean Prioritas Veo 3.1 4K",
-            "Konsistensi Karakter Tidak Terbatas",
-            "Ekspor label putih",
-            "Akses API",
-            "10 kursi tim",
-            "Manajer akun khusus",
-            "SLA Enterprise tersedia berdasarkan permintaan"
+            "Everything in Pro, plus:",
+            "75,000 credits/month included",
+            "500 GB active storage",
+            "Veo 3.1 4K Priority Queue",
+            "Unlimited Character Consistency",
+            "White-label exports",
+            "API access",
+            "10 team seats",
+            "Dedicated account manager",
+            "Enterprise SLA available on request"
           ]
         }
       ]
     },
-    "explorerHighlight": "Cara tercepat untuk merasakan studio SceneFlow yang lengkap — dari konsep hingga Screening Room.",
+    "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
     "trustBadges": [
-      "Google Cloud infrastruktur",
-      "Generasi Vertex AI",
-      "Pembayaran aman melalui Whop",
-      "JAMINAN UANG KEMBALI 90 HARI"
+      "Secure payments via Whop",
+      "14-day money-back guarantee",
+      "Credits never expire (Explorer pack)",
+      "Cancel anytime"
     ]
   },
   "landingSections": {
@@ -1735,10 +1738,10 @@
     "collapseSection": "Sembunyikan bagian"
   },
   "finalCta": {
-    "title": "Siap menguji pipa lengkap?",
-    "subtitle": "Skrip dan pengoptimalan bertenaga Google, backend generasi pilihan Anda, dan tinjauan Screening Room - semuanya dalam satu studio. Kohort Akses Awal September sekarang terbentuk — mulai dengan paket Explorer $ 9 atau ajukan permohonan akses Kreator Pendiri.",
-    "cta": "Mulai Produksi Anda",
-    "ctaSecondary": "Ajukan Permohonan Akses Kreator Pendiri",
+    "title": "Ready to create in Go or Director Mode?",
+    "subtitle": "Pick Go for speed or Director for control — start from the $9 Explorer plan or apply for Founding Creator access.",
+    "cta": "Start with Go Mode",
+    "ctaSecondary": "Apply for Founding Creator Access",
     "ctaSecondaryHref": "/early-access"
   },
   "footer": {
@@ -2146,5 +2149,40 @@
   },
   "keyFeatures": {
     "landingUiLanguagesLabel": "UI dan Produksi Tersedia dalam 39 Bahasa"
+  },
+  "twoModes": {
+    "title": "One Platform. Two Experiences.",
+    "go": {
+      "name": "SceneFlow Go",
+      "tagline": "Concept to animatic in minutes.",
+      "points": [
+        "Full intelligence and automation.",
+        "Enter a concept or script, click Go, and take a break.",
+        "Automatically handles Blueprint, structure, references, frames, audio, and animatic assembly.",
+        "Complete animatic ready in under 10 minutes.",
+        "Light natural-language revisions available on demand."
+      ],
+      "cta": "Try Go Mode"
+    },
+    "director": {
+      "name": "SceneFlow Studio",
+      "subtitle": "Director Mode",
+      "tagline": "Every visual, emotion, line, and note under your direction.",
+      "points": [
+        "Same powerful underlying AI pipeline with complete manual authorship.",
+        "Granular step-by-step control across every scene and beat.",
+        "Fine-tune visuals, character emotion, dialogue timing, and music choices.",
+        "Complete pre-visualization and master production workflow."
+      ],
+      "cta": "Launch Studio ($9)"
+    }
+  },
+  "infrastructure": {
+    "title": "Enterprise-Grade Infrastructure & Security",
+    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   }
 }

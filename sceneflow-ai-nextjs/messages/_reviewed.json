@@ -25,13 +25,7 @@
     "Gemini Studio",
     "Google Flow"
   ],
-  "locales": {
-    "el": {
-      "tier": "B-mt",
-      "mt": true,
-      "scope": "productionShowcase"
-    }
-  },
+  "locales": {},
   "landingSync": {
     "provider": "mymemory",
     "scope": "landing-namespaces",
@@ -40,13 +34,19 @@
     "syncedAt": "2026-07-31T15:18:42.781Z"
   },
   "productionShowcaseSync": {
-    "provider": "deep-translator",
-    "scope": "productionShowcase",
+    "provider": "auto",
+    "scope": "landing",
     "namespaces": [
-      "productionShowcase"
+      "hero",
+      "twoModes",
+      "infrastructure",
+      "finalCta",
+      "pricing",
+      "footer",
+      "floatingNav"
     ],
     "batchSize": null,
     "batchNumber": null,
-    "syncedAt": "2026-08-01T07:59:52.262Z"
+    "syncedAt": "2026-08-02T02:47:26.013Z"
   }
 }
