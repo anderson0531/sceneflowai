@@ -1,5 +1,11 @@
 /**
+ * @deprecated Fal.ai integration is deprecated. Production uses Vertex/GCP only.
+ * Kept for one release; do not import from new code paths.
+ */
+
+/**
  * Fal.ai-hosted Kling models for Vertex policy fallback (pay-as-you-go).
+ * @deprecated Fal.ai is no longer used in production.
  */
 
 import { fal } from '@fal-ai/client'

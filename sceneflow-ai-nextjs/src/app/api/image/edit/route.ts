@@ -1,12 +1,11 @@
 /**
  * Image Edit API Route
  *
- * Instruction-based editing via Fal Kling O3 (default) or Vertex Gemini edit (rollback).
+ * Instruction-based editing via Vertex Gemini image edit.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { editImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
-import { isFalKlingImageProvider } from '@/lib/fal/config'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import {
   CHARACTER_IDENTITY_REFERENCE_INSTRUCTION,
@@ -95,7 +94,7 @@ export async function POST(request: NextRequest) {
     const modelTier = totalRefs > 3 ? 'designer' : requestedTier
     const identityRef = referenceImages.find((r) => r.imageUrl !== sourceImage)?.imageUrl
 
-    console.log(`[Image Edit API] ${isFalKlingImageProvider() ? 'Fal Kling O3' : 'Vertex Gemini'} edit: "${instruction.substring(0, 50)}..."`)
+    console.log(`[Image Edit API] Vertex Gemini edit: "${instruction.substring(0, 50)}..."`)
 
     const dualRefInstruction = buildDualReferenceInstruction(referenceImages)
     const fullInstruction = dualRefInstruction
@@ -131,8 +130,8 @@ export async function POST(request: NextRequest) {
       mode: 'instruction',
       imageUrl: permanentUrl,
       originalImageUrl: sourceImage,
-      model: isFalKlingImageProvider() ? 'fal-kling-o3' : 'vertex-gemini',
-      provider: isFalKlingImageProvider() ? 'fal-kling' : 'vertex-gemini',
+      model: 'vertex-gemini',
+      provider: 'vertex-gemini',
     })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error'
@@ -145,8 +144,8 @@ export async function GET() {
   return NextResponse.json({
     service: 'Image Edit API',
     version: '5.0.0',
-    description: 'AI-powered image editing via Fal Kling O3 (default) or Vertex Gemini edit',
-    provider: isFalKlingImageProvider() ? 'fal-kling' : 'vertex-gemini',
+    description: 'AI-powered image editing via Vertex Gemini edit',
+    provider: 'vertex-gemini',
     modes: [
       {
         mode: 'instruction',

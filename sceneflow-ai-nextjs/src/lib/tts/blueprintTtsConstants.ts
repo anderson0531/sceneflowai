@@ -4,7 +4,7 @@
 
 export const DEFAULT_BLUEPRINT_GEMINI_VOICE = 'gemini-Kore'
 
-export const DEFAULT_GEMINI_TTS_MODEL = 'gemini-3.1-flash-tts-preview'
+export const DEFAULT_GEMINI_TTS_MODEL = 'gemini-2.5-flash-tts'
 
 export function isGeminiTtsConfigured(): boolean {
   return !!(

@@ -1,5 +1,11 @@
 /**
+ * @deprecated Fal.ai integration is deprecated. Production uses Vertex/GCP only.
+ * Kept for one release; do not import from new code paths.
+ */
+
+/**
  * Fal-hosted Kling image generation (O3 Omni for references, v3 for text-only).
+ * @deprecated Fal.ai is no longer used in production.
  */
 
 import { fal } from '@fal-ai/client'

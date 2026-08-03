@@ -1,11 +1,11 @@
 /**
- * KlingSafetyGuard — mandatory Hive audit for Fal/Kling fallback output only.
+ * KlingSafetyGuard — mandatory Hive audit for direct Kling fallback output only.
  * Vertex path never invokes this module.
  */
 
 import { HiveModerationService, type HiveModerationResult } from '@/services/HiveModerationService'
 import { ADMIN_REVIEW } from '@/lib/moderation/moderationSampling'
-import { isFalKlingFallbackEnabled } from '@/lib/generation/contentPolicy'
+import { isDirectKlingFallbackEnabled } from '@/lib/kling/config'
 import { recordUserModerationViolation } from '@/lib/moderation/userModerationViolations'
 import { uploadToGCS, deleteFromGCS } from '@/lib/storage/gcsAssets'
 
@@ -42,7 +42,7 @@ export interface KlingSafetyGuardContext {
 export function isKlingHiveGuardEnabled(): boolean {
   if (process.env.KLING_HIVE_GUARD_ENABLED === 'false') return false
   if (process.env.KLING_HIVE_GUARD_ENABLED === 'true') return true
-  return isFalKlingFallbackEnabled() && HiveModerationService.isConfigured()
+  return isDirectKlingFallbackEnabled() && HiveModerationService.isConfigured()
 }
 
 /**
