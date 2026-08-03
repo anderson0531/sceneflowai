@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getUserDisplayName } from '@/lib/user/displayName'
 import { strictJsonPromptSuffix, safeParseJsonFromText } from '@/lib/safeJson'
-import { analyzeDuration, normalizeDuration } from '@/lib/treatment/duration'
+import { analyzeDuration, normalizeDuration, computeBlueprintDurationFromBeats } from '@/lib/treatment/duration'
 import { buildTreatmentPrompt } from '@/lib/treatment/prompts'
 import {
   type ContentIntent,
@@ -597,12 +597,12 @@ async function generateFilmTreatment(
       : normalizeDuration(rawBeats, targetMinutes)
     const filmTreatmentText = (parsed as any).film_treatment || parsed.synopsis || 'Comprehensive film treatment'
     
-    // Calculate total duration from beats (in seconds)
-    const totalDurationSeconds = normalizedBeats.reduce((sum: number, b: any) => sum + ((b.minutes || 1) * 60), 0)
+    const durationFromBeats = computeBlueprintDurationFromBeats(normalizedBeats)
+    const totalDurationSeconds = durationFromBeats.total_duration_seconds
     // Duration is DERIVED from the beats the model actually wrote in auto scope,
     // and equals the user's target in fixed scope.
     const estimatedMinutes = autoScope
-      ? Math.max(1, Math.round(totalDurationSeconds / 60))
+      ? durationFromBeats.estimatedDurationMinutes
       : targetMinutes
     
     // Prepare the result object
@@ -619,7 +619,7 @@ async function generateFilmTreatment(
       title: parsed.title,
       logline: parsed.logline,
       genre: parsed.genre,
-      format_length: `${totalDurationSeconds} seconds`,
+      format_length: durationFromBeats.format_length,
       author_writer: context?.userName || 'User',
       date: new Date().toLocaleString('en-US', {
         year: 'numeric',

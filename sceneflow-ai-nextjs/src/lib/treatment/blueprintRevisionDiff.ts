@@ -1,4 +1,5 @@
 import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
+import { syncBlueprintDurationFields } from '@/lib/treatment/duration'
 import {
   BLUEPRINT_FIELD_LABELS,
   type FieldDiff,
@@ -36,6 +37,14 @@ function serializeValue(value: unknown): string {
   return truncateForDiff(String(value))
 }
 
+function serializeFieldValue(field: string, value: unknown): string {
+  if (field === 'total_duration_seconds' && typeof value === 'number') {
+    const minutes = Math.max(1, Math.round(value / 60))
+    return truncateForDiff(`${minutes} min (${value} sec)`)
+  }
+  return serializeValue(value)
+}
+
 function valuesEqual(a: unknown, b: unknown): boolean {
   return serializeValue(a) === serializeValue(b)
 }
@@ -59,8 +68,8 @@ export function buildFieldDiffs(
       field,
       label: BLUEPRINT_FIELD_LABELS[field] || field,
       section: fieldToSection(field),
-      before: serializeValue(bVal),
-      after: serializeValue(aVal),
+      before: serializeFieldValue(field, bVal),
+      after: serializeFieldValue(field, aVal),
     })
   }
 
@@ -71,7 +80,7 @@ export function mergeRevisionIntoVariant(
   original: Record<string, unknown>,
   patch: Record<string, unknown>
 ): Record<string, unknown> {
-  const merged = { ...original, ...patch, updatedAt: Date.now() }
+  let merged = { ...original, ...patch, updatedAt: Date.now() }
   if (patch.narrative_reasoning && typeof patch.narrative_reasoning === 'object') {
     const prev =
       (original.narrative_reasoning as Record<string, unknown>) || {}
@@ -79,6 +88,9 @@ export function mergeRevisionIntoVariant(
       ...prev,
       ...(patch.narrative_reasoning as Record<string, unknown>),
     }
+  }
+  if (patch.beats !== undefined || Array.isArray(merged.beats)) {
+    merged = syncBlueprintDurationFields(merged)
   }
   return merged
 }

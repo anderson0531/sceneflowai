@@ -23,8 +23,27 @@ export function analyzeDuration(input: string | undefined | null, fallback: numb
   return fallback
 }
 
-export function sumBeatMinutes(beats: Beat[]): number {
+export function sumBeatMinutes(beats: Array<{ minutes?: number }>): number {
   return beats.reduce((s, b) => s + (Number(b.minutes) || 0), 0)
+}
+
+export function computeBlueprintDurationFromBeats(beats: Array<{ minutes?: number }>) {
+  const totalSeconds = Math.round(sumBeatMinutes(beats) * 60)
+  const estimatedMinutes = Math.max(1, Math.round(totalSeconds / 60))
+  return {
+    total_duration_seconds: totalSeconds,
+    estimatedDurationMinutes: estimatedMinutes,
+    format_length: `${totalSeconds} seconds`,
+  }
+}
+
+export function syncBlueprintDurationFields<T extends Record<string, unknown>>(variant: T): T {
+  const beats = variant.beats
+  if (!Array.isArray(beats) || beats.length === 0) return variant
+  return {
+    ...variant,
+    ...computeBlueprintDurationFromBeats(beats as Array<{ minutes?: number }>),
+  }
 }
 
 // Redistribute minutes to hit the target while preserving relative weights.

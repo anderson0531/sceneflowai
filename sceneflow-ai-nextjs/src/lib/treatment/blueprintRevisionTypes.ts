@@ -73,7 +73,7 @@ export const BLUEPRINT_FIELD_LABELS: Record<string, string> = {
 }
 
 export const SECTION_FIELDS: Record<BlueprintFixSection, string[]> = {
-  core: ['title', 'logline', 'genre', 'format_length', 'target_audience'],
+  core: ['title', 'logline', 'genre', 'target_audience'],
   story: ['synopsis', 'setting', 'protagonist', 'antagonist', 'act_breakdown'],
   tone: ['tone', 'tone_description', 'style', 'artStyle', 'aspectRatio', 'visual_style', 'themes', 'mood_references'],
   beats: ['beats', 'total_duration_seconds', 'estimatedDurationMinutes'],

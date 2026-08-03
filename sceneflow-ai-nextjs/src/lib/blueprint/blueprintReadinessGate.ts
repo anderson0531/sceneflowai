@@ -3,11 +3,13 @@
  */
 
 import { READY_FOR_PRODUCTION_THRESHOLD_V3 } from '@/lib/types/audienceResonance'
+import { formatBlueprintRuntime } from '@/lib/blueprint/formatBlueprintCore'
 import {
   getArtStylePresetName,
   resolveVariantArtStyle,
   resolveVariantAspectRatio,
 } from '@/lib/treatment/blueprintFoundation'
+import { computeBlueprintDurationFromBeats } from '@/lib/treatment/duration'
 import type {
   AudienceDefinition,
   PersistedBlueprintAudienceResonance,
@@ -57,12 +59,7 @@ export function evaluateBlueprintReadyChecklist(input: {
   const scoreAtTarget =
     arScore !== null && arScore >= READY_FOR_PRODUCTION_THRESHOLD_V3
 
-  const runtimeEstimate =
-    input.estimatedRuntimeMinutes != null
-      ? `~${Math.round(input.estimatedRuntimeMinutes)} min`
-      : typeof input.variant?.format_length === 'string'
-        ? String(input.variant.format_length)
-        : null
+  const runtimeEstimate = resolveRuntimeEstimate(input.variant, input.estimatedRuntimeMinutes)
 
   const artStyle = input.variant ? resolveVariantArtStyle(input.variant) : null
   const aspectRatio = input.variant ? resolveVariantAspectRatio(input.variant) : null
@@ -151,4 +148,33 @@ export function evaluateStartProductionGate(input: {
   }
 
   return { allowed: false, hardBlock: false, reasons, checklist }
+}
+
+function resolveRuntimeEstimate(
+  variant: Record<string, unknown> | null,
+  legacyEstimatedMinutes?: number | null
+): string | null {
+  const estMin = variant?.estimatedDurationMinutes
+  if (typeof estMin === 'number' && estMin > 0) {
+    return `~${Math.round(estMin)} min`
+  }
+
+  const beats = variant?.beats
+  if (Array.isArray(beats) && beats.length > 0) {
+    const { estimatedDurationMinutes } = computeBlueprintDurationFromBeats(
+      beats as Array<{ minutes?: number }>
+    )
+    return `~${estimatedDurationMinutes} min`
+  }
+
+  if (typeof variant?.format_length === 'string' && variant.format_length) {
+    const { display } = formatBlueprintRuntime(variant.format_length)
+    return display || variant.format_length
+  }
+
+  if (legacyEstimatedMinutes != null) {
+    return `~${Math.round(legacyEstimatedMinutes)} min`
+  }
+
+  return null
 }
