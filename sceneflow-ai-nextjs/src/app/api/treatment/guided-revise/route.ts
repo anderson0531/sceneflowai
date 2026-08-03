@@ -5,16 +5,21 @@ import { CreditService } from '@/services/CreditService'
 import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
 import { safeParseJsonFromText } from '@/lib/safeJson'
 import { generateText } from '@/lib/vertexai/gemini'
-import type { BlueprintAudienceRecommendation, BlueprintFixSection } from '@/lib/types/audienceResonance'
+import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
 import type { GuidedReviseRequest, BlueprintChangePlan } from '@/lib/treatment/blueprintRevisionTypes'
 import {
   buildPlannerPrompt,
   buildRewriterPrompt,
   buildBalanceMicroPassPrompt,
   inferPlanFromFocus,
+  inferPlanFromRecommendations,
   trimVariantForPrompt,
   trimRecommendationsForPrompt,
 } from '@/lib/treatment/blueprintRevisionPrompts'
+import {
+  stripHeavyFieldsFromVariant,
+  reattachPreservedAssets,
+} from '@/lib/treatment/blueprintVariantSanitize'
 import {
   buildFieldDiffs,
   mergeRevisionIntoVariant,
@@ -26,6 +31,7 @@ export const runtime = 'nodejs'
 export const maxDuration = 180
 
 const CREDIT_COST = BLUEPRINT_CREDITS.BLUEPRINT_GUIDED_REVISE
+const MAX_GEMINI_JSON_CHARS = 150_000
 
 const MAX_PATCH_FIELD_LEN: Record<string, number> = {
   synopsis: 8000,
@@ -89,9 +95,39 @@ async function runGeminiJson(
     responseMimeType: 'application/json',
     timeoutMs: 120_000,
   })
-  const text = result?.text || '{}'
+  let text = result?.text || '{}'
+  if (text.length > MAX_GEMINI_JSON_CHARS) {
+    console.warn(
+      `[Guided Revise] Model response too large (${text.length} chars), truncating to ${MAX_GEMINI_JSON_CHARS}`
+    )
+    text = text.slice(0, MAX_GEMINI_JSON_CHARS)
+  }
   const parsed = safeParseJsonFromText(text)
   return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : null
+}
+
+function resolveInitialPlan(
+  focusScope: BlueprintFixSection | 'all' | undefined,
+  intentText: string,
+  selectedRecs: ReturnType<typeof trimRecommendationsForPrompt>
+): BlueprintChangePlan {
+  return (
+    inferPlanFromFocus(focusScope, intentText) ??
+    inferPlanFromRecommendations(selectedRecs, intentText) ??
+    normalizePlan({
+      primaryGoal: intentText,
+      sectionsToUpdate: ['story'],
+    })
+  )
+}
+
+function shouldRunPlanner(
+  focusScope: BlueprintFixSection | 'all' | undefined,
+  selectedRecs: ReturnType<typeof trimRecommendationsForPrompt>
+): boolean {
+  if (inferPlanFromFocus(focusScope, '')) return false
+  if (inferPlanFromRecommendations(selectedRecs, '')) return false
+  return true
 }
 
 export async function POST(request: NextRequest) {
@@ -104,7 +140,7 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json()) as GuidedReviseRequest
     const {
-      variant: rawVariant,
+      variant: incomingVariant,
       userIntent = '',
       selectedRecommendationIds = [],
       resonanceRecommendations = [],
@@ -112,15 +148,18 @@ export async function POST(request: NextRequest) {
       contentIntent: bodyIntent,
     } = body
 
-    const contentIntent =
-      bodyIntent ?? resolveContentIntent(String(rawVariant.genre || ''))
-
-    if (!rawVariant || typeof rawVariant !== 'object') {
+    if (!incomingVariant || typeof incomingVariant !== 'object') {
       return NextResponse.json(
         { success: false, message: 'variant is required' },
         { status: 400 }
       )
     }
+
+    const { variant: rawVariant, preservedCharacterAssets } =
+      stripHeavyFieldsFromVariant(incomingVariant)
+
+    const contentIntent =
+      bodyIntent ?? resolveContentIntent(String(rawVariant.genre || ''))
 
     const variant = trimVariantForPrompt(rawVariant)
 
@@ -158,17 +197,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Step A: Planner (skip when scoped to one section — reduces memory + one fewer LLM call)
-    let plan =
-      inferPlanFromFocus(focusScope, intentText) ??
-      normalizePlan({
-        primaryGoal: intentText,
-        sectionsToUpdate: ['story'],
-      })
+    let plan = resolveInitialPlan(focusScope, intentText, selectedRecs)
 
-    if (!inferPlanFromFocus(focusScope, intentText)) {
-      const plannerPrompt = buildPlannerPrompt(variant, intentText, selectedRecs, focusScope, contentIntent)
-      const planRaw = await runGeminiJson(plannerPrompt, 1536)
+    if (shouldRunPlanner(focusScope, selectedRecs)) {
+      const plannerPrompt = buildPlannerPrompt(
+        variant,
+        intentText,
+        selectedRecs,
+        focusScope,
+        contentIntent
+      )
+      const planRaw = await runGeminiJson(plannerPrompt, 1024)
       plan = normalizePlan(
         planRaw ?? { primaryGoal: intentText, sectionsToUpdate: ['story'] }
       )
@@ -180,9 +219,14 @@ export async function POST(request: NextRequest) {
         : ['story']
     }
 
-    // Step B: Balanced rewriter
-    const rewriterPrompt = buildRewriterPrompt(variant, plan, intentText, selectedRecs, contentIntent)
-    let patch = await runGeminiJson(rewriterPrompt, 6144)
+    const rewriterPrompt = buildRewriterPrompt(
+      variant,
+      plan,
+      intentText,
+      selectedRecs,
+      contentIntent
+    )
+    let patch = await runGeminiJson(rewriterPrompt, 4096)
 
     if (!patch) {
       return NextResponse.json(
@@ -195,8 +239,14 @@ export async function POST(request: NextRequest) {
     const missing = detectMissingBalanceSections(plan.sectionsToUpdate, patch)
     if (missing.length > 0) {
       incompleteBalance = true
-      const microPrompt = buildBalanceMicroPassPrompt(variant, plan, patch, missing, contentIntent)
-      const microPatch = await runGeminiJson(microPrompt, 3072)
+      const microPrompt = buildBalanceMicroPassPrompt(
+        variant,
+        plan,
+        patch,
+        missing,
+        contentIntent
+      )
+      const microPatch = await runGeminiJson(microPrompt, 2048)
       if (microPatch) {
         patch = { ...patch, ...microPatch }
       }
@@ -209,7 +259,8 @@ export async function POST(request: NextRequest) {
       | undefined
     const { narrative_reasoning: _nr, ...fieldPatch } = patch
 
-    const revisedVariant = mergeRevisionIntoVariant(rawVariant, fieldPatch)
+    const merged = mergeRevisionIntoVariant(rawVariant, fieldPatch)
+    const revisedVariant = reattachPreservedAssets(merged, preservedCharacterAssets)
     const diff = buildFieldDiffs(variant, trimVariantForPrompt(revisedVariant))
 
     const changePlan: BlueprintChangePlan = {

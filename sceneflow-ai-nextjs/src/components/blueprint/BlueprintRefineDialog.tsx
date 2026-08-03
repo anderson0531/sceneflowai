@@ -28,6 +28,8 @@ import {
   type BlueprintSection,
 } from '@/lib/constants/blueprint-optimization'
 import type { BlueprintChangePlan, FieldDiff } from '@/lib/treatment/blueprintRevisionTypes'
+import { stripHeavyFieldsFromVariant } from '@/lib/treatment/blueprintVariantSanitize'
+import { readJsonSafe } from '@/lib/readJsonSafe'
 import { cn } from '@/lib/utils'
 import type { ContentIntent } from '@/lib/content/contentIntent'
 import { resolveContentIntent } from '@/lib/content/contentIntent'
@@ -317,12 +319,13 @@ export function BlueprintRefineDialog({
 
     setIsGenerating(true)
     try {
+      const { variant: payloadVariant } = stripHeavyFieldsFromVariant(variant)
       const response = await fetch('/api/treatment/guided-revise', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          variant,
+          variant: payloadVariant,
           userIntent: combinedIntent,
           selectedRecommendationIds: [...selectedRecIds],
           resonanceRecommendations: recs,
@@ -332,18 +335,22 @@ export function BlueprintRefineDialog({
             contentIntentProp ?? resolveContentIntent(String(variant?.genre || '')),
         }),
       })
-      const data = await response.json()
+      const data = await readJsonSafe(response)
       if (!response.ok) {
-        throw new Error(data.message || 'Revision failed')
+        const fallback =
+          response.status === 503 || response.status === 504 || response.status === 502
+            ? 'Revision ran out of memory or timed out — try a narrower focus (e.g. Story only).'
+            : 'Revision failed'
+        throw new Error(String(data.message || fallback))
       }
       if (data.success && data.revisedVariant) {
-        setPreviewVariant(data.revisedVariant)
-        setChangePlan(data.changePlan ?? null)
-        setDiff(data.diff ?? [])
+        setPreviewVariant(data.revisedVariant as Record<string, unknown>)
+        setChangePlan((data.changePlan as BlueprintChangePlan) ?? null)
+        setDiff((data.diff as FieldDiff[]) ?? [])
         setPhase('preview')
         toast.success('Balanced revision ready — review before applying')
       } else {
-        throw new Error(data.message || 'Revision failed')
+        throw new Error(String(data.message || 'Revision failed'))
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to generate revision')

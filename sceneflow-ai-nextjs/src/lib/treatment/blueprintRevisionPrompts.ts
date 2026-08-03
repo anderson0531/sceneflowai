@@ -121,6 +121,50 @@ function pickVariantFields(
   return out
 }
 
+/** Infer plan from audience resonance recommendations (skips planner LLM when possible). */
+export function inferPlanFromRecommendations(
+  recs: BlueprintAudienceRecommendation[],
+  intentText: string
+): BlueprintChangePlan | null {
+  if (!recs.length) return null
+
+  const fixSections = recs
+    .map((r) => r.fixSection)
+    .filter((s): s is BlueprintFixSection => Boolean(s))
+
+  if (fixSections.length === 0) return null
+
+  const uniqueSections = [...new Set(fixSections)]
+
+  if (uniqueSections.length === 1) {
+    return inferPlanFromFocus(uniqueSections[0], intentText)
+  }
+
+  const sections = new Set<BlueprintFixSection>(uniqueSections)
+  if (sections.has('characters')) {
+    sections.add('story')
+    sections.add('beats')
+  }
+  if (sections.has('story')) {
+    sections.add('beats')
+  }
+  if (sections.has('beats')) {
+    sections.add('story')
+  }
+
+  return {
+    primaryGoal: truncateStr(intentText, 300) || 'Apply audience resonance recommendations',
+    sectionsToUpdate: [...sections],
+    crossSectionDependencies: recs
+      .flatMap((r) => r.impactSections ?? [])
+      .filter((s): s is BlueprintFixSection =>
+        ['core', 'story', 'tone', 'beats', 'characters'].includes(s)
+      ),
+    preserveConstraints: ['Preserve title unless user requests a rename'],
+    coherenceActions: [`Reconcile ${[...sections].join(', ')} from resonance fixes`],
+  }
+}
+
 /** Skip planner LLM call when user scoped a single section (saves memory + latency). */
 export function inferPlanFromFocus(
   focusScope: BlueprintFixSection | 'all' | undefined,
