@@ -1,5 +1,5 @@
 import { sequelize } from '@/config/database'
-import Project from '@/models/Project'
+import { assertProjectAccess } from '@/lib/projectAccess'
 import type { PersistedBlueprintAudienceResonance } from '@/lib/types/audienceResonance'
 
 /**
@@ -8,22 +8,17 @@ import type { PersistedBlueprintAudienceResonance } from '@/lib/types/audienceRe
 export async function persistBlueprintARToProject(
   projectId: string,
   persisted: PersistedBlueprintAudienceResonance,
-  userId?: string
+  ownerUserId: string,
+  legacyOwnerId?: string | null
 ): Promise<void> {
   await sequelize.authenticate()
 
-  const project = await Project.findByPk(projectId, {
-    attributes: ['id', 'user_id', 'metadata'],
-  })
-
-  if (!project) {
-    throw new Error(`Project not found: ${projectId}`)
+  const access = await assertProjectAccess(projectId, ownerUserId, legacyOwnerId)
+  if (!access.ok) {
+    throw new Error(access.error)
   }
 
-  if (userId && project.user_id !== userId) {
-    throw new Error('Forbidden')
-  }
-
+  const project = access.project
   const existing = (project.metadata || {}) as Record<string, unknown>
   const mergedMetadata: Record<string, unknown> = {
     ...existing,

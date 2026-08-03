@@ -36,6 +36,7 @@ import type { OpenBlueprintRefineOptions } from '@/lib/blueprint/openBlueprintRe
 import { blueprintCategoryToSection, scrollToBlueprintSection } from '@/lib/blueprint/blueprintProgress'
 import { BLUEPRINT_COPY } from '@/lib/blueprint/blueprintGlossary'
 import { buildBlueprintARNarrationText } from '@/lib/blueprint/arNarrationText'
+import { legacyOwnerIdFromStorage } from '@/lib/blueprint/createBlueprintShare'
 import { resolveContentIntent, type ContentIntent } from '@/lib/content/contentIntent'
 import {
   getScoreTextClassName,
@@ -252,6 +253,7 @@ export function AudienceResonancePanelV3({
             character_descriptions: treatment.character_descriptions,
           },
           audienceDefinition,
+          legacyOwnerId: legacyOwnerIdFromStorage(),
           genre: intent.primaryGenre,
           tone: intent.toneProfile,
           contentIntent,
@@ -284,6 +286,9 @@ export function AudienceResonancePanelV3({
           (savedBlueprintAR?.iterationCount ?? 0) + 1
         )
         onAnalysisComplete?.(persisted)
+        if (projectId && data.persistedToProject === false) {
+          toast.warning('Analysis complete, but could not save to your project. Try again or refresh.')
+        }
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Analysis failed'

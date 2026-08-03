@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { generateText } from '@/lib/vertexai/gemini'
+import { getAuthenticatedUserId } from '@/lib/projectAccess'
 import { safeParseJsonFromText } from '@/lib/safeJson'
 import { CreditService } from '@/services/CreditService'
 import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
@@ -56,6 +55,8 @@ export interface AudienceResonanceRequestBody {
   audienceDefinition: AudienceDefinition
   /** When set, analysis is merged into project.metadata in the database */
   projectId?: string
+  /** Pre-login localStorage owner id for legacy project ownership migration */
+  legacyOwnerId?: string
   /** Genre/tone context only — not part of audience definition */
   genre?: string
   tone?: string
@@ -177,8 +178,7 @@ export async function POST(request: NextRequest) {
   const reqId = crypto.randomUUID()
 
   try {
-    const session = await getServerSession(authOptions as any).catch(() => null)
-    const userId = (session?.user as { id?: string })?.id
+    const userId = await getAuthenticatedUserId(request)
 
     if (!userId) {
       return NextResponse.json(
@@ -290,9 +290,16 @@ export async function POST(request: NextRequest) {
       body.iteration ?? 1
     )
 
+    let persistedToProject = false
     if (body.projectId && !body.projectId.startsWith('new-project')) {
       try {
-        await persistBlueprintARToProject(body.projectId, persisted, userId)
+        await persistBlueprintARToProject(
+          body.projectId,
+          persisted,
+          userId,
+          body.legacyOwnerId
+        )
+        persistedToProject = true
       } catch (persistErr) {
         console.error('[Blueprint AR v3] Failed to persist analysis to project:', persistErr)
       }
@@ -303,6 +310,7 @@ export async function POST(request: NextRequest) {
         success: true,
         analysis,
         persisted,
+        persistedToProject,
         readyForProduction: analysis.isReadyForProduction,
         iteration: body.iteration ?? 1,
       },

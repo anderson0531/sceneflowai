@@ -16,6 +16,8 @@ function legacyOwnerIdFromStorage(): string | undefined {
   return id && id.length > 0 ? id : undefined
 }
 
+export { legacyOwnerIdFromStorage }
+
 export type CreateBlueprintShareResult =
   | {
       success: true
