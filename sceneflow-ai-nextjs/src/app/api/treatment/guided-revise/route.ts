@@ -33,6 +33,31 @@ export const maxDuration = 180
 
 const CREDIT_COST = BLUEPRINT_CREDITS.BLUEPRINT_GUIDED_REVISE
 const MAX_GEMINI_JSON_CHARS = 150_000
+const MAX_BODY_BYTES = 3 * 1024 * 1024
+/** With Fluid Compute one instance serves concurrent requests; cap them so retries can't stack. */
+const MAX_CONCURRENT_REVISIONS = 2
+/** Skip the optional balance micro-pass when past this elapsed time so we finish inside maxDuration. */
+const ROUTE_DEADLINE_MS = 120_000
+
+let inFlightRevisions = 0
+
+// Identifies which build produced these logs (previews vs production)
+console.log(
+  `[Guided Revise] Module init (commit=${process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 8) ?? 'local'})`
+)
+
+function logHeap(label: string, extra?: Record<string, number>) {
+  const { heapUsed, rss } = process.memoryUsage()
+  const mb = (n: number) => Math.round(n / 1024 / 1024)
+  const extras = extra
+    ? ` ${Object.entries(extra)
+        .map(([k, v]) => `${k}=${v}`)
+        .join(' ')}`
+    : ''
+  console.log(
+    `[Guided Revise][mem] ${label}: heapUsed=${mb(heapUsed)}MB rss=${mb(rss)}MB inFlight=${inFlightRevisions}${extras}`
+  )
+}
 
 const MAX_PATCH_FIELD_LEN: Record<string, number> = {
   synopsis: 8000,
@@ -85,18 +110,25 @@ function capPatchSize(patch: Record<string, unknown>): Record<string, unknown> {
 }
 
 async function runGeminiJson(
+  label: string,
   prompt: string,
   maxOutputTokens: number
 ): Promise<Record<string, unknown> | null> {
+  logHeap(`before ${label}`, { promptChars: prompt.length })
+  // maxRetries 1 + 90s timeout: default 3 retries x 120s could retain in-flight
+  // state for ~8 minutes, long past the 180s maxDuration, stacking memory on
+  // the warm instance when users retry.
   const result = await generateText(prompt, {
     model: 'gemini-2.5-flash',
     temperature: 0.3,
     maxOutputTokens,
     thinkingBudget: 0,
     responseMimeType: 'application/json',
-    timeoutMs: 120_000,
+    timeoutMs: 90_000,
+    maxRetries: 1,
   })
   let text = result?.text || '{}'
+  logHeap(`after ${label}`, { responseChars: text.length })
   if (text.length > MAX_GEMINI_JSON_CHARS) {
     console.warn(
       `[Guided Revise] Model response too large (${text.length} chars), truncating to ${MAX_GEMINI_JSON_CHARS}`
@@ -132,14 +164,58 @@ function shouldRunPlanner(
 }
 
 export async function POST(request: NextRequest) {
+  const startedAt = Date.now()
+
+  if (inFlightRevisions >= MAX_CONCURRENT_REVISIONS) {
+    logHeap('rejected: concurrency cap')
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          'A revision is already in progress — wait for it to finish before retrying.',
+        code: 'too_many_revisions',
+      },
+      { status: 429 }
+    )
+  }
+
+  inFlightRevisions++
   try {
+    logHeap('request start')
+
     const session = await getServerSession(authOptions as any).catch(() => null)
     const userId = (session?.user as { id?: string })?.id
     if (!userId) {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = (await request.json()) as GuidedReviseRequest
+    const rawBody = await request.text()
+    const bodyBytes = Buffer.byteLength(rawBody, 'utf8')
+    logHeap('after body read', { bodyBytes })
+
+    if (bodyBytes > MAX_BODY_BYTES) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            'Blueprint payload is too large to revise. Remove embedded images from the blueprint and try again.',
+          code: 'payload_too_large',
+          bodyBytes,
+        },
+        { status: 413 }
+      )
+    }
+
+    let body: GuidedReviseRequest
+    try {
+      body = JSON.parse(rawBody) as GuidedReviseRequest
+    } catch {
+      return NextResponse.json(
+        { success: false, message: 'Invalid JSON body' },
+        { status: 400 }
+      )
+    }
+
     const {
       variant: incomingVariant,
       userIntent = '',
@@ -158,6 +234,7 @@ export async function POST(request: NextRequest) {
 
     const { variant: rawVariant, preservedCharacterAssets } =
       stripHeavyFieldsFromVariant(incomingVariant)
+    logHeap('after strip')
 
     const contentIntent =
       bodyIntent ?? resolveContentIntent(String(rawVariant.genre || ''))
@@ -208,7 +285,7 @@ export async function POST(request: NextRequest) {
         focusScope,
         contentIntent
       )
-      const planRaw = await runGeminiJson(plannerPrompt, 1024)
+      const planRaw = await runGeminiJson('planner', plannerPrompt, 1024)
       plan = normalizePlan(
         planRaw ?? { primaryGoal: intentText, sectionsToUpdate: ['story'] }
       )
@@ -227,7 +304,7 @@ export async function POST(request: NextRequest) {
       selectedRecs,
       contentIntent
     )
-    let patch = await runGeminiJson(rewriterPrompt, 4096)
+    let patch = await runGeminiJson('rewriter', rewriterPrompt, 4096)
 
     if (!patch) {
       return NextResponse.json(
@@ -240,16 +317,23 @@ export async function POST(request: NextRequest) {
     const missing = detectMissingBalanceSections(plan.sectionsToUpdate, patch)
     if (missing.length > 0) {
       incompleteBalance = true
-      const microPrompt = buildBalanceMicroPassPrompt(
-        variant,
-        plan,
-        patch,
-        missing,
-        contentIntent
-      )
-      const microPatch = await runGeminiJson(microPrompt, 2048)
-      if (microPatch) {
-        patch = { ...patch, ...microPatch }
+      const elapsedMs = Date.now() - startedAt
+      if (elapsedMs > ROUTE_DEADLINE_MS) {
+        console.warn(
+          `[Guided Revise] Skipping balance micro-pass at ${elapsedMs}ms to stay inside maxDuration`
+        )
+      } else {
+        const microPrompt = buildBalanceMicroPassPrompt(
+          variant,
+          plan,
+          patch,
+          missing,
+          contentIntent
+        )
+        const microPatch = await runGeminiJson('micro-pass', microPrompt, 2048)
+        if (microPatch) {
+          patch = { ...patch, ...microPatch }
+        }
       }
     }
 
@@ -263,6 +347,7 @@ export async function POST(request: NextRequest) {
     const merged = mergeRevisionIntoVariant(rawVariant, fieldPatch)
     const revisedVariant = reattachPreservedAssets(merged, preservedCharacterAssets)
     const diff = buildFieldDiffs(variant, trimVariantForPrompt(revisedVariant))
+    logHeap('before response', { elapsedMs: Date.now() - startedAt })
 
     const changePlan: BlueprintChangePlan = {
       ...plan,
@@ -310,5 +395,7 @@ export async function POST(request: NextRequest) {
       },
       { status: classified.status }
     )
+  } finally {
+    inFlightRevisions = Math.max(0, inFlightRevisions - 1)
   }
 }

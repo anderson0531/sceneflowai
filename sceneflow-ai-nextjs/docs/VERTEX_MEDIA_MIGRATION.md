@@ -11,13 +11,13 @@ Production image and video generation uses **Vertex AI** (`aiplatform.googleapis
 
 ## Image routing
 
-All production image generation uses **Vertex AI** (Imagen 4 / Gemini image). Fal.ai-hosted Kling is deprecated and no longer routed.
+All production image generation uses **Gemini Image on Vertex** (`generateContent`). Fal.ai-hosted Kling is deprecated and no longer routed. **All Imagen `:predict` endpoints were retired by Google on 2026-06-30** and return 404 — `callVertexAIImagen` now throws `ImagenRetiredError`.
 
 | Use case | Implementation |
 |----------|----------------|
-| Reference / character lock | `generateVertexGeminiImage` in `src/lib/vertexai/vertexImageClient.ts` |
-| Text-only (eco / standard) | Imagen 4 via `callVertexAIImagen` when `VERTEX_USE_IMAGEN_4` is not `false` |
-| Legacy shim imports | `@/lib/gemini/geminiStudioImageClient` → Vertex only |
+| Reference / character lock | `generateVertexGeminiImage` in `src/lib/vertexai/vertexImageClient.ts` (`gemini-3-pro-image-preview`, falls back to `gemini-2.5-flash-image`) |
+| Text-only (eco tier) | `generateVertexGeminiImage` with `gemini-2.5-flash-image` (GA) |
+| Legacy shim imports | `@/lib/gemini/imageClient` / `@/lib/gemini/geminiStudioImageClient` → Gemini Image only |
 
 ## Video routing
 
@@ -32,8 +32,29 @@ After up to `VEO_POLICY_MAX_ATTEMPTS` (default 3) Vertex policy failures on **vi
 
 Image policy exhaustion returns a clear `ContentPolicyExhaustedError` — no Fal fallback.
 
+## Node heap sizing on Vercel (OOM prevention)
+
+Node does **not** size its V8 heap from the Vercel function `memory` setting: a function with
+`memory: 3009` still gets the default old-space cap (~1.8–1.9 GB), which is where
+`/api/treatment/guided-revise` OOMed (`FATAL ERROR: Ineffective mark-compacts near heap limit`).
+
+Set a project Environment Variable in the Vercel dashboard (all environments):
+
+```bash
+NODE_OPTIONS=--max-old-space-size=2560
+```
+
+- 2560 MB keeps ~15% headroom under the 3009 MB configured for the heaviest functions.
+- Caveat: functions still on the 2048 MB default that actually exceed physical RAM will be
+  killed by the kernel (exit 137) instead of throwing a JS OOM — the user-visible result is
+  the same 500, so this trade-off is acceptable.
+- `guided-revise` also logs `[Guided Revise][mem]` heap checkpoints (request start, body size,
+  around each LLM call, before response) plus the build commit SHA at module init — use these
+  to pinpoint where memory jumps if an OOM recurs.
+
 ## Verification
 
 1. Scene with character refs: logs show `aiplatform.googleapis.com`, not `generativelanguage.googleapis.com`.
 2. Continuous beat EXT completes on Vertex without `forceProvider: 'gemini'`.
 3. Failed policy attempts do not charge segment video credits until blob upload succeeds.
+4. `GET /api/diagnostic/vertexai` returns ok using `gemini-2.5-flash-image`.
