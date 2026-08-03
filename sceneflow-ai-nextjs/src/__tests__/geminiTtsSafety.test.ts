@@ -16,9 +16,9 @@ describe('geminiTtsSafety', () => {
     }
   })
 
-  it('defaults to BLOCK_NONE when env is unset', () => {
+  it('defaults to GOOGLE_DEFAULT when env is unset', () => {
     delete process.env.GEMINI_TTS_SAFETY_THRESHOLD
-    expect(getGeminiTtsSafetyThreshold()).toBe('BLOCK_NONE')
+    expect(getGeminiTtsSafetyThreshold()).toBe('GOOGLE_DEFAULT')
   })
 
   it('returns GOOGLE_DEFAULT for empty or explicit GOOGLE_DEFAULT', () => {
@@ -34,12 +34,17 @@ describe('geminiTtsSafety', () => {
     expect(getGeminiTtsSafetyThreshold('OFF')).toBe('OFF')
   })
 
-  it('falls back to BLOCK_NONE for invalid values', () => {
-    expect(getGeminiTtsSafetyThreshold('BLOCK_EVERYTHING')).toBe('BLOCK_NONE')
+  it('falls back to GOOGLE_DEFAULT for invalid values', () => {
+    expect(getGeminiTtsSafetyThreshold('BLOCK_EVERYTHING')).toBe('GOOGLE_DEFAULT')
   })
 
-  it('buildGeminiTtsAdvancedVoiceOptions returns 4-category BLOCK_NONE payload by default', () => {
-    const opts = buildGeminiTtsAdvancedVoiceOptions()
+  it('buildGeminiTtsAdvancedVoiceOptions omits advancedVoiceOptions by default', () => {
+    delete process.env.GEMINI_TTS_SAFETY_THRESHOLD
+    expect(buildGeminiTtsAdvancedVoiceOptions()).toBeUndefined()
+  })
+
+  it('buildGeminiTtsAdvancedVoiceOptions returns a 4-category payload for an explicit threshold', () => {
+    const opts = buildGeminiTtsAdvancedVoiceOptions('BLOCK_NONE')
     expect(opts).toBeDefined()
     expect(opts?.safetySettings.settings).toHaveLength(4)
     expect(opts?.safetySettings.settings.map((s) => s.category)).toEqual([

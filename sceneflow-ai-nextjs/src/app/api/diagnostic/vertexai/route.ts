@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getVertexAIAuthToken } from '@/lib/vertexai/client'
+import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 
 export const runtime = 'nodejs'
 
@@ -57,11 +58,12 @@ export async function GET(_req: NextRequest) {
       return NextResponse.json(results, { status: 500 })
     }
 
-    // 4. Test predict endpoint with Imagen 3
-    const model = 'imagen-3.0-generate-001'
-    const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:predict`
+    // 4. Test the Gemini Image endpoint (Imagen endpoints were retired 2026-06-30)
+    const model = GEMINI_IMAGE_MODELS.flash
+    const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
+    results.model = model
     results.testEndpoint = endpoint
-    
+
     try {
       const token = await getVertexAIAuthToken()
       const testRes = await fetch(endpoint, {
@@ -71,8 +73,11 @@ export async function GET(_req: NextRequest) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          instances: [{ prompt: 'test diagnostic image' }],
-          parameters: { sampleCount: 1, aspectRatio: '1:1' }
+          contents: [{ role: 'user', parts: [{ text: 'test diagnostic image' }] }],
+          generationConfig: {
+            responseModalities: ['TEXT', 'IMAGE'],
+            imageConfig: { aspectRatio: '1:1' },
+          },
         })
       })
       
@@ -86,7 +91,7 @@ export async function GET(_req: NextRequest) {
         if (testRes.status === 403) {
           results.hints.push(`IAM permission denied. Run: gcloud projects add-iam-policy-binding ${projectId} --member="serviceAccount:${results.serviceAccount}" --role="roles/aiplatform.user"`)
         } else if (testRes.status === 404) {
-          results.hints.push(`Model or endpoint not found. Check region (${location}) supports Imagen 3`)
+          results.hints.push(`Model ${model} not found. Check that region ${location} serves Gemini Image.`)
         }
       } else {
         results.ok = true

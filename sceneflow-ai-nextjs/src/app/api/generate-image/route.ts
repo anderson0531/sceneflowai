@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getVertexAIAuthToken } from '@/lib/vertexai/client';
-import { getImagenSafetyFilterLevel, getImagenPersonGeneration } from '@/lib/vertexai/safety';
+import { generateImageWithGemini } from '@/lib/gemini/imageClient';
+import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig';
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -80,60 +80,31 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: 'OpenAI image generation failed', traceId }, { status: 500 })
       }
 
-      // Use Vertex AI Imagen for image generation
-      const accessToken = await getVertexAIAuthToken();
+      // Gemini Image on Vertex (Imagen endpoints were retired 2026-06-30)
       let imageUrl = '';
       const images: { dataUrl: string; mimeType: string }[] = [];
-      let selectedModel = 'imagen-3.0-generate-001';
-      let providerUsed: 'imagen' | 'openai' | 'none' = 'none';
+      const selectedModel = GEMINI_IMAGE_MODELS.flash;
+      let providerUsed: 'vertex-gemini' | 'openai' | 'none' = 'none';
       let primaryStatus = 0;
       let primaryBodyText: string | undefined;
 
-      // Try Imagen 3.0 via Vertex AI
       try {
-        const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${selectedModel}:predict`;
-        
-        const requestBody = {
-          instances: [{
-            prompt: enhancedPrompt
-          }],
-          parameters: {
-            sampleCount: 1,
-            aspectRatio: '16:9',
-            safetySetting: getImagenSafetyFilterLevel(),
-            personGeneration: getImagenPersonGeneration()
-          }
-        };
-
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(requestBody)
+        const dataUrl = await generateImageWithGemini(enhancedPrompt, {
+          aspectRatio: '16:9',
+          numberOfImages: 1,
+          quality: 'fast',
         });
 
-        primaryStatus = response.status;
-        
-        if (response.ok) {
-          const data = await response.json();
-          const predictions = data?.predictions;
-          
-          if (predictions && predictions.length > 0) {
-            const imageBytes = predictions[0]?.bytesBase64Encoded;
-            if (imageBytes) {
-              imageUrl = `data:image/png;base64,${imageBytes}`;
-              images.push({ dataUrl: imageUrl, mimeType: 'image/png' });
-              providerUsed = 'imagen';
-            }
-          }
-        } else {
-          try { primaryBodyText = await response.text(); } catch {}
-          console.error('🎨 Vertex AI Imagen error:', primaryBodyText);
+        const match = dataUrl.match(/^data:([^;]+);base64,/);
+        if (match) {
+          imageUrl = dataUrl;
+          images.push({ dataUrl, mimeType: match[1] });
+          providerUsed = 'vertex-gemini';
+          primaryStatus = 200;
         }
-      } catch (imagenError) {
-        console.error('🎨 Vertex AI Imagen request failed:', imagenError);
+      } catch (imageError) {
+        primaryBodyText = imageError instanceof Error ? imageError.message : String(imageError);
+        console.error('🎨 Vertex Gemini Image request failed:', primaryBodyText);
       }
 
       const payload = {

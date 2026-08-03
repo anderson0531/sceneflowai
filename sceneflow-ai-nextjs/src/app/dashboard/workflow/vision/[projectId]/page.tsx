@@ -5537,7 +5537,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [showBYOKSettings, setShowBYOKSettings] = useState(false)
   const [byokSettings, setBYOKSettings] = useState<BYOKSettings>({
     imageProvider: 'google',
-    imageModel: 'imagen-3.0-generate-001',
+    imageModel: 'gemini-2.5-flash-image',
     audioProvider: 'elevenlabs',
     audioModel: 'eleven_multilingual_v2',
     videoProvider: 'runway',

@@ -12,6 +12,19 @@ const compat = new FlatCompat({
 const eslintConfig = [
   {
     ignores: [
+      // Build output and non-source files. `next lint` scoped itself to app/src
+      // directories; `eslint .` does not, so these must be excluded explicitly.
+      ".next/**",
+      "out/**",
+      "build/**",
+      "coverage/**",
+      "public/**",
+      "next-env.d.ts",
+      "scripts/**",
+      "docker/**",
+      "*.js",
+      "*.mjs",
+      "*.cjs",
       "src/services/**",
       "src/components/**",
       "src/app/dashboard/**",

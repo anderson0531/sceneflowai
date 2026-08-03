@@ -26,6 +26,7 @@ import {
   detectMissingBalanceSections,
 } from '@/lib/treatment/blueprintRevisionDiff'
 import { resolveContentIntent } from '@/lib/content/contentIntent'
+import { classifyAiError, upstreamStatusOf } from '@/lib/errors/aiErrorClassification'
 
 export const runtime = 'nodejs'
 export const maxDuration = 180
@@ -288,20 +289,26 @@ export async function POST(request: NextRequest) {
       creditsUsed: CREDIT_COST,
     })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error'
-    const oom =
-      message.includes('heap') ||
-      message.includes('OOM') ||
-      message.includes('memory')
-    console.error('[Guided Revise] Error:', error)
+    const classified = classifyAiError(error)
+    const upstreamStatus = upstreamStatusOf(error)
+    console.error(
+      `[Guided Revise] Error (code=${classified.code}, status=${classified.status}${
+        upstreamStatus ? `, upstream=${upstreamStatus}` : ''
+      }, name=${error instanceof Error ? error.name : typeof error}):`,
+      classified.details
+    )
     return NextResponse.json(
       {
         success: false,
-        message: oom
-          ? 'Revision ran out of memory. Try a narrower focus scope or fewer recommendations.'
-          : 'Failed to generate guided revision',
+        message:
+          classified.code === 'out_of_memory'
+            ? 'Revision ran out of memory. Try a narrower focus scope or fewer recommendations.'
+            : classified.message,
+        code: classified.code,
+        details: classified.details,
+        ...(upstreamStatus ? { upstreamStatus } : {}),
       },
-      { status: oom ? 503 : 500 }
+      { status: classified.status }
     )
   }
 }

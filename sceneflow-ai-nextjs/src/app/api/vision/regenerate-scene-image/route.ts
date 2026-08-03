@@ -3,6 +3,7 @@ import '@/models'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
+import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -133,8 +134,8 @@ export async function POST(request: NextRequest) {
       success: true,
       imageUrl: blobUrl,
       promptUsed: customPrompt,
-      model: 'imagen-3.0-generate-001',
-      provider: 'vertex-ai-imagen-3',
+      model: GEMINI_IMAGE_MODELS.flash,
+      provider: 'vertex-gemini-image',
       storageType: 'vercel-blob',
       creditsCharged: CREDIT_COST,
       creditsBalance: newBalance

@@ -654,10 +654,15 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             errorText = await response.text().catch(() => 'Unknown error')
           }
 
+          // `details`/`code` carry the upstream cause; without them a 500 is undiagnosable
+          const detailSuffix = [errorPayload?.code, errorPayload?.details]
+            .filter(Boolean)
+            .join(': ')
+
           const requestError = new Error(
             response.status === 402
               ? `Insufficient credits for hero image generation. Need ${errorPayload?.creditsRequired ?? 'more'} credits${typeof errorPayload?.creditsAvailable === 'number' ? ` (available: ${errorPayload.creditsAvailable})` : ''}.`
-              : `Hero image generation failed: ${response.status} - ${errorText}`
+              : `Hero image generation failed: ${response.status} - ${errorText}${detailSuffix ? ` (${detailSuffix})` : ''}`
           ) as Error & { status?: number; payload?: any }
           requestError.status = response.status
           requestError.payload = errorPayload
@@ -695,8 +700,11 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         }
         try {
           const { toast } = require('sonner')
+          const serverMessage = error?.payload?.error
           if (error?.status === 402) {
             toast.error(errorMessage)
+          } else if (serverMessage) {
+            toast.error(`${serverMessage} Click the image to retry.`)
           } else {
             toast.error('Hero image generation failed. Click the image to retry.')
           }

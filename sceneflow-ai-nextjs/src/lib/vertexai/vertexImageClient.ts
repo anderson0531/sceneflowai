@@ -1,18 +1,13 @@
 /**
  * Vertex AI image generation (production media path).
- * - Gemini Image on Vertex for reference-heavy / multimodal prompts
- * - Imagen 4 / Imagen 3 via callVertexAIImagen for text-only tiers
+ *
+ * All Imagen endpoints were retired 2026-06-30, so every image request — with or
+ * without reference images — goes through Gemini Image on Vertex (generateContent).
  */
 
 import { getVertexAIAuthToken } from '@/lib/vertexai/client'
-import { callVertexAIImagen } from '@/lib/vertexai/client'
 import { fetchReferenceImageAsBase64 } from '@/lib/storage/fetchReferenceImage'
-import {
-  getImagenModel,
-  getImagen4Model,
-  DEFAULT_IMAGE_QUALITY,
-  type ImagenQualityTier,
-} from '@/lib/config/modelConfig'
+import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 import { getGeminiSafetyThreshold } from '@/lib/vertexai/safety'
 import { MAX_REFERENCE_IMAGES_ECO } from '@/lib/vision/referenceLimits'
 
@@ -20,9 +15,9 @@ export type VertexImageTier = 'eco' | 'designer' | 'director'
 export type VertexThinkingLevel = 'low' | 'high'
 
 const GEMINI_IMAGE_TIER_CONFIG = {
-  eco: { model: 'gemini-2.5-flash-image', maxResolution: '2K' },
-  designer: { model: 'gemini-3-pro-image-preview', maxResolution: '4K' },
-  director: { model: 'gemini-3-pro-image-preview', maxResolution: '4K' },
+  eco: { model: GEMINI_IMAGE_MODELS.flash, maxResolution: '2K' },
+  designer: { model: GEMINI_IMAGE_MODELS.pro, maxResolution: '4K' },
+  director: { model: GEMINI_IMAGE_MODELS.pro, maxResolution: '4K' },
 } as const
 
 let proModelRateLimitedUntil: number | null = null
@@ -47,9 +42,15 @@ async function sleepWithBackoff(attempt: number): Promise<void> {
 }
 
 function getVertexImageConfig() {
-  const projectId = process.env.VERTEX_PROJECT_ID
-  const location = process.env.VERTEX_IMAGE_LOCATION || process.env.VERTEX_LOCATION || 'us-central1'
-  if (!projectId) throw new Error('VERTEX_PROJECT_ID not configured')
+  const projectId = process.env.VERTEX_PROJECT_ID || process.env.GCP_PROJECT_ID
+  const location =
+    process.env.VERTEX_IMAGE_LOCATION ||
+    process.env.VERTEX_LOCATION ||
+    process.env.GCP_REGION ||
+    'us-central1'
+  if (!projectId) {
+    throw new Error('VERTEX_PROJECT_ID or GCP_PROJECT_ID must be configured for image generation')
+  }
   return { projectId, location }
 }
 
@@ -308,46 +309,13 @@ export async function generateVertexGeminiImage(
 }
 
 /**
- * Unified Vertex image entry — routes by reference presence and tier.
+ * Unified Vertex image entry. Text-only and reference-based generation both use
+ * Gemini Image; the Imagen `:predict` path was removed after the 2026-06-30 retirement.
  */
 export async function generateVertexImage(
   options: GenerateVertexImageOptions
 ): Promise<VertexImageResult> {
-  const hasRefs = (options.referenceImages?.length ?? 0) > 0
-  if (hasRefs) {
-    return generateVertexGeminiImage(options)
-  }
-
-  const tier = options.modelTier || 'designer'
-  const quality: ImagenQualityTier =
-    tier === 'eco' ? 'fast' : tier === 'director' ? 'standard' : DEFAULT_IMAGE_QUALITY
-
-  const useImagen4 = process.env.VERTEX_USE_IMAGEN_4 !== 'false'
-  const modelId = useImagen4
-    ? getImagen4Model(quality)
-    : getImagenModel(quality, false)
-
-  const aspect =
-    options.aspectRatio === '21:9'
-      ? '16:9'
-      : (options.aspectRatio as '1:1' | '9:16' | '16:9' | '4:3' | '3:4' | undefined) || '16:9'
-
-  const dataUrl = await callVertexAIImagen(options.prompt, {
-    aspectRatio: aspect,
-    numberOfImages: 1,
-    modelQuality: quality === 'capability' ? 'standard' : quality,
-    modelId,
-  })
-
-  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/)
-  if (!match) throw new Error('Invalid Imagen response format')
-
-  return {
-    imageBase64: match[2],
-    mimeType: match[1],
-    provider: 'vertex',
-    modelId,
-  }
+  return generateVertexGeminiImage(options)
 }
 
 export interface VertexImageEditOptions {

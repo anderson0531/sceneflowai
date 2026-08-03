@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
+import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 import { generateImageWithVertexKlingFallback } from '@/lib/generation/vertexImageWithKlingFallback'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen, generateLinkingDescription, extractDemographicAnchor, buildIdentityPromptToken, sanitizePromptForIdentityRefs, filterCharactersForPromptRefs, stripReferenceImageMappingBlock } from '@/lib/imagen/promptOptimizer'
@@ -2258,7 +2259,7 @@ export async function POST(req: NextRequest) {
             personGeneration: effectivePersonGeneration,
             negativePrompt: finalNegativePrompt,
           })
-          generationModelId = 'imagen-3.0-fast-generate-001'
+          generationModelId = GEMINI_IMAGE_MODELS.flash
           generationProvider = 'vertex'
         }
         

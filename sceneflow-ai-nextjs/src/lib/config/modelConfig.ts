@@ -205,53 +205,67 @@ export function getVeoCostEstimate(
 }
 
 // =============================================================================
-// IMAGE GENERATION MODELS (Imagen)
+// IMAGE GENERATION MODELS (Gemini Image)
 // =============================================================================
 
 export type ImagenQualityTier = 'fast' | 'standard' | 'capability';
 
+/** Gemini image tiers on Vertex — the only supported image models. */
+export const GEMINI_IMAGE_MODELS = {
+  /** GA, regional endpoints, no imageSize control */
+  flash: 'gemini-2.5-flash-image',
+  /** Preview, global endpoint only, supports 4K + imageSize */
+  pro: 'gemini-3-pro-image-preview',
+} as const;
+
+/** Vertex image tier used by vertexImageClient. */
+export type GeminiImageTier = 'eco' | 'designer' | 'director';
+
+/** Map a legacy Imagen quality tier onto a Gemini image tier. */
+export function geminiImageTierForQuality(
+  quality: ImagenQualityTier | ModelQuality = DEFAULT_IMAGEN_QUALITY,
+  hasReferenceImages: boolean = false
+): GeminiImageTier {
+  if (hasReferenceImages) return 'designer';
+  return quality === 'fast' ? 'eco' : 'designer';
+}
+
+/**
+ * @deprecated All Imagen endpoints were retired 2026-06-30 and now return 404.
+ * Use GEMINI_IMAGE_MODELS / geminiImageTierForQuality instead.
+ */
 export const IMAGEN_MODELS = {
-  /** Imagen 3 Fast - ~$0.02/image, faster generation */
   fast: 'imagen-3.0-fast-generate-001',
-  
-  /** Imagen 3 Standard - ~$0.04/image, balanced quality/speed */
   standard: 'imagen-3.0-generate-001',
-  
-  /** Imagen 3 Capability - ~$0.05/image, required for reference images (character consistency) */
   capability: 'imagen-3.0-capability-001',
 } as const;
 
-/** Imagen 4 on Vertex (text-only; no reference images) */
+/**
+ * @deprecated All Imagen endpoints were retired 2026-06-30 and now return 404.
+ * Use GEMINI_IMAGE_MODELS / geminiImageTierForQuality instead.
+ */
 export const IMAGEN_4_MODELS = {
   fast: 'imagen-4.0-fast-generate-001',
   standard: 'imagen-4.0-generate-001',
   ultra: 'imagen-4.0-ultra-generate-001',
 } as const;
 
-export function getImagen4Model(quality: ImagenQualityTier = DEFAULT_IMAGEN_QUALITY): string {
-  if (quality === 'capability') return IMAGEN_4_MODELS.standard;
-  if (quality === 'standard') return IMAGEN_4_MODELS.standard;
-  return IMAGEN_4_MODELS.fast;
+/** @deprecated Imagen 4 endpoints were retired 2026-06-30. Returns a Gemini image model. */
+export function getImagen4Model(_quality: ImagenQualityTier = DEFAULT_IMAGEN_QUALITY): string {
+  return GEMINI_IMAGE_MODELS.flash;
 }
 
 /** Default Imagen quality tier (cost-optimized) */
 export const DEFAULT_IMAGEN_QUALITY: ImagenQualityTier = 'fast';
 
-/** 
- * Get Imagen model name for quality tier
- * Note: If reference images are provided, always uses 'capability' model
- */
+/** @deprecated Imagen endpoints were retired 2026-06-30. Returns a Gemini image model. */
 export function getImagenModel(
   quality: ImagenQualityTier | ModelQuality = DEFAULT_IMAGEN_QUALITY,
   hasReferenceImages: boolean = false
 ): string {
-  // Reference images require capability model regardless of quality setting
-  if (hasReferenceImages) {
-    return IMAGEN_MODELS.capability;
-  }
-  // Handle ModelQuality type (fast/standard)
-  const tier = quality as ImagenQualityTier;
-  return IMAGEN_MODELS[tier] || IMAGEN_MODELS.fast;
+  return geminiImageTierForQuality(quality, hasReferenceImages) === 'eco'
+    ? GEMINI_IMAGE_MODELS.flash
+    : GEMINI_IMAGE_MODELS.pro;
 }
 
 /** Estimated cost per image for each Imagen tier */

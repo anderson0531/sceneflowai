@@ -1,9 +1,9 @@
 /**
- * Image generation client — Vertex Imagen / Gemini image only.
+ * Image generation client — Gemini Image on Vertex only.
  * Legacy name `generateImageWithGemini` preserved for existing route imports.
  */
 
-import { generateImageWithGemini as generateImageWithVertexImagen } from '@/lib/gemini/imageClient.vertex'
+import { generateImageWithGemini as generateImageWithVertexGemini } from '@/lib/gemini/imageClient.vertex'
 
 interface ReferenceImage {
   referenceId: number
@@ -26,13 +26,17 @@ interface ImageGenerationOptions {
 }
 
 /**
- * Generate image via Vertex Imagen / Gemini image.
+ * Generate image via Gemini Image on Vertex.
  */
 export async function generateImageWithGemini(
   prompt: string,
   options: ImageGenerationOptions = {}
 ): Promise<string> {
-  return generateImageWithVertexImagen(prompt, options)
+  const { quality, ...rest } = options
+  return generateImageWithVertexGemini(prompt, {
+    ...rest,
+    ...(quality ? { quality: quality === 'max' ? 'standard' : quality } : {}),
+  })
 }
 
 export type { ImageGenerationOptions, ReferenceImage, ImagenAspectRatio }
