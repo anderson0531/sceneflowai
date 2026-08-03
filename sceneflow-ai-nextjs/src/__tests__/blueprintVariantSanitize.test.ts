@@ -6,6 +6,7 @@ import {
 import {
   inferPlanFromRecommendations,
   inferPlanFromFocus,
+  inferPlanFromUserIntent,
 } from '@/lib/treatment/blueprintRevisionPrompts'
 import type { BlueprintAudienceRecommendation } from '@/lib/types/audienceResonance'
 
@@ -118,6 +119,25 @@ describe('inferPlanFromRecommendations', () => {
     expect(plan?.sectionsToUpdate).toContain('story')
     expect(plan?.sectionsToUpdate).toContain('characters')
     expect(plan?.sectionsToUpdate).toContain('beats')
+  })
+})
+
+describe('inferPlanFromUserIntent', () => {
+  it('defaults to story when no section keywords match', () => {
+    const plan = inferPlanFromUserIntent('Make the opening more compelling')
+    expect(plan?.sectionsToUpdate).toEqual(['story'])
+    expect(plan?.primaryGoal).toContain('opening')
+  })
+
+  it('detects character and story keywords', () => {
+    const plan = inferPlanFromUserIntent('Deepen the protagonist arc and tighten act two beats')
+    expect(plan?.sectionsToUpdate).toContain('characters')
+    expect(plan?.sectionsToUpdate).toContain('beats')
+    expect(plan?.sectionsToUpdate).toContain('story')
+  })
+
+  it('returns null for empty intent', () => {
+    expect(inferPlanFromUserIntent('   ')).toBeNull()
   })
 })
 

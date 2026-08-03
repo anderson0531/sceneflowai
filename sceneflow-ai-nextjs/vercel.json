@@ -2,6 +2,9 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "regions": ["sfo1"],
+  "env": {
+    "NODE_OPTIONS": "--max-old-space-size=2560"
+  },
   "functions": {
     "src/app/api/vision/generate-script-v2/route.ts": {
       "maxDuration": 600

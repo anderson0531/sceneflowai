@@ -165,6 +165,66 @@ export function inferPlanFromRecommendations(
   }
 }
 
+/**
+ * Infer a change plan from free-form user direction (skips planner LLM).
+ * Defaults to story-only when no section keywords match.
+ */
+export function inferPlanFromUserIntent(userIntent: string): BlueprintChangePlan | null {
+  const trimmed = userIntent.trim()
+  if (!trimmed) return null
+
+  const lower = trimmed.toLowerCase()
+  const sections = new Set<BlueprintFixSection>()
+
+  if (/character|protagonist|antagonist|arc\b|role\b|cast\b/.test(lower)) {
+    sections.add('characters')
+  }
+  if (/beat|pacing|act\b|structure|duration|runtime/.test(lower)) {
+    sections.add('beats')
+  }
+  if (/tone|mood|theme|visual|style|art\s*style/.test(lower)) {
+    sections.add('tone')
+  }
+  if (/logline|genre|title|format|audience|length/.test(lower)) {
+    sections.add('core')
+  }
+  if (/synopsis|story|setting|plot|conflict|narrative/.test(lower)) {
+    sections.add('story')
+  }
+
+  if (sections.size === 0) {
+    return {
+      primaryGoal: truncateStr(trimmed, 300),
+      sectionsToUpdate: ['story'],
+      crossSectionDependencies: [],
+      preserveConstraints: ['Preserve title unless user requests a rename'],
+      coherenceActions: ['Revise story per user direction'],
+    }
+  }
+
+  if (sections.has('characters')) {
+    sections.add('story')
+    sections.add('beats')
+  }
+  if (sections.has('story')) {
+    sections.add('beats')
+  }
+  if (sections.has('beats')) {
+    sections.add('story')
+  }
+  if (sections.has('core')) {
+    sections.add('story')
+  }
+
+  return {
+    primaryGoal: truncateStr(trimmed, 300),
+    sectionsToUpdate: [...sections],
+    crossSectionDependencies: [],
+    preserveConstraints: ['Preserve title unless user requests a rename'],
+    coherenceActions: [`Revise ${[...sections].join(', ')} per user direction`],
+  }
+}
+
 /** Skip planner LLM call when user scoped a single section (saves memory + latency). */
 export function inferPlanFromFocus(
   focusScope: BlueprintFixSection | 'all' | undefined,
@@ -237,13 +297,22 @@ Return ONLY valid JSON:
 ${strictJsonPromptSuffix}`
 }
 
+export interface RewriterPromptOptions {
+  /** Fields already revised in an earlier sequential pass. */
+  partialPatch?: Record<string, unknown>
+  /** When false, omit narrative_reasoning from the output schema (intermediate passes). */
+  includeNarrativeReasoning?: boolean
+}
+
 export function buildRewriterPrompt(
   variant: Record<string, unknown>,
   plan: BlueprintChangePlan,
   userIntent: string,
   recs: BlueprintAudienceRecommendation[],
-  contentIntent?: ContentIntent
+  contentIntent?: ContentIntent,
+  options: RewriterPromptOptions = {}
 ): string {
+  const { partialPatch, includeNarrativeReasoning = true } = options
   const intent = contentIntent ?? resolveContentIntent(String(variant.genre || ''))
   const trimmed = trimVariantForPrompt(variant)
   const allFields = new Set<string>()
@@ -260,9 +329,23 @@ export function buildRewriterPrompt(
 
   const allowedFields = [...allFields]
   const scopedBlueprint = pickVariantFields(trimmed, allowedFields)
+  const partialBlock =
+    partialPatch && Object.keys(partialPatch).length > 0
+      ? `\nPARTIAL REVISION SO FAR (preserve these; build on them):\n${compactJson(pickVariantFields(partialPatch, allowedFields))}\n`
+      : ''
   const recBlock = buildRecommendationIntentBlock(recs)
   const couplingRules = getCouplingRulesForIntent(intent)
   const intentGuard = getIntentRevisionGuardrail(intent)
+  const reasoningSchema = includeNarrativeReasoning
+    ? `Include "narrative_reasoning" object:
+{
+  "narrative_reasoning": {
+    "user_adjustments": "<summary of what changed and why, for the creator>",
+    "key_decisions": [{"decision": "...", "why": "...", "impact": "..."}]
+  },
+  ...modified blueprint fields...
+}`
+    : `Return ONLY modified blueprint fields (no narrative_reasoning on this pass).`
 
   return `You are an expert ${intent === 'fiction' ? 'film treatment editor' : 'content blueprint editor'} performing a GUIDED, BALANCED blueprint revision.
 
@@ -286,17 +369,10 @@ ALLOWED FIELDS TO RETURN (include all you modify): ${allowedFields.join(', ')}
 
 CURRENT VALUES (allowed fields only):
 ${compactJson(scopedBlueprint)}
-
+${partialBlock}
 ${couplingRules}
 
-Return ONLY a JSON object with the modified fields (subset of allowed fields). Include "narrative_reasoning" object:
-{
-  "narrative_reasoning": {
-    "user_adjustments": "<summary of what changed and why, for the creator>",
-    "key_decisions": [{"decision": "...", "why": "...", "impact": "..."}]
-  },
-  ...modified blueprint fields...
-}
+Return ONLY a JSON object with the modified fields (subset of allowed fields). ${reasoningSchema}
 ${strictJsonPromptSuffix}`
 }
 

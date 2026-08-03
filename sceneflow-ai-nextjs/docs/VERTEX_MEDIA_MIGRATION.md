@@ -38,7 +38,8 @@ Node does **not** size its V8 heap from the Vercel function `memory` setting: a 
 `memory: 3009` still gets the default old-space cap (~1.8–1.9 GB), which is where
 `/api/treatment/guided-revise` OOMed (`FATAL ERROR: Ineffective mark-compacts near heap limit`).
 
-Set a project Environment Variable in the Vercel dashboard (all environments):
+Set a project Environment Variable in the Vercel dashboard (all environments), or rely on
+`vercel.json` `env.NODE_OPTIONS` in this repo:
 
 ```bash
 NODE_OPTIONS=--max-old-space-size=2560

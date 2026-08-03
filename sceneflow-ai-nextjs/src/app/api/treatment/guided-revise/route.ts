@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
+import v8 from 'node:v8'
 import { authOptions } from '@/lib/auth'
 import { CreditService } from '@/services/CreditService'
 import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
@@ -13,6 +14,7 @@ import {
   buildBalanceMicroPassPrompt,
   inferPlanFromFocus,
   inferPlanFromRecommendations,
+  inferPlanFromUserIntent,
   trimVariantForPrompt,
   trimRecommendationsForPrompt,
 } from '@/lib/treatment/blueprintRevisionPrompts'
@@ -34,20 +36,22 @@ export const maxDuration = 180
 const CREDIT_COST = BLUEPRINT_CREDITS.BLUEPRINT_GUIDED_REVISE
 const MAX_GEMINI_JSON_CHARS = 150_000
 const MAX_BODY_BYTES = 3 * 1024 * 1024
-/** With Fluid Compute one instance serves concurrent requests; cap them so retries can't stack. */
-const MAX_CONCURRENT_REVISIONS = 2
+/** With Fluid Compute one instance serves concurrent requests; cap at 1 to avoid heap stacking. */
+const MAX_CONCURRENT_REVISIONS = 1
 /** Skip the optional balance micro-pass when past this elapsed time so we finish inside maxDuration. */
 const ROUTE_DEADLINE_MS = 120_000
 
 let inFlightRevisions = 0
 
+const v8HeapLimitMb = Math.round(v8.getHeapStatistics().heap_size_limit / 1024 / 1024)
+
 // Identifies which build produced these logs (previews vs production)
 console.log(
-  `[Guided Revise] Module init (commit=${process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 8) ?? 'local'})`
+  `[Guided Revise] Module init (commit=${process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 8) ?? 'local'}, v8HeapLimit=${v8HeapLimitMb}MB, NODE_OPTIONS=${process.env.NODE_OPTIONS ? 'set' : 'unset'})`
 )
 
 function logHeap(label: string, extra?: Record<string, number>) {
-  const { heapUsed, rss } = process.memoryUsage()
+  const { heapUsed, heapTotal, rss, external } = process.memoryUsage()
   const mb = (n: number) => Math.round(n / 1024 / 1024)
   const extras = extra
     ? ` ${Object.entries(extra)
@@ -55,7 +59,7 @@ function logHeap(label: string, extra?: Record<string, number>) {
         .join(' ')}`
     : ''
   console.log(
-    `[Guided Revise][mem] ${label}: heapUsed=${mb(heapUsed)}MB rss=${mb(rss)}MB inFlight=${inFlightRevisions}${extras}`
+    `[Guided Revise][mem] ${label}: heapUsed=${mb(heapUsed)}MB heapTotal=${mb(heapTotal)}MB heapLimit=${v8HeapLimitMb}MB rss=${mb(rss)}MB external=${mb(external)}MB inFlight=${inFlightRevisions}${extras}`
   )
 }
 
@@ -139,6 +143,68 @@ async function runGeminiJson(
   return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : null
 }
 
+/** Run rewriter as sequential section passes to cap peak heap per LLM call. */
+async function runSequentialRewriter(
+  variant: Record<string, unknown>,
+  plan: BlueprintChangePlan,
+  userIntent: string,
+  selectedRecs: ReturnType<typeof trimRecommendationsForPrompt>,
+  contentIntent: ReturnType<typeof resolveContentIntent>
+): Promise<Record<string, unknown> | null> {
+  const sections = [...new Set(plan.sectionsToUpdate)]
+  if (sections.length <= 1) {
+    const prompt = buildRewriterPrompt(
+      variant,
+      plan,
+      userIntent,
+      selectedRecs,
+      contentIntent
+    )
+    return runGeminiJson('rewriter', prompt, 2048)
+  }
+
+  let mergedPatch: Record<string, unknown> = {}
+  let narrativeReasoning: Record<string, unknown> | undefined
+
+  for (let i = 0; i < sections.length; i++) {
+    const section = sections[i] as BlueprintFixSection
+    const isLast = i === sections.length - 1
+    const sectionPlan: BlueprintChangePlan = {
+      ...plan,
+      sectionsToUpdate: [section],
+    }
+    const prompt = buildRewriterPrompt(
+      variant,
+      sectionPlan,
+      userIntent,
+      selectedRecs,
+      contentIntent,
+      {
+        partialPatch: mergedPatch,
+        includeNarrativeReasoning: isLast,
+      }
+    )
+    const sectionPatch = await runGeminiJson(
+      `rewriter:${section}`,
+      prompt,
+      isLast ? 2048 : 1536
+    )
+    if (!sectionPatch) continue
+
+    const { narrative_reasoning: nr, ...fieldPatch } = sectionPatch
+    mergedPatch = { ...mergedPatch, ...fieldPatch }
+    if (nr && typeof nr === 'object') {
+      narrativeReasoning = nr as Record<string, unknown>
+    }
+  }
+
+  if (narrativeReasoning) {
+    mergedPatch.narrative_reasoning = narrativeReasoning
+  }
+
+  return Object.keys(mergedPatch).length > 0 ? mergedPatch : null
+}
+
 function resolveInitialPlan(
   focusScope: BlueprintFixSection | 'all' | undefined,
   intentText: string,
@@ -147,6 +213,7 @@ function resolveInitialPlan(
   return (
     inferPlanFromFocus(focusScope, intentText) ??
     inferPlanFromRecommendations(selectedRecs, intentText) ??
+    inferPlanFromUserIntent(intentText) ??
     normalizePlan({
       primaryGoal: intentText,
       sectionsToUpdate: ['story'],
@@ -156,10 +223,12 @@ function resolveInitialPlan(
 
 function shouldRunPlanner(
   focusScope: BlueprintFixSection | 'all' | undefined,
-  selectedRecs: ReturnType<typeof trimRecommendationsForPrompt>
+  selectedRecs: ReturnType<typeof trimRecommendationsForPrompt>,
+  intentText: string
 ): boolean {
   if (inferPlanFromFocus(focusScope, '')) return false
   if (inferPlanFromRecommendations(selectedRecs, '')) return false
+  if (intentText.trim() && inferPlanFromUserIntent(intentText)) return false
   return true
 }
 
@@ -225,6 +294,12 @@ export async function POST(request: NextRequest) {
       contentIntent: bodyIntent,
     } = body
 
+    if (v8HeapLimitMb < 2300 && !process.env.NODE_OPTIONS) {
+      console.warn(
+        `[Guided Revise] V8 heap limit is ${v8HeapLimitMb}MB without NODE_OPTIONS — OOM risk on warm instances`
+      )
+    }
+
     if (!incomingVariant || typeof incomingVariant !== 'object') {
       return NextResponse.json(
         { success: false, message: 'variant is required' },
@@ -277,7 +352,7 @@ export async function POST(request: NextRequest) {
 
     let plan = resolveInitialPlan(focusScope, intentText, selectedRecs)
 
-    if (shouldRunPlanner(focusScope, selectedRecs)) {
+    if (shouldRunPlanner(focusScope, selectedRecs, intentText)) {
       const plannerPrompt = buildPlannerPrompt(
         variant,
         intentText,
@@ -297,14 +372,15 @@ export async function POST(request: NextRequest) {
         : ['story']
     }
 
-    const rewriterPrompt = buildRewriterPrompt(
+    logHeap('before rewriter', { sections: plan.sectionsToUpdate.length })
+
+    let patch = await runSequentialRewriter(
       variant,
       plan,
       intentText,
       selectedRecs,
       contentIntent
     )
-    let patch = await runGeminiJson('rewriter', rewriterPrompt, 4096)
 
     if (!patch) {
       return NextResponse.json(
