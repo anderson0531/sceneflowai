@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import v8 from 'node:v8'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getSessionUserId } from '@/lib/auth/sessionUser'
 import { CreditService } from '@/services/CreditService'
 import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
 import type { GuidedReviseRequest } from '@/lib/treatment/blueprintRevisionTypes'
@@ -37,8 +36,7 @@ function isSingleSectionScope(
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions as any).catch(() => null)
-    const userId = (session?.user as { id?: string })?.id
+    const userId = await getSessionUserId()
     if (!userId) {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
     }
