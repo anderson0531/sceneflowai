@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (batch && Array.isArray(batch) && batch.length > 0) {
-      const job = await createGenerationJob({
+      const { job } = await createGenerationJob({
         userId,
         projectId,
         jobType,
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ jobId: job.id, status: 'queued' })
     }
 
-    const job = await createGenerationJob({
+    const { job } = await createGenerationJob({
       userId,
       projectId,
       jobType,

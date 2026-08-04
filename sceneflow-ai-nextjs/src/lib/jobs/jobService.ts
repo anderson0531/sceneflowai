@@ -79,7 +79,7 @@ export async function createGenerationJob(input: {
   projectId: string
   jobType: GenerationJobType
   payload: Record<string, unknown>
-}): Promise<GenerationJob> {
+}): Promise<{ job: GenerationJob; dispatched: boolean }> {
   await ensureNotificationsSchema()
   const job = await GenerationJob.create({
     user_id: input.userId,
@@ -90,6 +90,7 @@ export async function createGenerationJob(input: {
     progress: 0,
   })
 
+  let dispatched = false
   try {
     await inngest.send({
       name: 'generation/job.queued',
@@ -101,11 +102,12 @@ export async function createGenerationJob(input: {
         payload: input.payload,
       },
     })
+    dispatched = true
   } catch (err) {
     console.warn('[jobService] Inngest send failed, job remains queued:', err)
   }
 
-  return job
+  return { job, dispatched }
 }
 
 export async function updateGenerationJob(

@@ -59,7 +59,9 @@ Full-balance jobs return `{ patch, diff, changePlan }` in `generation_jobs.resul
 full variant). The client merges the patch locally. Core logic lives in
 `src/lib/treatment/runGuidedRevise.ts`.
 
-Module init for the start route logs `v8HeapLimit` and the full `NODE_OPTIONS` string.
+**Inngest (recommended):** set `INNGEST_EVENT_KEY` (and `INNGEST_SIGNING_KEY` for the
+`/api/inngest` serve route) in Vercel env, or connect the Inngest Vercel integration.
+Without it, `guided-revise/start` falls back to inline execution via Next.js `after()`.
 
 ## Verification
 

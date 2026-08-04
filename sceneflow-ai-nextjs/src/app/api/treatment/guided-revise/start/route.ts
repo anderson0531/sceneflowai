@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import v8 from 'node:v8'
 import { getSessionUserId } from '@/lib/auth/sessionUser'
 import { CreditService } from '@/services/CreditService'
@@ -8,6 +8,7 @@ import {
   buildGuidedRevisePayload,
 } from '@/lib/treatment/runGuidedRevise'
 import { createGenerationJob, findActiveJob } from '@/lib/jobs/jobService'
+import { executeBlueprintGuidedReviseJob } from '@/lib/jobs/executeBlueprintGuidedReviseJob'
 import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
 
 export const runtime = 'nodejs'
@@ -158,12 +159,30 @@ export async function POST(request: NextRequest) {
       preservedCharacterAssets: payload.preservedCharacterAssets,
     }
 
-    const job = await createGenerationJob({
+    const { job, dispatched } = await createGenerationJob({
       userId,
       projectId,
       jobType: 'blueprint_guided_revise',
       payload: jobPayload,
     })
+
+    if (!dispatched) {
+      console.warn(
+        '[Guided Revise Start] INNGEST_EVENT_KEY not set — running inline fallback via after()'
+      )
+      after(async () => {
+        try {
+          await executeBlueprintGuidedReviseJob({
+            jobId: job.id,
+            userId,
+            projectId,
+            payload: jobPayload,
+          })
+        } catch (err) {
+          console.error('[Guided Revise Start] Inline fallback failed:', err)
+        }
+      })
+    }
 
     await CreditService.charge(userId, CREDIT_COST, 'ai_usage', null, {
       operation: 'blueprint_guided_revise',
@@ -178,6 +197,7 @@ export async function POST(request: NextRequest) {
         status: 'queued',
         creditsUsed: CREDIT_COST,
         estimatedSeconds: 90,
+        dispatch: dispatched ? 'inngest' : 'inline_fallback',
       },
       { status: 202 }
     )

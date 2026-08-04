@@ -256,7 +256,7 @@ export async function POST(
       aspectRatio: body.aspectRatio || '16:9',
     }
 
-    const job = await createGenerationJob({
+    const { job } = await createGenerationJob({
       userId: String(session.user.id),
       projectId: body.projectId,
       jobType: 'kling_long_take',

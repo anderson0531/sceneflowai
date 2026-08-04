@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
 
     const chunks = planSceneChunks(sceneCount, chunkSize ?? DEFAULT_SCENE_CHUNK_SIZE)
 
-    const job = await createGenerationJob({
+    const { job } = await createGenerationJob({
       userId,
       projectId,
       jobType: 'script_analysis',
