@@ -23,6 +23,50 @@ export function analyzeDuration(input: string | undefined | null, fallback: numb
   return fallback
 }
 
+/** Inclusive runtime range the blueprint pipeline supports, in minutes. */
+export const MIN_SUPPORTED_RUNTIME_MINUTES = 3
+export const MAX_SUPPORTED_RUNTIME_MINUTES = 180
+
+/**
+ * Runtime the user asked for, in minutes, or null when the text names none.
+ *
+ * Unlike {@link analyzeDuration} this never clamps and has no fallback, so a
+ * caller can tell "no duration mentioned" apart from "duration out of range".
+ */
+export function parseRequestedRuntimeMinutes(text: string | undefined | null): number | null {
+  if (!text) return null
+  const value = String(text)
+
+  // Ranges first ("30-40 minutes"), otherwise the leading number would win alone.
+  const range = value.match(
+    /(\d{1,3}(?:\.\d+)?)\s*[-–—]\s*(\d{1,3}(?:\.\d+)?)\s*(hours?|hrs?|hr|h|minutes?|mins?|min|m|seconds?|secs?|sec|s)\b/i
+  )
+  if (range) {
+    const low = parseFloat(range[1])
+    const high = parseFloat(range[2])
+    if (Number.isFinite(low) && Number.isFinite(high)) {
+      return toMinutes((low + high) / 2, range[3])
+    }
+  }
+
+  const single = value.match(
+    /(\d{1,4}(?:\.\d+)?)\s*(hours?|hrs?|hr|h|minutes?|mins?|min|m|seconds?|secs?|sec|s)\b/i
+  )
+  if (single) {
+    const amount = parseFloat(single[1])
+    if (Number.isFinite(amount)) return toMinutes(amount, single[2])
+  }
+
+  return null
+}
+
+function toMinutes(amount: number, unit: string): number {
+  const u = unit.toLowerCase()
+  if (u.startsWith('h')) return amount * 60
+  if (u.startsWith('s')) return amount / 60
+  return amount
+}
+
 export function sumBeatMinutes(beats: Beat[]): number {
   return beats.reduce((s, b) => s + (Number(b.minutes) || 0), 0)
 }

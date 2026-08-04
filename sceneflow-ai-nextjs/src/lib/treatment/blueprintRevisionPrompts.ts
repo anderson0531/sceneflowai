@@ -1,6 +1,6 @@
 import type { BlueprintAudienceRecommendation } from '@/lib/types/audienceResonance'
 import type { BlueprintChangePlan, BlueprintFixSection } from './blueprintRevisionTypes'
-import { MAX_BEATS, SECTION_FIELDS } from './blueprintRevisionTypes'
+import { inferTargetedSections, MAX_BEATS, SECTION_FIELDS } from './blueprintRevisionTypes'
 import { strictJsonPromptSuffix } from '@/lib/safeJson'
 import {
   type ContentIntent,
@@ -177,24 +177,7 @@ export function inferPlanFromUserIntent(userIntent: string): BlueprintChangePlan
   const trimmed = userIntent.trim()
   if (!trimmed) return null
 
-  const lower = trimmed.toLowerCase()
-  const sections = new Set<BlueprintFixSection>()
-
-  if (/character|protagonist|antagonist|arc\b|role\b|cast\b/.test(lower)) {
-    sections.add('characters')
-  }
-  if (/beat|pacing|act\b|structure|duration|runtime/.test(lower)) {
-    sections.add('beats')
-  }
-  if (/tone|mood|theme|visual|style|art\s*style/.test(lower)) {
-    sections.add('tone')
-  }
-  if (/logline|genre|title|format|audience|length/.test(lower)) {
-    sections.add('core')
-  }
-  if (/synopsis|story|setting|plot|conflict|narrative/.test(lower)) {
-    sections.add('story')
-  }
+  const sections = new Set<BlueprintFixSection>(inferTargetedSections(trimmed))
 
   if (sections.size === 0) {
     return {

@@ -6,6 +6,7 @@ import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
 import { strictJsonPromptSuffix, safeParseJsonFromText } from '@/lib/safeJson'
 import { generateText } from '@/lib/vertexai/gemini'
 import { getGeminiTextModel } from '@/lib/config/modelConfig'
+import { validateRevisionRequest } from '@/lib/treatment/blueprintRequestValidation'
 import {
   type ContentIntent,
   getIntentRevisionGuardrail,
@@ -154,6 +155,22 @@ export async function POST(request: NextRequest) {
     if (!instructions?.trim()) {
       return NextResponse.json(
         { success: false, message: 'instructions are required' },
+        { status: 400 }
+      )
+    }
+
+    // The dialog blocks these client-side, but that is bypassable and this route
+    // charges credits, so reject blockers before touching the credit balance.
+    // Scope mismatch is only a warning, so a focused edit is still allowed here.
+    const blockers = validateRevisionRequest({
+      intentText: instructions,
+      focusScope: section,
+      variant,
+    }).filter((issue) => issue.severity === 'blocker')
+
+    if (blockers.length > 0) {
+      return NextResponse.json(
+        { success: false, message: blockers[0].message, code: blockers[0].code },
         { status: 400 }
       )
     }

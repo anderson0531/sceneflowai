@@ -90,3 +90,23 @@ export const SECTION_FIELDS: Record<BlueprintFixSection, string[]> = {
   beats: ['beats', 'total_duration_seconds', 'estimatedDurationMinutes'],
   characters: ['character_descriptions'],
 }
+
+/**
+ * Which section a free-text direction is talking about. Shared by the planner
+ * and by request validation so the two cannot drift apart.
+ */
+export const SECTION_INTENT_PATTERNS: Record<BlueprintFixSection, RegExp> = {
+  characters: /character|protagonist|antagonist|arc\b|role\b|cast\b/,
+  beats: /beat|pacing|act\b|structure|duration|runtime/,
+  tone: /tone|mood|theme|visual|style|art\s*style/,
+  core: /logline|genre|title|format|audience|length/,
+  story: /synopsis|story|setting|plot|conflict|narrative/,
+}
+
+/** Sections a direction explicitly refers to, by keyword. */
+export function inferTargetedSections(text: string): BlueprintFixSection[] {
+  const lower = text.toLowerCase()
+  return (Object.keys(SECTION_INTENT_PATTERNS) as BlueprintFixSection[]).filter((section) =>
+    SECTION_INTENT_PATTERNS[section].test(lower)
+  )
+}

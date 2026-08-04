@@ -7,6 +7,7 @@ import type { GuidedReviseRequest } from '@/lib/treatment/blueprintRevisionTypes
 import {
   buildGuidedRevisePayload,
 } from '@/lib/treatment/runGuidedRevise'
+import { validateRevisionRequest } from '@/lib/treatment/blueprintRequestValidation'
 import { createGenerationJob, findActiveJob } from '@/lib/jobs/jobService'
 import { scheduleBlueprintGuidedReviseStep } from '@/lib/jobs/dispatchBlueprintGuidedReviseStep'
 import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
@@ -113,6 +114,26 @@ export async function POST(request: NextRequest) {
     if (!payload.intentText.trim() && payload.selectedRecs.length === 0) {
       return NextResponse.json(
         { success: false, message: 'Provide revision direction or select recommendations' },
+        { status: 400 }
+      )
+    }
+
+    // The dialog blocks these client-side, but that is bypassable and this route
+    // charges credits, so reject blockers before touching the credit balance.
+    const blockers = validateRevisionRequest({
+      intentText: payload.intentText,
+      focusScope: focusScope ?? 'all',
+      variant: payload.rawVariant,
+      hasSelectedRecommendations: payload.selectedRecs.length > 0,
+    }).filter((issue) => issue.severity === 'blocker')
+
+    if (blockers.length > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: blockers[0].message,
+          code: blockers[0].code,
+        },
         { status: 400 }
       )
     }

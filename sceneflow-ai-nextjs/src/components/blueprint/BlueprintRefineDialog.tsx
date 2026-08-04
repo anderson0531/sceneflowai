@@ -37,6 +37,13 @@ import {
 } from '@/lib/treatment/blueprintRevisionDiff'
 import { trimVariantForPrompt } from '@/lib/treatment/blueprintRevisionPrompts'
 import { readJsonSafe } from '@/lib/readJsonSafe'
+import {
+  hasBlockingIssue,
+  MAX_INTENT_CHARS,
+  validateRevisionRequest,
+} from '@/lib/treatment/blueprintRequestValidation'
+import { moderatePrompt } from '@/utils/promptModerator'
+import { ContentPolicyAlert } from '@/components/vision/scene-production/ContentPolicyAlert'
 import { useBackgroundJob } from '@/hooks/useBackgroundJob'
 import { cn } from '@/lib/utils'
 import type { ContentIntent } from '@/lib/content/contentIntent'
@@ -399,6 +406,38 @@ export function BlueprintRefineDialog({
     return parts.join('\n')
   }, [userIntent, templateSections, selectedTemplateKeys])
 
+  // All validation below is pure and synchronous, so it can run per keystroke.
+  const selectedRecCount = useMemo(
+    () => resonanceRecommendations?.filter((r) => selectedRecIds.has(r.id)).length ?? 0,
+    [resonanceRecommendations, selectedRecIds]
+  )
+
+  const requestIssues = useMemo(
+    () =>
+      validateRevisionRequest({
+        intentText: combinedIntent,
+        focusScope,
+        variant,
+        hasSelectedRecommendations: selectedRecCount > 0,
+      }),
+    [combinedIntent, focusScope, variant, selectedRecCount]
+  )
+
+  const moderation = useMemo(() => moderatePrompt(combinedIntent), [combinedIntent])
+  // Low severity is advisory; medium and high are what actually get rejected upstream.
+  const policyBlocks =
+    !moderation.isClean &&
+    (moderation.severity === 'medium' || moderation.severity === 'high')
+
+  const blockers = requestIssues.filter((i) => i.severity === 'blocker')
+  const warnings = requestIssues.filter((i) => i.severity === 'warning')
+  const submitBlocked = hasBlockingIssue(requestIssues) || policyBlocks
+
+  const applyPolicyFix = useCallback((fixed: string) => {
+    setUserIntent(fixed)
+    setSelectedTemplateKeys(new Set())
+  }, [])
+
   const toggleRec = (id: string) => {
     setSelectedRecIds((prev) => {
       const next = new Set(prev)
@@ -423,6 +462,11 @@ export function BlueprintRefineDialog({
     const recs = resonanceRecommendations?.filter((r) => selectedRecIds.has(r.id)) ?? []
     if (!combinedIntent.trim() && recs.length === 0) {
       toast.error('Describe what should change or select recommendations')
+      return
+    }
+    // The button is disabled in this state; this guards programmatic paths.
+    if (submitBlocked) {
+      toast.error(blockers[0]?.message || 'Adjust your request before generating')
       return
     }
 
@@ -635,9 +679,23 @@ export function BlueprintRefineDialog({
               )}
 
               <div className="space-y-2">
-                <label className="text-xs font-medium text-gray-400">
-                  What should change and why?
-                </label>
+                <div className="flex items-baseline justify-between gap-2">
+                  <label className="text-xs font-medium text-gray-400">
+                    What should change and why?
+                  </label>
+                  {userIntent.length > 0 && (
+                    <span
+                      className={cn(
+                        'text-[10px] tabular-nums',
+                        userIntent.trim().length > MAX_INTENT_CHARS
+                          ? 'text-amber-300'
+                          : 'text-gray-500'
+                      )}
+                    >
+                      {userIntent.trim().length} / {MAX_INTENT_CHARS}
+                    </span>
+                  )}
+                </div>
                 <Textarea
                   value={userIntent}
                   onChange={(e) => setUserIntent(e.target.value)}
@@ -720,6 +778,35 @@ export function BlueprintRefineDialog({
           )}
         </div>
 
+        {phase === 'intent' && (blockers.length > 0 || warnings.length > 0 || !moderation.isClean) && (
+          <div className="flex-shrink-0 space-y-2 pt-3">
+            {!moderation.isClean && (
+              <ContentPolicyAlert
+                moderationResult={moderation}
+                onApplyFix={applyPolicyFix}
+              />
+            )}
+            {blockers.map((issue) => (
+              <div
+                key={issue.code}
+                className="rounded-lg border border-red-500/40 bg-red-500/10 p-2.5 flex items-start gap-2"
+              >
+                <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-red-200/90">{issue.message}</p>
+              </div>
+            ))}
+            {warnings.map((issue) => (
+              <div
+                key={issue.code}
+                className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5 flex items-start gap-2"
+              >
+                <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-200/90">{issue.message}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="flex-shrink-0 flex items-center justify-between gap-2 pt-3 border-t border-slate-700">
           {fullBalanceJobBlocksGenerate && (
             <p className="text-[11px] text-amber-300/90 flex-1 min-w-0">
@@ -739,7 +826,7 @@ export function BlueprintRefineDialog({
           {phase === 'intent' ? (
             <Button
               size="sm"
-              disabled={isGenerating || fullBalanceJobBlocksGenerate}
+              disabled={isGenerating || fullBalanceJobBlocksGenerate || submitBlocked}
               onClick={handleGenerate}
               className="bg-gradient-to-r from-cyan-600 to-blue-600"
             >
