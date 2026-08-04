@@ -196,7 +196,6 @@ export function SidePanelTabs({
           <div className="h-full overflow-y-auto">
             <NarrativeReasoningPanel
               reasoning={(currentTreatment as any)?.narrative_reasoning ?? null}
-              variant={currentTreatment as Record<string, unknown> | null}
             />
           </div>
         ) : (

@@ -113,9 +113,12 @@ describe('Reasoning panel', () => {
     expect(panel).toContain("'reasoning'")
     expect(panel).toContain('<span>Reasoning</span>')
     expect(panel).toContain('NarrativeReasoningPanel')
-    expect(readSource('src/components/blueprint/NarrativeReasoningPanel.tsx')).toContain(
-      'BlueprintNarrationSection'
-    )
+    const reasoningPanel = readSource('src/components/blueprint/NarrativeReasoningPanel.tsx')
+    const narrationSection = readSource('src/components/blueprint/BlueprintNarrationSection.tsx')
+    expect(reasoningPanel).toContain('BlueprintNarrationSection')
+    expect(reasoningPanel).toContain('reasoning={reasoning}')
+    expect(reasoningPanel).toContain('reasoning={null}')
+    expect(narrationSection).toContain('buildNarrativeReasoningNarrationText')
   })
 
   it('can be focused by signal, like the other tabs', () => {

@@ -3,13 +3,9 @@
 import React from 'react'
 import { Award, Lightbulb, RefreshCw, Sparkles, Users } from 'lucide-react'
 import { BlueprintNarrationSection } from '@/components/blueprint/BlueprintNarrationSection'
+import type { NarrativeReasoningNarrationInput } from '@/lib/blueprint/buildNarrativeReasoningNarrationText'
 
-export type NarrativeReasoning = {
-  character_focus?: string
-  story_strengths?: string
-  user_adjustments?: string
-  key_decisions?: Array<{ decision?: string; why?: string; impact?: string }>
-}
+export type NarrativeReasoning = NarrativeReasoningNarrationInput
 
 /**
  * The AI's account of the choices it made. Lives in the side panel's Reasoning
@@ -17,15 +13,13 @@ export type NarrativeReasoning = {
  */
 export function NarrativeReasoningPanel({
   reasoning,
-  variant,
 }: {
   reasoning?: NarrativeReasoning | null
-  variant?: Record<string, unknown> | null
 }) {
   if (!reasoning) {
     return (
       <div className="p-4 space-y-4">
-        <BlueprintNarrationSection variant={variant} playId="reasoning-narration" />
+        <BlueprintNarrationSection reasoning={null} playId="reasoning-narration" />
         <div className="rounded-lg border border-slate-700/60 bg-slate-800/40 p-3">
           <p className="text-xs text-gray-400">
             No reasoning recorded for this blueprint yet. Regenerate it to capture why the
@@ -41,7 +35,7 @@ export function NarrativeReasoningPanel({
 
   return (
     <div className="p-4 space-y-4">
-      <BlueprintNarrationSection variant={variant} playId="reasoning-narration" />
+      <BlueprintNarrationSection reasoning={reasoning} playId="reasoning-narration" />
 
       <div className="flex items-center gap-2">
         <Lightbulb className="w-4 h-4 text-amber-400 shrink-0" />

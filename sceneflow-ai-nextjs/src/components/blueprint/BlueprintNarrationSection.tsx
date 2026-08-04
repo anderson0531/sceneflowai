@@ -15,9 +15,14 @@ import {
   buildBlueprintNarrationText,
   type BlueprintNarrationMode,
 } from '@/lib/blueprint/buildBlueprintNarrationText'
+import {
+  buildNarrativeReasoningNarrationText,
+  type NarrativeReasoningNarrationInput,
+} from '@/lib/blueprint/buildNarrativeReasoningNarrationText'
 
 type BlueprintNarrationSectionProps = {
-  variant: Record<string, unknown> | null | undefined
+  variant?: Record<string, unknown> | null | undefined
+  reasoning?: NarrativeReasoningNarrationInput | null
   playId?: string
   compact?: boolean
 }
@@ -34,16 +39,20 @@ function narrationProgressLabel(
 
 export function BlueprintNarrationSection({
   variant,
+  reasoning,
   playId = 'blueprint-narration',
   compact = false,
 }: BlueprintNarrationSectionProps) {
   const tts = useBlueprintTtsContext()
   const [mode, setMode] = useState<BlueprintNarrationMode>('synopsis')
+  const isReasoningMode = reasoning !== undefined
 
-  const narrationText = useMemo(
-    () => buildBlueprintNarrationText(variant, mode),
-    [variant, mode]
-  )
+  const narrationText = useMemo(() => {
+    if (isReasoningMode) {
+      return buildNarrativeReasoningNarrationText(reasoning)
+    }
+    return buildBlueprintNarrationText(variant, mode)
+  }, [isReasoningMode, reasoning, variant, mode])
 
   const isActive = tts.loadingId === playId
   const progressLabel = narrationProgressLabel(tts.generationProgress)
@@ -80,7 +89,9 @@ export function BlueprintNarrationSection({
           </h4>
           {!compact && (
             <p className="text-[11px] text-purple-200/70 mt-0.5">
-              Listen to this blueprint with your selected narrator voice.
+              {isReasoningMode
+                ? "Listen to the AI's narrative reasoning with your selected narrator voice."
+                : 'Listen to this blueprint with your selected narrator voice.'}
             </p>
           )}
         </div>
@@ -98,7 +109,9 @@ export function BlueprintNarrationSection({
             </Button>
           ) : (
             <Button
-              aria-label="Play blueprint narration"
+              aria-label={
+                isReasoningMode ? 'Play narrative reasoning narration' : 'Play blueprint narration'
+              }
               title="Play narration"
               onClick={handlePlay}
               disabled={!narrationText.trim()}
@@ -120,16 +133,18 @@ export function BlueprintNarrationSection({
         <div className="text-[11px] text-purple-100/80 truncate" title={tts.selectedVoiceName}>
           Voice: {tts.selectedVoiceName}
         </div>
-        <Select value={mode} onValueChange={(value) => setMode(value as BlueprintNarrationMode)}>
-          <SelectTrigger className="h-8 bg-slate-900/60 border-purple-500/20 text-xs">
-            <SelectValue placeholder="Narration mode" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="synopsis">Logline + Synopsis</SelectItem>
-            <SelectItem value="full">Full Treatment</SelectItem>
-            <SelectItem value="beats">Beat-by-Beat</SelectItem>
-          </SelectContent>
-        </Select>
+        {!isReasoningMode ? (
+          <Select value={mode} onValueChange={(value) => setMode(value as BlueprintNarrationMode)}>
+            <SelectTrigger className="h-8 bg-slate-900/60 border-purple-500/20 text-xs">
+              <SelectValue placeholder="Narration mode" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="synopsis">Logline + Synopsis</SelectItem>
+              <SelectItem value="full">Full Treatment</SelectItem>
+              <SelectItem value="beats">Beat-by-Beat</SelectItem>
+            </SelectContent>
+          </Select>
+        ) : null}
       </div>
 
       {isActive && progressLabel ? (
