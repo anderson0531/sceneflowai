@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { Globe, X } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 import { cn } from '@/lib/utils'
 import { GoogleTranslate } from '@/app/components/GoogleTranslate'
@@ -43,6 +44,7 @@ function writeActiveLocale(locale: string | null): void {
  */
 export function PageTranslateControl({ className }: { className?: string }) {
   const pathname = usePathname()
+  const t = useTranslations('common.language')
   const [mounted, setMounted] = useState(false)
   const [active, setActive] = useState<string | null>(null)
   const [expanded, setExpanded] = useState(false)
@@ -94,7 +96,7 @@ export function PageTranslateControl({ className }: { className?: string }) {
             className="inline-flex items-center gap-1 text-xs text-gray-400 underline-offset-2 hover:text-gray-200 hover:underline"
           >
             <X className="h-3 w-3" />
-            Show original language
+            {t('stopTranslating')}
           </button>
         </>
       ) : expanded ? (
@@ -103,18 +105,18 @@ export function PageTranslateControl({ className }: { className?: string }) {
           onValueChange={translateTo}
           size="sm"
           align="end"
-          placeholder="Translate this page"
-          ariaLabel="Translate this page"
+          placeholder={t('translatePage')}
+          ariaLabel={t('translatePage')}
         />
       ) : (
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          title="Uses your browser's translation service. Quality varies and some controls may not translate."
+          title={t('translatePageHint')}
           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800/60 px-2.5 py-1 text-xs text-gray-300 transition-colors hover:border-cyan-500/40 hover:text-white"
         >
           <Globe className="h-3.5 w-3.5" />
-          Translate this page
+          {t('translatePage')}
         </button>
       )}
 

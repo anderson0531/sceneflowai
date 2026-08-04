@@ -257,12 +257,15 @@ export default function RootLayout({
             <AudioPlayerProvider>
               <CreditsProvider>
                 <CreditsPaywallHost />
-                {/* Only the header needs the client-side catalog; route groups
-                    resolve their own on the server. */}
+                {/* Root-level chrome (header, translate control) needs the
+                    client-side catalog because the root layout cannot resolve
+                    the locale on the server without making every static page
+                    dynamic. Route groups nest their own server-resolved
+                    provider inside, which replaces this one for their subtree. */}
                 <ClientAppMessagesProvider>
                   <GlobalHeader />
+                  <ConditionalLayout>{children}</ConditionalLayout>
                 </ClientAppMessagesProvider>
-                <ConditionalLayout>{children}</ConditionalLayout>
                 <InstallPrompt />
                 <Toaster
                   position="top-right"
