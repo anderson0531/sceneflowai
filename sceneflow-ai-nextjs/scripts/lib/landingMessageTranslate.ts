@@ -1,71 +1,58 @@
 import { batchTranslateWithVertexAI } from '../../src/lib/vertexai/translate'
+import {
+  GLOSSARY_TERMS,
+  glossarySlug,
+  icuArgumentsMatch,
+  protectAll,
+  restoreAll,
+  restoreGlossary as restoreGlossaryTerms,
+} from '../../src/lib/i18n/glossary'
 
-export const GLOSSARY_TERMS = [
-  'SceneFlow AI Studio',
-  'SceneFlow AI',
-  'SceneFlow',
-  'Blueprint Studio',
-  'Series Studio',
-  'Production Studio',
-  'Blueprint',
-  'Production Mixer',
-  'Beat Frames',
-  'Audience Resonance',
-  'Screening Room',
-  'Reference Library',
-  'Final Cut',
-  'Premiere',
-  'Animatic',
-  'Express Pre-vis',
-  'Pre-vis',
-  'Pre-Visualization Engine',
-  'Creative Decision Engine',
-  'BYOK',
-  'Whop',
-  'Explorer',
-  'Vertex AI',
-  'ElevenLabs',
-  'Google Cloud',
-  'Gemini Studio',
-  'Google Flow',
-]
+export { GLOSSARY_TERMS, glossarySlug }
 
-const GLOSSARY_PLACEHOLDER_PREFIX = 'SFAI'
-const GLOSSARY_PLACEHOLDER_SUFFIX = 'TERM'
 const GOOGLE_TRANSLATE_API = 'https://translation.googleapis.com/language/translate/v2'
 const MYMEMORY_API = 'https://api.mymemory.translated.net/get'
 
-function glossarySlug(term: string): string {
-  return term.replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '').toUpperCase()
+export interface ProtectedEntry {
+  protectedText: string
+  map: Map<string, string>
+  icu: Map<string, string>
+  original: string
 }
 
-export { glossarySlug }
-
-export function protectGlossary(text: string): { protectedText: string; map: Map<string, string> } {
-  const map = new Map<string, string>()
-  let protectedText = text
-  GLOSSARY_TERMS.forEach((term) => {
-    if (!protectedText.includes(term)) return
-    const placeholder = `${GLOSSARY_PLACEHOLDER_PREFIX}${glossarySlug(term)}${GLOSSARY_PLACEHOLDER_SUFFIX}`
-    map.set(placeholder, term)
-    protectedText = protectedText.split(term).join(placeholder)
-  })
-  return { protectedText, map }
+/**
+ * Shield glossary terms *and* ICU arguments before sending text to a provider.
+ *
+ * ICU protection is the addition here: `{count, plural, ...}` used to be sent as
+ * plain prose, so an engine was free to translate or reorder the inside of the
+ * braces and produce a message that throws at format time rather than merely
+ * reading oddly.
+ */
+export function protectGlossary(text: string): ProtectedEntry {
+  const { protectedText, glossary, icu } = protectAll(text)
+  return { protectedText, map: glossary, icu, original: text }
 }
 
-function scrubLegacyPlaceholders(text: string): string {
-  return text.replace(/__\s*SFTERM_(\d+)\s*__/g, (_, idx) => GLOSSARY_TERMS[Number(idx)] ?? _)
-}
+/**
+ * Restore protected spans. When the ICU map is supplied, a translation that lost
+ * or mangled an argument is rejected in favour of the English source: a wrong
+ * language is a cosmetic problem, a broken ICU message is a crash.
+ */
+export function restoreGlossary(
+  text: string,
+  map: Map<string, string>,
+  entry?: Pick<ProtectedEntry, 'icu' | 'original'>
+): string {
+  if (!entry) return restoreGlossaryTerms(text, map)
 
-export function restoreGlossary(text: string, map: Map<string, string>): string {
-  let restored = text
-  for (const [placeholder, term] of map) {
-    restored = restored.split(placeholder).join(term)
-    const slug = glossarySlug(term)
-    const fuzzy = new RegExp(`${GLOSSARY_PLACEHOLDER_PREFIX}\\s*${slug}\\s*${GLOSSARY_PLACEHOLDER_SUFFIX}`, 'g')
-    restored = restored.replace(fuzzy, term)
+  const restored = restoreAll(text, map, entry.icu)
+  if (!icuArgumentsMatch(entry.original, restored)) {
+    console.warn(
+      `[i18n] dropping translation with mangled ICU arguments: ${entry.original.slice(0, 60)}`
+    )
+    return entry.original
   }
-  return scrubLegacyPlaceholders(restored)
+  return restored
 }
 
 export function flattenMessages(
@@ -220,7 +207,7 @@ async function translateBatchGoogleRest(
 
   return texts.map((original, i) => {
     const raw = translations[i]?.translatedText ?? original
-    return restoreGlossary(raw, protectedEntries[i].map)
+    return restoreGlossary(raw, protectedEntries[i].map, protectedEntries[i])
   })
 }
 
@@ -229,7 +216,8 @@ async function translateBatchLibreTranslate(texts: string[], target: string): Pr
   const results: string[] = []
 
   for (const text of texts) {
-    const { protectedText, map } = protectGlossary(text)
+    const entry = protectGlossary(text)
+    const { protectedText, map } = entry
     const response = await fetch(`${LIBRETRANSLATE_URL}/translate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -246,7 +234,7 @@ async function translateBatchLibreTranslate(texts: string[], target: string): Pr
       throw new Error(`LibreTranslate: ${data.error}`)
     }
 
-    results.push(restoreGlossary(data.translatedText ?? text, map))
+    results.push(restoreGlossary(data.translatedText ?? text, map, entry))
     await new Promise((r) => setTimeout(r, 50))
   }
 
@@ -281,7 +269,7 @@ async function translateBatchDeepTranslator(texts: string[], target: string): Pr
   }
 
   return texts.map((original, i) =>
-    restoreGlossary(parsed.translations![i] ?? original, protectedEntries[i].map)
+    restoreGlossary(parsed.translations![i] ?? original, protectedEntries[i].map, protectedEntries[i])
   )
 }
 
@@ -290,7 +278,8 @@ async function translateBatchMyMemory(texts: string[], target: string): Promise<
   const results: string[] = []
 
   for (const text of texts) {
-    const { protectedText, map } = protectGlossary(text)
+    const entry = protectGlossary(text)
+    const { protectedText, map } = entry
     let translated = text
     let lastError: Error | null = null
 
@@ -321,7 +310,7 @@ async function translateBatchMyMemory(texts: string[], target: string): Promise<
           throw new Error('MyMemory daily quota finished')
         }
 
-        translated = restoreGlossary(data.responseData?.translatedText ?? text, map)
+        translated = restoreGlossary(data.responseData?.translatedText ?? text, map, entry)
         lastError = null
         break
       } catch (err) {
@@ -352,7 +341,9 @@ export async function translateBatch(
     const protectedEntries = texts.map((t) => protectGlossary(t))
     const q = protectedEntries.map((e) => e.protectedText)
     const results = await batchTranslateWithVertexAI(q, toGoogleTarget(target), 'en')
-    return results.map((r, i) => restoreGlossary(r.translatedText, protectedEntries[i].map))
+    return results.map((r, i) =>
+      restoreGlossary(r.translatedText, protectedEntries[i].map, protectedEntries[i])
+    )
   }
 
   if (resolved === 'google-rest') {

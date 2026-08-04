@@ -30,6 +30,7 @@ import UserIntegration from '@/models/UserIntegration'
 import GenerationJob from '@/models/GenerationJob'
 import Notification from '@/models/Notification'
 import AssetProvenanceLog from '@/models/AssetProvenanceLog'
+import ContentTranslation from '@/models/ContentTranslation'
 
 import { migrateUsersSubscriptionColumns } from '@/lib/database/migrateUsersSubscription'
 import { migrateCreditLedger } from '@/lib/database/migrateCreditLedger'
@@ -236,6 +237,7 @@ export async function bootstrapDatabaseSchema(): Promise<{
 
     logs.push('31. Creating content_translations table...')
     try {
+      await ContentTranslation.sync({ force: false })
       await ensureContentTranslationsTable()
       logs.push('✅ content_translations table created')
     } catch (error: unknown) {
