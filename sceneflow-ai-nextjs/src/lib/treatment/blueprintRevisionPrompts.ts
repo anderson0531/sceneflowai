@@ -8,6 +8,7 @@ import {
   getIntentRevisionGuardrail,
   resolveContentIntent,
 } from '@/lib/content/contentIntent'
+import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 
 const MAX_SYNOPSIS = 1200
 const MAX_BEAT_SYNOPSIS = 120
@@ -198,7 +199,8 @@ export function buildRewriterPrompt(
   plan: BlueprintChangePlan,
   userIntent: string,
   recs: BlueprintAudienceRecommendation[],
-  contentIntent?: ContentIntent
+  contentIntent?: ContentIntent,
+  storyLocale?: string
 ): string {
   const intent = contentIntent ?? resolveContentIntent(String(variant.genre || ''))
   const trimmed = trimVariantForPrompt(variant)
@@ -219,6 +221,14 @@ export function buildRewriterPrompt(
   const recBlock = buildRecommendationIntentBlock(recs)
   const couplingRules = getCouplingRulesForIntent(intent)
   const intentGuard = getIntentRevisionGuardrail(intent)
+  // A revision must come back in the language the creator is reading, or each
+  // pass drags the blueprint back toward English one section at a time.
+  const languageBlock = localeDirective(storyLocale, {
+    properNouns: buildProperNounGlossary(
+      { characters: (variant.character_descriptions as any[]) ?? [] },
+      [String(variant.title ?? '')]
+    ),
+  })
 
   return `You are an expert ${intent === 'fiction' ? 'film treatment editor' : 'content blueprint editor'} performing a GUIDED, BALANCED blueprint revision.
 
@@ -244,7 +254,7 @@ CURRENT VALUES (allowed fields only):
 ${compactJson(scopedBlueprint)}
 
 ${couplingRules}
-
+${languageBlock}
 Return ONLY a JSON object with the modified fields (subset of allowed fields). Include "narrative_reasoning" object:
 {
   "narrative_reasoning": {

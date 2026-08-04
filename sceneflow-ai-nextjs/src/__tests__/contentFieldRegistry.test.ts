@@ -19,6 +19,13 @@ describe('normalizeFieldPath', () => {
       'scenes[].segments[].videoPrompt'
     )
   })
+
+  it('collapses stable entity ids so override keys survive reordering', () => {
+    expect(normalizeFieldPath('treatmentVariants[A].logline')).toBe(
+      'treatmentVariants[].logline'
+    )
+    expect(normalizeFieldPath('beatSheet[beat_9f2].summary')).toBe('beatSheet[].summary')
+  })
 })
 
 describe('classifyField', () => {

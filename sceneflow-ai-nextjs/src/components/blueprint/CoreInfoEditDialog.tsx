@@ -8,6 +8,9 @@ import { Input } from '../ui/Input'
 import { toast } from 'sonner'
 import { Wand2, Loader2, FileText, Save, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { LocalizedField, TranslationNotice } from '@/components/i18n/LocalizedField'
+import { useLocalizedFields } from '@/i18n/content/useLocalizedFields'
+import type { EntityI18n } from '@/i18n/content/entityI18n'
 
 type TreatmentVariant = {
   id: string
@@ -26,6 +29,12 @@ type Props = {
   onClose: () => void
   onApply: (patch: Partial<TreatmentVariant>) => void
   projectId?: string
+  /**
+   * Localization state for the project. When omitted the dialog behaves exactly
+   * as it did before: every field reads as its own source language.
+   */
+  entityI18n?: EntityI18n
+  onEntityI18nChange?: (next: EntityI18n) => void
 }
 
 const INSTRUCTION_TEMPLATES = [
@@ -34,7 +43,15 @@ const INSTRUCTION_TEMPLATES = [
   { id: 'refine-title', label: 'Stronger Title', text: 'Suggest a more memorable, evocative title that captures the essence.' },
 ]
 
-export function CoreInfoEditDialog({ open, variant, onClose, onApply, projectId }: Props) {
+export function CoreInfoEditDialog({
+  open,
+  variant,
+  onClose,
+  onApply,
+  projectId,
+  entityI18n,
+  onEntityI18nChange,
+}: Props) {
   const [draft, setDraft] = useState<Partial<TreatmentVariant>>({})
   const [selectedInstructions, setSelectedInstructions] = useState<string[]>([])
   const [customInstruction, setCustomInstruction] = useState('')
@@ -94,6 +111,34 @@ export function CoreInfoEditDialog({ open, variant, onClose, onApply, projectId 
   const updateDraft = (key: string, value: any) => {
     setDraft(prev => ({ ...prev, [key]: value }))
     setHasChanges(true)
+  }
+
+  const localized = useLocalizedFields({
+    pathPrefix: `treatmentVariants[${variant?.id ?? 'current'}]`,
+    values: {
+      title: draft.title,
+      logline: draft.logline,
+      genre: draft.genre,
+      target_audience: draft.target_audience,
+    },
+    i18n: entityI18n,
+    onI18nChange: onEntityI18nChange,
+    enabled: open,
+  })
+
+  const bindField = (name: string) => {
+    const binding = localized.bind(name)
+    return {
+      path: binding.path,
+      sourceValue: binding.sourceValue,
+      translation: binding.translation,
+      sourceLocale: localized.sourceLocale,
+      uiLocale: localized.uiLocale,
+      onChangeSource: (value: string) => updateDraft(name, value),
+      onChangeOverride: localized.canOverride
+        ? (value: string) => binding.setOverride(value)
+        : undefined,
+    }
   }
 
   const refineSection = async () => {
@@ -198,42 +243,33 @@ export function CoreInfoEditDialog({ open, variant, onClose, onApply, projectId 
             ))}
           </div>
 
+          {localized.needsTranslation && (
+            <TranslationNotice
+              sourceLocale={localized.sourceLocale}
+              uiLocale={localized.uiLocale}
+              isLoading={localized.isLoading}
+              onPromote={onEntityI18nChange ? localized.promoteToSourceLocale : undefined}
+            />
+          )}
+
           <div className="space-y-3">
-            <div className="space-y-1">
-              <label className="text-xs text-gray-400">Title</label>
-              <Input
-                value={draft.title || ''}
-                onChange={(e) => updateDraft('title', e.target.value)}
-                className="bg-slate-800/50 border-slate-700"
-              />
-            </div>
+            <LocalizedField label="Title" {...bindField('title')}>
+              {(p) => <Input {...p} className="bg-slate-800/50 border-slate-700" />}
+            </LocalizedField>
 
-            <div className="space-y-1">
-              <label className="text-xs text-gray-400">Logline</label>
-              <Textarea
-                value={draft.logline || ''}
-                onChange={(e) => updateDraft('logline', e.target.value)}
-                className="min-h-[80px] bg-slate-800/50 border-slate-700"
-              />
-            </div>
+            <LocalizedField label="Logline" {...bindField('logline')}>
+              {(p) => (
+                <Textarea {...p} className="min-h-[80px] bg-slate-800/50 border-slate-700" />
+              )}
+            </LocalizedField>
 
-            <div className="space-y-1">
-              <label className="text-xs text-gray-400">Genre</label>
-              <Input
-                value={draft.genre || ''}
-                onChange={(e) => updateDraft('genre', e.target.value)}
-                className="bg-slate-800/50 border-slate-700"
-              />
-            </div>
+            <LocalizedField label="Genre" {...bindField('genre')}>
+              {(p) => <Input {...p} className="bg-slate-800/50 border-slate-700" />}
+            </LocalizedField>
 
-            <div className="space-y-1">
-              <label className="text-xs text-gray-400">Target Audience</label>
-              <Input
-                value={draft.target_audience || ''}
-                onChange={(e) => updateDraft('target_audience', e.target.value)}
-                className="bg-slate-800/50 border-slate-700"
-              />
-            </div>
+            <LocalizedField label="Target Audience" {...bindField('target_audience')}>
+              {(p) => <Input {...p} className="bg-slate-800/50 border-slate-700" />}
+            </LocalizedField>
           </div>
 
           <div className="space-y-2">

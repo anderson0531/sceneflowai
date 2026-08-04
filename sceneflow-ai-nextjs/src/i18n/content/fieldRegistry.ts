@@ -58,17 +58,47 @@ export const CONTENT_FIELDS: Record<string, FieldKind> = {
   'treatmentVariants[].title': 'display',
   'treatmentVariants[].logline': 'display',
   'treatmentVariants[].synopsis': 'display',
-  'treatmentVariants[].visual_style': 'display',
+  'treatmentVariants[].setting': 'display',
+  'treatmentVariants[].protagonist': 'display',
+  'treatmentVariants[].antagonist': 'display',
+  'treatmentVariants[].opening_hook': 'display',
+  'treatmentVariants[].cta': 'display',
+  'treatmentVariants[].tone': 'display',
   'treatmentVariants[].tone_description': 'display',
   'treatmentVariants[].target_audience': 'display',
   'treatmentVariants[].genre': 'display',
   'treatmentVariants[].themes': 'display',
+  'treatmentVariants[].format_length': 'opaque',
+  // Feeds the image pipeline, so it stays in English like the other visual
+  // prompt fields.
+  'treatmentVariants[].visual_style': 'machine',
+  'treatmentVariants[].audio_direction': 'machine',
+  'treatmentVariants[].beats[].title': 'display',
+  'treatmentVariants[].beats[].intent': 'display',
+  'treatmentVariants[].beats[].synopsis': 'display',
   'treatmentVariants[].mood_references[]': 'display',
   'treatmentVariants[].heroImage': 'opaque',
   'treatmentVariants[].character_descriptions[].name': 'opaque',
+  'treatmentVariants[].character_descriptions[].subject': 'opaque',
+  'treatmentVariants[].character_descriptions[].role': 'opaque',
   'treatmentVariants[].character_descriptions[].description': 'display',
-  'treatmentVariants[].character_descriptions[].role': 'display',
-  'treatmentVariants[].character_descriptions[].appearance': 'display',
+  'treatmentVariants[].character_descriptions[].externalGoal': 'display',
+  'treatmentVariants[].character_descriptions[].internalNeed': 'display',
+  'treatmentVariants[].character_descriptions[].fatalFlaw': 'display',
+  'treatmentVariants[].character_descriptions[].arcStartingState': 'display',
+  'treatmentVariants[].character_descriptions[].arcShift': 'display',
+  'treatmentVariants[].character_descriptions[].arcEndingState': 'display',
+  // Everything below feeds character reference image generation.
+  'treatmentVariants[].character_descriptions[].appearance': 'machine',
+  'treatmentVariants[].character_descriptions[].ethnicity': 'machine',
+  'treatmentVariants[].character_descriptions[].keyFeature': 'machine',
+  'treatmentVariants[].character_descriptions[].hairStyle': 'machine',
+  'treatmentVariants[].character_descriptions[].hairColor': 'machine',
+  'treatmentVariants[].character_descriptions[].eyeColor': 'machine',
+  'treatmentVariants[].character_descriptions[].expression': 'machine',
+  'treatmentVariants[].character_descriptions[].build': 'machine',
+  'treatmentVariants[].character_descriptions[].defaultWardrobe': 'machine',
+  'treatmentVariants[].character_descriptions[].wardrobeAccessories': 'machine',
 
   'beatSheet[].id': 'opaque',
   'beatSheet[].act': 'opaque',
@@ -201,10 +231,16 @@ const MACHINE_SEGMENT_PATTERN = /(^|[._])(prompt|prompts)$|Prompt$|PromptElement
 const OPAQUE_SEGMENT_PATTERN =
   /(^|[._])(id|ids|url|urls|uri|href|slug|key|hash|token|at|createdAt|updatedAt|gcsPath|audioUrl|imageUrl)$/i
 
-/** Normalize `a.0.b` / `a[0].b` to the registry's `a[].b` form. */
+/**
+ * Normalize `a.0.b`, `a[0].b`, and `a[var_1].b` to the registry's `a[].b` form.
+ *
+ * Any bracket content collapses, not just digits, so callers can key overrides
+ * by a stable entity id (`treatmentVariants[A].logline`) instead of an array
+ * index that shifts when a variant is reordered or deleted.
+ */
 export function normalizeFieldPath(path: string): string {
   return path
-    .replace(/\[(\d+)\]/g, '[]')
+    .replace(/\[[^\]]*\]/g, '[]')
     .replace(/\.(\d+)(?=\.|$)/g, '[]')
     .replace(/\[\]\./g, '[].')
 }

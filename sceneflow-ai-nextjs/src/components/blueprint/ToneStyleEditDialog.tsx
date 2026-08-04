@@ -7,6 +7,9 @@ import { Textarea } from '../ui/textarea'
 import { toast } from 'sonner'
 import { Wand2, Loader2, Palette, Save, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { LocalizedField, TranslationNotice } from '@/components/i18n/LocalizedField'
+import { useLocalizedFields } from '@/i18n/content/useLocalizedFields'
+import type { EntityI18n } from '@/i18n/content/entityI18n'
 import { BlueprintFoundationFields } from '@/components/blueprint/BlueprintFoundationFields'
 import {
   type BlueprintAspectRatio,
@@ -32,6 +35,12 @@ type Props = {
   onClose: () => void
   onApply: (patch: Partial<TreatmentVariant>) => void
   projectId?: string
+  /**
+   * Localization state for the project. When omitted the dialog behaves exactly
+   * as it did before: every field reads as its own source language.
+   */
+  entityI18n?: EntityI18n
+  onEntityI18nChange?: (next: EntityI18n) => void
 }
 
 const INSTRUCTION_TEMPLATES = [
@@ -40,7 +49,11 @@ const INSTRUCTION_TEMPLATES = [
   { id: 'theme-depth', label: 'Deepen Themes', text: 'Explore themes with more nuance and complexity.' },
 ]
 
-export function ToneStyleEditDialog({ open, variant, onClose, onApply, projectId }: Props) {
+export function ToneStyleEditDialog({
+  open, variant, onClose, onApply, projectId,
+  entityI18n,
+  onEntityI18nChange,
+}: Props) {
   const [draft, setDraft] = useState<Partial<TreatmentVariant>>({})
   const [selectedInstructions, setSelectedInstructions] = useState<string[]>([])
   const [customInstruction, setCustomInstruction] = useState('')
@@ -101,6 +114,31 @@ export function ToneStyleEditDialog({ open, variant, onClose, onApply, projectId
     setDraft(prev => ({ ...prev, [key]: value }))
     setHasChanges(true)
   }
+  const localized = useLocalizedFields({
+    pathPrefix: `treatmentVariants[${variant?.id ?? 'current'}]`,
+    values: {
+      tone_description: draft.tone_description,
+    },
+    i18n: entityI18n,
+    onI18nChange: onEntityI18nChange,
+    enabled: open,
+  })
+
+  const bindField = (name: string) => {
+    const binding = localized.bind(name)
+    return {
+      path: binding.path,
+      sourceValue: binding.sourceValue,
+      translation: binding.translation,
+      sourceLocale: localized.sourceLocale,
+      uiLocale: localized.uiLocale,
+      onChangeSource: (value: string) => updateDraft(name, value),
+      onChangeOverride: localized.canOverride
+        ? (value: string) => binding.setOverride(value)
+        : undefined,
+    }
+  }
+
 
   const refineSection = async () => {
     if (!variant) return
@@ -204,15 +242,21 @@ export function ToneStyleEditDialog({ open, variant, onClose, onApply, projectId
             ))}
           </div>
 
+          {localized.needsTranslation && (
+            <TranslationNotice
+              sourceLocale={localized.sourceLocale}
+              uiLocale={localized.uiLocale}
+              isLoading={localized.isLoading}
+              onPromote={onEntityI18nChange ? localized.promoteToSourceLocale : undefined}
+            />
+          )}
+
           <div className="space-y-3">
-            <div className="space-y-1">
-              <label className="text-xs text-gray-400">Tone Description</label>
-              <Textarea
-                value={draft.tone_description || ''}
-                onChange={(e) => updateDraft('tone_description', e.target.value)}
-                className="min-h-[80px] bg-slate-800/50 border-slate-700"
-              />
-            </div>
+            <LocalizedField label="Tone Description" {...bindField('tone_description')}>
+              {(p) => (
+                <Textarea {...p} className="min-h-[80px] bg-slate-800/50 border-slate-700" />
+              )}
+            </LocalizedField>
 
             <BlueprintFoundationFields
               artStyle={draft.artStyle || resolveVariantArtStyle(draft)}

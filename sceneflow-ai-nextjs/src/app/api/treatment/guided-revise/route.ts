@@ -21,6 +21,7 @@ import {
   detectMissingBalanceSections,
 } from '@/lib/treatment/blueprintRevisionDiff'
 import { resolveContentIntent } from '@/lib/content/contentIntent'
+import { resolveStoryLocale } from '@/i18n/server/storyLocale'
 
 export const runtime = 'nodejs'
 export const maxDuration = 180
@@ -124,6 +125,13 @@ export async function POST(request: NextRequest) {
 
     const variant = trimVariantForPrompt(rawVariant)
 
+    const { storyLocale } = await resolveStoryLocale({
+      explicit: (body as any).storyLocale,
+      projectId: (body as any).projectId,
+      userIdOrEmail: userId,
+      includeProperNouns: false,
+    })
+
     const selectedRecs = trimRecommendationsForPrompt(
       resonanceRecommendations.filter((r) =>
         selectedRecommendationIds.length > 0
@@ -181,7 +189,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Step B: Balanced rewriter
-    const rewriterPrompt = buildRewriterPrompt(variant, plan, intentText, selectedRecs, contentIntent)
+    const rewriterPrompt = buildRewriterPrompt(variant, plan, intentText, selectedRecs, contentIntent, storyLocale)
     let patch = await runGeminiJson(rewriterPrompt, 6144)
 
     if (!patch) {
