@@ -3,7 +3,6 @@ import {
   Gauge,
   Library,
   Zap,
-  Clapperboard,
   Languages,
   GitBranch,
   MonitorPlay,
@@ -16,6 +15,7 @@ import {
   Smartphone,
   type LucideIcon,
 } from 'lucide-react'
+import { ASSISTANT_ICON } from '@/lib/constants/assistantIcon'
 
 /** Icon map for Key Features cards — keys must match messages/en.json keyFeatures.categories[].features[].icon */
 export const FEATURE_ICONS: Record<string, LucideIcon> = {
@@ -26,7 +26,8 @@ export const FEATURE_ICONS: Record<string, LucideIcon> = {
   writersRoom: PenLine,
   ara: Gauge,
   referenceLibrary: Library,
-  iad: Clapperboard,
+  // Same mark as the in-app Assistant button, so marketing and product match.
+  iad: ASSISTANT_ICON,
   multilanguage: Languages,
   express: Zap,
   screeningRoom: MonitorPlay,

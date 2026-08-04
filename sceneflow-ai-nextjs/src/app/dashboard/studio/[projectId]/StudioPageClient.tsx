@@ -59,7 +59,6 @@ import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 import { ProductEmptyState } from '@/components/product'
 import { BlueprintResonanceStrip } from '@/components/blueprint/BlueprintResonanceStrip'
 import { BlueprintNextStepBanner } from '@/components/blueprint/BlueprintNextStepBanner'
-import { BlueprintReadyBanner } from '@/components/blueprint/BlueprintReadyBanner'
 import { StartProductionDialog } from '@/components/blueprint/StartProductionDialog'
 import {
   BlueprintRefineDiffBanner,
@@ -1282,8 +1281,8 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
 
   return (
     <div className="min-h-full">
-      <TopProgressBar progress={genProgress} />
-      <GeneratingOverlay visible={isGen} message="Creating your Film Concept..." progress={genProgress} />
+      <TopProgressBar visible={isGen} progress={genProgress} />
+      <GeneratingOverlay visible={isGen} title="Creating your Film Concept…" progress={genProgress} />
       
       <PanelGroup direction="horizontal" className="min-h-full">
         {/* Main Content Panel */}
@@ -1373,11 +1372,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 {hasBlueprint && (
                   <BlueprintNextStepBanner
                     progress={blueprintProgress}
+                    checklist={checklist}
                     onAction={handleNextStepAction}
                   />
-                )}
-                {hasBlueprint && !checklist.isBlueprintReady && (
-                  <BlueprintReadyBanner checklist={checklist} />
                 )}
                 {refineDiffSummary.length > 0 && (
                   <BlueprintRefineDiffBanner

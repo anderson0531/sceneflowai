@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { ASSISTANT } from '@/lib/constants/assistant'
 import { Users, X, Copy, Check, Link2, Radar } from 'lucide-react'
 import { AudienceResonancePanelV3 } from './AudienceResonancePanelV3'
 import { cn } from '@/lib/utils'
@@ -679,7 +680,7 @@ function CollaborationContent({
                   disabled={selectedRecIds.size === 0 || !onOpenBlueprintRefine}
                   className="w-full px-3 py-2 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-white text-sm font-medium disabled:opacity-50"
                 >
-                  Open guided revision
+                  Open {ASSISTANT.short}
                 </button>
               </div>
             )}

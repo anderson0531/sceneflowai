@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
+import { ASSISTANT } from '@/lib/constants/assistant'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import {
@@ -43,7 +44,7 @@ const BLUEPRINT_TOUR_STEPS: TourStep[] = [
     description:
       'Start from a series episode, concept, or imported script. Generate a structured treatment with logline, beats, characters, and tone.',
     icon: <Sparkles className="w-6 h-6" />,
-    tip: 'Use Regenerate Blueprint for a full reset; Edit Blueprint for scoped changes.',
+    tip: `Use Regenerate Blueprint for a full reset; the ${ASSISTANT.short} (${ASSISTANT.full}) for scoped changes.`,
   },
   {
     id: 'review',

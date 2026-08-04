@@ -6,7 +6,6 @@ import { Button } from '../ui/Button'
 import { Textarea } from '../ui/textarea'
 import { toast } from 'sonner'
 import {
-  Compass,
   Loader2,
   Sparkles,
   AlertTriangle,
@@ -43,6 +42,8 @@ import {
   validateRevisionRequest,
 } from '@/lib/treatment/blueprintRequestValidation'
 import { moderatePrompt } from '@/utils/promptModerator'
+import { ASSISTANT, assistantTitle } from '@/lib/constants/assistant'
+import { ASSISTANT_ICON as AssistantIcon } from '@/lib/constants/assistantIcon'
 import { ContentPolicyAlert } from '@/components/vision/scene-production/ContentPolicyAlert'
 import { useBackgroundJob } from '@/hooks/useBackgroundJob'
 import { cn } from '@/lib/utils'
@@ -618,12 +619,12 @@ export function BlueprintRefineDialog({
 
         <DialogHeader className="flex-shrink-0 pb-2">
           <DialogTitle className="flex items-center gap-2 text-xl">
-            <Compass className="w-5 h-5 text-cyan-400" />
-            Blueprint Editor
+            <AssistantIcon className="w-5 h-5 text-cyan-400" />
+            {assistantTitle('Blueprint')}
           </DialogTitle>
           <p className="text-xs text-gray-500 mt-1">
-            Describe your direction — AI will balance changes across the full blueprint. No direct
-            field editing.
+            {ASSISTANT.full} — describe your direction and it balances changes across the full
+            blueprint. No direct field editing.
           </p>
         </DialogHeader>
 

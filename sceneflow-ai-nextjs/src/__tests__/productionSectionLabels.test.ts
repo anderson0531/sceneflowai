@@ -8,6 +8,7 @@ import {
 import { productNav } from '@/config/nav/globalNav'
 import { productionWorkflowGroups } from '@/config/nav/workflowGuideConfig'
 import { guidanceContent } from '@/components/vision/SceneWorkflowCoPilot'
+import { ASSISTANT } from '@/lib/constants/assistant'
 
 const ROOT = path.resolve(__dirname, '../..')
 
@@ -51,9 +52,11 @@ describe('Production section labels', () => {
     expect(showcase).toContain(PRODUCTION_SECTION_LABELS.dialogueAction)
   })
 
-  it('names the Intelligent Assistant Writer and Audience Resonance Analysis in the section description', () => {
-    expect(PRODUCTION_SECTION_DESCRIPTIONS.dialogueAction).toContain('Intelligent Assistant Writer')
+  it('names the Assistant and Audience Resonance Analysis in the section description', () => {
+    expect(PRODUCTION_SECTION_DESCRIPTIONS.dialogueAction).toContain(ASSISTANT.full)
     expect(PRODUCTION_SECTION_DESCRIPTIONS.dialogueAction).toContain('Audience Resonance Analysis')
+    // The old "Assistant Writer" name is retired in favour of one brand.
+    expect(PRODUCTION_SECTION_DESCRIPTIONS.dialogueAction).not.toContain('Assistant Writer')
   })
 
   it('renders the segmented tab labels from the shared constants', () => {

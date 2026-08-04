@@ -3,6 +3,7 @@
  */
 
 import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
+import { ASSISTANT } from '@/lib/constants/assistant'
 
 export interface GlossaryTerm {
   term: string
@@ -24,11 +25,11 @@ export const BLUEPRINT_GLOSSARY: Record<string, GlossaryTerm> = {
   },
   regenerateBlueprint: {
     term: 'Regenerate Blueprint',
-    definition: 'Full AI regen when you want a major creative reset — use Edit Blueprint for scoped changes.',
+    definition: `Full AI regen when you want a major creative reset — use the ${ASSISTANT.short} for scoped changes.`,
   },
   editBlueprint: {
-    term: 'Edit Blueprint',
-    definition: 'Scoped AI edits to core info, story, tone, beats, or characters.',
+    term: ASSISTANT.short,
+    definition: `${ASSISTANT.full} — describe a change in plain words and it revises core info, story, tone, beats, or characters for you.`,
   },
   startProduction: {
     term: 'Open Production Studio',
@@ -51,7 +52,7 @@ export const BLUEPRINT_COPY = {
   blueprintSavedOpeningProduction: `Blueprint saved — opening ${STUDIO_DISPLAY_NAMES.production}`,
   creatingVision: `Opening ${STUDIO_DISPLAY_NAMES.production}…`,
   reimagine: 'Regenerate Blueprint',
-  editBlueprint: 'Edit Blueprint',
+  editBlueprint: ASSISTANT.short,
   startProduction: 'Open Production Studio',
   startProductionTooltip: `Open Production Studio — generate script and begin the ${STUDIO_DISPLAY_NAMES.production} pipeline`,
 } as const

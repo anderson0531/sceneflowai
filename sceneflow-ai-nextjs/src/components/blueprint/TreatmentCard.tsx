@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react'
 import { useGuideStore } from '@/store/useGuideStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Play, Square, Volume2, PencilLine, MoreHorizontal, ChevronDown, MessageSquare, ArrowRight, Loader2, Wand2, X, Users, Lightbulb, SparklesIcon, Award, RefreshCw, FileText, Printer } from 'lucide-react'
+import { Play, Square, Volume2, MoreHorizontal, ChevronDown, MessageSquare, ArrowRight, Loader2, Wand2, X, Users, Lightbulb, SparklesIcon, Award, RefreshCw, FileText, Printer } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -21,6 +21,9 @@ import { useBlueprintTts } from '@/hooks/useBlueprintTts'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType } from '@/lib/types/reports'
 import { BLUEPRINT_COPY } from '@/lib/blueprint/blueprintGlossary'
+import { ASSISTANT } from '@/lib/constants/assistant'
+import { ASSISTANT_ICON as AssistantIcon } from '@/lib/constants/assistantIcon'
+import { AssistantButton } from '@/components/blueprint/AssistantButton'
 import { formatBlueprintRuntime } from '@/lib/blueprint/formatBlueprintCore'
 import { BlueprintFieldCard, BlueprintSubsectionHeading } from '@/components/blueprint/BlueprintFieldCard'
 import { resolveAuthorWriterDisplay } from '@/lib/user/displayName'
@@ -96,7 +99,9 @@ export function TreatmentCard({
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [isSharing, setIsSharing] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
-  const [showReasoning, setShowReasoning] = useState(false)
+  // Open by default: the structure help modal tells users to read this, and it
+  // is the only place the AI explains the choices it made.
+  const [showReasoning, setShowReasoning] = useState(true)
   const [reportPreviewOpen, setReportPreviewOpen] = useState(false)
   // Client-side only state for flash highlight (avoids hydration mismatch from Date.now())
   const [isClient, setIsClient] = useState(false)
@@ -205,22 +210,12 @@ export function TreatmentCard({
                     <TooltipProvider>
                       <div className="flex items-center gap-1">
 
-                        {/* Edit Blueprint - precise section editing */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              aria-label="Edit blueprint"
-                              title="Edit Blueprint (E)"
-                              onClick={() => openRefine({})}
-                              className="h-8 w-8 border border-gray-700 text-gray-200 hover:bg-gray-800"
-                              variant="outline"
-                              size="icon"
-                            >
-                              <PencilLine className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>{BLUEPRINT_COPY.editBlueprint} (E)</TooltipContent>
-                        </Tooltip>
+                        {/* Assistant — scoped AI edits across the whole blueprint */}
+                        <AssistantButton
+                          onClick={() => openRefine({})}
+                          size="toolbar"
+                          scopeLabel="whole blueprint"
+                        />
 
                         {/* Reimagine - major story changes */}
                         <Tooltip>
@@ -268,7 +263,7 @@ export function TreatmentCard({
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-52">
                               <DropdownMenuItem onSelect={(e)=>{e.preventDefault(); openRefine({});}} onClick={(e)=>{e.preventDefault();}}>
-                                <PencilLine className="h-4 w-4 mr-2" /> Refine
+                                <AssistantIcon className="h-4 w-4 mr-2" /> {ASSISTANT.short}
                               </DropdownMenuItem>
                               <DropdownMenuItem onSelect={(e)=>{e.preventDefault(); setReimaginOpen(true);}} onClick={(e)=>{e.preventDefault();}}>
                                 <RefreshCw className="h-4 w-4 mr-2" /> Reimagine
@@ -392,7 +387,9 @@ export function TreatmentCard({
                           </DropdownMenu>
                         </div>
 
-                        {/* Start Production - moved to end */}
+                        {/* Secondary shortcut: the page header owns the primary
+                            Production hand-off, so this one is de-emphasised to
+                            leave a single filled call to action per viewport. */}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -400,7 +397,8 @@ export function TreatmentCard({
                               aria-label={BLUEPRINT_COPY.startProduction}
                               onClick={handleStartProductionClick}
                               disabled={!startProductionEnabled || isStartingProduction}
-                              className="h-8 px-2 bg-sf-primary text-white hover:bg-sf-accent disabled:opacity-50"
+                              variant="outline"
+                              className="h-8 px-2 border-emerald-600/40 text-emerald-300 hover:bg-emerald-600/10 disabled:opacity-50"
                               size="sm"
                             >
                               {isStartingProduction ? (
@@ -439,9 +437,8 @@ export function TreatmentCard({
                   {/* Callout */}
                   <div className={`p-4 rounded-lg border-l-4 ${accent} bg-gray-50 dark:bg-gray-800/50`}> 
                     <div className={`text-lg font-bold text-gray-900 dark:text-gray-100 ${v.id===activeVariant.id ? flashIf('title') : ''}`}>{v.title || 'Treatment'}</div>
-                    {v.logline ? (
-                      <div className={`mt-2 text-base text-gray-700 dark:text-gray-300 leading-relaxed ${v.id===activeVariant.id ? flashIf('logline') : ''}`}>{v.logline}</div>
-                    ) : null}
+                    {/* Logline lives in the hero overlay and the Core field; a third
+                        copy here pushed the blueprint body further down the page. */}
                     {!tts.enabled && (
                       <div className="mt-2 text-xs text-gray-400 inline-flex items-center gap-1" title="Configure Google TTS to enable audio previews">
                         <Volume2 size={14} /> Audio preview unavailable
@@ -455,14 +452,10 @@ export function TreatmentCard({
                     title="Core Identifying Information"
                     data-blueprint-section="core"
                     actions={
-                      <Button
+                      <AssistantButton
                         onClick={() => openGuidedForSection('core')}
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 w-6 p-0 hover:bg-slate-700/50"
-                      >
-                        <PencilLine className="w-3 h-3 text-gray-400 hover:text-cyan-400" />
-                      </Button>
+                        scopeLabel="Core Identifying Information"
+                      />
                     }
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -544,14 +537,10 @@ export function TreatmentCard({
                     title="Story Setup"
                     data-blueprint-section="story"
                     actions={
-                      <Button
+                      <AssistantButton
                         onClick={() => openGuidedForSection('story')}
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 w-6 p-0 hover:bg-slate-700/50"
-                      >
-                        <PencilLine className="w-3 h-3 text-gray-400 hover:text-cyan-400" />
-                      </Button>
+                        scopeLabel="Story Setup"
+                      />
                     }
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -587,14 +576,10 @@ export function TreatmentCard({
                     title="Tone, Style, & Themes"
                     data-blueprint-section="tone"
                     actions={
-                      <Button
+                      <AssistantButton
                         onClick={() => openGuidedForSection('tone')}
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 w-6 p-0 hover:bg-slate-700/50"
-                      >
-                        <PencilLine className="w-3 h-3 text-gray-400 hover:text-cyan-400" />
-                      </Button>
+                        scopeLabel="Tone, Style, & Themes"
+                      />
                     }
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -669,14 +654,10 @@ export function TreatmentCard({
                     title="Beats & Runtime"
                     data-blueprint-section="beats"
                     actions={
-                      <Button
+                      <AssistantButton
                         onClick={() => openGuidedForSection('beats')}
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 w-6 p-0 hover:bg-slate-700/50"
-                      >
-                        <PencilLine className="w-3 h-3 text-gray-400 hover:text-cyan-400" />
-                      </Button>
+                        scopeLabel="Beats & Runtime"
+                      />
                     }
                   >
                     <div className="space-y-3">
@@ -721,14 +702,10 @@ export function TreatmentCard({
                       title={`Characters (${v.character_descriptions.length})`}
                       data-blueprint-section="characters"
                       actions={
-                        <Button
+                        <AssistantButton
                           onClick={() => openGuidedForSection('characters')}
-                          size="sm"
-                          variant="ghost"
-                          className="h-6 w-6 p-0 hover:bg-slate-700/50"
-                        >
-                          <PencilLine className="w-3 h-3 text-gray-400 hover:text-cyan-400" />
-                        </Button>
+                          scopeLabel="Characters"
+                        />
                       }
                     >
                       <div className="space-y-3">

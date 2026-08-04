@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { ASSISTANT } from '@/lib/constants/assistant'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -277,7 +278,7 @@ export function CueAssistantWidget() {
           return 'When your Blueprint is ready, use Start Production in the header or Resonance panel. A checklist warns below 80 — you can confirm and override if needed.'
         }
         if (message.includes('edit') || message.includes('refine') || message.includes('iterate')) {
-          return 'Iterate with Edit Blueprint (scoped changes) or Regenerate Blueprint (full reset). Apply AR recommendations, then re-analyze to track score improvement.'
+          return `Iterate with the ${ASSISTANT.short} (scoped changes) or Regenerate Blueprint (full reset). Apply AR recommendations, then re-analyze to track score improvement.`
         }
         return 'Blueprint workflow: Generate → Review sections → Run Audience Resonance → Iterate → Start Production. Check the sidebar workflow guide and header next-step banner.'
       case 'finalcut':
