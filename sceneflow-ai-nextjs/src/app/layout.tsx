@@ -12,6 +12,7 @@ import AnimatedProcessingOverlay from '../components/AnimatedProcessingOverlay'
 import { CreditsProvider } from '@/contexts/CreditsContext'
 import { CreditsPaywallHost } from '@/components/credits/CreditsPaywallHost'
 import { CookieConsent } from '@/components/ui/CookieConsent'
+import { DocumentLocaleScript } from '@/components/i18n/DocumentLocaleScript'
 import { GlobalErrorGuard } from '@/components/providers/GlobalErrorGuard'
 import AudioPlayerProvider from '@/context/AudioPlayerProvider'
 import {
@@ -224,8 +225,9 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" dir="ltr" suppressHydrationWarning>
       <head>
+        <DocumentLocaleScript />
         <link rel="preconnect" href={HERO_VIDEO_BLOB_HOST} crossOrigin="anonymous" />
         {LANDING_VIDEO_CDN_HOST ? (
           <link rel="preconnect" href={LANDING_VIDEO_CDN_HOST} crossOrigin="anonymous" />

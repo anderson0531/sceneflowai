@@ -35,6 +35,10 @@ import { migrateUsersSubscriptionColumns } from '@/lib/database/migrateUsersSubs
 import { migrateCreditLedger } from '@/lib/database/migrateCreditLedger'
 import { migrateRateCard } from '@/lib/database/migrateRateCard'
 import { ensureWhopUserColumns } from '@/lib/database/migrateWhopPayment'
+import {
+  ensureContentTranslationsTable,
+  ensureUserLocaleColumns,
+} from '@/lib/database/migrateI18n'
 
 /**
  * Creates Sequelize tables on an empty Postgres (e.g. new Neon DB).
@@ -101,6 +105,15 @@ export async function bootstrapDatabaseSchema(): Promise<{
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error)
       logs.push(`⚠️ Whop columns migration note: ${msg}`)
+    }
+
+    logs.push('4c. Running i18n locale columns migration...')
+    try {
+      await ensureUserLocaleColumns()
+      logs.push('✅ i18n locale columns migration completed')
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error)
+      logs.push(`⚠️ i18n locale columns migration note: ${msg}`)
     }
 
     logs.push('5. Creating Series table (required before projects.series_id FK)...')
@@ -221,7 +234,16 @@ export async function bootstrapDatabaseSchema(): Promise<{
     await AssetProvenanceLog.sync({ force: false })
     logs.push('✅ AssetProvenanceLog table created')
 
-    logs.push('31. Enabling pgcrypto extension (for UUID defaults)...')
+    logs.push('31. Creating content_translations table...')
+    try {
+      await ensureContentTranslationsTable()
+      logs.push('✅ content_translations table created')
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error)
+      logs.push(`⚠️ content_translations note: ${msg}`)
+    }
+
+    logs.push('32. Enabling pgcrypto extension (for UUID defaults)...')
     try {
       await sequelize.query('CREATE EXTENSION IF NOT EXISTS "pgcrypto"')
       logs.push('✅ pgcrypto extension enabled')
