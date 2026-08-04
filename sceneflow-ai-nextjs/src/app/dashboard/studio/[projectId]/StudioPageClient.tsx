@@ -13,7 +13,7 @@ import { useCue } from "@/store/useCueStore";
 import ProjectIdeaTab from "@/components/studio/ProjectIdeaTab";
 import dynamic from 'next/dynamic';
 import { cn } from "@/lib/utils";
-import { getUserDisplayName } from '@/lib/user/displayName';
+import { resolveCreatorName } from '@/lib/user/displayName';
 import { BlueprintReimaginDialog } from '@/components/blueprint/BlueprintReimaginDialog'
 import {
   resolveContentIntentFromMetadata,
@@ -777,8 +777,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           filmType: opts?.duration || 'auto',
           rigor: opts?.rigor || 'thorough',
           variants: variantCount,
-          // Pass user's name for "Created By" field
-          userName: getUserDisplayName(session?.user),
+          // Creator credit. The route re-resolves this from the database, so a
+          // handle sent from here is discarded rather than credited.
+          userName: resolveCreatorName(session?.user) ?? '',
           // Pass dialog settings to enable optimizations (skip core concept, reduce prompt size)
           ...(opts?.genre && { genre: opts.genre }),
           ...(opts?.tone && { tone: opts.tone }),
@@ -1341,6 +1342,11 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                       <Button
                         onClick={handleRequestStartProduction}
                         disabled={isStartingProduction}
+                        // Short label matches the next-step banner's Go button; the
+                        // destination stays in the accessible name and tooltip so
+                        // "Go" is never the only context.
+                        aria-label={BLUEPRINT_COPY.startProduction}
+                        title={BLUEPRINT_COPY.startProductionTooltip}
                         className="bg-emerald-600 hover:bg-emerald-500 text-white text-sm h-9"
                         size="sm"
                       >
@@ -1349,7 +1355,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                         ) : (
                           <Clapperboard className="w-4 h-4 mr-1.5" />
                         )}
-                        {BLUEPRINT_COPY.startProduction}
+                        {isStartingProduction
+                          ? BLUEPRINT_COPY.startingProduction
+                          : BLUEPRINT_COPY.startProductionShort}
                       </Button>
                     )}
                     <Button 

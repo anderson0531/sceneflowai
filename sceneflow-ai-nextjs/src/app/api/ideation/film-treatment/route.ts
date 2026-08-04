@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { getUserDisplayName } from '@/lib/user/displayName'
+import { resolveCreatorCreditForSession } from '@/lib/user/creatorCredit'
 import { strictJsonPromptSuffix, safeParseJsonFromText } from '@/lib/safeJson'
 import { analyzeDuration, normalizeDuration } from '@/lib/treatment/duration'
 import { buildTreatmentPrompt } from '@/lib/treatment/prompts'
@@ -364,9 +364,11 @@ export async function POST(request: NextRequest) {
     const body: FilmTreatmentRequest = await request.json()
     const { input, targetAudience, keyMessage, tone, genre, duration, platform } = body
     const session = await getServerSession(authOptions)
-    const userName = session?.user
-      ? getUserDisplayName(session.user)
-      : body.userName
+    // Read the creator credit from the database rather than the session: the JWT
+    // is only populated at sign-in, so a profile edit would not be reflected.
+    // Empty means "no real name on file", and downstream credits omit rather than
+    // print a login id.
+    const userName = await resolveCreatorCreditForSession(session, body.userName)
     let { coreConcept } = body
     const rigor: RigorMode = body.rigor || 'thorough'
     const thinkingBudget = resolveThinkingBudget(rigor, body.debugThinkingBudget)
@@ -650,7 +652,9 @@ async function generateFilmTreatment(
       logline: parsed.logline,
       genre: parsed.genre,
       format_length: `${totalDurationSeconds} seconds`,
-      author_writer: context?.userName || 'User',
+      // Empty when the account has no real name; consumers omit the credit
+      // rather than print a placeholder or a login id.
+      author_writer: context?.userName || '',
       date: new Date().toLocaleString('en-US', {
         year: 'numeric',
         month: 'short',

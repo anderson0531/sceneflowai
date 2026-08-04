@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/Button'
 import { AlertTriangle, Clapperboard, Loader2 } from 'lucide-react'
 import type { StartProductionGateResult } from '@/lib/blueprint/blueprintReadinessGate'
 import { BLUEPRINT_COPY } from '@/lib/blueprint/blueprintGlossary'
+import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 
 interface StartProductionDialogProps {
   open: boolean
@@ -45,7 +46,9 @@ export function StartProductionDialog({
             {BLUEPRINT_COPY.startProduction}
           </DialogTitle>
           <DialogDescription className="text-gray-400">
-            Review your Blueprint before opening Production.
+            {hardBlock
+              ? 'Your Blueprint is not ready for Production yet.'
+              : `This closes ${STUDIO_DISPLAY_NAMES.blueprint} and opens ${STUDIO_DISPLAY_NAMES.production}. Your Blueprint is saved first, and you can come back to it.`}
           </DialogDescription>
         </DialogHeader>
 
@@ -102,7 +105,7 @@ export function StartProductionDialog({
 
         <DialogFooter className="flex-col sm:flex-row gap-2">
           <Button variant="outline" onClick={onCancel} disabled={isStarting}>
-            Cancel
+            {hardBlock ? 'Close' : `Stay in ${STUDIO_DISPLAY_NAMES.blueprint}`}
           </Button>
           {allowed && !hardBlock && (
             <Button

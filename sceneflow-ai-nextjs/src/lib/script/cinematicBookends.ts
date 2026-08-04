@@ -5,6 +5,7 @@
 
 import { mintBeatId } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
+import { resolveCreatorCredit } from '@/lib/user/displayName'
 
 export interface TreatmentContext {
   title?: string
@@ -40,6 +41,26 @@ function isOutroScene(scene: Record<string, unknown>): boolean {
   )
 }
 
+/**
+ * Author fit to appear on a title card, or '' to omit the credit.
+ *
+ * Blueprints created before the creator credit was tightened can hold an
+ * email-derived handle, which must not be printed as "Written by".
+ */
+function creditableAuthor(treatment: TreatmentContext): string {
+  return resolveCreatorCredit(treatment.author_writer, null)
+}
+
+/**
+ * Credit lines for a prompt's example JSON. Emits an empty array when there is
+ * no creditable author, so the model is not shown a placeholder to copy.
+ */
+export function creditLinesJsonForPrompt(authorWriter?: string | null): string {
+  const author = resolveCreatorCredit(authorWriter, null)
+  if (!author) return '[]'
+  return JSON.stringify([{ name: author, role: 'Written by', isPrimary: false }])
+}
+
 function formatGenre(genre?: string | string[]): string {
   if (!genre) return 'drama'
   return Array.isArray(genre) ? genre.join('/') : genre
@@ -48,7 +69,7 @@ function formatGenre(genre?: string | string[]): string {
 function buildTitleBeats(treatment: TreatmentContext): SceneBeat[] {
   const title = treatment.title?.trim() || 'UNTITLED'
   const genre = formatGenre(treatment.genre)
-  const author = treatment.author_writer?.trim()
+  const author = creditableAuthor(treatment)
 
   const beats: SceneBeat[] = [
     {
@@ -87,7 +108,7 @@ function buildTitleBeats(treatment: TreatmentContext): SceneBeat[] {
 function buildOutroBeats(treatment: TreatmentContext): SceneBeat[] {
   const title = treatment.title?.trim() || 'UNTITLED'
   const genre = formatGenre(treatment.genre)
-  const author = treatment.author_writer?.trim()
+  const author = creditableAuthor(treatment)
 
   const creditNote = author ? `Written by ${author}. ` : ''
 
@@ -124,10 +145,11 @@ function buildTitleScene(treatment: TreatmentContext): Record<string, unknown> {
   const creditLines: Array<Record<string, unknown>> = [
     { id: 'credit-title', name: title, role: '', isPrimary: true },
   ]
-  if (treatment.author_writer?.trim()) {
+  const titleAuthor = creditableAuthor(treatment)
+  if (titleAuthor) {
     creditLines.push({
       id: 'credit-author',
-      name: treatment.author_writer.trim(),
+      name: titleAuthor,
       role: 'Written by',
       isPrimary: false,
     })
@@ -158,10 +180,11 @@ function buildOutroScene(treatment: TreatmentContext): Record<string, unknown> {
     .join('\n\n')
 
   const creditLines: Array<Record<string, unknown>> = []
-  if (treatment.author_writer?.trim()) {
+  const outroAuthor = creditableAuthor(treatment)
+  if (outroAuthor) {
     creditLines.push({
       id: 'credit-author',
-      name: treatment.author_writer.trim(),
+      name: outroAuthor,
       role: 'Written by',
       isPrimary: false,
     })

@@ -26,7 +26,7 @@ import { ASSISTANT_ICON as AssistantIcon } from '@/lib/constants/assistantIcon'
 import { AssistantButton } from '@/components/blueprint/AssistantButton'
 import { formatBlueprintRuntime } from '@/lib/blueprint/formatBlueprintCore'
 import { BlueprintFieldCard, BlueprintSubsectionHeading } from '@/components/blueprint/BlueprintFieldCard'
-import { resolveAuthorWriterDisplay } from '@/lib/user/displayName'
+import { resolveCreatorCredit } from '@/lib/user/displayName'
 import { cn } from '@/lib/utils'
 import {
   getArtStylePresetName,
@@ -510,11 +510,14 @@ export function TreatmentCard({
                         valueClassName={v.id === activeVariant.id ? flashIf('logline') : undefined}
                         className="md:col-span-2"
                       />
+                      {/* Credit resolves to '' when the account has no real name on
+                          file, and hideWhenEmpty then drops the row rather than
+                          crediting a login id. */}
                       <BlueprintFieldCard
                         sectionId="core"
                         variant="studio"
                         label="Created by"
-                        value={resolveAuthorWriterDisplay(v.author_writer, session?.user)}
+                        value={resolveCreatorCredit(v.author_writer, session?.user)}
                         valueClassName={v.id === activeVariant.id ? flashIf('author_writer') : undefined}
                       />
                       <BlueprintFieldCard

@@ -54,16 +54,13 @@ export function useStartProduction(projectId: string) {
         return
       }
 
-      if (gate.hardBlock || !gate.allowed) {
-        setPendingVariant(variant)
-        setPendingGate(gate)
-        setShowPreflight(true)
-        return
-      }
-
-      void executeHandoff(variant)
+      // Always confirm. Starting Production navigates out of Blueprint Studio, so
+      // it should never happen on a single click, even when every gate passes.
+      setPendingVariant(variant)
+      setPendingGate(gate)
+      setShowPreflight(true)
     },
-    [executeHandoff]
+    []
   )
 
   const confirmStartProduction = useCallback(

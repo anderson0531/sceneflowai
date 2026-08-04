@@ -54,5 +54,11 @@ export const BLUEPRINT_COPY = {
   reimagine: 'Regenerate Blueprint',
   editBlueprint: ASSISTANT.short,
   startProduction: 'Open Production Studio',
+  /**
+   * Header button label. Matches the next-step banner's Go button, while
+   * `startProduction` stays the destination's name for the next-step text,
+   * sidebar guide, tooltips and accessible names.
+   */
+  startProductionShort: 'Go',
   startProductionTooltip: `Open Production Studio — generate script and begin the ${STUDIO_DISPLAY_NAMES.production} pipeline`,
 } as const
