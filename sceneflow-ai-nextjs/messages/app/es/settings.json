@@ -1,0 +1,43 @@
+{
+  "nav": {
+    "profile": "Perfil",
+    "integrations": "Integraciones",
+    "security": "Seguridad",
+    "billing": "Facturación y créditos",
+    "notifications": "Notificaciones",
+    "data": "Privacidad de datos",
+    "byok": "Configuración de BYOK",
+    "storage": "Almacenamiento",
+    "admin": "Administrador"
+  },
+  "profile": {
+    "title": "Información del perfil",
+    "description": "Gestiona la información de tu cuenta y tus datos personales",
+    "username": "Nombre de usuario",
+    "usernamePlaceholder": "Ingrese su nombre de usuario",
+    "email": "Dirección de correo electrónico",
+    "emailPlaceholder": "Introduzca su dirección de correo electrónico",
+    "firstName": "Nombre",
+    "firstNamePlaceholder": "Escriba su nombre",
+    "lastName": "Apellido",
+    "lastNamePlaceholder": "Introduzca su apellido",
+    "updated": "Perfil actualizado correctamente",
+    "updateFailed": "No se logró actualizar el perfil."
+  },
+  "languages": {
+    "title": "Idiomas",
+    "description": "Lee el estudio en un idioma, escribe tu historia en otro y entrega tantas como necesites",
+    "interfaceTitle": "Idioma de la interfaz",
+    "interfaceDescription": "Menús, botones y diálogos en el panel de control y en los tres estudios.",
+    "storyTitle": "Idioma del cuento",
+    "storyDescription": "El lenguaje en el que se crean los nuevos tratamientos, ritmos, personajes y diálogos escritos por IA. Los proyectos individuales pueden anular esto.",
+    "deliveryTitle": "Idiomas de entrega",
+    "deliveryDescription": "Narración, doblajes y vídeo renderizado. Un solo proyecto puede enviarse en muchos idiomas a la vez, por lo que estos se eligen por escena en lugar de por cuenta.",
+    "deliveryStartsFrom": "Comienza desde {language}",
+    "deliverySetInProduction": "Set in Production Studio",
+    "promptsStayEnglish": "Las indicaciones de imagen y video permanecen en inglés independientemente de estos ajustes: los modelos de generación producen resultados notablemente más débiles a partir de las indicaciones traducidas.",
+    "interfaceSet": "Idioma de interfaz establecido en {language}",
+    "saved": "Idioma de preferencia ha sido guardado",
+    "saveFailed": "No se ha podido guardar la preferencia de idioma"
+  }
+}

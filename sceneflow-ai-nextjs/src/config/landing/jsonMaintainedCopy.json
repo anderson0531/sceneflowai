@@ -1,0 +1,542 @@
+{
+  "pipeline": {
+    "badge": "What is SceneFlow?",
+    "title": "The 3-Pillar Pipeline Architecture",
+    "subtitle": "Three phases from first idea to publish-ready master — Series Studio, Blueprint Studio, and Production Studio.",
+    "ui": {
+      "expandFullscreen": "View fullscreen",
+      "closeFullscreen": "Close",
+      "landscapeHint": "Rotate your device for a wider landscape view",
+      "howItWorksLabel": "How it works in this phase",
+      "showHowItWorks": "Show how it works",
+      "hideHowItWorks": "Hide how it works",
+      "imagePlaceholder": "Screenshot placeholder",
+      "videoWalkthrough": "30-second walkthrough",
+      "comingSoon": "Product screenshot coming soon"
+    },
+    "pillars": [
+      {
+        "id": "series",
+        "tabLabel": "Series Studio",
+        "number": "01",
+        "title": "Series Studio Generation",
+        "header": "Build a Universe, Not a Clip",
+        "body": "Describe your series or YouTube channel once, and SceneFlow builds the whole world — storyline, cast, and an unlimited episode slate — with a Shared Reference Library that keeps every episode on-brand.",
+        "steps": [
+          {
+            "id": "series-concept",
+            "number": "1",
+            "title": "Start with your concept",
+            "description": "Drop in a concept or a detailed description of your series or YouTube channel. SceneFlow turns it into a structured, production-ready foundation — no prompt engineering required.",
+            "imagePlaceholder": "New series intake — concept or channel description"
+          },
+          {
+            "id": "series-baseline",
+            "number": "2",
+            "title": "Review the SceneFlow baseline",
+            "description": "SceneFlow returns a professional baseline scored by Audience Resonance Analysis. Read or listen to the narrated overview, then steer it with your own direction.",
+            "imagePlaceholder": "Series baseline — Audience Resonance score and narrated overview"
+          },
+          {
+            "id": "series-episodes",
+            "number": "3",
+            "title": "Create unlimited episodes",
+            "description": "Spin up as many episodes as your story needs. Each one inherits your series DNA, so the cast, tone, and world stay consistent from episode one to the season finale.",
+            "imagePlaceholder": "Episode slate — unlimited episodes generated from the series arc"
+          },
+          {
+            "id": "series-reference-library",
+            "number": "4",
+            "title": "Review the Reference Library",
+            "description": "Browse the shared Reference Library — characters, voices, wardrobe, locations, and props — created and maintained through Production Studio and reused across every episode.",
+            "imagePlaceholder": "Shared Reference Library — characters, voices, locations, props"
+          },
+          {
+            "id": "series-assistant-writer",
+            "number": "5",
+            "title": "Direct the Intelligent Assistant Writer",
+            "description": "Reshape the series or any episode by speaking or typing your direction. The Intelligent Assistant Writer rewrites professional copy instantly — no blank page, no prompt engineering.",
+            "imagePlaceholder": "Intelligent Assistant Writer — voice or text direction on series and episodes"
+          },
+          {
+            "id": "series-start-production",
+            "number": "6",
+            "title": "Start production in one click",
+            "description": "When an episode feels right, start its production with a single click and flow straight into the guided Production Studio pipeline.",
+            "imagePlaceholder": "One-click start production on a selected episode"
+          }
+        ]
+      },
+      {
+        "id": "blueprint",
+        "tabLabel": "Blueprint Studio",
+        "number": "02",
+        "title": "Blueprint Studio",
+        "header": "Your Creative DNA, Locked In",
+        "body": "Blueprint Studio is your deep film treatment — synopsis, beats, characters, tone, and style — pre-scored by Audience Resonance Analysis so you approve a story that lands before a single frame renders.",
+        "steps": [
+          {
+            "id": "blueprint-baseline",
+            "number": "1",
+            "title": "Review the baseline Blueprint",
+            "description": "Open a professional baseline Blueprint with Audience Resonance Analysis built in. Read or listen to the narrated overview to hear exactly why it works.",
+            "imagePlaceholder": "Baseline Blueprint — treatment with Audience Resonance score"
+          },
+          {
+            "id": "blueprint-assistant-writer",
+            "number": "2",
+            "title": "Direct the Intelligent Assistant Writer",
+            "description": "Refine the synopsis, beats, characters, and more by speaking or typing your direction. The Intelligent Assistant Writer revises the treatment instantly — no prompt engineering.",
+            "imagePlaceholder": "Intelligent Assistant Writer — editing synopsis, beats, and characters"
+          },
+          {
+            "id": "blueprint-reasoning",
+            "number": "3",
+            "title": "Review the Reasoning",
+            "description": "Open the Reasoning section for a creative explanation of the current Blueprint — the story logic behind every beat and character choice.",
+            "imagePlaceholder": "Reasoning panel — creative explanation of the Blueprint"
+          },
+          {
+            "id": "blueprint-start-production",
+            "number": "4",
+            "title": "Start production when ready",
+            "description": "Once the story sings, start production — and the entire pipeline inherits your approved creative DNA with no drift.",
+            "imagePlaceholder": "Open Production Studio — readiness gate from an approved blueprint"
+          }
+        ]
+      },
+      {
+        "id": "production",
+        "tabLabel": "Production Studio",
+        "number": "03",
+        "title": "Production Studio",
+        "header": "From Script to Published Master",
+        "body": "Production Studio runs concurrent, multi-engine generation — script, audio, frames, and video — with the Intelligent Assistant Director, the Screening Room, and multilanguage streams carrying you from approved script to a published 4K master.",
+        "steps": [
+          {
+            "id": "production-script-ara",
+            "number": "1",
+            "title": "Review the baseline script",
+            "description": "Start from a professional baseline script with Audience Resonance Analysis. Read or listen to the narrated analysis to know what lands before you spend a credit.",
+            "imagePlaceholder": "Baseline script — Audience Resonance analysis and narrated overview"
+          },
+          {
+            "id": "production-assistant-writer",
+            "number": "2",
+            "title": "Optimize scene by scene",
+            "description": "Use the Intelligent Assistant Writer to optimize the script scene by scene — tighten dialogue, reshape beats, and apply one-click improvements by voice or text.",
+            "imagePlaceholder": "Intelligent Assistant Writer — scene-by-scene script optimization"
+          },
+          {
+            "id": "production-reference-library",
+            "number": "3",
+            "title": "Build the Reference Library",
+            "description": "Create or update the Reference Library with scripted, custom, or uploaded characters, voices, wardrobes, locations, and props. Edit reference images directly — no \"slot machine\" regenerations.",
+            "imagePlaceholder": "Reference Library — characters, voices, wardrobe, locations, props"
+          },
+          {
+            "id": "production-audio",
+            "number": "4",
+            "title": "Generate audio",
+            "description": "Generate dialogue, narration, SFX, and music with Express Production across all scenes, Express Scene, or beat by beat — native-quality voiceover in 70+ languages.",
+            "imagePlaceholder": "Express audio — all scenes, single scene, or beat by beat"
+          },
+          {
+            "id": "production-frames",
+            "number": "5",
+            "title": "Generate and edit frames",
+            "description": "Generate beat frames with Express Production, Express Scene, or beat by beat, then edit any frame with the Intelligent Assistant Director (IAD) — just describe the change.",
+            "imagePlaceholder": "Beat frames with Intelligent Assistant Director edits"
+          },
+          {
+            "id": "production-animatic",
+            "number": "6",
+            "title": "Review the animatic",
+            "description": "Play the full animatic — frames, dialogue, SFX, and music — in the interactive Screening Room, and share a link for feedback without exporting a file.",
+            "imagePlaceholder": "Screening Room — interactive animatic review and sharing"
+          },
+          {
+            "id": "production-video",
+            "number": "7",
+            "title": "Generate video",
+            "description": "Turn approved frames into motion with Express Scene or beat by beat. Retake any shot with the Intelligent Assistant Director — no endless slot-machine regenerations.",
+            "imagePlaceholder": "Express video generation with IAD retakes"
+          },
+          {
+            "id": "production-mixer",
+            "number": "8",
+            "title": "Edit in the Mixer",
+            "description": "Polish every scene in the Mixer — captions, trims, dubbing, overlays, and audio balance — brand-safe finishing without leaving the studio.",
+            "imagePlaceholder": "Mixer — captions, trim, dubbing, and audio controls"
+          },
+          {
+            "id": "production-render-scenes",
+            "number": "9",
+            "title": "Render and review scenes",
+            "description": "Render your scenes, then review and share them through the Screening Room to lock approval before final assembly.",
+            "imagePlaceholder": "Rendered scenes reviewed and shared in the Screening Room"
+          },
+          {
+            "id": "production-multilanguage",
+            "number": "10",
+            "title": "Generate multilanguage streams",
+            "description": "Spin up dubbed or lip-synced language streams from the same approved cut — reach 70+ markets without re-shooting a single frame.",
+            "imagePlaceholder": "Multilanguage streams — dubbed and lip-sync per locale"
+          },
+          {
+            "id": "production-publish",
+            "number": "11",
+            "title": "Render final and publish",
+            "description": "Render the final production into a master and publish — auto-generated thumbnails, titles, and descriptions ready for your YouTube channel and beyond.",
+            "imagePlaceholder": "Final render and one-click publish to YouTube"
+          }
+        ]
+      }
+    ]
+  },
+  "screeningRoom": {
+    "badge": "Interactive Screening Room — Animatic Preview Available",
+    "languagePrompt": "Hear the pipeline in your target market:",
+    "languages": [
+      {
+        "id": "en",
+        "label": "English",
+        "flag": "🇺🇸"
+      },
+      {
+        "id": "es",
+        "label": "Español",
+        "flag": "🇪🇸"
+      },
+      {
+        "id": "pt",
+        "label": "Português",
+        "flag": "🇧🇷"
+      },
+      {
+        "id": "hi",
+        "label": "हिन्दी",
+        "flag": "🇮🇳"
+      },
+      {
+        "id": "zh",
+        "label": "中文",
+        "flag": "🇨🇳"
+      }
+    ],
+    "steps": [
+      {
+        "id": "concept",
+        "label": "Concept & Script Optimization"
+      },
+      {
+        "id": "animatic",
+        "label": "30-Min Animatic Review"
+      },
+      {
+        "id": "video",
+        "label": "Full Motion Express Video Renders"
+      }
+    ],
+    "previewLabel": "Preview"
+  },
+  "useCasesShowcase": {
+    "badge": "Who is SceneFlow For?",
+    "title": "Who is SceneFlow For?",
+    "subtitle": "From concept to a Screening Room animatic to auto-published multilanguage video — one automated pipeline, four ways to ship.",
+    "cta": "Start Your Production",
+    "tabStory": "Solution",
+    "tabScreening": "Screening",
+    "problemLabel": "The Problem",
+    "solutionLabel": "The SceneFlow Solution",
+    "outcomeLabel": "The Outcome",
+    "videoLanguagePrompt": "Watch this journey in your language",
+    "videoComingSoon": "Walkthrough video coming soon",
+    "videoSoon": "Soon",
+    "personas": [
+      {
+        "id": "youtubeCreator",
+        "label": "The YouTube Creator",
+        "headline": "From Concept to Cinematic Series — No Prompt Engineering",
+        "intro": "Start with a concept or a detailed series description. SceneFlow builds the series universe, characters, and unlimited episodes, then uses Express to render audio, frames, and video concurrently. You create and direct with plain text or voice; SceneFlow builds the vision — no prompt engineering, no slot-machine retakes.",
+        "story": {
+          "problem": [
+            "You juggle separate tools for script, images, voice, video, music, and editing.",
+            "You re-generate each piece over and over, hoping for a usable result.",
+            "Characters still look different from scene to scene."
+          ],
+          "solution": [
+            "One guided studio replaces the whole tool stack.",
+            "Describe your idea in plain words — SceneFlow writes the series and designs the cast.",
+            "Express renders audio, frames, and video together while a Reference Library keeps characters consistent."
+          ],
+          "outcome": [
+            "Stop losing weekends to fragmented tools.",
+            "Publish on a steady rhythm you can actually keep up with.",
+            "Keep every episode on-brand without re-rolling for consistency."
+          ]
+        },
+        "screeningRoomHook": "Visualize the story as an animatic before motion video, review scenes before finalizing streams, and share multilanguage streams (70+ languages) for pre-release feedback.",
+        "screeningRoomPreview": "The Unseen Archive: The Grand Illusion: The Chicago World's Fair Deception"
+      },
+      {
+        "id": "startupProvider",
+        "label": "The Startup Provider",
+        "headline": "Run a Global Video Studio — Without Building One",
+        "intro": "Deliver polished, localized video to small businesses that can't afford an agency. Express renders whole client packages concurrently, Mixer adds brand overlays, watermarks, and timing, and auto-aligned dub/lip-sync ships every deliverable in your client's market language — all from one predictable pipeline.",
+        "story": {
+          "problem": [
+            "Small-business clients can't afford a traditional video agency.",
+            "You buy and juggle many tools, redoing the work for every client.",
+            "Each new language means rebuilding the video from scratch."
+          ],
+          "solution": [
+            "One predictable pipeline for every client project.",
+            "Render a full video package at once — audio, frames, and video together.",
+            "Add branding, overlays, and watermarks, then auto dub and lip-sync into the client's market language."
+          ],
+          "outcome": [
+            "Serve many clients from one studio workflow.",
+            "Reach global markets in 70+ languages without rebuilding each video.",
+            "Scale the service without hiring a crew or building infrastructure."
+          ]
+        },
+        "screeningRoomHook": "Client-facing review of the animatic, scene sign-off before final streams, and shareable multilanguage previews for stakeholders abroad.",
+        "screeningRoomPreview": "Main Street Rising: A Local Business Relaunch"
+      },
+      {
+        "id": "enterprise",
+        "label": "Enterprise & Institutions",
+        "headline": "Compliant Training at the Speed of Policy Change",
+        "intro": "Internal L&D and comms teams ship brand-locked, audit-ready modules without vendor cycles. Refine any frame or line with text or voice to stay on-message, finish with Mixer overlays and watermarks, and roll out auto-aligned dubbed or lip-synced versions to every region from a single approved master.",
+        "story": {
+          "problem": [
+            "Training and comms videos wait weeks on outside vendors and cost a premium.",
+            "When policy or product changes, videos go stale and off-brand.",
+            "Every update triggers another expensive production round."
+          ],
+          "solution": [
+            "Produce brand-locked, audit-ready videos in-house.",
+            "Change any line or frame with a typed or spoken instruction.",
+            "Review and approve before paying for the final render, then roll out one master to every region."
+          ],
+          "outcome": [
+            "Training and communications keep pace with policy changes.",
+            "Stay on-brand without waiting on vendor cycles.",
+            "Update once and distribute everywhere from a single approved cut."
+          ]
+        },
+        "screeningRoomHook": "Review scenes before streams go final and share private Screening Room links for cross-region feedback without exporting unfinished masters.",
+        "screeningRoomPreview": "Shield Protocol: Global Cybersecurity Onboarding"
+      },
+      {
+        "id": "educator",
+        "label": "The Educator",
+        "headline": "Turn Curriculum Into Lessons Students Actually Watch",
+        "intro": "Large institutions convert dense chapters into localized, narrative video. Express builds full lessons fast, intelligent text/voice edits let faculty tune content without prompt engineering, and auto-aligned dub/lip-sync matches each cohort's language — then auto-publish ships localized titles and thumbnails to every channel.",
+        "story": {
+          "problem": [
+            "Dense course material becomes video only after weeks, specialized skills, or a big budget.",
+            "Without that, lessons stay as slideshows students skip.",
+            "Serving students in multiple languages multiplies the work."
+          ],
+          "solution": [
+            "Build full narrated lessons quickly in one studio.",
+            "Faculty adjust content by typing or speaking — no technical prompts.",
+            "Auto dub, lip-sync, and publish with localized titles and thumbnails for every cohort."
+          ],
+          "outcome": [
+            "Turn curriculum into video students actually watch.",
+            "Reach every campus in their language without a production team.",
+            "Ship lessons faster than traditional video production allows."
+          ]
+        },
+        "screeningRoomHook": "Faculty preview the animatic before production spend, review lesson scenes, and share streams in 70+ languages for multi-campus feedback.",
+        "screeningRoomPreview": "Renaissance Workshop: Seeing the Past in Motion"
+      }
+    ]
+  },
+  "keyFeatures": {
+    "badge": "Key Features",
+    "title": "The Features That Set SceneFlow Apart",
+    "subtitle": "Plan locks your foundation — keys, budget, series bible, and blueprint. Create is where you write, reference, generate, and review. Release delivers masters, versions, promos, and YouTube-ready bundles.",
+    "learnMoreLabel": "Learn more",
+    "showLessLabel": "Show less",
+    "problemLabel": "The Problem",
+    "solutionLabel": "The Solution",
+    "outcomeLabel": "The Payoff",
+    "videoComingSoon": "Feature demo coming soon",
+    "videoSoon": "Soon",
+    "landingUiLanguagesLabel": "UI and Productions Available in 39 Languages",
+    "categories": [
+      {
+        "id": "create",
+        "label": "Plan",
+        "features": [
+          {
+            "icon": "byok",
+            "title": "Bring Your Own Key (BYOK)",
+            "description": "Plug in your personal or corporate API keys for image and video providers. Control model costs at scale while keeping the full guided studio.",
+            "learnMore": {
+              "problem": "As you scale, per-generation platform fees stack up — and you have little control over the underlying model costs eating into every production's margin.",
+              "solution": "BYOK lets you plug in your personal or corporate API key for image and video processing with supported providers, so generation runs on your own account while you keep the full SceneFlow studio experience.",
+              "outcome": "Cut platform costs and control your spend at scale — same guided pipeline, your economics."
+            }
+          },
+          {
+            "icon": "budget",
+            "title": "Production Budget Management",
+            "description": "Set a credit budget per project, track spend in real time, and get guidance to trim cost before you render — draft frames, fewer generations, add-on credits when you need runway.",
+            "learnMore": {
+              "problem": "Creative projects are notorious for silent budget overruns — you only discover you have blown through your credits after the fact, mid-production and out of runway.",
+              "solution": "Production Budget Management calculates and tracks each production's credit budget in real time, with guidance on trimming costs — draft frames, fewer video generations — and add-on credits whenever you need more headroom.",
+              "outcome": "Stay in full control of spend from first beat to final cut — no surprise overruns, no stalled productions, predictable costs every time."
+            }
+          },
+          {
+            "icon": "series",
+            "title": "Series Studio",
+            "description": "Define your universe once — season arcs, recurring cast, and continuity rules. Episode outlines sync into Blueprint Studio and Production Studio so every installment stays on-model.",
+            "learnMore": {
+              "problem": "Serialized content multiplies the work: every new episode means rebuilding context, re-establishing characters, and hoping continuity holds across a growing catalog.",
+              "solution": "Series Studio captures your universe — season arcs, cast, and continuity rules — once. Episode outlines flow automatically into Blueprint Studio and Production Studio, so each installment inherits the same locked foundation.",
+              "outcome": "Ship consistent episodes on schedule from one studio — scale your channel or franchise without scaling your chaos."
+            }
+          },
+          {
+            "icon": "blueprint",
+            "title": "Blueprint Studio",
+            "description": "Turn a concept into a structured story: beats, character arcs, audience definition, and locked art style. Collaborators review via share links before you enter Production.",
+            "learnMore": {
+              "problem": "Jumping straight into production without a locked story structure leads to expensive rework — unclear beats, drifting tone, and stakeholder surprises after credits are already spent.",
+              "solution": "Blueprint transforms a concept into a structured treatment: story beats, character arcs, target audience, and locked visual style. Share links let collaborators review and approve before a single frame is generated.",
+              "outcome": "Greenlight with confidence — everyone aligns on the story and look before production spend begins."
+            }
+          }
+        ]
+      },
+      {
+        "id": "direct",
+        "label": "Create",
+        "features": [
+          {
+            "icon": "writersRoom",
+            "title": "Writer's Room",
+            "description": "Revise scripts scene by scene with the Intelligent Assistant Writer and Audience Resonance Analysis — optimize dialogue, pacing, and tone before you spend on frames and video.",
+            "learnMore": {
+              "problem": "The blank page is where most projects stall. Generic AI writing tools spit out bland copy that ignores who you are actually talking to — so you spend hours rewriting, or worse, ship something that never connects.",
+              "solution": "Writer's Room fuses your target audience with proven screenwriting technique to draft and revise scene-by-scene script copy. Steer every beat by plain voice or text — with ARA scoring and one-click fixes built in.",
+              "outcome": "Audience-tuned, production-ready scripts in minutes — so you enter Pre-Vis and Motion with a story that already lands."
+            }
+          },
+          {
+            "icon": "ara",
+            "title": "Audience Resonance Analysis (ARA)",
+            "description": "Score your story against a defined target audience. Get pinpoint recommendations and one-click revisions across script and structure before production spend.",
+            "learnMore": {
+              "problem": "By the time you find out a story misses the mark, you have already burned hours and credits rendering audio, frames, and video. Creative guesswork is expensive, and reshoots are even more so.",
+              "solution": "ARA runs a test-audience screening on your copy before a single audio clip, frame, or video is generated. Get a resonance score, pinpointed recommendations, and one-click revisions across script and structure.",
+              "outcome": "De-risk every project up front — greenlight only the stories that will land, and stop paying to render ideas that were never going to work."
+            }
+          },
+          {
+            "icon": "referenceLibrary",
+            "title": "Intelligent Reference Library",
+            "description": "Lock characters, voices, wardrobes, locations, and props once. Every generation pulls from the same references — zero drift across scenes, episodes, and series.",
+            "learnMore": {
+              "problem": "AI video's dirty secret is drift: your hero's face, wardrobe, and settings mutate shot to shot and episode to episode, shattering the illusion and forcing endless re-rolls to stay on-model.",
+              "solution": "Build AI-assisted or fully custom characters, wardrobes, voices, locations, and props once, then reuse them everywhere. Every generation pulls from the same locked references — with auto voice generation matched to each character's image and role.",
+              "outcome": "Perfect consistency across scenes, productions, and entire series — zero character drift, so your audience stays immersed in the story instead of noticing the seams."
+            }
+          },
+          {
+            "icon": "iad",
+            "title": "Intelligent Assistant Director (IAD)",
+            "description": "Direct precise frame and video edits in plain speech or text — no slot-machine re-rolls. IAD applies surgical changes while honoring your Reference Library.",
+            "learnMore": {
+              "problem": "Most AI tools force you to re-roll the entire shot and pray when you want one small change — a slot machine that wastes credits and rarely gives you exactly what you pictured.",
+              "solution": "IAD lets you direct precise frame or video revisions in plain speech or text — 'remove the coffee mug from the table' — and applies the edit while honoring your Reference Library for continuity.",
+              "outcome": "Get the exact shot you envisioned with surgical edits instead of random regenerations — less wasted spend, more creative control, faster final cuts."
+            }
+          },
+          {
+            "icon": "multilanguage",
+            "title": "Multilanguage Streams",
+            "description": "Express-generate audio in 70+ languages, auto-aligned to beat frames and video. Ship dubbed or lip-synced language streams from one approved master cut.",
+            "learnMore": {
+              "problem": "Reaching a global audience usually means re-recording voice talent, re-timing every scene, and rebuilding the project once per language — a cost and coordination nightmare that keeps most creators single-market.",
+              "solution": "Express-generate audio in 70+ languages in minutes, auto-aligned to your animatic beat frames and video. Produce dubbed or lip-synced streams from the same approved cut, no re-shoots required.",
+              "outcome": "Ship every story natively to 70+ markets from one production — multiply your reach and revenue without multiplying your workload."
+            }
+          },
+          {
+            "icon": "express",
+            "title": "Express Generation",
+            "description": "Orchestrate concurrent audio, frame, and video generation across scenes. A 30-beat production in ~30 minutes instead of hours of sequential waiting.",
+            "learnMore": {
+              "problem": "Generating a production one asset at a time turns a single project into an all-day wait — you queue a clip, watch it render, then repeat hundreds of times while momentum evaporates.",
+              "solution": "Express Generation taps SceneFlow's dedicated cloud to run concurrent generations of audio, frames, and video across your entire production at once, instead of one slow job after another.",
+              "outcome": "A 30-beat production finishes in about 30 minutes instead of roughly 2.5 hours — so you iterate the same day and ship while the idea is still hot."
+            }
+          },
+          {
+            "icon": "screeningRoom",
+            "title": "Screening Room",
+            "description": "Preview animatics, scene video, and language streams. Share a screening link for playback and structured reviewer feedback before you publish.",
+            "learnMore": {
+              "problem": "Getting sign-off usually means exporting rough files, emailing them around, and stitching together scattered feedback from a dozen threads — slow, messy, and easy to lose track of.",
+              "solution": "The Screening Room lets you preview and share Animatics, full-audio Video, and per-language Streams from one link. Viewers get real playback controls; reviewers leave structured feedback right on the cut.",
+              "outcome": "Lock approvals faster with stakeholder feedback in one place — no premature exports, no lost notes, no version confusion."
+            }
+          }
+        ]
+      },
+      {
+        "id": "ship",
+        "label": "Release",
+        "features": [
+          {
+            "icon": "upscale",
+            "title": "Delivery-Quality Upscale",
+            "description": "Render delivery masters at 720p, 1080p, or 4K — with optional Topaz upscaling when credentials are connected. One stitch, screening-ready quality.",
+            "learnMore": {
+              "problem": "Export quality is often an afterthought — you stitch a master at whatever resolution the pipeline defaulted to, then discover it is not sharp enough for YouTube, broadcast, or client delivery.",
+              "solution": "Choose a delivery tier — Draft (720p), Standard (1080p), or Premium (4K) — when you render your language master. Optional Topaz upscaling sharpens the final cut when your credentials are connected.",
+              "outcome": "Ship screening-ready masters at the quality your audience and platform expect — no re-stitching, no compromise."
+            }
+          },
+          {
+            "icon": "versionControl",
+            "title": "Version Control",
+            "description": "Keep every take for each stream. Compare versions, pin favorites, and iterate without losing the cut everyone loved two edits ago.",
+            "learnMore": {
+              "problem": "Creative iteration is messy: the best take gets overwritten, alternates vanish, and you can never quite get back to the version everyone loved two edits ago.",
+              "solution": "Version Control keeps every generated take for each stream. Compare versions side by side, pin favorites, and keep iterating — the full history of every scene stays intact.",
+              "outcome": "Explore boldly without fear of losing your best work — always recover the perfect take and make confident final decisions."
+            }
+          },
+          {
+            "icon": "promoTrailer",
+            "title": "Promotion Trailers",
+            "description": "Auto-weave a beat-selected 9:16 promo (30–60s) from your highest-resonance moments — vertical trailers ready for Shorts, Reels, and TikTok.",
+            "learnMore": {
+              "problem": "Cutting vertical promos by hand means scrubbing through your master, guessing highlight windows, and rebuilding the same story three times for Shorts, Reels, and TikTok.",
+              "solution": "SceneFlow selects your highest-resonance beats, weaves a 30–60 second 9:16 trailer automatically, and renders a vertical cut ready for social platforms — no manual timeline work.",
+              "outcome": "Launch every production with a scroll-stopping promo the same day your master is ready — multiply discovery without multiplying edit time."
+            }
+          },
+          {
+            "icon": "youtubePublish",
+            "title": "YouTube Publishing",
+            "description": "Per-language bundles: AI titles and descriptions, generated thumbnails, privacy and category settings, and multilanguage audio publish — from the Publishing Library.",
+            "learnMore": {
+              "problem": "The work is not done when the video is — thumbnails, titles, descriptions, and language tracks are their own time sink standing between your finished cut and a live upload.",
+              "solution": "The Publishing Library assembles per-language YouTube bundles: AI-generated titles and descriptions, custom thumbnails, privacy and category settings, and multilanguage audio tracks — then publishes in one flow.",
+              "outcome": "Go from final render to live on YouTube in minutes, reaching billions of viewers across languages without a separate packaging-and-upload marathon."
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

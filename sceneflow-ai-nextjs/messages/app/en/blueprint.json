@@ -1,0 +1,74 @@
+{
+  "studio": {
+    "title": "Blueprint Studio",
+    "episodeBadge": "Episode {number}",
+    "partOfSeries": "Part of {series}",
+    "showSidePanel": "Show Side Panel",
+    "hideSidePanel": "Hide Side Panel",
+    "startProduction": "Start Production",
+    "syncedToProduction": "Blueprint synced to Production Studio — regenerate your script when ready.",
+    "syncFailed": "Blueprint updated, but Production Studio sync failed"
+  },
+  "tabs": {
+    "projectIdea": "Project Idea",
+    "treatment": "Treatment",
+    "characters": "Characters",
+    "beatSheet": "Beat Sheet"
+  },
+  "sections": {
+    "coreInfo": "Core Info",
+    "coreInfoTitle": "Core Identifying Information",
+    "coreInfoDescription": "Title, logline, genre, and audience targeting",
+    "storySetup": "Story Setup",
+    "toneStyle": "Tone & Style",
+    "beats": "Beats",
+    "characters": "Characters"
+  },
+  "fields": {
+    "title": "Title",
+    "logline": "Logline",
+    "genre": "Genre",
+    "targetAudience": "Target Audience",
+    "synopsis": "Synopsis",
+    "setting": "Setting",
+    "protagonist": "Protagonist",
+    "antagonist": "Antagonist / Conflict",
+    "toneDescription": "Tone Description",
+    "themes": "Themes (comma-separated)",
+    "beat": "Beat {number}",
+    "beatTitle": "Beat title",
+    "beatDescription": "Beat description…",
+    "minutes": "Minutes",
+    "description": "Description",
+    "name": "Name",
+    "role": "Role (e.g., protagonist)",
+    "characterDescription": "Character description…",
+    "externalGoal": "External goal",
+    "internalNeed": "Internal need",
+    "fatalFlaw": "Fatal flaw",
+    "psychologicalDepth": "Psychological Depth (optional)",
+    "customInstruction": "Add specific refinement instructions…"
+  },
+  "refine": {
+    "refiningTitle": "Refining {section}",
+    "refiningBody": "AI is enhancing your content…",
+    "refineSection": "Refine {section}",
+    "fieldsRefined": "Refined {count, plural, =1 {# field} other {# fields}}",
+    "failed": "Failed to refine",
+    "sharpenLogline": "Sharpen Logline",
+    "clarifyGenre": "Clarify Genre",
+    "strongerTitle": "Stronger Title",
+    "whatShouldChange": "What should change and why?"
+  },
+  "empty": {
+    "noCharacters": "No characters defined yet",
+    "noBeats": "No beats yet"
+  },
+  "toast": {
+    "coreInfoUpdated": "Core info updated",
+    "storySetupUpdated": "Story setup updated",
+    "toneStyleUpdated": "Tone and style updated",
+    "beatsUpdated": "Beats updated",
+    "charactersUpdated": "Characters updated"
+  }
+}
