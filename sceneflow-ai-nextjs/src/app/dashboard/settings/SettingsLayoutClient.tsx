@@ -79,7 +79,7 @@ export function SettingsLayoutClient({
                     href={item.href}
                     className={`block rounded-lg p-3 transition-colors duration-200 ${
                       isActive
-                        ? 'border-r-2 border-sf-primary bg-gray-900/80 text-white'
+                        ? 'border-e-2 border-sf-primary bg-gray-900/80 text-white'
                         : 'text-gray-400 hover:bg-gray-900/50 hover:text-gray-200'
                     }`}
                   >

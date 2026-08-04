@@ -71,7 +71,7 @@ export function GlobalHeader() {
           <div className="flex-1" />
 
           {/* Right: Controls */}
-          <div className="flex items-center gap-3 ml-auto">
+          <div className="flex items-center gap-3 ms-auto">
             {isSignedIn && <CreditsBadge className="hidden sm:flex" />}
             {isSignedIn && <HeaderLocaleSwitcher />}
             {/* Profile */}
@@ -104,7 +104,7 @@ export function GlobalHeader() {
             </button>
             {/* When signed out: explicit auth controls */}
             {!isSignedIn && (
-              <div className="hidden sm:flex items-center gap-2 pl-2">
+              <div className="hidden sm:flex items-center gap-2 ps-2">
                 <Button
                   variant="outline"
                   size="sm"
