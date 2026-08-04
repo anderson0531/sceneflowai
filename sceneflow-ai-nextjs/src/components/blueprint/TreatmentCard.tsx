@@ -28,11 +28,23 @@ import { formatBlueprintRuntime } from '@/lib/blueprint/formatBlueprintCore'
 import { BlueprintFieldCard, BlueprintSubsectionHeading } from '@/components/blueprint/BlueprintFieldCard'
 import { resolveCreatorCredit } from '@/lib/user/displayName'
 import { cn } from '@/lib/utils'
+import { BLUEPRINT_ACTIVATE_SECTION_EVENT } from '@/lib/blueprint/blueprintProgress'
 import {
   getArtStylePresetName,
   resolveVariantArtStyle,
   resolveVariantAspectRatio,
 } from '@/lib/treatment/blueprintFoundation'
+
+/** Blueprint body sections, in tab order. */
+const SECTION_TABS: Array<{ id: BlueprintFixSection; label: string }> = [
+  { id: 'core', label: 'Core' },
+  { id: 'story', label: 'Story' },
+  { id: 'tone', label: 'Tone' },
+  { id: 'beats', label: 'Beats' },
+  { id: 'characters', label: 'Characters' },
+]
+
+const SECTION_TAB_IDS: BlueprintFixSection[] = SECTION_TABS.map((t) => t.id)
 
 export type TreatmentCardProps = {
   onOpenBlueprintRefine?: (opts?: OpenBlueprintRefineOptions) => void
@@ -43,6 +55,8 @@ export type TreatmentCardProps = {
   isStartingProduction?: boolean
   startProductionEnabled?: boolean
   onOpenCollaborate?: () => void
+  /** Opens the side panel on Foundation, where Narrative Reasoning now lives. */
+  onOpenFoundation?: () => void
 }
 
 export function TreatmentCard({
@@ -54,6 +68,7 @@ export function TreatmentCard({
   isStartingProduction = false,
   startProductionEnabled = true,
   onOpenCollaborate,
+  onOpenFoundation,
 }: TreatmentCardProps = {}) {
   const router = useRouter()
   const { data: session } = useSession()
@@ -93,15 +108,30 @@ export function TreatmentCard({
   const tts = useBlueprintTts()
   const [reimaginOpen, setReimaginOpen] = useState(false)
   const openRefine = (opts?: OpenBlueprintRefineOptions) => onOpenBlueprintRefine?.(opts)
-  const openGuidedForSection = (scope: BlueprintFixSection) =>
+  const [activeSection, setActiveSection] = useState<BlueprintFixSection>('core')
+  const openGuidedForSection = (scope: BlueprintFixSection) => {
+    // Keep the card on the section being edited so the applied diff is visible.
+    setActiveSection(scope)
     onOpenBlueprintRefine?.({ initialScope: scope })
+  }
+
+  // Audience Resonance, the Cue events and the readiness banner all jump to a
+  // section. Their target may live in a tab that is not mounted, so they ask for
+  // it by event and scrollToBlueprintSection scrolls once this render commits.
+  useEffect(() => {
+    const onActivate = (e: Event) => {
+      const section = (e as CustomEvent<{ section?: string }>).detail?.section
+      if (section && SECTION_TAB_IDS.includes(section as BlueprintFixSection)) {
+        setActiveSection(section as BlueprintFixSection)
+      }
+    }
+    window.addEventListener(BLUEPRINT_ACTIVATE_SECTION_EVENT, onActivate)
+    return () => window.removeEventListener(BLUEPRINT_ACTIVATE_SECTION_EVENT, onActivate)
+  }, [])
   const [shareOpen, setShareOpen] = useState(false)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [isSharing, setIsSharing] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
-  // Open by default: the structure help modal tells users to read this, and it
-  // is the only place the AI explains the choices it made.
-  const [showReasoning, setShowReasoning] = useState(true)
   const [reportPreviewOpen, setReportPreviewOpen] = useState(false)
   // Client-side only state for flash highlight (avoids hydration mismatch from Date.now())
   const [isClient, setIsClient] = useState(false)
@@ -432,6 +462,12 @@ export function TreatmentCard({
               const badgeGenre = `${badge} border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300`
               const badgeFormat = `${badge} border-purple-200 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300`
               const badgeAudience = `${badge} border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300`
+              // '' when the account has no real name on file.
+              const creatorCredit = resolveCreatorCredit(v.author_writer, session?.user)
+              const beatCount = Array.isArray((v as any).beats) ? (v as any).beats.length : 0
+              const characterCount = Array.isArray(v.character_descriptions)
+                ? v.character_descriptions.length
+                : 0
               return (
                 <div className="space-y-5 text-sm">
                   {/* Callout */}
@@ -445,6 +481,24 @@ export function TreatmentCard({
                       </div>
                     )}
                   </div>
+                  <Tabs
+                    value={activeSection}
+                    onValueChange={(next) => setActiveSection(next as BlueprintFixSection)}
+                    className="w-full"
+                  >
+                    <TabsList className="flex w-full flex-wrap h-auto justify-start">
+                      {SECTION_TABS.map((tab) => (
+                        <TabsTrigger key={tab.id} value={tab.id}>
+                          {tab.id === 'beats' && beatCount > 0
+                            ? `${tab.label} (${beatCount})`
+                            : tab.id === 'characters' && characterCount > 0
+                              ? `${tab.label} (${characterCount})`
+                              : tab.label}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+
+                  <TabsContent value="core" className="mt-4">
                   {/* Core Identifying Information */}
                   <BlueprintSubsectionHeading
                     sectionId="core"
@@ -510,16 +564,32 @@ export function TreatmentCard({
                         valueClassName={v.id === activeVariant.id ? flashIf('logline') : undefined}
                         className="md:col-span-2"
                       />
-                      {/* Credit resolves to '' when the account has no real name on
-                          file, and hideWhenEmpty then drops the row rather than
-                          crediting a login id. */}
                       <BlueprintFieldCard
                         sectionId="core"
                         variant="studio"
                         label="Created by"
-                        value={resolveCreatorCredit(v.author_writer, session?.user)}
-                        valueClassName={v.id === activeVariant.id ? flashIf('author_writer') : undefined}
-                      />
+                        hideWhenEmpty={false}
+                      >
+                        {creatorCredit ? (
+                          <p
+                            className={cn(
+                              'text-sm text-gray-100 leading-relaxed',
+                              v.id === activeVariant.id ? flashIf('author_writer') : undefined
+                            )}
+                          >
+                            {creatorCredit}
+                          </p>
+                        ) : (
+                          // Nothing presentable on file. Prompt instead of hiding the
+                          // row, so the gap is visible and fixable in one click.
+                          <a
+                            href="/dashboard/settings/profile"
+                            className="text-sm text-cyan-300 hover:text-cyan-200 underline decoration-cyan-500/40"
+                          >
+                            Add your name
+                          </a>
+                        )}
+                      </BlueprintFieldCard>
                       <BlueprintFieldCard
                         sectionId="core"
                         variant="studio"
@@ -532,7 +602,9 @@ export function TreatmentCard({
                       />
                     </div>
                   </BlueprintSubsectionHeading>
+                  </TabsContent>
 
+                  <TabsContent value="story" className="mt-4">
                   {/* Narrative Structure & Plot */}
                   <BlueprintSubsectionHeading
                     sectionId="story"
@@ -571,7 +643,9 @@ export function TreatmentCard({
                       />
                     </div>
                   </BlueprintSubsectionHeading>
+                  </TabsContent>
 
+                  <TabsContent value="tone" className="mt-4">
                   {/* Tone, Style, & Themes */}
                   <BlueprintSubsectionHeading
                     sectionId="tone"
@@ -649,7 +723,9 @@ export function TreatmentCard({
                       ) : null}
                     </div>
                   </BlueprintSubsectionHeading>
+                  </TabsContent>
 
+                  <TabsContent value="beats" className="mt-4">
                   {/* Beats & Runtime */}
                   <BlueprintSubsectionHeading
                     sectionId="beats"
@@ -696,23 +772,33 @@ export function TreatmentCard({
                       )}
                     </div>
                   </BlueprintSubsectionHeading>
+                  </TabsContent>
 
-                  {/* Characters - Expanded View with Psychological Depth */}
-                  {Array.isArray(v.character_descriptions) && v.character_descriptions.length > 0 ? (
-                    <BlueprintSubsectionHeading
-                      sectionId="characters"
-                      variant="studio"
-                      title={`Characters (${v.character_descriptions.length})`}
-                      data-blueprint-section="characters"
-                      actions={
-                        <AssistantButton
-                          onClick={() => openGuidedForSection('characters')}
-                          scopeLabel="Characters"
-                        />
-                      }
-                    >
+                  <TabsContent value="characters" className="mt-4">
+                  {/* Characters - Expanded View with Psychological Depth. The heading
+                      always renders now that it owns a tab, so an empty cast shows a
+                      prompt rather than an unexplained blank panel. */}
+                  <BlueprintSubsectionHeading
+                    sectionId="characters"
+                    variant="studio"
+                    title={characterCount > 0 ? `Characters (${characterCount})` : 'Characters'}
+                    data-blueprint-section="characters"
+                    actions={
+                      <AssistantButton
+                        onClick={() => openGuidedForSection('characters')}
+                        scopeLabel="Characters"
+                      />
+                    }
+                  >
+                  {characterCount === 0 ? (
+                    <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200/90">
+                      No characters yet. Use the {ASSISTANT.short} to build the cast for this
+                      blueprint.
+                    </div>
+                  ) : (
+                    <>
                       <div className="space-y-3">
-                        {v.character_descriptions.map((c, idx) => (
+                        {(v.character_descriptions ?? []).map((c, idx) => (
                           <details 
                             key={idx}
                             className="group rounded-lg border border-slate-700/60 bg-slate-800/50 overflow-hidden"
@@ -796,110 +882,24 @@ export function TreatmentCard({
                       <div className="text-xs text-gray-600 dark:text-gray-400 italic mt-2 px-3">
                         💡 Characters will be refined with images and detailed attributes in Production
                       </div>
-                    </BlueprintSubsectionHeading>
-                  ) : null}
+                    </>
+                  )}
+                  </BlueprintSubsectionHeading>
+                  </TabsContent>
+                  </Tabs>
 
-                  {/* Narrative Reasoning */}
-                  {(() => {
-                    console.log('[TreatmentCard] Checking narrative_reasoning for variant:', v.id)
-                    console.log('[TreatmentCard] narrative_reasoning exists:', !!(v as any).narrative_reasoning)
-                    if ((v as any).narrative_reasoning) {
-                      console.log('[TreatmentCard] narrative_reasoning data:', (v as any).narrative_reasoning)
-                    }
-                    return null
-                  })()}
+                  {/* Narrative Reasoning now lives in the side panel's Foundation
+                      tab, so the body stays about the blueprint itself. */}
                   {(v as any).narrative_reasoning && (
-                    <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6">
+                    <div className="pt-2">
                       <button
-                        onClick={() => setShowReasoning(!showReasoning)}
-                        className="flex items-center justify-between w-full text-left"
+                        type="button"
+                        onClick={onOpenFoundation}
+                        className="inline-flex items-center gap-1.5 text-xs text-amber-300/90 hover:text-amber-200"
                       >
-                        <div className="flex items-center gap-2">
-                          <Lightbulb className="w-5 h-5 text-amber-500" />
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                            Narrative Reasoning
-                          </h3>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            Why the AI made these storytelling choices
-                          </span>
-                        </div>
-                        <ChevronDown className={`w-5 h-5 transition-transform ${showReasoning ? 'rotate-180' : ''}`} />
+                        <Lightbulb className="w-3.5 h-3.5" />
+                        Why these choices?
                       </button>
-                      
-                      {showReasoning && (
-                        <div className="mt-4 space-y-4">
-                          {/* Show message if reasoning is empty */}
-                          {!(v as any).narrative_reasoning.character_focus && !(v as any).narrative_reasoning.story_strengths ? (
-                            <div className="p-4 bg-amber-50 dark:bg-amber-950 rounded-lg border border-amber-200 dark:border-amber-800">
-                              <p className="text-sm text-amber-800 dark:text-amber-200">
-                                The AI did not provide narrative reasoning for this treatment. Try regenerating to see the AI's creative decisions.
-                              </p>
-                            </div>
-                          ) : (
-                            <>
-                              {/* Character Focus */}
-                              <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-                                <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
-                                  <Users className="w-4 h-4" />
-                                  Character Focus
-                                </h4>
-                                <p className="text-sm text-blue-800 dark:text-blue-200">
-                                  {(v as any).narrative_reasoning.character_focus}
-                                </p>
-                              </div>
-                              
-                              {/* Key Decisions */}
-                              {(v as any).narrative_reasoning.key_decisions && Array.isArray((v as any).narrative_reasoning.key_decisions) && (v as any).narrative_reasoning.key_decisions.length > 0 && (
-                                <div className="space-y-3">
-                                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                                    <SparklesIcon className="w-4 h-4 text-purple-500" />
-                                    Key Creative Decisions
-                                  </h4>
-                                  {(v as any).narrative_reasoning.key_decisions.map((decision: any, idx: number) => (
-                                    <div key={idx} className="p-4 bg-purple-50 dark:bg-purple-950 rounded-lg border-l-4 border-purple-500">
-                                      <div className="font-medium text-purple-900 dark:text-purple-100 mb-1">
-                                        {decision.decision}
-                                      </div>
-                                      <div className="text-sm text-purple-800 dark:text-purple-200 mb-2">
-                                        <strong>Why:</strong> {decision.why}
-                                      </div>
-                                      <div className="text-sm text-purple-700 dark:text-purple-300 italic">
-                                        <strong>Impact:</strong> {decision.impact}
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                              
-                              {/* Story Strengths */}
-                              {(v as any).narrative_reasoning.story_strengths && (
-                                <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
-                                  <h4 className="font-semibold text-green-900 dark:text-green-100 mb-2 flex items-center gap-2">
-                                    <Award className="w-4 h-4" />
-                                    Story Strengths
-                                  </h4>
-                                  <p className="text-sm text-green-800 dark:text-green-200">
-                                    {(v as any).narrative_reasoning.story_strengths}
-                                  </p>
-                                </div>
-                              )}
-                              
-                              {/* User Adjustments */}
-                              {(v as any).narrative_reasoning.user_adjustments && (
-                                <div className="p-4 bg-amber-50 dark:bg-amber-950 rounded-lg border border-amber-200 dark:border-amber-800">
-                                  <h4 className="font-semibold text-amber-900 dark:text-amber-100 mb-2 flex items-center gap-2">
-                                    <RefreshCw className="w-4 h-4" />
-                                    Want Different Emphasis?
-                                  </h4>
-                                  <p className="text-sm text-amber-800 dark:text-amber-200">
-                                    {(v as any).narrative_reasoning.user_adjustments}
-                                  </p>
-                                </div>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      )}
                     </div>
                   )}
 

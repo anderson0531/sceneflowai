@@ -1,0 +1,130 @@
+'use client'
+
+import React from 'react'
+import { Award, Lightbulb, RefreshCw, Sparkles, Users } from 'lucide-react'
+
+export type NarrativeReasoning = {
+  character_focus?: string
+  story_strengths?: string
+  user_adjustments?: string
+  key_decisions?: Array<{ decision?: string; why?: string; impact?: string }>
+}
+
+/**
+ * The AI's account of the choices it made. Lives in the side panel's Foundation
+ * tab so the blueprint body stays about the blueprint itself.
+ */
+export function NarrativeReasoningPanel({
+  reasoning,
+}: {
+  reasoning?: NarrativeReasoning | null
+}) {
+  if (!reasoning) {
+    return (
+      <div className="p-4">
+        <div className="rounded-lg border border-slate-700/60 bg-slate-800/40 p-3">
+          <p className="text-xs text-gray-400">
+            No reasoning recorded for this blueprint yet. Regenerate it to capture why the
+            AI made its storytelling choices.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  const decisions = Array.isArray(reasoning.key_decisions) ? reasoning.key_decisions : []
+  const isEmpty = !reasoning.character_focus && !reasoning.story_strengths
+
+  return (
+    <div className="p-4 space-y-4">
+      <div className="flex items-center gap-2">
+        <Lightbulb className="w-4 h-4 text-amber-400 shrink-0" />
+        <div>
+          <h3 className="text-sm font-semibold text-white">Narrative Reasoning</h3>
+          <p className="text-[11px] text-gray-500">
+            Why the AI made these storytelling choices
+          </p>
+        </div>
+      </div>
+
+      {isEmpty ? (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
+          <p className="text-xs text-amber-200/90">
+            The AI did not provide narrative reasoning for this blueprint. Regenerate it to
+            see the creative decisions.
+          </p>
+        </div>
+      ) : (
+        <>
+          {reasoning.character_focus && (
+            <section className="rounded-lg border border-blue-500/25 bg-blue-500/10 p-3">
+              <h4 className="text-xs font-semibold text-blue-100 mb-1.5 flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5" />
+                Character Focus
+              </h4>
+              <p className="text-xs text-blue-100/90 leading-relaxed">
+                {reasoning.character_focus}
+              </p>
+            </section>
+          )}
+
+          {decisions.length > 0 && (
+            <section className="space-y-2">
+              <h4 className="text-xs font-semibold text-gray-200 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                Key Creative Decisions
+              </h4>
+              {decisions.map((decision, idx) => (
+                <div
+                  key={idx}
+                  className="rounded-lg border-l-2 border-purple-500 bg-purple-500/10 p-3"
+                >
+                  <div className="text-xs font-medium text-purple-100 mb-1">
+                    {decision.decision}
+                  </div>
+                  {decision.why && (
+                    <p className="text-[11px] text-purple-100/90 mb-1">
+                      <strong className="font-semibold">Why:</strong> {decision.why}
+                    </p>
+                  )}
+                  {decision.impact && (
+                    <p className="text-[11px] text-purple-200/80 italic">
+                      <strong className="font-semibold not-italic">Impact:</strong>{' '}
+                      {decision.impact}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </section>
+          )}
+
+          {reasoning.story_strengths && (
+            <section className="rounded-lg border border-emerald-500/25 bg-emerald-500/10 p-3">
+              <h4 className="text-xs font-semibold text-emerald-100 mb-1.5 flex items-center gap-1.5">
+                <Award className="w-3.5 h-3.5" />
+                Story Strengths
+              </h4>
+              <p className="text-xs text-emerald-100/90 leading-relaxed">
+                {reasoning.story_strengths}
+              </p>
+            </section>
+          )}
+
+          {reasoning.user_adjustments && (
+            <section className="rounded-lg border border-amber-500/25 bg-amber-500/10 p-3">
+              <h4 className="text-xs font-semibold text-amber-100 mb-1.5 flex items-center gap-1.5">
+                <RefreshCw className="w-3.5 h-3.5" />
+                Want Different Emphasis?
+              </h4>
+              <p className="text-xs text-amber-100/90 leading-relaxed">
+                {reasoning.user_adjustments}
+              </p>
+            </section>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+export default NarrativeReasoningPanel

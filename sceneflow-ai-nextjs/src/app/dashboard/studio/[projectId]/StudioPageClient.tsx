@@ -166,6 +166,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const [isSharing, setIsSharing] = useState(false)
   const [collaborationTabSignal, setCollaborationTabSignal] = useState(0)
   const [resonanceTabSignal, setResonanceTabSignal] = useState(0)
+  const [foundationTabSignal, setFoundationTabSignal] = useState(0)
   const [refineDiffSummary, setRefineDiffSummary] = useState<RefineDiffSummary[]>([])
   const hadBlueprintOnLoadRef = useRef(false)
   
@@ -1135,6 +1136,11 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     setCollaborationTabSignal((s) => s + 1)
   }, [])
 
+  const openFoundationPanel = useCallback(() => {
+    setShowSidePanel(true)
+    setFoundationTabSignal((s) => s + 1)
+  }, [])
+
   const studioEventHandlers = useMemo(
     () => ({
       openReimaginDialog: () => setShowReimaginDialog(true),
@@ -1482,6 +1488,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                   isStartingProduction={isStartingProduction}
                   startProductionEnabled={checklist.blueprintGenerated}
                   onOpenCollaborate={openCollaboratePanel}
+                  onOpenFoundation={openFoundationPanel}
                 />
               </div>
             </div>
@@ -1504,6 +1511,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 isSharing={isSharing}
                 collaborationTabSignal={collaborationTabSignal}
                 resonanceTabSignal={resonanceTabSignal}
+                foundationTabSignal={foundationTabSignal}
                 projectId={projectId}
                 audienceDefinition={audienceDefinition}
                 onAudienceDefinitionSave={handleAudienceDefinitionSave}
@@ -1536,7 +1544,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               <ul className="space-y-3">
                 <li className="flex items-start gap-3">
                   <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span><strong>AI Narrative Reasoning</strong>—Flow will explain <em>why</em> it chose specific protagonists, themes, and creative directions in the "Narrative Reasoning" section.</span>
+                  <span><strong>AI Narrative Reasoning</strong>—Flow will explain <em>why</em> it chose specific protagonists, themes, and creative directions in the side panel&apos;s &quot;Foundation&quot; tab.</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
@@ -1552,7 +1560,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 </li>
                 <li className="flex items-start gap-3">
                   <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>The AI may make <strong>creative decisions</strong> (combining characters, emphasizing themes) to strengthen the narrative—check the "Narrative Reasoning" section in your treatment to understand these choices.</span>
+                  <span>The AI may make <strong>creative decisions</strong> (combining characters, emphasizing themes) to strengthen the narrative—open the side panel&apos;s &quot;Foundation&quot; tab to understand these choices.</span>
                 </li>
               </ul>
             </div>
