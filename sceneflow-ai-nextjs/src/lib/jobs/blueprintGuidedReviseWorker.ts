@@ -6,6 +6,7 @@ import {
   updateGenerationJob,
 } from '@/lib/jobs/jobService'
 import {
+  isStepLeaseHeld,
   readWorkerState,
   type BlueprintGuidedReviseWorkerState,
 } from '@/lib/jobs/blueprintGuidedReviseWorkerState'
@@ -22,7 +23,7 @@ export type BlueprintGuidedReviseStepOutcome = {
   done: boolean
   error?: string
   phase?: string
-  /** Another invocation is already executing this job step. */
+  /** Another invocation currently holds the lease on this phase. */
   inFlight?: boolean
 }
 
@@ -40,11 +41,11 @@ async function runProcessingPhase(
   payload: Record<string, unknown>,
   worker: BlueprintGuidedReviseWorkerState
 ): Promise<BlueprintGuidedReviseStepOutcome> {
-  if (worker.inFlight) {
+  if (isStepLeaseHeld(worker)) {
     return { done: false, phase: worker.phase, inFlight: true }
   }
 
-  await saveWorkerState(jobId, { ...worker, inFlight: true })
+  await saveWorkerState(jobId, { ...worker, inFlightAt: new Date().toISOString() })
 
   try {
     const revisePayload = payloadFromJobRecord(payload)
@@ -56,7 +57,7 @@ async function runProcessingPhase(
         ...worker,
         phase: 'finalize',
         mergedPatch,
-        inFlight: false,
+        inFlightAt: null,
       })
       return { done: false, phase: 'finalize' }
     }
@@ -90,23 +91,15 @@ async function runProcessingPhase(
         mergedPatch.narrative_reasoning = nr
       }
 
-      if (index + 1 < sections.length) {
-        await saveWorkerState(jobId, {
-          ...worker,
-          sectionIndex: index + 1,
-          mergedPatch,
-          inFlight: false,
-        })
-        return { done: false, phase: 'rewrite' }
-      }
-
+      const hasMoreSections = index + 1 < sections.length
       await saveWorkerState(jobId, {
         ...worker,
-        phase: 'finalize',
+        phase: hasMoreSections ? 'rewrite' : 'finalize',
+        sectionIndex: hasMoreSections ? index + 1 : index,
         mergedPatch,
-        inFlight: false,
+        inFlightAt: null,
       })
-      return { done: false, phase: 'finalize' }
+      return { done: false, phase: hasMoreSections ? 'rewrite' : 'finalize' }
     }
 
     if (worker.phase === 'finalize') {
@@ -143,14 +136,14 @@ async function runProcessingPhase(
 
     return { done: true, error: `Unknown worker phase: ${String(worker.phase)}` }
   } catch (err) {
-    await saveWorkerState(jobId, { ...worker, inFlight: false }).catch(() => {})
+    await saveWorkerState(jobId, { ...worker, inFlightAt: null }).catch(() => {})
     throw err
   }
 }
 
 /**
  * Run exactly one planner / rewrite / finalize phase for a blueprint_guided_revise job.
- * Caller chains the next step via scheduleBlueprintGuidedReviseStep().
+ * Safe to call repeatedly and concurrently: a DB lease guards each phase.
  */
 export async function runBlueprintGuidedReviseStep(
   jobId: string
@@ -177,14 +170,15 @@ export async function runBlueprintGuidedReviseStep(
           error: 'Revision worker state missing — cancel and start a new revision',
         }
       }
-      return runProcessingPhase(jobId, userId, projectId, payload, worker)
+      return await runProcessingPhase(jobId, userId, projectId, payload, worker)
     }
 
     if (job.status !== 'queued') {
       return { done: true, error: `Unexpected job status: ${job.status}` }
     }
 
-    // Plan step — only while queued. Atomic claim prevents duplicate planner runs.
+    // Planner runs only while queued. The conditional update is the claim, so
+    // concurrent callers cannot plan the same job twice.
     const [claimed] = await GenerationJob.update(
       { status: 'processing', progress: 5 },
       { where: { id: jobId, status: 'queued' } }
@@ -192,9 +186,15 @@ export async function runBlueprintGuidedReviseStep(
 
     if (claimed === 0) {
       const retry = await GenerationJob.findByPk(jobId)
-      const retryWorker = retry ? readWorkerState(retry.payload ?? {}) : null
+      const retryWorker = retry ? readWorkerState((retry.payload ?? {}) as Record<string, unknown>) : null
       if (retry?.status === 'processing' && retryWorker) {
-        return runProcessingPhase(jobId, userId, projectId, retry.payload ?? {}, retryWorker)
+        return await runProcessingPhase(
+          jobId,
+          userId,
+          projectId,
+          (retry.payload ?? {}) as Record<string, unknown>,
+          retryWorker
+        )
       }
       return { done: false, phase: 'claim_pending', inFlight: true }
     }
@@ -209,7 +209,7 @@ export async function runBlueprintGuidedReviseStep(
       sections,
       sectionIndex: 0,
       mergedPatch: {},
-      inFlight: false,
+      inFlightAt: null,
     }
 
     await saveWorkerState(jobId, nextWorker)

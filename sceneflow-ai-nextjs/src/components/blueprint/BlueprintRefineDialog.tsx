@@ -320,6 +320,41 @@ export function BlueprintRefineDialog({
     )
   }, [jobActive, backgroundJob])
 
+  // Drive the revision forward from the client. Serverless self-invocation can be
+  // dropped once a response is sent, which would otherwise leave the job parked at
+  // one phase forever. Each tick runs at most one lease-guarded phase server-side.
+  const jobId = backgroundJob?.id
+  useEffect(() => {
+    if (!jobActive || !jobId) return
+
+    let cancelled = false
+    let inFlight = false
+
+    const advance = async () => {
+      if (cancelled || inFlight) return
+      inFlight = true
+      try {
+        await fetch('/api/treatment/guided-revise/step', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ jobId }),
+        })
+      } catch {
+        // The next tick retries; polling still reflects real job state.
+      } finally {
+        inFlight = false
+      }
+    }
+
+    void advance()
+    const interval = setInterval(advance, 5000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [jobActive, jobId])
+
   useEffect(() => {
     if (!open) return
     setPhase('intent')
