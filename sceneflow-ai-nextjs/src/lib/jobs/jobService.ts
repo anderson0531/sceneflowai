@@ -118,6 +118,7 @@ export async function updateGenerationJob(
     progress: number
     result: Record<string, unknown> | null
     error: string | null
+    payload: Record<string, unknown>
   }>
 ): Promise<void> {
   const updates: Record<string, unknown> = { ...patch }
@@ -125,6 +126,19 @@ export async function updateGenerationJob(
     updates.completed_at = new Date()
   }
   await GenerationJob.update(updates, { where: { id: jobId } })
+}
+
+/** Shallow-merge keys onto generation_jobs.payload (used by step worker state). */
+export async function patchGenerationJobPayload(
+  jobId: string,
+  patch: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  const job = await GenerationJob.findByPk(jobId)
+  if (!job) throw new Error('Job not found')
+  const current = (job.payload ?? {}) as Record<string, unknown>
+  const next = { ...current, ...patch }
+  await GenerationJob.update({ payload: next }, { where: { id: jobId } })
+  return next
 }
 
 export async function notifyUser(input: {

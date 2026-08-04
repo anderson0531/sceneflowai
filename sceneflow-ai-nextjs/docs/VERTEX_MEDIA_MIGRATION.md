@@ -61,7 +61,10 @@ full variant). The client merges the patch locally. Core logic lives in
 
 **Inngest (recommended):** set `INNGEST_EVENT_KEY` (and `INNGEST_SIGNING_KEY` for the
 `/api/inngest` serve route) in Vercel env, or connect the Inngest Vercel integration.
-Without it, `guided-revise/start` falls back to inline execution via Next.js `after()`.
+Without it, `guided-revise/start` dispatches a **step worker**
+(`POST /api/internal/jobs/blueprint-guided-revise/step`) — one serverless invocation per
+planner/section/finalize phase so memory does not accumulate on a warm instance.
+Set `INTERNAL_JOB_SECRET` in production (defaults to `sceneflow-internal` in dev).
 
 ## Verification
 
