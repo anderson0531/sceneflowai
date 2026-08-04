@@ -774,7 +774,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           ...(opts?.aspectRatio && { aspectRatio: opts.aspectRatio }),
           ...(opts?.contentIntent && { contentIntent: opts.contentIntent }),
           ...(opts?.format && { format: opts.format }),
-          hasExplicitSettings
+          hasExplicitSettings,
+          projectId,
+          storyLocale: storyI18n.sourceLocale
         })
       })
       

@@ -7,6 +7,8 @@ import { callLLM } from '@/services/llmGateway'
 import { v4 as uuidv4 } from 'uuid'
 import { StoryThread } from '@/types/series'
 import { SERIES_CHARACTER_NAMING_BLOCK } from '@/lib/character/characterNamingPrompt'
+import { resolveStoryLocale } from '@/i18n/server/storyLocale'
+import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 600 // Allow 10 minutes for full series generation
@@ -212,6 +214,16 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       `[${timestamp}] [POST /api/series/${seriesId}/generate] Generating storyline for topic: "${topic}", episodes: ${targetEpisodeCount}${episodesCapped ? ` (requested ${rawRequestedEpisodes})` : ''}`
     )
     
+    const { storyLocale } = await resolveStoryLocale({
+      explicit: (body as any)?.storyLocale,
+      seriesId,
+      userIdOrEmail: (series as any).user_id,
+      includeProperNouns: false,
+    })
+    if (storyLocale !== 'en') {
+      console.log(`[POST /api/series/${seriesId}/generate] authoring in ${storyLocale}`)
+    }
+
     // Build the generation prompt based on what needs to be generated
     let generatedData: any
     
@@ -228,7 +240,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       generatedData = await generateFullSeriesStoryline(
         topic,
         targetEpisodeCount,
-        { genre, tone, format }
+        { genre, tone, format, storyLocale }
       )
     }
     
@@ -323,11 +335,18 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 async function generateFullSeriesStoryline(
   topic: string,
   episodeCount: number,
-  options: { genre?: string; tone?: string; format?: string }
+  options: { genre?: string; tone?: string; format?: string; storyLocale?: string }
 ): Promise<any> {
   console.log(`[generateFullSeriesStoryline] Generating ${episodeCount} episodes with Pro model`)
   
   const format = options.format || 'narrative'
+
+  // The bible is authored first and then every episode batch inherits its
+  // names, so the language directive has to be present from the bible onward or
+  // the series ends up half-translated.
+  const languageBlock = localeDirective(options.storyLocale, {
+    keepEnglishFields: ['act', 'status', 'type', 'role'],
+  })
   
   // Dynamic persona and instructions based on format
   let personaInstruction = 'You are an expert TV series showrunner creating a comprehensive series bible.'
@@ -429,7 +448,7 @@ Generate:
 ${SERIES_CHARACTER_NAMING_BLOCK}
 
 ${mappingInstruction}
-
+${languageBlock}
 Return ONLY valid JSON:
 {
   "title": "Series Title",
@@ -531,6 +550,18 @@ Return ONLY valid JSON:
       }
     }
     
+    // Names now exist in the bible, so protect them for every subsequent batch.
+    const batchLanguageBlock = localeDirective(options.storyLocale, {
+      properNouns: buildProperNounGlossary(
+        {
+          characters: parsed.productionBible?.characters,
+          locations: parsed.productionBible?.locations,
+        },
+        [parsed.title]
+      ),
+      keepEnglishFields: ['act', 'status', 'type', 'role'],
+    })
+
     const batchPrompt = `You are continuing an existing series/production with consistent arcs/curriculum.
 
 SERIES/PRODUCTION: ${parsed.title}
@@ -562,7 +593,7 @@ Continue the content naturally. Each new installment must:
 3. End with a hook for the next installment (unless finale)
 
 ${mappingInstruction}
-
+${batchLanguageBlock}
 Return ONLY valid JSON array:
 [
   {

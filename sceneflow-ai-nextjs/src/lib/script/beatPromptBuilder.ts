@@ -1,4 +1,5 @@
 import { Beat } from './beatExtractor'
+import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 
 export interface Character {
   name: string
@@ -16,8 +17,14 @@ export function buildBeatPrompt(
   treatment: any,
   beat: Beat,
   rollingSummary: string,
-  characters: Character[]
+  characters: Character[],
+  storyLocale?: string
 ): string {
+  const languageBlock = localeDirective(storyLocale, {
+    properNouns: buildProperNounGlossary({ characters }, [treatment?.title]),
+    note: 'Scene headings keep the INT./EXT. prefix and time-of-day term in English. Dialogue emotion tags in square brackets stay in English.',
+  })
+
   const characterList = characters.length > 0
     ? `\n\nDEFINED CHARACTERS (USE ONLY THESE):\n${characters.map((c: any) => 
         `${c.name} (${c.role || 'character'}): ${c.description || ''}
@@ -51,7 +58,7 @@ Scene Range: ${beat.startScene}-${beat.endScene} (${beat.sceneCount} scenes)
 2. Each scene MUST have: heading, action, narration, dialogue, visualDescription, duration
 3. Ensure smooth transition from "STORY SO FAR"
 4. Return ONLY valid JSON (no markdown, no explanations)
-
+${languageBlock}
 # DURATION ESTIMATION FORMULA (FOLLOW EXACTLY)
 Step 1: Count total words (narration + all dialogue)
 Step 2: audio_duration = (total_words / 150) * 60 seconds

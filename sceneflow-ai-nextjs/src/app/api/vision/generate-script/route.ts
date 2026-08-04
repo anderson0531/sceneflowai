@@ -7,6 +7,8 @@ import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
 import { migrateProjectToSegmented } from '@/lib/script/migrateToSegmented'
 import { normalizeDialogueToProductionLineTargets } from '@/lib/script/segmentScript'
 import { buildCharacterDialogueExamples } from '@/lib/character/characterNamingPrompt'
+import { resolveStoryLocale } from '@/i18n/server/storyLocale'
+import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -218,6 +220,23 @@ CRITICAL: Return ONLY the JSON array, no other text.`
       }
     }
 
+    // Author dialogue and action natively in the story language. Character names
+    // are protected so dialogue attribution keeps matching the character library.
+    const { storyLocale, properNouns } = await resolveStoryLocale({
+      projectId,
+      seriesId: project.series_id,
+    })
+    const languageBlock = localeDirective(storyLocale, {
+      properNouns: buildProperNounGlossary(
+        { characters },
+        properNouns.concat(filmTreatmentVariant.title)
+      ),
+      note: 'Scene headings keep the INT./EXT. prefix and the time-of-day term in English; the location name itself follows the story language. Dialogue emotion tags in square brackets stay in English.',
+    })
+    if (storyLocale !== 'en') {
+      console.log(`[Script Gen] Authoring script in ${storyLocale}`)
+    }
+
     // Calculate scenes per beat based on duration (industry standard: 3-7 scenes per beat)
     const beatsCount = Array.isArray(beatSheet) ? beatSheet.length : Math.ceil(targetDuration / 600)
     const targetScenesPerBeat = Math.ceil(targetDuration / 60 / beatsCount) // Minutes per beat determines scenes
@@ -304,7 +323,7 @@ ${Array.isArray(beatSheet) && beatSheet.length > 0 ?
 CHARACTERS (USE THESE EXACT NAMES IN DIALOGUE):
 ${characters.map((c: any) => `${c.name} (${c.role}): ${c.description || ''}`).join('\n') || 'Extract characters from story'}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${seriesContinuityBlock ? `\n${seriesContinuityBlock}` : ''}
+${seriesContinuityBlock ? `\n${seriesContinuityBlock}` : ''}${languageBlock}
 CRITICAL DIALOGUE RULES:
 - Use ONLY the EXACT character names from the list above in the "character" field
 - DO NOT abbreviate, modify, or create variations of character names in attribution
@@ -439,7 +458,7 @@ ${batchBeats.map((b: any) => `"${b.title}" - ${b.intent}`).join('\n')}
 CHARACTERS:
 ${characters.map((c: any) => `${c.name} (${c.role}): ${c.description}`).join('\n')}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${seriesContinuityBlock ? `\n${seriesContinuityBlock}` : ''}
+${seriesContinuityBlock ? `\n${seriesContinuityBlock}` : ''}${languageBlock}
 ${previousScenesSummary}
 
 Generate scenes ${startScene}-${endScene} (${scenesInBatch} scenes total).

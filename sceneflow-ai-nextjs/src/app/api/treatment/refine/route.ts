@@ -5,6 +5,8 @@ import { CreditService } from '@/services/CreditService'
 import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
 import { strictJsonPromptSuffix, safeParseJsonFromText } from '@/lib/safeJson'
 import { generateText } from '@/lib/vertexai/gemini'
+import { resolveStoryLocale } from '@/i18n/server/storyLocale'
+import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 import {
   type ContentIntent,
   getIntentRevisionGuardrail,
@@ -27,6 +29,9 @@ interface RefineRequest {
   section: SectionType
   instructions: string
   contentIntent?: ContentIntent
+  projectId?: string
+  /** Language to refine in; resolved server-side when omitted. */
+  storyLocale?: string
 }
 
 // Section-specific field mappings for targeted refinement
@@ -181,9 +186,25 @@ export async function POST(request: NextRequest) {
     const maxTokens = section === 'beats' ? 2048 : 
                       section === 'characters' ? 3072 : 4096
 
+    // A refinement must come back in the same language the creator is reading,
+    // otherwise every edit made from a dialog would quietly revert the project
+    // to English one field at a time.
+    const { storyLocale, properNouns } = await resolveStoryLocale({
+      explicit: body.storyLocale,
+      projectId: body.projectId,
+      userIdOrEmail: userId,
+    })
+    const languageBlock = localeDirective(storyLocale, {
+      properNouns: buildProperNounGlossary(
+        { characters: (variant.character_descriptions as any[]) ?? [] },
+        properNouns.concat(String(variant.title ?? ''))
+      ),
+    })
+
     const prompt = `${getSectionContext(section, contentIntent)}
 
 ${getIntentRevisionGuardrail(contentIntent)}
+${languageBlock}
 
 You are an expert content blueprint editor. REWRITE the specified fields according to the user's instructions.
 

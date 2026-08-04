@@ -14,6 +14,7 @@ import {
   resolveVariantAspectRatio,
 } from '@/lib/treatment/blueprintFoundation'
 import { BLUEPRINT_CHARACTER_IDENTITY_BLOCK } from '@/lib/character/characterNamingPrompt'
+import { localeDirective } from '@/lib/prompts/localeDirective'
 
 type Format = ProductionFormat
 
@@ -141,8 +142,12 @@ export function buildTreatmentPrompt(opts: {
   hasExplicitSettings?: boolean
   contentIntent?: ContentIntent
   rigor?: 'fast' | 'balanced' | 'thorough'
+  /** Language the treatment prose should be authored in. Defaults to English. */
+  storyLocale?: string
+  /** Character/location names that must be reproduced verbatim. */
+  properNouns?: readonly string[]
 }) {
-  const { input, coreConcept, format, targetMinutes, autoScope, advisoryScopeLabel, styleHint, context, beatStructure, persona, hasExplicitSettings, contentIntent, rigor = 'thorough' } = opts
+  const { input, coreConcept, format, targetMinutes, autoScope, advisoryScopeLabel, styleHint, context, beatStructure, persona, hasExplicitSettings, contentIntent, rigor = 'thorough', storyLocale, properNouns } = opts
   const intent = contentIntent ?? resolveContentIntent(context?.genre)
   const pacingPhilosophy = buildPacingPhilosophyBlock(intent)
   // In auto scope, runtime is advisory: the story/illustration decides its own
@@ -183,6 +188,11 @@ export function buildTreatmentPrompt(opts: {
   const aspectRatio = context?.aspectRatio || resolveVariantAspectRatio(context || {})
   const foundationBlock = buildFoundationPromptBlock(artStyle, aspectRatio)
 
+  const languageBlock = localeDirective(storyLocale, {
+    properNouns,
+    keepEnglishFields: ['format_length'],
+  })
+
   return `CRITICAL INSTRUCTIONS: You are a professional ${formatSpecifics.personaLabel} showrunner.
 CONTENT INTENT: ${intent.toUpperCase()} — ${formatSpecifics.schemaFieldSemantics}
 ${scopeBlock}
@@ -217,7 +227,7 @@ CONTEXT:
 ${foundationBlock}
 
 ${OUTPUT_RULES_BLOCK}
-
+${languageBlock}
 STEP 1: BEFORE GENERATING ANYTHING ELSE, THINK ABOUT:
 ${formatSpecifics.step1Thinking}
 
