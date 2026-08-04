@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
+import { LanguageSettingsCard } from '@/components/i18n/LanguageSettingsCard'
 
 export default function ProfilePage() {
   const { data: session } = useSession()
@@ -120,6 +121,7 @@ export default function ProfilePage() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
+      className="space-y-6"
     >
       <Card className="bg-gray-800/60 border-gray-700/60 text-white">
         <CardHeader>
@@ -224,6 +226,8 @@ export default function ProfilePage() {
           </form>
         </CardContent>
       </Card>
+
+      <LanguageSettingsCard />
     </motion.div>
   )
 }

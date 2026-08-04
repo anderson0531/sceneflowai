@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth'
 import { redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
 import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
+import { LocaleBootstrap } from '@/components/i18n/LocaleBootstrap'
 
 export default async function DashboardLayout({
   children,
@@ -16,5 +17,10 @@ export default async function DashboardLayout({
     redirect(getLoginUrl({ returnUrl: '/dashboard' }))
   }
 
-  return <div className="max-w-full h-full min-h-0">{children}</div>
+  return (
+    <div className="max-w-full h-full min-h-0">
+      <LocaleBootstrap />
+      {children}
+    </div>
+  )
 }

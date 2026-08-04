@@ -9,6 +9,7 @@ import { CreditsBadge } from '../../components/credits/CreditsBadge'
 import { SceneFlowStudioBrand } from '../../components/layout/SceneFlowStudioBrand'
 import { isPublicRoute } from '@/constants/publicRoutes'
 import { getDashboardUrl, getLoginUrl } from '@/lib/auth/postLoginRedirect'
+import { HeaderLocaleSwitcher } from '@/components/i18n/HeaderLocaleSwitcher'
 
 declare global {
   namespace JSX {
@@ -70,6 +71,7 @@ export function GlobalHeader() {
           {/* Right: Controls */}
           <div className="flex items-center gap-3 ml-auto">
             {isSignedIn && <CreditsBadge className="hidden sm:flex" />}
+            {isSignedIn && <HeaderLocaleSwitcher />}
             {/* Profile */}
             <button
               className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/60"
