@@ -992,6 +992,30 @@ body.rtl .tabular-nums {
   unicode-bidi: embed;
 }
 
+/* =============================================================================
+   Translation opt-outs
+
+   `notranslate` is the class Google Translate and Safari both honour natively.
+   Anything whose exact characters matter must carry it (or translate="no"):
+   brand marks, generation prompts, code and JSON, credit amounts, timecodes,
+   and identifiers. A mistranslated prompt silently degrades render quality; a
+   mistranslated timecode or id is simply wrong.
+   ============================================================================= */
+
+.notranslate,
+[translate='no'] {
+  /* Nothing to style — the attribute and class are the signal. Declared so the
+     utility is discoverable in one place and safe to apply anywhere. */
+  unicode-bidi: isolate;
+}
+
+/* Numeric readouts stay LTR and untranslated even inside RTL layouts. */
+.sf-numeric {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Google Translate widget styles removed — landing uses native next-intl locales */
 
 /* SFAI logo wordmark — cyan glow on "AI" */

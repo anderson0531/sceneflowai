@@ -947,6 +947,7 @@ export function GuidePromptEditor({
                   
                   {narratorVoiceType === 'custom' && (
                     <Textarea
+                      translate="no"
                       value={customVoiceDescription}
                       onChange={(e) => setCustomVoiceDescription(e.target.value)}
                       placeholder="e.g., 'A raspy, deep-voiced elderly man with a thick Scottish accent, speaking slowly and deliberately'"
@@ -1076,6 +1077,7 @@ export function GuidePromptEditor({
                               </div>
                             </div>
                             <Textarea
+                              translate="no"
                               value={element.editedContent ?? effectiveText}
                               onChange={(e) => updateElementEditedContent(element.id, e.target.value)}
                               className="min-h-[90px] text-sm bg-slate-900 border-slate-600"
@@ -1126,6 +1128,7 @@ export function GuidePromptEditor({
                 Additional Prompt Direction (optional)
               </Label>
               <Textarea
+                translate="no"
                 value={customAddition}
                 onChange={(e) => setCustomAddition(e.target.value)}
                 placeholder="Add custom prompt direction (e.g., 'Camera slowly pushes in on subject')..."
@@ -1180,6 +1183,7 @@ export function GuidePromptEditor({
                     <div className="space-y-2">
                       <Label className="text-xs text-slate-400">Custom negative prompt:</Label>
                       <Textarea
+                        translate="no"
                         value={customNegativePrompt}
                         onChange={(e) => setCustomNegativePrompt(e.target.value)}
                         placeholder="Add custom terms to avoid (e.g., 'shaky camera, motion blur')..."

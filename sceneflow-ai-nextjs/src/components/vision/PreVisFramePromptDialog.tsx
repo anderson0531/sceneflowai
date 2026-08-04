@@ -256,6 +256,7 @@ export function PreVisFramePromptDialog({
                     <div key={name}>
                       <label className="text-[10px] text-slate-500">{name}</label>
                       <Textarea
+                        translate="no"
                         value={wardrobeTextOverrides[name] || ''}
                         onChange={(e) =>
                           setWardrobeTextOverrides((prev) => ({ ...prev, [name]: e.target.value }))
@@ -354,6 +355,7 @@ export function PreVisFramePromptDialog({
 
             <TabsContent value="advanced" className="space-y-3 mt-0">
               <Textarea
+                translate="no"
                 value={advancedPrompt}
                 onChange={(e) => setAdvancedPrompt(e.target.value)}
                 rows={10}
@@ -361,6 +363,7 @@ export function PreVisFramePromptDialog({
                 className="font-mono text-sm"
               />
               <Textarea
+                translate="no"
                 value={negativePrompt}
                 onChange={(e) => setNegativePrompt(e.target.value)}
                 rows={2}

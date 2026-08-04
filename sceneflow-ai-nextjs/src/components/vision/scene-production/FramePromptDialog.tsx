@@ -1573,6 +1573,7 @@ export function FramePromptDialog({
                     </div>
                   </div>
                   <Textarea
+                    translate="no"
                     value={customPrompt}
                     onChange={(e) => setCustomPrompt(e.target.value)}
                     placeholder={promptPlaceholderText}
@@ -1634,6 +1635,7 @@ export function FramePromptDialog({
                       <div className="space-y-2">
                         <Label className="text-xs text-slate-400">Custom negative prompt:</Label>
                         <Textarea
+                          translate="no"
                           value={customNegativePrompt}
                           onChange={(e) => setCustomNegativePrompt(e.target.value)}
                           placeholder="Add custom terms to avoid..."
