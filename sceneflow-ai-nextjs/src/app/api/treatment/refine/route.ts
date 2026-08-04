@@ -178,8 +178,10 @@ export async function POST(request: NextRequest) {
       }))
     }
 
-    // Section-specific token limits to prevent OOM
-    const maxTokens = section === 'beats' ? 2048 : 
+    // Section-specific output budgets. Beats must emit a whole array, so the
+    // former 2048 cap truncated the tail and dropped beats; the OOM these caps
+    // were guarding against was an unbounded loop in safeParseJsonFromText.
+    const maxTokens = section === 'beats' ? 4096 :
                       section === 'characters' ? 3072 : 4096
 
     const prompt = `${getSectionContext(section, contentIntent)}

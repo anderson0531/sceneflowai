@@ -424,7 +424,10 @@ export function TreatmentCard({
             {/* Display single treatment content */}
             <div className="mt-3">
             {(() => {
-              const v = variants[0]
+              // Render the selected variant: edits and refinements are applied to
+              // activeVariant, so pinning this to variants[0] showed stale content
+              // (and no updated beats) whenever another variant was selected.
+              const v = activeVariant
               if (!v) return null
               const accent = v.id === 'A' ? 'border-blue-500' : v.id === 'B' ? 'border-purple-500' : 'border-emerald-500'
               const badge = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs'
@@ -686,7 +689,12 @@ export function TreatmentCard({
                           v.id === activeVariant.id ? flashIf('synopsis') || flashIf('content') : undefined
                         }
                       />
-                      {Array.isArray((v as any).beats) && (v as any).beats.length > 0 ? (
+                      {!Array.isArray((v as any).beats) || (v as any).beats.length === 0 ? (
+                        <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200/90">
+                          No beats yet. Use the pencil to generate a beat sheet for this
+                          blueprint.
+                        </div>
+                      ) : (
                         <div className="space-y-2">
                           {(v as any).beats.map((b: any, idx: number) => (
                             <div key={idx} className={`p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 ${v.id===activeVariant.id ? flashIf('beats') : ''}`}>
@@ -701,7 +709,7 @@ export function TreatmentCard({
                             </div>
                           ))}
                         </div>
-                      ) : null}
+                      )}
                     </div>
                   </BlueprintSubsectionHeading>
 
