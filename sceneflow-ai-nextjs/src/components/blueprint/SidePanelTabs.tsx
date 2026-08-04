@@ -25,6 +25,7 @@ import type { BlueprintSectionAudioStatus } from '@/lib/blueprint/shareTypes'
 import { BlueprintGeminiVoicePicker } from './BlueprintGeminiVoicePicker'
 import { DirectorNoteBuilderDialog } from '@/components/tts/DirectorNoteBuilderDialog'
 import { DEFAULT_BLUEPRINT_GEMINI_VOICE } from '@/lib/tts/blueprintTtsConstants'
+import { VOICE_DIRECTION_COPY } from '@/lib/blueprint/blueprintGlossary'
 
 interface SidePanelTabsProps {
   onClose?: () => void
@@ -243,7 +244,7 @@ function CollaborationContent({
   const [audioLanguage, setAudioLanguage] = React.useState('en')
   const [audioStatus, setAudioStatus] = React.useState<BlueprintSectionAudioStatus | undefined>()
   const [audioVoiceId, setAudioVoiceId] = React.useState(DEFAULT_BLUEPRINT_GEMINI_VOICE)
-  const [audioVoiceName, setAudioVoiceName] = React.useState('Kore (Gemini)')
+  const [audioVoiceName, setAudioVoiceName] = React.useState('Kore (Female)')
   const [audioDirectorNotes, setAudioDirectorNotes] = React.useState('')
   const [voicePickerOpen, setVoicePickerOpen] = React.useState(false)
   const [directorNotesOpen, setDirectorNotesOpen] = React.useState(false)
@@ -486,7 +487,7 @@ function CollaborationContent({
               className="w-full px-3 py-2 rounded-lg border border-slate-600/60 bg-slate-800/40 text-gray-300 text-xs flex items-center justify-center gap-1.5 disabled:opacity-50"
             >
               <Sparkles className="h-3.5 w-3.5 text-purple-400" />
-              {audioDirectorNotes.trim() ? "Director's notes (set)" : "Director's notes"}
+              {audioDirectorNotes.trim() ? VOICE_DIRECTION_COPY.set : VOICE_DIRECTION_COPY.sectionLabel}
             </button>
             <button
               type="button"

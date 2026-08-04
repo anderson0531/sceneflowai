@@ -20,11 +20,12 @@ import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSele
 import { useBlueprintTts } from '@/hooks/useBlueprintTts'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType } from '@/lib/types/reports'
-import { BLUEPRINT_COPY } from '@/lib/blueprint/blueprintGlossary'
+import { BLUEPRINT_COPY, VOICE_DIRECTION_COPY } from '@/lib/blueprint/blueprintGlossary'
 import { ASSISTANT } from '@/lib/constants/assistant'
 import { ASSISTANT_ICON as AssistantIcon } from '@/lib/constants/assistantIcon'
 import { AssistantButton } from '@/components/blueprint/AssistantButton'
 import {
+  formatBeatsTabLabel,
   resolveBlueprintFormatLabel,
   summariseBeatsRuntime,
 } from '@/lib/blueprint/formatBlueprintCore'
@@ -389,7 +390,7 @@ export function TreatmentCard({
                               ) : (
                                 <div className="mx-2 my-1 text-xs text-amber-300">Audio not configured</div>
                               )}
-                              <div className="px-1 pt-2 pb-1 text-xs text-gray-400">Director&apos;s notes</div>
+                              <div className="px-1 pt-2 pb-1 text-xs text-gray-400">{VOICE_DIRECTION_COPY.sectionLabel}</div>
                               <Button
                                 variant="outline"
                                 className="h-8 mx-1 w-[calc(100%-8px)] justify-start gap-2 text-left font-normal"
@@ -400,7 +401,7 @@ export function TreatmentCard({
                               >
                                 <SparklesIcon className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
                                 <span className="truncate text-xs">
-                                  {tts.directorNotes.trim() ? 'Notes set' : "Add director's notes"}
+                                  {tts.directorNotes.trim() ? VOICE_DIRECTION_COPY.set : VOICE_DIRECTION_COPY.add}
                                 </span>
                               </Button>
                               <div className="px-1 pt-2 pb-1 text-xs text-gray-400">Language</div>
@@ -507,7 +508,7 @@ export function TreatmentCard({
                       {SECTION_TABS.map((tab) => (
                         <TabsTrigger key={tab.id} value={tab.id}>
                           {tab.id === 'beats' && beatCount > 0
-                            ? `${tab.label} (${beatCount})`
+                            ? formatBeatsTabLabel(beatCount, beatsRuntime.minutes, beatsRuntime.display)
                             : tab.id === 'characters' && characterCount > 0
                               ? `${tab.label} (${characterCount})`
                               : tab.label}

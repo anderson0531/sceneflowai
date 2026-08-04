@@ -44,7 +44,7 @@ describe('Blueprint section tabs', () => {
   })
 
   it('shows counts on the Beats and Characters tabs', () => {
-    expect(card).toContain('beatCount > 0')
+    expect(card).toContain('formatBeatsTabLabel')
     expect(card).toContain('characterCount > 0')
   })
 

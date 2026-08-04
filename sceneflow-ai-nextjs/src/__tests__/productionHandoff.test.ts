@@ -16,8 +16,8 @@ describe('Production hand-off label', () => {
   })
 
   it('keeps the full destination name for labels and tooltips', () => {
-    expect(BLUEPRINT_COPY.startProduction).toBe('Open Production Studio')
-    expect(BLUEPRINT_COPY.startProductionTooltip).toContain('Open Production Studio')
+    expect(BLUEPRINT_COPY.startProduction).toBe('Go to Production Studio')
+    expect(BLUEPRINT_COPY.startProductionTooltip).toContain('Go to Production Studio')
   })
 
   it('leaves the next-step label as the destination, not Go', () => {

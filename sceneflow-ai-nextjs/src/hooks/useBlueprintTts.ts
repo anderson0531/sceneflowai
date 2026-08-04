@@ -2,18 +2,19 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { DEFAULT_BLUEPRINT_GEMINI_VOICE } from '@/lib/tts/blueprintTtsConstants'
+import { formatGeminiVoiceSelectedLabel } from '@/lib/tts/geminiVoiceCatalog'
 import { toGoogleTranslateCode } from '@/constants/veoLanguages'
 
 const DIRECTOR_NOTES_STORAGE_KEY = 'sceneflow-blueprint-tts-director-notes'
 
-export type BlueprintGeminiVoice = { id: string; name: string }
+export type BlueprintGeminiVoice = { id: string; name: string; gender?: string }
 
 export function useBlueprintTts() {
   const [voices, setVoices] = useState<BlueprintGeminiVoice[]>([])
   const [enabled, setEnabled] = useState(false)
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>(DEFAULT_BLUEPRINT_GEMINI_VOICE)
-  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('Kore (Gemini)')
+  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('Kore (Female)')
   const [directorNotes, setDirectorNotes] = useState('')
   const [audioMenuOpen, setAudioMenuOpen] = useState(false)
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false)
@@ -44,10 +45,13 @@ export function useBlueprintTts() {
           setVoices([])
           return
         }
-        const gemini = data.voices.map((v: { id: string; name: string }) => ({
-          id: v.id,
-          name: v.name,
-        }))
+        const gemini = data.voices.map(
+          (v: { id: string; name: string; gender?: string }) => ({
+            id: v.id,
+            name: formatGeminiVoiceSelectedLabel(v),
+            gender: v.gender,
+          })
+        )
         setEnabled(gemini.length > 0)
         setVoices(gemini)
         const defaultVoice =

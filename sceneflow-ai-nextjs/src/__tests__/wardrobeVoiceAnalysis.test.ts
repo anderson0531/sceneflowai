@@ -14,6 +14,9 @@ import {
 } from '@/lib/voiceRecommendation'
 import {
   enrichGeminiVoicesForScoring,
+  formatGeminiVoiceListLabel,
+  formatGeminiVoiceSelectedLabel,
+  GEMINI_VOICE_CATALOG,
   getGeminiVoicesForApi,
 } from '@/lib/tts/geminiVoiceCatalog'
 
@@ -225,5 +228,42 @@ describe('vision gender persistence for recommendations', () => {
         ['gemini-Sadaltager', 'gemini-Alnilam', 'gemini-Schedar', 'gemini-Algieba'].includes(id),
       ),
     ).toBe(true)
+  })
+})
+
+describe('formatGeminiVoiceListLabel', () => {
+  it('strips the Gemini suffix and builds a gender + archetype subtitle', () => {
+    const kore = GEMINI_VOICE_CATALOG.find((v) => v.id === 'gemini-Kore')
+    expect(kore).toBeTruthy()
+    const label = formatGeminiVoiceListLabel({
+      name: kore!.displayName,
+      gender: kore!.gender,
+      description: kore!.archetypeDescription,
+    })
+    expect(label.title).toBe('Kore')
+    expect(label.subtitle).toMatch(/^Female, /)
+    expect(label.subtitle.toLowerCase()).toContain('firm')
+  })
+
+  it('truncates long archetype descriptions for list rows', () => {
+    const long = 'A'.repeat(80)
+    const label = formatGeminiVoiceListLabel({
+      name: 'Kore (Gemini)',
+      gender: 'female',
+      description: long,
+    })
+    expect(label.subtitle.length).toBeLessThanOrEqual(70)
+    expect(label.subtitle.endsWith('…')).toBe(true)
+  })
+})
+
+describe('formatGeminiVoiceSelectedLabel', () => {
+  it('returns a compact gendered label for Voice buttons', () => {
+    expect(
+      formatGeminiVoiceSelectedLabel({ name: 'Kore (Gemini)', gender: 'female' })
+    ).toBe('Kore (Female)')
+    expect(formatGeminiVoiceSelectedLabel({ name: 'Puck (Gemini)', gender: 'male' })).toBe(
+      'Puck (Male)'
+    )
   })
 })

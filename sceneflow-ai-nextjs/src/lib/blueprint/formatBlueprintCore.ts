@@ -60,6 +60,32 @@ export function summariseBeatsRuntime(beats: unknown): {
   }
 }
 
+/** Compact runtime for tab labels, e.g. "40 min" → "40m", "90 sec" → "90s". */
+export function compactBlueprintRuntimeDisplay(display: string): string {
+  const trimmed = display.trim()
+  if (!trimmed) return ''
+
+  const minOnly = trimmed.match(/^(\d+)\s*min$/i)
+  if (minOnly) return `${minOnly[1]}m`
+
+  const secOnly = trimmed.match(/^(\d+)\s*sec$/i)
+  if (secOnly) return `${secOnly[1]}s`
+
+  const minSec = trimmed.match(/^(\d+)\s*min\s+(\d+)\s*sec$/i)
+  if (minSec) return `${minSec[1]}m ${minSec[2]}s`
+
+  return trimmed
+}
+
+/** Tab label for the Beats section, e.g. "Beats (10 - 40m)". */
+export function formatBeatsTabLabel(count: number, minutes: number, runtimeDisplay = ''): string {
+  if (count <= 0) return 'Beats'
+  if (minutes <= 0 || !runtimeDisplay.trim()) return `Beats (${count})`
+
+  const compact = compactBlueprintRuntimeDisplay(runtimeDisplay)
+  return compact ? `Beats (${count} - ${compact})` : `Beats (${count})`
+}
+
 /**
  * The production format for the Format field, e.g. "podcast episode".
  *

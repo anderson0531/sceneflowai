@@ -2,6 +2,8 @@ import { readFileSync } from 'fs'
 import path from 'path'
 import { describe, expect, it } from 'vitest'
 import {
+  compactBlueprintRuntimeDisplay,
+  formatBeatsTabLabel,
   formatBlueprintRuntime,
   resolveBlueprintFormatLabel,
   summariseBeatsRuntime,
@@ -42,6 +44,28 @@ describe('summariseBeatsRuntime', () => {
   it('ignores unparseable beat minutes rather than producing NaN', () => {
     const summary = summariseBeatsRuntime([{ minutes: 'abc' }, { minutes: 4 }])
     expect(summary.minutes).toBe(4)
+  })
+})
+
+describe('formatBeatsTabLabel', () => {
+  it('shows count and compact runtime on the Beats tab', () => {
+    const summary = summariseBeatsRuntime(fortyMinuteBeats)
+    expect(formatBeatsTabLabel(summary.count, summary.minutes, summary.display)).toBe(
+      'Beats (10 - 40m)'
+    )
+  })
+
+  it('falls back to count only when runtime is missing', () => {
+    expect(formatBeatsTabLabel(3, 0, '')).toBe('Beats (3)')
+    expect(formatBeatsTabLabel(0, 0, '')).toBe('Beats')
+  })
+})
+
+describe('compactBlueprintRuntimeDisplay', () => {
+  it('compresses common runtime strings for tab labels', () => {
+    expect(compactBlueprintRuntimeDisplay('40 min')).toBe('40m')
+    expect(compactBlueprintRuntimeDisplay('90 sec')).toBe('90s')
+    expect(compactBlueprintRuntimeDisplay('1 min 30 sec')).toBe('1m 30s')
   })
 })
 
