@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Globe, Languages, Loader, PenLine, Volume2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 
 import {
   Card,
@@ -29,6 +30,7 @@ type LocalePreferences = {
  * row states what it actually affects.
  */
 export function LanguageSettingsCard() {
+  const t = useTranslations('settings.languages')
   const [prefs, setPrefs] = useState<LocalePreferences>({
     uiLocale: DEFAULT_LOCALE,
     storyLocale: DEFAULT_LOCALE,
@@ -76,21 +78,21 @@ export function LanguageSettingsCard() {
         if (patch.uiLocale) {
           writeUiLocaleCookie(patch.uiLocale)
           applyDocumentLocale(patch.uiLocale)
-          toast.success(`Interface language set to ${getLocaleNativeName(patch.uiLocale)}`)
+          toast.success(t('interfaceSet', { language: getLocaleNativeName(patch.uiLocale) }))
           // Message catalogs are resolved on the server, so the new language
           // only appears after a re-render from the server.
           setTimeout(() => window.location.reload(), 600)
         } else {
-          toast.success('Language preference saved')
+          toast.success(t('saved'))
         }
       } catch {
         setPrefs(previous)
-        toast.error('Could not save language preference')
+        toast.error(t('saveFailed'))
       } finally {
         setSavingKey(null)
       }
     },
-    [prefs]
+    [prefs, t]
   )
 
   if (loading) {
@@ -111,11 +113,8 @@ export function LanguageSettingsCard() {
             <Languages className="w-5 h-5 text-sf-primary" />
           </div>
           <div>
-            <CardTitle className="text-xl font-semibold">Languages</CardTitle>
-            <CardDescription className="text-gray-400">
-              Read the studio in one language, write your story in another, and deliver
-              in as many as you need
-            </CardDescription>
+            <CardTitle className="text-xl font-semibold">{t('title')}</CardTitle>
+            <CardDescription className="text-gray-400">{t('description')}</CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -123,8 +122,8 @@ export function LanguageSettingsCard() {
       <CardContent className="space-y-6">
         <SettingRow
           icon={<Globe className="w-4 h-4 text-cyan-400" />}
-          title="Interface language"
-          description="Menus, buttons, and dialogs across the Dashboard and all three studios."
+          title={t('interfaceTitle')}
+          description={t('interfaceDescription')}
           busy={savingKey === 'uiLocale'}
           control={
             <LocalePicker
@@ -132,15 +131,15 @@ export function LanguageSettingsCard() {
               onValueChange={(locale) => save({ uiLocale: locale }, 'uiLocale')}
               size="md"
               disabled={savingKey !== null}
-              ariaLabel="Interface language"
+              ariaLabel={t('interfaceTitle')}
             />
           }
         />
 
         <SettingRow
           icon={<PenLine className="w-4 h-4 text-violet-400" />}
-          title="Story language"
-          description="The language new AI-written treatments, beats, characters, and dialogue are authored in. Individual projects can override this."
+          title={t('storyTitle')}
+          description={t('storyDescription')}
           busy={savingKey === 'storyLocale'}
           control={
             <LocalePicker
@@ -148,34 +147,33 @@ export function LanguageSettingsCard() {
               onValueChange={(locale) => save({ storyLocale: locale }, 'storyLocale')}
               size="md"
               disabled={savingKey !== null}
-              ariaLabel="Story language"
+              ariaLabel={t('storyTitle')}
             />
           }
         />
 
         <SettingRow
           icon={<Volume2 className="w-4 h-4 text-emerald-400" />}
-          title="Delivery languages"
-          description="Narration, dubs, and rendered video. A single project can ship in many languages at once, so these are chosen per scene rather than per account."
+          title={t('deliveryTitle')}
+          description={t('deliveryDescription')}
           busy={false}
           control={
             <div className="flex flex-col items-start gap-1.5 sm:items-end">
               <span className="text-xs text-gray-300">
-                Starts from {getLocaleNativeName(prefs.storyLocale)}
+                {t('deliveryStartsFrom', { language: getLocaleNativeName(prefs.storyLocale) })}
               </span>
               <a
                 href="/dashboard/projects"
                 className="text-xs font-medium text-emerald-400 underline-offset-2 hover:underline"
               >
-                Set in Production Studio
+                {t('deliverySetInProduction')}
               </a>
             </div>
           }
         />
 
         <p className="text-xs text-gray-500 border-t border-gray-700/60 pt-4">
-          Image and video prompts stay in English regardless of these settings — the
-          generation models produce noticeably weaker results from translated prompts.
+          {t('promptsStayEnglish')}
         </p>
       </CardContent>
     </Card>

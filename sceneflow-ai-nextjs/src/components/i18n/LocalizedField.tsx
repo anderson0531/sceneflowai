@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { Eye, EyeOff, Languages, Loader2, Lock, PenLine } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 import { cn } from '@/lib/utils'
 import { getLocaleNativeName } from '@/i18n/locale'
@@ -64,6 +65,7 @@ export function LocalizedField({
   children,
   className,
 }: LocalizedFieldProps) {
+  const t = useTranslations('common.language')
   const [showingSource, setShowingSource] = React.useState(false)
 
   const isLocked = translation.kind === 'machine' || translation.kind === 'opaque'
@@ -103,7 +105,7 @@ export function LocalizedField({
             {translation.isLoading && (
               <span className="inline-flex items-center gap-1 text-[11px] text-gray-500">
                 <Loader2 className="h-3 w-3 animate-spin" />
-                Translating
+                {t('translating')}
               </span>
             )}
 
@@ -113,7 +115,7 @@ export function LocalizedField({
 
             {isTranslated && showingSource && (
               <span className="inline-flex items-center gap-1 rounded-full border border-slate-600/50 bg-slate-700/30 px-2 py-0.5 text-[11px] text-gray-300">
-                Original · {getLocaleNativeName(sourceLocale)}
+                {t('originalIn', { language: getLocaleNativeName(sourceLocale) })}
               </span>
             )}
 
@@ -126,12 +128,12 @@ export function LocalizedField({
                 {showingSource ? (
                   <>
                     <EyeOff className="h-3 w-3" />
-                    Hide original
+                    {t('hideOriginal')}
                   </>
                 ) : (
                   <>
                     <Eye className="h-3 w-3" />
-                    View original
+                    {t('viewOriginal')}
                   </>
                 )}
               </button>
@@ -153,8 +155,7 @@ export function LocalizedField({
 
       {isTranslated && !showingSource && onChangeOverride && (
         <p className="text-[11px] text-gray-500">
-          Edits here become your wording for {getLocaleNativeName(uiLocale)} and will not be
-          overwritten.
+          {t('overrideHint', { language: getLocaleNativeName(uiLocale) })}
         </p>
       )}
     </div>
@@ -168,11 +169,13 @@ function StateChip({
   state: FieldTranslation['state']
   sourceLocale: string
 }) {
+  const t = useTranslations('common.language')
+
   if (state === 'override') {
     return (
       <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-300">
         <PenLine className="h-3 w-3" />
-        Your wording
+        {t('yourWording')}
       </span>
     )
   }
@@ -180,28 +183,25 @@ function StateChip({
   return (
     <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] text-amber-300">
       <Languages className="h-3 w-3" />
-      Machine translated · from {getLocaleNativeName(sourceLocale)}
+      {t('machineTranslatedFrom', { language: getLocaleNativeName(sourceLocale) })}
     </span>
   )
 }
 
 function LockedChip({ kind }: { kind: FieldTranslation['kind'] }) {
+  const t = useTranslations('common.language')
   return (
     <span className="inline-flex items-center gap-1 rounded-full border border-slate-600/50 bg-slate-700/30 px-2 py-0.5 text-[11px] text-gray-300">
       <Lock className="h-3 w-3" />
-      {kind === 'machine' ? 'English required' : 'Not translated'}
+      {kind === 'machine' ? t('englishRequired') : t('notTranslated')}
     </span>
   )
 }
 
 function LockedHint({ kind }: { kind: FieldTranslation['kind'] }) {
+  const t = useTranslations('common.language')
   if (kind !== 'machine') return null
-  return (
-    <p className="text-[11px] text-gray-500">
-      Image and video models produce noticeably weaker results from translated prompts, so
-      this field stays in English.
-    </p>
-  )
+  return <p className="text-[11px] text-gray-500">{t('machineFieldHint')}</p>
 }
 
 /**
@@ -222,6 +222,7 @@ export function RewriteInLanguageButton({
   disabled?: boolean
   className?: string
 }) {
+  const t = useTranslations('common.language')
   return (
     <button
       type="button"
@@ -231,10 +232,10 @@ export function RewriteInLanguageButton({
         'inline-flex items-center gap-1.5 rounded-lg border border-violet-500/40 bg-violet-500/10 px-2.5 py-1 text-xs text-violet-200 transition-colors hover:bg-violet-500/20 disabled:opacity-50',
         className
       )}
-      title={`Make ${getLocaleNativeName(uiLocale)} the language this project is written in`}
+      title={t('rewriteInHint', { language: getLocaleNativeName(uiLocale) })}
     >
       <PenLine className="h-3 w-3" />
-      Rewrite in {getLocaleNativeName(uiLocale)}
+      {t('rewriteIn', { language: getLocaleNativeName(uiLocale) })}
     </button>
   )
 }
@@ -254,6 +255,7 @@ export function TranslationNotice({
   isLoading?: boolean
   onPromote?: () => void
 }) {
+  const t = useTranslations('common.language')
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
       <p className="flex items-center gap-2 text-xs text-amber-200/90">
@@ -262,8 +264,10 @@ export function TranslationNotice({
         ) : (
           <Languages className="h-3.5 w-3.5" />
         )}
-        This project is written in {getLocaleNativeName(sourceLocale)}. Translations into{' '}
-        {getLocaleNativeName(uiLocale)} are machine generated.
+        {t('translationNotice', {
+          sourceLanguage: getLocaleNativeName(sourceLocale),
+          targetLanguage: getLocaleNativeName(uiLocale),
+        })}
       </p>
       {onPromote && <RewriteInLanguageButton uiLocale={uiLocale} onPromote={onPromote} />}
     </div>

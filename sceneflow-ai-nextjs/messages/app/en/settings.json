@@ -1,14 +1,29 @@
 {
+  "shell": {
+    "title": "Account Settings",
+    "subtitle": "Manage your account, integrations, and preferences",
+    "sectionsHeading": "Settings",
+    "quickActions": "Quick Actions",
+    "backToDashboard": "Back to Dashboard",
+    "continueWorkflow": "Continue Workflow"
+  },
   "nav": {
     "profile": "Profile",
+    "profileDescription": "Manage your account information",
     "integrations": "Integrations",
+    "integrationsDescription": "Connect AI providers and external services",
     "security": "Security",
-    "billing": "Billing & Credits",
+    "securityDescription": "Password and security settings",
+    "billing": "Billing",
+    "billingDescription": "Manage your subscription and billing",
     "notifications": "Notifications",
+    "notificationsDescription": "Email and push notification preferences",
     "data": "Data & Privacy",
+    "dataDescription": "Data export and privacy controls",
     "byok": "BYOK Settings",
     "storage": "Storage",
-    "admin": "Admin"
+    "admin": "Admin",
+    "adminDescription": "Admin functions and controls"
   },
   "profile": {
     "title": "Profile Information",

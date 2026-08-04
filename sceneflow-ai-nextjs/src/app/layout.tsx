@@ -13,6 +13,7 @@ import { CreditsProvider } from '@/contexts/CreditsContext'
 import { CreditsPaywallHost } from '@/components/credits/CreditsPaywallHost'
 import { CookieConsent } from '@/components/ui/CookieConsent'
 import { DocumentLocaleScript } from '@/components/i18n/DocumentLocaleScript'
+import { ClientAppMessagesProvider } from '@/components/i18n/ClientAppMessagesProvider'
 import { GlobalErrorGuard } from '@/components/providers/GlobalErrorGuard'
 import AudioPlayerProvider from '@/context/AudioPlayerProvider'
 import {
@@ -256,7 +257,11 @@ export default function RootLayout({
             <AudioPlayerProvider>
               <CreditsProvider>
                 <CreditsPaywallHost />
-                <GlobalHeader />
+                {/* Only the header needs the client-side catalog; route groups
+                    resolve their own on the server. */}
+                <ClientAppMessagesProvider>
+                  <GlobalHeader />
+                </ClientAppMessagesProvider>
                 <ConditionalLayout>{children}</ConditionalLayout>
                 <InstallPrompt />
                 <Toaster

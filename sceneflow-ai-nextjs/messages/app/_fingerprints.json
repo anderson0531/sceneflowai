@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-04T14:57:34.104Z",
+  "generatedAt": "2026-08-04T15:03:32.040Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -130,15 +130,28 @@
       "projects.meta.duration": "e1bded87ee24b702"
     },
     "settings": {
+      "shell.title": "d0f9bc7a3b0119a3",
+      "shell.subtitle": "47fab3e1a9a24594",
+      "shell.sectionsHeading": "74a883a037bc227f",
+      "shell.quickActions": "2cc2b6f7f200e65c",
+      "shell.backToDashboard": "97ba1d394fab183d",
+      "shell.continueWorkflow": "90fa97794c43614b",
       "nav.profile": "d696a35bdd1883da",
+      "nav.profileDescription": "4a23a29f177a9059",
       "nav.integrations": "090512d93fcc3c0d",
+      "nav.integrationsDescription": "493da9fd273292ae",
       "nav.security": "8f6fb4eb7f42c0e2",
-      "nav.billing": "92349d06fd0e5dcb",
+      "nav.securityDescription": "d35acb876842a4d1",
+      "nav.billing": "3ac8bbca9a74cfbd",
+      "nav.billingDescription": "6883044134c31b47",
       "nav.notifications": "788011833a5a0f22",
+      "nav.notificationsDescription": "72c5111059b8f48f",
       "nav.data": "f6d8a0c467a4729d",
+      "nav.dataDescription": "30be722ae48876b0",
       "nav.byok": "73dc2e8011b0443a",
       "nav.storage": "a69c4dece144a46e",
       "nav.admin": "c1c224b03cd9bc7b",
+      "nav.adminDescription": "458762e3d7bfa847",
       "profile.title": "64ceb89543b7fe25",
       "profile.description": "0498b8a749575b73",
       "profile.username": "e3b89e9d33f88e52",

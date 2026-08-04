@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Globe, X } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 import { Button } from '@/components/ui/Button'
 import {
@@ -31,6 +32,7 @@ const DISMISSED_KEY = 'sf-locale-suggestion-dismissed'
  *    happens to be travelling is worse than asking.
  */
 export function LocaleBootstrap() {
+  const t = useTranslations('common.language')
   const [suggestion, setSuggestion] = useState<string | null>(null)
 
   useEffect(() => {
@@ -123,11 +125,9 @@ export function LocaleBootstrap() {
         <Globe className="mt-0.5 h-5 w-5 shrink-0 text-cyan-400" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-white" lang={suggestion}>
-            View SceneFlow in {nativeName}?
+            {t('suggestionPrompt', { language: nativeName })}
           </p>
-          <p className="mt-1 text-xs text-gray-400">
-            You can change this any time in Settings under Languages.
-          </p>
+          <p className="mt-1 text-xs text-gray-400">{t('suggestionHint')}</p>
           <div className="mt-3 flex gap-2">
             <Button size="sm" className="bg-cyan-500 text-white hover:bg-cyan-600" onClick={accept}>
               <span lang={suggestion}>{nativeName}</span>
@@ -138,13 +138,13 @@ export function LocaleBootstrap() {
               className="border-slate-700 text-gray-300"
               onClick={dismiss}
             >
-              Keep English
+              {t('keepEnglish')}
             </Button>
           </div>
         </div>
         <button
           onClick={dismiss}
-          aria-label="Dismiss"
+          aria-label={t('dismiss')}
           className="rounded p-1 text-gray-500 hover:bg-slate-800 hover:text-gray-300"
         >
           <X className="h-4 w-4" />

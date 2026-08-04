@@ -8,9 +8,12 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { LanguageSettingsCard } from '@/components/i18n/LanguageSettingsCard'
 
 export default function ProfilePage() {
+  const t = useTranslations('settings.profile')
+  const tc = useTranslations('common')
   const { data: session } = useSession()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -87,15 +90,15 @@ export default function ProfilePage() {
       const data = await response.json()
 
       if (response.ok) {
-        toast.success('Profile updated successfully')
+        toast.success(t('updated'))
         // Reload profile data
         await fetchUserProfile()
       } else {
-        toast.error(data.error || 'Failed to update profile')
+        toast.error(data.error || t('updateFailed'))
       }
     } catch (error) {
       console.error('Failed to update profile:', error)
-      toast.error('Failed to update profile')
+      toast.error(t('updateFailed'))
     } finally {
       setSaving(false)
     }
@@ -130,10 +133,8 @@ export default function ProfilePage() {
               <UserCircle className="w-5 h-5 text-sf-primary" />
             </div>
             <div>
-              <CardTitle className="text-xl font-semibold">Profile Information</CardTitle>
-              <CardDescription className="text-gray-400">
-                Manage your account information and personal details
-              </CardDescription>
+              <CardTitle className="text-xl font-semibold">{t('title')}</CardTitle>
+              <CardDescription className="text-gray-400">{t('description')}</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -143,7 +144,7 @@ export default function ProfilePage() {
               <div className="space-y-2">
                 <label htmlFor="username" className="text-sm font-medium text-gray-200 flex items-center gap-2">
                   <User className="w-4 h-4" />
-                  Username
+                  {t('username')}
                 </label>
                 <Input
                   id="username"
@@ -152,14 +153,14 @@ export default function ProfilePage() {
                   value={formData.username}
                   onChange={handleChange}
                   className="bg-gray-900/80 border-gray-700/60 text-white"
-                  placeholder="Enter your username"
+                  placeholder={t('usernamePlaceholder')}
                 />
               </div>
 
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium text-gray-200 flex items-center gap-2">
                   <Mail className="w-4 h-4" />
-                  Email Address
+                  {t('email')}
                 </label>
                 <Input
                   id="email"
@@ -168,14 +169,14 @@ export default function ProfilePage() {
                   value={formData.email}
                   onChange={handleChange}
                   className="bg-gray-900/80 border-gray-700/60 text-white"
-                  placeholder="Enter your email"
+                  placeholder={t('emailPlaceholder')}
                   required
                 />
               </div>
 
               <div className="space-y-2">
                 <label htmlFor="first_name" className="text-sm font-medium text-gray-200">
-                  First Name
+                  {t('firstName')}
                 </label>
                 <Input
                   id="first_name"
@@ -184,13 +185,13 @@ export default function ProfilePage() {
                   value={formData.first_name}
                   onChange={handleChange}
                   className="bg-gray-900/80 border-gray-700/60 text-white"
-                  placeholder="Enter your first name"
+                  placeholder={t('firstNamePlaceholder')}
                 />
               </div>
 
               <div className="space-y-2">
                 <label htmlFor="last_name" className="text-sm font-medium text-gray-200">
-                  Last Name
+                  {t('lastName')}
                 </label>
                 <Input
                   id="last_name"
@@ -199,7 +200,7 @@ export default function ProfilePage() {
                   value={formData.last_name}
                   onChange={handleChange}
                   className="bg-gray-900/80 border-gray-700/60 text-white"
-                  placeholder="Enter your last name"
+                  placeholder={t('lastNamePlaceholder')}
                 />
               </div>
             </div>
@@ -213,12 +214,12 @@ export default function ProfilePage() {
                 {saving ? (
                   <>
                     <Loader className="w-4 h-4 animate-spin" />
-                    Saving...
+                    {tc('status.saving')}
                   </>
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    Save Changes
+                    {tc('actions.saveChanges')}
                   </>
                 )}
               </Button>
