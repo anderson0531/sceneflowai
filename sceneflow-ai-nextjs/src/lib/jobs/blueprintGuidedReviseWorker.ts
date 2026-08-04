@@ -7,7 +7,6 @@ import {
 } from '@/lib/jobs/jobService'
 import {
   readWorkerState,
-  writeWorkerState,
   type BlueprintGuidedReviseWorkerState,
 } from '@/lib/jobs/blueprintGuidedReviseWorkerState'
 import {
@@ -23,76 +22,48 @@ export type BlueprintGuidedReviseStepOutcome = {
   done: boolean
   error?: string
   phase?: string
+  /** Another invocation is already executing this job step. */
+  inFlight?: boolean
 }
 
-/**
- * Run exactly one planner / rewrite / finalize phase for a blueprint_guided_revise job.
- * Caller chains the next step via scheduleBlueprintGuidedReviseStep().
- */
-export async function runBlueprintGuidedReviseStep(
-  jobId: string
+async function saveWorkerState(
+  jobId: string,
+  worker: BlueprintGuidedReviseWorkerState
+): Promise<void> {
+  await patchGenerationJobPayload(jobId, { _worker: worker })
+}
+
+async function runProcessingPhase(
+  jobId: string,
+  userId: string,
+  projectId: string,
+  payload: Record<string, unknown>,
+  worker: BlueprintGuidedReviseWorkerState
 ): Promise<BlueprintGuidedReviseStepOutcome> {
-  const job = await GenerationJob.findByPk(jobId)
-  if (!job || job.job_type !== 'blueprint_guided_revise') {
-    return { done: true, error: 'Job not found' }
+  if (worker.inFlight) {
+    return { done: false, phase: worker.phase, inFlight: true }
   }
 
-  if (job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled') {
-    return { done: true, phase: job.status }
-  }
-
-  const userId = job.user_id
-  const projectId = job.project_id
-  const storedPayload = (job.payload ?? {}) as Record<string, unknown>
-  const worker = readWorkerState(storedPayload)
+  await saveWorkerState(jobId, { ...worker, inFlight: true })
 
   try {
-    if (job.status === 'queued' || !worker) {
-      await updateGenerationJob(jobId, { status: 'processing', progress: 5 })
-      const revisePayload = payloadFromJobRecord(storedPayload)
-      const plan = await runPlannerStep(revisePayload)
-      const sections = [...new Set(plan.sectionsToUpdate)] as BlueprintFixSection[]
-
-      const nextWorker: BlueprintGuidedReviseWorkerState = {
-        phase: sections.length <= 1 ? 'rewrite-all' : 'rewrite',
-        plan,
-        sections,
-        sectionIndex: 0,
-        mergedPatch: {},
-      }
-
-      await patchGenerationJobPayload(jobId, writeWorkerState(storedPayload, nextWorker))
-      await updateGenerationJob(jobId, { progress: 15 })
-      return { done: false, phase: nextWorker.phase }
-    }
-
-    const freshJob = await GenerationJob.findByPk(jobId)
-    if (!freshJob) return { done: true, error: 'Job not found' }
-    const payload = (freshJob.payload ?? {}) as Record<string, unknown>
-    const state = readWorkerState(payload)
-    if (!state) {
-      return { done: true, error: 'Worker state missing' }
-    }
-
     const revisePayload = payloadFromJobRecord(payload)
 
-    if (state.phase === 'rewrite-all') {
+    if (worker.phase === 'rewrite-all') {
       await updateGenerationJob(jobId, { progress: 50 })
-      const mergedPatch = await runAllSectionRewrites(revisePayload, state.plan)
-      await patchGenerationJobPayload(
-        jobId,
-        writeWorkerState(payload, {
-          ...state,
-          phase: 'finalize',
-          mergedPatch,
-        })
-      )
+      const mergedPatch = await runAllSectionRewrites(revisePayload, worker.plan)
+      await saveWorkerState(jobId, {
+        ...worker,
+        phase: 'finalize',
+        mergedPatch,
+        inFlight: false,
+      })
       return { done: false, phase: 'finalize' }
     }
 
-    if (state.phase === 'rewrite') {
-      const sections = state.sections
-      const index = state.sectionIndex ?? 0
+    if (worker.phase === 'rewrite') {
+      const sections = worker.sections
+      const index = worker.sectionIndex ?? 0
       const section = sections[index]
       if (!section) {
         throw new Error(`Invalid section index ${index}`)
@@ -104,15 +75,15 @@ export async function runBlueprintGuidedReviseStep(
 
       const sectionPatch = await runSectionRewriteStep(
         revisePayload,
-        state.plan,
+        worker.plan,
         section,
-        state.mergedPatch ?? {},
+        worker.mergedPatch ?? {},
         isLast
       )
 
       const { narrative_reasoning: nr, ...fieldPatch } = sectionPatch
       const mergedPatch: Record<string, unknown> = {
-        ...(state.mergedPatch ?? {}),
+        ...(worker.mergedPatch ?? {}),
         ...fieldPatch,
       }
       if (nr && typeof nr === 'object') {
@@ -120,34 +91,30 @@ export async function runBlueprintGuidedReviseStep(
       }
 
       if (index + 1 < sections.length) {
-        await patchGenerationJobPayload(
-          jobId,
-          writeWorkerState(payload, {
-            ...state,
-            sectionIndex: index + 1,
-            mergedPatch,
-          })
-        )
+        await saveWorkerState(jobId, {
+          ...worker,
+          sectionIndex: index + 1,
+          mergedPatch,
+          inFlight: false,
+        })
         return { done: false, phase: 'rewrite' }
       }
 
-      await patchGenerationJobPayload(
-        jobId,
-        writeWorkerState(payload, {
-          ...state,
-          phase: 'finalize',
-          mergedPatch,
-        })
-      )
+      await saveWorkerState(jobId, {
+        ...worker,
+        phase: 'finalize',
+        mergedPatch,
+        inFlight: false,
+      })
       return { done: false, phase: 'finalize' }
     }
 
-    if (state.phase === 'finalize') {
+    if (worker.phase === 'finalize') {
       await updateGenerationJob(jobId, { progress: 92 })
       const finalized = finalizeGuidedRevise(
         revisePayload,
-        state.plan,
-        state.mergedPatch ?? {}
+        worker.plan,
+        worker.mergedPatch ?? {}
       )
       const result = {
         patch: finalized.patch,
@@ -174,7 +141,80 @@ export async function runBlueprintGuidedReviseStep(
       return { done: true, phase: 'completed' }
     }
 
-    return { done: true, error: `Unknown worker phase: ${String(state.phase)}` }
+    return { done: true, error: `Unknown worker phase: ${String(worker.phase)}` }
+  } catch (err) {
+    await saveWorkerState(jobId, { ...worker, inFlight: false }).catch(() => {})
+    throw err
+  }
+}
+
+/**
+ * Run exactly one planner / rewrite / finalize phase for a blueprint_guided_revise job.
+ * Caller chains the next step via scheduleBlueprintGuidedReviseStep().
+ */
+export async function runBlueprintGuidedReviseStep(
+  jobId: string
+): Promise<BlueprintGuidedReviseStepOutcome> {
+  const job = await GenerationJob.findByPk(jobId)
+  if (!job || job.job_type !== 'blueprint_guided_revise') {
+    return { done: true, error: 'Job not found' }
+  }
+
+  if (job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled') {
+    return { done: true, phase: job.status }
+  }
+
+  const userId = job.user_id
+  const projectId = job.project_id
+  const payload = (job.payload ?? {}) as Record<string, unknown>
+  const worker = readWorkerState(payload)
+
+  try {
+    if (job.status === 'processing') {
+      if (!worker) {
+        return {
+          done: true,
+          error: 'Revision worker state missing — cancel and start a new revision',
+        }
+      }
+      return runProcessingPhase(jobId, userId, projectId, payload, worker)
+    }
+
+    if (job.status !== 'queued') {
+      return { done: true, error: `Unexpected job status: ${job.status}` }
+    }
+
+    // Plan step — only while queued. Atomic claim prevents duplicate planner runs.
+    const [claimed] = await GenerationJob.update(
+      { status: 'processing', progress: 5 },
+      { where: { id: jobId, status: 'queued' } }
+    )
+
+    if (claimed === 0) {
+      const retry = await GenerationJob.findByPk(jobId)
+      const retryWorker = retry ? readWorkerState(retry.payload ?? {}) : null
+      if (retry?.status === 'processing' && retryWorker) {
+        return runProcessingPhase(jobId, userId, projectId, retry.payload ?? {}, retryWorker)
+      }
+      return { done: false, phase: 'claim_pending', inFlight: true }
+    }
+
+    const revisePayload = payloadFromJobRecord(payload)
+    const plan = await runPlannerStep(revisePayload)
+    const sections = [...new Set(plan.sectionsToUpdate)] as BlueprintFixSection[]
+
+    const nextWorker: BlueprintGuidedReviseWorkerState = {
+      phase: sections.length <= 1 ? 'rewrite-all' : 'rewrite',
+      plan,
+      sections,
+      sectionIndex: 0,
+      mergedPatch: {},
+      inFlight: false,
+    }
+
+    await saveWorkerState(jobId, nextWorker)
+    await updateGenerationJob(jobId, { progress: 15 })
+    return { done: false, phase: nextWorker.phase }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Blueprint revision failed'
     await updateGenerationJob(jobId, { status: 'failed', error: message })

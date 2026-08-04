@@ -8,6 +8,8 @@ export type BlueprintGuidedReviseWorkerState = {
   sections: BlueprintFixSection[]
   sectionIndex?: number
   mergedPatch?: Record<string, unknown>
+  /** Prevents overlapping step invocations from duplicating work. */
+  inFlight?: boolean
 }
 
 export function readWorkerState(

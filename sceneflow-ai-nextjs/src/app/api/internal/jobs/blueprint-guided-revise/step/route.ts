@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
   const outcome = await runBlueprintGuidedReviseStep(jobId)
 
-  if (!outcome.done && !outcome.error) {
+  if (!outcome.done && !outcome.error && !outcome.inFlight) {
     scheduleBlueprintGuidedReviseStep(jobId)
   }
 

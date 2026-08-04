@@ -137,7 +137,9 @@ export async function patchGenerationJobPayload(
   if (!job) throw new Error('Job not found')
   const current = (job.payload ?? {}) as Record<string, unknown>
   const next = { ...current, ...patch }
-  await GenerationJob.update({ payload: next }, { where: { id: jobId } })
+  job.payload = next
+  job.changed('payload', true)
+  await job.save()
   return next
 }
 
