@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { isStaleActiveJob } from '@/lib/jobs/staleJob'
 
 export type BackgroundJobStatus = 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled'
 
@@ -13,6 +14,7 @@ export type BackgroundJob = {
   result?: Record<string, unknown> | null
   error?: string | null
   created_at?: string
+  updated_at?: string
   completed_at?: string | null
 }
 
@@ -58,7 +60,12 @@ export function useBackgroundJob(options: {
     if (notifiedRef.current.has(next.id)) return
     notifiedRef.current.add(next.id)
     if (next.status === 'completed') onCompletedRef.current?.(next)
-    if (next.status === 'failed') onFailedRef.current?.(next)
+    if (next.status === 'failed' || next.status === 'cancelled') onFailedRef.current?.(next)
+  }, [])
+
+  const dismiss = useCallback(() => {
+    jobIdRef.current = null
+    setJob(null)
   }, [])
 
   /** Re-attach to an in-flight job so refreshing does not orphan it. */
@@ -70,7 +77,7 @@ export function useBackgroundJob(options: {
       if (!res.ok) return
       const data = await res.json()
       const match = (data.jobs || []).find((j: BackgroundJob) => j.job_type === jobType)
-      if (match) {
+      if (match && !isStaleActiveJob(match)) {
         jobIdRef.current = match.id
         // Mark as already-seen so re-attaching never replays a completion toast
         // for work the user was told about before the reload.
@@ -96,11 +103,17 @@ export function useBackgroundJob(options: {
       const res = await fetch(`/api/jobs?jobId=${encodeURIComponent(jobId)}`)
       if (!res.ok) return
       const data = await res.json()
-      if (data.job) settle(data.job)
+      if (data.job) {
+        if (isStaleActiveJob(data.job)) {
+          dismiss()
+          return
+        }
+        settle(data.job)
+      }
     } catch {
       // Transient network failure — the next tick retries.
     }
-  }, [settle])
+  }, [dismiss, settle])
 
   useEffect(() => {
     if (!enabled) return
@@ -121,10 +134,30 @@ export function useBackgroundJob(options: {
     })
   }, [jobType])
 
-  const dismiss = useCallback(() => {
-    jobIdRef.current = null
-    setJob(null)
-  }, [])
+  const cancel = useCallback(async () => {
+    const jobId = jobIdRef.current
+    if (!jobId) {
+      dismiss()
+      return
+    }
+    try {
+      const res = await fetch('/api/jobs', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ jobId, action: 'cancel' }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.job) settle(data.job)
+        else dismiss()
+      } else {
+        dismiss()
+      }
+    } catch {
+      dismiss()
+    }
+  }, [dismiss, settle])
 
   return {
     job,
@@ -133,6 +166,7 @@ export function useBackgroundJob(options: {
     isActive: !!job && !isTerminal(job.status),
     track,
     dismiss,
+    cancel,
     refresh: poll,
   }
 }

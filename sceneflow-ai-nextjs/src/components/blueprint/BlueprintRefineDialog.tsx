@@ -274,7 +274,12 @@ export function BlueprintRefineDialog({
     [variant]
   )
 
-  const { job: backgroundJob, isActive: jobActive, track: trackJob } = useBackgroundJob({
+  const {
+    job: backgroundJob,
+    isActive: jobActive,
+    track: trackJob,
+    cancel: cancelBackgroundJob,
+  } = useBackgroundJob({
     projectId: projectId ?? '',
     jobType: 'blueprint_guided_revise',
     enabled: open && !!projectId,
@@ -302,6 +307,8 @@ export function BlueprintRefineDialog({
       toast.error(job.error || 'Blueprint revision failed')
     },
   })
+
+  const fullBalanceJobBlocksGenerate = jobActive && focusScope === 'all'
 
   useEffect(() => {
     if (!jobActive || !backgroundJob) return
@@ -676,13 +683,25 @@ export function BlueprintRefineDialog({
         </div>
 
         <div className="flex-shrink-0 flex items-center justify-between gap-2 pt-3 border-t border-slate-700">
+          {fullBalanceJobBlocksGenerate && (
+            <p className="text-[11px] text-amber-300/90 flex-1 min-w-0">
+              {jobStatusText || 'A full-balance revision is already running.'}{' '}
+              <button
+                type="button"
+                onClick={() => void cancelBackgroundJob()}
+                className="underline hover:text-amber-200"
+              >
+                Cancel it
+              </button>
+            </p>
+          )}
           <Button variant="ghost" size="sm" onClick={onClose}>
             Cancel
           </Button>
           {phase === 'intent' ? (
             <Button
               size="sm"
-              disabled={isGenerating || jobActive}
+              disabled={isGenerating || fullBalanceJobBlocksGenerate}
               onClick={handleGenerate}
               className="bg-gradient-to-r from-cyan-600 to-blue-600"
             >
