@@ -27,6 +27,7 @@ import { AssistantButton } from '@/components/blueprint/AssistantButton'
 import { formatBlueprintRuntime } from '@/lib/blueprint/formatBlueprintCore'
 import { BlueprintFieldCard, BlueprintSubsectionHeading } from '@/components/blueprint/BlueprintFieldCard'
 import { resolveCreatorCredit } from '@/lib/user/displayName'
+import { useCreatorProfile } from '@/hooks/useCreatorProfile'
 import { cn } from '@/lib/utils'
 import { BLUEPRINT_ACTIVATE_SECTION_EVENT } from '@/lib/blueprint/blueprintProgress'
 import {
@@ -72,6 +73,7 @@ export function TreatmentCard({
 }: TreatmentCardProps = {}) {
   const router = useRouter()
   const { data: session } = useSession()
+  const { profile: creatorProfile, loading: creatorProfileLoading } = useCreatorProfile()
   const { guide } = useGuideStore()
   const { selectTreatmentVariant } = useGuideStore() as any
   const { setTreatmentVariants } = useGuideStore() as any
@@ -462,8 +464,12 @@ export function TreatmentCard({
               const badgeGenre = `${badge} border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300`
               const badgeFormat = `${badge} border-purple-200 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300`
               const badgeAudience = `${badge} border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300`
-              // '' when the account has no real name on file.
-              const creatorCredit = resolveCreatorCredit(v.author_writer, session?.user)
+              // The database row wins over session?.user, whose name fields are
+              // frozen at sign-in and so miss any profile edit.
+              const creatorCredit = resolveCreatorCredit(
+                v.author_writer,
+                creatorProfile ?? session?.user
+              )
               const beatCount = Array.isArray((v as any).beats) ? (v as any).beats.length : 0
               const characterCount = Array.isArray(v.character_descriptions)
                 ? v.character_descriptions.length
@@ -579,6 +585,10 @@ export function TreatmentCard({
                           >
                             {creatorCredit}
                           </p>
+                        ) : creatorProfileLoading ? (
+                          // The profile decides this, so stay quiet until it lands
+                          // rather than flashing the prompt on every load.
+                          <p className="text-sm text-gray-500">&nbsp;</p>
                         ) : (
                           // Nothing presentable on file. Prompt instead of hiding the
                           // row, so the gap is visible and fixable in one click.
