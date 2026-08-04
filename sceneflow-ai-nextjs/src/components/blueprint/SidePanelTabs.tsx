@@ -47,7 +47,7 @@ interface SidePanelTabsProps {
   collaborationTabSignal?: number
   /** Increment to switch to the Resonance tab (e.g. after first generation). */
   resonanceTabSignal?: number
-  /** Increment to switch to the Foundation tab (e.g. from "Why these choices?"). */
+  /** Increment to switch to the Reasoning tab (e.g. from "Why these choices?"). */
   foundationTabSignal?: number
   onScrollToSection?: (section: string) => void
 }
@@ -73,7 +73,7 @@ export function SidePanelTabs({
   foundationTabSignal = 0,
   onScrollToSection,
 }: SidePanelTabsProps) {
-  const [activeTab, setActiveTab] = useState<'resonance' | 'collaboration' | 'foundation'>(
+  const [activeTab, setActiveTab] = useState<'resonance' | 'collaboration' | 'reasoning'>(
     'resonance'
   )
 
@@ -91,7 +91,7 @@ export function SidePanelTabs({
 
   React.useEffect(() => {
     if (foundationTabSignal > 0) {
-      setActiveTab('foundation')
+      setActiveTab('reasoning')
     }
   }, [foundationTabSignal])
   const { guide } = useGuideStore()
@@ -142,16 +142,16 @@ export function SidePanelTabs({
             <span>Collaborate</span>
           </button>
           <button
-            onClick={() => setActiveTab('foundation')}
+            onClick={() => setActiveTab('reasoning')}
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
-              activeTab === 'foundation'
+              activeTab === 'reasoning'
                 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                 : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
             )}
           >
             <Lightbulb size={14} />
-            <span>Foundation</span>
+            <span>Reasoning</span>
           </button>
         </div>
         {onClose && (
@@ -192,10 +192,11 @@ export function SidePanelTabs({
               onAnalysisComplete={onAnalysisComplete}
             />
           )
-        ) : activeTab === 'foundation' ? (
+        ) : activeTab === 'reasoning' ? (
           <div className="h-full overflow-y-auto">
             <NarrativeReasoningPanel
               reasoning={(currentTreatment as any)?.narrative_reasoning ?? null}
+              variant={currentTreatment as Record<string, unknown> | null}
             />
           </div>
         ) : (

@@ -12,7 +12,7 @@ import {
 import { BlueprintGeminiVoicePicker } from '@/components/blueprint/BlueprintGeminiVoicePicker'
 import { DirectorNoteBuilderDialog } from '@/components/tts/DirectorNoteBuilderDialog'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
-import { useBlueprintTts } from '@/hooks/useBlueprintTts'
+import { useBlueprintTtsContext } from '@/contexts/BlueprintTtsContext'
 import { VOICE_DIRECTION_COPY } from '@/lib/blueprint/blueprintGlossary'
 
 export interface BlueprintTtsControlsProps {
@@ -26,7 +26,7 @@ export function BlueprintTtsControls({
   playId = 'blueprint-tts',
   className,
 }: BlueprintTtsControlsProps) {
-  const tts = useBlueprintTts()
+  const tts = useBlueprintTtsContext()
 
   return (
     <TooltipProvider>

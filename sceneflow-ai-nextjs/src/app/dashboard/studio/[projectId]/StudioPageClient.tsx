@@ -54,6 +54,8 @@ const TreatmentCard = dynamic(
 )
 import TopProgressBar from '@/components/ui/TopProgressBar'
 import GeneratingOverlay from '@/components/ui/GeneratingOverlay'
+import { BlueprintTtsProvider } from '@/contexts/BlueprintTtsContext'
+import { BlueprintTtsProgressBar } from '@/components/blueprint/BlueprintTtsProgressBar'
 import { BlueprintOnboarding } from '@/components/blueprint/BlueprintOnboarding'
 import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 import { ProductEmptyState } from '@/components/product'
@@ -1287,8 +1289,10 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const beatsDataRef = React.useRef<any[]>([])
 
   return (
+    <BlueprintTtsProvider>
     <div className="min-h-full">
       <TopProgressBar visible={isGen} progress={genProgress} />
+      <BlueprintTtsProgressBar />
       <GeneratingOverlay visible={isGen} title="Creating your Film Concept…" progress={genProgress} />
       
       <PanelGroup direction="horizontal" className="min-h-full">
@@ -1545,7 +1549,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               <ul className="space-y-3">
                 <li className="flex items-start gap-3">
                   <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span><strong>AI Narrative Reasoning</strong>—Flow will explain <em>why</em> it chose specific protagonists, themes, and creative directions in the side panel&apos;s &quot;Foundation&quot; tab.</span>
+                  <span><strong>AI Narrative Reasoning</strong>—Flow will explain <em>why</em> it chose specific protagonists, themes, and creative directions in the side panel&apos;s &quot;Reasoning&quot; tab.</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
@@ -1561,7 +1565,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 </li>
                 <li className="flex items-start gap-3">
                   <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>The AI may make <strong>creative decisions</strong> (combining characters, emphasizing themes) to strengthen the narrative—open the side panel&apos;s &quot;Foundation&quot; tab to understand these choices.</span>
+                  <span>The AI may make <strong>creative decisions</strong> (combining characters, emphasizing themes) to strengthen the narrative—open the side panel&apos;s &quot;Reasoning&quot; tab to understand these choices.</span>
                 </li>
               </ul>
             </div>
@@ -1738,5 +1742,6 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
 
       <BlueprintOnboarding />
     </div>
+    </BlueprintTtsProvider>
   );
 }

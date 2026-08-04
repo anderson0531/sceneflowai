@@ -7,6 +7,12 @@ import { toGoogleTranslateCode } from '@/constants/veoLanguages'
 
 const DIRECTOR_NOTES_STORAGE_KEY = 'sceneflow-blueprint-tts-director-notes'
 
+export type BlueprintTtsGenerationProgress = {
+  current: number
+  total: number
+  phase: 'generating' | 'playing'
+}
+
 export type BlueprintGeminiVoice = { id: string; name: string; gender?: string }
 
 export function useBlueprintTts() {
@@ -20,6 +26,8 @@ export function useBlueprintTts() {
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false)
   const [directorNotesDialogOpen, setDirectorNotesDialogOpen] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState('en')
+  const [generationProgress, setGenerationProgress] =
+    useState<BlueprintTtsGenerationProgress | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const queueAbortRef = useRef({ abort: false })
   const translationCacheRef = useRef<Map<string, string>>(new Map())
@@ -87,14 +95,24 @@ export function useBlueprintTts() {
     }
     audioRef.current = null
     setLoadingId(null)
+    setGenerationProgress(null)
     queueAbortRef.current.abort = true
   }, [])
 
   const playTextChunks = useCallback(
-    async (texts: string[]) => {
+    async (texts: string[], playId: string) => {
       queueAbortRef.current.abort = false
-      for (const t of texts) {
+      const total = texts.length
+
+      for (let index = 0; index < texts.length; index++) {
+        const t = texts[index]
         if (queueAbortRef.current.abort) break
+
+        setGenerationProgress({
+          current: index + 1,
+          total,
+          phase: 'generating',
+        })
 
         let textToSpeak = t
         if (selectedLanguage !== 'en') {
@@ -146,11 +164,22 @@ export function useBlueprintTts() {
         const url = URL.createObjectURL(blob)
         const audio = new Audio(url)
         audioRef.current = audio
+
+        setGenerationProgress({
+          current: index + 1,
+          total,
+          phase: 'playing',
+        })
+
         await new Promise<void>((resolve, reject) => {
           audio.onended = () => resolve()
           audio.onerror = () => reject(new Error('Audio error'))
           audio.play().catch(reject)
         })
+      }
+
+      if (!queueAbortRef.current.abort) {
+        setGenerationProgress(null)
       }
     },
     [selectedLanguage, selectedVoiceId, voices, directorNotes]
@@ -173,11 +202,12 @@ export function useBlueprintTts() {
         if (!selectedVoiceId && voices.length === 0) {
           throw new Error('No voice available')
         }
-        await playTextChunks(chunks)
+        await playTextChunks(chunks, playId)
       } catch {
         stopAny()
       } finally {
         setLoadingId((id) => (id === playId ? null : id))
+        setGenerationProgress(null)
       }
     },
     [playTextChunks, selectedVoiceId, stopAny, voices.length]
@@ -219,5 +249,6 @@ export function useBlueprintTts() {
     selectVoice,
     saveDirectorNotes,
     isPlaying: loadingId !== null,
+    generationProgress,
   }
 }

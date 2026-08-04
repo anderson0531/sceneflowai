@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react'
 import { useGuideStore } from '@/store/useGuideStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Play, Square, Volume2, MoreHorizontal, ChevronDown, MessageSquare, ArrowRight, Loader2, Wand2, X, Users, Lightbulb, SparklesIcon, Award, RefreshCw, FileText, Printer } from 'lucide-react'
+import { Play, Square, Volume2, MoreHorizontal, ChevronDown, MessageSquare, Loader2, Wand2, X, Users, Lightbulb, SparklesIcon, Award, RefreshCw, FileText, Printer } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -17,7 +17,11 @@ import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
 import { BlueprintGeminiVoicePicker } from '@/components/blueprint/BlueprintGeminiVoicePicker'
 import { DirectorNoteBuilderDialog } from '@/components/tts/DirectorNoteBuilderDialog'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
-import { useBlueprintTts } from '@/hooks/useBlueprintTts'
+import { useBlueprintTtsContext } from '@/contexts/BlueprintTtsContext'
+import {
+  buildBlueprintNarrationText,
+  type BlueprintNarrationMode,
+} from '@/lib/blueprint/buildBlueprintNarrationText'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType } from '@/lib/types/reports'
 import { BLUEPRINT_COPY, VOICE_DIRECTION_COPY } from '@/lib/blueprint/blueprintGlossary'
@@ -114,7 +118,7 @@ export function TreatmentCard({
   const selectedId = (guide as any)?.selectedTreatmentId as string | undefined
 
   // Top-level hooks (must not be conditional)
-  const tts = useBlueprintTts()
+  const tts = useBlueprintTtsContext()
   const [reimaginOpen, setReimaginOpen] = useState(false)
   const openRefine = (opts?: OpenBlueprintRefineOptions) => onOpenBlueprintRefine?.(opts)
   const [activeSection, setActiveSection] = useState<BlueprintFixSection>('core')
@@ -156,7 +160,7 @@ export function TreatmentCard({
     const detail = { text, focus: true, generate: Boolean(opts?.generate) }
     window.dispatchEvent(new CustomEvent('sf:set-composer', { detail }))
   }
-  const [narrationMode, setNarrationMode] = useState<'synopsis'|'full'|'beats'>('synopsis')
+  const [narrationMode, setNarrationMode] = useState<BlueprintNarrationMode>('synopsis')
   // Character state removed - all character management moved to Vision phase
 
   const active = useMemo(() => {
@@ -165,16 +169,8 @@ export function TreatmentCard({
     return null
   }, [selectedId, variants])
 
-  function buildNarrationText(v: any, mode: 'synopsis'|'full'|'beats'): string {
-    if (mode === 'beats' && Array.isArray(v.beats) && v.beats.length) {
-      const parts = v.beats.map((b: any, i: number) => `${i + 1}. ${b.title || 'Beat'} — ${b.synopsis || b.intent || ''}`)
-      return parts.join('\n')
-    }
-    const baseSynopsis = String(v.synopsis || v.content || '')
-    const log = v.logline ? `${v.logline}. ` : ''
-    if (mode === 'synopsis') return `${log}${baseSynopsis}`
-    const full = [v.title ? `${v.title}.` : '', log, baseSynopsis, (Array.isArray(v.themes) ? ` Themes: ${v.themes.join(', ')}` : '')].join(' ').trim()
-    return full
+  function buildNarrationText(v: Record<string, unknown>, mode: BlueprintNarrationMode): string {
+    return buildBlueprintNarrationText(v, mode)
   }
 
   const playVariant = async (variantId: string) => {
@@ -235,16 +231,6 @@ export function TreatmentCard({
               <div className="flex items-center justify-end gap-3 py-2">
                 {/* Variant Actions Toolbar */}
                 {(() => {
-                  const v = variants.find(x => x.id === active) || variants[0]
-                  const accent = v?.id === 'A' ? 'text-blue-300 border-blue-500 hover:bg-blue-500/10' : v?.id === 'B' ? 'text-purple-300 border-purple-500 hover:bg-purple-500/10' : 'text-emerald-300 border-emerald-500 hover:bg-emerald-500/10'
-
-                  const handleStartProductionClick = () => {
-                    if (onStartProduction) {
-                      onStartProduction()
-                      return
-                    }
-                  }
-
                   return (
                     <TooltipProvider>
                       <div className="flex items-center gap-1">
@@ -425,38 +411,43 @@ export function TreatmentCard({
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
-
-                        {/* Secondary shortcut: the page header owns the primary
-                            Production hand-off, so this one is de-emphasised to
-                            leave a single filled call to action per viewport. */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              aria-busy={isStartingProduction}
-                              aria-label={BLUEPRINT_COPY.startProduction}
-                              onClick={handleStartProductionClick}
-                              disabled={!startProductionEnabled || isStartingProduction}
-                              variant="outline"
-                              className="h-8 px-2 border-emerald-600/40 text-emerald-300 hover:bg-emerald-600/10 disabled:opacity-50"
-                              size="sm"
-                            >
-                              {isStartingProduction ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <ArrowRight className="h-4 w-4" />
-                              )}
-                              <span className="hidden md:inline ml-1.5">
-                                {isStartingProduction ? BLUEPRINT_COPY.startingProduction : BLUEPRINT_COPY.startProduction}
-                              </span>
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>{BLUEPRINT_COPY.startProductionTooltip}</TooltipContent>
-                        </Tooltip>
                       </div>
                     </TooltipProvider>
                   )
                 })()}
               </div>
+              {tts.loadingId === active && tts.generationProgress ? (
+                <div className="px-1 pb-2 space-y-1" aria-live="polite">
+                  <div className="flex items-center justify-between gap-2 text-[11px] text-cyan-200/90">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Loader2 className="h-3 w-3 animate-spin shrink-0" />
+                      {tts.generationProgress.phase === 'generating'
+                        ? 'Generating narration'
+                        : 'Playing narration'}
+                      {tts.generationProgress.total > 1
+                        ? ` (${tts.generationProgress.current}/${tts.generationProgress.total})`
+                        : ''}
+                      …
+                    </span>
+                    <span>
+                      {Math.round(
+                        (tts.generationProgress.current / tts.generationProgress.total) * 100
+                      )}
+                      %
+                    </span>
+                  </div>
+                  <div className="h-1 rounded-full bg-slate-800 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-purple-500 transition-[width] duration-300 ease-out"
+                      style={{
+                        width: `${Math.round(
+                          (tts.generationProgress.current / tts.generationProgress.total) * 100
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              ) : null}
             </div>
             {/* Display single treatment content */}
             <div className="mt-3">
@@ -926,7 +917,7 @@ export function TreatmentCard({
                   </TabsContent>
                   </Tabs>
 
-                  {/* Narrative Reasoning now lives in the side panel's Foundation
+                  {/* Narrative Reasoning now lives in the side panel's Reasoning
                       tab, so the body stays about the blueprint itself. */}
                   {(v as any).narrative_reasoning && (
                     <div className="pt-2">

@@ -105,14 +105,17 @@ describe('Created by row', () => {
   })
 })
 
-describe('Foundation panel', () => {
+describe('Reasoning panel', () => {
   const panel = readSource('src/components/blueprint/SidePanelTabs.tsx')
   const card = readSource(CARD)
 
-  it('adds a Foundation tab beside Resonance and Collaborate', () => {
-    expect(panel).toContain("'foundation'")
-    expect(panel).toContain('<span>Foundation</span>')
+  it('adds a Reasoning tab beside Resonance and Collaborate', () => {
+    expect(panel).toContain("'reasoning'")
+    expect(panel).toContain('<span>Reasoning</span>')
     expect(panel).toContain('NarrativeReasoningPanel')
+    expect(readSource('src/components/blueprint/NarrativeReasoningPanel.tsx')).toContain(
+      'BlueprintNarrationSection'
+    )
   })
 
   it('can be focused by signal, like the other tabs', () => {
@@ -124,8 +127,16 @@ describe('Foundation panel', () => {
     expect(card).not.toContain("console.log('[TreatmentCard]")
   })
 
+  it('REGRESSION: the card toolbar no longer duplicates the production hand-off button', () => {
+    expect(card).not.toContain('BLUEPRINT_COPY.startProduction')
+  })
+
   it('keeps the reasoning reachable from the card', () => {
     expect(card).toContain('onOpenFoundation')
     expect(card).toContain('Why these choices?')
+  })
+
+  it('shows narration generation progress in the toolbar', () => {
+    expect(card).toContain('generationProgress')
   })
 })
