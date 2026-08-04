@@ -5,6 +5,7 @@ import { CreditService } from '@/services/CreditService'
 import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
 import { strictJsonPromptSuffix, safeParseJsonFromText } from '@/lib/safeJson'
 import { generateText } from '@/lib/vertexai/gemini'
+import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import {
   type ContentIntent,
   getIntentRevisionGuardrail,
@@ -230,10 +231,11 @@ ${strictJsonPromptSuffix}`
     console.log(`[Refine Treatment] Using maxTokens: ${maxTokens} for section: ${section}`)
     
     const result = await generateText(prompt, {
-      model: 'gemini-2.5-flash',
+      model: getGeminiTextModel('flash'),
       temperature: 0.3,
       maxOutputTokens: maxTokens,
-      thinkingBudget: 0  // Disable thinking mode to prevent OOM crashes
+      thinkingLevel: 'minimal',
+      responseMimeType: 'application/json',
     })
 
     const generatedText = result?.text || '{}'

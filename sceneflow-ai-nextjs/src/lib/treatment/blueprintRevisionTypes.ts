@@ -38,7 +38,9 @@ export interface FieldDiff {
 
 export interface GuidedReviseResponse {
   success: boolean
+  /** @deprecated Prefer patch — client merges locally to avoid large responses */
   revisedVariant?: Record<string, unknown>
+  patch?: Record<string, unknown>
   changePlan?: BlueprintChangePlan
   diff?: FieldDiff[]
   narrativeReasoning?: {
@@ -48,6 +50,8 @@ export interface GuidedReviseResponse {
   incompleteBalance?: boolean
   creditsUsed?: number
   message?: string
+  jobId?: string
+  status?: string
 }
 
 export const BLUEPRINT_FIELD_LABELS: Record<string, string> = {

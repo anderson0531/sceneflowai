@@ -14,6 +14,37 @@ function fieldToSection(field: string): BlueprintFixSection {
 
 const MAX_DIFF_DISPLAY = 1200
 
+const MAX_PATCH_FIELD_LEN: Record<string, number> = {
+  synopsis: 8000,
+  content: 8000,
+  logline: 600,
+  setting: 2000,
+  protagonist: 2000,
+  antagonist: 2000,
+  tone_description: 2000,
+}
+
+/** Cap LLM patch field sizes before merge/response. */
+export function capPatchSize(patch: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...patch }
+  for (const [key, max] of Object.entries(MAX_PATCH_FIELD_LEN)) {
+    const v = out[key]
+    if (typeof v === 'string' && v.length > max) {
+      out[key] = `${v.slice(0, max)}…`
+    }
+  }
+  if (Array.isArray(out.beats)) {
+    out.beats = (out.beats as Array<Record<string, unknown>>).slice(0, 8)
+  }
+  if (Array.isArray(out.character_descriptions)) {
+    out.character_descriptions = (out.character_descriptions as Array<Record<string, unknown>>).slice(
+      0,
+      8
+    )
+  }
+  return out
+}
+
 function truncateForDiff(text: string): string {
   return text.length <= MAX_DIFF_DISPLAY ? text : `${text.slice(0, MAX_DIFF_DISPLAY)}…`
 }

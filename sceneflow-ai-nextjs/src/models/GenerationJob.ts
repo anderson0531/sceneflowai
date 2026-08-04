@@ -10,6 +10,7 @@ export type GenerationJobType =
   | 'reference_library'
   | 'kling_long_take'
   | 'script_analysis'
+  | 'blueprint_guided_revise'
 
 export type GenerationJobStatus =
   | 'queued'

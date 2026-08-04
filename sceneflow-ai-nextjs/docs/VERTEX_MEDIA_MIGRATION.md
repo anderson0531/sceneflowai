@@ -34,24 +34,32 @@ Image policy exhaustion returns a clear `ContentPolicyExhaustedError` — no Fal
 
 ## Node heap sizing on Vercel (OOM prevention)
 
-Node does **not** size its V8 heap from the Vercel function `memory` setting: a function with
-`memory: 3009` still gets the default old-space cap (~1.8–1.9 GB), which is where
-`/api/treatment/guided-revise` OOMed (`FATAL ERROR: Ineffective mark-compacts near heap limit`).
+Node does **not** size its V8 heap from the Vercel function `memory` setting. Even with
+`memory: 3009`, Vercel may cap the V8 heap at ~**2036 MB** (logs show `v8HeapLimit=2036MB`
+with `NODE_OPTIONS=set`). Warm Fluid Compute instances can accumulate heap from other routes
+and OOM mid-request even when the current request's `heapUsed` is ~30 MB.
 
-Set a project Environment Variable in the Vercel dashboard (all environments), or rely on
-`vercel.json` `env.NODE_OPTIONS` in this repo:
+Set a project Environment Variable (or `vercel.json` `env.NODE_OPTIONS`):
 
 ```bash
 NODE_OPTIONS=--max-old-space-size=2560
 ```
 
-- 2560 MB keeps ~15% headroom under the 3009 MB configured for the heaviest functions.
-- Caveat: functions still on the 2048 MB default that actually exceed physical RAM will be
-  killed by the kernel (exit 137) instead of throwing a JS OOM — the user-visible result is
-  the same 500, so this trade-off is acceptable.
-- `guided-revise` also logs `[Guided Revise][mem]` heap checkpoints (request start, body size,
-  around each LLM call, before response) plus the build commit SHA at module init — use these
-  to pinpoint where memory jumps if an OOM recurs.
+Do **not** rely on raising the heap further — the platform cap is the hard limit.
+
+### Blueprint guided-revise routing (OOM fix)
+
+| Edit scope | Route | Execution |
+|------------|-------|-----------|
+| Single section (Story, Beats, …) | `POST /api/treatment/refine` | Sync, one LLM call, `{ draft }` only |
+| Full blueprint balance | `POST /api/treatment/guided-revise/start` | Inngest job `blueprint_guided_revise`; one durable step per section |
+| Legacy | `POST /api/treatment/guided-revise` | **410 Gone** — use refine or start |
+
+Full-balance jobs return `{ patch, diff, changePlan }` in `generation_jobs.result` (not the
+full variant). The client merges the patch locally. Core logic lives in
+`src/lib/treatment/runGuidedRevise.ts`.
+
+Module init for the start route logs `v8HeapLimit` and the full `NODE_OPTIONS` string.
 
 ## Verification
 

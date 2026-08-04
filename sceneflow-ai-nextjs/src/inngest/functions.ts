@@ -21,6 +21,14 @@ import {
   loadScriptForAnalysis,
   persistAudienceReview,
 } from '@/lib/script/audienceResonance/persistReview'
+import {
+  finalizeGuidedRevise,
+  payloadFromJobRecord,
+  runAllSectionRewrites,
+  runPlannerStep,
+  runSectionRewriteStep,
+} from '@/lib/treatment/runGuidedRevise'
+import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -69,6 +77,9 @@ export const processGenerationJob = inngest.createFunction(
     }
     if (jobType === 'script_analysis') {
       return { ok: true, delegated: 'process-script-analysis' }
+    }
+    if (jobType === 'blueprint_guided_revise') {
+      return { ok: true, delegated: 'process-blueprint-guided-revise' }
     }
 
     await step.run('mark-processing', async () => {
@@ -485,9 +496,120 @@ export const processScriptAnalysis = inngest.createFunction(
   }
 )
 
+export const processBlueprintGuidedRevise = inngest.createFunction(
+  {
+    id: 'process-blueprint-guided-revise',
+    retries: 2,
+    triggers: [
+      {
+        event: 'generation/job.queued',
+        if: 'event.data.jobType == "blueprint_guided_revise"',
+      },
+    ],
+  },
+  async ({ event, step }) => {
+    const { jobId, userId, projectId, payload: storedPayload } = event.data as {
+      jobId: string
+      userId: string
+      projectId: string
+      payload: Record<string, unknown>
+    }
+
+    try {
+      const revisePayload = await step.run('load-payload', async () => {
+        await updateGenerationJob(jobId, { status: 'processing', progress: 5 })
+        return payloadFromJobRecord(storedPayload)
+      })
+
+      const plan = await step.run('plan', async () => {
+        await updateGenerationJob(jobId, { progress: 15 })
+        return runPlannerStep(revisePayload)
+      })
+
+      const sections = [...new Set(plan.sectionsToUpdate)]
+      let mergedPatch: Record<string, unknown> = {}
+
+      if (sections.length <= 1) {
+        mergedPatch = await step.run('rewrite-all', async () => {
+          await updateGenerationJob(jobId, { progress: 50 })
+          return runAllSectionRewrites(revisePayload, plan)
+        })
+      } else {
+        for (let i = 0; i < sections.length; i++) {
+          const section = sections[i] as BlueprintFixSection
+          const isLast = i === sections.length - 1
+          const sectionPatch = await step.run(`rewrite:${section}`, async () => {
+            const progress = 15 + Math.round(((i + 1) / sections.length) * 70)
+            await updateGenerationJob(jobId, { progress })
+            return runSectionRewriteStep(
+              revisePayload,
+              plan,
+              section,
+              mergedPatch,
+              isLast
+            )
+          })
+          const { narrative_reasoning: nr, ...fieldPatch } = sectionPatch
+          mergedPatch = { ...mergedPatch, ...fieldPatch }
+          if (nr && typeof nr === 'object') {
+            mergedPatch.narrative_reasoning = nr
+          }
+        }
+      }
+
+      const result = await step.run('finalize', async () => {
+        await updateGenerationJob(jobId, { progress: 92 })
+        const finalized = finalizeGuidedRevise(revisePayload, plan, mergedPatch)
+        return {
+          patch: finalized.patch,
+          diff: finalized.diff,
+          changePlan: finalized.changePlan,
+          narrativeReasoning: finalized.narrativeReasoning,
+          incompleteBalance: finalized.incompleteBalance,
+        }
+      })
+
+      await step.run('complete', async () => {
+        await updateGenerationJob(jobId, {
+          status: 'completed',
+          progress: 100,
+          result,
+        })
+        await notifyUser({
+          userId,
+          projectId,
+          jobId,
+          type: 'job_completed',
+          title: 'Blueprint revision ready',
+          message: 'Your balanced blueprint edit is ready to review.',
+          metadata: { kind: 'blueprint_guided_revise' },
+        })
+      })
+
+      return { ok: true }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Blueprint revision failed'
+      await step.run('fail', async () => {
+        await updateGenerationJob(jobId, { status: 'failed', error: message })
+        await notifyUser({
+          userId,
+          projectId,
+          jobId,
+          type: 'job_failed',
+          title: 'Blueprint revision failed',
+          message,
+          metadata: { kind: 'blueprint_guided_revise' },
+        })
+      })
+      throw err
+    }
+  }
+)
+
 export const inngestFunctions = [
   processGenerationJob,
   processBatchGenerationJob,
   processKlingLongTake,
   processScriptAnalysis,
+  processBlueprintGuidedRevise,
 ]
