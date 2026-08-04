@@ -48,7 +48,8 @@ type Props = {
   open: boolean
   variant: TreatmentVariant | null
   onClose: () => void
-  onApply: (patch: Record<string, unknown>) => void
+  /** Return false to reject the patch, leaving the dialog open on its preview. */
+  onApply: (patch: Record<string, unknown>) => void | boolean
   onRefineApplied?: (diff: FieldDiff[]) => void
   projectId?: string
   resonanceRecommendations?: BlueprintAudienceRecommendation[]
@@ -524,7 +525,9 @@ export function BlueprintRefineDialog({
 
   const handleApplyPreview = useCallback(() => {
     if (!previewVariant) return
-    onApply(previewVariant)
+    // A rejected patch (e.g. beats lost to truncation) must not report success or
+    // close the dialog — the user still has the preview and can regenerate.
+    if (onApply(previewVariant) === false) return
     if (diff.length > 0 && onRefineApplied) {
       onRefineApplied(diff)
     }

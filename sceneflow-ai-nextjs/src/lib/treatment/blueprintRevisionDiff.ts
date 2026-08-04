@@ -2,6 +2,7 @@ import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
 import {
   BLUEPRINT_FIELD_LABELS,
   type FieldDiff,
+  MAX_BEATS,
   SECTION_FIELDS,
 } from './blueprintRevisionTypes'
 
@@ -12,7 +13,12 @@ function fieldToSection(field: string): BlueprintFixSection {
   return 'story'
 }
 
-const MAX_DIFF_DISPLAY = 1200
+/**
+ * Beat sheets serialize every beat with its synopsis, so a long runtime needs
+ * more room than a single field. This also feeds valuesEqual, so too small a
+ * budget made edits past the cutoff invisible to change detection.
+ */
+const MAX_DIFF_DISPLAY = 6000
 
 const MAX_PATCH_FIELD_LEN: Record<string, number> = {
   synopsis: 8000,
@@ -34,7 +40,7 @@ export function capPatchSize(patch: Record<string, unknown>): Record<string, unk
     }
   }
   if (Array.isArray(out.beats)) {
-    out.beats = (out.beats as Array<Record<string, unknown>>).slice(0, 8)
+    out.beats = (out.beats as Array<Record<string, unknown>>).slice(0, MAX_BEATS)
   }
   if (Array.isArray(out.character_descriptions)) {
     out.character_descriptions = (out.character_descriptions as Array<Record<string, unknown>>).slice(
@@ -56,7 +62,7 @@ function serializeValue(value: unknown): string {
     if (value.length === 0) return ''
     if (typeof value[0] === 'object' && value[0] !== null && 'title' in value[0]) {
       const beats = (value as Array<{ title?: string; synopsis?: string }>)
-        .slice(0, 8)
+        .slice(0, MAX_BEATS)
         .map((b, i) => `${i + 1}. ${b.title || 'Beat'}: ${b.synopsis || ''}`)
         .join('\n')
       return truncateForDiff(beats)

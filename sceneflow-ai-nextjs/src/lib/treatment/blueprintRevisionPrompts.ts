@@ -1,6 +1,6 @@
 import type { BlueprintAudienceRecommendation } from '@/lib/types/audienceResonance'
 import type { BlueprintChangePlan, BlueprintFixSection } from './blueprintRevisionTypes'
-import { SECTION_FIELDS } from './blueprintRevisionTypes'
+import { MAX_BEATS, SECTION_FIELDS } from './blueprintRevisionTypes'
 import { strictJsonPromptSuffix } from '@/lib/safeJson'
 import {
   type ContentIntent,
@@ -10,7 +10,11 @@ import {
 } from '@/lib/content/contentIntent'
 
 const MAX_SYNOPSIS = 1200
-const MAX_BEAT_SYNOPSIS = 120
+/**
+ * Beats are the section most often rewritten, so the model has to see the real
+ * synopsis it is revising. At 120 it received stubs and could not preserve detail.
+ */
+const MAX_BEAT_SYNOPSIS = 600
 const MAX_CHAR_DESC = 200
 const MAX_REC_TEXT = 220
 const MAX_RECS_IN_PROMPT = 12
@@ -40,7 +44,7 @@ function truncateStr(value: unknown, max: number): string {
 
 export function trimVariantForPrompt(variant: Record<string, unknown>): Record<string, unknown> {
   const beats = Array.isArray(variant.beats)
-    ? (variant.beats as Array<Record<string, unknown>>).slice(0, 8).map((b, i) => ({
+    ? (variant.beats as Array<Record<string, unknown>>).slice(0, MAX_BEATS).map((b, i) => ({
         title: b.title || `Beat ${i + 1}`,
         intent: truncateStr(b.intent, 80),
         minutes: b.minutes || 0,
@@ -353,7 +357,11 @@ CRITICAL RULES:
 - You are REPLACING content, NOT appending. Return complete new values for each field you change.
 - Apply the change plan and cross-section coupling. The blueprint must read as one coherent document.
 - Do NOT change fields outside the allowed list unless coupling requires it.
-- Maximum 8 beats. Beat synopses 1-3 sentences each.
+- Beat "minutes" MUST sum to the target runtime. Let the beat count follow from that
+  target and the pacing the story needs (up to ${MAX_BEATS} beats) — do NOT keep the
+  existing beat count when the runtime changes.
+- Every beat you return MUST include title, intent, minutes, and a 1-3 sentence synopsis.
+- When returning "beats", return the COMPLETE ordered array, not just changed entries.
 - character_descriptions: preserve participant NAMES unless user explicitly requests rename.
 - Return ONLY fields you modify — do not echo unchanged fields.
 ${intentGuard}

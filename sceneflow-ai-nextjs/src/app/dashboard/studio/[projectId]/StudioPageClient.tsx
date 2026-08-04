@@ -36,8 +36,10 @@ import {
   fetchActiveBlueprintShare,
 } from '@/lib/blueprint/createBlueprintShare'
 import { resolveBlueprintHeroImageUrl } from '@/lib/blueprint/resolveBlueprintHeroImage'
+import { resolveLoadedBlueprintVariants } from '@/lib/blueprint/resolveLoadedVariants'
 import type { ReimagineFoundationField } from '@/components/vision/ReimagineFoundationDialog'
 import { normalizeVariantFoundation } from '@/lib/treatment/blueprintFoundation'
+import { checkBeatsPatch } from '@/lib/treatment/blueprintRevisionValidate'
 import { toast } from 'sonner'
 import {
   createPersistedBlueprintAR,
@@ -269,6 +271,11 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
 
   const handleBlueprintRefineApply = useCallback(
     (patch: Record<string, unknown>) => {
+      const beatsCheck = checkBeatsPatch(patch)
+      if (!beatsCheck.ok) {
+        toast.error(beatsCheck.message || 'Revision was incomplete and was not applied')
+        return false
+      }
       if (activeTreatmentVariant?.id) {
         updateTreatmentVariant(activeTreatmentVariant.id, patch)
       }
@@ -988,12 +995,12 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             metadataKeys: Object.keys(projectData?.metadata || {})
           })
           
-          // Check multiple places where treatment data might be stored
+          // Several metadata fields can hold a blueprint; resolveLoadedBlueprintVariants
+          // owns the precedence so the saved working copy is never shadowed by an
+          // older approved snapshot.
           const metadata = projectData?.metadata || {}
-          const hasFilmTreatmentVariant = metadata.filmTreatmentVariant
-          const hasTreatmentVariants = Array.isArray(metadata.treatmentVariants) && metadata.treatmentVariants.length > 0
-          const hasFilmTreatment = metadata.filmTreatment
-          const hasApprovedTreatment = metadata.approvedTreatment
+          const resolvedBlueprint = resolveLoadedBlueprintVariants(metadata, projectData?.title)
+          const hasStoredBlueprint = resolvedBlueprint.source !== 'none'
           
           // Check if this is a series episode and set context for badge
           if (metadata.seriesId && metadata.seriesTitle && metadata.episodeNumber) {
@@ -1005,45 +1012,18 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             console.log('[StudioPage] Series episode detected:', metadata.seriesTitle, 'Ep', metadata.episodeNumber)
           }
           
-          if (hasFilmTreatmentVariant) {
-            const approvedVariant = metadata.filmTreatmentVariant
-            if (approvedVariant.content || approvedVariant.synopsis) {
-              updateTreatment(approvedVariant.content || approvedVariant.synopsis || '')
+          if (hasStoredBlueprint) {
+            if (resolvedBlueprint.treatmentText) {
+              updateTreatment(resolvedBlueprint.treatmentText)
             }
-            setTreatmentVariants([{
-              id: approvedVariant.id || 'approved-treatment',
-              ...approvedVariant
-            }])
-            console.log('[StudioPage] Restored approved filmTreatmentVariant from project:', approvedVariant.id || 'approved-treatment')
-          } else if (hasApprovedTreatment) {
-            const approvedVariant = metadata.approvedTreatment
-            if (approvedVariant.content || approvedVariant.synopsis) {
-              updateTreatment(approvedVariant.content || approvedVariant.synopsis || '')
-            }
-            setTreatmentVariants([{
-              id: approvedVariant.id || 'approved-treatment',
-              ...approvedVariant
-            }])
-            console.log('[StudioPage] Restored approvedTreatment from project:', approvedVariant.id || 'approved-treatment')
-          } else if (hasTreatmentVariants) {
-            // Restore from treatmentVariants array
-            setTreatmentVariants(metadata.treatmentVariants)
-            if (metadata.treatmentVariants[0]) {
-              const first = metadata.treatmentVariants[0]
-              updateTreatment(first.content || first.synopsis || '')
-            }
-            console.log('[StudioPage] Restored treatmentVariants from project:', metadata.treatmentVariants.length)
+            setTreatmentVariants(
+              resolvedBlueprint.variants as Parameters<typeof setTreatmentVariants>[0]
+            )
             hadBlueprintOnLoadRef.current = true
-          } else if (hasFilmTreatment) {
-            // Restore from plain filmTreatment string
-            updateTreatment(metadata.filmTreatment)
-            setTreatmentVariants([{
-              id: 'legacy-treatment',
-              label: projectData.title || 'Film Treatment',
-              content: metadata.filmTreatment,
-              synopsis: metadata.filmTreatment
-            }])
-            console.log('[StudioPage] Restored legacy filmTreatment from project')
+            console.log(
+              `[StudioPage] Restored blueprint from ${resolvedBlueprint.source}:`,
+              resolvedBlueprint.variants.length
+            )
           }
           
           if (projectData.title) {
@@ -1055,11 +1035,11 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             setBeatsView(metadata.beats)
           }
           
-          if (!hasFilmTreatmentVariant && !hasApprovedTreatment && !hasTreatmentVariants && Array.isArray(metadata.beats)) {
+          if (!hasStoredBlueprint && Array.isArray(metadata.beats)) {
             setBeatsView(metadata.beats)
           }
           
-          if (!hasFilmTreatmentVariant && !hasApprovedTreatment && !hasTreatmentVariants && metadata.estimatedRuntime) {
+          if (!hasStoredBlueprint && metadata.estimatedRuntime) {
             setEstimatedRuntime(metadata.estimatedRuntime)
           }
           
@@ -1074,7 +1054,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           console.log('[StudioPage] Project data loaded:', projectData.id)
           
           // Auto-generate hero image if treatment exists but hero image doesn't
-          const loadedVariant = metadata.treatmentVariants?.[0] || metadata.filmTreatmentVariant
+          const loadedVariant = resolvedBlueprint.variants[0] as
+            | { title?: string; heroImage?: { url?: string } }
+            | undefined
           if (loadedVariant?.title && !loadedVariant?.heroImage?.url) {
             console.log('[StudioPage] Treatment loaded without hero image, auto-generating...')
             // Use setTimeout to allow state to settle before generating
@@ -1084,7 +1066,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           // Directly check URL for primeBlueprint bypasses hydration delays
           const urlParams = new URLSearchParams(window.location.search)
           const isPrimeBlueprint = urlParams.get('primeBlueprint') === 'true'
-          const hasBlueprintPrimeInput = metadata.blueprintPrimeInput && !hasFilmTreatmentVariant && !hasTreatmentVariants
+          const hasBlueprintPrimeInput = metadata.blueprintPrimeInput && !hasStoredBlueprint
 
           if (isPrimeBlueprint && hasBlueprintPrimeInput) {
             console.log('[StudioPage] Series episode detected - auto-generating Blueprint directly from load()')
@@ -1204,6 +1186,14 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     autoSaveDebounceRef.current = setTimeout(async () => {
       try {
         setSaveError(false)
+        // Production reads metadata.filmTreatmentVariant for its beat sheet, so keep
+        // it in step with Studio edits. Only refresh when it already exists: Studio
+        // must not create a production foundation that was never approved.
+        const activeVariant = treatmentVariants[0]
+        const existingFoundation = (
+          currentProject?.metadata as Record<string, unknown> | undefined
+        )?.filmTreatmentVariant
+        const shouldSyncFoundation = !!existingFoundation && !!activeVariant
         const blueprintData = {
           id: projectId,
           title: guide.title || 'Untitled Project',
@@ -1213,6 +1203,11 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             blueprintInput: lastInput,
             filmTreatment: guide.filmTreatment,
             treatmentVariants: treatmentVariants,
+            ...(shouldSyncFoundation && {
+              filmTreatmentVariant: normalizeVariantFoundation(
+                activeVariant as Record<string, unknown>
+              ),
+            }),
             beats: beatsView,
             estimatedRuntime: estimatedRuntime,
             audienceDefinition,

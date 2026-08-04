@@ -76,6 +76,13 @@ export const BLUEPRINT_FIELD_LABELS: Record<string, string> = {
   estimatedDurationMinutes: 'Est. Runtime',
 }
 
+/**
+ * Ceiling on beats carried through a revision. A flat 8 could not express a
+ * long runtime — at ~2.5 minutes per beat a 40 minute blueprint needs ~16 —
+ * so the tail was silently sliced off.
+ */
+export const MAX_BEATS = 24
+
 export const SECTION_FIELDS: Record<BlueprintFixSection, string[]> = {
   core: ['title', 'logline', 'genre', 'format_length', 'target_audience'],
   story: ['synopsis', 'setting', 'protagonist', 'antagonist', 'act_breakdown'],

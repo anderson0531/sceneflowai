@@ -110,13 +110,55 @@ export function modelForRewriteStep(
   return isFullBalance ? getGeminiTextModel('pro') : getGeminiTextModel('flash')
 }
 
+export const REWRITE_TOKENS_BASE = 3072
+export const REWRITE_TOKENS_WITH_BEATS = 8192
+export const REWRITE_TOKENS_REASONING = 1024
+
+/**
+ * Sections whose rewrite emits the beats array. Mirrors buildRewriterPrompt,
+ * which adds `beats` to the allowed fields for story and characters too.
+ */
+const BEAT_EMITTING_SECTIONS: BlueprintFixSection[] = ['beats', 'story', 'characters']
+
+/**
+ * Output budget for one rewrite pass. A beats pass has to emit every beat with
+ * its own synopsis, so the former flat 2048 was cut off mid-beat and the JSON
+ * repair salvaged only the first title.
+ */
+export function tokensForRewriteStep(
+  sections: BlueprintFixSection[],
+  isLast: boolean
+): number {
+  const emitsBeats = sections.some((s) => BEAT_EMITTING_SECTIONS.includes(s))
+  const base = emitsBeats ? REWRITE_TOKENS_WITH_BEATS : REWRITE_TOKENS_BASE
+  return base + (isLast ? REWRITE_TOKENS_REASONING : 0)
+}
+
+/** A model response was cut off, so the patch is missing fields the user asked for. */
+export class GuidedReviseTruncatedError extends Error {
+  readonly finishReason: string
+  constructor(label: string, finishReason: string) {
+    super(
+      `The ${label} pass was cut off by the model (${finishReason}), so the revision is incomplete. Try a narrower focus, or a shorter runtime if you increased it.`
+    )
+    this.name = 'GuidedReviseTruncatedError'
+    this.finishReason = finishReason
+  }
+}
+
+export type GeminiJsonStepResult = {
+  data: Record<string, unknown> | null
+  /** Set when the model stopped for any reason other than STOP. */
+  truncatedBy?: string
+}
+
 export async function runGeminiJsonStep(
   label: string,
   prompt: string,
   maxOutputTokens: number,
   model: string,
   logHeap: HeapLogger = noopHeap
-): Promise<Record<string, unknown> | null> {
+): Promise<GeminiJsonStepResult> {
   logHeap(`before ${label}`, { promptChars: prompt.length })
   const isGemini3 = model.includes('gemini-3')
   const result = await generateText(prompt, {
@@ -132,16 +174,21 @@ export async function runGeminiJsonStep(
   })
   let text = result?.text || '{}'
   logHeap(`after ${label}`, { responseChars: text.length })
-  if (result?.finishReason && result.finishReason !== 'STOP') {
+  const truncatedBy =
+    result?.finishReason && result.finishReason !== 'STOP' ? result.finishReason : undefined
+  if (truncatedBy) {
     console.warn(
-      `[Guided Revise] ${label} finished with ${result.finishReason} (${text.length} chars) — response repaired from truncation`
+      `[Guided Revise] ${label} finished with ${truncatedBy} (${text.length} chars, budget ${maxOutputTokens}) — patch is incomplete`
     )
   }
   if (text.length > MAX_GEMINI_JSON_CHARS) {
     text = text.slice(0, MAX_GEMINI_JSON_CHARS)
   }
   const parsed = safeParseJsonFromText(text)
-  return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : null
+  return {
+    data: parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : null,
+    truncatedBy,
+  }
 }
 
 export async function runPlannerStep(
@@ -162,7 +209,8 @@ export async function runPlannerStep(
       payload.focusScope,
       payload.contentIntent
     )
-    const planRaw = await runGeminiJsonStep(
+    // The plan is small and has a usable fallback, so truncation here is tolerated.
+    const { data: planRaw } = await runGeminiJsonStep(
       'planner',
       plannerPrompt,
       1024,
@@ -207,13 +255,16 @@ export async function runSectionRewriteStep(
       includeNarrativeReasoning: isLast,
     }
   )
-  const sectionPatch = await runGeminiJsonStep(
+  const { data: sectionPatch, truncatedBy } = await runGeminiJsonStep(
     `rewriter:${section}`,
     prompt,
-    isLast ? 2048 : 1536,
+    tokensForRewriteStep([section], isLast),
     model,
     logHeap
   )
+  if (truncatedBy) {
+    throw new GuidedReviseTruncatedError(section, truncatedBy)
+  }
   return sectionPatch ?? {}
 }
 
@@ -232,7 +283,16 @@ export async function runAllSectionRewrites(
       payload.selectedRecs,
       payload.contentIntent
     )
-    const patch = await runGeminiJsonStep('rewriter', prompt, 2048, model, logHeap)
+    const { data: patch, truncatedBy } = await runGeminiJsonStep(
+      'rewriter',
+      prompt,
+      tokensForRewriteStep(sections, true),
+      model,
+      logHeap
+    )
+    if (truncatedBy) {
+      throw new GuidedReviseTruncatedError(sections[0] ?? 'revision', truncatedBy)
+    }
     return patch ?? {}
   }
 
@@ -275,6 +335,19 @@ export function finalizeGuidedRevise(
     | Record<string, unknown>
     | undefined
   const { narrative_reasoning: _nr, ...fieldPatch } = capped
+
+  // Runtime is derived, not authored: when beats change, keep the stated duration
+  // in step with them so the header and the beat sheet cannot disagree.
+  if (Array.isArray(fieldPatch.beats) && fieldPatch.beats.length > 0) {
+    const totalMinutes = (fieldPatch.beats as Array<Record<string, unknown>>).reduce(
+      (sum, b) => sum + (Number(b.minutes) || 0),
+      0
+    )
+    if (totalMinutes > 0) {
+      fieldPatch.total_duration_seconds = Math.round(totalMinutes * 60)
+      fieldPatch.estimatedDurationMinutes = Math.max(1, Math.round(totalMinutes))
+    }
+  }
 
   const merged = mergeRevisionIntoVariant(payload.rawVariant, fieldPatch)
   const diff = buildFieldDiffs(
