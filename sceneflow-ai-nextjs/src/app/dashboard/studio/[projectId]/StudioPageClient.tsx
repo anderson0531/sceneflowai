@@ -279,6 +279,12 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       if (activeTreatmentVariant?.id) {
         updateTreatmentVariant(activeTreatmentVariant.id, patch)
       }
+      // The readiness gate prefers this over the variant's format_length, so a
+      // revised runtime has to land here too or the gate keeps quoting the old one.
+      const revisedRuntime = Number(patch.estimatedDurationMinutes)
+      if (Number.isFinite(revisedRuntime) && revisedRuntime > 0) {
+        setEstimatedRuntime(revisedRuntime)
+      }
       blueprintRefineApplyExtraRef.current?.(patch)
       blueprintRefineApplyExtraRef.current = null
       setBlueprintRefineOpen(false)

@@ -10,6 +10,7 @@ import type { ContentIntent } from '@/lib/content/contentIntent'
 import { resolveContentIntent } from '@/lib/content/contentIntent'
 import type { BlueprintChangePlan, FieldDiff } from './blueprintRevisionTypes'
 import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
+import { deriveRuntimeFieldsFromBeats } from './duration'
 import {
   buildPlannerPrompt,
   buildRewriterPrompt,
@@ -336,17 +337,11 @@ export function finalizeGuidedRevise(
     | undefined
   const { narrative_reasoning: _nr, ...fieldPatch } = capped
 
-  // Runtime is derived, not authored: when beats change, keep the stated duration
-  // in step with them so the header and the beat sheet cannot disagree.
-  if (Array.isArray(fieldPatch.beats) && fieldPatch.beats.length > 0) {
-    const totalMinutes = (fieldPatch.beats as Array<Record<string, unknown>>).reduce(
-      (sum, b) => sum + (Number(b.minutes) || 0),
-      0
-    )
-    if (totalMinutes > 0) {
-      fieldPatch.total_duration_seconds = Math.round(totalMinutes * 60)
-      fieldPatch.estimatedDurationMinutes = Math.max(1, Math.round(totalMinutes))
-    }
+  // Runtime is derived, not authored: when beats change, restate every runtime
+  // field so the Format chip and the beat sheet cannot disagree.
+  const derivedRuntime = deriveRuntimeFieldsFromBeats(fieldPatch.beats)
+  if (derivedRuntime) {
+    Object.assign(fieldPatch, derivedRuntime)
   }
 
   const merged = mergeRevisionIntoVariant(payload.rawVariant, fieldPatch)

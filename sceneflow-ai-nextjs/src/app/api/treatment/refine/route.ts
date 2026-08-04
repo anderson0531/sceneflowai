@@ -7,6 +7,7 @@ import { strictJsonPromptSuffix, safeParseJsonFromText } from '@/lib/safeJson'
 import { generateText } from '@/lib/vertexai/gemini'
 import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import { validateRevisionRequest } from '@/lib/treatment/blueprintRequestValidation'
+import { deriveRuntimeFieldsFromBeats } from '@/lib/treatment/duration'
 import {
   type ContentIntent,
   getIntentRevisionGuardrail,
@@ -274,6 +275,14 @@ ${strictJsonPromptSuffix}`
       if (parsed[field] !== undefined) {
         filteredDraft[field] = parsed[field]
       }
+    }
+
+    // Runtime is derived from the beats, not authored by the model. format_length
+    // is a core field so it survives neither the model's scope nor the filter
+    // above, which left the Format chip showing the pre-edit runtime.
+    const derivedRuntime = deriveRuntimeFieldsFromBeats(filteredDraft.beats)
+    if (derivedRuntime) {
+      Object.assign(filteredDraft, derivedRuntime)
     }
 
     console.log(`[Refine Treatment] Successfully refined ${Object.keys(filteredDraft).length} fields in section "${section}"`)

@@ -71,6 +71,42 @@ export function sumBeatMinutes(beats: Beat[]): number {
   return beats.reduce((s, b) => s + (Number(b.minutes) || 0), 0)
 }
 
+export type DerivedRuntimeFields = {
+  total_duration_seconds: number
+  estimatedDurationMinutes: number
+  format_length: string
+}
+
+/**
+ * Every runtime field a variant exposes, derived from its beat sheet.
+ *
+ * These are three views of one number, so they must be written together:
+ * updating only total_duration_seconds left the Format chip rendering the old
+ * runtime, because that chip reads format_length.
+ *
+ * Returns null when there is nothing to derive from.
+ */
+export function deriveRuntimeFieldsFromBeats(
+  beats: unknown
+): DerivedRuntimeFields | null {
+  if (!Array.isArray(beats) || beats.length === 0) return null
+
+  const totalMinutes = beats.reduce((sum: number, beat) => {
+    const minutes = Number((beat as { minutes?: unknown } | null)?.minutes)
+    return sum + (Number.isFinite(minutes) ? minutes : 0)
+  }, 0)
+  if (totalMinutes <= 0) return null
+
+  const totalSeconds = Math.round(totalMinutes * 60)
+  return {
+    total_duration_seconds: totalSeconds,
+    estimatedDurationMinutes: Math.max(1, Math.round(totalMinutes)),
+    // Keep the "N seconds" shape film-treatment writes: formatBlueprintRuntime
+    // renders it and projects/from-variant parses seconds back out of it.
+    format_length: `${totalSeconds} seconds`,
+  }
+}
+
 // Redistribute minutes to hit the target while preserving relative weights.
 export function normalizeDuration(beats: Beat[], targetMinutes: number): Beat[] {
   if (!Array.isArray(beats) || beats.length === 0) return []
