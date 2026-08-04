@@ -132,6 +132,11 @@ export async function runGeminiJsonStep(
   })
   let text = result?.text || '{}'
   logHeap(`after ${label}`, { responseChars: text.length })
+  if (result?.finishReason && result.finishReason !== 'STOP') {
+    console.warn(
+      `[Guided Revise] ${label} finished with ${result.finishReason} (${text.length} chars) — response repaired from truncation`
+    )
+  }
   if (text.length > MAX_GEMINI_JSON_CHARS) {
     text = text.slice(0, MAX_GEMINI_JSON_CHARS)
   }
