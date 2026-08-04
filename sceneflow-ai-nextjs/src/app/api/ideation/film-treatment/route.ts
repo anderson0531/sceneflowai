@@ -104,6 +104,9 @@ interface FilmTreatmentItem {
   title?: string
   logline?: string
   genre?: string
+  /** Production format shown as "Format", e.g. podcast or education. */
+  format?: string
+  /** Runtime string, despite the name. Kept for the duration consumers. */
   format_length?: string
   author_writer?: string
   date?: string
@@ -651,6 +654,9 @@ async function generateFilmTreatment(
       title: parsed.title,
       logline: parsed.logline,
       genre: parsed.genre,
+      // The production format the UI shows as "Format", e.g. podcast or education.
+      // Distinct from format_length, which is a runtime despite its name.
+      format: context?.format || 'short_film',
       format_length: `${totalDurationSeconds} seconds`,
       // Empty when the account has no real name; consumers omit the credit
       // rather than print a placeholder or a login id.

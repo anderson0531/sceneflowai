@@ -1489,6 +1489,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                   startProductionEnabled={checklist.blueprintGenerated}
                   onOpenCollaborate={openCollaboratePanel}
                   onOpenFoundation={openFoundationPanel}
+                  projectFormat={currentProject?.metadata?.format ?? null}
                 />
               </div>
             </div>

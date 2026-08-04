@@ -24,7 +24,10 @@ import { BLUEPRINT_COPY } from '@/lib/blueprint/blueprintGlossary'
 import { ASSISTANT } from '@/lib/constants/assistant'
 import { ASSISTANT_ICON as AssistantIcon } from '@/lib/constants/assistantIcon'
 import { AssistantButton } from '@/components/blueprint/AssistantButton'
-import { formatBlueprintRuntime } from '@/lib/blueprint/formatBlueprintCore'
+import {
+  resolveBlueprintFormatLabel,
+  summariseBeatsRuntime,
+} from '@/lib/blueprint/formatBlueprintCore'
 import { BlueprintFieldCard, BlueprintSubsectionHeading } from '@/components/blueprint/BlueprintFieldCard'
 import { resolveCreatorCredit } from '@/lib/user/displayName'
 import { useCreatorProfile } from '@/hooks/useCreatorProfile'
@@ -58,6 +61,8 @@ export type TreatmentCardProps = {
   onOpenCollaborate?: () => void
   /** Opens the side panel on Foundation, where Narrative Reasoning now lives. */
   onOpenFoundation?: () => void
+  /** Project's production format, used when the variant predates storing its own. */
+  projectFormat?: string | null
 }
 
 export function TreatmentCard({
@@ -70,6 +75,7 @@ export function TreatmentCard({
   startProductionEnabled = true,
   onOpenCollaborate,
   onOpenFoundation,
+  projectFormat,
 }: TreatmentCardProps = {}) {
   const router = useRouter()
   const { data: session } = useSession()
@@ -470,7 +476,12 @@ export function TreatmentCard({
                 v.author_writer,
                 creatorProfile ?? session?.user
               )
-              const beatCount = Array.isArray((v as any).beats) ? (v as any).beats.length : 0
+              const beatsRuntime = summariseBeatsRuntime((v as any).beats)
+              const beatCount = beatsRuntime.count
+              const productionFormatLabel = resolveBlueprintFormatLabel(
+                v as Record<string, unknown>,
+                projectFormat
+              )
               const characterCount = Array.isArray(v.character_descriptions)
                 ? v.character_descriptions.length
                 : 0
@@ -536,15 +547,16 @@ export function TreatmentCard({
                         sectionId="core"
                         variant="studio"
                         label="Format"
-                        hideWhenEmpty={!v.format_length}
+                        hideWhenEmpty={!productionFormatLabel}
                       >
+                        {/* The production format, not a runtime. This chip used to
+                            render format_length, which holds a duration despite its
+                            name, so Format showed the runtime. */}
                         <span
-                          className={cn(badgeFormat, v.id === activeVariant.id ? flashIf('format_length') : '')}
-                          title={v.format_length || undefined}
+                          className={cn(badgeFormat, v.id === activeVariant.id ? flashIf('format') : '')}
+                          title={productionFormatLabel || undefined}
                         >
-                          {v.format_length
-                            ? formatBlueprintRuntime(String(v.format_length)).display
-                            : null}
+                          {productionFormatLabel}
                         </span>
                       </BlueprintFieldCard>
                       <BlueprintFieldCard
@@ -743,10 +755,25 @@ export function TreatmentCard({
                     title="Beats & Runtime"
                     data-blueprint-section="beats"
                     actions={
-                      <AssistantButton
-                        onClick={() => openGuidedForSection('beats')}
-                        scopeLabel="Beats & Runtime"
-                      />
+                      <div className="flex items-center gap-2">
+                        {/* Runtime belongs to the beats that produce it, and is summed
+                            from the list below rather than read from a stored field. */}
+                        {beatsRuntime.display && (
+                          <span
+                            className={cn(
+                              badgeFormat,
+                              v.id === activeVariant.id ? flashIf('beats') : ''
+                            )}
+                            title={`${beatsRuntime.count} beats totalling ${beatsRuntime.display}`}
+                          >
+                            {beatsRuntime.display} total
+                          </span>
+                        )}
+                        <AssistantButton
+                          onClick={() => openGuidedForSection('beats')}
+                          scopeLabel="Beats & Runtime"
+                        />
+                      </div>
                     }
                   >
                     <div className="space-y-3">

@@ -1,3 +1,9 @@
+import {
+  formatLabel,
+  resolveProductionFormat,
+  type ProductionFormat,
+} from '@/lib/content/contentIntent'
+
 function str(value: unknown): string {
   if (typeof value !== 'string') return value != null ? String(value).trim() : ''
   return value.trim()
@@ -23,6 +29,62 @@ export function getBlueprintCoreFields(variant: Record<string, unknown>): Bluepr
     authorWriter: str(variant.author_writer),
     date: str(variant.date),
   }
+}
+
+/**
+ * Runtime summed from the beats themselves.
+ *
+ * Derived at render time rather than read from a stored field, so the number
+ * shown can never disagree with the beat list printed beneath it.
+ */
+export function summariseBeatsRuntime(beats: unknown): {
+  minutes: number
+  count: number
+  display: string
+} {
+  if (!Array.isArray(beats) || beats.length === 0) {
+    return { minutes: 0, count: 0, display: '' }
+  }
+
+  const minutes = beats.reduce((sum: number, beat) => {
+    const value = Number((beat as { minutes?: unknown } | null)?.minutes)
+    return sum + (Number.isFinite(value) ? value : 0)
+  }, 0)
+
+  if (minutes <= 0) return { minutes: 0, count: beats.length, display: '' }
+
+  return {
+    minutes,
+    count: beats.length,
+    display: formatBlueprintRuntime(`${Math.round(minutes * 60)} seconds`).display,
+  }
+}
+
+/**
+ * The production format for the Format field, e.g. "podcast episode".
+ *
+ * This used to render `format_length`, which holds a duration despite its name,
+ * so the field labelled Format showed a runtime. Older blueprints do not carry
+ * `format`, hence the fallbacks.
+ */
+export function resolveBlueprintFormatLabel(
+  variant: Record<string, unknown> | null | undefined,
+  projectFormat?: string | null
+): string {
+  const candidates = [variant?.format, projectFormat]
+
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim()) {
+      return formatLabel(candidate.trim() as ProductionFormat)
+    }
+  }
+
+  const genre = variant?.genre
+  if (typeof genre === 'string' && genre.trim()) {
+    return formatLabel(resolveProductionFormat(genre))
+  }
+
+  return ''
 }
 
 /** Humanize runtime strings like "600 seconds" for display chips. */
