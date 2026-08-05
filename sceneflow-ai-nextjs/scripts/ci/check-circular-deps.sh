@@ -8,10 +8,11 @@
 # Circular dependencies in JavaScript/TypeScript can cause Temporal Dead Zone (TDZ)
 # errors when modules reference each other before initialization completes.
 #
-# Known safe circular patterns (type-only imports) are excluded.
+# Type-only and deferred dynamic imports are excluded via .madgerc, since neither
+# exists at module-initialization time and so neither can produce a TDZ error.
 #
 
-set -e
+set -euo pipefail
 
 echo "🔍 Checking for circular dependencies..."
 echo ""
@@ -20,10 +21,13 @@ echo ""
 # --circular: Only show circular dependencies
 # --extensions: Include both .ts and .tsx files
 # --exclude: Exclude test files and node_modules
-OUTPUT=$(npx madge --circular --extensions ts,tsx --exclude '\.test\.|\.spec\.|node_modules' src/ 2>&1)
+#
+# Trust madge's exit code rather than matching its prose: it reports "1 circular
+# dependency" in the singular, which a plural-only grep silently lets through.
+STATUS=0
+OUTPUT=$(npx madge --circular --extensions ts,tsx --exclude '\.test\.|\.spec\.|node_modules' src/ 2>&1) || STATUS=$?
 
-# Check if any circular dependencies were found
-if echo "$OUTPUT" | grep -q "Found .* circular dependencies"; then
+if [ "$STATUS" -ne 0 ]; then
   echo "❌ Circular dependencies detected!"
   echo ""
   echo "$OUTPUT"
