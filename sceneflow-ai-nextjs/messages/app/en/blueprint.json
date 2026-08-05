@@ -220,7 +220,14 @@
   },
   "nextStep": {
     "remainingToFinish": "{count} to finish",
-    "go": "Go"
+    "go": "Go",
+    "generateBlueprint": "Generate Blueprint",
+    "saveAudienceAndAnalyze": "Save audience & run Audience Resonance",
+    "applyTopFix": "Apply top Audience Resonance fix",
+    "startProduction": "Go to Production Studio",
+    "reAnalyzeOrRefine": "Re-analyze or refine Blueprint",
+    "improveScoreOrStart": "Improve score or Go to Production Studio",
+    "generating": "Generating Blueprint…"
   },
   "sidePanel": {
     "tabs": {
@@ -284,5 +291,165 @@
     "generateHero": "Generate Hero Image",
     "editPrompt": "Edit Prompt",
     "downloadImage": "Download Image"
+  },
+  "startProduction": {
+    "beats": "Beats",
+    "characters": "Characters",
+    "arScore": "AR score",
+    "runtime": "Runtime",
+    "artStyle": "Art style",
+    "aspectRatio": "Aspect ratio",
+    "startAnyway": "Start anyway",
+    "cannotStart": "Cannot start yet",
+    "recommendationsBefore": "Recommendations before Production"
+  },
+  "assistant": {
+    "assistantIntro": "{assistant} — describe your direction and it balances changes across the full blueprint. No direct field editing.",
+    "currentBlueprint": "Current blueprint (read-only)",
+    "noCharacters": "No characters",
+    "noFieldChanges": "No field-level changes detected (review summary above).",
+    "before": "Before",
+    "after": "After",
+    "resonanceRecommendations": "Resonance recommendations ({count})",
+    "minusPoints": "−{points}",
+    "whatShouldChange": "What should change and why?",
+    "focusOptional": "Focus (optional)",
+    "guidedRefinements": "Guided refinements (optional)",
+    "revisionPlan": "Revision plan",
+    "cancelIt": "Cancel it",
+    "generateBalanced": "Generate balanced revision",
+    "reviseIntent": "Revise intent",
+    "applyRevision": "Apply revision"
+  },
+  "reimagine": {
+    "reimagineTitle": "Reimagine Blueprint",
+    "startTitle": "Start Project",
+    "describeProject": "Describe Your Project",
+    "importTreatment": "Import treatment",
+    "contentType": "Content Type",
+    "genre": "Genre",
+    "tone": "Tone",
+    "scope": "Scope",
+    "required": "*",
+    "optional": "(optional)",
+    "autoLengthHint": "Length follows the story; no fixed runtime is forced.",
+    "targetAudience": "Target Audience",
+    "audienceHint": "(describe in your own words)",
+    "visualFoundation": "Visual Foundation",
+    "lockedAtBlueprint": "(locked at Blueprint)"
+  },
+  "tour": {
+    "stepCounter": "{current} of {total}",
+    "skip": "Skip tour",
+    "back": "Back",
+    "next": "Next",
+    "getStarted": "Get started",
+    "welcome": {
+      "title": "Welcome to Blueprint Studio",
+      "description": "Blueprint Studio is your creative foundation: Generate → Review → Iterate → Go to Production Studio. One continuous workflow — not scattered editors.",
+      "tip": "The sidebar workflow guide and co-pilot show your next step at every stage."
+    },
+    "generate": {
+      "title": "Step 1 — Generate",
+      "description": "Start from a series episode, concept, or imported script. Generate a structured treatment with logline, beats, characters, and tone.",
+      "tip": "Use Regenerate Blueprint for a full reset; the Assistant for scoped changes."
+    },
+    "review": {
+      "title": "Step 2 — Review",
+      "description": "Read each section in the treatment card. Open Audience Resonance in the side panel — save your target audience, then analyze.",
+      "tip": "Audience Resonance target is 80+ before Production."
+    },
+    "iterate": {
+      "title": "Step 3 — Iterate",
+      "description": "Apply AR recommendations or edit sections directly. Re-analyze after changes to track score improvement.",
+      "tip": "Click a category deduction to jump to the matching Blueprint section."
+    },
+    "collaborate": {
+      "title": "Collaborate",
+      "description": "Share a collaborate link from the side panel for reviewer feedback, section audio, and structured synthesis.",
+      "tip": "One canonical Collaborate home — the side panel tab."
+    },
+    "resonance": {
+      "title": "Audience Resonance strip",
+      "description": "The header strip shows your AR score and points to 80+. Use “Improve weakest category” to focus your next edit."
+    },
+    "startProduction": {
+      "title": "Step 4 — Start Production",
+      "description": "When your Blueprint is ready, Start Production hands off to script generation and the Production pipeline.",
+      "tip": "A soft gate warns below 80 — you can override with confirmation."
+    }
+  },
+  "checklist": {
+    "blueprintGenerated": "Blueprint generated",
+    "audienceSaved": "Target audience saved",
+    "arAnalyzed": "Audience Resonance analyzed",
+    "arRunAtLeastOnce": "Audience Resonance run at least once",
+    "scoreTarget": "Score {target}+",
+    "scoreAtTarget": "Score {target}+ (current: {current})",
+    "artStyle": "Art style",
+    "artStyleWithValue": "Art style ({value})",
+    "aspectRatio": "Aspect ratio",
+    "aspectRatioWithValue": "Aspect ratio ({value})",
+    "collaborateShared": "Collaborate link shared"
+  },
+  "gate": {
+    "missingBlueprint": "Generate a Blueprint first",
+    "missingArtStyle": "Select an art style in Visual Foundation",
+    "missingAspectRatio": "Select an aspect ratio in Visual Foundation",
+    "missingAudience": "Save your target audience",
+    "missingArRun": "Run Audience Resonance at least once",
+    "missingScore": "Reach the Audience Resonance target",
+    "blockGenerateFirst": "Generate a Blueprint before starting Production.",
+    "needArtStyle": "Select an art style in Blueprint Visual Foundation.",
+    "needAspectRatio": "Select an aspect ratio in Blueprint Visual Foundation.",
+    "needAudience": "Save your target audience in the Resonance panel.",
+    "needArRun": "Run Audience Resonance at least once.",
+    "needScore": "Audience Resonance is below {target} (score: {score})."
+  },
+  "assistantButton": {
+    "label": "Assistant",
+    "scopedLabel": "Assistant — {scope}",
+    "tooltip": "{brand} — describe the change in plain words and it revises for you"
+  },
+  "chips": {
+    "strong-concept": "Strong concept",
+    "needs-clarity": "Needs clarity",
+    "wrong-tone": "Wrong tone for audience",
+    "compelling-hook": "Compelling hook",
+    "ready-to-produce": "Ready to produce",
+    "core-clear-logline": "Clear logline",
+    "core-weak-hook": "Weak hook",
+    "core-genre-fit": "Genre fits well",
+    "story-strong-arc": "Strong story arc",
+    "story-confusing": "Story confusing",
+    "story-stakes": "Raise the stakes",
+    "char-compelling": "Compelling characters",
+    "char-flat": "Flat character arc",
+    "char-motivation": "Unclear motivation",
+    "beats-pacing": "Pacing drags",
+    "beats-midpoint": "Missing midpoint",
+    "beats-structure": "Solid structure",
+    "tone-consistent": "Tone consistent",
+    "tone-off": "Tone feels off",
+    "tone-visual": "Visual style unclear"
+  },
+  "workflowGuide": {
+    "group": {
+      "create-story": "Create Your Story",
+      "refine-blueprint": "Refine Your Blueprint",
+      "enhance-experience": "Enhance Experience",
+      "start-production": "Ready for Production Studio"
+    },
+    "step": {
+      "enter-idea": "Enter your idea or topic",
+      "generate-blueprint": "Generate Blueprint",
+      "review-sections": "Review & edit sections",
+      "run-resonance": "Run Audience Resonance",
+      "apply-fixes": "Apply quick fixes",
+      "regenerate-hero": "Regenerate hero image",
+      "preview-audio": "Preview with audio",
+      "collaborate-export": "Collaborate & export",
+      "start-production": "Go to Production Studio"
+    }
   }
 }

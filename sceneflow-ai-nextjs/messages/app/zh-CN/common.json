@@ -89,7 +89,9 @@
     "dismiss": "解散",
     "translatePage": "翻译此页",
     "translatePageHint": "使用浏览器的翻译服务。质量各不相同，某些控件可能无法翻译。",
-    "stopTranslating": "原始语言"
+    "stopTranslating": "原始语言",
+    "storyLanguageHint": "新内容用{language}编写。在“语言”下的“设置”中更改。",
+    "translatingFields": "正在翻译{count, plural, =1 {# field} other {# fields}}…"
   },
   "errors": {
     "generic": "出错了。请重试。",

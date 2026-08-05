@@ -89,7 +89,9 @@
     "dismiss": "खारिज करना",
     "translatePage": "इस पेज का अनुवाद करें",
     "translatePageHint": "अपने ब्राउज़र की अनुवाद सेवा का उपयोग करता है। गुणवत्ता भिन्न होती है और कुछ नियंत्रणों का अनुवाद नहीं हो सकता है।",
-    "stopTranslating": "मूल भाषा दिखाएँ"
+    "stopTranslating": "मूल भाषा दिखाएँ",
+    "storyLanguageHint": "{language} में नई सामग्री लिखी गई है। इसे भाषा के तहत सेटिंग में बदलें।",
+    "translatingFields": "{count, plural, =1 {# field} other {# fields}} का अनुवाद किया जा रहा है..."
   },
   "errors": {
     "generic": "कोई गड़बड़ हो गई, कृपया दोबारा कोशिश करें।",

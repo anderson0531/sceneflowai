@@ -89,7 +89,9 @@
     "dismiss": "Descartar",
     "translatePage": "Traducir esta página",
     "translatePageHint": "Utiliza el servicio de traducción de su navegador. La calidad varía y es posible que algunos controles no se traduzcan.",
-    "stopTranslating": "Idioma original"
+    "stopTranslating": "Idioma original",
+    "storyLanguageHint": "El nuevo contenido está escrito en {language}. Cámbialo en Configuración en Idiomas.",
+    "translatingFields": "Traduciendo {count, plural, =1 {# field} other {# fields}}..."
   },
   "errors": {
     "generic": "Algo salió mal. Inténtalo de nuevo.",

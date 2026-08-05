@@ -89,7 +89,9 @@
     "dismiss": "Ablehnen",
     "translatePage": "Diese Seite übersetzen",
     "translatePageHint": "Verwendet den Übersetzungsdienst Ihres Browsers. Die Qualität variiert und einige Kontrollen werden möglicherweise nicht übersetzt.",
-    "stopTranslating": "原始语言"
+    "stopTranslating": "原始语言",
+    "storyLanguageHint": "Neue Inhalte werden in {language} geschrieben. Ändern Sie es in den Einstellungen unter Sprachen.",
+    "translatingFields": "{count, plural, =1 {# field} other {# fields}} wird übersetzt…"
   },
   "errors": {
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",

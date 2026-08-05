@@ -89,7 +89,9 @@
     "dismiss": "ยกเลิก",
     "translatePage": "แปลหน้านี้",
     "translatePageHint": "ใช้บริการแปลภาษาของเบราว์เซอร์ของคุณคุณภาพแตกต่างกันไปและการควบคุมบางอย่างอาจไม่สามารถแปลได้",
-    "stopTranslating": "แสดงภาษาต้นฉบับ"
+    "stopTranslating": "แสดงภาษาต้นฉบับ",
+    "storyLanguageHint": "เนื้อหาใหม่เขียนด้วย {language} เปลี่ยนในการตั้งค่าภายใต้ภาษา",
+    "translatingFields": "กำลังแปล {count, plural, =1 {# field} other {# fields}}…"
   },
   "errors": {
     "generic": "มีบางอย่างผิดปกติ โปรดลองอีกครั้ง",

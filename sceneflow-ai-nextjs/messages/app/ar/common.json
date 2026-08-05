@@ -89,7 +89,9 @@
     "dismiss": "تجاهل",
     "translatePage": "Translate this page",
     "translatePageHint": "يستخدم خدمة الترجمة في متصفحك. تختلف الجودة وقد لا تترجم بعض عناصر التحكم.",
-    "stopTranslating": "اللغة الأصلية"
+    "stopTranslating": "اللغة الأصلية",
+    "storyLanguageHint": "المحتوى الجديد مكتوب بلغة {language}. قم بتغييره في الإعدادات ضمن اللغات.",
+    "translatingFields": "جارٍ ترجمة {count, plural, =1 {# field} other {# fields}}..."
   },
   "errors": {
     "generic": "لقد حدث خطأ ما. برجاء إعادة المحاولة.",

@@ -14,7 +14,31 @@
     "saved": "บันทึกแล้ว",
     "saveFailed": "การบันทึกล้มเหลว",
     "syncedToProduction": "Blueprint ซิงค์กับ Production Studio — สร้างสคริปต์ของคุณใหม่เมื่อพร้อม",
-    "syncFailed": "อัปเดต Blueprint แล้วแต่การซิงค์ Production Studio ล้มเหลว"
+    "syncFailed": "อัปเดต Blueprint แล้วแต่การซิงค์ Production Studio ล้มเหลว",
+    "untitled": "ยังไม่กำหนดชื่อ",
+    "editHeroImage": "แก้ไขรูปภาพฮีโร่ — {title}",
+    "empty": {
+      "title": "เริ่มโปรเจกต์ของคุณ",
+      "description": "อธิบายโปรเจกต์ของคุณและสร้าง Blueprint ระดับมืออาชีพด้วยโครงสร้างเรื่องราวตัวละครและทิศทางภาพที่ขับเคลื่อนด้วย AI",
+      "action": "เริ่มโครงการ"
+    },
+    "toast": {
+      "shareLinkReady": "แชร์ลิงก์พร้อมแล้ว — คัดลอกไปยังคลิปบอร์ดแล้ว",
+      "saveBeforeSharing": "บันทึกโปรเจกต์ก่อนแชร์",
+      "generateBeforeSharing": "สร้างพิมพ์เขียวก่อนแชร์",
+      "noVariantToShare": "ไม่มีตัวแปรการรักษาที่จะแชร์",
+      "shareLinkFailed": "สร้างลิงก์แชร์ไม่สำเร็จ",
+      "noVariantFound": "ไม่พบตัวแปร Blueprint",
+      "analysisSaveFailed": "การวิเคราะห์เสร็จสมบูรณ์แต่ไม่สามารถบันทึกไปยังโครงการได้",
+      "heroFailedWithReason": "{reason} คลิกที่ภาพเพื่อลองอีกครั้ง",
+      "heroFailed": "การสร้างภาพฮีโร่ล้มเหลวคลิกที่ภาพเพื่อลองอีกครั้ง",
+      "autoGenerateFailed": "ล้มเหลวในการสร้าง Blueprint โดยอัตโนมัติ",
+      "heroUploaded": "อัพโหลดรูปภาพสำเร็จแล้ว.",
+      "heroUploadFailed": "ไม่สามารถอัปโหลดรูปภาพได้",
+      "projectSaved": "บันทึกโปรเจกต์แล้ว!",
+      "projectCreated": "สร้างโปรเจกต์แล้ว!",
+      "projectSaveFailed": "บันทึกโปรเจกต์ไม่สำเร็จ"
+    }
   },
   "tabs": {
     "core": "คอร์",
@@ -81,7 +105,17 @@
     "refineNote": "💡 ตัวละครจะได้รับการขัดเกลาด้วยภาพและคุณลักษณะโดยละเอียดในการผลิต"
   },
   "reasoning": {
-    "whyChoices": "ทำไมต้องเลือกตัวเลือกเหล่านี้?"
+    "whyChoices": "ทำไมต้องเลือกตัวเลือกเหล่านี้?",
+    "title": "การให้เหตุผลในการบรรยาย",
+    "subtitle": "ทำไม AI ถึงเลือกการเล่าเรื่องเหล่านี้",
+    "noneRecorded": "ยังไม่มีการบันทึกเหตุผลสำหรับพิมพ์เขียวนี้สร้างใหม่เพื่อจับภาพว่าทำไม AI ถึงเลือกการเล่าเรื่อง",
+    "notProvided": "AI ไม่ได้ให้เหตุผลในการเล่าเรื่องสำหรับพิมพ์เขียวนี้สร้างมันขึ้นมาใหม่เพื่อดูการตัดสินใจที่สร้างสรรค์",
+    "characterFocus": "โฟกัสของตัวละคร",
+    "keyDecisions": "การตัดสินใจเชิงสร้างสรรค์ที่สำคัญ",
+    "why": "แต่ทำไมล่ะ? ",
+    "impact": "ผลลัพธ์:",
+    "storyStrengths": "จุดแข็งของเรื่องราว",
+    "wantDifferentEmphasis": "ต้องการการเน้นที่แตกต่างกันหรือไม่?"
   },
   "help": {
     "title": "โฟลว์สร้างเรื่องราวของคุณอย่างไร",
@@ -158,7 +192,8 @@
     "strengthenArcs": "เสริมความแข็งแกร่งให้กับส่วนโค้ง",
     "distinctVoices": "เสียงที่แตกต่าง",
     "relationshipDynamics": "พลวัตความสัมพันธ์",
-    "whatShouldChange": "อะไรควรเปลี่ยนแปลงและเพราะเหตุใด?"
+    "whatShouldChange": "อะไรควรเปลี่ยนแปลงและเพราะเหตุใด?",
+    "blueprintUpdated": "อัปเดต Blueprint แล้ว"
   },
   "dialog": {
     "unsavedChanges": "การเปลี่ยนแปลงที่ไม่ได้บันทึก"
@@ -175,5 +210,246 @@
     "toneStyleUpdated": "อัพเดทโทนสีและสไตล์แล้ว!",
     "beatsUpdated": "อัปเดตจังหวะแล้ว!",
     "charactersUpdated": "อัปเดตตัวละครแล้ว!"
+  },
+  "resonance": {
+    "run": "เรียกใช้ {feature}",
+    "chipLabel": "Blueprint AR",
+    "targetSuffix": "→ เป้าหมาย {target} +",
+    "pointsToTarget": "{points} คะแนน",
+    "improveWeakest": "ปรับปรุงจุดอ่อนที่สุด"
+  },
+  "nextStep": {
+    "remainingToFinish": "{count} เพื่อเสร็จสิ้น",
+    "go": "ค้นหา",
+    "generateBlueprint": "สร้าง Blueprint",
+    "saveAudienceAndAnalyze": "บันทึกผู้ชมและเรียกใช้ Audience Resonance",
+    "applyTopFix": "ใช้ TOP Audience Resonance FIX",
+    "startProduction": "ไปที่ Production Studio",
+    "reAnalyzeOrRefine": "วิเคราะห์หรือปรับแต่ง Blueprint อีกครั้ง",
+    "improveScoreOrStart": "ปรับปรุงคะแนนหรือไปที่ Production Studio",
+    "generating": "กำลังสร้าง Blueprint..."
+  },
+  "sidePanel": {
+    "tabs": {
+      "resonance": "การสั่นพ้อง",
+      "collaborate": "ร่วมมือ",
+      "reasoning": "การใช้เหตุผล"
+    },
+    "collab": {
+      "creatingLink": "กำลังสร้างลิงก์...",
+      "shareAndCollaborate": "แชร์และทำงานร่วมกัน",
+      "reviewerAudio": "เสียงจากผู้รีวิว",
+      "voice": "เสียง: {name}",
+      "generatingAudio": "กำลังสร้างเสียงส่วน…",
+      "generateAudio": "สร้างเสียงส่วน",
+      "status": "สถานะ: {status}",
+      "statusIdleHint": "— แตะสร้างเมื่อพร้อม",
+      "emptyHint": "หลังจากสร้างลิงค์ข้อเสนอแนะการแชทเป็นทีมและข้อความโดยตรงกับผู้รีวิวจะปรากฏที่นี่",
+      "reviewCounts": "{reviews, plural, =1 {# review} other {# reviews}} · {reviewers, plural, =1 {# reviewer} other {# reviewers}}",
+      "revokeLink": "ยกเลิกลิงก์",
+      "noFeedback": "ยังไม่มีข้อเสนอแนะแชร์ลิงค์กับผู้รีวิว",
+      "scoreOutOfFive": "{score}/5",
+      "preferred": "ค่าที่ควรใช้Size Policy",
+      "concerns": "Concerns ",
+      "notes": "หมายเหตุ: ",
+      "synthesize": "เปลี่ยนข้อเสนอแนะเป็นคำแนะนำ",
+      "synthesized": "คำแนะนำสังเคราะห์",
+      "openAssistant": "เปิด {assistant}"
+    }
+  },
+  "audienceResonance": {
+    "title": "การวิเคราะห์ Audience Resonance",
+    "targetAudience": "ກຸ່ມ​ເປົ້າ​ໝາຍ",
+    "unsaved": ". ยังไม่บันทึก",
+    "analysisDirection": "ทิศทางการวิเคราะห์ (ไม่บังคับ)",
+    "saveAudience": "บันทึกผู้ชม",
+    "analyze": "วิเคราะห์ ",
+    "reAnalyze": "วิเคราะห์อีกครั้ง",
+    "outOfHundred": "/100",
+    "pointsToReach": "{points} ชี้ไปที่ {target} +",
+    "scoreBreakdown": "รายละเอียดคะแนน (จาก 100)",
+    "minusPoints": "− {points}",
+    "recommendations": "ข้อเสนอแนะ",
+    "improveWith": "ปรับปรุงด้วย {assistant} →",
+    "strengths": "จุดแข็ง ",
+    "categoryScores": "คะแนนหมวดหมู่",
+    "jumpToSection": "ข้ามไปยังส่วน Blueprint ที่ตรงกัน",
+    "emptyHint": "บันทึกกลุ่มเป้าหมายของคุณจากนั้นวิเคราะห์ว่าพิมพ์เขียวของคุณสะท้อนกับกลุ่มเป้าหมายนั้นอย่างไร"
+  },
+  "heroImage": {
+    "uploading": "กำลังอัปโหลด...",
+    "uploadImage": "อัพโหลดภาพ",
+    "uploadingHero": "กำลังอัปโหลดภาพฮีโร่...",
+    "generatingHero": "กำลังสร้างภาพฮีโร่...",
+    "failedToLoad": "โหลดภาพฮีโร่ไม่สำเร็จ",
+    "failedToLoadHint": "URL ของภาพอาจหมดอายุหรือไม่พร้อมใช้งานอัปโหลดการแทนที่หรือสร้างใหม่",
+    "regenerate": "สร้างอีกครั้ง",
+    "regenerateImage": "สร้างรูปภาพอีกครั้ง",
+    "failedToGenerate": "สร้างไม่สำเร็จ",
+    "retry": "ลองใหม่",
+    "notGenerated": "ไม่ได้สร้างภาพฮีโร่",
+    "generateHero": "สร้างรูปภาพฮีโร่",
+    "editPrompt": "แก้ไขข้อความแจ้งเตือน",
+    "downloadImage": "ดาวน์โหลดรูปภาพ"
+  },
+  "startProduction": {
+    "beats": "จังหวะ",
+    "characters": "ตัวละคร",
+    "arScore": "คะแนน AR",
+    "runtime": "ระยะเวลา",
+    "artStyle": "สไตล์ศิลปะ",
+    "aspectRatio": "อัตรากว้างยาว",
+    "startAnyway": "เริ่มเลย",
+    "cannotStart": "ยังเริ่มไม่ได้",
+    "recommendationsBefore": "คำแนะนำก่อนการผลิต"
+  },
+  "assistant": {
+    "assistantIntro": "{assistant} — อธิบายทิศทางของคุณและปรับสมดุลการเปลี่ยนแปลงในพิมพ์เขียวเต็มรูปแบบไม่มีการแก้ไขฟิลด์โดยตรง",
+    "currentBlueprint": "พิมพ์เขียวปัจจุบัน (อ่านอย่างเดียว)",
+    "noCharacters": "ไม่มีอักขระ",
+    "noFieldChanges": "ไม่พบการเปลี่ยนแปลงในระดับเขตข้อมูล (สรุปรีวิวด้านบน)",
+    "before": "ก่อน",
+    "after": "หลังจาก ",
+    "resonanceRecommendations": "คำแนะนำเรโซแนนซ์ ({count})",
+    "minusPoints": "− {points}",
+    "whatShouldChange": "อะไรควรเปลี่ยนแปลงและเพราะเหตุใด?",
+    "focusOptional": "โฟกัส (ไม่บังคับ)",
+    "guidedRefinements": "การปรับแต่งตามคำแนะนำ (ไม่บังคับ)",
+    "revisionPlan": "แผนการแก้ไข",
+    "cancelIt": "ยกเลิกซะ",
+    "generateBalanced": "สร้างการแก้ไขที่สมดุล",
+    "reviseIntent": "แก้ไขเจตนา",
+    "applyRevision": "ใช้การแก้ไข"
+  },
+  "reimagine": {
+    "reimagineTitle": "Reimagine Blueprint",
+    "startTitle": "เริ่มโครงการ",
+    "describeProject": "บรรยายโปรเจกต์ของคุณ",
+    "importTreatment": "นำเข้าการบำบัด",
+    "contentType": "ประเภทเนื้อหา",
+    "genre": "ประเภท",
+    "tone": "โทนภาพ",
+    "scope": "ขอบเขต",
+    "required": "*",
+    "optional": "(ไม่บังคับให้กรอก)",
+    "autoLengthHint": "ความยาวเป็นไปตามเรื่องราวไม่มีการบังคับรันไทม์คงที่",
+    "targetAudience": "ກຸ່ມ​ເປົ້າ​ໝາຍ",
+    "audienceHint": "(อธิบายเป็นคำพูดของท่านเอง)",
+    "visualFoundation": "วิชวลฟาวน์เด",
+    "lockedAtBlueprint": "(ล็อคที่ Blueprint)"
+  },
+  "tour": {
+    "stepCounter": "{current} ของ {total}",
+    "skip": "ข้ามทัวร์",
+    "back": "ย้อนกลับ",
+    "next": "ต่อไป",
+    "getStarted": "เริ่มต้น",
+    "welcome": {
+      "title": "ยินดีต้อนรับสู่ Blueprint Studio",
+      "description": "Blueprint Studio เป็นรากฐานความคิดสร้างสรรค์ของคุณ: สร้าง→ →บทวิจารณ์ Iterate → ไปที่ Production Studio ขั้นตอนการทำงานต่อเนื่องหนึ่งขั้นตอน — ไม่ใช่บรรณาธิการที่กระจัดกระจาย",
+      "tip": "คู่มือเวิร์กโฟลว์แถบด้านข้างและนักบินร่วมจะแสดงขั้นตอนต่อไปของคุณในทุกขั้นตอน"
+    },
+    "generate": {
+      "title": "ขั้นตอนที่ 1 — สร้าง",
+      "description": "เริ่มจากซีรีส์คอนเซ็ปต์หรือสคริปต์ที่นำเข้าสร้างการรักษาที่มีโครงสร้างด้วย logline, beat, character และ tone",
+      "tip": "ใช้ Regenerate Blueprint สำหรับการรีเซ็ตแบบเต็ม; ผู้ช่วยสำหรับการเปลี่ยนแปลงที่กำหนดขอบเขต"
+    },
+    "review": {
+      "title": "ขั้นตอนที่ 2 — รีวิว",
+      "description": "อ่านแต่ละส่วนในบัตรการรักษาเปิด Audience Resonance ในแผงด้านข้าง — บันทึกกลุ่มเป้าหมายของคุณแล้ววิเคราะห์",
+      "tip": "Audience Resonance เป้าหมายคือ 80 ปีขึ้นไปก่อนการผลิต"
+    },
+    "iterate": {
+      "title": "ขั้นตอนที่ 3 — Iterate",
+      "description": "ใช้คำแนะนำ AR หรือแก้ไขส่วนโดยตรงวิเคราะห์อีกครั้งหลังจากการเปลี่ยนแปลงเพื่อติดตามการปรับปรุงคะแนน",
+      "tip": "คลิกการหักหมวดหมู่เพื่อข้ามไปยังส่วน Blueprint ที่ตรงกัน"
+    },
+    "collaborate": {
+      "title": "ร่วมมือ",
+      "description": "แชร์ลิงค์การทำงานร่วมกันจากแผงด้านข้างเพื่อดูข้อเสนอแนะเสียงส่วนและการสังเคราะห์ที่มีโครงสร้าง",
+      "tip": "One canonical Collaborate home — แท็บแผงด้านข้าง"
+    },
+    "resonance": {
+      "title": "Audience Resonance STRIP",
+      "description": "แถบส่วนหัวแสดงคะแนน AR ของคุณและคะแนน 80 + ใช้ “ปรับปรุงหมวดหมู่ที่อ่อนแอที่สุด” เพื่อมุ่งเน้นการแก้ไขครั้งต่อไปของคุณ"
+    },
+    "startProduction": {
+      "title": "ขั้นตอนที่ 4 — เริ่มการผลิต",
+      "description": "เมื่อ Blueprint ของคุณพร้อมแล้วให้เริ่มต้นการผลิตส่งมอบให้กับการสร้างสคริปต์และขั้นตอนการผลิต",
+      "tip": "Soft Gate เตือนต่ำกว่า 80 — คุณสามารถแทนที่ด้วยการยืนยันได้"
+    }
+  },
+  "checklist": {
+    "blueprintGenerated": "สร้าง Blueprint แล้ว",
+    "audienceSaved": "บันทึกกลุ่มเป้าหมายแล้ว",
+    "arAnalyzed": "Audience Resonance วิเคราะห์แล้ว",
+    "arRunAtLeastOnce": "Audience Resonance ทำงานอย่างน้อยหนึ่งครั้ง",
+    "scoreTarget": "คะแนน {target} +",
+    "scoreAtTarget": "คะแนน {target} + (ปัจจุบัน: {current})",
+    "artStyle": "สไตล์ศิลปะ",
+    "artStyleWithValue": "สไตล์ศิลปะ ({value})",
+    "aspectRatio": "อัตรากว้างยาว",
+    "aspectRatioWithValue": "อัตราส่วนภาพ ({value})",
+    "collaborateShared": "แชร์ลิงก์ทำงานร่วมกันแล้ว"
+  },
+  "gate": {
+    "missingBlueprint": "สร้าง Blueprint ก่อน",
+    "missingArtStyle": "เลือกสไตล์ศิลปะใน Visual Foundation",
+    "missingAspectRatio": "เลือกอัตราส่วนภาพใน Visual Foundation",
+    "missingAudience": "บันทึกกลุ่มเป้าหมายของคุณ",
+    "missingArRun": "เรียกใช้ Audience Resonance อย่างน้อยหนึ่งครั้ง",
+    "missingScore": "บรรลุเป้าหมาย Audience Resonance",
+    "blockGenerateFirst": "สร้าง Blueprint ก่อนเริ่มการผลิต",
+    "needArtStyle": "เลือกรูปแบบศิลปะใน Blueprint Visual Foundation",
+    "needAspectRatio": "เลือกอัตราส่วนภาพใน Blueprint Visual Foundation",
+    "needAudience": "บันทึกกลุ่มเป้าหมายของคุณในแผงเรโซแนนซ์",
+    "needArRun": "เรียกใช้ Audience Resonance อย่างน้อยหนึ่งครั้ง",
+    "needScore": "Audience Resonance ต่ำกว่า {target} (คะแนน: {score})"
+  },
+  "assistantButton": {
+    "label": "ผู้ช่วย",
+    "scopedLabel": "ผู้ช่วย — {scope}",
+    "tooltip": "{brand} — อธิบายการเปลี่ยนแปลงในคำธรรมดาและแก้ไขให้คุณ"
+  },
+  "chips": {
+    "strong-concept": "แนวคิดที่แข็งแกร่ง",
+    "needs-clarity": "ต้องการความชัดเจน",
+    "wrong-tone": "น้ำเสียงที่ไม่ถูกต้องสำหรับผู้ชม",
+    "compelling-hook": "ตะขอที่น่าสนใจ",
+    "ready-to-produce": "พร้อมผลิต",
+    "core-clear-logline": "ล้างล็อกไลน์",
+    "core-weak-hook": "ตะขออ่อน",
+    "core-genre-fit": "แนวเพลงเข้ากันได้ดี",
+    "story-strong-arc": "STRONG STORY ARC",
+    "story-confusing": "เรื่องที่สับสน",
+    "story-stakes": "เพิ่มเงินเดิมพัน",
+    "char-compelling": "ตัวละครที่น่าสนใจ",
+    "char-flat": "ส่วนโค้งตัวอักษรแบบแบน",
+    "char-motivation": "แรงจูงใจที่ไม่ชัดเจน",
+    "beats-pacing": "การลาก Pacing",
+    "beats-midpoint": "ไม่มีจุดกึ่งกลาง",
+    "beats-structure": "โครงสร้างที่แข็งแรง",
+    "tone-consistent": "โทนเสียงที่สอดคล้องกัน",
+    "tone-off": "รู้สึกว่าโทนสีไม่ถูกต้อง",
+    "tone-visual": "สไตล์ภาพไม่ชัดเจน"
+  },
+  "workflowGuide": {
+    "group": {
+      "create-story": "สร้างเรื่องราวของคุณ",
+      "refine-blueprint": "ปรับแต่ง Blueprint ของคุณ",
+      "enhance-experience": "ยกระดับประสบการณ์",
+      "start-production": "พร้อมสำหรับ Production Studio"
+    },
+    "step": {
+      "enter-idea": "ป้อนไอเดียหรือหัวข้อของคุณ",
+      "generate-blueprint": "สร้าง Blueprint",
+      "review-sections": "ตรวจสอบและแก้ไขส่วนต่างๆ",
+      "run-resonance": "เรียกใช้ Audience Resonance",
+      "apply-fixes": "ใช้การแก้ไขด่วน",
+      "regenerate-hero": "สร้างอิมเมจฮีโร่ใหม่",
+      "preview-audio": "ดูตัวอย่างพร้อมเสียง",
+      "collaborate-export": "ทำงานร่วมกันและส่งออก",
+      "start-production": "ไปที่ Production Studio"
+    }
   }
 }

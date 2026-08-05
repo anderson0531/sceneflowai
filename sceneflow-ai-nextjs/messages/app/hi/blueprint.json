@@ -14,7 +14,31 @@
     "saved": "सहेजा गया",
     "saveFailed": "सहेजना असफल",
     "syncedToProduction": "Blueprint को Production Studio से सिंक किया गया - तैयार होने पर अपनी स्क्रिप्ट को फिर से तैयार करें।",
-    "syncFailed": "Blueprint अपडेट किया गया, लेकिन Production Studio सिंक विफल रहा"
+    "syncFailed": "Blueprint अपडेट किया गया, लेकिन Production Studio सिंक विफल रहा",
+    "untitled": "शीर्षकरहित",
+    "editHeroImage": "हीरो इमेज में बदलाव करें — {title}",
+    "empty": {
+      "title": "अपना प्रोजेक्ट शुरू करें",
+      "description": "अपनी परियोजना का वर्णन करें और एआई - संचालित कहानी संरचना, पात्रों और दृश्य दिशा के साथ एक पेशेवर Blueprint उत्पन्न करें।",
+      "action": "प्रोजेक्ट शुरू करें"
+    },
+    "toast": {
+      "shareLinkReady": "लिंक तैयार शेयर करें — क्लिपबोर्ड पर कॉपी किया गया",
+      "saveBeforeSharing": "शेयर करने से पहले प्रोजेक्ट सेव करें",
+      "generateBeforeSharing": "शेयर करने से पहले एक ब्लूप्रिंट बनाएँ",
+      "noVariantToShare": "साझा करने के लिए कोई उपचार संस्करण नहीं है",
+      "shareLinkFailed": "शेयर लिंक बनाने में विफल",
+      "noVariantFound": "कोई Blueprint संस्करण नहीं मिला",
+      "analysisSaveFailed": "विश्लेषण पूरा हुआ लेकिन प्रोजेक्ट में सेव नहीं हो सका",
+      "heroFailedWithReason": "{reason} फिर से कोशिश करने के लिए इमेज पर क्लिक करें।",
+      "heroFailed": "हीरो इमेज जनरेट नहीं हो सकी। फिर से कोशिश करने के लिए इमेज पर क्लिक करें।",
+      "autoGenerateFailed": "स्वचालित रूप से Blueprint उत्पन्न करने में विफल।",
+      "heroUploaded": "Hero इमेज सफलतापूर्वक अपलोड की गई",
+      "heroUploadFailed": "फ़ोटो अपलोड नहीं की जा सकी",
+      "projectSaved": "प्रोजेक्ट सहेजा गया",
+      "projectCreated": "प्रोजेक्ट बनाया गया!",
+      "projectSaveFailed": "प्रोजेक्ट सेव नहीं किया जा सका"
+    }
   },
   "tabs": {
     "core": "कोर",
@@ -81,7 +105,17 @@
     "refineNote": "उत्पादन में 💡 वर्णों को छवियों और विस्तृत विशेषताओं के साथ परिष्कृत किया जाएगा"
   },
   "reasoning": {
-    "whyChoices": "ये विकल्प क्यों?"
+    "whyChoices": "ये विकल्प क्यों?",
+    "title": "नैरेटिव रीजनिंग",
+    "subtitle": "एआई ने ये कहानी कहने के विकल्प क्यों बनाए",
+    "noneRecorded": "इस ब्लूप्रिंट के लिए अभी तक कोई तर्क दर्ज नहीं किया गया है। यह पता लगाने के लिए इसे फिर से तैयार करें कि एआई ने अपने कहानी कहने के विकल्प क्यों बनाए।",
+    "notProvided": "AI ने इस ब्लूप्रिंट के लिए कथात्मक तर्क प्रदान नहीं किया। रचनात्मक निर्णयों को देखने के लिए इसे फिर से बनाएं।",
+    "characterFocus": "कैरेक्टर फ़ोकस",
+    "keyDecisions": "मुख्य रचनात्मक निर्णय",
+    "why": "Why",
+    "impact": "प्रभाव",
+    "storyStrengths": "कहानी की ताकत",
+    "wantDifferentEmphasis": "अलग जोर चाहते हैं?"
   },
   "help": {
     "title": "फ़्लो आपकी कहानी कैसे बनाता है",
@@ -158,7 +192,8 @@
     "strengthenArcs": "चापों को मज़बूत करें",
     "distinctVoices": "विशिष्ट आवाज़ें",
     "relationshipDynamics": "रिलेशनशिप डायनेमिक्स",
-    "whatShouldChange": "क्या बदलना चाहिए और क्यों?"
+    "whatShouldChange": "क्या बदलना चाहिए और क्यों?",
+    "blueprintUpdated": "Blueprint अपडेट किया गया"
   },
   "dialog": {
     "unsavedChanges": "उपयोगिता"
@@ -175,5 +210,246 @@
     "toneStyleUpdated": "टोन और स्टाइल अपडेट किया गया!",
     "beatsUpdated": "बीट्स अपडेट किया गया!",
     "charactersUpdated": "कैरेक्टर अपडेट किए गए!"
+  },
+  "resonance": {
+    "run": "{feature} चलाएँ",
+    "chipLabel": "Blueprint AR",
+    "targetSuffix": "→ लक्ष्य {target}+",
+    "pointsToTarget": "{points} पॉइंट्स",
+    "improveWeakest": "सबसे कमजोर में सुधार करें"
+  },
+  "nextStep": {
+    "remainingToFinish": "{count} समाप्त करने के लिए",
+    "go": "इस पर जाएँ",
+    "generateBlueprint": "Blueprint जेनरेट करें",
+    "saveAudienceAndAnalyze": "दर्शकों को सहेजें और Audience Resonance चलाएं",
+    "applyTopFix": "TOP Audience Resonance FIX लागू करें",
+    "startProduction": "Production Studio पर जाएँ",
+    "reAnalyzeOrRefine": "Blueprint का पुन: विश्लेषण या परिष्कृत करें",
+    "improveScoreOrStart": "स्कोर में सुधार करें या Production Studio पर जाएं",
+    "generating": "Blueprint जनरेट किया जा रहा है..."
+  },
+  "sidePanel": {
+    "tabs": {
+      "resonance": "अनुनाद",
+      "collaborate": "साझेदारी",
+      "reasoning": "तर्क वितर्क"
+    },
+    "collab": {
+      "creatingLink": "लिंक बनाया जा रहा है...",
+      "shareAndCollaborate": "साझा करें और सहयोग करें",
+      "reviewerAudio": "समीक्षक ऑडियो",
+      "voice": "आवाज: {name}",
+      "generatingAudio": "सेक्शन ऑडियो जनरेट किया जा रहा है...",
+      "generateAudio": "सेक्शन ऑडियो जनरेट करें",
+      "status": "स्थिति: {status}",
+      "statusIdleHint": "— तैयार होने पर जेनरेट करें पर टैप करें",
+      "emptyHint": "लिंक बनाने के बाद, आपका फ़ीडबैक, टीम चैट और समीक्षकों के साथ सीधे मैसेज यहाँ दिखाई देंगे।",
+      "reviewCounts": "{reviews, plural, =1 {# review} other {# reviews}} · {reviewers, plural, =1 {# reviewer} other {# reviewers}}",
+      "revokeLink": "लिंक वापस लें",
+      "noFeedback": "अभी तक कोई फ़ीडबैक नहीं मिला है। समीक्षकों के साथ लिंक शेयर करें।",
+      "scoreOutOfFive": "{score}/5",
+      "preferred": "पसंदीदा",
+      "concerns": "चिंताओं",
+      "notes": "नोट्स:",
+      "synthesize": "फ़ीडबैक को सुझावों में बदलें",
+      "synthesized": "संश्लेषित सिफारिशें",
+      "openAssistant": "{assistant} खोलें"
+    }
+  },
+  "audienceResonance": {
+    "title": "Audience Resonance विश्लेषण",
+    "targetAudience": "लक्षित दर्शक",
+    "unsaved": "सेव नहीं किया गया",
+    "analysisDirection": "विश्लेषण दिशा (वैकल्पिक)",
+    "saveAudience": "ऑडियंस सेव करें",
+    "analyze": "विश्लेषण (Analyze)",
+    "reAnalyze": "फिर से विश्लेषण करें",
+    "outOfHundred": "Mithilesh Kumar",
+    "pointsToReach": "{points} {target} + तक पहुँचने के लिए पॉइंट्स",
+    "scoreBreakdown": "स्कोर का ब्यौरा (100 से)",
+    "minusPoints": "−{points}",
+    "recommendations": "सिफारिशें",
+    "improveWith": "{assistant} के साथ सुधार करें →",
+    "strengths": "सामर्थ्य ",
+    "categoryScores": "श्रेणी के स्कोर",
+    "jumpToSection": "मैचिंग Blueprint सेक्शन पर जाएँ",
+    "emptyHint": "अपने लक्षित दर्शकों को सहेजें, फिर विश्लेषण करें कि आपका ब्लूप्रिंट उस दर्शकों के साथ कैसे प्रतिध्वनित होता है।"
+  },
+  "heroImage": {
+    "uploading": "...अपलोड हो रही है",
+    "uploadImage": "इमेज अपलोड करें",
+    "uploadingHero": "हीरो इमेज अपलोड की जा रही है...",
+    "generatingHero": "हीरो इमेज बनाई जा रही है...",
+    "failedToLoad": "Hero इमेज लोड नहीं हो सकी",
+    "failedToLoadHint": "छवि URL की समय सीमा समाप्त हो सकती है या अनुपलब्ध हो सकती है। रिप्लेसमेंट अपलोड करें या फिर से जनरेट करें।",
+    "regenerate": "फिर से जनरेट करें",
+    "regenerateImage": "इमेज को फिर से जनरेट करें",
+    "failedToGenerate": "जनरेट नहीं हो सका",
+    "retry": "वरी कोशिश कयो",
+    "notGenerated": "हीरो इमेज जनरेट नहीं की गई",
+    "generateHero": "हीरो इमेज जनरेट करें",
+    "editPrompt": "प्रॉम्प्ट में बदलाव करें",
+    "downloadImage": "इस छवि को डाउनलोड करें"
+  },
+  "startProduction": {
+    "beats": "बीट्स",
+    "characters": "वर्ण",
+    "arScore": "AR स्कोर",
+    "runtime": "रनटाइम",
+    "artStyle": "कला शैली",
+    "aspectRatio": "आस्पेक्ट रेशो:",
+    "startAnyway": "फिर भी शुरू करें",
+    "cannotStart": "परियोजना नाम.",
+    "recommendationsBefore": "उत्पादन से पहले की सिफारिशें"
+  },
+  "assistant": {
+    "assistantIntro": "{assistant} — अपनी दिशा का वर्णन करें और यह पूरे ब्लूप्रिंट में परिवर्तनों को संतुलित करता है। कोई डायरेक्ट फ़ील्ड एडिटिंग नहीं।",
+    "currentBlueprint": "वर्तमान ब्लूप्रिंट (केवल पढ़ने के लिए)",
+    "noCharacters": "कोई कैरेक्टर नहीं",
+    "noFieldChanges": "फ़ील्ड - स्तर के किसी भी बदलाव का पता नहीं चला (ऊपर दिए गए सारांश की समीक्षा करें)।",
+    "before": "Before",
+    "after": "उसके बाद",
+    "resonanceRecommendations": "अनुनाद सिफारिशें ({count})",
+    "minusPoints": "−{points}",
+    "whatShouldChange": "क्या बदलना चाहिए और क्यों?",
+    "focusOptional": "फ़ोकस (ज़रूरी नहीं)",
+    "guidedRefinements": "गाइडेड रिफ़ाइनमेंट (ज़रूरी नहीं)",
+    "revisionPlan": "संशोधन योजना",
+    "cancelIt": "इसे कैंसिल करें",
+    "generateBalanced": "संतुलित संशोधन उत्पन्न करें",
+    "reviseIntent": "इरादे में बदलाव करें",
+    "applyRevision": "संशोधन लागू करें"
+  },
+  "reimagine": {
+    "reimagineTitle": "Blueprint की फिर से कल्पना करें",
+    "startTitle": "प्रोजेक्ट शुरू करें",
+    "describeProject": "अपने प्रोजेक्ट के बारे में बताएँ",
+    "importTreatment": "इलाज इम्पोर्ट करें",
+    "contentType": "सामग्री के प्रकार",
+    "genre": "घराना",
+    "tone": "टोन",
+    "scope": "दायरा ",
+    "required": "*",
+    "optional": "(ज़रूरी नहीं)",
+    "autoLengthHint": "लंबाई कहानी का अनुसरण करती है; कोई निश्चित रनटाइम मजबूर नहीं किया जाता है।",
+    "targetAudience": "लक्षित दर्शक",
+    "audienceHint": "(अपने शब्दों में बताएँ)",
+    "visualFoundation": "विजुअल फ़ाउंडेशन",
+    "lockedAtBlueprint": "(Blueprint पर बंद)"
+  },
+  "tour": {
+    "stepCounter": "{total} का {current}",
+    "skip": "टूर छोड़ें",
+    "back": "वापस जाएँ",
+    "next": "अगला",
+    "getStarted": "शुरू करें",
+    "welcome": {
+      "title": "Blueprint Studio में आपका स्वागत है",
+      "description": "Blueprint Studio आपकी रचनात्मक नींव है: → समीक्षा उत्पन्न करें → Iterate Production Studio → पर जाएं। एक सतत वर्कफ़्लो — बिखरे हुए संपादक नहीं।",
+      "tip": "साइडबार वर्कफ़्लो गाइड और सह - पायलट हर चरण में आपका अगला चरण दिखाते हैं।"
+    },
+    "generate": {
+      "title": "चरण 1 — जनरेट करें",
+      "description": "सीरीज़ के एपिसोड, कॉन्सेप्ट या इम्पोर्टेड स्क्रिप्ट से शुरू करें। लॉगलाइन, बीट्स, कैरेक्टर और टोन के साथ एक स्ट्रक्चर्ड ट्रीटमेंट जनरेट करें।",
+      "tip": "पूर्ण रीसेट के लिए पुन: उत्पन्न Blueprint का उपयोग करें; स्कोप किए गए परिवर्तनों के लिए सहायक।"
+    },
+    "review": {
+      "title": "चरण 2 — समीक्षा करें",
+      "description": "ट्रीटमेंट कार्ड के हर सेक्शन को पढ़ें। साइड पैनल में Audience Resonance खोलें — अपने लक्षित दर्शकों को सहेजें, फिर विश्लेषण करें।",
+      "tip": "Audience Resonance का लक्ष्य उत्पादन से पहले 80+ है।"
+    },
+    "iterate": {
+      "title": "चरण 3 — दोहराना",
+      "description": "AR सुझावों को सीधे लागू करें या सेक्शन में बदलाव करें। स्कोर सुधार को ट्रैक करने के लिए परिवर्तनों के बाद फिर से विश्लेषण करें।",
+      "tip": "मैचिंग Blueprint सेक्शन पर जाने के लिए कैटेगरी डिडक्शन पर क्लिक करें।"
+    },
+    "collaborate": {
+      "title": "साझेदारी",
+      "description": "समीक्षक के फ़ीडबैक, सेक्शन ऑडियो और संरचित संश्लेषण के लिए साइड पैनल से एक सहयोग लिंक साझा करें।",
+      "tip": "एक कैननिकल कोलैबरेट होम — साइड पैनल टैब।"
+    },
+    "resonance": {
+      "title": "Audience Resonance स्ट्रिप",
+      "description": "हेडर स्ट्रिप आपके AR स्कोर को दिखाती है और 80+ की ओर इशारा करती है। अपने अगले संपादन पर ध्यान केंद्रित करने के लिए \"सबसे कमजोर श्रेणी में सुधार करें\" का उपयोग करें।"
+    },
+    "startProduction": {
+      "title": "चरण 4 — उत्पादन शुरू करें",
+      "description": "जब आपका Blueprint तैयार हो जाए, तो स्क्रिप्ट जनरेशन और प्रोडक्शन पाइपलाइन के लिए प्रोडक्शन शुरू करें।",
+      "tip": "एक सॉफ़्ट गेट 80 से कम की चेतावनी देता है — आप कन्फ़र्मेशन के साथ ओवरराइड कर सकते हैं।"
+    }
+  },
+  "checklist": {
+    "blueprintGenerated": "Blueprint जनरेट किया गया",
+    "audienceSaved": "टार्गेट ऑडियंस सेव किए गए",
+    "arAnalyzed": "Audience Resonance का विश्लेषण किया गया",
+    "arRunAtLeastOnce": "Audience Resonance कम से कम एक बार चलाएँ",
+    "scoreTarget": "स्कोर {target}+",
+    "scoreAtTarget": "स्कोर {target}+ (वर्तमान: {current})",
+    "artStyle": "कला शैली",
+    "artStyleWithValue": "कला शैली ({value})",
+    "aspectRatio": "आस्पेक्ट रेशो:",
+    "aspectRatioWithValue": "आस्पेक्ट रेश्यो ({value})",
+    "collaborateShared": "साझा किया गया लिंक सहयोग करें"
+  },
+  "gate": {
+    "missingBlueprint": "पहले एक Blueprint जेनरेट करें",
+    "missingArtStyle": "विजुअल फ़ाउंडेशन में एक कला शैली चुनें",
+    "missingAspectRatio": "विजुअल फ़ाउंडेशन में एक आस्पेक्ट रेशियो चुनें",
+    "missingAudience": "अपने टार्गेट ऑडियंस को सेव",
+    "missingArRun": "कम से कम एक बार Audience Resonance चलाएँ",
+    "missingScore": "Audience Resonance लक्ष्य तक पहुंचें",
+    "blockGenerateFirst": "उत्पादन शुरू करने से पहले एक Blueprint उत्पन्न करें।",
+    "needArtStyle": "Blueprint विजुअल फ़ाउंडेशन में एक कला शैली का चयन करें।",
+    "needAspectRatio": "Blueprint विजुअल फ़ाउंडेशन में एक आस्पेक्ट रेशियो चुनें।",
+    "needAudience": "अनुनाद पैनल में अपने लक्षित दर्शकों को सहेजें।",
+    "needArRun": "कम से कम एक बार Audience Resonance चलाएं।",
+    "needScore": "Audience Resonance {target} (स्कोर: {score}) से नीचे है।"
+  },
+  "assistantButton": {
+    "label": "सहायकlevel",
+    "scopedLabel": "सहायक — {scope}",
+    "tooltip": "{brand} — सादे शब्दों में परिवर्तन का वर्णन करें और यह आपके लिए संशोधित होता है"
+  },
+  "chips": {
+    "strong-concept": "मजबूत अवधारणा",
+    "needs-clarity": "स्पष्टता की आवश्यकता है",
+    "wrong-tone": "ऑडियंस के लिए गलत लहज़ा",
+    "compelling-hook": "आकर्षक हुक",
+    "ready-to-produce": "उत्पादन के लिए तैयार",
+    "core-clear-logline": "लॉगलाइन साफ़ करें",
+    "core-weak-hook": "कमजोर हुक",
+    "core-genre-fit": "शैली अच्छी तरह से फिट बैठती है",
+    "story-strong-arc": "मज़बूत कहानी की चाप",
+    "story-confusing": "कहानी उलझन में डालती है",
+    "story-stakes": "दांव लगाएँ",
+    "char-compelling": "आकर्षक कैरेक्टर",
+    "char-flat": "फ्लैट कैरेक्टर आर्क",
+    "char-motivation": "अस्पष्ट प्रेरणा",
+    "beats-pacing": "पेसिंग ड्रैग्स",
+    "beats-midpoint": "मिडपॉइंट मौजूद नहीं है",
+    "beats-structure": "ठोस संरचना",
+    "tone-consistent": "स्वर सुसंगत",
+    "tone-off": "टोन बंद महसूस होता है",
+    "tone-visual": "विज़ुअल स्टाइल अस्पष्ट है"
+  },
+  "workflowGuide": {
+    "group": {
+      "create-story": "अपनी कहानी बनाएँ",
+      "refine-blueprint": "अपने Blueprint को परिष्कृत करें",
+      "enhance-experience": "अनुभव बढ़ाएँ",
+      "start-production": "Production Studio के लिए तैयार"
+    },
+    "step": {
+      "enter-idea": "अपना विचार या विषय दर्ज करें",
+      "generate-blueprint": "Blueprint जेनरेट करें",
+      "review-sections": "सेक्शन पर गौर करें और उसमें बदलाव करें",
+      "run-resonance": "Audience Resonance चलाएं",
+      "apply-fixes": "झटपट सुधार लागू करें",
+      "regenerate-hero": "हीरो इमेज को फिर से जनरेट करें",
+      "preview-audio": "ऑडियो के साथ पूर्वावलोकन करें",
+      "collaborate-export": "सहयोग करें और एक्सपोर्ट करें",
+      "start-production": "Production Studio पर जाएँ"
+    }
   }
 }

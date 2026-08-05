@@ -14,7 +14,31 @@
     "saved": "Enregistré",
     "saveFailed": "Echec de l’enregistrement",
     "syncedToProduction": "Blueprint synchronisé avec Production Studio - régénérez votre script lorsque vous êtes prêt.",
-    "syncFailed": "Blueprint mis à jour, mais Production Studio Sync a échoué"
+    "syncFailed": "Blueprint mis à jour, mais Production Studio Sync a échoué",
+    "untitled": "Sans titre",
+    "editHeroImage": "Modifier l'image du héros — {title}",
+    "empty": {
+      "title": "Démarrer un projet",
+      "description": "Décrivez votre projet et générez un Blueprint professionnel avec une structure d'histoire, des personnages et une direction visuelle alimentés par l'IA.",
+      "action": "Commencer un projet"
+    },
+    "toast": {
+      "shareLinkReady": "Lien de partage prêt — copié dans le presse-papiers",
+      "saveBeforeSharing": "Enregistrez le projet avant de le partager",
+      "generateBeforeSharing": "Générer un plan avant de le partager",
+      "noVariantToShare": "Aucune variante de traitement à partager",
+      "shareLinkFailed": "Échec de la création du lien de partage",
+      "noVariantFound": "Aucune variante de Blueprint trouvée",
+      "analysisSaveFailed": "Analyse terminée mais échec de l'enregistrement dans le projet",
+      "heroFailedWithReason": "{reason} Cliquez sur l'image pour réessayer.",
+      "heroFailed": "Échec de la génération de l'image du héros. Cliquez sur l'image pour réessayer.",
+      "autoGenerateFailed": "Échec de la génération automatique de Blueprint.",
+      "heroUploaded": "Image mise en ligne correctement",
+      "heroUploadFailed": "L’image n’a pas pu être téléchargée",
+      "projectSaved": "Projet sauvegardé !",
+      "projectCreated": "Projet crée",
+      "projectSaveFailed": "Échec de l'enregistrement du projet"
+    }
   },
   "tabs": {
     "core": "Core",
@@ -81,7 +105,17 @@
     "refineNote": "💡 Les personnages seront affinés avec des images et des attributs détaillés dans la production"
   },
   "reasoning": {
-    "whyChoices": "Pourquoi ces choix<x id=\"2\"/>?"
+    "whyChoices": "Pourquoi ces choix<x id=\"2\"/>?",
+    "title": "Raisonnement narratif",
+    "subtitle": "Pourquoi l'IA a fait ces choix de narration",
+    "noneRecorded": "Aucun raisonnement enregistré pour ce plan pour le moment. Régénérez-le pour saisir pourquoi l'IA a fait ses choix de narration.",
+    "notProvided": "L'IA n'a pas fourni de raisonnement narratif pour ce plan. Régénérez-le pour voir les décisions créatives.",
+    "characterFocus": "Focalisation sur les personnages",
+    "keyDecisions": "Décisions créatives",
+    "why": "Pourquoi :",
+    "impact": "Impact :",
+    "storyStrengths": "Points forts de l'histoire",
+    "wantDifferentEmphasis": "Vous voulez un accent différent ?"
   },
   "help": {
     "title": "Comment Flow crée votre histoire",
@@ -158,7 +192,8 @@
     "strengthenArcs": "Renforcer les arcs",
     "distinctVoices": "Voix distinctes",
     "relationshipDynamics": "Dynamique relationnelle",
-    "whatShouldChange": "Qu'est-ce qui devrait changer et pourquoi ?"
+    "whatShouldChange": "Qu'est-ce qui devrait changer et pourquoi ?",
+    "blueprintUpdated": "Blueprint mis À jour"
   },
   "dialog": {
     "unsavedChanges": "Modifications non enregistrées"
@@ -175,5 +210,246 @@
     "toneStyleUpdated": "Ton et style mis à jour !",
     "beatsUpdated": "Beats mis à jour !",
     "charactersUpdated": "Caractères mis à jour !"
+  },
+  "resonance": {
+    "run": "Exécuter {feature}",
+    "chipLabel": "Blueprint AR",
+    "targetSuffix": "→ cible {target}+",
+    "pointsToTarget": "{points} PTS",
+    "improveWeakest": "Améliorer le plus faible"
+  },
+  "nextStep": {
+    "remainingToFinish": "{count} pour finir",
+    "go": "OK",
+    "generateBlueprint": "Générer Blueprint",
+    "saveAudienceAndAnalyze": "Enregistrer LE public ET exécuter Audience Resonance",
+    "applyTopFix": "Appliquer top Audience Resonance fix",
+    "startProduction": "Aller à Production Studio",
+    "reAnalyzeOrRefine": "Réanalyser ou affiner Blueprint",
+    "improveScoreOrStart": "Améliorer le score ou Aller à Production Studio",
+    "generating": "Génération de Blueprint…"
+  },
+  "sidePanel": {
+    "tabs": {
+      "resonance": "Résonance",
+      "collaborate": "Collaborer",
+      "reasoning": "Raisonnement"
+    },
+    "collab": {
+      "creatingLink": "Création d'un lien",
+      "shareAndCollaborate": "Partager et collaborer",
+      "reviewerAudio": "Audio du réviseur",
+      "voice": "Voix : {name}",
+      "generatingAudio": "Génération de l'audio de la section…",
+      "generateAudio": "Générer un audio de section",
+      "status": "Statut : {status}",
+      "statusIdleHint": "— appuyez sur Générer lorsque vous êtes prêt",
+      "emptyHint": "Après avoir créé un lien, les commentaires, le clavardage d'équipe et les messages directs avec les évaluateurs apparaîtront ici.",
+      "reviewCounts": "{reviews, plural, =1 {# review} other {# reviews}} · {reviewers, plural, =1 {# reviewer} other {# reviewers}}",
+      "revokeLink": "Révoquer le lien",
+      "noFeedback": "Pas encore de commentaire. Partagez le lien avec les évaluateurs.",
+      "scoreOutOfFive": "{score}/5",
+      "preferred": "Préféré",
+      "concerns": "Préoccupations&#xA0;:",
+      "notes": "Notes: ",
+      "synthesize": "Transformer les commentaires en recommandations",
+      "synthesized": "Recommandations synthétisées",
+      "openAssistant": "Ouvrir {assistant}"
+    }
+  },
+  "audienceResonance": {
+    "title": "Audience Resonance Analysis",
+    "targetAudience": "Public cible",
+    "unsaved": "Non enregistré",
+    "analysisDirection": "Direction d'analyse (facultatif)",
+    "saveAudience": "Audiences",
+    "analyze": "Analyze",
+    "reAnalyze": "Réanalyser",
+    "outOfHundred": "/ 100",
+    "pointsToReach": "Points {points} pour atteindre {target}+",
+    "scoreBreakdown": "Répartition des scores (à partir de 100)",
+    "minusPoints": "−{points}",
+    "recommendations": "Recommandations",
+    "improveWith": "Améliorez-vous avec {assistant} →",
+    "strengths": "Points forts",
+    "categoryScores": "Scores de catégorie",
+    "jumpToSection": "Aller à la section Blueprint correspondante",
+    "emptyHint": "Enregistrez votre public cible, puis analysez comment votre plan résonne avec ce public."
+  },
+  "heroImage": {
+    "uploading": "Transfert en cours...",
+    "uploadImage": "Uploader une image",
+    "uploadingHero": "Téléchargement de l'image du héros...",
+    "generatingHero": "Génération de l'image du héros...",
+    "failedToLoad": "L'image n’a pas pu être chargée",
+    "failedToLoadHint": "L'URL de l'image peut être expirée ou indisponible. Téléchargez un produit de remplacement ou régénérez-le.",
+    "regenerate": "Regénérer",
+    "regenerateImage": "Régénérer l'image",
+    "failedToGenerate": "Échec lors de la création",
+    "retry": "Réessayer",
+    "notGenerated": "Image de héros non générée",
+    "generateHero": "Générer une image de héros",
+    "editPrompt": "Modifier l'invite",
+    "downloadImage": "Télécharger l'image"
+  },
+  "startProduction": {
+    "beats": "Beats",
+    "characters": "Caractères",
+    "arScore": "Score AR",
+    "runtime": "Durée de cycle ",
+    "artStyle": "style nail art",
+    "aspectRatio": "Rapport d'aspect",
+    "startAnyway": "Commencer quand même",
+    "cannotStart": "Vous ne pouvez pas encore commencer.",
+    "recommendationsBefore": "Recommandations avant la production"
+  },
+  "assistant": {
+    "assistantIntro": "{assistant} — décrivez votre direction et équilibrez les changements sur l'ensemble du plan. Pas de modification directe du champ.",
+    "currentBlueprint": "Plan actuel (en lecture seule)",
+    "noCharacters": "Aucun personnages",
+    "noFieldChanges": "Aucun changement au niveau du champ détecté (voir le résumé ci-dessus).",
+    "before": "Avant",
+    "after": "Après",
+    "resonanceRecommendations": "Recommandations de résonance ({count})",
+    "minusPoints": "−{points}",
+    "whatShouldChange": "Qu'est-ce qui devrait changer et pourquoi ?",
+    "focusOptional": "Focus (facultatif)",
+    "guidedRefinements": "Raffinements guidés (facultatif)",
+    "revisionPlan": "Plan de révision",
+    "cancelIt": "- Annule-le.",
+    "generateBalanced": "Générer une révision équilibrée",
+    "reviseIntent": "Réviser l'intention",
+    "applyRevision": "Appliquer la révision"
+  },
+  "reimagine": {
+    "reimagineTitle": "Réimaginez Blueprint",
+    "startTitle": "Commencer un projet",
+    "describeProject": "Décrivez votre projet",
+    "importTreatment": "Importer un traitement",
+    "contentType": "Tyde de contenu",
+    "genre": "Genre",
+    "tone": "Ton",
+    "scope": "Champ d’application",
+    "required": "Livre 2ème — I. Division des capitaux&#09;127",
+    "optional": "(facultatif)",
+    "autoLengthHint": "La longueur suit l'histoire ; aucune durée d'exécution fixe n'est forcée.",
+    "targetAudience": "Public cible",
+    "audienceHint": "décrire (avec vos propres mots)",
+    "visualFoundation": "Fond de teint visuel",
+    "lockedAtBlueprint": "(verrouillé à Blueprint)"
+  },
+  "tour": {
+    "stepCounter": "{current} de {total}",
+    "skip": "Passer la découverte",
+    "back": "Retour",
+    "next": "Suivant",
+    "getStarted": "Pour commencer",
+    "welcome": {
+      "title": "Bienvenue chez Blueprint Studio",
+      "description": "Blueprint Studio est votre fondation créative : Générez des → itérations de → révision → Allez à Production Studio. Un flux de travail continu — pas des éditeurs dispersés.",
+      "tip": "Le guide de flux de travail de la barre latérale et le copilote montrent votre prochaine étape à chaque étape."
+    },
+    "generate": {
+      "title": "Étape 1 — Générer",
+      "description": "Commencez à partir d'un épisode de série, d'un concept ou d'un script importé. Générez un traitement structuré avec la logline, les battements, les personnages et le ton.",
+      "tip": "Utilisez Regenerate Blueprint pour une réinitialisation complète ; l'Assistant pour les changements de portée."
+    },
+    "review": {
+      "title": "Étape 2 - Examiner",
+      "description": "Lisez chaque section de la carte de traitement. Ouvrez Audience Resonance dans le panneau latéral — enregistrez votre public cible, puis analysez.",
+      "tip": "Audience Resonance cible 80+ avant Production."
+    },
+    "iterate": {
+      "title": "Étape 3 — Itérer",
+      "description": "Appliquez les recommandations de RA ou modifiez directement les sections. Réanalyser après les modifications pour suivre l'amélioration du score.",
+      "tip": "Cliquez sur une déduction de catégorie pour accéder à la section correspondante de Blueprint."
+    },
+    "collaborate": {
+      "title": "Collaborer",
+      "description": "Partagez un lien de collaboration à partir du panneau latéral pour les commentaires des évaluateurs, l'audio de la section et la synthèse structurée.",
+      "tip": "One Canonical Collaborate Home — l'onglet du panneau latéral."
+    },
+    "resonance": {
+      "title": "Audience Resonance strip",
+      "description": "La bande d'en-tête affiche votre score AR et indique plus de 80. Utilisez « Améliorer la catégorie la plus faible » pour cibler votre prochaine modification."
+    },
+    "startProduction": {
+      "title": "Étape 4 — Démarrer la production",
+      "description": "Lorsque votre Blueprint est prêt, Démarrer la production passe à la génération de scripts et au pipeline de production.",
+      "tip": "Une barrière souple avertit en dessous de 80 — vous pouvez remplacer par une confirmation."
+    }
+  },
+  "checklist": {
+    "blueprintGenerated": "Blueprint généré",
+    "audienceSaved": "Public cible enregistré",
+    "arAnalyzed": "Audience Resonance analysée",
+    "arRunAtLeastOnce": "Audience Resonance run at least once",
+    "scoreTarget": "Score {target}+",
+    "scoreAtTarget": "Score {target}+ (courant : {current})",
+    "artStyle": "style nail art",
+    "artStyleWithValue": "Style artistique ({value})",
+    "aspectRatio": "Rapport d'aspect",
+    "aspectRatioWithValue": "Rapport d'aspect ({value})",
+    "collaborateShared": "Lien de collaboration partagé"
+  },
+  "gate": {
+    "missingBlueprint": "Générer d'abord un Blueprint",
+    "missingArtStyle": "Sélectionnez un style artistique dans Visual Foundation",
+    "missingAspectRatio": "Sélectionnez un rapport d'aspect dans Visual Foundation",
+    "missingAudience": "Votre public cible",
+    "missingArRun": "Exécuter Audience Resonance au moins une fois",
+    "missingScore": "Atteindre LA cible Audience Resonance",
+    "blockGenerateFirst": "Générer un Blueprint avant de démarrer la production.",
+    "needArtStyle": "Sélectionnez un style artistique dans Blueprint Visual Foundation.",
+    "needAspectRatio": "Sélectionnez un rapport d'aspect dans Blueprint Visual Foundation.",
+    "needAudience": "Enregistrez votre public cible dans le panneau Résonance.",
+    "needArRun": "Exécutez Audience Resonance au moins une fois.",
+    "needScore": "Audience Resonance est inférieur à {target} (score : {score})."
+  },
+  "assistantButton": {
+    "label": "Assistant",
+    "scopedLabel": "Assistant — {scope}",
+    "tooltip": "{brand} — décrivez le changement en termes simples et il révise pour vous"
+  },
+  "chips": {
+    "strong-concept": "<x id=\"1\"/>Concept Fort",
+    "needs-clarity": "Nécessite de la clarté",
+    "wrong-tone": "Mauvais ton pour le public",
+    "compelling-hook": "Crochet convaincant",
+    "ready-to-produce": "Prêt à produire",
+    "core-clear-logline": "Effacer la logline",
+    "core-weak-hook": "Crochet faible",
+    "core-genre-fit": "Le genre s'adapte bien",
+    "story-strong-arc": "Arc narratif fort",
+    "story-confusing": "Histoire déroutante",
+    "story-stakes": "Augmenter les enjeux",
+    "char-compelling": "Caractères convaincants",
+    "char-flat": "Arc de caractère plat",
+    "char-motivation": "Motivation peu claire",
+    "beats-pacing": "Traînées de stimulation",
+    "beats-midpoint": "Point médian manquant",
+    "beats-structure": "Structure consolidée.",
+    "tone-consistent": "Tonalité cohérente",
+    "tone-off": "Le ton est éteint",
+    "tone-visual": "Style visuel peu clair"
+  },
+  "workflowGuide": {
+    "group": {
+      "create-story": "Crée ta propre histoire",
+      "refine-blueprint": "Affinez votre Blueprint",
+      "enhance-experience": "Améliorer l'expérience client",
+      "start-production": "Prêt pour Production Studio"
+    },
+    "step": {
+      "enter-idea": "Saisissez votre idée ou votre sujet",
+      "generate-blueprint": "Générer Blueprint",
+      "review-sections": "Examiner et modifier les sections",
+      "run-resonance": "Exécuter Audience Resonance",
+      "apply-fixes": "Appliquer des solutions rapides",
+      "regenerate-hero": "Régénérer l'image du héros",
+      "preview-audio": "Aperçu avec audio",
+      "collaborate-export": "Collaborer et exporter",
+      "start-production": "Aller à Production Studio"
+    }
   }
 }

@@ -14,7 +14,31 @@
     "saved": "[ترجمة المصطلح: Saved]",
     "saveFailed": "فشل الحفظ",
     "syncedToProduction": "Blueprint تمت مزامنته مع Production Studio - قم بتجديد البرنامج النصي الخاص بك عندما يكون جاهزًا.",
-    "syncFailed": "تم تحديث Blueprint، ولكن فشلت مزامنة Production Studio"
+    "syncFailed": "تم تحديث Blueprint، ولكن فشلت مزامنة Production Studio",
+    "untitled": "بدون عنوان",
+    "editHeroImage": "تعديل صورة البطل — {title}",
+    "empty": {
+      "title": "ابدأ مشروعك",
+      "description": "صف مشروعك وقم بإنشاء Blueprint احترافي مع بنية قصة مدعومة بالذكاء الاصطناعي وشخصيات واتجاه مرئي.",
+      "action": "بدء المشروع"
+    },
+    "toast": {
+      "shareLinkReady": "مشاركة الرابط جاهز — تم النسخ إلى الحافظة",
+      "saveBeforeSharing": "احفظ المشروع قبل المشاركة",
+      "generateBeforeSharing": "إنشاء مخطط قبل المشاركة",
+      "noVariantToShare": "لا يوجد متغير علاج لمشاركته",
+      "shareLinkFailed": "تعذر إنشاء رابط المشاركة",
+      "noVariantFound": "لم يتم العثور على متغير Blueprint",
+      "analysisSaveFailed": "اكتمل التحليل ولكن فشل الحفظ في المشروع",
+      "heroFailedWithReason": "{reason} انقر على الصورة لإعادة المحاولة.",
+      "heroFailed": "فشل إنشاء صورة البطل. انقر على الصورة لإعادة المحاولة.",
+      "autoGenerateFailed": "فشل إنشاء Blueprint تلقائيًا.",
+      "heroUploaded": "تم تحميل الصورة بنجاح",
+      "heroUploadFailed": "فشل تحميل الصورة",
+      "projectSaved": "تم حفظ المشروع.",
+      "projectCreated": "تم انشاء المشروع بواسطة",
+      "projectSaveFailed": "تعذر حفظ المشروع"
+    }
   },
   "tabs": {
     "core": "مهن أساسية",
@@ -81,7 +105,17 @@
     "refineNote": "سيتم تنقيح 💡 الشخصيات بالصور والسمات التفصيلية في الإنتاج"
   },
   "reasoning": {
-    "whyChoices": "لماذا هذه الخيارات ؟"
+    "whyChoices": "لماذا هذه الخيارات ؟",
+    "title": "التفكير السردي",
+    "subtitle": "لماذا اتخذ الذكاء الاصطناعي خيارات سرد القصص هذه",
+    "noneRecorded": "لم يتم تسجيل أي منطق لهذا المخطط حتى الآن. قم بتجديده لالتقاط سبب قيام الذكاء الاصطناعي بخياراته في سرد القصص.",
+    "notProvided": "لم يقدم الذكاء الاصطناعي المنطق السردي لهذا المخطط. قم بتجديده لرؤية القرارات الإبداعية.",
+    "characterFocus": "التركيز على الشخصية",
+    "keyDecisions": "القرارات الإبداعية الرئيسية",
+    "why": "لماذا؟",
+    "impact": "التأثير:",
+    "storyStrengths": "نقاط القوة في القصة",
+    "wantDifferentEmphasis": "هل تريد تركيزًا مختلفًا ؟"
   },
   "help": {
     "title": "كيف ينشئ Flow قصتك",
@@ -158,7 +192,8 @@
     "strengthenArcs": "تقوية الأقواس",
     "distinctVoices": "أصوات متميزة",
     "relationshipDynamics": "ديناميكيات العلاقات",
-    "whatShouldChange": "ما الذي يجب أن يتغير ولماذا ؟"
+    "whatShouldChange": "ما الذي يجب أن يتغير ولماذا ؟",
+    "blueprintUpdated": "تم تحديث Blueprint"
   },
   "dialog": {
     "unsavedChanges": "تغييرات غير محفوظة"
@@ -175,5 +210,246 @@
     "toneStyleUpdated": "تم تحديث النغمة والأسلوب!",
     "beatsUpdated": "تم تحديث Beats!",
     "charactersUpdated": "تم تحديث الشخصيات!"
+  },
+  "resonance": {
+    "run": "تشغيل {feature}",
+    "chipLabel": "Blueprint AR",
+    "targetSuffix": "→ target {target}+",
+    "pointsToTarget": "{points} نقطة",
+    "improveWeakest": "تحسين الأضعف"
+  },
+  "nextStep": {
+    "remainingToFinish": "{count} للإنهاء",
+    "go": "انتقل",
+    "generateBlueprint": "إنشاء Blueprint",
+    "saveAudienceAndAnalyze": "حفظ الجمهور وتشغيل SFAIUDIENCE_RESONANCETERM",
+    "applyTopFix": "تطبيق TOP Audience Resonance FIX",
+    "startProduction": "انتقل إلى Production Studio",
+    "reAnalyzeOrRefine": "إعادة تحليل أو تنقيح Blueprint",
+    "improveScoreOrStart": "تحسين النتيجة أو الانتقال إلى Production Studio",
+    "generating": "جارٍ التوليد Blueprint..."
+  },
+  "sidePanel": {
+    "tabs": {
+      "resonance": "الصدى",
+      "collaborate": "التعاون",
+      "reasoning": "السبب"
+    },
+    "collab": {
+      "creatingLink": "جارٍ إنشاء الرابط...",
+      "shareAndCollaborate": "المشاركة والتعاون",
+      "reviewerAudio": "صوت المراجع",
+      "voice": "الصوت: {name}",
+      "generatingAudio": "جارٍ إنشاء مقطع صوتي...",
+      "generateAudio": "إنشاء مقطع صوتي",
+      "status": "الحالة: {status}",
+      "statusIdleHint": "— اضغط على إنشاء عندما تكون مستعداً",
+      "emptyHint": "بعد إنشاء رابط، ستظهر التعليقات ودردشة الفريق والرسائل المباشرة مع المراجعين هنا.",
+      "reviewCounts": "{reviews, plural, =1 {# review} other {# reviews}} · {reviewers, plural, =1 {# reviewer} other {# reviewers}}",
+      "revokeLink": "إلغاء الرابط",
+      "noFeedback": "لا توجد ملاحظات حتى الآن. شارك الرابط مع المراجعين.",
+      "scoreOutOfFive": "{score}/5",
+      "preferred": "مفضل ، مميز ، ممتاز",
+      "concerns": "المخاوف:",
+      "notes": "الملاحظات: ",
+      "synthesize": "تحويل التعليقات إلى توصيات",
+      "synthesized": "توصيات مجمعة",
+      "openAssistant": "افتح {assistant}"
+    }
+  },
+  "audienceResonance": {
+    "title": "Audience Resonance تحليل",
+    "targetAudience": "الفئات المستهدفة",
+    "unsaved": "لم يتم الحفظ",
+    "analysisDirection": "اتجاه التحليل (اختياري)",
+    "saveAudience": "حفظ الجمهور",
+    "analyze": "التحليل",
+    "reAnalyze": "إعادة التحليل",
+    "outOfHundred": "100",
+    "pointsToReach": "نقاط {points} للوصول إلى {target}+",
+    "scoreBreakdown": "توزيع الدرجات (من 100)",
+    "minusPoints": "-{points}",
+    "recommendations": "اﻟﺘﻮﺻﻴﺎت",
+    "improveWith": "تحسين مع {assistant} →",
+    "strengths": "نقاط القوة",
+    "categoryScores": "<g id=\"2\">درجات الفئة</g><x id=\"1\"/>",
+    "jumpToSection": "الانتقال إلى قسم SFAIBLUEPRINTERM المطابق",
+    "emptyHint": "احفظ جمهورك المستهدف، ثم حلل كيف يتردد صدى مخططك مع هذا الجمهور."
+  },
+  "heroImage": {
+    "uploading": "Uploading...",
+    "uploadImage": "رفع صورة",
+    "uploadingHero": "جارٍ تحميل الصورة الرئيسية...",
+    "generatingHero": "جارٍ إنشاء صورة رئيسية...",
+    "failedToLoad": "فشل تحميل صورة البطل",
+    "failedToLoadHint": "قد يكون عنوان URL للصورة منتهي الصلاحية أو غير متاح. قم بتحميل بديل أو تجديد.",
+    "regenerate": "يجدد",
+    "regenerateImage": "إعادة إنشاء الصورة",
+    "failedToGenerate": "فشل إنشاء طلب توقيع شهادة",
+    "retry": "أعد المحاولة",
+    "notGenerated": "لم يتم إنشاء صورة البطل",
+    "generateHero": "إنشاء صورة البطل",
+    "editPrompt": "تعديل المطالبة",
+    "downloadImage": "تحميل الصورة"
+  },
+  "startProduction": {
+    "beats": "يدق",
+    "characters": "الرموز",
+    "arScore": "درجة الواقع المعزز",
+    "runtime": "وقت التشغيل",
+    "artStyle": "طراز فني",
+    "aspectRatio": "نسبة الارتفاع إلى العرض",
+    "startAnyway": "لأبد على الأقل",
+    "cannotStart": "لا يمكن البدء بعد",
+    "recommendationsBefore": "التوصيات قبل الإنتاج"
+  },
+  "assistant": {
+    "assistantIntro": "{assistant} — صف اتجاهك ويوازن التغييرات عبر المخطط الكامل. لا يوجد تعديل مباشر للحقل.",
+    "currentBlueprint": "المخطط الحالي (للقراءة فقط)",
+    "noCharacters": "لا توجد أحرف",
+    "noFieldChanges": "لم يتم اكتشاف أي تغييرات على مستوى الحقل (راجع الملخص أعلاه).",
+    "before": "[ترجمة المصطلح: Before]",
+    "after": "[ترجمة المصطلح: After]",
+    "resonanceRecommendations": "توصيات الرنين ({count})",
+    "minusPoints": "-{points}",
+    "whatShouldChange": "ما الذي يجب أن يتغير ولماذا ؟",
+    "focusOptional": "مجال التركيز (اختياري)",
+    "guidedRefinements": "التحسينات الموجهة (اختياري)",
+    "revisionPlan": "خطة المراجعة",
+    "cancelIt": "إلغائها",
+    "generateBalanced": "إنشاء مراجعة متوازنة",
+    "reviseIntent": "مراجعة القصد",
+    "applyRevision": "تطبيق المراجعة"
+  },
+  "reimagine": {
+    "reimagineTitle": "Reimagine Blueprint",
+    "startTitle": "بدء المشروع",
+    "describeProject": "اوصف مشروعك",
+    "importTreatment": "معالجة الاستيراد",
+    "contentType": "نوع المحتوى",
+    "genre": " النوع",
+    "tone": "الوتيرة",
+    "scope": "[ترجمة المصطلح: Scope]",
+    "required": "*",
+    "optional": "(اختياري)",
+    "autoLengthHint": "الطول يتبع القصة ؛ لا يتم فرض وقت تشغيل ثابت.",
+    "targetAudience": "الفئات المستهدفة",
+    "audienceHint": "(صف بكلماتك الخاصة)",
+    "visualFoundation": "فيجوال فاونديشن",
+    "lockedAtBlueprint": "(مقفل في Blueprint)"
+  },
+  "tour": {
+    "stepCounter": "{current} of {total}",
+    "skip": "تخطي الجولة",
+    "back": "[ترجمة المصطلح: Back]",
+    "next": "[ترجمة المصطلح: Next]",
+    "getStarted": "التسجيل في المنصة",
+    "welcome": {
+      "title": "مرحبًا بك في Blueprint Studio",
+      "description": "Blueprint Studio هو الأساس الإبداعي الخاص بك: إنشاء → مراجعة → متكررة → انتقل إلى Production Studio. سير عمل واحد مستمر — ليس محررين مبعثرين.",
+      "tip": "يوضح دليل سير عمل الشريط الجانبي ومساعد الطيار خطوتك التالية في كل مرحلة."
+    },
+    "generate": {
+      "title": "الخطوة 1 — إنشاء",
+      "description": "ابدأ من حلقة مسلسل أو مفهوم أو نص مستورد. قم بإنشاء معالجة منظمة مع خط السجل والنبضات والشخصيات والنبرة.",
+      "tip": "استخدم إعادة إنشاء Blueprint لإعادة تعيين كاملة ؛ المساعد للتغييرات المحددة النطاق."
+    },
+    "review": {
+      "title": "الخطوة 2 — المراجعة",
+      "description": "اقرأ كل قسم في بطاقة العلاج. افتح Audience Resonance في اللوحة الجانبية — احفظ جمهورك المستهدف، ثم حلل.",
+      "tip": "Audience Resonance الهدف هو 80+ قبل الإنتاج."
+    },
+    "iterate": {
+      "title": "الخطوة 3 — التكرار",
+      "description": "تطبيق توصيات الواقع المعزز أو تعديل الأقسام مباشرة. إعادة التحليل بعد التغييرات لتتبع تحسين النتيجة.",
+      "tip": "انقر على خصم فئة للانتقال إلى قسم Blueprint المطابق."
+    },
+    "collaborate": {
+      "title": "التعاون",
+      "description": "شارك رابط تعاون من اللوحة الجانبية للحصول على ملاحظات المراجع وصوت القسم والتوليف المنظم.",
+      "tip": "One canonical Collaborate home — علامة تبويب اللوحة الجانبية."
+    },
+    "resonance": {
+      "title": "Audience Resonance STRIP",
+      "description": "يعرض شريط الرأس درجة الواقع المعزز الخاصة بك ويشير إلى أكثر من 80. استخدم \"تحسين الفئة الأضعف\" لتركيز تعديلك التالي."
+    },
+    "startProduction": {
+      "title": "الخطوة 4 — بدء الإنتاج",
+      "description": "عندما تكون Blueprint جاهزة، ابدأ الإنتاج لتوليد النص وخط أنابيب الإنتاج.",
+      "tip": "تحذر البوابة اللينة أقل من 80 — يمكنك التجاوز مع التأكيد."
+    }
+  },
+  "checklist": {
+    "blueprintGenerated": "تم إنشاء Blueprint",
+    "audienceSaved": "تم حفظ الجمهور المستهدف",
+    "arAnalyzed": "تم تحليل Audience Resonance",
+    "arRunAtLeastOnce": "Audience Resonance تشغيل مرة واحدة على الأقل",
+    "scoreTarget": "النتيجة {target}+",
+    "scoreAtTarget": "النتيجة {target}+ (الحالي: {current})",
+    "artStyle": "طراز فني",
+    "artStyleWithValue": "نمط الفن ({value})",
+    "aspectRatio": "نسبة الارتفاع إلى العرض",
+    "aspectRatioWithValue": "نسبة العرض إلى الارتفاع ({value})",
+    "collaborateShared": "تمت مشاركة رابط التعاون"
+  },
+  "gate": {
+    "missingBlueprint": "إنشاء Blueprint أولاً",
+    "missingArtStyle": "حدد نمطًا فنيًا في Visual Foundation",
+    "missingAspectRatio": "حدد نسبة العرض إلى الارتفاع في Visual Foundation",
+    "missingAudience": "حفظ الجمهور الاستهداف",
+    "missingArRun": "قم بتشغيل Audience Resonance مرة واحدة على الأقل",
+    "missingScore": "الوصول إلى هدف Audience Resonance",
+    "blockGenerateFirst": "إنشاء Blueprint قبل بدء الإنتاج.",
+    "needArtStyle": "حدد نمطًا فنيًا في Blueprint Visual Foundation.",
+    "needAspectRatio": "حدد نسبة العرض إلى الارتفاع في Blueprint Visual Foundation.",
+    "needAudience": "احفظ جمهورك المستهدف في لوحة الرنين.",
+    "needArRun": "قم بتشغيل Audience Resonance مرة واحدة على الأقل.",
+    "needScore": "Audience Resonance أقل من {target} (النتيجة: {score})."
+  },
+  "assistantButton": {
+    "label": "المساعد",
+    "scopedLabel": "مساعد — {scope}",
+    "tooltip": "{brand} — صف التغيير بكلمات بسيطة وراجعه لك"
+  },
+  "chips": {
+    "strong-concept": "مفهوم قوي",
+    "needs-clarity": "يحتاج آدم وضوحا.",
+    "wrong-tone": "نبرة خاطئة للجمهور",
+    "compelling-hook": "خطاف مقنع",
+    "ready-to-produce": "جاهز للإنتاج",
+    "core-clear-logline": "مسح سطر السجل",
+    "core-weak-hook": "خطاف ضعيف",
+    "core-genre-fit": "النوع يتناسب بشكل جيد",
+    "story-strong-arc": "قوس القصة القوية",
+    "story-confusing": "قصة مربكة",
+    "story-stakes": "رفعت الرهان",
+    "char-compelling": "شخصيات مقنعة",
+    "char-flat": "قوس الحرف المسطح",
+    "char-motivation": "دافع غير واضح",
+    "beats-pacing": "عمليات سحب التحفيز",
+    "beats-midpoint": "نقطة المنتصف مفقودة",
+    "beats-structure": "هذا مثل بنية ثابتة",
+    "tone-consistent": "نغمة متسقة",
+    "tone-off": "النغمة تبدو مزعجة",
+    "tone-visual": "النمط المرئي غير واضح"
+  },
+  "workflowGuide": {
+    "group": {
+      "create-story": "أنشئ قصتك",
+      "refine-blueprint": "صقل مؤهلاتك",
+      "enhance-experience": "تعزيز تجارب المعتمرين وضيوف الرحمن",
+      "start-production": "جاهز للتسليم_STUDIOTERM"
+    },
+    "step": {
+      "enter-idea": "أدخل فكرتك أو موضوعك",
+      "generate-blueprint": "إنشاء Blueprint",
+      "review-sections": "مراجعة وتحرير الأقسام",
+      "run-resonance": "تشغيل Audience Resonance",
+      "apply-fixes": "تطبيق الإصلاحات السريعة",
+      "regenerate-hero": "إعادة إنشاء صورة البطل",
+      "preview-audio": "معاينة مع الصوت",
+      "collaborate-export": "التعاون والتصدير",
+      "start-production": "انتقل إلى Production Studio"
+    }
   }
 }

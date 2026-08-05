@@ -89,7 +89,9 @@
     "dismiss": "Ignorer",
     "translatePage": "Traduire cette page",
     "translatePageHint": "Utilise le service de traduction de votre navigateur. La qualité varie et certains contrôles peuvent ne pas se traduire.",
-    "stopTranslating": "langue originale"
+    "stopTranslating": "langue originale",
+    "storyLanguageHint": "Le nouveau contenu est écrit en {language}. Modifiez-le dans Paramètres sous Langues.",
+    "translatingFields": "Traduction de {count, plural, =1 {# field} other {# fields}}…"
   },
   "errors": {
     "generic": "Un problème est survenu. Veuillez réessayer.",

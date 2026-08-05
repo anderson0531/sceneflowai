@@ -14,7 +14,31 @@
     "saved": "Gespeichert",
     "saveFailed": "Speichern fehlgeschlagen",
     "syncedToProduction": "Blueprint synchronisiert mit Production Studio — Regenerieren Sie Ihr Skript, wenn Sie bereit sind.",
-    "syncFailed": "Blueprint aktualisiert, aber Production Studio Sync fehlgeschlagen"
+    "syncFailed": "Blueprint aktualisiert, aber Production Studio Sync fehlgeschlagen",
+    "untitled": "Ohne Titel",
+    "editHeroImage": "Heldenbild bearbeiten — {title}",
+    "empty": {
+      "title": "Starten Sie Ihr Projekt",
+      "description": "Beschreiben Sie Ihr Projekt und generieren Sie ein professionelles Blueprint mit KI-gestützter Story-Struktur, Charakteren und visueller Richtung.",
+      "action": "Projekt starten"
+    },
+    "toast": {
+      "shareLinkReady": "Link teilen bereit — in die Zwischenablage kopiert",
+      "saveBeforeSharing": "Speichern Sie das Projekt, bevor Sie es freigeben",
+      "generateBeforeSharing": "Erstellen Sie einen Blueprint, bevor Sie ihn freigeben",
+      "noVariantToShare": "Keine Behandlungsvariante zum Teilen",
+      "shareLinkFailed": "Fehler beim Erstellen des Freigabelinks",
+      "noVariantFound": "Keine Blueprint-Variante gefunden",
+      "analysisSaveFailed": "Analyse abgeschlossen, konnte aber nicht im Projekt gespeichert werden",
+      "heroFailedWithReason": "{reason} Klicken Sie auf das Bild, um es erneut zu versuchen.",
+      "heroFailed": "Hero-Bildgenerierung fehlgeschlagen. Klicken Sie auf das Bild, um es erneut zu versuchen.",
+      "autoGenerateFailed": "Fehler beim automatischen Generieren von Blueprint.",
+      "heroUploaded": "Bild erfolgreich hochgeladen.",
+      "heroUploadFailed": "Das Bild konnte nicht hochgeladen werden",
+      "projectSaved": "Projekt gespeichert",
+      "projectCreated": "Projekt erstellt",
+      "projectSaveFailed": "Das Projekt kann nicht gespeichert werden."
+    }
   },
   "tabs": {
     "core": "Core",
@@ -81,7 +105,17 @@
     "refineNote": "💡 Charaktere werden mit Bildern und detaillierten Attributen in der Produktion verfeinert"
   },
   "reasoning": {
-    "whyChoices": "Warum diese Entscheidungen?"
+    "whyChoices": "Warum diese Entscheidungen?",
+    "title": "Narratives Denken",
+    "subtitle": "Warum die KI diese Storytelling-Entscheidungen getroffen hat",
+    "noneRecorded": "Für diese Blaupause wurde noch keine Begründung aufgezeichnet. Regenerieren Sie es, um zu erfassen, warum die KI ihre Storytelling-Entscheidungen getroffen hat.",
+    "notProvided": "Die KI lieferte keine erzählerische Begründung für diese Blaupause. Regenerieren Sie es, um die kreativen Entscheidungen zu sehen.",
+    "characterFocus": "Charakterfokus",
+    "keyDecisions": "Kreative Entscheidungen",
+    "why": "Warum:",
+    "impact": "Stoß:",
+    "storyStrengths": "Story-Stärken",
+    "wantDifferentEmphasis": "Möchtest du einen anderen Schwerpunkt?"
   },
   "help": {
     "title": "Wie Flow Ihre Geschichte kreiert",
@@ -158,7 +192,8 @@
     "strengthenArcs": "Bögen stärken",
     "distinctVoices": "Ausgeprägte Stimmen",
     "relationshipDynamics": "Beziehungsdynamik",
-    "whatShouldChange": "Was sollte sich ändern und warum?"
+    "whatShouldChange": "Was sollte sich ändern und warum?",
+    "blueprintUpdated": "Blueprint aktualisiert"
   },
   "dialog": {
     "unsavedChanges": "Nicht gespeicherte Änderungen"
@@ -175,5 +210,246 @@
     "toneStyleUpdated": "Ton & Stil aktualisiert!",
     "beatsUpdated": "Beats aktualisiert!",
     "charactersUpdated": "Charaktere aktualisiert!"
+  },
+  "resonance": {
+    "run": "Führen Sie {feature} aus",
+    "chipLabel": "Blueprint AR",
+    "targetSuffix": "→ ziel {target}+",
+    "pointsToTarget": "{points} Pkt.",
+    "improveWeakest": "Am schwächsten verbessern"
+  },
+  "nextStep": {
+    "remainingToFinish": "{count} zum Abschluss",
+    "go": "Los",
+    "generateBlueprint": "Blueprint generieren",
+    "saveAudienceAndAnalyze": "Zielgruppe speichern & Audience Resonance ausführen",
+    "applyTopFix": "Top Audience Resonance Fix anwenden",
+    "startProduction": "Gehen Sie zu Production Studio",
+    "reAnalyzeOrRefine": "Blueprint neu analysieren oder verfeinern",
+    "improveScoreOrStart": "Verbessere die Punktzahl oder gehe zu Production Studio",
+    "generating": "Blueprint wird generiert..."
+  },
+  "sidePanel": {
+    "tabs": {
+      "resonance": "Resonanz",
+      "collaborate": "Zusammenarbeiten",
+      "reasoning": "Begründung"
+    },
+    "collab": {
+      "creatingLink": "Link wird erstellt...",
+      "shareAndCollaborate": "Teilen und Zusammenarbeiten",
+      "reviewerAudio": "Reviewer-Audio",
+      "voice": "Stimme: {name}",
+      "generatingAudio": "Abschnitt-Audio wird generiert...",
+      "generateAudio": "Abschnitt-Audio generieren",
+      "status": "Status: {status}",
+      "statusIdleHint": "— Tippen Sie auf Generieren, wenn Sie bereit sind",
+      "emptyHint": "Nachdem du einen Link erstellt hast, werden hier Feedback, Team-Chat und Direktnachrichten mit Prüfern angezeigt.",
+      "reviewCounts": "{reviews, plural, =1 {# review} other {# reviews}} · {reviewers, plural, =1 {# reviewer} other {# reviewers}}",
+      "revokeLink": "Link widerrufen",
+      "noFeedback": "Noch kein Feedback. Teilen Sie den Link mit den Prüfern.",
+      "scoreOutOfFive": "{score}/5",
+      "preferred": " ,Bevorzugt",
+      "concerns": "Bedenken:",
+      "notes": "Anmerkungen: ",
+      "synthesize": "Feedback in Empfehlungen umwandeln",
+      "synthesized": "Zusammengefasste Empfehlungen",
+      "openAssistant": "Öffnen Sie {assistant}"
+    }
+  },
+  "audienceResonance": {
+    "title": "Audience Resonance Analyse",
+    "targetAudience": "Zielgruppe",
+    "unsaved": "Ungesichert",
+    "analysisDirection": "Analyserichtung (optional)",
+    "saveAudience": "Zielgruppe speichern",
+    "analyze": "Analysieren",
+    "reAnalyze": "Erneut analysieren",
+    "outOfHundred": "/ 100",
+    "pointsToReach": "{points} Punkte, um {target} + zu erreichen",
+    "scoreBreakdown": "Punkteaufschlüsselung (von 100)",
+    "minusPoints": "−{points}",
+    "recommendations": "Empfehlungen",
+    "improveWith": "Verbessern mit {assistant} →",
+    "strengths": "Stärken",
+    "categoryScores": "Kategorie: Highscores",
+    "jumpToSection": "Zum Abschnitt Matching Blueprint springen",
+    "emptyHint": "Speichern Sie Ihre Zielgruppe und analysieren Sie dann, wie Ihr Blueprint bei dieser Zielgruppe ankommt."
+  },
+  "heroImage": {
+    "uploading": "Wird hochgeladen...",
+    "uploadImage": "Bild hochladen",
+    "uploadingHero": "Hero-Bild wird hochgeladen...",
+    "generatingHero": "Hero-Bild wird generiert...",
+    "failedToLoad": "Hero-Bild konnte nicht geladen werden",
+    "failedToLoadHint": "Die Bild-URL ist möglicherweise abgelaufen oder nicht verfügbar. Laden Sie einen Ersatz hoch oder regenerieren Sie ihn.",
+    "regenerate": "Regenerieren",
+    "regenerateImage": "Bild neu generieren",
+    "failedToGenerate": "Code konnte nicht generiert werden",
+    "retry": "Erneut versuchen",
+    "notGenerated": "Heldenbild nicht generiert",
+    "generateHero": "Heldenbild generieren",
+    "editPrompt": "Eingabeaufforderung bearbeiten",
+    "downloadImage": "Bild herunterladen"
+  },
+  "startProduction": {
+    "beats": "Schläge",
+    "characters": "Buchstaben",
+    "arScore": "AR-Score",
+    "runtime": "Laufzeit",
+    "artStyle": "Art, Style",
+    "aspectRatio": "Bildverhältnis",
+    "startAnyway": "Dennoch starten?",
+    "cannotStart": "Fehler beim Starten.",
+    "recommendationsBefore": "Empfehlungen vor der Produktion"
+  },
+  "assistant": {
+    "assistantIntro": "{assistant} — beschreiben Sie Ihre Richtung und es gleicht Änderungen über den gesamten Plan aus. Keine direkte Feldbearbeitung.",
+    "currentBlueprint": "Aktueller Blueprint (schreibgeschützt)",
+    "noCharacters": "Keine Zeichen",
+    "noFieldChanges": "Keine Änderungen auf Feldebene erkannt (Zusammenfassung oben).",
+    "before": "Vorher",
+    "after": "Nachher",
+    "resonanceRecommendations": "Resonanzempfehlungen ({count})",
+    "minusPoints": "−{points}",
+    "whatShouldChange": "Was sollte sich ändern und warum?",
+    "focusOptional": "Fokus (optional)",
+    "guidedRefinements": "Geführte Verfeinerungen (optional)",
+    "revisionPlan": "Revisionsplan",
+    "cancelIt": "Sag es ab",
+    "generateBalanced": "Ausgewogene Revision erzeugen",
+    "reviseIntent": "Absicht überarbeiten",
+    "applyRevision": "Überarbeitung anwenden"
+  },
+  "reimagine": {
+    "reimagineTitle": "Blueprint neu erfinden",
+    "startTitle": "Projekt starten",
+    "describeProject": "Beschreiben Sie Ihr Projekt",
+    "importTreatment": "Behandlung importieren",
+    "contentType": "Inhaltstyp",
+    "genre": "Genre",
+    "tone": "Klang",
+    "scope": "Reichweite",
+    "required": "*",
+    "optional": "(optionell)",
+    "autoLengthHint": "Die Länge folgt der Geschichte; es wird keine feste Laufzeit erzwungen.",
+    "targetAudience": "Zielgruppe",
+    "audienceHint": "Beschreiben Sie es mit Ihren eigenen Worten.",
+    "visualFoundation": "Visuelle Grundlage",
+    "lockedAtBlueprint": "(gesperrt bei Blueprint)"
+  },
+  "tour": {
+    "stepCounter": "{current} von {total}",
+    "skip": "Tour überspringen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "getStarted": "Erste Schritte",
+    "welcome": {
+      "title": "Willkommen bei Blueprint Studio",
+      "description": "Blueprint Studio ist Ihre kreative Grundlage: Generate → Review → Iterate → Gehen Sie zu Production Studio. Ein kontinuierlicher Workflow — keine verstreuten Editoren.",
+      "tip": "Der Workflow-Leitfaden der Seitenleiste und der Co-Pilot zeigen Ihnen in jeder Phase Ihren nächsten Schritt."
+    },
+    "generate": {
+      "title": "Schritt 1 — Generieren",
+      "description": "Beginnen Sie mit einer Serienepisode, einem Konzept oder einem importierten Skript. Generieren Sie eine strukturierte Behandlung mit Logline, Beats, Charakteren und Ton.",
+      "tip": "Verwenden Sie Regenerate Blueprint für einen vollständigen Reset; den Assistenten für bereichsbezogene Änderungen."
+    },
+    "review": {
+      "title": "Schritt 2: Korrekturlesen",
+      "description": "Lesen Sie jeden Abschnitt der Behandlungskarte. Öffnen Sie Audience Resonance in der Seitenleiste — speichern Sie Ihre Zielgruppe und analysieren Sie dann.",
+      "tip": "Audience Resonance Ziel ist 80+ vor Produktion."
+    },
+    "iterate": {
+      "title": "Schritt 3 — Iterieren",
+      "description": "Wenden Sie AR-Empfehlungen direkt an oder bearbeiten Sie Abschnitte. Analysieren Sie nach Änderungen erneut, um die Verbesserung der Punktzahl zu verfolgen.",
+      "tip": "Klicken Sie auf einen Kategorieabzug, um zum entsprechenden Abschnitt Blueprint zu springen."
+    },
+    "collaborate": {
+      "title": "Zusammenarbeiten",
+      "description": "Teilen Sie einen Link zur Zusammenarbeit über das Seitenpanel, um Feedback von Prüfern, Abschnitt-Audio und strukturierte Synthese zu erhalten.",
+      "tip": "Eine kanonische Collaborate-Startseite — die Registerkarte der Seitenleiste."
+    },
+    "resonance": {
+      "title": "Audience Resonance Streifen",
+      "description": "Der Kopfzeilenstreifen zeigt Ihre AR-Punktzahl an und weist auf 80+ hin. Verwende „Schwächste Kategorie verbessern“, um deine nächste Bearbeitung zu fokussieren."
+    },
+    "startProduction": {
+      "title": "Schritt 4 — Produktion starten",
+      "description": "Wenn Ihr Blueprint fertig ist, übergeben Sie die Produktion an die Skripterzeugung und die Produktionspipeline.",
+      "tip": "Ein weiches Tor warnt unter 80 — Sie können es mit Bestätigung außer Kraft setzen."
+    }
+  },
+  "checklist": {
+    "blueprintGenerated": "Blueprint generiert",
+    "audienceSaved": "Zielgruppe gespeichert",
+    "arAnalyzed": "Audience Resonance analysiert",
+    "arRunAtLeastOnce": "Audience Resonance mindestens einmal ausführen",
+    "scoreTarget": "Score {target}+",
+    "scoreAtTarget": "Score {target}+ (aktuell: {current})",
+    "artStyle": "Art, Style",
+    "artStyleWithValue": "Kunststil ({value})",
+    "aspectRatio": "Bildverhältnis",
+    "aspectRatioWithValue": "Seitenverhältnis ({value})",
+    "collaborateShared": "Gemeinsamer Link geteilt"
+  },
+  "gate": {
+    "missingBlueprint": "Erstellen Sie zuerst einen Blueprint",
+    "missingArtStyle": "Wählen Sie einen Kunststil in Visual Foundation",
+    "missingAspectRatio": "Wählen Sie ein Seitenverhältnis in Visual Foundation",
+    "missingAudience": "Deine Zielgruppe",
+    "missingArRun": "Audience Resonance mindestens einmal ausführen",
+    "missingScore": "Erreichen des Ziels Audience Resonance",
+    "blockGenerateFirst": "Generieren Sie einen Blueprint, bevor Sie mit der Produktion beginnen.",
+    "needArtStyle": "Wählen Sie einen Kunststil in Blueprint Visual Foundation.",
+    "needAspectRatio": "Wählen Sie ein Seitenverhältnis in Blueprint Visual Foundation.",
+    "needAudience": "Speichern Sie Ihre Zielgruppe im Resonanz-Panel.",
+    "needArRun": "Führen Sie Audience Resonance mindestens einmal aus.",
+    "needScore": "Audience Resonance liegt unter {target} (Score: {score})."
+  },
+  "assistantButton": {
+    "label": "Assistent/in",
+    "scopedLabel": "Assistent — {scope}",
+    "tooltip": "{brand} — beschreiben Sie die Änderung in einfachen Worten und sie wird für Sie überarbeitet"
+  },
+  "chips": {
+    "strong-concept": "Starkes Konzept",
+    "needs-clarity": "Braucht Klarheit",
+    "wrong-tone": "Falscher Ton für Publikum",
+    "compelling-hook": "Zwingender Haken",
+    "ready-to-produce": "Herstellungslinie bereit zu produzieren",
+    "core-clear-logline": "Logline löschen",
+    "core-weak-hook": "Schwacher Haken",
+    "core-genre-fit": "Genre passt gut",
+    "story-strong-arc": "Starker Storybogen",
+    "story-confusing": "Geschichte verwirrend",
+    "story-stakes": "to raise the stakes",
+    "char-compelling": "Überzeugende Charaktere",
+    "char-flat": "Flacher Charakterbogen",
+    "char-motivation": "Unklare Motivation",
+    "beats-pacing": "Schrittmachende Drags",
+    "beats-midpoint": "Fehlender Mittelpunkt",
+    "beats-structure": "Solide Bauweise",
+    "tone-consistent": "Ton konsistent",
+    "tone-off": "Ton fühlt sich ab",
+    "tone-visual": "Visueller Stil unklar"
+  },
+  "workflowGuide": {
+    "group": {
+      "create-story": "Erschaffe „Deine Geschichte“",
+      "refine-blueprint": "Verfeinern Sie Ihren Blueprint",
+      "enhance-experience": "Ihr Erlebnis zu verbessern.",
+      "start-production": "Bereit für Production Studio"
+    },
+    "step": {
+      "enter-idea": "Geben Sie Ihre Idee oder Ihr Thema ein",
+      "generate-blueprint": "Blueprint generieren",
+      "review-sections": "Abschnitte überprüfen und bearbeiten",
+      "run-resonance": "Audience Resonance ausführen",
+      "apply-fixes": "Wenden Sie Schnellkorrekturen an",
+      "regenerate-hero": "Hero-Bild regenerieren",
+      "preview-audio": "Vorschau mit Audio",
+      "collaborate-export": "Zusammenarbeiten und exportieren",
+      "start-production": "Gehen Sie zu Production Studio"
+    }
   }
 }

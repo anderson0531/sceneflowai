@@ -14,7 +14,31 @@
     "saved": "保存成功",
     "saveFailed": "保存失败",
     "syncedToProduction": "SFAIBLUEPRINTERM已同步到Production Studio —准备就绪时重新生成脚本。",
-    "syncFailed": "SFAIBLUEPRINTERM已更新，但Production Studio同步失败"
+    "syncFailed": "SFAIBLUEPRINTERM已更新，但Production Studio同步失败",
+    "untitled": "无标题",
+    "editHeroImage": "编辑主图— {title}",
+    "empty": {
+      "title": "开始您的项目",
+      "description": "描述您的项目，并生成具有AI驱动的故事结构、角色和视觉方向的专业SFAIBLUEPRINTERM。",
+      "action": "项目开始"
+    },
+    "toast": {
+      "shareLinkReady": "共享链接已准备就绪—已复制到剪贴板",
+      "saveBeforeSharing": "在共享前保存项目",
+      "generateBeforeSharing": "分享前生成蓝图",
+      "noVariantToShare": "没有可共享的治疗变体",
+      "shareLinkFailed": "创建共享链接失败",
+      "noVariantFound": "未找到Blueprint变体",
+      "analysisSaveFailed": "分析已完成，但未能保存到项目",
+      "heroFailedWithReason": "{reason}单击图像重试。",
+      "heroFailed": "英雄形象生成失败。单击图像以重试。",
+      "autoGenerateFailed": "无法自动生成Blueprint。",
+      "heroUploaded": "图片上传成功",
+      "heroUploadFailed": "上传图片失败",
+      "projectSaved": "已保存项目",
+      "projectCreated": "项目已创建",
+      "projectSaveFailed": "保存项目失败"
+    }
   },
   "tabs": {
     "core": "Core",
@@ -81,7 +105,17 @@
     "refineNote": "💡 角色将在生产中使用图像和详细属性进行优化"
   },
   "reasoning": {
-    "whyChoices": "为什么要选择这些选项？"
+    "whyChoices": "为什么要选择这些选项？",
+    "title": "叙事推理",
+    "subtitle": "为什么人工智能做出这些讲故事的选择",
+    "noneRecorded": "此蓝图尚未记录任何推理。重新生成它，以捕捉人工智能为什么做出讲故事的选择。",
+    "notProvided": "人工智能没有为这个蓝图提供叙事推理。重新生成以查看创意决策。",
+    "characterFocus": "角色专注",
+    "keyDecisions": "关键创意决策",
+    "why": "为什么：",
+    "impact": "影响：",
+    "storyStrengths": "故事优势",
+    "wantDifferentEmphasis": "想要不同的重点？"
   },
   "help": {
     "title": "Flow如何创建您的故事",
@@ -158,7 +192,8 @@
     "strengthenArcs": "强化弧线",
     "distinctVoices": "独特的声音",
     "relationshipDynamics": "关系动态",
-    "whatShouldChange": "应该改变什么？为什么？"
+    "whatShouldChange": "应该改变什么？为什么？",
+    "blueprintUpdated": "SFAIBLUEPRINTERM已更新"
   },
   "dialog": {
     "unsavedChanges": "未保存的更改"
@@ -175,5 +210,246 @@
     "toneStyleUpdated": "色调和风格已更新！",
     "beatsUpdated": "节拍已更新！",
     "charactersUpdated": "角色已更新！"
+  },
+  "resonance": {
+    "run": "运行{feature}",
+    "chipLabel": "SFAIBLUEPRINTERM AR",
+    "targetSuffix": "→ target {target} +",
+    "pointsToTarget": "{points} PTS",
+    "improveWeakest": "改善最弱"
+  },
+  "nextStep": {
+    "remainingToFinish": "{count}完成",
+    "go": "前往",
+    "generateBlueprint": "生成Blueprint",
+    "saveAudienceAndAnalyze": "保存受众并运行Audience Resonance",
+    "applyTopFix": "应用TOP Audience Resonance FIX",
+    "startProduction": "前往Production Studio",
+    "reAnalyzeOrRefine": "重新分析或优化Blueprint",
+    "improveScoreOrStart": "提高分数或转到Production Studio",
+    "generating": "正在生成Blueprint…"
+  },
+  "sidePanel": {
+    "tabs": {
+      "resonance": "共振",
+      "collaborate": "协作",
+      "reasoning": "原由"
+    },
+    "collab": {
+      "creatingLink": "正在创建链接…",
+      "shareAndCollaborate": "共享和协作",
+      "reviewerAudio": "审阅者音频",
+      "voice": "语音： {name}",
+      "generatingAudio": "正在生成节音频…",
+      "generateAudio": "生成节音频",
+      "status": "状态： {status}",
+      "statusIdleHint": "—准备就绪后轻触生成",
+      "emptyHint": "创建链接后，此处将显示反馈、团队聊天以及与审核者的直接消息。",
+      "reviewCounts": "{reviews, plural, =1 {# review} other {# reviews}} · {reviewers, plural, =1 {# reviewer} other {# reviewers}}",
+      "revokeLink": "撤销链接",
+      "noFeedback": "还没有反馈。与审阅者分享链接。",
+      "scoreOutOfFive": "{score}/5",
+      "preferred": "首选",
+      "concerns": "关注的问题",
+      "notes": "备注：",
+      "synthesize": "将反馈转化为推荐",
+      "synthesized": "综合推荐",
+      "openAssistant": "打开{assistant}"
+    }
+  },
+  "audienceResonance": {
+    "title": "Audience Resonance分析",
+    "targetAudience": "目标受众",
+    "unsaved": "未保存",
+    "analysisDirection": "分析方向（可选）",
+    "saveAudience": "保存受众",
+    "analyze": "Analyze 分析",
+    "reAnalyze": "重新分析",
+    "outOfHundred": "100",
+    "pointsToReach": "{points}积分达到{target} +",
+    "scoreBreakdown": "分数明细（从100 ）",
+    "minusPoints": "− {points}",
+    "recommendations": "建议",
+    "improveWith": "使用{assistant}改进 →",
+    "strengths": "优点",
+    "categoryScores": "类别分数",
+    "jumpToSection": "跳转到匹配的Blueprint部分",
+    "emptyHint": "保存您的目标受众，然后分析您的蓝图如何与该受众产生共鸣。"
+  },
+  "heroImage": {
+    "uploading": "正在上传...",
+    "uploadImage": "上传图片",
+    "uploadingHero": "正在上传英雄图片...",
+    "generatingHero": "正在生成英雄形象...",
+    "failedToLoad": "图像上传失败",
+    "failedToLoadHint": "图片网址可能已过期或不可用。上传替代品或重新生成。",
+    "regenerate": "重新生成",
+    "regenerateImage": "重新生成图像",
+    "failedToGenerate": "生成失败",
+    "retry": "再次挑战",
+    "notGenerated": "未生成Hero图片",
+    "generateHero": "生成一个海报图像",
+    "editPrompt": "编辑提示",
+    "downloadImage": "下载图像"
+  },
+  "startProduction": {
+    "beats": "节拍",
+    "characters": "人物",
+    "arScore": "AR分数",
+    "runtime": "Runtime",
+    "artStyle": "艺术风格",
+    "aspectRatio": "纵横比",
+    "startAnyway": "不管怎样，开始行动。",
+    "cannotStart": "项目",
+    "recommendationsBefore": "生产前的建议"
+  },
+  "assistant": {
+    "assistantIntro": "{assistant} —描述您的方向，并在整个蓝图中平衡变化。无需直接编辑字段。",
+    "currentBlueprint": "当前蓝图（只读）",
+    "noCharacters": "没有角色",
+    "noFieldChanges": "未检测到现场级别的变化（上面的审查摘要）。",
+    "before": "突破前属性",
+    "after": "之后",
+    "resonanceRecommendations": "共振建议（ {count} ）",
+    "minusPoints": "− {points}",
+    "whatShouldChange": "应该改变什么？为什么？",
+    "focusOptional": "焦点（可选）",
+    "guidedRefinements": "引导式改进（可选）",
+    "revisionPlan": "修订计划",
+    "cancelIt": "是否放弃？",
+    "generateBalanced": "生成平衡修订",
+    "reviseIntent": "修改意图",
+    "applyRevision": "应用修订"
+  },
+  "reimagine": {
+    "reimagineTitle": "重新构想Blueprint",
+    "startTitle": "项目开始",
+    "describeProject": "描述您的项目",
+    "importTreatment": "导入处理",
+    "contentType": "内容类型",
+    "genre": "体裁",
+    "tone": "音色",
+    "scope": "范围",
+    "required": "*",
+    "optional": "（可选）",
+    "autoLengthHint": "长度跟随故事；不强制使用固定的运行时。",
+    "targetAudience": "目标受众",
+    "audienceHint": "（用你自己的话描述）",
+    "visualFoundation": "视觉基础",
+    "lockedAtBlueprint": "（锁定在Blueprint ）"
+  },
+  "tour": {
+    "stepCounter": "{current}的{total}",
+    "skip": "跳过导航",
+    "back": "回到",
+    "next": "下一頁",
+    "getStarted": "开始使用",
+    "welcome": {
+      "title": "欢迎来到Blueprint Studio",
+      "description": "Blueprint Studio是您的创意基础：生成→评论→迭代→转到Production Studio。一个连续的工作流程—不分散的编辑器。",
+      "tip": "侧边栏工作流程指南和副驾驶展示了您在每个阶段的下一步。"
+    },
+    "generate": {
+      "title": "第1步—生成",
+      "description": "从系列剧集、概念或导入的脚本开始。使用对数线、节拍、字符和音调生成结构化治疗。",
+      "tip": "使用Regenerate Blueprint进行完全重置；使用Assistant进行范围更改。"
+    },
+    "review": {
+      "title": "第2步—查看",
+      "description": "阅读治疗卡中的每个部分。在侧面板中打开Audience Resonance —保存目标受众，然后进行分析。",
+      "tip": "Audience Resonance目标为生产前80 +。"
+    },
+    "iterate": {
+      "title": "第3步—迭代",
+      "description": "直接应用AR推荐或编辑部分。更改后重新分析以跟踪分数改进。",
+      "tip": "单击类别扣除以跳转到匹配的Blueprint部分。"
+    },
+    "collaborate": {
+      "title": "协作",
+      "description": "分享侧面板中的协作链接，以获取审核者反馈、部分音频和结构化合成。",
+      "tip": "One canonical Collaborate home —侧面板选项卡。"
+    },
+    "resonance": {
+      "title": "Audience Resonance条",
+      "description": "标题栏显示您的AR分数，分数为80 +。使用“改善最弱类别”来重点关注下一次编辑。"
+    },
+    "startProduction": {
+      "title": "第4步—开始生产",
+      "description": "当您的SFAIBLUEPRINTERM准备就绪时，开始生产移交给脚本生成和生产管道。",
+      "tip": "软门警告低于80 —您可以通过确认覆盖。"
+    }
+  },
+  "checklist": {
+    "blueprintGenerated": "已生成Blueprint",
+    "audienceSaved": "目标受众已保存",
+    "arAnalyzed": "Audience Resonance已分析",
+    "arRunAtLeastOnce": "Audience Resonance至少运行一次",
+    "scoreTarget": "得分{target} +",
+    "scoreAtTarget": "得分{target} + （当前： {current} ）",
+    "artStyle": "艺术风格",
+    "artStyleWithValue": "艺术风格（ {value} ）",
+    "aspectRatio": "纵横比",
+    "aspectRatioWithValue": "纵横比({value})",
+    "collaborateShared": "协作链接已共享"
+  },
+  "gate": {
+    "missingBlueprint": "首先生成Blueprint",
+    "missingArtStyle": "在Visual Foundation中选择一种艺术风格",
+    "missingAspectRatio": "在Visual Foundation中选择纵横比",
+    "missingAudience": "保存目标受众",
+    "missingArRun": "至少运行一次Audience Resonance",
+    "missingScore": "达到Audience Resonance目标",
+    "blockGenerateFirst": "在开始生产之前生成Blueprint。",
+    "needArtStyle": "在Blueprint Visual Foundation中选择一种艺术风格。",
+    "needAspectRatio": "在Blueprint Visual Foundation中选择纵横比。",
+    "needAudience": "在Resonance面板中保存目标受众。",
+    "needArRun": "至少运行一次Audience Resonance。",
+    "needScore": "Audience Resonance低于{target} （分数： {score} ）。"
+  },
+  "assistantButton": {
+    "label": "援助",
+    "scopedLabel": "助理— {scope}",
+    "tooltip": "{brand} —用简单的词语描述变化，并为您修改"
+  },
+  "chips": {
+    "strong-concept": "强大的概念",
+    "needs-clarity": "需要清晰度",
+    "wrong-tone": "为受众提供的语气错误",
+    "compelling-hook": "引人注目的挂钩",
+    "ready-to-produce": "准备生产",
+    "core-clear-logline": "清除日志行",
+    "core-weak-hook": "弱钩",
+    "core-genre-fit": "流派很合适",
+    "story-strong-arc": "强力故事弧线",
+    "story-confusing": "令人困惑的故事",
+    "story-stakes": "加大赌注",
+    "char-compelling": "引人入胜的角色",
+    "char-flat": "平面字符弧",
+    "char-motivation": "动机不明确",
+    "beats-pacing": "起搏阻力",
+    "beats-midpoint": "缺少中点",
+    "beats-structure": "固体结构",
+    "tone-consistent": "语气一致",
+    "tone-off": "语气松弛",
+    "tone-visual": "视觉风格不清晰"
+  },
+  "workflowGuide": {
+    "group": {
+      "create-story": "创造你自己的故事！",
+      "refine-blueprint": "优化您的Blueprint",
+      "enhance-experience": "强化体验",
+      "start-production": "已准备好进行Production Studio"
+    },
+    "step": {
+      "enter-idea": "输入您的创意或主题",
+      "generate-blueprint": "生成Blueprint",
+      "review-sections": "查看和编辑版块",
+      "run-resonance": "运行Audience Resonance",
+      "apply-fixes": "应用快速修复",
+      "regenerate-hero": "重新生成英雄形象",
+      "preview-audio": "带音频预览",
+      "collaborate-export": "协作和导出",
+      "start-production": "前往Production Studio"
+    }
   }
 }
