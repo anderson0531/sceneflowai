@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import React, { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog'
 import { Button } from '../ui/Button'
@@ -115,6 +117,8 @@ export function BlueprintReimaginDialog({
   projectId,
   focusField,
 }: Props) {
+  const t = useTranslations('blueprint.reimagine')
+  const tc = useTranslations('common')
   // Form state
   const [synopsis, setSynopsis] = useState('')
   const [contentType, setContentType] = useState<ContentIntent | ''>('')
@@ -232,12 +236,12 @@ export function BlueprintReimaginDialog({
             {isReimaginMode ? (
               <>
                 <RefreshCw className="w-5 h-5 text-cyan-400" />
-                <span>Reimagine Blueprint</span>
+                <span>{t('reimagineTitle')}</span>
               </>
             ) : (
               <>
                 <Sparkles className="w-5 h-5 text-amber-400" />
-                <span>Start Project</span>
+                <span>{t('startTitle')}</span>
               </>
             )}
           </DialogTitle>
@@ -252,7 +256,7 @@ export function BlueprintReimaginDialog({
             <div className="flex items-center justify-between gap-2">
               <label className="flex items-center gap-2 text-sm font-medium text-gray-300">
                 <Film className="w-4 h-4 text-cyan-400" />
-                Describe Your Project
+                {t('describeProject')}
               </label>
               <button
                 type="button"
@@ -260,7 +264,7 @@ export function BlueprintReimaginDialog({
                 className="inline-flex items-center gap-1.5 rounded-md border border-slate-600 px-2.5 py-1 text-[11px] font-medium text-slate-300 hover:bg-slate-800 hover:text-white"
               >
                 <Upload className="h-3.5 w-3.5" />
-                Import treatment
+                {t('importTreatment')}
               </button>
             </div>
             <ConceptDescriptionField
@@ -280,7 +284,7 @@ export function BlueprintReimaginDialog({
           {/* Content type — required master switch that keeps intent aligned */}
           <div className="space-y-1.5">
             <label className="text-xs text-gray-400 flex items-center gap-1">
-              <Layers className="w-3 h-3" /> Content Type <span className="text-red-400">*</span>
+              <Layers className="w-3 h-3" /> {t('contentType')} <span className="text-red-400">{t('required')}</span>
             </label>
             <Select value={contentType} onValueChange={(v) => setContentType(v as ContentIntent)}>
               <SelectTrigger className="bg-slate-800/50 border-slate-700 text-sm">
@@ -306,7 +310,7 @@ export function BlueprintReimaginDialog({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <label className="text-xs text-gray-400 flex items-center gap-1">
-                <Palette className="w-3 h-3" /> Genre <span className="text-red-400">*</span>
+                <Palette className="w-3 h-3" /> {t('genre')} <span className="text-red-400">{t('required')}</span>
               </label>
               <Input
                 value={genre}
@@ -317,7 +321,7 @@ export function BlueprintReimaginDialog({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs text-gray-400">Tone <span className="text-red-400">*</span></label>
+              <label className="text-xs text-gray-400">{t('tone')} <span className="text-red-400">{t('required')}</span></label>
               <Input
                 value={tone}
                 onChange={(e) => setTone(e.target.value)}
@@ -328,7 +332,7 @@ export function BlueprintReimaginDialog({
 
             <div className="space-y-1.5">
               <label className="text-xs text-gray-400 flex items-center gap-1">
-                <Clock className="w-3 h-3" /> Scope <span className="text-gray-500">(optional)</span>
+                <Clock className="w-3 h-3" /> {t('scope')} <span className="text-gray-500">{t('optional')}</span>
               </label>
               <Select value={duration} onValueChange={setDuration}>
                 <SelectTrigger className="bg-slate-800/50 border-slate-700 text-sm">
@@ -341,7 +345,7 @@ export function BlueprintReimaginDialog({
                 </SelectContent>
               </Select>
               {duration === 'auto' && (
-                <p className="text-[10px] text-gray-500">Length follows the story; no fixed runtime is forced.</p>
+                <p className="text-[10px] text-gray-500">{t('autoLengthHint')}</p>
               )}
             </div>
           </div>
@@ -349,8 +353,8 @@ export function BlueprintReimaginDialog({
           {/* Target Audience — free-text description (speech or typing) + AI enhance */}
           <div className="space-y-1.5">
             <label className="text-xs text-gray-400 flex items-center gap-1">
-              <Users className="w-3 h-3" /> Target Audience
-              <span className="text-gray-500">(describe in your own words)</span>
+              <Users className="w-3 h-3" /> {t('targetAudience')}
+              <span className="text-gray-500">{t('audienceHint')}</span>
             </label>
             <AudienceDescriptionField
               value={audienceDef}
@@ -369,8 +373,8 @@ export function BlueprintReimaginDialog({
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-medium text-gray-300">
               <Palette className="w-4 h-4 text-cyan-400" />
-              Visual Foundation
-              <span className="text-xs text-gray-500 font-normal">(locked at Blueprint)</span>
+              {t('visualFoundation')}
+              <span className="text-xs text-gray-500 font-normal">{t('lockedAtBlueprint')}</span>
             </label>
             <BlueprintFoundationFields
               artStyle={artStyle}
@@ -386,7 +390,7 @@ export function BlueprintReimaginDialog({
         {/* Actions */}
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
           <Button variant="ghost" onClick={onClose} disabled={isGenerating}>
-            Cancel
+            {tc('actions.cancel')}
           </Button>
           <Button
             onClick={handleGenerate}

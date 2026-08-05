@@ -1,6 +1,8 @@
 'use client'
 
-import { ASSISTANT, assistantAriaLabel } from '@/lib/constants/assistant'
+import { useTranslations } from 'next-intl'
+
+import { ASSISTANT } from '@/lib/constants/assistant'
 import { ASSISTANT_ICON } from '@/lib/constants/assistantIcon'
 import {
   Tooltip,
@@ -38,6 +40,7 @@ export function AssistantButton({
   disabled,
   className,
 }: Props) {
+  const t = useTranslations('blueprint.assistantButton')
   const Icon = ASSISTANT_ICON
 
   return (
@@ -48,7 +51,7 @@ export function AssistantButton({
             type="button"
             onClick={onClick}
             disabled={disabled}
-            aria-label={assistantAriaLabel(scopeLabel)}
+            aria-label={scopeLabel ? t('scopedLabel', { scope: scopeLabel }) : t('label')}
             className={cn(
               'inline-flex items-center gap-1.5 rounded-md border font-medium transition-colors',
               'border-cyan-500/30 bg-cyan-500/10 text-cyan-300',
@@ -60,10 +63,10 @@ export function AssistantButton({
             )}
           >
             <Icon className={size === 'toolbar' ? 'h-4 w-4' : 'h-3.5 w-3.5'} aria-hidden />
-            <span className="hidden sm:inline">{ASSISTANT.short}</span>
+            <span className="hidden sm:inline">{t('label')}</span>
           </button>
         </TooltipTrigger>
-        <TooltipContent className="max-w-xs">{ASSISTANT.tooltip}</TooltipContent>
+        <TooltipContent className="max-w-xs">{t('tooltip', { brand: ASSISTANT.full })}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   )

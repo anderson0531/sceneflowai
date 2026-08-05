@@ -75,10 +75,8 @@ export { TreatmentCard } from './TreatmentCard'
 export { ActionBar } from './ActionBar'
 
 // Blueprint Editor Dialogs (v2)
+// The per-section edit dialogs were removed: 7d6957d6d replaced direct field
+// editing with the guided balanced revision in BlueprintRefineDialog, and the
+// dialogs survived only as unreferenced exports.
 export { BlueprintReimaginDialog } from './BlueprintReimaginDialog'
 export { BlueprintRefineDialog } from './BlueprintRefineDialog'
-export { CoreInfoEditDialog } from './CoreInfoEditDialog'
-export { StorySetupEditDialog } from './StorySetupEditDialog'
-export { ToneStyleEditDialog } from './ToneStyleEditDialog'
-export { BeatsEditDialog } from './BeatsEditDialog'
-export { CharactersEditDialog } from './CharactersEditDialog'

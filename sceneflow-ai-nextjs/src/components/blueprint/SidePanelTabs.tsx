@@ -20,7 +20,6 @@ import type {
 import { isBlueprintARV3Enabled } from '@/lib/types/audienceResonance'
 import { AudienceResonancePanel } from './AudienceResonancePanel'
 import type { OpenBlueprintRefineOptions } from '@/lib/blueprint/openBlueprintRefine'
-import { chipLabelById } from '@/lib/blueprint/feedbackChips'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { triggerBlueprintShareSectionAudio } from '@/lib/blueprint/createBlueprintShare'
 import type { BlueprintSectionAudioStatus } from '@/lib/blueprint/shareTypes'
@@ -234,6 +233,7 @@ function CollaborationContent({
 }) {
   const t = useTranslations('blueprint.sidePanel')
   const tc = useTranslations('common')
+  const tChips = useTranslations('blueprint.chips')
   const [subTab, setSubTab] = useState<'feedback' | 'team' | 'messages'>('feedback')
   const [feedback, setFeedback] = React.useState<any[]>([])
   const [participants, setParticipants] = React.useState<
@@ -633,7 +633,7 @@ function CollaborationContent({
                                 key={tagId}
                                 className="px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300/90 text-[10px]"
                               >
-                                {chipLabelById(tagId)}
+                                {tChips(tagId)}
                               </span>
                             ))}
                           </div>

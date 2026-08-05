@@ -1,7 +1,8 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import React, { useState, useEffect, useCallback } from 'react'
-import { ASSISTANT } from '@/lib/constants/assistant'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import {
@@ -18,8 +19,6 @@ import {
   Users,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { BLUEPRINT_COPY } from '@/lib/blueprint/blueprintGlossary'
-import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 
 export interface TourStep {
   id: string
@@ -29,62 +28,19 @@ export interface TourStep {
   tip?: string
 }
 
-const BLUEPRINT_TOUR_STEPS: TourStep[] = [
-  {
-    id: 'welcome',
-    title: `Welcome to ${STUDIO_DISPLAY_NAMES.blueprint}`,
-    description:
-      `${STUDIO_DISPLAY_NAMES.blueprint} is your creative foundation: Generate → Review → Iterate → Go to Production Studio. One continuous workflow — not scattered editors.`,
-    icon: <Sparkles className="w-6 h-6" />,
-    tip: 'The sidebar workflow guide and co-pilot show your next step at every stage.',
-  },
-  {
-    id: 'generate',
-    title: 'Step 1 — Generate',
-    description:
-      'Start from a series episode, concept, or imported script. Generate a structured treatment with logline, beats, characters, and tone.',
-    icon: <Sparkles className="w-6 h-6" />,
-    tip: `Use Regenerate Blueprint for a full reset; the ${ASSISTANT.short} (${ASSISTANT.full}) for scoped changes.`,
-  },
-  {
-    id: 'review',
-    title: 'Step 2 — Review',
-    description:
-      'Read each section in the treatment card. Open Audience Resonance in the side panel — save your target audience, then analyze.',
-    icon: <Eye className="w-6 h-6" />,
-    tip: BLUEPRINT_COPY.audienceResonance + ' target is 80+ before Production.',
-  },
-  {
-    id: 'iterate',
-    title: 'Step 3 — Iterate',
-    description:
-      'Apply AR recommendations or edit sections directly. Re-analyze after changes to track score improvement.',
-    icon: <PencilLine className="w-6 h-6" />,
-    tip: 'Click a category deduction to jump to the matching Blueprint section.',
-  },
-  {
-    id: 'collaborate',
-    title: 'Collaborate',
-    description:
-      'Share a collaborate link from the side panel for reviewer feedback, section audio, and structured synthesis.',
-    icon: <Users className="w-6 h-6" />,
-    tip: 'One canonical Collaborate home — the side panel tab.',
-  },
-  {
-    id: 'resonance',
-    title: 'Audience Resonance strip',
-    description:
-      'The header strip shows your AR score and points to 80+. Use “Improve weakest category” to focus your next edit.',
-    icon: <Radar className="w-6 h-6" />,
-  },
-  {
-    id: 'start-production',
-    title: 'Step 4 — Start Production',
-    description:
-      'When your Blueprint is ready, Start Production hands off to script generation and the Production pipeline.',
-    icon: <Clapperboard className="w-6 h-6" />,
-    tip: 'A soft gate warns below 80 — you can override with confirmation.',
-  },
+/**
+ * Step order and iconography only. Titles, descriptions and tips come from the
+ * catalog keyed by id, because a module-level const cannot call a hook and the
+ * copy interpolates product names that are themselves translated.
+ */
+const BLUEPRINT_TOUR_STEPS: Array<{ id: string; icon: React.ReactNode; hasTip: boolean }> = [
+  { id: 'welcome', icon: <Sparkles className="w-6 h-6" />, hasTip: true },
+  { id: 'generate', icon: <Sparkles className="w-6 h-6" />, hasTip: true },
+  { id: 'review', icon: <Eye className="w-6 h-6" />, hasTip: true },
+  { id: 'iterate', icon: <PencilLine className="w-6 h-6" />, hasTip: true },
+  { id: 'collaborate', icon: <Users className="w-6 h-6" />, hasTip: true },
+  { id: 'resonance', icon: <Radar className="w-6 h-6" />, hasTip: false },
+  { id: 'startProduction', icon: <Clapperboard className="w-6 h-6" />, hasTip: true },
 ]
 
 const TOUR_STORAGE_KEY = 'sceneflow-blueprint-tour-complete'
@@ -96,6 +52,8 @@ interface BlueprintOnboardingProps {
 }
 
 export function BlueprintOnboarding({ onComplete, className }: BlueprintOnboardingProps) {
+  const t = useTranslations('blueprint.tour')
+  const tp = useTranslations('blueprint.studio')
   const [isVisible, setIsVisible] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
 
@@ -166,17 +124,17 @@ export function BlueprintOnboarding({ onComplete, className }: BlueprintOnboardi
               <div className="p-2.5 rounded-xl bg-cyan-500/15 text-cyan-400">{step.icon}</div>
               <div>
                 <p className="text-xs text-gray-500 uppercase tracking-wide">
-                  {currentStep + 1} of {totalSteps}
+                  {t('stepCounter', { current: currentStep + 1, total: totalSteps })}
                 </p>
-                <h2 className="text-lg font-semibold text-white">{step.title}</h2>
+                <h2 className="text-lg font-semibold text-white">{t(`${step.id}.title`)}</h2>
               </div>
             </div>
 
-            <p className="text-sm text-gray-300 leading-relaxed mb-4">{step.description}</p>
-            {step.tip && (
+            <p className="text-sm text-gray-300 leading-relaxed mb-4">{t(`${step.id}.description`)}</p>
+            {step.hasTip && (
               <div className="flex gap-2 p-3 rounded-lg bg-slate-800/60 border border-slate-700/50 text-xs text-gray-400">
                 <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
-                {step.tip}
+                {t(`${step.id}.tip`)}
               </div>
             )}
 
@@ -200,17 +158,17 @@ export function BlueprintOnboarding({ onComplete, className }: BlueprintOnboardi
                 className="text-gray-400 hover:text-white"
               >
                 <SkipForward className="w-4 h-4 mr-1" />
-                Skip tour
+                {t('skip')}
               </Button>
               <div className="flex gap-2">
                 {currentStep > 0 && (
                   <Button variant="outline" size="sm" onClick={handlePrev}>
                     <ChevronLeft className="w-4 h-4 mr-1" />
-                    Back
+                    {t('back')}
                   </Button>
                 )}
                 <Button size="sm" onClick={handleNext} className="bg-cyan-600 hover:bg-cyan-500">
-                  {isLastStep ? 'Get started' : 'Next'}
+                  {isLastStep ? t('getStarted') : t('next')}
                   {!isLastStep && <ChevronRight className="w-4 h-4 ml-1" />}
                 </Button>
               </div>

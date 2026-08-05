@@ -13,6 +13,12 @@ export type WorkflowStepStatus = 'pending' | 'in-progress' | 'complete' | 'skipp
  * Individual workflow step within a group
  */
 export interface WorkflowStep {
+  /**
+   * Catalog key under `blueprint.workflowGuide`. Set per phase as that phase is
+   * localized; the panel falls back to `label` while it is absent, so phases
+   * convert one at a time without risking a missing-key render.
+   */
+  labelKey?: string
   id: string
   label: string
   description?: string
@@ -24,6 +30,8 @@ export interface WorkflowStep {
  * Workflow group containing related steps
  */
 export interface WorkflowGroup {
+  /** Catalog key under `blueprint.workflowGuide`; see {@link WorkflowStep.labelKey}. */
+  titleKey?: string
   id: string
   title: string
   icon: string
@@ -176,18 +184,21 @@ export const blueprintWorkflowGroups: WorkflowGroup[] = [
   {
     id: 'create-story',
     title: 'Create Your Story',
+    titleKey: 'group.create-story',
     icon: 'Lightbulb',
     iconColor: 'text-yellow-500',
     steps: [
       { 
         id: 'enter-idea', 
         label: 'Enter your idea or topic', 
+        labelKey: 'step.enter-idea',
         description: 'Describe your video concept, story, or topic',
         actionEventName: 'blueprint:enter-concept' 
       },
       { 
         id: 'generate-blueprint', 
         label: 'Generate Blueprint', 
+        labelKey: 'step.generate-blueprint',
         description: 'AI creates title, logline, beats, characters',
         actionEventName: 'blueprint:generate-treatment' 
       },
@@ -196,6 +207,7 @@ export const blueprintWorkflowGroups: WorkflowGroup[] = [
   {
     id: 'refine-blueprint',
     title: 'Refine Your Blueprint',
+    titleKey: 'group.refine-blueprint',
     icon: 'Target',
     iconColor: 'text-cyan-500',
     collapsed: true,
@@ -203,18 +215,21 @@ export const blueprintWorkflowGroups: WorkflowGroup[] = [
       { 
         id: 'review-sections', 
         label: 'Review & edit sections', 
+        labelKey: 'step.review-sections',
         description: 'Fine-tune story, tone, beats, characters',
         actionEventName: 'blueprint:edit-sections' 
       },
       { 
         id: 'run-resonance', 
         label: 'Run Audience Resonance', 
+        labelKey: 'step.run-resonance',
         description: 'Get score and recommendations',
         actionEventName: 'blueprint:analyze-resonance' 
       },
       { 
         id: 'apply-fixes', 
         label: 'Apply quick fixes', 
+        labelKey: 'step.apply-fixes',
         description: 'Target 80+ score (2-3 iterations max)',
         actionEventName: 'blueprint:apply-fixes' 
       },
@@ -223,6 +238,7 @@ export const blueprintWorkflowGroups: WorkflowGroup[] = [
   {
     id: 'enhance-experience',
     title: 'Enhance Experience',
+    titleKey: 'group.enhance-experience',
     icon: 'Sparkles',
     iconColor: 'text-purple-500',
     collapsed: true,
@@ -230,18 +246,21 @@ export const blueprintWorkflowGroups: WorkflowGroup[] = [
       { 
         id: 'regenerate-hero', 
         label: 'Regenerate hero image', 
+        labelKey: 'step.regenerate-hero',
         description: 'Update visual to match narrative',
         actionEventName: 'blueprint:regenerate-hero' 
       },
       { 
         id: 'preview-audio', 
         label: 'Preview with audio', 
+        labelKey: 'step.preview-audio',
         description: 'Listen in multiple languages',
         actionEventName: 'blueprint:preview-audio' 
       },
       { 
         id: 'collaborate-export', 
         label: 'Collaborate & export', 
+        labelKey: 'step.collaborate-export',
         description: 'Share link, export PDF/Doc/PPTX',
         actionEventName: 'blueprint:collaborate' 
       },
@@ -250,6 +269,7 @@ export const blueprintWorkflowGroups: WorkflowGroup[] = [
   {
     id: 'start-production',
     title: 'Ready for Production Studio',
+    titleKey: 'group.start-production',
     icon: 'ArrowRight',
     iconColor: 'text-green-500',
     collapsed: true,
@@ -257,6 +277,7 @@ export const blueprintWorkflowGroups: WorkflowGroup[] = [
       { 
         id: 'start-production', 
         label: 'Go to Production Studio', 
+        labelKey: 'step.start-production',
         description: 'Generate script and open Production Studio',
         actionEventName: 'blueprint:start-production' 
       },

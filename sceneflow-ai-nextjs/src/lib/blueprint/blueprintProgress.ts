@@ -26,14 +26,16 @@ export interface BlueprintProgressInput {
 
 export interface BlueprintProgressItem {
   id: string
-  label: string
+  /** Catalog key under `blueprint.checklist`; the renderer translates it. */
+  labelKey: string
   isComplete: boolean
   value?: string
 }
 
 export interface BlueprintProgressResult {
   currentStep: BlueprintWorkflowStep
-  nextStepLabel: string
+  /** Catalog key under `blueprint.nextStep`; the renderer translates it. */
+  nextStepLabelKey: string
   nextStepEvent: string | null
   arScore: number | null
   arTarget: number
@@ -116,22 +118,22 @@ export function calculateBlueprintProgress(
   const hasAppliedFixes = (input.savedBlueprintAR?.appliedRecommendationIds?.length ?? 0) > 0
 
   let currentStep: BlueprintWorkflowStep = 'generate'
-  let nextStepLabel = 'Generate Blueprint'
+  let nextStepLabelKey = 'generateBlueprint'
   let nextStepEvent: string | null = 'blueprint:generate-treatment'
 
   if (input.hasBlueprint) {
     currentStep = 'review'
-    nextStepLabel = 'Save audience & run Audience Resonance'
+    nextStepLabelKey = 'saveAudienceAndAnalyze'
     nextStepEvent = 'blueprint:analyze-resonance'
 
     if (hasAudienceSaved && hasARRun) {
       currentStep = 'iterate'
-      nextStepLabel =
+      nextStepLabelKey =
         pendingRecs.length > 0
-          ? 'Apply top Audience Resonance fix'
+          ? 'applyTopFix'
           : isAtTarget
-            ? BLUEPRINT_COPY.startProduction
-            : 'Re-analyze or refine Blueprint'
+            ? 'startProduction'
+            : 'reAnalyzeOrRefine'
       nextStepEvent =
         pendingRecs.length > 0
           ? 'blueprint:apply-fixes'
@@ -143,7 +145,7 @@ export function calculateBlueprintProgress(
     if (isAtTarget || (hasARRun && input.hasBlueprint && hasAudienceSaved)) {
       if (isAtTarget || pendingRecs.length === 0) {
         currentStep = 'startProduction'
-        nextStepLabel = isAtTarget ? BLUEPRINT_COPY.startProduction : `Improve score or ${BLUEPRINT_COPY.startProduction}`
+        nextStepLabelKey = isAtTarget ? 'startProduction' : 'improveScoreOrStart'
         nextStepEvent = 'blueprint:start-production'
       }
     }
@@ -151,7 +153,7 @@ export function calculateBlueprintProgress(
 
   if (input.isGenerating) {
     currentStep = 'generate'
-    nextStepLabel = 'Generating Blueprint…'
+    nextStepLabelKey = 'generating'
     nextStepEvent = null
   }
 
@@ -187,36 +189,36 @@ export function calculateBlueprintProgress(
   const progressItems: BlueprintProgressItem[] = [
     {
       id: 'blueprint-generated',
-      label: 'Blueprint generated',
+      labelKey: 'blueprintGenerated',
       isComplete: input.hasBlueprint,
     },
     {
       id: 'audience-saved',
-      label: 'Target audience saved',
+      labelKey: 'audienceSaved',
       isComplete: hasAudienceSaved,
     },
     {
       id: 'ar-analyzed',
-      label: 'Audience Resonance analyzed',
+      labelKey: 'arAnalyzed',
       isComplete: hasARRun,
       value: arScore !== null ? `${arScore}/100` : undefined,
     },
     {
       id: 'ar-target',
-      label: `Score ${READY_FOR_PRODUCTION_THRESHOLD_V3}+`,
+      labelKey: 'scoreTarget',
       isComplete: isAtTarget,
       value: arScore !== null ? `${arScore}` : undefined,
     },
     {
       id: 'collaborate-shared',
-      label: 'Collaborate link shared',
+      labelKey: 'collaborateShared',
       isComplete: hasShare,
     },
   ]
 
   return {
     currentStep,
-    nextStepLabel,
+    nextStepLabelKey,
     nextStepEvent,
     arScore,
     arTarget: READY_FOR_PRODUCTION_THRESHOLD_V3,

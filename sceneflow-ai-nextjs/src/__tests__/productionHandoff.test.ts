@@ -23,9 +23,16 @@ describe('Production hand-off label', () => {
   it('leaves the next-step label as the destination, not Go', () => {
     // blueprintProgress renders this beside the banner's own Go button, so
     // "Next step: Go" would be meaningless.
+    // The label is emitted as a catalog key now; blueprint.nextStep.startProduction
+    // holds the destination name, and no short/Go key is reachable from here.
     const progress = readSource('src/lib/blueprint/blueprintProgress.ts')
-    expect(progress).toContain('BLUEPRINT_COPY.startProduction')
+    expect(progress).toContain("nextStepLabelKey")
+    expect(progress).toContain("? 'startProduction'")
     expect(progress).not.toContain('startProductionShort')
+    expect(progress).not.toContain("'goShort'")
+
+    const catalog = JSON.parse(readSource('messages/app/en/blueprint.json'))
+    expect(catalog.nextStep.startProduction).toBe('Go to Production Studio')
   })
 
   it('uses the short label only on the Studio header button', () => {

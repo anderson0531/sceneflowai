@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import React, { useState, useCallback, useMemo } from 'react'
 import { cn } from '@/lib/utils'
 import { 
@@ -66,6 +68,7 @@ interface WorkflowStepItemProps {
 }
 
 function WorkflowStepItem({ step, status, onAction, onToggleComplete }: WorkflowStepItemProps) {
+  const t = useTranslations('blueprint.workflowGuide')
   const isComplete = status === 'complete'
   
   return (
@@ -101,7 +104,7 @@ function WorkflowStepItem({ step, status, onAction, onToggleComplete }: Workflow
                 : 'text-slate-400 cursor-default'
           )}
         >
-          {step.label}
+          {step.labelKey ? t(step.labelKey) : step.label}
         </button>
       </div>
       
@@ -134,6 +137,7 @@ function WorkflowGroupSection({
   onStepAction,
   onToggleStepComplete,
 }: WorkflowGroupSectionProps) {
+  const t = useTranslations('blueprint.workflowGuide')
   const IconComponent = iconMap[group.icon] || ClipboardCheck
   
   // Calculate group completion
@@ -161,7 +165,7 @@ function WorkflowGroupSection({
           'text-xs font-medium flex-1 text-left truncate',
           isGroupComplete ? 'text-green-400' : 'text-slate-200'
         )}>
-          {group.title}
+          {group.titleKey ? t(group.titleKey) : group.title}
         </span>
         <span className={cn(
           'text-[10px] px-1.5 py-0.5 rounded-full',

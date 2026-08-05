@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import { Button } from '../ui/Button'
@@ -93,6 +95,7 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 }
 
 function BlueprintSnapshot({ variant }: { variant: TreatmentVariant }) {
+  const t = useTranslations('blueprint.assistant')
   const [expanded, setExpanded] = useState<Record<string, boolean>>({
     core: true,
     story: false,
@@ -114,7 +117,7 @@ function BlueprintSnapshot({ variant }: { variant: TreatmentVariant }) {
 
   return (
     <div className="space-y-2 rounded-xl border border-slate-700/50 bg-slate-800/30 p-3">
-      <p className="text-xs text-gray-500 mb-2">Current blueprint (read-only)</p>
+      <p className="text-xs text-gray-500 mb-2">{t('currentBlueprint')}</p>
       {(
         [
           {
@@ -148,7 +151,7 @@ function BlueprintSnapshot({ variant }: { variant: TreatmentVariant }) {
             content: (
               <ul className="text-xs text-gray-300 space-y-1">
                 {chars.length === 0 ? (
-                  <li className="text-gray-500">No characters</li>
+                  <li className="text-gray-500">{t('noCharacters')}</li>
                 ) : (
                   chars.map((c, i) => (
                     <li key={i}>
@@ -208,10 +211,11 @@ function BlueprintSnapshot({ variant }: { variant: TreatmentVariant }) {
 }
 
 function DiffPanel({ diffs }: { diffs: FieldDiff[] }) {
+  const t = useTranslations('blueprint.assistant')
   if (diffs.length === 0) {
     return (
       <p className="text-sm text-gray-500 text-center py-4">
-        No field-level changes detected (review summary above).
+        {t('noFieldChanges')}
       </p>
     )
   }
@@ -228,11 +232,11 @@ function DiffPanel({ diffs }: { diffs: FieldDiff[] }) {
           </div>
           <div className="grid grid-cols-1 gap-2 text-[11px]">
             <div>
-              <span className="text-red-400/80">Before</span>
+              <span className="text-red-400/80">{t('before')}</span>
               <p className="text-gray-500 line-clamp-4 whitespace-pre-wrap">{d.before || '—'}</p>
             </div>
             <div>
-              <span className="text-emerald-400/80">After</span>
+              <span className="text-emerald-400/80">{t('after')}</span>
               <p className="text-gray-200 line-clamp-6 whitespace-pre-wrap">{d.after || '—'}</p>
             </div>
           </div>
@@ -254,6 +258,8 @@ export function BlueprintRefineDialog({
   onRequestReanalyze,
   contentIntent: contentIntentProp,
 }: Props) {
+  const t = useTranslations('blueprint.assistant')
+  const tc = useTranslations('common')
   const [phase, setPhase] = useState<'intent' | 'preview'>('intent')
   const [userIntent, setUserIntent] = useState('')
   const [focusScope, setFocusScope] = useState<BlueprintFixSection | 'all'>('all')
@@ -623,8 +629,7 @@ export function BlueprintRefineDialog({
             {assistantTitle('Blueprint')}
           </DialogTitle>
           <p className="text-xs text-gray-500 mt-1">
-            {ASSISTANT.full} — describe your direction and it balances changes across the full
-            blueprint. No direct field editing.
+            {t('assistantIntro', { assistant: ASSISTANT.full })}
           </p>
         </DialogHeader>
 
@@ -640,7 +645,7 @@ export function BlueprintRefineDialog({
                   >
                     <span className="flex items-center gap-2">
                       <AlertTriangle className="w-4 h-4" />
-                      Resonance recommendations ({resonanceRecommendations.length})
+                      {t('resonanceRecommendations', { count: resonanceRecommendations.length })}
                     </span>
                     <ChevronDown
                       className={cn('w-4 h-4 transition-transform', showResonanceRecs && 'rotate-180')}
@@ -669,7 +674,7 @@ export function BlueprintRefineDialog({
                           <span className="text-gray-300 flex-1">
                             {rec.intentLabel || rec.title || rec.text.slice(0, 80)}
                             <span className="text-red-400/80 ml-1 font-mono">
-                              −{rec.pointsDeducted}
+                              {t('minusPoints', { points: rec.pointsDeducted })}
                             </span>
                           </span>
                         </div>
@@ -682,7 +687,7 @@ export function BlueprintRefineDialog({
               <div className="space-y-2">
                 <div className="flex items-baseline justify-between gap-2">
                   <label className="text-xs font-medium text-gray-400">
-                    What should change and why?
+                    {t('whatShouldChange')}
                   </label>
                   {userIntent.length > 0 && (
                     <span
@@ -706,7 +711,7 @@ export function BlueprintRefineDialog({
               </div>
 
               <div className="space-y-2">
-                <span className="text-xs text-gray-500">Focus (optional)</span>
+                <span className="text-xs text-gray-500">{t('focusOptional')}</span>
                 <div className="flex flex-wrap gap-1.5">
                   {SCOPE_OPTIONS.map((opt) => (
                     <button
@@ -727,7 +732,7 @@ export function BlueprintRefineDialog({
               </div>
 
               <div className="space-y-2">
-                <span className="text-xs text-gray-500">Guided refinements (optional)</span>
+                <span className="text-xs text-gray-500">{t('guidedRefinements')}</span>
                 <div className="flex flex-wrap gap-1.5">
                   {templateSections.flatMap(({ section, templates }) =>
                     templates.map((t) => {
@@ -763,7 +768,7 @@ export function BlueprintRefineDialog({
               <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-3 space-y-2">
                 <h3 className="text-sm font-semibold text-emerald-200 flex items-center gap-2">
                   <Check className="w-4 h-4" />
-                  Revision plan
+                  {t('revisionPlan')}
                 </h3>
                 <p className="text-xs text-gray-300">{changePlan.primaryGoal}</p>
                 {changePlan.coherenceActions.length > 0 && (
@@ -817,12 +822,12 @@ export function BlueprintRefineDialog({
                 onClick={() => void cancelBackgroundJob()}
                 className="underline hover:text-amber-200"
               >
-                Cancel it
+                {t('cancelIt')}
               </button>
             </p>
           )}
           <Button variant="ghost" size="sm" onClick={onClose}>
-            Cancel
+            {tc('actions.cancel')}
           </Button>
           {phase === 'intent' ? (
             <Button
@@ -836,13 +841,13 @@ export function BlueprintRefineDialog({
               ) : (
                 <Wand2 className="w-4 h-4 mr-2" />
               )}
-              Generate balanced revision
+              {t('generateBalanced')}
             </Button>
           ) : (
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={handleDiscardPreview}>
                 <RefreshCw className="w-4 h-4 mr-1" />
-                Revise intent
+                {t('reviseIntent')}
               </Button>
               <Button
                 size="sm"
@@ -850,7 +855,7 @@ export function BlueprintRefineDialog({
                 className="bg-gradient-to-r from-emerald-600 to-cyan-600"
               >
                 <Sparkles className="w-4 h-4 mr-2" />
-                Apply revision
+                {t('applyRevision')}
               </Button>
             </div>
           )}

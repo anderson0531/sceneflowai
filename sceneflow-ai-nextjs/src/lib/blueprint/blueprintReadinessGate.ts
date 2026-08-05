@@ -27,13 +27,21 @@ export interface BlueprintReadyChecklist {
   artStyleLabel: string | null
   aspectRatioLabel: string | null
   isBlueprintReady: boolean
-  missingItems: string[]
+  /** Catalog keys under `blueprint.gate`; the renderer translates them. */
+  missingItemKeys: string[]
+}
+
+/** A gate message as a catalog key plus any values it interpolates. */
+export interface GateReason {
+  key: string
+  values?: Record<string, string | number>
 }
 
 export interface StartProductionGateResult {
   allowed: boolean
   hardBlock: boolean
-  reasons: string[]
+  /** Catalog keys under `blueprint.gate`; the renderer translates them. */
+  reasonKeys: GateReason[]
   checklist: BlueprintReadyChecklist
 }
 
@@ -78,17 +86,13 @@ export function evaluateBlueprintReadyChecklist(input: {
     artStyleSet &&
     aspectRatioSet
 
-  const missingItems: string[] = []
-  if (!blueprintGenerated) missingItems.push('Generate a Blueprint first')
-  if (!artStyleSet) missingItems.push('Select an art style in Visual Foundation')
-  if (!aspectRatioSet) missingItems.push('Select an aspect ratio in Visual Foundation')
-  if (!audienceSaved) missingItems.push('Save your target audience')
-  if (!arRunAtLeastOnce) missingItems.push('Run Audience Resonance at least once')
-  if (!scoreAtTarget) {
-    missingItems.push(
-      `Reach ${READY_FOR_PRODUCTION_THRESHOLD_V3}+ Audience Resonance (currently ${arScore ?? '—'})`
-    )
-  }
+  const missingItemKeys: string[] = []
+  if (!blueprintGenerated) missingItemKeys.push('missingBlueprint')
+  if (!artStyleSet) missingItemKeys.push('missingArtStyle')
+  if (!aspectRatioSet) missingItemKeys.push('missingAspectRatio')
+  if (!audienceSaved) missingItemKeys.push('missingAudience')
+  if (!arRunAtLeastOnce) missingItemKeys.push('missingArRun')
+  if (!scoreAtTarget) missingItemKeys.push('missingScore')
 
   return {
     blueprintGenerated,
@@ -104,7 +108,7 @@ export function evaluateBlueprintReadyChecklist(input: {
     artStyleLabel: artStyle ? getArtStylePresetName(artStyle) : null,
     aspectRatioLabel: aspectRatio,
     isBlueprintReady,
-    missingItems,
+    missingItemKeys,
   }
 }
 
@@ -113,42 +117,46 @@ export function evaluateStartProductionGate(input: {
   overrideSoftGate?: boolean
 }): StartProductionGateResult {
   const { checklist } = input
-  const reasons: string[] = []
+  const reasons: GateReason[] = []
 
   if (!checklist.blueprintGenerated) {
     return {
       allowed: false,
       hardBlock: true,
-      reasons: ['Generate a Blueprint before starting Production.'],
+      reasonKeys: [{ key: 'blockGenerateFirst' }],
       checklist,
     }
   }
 
   if (!checklist.artStyleSet) {
-    reasons.push('Select an art style in Blueprint Visual Foundation.')
+    reasons.push({ key: 'needArtStyle' })
   }
   if (!checklist.aspectRatioSet) {
-    reasons.push('Select an aspect ratio in Blueprint Visual Foundation.')
+    reasons.push({ key: 'needAspectRatio' })
   }
   if (!checklist.audienceSaved) {
-    reasons.push('Save your target audience in the Resonance panel.')
+    reasons.push({ key: 'needAudience' })
   }
   if (!checklist.arRunAtLeastOnce) {
-    reasons.push('Run Audience Resonance at least once.')
+    reasons.push({ key: 'needArRun' })
   }
   if (!checklist.scoreAtTarget) {
-    reasons.push(
-      `Audience Resonance is below ${READY_FOR_PRODUCTION_THRESHOLD_V3} (score: ${checklist.arScore ?? '—'}).`
-    )
+    reasons.push({
+      key: 'needScore',
+      values: {
+        target: READY_FOR_PRODUCTION_THRESHOLD_V3,
+        score: checklist.arScore ?? '—',
+      },
+    })
   }
 
   if (reasons.length === 0) {
-    return { allowed: true, hardBlock: false, reasons: [], checklist }
+    return { allowed: true, hardBlock: false, reasonKeys: [], checklist }
   }
 
   if (input.overrideSoftGate) {
-    return { allowed: true, hardBlock: false, reasons, checklist }
+    return { allowed: true, hardBlock: false, reasonKeys: reasons, checklist }
   }
 
-  return { allowed: false, hardBlock: false, reasons, checklist }
+  return { allowed: false, hardBlock: false, reasonKeys: reasons, checklist }
 }

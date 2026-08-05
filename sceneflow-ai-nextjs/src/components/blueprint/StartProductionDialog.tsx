@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import React from 'react'
 import {
   Dialog,
@@ -32,10 +34,12 @@ export function StartProductionDialog({
   onConfirm,
   onCancel,
 }: StartProductionDialogProps) {
+  const t = useTranslations('blueprint.startProduction')
+  const tGate = useTranslations('blueprint.gate')
   if (!gate) return null
 
-  const { checklist, reasons, allowed, hardBlock } = gate
-  const showOverride = !allowed && !hardBlock && reasons.length > 0
+  const { checklist, reasonKeys, allowed, hardBlock } = gate
+  const showOverride = !allowed && !hardBlock && reasonKeys.length > 0
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -55,48 +59,48 @@ export function StartProductionDialog({
         <div className="space-y-4 py-2">
           <dl className="grid grid-cols-2 gap-3 text-sm">
             <div className="rounded-lg bg-slate-800/50 p-3 border border-slate-700/50">
-              <dt className="text-xs text-gray-500">Beats</dt>
+              <dt className="text-xs text-gray-500">{t('beats')}</dt>
               <dd className="text-lg font-semibold text-white">{checklist.beatsCount}</dd>
             </div>
             <div className="rounded-lg bg-slate-800/50 p-3 border border-slate-700/50">
-              <dt className="text-xs text-gray-500">Characters</dt>
+              <dt className="text-xs text-gray-500">{t('characters')}</dt>
               <dd className="text-lg font-semibold text-white">{checklist.characterCount}</dd>
             </div>
             <div className="rounded-lg bg-slate-800/50 p-3 border border-slate-700/50">
-              <dt className="text-xs text-gray-500">AR score</dt>
+              <dt className="text-xs text-gray-500">{t('arScore')}</dt>
               <dd className="text-lg font-semibold text-white">
                 {checklist.arScore ?? '—'}
               </dd>
             </div>
             <div className="rounded-lg bg-slate-800/50 p-3 border border-slate-700/50">
-              <dt className="text-xs text-gray-500">Runtime</dt>
+              <dt className="text-xs text-gray-500">{t('runtime')}</dt>
               <dd className="text-lg font-semibold text-white">
                 {checklist.runtimeEstimate ?? '—'}
               </dd>
             </div>
             <div className="rounded-lg bg-slate-800/50 p-3 border border-slate-700/50">
-              <dt className="text-xs text-gray-500">Art style</dt>
+              <dt className="text-xs text-gray-500">{t('artStyle')}</dt>
               <dd className="text-sm font-semibold text-white truncate">
                 {checklist.artStyleLabel ?? '—'}
               </dd>
             </div>
             <div className="rounded-lg bg-slate-800/50 p-3 border border-slate-700/50">
-              <dt className="text-xs text-gray-500">Aspect ratio</dt>
+              <dt className="text-xs text-gray-500">{t('aspectRatio')}</dt>
               <dd className="text-lg font-semibold text-white">
                 {checklist.aspectRatioLabel ?? '—'}
               </dd>
             </div>
           </dl>
 
-          {reasons.length > 0 && (
+          {reasonKeys.length > 0 && (
             <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 space-y-2">
               <div className="flex items-center gap-2 text-amber-200 text-xs font-medium">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
-                {hardBlock ? 'Cannot start yet' : 'Recommendations before Production'}
+                {hardBlock ? t('cannotStart') : t('recommendationsBefore')}
               </div>
               <ul className="text-xs text-amber-100/90 space-y-1 list-disc list-inside">
-                {reasons.map((r) => (
-                  <li key={r}>{r}</li>
+                {reasonKeys.map((reason) => (
+                  <li key={reason.key}>{tGate(reason.key, reason.values)}</li>
                 ))}
               </ul>
             </div>
@@ -128,7 +132,7 @@ export function StartProductionDialog({
               {isStarting ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
               ) : null}
-              Start anyway
+              {t('startAnyway')}
             </Button>
           )}
         </DialogFooter>

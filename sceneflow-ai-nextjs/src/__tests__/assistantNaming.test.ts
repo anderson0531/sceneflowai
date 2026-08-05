@@ -103,8 +103,11 @@ describe('Assistant naming', () => {
 
   it('labels the Assistant button with text, not an icon alone', () => {
     const button = readSource('src/components/blueprint/AssistantButton.tsx')
-    expect(button).toContain('ASSISTANT.short')
-    expect(button).toContain('ASSISTANT.tooltip')
+    // The label and tooltip moved into the catalog; the brand name stays a
+    // constant because it is a product name the glossary keeps untranslated.
+    expect(button).toContain("t('label')")
+    expect(button).toContain("t('tooltip'")
+    expect(button).toContain('ASSISTANT.full')
     expect(button).toContain('aria-label')
   })
 

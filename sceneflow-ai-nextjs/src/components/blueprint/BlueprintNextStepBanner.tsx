@@ -63,9 +63,10 @@ export function BlueprintNextStepBanner({
   className,
 }: BlueprintNextStepBannerProps) {
   const t = useTranslations('blueprint.nextStep')
+  const tCheck = useTranslations('blueprint.checklist')
   const [expanded, setExpanded] = useState(false)
 
-  if (!progress.nextStepEvent && progress.currentStep === 'generate' && !progress.nextStepLabel) {
+  if (!progress.nextStepEvent && progress.currentStep === 'generate' && !progress.nextStepLabelKey) {
     return null
   }
 
@@ -74,20 +75,27 @@ export function BlueprintNextStepBanner({
   // ready while StartProductionDialog blocks.
   const items = checklist
     ? [
-        { ok: checklist.blueprintGenerated, label: 'Blueprint generated' },
-        { ok: checklist.audienceSaved, label: 'Target audience saved' },
-        { ok: checklist.arRunAtLeastOnce, label: 'Audience Resonance run at least once' },
+        { ok: checklist.blueprintGenerated, label: tCheck('blueprintGenerated') },
+        { ok: checklist.audienceSaved, label: tCheck('audienceSaved') },
+        { ok: checklist.arRunAtLeastOnce, label: tCheck('arRunAtLeastOnce') },
         {
           ok: checklist.scoreAtTarget,
-          label: `Score ${READY_FOR_PRODUCTION_THRESHOLD_V3}+ (current: ${checklist.arScore ?? '—'})`,
+          label: tCheck('scoreAtTarget', {
+            target: READY_FOR_PRODUCTION_THRESHOLD_V3,
+            current: checklist.arScore ?? '—',
+          }),
         },
         {
           ok: checklist.artStyleSet,
-          label: `Art style${checklist.artStyleLabel ? ` (${checklist.artStyleLabel})` : ''}`,
+          label: checklist.artStyleLabel
+            ? tCheck('artStyleWithValue', { value: checklist.artStyleLabel })
+            : tCheck('artStyle'),
         },
         {
           ok: checklist.aspectRatioSet,
-          label: `Aspect ratio${checklist.aspectRatioLabel ? ` (${checklist.aspectRatioLabel})` : ''}`,
+          label: checklist.aspectRatioLabel
+            ? tCheck('aspectRatioWithValue', { value: checklist.aspectRatioLabel })
+            : tCheck('aspectRatio'),
         },
       ]
     : []
@@ -121,7 +129,7 @@ export function BlueprintNextStepBanner({
             <p className="text-[10px] uppercase tracking-wide text-gray-500">
               {isReady ? 'Ready for Production' : 'Next step'}
             </p>
-            <p className="text-sm font-medium text-white truncate">{progress.nextStepLabel}</p>
+            <p className="text-sm font-medium text-white truncate">{t(progress.nextStepLabelKey)}</p>
           </div>
         </div>
 

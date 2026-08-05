@@ -112,7 +112,10 @@ describe('Reasoning panel', () => {
 
   it('adds a Reasoning tab beside Resonance and Collaborate', () => {
     expect(panel).toContain("'reasoning'")
-    expect(panel).toContain('<span>Reasoning</span>')
+    // Tab labels resolve through the blueprint catalog.
+    expect(panel).toContain("t('tabs.reasoning')")
+    expect(panel).toContain("t('tabs.resonance')")
+    expect(panel).toContain("t('tabs.collaborate')")
     expect(panel).toContain('NarrativeReasoningPanel')
     const reasoningPanel = readSource('src/components/blueprint/NarrativeReasoningPanel.tsx')
     const narrationSection = readSource('src/components/blueprint/BlueprintNarrationSection.tsx')
