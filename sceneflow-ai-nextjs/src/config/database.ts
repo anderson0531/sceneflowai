@@ -62,10 +62,21 @@ ensureGoogleApplicationCredentialsFile()
  * a second connection therefore doubles the resting footprint for a pool that
  * short queries rarely need concurrently.
  *
- * This is mitigation, not a cure. The ceiling still scales with instance count,
- * so a sustained burst needs a pooler (PgBouncer / Cloud SQL Auth Proxy) or a
- * larger `max_connections`. DB_POOL_MAX raises this without a code change once
- * either is in place.
+ * `maxUses: 1` is the piece that actually frees slots under freeze: when a
+ * request returns its connection to the pool, sequelize-pool destroys it
+ * instead of parking it idle. A warm instance that then freezes holds *zero*
+ * Cloud SQL sockets. Without this, max=1 still accumulates one zombie socket
+ * per warm instance until Vercel recycles the isolate — which is how production
+ * hit 53300 again after the max=1 deploy.
+ *
+ * Do not rely on `idle: 0` for the same effect: sequelize-pool coerces a falsy
+ * idleTimeoutMillis to 30000 (`factory.idleTimeoutMillis || 30000`), so zero
+ * never means "destroy immediately".
+ *
+ * This is mitigation, not a cure. Concurrent in-flight requests across many
+ * cold starts can still saturate `max_connections`. A sustained burst needs a
+ * pooler (PgBouncer / Cloud SQL Auth Proxy) or a larger tier. DB_POOL_MAX raises
+ * the per-instance cap without a code change once either is in place.
  */
 function poolMaxFromEnv(): number {
   const raw = Number.parseInt(process.env.DB_POOL_MAX ?? '', 10)
@@ -77,10 +88,12 @@ const pool = {
   max: poolMaxFromEnv(),
   min: 0,
   acquire: 60000,
+  // Kept non-zero only as a backstop for long-lived local processes; on Vercel
+  // the freeze window prevents eviction from running, so maxUses does the work.
   idle: 10000,
-  // Reap idle connections on a timer, so a warm instance between requests stops
-  // holding slots that other instances are queueing for.
   evict: 5000,
+  // Destroy the socket after each checkout. Critical for serverless freeze.
+  maxUses: 1,
 }
 const define = { underscored: true }
 

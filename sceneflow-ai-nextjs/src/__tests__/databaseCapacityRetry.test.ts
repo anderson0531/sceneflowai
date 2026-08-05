@@ -59,7 +59,10 @@ describe('pool is sized for serverless', () => {
     expect(CONFIG).toContain('DB_POOL_MAX')
   })
 
-  it('reaps idle connections so warm instances stop holding slots', () => {
+  it('destroys sockets after each use so frozen isolates hold none', () => {
+    // idle/evict never run while Vercel has the isolate frozen; maxUses is what
+    // actually returns the Cloud SQL slot when the request ends.
+    expect(CONFIG).toMatch(/maxUses:\s*1/)
     expect(CONFIG).toContain('evict:')
   })
 })
