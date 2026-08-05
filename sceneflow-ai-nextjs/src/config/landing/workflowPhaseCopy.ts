@@ -40,12 +40,12 @@ export const WORKFLOW_PHASES: WorkflowPhaseCopy[] = [
     description:
       'Transform concepts into structured treatments with logline, beats, characters, and tone. Run Audience Resonance and collaborate before heavy rendering.',
     keySteps: [
-      'Generate → Review → Iterate → Open Production Studio',
+      'Generate → Review → Iterate → Go to Production Studio',
       'Audience Resonance scoring with 80+ target',
       'Collaborator share links and export (PDF, Doc, PPTX)',
     ],
     keyFeatures: [
-      'Generate → Review → Iterate → Open Production Studio workflow',
+      'Generate → Review → Iterate → Go to Production Studio workflow',
       'Concept to structure in minutes — logline, beats, characters, and tone',
       'Audience Resonance scoring with 80+ target before Production Studio',
       'Collaborator share links — feedback synthesis into guided revision',

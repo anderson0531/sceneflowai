@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react'
+import { ASSISTANT } from '@/lib/constants/assistant'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronDown,
@@ -622,7 +623,7 @@ export function AudienceResonancePanelV3({
                       className="text-[10px] text-cyan-400 flex items-center gap-1"
                     >
                       <Pencil className="w-3 h-3" />
-                      Open editor
+                      {ASSISTANT.short}
                     </button>
                   </div>
                   {sortedRecs.slice(0, 5).map((rec) => (
@@ -644,7 +645,7 @@ export function AudienceResonancePanelV3({
                         onClick={() => openEditor([rec])}
                         className="text-[10px] text-cyan-400 hover:text-cyan-300"
                       >
-                        Improve in editor →
+                        Improve with {ASSISTANT.short} →
                       </button>
                     </div>
                   ))}

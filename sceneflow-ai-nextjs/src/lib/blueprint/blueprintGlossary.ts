@@ -3,6 +3,7 @@
  */
 
 import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
+import { ASSISTANT } from '@/lib/constants/assistant'
 
 export interface GlossaryTerm {
   term: string
@@ -24,14 +25,14 @@ export const BLUEPRINT_GLOSSARY: Record<string, GlossaryTerm> = {
   },
   regenerateBlueprint: {
     term: 'Regenerate Blueprint',
-    definition: 'Full AI regen when you want a major creative reset — use Edit Blueprint for scoped changes.',
+    definition: `Full AI regen when you want a major creative reset — use the ${ASSISTANT.short} for scoped changes.`,
   },
   editBlueprint: {
-    term: 'Edit Blueprint',
-    definition: 'Scoped AI edits to core info, story, tone, beats, or characters.',
+    term: ASSISTANT.short,
+    definition: `${ASSISTANT.full} — describe a change in plain words and it revises core info, story, tone, beats, or characters for you.`,
   },
   startProduction: {
-    term: 'Open Production Studio',
+    term: 'Go to Production Studio',
     definition: `Hand off your Blueprint to generate script and begin the ${STUDIO_DISPLAY_NAMES.production} pipeline.`,
   },
 }
@@ -51,7 +52,20 @@ export const BLUEPRINT_COPY = {
   blueprintSavedOpeningProduction: `Blueprint saved — opening ${STUDIO_DISPLAY_NAMES.production}`,
   creatingVision: `Opening ${STUDIO_DISPLAY_NAMES.production}…`,
   reimagine: 'Regenerate Blueprint',
-  editBlueprint: 'Edit Blueprint',
-  startProduction: 'Open Production Studio',
-  startProductionTooltip: `Open Production Studio — generate script and begin the ${STUDIO_DISPLAY_NAMES.production} pipeline`,
+  editBlueprint: ASSISTANT.short,
+  startProduction: 'Go to Production Studio',
+  /**
+   * Header button label. Matches the next-step banner's Go button, while
+   * `startProduction` stays the destination's name for the next-step text,
+   * sidebar guide, tooltips and accessible names.
+   */
+  startProductionShort: 'Go',
+  startProductionTooltip: `Go to Production Studio — generate script and begin the ${STUDIO_DISPLAY_NAMES.production} pipeline`,
+} as const
+
+/** Blueprint voice/TTS menu labels (Voice Direction, not Director's notes). */
+export const VOICE_DIRECTION_COPY = {
+  sectionLabel: 'Voice Direction',
+  add: 'Add voice direction',
+  set: 'Voice direction set',
 } as const

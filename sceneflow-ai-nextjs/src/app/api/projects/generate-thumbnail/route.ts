@@ -3,6 +3,7 @@ import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
+import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 
 export const maxDuration = 60
 
@@ -101,8 +102,8 @@ Style Requirements:
       success: true, 
       imageUrl: blobUrl, // Return Blob URL, not base64
       promptUsed: enhancedPrompt, // Return the actual prompt used
-      model: 'imagen-3.0-generate-001',
-      provider: 'vertex-ai-imagen-3',
+      model: GEMINI_IMAGE_MODELS.flash,
+      provider: 'vertex-gemini-image',
       usedBYOK: !!userApiKey,
       storageType: 'vercel-blob'
     })

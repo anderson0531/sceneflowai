@@ -56,16 +56,43 @@ export function blueprintCategoryToSection(categoryName: string): string {
   return CATEGORY_TO_SECTION[categoryName] ?? 'story'
 }
 
+/** Asks the blueprint card to select the tab owning a section. */
+export const BLUEPRINT_ACTIVATE_SECTION_EVENT = 'blueprint:activate-section'
+
+function highlight(el: Element) {
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  el.classList.add('ring-2', 'ring-cyan-400/60', 'rounded-lg')
+  window.setTimeout(() => {
+    el.classList.remove('ring-2', 'ring-cyan-400/60', 'rounded-lg')
+  }, 2000)
+}
+
+/**
+ * Reveal a blueprint section and scroll to it.
+ *
+ * The sections live in tabs, and the inactive panels are not mounted, so the
+ * element usually does not exist yet. Ask the card to switch tabs first, then
+ * look for it once React has committed that render.
+ */
 export function scrollToBlueprintSection(section: string) {
   if (typeof window === 'undefined') return
-  const el = document.querySelector(`[data-blueprint-section="${section}"]`)
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    el.classList.add('ring-2', 'ring-cyan-400/60', 'rounded-lg')
-    window.setTimeout(() => {
-      el.classList.remove('ring-2', 'ring-cyan-400/60', 'rounded-lg')
-    }, 2000)
+
+  window.dispatchEvent(
+    new CustomEvent(BLUEPRINT_ACTIVATE_SECTION_EVENT, { detail: { section } })
+  )
+
+  const existing = document.querySelector(`[data-blueprint-section="${section}"]`)
+  if (existing) {
+    highlight(existing)
+    return
   }
+
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      const el = document.querySelector(`[data-blueprint-section="${section}"]`)
+      if (el) highlight(el)
+    })
+  })
 }
 
 export function calculateBlueprintProgress(

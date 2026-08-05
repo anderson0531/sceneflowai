@@ -34,15 +34,15 @@ describe('klingSafetyGuard', () => {
   const envBackup: Record<string, string | undefined> = {}
 
   beforeEach(() => {
-    envBackup.FAL_KEY = process.env.FAL_KEY
+    envBackup.KLING_API_KEY = process.env.KLING_API_KEY
     envBackup.KLING_HIVE_GUARD_ENABLED = process.env.KLING_HIVE_GUARD_ENABLED
-    process.env.FAL_KEY = 'test-fal-key'
+    process.env.KLING_API_KEY = 'api-key-kling-test'
     vi.clearAllMocks()
     vi.mocked(HiveModerationService.isConfigured).mockReturnValue(true)
   })
 
   afterEach(() => {
-    process.env.FAL_KEY = envBackup.FAL_KEY
+    process.env.KLING_API_KEY = envBackup.KLING_API_KEY
     process.env.KLING_HIVE_GUARD_ENABLED = envBackup.KLING_HIVE_GUARD_ENABLED
   })
 
@@ -75,7 +75,7 @@ describe('klingSafetyGuard', () => {
     expect(evaluation.categories).toContain('non_consensual_likeness')
   })
 
-  it('isKlingHiveGuardEnabled defaults on when Fal + Hive configured', () => {
+  it('isKlingHiveGuardEnabled defaults on when direct Kling + Hive configured', () => {
     delete process.env.KLING_HIVE_GUARD_ENABLED
     expect(isKlingHiveGuardEnabled()).toBe(true)
   })

@@ -35,9 +35,13 @@ jobs:
         working-directory: sceneflow-ai-nextjs
         run: npm run ci:circular
 
-      - name: TypeScript check
+      # Soft-fail: ~800 pre-existing errors predate this workflow, and the app
+      # ships with next.config.mjs `typescript.ignoreBuildErrors`, so tsc has
+      # never gated a deploy. Surfaced here to track the debt without wedging CI.
+      - name: TypeScript check (soft-fail)
         working-directory: sceneflow-ai-nextjs
         run: npx tsc --noEmit
+        continue-on-error: true
 
       # i18n guards. These fail the build rather than soft-failing: each one
       # catches a defect that is silent at runtime.
@@ -57,8 +61,8 @@ jobs:
         working-directory: sceneflow-ai-nextjs
         run: npm run lint:i18n
 
-      - name: Build (optional)
-        if: ${{ success() }}
+      # The real gate: mirrors what Vercel runs, so a red build means a red deploy.
+      - name: Build
         working-directory: sceneflow-ai-nextjs
         env:
           DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci

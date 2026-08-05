@@ -1,6 +1,6 @@
 import type { BlueprintAudienceRecommendation } from '@/lib/types/audienceResonance'
 import type { BlueprintChangePlan, BlueprintFixSection } from './blueprintRevisionTypes'
-import { SECTION_FIELDS } from './blueprintRevisionTypes'
+import { inferTargetedSections, MAX_BEATS, SECTION_FIELDS } from './blueprintRevisionTypes'
 import { strictJsonPromptSuffix } from '@/lib/safeJson'
 import {
   type ContentIntent,
@@ -11,7 +11,11 @@ import {
 import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 
 const MAX_SYNOPSIS = 1200
-const MAX_BEAT_SYNOPSIS = 120
+/**
+ * Beats are the section most often rewritten, so the model has to see the real
+ * synopsis it is revising. At 120 it received stubs and could not preserve detail.
+ */
+const MAX_BEAT_SYNOPSIS = 600
 const MAX_CHAR_DESC = 200
 const MAX_REC_TEXT = 220
 const MAX_RECS_IN_PROMPT = 12
@@ -41,7 +45,7 @@ function truncateStr(value: unknown, max: number): string {
 
 export function trimVariantForPrompt(variant: Record<string, unknown>): Record<string, unknown> {
   const beats = Array.isArray(variant.beats)
-    ? (variant.beats as Array<Record<string, unknown>>).slice(0, 8).map((b, i) => ({
+    ? (variant.beats as Array<Record<string, unknown>>).slice(0, MAX_BEATS).map((b, i) => ({
         title: b.title || `Beat ${i + 1}`,
         intent: truncateStr(b.intent, 80),
         minutes: b.minutes || 0,
@@ -122,6 +126,93 @@ function pickVariantFields(
   return out
 }
 
+/** Infer plan from audience resonance recommendations (skips planner LLM when possible). */
+export function inferPlanFromRecommendations(
+  recs: BlueprintAudienceRecommendation[],
+  intentText: string
+): BlueprintChangePlan | null {
+  if (!recs.length) return null
+
+  const fixSections = recs
+    .map((r) => r.fixSection)
+    .filter((s): s is BlueprintFixSection => Boolean(s))
+
+  if (fixSections.length === 0) return null
+
+  const uniqueSections = [...new Set(fixSections)]
+
+  if (uniqueSections.length === 1) {
+    return inferPlanFromFocus(uniqueSections[0], intentText)
+  }
+
+  const sections = new Set<BlueprintFixSection>(uniqueSections)
+  if (sections.has('characters')) {
+    sections.add('story')
+    sections.add('beats')
+  }
+  if (sections.has('story')) {
+    sections.add('beats')
+  }
+  if (sections.has('beats')) {
+    sections.add('story')
+  }
+
+  return {
+    primaryGoal: truncateStr(intentText, 300) || 'Apply audience resonance recommendations',
+    sectionsToUpdate: [...sections],
+    crossSectionDependencies: recs
+      .flatMap((r) => r.impactSections ?? [])
+      .filter((s): s is BlueprintFixSection =>
+        ['core', 'story', 'tone', 'beats', 'characters'].includes(s)
+      ),
+    preserveConstraints: ['Preserve title unless user requests a rename'],
+    coherenceActions: [`Reconcile ${[...sections].join(', ')} from resonance fixes`],
+  }
+}
+
+/**
+ * Infer a change plan from free-form user direction (skips planner LLM).
+ * Defaults to story-only when no section keywords match.
+ */
+export function inferPlanFromUserIntent(userIntent: string): BlueprintChangePlan | null {
+  const trimmed = userIntent.trim()
+  if (!trimmed) return null
+
+  const sections = new Set<BlueprintFixSection>(inferTargetedSections(trimmed))
+
+  if (sections.size === 0) {
+    return {
+      primaryGoal: truncateStr(trimmed, 300),
+      sectionsToUpdate: ['story'],
+      crossSectionDependencies: [],
+      preserveConstraints: ['Preserve title unless user requests a rename'],
+      coherenceActions: ['Revise story per user direction'],
+    }
+  }
+
+  if (sections.has('characters')) {
+    sections.add('story')
+    sections.add('beats')
+  }
+  if (sections.has('story')) {
+    sections.add('beats')
+  }
+  if (sections.has('beats')) {
+    sections.add('story')
+  }
+  if (sections.has('core')) {
+    sections.add('story')
+  }
+
+  return {
+    primaryGoal: truncateStr(trimmed, 300),
+    sectionsToUpdate: [...sections],
+    crossSectionDependencies: [],
+    preserveConstraints: ['Preserve title unless user requests a rename'],
+    coherenceActions: [`Revise ${[...sections].join(', ')} per user direction`],
+  }
+}
+
 /** Skip planner LLM call when user scoped a single section (saves memory + latency). */
 export function inferPlanFromFocus(
   focusScope: BlueprintFixSection | 'all' | undefined,
@@ -194,14 +285,24 @@ Return ONLY valid JSON:
 ${strictJsonPromptSuffix}`
 }
 
+export interface RewriterPromptOptions {
+  /** Fields already revised in an earlier sequential pass. */
+  partialPatch?: Record<string, unknown>
+  /** When false, omit narrative_reasoning from the output schema (intermediate passes). */
+  includeNarrativeReasoning?: boolean
+  /** Language the creator authors in; the revision must come back in it. */
+  storyLocale?: string
+}
+
 export function buildRewriterPrompt(
   variant: Record<string, unknown>,
   plan: BlueprintChangePlan,
   userIntent: string,
   recs: BlueprintAudienceRecommendation[],
   contentIntent?: ContentIntent,
-  storyLocale?: string
+  options: RewriterPromptOptions = {}
 ): string {
+  const { partialPatch, includeNarrativeReasoning = true, storyLocale } = options
   const intent = contentIntent ?? resolveContentIntent(String(variant.genre || ''))
   const trimmed = trimVariantForPrompt(variant)
   const allFields = new Set<string>()
@@ -218,6 +319,10 @@ export function buildRewriterPrompt(
 
   const allowedFields = [...allFields]
   const scopedBlueprint = pickVariantFields(trimmed, allowedFields)
+  const partialBlock =
+    partialPatch && Object.keys(partialPatch).length > 0
+      ? `\nPARTIAL REVISION SO FAR (preserve these; build on them):\n${compactJson(pickVariantFields(partialPatch, allowedFields))}\n`
+      : ''
   const recBlock = buildRecommendationIntentBlock(recs)
   const couplingRules = getCouplingRulesForIntent(intent)
   const intentGuard = getIntentRevisionGuardrail(intent)
@@ -229,6 +334,16 @@ export function buildRewriterPrompt(
       [String(variant.title ?? '')]
     ),
   })
+  const reasoningSchema = includeNarrativeReasoning
+    ? `Include "narrative_reasoning" object:
+{
+  "narrative_reasoning": {
+    "user_adjustments": "<summary of what changed and why, for the creator>",
+    "key_decisions": [{"decision": "...", "why": "...", "impact": "..."}]
+  },
+  ...modified blueprint fields...
+}`
+    : `Return ONLY modified blueprint fields (no narrative_reasoning on this pass).`
 
   return `You are an expert ${intent === 'fiction' ? 'film treatment editor' : 'content blueprint editor'} performing a GUIDED, BALANCED blueprint revision.
 
@@ -236,7 +351,11 @@ CRITICAL RULES:
 - You are REPLACING content, NOT appending. Return complete new values for each field you change.
 - Apply the change plan and cross-section coupling. The blueprint must read as one coherent document.
 - Do NOT change fields outside the allowed list unless coupling requires it.
-- Maximum 8 beats. Beat synopses 1-3 sentences each.
+- Beat "minutes" MUST sum to the target runtime. Let the beat count follow from that
+  target and the pacing the story needs (up to ${MAX_BEATS} beats) — do NOT keep the
+  existing beat count when the runtime changes.
+- Every beat you return MUST include title, intent, minutes, and a 1-3 sentence synopsis.
+- When returning "beats", return the COMPLETE ordered array, not just changed entries.
 - character_descriptions: preserve participant NAMES unless user explicitly requests rename.
 - Return ONLY fields you modify — do not echo unchanged fields.
 ${intentGuard}
@@ -252,17 +371,10 @@ ALLOWED FIELDS TO RETURN (include all you modify): ${allowedFields.join(', ')}
 
 CURRENT VALUES (allowed fields only):
 ${compactJson(scopedBlueprint)}
-
+${partialBlock}
 ${couplingRules}
 ${languageBlock}
-Return ONLY a JSON object with the modified fields (subset of allowed fields). Include "narrative_reasoning" object:
-{
-  "narrative_reasoning": {
-    "user_adjustments": "<summary of what changed and why, for the creator>",
-    "key_decisions": [{"decision": "...", "why": "...", "impact": "..."}]
-  },
-  ...modified blueprint fields...
-}
+Return ONLY a JSON object with the modified fields (subset of allowed fields). ${reasoningSchema}
 ${strictJsonPromptSuffix}`
 }
 

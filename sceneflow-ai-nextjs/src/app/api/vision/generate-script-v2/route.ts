@@ -17,7 +17,10 @@ import {
   migrateProjectToBeats,
   migrateProjectBeatsToStartFrameOnly,
 } from '@/lib/script/beatMigration'
-import { ensureCinematicBookends } from '@/lib/script/cinematicBookends'
+import {
+  creditLinesJsonForPrompt,
+  ensureCinematicBookends,
+} from '@/lib/script/cinematicBookends'
 import {
   buildBeatTimelineNarrationRules,
   buildNarrationLegacyFieldHint,
@@ -1211,7 +1214,7 @@ OUTPUT FORMAT (JSON):
         {"kind": "action", "actionDescription": "End card: title logo holds, fade to black..."}
       ],
       "dialogue": [],
-      "creditLines": [{"name": "${treatment.author_writer || 'Creator'}", "role": "Written by", "isPrimary": false}],
+      "creditLines": ${creditLinesJsonForPrompt(treatment.author_writer)},
       "visualDescription": "Professional end credits sequence",
       "duration": 25
     }

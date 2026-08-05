@@ -778,7 +778,7 @@ async function generateGoogleAudio(
     // Default aligns with Gemini 3.1 Flash TTS preview (global). Override via GEMINI_TTS_MODEL,
     // e.g. gemini-2.5-flash-tts or gemini-2.5-pro-tts for GA regions / quality tradeoffs.
     payload.voice.modelName =
-      process.env.GEMINI_TTS_MODEL?.trim() || 'gemini-3.1-flash-tts-preview'
+      process.env.GEMINI_TTS_MODEL?.trim() || 'gemini-2.5-flash-tts'
     const advancedVoiceOptions = buildGeminiTtsAdvancedVoiceOptions()
     if (advancedVoiceOptions) {
       payload.advancedVoiceOptions = advancedVoiceOptions

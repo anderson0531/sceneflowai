@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { getUserDisplayName } from '@/lib/user/displayName'
+import { resolveCreatorCreditForSession } from '@/lib/user/creatorCredit'
 import { strictJsonPromptSuffix, safeParseJsonFromText } from '@/lib/safeJson'
 import { analyzeDuration, normalizeDuration } from '@/lib/treatment/duration'
 import { buildTreatmentPrompt } from '@/lib/treatment/prompts'
@@ -60,6 +60,13 @@ interface FilmTreatmentRequest {
 
 type RigorMode = 'fast' | 'balanced' | 'thorough'
 
+/**
+ * The treatment JSON carries character_descriptions (19 fields per character),
+ * scene_descriptions, and the beat sheet. At the 8192 default the response was
+ * cut off before `beats`, which parses cleanly but arrives empty.
+ */
+const TREATMENT_MAX_OUTPUT_TOKENS = 16384
+
 function getThinkingBudgetForRigor(rigor: RigorMode): number {
   switch (rigor) {
     case 'fast': return 0
@@ -102,6 +109,9 @@ interface FilmTreatmentItem {
   title?: string
   logline?: string
   genre?: string
+  /** Production format shown as "Format", e.g. podcast or education. */
+  format?: string
+  /** Runtime string, despite the name. Kept for the duration consumers. */
   format_length?: string
   author_writer?: string
   date?: string
@@ -362,9 +372,11 @@ export async function POST(request: NextRequest) {
     const body: FilmTreatmentRequest = await request.json()
     const { input, targetAudience, keyMessage, tone, genre, duration, platform } = body
     const session = await getServerSession(authOptions)
-    const userName = session?.user
-      ? getUserDisplayName(session.user)
-      : body.userName
+    // Read the creator credit from the database rather than the session: the JWT
+    // is only populated at sign-in, so a profile edit would not be reflected.
+    // Empty means "no real name on file", and downstream credits omit rather than
+    // print a login id.
+    const userName = await resolveCreatorCreditForSession(session, body.userName)
     let { coreConcept } = body
     const rigor: RigorMode = body.rigor || 'thorough'
     const thinkingBudget = resolveThinkingBudget(rigor, body.debugThinkingBudget)
@@ -567,7 +579,7 @@ async function generateFilmTreatment(
   
   // Add stricter JSON formatting instruction on retry
   const retryHint = attempt > 1 
-    ? '\n\nCRITICAL: Previous response had JSON errors. Ensure ALL arrays use commas between elements, ALL strings are properly escaped, and NO control characters exist in strings.'
+    ? '\n\nCRITICAL: The previous response was incomplete or malformed. Return the COMPLETE JSON object, including a non-empty "beats" array. Keep character_descriptions and scene_descriptions concise so the JSON finishes within the output limit. Ensure ALL arrays use commas between elements, ALL strings are properly escaped, and NO control characters exist in strings.'
     : ''
   
   const prompt = buildTreatmentPrompt({
@@ -591,25 +603,48 @@ async function generateFilmTreatment(
   const thinkingBudget = context?.thinkingBudget ?? getThinkingBudgetForRigor(context?.rigor || 'thorough')
   console.log(`[Film Treatment] Calling Vertex AI Gemini (thinkingBudget=${thinkingBudget})...`)
   
-  const result = await generateText(prompt, {
+  const generation = await generateText(prompt, {
     model: 'gemini-2.5-flash',
     temperature: 0.3,
     topP: 0.9,
     responseMimeType: 'application/json',
+    maxOutputTokens: TREATMENT_MAX_OUTPUT_TOKENS,
     thinkingBudget,
   })
 
-  if (!result?.text) {
+  if (!generation?.text) {
     throw new Error('No response from Vertex AI Gemini')
   }
 
-  const generatedText = result.text
+  const generatedText = generation.text
+  const finishReason = generation.finishReason
+  if (finishReason && finishReason !== 'STOP') {
+    console.warn(
+      `[Film Treatment] Response finished with ${finishReason} (${generatedText.length} chars) — tail fields such as beats may be missing`
+    )
+  }
 
   try {
     const parsedRaw = safeParseJsonFromText(generatedText)
     const parsed = repairTreatment(parsedRaw)
     
     const beats = Array.isArray(parsed.beats) ? parsed.beats : []
+
+    // `beats` is emitted near the end of the requested JSON, after the verbose
+    // character_descriptions array. A response cut off at the output limit still
+    // parses (the tail is repaired away), so an empty array here means the beat
+    // sheet was lost rather than that the story has no beats.
+    if (beats.length === 0) {
+      if (attempt < maxAttempts) {
+        console.warn(
+          `[Film Treatment] No beats returned on attempt ${attempt} (finishReason=${finishReason ?? 'unknown'}), retrying...`
+        )
+        return generateFilmTreatment(input, coreConcept, context, attempt + 1)
+      }
+      console.error(
+        `[Film Treatment] No beats after ${attempt} attempts (finishReason=${finishReason ?? 'unknown'}) — returning treatment without a beat sheet`
+      )
+    }
     const rawBeats = beats.map((b: any) => ({ title: b.title || 'Segment', summary: b.intent || '', minutes: Number(b.minutes) || 1 }))
     // In auto scope, KEEP the model's own beat pacing (story decides length).
     // In fixed scope, rescale beats so they sum to the user-selected target.
@@ -640,8 +675,13 @@ async function generateFilmTreatment(
       title: parsed.title,
       logline: parsed.logline,
       genre: parsed.genre,
+      // The production format the UI shows as "Format", e.g. podcast or education.
+      // Distinct from format_length, which is a runtime despite its name.
+      format: context?.format || 'short_film',
       format_length: `${totalDurationSeconds} seconds`,
-      author_writer: context?.userName || 'User',
+      // Empty when the account has no real name; consumers omit the credit
+      // rather than print a placeholder or a login id.
+      author_writer: context?.userName || '',
       date: new Date().toLocaleString('en-US', {
         year: 'numeric',
         month: 'short',

@@ -17,17 +17,15 @@ import {
   ContentPolicyExhaustedError,
 } from '@/lib/generation/contentPolicy'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
-import { runFalKlingVideo } from '@/lib/fal/klingPolicyClient'
-import { FAL_KLING_FALLBACK_MODEL_FAMILY } from '@/lib/fal/config'
 import { runKlingVideo } from '@/lib/kling/klingDirectClient'
 import { KLING_FALLBACK_MODEL_FAMILY } from '@/lib/kling/config'
 import type { VideoGenerationMethod } from '@/lib/vision/intelligentMethodSelection'
 import { neutralizeReferenceConflictPrompt } from '@/lib/gemini/neutralizeReferenceConflictPrompt'
 import { filterRefsForPolicyRetry } from '@/lib/video/normalizeReferenceImages'
 
-export type GenerationProvider = 'vertex' | 'fal' | 'kling'
+export type GenerationProvider = 'vertex' | 'kling'
 
-export type KlingFallbackModelFamily = typeof FAL_KLING_FALLBACK_MODEL_FAMILY | typeof KLING_FALLBACK_MODEL_FAMILY
+export type KlingFallbackModelFamily = typeof KLING_FALLBACK_MODEL_FAMILY
 
 export interface VeoKlingVideoResult {
   status: 'COMPLETED' | 'FAILED'
@@ -200,42 +198,6 @@ async function runKlingVideoFallback(
   })
 }
 
-async function runFalVideoFallback(
-  prompt: string,
-  method: VideoGenerationMethod,
-  options: VideoGenerationOptions
-): Promise<Buffer> {
-  const falOpts = stripExtForKling(options)
-  const duration = falOpts.durationSeconds === 8 ? 8 : 5
-  const aspect = falOpts.aspectRatio || '16:9'
-  const needsStart = method === 'I2V' || method === 'FTV' || method === 'EXT'
-
-  if (needsStart && !falOpts.startFrame) {
-    throw new Error('Fal Kling image-to-video requires startFrame URL or base64')
-  }
-
-  return runFalKlingVideo({
-    prompt,
-    negative_prompt: falOpts.negativePrompt,
-    duration,
-    aspect_ratio: aspect,
-    startFrame: needsStart ? falOpts.startFrame : undefined,
-    lastFrame: method === 'FTV' ? falOpts.lastFrame : undefined,
-  })
-}
-
-async function runExternalKlingFallback(
-  provider: 'kling' | 'fal',
-  prompt: string,
-  method: VideoGenerationMethod,
-  options: VideoGenerationOptions
-): Promise<Buffer> {
-  if (provider === 'kling') {
-    return runKlingVideoFallback(prompt, method, options)
-  }
-  return runFalVideoFallback(prompt, method, options)
-}
-
 /**
  * Up to VEO_POLICY_MAX_ATTEMPTS Vertex tries, then optional Kling on policy exhaustion.
  */
@@ -350,22 +312,20 @@ export async function generateVideoWithVeoKlingFallback(
   }
 
   try {
-    const buffer = await runExternalKlingFallback(klingProvider, prompt, method, options)
+    const buffer = await runKlingVideoFallback(prompt, method, options)
     return {
       status: 'COMPLETED',
       videoBuffer: buffer,
-      generationProvider: klingProvider,
-      fallbackModelFamily:
-        klingProvider === 'kling' ? KLING_FALLBACK_MODEL_FAMILY : FAL_KLING_FALLBACK_MODEL_FAMILY,
+      generationProvider: 'kling',
+      fallbackModelFamily: KLING_FALLBACK_MODEL_FAMILY,
       wasPolicyFallback: true,
       vertexAttempts,
       finalMethod: method,
     }
   } catch (klingErr) {
     const msg = klingErr instanceof Error ? klingErr.message : String(klingErr)
-    const label = klingProvider === 'kling' ? 'Direct Kling' : 'Fal Kling'
     throw new ContentPolicyExhaustedError(
-      `Vertex policy exhausted (${vertexAttempts} attempts); ${label} failed: ${msg}`,
+      `Vertex policy exhausted (${vertexAttempts} attempts); Direct Kling failed: ${msg}`,
       vertexAttempts,
       lastError
     )

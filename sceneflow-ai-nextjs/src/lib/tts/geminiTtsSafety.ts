@@ -31,14 +31,14 @@ export type GeminiTtsAdvancedVoiceOptions = {
   }
 }
 
-const DEFAULT_THRESHOLD: GeminiTtsSafetyThreshold = 'BLOCK_NONE'
+const DEFAULT_THRESHOLD: GeminiTtsSafetyThreshold | 'GOOGLE_DEFAULT' = 'GOOGLE_DEFAULT'
 
 function isValidThreshold(value: string): value is GeminiTtsSafetyThreshold {
   return (GEMINI_TTS_SAFETY_THRESHOLDS as readonly string[]).includes(value)
 }
 
 /**
- * Reads GEMINI_TTS_SAFETY_THRESHOLD. When unset, defaults to BLOCK_NONE.
+ * Reads GEMINI_TTS_SAFETY_THRESHOLD. When unset, defaults to GOOGLE_DEFAULT.
  * GOOGLE_DEFAULT or empty string omits advancedVoiceOptions (Google's built-in filtering).
  */
 export function getGeminiTtsSafetyThreshold(

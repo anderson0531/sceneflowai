@@ -12,7 +12,7 @@
                 "build:memory": "NODE_OPTIONS='--max-old-space-size=3072' next build",
                 "build:analyze": "ANALYZE=1 next build",
                 "start": "next start",
-                "lint": "next lint",
+                "lint": "eslint .",
                 "typecheck": "tsc --noEmit",
                 "lint:circular": "madge --circular --extensions ts,tsx src/",
                 "db:migrate": "echo 'Skipping migrations (placeholder)'",

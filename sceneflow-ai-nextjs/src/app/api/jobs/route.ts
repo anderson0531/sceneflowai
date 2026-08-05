@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import '@/models'
-import { getJobForUser, listJobsForUser } from '@/lib/jobs/jobService'
-import { createGenerationJob } from '@/lib/jobs/jobService'
+import {
+  cancelGenerationJob,
+  createGenerationJob,
+  getJobForUser,
+  listJobsForUser,
+} from '@/lib/jobs/jobService'
 import { getSessionUserId } from '@/lib/auth/sessionUser'
 import type { GenerationJobType } from '@/models/GenerationJob'
 import { inngest } from '@/inngest/client'
@@ -36,6 +40,31 @@ export async function GET(req: NextRequest) {
   }
 }
 
+export async function PATCH(req: NextRequest) {
+  try {
+    const userId = await getSessionUserId()
+    if (!userId) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
+
+    const body = await req.json()
+    const { jobId, action } = body as { jobId?: string; action?: string }
+    if (!jobId || action !== 'cancel') {
+      return NextResponse.json({ error: 'jobId and action=cancel required' }, { status: 400 })
+    }
+
+    const cancelled = await cancelGenerationJob(jobId, userId)
+    if (!cancelled) {
+      return NextResponse.json({ error: 'Job not found or not active' }, { status: 404 })
+    }
+
+    const job = await getJobForUser(jobId, userId)
+    return NextResponse.json({ job })
+  } catch (err: any) {
+    return NextResponse.json({ error: err?.message }, { status: 500 })
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
@@ -56,7 +85,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (batch && Array.isArray(batch) && batch.length > 0) {
-      const job = await createGenerationJob({
+      const { job } = await createGenerationJob({
         userId,
         projectId,
         jobType,
@@ -69,7 +98,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ jobId: job.id, status: 'queued' })
     }
 
-    const job = await createGenerationJob({
+    const { job } = await createGenerationJob({
       userId,
       projectId,
       jobType,

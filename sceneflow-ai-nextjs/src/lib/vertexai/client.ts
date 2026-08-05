@@ -1,7 +1,5 @@
 import { GoogleAuth } from 'google-auth-library'
-import { fetchWithRetry } from '../utils/retry'
-import { getImagenModel, DEFAULT_IMAGE_QUALITY, type ModelQuality } from '@/lib/config/modelConfig'
-import { getImagenSafetyFilterLevel, getImagenPersonGeneration } from './safety'
+import { type ModelQuality } from '@/lib/config/modelConfig'
 
 let authClient: any = null
 
@@ -64,232 +62,44 @@ export async function getVertexAIAuthToken(): Promise<string> {
   }
 }
 
+export class ImagenRetiredError extends Error {
+  constructor(modelId?: string) {
+    super(
+      `Vertex AI Imagen endpoints were retired on 2026-06-30${
+        modelId ? ` (requested ${modelId})` : ''
+      } and now return 404. Use generateVertexImage / generateVertexGeminiImage from @/lib/vertexai/vertexImageClient instead.`
+    )
+    this.name = 'ImagenRetiredError'
+  }
+}
+
 /**
- * Generate image using Vertex AI Imagen 
- * Uses imagen-3.0-capability-001 for subject customization with reference images
- * Uses imagen-3.0-generate-001 or imagen-3.0-fast-generate-001 for standard generation
- * 
- * @param prompt - Text description of image to generate
- * @param options - Generation options (aspect ratio, number of images, reference images, quality tier)
- * @returns Base64-encoded image data URL
+ * @deprecated Imagen `:predict` endpoints were retired on 2026-06-30.
+ * Call `generateVertexImage` from `@/lib/vertexai/vertexImageClient` instead — it uses
+ * Gemini Image (`generateContent`) and supports reference images.
+ *
+ * This shim throws immediately rather than issuing a request that would 404.
  */
 export async function callVertexAIImagen(
-  prompt: string,
+  _prompt: string,
   options: {
     aspectRatio?: '1:1' | '9:16' | '16:9' | '4:3' | '3:4'
     numberOfImages?: number
     negativePrompt?: string
-    quality?: 'max' | 'auto'  // Legacy Imagen quality setting
-    modelQuality?: ModelQuality  // Model tier: fast or standard
-    /** Override model ID (e.g. imagen-4.0-fast-generate-001) */
+    quality?: 'max' | 'auto'
+    modelQuality?: ModelQuality
     modelId?: string
     personGeneration?: 'allow_adult' | 'allow_all' | 'dont_allow'
     referenceImages?: Array<{
       referenceId: number
       base64Image?: string
       imageUrl?: string
-      gcsUri?: string // Deprecated: kept for backward compatibility
+      gcsUri?: string
       referenceType?: 'REFERENCE_TYPE_SUBJECT'
       subjectDescription?: string
       subjectType?: 'SUBJECT_TYPE_PERSON' | 'SUBJECT_TYPE_PRODUCT'
     }>
   } = {}
 ): Promise<string> {
-  const projectId = process.env.GCP_PROJECT_ID
-  const region = process.env.GCP_REGION || 'us-central1'
-  
-  if (!projectId) {
-    throw new Error('GCP_PROJECT_ID not configured')
-  }
-  
-  // Select model based on quality tier (default: fast for cost efficiency)
-  // Uses capability model for subject customization with reference images
-  const hasReferenceImages = options.referenceImages && options.referenceImages.length > 0
-  const quality = options.modelQuality || DEFAULT_IMAGE_QUALITY
-  const MODEL_ID = options.modelId || getImagenModel(quality, hasReferenceImages)
-  
-  console.log(`[Imagen] Generating image with ${MODEL_ID} (quality: ${quality})...`)
-  console.log('[Imagen] FULL Prompt:', prompt)
-  console.log('[Imagen] Project:', projectId, 'Region:', region)
-  console.log('[Imagen] Has reference images:', hasReferenceImages)
-  
-  const accessToken = await getVertexAIAuthToken()
-  
-  // Vertex AI endpoint
-  const endpoint = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/${MODEL_ID}:predict`
-  
-  // Build request body for Vertex AI Imagen 
-  // Use configurable safety settings (default: block_few for creative content)
-  const safetySetting = getImagenSafetyFilterLevel()
-  const personGeneration = options.personGeneration || getImagenPersonGeneration()
-  
-  console.log('[Imagen] Safety settings:', { safetySetting, personGeneration })
-  
-  const requestBody: any = {
-    instances: [{
-      prompt: prompt
-    }],
-    parameters: {
-      sampleCount: options.numberOfImages || 1,
-      aspectRatio: options.aspectRatio || '16:9',
-      safetySetting: safetySetting,
-      personGeneration: personGeneration
-    }
-  }
-  
-  // Only add negativePrompt for non-capability models (not supported by imagen-3.0-capability-001)
-  if (!hasReferenceImages && options.negativePrompt) {
-    requestBody.parameters.negativePrompt = options.negativePrompt
-  }
-  
-  // Add reference images for subject customization (character consistency)
-  // Per Google docs: referenceImage.bytesBase64Encoded is REQUIRED (not gcsUri)
-  // https://docs.cloud.google.com/vertex-ai/generative-ai/docs/model-reference/imagen-api-customization
-  if (hasReferenceImages) {
-    console.log('[Imagen] Adding', options.referenceImages!.length, 'reference image(s) for subject customization')
-    console.log('[Imagen] Using bytesBase64Encoded format (required by API)')
-    
-    // Build referenceImages array per Imagen 3 Capability API spec
-    const referenceImagesArray = []
-    
-    for (const ref of options.referenceImages!) {
-      let base64Data = ref.base64Image
-      
-      // If HTTP/HTTPS URL provided, download and convert to base64
-      if (!base64Data && (ref.imageUrl || ref.gcsUri)) {
-        const sourceUrl = ref.imageUrl || ref.gcsUri
-        console.log(`[Imagen] Downloading image from: ${sourceUrl?.substring(0, 60)}...`)
-        try {
-          const { fetchReferenceImageAsBase64 } = await import('@/lib/storage/fetchReferenceImage')
-          const downloaded = await fetchReferenceImageAsBase64(sourceUrl!, {
-            label: ref.subjectDescription || `reference ${ref.referenceId}`,
-          })
-          base64Data = downloaded.base64
-          console.log(`[Imagen] Downloaded and encoded ${base64Data.length} base64 chars`)
-        } catch (error: any) {
-          console.error(`[Imagen] Failed to download reference image:`, error.message)
-          throw error
-        }
-      }
-      
-      if (!base64Data) {
-        console.warn(`[Imagen] Reference ${ref.referenceId}: No image data available, skipping`)
-        continue
-      }
-      
-      // Build reference image object per API spec
-      // IMPORTANT: bytesBase64Encoded is REQUIRED (gcsUri does NOT work for subject customization)
-      const refImage: any = {
-        referenceType: ref.referenceType || 'REFERENCE_TYPE_SUBJECT',
-        referenceId: ref.referenceId,
-        referenceImage: {
-          bytesBase64Encoded: base64Data
-        },
-        subjectImageConfig: {
-          subjectType: ref.subjectType || 'SUBJECT_TYPE_PERSON',
-          subjectDescription: ref.subjectDescription || 'a person'
-        }
-      }
-      
-      referenceImagesArray.push(refImage)
-      console.log(`[Imagen] Reference ${ref.referenceId}: "${ref.subjectDescription || 'a person'}" (${base64Data.length} base64 chars)`)
-    }
-    
-    if (referenceImagesArray.length > 0) {
-      requestBody.instances[0].referenceImages = referenceImagesArray
-      console.log('[Imagen] Reference images configured:', referenceImagesArray.length, 'images (using bytesBase64Encoded)')
-      
-      // Debug: Log the full reference structure (without base64 data)
-      console.log('[Imagen] DEBUG - Reference structure:', JSON.stringify(
-        referenceImagesArray.map(r => ({
-          referenceType: r.referenceType,
-          referenceId: r.referenceId,
-          subjectImageConfig: r.subjectImageConfig,
-          base64Length: r.referenceImage?.bytesBase64Encoded?.length || 0
-        })), null, 2
-      ))
-      
-      // Verify the request structure matches Google's expected format
-      console.log('[Imagen] DEBUG - Full request structure:')
-      const debugRequest = {
-        instances: [{
-          prompt: requestBody.instances[0].prompt.substring(0, 100) + '...',
-          referenceImages: referenceImagesArray.map(r => ({
-            referenceType: r.referenceType,
-            referenceId: r.referenceId,
-            referenceImage: { bytesBase64Encoded: `[${r.referenceImage.bytesBase64Encoded.length} chars]` },
-            subjectImageConfig: r.subjectImageConfig
-          }))
-        }],
-        parameters: requestBody.parameters
-      }
-      console.log(JSON.stringify(debugRequest, null, 2))
-    } else {
-      console.warn('[Imagen] No valid reference images, proceeding without subject customization')
-    }
-  }
-  
-  console.log('[Imagen] Config:', JSON.stringify(requestBody.parameters))
-  
-  const response = await fetchWithRetry(
-    endpoint,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(requestBody)
-    },
-    {
-      maxRetries: 3,
-      initialDelayMs: 1000,
-      operationName: `Vertex Imagen ${MODEL_ID}`,
-    }
-  )
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    console.error('[Imagen] Error response:', errorText)
-    
-    let hint = ''
-    if (response.status === 403) {
-      hint = 'IAM permission denied. Ensure service account has roles/aiplatform.user role.'
-    } else if (response.status === 404) {
-      hint = `Model ${MODEL_ID} not found in region ${region}.`
-    } else if (response.status === 400) {
-      hint = 'Bad request. Check prompt and parameters.'
-    }
-    
-    throw new Error(`Vertex AI error ${response.status}: ${errorText}. ${hint}`)
-  }
-  
-  const data = await response.json()
-  
-  console.log('[Imagen] Response structure:', Object.keys(data))
-  console.log('[Imagen] Full response:', JSON.stringify(data).slice(0, 1000))
-  
-  // Check for API errors in response
-  if (data.error) {
-    console.error('[Imagen] API error in response:', data.error)
-    throw new Error(`Vertex AI API error: ${data.error.message || 'Unknown error'}`)
-  }
-  
-  // Extract image bytes from Vertex AI response
-  const predictions = data?.predictions
-  if (!predictions || predictions.length === 0) {
-    console.error('[Imagen] No predictions in response - likely filtered by safety settings')
-    throw new Error('Problem: Image generation was filtered due to content policies.\n\n\nAction: Try adjusting the prompt to be more descriptive, avoid sensitive content, and ensure it describes a professional character portrait.')
-  }
-  
-  const imageBytes = predictions[0]?.bytesBase64Encoded
-  
-  if (!imageBytes) {
-    console.error('[Imagen] Unexpected response structure:', JSON.stringify(data).slice(0, 500))
-    throw new Error('Unexpected response format from Vertex AI')
-  }
-  
-  console.log('[Imagen] Image generated successfully')
-  return `data:image/png;base64,${imageBytes}`
+  throw new ImagenRetiredError(options.modelId)
 }
-

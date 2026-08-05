@@ -13,6 +13,7 @@
 
 import type { AudioSlotSavedPayload } from '@/lib/audio/cleanupAudio'
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { ASSISTANT } from '@/lib/constants/assistant'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target, Share2 } from 'lucide-react'
@@ -5370,11 +5371,11 @@ function SceneCard({
                               className="flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg font-medium border transition-all bg-gray-700/40 text-gray-300 border-gray-600/50 hover:bg-gray-700/60 hover:border-gray-500/70 hover:text-white shadow-sm"
                             >
                               <Pencil className="w-3 h-3" />
-                              <span>Direct</span>
+                              <span>{ASSISTANT.short}</span>
                             </button>
                           </TooltipTrigger>
                           <TooltipContent className="bg-gray-900 text-white border border-gray-700">
-                            <p className="text-xs">Direct scene with AI assistance</p>
+                            <p className="text-xs">{ASSISTANT.tooltip}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -5571,7 +5572,7 @@ function SceneCard({
                       className="h-8 text-xs bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white rounded-lg shadow-md"
                     >
                       <Pencil className="w-3.5 h-3.5 mr-1.5" />
-                      Edit & Apply
+                      {ASSISTANT.short} &amp; Apply
                     </Button>
                   )}
                   {onEditScene && !(onEditSceneWithRecommendations && (scene.audienceAnalysis.recommendations?.length || 0) > 0) && (
@@ -5584,7 +5585,7 @@ function SceneCard({
                       className="h-8 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
                     >
                       <Pencil className="w-3.5 h-3.5 mr-1.5" />
-                      Direct
+                      {ASSISTANT.short}
                     </Button>
                   )}
                   {onAnalyzeScene && (
@@ -5626,7 +5627,7 @@ function SceneCard({
                 const isActive = activeWorkflowTab === tab.key
                 const status = getStepStatus(tab.key)
                 const tooltipText = tab.key === 'dialogueAction'
-                  ? 'Optimize the script with the Intelligent Assistant Writer, run Audience Resonance Analysis, and generate narration, dialogue, music & SFX audio'
+                  ? `Optimize the script with the ${ASSISTANT.full}, run Audience Resonance Analysis, and generate narration, dialogue, music & SFX audio`
                   : 'Build storyboard keyframes, generate video beats & render final scene'
                 
                 return (
@@ -5876,10 +5877,10 @@ function SceneCard({
                                 className="px-3 py-1.5 text-xs font-medium rounded-md flex items-center gap-1.5 transition-all shadow-sm bg-blue-600 hover:bg-blue-500 text-white"
                               >
                                 <Edit className="w-3 h-3" />
-                                Direct
+                                {ASSISTANT.short}
                               </button>
                             </TooltipTrigger>
-                            <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Direct and revise this scene with the Intelligent Assistant Writer</TooltipContent>
+                            <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">{ASSISTANT.tooltip}</TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
                       )}

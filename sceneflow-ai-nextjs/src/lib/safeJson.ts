@@ -14,6 +14,95 @@ function extractFirstFenced(text: string): string | null {
   return inner
 }
 
+/** Indices of `,` outside string literals, ascending. */
+function structuralCommaIndices(text: string): number[] {
+  const indices: number[] = []
+  let inString = false
+  let escape = false
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i]
+    if (inString) {
+      if (escape) escape = false
+      else if (ch === '\\') escape = true
+      else if (ch === '"') inString = false
+      continue
+    }
+    if (ch === '"') {
+      inString = true
+      escape = false
+    } else if (ch === ',') {
+      indices.push(i)
+    }
+  }
+  return indices
+}
+
+/**
+ * Close a truncated JSON fragment: terminate an open string, drop a trailing
+ * separator or dangling key, then close open containers in reverse order.
+ */
+function closeUnbalancedJson(text: string): string {
+  let inString = false
+  let escape = false
+  const stack: string[] = []
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i]
+    if (inString) {
+      if (escape) escape = false
+      else if (ch === '\\') escape = true
+      else if (ch === '"') inString = false
+      continue
+    }
+    if (ch === '"') {
+      inString = true
+      escape = false
+    } else if (ch === '{' || ch === '[') {
+      stack.push(ch)
+    } else if (ch === '}' || ch === ']') {
+      stack.pop()
+    }
+  }
+
+  let out = inString ? `${text}"` : text
+
+  // A truncated fragment can end on a separator or a key with no value.
+  for (let i = 0; i < 4; i++) {
+    const trimmed = out
+      .replace(/[,:]\s*$/, '')
+      .replace(/([,{])\s*"(?:[^"\\]|\\.)*"\s*$/, '$1')
+      .replace(/[,:]\s*$/, '')
+    if (trimmed === out) break
+    out = trimmed
+  }
+
+  for (let i = stack.length - 1; i >= 0; i--) {
+    out += stack[i] === '{' ? '}' : ']'
+  }
+  return out
+}
+
+/**
+ * Best-effort recovery of a truncated model response (finishReason MAX_TOKENS).
+ * Closes what is open, then walks back one trailing entry at a time until the
+ * fragment parses. Returns null when nothing salvageable remains.
+ */
+function repairTruncatedJson(text: string): unknown | null {
+  const commas = structuralCommaIndices(text)
+  const cutPoints = [text.length, ...commas.slice(-200).reverse()]
+
+  for (const cut of cutPoints) {
+    const body = text.slice(0, cut)
+    if (!body.trim()) continue
+    try {
+      return JSON.parse(closeUnbalancedJson(body))
+    } catch {
+      // Drop one more trailing entry and retry.
+    }
+  }
+  return null
+}
+
 function extractBalancedJson(text: string): string | null {
   let inString = false
   let escape = false
@@ -88,16 +177,16 @@ export function safeParseJsonFromText(text: string): any {
       .replace(/:\s*(?:NaN|Infinity)/g, ': null')
       .trim()
 
-    // STEP 3: Balance braces/brackets
-    const openBraces = (candidate.match(/{/g) || []).length
-    const closeBraces = (candidate.match(/}/g) || []).length
-    const openBrackets = (candidate.match(/\[/g) || []).length
-    const closeBrackets = (candidate.match(/\]/g) || []).length
+    try {
+      return JSON.parse(candidate)
+    } catch {
+      // Fall through to truncation repair.
+    }
 
-    while (openBraces > closeBraces) candidate += '}'
-    while (openBrackets > closeBrackets) candidate += ']'
+    // STEP 3: Repair a truncated fragment by closing open containers.
+    const repaired = repairTruncatedJson(candidate)
+    if (repaired !== null) return repaired
 
-    // Try parsing the cleaned version
     return JSON.parse(candidate)
 
   } catch (sanitizeError: any) {

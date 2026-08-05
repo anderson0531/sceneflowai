@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
 import { Loader, Eye, Check, Undo, Redo } from 'lucide-react'
+import { ASSISTANT, assistantTitle } from '@/lib/constants/assistant'
+import { ASSISTANT_ICON as AssistantIcon } from '@/lib/constants/assistantIcon'
 import { InstructionsPanel, type InstructionsPanelAudienceAnalysis } from './InstructionsPanel'
 import { PreviewPanel } from './PreviewPanel'
 import { SceneComparisonPanel } from './SceneComparisonPanel'
@@ -300,9 +302,14 @@ export function SceneEditorModal({
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div>
-              <DialogTitle>Intelligent Assistant Writer — Scene {sceneIndex + 1}</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <AssistantIcon className="w-5 h-5 text-cyan-400" />
+                {assistantTitle(`Scene ${sceneIndex + 1}`)}
+              </DialogTitle>
               <DialogDescription>
                 {typeof scene.heading === 'string' ? scene.heading : (scene.heading?.text || 'Untitled Scene')}
+                {' · '}
+                {ASSISTANT.full}
               </DialogDescription>
             </div>
             <div className="flex items-center gap-2">

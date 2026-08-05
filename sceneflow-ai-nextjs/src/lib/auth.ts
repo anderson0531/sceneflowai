@@ -98,7 +98,7 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = (user as any).id
         token.name = user.name
@@ -107,6 +107,28 @@ export const authOptions: NextAuthOptions = {
         token.last_name = (user as any).last_name ?? null
         token.username = (user as any).username ?? null
       }
+
+      // Without this the token keeps its sign-in values forever, so a profile edit
+      // never reaches session.user and anything displaying a name stays stale.
+      if (trigger === 'update') {
+        const patch = (session ?? {}) as {
+          first_name?: string | null
+          last_name?: string | null
+          username?: string | null
+          name?: string | null
+        }
+        if (patch.first_name !== undefined) token.first_name = patch.first_name ?? null
+        if (patch.last_name !== undefined) token.last_name = patch.last_name ?? null
+        if (patch.username !== undefined) token.username = patch.username ?? null
+
+        const rebuilt = [token.first_name, token.last_name]
+          .filter(Boolean)
+          .join(' ')
+          .trim()
+        if (patch.name) token.name = patch.name
+        else if (rebuilt) token.name = rebuilt
+      }
+
       return token
     },
     async session({ session, token }) {

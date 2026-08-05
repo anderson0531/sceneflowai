@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react'
 import { useGuideStore } from '@/store/useGuideStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Play, Square, Volume2, PencilLine, MoreHorizontal, ChevronDown, MessageSquare, ArrowRight, Loader2, Wand2, X, Users, Lightbulb, SparklesIcon, Award, RefreshCw, FileText, Printer } from 'lucide-react'
+import { Play, Square, Volume2, MoreHorizontal, ChevronDown, MessageSquare, Loader2, Wand2, X, Users, Lightbulb, SparklesIcon, Award, RefreshCw, FileText, Printer } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -17,19 +17,43 @@ import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
 import { BlueprintGeminiVoicePicker } from '@/components/blueprint/BlueprintGeminiVoicePicker'
 import { DirectorNoteBuilderDialog } from '@/components/tts/DirectorNoteBuilderDialog'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
-import { useBlueprintTts } from '@/hooks/useBlueprintTts'
+import { useBlueprintTtsContext } from '@/contexts/BlueprintTtsContext'
+import {
+  buildBlueprintNarrationText,
+  type BlueprintNarrationMode,
+} from '@/lib/blueprint/buildBlueprintNarrationText'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType } from '@/lib/types/reports'
-import { BLUEPRINT_COPY } from '@/lib/blueprint/blueprintGlossary'
-import { formatBlueprintRuntime } from '@/lib/blueprint/formatBlueprintCore'
+import { BLUEPRINT_COPY, VOICE_DIRECTION_COPY } from '@/lib/blueprint/blueprintGlossary'
+import { ASSISTANT } from '@/lib/constants/assistant'
+import { ASSISTANT_ICON as AssistantIcon } from '@/lib/constants/assistantIcon'
+import { AssistantButton } from '@/components/blueprint/AssistantButton'
+import {
+  formatBeatsTabLabel,
+  resolveBlueprintFormatLabel,
+  summariseBeatsRuntime,
+} from '@/lib/blueprint/formatBlueprintCore'
 import { BlueprintFieldCard, BlueprintSubsectionHeading } from '@/components/blueprint/BlueprintFieldCard'
-import { resolveAuthorWriterDisplay } from '@/lib/user/displayName'
+import { resolveCreatorCredit } from '@/lib/user/displayName'
+import { useCreatorProfile } from '@/hooks/useCreatorProfile'
 import { cn } from '@/lib/utils'
+import { BLUEPRINT_ACTIVATE_SECTION_EVENT } from '@/lib/blueprint/blueprintProgress'
 import {
   getArtStylePresetName,
   resolveVariantArtStyle,
   resolveVariantAspectRatio,
 } from '@/lib/treatment/blueprintFoundation'
+
+/** Blueprint body sections, in tab order. */
+const SECTION_TABS: Array<{ id: BlueprintFixSection; label: string }> = [
+  { id: 'core', label: 'Core' },
+  { id: 'story', label: 'Story' },
+  { id: 'tone', label: 'Tone' },
+  { id: 'beats', label: 'Beats' },
+  { id: 'characters', label: 'Characters' },
+]
+
+const SECTION_TAB_IDS: BlueprintFixSection[] = SECTION_TABS.map((t) => t.id)
 
 export type TreatmentCardProps = {
   onOpenBlueprintRefine?: (opts?: OpenBlueprintRefineOptions) => void
@@ -40,6 +64,10 @@ export type TreatmentCardProps = {
   isStartingProduction?: boolean
   startProductionEnabled?: boolean
   onOpenCollaborate?: () => void
+  /** Opens the side panel on Foundation, where Narrative Reasoning now lives. */
+  onOpenFoundation?: () => void
+  /** Project's production format, used when the variant predates storing its own. */
+  projectFormat?: string | null
 }
 
 export function TreatmentCard({
@@ -51,9 +79,12 @@ export function TreatmentCard({
   isStartingProduction = false,
   startProductionEnabled = true,
   onOpenCollaborate,
+  onOpenFoundation,
+  projectFormat,
 }: TreatmentCardProps = {}) {
   const router = useRouter()
   const { data: session } = useSession()
+  const { profile: creatorProfile, loading: creatorProfileLoading } = useCreatorProfile()
   const { guide } = useGuideStore()
   const { selectTreatmentVariant } = useGuideStore() as any
   const { setTreatmentVariants } = useGuideStore() as any
@@ -87,16 +118,33 @@ export function TreatmentCard({
   const selectedId = (guide as any)?.selectedTreatmentId as string | undefined
 
   // Top-level hooks (must not be conditional)
-  const tts = useBlueprintTts()
+  const tts = useBlueprintTtsContext()
   const [reimaginOpen, setReimaginOpen] = useState(false)
   const openRefine = (opts?: OpenBlueprintRefineOptions) => onOpenBlueprintRefine?.(opts)
-  const openGuidedForSection = (scope: BlueprintFixSection) =>
+  const [activeSection, setActiveSection] = useState<BlueprintFixSection>('core')
+  const openGuidedForSection = (scope: BlueprintFixSection) => {
+    // Keep the card on the section being edited so the applied diff is visible.
+    setActiveSection(scope)
     onOpenBlueprintRefine?.({ initialScope: scope })
+  }
+
+  // Audience Resonance, the Cue events and the readiness banner all jump to a
+  // section. Their target may live in a tab that is not mounted, so they ask for
+  // it by event and scrollToBlueprintSection scrolls once this render commits.
+  useEffect(() => {
+    const onActivate = (e: Event) => {
+      const section = (e as CustomEvent<{ section?: string }>).detail?.section
+      if (section && SECTION_TAB_IDS.includes(section as BlueprintFixSection)) {
+        setActiveSection(section as BlueprintFixSection)
+      }
+    }
+    window.addEventListener(BLUEPRINT_ACTIVATE_SECTION_EVENT, onActivate)
+    return () => window.removeEventListener(BLUEPRINT_ACTIVATE_SECTION_EVENT, onActivate)
+  }, [])
   const [shareOpen, setShareOpen] = useState(false)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [isSharing, setIsSharing] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
-  const [showReasoning, setShowReasoning] = useState(false)
   const [reportPreviewOpen, setReportPreviewOpen] = useState(false)
   // Client-side only state for flash highlight (avoids hydration mismatch from Date.now())
   const [isClient, setIsClient] = useState(false)
@@ -112,7 +160,7 @@ export function TreatmentCard({
     const detail = { text, focus: true, generate: Boolean(opts?.generate) }
     window.dispatchEvent(new CustomEvent('sf:set-composer', { detail }))
   }
-  const [narrationMode, setNarrationMode] = useState<'synopsis'|'full'|'beats'>('synopsis')
+  const [narrationMode, setNarrationMode] = useState<BlueprintNarrationMode>('synopsis')
   // Character state removed - all character management moved to Vision phase
 
   const active = useMemo(() => {
@@ -121,16 +169,8 @@ export function TreatmentCard({
     return null
   }, [selectedId, variants])
 
-  function buildNarrationText(v: any, mode: 'synopsis'|'full'|'beats'): string {
-    if (mode === 'beats' && Array.isArray(v.beats) && v.beats.length) {
-      const parts = v.beats.map((b: any, i: number) => `${i + 1}. ${b.title || 'Beat'} — ${b.synopsis || b.intent || ''}`)
-      return parts.join('\n')
-    }
-    const baseSynopsis = String(v.synopsis || v.content || '')
-    const log = v.logline ? `${v.logline}. ` : ''
-    if (mode === 'synopsis') return `${log}${baseSynopsis}`
-    const full = [v.title ? `${v.title}.` : '', log, baseSynopsis, (Array.isArray(v.themes) ? ` Themes: ${v.themes.join(', ')}` : '')].join(' ').trim()
-    return full
+  function buildNarrationText(v: Record<string, unknown>, mode: BlueprintNarrationMode): string {
+    return buildBlueprintNarrationText(v, mode)
   }
 
   const playVariant = async (variantId: string) => {
@@ -191,36 +231,16 @@ export function TreatmentCard({
               <div className="flex items-center justify-end gap-3 py-2">
                 {/* Variant Actions Toolbar */}
                 {(() => {
-                  const v = variants.find(x => x.id === active) || variants[0]
-                  const accent = v?.id === 'A' ? 'text-blue-300 border-blue-500 hover:bg-blue-500/10' : v?.id === 'B' ? 'text-purple-300 border-purple-500 hover:bg-purple-500/10' : 'text-emerald-300 border-emerald-500 hover:bg-emerald-500/10'
-
-                  const handleStartProductionClick = () => {
-                    if (onStartProduction) {
-                      onStartProduction()
-                      return
-                    }
-                  }
-
                   return (
                     <TooltipProvider>
                       <div className="flex items-center gap-1">
 
-                        {/* Edit Blueprint - precise section editing */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              aria-label="Edit blueprint"
-                              title="Edit Blueprint (E)"
-                              onClick={() => openRefine({})}
-                              className="h-8 w-8 border border-gray-700 text-gray-200 hover:bg-gray-800"
-                              variant="outline"
-                              size="icon"
-                            >
-                              <PencilLine className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>{BLUEPRINT_COPY.editBlueprint} (E)</TooltipContent>
-                        </Tooltip>
+                        {/* Assistant — scoped AI edits across the whole blueprint */}
+                        <AssistantButton
+                          onClick={() => openRefine({})}
+                          size="toolbar"
+                          scopeLabel="whole blueprint"
+                        />
 
                         {/* Reimagine - major story changes */}
                         <Tooltip>
@@ -268,7 +288,7 @@ export function TreatmentCard({
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-52">
                               <DropdownMenuItem onSelect={(e)=>{e.preventDefault(); openRefine({});}} onClick={(e)=>{e.preventDefault();}}>
-                                <PencilLine className="h-4 w-4 mr-2" /> Refine
+                                <AssistantIcon className="h-4 w-4 mr-2" /> {ASSISTANT.short}
                               </DropdownMenuItem>
                               <DropdownMenuItem onSelect={(e)=>{e.preventDefault(); setReimaginOpen(true);}} onClick={(e)=>{e.preventDefault();}}>
                                 <RefreshCw className="h-4 w-4 mr-2" /> Reimagine
@@ -356,7 +376,7 @@ export function TreatmentCard({
                               ) : (
                                 <div className="mx-2 my-1 text-xs text-amber-300">Audio not configured</div>
                               )}
-                              <div className="px-1 pt-2 pb-1 text-xs text-gray-400">Director&apos;s notes</div>
+                              <div className="px-1 pt-2 pb-1 text-xs text-gray-400">{VOICE_DIRECTION_COPY.sectionLabel}</div>
                               <Button
                                 variant="outline"
                                 className="h-8 mx-1 w-[calc(100%-8px)] justify-start gap-2 text-left font-normal"
@@ -367,7 +387,7 @@ export function TreatmentCard({
                               >
                                 <SparklesIcon className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
                                 <span className="truncate text-xs">
-                                  {tts.directorNotes.trim() ? 'Notes set' : "Add director's notes"}
+                                  {tts.directorNotes.trim() ? VOICE_DIRECTION_COPY.set : VOICE_DIRECTION_COPY.add}
                                 </span>
                               </Button>
                               <div className="px-1 pt-2 pb-1 text-xs text-gray-400">Language</div>
@@ -391,60 +411,103 @@ export function TreatmentCard({
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
-
-                        {/* Start Production - moved to end */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              aria-busy={isStartingProduction}
-                              aria-label={BLUEPRINT_COPY.startProduction}
-                              onClick={handleStartProductionClick}
-                              disabled={!startProductionEnabled || isStartingProduction}
-                              className="h-8 px-2 bg-sf-primary text-white hover:bg-sf-accent disabled:opacity-50"
-                              size="sm"
-                            >
-                              {isStartingProduction ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <ArrowRight className="h-4 w-4" />
-                              )}
-                              <span className="hidden md:inline ml-1.5">
-                                {isStartingProduction ? BLUEPRINT_COPY.startingProduction : BLUEPRINT_COPY.startProduction}
-                              </span>
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>{BLUEPRINT_COPY.startProductionTooltip}</TooltipContent>
-                        </Tooltip>
                       </div>
                     </TooltipProvider>
                   )
                 })()}
               </div>
+              {tts.loadingId === active && tts.generationProgress ? (
+                <div className="px-1 pb-2 space-y-1" aria-live="polite">
+                  <div className="flex items-center justify-between gap-2 text-[11px] text-cyan-200/90">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Loader2 className="h-3 w-3 animate-spin shrink-0" />
+                      {tts.generationProgress.phase === 'generating'
+                        ? 'Generating narration'
+                        : 'Playing narration'}
+                      {tts.generationProgress.total > 1
+                        ? ` (${tts.generationProgress.current}/${tts.generationProgress.total})`
+                        : ''}
+                      …
+                    </span>
+                    <span>
+                      {Math.round(
+                        (tts.generationProgress.current / tts.generationProgress.total) * 100
+                      )}
+                      %
+                    </span>
+                  </div>
+                  <div className="h-1 rounded-full bg-slate-800 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-purple-500 transition-[width] duration-300 ease-out"
+                      style={{
+                        width: `${Math.round(
+                          (tts.generationProgress.current / tts.generationProgress.total) * 100
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              ) : null}
             </div>
             {/* Display single treatment content */}
             <div className="mt-3">
             {(() => {
-              const v = variants[0]
+              // Render the selected variant: edits and refinements are applied to
+              // activeVariant, so pinning this to variants[0] showed stale content
+              // (and no updated beats) whenever another variant was selected.
+              const v = activeVariant
               if (!v) return null
               const accent = v.id === 'A' ? 'border-blue-500' : v.id === 'B' ? 'border-purple-500' : 'border-emerald-500'
               const badge = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs'
               const badgeGenre = `${badge} border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300`
               const badgeFormat = `${badge} border-purple-200 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300`
               const badgeAudience = `${badge} border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300`
+              // The database row wins over session?.user, whose name fields are
+              // frozen at sign-in and so miss any profile edit.
+              const creatorCredit = resolveCreatorCredit(
+                v.author_writer,
+                creatorProfile ?? session?.user
+              )
+              const beatsRuntime = summariseBeatsRuntime((v as any).beats)
+              const beatCount = beatsRuntime.count
+              const productionFormatLabel = resolveBlueprintFormatLabel(
+                v as Record<string, unknown>,
+                projectFormat
+              )
+              const characterCount = Array.isArray(v.character_descriptions)
+                ? v.character_descriptions.length
+                : 0
               return (
                 <div className="space-y-5 text-sm">
                   {/* Callout */}
                   <div className={`p-4 rounded-lg border-l-4 ${accent} bg-gray-50 dark:bg-gray-800/50`}> 
                     <div className={`text-lg font-bold text-gray-900 dark:text-gray-100 ${v.id===activeVariant.id ? flashIf('title') : ''}`}>{v.title || 'Treatment'}</div>
-                    {v.logline ? (
-                      <div className={`mt-2 text-base text-gray-700 dark:text-gray-300 leading-relaxed ${v.id===activeVariant.id ? flashIf('logline') : ''}`}>{v.logline}</div>
-                    ) : null}
+                    {/* Logline lives in the hero overlay and the Core field; a third
+                        copy here pushed the blueprint body further down the page. */}
                     {!tts.enabled && (
                       <div className="mt-2 text-xs text-gray-400 inline-flex items-center gap-1" title="Configure Google TTS to enable audio previews">
                         <Volume2 size={14} /> Audio preview unavailable
                       </div>
                     )}
                   </div>
+                  <Tabs
+                    value={activeSection}
+                    onValueChange={(next) => setActiveSection(next as BlueprintFixSection)}
+                    className="w-full"
+                  >
+                    <TabsList className="flex w-full flex-wrap h-auto justify-start">
+                      {SECTION_TABS.map((tab) => (
+                        <TabsTrigger key={tab.id} value={tab.id}>
+                          {tab.id === 'beats' && beatCount > 0
+                            ? formatBeatsTabLabel(beatCount, beatsRuntime.minutes, beatsRuntime.display)
+                            : tab.id === 'characters' && characterCount > 0
+                              ? `${tab.label} (${characterCount})`
+                              : tab.label}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+
+                  <TabsContent value="core" className="mt-4">
                   {/* Core Identifying Information */}
                   <BlueprintSubsectionHeading
                     sectionId="core"
@@ -452,14 +515,10 @@ export function TreatmentCard({
                     title="Core Identifying Information"
                     data-blueprint-section="core"
                     actions={
-                      <Button
+                      <AssistantButton
                         onClick={() => openGuidedForSection('core')}
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 w-6 p-0 hover:bg-slate-700/50"
-                      >
-                        <PencilLine className="w-3 h-3 text-gray-400 hover:text-cyan-400" />
-                      </Button>
+                        scopeLabel="Core Identifying Information"
+                      />
                     }
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -480,15 +539,16 @@ export function TreatmentCard({
                         sectionId="core"
                         variant="studio"
                         label="Format"
-                        hideWhenEmpty={!v.format_length}
+                        hideWhenEmpty={!productionFormatLabel}
                       >
+                        {/* The production format, not a runtime. This chip used to
+                            render format_length, which holds a duration despite its
+                            name, so Format showed the runtime. */}
                         <span
-                          className={cn(badgeFormat, v.id === activeVariant.id ? flashIf('format_length') : '')}
-                          title={v.format_length || undefined}
+                          className={cn(badgeFormat, v.id === activeVariant.id ? flashIf('format') : '')}
+                          title={productionFormatLabel || undefined}
                         >
-                          {v.format_length
-                            ? formatBlueprintRuntime(String(v.format_length)).display
-                            : null}
+                          {productionFormatLabel}
                         </span>
                       </BlueprintFieldCard>
                       <BlueprintFieldCard
@@ -518,9 +578,32 @@ export function TreatmentCard({
                         sectionId="core"
                         variant="studio"
                         label="Created by"
-                        value={resolveAuthorWriterDisplay(v.author_writer, session?.user)}
-                        valueClassName={v.id === activeVariant.id ? flashIf('author_writer') : undefined}
-                      />
+                        hideWhenEmpty={false}
+                      >
+                        {creatorCredit ? (
+                          <p
+                            className={cn(
+                              'text-sm text-gray-100 leading-relaxed',
+                              v.id === activeVariant.id ? flashIf('author_writer') : undefined
+                            )}
+                          >
+                            {creatorCredit}
+                          </p>
+                        ) : creatorProfileLoading ? (
+                          // The profile decides this, so stay quiet until it lands
+                          // rather than flashing the prompt on every load.
+                          <p className="text-sm text-gray-500">&nbsp;</p>
+                        ) : (
+                          // Nothing presentable on file. Prompt instead of hiding the
+                          // row, so the gap is visible and fixable in one click.
+                          <a
+                            href="/dashboard/settings/profile"
+                            className="text-sm text-cyan-300 hover:text-cyan-200 underline decoration-cyan-500/40"
+                          >
+                            Add your name
+                          </a>
+                        )}
+                      </BlueprintFieldCard>
                       <BlueprintFieldCard
                         sectionId="core"
                         variant="studio"
@@ -533,7 +616,9 @@ export function TreatmentCard({
                       />
                     </div>
                   </BlueprintSubsectionHeading>
+                  </TabsContent>
 
+                  <TabsContent value="story" className="mt-4">
                   {/* Narrative Structure & Plot */}
                   <BlueprintSubsectionHeading
                     sectionId="story"
@@ -541,14 +626,10 @@ export function TreatmentCard({
                     title="Story Setup"
                     data-blueprint-section="story"
                     actions={
-                      <Button
+                      <AssistantButton
                         onClick={() => openGuidedForSection('story')}
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 w-6 p-0 hover:bg-slate-700/50"
-                      >
-                        <PencilLine className="w-3 h-3 text-gray-400 hover:text-cyan-400" />
-                      </Button>
+                        scopeLabel="Story Setup"
+                      />
                     }
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -576,7 +657,9 @@ export function TreatmentCard({
                       />
                     </div>
                   </BlueprintSubsectionHeading>
+                  </TabsContent>
 
+                  <TabsContent value="tone" className="mt-4">
                   {/* Tone, Style, & Themes */}
                   <BlueprintSubsectionHeading
                     sectionId="tone"
@@ -584,14 +667,10 @@ export function TreatmentCard({
                     title="Tone, Style, & Themes"
                     data-blueprint-section="tone"
                     actions={
-                      <Button
+                      <AssistantButton
                         onClick={() => openGuidedForSection('tone')}
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 w-6 p-0 hover:bg-slate-700/50"
-                      >
-                        <PencilLine className="w-3 h-3 text-gray-400 hover:text-cyan-400" />
-                      </Button>
+                        scopeLabel="Tone, Style, & Themes"
+                      />
                     }
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -658,7 +737,9 @@ export function TreatmentCard({
                       ) : null}
                     </div>
                   </BlueprintSubsectionHeading>
+                  </TabsContent>
 
+                  <TabsContent value="beats" className="mt-4">
                   {/* Beats & Runtime */}
                   <BlueprintSubsectionHeading
                     sectionId="beats"
@@ -666,14 +747,25 @@ export function TreatmentCard({
                     title="Beats & Runtime"
                     data-blueprint-section="beats"
                     actions={
-                      <Button
-                        onClick={() => openGuidedForSection('beats')}
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 w-6 p-0 hover:bg-slate-700/50"
-                      >
-                        <PencilLine className="w-3 h-3 text-gray-400 hover:text-cyan-400" />
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        {/* Runtime belongs to the beats that produce it, and is summed
+                            from the list below rather than read from a stored field. */}
+                        {beatsRuntime.display && (
+                          <span
+                            className={cn(
+                              badgeFormat,
+                              v.id === activeVariant.id ? flashIf('beats') : ''
+                            )}
+                            title={`${beatsRuntime.count} beats totalling ${beatsRuntime.display}`}
+                          >
+                            {beatsRuntime.display} total
+                          </span>
+                        )}
+                        <AssistantButton
+                          onClick={() => openGuidedForSection('beats')}
+                          scopeLabel="Beats & Runtime"
+                        />
+                      </div>
                     }
                   >
                     <div className="space-y-3">
@@ -686,7 +778,12 @@ export function TreatmentCard({
                           v.id === activeVariant.id ? flashIf('synopsis') || flashIf('content') : undefined
                         }
                       />
-                      {Array.isArray((v as any).beats) && (v as any).beats.length > 0 ? (
+                      {!Array.isArray((v as any).beats) || (v as any).beats.length === 0 ? (
+                        <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200/90">
+                          No beats yet. Use the pencil to generate a beat sheet for this
+                          blueprint.
+                        </div>
+                      ) : (
                         <div className="space-y-2">
                           {(v as any).beats.map((b: any, idx: number) => (
                             <div key={idx} className={`p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 ${v.id===activeVariant.id ? flashIf('beats') : ''}`}>
@@ -701,30 +798,36 @@ export function TreatmentCard({
                             </div>
                           ))}
                         </div>
-                      ) : null}
+                      )}
                     </div>
                   </BlueprintSubsectionHeading>
+                  </TabsContent>
 
-                  {/* Characters - Expanded View with Psychological Depth */}
-                  {Array.isArray(v.character_descriptions) && v.character_descriptions.length > 0 ? (
-                    <BlueprintSubsectionHeading
-                      sectionId="characters"
-                      variant="studio"
-                      title={`Characters (${v.character_descriptions.length})`}
-                      data-blueprint-section="characters"
-                      actions={
-                        <Button
-                          onClick={() => openGuidedForSection('characters')}
-                          size="sm"
-                          variant="ghost"
-                          className="h-6 w-6 p-0 hover:bg-slate-700/50"
-                        >
-                          <PencilLine className="w-3 h-3 text-gray-400 hover:text-cyan-400" />
-                        </Button>
-                      }
-                    >
+                  <TabsContent value="characters" className="mt-4">
+                  {/* Characters - Expanded View with Psychological Depth. The heading
+                      always renders now that it owns a tab, so an empty cast shows a
+                      prompt rather than an unexplained blank panel. */}
+                  <BlueprintSubsectionHeading
+                    sectionId="characters"
+                    variant="studio"
+                    title={characterCount > 0 ? `Characters (${characterCount})` : 'Characters'}
+                    data-blueprint-section="characters"
+                    actions={
+                      <AssistantButton
+                        onClick={() => openGuidedForSection('characters')}
+                        scopeLabel="Characters"
+                      />
+                    }
+                  >
+                  {characterCount === 0 ? (
+                    <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200/90">
+                      No characters yet. Use the {ASSISTANT.short} to build the cast for this
+                      blueprint.
+                    </div>
+                  ) : (
+                    <>
                       <div className="space-y-3">
-                        {v.character_descriptions.map((c, idx) => (
+                        {(v.character_descriptions ?? []).map((c, idx) => (
                           <details 
                             key={idx}
                             className="group rounded-lg border border-slate-700/60 bg-slate-800/50 overflow-hidden"
@@ -808,110 +911,24 @@ export function TreatmentCard({
                       <div className="text-xs text-gray-600 dark:text-gray-400 italic mt-2 px-3">
                         💡 Characters will be refined with images and detailed attributes in Production
                       </div>
-                    </BlueprintSubsectionHeading>
-                  ) : null}
+                    </>
+                  )}
+                  </BlueprintSubsectionHeading>
+                  </TabsContent>
+                  </Tabs>
 
-                  {/* Narrative Reasoning */}
-                  {(() => {
-                    console.log('[TreatmentCard] Checking narrative_reasoning for variant:', v.id)
-                    console.log('[TreatmentCard] narrative_reasoning exists:', !!(v as any).narrative_reasoning)
-                    if ((v as any).narrative_reasoning) {
-                      console.log('[TreatmentCard] narrative_reasoning data:', (v as any).narrative_reasoning)
-                    }
-                    return null
-                  })()}
+                  {/* Narrative Reasoning now lives in the side panel's Reasoning
+                      tab, so the body stays about the blueprint itself. */}
                   {(v as any).narrative_reasoning && (
-                    <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6">
+                    <div className="pt-2">
                       <button
-                        onClick={() => setShowReasoning(!showReasoning)}
-                        className="flex items-center justify-between w-full text-left"
+                        type="button"
+                        onClick={onOpenFoundation}
+                        className="inline-flex items-center gap-1.5 text-xs text-amber-300/90 hover:text-amber-200"
                       >
-                        <div className="flex items-center gap-2">
-                          <Lightbulb className="w-5 h-5 text-amber-500" />
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                            Narrative Reasoning
-                          </h3>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            Why the AI made these storytelling choices
-                          </span>
-                        </div>
-                        <ChevronDown className={`w-5 h-5 transition-transform ${showReasoning ? 'rotate-180' : ''}`} />
+                        <Lightbulb className="w-3.5 h-3.5" />
+                        Why these choices?
                       </button>
-                      
-                      {showReasoning && (
-                        <div className="mt-4 space-y-4">
-                          {/* Show message if reasoning is empty */}
-                          {!(v as any).narrative_reasoning.character_focus && !(v as any).narrative_reasoning.story_strengths ? (
-                            <div className="p-4 bg-amber-50 dark:bg-amber-950 rounded-lg border border-amber-200 dark:border-amber-800">
-                              <p className="text-sm text-amber-800 dark:text-amber-200">
-                                The AI did not provide narrative reasoning for this treatment. Try regenerating to see the AI's creative decisions.
-                              </p>
-                            </div>
-                          ) : (
-                            <>
-                              {/* Character Focus */}
-                              <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-                                <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
-                                  <Users className="w-4 h-4" />
-                                  Character Focus
-                                </h4>
-                                <p className="text-sm text-blue-800 dark:text-blue-200">
-                                  {(v as any).narrative_reasoning.character_focus}
-                                </p>
-                              </div>
-                              
-                              {/* Key Decisions */}
-                              {(v as any).narrative_reasoning.key_decisions && Array.isArray((v as any).narrative_reasoning.key_decisions) && (v as any).narrative_reasoning.key_decisions.length > 0 && (
-                                <div className="space-y-3">
-                                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                                    <SparklesIcon className="w-4 h-4 text-purple-500" />
-                                    Key Creative Decisions
-                                  </h4>
-                                  {(v as any).narrative_reasoning.key_decisions.map((decision: any, idx: number) => (
-                                    <div key={idx} className="p-4 bg-purple-50 dark:bg-purple-950 rounded-lg border-l-4 border-purple-500">
-                                      <div className="font-medium text-purple-900 dark:text-purple-100 mb-1">
-                                        {decision.decision}
-                                      </div>
-                                      <div className="text-sm text-purple-800 dark:text-purple-200 mb-2">
-                                        <strong>Why:</strong> {decision.why}
-                                      </div>
-                                      <div className="text-sm text-purple-700 dark:text-purple-300 italic">
-                                        <strong>Impact:</strong> {decision.impact}
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                              
-                              {/* Story Strengths */}
-                              {(v as any).narrative_reasoning.story_strengths && (
-                                <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
-                                  <h4 className="font-semibold text-green-900 dark:text-green-100 mb-2 flex items-center gap-2">
-                                    <Award className="w-4 h-4" />
-                                    Story Strengths
-                                  </h4>
-                                  <p className="text-sm text-green-800 dark:text-green-200">
-                                    {(v as any).narrative_reasoning.story_strengths}
-                                  </p>
-                                </div>
-                              )}
-                              
-                              {/* User Adjustments */}
-                              {(v as any).narrative_reasoning.user_adjustments && (
-                                <div className="p-4 bg-amber-50 dark:bg-amber-950 rounded-lg border border-amber-200 dark:border-amber-800">
-                                  <h4 className="font-semibold text-amber-900 dark:text-amber-100 mb-2 flex items-center gap-2">
-                                    <RefreshCw className="w-4 h-4" />
-                                    Want Different Emphasis?
-                                  </h4>
-                                  <p className="text-sm text-amber-800 dark:text-amber-200">
-                                    {(v as any).narrative_reasoning.user_adjustments}
-                                  </p>
-                                </div>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      )}
                     </div>
                   )}
 

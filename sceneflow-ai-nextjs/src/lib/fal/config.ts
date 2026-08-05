@@ -1,8 +1,13 @@
+/**
+ * @deprecated Fal.ai integration is deprecated. Production uses Vertex/GCP only.
+ * Kept for one release; do not import from new code paths.
+ */
+
 import { fal } from '@fal-ai/client'
 
 let configured = false
 
-/** Configure Fal singleton once per process (uses FAL_KEY). */
+/** @deprecated Fal.ai is no longer used in production. */
 export function ensureFalConfigured(): void {
   if (configured) return
   const key = process.env.FAL_KEY?.trim()
@@ -15,6 +20,7 @@ export function ensureFalConfigured(): void {
 
 export const FAL_KLING_FALLBACK_MODEL_FAMILY = 'kling' as const
 
+/** @deprecated */
 export function getFalKlingT2vModel(): string {
   return (
     process.env.FAL_KLING_T2V_MODEL ||
@@ -22,6 +28,7 @@ export function getFalKlingT2vModel(): string {
   )
 }
 
+/** @deprecated */
 export function getFalKlingI2vModel(): string {
   return (
     process.env.FAL_KLING_I2V_MODEL ||
@@ -29,6 +36,7 @@ export function getFalKlingI2vModel(): string {
   )
 }
 
+/** @deprecated */
 export function getFalKlingImageModel(): string {
   return (
     process.env.FAL_KLING_IMAGE_MODEL ||
@@ -36,6 +44,7 @@ export function getFalKlingImageModel(): string {
   )
 }
 
+/** @deprecated */
 export function getFalKlingImageO3Model(): string {
   return (
     process.env.FAL_KLING_IMAGE_O3_MODEL ||
@@ -45,13 +54,17 @@ export function getFalKlingImageO3Model(): string {
 
 export type ImageProvider = 'fal-kling' | 'vertex'
 
-/** Primary image generation backend. Default: fal-kling (Fal-hosted Kling O3). */
+/** Always returns vertex — Fal-hosted Kling image provider is deprecated. */
 export function getImageProvider(): ImageProvider {
-  const raw = process.env.IMAGE_PROVIDER?.trim().toLowerCase()
-  if (raw === 'vertex') return 'vertex'
-  return 'fal-kling'
+  if (process.env.IMAGE_PROVIDER?.trim().toLowerCase() === 'fal-kling') {
+    console.warn(
+      '[fal/config] IMAGE_PROVIDER=fal-kling is deprecated and ignored; using vertex.'
+    )
+  }
+  return 'vertex'
 }
 
+/** Always false — Fal-hosted Kling is deprecated. */
 export function isFalKlingImageProvider(): boolean {
-  return getImageProvider() === 'fal-kling'
+  return false
 }

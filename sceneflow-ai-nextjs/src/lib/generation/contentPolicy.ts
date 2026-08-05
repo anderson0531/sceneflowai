@@ -54,11 +54,9 @@ export function getVeoPolicyMaxAttempts(): number {
 
 import { isDirectKlingFallbackEnabled } from '@/lib/kling/config'
 
-/** Fal.ai gateway for Kling models (platform pay-as-you-go). */
+/** @deprecated Fal.ai fallback removed — always returns false. */
 export function isFalKlingFallbackEnabled(): boolean {
-  if (process.env.FAL_KLING_POLICY_FALLBACK_ENABLED === 'false') return false
-  if (process.env.KLING_POLICY_FALLBACK_ENABLED === 'false') return false
-  return !!process.env.FAL_KEY?.trim()
+  return false
 }
 
 /** @deprecated Use isFalKlingFallbackEnabled */
@@ -66,10 +64,9 @@ export const isKlingFallbackEnabled = isFalKlingFallbackEnabled
 
 export { isDirectKlingFallbackEnabled }
 
-/** Prefer direct Kling when configured; otherwise Fal-hosted Kling. */
-export function getKlingFallbackProvider(): 'kling' | 'fal' | null {
+/** Direct Kling API only — Fal.ai is never used. */
+export function getKlingFallbackProvider(): 'kling' | null {
   if (isDirectKlingFallbackEnabled()) return 'kling'
-  if (isFalKlingFallbackEnabled()) return 'fal'
   return null
 }
 

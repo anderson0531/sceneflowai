@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { GoogleAuth } from 'google-auth-library'
 import { CreditService } from '@/services/CreditService'
+import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -95,15 +96,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         try { console.error('Vertex auth error: empty access token') } catch {}
         return { err: { status: 0, body: 'auth: empty access token' } }
       }
-      const endpoint = `https://vertexai.googleapis.com/v1/projects/${gProject}/locations/${gLocation}/publishers/google/models/imagegeneration@006:predict`
+      // Imagen endpoints were retired 2026-06-30; use Gemini Image generateContent
+      const endpoint = `https://${gLocation}-aiplatform.googleapis.com/v1/projects/${gProject}/locations/${gLocation}/publishers/google/models/${GEMINI_IMAGE_MODELS.flash}:generateContent`
       const body = {
-        instances: [ {
-          prompt,
-        } ],
-        parameters: {
-          sampleCount: 1,
-          outputMimeType: 'image/png'
-        }
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseModalities: ['TEXT', 'IMAGE'],
+          imageConfig: { aspectRatio: '16:9' },
+        },
       }
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -123,9 +123,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         }
       }
       const json = await res.json().catch(() => ({}))
-      const pred = json?.predictions?.[0] || {}
-      const b64 = pred.bytesBase64Encoded || pred.byteContent || pred.imageBytes || null
-      return b64 ? { url: `data:image/png;base64,${b64}` } : { err: { status: 200, body: 'no_bytes' } }
+      const parts = json?.candidates?.[0]?.content?.parts || []
+      for (const part of parts) {
+        const inline = part?.inlineData || part?.inline_data
+        if (inline?.data) {
+          const mimeType = inline.mimeType || inline.mime_type || 'image/png'
+          return { url: `data:${mimeType};base64,${inline.data}` }
+        }
+      }
+      return { err: { status: 200, body: 'no_bytes' } }
     }
 
     const thumbnails: Record<string, { success: boolean; imageUrl?: string; error?: string }> = {}

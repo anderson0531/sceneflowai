@@ -7,6 +7,7 @@ import Notification from '@/models/Notification'
 import { inngest } from '@/inngest/client'
 import { sequelize } from '@/config/database'
 import { ACTIVE_JOB_STATUSES } from '@/lib/jobs/jobStatus'
+import { isStaleActiveJob, STALE_JOB_ERROR } from '@/lib/jobs/staleJob'
 
 export { ACTIVE_JOB_STATUSES }
 
@@ -79,7 +80,7 @@ export async function createGenerationJob(input: {
   projectId: string
   jobType: GenerationJobType
   payload: Record<string, unknown>
-}): Promise<GenerationJob> {
+}): Promise<{ job: GenerationJob; dispatched: boolean }> {
   await ensureNotificationsSchema()
   const job = await GenerationJob.create({
     user_id: input.userId,
@@ -90,6 +91,7 @@ export async function createGenerationJob(input: {
     progress: 0,
   })
 
+  let dispatched = false
   try {
     await inngest.send({
       name: 'generation/job.queued',
@@ -101,11 +103,12 @@ export async function createGenerationJob(input: {
         payload: input.payload,
       },
     })
+    dispatched = true
   } catch (err) {
     console.warn('[jobService] Inngest send failed, job remains queued:', err)
   }
 
-  return job
+  return { job, dispatched }
 }
 
 export async function updateGenerationJob(
@@ -115,6 +118,7 @@ export async function updateGenerationJob(
     progress: number
     result: Record<string, unknown> | null
     error: string | null
+    payload: Record<string, unknown>
   }>
 ): Promise<void> {
   const updates: Record<string, unknown> = { ...patch }
@@ -122,6 +126,21 @@ export async function updateGenerationJob(
     updates.completed_at = new Date()
   }
   await GenerationJob.update(updates, { where: { id: jobId } })
+}
+
+/** Shallow-merge keys onto generation_jobs.payload (used by step worker state). */
+export async function patchGenerationJobPayload(
+  jobId: string,
+  patch: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  const job = await GenerationJob.findByPk(jobId)
+  if (!job) throw new Error('Job not found')
+  const current = (job.payload ?? {}) as Record<string, unknown>
+  const next = { ...current, ...patch }
+  job.payload = next
+  job.changed('payload', true)
+  await job.save()
+  return next
 }
 
 export async function notifyUser(input: {
@@ -146,6 +165,26 @@ export async function notifyUser(input: {
   })
 }
 
+/** Mark stuck queued/processing jobs as failed so new work can start. */
+export async function expireStaleActiveJob(job: GenerationJob): Promise<boolean> {
+  if (!isStaleActiveJob(job)) return false
+  await updateGenerationJob(job.id, {
+    status: 'failed',
+    error: STALE_JOB_ERROR,
+  })
+  return true
+}
+
+export async function cancelGenerationJob(jobId: string, userId: string): Promise<boolean> {
+  const job = await getJobForUser(jobId, userId)
+  if (!job || !ACTIVE_JOB_STATUSES.includes(job.status)) return false
+  await updateGenerationJob(jobId, {
+    status: 'cancelled',
+    error: 'Cancelled by user',
+  })
+  return true
+}
+
 export async function listJobsForUser(
   userId: string,
   projectId?: string,
@@ -154,11 +193,20 @@ export async function listJobsForUser(
   const where: Record<string, unknown> = { user_id: userId }
   if (projectId) where.project_id = projectId
   if (options.activeOnly) where.status = ACTIVE_JOB_STATUSES
-  return GenerationJob.findAll({
+  const jobs = await GenerationJob.findAll({
     where,
     order: [['created_at', 'DESC']],
     limit: 50,
   })
+
+  if (!options.activeOnly) return jobs
+
+  const active: GenerationJob[] = []
+  for (const job of jobs) {
+    if (await expireStaleActiveJob(job)) continue
+    active.push(job)
+  }
+  return active
 }
 
 /** Single job scoped to its owner, so one account cannot poll another's job. */
@@ -172,7 +220,7 @@ export async function findActiveJob(input: {
   projectId: string
   jobType: GenerationJobType
 }) {
-  return GenerationJob.findOne({
+  const existing = await GenerationJob.findOne({
     where: {
       user_id: input.userId,
       project_id: input.projectId,
@@ -181,6 +229,9 @@ export async function findActiveJob(input: {
     },
     order: [['created_at', 'DESC']],
   })
+  if (!existing) return null
+  if (await expireStaleActiveJob(existing)) return null
+  return existing
 }
 
 export async function listNotificationsForUser(userId: string, unreadOnly = false) {

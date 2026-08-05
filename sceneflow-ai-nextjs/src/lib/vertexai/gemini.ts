@@ -562,7 +562,7 @@ export async function generateWithVision(
 }
 
 // =============================================================================
-// Image Generation (Imagen 4 via Vertex AI)
+// Image Generation (Gemini Image via Vertex AI)
 // =============================================================================
 
 export interface ImageGenerationOptions {
@@ -581,142 +581,35 @@ export interface ImageGenerationOptions {
 }
 
 /**
- * Generate image using Imagen 4 via Vertex AI
- * Replaces Gemini 3 Pro Image Preview calls to generativelanguage.googleapis.com
+ * Generate image using Gemini Image via Vertex AI.
+ *
+ * Imagen `:predict` endpoints were retired 2026-06-30, so this delegates to the
+ * shared Gemini Image client, which handles reference images, tier fallback, and retries.
  */
 export async function generateImage(
   prompt: string,
   options: ImageGenerationOptions = {}
 ): Promise<string> {
-  const { projectId, location } = getConfig()
-  
-  // Use Imagen 4 for image generation
-  // - imagen-3.0-capability-001 for subject customization (with reference images)
-  // - imagen-3.0-generate-001 for standard generation
-  const hasReferenceImages = options.referenceImages && options.referenceImages.length > 0
-  const model = hasReferenceImages 
-    ? 'imagen-3.0-capability-001'
-    : 'imagen-3.0-generate-001'
-  
-  console.log(`[Vertex Imagen] Generating image with ${model}...`)
-  console.log('[Vertex Imagen] Prompt:', prompt.substring(0, 200))
-  console.log('[Vertex Imagen] Has references:', hasReferenceImages)
-  
-  const accessToken = await getVertexAIAuthToken()
-  
-  const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:predict`
-  
-  // Build request body
-  // Use configurable safety settings from environment (default: block_few for creative content)
-  const safetySetting = getImagenSafetyFilterLevel()
-  const personGeneration = options.personGeneration || getImagenPersonGeneration()
-  
-  console.log('[Vertex Imagen] Safety settings:', { safetySetting, personGeneration })
-  
-  const requestBody: any = {
-    instances: [{
-      prompt: prompt
-    }],
-    parameters: {
-      sampleCount: options.numberOfImages || 1,
-      aspectRatio: options.aspectRatio || '16:9',
-      safetySetting: safetySetting,
-      personGeneration: personGeneration
-    }
-  }
-  
-  // Add negative prompt (only for non-capability models)
-  if (!hasReferenceImages && options.negativePrompt) {
-    requestBody.parameters.negativePrompt = options.negativePrompt
-  }
-  
-  // Add reference images for subject customization
-  if (hasReferenceImages) {
-    const referenceImagesArray = []
-    
-    for (const ref of options.referenceImages!) {
-      let base64Data = ref.base64Image
-      
-      // Download from URL if needed
-      if (!base64Data && ref.imageUrl) {
-        console.log(`[Vertex Imagen] Downloading reference from: ${ref.imageUrl.substring(0, 50)}...`)
-        const { fetchReferenceImageAsBase64 } = await import('@/lib/storage/fetchReferenceImage')
-        const downloaded = await fetchReferenceImageAsBase64(ref.imageUrl, {
-          label: ref.subjectDescription || `reference ${ref.referenceId}`,
-        })
-        base64Data = downloaded.base64
-      }
-      
-      if (!base64Data) {
-        console.warn(`[Vertex Imagen] Reference ${ref.referenceId}: No image data, skipping`)
-        continue
-      }
-      
-      referenceImagesArray.push({
-        referenceType: ref.referenceType || 'REFERENCE_TYPE_SUBJECT',
-        referenceId: ref.referenceId,
-        referenceImage: {
-          bytesBase64Encoded: base64Data
-        },
-        subjectImageConfig: {
-          subjectType: ref.subjectType || 'SUBJECT_TYPE_PERSON',
-          subjectDescription: ref.subjectDescription || 'a person'
+  const { generateImageWithGemini } = await import('@/lib/gemini/imageClient.vertex')
+
+  return generateImageWithGemini(prompt, {
+    ...(options.aspectRatio ? { aspectRatio: options.aspectRatio } : {}),
+    ...(options.numberOfImages ? { numberOfImages: options.numberOfImages } : {}),
+    ...(options.negativePrompt ? { negativePrompt: options.negativePrompt } : {}),
+    ...(options.personGeneration ? { personGeneration: options.personGeneration } : {}),
+    ...(options.referenceImages?.length
+      ? {
+          referenceImages: options.referenceImages.map((ref) => ({
+            referenceId: ref.referenceId,
+            ...(ref.imageUrl ? { imageUrl: ref.imageUrl } : {}),
+            ...(ref.base64Image ? { base64Image: ref.base64Image } : {}),
+            ...(ref.subjectDescription
+              ? { subjectDescription: ref.subjectDescription }
+              : {}),
+          })),
         }
-      })
-      
-      console.log(`[Vertex Imagen] Added reference ${ref.referenceId}: ${ref.subjectDescription || 'person'}`)
-    }
-    
-    if (referenceImagesArray.length > 0) {
-      requestBody.instances[0].referenceImages = referenceImagesArray
-    }
-  }
-  
-  const response = await fetchWithRetry(
-    endpoint,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(requestBody)
-    },
-    {
-      maxRetries: 3,
-      initialDelayMs: 1000,
-      operationName: `Vertex Imagen ${model}`,
-    }
-  )
-  
-  if (!response.ok) {
-    const errorText = await response.text()
-    console.error('[Vertex Imagen] Error:', errorText)
-    
-    let hint = ''
-    if (response.status === 403) {
-      hint = 'IAM permission denied. Ensure service account has roles/aiplatform.user.'
-    } else if (response.status === 404) {
-      hint = `Model ${model} not found in region ${location}.`
-    }
-    
-    throw new Error(`Vertex AI Imagen error ${response.status}: ${errorText}. ${hint}`)
-  }
-  
-  const data = await response.json()
-  
-  const predictions = data?.predictions
-  if (!predictions || predictions.length === 0) {
-    throw new Error('Image generation was filtered due to content policies. Try adjusting the prompt.')
-  }
-  
-  const imageBytes = predictions[0]?.bytesBase64Encoded
-  if (!imageBytes) {
-    throw new Error('Unexpected response format from Vertex AI Imagen')
-  }
-  
-  console.log('[Vertex Imagen] Image generated successfully')
-  return `data:image/png;base64,${imageBytes}`
+      : {}),
+  })
 }
 
 // =============================================================================
