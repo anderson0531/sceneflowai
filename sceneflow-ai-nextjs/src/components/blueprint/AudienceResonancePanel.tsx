@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react'
+import { ASSISTANT } from '@/lib/constants/assistant'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Target, 
@@ -1060,7 +1061,7 @@ export function AudienceResonancePanel({
                       className="w-full mt-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 text-xs font-medium rounded-lg border border-cyan-500/30"
                     >
                       <Pencil className="w-3.5 h-3.5" />
-                      Open guided editor
+                      Open {ASSISTANT.short}
                     </button>
                   )}
                 </div>
@@ -1382,7 +1383,7 @@ function InsightCard({
                   className="flex items-center gap-2 px-3 py-2 bg-cyan-500/10 text-cyan-400 text-xs font-medium rounded-lg hover:bg-cyan-500/20 transition-colors"
                 >
                   <Pencil className="w-3 h-3" />
-                  Improve in editor
+                  Improve with {ASSISTANT.short}
                   <ArrowRight className="w-3 h-3" />
                 </button>
               )}

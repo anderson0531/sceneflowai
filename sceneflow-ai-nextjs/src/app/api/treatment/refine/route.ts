@@ -5,6 +5,9 @@ import { CreditService } from '@/services/CreditService'
 import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
 import { strictJsonPromptSuffix, safeParseJsonFromText } from '@/lib/safeJson'
 import { generateText } from '@/lib/vertexai/gemini'
+import { getGeminiTextModel } from '@/lib/config/modelConfig'
+import { validateRevisionRequest } from '@/lib/treatment/blueprintRequestValidation'
+import { deriveRuntimeFieldsFromBeats } from '@/lib/treatment/duration'
 import {
   type ContentIntent,
   getIntentRevisionGuardrail,
@@ -157,6 +160,22 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // The dialog blocks these client-side, but that is bypassable and this route
+    // charges credits, so reject blockers before touching the credit balance.
+    // Scope mismatch is only a warning, so a focused edit is still allowed here.
+    const blockers = validateRevisionRequest({
+      intentText: instructions,
+      focusScope: section,
+      variant,
+    }).filter((issue) => issue.severity === 'blocker')
+
+    if (blockers.length > 0) {
+      return NextResponse.json(
+        { success: false, message: blockers[0].message, code: blockers[0].code },
+        { status: 400 }
+      )
+    }
+
     // Extract only the relevant fields for this section
     const sectionFields = SECTION_FIELDS[section]
     const sectionData: Record<string, unknown> = {}
@@ -177,8 +196,10 @@ export async function POST(request: NextRequest) {
       }))
     }
 
-    // Section-specific token limits to prevent OOM
-    const maxTokens = section === 'beats' ? 2048 : 
+    // Section-specific output budgets. Beats must emit a whole array, so the
+    // former 2048 cap truncated the tail and dropped beats; the OOM these caps
+    // were guarding against was an unbounded loop in safeParseJsonFromText.
+    const maxTokens = section === 'beats' ? 4096 :
                       section === 'characters' ? 3072 : 4096
 
     const prompt = `${getSectionContext(section, contentIntent)}
@@ -230,10 +251,11 @@ ${strictJsonPromptSuffix}`
     console.log(`[Refine Treatment] Using maxTokens: ${maxTokens} for section: ${section}`)
     
     const result = await generateText(prompt, {
-      model: 'gemini-2.5-flash',
+      model: getGeminiTextModel('flash'),
       temperature: 0.3,
       maxOutputTokens: maxTokens,
-      thinkingBudget: 0  // Disable thinking mode to prevent OOM crashes
+      thinkingLevel: 'minimal',
+      responseMimeType: 'application/json',
     })
 
     const generatedText = result?.text || '{}'
@@ -253,6 +275,14 @@ ${strictJsonPromptSuffix}`
       if (parsed[field] !== undefined) {
         filteredDraft[field] = parsed[field]
       }
+    }
+
+    // Runtime is derived from the beats, not authored by the model. format_length
+    // is a core field so it survives neither the model's scope nor the filter
+    // above, which left the Format chip showing the pre-edit runtime.
+    const derivedRuntime = deriveRuntimeFieldsFromBeats(filteredDraft.beats)
+    if (derivedRuntime) {
+      Object.assign(filteredDraft, derivedRuntime)
     }
 
     console.log(`[Refine Treatment] Successfully refined ${Object.keys(filteredDraft).length} fields in section "${section}"`)

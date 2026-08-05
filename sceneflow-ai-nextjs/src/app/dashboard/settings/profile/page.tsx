@@ -8,9 +8,10 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
+import { invalidateCreatorProfile } from '@/hooks/useCreatorProfile'
 
 export default function ProfilePage() {
-  const { data: session } = useSession()
+  const { data: session, update } = useSession()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState({
@@ -89,6 +90,14 @@ export default function ProfilePage() {
         toast.success('Profile updated successfully')
         // Reload profile data
         await fetchUserProfile()
+        // The NextAuth token is only written at sign-in, so without this every
+        // surface reading session.user keeps the old name until re-login.
+        await update({
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          username: formData.username,
+        })
+        invalidateCreatorProfile()
       } else {
         toast.error(data.error || 'Failed to update profile')
       }

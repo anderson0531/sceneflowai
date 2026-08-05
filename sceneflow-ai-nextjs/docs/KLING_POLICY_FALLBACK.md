@@ -8,7 +8,9 @@ When Vertex Veo or Gemini Omni video generation is used explicitly (or as opt-in
 1. **Pre-flight risk score** — fast local regex + semantic triggers (`preflightPromptGuard.ts`)
 2. **Choreography rewrite** — Gemini Flash neutralizes borderline/high-risk prompts (additive affirmation, no negations)
 3. **Vertex policy ladder** — sanitize → reference trim → method downgrade (`veoWithKlingFallback.ts`)
-4. **Kling fallback (last resort)** — direct Kling API preferred, else Fal-hosted Kling
+4. **Direct Kling fallback (last resort, video only)** — `api.klingai.com` when `KLING_*` credentials are set
+
+> **Deprecated:** Fal.ai-hosted Kling (`FAL_KEY`, `@fal-ai/client`) is no longer used. Image generation is Vertex-only.
 
 ## SceneFlow failover chain (direct Kling primary)
 
@@ -43,7 +45,7 @@ flowchart LR
   B -->|low| D[Vertex attempt 1]
   C --> D
   D -->|policy| E[Sanitize + retry ladder]
-  E -->|policy exhausted| F[Direct Kling or Fal Kling]
+  E -->|policy exhausted| F[Direct Kling API]
   D -->|ok| G[Blob upload]
   F -->|ok| G
   F -->|fail| H[422 no charge]
@@ -58,14 +60,17 @@ flowchart LR
 
 Module: `src/lib/generation/preflightPromptGuard.ts`
 
-## Kling provider precedence
+## Kling provider precedence (video policy fallback)
 
 | Priority | Provider | Env |
 |----------|----------|-----|
 | 1 | **Direct Kling** (klingai.com) | `KLING_API_KEY` **or** `KLING_ACCESS_KEY` + `KLING_SECRET_KEY` |
-| 2 | Fal-hosted Kling | `FAL_KEY` |
 
 Set `KLING_DIRECT_FALLBACK_ENABLED=false` or `KLING_POLICY_FALLBACK_ENABLED=false` to disable direct Kling.
+
+### Deprecated: Fal-hosted Kling
+
+Fal.ai (`FAL_KEY`, `FAL_KLING_*` env vars) is **deprecated** and no longer invoked. The modules under `src/lib/fal/*` remain for one release but are not imported from production paths. A follow-up PR will remove `@fal-ai/client` from `package.json`.
 
 ### Direct Kling auth
 
@@ -93,14 +98,14 @@ KLING_SECRET_KEY="sk_..."
 | `KLING_VIDEO_MODE` | `std` (`pro` for higher quality) |
 | `KLING_SOUND_ENABLED` | `on` (native audio for dialogue) |
 
-## Fal-hosted Kling (secondary)
+## Deprecated: Fal-hosted Kling (removed)
 
-| Variable | Purpose |
-|----------|---------|
-| `FAL_KEY` | Fal.ai API key |
-| `FAL_KLING_T2V_MODEL` | Default `fal-ai/kling-video/v3/standard/text-to-video` |
-| `FAL_KLING_I2V_MODEL` | Default `fal-ai/kling-video/v3/pro/image-to-video` |
-| `FAL_KLING_POLICY_FALLBACK_ENABLED` | Set `false` to disable |
+| Variable | Status |
+|----------|--------|
+| `FAL_KEY` | **Deprecated** — no longer required or used |
+| `FAL_KLING_T2V_MODEL` | Deprecated |
+| `FAL_KLING_I2V_MODEL` | Deprecated |
+| `FAL_KLING_POLICY_FALLBACK_ENABLED` | Deprecated — ignored |
 
 ## Vertex retry ladder
 
@@ -112,13 +117,13 @@ KLING_SECRET_KEY="sk_..."
 ## Credits
 
 - Vertex failures before a successful blob: **no** segment video charge.
-- Kling fallback success (direct or Fal): `KLING_VIDEO_5S` / `KLING_VIDEO_10S` credits.
+- Kling fallback success (direct): `KLING_VIDEO_5S` / `KLING_VIDEO_10S` credits.
 
 ## Response metadata
 
 | Field | Values |
 |-------|--------|
-| `generationProvider` | `'vertex'` \| `'fal'` \| `'kling'` |
+| `generationProvider` | `'vertex'` \| `'kling'` |
 | `fallbackModelFamily` | `'kling'` when fallback completed the clip |
 | `wasPolicyFallback` | `true` when Kling was used after Vertex policy exhaustion |
 | `usedBackupEngine` | `true` when `wasPolicyFallback` (subtle UI note) |
@@ -137,7 +142,7 @@ Preview the assembled prompt: `POST /api/segments/[segmentId]/preview-api-prompt
 ## Continuous beats / EXT
 
 - **Vertex EXT** requires a prior segment `veoVideoRef` (Vertex-only).
-- If the previous part used **`generationProvider: 'fal'` or `'kling'`**, EXT is skipped; use I2V with the prior clip's last frame (`priorSegmentSupportsVertexExt` in `veoChainQueue.ts`).
+- If the previous part used **`generationProvider: 'kling'`**, EXT is skipped; use I2V with the prior clip's last frame (`priorSegmentSupportsVertexExt` in `veoChainQueue.ts`).
 
 ## Long-form dialogue (2-tier pipeline)
 
@@ -190,11 +195,11 @@ Rebuild the FFmpeg renderer image after deploying the `stitch` branch in `docker
 - `src/lib/generation/veoWithKlingFallback.ts` — Vertex ladder + Kling dispatch
 - `src/lib/kling/klingDirectClient.ts` — direct Kling API
 - `src/lib/kling/config.ts` — direct Kling env
-- `src/lib/fal/klingPolicyClient.ts` — Fal-hosted Kling
+- `src/lib/fal/klingPolicyClient.ts` — **deprecated** Fal-hosted Kling (unused)
 
 ## Content validation
 
-Kling fallback output is **automatically moderated** via `KlingSafetyGuard` (Hive visual-moderation) before blob upload when Hive credentials are configured. Applies to both `'fal'` and `'kling'` providers.
+Kling fallback output is **automatically moderated** via `KlingSafetyGuard` (Hive visual-moderation) before blob upload when Hive credentials are configured. Applies to the `'kling'` provider.
 
 | Variable | Purpose |
 |----------|---------|

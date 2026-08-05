@@ -3,6 +3,7 @@ import '@/models'
 import Series from '@/models/Series'
 import { sequelize } from '@/config/database'
 import { uploadImageToBlob } from '@/lib/storage/blob'
+import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 import {
   assertSeriesImageGenConfigured,
   cloneSeriesMetadata,
@@ -80,8 +81,8 @@ export async function POST(
       success: true,
       thumbnailUrl: blobUrl,
       promptUsed: enhancedPrompt,
-      model: 'imagen-3.0-fast-generate-001',
-      provider: 'vertex-ai-imagen',
+      model: GEMINI_IMAGE_MODELS.flash,
+      provider: 'vertex-gemini-image',
       storageType: 'gcs',
     })
   } catch (error) {

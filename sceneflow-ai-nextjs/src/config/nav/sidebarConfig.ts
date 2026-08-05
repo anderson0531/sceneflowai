@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
+import { ASSISTANT } from '@/lib/constants/assistant'
 
 /**
  * Workflow phase identifiers matching the production pipeline
@@ -131,7 +132,7 @@ export const blueprintSidebarConfig: WorkflowSidebarConfig = {
   ],
   quickActions: [
     { id: 'generate-blueprint', label: 'Generate Blueprint', icon: 'Sparkles', iconColor: 'text-sf-primary', action: 'event', eventName: 'blueprint:generate-treatment' },
-    { id: 'refine-concept', label: 'Edit Blueprint', icon: 'Wrench', iconColor: 'text-amber-500', action: 'event', eventName: 'blueprint:edit-sections' },
+    { id: 'refine-concept', label: ASSISTANT.short, icon: 'Wrench', iconColor: 'text-amber-500', action: 'event', eventName: 'blueprint:edit-sections' },
     { id: 'scorecard', label: 'Audience Resonance', icon: 'BarChart3', iconColor: 'text-purple-500', action: 'event', eventName: 'blueprint:analyze-resonance' },
     { id: 'save', label: 'Save Progress', icon: 'Save', iconColor: 'text-green-500', action: 'event', eventName: 'blueprint:save' },
     { id: 'export', label: 'Collaborate', icon: 'Share2', iconColor: 'text-blue-500', action: 'event', eventName: 'blueprint:collaborate' },

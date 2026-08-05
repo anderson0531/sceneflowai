@@ -256,7 +256,7 @@ export const blueprintWorkflowGroups: WorkflowGroup[] = [
     steps: [
       { 
         id: 'start-production', 
-        label: 'Open Production Studio', 
+        label: 'Go to Production Studio', 
         description: 'Generate script and open Production Studio',
         actionEventName: 'blueprint:start-production' 
       },

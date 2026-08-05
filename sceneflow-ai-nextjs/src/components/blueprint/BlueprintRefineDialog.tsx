@@ -6,7 +6,6 @@ import { Button } from '../ui/Button'
 import { Textarea } from '../ui/textarea'
 import { toast } from 'sonner'
 import {
-  Compass,
   Loader2,
   Sparkles,
   AlertTriangle,
@@ -28,6 +27,25 @@ import {
   type BlueprintSection,
 } from '@/lib/constants/blueprint-optimization'
 import type { BlueprintChangePlan, FieldDiff } from '@/lib/treatment/blueprintRevisionTypes'
+import {
+  stripHeavyFieldsFromVariant,
+} from '@/lib/treatment/blueprintVariantSanitize'
+import {
+  buildFieldDiffs,
+  mergeRevisionIntoVariant,
+} from '@/lib/treatment/blueprintRevisionDiff'
+import { trimVariantForPrompt } from '@/lib/treatment/blueprintRevisionPrompts'
+import { readJsonSafe } from '@/lib/readJsonSafe'
+import {
+  hasBlockingIssue,
+  MAX_INTENT_CHARS,
+  validateRevisionRequest,
+} from '@/lib/treatment/blueprintRequestValidation'
+import { moderatePrompt } from '@/utils/promptModerator'
+import { ASSISTANT, assistantTitle } from '@/lib/constants/assistant'
+import { ASSISTANT_ICON as AssistantIcon } from '@/lib/constants/assistantIcon'
+import { ContentPolicyAlert } from '@/components/vision/scene-production/ContentPolicyAlert'
+import { useBackgroundJob } from '@/hooks/useBackgroundJob'
 import { cn } from '@/lib/utils'
 import type { ContentIntent } from '@/lib/content/contentIntent'
 import { resolveContentIntent } from '@/lib/content/contentIntent'
@@ -38,7 +56,8 @@ type Props = {
   open: boolean
   variant: TreatmentVariant | null
   onClose: () => void
-  onApply: (patch: Record<string, unknown>) => void
+  /** Return false to reject the patch, leaving the dialog open on its preview. */
+  onApply: (patch: Record<string, unknown>) => void | boolean
   onRefineApplied?: (diff: FieldDiff[]) => void
   projectId?: string
   resonanceRecommendations?: BlueprintAudienceRecommendation[]
@@ -245,6 +264,105 @@ export function BlueprintRefineDialog({
   const [previewVariant, setPreviewVariant] = useState<Record<string, unknown> | null>(null)
   const [changePlan, setChangePlan] = useState<BlueprintChangePlan | null>(null)
   const [diff, setDiff] = useState<FieldDiff[]>([])
+  const [jobStatusText, setJobStatusText] = useState<string | null>(null)
+
+  const applyRevisionResult = useCallback(
+    (
+      patch: Record<string, unknown>,
+      resultDiff: FieldDiff[],
+      plan: BlueprintChangePlan | null
+    ) => {
+      if (!variant) return
+      const merged = mergeRevisionIntoVariant(variant, patch)
+      setPreviewVariant(merged)
+      setChangePlan(plan)
+      setDiff(resultDiff)
+      setPhase('preview')
+      toast.success('Balanced revision ready — review before applying')
+    },
+    [variant]
+  )
+
+  const {
+    job: backgroundJob,
+    isActive: jobActive,
+    track: trackJob,
+    cancel: cancelBackgroundJob,
+  } = useBackgroundJob({
+    projectId: projectId ?? '',
+    jobType: 'blueprint_guided_revise',
+    enabled: open && !!projectId,
+    onCompleted: (job) => {
+      setIsGenerating(false)
+      setJobStatusText(null)
+      const result = job.result as {
+        patch?: Record<string, unknown>
+        diff?: FieldDiff[]
+        changePlan?: BlueprintChangePlan
+      } | null
+      if (result?.patch) {
+        applyRevisionResult(
+          result.patch,
+          result.diff ?? [],
+          result.changePlan ?? null
+        )
+      } else {
+        toast.error('Revision completed but returned no changes')
+      }
+    },
+    onFailed: (job) => {
+      setIsGenerating(false)
+      setJobStatusText(null)
+      toast.error(job.error || 'Blueprint revision failed')
+    },
+  })
+
+  const fullBalanceJobBlocksGenerate = jobActive && focusScope === 'all'
+
+  useEffect(() => {
+    if (!jobActive || !backgroundJob) return
+    const pct = backgroundJob.progress ?? 0
+    setJobStatusText(
+      backgroundJob.status === 'queued'
+        ? 'Queued…'
+        : `Revising blueprint… ${pct > 0 ? `${pct}%` : ''}`.trim()
+    )
+  }, [jobActive, backgroundJob])
+
+  // Drive the revision forward from the client. Serverless self-invocation can be
+  // dropped once a response is sent, which would otherwise leave the job parked at
+  // one phase forever. Each tick runs at most one lease-guarded phase server-side.
+  const jobId = backgroundJob?.id
+  useEffect(() => {
+    if (!jobActive || !jobId) return
+
+    let cancelled = false
+    let inFlight = false
+
+    const advance = async () => {
+      if (cancelled || inFlight) return
+      inFlight = true
+      try {
+        await fetch('/api/treatment/guided-revise/step', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ jobId }),
+        })
+      } catch {
+        // The next tick retries; polling still reflects real job state.
+      } finally {
+        inFlight = false
+      }
+    }
+
+    void advance()
+    const interval = setInterval(advance, 5000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [jobActive, jobId])
 
   useEffect(() => {
     if (!open) return
@@ -254,6 +372,7 @@ export function BlueprintRefineDialog({
     setPreviewVariant(null)
     setChangePlan(null)
     setDiff([])
+    setJobStatusText(null)
     setSelectedTemplateKeys(new Set())
     if (resonanceRecommendations?.length) {
       setSelectedRecIds(new Set(resonanceRecommendations.map((r) => r.id)))
@@ -288,6 +407,38 @@ export function BlueprintRefineDialog({
     return parts.join('\n')
   }, [userIntent, templateSections, selectedTemplateKeys])
 
+  // All validation below is pure and synchronous, so it can run per keystroke.
+  const selectedRecCount = useMemo(
+    () => resonanceRecommendations?.filter((r) => selectedRecIds.has(r.id)).length ?? 0,
+    [resonanceRecommendations, selectedRecIds]
+  )
+
+  const requestIssues = useMemo(
+    () =>
+      validateRevisionRequest({
+        intentText: combinedIntent,
+        focusScope,
+        variant,
+        hasSelectedRecommendations: selectedRecCount > 0,
+      }),
+    [combinedIntent, focusScope, variant, selectedRecCount]
+  )
+
+  const moderation = useMemo(() => moderatePrompt(combinedIntent), [combinedIntent])
+  // Low severity is advisory; medium and high are what actually get rejected upstream.
+  const policyBlocks =
+    !moderation.isClean &&
+    (moderation.severity === 'medium' || moderation.severity === 'high')
+
+  const blockers = requestIssues.filter((i) => i.severity === 'blocker')
+  const warnings = requestIssues.filter((i) => i.severity === 'warning')
+  const submitBlocked = hasBlockingIssue(requestIssues) || policyBlocks
+
+  const applyPolicyFix = useCallback((fixed: string) => {
+    setUserIntent(fixed)
+    setSelectedTemplateKeys(new Set())
+  }, [])
+
   const toggleRec = (id: string) => {
     setSelectedRecIds((prev) => {
       const next = new Set(prev)
@@ -314,47 +465,114 @@ export function BlueprintRefineDialog({
       toast.error('Describe what should change or select recommendations')
       return
     }
+    // The button is disabled in this state; this guards programmatic paths.
+    if (submitBlocked) {
+      toast.error(blockers[0]?.message || 'Adjust your request before generating')
+      return
+    }
 
     setIsGenerating(true)
+    setJobStatusText(null)
+
     try {
-      const response = await fetch('/api/treatment/guided-revise', {
+      const { variant: payloadVariant } = stripHeavyFieldsFromVariant(variant)
+      const contentIntent =
+        contentIntentProp ?? resolveContentIntent(String(variant?.genre || ''))
+
+      // Sync fast-path: single-section edits use the proven refine route (one LLM call, draft only).
+      if (focusScope !== 'all') {
+        const response = await fetch('/api/treatment/refine', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            variant: payloadVariant,
+            section: focusScope,
+            instructions: combinedIntent,
+            contentIntent,
+          }),
+        })
+        const data = await readJsonSafe(response)
+        if (!response.ok) {
+          throw new Error(String(data.message || 'Section revision failed'))
+        }
+        if (data.success && data.draft) {
+          const patch = data.draft as Record<string, unknown>
+          const merged = mergeRevisionIntoVariant(variant, patch)
+          const resultDiff = buildFieldDiffs(
+            trimVariantForPrompt(variant),
+            trimVariantForPrompt(merged)
+          )
+          const plan: BlueprintChangePlan = {
+            primaryGoal: combinedIntent.slice(0, 300) || `Revise ${focusScope}`,
+            sectionsToUpdate: [focusScope],
+            crossSectionDependencies: [],
+            preserveConstraints: ['Preserve title unless user requests a rename'],
+            coherenceActions: [`Updated ${focusScope} section`],
+          }
+          applyRevisionResult(patch, resultDiff, plan)
+        } else {
+          throw new Error(String(data.message || 'Section revision failed'))
+        }
+        return
+      }
+
+      // Full-balance: durable Inngest job (fresh memory per section step).
+      if (!projectId) {
+        toast.error('Open this project from the studio to run a full-balance revision')
+        return
+      }
+
+      const response = await fetch('/api/treatment/guided-revise/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          variant,
+          variant: payloadVariant,
           userIntent: combinedIntent,
           selectedRecommendationIds: [...selectedRecIds],
           resonanceRecommendations: recs,
-          focusScope: focusScope === 'all' ? undefined : focusScope,
+          focusScope: undefined,
           projectId,
-          contentIntent:
-            contentIntentProp ?? resolveContentIntent(String(variant?.genre || '')),
+          contentIntent,
         }),
       })
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.message || 'Revision failed')
+      const data = await readJsonSafe(response)
+      if (!response.ok && response.status !== 202) {
+        const fallback =
+          response.status === 503 || response.status === 504 || response.status === 502
+            ? 'Revision timed out — try a narrower focus (e.g. Story only).'
+            : 'Revision failed'
+        throw new Error(String(data.message || fallback))
       }
-      if (data.success && data.revisedVariant) {
-        setPreviewVariant(data.revisedVariant)
-        setChangePlan(data.changePlan ?? null)
-        setDiff(data.diff ?? [])
-        setPhase('preview')
-        toast.success('Balanced revision ready — review before applying')
+      if (data.jobId) {
+        trackJob(String(data.jobId), {
+          status: (data.status as 'queued') ?? 'queued',
+          progress: typeof data.progress === 'number' ? data.progress : 0,
+        })
+        setJobStatusText(data.alreadyRunning ? 'Resuming revision…' : 'Queued…')
+        if (!data.alreadyRunning) {
+          toast.message('Full-balance revision started — you can keep working')
+        }
       } else {
-        throw new Error(data.message || 'Revision failed')
+        throw new Error(String(data.message || 'Failed to queue revision'))
       }
     } catch (err) {
+      setIsGenerating(false)
+      setJobStatusText(null)
       toast.error(err instanceof Error ? err.message : 'Failed to generate revision')
     } finally {
-      setIsGenerating(false)
+      if (focusScope !== 'all') {
+        setIsGenerating(false)
+      }
     }
   }
 
   const handleApplyPreview = useCallback(() => {
     if (!previewVariant) return
-    onApply(previewVariant)
+    // A rejected patch (e.g. beats lost to truncation) must not report success or
+    // close the dialog — the user still has the preview and can regenerate.
+    if (onApply(previewVariant) === false) return
     if (diff.length > 0 && onRefineApplied) {
       onRefineApplied(diff)
     }
@@ -386,9 +604,14 @@ export function BlueprintRefineDialog({
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center rounded-lg">
             <div className="bg-slate-900 border border-cyan-500/30 rounded-xl p-8 shadow-2xl flex flex-col items-center max-w-sm text-center">
               <Loader2 className="w-12 h-12 animate-spin text-cyan-400 mb-4" />
-              <h3 className="text-lg font-semibold text-white mb-2">Crafting balanced revision</h3>
+              <h3 className="text-lg font-semibold text-white mb-2">
+                {focusScope === 'all' ? 'Balancing full blueprint' : 'Revising section'}
+              </h3>
               <p className="text-sm text-gray-400">
-                Planning changes and reconciling story, characters, and beats…
+                {jobStatusText ??
+                  (focusScope === 'all'
+                    ? 'Planning changes and reconciling story, characters, and beats…'
+                    : 'Applying your direction to the selected section…')}
               </p>
             </div>
           </div>
@@ -396,12 +619,12 @@ export function BlueprintRefineDialog({
 
         <DialogHeader className="flex-shrink-0 pb-2">
           <DialogTitle className="flex items-center gap-2 text-xl">
-            <Compass className="w-5 h-5 text-cyan-400" />
-            Blueprint Editor
+            <AssistantIcon className="w-5 h-5 text-cyan-400" />
+            {assistantTitle('Blueprint')}
           </DialogTitle>
           <p className="text-xs text-gray-500 mt-1">
-            Describe your direction — AI will balance changes across the full blueprint. No direct
-            field editing.
+            {ASSISTANT.full} — describe your direction and it balances changes across the full
+            blueprint. No direct field editing.
           </p>
         </DialogHeader>
 
@@ -457,9 +680,23 @@ export function BlueprintRefineDialog({
               )}
 
               <div className="space-y-2">
-                <label className="text-xs font-medium text-gray-400">
-                  What should change and why?
-                </label>
+                <div className="flex items-baseline justify-between gap-2">
+                  <label className="text-xs font-medium text-gray-400">
+                    What should change and why?
+                  </label>
+                  {userIntent.length > 0 && (
+                    <span
+                      className={cn(
+                        'text-[10px] tabular-nums',
+                        userIntent.trim().length > MAX_INTENT_CHARS
+                          ? 'text-amber-300'
+                          : 'text-gray-500'
+                      )}
+                    >
+                      {userIntent.trim().length} / {MAX_INTENT_CHARS}
+                    </span>
+                  )}
+                </div>
                 <Textarea
                   value={userIntent}
                   onChange={(e) => setUserIntent(e.target.value)}
@@ -542,14 +779,55 @@ export function BlueprintRefineDialog({
           )}
         </div>
 
+        {phase === 'intent' && (blockers.length > 0 || warnings.length > 0 || !moderation.isClean) && (
+          <div className="flex-shrink-0 space-y-2 pt-3">
+            {!moderation.isClean && (
+              <ContentPolicyAlert
+                moderationResult={moderation}
+                onApplyFix={applyPolicyFix}
+              />
+            )}
+            {blockers.map((issue) => (
+              <div
+                key={issue.code}
+                className="rounded-lg border border-red-500/40 bg-red-500/10 p-2.5 flex items-start gap-2"
+              >
+                <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-red-200/90">{issue.message}</p>
+              </div>
+            ))}
+            {warnings.map((issue) => (
+              <div
+                key={issue.code}
+                className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5 flex items-start gap-2"
+              >
+                <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-200/90">{issue.message}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="flex-shrink-0 flex items-center justify-between gap-2 pt-3 border-t border-slate-700">
+          {fullBalanceJobBlocksGenerate && (
+            <p className="text-[11px] text-amber-300/90 flex-1 min-w-0">
+              {jobStatusText || 'A full-balance revision is already running.'}{' '}
+              <button
+                type="button"
+                onClick={() => void cancelBackgroundJob()}
+                className="underline hover:text-amber-200"
+              >
+                Cancel it
+              </button>
+            </p>
+          )}
           <Button variant="ghost" size="sm" onClick={onClose}>
             Cancel
           </Button>
           {phase === 'intent' ? (
             <Button
               size="sm"
-              disabled={isGenerating}
+              disabled={isGenerating || fullBalanceJobBlocksGenerate || submitBlocked}
               onClick={handleGenerate}
               className="bg-gradient-to-r from-cyan-600 to-blue-600"
             >

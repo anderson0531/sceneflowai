@@ -8,6 +8,16 @@ import { DEFAULT_PROMPT_TEMPLATES, TREATMENT_VISUAL_CREDITS } from '@/types/trea
 import type { TreatmentMood, TreatmentVisuals, GeneratedImage, CharacterPortrait, ActAnchor } from '@/types/treatment-visuals'
 import type { FilmTreatmentData } from '@/lib/types/reports'
 import { blueprintAspectRatioToImageApi } from '@/lib/treatment/blueprintFoundation'
+import { classifyAiError, errorMessageOf } from '@/lib/errors/aiErrorClassification'
+
+export const runtime = 'nodejs'
+export const maxDuration = 300
+
+interface VisualFailure {
+  visual: string
+  code: string
+  message: string
+}
 
 interface GenerateVisualRequest {
   projectId: string
@@ -380,6 +390,20 @@ export async function POST(request: NextRequest) {
       creditsUsed: 0
     }
     
+    const partialFailures: VisualFailure[] = []
+    const recordFailure = (visual: string, error: unknown) => {
+      const classified = classifyAiError(error)
+      console.error(
+        `[Treatment Visual] ${visual} failed (code=${classified.code}):`,
+        classified.details
+      )
+      partialFailures.push({
+        visual,
+        code: classified.code,
+        message: classified.details,
+      })
+    }
+
     // Generate all visuals
     if (generateAll) {
       // Hero image
@@ -387,7 +411,7 @@ export async function POST(request: NextRequest) {
         visuals.heroImage = await generateHeroImage(treatment, mood, projectId)
         visuals.creditsUsed = (visuals.creditsUsed || 0) + TREATMENT_VISUAL_CREDITS.heroImage
       } catch (error) {
-        console.error('Failed to generate hero image:', error)
+        recordFailure('hero', error)
       }
       
       // Character portraits (first 4)
@@ -399,7 +423,7 @@ export async function POST(request: NextRequest) {
           visuals.characterPortraits.push(portrait)
           visuals.creditsUsed = (visuals.creditsUsed || 0) + TREATMENT_VISUAL_CREDITS.characterPortrait
         } catch (error) {
-          console.error(`Failed to generate portrait for ${char.name}:`, error)
+          recordFailure(`character:${char.name}`, error)
         }
       }
       
@@ -419,12 +443,27 @@ export async function POST(request: NextRequest) {
             visuals.actAnchors.push(anchor)
             visuals.creditsUsed = (visuals.creditsUsed || 0) + TREATMENT_VISUAL_CREDITS.actEstablishing
           } catch (error) {
-            console.error(`Failed to generate act ${actNum} anchor:`, error)
+            recordFailure(`act:${actNum}`, error)
           }
         }
       }
       
       visuals.lastGeneratedAt = new Date().toISOString()
+
+      // Every sub-step failing is a real error, not a successful empty result
+      if (partialFailures.length > 0 && !visuals.heroImage) {
+        const first = partialFailures[0]
+        const classified = classifyAiError(new Error(first.message))
+        return NextResponse.json(
+          {
+            error: classified.message,
+            code: classified.code,
+            details: first.message,
+            partialFailures,
+          },
+          { status: classified.status }
+        )
+      }
     }
     // Generate single visual
     else if (visualType) {
@@ -460,15 +499,23 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({
       success: true,
-      visuals
+      visuals,
+      ...(partialFailures.length > 0 ? { partialFailures } : {})
     })
     
   } catch (error: any) {
-    console.error('Treatment visual generation error:', error)
-    const errorMessage = error?.message || 'Unknown error'
+    const classified = classifyAiError(error)
+    console.error(
+      `[Treatment Visual] Failed (code=${classified.code}, status=${classified.status}):`,
+      classified.details
+    )
     return NextResponse.json(
-      { error: 'Failed to generate treatment visuals', details: errorMessage },
-      { status: 500 }
+      {
+        error: classified.message,
+        code: classified.code,
+        details: classified.details,
+      },
+      { status: classified.status }
     )
   }
 }

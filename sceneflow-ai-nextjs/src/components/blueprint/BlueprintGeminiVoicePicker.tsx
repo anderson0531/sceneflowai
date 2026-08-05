@@ -10,8 +10,17 @@ import {
 } from '@/components/ui/dialog'
 import { Check } from 'lucide-react'
 import { DEFAULT_BLUEPRINT_GEMINI_VOICE } from '@/lib/tts/blueprintTtsConstants'
+import {
+  formatGeminiVoiceListLabel,
+  formatGeminiVoiceSelectedLabel,
+} from '@/lib/tts/geminiVoiceCatalog'
 
-type GeminiVoice = { id: string; name: string; gender?: string }
+type GeminiVoice = {
+  id: string
+  name: string
+  gender?: string
+  description?: string
+}
 
 interface BlueprintGeminiVoicePickerProps {
   open: boolean
@@ -38,11 +47,14 @@ export function BlueprintGeminiVoicePicker({
         const res = await fetch('/api/tts/blueprint/voices', { cache: 'no-store' })
         const data = await res.json().catch(() => null)
         if (!mounted) return
-        const list = (data?.voices ?? []).map((v: { id: string; name: string; gender?: string }) => ({
+        const list = (data?.voices ?? []).map(
+          (v: { id: string; name: string; gender?: string; description?: string }) => ({
             id: v.id,
             name: v.name,
             gender: v.gender,
-          }))
+            description: v.description,
+          })
+        )
         setVoices(list)
       } catch {
         if (mounted) setVoices([])
@@ -56,7 +68,10 @@ export function BlueprintGeminiVoicePicker({
   }, [open])
 
   const sorted = useMemo(
-    () => [...voices].sort((a, b) => a.name.localeCompare(b.name)),
+    () =>
+      [...voices].sort((a, b) =>
+        formatGeminiVoiceListLabel(a).title.localeCompare(formatGeminiVoiceListLabel(b).title)
+      ),
     [voices]
   )
 
@@ -80,19 +95,29 @@ export function BlueprintGeminiVoicePicker({
             sorted.map((v) => {
               const selected =
                 (selectedVoiceId || DEFAULT_BLUEPRINT_GEMINI_VOICE) === v.id
+              const { title, subtitle } = formatGeminiVoiceListLabel(v)
               return (
                 <button
                   key={v.id}
                   type="button"
-                  onClick={() => onSelectVoice(v.id, v.name)}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-left transition-colors ${
+                  onClick={() =>
+                    onSelectVoice(v.id, formatGeminiVoiceSelectedLabel(v))
+                  }
+                  className={`w-full flex items-start justify-between gap-2 px-3 py-2.5 rounded-lg text-sm text-left transition-colors ${
                     selected
                       ? 'bg-purple-600/30 border border-purple-500/40 text-white'
                       : 'hover:bg-gray-800/80 text-gray-200 border border-transparent'
                   }`}
                 >
-                  <span>{v.name}</span>
-                  {selected ? <Check className="h-4 w-4 shrink-0 text-purple-300" /> : null}
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-gray-100 truncate">{title}</div>
+                    {subtitle ? (
+                      <div className="text-xs text-gray-400 leading-relaxed line-clamp-2 mt-0.5">
+                        {subtitle}
+                      </div>
+                    ) : null}
+                  </div>
+                  {selected ? <Check className="h-4 w-4 shrink-0 text-purple-300 mt-0.5" /> : null}
                 </button>
               )
             })

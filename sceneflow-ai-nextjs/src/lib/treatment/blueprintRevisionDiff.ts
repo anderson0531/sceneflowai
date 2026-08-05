@@ -2,6 +2,7 @@ import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
 import {
   BLUEPRINT_FIELD_LABELS,
   type FieldDiff,
+  MAX_BEATS,
   SECTION_FIELDS,
 } from './blueprintRevisionTypes'
 
@@ -12,7 +13,43 @@ function fieldToSection(field: string): BlueprintFixSection {
   return 'story'
 }
 
-const MAX_DIFF_DISPLAY = 1200
+/**
+ * Beat sheets serialize every beat with its synopsis, so a long runtime needs
+ * more room than a single field. This also feeds valuesEqual, so too small a
+ * budget made edits past the cutoff invisible to change detection.
+ */
+const MAX_DIFF_DISPLAY = 6000
+
+const MAX_PATCH_FIELD_LEN: Record<string, number> = {
+  synopsis: 8000,
+  content: 8000,
+  logline: 600,
+  setting: 2000,
+  protagonist: 2000,
+  antagonist: 2000,
+  tone_description: 2000,
+}
+
+/** Cap LLM patch field sizes before merge/response. */
+export function capPatchSize(patch: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...patch }
+  for (const [key, max] of Object.entries(MAX_PATCH_FIELD_LEN)) {
+    const v = out[key]
+    if (typeof v === 'string' && v.length > max) {
+      out[key] = `${v.slice(0, max)}…`
+    }
+  }
+  if (Array.isArray(out.beats)) {
+    out.beats = (out.beats as Array<Record<string, unknown>>).slice(0, MAX_BEATS)
+  }
+  if (Array.isArray(out.character_descriptions)) {
+    out.character_descriptions = (out.character_descriptions as Array<Record<string, unknown>>).slice(
+      0,
+      8
+    )
+  }
+  return out
+}
 
 function truncateForDiff(text: string): string {
   return text.length <= MAX_DIFF_DISPLAY ? text : `${text.slice(0, MAX_DIFF_DISPLAY)}…`
@@ -25,7 +62,7 @@ function serializeValue(value: unknown): string {
     if (value.length === 0) return ''
     if (typeof value[0] === 'object' && value[0] !== null && 'title' in value[0]) {
       const beats = (value as Array<{ title?: string; synopsis?: string }>)
-        .slice(0, 8)
+        .slice(0, MAX_BEATS)
         .map((b, i) => `${i + 1}. ${b.title || 'Beat'}: ${b.synopsis || ''}`)
         .join('\n')
       return truncateForDiff(beats)

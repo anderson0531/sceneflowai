@@ -1,7 +1,9 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Users, X, Copy, Check, Link2, Radar } from 'lucide-react'
+import { ASSISTANT } from '@/lib/constants/assistant'
+import { Users, X, Copy, Check, Link2, Radar, Lightbulb } from 'lucide-react'
+import { NarrativeReasoningPanel } from './NarrativeReasoningPanel'
 import { AudienceResonancePanelV3 } from './AudienceResonancePanelV3'
 import { cn } from '@/lib/utils'
 import { useGuideStore } from '@/store/useGuideStore'
@@ -23,6 +25,7 @@ import type { BlueprintSectionAudioStatus } from '@/lib/blueprint/shareTypes'
 import { BlueprintGeminiVoicePicker } from './BlueprintGeminiVoicePicker'
 import { DirectorNoteBuilderDialog } from '@/components/tts/DirectorNoteBuilderDialog'
 import { DEFAULT_BLUEPRINT_GEMINI_VOICE } from '@/lib/tts/blueprintTtsConstants'
+import { VOICE_DIRECTION_COPY } from '@/lib/blueprint/blueprintGlossary'
 
 interface SidePanelTabsProps {
   onClose?: () => void
@@ -44,6 +47,8 @@ interface SidePanelTabsProps {
   collaborationTabSignal?: number
   /** Increment to switch to the Resonance tab (e.g. after first generation). */
   resonanceTabSignal?: number
+  /** Increment to switch to the Reasoning tab (e.g. from "Why these choices?"). */
+  foundationTabSignal?: number
   onScrollToSection?: (section: string) => void
 }
 
@@ -65,9 +70,12 @@ export function SidePanelTabs({
   shareToken,
   collaborationTabSignal = 0,
   resonanceTabSignal = 0,
+  foundationTabSignal = 0,
   onScrollToSection,
 }: SidePanelTabsProps) {
-  const [activeTab, setActiveTab] = useState<'resonance' | 'collaboration'>('resonance')
+  const [activeTab, setActiveTab] = useState<'resonance' | 'collaboration' | 'reasoning'>(
+    'resonance'
+  )
 
   React.useEffect(() => {
     if (collaborationTabSignal > 0) {
@@ -80,6 +88,12 @@ export function SidePanelTabs({
       setActiveTab('resonance')
     }
   }, [resonanceTabSignal])
+
+  React.useEffect(() => {
+    if (foundationTabSignal > 0) {
+      setActiveTab('reasoning')
+    }
+  }, [foundationTabSignal])
   const { guide } = useGuideStore()
   const { updateTreatmentVariant } = useGuideStore() as any
   const activeVariantId = (guide as any)?.selectedTreatmentId || ((guide as any)?.treatmentVariants?.[0]?.id)
@@ -127,6 +141,18 @@ export function SidePanelTabs({
             <Users size={14} />
             <span>Collaborate</span>
           </button>
+          <button
+            onClick={() => setActiveTab('reasoning')}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
+              activeTab === 'reasoning'
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
+            )}
+          >
+            <Lightbulb size={14} />
+            <span>Reasoning</span>
+          </button>
         </div>
         {onClose && (
           <button
@@ -166,6 +192,12 @@ export function SidePanelTabs({
               onAnalysisComplete={onAnalysisComplete}
             />
           )
+        ) : activeTab === 'reasoning' ? (
+          <div className="h-full overflow-y-auto">
+            <NarrativeReasoningPanel
+              reasoning={(currentTreatment as any)?.narrative_reasoning ?? null}
+            />
+          </div>
         ) : (
           <CollaborationContent 
             sessionId={sessionId}
@@ -212,7 +244,7 @@ function CollaborationContent({
   const [audioLanguage, setAudioLanguage] = React.useState('en')
   const [audioStatus, setAudioStatus] = React.useState<BlueprintSectionAudioStatus | undefined>()
   const [audioVoiceId, setAudioVoiceId] = React.useState(DEFAULT_BLUEPRINT_GEMINI_VOICE)
-  const [audioVoiceName, setAudioVoiceName] = React.useState('Kore (Gemini)')
+  const [audioVoiceName, setAudioVoiceName] = React.useState('Kore (Female)')
   const [audioDirectorNotes, setAudioDirectorNotes] = React.useState('')
   const [voicePickerOpen, setVoicePickerOpen] = React.useState(false)
   const [directorNotesOpen, setDirectorNotesOpen] = React.useState(false)
@@ -455,7 +487,7 @@ function CollaborationContent({
               className="w-full px-3 py-2 rounded-lg border border-slate-600/60 bg-slate-800/40 text-gray-300 text-xs flex items-center justify-center gap-1.5 disabled:opacity-50"
             >
               <Sparkles className="h-3.5 w-3.5 text-purple-400" />
-              {audioDirectorNotes.trim() ? "Director's notes (set)" : "Director's notes"}
+              {audioDirectorNotes.trim() ? VOICE_DIRECTION_COPY.set : VOICE_DIRECTION_COPY.sectionLabel}
             </button>
             <button
               type="button"
@@ -679,7 +711,7 @@ function CollaborationContent({
                   disabled={selectedRecIds.size === 0 || !onOpenBlueprintRefine}
                   className="w-full px-3 py-2 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-white text-sm font-medium disabled:opacity-50"
                 >
-                  Open guided revision
+                  Open {ASSISTANT.short}
                 </button>
               </div>
             )}

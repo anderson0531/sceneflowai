@@ -1,5 +1,5 @@
 /**
- * Vertex image policy ladder → Kling image fallback.
+ * Vertex image policy ladder — sanitize and retry on Vertex only.
  */
 
 import {
@@ -9,19 +9,15 @@ import {
 } from '@/lib/vertexai/vertexImageClient'
 import {
   isVertexContentPolicyError,
-  isFalKlingFallbackEnabled,
   getVeoPolicyMaxAttempts,
   ContentPolicyExhaustedError,
 } from '@/lib/generation/contentPolicy'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
-import { runFalKlingImage } from '@/lib/fal/klingPolicyClient'
-import { FAL_KLING_FALLBACK_MODEL_FAMILY, getFalKlingImageModel } from '@/lib/fal/config'
 
-export type ImageGenerationProvider = 'vertex' | 'fal'
+export type ImageGenerationProvider = 'vertex'
 
 export interface VertexKlingImageResult extends VertexImageResult {
   generationProvider: ImageGenerationProvider
-  fallbackModelFamily?: typeof FAL_KLING_FALLBACK_MODEL_FAMILY
   wasPolicyFallback: boolean
   vertexAttempts: number
 }
@@ -52,32 +48,10 @@ export async function generateImageWithVertexKlingFallback(
     }
   }
 
-  if (!isFalKlingFallbackEnabled()) {
-    throw new ContentPolicyExhaustedError(lastError, maxAttempts, lastError)
-  }
-
-  try {
-    const buf = await runFalKlingImage({
-      prompt,
-      negative_prompt: options.negativePrompt,
-      aspect_ratio: options.aspectRatio || '16:9',
-    })
-    return {
-      imageBase64: buf.toString('base64'),
-      mimeType: 'image/png',
-      provider: 'vertex',
-      modelId: getFalKlingImageModel(),
-      generationProvider: 'fal',
-      fallbackModelFamily: FAL_KLING_FALLBACK_MODEL_FAMILY,
-      wasPolicyFallback: true,
-      vertexAttempts: maxAttempts,
-    }
-  } catch (falErr) {
-    const msg = falErr instanceof Error ? falErr.message : String(falErr)
-    throw new ContentPolicyExhaustedError(
-      `Vertex image policy exhausted; Fal Kling failed: ${msg}`,
-      maxAttempts,
-      lastError
-    )
-  }
+  throw new ContentPolicyExhaustedError(
+    lastError ||
+      'Image generation was blocked by content policy. Try adjusting the prompt.',
+    maxAttempts,
+    lastError
+  )
 }

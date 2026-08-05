@@ -1,4 +1,5 @@
 import type { WorkflowPhase } from './sidebarConfig'
+import { ASSISTANT } from '@/lib/constants/assistant'
 
 /**
  * Pro Tip status
@@ -51,7 +52,7 @@ export const proTipsConfig: Record<WorkflowPhase, ProTip[]> = {
       phase: 'blueprint',
       title: 'Review AI recommendations',
       description: 'Address deductions and apply quick fixes',
-      actionLabel: 'Edit Blueprint',
+      actionLabel: ASSISTANT.short,
       actionEventName: 'blueprint:edit-sections',
       priority: 2,
     },

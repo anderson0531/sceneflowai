@@ -188,7 +188,7 @@ export function DirectorNoteBuilderDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-cyan-400" />
-            Director's Note (Audio Profile)
+            Voice Direction
           </DialogTitle>
           <DialogDescription>
             Shape the exact vocal characteristics, tone, and pacing for {name}.

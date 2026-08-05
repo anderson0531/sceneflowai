@@ -2,6 +2,9 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "regions": ["sfo1"],
+  "env": {
+    "NODE_OPTIONS": "--max-old-space-size=2560"
+  },
   "functions": {
     "src/app/api/vision/generate-script-v2/route.ts": {
       "maxDuration": 600
@@ -24,8 +27,17 @@
     "src/app/api/treatment/refine/route.ts": {
       "maxDuration": 120
     },
-    "src/app/api/treatment/guided-revise/route.ts": {
-      "maxDuration": 180,
+    "src/app/api/treatment/guided-revise/start/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/treatment/guided-revise/step/route.ts": {
+      "maxDuration": 120
+    },
+    "src/app/api/internal/jobs/blueprint-guided-revise/step/route.ts": {
+      "maxDuration": 120
+    },
+    "src/app/api/treatment/generate-visual/route.ts": {
+      "maxDuration": 300,
       "memory": 3009
     },
     "src/app/api/v2/blueprint/analyze/route.ts": {

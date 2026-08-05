@@ -356,3 +356,46 @@ export function getGeminiVoicesForPicker() {
     category: 'Premium',
   }))
 }
+
+function geminiBaseName(name: string): string {
+  return name.replace(/\s*\((Gemini|Premium)\)\s*$/i, '').trim()
+}
+
+function normalizeGenderLabel(gender?: string): string {
+  if (!gender) return ''
+  const normalized = gender.trim().toLowerCase()
+  if (normalized === 'male' || normalized === 'm') return 'Male'
+  if (normalized === 'female' || normalized === 'f') return 'Female'
+  return gender.trim()
+}
+
+function truncateVoiceDescription(text: string, max = 60): string {
+  const trimmed = text.trim()
+  if (trimmed.length <= max) return trimmed
+  return `${trimmed.slice(0, max - 1).trim()}…`
+}
+
+/** Two-line picker copy: title + gender/archetype subtitle. */
+export function formatGeminiVoiceListLabel(args: {
+  name?: string
+  gender?: string
+  description?: string
+}): { title: string; subtitle: string } {
+  const title = geminiBaseName(args.name || '')
+  const gender = normalizeGenderLabel(args.gender)
+  const description = truncateVoiceDescription(args.description || '')
+  const subtitle =
+    gender && description ? `${gender}, ${description}` : gender || description
+
+  return { title, subtitle }
+}
+
+/** Compact selected-voice label for Voice: buttons, e.g. "Kore (Female)". */
+export function formatGeminiVoiceSelectedLabel(args: {
+  name?: string
+  gender?: string
+}): string {
+  const title = geminiBaseName(args.name || '')
+  const gender = normalizeGenderLabel(args.gender)
+  return gender ? `${title} (${gender})` : title
+}

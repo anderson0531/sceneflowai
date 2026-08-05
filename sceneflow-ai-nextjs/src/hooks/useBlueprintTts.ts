@@ -2,23 +2,32 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { DEFAULT_BLUEPRINT_GEMINI_VOICE } from '@/lib/tts/blueprintTtsConstants'
+import { formatGeminiVoiceSelectedLabel } from '@/lib/tts/geminiVoiceCatalog'
 import { toGoogleTranslateCode } from '@/constants/veoLanguages'
 
 const DIRECTOR_NOTES_STORAGE_KEY = 'sceneflow-blueprint-tts-director-notes'
 
-export type BlueprintGeminiVoice = { id: string; name: string }
+export type BlueprintTtsGenerationProgress = {
+  current: number
+  total: number
+  phase: 'generating' | 'playing'
+}
+
+export type BlueprintGeminiVoice = { id: string; name: string; gender?: string }
 
 export function useBlueprintTts() {
   const [voices, setVoices] = useState<BlueprintGeminiVoice[]>([])
   const [enabled, setEnabled] = useState(false)
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>(DEFAULT_BLUEPRINT_GEMINI_VOICE)
-  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('Kore (Gemini)')
+  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('Kore (Female)')
   const [directorNotes, setDirectorNotes] = useState('')
   const [audioMenuOpen, setAudioMenuOpen] = useState(false)
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false)
   const [directorNotesDialogOpen, setDirectorNotesDialogOpen] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState('en')
+  const [generationProgress, setGenerationProgress] =
+    useState<BlueprintTtsGenerationProgress | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const queueAbortRef = useRef({ abort: false })
   const translationCacheRef = useRef<Map<string, string>>(new Map())
@@ -44,10 +53,13 @@ export function useBlueprintTts() {
           setVoices([])
           return
         }
-        const gemini = data.voices.map((v: { id: string; name: string }) => ({
-          id: v.id,
-          name: v.name,
-        }))
+        const gemini = data.voices.map(
+          (v: { id: string; name: string; gender?: string }) => ({
+            id: v.id,
+            name: formatGeminiVoiceSelectedLabel(v),
+            gender: v.gender,
+          })
+        )
         setEnabled(gemini.length > 0)
         setVoices(gemini)
         const defaultVoice =
@@ -83,14 +95,24 @@ export function useBlueprintTts() {
     }
     audioRef.current = null
     setLoadingId(null)
+    setGenerationProgress(null)
     queueAbortRef.current.abort = true
   }, [])
 
   const playTextChunks = useCallback(
-    async (texts: string[]) => {
+    async (texts: string[], playId: string) => {
       queueAbortRef.current.abort = false
-      for (const t of texts) {
+      const total = texts.length
+
+      for (let index = 0; index < texts.length; index++) {
+        const t = texts[index]
         if (queueAbortRef.current.abort) break
+
+        setGenerationProgress({
+          current: index + 1,
+          total,
+          phase: 'generating',
+        })
 
         let textToSpeak = t
         if (selectedLanguage !== 'en') {
@@ -142,11 +164,22 @@ export function useBlueprintTts() {
         const url = URL.createObjectURL(blob)
         const audio = new Audio(url)
         audioRef.current = audio
+
+        setGenerationProgress({
+          current: index + 1,
+          total,
+          phase: 'playing',
+        })
+
         await new Promise<void>((resolve, reject) => {
           audio.onended = () => resolve()
           audio.onerror = () => reject(new Error('Audio error'))
           audio.play().catch(reject)
         })
+      }
+
+      if (!queueAbortRef.current.abort) {
+        setGenerationProgress(null)
       }
     },
     [selectedLanguage, selectedVoiceId, voices, directorNotes]
@@ -169,11 +202,12 @@ export function useBlueprintTts() {
         if (!selectedVoiceId && voices.length === 0) {
           throw new Error('No voice available')
         }
-        await playTextChunks(chunks)
+        await playTextChunks(chunks, playId)
       } catch {
         stopAny()
       } finally {
         setLoadingId((id) => (id === playId ? null : id))
+        setGenerationProgress(null)
       }
     },
     [playTextChunks, selectedVoiceId, stopAny, voices.length]
@@ -215,5 +249,6 @@ export function useBlueprintTts() {
     selectVoice,
     saveDirectorNotes,
     isPlaying: loadingId !== null,
+    generationProgress,
   }
 }

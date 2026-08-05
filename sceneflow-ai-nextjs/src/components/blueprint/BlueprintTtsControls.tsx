@@ -12,7 +12,8 @@ import {
 import { BlueprintGeminiVoicePicker } from '@/components/blueprint/BlueprintGeminiVoicePicker'
 import { DirectorNoteBuilderDialog } from '@/components/tts/DirectorNoteBuilderDialog'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
-import { useBlueprintTts } from '@/hooks/useBlueprintTts'
+import { useBlueprintTtsContext } from '@/contexts/BlueprintTtsContext'
+import { VOICE_DIRECTION_COPY } from '@/lib/blueprint/blueprintGlossary'
 
 export interface BlueprintTtsControlsProps {
   getTextToSpeak: () => string
@@ -25,7 +26,7 @@ export function BlueprintTtsControls({
   playId = 'blueprint-tts',
   className,
 }: BlueprintTtsControlsProps) {
-  const tts = useBlueprintTts()
+  const tts = useBlueprintTtsContext()
 
   return (
     <TooltipProvider>
@@ -113,7 +114,7 @@ export function BlueprintTtsControls({
             ) : (
               <div className="mx-2 my-1 text-xs text-amber-300">Audio not configured</div>
             )}
-            <div className="px-1 pt-2 pb-1 text-xs text-gray-400">Director&apos;s notes</div>
+            <div className="px-1 pt-2 pb-1 text-xs text-gray-400">{VOICE_DIRECTION_COPY.sectionLabel}</div>
             <Button
               variant="outline"
               className="h-8 mx-1 w-[calc(100%-8px)] justify-start gap-2 text-left font-normal"
@@ -124,7 +125,7 @@ export function BlueprintTtsControls({
             >
               <Sparkles className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
               <span className="truncate text-xs">
-                {tts.directorNotes.trim() ? "Notes set" : 'Add director\'s notes'}
+                {tts.directorNotes.trim() ? VOICE_DIRECTION_COPY.set : VOICE_DIRECTION_COPY.add}
               </span>
             </Button>
             <div className="px-1 pt-2 pb-1 text-xs text-gray-400">Language</div>

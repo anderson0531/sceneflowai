@@ -92,8 +92,8 @@ export function BYOKSettingsPanel({
                 <SelectContent>
                   {settings.imageProvider === 'google' && (
                     <>
-                      <SelectItem value="imagen-3.0-generate-001">Imagen 3.0</SelectItem>
-                      <SelectItem value="imagen-3.0-fast-generate-001">Imagen 3.0 Fast</SelectItem>
+                      <SelectItem value="gemini-2.5-flash-image">Gemini 2.5 Flash Image</SelectItem>
+                      <SelectItem value="gemini-3-pro-image-preview">Gemini 3 Pro Image</SelectItem>
                     </>
                   )}
                   {settings.imageProvider === 'openai' && (

@@ -12,7 +12,6 @@ describe('contentPolicy', () => {
   const envBackup: Record<string, string | undefined> = {}
 
   beforeEach(() => {
-    envBackup.FAL_KEY = process.env.FAL_KEY
     envBackup.KLING_API_KEY = process.env.KLING_API_KEY
     envBackup.FAL_KLING_POLICY_FALLBACK_ENABLED = process.env.FAL_KLING_POLICY_FALLBACK_ENABLED
     envBackup.VEO_POLICY_MAX_ATTEMPTS = process.env.VEO_POLICY_MAX_ATTEMPTS
@@ -20,7 +19,6 @@ describe('contentPolicy', () => {
   })
 
   afterEach(() => {
-    process.env.FAL_KEY = envBackup.FAL_KEY
     process.env.KLING_API_KEY = envBackup.KLING_API_KEY
     process.env.FAL_KLING_POLICY_FALLBACK_ENABLED = envBackup.FAL_KLING_POLICY_FALLBACK_ENABLED
     process.env.VEO_POLICY_MAX_ATTEMPTS = envBackup.VEO_POLICY_MAX_ATTEMPTS
@@ -42,28 +40,27 @@ describe('contentPolicy', () => {
     expect(getVeoPolicyMaxAttempts()).toBe(3)
   })
 
-  it('enables Fal fallback when FAL_KEY is set', () => {
+  it('never enables Fal fallback', () => {
     process.env.FAL_KEY = 'test-key'
     delete process.env.FAL_KLING_POLICY_FALLBACK_ENABLED
-    expect(isFalKlingFallbackEnabled()).toBe(true)
+    expect(isFalKlingFallbackEnabled()).toBe(false)
   })
 
-  it('disables Fal fallback when explicitly off', () => {
+  it('keeps Fal fallback disabled when explicitly off', () => {
     process.env.FAL_KEY = 'test-key'
     process.env.FAL_KLING_POLICY_FALLBACK_ENABLED = 'false'
     expect(isFalKlingFallbackEnabled()).toBe(false)
   })
 
-  it('prefers direct Kling over Fal in getKlingFallbackProvider', () => {
+  it('returns direct Kling when configured', () => {
     process.env.KLING_API_KEY = 'api-key-kling-test'
-    process.env.FAL_KEY = 'fal-key'
     expect(getKlingFallbackProvider()).toBe('kling')
   })
 
-  it('falls back to Fal when direct Kling is not configured', () => {
+  it('never returns fal from getKlingFallbackProvider', () => {
     delete process.env.KLING_API_KEY
     process.env.FAL_KEY = 'fal-key'
-    expect(getKlingFallbackProvider()).toBe('fal')
+    expect(getKlingFallbackProvider()).toBeNull()
   })
 
   it('returns null when no Kling provider is configured', () => {

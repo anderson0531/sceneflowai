@@ -1,3 +1,8 @@
+/**
+ * @deprecated Fal.ai integration is deprecated. Production uses Vertex/GCP only.
+ * Kept for one release; do not import from new code paths.
+ */
+
 import type { PrioritizedReferenceImage } from '@/lib/vision/referenceLimits'
 import type { KlingImageElement } from './klingImageClient'
 
