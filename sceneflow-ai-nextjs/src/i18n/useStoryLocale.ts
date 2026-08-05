@@ -8,22 +8,30 @@ import {
   type EntityI18n,
 } from '@/i18n/content/entityI18n'
 import { readUiLocaleCookie } from '@/i18n/useUiLocale'
+import {
+  getCachedAccountStoryLocale,
+  setCachedAccountStoryLocale,
+} from '@/i18n/accountStoryLocaleCache'
 
-let cachedAccountStoryLocale: string | null = null
+export { setCachedAccountStoryLocale }
 
 /**
  * Account-level default for the story language.
  *
  * Cached per page load: this is read by every studio surface and the value only
- * changes from the settings page, which reloads.
+ * changes from the settings page or the header switcher, both of which reload.
  */
 export function useAccountStoryLocale(): string {
   const [locale, setLocale] = useState<string>(
-    () => cachedAccountStoryLocale ?? readUiLocaleCookie() ?? DEFAULT_LOCALE
+    () => getCachedAccountStoryLocale() ?? readUiLocaleCookie() ?? DEFAULT_LOCALE
   )
 
   useEffect(() => {
-    if (cachedAccountStoryLocale) return
+    const cached = getCachedAccountStoryLocale()
+    if (cached) {
+      setLocale(cached)
+      return
+    }
     let cancelled = false
     ;(async () => {
       try {
@@ -31,7 +39,7 @@ export function useAccountStoryLocale(): string {
         if (!response.ok) return
         const data = await response.json()
         if (cancelled || !isLocale(data.storyLocale)) return
-        cachedAccountStoryLocale = data.storyLocale
+        setCachedAccountStoryLocale(data.storyLocale)
         setLocale(data.storyLocale)
       } catch {
         // Falls back to the interface locale, which is the common case anyway.

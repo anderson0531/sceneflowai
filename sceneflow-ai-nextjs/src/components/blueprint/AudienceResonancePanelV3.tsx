@@ -55,6 +55,10 @@ const ResonanceRadarChart = dynamic(
 )
 import { ResonanceRadarLegend } from '@/components/charts/ResonanceRadarLegend'
 import type { ResonanceAxis } from '@/lib/types/audienceResonance'
+import { EMPTY_ENTITY_I18N, type EntityI18n } from '@/i18n/content/entityI18n'
+import { useContentTranslation } from '@/i18n/content/useContentTranslation'
+import { buildAudienceResonanceDisplayFields } from '@/i18n/content/buildBlueprintDisplayFields'
+import { TranslationNotice } from '@/components/i18n/LocalizedField'
 
 export interface AudienceResonancePanelV3Props {
   treatment?: Record<string, unknown>
@@ -70,6 +74,8 @@ export interface AudienceResonancePanelV3Props {
   onAnalysisComplete?: (persisted: PersistedBlueprintAudienceResonance) => void
   onOpenBlueprintRefine?: (opts?: OpenBlueprintRefineOptions) => void
   onScrollToSection?: (section: string) => void
+  /** Language the stored AR prose was written in. */
+  contentI18n?: EntityI18n
 }
 
 const V3_CATEGORY_AXIS_IDS: Record<string, ResonanceAxis['id']> = {
@@ -142,6 +148,7 @@ export function AudienceResonancePanelV3({
   onAnalysisComplete,
   onOpenBlueprintRefine,
   onScrollToSection,
+  contentI18n,
 }: AudienceResonancePanelV3Props) {
   const t = useTranslations('blueprint.audienceResonance')
   const [localTreatment, setLocalTreatment] = useState(treatmentProp)
@@ -189,6 +196,31 @@ export function AudienceResonancePanelV3({
   const sortedRecs = useMemo(
     () => [...pendingRecs].sort((a, b) => b.pointsDeducted - a.pointsDeducted),
     [pendingRecs]
+  )
+
+  const arContentFields = useMemo(
+    () => buildAudienceResonanceDisplayFields(analysis),
+    [analysis]
+  )
+
+  const resolvedContentI18n = contentI18n ?? EMPTY_ENTITY_I18N
+
+  const {
+    resolve: resolveAr,
+    needsTranslation: arNeedsTranslation,
+    isLoading: arTranslating,
+    pendingCount: arPendingCount,
+    uiLocale: arUiLocale,
+    sourceLocale: arSourceLocale,
+  } = useContentTranslation({
+    fields: arContentFields,
+    i18n: resolvedContentI18n,
+    enabled: Boolean(analysis),
+  })
+
+  const arText = useCallback(
+    (path: string, fallback = '') => resolveAr(path).text || fallback,
+    [resolveAr]
   )
 
   const pointsToReady = analysis
@@ -507,6 +539,14 @@ export function AudienceResonancePanelV3({
               animate={{ opacity: 1 }}
               className="p-4 space-y-4"
             >
+              {arNeedsTranslation ? (
+                <TranslationNotice
+                  sourceLocale={arSourceLocale}
+                  uiLocale={arUiLocale}
+                  isLoading={arTranslating}
+                  pendingCount={arPendingCount}
+                />
+              ) : null}
               <div
                 className={cn(
                   'rounded-xl border bg-slate-900/40 p-4 space-y-3',
@@ -547,7 +587,9 @@ export function AudienceResonancePanelV3({
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-gray-400">{analysis.summary}</p>
+                <p className="text-xs text-gray-400">
+                  {arText('audienceResonance.summary', analysis.summary)}
+                </p>
                 {!analysis.isReadyForProduction && pointsToReady > 0 && (
                   <p className="text-[11px] text-cyan-400/90 flex items-center gap-1">
                     <TrendingUp className="w-3 h-3" />
@@ -611,7 +653,9 @@ export function AudienceResonancePanelV3({
                         }}
                         title={t('jumpToSection')}
                       >
-                        <span className="flex-1 pr-2">{d.reason}</span>
+                        <span className="flex-1 pr-2">
+                          {arText(`audienceResonance.deductions[${i}].reason`, d.reason)}
+                        </span>
                         <span className="text-red-400 font-mono shrink-0">{t('minusPoints', { points: d.points })}</span>
                       </li>
                     ))}
@@ -634,20 +678,29 @@ export function AudienceResonancePanelV3({
                       {ASSISTANT.short}
                     </button>
                   </div>
-                  {sortedRecs.slice(0, 5).map((rec) => (
+                  {sortedRecs.slice(0, 5).map((rec) => {
+                    const recTitle = arText(
+                      `audienceResonance.recommendations[${rec.id}].title`,
+                      rec.title || ''
+                    )
+                    const recText = arText(
+                      `audienceResonance.recommendations[${rec.id}].text`,
+                      rec.text
+                    )
+                    return (
                     <div
                       key={rec.id}
                       className="rounded-lg border border-slate-700/50 bg-slate-800/30 p-2.5 space-y-1"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-sm text-white font-medium">
-                          {rec.title || rec.text.slice(0, 60)}
+                          {recTitle || recText.slice(0, 60)}
                         </span>
                         <span className="text-[10px] text-red-400/90 font-mono">
                           {t('minusPoints', { points: rec.pointsDeducted })}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-500 line-clamp-2">{rec.text}</p>
+                      <p className="text-xs text-gray-500 line-clamp-2">{recText}</p>
                       <button
                         type="button"
                         onClick={() => openEditor([rec])}
@@ -656,7 +709,7 @@ export function AudienceResonancePanelV3({
                         {t('improveWith', { assistant: ASSISTANT.short })}
                       </button>
                     </div>
-                  ))}
+                  )})}
                 </div>
               )}
 
@@ -668,7 +721,7 @@ export function AudienceResonancePanelV3({
                   {analysis.strengths.slice(0, 3).map((s, i) => (
                     <p key={i} className="text-xs text-gray-400 flex gap-1.5">
                       <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" />
-                      {s}
+                      {arText(`audienceResonance.strengths[${i}]`, s)}
                     </p>
                   ))}
                 </div>
@@ -682,11 +735,12 @@ export function AudienceResonancePanelV3({
                 <div className="px-3 pb-3 space-y-2">
                   <ResonanceRadarChart axes={radarAxes} size="sm" />
                   <ResonanceRadarLegend axes={radarAxes} />
-                  {analysis.categories.map((cat) => (
+                  {analysis.categories.map((cat, catIndex) => (
                     <button
                       key={cat.name}
                       type="button"
                       onClick={() => {
+                        // Keep the English source name for section routing.
                         const section =
                           CATEGORY_SECTION_MAP[cat.name] ??
                           blueprintCategoryToSection(cat.name)
@@ -695,7 +749,9 @@ export function AudienceResonancePanelV3({
                       }}
                       className="w-full flex justify-between text-[11px] text-gray-400 hover:text-cyan-300 px-1 py-0.5 rounded hover:bg-slate-800/50"
                     >
-                      <span>{cat.name}</span>
+                      <span>
+                        {arText(`audienceResonance.categories[${catIndex}].name`, cat.name)}
+                      </span>
                       <span className="font-mono">{cat.score}</span>
                     </button>
                   ))}

@@ -77,6 +77,7 @@ export const CONTENT_FIELDS: Record<string, FieldKind> = {
   'treatmentVariants[].beats[].intent': 'display',
   'treatmentVariants[].beats[].synopsis': 'display',
   'treatmentVariants[].mood_references[]': 'display',
+  'treatmentVariants[].themes[]': 'display',
   'treatmentVariants[].heroImage': 'opaque',
   'treatmentVariants[].character_descriptions[].name': 'opaque',
   'treatmentVariants[].character_descriptions[].subject': 'opaque',
@@ -88,6 +89,14 @@ export const CONTENT_FIELDS: Record<string, FieldKind> = {
   'treatmentVariants[].character_descriptions[].arcStartingState': 'display',
   'treatmentVariants[].character_descriptions[].arcShift': 'display',
   'treatmentVariants[].character_descriptions[].arcEndingState': 'display',
+
+  // ── Blueprint: Audience Resonance analysis (persisted creative prose) ───
+  'audienceResonance.summary': 'display',
+  'audienceResonance.strengths[]': 'display',
+  'audienceResonance.deductions[].reason': 'display',
+  'audienceResonance.recommendations[].title': 'display',
+  'audienceResonance.recommendations[].text': 'display',
+  'audienceResonance.categories[].name': 'display',
   // Everything below feeds character reference image generation.
   'treatmentVariants[].character_descriptions[].appearance': 'machine',
   'treatmentVariants[].character_descriptions[].ethnicity': 'machine',

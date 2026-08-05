@@ -8,12 +8,12 @@ import { getLocaleNativeName } from '@/i18n/locale'
 /**
  * Read-only indicator for the language new AI content will be written in.
  *
- * Deliberately not a control. The header switcher is the single language
- * control, and the story language follows it through the resolution chain in
- * `i18n/server/storyLocale.ts` (entity override -> account -> interface
- * language). A second picker beside the header one read as the same setting
- * being out of sync, so the per-project override now lives in Settings and the
- * studio only reports the outcome.
+ * Deliberately not a control — not the interface language. The header switcher
+ * updates both `preferred_locale` and account `story_locale`, so this badge
+ * tracks the header unless the project carries `metadata.i18n.sourceLocale`
+ * (set from Settings). That override is the generation language for this
+ * project; existing English (or other) body text still localizes via the
+ * content-MT path using `readEntityI18n`, which defaults to `en` when unset.
  */
 export function StoryLocaleBadge({ locale }: { locale: string }) {
   const t = useTranslations('common.language')

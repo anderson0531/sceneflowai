@@ -9,6 +9,7 @@ import {
   UI_LOCALE_STORAGE_KEY,
 } from './locale'
 import { beginLocaleSwitch, endLocaleSwitch } from './localeSwitchStatus'
+import { setCachedAccountStoryLocale } from './accountStoryLocaleCache'
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365
 
@@ -47,6 +48,10 @@ export function applyDocumentLocale(locale: string): void {
  * Persists to `users.preferred_locale` and mirrors to the `sf-locale` cookie so
  * the next server render is already correct, then reloads so server components
  * re-render with the new catalog.
+ *
+ * The header is the single language control in the studios, so the same write
+ * also sets `users.story_locale`. Project-level overrides in
+ * `metadata.i18n.sourceLocale` still win for generation and the story badge.
  */
 export function useUiLocale() {
   const [locale, setLocale] = useState<string>(DEFAULT_LOCALE)
@@ -67,6 +72,9 @@ export function useUiLocale() {
       setLocale(nextLocale)
       writeUiLocaleCookie(nextLocale)
       applyDocumentLocale(nextLocale)
+      // Keep the story-language cache aligned before reload so a no-reload
+      // caller (and any mount that reads the cache) sees the new default.
+      setCachedAccountStoryLocale(nextLocale)
 
       // Raised before the request so the overlay covers the whole gap, not just
       // the reload at the end of it.
@@ -77,7 +85,7 @@ export function useUiLocale() {
         await fetch('/api/user/locale', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ uiLocale: nextLocale }),
+          body: JSON.stringify({ uiLocale: nextLocale, storyLocale: nextLocale }),
         })
       } catch {
         // The cookie already carries the choice; the profile write can retry

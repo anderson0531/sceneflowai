@@ -1,13 +1,13 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
 import { useGuideStore } from '@/store/useGuideStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Play, Square, Volume2, MoreHorizontal, ChevronDown, MessageSquare, Loader2, Wand2, X, Users, Lightbulb, SparklesIcon, Award, RefreshCw, FileText, Printer } from 'lucide-react'
+import { Play, Square, Volume2, MoreHorizontal, ChevronDown, MessageSquare, Loader2, Wand2, X, Users, Lightbulb, SparklesIcon, Award, RefreshCw, FileText, Printer, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -44,6 +44,13 @@ import {
   resolveVariantArtStyle,
   resolveVariantAspectRatio,
 } from '@/lib/treatment/blueprintFoundation'
+import { EMPTY_ENTITY_I18N, type EntityI18n } from '@/i18n/content/entityI18n'
+import { useContentTranslation } from '@/i18n/content/useContentTranslation'
+import {
+  buildTreatmentVariantDisplayFields,
+  treatmentVariantPathPrefix,
+} from '@/i18n/content/buildBlueprintDisplayFields'
+import { TranslationNotice } from '@/components/i18n/LocalizedField'
 
 /** Blueprint body sections, in tab order. Labels resolve through the catalog. */
 const SECTION_TABS: Array<{ id: BlueprintFixSection; labelKey: string }> = [
@@ -69,6 +76,13 @@ export type TreatmentCardProps = {
   onOpenFoundation?: () => void
   /** Project's production format, used when the variant predates storing its own. */
   projectFormat?: string | null
+  /**
+   * Language the stored creative text was written in (`metadata.i18n`).
+   * Defaults to English when unset so existing projects still content-MT into
+   * the reader's interface language. Distinct from the story-language badge,
+   * which tracks generation preference / account default.
+   */
+  contentI18n?: EntityI18n
 }
 
 export function TreatmentCard({
@@ -82,6 +96,7 @@ export function TreatmentCard({
   onOpenCollaborate,
   onOpenFoundation,
   projectFormat,
+  contentI18n,
 }: TreatmentCardProps = {}) {
   const t = useTranslations('blueprint')
   const router = useRouter()
@@ -170,6 +185,35 @@ export function TreatmentCard({
     if (Array.isArray(variants) && variants.length > 0) return variants[0].id
     return null
   }, [selectedId, variants])
+
+  // Content MT must run as a top-level hook (this card has an early return).
+  // Source locale comes from project metadata, defaulting to English — not from
+  // the account story preference, which tracks the header after a locale switch.
+  const contentFields = useMemo(() => {
+    if (!Array.isArray(variants) || !active) return {}
+    const variant = variants.find((x) => x.id === active) || variants[0]
+    return buildTreatmentVariantDisplayFields(variant)
+  }, [variants, active])
+
+  const resolvedContentI18n = contentI18n ?? EMPTY_ENTITY_I18N
+
+  const {
+    resolve: resolveContent,
+    needsTranslation,
+    isLoading: contentTranslating,
+    pendingCount,
+    uiLocale,
+    sourceLocale,
+  } = useContentTranslation({
+    fields: contentFields,
+    i18n: resolvedContentI18n,
+    enabled: Boolean(active),
+  })
+
+  const localized = useCallback(
+    (path: string, fallback = '') => resolveContent(path).text || fallback,
+    [resolveContent]
+  )
 
   function buildNarrationText(v: Record<string, unknown>, mode: BlueprintNarrationMode): string {
     return buildBlueprintNarrationText(v, mode)
@@ -451,12 +495,51 @@ export function TreatmentCard({
             </div>
             {/* Display single treatment content */}
             <div className="mt-3">
+            {needsTranslation ? (
+              <div className="mb-3">
+                <TranslationNotice
+                  sourceLocale={sourceLocale}
+                  uiLocale={uiLocale}
+                  isLoading={contentTranslating}
+                  pendingCount={pendingCount}
+                />
+              </div>
+            ) : null}
             {(() => {
               // Render the selected variant: edits and refinements are applied to
               // activeVariant, so pinning this to variants[0] showed stale content
               // (and no updated beats) whenever another variant was selected.
               const v = activeVariant
               if (!v) return null
+              const prefix = treatmentVariantPathPrefix(String(v.id))
+              const titleText = localized(`${prefix}.title`)
+              const loglineText = localized(`${prefix}.logline`)
+              const synopsisText = localized(`${prefix}.synopsis`)
+              const genreText = localized(`${prefix}.genre`, v.genre || '')
+              const audienceText = localized(`${prefix}.target_audience`, v.target_audience || '')
+              const settingText = localized(`${prefix}.setting`, v.setting || '')
+              const protagonistText = localized(`${prefix}.protagonist`, v.protagonist || '')
+              const antagonistText = localized(`${prefix}.antagonist`, v.antagonist || '')
+              const toneText = localized(
+                `${prefix}.tone_description`,
+                localized(`${prefix}.tone`, v.tone_description || v.tone || '')
+              )
+              const themeTexts = Array.isArray(v.themes)
+                ? v.themes.map((theme: string, index: number) =>
+                    typeof theme === 'string'
+                      ? localized(`${prefix}.themes[${index}]`, theme)
+                      : String(theme)
+                  )
+                : v.themes
+                  ? [localized(`${prefix}.themes`, String(v.themes))]
+                  : []
+              const moodText = Array.isArray(v.mood_references)
+                ? v.mood_references
+                    .map((mood: string, index: number) =>
+                      localized(`${prefix}.mood_references[${index}]`, mood)
+                    )
+                    .join(', ')
+                : ''
               const accent = v.id === 'A' ? 'border-blue-500' : v.id === 'B' ? 'border-purple-500' : 'border-emerald-500'
               const badge = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs'
               const badgeGenre = `${badge} border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300`
@@ -481,7 +564,7 @@ export function TreatmentCard({
                 <div className="space-y-5 text-sm">
                   {/* Callout */}
                   <div className={`p-4 rounded-lg border-l-4 ${accent} bg-gray-50 dark:bg-gray-800/50`}> 
-                    <div className={`text-lg font-bold text-gray-900 dark:text-gray-100 ${v.id===activeVariant.id ? flashIf('title') : ''}`}>{v.title || t('fields.treatmentFallback')}</div>
+                    <div className={`text-lg font-bold text-gray-900 dark:text-gray-100 ${v.id===activeVariant.id ? flashIf('title') : ''}`}>{titleText || t('fields.treatmentFallback')}</div>
                     {/* Logline lives in the hero overlay and the Core field; a third
                         copy here pushed the blueprint body further down the page. */}
                     {!tts.enabled && (
@@ -531,13 +614,13 @@ export function TreatmentCard({
                         sectionId="core"
                         variant="studio"
                         label={t('fields.title')}
-                        value={v.title || ''}
+                        value={titleText}
                         emphasis="prominent"
                         valueClassName={v.id === activeVariant.id ? flashIf('title') : undefined}
                       />
-                      <BlueprintFieldCard sectionId="core" variant="studio" label={t('fields.genre')} hideWhenEmpty={!v.genre}>
+                      <BlueprintFieldCard sectionId="core" variant="studio" label={t('fields.genre')} hideWhenEmpty={!genreText}>
                         <span className={cn(badgeGenre, v.id === activeVariant.id ? flashIf('genre') : '')}>
-                          {v.genre}
+                          {genreText}
                         </span>
                       </BlueprintFieldCard>
                       <BlueprintFieldCard
@@ -560,7 +643,7 @@ export function TreatmentCard({
                         sectionId="core"
                         variant="studio"
                         label={t('fields.audience')}
-                        hideWhenEmpty={!v.target_audience}
+                        hideWhenEmpty={!audienceText}
                       >
                         <span
                           className={cn(
@@ -568,14 +651,14 @@ export function TreatmentCard({
                             v.id === activeVariant.id ? flashIf('target_audience') : ''
                           )}
                         >
-                          {v.target_audience}
+                          {audienceText}
                         </span>
                       </BlueprintFieldCard>
                       <BlueprintFieldCard
                         sectionId="core"
                         variant="studio"
                         label={t('fields.logline')}
-                        value={v.logline || ''}
+                        value={loglineText}
                         valueClassName={v.id === activeVariant.id ? flashIf('logline') : undefined}
                         className="md:col-span-2"
                       />
@@ -642,21 +725,21 @@ export function TreatmentCard({
                         sectionId="story"
                         variant="studio"
                         label={t('fields.setting')}
-                        value={v.setting || ''}
+                        value={settingText}
                         valueClassName={v.id === activeVariant.id ? flashIf('setting') : undefined}
                       />
                       <BlueprintFieldCard
                         sectionId="story"
                         variant="studio"
                         label={t('fields.protagonist')}
-                        value={v.protagonist || ''}
+                        value={protagonistText}
                         valueClassName={v.id === activeVariant.id ? flashIf('protagonist') : undefined}
                       />
                       <BlueprintFieldCard
                         sectionId="story"
                         variant="studio"
                         label={t('fields.antagonist')}
-                        value={v.antagonist || ''}
+                        value={antagonistText}
                         valueClassName={v.id === activeVariant.id ? flashIf('antagonist') : undefined}
                         className="md:col-span-2"
                       />
@@ -683,7 +766,7 @@ export function TreatmentCard({
                         sectionId="tone"
                         variant="studio"
                         label={t('fields.tone')}
-                        value={v.tone_description || v.tone || ''}
+                        value={toneText}
                         valueClassName={
                           v.id === activeVariant.id ? flashIf('tone_description') || flashIf('tone') : undefined
                         }
@@ -710,7 +793,7 @@ export function TreatmentCard({
                         sectionId="tone"
                         variant="studio"
                         label={t('fields.themesPlain')}
-                        hideWhenEmpty={!v.themes || (Array.isArray(v.themes) && v.themes.length === 0)}
+                        hideWhenEmpty={themeTexts.length === 0}
                         className="md:col-span-2"
                       >
                         <div
@@ -719,24 +802,22 @@ export function TreatmentCard({
                             v.id === activeVariant.id ? flashIf('themes') : ''
                           )}
                         >
-                          {Array.isArray(v.themes)
-                            ? v.themes.map((t: string, i: number) => (
+                          {themeTexts.map((themeLabel: string, i: number) => (
                                 <span
-                                  key={`${t}-${i}`}
+                                  key={`${themeLabel}-${i}`}
                                   className="px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 text-xs"
                                 >
-                                  {t}
+                                  {themeLabel}
                                 </span>
-                              ))
-                            : String(v.themes)}
+                              ))}
                         </div>
                       </BlueprintFieldCard>
-                      {Array.isArray(v.mood_references) && v.mood_references.length > 0 ? (
+                      {moodText ? (
                         <BlueprintFieldCard
                           sectionId="tone"
                           variant="studio"
                           label={t('fields.moodReferences')}
-                          value={v.mood_references.join(', ')}
+                          value={moodText}
                           className="md:col-span-2"
                         />
                       ) : null}
@@ -778,7 +859,7 @@ export function TreatmentCard({
                         sectionId="beats"
                         variant="studio"
                         label={t('fields.synopsis')}
-                        value={v.synopsis || v.content || ''}
+                        value={synopsisText}
                         valueClassName={
                           v.id === activeVariant.id ? flashIf('synopsis') || flashIf('content') : undefined
                         }
@@ -789,18 +870,31 @@ export function TreatmentCard({
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          {(v as any).beats.map((b: any, idx: number) => (
+                          {(v as any).beats.map((b: any, idx: number) => {
+                            const beatTitle = localized(
+                              `${prefix}.beats[${idx}].title`,
+                              b.title || ''
+                            )
+                            const beatIntent = localized(
+                              `${prefix}.beats[${idx}].intent`,
+                              b.intent || ''
+                            )
+                            const beatSynopsis = localized(
+                              `${prefix}.beats[${idx}].synopsis`,
+                              b.synopsis || ''
+                            )
+                            return (
                             <div key={idx} className={`p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 ${v.id===activeVariant.id ? flashIf('beats') : ''}`}>
                               <div className="flex items-start justify-between gap-3">
                                 <div>
-                                  <div className="text-sm text-gray-900 dark:text-gray-100 font-medium">{b.title || t('fields.beat', { number: idx + 1 })}</div>
-                                  {b.intent && <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{b.intent}</div>}
+                                  <div className="text-sm text-gray-900 dark:text-gray-100 font-medium">{beatTitle || t('fields.beat', { number: idx + 1 })}</div>
+                                  {beatIntent && <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{beatIntent}</div>}
                                 </div>
                                 <div className="shrink-0 text-xs px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700 font-medium">{t('fields.minutesSuffix', { value: Number(b.minutes||0).toFixed(2) })}</div>
                               </div>
-                              {b.synopsis && <div className="text-sm text-gray-700 dark:text-gray-300 mt-2 whitespace-pre-wrap leading-relaxed">{b.synopsis}</div>}
+                              {beatSynopsis && <div className="text-sm text-gray-700 dark:text-gray-300 mt-2 whitespace-pre-wrap leading-relaxed">{beatSynopsis}</div>}
                             </div>
-                          ))}
+                          )})}
                         </div>
                       )}
                     </div>
@@ -830,7 +924,16 @@ export function TreatmentCard({
                   ) : (
                     <>
                       <div className="space-y-3">
-                        {(v.character_descriptions ?? []).map((c, idx) => (
+                        {(v.character_descriptions ?? []).map((c, idx) => {
+                          const charBase = `${prefix}.character_descriptions[${idx}]`
+                          const description = localized(`${charBase}.description`, c.description || '')
+                          const externalGoal = localized(`${charBase}.externalGoal`, c.externalGoal || '')
+                          const internalNeed = localized(`${charBase}.internalNeed`, c.internalNeed || '')
+                          const fatalFlaw = localized(`${charBase}.fatalFlaw`, c.fatalFlaw || '')
+                          const arcStarting = localized(`${charBase}.arcStartingState`, c.arcStartingState || '')
+                          const arcShift = localized(`${charBase}.arcShift`, c.arcShift || '')
+                          const arcEnding = localized(`${charBase}.arcEndingState`, c.arcEndingState || '')
+                          return (
                           <details 
                             key={idx}
                             className="group rounded-lg border border-slate-700/60 bg-slate-800/50 overflow-hidden"
@@ -849,58 +952,58 @@ export function TreatmentCard({
                             </summary>
                             <div className="px-4 pb-4 pt-2 border-t border-slate-700/60 space-y-3">
                               {/* Description */}
-                              {c.description && (
-                                <div className="text-sm text-gray-700 dark:text-gray-300">{c.description}</div>
+                              {description && (
+                                <div className="text-sm text-gray-700 dark:text-gray-300">{description}</div>
                               )}
                               
                               {/* Goals & Flaws Grid */}
                               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                {c.externalGoal && (
+                                {externalGoal && (
                                   <div className="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 border border-blue-100 dark:border-blue-900">
                                     <div className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-1">{t('character.externalGoal')}</div>
-                                    <div className="text-xs text-blue-800 dark:text-blue-200">{c.externalGoal}</div>
+                                    <div className="text-xs text-blue-800 dark:text-blue-200">{externalGoal}</div>
                                   </div>
                                 )}
-                                {c.internalNeed && (
+                                {internalNeed && (
                                   <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/50 border border-amber-100 dark:border-amber-900">
                                     <div className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-1">{t('character.internalNeed')}</div>
-                                    <div className="text-xs text-amber-800 dark:text-amber-200">{c.internalNeed}</div>
+                                    <div className="text-xs text-amber-800 dark:text-amber-200">{internalNeed}</div>
                                   </div>
                                 )}
-                                {c.fatalFlaw && (
+                                {fatalFlaw && (
                                   <div className="p-2.5 rounded-lg bg-red-50 dark:bg-red-950/50 border border-red-100 dark:border-red-900">
                                     <div className="text-[10px] font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide mb-1">{t('character.fatalFlaw')}</div>
-                                    <div className="text-xs text-red-800 dark:text-red-200">{c.fatalFlaw}</div>
+                                    <div className="text-xs text-red-800 dark:text-red-200">{fatalFlaw}</div>
                                   </div>
                                 )}
                               </div>
                               
                               {/* Character Arc */}
-                              {(c.arcStartingState || c.arcShift || c.arcEndingState) && (
+                              {(arcStarting || arcShift || arcEnding) && (
                                 <div className="p-3 rounded-lg bg-gradient-to-r from-purple-50 via-indigo-50 to-cyan-50 dark:from-purple-950/30 dark:via-indigo-950/30 dark:to-cyan-950/30 border border-purple-100 dark:border-purple-800">
                                   <div className="text-[10px] font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wide mb-2">{t('character.arc')}</div>
                                   <div className="flex items-center gap-2 text-xs">
-                                    {c.arcStartingState && (
+                                    {arcStarting && (
                                       <div className="flex-1 p-2 rounded bg-slate-900/60">
                                         <div className="text-[9px] text-gray-400 uppercase">{t('character.arcStarting')}</div>
-                                        <div className="text-gray-300">{c.arcStartingState}</div>
+                                        <div className="text-gray-300">{arcStarting}</div>
                                       </div>
                                     )}
-                                    {c.arcShift && (
+                                    {arcShift && (
                                       <>
                                         <ArrowRight className="w-3 h-3 text-purple-400 flex-shrink-0" />
                                         <div className="flex-1 p-2 rounded bg-slate-900/60">
                                           <div className="text-[9px] text-gray-400 uppercase">{t('character.arcShift')}</div>
-                                          <div className="text-gray-300">{c.arcShift}</div>
+                                          <div className="text-gray-300">{arcShift}</div>
                                         </div>
                                       </>
                                     )}
-                                    {c.arcEndingState && (
+                                    {arcEnding && (
                                       <>
                                         <ArrowRight className="w-3 h-3 text-cyan-400 flex-shrink-0" />
                                         <div className="flex-1 p-2 rounded bg-slate-900/60">
                                           <div className="text-[9px] text-gray-400 uppercase">{t('character.arcEnding')}</div>
-                                          <div className="text-gray-300">{c.arcEndingState}</div>
+                                          <div className="text-gray-300">{arcEnding}</div>
                                         </div>
                                       </>
                                     )}
@@ -909,7 +1012,7 @@ export function TreatmentCard({
                               )}
                             </div>
                           </details>
-                        ))}
+                        )})}
                       </div>
                       <div className="text-xs text-gray-600 dark:text-gray-400 italic mt-2 px-3">
                         {t('character.refineNote')}
