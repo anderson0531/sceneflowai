@@ -4,12 +4,10 @@ import { useTranslations } from 'next-intl'
 
 import React, { useState, useCallback, useMemo } from 'react'
 import { cn } from '@/lib/utils'
-import { 
-  ChevronUp, 
-  ChevronDown, 
+import {
+  ChevronUp,
+  ChevronDown,
   ChevronRight,
-  CheckCircle2, 
-  Circle,
   ClipboardCheck,
   Sparkles,
   FileText,
@@ -26,18 +24,14 @@ import {
   ArrowRight,
   Target,
 } from 'lucide-react'
-import { 
-  type WorkflowGroup, 
+import {
+  type WorkflowGroup,
   type WorkflowStep,
-  type WorkflowStepStatus,
   getWorkflowGroupsForPhase,
-  getTotalSteps,
-  getCompletedSteps,
 } from '@/config/nav/workflowGuideConfig'
 import { type WorkflowPhase } from '@/config/nav/sidebarConfig'
 import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 
-// Icon map for dynamic rendering
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   FileText,
   Users,
@@ -56,60 +50,47 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Sparkles,
 }
 
+function guideLabel(
+  t: ReturnType<typeof useTranslations>,
+  key: string | undefined,
+  fallback: string
+): string {
+  if (key && t.has(key)) return t(key)
+  return fallback
+}
+
 // =============================================================================
-// WORKFLOW STEP ITEM
+// OPTIONAL ACTION ROW
 // =============================================================================
 
 interface WorkflowStepItemProps {
   step: WorkflowStep
-  status: WorkflowStepStatus
   onAction: (step: WorkflowStep) => void
-  onToggleComplete: (stepId: string) => void
 }
 
-function WorkflowStepItem({ step, status, onAction, onToggleComplete }: WorkflowStepItemProps) {
+function WorkflowStepItem({ step, onAction }: WorkflowStepItemProps) {
   const t = useTranslations('blueprint.workflowGuide')
-  const isComplete = status === 'complete'
-  
+  const label = guideLabel(t, step.labelKey, step.label)
+  const canAct = Boolean(step.actionEventName || step.actionHref)
+
   return (
     <div className="flex items-center gap-2 py-1.5 pl-6 group">
-      {/* Checkbox */}
-      <button
-        onClick={() => onToggleComplete(step.id)}
-        className={cn(
-          'w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-colors',
-          isComplete 
-            ? 'bg-green-500 text-white' 
-            : 'bg-slate-700 hover:bg-slate-600 text-slate-500'
-        )}
-      >
-        {isComplete ? (
-          <CheckCircle2 className="w-2.5 h-2.5" />
-        ) : (
-          <Circle className="w-2 h-2" />
-        )}
-      </button>
-      
-      {/* Label & Action */}
       <div className="flex-1 min-w-0">
         <button
-          onClick={() => step.actionEventName && onAction(step)}
-          disabled={!step.actionEventName}
+          type="button"
+          onClick={() => canAct && onAction(step)}
+          disabled={!canAct}
           className={cn(
             'text-xs text-left w-full transition-colors truncate',
-            isComplete 
-              ? 'text-green-400/70 line-through' 
-              : step.actionEventName
-                ? 'text-slate-300 hover:text-cyan-400 cursor-pointer'
-                : 'text-slate-400 cursor-default'
+            canAct
+              ? 'text-slate-300 hover:text-cyan-400 cursor-pointer'
+              : 'text-slate-400 cursor-default'
           )}
         >
-          {step.labelKey ? t(step.labelKey) : step.label}
+          {label}
         </button>
       </div>
-      
-      {/* Action indicator */}
-      {step.actionEventName && !isComplete && (
+      {canAct && (
         <ChevronRight className="w-3 h-3 text-slate-600 group-hover:text-cyan-400 transition-colors opacity-0 group-hover:opacity-100" />
       )}
     </div>
@@ -117,65 +98,36 @@ function WorkflowStepItem({ step, status, onAction, onToggleComplete }: Workflow
 }
 
 // =============================================================================
-// WORKFLOW GROUP SECTION
+// INTENTION GROUP
 // =============================================================================
 
 interface WorkflowGroupSectionProps {
   group: WorkflowGroup
-  stepStatus: Record<string, WorkflowStepStatus>
   isExpanded: boolean
   onToggleExpand: () => void
   onStepAction: (step: WorkflowStep) => void
-  onToggleStepComplete: (stepId: string) => void
 }
 
 function WorkflowGroupSection({
   group,
-  stepStatus,
   isExpanded,
   onToggleExpand,
   onStepAction,
-  onToggleStepComplete,
 }: WorkflowGroupSectionProps) {
   const t = useTranslations('blueprint.workflowGuide')
   const IconComponent = iconMap[group.icon] || ClipboardCheck
-  
-  // Calculate group completion
-  const completedSteps = group.steps.filter(s => stepStatus[s.id] === 'complete').length
-  const totalSteps = group.steps.length
-  const isGroupComplete = completedSteps === totalSteps
-  const hasProgress = completedSteps > 0
-  
+  const title = guideLabel(t, group.titleKey, group.title)
+
   return (
-    <div className={cn(
-      'rounded-lg border transition-all duration-200',
-      isGroupComplete 
-        ? 'bg-green-500/5 border-green-500/20' 
-        : hasProgress
-          ? 'bg-amber-500/5 border-amber-500/20'
-          : 'bg-slate-800/30 border-slate-700/50'
-    )}>
-      {/* Group Header */}
+    <div className="rounded-lg border bg-slate-800/30 border-slate-700/50 transition-all duration-200">
       <button
+        type="button"
         onClick={onToggleExpand}
         className="w-full flex items-center gap-2 p-2 hover:bg-slate-700/30 rounded-lg transition-colors"
       >
         <IconComponent className={cn('w-4 h-4 flex-shrink-0', group.iconColor)} />
-        <span className={cn(
-          'text-xs font-medium flex-1 text-left truncate',
-          isGroupComplete ? 'text-green-400' : 'text-slate-200'
-        )}>
-          {group.titleKey ? t(group.titleKey) : group.title}
-        </span>
-        <span className={cn(
-          'text-[10px] px-1.5 py-0.5 rounded-full',
-          isGroupComplete 
-            ? 'bg-green-500/20 text-green-400'
-            : hasProgress
-              ? 'bg-amber-500/20 text-amber-400'
-              : 'bg-slate-700 text-slate-500'
-        )}>
-          {completedSteps}/{totalSteps}
+        <span className="text-xs font-medium flex-1 text-left truncate text-slate-200">
+          {title}
         </span>
         {isExpanded ? (
           <ChevronUp className="w-3 h-3 text-slate-500" />
@@ -183,18 +135,11 @@ function WorkflowGroupSection({
           <ChevronDown className="w-3 h-3 text-slate-500" />
         )}
       </button>
-      
-      {/* Steps List */}
+
       {isExpanded && (
         <div className="pb-2 border-t border-slate-700/50 mt-1">
-          {group.steps.map(step => (
-            <WorkflowStepItem
-              key={step.id}
-              step={step}
-              status={stepStatus[step.id] || 'pending'}
-              onAction={onStepAction}
-              onToggleComplete={onToggleStepComplete}
-            />
+          {group.steps.map((step) => (
+            <WorkflowStepItem key={step.id} step={step} onAction={onStepAction} />
           ))}
         </div>
       )}
@@ -210,50 +155,28 @@ interface WorkflowGuidePanelProps {
   phase: WorkflowPhase
   isOpen: boolean
   onToggle: () => void
-  externalStatus?: Record<string, WorkflowStepStatus>
+  /** Kept for callers; Blueprint Guide no longer presents completion state. */
+  externalStatus?: Record<string, string>
   className?: string
 }
 
-export function WorkflowGuidePanel({ 
-  phase, 
-  isOpen, 
+export function WorkflowGuidePanel({
+  phase,
+  isOpen,
   onToggle,
-  externalStatus = {},
-  className 
+  className,
 }: WorkflowGuidePanelProps) {
-  // Get groups for current phase
+  const t = useTranslations('blueprint.workflowGuide')
   const groups = useMemo(() => getWorkflowGroupsForPhase(phase), [phase])
-  
-  // Local status for steps
-  const [localStatus, setLocalStatus] = useState<Record<string, WorkflowStepStatus>>({})
-  
-  // Track which groups are expanded
+
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() => {
-    // Initialize with first group expanded, others based on their config
     const initial: Record<string, boolean> = {}
     groups.forEach((group, index) => {
       initial[group.id] = index === 0 ? true : !(group.collapsed ?? false)
     })
     return initial
   })
-  
-  // Merge external and local status
-  const stepStatus = useMemo(() => {
-    const merged: Record<string, WorkflowStepStatus> = {}
-    groups.forEach(group => {
-      group.steps.forEach(step => {
-        merged[step.id] = externalStatus[step.id] || localStatus[step.id] || 'pending'
-      })
-    })
-    return merged
-  }, [groups, externalStatus, localStatus])
-  
-  // Calculate overall progress
-  const totalSteps = getTotalSteps(groups)
-  const completedSteps = getCompletedSteps(groups, stepStatus)
-  const progressPercent = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0
-  
-  // Handle step action
+
   const handleStepAction = useCallback((step: WorkflowStep) => {
     if (step.actionEventName) {
       window.dispatchEvent(new CustomEvent(step.actionEventName))
@@ -262,27 +185,16 @@ export function WorkflowGuidePanel({
       window.location.href = step.actionHref
     }
   }, [])
-  
-  // Toggle step complete
-  const handleToggleStepComplete = useCallback((stepId: string) => {
-    setLocalStatus(prev => ({
-      ...prev,
-      [stepId]: prev[stepId] === 'complete' ? 'pending' : 'complete'
-    }))
-  }, [])
-  
-  // Toggle group expansion
+
   const handleToggleGroup = useCallback((groupId: string) => {
-    setExpandedGroups(prev => ({
+    setExpandedGroups((prev) => ({
       ...prev,
-      [groupId]: !prev[groupId]
+      [groupId]: !prev[groupId],
     }))
   }, [])
-  
-  // Don't render if no groups
+
   if (groups.length === 0) return null
-  
-  // Phase display name
+
   const phaseDisplayName: Record<WorkflowPhase, string> = {
     blueprint: STUDIO_DISPLAY_NAMES.blueprint,
     production: STUDIO_DISPLAY_NAMES.production,
@@ -290,81 +202,47 @@ export function WorkflowGuidePanel({
     'final-cut': 'Screening Room',
     premiere: 'Screening Room',
     dashboard: 'Dashboard',
-    settings: 'Settings'
+    settings: 'Settings',
   }
-  
+
+  // Blueprint guide uses catalog chrome; other phases keep English fallbacks
+  // until their catalogs are wired (production still uses raw labels).
+  const title = phase === 'blueprint' && t.has('title') ? t('title') : 'Guide'
+  const optionalHint =
+    phase === 'blueprint' && t.has('optionalHint') ? t('optionalHint') : null
+
   return (
     <div className={cn('p-4 border-b border-gray-200 dark:border-gray-700', className)}>
-      {/* Header */}
       <button
+        type="button"
         onClick={onToggle}
-        className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 tracking-wider mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+        className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 tracking-wider mb-1 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
       >
         <div className="flex items-center gap-2">
           <ClipboardCheck className="w-3.5 h-3.5 text-amber-500" />
-          <span>Guide</span>
+          <span>{title}</span>
           <span className="text-[10px] font-normal text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded">
             {phaseDisplayName[phase]}
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          {completedSteps > 0 && (
-            <span className={cn(
-              'text-[10px] font-medium',
-              progressPercent === 100 ? 'text-green-500' : 'text-cyan-500'
-            )}>
-              {completedSteps}/{totalSteps}
-            </span>
-          )}
-          {isOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-        </div>
+        {isOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
       </button>
-      
-      {/* Groups */}
+
+      {isOpen && optionalHint && (
+        <p className="text-[10px] text-slate-500 mb-3 pl-6">{optionalHint}</p>
+      )}
+
       {isOpen && (
-        <div className="space-y-2">
-          {groups.map(group => (
+        <div className={cn('space-y-2', !optionalHint && 'mt-2')}>
+          {groups.map((group) => (
             <WorkflowGroupSection
               key={group.id}
               group={group}
-              stepStatus={stepStatus}
               isExpanded={expandedGroups[group.id] ?? true}
               onToggleExpand={() => handleToggleGroup(group.id)}
               onStepAction={handleStepAction}
-              onToggleStepComplete={handleToggleStepComplete}
             />
           ))}
-          
-          {/* Progress Bar */}
-          <div className="mt-4 pt-3 border-t border-slate-700/50">
-            <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1.5">
-              <span>Overall Progress</span>
-              <span className="font-medium">{progressPercent}%</span>
-            </div>
-            <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
-              <div 
-                className={cn(
-                  'h-full transition-all duration-500 rounded-full',
-                  progressPercent === 100 
-                    ? 'bg-green-500' 
-                    : progressPercent > 50 
-                      ? 'bg-amber-500' 
-                      : 'bg-cyan-500'
-                )}
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-          </div>
-          
-          {/* All Complete Message */}
-          {progressPercent === 100 && (
-            <div className="flex items-center gap-2 mt-3 p-2 bg-green-500/10 border border-green-500/20 rounded-lg">
-              <Sparkles className="w-3.5 h-3.5 text-green-400" />
-              <span className="text-xs text-green-400 font-medium">
-                Workflow complete! Ready to proceed.
-              </span>
-            </div>
-          )}
         </div>
       )}
     </div>

@@ -434,11 +434,14 @@
     "tone-visual": "视觉风格不清晰"
   },
   "workflowGuide": {
+    "title": "指南",
+    "optionalHint": "可选 — 按需使用",
     "group": {
-      "create-story": "创造你自己的故事！",
-      "refine-blueprint": "优化您的Blueprint",
-      "enhance-experience": "强化体验",
-      "start-production": "已准备好进行Production Studio"
+      "create-blueprint": "创建蓝图",
+      "review-blueprint": "审阅蓝图",
+      "optimize-blueprint": "优化蓝图",
+      "enhance-experience": "增强体验",
+      "continue": "继续"
     },
     "step": {
       "enter-idea": "输入您的创意或主题",

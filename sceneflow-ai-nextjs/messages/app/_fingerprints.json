@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-05T10:45:09.638Z",
+  "generatedAt": "2026-08-05T11:43:43.834Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -592,10 +592,13 @@
       "chips.tone-consistent": "681aac574d16e0dd",
       "chips.tone-off": "554b7a925f7c1c0b",
       "chips.tone-visual": "290812eb27b4e21f",
-      "workflowGuide.group.create-story": "b891b6eee8675587",
-      "workflowGuide.group.refine-blueprint": "92548e33de3dcd22",
+      "workflowGuide.title": "8dd65d0952ed144c",
+      "workflowGuide.optionalHint": "2b38c18744f6bd83",
+      "workflowGuide.group.create-blueprint": "58115ecbc23ede88",
+      "workflowGuide.group.review-blueprint": "4fb58e8d94ddd255",
+      "workflowGuide.group.optimize-blueprint": "c595e4fc4e00b4d0",
       "workflowGuide.group.enhance-experience": "4df2b894a5ca062f",
-      "workflowGuide.group.start-production": "237fe6006680407a",
+      "workflowGuide.group.continue": "31fbef162594de01",
       "workflowGuide.step.enter-idea": "3afc693cae93b398",
       "workflowGuide.step.generate-blueprint": "e26f72b23cf3749b",
       "workflowGuide.step.review-sections": "1741d20b807f08c8",

@@ -434,11 +434,14 @@
     "tone-visual": "Estilo visual poco claro"
   },
   "workflowGuide": {
+    "title": "Guía",
+    "optionalHint": "Opcional — usa lo que te ayude",
     "group": {
-      "create-story": "Crea tu propio cuento",
-      "refine-blueprint": "Refina TU Blueprint",
-      "enhance-experience": "Mejore su experiencia",
-      "start-production": "Listo para Production Studio"
+      "create-blueprint": "Crear Blueprint",
+      "review-blueprint": "Revisar Blueprint",
+      "optimize-blueprint": "Optimizar Blueprint",
+      "enhance-experience": "Mejorar la experiencia",
+      "continue": "Continuar"
     },
     "step": {
       "enter-idea": "Introduce tu idea o tema",

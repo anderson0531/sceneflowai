@@ -434,11 +434,14 @@
     "tone-visual": "Estilo visual pouco claro"
   },
   "workflowGuide": {
+    "title": "Guia",
+    "optionalHint": "Opcional — use o que ajudar",
     "group": {
-      "create-story": "Crie a sua história",
-      "refine-blueprint": "Refine seu Blueprint",
-      "enhance-experience": "Melhore a sua experiência",
-      "start-production": "Pronto para SFAIPRODUÇÃO_STUDIOTERM"
+      "create-blueprint": "Criar Blueprint",
+      "review-blueprint": "Revisar Blueprint",
+      "optimize-blueprint": "Otimizar Blueprint",
+      "enhance-experience": "Aprimorar a experiência",
+      "continue": "Continuar"
     },
     "step": {
       "enter-idea": "Introduza a sua ideia ou tópico",

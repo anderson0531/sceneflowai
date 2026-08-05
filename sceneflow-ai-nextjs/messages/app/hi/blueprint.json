@@ -434,11 +434,14 @@
     "tone-visual": "विज़ुअल स्टाइल अस्पष्ट है"
   },
   "workflowGuide": {
+    "title": "गाइड",
+    "optionalHint": "वैकल्पिक — जो मदद करे उसे उपयोग करें",
     "group": {
-      "create-story": "अपनी कहानी बनाएँ",
-      "refine-blueprint": "अपने Blueprint को परिष्कृत करें",
+      "create-blueprint": "ब्लूप्रिंट बनाएँ",
+      "review-blueprint": "ब्लूप्रिंट समीक्षा",
+      "optimize-blueprint": "ब्लूप्रिंट अनुकूलित करें",
       "enhance-experience": "अनुभव बढ़ाएँ",
-      "start-production": "Production Studio के लिए तैयार"
+      "continue": "जारी रखें"
     },
     "step": {
       "enter-idea": "अपना विचार या विषय दर्ज करें",
