@@ -12,6 +12,10 @@ export interface UserAttributes {
   avatar_url?: string
   is_active: boolean
   email_verified: boolean
+  /** Interface language for app chrome. Mirrored to the `sf-locale` cookie. */
+  preferred_locale?: string | null
+  /** Default language new AI-authored creative content is written in. */
+  story_locale?: string | null
   credits?: number
   subscription_tier_id?: string | null // FK to SubscriptionTier
   subscription_status: 'active' | 'cancelled' | 'expired' | 'trial' | null
@@ -41,7 +45,7 @@ export interface UserAttributes {
   updated_at: Date
 }
 
-export interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'created_at' | 'updated_at' | 'is_active' | 'email_verified' | 'subscription_status' | 'subscription_credits_monthly' | 'addon_credits' | 'storage_used_gb' | 'one_time_tiers_purchased' | 'trust_score' | 'voice_cloning_enabled' | 'account_verified_at' | 'moderation_violations_count' | 'moderation_violations_recent' | 'last_violation_at' | 'moderation_suspended_until'> {}
+export interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'created_at' | 'updated_at' | 'is_active' | 'email_verified' | 'preferred_locale' | 'story_locale' | 'subscription_status' | 'subscription_credits_monthly' | 'addon_credits' | 'storage_used_gb' | 'one_time_tiers_purchased' | 'trust_score' | 'voice_cloning_enabled' | 'account_verified_at' | 'moderation_violations_count' | 'moderation_violations_recent' | 'last_violation_at' | 'moderation_suspended_until'> {}
 
 export class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
   declare id: string
@@ -53,6 +57,8 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
   declare avatar_url: string | undefined
   declare is_active: boolean
   declare email_verified: boolean
+  declare preferred_locale: string | null | undefined
+  declare story_locale: string | null | undefined
   declare credits: number | undefined
   declare subscription_tier_id: string | null | undefined
   declare subscription_status: 'active' | 'cancelled' | 'expired' | 'trial' | null
@@ -139,6 +145,14 @@ User.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false,
+    },
+    preferred_locale: {
+      type: DataTypes.STRING(12),
+      allowNull: true,
+    },
+    story_locale: {
+      type: DataTypes.STRING(12),
+      allowNull: true,
     },
     credits: {
       type: DataTypes.BIGINT,

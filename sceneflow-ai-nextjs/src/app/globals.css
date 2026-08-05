@@ -992,6 +992,182 @@ body.rtl .tabular-nums {
   unicode-bidi: embed;
 }
 
+/* -----------------------------------------------------------------------------
+   App-surface RTL
+
+   The rules above were written for the landing page. The studios need a few
+   more, and they are scoped narrowly on purpose: a blanket `flex-direction:
+   row-reverse` would scramble the timeline and mixer, where left-to-right is a
+   representation of time rather than of reading order.
+   -------------------------------------------------------------------------- */
+
+/* Values that are coordinates or identifiers, not prose. */
+html[dir="rtl"] .sf-numeric,
+html[dir="rtl"] .notranslate,
+html[dir="rtl"] [translate="no"],
+html[dir="rtl"] [data-timecode],
+html[dir="rtl"] .font-mono {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: start;
+}
+
+/* Time-ordered surfaces keep visual left-to-right: a timeline reads as time,
+   not as text, and flipping it would reverse the meaning of the whole panel. */
+html[dir="rtl"] [data-ltr-layout],
+html[dir="rtl"] [data-timeline],
+html[dir="rtl"] .sf-timeline {
+  direction: ltr;
+}
+
+/* Restore prose direction for labels living inside an LTR-locked timeline. */
+html[dir="rtl"] [data-ltr-layout] .sf-rtl-text,
+html[dir="rtl"] [data-timeline] .sf-rtl-text,
+html[dir="rtl"] .sf-timeline .sf-rtl-text {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Prompt and code editors stay LTR: their content is English by design. */
+html[dir="rtl"] textarea[translate="no"],
+html[dir="rtl"] input[translate="no"] {
+  direction: ltr;
+  text-align: left;
+}
+
+/* Chevrons and directional affordances mirror with the reading direction. */
+html[dir="rtl"] .sf-mirror-icon {
+  transform: scaleX(-1);
+}
+
+/* =============================================================================
+   Script-aware typography
+
+   next/font loads Inter, Montserrat, Roboto Mono and Lora with subsets: ['latin']
+   only, which silently renders Thai, Bengali, Devanagari, Ethiopic, Arabic,
+   Hebrew and CJK as fallback boxes or mismatched glyphs.
+
+   These use OS-provided fonts rather than webfonts on purpose. Noto Sans SC
+   alone is several megabytes; every platform already ships a good font for its
+   own scripts, and downloading one per locale would be a serious regression for
+   a PWA. The `:lang()` selectors are fully static, so this costs nothing at
+   build time and works with the pre-paint locale script.
+
+   Line height is raised for the scripts whose ascenders and descenders collide
+   at our default leading (Thai tone marks, Devanagari matras, Ethiopic).
+   ============================================================================= */
+
+html:lang(th) body {
+  font-family: 'Noto Sans Thai', 'Leelawadee UI', 'Thonburi', var(--font-inter), sans-serif;
+  line-height: 1.85;
+}
+
+html:lang(hi) body,
+html:lang(mr) body,
+html:lang(ne) body {
+  font-family: 'Noto Sans Devanagari', 'Nirmala UI', 'Kohinoor Devanagari', var(--font-inter), sans-serif;
+  line-height: 1.8;
+}
+
+html:lang(bn) body {
+  font-family: 'Noto Sans Bengali', 'Nirmala UI', 'Bangla Sangam MN', var(--font-inter), sans-serif;
+  line-height: 1.8;
+}
+
+html:lang(am) body {
+  font-family: 'Noto Sans Ethiopic', 'Nyala', 'Kefa', var(--font-inter), sans-serif;
+  line-height: 1.85;
+}
+
+html:lang(ar) body,
+html:lang(fa) body,
+html:lang(ur) body {
+  font-family: 'Noto Sans Arabic', 'Segoe UI', 'Geeza Pro', 'Tahoma', var(--font-inter), sans-serif;
+  line-height: 1.8;
+}
+
+html:lang(he) body {
+  font-family: 'Noto Sans Hebrew', 'Segoe UI', 'Arial Hebrew', var(--font-inter), sans-serif;
+  line-height: 1.75;
+}
+
+html:lang(zh-CN) body {
+  font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', var(--font-inter), sans-serif;
+}
+
+html:lang(zh-TW) body {
+  font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', var(--font-inter), sans-serif;
+}
+
+html:lang(ja) body {
+  font-family: 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', 'Meiryo', var(--font-inter), sans-serif;
+}
+
+html:lang(ko) body {
+  font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', var(--font-inter), sans-serif;
+}
+
+/* Display faces have no coverage outside Latin; fall through to the body stack
+   so a heading does not render in a different script than its page. */
+html:lang(th) h1, html:lang(th) h2, html:lang(th) h3,
+html:lang(hi) h1, html:lang(hi) h2, html:lang(hi) h3,
+html:lang(bn) h1, html:lang(bn) h2, html:lang(bn) h3,
+html:lang(am) h1, html:lang(am) h2, html:lang(am) h3,
+html:lang(ar) h1, html:lang(ar) h2, html:lang(ar) h3,
+html:lang(he) h1, html:lang(he) h2, html:lang(he) h3,
+html:lang(fa) h1, html:lang(fa) h2, html:lang(fa) h3,
+html:lang(ur) h1, html:lang(ur) h2, html:lang(ur) h3,
+html:lang(zh-CN) h1, html:lang(zh-CN) h2, html:lang(zh-CN) h3,
+html:lang(zh-TW) h1, html:lang(zh-TW) h2, html:lang(zh-TW) h3,
+html:lang(ja) h1, html:lang(ja) h2, html:lang(ja) h3,
+html:lang(ko) h1, html:lang(ko) h2, html:lang(ko) h3 {
+  font-family: inherit;
+}
+
+/* =============================================================================
+   Text expansion
+
+   German and Finnish run roughly 30% longer than English, so fixed-width
+   controls that fit "Save" clip "Speichern". These relax the studio chrome's
+   fixed widths into minimums for the locales that need it, which is safer than
+   hunting every w-* utility across ~250 files.
+   ============================================================================= */
+
+html:lang(de) .sf-expandable,
+html:lang(fi) .sf-expandable,
+html:lang(pl) .sf-expandable,
+html:lang(ru) .sf-expandable,
+html:lang(hu) .sf-expandable,
+html:lang(el) .sf-expandable {
+  width: auto !important;
+  min-width: max-content;
+  white-space: normal;
+}
+
+/* =============================================================================
+   Translation opt-outs
+
+   `notranslate` is the class Google Translate and Safari both honour natively.
+   Anything whose exact characters matter must carry it (or translate="no"):
+   brand marks, generation prompts, code and JSON, credit amounts, timecodes,
+   and identifiers. A mistranslated prompt silently degrades render quality; a
+   mistranslated timecode or id is simply wrong.
+   ============================================================================= */
+
+.notranslate,
+[translate='no'] {
+  /* Nothing to style — the attribute and class are the signal. Declared so the
+     utility is discoverable in one place and safe to apply anywhere. */
+  unicode-bidi: isolate;
+}
+
+/* Numeric readouts stay LTR and untranslated even inside RTL layouts. */
+.sf-numeric {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Google Translate widget styles removed — landing uses native next-intl locales */
 
 /* SFAI logo wordmark — cyan glow on "AI" */

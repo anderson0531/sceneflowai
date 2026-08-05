@@ -1,0 +1,51 @@
+{
+  "studio": {
+    "title": "Series Studio",
+    "description": "Plan a multi-episode arc once, then produce each episode against it",
+    "newSeries": "New Series",
+    "empty": "No series yet",
+    "emptyHint": "A series keeps characters, locations, and continuity consistent across episodes."
+  },
+  "detail": {
+    "episodes": "Episodes",
+    "productionBible": "Production Bible",
+    "referenceLibrary": "Reference Library",
+    "resonance": "Audience Resonance",
+    "generateEpisodes": "Generate Episodes",
+    "addEpisode": "Add Episode",
+    "openEpisode": "Open Episode {number}",
+    "episodeCount": "{count, plural, =1 {# episode} other {# episodes}}"
+  },
+  "continuity": {
+    "title": "Continuity Engine",
+    "characters": "Characters",
+    "locations": "Locations",
+    "aesthetics": "Aesthetics",
+    "keyEvents": "Key Events",
+    "storyThreads": "Story Threads",
+    "reviewUpdates": "Review Updates"
+  },
+  "fields": {
+    "seriesTitle": "Series title",
+    "logline": "Logline",
+    "synopsis": "Synopsis",
+    "setting": "Setting",
+    "targetAudience": "Target audience",
+    "episodeTitle": "Episode title",
+    "episodeSynopsis": "Episode synopsis",
+    "episodeHook": "Hook for the next episode",
+    "characterName": "Character name",
+    "characterDescription": "Description",
+    "appearance": "Appearance",
+    "backstory": "Backstory",
+    "personality": "Personality",
+    "locationName": "Location name",
+    "locationDescription": "Description"
+  },
+  "toast": {
+    "created": "Series created",
+    "updated": "Series updated",
+    "generateFailed": "Could not generate episodes",
+    "deleted": "Series deleted"
+  }
+}

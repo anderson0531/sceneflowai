@@ -12,6 +12,8 @@ import AnimatedProcessingOverlay from '../components/AnimatedProcessingOverlay'
 import { CreditsProvider } from '@/contexts/CreditsContext'
 import { CreditsPaywallHost } from '@/components/credits/CreditsPaywallHost'
 import { CookieConsent } from '@/components/ui/CookieConsent'
+import { DocumentLocaleScript } from '@/components/i18n/DocumentLocaleScript'
+import { ClientAppMessagesProvider } from '@/components/i18n/ClientAppMessagesProvider'
 import { GlobalErrorGuard } from '@/components/providers/GlobalErrorGuard'
 import AudioPlayerProvider from '@/context/AudioPlayerProvider'
 import {
@@ -224,8 +226,9 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" dir="ltr" suppressHydrationWarning>
       <head>
+        <DocumentLocaleScript />
         <link rel="preconnect" href={HERO_VIDEO_BLOB_HOST} crossOrigin="anonymous" />
         {LANDING_VIDEO_CDN_HOST ? (
           <link rel="preconnect" href={LANDING_VIDEO_CDN_HOST} crossOrigin="anonymous" />
@@ -254,8 +257,15 @@ export default function RootLayout({
             <AudioPlayerProvider>
               <CreditsProvider>
                 <CreditsPaywallHost />
-                <GlobalHeader />
-                <ConditionalLayout>{children}</ConditionalLayout>
+                {/* Root-level chrome (header, translate control) needs the
+                    client-side catalog because the root layout cannot resolve
+                    the locale on the server without making every static page
+                    dynamic. Route groups nest their own server-resolved
+                    provider inside, which replaces this one for their subtree. */}
+                <ClientAppMessagesProvider>
+                  <GlobalHeader />
+                  <ConditionalLayout>{children}</ConditionalLayout>
+                </ClientAppMessagesProvider>
                 <InstallPrompt />
                 <Toaster
                   position="top-right"

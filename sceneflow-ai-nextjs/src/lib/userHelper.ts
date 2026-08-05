@@ -2,6 +2,7 @@ import { Op, QueryTypes, col, fn, where as sqlWhere } from 'sequelize'
 import { sequelize } from '@/config/database'
 import { User } from '@/models/User'
 import { grantWelcomeCreditsToNewUser } from '@/lib/credits/welcomeCredits'
+import { ensureUserLocaleColumnsOnce } from '@/lib/database/migrateI18n'
 
 const TAG = '[userHelper]'
 
@@ -93,6 +94,8 @@ export async function resolveUser(userIdOrEmail: string): Promise<User> {
   if (!userIdOrEmail) {
     throw new Error('User ID or email is required')
   }
+
+  await ensureUserLocaleColumnsOnce()
 
   let user: User | null = null
 

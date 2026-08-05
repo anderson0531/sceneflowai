@@ -149,6 +149,9 @@ async function generateEpisodeBatch(
     totalPlannedEpisodes,
     startEpisodeNumber,
     count,
+    storyLocale: (series as any).metadata?.i18n?.sourceLocale,
+    locations: (bible as any).locations,
+    props: (bible as any).props,
   })
 
   const response = await callLLM(

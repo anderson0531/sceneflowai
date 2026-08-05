@@ -9,6 +9,8 @@ import { CreditsBadge } from '../../components/credits/CreditsBadge'
 import { SceneFlowStudioBrand } from '../../components/layout/SceneFlowStudioBrand'
 import { isPublicRoute } from '@/constants/publicRoutes'
 import { getDashboardUrl, getLoginUrl } from '@/lib/auth/postLoginRedirect'
+import { HeaderLocaleSwitcher } from '@/components/i18n/HeaderLocaleSwitcher'
+import { useTranslations } from 'next-intl'
 
 declare global {
   namespace JSX {
@@ -24,6 +26,7 @@ export function GlobalHeader() {
   const userName = session?.user?.name || null
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const t = useTranslations('common.nav')
 
   useEffect(() => {}, [status])
 
@@ -57,7 +60,7 @@ export function GlobalHeader() {
             <button
               className="p-3 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/60 lg:hidden"
               onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label="Toggle menu"
+              aria-label={t('toggleMenu')}
             >
               {mobileOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -68,12 +71,13 @@ export function GlobalHeader() {
           <div className="flex-1" />
 
           {/* Right: Controls */}
-          <div className="flex items-center gap-3 ml-auto">
+          <div className="flex items-center gap-3 ms-auto">
             {isSignedIn && <CreditsBadge className="hidden sm:flex" />}
+            {isSignedIn && <HeaderLocaleSwitcher />}
             {/* Profile */}
             <button
               className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/60"
-              aria-label="Profile"
+              aria-label={t('profile')}
               onClick={() =>
                 isSignedIn
                   ? (window.location.href = '/dashboard/settings/profile')
@@ -85,7 +89,7 @@ export function GlobalHeader() {
             {/* Help */}
             <button
               className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/60"
-              aria-label="Help"
+              aria-label={t('help')}
               onClick={() => (window.location.href = '/dashboard/help')}
             >
               <HelpCircle size={20} />
@@ -93,28 +97,28 @@ export function GlobalHeader() {
             {/* Settings */}
             <button
               className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/60"
-              aria-label="Settings"
+              aria-label={t('settings')}
               onClick={() => (window.location.href = '/dashboard/settings/profile')}
             >
               <Settings size={20} />
             </button>
             {/* When signed out: explicit auth controls */}
             {!isSignedIn && (
-              <div className="hidden sm:flex items-center gap-2 pl-2">
+              <div className="hidden sm:flex items-center gap-2 ps-2">
                 <Button
                   variant="outline"
                   size="sm"
                   className="border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
                   onClick={() => goToLogin('login')}
                 >
-                  Sign In
+                  {t('signIn')}
                 </Button>
                 <Button
                   size="sm"
                   className="bg-sf-primary hover:bg-sf-accent text-white"
                   onClick={() => goToLogin('signup')}
                 >
-                  Get Started
+                  {t('getStarted')}
                 </Button>
               </div>
             )}
@@ -122,9 +126,9 @@ export function GlobalHeader() {
             {isSignedIn && (
               <button
                 className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/60"
-                aria-label="Sign out"
+                aria-label={t('signOut')}
                 onClick={handleSignOut}
-                title={userName ? `Sign out ${userName}` : 'Sign out'}
+                title={userName ? `${t('signOut')} ${userName}` : t('signOut')}
               >
                 <LogOut size={20} />
               </button>
@@ -138,7 +142,7 @@ export function GlobalHeader() {
             <div className="w-full px-4 py-3 flex flex-col gap-1">
                 <div className="flex items-center gap-2">
                   <Button variant="outline" className="flex-1 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => goToLogin('login')}>
-                    <span className="mr-2 inline-flex items-center"><User size={16} /></span> {isSignedIn ? 'Switch Account' : 'Sign In'}
+                    <span className="me-2 inline-flex items-center"><User size={16} /></span> {isSignedIn ? t('switchAccount') : t('signIn')}
                   </Button>
                 </div>
             </div>

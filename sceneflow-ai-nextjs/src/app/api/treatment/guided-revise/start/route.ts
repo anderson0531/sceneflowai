@@ -11,6 +11,7 @@ import { validateRevisionRequest } from '@/lib/treatment/blueprintRequestValidat
 import { createGenerationJob, findActiveJob } from '@/lib/jobs/jobService'
 import { scheduleBlueprintGuidedReviseStep } from '@/lib/jobs/dispatchBlueprintGuidedReviseStep'
 import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
+import { resolveStoryLocale } from '@/i18n/server/storyLocale'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -102,6 +103,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Resolved here rather than in the worker: the job runs without a session,
+    // so the creator's language has to be captured while the request context exists.
+    const { storyLocale } = await resolveStoryLocale({
+      explicit: (body as { storyLocale?: string }).storyLocale,
+      projectId,
+      userIdOrEmail: userId,
+      includeProperNouns: false,
+    })
+
     const payload = buildGuidedRevisePayload({
       incomingVariant,
       userIntent,
@@ -109,6 +119,7 @@ export async function POST(request: NextRequest) {
       resonanceRecommendations,
       focusScope,
       contentIntent: bodyIntent,
+      storyLocale,
     })
 
     if (!payload.intentText.trim() && payload.selectedRecs.length === 0) {
@@ -176,6 +187,7 @@ export async function POST(request: NextRequest) {
       resonanceRecommendations: payload.selectedRecs,
       focusScope: focusScope ?? 'all',
       contentIntent: payload.contentIntent,
+      storyLocale: payload.storyLocale,
       rawVariant: payload.rawVariant,
       preservedCharacterAssets: payload.preservedCharacterAssets,
     }

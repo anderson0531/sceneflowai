@@ -25,7 +25,7 @@ export function CreditsBadge({ showPlan = false, className = '' }: CreditsBadgeP
   }
 
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
+    <div className={`flex items-center gap-2 ${className}`} translate="no">
       <Link 
         href={billingHref}
         className={`
@@ -71,7 +71,7 @@ export function CreditsInline({ className = '' }: { className?: string }) {
   const { isLoading } = useCredits()
 
   return (
-    <span className={`inline-flex items-center gap-1 text-sm ${className}`}>
+    <span className={`inline-flex items-center gap-1 text-sm ${className}`} translate="no">
       <Coins className={`w-3.5 h-3.5 ${isLow || isEmpty ? 'text-yellow-400' : 'text-emerald-400'}`} />
       <span className={isLow || isEmpty ? 'text-yellow-400' : 'text-gray-300'}>
         {isLoading ? '...' : formatted}

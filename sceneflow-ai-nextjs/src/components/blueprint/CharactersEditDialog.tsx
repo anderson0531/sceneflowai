@@ -8,6 +8,9 @@ import { Input } from '../ui/Input'
 import { toast } from 'sonner'
 import { Wand2, Loader2, Users, Save, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { LocalizedField, TranslationNotice } from '@/components/i18n/LocalizedField'
+import { useLocalizedFields } from '@/i18n/content/useLocalizedFields'
+import type { EntityI18n } from '@/i18n/content/entityI18n'
 
 type Character = {
   name: string
@@ -41,6 +44,12 @@ type Props = {
   onClose: () => void
   onApply: (patch: Partial<TreatmentVariant>) => void
   projectId?: string
+  /**
+   * Localization state for the project. When omitted the dialog behaves exactly
+   * as it did before: every field reads as its own source language.
+   */
+  entityI18n?: EntityI18n
+  onEntityI18nChange?: (next: EntityI18n) => void
 }
 
 const INSTRUCTION_TEMPLATES = [
@@ -50,22 +59,33 @@ const INSTRUCTION_TEMPLATES = [
   { id: 'relationship-dynamics', label: 'Relationship Dynamics', text: 'Enrich the relationships and dynamics between characters.' },
 ]
 
-function CharacterEditor({ 
-  character, 
+type CharacterFieldBinding = React.ComponentProps<typeof LocalizedField>
+
+function CharacterEditor({
+  character,
   index,
-  onChange 
-}: { 
+  onChange,
+  bindField,
+}: {
   character: Character
   index: number
-  onChange: (index: number, field: keyof Character, value: string) => void 
+  onChange: (index: number, field: keyof Character, value: string) => void
+  /** Supplies translation state for the prose fields. */
+  bindField: (
+    index: number,
+    field: 'description' | 'externalGoal' | 'internalNeed' | 'fatalFlaw'
+  ) => Omit<CharacterFieldBinding, 'label' | 'children'>
 }) {
   return (
     <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-700 space-y-2">
       <div className="grid grid-cols-2 gap-2">
+        {/* Names anchor continuity with the character library, reference images
+            and locked prompt tokens, so they are never translated. */}
         <Input
           value={character.name || ''}
           onChange={(e) => onChange(index, 'name', e.target.value)}
           placeholder="Name"
+          translate="no"
           className="bg-slate-900/50 border-slate-700 text-sm"
         />
         <Input
@@ -75,42 +95,58 @@ function CharacterEditor({
           className="bg-slate-900/50 border-slate-700 text-sm"
         />
       </div>
-      <Textarea
-        value={character.description || ''}
-        onChange={(e) => onChange(index, 'description', e.target.value)}
-        placeholder="Character description..."
-        className="min-h-[60px] bg-slate-900/50 border-slate-700 text-sm"
-      />
+      <LocalizedField label="Description" {...bindField(index, 'description')}>
+        {(p) => (
+          <Textarea
+            {...p}
+            placeholder="Character description..."
+            className="min-h-[60px] bg-slate-900/50 border-slate-700 text-sm"
+          />
+        )}
+      </LocalizedField>
       <details className="group">
         <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-300">
           Psychological Depth (optional)
         </summary>
         <div className="mt-2 space-y-2">
-          <Input
-            value={character.externalGoal || ''}
-            onChange={(e) => onChange(index, 'externalGoal', e.target.value)}
-            placeholder="External goal"
-            className="bg-slate-900/50 border-slate-700 text-xs"
-          />
-          <Input
-            value={character.internalNeed || ''}
-            onChange={(e) => onChange(index, 'internalNeed', e.target.value)}
-            placeholder="Internal need"
-            className="bg-slate-900/50 border-slate-700 text-xs"
-          />
-          <Input
-            value={character.fatalFlaw || ''}
-            onChange={(e) => onChange(index, 'fatalFlaw', e.target.value)}
-            placeholder="Fatal flaw"
-            className="bg-slate-900/50 border-slate-700 text-xs"
-          />
+          <LocalizedField label="External goal" {...bindField(index, 'externalGoal')}>
+            {(p) => (
+              <Input
+                {...p}
+                placeholder="External goal"
+                className="bg-slate-900/50 border-slate-700 text-xs"
+              />
+            )}
+          </LocalizedField>
+          <LocalizedField label="Internal need" {...bindField(index, 'internalNeed')}>
+            {(p) => (
+              <Input
+                {...p}
+                placeholder="Internal need"
+                className="bg-slate-900/50 border-slate-700 text-xs"
+              />
+            )}
+          </LocalizedField>
+          <LocalizedField label="Fatal flaw" {...bindField(index, 'fatalFlaw')}>
+            {(p) => (
+              <Input
+                {...p}
+                placeholder="Fatal flaw"
+                className="bg-slate-900/50 border-slate-700 text-xs"
+              />
+            )}
+          </LocalizedField>
         </div>
       </details>
     </div>
   )
 }
 
-export function CharactersEditDialog({ open, variant, onClose, onApply, projectId }: Props) {
+export function CharactersEditDialog({
+  open, variant, onClose, onApply, projectId,
+  entityI18n,
+  onEntityI18nChange,
+}: Props) {
   const [draft, setDraft] = useState<Partial<TreatmentVariant>>({})
   const [selectedInstructions, setSelectedInstructions] = useState<string[]>([])
   const [customInstruction, setCustomInstruction] = useState('')
@@ -173,6 +209,46 @@ export function CharactersEditDialog({ open, variant, onClose, onApply, projectI
     const characters = [...(draft.character_descriptions || [])]
     characters[index] = { ...characters[index], [field]: value }
     updateDraft('character_descriptions', characters)
+  }
+
+  const PROSE_FIELDS = ['description', 'externalGoal', 'internalNeed', 'fatalFlaw'] as const
+
+  const localized = useLocalizedFields({
+    pathPrefix: `treatmentVariants[${variant?.id ?? 'current'}]`,
+    values: Object.fromEntries(
+      (draft.character_descriptions || []).flatMap((character, index) =>
+        PROSE_FIELDS.map((field) => [
+          `character_descriptions[${index}].${field}`,
+          character[field],
+        ])
+      )
+    ),
+    i18n: entityI18n,
+    onI18nChange: onEntityI18nChange,
+    // Character names must reach the translator verbatim so descriptions keep
+    // referring to them correctly.
+    glossary: (draft.character_descriptions || [])
+      .map((character) => character.name)
+      .filter((name): name is string => Boolean(name)),
+    enabled: open,
+  })
+
+  const bindCharacterField = (
+    index: number,
+    field: (typeof PROSE_FIELDS)[number]
+  ) => {
+    const binding = localized.bind(`character_descriptions[${index}].${field}`)
+    return {
+      path: binding.path,
+      sourceValue: binding.sourceValue,
+      translation: binding.translation,
+      sourceLocale: localized.sourceLocale,
+      uiLocale: localized.uiLocale,
+      onChangeSource: (value: string) => updateCharacter(index, field, value),
+      onChangeOverride: localized.canOverride
+        ? (value: string) => binding.setOverride(value)
+        : undefined,
+    }
   }
 
   const refineSection = async () => {
@@ -277,6 +353,15 @@ export function CharactersEditDialog({ open, variant, onClose, onApply, projectI
             ))}
           </div>
 
+          {localized.needsTranslation && (
+            <TranslationNotice
+              sourceLocale={localized.sourceLocale}
+              uiLocale={localized.uiLocale}
+              isLoading={localized.isLoading}
+              onPromote={onEntityI18nChange ? localized.promoteToSourceLocale : undefined}
+            />
+          )}
+
           <div className="space-y-3">
             {(draft.character_descriptions || []).map((character, index) => (
               <CharacterEditor
@@ -284,6 +369,7 @@ export function CharactersEditDialog({ open, variant, onClose, onApply, projectI
                 character={character}
                 index={index}
                 onChange={updateCharacter}
+                bindField={bindCharacterField}
               />
             ))}
             

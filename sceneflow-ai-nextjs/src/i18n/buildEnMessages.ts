@@ -3,6 +3,10 @@
  * Config files remain for IDs/structure; display strings live here for i18n.
  */
 import { LEGAL_FOOTER_ADDRESS } from '@/config/legal/legalCopy'
+// Namespaces authored directly as JSON rather than as TypeScript copy modules.
+// Before this existed, they lived only in messages/en.json, so running
+// `npm run i18n:build-en` silently deleted them.
+import JSON_MAINTAINED_COPY from '@/config/landing/jsonMaintainedCopy.json'
 import {
   AUDIENCE_PATHS,
   AUDIENCE_PATH_MODES,
@@ -64,6 +68,7 @@ export function buildEnMessages() {
   const { explorer: explorerPlan, subscriptions: subscriptionPlans } = getLandingPlans()
 
   return {
+    ...JSON_MAINTAINED_COPY,
     metadata: {
       title: 'SceneFlow AI - AI-Powered Video Creation',
       description:
@@ -238,7 +243,8 @@ export function buildEnMessages() {
       ui: {
         useCases: 'Use Cases',
         sectors: '{count} SECTORS',
-        demoComingSoon: 'Demo coming soon',
+        // demoComingSoon intentionally omitted: USE_CASE_PERSONA_UI spreads its
+        // own value below, which always won.
         selectExample: 'SELECT A USE CASE TO LEARN MORE',
         hearStory: 'Hear the Story',
         pauseStory: 'Pause story',

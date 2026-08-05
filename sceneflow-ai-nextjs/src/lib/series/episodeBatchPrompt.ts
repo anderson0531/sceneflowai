@@ -6,6 +6,7 @@
 import type { ContentIntent } from '@/lib/content/contentIntent'
 import { resolveContentIntentFromMetadata } from '@/lib/content/contentIntent'
 import { SERIES_CHARACTER_NAMING_BLOCK } from '@/lib/character/characterNamingPrompt'
+import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 
 export interface EpisodeBatchPromptInput {
   seriesTitle: string
@@ -23,6 +24,11 @@ export interface EpisodeBatchPromptInput {
   totalPlannedEpisodes: number
   startEpisodeNumber: number
   count: number
+  /** Language episode prose should be authored in. Defaults to English. */
+  storyLocale?: string
+  /** Location and prop names from the series bible, kept verbatim. */
+  locations?: Array<{ name?: string | null } | null>
+  props?: Array<{ name?: string | null } | null>
 }
 
 export function resolveSeriesContentIntent(format?: string, genre?: string): ContentIntent {
@@ -170,6 +176,22 @@ export function buildEpisodeBatchPrompt(input: EpisodeBatchPromptInput): string 
 3. Maintain authentic host/guest framing
 4. End with hook for next episode (except finale)`
 
+  // Names already established in the series bible must survive verbatim, or the
+  // new episodes will silently drift away from existing reference images and
+  // locked prompt tokens.
+  const languageBlock = localeDirective(input.storyLocale, {
+    properNouns: buildProperNounGlossary(
+      {
+        characters: input.characters,
+        locations: input.locations,
+        props: input.props,
+      },
+      [input.seriesTitle, input.protagonist?.name]
+    ),
+    keepEnglishFields: ['act', 'status', 'type'],
+    note: 'Episode numbering, act numbers, and status values stay as specified in the schema.',
+  })
+
   return `${mapping.personaInstruction}
 
 SERIES: ${input.seriesTitle}
@@ -203,7 +225,7 @@ Generate ${input.count} NEW episodes starting from Episode ${input.startEpisodeN
 ${continuationRules}
 
 ${mapping.mappingInstruction}
-
+${languageBlock}
 Return ONLY valid JSON array:
 [
   {

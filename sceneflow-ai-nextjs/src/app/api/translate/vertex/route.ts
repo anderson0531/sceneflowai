@@ -5,17 +5,21 @@
  * to avoid API key rate limits that affect the v2 REST endpoint.
  * 
  * This endpoint mirrors the interface of /api/translate/google for easy migration.
+ *
+ * Reads through the shared `content_translations` cache. Prefer
+ * POST /api/i18n/content for interface-facing content: it is authenticated,
+ * batched, and enforces field classification.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { translateWithVertexAI } from '@/lib/vertexai/translate'
+import { translateRawText } from '@/lib/i18n/contentTranslator'
 
 export const maxDuration = 30
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { text, targetLanguage, sourceLanguage = 'en' } = body
+    const { text, targetLanguage, sourceLanguage = 'en', glossary } = body
 
     if (!text) {
       return NextResponse.json(
@@ -34,15 +38,17 @@ export async function POST(request: NextRequest) {
     console.log(`[Vertex Translate API] Request: ${sourceLanguage} -> ${targetLanguage}`)
     console.log(`[Vertex Translate API] Text length: ${text.length} characters`)
 
-    const result = await translateWithVertexAI({
+    const translatedText = await translateRawText(
       text,
       targetLanguage,
-      sourceLanguage
-    })
+      sourceLanguage,
+      Array.isArray(glossary)
+        ? glossary.filter((term: unknown): term is string => typeof term === 'string')
+        : []
+    )
 
     return NextResponse.json({
-      translatedText: result.translatedText,
-      detectedSourceLanguage: result.detectedSourceLanguage,
+      translatedText,
       sourceLanguage,
       targetLanguage
     })

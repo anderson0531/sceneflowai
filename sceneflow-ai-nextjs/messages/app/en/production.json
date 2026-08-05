@@ -1,0 +1,57 @@
+{
+  "studio": {
+    "title": "Production Studio",
+    "script": "Script",
+    "characters": "Characters",
+    "scenes": "Scenes",
+    "references": "References",
+    "timeline": "Timeline",
+    "mixer": "Production Mixer",
+    "directorConsole": "Director Console"
+  },
+  "script": {
+    "generateScript": "Generate Script",
+    "regenerateScript": "Regenerate Script",
+    "optimizeScene": "Optimize Scene",
+    "reviewScript": "Review Script",
+    "sceneNumber": "Scene {number}",
+    "heading": "Scene heading",
+    "visualDescription": "Visual description",
+    "dialogue": "Dialogue",
+    "narration": "Narration",
+    "segmentDirection": "Segment direction",
+    "soundEffects": "Sound effects",
+    "music": "Music",
+    "noScript": "No script yet",
+    "noScriptHint": "Generate a script from your approved blueprint to start production."
+  },
+  "language": {
+    "viewLanguage": "View language",
+    "generateLanguage": "Generate language",
+    "deliveryLanguage": "Delivery language",
+    "addLanguage": "Add a language",
+    "languageHint": "Dialogue and narration are generated in this language. Frame and video prompts stay in English.",
+    "translationsSaved": "Translations saved",
+    "translationFailed": "Could not translate this scene"
+  },
+  "prompts": {
+    "startFrame": "Start frame prompt",
+    "endFrame": "End frame prompt",
+    "videoPrompt": "Video prompt",
+    "englishOnlyNotice": "Prompts stay in English: image and video models produce noticeably weaker results from translated prompts."
+  },
+  "render": {
+    "renderScene": "Render Scene",
+    "rendering": "Rendering…",
+    "renderFailed": "Render failed",
+    "renderComplete": "Render complete",
+    "queued": "Queued",
+    "retake": "Retake"
+  },
+  "toast": {
+    "sceneUpdated": "Scene updated",
+    "segmentsGenerated": "Segments generated",
+    "audioGenerated": "Audio generated",
+    "saveFailed": "Could not save your changes"
+  }
+}

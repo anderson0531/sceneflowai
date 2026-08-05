@@ -1,0 +1,58 @@
+{
+  "shell": {
+    "title": "Account Settings",
+    "subtitle": "Manage your account, integrations, and preferences",
+    "sectionsHeading": "Settings",
+    "quickActions": "Quick Actions",
+    "backToDashboard": "Back to Dashboard",
+    "continueWorkflow": "Continue Workflow"
+  },
+  "nav": {
+    "profile": "Profile",
+    "profileDescription": "Manage your account information",
+    "integrations": "Integrations",
+    "integrationsDescription": "Connect AI providers and external services",
+    "security": "Security",
+    "securityDescription": "Password and security settings",
+    "billing": "Billing",
+    "billingDescription": "Manage your subscription and billing",
+    "notifications": "Notifications",
+    "notificationsDescription": "Email and push notification preferences",
+    "data": "Data & Privacy",
+    "dataDescription": "Data export and privacy controls",
+    "byok": "BYOK Settings",
+    "storage": "Storage",
+    "admin": "Admin",
+    "adminDescription": "Admin functions and controls"
+  },
+  "profile": {
+    "title": "Profile Information",
+    "description": "Manage your account information and personal details",
+    "username": "Username",
+    "usernamePlaceholder": "Enter your username",
+    "email": "Email Address",
+    "emailPlaceholder": "Enter your email",
+    "firstName": "First Name",
+    "firstNamePlaceholder": "Enter your first name",
+    "lastName": "Last Name",
+    "lastNamePlaceholder": "Enter your last name",
+    "updated": "Profile updated successfully",
+    "updateFailed": "Failed to update profile"
+  },
+  "languages": {
+    "title": "Languages",
+    "description": "Read the studio in one language, write your story in another, and deliver in as many as you need",
+    "interfaceTitle": "Interface language",
+    "interfaceDescription": "Menus, buttons, and dialogs across the Dashboard and all three studios.",
+    "storyTitle": "Story language",
+    "storyDescription": "The language new AI-written treatments, beats, characters, and dialogue are authored in. Individual projects can override this.",
+    "deliveryTitle": "Delivery languages",
+    "deliveryDescription": "Narration, dubs, and rendered video. A single project can ship in many languages at once, so these are chosen per scene rather than per account.",
+    "deliveryStartsFrom": "Starts from {language}",
+    "deliverySetInProduction": "Set in Production Studio",
+    "promptsStayEnglish": "Image and video prompts stay in English regardless of these settings — the generation models produce noticeably weaker results from translated prompts.",
+    "interfaceSet": "Interface language set to {language}",
+    "saved": "Language preference saved",
+    "saveFailed": "Could not save language preference"
+  }
+}

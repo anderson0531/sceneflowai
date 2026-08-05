@@ -8,6 +8,9 @@ import { Input } from '../ui/Input'
 import { toast } from 'sonner'
 import { Wand2, Loader2, Clock, Save, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { LocalizedField, TranslationNotice } from '@/components/i18n/LocalizedField'
+import { useLocalizedFields } from '@/i18n/content/useLocalizedFields'
+import type { EntityI18n } from '@/i18n/content/entityI18n'
 
 type Beat = {
   title: string
@@ -28,6 +31,12 @@ type Props = {
   onClose: () => void
   onApply: (patch: Partial<TreatmentVariant>) => void
   projectId?: string
+  /**
+   * Localization state for the project. When omitted the dialog behaves exactly
+   * as it did before: every field reads as its own source language.
+   */
+  entityI18n?: EntityI18n
+  onEntityI18nChange?: (next: EntityI18n) => void
 }
 
 const INSTRUCTION_TEMPLATES = [
@@ -37,7 +46,11 @@ const INSTRUCTION_TEMPLATES = [
   { id: 'clear-resolution', label: 'Clear Resolution', text: 'Ensure a satisfying and meaningful resolution.' },
 ]
 
-export function BeatsEditDialog({ open, variant, onClose, onApply, projectId }: Props) {
+export function BeatsEditDialog({
+  open, variant, onClose, onApply, projectId,
+  entityI18n,
+  onEntityI18nChange,
+}: Props) {
   const [draft, setDraft] = useState<Partial<TreatmentVariant>>({})
   const [selectedInstructions, setSelectedInstructions] = useState<string[]>([])
   const [customInstruction, setCustomInstruction] = useState('')
@@ -100,6 +113,37 @@ export function BeatsEditDialog({ open, variant, onClose, onApply, projectId }: 
     const beats = [...(draft.beats || [])]
     beats[index] = { ...beats[index], [field]: value }
     updateDraft('beats', beats)
+  }
+
+  // Beat prose is keyed by position rather than by id: beats in a treatment
+  // variant have no stable identifier yet, so an override follows the slot.
+  const localized = useLocalizedFields({
+    pathPrefix: `treatmentVariants[${variant?.id ?? 'current'}]`,
+    values: Object.fromEntries(
+      (draft.beats || []).flatMap((beat, index) => [
+        [`beats[${index}].title`, beat.title],
+        [`beats[${index}].synopsis`, beat.synopsis],
+      ])
+    ),
+    i18n: entityI18n,
+    onI18nChange: onEntityI18nChange,
+    enabled: open,
+  })
+
+  const bindBeatField = (index: number, field: 'title' | 'synopsis') => {
+    const name = `beats[${index}].${field}`
+    const binding = localized.bind(name)
+    return {
+      path: binding.path,
+      sourceValue: binding.sourceValue,
+      translation: binding.translation,
+      sourceLocale: localized.sourceLocale,
+      uiLocale: localized.uiLocale,
+      onChangeSource: (value: string) => updateBeat(index, field, value),
+      onChangeOverride: localized.canOverride
+        ? (value: string) => binding.setOverride(value)
+        : undefined,
+    }
   }
 
   const refineSection = async () => {
@@ -204,32 +248,54 @@ export function BeatsEditDialog({ open, variant, onClose, onApply, projectId }: 
             ))}
           </div>
 
+          {localized.needsTranslation && (
+            <TranslationNotice
+              sourceLocale={localized.sourceLocale}
+              uiLocale={localized.uiLocale}
+              isLoading={localized.isLoading}
+              onPromote={onEntityI18nChange ? localized.promoteToSourceLocale : undefined}
+            />
+          )}
+
           <div className="space-y-2">
             {(draft.beats || []).map((beat, index) => (
               <div key={index} className="p-3 bg-slate-800/50 rounded-lg border border-slate-700">
                 <div className="space-y-2">
                   <div className="flex gap-2">
-                    <Input
-                      value={beat.title || ''}
-                      onChange={(e) => updateBeat(index, 'title', e.target.value)}
-                      placeholder="Beat title"
-                      className="flex-1 bg-slate-900/50 border-slate-700 text-sm"
-                    />
-                    <Input
-                      type="number"
-                      value={beat.minutes || 0}
-                      onChange={(e) => updateBeat(index, 'minutes', parseFloat(e.target.value) || 0)}
-                      placeholder="Min"
-                      className="w-20 bg-slate-900/50 border-slate-700 text-sm"
-                      step="0.1"
-                    />
+                    <LocalizedField
+                      label={`Beat ${index + 1}`}
+                      className="flex-1"
+                      {...bindBeatField(index, 'title')}
+                    >
+                      {(p) => (
+                        <Input
+                          {...p}
+                          placeholder="Beat title"
+                          className="bg-slate-900/50 border-slate-700 text-sm"
+                        />
+                      )}
+                    </LocalizedField>
+                    <div className="space-y-1">
+                      <label className="text-xs text-gray-400">Minutes</label>
+                      <Input
+                        type="number"
+                        value={beat.minutes || 0}
+                        onChange={(e) => updateBeat(index, 'minutes', parseFloat(e.target.value) || 0)}
+                        placeholder="Min"
+                        className="w-20 bg-slate-900/50 border-slate-700 text-sm"
+                        step="0.1"
+                      />
+                    </div>
                   </div>
-                  <Textarea
-                    value={beat.synopsis || ''}
-                    onChange={(e) => updateBeat(index, 'synopsis', e.target.value)}
-                    className="min-h-[40px] bg-slate-900/50 border-slate-700 text-xs"
-                    placeholder="Beat description..."
-                  />
+                  <LocalizedField label="Description" {...bindBeatField(index, 'synopsis')}>
+                    {(p) => (
+                      <Textarea
+                        {...p}
+                        className="min-h-[40px] bg-slate-900/50 border-slate-700 text-xs"
+                        placeholder="Beat description..."
+                      />
+                    )}
+                  </LocalizedField>
                 </div>
               </div>
             ))}

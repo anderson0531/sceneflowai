@@ -40,6 +40,8 @@ export type GuidedRevisePayload = {
   selectedRecs: BlueprintAudienceRecommendation[]
   focusScope?: BlueprintFixSection | 'all'
   contentIntent: ContentIntent
+  /** Language the creator authors in; each rewrite pass must answer in it. */
+  storyLocale?: string
 }
 
 export type GuidedReviseResult = {
@@ -254,6 +256,7 @@ export async function runSectionRewriteStep(
     {
       partialPatch,
       includeNarrativeReasoning: isLast,
+      storyLocale: payload.storyLocale,
     }
   )
   const { data: sectionPatch, truncatedBy } = await runGeminiJsonStep(
@@ -282,7 +285,8 @@ export async function runAllSectionRewrites(
       plan,
       payload.intentText,
       payload.selectedRecs,
-      payload.contentIntent
+      payload.contentIntent,
+      { storyLocale: payload.storyLocale }
     )
     const { data: patch, truncatedBy } = await runGeminiJsonStep(
       'rewriter',
@@ -377,6 +381,7 @@ export function buildGuidedRevisePayload(input: {
   resonanceRecommendations?: BlueprintAudienceRecommendation[]
   focusScope?: BlueprintFixSection | 'all'
   contentIntent?: ContentIntent
+  storyLocale?: string
 }): GuidedRevisePayload {
   const { variant: rawVariant, preservedCharacterAssets } =
     stripHeavyFieldsFromVariant(input.incomingVariant)
@@ -405,6 +410,7 @@ export function buildGuidedRevisePayload(input: {
     selectedRecs,
     focusScope: input.focusScope,
     contentIntent,
+    storyLocale: input.storyLocale,
   }
 }
 
@@ -430,6 +436,7 @@ export function payloadFromJobRecord(
     selectedRecs,
     focusScope: stored.focusScope as BlueprintFixSection | 'all' | undefined,
     contentIntent,
+    storyLocale: stored.storyLocale as string | undefined,
   }
 }
 

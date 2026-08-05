@@ -20,6 +20,7 @@ import {
   resolveVariantArtStyle,
 } from '@/lib/treatment/blueprintFoundation'
 import { generateText } from '@/lib/vertexai/gemini'
+import { resolveStoryLocale } from '@/i18n/server/storyLocale'
 
 // Vercel function configuration - must match vercel.json
 export const maxDuration = 300 // 5 minutes for complex Blueprint generation
@@ -49,6 +50,10 @@ interface FilmTreatmentRequest {
   variants?: number // default 1 when explicit settings, else 3
   userName?: string  // User's name for "Created By" field
   hasExplicitSettings?: boolean
+  /** Language the treatment should be authored in; resolved server-side if omitted. */
+  storyLocale?: string
+  projectId?: string
+  seriesId?: string
   /** Dev-only: override thinking budget for A/B validation (NODE_ENV=development only) */
   debugThinkingBudget?: number
 }
@@ -462,6 +467,18 @@ export async function POST(request: NextRequest) {
       { id: 'C', label: 'C', styleHint: 'Energetic, bold, high-contrast visuals, rhythmic editing' },
     ].slice(0, variantsCount)
 
+    const { storyLocale, properNouns, source: storyLocaleSource } = await resolveStoryLocale({
+      explicit: body.storyLocale,
+      projectId: body.projectId,
+      seriesId: body.seriesId,
+      userIdOrEmail: session?.user?.id || session?.user?.email,
+    })
+    if (storyLocale !== 'en') {
+      console.log(
+        `[Film Treatment] authoring in ${storyLocale} (source=${storyLocaleSource}, ${properNouns.length} protected names)`
+      )
+    }
+
     const bodyArtStyle = (body as any).artStyle || (body as any).visualStyle
     const bodyAspectRatio = (body as any).aspectRatio
     const lockedArtStyle = bodyArtStyle ? resolveVariantArtStyle({ artStyle: bodyArtStyle, visual_style: bodyArtStyle }) : DEFAULT_ART_STYLE
@@ -487,6 +504,8 @@ export async function POST(request: NextRequest) {
       hasExplicitSettings,
       rigor,
       thinkingBudget,
+      storyLocale,
+      properNouns,
     }
 
     const variantsStartMs = Date.now()
@@ -577,6 +596,8 @@ async function generateFilmTreatment(
     hasExplicitSettings: context?.hasExplicitSettings,
     contentIntent: context?.contentIntent,
     rigor: context?.rigor || 'thorough',
+    storyLocale: context?.storyLocale,
+    properNouns: context?.properNouns,
   }) + retryHint + strictJsonPromptSuffix
 
   const thinkingBudget = context?.thinkingBudget ?? getThinkingBudgetForRigor(context?.rigor || 'thorough')

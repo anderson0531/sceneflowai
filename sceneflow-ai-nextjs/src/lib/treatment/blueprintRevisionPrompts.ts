@@ -8,6 +8,7 @@ import {
   getIntentRevisionGuardrail,
   resolveContentIntent,
 } from '@/lib/content/contentIntent'
+import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 
 const MAX_SYNOPSIS = 1200
 /**
@@ -289,6 +290,8 @@ export interface RewriterPromptOptions {
   partialPatch?: Record<string, unknown>
   /** When false, omit narrative_reasoning from the output schema (intermediate passes). */
   includeNarrativeReasoning?: boolean
+  /** Language the creator authors in; the revision must come back in it. */
+  storyLocale?: string
 }
 
 export function buildRewriterPrompt(
@@ -299,7 +302,7 @@ export function buildRewriterPrompt(
   contentIntent?: ContentIntent,
   options: RewriterPromptOptions = {}
 ): string {
-  const { partialPatch, includeNarrativeReasoning = true } = options
+  const { partialPatch, includeNarrativeReasoning = true, storyLocale } = options
   const intent = contentIntent ?? resolveContentIntent(String(variant.genre || ''))
   const trimmed = trimVariantForPrompt(variant)
   const allFields = new Set<string>()
@@ -323,6 +326,14 @@ export function buildRewriterPrompt(
   const recBlock = buildRecommendationIntentBlock(recs)
   const couplingRules = getCouplingRulesForIntent(intent)
   const intentGuard = getIntentRevisionGuardrail(intent)
+  // A revision must come back in the language the creator is reading, or each
+  // pass drags the blueprint back toward English one section at a time.
+  const languageBlock = localeDirective(storyLocale, {
+    properNouns: buildProperNounGlossary(
+      { characters: (variant.character_descriptions as any[]) ?? [] },
+      [String(variant.title ?? '')]
+    ),
+  })
   const reasoningSchema = includeNarrativeReasoning
     ? `Include "narrative_reasoning" object:
 {
@@ -362,7 +373,7 @@ CURRENT VALUES (allowed fields only):
 ${compactJson(scopedBlueprint)}
 ${partialBlock}
 ${couplingRules}
-
+${languageBlock}
 Return ONLY a JSON object with the modified fields (subset of allowed fields). ${reasoningSchema}
 ${strictJsonPromptSuffix}`
 }

@@ -43,6 +43,24 @@ jobs:
         run: npx tsc --noEmit
         continue-on-error: true
 
+      # i18n guards. These fail the build rather than soft-failing: each one
+      # catches a defect that is silent at runtime.
+      #  - a stale fingerprint means changed English is never re-translated
+      #  - an unclassified prose field is never localized
+      #  - a dropped ICU argument throws at format time, not at build time
+      #  - a new hardcoded string un-translates a surface that was converted
+      - name: i18n catalog check
+        working-directory: sceneflow-ai-nextjs
+        run: npm run i18n:app:check
+
+      - name: i18n tests
+        working-directory: sceneflow-ai-nextjs
+        run: npm run test:i18n
+
+      - name: i18n lint (converted surfaces)
+        working-directory: sceneflow-ai-nextjs
+        run: npm run lint:i18n
+
       # The real gate: mirrors what Vercel runs, so a red build means a red deploy.
       - name: Build
         working-directory: sceneflow-ai-nextjs

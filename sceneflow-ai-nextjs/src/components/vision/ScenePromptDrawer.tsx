@@ -204,6 +204,7 @@ export default function ScenePromptDrawer({
                   <div>
                     <div className="text-xs text-gray-400 mb-2">Your Prompt</div>
                     <textarea
+                      translate="no"
                       value={editedPrompt}
                       onChange={(e) => setEditedPrompt(e.target.value)}
                       className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-gray-100 text-sm min-h-[200px] focus:outline-none focus:border-blue-500 resize-none"
@@ -266,6 +267,7 @@ export default function ScenePromptDrawer({
                 <div>
                   <div className="text-xs text-gray-400 mb-2">What should change?</div>
                   <textarea
+                    translate="no"
                     value={aiInstructions}
                     onChange={(e) => setAiInstructions(e.target.value)}
                     className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-gray-100 text-sm resize-none"

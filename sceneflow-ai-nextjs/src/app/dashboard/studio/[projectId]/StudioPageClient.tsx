@@ -58,6 +58,8 @@ import { BlueprintTtsProvider } from '@/contexts/BlueprintTtsContext'
 import { BlueprintTtsProgressBar } from '@/components/blueprint/BlueprintTtsProgressBar'
 import { BlueprintOnboarding } from '@/components/blueprint/BlueprintOnboarding'
 import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
+import { StoryLocaleControl } from '@/components/i18n/StoryLocaleControl'
+import { useStoryLocale } from '@/i18n/useStoryLocale'
 import { ProductEmptyState } from '@/components/product'
 import { BlueprintResonanceStrip } from '@/components/blueprint/BlueprintResonanceStrip'
 import { BlueprintNextStepBanner } from '@/components/blueprint/BlueprintNextStepBanner'
@@ -107,6 +109,11 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   
   // Side panel visibility state
   const [showSidePanel, setShowSidePanel] = useState(true)
+
+  // Language new AI-written content is authored in, overridable per project.
+  const { i18n: storyI18n, setEntityI18n: setStoryI18n } = useStoryLocale(
+    currentProject as { metadata?: Record<string, any> | null } | null
+  )
 
   const isProjectCreated = !!(guide.filmTreatment && guide.filmTreatment.trim() !== '' && guide.title && guide.title !== 'Untitled Project');
 
@@ -791,7 +798,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           ...(opts?.aspectRatio && { aspectRatio: opts.aspectRatio }),
           ...(opts?.contentIntent && { contentIntent: opts.contentIntent }),
           ...(opts?.format && { format: opts.format }),
-          hasExplicitSettings
+          hasExplicitSettings,
+          projectId,
+          storyLocale: storyI18n.sourceLocale
         })
       })
       
@@ -1339,6 +1348,11 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                     )}
                   </div>
                   <div className="flex items-center gap-2 flex-wrap justify-end">
+                    <StoryLocaleControl
+                      entityId={projectId}
+                      i18n={storyI18n}
+                      onChange={setStoryI18n}
+                    />
                     {hasBlueprint && (
                       <BlueprintResonanceStrip
                         progress={blueprintProgress}
