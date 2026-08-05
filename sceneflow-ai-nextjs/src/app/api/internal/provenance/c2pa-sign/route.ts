@@ -53,8 +53,12 @@ async function tryEmbedC2paManifest(
   metadata: Record<string, string>
 ): Promise<Buffer | null> {
   try {
-    // Dynamic import — optional dependency for Sandbox deployments
-    const c2pa = await import('@contentauth/c2pa-node').catch(() => null)
+    // Optional native dependency, only present in Sandbox deployments. The ignore
+    // comments keep the bundler from resolving it at build time — `.catch` only
+    // handles the runtime rejection, so without them every build warns.
+    const c2pa = await import(
+      /* webpackIgnore: true */ /* turbopackIgnore: true */ '@contentauth/c2pa-node'
+    ).catch(() => null)
     if (!c2pa?.Builder || !c2pa?.createC2paFromBuffer) {
       console.warn('[C2PA] @contentauth/c2pa-node not installed — skipping embed')
       return null
