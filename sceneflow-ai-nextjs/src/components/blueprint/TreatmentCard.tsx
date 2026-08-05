@@ -22,6 +22,7 @@ import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType } from '@/lib/types/reports'
 import { BLUEPRINT_COPY } from '@/lib/blueprint/blueprintGlossary'
 import { formatBlueprintRuntime } from '@/lib/blueprint/formatBlueprintCore'
+import { computeBlueprintDurationFromBeats } from '@/lib/treatment/duration'
 import { BlueprintFieldCard, BlueprintSubsectionHeading } from '@/components/blueprint/BlueprintFieldCard'
 import { resolveAuthorWriterDisplay } from '@/lib/user/displayName'
 import { cn } from '@/lib/utils'
@@ -688,6 +689,20 @@ export function TreatmentCard({
                       />
                       {Array.isArray((v as any).beats) && (v as any).beats.length > 0 ? (
                         <div className="space-y-2">
+                          <span
+                            className={cn(
+                              badgeFormat,
+                              'inline-block',
+                              v.id === activeVariant.id ? flashIf('estimatedDurationMinutes') || flashIf('total_duration_seconds') : ''
+                            )}
+                          >
+                            {(() => {
+                              const minutes =
+                                v.estimatedDurationMinutes ??
+                                computeBlueprintDurationFromBeats((v as any).beats).estimatedDurationMinutes
+                              return `${minutes} min total`
+                            })()}
+                          </span>
                           {(v as any).beats.map((b: any, idx: number) => (
                             <div key={idx} className={`p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 ${v.id===activeVariant.id ? flashIf('beats') : ''}`}>
                               <div className="flex items-start justify-between gap-3">

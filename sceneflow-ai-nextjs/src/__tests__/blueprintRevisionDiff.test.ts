@@ -36,4 +36,14 @@ describe('blueprintRevisionDiff', () => {
       'Updated logline'
     )
   })
+
+  it('buildFieldDiffs humanizes total_duration_seconds', () => {
+    const diffs = buildFieldDiffs(
+      { total_duration_seconds: 600 },
+      { total_duration_seconds: 2700 }
+    )
+    expect(diffs).toHaveLength(1)
+    expect(diffs[0].before).toBe('10 min (600 sec)')
+    expect(diffs[0].after).toBe('45 min (2700 sec)')
+  })
 })

@@ -8,6 +8,7 @@ import { Input } from '../ui/Input'
 import { toast } from 'sonner'
 import { Wand2, Loader2, Clock, Save, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { syncBlueprintDurationFields } from '@/lib/treatment/duration'
 
 type Beat = {
   title: string
@@ -140,7 +141,7 @@ export function BeatsEditDialog({ open, variant, onClose, onApply, projectId }: 
   }
 
   const handleApply = () => {
-    onApply(draft)
+    onApply(syncBlueprintDurationFields(draft as Record<string, unknown>) as Partial<TreatmentVariant>)
     toast.success('Beats updated!')
     onClose()
   }

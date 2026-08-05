@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { ProductionGuide, Beat, CharacterProfile, ViewMode, BeatFunction, EmotionalCharge, BoneyardItem, FilmTreatmentDetails } from '@/types/productionGuide';
+import { syncBlueprintDurationFields } from '@/lib/treatment/duration';
 
 // Dynamic project initialization - no hardcoded data
 const initialGuide: ProductionGuide = {
@@ -434,7 +435,8 @@ export const useGuideStore = create<GuideState>((set) => ({
     if (idx === -1) return state as any
     const before = list[idx]
     const updated = [...list]
-    updated[idx] = { ...before, ...patch, updatedAt: Date.now() }
+    const merged = syncBlueprintDurationFields({ ...before, ...patch })
+    updated[idx] = { ...merged, updatedAt: Date.now() }
     return { guide: { ...(state.guide as any), treatmentVariants: updated }, lastEdit: { variantId: id, before }, variantsLastModified: Date.now() } as any
   }),
   addTreatmentVariant: (variant) => set((state) => {

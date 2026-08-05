@@ -10,6 +10,7 @@ import {
   getIntentRevisionGuardrail,
   resolveContentIntent,
 } from '@/lib/content/contentIntent'
+import { syncBlueprintDurationFields } from '@/lib/treatment/duration'
 
 const BLUEPRINT_REFINE_CREDIT_COST = BLUEPRINT_CREDITS.BLUEPRINT_REFINE // 10 credits
 
@@ -31,7 +32,7 @@ interface RefineRequest {
 
 // Section-specific field mappings for targeted refinement
 const SECTION_FIELDS: Record<SectionType, string[]> = {
-  core: ['title', 'logline', 'genre', 'format_length', 'target_audience'],
+  core: ['title', 'logline', 'genre', 'target_audience'],
   story: ['synopsis', 'setting', 'protagonist', 'antagonist', 'act_breakdown'],
   tone: ['tone', 'tone_description', 'style', 'artStyle', 'aspectRatio', 'visual_style', 'themes', 'mood_references'],
   beats: ['beats', 'total_duration_seconds', 'estimatedDurationMinutes'],
@@ -253,6 +254,13 @@ ${strictJsonPromptSuffix}`
       if (parsed[field] !== undefined) {
         filteredDraft[field] = parsed[field]
       }
+    }
+
+    if (section === 'beats' && Array.isArray(filteredDraft.beats)) {
+      const synced = syncBlueprintDurationFields({ ...variant, ...filteredDraft })
+      filteredDraft.total_duration_seconds = synced.total_duration_seconds
+      filteredDraft.estimatedDurationMinutes = synced.estimatedDurationMinutes
+      filteredDraft.format_length = synced.format_length
     }
 
     console.log(`[Refine Treatment] Successfully refined ${Object.keys(filteredDraft).length} fields in section "${section}"`)
