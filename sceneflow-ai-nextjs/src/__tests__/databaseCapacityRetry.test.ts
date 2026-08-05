@@ -50,8 +50,8 @@ describe('connection-capacity errors are recognised', () => {
 })
 
 describe('pool is sized for serverless', () => {
-  it('defaults small, because the ceiling is max x concurrent instances', () => {
-    expect(CONFIG).toContain('return 2')
+  it('defaults to one, because a frozen instance holds its sockets open', () => {
+    expect(CONFIG).toMatch(/function poolMaxFromEnv[\s\S]*?return 1\n\}/)
     expect(CONFIG).not.toContain('const pool = { max: 5')
   })
 

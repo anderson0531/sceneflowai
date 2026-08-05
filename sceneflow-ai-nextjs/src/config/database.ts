@@ -51,19 +51,26 @@ ensureGoogleApplicationCredentialsFile()
 
 /**
  * Pool size is per *instance*, and every serverless instance gets its own module
- * scope, so the ceiling the database sees is `max` x concurrent instances. At the
- * previous max of 5 a dozen warm instances alone could exhaust a small Cloud SQL
- * tier, which surfaces as "remaining connection slots are reserved…" on whichever
- * request happens to connect next.
+ * scope, so the ceiling the database sees is `max` x live instances — not `max`.
+ * At the previous max of 5, a dozen warm instances alone could exhaust a small
+ * Cloud SQL tier, surfacing as "remaining connection slots are reserved…" on
+ * whichever request connects next.
  *
- * Queries here are short, so a small pool costs a little queueing inside an
- * instance and buys a much higher instance ceiling. Override with DB_POOL_MAX
- * when the instance size or tier changes, so tuning does not need a code change.
+ * One per instance, because the usual escape hatch does not apply here: an idle
+ * instance is frozen between invocations, so the `idle`/`evict` reapers do not
+ * run and its sockets stay open on the server the whole time it is warm. Holding
+ * a second connection therefore doubles the resting footprint for a pool that
+ * short queries rarely need concurrently.
+ *
+ * This is mitigation, not a cure. The ceiling still scales with instance count,
+ * so a sustained burst needs a pooler (PgBouncer / Cloud SQL Auth Proxy) or a
+ * larger `max_connections`. DB_POOL_MAX raises this without a code change once
+ * either is in place.
  */
 function poolMaxFromEnv(): number {
   const raw = Number.parseInt(process.env.DB_POOL_MAX ?? '', 10)
   if (Number.isFinite(raw) && raw > 0) return raw
-  return 2
+  return 1
 }
 
 const pool = {
