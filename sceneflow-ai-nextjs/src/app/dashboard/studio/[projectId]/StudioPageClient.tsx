@@ -1454,6 +1454,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                   <BlueprintRefineDiffBanner
                     diffs={refineDiffSummary}
                     onDismiss={() => setRefineDiffSummary([])}
+                    contentI18n={contentI18n}
                   />
                 )}
                 {/* Billboard Hero Image - shows when treatment exists */}
@@ -1639,6 +1640,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           initialActiveTab={blueprintRefineTab}
           onRequestReanalyze={requestBlueprintReanalyze}
           contentIntent={currentProject?.metadata?.contentIntent}
+          contentI18n={contentI18n}
         />
       )}
 

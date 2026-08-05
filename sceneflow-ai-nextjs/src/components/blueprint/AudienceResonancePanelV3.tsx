@@ -57,7 +57,10 @@ import { ResonanceRadarLegend } from '@/components/charts/ResonanceRadarLegend'
 import type { ResonanceAxis } from '@/lib/types/audienceResonance'
 import { EMPTY_ENTITY_I18N, type EntityI18n } from '@/i18n/content/entityI18n'
 import { useContentTranslation } from '@/i18n/content/useContentTranslation'
-import { buildAudienceResonanceDisplayFields } from '@/i18n/content/buildBlueprintDisplayFields'
+import {
+  buildAudienceDefinitionDisplayFields,
+  buildAudienceResonanceDisplayFields,
+} from '@/i18n/content/buildBlueprintDisplayFields'
 import { TranslationNotice } from '@/components/i18n/LocalizedField'
 
 export interface AudienceResonancePanelV3Props {
@@ -198,10 +201,11 @@ export function AudienceResonancePanelV3({
     [pendingRecs]
   )
 
-  const arContentFields = useMemo(
-    () => buildAudienceResonanceDisplayFields(analysis),
-    [analysis]
-  )
+  const arContentFields = useMemo(() => {
+    const analysisFields = buildAudienceResonanceDisplayFields(analysis)
+    const audienceFields = buildAudienceDefinitionDisplayFields(audienceDefinition)
+    return { ...analysisFields, ...audienceFields }
+  }, [analysis, audienceDefinition])
 
   const resolvedContentI18n = contentI18n ?? EMPTY_ENTITY_I18N
 
@@ -215,7 +219,7 @@ export function AudienceResonancePanelV3({
   } = useContentTranslation({
     fields: arContentFields,
     i18n: resolvedContentI18n,
-    enabled: Boolean(analysis),
+    enabled: Boolean(analysis) || Boolean(audienceDefinition?.description),
   })
 
   const arText = useCallback(
@@ -455,10 +459,16 @@ export function AudienceResonancePanelV3({
 
           {!audienceSetupExpanded && (
             <p className="text-[11px] text-gray-500 leading-snug line-clamp-2">
-              {audienceDefinition.description ||
-                'Describe your target audience to run a resonance analysis.'}
+              {arText(
+                'audienceDefinition.description',
+                audienceDefinition.description ||
+                  'Describe your target audience to run a resonance analysis.'
+              )}
               {audienceDefinition.customDirection
-                ? ` · ${audienceDefinition.customDirection}`
+                ? ` · ${arText(
+                    'audienceDefinition.customDirection',
+                    audienceDefinition.customDirection
+                  )}`
                 : ''}
             </p>
           )}

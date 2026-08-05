@@ -169,7 +169,7 @@ export const blueprintSidebarConfig: WorkflowSidebarConfig = {
   },
   sectionDefaults: {
     workflow: false,
-    workflowGuide: true,
+    workflowGuide: false,
     proTips: false,
     progress: true,
     quickActions: false,

@@ -30,6 +30,13 @@ import {
   saveFeedbackDraft,
   type ShareFeedbackDraft,
 } from '@/lib/blueprint/feedbackChips'
+import { useContentTranslation } from '@/i18n/content/useContentTranslation'
+import {
+  applyTreatmentVariantTranslations,
+  buildTreatmentVariantDisplayFields,
+} from '@/i18n/content/buildBlueprintDisplayFields'
+import { EMPTY_ENTITY_I18N, readEntityI18n } from '@/i18n/content/entityI18n'
+import { fromTtsLanguageCode } from '@/i18n/languageCodeBridge'
 
 const PARTICIPANT_KEY = (token: string) => `sf_collab_participant_${token}`
 const SHARE_LANG_KEY = (token: string) => `sf_share_lang_${token}`
@@ -299,8 +306,46 @@ export function BlueprintShareViewer({ token }: Props) {
     !hasCachedAudio &&
     (audioStatus === 'ready' || audioStatus === 'partial' || audioStatus === 'idle')
 
-  const filmTitle = String(treatment?.title || 'Blueprint')
-  const logline = treatment?.logline ? String(treatment.logline) : undefined
+  const treatmentForMt = useMemo(() => {
+    if (!treatment) return null
+    if (treatment.id) return treatment
+    return { ...treatment, id: 'share' }
+  }, [treatment])
+
+  const contentFields = useMemo(
+    () => buildTreatmentVariantDisplayFields(treatmentForMt),
+    [treatmentForMt]
+  )
+  const shareContentI18n = useMemo(() => {
+    if (!treatment) return EMPTY_ENTITY_I18N
+    return readEntityI18n({ metadata: (treatment as { metadata?: Record<string, unknown> }).metadata })
+  }, [treatment])
+  const contentTargetLocale = fromTtsLanguageCode(reviewLanguage)
+
+  const { resolve: resolveContent } = useContentTranslation({
+    fields: contentFields,
+    i18n: shareContentI18n,
+    enabled: Boolean(treatmentForMt),
+    targetLocale: contentTargetLocale,
+  })
+
+  const localizedTreatment = useMemo(() => {
+    if (!treatmentForMt) return null
+    return applyTreatmentVariantTranslations(treatmentForMt, resolveContent) || treatmentForMt
+  }, [treatmentForMt, resolveContent])
+
+  const filmTitle = String(localizedTreatment?.title || treatment?.title || 'Blueprint')
+  const logline = localizedTreatment?.logline
+    ? String(localizedTreatment.logline)
+    : treatment?.logline
+      ? String(treatment.logline)
+      : undefined
+  const displayGenre = localizedTreatment?.genre
+    ? String(localizedTreatment.genre)
+    : treatment?.genre
+      ? String(treatment.genre)
+      : undefined
+  const reviewVariant = localizedTreatment || treatment!
 
   const statusMessages = (
     <>
@@ -382,6 +427,7 @@ export function BlueprintShareViewer({ token }: Props) {
           <BlueprintShareLanguageControls
             language={reviewLanguage}
             onLanguageChange={setReviewLanguage}
+            enableGoogleTranslate={false}
           />
           <div className="space-y-1">{statusMessages}</div>
         </div>
@@ -411,7 +457,7 @@ export function BlueprintShareViewer({ token }: Props) {
           title={filmTitle}
           logline={logline}
           heroImageUrl={heroImageUrl}
-          genre={treatment.genre ? String(treatment.genre) : undefined}
+          genre={displayGenre}
         />
 
         {!hasCachedAudio &&
@@ -431,7 +477,7 @@ export function BlueprintShareViewer({ token }: Props) {
               key={s.id}
               sectionId={s.id}
               title={s.label}
-              variant={treatment}
+              variant={reviewVariant}
               expanded={!!expanded[s.id]}
               onToggle={() => setExpanded((p) => ({ ...p, [s.id]: !p[s.id] }))}
               audio={sectionAudio[s.id]}
@@ -452,8 +498,8 @@ export function BlueprintShareViewer({ token }: Props) {
                   ? (next) => updateSectionFeedback(s.id, next)
                   : undefined
               }
-              omitLoglineInCore={!!treatment.logline}
-              omitTitleInCore={!!treatment.title}
+              omitLoglineInCore={!!reviewVariant.logline}
+              omitTitleInCore={!!reviewVariant.title}
             />
           ))}
         </div>

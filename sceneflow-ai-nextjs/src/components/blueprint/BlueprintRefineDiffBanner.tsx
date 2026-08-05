@@ -2,9 +2,12 @@
 
 import { useTranslations } from 'next-intl'
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import { X, GitCompare } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useContentTranslation } from '@/i18n/content/useContentTranslation'
+import { buildRefineDiffDisplayFields } from '@/i18n/content/buildBlueprintDisplayFields'
+import { EMPTY_ENTITY_I18N, type EntityI18n } from '@/i18n/content/entityI18n'
 
 export interface RefineDiffSummary {
   label: string
@@ -16,14 +19,23 @@ interface BlueprintRefineDiffBannerProps {
   diffs: RefineDiffSummary[]
   onDismiss: () => void
   className?: string
+  contentI18n?: EntityI18n
 }
 
 export function BlueprintRefineDiffBanner({
   diffs,
   onDismiss,
   className,
+  contentI18n,
 }: BlueprintRefineDiffBannerProps) {
   const t = useTranslations('blueprint.refine')
+  const fields = useMemo(() => buildRefineDiffDisplayFields(diffs), [diffs])
+  const { resolve } = useContentTranslation({
+    fields,
+    i18n: contentI18n ?? EMPTY_ENTITY_I18N,
+    enabled: diffs.length > 0,
+  })
+
   if (diffs.length === 0) return null
 
   return (
@@ -43,12 +55,18 @@ export function BlueprintRefineDiffBanner({
         </button>
       </div>
       <ul className="space-y-1.5 text-xs text-gray-300">
-        {diffs.slice(0, 6).map((d) => (
-          <li key={d.label}>
-            <span className="text-cyan-300">{d.label}</span>
-            {d.after ? `: ${String(d.after).slice(0, 80)}${String(d.after).length > 80 ? '…' : ''}` : ' changed'}
-          </li>
-        ))}
+        {diffs.slice(0, 6).map((d, index) => {
+          const after =
+            resolve(`refineDiff[${index}].after`).text || d.after || ''
+          return (
+            <li key={d.label}>
+              <span className="text-cyan-300">{d.label}</span>
+              {after
+                ? `: ${String(after).slice(0, 80)}${String(after).length > 80 ? '…' : ''}`
+                : ' changed'}
+            </li>
+          )
+        })}
       </ul>
     </div>
   )

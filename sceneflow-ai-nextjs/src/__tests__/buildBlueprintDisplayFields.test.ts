@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { classifyField } from '@/i18n/content/fieldRegistry'
 import {
+  applyTreatmentVariantTranslations,
+  buildAudienceDefinitionDisplayFields,
   buildAudienceResonanceDisplayFields,
+  buildNarrativeReasoningDisplayFields,
+  buildRefineDiffDisplayFields,
   buildTreatmentVariantDisplayFields,
   treatmentVariantPathPrefix,
 } from '@/i18n/content/buildBlueprintDisplayFields'
@@ -42,6 +46,28 @@ describe('buildTreatmentVariantDisplayFields', () => {
     expect(buildTreatmentVariantDisplayFields({ title: 'x' })).toEqual({})
     expect(treatmentVariantPathPrefix('B')).toBe('treatmentVariants[B]')
   })
+
+  it('applies resolved translations onto display fields while keeping names opaque', () => {
+    const source = {
+      id: 'A',
+      title: 'English Title',
+      logline: 'English logline',
+      character_descriptions: [
+        { name: 'Ada', role: 'Lead', description: 'An archivist.' },
+      ],
+    }
+    const localized = applyTreatmentVariantTranslations(source, (path) => {
+      if (path.endsWith('.title')) return { text: 'Título en español' }
+      if (path.endsWith('.logline')) return { text: 'Logline en español' }
+      if (path.endsWith('.description')) return { text: 'Una archivista.' }
+      return { text: '' }
+    })
+
+    expect(localized?.title).toBe('Título en español')
+    expect(localized?.logline).toBe('Logline en español')
+    expect(localized?.character_descriptions?.[0]?.name).toBe('Ada')
+    expect(localized?.character_descriptions?.[0]?.description).toBe('Una archivista.')
+  })
 })
 
 describe('buildAudienceResonanceDisplayFields', () => {
@@ -60,5 +86,43 @@ describe('buildAudienceResonanceDisplayFields', () => {
     expect(fields['audienceResonance.recommendations[r1].title']).toBe('Tighten beats')
     expect(classifyField('audienceResonance.summary')).toBe('display')
     expect(classifyField('audienceResonance.recommendations[r1].text')).toBe('display')
+  })
+})
+
+describe('buildNarrativeReasoningDisplayFields', () => {
+  it('flattens reasoning prose and classifies as display', () => {
+    const fields = buildNarrativeReasoningDisplayFields({
+      character_focus: 'Ada drives every turn.',
+      story_strengths: 'Clear stakes.',
+      user_adjustments: 'Lean darker.',
+      key_decisions: [{ decision: 'Keep the vault', why: 'Theme', impact: 'Act two' }],
+    })
+
+    expect(fields['narrativeReasoning.character_focus']).toBe('Ada drives every turn.')
+    expect(fields['narrativeReasoning.key_decisions[0].decision']).toBe('Keep the vault')
+    expect(classifyField('narrativeReasoning.character_focus')).toBe('display')
+    expect(classifyField('narrativeReasoning.key_decisions[0].why')).toBe('display')
+  })
+})
+
+describe('buildAudienceDefinitionDisplayFields', () => {
+  it('exposes description and custom direction as display fields', () => {
+    const fields = buildAudienceDefinitionDisplayFields({
+      description: 'Adult drama fans',
+      customDirection: 'Prefer slow burn',
+    })
+    expect(fields['audienceDefinition.description']).toBe('Adult drama fans')
+    expect(classifyField('audienceDefinition.customDirection')).toBe('display')
+  })
+})
+
+describe('buildRefineDiffDisplayFields', () => {
+  it('maps before/after snippets for content MT', () => {
+    const fields = buildRefineDiffDisplayFields([
+      { before: 'Old logline', after: 'New logline' },
+    ])
+    expect(fields['refineDiff[0].before']).toBe('Old logline')
+    expect(fields['refineDiff[0].after']).toBe('New logline')
+    expect(classifyField('refineDiff[0].after')).toBe('display')
   })
 })

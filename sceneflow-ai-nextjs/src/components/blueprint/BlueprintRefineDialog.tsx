@@ -51,6 +51,13 @@ import { useBackgroundJob } from '@/hooks/useBackgroundJob'
 import { cn } from '@/lib/utils'
 import type { ContentIntent } from '@/lib/content/contentIntent'
 import { resolveContentIntent } from '@/lib/content/contentIntent'
+import { useContentTranslation } from '@/i18n/content/useContentTranslation'
+import {
+  applyTreatmentVariantTranslations,
+  buildRefineDiffDisplayFields,
+  buildTreatmentVariantDisplayFields,
+} from '@/i18n/content/buildBlueprintDisplayFields'
+import { EMPTY_ENTITY_I18N, type EntityI18n } from '@/i18n/content/entityI18n'
 
 type TreatmentVariant = Record<string, unknown>
 
@@ -67,6 +74,7 @@ type Props = {
   initialActiveTab?: string
   onRequestReanalyze?: () => void
   contentIntent?: ContentIntent | null
+  contentI18n?: EntityI18n
 }
 
 const SCOPE_OPTIONS: { id: BlueprintFixSection | 'all'; label: string }[] = [
@@ -94,7 +102,13 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
   )
 }
 
-function BlueprintSnapshot({ variant }: { variant: TreatmentVariant }) {
+function BlueprintSnapshot({
+  variant,
+  contentI18n,
+}: {
+  variant: TreatmentVariant
+  contentI18n?: EntityI18n
+}) {
   const t = useTranslations('blueprint.assistant')
   const [expanded, setExpanded] = useState<Record<string, boolean>>({
     core: true,
@@ -107,13 +121,27 @@ function BlueprintSnapshot({ variant }: { variant: TreatmentVariant }) {
   const toggle = (key: string) =>
     setExpanded((p) => ({ ...p, [key]: !p[key] }))
 
-  const themes = Array.isArray(variant.themes)
-    ? (variant.themes as string[]).join(', ')
-    : String(variant.themes || '')
+  const fields = useMemo(
+    () => buildTreatmentVariantDisplayFields(variant),
+    [variant]
+  )
+  const { resolve } = useContentTranslation({
+    fields,
+    i18n: contentI18n ?? EMPTY_ENTITY_I18N,
+    enabled: Boolean(variant?.id),
+  })
+  const localized = useMemo(
+    () => applyTreatmentVariantTranslations(variant, resolve) || variant,
+    [variant, resolve]
+  )
 
-  const beats = (variant.beats as Array<{ title?: string; synopsis?: string }>) || []
+  const themes = Array.isArray(localized.themes)
+    ? (localized.themes as string[]).join(', ')
+    : String(localized.themes || '')
+
+  const beats = (localized.beats as Array<{ title?: string; synopsis?: string }>) || []
   const chars =
-    (variant.character_descriptions as Array<{ name?: string; role?: string }>) || []
+    (localized.character_descriptions as Array<{ name?: string; role?: string }>) || []
 
   return (
     <div className="space-y-2 rounded-xl border border-slate-700/50 bg-slate-800/30 p-3">
@@ -125,9 +153,9 @@ function BlueprintSnapshot({ variant }: { variant: TreatmentVariant }) {
             title: 'Core',
             content: (
               <>
-                <ReadOnlyField label="Title" value={String(variant.title || '')} />
-                <ReadOnlyField label="Logline" value={String(variant.logline || '')} />
-                <ReadOnlyField label="Genre" value={String(variant.genre || '')} />
+                <ReadOnlyField label="Title" value={String(localized.title || '')} />
+                <ReadOnlyField label="Logline" value={String(localized.logline || '')} />
+                <ReadOnlyField label="Genre" value={String(localized.genre || '')} />
               </>
             ),
           },
@@ -138,10 +166,16 @@ function BlueprintSnapshot({ variant }: { variant: TreatmentVariant }) {
               <>
                 <ReadOnlyField
                   label="Synopsis"
-                  value={String(variant.synopsis || variant.content || '')}
+                  value={String(localized.synopsis || localized.content || '')}
                 />
-                <ReadOnlyField label="Protagonist" value={String(variant.protagonist || '')} />
-                <ReadOnlyField label="Antagonist" value={String(variant.antagonist || '')} />
+                <ReadOnlyField
+                  label="Protagonist"
+                  value={String(localized.protagonist || '')}
+                />
+                <ReadOnlyField
+                  label="Antagonist"
+                  value={String(localized.antagonist || '')}
+                />
               </>
             ),
           },
@@ -182,7 +216,7 @@ function BlueprintSnapshot({ variant }: { variant: TreatmentVariant }) {
               <>
                 <ReadOnlyField
                   label="Tone"
-                  value={String(variant.tone_description || variant.tone || '')}
+                  value={String(localized.tone_description || localized.tone || '')}
                 />
                 <ReadOnlyField label="Themes" value={themes} />
               </>
@@ -210,8 +244,21 @@ function BlueprintSnapshot({ variant }: { variant: TreatmentVariant }) {
   )
 }
 
-function DiffPanel({ diffs }: { diffs: FieldDiff[] }) {
+function DiffPanel({
+  diffs,
+  contentI18n,
+}: {
+  diffs: FieldDiff[]
+  contentI18n?: EntityI18n
+}) {
   const t = useTranslations('blueprint.assistant')
+  const fields = useMemo(() => buildRefineDiffDisplayFields(diffs), [diffs])
+  const { resolve } = useContentTranslation({
+    fields,
+    i18n: contentI18n ?? EMPTY_ENTITY_I18N,
+    enabled: diffs.length > 0,
+  })
+
   if (diffs.length === 0) {
     return (
       <p className="text-sm text-gray-500 text-center py-4">
@@ -221,7 +268,7 @@ function DiffPanel({ diffs }: { diffs: FieldDiff[] }) {
   }
   return (
     <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
-      {diffs.map((d) => (
+      {diffs.map((d, index) => (
         <div
           key={d.field}
           className="rounded-lg border border-slate-700/50 bg-slate-800/40 p-2.5 space-y-1.5"
@@ -233,11 +280,15 @@ function DiffPanel({ diffs }: { diffs: FieldDiff[] }) {
           <div className="grid grid-cols-1 gap-2 text-[11px]">
             <div>
               <span className="text-red-400/80">{t('before')}</span>
-              <p className="text-gray-500 line-clamp-4 whitespace-pre-wrap">{d.before || '—'}</p>
+              <p className="text-gray-500 line-clamp-4 whitespace-pre-wrap">
+                {resolve(`refineDiff[${index}].before`).text || d.before || '—'}
+              </p>
             </div>
             <div>
               <span className="text-emerald-400/80">{t('after')}</span>
-              <p className="text-gray-200 line-clamp-6 whitespace-pre-wrap">{d.after || '—'}</p>
+              <p className="text-gray-200 line-clamp-6 whitespace-pre-wrap">
+                {resolve(`refineDiff[${index}].after`).text || d.after || '—'}
+              </p>
             </div>
           </div>
         </div>
@@ -257,6 +308,7 @@ export function BlueprintRefineDialog({
   initialActiveTab,
   onRequestReanalyze,
   contentIntent: contentIntentProp,
+  contentI18n,
 }: Props) {
   const t = useTranslations('blueprint.assistant')
   const tc = useTranslations('common')
@@ -759,7 +811,7 @@ export function BlueprintRefineDialog({
                 </div>
               </div>
 
-              <BlueprintSnapshot variant={variant} />
+              <BlueprintSnapshot variant={variant} contentI18n={contentI18n} />
             </>
           )}
 
@@ -779,7 +831,7 @@ export function BlueprintRefineDialog({
                   </ul>
                 )}
               </div>
-              <DiffPanel diffs={diff} />
+              <DiffPanel diffs={diff} contentI18n={contentI18n} />
             </div>
           )}
         </div>

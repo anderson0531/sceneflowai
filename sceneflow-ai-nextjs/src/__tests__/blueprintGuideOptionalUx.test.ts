@@ -66,3 +66,14 @@ describe('sidebar Guide can load blueprint messages', () => {
     expect(provider).toContain('getAppMessages')
   })
 })
+
+describe('Blueprint Guide defaults closed', () => {
+  it('starts the workflowGuide section collapsed in Blueprint Studio', () => {
+    const config = readSource('src/config/nav/sidebarConfig.ts')
+    const blueprintBlock = config.slice(
+      config.indexOf('export const blueprintSidebarConfig'),
+      config.indexOf('export const productionSidebarConfig')
+    )
+    expect(blueprintBlock).toMatch(/sectionDefaults:\s*\{[^}]*workflowGuide:\s*false/s)
+  })
+})

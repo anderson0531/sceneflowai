@@ -97,6 +97,20 @@ export const CONTENT_FIELDS: Record<string, FieldKind> = {
   'audienceResonance.recommendations[].title': 'display',
   'audienceResonance.recommendations[].text': 'display',
   'audienceResonance.categories[].name': 'display',
+  'audienceDefinition.description': 'display',
+  'audienceDefinition.customDirection': 'display',
+
+  // ── Blueprint: Narrative reasoning (side-panel creative prose) ───────────
+  'narrativeReasoning.character_focus': 'display',
+  'narrativeReasoning.story_strengths': 'display',
+  'narrativeReasoning.user_adjustments': 'display',
+  'narrativeReasoning.key_decisions[].decision': 'display',
+  'narrativeReasoning.key_decisions[].why': 'display',
+  'narrativeReasoning.key_decisions[].impact': 'display',
+
+  // ── Blueprint: Refine diff snippets (ephemeral display) ─────────────────
+  'refineDiff[].before': 'display',
+  'refineDiff[].after': 'display',
   // Everything below feeds character reference image generation.
   'treatmentVariants[].character_descriptions[].appearance': 'machine',
   'treatmentVariants[].character_descriptions[].ethnicity': 'machine',

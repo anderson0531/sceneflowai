@@ -5,6 +5,7 @@ import {
   normalizeBlueprintGeminiVoiceId,
   synthesizeGeminiFlashMp3,
 } from '@/lib/tts/geminiFlashTts'
+import { resolveGeminiTtsLanguageCode } from '@/lib/tts/googleTtsLocale'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -45,6 +46,14 @@ export async function POST(request: NextRequest) {
       typeof body?.voiceId === 'string' ? body.voiceId : undefined
     )
 
+    const languageRaw =
+      typeof body?.language === 'string'
+        ? body.language
+        : typeof body?.languageCode === 'string'
+          ? body.languageCode
+          : 'en'
+    const languageCode = resolveGeminiTtsLanguageCode(languageRaw)
+
     const chunks = chunkNarrationText(cleanText, 4000)
     const buffers: Buffer[] = []
     for (const chunk of chunks) {
@@ -53,6 +62,7 @@ export async function POST(request: NextRequest) {
           text: chunk,
           voiceId,
           directorNotes,
+          languageCode,
         })
       )
     }
