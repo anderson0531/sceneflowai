@@ -33,7 +33,7 @@
                 "i18n:sync-landing:batches": "npx tsx scripts/run-landing-locale-batches.ts --priority-only --skip-existing --batch-size 15 --locale-delay-ms 5000 --batch-cooldown-ms 90000",
                 "i18n:sync-production-showcase": "USE_LIBRETRANSLATE=1 npx tsx scripts/run-landing-locale-batches.ts --production-showcase-only --skip-existing --provider=auto --batch-size 5 --locale-delay-ms 2000 --batch-cooldown-ms 10000",
                 "i18n:app:extract": "tsx scripts/i18n-extract.ts",
-                "test:i18n": "vitest run src/__tests__/appMessageCatalogs.test.ts src/__tests__/contentFieldRegistry.test.ts src/__tests__/entityI18n.test.ts src/__tests__/gtSurfaces.test.ts src/__tests__/i18nGlossary.test.ts src/__tests__/localeDirection.test.ts src/__tests__/localeDirective.test.ts src/__tests__/landingLocaleCopy.test.ts",
+		"test:i18n": "vitest run src/__tests__/appMessageCatalogs.test.ts src/__tests__/contentFieldRegistry.test.ts src/__tests__/entityI18n.test.ts src/__tests__/gtSurfaces.test.ts src/__tests__/i18nGlossary.test.ts src/__tests__/localeDirection.test.ts src/__tests__/localeDirective.test.ts src/__tests__/landingLocaleCopy.test.ts src/__tests__/localeSwitchFeedback.test.ts",
                 "lint:i18n": "eslint --config eslint.i18n.config.mjs src",
                 "i18n:app:build-en": "tsx scripts/build-app-messages.ts",
                 "i18n:app:check": "tsx scripts/build-app-messages.ts --check",

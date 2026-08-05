@@ -1,0 +1,127 @@
+import { describe, it, expect, beforeEach } from 'vitest'
+import { readFileSync } from 'fs'
+import path from 'path'
+import {
+  beginLocaleSwitch,
+  endLocaleSwitch,
+  getLocaleSwitchState,
+  getLocaleSwitchServerState,
+  subscribeLocaleSwitch,
+} from '@/i18n/localeSwitchStatus'
+
+function readSource(relativePath: string): string {
+  return readFileSync(path.join(process.cwd(), relativePath), 'utf8')
+}
+
+describe('locale switch status store', () => {
+  beforeEach(() => endLocaleSwitch())
+
+  it('starts idle', () => {
+    expect(getLocaleSwitchState()).toEqual({ pending: false })
+  })
+
+  it('carries the target locale so the overlay can name it', () => {
+    beginLocaleSwitch('es')
+    expect(getLocaleSwitchState()).toEqual({ pending: true, locale: 'es' })
+  })
+
+  it('notifies subscribers on both edges', () => {
+    let calls = 0
+    const unsubscribe = subscribeLocaleSwitch(() => {
+      calls += 1
+    })
+    beginLocaleSwitch('ar')
+    endLocaleSwitch()
+    unsubscribe()
+    beginLocaleSwitch('th')
+    expect(calls).toBe(2)
+  })
+
+  it('is never pending during SSR, so the overlay cannot be prerendered', () => {
+    beginLocaleSwitch('es')
+    expect(getLocaleSwitchServerState()).toEqual({ pending: false })
+  })
+})
+
+describe('the overlay covers the whole switch', () => {
+  const hook = readSource('src/i18n/useUiLocale.ts')
+
+  it('raises before the profile write, not just before the reload', () => {
+    const beginAt = hook.indexOf('beginLocaleSwitch(nextLocale)')
+    const fetchAt = hook.indexOf("fetch('/api/user/locale'")
+    const reloadAt = hook.indexOf('window.location.reload()')
+    expect(beginAt).toBeGreaterThan(-1)
+    expect(beginAt).toBeLessThan(fetchAt)
+    expect(fetchAt).toBeLessThan(reloadAt)
+  })
+
+  it('clears the overlay when the caller opted out of the reload', () => {
+    // Without a reload nothing replaces the document, so the store must be
+    // released explicitly or the overlay would stay up forever.
+    expect(hook).toContain('endLocaleSwitch()')
+  })
+
+  it('is raised from the Settings card too, which reloads on its own timer', () => {
+    const card = readSource('src/components/i18n/LanguageSettingsCard.tsx')
+    expect(card).toContain('beginLocaleSwitch(patch.uiLocale)')
+  })
+})
+
+describe('overlay placement', () => {
+  const layout = readSource('src/app/layout.tsx')
+
+  it('mounts once at the root', () => {
+    expect(layout).toContain('<LocaleSwitchOverlay />')
+  })
+
+  it('sits outside the message provider', () => {
+    // It renders while the old catalog is still loaded, so translated copy
+    // would name the language being left rather than the one being adopted.
+    const providerEnd = layout.indexOf('</ClientAppMessagesProvider>')
+    const overlayAt = layout.indexOf('<LocaleSwitchOverlay />')
+    expect(providerEnd).toBeGreaterThan(-1)
+    expect(overlayAt).toBeGreaterThan(providerEnd)
+  })
+
+  it('labels itself with the target endonym rather than the catalog', () => {
+    const overlay = readSource('src/components/i18n/LocaleSwitchOverlay.tsx')
+    expect(overlay).toContain('getLocaleNativeName(state.locale)')
+    expect(overlay).not.toContain('useTranslations')
+  })
+})
+
+describe('content translation reports its own progress', () => {
+  it('exposes how many fields are in flight', () => {
+    const hook = readSource('src/i18n/content/useContentTranslation.ts')
+    expect(hook).toContain('setPendingCount(pending.length)')
+    expect(hook).toContain('pendingCount')
+  })
+
+  it('names the wait instead of leaving bare spinners', () => {
+    const field = readSource('src/components/i18n/LocalizedField.tsx')
+    expect(field).toContain("t('translatingFields', { count: pendingCount })")
+
+    const catalog = JSON.parse(readSource('messages/app/en/common.json'))
+    expect(catalog.language.translatingFields).toContain('{count')
+  })
+})
+
+describe('the header is the only language control in the studio', () => {
+  const studio = readSource('src/app/dashboard/studio/[projectId]/StudioPageClient.tsx')
+
+  it('shows the story language read-only', () => {
+    expect(studio).toContain('<StoryLocaleBadge')
+    expect(studio).not.toContain('<StoryLocaleControl')
+  })
+
+  it('keeps the per-project override reachable from Settings', () => {
+    const settings = readSource('src/components/i18n/LanguageSettingsCard.tsx')
+    expect(settings).toContain('storyLocale')
+  })
+
+  it('lets the story language follow the interface language', () => {
+    // Nothing to keep in sync if the account default already falls through.
+    const resolver = readSource('src/i18n/server/storyLocale.ts')
+    expect(resolver).toContain('user.story_locale ?? user.preferred_locale')
+  })
+})
