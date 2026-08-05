@@ -29,6 +29,15 @@ describe('localeDirective', () => {
     expect(block).toMatch(/ends in "Prompt"/)
   })
 
+  it('asks the model to author narrative reasoning in the story language', () => {
+    const block = localeDirective('es')
+    expect(block).toContain('narrative reasoning')
+    expect(block).toContain('character_focus')
+    expect(block).toContain('key_decisions')
+    expect(block).toContain('story_strengths')
+    expect(block).toContain('user_adjustments')
+  })
+
   it('keeps JSON keys and schema enums in English', () => {
     const block = localeDirective('ar')
     expect(block).toContain('Every JSON key')
