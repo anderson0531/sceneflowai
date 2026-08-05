@@ -45,7 +45,7 @@
     "interfaceTitle": "Interface language",
     "interfaceDescription": "Menus, buttons, and dialogs across the Dashboard and all three studios.",
     "storyTitle": "Story language",
-    "storyDescription": "The language new AI-written treatments, beats, characters, and dialogue are authored in. Individual projects can override this.",
+    "storyDescription": "The language new AI-written treatments, beats, characters, and dialogue are authored in. The header language switcher updates this together with the interface language.",
     "deliveryTitle": "Delivery languages",
     "deliveryDescription": "Narration, dubs, and rendered video. A single project can ship in many languages at once, so these are chosen per scene rather than per account.",
     "deliveryStartsFrom": "Starts from {language}",

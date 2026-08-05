@@ -45,7 +45,7 @@
     "interfaceTitle": "Sprache der Benutzeroberfläche",
     "interfaceDescription": "Menüs, Schaltflächen und Dialoge über das Dashboard und alle drei Studios hinweg.",
     "storyTitle": "Story-Sprache",
-    "storyDescription": "In der Sprache werden neue KI-geschriebene Behandlungen, Beats, Charaktere und Dialoge verfasst. Einzelne Projekte können dies außer Kraft setzen.",
+    "storyDescription": "Die Sprache, in der neue KI-geschriebene Treatments, Beats, Figuren und Dialoge verfasst werden. Der Sprachumschalter in der Kopfzeile aktualisiert dies zusammen mit der Oberflächenprache.",
     "deliveryTitle": "Liefersprachen",
     "deliveryDescription": "Narration, Dubs und gerendertes Video. Ein einzelnes Projekt kann in mehreren Sprachen gleichzeitig ausgeliefert werden, sodass diese pro Szene und nicht pro Konto ausgewählt werden.",
     "deliveryStartsFrom": "Beginnt ab {language}",

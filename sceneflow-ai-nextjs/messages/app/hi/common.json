@@ -60,7 +60,18 @@
     "getStarted": "प्रारंभ करें",
     "switchAccount": "खाता बदलें",
     "toggleMenu": "मेन्यू टॉगल करें",
-    "skipToContent": "मुख्य कंटेंट छोड़ें"
+    "skipToContent": "मुख्य कंटेंट छोड़ें",
+    "workflow": "वर्कफ़्लो",
+    "credits": "क्रेडिट",
+    "balance": "शेष",
+    "buyCredits": "क्रेडिट खरीदें",
+    "current": "वर्तमान",
+    "hideSidebar": "नेविगेशन साइडबार छिपाएँ",
+    "hideSidebarTitle": "साइडबार छिपाएँ (सामग्री के लिए अधिक स्थान)",
+    "showSidebar": "नेविगेशन साइडबार दिखाएँ",
+    "showSidebarTitle": "साइडबार दिखाएँ",
+    "byokSettings": "BYOK सेटिंग्स",
+    "billingCredits": "बिलिंग और क्रेडिट"
   },
   "language": {
     "interfaceLanguage": "इंटरफ़ेस भाषा",

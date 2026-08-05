@@ -60,7 +60,18 @@
     "getStarted": "Erste Schritte",
     "switchAccount": "Konto wechseln",
     "toggleMenu": "Menü umschalten",
-    "skipToContent": "     Skip to main content"
+    "skipToContent": "     Skip to main content",
+    "workflow": "Workflow",
+    "credits": "Credits",
+    "balance": "Guthaben",
+    "buyCredits": "Credits kaufen",
+    "current": "Aktuell",
+    "hideSidebar": "Navigationsleiste ausblenden",
+    "hideSidebarTitle": "Seitenleiste ausblenden (mehr Platz für Inhalte)",
+    "showSidebar": "Navigationsleiste einblenden",
+    "showSidebarTitle": "Seitenleiste einblenden",
+    "byokSettings": "BYOK-Einstellungen",
+    "billingCredits": "Abrechnung und Credits"
   },
   "language": {
     "interfaceLanguage": "Sprache der Benutzeroberfläche",

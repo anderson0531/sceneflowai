@@ -60,7 +60,18 @@
     "getStarted": "เริ่มต้น",
     "switchAccount": "สลับบัญชี",
     "toggleMenu": "สลับเมนู",
-    "skipToContent": "ข้ามไปที่เนื้อหาหลัก"
+    "skipToContent": "ข้ามไปที่เนื้อหาหลัก",
+    "workflow": "เวิร์กโฟลว์",
+    "credits": "เครดิต",
+    "balance": "ยอดคงเหลือ",
+    "buyCredits": "ซื้อเครดิต",
+    "current": "ปัจจุบัน",
+    "hideSidebar": "ซ่อนแถบนำทาง",
+    "hideSidebarTitle": "ซ่อนแถบด้านข้าง (พื้นที่สำหรับเนื้อหามากขึ้น)",
+    "showSidebar": "แสดงแถบนำทาง",
+    "showSidebarTitle": "แสดงแถบด้านข้าง",
+    "byokSettings": "การตั้งค่า BYOK",
+    "billingCredits": "การเรียกเก็บเงินและเครดิต"
   },
   "language": {
     "interfaceLanguage": "ภาษาอินเตอร์เฟซ",

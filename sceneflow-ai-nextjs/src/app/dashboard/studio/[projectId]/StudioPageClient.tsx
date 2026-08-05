@@ -58,9 +58,13 @@ import GeneratingOverlay from '@/components/ui/GeneratingOverlay'
 import { BlueprintTtsProvider } from '@/contexts/BlueprintTtsContext'
 import { BlueprintTtsProgressBar } from '@/components/blueprint/BlueprintTtsProgressBar'
 import { BlueprintOnboarding } from '@/components/blueprint/BlueprintOnboarding'
-import { StoryLocaleBadge } from '@/components/i18n/StoryLocaleControl'
 import { useStoryLocale } from '@/i18n/useStoryLocale'
 import { readEntityI18n } from '@/i18n/content/entityI18n'
+import { useContentTranslation } from '@/i18n/content/useContentTranslation'
+import {
+  buildTreatmentVariantDisplayFields,
+  treatmentVariantPathPrefix,
+} from '@/i18n/content/buildBlueprintDisplayFields'
 import { ProductEmptyState } from '@/components/product'
 import { BlueprintResonanceStrip } from '@/components/blueprint/BlueprintResonanceStrip'
 import { BlueprintNextStepBanner } from '@/components/blueprint/BlueprintNextStepBanner'
@@ -124,6 +128,39 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     () => readEntityI18n(currentProject as { metadata?: Record<string, any> | null } | null),
     [currentProject]
   )
+
+  // Billboard hero uses variants[0] (same as today). Localize title/logline/genre
+  // through the content-MT path — chrome catalogs do not cover DB text.
+  const heroVariant = guide.treatmentVariants?.[0]
+  const heroFields = useMemo(
+    () => buildTreatmentVariantDisplayFields(heroVariant as Record<string, unknown> | undefined),
+    [heroVariant]
+  )
+  const { resolve: resolveHero } = useContentTranslation({
+    fields: heroFields,
+    i18n: contentI18n,
+    enabled: Boolean(heroVariant?.id),
+  })
+  const heroTitle = useMemo(() => {
+    if (!heroVariant?.id) return t('untitled')
+    const prefix = treatmentVariantPathPrefix(String(heroVariant.id))
+    return (
+      resolveHero(`${prefix}.title`).text ||
+      heroVariant.title ||
+      guide.title ||
+      t('untitled')
+    )
+  }, [heroVariant, resolveHero, guide.title, t])
+  const heroSubtitle = useMemo(() => {
+    if (!heroVariant?.id) return undefined
+    const prefix = treatmentVariantPathPrefix(String(heroVariant.id))
+    return resolveHero(`${prefix}.logline`).text || heroVariant.logline || undefined
+  }, [heroVariant, resolveHero])
+  const heroGenre = useMemo(() => {
+    if (!heroVariant?.id) return undefined
+    const prefix = treatmentVariantPathPrefix(String(heroVariant.id))
+    return resolveHero(`${prefix}.genre`).text || heroVariant.genre || undefined
+  }, [heroVariant, resolveHero])
 
   const isProjectCreated = !!(guide.filmTreatment && guide.filmTreatment.trim() !== '' && guide.title && guide.title !== 'Untitled Project');
 
@@ -1358,10 +1395,6 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                     )}
                   </div>
                   <div className="flex items-center gap-2 flex-wrap justify-end">
-                    {/* Read-only: the header switcher is the single language
-                        control, and the story language follows it unless the
-                        project carries an override set in Settings. */}
-                    <StoryLocaleBadge locale={storyI18n.sourceLocale} />
                     {hasBlueprint && (
                       <BlueprintResonanceStrip
                         progress={blueprintProgress}
@@ -1428,9 +1461,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                   <div data-blueprint-section="hero-image">
                     <TreatmentHeroImage
                       image={guide.treatmentVariants[0]?.heroImage || null}
-                      title={guide.treatmentVariants[0]?.title || guide.title || t('untitled')}
-                      subtitle={guide.treatmentVariants[0]?.logline}
-                      genre={guide.treatmentVariants[0]?.genre}
+                      title={heroTitle}
+                      subtitle={heroSubtitle}
+                      genre={heroGenre}
                       aspectRatio="2.39:1"
                       className="mb-6"
                       onRegenerate={() => setShowHeroPromptBuilder(true)}

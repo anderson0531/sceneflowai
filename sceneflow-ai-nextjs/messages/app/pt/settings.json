@@ -45,7 +45,7 @@
     "interfaceTitle": "Idioma da interface",
     "interfaceDescription": "Menus, botões e caixas de diálogo no Painel e nos três estúdios.",
     "storyTitle": "Linguagem da história",
-    "storyDescription": "A nova linguagem em que os tratamentos, batidas, personagens e diálogos escritos pela IA são criados. Projetos individuais podem substituir isso.",
+    "storyDescription": "O idioma em que novos tratamentos, beats, personagens e diálogos escritos por IA são criados. O seletor de idioma do cabeçalho atualiza isso junto com o idioma da interface.",
     "deliveryTitle": "Idiomas de entrega",
     "deliveryDescription": "Narração, dublagem e vídeo renderizado. Um único projeto pode ser enviado em vários idiomas ao mesmo tempo, portanto, eles são escolhidos por cena e não por conta.",
     "deliveryStartsFrom": "Começa em {language}",

@@ -60,7 +60,18 @@
     "getStarted": "Iniciar",
     "switchAccount": "Mudar de conta",
     "toggleMenu": "Mostrar/esconder menu",
-    "skipToContent": "Saltar para o conteúdo principal"
+    "skipToContent": "Saltar para o conteúdo principal",
+    "workflow": "Fluxo de trabalho",
+    "credits": "Créditos",
+    "balance": "Saldo",
+    "buyCredits": "Comprar créditos",
+    "current": "Atual",
+    "hideSidebar": "Ocultar barra de navegação",
+    "hideSidebarTitle": "Ocultar barra lateral (mais espaço para o conteúdo)",
+    "showSidebar": "Mostrar barra de navegação",
+    "showSidebarTitle": "Mostrar barra lateral",
+    "byokSettings": "Configurações BYOK",
+    "billingCredits": "Cobrança e créditos"
   },
   "language": {
     "interfaceLanguage": "Idioma da interface",

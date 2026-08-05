@@ -60,7 +60,18 @@
     "getStarted": "开始",
     "switchAccount": "更换账号",
     "toggleMenu": "切换菜单",
-    "skipToContent": "跳到主内容"
+    "skipToContent": "跳到主内容",
+    "workflow": "工作流",
+    "credits": "积分",
+    "balance": "余额",
+    "buyCredits": "购买积分",
+    "current": "当前",
+    "hideSidebar": "隐藏导航侧边栏",
+    "hideSidebarTitle": "隐藏侧边栏（为内容留出更多空间）",
+    "showSidebar": "显示导航侧边栏",
+    "showSidebarTitle": "显示侧边栏",
+    "byokSettings": "BYOK 设置",
+    "billingCredits": "账单与积分"
   },
   "language": {
     "interfaceLanguage": "界面语言",
