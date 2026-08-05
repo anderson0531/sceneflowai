@@ -202,6 +202,7 @@ export function SidePanelTabs({
           <div className="h-full overflow-y-auto">
             <NarrativeReasoningPanel
               reasoning={(currentTreatment as any)?.narrative_reasoning ?? null}
+              contentI18n={contentI18n}
             />
           </div>
         ) : (

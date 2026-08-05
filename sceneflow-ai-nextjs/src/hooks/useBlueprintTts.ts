@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { DEFAULT_BLUEPRINT_GEMINI_VOICE } from '@/lib/tts/blueprintTtsConstants'
 import { formatGeminiVoiceSelectedLabel } from '@/lib/tts/geminiVoiceCatalog'
 import { toGoogleTranslateCode } from '@/constants/veoLanguages'
+import { useUiLocale } from '@/i18n/useUiLocale'
+import { toTtsLanguageCode } from '@/i18n/languageCodeBridge'
 
 const DIRECTOR_NOTES_STORAGE_KEY = 'sceneflow-blueprint-tts-director-notes'
 
@@ -16,6 +18,8 @@ export type BlueprintTtsGenerationProgress = {
 export type BlueprintGeminiVoice = { id: string; name: string; gender?: string }
 
 export function useBlueprintTts() {
+  const { locale: uiLocale } = useUiLocale()
+  const headerTtsLanguage = toTtsLanguageCode(uiLocale)
   const [voices, setVoices] = useState<BlueprintGeminiVoice[]>([])
   const [enabled, setEnabled] = useState(false)
   const [loadingId, setLoadingId] = useState<string | null>(null)
@@ -25,12 +29,24 @@ export function useBlueprintTts() {
   const [audioMenuOpen, setAudioMenuOpen] = useState(false)
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false)
   const [directorNotesDialogOpen, setDirectorNotesDialogOpen] = useState(false)
-  const [selectedLanguage, setSelectedLanguage] = useState('en')
+  const [selectedLanguage, setSelectedLanguage] = useState(headerTtsLanguage)
+  const [languageOverride, setLanguageOverride] = useState(false)
   const [generationProgress, setGenerationProgress] =
     useState<BlueprintTtsGenerationProgress | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const queueAbortRef = useRef({ abort: false })
   const translationCacheRef = useRef<Map<string, string>>(new Map())
+
+  useEffect(() => {
+    if (!languageOverride) {
+      setSelectedLanguage(headerTtsLanguage)
+    }
+  }, [headerTtsLanguage, languageOverride])
+
+  const setSelectedLanguageWithOverride = useCallback((code: string) => {
+    setLanguageOverride(true)
+    setSelectedLanguage(code)
+  }, [])
 
   useEffect(() => {
     try {
@@ -151,6 +167,7 @@ export function useBlueprintTts() {
           body: JSON.stringify({
             text: textToSpeak,
             voiceId,
+            language: selectedLanguage,
             directorNotes: directorNotes.trim() || undefined,
           }),
         })
@@ -237,7 +254,7 @@ export function useBlueprintTts() {
     selectedVoiceName,
     directorNotes,
     selectedLanguage,
-    setSelectedLanguage,
+    setSelectedLanguage: setSelectedLanguageWithOverride,
     audioMenuOpen,
     setAudioMenuOpen,
     voiceDialogOpen,

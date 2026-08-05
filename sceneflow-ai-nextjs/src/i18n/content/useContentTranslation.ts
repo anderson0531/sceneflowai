@@ -30,6 +30,11 @@ export interface UseContentTranslationOptions {
   glossary?: readonly string[]
   /** Skip network work, e.g. while a dialog is closed. */
   enabled?: boolean
+  /**
+   * Override the reader's target locale (e.g. Share/Review language picker).
+   * Defaults to the authenticated UI locale from the header switcher.
+   */
+  targetLocale?: string
 }
 
 /**
@@ -45,8 +50,10 @@ export function useContentTranslation({
   i18n,
   glossary = [],
   enabled = true,
+  targetLocale: targetLocaleOverride,
 }: UseContentTranslationOptions) {
-  const { locale: uiLocale } = useUiLocale()
+  const { locale: uiLocaleFromHook } = useUiLocale()
+  const uiLocale = targetLocaleOverride || uiLocaleFromHook
   const sourceLocale = i18n.sourceLocale
   const needsTranslation = enabled && uiLocale !== sourceLocale
 

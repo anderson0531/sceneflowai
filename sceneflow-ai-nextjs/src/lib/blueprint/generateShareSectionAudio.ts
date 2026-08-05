@@ -7,6 +7,7 @@ import {
   normalizeBlueprintGeminiVoiceId,
   synthesizeGeminiFlashMp3,
 } from '@/lib/tts/geminiFlashTts'
+import { resolveGeminiTtsLanguageCode } from '@/lib/tts/googleTtsLocale'
 import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
 import type {
   BlueprintSectionAudioEntry,
@@ -143,10 +144,12 @@ export async function recoverStaleSectionAudioIfNeeded(
 async function synthesizeSectionMp3(
   text: string,
   voiceId: string,
-  directorNotes?: string
+  directorNotes?: string,
+  language?: string
 ): Promise<Buffer> {
   const chunks = chunkNarrationText(text)
   if (chunks.length === 0) return Buffer.alloc(0)
+  const languageCode = resolveGeminiTtsLanguageCode(language || DEFAULT_SHARE_AUDIO_LANGUAGE)
   const buffers: Buffer[] = []
   for (let i = 0; i < chunks.length; i++) {
     const t0 = Date.now()
@@ -154,9 +157,10 @@ async function synthesizeSectionMp3(
       text: chunks[i]!,
       voiceId: normalizeBlueprintGeminiVoiceId(voiceId),
       directorNotes,
+      languageCode,
     })
     console.info(
-      `[generateShareSectionAudio] gemini chunk ${i + 1}/${chunks.length} voice=${normalizeBlueprintGeminiVoiceId(voiceId)} model=${DEFAULT_GEMINI_TTS_MODEL} ms=${Date.now() - t0}`
+      `[generateShareSectionAudio] gemini chunk ${i + 1}/${chunks.length} voice=${normalizeBlueprintGeminiVoiceId(voiceId)} model=${DEFAULT_GEMINI_TTS_MODEL} lang=${languageCode} ms=${Date.now() - t0}`
     )
     buffers.push(buf)
   }
@@ -227,7 +231,7 @@ export async function generateShareSectionAudio(
     )
 
     try {
-      const buffer = await synthesizeSectionMp3(speakableText, voiceId, directorNotes)
+      const buffer = await synthesizeSectionMp3(speakableText, voiceId, directorNotes, language)
       if (!buffer.length) continue
 
       const filename = `audio/blueprint-share/${params.projectId}/${params.sessionId}/${language}/${section}.mp3`
