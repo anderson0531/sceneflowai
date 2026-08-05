@@ -8,6 +8,7 @@ import { getCloudSqlDriverOptions, resetCloudSqlConnector } from '@/lib/database
 import {
   logDatabaseConnectionFailure,
   isSslOrCertConnectionError,
+  isTransientConnectionCapacityError,
 } from '@/lib/database/connectionDiagnostics'
 
 dotenv.config({ path: '.env.local' })
@@ -48,8 +49,58 @@ function ensureGoogleApplicationCredentialsFile(): void {
 
 ensureGoogleApplicationCredentialsFile()
 
-const pool = { max: 5, min: 0, acquire: 60000, idle: 10000 }
+/**
+ * Pool size is per *instance*, and every serverless instance gets its own module
+ * scope, so the ceiling the database sees is `max` x concurrent instances. At the
+ * previous max of 5 a dozen warm instances alone could exhaust a small Cloud SQL
+ * tier, which surfaces as "remaining connection slots are reserved…" on whichever
+ * request happens to connect next.
+ *
+ * Queries here are short, so a small pool costs a little queueing inside an
+ * instance and buys a much higher instance ceiling. Override with DB_POOL_MAX
+ * when the instance size or tier changes, so tuning does not need a code change.
+ */
+function poolMaxFromEnv(): number {
+  const raw = Number.parseInt(process.env.DB_POOL_MAX ?? '', 10)
+  if (Number.isFinite(raw) && raw > 0) return raw
+  return 2
+}
+
+const pool = {
+  max: poolMaxFromEnv(),
+  min: 0,
+  acquire: 60000,
+  idle: 10000,
+  // Reap idle connections on a timer, so a warm instance between requests stops
+  // holding slots that other instances are queueing for.
+  evict: 5000,
+}
 const define = { underscored: true }
+
+/**
+ * Retry queries that fail only because the server is at `max_connections`.
+ *
+ * Applied on the Sequelize instance rather than at call sites: the ~72 routes
+ * that touch the database call `sequelize.authenticate()` and the models
+ * directly, so a wrapper helper would have to be threaded through every one of
+ * them to help. Sequelize routes model calls and `authenticate()` through the
+ * same query path, so configuring it here covers all of them at once.
+ *
+ * Slots free up as other requests finish, so the wait is short. Message wording
+ * differs across server versions, and pg's own pool says "too many clients".
+ */
+const retry = {
+  match: [
+    /remaining connection slots are reserved/i,
+    /too many clients already/i,
+    /too many connections/i,
+  ],
+  // Six attempts over roughly four seconds. Long enough to ride out a burst of
+  // cold starts, short enough to stay well inside the 60s acquire timeout.
+  max: 6,
+  backoffBase: 150,
+  backoffExponent: 1.6,
+}
 
 function useCloudSqlFromEnv(): boolean {
   return Boolean(
@@ -211,6 +262,7 @@ function createSequelize(): Sequelize {
         },
       },
       pool,
+      retry,
       logging: false,
       define,
     })
@@ -231,6 +283,7 @@ function createSequelize(): Sequelize {
         },
       },
       pool,
+      retry,
       logging: false,
       define,
     })
@@ -255,6 +308,7 @@ function createSequelize(): Sequelize {
       },
     },
     pool,
+    retry,
     logging: false,
     define,
   })
@@ -281,6 +335,17 @@ export async function withDatabaseSelfHeal<T>(
   try {
     return await operation()
   } catch (error) {
+    // Capacity is already retried by the Sequelize `retry` config, which covers
+    // every caller rather than only the few that use this helper. Reaching here
+    // means the retries were exhausted, so say what to change and stop.
+    if (isTransientConnectionCapacityError(error)) {
+      console.error(
+        `[database] ${context}: still at connection capacity after ${retry.max} attempts. ` +
+          `Lower DB_POOL_MAX (currently ${pool.max}) or raise the instance's max_connections.`
+      )
+      throw error
+    }
+
     if (!isSslOrCertConnectionError(error)) {
       logDatabaseConnectionFailure(error, context, getDatabaseConnectionInfo)
       throw error

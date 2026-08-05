@@ -53,6 +53,30 @@ export function isSslOrCertConnectionError(error: unknown): boolean {
   return false
 }
 
+/**
+ * Postgres refused the connection because the server is at `max_connections`.
+ *
+ * Distinct from an SSL fault: nothing is wrong with this process, so resetting
+ * the connector would not help and would throw away a healthy pool. Slots free
+ * up as other requests finish, which makes the failure worth retrying.
+ *
+ * Wording differs across server versions ("non-replication superuser" on 14/15,
+ * "roles with the SUPERUSER attribute" on 16), and pg's own pool reports
+ * "sorry, too many clients already", so match all three.
+ */
+export function isTransientConnectionCapacityError(error: unknown): boolean {
+  const { message, code } = extractConnectionErrorCodes(error)
+  const normalized = message.toLowerCase()
+
+  // 53300 too_many_connections, 53400 configuration_limit_exceeded.
+  if (code === '53300' || code === '53400') return true
+  if (normalized.includes('remaining connection slots are reserved')) return true
+  if (normalized.includes('too many clients already')) return true
+  if (normalized.includes('too many connections')) return true
+
+  return false
+}
+
 export function formatDatabaseConnectionFailure(
   error: unknown,
   connectionInfo: DatabaseConnectionInfo,
