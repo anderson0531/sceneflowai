@@ -14,6 +14,7 @@ import { CreditsPaywallHost } from '@/components/credits/CreditsPaywallHost'
 import { CookieConsent } from '@/components/ui/CookieConsent'
 import { DocumentLocaleScript } from '@/components/i18n/DocumentLocaleScript'
 import { ClientAppMessagesProvider } from '@/components/i18n/ClientAppMessagesProvider'
+import { LocaleSwitchOverlay } from '@/components/i18n/LocaleSwitchOverlay'
 import { GlobalErrorGuard } from '@/components/providers/GlobalErrorGuard'
 import AudioPlayerProvider from '@/context/AudioPlayerProvider'
 import {
@@ -266,6 +267,10 @@ export default function RootLayout({
                   <GlobalHeader />
                   <ConditionalLayout>{children}</ConditionalLayout>
                 </ClientAppMessagesProvider>
+                {/* Outside the catalog provider on purpose: it renders while the
+                    old catalog is still loaded, and labels itself with the
+                    target language's endonym instead. */}
+                <LocaleSwitchOverlay />
                 <InstallPrompt />
                 <Toaster
                   position="top-right"

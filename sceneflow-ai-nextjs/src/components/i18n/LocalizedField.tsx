@@ -248,26 +248,37 @@ export function TranslationNotice({
   sourceLocale,
   uiLocale,
   isLoading,
+  pendingCount = 0,
   onPromote,
 }: {
   sourceLocale: string
   uiLocale: string
   isLoading?: boolean
+  /** Fields in the in-flight request, so the wait is named rather than implied. */
+  pendingCount?: number
   onPromote?: () => void
 }) {
   const t = useTranslations('common.language')
+
+  // While work is in flight the count is the useful message; the provenance
+  // notice only matters once there is a translation to be honest about.
+  const message =
+    isLoading && pendingCount > 0
+      ? t('translatingFields', { count: pendingCount })
+      : t('translationNotice', {
+          sourceLanguage: getLocaleNativeName(sourceLocale),
+          targetLanguage: getLocaleNativeName(uiLocale),
+        })
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
-      <p className="flex items-center gap-2 text-xs text-amber-200/90">
+      <p className="flex items-center gap-2 text-xs text-amber-200/90" aria-live="polite">
         {isLoading ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
         ) : (
           <Languages className="h-3.5 w-3.5" />
         )}
-        {t('translationNotice', {
-          sourceLanguage: getLocaleNativeName(sourceLocale),
-          targetLanguage: getLocaleNativeName(uiLocale),
-        })}
+        {message}
       </p>
       {onPromote && <RewriteInLanguageButton uiLocale={uiLocale} onPromote={onPromote} />}
     </div>

@@ -58,7 +58,7 @@ import GeneratingOverlay from '@/components/ui/GeneratingOverlay'
 import { BlueprintTtsProvider } from '@/contexts/BlueprintTtsContext'
 import { BlueprintTtsProgressBar } from '@/components/blueprint/BlueprintTtsProgressBar'
 import { BlueprintOnboarding } from '@/components/blueprint/BlueprintOnboarding'
-import { StoryLocaleControl } from '@/components/i18n/StoryLocaleControl'
+import { StoryLocaleBadge } from '@/components/i18n/StoryLocaleControl'
 import { useStoryLocale } from '@/i18n/useStoryLocale'
 import { ProductEmptyState } from '@/components/product'
 import { BlueprintResonanceStrip } from '@/components/blueprint/BlueprintResonanceStrip'
@@ -110,8 +110,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   // Side panel visibility state
   const [showSidePanel, setShowSidePanel] = useState(true)
 
-  // Language new AI-written content is authored in, overridable per project.
-  const { i18n: storyI18n, setEntityI18n: setStoryI18n } = useStoryLocale(
+  // Language new AI-written content is authored in. Read-only here: it follows
+  // the header switcher unless the project carries an override from Settings.
+  const { i18n: storyI18n } = useStoryLocale(
     currentProject as { metadata?: Record<string, any> | null } | null
   )
 
@@ -312,7 +313,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       setShowSidePanel(true)
       if (copy) {
         navigator.clipboard.writeText(result.url).catch(() => {})
-        toast.success('Share link ready — copied to clipboard')
+        toast.success(t('toast.shareLinkReady'))
       }
     },
     []
@@ -362,13 +363,13 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
 
   const handleShare = async (opts?: { forceNew?: boolean }) => {
     if (!projectId || projectId.startsWith('new-project')) {
-      toast.error('Save the project before sharing')
+      toast.error(t('toast.saveBeforeSharing'))
       return
     }
 
     const variants = (guide as any)?.treatmentVariants
     if (!variants?.length) {
-      toast.error('Generate a blueprint before sharing')
+      toast.error(t('toast.generateBeforeSharing'))
       return
     }
 
@@ -376,7 +377,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     const variant =
       variants.find((v: { id: string }) => v.id === selectedId) || variants[0]
     if (!variant) {
-      toast.error('No treatment variant to share')
+      toast.error(t('toast.noVariantToShare'))
       return
     }
 
@@ -413,7 +414,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       }
     } catch (error) {
       console.error('Share failed:', error)
-      toast.error('Failed to create share link')
+      toast.error(t('toast.shareLinkFailed'))
     } finally {
       setIsSharing(false)
     }
@@ -475,7 +476,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     const v =
       variants?.find((variant: any) => variant.id === selectedId) || variants?.[0]
     if (!v) {
-      toast.error('No Blueprint variant found')
+      toast.error(t('toast.noVariantFound'))
       return
     }
     const gate = evaluateGate(false)
@@ -542,13 +543,13 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       })
       if (!ok) {
         const { toast } = await import('sonner')
-        toast.error('Analysis completed but failed to save to project')
+        toast.error(t('toast.analysisSaveFailed'))
       }
     } catch (error) {
       console.error('[StudioPage] Error saving AR analysis:', error)
       try {
         const { toast } = await import('sonner')
-        toast.error('Failed to save analysis to project')
+        toast.error(t('toast.analysisSaveFailed'))
       } catch {}
     }
   }
@@ -726,9 +727,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           if (error?.status === 402) {
             toast.error(errorMessage)
           } else if (serverMessage) {
-            toast.error(`${serverMessage} Click the image to retry.`)
+            toast.error(t('toast.heroFailedWithReason', { reason: serverMessage }))
           } else {
-            toast.error('Hero image generation failed. Click the image to retry.')
+            toast.error(t('toast.heroFailed'))
           }
         } catch {}
         // Clear the generation flag on error so user can retry
@@ -965,7 +966,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         })
         
         if (res.ok) {
-          try { const { toast } = require('sonner'); toast.success('Project saved!') } catch {}
+          try { const { toast } = require('sonner'); toast.success(t('toast.projectSaved')) } catch {}
         }
       } else {
         const res = await fetch('/api/projects', {
@@ -980,13 +981,13 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         
         const data = await res.json()
         if (data.success && data.project) {
-          try { const { toast } = require('sonner'); toast.success('Project created!') } catch {}
+          try { const { toast } = require('sonner'); toast.success(t('toast.projectCreated')) } catch {}
           router.push(`/dashboard/studio/${data.project.id}`)
         }
       }
     } catch (error) {
       console.error('Save failed:', error)
-      try { const { toast } = require('sonner'); toast.error('Failed to save project') } catch {}
+      try { const { toast } = require('sonner'); toast.error(t('toast.projectSaveFailed')) } catch {}
     }
   };
 
@@ -1107,7 +1108,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 format: metadata.format || projectData.metadata?.format || defaultFormatForIntent(primeIntent),
               }).catch((err) => {
                 console.error('[StudioPage] Auto-generation failed:', err)
-                toast.error('Failed to generate Blueprint automatically.')
+                toast.error(t('toast.autoGenerateFailed'))
               })
             }, 800)
           }
@@ -1348,11 +1349,10 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                     )}
                   </div>
                   <div className="flex items-center gap-2 flex-wrap justify-end">
-                    <StoryLocaleControl
-                      entityId={projectId}
-                      i18n={storyI18n}
-                      onChange={setStoryI18n}
-                    />
+                    {/* Read-only: the header switcher is the single language
+                        control, and the story language follows it unless the
+                        project carries an override set in Settings. */}
+                    <StoryLocaleBadge locale={storyI18n.sourceLocale} />
                     {hasBlueprint && (
                       <BlueprintResonanceStrip
                         progress={blueprintProgress}
@@ -1419,7 +1419,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                   <div data-blueprint-section="hero-image">
                     <TreatmentHeroImage
                       image={guide.treatmentVariants[0]?.heroImage || null}
-                      title={guide.treatmentVariants[0]?.title || guide.title || 'Untitled'}
+                      title={guide.treatmentVariants[0]?.title || guide.title || t('untitled')}
                       subtitle={guide.treatmentVariants[0]?.logline}
                       genre={guide.treatmentVariants[0]?.genre}
                       aspectRatio="2.39:1"
@@ -1465,12 +1465,12 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                               await syncActiveBlueprintShare(updatedVariant as Record<string, unknown>)
                             }
                             const { toast } = await import('sonner')
-                            toast.success('Hero image uploaded successfully')
+                            toast.success(t('toast.heroUploaded'))
                           }
                         } catch (error) {
                           console.error('Upload error:', error)
                           const { toast } = await import('sonner')
-                          toast.error('Failed to upload image')
+                          toast.error(t('toast.heroUploadFailed'))
                         } finally {
                           setIsUploadingHero(false)
                         }
@@ -1487,11 +1487,11 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 {(!guide.treatmentVariants || guide.treatmentVariants.length === 0) && !isGen && (
                   <ProductEmptyState
                     icon={<Wand2 className="h-8 w-8 text-cyan-400" />}
-                    title="Start Your Project"
-                    description="Describe your project and generate a professional Blueprint with AI-powered story structure, characters, and visual direction."
+                    title={t('empty.title')}
+                    description={t('empty.description')}
                     accent="product"
                     className="border-cyan-500/30 bg-gradient-to-br from-cyan-500/5 to-purple-500/5"
-                    actionLabel="Start Project"
+                    actionLabel={t('empty.action')}
                     onAction={() => setShowReimaginDialog(true)}
                   />
                 )}
@@ -1686,7 +1686,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           open={showHeroPromptBuilder}
           onClose={() => setShowHeroPromptBuilder(false)}
           treatment={{
-            title: guide.treatmentVariants[0]?.title || guide.title || 'Untitled',
+            title: guide.treatmentVariants[0]?.title || guide.title || t('untitled'),
             logline: guide.treatmentVariants[0]?.logline,
             synopsis: guide.treatmentVariants[0]?.synopsis || guide.treatmentVariants[0]?.content,
             genre: guide.treatmentVariants[0]?.genre,
@@ -1721,7 +1721,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           onOpenChange={setShowHeroEditModal}
           imageUrl={guide.treatmentVariants[0].heroImage.url}
           imageType="scene"
-          title={`Edit Hero Image — ${guide.treatmentVariants[0]?.title || 'Untitled'}`}
+          title={t('editHeroImage', { title: guide.treatmentVariants[0]?.title || t('untitled') })}
           onSave={(newImageUrl) => {
             // Update the hero image with the edited version
             const currentVariants = useGuideStore.getState().guide.treatmentVariants || []

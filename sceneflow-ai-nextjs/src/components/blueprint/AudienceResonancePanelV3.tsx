@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import React, { useState, useCallback, useEffect, useMemo } from 'react'
 import { ASSISTANT } from '@/lib/constants/assistant'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -141,6 +143,7 @@ export function AudienceResonancePanelV3({
   onOpenBlueprintRefine,
   onScrollToSection,
 }: AudienceResonancePanelV3Props) {
+  const t = useTranslations('blueprint.audienceResonance')
   const [localTreatment, setLocalTreatment] = useState(treatmentProp)
   const treatment = localTreatment || treatmentProp
 
@@ -385,7 +388,7 @@ export function AudienceResonancePanelV3({
         <div className="p-4 border-b border-slate-800/60 space-y-3">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-sm font-semibold text-white tracking-tight">
-              Audience Resonance Analysis
+              {t('title')}
             </h2>
             <BlueprintTtsControls
               playId="ar-panel"
@@ -400,11 +403,11 @@ export function AudienceResonancePanelV3({
             aria-expanded={audienceSetupExpanded}
           >
             <span className="text-xs font-medium text-gray-400 uppercase tracking-wide flex-1">
-              Target Audience
+              {t('targetAudience')}
             </span>
             {audienceDirty && (
               <span className="text-[10px] text-amber-400 normal-case tracking-normal">
-                Unsaved
+                {t('unsaved')}
               </span>
             )}
             <span className="text-[10px] text-gray-500 group-hover:text-gray-400 normal-case tracking-normal">
@@ -445,7 +448,7 @@ export function AudienceResonancePanelV3({
 
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">
-                  Analysis direction (optional)
+                  {t('analysisDirection')}
                 </label>
                 <Textarea
                   value={audienceDefinition.customDirection || ''}
@@ -473,7 +476,7 @@ export function AudienceResonancePanelV3({
               className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border border-slate-600 text-gray-300 hover:bg-slate-800 disabled:opacity-40"
             >
               <Save className="w-3.5 h-3.5" />
-              Save audience
+              {t('saveAudience')}
             </button>
             <button
               type="button"
@@ -486,7 +489,7 @@ export function AudienceResonancePanelV3({
               ) : (
                 <Sparkles className="w-3.5 h-3.5" />
               )}
-              Analyze
+              {t('analyze')}
             </button>
           </div>
         </div>
@@ -519,7 +522,7 @@ export function AudienceResonancePanelV3({
                   >
                     {analysis.overallScore}
                   </span>
-                  <span className="text-sm text-gray-500">/ 100</span>
+                  <span className="text-sm text-gray-500">{t('outOfHundred')}</span>
                   <span
                     className={cn(
                       'text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded',
@@ -548,7 +551,7 @@ export function AudienceResonancePanelV3({
                 {!analysis.isReadyForProduction && pointsToReady > 0 && (
                   <p className="text-[11px] text-cyan-400/90 flex items-center gap-1">
                     <TrendingUp className="w-3 h-3" />
-                    {pointsToReady} points to reach {READY_FOR_PRODUCTION_THRESHOLD_V3}+
+                    {t('pointsToReach', { points: pointsToReady, target: READY_FOR_PRODUCTION_THRESHOLD_V3 })}
                   </p>
                 )}
                 <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
@@ -569,7 +572,7 @@ export function AudienceResonancePanelV3({
                     disabled={isAnalyzing}
                     className="flex-1 px-3 py-2 text-xs bg-cyan-600/80 hover:bg-cyan-600 text-white rounded-lg disabled:opacity-50"
                   >
-                    Re-analyze
+                    {t('reAnalyze')}
                   </button>
                   {onProceedToScripting && (
                     <button
@@ -594,7 +597,7 @@ export function AudienceResonancePanelV3({
               {analysis.deductions.length > 0 && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wide">
-                    Score breakdown (from 100)
+                    {t('scoreBreakdown')}
                   </h4>
                   <ul className="space-y-1">
                     {analysis.deductions.map((d, i) => (
@@ -606,10 +609,10 @@ export function AudienceResonancePanelV3({
                           scrollToBlueprintSection(section)
                           onScrollToSection?.(section)
                         }}
-                        title="Jump to matching Blueprint section"
+                        title={t('jumpToSection')}
                       >
                         <span className="flex-1 pr-2">{d.reason}</span>
-                        <span className="text-red-400 font-mono shrink-0">−{d.points}</span>
+                        <span className="text-red-400 font-mono shrink-0">{t('minusPoints', { points: d.points })}</span>
                       </li>
                     ))}
                   </ul>
@@ -620,7 +623,7 @@ export function AudienceResonancePanelV3({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-medium text-amber-400/90 uppercase tracking-wide">
-                      Recommendations
+                      {t('recommendations')}
                     </h4>
                     <button
                       type="button"
@@ -641,7 +644,7 @@ export function AudienceResonancePanelV3({
                           {rec.title || rec.text.slice(0, 60)}
                         </span>
                         <span className="text-[10px] text-red-400/90 font-mono">
-                          −{rec.pointsDeducted}
+                          {t('minusPoints', { points: rec.pointsDeducted })}
                         </span>
                       </div>
                       <p className="text-xs text-gray-500 line-clamp-2">{rec.text}</p>
@@ -650,7 +653,7 @@ export function AudienceResonancePanelV3({
                         onClick={() => openEditor([rec])}
                         className="text-[10px] text-cyan-400 hover:text-cyan-300"
                       >
-                        Improve with {ASSISTANT.short} →
+                        {t('improveWith', { assistant: ASSISTANT.short })}
                       </button>
                     </div>
                   ))}
@@ -660,7 +663,7 @@ export function AudienceResonancePanelV3({
               {analysis.strengths.length > 0 && (
                 <div className="space-y-1">
                   <h4 className="text-xs text-emerald-500/80 uppercase tracking-wide">
-                    Strengths
+                    {t('strengths')}
                   </h4>
                   {analysis.strengths.slice(0, 3).map((s, i) => (
                     <p key={i} className="text-xs text-gray-400 flex gap-1.5">
@@ -673,7 +676,7 @@ export function AudienceResonancePanelV3({
 
               <details className="rounded-xl border border-slate-700/30 bg-slate-800/20">
                 <summary className="px-3 py-2 text-xs text-gray-400 cursor-pointer list-none flex justify-between">
-                  Category scores
+                  {t('categoryScores')}
                   <ChevronDown className="w-4 h-4" />
                 </summary>
                 <div className="px-3 pb-3 space-y-2">
@@ -704,7 +707,7 @@ export function AudienceResonancePanelV3({
 
         {!analysis && !isAnalyzing && !error && (
           <div className="py-12 px-4 text-center text-sm text-gray-500">
-            Save your target audience, then analyze how your blueprint resonates with that audience.
+            {t('emptyHint')}
           </div>
         )}
       </div>

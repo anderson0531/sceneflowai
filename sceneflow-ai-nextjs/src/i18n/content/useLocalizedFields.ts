@@ -57,7 +57,7 @@ export function useLocalizedFields({
     return out
   }, [pathPrefix, values])
 
-  const { resolve, uiLocale, sourceLocale, needsTranslation, isLoading } =
+  const { resolve, uiLocale, sourceLocale, needsTranslation, isLoading, pendingCount } =
     useContentTranslation({ fields, i18n, glossary, enabled })
 
   const bind = useCallback(
@@ -85,6 +85,8 @@ export function useLocalizedFields({
     sourceLocale,
     needsTranslation,
     isLoading,
+    /** Fields covered by the in-flight request; 0 when idle. */
+    pendingCount,
     promoteToSourceLocale,
     /** Only offer override editing when the caller can persist it. */
     canOverride: Boolean(onI18nChange),

@@ -250,6 +250,7 @@ export function ToneStyleEditDialog({
               sourceLocale={localized.sourceLocale}
               uiLocale={localized.uiLocale}
               isLoading={localized.isLoading}
+              pendingCount={localized.pendingCount}
               onPromote={onEntityI18nChange ? localized.promoteToSourceLocale : undefined}
             />
           )}

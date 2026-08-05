@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useTranslations } from 'next-intl'
 import { Radar, TrendingUp, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
@@ -21,6 +22,8 @@ export function BlueprintResonanceStrip({
   onImproveWeakest,
   className,
 }: BlueprintResonanceStripProps) {
+  const t = useTranslations('blueprint.resonance')
+
   if (!progress.arScore && progress.arScore !== 0) {
     return (
       <button
@@ -33,7 +36,7 @@ export function BlueprintResonanceStrip({
         )}
       >
         <Radar className="w-3.5 h-3.5" />
-        Run {BLUEPRINT_COPY.audienceResonance}
+        {t('run', { feature: BLUEPRINT_COPY.audienceResonance })}
       </button>
     )
   }
@@ -42,8 +45,8 @@ export function BlueprintResonanceStrip({
     <div className={cn('inline-flex flex-wrap items-center gap-2', className)}>
       <ProductScoreChip
         score={progress.arScore!}
-        label="Blueprint AR"
-        suffix={`→ target ${progress.arTarget}+`}
+        label={t('chipLabel')}
+        suffix={t('targetSuffix', { target: progress.arTarget })}
         onClick={onOpenResonance}
       />
       <Radar className="hidden" aria-hidden />
@@ -52,7 +55,7 @@ export function BlueprintResonanceStrip({
           <span className="text-xs text-gray-500">·</span>
           <span className="inline-flex items-center gap-1 text-xs text-cyan-300/90">
             <TrendingUp className="w-3 h-3" />
-            {progress.pointsToTarget} pts
+            {t('pointsToTarget', { points: progress.pointsToTarget })}
           </span>
           {progress.weakestCategory && (
             <Button
@@ -62,7 +65,7 @@ export function BlueprintResonanceStrip({
               className="h-6 px-2 text-[10px] text-cyan-300 hover:text-white hover:bg-cyan-500/20"
               onClick={onImproveWeakest}
             >
-              Improve weakest
+              {t('improveWeakest')}
               <ArrowRight className="w-3 h-3 ml-0.5" />
             </Button>
           )}

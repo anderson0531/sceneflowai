@@ -8,6 +8,7 @@ import {
   UI_LOCALE_COOKIE,
   UI_LOCALE_STORAGE_KEY,
 } from './locale'
+import { beginLocaleSwitch, endLocaleSwitch } from './localeSwitchStatus'
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365
 
@@ -61,9 +62,15 @@ export function useUiLocale() {
     async (nextLocale: string, options?: { reload?: boolean }) => {
       if (!isLocale(nextLocale)) return
 
+      const willReload = options?.reload !== false && typeof window !== 'undefined'
+
       setLocale(nextLocale)
       writeUiLocaleCookie(nextLocale)
       applyDocumentLocale(nextLocale)
+
+      // Raised before the request so the overlay covers the whole gap, not just
+      // the reload at the end of it.
+      if (willReload) beginLocaleSwitch(nextLocale)
 
       setIsSaving(true)
       try {
@@ -81,8 +88,10 @@ export function useUiLocale() {
 
       // Server components hold the message catalog, so a reload is what makes
       // the new language actually appear.
-      if (options?.reload !== false && typeof window !== 'undefined') {
+      if (willReload) {
         window.location.reload()
+      } else {
+        endLocaleSwitch()
       }
     },
     []

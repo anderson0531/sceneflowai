@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import React, { useState } from 'react'
 import { ASSISTANT } from '@/lib/constants/assistant'
 import { Users, X, Copy, Check, Link2, Radar, Lightbulb } from 'lucide-react'
@@ -73,6 +75,7 @@ export function SidePanelTabs({
   foundationTabSignal = 0,
   onScrollToSection,
 }: SidePanelTabsProps) {
+  const t = useTranslations('blueprint.sidePanel')
   const [activeTab, setActiveTab] = useState<'resonance' | 'collaboration' | 'reasoning'>(
     'resonance'
   )
@@ -127,7 +130,7 @@ export function SidePanelTabs({
             )}
           >
             <Radar size={14} />
-            <span>Resonance</span>
+            <span>{t('tabs.resonance')}</span>
           </button>
           <button
             onClick={() => setActiveTab('collaboration')}
@@ -139,7 +142,7 @@ export function SidePanelTabs({
             )}
           >
             <Users size={14} />
-            <span>Collaborate</span>
+            <span>{t('tabs.collaborate')}</span>
           </button>
           <button
             onClick={() => setActiveTab('reasoning')}
@@ -151,7 +154,7 @@ export function SidePanelTabs({
             )}
           >
             <Lightbulb size={14} />
-            <span>Reasoning</span>
+            <span>{t('tabs.reasoning')}</span>
           </button>
         </div>
         {onClose && (
@@ -229,6 +232,8 @@ function CollaborationContent({
   isSharing: boolean
   onOpenBlueprintRefine?: (opts: OpenBlueprintRefineOptions) => void
 }) {
+  const t = useTranslations('blueprint.sidePanel')
+  const tc = useTranslations('common')
   const [subTab, setSubTab] = useState<'feedback' | 'team' | 'messages'>('feedback')
   const [feedback, setFeedback] = React.useState<any[]>([])
   const [participants, setParticipants] = React.useState<
@@ -458,13 +463,13 @@ function CollaborationContent({
             ) : (
               <Users size={16} />
             )}
-            <span>{isSharing ? 'Creating link…' : 'Share & Collaborate'}</span>
+            <span>{isSharing ? t('collab.creatingLink') : t('collab.shareAndCollaborate')}</span>
           </button>
         )}
 
         {hasShareLink && (
           <div className="mt-3 space-y-2 rounded-lg border border-slate-700/50 bg-slate-900/40 p-2.5">
-            <p className="text-[10px] uppercase tracking-wide text-gray-500">Reviewer audio</p>
+            <p className="text-[10px] uppercase tracking-wide text-gray-500">{t('collab.reviewerAudio')}</p>
             <GroupedLanguageSelector
               value={audioLanguage}
               onValueChange={setAudioLanguage}
@@ -478,7 +483,7 @@ function CollaborationContent({
               disabled={audioRefreshing || audioStatus === 'pending'}
               className="w-full px-3 py-2 rounded-lg border border-slate-600/60 bg-slate-800/40 text-white text-xs text-left truncate disabled:opacity-50"
             >
-              Voice: {audioVoiceName}
+              {t('collab.voice', { name: audioVoiceName })}
             </button>
             <button
               type="button"
@@ -499,13 +504,13 @@ function CollaborationContent({
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : null}
               {audioRefreshing || audioStatus === 'pending'
-                ? 'Generating section audio…'
-                : 'Generate section audio'}
+                ? t('collab.generatingAudio')
+                : t('collab.generateAudio')}
             </button>
             {audioStatus ? (
               <p className="text-[10px] text-gray-500">
-                Status: {audioStatus}
-                {audioStatus === 'idle' ? ' — tap Generate when ready' : ''}
+                {t('collab.status', { status: audioStatus })}
+                {audioStatus === 'idle' ? t('collab.statusIdleHint') : ''}
               </p>
             ) : null}
             <button
@@ -540,17 +545,17 @@ function CollaborationContent({
 
       {!hasShareLink ? (
         <div className="flex-1 overflow-y-auto p-4">
-          <p className="text-xs text-gray-500 leading-relaxed">
-            After you create a link, feedback, team chat, and direct messages with reviewers will appear here.
-          </p>
+          <p className="text-xs text-gray-500 leading-relaxed">{t('collab.emptyHint')}</p>
         </div>
       ) : (
     <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
 
       <div className="shrink-0 px-3 py-1.5 flex items-center justify-between border-b border-gray-800/40">
         <span className="text-[10px] text-gray-500">
-          {feedback.length} review{feedback.length !== 1 ? 's' : ''} · {participants.length} reviewer
-          {participants.length !== 1 ? 's' : ''}
+          {t('collab.reviewCounts', {
+            reviews: feedback.length,
+            reviewers: participants.length,
+          })}
         </span>
         <button
           type="button"
@@ -558,7 +563,7 @@ function CollaborationContent({
           disabled={revoking}
           className="text-[10px] text-red-400/80 hover:text-red-300 disabled:opacity-50"
         >
-          Revoke link
+          {t('collab.revokeLink')}
         </button>
       </div>
 
@@ -581,22 +586,20 @@ function CollaborationContent({
       <div className="flex-1 min-h-0 overflow-y-auto p-3">
         {subTab === 'feedback' && (
           <div className="space-y-3">
-            {loading && <div className="text-sm text-gray-400">Loading…</div>}
+            {loading && <div className="text-sm text-gray-400">{tc('status.loading')}</div>}
             {!loading && feedback.length === 0 && (
-              <div className="text-sm text-gray-400 text-center py-6">
-                No feedback yet. Share the link with reviewers.
-              </div>
+              <div className="text-sm text-gray-400 text-center py-6">{t('collab.noFeedback')}</div>
             )}
             {feedback.map((f: any) => (
               <div key={f.id} className="text-xs text-gray-300 rounded border border-gray-800 p-2 bg-gray-900/50">
                 <div className="text-gray-400 mb-1 flex justify-between gap-2">
                   <span className="min-w-0">
                     {f.overallScore ? (
-                      <span className="text-yellow-500 font-medium">{f.overallScore}/5</span>
+                      <span className="text-yellow-500 font-medium">{t('collab.scoreOutOfFive', { score: f.overallScore })}</span>
                     ) : null}{' '}
                     <span className="text-gray-200">{f.reviewerName}</span>
                     {f.preferred ? (
-                      <span className="ml-1 text-emerald-400/90">· Preferred</span>
+                      <span className="ml-1 text-emerald-400/90">{t('collab.preferred')}</span>
                     ) : null}
                   </span>
                   <span className="text-gray-500 shrink-0">
@@ -620,7 +623,7 @@ function CollaborationContent({
                             {sec}
                           </span>
                           {data.score ? (
-                            <span className="text-amber-500/90 text-[10px]">{data.score}/5</span>
+                            <span className="text-amber-500/90 text-[10px]">{t('collab.scoreOutOfFive', { score: data.score })}</span>
                           ) : null}
                         </div>
                         {Array.isArray(data.tags) && data.tags.length > 0 && (
@@ -643,13 +646,13 @@ function CollaborationContent({
                         )}
                         {data.concerns && (
                           <p className="mt-0.5">
-                            <span className="text-gray-500">Concerns: </span>
+                            <span className="text-gray-500">{t('collab.concerns')}</span>
                             {data.concerns}
                           </p>
                         )}
                         {data.suggestions && (
                           <p className="mt-0.5 text-gray-400">
-                            <span className="text-gray-500">Notes: </span>
+                            <span className="text-gray-500">{t('collab.notes')}</span>
                             {data.suggestions}
                           </p>
                         )}
@@ -676,13 +679,13 @@ function CollaborationContent({
                 ) : (
                   <Sparkles className="h-4 w-4" />
                 )}
-                Turn feedback into recommendations
+                {t('collab.synthesize')}
               </button>
             )}
 
             {recommendations.length > 0 && (
               <div className="space-y-2 border-t border-gray-800 pt-3">
-                <p className="text-xs text-gray-400 font-medium">Synthesized recommendations</p>
+                <p className="text-xs text-gray-400 font-medium">{t('collab.synthesized')}</p>
                 {recommendations.map((rec) => (
                   <label
                     key={rec.id}
@@ -711,7 +714,7 @@ function CollaborationContent({
                   disabled={selectedRecIds.size === 0 || !onOpenBlueprintRefine}
                   className="w-full px-3 py-2 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-white text-sm font-medium disabled:opacity-50"
                 >
-                  Open {ASSISTANT.short}
+                  {t('collab.openAssistant', { assistant: ASSISTANT.short })}
                 </button>
               </div>
             )}

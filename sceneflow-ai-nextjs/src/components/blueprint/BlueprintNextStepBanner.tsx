@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import React, { useState } from 'react'
 import {
   ArrowRight,
@@ -60,6 +62,7 @@ export function BlueprintNextStepBanner({
   onAction,
   className,
 }: BlueprintNextStepBannerProps) {
+  const t = useTranslations('blueprint.nextStep')
   const [expanded, setExpanded] = useState(false)
 
   if (!progress.nextStepEvent && progress.currentStep === 'generate' && !progress.nextStepLabel) {
@@ -130,7 +133,7 @@ export function BlueprintNextStepBanner({
               aria-expanded={expanded}
               className="inline-flex items-center gap-1 text-xs text-amber-200/90 hover:text-amber-100"
             >
-              {remaining} to finish
+              {t('remainingToFinish', { count: remaining })}
               {expanded ? (
                 <ChevronUp className="w-3.5 h-3.5" />
               ) : (
@@ -144,7 +147,7 @@ export function BlueprintNextStepBanner({
               onClick={onAction}
               className="bg-cyan-600 hover:bg-cyan-500 text-white"
             >
-              Go
+              {t('go')}
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           )}

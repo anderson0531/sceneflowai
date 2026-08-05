@@ -65,6 +65,7 @@
   "language": {
     "interfaceLanguage": "Interface language",
     "storyLanguage": "Story language",
+    "storyLanguageHint": "New content is written in {language}. Change it in Settings under Languages.",
     "deliveryLanguages": "Delivery languages",
     "selectLanguage": "Select language",
     "searchLanguage": "Search language…",
@@ -76,6 +77,7 @@
     "viewOriginal": "View original",
     "hideOriginal": "Hide original",
     "translating": "Translating",
+    "translatingFields": "Translating {count, plural, =1 {# field} other {# fields}}…",
     "englishRequired": "English required",
     "notTranslated": "Not translated",
     "machineFieldHint": "Image and video models produce noticeably weaker results from translated prompts, so this field stays in English.",

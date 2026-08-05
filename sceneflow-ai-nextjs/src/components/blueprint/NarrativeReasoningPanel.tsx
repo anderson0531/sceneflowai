@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useTranslations } from 'next-intl'
 import { Award, Lightbulb, RefreshCw, Sparkles, Users } from 'lucide-react'
 import { BlueprintNarrationSection } from '@/components/blueprint/BlueprintNarrationSection'
 import type { NarrativeReasoningNarrationInput } from '@/lib/blueprint/buildNarrativeReasoningNarrationText'
@@ -16,15 +17,14 @@ export function NarrativeReasoningPanel({
 }: {
   reasoning?: NarrativeReasoning | null
 }) {
+  const t = useTranslations('blueprint.reasoning')
+
   if (!reasoning) {
     return (
       <div className="p-4 space-y-4">
         <BlueprintNarrationSection reasoning={null} playId="reasoning-narration" />
         <div className="rounded-lg border border-slate-700/60 bg-slate-800/40 p-3">
-          <p className="text-xs text-gray-400">
-            No reasoning recorded for this blueprint yet. Regenerate it to capture why the
-            AI made its storytelling choices.
-          </p>
+          <p className="text-xs text-gray-400">{t('noneRecorded')}</p>
         </div>
       </div>
     )
@@ -40,19 +40,14 @@ export function NarrativeReasoningPanel({
       <div className="flex items-center gap-2">
         <Lightbulb className="w-4 h-4 text-amber-400 shrink-0" />
         <div>
-          <h3 className="text-sm font-semibold text-white">Narrative Reasoning</h3>
-          <p className="text-[11px] text-gray-500">
-            Why the AI made these storytelling choices
-          </p>
+          <h3 className="text-sm font-semibold text-white">{t('title')}</h3>
+          <p className="text-[11px] text-gray-500">{t('subtitle')}</p>
         </div>
       </div>
 
       {isEmpty ? (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
-          <p className="text-xs text-amber-200/90">
-            The AI did not provide narrative reasoning for this blueprint. Regenerate it to
-            see the creative decisions.
-          </p>
+          <p className="text-xs text-amber-200/90">{t('notProvided')}</p>
         </div>
       ) : (
         <>
@@ -60,7 +55,7 @@ export function NarrativeReasoningPanel({
             <section className="rounded-lg border border-blue-500/25 bg-blue-500/10 p-3">
               <h4 className="text-xs font-semibold text-blue-100 mb-1.5 flex items-center gap-1.5">
                 <Users className="w-3.5 h-3.5" />
-                Character Focus
+                {t('characterFocus')}
               </h4>
               <p className="text-xs text-blue-100/90 leading-relaxed">
                 {reasoning.character_focus}
@@ -72,7 +67,7 @@ export function NarrativeReasoningPanel({
             <section className="space-y-2">
               <h4 className="text-xs font-semibold text-gray-200 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-                Key Creative Decisions
+                {t('keyDecisions')}
               </h4>
               {decisions.map((decision, idx) => (
                 <div
@@ -84,12 +79,12 @@ export function NarrativeReasoningPanel({
                   </div>
                   {decision.why && (
                     <p className="text-[11px] text-purple-100/90 mb-1">
-                      <strong className="font-semibold">Why:</strong> {decision.why}
+                      <strong className="font-semibold">{t('why')}</strong> {decision.why}
                     </p>
                   )}
                   {decision.impact && (
                     <p className="text-[11px] text-purple-200/80 italic">
-                      <strong className="font-semibold not-italic">Impact:</strong>{' '}
+                      <strong className="font-semibold not-italic">{t('impact')}</strong>{' '}
                       {decision.impact}
                     </p>
                   )}
@@ -102,7 +97,7 @@ export function NarrativeReasoningPanel({
             <section className="rounded-lg border border-emerald-500/25 bg-emerald-500/10 p-3">
               <h4 className="text-xs font-semibold text-emerald-100 mb-1.5 flex items-center gap-1.5">
                 <Award className="w-3.5 h-3.5" />
-                Story Strengths
+                {t('storyStrengths')}
               </h4>
               <p className="text-xs text-emerald-100/90 leading-relaxed">
                 {reasoning.story_strengths}
@@ -114,7 +109,7 @@ export function NarrativeReasoningPanel({
             <section className="rounded-lg border border-amber-500/25 bg-amber-500/10 p-3">
               <h4 className="text-xs font-semibold text-amber-100 mb-1.5 flex items-center gap-1.5">
                 <RefreshCw className="w-3.5 h-3.5" />
-                Want Different Emphasis?
+                {t('wantDifferentEmphasis')}
               </h4>
               <p className="text-xs text-amber-100/90 leading-relaxed">
                 {reasoning.user_adjustments}

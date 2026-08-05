@@ -52,6 +52,9 @@ export function useContentTranslation({
 
   const [machine, setMachine] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
+  // How many fields the in-flight request covers, so callers can say what is
+  // happening once instead of leaving a row of unexplained spinners.
+  const [pendingCount, setPendingCount] = useState(0)
   const requestedRef = useRef(new Set<string>())
 
   // Stable identity for the set of source strings, so the effect does not
@@ -83,6 +86,7 @@ export function useContentTranslation({
 
     let cancelled = false
     setIsLoading(true)
+    setPendingCount(pending.length)
 
     ;(async () => {
       try {
@@ -116,7 +120,10 @@ export function useContentTranslation({
         for (const item of pending) {
           requestedRef.current.add(`${uiLocale}\u0000${item.path}\u0000${item.text}`)
         }
-        if (!cancelled) setIsLoading(false)
+        if (!cancelled) {
+          setIsLoading(false)
+          setPendingCount(0)
+        }
       }
     })()
 
@@ -162,5 +169,7 @@ export function useContentTranslation({
     sourceLocale,
     needsTranslation,
     isLoading,
+    /** Fields covered by the in-flight request; 0 when idle. */
+    pendingCount,
   }
 }

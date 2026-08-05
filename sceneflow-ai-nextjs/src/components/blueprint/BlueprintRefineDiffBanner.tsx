@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import React from 'react'
 import { X, GitCompare } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -21,6 +23,7 @@ export function BlueprintRefineDiffBanner({
   onDismiss,
   className,
 }: BlueprintRefineDiffBannerProps) {
+  const t = useTranslations('blueprint.refine')
   if (diffs.length === 0) return null
 
   return (
@@ -33,7 +36,7 @@ export function BlueprintRefineDiffBanner({
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2 text-cyan-200 font-medium text-xs uppercase tracking-wide">
           <GitCompare className="w-4 h-4" />
-          Blueprint updated
+          {t('blueprintUpdated')}
         </div>
         <button type="button" onClick={onDismiss} className="text-gray-400 hover:text-white">
           <X className="w-4 h-4" />

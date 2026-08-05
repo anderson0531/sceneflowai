@@ -15,6 +15,7 @@ import {
 import { LocalePicker } from '@/components/i18n/LocalePicker'
 import { DEFAULT_LOCALE, getLocaleNativeName, isLocale } from '@/i18n/locale'
 import { applyDocumentLocale, writeUiLocaleCookie } from '@/i18n/useUiLocale'
+import { beginLocaleSwitch } from '@/i18n/localeSwitchStatus'
 
 type LocalePreferences = {
   uiLocale: string
@@ -80,7 +81,8 @@ export function LanguageSettingsCard() {
           applyDocumentLocale(patch.uiLocale)
           toast.success(t('interfaceSet', { language: getLocaleNativeName(patch.uiLocale) }))
           // Message catalogs are resolved on the server, so the new language
-          // only appears after a re-render from the server.
+          // only appears after a re-render from the server. Cover the wait.
+          beginLocaleSwitch(patch.uiLocale)
           setTimeout(() => window.location.reload(), 600)
         } else {
           toast.success(t('saved'))

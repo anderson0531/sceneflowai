@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import React, { useState, useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { 
@@ -52,6 +54,7 @@ export function TreatmentHeroImage({
   error: externalError,
   className
 }: TreatmentHeroImageProps) {
+  const t = useTranslations('blueprint.heroImage')
   const [isHovered, setIsHovered] = useState(false)
   const [imageError, setImageError] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -148,12 +151,12 @@ export function TreatmentHeroImage({
       {isUploading ? (
         <>
           <Loader className="w-4 h-4 mr-2 animate-spin" />
-          Uploading...
+          {t('uploading')}
         </>
       ) : (
         <>
           <Upload className="w-4 h-4 mr-2" />
-          Upload Image
+          {t('uploadImage')}
         </>
       )}
     </Button>
@@ -190,7 +193,7 @@ export function TreatmentHeroImage({
             {isUploading ? (
               <div className="flex flex-col items-center gap-3">
                 <Loader className="w-12 h-12 text-emerald-400 animate-spin" />
-                <span className="text-sm text-slate-400">Uploading hero image...</span>
+                <span className="text-sm text-slate-400">{t('uploadingHero')}</span>
               </div>
             ) : isGenerating || image?.status === 'generating' ? (
               <div className="flex flex-col items-center gap-3">
@@ -201,15 +204,15 @@ export function TreatmentHeroImage({
                   </div>
                 </div>
                 <span className="text-sm text-slate-400 animate-pulse">
-                  Generating hero image...
+                  {t('generatingHero')}
                 </span>
               </div>
             ) : imageError && image?.url ? (
               <div className="flex flex-col items-center gap-2 text-amber-400">
                 <ImageOff className="w-10 h-10" />
-                <span className="text-sm">Hero image failed to load</span>
+                <span className="text-sm">{t('failedToLoad')}</span>
                 <span className="text-xs text-slate-500 max-w-xs text-center">
-                  The image URL may be expired or unavailable. Upload a replacement or regenerate.
+                  {t('failedToLoadHint')}
                 </span>
                 <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
                   {uploadButton}
@@ -221,7 +224,7 @@ export function TreatmentHeroImage({
                       disabled={isGenerating}
                     >
                       <RefreshCw className="w-4 h-4 mr-2" />
-                      Regenerate
+                      {t('regenerate')}
                     </Button>
                   )}
                 </div>
@@ -229,7 +232,7 @@ export function TreatmentHeroImage({
             ) : image?.status === 'error' || externalError ? (
               <div className="flex flex-col items-center gap-2 text-red-400">
                 <ImageOff className="w-10 h-10" />
-                <span className="text-sm">Failed to generate</span>
+                <span className="text-sm">{t('failedToGenerate')}</span>
                 {(externalError || image?.error) && (
                   <span className="text-xs text-slate-500 max-w-xs text-center">
                     {externalError || image?.error}
@@ -245,7 +248,7 @@ export function TreatmentHeroImage({
                       className="border-red-500/30 hover:border-red-400/50"
                     >
                       <RefreshCw className="w-4 h-4 mr-2" />
-                      Retry
+                      {t('retry')}
                     </Button>
                   )}
                 </div>
@@ -253,7 +256,7 @@ export function TreatmentHeroImage({
             ) : (
               <div className="flex flex-col items-center gap-3 text-slate-500">
                 <Film className="w-16 h-16 opacity-30" />
-                <span className="text-sm">Hero image not generated</span>
+                <span className="text-sm">{t('notGenerated')}</span>
                 <div className="flex flex-wrap items-center justify-center gap-2">
                   {uploadButton}
                   {onRegenerate && (
@@ -264,7 +267,7 @@ export function TreatmentHeroImage({
                       disabled={isGenerating}
                     >
                       <Sparkles className="w-4 h-4 mr-2" />
-                      Generate Hero Image
+                      {t('generateHero')}
                     </Button>
                   )}
                 </div>
@@ -331,7 +334,7 @@ export function TreatmentHeroImage({
                     )}
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>Regenerate Image</TooltipContent>
+                <TooltipContent>{t('regenerateImage')}</TooltipContent>
               </Tooltip>
             )}
             
@@ -346,7 +349,7 @@ export function TreatmentHeroImage({
                     <Wand2 className="w-5 h-5 text-white" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>Edit Prompt</TooltipContent>
+                <TooltipContent>{t('editPrompt')}</TooltipContent>
               </Tooltip>
             )}
             
@@ -366,7 +369,7 @@ export function TreatmentHeroImage({
                     )}
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>Upload Image</TooltipContent>
+                <TooltipContent>{t('uploadImage')}</TooltipContent>
               </Tooltip>
             )}
             
@@ -381,7 +384,7 @@ export function TreatmentHeroImage({
                     <Download className="w-5 h-5 text-white" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>Download Image</TooltipContent>
+                <TooltipContent>{t('downloadImage')}</TooltipContent>
               </Tooltip>
             )}
             </TooltipProvider>

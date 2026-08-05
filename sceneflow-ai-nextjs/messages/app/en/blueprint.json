@@ -14,7 +14,31 @@
     "saved": "Saved",
     "saveFailed": "Save failed",
     "syncedToProduction": "Blueprint synced to Production Studio — regenerate your script when ready.",
-    "syncFailed": "Blueprint updated, but Production Studio sync failed"
+    "syncFailed": "Blueprint updated, but Production Studio sync failed",
+    "untitled": "Untitled",
+    "editHeroImage": "Edit Hero Image — {title}",
+    "empty": {
+      "title": "Start Your Project",
+      "description": "Describe your project and generate a professional Blueprint with AI-powered story structure, characters, and visual direction.",
+      "action": "Start Project"
+    },
+    "toast": {
+      "shareLinkReady": "Share link ready — copied to clipboard",
+      "saveBeforeSharing": "Save the project before sharing",
+      "generateBeforeSharing": "Generate a blueprint before sharing",
+      "noVariantToShare": "No treatment variant to share",
+      "shareLinkFailed": "Failed to create share link",
+      "noVariantFound": "No Blueprint variant found",
+      "analysisSaveFailed": "Analysis completed but failed to save to project",
+      "heroFailedWithReason": "{reason} Click the image to retry.",
+      "heroFailed": "Hero image generation failed. Click the image to retry.",
+      "autoGenerateFailed": "Failed to generate Blueprint automatically.",
+      "heroUploaded": "Hero image uploaded successfully",
+      "heroUploadFailed": "Failed to upload image",
+      "projectSaved": "Project saved!",
+      "projectCreated": "Project created!",
+      "projectSaveFailed": "Failed to save project"
+    }
   },
   "tabs": {
     "core": "Core",
@@ -81,7 +105,17 @@
     "refineNote": "💡 Characters will be refined with images and detailed attributes in Production"
   },
   "reasoning": {
-    "whyChoices": "Why these choices?"
+    "whyChoices": "Why these choices?",
+    "title": "Narrative Reasoning",
+    "subtitle": "Why the AI made these storytelling choices",
+    "noneRecorded": "No reasoning recorded for this blueprint yet. Regenerate it to capture why the AI made its storytelling choices.",
+    "notProvided": "The AI did not provide narrative reasoning for this blueprint. Regenerate it to see the creative decisions.",
+    "characterFocus": "Character Focus",
+    "keyDecisions": "Key Creative Decisions",
+    "why": "Why:",
+    "impact": "Impact:",
+    "storyStrengths": "Story Strengths",
+    "wantDifferentEmphasis": "Want Different Emphasis?"
   },
   "help": {
     "title": "How Flow Creates Your Story",
@@ -158,7 +192,8 @@
     "strengthenArcs": "Strengthen Arcs",
     "distinctVoices": "Distinct Voices",
     "relationshipDynamics": "Relationship Dynamics",
-    "whatShouldChange": "What should change and why?"
+    "whatShouldChange": "What should change and why?",
+    "blueprintUpdated": "Blueprint updated"
   },
   "dialog": {
     "unsavedChanges": "Unsaved Changes"
@@ -175,5 +210,79 @@
     "toneStyleUpdated": "Tone & style updated!",
     "beatsUpdated": "Beats updated!",
     "charactersUpdated": "Characters updated!"
+  },
+  "resonance": {
+    "run": "Run {feature}",
+    "chipLabel": "Blueprint AR",
+    "targetSuffix": "→ target {target}+",
+    "pointsToTarget": "{points} pts",
+    "improveWeakest": "Improve weakest"
+  },
+  "nextStep": {
+    "remainingToFinish": "{count} to finish",
+    "go": "Go"
+  },
+  "sidePanel": {
+    "tabs": {
+      "resonance": "Resonance",
+      "collaborate": "Collaborate",
+      "reasoning": "Reasoning"
+    },
+    "collab": {
+      "creatingLink": "Creating link…",
+      "shareAndCollaborate": "Share & Collaborate",
+      "reviewerAudio": "Reviewer audio",
+      "voice": "Voice: {name}",
+      "generatingAudio": "Generating section audio…",
+      "generateAudio": "Generate section audio",
+      "status": "Status: {status}",
+      "statusIdleHint": " — tap Generate when ready",
+      "emptyHint": "After you create a link, feedback, team chat, and direct messages with reviewers will appear here.",
+      "reviewCounts": "{reviews, plural, =1 {# review} other {# reviews}} · {reviewers, plural, =1 {# reviewer} other {# reviewers}}",
+      "revokeLink": "Revoke link",
+      "noFeedback": "No feedback yet. Share the link with reviewers.",
+      "scoreOutOfFive": "{score}/5",
+      "preferred": "· Preferred",
+      "concerns": "Concerns: ",
+      "notes": "Notes: ",
+      "synthesize": "Turn feedback into recommendations",
+      "synthesized": "Synthesized recommendations",
+      "openAssistant": "Open {assistant}"
+    }
+  },
+  "audienceResonance": {
+    "title": "Audience Resonance Analysis",
+    "targetAudience": "Target Audience",
+    "unsaved": "Unsaved",
+    "analysisDirection": "Analysis direction (optional)",
+    "saveAudience": "Save audience",
+    "analyze": "Analyze",
+    "reAnalyze": "Re-analyze",
+    "outOfHundred": "/ 100",
+    "pointsToReach": "{points} points to reach {target}+",
+    "scoreBreakdown": "Score breakdown (from 100)",
+    "minusPoints": "−{points}",
+    "recommendations": "Recommendations",
+    "improveWith": "Improve with {assistant} →",
+    "strengths": "Strengths",
+    "categoryScores": "Category scores",
+    "jumpToSection": "Jump to matching Blueprint section",
+    "emptyHint": "Save your target audience, then analyze how your blueprint resonates with that audience."
+  },
+  "heroImage": {
+    "uploading": "Uploading...",
+    "uploadImage": "Upload Image",
+    "uploadingHero": "Uploading hero image...",
+    "generatingHero": "Generating hero image...",
+    "failedToLoad": "Hero image failed to load",
+    "failedToLoadHint": "The image URL may be expired or unavailable. Upload a replacement or regenerate.",
+    "regenerate": "Regenerate",
+    "regenerateImage": "Regenerate Image",
+    "failedToGenerate": "Failed to generate",
+    "retry": "Retry",
+    "notGenerated": "Hero image not generated",
+    "generateHero": "Generate Hero Image",
+    "editPrompt": "Edit Prompt",
+    "downloadImage": "Download Image"
   }
 }
