@@ -121,12 +121,14 @@ export function useContentTranslation({
           }
         }
         setMachine((current) => ({ ...current, ...next }))
-      } catch {
-        // Leave the source text in place; the field simply reads as 'source'.
-      } finally {
+        // Only remember successful fetches so a failed request can retry.
         for (const item of pending) {
           requestedRef.current.add(`${uiLocale}\u0000${item.path}\u0000${item.text}`)
         }
+      } catch {
+        // Leave the source text in place; the field simply reads as 'source'.
+        // Do not mark requestedRef — the next effect can retry.
+      } finally {
         if (!cancelled) {
           setIsLoading(false)
           setPendingCount(0)

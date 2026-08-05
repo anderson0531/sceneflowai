@@ -43,6 +43,19 @@ export function applyDocumentLocale(locale: string): void {
 }
 
 /**
+ * Resolve the client's UI locale without waiting for a useEffect tick.
+ * Content MT needs this on the first render so chrome catalogs and body
+ * translation agree about the reading language.
+ */
+export function resolveClientUiLocale(): string {
+  if (typeof document === 'undefined') return DEFAULT_LOCALE
+  const fromCookie = readUiLocaleCookie()
+  if (fromCookie) return fromCookie
+  const fromDocument = document.documentElement.lang
+  return isLocale(fromDocument) ? fromDocument : DEFAULT_LOCALE
+}
+
+/**
  * Read and change the interface locale for app surfaces.
  *
  * Persists to `users.preferred_locale` and mirrors to the `sf-locale` cookie so
@@ -54,13 +67,14 @@ export function applyDocumentLocale(locale: string): void {
  * `metadata.i18n.sourceLocale` still win for generation and the story badge.
  */
 export function useUiLocale() {
-  const [locale, setLocale] = useState<string>(DEFAULT_LOCALE)
+  const [locale, setLocale] = useState<string>(() => resolveClientUiLocale())
   const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
-    const fromDocument = document.documentElement.lang
-    const resolved = readUiLocaleCookie() ?? (isLocale(fromDocument) ? fromDocument : undefined)
-    if (resolved) setLocale(resolved)
+    const resolved = resolveClientUiLocale()
+    if (resolved !== locale) setLocale(resolved)
+    // Sync once on mount; switchLocale owns later updates.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const switchLocale = useCallback(

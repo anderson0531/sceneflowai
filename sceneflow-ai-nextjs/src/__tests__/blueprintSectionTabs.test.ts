@@ -120,9 +120,16 @@ describe('Reasoning panel', () => {
     const reasoningPanel = readSource('src/components/blueprint/NarrativeReasoningPanel.tsx')
     const narrationSection = readSource('src/components/blueprint/BlueprintNarrationSection.tsx')
     expect(reasoningPanel).toContain('BlueprintNarrationSection')
-    expect(reasoningPanel).toContain('reasoning={reasoning}')
+    expect(reasoningPanel).toContain('reasoning={localizedReasoning}')
     expect(reasoningPanel).toContain('reasoning={null}')
+    expect(reasoningPanel).toContain('TranslationNotice')
     expect(narrationSection).toContain('buildNarrativeReasoningNarrationText')
+  })
+
+  it('defaults to the Reasoning tab', () => {
+    expect(panel).toMatch(
+      /useState<'resonance' \| 'collaboration' \| 'reasoning'>\(\s*'reasoning'\s*\)/
+    )
   })
 
   it('can be focused by signal, like the other tabs', () => {

@@ -892,8 +892,8 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           if (!hadBlueprintOnLoadRef.current) {
             hadBlueprintOnLoadRef.current = true
             setShowSidePanel(true)
-            setResonanceTabSignal((s) => s + 1)
-            toast.message('Blueprint ready — save your audience, then run Audience Resonance', {
+            setFoundationTabSignal((s) => s + 1)
+            toast.message('Blueprint ready — review Narrative Reasoning for why these choices', {
               duration: 6000,
             })
           }

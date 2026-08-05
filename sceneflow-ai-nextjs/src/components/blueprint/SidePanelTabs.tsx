@@ -79,7 +79,7 @@ export function SidePanelTabs({
 }: SidePanelTabsProps) {
   const t = useTranslations('blueprint.sidePanel')
   const [activeTab, setActiveTab] = useState<'resonance' | 'collaboration' | 'reasoning'>(
-    'resonance'
+    'reasoning'
   )
 
   React.useEffect(() => {

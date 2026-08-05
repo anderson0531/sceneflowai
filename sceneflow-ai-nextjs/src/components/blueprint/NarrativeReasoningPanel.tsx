@@ -8,6 +8,7 @@ import type { NarrativeReasoningNarrationInput } from '@/lib/blueprint/buildNarr
 import { useContentTranslation } from '@/i18n/content/useContentTranslation'
 import { buildNarrativeReasoningDisplayFields } from '@/i18n/content/buildBlueprintDisplayFields'
 import { EMPTY_ENTITY_I18N, type EntityI18n } from '@/i18n/content/entityI18n'
+import { TranslationNotice } from '@/components/i18n/LocalizedField'
 
 export type NarrativeReasoning = NarrativeReasoningNarrationInput
 
@@ -29,7 +30,14 @@ export function NarrativeReasoningPanel({
     [reasoning]
   )
   const resolvedI18n = contentI18n ?? EMPTY_ENTITY_I18N
-  const { resolve } = useContentTranslation({
+  const {
+    resolve,
+    needsTranslation,
+    isLoading,
+    pendingCount,
+    uiLocale,
+    sourceLocale,
+  } = useContentTranslation({
     fields,
     i18n: resolvedI18n,
     enabled: Boolean(reasoning),
@@ -39,7 +47,45 @@ export function NarrativeReasoningPanel({
     [resolve]
   )
 
-  if (!reasoning) {
+  const localizedReasoning = useMemo((): NarrativeReasoning | null => {
+    if (!reasoning) return null
+    const decisions = Array.isArray(reasoning.key_decisions)
+      ? reasoning.key_decisions
+      : []
+    return {
+      ...reasoning,
+      character_focus: text(
+        'narrativeReasoning.character_focus',
+        reasoning.character_focus || ''
+      ),
+      story_strengths: text(
+        'narrativeReasoning.story_strengths',
+        reasoning.story_strengths || ''
+      ),
+      user_adjustments: text(
+        'narrativeReasoning.user_adjustments',
+        reasoning.user_adjustments || ''
+      ),
+      key_decisions: decisions.map((decision, idx) => ({
+        ...decision,
+        decision: text(
+          `narrativeReasoning.key_decisions[${idx}].decision`,
+          decision.decision || ''
+        ),
+        why: decision.why
+          ? text(`narrativeReasoning.key_decisions[${idx}].why`, decision.why)
+          : decision.why,
+        impact: decision.impact
+          ? text(
+              `narrativeReasoning.key_decisions[${idx}].impact`,
+              decision.impact
+            )
+          : decision.impact,
+      })),
+    }
+  }, [reasoning, text])
+
+  if (!reasoning || !localizedReasoning) {
     return (
       <div className="p-4 space-y-4">
         <BlueprintNarrationSection reasoning={null} playId="reasoning-narration" />
@@ -50,24 +96,20 @@ export function NarrativeReasoningPanel({
     )
   }
 
-  const decisions = Array.isArray(reasoning.key_decisions) ? reasoning.key_decisions : []
-  const characterFocus = text(
-    'narrativeReasoning.character_focus',
-    reasoning.character_focus || ''
-  )
-  const storyStrengths = text(
-    'narrativeReasoning.story_strengths',
-    reasoning.story_strengths || ''
-  )
-  const userAdjustments = text(
-    'narrativeReasoning.user_adjustments',
-    reasoning.user_adjustments || ''
-  )
+  const decisions = Array.isArray(localizedReasoning.key_decisions)
+    ? localizedReasoning.key_decisions
+    : []
+  const characterFocus = localizedReasoning.character_focus || ''
+  const storyStrengths = localizedReasoning.story_strengths || ''
+  const userAdjustments = localizedReasoning.user_adjustments || ''
   const isEmpty = !characterFocus && !storyStrengths
 
   return (
     <div className="p-4 space-y-4">
-      <BlueprintNarrationSection reasoning={reasoning} playId="reasoning-narration" />
+      <BlueprintNarrationSection
+        reasoning={localizedReasoning}
+        playId="reasoning-narration"
+      />
 
       <div className="flex items-center gap-2">
         <Lightbulb className="w-4 h-4 text-amber-400 shrink-0" />
@@ -76,6 +118,15 @@ export function NarrativeReasoningPanel({
           <p className="text-[11px] text-gray-500">{t('subtitle')}</p>
         </div>
       </div>
+
+      {needsTranslation ? (
+        <TranslationNotice
+          sourceLocale={sourceLocale}
+          uiLocale={uiLocale}
+          isLoading={isLoading}
+          pendingCount={pendingCount}
+        />
+      ) : null}
 
       {isEmpty ? (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
@@ -105,27 +156,17 @@ export function NarrativeReasoningPanel({
                   className="rounded-lg border-l-2 border-purple-500 bg-purple-500/10 p-3"
                 >
                   <div className="text-xs font-medium text-purple-100 mb-1">
-                    {text(
-                      `narrativeReasoning.key_decisions[${idx}].decision`,
-                      decision.decision || ''
-                    )}
+                    {decision.decision}
                   </div>
                   {decision.why && (
                     <p className="text-[11px] text-purple-100/90 mb-1">
-                      <strong className="font-semibold">{t('why')}</strong>{' '}
-                      {text(
-                        `narrativeReasoning.key_decisions[${idx}].why`,
-                        decision.why
-                      )}
+                      <strong className="font-semibold">{t('why')}</strong> {decision.why}
                     </p>
                   )}
                   {decision.impact && (
                     <p className="text-[11px] text-purple-200/80 italic">
                       <strong className="font-semibold not-italic">{t('impact')}</strong>{' '}
-                      {text(
-                        `narrativeReasoning.key_decisions[${idx}].impact`,
-                        decision.impact
-                      )}
+                      {decision.impact}
                     </p>
                   )}
                 </div>
