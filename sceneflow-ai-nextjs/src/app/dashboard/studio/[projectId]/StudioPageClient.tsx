@@ -60,6 +60,7 @@ import { BlueprintTtsProgressBar } from '@/components/blueprint/BlueprintTtsProg
 import { BlueprintOnboarding } from '@/components/blueprint/BlueprintOnboarding'
 import { StoryLocaleBadge } from '@/components/i18n/StoryLocaleControl'
 import { useStoryLocale } from '@/i18n/useStoryLocale'
+import { readEntityI18n } from '@/i18n/content/entityI18n'
 import { ProductEmptyState } from '@/components/product'
 import { BlueprintResonanceStrip } from '@/components/blueprint/BlueprintResonanceStrip'
 import { BlueprintNextStepBanner } from '@/components/blueprint/BlueprintNextStepBanner'
@@ -114,6 +115,14 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   // the header switcher unless the project carries an override from Settings.
   const { i18n: storyI18n } = useStoryLocale(
     currentProject as { metadata?: Record<string, any> | null } | null
+  )
+
+  // Language the stored creative text was written in. Defaults to English when
+  // the project has never stamped metadata.i18n — so content MT still runs
+  // after the header syncs account story_locale to the UI language.
+  const contentI18n = useMemo(
+    () => readEntityI18n(currentProject as { metadata?: Record<string, any> | null } | null),
+    [currentProject]
   )
 
   const isProjectCreated = !!(guide.filmTreatment && guide.filmTreatment.trim() !== '' && guide.title && guide.title !== 'Untitled Project');
@@ -1508,6 +1517,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                   onOpenCollaborate={openCollaboratePanel}
                   onOpenFoundation={openFoundationPanel}
                   projectFormat={currentProject?.metadata?.format ?? null}
+                  contentI18n={contentI18n}
                 />
               </div>
             </div>
@@ -1541,6 +1551,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 contentIntent={currentProject?.metadata?.contentIntent}
                 onOpenBlueprintRefine={openBlueprintRefine}
                 onScrollToSection={(section) => scrollToBlueprintSection(section)}
+                contentI18n={contentI18n}
               />
             </Panel>
           </>

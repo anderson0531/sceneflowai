@@ -51,6 +51,8 @@ interface SidePanelTabsProps {
   /** Increment to switch to the Reasoning tab (e.g. from "Why these choices?"). */
   foundationTabSignal?: number
   onScrollToSection?: (section: string) => void
+  /** Language the stored creative / AR text was written in. */
+  contentI18n?: import('@/i18n/content/entityI18n').EntityI18n
 }
 
 export function SidePanelTabs({ 
@@ -73,6 +75,7 @@ export function SidePanelTabs({
   resonanceTabSignal = 0,
   foundationTabSignal = 0,
   onScrollToSection,
+  contentI18n,
 }: SidePanelTabsProps) {
   const t = useTranslations('blueprint.sidePanel')
   const [activeTab, setActiveTab] = useState<'resonance' | 'collaboration' | 'reasoning'>(
@@ -184,6 +187,7 @@ export function SidePanelTabs({
               onAnalysisComplete={onAnalysisComplete}
               onOpenBlueprintRefine={onOpenBlueprintRefine}
               onScrollToSection={onScrollToSection}
+              contentI18n={contentI18n}
             />
           ) : (
             <AudienceResonancePanel

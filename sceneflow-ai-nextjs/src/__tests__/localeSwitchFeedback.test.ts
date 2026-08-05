@@ -108,6 +108,7 @@ describe('content translation reports its own progress', () => {
 
 describe('the header is the only language control in the studio', () => {
   const studio = readSource('src/app/dashboard/studio/[projectId]/StudioPageClient.tsx')
+  const hook = readSource('src/i18n/useUiLocale.ts')
 
   it('shows the story language read-only', () => {
     expect(studio).toContain('<StoryLocaleBadge')
@@ -123,5 +124,41 @@ describe('the header is the only language control in the studio', () => {
     // Nothing to keep in sync if the account default already falls through.
     const resolver = readSource('src/i18n/server/storyLocale.ts')
     expect(resolver).toContain('user.story_locale ?? user.preferred_locale')
+  })
+
+  it('header switch writes both uiLocale and storyLocale', () => {
+    expect(hook).toContain("JSON.stringify({ uiLocale: nextLocale, storyLocale: nextLocale })")
+    expect(hook).toContain('setCachedAccountStoryLocale(nextLocale)')
+  })
+})
+
+describe('Blueprint read path uses content MT, not Google Translate', () => {
+  it('TreatmentCard wires useContentTranslation for display fields', () => {
+    const card = readSource('src/components/blueprint/TreatmentCard.tsx')
+    expect(card).toContain('useContentTranslation')
+    expect(card).toContain('buildTreatmentVariantDisplayFields')
+    expect(card).toContain('TranslationNotice')
+    expect(card).toContain('contentI18n')
+  })
+
+  it('Audience Resonance panel translates analysis prose the same way', () => {
+    const panel = readSource('src/components/blueprint/AudienceResonancePanelV3.tsx')
+    expect(panel).toContain('useContentTranslation')
+    expect(panel).toContain('buildAudienceResonanceDisplayFields')
+    expect(panel).toContain('TranslationNotice')
+  })
+
+  it('studio routes stay catalog-only (no GT widget)', () => {
+    const surfaces = readSource('src/config/i18n/gtSurfaces.ts')
+    expect(surfaces).toMatch(/prefix:\s*'\/dashboard\/studio'[\s\S]*?mode:\s*'catalog'/)
+  })
+
+  it('content source defaults to English when project i18n is unset', () => {
+    // So syncing account story_locale with the header does not disable MT for
+    // existing English treatments.
+    const entity = readSource('src/i18n/content/entityI18n.ts')
+    expect(entity).toContain("sourceLocale: DEFAULT_LOCALE")
+    const studio = readSource('src/app/dashboard/studio/[projectId]/StudioPageClient.tsx')
+    expect(studio).toContain('readEntityI18n(currentProject')
   })
 })
