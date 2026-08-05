@@ -434,11 +434,14 @@
     "tone-visual": "สไตล์ภาพไม่ชัดเจน"
   },
   "workflowGuide": {
+    "title": "คู่มือ",
+    "optionalHint": "ไม่บังคับ — ใช้เท่าที่ช่วยได้",
     "group": {
-      "create-story": "สร้างเรื่องราวของคุณ",
-      "refine-blueprint": "ปรับแต่ง Blueprint ของคุณ",
-      "enhance-experience": "ยกระดับประสบการณ์",
-      "start-production": "พร้อมสำหรับ Production Studio"
+      "create-blueprint": "สร้าง Blueprint",
+      "review-blueprint": "ตรวจทาน Blueprint",
+      "optimize-blueprint": "ปรับ Blueprint",
+      "enhance-experience": "เสริมประสบการณ์",
+      "continue": "ดำเนินการต่อ"
     },
     "step": {
       "enter-idea": "ป้อนไอเดียหรือหัวข้อของคุณ",

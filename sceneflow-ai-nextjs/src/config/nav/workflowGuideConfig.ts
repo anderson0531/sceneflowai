@@ -2,9 +2,10 @@ import type { WorkflowPhase } from './sidebarConfig'
 
 /**
  * Workflow Guide Configuration
- * 
- * Grouped checklist items for each workflow phase to guide users through
- * the production process without requiring extensive training.
+ *
+ * Grouped optional actions for each workflow phase. Blueprint groups are
+ * intention categories (Create / Review / Optimize / …), not a mandatory
+ * linear checklist.
  */
 
 export type WorkflowStepStatus = 'pending' | 'in-progress' | 'complete' | 'skipped'
@@ -168,70 +169,85 @@ export const finalCutWorkflowGroups: WorkflowGroup[] = screeningRoomWorkflowGrou
 export const premiereWorkflowGroups: WorkflowGroup[] = screeningRoomWorkflowGroups
 
 // =============================================================================
-// BLUEPRINT PHASE WORKFLOW GUIDE
+// BLUEPRINT PHASE — optional intention categories
 // =============================================================================
 
 /**
- * Blueprint Guide: Streamlined 4-phase workflow
- * 
- * Design principles:
- * - Action-oriented labels (verbs)
- * - Progressive disclosure (expand current group)
- * - Minimal text, clear next steps
- * - Tooltips/help for details (not inline)
+ * Blueprint Guide: optional actions grouped by intention.
+ *
+ * Step ids and actionEventName values stay stable so studio event wiring and
+ * blueprintProgress guideStatus maps keep working. Presentation is not a
+ * required linear workflow.
  */
 export const blueprintWorkflowGroups: WorkflowGroup[] = [
   {
-    id: 'create-story',
-    title: 'Create Your Story',
-    titleKey: 'group.create-story',
+    id: 'create-blueprint',
+    title: 'Create Blueprint',
+    titleKey: 'group.create-blueprint',
     icon: 'Lightbulb',
     iconColor: 'text-yellow-500',
     steps: [
-      { 
-        id: 'enter-idea', 
-        label: 'Enter your idea or topic', 
+      {
+        id: 'enter-idea',
+        label: 'Enter your idea or topic',
         labelKey: 'step.enter-idea',
         description: 'Describe your video concept, story, or topic',
-        actionEventName: 'blueprint:enter-concept' 
+        actionEventName: 'blueprint:enter-concept',
       },
-      { 
-        id: 'generate-blueprint', 
-        label: 'Generate Blueprint', 
+      {
+        id: 'generate-blueprint',
+        label: 'Generate Blueprint',
         labelKey: 'step.generate-blueprint',
         description: 'AI creates title, logline, beats, characters',
-        actionEventName: 'blueprint:generate-treatment' 
+        actionEventName: 'blueprint:generate-treatment',
       },
     ],
   },
   {
-    id: 'refine-blueprint',
-    title: 'Refine Your Blueprint',
-    titleKey: 'group.refine-blueprint',
-    icon: 'Target',
+    id: 'review-blueprint',
+    title: 'Review Blueprint',
+    titleKey: 'group.review-blueprint',
+    icon: 'FileText',
     iconColor: 'text-cyan-500',
     collapsed: true,
     steps: [
-      { 
-        id: 'review-sections', 
-        label: 'Review & edit sections', 
+      {
+        id: 'review-sections',
+        label: 'Review & edit sections',
         labelKey: 'step.review-sections',
         description: 'Fine-tune story, tone, beats, characters',
-        actionEventName: 'blueprint:edit-sections' 
+        actionEventName: 'blueprint:edit-sections',
       },
-      { 
-        id: 'run-resonance', 
-        label: 'Run Audience Resonance', 
+      {
+        id: 'collaborate-export',
+        label: 'Collaborate & export',
+        labelKey: 'step.collaborate-export',
+        description: 'Share link, export PDF/Doc/PPTX',
+        actionEventName: 'blueprint:collaborate',
+      },
+    ],
+  },
+  {
+    id: 'optimize-blueprint',
+    title: 'Optimize Blueprint',
+    titleKey: 'group.optimize-blueprint',
+    icon: 'Target',
+    iconColor: 'text-amber-500',
+    collapsed: true,
+    steps: [
+      {
+        id: 'run-resonance',
+        label: 'Run Audience Resonance',
         labelKey: 'step.run-resonance',
         description: 'Get score and recommendations',
-        actionEventName: 'blueprint:analyze-resonance' 
+        actionEventName: 'blueprint:analyze-resonance',
       },
-      { 
-        id: 'apply-fixes', 
-        label: 'Apply quick fixes', 
+      {
+        id: 'apply-fixes',
+        label: 'Apply quick fixes',
         labelKey: 'step.apply-fixes',
         description: 'Target 80+ score (2-3 iterations max)',
-        actionEventName: 'blueprint:apply-fixes' 
+        actionEventName: 'blueprint:apply-fixes',
       },
     ],
   },
@@ -243,43 +259,36 @@ export const blueprintWorkflowGroups: WorkflowGroup[] = [
     iconColor: 'text-purple-500',
     collapsed: true,
     steps: [
-      { 
-        id: 'regenerate-hero', 
-        label: 'Regenerate hero image', 
+      {
+        id: 'regenerate-hero',
+        label: 'Regenerate hero image',
         labelKey: 'step.regenerate-hero',
         description: 'Update visual to match narrative',
-        actionEventName: 'blueprint:regenerate-hero' 
+        actionEventName: 'blueprint:regenerate-hero',
       },
-      { 
-        id: 'preview-audio', 
-        label: 'Preview with audio', 
+      {
+        id: 'preview-audio',
+        label: 'Preview with audio',
         labelKey: 'step.preview-audio',
         description: 'Listen in multiple languages',
-        actionEventName: 'blueprint:preview-audio' 
-      },
-      { 
-        id: 'collaborate-export', 
-        label: 'Collaborate & export', 
-        labelKey: 'step.collaborate-export',
-        description: 'Share link, export PDF/Doc/PPTX',
-        actionEventName: 'blueprint:collaborate' 
+        actionEventName: 'blueprint:preview-audio',
       },
     ],
   },
   {
-    id: 'start-production',
-    title: 'Ready for Production Studio',
-    titleKey: 'group.start-production',
+    id: 'continue',
+    title: 'Continue',
+    titleKey: 'group.continue',
     icon: 'ArrowRight',
     iconColor: 'text-green-500',
     collapsed: true,
     steps: [
-      { 
-        id: 'start-production', 
-        label: 'Go to Production Studio', 
+      {
+        id: 'start-production',
+        label: 'Go to Production Studio',
         labelKey: 'step.start-production',
         description: 'Generate script and open Production Studio',
-        actionEventName: 'blueprint:start-production' 
+        actionEventName: 'blueprint:start-production',
       },
     ],
   },
@@ -317,14 +326,14 @@ export function getTotalSteps(groups: WorkflowGroup[]): number {
  * Calculate completed steps from status record
  */
 export function getCompletedSteps(
-  groups: WorkflowGroup[], 
+  groups: WorkflowGroup[],
   statusRecord: Record<string, WorkflowStepStatus>
 ): number {
   let completed = 0
-  groups.forEach(group => {
-    group.steps.forEach(step => {
+  groups.forEach((group) => {
+    group.steps.forEach((step) => {
       if (statusRecord[step.id] === 'complete') {
-        completed++
+        completed += 1
       }
     })
   })

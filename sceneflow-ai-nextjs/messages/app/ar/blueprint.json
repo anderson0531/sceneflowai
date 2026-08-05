@@ -434,11 +434,14 @@
     "tone-visual": "النمط المرئي غير واضح"
   },
   "workflowGuide": {
+    "title": "الدليل",
+    "optionalHint": "اختياري — استخدم ما يفيدك",
     "group": {
-      "create-story": "أنشئ قصتك",
-      "refine-blueprint": "صقل مؤهلاتك",
-      "enhance-experience": "تعزيز تجارب المعتمرين وضيوف الرحمن",
-      "start-production": "جاهز للتسليم_STUDIOTERM"
+      "create-blueprint": "إنشاء المخطط",
+      "review-blueprint": "مراجعة المخطط",
+      "optimize-blueprint": "تحسين المخطط",
+      "enhance-experience": "تعزيز التجربة",
+      "continue": "متابعة"
     },
     "step": {
       "enter-idea": "أدخل فكرتك أو موضوعك",
