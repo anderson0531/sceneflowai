@@ -1,0 +1,36 @@
+{
+  "home": {
+    "title": "Tableau de bord",
+    "welcome": "Heureux de vous revoir",
+    "continueWorking": "Voulez-vous continuer à travailler?",
+    "recentProjects": "Projets récents",
+    "noProjects": "Pas de projets jusque là",
+    "noProjectsHint": "Lancez un projet pour le voir ici.",
+    "startProject": "Commencer un projet"
+  },
+  "projects": {
+    "title": "PROJETS",
+    "description": "Chaque projet que vous avez commencé, le plus récent en premier",
+    "newProject": "Nouveau projet",
+    "search": "Rechercher parmi les projets",
+    "empty": "Pas de projets jusque là",
+    "emptyHint": "Votre premier projet commence dans Blueprint Studio.",
+    "openBlueprint": "Ouvrir dans Blueprint Studio",
+    "openProduction": "Ouvrir dans Production Studio",
+    "deleteConfirmTitle": "Supprimer mon projet",
+    "deleteConfirmBody": "Cela supprime le plan, le script et tous les actifs générés. Elle ne peut pas être annulée.",
+    "deleted": "Projet supprimé",
+    "deleteFailed": "Impossible de supprimer le projet",
+    "phase": {
+      "blueprint": "Blueprint",
+      "production": "Production",
+      "complete": "Terminez"
+    },
+    "meta": {
+      "updated": "Mise à jour {date}",
+      "created": "Créé {date}",
+      "episodeOf": "Épisode {number} de {series}",
+      "duration": "{minutes} min"
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "home": {
+    "title": "仪表板",
+    "welcome": "欢迎回来 ",
+    "continueWorking": "继续工作",
+    "recentProjects": "近期项目",
+    "noProjects": "还没有项目",
+    "noProjectsHint": "启动项目以在此处查看。",
+    "startProject": "项目开始"
+  },
+  "projects": {
+    "title": "项目",
+    "description": "您已经开始的每个项目，最新的第一个",
+    "newProject": "新项目",
+    "search": "搜索项目",
+    "empty": "还没有项目",
+    "emptyHint": "您的第一个项目开始于Blueprint Studio。",
+    "openBlueprint": "在Blueprint Studio中打开",
+    "openProduction": "在Production Studio中打开",
+    "deleteConfirmTitle": "删除此项目？",
+    "deleteConfirmBody": "这将删除蓝图、脚本和每个生成的资产。此操作无法撤消。",
+    "deleted": "项目已删除",
+    "deleteFailed": "无法删除项目",
+    "phase": {
+      "blueprint": "Blueprint",
+      "production": "生产",
+      "complete": "已完成"
+    },
+    "meta": {
+      "updated": "已更新{date}",
+      "created": "已创建{date}",
+      "episodeOf": "剧集{number} of {series}",
+      "duration": "{minutes}最小"
+    }
+  }
+}

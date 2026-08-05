@@ -1,0 +1,58 @@
+{
+  "shell": {
+    "title": "إعدادات الحساب",
+    "subtitle": "إدارة حسابك وعمليات الدمج والتفضيلات",
+    "sectionsHeading": "الإعدادات",
+    "quickActions": "خيارات سريعة",
+    "backToDashboard": "العودة إلى حسابي",
+    "continueWorkflow": "متابعة سير العمل"
+  },
+  "nav": {
+    "profile": "ملف تعريفي",
+    "profileDescription": "إدارة معلومات حسابك",
+    "integrations": "التكامل",
+    "integrationsDescription": "ربط مزودي الذكاء الاصطناعي والخدمات الخارجية",
+    "security": "السند المالي",
+    "securityDescription": "إعدادات كلمة المرور والأمان",
+    "billing": "إصدار الفواتير",
+    "billingDescription": "إدارة اشتراكك والفوترة",
+    "notifications": "الإشعارات",
+    "notificationsDescription": "تفضيلات البريد الإلكتروني والإشعارات المؤقتة",
+    "data": "خصوصية البيانات",
+    "dataDescription": "ضوابط تصدير البيانات والخصوصية",
+    "byok": "إعدادات BYOK",
+    "storage": "--",
+    "admin": "الإدارة",
+    "adminDescription": "وظائف المشرف وعناصر التحكم"
+  },
+  "profile": {
+    "title": "معلومات الملف الشخصي",
+    "description": "إدارة معلومات حسابك وتفاصيلك الشخصية",
+    "username": "[ترجمة المصطلح: Username]",
+    "usernamePlaceholder": "أدخِل اسم المستخدم",
+    "email": "البريد الإلكتروني:",
+    "emailPlaceholder": "أدخل بريدك الإلكتروني",
+    "firstName": "الاسم الأول",
+    "firstNamePlaceholder": "أدخل اسمك الأول",
+    "lastName": "الاسم الأخير",
+    "lastNamePlaceholder": "أدخل اسمك الأخير",
+    "updated": "تم تحديث ملفك الشخصي بنجاح",
+    "updateFailed": "فشل تحديث ملفك"
+  },
+  "languages": {
+    "title": "اللغات",
+    "description": "اقرأ الاستوديو بلغة واحدة، واكتب قصتك بلغة أخرى، وقدم ما تحتاجه",
+    "interfaceTitle": "لغة الواجهة",
+    "interfaceDescription": "القوائم والأزرار ومربعات الحوار عبر لوحة التحكم والاستوديوهات الثلاثة.",
+    "storyTitle": "لغة القصة",
+    "storyDescription": "يتم تأليف اللغة الجديدة للعلاجات المكتوبة بالذكاء الاصطناعي، والإيقاعات، والشخصيات، والحوار. يمكن للمشاريع الفردية تجاوز ذلك.",
+    "deliveryTitle": "لغات التسليم",
+    "deliveryDescription": "السرد والدبلجة والفيديو المقدم. يمكن شحن مشروع واحد بالعديد من اللغات في وقت واحد، لذلك يتم اختيارها لكل مشهد بدلاً من كل حساب.",
+    "deliveryStartsFrom": "يبدأ من {language}",
+    "deliverySetInProduction": "تعيين في Production Studio",
+    "promptsStayEnglish": "تبقى مطالبات الصور والفيديو باللغة الإنجليزية بغض النظر عن هذه الإعدادات — تنتج نماذج الجيل نتائج أضعف بشكل ملحوظ من المطالبات المترجمة.",
+    "interfaceSet": "تعيين لغة الواجهة على {language}",
+    "saved": "تم حفظ تفضيلات اللغة",
+    "saveFailed": "تعذر حفظ تفضيلات اللغة"
+  }
+}

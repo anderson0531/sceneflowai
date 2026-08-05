@@ -1,0 +1,57 @@
+{
+  "studio": {
+    "title": "Production Studio",
+    "script": "Script",
+    "characters": "Caractères",
+    "scenes": "Scènes",
+    "references": "Références",
+    "timeline": "Calendrier",
+    "mixer": "Production Mixer",
+    "directorConsole": "Console du directeur"
+  },
+  "script": {
+    "generateScript": "Générer un script",
+    "regenerateScript": "Régénérer le script",
+    "optimizeScene": "Optimiser la scène",
+    "reviewScript": "Examiner le script",
+    "sceneNumber": "Scène {number}",
+    "heading": "Titre de la scène",
+    "visualDescription": "Description visuelle",
+    "dialogue": "Dialogue",
+    "narration": "Narration",
+    "segmentDirection": "Direction du segment",
+    "soundEffects": "Bruitages",
+    "music": "Musique",
+    "noScript": "Pas de script",
+    "noScriptHint": "Générez un script à partir de votre plan approuvé pour commencer la production."
+  },
+  "language": {
+    "viewLanguage": "Voir la langue",
+    "generateLanguage": "Générer la langue",
+    "deliveryLanguage": "• Langue de formation&#xA0;:",
+    "addLanguage": "Ajouter une langue",
+    "languageHint": "Le dialogue et la narration sont générés dans cette langue. Les invites d'image et de vidéo restent en anglais.",
+    "translationsSaved": "Traductions enregistrées !",
+    "translationFailed": "Impossible de traduire cette scène"
+  },
+  "prompts": {
+    "startFrame": "Invite de démarrage du cadre",
+    "endFrame": "Invite du cadre de fin",
+    "videoPrompt": "Invite vidéo",
+    "englishOnlyNotice": "Les invites restent en anglais : les modèles d'image et de vidéo produisent des résultats nettement plus faibles à partir des invites traduites."
+  },
+  "render": {
+    "renderScene": "Rendu de la scène",
+    "rendering": "Rendu en cours…",
+    "renderFailed": "Échec du rendu",
+    "renderComplete": "Rendu de la vue complété",
+    "queued": "En file d'attente",
+    "retake": "Reprendre"
+  },
+  "toast": {
+    "sceneUpdated": "Scène mise à jour",
+    "segmentsGenerated": "Segments générés",
+    "audioGenerated": "Audio généré",
+    "saveFailed": "Impossible d’enregistrer les modifications"
+  }
+}

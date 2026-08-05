@@ -1,0 +1,57 @@
+{
+  "studio": {
+    "title": "Production Studio",
+    "script": "Skript",
+    "characters": "Buchstaben",
+    "scenes": "Scenes (Szenen)",
+    "references": "Literatur",
+    "timeline": "Timeline",
+    "mixer": "Production Mixer",
+    "directorConsole": "Director Console"
+  },
+  "script": {
+    "generateScript": "\"Skript generieren\",",
+    "regenerateScript": "Skript neu generieren",
+    "optimizeScene": "Szene optimieren",
+    "reviewScript": "Skript überprüfen",
+    "sceneNumber": "Szene {number}",
+    "heading": "SZENENÜBERSCHRIFT",
+    "visualDescription": "Visuelle Beschreibung",
+    "dialogue": "Dialog",
+    "narration": "Erzählung",
+    "segmentDirection": "Segmentrichtung",
+    "soundEffects": "Soundeffekte",
+    "music": "Musik",
+    "noScript": "Kein Skript",
+    "noScriptHint": "Generieren Sie ein Skript aus Ihrem genehmigten Blueprint, um mit der Produktion zu beginnen."
+  },
+  "language": {
+    "viewLanguage": "Sprache anzeigen",
+    "generateLanguage": "Sprache generieren",
+    "deliveryLanguage": "Sprache Vortrag",
+    "addLanguage": "Sprache hinzufügen",
+    "languageHint": "Dialog und Narration werden in dieser Sprache generiert. Frame- und Videoaufforderungen bleiben in englischer Sprache.",
+    "translationsSaved": "Übersetzungen gespeichert!",
+    "translationFailed": "Diese Szene konnte nicht übersetzt werden"
+  },
+  "prompts": {
+    "startFrame": "Start-Frame-Prompt",
+    "endFrame": "Eingabeaufforderung für den Endrahmen",
+    "videoPrompt": "Videoaufforderung",
+    "englishOnlyNotice": "Prompts bleiben auf Englisch: Bild- und Videomodelle produzieren durch übersetzte Prompts spürbar schwächere Ergebnisse."
+  },
+  "render": {
+    "renderScene": "Szene rendern",
+    "rendering": "Rendern …",
+    "renderFailed": "Rendering fehlgeschlagen",
+    "renderComplete": "Wiedergabe abgeschlossen",
+    "queued": "In Warteschlange",
+    "retake": "Wiederholen"
+  },
+  "toast": {
+    "sceneUpdated": "Szene aktualisiert",
+    "segmentsGenerated": "Generierte Segmente",
+    "audioGenerated": "Audio generiert",
+    "saveFailed": "Änderungen konnten nicht gespeichert werden"
+  }
+}

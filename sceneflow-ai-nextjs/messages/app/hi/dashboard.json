@@ -1,0 +1,36 @@
+{
+  "home": {
+    "title": "डैशबोर्ड",
+    "welcome": "फिर से स्वागत है।",
+    "continueWorking": "काम करना जारी रखें",
+    "recentProjects": "हाल के प्रोजेक्ट",
+    "noProjects": "कोई प्रोजेक्ट नहीं",
+    "noProjectsHint": "इसे यहाँ देखने के लिए एक प्रोजेक्ट शुरू करें।",
+    "startProject": "प्रोजेक्ट शुरू करें"
+  },
+  "projects": {
+    "title": "",
+    "description": "आपके द्वारा शुरू किया गया हर प्रोजेक्ट, सबसे पहले नया",
+    "newProject": "नए प्रोजेक्ट",
+    "search": "प्रोजेक्ट खोजें",
+    "empty": "कोई प्रोजेक्ट नहीं",
+    "emptyHint": "आपका पहला प्रोजेक्ट Blueprint Studio में शुरू होता है।",
+    "openBlueprint": "Blueprint Studio में खोलें",
+    "openProduction": "Production Studio में खोलें",
+    "deleteConfirmTitle": "इस प्रोजेक्ट को मिटाएँ?",
+    "deleteConfirmBody": "यह ब्लूप्रिंट, स्क्रिप्ट और हर उत्पन्न संपत्ति को हटा देता है। इसे पूर्ववत नहीं किया जा सकता।",
+    "deleted": "प्रोजेक्ट हटा दिया गया",
+    "deleteFailed": "प्रोजेक्ट हटाया नहीं जा सका",
+    "phase": {
+      "blueprint": "Blueprint",
+      "production": "उत्पादन ",
+      "complete": "पूरा हुआ"
+    },
+    "meta": {
+      "updated": "अपडेट किया गया {date}",
+      "created": "{date} बनाया गया",
+      "episodeOf": "{series} का एपिसोड {number}",
+      "duration": "{minutes} मिनट"
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "home": {
+    "title": "แดชบอร์ด",
+    "welcome": "ยินดีต้อนรับกลับสู่ อนันตาริเวอร์ฮิลส์รีสอร์ท",
+    "continueWorking": "ทำงานต่อ",
+    "recentProjects": "โปรเจกต์ล่า",
+    "noProjects": "ยังไม่มีโปรเจกต์",
+    "noProjectsHint": "เริ่มโปรเจกต์เพื่อดูโปรเจกต์ได้ที่นี่",
+    "startProject": "เริ่มโครงการ"
+  },
+  "projects": {
+    "title": "ทุน",
+    "description": "ทุกโปรเจกต์ที่คุณเริ่มใหม่ล่าสุดก่อนใคร",
+    "newProject": "โครงการใหม่",
+    "search": "ค้นหาโปรเจกต์",
+    "empty": "ยังไม่มีโปรเจกต์",
+    "emptyHint": "โปรเจกต์แรกของคุณเริ่มต้นที่ Blueprint Studio",
+    "openBlueprint": "เปิดใน Blueprint Studio",
+    "openProduction": "เปิดใน Production Studio",
+    "deleteConfirmTitle": "ลบโปรเจกต์นี้ไหม?",
+    "deleteConfirmBody": "การดำเนินการนี้จะลบพิมพ์เขียวสคริปต์และเนื้อหาที่สร้างขึ้นทั้งหมดไม่สามารถยกเลิกได้",
+    "deleted": "ลบโปรเจกต์",
+    "deleteFailed": "ลบโปรเจกต์ไม่ได้",
+    "phase": {
+      "blueprint": "Blueprint",
+      "production": "Production",
+      "complete": "เสร็จสมบูรณ์"
+    },
+    "meta": {
+      "updated": "อัปเดต {date}",
+      "created": "สร้าง {date} แล้ว",
+      "episodeOf": "ตอนที่ {number} จาก {series}",
+      "duration": "{minutes} MIN"
+    }
+  }
+}

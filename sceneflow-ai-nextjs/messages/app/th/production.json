@@ -1,0 +1,57 @@
+{
+  "studio": {
+    "title": "Production Studio",
+    "script": "สคริปต์",
+    "characters": "ตัวละคร",
+    "scenes": "ฉาก",
+    "references": "รายการอ้างอิง",
+    "timeline": "ไทม์ไลน์",
+    "mixer": "Production Mixer",
+    "directorConsole": "คอนโซลผู้อำนวยการ"
+  },
+  "script": {
+    "generateScript": "สร้างสคริปต์",
+    "regenerateScript": "สร้างสคริปต์ใหม่",
+    "optimizeScene": "เพิ่มประสิทธิภาพฉาก",
+    "reviewScript": "รีวิวสคริปต์",
+    "sceneNumber": "ฉาก {number}",
+    "heading": "หัวข้อฉาก",
+    "visualDescription": "คำอธิบายภาพ:",
+    "dialogue": "บทสนทนา",
+    "narration": "คำบรรยาย",
+    "segmentDirection": "ทิศทางเซกเมนต์",
+    "soundEffects": "ซาวด์เอฟเฟกต์",
+    "music": "เพลง",
+    "noScript": "ยังไม่มีสคริปต์",
+    "noScriptHint": "สร้างสคริปต์จากพิมพ์เขียวที่ได้รับอนุมัติของคุณเพื่อเริ่มการผลิต"
+  },
+  "language": {
+    "viewLanguage": "ดูภาษา",
+    "generateLanguage": "สร้างภาษา",
+    "deliveryLanguage": "ภาษาในการจัดส่ง",
+    "addLanguage": "เพิ่มภาษา",
+    "languageHint": "การสนทนาและการบรรยายถูกสร้างขึ้นในภาษานี้พร้อมท์กรอบรูปและวิดีโอเป็นภาษาอังกฤษ",
+    "translationsSaved": "บันทึกการแปลแล้ว!",
+    "translationFailed": "ไม่สามารถแปลฉากนี้ได้"
+  },
+  "prompts": {
+    "startFrame": "เริ่มพร้อมท์เฟรม",
+    "endFrame": "ข้อความแจ้งเตือนเมื่อสิ้นสุดเฟรม",
+    "videoPrompt": "พรอมต์วิดีโอ",
+    "englishOnlyNotice": "พร้อมท์เป็นภาษาอังกฤษ: โมเดลภาพและวิดีโอให้ผลลัพธ์ที่อ่อนแอลงอย่างเห็นได้ชัดจากการแปลพร้อมท์"
+  },
+  "render": {
+    "renderScene": "ฉากเรนเดอร์",
+    "rendering": "การแสดงผล",
+    "renderFailed": "การแสดงผลล้มเหลว",
+    "renderComplete": "การแสดงผลเสร็จสมบูรณ์",
+    "queued": "อยู่ในคิว",
+    "retake": "ลองทำใหม่"
+  },
+  "toast": {
+    "sceneUpdated": "อัปเดตฉากแล้ว",
+    "segmentsGenerated": "กลุ่มที่สร้างขึ้น",
+    "audioGenerated": "สร้างเสียงแล้ว",
+    "saveFailed": "ไม่สามารถบันทึกการเปลี่ยนแปลง"
+  }
+}

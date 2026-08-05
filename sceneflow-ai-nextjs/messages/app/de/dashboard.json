@@ -1,0 +1,36 @@
+{
+  "home": {
+    "title": "Dashboard",
+    "welcome": "Willkommen zurück",
+    "continueWorking": "Arbeiten Sie weiter",
+    "recentProjects": "Letzte Projekte",
+    "noProjects": "Keine Aufgaben",
+    "noProjectsHint": "Starten Sie ein Projekt, um es hier zu sehen.",
+    "startProject": "Projekt starten"
+  },
+  "projects": {
+    "title": "Projekte",
+    "description": "Jedes Projekt, das Sie begonnen haben, das neueste zuerst",
+    "newProject": "Neues Projekt",
+    "search": "Projekte suchen",
+    "empty": "Keine Aufgaben",
+    "emptyHint": "Ihr erstes Projekt startet in Blueprint Studio.",
+    "openBlueprint": "In Blueprint Studio öffnen",
+    "openProduction": "In Production Studio öffnen",
+    "deleteConfirmTitle": "Dieses Projekt löschen?",
+    "deleteConfirmBody": "Dadurch werden der Blueprint, das Skript und jedes generierte Asset entfernt. Es kann nicht rückgängig gemacht werden.",
+    "deleted": "Projekt gelöscht",
+    "deleteFailed": "Das Projekt konnte nicht gelöscht werden",
+    "phase": {
+      "blueprint": "Blueprint",
+      "production": "Produktion",
+      "complete": "Abgeschlossen"
+    },
+    "meta": {
+      "updated": "Aktualisiert {date}",
+      "created": "{date} erstellt",
+      "episodeOf": "Episode {number} von {series}",
+      "duration": "{minutes} min"
+    }
+  }
+}

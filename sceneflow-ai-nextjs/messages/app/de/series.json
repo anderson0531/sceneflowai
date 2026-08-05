@@ -1,0 +1,51 @@
+{
+  "studio": {
+    "title": "Series Studio",
+    "description": "Planen Sie einmal einen Bogen mit mehreren Episoden und produzieren Sie dann jede Episode dagegen",
+    "newSeries": "Neue Serie",
+    "empty": "Noch keine Serie",
+    "emptyHint": "Eine Serie hält Charaktere, Orte und Kontinuität über Episoden hinweg konsistent."
+  },
+  "detail": {
+    "episodes": "Episoden",
+    "productionBible": "Produktionsbibel",
+    "referenceLibrary": "SFAIRERENCE_LIBRARYTERM",
+    "resonance": "Audience Resonance",
+    "generateEpisodes": "Episoden generieren",
+    "addEpisode": "Folge hinzufügen",
+    "openEpisode": "Offene Episode {number}",
+    "episodeCount": "{count, plural, =1 {# episode} other {# episodes}}"
+  },
+  "continuity": {
+    "title": "Continuity Engine",
+    "characters": "Buchstaben",
+    "locations": "Standorte",
+    "aesthetics": "Ästhetik",
+    "keyEvents": "Besondere Ereignisse",
+    "storyThreads": "Story-Threads",
+    "reviewUpdates": "Aktualisierungen überprüfen"
+  },
+  "fields": {
+    "seriesTitle": "Serientitel",
+    "logline": "Logline",
+    "synopsis": "UeBERSICHT",
+    "setting": "Einrichtung/Umgebung",
+    "targetAudience": "Zielgruppe",
+    "episodeTitle": "Episodentitel",
+    "episodeSynopsis": "Episodenübersicht",
+    "episodeHook": "Haken für die nächste Episode",
+    "characterName": "Charaktername",
+    "characterDescription": "Kennzeichnung",
+    "appearance": "Aussehen",
+    "backstory": "Backstory",
+    "personality": "Persönlichkeit",
+    "locationName": "Standort Name",
+    "locationDescription": "Kennzeichnung"
+  },
+  "toast": {
+    "created": "Serie erstellt",
+    "updated": "Serie aktualisiert.",
+    "generateFailed": "Episoden konnten nicht generiert werden",
+    "deleted": "Serie gelöscht"
+  }
+}

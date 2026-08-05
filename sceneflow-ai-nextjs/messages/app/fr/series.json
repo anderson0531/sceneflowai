@@ -1,0 +1,51 @@
+{
+  "studio": {
+    "title": "Series Studio",
+    "description": "Planifiez un arc multi-épisode une fois, puis produisez chaque épisode contre lui",
+    "newSeries": "Nouvelle série",
+    "empty": "Pas encore de série",
+    "emptyHint": "Une série assure la cohérence des personnages, des lieux et de la continuité entre les épisodes."
+  },
+  "detail": {
+    "episodes": "Épisodes",
+    "productionBible": "Bible de production",
+    "referenceLibrary": "Reference Library",
+    "resonance": "Audience Resonance",
+    "generateEpisodes": "Générer Épisodes",
+    "addEpisode": "Ajouter un nouvel épisode",
+    "openEpisode": "Épisode ouvert {number}",
+    "episodeCount": "{count, plural, =1 {# episode} other {# episodes}}"
+  },
+  "continuity": {
+    "title": "Moteur de continuité",
+    "characters": "Caractères",
+    "locations": "Emplacement",
+    "aesthetics": "Esthétique",
+    "keyEvents": "Événements clés",
+    "storyThreads": "Story Threads",
+    "reviewUpdates": "Mises à jour des commentaires"
+  },
+  "fields": {
+    "seriesTitle": "Titre de la collection",
+    "logline": "Logline ",
+    "synopsis": "Synopsis",
+    "setting": "Environnement",
+    "targetAudience": "Public cible",
+    "episodeTitle": "Titre de l'épisode",
+    "episodeSynopsis": "Synopsis de l'épisode",
+    "episodeHook": "Crochet pour le prochain épisode",
+    "characterName": "Character name",
+    "characterDescription": "Description",
+    "appearance": "Aspect",
+    "backstory": "Toile de fond",
+    "personality": "Personnalité",
+    "locationName": "Nom du lieu",
+    "locationDescription": "Description"
+  },
+  "toast": {
+    "created": "Série créée",
+    "updated": "Série mise à jour",
+    "generateFailed": "Impossible de générer les épisodes",
+    "deleted": "Série supprimée"
+  }
+}

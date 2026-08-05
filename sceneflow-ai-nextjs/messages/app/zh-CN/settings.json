@@ -1,0 +1,58 @@
+{
+  "shell": {
+    "title": "帐户设置",
+    "subtitle": "管理您的账号、整合功能和偏好设置",
+    "sectionsHeading": "设置",
+    "quickActions": "快捷操作",
+    "backToDashboard": "返回到仪表盘",
+    "continueWorkflow": "继续工作流程"
+  },
+  "nav": {
+    "profile": "個人檔案",
+    "profileDescription": "管理您的账号信息",
+    "integrations": "集成",
+    "integrationsDescription": "连接人工智能提供商和外部服务",
+    "security": "安全",
+    "securityDescription": "密码安全设置",
+    "billing": "计费",
+    "billingDescription": "管理您的订阅和账单",
+    "notifications": "消息",
+    "notificationsDescription": "设置电子邮件通知首选项。",
+    "data": "资料私隐",
+    "dataDescription": "数据导出和隐私控制",
+    "byok": "BYOK设置",
+    "storage": "收纳",
+    "admin": "管理员",
+    "adminDescription": "管理功能和控制"
+  },
+  "profile": {
+    "title": "个人资料",
+    "description": "管理您的帐户信息和个人详细信息",
+    "username": "用户名",
+    "usernamePlaceholder": "请输入用户名和密码进行登录。",
+    "email": "电子邮箱地址",
+    "emailPlaceholder": "请输入您的电子邮箱",
+    "firstName": "名",
+    "firstNamePlaceholder": "请输入您的名字",
+    "lastName": "姓",
+    "lastNamePlaceholder": "请输入您的姓氏",
+    "updated": "个人资料更新成功",
+    "updateFailed": "更新个人资料失败"
+  },
+  "languages": {
+    "title": "语言",
+    "description": "用一种语言阅读单间公寓，用另一种语言撰写故事，并根据需要提供多种内容",
+    "interfaceTitle": "界面语言",
+    "interfaceDescription": "控制面板和所有三个工作室的菜单、按钮和对话框。",
+    "storyTitle": "故事语言",
+    "storyDescription": "语言新AI编写的治疗、节拍、人物和对话被写入。单个项目可以覆盖此设置。",
+    "deliveryTitle": "交付语言",
+    "deliveryDescription": "旁白、配音和渲染视频。单个项目可以同时以多种语言发货，因此这些是按场景而不是按帐户选择的。",
+    "deliveryStartsFrom": "从{language}开始",
+    "deliverySetInProduction": "在Production Studio中设置",
+    "promptsStayEnglish": "无论这些设置如何，图像和视频提示都保持英文—生成模型从翻译提示中产生的结果明显较弱。",
+    "interfaceSet": "界面语言设置为{language}",
+    "saved": "语言偏好已保存",
+    "saveFailed": "无法保存语言首选项"
+  }
+}

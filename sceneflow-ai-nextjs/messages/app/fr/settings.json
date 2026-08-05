@@ -1,0 +1,58 @@
+{
+  "shell": {
+    "title": "Paramètres du compte",
+    "subtitle": "Gérez votre compte, vos intégrations et vos préférences",
+    "sectionsHeading": "Paramètres",
+    "quickActions": "Actions rapides",
+    "backToDashboard": "Retour au Tableau de bord",
+    "continueWorkflow": "Continuer le flux de travail"
+  },
+  "nav": {
+    "profile": "Profil",
+    "profileDescription": "- Gérer les informations de votre compte",
+    "integrations": "Intégrations",
+    "integrationsDescription": "Connecter les fournisseurs d'IA et les services externes",
+    "security": "Sécurité",
+    "securityDescription": "Paramètres de mot de passe et de sécurité",
+    "billing": "Facturation",
+    "billingDescription": "Gérez votre abonnement et votre facturation",
+    "notifications": "Notifications",
+    "notificationsDescription": "Email et notification push",
+    "data": "Confidentialité des données",
+    "dataDescription": "Contrôles de l'exportation et de la confidentialité des données",
+    "byok": "Paramètres BYOK",
+    "storage": "Stockage",
+    "admin": "Admin",
+    "adminDescription": "Fonctions et contrôles d'administration"
+  },
+  "profile": {
+    "title": "Informations du profil",
+    "description": "Gérer les informations de votre compte et vos informations personnelles",
+    "username": "Identifiant",
+    "usernamePlaceholder": "Entrez votre pseudo",
+    "email": "E-mail",
+    "emailPlaceholder": "Saisissez votre adresse mail",
+    "firstName": "Prénom",
+    "firstNamePlaceholder": "Saisissez votre prénom",
+    "lastName": "Nom",
+    "lastNamePlaceholder": "Saisissez votre nom",
+    "updated": "Mise à jour du profil réussie",
+    "updateFailed": "La mise à jour du profil a échoué"
+  },
+  "languages": {
+    "title": "Langues",
+    "description": "Lisez le studio dans une langue, écrivez votre histoire dans une autre et livrez-en autant que vous le souhaitez",
+    "interfaceTitle": "Langue de l’interface",
+    "interfaceDescription": "Menus, boutons et dialogues sur le tableau de bord et les trois studios.",
+    "storyTitle": "Langue de l'histoire",
+    "storyDescription": "Le langage dans lequel sont rédigés les nouveaux traitements, rythmes, personnages et dialogues écrits par l'IA. Les projets individuels peuvent remplacer cela.",
+    "deliveryTitle": "Langues de livraison",
+    "deliveryDescription": "Narration, doublage et rendu vidéo. Un seul projet peut être livré en plusieurs langues à la fois, elles sont donc choisies par scène plutôt que par compte.",
+    "deliveryStartsFrom": "Commence à partir de {language}",
+    "deliverySetInProduction": "Définir dans Production Studio",
+    "promptsStayEnglish": "Les invites d'image et de vidéo restent en anglais indépendamment de ces paramètres — les modèles de génération produisent des résultats nettement plus faibles à partir des invites traduites.",
+    "interfaceSet": "Langue de l'interface définie sur {language}",
+    "saved": "Préférence de langue enregistrée",
+    "saveFailed": "Impossible d'enregistrer la préférence de langue"
+  }
+}

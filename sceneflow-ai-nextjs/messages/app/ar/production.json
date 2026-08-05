@@ -1,0 +1,57 @@
+{
+  "studio": {
+    "title": "Production Studio",
+    "script": "نص الحوار",
+    "characters": "الرموز",
+    "scenes": "المواقع",
+    "references": "المراجع:",
+    "timeline": "الجدول الزمني",
+    "mixer": "Production Mixer",
+    "directorConsole": "وحدة تحكم المدير"
+  },
+  "script": {
+    "generateScript": "إنشاء برنامج نصي",
+    "regenerateScript": "إعادة إنشاء النص البرمجي",
+    "optimizeScene": "تحسين المشهد",
+    "reviewScript": "مراجعة النص",
+    "sceneNumber": "مشهد {number}",
+    "heading": "عنوان المشهد",
+    "visualDescription": "الوصف التصويري:",
+    "dialogue": "الحوار بين الأديان",
+    "narration": "البيان",
+    "segmentDirection": "اتجاه المقطع",
+    "soundEffects": "مؤثرات صوتية",
+    "music": "الموسيقى",
+    "noScript": "لا يوجد نص حتى الآن",
+    "noScriptHint": "أنشئ نصًا من مخططك المعتمد لبدء الإنتاج."
+  },
+  "language": {
+    "viewLanguage": "عرض اللغة",
+    "generateLanguage": "إنشاء لغة",
+    "deliveryLanguage": "لغة التسليم:",
+    "addLanguage": "<i class=\"fa fa-plus-circle\"/>أضف لغة...",
+    "languageHint": "يتم إنشاء الحوار والسرد بهذه اللغة. تظل مطالبات الإطار والفيديو باللغة الإنجليزية.",
+    "translationsSaved": "تم حفظ الترجمات",
+    "translationFailed": "تعذر ترجمة هذا المشهد"
+  },
+  "prompts": {
+    "startFrame": "بدء المطالبة بالإطار",
+    "endFrame": "موجه إطار النهاية",
+    "videoPrompt": "مطالبة الفيديو",
+    "englishOnlyNotice": "تبقى المطالبات باللغة الإنجليزية: تنتج نماذج الصور والفيديو نتائج أضعف بشكل ملحوظ من المطالبات المترجمة."
+  },
+  "render": {
+    "renderScene": "تقديم المشهد",
+    "rendering": "تصيير",
+    "renderFailed": "تعذَّر التقديم",
+    "renderComplete": "إعادة كاملة",
+    "queued": "في قائمة الانتظار",
+    "retake": "إعادة الالتقاط"
+  },
+  "toast": {
+    "sceneUpdated": "تم تحديث المشهد",
+    "segmentsGenerated": "الشرائح التي تم إنشاؤها",
+    "audioGenerated": "تم إنشاء الصوت",
+    "saveFailed": "تعذر حفظ التغييرات"
+  }
+}

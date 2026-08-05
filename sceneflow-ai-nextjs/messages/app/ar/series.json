@@ -1,0 +1,51 @@
+{
+  "studio": {
+    "title": "Series Studio",
+    "description": "خطط لقوس متعدد الحلقات مرة واحدة، ثم قم بإنتاج كل حلقة ضده",
+    "newSeries": "سلسلة جديدة",
+    "empty": "لا توجد سلسلة حتى الآن",
+    "emptyHint": "تحافظ السلسلة على اتساق الشخصيات والمواقع والاستمرارية عبر الحلقات."
+  },
+  "detail": {
+    "episodes": "الحلقات",
+    "productionBible": "الكتاب المقدس للإنتاج",
+    "referenceLibrary": "Reference Library",
+    "resonance": "Audience Resonance",
+    "generateEpisodes": "توليد الحلقات",
+    "addEpisode": "إضافة حلقة",
+    "openEpisode": "الحلقة المفتوحة {number}",
+    "episodeCount": "{count, plural, =1 {# episode} other {# episodes}}"
+  },
+  "continuity": {
+    "title": "محرك الاستمرارية",
+    "characters": "الرموز",
+    "locations": "[ترجمة المصطلح: Locations]",
+    "aesthetics": "الجماليات",
+    "keyEvents": "الأحداث الرئيسية",
+    "storyThreads": "سلاسل القصة",
+    "reviewUpdates": "مراجعة التحديثات"
+  },
+  "fields": {
+    "seriesTitle": "عنوان السلسلة:",
+    "logline": "الرمية",
+    "synopsis": "خلاصة",
+    "setting": "[ترجمة المصطلح: Setting]",
+    "targetAudience": "مجموعات الجمهور المستهدفة",
+    "episodeTitle": "عنوان الحلقة",
+    "episodeSynopsis": "EPISODE SYNOPSIS",
+    "episodeHook": "ربط للحلقة القادمة",
+    "characterName": "اسم الشخصية",
+    "characterDescription": "الوصف",
+    "appearance": "شكل الخارجي",
+    "backstory": "لمحة عامة",
+    "personality": "الشخصية",
+    "locationName": "اسم الموقع",
+    "locationDescription": "الوصف"
+  },
+  "toast": {
+    "created": "تم إنشاء السلسلة",
+    "updated": "تم تحديث السلسلة",
+    "generateFailed": "تعذر إنشاء حلقات",
+    "deleted": "تم حذف السلسلة"
+  }
+}

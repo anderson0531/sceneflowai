@@ -1,0 +1,51 @@
+{
+  "studio": {
+    "title": "Series Studio",
+    "description": "วางแผนส่วนโค้งแบบหลายขั้นตอนหนึ่งครั้งจากนั้นสร้างแต่ละตอนเทียบกับมัน",
+    "newSeries": "ซีรีส์ใหม่",
+    "empty": "ยังไม่มีซีรีส์",
+    "emptyHint": "ซีรีส์ช่วยให้ตัวละครสถานที่และความต่อเนื่องสอดคล้องกันในแต่ละตอน"
+  },
+  "detail": {
+    "episodes": "ตอน",
+    "productionBible": "คัมภีร์ไบเบิลการผลิต",
+    "referenceLibrary": "Reference Library",
+    "resonance": "Audience Resonance",
+    "generateEpisodes": "สร้างตอน",
+    "addEpisode": "เพิ่มตอน",
+    "openEpisode": "เปิดตอน {number}",
+    "episodeCount": "{count, plural, =1 {# episode} other {# episodes}}"
+  },
+  "continuity": {
+    "title": "เครื่องยนต์ความต่อเนื่อง",
+    "characters": "ตัวละคร",
+    "locations": "สถานที่",
+    "aesthetics": "สุนทรียภาพ",
+    "keyEvents": "กิจกรรมสำคัญ",
+    "storyThreads": "ชุดเรื่องราว",
+    "reviewUpdates": "รีวิวอัปเดต "
+  },
+  "fields": {
+    "seriesTitle": "ชื่อชุด",
+    "logline": "Logline",
+    "synopsis": "เรื่องย่อ",
+    "setting": "การตั้งค่า",
+    "targetAudience": "กลุ่มเป้าหมาย",
+    "episodeTitle": "ชื่อตอน",
+    "episodeSynopsis": "เรื่องย่อตอน",
+    "episodeHook": "ท่อนฮุคสำหรับตอนต่อไป",
+    "characterName": "ชื่อตัวละคร",
+    "characterDescription": "รายละเอียด",
+    "appearance": "รูปลักษณ์",
+    "backstory": "เรื่องราวเบื้องหลัง",
+    "personality": "บุคลิก ",
+    "locationName": "ชื่อสถานที่",
+    "locationDescription": "รายละเอียด"
+  },
+  "toast": {
+    "created": "สร้างซีรีส์แล้ว",
+    "updated": "อัปเดตซีรีส์แล้ว",
+    "generateFailed": "ไม่สามารถสร้างตอนได้",
+    "deleted": "ลบซีรีส์แล้ว"
+  }
+}

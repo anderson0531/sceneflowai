@@ -1,0 +1,51 @@
+{
+  "studio": {
+    "title": "Series Studio",
+    "description": "策划一次多集剧情，然后针对它制作每集剧情",
+    "newSeries": "新系列",
+    "empty": "没有专题",
+    "emptyHint": "一系列剧集使角色、位置和连续性在各个剧集之间保持一致。"
+  },
+  "detail": {
+    "episodes": "劇集",
+    "productionBible": "生产圣经",
+    "referenceLibrary": "Reference Library",
+    "resonance": "Audience Resonance",
+    "generateEpisodes": "生成剧集",
+    "addEpisode": "添加 # 集数",
+    "openEpisode": "打开剧集{number}",
+    "episodeCount": "{count, plural, =1 {# episode} other {# episodes}}"
+  },
+  "continuity": {
+    "title": "连续性引擎",
+    "characters": "人物",
+    "locations": "位置",
+    "aesthetics": "美学",
+    "keyEvents": "主要活動",
+    "storyThreads": "故事线程",
+    "reviewUpdates": "查看更新"
+  },
+  "fields": {
+    "seriesTitle": "系列标题",
+    "logline": "剧情梗概：",
+    "synopsis": "故事梗概",
+    "setting": "设置",
+    "targetAudience": "目标受众",
+    "episodeTitle": "剧集标题",
+    "episodeSynopsis": "剧集概要",
+    "episodeHook": "下一集的挂钩",
+    "characterName": "角色名称",
+    "characterDescription": "描述",
+    "appearance": "设备外观",
+    "backstory": "背景故事",
+    "personality": "个性",
+    "locationName": "服务地点",
+    "locationDescription": "描述"
+  },
+  "toast": {
+    "created": "已创建的系列",
+    "updated": "系列已更新",
+    "generateFailed": "无法生成剧集",
+    "deleted": "系列已删除"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "studio": {
+    "title": "Series Studio",
+    "description": "एक बार एक मल्टी - एपिसोड आर्क की योजना बनाएं, फिर इसके खिलाफ प्रत्येक एपिसोड का उत्पादन करें",
+    "newSeries": "नई सीरीज़",
+    "empty": "अभी तक कोई श्रृंखला नहीं है",
+    "emptyHint": "एक श्रृंखला पूरे एपिसोड में पात्रों, स्थानों और निरंतरता को सुसंगत रखती है।"
+  },
+  "detail": {
+    "episodes": "एपिसोड",
+    "productionBible": "उत्पादन बाइबिल",
+    "referenceLibrary": "Reference Library",
+    "resonance": "Audience Resonance",
+    "generateEpisodes": "एपिसोड जनरेट करें",
+    "addEpisode": "एपिसोड जोड़ें",
+    "openEpisode": "एपिसोड खोलें {number}",
+    "episodeCount": "{count, plural, =1 {# episode} other {# episodes}}"
+  },
+  "continuity": {
+    "title": "सातत्य इंजन",
+    "characters": "वर्ण",
+    "locations": "स्थान",
+    "aesthetics": "सौन्दर्यशास्त्र",
+    "keyEvents": "मुख्य इवेंट",
+    "storyThreads": "कहानी के धागे",
+    "reviewUpdates": "अपडेट पर गौर करें"
+  },
+  "fields": {
+    "seriesTitle": "सीरीज़ का शीर्षक",
+    "logline": "लॉगलाइन",
+    "synopsis": "सारांश",
+    "setting": "सेटिंग",
+    "targetAudience": "लक्षित दर्शक",
+    "episodeTitle": "आपके एपिसोड का शीर्षक",
+    "episodeSynopsis": "एपिसोड सारांश",
+    "episodeHook": "अगले एपिसोड के लिए हुक",
+    "characterName": "कैरेक्टर का नाम",
+    "characterDescription": "विवरण",
+    "appearance": "रंग-रूप",
+    "backstory": "बैकस्टोरी",
+    "personality": "व्यक्तित्व ",
+    "locationName": "स्थान का नाम",
+    "locationDescription": "विवरण"
+  },
+  "toast": {
+    "created": "श्रृंखला बनाई गई",
+    "updated": "सीरीज़ अपडेट की गई",
+    "generateFailed": "एपिसोड जनरेट नहीं किए जा सके",
+    "deleted": "श्रृंखला हटा दी गई"
+  }
+}

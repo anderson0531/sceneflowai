@@ -1,0 +1,57 @@
+{
+  "studio": {
+    "title": "Production Studio",
+    "script": "आलेख",
+    "characters": "वर्ण",
+    "scenes": "पर्दे",
+    "references": "संदर्भ",
+    "timeline": "टाइमलाइन",
+    "mixer": "Production Mixer",
+    "directorConsole": "डायरेक्टर कंसोल"
+  },
+  "script": {
+    "generateScript": "स्क्रिप्ट जनरेट करें",
+    "regenerateScript": "स्क्रिप्ट फिर से जनरेट करें",
+    "optimizeScene": "सीन ऑप्टिमाइज़ करें",
+    "reviewScript": "स्क्रिप्ट की समीक्षा करें",
+    "sceneNumber": "सीन {number}",
+    "heading": "सीन का शीर्षक",
+    "visualDescription": "विज़ुअल विवरण",
+    "dialogue": "संवाद",
+    "narration": "कथन",
+    "segmentDirection": "सेगमेंट की दिशा",
+    "soundEffects": "ध्वनि प्रभाव",
+    "music": "संगीत",
+    "noScript": "अभी तक कोई स्क्रिप्ट नहीं है",
+    "noScriptHint": "उत्पादन शुरू करने के लिए अपने स्वीकृत ब्लूप्रिंट से एक स्क्रिप्ट जेनरेट करें।"
+  },
+  "language": {
+    "viewLanguage": "भाषा देखें",
+    "generateLanguage": "भाषा जनरेट करें",
+    "deliveryLanguage": "डिलीवरी की भाषा",
+    "addLanguage": "भाषा जोड़ें",
+    "languageHint": "इस भाषा में संवाद और कथन उत्पन्न होते हैं। फ़्रेम और वीडियो संकेत अंग्रेजी में रहते हैं।",
+    "translationsSaved": "अनुवाद सेव किए गए",
+    "translationFailed": "इस दृश्य का अनुवाद नहीं किया जा सका"
+  },
+  "prompts": {
+    "startFrame": "फ़्रेम प्रॉम्प्ट शुरू करें",
+    "endFrame": "एंड फ़्रेम प्रॉम्प्ट",
+    "videoPrompt": "वीडियो प्रॉम्प्ट",
+    "englishOnlyNotice": "प्रॉम्प्ट अंग्रेज़ी में रहते हैं: इमेज और वीडियो मॉडल अनुवादित प्रॉम्प्ट से काफी कमजोर परिणाम देते हैं।"
+  },
+  "render": {
+    "renderScene": "दृश्य प्रस्तुत करें",
+    "rendering": "रेंडरिंग",
+    "renderFailed": "रेंडर नहीं हो सका",
+    "renderComplete": "रेंडर पूरा हुआ",
+    "queued": "क़तार- बद्ध",
+    "retake": "फिर से लेना"
+  },
+  "toast": {
+    "sceneUpdated": "सीन अपडेट किया गया",
+    "segmentsGenerated": "सेगमेंट जनरेट किए गए",
+    "audioGenerated": "ऑडियो जनरेट किया गया",
+    "saveFailed": "आपके बदलाव सेव नहीं किए जा सके"
+  }
+}

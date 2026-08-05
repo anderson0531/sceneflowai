@@ -1,0 +1,36 @@
+{
+  "home": {
+    "title": "لوحة القيادة",
+    "welcome": "مرحباً بك مجدداً ",
+    "continueWorking": ". واصلوا عملكم ",
+    "recentProjects": "المشاريع الحديثة",
+    "noProjects": "No projects",
+    "noProjectsHint": "ابدأ مشروعًا لرؤيته هنا.",
+    "startProject": "بدء المشروع"
+  },
+  "projects": {
+    "title": "مشروع",
+    "description": "كل مشروع بدأته، الأحدث أولاً",
+    "newProject": "مشروع جديد",
+    "search": "البحث في المشاريع",
+    "empty": "No projects",
+    "emptyHint": "يبدأ مشروعك الأول في Blueprint Studio.",
+    "openBlueprint": "فتح في Blueprint Studio",
+    "openProduction": "فتح في Production Studio",
+    "deleteConfirmTitle": "هل تريد حذف هذا المشروع ؟",
+    "deleteConfirmBody": "يؤدي هذا إلى إزالة المخطط والنص وكل أصل تم إنشاؤه. لا يمكن التراجع عنه.",
+    "deleted": "تم حذف المشروع",
+    "deleteFailed": "تعذر حذف المشروع",
+    "phase": {
+      "blueprint": "Blueprint",
+      "production": "الإنتاج",
+      "complete": "إكمال"
+    },
+    "meta": {
+      "updated": "تحديث {date}",
+      "created": "تم إنشاء {date}",
+      "episodeOf": "الحلقة {number} من {series}",
+      "duration": "{minutes} دقيقة"
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "studio": {
+    "title": "Production Studio",
+    "script": "脚本",
+    "characters": "人物",
+    "scenes": "场景",
+    "references": "参考文献",
+    "timeline": "假期时间表",
+    "mixer": "Production Mixer",
+    "directorConsole": "导演控制台"
+  },
+  "script": {
+    "generateScript": "生成脚本",
+    "regenerateScript": "重新生成脚本",
+    "optimizeScene": "优化场景",
+    "reviewScript": "审阅脚本",
+    "sceneNumber": "场景{number}",
+    "heading": "场景标题",
+    "visualDescription": "视觉描述",
+    "dialogue": "对话",
+    "narration": "旁白",
+    "segmentDirection": "段方向",
+    "soundEffects": "音效",
+    "music": "音乐",
+    "noScript": "尚无脚本",
+    "noScriptHint": "从批准的蓝图生成脚本以开始生产。"
+  },
+  "language": {
+    "viewLanguage": "查看语言",
+    "generateLanguage": "生成语言",
+    "deliveryLanguage": "授课语言",
+    "addLanguage": "添加一个语言...",
+    "languageHint": "对话和旁白用这种语言生成。帧和视频提示使用英语。",
+    "translationsSaved": "保存翻译.",
+    "translationFailed": "无法翻译此场景"
+  },
+  "prompts": {
+    "startFrame": "启动帧提示",
+    "endFrame": "结束框架提示",
+    "videoPrompt": "视频提示",
+    "englishOnlyNotice": "提示保持英文：图像和视频模型从翻译提示中产生的结果明显较弱。"
+  },
+  "render": {
+    "renderScene": "渲染场景",
+    "rendering": "正在渲染…",
+    "renderFailed": "渲染失败",
+    "renderComplete": "渲染完成",
+    "queued": "已在队列中",
+    "retake": "重新测验"
+  },
+  "toast": {
+    "sceneUpdated": "场景已更新",
+    "segmentsGenerated": "已生成段",
+    "audioGenerated": "已生成音频",
+    "saveFailed": "无法保存更改"
+  }
+}

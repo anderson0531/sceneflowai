@@ -1,0 +1,58 @@
+{
+  "shell": {
+    "title": "खाता सेटिंग",
+    "subtitle": "अपना अकाउंट, इंटीग्रेशन और पसंद - नापसंद मैनेज करें",
+    "sectionsHeading": "सेटिंग्स",
+    "quickActions": "झटपट कार्रवाई",
+    "backToDashboard": "डैशबोर्ड पर वापस जाएँ",
+    "continueWorkflow": "वर्कफ़्लो जारी रखें"
+  },
+  "nav": {
+    "profile": "प्रोफ़ाइल",
+    "profileDescription": "अपने अकाउंट की जानकारी मैनेज करें",
+    "integrations": "इंटीग्रेशन",
+    "integrationsDescription": "AI प्रदाताओं और बाहरी सेवाओं को कनेक्ट करें",
+    "security": "सुरक्षा",
+    "securityDescription": "पासवर्ड और सुरक्षा सेटिंग",
+    "billing": "बिलिंग",
+    "billingDescription": "अपनी सदस्यता और बिलिंग मैनेज करें",
+    "notifications": "नोटिफ़िकेशन",
+    "notificationsDescription": "ईमेल और पुश नोटिफ़िकेशन प्राथमिकताएँ",
+    "data": "डेटा गोपनीयता",
+    "dataDescription": "डेटा एक्सपोर्ट और निजता नियंत्रण",
+    "byok": "BYOK सेटिंग",
+    "storage": "स्टोरेज",
+    "admin": "एडमिन",
+    "adminDescription": "एडमिन फ़ंक्शंस और कंट्रोल"
+  },
+  "profile": {
+    "title": "Comment",
+    "description": "अपने अकाउंट की जानकारी और निजी जानकारी मैनेज करें",
+    "username": "यूज़रनेम",
+    "usernamePlaceholder": "अपना यूज़रनेम डालें।",
+    "email": "ईमेल पता ",
+    "emailPlaceholder": "अपना ईमेल डालें.",
+    "firstName": "नाम",
+    "firstNamePlaceholder": "अपना नाम डालें\n",
+    "lastName": "उपनाम",
+    "lastNamePlaceholder": "अपना नाम दर्ज करें।",
+    "updated": "प्रोफाइल को सफलतापूर्वक अपडेट किया गया।",
+    "updateFailed": "प्रोफ़ाइल अपडेट नहीं की जा सकी"
+  },
+  "languages": {
+    "title": "भाषाएँ",
+    "description": "स्टूडियो को एक भाषा में पढ़ें, अपनी कहानी दूसरी भाषा में लिखें, और जितनी ज़रूरत हो उतनी डिलीवर करें",
+    "interfaceTitle": "इंटरफ़ेस भाषा",
+    "interfaceDescription": "डैशबोर्ड और तीनों स्टूडियो में मेनू, बटन और डायलॉग।",
+    "storyTitle": "कहानी की भाषा",
+    "storyDescription": "भाषा के नए AI - लिखित उपचार, बीट्स, कैरेक्टर और डायलॉग इसमें लिखे गए हैं। अलग - अलग प्रोजेक्ट इसे ओवरराइड कर सकते हैं।",
+    "deliveryTitle": "डिलीवरी की भाषाएँ",
+    "deliveryDescription": "कथन, डब और रेंडर किया गया वीडियो। एक ही प्रोजेक्ट कई भाषाओं में एक साथ शिप किया जा सकता है, इसलिए इन्हें हर अकाउंट के बजाय हर सीन के हिसाब से चुना जाता है।",
+    "deliveryStartsFrom": "{language} से शुरू होता है",
+    "deliverySetInProduction": "Production Studio में सेट करें",
+    "promptsStayEnglish": "इन सेटिंग्स की परवाह किए बिना इमेज और वीडियो प्रॉम्प्ट अंग्रेजी में रहते हैं — जेनरेशन मॉडल अनुवादित प्रॉम्प्ट से काफी कमजोर परिणाम उत्पन्न करते हैं।",
+    "interfaceSet": "{language} पर इंटरफ़ेस भाषा सेट है",
+    "saved": "भाषा की पसंद सेव की गई",
+    "saveFailed": "भाषा वरीयता सेव नहीं की जा सकी"
+  }
+}

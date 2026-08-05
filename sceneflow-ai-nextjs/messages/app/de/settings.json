@@ -1,0 +1,58 @@
+{
+  "shell": {
+    "title": "Kontoeinstellungen",
+    "subtitle": "Verwalte dein Konto, deine Integrationen und Einstellungen",
+    "sectionsHeading": "Einstellungen",
+    "quickActions": "Schnellzugriff",
+    "backToDashboard": "Back to dashboard",
+    "continueWorkflow": "Workflow forts."
+  },
+  "nav": {
+    "profile": "Profil",
+    "profileDescription": "- Ihre Kontoinformationen verwalten",
+    "integrations": "Integrationen",
+    "integrationsDescription": "Verbinden Sie KI-Anbieter und externe Dienste",
+    "security": "Sicherheit",
+    "securityDescription": "Passwort- und Sicherheitseinstellungen",
+    "billing": "Rechnungsstellung",
+    "billingDescription": "Verwalten Sie Ihr Abonnement und Ihre Abrechnung",
+    "notifications": "Benachrichtigungen",
+    "notificationsDescription": "Präferenzen E-Mail-Benachrichtigungen",
+    "data": "Datenschutz",
+    "dataDescription": "Datenexport und Datenschutzkontrollen",
+    "byok": "BYOK-Einstellungen",
+    "storage": "Storage",
+    "admin": "Admin",
+    "adminDescription": "Admin-Funktionen und Steuerelemente"
+  },
+  "profile": {
+    "title": "Stammdaten",
+    "description": "Verwalten Sie Ihre Kontoinformationen und persönlichen Daten",
+    "username": "Benutzername",
+    "usernamePlaceholder": "Benutzernamen eingeben",
+    "email": "E-Mail-Adresse",
+    "emailPlaceholder": "Geben Sie Ihre E-Mail-Adresse ein",
+    "firstName": "Vorname",
+    "firstNamePlaceholder": "Geben Sie Ihren Vornamen ein",
+    "lastName": "Nachname",
+    "lastNamePlaceholder": "Geben Sie Ihren Nachnamen ein",
+    "updated": "Profil erfolgreich aktualisiert",
+    "updateFailed": "Aktualisierung des Profils fehlgeschlagen"
+  },
+  "languages": {
+    "title": "Sprachen",
+    "description": "Lies das Studio in einer Sprache, schreibe deine Geschichte in einer anderen und liefere so viele, wie du brauchst",
+    "interfaceTitle": "Sprache der Benutzeroberfläche",
+    "interfaceDescription": "Menüs, Schaltflächen und Dialoge über das Dashboard und alle drei Studios hinweg.",
+    "storyTitle": "Story-Sprache",
+    "storyDescription": "In der Sprache werden neue KI-geschriebene Behandlungen, Beats, Charaktere und Dialoge verfasst. Einzelne Projekte können dies außer Kraft setzen.",
+    "deliveryTitle": "Liefersprachen",
+    "deliveryDescription": "Narration, Dubs und gerendertes Video. Ein einzelnes Projekt kann in mehreren Sprachen gleichzeitig ausgeliefert werden, sodass diese pro Szene und nicht pro Konto ausgewählt werden.",
+    "deliveryStartsFrom": "Beginnt ab {language}",
+    "deliverySetInProduction": "In Production Studio einstellen",
+    "promptsStayEnglish": "Bild- und Videoaufforderungen bleiben unabhängig von diesen Einstellungen in englischer Sprache — die Generierungsmodelle produzieren spürbar schwächere Ergebnisse aus übersetzten Aufforderungen.",
+    "interfaceSet": "Schnittstellensprache eingestellt auf {language}",
+    "saved": "Spracheinstellung gespeichert",
+    "saveFailed": "Spracheinstellung konnte nicht gespeichert werden"
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "studio": {
+    "title": "SFAIPRODUÇÃO_STUDIOTERM",
+    "script": "Guião ",
+    "characters": "Personagens",
+    "scenes": "Cenas",
+    "references": "Referências",
+    "timeline": "Prazo de Execução",
+    "mixer": "Production Mixer",
+    "directorConsole": "Consola do Director"
+  },
+  "script": {
+    "generateScript": "Gerar Script",
+    "regenerateScript": "Regenerar Script",
+    "optimizeScene": "Otimizar Cena",
+    "reviewScript": "Roteiro de Revisão",
+    "sceneNumber": "Scene {number}",
+    "heading": "Cabeçalho da cena",
+    "visualDescription": "<g x=1 id=\"11232\">Imagem </g><g x=2 id=\"11233\"> Descrição </g>",
+    "dialogue": "Diálogo",
+    "narration": "Narrativa",
+    "segmentDirection": "Direção segmento de viagem",
+    "soundEffects": "Efeitos sonoros",
+    "music": "Música",
+    "noScript": "Ainda não há guião",
+    "noScriptHint": "Gere um script a partir do seu plano aprovado para iniciar a produção."
+  },
+  "language": {
+    "viewLanguage": "Ver Idioma",
+    "generateLanguage": "Gerar idioma",
+    "deliveryLanguage": "Idioma de entrega",
+    "addLanguage": "Adicionar um idioma",
+    "languageHint": "Diálogo e narração são gerados nesta linguagem. Os prompts de quadro e vídeo permanecem em inglês.",
+    "translationsSaved": "Traduções guardadas",
+    "translationFailed": "Não foi possível traduzir esta cena"
+  },
+  "prompts": {
+    "startFrame": "Iniciar prompt de quadro",
+    "endFrame": "Prompt de quadro final",
+    "videoPrompt": "Prompt de vídeo",
+    "englishOnlyNotice": "Os prompts permanecem em inglês: modelos de imagem e vídeo produzem resultados visivelmente mais fracos a partir de prompts traduzidos."
+  },
+  "render": {
+    "renderScene": "Renderizar cena",
+    "rendering": "Renderizando…",
+    "renderFailed": "Falha na renderização",
+    "renderComplete": "Renderização da view completa",
+    "queued": "Agendado",
+    "retake": "Voltar a tirar"
+  },
+  "toast": {
+    "sceneUpdated": "Cena atualizada",
+    "segmentsGenerated": "Segmentos gerados",
+    "audioGenerated": "Áudio gerado",
+    "saveFailed": "Não foi possível salvar as alterações"
+  }
+}
