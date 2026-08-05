@@ -60,7 +60,18 @@
     "getStarted": "Get Started",
     "switchAccount": "Switch Account",
     "toggleMenu": "Toggle menu",
-    "skipToContent": "Skip to main content"
+    "skipToContent": "Skip to main content",
+    "workflow": "Workflow",
+    "credits": "Credits",
+    "balance": "Balance",
+    "buyCredits": "Buy Credits",
+    "current": "Current",
+    "hideSidebar": "Hide navigation sidebar",
+    "hideSidebarTitle": "Hide sidebar (more space for content)",
+    "showSidebar": "Show navigation sidebar",
+    "showSidebarTitle": "Show sidebar",
+    "byokSettings": "BYOK Settings",
+    "billingCredits": "Billing & Credits"
   },
   "language": {
     "interfaceLanguage": "Interface language",

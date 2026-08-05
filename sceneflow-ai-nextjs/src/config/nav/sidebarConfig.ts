@@ -47,9 +47,13 @@ export interface QuickAction {
 export interface WorkflowStep {
   id: string
   label: string
+  /** Catalog key under `common.nav` when present; falls back to `label`. */
+  labelKey?: string
   href: string | ((projectId: string) => string)
   status: WorkflowStepStatus | ((projectId: string) => WorkflowStepStatus)
   badge?: string
+  /** Catalog key under `common.nav` for the badge (e.g. `current`). */
+  badgeKey?: string
 }
 
 /**
@@ -104,15 +108,30 @@ export interface WorkflowSidebarConfig {
 function makeWorkflowSteps(
   currentPhase: 'blueprint' | 'production'
 ): WorkflowStep[] {
-  const phases: { id: string; label: string; href: (pid: string) => string }[] = [
-    { id: 'blueprint', label: STUDIO_DISPLAY_NAMES.blueprint, href: (pid) => `/dashboard/studio/${pid}` },
-    { id: 'production', label: STUDIO_DISPLAY_NAMES.production, href: (pid) => `/dashboard/workflow/vision/${pid}` },
+  const phases: {
+    id: string
+    label: string
+    labelKey: string
+    href: (pid: string) => string
+  }[] = [
+    {
+      id: 'blueprint',
+      label: STUDIO_DISPLAY_NAMES.blueprint,
+      labelKey: 'blueprint',
+      href: (pid) => `/dashboard/studio/${pid}`,
+    },
+    {
+      id: 'production',
+      label: STUDIO_DISPLAY_NAMES.production,
+      labelKey: 'production',
+      href: (pid) => `/dashboard/workflow/vision/${pid}`,
+    },
   ]
   const currentIndex = phases.findIndex((p) => p.id === currentPhase)
   return phases.map((p, i) => ({
     ...p,
     status: (i < currentIndex ? 'completed' : i === currentIndex ? 'current' : 'upcoming') as WorkflowStepStatus,
-    ...(i === currentIndex ? { badge: 'Current' } : {}),
+    ...(i === currentIndex ? { badge: 'Current', badgeKey: 'current' } : {}),
   }))
 }
 

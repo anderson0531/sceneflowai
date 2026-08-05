@@ -60,7 +60,18 @@
     "getStarted": "البدء في تعلم القيادة",
     "switchAccount": "تغيير الحساب",
     "toggleMenu": "اسدال القائمة",
-    "skipToContent": "تخطى إلى المحتوى الرئيسي"
+    "skipToContent": "تخطى إلى المحتوى الرئيسي",
+    "workflow": "سير العمل",
+    "credits": "الأرصدة",
+    "balance": "الرصيد",
+    "buyCredits": "شراء أرصدة",
+    "current": "الحالي",
+    "hideSidebar": "إخفاء شريط التنقل",
+    "hideSidebarTitle": "إخفاء الشريط الجانبي (مساحة أكبر للمحتوى)",
+    "showSidebar": "إظهار شريط التنقل",
+    "showSidebarTitle": "إظهار الشريط الجانبي",
+    "byokSettings": "إعدادات BYOK",
+    "billingCredits": "الفوترة والأرصدة"
   },
   "language": {
     "interfaceLanguage": "لغة الواجهة",

@@ -45,7 +45,7 @@
     "interfaceTitle": "界面语言",
     "interfaceDescription": "控制面板和所有三个工作室的菜单、按钮和对话框。",
     "storyTitle": "故事语言",
-    "storyDescription": "语言新AI编写的治疗、节拍、人物和对话被写入。单个项目可以覆盖此设置。",
+    "storyDescription": "新的 AI 撰写的大纲、节拍、角色和对白所使用的语言。页眉语言切换器会与界面语言一起更新此项。",
     "deliveryTitle": "交付语言",
     "deliveryDescription": "旁白、配音和渲染视频。单个项目可以同时以多种语言发货，因此这些是按场景而不是按帐户选择的。",
     "deliveryStartsFrom": "从{language}开始",

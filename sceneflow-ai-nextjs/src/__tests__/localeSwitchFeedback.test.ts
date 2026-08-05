@@ -110,12 +110,14 @@ describe('the header is the only language control in the studio', () => {
   const studio = readSource('src/app/dashboard/studio/[projectId]/StudioPageClient.tsx')
   const hook = readSource('src/i18n/useUiLocale.ts')
 
-  it('shows the story language read-only', () => {
-    expect(studio).toContain('<StoryLocaleBadge')
+  it('does not show a second story-language badge beside the header', () => {
+    // The badge reported generation language and stayed pinned to stale project
+    // metadata.i18n overrides; the header is the sole studio language control.
+    expect(studio).not.toContain('<StoryLocaleBadge')
     expect(studio).not.toContain('<StoryLocaleControl')
   })
 
-  it('keeps the per-project override reachable from Settings', () => {
+  it('keeps account story language editable in Settings', () => {
     const settings = readSource('src/components/i18n/LanguageSettingsCard.tsx')
     expect(settings).toContain('storyLocale')
   })
@@ -146,6 +148,25 @@ describe('Blueprint read path uses content MT, not Google Translate', () => {
     expect(panel).toContain('useContentTranslation')
     expect(panel).toContain('buildAudienceResonanceDisplayFields')
     expect(panel).toContain('TranslationNotice')
+  })
+
+  it('hero billboard title/logline/genre go through content MT', () => {
+    const studio = readSource('src/app/dashboard/studio/[projectId]/StudioPageClient.tsx')
+    expect(studio).toContain('useContentTranslation')
+    expect(studio).toContain('buildTreatmentVariantDisplayFields')
+    expect(studio).toContain('heroTitle')
+    expect(studio).toContain('title={heroTitle}')
+    expect(studio).toContain('subtitle={heroSubtitle}')
+    expect(studio).toContain('genre={heroGenre}')
+  })
+
+  it('sidebar menu labels come from common.nav catalogs', () => {
+    const sidebar = readSource('src/components/layout/GlobalSidebarUnified.tsx')
+    expect(sidebar).toContain("useTranslations('common.nav')")
+    expect(sidebar).toContain('tNav(item.labelKey)')
+    expect(sidebar).toContain("tNav('workflow')")
+    expect(sidebar).toContain("tNav('credits')")
+    expect(sidebar).not.toMatch(/<span>\{item\.label\}<\/span>/)
   })
 
   it('studio routes stay catalog-only (no GT widget)', () => {

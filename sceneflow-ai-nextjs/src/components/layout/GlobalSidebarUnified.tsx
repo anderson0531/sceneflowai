@@ -3,6 +3,7 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react'
 import { usePathname, useParams } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { useCredits } from '@/contexts/CreditsContext'
 import { mainNav } from '../../config/nav/globalNav'
 import { 
@@ -87,6 +88,7 @@ interface GlobalSidebarProps {
 const SIDEBAR_VISIBILITY_KEY = 'sceneflow-unified-sidebar-visible'
 
 export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
+  const tNav = useTranslations('common.nav')
   const pathname = usePathname()
   const params = useParams() as Record<string, string>
   const currentProject = useStore(s => s.currentProject)
@@ -307,8 +309,8 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
               size="sm"
               className="h-8 w-8 p-0 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
               onClick={() => persistSidebarVisibility(false)}
-              aria-label="Hide navigation sidebar"
-              title="Hide sidebar (more space for content)"
+              aria-label={tNav('hideSidebar')}
+              title={tNav('hideSidebarTitle')}
             >
               <PanelLeftClose className="h-4 w-4" aria-hidden />
             </Button>
@@ -331,7 +333,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
                   {item.key === 'projects' && <FolderOpen className="w-4 h-4 text-yellow-500" />}
                   {item.key === 'series' && <Library className="w-4 h-4 text-cyan-500" />}
                   {item.key === 'start' && <Sparkles className="w-4 h-4 text-purple-500" />}
-                  <span>{item.label}</span>
+                  <span>{tNav(item.labelKey)}</span>
                 </Link>
               ))}
             </nav>
@@ -346,7 +348,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
               >
                 <div className="flex items-center gap-2">
                   <GitBranch className="w-4 h-4 text-cyan-500" />
-                  <span>Workflow</span>
+                  <span>{tNav('workflow')}</span>
                 </div>
                 {sectionsOpen.workflow ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </button>
@@ -359,6 +361,10 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
                       const status = typeof step.status === 'function' ? step.status(projectId || '') : step.status
                       const href = typeof step.href === 'function' ? step.href(projectId || '') : step.href
                       const classes = getWorkflowStepClasses(status)
+                      const stepLabel = step.labelKey ? tNav(step.labelKey) : step.label
+                      const stepBadge = step.badgeKey
+                        ? tNav(step.badgeKey)
+                        : step.badge
                       
                       const stepContent = (
                         <>
@@ -367,9 +373,9 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
                             {status === 'upcoming' && <Circle className={cn('w-2.5 h-2.5', classes.dotIcon)} />}
                             {status === 'locked' && <Circle className={cn('w-2.5 h-2.5', classes.dotIcon)} />}
                           </div>
-                          <span className="group-hover:text-gray-700 dark:group-hover:text-gray-200">{step.label}</span>
-                          {step.badge && (
-                            <span className="ml-auto text-[10px] bg-sf-primary/20 px-1.5 py-0.5 rounded">{step.badge}</span>
+                          <span className="group-hover:text-gray-700 dark:group-hover:text-gray-200">{stepLabel}</span>
+                          {stepBadge && (
+                            <span className="ml-auto text-[10px] bg-sf-primary/20 px-1.5 py-0.5 rounded">{stepBadge}</span>
                           )}
                         </>
                       )
@@ -393,7 +399,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
                           <button
                             key={step.id}
                             onClick={() => {
-                              setNavigationTarget({ href, label: step.label })
+                              setNavigationTarget({ href, label: stepLabel })
                               setShowNavigationWarning(true)
                             }}
                             className={cn('flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors group w-full text-left', classes.container)}
@@ -451,7 +457,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
               >
                 <div className="flex items-center gap-2">
                   <Coins className="w-4 h-4 text-emerald-500" />
-                  <span>Credits</span>
+                  <span>{tNav('credits')}</span>
                 </div>
                 {sectionsOpen.credits ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </button>
@@ -461,7 +467,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Coins className="w-4 h-4 text-emerald-500" />
-                        <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Balance</span>
+                        <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">{tNav('balance')}</span>
                       </div>
                       <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{creditsData?.total_credits?.toLocaleString() ?? '—'}</span>
                     </div>
@@ -471,7 +477,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
                     className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors w-full justify-center"
                   >
                     <CreditCard className="w-3 h-3" />
-                    <span>Buy Credits</span>
+                    <span>{tNav('buyCredits')}</span>
                   </Link>
                 </div>
               )}
@@ -485,8 +491,8 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
           type="button"
           onClick={() => persistSidebarVisibility(true)}
           className="absolute left-2 top-3 z-[35] flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-md transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
-          aria-label="Show navigation sidebar"
-          title="Show sidebar"
+          aria-label={tNav('showSidebar')}
+          title={tNav('showSidebarTitle')}
         >
           <PanelLeft className="h-4 w-4" aria-hidden />
         </button>
