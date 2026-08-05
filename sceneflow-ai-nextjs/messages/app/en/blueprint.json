@@ -5,30 +5,108 @@
     "partOfSeries": "Part of {series}",
     "showSidePanel": "Show Side Panel",
     "hideSidePanel": "Hide Side Panel",
-    "startProduction": "Start Production",
+    "goToProduction": "Go to Production Studio",
+    "goShort": "Go",
+    "goTooltip": "Go to Production Studio — generate script and begin the Production Studio pipeline",
+    "openingProduction": "Opening Production Studio…",
+    "creatingConcept": "Creating your Film Concept…",
+    "saving": "Saving...",
+    "saved": "Saved",
+    "saveFailed": "Save failed",
     "syncedToProduction": "Blueprint synced to Production Studio — regenerate your script when ready.",
     "syncFailed": "Blueprint updated, but Production Studio sync failed"
   },
   "tabs": {
-    "projectIdea": "Project Idea",
-    "treatment": "Treatment",
+    "core": "Core",
+    "story": "Story",
+    "tone": "Tone",
+    "beats": "Beats",
     "characters": "Characters",
-    "beatSheet": "Beat Sheet"
+    "charactersWithCount": "Characters ({count})"
   },
   "sections": {
     "coreInfo": "Core Info",
     "coreInfoTitle": "Core Identifying Information",
     "coreInfoDescription": "Title, logline, genre, and audience targeting",
     "storySetup": "Story Setup",
+    "storySetupDescription": "Synopsis, setting, protagonist, and antagonist",
     "toneStyle": "Tone & Style",
+    "toneStyleThemes": "Tone, Style, & Themes",
+    "toneStyleDescription": "Visual style, mood, and thematic elements",
     "beats": "Beats",
-    "characters": "Characters"
+    "beatsRuntime": "Beats & Runtime",
+    "beatsDescription": "Story structure and pacing",
+    "beatsTotalling": "{count} beats totalling {display}",
+    "runtimeTotal": "{display} total",
+    "characters": "Characters",
+    "charactersWithCount": "Characters ({count})",
+    "charactersDescription": "Character details and psychological depth",
+    "wholeBlueprint": "whole blueprint"
+  },
+  "audio": {
+    "previewPrint": "Preview & Print",
+    "moreActions": "More actions",
+    "play": "Play (P)",
+    "stop": "Stop (P)",
+    "unavailable": "Audio preview unavailable",
+    "configureTts": "Configure Google TTS to enable audio previews",
+    "configureTtsDetailed": "Configure Google TTS (GOOGLE_API_KEY or Vertex) to enable audio previews",
+    "settings": "Audio settings",
+    "voice": "Voice",
+    "selectVoice": "Select voice...",
+    "notConfigured": "Audio not configured",
+    "language": "Language",
+    "narration": "Narration",
+    "narrationMode": "Narration mode",
+    "modeSynopsis": "Logline + Synopsis",
+    "modeFull": "Full Treatment",
+    "modeBeats": "Beat‑by‑Beat",
+    "generating": "Generating narration",
+    "playing": "Playing narration"
+  },
+  "menu": {
+    "reimagine": "Reimagine"
+  },
+  "credit": {
+    "addYourName": "Add your name"
+  },
+  "character": {
+    "externalGoal": "External Goal",
+    "internalNeed": "Internal Need",
+    "fatalFlaw": "Fatal Flaw",
+    "arc": "Character Arc",
+    "arcStarting": "Starting",
+    "arcShift": "Shift",
+    "arcEnding": "Ending",
+    "refineNote": "💡 Characters will be refined with images and detailed attributes in Production"
+  },
+  "reasoning": {
+    "whyChoices": "Why these choices?"
+  },
+  "help": {
+    "title": "How Flow Creates Your Story",
+    "intro": "Flow analyzes your concept and generates a professional film treatment using industry-standard techniques:",
+    "reasoning": "<strong>AI Narrative Reasoning</strong>—Flow will explain <em>why</em> it chose specific protagonists, themes, and creative directions in the side panel's \"Reasoning\" tab.",
+    "threeAct": "<strong>Three-Act Structure</strong>—Your story is automatically organized into Setup, Confrontation, and Resolution beats.",
+    "characterDev": "<strong>Character Development</strong>—Main and supporting characters with motivations, arcs, and relationships.",
+    "visualStyle": "<strong>Visual Style Guide</strong>—Tone, mood, and cinematography recommendations tailored to your genre.",
+    "decisions": "The AI may make <strong>creative decisions</strong> (combining characters, emphasizing themes) to strengthen the narrative—open the side panel's \"Reasoning\" tab to understand these choices."
   },
   "fields": {
     "title": "Title",
     "logline": "Logline",
     "genre": "Genre",
     "targetAudience": "Target Audience",
+    "audience": "Target audience",
+    "format": "Format",
+    "createdBy": "Created by",
+    "date": "Date",
+    "tone": "Tone",
+    "artStyle": "Art style",
+    "aspectRatio": "Aspect ratio",
+    "themesPlain": "Themes",
+    "moodReferences": "Mood / References",
+    "treatmentFallback": "Treatment",
     "synopsis": "Synopsis",
     "setting": "Setting",
     "protagonist": "Protagonist",
@@ -37,8 +115,10 @@
     "themes": "Themes (comma-separated)",
     "beat": "Beat {number}",
     "beatTitle": "Beat title",
-    "beatDescription": "Beat description…",
+    "beatDescription": "Beat description...",
     "minutes": "Minutes",
+    "minutesShort": "Min",
+    "minutesSuffix": "{value} m",
     "description": "Description",
     "name": "Name",
     "role": "Role (e.g., protagonist)",
@@ -47,28 +127,53 @@
     "internalNeed": "Internal need",
     "fatalFlaw": "Fatal flaw",
     "psychologicalDepth": "Psychological Depth (optional)",
-    "customInstruction": "Add specific refinement instructions…"
+    "customInstruction": "Add specific refinement instructions..."
   },
   "refine": {
     "refiningTitle": "Refining {section}",
     "refiningBody": "AI is enhancing your content…",
+    "bodyCore": "AI is enhancing your core information...",
+    "bodyStory": "AI is enhancing your story elements...",
+    "bodyTone": "AI is enhancing your creative direction...",
+    "bodyBeats": "AI is enhancing your story structure...",
+    "bodyCharacters": "AI is enhancing character depth...",
     "refineSection": "Refine {section}",
     "fieldsRefined": "Refined {count, plural, =1 {# field} other {# fields}}",
     "failed": "Failed to refine",
     "sharpenLogline": "Sharpen Logline",
     "clarifyGenre": "Clarify Genre",
     "strongerTitle": "Stronger Title",
+    "expandSetting": "Expand Setting",
+    "deepenProtagonist": "Deepen Protagonist",
+    "strengthenAntagonist": "Strengthen Antagonist",
+    "addConflict": "Add Conflict",
+    "unifyTone": "Unify Tone",
+    "visualClarity": "Visual Clarity",
+    "deepenThemes": "Deepen Themes",
+    "improvePacing": "Improve Pacing",
+    "risingAction": "Rising Action",
+    "strongerClimax": "Stronger Climax",
+    "clearResolution": "Clear Resolution",
+    "addDepth": "Add Psychological Depth",
+    "strengthenArcs": "Strengthen Arcs",
+    "distinctVoices": "Distinct Voices",
+    "relationshipDynamics": "Relationship Dynamics",
     "whatShouldChange": "What should change and why?"
+  },
+  "dialog": {
+    "unsavedChanges": "Unsaved Changes"
   },
   "empty": {
     "noCharacters": "No characters defined yet",
-    "noBeats": "No beats yet"
+    "noCharactersCast": "No characters yet. Use the {assistant} to build the cast for this blueprint.",
+    "noBeats": "No beats yet. Use the pencil to generate a beat sheet for this blueprint.",
+    "noBeatsShort": "No beats defined yet"
   },
   "toast": {
-    "coreInfoUpdated": "Core info updated",
-    "storySetupUpdated": "Story setup updated",
-    "toneStyleUpdated": "Tone and style updated",
-    "beatsUpdated": "Beats updated",
-    "charactersUpdated": "Characters updated"
+    "coreInfoUpdated": "Core info updated!",
+    "storySetupUpdated": "Story setup updated!",
+    "toneStyleUpdated": "Tone & style updated!",
+    "beatsUpdated": "Beats updated!",
+    "charactersUpdated": "Characters updated!"
   }
 }

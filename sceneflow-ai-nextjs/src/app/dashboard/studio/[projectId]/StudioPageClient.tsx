@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import { Button } from "@/components/ui/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/Input";
@@ -57,7 +58,6 @@ import GeneratingOverlay from '@/components/ui/GeneratingOverlay'
 import { BlueprintTtsProvider } from '@/contexts/BlueprintTtsContext'
 import { BlueprintTtsProgressBar } from '@/components/blueprint/BlueprintTtsProgressBar'
 import { BlueprintOnboarding } from '@/components/blueprint/BlueprintOnboarding'
-import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 import { StoryLocaleControl } from '@/components/i18n/StoryLocaleControl'
 import { useStoryLocale } from '@/i18n/useStoryLocale'
 import { ProductEmptyState } from '@/components/product'
@@ -68,7 +68,6 @@ import {
   BlueprintRefineDiffBanner,
   type RefineDiffSummary,
 } from '@/components/blueprint/BlueprintRefineDiffBanner'
-import { BLUEPRINT_COPY } from '@/lib/blueprint/blueprintGlossary'
 import { useBlueprintProgress } from '@/hooks/studio/useBlueprintProgress'
 import { useBlueprintReadiness } from '@/hooks/studio/useBlueprintReadiness'
 import { useStartProduction } from '@/hooks/studio/useStartProduction'
@@ -84,6 +83,7 @@ interface StudioPageClientProps {
 }
 
 export default function StudioPageClient({ projectId }: StudioPageClientProps) {
+  const t = useTranslations('blueprint.studio');
   const searchParams = useSearchParams();
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
@@ -215,14 +215,14 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           }),
         })
         if (!res.ok) throw new Error('Failed to sync variant to Production')
-        toast.success(`Blueprint synced to ${STUDIO_DISPLAY_NAMES.production} — regenerate your script when ready.`)
+        toast.success(t('syncedToProduction'))
         router.push(`/dashboard/workflow/vision/${productionProjectId}`)
       } catch (error) {
         console.error('[StudioPage] Production sync failed:', error)
-        toast.error(`Blueprint updated, but ${STUDIO_DISPLAY_NAMES.production} sync failed`)
+        toast.error(t('syncFailed'))
       }
     },
-    [router]
+    [router, t]
   )
 
   useEffect(() => {
@@ -1302,7 +1302,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     <div className="min-h-full">
       <TopProgressBar visible={isGen} progress={genProgress} />
       <BlueprintTtsProgressBar />
-      <GeneratingOverlay visible={isGen} title="Creating your Film Concept…" progress={genProgress} />
+      <GeneratingOverlay visible={isGen} title={t('creatingConcept')} progress={genProgress} />
       
       <PanelGroup direction="horizontal" className="min-h-full">
         {/* Main Content Panel */}
@@ -1317,33 +1317,33 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               <div className="px-6 py-4 border-b border-white/10 bg-slate-900/70 backdrop-blur rounded-t-3xl">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <h3 className="text-xl font-bold text-white">{STUDIO_DISPLAY_NAMES.blueprint}</h3>
+                    <h3 className="text-xl font-bold text-white">{t('title')}</h3>
                     {/* Series Episode Badge */}
                     {seriesContext && (
                       <a 
                         href={`/dashboard/series/${seriesContext.seriesId}`}
                         className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-500/30 text-xs font-medium text-cyan-400 hover:bg-cyan-500/30 transition-colors"
-                        title={`Part of ${seriesContext.seriesTitle}`}
+                        title={t('partOfSeries', { series: seriesContext.seriesTitle })}
                       >
                         <Clapperboard className="w-3 h-3" />
-                        <span>Episode {seriesContext.episodeNumber}</span>
+                        <span>{t('episodeBadge', { number: seriesContext.episodeNumber })}</span>
                       </a>
                     )}
                     {!isSaved && !saveError && (
                       <span className="text-xs text-gray-500 flex items-center gap-1">
                         <RefreshCw className="w-3 h-3 animate-spin" />
-                        Saving...
+                        {t('saving')}
                       </span>
                     )}
                     {saveError && (
                       <span className="text-xs text-red-400 flex items-center gap-1">
-                        Save failed
+                        {t('saveFailed')}
                       </span>
                     )}
                     {isSaved && !saveError && projectId && !projectId.startsWith('new-project') && (
                       <span className="text-xs text-emerald-400 flex items-center gap-1">
                         <Check className="w-3 h-3" />
-                        Saved
+                        {t('saved')}
                       </span>
                     )}
                   </div>
@@ -1369,8 +1369,8 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                         // Short label matches the next-step banner's Go button; the
                         // destination stays in the accessible name and tooltip so
                         // "Go" is never the only context.
-                        aria-label={BLUEPRINT_COPY.startProduction}
-                        title={BLUEPRINT_COPY.startProductionTooltip}
+                        aria-label={t('goToProduction')}
+                        title={t('goTooltip')}
                         className="bg-emerald-600 hover:bg-emerald-500 text-white text-sm h-9"
                         size="sm"
                       >
@@ -1380,8 +1380,8 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                           <Clapperboard className="w-4 h-4 mr-1.5" />
                         )}
                         {isStartingProduction
-                          ? BLUEPRINT_COPY.startingProduction
-                          : BLUEPRINT_COPY.startProductionShort}
+                          ? t('openingProduction')
+                          : t('goShort')}
                       </Button>
                     )}
                     <Button 
@@ -1391,7 +1391,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                         "text-gray-300 hover:text-white border-gray-700 p-2",
                         showSidePanel && "bg-blue-500/10 border-blue-500/30 text-blue-300"
                       )}
-                      title={showSidePanel ? "Hide Side Panel" : "Show Side Panel"}
+                      title={showSidePanel ? t('hideSidePanel') : t('showSidePanel')}
                     >
                       {showSidePanel ? <PanelRightClose className="w-4 h-4" /> : <PanelRight className="w-4 h-4" />}
                     </Button>
@@ -1554,33 +1554,24 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-semibold text-white flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-purple-400" />
-                How Flow Creates Your Story
+                {t('help.title')}
               </h3>
               <button onClick={() => setShowStructureHelp(false)} className="text-gray-400 hover:text-white">✕</button>
             </div>
             <div className="space-y-4 text-gray-300">
-              <p>Flow analyzes your concept and generates a professional film treatment using industry-standard techniques:</p>
+              <p>{t('help.intro')}</p>
               <ul className="space-y-3">
-                <li className="flex items-start gap-3">
-                  <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span><strong>AI Narrative Reasoning</strong>—Flow will explain <em>why</em> it chose specific protagonists, themes, and creative directions in the side panel&apos;s &quot;Reasoning&quot; tab.</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span><strong>Three-Act Structure</strong>—Your story is automatically organized into Setup, Confrontation, and Resolution beats.</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span><strong>Character Development</strong>—Main and supporting characters with motivations, arcs, and relationships.</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span><strong>Visual Style Guide</strong>—Tone, mood, and cinematography recommendations tailored to your genre.</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>The AI may make <strong>creative decisions</strong> (combining characters, emphasizing themes) to strengthen the narrative—open the side panel&apos;s &quot;Reasoning&quot; tab to understand these choices.</span>
-                </li>
+                {(['reasoning', 'threeAct', 'characterDev', 'visualStyle', 'decisions'] as const).map((item) => (
+                  <li key={item} className="flex items-start gap-3">
+                    <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span>
+                      {t.rich(`help.${item}`, {
+                        strong: (chunks) => <strong>{chunks}</strong>,
+                        em: (chunks) => <em>{chunks}</em>,
+                      })}
+                    </span>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>

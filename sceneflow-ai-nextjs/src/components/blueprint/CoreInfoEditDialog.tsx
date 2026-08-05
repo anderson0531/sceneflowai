@@ -6,6 +6,7 @@ import { Button } from '../ui/Button'
 import { Textarea } from '../ui/textarea'
 import { Input } from '../ui/Input'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { Wand2, Loader2, FileText, Save, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { LocalizedField, TranslationNotice } from '@/components/i18n/LocalizedField'
@@ -38,9 +39,9 @@ type Props = {
 }
 
 const INSTRUCTION_TEMPLATES = [
-  { id: 'sharpen-logline', label: 'Sharpen Logline', text: 'Make the logline more compelling with a stronger hook and clearer stakes.' },
-  { id: 'clarify-genre', label: 'Clarify Genre', text: 'Ensure genre expectations are clear and consistent throughout.' },
-  { id: 'refine-title', label: 'Stronger Title', text: 'Suggest a more memorable, evocative title that captures the essence.' },
+  { id: 'sharpen-logline', labelKey: 'refine.sharpenLogline', text: 'Make the logline more compelling with a stronger hook and clearer stakes.' },
+  { id: 'clarify-genre', labelKey: 'refine.clarifyGenre', text: 'Ensure genre expectations are clear and consistent throughout.' },
+  { id: 'refine-title', labelKey: 'refine.strongerTitle', text: 'Suggest a more memorable, evocative title that captures the essence.' },
 ]
 
 export function CoreInfoEditDialog({
@@ -52,6 +53,8 @@ export function CoreInfoEditDialog({
   entityI18n,
   onEntityI18nChange,
 }: Props) {
+  const t = useTranslations('blueprint')
+  const tc = useTranslations('common')
   const [draft, setDraft] = useState<Partial<TreatmentVariant>>({})
   const [selectedInstructions, setSelectedInstructions] = useState<string[]>([])
   const [customInstruction, setCustomInstruction] = useState('')
@@ -96,13 +99,13 @@ export function CoreInfoEditDialog({
       if (data.success && data.draft) {
         setDraft(prev => ({ ...prev, ...data.draft }))
         setHasChanges(true)
-        toast.success(`Refined ${data.fieldsUpdated?.length || 0} fields`)
+        toast.success(t('refine.fieldsRefined', { count: data.fieldsUpdated?.length || 0 }))
       } else {
         throw new Error(data.message || 'Refinement failed')
       }
     } catch (error) {
       console.error('Refine error:', error)
-      toast.error('Failed to refine')
+      toast.error(t('refine.failed'))
     } finally {
       setIsRefining(false)
     }
@@ -166,13 +169,13 @@ export function CoreInfoEditDialog({
       if (data.success && data.draft) {
         setDraft(prev => ({ ...prev, ...data.draft }))
         setHasChanges(true)
-        toast.success(`Refined ${data.fieldsUpdated?.length || 0} fields`)
+        toast.success(t('refine.fieldsRefined', { count: data.fieldsUpdated?.length || 0 }))
       } else {
         throw new Error(data.message || 'Refinement failed')
       }
     } catch (error) {
       console.error('Refine error:', error)
-      toast.error('Failed to refine')
+      toast.error(t('refine.failed'))
     } finally {
       setIsRefining(false)
     }
@@ -180,7 +183,7 @@ export function CoreInfoEditDialog({
 
   const handleApply = () => {
     onApply(draft)
-    toast.success('Core info updated!')
+    toast.success(t('toast.coreInfoUpdated'))
     onClose()
   }
 
@@ -193,8 +196,8 @@ export function CoreInfoEditDialog({
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center rounded-lg">
             <div className="bg-slate-900 border border-cyan-500/30 rounded-xl p-8 shadow-2xl flex flex-col items-center max-w-sm text-center">
               <Loader2 className="w-12 h-12 animate-spin text-cyan-400 mb-4" />
-              <h3 className="text-lg font-semibold text-white mb-2">Refining Core Info</h3>
-              <p className="text-sm text-gray-400">AI is enhancing your core information...</p>
+              <h3 className="text-lg font-semibold text-white mb-2">{t('refine.refiningTitle', { section: t('sections.coreInfo') })}</h3>
+              <p className="text-sm text-gray-400">{t('refine.bodyCore')}</p>
             </div>
           </div>
         )}
@@ -202,11 +205,11 @@ export function CoreInfoEditDialog({
         <DialogHeader className="pb-3 border-b border-slate-700">
           <DialogTitle className="flex items-center gap-2 text-lg">
             <FileText className="w-5 h-5 text-cyan-400" />
-            <span>Edit</span>
-            <span className="text-gray-500 font-normal">· Core Info</span>
+            <span>{tc('actions.edit')}</span>
+            <span className="text-gray-500 font-normal">· {t('sections.coreInfo')}</span>
             {hasChanges && (
               <span className="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-full">
-                Unsaved Changes
+                {t('dialog.unsavedChanges')}
               </span>
             )}
           </DialogTitle>
@@ -218,8 +221,8 @@ export function CoreInfoEditDialog({
               <FileText className="w-4 h-4 text-cyan-400" />
             </div>
             <div>
-              <h3 className="font-semibold text-white">Core Identifying Information</h3>
-              <p className="text-xs text-gray-500">Title, logline, genre, and audience targeting</p>
+              <h3 className="font-semibold text-white">{t('sections.coreInfoTitle')}</h3>
+              <p className="text-xs text-gray-500">{t('sections.coreInfoDescription')}</p>
             </div>
           </div>
 
@@ -238,7 +241,7 @@ export function CoreInfoEditDialog({
                 )}
               >
                 <Wand2 className="w-3 h-3" />
-                {template.label}
+                {t(template.labelKey)}
               </button>
             ))}
           </div>
@@ -253,21 +256,21 @@ export function CoreInfoEditDialog({
           )}
 
           <div className="space-y-3">
-            <LocalizedField label="Title" {...bindField('title')}>
+            <LocalizedField label={t('fields.title')} {...bindField('title')}>
               {(p) => <Input {...p} className="bg-slate-800/50 border-slate-700" />}
             </LocalizedField>
 
-            <LocalizedField label="Logline" {...bindField('logline')}>
+            <LocalizedField label={t('fields.logline')} {...bindField('logline')}>
               {(p) => (
                 <Textarea {...p} className="min-h-[80px] bg-slate-800/50 border-slate-700" />
               )}
             </LocalizedField>
 
-            <LocalizedField label="Genre" {...bindField('genre')}>
+            <LocalizedField label={t('fields.genre')} {...bindField('genre')}>
               {(p) => <Input {...p} className="bg-slate-800/50 border-slate-700" />}
             </LocalizedField>
 
-            <LocalizedField label="Target Audience" {...bindField('target_audience')}>
+            <LocalizedField label={t('fields.targetAudience')} {...bindField('target_audience')}>
               {(p) => <Input {...p} className="bg-slate-800/50 border-slate-700" />}
             </LocalizedField>
           </div>
@@ -276,7 +279,7 @@ export function CoreInfoEditDialog({
             <Textarea
               value={customInstruction}
               onChange={(e) => setCustomInstruction(e.target.value)}
-              placeholder="Add specific refinement instructions..."
+              placeholder={t('fields.customInstruction')}
               className="min-h-[60px] bg-slate-800/50 border-slate-700 text-sm"
             />
             <Button
@@ -291,7 +294,7 @@ export function CoreInfoEditDialog({
               ) : (
                 <Wand2 className="w-4 h-4 mr-2" />
               )}
-              Refine Core Info
+              {t('refine.refineSection', { section: t('sections.coreInfo') })}
             </Button>
           </div>
         </div>
@@ -299,7 +302,7 @@ export function CoreInfoEditDialog({
         <div className="flex justify-end gap-2 pt-4 border-t border-slate-700 flex-shrink-0">
           <Button onClick={onClose} variant="outline" className="border-slate-700">
             <X className="w-4 h-4 mr-2" />
-            Cancel
+            {tc('actions.cancel')}
           </Button>
           <Button
             onClick={handleApply}
@@ -307,7 +310,7 @@ export function CoreInfoEditDialog({
             className="bg-cyan-500 hover:bg-cyan-600 text-white"
           >
             <Save className="w-4 h-4 mr-2" />
-            Apply Changes
+            {tc('actions.applyChanges')}
           </Button>
         </div>
       </DialogContent>

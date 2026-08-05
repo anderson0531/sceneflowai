@@ -6,6 +6,7 @@ import { Button } from '../ui/Button'
 import { Textarea } from '../ui/textarea'
 import { Input } from '../ui/Input'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { Wand2, Loader2, Clock, Save, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { LocalizedField, TranslationNotice } from '@/components/i18n/LocalizedField'
@@ -40,10 +41,10 @@ type Props = {
 }
 
 const INSTRUCTION_TEMPLATES = [
-  { id: 'improve-pacing', label: 'Improve Pacing', text: 'Adjust beat durations for better pacing and flow.' },
-  { id: 'rising-action', label: 'Rising Action', text: 'Strengthen the escalation and rising tension.' },
-  { id: 'stronger-climax', label: 'Stronger Climax', text: 'Make the climax more impactful and satisfying.' },
-  { id: 'clear-resolution', label: 'Clear Resolution', text: 'Ensure a satisfying and meaningful resolution.' },
+  { id: 'improve-pacing', labelKey: 'refine.improvePacing', text: 'Adjust beat durations for better pacing and flow.' },
+  { id: 'rising-action', labelKey: 'refine.risingAction', text: 'Strengthen the escalation and rising tension.' },
+  { id: 'stronger-climax', labelKey: 'refine.strongerClimax', text: 'Make the climax more impactful and satisfying.' },
+  { id: 'clear-resolution', labelKey: 'refine.clearResolution', text: 'Ensure a satisfying and meaningful resolution.' },
 ]
 
 export function BeatsEditDialog({
@@ -51,6 +52,8 @@ export function BeatsEditDialog({
   entityI18n,
   onEntityI18nChange,
 }: Props) {
+  const t = useTranslations('blueprint')
+  const tc = useTranslations('common')
   const [draft, setDraft] = useState<Partial<TreatmentVariant>>({})
   const [selectedInstructions, setSelectedInstructions] = useState<string[]>([])
   const [customInstruction, setCustomInstruction] = useState('')
@@ -92,13 +95,13 @@ export function BeatsEditDialog({
       if (data.success && data.draft) {
         setDraft(prev => ({ ...prev, ...data.draft }))
         setHasChanges(true)
-        toast.success(`Refined ${data.fieldsUpdated?.length || 0} fields`)
+        toast.success(t('refine.fieldsRefined', { count: data.fieldsUpdated?.length || 0 }))
       } else {
         throw new Error(data.message || 'Refinement failed')
       }
     } catch (error) {
       console.error('Refine error:', error)
-      toast.error('Failed to refine')
+      toast.error(t('refine.failed'))
     } finally {
       setIsRefining(false)
     }
@@ -171,13 +174,13 @@ export function BeatsEditDialog({
       if (data.success && data.draft) {
         setDraft(prev => ({ ...prev, ...data.draft }))
         setHasChanges(true)
-        toast.success(`Refined ${data.fieldsUpdated?.length || 0} fields`)
+        toast.success(t('refine.fieldsRefined', { count: data.fieldsUpdated?.length || 0 }))
       } else {
         throw new Error(data.message || 'Refinement failed')
       }
     } catch (error) {
       console.error('Refine error:', error)
-      toast.error('Failed to refine')
+      toast.error(t('refine.failed'))
     } finally {
       setIsRefining(false)
     }
@@ -185,7 +188,7 @@ export function BeatsEditDialog({
 
   const handleApply = () => {
     onApply(draft)
-    toast.success('Beats updated!')
+    toast.success(t('toast.beatsUpdated'))
     onClose()
   }
 
@@ -198,8 +201,8 @@ export function BeatsEditDialog({
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center rounded-lg">
             <div className="bg-slate-900 border border-cyan-500/30 rounded-xl p-8 shadow-2xl flex flex-col items-center max-w-sm text-center">
               <Loader2 className="w-12 h-12 animate-spin text-cyan-400 mb-4" />
-              <h3 className="text-lg font-semibold text-white mb-2">Refining Beats</h3>
-              <p className="text-sm text-gray-400">AI is enhancing your story structure...</p>
+              <h3 className="text-lg font-semibold text-white mb-2">{t('refine.refiningTitle', { section: t('sections.beats') })}</h3>
+              <p className="text-sm text-gray-400">{t('refine.bodyBeats')}</p>
             </div>
           </div>
         )}
@@ -207,11 +210,11 @@ export function BeatsEditDialog({
         <DialogHeader className="pb-3 border-b border-slate-700">
           <DialogTitle className="flex items-center gap-2 text-lg">
             <Clock className="w-5 h-5 text-cyan-400" />
-            <span>Edit</span>
-            <span className="text-gray-500 font-normal">· Beats</span>
+            <span>{tc('actions.edit')}</span>
+            <span className="text-gray-500 font-normal">· {t('sections.beats')}</span>
             {hasChanges && (
               <span className="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-full">
-                Unsaved Changes
+                {t('dialog.unsavedChanges')}
               </span>
             )}
           </DialogTitle>
@@ -223,8 +226,8 @@ export function BeatsEditDialog({
               <Clock className="w-4 h-4 text-cyan-400" />
             </div>
             <div>
-              <h3 className="font-semibold text-white">Beats & Runtime</h3>
-              <p className="text-xs text-gray-500">Story structure and pacing</p>
+              <h3 className="font-semibold text-white">{t('sections.beatsRuntime')}</h3>
+              <p className="text-xs text-gray-500">{t('sections.beatsDescription')}</p>
             </div>
           </div>
 
@@ -243,7 +246,7 @@ export function BeatsEditDialog({
                 )}
               >
                 <Wand2 className="w-3 h-3" />
-                {template.label}
+                {t(template.labelKey)}
               </button>
             ))}
           </div>
@@ -263,36 +266,36 @@ export function BeatsEditDialog({
                 <div className="space-y-2">
                   <div className="flex gap-2">
                     <LocalizedField
-                      label={`Beat ${index + 1}`}
+                      label={t('fields.beat', { number: index + 1 })}
                       className="flex-1"
                       {...bindBeatField(index, 'title')}
                     >
                       {(p) => (
                         <Input
                           {...p}
-                          placeholder="Beat title"
+                          placeholder={t('fields.beatTitle')}
                           className="bg-slate-900/50 border-slate-700 text-sm"
                         />
                       )}
                     </LocalizedField>
                     <div className="space-y-1">
-                      <label className="text-xs text-gray-400">Minutes</label>
+                      <label className="text-xs text-gray-400">{t('fields.minutes')}</label>
                       <Input
                         type="number"
                         value={beat.minutes || 0}
                         onChange={(e) => updateBeat(index, 'minutes', parseFloat(e.target.value) || 0)}
-                        placeholder="Min"
+                        placeholder={t('fields.minutesShort')}
                         className="w-20 bg-slate-900/50 border-slate-700 text-sm"
                         step="0.1"
                       />
                     </div>
                   </div>
-                  <LocalizedField label="Description" {...bindBeatField(index, 'synopsis')}>
+                  <LocalizedField label={t('fields.description')} {...bindBeatField(index, 'synopsis')}>
                     {(p) => (
                       <Textarea
                         {...p}
                         className="min-h-[40px] bg-slate-900/50 border-slate-700 text-xs"
-                        placeholder="Beat description..."
+                        placeholder={t('fields.beatDescription')}
                       />
                     )}
                   </LocalizedField>
@@ -301,7 +304,7 @@ export function BeatsEditDialog({
             ))}
             
             {(!draft.beats || draft.beats.length === 0) && (
-              <p className="text-sm text-gray-500 text-center py-4">No beats defined yet</p>
+              <p className="text-sm text-gray-500 text-center py-4">{t('empty.noBeatsShort')}</p>
             )}
           </div>
 
@@ -309,7 +312,7 @@ export function BeatsEditDialog({
             <Textarea
               value={customInstruction}
               onChange={(e) => setCustomInstruction(e.target.value)}
-              placeholder="Add specific refinement instructions..."
+              placeholder={t('fields.customInstruction')}
               className="min-h-[60px] bg-slate-800/50 border-slate-700 text-sm"
             />
             <Button
@@ -324,7 +327,7 @@ export function BeatsEditDialog({
               ) : (
                 <Wand2 className="w-4 h-4 mr-2" />
               )}
-              Refine Beats
+              {t('refine.refineSection', { section: t('sections.beats') })}
             </Button>
           </div>
         </div>
@@ -332,7 +335,7 @@ export function BeatsEditDialog({
         <div className="flex justify-end gap-2 pt-4 border-t border-slate-700 flex-shrink-0">
           <Button onClick={onClose} variant="outline" className="border-slate-700">
             <X className="w-4 h-4 mr-2" />
-            Cancel
+            {tc('actions.cancel')}
           </Button>
           <Button
             onClick={handleApply}
@@ -340,7 +343,7 @@ export function BeatsEditDialog({
             className="bg-cyan-500 hover:bg-cyan-600 text-white"
           >
             <Save className="w-4 h-4 mr-2" />
-            Apply Changes
+            {tc('actions.applyChanges')}
           </Button>
         </div>
       </DialogContent>

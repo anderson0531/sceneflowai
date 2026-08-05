@@ -8,7 +8,14 @@
     "data": "Privacidad de datos",
     "byok": "Configuración de BYOK",
     "storage": "Almacenamiento",
-    "admin": "Administrador"
+    "admin": "Administrador",
+    "profileDescription": "- Administrar la información de tu cuenta",
+    "integrationsDescription": "Conectar proveedores de IA y servicios externos",
+    "securityDescription": "Configuracion de seguridad",
+    "billingDescription": "Gestiona tu suscripción y facturación",
+    "notificationsDescription": "Preferencias de notificación por correo electrónico",
+    "dataDescription": "Exportación de datos y controles de privacidad",
+    "adminDescription": "Funciones y controles del administrador"
   },
   "profile": {
     "title": "Información del perfil",
@@ -39,5 +46,13 @@
     "interfaceSet": "Idioma de interfaz establecido en {language}",
     "saved": "Idioma de preferencia ha sido guardado",
     "saveFailed": "No se ha podido guardar la preferencia de idioma"
+  },
+  "shell": {
+    "title": "Ajustes de la cuenta",
+    "subtitle": "Gestiona tu cuenta, tus integraciones y tus preferencias",
+    "sectionsHeading": "Ajustes",
+    "quickActions": "Acciones Rápidas",
+    "backToDashboard": "Volver al panel de control",
+    "continueWorkflow": "Continuar flujo de trabajo"
   }
 }

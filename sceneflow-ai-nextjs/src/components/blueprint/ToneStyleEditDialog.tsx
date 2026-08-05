@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import { Button } from '../ui/Button'
 import { Textarea } from '../ui/textarea'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { Wand2, Loader2, Palette, Save, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { LocalizedField, TranslationNotice } from '@/components/i18n/LocalizedField'
@@ -44,9 +45,9 @@ type Props = {
 }
 
 const INSTRUCTION_TEMPLATES = [
-  { id: 'unify-tone', label: 'Unify Tone', text: 'Ensure consistent tone throughout all story elements.' },
-  { id: 'visual-clarity', label: 'Visual Clarity', text: 'Make visual style directions more specific and actionable.' },
-  { id: 'theme-depth', label: 'Deepen Themes', text: 'Explore themes with more nuance and complexity.' },
+  { id: 'unify-tone', labelKey: 'refine.unifyTone', text: 'Ensure consistent tone throughout all story elements.' },
+  { id: 'visual-clarity', labelKey: 'refine.visualClarity', text: 'Make visual style directions more specific and actionable.' },
+  { id: 'theme-depth', labelKey: 'refine.deepenThemes', text: 'Explore themes with more nuance and complexity.' },
 ]
 
 export function ToneStyleEditDialog({
@@ -54,6 +55,8 @@ export function ToneStyleEditDialog({
   entityI18n,
   onEntityI18nChange,
 }: Props) {
+  const t = useTranslations('blueprint')
+  const tc = useTranslations('common')
   const [draft, setDraft] = useState<Partial<TreatmentVariant>>({})
   const [selectedInstructions, setSelectedInstructions] = useState<string[]>([])
   const [customInstruction, setCustomInstruction] = useState('')
@@ -98,13 +101,13 @@ export function ToneStyleEditDialog({
       if (data.success && data.draft) {
         setDraft(prev => ({ ...prev, ...data.draft }))
         setHasChanges(true)
-        toast.success(`Refined ${data.fieldsUpdated?.length || 0} fields`)
+        toast.success(t('refine.fieldsRefined', { count: data.fieldsUpdated?.length || 0 }))
       } else {
         throw new Error(data.message || 'Refinement failed')
       }
     } catch (error) {
       console.error('Refine error:', error)
-      toast.error('Failed to refine')
+      toast.error(t('refine.failed'))
     } finally {
       setIsRefining(false)
     }
@@ -165,13 +168,13 @@ export function ToneStyleEditDialog({
       if (data.success && data.draft) {
         setDraft(prev => ({ ...prev, ...data.draft }))
         setHasChanges(true)
-        toast.success(`Refined ${data.fieldsUpdated?.length || 0} fields`)
+        toast.success(t('refine.fieldsRefined', { count: data.fieldsUpdated?.length || 0 }))
       } else {
         throw new Error(data.message || 'Refinement failed')
       }
     } catch (error) {
       console.error('Refine error:', error)
-      toast.error('Failed to refine')
+      toast.error(t('refine.failed'))
     } finally {
       setIsRefining(false)
     }
@@ -179,7 +182,7 @@ export function ToneStyleEditDialog({
 
   const handleApply = () => {
     onApply(draft)
-    toast.success('Tone & style updated!')
+    toast.success(t('toast.toneStyleUpdated'))
     onClose()
   }
 
@@ -192,8 +195,8 @@ export function ToneStyleEditDialog({
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center rounded-lg">
             <div className="bg-slate-900 border border-cyan-500/30 rounded-xl p-8 shadow-2xl flex flex-col items-center max-w-sm text-center">
               <Loader2 className="w-12 h-12 animate-spin text-cyan-400 mb-4" />
-              <h3 className="text-lg font-semibold text-white mb-2">Refining Tone & Style</h3>
-              <p className="text-sm text-gray-400">AI is enhancing your creative direction...</p>
+              <h3 className="text-lg font-semibold text-white mb-2">{t('refine.refiningTitle', { section: t('sections.toneStyle') })}</h3>
+              <p className="text-sm text-gray-400">{t('refine.bodyTone')}</p>
             </div>
           </div>
         )}
@@ -201,11 +204,11 @@ export function ToneStyleEditDialog({
         <DialogHeader className="pb-3 border-b border-slate-700">
           <DialogTitle className="flex items-center gap-2 text-lg">
             <Palette className="w-5 h-5 text-cyan-400" />
-            <span>Edit</span>
-            <span className="text-gray-500 font-normal">· Tone & Style</span>
+            <span>{tc('actions.edit')}</span>
+            <span className="text-gray-500 font-normal">· {t('sections.toneStyle')}</span>
             {hasChanges && (
               <span className="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-full">
-                Unsaved Changes
+                {t('dialog.unsavedChanges')}
               </span>
             )}
           </DialogTitle>
@@ -217,8 +220,8 @@ export function ToneStyleEditDialog({
               <Palette className="w-4 h-4 text-cyan-400" />
             </div>
             <div>
-              <h3 className="font-semibold text-white">Tone, Style & Themes</h3>
-              <p className="text-xs text-gray-500">Visual style, mood, and thematic elements</p>
+              <h3 className="font-semibold text-white">{t('sections.toneStyleThemes')}</h3>
+              <p className="text-xs text-gray-500">{t('sections.toneStyleDescription')}</p>
             </div>
           </div>
 
@@ -237,7 +240,7 @@ export function ToneStyleEditDialog({
                 )}
               >
                 <Wand2 className="w-3 h-3" />
-                {template.label}
+                {t(template.labelKey)}
               </button>
             ))}
           </div>
@@ -252,7 +255,7 @@ export function ToneStyleEditDialog({
           )}
 
           <div className="space-y-3">
-            <LocalizedField label="Tone Description" {...bindField('tone_description')}>
+            <LocalizedField label={t('fields.toneDescription')} {...bindField('tone_description')}>
               {(p) => (
                 <Textarea {...p} className="min-h-[80px] bg-slate-800/50 border-slate-700" />
               )}
@@ -269,7 +272,7 @@ export function ToneStyleEditDialog({
             />
 
             <div className="space-y-1">
-              <label className="text-xs text-gray-400">Themes (comma-separated)</label>
+              <label className="text-xs text-gray-400">{t('fields.themes')}</label>
               <Textarea
                 value={Array.isArray(draft.themes) ? draft.themes.join(', ') : draft.themes || ''}
                 onChange={(e) => updateDraft('themes', e.target.value.split(',').map(t => t.trim()).filter(Boolean))}
@@ -283,7 +286,7 @@ export function ToneStyleEditDialog({
             <Textarea
               value={customInstruction}
               onChange={(e) => setCustomInstruction(e.target.value)}
-              placeholder="Add specific refinement instructions..."
+              placeholder={t('fields.customInstruction')}
               className="min-h-[60px] bg-slate-800/50 border-slate-700 text-sm"
             />
             <Button
@@ -298,7 +301,7 @@ export function ToneStyleEditDialog({
               ) : (
                 <Wand2 className="w-4 h-4 mr-2" />
               )}
-              Refine Tone & Style
+              {t('refine.refineSection', { section: t('sections.toneStyle') })}
             </Button>
           </div>
         </div>
@@ -306,7 +309,7 @@ export function ToneStyleEditDialog({
         <div className="flex justify-end gap-2 pt-4 border-t border-slate-700 flex-shrink-0">
           <Button onClick={onClose} variant="outline" className="border-slate-700">
             <X className="w-4 h-4 mr-2" />
-            Cancel
+            {tc('actions.cancel')}
           </Button>
           <Button
             onClick={handleApply}
@@ -314,7 +317,7 @@ export function ToneStyleEditDialog({
             className="bg-cyan-500 hover:bg-cyan-600 text-white"
           >
             <Save className="w-4 h-4 mr-2" />
-            Apply Changes
+            {tc('actions.applyChanges')}
           </Button>
         </div>
       </DialogContent>

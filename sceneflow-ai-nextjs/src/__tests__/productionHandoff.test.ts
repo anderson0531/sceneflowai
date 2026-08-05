@@ -30,9 +30,10 @@ describe('Production hand-off label', () => {
 
   it('uses the short label only on the Studio header button', () => {
     const page = readSource('src/app/dashboard/studio/[projectId]/StudioPageClient.tsx')
-    expect(page).toContain('BLUEPRINT_COPY.startProductionShort')
+    // The header button copy moved to the blueprint catalog (studio.goShort).
+    expect(page).toContain("t('goShort')")
     // A bare "Go" needs the destination in its accessible name.
-    expect(page).toContain('aria-label={BLUEPRINT_COPY.startProduction}')
+    expect(page).toContain("aria-label={t('goToProduction')}")
   })
 
   it('keeps the full name in the dialog, sidebar guide and card toolbar', () => {

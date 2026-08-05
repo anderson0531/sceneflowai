@@ -1,0 +1,36 @@
+{
+  "home": {
+    "title": "Panel",
+    "welcome": "Bienvenido/a de nuevo",
+    "continueWorking": "Seguir trabajando",
+    "recentProjects": "Proyectos recientes",
+    "noProjects": "No projects yet.",
+    "noProjectsHint": "Inicie un proyecto para verlo aquí.",
+    "startProject": "Comienzo del proyecto"
+  },
+  "projects": {
+    "title": "Proyectos",
+    "description": "Cada proyecto que has comenzado, el más nuevo primero",
+    "newProject": "Nuevo proyecto",
+    "search": "Buscar Proyectos",
+    "empty": "No projects yet.",
+    "emptyHint": "Tu primer proyecto comienza en Blueprint Studio.",
+    "openBlueprint": "Abrir en Blueprint Studio",
+    "openProduction": "Abrir en Production Studio",
+    "deleteConfirmTitle": "¿Eliminar este proyecto?",
+    "deleteConfirmBody": "Esto elimina el plano, el script y todos los activos generados. No se puede deshacer.",
+    "deleted": "Proyecto eliminado",
+    "deleteFailed": "No se ha podido eliminar el proyecto",
+    "phase": {
+      "blueprint": "Blueprint",
+      "production": "Producción",
+      "complete": "Completado"
+    },
+    "meta": {
+      "updated": "Actualizado {date}",
+      "created": "Creado {date}",
+      "episodeOf": "Episodio {number} de {series}",
+      "duration": "{minutes} min"
+    }
+  }
+}

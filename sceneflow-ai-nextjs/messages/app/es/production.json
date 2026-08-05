@@ -1,0 +1,57 @@
+{
+  "studio": {
+    "title": "Production Studio",
+    "script": "Script",
+    "characters": "Personajes",
+    "scenes": "Scenes",
+    "references": "Referencias",
+    "timeline": "Línea temporal",
+    "mixer": "Production Mixer",
+    "directorConsole": "Consola del director"
+  },
+  "script": {
+    "generateScript": "Generar secuencia de comandos",
+    "regenerateScript": "Regenerar guión",
+    "optimizeScene": "Optimizar escena",
+    "reviewScript": "Revise el guion.",
+    "sceneNumber": "Escena {number}",
+    "heading": "Encabezado de escena",
+    "visualDescription": "Descripción visual",
+    "dialogue": "Diálogos",
+    "narration": "Observaciones",
+    "segmentDirection": "Dirección del segmento",
+    "soundEffects": "Efectos de sonido",
+    "music": "Música",
+    "noScript": "Aún no hay guión",
+    "noScriptHint": "Genera un script a partir de tu plano aprobado para comenzar la producción."
+  },
+  "language": {
+    "viewLanguage": "Ver idioma",
+    "generateLanguage": "Generar idioma",
+    "deliveryLanguage": "Idioma de entrega",
+    "addLanguage": "Añadir un lenguaje",
+    "languageHint": "El diálogo y la narración se generan en este idioma. Las indicaciones de fotogramas y vídeos se mantienen en inglés.",
+    "translationsSaved": "¡Traducciones guardadas!",
+    "translationFailed": "No se ha podido traducir esta escena"
+  },
+  "prompts": {
+    "startFrame": "Indicador de inicio de fotograma",
+    "endFrame": "Indicador de fin de fotograma",
+    "videoPrompt": "Aviso de vídeo",
+    "englishOnlyNotice": "Las indicaciones permanecen en inglés: los modelos de imagen y video producen resultados notablemente más débiles a partir de las indicaciones traducidas."
+  },
+  "render": {
+    "renderScene": "Renderizar escena",
+    "rendering": "Renderizando…",
+    "renderFailed": "Error de renderización",
+    "renderComplete": "Renderizar completo",
+    "queued": "En cola",
+    "retake": "Repetir"
+  },
+  "toast": {
+    "sceneUpdated": "Escena actualizada",
+    "segmentsGenerated": "Segmentos generados",
+    "audioGenerated": "Audio generado",
+    "saveFailed": "No se pudieron guardar los cambios."
+  }
+}

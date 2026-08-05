@@ -6,6 +6,7 @@ import { Button } from '../ui/Button'
 import { Textarea } from '../ui/textarea'
 import { Input } from '../ui/Input'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { Wand2, Loader2, Users, Save, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { LocalizedField, TranslationNotice } from '@/components/i18n/LocalizedField'
@@ -53,10 +54,10 @@ type Props = {
 }
 
 const INSTRUCTION_TEMPLATES = [
-  { id: 'add-depth', label: 'Add Psychological Depth', text: 'Add more internal conflict, wants vs needs, and character flaws.' },
-  { id: 'strengthen-arcs', label: 'Strengthen Arcs', text: 'Make character transformations more pronounced and earned.' },
-  { id: 'distinct-voices', label: 'Distinct Voices', text: 'Give each character a more unique personality and voice.' },
-  { id: 'relationship-dynamics', label: 'Relationship Dynamics', text: 'Enrich the relationships and dynamics between characters.' },
+  { id: 'add-depth', labelKey: 'refine.addDepth', text: 'Add more internal conflict, wants vs needs, and character flaws.' },
+  { id: 'strengthen-arcs', labelKey: 'refine.strengthenArcs', text: 'Make character transformations more pronounced and earned.' },
+  { id: 'distinct-voices', labelKey: 'refine.distinctVoices', text: 'Give each character a more unique personality and voice.' },
+  { id: 'relationship-dynamics', labelKey: 'refine.relationshipDynamics', text: 'Enrich the relationships and dynamics between characters.' },
 ]
 
 type CharacterFieldBinding = React.ComponentProps<typeof LocalizedField>
@@ -76,6 +77,7 @@ function CharacterEditor({
     field: 'description' | 'externalGoal' | 'internalNeed' | 'fatalFlaw'
   ) => Omit<CharacterFieldBinding, 'label' | 'children'>
 }) {
+  const t = useTranslations('blueprint')
   return (
     <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-700 space-y-2">
       <div className="grid grid-cols-2 gap-2">
@@ -84,54 +86,54 @@ function CharacterEditor({
         <Input
           value={character.name || ''}
           onChange={(e) => onChange(index, 'name', e.target.value)}
-          placeholder="Name"
+          placeholder={t('fields.name')}
           translate="no"
           className="bg-slate-900/50 border-slate-700 text-sm"
         />
         <Input
           value={character.role || ''}
           onChange={(e) => onChange(index, 'role', e.target.value)}
-          placeholder="Role (e.g., protagonist)"
+          placeholder={t('fields.role')}
           className="bg-slate-900/50 border-slate-700 text-sm"
         />
       </div>
-      <LocalizedField label="Description" {...bindField(index, 'description')}>
+      <LocalizedField label={t('fields.description')} {...bindField(index, 'description')}>
         {(p) => (
           <Textarea
             {...p}
-            placeholder="Character description..."
+            placeholder={t('fields.characterDescription')}
             className="min-h-[60px] bg-slate-900/50 border-slate-700 text-sm"
           />
         )}
       </LocalizedField>
       <details className="group">
         <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-300">
-          Psychological Depth (optional)
+          {t('fields.psychologicalDepth')}
         </summary>
         <div className="mt-2 space-y-2">
-          <LocalizedField label="External goal" {...bindField(index, 'externalGoal')}>
+          <LocalizedField label={t('fields.externalGoal')} {...bindField(index, 'externalGoal')}>
             {(p) => (
               <Input
                 {...p}
-                placeholder="External goal"
+                placeholder={t('fields.externalGoal')}
                 className="bg-slate-900/50 border-slate-700 text-xs"
               />
             )}
           </LocalizedField>
-          <LocalizedField label="Internal need" {...bindField(index, 'internalNeed')}>
+          <LocalizedField label={t('fields.internalNeed')} {...bindField(index, 'internalNeed')}>
             {(p) => (
               <Input
                 {...p}
-                placeholder="Internal need"
+                placeholder={t('fields.internalNeed')}
                 className="bg-slate-900/50 border-slate-700 text-xs"
               />
             )}
           </LocalizedField>
-          <LocalizedField label="Fatal flaw" {...bindField(index, 'fatalFlaw')}>
+          <LocalizedField label={t('fields.fatalFlaw')} {...bindField(index, 'fatalFlaw')}>
             {(p) => (
               <Input
                 {...p}
-                placeholder="Fatal flaw"
+                placeholder={t('fields.fatalFlaw')}
                 className="bg-slate-900/50 border-slate-700 text-xs"
               />
             )}
@@ -147,6 +149,8 @@ export function CharactersEditDialog({
   entityI18n,
   onEntityI18nChange,
 }: Props) {
+  const t = useTranslations('blueprint')
+  const tc = useTranslations('common')
   const [draft, setDraft] = useState<Partial<TreatmentVariant>>({})
   const [selectedInstructions, setSelectedInstructions] = useState<string[]>([])
   const [customInstruction, setCustomInstruction] = useState('')
@@ -188,13 +192,13 @@ export function CharactersEditDialog({
       if (data.success && data.draft) {
         setDraft(prev => ({ ...prev, ...data.draft }))
         setHasChanges(true)
-        toast.success(`Refined ${data.fieldsUpdated?.length || 0} fields`)
+        toast.success(t('refine.fieldsRefined', { count: data.fieldsUpdated?.length || 0 }))
       } else {
         throw new Error(data.message || 'Refinement failed')
       }
     } catch (error) {
       console.error('Refine error:', error)
-      toast.error('Failed to refine')
+      toast.error(t('refine.failed'))
     } finally {
       setIsRefining(false)
     }
@@ -276,13 +280,13 @@ export function CharactersEditDialog({
       if (data.success && data.draft) {
         setDraft(prev => ({ ...prev, ...data.draft }))
         setHasChanges(true)
-        toast.success(`Refined ${data.fieldsUpdated?.length || 0} fields`)
+        toast.success(t('refine.fieldsRefined', { count: data.fieldsUpdated?.length || 0 }))
       } else {
         throw new Error(data.message || 'Refinement failed')
       }
     } catch (error) {
       console.error('Refine error:', error)
-      toast.error('Failed to refine')
+      toast.error(t('refine.failed'))
     } finally {
       setIsRefining(false)
     }
@@ -290,7 +294,7 @@ export function CharactersEditDialog({
 
   const handleApply = () => {
     onApply(draft)
-    toast.success('Characters updated!')
+    toast.success(t('toast.charactersUpdated'))
     onClose()
   }
 
@@ -303,8 +307,8 @@ export function CharactersEditDialog({
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center rounded-lg">
             <div className="bg-slate-900 border border-cyan-500/30 rounded-xl p-8 shadow-2xl flex flex-col items-center max-w-sm text-center">
               <Loader2 className="w-12 h-12 animate-spin text-cyan-400 mb-4" />
-              <h3 className="text-lg font-semibold text-white mb-2">Refining Characters</h3>
-              <p className="text-sm text-gray-400">AI is enhancing character depth...</p>
+              <h3 className="text-lg font-semibold text-white mb-2">{t('refine.refiningTitle', { section: t('sections.characters') })}</h3>
+              <p className="text-sm text-gray-400">{t('refine.bodyCharacters')}</p>
             </div>
           </div>
         )}
@@ -312,11 +316,11 @@ export function CharactersEditDialog({
         <DialogHeader className="pb-3 border-b border-slate-700">
           <DialogTitle className="flex items-center gap-2 text-lg">
             <Users className="w-5 h-5 text-cyan-400" />
-            <span>Edit</span>
-            <span className="text-gray-500 font-normal">· Characters</span>
+            <span>{tc('actions.edit')}</span>
+            <span className="text-gray-500 font-normal">· {t('sections.characters')}</span>
             {hasChanges && (
               <span className="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-full">
-                Unsaved Changes
+                {t('dialog.unsavedChanges')}
               </span>
             )}
           </DialogTitle>
@@ -328,8 +332,8 @@ export function CharactersEditDialog({
               <Users className="w-4 h-4 text-cyan-400" />
             </div>
             <div>
-              <h3 className="font-semibold text-white">Characters</h3>
-              <p className="text-xs text-gray-500">Character details and psychological depth</p>
+              <h3 className="font-semibold text-white">{t('sections.characters')}</h3>
+              <p className="text-xs text-gray-500">{t('sections.charactersDescription')}</p>
             </div>
           </div>
 
@@ -348,7 +352,7 @@ export function CharactersEditDialog({
                 )}
               >
                 <Wand2 className="w-3 h-3" />
-                {template.label}
+                {t(template.labelKey)}
               </button>
             ))}
           </div>
@@ -374,7 +378,7 @@ export function CharactersEditDialog({
             ))}
             
             {(!draft.character_descriptions || draft.character_descriptions.length === 0) && (
-              <p className="text-sm text-gray-500 text-center py-4">No characters defined yet</p>
+              <p className="text-sm text-gray-500 text-center py-4">{t('empty.noCharacters')}</p>
             )}
           </div>
 
@@ -382,7 +386,7 @@ export function CharactersEditDialog({
             <Textarea
               value={customInstruction}
               onChange={(e) => setCustomInstruction(e.target.value)}
-              placeholder="Add specific refinement instructions..."
+              placeholder={t('fields.customInstruction')}
               className="min-h-[60px] bg-slate-800/50 border-slate-700 text-sm"
             />
             <Button
@@ -397,7 +401,7 @@ export function CharactersEditDialog({
               ) : (
                 <Wand2 className="w-4 h-4 mr-2" />
               )}
-              Refine Characters
+              {t('refine.refineSection', { section: t('sections.characters') })}
             </Button>
           </div>
         </div>
@@ -405,7 +409,7 @@ export function CharactersEditDialog({
         <div className="flex justify-end gap-2 pt-4 border-t border-slate-700 flex-shrink-0">
           <Button onClick={onClose} variant="outline" className="border-slate-700">
             <X className="w-4 h-4 mr-2" />
-            Cancel
+            {tc('actions.cancel')}
           </Button>
           <Button
             onClick={handleApply}
@@ -413,7 +417,7 @@ export function CharactersEditDialog({
             className="bg-cyan-500 hover:bg-cyan-600 text-white"
           >
             <Save className="w-4 h-4 mr-2" />
-            Apply Changes
+            {tc('actions.applyChanges')}
           </Button>
         </div>
       </DialogContent>

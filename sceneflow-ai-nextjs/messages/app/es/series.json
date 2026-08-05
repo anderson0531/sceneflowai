@@ -1,0 +1,51 @@
+{
+  "studio": {
+    "title": "Series Studio",
+    "description": "Planifica un arco de varios episodios una vez, luego produce cada episodio en su contra",
+    "newSeries": "Nueva serie",
+    "empty": "Ninguna perla",
+    "emptyHint": "Una serie mantiene los personajes, las ubicaciones y la continuidad consistentes en todos los episodios."
+  },
+  "detail": {
+    "episodes": "Capítulos",
+    "productionBible": "Biblia de producción",
+    "referenceLibrary": "Reference Library",
+    "resonance": "Audience Resonance",
+    "generateEpisodes": "Gerar episodios",
+    "addEpisode": "Añadir episodio",
+    "openEpisode": "Abrir episodio {number}",
+    "episodeCount": "{count, plural, =1 {# episode} other {# episodes}}"
+  },
+  "continuity": {
+    "title": "Motor de continuidad",
+    "characters": "Personajes",
+    "locations": "Localidades",
+    "aesthetics": "Aesthetics",
+    "keyEvents": "Eventos clave",
+    "storyThreads": "Hilos de historias",
+    "reviewUpdates": "Revisar actualizaciones"
+  },
+  "fields": {
+    "seriesTitle": "Tìtulo de Series",
+    "logline": "Logline",
+    "synopsis": "Sinopsis",
+    "setting": "Ambiente",
+    "targetAudience": "Público objetivo",
+    "episodeTitle": "Titulo episodios",
+    "episodeSynopsis": "Episode Synopsis",
+    "episodeHook": "Gancho para el próximo episodio",
+    "characterName": "Nombre del personaje",
+    "characterDescription": "Descripción",
+    "appearance": "Apariencia",
+    "backstory": "Antecedentes",
+    "personality": "Personalidad",
+    "locationName": "Nombre localización",
+    "locationDescription": "Descripción"
+  },
+  "toast": {
+    "created": "Serie creada",
+    "updated": "Series no actualizadas.",
+    "generateFailed": "No se han podido generar episodios",
+    "deleted": "Serie eliminada"
+  }
+}

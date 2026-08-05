@@ -40,7 +40,8 @@ describe('Blueprint section tabs', () => {
 
   it('gives Characters an empty state instead of omitting the section', () => {
     expect(card).toContain('characterCount === 0')
-    expect(card).toContain('No characters yet')
+    // The copy moved to the blueprint catalog; the card references the key.
+    expect(card).toContain("t('empty.noCharactersCast'")
   })
 
   it('shows counts on the Beats and Characters tabs', () => {
@@ -100,7 +101,7 @@ describe('Created by row', () => {
   })
 
   it('offers a way to fix a missing name', () => {
-    expect(card).toContain('Add your name')
+    expect(card).toContain("t('credit.addYourName')")
     expect(card).toContain('/dashboard/settings/profile')
   })
 })
@@ -136,7 +137,7 @@ describe('Reasoning panel', () => {
 
   it('keeps the reasoning reachable from the card', () => {
     expect(card).toContain('onOpenFoundation')
-    expect(card).toContain('Why these choices?')
+    expect(card).toContain("t('reasoning.whyChoices')")
   })
 
   it('shows narration generation progress in the toolbar', () => {

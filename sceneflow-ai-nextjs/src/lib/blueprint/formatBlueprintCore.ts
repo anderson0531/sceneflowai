@@ -77,13 +77,18 @@ export function compactBlueprintRuntimeDisplay(display: string): string {
   return trimmed
 }
 
-/** Tab label for the Beats section, e.g. "Beats (10 - 40m)". */
-export function formatBeatsTabLabel(count: number, minutes: number, runtimeDisplay = ''): string {
-  if (count <= 0) return 'Beats'
-  if (minutes <= 0 || !runtimeDisplay.trim()) return `Beats (${count})`
+/** Tab label for the Beats section, e.g. "Beats (10 - 40m)". Callers pass a translated base label. */
+export function formatBeatsTabLabel(
+  count: number,
+  minutes: number,
+  runtimeDisplay = '',
+  label = 'Beats'
+): string {
+  if (count <= 0) return label
+  if (minutes <= 0 || !runtimeDisplay.trim()) return `${label} (${count})`
 
   const compact = compactBlueprintRuntimeDisplay(runtimeDisplay)
-  return compact ? `Beats (${count} - ${compact})` : `Beats (${count})`
+  return compact ? `${label} (${count} - ${compact})` : `${label} (${count})`
 }
 
 /**

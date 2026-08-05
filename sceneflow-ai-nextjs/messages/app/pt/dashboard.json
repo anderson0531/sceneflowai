@@ -1,0 +1,36 @@
+{
+  "home": {
+    "title": "Painel de controlo para acompanhamento da evolução dos indicadores;",
+    "welcome": "Bem-vindo(a) de de novo",
+    "continueWorking": "Continua trabalhando.",
+    "recentProjects": "Projetos recentes",
+    "noProjects": "Ainda não há projectos",
+    "noProjectsHint": "Inicie um projeto para vê-lo aqui.",
+    "startProject": "PROJETO DE INÍCIO DE POÇO"
+  },
+  "projects": {
+    "title": "Projectos",
+    "description": "Todos os projetos que iniciou, os mais novos primeiro",
+    "newProject": "Novo projeto",
+    "search": "Pesquisar projetos",
+    "empty": "Ainda não há projectos",
+    "emptyHint": "O seu primeiro projeto começa em Blueprint Studio.",
+    "openBlueprint": "Abrir em Blueprint Studio",
+    "openProduction": "Abrir no Production Studio",
+    "deleteConfirmTitle": "Apagar este projeto",
+    "deleteConfirmBody": "Isso remove o blueprint, o script e todos os ativos gerados. Não pode ser desfeito.",
+    "deleted": "Projeto eliminado",
+    "deleteFailed": "Não foi possível eliminar o projeto",
+    "phase": {
+      "blueprint": "Blueprint",
+      "production": "Produção",
+      "complete": "Concluir"
+    },
+    "meta": {
+      "updated": "{date} atualizado",
+      "created": "{date} criado",
+      "episodeOf": "Episódio {number} de {series}",
+      "duration": "{minutes} min"
+    }
+  }
+}

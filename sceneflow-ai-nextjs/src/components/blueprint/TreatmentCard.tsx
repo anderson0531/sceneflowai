@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
 import { useGuideStore } from '@/store/useGuideStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -44,13 +45,13 @@ import {
   resolveVariantAspectRatio,
 } from '@/lib/treatment/blueprintFoundation'
 
-/** Blueprint body sections, in tab order. */
-const SECTION_TABS: Array<{ id: BlueprintFixSection; label: string }> = [
-  { id: 'core', label: 'Core' },
-  { id: 'story', label: 'Story' },
-  { id: 'tone', label: 'Tone' },
-  { id: 'beats', label: 'Beats' },
-  { id: 'characters', label: 'Characters' },
+/** Blueprint body sections, in tab order. Labels resolve through the catalog. */
+const SECTION_TABS: Array<{ id: BlueprintFixSection; labelKey: string }> = [
+  { id: 'core', labelKey: 'tabs.core' },
+  { id: 'story', labelKey: 'tabs.story' },
+  { id: 'tone', labelKey: 'tabs.tone' },
+  { id: 'beats', labelKey: 'tabs.beats' },
+  { id: 'characters', labelKey: 'tabs.characters' },
 ]
 
 const SECTION_TAB_IDS: BlueprintFixSection[] = SECTION_TABS.map((t) => t.id)
@@ -82,6 +83,7 @@ export function TreatmentCard({
   onOpenFoundation,
   projectFormat,
 }: TreatmentCardProps = {}) {
+  const t = useTranslations('blueprint')
   const router = useRouter()
   const { data: session } = useSession()
   const { profile: creatorProfile, loading: creatorProfileLoading } = useCreatorProfile()
@@ -239,7 +241,7 @@ export function TreatmentCard({
                         <AssistantButton
                           onClick={() => openRefine({})}
                           size="toolbar"
-                          scopeLabel="whole blueprint"
+                          scopeLabel={t('sections.wholeBlueprint')}
                         />
 
                         {/* Reimagine - major story changes */}
@@ -264,8 +266,8 @@ export function TreatmentCard({
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
-                                aria-label="Preview and print"
-                                title="Preview & Print"
+                                aria-label={t('audio.previewPrint')}
+                                title={t('audio.previewPrint')}
                                 onClick={() => setReportPreviewOpen(true)}
                                 className="h-8 w-8 border border-gray-700 text-gray-200 hover:bg-gray-800"
                                 variant="outline"
@@ -274,7 +276,7 @@ export function TreatmentCard({
                                 <Printer className="h-4 w-4" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Preview & Print</TooltipContent>
+                            <TooltipContent>{t('audio.previewPrint')}</TooltipContent>
                           </Tooltip>
                         )}
 
@@ -282,7 +284,7 @@ export function TreatmentCard({
                         <div className="md:hidden">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button aria-label="More actions" className="h-8 w-8" size="icon" variant="outline">
+                              <Button aria-label={t('audio.moreActions')} className="h-8 w-8" size="icon" variant="outline">
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
@@ -291,7 +293,7 @@ export function TreatmentCard({
                                 <AssistantIcon className="h-4 w-4 mr-2" /> {ASSISTANT.short}
                               </DropdownMenuItem>
                               <DropdownMenuItem onSelect={(e)=>{e.preventDefault(); setReimaginOpen(true);}} onClick={(e)=>{e.preventDefault();}}>
-                                <RefreshCw className="h-4 w-4 mr-2" /> Reimagine
+                                <RefreshCw className="h-4 w-4 mr-2" /> {t('menu.reimagine')}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -303,8 +305,8 @@ export function TreatmentCard({
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button
-                                    aria-label="Stop playback"
-                                    title="Stop (P)"
+                                    aria-label={t('audio.stop')}
+                                    title={t('audio.stop')}
                                     onClick={tts.stopAny}
                                     className="h-8 w-8 border border-gray-700 text-gray-300 hover:bg-gray-800"
                                     variant="outline"
@@ -313,14 +315,14 @@ export function TreatmentCard({
                                     <Square className="h-4 w-4" />
                                   </Button>
                                 </TooltipTrigger>
-                                <TooltipContent>Stop (P)</TooltipContent>
+                                <TooltipContent>{t('audio.stop')}</TooltipContent>
                               </Tooltip>
                             ) : (
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button
-                                    aria-label="Play variant narration"
-                                    title="Play (P)"
+                                    aria-label={t('audio.play')}
+                                    title={t('audio.play')}
                                     onClick={() => { const currentId = ((guide as any)?.selectedTreatmentId as string) || active; if (currentId) playVariant(currentId) }}
                                     className="h-8 w-8 border border-gray-700 text-gray-300 hover:bg-gray-800"
                                     variant="outline"
@@ -329,15 +331,15 @@ export function TreatmentCard({
                                     <Play className="h-4 w-4" />
                                   </Button>
                                 </TooltipTrigger>
-                                <TooltipContent>Play (P)</TooltipContent>
+                                <TooltipContent>{t('audio.play')}</TooltipContent>
                               </Tooltip>
                             )
                           ) : (
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
-                                  aria-label="Audio preview unavailable"
-                                  title="Audio preview unavailable"
+                                  aria-label={t('audio.unavailable')}
+                                  title={t('audio.unavailable')}
                                   disabled
                                   className="h-8 w-8 border border-gray-800 text-gray-500"
                                   variant="outline"
@@ -346,21 +348,19 @@ export function TreatmentCard({
                                   <Play className="h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>
-                                Configure Google TTS (GOOGLE_API_KEY or Vertex) to enable audio previews
-                              </TooltipContent>
+                              <TooltipContent>{t('audio.configureTtsDetailed')}</TooltipContent>
                             </Tooltip>
                           )}
 
                           {/* Audio settings chevron */}
                           <DropdownMenu open={tts.audioMenuOpen} onOpenChange={tts.setAudioMenuOpen}>
                             <DropdownMenuTrigger asChild>
-                              <Button aria-label="Audio settings" aria-expanded={tts.audioMenuOpen} className="h-8 w-8" size="icon" variant="outline">
+                              <Button aria-label={t('audio.settings')} aria-expanded={tts.audioMenuOpen} className="h-8 w-8" size="icon" variant="outline">
                                 <ChevronDown className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-72">
-                              <div className="px-1 py-1.5 text-xs text-gray-400">Voice</div>
+                              <div className="px-1 py-1.5 text-xs text-gray-400">{t('audio.voice')}</div>
                               {tts.enabled ? (
                                 <Button 
                                   variant="outline" 
@@ -370,11 +370,11 @@ export function TreatmentCard({
                                     tts.setVoiceDialogOpen(true)
                                   }}
                                 >
-                                  <span className="truncate">{tts.selectedVoiceName || 'Select voice...'}</span>
+                                  <span className="truncate">{tts.selectedVoiceName || t('audio.selectVoice')}</span>
                                   <ChevronDown className="h-4 w-4 ml-2 opacity-50" />
                                 </Button>
                               ) : (
-                                <div className="mx-2 my-1 text-xs text-amber-300">Audio not configured</div>
+                                <div className="mx-2 my-1 text-xs text-amber-300">{t('audio.notConfigured')}</div>
                               )}
                               <div className="px-1 pt-2 pb-1 text-xs text-gray-400">{VOICE_DIRECTION_COPY.sectionLabel}</div>
                               <Button
@@ -390,22 +390,22 @@ export function TreatmentCard({
                                   {tts.directorNotes.trim() ? VOICE_DIRECTION_COPY.set : VOICE_DIRECTION_COPY.add}
                                 </span>
                               </Button>
-                              <div className="px-1 pt-2 pb-1 text-xs text-gray-400">Language</div>
+                              <div className="px-1 pt-2 pb-1 text-xs text-gray-400">{t('audio.language')}</div>
                               <GroupedLanguageSelector
                                 value={tts.selectedLanguage}
                                 onValueChange={(code) => tts.setSelectedLanguage(code)}
                                 size="xs"
                                 intent="generate"
                               />
-                              <div className="px-1 pt-2 pb-1 text-xs text-gray-400">Narration</div>
+                              <div className="px-1 pt-2 pb-1 text-xs text-gray-400">{t('audio.narration')}</div>
                               <Select value={narrationMode} onValueChange={(val)=>setNarrationMode(val as any)}>
                                 <SelectTrigger className="h-8 mx-1">
-                                  <SelectValue placeholder="Narration mode" />
+                                  <SelectValue placeholder={t('audio.narrationMode')} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="synopsis">Logline + Synopsis</SelectItem>
-                                  <SelectItem value="full">Full Treatment</SelectItem>
-                                  <SelectItem value="beats">Beat‑by‑Beat</SelectItem>
+                                  <SelectItem value="synopsis">{t('audio.modeSynopsis')}</SelectItem>
+                                  <SelectItem value="full">{t('audio.modeFull')}</SelectItem>
+                                  <SelectItem value="beats">{t('audio.modeBeats')}</SelectItem>
                                 </SelectContent>
                               </Select>
                             </DropdownMenuContent>
@@ -422,8 +422,8 @@ export function TreatmentCard({
                     <span className="inline-flex items-center gap-1.5">
                       <Loader2 className="h-3 w-3 animate-spin shrink-0" />
                       {tts.generationProgress.phase === 'generating'
-                        ? 'Generating narration'
-                        : 'Playing narration'}
+                        ? t('audio.generating')
+                        : t('audio.playing')}
                       {tts.generationProgress.total > 1
                         ? ` (${tts.generationProgress.current}/${tts.generationProgress.total})`
                         : ''}
@@ -481,12 +481,12 @@ export function TreatmentCard({
                 <div className="space-y-5 text-sm">
                   {/* Callout */}
                   <div className={`p-4 rounded-lg border-l-4 ${accent} bg-gray-50 dark:bg-gray-800/50`}> 
-                    <div className={`text-lg font-bold text-gray-900 dark:text-gray-100 ${v.id===activeVariant.id ? flashIf('title') : ''}`}>{v.title || 'Treatment'}</div>
+                    <div className={`text-lg font-bold text-gray-900 dark:text-gray-100 ${v.id===activeVariant.id ? flashIf('title') : ''}`}>{v.title || t('fields.treatmentFallback')}</div>
                     {/* Logline lives in the hero overlay and the Core field; a third
                         copy here pushed the blueprint body further down the page. */}
                     {!tts.enabled && (
-                      <div className="mt-2 text-xs text-gray-400 inline-flex items-center gap-1" title="Configure Google TTS to enable audio previews">
-                        <Volume2 size={14} /> Audio preview unavailable
+                      <div className="mt-2 text-xs text-gray-400 inline-flex items-center gap-1" title={t('audio.configureTts')}>
+                        <Volume2 size={14} /> {t('audio.unavailable')}
                       </div>
                     )}
                   </div>
@@ -499,10 +499,15 @@ export function TreatmentCard({
                       {SECTION_TABS.map((tab) => (
                         <TabsTrigger key={tab.id} value={tab.id}>
                           {tab.id === 'beats' && beatCount > 0
-                            ? formatBeatsTabLabel(beatCount, beatsRuntime.minutes, beatsRuntime.display)
+                            ? formatBeatsTabLabel(
+                                beatCount,
+                                beatsRuntime.minutes,
+                                beatsRuntime.display,
+                                t('tabs.beats')
+                              )
                             : tab.id === 'characters' && characterCount > 0
-                              ? `${tab.label} (${characterCount})`
-                              : tab.label}
+                              ? t('tabs.charactersWithCount', { count: characterCount })
+                              : t(tab.labelKey)}
                         </TabsTrigger>
                       ))}
                     </TabsList>
@@ -512,12 +517,12 @@ export function TreatmentCard({
                   <BlueprintSubsectionHeading
                     sectionId="core"
                     variant="studio"
-                    title="Core Identifying Information"
+                    title={t('sections.coreInfoTitle')}
                     data-blueprint-section="core"
                     actions={
                       <AssistantButton
                         onClick={() => openGuidedForSection('core')}
-                        scopeLabel="Core Identifying Information"
+                        scopeLabel={t('sections.coreInfoTitle')}
                       />
                     }
                   >
@@ -525,12 +530,12 @@ export function TreatmentCard({
                       <BlueprintFieldCard
                         sectionId="core"
                         variant="studio"
-                        label="Title"
+                        label={t('fields.title')}
                         value={v.title || ''}
                         emphasis="prominent"
                         valueClassName={v.id === activeVariant.id ? flashIf('title') : undefined}
                       />
-                      <BlueprintFieldCard sectionId="core" variant="studio" label="Genre" hideWhenEmpty={!v.genre}>
+                      <BlueprintFieldCard sectionId="core" variant="studio" label={t('fields.genre')} hideWhenEmpty={!v.genre}>
                         <span className={cn(badgeGenre, v.id === activeVariant.id ? flashIf('genre') : '')}>
                           {v.genre}
                         </span>
@@ -538,7 +543,7 @@ export function TreatmentCard({
                       <BlueprintFieldCard
                         sectionId="core"
                         variant="studio"
-                        label="Format"
+                        label={t('fields.format')}
                         hideWhenEmpty={!productionFormatLabel}
                       >
                         {/* The production format, not a runtime. This chip used to
@@ -554,7 +559,7 @@ export function TreatmentCard({
                       <BlueprintFieldCard
                         sectionId="core"
                         variant="studio"
-                        label="Target audience"
+                        label={t('fields.audience')}
                         hideWhenEmpty={!v.target_audience}
                       >
                         <span
@@ -569,7 +574,7 @@ export function TreatmentCard({
                       <BlueprintFieldCard
                         sectionId="core"
                         variant="studio"
-                        label="Logline"
+                        label={t('fields.logline')}
                         value={v.logline || ''}
                         valueClassName={v.id === activeVariant.id ? flashIf('logline') : undefined}
                         className="md:col-span-2"
@@ -577,7 +582,7 @@ export function TreatmentCard({
                       <BlueprintFieldCard
                         sectionId="core"
                         variant="studio"
-                        label="Created by"
+                        label={t('fields.createdBy')}
                         hideWhenEmpty={false}
                       >
                         {creatorCredit ? (
@@ -600,14 +605,14 @@ export function TreatmentCard({
                             href="/dashboard/settings/profile"
                             className="text-sm text-cyan-300 hover:text-cyan-200 underline decoration-cyan-500/40"
                           >
-                            Add your name
+                            {t('credit.addYourName')}
                           </a>
                         )}
                       </BlueprintFieldCard>
                       <BlueprintFieldCard
                         sectionId="core"
                         variant="studio"
-                        label="Date"
+                        label={t('fields.date')}
                         value={v.date || ''}
                         valueClassName={cn(
                           'font-mono',
@@ -623,12 +628,12 @@ export function TreatmentCard({
                   <BlueprintSubsectionHeading
                     sectionId="story"
                     variant="studio"
-                    title="Story Setup"
+                    title={t('sections.storySetup')}
                     data-blueprint-section="story"
                     actions={
                       <AssistantButton
                         onClick={() => openGuidedForSection('story')}
-                        scopeLabel="Story Setup"
+                        scopeLabel={t('sections.storySetup')}
                       />
                     }
                   >
@@ -636,21 +641,21 @@ export function TreatmentCard({
                       <BlueprintFieldCard
                         sectionId="story"
                         variant="studio"
-                        label="Setting"
+                        label={t('fields.setting')}
                         value={v.setting || ''}
                         valueClassName={v.id === activeVariant.id ? flashIf('setting') : undefined}
                       />
                       <BlueprintFieldCard
                         sectionId="story"
                         variant="studio"
-                        label="Protagonist"
+                        label={t('fields.protagonist')}
                         value={v.protagonist || ''}
                         valueClassName={v.id === activeVariant.id ? flashIf('protagonist') : undefined}
                       />
                       <BlueprintFieldCard
                         sectionId="story"
                         variant="studio"
-                        label="Antagonist / Conflict"
+                        label={t('fields.antagonist')}
                         value={v.antagonist || ''}
                         valueClassName={v.id === activeVariant.id ? flashIf('antagonist') : undefined}
                         className="md:col-span-2"
@@ -664,12 +669,12 @@ export function TreatmentCard({
                   <BlueprintSubsectionHeading
                     sectionId="tone"
                     variant="studio"
-                    title="Tone, Style, & Themes"
+                    title={t('sections.toneStyleThemes')}
                     data-blueprint-section="tone"
                     actions={
                       <AssistantButton
                         onClick={() => openGuidedForSection('tone')}
-                        scopeLabel="Tone, Style, & Themes"
+                        scopeLabel={t('sections.toneStyleThemes')}
                       />
                     }
                   >
@@ -677,7 +682,7 @@ export function TreatmentCard({
                       <BlueprintFieldCard
                         sectionId="tone"
                         variant="studio"
-                        label="Tone"
+                        label={t('fields.tone')}
                         value={v.tone_description || v.tone || ''}
                         valueClassName={
                           v.id === activeVariant.id ? flashIf('tone_description') || flashIf('tone') : undefined
@@ -686,7 +691,7 @@ export function TreatmentCard({
                       <BlueprintFieldCard
                         sectionId="tone"
                         variant="studio"
-                        label="Art style"
+                        label={t('fields.artStyle')}
                         value={getArtStylePresetName(resolveVariantArtStyle(v))}
                         valueClassName={
                           v.id === activeVariant.id ? flashIf('artStyle') || flashIf('visual_style') : undefined
@@ -695,7 +700,7 @@ export function TreatmentCard({
                       <BlueprintFieldCard
                         sectionId="tone"
                         variant="studio"
-                        label="Aspect ratio"
+                        label={t('fields.aspectRatio')}
                         value={resolveVariantAspectRatio(v)}
                         valueClassName={
                           v.id === activeVariant.id ? flashIf('aspectRatio') : undefined
@@ -704,7 +709,7 @@ export function TreatmentCard({
                       <BlueprintFieldCard
                         sectionId="tone"
                         variant="studio"
-                        label="Themes"
+                        label={t('fields.themesPlain')}
                         hideWhenEmpty={!v.themes || (Array.isArray(v.themes) && v.themes.length === 0)}
                         className="md:col-span-2"
                       >
@@ -730,7 +735,7 @@ export function TreatmentCard({
                         <BlueprintFieldCard
                           sectionId="tone"
                           variant="studio"
-                          label="Mood / References"
+                          label={t('fields.moodReferences')}
                           value={v.mood_references.join(', ')}
                           className="md:col-span-2"
                         />
@@ -744,7 +749,7 @@ export function TreatmentCard({
                   <BlueprintSubsectionHeading
                     sectionId="beats"
                     variant="studio"
-                    title="Beats & Runtime"
+                    title={t('sections.beatsRuntime')}
                     data-blueprint-section="beats"
                     actions={
                       <div className="flex items-center gap-2">
@@ -756,14 +761,14 @@ export function TreatmentCard({
                               badgeFormat,
                               v.id === activeVariant.id ? flashIf('beats') : ''
                             )}
-                            title={`${beatsRuntime.count} beats totalling ${beatsRuntime.display}`}
+                            title={t('sections.beatsTotalling', { count: beatsRuntime.count, display: beatsRuntime.display })}
                           >
-                            {beatsRuntime.display} total
+                            {t('sections.runtimeTotal', { display: beatsRuntime.display })}
                           </span>
                         )}
                         <AssistantButton
                           onClick={() => openGuidedForSection('beats')}
-                          scopeLabel="Beats & Runtime"
+                          scopeLabel={t('sections.beatsRuntime')}
                         />
                       </div>
                     }
@@ -772,7 +777,7 @@ export function TreatmentCard({
                       <BlueprintFieldCard
                         sectionId="beats"
                         variant="studio"
-                        label="Synopsis"
+                        label={t('fields.synopsis')}
                         value={v.synopsis || v.content || ''}
                         valueClassName={
                           v.id === activeVariant.id ? flashIf('synopsis') || flashIf('content') : undefined
@@ -780,8 +785,7 @@ export function TreatmentCard({
                       />
                       {!Array.isArray((v as any).beats) || (v as any).beats.length === 0 ? (
                         <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200/90">
-                          No beats yet. Use the pencil to generate a beat sheet for this
-                          blueprint.
+                          {t('empty.noBeats')}
                         </div>
                       ) : (
                         <div className="space-y-2">
@@ -789,10 +793,10 @@ export function TreatmentCard({
                             <div key={idx} className={`p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 ${v.id===activeVariant.id ? flashIf('beats') : ''}`}>
                               <div className="flex items-start justify-between gap-3">
                                 <div>
-                                  <div className="text-sm text-gray-900 dark:text-gray-100 font-medium">{b.title || `Beat ${idx+1}`}</div>
+                                  <div className="text-sm text-gray-900 dark:text-gray-100 font-medium">{b.title || t('fields.beat', { number: idx + 1 })}</div>
                                   {b.intent && <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{b.intent}</div>}
                                 </div>
-                                <div className="shrink-0 text-xs px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700 font-medium">{Number(b.minutes||0).toFixed(2)} m</div>
+                                <div className="shrink-0 text-xs px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700 font-medium">{t('fields.minutesSuffix', { value: Number(b.minutes||0).toFixed(2) })}</div>
                               </div>
                               {b.synopsis && <div className="text-sm text-gray-700 dark:text-gray-300 mt-2 whitespace-pre-wrap leading-relaxed">{b.synopsis}</div>}
                             </div>
@@ -810,19 +814,18 @@ export function TreatmentCard({
                   <BlueprintSubsectionHeading
                     sectionId="characters"
                     variant="studio"
-                    title={characterCount > 0 ? `Characters (${characterCount})` : 'Characters'}
+                    title={characterCount > 0 ? t('sections.charactersWithCount', { count: characterCount }) : t('sections.characters')}
                     data-blueprint-section="characters"
                     actions={
                       <AssistantButton
                         onClick={() => openGuidedForSection('characters')}
-                        scopeLabel="Characters"
+                        scopeLabel={t('sections.characters')}
                       />
                     }
                   >
                   {characterCount === 0 ? (
                     <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200/90">
-                      No characters yet. Use the {ASSISTANT.short} to build the cast for this
-                      blueprint.
+                      {t('empty.noCharactersCast', { assistant: ASSISTANT.short })}
                     </div>
                   ) : (
                     <>
@@ -854,19 +857,19 @@ export function TreatmentCard({
                               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 {c.externalGoal && (
                                   <div className="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 border border-blue-100 dark:border-blue-900">
-                                    <div className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-1">External Goal</div>
+                                    <div className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-1">{t('character.externalGoal')}</div>
                                     <div className="text-xs text-blue-800 dark:text-blue-200">{c.externalGoal}</div>
                                   </div>
                                 )}
                                 {c.internalNeed && (
                                   <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/50 border border-amber-100 dark:border-amber-900">
-                                    <div className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-1">Internal Need</div>
+                                    <div className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-1">{t('character.internalNeed')}</div>
                                     <div className="text-xs text-amber-800 dark:text-amber-200">{c.internalNeed}</div>
                                   </div>
                                 )}
                                 {c.fatalFlaw && (
                                   <div className="p-2.5 rounded-lg bg-red-50 dark:bg-red-950/50 border border-red-100 dark:border-red-900">
-                                    <div className="text-[10px] font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide mb-1">Fatal Flaw</div>
+                                    <div className="text-[10px] font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide mb-1">{t('character.fatalFlaw')}</div>
                                     <div className="text-xs text-red-800 dark:text-red-200">{c.fatalFlaw}</div>
                                   </div>
                                 )}
@@ -875,11 +878,11 @@ export function TreatmentCard({
                               {/* Character Arc */}
                               {(c.arcStartingState || c.arcShift || c.arcEndingState) && (
                                 <div className="p-3 rounded-lg bg-gradient-to-r from-purple-50 via-indigo-50 to-cyan-50 dark:from-purple-950/30 dark:via-indigo-950/30 dark:to-cyan-950/30 border border-purple-100 dark:border-purple-800">
-                                  <div className="text-[10px] font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wide mb-2">Character Arc</div>
+                                  <div className="text-[10px] font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wide mb-2">{t('character.arc')}</div>
                                   <div className="flex items-center gap-2 text-xs">
                                     {c.arcStartingState && (
                                       <div className="flex-1 p-2 rounded bg-slate-900/60">
-                                        <div className="text-[9px] text-gray-400 uppercase">Starting</div>
+                                        <div className="text-[9px] text-gray-400 uppercase">{t('character.arcStarting')}</div>
                                         <div className="text-gray-300">{c.arcStartingState}</div>
                                       </div>
                                     )}
@@ -887,7 +890,7 @@ export function TreatmentCard({
                                       <>
                                         <ArrowRight className="w-3 h-3 text-purple-400 flex-shrink-0" />
                                         <div className="flex-1 p-2 rounded bg-slate-900/60">
-                                          <div className="text-[9px] text-gray-400 uppercase">Shift</div>
+                                          <div className="text-[9px] text-gray-400 uppercase">{t('character.arcShift')}</div>
                                           <div className="text-gray-300">{c.arcShift}</div>
                                         </div>
                                       </>
@@ -896,7 +899,7 @@ export function TreatmentCard({
                                       <>
                                         <ArrowRight className="w-3 h-3 text-cyan-400 flex-shrink-0" />
                                         <div className="flex-1 p-2 rounded bg-slate-900/60">
-                                          <div className="text-[9px] text-gray-400 uppercase">Ending</div>
+                                          <div className="text-[9px] text-gray-400 uppercase">{t('character.arcEnding')}</div>
                                           <div className="text-gray-300">{c.arcEndingState}</div>
                                         </div>
                                       </>
@@ -909,7 +912,7 @@ export function TreatmentCard({
                         ))}
                       </div>
                       <div className="text-xs text-gray-600 dark:text-gray-400 italic mt-2 px-3">
-                        💡 Characters will be refined with images and detailed attributes in Production
+                        {t('character.refineNote')}
                       </div>
                     </>
                   )}
@@ -927,7 +930,7 @@ export function TreatmentCard({
                         className="inline-flex items-center gap-1.5 text-xs text-amber-300/90 hover:text-amber-200"
                       >
                         <Lightbulb className="w-3.5 h-3.5" />
-                        Why these choices?
+                        {t('reasoning.whyChoices')}
                       </button>
                     </div>
                   )}

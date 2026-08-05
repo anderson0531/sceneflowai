@@ -1,0 +1,58 @@
+{
+  "shell": {
+    "title": "Definições da Conta",
+    "subtitle": "Gerir a sua conta, integrações e preferências",
+    "sectionsHeading": "Definições",
+    "quickActions": "Acções Rápidas",
+    "backToDashboard": "Voltar ao Painel de Controle",
+    "continueWorkflow": "Continuar fluxo de trabalho"
+  },
+  "nav": {
+    "profile": "Perfil",
+    "profileDescription": "Gerir as informações da sua conta",
+    "integrations": "Integrações",
+    "integrationsDescription": "Conecte provedores de IA e serviços externos",
+    "security": "Segurança",
+    "securityDescription": "Definições de palavra-passe e segurança",
+    "billing": "Faturação",
+    "billingDescription": "Faça a gestão da sua subscrição e faturação",
+    "notifications": "Notificações",
+    "notificationsDescription": "Preferências de Notificação por Email",
+    "data": "Privacidade de Dados",
+    "dataDescription": "Exportação de dados e controles de privacidade",
+    "byok": "Definições BYOK",
+    "storage": "Armazenamento",
+    "admin": "Admin",
+    "adminDescription": "Funções e controlos administrativos"
+  },
+  "profile": {
+    "title": "Informações do perfil",
+    "description": "Gerir as informações da sua conta e dados pessoais",
+    "username": "Nome de Utilizador",
+    "usernamePlaceholder": "Introduza o seu nome de utilizador",
+    "email": "Endereço de correio eletrónico",
+    "emailPlaceholder": "Introduza o seu e-mail",
+    "firstName": "Primeiro Nome",
+    "firstNamePlaceholder": "Introduza o nome próprio",
+    "lastName": "Apelido",
+    "lastNamePlaceholder": "Introduza o apelido",
+    "updated": "Perfil atualizado com sucesso",
+    "updateFailed": "Falha ao atualizar perfil"
+  },
+  "languages": {
+    "title": "Linguas",
+    "description": "Leia o estúdio num idioma, escreva a sua história noutro e entregue o que precisar",
+    "interfaceTitle": "Idioma da interface",
+    "interfaceDescription": "Menus, botões e caixas de diálogo no Painel e nos três estúdios.",
+    "storyTitle": "Linguagem da história",
+    "storyDescription": "A nova linguagem em que os tratamentos, batidas, personagens e diálogos escritos pela IA são criados. Projetos individuais podem substituir isso.",
+    "deliveryTitle": "Idiomas de entrega",
+    "deliveryDescription": "Narração, dublagem e vídeo renderizado. Um único projeto pode ser enviado em vários idiomas ao mesmo tempo, portanto, eles são escolhidos por cena e não por conta.",
+    "deliveryStartsFrom": "Começa em {language}",
+    "deliverySetInProduction": "Definido em Production Studio",
+    "promptsStayEnglish": "Os prompts de imagem e vídeo permanecem em inglês, independentemente dessas configurações — os modelos de geração produzem resultados visivelmente mais fracos a partir de prompts traduzidos.",
+    "interfaceSet": "Idioma da interface definido como {language}",
+    "saved": "Preferência de idioma guardada",
+    "saveFailed": "Não foi possível guardar a preferência de idioma"
+  }
+}
