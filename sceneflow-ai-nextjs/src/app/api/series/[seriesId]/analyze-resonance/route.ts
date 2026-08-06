@@ -10,6 +10,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import '@/models'
 import { Series } from '@/models/Series'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { localeDirective } from '@/lib/prompts/localeDirective'
 import { sequelize } from '@/config/database'
 import { callLLM } from '@/services/llmGateway'
 import { v4 as uuidv4 } from 'uuid'
@@ -191,9 +193,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const currentIteration = previousIterationCount + 1
     
     // Build comprehensive prompt for analysis with context about previous analysis
+    // The verdict, drivers and market notes are prose the creator reads, so the
+    // analysis has to be written in the language the series is written in.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, { seriesId })
+
     const analysisPrompt = buildAnalysisPrompt(
       series, bible, episodes, characters, locations,
-      { previousScore, iterationCount: currentIteration, appliedFixes: existingAppliedFixes }
+      { previousScore, iterationCount: currentIteration, appliedFixes: existingAppliedFixes },
+      localeDirective(storyLocale, {
+        properNouns,
+        note: 'Every JSON key stays exactly as specified, as do the "impactLevel" and "demandOutlook" enum values.',
+      })
     )
     
     const response = await callLLM(
@@ -306,7 +316,8 @@ function buildAnalysisPrompt(
   episodes: any[],
   characters: any[],
   locations: any[],
-  context?: { previousScore: number | null; iterationCount: number; appliedFixes: string[] }
+  context?: { previousScore: number | null; iterationCount: number; appliedFixes: string[] },
+  languageBlock: string = ''
 ): string {
   const meta = series.metadata as Record<string, unknown> | null;
   const format = (meta?.format as string) || 'narrative';
@@ -540,7 +551,8 @@ Return ONLY valid JSON:
       "culturalAdaptationNotes": ["Adaptation note 1", "Adaptation note 2"]
     }
   }
-}`
+}
+${languageBlock}`
 }
 
 /**

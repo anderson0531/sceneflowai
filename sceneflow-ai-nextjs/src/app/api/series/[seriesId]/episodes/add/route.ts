@@ -13,6 +13,7 @@ import { sequelize } from '@/config/database'
 import { callLLM } from '@/services/llmGateway'
 import { SeriesEpisodeBlueprint } from '@/types/series'
 import { buildEpisodeBatchPrompt, resolveSeriesContentIntent } from '@/lib/series/episodeBatchPrompt'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 
 // Maximum episodes to generate in a single batch (5 for reliable JSON parsing)
 const BATCH_SIZE = 5
@@ -101,7 +102,8 @@ function safeParseJSON(text: string): any {
 async function generateEpisodeBatch(
   series: Series,
   startEpisodeNumber: number,
-  count: number
+  count: number,
+  storyLocale?: string
 ): Promise<SeriesEpisodeBlueprint[]> {
   const bible = series.production_bible || {}
   const existingEpisodes = series.episode_blueprints || []
@@ -149,7 +151,7 @@ async function generateEpisodeBatch(
     totalPlannedEpisodes,
     startEpisodeNumber,
     count,
-    storyLocale: (series as any).metadata?.i18n?.sourceLocale,
+    storyLocale,
     locations: (bible as any).locations,
     props: (bible as any).props,
   })
@@ -226,6 +228,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     
     console.log(`[${timestamp}] [POST /api/series/${seriesId}/episodes/add] Adding ${canAdd} episodes starting at ${startEpisodeNumber}`)
     
+    // Resolved through the shared chain rather than read straight off series
+    // metadata, so a series that never stamped a locale still inherits the
+    // creator's language instead of silently falling back to English.
+    const { storyLocale } = await resolveRequestStoryLocale(request, {
+      seriesId,
+      includeProperNouns: false,
+    })
+
     // Generate in batches if needed
     const newEpisodes: SeriesEpisodeBlueprint[] = []
     let remaining = canAdd
@@ -235,7 +245,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       const batchSize = Math.min(remaining, BATCH_SIZE)
       console.log(`[${timestamp}] Generating batch of ${batchSize} episodes starting at ${nextEpisodeNum}`)
       
-      const batch = await generateEpisodeBatch(series, nextEpisodeNum, batchSize)
+      const batch = await generateEpisodeBatch(series, nextEpisodeNum, batchSize, storyLocale)
       newEpisodes.push(...batch)
       
       remaining -= batchSize
