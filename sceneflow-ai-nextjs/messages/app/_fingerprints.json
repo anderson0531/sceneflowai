@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-06T06:07:16.261Z",
+  "generatedAt": "2026-08-06T10:10:59.647Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -459,9 +459,13 @@
       "audienceResonance.reAnalyze": "6e0f3537158fc50f",
       "audienceResonance.outOfHundred": "5c3651ff554f518c",
       "audienceResonance.pointsToReach": "4435a8f7af71cc0d",
+      "audienceResonance.readyOptionalPolish": "3548c3f3a1ddf606",
       "audienceResonance.scoreBreakdown": "db4584399066ee00",
+      "audienceResonance.scoreBreakdownBalancedHint": "748bcb64e722353f",
       "audienceResonance.minusPoints": "814d493f4ba4061d",
       "audienceResonance.recommendations": "0738ee00b61bc3af",
+      "audienceResonance.optionalPolish": "99f8bf6113381feb",
+      "audienceResonance.polishBadge": "770341d6e89e04e8",
       "audienceResonance.improveWith": "ac6e601a1398667e",
       "audienceResonance.strengths": "b11d27f88ceb483a",
       "audienceResonance.categoryScores": "c14e2bf41386f9e9",
