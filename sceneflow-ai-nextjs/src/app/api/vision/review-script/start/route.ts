@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import '@/models'
-import { createGenerationJob, findActiveJob } from '@/lib/jobs/jobService'
+import {
+  createGenerationJob,
+  findActiveJob,
+  updateGenerationJob,
+} from '@/lib/jobs/jobService'
 import { getSessionUserId } from '@/lib/auth/sessionUser'
 import { CreditService } from '@/services/CreditService'
 import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
 import { loadScriptForAnalysis } from '@/lib/script/audienceResonance/persistReview'
 import { planSceneChunks, DEFAULT_SCENE_CHUNK_SIZE } from '@/lib/script/audienceResonance/chunkPlan'
+
+const DISPATCH_FAILED_ERROR =
+  'Audience Resonance could not be started — background jobs are not configured'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -82,7 +89,7 @@ export async function POST(req: NextRequest) {
 
     const chunks = planSceneChunks(sceneCount, chunkSize ?? DEFAULT_SCENE_CHUNK_SIZE)
 
-    const { job } = await createGenerationJob({
+    const { job, dispatched } = await createGenerationJob({
       userId,
       projectId,
       jobType: 'script_analysis',
@@ -97,8 +104,22 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Charged at enqueue: the work is committed once the job is queued, and the
-    // request that would have charged on completion has already returned.
+    if (!dispatched) {
+      await updateGenerationJob(job.id, {
+        status: 'failed',
+        error: DISPATCH_FAILED_ERROR,
+      })
+      return NextResponse.json(
+        {
+          error: DISPATCH_FAILED_ERROR,
+          jobId: job.id,
+          status: 'failed',
+        },
+        { status: 503 }
+      )
+    }
+
+    // Charged only after Inngest accepted the event — otherwise the job never runs.
     await CreditService.charge(userId, AUDIENCE_RESONANCE_CREDIT_COST, 'ai_usage', null, {
       operation: 'audience_resonance_analysis',
       projectId,

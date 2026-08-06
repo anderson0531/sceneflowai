@@ -14982,6 +14982,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           scriptAnalysisJob.job?.status === 'queued' ? 'Queued' : 'Analyzing every scene'
         }
         onDismiss={scriptAnalysisJob.dismiss}
+        onCancel={() => void scriptAnalysisJob.cancel()}
         onViewResult={() => {
           setShowReviewModal(true)
           scriptAnalysisJob.dismiss()

@@ -7,6 +7,7 @@ import Notification from '@/models/Notification'
 import { inngest } from '@/inngest/client'
 import { sequelize } from '@/config/database'
 import { ACTIVE_JOB_STATUSES } from '@/lib/jobs/jobStatus'
+import { isInngestDispatchConfigured } from '@/lib/jobs/inngestDispatch'
 import { isStaleActiveJob, STALE_JOB_ERROR } from '@/lib/jobs/staleJob'
 import { hasTables } from '@/lib/database/schemaProbe'
 
@@ -99,6 +100,13 @@ export async function createGenerationJob(input: {
     progress: 0,
   })
 
+  if (!isInngestDispatchConfigured()) {
+    console.warn(
+      '[jobService] INNGEST_EVENT_KEY not set — job remains queued (dispatched=false)'
+    )
+    return { job, dispatched: false }
+  }
+
   let dispatched = false
   try {
     await inngest.send({
@@ -130,7 +138,11 @@ export async function updateGenerationJob(
   }>
 ): Promise<void> {
   const updates: Record<string, unknown> = { ...patch }
-  if (patch.status === 'completed' || patch.status === 'failed') {
+  if (
+    patch.status === 'completed' ||
+    patch.status === 'failed' ||
+    patch.status === 'cancelled'
+  ) {
     updates.completed_at = new Date()
   }
   await GenerationJob.update(updates, { where: { id: jobId } })
