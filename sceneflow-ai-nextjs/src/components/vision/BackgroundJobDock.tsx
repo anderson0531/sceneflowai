@@ -43,6 +43,16 @@ export function BackgroundJobDock({
   const total = Number(job.result?.totalScenes ?? job.payload?.sceneCount ?? 0)
   const stale = job.result?.stale === true
 
+  const handleClose = () => {
+    // Active jobs must be cancelled — bare dismiss orphans the server job
+    // and can leave the UI stuck with no cancel affordance.
+    if (isActive && onCancel) {
+      onCancel()
+      return
+    }
+    onDismiss()
+  }
+
   return (
     <div className="fixed bottom-4 right-4 z-[80] w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-700 bg-slate-900/95 p-3 shadow-2xl backdrop-blur">
       <div className="flex items-start gap-2">
@@ -86,11 +96,11 @@ export function BackgroundJobDock({
           {isActive && onCancel ? (
             <Button
               size="sm"
-              variant="outline"
+              variant="destructive"
               onClick={onCancel}
-              className="mt-2 h-7 w-full border-slate-600 bg-transparent text-[11px] text-slate-200 hover:bg-slate-800"
+              className="mt-2 h-8 w-full text-[11px] font-semibold"
             >
-              Cancel
+              Cancel analysis
             </Button>
           ) : null}
 
@@ -109,8 +119,8 @@ export function BackgroundJobDock({
 
         <button
           type="button"
-          onClick={onDismiss}
-          aria-label="Dismiss"
+          onClick={handleClose}
+          aria-label={isActive && onCancel ? 'Cancel analysis' : 'Dismiss'}
           className="shrink-0 rounded p-0.5 text-slate-500 transition-colors hover:text-slate-200"
         >
           <X className="h-3.5 w-3.5" />

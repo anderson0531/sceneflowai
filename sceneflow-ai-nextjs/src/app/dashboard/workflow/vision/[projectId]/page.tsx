@@ -6402,6 +6402,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     onFailed: (job) => {
       setIsGeneratingReviews(false)
       useStore.getState().setIsGeneratingReviews(false)
+      const cancelled =
+        job.status === 'cancelled' ||
+        (typeof job.error === 'string' && job.error.toLowerCase().includes('cancelled'))
+      if (cancelled) {
+        toast.info('Analysis cancelled', {
+          description: 'You can start Audience Resonance again anytime.',
+          duration: 6000,
+        })
+        return
+      }
       toast.error('Script analysis failed', {
         description: job.error || 'Please try again.',
         duration: 10000,
@@ -6414,13 +6424,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     },
   })
 
-  // Re-attaching to an in-flight job on mount keeps the button state honest
-  // after a reload.
+  // Keep the AR header button in sync with the tracked job (including cancel/dismiss).
   useEffect(() => {
-    if (scriptAnalysisJob.isActive) {
-      setIsGeneratingReviews(true)
-      useStore.getState().setIsGeneratingReviews(true)
-    }
+    setIsGeneratingReviews(scriptAnalysisJob.isActive)
+    useStore.getState().setIsGeneratingReviews(scriptAnalysisJob.isActive)
   }, [scriptAnalysisJob.isActive])
 
   const startScriptAnalysis = useCallback(
@@ -6436,6 +6443,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const data = await res.json().catch(() => ({}))
 
         if (!res.ok) {
+          if (res.status === 503 || data?.code === 'INNGEST_NOT_CONFIGURED') {
+            console.error('[Script Review] Background jobs not configured:', data)
+            toast.error('Audience Resonance isn’t available right now', {
+              description:
+                'Background processing isn’t configured for this environment. Try again later or contact support.',
+              duration: 12000,
+            })
+            setIsGeneratingReviews(false)
+            useStore.getState().setIsGeneratingReviews(false)
+            setAnalysisHandoffOpen(false)
+            return
+          }
           throw new Error(data?.error || 'Failed to start analysis')
         }
 
@@ -6455,16 +6474,26 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (data.alreadyRunning) {
           toast.info('Analysis already running', {
             description: 'We will notify you when it finishes.',
+            action: {
+              label: 'Cancel analysis',
+              onClick: () => void scriptAnalysisJob.cancel(),
+            },
           })
         } else {
           toast.success('Analysis started', {
             description: 'Keep working — we will notify you when it is ready.',
             duration: 8000,
+            action: {
+              label: 'Cancel analysis',
+              onClick: () => void scriptAnalysisJob.cancel(),
+            },
           })
         }
       } catch (error) {
         console.error('[Script Review] Failed to queue analysis:', error)
         toast.error(error instanceof Error ? error.message : 'Failed to start analysis')
+        setIsGeneratingReviews(false)
+        useStore.getState().setIsGeneratingReviews(false)
         setAnalysisHandoffOpen(false)
       } finally {
         setAnalysisStarting(false)
@@ -6479,6 +6508,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     if (scriptAnalysisJob.isActive) {
       toast.info('Analysis already running', {
         description: 'We will notify you when it finishes.',
+        action: {
+          label: 'Cancel analysis',
+          onClick: () => void scriptAnalysisJob.cancel(),
+        },
       })
       return
     }
@@ -14295,6 +14328,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 audienceScore={audienceReview?.overallScore}
                 onGenerateReviews={handleGenerateReviews}
                 isGeneratingReviews={isGeneratingReviews}
+                onCancelReviews={() => void scriptAnalysisJob.cancel()}
                 onShowReviews={handleAudienceHeaderClick}
                 onOpenReferences={() => openReferenceLibrary()}
                 onOpenPublishing={() => openPublishing()}

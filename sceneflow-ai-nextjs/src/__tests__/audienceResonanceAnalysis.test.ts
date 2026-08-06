@@ -276,13 +276,28 @@ describe('Job lifecycle', () => {
     const jobService = readSource('src/lib/jobs/jobService.ts')
     const dock = readSource('src/components/vision/BackgroundJobDock.tsx')
     const visionPage = readSource('src/app/dashboard/workflow/vision/[projectId]/page.tsx')
+    const scriptPanel = readSource('src/components/vision/ScriptPanel.tsx')
 
     expect(jobsApi).toContain("action !== 'cancel'")
     expect(jobsApi).toContain('cancelGenerationJob')
     expect(jobService).toContain('export async function cancelGenerationJob')
     expect(dock).toContain('onCancel')
+    expect(dock).toContain('Cancel analysis')
     expect(dock).toContain("job.status === 'cancelled'")
+    expect(dock).toContain('isActive && onCancel')
     expect(visionPage).toContain('onCancel={() => void scriptAnalysisJob.cancel()}')
+    expect(visionPage).toContain("label: 'Cancel analysis'")
+    expect(visionPage).toContain("job.status === 'cancelled'")
+    expect(visionPage).toContain('Analysis cancelled')
+    expect(visionPage).toContain('INNGEST_NOT_CONFIGURED')
+    expect(visionPage).toContain('Audience Resonance isn’t available right now')
+    expect(visionPage).toContain('onCancelReviews={() => void scriptAnalysisJob.cancel()}')
+    expect(scriptPanel).toContain('onCancelReviews')
+  })
+
+  it('returns a stable code when Inngest is not configured', () => {
+    const start = readSource('src/app/api/vision/review-script/start/route.ts')
+    expect(start).toContain("code: 'INNGEST_NOT_CONFIGURED'")
   })
 
   it('scopes job reads to the session user', () => {

@@ -112,6 +112,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error: DISPATCH_FAILED_ERROR,
+          code: 'INNGEST_NOT_CONFIGURED',
           jobId: job.id,
           status: 'failed',
         },
