@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { after } from 'next/server'
 import { runBlueprintGuidedReviseStep } from '@/lib/jobs/blueprintGuidedReviseWorker'
-import { scheduleBlueprintGuidedReviseStep } from '@/lib/jobs/dispatchBlueprintGuidedReviseStep'
+import { postBlueprintGuidedReviseStep } from '@/lib/jobs/dispatchBlueprintGuidedReviseStep'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -12,7 +13,12 @@ function authorize(req: NextRequest): boolean {
 
 /**
  * Internal worker: one planner/rewrite/finalize step per invocation.
- * Chains to itself so each LLM call runs in a fresh serverless isolate.
+ *
+ * The step is acknowledged before it runs. Running it inline instead would hold
+ * the caller open for the whole phase, and because the caller is itself a step
+ * doing the same thing, every function in the chain stayed alive until the last
+ * one finished — which is how a full-balance revision timed out the 60s start
+ * route. Acknowledging first bounds each invocation to its own phase.
  */
 export async function POST(req: NextRequest) {
   if (!authorize(req)) {
@@ -31,11 +37,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'jobId is required' }, { status: 400 })
   }
 
-  const outcome = await runBlueprintGuidedReviseStep(jobId)
+  const acceptedJobId = jobId
 
-  if (!outcome.done && !outcome.error && !outcome.inFlight) {
-    scheduleBlueprintGuidedReviseStep(jobId)
-  }
+  after(async () => {
+    try {
+      const outcome = await runBlueprintGuidedReviseStep(acceptedJobId)
+      if (!outcome.done && !outcome.error && !outcome.inFlight) {
+        // Awaited directly rather than through scheduleBlueprintGuidedReviseStep:
+        // the next hop acknowledges immediately, so this waits on a handshake
+        // instead of on that hop's phase. Nesting another `after()` here is what
+        // chained the lifetimes together.
+        await postBlueprintGuidedReviseStep(acceptedJobId)
+      }
+    } catch (err) {
+      // The worker already marks the job failed and notifies the user; this is
+      // the last chance to see it in logs, since nobody awaits this callback.
+      console.error(
+        `[BlueprintGuidedRevise] Step failed for job ${acceptedJobId}:`,
+        err
+      )
+    }
+  })
 
-  return NextResponse.json(outcome)
+  return NextResponse.json({ accepted: true, jobId: acceptedJobId }, { status: 202 })
 }

@@ -3,8 +3,13 @@
  *
  * Each invocation gets its own serverless isolate, so memory never accumulates
  * across LLM calls. Vercel terminates a function once its response is sent, so
- * the outbound request must be awaited inside `after()` rather than fired and
+ * the outbound request is awaited inside `after()` rather than fired and
  * forgotten — otherwise the chain silently dies and the job stalls.
+ *
+ * What is awaited is only the *handshake*: the worker route acknowledges a step
+ * before running it. Awaiting the phase itself would keep this function alive for
+ * the whole phase, and since every step dispatches the next one the same way, the
+ * lifetimes nested and the 60s start route timed out waiting on the entire job.
  */
 
 import { after } from 'next/server'
@@ -42,7 +47,13 @@ export async function postBlueprintGuidedReviseStep(jobId: string): Promise<void
   }
 }
 
-/** Queue the next step so it survives until after the current response is sent. */
+/**
+ * Queue a step so the dispatch survives until after the current response is sent.
+ *
+ * For use from request handlers that are not themselves steps. A step chains its
+ * successor by awaiting {@link postBlueprintGuidedReviseStep} inside the `after()`
+ * it is already running in, rather than nesting another one.
+ */
 export function scheduleBlueprintGuidedReviseStep(jobId: string): void {
   try {
     after(() => postBlueprintGuidedReviseStep(jobId))

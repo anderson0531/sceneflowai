@@ -1,7 +1,29 @@
 import { sequelize } from '@/models'
+import { hasColumns } from '@/lib/database/schemaProbe'
+
+/** Columns this migration adds; all present means there is nothing to do. */
+const SUBSCRIPTION_COLUMNS = [
+  'subscription_tier_id',
+  'subscription_status',
+  'subscription_start_date',
+  'subscription_end_date',
+  'subscription_credits_monthly',
+  'subscription_credits_expires_at',
+  'addon_credits',
+  'storage_used_gb',
+  'paddle_customer_id',
+  'paddle_subscription_id',
+  'one_time_tiers_purchased',
+]
 
 export async function migrateUsersSubscriptionColumns() {
   try {
+    // One probe instead of a dozen idempotent ALTERs. This runs on the request
+    // path via CreditService, and the module guard resets on every cold start.
+    if (await hasColumns('users', SUBSCRIPTION_COLUMNS)) {
+      return
+    }
+
     await sequelize.authenticate()
     console.log('Database connection established.')
     
