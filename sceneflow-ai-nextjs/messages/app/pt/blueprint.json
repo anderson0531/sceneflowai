@@ -120,11 +120,11 @@
   "help": {
     "title": "Como o Flow cria a sua história",
     "intro": "O Flow analisa o seu conceito e gera um tratamento de filme profissional usando técnicas padrão da indústria:",
-    "reasoning": "<strong>Raciocínio narrativo por IA</strong> - O Flow explicará <em>por que</em> escolheu protagonistas, temas e direções criativas específicos na guia \"Raciocínio\" do painel lateral.",
+    "reasoning": "<strong>Raciocínio narrativo por IA</strong> - O Flow explicará <em>por que</em> escolheu protagonistas, temas e direções criativas específicos na guia \"Narrativa\" do painel lateral.",
     "threeAct": "<strong>Estrutura de Três Atos</strong> - Sua história é automaticamente organizada em batidas de Configuração, Confronto e Resolução.",
     "characterDev": "<strong>Desenvolvimento de Caráter</strong> - Personagens principais e de apoio com motivações, arcos e relacionamentos.",
     "visualStyle": "<strong>Guia de Estilo Visual</strong> - Recomendações de tom, humor e cinematografia adaptadas ao seu género.",
-    "decisions": "A IA pode tomar <strong>decisões criativas</strong> (combinar personagens, enfatizar temas) para fortalecer a narrativa - abra a guia \"Raciocínio\" do painel lateral para entender essas escolhas."
+    "decisions": "A IA pode tomar <strong>decisões criativas</strong> (combinar personagens, enfatizar temas) para fortalecer a narrativa - abra a guia \"Narrativa\" do painel lateral para entender essas escolhas."
   },
   "fields": {
     "title": "Título",
@@ -233,7 +233,7 @@
     "tabs": {
       "resonance": "Ressonância",
       "collaborate": "Colaborar",
-      "reasoning": "Raciocínio"
+      "reasoning": "Narrativa"
     },
     "collab": {
       "creatingLink": "A criar ligação...",

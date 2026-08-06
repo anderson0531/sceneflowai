@@ -120,11 +120,11 @@
   "help": {
     "title": "Wie Flow Ihre Geschichte kreiert",
     "intro": "Flow analysiert Ihr Konzept und generiert mit branchenüblichen Techniken eine professionelle Folienbehandlung:",
-    "reasoning": "<strong>AI Narrative Reasoning -</strong> Flow erklärt, <em>warum</em> es bestimmte Protagonisten, Themen und kreative Richtungen in der Registerkarte „Reasoning“ der Seitenleiste ausgewählt hat.",
+    "reasoning": "<strong>AI Narrative Reasoning -</strong> Flow erklärt, <em>warum</em> es bestimmte Protagonisten, Themen und kreative Richtungen in der Registerkarte „Erzählung“ der Seitenleiste ausgewählt hat.",
     "threeAct": "<strong>Drei-Akt-Struktur</strong> - Ihre Geschichte wird automatisch in Setup-, Konfrontations- und Lösungs-Beats organisiert.",
     "characterDev": "<strong>Charakterentwicklung</strong>- Haupt- und Nebencharaktere mit Motivationen, Bögen und Beziehungen.",
     "visualStyle": "<strong>Visueller Style-Guide</strong>- Empfehlungen zu Ton, Stimmung und Kinematografie, die auf Ihr Genre zugeschnitten sind.",
-    "decisions": "Die KI kann <strong>kreative Entscheidungen treffen</strong> (Charaktere kombinieren, Themen betonen), um die Erzählung zu stärken - öffnen Sie die Registerkarte „Argumentation“ des Seitenpanels, um diese Entscheidungen zu verstehen."
+    "decisions": "Die KI kann <strong>kreative Entscheidungen treffen</strong> (Charaktere kombinieren, Themen betonen), um die Erzählung zu stärken - öffnen Sie die Registerkarte „Erzählung“ des Seitenpanels, um diese Entscheidungen zu verstehen."
   },
   "fields": {
     "title": "Titel",
@@ -233,7 +233,7 @@
     "tabs": {
       "resonance": "Resonanz",
       "collaborate": "Zusammenarbeiten",
-      "reasoning": "Begründung"
+      "reasoning": "Erzählung"
     },
     "collab": {
       "creatingLink": "Link wird erstellt...",

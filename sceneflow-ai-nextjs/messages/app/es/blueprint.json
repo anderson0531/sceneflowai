@@ -120,11 +120,11 @@
   "help": {
     "title": "Cómo Flow crea tu historia",
     "intro": "Flow analiza su concepto y genera un tratamiento de película profesional utilizando técnicas estándar de la industria:",
-    "reasoning": "<strong>Razonamiento narrativo de IA</strong>: Flow explicará <em>por qué</em> eligió protagonistas, temas e instrucciones creativas específicos en la pestaña \"Razonamiento\" del panel lateral.",
+    "reasoning": "<strong>Razonamiento narrativo de IA</strong>: Flow explicará <em>por qué</em> eligió protagonistas, temas e instrucciones creativas específicos en la pestaña \"Narrativa\" del panel lateral.",
     "threeAct": "<strong>Estructura</strong> de tres acciones: tu historia se organiza automáticamente en ritmos de configuración, confrontación y resolución.",
     "characterDev": "<strong>Desarrollo del personaje</strong>: personajes principales y secundarios con motivaciones, arcos y relaciones.",
     "visualStyle": "<strong>Guía de estilo visual</strong>: recomendaciones de tono, estado de ánimo y cinematografía adaptadas a tu género.",
-    "decisions": "La IA puede tomar <strong>decisiones creativas</strong> (combinar personajes, enfatizar temas) para fortalecer la narrativa: abra la pestaña \"Razonamiento\" del panel lateral para comprender estas opciones."
+    "decisions": "La IA puede tomar <strong>decisiones creativas</strong> (combinar personajes, enfatizar temas) para fortalecer la narrativa: abra la pestaña \"Narrativa\" del panel lateral para comprender estas opciones."
   },
   "fields": {
     "title": "Título",
@@ -233,7 +233,7 @@
     "tabs": {
       "resonance": "Resonancia",
       "collaborate": "Colaborar",
-      "reasoning": "Razonamiento"
+      "reasoning": "Narrativa"
     },
     "collab": {
       "creatingLink": "Generando enlace",

@@ -120,11 +120,11 @@
   "help": {
     "title": "How Flow Creates Your Story",
     "intro": "Flow analyzes your concept and generates a professional film treatment using industry-standard techniques:",
-    "reasoning": "<strong>AI Narrative Reasoning</strong>—Flow will explain <em>why</em> it chose specific protagonists, themes, and creative directions in the side panel's \"Reasoning\" tab.",
+    "reasoning": "<strong>AI Narrative Reasoning</strong>—Flow will explain <em>why</em> it chose specific protagonists, themes, and creative directions in the side panel's \"Narrative\" tab.",
     "threeAct": "<strong>Three-Act Structure</strong>—Your story is automatically organized into Setup, Confrontation, and Resolution beats.",
     "characterDev": "<strong>Character Development</strong>—Main and supporting characters with motivations, arcs, and relationships.",
     "visualStyle": "<strong>Visual Style Guide</strong>—Tone, mood, and cinematography recommendations tailored to your genre.",
-    "decisions": "The AI may make <strong>creative decisions</strong> (combining characters, emphasizing themes) to strengthen the narrative—open the side panel's \"Reasoning\" tab to understand these choices."
+    "decisions": "The AI may make <strong>creative decisions</strong> (combining characters, emphasizing themes) to strengthen the narrative—open the side panel's \"Narrative\" tab to understand these choices."
   },
   "fields": {
     "title": "Title",
@@ -233,7 +233,7 @@
     "tabs": {
       "resonance": "Resonance",
       "collaborate": "Collaborate",
-      "reasoning": "Reasoning"
+      "reasoning": "Narrative"
     },
     "collab": {
       "creatingLink": "Creating link…",

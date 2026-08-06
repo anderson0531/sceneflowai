@@ -465,9 +465,9 @@ export function TreatmentCard({
                   <div className="flex items-center justify-between gap-2 text-[11px] text-cyan-200/90">
                     <span className="inline-flex items-center gap-1.5">
                       <Loader2 className="h-3 w-3 animate-spin shrink-0" />
-                      {tts.generationProgress.phase === 'generating'
-                        ? t('audio.generating')
-                        : t('audio.playing')}
+                      {tts.generationProgress.phase === 'playing'
+                        ? t('audio.playing')
+                        : t('audio.generating')}
                       {tts.generationProgress.total > 1
                         ? ` (${tts.generationProgress.current}/${tts.generationProgress.total})`
                         : ''}

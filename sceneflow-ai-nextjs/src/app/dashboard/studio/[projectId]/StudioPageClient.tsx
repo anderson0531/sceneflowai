@@ -1244,6 +1244,20 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     setFoundationTabSignal((s) => s + 1)
   }, [])
 
+  /**
+   * Closing clears the tab signals so the next open lands on Narrative.
+   *
+   * The panel unmounts when it closes, and the signals are increments that the
+   * panel re-reads on mount. Left set, a creator who once opened Collaborate
+   * would keep landing back there every time they reopened the panel.
+   */
+  const closeSidePanel = useCallback(() => {
+    setShowSidePanel(false)
+    setCollaborationTabSignal(0)
+    setResonanceTabSignal(0)
+    setFoundationTabSignal(0)
+  }, [])
+
   const studioEventHandlers = useMemo(
     () => ({
       openReimaginDialog: () => setShowReimaginDialog(true),
@@ -1472,7 +1486,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                       </Button>
                     )}
                     <Button 
-                      onClick={() => setShowSidePanel(!showSidePanel)} 
+                      onClick={() => (showSidePanel ? closeSidePanel() : setShowSidePanel(true))} 
                       variant="outline" 
                       className={cn(
                         "text-gray-300 hover:text-white border-gray-700 p-2",
@@ -1611,7 +1625,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             {/* Side Panel with Resonance & Collaboration Tabs */}
             <Panel defaultSize={25} minSize={20} maxSize={40}>
               <SidePanelTabs 
-                onClose={() => setShowSidePanel(false)}
+                onClose={closeSidePanel}
                 sessionId={sessionId}
                 shareToken={shareToken}
                 shareUrl={shareUrl}
