@@ -6445,10 +6445,25 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (!res.ok) {
           if (res.status === 503 || data?.code === 'INNGEST_NOT_CONFIGURED') {
             console.error('[Script Review] Background jobs not configured:', data)
+            // Legacy/stuck queued rows may still exist — surface Cancel if so.
+            await scriptAnalysisJob.rehydrate()
             toast.error('Audience Resonance isn’t available right now', {
               description:
-                'Background processing isn’t configured for this environment. Try again later or contact support.',
-              duration: 12000,
+                'Background processing isn’t configured for this environment. You can clear any stuck analysis and try again later, or contact support.',
+              duration: 14000,
+              action: {
+                label: 'Clear stuck analysis',
+                onClick: () => {
+                  void (async () => {
+                    const n = await scriptAnalysisJob.cancelActive()
+                    toast.success(
+                      n > 0
+                        ? `Cleared ${n} stuck analysis job${n === 1 ? '' : 's'}`
+                        : 'No stuck analysis jobs found'
+                    )
+                  })()
+                },
+              },
             })
             setIsGeneratingReviews(false)
             useStore.getState().setIsGeneratingReviews(false)

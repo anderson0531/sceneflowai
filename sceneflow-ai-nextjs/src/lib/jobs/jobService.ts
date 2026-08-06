@@ -100,9 +100,12 @@ export async function createGenerationJob(input: {
     progress: 0,
   })
 
+  // Leave status=queued when undispatched: some callers (guided revise) fall back
+  // to an HTTP step worker. AR start checks isInngestDispatchConfigured() first
+  // so it never inserts a row when the key is missing.
   if (!isInngestDispatchConfigured()) {
     console.warn(
-      '[jobService] INNGEST_EVENT_KEY not set — job remains queued (dispatched=false)'
+      '[jobService] INNGEST_EVENT_KEY not set — job not dispatched (caller must handle)'
     )
     return { job, dispatched: false }
   }
@@ -121,7 +124,10 @@ export async function createGenerationJob(input: {
     })
     dispatched = true
   } catch (err) {
-    console.warn('[jobService] Inngest send failed, job remains queued:', err)
+    console.warn(
+      '[jobService] Inngest send failed — job not dispatched (caller must handle):',
+      err
+    )
   }
 
   return { job, dispatched }
@@ -203,6 +209,24 @@ export async function cancelGenerationJob(jobId: string, userId: string): Promis
     error: 'Cancelled by user',
   })
   return true
+}
+
+/**
+ * Cancel every active job of a type for a project (clears stuck queued AR, etc.).
+ */
+export async function cancelActiveJobsForProject(input: {
+  userId: string
+  projectId: string
+  jobType: GenerationJobType
+}): Promise<{ cancelledIds: string[] }> {
+  const jobs = await listJobsForUser(input.userId, input.projectId, { activeOnly: true })
+  const cancelledIds: string[] = []
+  for (const job of jobs) {
+    if (job.job_type !== input.jobType) continue
+    const ok = await cancelGenerationJob(job.id, input.userId)
+    if (ok) cancelledIds.push(job.id)
+  }
+  return { cancelledIds }
 }
 
 export async function listJobsForUser(

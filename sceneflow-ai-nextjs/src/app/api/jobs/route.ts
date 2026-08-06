@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import '@/models'
 import {
+  cancelActiveJobsForProject,
   cancelGenerationJob,
   createGenerationJob,
   getJobForUser,
@@ -48,9 +49,33 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { jobId, action } = body as { jobId?: string; action?: string }
+    const { jobId, action, projectId, jobType } = body as {
+      jobId?: string
+      action?: string
+      projectId?: string
+      jobType?: GenerationJobType
+    }
+
+    if (action === 'cancel-active') {
+      if (!projectId || !jobType) {
+        return NextResponse.json(
+          { error: 'projectId, jobType, and action=cancel-active required' },
+          { status: 400 }
+        )
+      }
+      const { cancelledIds } = await cancelActiveJobsForProject({
+        userId,
+        projectId,
+        jobType,
+      })
+      return NextResponse.json({ cancelledIds, cancelledCount: cancelledIds.length })
+    }
+
     if (!jobId || action !== 'cancel') {
-      return NextResponse.json({ error: 'jobId and action=cancel required' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'jobId and action=cancel required (or action=cancel-active with projectId+jobType)' },
+        { status: 400 }
+      )
     }
 
     const cancelled = await cancelGenerationJob(jobId, userId)

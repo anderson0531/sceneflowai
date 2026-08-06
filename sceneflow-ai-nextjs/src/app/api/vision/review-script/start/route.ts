@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import '@/models'
-import {
-  createGenerationJob,
-  findActiveJob,
-  updateGenerationJob,
-} from '@/lib/jobs/jobService'
+import { createGenerationJob, findActiveJob, updateGenerationJob } from '@/lib/jobs/jobService'
+import { isInngestDispatchConfigured } from '@/lib/jobs/inngestDispatch'
 import { getSessionUserId } from '@/lib/auth/sessionUser'
 import { CreditService } from '@/services/CreditService'
 import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
@@ -66,6 +63,18 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Fail before inserting a generation_jobs row when Inngest cannot dispatch.
+    if (!isInngestDispatchConfigured()) {
+      return NextResponse.json(
+        {
+          error: DISPATCH_FAILED_ERROR,
+          code: 'INNGEST_NOT_CONFIGURED',
+          status: 'failed',
+        },
+        { status: 503 }
+      )
+    }
+
     const context = await loadScriptForAnalysis(projectId)
     if (!context) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
@@ -105,6 +114,7 @@ export async function POST(req: NextRequest) {
     })
 
     if (!dispatched) {
+      // Key was present but send failed — fail the row so it cannot block retries.
       await updateGenerationJob(job.id, {
         status: 'failed',
         error: DISPATCH_FAILED_ERROR,
