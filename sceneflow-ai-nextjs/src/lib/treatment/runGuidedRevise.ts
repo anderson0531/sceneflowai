@@ -37,6 +37,12 @@ export type GuidedRevisePayload = {
   preservedCharacterAssets: PreservedCharacterAssets
   variant: Record<string, unknown>
   intentText: string
+  /**
+   * English rendering of `intentText`, used only for the English keyword
+   * matching in section inference and request validation. Absent when the
+   * creator already writes in English.
+   */
+  intentTextForRouting?: string
   selectedRecs: BlueprintAudienceRecommendation[]
   focusScope?: BlueprintFixSection | 'all'
   contentIntent: ContentIntent
@@ -198,13 +204,17 @@ export async function runPlannerStep(
   payload: GuidedRevisePayload,
   logHeap: HeapLogger = noopHeap
 ): Promise<BlueprintChangePlan> {
+  // Section inference matches English keywords, so it reads the English copy of
+  // the direction while every prompt below keeps the creator's own words.
+  const routingText = payload.intentTextForRouting ?? payload.intentText
+
   let plan = resolveInitialPlan(
     payload.focusScope,
-    payload.intentText,
+    routingText,
     payload.selectedRecs
   )
 
-  if (shouldRunPlanner(payload.focusScope, payload.selectedRecs, payload.intentText)) {
+  if (shouldRunPlanner(payload.focusScope, payload.selectedRecs, routingText)) {
     const plannerPrompt = buildPlannerPrompt(
       payload.variant,
       payload.intentText,
@@ -382,6 +392,7 @@ export function buildGuidedRevisePayload(input: {
   focusScope?: BlueprintFixSection | 'all'
   contentIntent?: ContentIntent
   storyLocale?: string
+  intentTextForRouting?: string
 }): GuidedRevisePayload {
   const { variant: rawVariant, preservedCharacterAssets } =
     stripHeavyFieldsFromVariant(input.incomingVariant)
@@ -407,6 +418,7 @@ export function buildGuidedRevisePayload(input: {
     preservedCharacterAssets,
     variant: trimVariantForPrompt(rawVariant),
     intentText,
+    intentTextForRouting: input.intentTextForRouting,
     selectedRecs,
     focusScope: input.focusScope,
     contentIntent,
@@ -433,6 +445,7 @@ export function payloadFromJobRecord(
       {}) as PreservedCharacterAssets,
     variant: trimVariantForPrompt(rawVariant),
     intentText,
+    intentTextForRouting: (stored.intentTextForRouting as string | undefined) || undefined,
     selectedRecs,
     focusScope: stored.focusScope as BlueprintFixSection | 'all' | undefined,
     contentIntent,
