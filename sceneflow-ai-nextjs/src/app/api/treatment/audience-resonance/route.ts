@@ -25,6 +25,8 @@ import {
   mapRecommendations,
 } from '@/lib/treatment/blueprintAudienceScorer'
 import { persistBlueprintARToProject } from '@/lib/treatment/persistBlueprintAR'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 import {
   type ContentIntent,
   getIntentScoringRubric,
@@ -80,7 +82,8 @@ function buildPrompt(
   genre?: string,
   tone?: string,
   appliedIds: string[] = [],
-  contentIntent?: ContentIntent
+  contentIntent?: ContentIntent,
+  languageBlock: string = ''
 ): string {
   const intent = contentIntent ?? resolveContentIntent(genre || treatment.genre)
   const rubric = getIntentScoringRubric(intent)
@@ -156,7 +159,7 @@ ${charsText}
 
 EVALUATION CATEGORIES (score each 1–100 for radar display):
 ${evalCategories.map((c) => `- ${c.name} (weight ${c.weight}): ${c.description}`).join('\n')}
-
+${languageBlock}
 Return ONLY valid JSON:
 {
   "overallScore": <100 minus sum of deduction points>,
@@ -213,7 +216,31 @@ export async function POST(request: NextRequest) {
 
     const audienceDefinition = createAudienceDefinition(rawDef)
     const appliedIds = body.appliedRecommendationIds || []
-    const prompt = buildPrompt(treatment, audienceDefinition, genre, tone, appliedIds, contentIntent)
+
+    // The summary, deductions and recommendations are all read by the creator,
+    // and the category names key the radar labels, so the analysis has to come
+    // back in their language rather than always in English.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, {
+      explicit: (body as { storyLocale?: string }).storyLocale,
+      projectId: body.projectId,
+      userIdOrEmail: userId,
+    })
+    const prompt = buildPrompt(
+      treatment,
+      audienceDefinition,
+      genre,
+      tone,
+      appliedIds,
+      contentIntent,
+      localeDirective(storyLocale, {
+        properNouns: buildProperNounGlossary(
+          { characters: treatment.character_descriptions ?? [] },
+          [...properNouns, treatment.title ?? '']
+        ),
+        note:
+          'The JSON keys, the "fixSection" values (core, story, tone, beats, characters), and the "priority" values stay exactly as specified.',
+      })
+    )
 
     // Give the model more room to reason when validating cultural nuance
     const needsCulturalReasoning = hasCulturalSignals(audienceDefinition.culturalSignals)

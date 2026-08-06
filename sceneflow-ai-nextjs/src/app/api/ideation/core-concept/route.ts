@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { strictJsonPromptSuffix } from '@/lib/safeJson'
 import { generateText } from '@/lib/vertexai/gemini'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { localeDirective } from '@/lib/prompts/localeDirective'
 
 interface CoreConceptRequest {
   input: string
@@ -10,6 +12,9 @@ interface CoreConceptRequest {
   genre?: string
   duration?: number
   platform?: string
+  projectId?: string
+  seriesId?: string
+  storyLocale?: string
 }
 
 interface CoreConceptResponse {
@@ -39,13 +44,23 @@ export async function POST(request: NextRequest) {
     console.log('🎯 Core Concept Analysis - Input length:', input.length)
     console.log('🎯 First 500 chars:', input.substring(0, 500))
 
+    // The concept is read back by the creator, so it has to come out in their
+    // language even when the input arrives in it.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, {
+      explicit: body.storyLocale,
+      projectId: body.projectId,
+      seriesId: body.seriesId,
+    })
+
     const coreConcept = await analyzeCoreConcept(input, {
       targetAudience,
       keyMessage,
       tone,
       genre,
       duration,
-      platform
+      platform,
+      storyLocale,
+      properNouns
     })
 
     return NextResponse.json({
@@ -92,7 +107,7 @@ TASK: Extract the core concept by:
 2. Writing a brief synopsis (≤50 words) - SUMMARIZE, don't copy
 3. Identifying core themes (extract main ideas)
 4. Determining the best narrative structure
-
+${localeDirective(context.storyLocale, { properNouns: context.properNouns })}
 Respond with valid JSON only:
 {
   "input_title": "Descriptive title based on the input",

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
 import { safeParseJsonFromText } from '@/lib/safeJson'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 import type {
   AnalyzeResonanceRequest,
   AnalyzeResonanceResponse,
@@ -106,7 +108,21 @@ export async function POST(request: NextRequest) {
       console.log(`[Resonance] Intent changed - using content baseline score: ${contentBaseline.score} for scoring stability`)
     }
     
-    const analysis = await analyzeWithGemini(treatment, intent, reqId, effectiveIteration, previousAnalysis, targetProfile, contentBaseline)
+    // Scores are numeric, but the prose the creator reads (notes, strengths,
+    // recommendations) has to arrive in their language.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, {
+      explicit: (body as { storyLocale?: string }).storyLocale,
+      projectId: (body as { projectId?: string }).projectId,
+    })
+    const languageBlock = localeDirective(storyLocale, {
+      properNouns: buildProperNounGlossary(
+        { characters: (treatment.character_descriptions as any[]) ?? [] },
+        [...properNouns, treatment.title ?? '']
+      ),
+      note: 'Every JSON key and every checkpoint id stays exactly as specified.',
+    })
+
+    const analysis = await analyzeWithGemini(treatment, intent, reqId, effectiveIteration, previousAnalysis, targetProfile, contentBaseline, languageBlock)
     
     const isReadyForProduction = analysis.greenlightScore.score >= READY_FOR_PRODUCTION_THRESHOLD
     
@@ -291,10 +307,11 @@ async function analyzeWithGemini(
   iteration: number = 1,
   previousAnalysis?: PreviousAnalysisContext,
   targetProfile?: AnalyzeResonanceRequest['targetProfile'],
-  contentBaseline?: { score: number; note: string }
+  contentBaseline?: { score: number; note: string },
+  languageBlock: string = ''
 ): Promise<AudienceResonanceAnalysis> {
   
-  const prompt = buildAnalysisPrompt(treatment, intent, iteration, previousAnalysis, targetProfile, contentBaseline)
+  const prompt = buildAnalysisPrompt(treatment, intent, iteration, previousAnalysis, targetProfile, contentBaseline, languageBlock)
   
   console.log(`[Resonance] Calling Vertex AI Gemini for analysis (iteration ${iteration})...`)
   
@@ -493,7 +510,8 @@ function buildAnalysisPrompt(
   iteration: number = 1,
   previousAnalysis?: PreviousAnalysisContext,
   targetProfile?: AnalyzeResonanceRequest['targetProfile'],
-  contentBaseline?: { score: number; note: string }
+  contentBaseline?: { score: number; note: string },
+  languageBlock: string = ''
 ): string {
   const normalizedIntent = normalizeAudienceIntent(intent)
   const genreLabel = normalizedIntent.primaryGenre.replace('-', ' ')
@@ -608,7 +626,7 @@ ${charactersText}
 ${treatment.act_breakdown ? `Acts: ${truncateText(treatment.act_breakdown.act1, 200)} → ${truncateText(treatment.act_breakdown.act2, 200)} → ${truncateText(treatment.act_breakdown.act3, 200)}` : ''}
 
 ${checklistSection}
-
+${languageBlock}
 Return JSON:
 {
   "greenlight_score": number (0-100),

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { AIProvider } from '@/services/ai-providers/BaseAIProviderAdapter'
 import { videoGenerationGateway } from '@/services/VideoGenerationGateway'
 import { generateText } from '@/lib/vertexai/gemini'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { localeDirective } from '@/lib/prompts/localeDirective'
 
 interface ConversationMessage {
   role: 'user' | 'assistant' | 'system'
@@ -98,6 +100,9 @@ interface IdeaGenerationRequest {
     callToAction?: string
   }
   provider?: AIProvider
+  projectId?: string
+  seriesId?: string
+  storyLocale?: string
 }
 
 interface IdeaGenerationResponse {
@@ -185,12 +190,21 @@ export async function POST(request: NextRequest) {
     console.log('📝 Conversation history length:', conversationHistory.length)
     console.log('📝 Last conversation message:', conversationHistory[conversationHistory.length - 1]?.content?.substring(0, 200) + '...')
     
+    // The conversation may be held in any language, and the ideas are read back
+    // by the creator, so they have to come out in the same one.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, {
+      explicit: body.storyLocale,
+      projectId: body.projectId,
+      seriesId: body.seriesId,
+    })
+
     const result = await generateVideoIdeas(
       conversationHistory,
       finalizedConcept,
       provider,
       isUsingUserProvider,
-      providerCapabilities
+      providerCapabilities,
+      localeDirective(storyLocale, { properNouns })
     )
     
     console.log('💡 Generated ideas result:', JSON.stringify(result, null, 2))
@@ -247,11 +261,12 @@ async function generateVideoIdeas(
   finalizedConcept: any,
   provider: AIProvider,
   isUsingUserProvider: boolean,
-  providerCapabilities: any
+  providerCapabilities: any,
+  languageBlock: string = ''
 ): Promise<{ scriptAnalysis: ScriptAnalysis, videoConcepts: VideoConcept[], legacyIdeas: VideoIdea[] }> {
 
   // Construct the idea generation prompt
-  const systemPrompt = constructIdeaGenerationPrompt(finalizedConcept, provider, providerCapabilities)
+  const systemPrompt = constructIdeaGenerationPrompt(finalizedConcept, provider, providerCapabilities, languageBlock)
   // Format conversation for LLM
   const formattedConversation = formatConversationForIdeaGeneration(systemPrompt, conversationHistory, finalizedConcept)
 
@@ -318,7 +333,7 @@ async function callGoogleGemini(
 /**
  * Construct the idea generation system prompt
  */
-function constructIdeaGenerationPrompt(finalizedConcept: any, provider: AIProvider, providerCapabilities: any): string {
+function constructIdeaGenerationPrompt(finalizedConcept: any, provider: AIProvider, providerCapabilities: any, languageBlock: string = ''): string {
   const providerInfo = getProviderInfo(provider)
   const capabilities = providerCapabilities ? `Provider Capabilities: ${JSON.stringify(providerCapabilities)}` : 'Standard video generation capabilities'
   
@@ -367,7 +382,7 @@ Context:
 - Genre: ${finalizedConcept.genre || 'Not specified'}
 - Duration: ${finalizedConcept.duration || 60} seconds
 - Platform: ${finalizedConcept.platform || 'Multi-platform'}
-
+${languageBlock}
 Respond with valid JSON in this exact structure:
 {
   "script_analysis": {
