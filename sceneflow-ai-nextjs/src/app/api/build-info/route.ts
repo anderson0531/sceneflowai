@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { PRODUCTION_SECTION_LABELS } from '@/constants/productionSections'
+import { getGeminiTextModel, normalizeGeminiTextModel } from '@/lib/config/modelConfig'
 
 export const runtime = 'nodejs'
 export const maxDuration = 10
@@ -12,7 +13,7 @@ export async function GET() {
 
   const commit = process.env.VERCEL_GIT_COMMIT_SHA || process.env.COMMIT_SHA || 'unknown'
   // Mirror the model logic used in /api/version
-  const model = process.env.GEMINI_MODEL || 'gemini-3.0-flash'
+  const model = normalizeGeminiTextModel(process.env.GEMINI_MODEL || getGeminiTextModel('flash'))
 
   // UI markers for deploy verification
   const uiMarker = {

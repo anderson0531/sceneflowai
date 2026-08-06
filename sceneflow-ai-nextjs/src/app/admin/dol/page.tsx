@@ -260,7 +260,7 @@ export default function DOLAdminPage() {
                     value={templateForm.modelId}
                     onChange={(e) => setTemplateForm(prev => ({ ...prev, modelId: e.target.value }))}
                     className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg"
-                    placeholder="gemini-3.0-flash"
+                    placeholder="gemini-3.5-flash"
                   />
                 </div>
 
@@ -370,7 +370,7 @@ export default function DOLAdminPage() {
                     value={modelForm.modelId}
                     onChange={(e) => setModelForm(prev => ({ ...prev, modelId: e.target.value }))}
                     className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg"
-                    placeholder="gemini-3.0-flash"
+                    placeholder="gemini-3.5-flash"
                   />
                 </div>
 

@@ -51,7 +51,7 @@ describe('preflightPromptGuard', () => {
       text: JSON.stringify({
         prompt: 'Leaning forward earnestly during a formal interview.',
       }),
-      model: 'gemini-3.1-flash-lite-preview',
+      model: 'gemini-3.1-flash-lite',
     })
 
     const original =

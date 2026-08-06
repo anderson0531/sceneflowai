@@ -316,9 +316,14 @@ export function getEnvImagenQuality(): ImagenQualityTier {
 
 export type GeminiThinkingLevel = 'minimal' | 'low' | 'medium' | 'high';
 
-// 1. PRIMARY PREVIEW MODELS
+/**
+ * Primary text models — IDs must match Vertex / AI Gateway catalogs.
+ * Verified against https://ai-gateway.vercel.sh/v1/models (2026-08-06).
+ * `gemini-3.0-flash` is not a real model id (production 404 → silent 2.5 downgrade).
+ */
 export const GEMINI_TEXT_MODELS = {
-  '3-flash': 'gemini-3.1-flash-lite-preview', // As seen in Model Garden screenshot
+  '3-flash': 'gemini-3.5-flash',
+  '3-flash-lite': 'gemini-3.1-flash-lite',
   '3-pro': 'gemini-3.1-pro-preview',
 } as const;
 
@@ -328,34 +333,41 @@ export const GEMINI_TEXT_MODELS_PREVIOUS = {
 } as const;
 
 /**
+ * Stale / invented ids that still appear in env overrides and older call sites.
+ * Mapped before any Vertex request so they never 404.
+ */
+const GEMINI_TEXT_MODEL_ALIASES: Record<string, string> = {
+  'gemini-3.0-flash': GEMINI_TEXT_MODELS['3-flash'],
+  'gemini-3.1-flash-lite-preview': GEMINI_TEXT_MODELS['3-flash-lite'],
+}
+
+/** Remap known-bad aliases to Gateway-verified Vertex model ids. */
+export function normalizeGeminiTextModel(model: string): string {
+  const trimmed = model.trim()
+  return GEMINI_TEXT_MODEL_ALIASES[trimmed] ?? trimmed
+}
+
+/**
  * Resolves the correct model ID based on desired tier and depth.
  * This is the function called by your Route.ts and Gemini.ts.
  */
 export function getGeminiTextModel(
   tier: 'flash' | 'pro' = 'flash'
 ): string {
-  // Use the major version alias for maximum compatibility with the preview registry
-  if (tier === 'pro') return 'gemini-3.1-pro-preview';
-  return 'gemini-3.1-flash-lite-preview';
+  if (tier === 'pro') return GEMINI_TEXT_MODELS['3-pro']
+  return GEMINI_TEXT_MODELS['3-flash']
 }
 
 /**
  * Text model ids worth probing against Vertex, roughly best-first.
- *
- * Ranking rationale: newer generations lead, because a newer Flash generally
- * beats an older Pro on reasoning while costing less. `gemini-3.0-flash` is
- * included specifically because it is used widely in this codebase yet appears
- * in no published catalog — the probe exists to settle whether Vertex serves it
- * or whether those call sites have been silently downgrading to 2.5-flash.
+ * Only Gateway-verified ids — no invented names like `gemini-3.0-flash`.
  */
 export const GEMINI_TEXT_MODEL_CANDIDATES = [
   'gemini-3.6-flash',
   'gemini-3.5-flash',
-  'gemini-3.1-pro-preview',
-  'gemini-3-pro-preview',
-  'gemini-3.1-flash-lite-preview',
-  'gemini-3.0-flash',
   'gemini-3-flash',
+  'gemini-3.1-flash-lite',
+  'gemini-3.1-pro-preview',
   'gemini-2.5-flash',
 ] as const;
 

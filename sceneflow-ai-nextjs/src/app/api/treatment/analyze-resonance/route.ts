@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
+import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import { safeParseJsonFromText } from '@/lib/safeJson'
 import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
@@ -315,10 +316,9 @@ async function analyzeWithGemini(
   
   console.log(`[Resonance] Calling Vertex AI Gemini for analysis (iteration ${iteration})...`)
   
-  // Use gemini-3.1-flash-lite-preview (Gemini 3 Flash)
-  // We use thinkingLevel: 'minimal' to disable thinking mode and avoid OOM issues
+    // We use thinkingLevel: 'minimal' to disable thinking mode and avoid OOM issues
   const result = await generateText(prompt, {
-    model: 'gemini-3.1-flash-lite-preview',
+    model: getGeminiTextModel('flash'),
     temperature: 0, // Use 0 for deterministic, consistent scoring
     maxOutputTokens: 2048, // Further reduced to prevent any large response issues
     responseMimeType: 'application/json',

@@ -17,7 +17,7 @@ import {
 } from './safety'
 import {
   getGeminiTextModel,
-  GEMINI_TEXT_MODELS_PREVIOUS,
+  normalizeGeminiTextModel,
   type GeminiThinkingLevel,
 } from '../config/modelConfig'
 
@@ -105,7 +105,6 @@ export interface TextGenerationResult {
 }
 
 type InternalTextGenerationOptions = TextGenerationOptions & {
-  _is404FallbackAttempt?: boolean
   /** Preserved across fallbacks so the result can report the original ask. */
   _requestedModel?: string
 }
@@ -118,11 +117,12 @@ export async function generateText(
   prompt: string,
   options: TextGenerationOptions = {}
 ): Promise<TextGenerationResult> {
-  const model = (options.model || 'gemini-3.1-pro-preview').trim()
-  const requestedModel = (options as InternalTextGenerationOptions)._requestedModel || model
+  const callerModel = (options.model || getGeminiTextModel('pro')).trim()
+  const model = normalizeGeminiTextModel(callerModel)
+  const requestedModel = (options as InternalTextGenerationOptions)._requestedModel || callerModel
 
   try {
-    return await generateTextWithModel(prompt, options, model)
+    return await generateTextWithModel(prompt, { ...options, model }, model)
   } catch (err) {
     if (isGeminiQuotaError(err) && !options.disableModelFallback) {
       const nextModel = getNextGeminiFallbackModel(model)
@@ -155,7 +155,7 @@ async function generateTextWithModel(
 ): Promise<TextGenerationResult> {
   const { projectId, location: defaultLocation } = getConfig();
 
-  const model = resolvedModel;
+  const model = normalizeGeminiTextModel(resolvedModel);
   const isGemini3 = model.includes('gemini-3');
   const isPreview = model.includes('preview');
 
@@ -243,26 +243,23 @@ async function generateTextWithModel(
   if (!isOk) {
     const errorText = await response.text(); 
     
-    if (
-      status === 404 &&
-      isGemini3 &&
-      !options._is404FallbackAttempt &&
-      !options.disableModelFallback
-    ) {
-      const fallbackModel = GEMINI_TEXT_MODELS_PREVIOUS['2.5-flash'];
-      recordModelDowngrade({
-        requestedModel: options._requestedModel || model,
-        resolvedModel: fallbackModel,
-        reason: 'model_not_found',
-        httpStatus: 404,
-      });
-      return generateText(prompt, {
-        ...options,
-        model: fallbackModel,
-        thinkingLevel: 'low',
-        _is404FallbackAttempt: true,
-        _requestedModel: options._requestedModel || model,
-      } as InternalTextGenerationOptions);
+    if (status === 404 && isGemini3 && !options.disableModelFallback) {
+      // Chain 3.5 → 3.1-lite → 2.5 instead of leaping straight to 2.5.
+      const fallbackModel = getNextGeminiFallbackModel(model)
+      if (fallbackModel) {
+        recordModelDowngrade({
+          requestedModel: options._requestedModel || model,
+          resolvedModel: fallbackModel,
+          reason: 'model_not_found',
+          httpStatus: 404,
+        });
+        return generateText(prompt, {
+          ...options,
+          model: fallbackModel,
+          thinkingLevel: fallbackModel.includes('2.5') ? 'low' : options.thinkingLevel,
+          _requestedModel: options._requestedModel || model,
+        } as InternalTextGenerationOptions);
+      }
     }
     
     throw new Error(`Vertex AI error ${status}: ${errorText}`);
@@ -292,8 +289,9 @@ export async function streamText(
   const { projectId, location: defaultLocation } = getConfig();
 
   // 1. RESOLVE MODEL & DYNAMIC LOCATION
-  const rawModel = options.model || 'gemini-3.1-pro-preview';
-  const model = rawModel.trim();
+  const model = normalizeGeminiTextModel(
+    (options.model || getGeminiTextModel('pro')).trim()
+  );
   const isGemini3 = model.includes('gemini-3');
   const isPreview = model.includes('preview');
 
@@ -407,7 +405,9 @@ export async function generateWithVision(
 ): Promise<TextGenerationResult> {
   const { projectId, location: defaultLocation } = getConfig()
   // Use central model constant for vision by default
-  const model = options.model || getGeminiTextModel()
+  const model = normalizeGeminiTextModel(
+    (options.model || getGeminiTextModel('flash')).trim()
+  )
 
   const isGemini3 = model.includes('gemini-3')
   const isPreview = model.includes('preview')
@@ -517,19 +517,27 @@ export async function generateWithVision(
   
   if (!response.ok) {
     const errorText = await response.text()
-    const isGemini3 = model.includes('3.0') || model.includes('3.1') || model.startsWith('gemini-3')
+    const isGemini3 = model.includes('gemini-3')
+    const fallbackModel = getNextGeminiFallbackModel(model)
     if (
       response.status === 404 &&
       isGemini3 &&
-      model !== 'gemini-2.5-flash' &&
-      !(options as { _isFallbackAttempt?: boolean })._isFallbackAttempt
+      fallbackModel &&
+      !options.disableModelFallback
     ) {
-      console.warn(`[Vertex Gemini Vision] 404 for ${model}. Falling back to gemini-2.5-flash.`)
+      console.warn(
+        `[Vertex Gemini Vision] 404 for ${model}. Falling back to ${fallbackModel}.`
+      )
+      recordModelDowngrade({
+        requestedModel: model,
+        resolvedModel: fallbackModel,
+        reason: 'model_not_found',
+        httpStatus: 404,
+      })
       return generateWithVision(parts, {
         ...options,
-        model: 'gemini-2.5-flash',
-        _isFallbackAttempt: true,
-      } as VisionGenerationOptions & { _isFallbackAttempt?: boolean })
+        model: fallbackModel,
+      })
     }
     console.error('[Vertex Gemini Vision] Error:', errorText)
     throw new Error(`Vertex AI Vision error ${response.status}: ${errorText}`)

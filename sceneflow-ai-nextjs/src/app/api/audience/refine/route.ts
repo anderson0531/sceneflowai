@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { generateText } from '@/lib/vertexai/gemini'
+import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import { safeParseJsonFromText } from '@/lib/safeJson'
 import { CreditService } from '@/services/CreditService'
 import { TEXT_CREDITS } from '@/lib/credits/creditCosts'
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
     const prompt = buildRefinePrompt(description, body.context)
 
     const result = await generateText(prompt, {
-      model: 'gemini-3.0-flash',
+      model: getGeminiTextModel('flash'),
       temperature: 0.2,
       maxOutputTokens: 2048,
       thinkingLevel: 'low',
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
     try {
       await CreditService.charge(userId, CREDIT_COST, 'ai_usage', body.projectId || null, {
         operation: 'audience_refine',
-        model: 'gemini-3.0-flash',
+        model: getGeminiTextModel('flash'),
       })
       const breakdown = await CreditService.getCreditBreakdown(userId)
       creditsBalance = breakdown.total_credits

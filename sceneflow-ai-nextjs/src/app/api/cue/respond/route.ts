@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { generateText, generateTextCacheAware } from '@/lib/vertexai/gemini'
+import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { localeDirective } from '@/lib/prompts/localeDirective'
 
@@ -355,7 +356,7 @@ export async function POST(req: NextRequest) {
                   return new Response(JSON.stringify({ 
                     reply: extractedJson, 
                     provider: provider.name.toLowerCase(),
-                    model: provider.name === 'Gemini' ? 'gemini-3.0-flash' : 'gpt-4o-mini'
+                    model: provider.name === 'Gemini' ? getGeminiTextModel('flash') : 'gpt-4o-mini'
                   }), { 
                     status: 200, 
                     headers: { 'Content-Type': 'application/json' } 
@@ -369,7 +370,7 @@ export async function POST(req: NextRequest) {
           return new Response(JSON.stringify({ 
             reply, 
             provider: provider.name.toLowerCase(),
-            model: provider.name === 'Gemini' ? 'gemini-3.0-flash' : 'gpt-4o-mini'
+            model: provider.name === 'Gemini' ? getGeminiTextModel('flash') : 'gpt-4o-mini'
           }), { 
             status: 200, 
             headers: { 'Content-Type': 'application/json' } 

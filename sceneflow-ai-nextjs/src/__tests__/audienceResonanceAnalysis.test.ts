@@ -293,9 +293,8 @@ describe('Model selection', () => {
   it('keeps the probe candidate list ranked newest-first', () => {
     expect(GEMINI_TEXT_MODEL_CANDIDATES[0]).toBe('gemini-3.6-flash')
     expect(GEMINI_TEXT_MODEL_CANDIDATES).toContain('gemini-3.1-pro-preview')
-    // Included deliberately: it is used widely yet appears in no catalog, so
-    // the probe is how we find out whether Vertex serves it.
-    expect(GEMINI_TEXT_MODEL_CANDIDATES).toContain('gemini-3.0-flash')
+    expect(GEMINI_TEXT_MODEL_CANDIDATES).toContain('gemini-3.5-flash')
+    expect(GEMINI_TEXT_MODEL_CANDIDATES).not.toContain('gemini-3.0-flash')
   })
 
   it('records a downgrade instead of failing over in silence', () => {

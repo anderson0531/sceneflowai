@@ -6,7 +6,7 @@ const mockPromptTemplates: PromptTemplate[] = [
   {
     id: '1',
     templateId: 'script-writing-gemini',
-    modelId: GEMINI_TEXT_MODELS.flash,
+    modelId: GEMINI_TEXT_MODELS['3-flash'],
     taskType: TaskType.SCRIPT_WRITING,
     templateString: `You are an expert screenwriter. Create a compelling script based on the following concept:
 

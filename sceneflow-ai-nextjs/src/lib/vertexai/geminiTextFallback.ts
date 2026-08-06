@@ -4,10 +4,11 @@ import {
 } from '@/lib/config/modelConfig'
 import { isRetryableError } from '@/lib/utils/retry'
 
-/** Ordered quota fallback: lighter models / separate quota pools. */
+/** Ordered quota / 404 fallback: lighter models / separate quota pools. */
 export const GEMINI_QUOTA_FALLBACK_CHAIN = [
   GEMINI_TEXT_MODELS['3-pro'],
   GEMINI_TEXT_MODELS['3-flash'],
+  GEMINI_TEXT_MODELS['3-flash-lite'],
   GEMINI_TEXT_MODELS_PREVIOUS['2.5-flash'],
 ] as const
 

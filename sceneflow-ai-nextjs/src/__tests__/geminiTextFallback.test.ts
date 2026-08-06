@@ -6,9 +6,10 @@ import {
 } from '@/lib/vertexai/geminiTextFallback'
 
 describe('geminiTextFallback', () => {
-  it('chains pro → flash-lite → 2.5-flash on quota errors', () => {
-    const [pro, flashLite, flash25] = GEMINI_QUOTA_FALLBACK_CHAIN
-    expect(getNextGeminiFallbackModel(pro)).toBe(flashLite)
+  it('chains pro → flash → lite → 2.5-flash on quota errors', () => {
+    const [pro, flash, flashLite, flash25] = GEMINI_QUOTA_FALLBACK_CHAIN
+    expect(getNextGeminiFallbackModel(pro)).toBe(flash)
+    expect(getNextGeminiFallbackModel(flash)).toBe(flashLite)
     expect(getNextGeminiFallbackModel(flashLite)).toBe(flash25)
     expect(getNextGeminiFallbackModel(flash25)).toBeNull()
   })

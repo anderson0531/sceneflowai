@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
+import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { localeDirective } from '@/lib/prompts/localeDirective'
 
@@ -346,7 +347,7 @@ ${languageBlock}`
 
   console.log('[Director Scene Review] Calling Vertex AI Gemini...')
   const result = await generateText(prompt, {
-    model: 'gemini-3.0-flash',
+    model: getGeminiTextModel('flash'),
     temperature: 0.3,
     maxOutputTokens: 4096,
     responseMimeType: 'application/json'
@@ -457,7 +458,7 @@ ${languageBlock}`
 
   console.log('[Audience Scene Review] Calling Vertex AI Gemini...')
   const result = await generateText(prompt, {
-    model: 'gemini-3.0-flash',
+    model: getGeminiTextModel('flash'),
     temperature: 0.3,
     maxOutputTokens: 4096,
     responseMimeType: 'application/json'
