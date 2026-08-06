@@ -6430,9 +6430,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     useStore.getState().setIsGeneratingReviews(scriptAnalysisJob.isActive)
   }, [scriptAnalysisJob.isActive])
 
-  // Drive analysis forward from the client. Vercel returns 508 when a serverless
-  // function fetches itself (internal step→step), which parks the HTTP fallback
-  // mid-job. Each tick runs at most one lease-guarded phase server-side.
+  // Drive analysis forward from the client. Vercel returns 508 INFINITE_LOOP_DETECTED
+  // when a serverless function fetches itself, so the internal worker never
+  // self-chains. Each tick runs at most one lease-guarded phase server-side.
   const scriptAnalysisJobId = scriptAnalysisJob.job?.id
   const scriptAnalysisJobActive = scriptAnalysisJob.isActive
   useEffect(() => {
