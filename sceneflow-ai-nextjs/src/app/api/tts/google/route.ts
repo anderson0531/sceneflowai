@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { chunkNarrationText } from '@/lib/blueprint/sectionNarrationText'
 import { synthesizeGeminiFlashMp3, isGeminiTtsConfigured } from '@/lib/tts/geminiFlashTts'
+import { NARRATION_CHUNK_BYTES } from '@/lib/tts/blueprintTtsConstants'
 import type { GeminiTtsAudioType } from '@/lib/tts/geminiTtsPrompt'
 
 export const dynamic = 'force-dynamic'
@@ -31,7 +32,9 @@ export async function POST(request: NextRequest) {
       audioType === 'dialogue' || audioType === 'narration' || audioType === 'music' || audioType === 'sfx'
         ? audioType
         : 'narration'
-    const chunks = chunkNarrationText(cleanText, 4000)
+    // Same Gemini ceiling as the Blueprint route: a UTF-8 byte budget, since a
+    // character budget lets non-Latin text past the limit.
+    const chunks = chunkNarrationText(cleanText, NARRATION_CHUNK_BYTES)
     const audioBuffers: Buffer[] = []
 
     for (let i = 0; i < chunks.length; i++) {

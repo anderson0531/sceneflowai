@@ -1,11 +1,15 @@
 import { readFileSync } from 'fs'
 import path from 'path'
 import { describe, expect, it } from 'vitest'
-import { chunkNarrationText } from '@/lib/blueprint/narrationChunks'
+import { chunkNarrationText, narrationByteLength } from '@/lib/blueprint/narrationChunks'
 import {
   hashNarrationAudio,
   narrationAudioPathname,
 } from '@/lib/blueprint/narrationAudioCache'
+import {
+  GEMINI_TTS_MAX_INPUT_BYTES,
+  NARRATION_CHUNK_BYTES,
+} from '@/lib/tts/blueprintTtsConstants'
 
 function readSource(relativePath: string): string {
   return readFileSync(path.join(process.cwd(), relativePath), 'utf8')
@@ -46,6 +50,79 @@ describe('narration chunking is client-safe and boundary-aware', () => {
     const sentenceAware = chunkNarrationText(text, 1500).length
     const hardSliced = Math.ceil(text.trim().length / 1200)
     expect(sentenceAware).toBeLessThan(hardSliced)
+  })
+})
+
+/**
+ * Cloud TTS rejects `input.text` over 4,000 UTF-8 bytes with an HTTP 400. A
+ * character budget looks correct in English and silently overshoots in any
+ * script that costs more than a byte per character, so the budget is asserted in
+ * bytes for the languages that actually exercise it.
+ */
+describe('chunk budgets are UTF-8 bytes, not characters', () => {
+  const scripts = {
+    english: 'The harbour wakes before the town does, and Nadia counts crates. ',
+    thai: 'ท่าเรือตื่นก่อนเมืองจะตื่น และนาเดียก็นับลังสินค้าอยู่แล้วในตอนนั้น ',
+    chinese: '海港在小镇苏醒之前就已经醒了，而娜迪亚那时已经在清点货箱了。',
+    hindi: 'बंदरगाह शहर से पहले जागता है, और नादिया पहले से ही बक्से गिन रही है। ',
+    arabic: 'يستيقظ المرفأ قبل أن تستيقظ المدينة، وكانت نادية تعد الصناديق بالفعل. ',
+  }
+
+  it('keeps every chunk within the requested byte budget', () => {
+    for (const [name, unit] of Object.entries(scripts)) {
+      const text = unit.repeat(Math.ceil(12000 / unit.length))
+      for (const budget of [NARRATION_CHUNK_BYTES, 1500, 1200]) {
+        for (const chunk of chunkNarrationText(text, budget)) {
+          expect(
+            narrationByteLength(chunk),
+            `${name} chunk exceeded ${budget} bytes`
+          ).toBeLessThanOrEqual(budget)
+        }
+      }
+    }
+  })
+
+  it('stays under the ceiling the speech API enforces', () => {
+    expect(NARRATION_CHUNK_BYTES).toBeLessThan(GEMINI_TTS_MAX_INPUT_BYTES)
+  })
+
+  it('would have caught the regression a character budget allowed', () => {
+    // 1,500 Thai characters is ~4,400 bytes: under a character budget, over the
+    // byte ceiling. This is the exact shape of the request that returned 400.
+    const thai = scripts.thai.repeat(Math.ceil(1500 / scripts.thai.length))
+    expect(thai.length).toBeGreaterThan(1400)
+    expect(narrationByteLength(thai)).toBeGreaterThan(GEMINI_TTS_MAX_INPUT_BYTES)
+
+    for (const chunk of chunkNarrationText(thai, 1500)) {
+      expect(narrationByteLength(chunk)).toBeLessThanOrEqual(1500)
+    }
+  })
+
+  it('never splits a multi-byte character in half', () => {
+    // A sentence with no boundary to split on forces the byte-slicing path.
+    const unbroken = '海港在小镇苏醒之前就已经醒了而娜迪亚那时已经在清点货箱了'.repeat(40)
+    const chunks = chunkNarrationText(unbroken, 200)
+    expect(chunks.length).toBeGreaterThan(1)
+    // Rejoining is lossless, which it would not be if a code point were cut.
+    expect(chunks.join('')).toBe(unbroken)
+    expect(chunks.join('')).not.toContain('\uFFFD')
+  })
+
+  it('routes and player all chunk on the shared byte budget', () => {
+    for (const file of [
+      'src/app/api/tts/blueprint/route.ts',
+      'src/app/api/tts/google/route.ts',
+      'src/app/api/tts/elevenlabs/route.ts',
+    ]) {
+      const source = readSource(file)
+      expect(source, `${file} budget`).toContain('NARRATION_CHUNK_BYTES')
+      expect(source, `${file} still uses a raw 4000 budget`).not.toMatch(
+        /chunkNarrationText\([^)]*,\s*4000\s*\)/
+      )
+    }
+    expect(readSource('src/hooks/useBlueprintTts.ts')).toContain(
+      'chunkNarrationText(trimmed, NARRATION_CHUNK_BYTES)'
+    )
   })
 })
 

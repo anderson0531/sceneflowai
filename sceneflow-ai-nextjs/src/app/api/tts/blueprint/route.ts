@@ -6,7 +6,10 @@ import {
   synthesizeGeminiFlashMp3,
 } from '@/lib/tts/geminiFlashTts'
 import { resolveGeminiTtsLanguageCode } from '@/lib/tts/googleTtsLocale'
-import { DEFAULT_GEMINI_TTS_MODEL } from '@/lib/tts/blueprintTtsConstants'
+import {
+  DEFAULT_GEMINI_TTS_MODEL,
+  NARRATION_CHUNK_BYTES,
+} from '@/lib/tts/blueprintTtsConstants'
 import {
   findCachedNarrationAudio,
   hashNarrationAudio,
@@ -82,7 +85,11 @@ export async function POST(request: NextRequest) {
     // Long narration is split into several Gemini calls. They are independent,
     // so they run concurrently and are reassembled in order — the helper returns
     // results in task order, which is what keeps the sentences in sequence.
-    const chunks = chunkNarrationText(cleanText, 4000)
+    //
+    // The budget is UTF-8 bytes, because that is what the API limits: a
+    // character budget lets a Thai or Chinese narration past the ceiling at
+    // roughly a third of the character count.
+    const chunks = chunkNarrationText(cleanText, NARRATION_CHUNK_BYTES)
     const results = await processWithConcurrency<Buffer>(
       chunks.map((chunk, index) => ({
         id: index,

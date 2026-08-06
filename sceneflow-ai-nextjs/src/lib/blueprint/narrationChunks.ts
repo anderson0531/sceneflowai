@@ -4,20 +4,60 @@
  * The studio player runs this in the browser to decide how many TTS requests a
  * narration needs, while the share pipeline runs it on the server. It lives
  * apart from `sectionNarrationText.ts` because that module hashes with
- * `node:crypto`, which a client bundle cannot import.
+ * node crypto, which a client bundle cannot import.
  */
+
+const encoder = typeof TextEncoder !== 'undefined' ? new TextEncoder() : null
+
+/**
+ * UTF-8 length, which is the unit the speech API actually limits.
+ *
+ * Counting `String.length` instead is how a Thai or Chinese narration silently
+ * became a 400: three bytes per character means 1,500 characters is 4,500 bytes,
+ * well past the 4,000-byte ceiling on `input.text`.
+ */
+export function narrationByteLength(text: string): number {
+  if (encoder) return encoder.encode(text).length
+  // Node before TextEncoder is global, and the test environment.
+  return Buffer.byteLength(text, 'utf8')
+}
+
+/** Split on code points so a multi-byte character is never cut in half. */
+function sliceByBytes(text: string, maxBytes: number): string[] {
+  const out: string[] = []
+  let current = ''
+  let currentBytes = 0
+
+  for (const char of text) {
+    const charBytes = narrationByteLength(char)
+    if (currentBytes + charBytes > maxBytes && current) {
+      out.push(current)
+      current = ''
+      currentBytes = 0
+    }
+    current += char
+    currentBytes += charBytes
+  }
+  if (current) out.push(current)
+
+  return out
+}
 
 /**
  * Split long narration at paragraph and sentence boundaries when possible.
  *
- * Boundaries matter for more than tidiness: a chunk that ends mid-word is also
- * a chunk the speech model reads with the wrong prosody, and the seam is
+ * `maxBytes` is a UTF-8 budget, not a character count, because that is the limit
+ * the speech API enforces. For ASCII the two are identical, so English callers
+ * see the behaviour they always had.
+ *
+ * Boundaries matter for more than tidiness: a chunk that ends mid-sentence is
+ * also a chunk the speech model reads with the wrong prosody, and the seam is
  * audible when the next clip starts.
  */
-export function chunkNarrationText(text: string, maxLen = 1200): string[] {
+export function chunkNarrationText(text: string, maxBytes = 1200): string[] {
   const trimmed = text.trim()
   if (!trimmed) return []
-  if (trimmed.length <= maxLen) return [trimmed]
+  if (narrationByteLength(trimmed) <= maxBytes) return [trimmed]
 
   const chunks: string[] = []
   const paragraphs = trimmed.split(/\n\n+/)
@@ -33,14 +73,12 @@ export function chunkNarrationText(text: string, maxLen = 1200): string[] {
     for (const sentence of sentences) {
       const piece = sentence.trim()
       if (!piece) continue
-      if (`${current} ${piece}`.trim().length > maxLen) {
+      if (narrationByteLength(`${current} ${piece}`.trim()) > maxBytes) {
         flush()
-        if (piece.length > maxLen) {
-          let cursor = 0
-          while (cursor < piece.length) {
-            chunks.push(piece.slice(cursor, cursor + maxLen))
-            cursor += maxLen
-          }
+        if (narrationByteLength(piece) > maxBytes) {
+          // One sentence larger than the budget: no boundary to use, so fall
+          // back to byte-safe slicing.
+          chunks.push(...sliceByBytes(piece, maxBytes))
         } else {
           current = piece
         }
@@ -52,5 +90,5 @@ export function chunkNarrationText(text: string, maxLen = 1200): string[] {
   }
   flush()
 
-  return chunks.length > 0 ? chunks : [trimmed.slice(0, maxLen)]
+  return chunks.length > 0 ? chunks : sliceByBytes(trimmed, maxBytes)
 }
