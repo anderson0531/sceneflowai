@@ -6445,34 +6445,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (!res.ok) {
           if (res.status === 503 || data?.code === 'INNGEST_NOT_CONFIGURED') {
             console.error('[Script Review] Background jobs not configured:', data)
-            // Legacy/stuck queued rows may still exist — surface Cancel if so.
-            const stuck = await scriptAnalysisJob.rehydrate()
-            if (stuck) {
-              toast.error('Audience Resonance isn’t available right now', {
-                description:
-                  'Background processing isn’t configured, and a previous analysis is still queued. Clear it, then contact support to enable background jobs.',
-                duration: 14000,
-                action: {
-                  label: 'Clear stuck analysis',
-                  onClick: () => {
-                    void (async () => {
-                      const n = await scriptAnalysisJob.cancelActive()
-                      toast.success(
-                        n > 0
-                          ? `Cleared ${n} stuck analysis job${n === 1 ? '' : 's'}`
-                          : 'Nothing left to clear — the queue is already empty'
-                      )
-                    })()
-                  },
-                },
-              })
-            } else {
-              toast.error('Audience Resonance isn’t available right now', {
-                description:
-                  'Background processing (Inngest) isn’t configured for this environment, so analysis can’t start. There is nothing stuck in the queue to cancel — ask an admin to set INNGEST_EVENT_KEY.',
-                duration: 14000,
-              })
-            }
+            scriptAnalysisJob.dismiss()
+            toast.error('Audience Resonance isn’t available right now', {
+              description:
+                'Background processing (Inngest) isn’t configured for this environment, so analysis can’t start. Ask an admin to set INNGEST_EVENT_KEY.',
+              duration: 14000,
+            })
             setIsGeneratingReviews(false)
             useStore.getState().setIsGeneratingReviews(false)
             setAnalysisHandoffOpen(false)
@@ -6494,24 +6472,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         // browser prompt is tied to something the user just asked for.
         void ensureBrowserNotificationPermission()
 
-        if (data.alreadyRunning) {
-          toast.info('Analysis already running', {
-            description: 'We will notify you when it finishes.',
-            action: {
-              label: 'Cancel analysis',
-              onClick: () => void scriptAnalysisJob.cancel(),
-            },
-          })
-        } else {
-          toast.success('Analysis started', {
-            description: 'Keep working — we will notify you when it is ready.',
-            duration: 8000,
-            action: {
-              label: 'Cancel analysis',
-              onClick: () => void scriptAnalysisJob.cancel(),
-            },
-          })
-        }
+        const replaced = Number(data.replacedPreviousCount || 0) > 0
+        toast.success(replaced ? 'Analysis restarted' : 'Analysis started', {
+          description: replaced
+            ? 'Previous analysis was cancelled. Keep working — we will notify you when the new run is ready.'
+            : 'Keep working — we will notify you when it is ready.',
+          duration: 8000,
+        })
       } catch (error) {
         console.error('[Script Review] Failed to queue analysis:', error)
         toast.error(error instanceof Error ? error.message : 'Failed to start analysis')
@@ -6528,22 +6495,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const handleGenerateReviews = async (targetDemographic?: string) => {
     const currentScript = scriptRef.current || script
     if (!currentScript || !projectId) return
-    if (scriptAnalysisJob.isActive) {
-      toast.info('Analysis already running', {
-        description: 'We will notify you when it finishes.',
-        action: {
-          label: 'Cancel analysis',
-          onClick: () => void scriptAnalysisJob.cancel(),
-        },
-      })
-      return
-    }
 
     const sceneCount = currentScript.script?.scenes?.length || 0
     setAnalysisEstimate(sceneCount ? Math.round((sceneCount / 10) * 40 + 45) : undefined)
     pendingAnalysisAudienceRef.current = targetDemographic
 
     // First run explains the background handoff; afterwards the toast suffices.
+    // If an analysis is already active, start still replaces it server-side.
     if (hasAcknowledgedAnalysisHandoff()) {
       await startScriptAnalysis(targetDemographic)
       return

@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import '@/models'
-import { createGenerationJob, findActiveJob, updateGenerationJob } from '@/lib/jobs/jobService'
+import {
+  cancelActiveJobsForProject,
+  createGenerationJob,
+  updateGenerationJob,
+} from '@/lib/jobs/jobService'
 import { isInngestDispatchConfigured } from '@/lib/jobs/inngestDispatch'
 import { getSessionUserId } from '@/lib/auth/sessionUser'
 import { CreditService } from '@/services/CreditService'
@@ -29,6 +33,9 @@ function estimateSeconds(chunkCount: number): number {
  * Analysis of every scene exceeds a single function's budget on long scripts,
  * so the work runs as a durable Inngest job. The client is handed a jobId to
  * poll and receives a notification on completion.
+ *
+ * Starting AR always means "run a new analysis": any prior active job for this
+ * project is cancelled first so the user is never blocked on a stuck queue.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -48,28 +55,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'projectId required' }, { status: 400 })
     }
 
-    // One analysis per project at a time — concurrent runs would race on the
-    // same review metadata and double-charge credits.
-    const existing = await findActiveJob({ userId, projectId, jobType: 'script_analysis' })
-    if (existing) {
-      return NextResponse.json(
-        {
-          jobId: existing.id,
-          status: existing.status,
-          progress: existing.progress,
-          alreadyRunning: true,
-        },
-        { status: 200 }
-      )
-    }
+    // User intent is a new run — replace any queued/processing analysis first.
+    const { cancelledIds } = await cancelActiveJobsForProject({
+      userId,
+      projectId,
+      jobType: 'script_analysis',
+    })
+    const replacedPreviousCount = cancelledIds.length
 
     // Fail before inserting a generation_jobs row when Inngest cannot dispatch.
+    // Prior actives were already cancelled above so retries also clear orphans.
     if (!isInngestDispatchConfigured()) {
       return NextResponse.json(
         {
           error: DISPATCH_FAILED_ERROR,
           code: 'INNGEST_NOT_CONFIGURED',
           status: 'failed',
+          replacedPreviousCount,
         },
         { status: 503 }
       )
@@ -125,6 +127,7 @@ export async function POST(req: NextRequest) {
           code: 'INNGEST_NOT_CONFIGURED',
           jobId: job.id,
           status: 'failed',
+          replacedPreviousCount,
         },
         { status: 503 }
       )
@@ -146,6 +149,7 @@ export async function POST(req: NextRequest) {
         chunkCount: chunks.length,
         estimatedSeconds: estimateSeconds(chunks.length),
         creditsUsed: AUDIENCE_RESONANCE_CREDIT_COST,
+        replacedPreviousCount,
       },
       { status: 202 }
     )
