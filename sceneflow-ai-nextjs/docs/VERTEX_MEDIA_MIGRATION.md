@@ -61,10 +61,17 @@ full variant). The client merges the patch locally. Core logic lives in
 
 **Inngest (recommended):** set `INNGEST_EVENT_KEY` (and `INNGEST_SIGNING_KEY` for the
 `/api/inngest` serve route) in Vercel env, or connect the Inngest Vercel integration.
-Without it, `guided-revise/start` dispatches a **step worker**
-(`POST /api/internal/jobs/blueprint-guided-revise/step`) — one serverless invocation per
-planner/section/finalize phase so memory does not accumulate on a warm instance.
-Set `INTERNAL_JOB_SECRET` in production (defaults to `sceneflow-internal` in dev).
+Also set `INTERNAL_JOB_SECRET` and `NEXT_PUBLIC_APP_URL` so HTTP fallbacks target
+production. Without the event key:
+
+- `guided-revise/start` dispatches a **step worker**
+  (`POST /api/internal/jobs/blueprint-guided-revise/step`) — one serverless invocation
+  per planner/section/finalize phase so memory does not accumulate on a warm instance.
+- `review-script/start` (Audience Resonance) dispatches
+  (`POST /api/internal/jobs/script-analysis/step`) — one invocation per scene chunk,
+  then synthesis/persist.
+
+`INTERNAL_JOB_SECRET` defaults to `sceneflow-internal` in dev only; set it in production.
 
 ## Verification
 

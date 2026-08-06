@@ -100,9 +100,8 @@ export async function createGenerationJob(input: {
     progress: 0,
   })
 
-  // Leave status=queued when undispatched: some callers (guided revise) fall back
-  // to an HTTP step worker. AR start checks isInngestDispatchConfigured() first
-  // so it never inserts a row when the key is missing.
+  // Leave status=queued when undispatched: callers (guided revise, AR) fall back
+  // to an HTTP step worker when Inngest is missing or send fails.
   if (!isInngestDispatchConfigured()) {
     console.warn(
       '[jobService] INNGEST_EVENT_KEY not set — job not dispatched (caller must handle)'

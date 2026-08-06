@@ -3,17 +3,13 @@ import '@/models'
 import {
   cancelActiveJobsForProject,
   createGenerationJob,
-  updateGenerationJob,
 } from '@/lib/jobs/jobService'
-import { isInngestDispatchConfigured } from '@/lib/jobs/inngestDispatch'
+import { scheduleScriptAnalysisStep } from '@/lib/jobs/dispatchScriptAnalysisStep'
 import { getSessionUserId } from '@/lib/auth/sessionUser'
 import { CreditService } from '@/services/CreditService'
 import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
 import { loadScriptForAnalysis } from '@/lib/script/audienceResonance/persistReview'
 import { planSceneChunks, DEFAULT_SCENE_CHUNK_SIZE } from '@/lib/script/audienceResonance/chunkPlan'
-
-const DISPATCH_FAILED_ERROR =
-  'Audience Resonance could not be started — background jobs are not configured'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -31,8 +27,9 @@ function estimateSeconds(chunkCount: number): number {
  * Queues a full-script Audience Resonance analysis and returns immediately.
  *
  * Analysis of every scene exceeds a single function's budget on long scripts,
- * so the work runs as a durable Inngest job. The client is handed a jobId to
- * poll and receives a notification on completion.
+ * so the work runs as a durable Inngest job when configured. Without Inngest,
+ * an HTTP step worker runs one chunk (or synthesis/persist) per invocation.
+ * The client is handed a jobId to poll and receives a notification on completion.
  *
  * Starting AR always means "run a new analysis": any prior active job for this
  * project is cancelled first so the user is never blocked on a stuck queue.
@@ -62,20 +59,6 @@ export async function POST(req: NextRequest) {
       jobType: 'script_analysis',
     })
     const replacedPreviousCount = cancelledIds.length
-
-    // Fail before inserting a generation_jobs row when Inngest cannot dispatch.
-    // Prior actives were already cancelled above so retries also clear orphans.
-    if (!isInngestDispatchConfigured()) {
-      return NextResponse.json(
-        {
-          error: DISPATCH_FAILED_ERROR,
-          code: 'INNGEST_NOT_CONFIGURED',
-          status: 'failed',
-          replacedPreviousCount,
-        },
-        { status: 503 }
-      )
-    }
 
     const context = await loadScriptForAnalysis(projectId)
     if (!context) {
@@ -116,24 +99,13 @@ export async function POST(req: NextRequest) {
     })
 
     if (!dispatched) {
-      // Key was present but send failed — fail the row so it cannot block retries.
-      await updateGenerationJob(job.id, {
-        status: 'failed',
-        error: DISPATCH_FAILED_ERROR,
-      })
-      return NextResponse.json(
-        {
-          error: DISPATCH_FAILED_ERROR,
-          code: 'INNGEST_NOT_CONFIGURED',
-          jobId: job.id,
-          status: 'failed',
-          replacedPreviousCount,
-        },
-        { status: 503 }
+      console.warn(
+        '[Script Review Start] INNGEST_EVENT_KEY not set or send failed — dispatching step worker (one HTTP invocation per chunk)'
       )
+      scheduleScriptAnalysisStep(job.id)
     }
 
-    // Charged only after Inngest accepted the event — otherwise the job never runs.
+    // Charged once work is accepted by Inngest or scheduled on the HTTP worker.
     await CreditService.charge(userId, AUDIENCE_RESONANCE_CREDIT_COST, 'ai_usage', null, {
       operation: 'audience_resonance_analysis',
       projectId,
@@ -150,6 +122,7 @@ export async function POST(req: NextRequest) {
         estimatedSeconds: estimateSeconds(chunks.length),
         creditsUsed: AUDIENCE_RESONANCE_CREDIT_COST,
         replacedPreviousCount,
+        dispatch: dispatched ? 'inngest' : 'step_worker',
       },
       { status: 202 }
     )
