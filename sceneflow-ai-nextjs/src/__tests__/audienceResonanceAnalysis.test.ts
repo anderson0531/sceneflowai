@@ -303,6 +303,8 @@ describe('Job lifecycle', () => {
     expect(visionPage).toContain("label: 'Clear stuck analysis'")
     expect(visionPage).toContain('cancelActive')
     expect(visionPage).toContain('scriptAnalysisJob.rehydrate')
+    expect(visionPage).toContain('INNGEST_EVENT_KEY')
+    expect(visionPage).toContain('nothing stuck in the queue')
     expect(visionPage).toContain("job.status === 'cancelled'")
     expect(visionPage).toContain('Analysis cancelled')
     expect(visionPage).toContain('INNGEST_NOT_CONFIGURED')
