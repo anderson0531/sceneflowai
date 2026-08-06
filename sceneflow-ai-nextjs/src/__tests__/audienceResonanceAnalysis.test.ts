@@ -258,9 +258,16 @@ describe('Job lifecycle', () => {
     const start = readSource('src/app/api/vision/review-script/start/route.ts')
     const jobService = readSource('src/lib/jobs/jobService.ts')
 
+    expect(start).toContain('isInngestDispatchConfigured')
     expect(start).toContain('dispatched')
     expect(start).toContain('status: 503')
     expect(start).toContain('background jobs are not configured')
+    expect(start).toContain("code: 'INNGEST_NOT_CONFIGURED'")
+    // Guard before create — no queued orphan when the key is missing.
+    const configGuard = start.indexOf('if (!isInngestDispatchConfigured())')
+    const createCall = start.indexOf('await createGenerationJob')
+    expect(configGuard).toBeGreaterThan(-1)
+    expect(createCall).toBeGreaterThan(configGuard)
     // Charge must come after the dispatch guard, not before.
     const dispatchGuard = start.indexOf('if (!dispatched)')
     const chargeCall = start.indexOf('CreditService.charge')
@@ -268,7 +275,10 @@ describe('Job lifecycle', () => {
     expect(chargeCall).toBeGreaterThan(dispatchGuard)
 
     expect(jobService).toContain('isInngestDispatchConfigured')
+    expect(jobService).toContain('cancelActiveJobsForProject')
     expect(jobService).toContain("patch.status === 'cancelled'")
+    expect(jobService).toContain('caller must handle')
+    expect(jobService).not.toContain('job remains queued')
   })
 
   it('exposes cancel for queued AR jobs via PATCH /api/jobs and the dock', () => {
@@ -277,22 +287,30 @@ describe('Job lifecycle', () => {
     const dock = readSource('src/components/vision/BackgroundJobDock.tsx')
     const visionPage = readSource('src/app/dashboard/workflow/vision/[projectId]/page.tsx')
     const scriptPanel = readSource('src/components/vision/ScriptPanel.tsx')
+    const hook = readSource('src/hooks/useBackgroundJob.ts')
 
-    expect(jobsApi).toContain("action !== 'cancel'")
+    expect(jobsApi).toContain("action === 'cancel-active'")
+    expect(jobsApi).toContain('cancelActiveJobsForProject')
     expect(jobsApi).toContain('cancelGenerationJob')
     expect(jobService).toContain('export async function cancelGenerationJob')
+    expect(jobService).toContain('export async function cancelActiveJobsForProject')
     expect(dock).toContain('onCancel')
     expect(dock).toContain('Cancel analysis')
     expect(dock).toContain("job.status === 'cancelled'")
     expect(dock).toContain('isActive && onCancel')
     expect(visionPage).toContain('onCancel={() => void scriptAnalysisJob.cancel()}')
     expect(visionPage).toContain("label: 'Cancel analysis'")
+    expect(visionPage).toContain("label: 'Clear stuck analysis'")
+    expect(visionPage).toContain('cancelActive')
+    expect(visionPage).toContain('scriptAnalysisJob.rehydrate')
     expect(visionPage).toContain("job.status === 'cancelled'")
     expect(visionPage).toContain('Analysis cancelled')
     expect(visionPage).toContain('INNGEST_NOT_CONFIGURED')
     expect(visionPage).toContain('Audience Resonance isn’t available right now')
     expect(visionPage).toContain('onCancelReviews={() => void scriptAnalysisJob.cancel()}')
     expect(scriptPanel).toContain('onCancelReviews')
+    expect(hook).toContain('cancelActive')
+    expect(hook).toContain('rehydrate')
   })
 
   it('returns a stable code when Inngest is not configured', () => {

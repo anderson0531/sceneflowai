@@ -159,6 +159,32 @@ export function useBackgroundJob(options: {
     }
   }, [dismiss, settle])
 
+  /** Cancel every active job of this type for the project (clears stuck queue). */
+  const cancelActive = useCallback(async (): Promise<number> => {
+    try {
+      const res = await fetch('/api/jobs', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          action: 'cancel-active',
+          projectId,
+          jobType,
+        }),
+      })
+      if (!res.ok) {
+        dismiss()
+        return 0
+      }
+      const data = await res.json()
+      dismiss()
+      return Number(data.cancelledCount || 0)
+    } catch {
+      dismiss()
+      return 0
+    }
+  }, [dismiss, jobType, projectId])
+
   return {
     job,
     /** True once the initial in-flight lookup finished. */
@@ -167,6 +193,8 @@ export function useBackgroundJob(options: {
     track,
     dismiss,
     cancel,
+    cancelActive,
     refresh: poll,
+    rehydrate,
   }
 }
