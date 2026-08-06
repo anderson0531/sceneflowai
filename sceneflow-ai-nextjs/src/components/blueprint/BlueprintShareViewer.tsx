@@ -35,7 +35,7 @@ import {
   applyTreatmentVariantTranslations,
   buildTreatmentVariantDisplayFields,
 } from '@/i18n/content/buildBlueprintDisplayFields'
-import { EMPTY_ENTITY_I18N, readEntityI18n } from '@/i18n/content/entityI18n'
+import { EMPTY_ENTITY_I18N, readContentEntityI18n } from '@/i18n/content/entityI18n'
 import { fromTtsLanguageCode } from '@/i18n/languageCodeBridge'
 
 const PARTICIPANT_KEY = (token: string) => `sf_collab_participant_${token}`
@@ -318,7 +318,9 @@ export function BlueprintShareViewer({ token }: Props) {
   )
   const shareContentI18n = useMemo(() => {
     if (!treatment) return EMPTY_ENTITY_I18N
-    return readEntityI18n({ metadata: (treatment as { metadata?: Record<string, unknown> }).metadata })
+    return readContentEntityI18n({
+      metadata: (treatment as { metadata?: Record<string, unknown> }).metadata,
+    })
   }, [treatment])
   const contentTargetLocale = fromTtsLanguageCode(reviewLanguage)
 

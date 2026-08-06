@@ -59,7 +59,11 @@ import { BlueprintTtsProvider } from '@/contexts/BlueprintTtsContext'
 import { BlueprintTtsProgressBar } from '@/components/blueprint/BlueprintTtsProgressBar'
 import { BlueprintOnboarding } from '@/components/blueprint/BlueprintOnboarding'
 import { useStoryLocale } from '@/i18n/useStoryLocale'
-import { readEntityI18n } from '@/i18n/content/entityI18n'
+import {
+  mergeEntityI18nIntoMetadata,
+  readContentEntityI18n,
+  withContentStampedSourceLocale,
+} from '@/i18n/content/entityI18n'
 import { useContentTranslation } from '@/i18n/content/useContentTranslation'
 import {
   buildTreatmentVariantDisplayFields,
@@ -121,11 +125,14 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     currentProject as { metadata?: Record<string, any> | null } | null
   )
 
-  // Language the stored creative text was written in. Defaults to English when
-  // the project has never stamped metadata.i18n — so content MT still runs
-  // after the header syncs account story_locale to the UI language.
+  // Language the stored creative text was written in. Legacy preference-only
+  // metadata.i18n stamps (no contentStamped) are treated as English so content
+  // MT still runs after the header syncs account story_locale to the UI language.
   const contentI18n = useMemo(
-    () => readEntityI18n(currentProject as { metadata?: Record<string, any> | null } | null),
+    () =>
+      readContentEntityI18n(
+        currentProject as { metadata?: Record<string, any> | null } | null
+      ),
     [currentProject]
   )
 
@@ -335,6 +342,18 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       if (activeTreatmentVariant?.id) {
         updateTreatmentVariant(activeTreatmentVariant.id, patch)
       }
+      // Revised creative text is authored in the current story locale — stamp so
+      // content MT provenance matches what the revise prompts produced.
+      const contentI18nStamp = withContentStampedSourceLocale(storyI18n.sourceLocale)
+      if (currentProject) {
+        setCurrentProject({
+          ...currentProject,
+          metadata: mergeEntityI18nIntoMetadata(
+            currentProject.metadata || {},
+            contentI18nStamp
+          ),
+        })
+      }
       // The readiness gate prefers this over the variant's format_length, so a
       // revised runtime has to land here too or the gate keeps quoting the old one.
       const revisedRuntime = Number(patch.estimatedDurationMinutes)
@@ -347,7 +366,13 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       setBlueprintRefineRecs(undefined)
       setBlueprintRefineTab(undefined)
     },
-    [activeTreatmentVariant?.id, updateTreatmentVariant]
+    [
+      activeTreatmentVariant?.id,
+      updateTreatmentVariant,
+      storyI18n.sourceLocale,
+      currentProject,
+      setCurrentProject,
+    ]
   )
   
   const applyShareResult = useCallback(
@@ -869,21 +894,29 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           content: t.synopsis || t.film_treatment || '',
           ...t
         }))
+
+        // Content MT provenance: stamp the language this generation actually used,
+        // so a prior preference-only es stamp cannot disable Spanish UI MT.
+        const authoredLocale =
+          (typeof data.storyLocale === 'string' && data.storyLocale) ||
+          storyI18n.sourceLocale
+        const contentI18nStamp = withContentStampedSourceLocale(authoredLocale)
         
         console.log('[StudioPage] Film treatment variants received:', variants.length)
         setTreatmentVariants(variants)
 
-        if (opts?.contentIntent || opts?.format || opts?.genre) {
-          setCurrentProject({
-            ...(currentProject || {}),
-            metadata: {
+        setCurrentProject({
+          ...(currentProject || {}),
+          metadata: mergeEntityI18nIntoMetadata(
+            {
               ...(currentProject?.metadata || {}),
-              ...(opts.genre && { genre: opts.genre }),
-              ...(opts.format && { format: opts.format }),
-              ...(opts.contentIntent && { contentIntent: opts.contentIntent }),
+              ...(opts?.genre && { genre: opts.genre }),
+              ...(opts?.format && { format: opts.format }),
+              ...(opts?.contentIntent && { contentIntent: opts.contentIntent }),
             },
-          } as any)
-        }
+            contentI18nStamp
+          ),
+        } as any)
         
         if (variants[0]) {
           updateTitle(variants[0].title || 'Untitled Project')
@@ -932,16 +965,19 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 userId,
                 title: variants[0]?.title || 'Untitled Project',
                 description: '',
-                metadata: {
-                  blueprintInput: text,
-                  filmTreatment: variants[0]?.synopsis || variants[0]?.content || '',
-                  treatmentVariants: variants,
-                  beats: data.beats || [],
-                  estimatedRuntime: data.estimatedRuntime || null,
-                  ...(opts?.genre && { genre: opts.genre }),
-                  ...(opts?.format && { format: opts.format }),
-                  ...(opts?.contentIntent && { contentIntent: opts.contentIntent }),
-                },
+                metadata: mergeEntityI18nIntoMetadata(
+                  {
+                    blueprintInput: text,
+                    filmTreatment: variants[0]?.synopsis || variants[0]?.content || '',
+                    treatmentVariants: variants,
+                    beats: data.beats || [],
+                    estimatedRuntime: data.estimatedRuntime || null,
+                    ...(opts?.genre && { genre: opts.genre }),
+                    ...(opts?.format && { format: opts.format }),
+                    ...(opts?.contentIntent && { contentIntent: opts.contentIntent }),
+                  },
+                  contentI18nStamp
+                ),
                 currentStep: 'ideation'
               })
             })
@@ -955,6 +991,15 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           } catch (createErr) {
             console.error('[StudioPage] Auto-create project failed (non-blocking):', createErr)
           }
+        } else if (projectId && !projectId.startsWith('new-project')) {
+          // Persist authorship stamp immediately so content MT does not wait on auto-save.
+          void persistBlueprintMetadata({
+            i18n: contentI18nStamp,
+            treatmentVariants: variants,
+            filmTreatment: variants[0]?.synopsis || variants[0]?.content || '',
+            beats: data.beats || beatsView,
+            estimatedRuntime: data.estimatedRuntime ?? estimatedRuntime,
+          })
         }
       } else {
         // Debug logging for when treatment display fails

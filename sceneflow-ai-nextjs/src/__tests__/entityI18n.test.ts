@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
+  getContentSourceLocale,
   getEntitySourceLocale,
   getOverride,
   mergeEntityI18nIntoMetadata,
+  readContentEntityI18n,
   readEntityI18n,
+  withContentStampedSourceLocale,
   withOverride,
   withPromotedSourceLocale,
   withoutOverride,
@@ -35,6 +38,52 @@ describe('readEntityI18n', () => {
     expect(readEntityI18n({ metadata: { i18n: { sourceLocale: 'xx' } } }).sourceLocale).toBe(
       'en'
     )
+  })
+
+  it('preserves contentStamped when present', () => {
+    const i18n = readEntityI18n({
+      metadata: { i18n: { sourceLocale: 'es', contentStamped: true } },
+    })
+    expect(i18n).toEqual({ sourceLocale: 'es', contentStamped: true })
+  })
+})
+
+describe('readContentEntityI18n', () => {
+  it('defaults to English when i18n is unset', () => {
+    expect(readContentEntityI18n({ metadata: {} })).toEqual({ sourceLocale: 'en' })
+    expect(getContentSourceLocale(null)).toBe('en')
+  })
+
+  it('heals legacy preference-only Spanish stamps to English for content MT', () => {
+    // Old StoryLocaleControl wrote sourceLocale without contentStamped.
+    const entity = { metadata: { i18n: { sourceLocale: 'es' } } }
+    expect(readEntityI18n(entity).sourceLocale).toBe('es')
+    expect(readContentEntityI18n(entity).sourceLocale).toBe('en')
+    expect(getContentSourceLocale(entity)).toBe('en')
+  })
+
+  it('trusts a generation-stamped Spanish source locale', () => {
+    const entity = {
+      metadata: { i18n: { sourceLocale: 'es', contentStamped: true } },
+    }
+    expect(readContentEntityI18n(entity)).toEqual({
+      sourceLocale: 'es',
+      contentStamped: true,
+    })
+  })
+
+  it('trusts sourceLocale when human overrides exist even without contentStamped', () => {
+    const entity = {
+      metadata: {
+        i18n: {
+          sourceLocale: 'es',
+          overrides: { en: { 'treatmentVariants[A].logline': 'A hook' } },
+        },
+      },
+    }
+    const i18n = readContentEntityI18n(entity)
+    expect(i18n.sourceLocale).toBe('es')
+    expect(getOverride(i18n, 'en', 'treatmentVariants[A].logline')).toBe('A hook')
   })
 })
 
@@ -76,9 +125,26 @@ describe('withPromotedSourceLocale', () => {
     const start = withOverride({ sourceLocale: 'en' }, 'ja', 'a.b', '手がかり')
     const promoted = withPromotedSourceLocale(start, 'ja')
     expect(promoted.sourceLocale).toBe('ja')
+    expect(promoted.contentStamped).toBe(true)
     // Overrides for the promoted locale are now the content itself, and every
     // other locale's translation is stale.
     expect(promoted.overrides).toBeUndefined()
+  })
+})
+
+describe('withContentStampedSourceLocale', () => {
+  it('marks authorship for generation and revise', () => {
+    expect(withContentStampedSourceLocale('es')).toEqual({
+      sourceLocale: 'es',
+      contentStamped: true,
+    })
+  })
+
+  it('falls back to English for unsupported codes', () => {
+    expect(withContentStampedSourceLocale('xx')).toEqual({
+      sourceLocale: 'en',
+      contentStamped: true,
+    })
   })
 })
 
@@ -86,9 +152,9 @@ describe('mergeEntityI18nIntoMetadata', () => {
   it('replaces only the i18n key so sibling metadata survives', () => {
     const merged = mergeEntityI18nIntoMetadata(
       { visionPhase: { script: 'keep me' }, i18n: { sourceLocale: 'en' } },
-      { sourceLocale: 'pt' }
+      { sourceLocale: 'pt', contentStamped: true }
     )
     expect(merged.visionPhase).toEqual({ script: 'keep me' })
-    expect(merged.i18n).toEqual({ sourceLocale: 'pt' })
+    expect(merged.i18n).toEqual({ sourceLocale: 'pt', contentStamped: true })
   })
 })

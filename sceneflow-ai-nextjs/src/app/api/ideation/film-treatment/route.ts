@@ -539,6 +539,7 @@ export async function POST(request: NextRequest) {
       success: true,
       data: variantResults[0],
       variants: variantResults,
+      storyLocale,
       message: 'Film treatment variants generated successfully',
       ...(autoDetectedStructure && {
         autoDetectedStructure: {
