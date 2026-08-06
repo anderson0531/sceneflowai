@@ -6,6 +6,8 @@ import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen } from '@/lib/imagen/promptOptimizer'
 import { generateText } from '@/lib/vertexai/gemini'
 import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 import { ensureSceneBeats } from '@/lib/script/beatMigration'
 import { buildCharacterDialogueExamples } from '@/lib/character/characterNamingPrompt'
 
@@ -97,6 +99,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Expand the scene using Gemini with story bible context
+    // Expansion writes the action and dialogue a creator reads and hears, so it
+    // has to be in the language the treatment is written in.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, { projectId })
+
     const expandedScene = await expandScene(
       apiKey,
       outline,
@@ -107,7 +113,10 @@ export async function POST(request: NextRequest) {
       storyBible,
       previousScenes,
       currentBeat,
-      seriesContinuityBlock
+      seriesContinuityBlock,
+      localeDirective(storyLocale, {
+        properNouns: buildProperNounGlossary({ characters: characters ?? [] }, properNouns),
+      })
     )
 
     // Save expanded scene immediately without waiting for image
@@ -172,7 +181,8 @@ async function expandScene(
   storyBible: any = {},
   previousScenes: string[] = [],
   currentBeat: any = null,
-  seriesContinuityBlock: string = ''
+  seriesContinuityBlock: string = '',
+  languageBlock: string = ''
 ): Promise<any> {
   
   // Build character bible
@@ -282,7 +292,8 @@ Generate a complete scene that EXPANDS (not changes) the outline. Return ONLY va
   "isExpanded": true
 }
 
-Remember: You are EXPANDING an approved treatment, not creating a new story. Stay faithful to the source material.`
+Remember: You are EXPANDING an approved treatment, not creating a new story. Stay faithful to the source material.
+${languageBlock}`
 
   try {
     const response = await callGeminiWithRetry(apiKey, prompt, 16000, 1)

@@ -89,4 +89,10 @@ export type AnalysisContext = {
   targetDemographic?: string
   contentSeed: number
   previousScores?: PreviousScores
+  /**
+   * `localeDirective` block for the language the script is written in. The
+   * verdict, notes and recommendations are prose the creator reads, so both
+   * passes carry it; empty for English.
+   */
+  languageBlock?: string
 }

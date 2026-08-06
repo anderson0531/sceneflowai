@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 
 export const maxDuration = 120
 export const runtime = 'nodejs'
@@ -21,7 +23,17 @@ export async function POST(req: NextRequest) {
     
     console.log('[Script Analysis] Analyzing script for project:', projectId)
     
-    const recommendations = await analyzeScript(script, characters, !!compact)
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, { projectId })
+
+    const recommendations = await analyzeScript(
+      script,
+      characters,
+      !!compact,
+      localeDirective(storyLocale, {
+        properNouns: buildProperNounGlossary({ characters: characters ?? [] }, properNouns),
+        note: 'The JSON keys and the "priority" and "category" enum values stay exactly as specified.',
+      })
+    )
     
     return NextResponse.json({
       success: true,
@@ -39,7 +51,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function analyzeScript(script: any, characters: any[], compact: boolean): Promise<any[]> {
+async function analyzeScript(script: any, characters: any[], compact: boolean, languageBlock: string = ''): Promise<any[]> {
   const limit = compact ? 5 : 8
   const sceneSummaries = (script.scenes || []).slice(0, limit).map((scene: any, idx: number) => {
     const dialogueCount = scene.dialogue?.length || 0
@@ -75,7 +87,7 @@ OUTPUT REQUIREMENTS:
 }
 - Total response must be <= 600 tokens.
 - Be specific and actionable; reference scenes briefly.
-`
+${languageBlock}`
 
   console.log('[Script Analysis] Sending prompt (first 500 chars):', prompt.substring(0, 500))
   console.log('[Script Analysis] Calling Vertex AI Gemini...')

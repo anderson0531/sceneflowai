@@ -122,7 +122,11 @@ Important prompt rules:
 - Keep motion subtle/ambient to avoid distracting from narration
 - First beat should be establishing/wide
 - Final beat can push in or hold on key detail
-- Vary shot types to maintain visual interest`
+- Vary shot types to maintain visual interest
+- "visualFocus" and "videoPrompt" must be written in English even when the
+  narration is in another language: they are fed to the video model, which
+  produces markedly worse results from non-English prompts. Copy
+  "narrationText" verbatim from the narration in its original language.`
 
   try {
     const result = await generateText(prompt, {
