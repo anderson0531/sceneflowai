@@ -6446,25 +6446,33 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           if (res.status === 503 || data?.code === 'INNGEST_NOT_CONFIGURED') {
             console.error('[Script Review] Background jobs not configured:', data)
             // Legacy/stuck queued rows may still exist — surface Cancel if so.
-            await scriptAnalysisJob.rehydrate()
-            toast.error('Audience Resonance isn’t available right now', {
-              description:
-                'Background processing isn’t configured for this environment. You can clear any stuck analysis and try again later, or contact support.',
-              duration: 14000,
-              action: {
-                label: 'Clear stuck analysis',
-                onClick: () => {
-                  void (async () => {
-                    const n = await scriptAnalysisJob.cancelActive()
-                    toast.success(
-                      n > 0
-                        ? `Cleared ${n} stuck analysis job${n === 1 ? '' : 's'}`
-                        : 'No stuck analysis jobs found'
-                    )
-                  })()
+            const stuck = await scriptAnalysisJob.rehydrate()
+            if (stuck) {
+              toast.error('Audience Resonance isn’t available right now', {
+                description:
+                  'Background processing isn’t configured, and a previous analysis is still queued. Clear it, then contact support to enable background jobs.',
+                duration: 14000,
+                action: {
+                  label: 'Clear stuck analysis',
+                  onClick: () => {
+                    void (async () => {
+                      const n = await scriptAnalysisJob.cancelActive()
+                      toast.success(
+                        n > 0
+                          ? `Cleared ${n} stuck analysis job${n === 1 ? '' : 's'}`
+                          : 'Nothing left to clear — the queue is already empty'
+                      )
+                    })()
+                  },
                 },
-              },
-            })
+              })
+            } else {
+              toast.error('Audience Resonance isn’t available right now', {
+                description:
+                  'Background processing (Inngest) isn’t configured for this environment, so analysis can’t start. There is nothing stuck in the queue to cancel — ask an admin to set INNGEST_EVENT_KEY.',
+                duration: 14000,
+              })
+            }
             setIsGeneratingReviews(false)
             useStore.getState().setIsGeneratingReviews(false)
             setAnalysisHandoffOpen(false)

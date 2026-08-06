@@ -68,13 +68,14 @@ export function useBackgroundJob(options: {
     setJob(null)
   }, [])
 
-  /** Re-attach to an in-flight job so refreshing does not orphan it. */
-  const rehydrate = useCallback(async () => {
+  /** Re-attach to an in-flight job so refreshing does not orphan it.
+   *  Returns the matched active job, or null when none. */
+  const rehydrate = useCallback(async (): Promise<BackgroundJob | null> => {
     try {
       const res = await fetch(
         `/api/jobs?projectId=${encodeURIComponent(projectId)}&active=true`
       )
-      if (!res.ok) return
+      if (!res.ok) return null
       const data = await res.json()
       const match = (data.jobs || []).find((j: BackgroundJob) => j.job_type === jobType)
       if (match && !isStaleActiveJob(match)) {
@@ -82,7 +83,9 @@ export function useBackgroundJob(options: {
         // Mark as already-seen so re-attaching never replays a completion toast
         // for work the user was told about before the reload.
         setJob(match)
+        return match
       }
+      return null
     } finally {
       setRehydrated(true)
     }
