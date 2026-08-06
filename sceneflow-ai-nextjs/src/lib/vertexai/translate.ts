@@ -45,8 +45,9 @@ export async function translateWithVertexAI(options: TranslateOptions): Promise<
     throw new Error('GCP_PROJECT_ID or VERTEX_PROJECT_ID not configured')
   }
   
-  // Skip translation if target is English or same as source
-  if (targetLanguage === 'en' || targetLanguage === sourceLanguage) {
+  // Skip only when target matches source. Translating *into* English is valid
+  // (e.g. Spanish-authored Blueprint viewed in the English UI).
+  if (targetLanguage === sourceLanguage) {
     console.log('[Vertex Translate] Skipping translation - target is same as source')
     return { translatedText: text }
   }
@@ -203,7 +204,7 @@ export async function batchTranslateWithVertexAI(
     throw new Error('GCP_PROJECT_ID or VERTEX_PROJECT_ID not configured')
   }
 
-  if (targetLanguage === 'en' || targetLanguage === sourceLanguage) {
+  if (targetLanguage === sourceLanguage) {
     console.log('[Vertex Translate] Skipping batch translation - target is same as source')
     return texts.map((text) => ({ translatedText: text }))
   }

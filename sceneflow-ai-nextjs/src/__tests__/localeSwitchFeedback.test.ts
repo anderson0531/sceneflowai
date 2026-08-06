@@ -176,10 +176,28 @@ describe('Blueprint read path uses content MT, not Google Translate', () => {
 
   it('content source defaults to English when project i18n is unset', () => {
     // So syncing account story_locale with the header does not disable MT for
-    // existing English treatments.
+    // existing English treatments. Legacy preference-only stamps are healed by
+    // readContentEntityI18n (not raw readEntityI18n).
     const entity = readSource('src/i18n/content/entityI18n.ts')
     expect(entity).toContain("sourceLocale: DEFAULT_LOCALE")
+    expect(entity).toContain('readContentEntityI18n')
+    expect(entity).toContain('contentStamped')
     const studio = readSource('src/app/dashboard/studio/[projectId]/StudioPageClient.tsx')
-    expect(studio).toContain('readEntityI18n(currentProject')
+    expect(studio).toContain('readContentEntityI18n(')
+  })
+
+  it('stamps content authorship locale on Blueprint generate and create', () => {
+    const studio = readSource('src/app/dashboard/studio/[projectId]/StudioPageClient.tsx')
+    expect(studio).toContain('withContentStampedSourceLocale')
+    expect(studio).toContain('mergeEntityI18nIntoMetadata')
+    expect(studio).toContain('contentI18nStamp')
+    const filmTreatment = readSource('src/app/api/ideation/film-treatment/route.ts')
+    expect(filmTreatment).toContain('storyLocale,')
+  })
+
+  it('does not skip Vertex translation merely because the target is English', () => {
+    const translate = readSource('src/lib/vertexai/translate.ts')
+    expect(translate).not.toMatch(/targetLanguage === ['"]en['"]\s*\|\|/)
+    expect(translate).toContain('if (targetLanguage === sourceLanguage)')
   })
 })

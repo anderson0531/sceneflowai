@@ -13,7 +13,8 @@ import { getLocaleNativeName } from '@/i18n/locale'
  * tracks the header unless the project carries `metadata.i18n.sourceLocale`
  * (set from Settings). That override is the generation language for this
  * project; existing English (or other) body text still localizes via the
- * content-MT path using `readEntityI18n`, which defaults to `en` when unset.
+ * content-MT path using `readContentEntityI18n`, which defaults to `en` when
+ * unset or when only a legacy preference stamp is present.
  */
 export function StoryLocaleBadge({ locale }: { locale: string }) {
   const t = useTranslations('common.language')

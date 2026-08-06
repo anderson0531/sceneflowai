@@ -15,6 +15,12 @@ import { DEFAULT_LOCALE, isLocale } from '@/i18n/locale'
 export interface EntityI18n {
   /** Language the entity's creative content is written in. */
   sourceLocale: string
+  /**
+   * True when `sourceLocale` was stamped by content generation/revise, not by
+   * the old story-language preference picker. Absent/false means a legacy
+   * preference-only stamp that content MT must not treat as authorship.
+   */
+  contentStamped?: boolean
   /** locale -> field path -> human-authored text that MT must not replace. */
   overrides?: Record<string, Record<string, string>>
 }
@@ -23,21 +29,74 @@ export const EMPTY_ENTITY_I18N: EntityI18n = { sourceLocale: DEFAULT_LOCALE }
 
 type MetadataCarrier = { metadata?: Record<string, any> | null } | null | undefined
 
+function parseOverrides(
+  raw: Record<string, any>
+): Record<string, Record<string, string>> | undefined {
+  if (!raw.overrides || typeof raw.overrides !== 'object') return undefined
+  return raw.overrides as Record<string, Record<string, string>>
+}
+
+function hasAnyOverride(overrides: Record<string, Record<string, string>> | undefined): boolean {
+  if (!overrides) return false
+  return Object.values(overrides).some(
+    (paths) => paths && typeof paths === 'object' && Object.keys(paths).length > 0
+  )
+}
+
+/**
+ * Full entity i18n block, including legacy preference-only sourceLocale stamps.
+ * Used for story-language resolution (generation preference / project override).
+ */
 export function readEntityI18n(entity: MetadataCarrier): EntityI18n {
   const raw = entity?.metadata?.i18n
   if (!raw || typeof raw !== 'object') return EMPTY_ENTITY_I18N
 
   const sourceLocale = isLocale(raw.sourceLocale) ? raw.sourceLocale : DEFAULT_LOCALE
-  const overrides =
-    raw.overrides && typeof raw.overrides === 'object'
-      ? (raw.overrides as Record<string, Record<string, string>>)
-      : undefined
+  const overrides = parseOverrides(raw)
+  const contentStamped = raw.contentStamped === true ? true : undefined
 
-  return { sourceLocale, overrides }
+  return { sourceLocale, overrides, ...(contentStamped ? { contentStamped } : {}) }
+}
+
+/**
+ * Content-MT provenance for stored creative text.
+ *
+ * Legacy StoryLocaleControl wrote `sourceLocale` as a generation preference
+ * without marking authorship. Those stamps must not disable MT when the UI
+ * matches them (e.g. English body + sourceLocale=es + UI=es → skipped MT).
+ * Only generation/revise stamps (`contentStamped`) or human overrides count.
+ */
+export function readContentEntityI18n(entity: MetadataCarrier): EntityI18n {
+  const raw = entity?.metadata?.i18n
+  if (!raw || typeof raw !== 'object') return EMPTY_ENTITY_I18N
+
+  const overrides = parseOverrides(raw)
+  const contentStamped = raw.contentStamped === true
+  const trusted =
+    contentStamped || hasAnyOverride(overrides)
+
+  if (!trusted) {
+    return {
+      sourceLocale: DEFAULT_LOCALE,
+      ...(overrides ? { overrides } : {}),
+    }
+  }
+
+  const sourceLocale = isLocale(raw.sourceLocale) ? raw.sourceLocale : DEFAULT_LOCALE
+  return {
+    sourceLocale,
+    contentStamped: contentStamped || undefined,
+    ...(overrides ? { overrides } : {}),
+  }
 }
 
 export function getEntitySourceLocale(entity: MetadataCarrier): string {
   return readEntityI18n(entity).sourceLocale
+}
+
+/** Content-MT source locale (heals legacy preference-only stamps). */
+export function getContentSourceLocale(entity: MetadataCarrier): string {
+  return readContentEntityI18n(entity).sourceLocale
 }
 
 export function getOverride(
@@ -78,10 +137,20 @@ export function withoutOverride(
  * Promote a language to source of record.
  *
  * Overrides for the promoted locale become the content itself, so they are
- * dropped along with every other derived translation.
+ * dropped along with every other derived translation. Marks authorship so
+ * content MT trusts the new sourceLocale.
  */
 export function withPromotedSourceLocale(i18n: EntityI18n, locale: string): EntityI18n {
-  return { sourceLocale: locale }
+  return { sourceLocale: locale, contentStamped: true }
+}
+
+/**
+ * Stamp the language creative content was actually authored in (generation /
+ * revise). Clears overrides because derived translations are now stale.
+ */
+export function withContentStampedSourceLocale(locale: string): EntityI18n {
+  const sourceLocale = isLocale(locale) ? locale : DEFAULT_LOCALE
+  return { sourceLocale, contentStamped: true }
 }
 
 /** Merge an `EntityI18n` back into a metadata object without disturbing siblings. */
