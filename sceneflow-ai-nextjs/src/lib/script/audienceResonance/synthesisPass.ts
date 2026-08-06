@@ -1,5 +1,5 @@
 import { generateText } from '@/lib/vertexai/gemini'
-import { getGeminiTextModel } from '@/lib/config/modelConfig'
+import { getAudienceResonanceModel } from '@/lib/config/modelConfig'
 import {
   applyShowVsTellAutoCap,
   buildScriptARShowVsTellGuidance,
@@ -126,7 +126,7 @@ Return ONLY valid JSON:
 ${languageBlock ?? ''}`
 
   const result = await generateText(prompt, {
-    model: getGeminiTextModel('pro'),
+    model: getAudienceResonanceModel(),
     temperature: 0.15,
     maxOutputTokens: 16000,
     thinkingLevel: 'high',
