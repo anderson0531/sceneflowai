@@ -105,19 +105,23 @@ describe('modelConfig Veo tiers', () => {
 })
 
 describe('modelConfig Gemini text defaults', () => {
-  it('exports Gateway-verified flash and pro ids', async () => {
+  it('exports Gateway-verified flash and pro ids via the GA workhorse pin', async () => {
     const {
+      GEMINI_PRODUCT_MODELS,
+      getGeminiProductModel,
       getGeminiTextModel,
       normalizeGeminiTextModel,
       GEMINI_TEXT_MODELS,
       getAudienceResonanceModel,
       getScriptGenerationModel,
     } = await import('@/lib/config/modelConfig')
-    expect(getGeminiTextModel('flash')).toBe('gemini-3.5-flash')
+    expect(GEMINI_PRODUCT_MODELS.workhorse).toBe('gemini-3.6-flash')
+    expect(getGeminiProductModel('blueprint')).toBe('gemini-3.6-flash')
+    expect(getGeminiTextModel('flash')).toBe('gemini-3.6-flash')
     expect(getGeminiTextModel('pro')).toBe('gemini-3.1-pro-preview')
-    expect(GEMINI_TEXT_MODELS['3-flash-lite']).toBe('gemini-3.1-flash-lite')
-    expect(normalizeGeminiTextModel('gemini-3.0-flash')).toBe('gemini-3.5-flash')
-    expect(getAudienceResonanceModel()).toBe('gemini-3.5-flash')
-    expect(getScriptGenerationModel()).toBe('gemini-3.5-flash')
+    expect(GEMINI_TEXT_MODELS['3-flash-lite']).toBe('gemini-3.5-flash-lite')
+    expect(normalizeGeminiTextModel('gemini-3.0-flash')).toBe('gemini-3.6-flash')
+    expect(getAudienceResonanceModel()).toBe('gemini-3.6-flash')
+    expect(getScriptGenerationModel()).toBe('gemini-3.6-flash')
   })
 })

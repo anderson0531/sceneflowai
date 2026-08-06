@@ -9,6 +9,7 @@ import { StoryThread } from '@/types/series'
 import { SERIES_CHARACTER_NAMING_BLOCK } from '@/lib/character/characterNamingPrompt'
 import { resolveStoryLocale } from '@/i18n/server/storyLocale'
 import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
+import { getGeminiProductModel } from '@/lib/config/modelConfig'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 600 // Allow 10 minutes for full series generation
@@ -310,7 +311,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       generated: {
         fields: Object.keys(generatedData),
         episodeCount: generatedData.episodeBlueprints?.length || 0,
-        model: 'gemini-2.5-flash',
+        model: getGeminiProductModel('series'),
         batchSize: EPISODE_BATCH_SIZE,
         requestedEpisodeCount: rawRequestedEpisodes,
         perRequestEpisodeCap: PER_REQUEST_MAX_FULL_GENERATE_EPISODES,
@@ -478,7 +479,7 @@ Return ONLY valid JSON:
   const bibleResponse = await callLLM(
     { 
       provider: 'gemini', 
-      model: 'gemini-2.5-flash',  // Use Flash for speed, Pro too slow for Vercel
+      model: getGeminiProductModel('series'),  // Use Flash for speed, Pro too slow for Vercel
       maxOutputTokens: MAX_OUTPUT_TOKENS,
       timeoutMs: GENERATION_TIMEOUT_MS
     },
@@ -617,7 +618,7 @@ Return ONLY valid JSON array:
     const batchResponse = await callLLM(
       { 
         provider: 'gemini', 
-        model: 'gemini-2.5-flash',  // Use Flash for speed
+        model: getGeminiProductModel('series'),  // Use Flash for speed
         maxOutputTokens: MAX_OUTPUT_TOKENS,
         timeoutMs: GENERATION_TIMEOUT_MS
       },
@@ -696,7 +697,7 @@ ${field === 'characters' || field === 'protagonist' ? SERIES_CHARACTER_NAMING_BL
 Return ONLY valid JSON.`
 
   const response = await callLLM(
-    { provider: 'gemini', model: 'gemini-2.5-flash' },
+    { provider: 'gemini', model: getGeminiProductModel('series') },
     fullPrompt
   )
   

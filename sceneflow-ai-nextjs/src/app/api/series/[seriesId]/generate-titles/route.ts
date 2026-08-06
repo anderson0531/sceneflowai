@@ -3,6 +3,7 @@ import '@/models'
 import { Series } from '@/models/Series'
 import { sequelize } from '@/config/database'
 import { callLLM } from '@/services/llmGateway'
+import { getGeminiProductModel } from '@/lib/config/modelConfig'
 
 export const dynamic = 'force-dynamic'
 
@@ -71,7 +72,7 @@ Example Output:
     const response = await callLLM(
       { 
         provider: 'gemini', 
-        model: 'gemini-2.5-flash',
+        model: getGeminiProductModel('series'),
         maxOutputTokens: 1024,
         temperature: 0.8
       },

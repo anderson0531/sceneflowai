@@ -15,6 +15,7 @@ import { localeDirective } from '@/lib/prompts/localeDirective'
 import { sequelize } from '@/config/database'
 import { callLLM } from '@/services/llmGateway'
 import { v4 as uuidv4 } from 'uuid'
+import { getGeminiProductModel } from '@/lib/config/modelConfig'
 import {
   createAudienceDefinition,
   buildCulturalAnalysisDirective,
@@ -209,7 +210,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const response = await callLLM(
       { 
         provider: 'gemini', 
-        model: 'gemini-2.5-flash',
+        model: getGeminiProductModel('series'),
         maxOutputTokens: 16384,
         timeoutMs: 120000
       },

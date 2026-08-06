@@ -273,8 +273,8 @@ describe('Job lifecycle', () => {
 })
 
 describe('Model selection', () => {
-  it('pins Audience Resonance to Gemini 3.5 Flash', () => {
-    expect(getAudienceResonanceModel()).toBe('gemini-3.5-flash')
+  it('pins Audience Resonance to the GA workhorse', () => {
+    expect(getAudienceResonanceModel()).toBe('gemini-3.6-flash')
 
     for (const relativePath of [
       'src/app/api/treatment/audience-resonance/route.ts',
@@ -304,8 +304,8 @@ describe('Model selection', () => {
     expect(source).toContain("getGeminiTextModel('pro')")
   })
 
-  it('pins script generation to Gemini 3.5 Flash', () => {
-    expect(getScriptGenerationModel()).toBe('gemini-3.5-flash')
+  it('pins script generation to the GA workhorse', () => {
+    expect(getScriptGenerationModel()).toBe('gemini-3.6-flash')
 
     for (const relativePath of [
       'src/app/api/vision/generate-script/route.ts',

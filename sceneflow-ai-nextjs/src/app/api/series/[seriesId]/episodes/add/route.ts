@@ -14,6 +14,7 @@ import { callLLM } from '@/services/llmGateway'
 import { SeriesEpisodeBlueprint } from '@/types/series'
 import { buildEpisodeBatchPrompt, resolveSeriesContentIntent } from '@/lib/series/episodeBatchPrompt'
 import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { getGeminiProductModel } from '@/lib/config/modelConfig'
 
 // Maximum episodes to generate in a single batch (5 for reliable JSON parsing)
 const BATCH_SIZE = 5
@@ -159,7 +160,7 @@ async function generateEpisodeBatch(
   const response = await callLLM(
     { 
       provider: 'gemini', 
-      model: 'gemini-2.5-flash',  // Use Flash for speed
+      model: getGeminiProductModel('series'),  // Use Flash for speed
       maxOutputTokens: 16384,
       timeoutMs: 90000
     },

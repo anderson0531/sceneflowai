@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { SERIES_CHARACTER_NAMING_BLOCK } from '@/lib/character/characterNamingPrompt'
 import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { localeDirective } from '@/lib/prompts/localeDirective'
+import { getGeminiProductModel } from '@/lib/config/modelConfig'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300 // 5 minutes for comprehensive storyline refactor
@@ -216,7 +217,7 @@ ${languageBlock}`
   
   const response = await callLLM({
     provider: 'gemini',
-    model: 'gemini-2.5-flash',
+    model: getGeminiProductModel('series'),
     maxOutputTokens: 8192, // Increased to prevent truncation on large character lists
     timeoutMs: 90000
   }, prompt)
@@ -283,7 +284,7 @@ ${languageBlock}`
     try {
       const response = await callLLM({
         provider: 'gemini',
-        model: 'gemini-2.5-flash',
+        model: getGeminiProductModel('series'),
         maxOutputTokens: 8192, // Increased to prevent truncation
         timeoutMs: 90000
       }, prompt)

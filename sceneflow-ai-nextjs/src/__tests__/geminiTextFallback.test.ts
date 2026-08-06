@@ -6,11 +6,17 @@ import {
 } from '@/lib/vertexai/geminiTextFallback'
 
 describe('geminiTextFallback', () => {
-  it('chains pro → flash → lite → 2.5-flash on quota errors', () => {
-    const [pro, flash, flashLite, flash25] = GEMINI_QUOTA_FALLBACK_CHAIN
-    expect(getNextGeminiFallbackModel(pro)).toBe(flash)
-    expect(getNextGeminiFallbackModel(flash)).toBe(flashLite)
-    expect(getNextGeminiFallbackModel(flashLite)).toBe(flash25)
+  it('chains pro → workhorse → prior → lite → 2.5-flash on quota errors', () => {
+    const [pro, workhorse, prior, lite, flash25] = GEMINI_QUOTA_FALLBACK_CHAIN
+    expect(pro).toBe('gemini-3.1-pro-preview')
+    expect(workhorse).toBe('gemini-3.6-flash')
+    expect(prior).toBe('gemini-3.5-flash')
+    expect(lite).toBe('gemini-3.5-flash-lite')
+    expect(flash25).toBe('gemini-2.5-flash')
+    expect(getNextGeminiFallbackModel(pro)).toBe(workhorse)
+    expect(getNextGeminiFallbackModel(workhorse)).toBe(prior)
+    expect(getNextGeminiFallbackModel(prior)).toBe(lite)
+    expect(getNextGeminiFallbackModel(lite)).toBe(flash25)
     expect(getNextGeminiFallbackModel(flash25)).toBeNull()
   })
 

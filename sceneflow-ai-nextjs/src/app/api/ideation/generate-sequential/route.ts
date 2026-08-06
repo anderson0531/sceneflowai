@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { safeParseJsonFromText, strictJsonPromptSuffix } from '@/lib/safeJson'
 import { generateText } from '@/lib/vertexai/gemini'
-import { getGeminiTextModel, normalizeGeminiTextModel } from '@/lib/config/modelConfig'
+import { getGeminiProductModel, normalizeGeminiTextModel } from '@/lib/config/modelConfig'
 import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 
@@ -472,7 +472,7 @@ export async function POST(request: NextRequest) {
       provider: p,
       model: p === 'openai'
         ? ((model && (model as any) !== 'auto') ? model : (process.env.OPENAI_MODEL || 'gpt-5'))
-        : normalizeGeminiTextModel((model && (model as any) !== 'auto') ? model : (process.env.GEMINI_MODEL || getGeminiTextModel('flash')))
+        : normalizeGeminiTextModel((model && (model as any) !== 'auto') ? model : getGeminiProductModel('blueprint'))
     })
 
     const candidates: Provider[] = userProvider
