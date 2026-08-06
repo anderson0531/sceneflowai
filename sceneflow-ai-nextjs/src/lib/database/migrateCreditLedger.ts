@@ -1,7 +1,14 @@
 import { sequelize } from '@/models'
+import { hasColumns } from '@/lib/database/schemaProbe'
 
 export async function migrateCreditLedger() {
   try {
+    // Runs inside the credit charge transaction path, so skip the DDL once the
+    // column is there rather than paying for it on every cold start.
+    if (await hasColumns('credit_ledger', ['credit_type'])) {
+      return
+    }
+
     await sequelize.authenticate()
     console.log('Database connection established.')
 

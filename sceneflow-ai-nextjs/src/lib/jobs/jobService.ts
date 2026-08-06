@@ -8,6 +8,7 @@ import { inngest } from '@/inngest/client'
 import { sequelize } from '@/config/database'
 import { ACTIVE_JOB_STATUSES } from '@/lib/jobs/jobStatus'
 import { isStaleActiveJob, STALE_JOB_ERROR } from '@/lib/jobs/staleJob'
+import { hasTables } from '@/lib/database/schemaProbe'
 
 export { ACTIVE_JOB_STATUSES }
 
@@ -30,6 +31,13 @@ async function ensureNotificationsSchema(): Promise<void> {
 
   notificationsSchemaInProgress = true
   try {
+    // Both tables already there is the normal case, and this sits on the request
+    // path for every queued job, so confirm with one lookup before issuing DDL.
+    if (await hasTables(['generation_jobs', 'notifications'])) {
+      notificationsSchemaCompleted = true
+      return
+    }
+
     console.log('[jobService] Auto-running generation_jobs + notifications schema migration...')
     await sequelize.query(`
       CREATE TABLE IF NOT EXISTS generation_jobs (
