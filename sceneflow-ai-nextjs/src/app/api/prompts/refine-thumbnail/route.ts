@@ -1,18 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
-    const { currentPrompt, instructions } = await request.json()
+    const body = await request.json()
+    const { currentPrompt, instructions: enteredInstructions, projectId } = body
 
-    if (!currentPrompt || !instructions) {
+    if (!currentPrompt || !enteredInstructions) {
       return NextResponse.json(
         { success: false, error: 'currentPrompt and instructions are required' },
         { status: 400 }
       )
     }
+
+    // This rewrites an image prompt, so the typed instruction is normalized to
+    // English before the rewriter sees it.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, { projectId })
+    const instructions = await englishForModel(enteredInstructions, storyLocale, properNouns)
 
     // Vertex AI uses service account credentials - no API key required
     const systemPrompt = `You are a prompt engineering expert specializing in image generation prompts for Imagen 3 (Vertex AI).

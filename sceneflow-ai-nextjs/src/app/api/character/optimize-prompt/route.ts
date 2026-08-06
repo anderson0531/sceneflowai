@@ -1,19 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 
 export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, instruction } = await req.json()
+    const { prompt, instruction: enteredInstruction } = await req.json()
 
     if (!prompt?.trim()) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
     }
 
-    if (!instruction?.trim()) {
+    if (!enteredInstruction?.trim()) {
       return NextResponse.json({ error: 'Instruction is required' }, { status: 400 })
     }
+
+    // This rewrites a character image prompt, so the typed instruction is
+    // normalized to English before the rewriter sees it.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(req)
+    const instruction = await englishForModel(enteredInstruction, storyLocale, properNouns)
 
     // Vertex AI requires VERTEX_PROJECT_ID and GOOGLE_APPLICATION_CREDENTIALS_JSON
     const projectId = process.env.VERTEX_PROJECT_ID || process.env.GCP_PROJECT_ID

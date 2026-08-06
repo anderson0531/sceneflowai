@@ -6,7 +6,8 @@ import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen } from '@/lib/imagen/promptOptimizer'
 import { generateText } from '@/lib/vertexai/gemini'
 import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
-import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { resolveStoryLocale } from '@/i18n/server/storyLocale'
 import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 import { ensureSceneBeats } from '@/lib/script/beatMigration'
 import { buildCharacterDialogueExamples } from '@/lib/character/characterNamingPrompt'
@@ -454,6 +455,17 @@ ${hasCharacterRefs ? '- Characters MUST match their reference images' : ''}
         console.error('[Prompt Optimizer] Failed, using original prompt:', error)
       }
     }
+
+    // The prompt is built from scene text in the creator's language, and Imagen
+    // needs English.
+    const { storyLocale, properNouns } = await resolveStoryLocale({
+      projectId,
+      includeProperNouns: false,
+    })
+    finalPrompt = await englishForModel(finalPrompt, storyLocale, [
+      ...characterNames.map(String),
+      ...properNouns,
+    ])
 
     // Generate with Vertex AI Imagen 3 (character references embedded in prompt)
     const base64Image = await generateImageWithGemini(finalPrompt, {

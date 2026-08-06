@@ -1,18 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
-    const { currentPrompt, instructions, sceneContext } = await request.json()
+    const body = await request.json()
+    const { currentPrompt, instructions: enteredInstructions, sceneContext, projectId } = body
 
-    if (!currentPrompt || !instructions) {
+    if (!currentPrompt || !enteredInstructions) {
       return NextResponse.json(
         { success: false, error: 'currentPrompt and instructions are required' },
         { status: 400 }
       )
     }
+
+    // This rewrites a scene image prompt, so the typed instruction is normalized
+    // to English before the rewriter sees it.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, { projectId })
+    const instructions = await englishForModel(enteredInstructions, storyLocale, properNouns)
 
     // Vertex AI uses service account credentials - no API key required
     const sceneInfo = sceneContext ? `

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 // NOTE: Vertex AI Imagen import removed - using Gemini Studio exclusively due to Vertex auth issues
 // import { callVertexAIImagen } from '@/lib/vertexai/client'
 import { generateImageWithGeminiStudio, editImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
@@ -411,8 +412,18 @@ export async function POST(req: NextRequest) {
       forceRegenerateStart,
     })
     
+    // Both the typed prompt and the stored action text can be in the creator's
+    // language; the image model needs English.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, {
+      projectId: (body as { projectId?: string }).projectId,
+    })
+
     // Use custom prompt if provided, otherwise fall back to action prompt
-    const rawEffectivePrompt = customPrompt?.trim() || actionPrompt
+    const rawEffectivePrompt = await englishForModel(
+      customPrompt?.trim() || actionPrompt,
+      storyLocale,
+      properNouns
+    )
     const expressionCue = formatVisualExpressionCue(rawEffectivePrompt)
     const effectivePrompt = expressionCue
       ? `${stripAllCues(rawEffectivePrompt)}. ${expressionCue}`

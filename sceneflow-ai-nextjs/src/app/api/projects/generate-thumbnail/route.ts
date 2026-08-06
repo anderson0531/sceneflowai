@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { uploadImageToBlob } from '@/lib/storage/blob'
@@ -32,7 +33,9 @@ export async function POST(request: NextRequest) {
     let enhancedPrompt: string
     
     if (customPrompt) {
-      enhancedPrompt = customPrompt
+      // Typed by the creator; the image model needs English.
+      const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, { projectId })
+      enhancedPrompt = await englishForModel(customPrompt, storyLocale, properNouns)
       console.log('[Thumbnail] Using custom prompt from user')
     } else {
       // Build default cinematic thumbnail prompt

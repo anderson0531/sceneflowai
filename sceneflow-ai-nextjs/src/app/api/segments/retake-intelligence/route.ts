@@ -9,6 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import {
   buildRetakeIntelligenceSystemPrompt,
@@ -34,12 +35,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Correction instruction is required' }, { status: 400 })
     }
 
+    // The plan rewrites a Kling prompt, so the typed correction is normalized to
+    // English before the classifier sees it.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, {
+      projectId: (body as { projectId?: string }).projectId,
+    })
+    const modelInstruction = await englishForModel(instruction, storyLocale, properNouns)
+
     console.log('[Retake Intelligence] Mode:', mode)
-    console.log('[Retake Intelligence] Instruction:', instruction)
+    console.log('[Retake Intelligence] Instruction:', modelInstruction)
     console.log('[Retake Intelligence] Prompt length:', currentPrompt.length)
 
     const systemInstruction = buildRetakeIntelligenceSystemPrompt(mode)
-    const userPrompt = buildRetakeIntelligenceUserPrompt(body)
+    const userPrompt = buildRetakeIntelligenceUserPrompt({
+      ...body,
+      instruction: modelInstruction,
+    })
 
     const result = await generateText(userPrompt, {
       model: getGeminiTextModel('flash'),

@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server'
 import { generateText, generateTextCacheAware } from '@/lib/vertexai/gemini'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { localeDirective } from '@/lib/prompts/localeDirective'
 
 export const dynamic = 'force-dynamic'
 
@@ -314,6 +316,17 @@ export async function POST(req: NextRequest) {
         { role: 'system', content: `App Context:\n${contextSummary}` },
         ...messages,
       ]
+    }
+
+    // The creator may be writing to Cue in their own language, so the reply — and
+    // any description Cue rewrites — has to come back in it. Carried as a system
+    // message so both providers honour it.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, {
+      projectId: (context as { projectId?: string })?.projectId ?? (context as any)?.project?.id,
+    })
+    const languageBlock = localeDirective(storyLocale, { properNouns })
+    if (languageBlock) {
+      finalMessages = [...finalMessages, { role: 'system', content: languageBlock }]
     }
 
     const providers = [

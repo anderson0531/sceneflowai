@@ -1,4 +1,6 @@
 import { NextRequest } from 'next/server'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -34,7 +36,7 @@ function buildBriefPrompt({ title, treatment, scenes, index }: { title?: string;
   ].join('\n')
 }
 
-function buildScenePrompt({ title, episode, sceneNumber, scene, directorsBrief }: { title?: string; episode?: string; sceneNumber: number; scene: SceneIn; directorsBrief: string }) {
+function buildScenePrompt({ title, episode, sceneNumber, scene, directorsBrief, languageBlock = '' }: { title?: string; episode?: string; sceneNumber: number; scene: SceneIn; directorsBrief: string; languageBlock?: string }) {
   const slug = upper(scene.slugline || 'INT./EXT. LOCATION - DAY')
   return [
     'You are an award-winning screenwriter. Write a compelling, professional, and COMPLETE scene script.',
@@ -60,7 +62,8 @@ function buildScenePrompt({ title, episode, sceneNumber, scene, directorsBrief }
     scene.keyAction ? `KEY ACTION: ${scene.keyAction}` : '',
     scene.emotionalTone ? `EMOTIONAL TONE: ${scene.emotionalTone}` : '',
     '',
-    'Now, using the Director\'s Brief for guidance, produce the complete scene.'
+    'Now, using the Director\'s Brief for guidance, produce the complete scene.',
+    languageBlock
   ].filter(Boolean).join('\n')
 }
 
@@ -107,6 +110,18 @@ export async function POST(req: NextRequest) {
     const episode = clean(body?.episode || '')
     const treatment = body?.treatment || {}
 
+    // Scene scripts are read and performed, so they have to be written in the
+    // language the treatment is in.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, {
+      projectId: body?.projectId,
+    })
+    const languageBlock = localeDirective(storyLocale, {
+      properNouns: buildProperNounGlossary(
+        { characters: Array.isArray(treatment?.characters) ? treatment.characters : [] },
+        [...properNouns, title]
+      ),
+    })
+
     const origin = req.nextUrl?.origin || process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL || ''
     const base = String(origin).replace(/^https?:\/\//, '').replace(/\/$/, '')
     const url = `https://${base}/api/cue/respond`
@@ -132,7 +147,7 @@ export async function POST(req: NextRequest) {
         const briefJson = await briefResp.json().catch(()=>({}))
         const directorsBrief = String(briefJson?.reply || '').trim()
         // Step 2: Strict scene script (timeout ~60s)
-        const scenePrompt = buildScenePrompt({ title, episode, sceneNumber: i+1, scene: scenes[i], directorsBrief })
+        const scenePrompt = buildScenePrompt({ title, episode, sceneNumber: i+1, scene: scenes[i], directorsBrief, languageBlock })
         const sceneResp = await fetchWithTimeout(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ prompt: scenePrompt, context: { mode:'scene_script', type:'scene_script', cacheZone: 'batch_script', cacheContext: treatmentContext, projectId: batchProjectId } }), timeoutMs: 60000 })
         if (!sceneResp.ok) throw new Error('Scene gen failed')
         const sceneJson = await sceneResp.json().catch(()=>({}))
