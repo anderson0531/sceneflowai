@@ -14,6 +14,7 @@ function readSource(relativePath: string): string {
 }
 
 const WORKER_ROUTE = 'src/app/api/internal/jobs/script-analysis/step/route.ts'
+const CLIENT_STEP_ROUTE = 'src/app/api/vision/review-script/step/route.ts'
 const DISPATCH = 'src/lib/jobs/dispatchScriptAnalysisStep.ts'
 
 function maxDurationOf(relativePath: string): number {
@@ -84,9 +85,38 @@ describe('script analysis step lease outlives the worker invocation', () => {
     expect(STEP_LEASE_MS).toBeGreaterThan(workerSeconds * 1000)
   })
 
+  it('exceeds the client-driven step maxDuration', () => {
+    const stepSeconds = maxDurationOf(CLIENT_STEP_ROUTE)
+    expect(STEP_LEASE_MS).toBeGreaterThan(stepSeconds * 1000)
+  })
+
   it('is declared in vercel.json for the step route', () => {
     const vercel = readSource('vercel.json')
     expect(vercel).toContain('src/app/api/internal/jobs/script-analysis/step/route.ts')
+    expect(vercel).toContain('src/app/api/vision/review-script/step/route.ts')
+  })
+})
+
+describe('script analysis client ticks survive Vercel 508 self-fetch', () => {
+  it('exposes a session-authenticated step route like guided-revise', () => {
+    const route = readSource(CLIENT_STEP_ROUTE)
+    expect(route).toContain('getSessionUserId')
+    expect(route).toContain('runScriptAnalysisStep(')
+    expect(route).toContain('maxDuration = 120')
+  })
+
+  it('vision page advances the job from the browser while active', () => {
+    const visionPage = readSource(
+      'src/app/dashboard/workflow/vision/[projectId]/page.tsx'
+    )
+    expect(visionPage).toContain("/api/vision/review-script/step")
+    expect(visionPage).toContain('508')
+  })
+
+  it('logs 508 body so recursion protection is diagnosable', () => {
+    const dispatch = readSource(DISPATCH)
+    expect(dispatch).toContain('Step dispatch returned')
+    expect(dispatch).toContain('recursion protection')
   })
 })
 
