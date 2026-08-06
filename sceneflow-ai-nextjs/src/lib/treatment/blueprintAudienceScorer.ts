@@ -41,14 +41,58 @@ export function pointsForPriority(priority: BlueprintRecommendationPriority): nu
   return Math.round((band.min + band.max) / 2)
 }
 
+/**
+ * Diminishing weights so a full polish backlog does not crater a solid blueprint.
+ * Sorted highest-impact first: first gap counts fully, later gaps taper.
+ */
+export const DEDUCTION_SCORE_WEIGHTS = [1, 0.65, 0.4, 0.25, 0.15, 0.1] as const
+export const DEDUCTION_SCORE_WEIGHT_TAIL = 0.05
+
+/** Soft max recommendations shown in the panel (full backlog, not drip-feed). */
+export const BLUEPRINT_AR_MAX_VISIBLE_RECS = 8
+
+/**
+ * Weighted deduction total used for the headline score (raw points stay on each item).
+ */
+export function weightedDeductionPoints(
+  deductions: Array<{ points: number }>
+): number {
+  const sorted = [...deductions].sort(
+    (a, b) => (Number(b.points) || 0) - (Number(a.points) || 0)
+  )
+  return sorted.reduce((sum, d, index) => {
+    const weight =
+      index < DEDUCTION_SCORE_WEIGHTS.length
+        ? DEDUCTION_SCORE_WEIGHTS[index]
+        : DEDUCTION_SCORE_WEIGHT_TAIL
+    return sum + (Number(d.points) || 0) * weight
+  }, 0)
+}
+
 export function calculateOverallFromDeductions(
   deductions: BlueprintAudienceDeduction[]
 ): number {
-  const total = deductions.reduce(
-    (sum, d) => sum + (Number(d.points) || 0),
-    0
+  const total = weightedDeductionPoints(deductions)
+  return clamp(Math.round(100 - total), 0, 100)
+}
+
+/** Per-deduction contribution after sorting (for UI transparency). */
+export function scoreContributionsForDeductions(
+  deductions: BlueprintAudienceDeduction[]
+): Array<BlueprintAudienceDeduction & { scoreContribution: number }> {
+  const sorted = [...deductions].sort(
+    (a, b) => (Number(b.points) || 0) - (Number(a.points) || 0)
   )
-  return clamp(100 - total, 0, 100)
+  return sorted.map((d, index) => {
+    const weight =
+      index < DEDUCTION_SCORE_WEIGHTS.length
+        ? DEDUCTION_SCORE_WEIGHTS[index]
+        : DEDUCTION_SCORE_WEIGHT_TAIL
+    return {
+      ...d,
+      scoreContribution: Math.round((Number(d.points) || 0) * weight * 10) / 10,
+    }
+  })
 }
 
 export function applyCategoryHysteresis(

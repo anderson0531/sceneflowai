@@ -274,7 +274,11 @@
     "strengths": "Points forts",
     "categoryScores": "Scores de catégorie",
     "jumpToSection": "Aller à la section Blueprint correspondante",
-    "emptyHint": "Enregistrez votre public cible, puis analysez comment votre plan résonne avec ce public."
+    "emptyHint": "Enregistrez votre public cible, puis analysez comment votre plan résonne avec ce public.",
+    "readyOptionalPolish": "Ready for production — optional polish below",
+    "scoreBreakdownBalancedHint": "Impact shown per gap; the headline score uses balanced weighting so a full polish list does not crater a strong blueprint.",
+    "optionalPolish": "Optional polish",
+    "polishBadge": "Polish"
   },
   "heroImage": {
     "uploading": "Transfert en cours...",

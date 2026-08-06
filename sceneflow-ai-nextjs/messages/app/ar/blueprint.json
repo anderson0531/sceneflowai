@@ -274,7 +274,11 @@
     "strengths": "نقاط القوة",
     "categoryScores": "<g id=\"2\">درجات الفئة</g><x id=\"1\"/>",
     "jumpToSection": "الانتقال إلى قسم SFAIBLUEPRINTERM المطابق",
-    "emptyHint": "احفظ جمهورك المستهدف، ثم حلل كيف يتردد صدى مخططك مع هذا الجمهور."
+    "emptyHint": "احفظ جمهورك المستهدف، ثم حلل كيف يتردد صدى مخططك مع هذا الجمهور.",
+    "readyOptionalPolish": "Ready for production — optional polish below",
+    "scoreBreakdownBalancedHint": "Impact shown per gap; the headline score uses balanced weighting so a full polish list does not crater a strong blueprint.",
+    "optionalPolish": "Optional polish",
+    "polishBadge": "Polish"
   },
   "heroImage": {
     "uploading": "Uploading...",

@@ -123,7 +123,7 @@ function buildPrompt(
 
   const appliedBlock =
     appliedIds.length > 0
-      ? `\nThe user already applied fixes for recommendation IDs: ${appliedIds.join(', ')}. Do NOT repeat those issues. Acknowledge improvements and find remaining gaps only.`
+      ? `\nThe user already applied fixes for recommendation IDs: ${appliedIds.join(', ')}. Do NOT repeat those issues. Acknowledge improvements. Prefer remaining lower-priority polish. Do NOT invent new high or critical issues unless they are clearly still present in the treatment.`
       : ''
 
   return `You are an expert ${rubric.persona} evaluating a ${intent === 'fiction' ? 'FILM TREATMENT' : 'CONTENT BLUEPRINT'} for TARGET AUDIENCE RESONANCE.
@@ -138,11 +138,11 @@ Secondary context (genre/tone only): Genre: ${genre || treatment.genre || 'unspe
 
 SCORING RULES (MANDATORY):
 1. Start at baseScore 100.
-2. List every genuine audience-resonance gap as a deduction with reason, points, category, priority.
-3. overallScore MUST equal 100 minus the sum of all deduction points (we verify server-side).
-4. Priority point bands: critical 12–18, high 10–15, medium 5–9, low 1–4.
+2. List a COMPLETE resonance backlog: every genuine audience-resonance gap as a deduction with reason, points, category, priority. Typical solid treatments have up to ~8 gaps. Do NOT withhold issues to protect the headline number, and do NOT drip-feed only the top two.
+3. Report honest per-gap points. The SERVER recomputes overallScore with balanced (diminishing) weighting — your overallScore field is a hint only.
+4. Priority point bands: critical 12–18, high 10–15, medium 5–9, low 1–4, optional 1–3.
 5. Each deduction MUST have a matching recommendation with text, priority, pointsDeducted, fixSection (core|story|tone|beats|characters), and when a fix ripples beyond one section, impactSections (array of sections to reconcile) and optional intentLabel (short chip text).
-6. Be fair: a solid treatment with minor gaps should score 75–88. Reserve below 65 for major audience misalignment.
+6. Be fair: strong treatments with only polish left often land 85–95 AFTER server scoring. Reserve below 65 for major audience misalignment. Do not invent critical gaps just to fill a band.
 7. Evaluate ONLY how well this content resonates with the TARGET AUDIENCE above.
 8. Do NOT penalize non-fiction/commercial content for missing fictional screenplay elements (antagonist arc, three-act drama, character ghost) unless content intent is fiction.
 
@@ -163,7 +163,7 @@ ${evalCategories.map((c) => `- ${c.name} (weight ${c.weight}): ${c.description}`
 ${languageBlock}
 Return ONLY valid JSON:
 {
-  "overallScore": <100 minus sum of deduction points>,
+  "overallScore": <hint: 100 minus sum of raw deduction points; server will rebalance>,
   "baseScore": 100,
   "deductions": [{"reason": "...", "points": <number>, "category": "...", "priority": "high|medium|low"}],
   "recommendations": [

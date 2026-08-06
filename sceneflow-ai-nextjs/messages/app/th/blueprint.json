@@ -274,7 +274,11 @@
     "strengths": "จุดแข็ง ",
     "categoryScores": "คะแนนหมวดหมู่",
     "jumpToSection": "ข้ามไปยังส่วน Blueprint ที่ตรงกัน",
-    "emptyHint": "บันทึกกลุ่มเป้าหมายของคุณจากนั้นวิเคราะห์ว่าพิมพ์เขียวของคุณสะท้อนกับกลุ่มเป้าหมายนั้นอย่างไร"
+    "emptyHint": "บันทึกกลุ่มเป้าหมายของคุณจากนั้นวิเคราะห์ว่าพิมพ์เขียวของคุณสะท้อนกับกลุ่มเป้าหมายนั้นอย่างไร",
+    "readyOptionalPolish": "Ready for production — optional polish below",
+    "scoreBreakdownBalancedHint": "Impact shown per gap; the headline score uses balanced weighting so a full polish list does not crater a strong blueprint.",
+    "optionalPolish": "Optional polish",
+    "polishBadge": "Polish"
   },
   "heroImage": {
     "uploading": "กำลังอัปโหลด...",
