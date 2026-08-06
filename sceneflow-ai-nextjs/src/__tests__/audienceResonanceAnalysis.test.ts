@@ -14,7 +14,12 @@ import {
   sceneWeightedScore,
 } from '@/lib/script/audienceResonance/scoring'
 import { ACTIVE_JOB_STATUSES } from '@/lib/jobs/jobStatus'
-import { GEMINI_TEXT_MODEL_CANDIDATES, getGeminiTextModel } from '@/lib/config/modelConfig'
+import {
+  GEMINI_TEXT_MODEL_CANDIDATES,
+  getAudienceResonanceModel,
+  getGeminiTextModel,
+  getScriptGenerationModel,
+} from '@/lib/config/modelConfig'
 import type { SceneAnalysis } from '@/lib/script/audienceResonance/types'
 
 const ROOT = path.resolve(__dirname, '../..')
@@ -268,24 +273,51 @@ describe('Job lifecycle', () => {
 })
 
 describe('Model selection', () => {
-  it('routes analysis and scene revision through the Pro tier helper', () => {
-    expect(getGeminiTextModel('pro')).toBe('gemini-3.1-pro-preview')
+  it('pins Audience Resonance to Gemini 3.5 Flash', () => {
+    expect(getAudienceResonanceModel()).toBe('gemini-3.5-flash')
 
     for (const relativePath of [
+      'src/app/api/treatment/audience-resonance/route.ts',
+      'src/app/api/treatment/analyze-resonance/route.ts',
       'src/lib/script/audienceResonance/scenePass.ts',
       'src/lib/script/audienceResonance/synthesisPass.ts',
-      'src/app/api/vision/revise-scene/route.ts',
     ]) {
       const source = readSource(relativePath)
-      expect(source, `${relativePath} should resolve its model`).toContain(
-        "getGeminiTextModel('pro')"
+      expect(source, `${relativePath} should use AR model helper`).toContain(
+        'getAudienceResonanceModel()'
       )
-      // Hardcoded ids are what let a stale model silently persist.
       expect(source, `${relativePath} should not hardcode a model`).not.toContain(
         "model: 'gemini-2.5-flash'"
       )
       expect(source, `${relativePath} should not hardcode a model`).not.toContain(
         "model: 'gemini-3.0-flash'"
+      )
+      expect(source, `${relativePath} should not use Pro for AR`).not.toContain(
+        "getGeminiTextModel('pro')"
+      )
+    }
+  })
+
+  it('keeps scene revision on the Pro tier helper', () => {
+    expect(getGeminiTextModel('pro')).toBe('gemini-3.1-pro-preview')
+    const source = readSource('src/app/api/vision/revise-scene/route.ts')
+    expect(source).toContain("getGeminiTextModel('pro')")
+  })
+
+  it('pins script generation to Gemini 3.5 Flash', () => {
+    expect(getScriptGenerationModel()).toBe('gemini-3.5-flash')
+
+    for (const relativePath of [
+      'src/app/api/vision/generate-script/route.ts',
+      'src/app/api/vision/generate-script-v2/route.ts',
+      'src/app/api/script/complete-gaps/route.ts',
+    ]) {
+      const source = readSource(relativePath)
+      expect(source, `${relativePath} should use script model helper`).toContain(
+        'getScriptGenerationModel()'
+      )
+      expect(source, `${relativePath} should not hardcode 2.5 flash`).not.toContain(
+        "model: 'gemini-2.5-flash'"
       )
     }
   })

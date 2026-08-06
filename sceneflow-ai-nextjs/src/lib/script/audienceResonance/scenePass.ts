@@ -1,5 +1,5 @@
 import { generateText } from '@/lib/vertexai/gemini'
-import { getGeminiTextModel } from '@/lib/config/modelConfig'
+import { getAudienceResonanceModel } from '@/lib/config/modelConfig'
 import { buildScriptARShowVsTellGuidance } from '@/lib/script/narrationPolicy'
 import type { AnalysisContext, SceneAnalysis } from './types'
 import type { SceneChunk } from './chunkPlan'
@@ -105,7 +105,7 @@ ${languageBlock ?? ''}`
   const maxOutputTokens = Math.max(MIN_CHUNK_TOKENS, scenes.length * TOKENS_PER_SCENE)
 
   const result = await generateText(prompt, {
-    model: getGeminiTextModel('pro'),
+    model: getAudienceResonanceModel(),
     temperature: 0.1,
     maxOutputTokens,
     thinkingLevel: 'high',

@@ -7,6 +7,7 @@ import { buildCharacterDialogueExamples } from '@/lib/character/characterNamingP
 import { SubscriptionService } from '../../../../services/SubscriptionService'
 import { runScriptQA, autoFixScript } from '@/lib/script/qualityAssurance'
 import { generateText } from '@/lib/vertexai/gemini'
+import { getScriptGenerationModel } from '@/lib/config/modelConfig'
 import { getSettingsForFormat, getScriptProgressStatuses, buildScriptConstraintPrompt, SCRIPT_SETTINGS_BY_FORMAT } from '@/lib/script/scriptGenerationRules'
 import { resolveContentIntentFromMetadata, buildPacingPhilosophyBlock } from '@/lib/content/contentIntent'
 import { migrateProjectToSegmented } from '@/lib/script/migrateToSegmented'
@@ -1511,7 +1512,7 @@ function mergeScenes(scene1: any, scene2: any): any {
 async function callGemini(prompt: string): Promise<string> {
   console.log('[Generate Script V2] Calling Vertex AI Gemini...')
   const result = await generateText(prompt, {
-    model: 'gemini-2.5-flash',
+    model: getScriptGenerationModel(),
     temperature: 0.7,
     maxOutputTokens: 16384,  // Reduced from 32768 to lower memory footprint
     timeoutMs: 180000        // 180s timeout for large script generation (increased from default 90s)

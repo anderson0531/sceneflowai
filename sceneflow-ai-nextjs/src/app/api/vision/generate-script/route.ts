@@ -3,6 +3,7 @@ import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { SubscriptionService } from '../../../../services/SubscriptionService'
 import { generateText } from '@/lib/vertexai/gemini'
+import { getScriptGenerationModel } from '@/lib/config/modelConfig'
 import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
 import { migrateProjectToSegmented } from '@/lib/script/migrateToSegmented'
 import { normalizeDialogueToProductionLineTargets } from '@/lib/script/segmentScript'
@@ -784,7 +785,7 @@ async function callGeminiWithRetry(
 async function callGemini(apiKey: string, prompt: string, maxTokens: number): Promise<string> {
   console.log('[Generate Script] Calling Vertex AI Gemini...')
   const result = await generateText(prompt, {
-    model: 'gemini-2.5-flash',
+    model: getScriptGenerationModel(),
     temperature: 0.5, // Reduced from 0.7 to 0.5 for more deterministic JSON
     topP: 0.9,
     maxOutputTokens: maxTokens,

@@ -110,10 +110,14 @@ describe('modelConfig Gemini text defaults', () => {
       getGeminiTextModel,
       normalizeGeminiTextModel,
       GEMINI_TEXT_MODELS,
+      getAudienceResonanceModel,
+      getScriptGenerationModel,
     } = await import('@/lib/config/modelConfig')
     expect(getGeminiTextModel('flash')).toBe('gemini-3.5-flash')
     expect(getGeminiTextModel('pro')).toBe('gemini-3.1-pro-preview')
     expect(GEMINI_TEXT_MODELS['3-flash-lite']).toBe('gemini-3.1-flash-lite')
     expect(normalizeGeminiTextModel('gemini-3.0-flash')).toBe('gemini-3.5-flash')
+    expect(getAudienceResonanceModel()).toBe('gemini-3.5-flash')
+    expect(getScriptGenerationModel()).toBe('gemini-3.5-flash')
   })
 })

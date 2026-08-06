@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { generateText } from '@/lib/vertexai/gemini'
+import { getScriptGenerationModel } from '@/lib/config/modelConfig'
 import { safeParseJsonFromText } from '@/lib/safeJson'
 import type { ParsedScript } from '@/lib/script/scriptParser'
 import type { CompletenessGap } from '@/lib/script/scriptCompleteness'
@@ -105,7 +106,7 @@ export async function POST(req: NextRequest) {
 
     const prompt = buildGapFillPrompt(body)
     const result = await generateText(prompt, {
-      model: 'gemini-2.5-flash',
+      model: getScriptGenerationModel(),
       temperature: 0.3,
       topP: 0.9,
       maxOutputTokens: 16000,

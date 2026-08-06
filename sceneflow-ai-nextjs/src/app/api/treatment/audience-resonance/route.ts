@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
-import { getGeminiTextModel } from '@/lib/config/modelConfig'
+import { getAudienceResonanceModel } from '@/lib/config/modelConfig'
 import { getAuthenticatedUserId } from '@/lib/projectAccess'
 import { safeParseJsonFromText } from '@/lib/safeJson'
 import { CreditService } from '@/services/CreditService'
@@ -247,7 +247,7 @@ export async function POST(request: NextRequest) {
     const needsCulturalReasoning = hasCulturalSignals(audienceDefinition.culturalSignals)
 
     const result = await generateText(prompt, {
-      model: getGeminiTextModel('flash'),
+      model: getAudienceResonanceModel(),
       temperature: 0.15,
       maxOutputTokens: needsCulturalReasoning ? 10000 : 8000,
       thinkingLevel: needsCulturalReasoning ? 'medium' : 'low',

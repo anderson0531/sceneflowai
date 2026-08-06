@@ -4,7 +4,9 @@ import { describe, expect, it } from 'vitest'
 import {
   GEMINI_TEXT_MODEL_CANDIDATES,
   GEMINI_TEXT_MODELS,
+  getAudienceResonanceModel,
   getGeminiTextModel,
+  getScriptGenerationModel,
   normalizeGeminiTextModel,
 } from '@/lib/config/modelConfig'
 import { GEMINI_QUOTA_FALLBACK_CHAIN } from '@/lib/vertexai/geminiTextFallback'
@@ -56,6 +58,8 @@ describe('Gateway-verified Gemini text defaults', () => {
     expect(GEMINI_TEXT_MODELS['3-flash']).toBe('gemini-3.5-flash')
     expect(GEMINI_TEXT_MODELS['3-flash-lite']).toBe('gemini-3.1-flash-lite')
     expect(getGeminiTextModel('pro')).toBe('gemini-3.1-pro-preview')
+    expect(getAudienceResonanceModel()).toBe('gemini-3.5-flash')
+    expect(getScriptGenerationModel()).toBe('gemini-3.5-flash')
   })
 
   it('keeps defaults and candidates inside the Gateway snapshot', () => {

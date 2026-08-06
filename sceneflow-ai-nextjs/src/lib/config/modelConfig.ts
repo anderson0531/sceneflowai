@@ -359,6 +359,21 @@ export function getGeminiTextModel(
 }
 
 /**
+ * Audience Resonance (Blueprint + Production script review) stays on Gemini 3.5 Flash
+ * even if other flash defaults change later.
+ */
+export function getAudienceResonanceModel(): string {
+  return GEMINI_TEXT_MODELS['3-flash']
+}
+
+/**
+ * Production script generation (v1/v2 + gap fill) stays on Gemini 3.5 Flash.
+ */
+export function getScriptGenerationModel(): string {
+  return GEMINI_TEXT_MODELS['3-flash']
+}
+
+/**
  * Text model ids worth probing against Vertex, roughly best-first.
  * Only Gateway-verified ids — no invented names like `gemini-3.0-flash`.
  */
