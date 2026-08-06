@@ -10,6 +10,7 @@ import {
   normalizeBlueprintGeminiVoiceId,
   synthesizeGeminiFlashMp3,
 } from '@/lib/tts/geminiFlashTts'
+import { NARRATION_CHUNK_BYTES } from '@/lib/tts/blueprintTtsConstants'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -90,7 +91,8 @@ export async function POST(request: NextRequest) {
         typeof (body as { prompt?: string }).prompt === 'string'
           ? (body as { prompt?: string }).prompt
           : undefined
-      const chunks = chunkNarrationText(text, 4000)
+      // Gemini path, so the same UTF-8 byte ceiling applies.
+      const chunks = chunkNarrationText(text, NARRATION_CHUNK_BYTES)
       const buffers: Buffer[] = []
       for (const chunk of chunks) {
         buffers.push(

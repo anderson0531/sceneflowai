@@ -12,10 +12,14 @@ const DIRECTOR_NOTES_STORAGE_KEY = 'sceneflow-blueprint-tts-director-notes'
 
 /**
  * Narration is chunked so a long read is not one enormous synthesis request.
- * Sentence-aware at ~1500 characters: bigger than the old 1200 hard slice, so
- * fewer round trips, and split on boundaries so no clip ends mid-word.
+ * Sentence-aware, and measured in UTF-8 bytes rather than characters: the speech
+ * API caps `input.text` at 4,000 bytes, which a Thai or Chinese narration reaches
+ * at roughly a third of the character count.
+ *
+ * Kept well under that ceiling on purpose — a smaller first clip is also a
+ * faster first note, and generation runs ahead of playback anyway.
  */
-const NARRATION_CHUNK_CHARS = 1500
+const NARRATION_CHUNK_BYTES = 1500
 
 /**
  * Clips generated ahead of the one playing. Playback is strictly ordered, so
@@ -316,7 +320,7 @@ export function useBlueprintTts() {
       if (!trimmed) return
       stopAny()
       setLoadingId(playId)
-      const chunks = chunkNarrationText(trimmed, NARRATION_CHUNK_CHARS)
+      const chunks = chunkNarrationText(trimmed, NARRATION_CHUNK_BYTES)
       try {
         if (!selectedVoiceId && voices.length === 0) {
           throw new Error('No voice available')
