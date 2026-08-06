@@ -1,6 +1,10 @@
 import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
 import { createHash } from 'crypto'
 
+// Re-exported so existing server callers keep one import for narration text and
+// its chunking. The implementation lives apart to stay client-bundle safe.
+export { chunkNarrationText } from '@/lib/blueprint/narrationChunks'
+
 export const BLUEPRINT_SECTION_ORDER: BlueprintFixSection[] = [
   'core',
   'story',
@@ -136,48 +140,6 @@ export function buildBlueprintSectionNarrationText(
 /** SHA-256 hex of narration text for cache invalidation. */
 export function hashSectionNarrationText(text: string): string {
   return createHash('sha256').update(text.trim()).digest('hex')
-}
-
-/** Split long narration at sentence/paragraph boundaries when possible. */
-export function chunkNarrationText(text: string, maxLen = 1200): string[] {
-  const trimmed = text.trim()
-  if (!trimmed) return []
-  if (trimmed.length <= maxLen) return [trimmed]
-
-  const chunks: string[] = []
-  const paragraphs = trimmed.split(/\n\n+/)
-  let current = ''
-
-  const flush = () => {
-    if (current.trim()) chunks.push(current.trim())
-    current = ''
-  }
-
-  for (const para of paragraphs) {
-    const sentences = para.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [para]
-    for (const sentence of sentences) {
-      const piece = sentence.trim()
-      if (!piece) continue
-      if (`${current} ${piece}`.trim().length > maxLen) {
-        flush()
-        if (piece.length > maxLen) {
-          let cursor = 0
-          while (cursor < piece.length) {
-            chunks.push(piece.slice(cursor, cursor + maxLen))
-            cursor += maxLen
-          }
-        } else {
-          current = piece
-        }
-      } else {
-        current = current ? `${current} ${piece}` : piece
-      }
-    }
-    flush()
-  }
-  flush()
-
-  return chunks.length > 0 ? chunks : [trimmed.slice(0, maxLen)]
 }
 
 export function getAllSectionNarrationTexts(

@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useBlueprintTtsContext } from '@/contexts/BlueprintTtsContext'
+import type { BlueprintTtsGenerationProgress } from '@/hooks/useBlueprintTts'
 import {
   buildBlueprintNarrationText,
   type BlueprintNarrationMode,
@@ -28,9 +29,12 @@ type BlueprintNarrationSectionProps = {
 }
 
 function narrationProgressLabel(
-  progress: { current: number; total: number; phase: 'generating' | 'playing' } | null
+  progress: BlueprintTtsGenerationProgress | null
 ): string | null {
   if (!progress) return null
+  // The translation pass covers the whole narration at once, so a per-clip
+  // count would read as stuck at zero.
+  if (progress.phase === 'translating') return 'Translating narration…'
   const action = progress.phase === 'generating' ? 'Generating' : 'Playing'
   return progress.total > 1
     ? `${action} narration (${progress.current}/${progress.total})…`
@@ -119,7 +123,7 @@ export function BlueprintNarrationSection({
               variant="outline"
               size="icon"
             >
-              {tts.generationProgress?.phase === 'generating' && isActive ? (
+              {tts.generationProgress?.phase !== 'playing' && isActive ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Play className="h-4 w-4" />
