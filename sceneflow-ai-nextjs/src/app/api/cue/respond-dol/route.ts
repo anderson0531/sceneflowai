@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDOL } from '@/services/DOL/DynamicOptimizationLayer';
 import { TaskType, TaskComplexity } from '@/types/dol';
 import { generateText } from '@/lib/vertexai/gemini';
+import { getGeminiTextModel } from '@/lib/config/modelConfig';
 
 type Role = 'system' | 'user' | 'assistant';
 
@@ -298,13 +299,13 @@ export async function POST(req: NextRequest) {
             const reply = await provider.call(
               finalMessages.map(m => m.content).join('\n\n'), 
               {}, 
-              provider.name === 'Gemini' ? 'gemini-3.0-flash' : 'gpt-4o-mini'
+              provider.name === 'Gemini' ? getGeminiTextModel('flash') : 'gpt-4o-mini'
             );
             console.log(`✅ Fallback: ${provider.name} success`);
             return new Response(JSON.stringify({ 
               reply, 
               provider: provider.name.toLowerCase(),
-              model: provider.name === 'Gemini' ? 'gemini-3.0-flash' : 'gpt-4o-mini',
+              model: provider.name === 'Gemini' ? getGeminiTextModel('flash') : 'gpt-4o-mini',
               fallback: true
             }), { 
               status: 200, 

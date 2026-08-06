@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
+import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { localeDirective } from '@/lib/prompts/localeDirective'
 
@@ -300,7 +301,7 @@ ${languageBlock}`
   console.log(`[Scene Analysis] Calling Gemini with ${tokenBudget} token budget for ${sceneCount} scenes`)
 
   const result = await generateText(prompt, {
-    model: 'gemini-3.0-flash',
+    model: getGeminiTextModel('flash'),
     temperature: 0.3,
     maxOutputTokens: tokenBudget,
   })

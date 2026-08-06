@@ -6,11 +6,11 @@ const mockPlatformModels: PlatformModel[] = [
   // Intelligence Models
   {
     id: '1',
-    modelId: GEMINI_TEXT_MODELS.flash,
+    modelId: GEMINI_TEXT_MODELS['3-flash'],
     platformId: 'google',
     platformType: PlatformType.GOOGLE,
     category: APICategory.INTELLIGENCE,
-    displayName: 'Gemini 1.5 Flash',
+    displayName: 'Gemini 3.5 Flash',
     description: 'High-performance intelligence model for complex tasks',
     costPerUnit: 0.00015,
     basePerformanceScore: 95,
@@ -24,11 +24,11 @@ const mockPlatformModels: PlatformModel[] = [
   },
   {
     id: '2',
-    modelId: GEMINI_TEXT_MODELS.flash,
+    modelId: GEMINI_TEXT_MODELS['3-flash'],
     platformId: 'google',
     platformType: PlatformType.GOOGLE,
     category: APICategory.INTELLIGENCE,
-    displayName: 'Gemini 2.5 Flash',
+    displayName: 'Gemini 3.5 Flash',
     description: 'Latest flash model with improved quality and speed',
     costPerUnit: 0.000075,
     basePerformanceScore: 90,

@@ -12,6 +12,7 @@
 
 import { CreditLedger, AIUsage } from '@/models'
 import { CREDIT_EXCHANGE_RATE, PROVIDER_COSTS_USD } from './creditCosts'
+import { getGeminiTextModel } from '@/lib/config/modelConfig'
 
 // =============================================================================
 // TYPES
@@ -376,8 +377,8 @@ function mapOperationToModel(operation: string): string {
   if (operation.includes('imagen')) return 'imagen-3.0-generate-001'
   if (operation.includes('veo_omni') || operation.includes('veo_fast')) return 'gemini-omni-flash-preview'
   if (operation.includes('veo_quality')) return 'veo-3.1-quality'
-  if (operation.includes('gemini_flash')) return 'gemini-3.0-flash'
-  if (operation.includes('gemini_pro')) return 'gemini-3.1-pro-preview'
+  if (operation.includes('gemini_flash')) return getGeminiTextModel('flash')
+  if (operation.includes('gemini_pro')) return getGeminiTextModel('pro')
   if (operation.includes('elevenlabs_tts')) return 'eleven_turbo_v2_5'
   if (operation.includes('google_music')) return 'lyria-002'
   if (operation.includes('sfx')) return 'sound_generation_v1'
