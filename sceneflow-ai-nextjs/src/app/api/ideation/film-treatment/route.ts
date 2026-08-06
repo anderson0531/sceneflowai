@@ -10,6 +10,7 @@ import {
   resolveContentIntent,
   resolveProductionFormat,
 } from '@/lib/content/contentIntent'
+import { getGeminiProductModel } from '@/lib/config/modelConfig'
 import { BEAT_STRUCTURES, type BeatStructureKey } from '@/lib/treatment/structures'
 import { repairTreatment } from '@/lib/treatment/validate'
 import {
@@ -605,7 +606,7 @@ async function generateFilmTreatment(
   console.log(`[Film Treatment] Calling Vertex AI Gemini (thinkingBudget=${thinkingBudget})...`)
   
   const generation = await generateText(prompt, {
-    model: 'gemini-2.5-flash',
+    model: getGeminiProductModel('blueprint'),
     temperature: 0.3,
     topP: 0.9,
     responseMimeType: 'application/json',
@@ -815,7 +816,7 @@ Respond with valid JSON only:
   console.log('[Film Treatment] Analyzing core concept with Vertex AI Gemini...')
 
   const result = await generateText(prompt, {
-    model: 'gemini-2.5-flash',
+    model: getGeminiProductModel('blueprint'),
     temperature: 0.3,
     topP: 0.9,
     responseMimeType: 'application/json',

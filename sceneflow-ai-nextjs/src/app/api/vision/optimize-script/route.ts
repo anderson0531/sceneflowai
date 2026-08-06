@@ -7,6 +7,7 @@ import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
 import { ensureSceneBeats } from '@/lib/script/beatMigration'
 import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
+import { getGeminiProductModel } from '@/lib/config/modelConfig'
 
 export const maxDuration = 600 // 10min for large scripts with retries + parallel batches
 export const runtime = 'nodejs'
@@ -764,7 +765,7 @@ Return ONLY valid JSON:
   
   try {
     const result = await generateText(prompt, {
-      model: 'gemini-2.5-flash',
+      model: getGeminiProductModel('script'),
       temperature: 0.2,
       maxOutputTokens: 4000,
       responseMimeType: 'application/json',
@@ -1134,7 +1135,7 @@ RULES:
   
   // First attempt - using Gemini 2.5 Flash for optimization
   let result = await generateText(prompt, {
-    model: 'gemini-2.5-flash',
+    model: getGeminiProductModel('script'),
     temperature,
     maxOutputTokens: estimatedTokens,
     responseMimeType: 'application/json',
@@ -1157,7 +1158,7 @@ RULES:
       console.warn(`[Script Optimization] Response truncated (MAX_TOKENS). Retrying with ${retryTokens} tokens (${Math.round(remainingMs/1000)}s remaining)...`)
       
       result = await generateText(prompt, {
-        model: 'gemini-2.5-flash',
+        model: getGeminiProductModel('script'),
         temperature,
         maxOutputTokens: retryTokens,
         responseMimeType: 'application/json',

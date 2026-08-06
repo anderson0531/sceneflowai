@@ -314,31 +314,53 @@ export function getEnvImagenQuality(): ImagenQualityTier {
  * Model Configuration for 2026 Vertex AI Environment
  */
 
-export type GeminiThinkingLevel = 'minimal' | 'low' | 'medium' | 'high';
+export type GeminiThinkingLevel = 'minimal' | 'low' | 'medium' | 'high'
 
 /**
- * Primary text models — IDs must match Vertex / AI Gateway catalogs.
- * Verified against https://ai-gateway.vercel.sh/v1/models (2026-08-06).
- * `gemini-3.0-flash` is not a real model id (production 404 → silent 2.5 downgrade).
+ * Product-facing Gemini pins. Bump ONLY `workhorse` when Google ships a new GA Flash,
+ * then refresh the Gateway fixture and run tests. Set `GEMINI_MODEL` for emergency rollback.
+ *
+ * Verified against https://ai-gateway.vercel.sh/v1/models.
+ */
+export const GEMINI_PRODUCT_MODELS = {
+  /** Highest GA Flash — Series / Blueprint / Script / AR all resolve here. */
+  workhorse: 'gemini-3.6-flash',
+  /** Previous GA Flash used in the 404/quota fallback ladder. */
+  prior: 'gemini-3.5-flash',
+  lite: 'gemini-3.5-flash-lite',
+  /** Preview quality tier (guided revise full-balance, revise-scene). Not the GA workhorse. */
+  pro: 'gemini-3.1-pro-preview',
+} as const
+
+export type GeminiProductSurface =
+  | 'series'
+  | 'blueprint'
+  | 'script'
+  | 'audience_resonance'
+
+/**
+ * Compatibility map — keep existing `GEMINI_TEXT_MODELS['3-flash']` call sites working.
+ * `3-flash` tracks the GA workhorse so a one-line bump upgrades the whole app.
  */
 export const GEMINI_TEXT_MODELS = {
-  '3-flash': 'gemini-3.5-flash',
-  '3-flash-lite': 'gemini-3.1-flash-lite',
-  '3-pro': 'gemini-3.1-pro-preview',
-} as const;
+  '3-flash': GEMINI_PRODUCT_MODELS.workhorse,
+  '3-flash-lite': GEMINI_PRODUCT_MODELS.lite,
+  '3-pro': GEMINI_PRODUCT_MODELS.pro,
+} as const
 
 /** Previous models, kept for fallback reference */
 export const GEMINI_TEXT_MODELS_PREVIOUS = {
   '2.5-flash': 'gemini-2.5-flash',
-} as const;
+} as const
 
 /**
  * Stale / invented ids that still appear in env overrides and older call sites.
  * Mapped before any Vertex request so they never 404.
  */
 const GEMINI_TEXT_MODEL_ALIASES: Record<string, string> = {
-  'gemini-3.0-flash': GEMINI_TEXT_MODELS['3-flash'],
-  'gemini-3.1-flash-lite-preview': GEMINI_TEXT_MODELS['3-flash-lite'],
+  'gemini-3.0-flash': GEMINI_PRODUCT_MODELS.workhorse,
+  'gemini-3.1-flash-lite-preview': GEMINI_PRODUCT_MODELS.lite,
+  'gemini-3.1-flash-lite': GEMINI_PRODUCT_MODELS.lite,
 }
 
 /** Remap known-bad aliases to Gateway-verified Vertex model ids. */
@@ -348,29 +370,32 @@ export function normalizeGeminiTextModel(model: string): string {
 }
 
 /**
+ * Resolves the GA workhorse (or env override) for a product surface.
+ * Series, Blueprint, Script, and Audience Resonance all share this pin.
+ */
+export function getGeminiProductModel(_surface: GeminiProductSurface): string {
+  const fromEnv = process.env.GEMINI_MODEL?.trim()
+  return normalizeGeminiTextModel(fromEnv || GEMINI_PRODUCT_MODELS.workhorse)
+}
+
+/**
  * Resolves the correct model ID based on desired tier and depth.
- * This is the function called by your Route.ts and Gemini.ts.
  */
 export function getGeminiTextModel(
   tier: 'flash' | 'pro' = 'flash'
 ): string {
-  if (tier === 'pro') return GEMINI_TEXT_MODELS['3-pro']
-  return GEMINI_TEXT_MODELS['3-flash']
+  if (tier === 'pro') return GEMINI_PRODUCT_MODELS.pro
+  return getGeminiProductModel('blueprint')
 }
 
-/**
- * Audience Resonance (Blueprint + Production script review) stays on Gemini 3.5 Flash
- * even if other flash defaults change later.
- */
+/** Audience Resonance (Blueprint + Production) → GA workhorse. */
 export function getAudienceResonanceModel(): string {
-  return GEMINI_TEXT_MODELS['3-flash']
+  return getGeminiProductModel('audience_resonance')
 }
 
-/**
- * Production script generation (v1/v2 + gap fill) stays on Gemini 3.5 Flash.
- */
+/** Script generation (v1/v2 + gaps + optimize) → GA workhorse. */
 export function getScriptGenerationModel(): string {
-  return GEMINI_TEXT_MODELS['3-flash']
+  return getGeminiProductModel('script')
 }
 
 /**
@@ -378,13 +403,14 @@ export function getScriptGenerationModel(): string {
  * Only Gateway-verified ids — no invented names like `gemini-3.0-flash`.
  */
 export const GEMINI_TEXT_MODEL_CANDIDATES = [
-  'gemini-3.6-flash',
-  'gemini-3.5-flash',
+  GEMINI_PRODUCT_MODELS.workhorse,
+  GEMINI_PRODUCT_MODELS.prior,
   'gemini-3-flash',
-  'gemini-3.1-flash-lite',
-  'gemini-3.1-pro-preview',
-  'gemini-2.5-flash',
-] as const;
+  GEMINI_PRODUCT_MODELS.lite,
+  GEMINI_PRODUCT_MODELS.pro,
+  GEMINI_TEXT_MODELS_PREVIOUS['2.5-flash'],
+] as const
+
 
 
 export type GeminiModelFamily = '2.5' | '3.0';

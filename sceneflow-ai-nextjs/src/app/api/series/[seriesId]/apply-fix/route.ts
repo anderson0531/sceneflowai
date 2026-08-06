@@ -16,6 +16,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { ApplySeriesFixRequest, ApplySeriesFixResponse } from '@/types/series'
 import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { localeDirective } from '@/lib/prompts/localeDirective'
+import { getGeminiProductModel } from '@/lib/config/modelConfig'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 120 // 2 minutes for fix generation
@@ -324,7 +325,7 @@ Return ONLY valid JSON:
 ${languageBlock}`
 
     const response = await callLLM(
-      { provider: 'gemini', model: 'gemini-2.5-flash', maxOutputTokens: 8192 },
+      { provider: 'gemini', model: getGeminiProductModel('series'), maxOutputTokens: 8192 },
       prompt
     )
     
@@ -402,7 +403,7 @@ IMPORTANT: Return exactly ${targetIndices.length} entries, one for each episode.
 ${languageBlock}`
 
   const response = await callLLM(
-    { provider: 'gemini', model: 'gemini-2.5-flash', maxOutputTokens: 16384 },
+    { provider: 'gemini', model: getGeminiProductModel('series'), maxOutputTokens: 16384 },
     prompt
   )
   
@@ -474,7 +475,7 @@ Return ONLY valid JSON:
 ${languageBlock}`
 
   const response = await callLLM(
-    { provider: 'gemini', model: 'gemini-2.5-flash', maxOutputTokens: 4096 },
+    { provider: 'gemini', model: getGeminiProductModel('series'), maxOutputTokens: 4096 },
     prompt
   )
   
@@ -535,7 +536,7 @@ Return ONLY valid JSON:
 ${languageBlock}`
 
   const response = await callLLM(
-    { provider: 'gemini', model: 'gemini-2.5-flash', maxOutputTokens: 4096 },
+    { provider: 'gemini', model: getGeminiProductModel('series'), maxOutputTokens: 4096 },
     prompt
   )
   
@@ -602,7 +603,7 @@ Return ONLY valid JSON:
 ${languageBlock}`
 
   const response = await callLLM(
-    { provider: 'gemini', model: 'gemini-2.5-flash', maxOutputTokens: 8192 },
+    { provider: 'gemini', model: getGeminiProductModel('series'), maxOutputTokens: 8192 },
     prompt
   )
   
@@ -668,7 +669,7 @@ Return ONLY valid JSON:
 ${languageBlock}`
 
   const response = await callLLM(
-    { provider: 'gemini', model: 'gemini-2.5-flash', maxOutputTokens: 4096 },
+    { provider: 'gemini', model: getGeminiProductModel('series'), maxOutputTokens: 4096 },
     prompt
   )
   

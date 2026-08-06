@@ -1,14 +1,18 @@
 import {
-  GEMINI_TEXT_MODELS,
+  GEMINI_PRODUCT_MODELS,
   GEMINI_TEXT_MODELS_PREVIOUS,
 } from '@/lib/config/modelConfig'
 import { isRetryableError } from '@/lib/utils/retry'
 
-/** Ordered quota / 404 fallback: lighter models / separate quota pools. */
+/**
+ * Ordered quota / 404 fallback: workhorse → prior GA → lite → 2.5.
+ * Pro leads so heavy revise calls can step down to the GA ladder.
+ */
 export const GEMINI_QUOTA_FALLBACK_CHAIN = [
-  GEMINI_TEXT_MODELS['3-pro'],
-  GEMINI_TEXT_MODELS['3-flash'],
-  GEMINI_TEXT_MODELS['3-flash-lite'],
+  GEMINI_PRODUCT_MODELS.pro,
+  GEMINI_PRODUCT_MODELS.workhorse,
+  GEMINI_PRODUCT_MODELS.prior,
+  GEMINI_PRODUCT_MODELS.lite,
   GEMINI_TEXT_MODELS_PREVIOUS['2.5-flash'],
 ] as const
 
