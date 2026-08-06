@@ -254,6 +254,37 @@ describe('Job lifecycle', () => {
     expect(start).toContain('status: 202')
   })
 
+  it('fails fast without charging when Inngest dispatch fails', () => {
+    const start = readSource('src/app/api/vision/review-script/start/route.ts')
+    const jobService = readSource('src/lib/jobs/jobService.ts')
+
+    expect(start).toContain('dispatched')
+    expect(start).toContain('status: 503')
+    expect(start).toContain('background jobs are not configured')
+    // Charge must come after the dispatch guard, not before.
+    const dispatchGuard = start.indexOf('if (!dispatched)')
+    const chargeCall = start.indexOf('CreditService.charge')
+    expect(dispatchGuard).toBeGreaterThan(-1)
+    expect(chargeCall).toBeGreaterThan(dispatchGuard)
+
+    expect(jobService).toContain('isInngestDispatchConfigured')
+    expect(jobService).toContain("patch.status === 'cancelled'")
+  })
+
+  it('exposes cancel for queued AR jobs via PATCH /api/jobs and the dock', () => {
+    const jobsApi = readSource('src/app/api/jobs/route.ts')
+    const jobService = readSource('src/lib/jobs/jobService.ts')
+    const dock = readSource('src/components/vision/BackgroundJobDock.tsx')
+    const visionPage = readSource('src/app/dashboard/workflow/vision/[projectId]/page.tsx')
+
+    expect(jobsApi).toContain("action !== 'cancel'")
+    expect(jobsApi).toContain('cancelGenerationJob')
+    expect(jobService).toContain('export async function cancelGenerationJob')
+    expect(dock).toContain('onCancel')
+    expect(dock).toContain("job.status === 'cancelled'")
+    expect(visionPage).toContain('onCancel={() => void scriptAnalysisJob.cancel()}')
+  })
+
   it('scopes job reads to the session user', () => {
     const jobs = readSource('src/app/api/jobs/route.ts')
 

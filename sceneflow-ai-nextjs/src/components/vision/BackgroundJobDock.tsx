@@ -18,6 +18,7 @@ export function BackgroundJobDock({
   title,
   activeLabel,
   onDismiss,
+  onCancel,
   onViewResult,
   viewResultLabel = 'View results',
 }: {
@@ -25,6 +26,8 @@ export function BackgroundJobDock({
   title: string
   activeLabel?: string
   onDismiss: () => void
+  /** Cancel an in-flight job (queued/processing). Distinct from dismiss. */
+  onCancel?: () => void
   onViewResult?: () => void
   viewResultLabel?: string
 }) {
@@ -32,7 +35,8 @@ export function BackgroundJobDock({
 
   const isFailed = job.status === 'failed'
   const isCompleted = job.status === 'completed'
-  const isActive = !isFailed && !isCompleted
+  const isCancelled = job.status === 'cancelled'
+  const isActive = !isFailed && !isCompleted && !isCancelled
   const progress = Math.min(100, Math.max(0, job.progress ?? 0))
 
   const analyzed = Number(job.result?.analyzedScenes ?? 0)
@@ -45,7 +49,7 @@ export function BackgroundJobDock({
         <div className="mt-0.5 shrink-0">
           {isActive ? (
             <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
-          ) : isFailed ? (
+          ) : isFailed || isCancelled ? (
             <AlertTriangle className="h-4 w-4 text-amber-400" />
           ) : (
             <CheckCircle2 className="h-4 w-4 text-emerald-400" />
@@ -59,9 +63,9 @@ export function BackgroundJobDock({
             <p className="mt-0.5 text-[11px] text-slate-400">
               {activeLabel || 'Working…'} — you can keep editing, we&apos;ll notify you
             </p>
-          ) : isFailed ? (
+          ) : isFailed || isCancelled ? (
             <p className="mt-0.5 text-[11px] text-amber-300/90">
-              {job.error || 'Something went wrong.'}
+              {job.error || (isCancelled ? 'Cancelled.' : 'Something went wrong.')}
             </p>
           ) : (
             <p className="mt-0.5 text-[11px] text-slate-400">
@@ -77,6 +81,17 @@ export function BackgroundJobDock({
                 style={{ width: `${Math.max(4, progress)}%` }}
               />
             </div>
+          ) : null}
+
+          {isActive && onCancel ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onCancel}
+              className="mt-2 h-7 w-full border-slate-600 bg-transparent text-[11px] text-slate-200 hover:bg-slate-800"
+            >
+              Cancel
+            </Button>
           ) : null}
 
           {isCompleted && onViewResult ? (
