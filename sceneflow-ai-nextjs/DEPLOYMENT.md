@@ -47,6 +47,24 @@ After deployment, monitor at:
 - **Production URL**: https://sceneflowai.studio
 - **Admin Dashboard**: https://sceneflowai.studio/admin/dol
 
+## Background jobs (Inngest + HTTP fallback)
+
+Production Studio Audience Resonance (`script_analysis`) and full-blueprint
+guided-revise prefer **Inngest**. Set these on the Vercel Production environment
+(or connect the Inngest Vercel integration), then redeploy:
+
+| Variable | Purpose |
+|----------|---------|
+| `INNGEST_EVENT_KEY` | Send `generation/job.queued` events |
+| `INNGEST_SIGNING_KEY` | Verify `/api/inngest` serve callbacks |
+| `INTERNAL_JOB_SECRET` | Auth for HTTP step workers when Inngest is missing |
+| `NEXT_PUBLIC_APP_URL` | Absolute app URL so step `fetch` targets production |
+
+Confirm Inngest syncs functions from `src/app/api/inngest/route.ts` (includes
+`processScriptAnalysis`). Without `INNGEST_EVENT_KEY`, start routes still queue
+work via internal step workers (`/api/internal/jobs/script-analysis/step` and
+`/api/internal/jobs/blueprint-guided-revise/step`).
+
 ## Troubleshooting
 
 If deployment fails:

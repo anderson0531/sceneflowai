@@ -255,32 +255,28 @@ describe('Job lifecycle', () => {
     expect(start).toContain('status: 202')
   })
 
-  it('fails fast without charging when Inngest dispatch fails', () => {
+  it('falls back to an HTTP step worker when Inngest does not dispatch', () => {
     const start = readSource('src/app/api/vision/review-script/start/route.ts')
     const jobService = readSource('src/lib/jobs/jobService.ts')
 
-    expect(start).toContain('isInngestDispatchConfigured')
-    expect(start).toContain('dispatched')
-    expect(start).toContain('status: 503')
-    expect(start).toContain('background jobs are not configured')
-    expect(start).toContain("code: 'INNGEST_NOT_CONFIGURED'")
-    // Cancel prior jobs before the config guard so retries also clear orphans.
-    const cancelCall = start.indexOf('cancelActiveJobsForProject')
-    const configGuard = start.indexOf('if (!isInngestDispatchConfigured())')
+    expect(start).toContain('scheduleScriptAnalysisStep(job.id)')
+    expect(start).toContain("dispatch: dispatched ? 'inngest' : 'step_worker'")
+    expect(start).not.toContain('isInngestDispatchConfigured')
+    expect(start).not.toContain("code: 'INNGEST_NOT_CONFIGURED'")
+    expect(start).not.toContain('status: 503')
+    // Charge after create; step worker is scheduled when !dispatched.
     const createCall = start.indexOf('await createGenerationJob')
-    expect(cancelCall).toBeGreaterThan(-1)
-    expect(configGuard).toBeGreaterThan(cancelCall)
-    expect(createCall).toBeGreaterThan(configGuard)
-    // Charge must come after the dispatch guard, not before.
-    const dispatchGuard = start.indexOf('if (!dispatched)')
+    const scheduleCall = start.indexOf('scheduleScriptAnalysisStep(job.id)')
     const chargeCall = start.indexOf('CreditService.charge')
-    expect(dispatchGuard).toBeGreaterThan(-1)
-    expect(chargeCall).toBeGreaterThan(dispatchGuard)
+    expect(createCall).toBeGreaterThan(-1)
+    expect(scheduleCall).toBeGreaterThan(createCall)
+    expect(chargeCall).toBeGreaterThan(scheduleCall)
 
     expect(jobService).toContain('isInngestDispatchConfigured')
     expect(jobService).toContain('cancelActiveJobsForProject')
     expect(jobService).toContain("patch.status === 'cancelled'")
     expect(jobService).toContain('caller must handle')
+    expect(jobService).toContain('AR')
     expect(jobService).not.toContain('job remains queued')
   })
 
@@ -308,18 +304,13 @@ describe('Job lifecycle', () => {
     expect(visionPage).not.toContain('Analysis already running')
     expect(visionPage).toContain("job.status === 'cancelled'")
     expect(visionPage).toContain('Analysis cancelled')
-    expect(visionPage).toContain('INNGEST_NOT_CONFIGURED')
-    expect(visionPage).toContain('Audience Resonance isn’t available right now')
-    expect(visionPage).toContain('INNGEST_EVENT_KEY')
+    expect(visionPage).not.toContain('INNGEST_NOT_CONFIGURED')
+    expect(visionPage).not.toContain('Audience Resonance isn’t available right now')
+    expect(visionPage).not.toContain('INNGEST_EVENT_KEY')
     expect(visionPage).toContain('onCancelReviews={() => void scriptAnalysisJob.cancel()}')
     expect(scriptPanel).toContain('onCancelReviews')
     expect(hook).toContain('cancelActive')
     expect(hook).toContain('rehydrate')
-  })
-
-  it('returns a stable code when Inngest is not configured', () => {
-    const start = readSource('src/app/api/vision/review-script/start/route.ts')
-    expect(start).toContain("code: 'INNGEST_NOT_CONFIGURED'")
   })
 
   it('scopes job reads to the session user', () => {

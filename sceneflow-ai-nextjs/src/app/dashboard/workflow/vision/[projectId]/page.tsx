@@ -6443,19 +6443,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const data = await res.json().catch(() => ({}))
 
         if (!res.ok) {
-          if (res.status === 503 || data?.code === 'INNGEST_NOT_CONFIGURED') {
-            console.error('[Script Review] Background jobs not configured:', data)
-            scriptAnalysisJob.dismiss()
-            toast.error('Audience Resonance isn’t available right now', {
-              description:
-                'Background processing (Inngest) isn’t configured for this environment, so analysis can’t start. Ask an admin to set INNGEST_EVENT_KEY.',
-              duration: 14000,
-            })
-            setIsGeneratingReviews(false)
-            useStore.getState().setIsGeneratingReviews(false)
-            setAnalysisHandoffOpen(false)
-            return
-          }
           throw new Error(data?.error || 'Failed to start analysis')
         }
 
