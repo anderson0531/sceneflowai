@@ -245,11 +245,12 @@ describe('Job lifecycle', () => {
     expect(worker).toMatch(/inngestFunctions\s*=\s*\[[\s\S]*processScriptAnalysis/)
   })
 
-  it('enqueues rather than analyzing inline, and rejects duplicate runs', () => {
+  it('enqueues rather than analyzing inline, and replaces prior active jobs', () => {
     const start = readSource('src/app/api/vision/review-script/start/route.ts')
 
-    expect(start).toContain('findActiveJob')
-    expect(start).toContain('alreadyRunning')
+    expect(start).toContain('cancelActiveJobsForProject')
+    expect(start).toContain('replacedPreviousCount')
+    expect(start).not.toContain('alreadyRunning')
     expect(start).toContain('baseScriptUpdatedAt')
     expect(start).toContain('status: 202')
   })
@@ -263,10 +264,12 @@ describe('Job lifecycle', () => {
     expect(start).toContain('status: 503')
     expect(start).toContain('background jobs are not configured')
     expect(start).toContain("code: 'INNGEST_NOT_CONFIGURED'")
-    // Guard before create — no queued orphan when the key is missing.
+    // Cancel prior jobs before the config guard so retries also clear orphans.
+    const cancelCall = start.indexOf('cancelActiveJobsForProject')
     const configGuard = start.indexOf('if (!isInngestDispatchConfigured())')
     const createCall = start.indexOf('await createGenerationJob')
-    expect(configGuard).toBeGreaterThan(-1)
+    expect(cancelCall).toBeGreaterThan(-1)
+    expect(configGuard).toBeGreaterThan(cancelCall)
     expect(createCall).toBeGreaterThan(configGuard)
     // Charge must come after the dispatch guard, not before.
     const dispatchGuard = start.indexOf('if (!dispatched)')
@@ -281,7 +284,7 @@ describe('Job lifecycle', () => {
     expect(jobService).not.toContain('job remains queued')
   })
 
-  it('exposes cancel for queued AR jobs via PATCH /api/jobs and the dock', () => {
+  it('exposes cancel for in-flight AR jobs via dock and auto-replaces on start', () => {
     const jobsApi = readSource('src/app/api/jobs/route.ts')
     const jobService = readSource('src/lib/jobs/jobService.ts')
     const dock = readSource('src/components/vision/BackgroundJobDock.tsx')
@@ -299,16 +302,15 @@ describe('Job lifecycle', () => {
     expect(dock).toContain("job.status === 'cancelled'")
     expect(dock).toContain('isActive && onCancel')
     expect(visionPage).toContain('onCancel={() => void scriptAnalysisJob.cancel()}')
-    expect(visionPage).toContain("label: 'Cancel analysis'")
-    expect(visionPage).toContain("label: 'Clear stuck analysis'")
-    expect(visionPage).toContain('cancelActive')
-    expect(visionPage).toContain('scriptAnalysisJob.rehydrate')
-    expect(visionPage).toContain('INNGEST_EVENT_KEY')
-    expect(visionPage).toContain('nothing stuck in the queue')
+    expect(visionPage).toContain('Analysis restarted')
+    expect(visionPage).toContain('replacedPreviousCount')
+    expect(visionPage).not.toContain("label: 'Clear stuck analysis'")
+    expect(visionPage).not.toContain('Analysis already running')
     expect(visionPage).toContain("job.status === 'cancelled'")
     expect(visionPage).toContain('Analysis cancelled')
     expect(visionPage).toContain('INNGEST_NOT_CONFIGURED')
     expect(visionPage).toContain('Audience Resonance isn’t available right now')
+    expect(visionPage).toContain('INNGEST_EVENT_KEY')
     expect(visionPage).toContain('onCancelReviews={() => void scriptAnalysisJob.cancel()}')
     expect(scriptPanel).toContain('onCancelReviews')
     expect(hook).toContain('cancelActive')
