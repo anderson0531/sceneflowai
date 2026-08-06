@@ -45,6 +45,7 @@ import {
   getScoreTextClassName,
   SCORE_READY_THRESHOLD,
 } from '@/lib/product/scoreThresholds'
+import { BLUEPRINT_AR_MAX_VISIBLE_RECS } from '@/lib/treatment/blueprintAudienceScorer'
 
 const ResonanceRadarChart = dynamic(
   () =>
@@ -600,12 +601,19 @@ export function AudienceResonancePanelV3({
                 <p className="text-xs text-gray-400">
                   {arText('audienceResonance.summary', analysis.summary)}
                 </p>
-                {!analysis.isReadyForProduction && pointsToReady > 0 && (
+                {analysis.isReadyForProduction ? (
+                  analysis.deductions.length > 0 || sortedRecs.length > 0 ? (
+                    <p className="text-[11px] text-emerald-400/90 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" />
+                      {t('readyOptionalPolish')}
+                    </p>
+                  ) : null
+                ) : pointsToReady > 0 ? (
                   <p className="text-[11px] text-cyan-400/90 flex items-center gap-1">
                     <TrendingUp className="w-3 h-3" />
                     {t('pointsToReach', { points: pointsToReady, target: READY_FOR_PRODUCTION_THRESHOLD_V3 })}
                   </p>
-                )}
+                ) : null}
                 <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
                   <div
                     className={cn(
@@ -651,6 +659,9 @@ export function AudienceResonancePanelV3({
                   <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wide">
                     {t('scoreBreakdown')}
                   </h4>
+                  <p className="text-[11px] text-gray-500 leading-snug">
+                    {t('scoreBreakdownBalancedHint')}
+                  </p>
                   <ul className="space-y-1">
                     {analysis.deductions.map((d, i) => (
                       <li
@@ -677,7 +688,9 @@ export function AudienceResonancePanelV3({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-medium text-amber-400/90 uppercase tracking-wide">
-                      {t('recommendations')}
+                      {analysis.isReadyForProduction
+                        ? t('optionalPolish')
+                        : t('recommendations')}
                     </h4>
                     <button
                       type="button"
@@ -688,7 +701,7 @@ export function AudienceResonancePanelV3({
                       {ASSISTANT.short}
                     </button>
                   </div>
-                  {sortedRecs.slice(0, 5).map((rec) => {
+                  {sortedRecs.slice(0, BLUEPRINT_AR_MAX_VISIBLE_RECS).map((rec) => {
                     const recTitle = arText(
                       `audienceResonance.recommendations[${rec.id}].title`,
                       rec.title || ''
@@ -697,6 +710,10 @@ export function AudienceResonancePanelV3({
                       `audienceResonance.recommendations[${rec.id}].text`,
                       rec.text
                     )
+                    const isPolish =
+                      analysis.isReadyForProduction ||
+                      rec.priority === 'low' ||
+                      rec.priority === 'optional'
                     return (
                     <div
                       key={rec.id}
@@ -706,9 +723,16 @@ export function AudienceResonancePanelV3({
                         <span className="text-sm text-white font-medium">
                           {recTitle || recText.slice(0, 60)}
                         </span>
-                        <span className="text-[10px] text-red-400/90 font-mono">
-                          {t('minusPoints', { points: rec.pointsDeducted })}
-                        </span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {isPolish && (
+                            <span className="text-[9px] uppercase tracking-wide text-emerald-400/80 border border-emerald-500/30 rounded px-1 py-0.5">
+                              {t('polishBadge')}
+                            </span>
+                          )}
+                          <span className="text-[10px] text-red-400/90 font-mono">
+                            {t('minusPoints', { points: rec.pointsDeducted })}
+                          </span>
+                        </div>
                       </div>
                       <p className="text-xs text-gray-500 line-clamp-2">{recText}</p>
                       <button

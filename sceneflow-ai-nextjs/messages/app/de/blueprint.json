@@ -274,7 +274,11 @@
     "strengths": "Stärken",
     "categoryScores": "Kategorie: Highscores",
     "jumpToSection": "Zum Abschnitt Matching Blueprint springen",
-    "emptyHint": "Speichern Sie Ihre Zielgruppe und analysieren Sie dann, wie Ihr Blueprint bei dieser Zielgruppe ankommt."
+    "emptyHint": "Speichern Sie Ihre Zielgruppe und analysieren Sie dann, wie Ihr Blueprint bei dieser Zielgruppe ankommt.",
+    "readyOptionalPolish": "Ready for production — optional polish below",
+    "scoreBreakdownBalancedHint": "Impact shown per gap; the headline score uses balanced weighting so a full polish list does not crater a strong blueprint.",
+    "optionalPolish": "Optional polish",
+    "polishBadge": "Polish"
   },
   "heroImage": {
     "uploading": "Wird hochgeladen...",

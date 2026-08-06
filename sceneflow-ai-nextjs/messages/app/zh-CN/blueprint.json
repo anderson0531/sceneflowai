@@ -274,7 +274,11 @@
     "strengths": "优点",
     "categoryScores": "类别分数",
     "jumpToSection": "跳转到匹配的Blueprint部分",
-    "emptyHint": "保存您的目标受众，然后分析您的蓝图如何与该受众产生共鸣。"
+    "emptyHint": "保存您的目标受众，然后分析您的蓝图如何与该受众产生共鸣。",
+    "readyOptionalPolish": "Ready for production — optional polish below",
+    "scoreBreakdownBalancedHint": "Impact shown per gap; the headline score uses balanced weighting so a full polish list does not crater a strong blueprint.",
+    "optionalPolish": "Optional polish",
+    "polishBadge": "Polish"
   },
   "heroImage": {
     "uploading": "正在上传...",
