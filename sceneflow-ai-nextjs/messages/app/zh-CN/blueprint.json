@@ -120,11 +120,11 @@
   "help": {
     "title": "Flow如何创建您的故事",
     "intro": "Flow使用行业标准技术分析您的概念并生成专业的薄膜处理：",
-    "reasoning": "<strong>AI叙事推理</strong>- Flow将在侧面板的“推理”选项卡中<em>解释为什么</em>选择特定的主角、主题和创意方向。",
+    "reasoning": "<strong>AI叙事推理</strong>- Flow将在侧面板的“叙事”选项卡中<em>解释为什么</em>选择特定的主角、主题和创意方向。",
     "threeAct": "<strong>三幕结构</strong>-您的故事会自动组织成设置、对抗和解决方案。",
     "characterDev": "<strong>角色发展</strong>-主要角色和有动机、弧线和关系的辅助角色。",
     "visualStyle": "<strong>视觉风格指南</strong>-根据您的流派量身定制的色调、情绪和电影摄影建议。",
-    "decisions": "人工智能可能会做出<strong>创造性的决定</strong>（结合人物，强调主题） ，以加强叙事-打开侧面板的“推理”选项卡以了解这些选择。"
+    "decisions": "人工智能可能会做出<strong>创造性的决定</strong>（结合人物，强调主题） ，以加强叙事-打开侧面板的“叙事”选项卡以了解这些选择。"
   },
   "fields": {
     "title": "标题",
@@ -233,7 +233,7 @@
     "tabs": {
       "resonance": "共振",
       "collaborate": "协作",
-      "reasoning": "原由"
+      "reasoning": "叙事"
     },
     "collab": {
       "creatingLink": "正在创建链接…",

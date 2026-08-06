@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-05T11:43:43.834Z",
+  "generatedAt": "2026-08-06T06:07:16.261Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -334,11 +334,11 @@
       "reasoning.wantDifferentEmphasis": "123b007694251519",
       "help.title": "df079a603c0e77e5",
       "help.intro": "5d16899db90813c6",
-      "help.reasoning": "5363ad28b2d84175",
+      "help.reasoning": "0b4f98a258d79d0e",
       "help.threeAct": "208745fa8bd4ed8b",
       "help.characterDev": "f94352672dee5baa",
       "help.visualStyle": "0903b042396a894c",
-      "help.decisions": "bf00b53404aabc23",
+      "help.decisions": "c910628a8576951a",
       "fields.title": "7e8cd2056da73a7f",
       "fields.logline": "de976131fa039019",
       "fields.genre": "6da795a8664f37f6",
@@ -430,7 +430,7 @@
       "nextStep.generating": "0dc92f139a23e73e",
       "sidePanel.tabs.resonance": "1a5d3460cc2051d3",
       "sidePanel.tabs.collaborate": "39ae268766078797",
-      "sidePanel.tabs.reasoning": "d8211e24e83d1600",
+      "sidePanel.tabs.reasoning": "ed2e59c337d01185",
       "sidePanel.collab.creatingLink": "26756b8c8a6e92f3",
       "sidePanel.collab.shareAndCollaborate": "7070d6eb46afe9df",
       "sidePanel.collab.reviewerAudio": "a95a57e27b9a78ce",
