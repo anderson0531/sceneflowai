@@ -27,7 +27,7 @@ export interface ResolvedStoryLocale {
   storyLocale: string
   properNouns: string[]
   /** Where the value came from, for logging. */
-  source: 'explicit' | 'project' | 'series' | 'account' | 'default'
+  source: 'explicit' | 'project' | 'series' | 'account' | 'cookie' | 'default'
 }
 
 export async function resolveStoryLocale(

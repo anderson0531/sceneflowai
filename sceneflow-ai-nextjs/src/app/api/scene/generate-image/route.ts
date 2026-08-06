@@ -102,6 +102,7 @@ import { buildEndFramePrompt } from '@/lib/scene/deriveSegmentsFromBeats'
 import { buildPreVisEndFrameEditInstruction } from '@/lib/vision/framePromptBaseline'
 import { buildSceneStagingText } from '@/lib/vision/frameGenerationContext'
 import { resolveBeatFrameGenerationContext } from '@/lib/vision/beatFrameGenerationContext'
+import { englishForModelBatch, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import {
   isExpressImageRateLimitError,
   isTransientExpressImageError,
@@ -403,8 +404,8 @@ export async function POST(req: NextRequest) {
     const {
       projectId,
       sceneIndex,
-      scenePrompt,           // Legacy support
-      customPrompt,          // NEW: From prompt builder
+      scenePrompt: enteredScenePrompt,           // Legacy support
+      customPrompt: enteredCustomPrompt,          // NEW: From prompt builder
       artStyle,              // NEW: User's art style selection
       shotType,              // NEW: Camera framing
       cameraAngle,           // NEW: Camera angle
@@ -452,6 +453,15 @@ export async function POST(req: NextRequest) {
       beatId,
       frameRole: frameRole ?? 'start',
     }
+
+    // Prompt-builder text is typed by the creator in their own language, and
+    // everything here becomes an image prompt, so normalize once at the entry.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, { projectId })
+    const [customPrompt, scenePrompt] = await englishForModelBatch(
+      [enteredCustomPrompt, enteredScenePrompt],
+      storyLocale,
+      properNouns
+    )
 
     const resolvedGen = resolveStoryboardGeneration({
       storyboardQuality:

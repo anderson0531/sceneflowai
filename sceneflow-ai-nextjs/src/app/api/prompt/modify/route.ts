@@ -9,6 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 
 interface ModifyPromptRequest {
   currentPrompt: string
@@ -24,7 +25,7 @@ interface ModifyPromptRequest {
 export async function POST(request: NextRequest) {
   try {
     const body: ModifyPromptRequest = await request.json()
-    const { currentPrompt, instruction, mode = 'FTV', context } = body
+    const { currentPrompt, instruction: enteredInstruction, mode = 'FTV', context } = body
 
     if (!currentPrompt) {
       return NextResponse.json(
@@ -33,12 +34,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!instruction?.trim()) {
+    if (!enteredInstruction?.trim()) {
       return NextResponse.json(
         { error: 'Modification instruction is required' },
         { status: 400 }
       )
     }
+
+    // This rewrites a generation prompt, so the typed instruction is normalized
+    // to English before the rewriter sees it.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, {
+      projectId: (body as { projectId?: string }).projectId,
+    })
+    const instruction = await englishForModel(enteredInstruction, storyLocale, properNouns)
 
     console.log('[Prompt Modify] Mode:', mode)
     console.log('[Prompt Modify] Instruction:', instruction)

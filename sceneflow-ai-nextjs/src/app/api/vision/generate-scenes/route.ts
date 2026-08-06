@@ -5,6 +5,7 @@ import { sequelize } from '@/config/database'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen } from '@/lib/imagen/promptOptimizer'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120  // Increased for new AI image models
@@ -31,11 +32,22 @@ export async function POST(request: NextRequest) {
     const charactersWithImages = (characters || []).filter((c: any) => c.referenceImage)
     console.log(`[Scene Gen] Found ${charactersWithImages.length} characters with reference images`)
 
+    // Scene text is written in the creator's language, and this prompt goes to
+    // the image model, which needs English.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, {
+      projectId,
+      userIdOrEmail: userId,
+    })
+
     // Generate scene images with Vertex AI
     const sceneImages = await Promise.all(
       scenes.map(async (scene: any, index: number) => {
         try {
-          const prompt = buildScenePrompt(scene, characters)
+          const prompt = await englishForModel(
+            buildScenePrompt(scene, characters),
+            storyLocale,
+            properNouns
+          )
           
           // Build optimized prompt with character references
           const sceneCharacterNames = scene.characters || []

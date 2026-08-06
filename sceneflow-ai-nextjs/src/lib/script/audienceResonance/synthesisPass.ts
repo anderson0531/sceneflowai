@@ -49,7 +49,7 @@ export async function synthesizeReview(
   context: AnalysisContext,
   sceneAnalysis: SceneAnalysis[]
 ): Promise<SynthesisResult> {
-  const { script, showVsTellMetrics, narrationPolicy, targetDemographic } = context
+  const { script, showVsTellMetrics, narrationPolicy, targetDemographic, languageBlock } = context
   const { formatContext } = buildScriptARShowVsTellGuidance(narrationPolicy)
   const { autoScoreCap, autoCapReason } = applyShowVsTellAutoCap(
     showVsTellMetrics.ratio,
@@ -122,7 +122,8 @@ Return ONLY valid JSON:
   "recommendations": [{"text": "<cross-scene fix>", "priority": "critical|high|medium|optional", "category": "<category>"}],
   "targetDemographic": "<primary audience>",
   "emotionalImpact": "<expected emotional response>"
-}`
+}
+${languageBlock ?? ''}`
 
   const result = await generateText(prompt, {
     model: getGeminiTextModel('pro'),

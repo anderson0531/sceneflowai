@@ -6,6 +6,7 @@ import { uploadReferenceLibraryBase64Image } from '@/lib/storage/referenceLibrar
 import { getCreditCost } from '@/lib/credits/creditCosts'
 import { CreditService } from '@/services/CreditService'
 import { LOCATION_TURNAROUND_GENERATION_INSTRUCTION } from '@/lib/vision/locationReferencePrompts'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -172,6 +173,14 @@ export async function POST(req: NextRequest) {
       // Legacy path: server-side composition from metadata fields
       prompt = buildLocationPrompt(locationName, intExt, timeOfDay, description)
     }
+
+    // The builder fields and description are typed by the creator, so the
+    // composed prompt can arrive in any language; the image model needs English.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, {
+      projectId: reqProjectId,
+    })
+    prompt = await englishForModel(prompt, storyLocale, [locationName, ...properNouns])
+
     console.log(`[Location Generation] Prompt: ${prompt.substring(0, 200)}...`)
 
     // Generate image — negativePrompt enforces no people in location shots

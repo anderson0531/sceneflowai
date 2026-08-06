@@ -53,7 +53,7 @@ export async function analyzeSceneChunk(
   context: AnalysisContext,
   chunk: SceneChunk
 ): Promise<ScenePassResult> {
-  const { scenesForAnalysis, script, narrationPolicy, targetDemographic } = context
+  const { scenesForAnalysis, script, narrationPolicy, targetDemographic, languageBlock } = context
   const scenes = scenesForAnalysis.slice(chunk.startIndex, chunk.endIndex)
   if (!scenes.length) return { sceneAnalysis: [] }
 
@@ -99,7 +99,8 @@ Return ONLY valid JSON:
   "sceneAnalysis": [
     {"sceneNumber": ${firstNumber}, "sceneHeading": "<heading>", "score": <1-100>, "storyWeight": <1-100>, "pacing": "slow|moderate|fast", "tension": "low|medium|high", "characterDevelopment": "minimal|moderate|strong", "visualPotential": "low|medium|high", "notes": "<one sentence>", "recommendations": [{"text": "<specific fix>", "priority": "high|medium|low", "pointsDeducted": <number>}]}
   ]
-}`
+}
+${languageBlock ?? ''}`
 
   const maxOutputTokens = Math.max(MIN_CHUNK_TOKENS, scenes.length * TOKENS_PER_SCENE)
 

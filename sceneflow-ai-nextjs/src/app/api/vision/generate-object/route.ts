@@ -6,6 +6,7 @@ import { uploadReferenceLibraryBase64Image } from '@/lib/storage/referenceLibrar
 import { getCreditCost } from '@/lib/credits/creditCosts'
 import { CreditService } from '@/services/CreditService'
 import { ObjectCategory } from '@/types/visionReferences'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -89,19 +90,25 @@ export async function POST(req: NextRequest) {
     const { 
       name, 
       description, 
-      prompt,
+      prompt: enteredPrompt,
       category = 'other',
       referenceImageUrl,
       referenceImageBase64,
       aspectRatio = '1:1' // Square is best for reference images
     } = body
 
-    if (!name || !prompt) {
+    if (!name || !enteredPrompt) {
       return NextResponse.json(
         { error: 'Missing required fields: name and prompt' },
         { status: 400 }
       )
     }
+
+    // Typed in the creator's language; the image model needs English.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, {
+      projectId: (body as { projectId?: string }).projectId,
+    })
+    const prompt = await englishForModel(enteredPrompt, storyLocale, [name, ...properNouns])
 
     const hasReference = !!(referenceImageUrl || referenceImageBase64)
     console.log(`[Key Props Generation] Generating: ${name}`)

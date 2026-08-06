@@ -32,6 +32,8 @@ import {
 } from '@/lib/script/narrationPolicy'
 import { adaptPromptForLyria, LYRIA_MUSIC_PROMPT_RULES } from '@/lib/audio/lyriaPromptAdapter'
 import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
+import { resolveStoryLocale } from '@/i18n/server/storyLocale'
+import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 import {
   buildFoundationPromptBlock,
   getArtStylePresetName,
@@ -267,6 +269,13 @@ export async function POST(request: NextRequest) {
           }
         }
         
+        // Dialogue and narration are performed by TTS, so the script has to be
+        // written in the language the treatment is in.
+        const { storyLocale, properNouns } = await resolveStoryLocale({
+          projectId,
+          userIdOrEmail: (project as any).user_id,
+        })
+
         // Build the single-pass prompt
         const singlePassPrompt = buildSinglePassPrompt(
           treatment, 
@@ -278,7 +287,13 @@ export async function POST(request: NextRequest) {
           projectFormat,
           contentIntent,
           narrationPolicy,
-          seriesContinuityBlock
+          seriesContinuityBlock,
+          localeDirective(storyLocale, {
+            properNouns: buildProperNounGlossary(
+              { characters: existingCharacters ?? [] },
+              properNouns
+            ),
+          })
         )
         
         let retryCount = 0
@@ -1013,7 +1028,8 @@ function buildSinglePassPrompt(
   format: string = 'narrative',
   contentIntent?: string,
   narrationPolicy?: NarrationPolicy,
-  seriesContinuityBlock: string = ''
+  seriesContinuityBlock: string = '',
+  languageBlock: string = ''
 ): string {
   const intent = contentIntent || resolveContentIntentFromMetadata({ format, genre: treatment.genre })
   const policy = narrationPolicy ?? resolveNarrationPolicy({ format, treatment, contentIntent })
@@ -1252,7 +1268,8 @@ IMPORTANT CONSTRAINTS:
 • Ensure "action" is specific to the events of the segment, NOT repeated across segments
 • Return ONLY valid JSON - no markdown, no explanations
 
-Now write the complete script, following the Treatment's beats naturally. Let story structure and dramatic rhythm drive scene breaks — do not compress the arc for brevity.`
+Now write the complete script, following the Treatment's beats naturally. Let story structure and dramatic rhythm drive scene breaks — do not compress the arc for brevity.
+${languageBlock}`
 }
 
 /**

@@ -12,6 +12,7 @@ import {
   DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK,
   WARDROBE_ONLY_REFERENCE_INSTRUCTION,
 } from '@/lib/character/characterReferenceAssembly'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 
 interface EditReferenceImage {
   imageUrl: string
@@ -96,10 +97,17 @@ export async function POST(request: NextRequest) {
 
     console.log(`[Image Edit API] Vertex Gemini edit: "${instruction.substring(0, 50)}..."`)
 
+    // The edit instruction is typed by the creator in their own language; the
+    // image model needs English.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, {
+      projectId: body.projectId,
+    })
+    const modelInstruction = await englishForModel(instruction.trim(), storyLocale, properNouns)
+
     const dualRefInstruction = buildDualReferenceInstruction(referenceImages)
     const fullInstruction = dualRefInstruction
-      ? `${dualRefInstruction}\n\n${instruction.trim()}`
-      : instruction.trim()
+      ? `${dualRefInstruction}\n\n${modelInstruction}`
+      : modelInstruction
 
     const result = await editImageWithGeminiStudio({
       sourceImage,

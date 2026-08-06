@@ -14,6 +14,7 @@ import {
   type LocationContext,
 } from '@/lib/intelligence/scene-image-intelligence'
 import { stripEmotionalDescriptors } from '@/lib/imagen/promptOptimizer'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -83,6 +84,11 @@ export async function POST(req: NextRequest) {
     } else {
       return NextResponse.json({ error: 'Scene not found' }, { status: 404 })
     }
+
+    // The context can come from a typed prompt or from scene text in the
+    // creator's language; everything downstream becomes an image prompt.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, { projectId })
+    fullSceneContext = await englishForModel(fullSceneContext, storyLocale, properNouns)
 
     // 2. Gather available references
     let detectedObjectReferences = objectReferences || []

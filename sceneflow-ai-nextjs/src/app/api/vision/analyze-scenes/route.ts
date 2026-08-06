@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { localeDirective } from '@/lib/prompts/localeDirective'
 
 export const maxDuration = 120
 export const runtime = 'nodejs'
@@ -68,11 +70,19 @@ export async function POST(req: NextRequest) {
     const sceneCount = script.scenes.length
     console.log(`[Scene Analysis] Analyzing ${sceneCount} scenes for project: ${projectId}${previousAnalyses?.length ? ' (progressive re-analysis)' : ''}`)
 
+    // Notes and recommendations quote scene content back to the creator, so the
+    // analysis has to be written in the language the script is in.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, { projectId })
+
     const sceneAnalysis = await generateSceneAnalysis(
       script,
       audienceReview,
       previousAnalyses,
-      targetDemographic
+      targetDemographic,
+      localeDirective(storyLocale, {
+        properNouns,
+        note: 'The JSON keys and every enum value ("pacing", "impact", "priority", "category") stay exactly as specified.',
+      })
     )
 
     console.log(`[Scene Analysis] Generated analysis for ${sceneAnalysis.length} scenes`)
@@ -96,7 +106,8 @@ async function generateSceneAnalysis(
   script: any,
   audienceReview?: AudienceReviewContext,
   previousAnalyses?: AnalyzeScenesRequest['previousAnalyses'],
-  targetDemographic?: string
+  targetDemographic?: string,
+  languageBlock: string = ''
 ): Promise<SceneAnalysis[]> {
   const sceneCount = script.scenes?.length || 0
   
@@ -280,7 +291,8 @@ CRITICAL REMINDERS:
 - Be constructive but HONEST - calibrate scores realistically
 - Every recommendation must reference specific content from the scene
 - Mark issues that require REWRITING as "structural", minor tweaks as "polish"
-- Ensure JSON is valid with proper escaping`
+- Ensure JSON is valid with proper escaping
+${languageBlock}`
 
   // Token budget: 500 tokens per scene for detailed analysis
   const tokenBudget = Math.min(32000, 4000 + sceneCount * 500)

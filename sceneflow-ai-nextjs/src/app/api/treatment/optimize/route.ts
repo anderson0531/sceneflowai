@@ -6,6 +6,8 @@ import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
 import { strictJsonPromptSuffix, safeParseJsonFromText } from '@/lib/safeJson'
 import { generateText } from '@/lib/vertexai/gemini'
 import { loadSeriesContinuityContext } from '@/lib/series/continuityContext'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 import type { AudienceResonanceAnalysis } from '@/lib/types/audienceResonance'
 import {
   type ContentIntent,
@@ -31,6 +33,8 @@ interface OptimizeRequest {
   /** Episode number within the series */
   episodeNumber?: number
   contentIntent?: ContentIntent
+  projectId?: string
+  storyLocale?: string
 }
 
 interface OptimizedSection {
@@ -162,6 +166,21 @@ Use this analysis to prioritize which areas need the most improvement while pres
         : []
     }
 
+    // An optimization pass rewrites every field, so without the directive it
+    // would quietly translate the whole blueprint back into English.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, {
+      explicit: body.storyLocale,
+      projectId: body.projectId,
+      seriesId,
+      userIdOrEmail: userId,
+    })
+    const languageBlock = localeDirective(storyLocale, {
+      properNouns: buildProperNounGlossary(
+        { characters: (variant.character_descriptions as any[]) ?? [] },
+        [...properNouns, String(variant.title ?? '')]
+      ),
+    })
+
     const editorRole =
       contentIntent === 'fiction'
         ? 'expert film treatment editor and story consultant'
@@ -207,7 +226,7 @@ CONSTRAINTS:
 - Synopsis: 150-300 words
 - Logline: 1-2 punchy sentences
 - Maintain the original genre and core premise
-
+${languageBlock}
 ${strictJsonPromptSuffix}`
 
     console.log('[Optimize Blueprint] Starting optimization with focus areas:', focusAreas)

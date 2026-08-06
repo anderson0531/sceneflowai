@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { safeParseJsonFromText, strictJsonPromptSuffix } from '@/lib/safeJson'
 import { generateText } from '@/lib/vertexai/gemini'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 
 // ============================================================================
 // PHASE 1 OPTIMIZATION: Direct Function Calls (No HTTP Overhead)
@@ -143,7 +145,7 @@ TASK: Extract the core concept by:
 2. Writing a brief synopsis (≤50 words) - SUMMARIZE, don't copy
 3. Identifying core themes (extract main ideas)
 4. Determining the best narrative structure
-
+${localeDirective(context.storyLocale, { properNouns: context.properNouns })}
 Respond with valid JSON only:
 {
   "input_title": "Descriptive title based on the input",
@@ -202,7 +204,7 @@ TASK: Create a comprehensive film treatment that includes:
 2. Visual style and aesthetic approach
 3. Tone and mood description
 4. Target audience specifics
-
+${localeDirective(context.storyLocale, { properNouns: context.properNouns })}
 Respond with valid JSON only (no markdown fences, no backticks, no comments):
 {
   "film_treatment": "Treatment vision and approach (≤100 words) - NO SCENE DETAILS",
@@ -261,7 +263,7 @@ TASK: Identify and analyze all characters by:
 3. Describing their key traits and characteristics (CONCISE)
 4. Identifying relationships between characters
 5. Outlining potential character arcs
-
+${localeDirective(context.storyLocale, { properNouns: context.properNouns })}
 Respond with valid JSON only:
 {
   "characters": [
@@ -340,7 +342,9 @@ TASK: Create a detailed beat sheet with:
 5. Pacing and transition notes
 
 CRITICAL: Total duration of all beats must equal ${context.duration || 300} seconds (minimum 5 minutes).
-
+${localeDirective(context.storyLocale, {
+  properNouns: buildProperNounGlossary({ characters }, context.properNouns),
+})}
 Respond with valid JSON only:
 {
   "act_structure": {
@@ -422,6 +426,9 @@ interface SequentialGenerationRequest {
   platform?: string
   provider?: Provider
   model?: string
+  projectId?: string
+  seriesId?: string
+  storyLocale?: string
 }
 
 interface SequentialGenerationResponse {
@@ -471,7 +478,25 @@ export async function POST(request: NextRequest) {
       ? [userProvider]
       : (hasGemini && hasOpenAI ? ['gemini','openai'] : (hasGemini ? ['gemini'] : ['openai']))
 
-    const context = { targetAudience, keyMessage, tone, genre, duration, platform }
+    // All four passes share the creator's language, so resolve once and let each
+    // prompt carry the directive; otherwise a later pass drags the concept back
+    // toward English.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, {
+      explicit: body.storyLocale,
+      projectId: body.projectId,
+      seriesId: body.seriesId,
+    })
+
+    const context = {
+      targetAudience,
+      keyMessage,
+      tone,
+      genre,
+      duration,
+      platform,
+      storyLocale,
+      properNouns,
+    }
 
     let lastErr: any = null
     for (const p of candidates) {

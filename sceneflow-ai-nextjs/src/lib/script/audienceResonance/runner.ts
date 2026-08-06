@@ -44,6 +44,8 @@ export type RunAudienceResonanceInput = {
   onProgress?: (progress: AnalysisProgress) => void | Promise<void>
   /** Runs one chunk. The Inngest worker supplies a durable step wrapper. */
   runChunk?: RunChunk
+  /** `localeDirective` block so the verdict is written in the script's language. */
+  languageBlock?: string
 }
 
 /** Strips empty narration so it neither reaches the prompt nor skews Show vs Tell. */
@@ -94,6 +96,7 @@ export function buildAnalysisContext(input: RunAudienceResonanceInput): Analysis
     targetDemographic: input.targetDemographic,
     contentSeed: deriveContentSeed(input.script),
     previousScores: input.previousScores,
+    languageBlock: input.languageBlock,
   }
 }
 

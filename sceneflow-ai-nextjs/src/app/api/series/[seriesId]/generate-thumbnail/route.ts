@@ -4,6 +4,7 @@ import Series from '@/models/Series'
 import { sequelize } from '@/config/database'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import {
   assertSeriesImageGenConfigured,
   cloneSeriesMetadata,
@@ -48,6 +49,13 @@ export async function POST(
       customPrompt = typeof body?.customPrompt === 'string' ? body.customPrompt : undefined
     } catch {
       // Empty body is fine for default prompt
+    }
+
+    // A custom thumbnail direction is typed by the creator; the image model
+    // needs English.
+    if (customPrompt) {
+      const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, { seriesId })
+      customPrompt = await englishForModel(customPrompt, storyLocale, properNouns)
     }
 
     console.log('[Series Thumbnail] Generating with Vertex Imagen...')

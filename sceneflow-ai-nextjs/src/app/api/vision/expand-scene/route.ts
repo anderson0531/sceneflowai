@@ -6,6 +6,9 @@ import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen } from '@/lib/imagen/promptOptimizer'
 import { generateText } from '@/lib/vertexai/gemini'
 import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { resolveStoryLocale } from '@/i18n/server/storyLocale'
+import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 import { ensureSceneBeats } from '@/lib/script/beatMigration'
 import { buildCharacterDialogueExamples } from '@/lib/character/characterNamingPrompt'
 
@@ -97,6 +100,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Expand the scene using Gemini with story bible context
+    // Expansion writes the action and dialogue a creator reads and hears, so it
+    // has to be in the language the treatment is written in.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, { projectId })
+
     const expandedScene = await expandScene(
       apiKey,
       outline,
@@ -107,7 +114,10 @@ export async function POST(request: NextRequest) {
       storyBible,
       previousScenes,
       currentBeat,
-      seriesContinuityBlock
+      seriesContinuityBlock,
+      localeDirective(storyLocale, {
+        properNouns: buildProperNounGlossary({ characters: characters ?? [] }, properNouns),
+      })
     )
 
     // Save expanded scene immediately without waiting for image
@@ -172,7 +182,8 @@ async function expandScene(
   storyBible: any = {},
   previousScenes: string[] = [],
   currentBeat: any = null,
-  seriesContinuityBlock: string = ''
+  seriesContinuityBlock: string = '',
+  languageBlock: string = ''
 ): Promise<any> {
   
   // Build character bible
@@ -282,7 +293,8 @@ Generate a complete scene that EXPANDS (not changes) the outline. Return ONLY va
   "isExpanded": true
 }
 
-Remember: You are EXPANDING an approved treatment, not creating a new story. Stay faithful to the source material.`
+Remember: You are EXPANDING an approved treatment, not creating a new story. Stay faithful to the source material.
+${languageBlock}`
 
   try {
     const response = await callGeminiWithRetry(apiKey, prompt, 16000, 1)
@@ -443,6 +455,17 @@ ${hasCharacterRefs ? '- Characters MUST match their reference images' : ''}
         console.error('[Prompt Optimizer] Failed, using original prompt:', error)
       }
     }
+
+    // The prompt is built from scene text in the creator's language, and Imagen
+    // needs English.
+    const { storyLocale, properNouns } = await resolveStoryLocale({
+      projectId,
+      includeProperNouns: false,
+    })
+    finalPrompt = await englishForModel(finalPrompt, storyLocale, [
+      ...characterNames.map(String),
+      ...properNouns,
+    ])
 
     // Generate with Vertex AI Imagen 3 (character references embedded in prompt)
     const base64Image = await generateImageWithGemini(finalPrompt, {

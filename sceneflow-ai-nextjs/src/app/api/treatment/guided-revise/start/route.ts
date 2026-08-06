@@ -12,6 +12,7 @@ import { createGenerationJob, findActiveJob } from '@/lib/jobs/jobService'
 import { scheduleBlueprintGuidedReviseStep } from '@/lib/jobs/dispatchBlueprintGuidedReviseStep'
 import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
 import { resolveStoryLocale } from '@/i18n/server/storyLocale'
+import { englishForModel } from '@/i18n/server/requestLocale'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -112,6 +113,13 @@ export async function POST(request: NextRequest) {
       includeProperNouns: false,
     })
 
+    // Section inference and request validation match English keywords ("beats",
+    // "pacing", "characters"), so Spanish direction silently collapsed to a
+    // story-only plan. An English copy drives that routing; the prompts keep the
+    // creator's own words.
+    const intentTextForRouting =
+      storyLocale === 'en' ? undefined : await englishForModel(userIntent, storyLocale)
+
     const payload = buildGuidedRevisePayload({
       incomingVariant,
       userIntent,
@@ -120,6 +128,7 @@ export async function POST(request: NextRequest) {
       focusScope,
       contentIntent: bodyIntent,
       storyLocale,
+      intentTextForRouting,
     })
 
     if (!payload.intentText.trim() && payload.selectedRecs.length === 0) {
@@ -132,7 +141,7 @@ export async function POST(request: NextRequest) {
     // The dialog blocks these client-side, but that is bypassable and this route
     // charges credits, so reject blockers before touching the credit balance.
     const blockers = validateRevisionRequest({
-      intentText: payload.intentText,
+      intentText: payload.intentTextForRouting ?? payload.intentText,
       focusScope: focusScope ?? 'all',
       variant: payload.rawVariant,
       hasSelectedRecommendations: payload.selectedRecs.length > 0,
@@ -183,6 +192,9 @@ export async function POST(request: NextRequest) {
 
     const jobPayload: Record<string, unknown> = {
       userIntent,
+      // Persisted alongside the raw direction so a retry in the worker infers the
+      // same sections without re-translating.
+      intentTextForRouting: payload.intentTextForRouting,
       selectedRecommendationIds,
       resonanceRecommendations: payload.selectedRecs,
       focusScope: focusScope ?? 'all',

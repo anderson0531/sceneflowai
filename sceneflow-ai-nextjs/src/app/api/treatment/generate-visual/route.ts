@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { CreditService } from '@/services/CreditService'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { DEFAULT_PROMPT_TEMPLATES, TREATMENT_VISUAL_CREDITS } from '@/types/treatment-visuals'
 import type { TreatmentMood, TreatmentVisuals, GeneratedImage, CharacterPortrait, ActAnchor } from '@/types/treatment-visuals'
 import type { FilmTreatmentData } from '@/lib/types/reports'
@@ -44,7 +45,9 @@ function buildPromptWithMood(basePrompt: string, mood: TreatmentMood): string {
 async function generateHeroImage(
   treatment: FilmTreatmentData,
   mood: TreatmentMood,
-  projectId: string
+  projectId: string,
+  storyLocale: string,
+  properNouns: string[]
 ): Promise<GeneratedImage> {
   // Extract character details for accurate depiction
   const characters = (treatment as any).character_descriptions || []
@@ -215,7 +218,8 @@ async function generateHeroImage(
   const heroAspectRatio = blueprintAspectRatioToImageApi(
     (treatment as { aspectRatio?: string }).aspectRatio
   )
-  const base64Image = await generateImageWithGemini(prompt, {
+  const modelPrompt = await englishForModel(prompt, storyLocale, properNouns)
+  const base64Image = await generateImageWithGemini(modelPrompt, {
     aspectRatio: heroAspectRatio,
     imageSize: '2K'
   })
@@ -241,7 +245,9 @@ async function generateCharacterPortrait(
   character: { name: string; role?: string; description?: string; image_prompt?: string },
   treatment: FilmTreatmentData,
   mood: TreatmentMood,
-  projectId: string
+  projectId: string,
+  storyLocale: string,
+  properNouns: string[]
 ): Promise<CharacterPortrait> {
   const role = character.role?.toLowerCase() || 'supporting'
   const roleType = role.includes('protagonist') || role.includes('lead') || role.includes('hero') 
@@ -261,7 +267,8 @@ async function generateCharacterPortrait(
     mood
   )
   
-  const base64Image = await generateImageWithGemini(prompt, {
+  const modelPrompt = await englishForModel(prompt, storyLocale, properNouns)
+  const base64Image = await generateImageWithGemini(modelPrompt, {
     aspectRatio: '3:4',
     imageSize: '1K'
   })
@@ -292,7 +299,9 @@ async function generateActAnchor(
   actContent: string,
   treatment: FilmTreatmentData,
   mood: TreatmentMood,
-  projectId: string
+  projectId: string,
+  storyLocale: string,
+  properNouns: string[]
 ): Promise<ActAnchor> {
   const prompt = buildPromptWithMood(
     DEFAULT_PROMPT_TEMPLATES.actEstablishing({
@@ -305,7 +314,8 @@ async function generateActAnchor(
     mood
   )
   
-  const base64Image = await generateImageWithGemini(prompt, {
+  const modelPrompt = await englishForModel(prompt, storyLocale, properNouns)
+  const base64Image = await generateImageWithGemini(modelPrompt, {
     aspectRatio: '21:9', // Cinematic 2.39:1
     imageSize: '2K'
   })
@@ -349,6 +359,13 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // Treatment text is written in the creator's language and every prompt here
+    // feeds the image model, which needs English.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, {
+      projectId,
+      userIdOrEmail: userId,
+    })
 
     // Estimate credits needed based on what we're generating
     let estimatedCredits = 0
@@ -408,7 +425,7 @@ export async function POST(request: NextRequest) {
     if (generateAll) {
       // Hero image
       try {
-        visuals.heroImage = await generateHeroImage(treatment, mood, projectId)
+        visuals.heroImage = await generateHeroImage(treatment, mood, projectId, storyLocale, properNouns)
         visuals.creditsUsed = (visuals.creditsUsed || 0) + TREATMENT_VISUAL_CREDITS.heroImage
       } catch (error) {
         recordFailure('hero', error)
@@ -419,7 +436,7 @@ export async function POST(request: NextRequest) {
       visuals.characterPortraits = []
       for (const char of characters) {
         try {
-          const portrait = await generateCharacterPortrait(char, treatment, mood, projectId)
+          const portrait = await generateCharacterPortrait(char, treatment, mood, projectId, storyLocale, properNouns)
           visuals.characterPortraits.push(portrait)
           visuals.creditsUsed = (visuals.creditsUsed || 0) + TREATMENT_VISUAL_CREDITS.characterPortrait
         } catch (error) {
@@ -439,7 +456,7 @@ export async function POST(request: NextRequest) {
       for (const [actNum, actContent] of acts) {
         if (actContent) {
           try {
-            const anchor = await generateActAnchor(actNum, actContent, treatment, mood, projectId)
+            const anchor = await generateActAnchor(actNum, actContent, treatment, mood, projectId, storyLocale, properNouns)
             visuals.actAnchors.push(anchor)
             visuals.creditsUsed = (visuals.creditsUsed || 0) + TREATMENT_VISUAL_CREDITS.actEstablishing
           } catch (error) {
@@ -469,7 +486,7 @@ export async function POST(request: NextRequest) {
     else if (visualType) {
       switch (visualType) {
         case 'hero':
-          visuals.heroImage = await generateHeroImage(treatment, mood, projectId)
+          visuals.heroImage = await generateHeroImage(treatment, mood, projectId, storyLocale, properNouns)
           visuals.creditsUsed = TREATMENT_VISUAL_CREDITS.heroImage
           break
           
@@ -477,7 +494,7 @@ export async function POST(request: NextRequest) {
           const charIndex = typeof visualId === 'number' ? visualId : 0
           const char = treatment.character_descriptions?.[charIndex]
           if (char) {
-            const portrait = await generateCharacterPortrait(char, treatment, mood, projectId)
+            const portrait = await generateCharacterPortrait(char, treatment, mood, projectId, storyLocale, properNouns)
             visuals.characterPortraits = [portrait]
             visuals.creditsUsed = TREATMENT_VISUAL_CREDITS.characterPortrait
           }
@@ -487,7 +504,7 @@ export async function POST(request: NextRequest) {
           const actNum = (typeof visualId === 'number' ? visualId : 1) as 1 | 2 | 3
           const actContent = treatment.act_breakdown?.[`act${actNum}` as keyof typeof treatment.act_breakdown] || ''
           if (actContent) {
-            const anchor = await generateActAnchor(actNum, actContent as string, treatment, mood, projectId)
+            const anchor = await generateActAnchor(actNum, actContent as string, treatment, mood, projectId, storyLocale, properNouns)
             visuals.actAnchors = [anchor]
             visuals.creditsUsed = TREATMENT_VISUAL_CREDITS.actEstablishing
           }

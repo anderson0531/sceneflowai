@@ -17,6 +17,8 @@ import {
   isStructuredRevisionResponse,
 } from '@/lib/script/structuredSceneRevision'
 import { attachCoGeneratedSceneDirection } from '@/lib/sceneGeneration/attachRevisedSceneDirection'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { localeDirective } from '@/lib/prompts/localeDirective'
 
 // Pro-tier revision with medium thinking can exceed the previous 120s ceiling.
 export const maxDuration = 300
@@ -97,6 +99,13 @@ export async function POST(req: NextRequest) {
 
     console.log('[Scene Revision] Revising scene:', sceneIndex, 'mode:', revisionMode)
 
+    // The instruction arrives in the creator's language and the rewrite replaces
+    // dialogue and narration wholesale, so the revision has to come back in the
+    // language the script is written in.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, {
+      projectId,
+    })
+
     // Generate revised scene based on mode
     const revisedScene = await generateRevisedScene({
         projectId,
@@ -108,7 +117,8 @@ export async function POST(req: NextRequest) {
       targetDemographic,
       preserveElements,
       revisionDepth,
-      context
+      context,
+      languageBlock: localeDirective(storyLocale, { properNouns })
     })
 
     return NextResponse.json({
@@ -135,7 +145,8 @@ async function generateRevisedScene({
   targetDemographic,
   preserveElements,
   revisionDepth,
-  context
+  context,
+  languageBlock = ''
 }: {
     projectId: string
   currentScene: any
@@ -147,6 +158,7 @@ async function generateRevisedScene({
   preserveElements: PreserveElementInput[]
   revisionDepth: 'light' | 'moderate' | 'deep'
   context: any
+  languageBlock?: string
 }): Promise<any> {
   // Normalize recommendations to extract text and categorize by impact
   const structuralRecs: string[] = []
@@ -357,7 +369,7 @@ CRITICAL SUCCESS CRITERIA:
 ${revisionInstruction}
 
 ${preserveInstructions ? `PRESERVATION REQUIREMENTS: ${preserveInstructions}` : ''}
-
+${languageBlock}
 Now rewrite the scene following all the rules, constraints, and formatting requirements provided in the context above.${strictJsonPromptSuffix}`
 
     // System instruction for the screenwriter persona

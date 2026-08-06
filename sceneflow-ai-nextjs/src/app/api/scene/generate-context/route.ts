@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { generateText } from '@/lib/vertexai/gemini'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { localeDirective } from '@/lib/prompts/localeDirective'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -52,7 +54,8 @@ async function callGemini(prompt: string): Promise<string> {
 function buildSceneContextPrompt(
   scene: GenerateContextRequest['scene'],
   sceneIndex: number,
-  allScenes?: GenerateContextRequest['allScenes']
+  allScenes?: GenerateContextRequest['allScenes'],
+  languageBlock: string = ''
 ): string {
   const heading = typeof scene.heading === 'object' ? scene.heading.text : scene.heading
   const description = scene.visualDescription || scene.action || ''
@@ -109,7 +112,8 @@ Respond in JSON format:
   "thematicContext": "Themes explored and their significance (1-2 sentences)"
 }
 
-Keep each field concise but insightful - aim for professional screenplay analysis quality.`
+Keep each field concise but insightful - aim for professional screenplay analysis quality.
+${languageBlock}`
 }
 
 export async function POST(req: NextRequest) {
@@ -124,8 +128,15 @@ export async function POST(req: NextRequest) {
       )
     }
     
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, { projectId })
+
     // Build and execute prompt
-    const prompt = buildSceneContextPrompt(scene, sceneIndex, allScenes)
+    const prompt = buildSceneContextPrompt(
+      scene,
+      sceneIndex,
+      allScenes,
+      localeDirective(storyLocale, { properNouns })
+    )
     const responseText = await callGemini(prompt)
     
     // Parse JSON response

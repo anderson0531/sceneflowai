@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { localeDirective } from '@/lib/prompts/localeDirective'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -224,10 +226,18 @@ export async function POST(req: NextRequest) {
 
     console.log('[Scene Review] Generating reviews for scene', sceneIndex, 'in project:', projectId)
 
+    // Category names key the radar labels and the prose is read directly, so the
+    // review has to be written in the language the script is in.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, { projectId })
+    const languageBlock = localeDirective(storyLocale, {
+      properNouns,
+      note: 'The JSON keys stay exactly as specified; the "name" values are labels shown to the reader and should be localized.',
+    })
+
     // Generate both director and audience reviews for the scene
     const [directorReview, audienceReview] = await Promise.all([
-      generateDirectorSceneReview(scene, sceneIndex, script),
-      generateAudienceSceneReview(scene, sceneIndex, script)
+      generateDirectorSceneReview(scene, sceneIndex, script, languageBlock),
+      generateAudienceSceneReview(scene, sceneIndex, script, languageBlock)
     ])
 
     return NextResponse.json({
@@ -245,7 +255,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function generateDirectorSceneReview(scene: any, sceneIndex: number, script: any): Promise<Review> {
+async function generateDirectorSceneReview(scene: any, sceneIndex: number, script: any, languageBlock: string = ''): Promise<Review> {
   const totalScenes = script.scenes?.length || 0
   const characterCount = script.characters?.length || 0
   
@@ -331,7 +341,8 @@ CRITICAL JSON FORMATTING RULES:
 - Keep each strength/improvement/recommendation under 100 characters
 
 Output this exact JSON structure:
-{"overallScore": <number>, "categories": [{"name": "Scene Structure", "score": <number>}, {"name": "Character Moments", "score": <number>}, {"name": "Pacing", "score": <number>}, {"name": "Visual Storytelling", "score": <number>}, {"name": "Script Integration", "score": <number>}], "analysis": "<single line analysis>", "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"], "improvements": ["<improvement 1>", "<improvement 2>", "<improvement 3>"], "recommendations": ["<recommendation 1>", "<recommendation 2>", "<recommendation 3>"]}`
+{"overallScore": <number>, "categories": [{"name": "Scene Structure", "score": <number>}, {"name": "Character Moments", "score": <number>}, {"name": "Pacing", "score": <number>}, {"name": "Visual Storytelling", "score": <number>}, {"name": "Script Integration", "score": <number>}], "analysis": "<single line analysis>", "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"], "improvements": ["<improvement 1>", "<improvement 2>", "<improvement 3>"], "recommendations": ["<recommendation 1>", "<recommendation 2>", "<recommendation 3>"]}
+${languageBlock}`
 
   console.log('[Director Scene Review] Calling Vertex AI Gemini...')
   const result = await generateText(prompt, {
@@ -359,7 +370,7 @@ Output this exact JSON structure:
   }
 }
 
-async function generateAudienceSceneReview(scene: any, sceneIndex: number, script: any): Promise<Review> {
+async function generateAudienceSceneReview(scene: any, sceneIndex: number, script: any, languageBlock: string = ''): Promise<Review> {
   const totalScenes = script.scenes?.length || 0
   const characterCount = script.characters?.length || 0
   
@@ -441,7 +452,8 @@ CRITICAL JSON FORMATTING RULES:
 - Keep each strength/improvement/recommendation under 100 characters
 
 Output this exact JSON structure:
-{"overallScore": <number>, "categories": [{"name": "Entertainment Value", "score": <number>}, {"name": "Emotional Impact", "score": <number>}, {"name": "Clarity", "score": <number>}, {"name": "Character Connection", "score": <number>}, {"name": "Story Momentum", "score": <number>}], "analysis": "<single line analysis>", "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"], "improvements": ["<improvement 1>", "<improvement 2>", "<improvement 3>"], "recommendations": ["<recommendation 1>", "<recommendation 2>", "<recommendation 3>"]}`
+{"overallScore": <number>, "categories": [{"name": "Entertainment Value", "score": <number>}, {"name": "Emotional Impact", "score": <number>}, {"name": "Clarity", "score": <number>}, {"name": "Character Connection", "score": <number>}, {"name": "Story Momentum", "score": <number>}], "analysis": "<single line analysis>", "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"], "improvements": ["<improvement 1>", "<improvement 2>", "<improvement 3>"], "recommendations": ["<recommendation 1>", "<recommendation 2>", "<recommendation 3>"]}
+${languageBlock}`
 
   console.log('[Audience Scene Review] Calling Vertex AI Gemini...')
   const result = await generateText(prompt, {

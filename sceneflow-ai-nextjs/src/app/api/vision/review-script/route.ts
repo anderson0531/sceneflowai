@@ -5,6 +5,8 @@ import { CreditService } from '@/services/CreditService'
 import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
 import { runAudienceResonance } from '@/lib/script/audienceResonance/runner'
 import type { PreviousScores } from '@/lib/script/audienceResonance/types'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 
 export const maxDuration = 180
 export const runtime = 'nodejs'
@@ -71,6 +73,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, {
+      projectId,
+      userIdOrEmail: userId,
+    })
+
     const audienceResonance = await runAudienceResonance({
       script,
       targetDemographic,
@@ -79,6 +86,13 @@ export async function POST(req: NextRequest) {
       treatment,
       previousScores,
       baseScriptUpdatedAt,
+      languageBlock: localeDirective(storyLocale, {
+        properNouns: buildProperNounGlossary(
+          { characters: script.characters ?? [] },
+          properNouns
+        ),
+        note: 'The JSON keys and the "priority" values stay exactly as specified; "name" and "category" values are labels shown to the reader and should be localized.',
+      }),
     })
 
     if (userId) {

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { strictJsonPromptSuffix } from '@/lib/safeJson'
 import { generateText } from '@/lib/vertexai/gemini'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 
 interface BeatSheetRequest {
   input: string
@@ -29,6 +31,9 @@ interface BeatSheetRequest {
   genre?: string
   duration?: number
   platform?: string
+  projectId?: string
+  seriesId?: string
+  storyLocale?: string
 }
 
 interface Beat {
@@ -90,13 +95,22 @@ export async function POST(request: NextRequest) {
     console.log('📋 Core concept:', coreConcept.input_title)
     console.log('📋 Characters count:', characters.length)
 
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, {
+      explicit: body.storyLocale,
+      projectId: body.projectId,
+      seriesId: body.seriesId,
+    })
+
     const beatSheet = await generateBeatSheet(input, coreConcept, filmTreatment, characters, {
       targetAudience,
       keyMessage,
       tone,
       genre,
       duration,
-      platform
+      platform,
+      storyLocale,
+      // Characters are already named in this request, so protect those names too.
+      properNouns: buildProperNounGlossary({ characters }, properNouns)
     })
 
     return NextResponse.json({
@@ -165,7 +179,7 @@ TASK: Create a detailed beat sheet with:
 5. Pacing and transition notes
 
 CRITICAL: Total duration of all beats must equal ${context.duration || 300} seconds (minimum 5 minutes).
-
+${localeDirective(context.storyLocale, { properNouns: context.properNouns })}
 Respond with valid JSON only:
 {
   "act_structure": {

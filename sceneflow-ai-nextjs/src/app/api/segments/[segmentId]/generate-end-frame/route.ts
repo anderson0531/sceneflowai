@@ -7,6 +7,7 @@ import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
 import { CreditService } from '@/services/CreditService'
 import { trackCost } from '@/lib/credits/costTracking'
 import { buildPreVisEndFrameEditInstruction } from '@/lib/vision/framePromptBaseline'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { mergeBeatFrameNegativePrompt } from '@/lib/character/sceneCharacterHeadshot'
 
 export const maxDuration = 60 // 1 minute for image generation
@@ -79,10 +80,19 @@ export async function POST(
     console.log('[Generate End Frame] Segment prompt preview:', segmentPrompt.substring(0, 150))
     console.log('[Generate End Frame] Duration:', segmentDuration, 'seconds')
 
-    const instruction = buildPreVisEndFrameEditInstruction({
-      startFramePrompt: segmentPrompt,
-      durationSeconds: segmentDuration,
+    // The segment prompt carries scene text in the creator's language, and this
+    // instruction is an image edit, so it is normalized to English first.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, {
+      projectId: (body as { projectId?: string }).projectId,
     })
+    const instruction = await englishForModel(
+      buildPreVisEndFrameEditInstruction({
+        startFramePrompt: segmentPrompt,
+        durationSeconds: segmentDuration,
+      }),
+      storyLocale,
+      properNouns
+    )
     const identityRef = characterRefs.find(c => c.url && c.url !== startFrameUrl)?.url
 
     const result = await editImageWithGeminiStudio({

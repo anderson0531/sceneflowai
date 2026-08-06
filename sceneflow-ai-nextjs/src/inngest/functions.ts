@@ -17,6 +17,7 @@ import { getKlingLongTakeCredits } from '@/lib/credits/creditCosts'
 import { CreditService } from '@/services/CreditService'
 import type { KlingQuality } from '@/lib/kling/types'
 import { runAudienceResonance, type RunChunk } from '@/lib/script/audienceResonance/runner'
+import { localeDirective } from '@/lib/prompts/localeDirective'
 import {
   loadScriptForAnalysis,
   persistAudienceReview,
@@ -420,6 +421,13 @@ export const processScriptAnalysis = inngest.createFunction(
         return loaded
       })
 
+      // No request here, so resolution goes through the project/series/account
+      // chain rather than the interface cookie.
+      const { storyLocale, properNouns } = await step.run('resolve-story-locale', async () => {
+        const { resolveStoryLocale } = await import('@/i18n/server/storyLocale')
+        return resolveStoryLocale({ projectId, userIdOrEmail: userId })
+      })
+
       const review = await runAudienceResonance({
         script: context.script,
         targetDemographic:
@@ -428,6 +436,10 @@ export const processScriptAnalysis = inngest.createFunction(
         contentIntent: context.contentIntent,
         treatment: context.treatment,
         previousScores: context.previousScores,
+        languageBlock: localeDirective(storyLocale, {
+          properNouns,
+          note: 'The JSON keys and the "priority" values stay exactly as specified; "name" and "category" values are labels shown to the reader and should be localized.',
+        }),
         baseScriptUpdatedAt:
           (payload.baseScriptUpdatedAt as string | null | undefined) ?? context.scriptUpdatedAt,
         chunkSize: (payload.chunkSize as number | undefined) ?? undefined,

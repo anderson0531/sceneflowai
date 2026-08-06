@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { strictJsonPromptSuffix } from '@/lib/safeJson'
 import { generateText } from '@/lib/vertexai/gemini'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { localeDirective } from '@/lib/prompts/localeDirective'
 
 interface CharacterBreakdownRequest {
   input: string
@@ -16,6 +18,9 @@ interface CharacterBreakdownRequest {
   genre?: string
   duration?: number
   platform?: string
+  projectId?: string
+  seriesId?: string
+  storyLocale?: string
 }
 
 interface Character {
@@ -52,13 +57,21 @@ export async function POST(request: NextRequest) {
     console.log('👥 Character Breakdown - Input length:', input.length)
     console.log('👥 Core concept:', coreConcept.input_title)
 
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, {
+      explicit: body.storyLocale,
+      projectId: body.projectId,
+      seriesId: body.seriesId,
+    })
+
     const characterBreakdown = await generateCharacterBreakdown(input, coreConcept, {
       targetAudience,
       keyMessage,
       tone,
       genre,
       duration,
-      platform
+      platform,
+      storyLocale,
+      properNouns
     })
 
     return NextResponse.json({
@@ -113,7 +126,7 @@ TASK: Identify and analyze all characters by:
 3. Describing their key traits and characteristics (CONCISE)
 4. Identifying relationships between characters
 5. Outlining potential character arcs
-
+${localeDirective(context.storyLocale, { properNouns: context.properNouns })}
 Respond with valid JSON only:
 {
   "characters": [

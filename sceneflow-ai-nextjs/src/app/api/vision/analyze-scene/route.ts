@@ -10,6 +10,8 @@ import {
   getScoreTier
 } from '@/lib/review-criteria'
 import { generateText } from '@/lib/vertexai/gemini'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { localeDirective } from '@/lib/prompts/localeDirective'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -91,12 +93,20 @@ export async function POST(req: NextRequest) {
     console.log('[Scene Analysis] Scene data:', JSON.stringify(scene, null, 2))
     console.log('[Scene Analysis] API Key present:', !!(process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY))
 
+    // Recommendations carry before/after script excerpts, so an English-only
+    // analysis would hand the creator replacement text in the wrong language.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, { projectId })
+    const languageBlock = localeDirective(storyLocale, {
+      properNouns,
+      note: 'The JSON keys, the "category" values, the "priority" values and the recommendation ids stay exactly as specified.',
+    })
+
     // Generate both director and audience analysis
     let directorAnalysis, audienceAnalysis
     try {
       [directorAnalysis, audienceAnalysis] = await Promise.all([
-        generateDirectorAnalysis(scene, context),
-        generateAudienceAnalysis(scene, context)
+        generateDirectorAnalysis(scene, context, languageBlock),
+        generateAudienceAnalysis(scene, context, languageBlock)
       ])
     } catch (error) {
       console.error('[Scene Analysis] Generation error:', error)
@@ -140,7 +150,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function generateDirectorAnalysis(scene: any, context: any): Promise<{
+async function generateDirectorAnalysis(scene: any, context: any, languageBlock: string = ''): Promise<{
   score: number
   recommendations: Recommendation[]
   categoryScores?: Array<{ category: string; score: number; weight: number }>
@@ -268,7 +278,7 @@ Format as JSON with this exact structure:
 }
 
 Focus on practical, implementable suggestions that a director would give to improve the scene.
-
+${languageBlock}
 IMPORTANT: Be concise and focused. Provide 2-3 high-impact recommendations maximum. Remember: recommendations for polish don't mean the scene is bad - score generously!`
 
   console.log('[Director Analysis] Sending prompt (first 500 chars):', prompt.substring(0, 500))
@@ -410,7 +420,7 @@ IMPORTANT: Be concise and focused. Provide 2-3 high-impact recommendations maxim
   }
 }
 
-async function generateAudienceAnalysis(scene: any, context: any): Promise<{
+async function generateAudienceAnalysis(scene: any, context: any, languageBlock: string = ''): Promise<{
   score: number
   recommendations: Recommendation[]
   categoryScores?: Array<{ category: string; score: number; weight: number }>
@@ -522,7 +532,7 @@ Format as JSON with this exact structure:
 }
 
 Focus on what audiences will love and what will make them more engaged with the story.
-
+${languageBlock}
 IMPORTANT: Be concise and focused. Provide 2-3 high-impact recommendations maximum. Remember: recommendations for polish don't mean the scene is bad - score generously!`
 
   console.log('[Audience Analysis] Sending prompt (first 500 chars):', prompt.substring(0, 500))

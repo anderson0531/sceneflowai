@@ -37,6 +37,34 @@ describe('runGuidedRevise', () => {
     expect(shouldRunPlanner(undefined, payload.selectedRecs, payload.intentText)).toBe(false)
   })
 
+  it('infers sections from the English copy of non-English direction', () => {
+    // Section keywords are English, so Spanish direction on its own collapsed to
+    // a story-only plan and quietly ignored the beats the creator asked about.
+    const spanish = 'Ajusta el ritmo de la segunda mitad'
+    const withoutRouting = buildGuidedRevisePayload({
+      incomingVariant: baseVariant,
+      userIntent: spanish,
+      storyLocale: 'es',
+    })
+    expect(
+      resolveInitialPlan(undefined, withoutRouting.intentText, withoutRouting.selectedRecs)
+        .sectionsToUpdate
+    ).toEqual(['story'])
+
+    const withRouting = buildGuidedRevisePayload({
+      incomingVariant: baseVariant,
+      userIntent: spanish,
+      storyLocale: 'es',
+      intentTextForRouting: 'Adjust the pacing of the second half',
+    })
+    // The prompts still receive the creator's own words.
+    expect(withRouting.intentText).toBe(spanish)
+    expect(
+      resolveInitialPlan(undefined, withRouting.intentTextForRouting!, withRouting.selectedRecs)
+        .sectionsToUpdate
+    ).toContain('beats')
+  })
+
   it('modelForRewriteStep uses pro for full balance', () => {
     expect(modelForRewriteStep(4, 'all')).toContain('pro')
     expect(modelForRewriteStep(1, 'story')).toContain('flash')

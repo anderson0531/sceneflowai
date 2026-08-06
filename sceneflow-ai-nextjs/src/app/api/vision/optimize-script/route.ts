@@ -5,6 +5,8 @@ import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
 import { ensureSceneBeats } from '@/lib/script/beatMigration'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 
 export const maxDuration = 600 // 10min for large scripts with retries + parallel batches
 export const runtime = 'nodejs'
@@ -118,15 +120,22 @@ export async function POST(req: NextRequest) {
       console.warn('[Script Optimization] Failed to load series continuity:', err)
     }
     
+    // A rewrite replaces dialogue and narration outright, so it has to come back
+    // in the language the script is written in.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, { projectId })
+    const languageBlock = localeDirective(storyLocale, {
+      properNouns: buildProperNounGlossary({ characters: characters ?? [] }, properNouns),
+    })
+
     let result: any
     try {
-      result = await optimizeScript(script, instruction, characters, !!compact, directorReview, audienceReview, seriesContinuityBlock)
+      result = await optimizeScript(script, instruction, characters, !!compact, directorReview, audienceReview, seriesContinuityBlock, languageBlock)
     } catch (e: any) {
       const msg = String(e?.message || '')
       const parseErr = msg.includes('Failed to parse optimization response') || msg.includes('no JSON found')
       if (parseErr && !compact) {
         console.warn('[Script Optimization] Parse failed. Retrying compact...')
-        result = await optimizeScript(script, instruction, characters, true, directorReview, audienceReview, seriesContinuityBlock)
+        result = await optimizeScript(script, instruction, characters, true, directorReview, audienceReview, seriesContinuityBlock, languageBlock)
       } else {
         throw e
       }
@@ -163,7 +172,8 @@ async function optimizeScript(
   compact: boolean,
   directorReview?: Review | null,
   audienceReview?: Review | null,
-  seriesContinuityBlock: string = ''
+  seriesContinuityBlock: string = '',
+  languageBlock: string = ''
 ) {
   // Global deadline: 540s hard limit (60s safety margin before Vercel's 600s kill)
   const globalStartTime = Date.now()
@@ -191,7 +201,7 @@ async function optimizeScript(
   }
   
   // Build shared context once (now includes voice profiles)
-  const sharedContext = buildSharedContext(script, instruction, characters, compact, directorReview, audienceReview, voiceProfiles, seriesContinuityBlock)
+  const sharedContext = buildSharedContext(script, instruction, characters, compact, directorReview, audienceReview, voiceProfiles, seriesContinuityBlock, languageBlock)
   
   // Extract per-scene analysis data from audience review (if available)
   const sceneAnalysis: SceneAnalysis[] = (audienceReview as any)?.sceneAnalysis || []
@@ -336,7 +346,8 @@ function buildSharedContext(
   directorReview?: Review | null,
   audienceReview?: Review | null,
   voiceProfiles?: Record<string, CharacterVoiceProfile>,
-  seriesContinuityBlock?: string
+  seriesContinuityBlock?: string,
+  languageBlock: string = ''
 ): string {
   // CREATIVE REWRITE MODE: Give the model permission to make substantial changes
   // The previous approach was too conservative, resulting in minimal dialogue changes
@@ -377,7 +388,7 @@ RIGHT (substantive rewrite): Ben: [horrified] "The ABI is consuming them!"
 3. ENVIRONMENTAL STORYTELLING: lights flicker, screens glitch, silence falls
 4. INCOMPLETE SENTENCES: "Before she—" "I almost—" "It's the same as when—"
 5. CONTRADICTION: Say one thing, body language says another
-
+${languageBlock}
 Total Scenes: ${script.scenes?.length || 0}`
 }
 

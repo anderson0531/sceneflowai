@@ -14,6 +14,8 @@ import { sequelize } from '@/config/database'
 import { callLLM } from '@/services/llmGateway'
 import { v4 as uuidv4 } from 'uuid'
 import { ApplySeriesFixRequest, ApplySeriesFixResponse } from '@/types/series'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { localeDirective } from '@/lib/prompts/localeDirective'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 120 // 2 minutes for fix generation
@@ -138,20 +140,25 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     
     let updatedContent: any
     let changesSummary: string
-    
+
+    // A fix rewrites bible or episode prose, so it has to come back in the
+    // language the series is written in.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, { seriesId })
+    const languageBlock = localeDirective(storyLocale, { properNouns })
+
     // Normalize targetSection to handle plural forms
     const normalizedSection = normalizeTargetSection(targetSection)
     
     switch (normalizedSection) {
       case 'episode':
-        const result = await applyEpisodeFix(series, targetId!, fixSuggestion)
+        const result = await applyEpisodeFix(series, targetId!, fixSuggestion, languageBlock)
         updatedContent = result.updatedEpisodes
         changesSummary = result.summary
         await series.update({ episode_blueprints: updatedContent })
         break
         
       case 'character':
-        const charResult = await applyCharacterFix(series, targetId!, fixSuggestion)
+        const charResult = await applyCharacterFix(series, targetId!, fixSuggestion, languageBlock)
         await series.update({
           production_bible: {
             ...series.production_bible,
@@ -162,7 +169,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         break
         
       case 'location':
-        const locResult = await applyLocationFix(series, targetId!, fixSuggestion)
+        const locResult = await applyLocationFix(series, targetId!, fixSuggestion, languageBlock)
         await series.update({
           production_bible: {
             ...series.production_bible,
@@ -173,7 +180,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         break
         
       case 'bible':
-        const bibleResult = await applyBibleFix(series, fixSuggestion)
+        const bibleResult = await applyBibleFix(series, fixSuggestion, languageBlock)
         await series.update({
           production_bible: bibleResult.updatedBible,
           logline: bibleResult.updatedLogline || series.logline
@@ -182,7 +189,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         break
         
       case 'visual-style':
-        const visualResult = await applyVisualStyleFix(series, fixSuggestion)
+        const visualResult = await applyVisualStyleFix(series, fixSuggestion, languageBlock)
         await series.update({
           production_bible: {
             ...series.production_bible,
@@ -249,7 +256,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 async function applyEpisodeFix(
   series: Series,
   episodeId: string,
-  fixSuggestion: string
+  fixSuggestion: string,
+  languageBlock: string = ''
 ): Promise<{ updatedEpisodes: any[]; summary: string }> {
   const episodes = [...(series.episode_blueprints || [])]
   
@@ -277,7 +285,7 @@ async function applyEpisodeFix(
   
   // For "all" episodes or large batches, use efficient batch processing
   if (targetIndices.length > 5) {
-    return applyBatchEpisodeFix(series, episodes, targetIndices, fixSuggestion)
+    return applyBatchEpisodeFix(series, episodes, targetIndices, fixSuggestion, languageBlock)
   }
   
   // For smaller sets, do individual updates
@@ -312,7 +320,8 @@ Return ONLY valid JSON:
   ],
   "episodeHook": "Stronger hook/cliffhanger for next episode",
   "changesSummary": "Brief description of what changed"
-}`
+}
+${languageBlock}`
 
     const response = await callLLM(
       { provider: 'gemini', model: 'gemini-2.5-flash', maxOutputTokens: 8192 },
@@ -355,7 +364,8 @@ async function applyBatchEpisodeFix(
   series: Series,
   episodes: any[],
   targetIndices: number[],
-  fixSuggestion: string
+  fixSuggestion: string,
+  languageBlock: string = ''
 ): Promise<{ updatedEpisodes: any[]; summary: string }> {
   // Build episode summaries for context
   const episodeSummaries = targetIndices.map(idx => {
@@ -388,7 +398,8 @@ Return ONLY valid JSON array with one entry per episode:
   }
 ]
 
-IMPORTANT: Return exactly ${targetIndices.length} entries, one for each episode.`
+IMPORTANT: Return exactly ${targetIndices.length} entries, one for each episode.
+${languageBlock}`
 
   const response = await callLLM(
     { provider: 'gemini', model: 'gemini-2.5-flash', maxOutputTokens: 16384 },
@@ -423,7 +434,8 @@ IMPORTANT: Return exactly ${targetIndices.length} entries, one for each episode.
 async function applyCharacterFix(
   series: Series,
   characterId: string,
-  fixSuggestion: string
+  fixSuggestion: string,
+  languageBlock: string = ''
 ): Promise<{ updatedCharacters: any[]; summary: string }> {
   const bible = series.production_bible || {}
   const characters = [...(bible.characters || [])]
@@ -458,7 +470,8 @@ Return ONLY valid JSON:
   "personality": "Updated personality traits",
   "backstory": "Updated backstory if relevant",
   "changesSummary": "Brief description of what changed"
-}`
+}
+${languageBlock}`
 
   const response = await callLLM(
     { provider: 'gemini', model: 'gemini-2.5-flash', maxOutputTokens: 4096 },
@@ -488,7 +501,8 @@ Return ONLY valid JSON:
 async function applyLocationFix(
   series: Series,
   locationId: string,
-  fixSuggestion: string
+  fixSuggestion: string,
+  languageBlock: string = ''
 ): Promise<{ updatedLocations: any[]; summary: string }> {
   const bible = series.production_bible || {}
   const locations = [...(bible.locations || [])]
@@ -517,7 +531,8 @@ Return ONLY valid JSON:
   "description": "Enhanced description addressing the fix",
   "visualDescription": "Updated visual description for production",
   "changesSummary": "Brief description of what changed"
-}`
+}
+${languageBlock}`
 
   const response = await callLLM(
     { provider: 'gemini', model: 'gemini-2.5-flash', maxOutputTokens: 4096 },
@@ -544,7 +559,8 @@ Return ONLY valid JSON:
  */
 async function applyBibleFix(
   series: Series,
-  fixSuggestion: string
+  fixSuggestion: string,
+  languageBlock: string = ''
 ): Promise<{ updatedBible: any; updatedLogline?: string; summary: string }> {
   const bible = series.production_bible || {}
   
@@ -582,7 +598,8 @@ Return ONLY valid JSON:
   },
   "toneGuidelines": "Updated tone if needed",
   "changesSummary": "Brief description of what changed"
-}`
+}
+${languageBlock}`
 
   const response = await callLLM(
     { provider: 'gemini', model: 'gemini-2.5-flash', maxOutputTokens: 8192 },
@@ -615,7 +632,8 @@ Return ONLY valid JSON:
  */
 async function applyVisualStyleFix(
   series: Series,
-  fixSuggestion: string
+  fixSuggestion: string,
+  languageBlock: string = ''
 ): Promise<{ updatedAesthetic: any; updatedGuidelines: string; summary: string }> {
   const bible = series.production_bible || {}
   const aesthetic = bible.aesthetic || {}
@@ -646,7 +664,8 @@ Return ONLY valid JSON:
     "lightingStyle": "Updated lighting approach"
   },
   "changesSummary": "Brief description of what changed"
-}`
+}
+${languageBlock}`
 
   const response = await callLLM(
     { provider: 'gemini', model: 'gemini-2.5-flash', maxOutputTokens: 4096 },

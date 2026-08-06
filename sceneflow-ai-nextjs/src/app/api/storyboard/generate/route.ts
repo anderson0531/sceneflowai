@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { AIProviderFactory } from '@/services/ai-providers/AIProviderFactory'
 import { UserProviderConfig } from '@/models/UserProviderConfig'
 import { EncryptionService } from '@/services/EncryptionService'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { localeDirective } from '@/lib/prompts/localeDirective'
 
 
 export interface StoryboardScene {
@@ -112,6 +114,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       console.warn('Could not retrieve user LLM config, using default:', error)
     }
 
+    // The frame descriptions, audio cues and mood are read by the creator; the
+    // directive keeps image_prompt in English because it feeds the image model.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, {
+      projectId,
+      userIdOrEmail: userId,
+    })
+    const languageBlock = localeDirective(storyLocale, { properNouns })
+
     // Prepare the prompt for storyboard generation
     const systemPrompt = `You are a professional film director and storyboard artist. Your task is to transform a video concept into a detailed, cinematic storyboard.
 
@@ -158,6 +168,7 @@ IMPORTANT:
 - Consider the flow and pacing between scenes
 - Provide specific, actionable image prompts for AI generation
 - Maintain consistency with the overall style and tone
+${languageBlock}
 - Focus on cinematic quality and visual storytelling`
 
     let storyboard: StoryboardScene[]

@@ -5,6 +5,8 @@ import { sequelize } from '@/config/database'
 import { callLLM } from '@/services/llmGateway'
 import { v4 as uuidv4 } from 'uuid'
 import { SERIES_CHARACTER_NAMING_BLOCK } from '@/lib/character/characterNamingPrompt'
+import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { localeDirective } from '@/lib/prompts/localeDirective'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300 // 5 minutes for comprehensive storyline refactor
@@ -166,7 +168,8 @@ function safeParseJSON(text: string): any {
  */
 async function refactorProductionBible(
   instruction: string,
-  series: any
+  series: any,
+  languageBlock: string = ''
 ): Promise<any> {
   const currentBible = series.production_bible || {}
   
@@ -206,7 +209,8 @@ Return ONLY valid JSON (no markdown, no explanation):
     }
   ],
   "changesApplied": ["Specific change 1", "Specific change 2"]
-}`
+}
+${languageBlock}`
 
   console.log('[Edit Storyline] Phase 1: Calling LLM for reference library refactor...')
   
@@ -227,7 +231,8 @@ Return ONLY valid JSON (no markdown, no explanation):
 async function refactorEpisodes(
   instruction: string,
   series: any,
-  updatedBible: any
+  updatedBible: any,
+  languageBlock: string = ''
 ): Promise<any[]> {
   const episodes = series.episode_blueprints || []
   if (episodes.length === 0) {
@@ -272,7 +277,8 @@ Return ONLY a valid JSON array (no markdown):
     "logline": "Updated logline reflecting the change",
     "synopsis": "Updated synopsis with new character/plot"
   }
-]`
+]
+${languageBlock}`
 
     try {
       const response = await callLLM({
@@ -362,9 +368,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     console.log(`[${timestamp}] [POST /api/series/${seriesId}/edit-storyline] Starting comprehensive refactor`)
     console.log(`[${timestamp}] Instruction: "${instruction.slice(0, 100)}"`)
     
+    // A storyline edit rewrites the bible and every episode logline, so it has
+    // to come back in the language the series is written in.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, { seriesId })
+    const languageBlock = localeDirective(storyLocale, { properNouns })
+
     // ========== PHASE 1: Refactor Reference Library ==========
     console.log(`[${timestamp}] Phase 1: Refactoring reference library...`)
-    const bibleUpdates = await refactorProductionBible(instruction, series)
+    const bibleUpdates = await refactorProductionBible(instruction, series, languageBlock)
     
     if (!bibleUpdates) {
       return NextResponse.json({ 
@@ -377,7 +388,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     
     // ========== PHASE 2: Refactor All Episodes ==========
     console.log(`[${timestamp}] Phase 2: Refactoring ${series.episode_blueprints?.length || 0} episodes...`)
-    const updatedEpisodes = await refactorEpisodes(instruction, series, bibleUpdates)
+    const updatedEpisodes = await refactorEpisodes(instruction, series, bibleUpdates, languageBlock)
     console.log(`[${timestamp}] Phase 2 complete. Updated ${updatedEpisodes.length} episodes`)
     
     // Preview mode - return proposed changes without saving
