@@ -7741,16 +7741,32 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               }
             }
                 
-                // Auto-generate scene directions for all new scenes
-                // Run in background after script generation completes
+                // Backfill direction only when server inception attach missed scenes.
                 if (reloadSucceeded && data.totalScenes > 0) {
-                  console.log(`[AutoDirection] Script generation complete - auto-generating direction for ${data.totalScenes} scenes`)
-                  try { const { toast } = require('sonner'); toast.info('Generating scene directions for new script...', { duration: 5000 }) } catch {}
-                  for (let i = 0; i < data.totalScenes; i++) {
-                    // Stagger calls to avoid overwhelming the API
-                    setTimeout(() => {
-                      handleBackgroundDirectionGeneration(i)
-                    }, i * 2000) // 2 second stagger between scenes
+                  const failureIndexes: number[] = Array.isArray(data.directionFailures)
+                    ? data.directionFailures
+                    : []
+                  if (data.directionsAttached && failureIndexes.length === 0) {
+                    console.log(
+                      `[AutoDirection] Script inception attached direction for ${data.totalScenes} scenes — skipping client backfill`
+                    )
+                  } else {
+                    const indexesToGenerate =
+                      failureIndexes.length > 0
+                        ? failureIndexes
+                        : Array.from({ length: data.totalScenes }, (_, i) => i)
+                    console.log(
+                      `[AutoDirection] Backfilling direction for ${indexesToGenerate.length}/${data.totalScenes} scenes`
+                    )
+                    try {
+                      const { toast } = require('sonner')
+                      toast.info('Generating missing scene directions…', { duration: 5000 })
+                    } catch {}
+                    indexesToGenerate.forEach((i: number, staggerIdx: number) => {
+                      setTimeout(() => {
+                        handleBackgroundDirectionGeneration(i)
+                      }, staggerIdx * 2000)
+                    })
                   }
                 }
                 
@@ -10736,8 +10752,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     
     const scene = sceneOverride ?? script?.script?.scenes?.[sceneIdx]
     if (!scene) return
-    
-    backgroundDirectionInFlight.current.add(sceneIdx)
+       backgroundDirectionInFlight.current.add(sceneIdx)
     setGeneratingDirectionFor(sceneIdx)
     
     try {

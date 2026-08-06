@@ -73,7 +73,7 @@ function getNextStep(state: WorkflowState): NextStepAction | null {
     return {
       label: 'Scene direction pending',
       description:
-        'Direction is generated automatically after script generation or when you edit the scene.',
+        'Direction is usually included when the script is generated. Generate or refresh it here if a scene is still missing direction or the script changed.',
       icon: <Compass className="w-4 h-4" />,
       targetTab: 'callAction',
       accentColor: 'cyan',

@@ -23,6 +23,11 @@ import {
   ensureCinematicBookends,
 } from '@/lib/script/cinematicBookends'
 import {
+  attachSceneDirectionsToScript,
+  readScenesFromVisionMetadata,
+  writeScenesIntoVisionMetadata,
+} from '@/lib/sceneGeneration/attachSceneDirectionsToScript'
+import {
   buildBeatTimelineNarrationRules,
   buildNarrationLegacyFieldHint,
   buildNarrationPromptSection,
@@ -681,6 +686,48 @@ export async function POST(request: NextRequest) {
           console.warn('[Script Gen V2] Segmented-script pass failed; persisting flat shape only', segErr)
         }
 
+        // Attach detailed scene direction before the script is marked ready so
+        // inception includes full DetailedSceneDirection (not a post-hoc client loop).
+        let directionFailures: number[] = []
+        let directionsAttached = false
+        try {
+          const scenesForDirection = readScenesFromVisionMetadata(metadataToPersist)
+          if (scenesForDirection.length > 0) {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              type: 'progress',
+              status: 'Generating scene directions…',
+              phase: 'direction',
+              totalScenes: scenesForDirection.length,
+            })}\n\n`))
+
+            const attachResult = await attachSceneDirectionsToScript(scenesForDirection, {
+              concurrency: 3,
+              onProgress: (done, total) => {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                  type: 'progress',
+                  status: `Scene directions ${done}/${total}`,
+                  phase: 'direction',
+                  done,
+                  total,
+                })}\n\n`))
+              },
+            })
+            metadataToPersist = writeScenesIntoVisionMetadata(
+              metadataToPersist,
+              attachResult.scenes
+            )
+            directionFailures = attachResult.directionFailures
+            directionsAttached = attachResult.directionsAttached
+            console.log('[Script Gen V2] Scene directions attached:', {
+              attached: attachResult.attachedCount,
+              skipped: attachResult.skippedCount,
+              failures: directionFailures,
+            })
+          }
+        } catch (dirErr) {
+          console.warn('[Script Gen V2] Direction attach failed (non-blocking):', dirErr)
+        }
+
         // Duration is now DERIVED from the script the model actually wrote,
         // rather than a target the content was forced to hit. Persist it so the
         // downstream video/cost/Veo budgeting reflects the real content length.
@@ -701,6 +748,8 @@ export async function POST(request: NextRequest) {
           partial: false,
           expectedScenes: allScenes.length,
           projectId: projectId,
+          directionsAttached,
+          ...(directionFailures.length > 0 ? { directionFailures } : {}),
         })}\n\n`))
         
         controller.close()
