@@ -5,6 +5,7 @@ import { sequelize } from '@/config/database'
 import { generateImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
 import { uploadReferenceLibraryBase64Image } from '@/lib/storage/referenceLibraryStorage'
 import { buildCharacterIdentityReferencePromptFromCharacter } from '@/lib/character/characterReferencePrompts'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import {
   ENHANCE_IDENTITY_ASPECT_RATIO,
   ENHANCE_IDENTITY_IMAGE_SIZE,
@@ -42,11 +43,22 @@ export async function POST(request: NextRequest) {
 
     console.log(`[Character Gen] Generating ${characters.length} character references with ${provider.providerName}`)
 
+    // Appearance fields are typed by the creator, so a prompt built from them can
+    // arrive in any language; the image model needs English.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, {
+      projectId,
+      userIdOrEmail: userId,
+    })
+
     // Generate character reference images in parallel
     const characterRefs = await Promise.all(
       characters.map(async (char: any, index: number) => {
         try {
-          const prompt = buildCharacterPrompt(char)
+          const prompt = await englishForModel(
+            buildCharacterPrompt(char),
+            storyLocale,
+            [char?.name, ...properNouns].filter(Boolean)
+          )
           
           const imageUrl = await generateCharacterImage({
             userId,

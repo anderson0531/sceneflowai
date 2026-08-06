@@ -8,6 +8,7 @@ import { uploadVideoToBlob } from '@/lib/storage/blob'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { BACKDROP_MODES, BackdropMode } from '@/lib/vision/backdropGenerator'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 
 export const maxDuration = 300
 export const runtime = 'nodejs'
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
 
     const body: GenerateBackdropVideoRequest = await req.json()
     const {
-      prompt,
+      prompt: enteredPrompt,
       mode = 'master',
       sourceSceneNumber,
       negativePrompt,
@@ -38,9 +39,15 @@ export async function POST(req: NextRequest) {
       aspectRatio = '16:9',
     } = body
 
-    if (!prompt) {
+    if (!enteredPrompt) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
     }
+
+    // Typed in the creator's language; Veo needs English.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, {
+      projectId: (body as { projectId?: string }).projectId,
+    })
+    const prompt = await englishForModel(enteredPrompt, storyLocale, properNouns)
 
     const modeConfig = BACKDROP_MODES[mode]
 

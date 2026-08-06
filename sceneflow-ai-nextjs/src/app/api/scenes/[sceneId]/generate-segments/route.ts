@@ -21,6 +21,7 @@ import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
 import { resolveNarrationTextForAudioTimeline } from '@/lib/script/narration'
 import { SegmentDirection, SceneSegmentPromptBundleEntry, detectNoTalentSegment } from '@/types/scene-direction'
 import { resolveVisualGender } from '@/lib/character/visualGender'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 
 /** Vercel: match `vercel.json` for this route — long Gemini JSON on global endpoint. */
 export const maxDuration = 300
@@ -243,7 +244,7 @@ export async function POST(
   const { 
     projectId, 
     focusMode, 
-    customInstructions,
+    customInstructions: enteredCustomInstructions,
     selectedCharacterIds = [],
     includeReferencesInPrompts = true,
     optimizeForTransitions = true,
@@ -278,6 +279,15 @@ export async function POST(
         { status: 400 }
       )
     }
+
+    // Director's notes are typed in the creator's language, and this phase emits
+    // video_generation_prompt for Veo, which needs English.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, { projectId })
+    const customInstructions = await englishForModel(
+      enteredCustomInstructions,
+      storyLocale,
+      properNouns
+    )
 
     console.log('[Scene Segmentation] Generating intelligent segments for scene:', sceneId)
 

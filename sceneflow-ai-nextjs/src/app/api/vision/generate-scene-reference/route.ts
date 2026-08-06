@@ -3,6 +3,7 @@ import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { uploadReferenceLibraryBase64Image } from '@/lib/storage/referenceLibraryStorage'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
 
     const body: GenerateSceneReferenceRequest = await req.json()
     const { 
-      prompt, 
+      prompt: enteredPrompt, 
       name, 
       description, 
       sourceSceneNumber,
@@ -38,12 +39,18 @@ export async function POST(req: NextRequest) {
       negativePrompt = 'people, characters, faces, crowds, humans, persons, figures'
     } = body
 
-    if (!prompt || !name) {
+    if (!enteredPrompt || !name) {
       return NextResponse.json(
         { error: 'Missing required fields: prompt, name' },
         { status: 400 }
       )
     }
+
+    // Typed in the creator's language; the image model needs English.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, {
+      projectId: (body as { projectId?: string }).projectId,
+    })
+    const prompt = await englishForModel(enteredPrompt, storyLocale, properNouns)
 
     console.log('[Scene Reference Generation] Generating scene reference:', name)
     console.log('[Scene Reference Generation] Prompt:', prompt.substring(0, 200))

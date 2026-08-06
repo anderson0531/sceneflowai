@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import '@/models'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 import { uploadImageToBlob } from '@/lib/storage/blob'
@@ -38,14 +39,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { projectId, sceneNumber, customPrompt, scene, visualStyle, characters } = await request.json()
+    const { projectId, sceneNumber, customPrompt: enteredPrompt, scene, visualStyle, characters } = await request.json()
 
-    if (!projectId || !sceneNumber || !customPrompt) {
+    if (!projectId || !sceneNumber || !enteredPrompt) {
       return NextResponse.json(
         { success: false, error: 'projectId, sceneNumber, and customPrompt are required' },
         { status: 400 }
       )
     }
+
+    // The creator may type this direction in their own language; the image model
+    // needs English.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, { projectId })
+    const customPrompt = await englishForModel(enteredPrompt, storyLocale, properNouns)
 
     console.log(`[Regenerate Scene] Regenerating image for scene ${sceneNumber}`)
 

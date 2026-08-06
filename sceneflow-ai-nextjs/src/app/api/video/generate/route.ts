@@ -3,6 +3,7 @@ import { UserProviderConfig } from '@/models/UserProviderConfig'
 import { EncryptionService } from '@/services/EncryptionService'
 import { AsyncJobManager } from '@/services/AsyncJobManager'
 import { SparkStudioService, VideoClip, GenerationSettings } from '@/services/SparkStudioService'
+import { englishForModelBatch, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 
 
 export interface VideoGenerationRequest {
@@ -66,6 +67,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         success: false,
         error: 'Missing user ID or project ID'
       }, { status: 400 })
+    }
+
+    // Clip prompts can carry scene text in the creator's language; the video
+    // providers need English.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, {
+      projectId,
+      userIdOrEmail: userId,
+    })
+    if (storyLocale !== 'en') {
+      const englishClipPrompts = await englishForModelBatch(
+        sceneDirections.map((scene) => scene.video_clip_prompt),
+        storyLocale,
+        properNouns
+      )
+      sceneDirections.forEach((scene, index) => {
+        scene.video_clip_prompt = englishClipPrompts[index] ?? scene.video_clip_prompt
+      })
     }
 
     // Check for valid Video Generation BYOK configuration

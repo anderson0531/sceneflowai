@@ -10,6 +10,7 @@ import {
 } from '@/lib/vision/backdropGenerator'
 import { CREDIT_COSTS, getCreditCost } from '@/lib/credits/creditCosts'
 import { CreditService } from '@/services/CreditService'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -53,19 +54,25 @@ export async function POST(req: NextRequest) {
 
     const body: GenerateBackdropRequest = await req.json()
     const { 
-      prompt, 
+      prompt: enteredPrompt, 
       mode = 'master',
       sourceSceneNumber,
       characterId,
       aspectRatio = '16:9',
     } = body
 
-    if (!prompt) {
+    if (!enteredPrompt) {
       return NextResponse.json(
         { error: 'Missing required field: prompt' },
         { status: 400 }
       )
     }
+
+    // Typed in the creator's language; the image model needs English.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, {
+      projectId: (body as { projectId?: string }).projectId,
+    })
+    const prompt = await englishForModel(enteredPrompt, storyLocale, properNouns)
 
     console.log(`[Backdrop Generation] Mode: ${mode}, Scene: ${sourceSceneNumber}`)
     console.log(`[Backdrop Generation] Prompt: ${prompt.substring(0, 200)}...`)

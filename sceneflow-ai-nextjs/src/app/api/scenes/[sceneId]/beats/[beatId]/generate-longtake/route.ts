@@ -29,6 +29,7 @@ import {
   resolveKlingElementsFromSources,
 } from '@/lib/kling/elementRegistry'
 import type { KlingLongTakeJobPayload } from '@/lib/kling/longTakeOrchestrator'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -229,7 +230,15 @@ export async function POST(
       await persistKlingElementIdsToProject(projectId, resolvedElements.newRegistrations)
     }
     const elementList = resolvedElements.elementIds
-    const basePrompt = body.prompt?.trim() || compiled.prompt
+    // A typed prompt arrives in the creator's language; Kling needs English.
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, {
+      projectId: body.projectId,
+    })
+    const basePrompt = await englishForModel(
+      body.prompt?.trim() || compiled.prompt,
+      storyLocale,
+      properNouns
+    )
     const prompt =
       resolvedElements.promptTags.length > 0
         ? injectElementTagsIntoPrompt(basePrompt, resolvedElements.promptTags)
