@@ -10,6 +10,11 @@ import { normalizeDialogueToProductionLineTargets } from '@/lib/script/segmentSc
 import { buildCharacterDialogueExamples } from '@/lib/character/characterNamingPrompt'
 import { resolveStoryLocale } from '@/i18n/server/storyLocale'
 import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
+import {
+  attachSceneDirectionsToScript,
+  readScenesFromVisionMetadata,
+  writeScenesIntoVisionMetadata,
+} from '@/lib/sceneGeneration/attachSceneDirectionsToScript'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -622,7 +627,7 @@ Generate COMPLETE scenes with full dialogue and action.`
     })
     
     // Combine into final script structure (fully expanded scenes with dialogue)
-    const scriptData = {
+    let scriptData: any = {
       title: filmTreatmentVariant.title || 'Untitled',
       logline: filmTreatmentVariant.logline || '',
       script: {
@@ -730,6 +735,45 @@ Generate COMPLETE scenes with full dialogue and action.`
       console.warn('[Generate Script] Segmented-script pass failed; persisting flat shape only', segErr)
     }
 
+    let directionFailures: number[] = []
+    let directionsAttached = false
+    try {
+      const scenesForDirection = readScenesFromVisionMetadata(metadataToPersist)
+      if (scenesForDirection.length > 0) {
+        if (sendProgress) {
+          sendProgress({
+            type: 'progress',
+            status: 'Generating scene directions…',
+            phase: 'direction',
+            totalScenes: scenesForDirection.length,
+          })
+        }
+        const attachResult = await attachSceneDirectionsToScript(scenesForDirection, {
+          concurrency: 3,
+        })
+        metadataToPersist = writeScenesIntoVisionMetadata(
+          metadataToPersist,
+          attachResult.scenes
+        )
+        // Keep the returned payload in sync with what we persist.
+        if (scriptData?.script) {
+          scriptData = {
+            ...scriptData,
+            script: { ...scriptData.script, scenes: attachResult.scenes },
+          }
+        }
+        directionFailures = attachResult.directionFailures
+        directionsAttached = attachResult.directionsAttached
+        console.log('[Generate Script] Scene directions attached:', {
+          attached: attachResult.attachedCount,
+          skipped: attachResult.skippedCount,
+          failures: directionFailures,
+        })
+      }
+    } catch (dirErr) {
+      console.warn('[Generate Script] Direction attach failed (non-blocking):', dirErr)
+    }
+
     // Update with proper Sequelize method
     await project.update({
       metadata: metadataToPersist
@@ -739,14 +783,18 @@ Generate COMPLETE scenes with full dialogue and action.`
     if (sendProgress) {
       sendProgress({
         type: 'complete',
-        script: scriptData
+        script: scriptData,
+        directionsAttached,
+        ...(directionFailures.length > 0 ? { directionFailures } : {}),
       })
     }
 
     // Return data (for non-SSE mode)
     return {
       success: true,
-      script: scriptData
+      script: scriptData,
+      directionsAttached,
+      ...(directionFailures.length > 0 ? { directionFailures } : {}),
     }
   } catch (error: any) {
     console.error('[Generate Script Internal] Error:', error)
