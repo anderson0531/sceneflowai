@@ -206,8 +206,11 @@ export class CreditService {
     // Resolve user first to get UUID (handles email or UUID)
     const resolvedUser = await findUserWithAutoMigration(userId)
     const userUuid = resolvedUser.id
-    // Ensure migration is run before starting transaction
+    // Migrations must finish before the transaction: DB_POOL_MAX defaults to 1, so a
+    // probe/DDL issued while the tx holds the only connection waits forever on acquire
+    // (guided-revise start hung after "Auto-running credit_ledger migration...").
     await ensureMigrationRan()
+    await ensureCreditLedgerMigrationRan()
     const result = await sequelize.transaction(async (tx) => {
       const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
       if (!user) throw new Error('User not found')
@@ -216,9 +219,6 @@ export class CreditService {
       const next = prev - chargeCredits
       user.credits = next
       await user.save({ transaction: tx })
-
-      // Ensure credit_ledger migration is run
-      await ensureCreditLedgerMigrationRan()
 
       // Log the charge in credit ledger
       try {
@@ -314,8 +314,9 @@ export class CreditService {
     // Resolve user first to get UUID (handles email or UUID)
     const resolvedUser = await findUserWithAutoMigration(userId)
     const userUuid = resolvedUser.id
-    // Ensure migration is run before starting transaction
+    // See charge(): ledger probe must not run while the tx holds the only pool slot.
     await ensureMigrationRan()
+    await ensureCreditLedgerMigrationRan()
     const result = await sequelize.transaction(async (tx) => {
       const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
       if (!user) throw new Error('User not found')
@@ -352,9 +353,6 @@ export class CreditService {
       user.credits = addonCredits + subscriptionCredits
 
       await user.save({ transaction: tx })
-
-      // Ensure credit_ledger migration is run
-      await ensureCreditLedgerMigrationRan()
 
       // Determine credit type for ledger
       const creditType: 'addon' | 'subscription' | null = 
@@ -437,8 +435,9 @@ export class CreditService {
     // Resolve user first to get UUID (handles email or UUID)
     const resolvedUser = await findUserWithAutoMigration(userId)
     const userUuid = resolvedUser.id
-    // Ensure migration is run before starting transaction
+    // See charge(): ledger probe must not run while the tx holds the only pool slot.
     await ensureMigrationRan()
+    await ensureCreditLedgerMigrationRan()
 
     return await sequelize.transaction(async (tx) => {
       const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
@@ -456,9 +455,6 @@ export class CreditService {
       user.credits = newAddonCredits + subscriptionCredits
 
       await user.save({ transaction: tx })
-
-      // Ensure credit_ledger migration is run
-      await ensureCreditLedgerMigrationRan()
 
       // Log the grant in credit ledger
       try {
