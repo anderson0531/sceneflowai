@@ -6430,6 +6430,42 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     useStore.getState().setIsGeneratingReviews(scriptAnalysisJob.isActive)
   }, [scriptAnalysisJob.isActive])
 
+  // Drive analysis forward from the client. Vercel returns 508 when a serverless
+  // function fetches itself (internal step→step), which parks the HTTP fallback
+  // mid-job. Each tick runs at most one lease-guarded phase server-side.
+  const scriptAnalysisJobId = scriptAnalysisJob.job?.id
+  const scriptAnalysisJobActive = scriptAnalysisJob.isActive
+  useEffect(() => {
+    if (!scriptAnalysisJobActive || !scriptAnalysisJobId) return
+
+    let cancelled = false
+    let inFlight = false
+
+    const advance = async () => {
+      if (cancelled || inFlight) return
+      inFlight = true
+      try {
+        await fetch('/api/vision/review-script/step', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ jobId: scriptAnalysisJobId }),
+        })
+      } catch {
+        // The next tick retries; polling still reflects real job state.
+      } finally {
+        inFlight = false
+      }
+    }
+
+    void advance()
+    const interval = setInterval(advance, 5000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [scriptAnalysisJobActive, scriptAnalysisJobId])
+
   const startScriptAnalysis = useCallback(
     async (targetDemographic?: string) => {
       if (!projectId) return

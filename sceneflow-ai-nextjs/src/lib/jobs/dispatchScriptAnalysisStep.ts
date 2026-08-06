@@ -27,6 +27,7 @@ function resolveAppUrl(): string {
 export async function postScriptAnalysisStep(jobId: string): Promise<void> {
   const url = `${resolveAppUrl()}/api/internal/jobs/script-analysis/step`
   const secret = process.env.INTERNAL_JOB_SECRET || 'sceneflow-internal'
+  const bypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET?.trim()
 
   try {
     const res = await fetch(url, {
@@ -34,11 +35,17 @@ export async function postScriptAnalysisStep(jobId: string): Promise<void> {
       headers: {
         'Content-Type': 'application/json',
         'x-internal-job': secret,
+        ...(bypass ? { 'x-vercel-protection-bypass': bypass } : {}),
       },
       body: JSON.stringify({ jobId }),
     })
     if (!res.ok) {
-      console.error(`[ScriptAnalysis] Step dispatch returned ${res.status} for job ${jobId}`)
+      const body = (await res.text().catch(() => '')).slice(0, 300)
+      // 508 = Vercel recursion protection (function self-fetch via x-vercel-id).
+      // Client-driven /api/vision/review-script/step ticks continue the job.
+      console.error(
+        `[ScriptAnalysis] Step dispatch returned ${res.status} for job ${jobId} url=${url} body=${body}`
+      )
     }
   } catch (err) {
     console.error('[ScriptAnalysis] Step dispatch failed:', err)
