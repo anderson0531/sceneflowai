@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { after } from 'next/server'
 import { runScriptAnalysisStep } from '@/lib/jobs/scriptAnalysisWorker'
-import { postScriptAnalysisStep } from '@/lib/jobs/dispatchScriptAnalysisStep'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -14,10 +13,11 @@ function authorize(req: NextRequest): boolean {
 /**
  * Internal worker: one init / scene-chunk / synthesis / persist step per invocation.
  *
- * The step is acknowledged before it runs. Running it inline instead would hold
- * the caller open for the whole phase, and because the caller is itself a step
- * doing the same thing, every function in the chain stayed alive until the last
- * one finished. Acknowledging first bounds each invocation to its own phase.
+ * Acknowledges first, then runs the phase in `after()`. Does **not** fetch this
+ * same route for the next hop — Vercel recursion protection returns
+ * `508 INFINITE_LOOP_DETECTED` when a function self-fetches via `x-vercel-id`
+ * (confirmed in production: `sfo1:sfo1:…`). Further phases are driven by
+ * browser ticks to `POST /api/vision/review-script/step`.
  */
 export async function POST(req: NextRequest) {
   if (!authorize(req)) {
@@ -40,14 +40,8 @@ export async function POST(req: NextRequest) {
 
   after(async () => {
     try {
-      const outcome = await runScriptAnalysisStep(acceptedJobId)
-      if (!outcome.done && !outcome.error && !outcome.inFlight) {
-        // Awaited directly rather than through scheduleScriptAnalysisStep:
-        // the next hop acknowledges immediately, so this waits on a handshake
-        // instead of on that hop's phase. Nesting another `after()` here is what
-        // chained the lifetimes together.
-        await postScriptAnalysisStep(acceptedJobId)
-      }
+      await runScriptAnalysisStep(acceptedJobId)
+      // Intentionally no postScriptAnalysisStep — self-fetch is blocked by Vercel.
     } catch (err) {
       // The worker already marks the job failed and notifies the user; this is
       // the last chance to see it in logs, since nobody awaits this callback.

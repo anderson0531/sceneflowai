@@ -42,10 +42,11 @@ describe('script analysis worker acknowledges a step before running it', () => {
     expect(runAt).toBeGreaterThan(afterStart)
   })
 
-  it('chains the next hop by awaiting the dispatch directly', () => {
-    expect(route).toContain('await postScriptAnalysisStep(')
-    expect(route).not.toMatch(/^import .*scheduleScriptAnalysisStep.*$/m)
-    expect(route).not.toMatch(/scheduleScriptAnalysisStep\s*\(/)
+  it('does not self-fetch the next hop (Vercel 508 INFINITE_LOOP_DETECTED)', () => {
+    expect(route).not.toMatch(/await postScriptAnalysisStep\s*\(/)
+    expect(route).not.toMatch(/^import .*postScriptAnalysisStep.*$/m)
+    expect(route).toContain('INFINITE_LOOP_DETECTED')
+    expect(route).toContain('/api/vision/review-script/step')
   })
 
   it('logs a failure nobody is awaiting', () => {
@@ -110,7 +111,7 @@ describe('script analysis client ticks survive Vercel 508 self-fetch', () => {
       'src/app/dashboard/workflow/vision/[projectId]/page.tsx'
     )
     expect(visionPage).toContain("/api/vision/review-script/step")
-    expect(visionPage).toContain('508')
+    expect(visionPage).toContain('INFINITE_LOOP_DETECTED')
   })
 
   it('logs 508 body so recursion protection is diagnosable', () => {
