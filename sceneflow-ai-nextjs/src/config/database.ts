@@ -342,16 +342,32 @@ function createSequelize(): Sequelize {
 
 export let sequelize = createSequelize()
 
+/**
+ * Refresh Cloud SQL mTLS without replacing the Sequelize singleton.
+ *
+ * Models (e.g. Project) bind `sequelize` at init time. Calling `sequelize.close()`
+ * permanently disables that connection manager, and `sequelize = createSequelize()`
+ * leaves models pointing at the closed instance — so authenticate on the new
+ * export can succeed while Project.findByPk still fails with alert 42 / closed CM.
+ *
+ * Drain pooled sockets, drop the connector + cached stream factory, and keep the
+ * same Sequelize instance so the next checkout runs beforeConnect with a fresh cert.
+ */
 export async function resetDatabaseConnection(): Promise<void> {
-  console.warn('[database] Resetting Sequelize + Cloud SQL connector singletons after SSL/cert error')
-  try {
-    await sequelize.close()
-  } catch {
-    /* pool may already be closed */
-  }
+  console.warn('[database] Resetting Cloud SQL connector after SSL/cert error (keeping Sequelize instance)')
   cloudSqlOptsPromise = null
   resetCloudSqlConnector()
-  sequelize = createSequelize()
+  try {
+    const pool = sequelize.connectionManager?.pool as
+      | { drain?: () => Promise<unknown>; destroyAllNow?: () => Promise<unknown> }
+      | undefined
+    if (pool?.drain && pool?.destroyAllNow) {
+      await pool.drain()
+      await pool.destroyAllNow()
+    }
+  } catch {
+    /* pool may already be empty */
+  }
 }
 
 export async function withDatabaseSelfHeal<T>(
