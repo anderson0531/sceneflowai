@@ -1503,7 +1503,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                       )}
                       {isExpressGeneratingReferences
                         ? 'Generating…'
-                        : `Express (${referencesExpressStats.total})`}
+                        : `Generate (${referencesExpressStats.total})`}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs text-xs">

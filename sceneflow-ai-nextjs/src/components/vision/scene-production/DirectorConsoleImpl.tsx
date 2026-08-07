@@ -1549,10 +1549,10 @@ export function DirectorConsoleRoot({
             onClick={handleExpress}
             disabled={queue.length === 0}
             className="border-indigo-500/50 text-indigo-300 hover:bg-indigo-500/10 hover:border-indigo-400 shadow-md hover:shadow-lg transition-all"
-            title="Express: batch-generate video for segments with beat references or a start Beat Frame"
+            title="Generate: batch-generate video for segments with beat references or a start Beat Frame"
           >
             <Wand2 className="w-4 h-4 mr-2" />
-            Express
+            Generate
           </Button>
           {statusCounts.rendered > 0 && (
             <Button

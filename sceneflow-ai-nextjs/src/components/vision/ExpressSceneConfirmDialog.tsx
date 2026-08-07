@@ -205,7 +205,7 @@ export function ExpressSceneConfirmDialog({
             ) : (
               <>
                 <Zap className="w-4 h-4 mr-2" />
-                Express Scene
+                Generate Scene
               </>
             )}
           </Button>

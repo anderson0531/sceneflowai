@@ -427,7 +427,7 @@ export function SegmentFrameTimeline({
                 title="Generate end frames from Pre-Vis start frames (AI edit)"
               >
                 <Wand2 className="w-5 h-5 mr-2" />
-                Express End ({segmentsNeedingEnd.length})
+                Generate End ({segmentsNeedingEnd.length})
               </Button>
             )}
 
@@ -445,7 +445,7 @@ export function SegmentFrameTimeline({
                 }
               >
                 <Wand2 className="w-5 h-5 mr-2" />
-                {segmentsNeedingBoth.length > 0 ? `Express Both (${segmentsNeedingBoth.length})` : 'Express'}
+                {segmentsNeedingBoth.length > 0 ? `Generate Both (${segmentsNeedingBoth.length})` : 'Generate'}
               </Button>
             )}
             

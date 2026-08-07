@@ -214,7 +214,7 @@ export function ExpressSfxConfirmDialog({
             ) : (
               <>
                 <Waves className="w-4 h-4 mr-2" />
-                Express SFX ({selectedBeatIds.length})
+                Generate SFX ({selectedBeatIds.length})
               </>
             )}
           </Button>

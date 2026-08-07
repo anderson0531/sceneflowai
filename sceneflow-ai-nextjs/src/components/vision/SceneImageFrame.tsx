@@ -56,7 +56,7 @@ export interface SceneImageFrameProps {
   promptLineClamp?: number
   /** Show expand button + full-size lightbox (hero preview). */
   expandable?: boolean
-  /** Override empty-state primary button label (e.g. Express Scene). */
+  /** Override empty-state primary button label (e.g. Generate Scene). */
   generateLabel?: string
   /** Use Zap icon instead of Sparkles on the empty-state generate button. */
   useExpressGenerateIcon?: boolean

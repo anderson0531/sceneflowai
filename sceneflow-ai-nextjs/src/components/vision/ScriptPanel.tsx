@@ -5899,7 +5899,7 @@ function SceneCard({
                           </Tooltip>
                         </TooltipProvider>
                       )}
-                      {/* Audio generation has moved to the "Express Audio" button in the Scene Beats card */}
+                      {/* Audio generation has moved to the "Generate Audio" button in the Scene Beats card */}
                       {/* Language Stream Selector */}
                       <div className="flex items-center gap-1.5">
                         <GroupedLanguageSelector
@@ -6428,12 +6428,12 @@ function SceneCard({
                               {isExpressAudioRunning ? (
                                 <>
                                   <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                  Express Audio...
+                                  Generate Audio...
                                 </>
                               ) : (
                                 <>
                                   <Sparkles className="w-3 h-3 mr-1" />
-                                  Express Audio
+                                  Generate Audio
                                   {(!voicesReady || !hasNarrationVoice) && (
                                     <span className="ml-1 text-amber-400">⚠</span>
                                   )}

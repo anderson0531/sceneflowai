@@ -553,9 +553,9 @@ export function SceneGallery({
                   <span>
                     {isExpressRunning
                       ? expressProgress
-                        ? `Express ${expressProgress.pct}%`
-                        : 'Express running…'
-                      : `Express All — advanced (${scenesNeedingExpress})`}
+                        ? `Generate ${expressProgress.pct}%`
+                        : 'Generating…'
+                      : `Generate All — advanced (${scenesNeedingExpress})`}
                   </span>
                   {isExpressRunning && expressProgress && (
                     <span
