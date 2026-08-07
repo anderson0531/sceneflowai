@@ -280,9 +280,15 @@ export async function generateVertexGeminiImage(
   }
 
   const candidates = data.candidates
-  if (!candidates?.length) throw new Error('No image generated from Vertex Gemini Image')
+  if (!candidates?.length) {
+    const block = data.promptFeedback?.blockReason
+    throw new Error(
+      `No image generated from Vertex Gemini Image${block ? ` (promptFeedback: ${block})` : ''}`
+    )
+  }
 
-  const content = candidates[0].content
+  const candidate = candidates[0]
+  const content = candidate.content
   let imageBase64: string | undefined
   let imageMimeType = 'image/png'
   let responseText: string | undefined
@@ -297,7 +303,15 @@ export async function generateVertexGeminiImage(
     }
   }
 
-  if (!imageBase64) throw new Error('No image in Vertex Gemini Image response')
+  if (!imageBase64) {
+    const finishReason = candidate.finishReason || candidate.finish_reason || 'unknown'
+    const textSnippet = (responseText || '').slice(0, 200)
+    throw new Error(
+      `No image in Vertex Gemini Image response (model=${model}, finishReason=${finishReason}${
+        textSnippet ? `, text=${JSON.stringify(textSnippet)}` : ''
+      })`
+    )
+  }
 
   return {
     imageBase64,

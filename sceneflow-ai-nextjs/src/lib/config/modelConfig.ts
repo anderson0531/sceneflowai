@@ -214,8 +214,8 @@ export type ImagenQualityTier = 'fast' | 'standard' | 'capability';
 export const GEMINI_IMAGE_MODELS = {
   /** GA, regional endpoints, no imageSize control */
   flash: 'gemini-2.5-flash-image',
-  /** Preview, global endpoint only, supports 4K + imageSize */
-  pro: 'gemini-3-pro-image-preview',
+  /** GA Nano Banana Pro — global endpoint only; supports 4K + imageSize */
+  pro: 'gemini-3-pro-image',
 } as const;
 
 /** Vertex image tier used by vertexImageClient. */
