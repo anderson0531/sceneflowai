@@ -1,7 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { readFileSync } from 'fs'
 import path from 'path'
-import { ContentPolicyExhaustedError } from '@/lib/generation/contentPolicy'
 
 vi.mock('@/lib/vertexai/vertexImageClient', async () => {
   const actual = await vi.importActual<typeof import('@/lib/vertexai/vertexImageClient')>(
