@@ -1509,7 +1509,7 @@ export function AudioGalleryPlayer({
           isFullscreen && "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pt-8"
         )}>
           <div className="flex gap-2 overflow-x-auto pb-2 justify-center">
-            {(playbackMode === 'video' ? videoSceneIndices : scenes.map((_, idx) => idx)).map(
+            {(playbackMode === 'video' ? videoSceneIndices : filmIndices).map(
               (idx) => {
               const scene = scenes[idx]
               const hasSceneAudio = sceneHasPlayablePreVisAudio(scene, selectedLanguage)
