@@ -34,12 +34,14 @@ export type HarmCategoryType = typeof HarmCategory[keyof typeof HarmCategory]
 
 /**
  * Harm block thresholds - controls what probability level triggers blocking
+ * OFF: Disable the category filter (modern Gemini / Vertex Image APIs)
  * BLOCK_NONE: Don't block any content (enterprise/regional restrictions may apply)
  * BLOCK_ONLY_HIGH: Only block high probability harmful content (most permissive public)
  * BLOCK_MEDIUM_AND_ABOVE: Block medium and high probability (moderate)
  * BLOCK_LOW_AND_ABOVE: Block low, medium, and high probability (strictest)
  */
 export const HarmBlockThreshold = {
+  OFF: 'OFF',
   BLOCK_NONE: 'BLOCK_NONE',
   BLOCK_ONLY_HIGH: 'BLOCK_ONLY_HIGH',
   BLOCK_MEDIUM_AND_ABOVE: 'BLOCK_MEDIUM_AND_ABOVE',
@@ -53,6 +55,14 @@ export interface SafetySetting {
   threshold: HarmBlockThresholdType
 }
 
+function parseHarmBlockThreshold(raw: string | undefined): HarmBlockThresholdType | null {
+  if (!raw) return null
+  if (Object.values(HarmBlockThreshold).includes(raw as HarmBlockThresholdType)) {
+    return raw as HarmBlockThresholdType
+  }
+  return null
+}
+
 // =============================================================================
 // Default Safety Settings (Gemini)
 // =============================================================================
@@ -62,14 +72,7 @@ export interface SafetySetting {
  * Default: BLOCK_ONLY_HIGH (most permissive public setting)
  */
 export function getGeminiSafetyThreshold(): HarmBlockThresholdType {
-  const envThreshold = process.env.VERTEX_SAFETY_THRESHOLD
-  
-  if (envThreshold && Object.values(HarmBlockThreshold).includes(envThreshold as HarmBlockThresholdType)) {
-    return envThreshold as HarmBlockThresholdType
-  }
-  
-  // Default to BLOCK_ONLY_HIGH for creative content flexibility
-  return HarmBlockThreshold.BLOCK_ONLY_HIGH
+  return parseHarmBlockThreshold(process.env.VERTEX_SAFETY_THRESHOLD) ?? HarmBlockThreshold.BLOCK_ONLY_HIGH
 }
 
 /**
@@ -79,7 +82,33 @@ export function getGeminiSafetyThreshold(): HarmBlockThresholdType {
  */
 export function getDefaultGeminiSafetySettings(): SafetySetting[] {
   const threshold = getGeminiSafetyThreshold()
-  
+
+  return [
+    { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold },
+    { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold },
+    { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold },
+    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold },
+  ]
+}
+
+/**
+ * Max-tolerance threshold for Vertex Gemini Image (Scene Headshot, wardrobe, etc.).
+ * Default OFF (matches permissive text paths in gemini.ts). Override via
+ * VERTEX_IMAGE_SAFETY_THRESHOLD, then VERTEX_SAFETY_THRESHOLD.
+ * Non-configurable Google RAI filters (e.g. child-safety) still apply.
+ */
+export function getGeminiImageSafetyThreshold(): HarmBlockThresholdType {
+  return (
+    parseHarmBlockThreshold(process.env.VERTEX_IMAGE_SAFETY_THRESHOLD) ??
+    parseHarmBlockThreshold(process.env.VERTEX_SAFETY_THRESHOLD) ??
+    HarmBlockThreshold.OFF
+  )
+}
+
+/** Safety settings for Gemini Image generateContent on Vertex. */
+export function getGeminiImageSafetySettings(): SafetySetting[] {
+  const threshold = getGeminiImageSafetyThreshold()
+
   return [
     { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold },
     { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold },
@@ -425,6 +454,7 @@ Avoid vague language. Be specific and visually descriptive.`
 export function logSafetyConfiguration(): void {
   console.log('[Vertex AI Safety] Current configuration:')
   console.log('  Gemini threshold:', getGeminiSafetyThreshold())
+  console.log('  Gemini Image threshold:', getGeminiImageSafetyThreshold())
   console.log('  Imagen filter level:', getImagenSafetyFilterLevel())
   console.log('  Imagen person generation:', getImagenPersonGeneration())
   console.log('  Veo safety setting:', getVeoSafetySetting())
