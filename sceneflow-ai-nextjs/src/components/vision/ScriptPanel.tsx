@@ -17,7 +17,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { ASSISTANT } from '@/lib/constants/assistant'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target, Share2 } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target, Share2 } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { PRODUCTION_SECTION_DESCRIPTIONS, PRODUCTION_SECTION_LABELS } from '@/constants/productionSections'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
@@ -51,12 +51,17 @@ import {
   ExpressAudioConfirmDialog,
   type ExpressAudioConfirmOptions,
 } from '@/components/vision/ExpressAudioConfirmDialog'
+import {
+  ExpressGenerateAllConfirmDialog,
+  type ExpressGenerateAllConfirmOptions,
+} from '@/components/vision/ExpressGenerateAllConfirmDialog'
 import type { ExpressSceneConfirmOptions } from '@/components/vision/ExpressSceneConfirmDialog'
 import { processWithConcurrency } from '@/lib/utils/concurrent-processor'
 import {
   buildExpressAudioItems,
   parseExpressAudioSelectedIds,
 } from '@/lib/audio/buildExpressAudioItems'
+import { runExpressGenerateAll } from '@/lib/sceneGeneration/runExpressGenerateAll'
 
 // Dynamic imports with ssr: false to prevent TDZ circular dependency issues
 // These components have complex initialization that can cause module load order problems
@@ -125,7 +130,6 @@ import {
   mergeStreamSelectorLanguages,
   type ProjectStream,
 } from '@/lib/streams/projectStreams'
-import { useAudioPlayerContext, type Track } from '@/context/AudioPlayerProvider'
 import { WebAudioMixer, type SceneAudioConfig, type AudioSource } from '@/lib/audio/webAudioMixer'
 import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { getAudioUrl } from '@/lib/audio/languageDetection'
@@ -3266,8 +3270,6 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                   onClick={() => setSelectedScene(idx)}
                   onExpand={onExpandScene}
                   isExpanding={expandingScenes.has(scene.sceneNumber)}
-                  onPlayScene={playScene}
-                  isPlaying={loadingSceneId === idx}
                   audioEnabled={enabled}
                   sceneIdx={idx}
                       timelineStart={timelineStart}
@@ -3302,7 +3304,6 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       onGenerateSceneScore={onGenerateSceneScore}
                       generatingScoreFor={generatingScoreFor}
                       getScoreColorClass={getScoreColorClass}
-                      onStopAudio={stopAudio}
                       onOpenSceneReview={(sceneIdx: number) => {
                         setSelectedSceneForReview(sceneIdx)
                         setShowSceneReviewModal(true)
@@ -3835,8 +3836,6 @@ interface SceneCardProps {
   projectAspectRatio?: BlueprintAspectRatio
   onExpand?: (sceneNumber: number) => Promise<void>
   isExpanding?: boolean
-  onPlayScene?: (sceneIdx: number) => Promise<void>
-  isPlaying?: boolean
   audioEnabled?: boolean
   sceneIdx: number
   onGenerateImage?: (sceneIdx: number) => Promise<void>
@@ -3903,7 +3902,6 @@ interface SceneCardProps {
   onGenerateSceneScore?: (sceneIndex: number) => void
   generatingScoreFor?: number | null
   getScoreColorClass?: (score: number) => string
-  onStopAudio?: () => void
   // NEW: Scene review modal props
   onOpenSceneReview?: (sceneIdx: number) => void
   // NEW: Music and SFX generation props
@@ -4110,8 +4108,6 @@ function SceneCard({
   onClick,
   onExpand,
   isExpanding,
-  onPlayScene,
-  isPlaying,
   audioEnabled,
   sceneIdx,
   onGenerateImage,
@@ -4151,7 +4147,6 @@ function SceneCard({
   onGenerateSceneScore,
   generatingScoreFor,
   getScoreColorClass,
-  onStopAudio,
   onOpenSceneReview,
   generatingMusic,
   setGeneratingMusic,
@@ -4395,6 +4390,7 @@ function SceneCard({
   const [isExpressSfxRunning, setIsExpressSfxRunning] = useState(false)
   const [expressAudioDialogOpen, setExpressAudioDialogOpen] = useState(false)
   const [isExpressAudioRunning, setIsExpressAudioRunning] = useState(false)
+  const [expressGenerateAllDialogOpen, setExpressGenerateAllDialogOpen] = useState(false)
   const [expressBeatStatus, setExpressBeatStatus] = useState<Record<string, ExpressBeatSfxStatus>>({})
   // Scene Image section: collapsed by default
   const [sceneImageCollapsed, setSceneImageCollapsed] = useState(true)
@@ -4658,7 +4654,7 @@ function SceneCard({
       } catch (error) {
         console.error('[ScriptPanel] Express Audio failed:', error)
         toast.error('Express Audio failed')
-      } finally {
+      }       finally {
         overlayStore?.hide()
         setIsExpressAudioRunning(false)
         setExpressAudioDialogOpen(false)
@@ -4675,6 +4671,22 @@ function SceneCard({
       onSaveSfxAudio,
       getNarrationAudioUrlForLang,
     ]
+  )
+
+  const handleExpressGenerateAllConfirm = useCallback(
+    async (options: ExpressGenerateAllConfirmOptions) => {
+      setExpressGenerateAllDialogOpen(false)
+      const runAudio = async () => {
+        if (options.audio.selectedIds.length === 0) return
+        await handleExpressAudioConfirm(options.audio)
+      }
+      const runFrames = async () => {
+        if (!onExpressSceneGenerate || options.frames.selectedFrameKeys.length === 0) return
+        await onExpressSceneGenerate(sceneIdx, selectedLanguage, options.frames)
+      }
+      await runExpressGenerateAll({ runAudio, runFrames })
+    },
+    [handleExpressAudioConfirm, onExpressSceneGenerate, sceneIdx, selectedLanguage]
   )
   
   // Helper: Check if all audio is complete for a specific language
@@ -4851,78 +4863,6 @@ function SceneCard({
     e.stopPropagation()
     if (onExpand && !isExpanding) {
       await onExpand(scene.sceneNumber)
-    }
-  }
-  
-  const handlePlay = async (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (isPlaying) {
-      if (onStopAudio) {
-        onStopAudio()
-      }
-    } else if (onPlayScene) {
-      // Try to use the audio player context for enhanced playback
-      try {
-        const audioPlayer = useAudioPlayerContext()
-        if (audioPlayer && scene) {
-          // Build playlist: music + dialogue + SFX in sequence
-          const playlist: Track[] = []
-          
-          // Add music if available
-          if (scene.musicAudio?.url) {
-            playlist.push({
-              id: 'music',
-              url: scene.musicAudio.url,
-              title: scene.musicAudio.name || 'Music',
-              type: 'music',
-              meta: scene.musicAudio,
-            })
-          }
-          
-          // Add narration/dialogue lines if available
-          if (Array.isArray(scene.dialogues)) {
-            scene.dialogues.forEach((d: any, i: number) => {
-              if (d.audioUrl) {
-                playlist.push({
-                  id: `dlg-${i}`,
-                  url: d.audioUrl,
-                  title: d.speaker ?? `Line ${i + 1}`,
-                  type: d.type ?? 'dialogue',
-                  meta: d,
-                })
-              }
-            })
-          }
-          
-          // Add SFX if available
-          if (Array.isArray(scene.sfx)) {
-            scene.sfx.forEach((s: any, i: number) => {
-              if (s.url) {
-                playlist.push({
-                  id: `sfx-${i}`,
-                  url: s.url,
-                  title: s.name ?? 'SFX',
-                  type: 'sfx',
-                  meta: s,
-                })
-              }
-            })
-          }
-          
-          // Load and play if playlist has tracks
-          if (playlist.length > 0) {
-            audioPlayer.loadPlaylist(playlist, 0)
-            await audioPlayer.play()
-            return
-          }
-        }
-      } catch (err) {
-        // Provider not available or error - fall back to original handler
-        console.debug('Audio player context not available, using fallback', err)
-      }
-      
-      // Fallback: use original onPlayScene handler
-      await onPlayScene(sceneIdx)
     }
   }
   
@@ -5402,29 +5342,79 @@ function SceneCard({
             )}
           </div>
           
-          {/* Mark Done and Help controls */}
+          {/* Generate All — audio + frames in parallel */}
           {!isOutline && activeStep && (
             <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                {/* Play Audio Button - Only visible in Writer's Room */}
-                {activeStep === 'dialogueAction' && onPlayScene && (
-                  <button
-                    onClick={handlePlay}
-                    className={`px-2 py-1 text-xs rounded-lg transition flex items-center gap-1 border ${isPlaying ? 'bg-red-500/20 text-red-400 border-red-500/40 hover:bg-red-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/30'}`}
-                  >
-                    {isPlaying ? (
-                      <>
-                        <Square className="w-3.5 h-3.5" />
-                        <span>Stop</span>
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-3.5 h-3.5" />
-                        <span>Play Audio</span>
-                      </>
-                    )}
-                  </button>
-                )}
-                
+                {(() => {
+                  const voicesReady = productionReadiness?.isAudioReady ?? true
+                  const hasNarrationVoice = productionReadiness?.hasNarrationVoice ?? true
+                  const missingVoices = productionReadiness?.charactersMissingVoices || []
+                  const laneBusy = isExpressAudioRunning || !!isExpressRunning
+                  const canOpen =
+                    !laneBusy &&
+                    voicesReady &&
+                    hasNarrationVoice &&
+                    (!!onExpressSceneGenerate || expressAudioItems.length > 0)
+                  const isDisabled = !canOpen
+
+                  const button = (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs border-sky-400/60 text-sky-200 hover:bg-sky-900/30"
+                      disabled={isDisabled}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (canOpen) setExpressGenerateAllDialogOpen(true)
+                      }}
+                    >
+                      {laneBusy ? (
+                        <>
+                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                          Generate All...
+                        </>
+                      ) : (
+                        <>
+                          <Zap className="w-3 h-3 mr-1" />
+                          Generate All
+                          {(!voicesReady || !hasNarrationVoice) && (
+                            <span className="ml-1 text-amber-400">⚠</span>
+                          )}
+                        </>
+                      )}
+                    </Button>
+                  )
+
+                  if (!voicesReady || !hasNarrationVoice) {
+                    return (
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>{button}</TooltipTrigger>
+                          <TooltipContent side="bottom" className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700 max-w-xs">
+                            <div className="space-y-1">
+                              <p className="font-medium text-amber-400 flex items-center gap-1.5">
+                                <AlertTriangle className="w-3.5 h-3.5" />
+                                Voice Setup Required
+                              </p>
+                              {!hasNarrationVoice && (
+                                <p className="text-xs text-gray-300">• Assign a narrator voice</p>
+                              )}
+                              {missingVoices.length > 0 && (
+                                <p className="text-xs text-gray-300">
+                                  • Assign voices to: {missingVoices.slice(0, 3).join(', ')}
+                                  {missingVoices.length > 3 && ` +${missingVoices.length - 3} more`}
+                                </p>
+                              )}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )
+                  }
+
+                  return button
+                })()}
             </div>
           )}
         </div>
@@ -7700,6 +7690,16 @@ function SceneCard({
             segmentDurationSeconds={scene.duration}
             isRunning={isExpressAudioRunning}
             onConfirm={handleExpressAudioConfirm}
+          />
+
+          <ExpressGenerateAllConfirmDialog
+            open={expressGenerateAllDialogOpen}
+            onOpenChange={setExpressGenerateAllDialogOpen}
+            scene={scene as Record<string, unknown>}
+            audioItems={expressAudioItems}
+            segmentDurationSeconds={scene.duration}
+            isRunning={isExpressAudioRunning || !!isExpressRunning}
+            onConfirm={handleExpressGenerateAllConfirm}
           />
           
           {/* AI Co-Pilot Side Panel */}
