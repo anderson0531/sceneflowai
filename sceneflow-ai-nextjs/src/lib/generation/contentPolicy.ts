@@ -31,6 +31,10 @@ const POLICY_MARKERS = [
   'blockreason',
   'safety policies',
   'content was filtered',
+  'image generation blocked',
+  'no image in vertex gemini image response',
+  'finishreason=safety',
+  'finishreason=image_safety',
 ]
 
 /**

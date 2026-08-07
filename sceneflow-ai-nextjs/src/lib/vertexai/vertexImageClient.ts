@@ -8,7 +8,7 @@
 import { getVertexAIAuthToken } from '@/lib/vertexai/client'
 import { fetchReferenceImageAsBase64 } from '@/lib/storage/fetchReferenceImage'
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
-import { getGeminiSafetyThreshold } from '@/lib/vertexai/safety'
+import { getGeminiImageSafetySettings } from '@/lib/vertexai/safety'
 import { MAX_REFERENCE_IMAGES_ECO } from '@/lib/vision/referenceLimits'
 
 export type VertexImageTier = 'eco' | 'designer' | 'director'
@@ -184,12 +184,7 @@ export async function generateVertexGeminiImage(
           }
         : {}),
     },
-    safetySettings: [
-      { category: 'HARM_CATEGORY_HARASSMENT', threshold: getGeminiSafetyThreshold() },
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: getGeminiSafetyThreshold() },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: getGeminiSafetyThreshold() },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: getGeminiSafetyThreshold() },
-    ],
+    safetySettings: getGeminiImageSafetySettings(),
   }
 
   const accessToken = await getVertexAIAuthToken()
@@ -276,13 +271,23 @@ export async function generateVertexGeminiImage(
 
   const data = await response.json()
   if (data.promptFeedback?.blockReason) {
-    throw new Error(`Image generation blocked: ${data.promptFeedback.blockReason}`)
+    throw new Error(
+      `Image generation blocked by safety: ${data.promptFeedback.blockReason}`
+    )
   }
 
   const candidates = data.candidates
-  if (!candidates?.length) throw new Error('No image generated from Vertex Gemini Image')
+  if (!candidates?.length) {
+    const block = data.promptFeedback?.blockReason
+    throw new Error(
+      block
+        ? `Image generation blocked by safety: ${block}`
+        : 'No image generated from Vertex Gemini Image (blocked by safety or empty candidates)'
+    )
+  }
 
-  const content = candidates[0].content
+  const candidate = candidates[0]
+  const content = candidate.content
   let imageBase64: string | undefined
   let imageMimeType = 'image/png'
   let responseText: string | undefined
@@ -297,7 +302,19 @@ export async function generateVertexGeminiImage(
     }
   }
 
-  if (!imageBase64) throw new Error('No image in Vertex Gemini Image response')
+  if (!imageBase64) {
+    const finishReason = String(
+      candidate.finishReason || candidate.finish_reason || 'unknown'
+    )
+    const textSnippet = (responseText || '').slice(0, 200)
+    const detail = `model=${model}, finishReason=${finishReason}${
+      textSnippet ? `, text=${JSON.stringify(textSnippet)}` : ''
+    }`
+    // Soft refusals (text-only 200 / SAFETY finish) — mark as safety so sanitize retries run.
+    throw new Error(
+      `No image in Vertex Gemini Image response — blocked by safety (${detail})`
+    )
+  }
 
   return {
     imageBase64,

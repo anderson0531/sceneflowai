@@ -15,7 +15,7 @@ All production image generation uses **Gemini Image on Vertex** (`generateConten
 
 | Use case | Implementation |
 |----------|----------------|
-| Reference / character lock | `generateVertexGeminiImage` in `src/lib/vertexai/vertexImageClient.ts` (`gemini-3-pro-image-preview`, falls back to `gemini-2.5-flash-image`) |
+| Reference / character lock | `generateVertexGeminiImage` in `src/lib/vertexai/vertexImageClient.ts` (`gemini-3-pro-image`, falls back to `gemini-2.5-flash-image`) |
 | Text-only (eco tier) | `generateVertexGeminiImage` with `gemini-2.5-flash-image` (GA) |
 | Legacy shim imports | `@/lib/gemini/imageClient` / `@/lib/gemini/geminiStudioImageClient` → Gemini Image only |
 

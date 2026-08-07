@@ -4,7 +4,7 @@
  * All Vertex Imagen endpoints were retired 2026-06-30 and now return 404, so this
  * client delegates to Gemini Image on Vertex (`generateContent`):
  * - gemini-2.5-flash-image (GA) for the fast tier
- * - gemini-3-pro-image-preview for the standard tier, with automatic fallback to flash
+ * - gemini-3-pro-image (GA) for the standard tier, with automatic fallback to flash
  *
  * The exported name `generateImageWithGemini` and its data-URL return value are kept
  * so existing route imports continue to work unchanged.
