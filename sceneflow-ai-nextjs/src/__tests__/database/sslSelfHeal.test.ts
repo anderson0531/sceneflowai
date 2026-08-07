@@ -66,6 +66,27 @@ describe('scene generate-image self-heals Cloud SQL cert errors', () => {
   })
 })
 
+describe('global getConnection SSL self-heal covers raw authenticate routes', () => {
+  it('installs a getConnection wrapper that resets the connector on SSL alert 42', () => {
+    expect(DATABASE_CONFIG).toContain('installGlobalSslSelfHeal')
+    expect(DATABASE_CONFIG).toContain('resetDatabaseConnectionCoalesced')
+    expect(DATABASE_CONFIG).toContain('SSL/cert error on getConnection')
+    expect(DATABASE_CONFIG).toMatch(/manager\.getConnection\s*=\s*async/)
+    // Must run after helpers so logging + reset resolve at call time.
+    expect(DATABASE_CONFIG).toMatch(
+      /export function getDatabaseConnectionInfo[\s\S]*installGlobalSslSelfHeal\(sequelize\)/
+    )
+  })
+
+  it('does not rely on Sequelize retry.match alone for SSL (needs connector reset)', () => {
+    const retryBlockStart = DATABASE_CONFIG.indexOf('const retry = {')
+    const retryBlockEnd = DATABASE_CONFIG.indexOf('function useCloudSqlFromEnv')
+    const retryBlock = DATABASE_CONFIG.slice(retryBlockStart, retryBlockEnd)
+    expect(retryBlock).not.toMatch(/bad certificate/i)
+    expect(retryBlock).not.toMatch(/alert number 42/i)
+  })
+})
+
 describe('withDatabaseSelfHeal retries SSL once after reset', () => {
   beforeEach(() => {
     vi.resetModules()
@@ -106,6 +127,37 @@ describe('withDatabaseSelfHeal retries SSL once after reset', () => {
     })
 
     expect(result).toBe('ok')
+    expect(attempts).toBe(2)
+  })
+
+  it('getConnection wrapper: SSL fail → reset → retry succeeds (H1)', async () => {
+    let attempts = 0
+    const reset = vi.fn(async () => undefined)
+    const sslError = Object.assign(
+      new Error(
+        '00098D16547F0000:error:0A000412:SSL routines:ssl3_read_bytes:ssl/tls alert bad certificate:ssl/record/rec_layer_s3.c:918:SSL alert number 42'
+      ),
+      {
+        name: 'SequelizeConnectionError',
+        original: { code: 'ERR_SSL_SSL/TLS_ALERT_BAD_CERTIFICATE' },
+      }
+    )
+
+    async function getConnectionWithHeal(): Promise<string> {
+      try {
+        attempts += 1
+        if (attempts === 1) throw sslError
+        return 'conn'
+      } catch (error) {
+        if (!isSslOrCertConnectionError(error)) throw error
+        await reset()
+        attempts += 1
+        return 'conn'
+      }
+    }
+
+    await expect(getConnectionWithHeal()).resolves.toBe('conn')
+    expect(reset).toHaveBeenCalledOnce()
     expect(attempts).toBe(2)
   })
 })
