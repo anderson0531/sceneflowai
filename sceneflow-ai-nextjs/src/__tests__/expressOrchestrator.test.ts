@@ -100,7 +100,7 @@ describe('runExpress', () => {
     concurrentDirections = 0
     peakConcurrentDirections = 0
     process.env.EXPRESS_SCENE_CONCURRENCY = '2'
-    process.env.EXPRESS_IMAGE_CONCURRENCY = '6'
+    process.env.EXPRESS_IMAGE_CONCURRENCY = '3'
     process.env.VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY = '2'
   })
 

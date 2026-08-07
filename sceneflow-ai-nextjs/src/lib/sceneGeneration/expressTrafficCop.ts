@@ -4,6 +4,10 @@
  * Caps concurrent Vertex/TTS work across all scenes in a single `runExpress`
  * invocation. On 429 bursts, halves lane capacity and applies a short cooldown.
  * When significant 429s occur, enters a regulated state with tighter global caps.
+ *
+ * Capacity ladder (EXPRESS_IMAGE_CONCURRENCY):
+ * - Startup credits / shared Vertex: default 3
+ * - Dedicated GCP / higher quota: set env to 6–12
  */
 
 import { isRetryableError } from '../utils/retry'
@@ -32,6 +36,9 @@ export interface ExpressTrafficCopOptions {
 
 const EXPRESS_LANES: ExpressLane[] = ['text', 'image', 'audio']
 
+/** Default image in-flight cap under Startup / shared Vertex quota. */
+export const DEFAULT_EXPRESS_IMAGE_CONCURRENCY = 3
+
 function parsePositiveInt(value: string | undefined, fallback: number): number {
   const n = Number(value ?? fallback)
   return Number.isFinite(n) && n >= 1 ? Math.floor(n) : fallback
@@ -41,13 +48,21 @@ export function getExpressSceneConcurrency(): number {
   return parsePositiveInt(process.env.EXPRESS_SCENE_CONCURRENCY, 3)
 }
 
+/** Image-lane max; override via EXPRESS_IMAGE_CONCURRENCY when dedicated GCP arrives. */
+export function getExpressImageConcurrency(): number {
+  return parsePositiveInt(
+    process.env.EXPRESS_IMAGE_CONCURRENCY,
+    DEFAULT_EXPRESS_IMAGE_CONCURRENCY
+  )
+}
+
 function defaultLaneMax(lane: ExpressLane, overrides?: Partial<Record<ExpressLane, number>>): number {
   if (overrides?.[lane] !== undefined) return overrides[lane]!
   switch (lane) {
     case 'text':
       return parsePositiveInt(process.env.EXPRESS_TEXT_CONCURRENCY, 3)
     case 'image':
-      return parsePositiveInt(process.env.EXPRESS_IMAGE_CONCURRENCY, 6)
+      return getExpressImageConcurrency()
     case 'audio':
       return parsePositiveInt(process.env.EXPRESS_AUDIO_CONCURRENCY, 3)
   }

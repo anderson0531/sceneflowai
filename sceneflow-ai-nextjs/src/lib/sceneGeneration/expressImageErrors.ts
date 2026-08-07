@@ -15,6 +15,10 @@ export function resolveExpressImageErrorStatus(err: unknown): number | undefined
   const parenMatch = msg.match(/\(\s*HTTP\s+(\d{3})\s*\)/i)
   if (parenMatch) return Number(parenMatch[1])
 
+  // Vertex Gemini Image error 429: ...
+  const vertexMatch = msg.match(/\berror\s+(\d{3})\b/i)
+  if (vertexMatch) return Number(vertexMatch[1])
+
   return undefined
 }
 
@@ -96,4 +100,13 @@ export function isExpressImageRateLimitError(err: unknown): boolean {
     msg.includes('rate limit') ||
     msg.includes('quota')
   )
+}
+
+/**
+ * Vertex already exhausted its identity-ref 429 ladder — outer scene retries must not
+ * re-burst another full inner attempt×3 cycle.
+ */
+export function isIdentityRefRateLimitExhausted(err: unknown): boolean {
+  const msg = String((err as { message?: unknown })?.message || err || '').toLowerCase()
+  return msg.includes('identity-ref rate limit exhausted')
 }

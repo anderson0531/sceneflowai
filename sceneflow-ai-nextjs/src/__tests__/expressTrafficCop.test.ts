@@ -1,13 +1,39 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { ExpressTrafficCop } from '@/lib/sceneGeneration/expressTrafficCop'
+import {
+  ExpressTrafficCop,
+  DEFAULT_EXPRESS_IMAGE_CONCURRENCY,
+  getExpressImageConcurrency,
+} from '@/lib/sceneGeneration/expressTrafficCop'
 
 describe('ExpressTrafficCop', () => {
+  const originalImageConcurrency = process.env.EXPRESS_IMAGE_CONCURRENCY
+
   beforeEach(() => {
     vi.useFakeTimers()
+    delete process.env.EXPRESS_IMAGE_CONCURRENCY
   })
 
   afterEach(() => {
     vi.useRealTimers()
+    if (originalImageConcurrency === undefined) {
+      delete process.env.EXPRESS_IMAGE_CONCURRENCY
+    } else {
+      process.env.EXPRESS_IMAGE_CONCURRENCY = originalImageConcurrency
+    }
+  })
+
+  it('defaults image lane concurrency to 3 for Startup quota', () => {
+    expect(DEFAULT_EXPRESS_IMAGE_CONCURRENCY).toBe(3)
+    expect(getExpressImageConcurrency()).toBe(3)
+    const cop = new ExpressTrafficCop()
+    expect(cop.getSnapshot().image.max).toBe(3)
+  })
+
+  it('honors EXPRESS_IMAGE_CONCURRENCY override for dedicated GCP', () => {
+    process.env.EXPRESS_IMAGE_CONCURRENCY = '8'
+    expect(getExpressImageConcurrency()).toBe(8)
+    const cop = new ExpressTrafficCop()
+    expect(cop.getSnapshot().image.max).toBe(8)
   })
 
   it('never exceeds lane max in-flight', async () => {
@@ -84,5 +110,25 @@ describe('ExpressTrafficCop', () => {
 
     expect(cop.getSnapshot().image.max).toBe(2)
     expect(onThrottle).toHaveBeenCalledWith('image', 2, 1000)
+  })
+
+  it('regulates on identity-ref rate limit exhausted errors', async () => {
+    const onThrottle = vi.fn()
+    const cop = new ExpressTrafficCop({
+      laneMax: { image: 4 },
+      cooldownMs: 1000,
+      onThrottle,
+    })
+
+    await expect(
+      cop.runInLane('image', async () => {
+        throw new Error(
+          'Vertex Gemini Image error 429: identity-ref rate limit exhausted after 3 retries: RESOURCE_EXHAUSTED'
+        )
+      })
+    ).rejects.toThrow(/identity-ref rate limit exhausted/)
+
+    expect(cop.getSnapshot().image.max).toBe(2)
+    expect(onThrottle).toHaveBeenCalled()
   })
 })

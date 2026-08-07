@@ -25,7 +25,13 @@ const RATE_LIMIT_COOLDOWN_MS = 60_000
 const MAX_RETRIES = 3
 const INITIAL_RETRY_DELAY_MS = 2000
 const MAX_RETRY_DELAY_MS = 10_000
+/** Identity-ref 429 ladder — longer than generic backoff to avoid stampeding Startup quota. */
+const IDENTITY_REF_RETRY_DELAYS_MS = [5_000, 15_000, 30_000] as const
 const REQUEST_TIMEOUT_MS = 90_000
+
+/** Marker so scene route does not re-burst another full outer×inner 429 ladder. */
+export const IDENTITY_REF_RATE_LIMIT_EXHAUSTED =
+  'identity-ref rate limit exhausted'
 
 function referenceCountExceedsEcoCap(referenceImages?: VertexReferenceImage[]): boolean {
   return (referenceImages?.length ?? 0) > MAX_REFERENCE_IMAGES_ECO
@@ -46,6 +52,35 @@ function canFallbackToEcoTier(options: GenerateVertexImageOptions): boolean {
 async function sleepWithBackoff(attempt: number): Promise<void> {
   const delay = Math.min(INITIAL_RETRY_DELAY_MS * 2 ** attempt, MAX_RETRY_DELAY_MS)
   const jitter = Math.random() * 500
+  await new Promise((r) => setTimeout(r, delay + jitter))
+}
+
+function parseRetryAfterMs(response: Response): number | null {
+  const raw = response.headers.get('retry-after')
+  if (!raw?.trim()) return null
+  const asSeconds = Number(raw)
+  if (Number.isFinite(asSeconds) && asSeconds >= 0) {
+    return Math.min(60_000, Math.max(1_000, asSeconds * 1000))
+  }
+  const asDate = Date.parse(raw)
+  if (Number.isFinite(asDate)) {
+    const delta = asDate - Date.now()
+    if (delta > 0) return Math.min(60_000, Math.max(1_000, delta))
+  }
+  return null
+}
+
+async function sleepIdentityRefBackoff(
+  attempt: number,
+  response?: Response
+): Promise<void> {
+  const retryAfter = response ? parseRetryAfterMs(response) : null
+  const scheduled =
+    IDENTITY_REF_RETRY_DELAYS_MS[
+      Math.min(attempt, IDENTITY_REF_RETRY_DELAYS_MS.length - 1)
+    ] ?? 30_000
+  const delay = retryAfter != null ? Math.max(retryAfter, scheduled) : scheduled
+  const jitter = Math.random() * 750
   await new Promise((r) => setTimeout(r, delay + jitter))
 }
 
@@ -242,10 +277,12 @@ export async function generateVertexGeminiImage(
           console.warn(
             `[Vertex Gemini Image] Rate limit on ${model} with reference images (attempt ${retryCount + 1}/${MAX_RETRIES}) — backing off without eco fallback`
           )
-          await sleepWithBackoff(retryCount)
+          await sleepIdentityRefBackoff(retryCount, response)
           return generateVertexGeminiImage(options, retryCount + 1)
         }
-        throw new Error(`Vertex Gemini Image error ${response.status}: ${errorText}`)
+        throw new Error(
+          `Vertex Gemini Image error ${response.status}: ${IDENTITY_REF_RATE_LIMIT_EXHAUSTED} after ${MAX_RETRIES} retries: ${errorText}`
+        )
       }
       if (!useFlashFallback) {
         proModelRateLimitedUntil = Date.now() + RATE_LIMIT_COOLDOWN_MS

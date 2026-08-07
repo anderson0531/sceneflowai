@@ -39,6 +39,9 @@ describe('identity-ref jobs stay on pro under rate limit', () => {
     expect(src).toContain('hasIdentityReferenceImages')
     expect(src).toContain('backing off without eco fallback')
     expect(src).toContain('canFallbackToEcoTier(options)')
+    expect(src).toContain('IDENTITY_REF_RATE_LIMIT_EXHAUSTED')
+    expect(src).toContain('sleepIdentityRefBackoff')
+    expect(src).toContain('IDENTITY_REF_RETRY_DELAYS_MS')
   })
 
   it('policy ladder escalates instead of only word-replacing once', () => {
@@ -53,5 +56,14 @@ describe('identity-ref jobs stay on pro under rate limit', () => {
         'No image in Vertex Gemini Image response — blocked by safety (model=gemini-3-pro-image, finishReason=IMAGE_SAFETY)'
       )
     ).toBe(true)
+  })
+})
+
+describe('nested 429 retry de-amplification', () => {
+  it('scene generate-image skips outer burst after identity-ref exhaustion', () => {
+    const src = readSource('src/app/api/scene/generate-image/route.ts')
+    expect(src).toContain('isIdentityRefRateLimitExhausted')
+    expect(src).toContain('skipping outer retry burst')
+    expect(src).toContain('useVertexGeminiImage ? 2 : 4')
   })
 })

@@ -105,6 +105,7 @@ import { resolveBeatFrameGenerationContext } from '@/lib/vision/beatFrameGenerat
 import { englishForModelBatch, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import {
   isExpressImageRateLimitError,
+  isIdentityRefRateLimitExhausted,
   isTransientExpressImageError,
   resolveExpressImageErrorStatus,
 } from '@/lib/sceneGeneration/expressImageErrors'
@@ -1862,12 +1863,14 @@ export async function POST(req: NextRequest) {
     // Vertex AI image generation (see docs/VERTEX_MEDIA_MIGRATION.md)
     let base64Image: string | null = null
     let generationAttempt = 0
-    const maxGenerationAttempts = 4
-    const rateLimitBackoffMs = [5000, 15000, 30000]
+    // Identity-ref jobs already retry inside vertexImageClient (up to 3× with long backoff).
+    // Cap outer attempts so we do not multiply into ~12 Vertex calls per frame under 429 storms.
     const useVertexGeminiImage =
       imageReferences.length > 0 ||
       objectImageReferences.length > 0 ||
       (matchedLocationReference && matchedLocationReference.imageUrl)
+    const maxGenerationAttempts = useVertexGeminiImage ? 2 : 4
+    const rateLimitBackoffMs = [5000, 15000, 30000]
 
     promptForResponse = stripReferenceImageMappingBlock(optimizedPrompt)
     
@@ -2286,6 +2289,14 @@ export async function POST(req: NextRequest) {
         const isTransientError = isTransientExpressImageError(error)
         const isRateLimitError = isExpressImageRateLimitError(error)
         const status = resolveExpressImageErrorStatus(error)
+
+        // Vertex already ran its identity-ref 429 ladder — do not outer-retry into another burst.
+        if (isIdentityRefRateLimitExhausted(error)) {
+          console.warn(
+            '[Scene Image] Identity-ref rate limit exhausted inside Vertex client; skipping outer retry burst'
+          )
+          throw error
+        }
 
         if (isTransientError && generationAttempt < maxGenerationAttempts) {
           if (Date.now() - routeStart > ROUTE_TIME_BUDGET_MS) {

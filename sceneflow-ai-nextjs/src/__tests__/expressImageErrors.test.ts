@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   isExpressImageCanaryAbortError,
   isExpressImageRateLimitError,
+  isIdentityRefRateLimitExhausted,
   isTransientExpressImageError,
   resolveExpressImageErrorStatus,
 } from '@/lib/sceneGeneration/expressImageErrors'
@@ -78,5 +79,28 @@ describe('isExpressImageRateLimitError', () => {
   it('returns true only for rate limit errors', () => {
     expect(isExpressImageRateLimitError(err('HTTP 429', 429))).toBe(true)
     expect(isExpressImageRateLimitError(err('HTTP 504', 504))).toBe(false)
+  })
+})
+
+describe('isIdentityRefRateLimitExhausted', () => {
+  it('detects exhausted identity-ref 429 ladder', () => {
+    expect(
+      isIdentityRefRateLimitExhausted(
+        err(
+          'Vertex Gemini Image error 429: identity-ref rate limit exhausted after 3 retries: RESOURCE_EXHAUSTED'
+        )
+      )
+    ).toBe(true)
+    expect(isIdentityRefRateLimitExhausted(err('HTTP 429: RESOURCE_EXHAUSTED'))).toBe(
+      false
+    )
+  })
+
+  it('parses Vertex Gemini Image error 429 status', () => {
+    expect(
+      resolveExpressImageErrorStatus(
+        err('Vertex Gemini Image error 429: identity-ref rate limit exhausted')
+      )
+    ).toBe(429)
   })
 })
