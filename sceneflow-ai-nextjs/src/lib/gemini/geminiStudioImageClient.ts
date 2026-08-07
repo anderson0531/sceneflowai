@@ -4,7 +4,8 @@
  */
 
 import { generateImageWithVertexKlingFallback } from '@/lib/generation/vertexImageWithKlingFallback'
-import { editVertexImage, type VertexImageTier, type VertexThinkingLevel } from '@/lib/vertexai/vertexImageClient'
+import { editImageWithVertexPolicyRetry } from '@/lib/generation/editImageWithVertexPolicyRetry'
+import { type VertexImageTier, type VertexThinkingLevel } from '@/lib/vertexai/vertexImageClient'
 
 export type ModelTier = VertexImageTier
 export type ThinkingLevel = VertexThinkingLevel
@@ -36,7 +37,7 @@ export interface GeminiStudioEditOptions {
   referenceImage?: string
   aspectRatio?: GeminiStudioImageOptions['aspectRatio']
   imageSize?: '1K' | '2K'
-  editIntent?: 'default' | 'keyframeEnd'
+  editIntent?: 'default' | 'keyframeEnd' | 'preVisEdit'
   segmentDurationSeconds?: number
   modelTier?: ModelTier
   thinkingLevel?: ThinkingLevel
@@ -66,7 +67,7 @@ export async function generateImageWithGeminiStudio(
 export async function editImageWithGeminiStudio(
   options: GeminiStudioEditOptions
 ): Promise<GeminiStudioImageResult> {
-  const result = await editVertexImage({
+  const result = await editImageWithVertexPolicyRetry({
     sourceImage: options.sourceImage,
     instruction: options.instruction,
     referenceImage: options.referenceImage,

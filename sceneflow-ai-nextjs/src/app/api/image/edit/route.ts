@@ -13,6 +13,11 @@ import {
   WARDROBE_ONLY_REFERENCE_INSTRUCTION,
 } from '@/lib/character/characterReferenceAssembly'
 import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import {
+  ContentPolicyExhaustedError,
+  isVertexContentPolicyError,
+} from '@/lib/generation/contentPolicy'
+import { EDIT_POLICY_USER_MESSAGE } from '@/lib/generation/editImageWithVertexPolicyRetry'
 
 interface EditReferenceImage {
   imageUrl: string
@@ -142,8 +147,14 @@ export async function POST(request: NextRequest) {
       provider: 'vertex-gemini',
     })
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error'
     console.error('[Image Edit API] Unexpected error:', error)
+    if (error instanceof ContentPolicyExhaustedError) {
+      return NextResponse.json({ error: EDIT_POLICY_USER_MESSAGE }, { status: 422 })
+    }
+    const message = error instanceof Error ? error.message : 'Internal server error'
+    if (isVertexContentPolicyError(message)) {
+      return NextResponse.json({ error: EDIT_POLICY_USER_MESSAGE }, { status: 422 })
+    }
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
