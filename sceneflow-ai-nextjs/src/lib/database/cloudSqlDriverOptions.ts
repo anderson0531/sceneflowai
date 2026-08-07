@@ -5,7 +5,16 @@ let connector: Connector | null = null
 
 /** Drop cached connector so the next connection mints a fresh ephemeral client cert. */
 export function resetCloudSqlConnector(): void {
+  const previous = connector
   connector = null
+  if (previous) {
+    try {
+      // Ephemeral client certs expire; closing forces a fresh mTLS handshake.
+      void previous.close()
+    } catch {
+      /* best-effort */
+    }
+  }
 }
 
 function parseGoogleServiceAccountJson(raw: string): Record<string, unknown> {

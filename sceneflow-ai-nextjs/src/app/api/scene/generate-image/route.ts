@@ -12,7 +12,7 @@ import { authOptions } from '@/lib/auth'
 import { CreditService } from '@/services/CreditService'
 import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
 import Project from '../../../../models/Project'
-import { sequelize } from '../../../../config/database'
+import { ensureDatabaseConnection } from '../../../../config/database'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
 import {
   generateSceneImagePromptWithDeadline,
@@ -556,7 +556,9 @@ export async function POST(req: NextRequest) {
     let effectiveCharacterWardrobes = characterWardrobes
 
     if (projectId) {
-      await sequelize.authenticate()
+      // Self-heal Cloud SQL TLS alert 42 (stale ephemeral client cert on warm isolates)
+      // instead of raw sequelize.authenticate(), which fails the whole Scene Image job.
+      await ensureDatabaseConnection('scene/generate-image')
       project = await Project.findByPk(projectId, {
         attributes: ['id', 'metadata', 'user_id', 'title', 'status', 'current_step']
       })
