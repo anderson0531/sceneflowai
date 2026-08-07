@@ -32,8 +32,8 @@ import {
 } from '@/lib/scene/sceneImageFeaturedValidation'
 import { detectCharactersInText, resolveBeatSpeaker } from '@/lib/scene/characterDetection'
 import { isStoryboardNoCharacterScene } from '@/lib/script/sceneClassification'
-import { getSceneBeats, isNarratorBeat } from '@/lib/script/beatMigration'
-import { NARRATOR_CHARACTER, type BeatKind } from '@/lib/script/segmentTypes'
+import { getSceneBeats, isNarratorBeat, resolveDialogueBeat } from '@/lib/script/beatMigration'
+import { NARRATOR_CHARACTER, type BeatKind, type SceneBeat } from '@/lib/script/segmentTypes'
 import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
 import {
   resolveVisualGender,
@@ -520,6 +520,8 @@ export async function POST(req: NextRequest) {
     }
     let dialogueFrameContext = ''
     let beatKindForIntelligence: BeatKind | undefined
+    let dialogueResolvedBeat: SceneBeat | undefined
+    let dialogueResolvedBeatIndex = -1
     
     let effectiveExcludeCharacters = excludeCharactersParam
     
@@ -993,8 +995,59 @@ export async function POST(req: NextRequest) {
           const base = beatAction || scene.action || scene.visualDescription || scene.heading || ''
           fullSceneContext = staging ? `${base}\n\nScene staging: ${staging}` : base
           console.log('[Scene Image] Using beat-primary context for beat frame')
+        } else if (isDialogueFrame && scene && typeof dialogueIndex === 'number') {
+          const resolved = resolveDialogueBeat(scene as Record<string, unknown>, dialogueIndex)
+          if (resolved) {
+            dialogueResolvedBeat = resolved.beat
+            dialogueResolvedBeatIndex = resolved.beatIndex
+            const beatAction =
+              resolved.beat.actionDescription?.trim() || resolved.beat.line?.trim() || ''
+            const staging = buildSceneStagingText(scene)
+            const base =
+              beatAction || scene.action || scene.visualDescription || scene.heading || ''
+            fullSceneContext = staging ? `${base}\n\nScene staging: ${staging}` : base
+            console.log('[Scene Image] Using beat-primary context for dialogue frame')
+          } else if (sceneDirectionText && sceneDirectionText.trim()) {
+            fullSceneContext = sceneDirectionText.trim()
+            const scriptExtra =
+              scene.action &&
+              scene.visualDescription &&
+              scene.action !== scene.visualDescription
+                ? `${scene.action} ${scene.visualDescription}`
+                : scene.action || scene.visualDescription || ''
+            const extraTrimmed = String(scriptExtra || '').trim()
+            if (extraTrimmed && !fullSceneContext.includes(extraTrimmed)) {
+              fullSceneContext = `${fullSceneContext}\n\n${extraTrimmed}`
+            }
+            console.log('[Scene Image] Using enhanced Scene Direction as base context')
+          } else {
+            fullSceneContext = scene.action || scene.visualDescription || scene.heading || ''
+            if (
+              scene.action &&
+              scene.visualDescription &&
+              scene.action !== scene.visualDescription
+            ) {
+              fullSceneContext = `${scene.action} ${scene.visualDescription}`
+            }
+            console.log(
+              '[Scene Image] Using original script components (action/visualDescription)'
+            )
+          }
         } else if (sceneDirectionText && sceneDirectionText.trim()) {
-          fullSceneContext = sceneDirectionText
+          fullSceneContext = sceneDirectionText.trim()
+          const scriptExtra =
+            scene.action &&
+            scene.visualDescription &&
+            scene.action !== scene.visualDescription
+              ? `${scene.action} ${scene.visualDescription}`
+              : scene.action || scene.visualDescription || ''
+          const extraTrimmed = String(scriptExtra || '').trim()
+          if (
+            extraTrimmed &&
+            !fullSceneContext.includes(extraTrimmed)
+          ) {
+            fullSceneContext = `${fullSceneContext}\n\n${extraTrimmed}`
+          }
           console.log('[Scene Image] Using enhanced Scene Direction as base context')
         } else if (scenePrompt && scenePrompt.trim()) {
           fullSceneContext = scenePrompt
@@ -1089,7 +1142,9 @@ export async function POST(req: NextRequest) {
     const beatForEmotion =
       isBeatFrame && sceneData
         ? getSceneBeats(sceneData as Record<string, unknown>)[effectiveBeatIndex]
-        : undefined
+        : isDialogueFrame && dialogueResolvedBeat
+          ? dialogueResolvedBeat
+          : undefined
     const projectCharactersForBeat = projectCharacters
     const beatSpeakerName =
       beatForEmotion?.character?.trim() ||
@@ -1567,6 +1622,17 @@ export async function POST(req: NextRequest) {
       const beatForIntelligence =
         isBeatFrame && sceneData
           ? getSceneBeats(sceneData as Record<string, unknown>)[effectiveBeatIndex]
+          : isDialogueFrame && dialogueResolvedBeat
+            ? dialogueResolvedBeat
+            : undefined
+      const intelligenceBeatIndex = isBeatFrame
+        ? effectiveBeatIndex
+        : isDialogueFrame && dialogueResolvedBeatIndex >= 0
+          ? dialogueResolvedBeatIndex
+          : undefined
+      const intelligenceTotalBeats =
+        intelligenceBeatIndex != null && sceneData
+          ? getSceneBeats(sceneData as Record<string, unknown>).length
           : undefined
 
       sceneImageIntelligenceRequest = {
@@ -1577,8 +1643,8 @@ export async function POST(req: NextRequest) {
         filmContext,
         sceneType,
         beatKind: beatKindForIntelligence,
-        beatIndex: isBeatFrame ? effectiveBeatIndex : undefined,
-        totalBeats: isBeatFrame ? getSceneBeats(sceneData as Record<string, unknown>).length : undefined,
+        beatIndex: intelligenceBeatIndex,
+        totalBeats: intelligenceTotalBeats,
         beatAction: stripPromptMetaInstructions(
           stripAllCues(beatForIntelligence?.actionDescription || beatForIntelligence?.line || '')
         ),
