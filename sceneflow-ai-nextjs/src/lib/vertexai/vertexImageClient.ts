@@ -31,7 +31,15 @@ function referenceCountExceedsEcoCap(referenceImages?: VertexReferenceImage[]): 
   return (referenceImages?.length ?? 0) > MAX_REFERENCE_IMAGES_ECO
 }
 
+function hasIdentityReferenceImages(options: GenerateVertexImageOptions): boolean {
+  return (options.referenceImages?.length ?? 0) > 0
+}
+
 function canFallbackToEcoTier(options: GenerateVertexImageOptions): boolean {
+  // Identity / wardrobe lock jobs must stay on the pro image model. A warm-instance
+  // 429 cooldown previously forced flash, which then rate-limited and still hit
+  // IMAGE_SAFETY (production 2026-08-07 Scene Headshot logs).
+  if (hasIdentityReferenceImages(options)) return false
   return !referenceCountExceedsEcoCap(options.referenceImages)
 }
 
@@ -228,9 +236,21 @@ export async function generateVertexGeminiImage(
 
   if (!response.ok) {
     const errorText = await response.text()
-    if (response.status === 429 && model.includes('pro-image') && !useFlashFallback) {
-      proModelRateLimitedUntil = Date.now() + RATE_LIMIT_COOLDOWN_MS
-      return generateVertexGeminiImage(options, 0)
+    if (response.status === 429 && model.includes('pro-image')) {
+      if (hasIdentityReferenceImages(options)) {
+        if (retryCount < MAX_RETRIES) {
+          console.warn(
+            `[Vertex Gemini Image] Rate limit on ${model} with reference images (attempt ${retryCount + 1}/${MAX_RETRIES}) — backing off without eco fallback`
+          )
+          await sleepWithBackoff(retryCount)
+          return generateVertexGeminiImage(options, retryCount + 1)
+        }
+        throw new Error(`Vertex Gemini Image error ${response.status}: ${errorText}`)
+      }
+      if (!useFlashFallback) {
+        proModelRateLimitedUntil = Date.now() + RATE_LIMIT_COOLDOWN_MS
+        return generateVertexGeminiImage(options, 0)
+      }
     }
     if (response.status === 429 && retryCount < MAX_RETRIES) {
       console.warn(
