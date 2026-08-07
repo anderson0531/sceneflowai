@@ -253,12 +253,30 @@ export function unwrapSceneImageAiPrompt(text: string): string {
   return ''
 }
 
+/**
+ * Structured intelligence prompts must include the composition section.
+ * Truncated JSON recovery often stops inside [GLOBAL STYLE ANCHOR], which
+ * drops Action/Framing and yields script-misaligned frames.
+ */
+export function hasCompleteSceneImageComposition(prompt: string): boolean {
+  const text = (prompt || '').trim()
+  if (!text) return false
+  if (!/\[SCENE COMPOSITION\s*&\s*BEAT\]/i.test(text)) return false
+  if (!/Action\s*\/\s*Framing\s*:/i.test(text)) return false
+  return true
+}
+
 function normalizeCachedSceneImageResult(
   result: SceneImageIntelligenceResult
 ): SceneImageIntelligenceResult | null {
   if (!result.prompt?.trim()) return null
   const unwrapped = unwrapSceneImageAiPrompt(result.prompt)
-  if (!unwrapped || unwrapped.length < 20 || looksLikeJsonPrompt(unwrapped)) {
+  if (
+    !unwrapped ||
+    unwrapped.length < 20 ||
+    looksLikeJsonPrompt(unwrapped) ||
+    !hasCompleteSceneImageComposition(unwrapped)
+  ) {
     return null
   }
   return { ...result, prompt: unwrapped }
@@ -676,6 +694,12 @@ export async function generateSceneImagePrompt(
       if (!recovered) {
         throw new Error('AI returned unparseable JSON prompt')
       }
+      if (!hasCompleteSceneImageComposition(recovered)) {
+        console.warn(
+          '[Scene Image Intelligence] Recovered prompt missing composition section — falling back'
+        )
+        throw new Error('AI returned truncated prompt without composition section')
+      }
       parsed = { prompt: recovered }
     }
 
@@ -688,6 +712,13 @@ export async function generateSceneImagePrompt(
     if (looksLikeJsonPrompt(rawPrompt)) {
       console.warn(`[Scene Image Intelligence] Prompt still looks like JSON after unwrap, falling back`)
       throw new Error('AI returned JSON-wrapped prompt')
+    }
+
+    if (!hasCompleteSceneImageComposition(rawPrompt)) {
+      console.warn(
+        '[Scene Image Intelligence] Recovered prompt missing composition section — falling back'
+      )
+      throw new Error('AI returned truncated prompt without composition section')
     }
 
     // Sanitize: ensure no dangerous content slipped through

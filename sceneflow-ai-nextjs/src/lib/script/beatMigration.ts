@@ -830,24 +830,31 @@ export function applyEstablishingImageToScene(
   )
 }
 
-/** Persist a dialogue-line storyboard image to beats[] and dialogue[]. */
-export function applyDialogueStoryboardImageToScene(
+/**
+ * Resolve the spoken beat that corresponds to dialogue[] index.
+ * Prefers lineId match, then spoken-order index, then line-text / Nth spoken beat.
+ */
+export function resolveDialogueBeat(
   scene: Record<string, unknown>,
-  dialogueIndex: number,
-  imageUrl: string,
-  extras?: { imagePrompt?: string; imageGcsPath?: string }
-): Record<string, unknown> {
+  dialogueIndex: number
+): { beat: SceneBeat; beatIndex: number } | null {
+  if (!Number.isInteger(dialogueIndex) || dialogueIndex < 0) return null
+
   const dialogue = Array.isArray(scene.dialogue)
     ? (scene.dialogue as Array<Record<string, unknown>>)
     : []
-  const targetLineId =
-    typeof dialogue[dialogueIndex]?.lineId === 'string'
-      ? dialogue[dialogueIndex].lineId.trim()
-      : undefined
+  const targetEntry = dialogue[dialogueIndex]
+  if (!targetEntry) return null
 
+  const targetLineId =
+    typeof targetEntry.lineId === 'string' ? targetEntry.lineId.trim() : undefined
+  const targetLine = String(targetEntry.line ?? targetEntry.text ?? '').trim()
+
+  const beats = getSceneBeats(scene)
   let spokenIdx = 0
-  const beats = getSceneBeats(scene).map((beat) => {
-    if (beat.kind === 'action') return beat
+  for (let i = 0; i < beats.length; i++) {
+    const beat = beats[i]
+    if (beat.kind === 'action') continue
 
     let matches = false
     if (targetLineId && beat.lineId === targetLineId) {
@@ -863,7 +870,31 @@ export function applyDialogueStoryboardImageToScene(
       spokenIdx++
     }
 
-    if (!matches) return beat
+    if (matches) return { beat, beatIndex: i }
+  }
+
+  const spoken = beats
+    .map((beat, beatIndex) => ({ beat, beatIndex }))
+    .filter(({ beat }) => beat.kind === 'dialogue' || beat.kind === 'narration')
+
+  if (targetLine) {
+    const byText = spoken.find(({ beat }) => (beat.line || '').trim() === targetLine)
+    if (byText) return byText
+  }
+
+  return spoken[dialogueIndex] ?? null
+}
+
+/** Persist a dialogue-line storyboard image to beats[] and dialogue[]. */
+export function applyDialogueStoryboardImageToScene(
+  scene: Record<string, unknown>,
+  dialogueIndex: number,
+  imageUrl: string,
+  extras?: { imagePrompt?: string; imageGcsPath?: string }
+): Record<string, unknown> {
+  const resolved = resolveDialogueBeat(scene, dialogueIndex)
+  const beats = getSceneBeats(scene).map((beat, beatIndex) => {
+    if (!resolved || beatIndex !== resolved.beatIndex) return beat
     return {
       ...beat,
       storyboardImageUrl: imageUrl,
