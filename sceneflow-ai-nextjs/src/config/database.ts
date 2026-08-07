@@ -370,6 +370,56 @@ export async function resetDatabaseConnection(): Promise<void> {
   }
 }
 
+/** Coalesce concurrent SSL resets so parallel Fluid requests share one connector refresh. */
+let sslResetInFlight: Promise<void> | null = null
+
+async function resetDatabaseConnectionCoalesced(): Promise<void> {
+  if (!sslResetInFlight) {
+    sslResetInFlight = resetDatabaseConnection().finally(() => {
+      sslResetInFlight = null
+    })
+  }
+  await sslResetInFlight
+}
+
+/**
+ * Global SSL alert-42 self-heal on every connection checkout.
+ *
+ * Capacity exhaustion is already retried via Sequelize `retry.match`. SSL alert 42
+ * (stale Cloud SQL ephemeral client cert on warm Fluid isolates) needs a connector
+ * reset first — a bare retry reuses the same bad cert. Wrapping getConnection covers
+ * all ~72 routes that call `sequelize.authenticate()` or models directly, without
+ * threading `ensureDatabaseConnection` through each call site.
+ */
+function installGlobalSslSelfHeal(instance: Sequelize): void {
+  const manager = instance.connectionManager as {
+    getConnection: (options?: unknown) => Promise<unknown>
+  }
+  const originalGetConnection = manager.getConnection.bind(manager)
+
+  manager.getConnection = async (options?: unknown) => {
+    try {
+      return await originalGetConnection(options)
+    } catch (error) {
+      if (!isSslOrCertConnectionError(error)) throw error
+
+      // #region agent log
+      console.warn(
+        '[database] SSL/cert error on getConnection — resetting Cloud SQL connector and retrying once',
+        { hypothesisId: 'H1', runId: 'ssl-alert42-global' }
+      )
+      // #endregion
+      logDatabaseConnectionFailure(
+        error,
+        'getConnection (retrying after connector reset)',
+        getDatabaseConnectionInfo
+      )
+      await resetDatabaseConnectionCoalesced()
+      return await originalGetConnection(options)
+    }
+  }
+}
+
 export async function withDatabaseSelfHeal<T>(
   operation: () => Promise<T>,
   context = 'database'
@@ -393,8 +443,10 @@ export async function withDatabaseSelfHeal<T>(
       throw error
     }
 
+    // getConnection already self-heals once; this path remains for callers that
+    // wrap non-checkout work, and as a second chance if the first reset raced.
     logDatabaseConnectionFailure(error, `${context} (retrying after connector reset)`, getDatabaseConnectionInfo)
-    await resetDatabaseConnection()
+    await resetDatabaseConnectionCoalesced()
 
     try {
       return await operation()
@@ -469,3 +521,6 @@ export function getDatabaseConnectionInfo() {
     sslRejectUnauthorized: strictTls,
   }
 }
+
+// Install after helpers exist so getConnection can log + reset with full context.
+installGlobalSslSelfHeal(sequelize)
