@@ -253,7 +253,10 @@ export class CreditService {
 
     const projectId = resolveProjectIdFromCharge(ref, meta)
     if (projectId) {
-      void incrementProjectCreditsUsed(projectId, chargeCredits)
+      // Await so we do not race the caller's next DB checkout under DB_POOL_MAX=1
+      // (void fire-and-forget caused SequelizeConnectionAcquireTimeoutError on
+      // getCreditBreakdown / Project loads during Express concurrency).
+      await incrementProjectCreditsUsed(projectId, chargeCredits)
     }
 
     return result
@@ -411,7 +414,8 @@ export class CreditService {
 
     const projectId = resolveProjectIdFromCharge(ref, meta)
     if (projectId) {
-      void incrementProjectCreditsUsed(projectId, credits)
+      // See charge(): must not race the caller's next checkout under pool max=1.
+      await incrementProjectCreditsUsed(projectId, credits)
     }
 
     return result

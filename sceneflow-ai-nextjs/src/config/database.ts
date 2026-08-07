@@ -56,11 +56,17 @@ ensureGoogleApplicationCredentialsFile()
  * Cloud SQL tier, surfacing as "remaining connection slots are reserved…" on
  * whichever request connects next.
  *
- * One per instance, because the usual escape hatch does not apply here: an idle
- * instance is frozen between invocations, so the `idle`/`evict` reapers do not
- * run and its sockets stay open on the server the whole time it is warm. Holding
- * a second connection therefore doubles the resting footprint for a pool that
- * short queries rarely need concurrently.
+ * One per instance by default, because the usual escape hatch does not apply
+ * here: an idle instance is frozen between invocations, so the `idle`/`evict`
+ * reapers do not run and its sockets stay open on the server the whole time it
+ * is warm. Holding a second connection therefore doubles the resting footprint
+ * for a pool that short queries rarely need concurrently.
+ *
+ * Caveat — Fluid Compute can run concurrent requests on the same isolate. With
+ * max=1 those requests serialize on the pool; a second checkout waits until
+ * `acquire` (60s) and fails as SequelizeConnectionAcquireTimeoutError. Prefer
+ * serializing fire-and-forget DB work (await budget increments) and raise
+ * DB_POOL_MAX only when a pooler or larger tier can absorb the peak.
  *
  * `maxUses: 1` is the piece that actually frees slots under freeze: when a
  * request returns its connection to the pool, sequelize-pool destroys it

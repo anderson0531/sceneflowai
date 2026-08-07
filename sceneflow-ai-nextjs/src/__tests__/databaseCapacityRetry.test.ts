@@ -4,6 +4,7 @@ import path from 'path'
 import {
   isTransientConnectionCapacityError,
   isSslOrCertConnectionError,
+  isConnectionAcquireTimeoutError,
 } from '@/lib/database/connectionDiagnostics'
 
 const CONFIG = readFileSync(
@@ -36,6 +37,22 @@ describe('connection-capacity errors are recognised', () => {
     expect(isTransientConnectionCapacityError(wrapped)).toBe(true)
   })
 
+  it('matches pool acquire timeouts from Express / Fluid concurrency', () => {
+    const acquireTimeout = Object.assign(new Error('Operation timeout'), {
+      name: 'SequelizeConnectionAcquireTimeoutError',
+      parent: new Error('Operation timeout'),
+    })
+    expect(isConnectionAcquireTimeoutError(acquireTimeout)).toBe(true)
+    expect(isTransientConnectionCapacityError(acquireTimeout)).toBe(true)
+    // Do not reset the connector for pool pressure.
+    expect(isSslOrCertConnectionError(acquireTimeout)).toBe(false)
+  })
+
+  it('does not treat a bare Operation timeout as capacity pressure', () => {
+    expect(isConnectionAcquireTimeoutError(new Error('Operation timeout'))).toBe(false)
+    expect(isTransientConnectionCapacityError(new Error('Operation timeout'))).toBe(false)
+  })
+
   it('leaves unrelated failures alone, so they are not retried', () => {
     expect(isTransientConnectionCapacityError(new Error('syntax error at or near'))).toBe(false)
     expect(isTransientConnectionCapacityError(new Error('bad_certificate'))).toBe(false)
@@ -64,6 +81,11 @@ describe('pool is sized for serverless', () => {
     // actually returns the Cloud SQL slot when the request ends.
     expect(CONFIG).toMatch(/maxUses:\s*1/)
     expect(CONFIG).toContain('evict:')
+  })
+
+  it('documents Fluid concurrent checkout risk under max=1', () => {
+    expect(CONFIG).toMatch(/Fluid Compute/i)
+    expect(CONFIG).toMatch(/SequelizeConnectionAcquireTimeoutError/)
   })
 })
 

@@ -54,6 +54,42 @@ export function isSslOrCertConnectionError(error: unknown): boolean {
 }
 
 /**
+ * Sequelize pool could not check out a connection before `pool.acquire`.
+ *
+ * Under Fluid Compute, concurrent requests on one isolate share DB_POOL_MAX
+ * (default 1). A second checkout waits until timeout and surfaces as
+ * SequelizeConnectionAcquireTimeoutError with message/parent "Operation timeout".
+ * Same symptom when Cloud SQL is saturated and creating a new socket hangs
+ * (especially with maxUses:1, which opens a fresh connection per query).
+ *
+ * Distinct from SSL faults: retrying after a short backoff is appropriate;
+ * resetting the connector is not.
+ */
+export function isConnectionAcquireTimeoutError(error: unknown): boolean {
+  const err = error as {
+    name?: string
+    message?: string
+    parent?: { message?: string; name?: string }
+    original?: { message?: string; name?: string }
+  }
+
+  const names = [err?.name, err?.parent?.name, err?.original?.name]
+    .filter(Boolean)
+    .join(' ')
+  if (/ConnectionAcquireTimeout/i.test(names)) return true
+
+  const messages = [err?.message, err?.parent?.message, err?.original?.message]
+    .filter(Boolean)
+    .join(' ')
+  if (/ConnectionAcquireTimeout/i.test(messages)) return true
+  // sequelize-pool uses this exact phrase; require it only when the Sequelize
+  // wrapper name is missing so we do not retry unrelated "Operation timeout"s.
+  if (/SequelizeConnection/i.test(names) && /Operation timeout/i.test(messages)) return true
+
+  return false
+}
+
+/**
  * Postgres refused the connection because the server is at `max_connections`.
  *
  * Distinct from an SSL fault: nothing is wrong with this process, so resetting
@@ -63,8 +99,14 @@ export function isSslOrCertConnectionError(error: unknown): boolean {
  * Wording differs across server versions ("non-replication superuser" on 14/15,
  * "roles with the SUPERUSER attribute" on 16), and pg's own pool reports
  * "sorry, too many clients already", so match all three.
+ *
+ * Also treats pool acquire timeouts as capacity pressure (see
+ * isConnectionAcquireTimeoutError) so call-site retries can ride out Express
+ * bursts without resetting the connector.
  */
 export function isTransientConnectionCapacityError(error: unknown): boolean {
+  if (isConnectionAcquireTimeoutError(error)) return true
+
   const { message, code } = extractConnectionErrorCodes(error)
   const normalized = message.toLowerCase()
 

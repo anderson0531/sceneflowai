@@ -64,3 +64,18 @@ describe('CreditService runs credit_ledger migration before opening a transactio
     })
   }
 })
+
+describe('CreditService awaits project budget increment (pool max=1 safe)', () => {
+  const source = readFileSync(
+    path.join(process.cwd(), 'src/services/CreditService.ts'),
+    'utf8'
+  )
+
+  for (const methodName of ['charge', 'chargeWithPriority'] as const) {
+    it(`${methodName} awaits incrementProjectCreditsUsed instead of void`, () => {
+      const body = methodBody(source, methodName)
+      expect(body).toContain('await incrementProjectCreditsUsed(')
+      expect(body).not.toMatch(/void\s+incrementProjectCreditsUsed\(/)
+    })
+  }
+})
