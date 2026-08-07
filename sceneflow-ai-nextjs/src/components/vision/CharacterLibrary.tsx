@@ -30,6 +30,7 @@ import {
   Settings2,
   Camera,
   ImagePlus,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import {
@@ -48,6 +49,7 @@ import {
 } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useDraggable } from "@dnd-kit/core";
+import { isVertexContentPolicyError } from "@/lib/generation/contentPolicy";
 import { CSS } from "@dnd-kit/utilities";
 import { upload } from "@vercel/blob/client";
 import { VoiceSelectionDialog } from "@/components/tts/VoiceSelectionDialog";
@@ -1095,6 +1097,9 @@ const CharacterCard = ({
   const [enhancingWardrobeId, setEnhancingWardrobeId] = useState<string | null>(
     null,
   ); // Which wardrobe is being AI-enhanced
+  const [softeningWardrobeId, setSofteningWardrobeId] = useState<string | null>(
+    null,
+  ); // Which wardrobe is being AI-softened for image safety
   const [generatingWardrobeImageId, setGeneratingWardrobeImageId] = useState<
     string | null
   >(null);
@@ -2070,7 +2075,80 @@ const CharacterCard = ({
     }
   };
 
-  const handleGenerateWardrobeImage = async (wardrobe: CharacterWardrobe) => {
+  /** Soften wardrobe text for Gemini Image safety; persists and returns softened fields. */
+  const softenWardrobeDescription = async (
+    wardrobeId: string,
+  ): Promise<{ description: string; accessories: string }> => {
+    const wardrobe = wardrobes.find((w) => w.id === wardrobeId);
+    if (!wardrobe) {
+      throw new Error("Wardrobe not found");
+    }
+
+    const response = await fetch("/api/character/soften-wardrobe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        characterName: character.name,
+        currentWardrobeDescription: wardrobe.description,
+        currentAccessories: wardrobe.accessories,
+        wardrobeName: wardrobe.name,
+      }),
+    });
+
+    const body = await readJsonSafe(response);
+
+    if (!response.ok) {
+      throw new Error((body.error as string) || "Failed to soften wardrobe");
+    }
+
+    const description =
+      typeof body.description === "string" ? body.description.trim() : "";
+    const accessories =
+      typeof body.accessories === "string"
+        ? body.accessories.trim()
+        : wardrobe.accessories || "";
+
+    if (!description) {
+      throw new Error("Softened wardrobe description was empty");
+    }
+
+    onUpdateWardrobe?.(characterId, {
+      defaultWardrobe: description,
+      wardrobeAccessories: accessories || wardrobe.accessories,
+      wardrobeId,
+      action: "update",
+    });
+
+    if (expandedWardrobe?.id === wardrobeId) {
+      setExpandedWardrobe({
+        ...expandedWardrobe,
+        description,
+        accessories: accessories || expandedWardrobe.accessories,
+      });
+    }
+
+    return { description, accessories };
+  };
+
+  const handleSoftenWardrobe = async (wardrobeId: string) => {
+    setSofteningWardrobeId(wardrobeId);
+    try {
+      await softenWardrobeDescription(wardrobeId);
+      toast.success("Wardrobe softened for image safety");
+    } catch (error) {
+      console.error("[Soften Wardrobe] Error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to soften wardrobe",
+      );
+    } finally {
+      setSofteningWardrobeId(null);
+    }
+  };
+
+  const handleGenerateWardrobeImage = async (
+    wardrobe: CharacterWardrobe,
+    options?: { allowSoftenRetry?: boolean },
+  ) => {
     if (!character.referenceImage?.trim()?.startsWith("http")) {
       toast.error("Generate a character identity reference image first");
       return;
@@ -2079,6 +2157,8 @@ const CharacterCard = ({
       toast.error("Add an outfit description before generating a wardrobe image");
       return;
     }
+
+    const allowSoftenRetry = options?.allowSoftenRetry !== false;
 
     setGeneratingWardrobeImageId(wardrobe.id);
     try {
@@ -2155,9 +2235,47 @@ const CharacterCard = ({
       );
     } catch (error) {
       console.error("[Wardrobe Image] Error:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to generate wardrobe image",
-      );
+      const message =
+        error instanceof Error ? error.message : "Failed to generate wardrobe image";
+
+      if (allowSoftenRetry && isVertexContentPolicyError(message)) {
+        toast.error("Image blocked by content policy", {
+          description:
+            "Soften costume wording for Gemini Image safety, then retry once.",
+          duration: 15000,
+          action: {
+            label: "Soften & retry",
+            onClick: () => {
+              void (async () => {
+                setSofteningWardrobeId(wardrobe.id);
+                try {
+                  const softened = await softenWardrobeDescription(wardrobe.id);
+                  setSofteningWardrobeId(null);
+                  await handleGenerateWardrobeImage(
+                    {
+                      ...wardrobe,
+                      description: softened.description,
+                      accessories: softened.accessories,
+                    },
+                    { allowSoftenRetry: false },
+                  );
+                } catch (retryError) {
+                  console.error("[Soften & retry] Error:", retryError);
+                  setSofteningWardrobeId(null);
+                  toast.error(
+                    retryError instanceof Error
+                      ? retryError.message
+                      : "Soften & retry failed",
+                  );
+                }
+              })();
+            },
+          },
+        });
+        return;
+      }
+
+      toast.error(message);
     } finally {
       setGeneratingWardrobeImageId(null);
     }
@@ -3529,6 +3647,21 @@ const CharacterCard = ({
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
+                                          handleSoftenWardrobe(w.id);
+                                        }}
+                                        disabled={softeningWardrobeId === w.id}
+                                        className="p-1.5 rounded-lg text-teal-600 dark:text-teal-400 hover:bg-teal-500/10 disabled:opacity-50"
+                                        title="Soften for image safety"
+                                      >
+                                        {softeningWardrobeId === w.id ? (
+                                          <Loader className="w-3.5 h-3.5 animate-spin" />
+                                        ) : (
+                                          <Shield className="w-3.5 h-3.5" />
+                                        )}
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
                                           startEditingWardrobe(w);
                                         }}
                                         className="p-1.5 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
@@ -3707,6 +3840,21 @@ const CharacterCard = ({
                                             <Loader className="w-3.5 h-3.5 animate-spin" />
                                           ) : (
                                             <Wand2 className="w-3.5 h-3.5" />
+                                          )}
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleSoftenWardrobe(w.id);
+                                          }}
+                                          disabled={softeningWardrobeId === w.id}
+                                          className="p-1.5 rounded-lg text-teal-600 dark:text-teal-400 hover:bg-teal-500/10 disabled:opacity-50"
+                                          title="Soften for image safety"
+                                        >
+                                          {softeningWardrobeId === w.id ? (
+                                            <Loader className="w-3.5 h-3.5 animate-spin" />
+                                          ) : (
+                                            <Shield className="w-3.5 h-3.5" />
                                           )}
                                         </button>
                                         <button
@@ -4257,7 +4405,8 @@ const CharacterCard = ({
                               More detailed descriptions produce more consistent
                               images across scenes. Use ✨ Enhance to automatically
                               add specifics like exact colors, materials, fit, and
-                              footwear.
+                              footwear. Soften rewrites unsafe costume language for
+                              Gemini Image.
                             </div>
                           </div>
                           <button
@@ -4276,6 +4425,25 @@ const CharacterCard = ({
                             ) : (
                               <>
                                 <Wand2 className="w-3 h-3" /> Enhance
+                              </>
+                            )}
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSoftenWardrobe(expandedWardrobe.id);
+                            }}
+                            disabled={softeningWardrobeId === expandedWardrobe.id}
+                            className="flex items-center gap-1 px-2 py-1 text-xs bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 rounded-lg hover:bg-teal-200 dark:hover:bg-teal-800/40 disabled:opacity-50"
+                          >
+                            {softeningWardrobeId === expandedWardrobe.id ? (
+                              <>
+                                <Loader className="w-3 h-3 animate-spin" />{" "}
+                                Softening...
+                              </>
+                            ) : (
+                              <>
+                                <Shield className="w-3 h-3" /> Soften
                               </>
                             )}
                           </button>
@@ -4387,7 +4555,8 @@ const CharacterCard = ({
                           More detailed descriptions produce more consistent
                           images across scenes. Use ✨ Enhance to automatically
                           add specifics like exact colors, materials, fit, and
-                          footwear.
+                          footwear. Soften rewrites unsafe costume language for
+                          Gemini Image.
                         </div>
                       </div>
                       <button
@@ -4406,6 +4575,25 @@ const CharacterCard = ({
                         ) : (
                           <>
                             <Wand2 className="w-3 h-3" /> Enhance
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSoftenWardrobe(expandedWardrobe.id);
+                        }}
+                        disabled={softeningWardrobeId === expandedWardrobe.id}
+                        className="flex items-center gap-1 px-2 py-1 text-xs bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 rounded-lg hover:bg-teal-200 dark:hover:bg-teal-800/40 disabled:opacity-50"
+                      >
+                        {softeningWardrobeId === expandedWardrobe.id ? (
+                          <>
+                            <Loader className="w-3 h-3 animate-spin" />{" "}
+                            Softening...
+                          </>
+                        ) : (
+                          <>
+                            <Shield className="w-3 h-3" /> Soften
                           </>
                         )}
                       </button>
