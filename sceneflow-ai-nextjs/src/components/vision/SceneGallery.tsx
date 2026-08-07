@@ -115,9 +115,11 @@ interface SceneGalleryProps {
   projectStreams?: ProjectStream[]
   /** Share a rendered stream master from Screening Room stream mode. */
   onShareStream?: (language: string) => void | Promise<void>
-  /** One-shot hint to open Screening Room in stream mode for a language. */
-  screeningPlaybackHint?: { mode: 'stream'; language: string } | null
+  /** One-shot hint to open Screening Room in stream or promo mode for a language. */
+  screeningPlaybackHint?: { mode: 'stream' | 'promo'; language: string } | null
   onScreeningPlaybackHintConsumed?: () => void
+  /** Rendered promo trailer MP4 URL for Screening Room Promo mode. */
+  promoTrailerUrl?: string | null
 }
 
 export function SceneGallery({
@@ -148,6 +150,7 @@ export function SceneGallery({
   onShareStream,
   screeningPlaybackHint,
   onScreeningPlaybackHintConsumed,
+  promoTrailerUrl,
 }: SceneGalleryProps) {
   const preVisBannerRef = React.useRef<HTMLDivElement>(null)
 
@@ -741,6 +744,7 @@ export function SceneGallery({
             onShareStream={onShareStream}
             screeningPlaybackHint={mode === 'screening' ? screeningPlaybackHint : undefined}
             onScreeningPlaybackHintConsumed={onScreeningPlaybackHintConsumed}
+            promoTrailerUrl={mode === 'screening' ? promoTrailerUrl : undefined}
           />
         </div>
       )}

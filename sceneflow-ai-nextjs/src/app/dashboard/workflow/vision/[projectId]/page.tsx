@@ -673,7 +673,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     parseProductionView(searchParams)
   )
   const [screeningPlaybackHint, setScreeningPlaybackHint] = useState<{
-    mode: 'stream'
+    mode: 'stream' | 'promo'
     language: string
   } | null>(null)
   const [isGenVideoRunning, setIsGenVideoRunning] = useState(false)
@@ -14529,6 +14529,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     onShareStream={handleShareStream}
                     screeningPlaybackHint={screeningPlaybackHint}
                     onScreeningPlaybackHintConsumed={() => setScreeningPlaybackHint(null)}
+                    promoTrailerUrl={
+                      getPublishingState(project?.metadata).promo?.trailer?.mp4Url || null
+                    }
                   />
                 </div>
               )}
@@ -14663,6 +14666,30 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         onOpenScreeningView={() => {
           setPublishingLibraryOpen(false)
           setProductionViewWithUrl('screening')
+        }}
+        onPreviewPromo={() => {
+          setPublishingLibraryOpen(false)
+          setScreeningPlaybackHint({ mode: 'promo', language: 'en' })
+          setProductionViewWithUrl('screening')
+        }}
+        onScriptScenesUpdated={(scenes) => {
+          setScript((prev: any) => {
+            if (!prev) return prev
+            if (prev.script?.scenes) {
+              return {
+                ...prev,
+                script: {
+                  ...prev.script,
+                  scenes,
+                },
+              }
+            }
+            return { ...prev, scenes }
+          })
+        }}
+        onOpenPromoInStudio={() => {
+          setPublishingLibraryOpen(false)
+          setProductionViewWithUrl('studio')
         }}
       />
       

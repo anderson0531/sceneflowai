@@ -28,6 +28,9 @@ export interface PublishingManagerProps {
   onPreviewStream: (language: string) => void
   sceneProductionState: Record<string, SceneProductionData>
   onOpenScreeningView?: () => void
+  onPreviewPromo?: () => void
+  onScriptScenesUpdated?: (scenes: unknown[]) => void
+  onOpenPromoInStudio?: (sceneId: string) => void
   layout?: 'dialog' | 'inline'
   hideTitle?: boolean
   initialTab?: PublishingLibraryTab
@@ -45,6 +48,9 @@ export function PublishingManager({
   onPreviewStream,
   sceneProductionState,
   onOpenScreeningView,
+  onPreviewPromo,
+  onScriptScenesUpdated,
+  onOpenPromoInStudio,
   layout = 'inline',
   hideTitle = false,
   initialTab,
@@ -158,7 +164,11 @@ export function PublishingManager({
             script={script}
             streams={streams}
             userId={userId}
+            sceneProductionState={sceneProductionState}
             onSaveMetadata={onSaveMetadata}
+            onScriptScenesUpdated={onScriptScenesUpdated}
+            onPreviewPromo={onPreviewPromo}
+            onOpenPromoInStudio={onOpenPromoInStudio}
           />
         ) : null}
         {activeTab === 'youtube' ? (

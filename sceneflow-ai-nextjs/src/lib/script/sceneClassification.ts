@@ -4,13 +4,20 @@ import { detectSceneType } from '@/lib/intelligence/scene-direction-metadata'
 import { detectNoTalentSegment } from '@/types/scene-direction'
 
 export function isTitleOrCinematicScene(scene: Record<string, unknown>): boolean {
-  if (scene.cinematicType === 'title' || scene.cinematicType === 'outro') return true
+  if (
+    scene.cinematicType === 'title' ||
+    scene.cinematicType === 'outro' ||
+    scene.cinematicType === 'promo'
+  ) {
+    return true
+  }
   const heading = String(scene.heading ?? '').toLowerCase()
   return (
     heading.includes('title sequence') ||
     heading.includes('title card') ||
     heading.includes('opening title') ||
-    heading.includes('main title')
+    heading.includes('main title') ||
+    heading.includes('promo trailer')
   )
 }
 

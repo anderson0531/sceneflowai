@@ -37,6 +37,14 @@ export interface PromoTrailerBeatPlan {
   endSec: number
   score: number
   label?: string
+  /** Preferred clip length for pacing (usually endSec - startSec). */
+  durationSec?: number
+  /** Reused storyboard frame from the source beat. */
+  frameUrl?: string
+  /** Reused production take / segment video from the source beat. */
+  videoUrl?: string
+  beatRole?: string
+  beatKind?: string
 }
 
 export interface PromoTrailerAsset {

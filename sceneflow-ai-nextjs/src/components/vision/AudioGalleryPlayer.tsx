@@ -68,8 +68,9 @@ import {
   getReadyStreamLanguages,
   type ProjectStream,
 } from '@/lib/streams/projectStreams'
+import { filmSceneIndices, isPromoCinematicScene } from '@/lib/publish/buildPromoScene'
 
-type PreVisPlaybackMode = 'animatic' | 'video' | 'stream'
+type PreVisPlaybackMode = 'animatic' | 'video' | 'stream' | 'promo'
 
 function resolveSceneVideoUrl(
   scene: any,
@@ -96,7 +97,11 @@ function getVideoSceneIndices(
 ): number[] {
   return scenes
     .map((scene, idx) =>
-      resolveSceneVideoUrl(scene, idx, language, sceneProductionState, finalCutSelection) ? idx : -1
+      isPromoCinematicScene(scene)
+        ? -1
+        : resolveSceneVideoUrl(scene, idx, language, sceneProductionState, finalCutSelection)
+          ? idx
+          : -1
     )
     .filter((idx) => idx >= 0)
 }
@@ -165,9 +170,11 @@ interface AudioGalleryPlayerProps {
   projectStreams?: ProjectStream[]
   /** Share rendered stream master (stream playback mode). */
   onShareStream?: (language: string) => void | Promise<void>
-  /** One-shot open hint from Streams tab preview. */
-  screeningPlaybackHint?: { mode: 'stream'; language: string } | null
+  /** One-shot open hint from Streams / Promo tab preview. */
+  screeningPlaybackHint?: { mode: 'stream' | 'promo'; language: string } | null
   onScreeningPlaybackHintConsumed?: () => void
+  /** Rendered 9:16 promo trailer MP4 (Publishing → Promo). */
+  promoTrailerUrl?: string | null
 }
 
 function formatTime(seconds: number) {
@@ -230,6 +237,7 @@ export function AudioGalleryPlayer({
   onShareStream,
   screeningPlaybackHint,
   onScreeningPlaybackHintConsumed,
+  promoTrailerUrl,
 }: AudioGalleryPlayerProps) {
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0)
   const [playbackMode, setPlaybackMode] = useState<PreVisPlaybackMode>('animatic')
@@ -303,7 +311,12 @@ export function AudioGalleryPlayer({
 
   const streamMasterUrl = activeStreamMaster?.mp4Url ?? null
 
+  const hasPromoTrailer = !!promoTrailerUrl?.trim()
+  const usePromoMaster = playbackMode === 'promo' && hasPromoTrailer
   const useStreamMaster = playbackMode === 'stream' && !!streamMasterUrl
+  const useMasterVideo = useStreamMaster || usePromoMaster
+
+  const filmIndices = useMemo(() => filmSceneIndices(scenes), [scenes])
 
   const useVideoForCurrentScene =
     playbackMode === 'video' && videoSceneIndices.includes(currentSceneIndex)
@@ -336,23 +349,20 @@ export function AudioGalleryPlayer({
       if (next != null) goToScene(next)
       return
     }
-    setCurrentSceneIndex((prev) => {
-      if (prev >= scenes.length - 1) return prev
-      const next = prev + 1
-      onSceneChange?.(next)
-      return next
-    })
-  }, [playbackMode, videoSceneIndices, currentSceneIndex, goToScene, scenes.length, onSceneChange])
+    if (playbackMode === 'stream' || playbackMode === 'promo') return
+    const nextFilm = filmIndices.find((idx) => idx > currentSceneIndex)
+    if (nextFilm != null) goToScene(nextFilm)
+  }, [playbackMode, videoSceneIndices, currentSceneIndex, goToScene, filmIndices])
 
   const handlePlaybackEnd = useCallback(() => {
-    if (playbackMode === 'stream') return
-    if (autoAdvanceRef.current && currentSceneIndex < scenes.length - 1) {
+    if (playbackMode === 'stream' || playbackMode === 'promo') return
+    if (autoAdvanceRef.current) {
       setTimeout(() => {
         goToNextScene()
         setTimeout(() => playAfterSceneChangeRef.current(), 100)
       }, 100)
     }
-  }, [playbackMode, currentSceneIndex, scenes.length, goToNextScene])
+  }, [playbackMode, goToNextScene])
 
   const playback = useStoryboardPlayback({
     scene: currentScene,
@@ -411,7 +421,7 @@ export function AudioGalleryPlayer({
     return { primaryUrl, overlayUrl: null as string | null, blend: 0, fadeBlack }
   }, [currentVisualFrame, currentTime, displayImageUrl])
 
-  const useActiveVideoPlayback = useStreamMaster || useVideoForCurrentScene
+  const useActiveVideoPlayback = useMasterVideo || useVideoForCurrentScene
 
   const videoFadeBlack = useMemo(() => {
     if (!useActiveVideoPlayback || videoDuration <= 0) return 0
@@ -523,8 +533,10 @@ export function AudioGalleryPlayer({
       if (prev != null) goToScene(prev)
       return
     }
-    goToScene(currentSceneIndex - 1)
-  }, [playbackMode, videoSceneIndices, currentSceneIndex, goToScene])
+    if (playbackMode === 'stream' || playbackMode === 'promo') return
+    const prevFilm = [...filmIndices].reverse().find((idx) => idx < currentSceneIndex)
+    if (prevFilm != null) goToScene(prevFilm)
+  }, [playbackMode, videoSceneIndices, currentSceneIndex, goToScene, filmIndices])
 
   const sceneDisplay = useMemo(
     () =>
@@ -543,10 +555,17 @@ export function AudioGalleryPlayer({
     (Array.isArray(currentScene?.sfxAudio) && currentScene!.sfxAudio.length > 0)
 
   useEffect(() => {
-    if (!screeningPlaybackHint || screeningPlaybackHint.mode !== 'stream') return
-    setPlaybackMode('stream')
-    onLanguageChange(screeningPlaybackHint.language)
-    onScreeningPlaybackHintConsumed?.()
+    if (!screeningPlaybackHint) return
+    if (screeningPlaybackHint.mode === 'stream') {
+      setPlaybackMode('stream')
+      onLanguageChange(screeningPlaybackHint.language)
+      onScreeningPlaybackHintConsumed?.()
+      return
+    }
+    if (screeningPlaybackHint.mode === 'promo') {
+      setPlaybackMode('promo')
+      onScreeningPlaybackHintConsumed?.()
+    }
   }, [screeningPlaybackHint, onLanguageChange, onScreeningPlaybackHintConsumed])
 
   useEffect(() => {
@@ -556,6 +575,20 @@ export function AudioGalleryPlayer({
   }, [playbackMode, hasAnySceneVideo])
 
   useEffect(() => {
+    if (playbackMode !== 'animatic' && playbackMode !== 'video') return
+    if (!isPromoCinematicScene(scenes[currentSceneIndex])) return
+    const firstFilm = filmIndices[0]
+    if (firstFilm != null && firstFilm !== currentSceneIndex) {
+      setCurrentSceneIndex(firstFilm)
+      onSceneChange?.(firstFilm)
+    }
+  }, [playbackMode, scenes, currentSceneIndex, filmIndices, onSceneChange])
+
+  useEffect(() => {
+    if (playbackMode === 'promo' && !hasPromoTrailer) {
+      setPlaybackMode('animatic')
+      return
+    }
     if (playbackMode === 'stream' && streamReadyLanguages.length === 0) {
       setPlaybackMode('animatic')
       return
@@ -565,6 +598,7 @@ export function AudioGalleryPlayer({
     }
   }, [
     playbackMode,
+    hasPromoTrailer,
     streamReadyLanguages,
     hasReadyStreamForLanguage,
     onLanguageChange,
@@ -582,26 +616,26 @@ export function AudioGalleryPlayer({
   }, [playbackMode, videoSceneIndices, currentSceneIndex, onSceneChange])
 
   useEffect(() => {
-    if (useStreamMaster || useVideoForCurrentScene) {
+    if (useMasterVideo || useVideoForCurrentScene) {
       pause()
       reset()
     } else if (videoRef.current) {
       videoRef.current.pause()
       setVideoPlaying(false)
     }
-  }, [useStreamMaster, useVideoForCurrentScene, currentSceneIndex, currentSceneVideoUrl, pause, reset])
+  }, [useMasterVideo, useVideoForCurrentScene, currentSceneIndex, currentSceneVideoUrl, pause, reset])
 
   useEffect(() => {
-    if (!shouldAutoPlayVideoRef.current || (!useVideoForCurrentScene && !useStreamMaster)) return
+    if (!shouldAutoPlayVideoRef.current || (!useVideoForCurrentScene && !useMasterVideo)) return
     shouldAutoPlayVideoRef.current = false
     const el = videoRef.current
     if (!el) return
     void el.play().then(() => setVideoPlaying(true)).catch(() => setVideoPlaying(false))
-  }, [useStreamMaster, useVideoForCurrentScene, currentSceneIndex, currentSceneVideoUrl, streamMasterUrl])
+  }, [useMasterVideo, useVideoForCurrentScene, currentSceneIndex, currentSceneVideoUrl, streamMasterUrl, promoTrailerUrl])
 
   const handleVideoEnded = useCallback(() => {
     setVideoPlaying(false)
-    if (useStreamMaster) return
+    if (useMasterVideo) return
     if (autoAdvanceRef.current) {
       const next = findNextVideoSceneIndex(videoSceneIndices, currentSceneIndex)
       if (next != null) {
@@ -611,9 +645,13 @@ export function AudioGalleryPlayer({
         }, 100)
       }
     }
-  }, [useStreamMaster, videoSceneIndices, currentSceneIndex, goToScene])
+  }, [useMasterVideo, videoSceneIndices, currentSceneIndex, goToScene])
 
-  const activeVideoUrl = useStreamMaster ? streamMasterUrl : currentSceneVideoUrl
+  const activeVideoUrl = usePromoMaster
+    ? promoTrailerUrl
+    : useStreamMaster
+      ? streamMasterUrl
+      : currentSceneVideoUrl
 
   const toggleVideoPlayback = useCallback(() => {
     const el = videoRef.current
@@ -626,9 +664,9 @@ export function AudioGalleryPlayer({
     }
   }, [])
 
-  const effectiveIsPlaying = useStreamMaster || useVideoForCurrentScene ? videoPlaying : isPlaying
-  const effectiveCurrentTime = useStreamMaster || useVideoForCurrentScene ? videoCurrentTime : currentTime
-  const effectiveDuration = useStreamMaster || useVideoForCurrentScene
+  const effectiveIsPlaying = useMasterVideo || useVideoForCurrentScene ? videoPlaying : isPlaying
+  const effectiveCurrentTime = useMasterVideo || useVideoForCurrentScene ? videoCurrentTime : currentTime
+  const effectiveDuration = useMasterVideo || useVideoForCurrentScene
     ? Math.max(videoDuration, 0.1)
     : sceneDuration
 
@@ -636,12 +674,12 @@ export function AudioGalleryPlayer({
     !effectiveIsPlaying && effectiveCurrentTime < 0.1 && !!screeningPosterUrl
 
   const toggleEffectivePlayback = useCallback(() => {
-    if (useStreamMaster || useVideoForCurrentScene) {
+    if (useMasterVideo || useVideoForCurrentScene) {
       toggleVideoPlayback()
     } else {
       togglePlayback()
     }
-  }, [useStreamMaster, useVideoForCurrentScene, toggleVideoPlayback, togglePlayback])
+  }, [useMasterVideo, useVideoForCurrentScene, toggleVideoPlayback, togglePlayback])
 
   const seekEffective = useCallback(
     (time: number) => {
@@ -845,13 +883,38 @@ export function AudioGalleryPlayer({
                 : 'Render a language master in Streams to enable Stream mode'}
             </TooltipContent>
           </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => hasPromoTrailer && setPlaybackMode('promo')}
+                disabled={!hasPromoTrailer}
+                className={cn(
+                  'px-2 py-0.5 rounded text-[11px] font-medium transition-colors',
+                  playbackMode === 'promo'
+                    ? 'bg-fuchsia-600 text-white'
+                    : 'text-gray-400 hover:text-white',
+                  !hasPromoTrailer && 'opacity-40 cursor-not-allowed hover:text-gray-400'
+                )}
+              >
+                Promo
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {hasPromoTrailer
+                ? 'Play the 9:16 promotional trailer'
+                : 'Create and render a promo trailer in Publishing → Promo'}
+            </TooltipContent>
+          </Tooltip>
         </div>
         <span className="text-xs text-gray-400 bg-gray-800 px-2 py-0.5 rounded">
-          {playbackMode === 'stream'
+          {playbackMode === 'promo'
+            ? 'Promo trailer'
+            : playbackMode === 'stream'
             ? 'Language master'
             : playbackMode === 'video'
             ? `Video ${videoScenePosition} of ${videoSceneIndices.length}`
-            : `Scene ${currentSceneIndex + 1} of ${scenes.length}`}
+            : `Scene ${filmIndices.indexOf(currentSceneIndex) >= 0 ? filmIndices.indexOf(currentSceneIndex) + 1 : currentSceneIndex + 1} of ${filmIndices.length || scenes.length}`}
         </span>
       </div>
 
@@ -995,7 +1058,7 @@ export function AudioGalleryPlayer({
             onPause={() => setVideoPlaying(false)}
             onEnded={handleVideoEnded}
           />
-          {videoFadeBlack > 0 && !useStreamMaster && effectiveIsPlaying && (
+          {videoFadeBlack > 0 && !useMasterVideo && effectiveIsPlaying && (
             <div
               className="absolute inset-0 bg-black z-[2] pointer-events-none"
               style={{ opacity: videoFadeBlack }}
@@ -1063,7 +1126,7 @@ export function AudioGalleryPlayer({
 
   const sceneThumbnailsRow = (
     <div className="flex gap-2 overflow-x-auto pb-1 justify-start">
-      {(playbackMode === 'video' ? videoSceneIndices : scenes.map((_, idx) => idx)).map((idx) => {
+      {(playbackMode === 'video' ? videoSceneIndices : filmIndices).map((idx) => {
         const scene = scenes[idx]
         const hasSceneAudio = sceneHasPlayablePreVisAudio(scene, selectedLanguage)
         const thumbUrl = getScenePlayableThumbnailUrl(scene)

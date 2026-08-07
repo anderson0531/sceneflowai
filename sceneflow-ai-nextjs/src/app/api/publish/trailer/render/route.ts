@@ -1,13 +1,14 @@
 /**
  * Beat-woven 9:16 promo trailer render.
  *
+ * Prefers per-beat videoUrl windows (and promo VO/music) over master-only stubs.
+ *
  * POST /api/publish/trailer/render
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { put } from '@vercel/blob'
 import type { PromoTrailerBeatPlan } from '@/types/publishingAssets'
 
 export const dynamic = 'force-dynamic'
@@ -26,37 +27,107 @@ export async function POST(request: NextRequest) {
       beatPlan?: PromoTrailerBeatPlan[]
       targetDurationSec?: number
       title?: string
+      narrationAudioUrl?: string
+      musicAudioUrl?: string
+      promoSceneId?: string
     }
 
     const projectId = (body.projectId || '').trim()
-    const videoUrl = (body.videoUrl || '').trim()
+    const fallbackVideoUrl = (body.videoUrl || '').trim()
     const beatPlan = body.beatPlan || []
-    const targetDurationSec = body.targetDurationSec || 45
+    const targetDurationSec = body.targetDurationSec || 60
 
-    if (!projectId || !videoUrl || beatPlan.length === 0) {
+    if (!projectId || beatPlan.length === 0) {
       return NextResponse.json(
-        { error: 'projectId, videoUrl, and beatPlan are required' },
+        { error: 'projectId and beatPlan are required' },
         { status: 400 }
       )
     }
 
-    const totalBeatSec = beatPlan.reduce((sum, b) => sum + (b.endSec - b.startSec), 0)
+    const clipSegments = beatPlan
+      .map((beat, idx) => {
+        const videoUrl = (beat.videoUrl || fallbackVideoUrl || '').trim()
+        if (!videoUrl) return null
+        const duration = beat.durationSec ?? beat.endSec - beat.startSec
+        return {
+          segmentId: `beat-${beat.beatId}-${idx}`,
+          sequenceIndex: idx,
+          videoUrl,
+          startTime: beat.videoUrl ? 0 : beat.startSec,
+          endTime: beat.videoUrl ? Math.max(0.5, duration) : beat.endSec,
+          audioSource: 'original' as const,
+          audioVolume: 0.35,
+          pauseDuration: 0,
+        }
+      })
+      .filter(Boolean) as Array<{
+      segmentId: string
+      sequenceIndex: number
+      videoUrl: string
+      startTime: number
+      endTime: number
+      audioSource: 'original'
+      audioVolume: number
+      pauseDuration: number
+    }>
+
+    if (clipSegments.length === 0 && !fallbackVideoUrl) {
+      return NextResponse.json(
+        {
+          error:
+            'No usable video clips on the beat plan. Generate scene videos or a master stream first.',
+        },
+        { status: 400 }
+      )
+    }
+
+    const segments =
+      clipSegments.length > 0
+        ? clipSegments
+        : beatPlan.map((beat, idx) => ({
+            segmentId: `beat-${beat.beatId}-${idx}`,
+            sequenceIndex: idx,
+            videoUrl: fallbackVideoUrl,
+            startTime: beat.startSec,
+            endTime: beat.endSec,
+            audioSource: 'original' as const,
+            audioVolume: 0.35,
+            pauseDuration: 0,
+          }))
+
+    const totalBeatSec = beatPlan.reduce(
+      (sum, b) => sum + (b.durationSec ?? b.endSec - b.startSec),
+      0
+    )
     const durationSec = Math.min(targetDurationSec, Math.max(30, totalBeatSec))
 
-    // Attempt cloud stitch of beat windows via stream render proxy
-    let mp4Url = videoUrl
-    try {
-      const segments = beatPlan.map((beat, idx) => ({
-        segmentId: `beat-${beat.beatId}`,
-        sequenceIndex: idx,
-        videoUrl,
-        startTime: beat.startSec,
-        endTime: beat.endSec,
-        audioSource: 'original' as const,
-        audioVolume: 1,
-        pauseDuration: 0,
-      }))
+    const audioTracks: Record<string, unknown> = {}
+    if (body.narrationAudioUrl) {
+      audioTracks.narration = [
+        {
+          id: 'promo-narration',
+          url: body.narrationAudioUrl,
+          startTime: 0,
+          volume: 1,
+        },
+      ]
+    }
+    if (body.musicAudioUrl) {
+      audioTracks.music = [
+        {
+          id: 'promo-music',
+          url: body.musicAudioUrl,
+          startTime: 0,
+          volume: 0.55,
+          loop: true,
+        },
+      ]
+    }
 
+    let mp4Url = segments[0]?.videoUrl || fallbackVideoUrl
+    let stitchSucceeded = false
+
+    try {
       const stitchRes = await fetch(new URL('/api/publish/stream/render', request.url).toString(), {
         method: 'POST',
         headers: {
@@ -65,21 +136,23 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({
           projectId,
-          sceneId: 'promo-trailer',
+          sceneId: body.promoSceneId || 'promo-trailer',
           sceneNumber: 0,
           resolution: '1080p',
           aspect: '9:16',
           audioConfig: {
-            includeNarration: false,
+            includeNarration: !!body.narrationAudioUrl,
             includeDialogue: false,
-            includeMusic: false,
+            includeMusic: !!body.musicAudioUrl,
             includeSfx: false,
             includeSegmentAudio: true,
             language: 'en',
-            segmentAudioVolume: 1,
+            segmentAudioVolume: 0.35,
+            narrationVolume: 1,
+            musicVolume: 0.55,
           },
           segments,
-          audioTracks: {},
+          audioTracks,
           textOverlays: [],
         }),
       })
@@ -87,7 +160,6 @@ export async function POST(request: NextRequest) {
       if (stitchRes.ok) {
         const stitchData = await stitchRes.json()
         if (stitchData.jobId) {
-          // Poll briefly for short beat clips
           for (let i = 0; i < 24; i++) {
             await new Promise((r) => setTimeout(r, 5000))
             const pollRes = await fetch(
@@ -98,36 +170,31 @@ export async function POST(request: NextRequest) {
             const pollData = await pollRes.json()
             if (pollData.status === 'COMPLETED') {
               mp4Url = pollData.downloadUrl || pollData.publicUrl || pollData.outputUrl || mp4Url
+              stitchSucceeded = true
               break
             }
             if (pollData.status === 'FAILED' || pollData.status === 'error') break
           }
-        } else if (stitchData.outputUrl) {
-          mp4Url = stitchData.outputUrl
+        } else if (stitchData.outputUrl || stitchData.publicUrl || stitchData.downloadUrl) {
+          mp4Url =
+            stitchData.outputUrl || stitchData.publicUrl || stitchData.downloadUrl || mp4Url
+          stitchSucceeded = true
         }
+      } else {
+        console.warn('[Trailer Render] Stitch HTTP', stitchRes.status, await stitchRes.text())
       }
     } catch (stitchErr) {
-      console.warn('[Trailer Render] Cloud stitch unavailable, using master URL:', stitchErr)
+      console.warn('[Trailer Render] Cloud stitch unavailable:', stitchErr)
     }
 
-    // Persist manifest alongside source when stitch unavailable
-    if (mp4Url === videoUrl) {
-      const manifest = {
-        projectId,
-        beatPlan,
-        durationSec,
-        aspect: '9:16',
-        sourceVideoUrl: videoUrl,
-        renderedAt: new Date().toISOString(),
-      }
-      const blob = await put(
-        `trailers/${projectId}-${Date.now()}.json`,
-        JSON.stringify(manifest),
-        { access: 'public', contentType: 'application/json' }
+    if (!stitchSucceeded && clipSegments.length === 0 && fallbackVideoUrl) {
+      // Last resort: master URL (legacy fallback) — only when no per-beat clips exist
+      mp4Url = fallbackVideoUrl
+    } else if (!stitchSucceeded && !mp4Url) {
+      return NextResponse.json(
+        { error: 'Trailer stitch failed and no playable clip URL is available' },
+        { status: 502 }
       )
-      mp4Url = blob.url.replace('.json', '.mp4')
-      // Keep source URL as playable fallback until vertical crop pipeline ships
-      mp4Url = videoUrl
     }
 
     return NextResponse.json({
@@ -136,6 +203,8 @@ export async function POST(request: NextRequest) {
       durationSec,
       aspect: '9:16',
       beatCount: beatPlan.length,
+      stitchSucceeded,
+      usedPerBeatClips: clipSegments.length > 0,
     })
   } catch (error) {
     console.error('[Trailer Render] POST error:', error)
