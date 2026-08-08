@@ -350,23 +350,57 @@ export let sequelize = createSequelize()
  * leaves models pointing at the closed instance — so authenticate on the new
  * export can succeed while Project.findByPk still fails with alert 42 / closed CM.
  *
- * Drain pooled sockets, drop the connector + cached stream factory, and keep the
- * same Sequelize instance so the next checkout runs beforeConnect with a fresh cert.
+ * Drop the connector + cached stream factory, destroy idle pooled sockets, and keep
+ * the same Sequelize instance so the next checkout runs beforeConnect with a fresh cert.
+ *
+ * IMPORTANT: do NOT call `pool.drain()`. sequelize-pool sets `_draining = true`
+ * permanently, and the next acquire throws "pool is draining and cannot accept work"
+ * — which is exactly what Scene Image hit after the SSL alert-42 self-heal.
  */
 export async function resetDatabaseConnection(): Promise<void> {
   console.warn('[database] Resetting Cloud SQL connector after SSL/cert error (keeping Sequelize instance)')
   cloudSqlOptsPromise = null
   resetCloudSqlConnector()
   try {
-    const pool = sequelize.connectionManager?.pool as
-      | { drain?: () => Promise<unknown>; destroyAllNow?: () => Promise<unknown> }
-      | undefined
-    if (pool?.drain && pool?.destroyAllNow) {
-      await pool.drain()
-      await pool.destroyAllNow()
-    }
+    await clearIdleSequelizePoolConnections(sequelize)
   } catch {
     /* pool may already be empty */
+  }
+}
+
+/**
+ * Destroy idle pooled sockets without draining the pool.
+ * If a prior buggy reset left `_draining` set, clear it so acquires work again.
+ */
+export async function clearIdleSequelizePoolConnections(instance: Sequelize): Promise<void> {
+  const pool = instance.connectionManager?.pool as
+    | {
+        drain?: () => Promise<unknown>
+        destroyAllNow?: () => Promise<unknown>
+        _draining?: boolean
+        read?: { destroyAllNow?: () => Promise<unknown>; _draining?: boolean }
+        write?: { destroyAllNow?: () => Promise<unknown>; _draining?: boolean }
+      }
+    | undefined
+  if (!pool) return
+
+  // Heal isolates that already drained themselves under the previous self-heal.
+  if (pool._draining === true) {
+    console.warn(
+      '[database] Clearing stuck pool._draining flag after prior SSL reset (hypothesisId=H1)',
+      { runId: 'ssl-pool-drain-self-heal' }
+    )
+    pool._draining = false
+  }
+  if (pool.read?._draining === true) pool.read._draining = false
+  if (pool.write?._draining === true) pool.write._draining = false
+
+  if (typeof pool.destroyAllNow === 'function') {
+    await pool.destroyAllNow()
+    return
+  }
+  if (pool.read?.destroyAllNow && pool.write?.destroyAllNow) {
+    await Promise.all([pool.read.destroyAllNow(), pool.write.destroyAllNow()])
   }
 }
 
