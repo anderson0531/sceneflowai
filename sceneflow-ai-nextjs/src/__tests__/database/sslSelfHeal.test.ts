@@ -50,12 +50,74 @@ describe('resetDatabaseConnection keeps the Sequelize singleton', () => {
     const body = DATABASE_CONFIG.slice(bodyStart, bodyEnd)
     expect(body).toContain('resetCloudSqlConnector')
     expect(body).toContain('cloudSqlOptsPromise = null')
+    expect(body).toContain('clearIdleSequelizePoolConnections')
     expect(body).not.toMatch(/await\s+sequelize\.close\(/)
     expect(body).not.toMatch(/sequelize\s*=\s*createSequelize\(/)
   })
 
+  it('does not call pool.drain() (permanently blocks acquires)', () => {
+    const bodyStart = DATABASE_CONFIG.indexOf('export async function resetDatabaseConnection')
+    const bodyEnd = DATABASE_CONFIG.indexOf('/** Coalesce concurrent SSL resets')
+    const body = DATABASE_CONFIG.slice(bodyStart, bodyEnd)
+    expect(body).not.toMatch(/pool\.drain\(/)
+    expect(body).toContain('destroyAllNow')
+    expect(body).toContain('_draining')
+  })
+
   it('closes the previous Cloud SQL connector so ephemeral certs are dropped', () => {
     expect(CONNECTOR).toMatch(/previous\.close\(/)
+  })
+})
+
+describe('clearIdleSequelizePoolConnections', () => {
+  it('does not call pool.drain in the exported helper body', () => {
+    const start = DATABASE_CONFIG.indexOf(
+      'export async function clearIdleSequelizePoolConnections'
+    )
+    const end = DATABASE_CONFIG.indexOf('/** Coalesce concurrent SSL resets')
+    const body = DATABASE_CONFIG.slice(start, end)
+    expect(body).toContain('destroyAllNow')
+    expect(body).toContain('_draining')
+    expect(body).not.toMatch(/\.drain\(/)
+  })
+
+  it('simulates SSL heal acquire path after clearing idle pool (no draining error)', async () => {
+    // Mirrors sequelize-pool: drain() blocks acquire forever; destroyAllNow alone does not.
+    class MiniPool {
+      _draining = false
+      destroyed = 0
+      async acquire() {
+        if (this._draining) {
+          throw new Error('pool is draining and cannot accept work')
+        }
+        return 'conn'
+      }
+      async drain() {
+        this._draining = true
+      }
+      async destroyAllNow() {
+        this.destroyed += 1
+      }
+    }
+
+    const buggy = new MiniPool()
+    await buggy.drain()
+    await buggy.destroyAllNow()
+    await expect(buggy.acquire()).rejects.toThrow(/pool is draining/)
+
+    const fixed = new MiniPool()
+    // Fixed heal path: never drain; clear flag if stuck; destroy idle only.
+    if (fixed._draining) fixed._draining = false
+    await fixed.destroyAllNow()
+    await expect(fixed.acquire()).resolves.toBe('conn')
+    expect(fixed.destroyed).toBe(1)
+
+    // Also heal a pool that was already drained by the previous buggy reset.
+    const stuck = new MiniPool()
+    await stuck.drain()
+    stuck._draining = false
+    await stuck.destroyAllNow()
+    await expect(stuck.acquire()).resolves.toBe('conn')
   })
 })
 
