@@ -143,6 +143,7 @@ export interface CharacterLibraryProps {
       sceneNumbers?: number[];
       appearanceNotes?: string;
       reason?: string;
+      needsImageRegen?: boolean;
       action?: "add" | "update" | "delete" | "setDefault";
     },
   ) => void;
@@ -158,6 +159,28 @@ export interface CharacterLibraryProps {
       reason: string;
     }>,
   ) => void;
+  /** Apply non-destructive wardrobe sync diffs from script */
+  onApplyWardrobeSyncDiffs?: (
+    diffs: Array<{
+      characterId: string;
+      characterName: string;
+      updates: Array<{
+        wardrobeId: string;
+        patch: Record<string, unknown>;
+        imageStale: boolean;
+        reason: string;
+      }>;
+      creates: Array<{
+        name: string;
+        description: string;
+        accessories?: string;
+        appearanceNotes?: string;
+        sceneNumbers: number[];
+        reason: string;
+      }>;
+      obsolete: Array<{ wardrobeId: string; name: string; reason: string }>;
+    }>,
+  ) => Promise<{ staleWardrobeIdsByCharacter: Record<string, string[]> } | void> | void;
   onAddCharacter?: (characterData: any) => void;
   onRemoveCharacter?: (characterName: string) => void;
   /** Apply enhanced reference directly (URL + vision description) without re-upload */
@@ -208,6 +231,7 @@ interface CharacterWardrobe {
   sceneNumbers?: number[]; // Scenes where this outfit is used (from script analysis)
   appearanceNotes?: string; // Makeup, hair state, visible injuries/marks
   reason?: string; // AI explanation for why this outfit is needed
+  needsImageRegen?: boolean;
 }
 
 interface CharacterCardProps {
@@ -252,6 +276,7 @@ interface CharacterCardProps {
       sceneNumbers?: number[];
       appearanceNotes?: string;
       reason?: string;
+      needsImageRegen?: boolean;
       action?: "add" | "update" | "delete" | "setDefault";
     },
   ) => void;
@@ -267,6 +292,7 @@ interface CharacterCardProps {
       reason: string;
     }>,
   ) => void;
+  onApplyWardrobeSyncDiffs?: CharacterLibraryProps["onApplyWardrobeSyncDiffs"];
   /** Script scenes for wardrobe analysis */
   scenes?: any[];
   onRemove?: () => void;
@@ -317,6 +343,7 @@ export function CharacterLibrary({
   onUpdateCharacterRole,
   onUpdateCharacterWardrobe,
   onBatchUpdateWardrobes,
+  onApplyWardrobeSyncDiffs,
   onAddCharacter,
   onRemoveCharacter,
   onEditCharacterImage,
@@ -368,6 +395,11 @@ export function CharacterLibrary({
   >(null);
   const [createVoiceDialogOpen, setCreateVoiceDialogOpen] = useState(false);
   const [addCharacterModalOpen, setAddCharacterModalOpen] = useState(false);
+  const [isSyncingAllWardrobes, setIsSyncingAllWardrobes] = useState(false);
+  const [allWardrobeSyncDiffs, setAllWardrobeSyncDiffs] = useState<
+    WardrobeSyncDiffPreview[] | null
+  >(null);
+  const [isApplyingAllSync, setIsApplyingAllSync] = useState(false);
 
   useEffect(() => {
     if (layout !== "dialog") return;
@@ -602,6 +634,7 @@ export function CharacterLibrary({
         onUpdateCharacterAttributes={onUpdateCharacterAttributes}
         onUpdateWardrobe={onUpdateCharacterWardrobe}
         onBatchUpdateWardrobes={onBatchUpdateWardrobes}
+        onApplyWardrobeSyncDiffs={onApplyWardrobeSyncDiffs}
         scenes={scenes}
         onRemove={() => onRemoveCharacter?.(char.name)}
         onEditImage={
@@ -630,12 +663,93 @@ export function CharacterLibrary({
   const activeCharacter =
     activeCharacterIndex >= 0 ? castCharacters[activeCharacterIndex] : null;
 
+  const handleUpdateAllWardrobesFromScript = async () => {
+    if (!scenes || scenes.length === 0) {
+      toast.error("No scenes available for analysis");
+      return;
+    }
+    if (castCharacters.length === 0) {
+      toast.error("No characters to sync");
+      return;
+    }
+
+    setIsSyncingAllWardrobes(true);
+    setAllWardrobeSyncDiffs(null);
+    try {
+      const response = await fetch("/api/character/sync-wardrobes-from-script", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          characters: castCharacters.map((char, idx) => ({
+            id: getCharacterId(char, idx),
+            name: char.name,
+            role: char.role,
+            appearanceDescription: char.appearanceDescription,
+            wardrobes: (char.wardrobes || []).map((w: CharacterWardrobe) => ({
+              id: w.id,
+              name: w.name,
+              description: w.description,
+              accessories: w.accessories,
+              appearanceNotes: w.appearanceNotes,
+              sceneNumbers: w.sceneNumbers,
+              previewImageUrl: w.previewImageUrl,
+              headshotUrl: w.headshotUrl,
+              fullBodyUrl: w.fullBodyUrl,
+              isDefault: w.isDefault,
+              createdAt: w.createdAt,
+              reason: w.reason,
+            })),
+          })),
+          scenes: buildScenesPayloadForWardrobeSync(scenes),
+          screenplayContext: {
+            genre: screenplayContext?.genre,
+            tone: screenplayContext?.tone,
+            setting: screenplayContext?.setting,
+            logline: screenplayContext?.logline,
+          },
+        }),
+      });
+      const body = await readJsonSafe(response);
+      if (!response.ok) {
+        throw new Error(
+          (body.error as string) || "Failed to sync wardrobes from script",
+        );
+      }
+      const diffs = (body.diffs as WardrobeSyncDiffPreview[]) || [];
+      setAllWardrobeSyncDiffs(diffs);
+      const totals = body.totals as
+        | { updates?: number; creates?: number; obsolete?: number }
+        | undefined;
+      toast.success("Script wardrobe sync ready", {
+        description: `${totals?.updates || 0} updates, ${totals?.creates || 0} new looks across ${diffs.length} character(s)`,
+      });
+    } catch (error) {
+      console.error("[Wardrobe Sync All] Error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to sync all wardrobes",
+      );
+    } finally {
+      setIsSyncingAllWardrobes(false);
+    }
+  };
+
+  const handleApplyAllWardrobeSync = async () => {
+    if (!allWardrobeSyncDiffs?.length || !onApplyWardrobeSyncDiffs) return;
+    setIsApplyingAllSync(true);
+    try {
+      await onApplyWardrobeSyncDiffs(allWardrobeSyncDiffs);
+      setAllWardrobeSyncDiffs(null);
+    } finally {
+      setIsApplyingAllSync(false);
+    }
+  };
+
   return (
     <div
       className={`bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 ${compact ? "p-4" : "p-6"} h-full overflow-y-auto`}
     >
       {!compact && (
-        <div className={`flex items-center justify-between mb-6`}>
+        <div className={`flex items-center justify-between mb-6 gap-3 flex-wrap`}>
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5 text-sf-primary" />
             <h3 className="font-semibold text-gray-900 dark:text-gray-100">
@@ -654,6 +768,73 @@ export function CharacterLibrary({
               <Info className="w-4 h-4" />
             </button>
           </div>
+          {scenes && scenes.length > 0 && castCharacters.length > 0 && (
+            <button
+              onClick={() => void handleUpdateAllWardrobesFromScript()}
+              disabled={isSyncingAllWardrobes}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-amber-600 dark:text-amber-400 border border-amber-500/40 rounded-lg hover:bg-amber-500/10 disabled:opacity-50"
+              title="Rescan the script and update every character's scene looks"
+            >
+              {isSyncingAllWardrobes ? (
+                <Loader className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="w-3.5 h-3.5" />
+              )}
+              Update All Wardrobes from Script
+            </button>
+          )}
+        </div>
+      )}
+
+      {(compact || true) && scenes && scenes.length > 0 && castCharacters.length > 0 && (
+        <div className={`${compact ? "mb-3" : "hidden"}`}>
+          <button
+            onClick={() => void handleUpdateAllWardrobesFromScript()}
+            disabled={isSyncingAllWardrobes}
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs text-amber-600 dark:text-amber-400 border border-amber-500/40 rounded-lg hover:bg-amber-500/10 disabled:opacity-50"
+            title="Rescan the script and update every character's scene looks"
+          >
+            {isSyncingAllWardrobes ? (
+              <Loader className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <RefreshCw className="w-3.5 h-3.5" />
+            )}
+            Update All Wardrobes from Script
+          </button>
+        </div>
+      )}
+
+      {allWardrobeSyncDiffs && allWardrobeSyncDiffs.length > 0 && (
+        <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
+              Project wardrobe sync ready
+            </span>
+            <button
+              onClick={() => setAllWardrobeSyncDiffs(null)}
+              className="text-[10px] text-gray-500"
+            >
+              Dismiss
+            </button>
+          </div>
+          <p className="text-[11px] text-gray-600 dark:text-gray-400">
+            {allWardrobeSyncDiffs.reduce((n, d) => n + d.updates.length, 0)}{" "}
+            updates,{" "}
+            {allWardrobeSyncDiffs.reduce((n, d) => n + d.creates.length, 0)} new
+            looks across {allWardrobeSyncDiffs.length} character(s)
+          </p>
+          <button
+            onClick={() => void handleApplyAllWardrobeSync()}
+            disabled={isApplyingAllSync || !onApplyWardrobeSyncDiffs}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50"
+          >
+            {isApplyingAllSync ? (
+              <Loader className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Check className="w-3.5 h-3.5" />
+            )}
+            Apply all wardrobe syncs
+          </button>
         </div>
       )}
 
@@ -920,6 +1101,57 @@ function formatSceneRange(sceneNumbers: number[]): string {
   return ranges.join(", ");
 }
 
+function buildScenesPayloadForWardrobeSync(scenes: any[]) {
+  return scenes.map((s: any, idx: number) => ({
+    sceneNumber: idx + 1,
+    heading: typeof s.heading === "string" ? s.heading : s.heading?.text,
+    action: s.action,
+    visualDescription: s.visualDescription,
+    dialogue: Array.isArray(s.dialogue)
+      ? s.dialogue.map((d: any) => `${d.character || ""}: ${d.line || ""}`).join(" ")
+      : undefined,
+    beats: (() => {
+      const beats = getSceneBeats(s);
+      return beats.length > 0
+        ? beats.map((b) => ({
+            kind: b.kind,
+            character: b.character,
+            line: b.line,
+            actionDescription: b.actionDescription?.trim() || undefined,
+          }))
+        : undefined;
+    })(),
+    segments: Array.isArray(s.segments)
+      ? s.segments.map((seg: any) => ({
+          segmentDirection: seg.segmentDirection,
+          startFrameDescription: seg.startFrameDescription,
+          endFrameDescription: seg.endFrameDescription,
+        }))
+      : undefined,
+  }));
+}
+
+type WardrobeSyncDiffPreview = {
+  characterId: string;
+  characterName: string;
+  updates: Array<{
+    wardrobeId: string;
+    patch: Record<string, unknown>;
+    imageStale: boolean;
+    reason: string;
+  }>;
+  creates: Array<{
+    name: string;
+    description: string;
+    accessories?: string;
+    appearanceNotes?: string;
+    sceneNumbers: number[];
+    reason: string;
+  }>;
+  obsolete: Array<{ wardrobeId: string; name: string; reason: string }>;
+  analysis?: string;
+};
+
 const CharacterCard = ({
   character,
   characterId,
@@ -943,6 +1175,7 @@ const CharacterCard = ({
   onUpdateCharacterAttributes,
   onUpdateWardrobe,
   onBatchUpdateWardrobes,
+  onApplyWardrobeSyncDiffs,
   scenes = [],
   onRemove,
   onEditImage,
@@ -1104,7 +1337,7 @@ const CharacterCard = ({
     string | null
   >(null);
 
-  // Script analysis for wardrobes state
+  // Script analysis / sync for wardrobes state
   const [isAnalyzingScript, setIsAnalyzingScript] = useState(false);
   const [wardrobeSuggestions, setWardrobeSuggestions] = useState<
     Array<{
@@ -1117,6 +1350,10 @@ const CharacterCard = ({
       appearanceNotes?: string;
     }>
   >([]);
+  const [wardrobeSyncDiff, setWardrobeSyncDiff] =
+    useState<WardrobeSyncDiffPreview | null>(null);
+  const [isApplyingSync, setIsApplyingSync] = useState(false);
+  const [isRegeneratingStale, setIsRegeneratingStale] = useState(false);
 
   // Wardrobe expansion modal state
   const [expandedWardrobe, setExpandedWardrobe] =
@@ -1724,8 +1961,8 @@ const CharacterCard = ({
     }
   };
 
-  // Analyze script to suggest wardrobes for this character
-  const handleAnalyzeScriptForWardrobes = async () => {
+  // Sync wardrobes from script (non-destructive diff)
+  const handleUpdateWardrobesFromScript = async () => {
     if (!scenes || scenes.length === 0) {
       toast.error("No scenes available for analysis");
       return;
@@ -1733,9 +1970,10 @@ const CharacterCard = ({
 
     setIsAnalyzingScript(true);
     setWardrobeSuggestions([]);
+    setWardrobeSyncDiff(null);
 
     try {
-      const response = await fetch("/api/character/suggest-wardrobes", {
+      const response = await fetch("/api/character/sync-wardrobes-from-script", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1744,43 +1982,22 @@ const CharacterCard = ({
             name: character.name,
             role: character.role,
             appearanceDescription: character.appearanceDescription,
-            existingWardrobes: wardrobes.map((w) => ({
+            wardrobes: wardrobes.map((w) => ({
+              id: w.id,
               name: w.name,
+              description: w.description,
+              accessories: w.accessories,
+              appearanceNotes: w.appearanceNotes,
               sceneNumbers: w.sceneNumbers,
+              previewImageUrl: w.previewImageUrl,
+              headshotUrl: w.headshotUrl,
+              fullBodyUrl: w.fullBodyUrl,
+              isDefault: w.isDefault,
+              createdAt: w.createdAt,
+              reason: w.reason,
             })),
           },
-          scenes: scenes.map((s: any, idx: number) => ({
-            sceneNumber: idx + 1,
-            heading:
-              typeof s.heading === "string" ? s.heading : s.heading?.text,
-            action: s.action,
-            visualDescription: s.visualDescription,
-            dialogue: s.dialogue
-              ?.filter(
-                (d: any) =>
-                  d.character?.toLowerCase() === character.name?.toLowerCase(),
-              )
-              .map((d: any) => d.line)
-              .join(" "),
-            beats: (() => {
-              const beats = getSceneBeats(s);
-              return beats.length > 0
-                ? beats.map((b) => ({
-                    kind: b.kind,
-                    character: b.character,
-                    line: b.line,
-                    actionDescription: b.actionDescription?.trim() || undefined,
-                  }))
-                : undefined;
-            })(),
-            segments: Array.isArray(s.segments)
-              ? s.segments.map((seg: any) => ({
-                  segmentDirection: seg.segmentDirection,
-                  startFrameDescription: seg.startFrameDescription,
-                  endFrameDescription: seg.endFrameDescription,
-                }))
-              : undefined,
-          })),
+          scenes: buildScenesPayloadForWardrobeSync(scenes),
           screenplayContext: {
             genre: screenplayContext?.genre,
             tone: screenplayContext?.tone,
@@ -1794,28 +2011,69 @@ const CharacterCard = ({
 
       if (!response.ok) {
         throw new Error(
-          (body.error as string) || "Failed to analyze script",
+          (body.error as string) || "Failed to sync wardrobes from script",
         );
       }
 
-      const { suggestions } = body;
-      setWardrobeSuggestions(suggestions || []);
+      const diff = (body.diffs as WardrobeSyncDiffPreview[] | undefined)?.[0];
+      if (!diff) {
+        toast.info("No wardrobe changes detected from the script");
+        return;
+      }
 
-      if (suggestions?.length > 0) {
+      const changeCount =
+        diff.updates.length + diff.creates.length + diff.obsolete.length;
+      setWardrobeSyncDiff(diff);
+
+      if (changeCount > 0) {
         toast.success(
-          `Found ${suggestions.length} wardrobe suggestion(s) for ${character.name}`,
+          `Found ${diff.updates.length} update(s), ${diff.creates.length} new look(s)`,
         );
       } else {
-        toast.info("No additional wardrobes needed based on script analysis");
+        toast.info("Wardrobes already match the script");
       }
     } catch (error) {
-      console.error("[Script Analysis] Error:", error);
+      console.error("[Wardrobe Sync] Error:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to analyze script",
+        error instanceof Error ? error.message : "Failed to sync wardrobes",
       );
     } finally {
       setIsAnalyzingScript(false);
     }
+  };
+
+  const handleApplyWardrobeSync = async () => {
+    if (!wardrobeSyncDiff || !onApplyWardrobeSyncDiffs) {
+      // Fallback: treat creates as batch replace when merge handler missing
+      if (wardrobeSyncDiff?.creates.length && onBatchUpdateWardrobes) {
+        onBatchUpdateWardrobes(
+          characterId,
+          wardrobeSyncDiff.creates.map((s) => ({
+            name: s.name,
+            description: s.description,
+            accessories: s.accessories,
+            sceneNumbers: s.sceneNumbers,
+            appearanceNotes: s.appearanceNotes,
+            reason: s.reason,
+          })),
+        );
+        setWardrobeSyncDiff(null);
+      }
+      return;
+    }
+
+    setIsApplyingSync(true);
+    try {
+      await onApplyWardrobeSyncDiffs([wardrobeSyncDiff]);
+      setWardrobeSyncDiff(null);
+    } finally {
+      setIsApplyingSync(false);
+    }
+  };
+
+  // Analyze script to suggest wardrobes for this character (legacy additive path)
+  const handleAnalyzeScriptForWardrobes = async () => {
+    await handleUpdateWardrobesFromScript();
   };
 
   // Accept a wardrobe suggestion and add it to the collection
@@ -2221,11 +2479,16 @@ const CharacterCard = ({
       onUpdateWardrobe?.(characterId, {
         wardrobeId: wardrobe.id,
         fullBodyUrl: resolvedUrl,
+        needsImageRegen: false,
         action: "update",
       });
 
       if (expandedWardrobe?.id === wardrobe.id) {
-        setExpandedWardrobe({ ...expandedWardrobe, fullBodyUrl: resolvedUrl });
+        setExpandedWardrobe({
+          ...expandedWardrobe,
+          fullBodyUrl: resolvedUrl,
+          needsImageRegen: false,
+        });
       }
 
       toast.success(
@@ -2278,6 +2541,25 @@ const CharacterCard = ({
       toast.error(message);
     } finally {
       setGeneratingWardrobeImageId(null);
+    }
+  };
+
+  const handleRegenerateStaleWardrobeImages = async () => {
+    const targets = wardrobes.filter((w) => w.needsImageRegen);
+    if (targets.length === 0) {
+      toast.info("No wardrobe images marked for regeneration");
+      return;
+    }
+    setIsRegeneratingStale(true);
+    try {
+      for (const wardrobe of targets) {
+        await handleGenerateWardrobeImage(wardrobe, { allowSoftenRetry: true });
+      }
+      toast.success(`Regenerated ${targets.length} wardrobe image(s)`);
+    } catch (error) {
+      console.error("[Wardrobe Sync] Regen error:", error);
+    } finally {
+      setIsRegeneratingStale(false);
     }
   };
 
@@ -3315,28 +3597,29 @@ const CharacterCard = ({
                   references work best with neutral upright pose, flat even lighting, and a plain
                   gray or white background.
                 </p>
-                {/* Primary CTA: Analyze Script for Outfits (Automate) */}
+                {/* Primary CTA: Update wardrobes from script */}
                 {scenes &&
                   scenes.length > 0 &&
                   wardrobes.length === 0 &&
                   !isAnalyzingScript &&
+                  !wardrobeSyncDiff &&
                   wardrobeSuggestions.length === 0 && (
                     <div className="text-center py-3">
                       <p className="text-xs text-gray-400 mb-2">
-                        Analyze your script to determine which outfits and looks{" "}
-                        {character.name} needs across scenes.
+                        Scan the script to create outfits and looks for{" "}
+                        {character.name} across scenes.
                       </p>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleAnalyzeScriptForWardrobes();
+                          handleUpdateWardrobesFromScript();
                         }}
                         disabled={isAnalyzingScript}
                         className="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-                        title="Analyze script to determine wardrobes needed for each scene range"
+                        title="Update wardrobes from script for each scene"
                       >
                         <FileText className="w-4 h-4" />
-                        <span>Analyze Script for Outfits & Looks</span>
+                        <span>Update Wardrobes from Script</span>
                         <span className="text-[10px] opacity-75">
                           ({scenes.length} scenes)
                         </span>
@@ -3349,9 +3632,99 @@ const CharacterCard = ({
                   <div className="flex items-center justify-center gap-2 py-4 text-amber-400">
                     <Loader className="w-4 h-4 animate-spin" />
                     <span className="text-xs">
-                      Analyzing {scenes?.length || 0} scenes...
+                      Syncing looks from {scenes?.length || 0} scenes...
                     </span>
                   </div>
+                )}
+
+                {/* Sync diff preview */}
+                {wardrobeSyncDiff && (
+                  <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <RefreshCw className="w-4 h-4 text-amber-500" />
+                        <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                          Script sync preview
+                        </span>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setWardrobeSyncDiff(null);
+                        }}
+                        className="text-[10px] text-gray-500 hover:text-gray-700"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                    <div className="text-[11px] text-gray-600 dark:text-gray-400 space-y-1">
+                      <p>
+                        {wardrobeSyncDiff.updates.length} update
+                        {wardrobeSyncDiff.updates.length === 1 ? "" : "s"}
+                        {" · "}
+                        {wardrobeSyncDiff.creates.length} new
+                        {" · "}
+                        {wardrobeSyncDiff.obsolete.length} unassigned
+                      </p>
+                      {wardrobeSyncDiff.updates.slice(0, 4).map((u) => (
+                        <p key={u.wardrobeId} className="truncate">
+                          Update: {(u.patch.name as string) || u.wardrobeId}
+                          {u.imageStale ? " (image stale)" : ""}
+                        </p>
+                      ))}
+                      {wardrobeSyncDiff.creates.slice(0, 4).map((c) => (
+                        <p key={c.name} className="truncate">
+                          New: {c.name}
+                          {c.sceneNumbers?.length
+                            ? ` · scenes ${formatSceneRange(c.sceneNumbers)}`
+                            : ""}
+                        </p>
+                      ))}
+                      {wardrobeSyncDiff.obsolete.slice(0, 3).map((o) => (
+                        <p key={o.wardrobeId} className="truncate text-gray-500">
+                          Unassign: {o.name}
+                        </p>
+                      ))}
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void handleApplyWardrobeSync();
+                      }}
+                      disabled={isApplyingSync}
+                      className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50"
+                    >
+                      {isApplyingSync ? (
+                        <Loader className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Check className="w-3.5 h-3.5" />
+                      )}
+                      Apply sync
+                    </button>
+                  </div>
+                )}
+
+                {wardrobes.some((w) => w.needsImageRegen) && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void handleRegenerateStaleWardrobeImages();
+                    }}
+                    disabled={isRegeneratingStale}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs border border-purple-500/40 text-purple-600 dark:text-purple-300 rounded-lg hover:bg-purple-500/10 disabled:opacity-50"
+                  >
+                    {isRegeneratingStale ? (
+                      <Loader className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-3.5 h-3.5" />
+                    )}
+                    Regenerate{" "}
+                    {wardrobes.filter((w) => w.needsImageRegen).length} changed
+                    wardrobe image
+                    {wardrobes.filter((w) => w.needsImageRegen).length === 1
+                      ? ""
+                      : "s"}
+                  </button>
                 )}
 
                 {/* Wardrobe Suggestions from Script Analysis (Guide) */}
@@ -4009,12 +4382,12 @@ const CharacterCard = ({
                   !showAddWardrobeForm &&
                   !showAiAssist && (
                     <div className="flex gap-2">
-                      {/* Re-analyze button */}
+                      {/* Update from Script */}
                       {scenes && scenes.length > 0 && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleAnalyzeScriptForWardrobes();
+                            handleUpdateWardrobesFromScript();
                           }}
                           disabled={isAnalyzingScript}
                           className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-[11px] text-amber-500 border border-amber-500/30 rounded-lg hover:bg-amber-500/10 disabled:opacity-50"
@@ -4024,7 +4397,7 @@ const CharacterCard = ({
                           ) : (
                             <RefreshCw className="w-3 h-3" />
                           )}
-                          Re-analyze
+                          Update from Script
                         </button>
                       )}
                       {/* Manual add */}

@@ -5970,6 +5970,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     sceneNumbers?: number[];
     appearanceNotes?: string;
     reason?: string;
+    needsImageRegen?: boolean;
     action?: 'add' | 'update' | 'delete' | 'setDefault';
   }) => {
     try {
@@ -6023,10 +6024,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   accessories: wardrobe.wardrobeAccessories || w.accessories,
                   ...(wardrobe.previewImageUrl ? { previewImageUrl: wardrobe.previewImageUrl } : {}),
                   ...(wardrobe.headshotUrl ? { headshotUrl: wardrobe.headshotUrl } : {}),
-                  ...(wardrobe.fullBodyUrl ? { fullBodyUrl: wardrobe.fullBodyUrl } : {}),
+                  ...(wardrobe.fullBodyUrl ? { fullBodyUrl: wardrobe.fullBodyUrl, needsImageRegen: false } : {}),
                   ...(wardrobe.sceneNumbers ? { sceneNumbers: wardrobe.sceneNumbers } : {}),
                   ...(wardrobe.appearanceNotes !== undefined ? { appearanceNotes: wardrobe.appearanceNotes } : {}),
-                  ...(wardrobe.reason ? { reason: wardrobe.reason } : {})
+                  ...(wardrobe.reason ? { reason: wardrobe.reason } : {}),
+                  ...(wardrobe.needsImageRegen !== undefined
+                    ? { needsImageRegen: wardrobe.needsImageRegen }
+                    : {}),
                 }
               : w
           )
@@ -6199,6 +6203,97 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     } catch (error) {
       console.error('[Batch Update Wardrobes] Error:', error)
       toast.error('Failed to update character wardrobes')
+    }
+  }
+
+  /** Non-destructive apply of script wardrobe sync diffs (preserves unchanged images). */
+  const handleApplyWardrobeSyncDiffs = async (
+    diffs: Array<{
+      characterId: string
+      characterName: string
+      updates: Array<{
+        wardrobeId: string
+        patch: Partial<CharacterWardrobe>
+        imageStale: boolean
+        reason: string
+      }>
+      creates: Array<{
+        name: string
+        description: string
+        accessories?: string
+        appearanceNotes?: string
+        sceneNumbers: number[]
+        reason: string
+      }>
+      obsolete: Array<{ wardrobeId: string; name: string; reason: string }>
+    }>
+  ): Promise<{ staleWardrobeIdsByCharacter: Record<string, string[]> }> => {
+    const { mergeWardrobeSyncDiff } = await import('@/lib/character/wardrobeScriptSync')
+    const staleWardrobeIdsByCharacter: Record<string, string[]> = {}
+
+    try {
+      let updatedCharacters = [...characters]
+      for (const diff of diffs) {
+        updatedCharacters = updatedCharacters.map((char, index) => {
+          const charId = char.id || index.toString()
+          if (charId !== diff.characterId && char.name !== diff.characterName) {
+            return char
+          }
+          const existing = (char.wardrobes || []) as CharacterWardrobe[]
+          const { wardrobes, staleWardrobeIds } = mergeWardrobeSyncDiff(existing, diff)
+          staleWardrobeIdsByCharacter[charId] = [
+            ...staleWardrobeIds,
+            ...diff.creates.map((_, i) => `pending-create-${i}`),
+          ]
+          // Remap create ids from merge result (new looks have needsImageRegen)
+          const staleFromMerge = wardrobes
+            .filter((w) => w.needsImageRegen)
+            .map((w) => w.id)
+          staleWardrobeIdsByCharacter[charId] = staleFromMerge
+
+          const defaultWdrb = wardrobes.find((w) => w.isDefault)
+          return {
+            ...char,
+            wardrobes,
+            defaultWardrobe: defaultWdrb?.description,
+            wardrobeAccessories: defaultWdrb?.accessories,
+          }
+        })
+      }
+
+      setCharacters(updatedCharacters)
+
+      if (project) {
+        const updatedVisionPhase = {
+          ...(projectRef.current || project)?.metadata?.visionPhase,
+          characters: updatedCharacters,
+          script: scriptRef.current || script,
+          scenes: scenes,
+          narrationVoice: narrationVoice,
+          descriptionVoice: descriptionVoice,
+        }
+        const updatedMetadata = {
+          ...(projectRef.current || project).metadata,
+          visionPhase: updatedVisionPhase,
+        }
+        const response = await serializedProjectSave(
+          { metadata: updatedMetadata },
+          'handleApplyWardrobeSyncDiffs'
+        )
+        if (!response.ok) throw new Error('Failed to apply wardrobe sync')
+        setProject({ ...project, metadata: updatedMetadata })
+      }
+
+      const totalUpdates = diffs.reduce((n, d) => n + d.updates.length, 0)
+      const totalCreates = diffs.reduce((n, d) => n + d.creates.length, 0)
+      toast.success('Wardrobes updated from script', {
+        description: `${totalUpdates} updated, ${totalCreates} new look${totalCreates === 1 ? '' : 's'}`,
+      })
+      return { staleWardrobeIdsByCharacter }
+    } catch (error) {
+      console.error('[Apply Wardrobe Sync] Error:', error)
+      toast.error('Failed to apply wardrobe sync')
+      return { staleWardrobeIdsByCharacter: {} }
     }
   }
   
@@ -14635,6 +14730,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         onUpdateCharacterRole={handleUpdateCharacterRole}
         onUpdateCharacterWardrobe={handleUpdateCharacterWardrobe}
         onBatchUpdateWardrobes={handleBatchUpdateWardrobes}
+        onApplyWardrobeSyncDiffs={handleApplyWardrobeSyncDiffs}
         onAddCharacter={handleAddCharacter}
         onRemoveCharacter={handleRemoveCharacter}
         ttsProvider={ttsProvider}

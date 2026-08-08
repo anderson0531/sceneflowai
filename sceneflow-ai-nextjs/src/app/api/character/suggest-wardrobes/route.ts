@@ -4,12 +4,11 @@ import { authOptions } from '@/lib/auth'
 import { generateText } from '@/lib/vertexai/gemini'
 import { safeParseJsonFromText } from '@/lib/safeJson'
 import {
-  distillAppearanceNotesFromText,
-  extractAppearanceNotesFromSceneText,
   formatSceneForWardrobeAnalysis,
   sceneIncludesCharacter,
   type WardrobeAnalysisSceneInput,
 } from '@/lib/character/wardrobeAnalysis'
+import { enrichSuggestionsWithBeatAppearanceNotes } from '@/lib/character/wardrobeScriptSync'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -42,59 +41,6 @@ interface WardrobeSuggestion {
   sceneNumbers: number[]
   reason: string
   confidence: number
-}
-
-/** Merge beat-derived appearance notes into suggestions when AI omitted them. */
-function enrichSuggestionsWithBeatAppearanceNotes(
-  suggestions: WardrobeSuggestion[],
-  characterScenes: WardrobeAnalysisSceneInput[],
-  characterName: string
-): WardrobeSuggestion[] {
-  if (characterScenes.length === 0) return suggestions
-
-  const sceneAppearanceMap = new Map<number, string>()
-  for (const scene of characterScenes) {
-    const rawNotes = extractAppearanceNotesFromSceneText(scene, characterName)
-    const distilled = rawNotes
-      .map((n) => distillAppearanceNotesFromText(n))
-      .filter(Boolean) as string[]
-    if (distilled.length > 0) {
-      sceneAppearanceMap.set(scene.sceneNumber, distilled.join('; '))
-    }
-  }
-
-  if (sceneAppearanceMap.size === 0) return suggestions
-
-  const enriched = suggestions.map((s) => ({ ...s }))
-
-  for (const [sceneNum, notes] of sceneAppearanceMap) {
-    const matching = enriched.filter((s) => s.sceneNumbers?.includes(sceneNum))
-    const withNotes = matching.find((s) => s.appearanceNotes?.trim())
-
-    if (withNotes) continue
-
-    if (matching.length > 0) {
-      const target = matching[0]
-      target.appearanceNotes = notes
-      if (!target.reason.toLowerCase().includes('bruise') && !target.reason.toLowerCase().includes('bloodshot')) {
-        target.reason = `${target.reason} Beat-level appearance: ${notes}.`.trim()
-      }
-    } else if (enriched.length > 0) {
-      const nearest = enriched.find((s) => s.sceneNumbers?.includes(sceneNum)) ?? enriched[0]
-      nearest.appearanceNotes = notes
-    } else {
-      enriched.push({
-        name: `Scene ${sceneNum} — Distressed Look`,
-        description: 'Same outfit as baseline — appearance change only',
-        appearanceNotes: notes,
-        sceneNumbers: [sceneNum],
-        reason: `Beat-level appearance details detected: ${notes}`,
-        confidence: 0.75,
-      })
-    }
-  }
-
-  return enriched
 }
 
 /**

@@ -30,6 +30,9 @@ export interface CharacterWardrobe {
   klingElementId?: string
   isDefault: boolean
   createdAt: string
+  /** Script sync marked clothing/notes changed — regenerate wardrobe image */
+  needsImageRegen?: boolean
+  reason?: string
 }
 
 export interface SceneCharacterWardrobe {
