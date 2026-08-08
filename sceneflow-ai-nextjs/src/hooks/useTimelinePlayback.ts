@@ -196,6 +196,8 @@ export function useTimelinePlayback({
   const animationRef = useRef<number | null>(null)
   const startTimeRef = useRef<number>(0)
   const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map())
+  /** Bumps when a clip is stopped so a stale audio.play() promise cannot restart it. */
+  const playGenerationRef = useRef<Map<string, number>>(new Map())
   
   // Refs to avoid recreating animate callback (prevents infinite loops)
   const trackVolumesRef = useRef(trackVolumes)
@@ -373,6 +375,9 @@ export function useTimelinePlayback({
         : 0
       
       if (!isEnabled) {
+        const nextGen = (playGenerationRef.current.get(key) ?? 0) + 1
+        playGenerationRef.current.set(key, nextGen)
+        audio.volume = 0
         if (!audio.paused) audio.pause()
         return
       }
@@ -385,11 +390,21 @@ export function useTimelinePlayback({
         const audioTime = computeClipAudioTime(clip, elapsed, audioDuration)
         
         if (audio.paused) {
-          // Start playing from correct position
+          // Start playing from correct position; token guards against stale play().
+          const nextGen = (playGenerationRef.current.get(key) ?? 0) + 1
+          playGenerationRef.current.set(key, nextGen)
+          const thisGen = nextGen
           audio.currentTime = audioTime
-          audio.play().catch(() => {
-            // Ignore autoplay errors - user hasn't interacted yet
-          })
+          audio.play()
+            .then(() => {
+              if (playGenerationRef.current.get(key) !== thisGen) {
+                audio.volume = 0
+                audio.pause()
+              }
+            })
+            .catch(() => {
+              // Ignore autoplay errors - user hasn't interacted yet
+            })
         } else {
           // Check for drift and correct if needed
           const drift = clip.loop
@@ -399,9 +414,12 @@ export function useTimelinePlayback({
             audio.currentTime = audioTime
           }
         }
-      } else if (!audio.paused) {
-        // Clip not in range, pause it
-        audio.pause()
+      } else {
+        // Clip not in range — silence then pause; invalidate in-flight play().
+        const nextGen = (playGenerationRef.current.get(key) ?? 0) + 1
+        playGenerationRef.current.set(key, nextGen)
+        audio.volume = 0
+        if (!audio.paused) audio.pause()
       }
     })
     

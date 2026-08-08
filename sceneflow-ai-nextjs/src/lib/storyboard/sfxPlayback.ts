@@ -57,6 +57,14 @@ function resolveSfxUrl(entry: unknown): string | undefined {
   return undefined
 }
 
+function resolveEntrySourceBeatId(entry: unknown): string | undefined {
+  if (entry && typeof entry === 'object') {
+    const beatId = (entry as { sourceBeatId?: unknown }).sourceBeatId
+    if (typeof beatId === 'string' && beatId.trim()) return beatId.trim()
+  }
+  return undefined
+}
+
 function resolveLegacySpreadStartTime(
   idx: number,
   slotCount: number,
@@ -91,7 +99,8 @@ function resolveClipDuration(
   return DEFAULT_SFX_DURATION_SEC
 }
 
-function capDurationToFrameWindow(
+/** Cap clip so it cannot ring into the next visual frame. */
+export function capDurationToFrameWindow(
   startTime: number,
   duration: number,
   frame: StoryboardVisualFrame | undefined
@@ -103,9 +112,62 @@ function capDurationToFrameWindow(
   return Math.max(0.1, frameEnd - startTime)
 }
 
+/** Visual frame whose window contains timeline time `t`. */
+export function findFrameContainingTime(
+  frames: StoryboardVisualFrame[],
+  t: number
+): StoryboardVisualFrame | undefined {
+  for (const frame of frames) {
+    if (frame.duration <= 0) continue
+    if (t >= frame.startTime && t < frame.startTime + frame.duration) {
+      return frame
+    }
+  }
+  return undefined
+}
+
+/**
+ * Resolve which beat owns an SFX slot.
+ * Order: cue.sourceBeatId → sfxAudio.sourceBeatId → reverse index map from linked cues.
+ */
+export function resolveSfxSlotBeatId(
+  scene: Record<string, unknown>,
+  idx: number,
+  cue: Partial<Pick<SceneSfxCue, 'sourceBeatId'>> | null,
+  entry: unknown,
+  beatIdBySfxIndex: Map<number, string>
+): string | undefined {
+  if (cue?.sourceBeatId?.trim()) return cue.sourceBeatId.trim()
+  const fromEntry = resolveEntrySourceBeatId(entry)
+  if (fromEntry) return fromEntry
+  return beatIdBySfxIndex.get(idx)
+}
+
+function buildBeatIdBySfxIndex(scene: Record<string, unknown>): Map<number, string> {
+  const map = new Map<number, string>()
+  const sfxArray = Array.isArray(scene.sfxAudio) ? scene.sfxAudio : []
+  const slotCount = Math.max(
+    sfxArray.length,
+    Array.isArray(scene.sfx) ? scene.sfx.length : 0
+  )
+
+  for (let idx = 0; idx < slotCount; idx++) {
+    const cue = parseCueAtIndex(scene, idx)
+    if (cue?.sourceBeatId?.trim()) {
+      map.set(idx, cue.sourceBeatId.trim())
+      continue
+    }
+    const fromEntry = resolveEntrySourceBeatId(sfxArray[idx])
+    if (fromEntry) map.set(idx, fromEntry)
+  }
+
+  return map
+}
+
 /**
  * Schedule SFX clips aligned to beat visual frames when cues carry sourceBeatId.
- * Legacy cues without beat linkage keep positional even-spread fallback.
+ * Legacy cues without beat linkage keep positional even-spread fallback, but still
+ * respect sfxMuted (via resolved beat or containing frame) and duration caps.
  */
 export function buildBeatAlignedStoryboardSfxClips(
   scene: Record<string, unknown>,
@@ -143,6 +205,7 @@ export function buildBeatAlignedStoryboardSfxClips(
   )
 
   const beatById = new Map(getSceneBeats(scene).map((beat) => [beat.beatId, beat]))
+  const beatIdBySfxIndex = buildBeatIdBySfxIndex(scene)
 
   const clips: BeatAlignedSfxClip[] = []
 
@@ -156,11 +219,12 @@ export function buildBeatAlignedStoryboardSfxClips(
         sourceBeatId: cue?.sourceBeatId ?? '',
       })
     if (!url) continue
-    const beatId = cue?.sourceBeatId
+
+    const beatId = resolveSfxSlotBeatId(scene, idx, cue, entry, beatIdBySfxIndex)
     if (beatId && excludedBeatIds.has(beatId)) continue
     if (beatId && isBeatSfxMuted(beatById.get(beatId))) continue
 
-    const frame = beatId ? frameByBeatId.get(beatId) : undefined
+    let frame = beatId ? frameByBeatId.get(beatId) : undefined
 
     let startTime: number
     if (
@@ -174,7 +238,16 @@ export function buildBeatAlignedStoryboardSfxClips(
     } else if (typeof cue?.time === 'number') {
       startTime = cue.time
     } else {
-      startTime = resolveLegacySpreadStartTime(idx, sfxArray.length, baseDuration)
+      startTime = resolveLegacySpreadStartTime(idx, Math.max(sfxArray.length, 1), baseDuration)
+    }
+
+    // Unlinked cues that still land inside a muted beat's visual window.
+    const containing = findFrameContainingTime(visualFrames, startTime)
+    if (containing?.beatId && isBeatSfxMuted(beatById.get(containing.beatId))) {
+      continue
+    }
+    if (!frame && containing) {
+      frame = containing
     }
 
     let duration = resolveClipDuration(idx, scene, frame, dynamicDurations, url)

@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'fs'
+import path from 'path'
 import { buildBeatFirstPlaybackTimeline } from '@/lib/storyboard/types'
-import { buildBeatAlignedStoryboardSfxClips, isBeatSfxMuted } from '@/lib/storyboard/sfxPlayback'
+import {
+  buildBeatAlignedStoryboardSfxClips,
+  capDurationToFrameWindow,
+  findFrameContainingTime,
+  isBeatSfxMuted,
+} from '@/lib/storyboard/sfxPlayback'
 
 const SARAH_URL = 'https://example.com/sarah.mp3'
 const SFX_A1 = 'https://example.com/sfx-a1.mp3'
@@ -334,6 +341,127 @@ describe('buildBeatAlignedStoryboardSfxClips', () => {
     expect(clips[0].id).toBe('sfx-beat-bt_a2')
     expect(clips.find((c) => c.id === 'sfx-beat-bt_a1')).toBeUndefined()
   })
+
+  it('omits SFX when first beat is muted even without cue sourceBeatId', () => {
+    const scene = {
+      imageUrl: 'https://example.com/est.jpg',
+      dialogue: [{ character: 'Sarah', line: 'Hello.' }],
+      beats: [
+        {
+          beatId: 'bt_a1',
+          kind: 'action',
+          actionDescription: 'Sarah enters the room',
+          storyboardImageUrl: 'https://example.com/a1.jpg',
+          sfxMuted: true,
+        },
+        {
+          beatId: 'bt_a2',
+          kind: 'action',
+          actionDescription: 'Sarah looks around',
+          storyboardImageUrl: 'https://example.com/a2.jpg',
+        },
+        {
+          beatId: 'bt_d1',
+          kind: 'dialogue',
+          character: 'Sarah',
+          line: 'Hello.',
+          audioUrl: SARAH_URL,
+          durationSeconds: 3,
+        },
+      ],
+      // Legacy string cue — no sourceBeatId (would previously ignore mute).
+      sfx: ['Footsteps', { description: 'Room tone', sourceBeatId: 'bt_a2' }],
+      sfxAudio: [SFX_A1, SFX_A2],
+      sfxSourceMeta: [
+        { source: 'veo', clipDurationSeconds: 8, promptMode: 'actionBeat' },
+        { source: 'veo', clipDurationSeconds: 4, promptMode: 'actionBeat' },
+      ],
+    }
+
+    const { visualFrames, voiceClips } = buildBeatFirstPlaybackTimeline(scene, 'en', {
+      [SARAH_URL]: 3,
+    })
+
+    const clips = buildBeatAlignedStoryboardSfxClips(scene, visualFrames, {
+      voiceEndTime: voiceClips[0].startTime + voiceClips[0].duration,
+    })
+
+    expect(clips.find((c) => c.url === SFX_A1)).toBeUndefined()
+    expect(clips.some((c) => c.url === SFX_A2)).toBe(true)
+  })
+
+  it('caps long SFX duration to the containing visual frame window', () => {
+    const scene = {
+      imageUrl: 'https://example.com/est.jpg',
+      dialogue: [{ character: 'Sarah', line: 'Hello.' }],
+      beats: [
+        {
+          beatId: 'bt_a1',
+          kind: 'action',
+          actionDescription: 'Sarah enters',
+          storyboardImageUrl: 'https://example.com/a1.jpg',
+        },
+        {
+          beatId: 'bt_a2',
+          kind: 'action',
+          actionDescription: 'Sarah looks',
+          storyboardImageUrl: 'https://example.com/a2.jpg',
+        },
+        {
+          beatId: 'bt_d1',
+          kind: 'dialogue',
+          character: 'Sarah',
+          line: 'Hello.',
+          audioUrl: SARAH_URL,
+          durationSeconds: 3,
+        },
+      ],
+      sfx: [{ description: 'Footsteps', sourceBeatId: 'bt_a1' }],
+      sfxAudio: [SFX_A1],
+      sfxSourceMeta: [{ source: 'veo', clipDurationSeconds: 12, promptMode: 'actionBeat' }],
+    }
+
+    const { visualFrames, voiceClips } = buildBeatFirstPlaybackTimeline(scene, 'en', {
+      [SARAH_URL]: 3,
+    })
+    const a1 = visualFrames.find((f) => f.beatId === 'bt_a1')!
+    const a2 = visualFrames.find((f) => f.beatId === 'bt_a2')!
+
+    const clips = buildBeatAlignedStoryboardSfxClips(scene, visualFrames, {
+      voiceEndTime: voiceClips[0].startTime + voiceClips[0].duration,
+    })
+
+    expect(clips).toHaveLength(1)
+    expect(clips[0].startTime).toBe(a1.startTime)
+    expect(clips[0].startTime + clips[0].duration).toBeLessThanOrEqual(a2.startTime + 0.001)
+    expect(clips[0].duration).toBeLessThan(12)
+  })
+
+  it('caps duration via containing frame when cue lacks sourceBeatId', () => {
+    const frames = [
+      {
+        clipId: 'f1',
+        frameType: 'establishing' as const,
+        startTime: 0,
+        duration: 4,
+        beatId: 'bt_a1',
+        imageUrl: 'https://example.com/a1.jpg',
+        label: 'A1',
+      },
+      {
+        clipId: 'f2',
+        frameType: 'establishing' as const,
+        startTime: 4,
+        duration: 4,
+        beatId: 'bt_a2',
+        imageUrl: 'https://example.com/a2.jpg',
+        label: 'A2',
+      },
+    ]
+    const containing = findFrameContainingTime(frames, 0)
+    expect(containing?.beatId).toBe('bt_a1')
+    expect(capDurationToFrameWindow(0, 10, containing)).toBe(4)
+  })
 })
 
 describe('isBeatSfxMuted', () => {
@@ -358,5 +486,27 @@ describe('isBeatSfxMuted', () => {
         sfxMuted: false,
       })
     ).toBe(false)
+  })
+})
+
+describe('timeline + flash source guards', () => {
+  it('hardens inactive clip stop with volume 0 and play generation tokens', () => {
+    const src = readFileSync(
+      path.join(process.cwd(), 'src/hooks/useTimelinePlayback.ts'),
+      'utf8'
+    )
+    expect(src).toContain('playGenerationRef')
+    expect(src).toMatch(/audio\.volume\s*=\s*0/)
+    expect(src).toContain('playGenerationRef.current.get(key) !== thisGen')
+  })
+
+  it('skips scene-start fade when poster matches beat-1 start', () => {
+    const player = readFileSync(
+      path.join(process.cwd(), 'src/components/vision/AudioGalleryPlayer.tsx'),
+      'utf8'
+    )
+    expect(player).toContain('computeSceneStartFadeBlack')
+    expect(player).toContain('shouldSkipPosterToPrimaryCrossfade')
+    expect(player).toContain('skipFadeFromBlack')
   })
 })
