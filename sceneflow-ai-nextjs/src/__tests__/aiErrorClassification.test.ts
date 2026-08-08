@@ -45,6 +45,18 @@ describe('classifyAiError', () => {
     expect(result.code).toBe('auth_failed')
   })
 
+  it('maps Lightning dunning / billing deny to 503 billing_denied (not auth_failed)', () => {
+    const result = classifyAiError(
+      new Error(
+        'Vertex AI error 403: {\n  "error": {\n    "code": 403,\n    "message": "Lightning dunning decision is deny for project: projects/809352734041",\n    "status": "PERMISSION_DENIED"\n  }\n}'
+      )
+    )
+    expect(result.status).toBe(503)
+    expect(result.code).toBe('billing_denied')
+    expect(result.message).toMatch(/billing/i)
+    expect(result.details).toContain('Lightning dunning')
+  })
+
   it('maps missing configuration to 503', () => {
     const result = classifyAiError(
       new Error('VERTEX_PROJECT_ID or GCP_PROJECT_ID must be configured for image generation')

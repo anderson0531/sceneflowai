@@ -8,6 +8,7 @@ export type AiErrorCode =
   | 'content_policy'
   | 'quota_exceeded'
   | 'auth_failed'
+  | 'billing_denied'
   | 'not_configured'
   | 'upstream_timeout'
   | 'storage_failed'
@@ -82,6 +83,23 @@ export function classifyAiError(error: unknown): ClassifiedAiError {
       status: 429,
       code: 'quota_exceeded',
       message: 'The AI provider is rate limiting requests. Please retry in a moment.',
+      details,
+    }
+  }
+
+  // Google Cloud billing dunning / locked account — not a bad service-account key.
+  if (
+    low.includes('lightning dunning') ||
+    low.includes('dunning decision is deny') ||
+    low.includes('account is locked due to a billing') ||
+    (low.includes('billing') &&
+      (low.includes('denied access') || low.includes('permission_denied') || upstreamStatus === 403))
+  ) {
+    return {
+      status: 503,
+      code: 'billing_denied',
+      message:
+        'Google Cloud billing is blocking Vertex AI for this project. Verify the billing account for VERTEX_PROJECT_ID (payment method / past-due invoice) in Google Cloud Console or AI Studio, then retry.',
       details,
     }
   }

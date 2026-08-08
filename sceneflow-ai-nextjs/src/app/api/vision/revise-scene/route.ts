@@ -19,6 +19,7 @@ import {
 import { attachCoGeneratedSceneDirection } from '@/lib/sceneGeneration/attachRevisedSceneDirection'
 import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { localeDirective } from '@/lib/prompts/localeDirective'
+import { classifyAiError } from '@/lib/errors/aiErrorClassification'
 
 // Pro-tier revision with medium thinking can exceed the previous 120s ceiling.
 export const maxDuration = 300
@@ -128,9 +129,14 @@ export async function POST(req: NextRequest) {
     })
   } catch (error: any) {
     console.error('[Scene Revision] Error:', error)
+    const classified = classifyAiError(error)
     return NextResponse.json(
-      { error: error.message || 'Failed to revise scene' },
-      { status: 500 }
+      {
+        error: classified.message,
+        code: classified.code,
+        details: classified.details,
+      },
+      { status: classified.status }
     )
   }
 }
