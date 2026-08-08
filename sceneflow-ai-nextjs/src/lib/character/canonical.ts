@@ -212,6 +212,27 @@ export function matchCharacter(
   return null
 }
 
+/** True when a character record's name/aliases match a dialogue speaker label. */
+export function characterRecordMatchesSpeakerName(
+  character: { name?: string; aliases?: string[] } | null | undefined,
+  speakerName?: string
+): boolean {
+  if (!character?.name || !speakerName?.trim()) return false
+  const search = toCanonicalName(speakerName)
+  if (toCanonicalName(character.name) === search) return true
+  if (
+    Array.isArray(character.aliases) &&
+    character.aliases.some(
+      (alias) => typeof alias === 'string' && toCanonicalName(alias) === search
+    )
+  ) {
+    return true
+  }
+  return generateAliases(toCanonicalName(character.name)).some(
+    (alias) => toCanonicalName(alias) === search
+  )
+}
+
 /** Match a vision-phase character record by id, canonical name, or aliases. */
 export function matchCharacterRecord<
   T extends { id?: string; name?: string; aliases?: string[] },
@@ -251,5 +272,39 @@ export function matchCharacterRecord<
       (alias) => toCanonicalName(alias) === canonicalSearch
     )
   })
+}
+
+/**
+ * Resolve a dialogue character for TTS.
+ * Trusts characterId only when it matches the line/request speaker name;
+ * otherwise falls back to name/alias match (heals stale ids after Restructure).
+ */
+export function resolveCharacterForDialogueTts<
+  T extends { id?: string; name?: string; aliases?: string[] },
+>(
+  characters: T[],
+  options: {
+    characterId?: string
+    characterName?: string
+    logContext?: string
+  }
+): T | undefined {
+  const { characterId, characterName, logContext } = options
+  if (!Array.isArray(characters) || characters.length === 0) return undefined
+
+  if (characterId) {
+    const byId = characters.find((c) => c?.id === characterId)
+    if (byId) {
+      if (!characterName?.trim() || characterRecordMatchesSpeakerName(byId, characterName)) {
+        return byId
+      }
+      console.warn(
+        `[TTS] characterId/name mismatch${logContext ? ` (${logContext})` : ''}: ` +
+          `id=${characterId} resolved="${byId.name}" but line/request name="${characterName}" — falling back to name match`
+      )
+    }
+  }
+
+  return matchCharacterRecord(characters, { characterName })
 }
 

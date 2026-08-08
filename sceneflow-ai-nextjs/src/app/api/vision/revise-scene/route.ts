@@ -451,7 +451,13 @@ Now rewrite the scene following all the rules, constraints, and formatting requi
 
   if (isStructuredRevisionResponse(parsed)) {
     console.log('[Scene Revision] Using structured beats response:', parsed.beats.length, 'beats')
-    const finalized = finalizeStructuredRevisedScene(parsed, currentScene, preserveElements, context)
+    const finalized = finalizeStructuredRevisedScene(
+      parsed,
+      currentScene,
+      preserveElements,
+      context,
+      { revisionDepth }
+    )
     return attachCoGeneratedSceneDirection({
       finalizedScene: finalized,
       currentScene,
@@ -463,7 +469,13 @@ Now rewrite the scene following all the rules, constraints, and formatting requi
   }
 
   console.warn('[Scene Revision] Structured beats missing — falling back to flat-field merge')
-  const finalized = finalizeFlatRevisedScene(parsed, currentScene, preserveElements, context)
+  const finalized = finalizeFlatRevisedScene(
+    parsed,
+    currentScene,
+    preserveElements,
+    context,
+    { revisionDepth }
+  )
   return attachCoGeneratedSceneDirection({
     finalizedScene: finalized,
     currentScene,

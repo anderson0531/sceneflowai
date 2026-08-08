@@ -51,7 +51,7 @@ import {
   resolveRawBeatIndex,
 } from '@/lib/script/beatMigration'
 import { needsProductionDerive } from '@/lib/scene/deriveSegmentsFromBeats'
-import { invalidateChangedBeatFramesOnScene } from '@/lib/script/structuredSceneRevision'
+import { invalidateChangedBeatFramesOnScene, applyDeepRestructureAssetClear, REVISION_DEPTH_SCENE_KEY, type RevisionDepth } from '@/lib/script/structuredSceneRevision'
 import type { BeatReferenceSelection } from '@/lib/script/segmentTypes'
 import type { StoryboardFrameSlot } from '@/lib/storyboard/types'
 import {
@@ -239,7 +239,7 @@ import { ScriptImportOnboardingBanner } from '@/components/vision/ScriptImportOn
 import { findSceneCharacters } from '../../../../../lib/character/matching'
 import { isStoryboardNoCharacterScene } from '../../../../../lib/script/sceneClassification'
 import { resolveQuickFrameActionPrompt } from '@/lib/vision/framePromptBaseline'
-import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
+import { toCanonicalName, generateAliases, resolveCharacterForDialogueTts } from '@/lib/character/canonical'
 import { getEdgeVoiceConfigForResolution } from '@/lib/tts/edgeTtsVoices'
 import { backoffMsFor429Attempt, sleep } from '@/lib/tts/googleTtsRetry'
 import { v4 as uuidv4 } from 'uuid'
@@ -11354,14 +11354,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         return
       }
 
-            // Primary: Match by ID (most reliable)
+            // Primary: ID when it matches the line/request speaker; else name match
+      // (mistrusts stale characterId left by Restructure remapping).
       let character = audioType === 'dialogue'
-        ? (dialogueLine?.characterId
-            ? characters.find(c => c.id === dialogueLine.characterId)
-            : null)
+        ? resolveCharacterForDialogueTts(characters, {
+            characterId: dialogueLine?.characterId,
+            characterName: characterName || dialogueLine?.character,
+            logContext: `scene ${sceneIndex + 1} dialogue`,
+          }) ?? null
         : null
       
-      // Enhanced fallback matching if ID lookup fails
+      // Enhanced fallback matching if ID/name lookup fails
       if (!character && audioType === 'dialogue' && characterName) {
         const canonicalSearchName = toCanonicalName(characterName)
         
@@ -12185,7 +12188,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const handleApplySceneChanges = async (
     sceneIndex: number,
     revisedScene: any,
-    options?: { preserveElements?: PreserveElement[] }
+    options?: { preserveElements?: PreserveElement[]; revisionDepth?: RevisionDepth }
   ) => {
     if (!script) return
 
@@ -12196,12 +12199,32 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const originalScene = updatedScenes[sceneIndex]
 
     const preserveElements = options?.preserveElements ?? []
+    const revisionDepth: RevisionDepth | undefined =
+      options?.revisionDepth ??
+      (revisedScene?.[REVISION_DEPTH_SCENE_KEY] as RevisionDepth | undefined)
+    const isDeepRestructure = revisionDepth === 'deep'
 
-    const { cleanedScene: audioCleanedScene, deletedUrls: allDeletedUrls } = applySceneEditAudioPolicy(
-      originalScene,
-      revisedScene,
-      preserveElements
-    )
+    let audioCleanedScene: any
+    let allDeletedUrls: string[] = []
+
+    if (isDeepRestructure) {
+      const deepResult = applyDeepRestructureAssetClear(
+        originalScene,
+        revisedScene,
+        preserveElements,
+        characters
+      )
+      audioCleanedScene = deepResult.cleanedScene
+      allDeletedUrls = deepResult.deletedUrls
+    } else {
+      const editResult = applySceneEditAudioPolicy(
+        originalScene,
+        revisedScene,
+        preserveElements
+      )
+      audioCleanedScene = editResult.cleanedScene
+      allDeletedUrls = editResult.deletedUrls
+    }
 
     let cleanedScene = applyScenePreservation(originalScene, audioCleanedScene, preserveElements)
     
@@ -12214,13 +12237,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
     }
     
-    // Force re-segmentation; invalidate storyboard frames only for beats whose content changed.
+    // Force re-segmentation; for deep Restructure frames are already cleared.
+    // For light/moderate, invalidate storyboard frames only for beats whose content changed.
     if (!shouldSkipBeatRederivation(preserveElements)) {
       cleanedScene.segments = undefined
-      if (getSceneBeats(cleanedScene).length > 0) {
+      if (!isDeepRestructure && getSceneBeats(cleanedScene).length > 0) {
         cleanedScene = invalidateChangedBeatFramesOnScene(cleanedScene, originalScene)
       }
     }
+
+    delete cleanedScene[REVISION_DEPTH_SCENE_KEY]
     updatedScenes[sceneIndex] = cleanedScene
 
     // Save to database FIRST
