@@ -7,11 +7,14 @@ import {
 } from '@/lib/script/sceneDiffChanges'
 import { getSceneBeats, migrateProjectToBeats } from '@/lib/script/beatMigration'
 import {
+  applyDeepRestructureAssetClear,
   finalizeFlatRevisedScene,
   finalizeStructuredRevisedScene,
   invalidateChangedBeatFramesOnScene,
   isStructuredRevisionResponse,
   mapStructuredRevisionBeats,
+  mergeBeatIdentityFromOriginal,
+  REVISION_DEPTH_SCENE_KEY,
 } from '@/lib/script/structuredSceneRevision'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
@@ -420,5 +423,206 @@ describe('beat identity re-alignment when AI omits beatIds', () => {
     const scenes = (result.metadata.visionPhase as { script: { script: { scenes: unknown[] } } })
       .script.script.scenes
     expect(getSceneBeats(scenes[0] as Record<string, unknown>)).toHaveLength(6)
+  })
+})
+
+describe('deep Restructure clears assets and relinks speakers', () => {
+  const characters = [
+    { id: 'char-prof', name: 'Professor Gideon Croft' },
+    { id: 'char-piper', name: 'Piper Hayes' },
+  ]
+
+  const originalBeats: SceneBeat[] = [
+    {
+      beatId: 'bt-1',
+      sequenceIndex: 0,
+      kind: 'action',
+      actionDescription: 'Professor paces.',
+      storyboardImageUrl: FRAME_URL,
+    },
+    {
+      beatId: 'bt-2',
+      sequenceIndex: 1,
+      kind: 'dialogue',
+      character: 'PROFESSOR GIDEON CROFT',
+      characterId: 'char-prof',
+      line: '[stern] Listen carefully.',
+      lineId: 'line-prof',
+      storyboardImageUrl: FRAME_URL,
+      audioUrl: 'https://blob.example/prof.mp3',
+    },
+  ]
+
+  const originalScene = structuredScene(originalBeats, {
+    dialogue: [
+      {
+        character: 'PROFESSOR GIDEON CROFT',
+        characterId: 'char-prof',
+        line: '[stern] Listen carefully.',
+        lineId: 'line-prof',
+        audioUrl: 'https://blob.example/prof.mp3',
+      },
+    ],
+    dialogueAudio: {
+      en: [{ audioUrl: 'https://blob.example/prof-en.mp3', duration: 1.2 }],
+    },
+    musicAudio: 'https://blob.example/music.mp3',
+    segments: [{ id: 'seg-1' }],
+  })
+
+  it('mergeBeatIdentityFromOriginal drops characterId when speaker changes (moderate)', () => {
+    const merged = mergeBeatIdentityFromOriginal(
+      {
+        beatId: 'x',
+        sequenceIndex: 1,
+        kind: 'dialogue',
+        character: 'PIPER HAYES',
+        line: '[soft] I am here.',
+      },
+      originalBeats[1],
+      { revisionDepth: 'moderate' }
+    )
+    expect(merged.beatId).toBe('bt-2')
+    expect(merged.characterId).toBeUndefined()
+    expect(merged.lineId).toBe('line-prof')
+  })
+
+  it('mergeBeatIdentityFromOriginal keeps characterId when speaker unchanged (moderate)', () => {
+    const merged = mergeBeatIdentityFromOriginal(
+      {
+        beatId: 'x',
+        sequenceIndex: 1,
+        kind: 'dialogue',
+        character: 'PROFESSOR GIDEON CROFT',
+        line: '[stern] Revised line.',
+      },
+      originalBeats[1],
+      { revisionDepth: 'moderate' }
+    )
+    expect(merged.characterId).toBe('char-prof')
+  })
+
+  it('deep map remaps Professor→Piper without carrying characterId or media', () => {
+    const mapped = mapStructuredRevisionBeats(
+      [
+        { kind: 'action', actionDescription: 'Piper steps forward.' },
+        {
+          kind: 'dialogue',
+          character: 'PIPER HAYES',
+          line: '[soft] I am here now.',
+        },
+      ],
+      originalScene,
+      { revisionDepth: 'deep' }
+    )
+
+    const dialogue = mapped.find((b) => b.kind === 'dialogue')
+    expect(dialogue?.character).toBe('PIPER HAYES')
+    expect(dialogue?.characterId).toBeUndefined()
+    expect(dialogue?.storyboardImageUrl).toBeUndefined()
+    expect(dialogue?.audioUrl).toBeUndefined()
+    expect(dialogue?.beatId).not.toBe('bt-2')
+  })
+
+  it('deep finalize relinks Piper characterId and clears frames/segments', () => {
+    const finalized = finalizeStructuredRevisedScene(
+      {
+        beats: [
+          { kind: 'action', actionDescription: 'Piper steps forward.' },
+          {
+            kind: 'dialogue',
+            character: 'PIPER HAYES',
+            line: '[soft] I am here now.',
+          },
+        ],
+      },
+      originalScene,
+      [],
+      { characters },
+      { revisionDepth: 'deep' }
+    )
+
+    expect(finalized[REVISION_DEPTH_SCENE_KEY]).toBe('deep')
+    expect(finalized.segments).toBeUndefined()
+
+    const beats = getSceneBeats(finalized)
+    const piperBeat = beats.find((b) => b.kind === 'dialogue')
+    expect(piperBeat?.characterId).toBe('char-piper')
+    expect(piperBeat?.character).toBe('PIPER HAYES')
+    expect(piperBeat?.storyboardImageUrl).toBeUndefined()
+
+    const dialogueLine = (finalized.dialogue as any[])?.[0]
+    expect(dialogueLine?.characterId).toBe('char-piper')
+    expect(dialogueLine?.character).toBe('PIPER HAYES')
+  })
+
+  it('applyDeepRestructureAssetClear clears audio and relinks speakers', () => {
+    const revised = finalizeStructuredRevisedScene(
+      {
+        beats: [
+          { kind: 'action', actionDescription: 'Piper steps forward.' },
+          {
+            kind: 'dialogue',
+            character: 'PIPER HAYES',
+            line: '[soft] I am here now.',
+          },
+        ],
+      },
+      originalScene,
+      [],
+      { characters },
+      { revisionDepth: 'deep' }
+    )
+
+    // Simulate stale audio surviving into apply payload
+    const withStaleAudio = {
+      ...revised,
+      dialogueAudio: originalScene.dialogueAudio,
+      musicAudio: originalScene.musicAudio,
+    }
+
+    const { cleanedScene, deletedUrls } = applyDeepRestructureAssetClear(
+      originalScene,
+      withStaleAudio,
+      [],
+      characters
+    )
+
+    expect(cleanedScene.musicAudio).toBeUndefined()
+    expect(cleanedScene.dialogueAudio).toBeUndefined()
+    expect(cleanedScene.segments).toBeUndefined()
+    expect(deletedUrls.length).toBeGreaterThan(0)
+
+    const piperBeat = getSceneBeats(cleanedScene).find((b) => b.kind === 'dialogue')
+    expect(piperBeat?.characterId).toBe('char-piper')
+    expect(piperBeat?.storyboardImageUrl).toBeUndefined()
+  })
+
+  it('moderate finalize keeps same-speaker characterId then relinks name casing', () => {
+    const finalized = finalizeStructuredRevisedScene(
+      {
+        beats: [
+          {
+            beatId: 'bt-1',
+            kind: 'action',
+            actionDescription: 'Professor paces.',
+          },
+          {
+            beatId: 'bt-2',
+            kind: 'dialogue',
+            character: 'PROFESSOR GIDEON CROFT',
+            line: '[stern] Revised carefully.',
+          },
+        ],
+      },
+      originalScene,
+      [],
+      { characters },
+      { revisionDepth: 'moderate' }
+    )
+
+    const dialogue = getSceneBeats(finalized).find((b) => b.beatId === 'bt-2')
+    expect(dialogue?.characterId).toBe('char-prof')
+    expect((finalized.dialogue as any[])[0]?.characterId).toBe('char-prof')
   })
 })

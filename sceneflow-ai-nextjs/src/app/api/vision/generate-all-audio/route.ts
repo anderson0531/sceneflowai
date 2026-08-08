@@ -4,7 +4,7 @@ import { sequelize } from '../../../../config/database'
 import { optimizeTextForTTS } from '../../../../lib/tts/textOptimizer'
 import { getBatchNarrationTtsText, sceneHasNarratorInDialogue } from '../../../../lib/script/narration'
 import { put } from '@vercel/blob'
-import { toCanonicalName, generateAliases } from '../../../../lib/character/canonical'
+import { toCanonicalName, generateAliases, resolveCharacterForDialogueTts } from '../../../../lib/character/canonical'
 import { mergeSceneTrustingIncomingAudio } from '../../../../lib/audio/cleanupAudio'
 
 export const maxDuration = 300 // 5 minutes for batch generation
@@ -530,14 +530,15 @@ export async function POST(req: NextRequest) {
               // Generate dialogue
               if (scene.dialogue && scene.dialogue.length > 0) {
                 const dialogueTasks = scene.dialogue.map(async (dialogueLine: any, dialogueIndex: number) => {
-                  let character = dialogueLine.characterId
-                    ? characters.find((c: any) => c.id === dialogueLine.characterId)
-                    : null;
+                  let character = resolveCharacterForDialogueTts(characters, {
+                    characterId: dialogueLine?.characterId,
+                    characterName: dialogueLine?.character,
+                    logContext: `batch-audio scene ${sceneIndex + 1} line ${dialogueIndex}`,
+                  }) ?? null;
                     
                   if (!character && dialogueLine.character) {
                     const canonicalSearchName = toCanonicalName(dialogueLine.character);
                     character = characters.find((c: any) => 
-                      c.id === dialogueLine.characterId || 
                       toCanonicalName(c.name) === canonicalSearchName ||
                       generateAliases(c.name).includes(canonicalSearchName)
                     );

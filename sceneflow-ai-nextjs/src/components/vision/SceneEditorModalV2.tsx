@@ -18,8 +18,11 @@ import {
   diffSceneChanges,
 } from '@/lib/script/sceneDiffChanges'
 
+type RevisionDepth = 'light' | 'moderate' | 'deep'
+
 interface SceneEditorApplyOptions {
   preserveElements?: PreserveElement[]
+  revisionDepth?: RevisionDepth
 }
 
 interface SceneEditorModalProps {
@@ -44,8 +47,6 @@ interface SceneEditorModalProps {
   logline?: string
   scriptTitle?: string
 }
-
-type RevisionDepth = 'light' | 'moderate' | 'deep'
 
 const REVISION_DEPTHS: Array<{ value: RevisionDepth; label: string; hint: string }> = [
   { value: 'light', label: 'Polish', hint: 'Refine wording, keep structure' },
@@ -256,6 +257,7 @@ export function SceneEditorModal({
     try {
       await onApplyChanges(sceneIndex, revisedSceneWithMetadata, {
         preserveElements: buildPreserveElements(),
+        revisionDepth,
       })
     } finally {
       setIsApplying(false)

@@ -10,7 +10,7 @@
  */
 
 import { optimizeTextForTTS } from '../../lib/tts/textOptimizer'
-import { toCanonicalName, generateAliases } from '../../lib/character/canonical'
+import { toCanonicalName, generateAliases, resolveCharacterForDialogueTts } from '../../lib/character/canonical'
 import { getEdgeVoiceConfigForResolution } from '../../lib/tts/edgeTtsVoices'
 import { resolveSfxDuration } from '../../lib/elevenlabs/sfxDuration'
 import {
@@ -305,15 +305,16 @@ export async function generateSceneAudio(
             toCanonicalName(dialogueLine.character) ===
               toCanonicalName(NARRATOR_CHARACTER))
 
-        let character = dialogueLine.characterId
-          ? characters.find((c: any) => c.id === dialogueLine.characterId)
-          : null
+        let character = resolveCharacterForDialogueTts(characters, {
+          characterId: dialogueLine?.characterId,
+          characterName: dialogueLine?.character,
+          logContext: `generateSceneAudio scene ${sceneIndex + 1} line ${dialogueIndex}`,
+        }) ?? null
 
         if (!character && dialogueLine.character) {
           const canonicalSearchName = toCanonicalName(dialogueLine.character)
           character = characters.find(
             (c: any) =>
-              c.id === dialogueLine.characterId ||
               toCanonicalName(c.name) === canonicalSearchName ||
               generateAliases(c.name).includes(canonicalSearchName)
           )
