@@ -135,10 +135,7 @@ import { SceneDirectionProvider } from '@/contexts/SceneDirectionContext'
 import { GenerateAudioDialog } from './GenerateAudioDialog'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
-import {
-  mergeStreamSelectorLanguages,
-  type ProjectStream,
-} from '@/lib/streams/projectStreams'
+import { type ProjectStream } from '@/lib/streams/projectStreams'
 import { WebAudioMixer, type SceneAudioConfig, type AudioSource } from '@/lib/audio/webAudioMixer'
 import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { getAudioUrl } from '@/lib/audio/languageDetection'
@@ -863,36 +860,6 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
   const [generateAudioDialogOpen, setGenerateAudioDialogOpen] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en')
 
-  const streamLanguages = useMemo(() => {
-    const audioLangs = new Set<string>()
-    const scriptScenes = script?.script?.scenes ?? []
-    for (const scene of scriptScenes) {
-      const s = scene as {
-        narrationAudio?: Record<string, { url?: string }>
-        dialogueAudio?: Record<string, unknown[]>
-      }
-      if (s.narrationAudio) {
-        for (const lang of Object.keys(s.narrationAudio)) {
-          if (s.narrationAudio[lang]?.url) audioLangs.add(lang)
-        }
-      }
-      if (s.dialogueAudio) {
-        for (const lang of Object.keys(s.dialogueAudio)) {
-          if (Array.isArray(s.dialogueAudio[lang]) && s.dialogueAudio[lang].length > 0) {
-            audioLangs.add(lang)
-          }
-        }
-      }
-    }
-    return mergeStreamSelectorLanguages(projectStreams, audioLangs)
-  }, [projectStreams, script?.script?.scenes])
-
-  useEffect(() => {
-    if (!streamLanguages.includes(selectedLanguage)) {
-      setSelectedLanguage(streamLanguages[0] ?? 'en')
-    }
-  }, [streamLanguages, selectedLanguage])
-  
   // Language playback offset per scene (for translated audio alignment)
   // Key: sceneId, Value: { languageCode: offsetSeconds }
   const [playbackOffsets, setPlaybackOffsets] = useState<Record<string, Record<string, number>>>({})
@@ -3303,7 +3270,6 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                   onGenerateSceneAudio={onGenerateSceneAudio}
                   selectedLanguage={selectedLanguage}
                   onLanguageChange={setSelectedLanguage}
-                  streamLanguages={streamLanguages}
                   playingAudio={playingAudio}
                       generatingDialogue={generatingDialogue}
                       setGeneratingDialogue={setGeneratingDialogue}
@@ -3888,7 +3854,6 @@ interface SceneCardProps {
   isGeneratingAudio?: boolean
   selectedLanguage?: string
   onLanguageChange?: (lang: string) => void
-  streamLanguages?: string[]
   playingAudio?: string | null
   generatingDialogue?: {sceneIdx: number, character: string, dialogueIndex?: number} | null
   setGeneratingDialogue?: (state: {sceneIdx: number, character: string, dialogueIndex?: number} | null) => void
@@ -4146,7 +4111,6 @@ function SceneCard({
   isGeneratingAudio,
   selectedLanguage = 'en',
   onLanguageChange,
-  streamLanguages = ['en'],
   playingAudio,
   generatingDialogue,
   setGeneratingDialogue,
@@ -5925,10 +5889,9 @@ function SceneCard({
                         <GroupedLanguageSelector
                           value={selectedLanguage}
                           onValueChange={(code) => onLanguageChange?.(code)}
-                          filterCodes={streamLanguages}
                           size="xs"
-                          intent="navigate"
-                          placeholder="View language..."
+                          intent="generate"
+                          placeholder="Generate language..."
                           className="bg-gray-800 border-blue-500/30 text-gray-200"
                         />
                       </div>

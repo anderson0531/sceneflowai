@@ -644,7 +644,6 @@ export function SceneGallery({
                   <GroupedLanguageSelector
                     value={selectedLanguage}
                     onValueChange={handleLanguageSelect}
-                    filterCodes={availableLanguages}
                     size="xs"
                     intent="generate"
                   />

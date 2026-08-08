@@ -218,7 +218,7 @@ export function AudioGalleryPlayer({
   scenes,
   selectedLanguage,
   onLanguageChange,
-  availableLanguages,
+  availableLanguages: _availableLanguages,
   onClose,
   onShare,
   onSceneChange,
@@ -718,7 +718,7 @@ export function AudioGalleryPlayer({
   const languageFilterCodes =
     playbackMode === 'stream' && streamReadyLanguages.length > 0
       ? streamReadyLanguages
-      : availableLanguages
+      : undefined
 
   // Image motion transform — one Ken Burns cycle per storyboard cut
   const kenBurnsProgress = useMemo(() => {
@@ -807,14 +807,13 @@ export function AudioGalleryPlayer({
   const embedFullscreen = embedMode && isFullscreen
   const showToolbar = (!embedMode || landingEmbedToolbar) && !useScreeningLayout && !embedFullscreen
   /** True when the top toolbar already provides a language selector. */
-  const toolbarHasLanguage = showToolbar && languageFilterCodes.length > 1
+  const toolbarHasLanguage = showToolbar
   /**
    * Show the on-video language pill only when the toolbar selector is not
    * visible (avoids the redundant duplicate on landing embeds, but keeps a
    * language control available in minimal fullscreen and toolbar-less embeds).
    */
-  const showOverlayLanguage =
-    embedMode && availableLanguages.length > 1 && !toolbarHasLanguage
+  const showOverlayLanguage = embedMode && !toolbarHasLanguage
 
   const motionControl = (
     <StoryboardImageEffectControl
@@ -990,17 +989,18 @@ export function AudioGalleryPlayer({
             Share
           </Button>
         )}
-        {languageFilterCodes.length > 1 && (
+        {languageFilterCodes === undefined || languageFilterCodes.length > 0 ? (
           <div className="flex items-center gap-2">
             <GroupedLanguageSelector
               value={selectedLanguage}
               onValueChange={onLanguageChange}
               filterCodes={languageFilterCodes}
               size="sm"
+              intent={languageFilterCodes === undefined ? 'generate' : 'navigate'}
               className="bg-gray-800 border-gray-700"
             />
           </div>
-        )}
+        ) : null}
         {screeningLayout && onBeatCaptionsEnabledChange && (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -1130,8 +1130,8 @@ export function AudioGalleryPlayer({
           <GroupedLanguageSelector
             value={selectedLanguage}
             onValueChange={onLanguageChange}
-            filterCodes={availableLanguages}
             size="sm"
+            intent="generate"
             className="bg-black/70 border-white/20 backdrop-blur-sm"
           />
         </div>
