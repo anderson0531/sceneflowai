@@ -89,6 +89,8 @@ export interface CharacterContext {
   hasCostumeReference?: boolean
   /** Beat-directed facial expression — scene owns mood, not the identity reference */
   directedEmotion?: string
+  /** Wardrobe appearanceNotes scene marks (bruises, makeup) — independent of emotion */
+  sceneAppearanceContinuity?: string
   /** Authoritative gender for prompt text (male, female, non-binary) */
   gender?: string
 }
@@ -386,8 +388,9 @@ CRITICAL RULES:
    - Use the provided Gender for each character as authoritative — never infer gender from the character's name
    - When an identity reference exists (person [N]), NEVER describe face, skin, ethnicity, age, gender, or body type in text — the reference image owns those structural traits
    - FACIAL EXPRESSION / EMOTION is NOT owned by identity or wardrobe references — always render the beat's directed emotional state on the face; describe expression in [SCENE COMPOSITION & BEAT] using directedEmotion from input when provided
+   - When sceneAppearanceContinuity is provided for a character, ALWAYS preserve those visible marks (bruises, wounds, makeup wear) from the wardrobe reference / notes — do not drop them when emotion changes between beats
    - When hairDescription is provided in input for a character with an identity ref, DO include a concise Hair lock in [SCENE COMPOSITION & BEAT] or Subject section — e.g. "person [1], hair: swept-back dark auburn ponytail (match identity reference exactly)"
-   - When a wardrobe reference exists (Ref Image [M]), NEVER describe outfit colors, garments, or accessories in text — the wardrobe reference owns clothing
+   - When a wardrobe reference exists (Ref Image [M]), NEVER describe outfit colors, garments, or accessories in text — the wardrobe reference owns clothing AND any visible scene-state marks present on that image
    - When a location reference exists, NEVER describe architectural layout, furniture placement, or room geometry in text — the location reference owns the set
    - When a prop reference exists, NEVER describe the prop's visual appearance in text — only name it and its narrative role/action
    - ${DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK}
@@ -521,13 +524,16 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
         }
         prompt += '\n'
       } else if (hasWardrobeRef) {
-        prompt += `   Wardrobe: USE WARDROBE REF ONLY — do not describe outfit in prompt text\n`
+        prompt += `   Wardrobe: USE WARDROBE REF ONLY — do not describe outfit in prompt text; preserve any visible scene marks on the wardrobe image\n`
       } else {
         prompt += `   Wardrobe: Not specified (use scene context sparingly)\n`
       }
 
       if (char.directedEmotion?.trim()) {
         prompt += `   Directed emotion (render on face): ${char.directedEmotion.trim()}\n`
+      }
+      if (char.sceneAppearanceContinuity?.trim()) {
+        prompt += `   Scene appearance continuity (preserve): ${char.sceneAppearanceContinuity.trim()}\n`
       }
     })
     prompt += '\n'

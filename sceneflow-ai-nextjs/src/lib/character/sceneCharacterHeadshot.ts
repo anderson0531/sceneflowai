@@ -78,6 +78,8 @@ export interface FullBodyWardrobeInput {
   hairStyle?: string
   hairColor?: string
   appearanceDescription?: string
+  /** Makeup, hair state, visible injuries/marks to bake into the full-body wardrobe image */
+  appearanceNotes?: string
   /** Existing full-body wardrobe URL — reused unless forceRegenerate */
   existingFullBodyUrl?: string
   forceRegenerate?: boolean
@@ -381,6 +383,7 @@ export async function generateFullBodyWardrobeImage(
     wardrobeDescription: input.wardrobeDescription,
     wardrobeAccessories: input.wardrobeAccessories,
     hairAnchor,
+    appearanceNotes: input.appearanceNotes,
   })
 
   const result = await generateImageWithGeminiStudio({

@@ -52,6 +52,18 @@ describe('buildFullBodyWardrobePrompt', () => {
     expect(prompt).toContain('Navy blazer and charcoal trousers')
     expect(prompt).toContain('head to feet')
   })
+
+  it('bakes appearanceNotes bruises into the full-body wardrobe prompt', () => {
+    const prompt = buildFullBodyWardrobePrompt({
+      characterName: 'Piper',
+      wardrobeDescription: 'Torn grey hoodie and jeans',
+      appearanceNotes: 'Bruised hands, contusion on knuckles',
+    })
+
+    expect(prompt).toMatch(/Bruised hands/i)
+    expect(prompt).toMatch(/Scene appearance \/ continuity marks/i)
+    expect(prompt).toMatch(/visible scene marks/i)
+  })
 })
 
 describe('resolveDefaultWardrobeDescription', () => {

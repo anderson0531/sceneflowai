@@ -1300,9 +1300,11 @@ ${beatTimelineNarrationRules}
 • Action beats are MANDATORY for visuals without spoken lines: reactions, inserts, B-roll, camera moves, environment changes, blocking without speech
 • Use action beats to carry story when dialogue would be redundant or expositional
 • NEVER put stage directions in "line" — they belong in actionDescription
-• Rhythm rule: no more than 2 consecutive spoken beats (dialogue or narration) without an intervening action beat
+• Rhythm rule: no more than 2 consecutive spoken beats (dialogue or narration) without an intervening action beat — BUT only when that action adds NEW visual information
+• Intervening action beats MUST be a new shot: insert, cutaway, geography/establishing, camera move, consequence, or a silent reaction on a NON-SPEAKER
+• Do NOT insert an action beat that restates the speaker's blocking, gesture, or posture already implied by an adjacent dialogue beat — merge that physical business into the dialogue beat's staging instead of cloning it as a separate action frame
 • actionDescription format: shot type + subject + motion/mood (e.g., "Close-up: hands trembling on keyboard, shallow DOF, cool blue light")
-• One beat = one storyboard frame = one video segment — each action beat must be visually distinct from adjacent spoken beats
+• One beat = one storyboard frame = one video segment — each action beat must be visually distinct from adjacent spoken beats (different subject, framing, or story information)
 • Target ~8–10 seconds per beat for video clip alignment
 • "action" beats use actionDescription only — NO spoken line, NO character field
 • "dialogue" beats must contain SPOKEN words with [emotion] tags — NO stage directions in line

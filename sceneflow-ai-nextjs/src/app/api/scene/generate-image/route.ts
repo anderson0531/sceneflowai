@@ -69,10 +69,12 @@ import {
 } from '@/lib/character/sceneCharacterHeadshot'
 import {
   buildBeatDirectedEmotionPromptSection,
+  buildSceneAppearanceContinuityPromptSection,
   formatDirectedEmotionLine,
   formatVisualExpressionCue,
   resolveBeatDirectedEmotion,
   resolveDirectedEmotionForCharacter,
+  resolveSceneAppearanceContinuity,
   stripAllCues,
   stripPromptMetaInstructions,
 } from '@/lib/scene/performanceCues'
@@ -176,6 +178,21 @@ function appendSceneImagePromptModifiers(
       !optimizedPrompt.includes('Directed emotion:')
     ) {
       optimizedPrompt = `${optimizedPrompt.trim()} ${formatDirectedEmotionLine(ctx.beatDirectedEmotion)}`
+    }
+
+    const continuitySection = buildSceneAppearanceContinuityPromptSection(
+      ctx.characterReferences.map(
+        (ref: { name: string; sceneAppearanceContinuity?: string }) => ({
+          name: ref.name,
+          continuity: ref.sceneAppearanceContinuity || '',
+        })
+      )
+    )
+    if (
+      continuitySection &&
+      !optimizedPrompt.includes('Scene appearance continuity')
+    ) {
+      optimizedPrompt = `${optimizedPrompt.trim()} ${continuitySection}`
     }
   } else if (ctx.beatForEmotion?.line) {
     const expressionCue = formatVisualExpressionCue(ctx.beatForEmotion.line)
@@ -1430,6 +1447,9 @@ export async function POST(req: NextRequest) {
         subjectTextDescription,
         appearanceDescription: char.appearanceDescription || char.visionDescription,
         appearanceNotes: refPair.resolvedWardrobe?.appearanceNotes,
+        sceneAppearanceContinuity: resolveSceneAppearanceContinuity(
+          refPair.resolvedWardrobe?.appearanceNotes
+        ),
         directedEmotion: resolveDirectedEmotionForCharacter({
           characterName: char.name,
           beatSpeaker: beatSpeakerName,
@@ -1565,6 +1585,7 @@ export async function POST(req: NextRequest) {
         hasDualReferences: !!ref.hasDualReferences,
         hasCostumeReference: !!ref.hasCostumeReference,
         directedEmotion: ref.directedEmotion,
+        sceneAppearanceContinuity: ref.sceneAppearanceContinuity,
       }))
       
       // Build prop contexts
@@ -2274,6 +2295,19 @@ export async function POST(req: NextRequest) {
             geminiPrompt += `- ${beatDirectedEmotionSection}\n`
           } else if (beatDirectedEmotion) {
             geminiPrompt += `- ${formatDirectedEmotionLine(beatDirectedEmotion, 'Directed emotion')}\n`
+          }
+          const appearanceContinuitySection = buildSceneAppearanceContinuityPromptSection(
+            characterReferences.map(
+              (ref: { name: string; sceneAppearanceContinuity?: string }) => ({
+                name: ref.name,
+                continuity: ref.sceneAppearanceContinuity || '',
+              })
+            )
+          )
+          if (appearanceContinuitySection) {
+            geminiPrompt += `- ${appearanceContinuitySection}\n`
+            geminiPrompt +=
+              '- Preserve wardrobe-visible scene marks (bruises, wounds, makeup wear) even when facial emotion changes between beats\n'
           }
           if (hairCompositionLock) {
             geminiPrompt += `- ${hairCompositionLock}\n`

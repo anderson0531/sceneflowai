@@ -305,5 +305,8 @@ describe('characterReferenceAssembly', () => {
   it('identity instruction marks PRIMARY and wardrobe instruction marks SECONDARY', () => {
     expect(CHARACTER_IDENTITY_REFERENCE_INSTRUCTION).toContain('PRIMARY')
     expect(WARDROBE_ONLY_REFERENCE_INSTRUCTION).toContain('SECONDARY')
+    expect(WARDROBE_ONLY_REFERENCE_INSTRUCTION).toMatch(/scene-state marks/i)
+    expect(WARDROBE_ONLY_REFERENCE_INSTRUCTION).toMatch(/bruises/i)
+    expect(DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK).toMatch(/visible scene-state marks/i)
   })
 })

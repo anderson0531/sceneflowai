@@ -206,19 +206,25 @@ export function buildNarrationLegacyFieldHint(policy: NarrationPolicy): string {
 }
 
 export function buildBeatTimelineNarrationRules(policy: NarrationPolicy): string {
+  const antiClone =
+    '• Action beats between spoken lines must add NEW visuals (insert, cutaway, geography, non-speaker reaction) — never clone the speaker\'s blocking already covered by adjacent dialogue'
+
   if (policy.mode === 'narrative-driven') {
     return `• Each scene MUST include an ordered "beats" array mixing kind: "dialogue", "action", "narration"
-• "narration" beats use character "NARRATOR" with spoken line`
+• "narration" beats use character "NARRATOR" with spoken line
+${antiClone}`
   }
 
   if (policy.allowPerSceneNarration) {
     return `• Each scene MUST include an ordered "beats" array mixing kind: "dialogue", "action", and optional "narration"
-• Use "narration" beats sparingly (max one per scene)`
+• Use "narration" beats sparingly (max one per scene)
+${antiClone}`
   }
 
   return `• Each scene MUST include an ordered "beats" array with kind: "dialogue" and "action" ONLY
 • Do NOT include kind: "narration" beats in main content scenes
-• Optional single narration beat in title sequence (cinematicType: "title") only`
+• Optional single narration beat in title sequence (cinematicType: "title") only
+${antiClone}`
 }
 
 /** Count narration words across legacy fields, dialogue, and beats (for Script AR). */

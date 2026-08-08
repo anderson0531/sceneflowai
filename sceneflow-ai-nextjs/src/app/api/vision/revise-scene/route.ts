@@ -354,6 +354,7 @@ STRUCTURED BEATS RULES:
 - Action beats use kind "action" with actionDescription only.
 - Dialogue beats use kind "dialogue" with character + line.
 - Narration beats use kind "narration" with character "NARRATOR" unless narrator is already a dialogue character.
+- Intervening action beats must add NEW visual information (insert, cutaway, geography, non-speaker reaction) — do NOT clone the speaker's blocking from an adjacent dialogue beat into a separate action frame.
 
 REMEMBER: ALL dialogue/narration lines must include [emotional tags] at the beginning.
 

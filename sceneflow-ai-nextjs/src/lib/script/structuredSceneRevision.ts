@@ -18,6 +18,7 @@ import {
   normalizeBeatsForProduction,
   parseLlmBeats,
 } from '@/lib/script/beatMigration'
+import { dedupeRedundantActionBeats } from '@/lib/script/actionBeatDedupe'
 import { mintLineId } from '@/lib/script/segmentScript'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
@@ -217,7 +218,7 @@ export function mapStructuredRevisionBeats(
     aligned.push(isDeep ? stripBeatPlaybackAssets(beat) : beat)
   }
 
-  return normalizeBeatsForProduction(aligned)
+  return normalizeBeatsForProduction(dedupeRedundantActionBeats(aligned))
 }
 
 function enforceRevisionBeatCount(

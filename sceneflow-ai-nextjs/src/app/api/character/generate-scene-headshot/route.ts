@@ -81,6 +81,7 @@ export async function POST(req: NextRequest) {
         hairStyle: headshotFields.hairStyle,
         hairColor: headshotFields.hairColor,
         appearanceDescription: headshotFields.appearanceDescription,
+        appearanceNotes: headshotFields.appearanceNotes,
       }
 
       const cachedFullBody = forceRegenerate ? undefined : pickFullBodyWardrobeUrl(fullBodyInput)
@@ -94,6 +95,7 @@ export async function POST(req: NextRequest) {
             appearanceDescription: fullBodyInput.appearanceDescription,
             wardrobeDescription: fullBodyInput.wardrobeDescription,
             wardrobeAccessories: fullBodyInput.wardrobeAccessories,
+            appearanceNotes: fullBodyInput.appearanceNotes,
           }),
           generated: false,
           reusedExistingHeadshot: true,

@@ -3,11 +3,13 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
   buildBeatDirectedEmotionPromptSection,
+  buildSceneAppearanceContinuityPromptSection,
   extractSceneStateFromAppearanceNotes,
   formatDirectedEmotionLine,
   inferEmotionFromActionProse,
   resolveBeatDirectedEmotion,
   resolveDirectedEmotionForCharacter,
+  resolveSceneAppearanceContinuity,
 } from '@/lib/scene/performanceCues'
 
 describe('resolveDirectedEmotionForCharacter', () => {
@@ -38,13 +40,13 @@ describe('resolveDirectedEmotionForCharacter', () => {
     expect(emotion).toMatch(/crying|tearful/i)
   })
 
-  it('falls back to wardrobe appearanceNotes when beat has no emotion', () => {
+  it('does not use wardrobe appearanceNotes as emotion — continuity is separate', () => {
     const emotion = resolveDirectedEmotionForCharacter({
       characterName: 'Elara',
       beatAction: 'Elara sits at the desk reviewing documents.',
       appearanceNotes: 'Bloodshot eyes, faint bruise forming on left temple, visible distress',
     })
-    expect(emotion).toMatch(/distress|bloodshot/i)
+    expect(emotion).toBe('')
   })
 
   it('does not apply dialogue line emotion to non-speaking characters', () => {
@@ -56,7 +58,23 @@ describe('resolveDirectedEmotionForCharacter', () => {
       appearanceNotes: 'Visible exhaustion and distress',
     })
     expect(emotion).not.toMatch(/angry/i)
-    expect(emotion).toMatch(/distress|exhaustion/i)
+    // Neutral action prose + no speaker cue → no directed emotion
+    expect(emotion).toBe('')
+  })
+
+  it('keeps bruise continuity when beat emotion is scared', () => {
+    const emotion = resolveDirectedEmotionForCharacter({
+      characterName: 'Piper',
+      beatSpeaker: 'Piper',
+      beatLine: '[scared] What did they do to me?',
+      appearanceNotes: 'Bruised hands, faint contusion on knuckles',
+    })
+    const continuity = resolveSceneAppearanceContinuity(
+      'Bruised hands, faint contusion on knuckles'
+    )
+    expect(emotion).toMatch(/scared|fearful/i)
+    expect(continuity).toMatch(/bruise/i)
+    expect(continuity).toMatch(/contusion|knuckles/i)
   })
 
   it('extractSceneStateFromAppearanceNotes drops base identity traits', () => {
@@ -68,6 +86,16 @@ describe('resolveDirectedEmotionForCharacter', () => {
     expect(scoped).toMatch(/distress|exhaustion/i)
     expect(scoped).not.toMatch(/pale skin/i)
     expect(scoped).not.toMatch(/dark brown wavy hair/i)
+  })
+
+  it('buildSceneAppearanceContinuityPromptSection formats continuity lines', () => {
+    const section = buildSceneAppearanceContinuityPromptSection([
+      { name: 'Piper', continuity: 'bruised hands, contusion on knuckles' },
+      { name: 'Marcus', continuity: '' },
+    ])
+    expect(section).toBe(
+      'Scene appearance continuity (preserve from wardrobe): Piper: bruised hands, contusion on knuckles.'
+    )
   })
 })
 
@@ -126,7 +154,9 @@ describe('generate-image beat frame acting and wardrobe regression guard', () =>
       'src/app/api/scene/generate-image/route.ts'
     )
     const source = readFileSync(routePath, 'utf8')
-    expect(source).toMatch(/performing the following moment in-scene \(candid, not posed\)/)
+    expect(source).toMatch(/Storyboard dialogue frame/)
+    expect(source).toMatch(/Storyboard silent action frame/)
+    expect(source).toMatch(/buildSceneAppearanceContinuityPromptSection/)
     expect(source).not.toMatch(
       /Create an image about \$\{subjectIntroductions\} to match the description:/
     )
