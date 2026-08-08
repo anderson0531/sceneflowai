@@ -43,6 +43,8 @@ export interface FullBodyWardrobePromptInput {
   wardrobeDescription?: string
   wardrobeAccessories?: string
   hairAnchor?: string
+  /** Scene-state marks (bruises, makeup wear, exhaustion) to bake into the wardrobe image. */
+  appearanceNotes?: string
 }
 
 function formatWardrobeLine(description: string): string {
@@ -211,9 +213,18 @@ export function buildFullBodyWardrobePrompt(input: FullBodyWardrobePromptInput):
     lines.push('', `Outfit: ${wardrobeParts.join('. ')}.`)
   }
 
+  if (input.appearanceNotes?.trim()) {
+    lines.push(
+      '',
+      `Scene appearance / continuity marks (paint onto body, hands, and face as visible): ${input.appearanceNotes.trim()}.`,
+      'Preserve these visible injuries, makeup wear, and exhaustion marks on the wardrobe reference — they are the source of truth for downstream frames.'
+    )
+  }
+
   lines.push(
     '',
-    'The face must match the attached identity reference exactly. This image is used for wardrobe/outfit fidelity only in downstream frames.'
+    'The face must match the attached identity reference exactly for bone structure and likeness.',
+    'This image is the wardrobe source of truth for outfit AND any visible scene marks (bruises, wounds, makeup wear) in downstream frames.'
   )
 
   return lines.join('\n')

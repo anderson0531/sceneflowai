@@ -14,6 +14,7 @@ import {
 } from '@/lib/script/segmentTypes'
 import { mintLineId } from '@/lib/script/segmentScript'
 import { applyDerivedSfxToScene } from '@/lib/script/deriveSfxFromSceneContent'
+import { dedupeRedundantActionBeats } from '@/lib/script/actionBeatDedupe'
 
 const BEAT_MIGRATION_FLAG = 'beatsMigratedAt'
 const START_FRAME_ONLY_MIGRATION_FLAG = 'startFrameOnlyMigrationAt'
@@ -1478,7 +1479,8 @@ export function parseLlmBeats(raw: unknown[]): SceneBeat[] {
 /** Ensure scene has beats — prefer valid beats[], else derive from scene content. */
 export function ensureSceneBeats(scene: Record<string, unknown>): Record<string, unknown> {
   const parsed = tryParseExistingBeats(scene)
-  const beats = parsed.length > 0 ? parsed : deriveBeatsFromSceneContent(scene)
+  const rawBeats = parsed.length > 0 ? parsed : deriveBeatsFromSceneContent(scene)
+  const beats = dedupeRedundantActionBeats(rawBeats)
   const withBeats = applyBeatsToScene(scene, beats)
   return applyDerivedSfxToScene(withBeats, beats)
 }

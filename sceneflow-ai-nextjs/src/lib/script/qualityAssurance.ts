@@ -8,7 +8,8 @@
 
 import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
 import { isCinematicBookendScene } from '@/lib/script/cinematicBookends'
-import { ensureSceneBeats } from '@/lib/script/beatMigration'
+import { ensureSceneBeats, applyBeatsToScene, getSceneBeats } from '@/lib/script/beatMigration'
+import { dedupeRedundantActionBeats, findRedundantActionBeatIndices } from '@/lib/script/actionBeatDedupe'
 import type { BeatKind, SceneBeat } from '@/lib/script/segmentTypes'
 
 export interface QAIssue {
@@ -174,6 +175,19 @@ export function runScriptQA(
           message: `Scene ${sceneNum} has ${consecutiveSpoken} consecutive spoken beats without an action beat`,
           suggestion: 'Insert action beats between dialogue/narration to drive visual changes',
           autoFixable: false,
+        })
+      }
+
+      const redundantActionIndices = findRedundantActionBeatIndices(beats)
+      if (redundantActionIndices.length > 0) {
+        issues.push({
+          type: 'warning',
+          category: 'formatting',
+          sceneIndex: sceneIdx,
+          message: `Scene ${sceneNum} has ${redundantActionIndices.length} action beat(s) that restate adjacent spoken/action staging`,
+          suggestion:
+            'Replace clone action beats with a distinct insert, cutaway, geography shot, or non-speaker reaction — or merge the physical business into the dialogue beat',
+          autoFixable: true,
         })
       }
 
@@ -448,6 +462,25 @@ export function autoFixScript(
         const hydrated = ensureSceneBeats(scene as Record<string, unknown>)
         fixedScenes[issue.sceneIndex] = hydrated as Scene
         if (Array.isArray((hydrated as Scene).beats) && (hydrated as Scene).beats!.length > 0) {
+          fixedCount++
+        }
+      }
+    }
+
+    if (
+      issue.category === 'formatting' &&
+      issue.message.includes('restate adjacent spoken/action staging') &&
+      issue.sceneIndex !== undefined
+    ) {
+      const scene = fixedScenes[issue.sceneIndex]
+      if (scene) {
+        const before = getSceneBeats(scene as Record<string, unknown>)
+        const after = dedupeRedundantActionBeats(before)
+        if (after.length !== before.length) {
+          fixedScenes[issue.sceneIndex] = applyBeatsToScene(
+            scene as Record<string, unknown>,
+            after
+          ) as Scene
           fixedCount++
         }
       }

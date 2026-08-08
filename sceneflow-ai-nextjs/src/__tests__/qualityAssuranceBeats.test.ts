@@ -63,6 +63,33 @@ describe('qualityAssurance beats', () => {
     expect(consecutiveWarnings.length).toBe(1)
   })
 
+  it('warns on action beats that restate adjacent dialogue staging', () => {
+    const scenes = [
+      {
+        sceneNumber: 1,
+        heading: 'INT. LAB - DAY',
+        duration: 60,
+        beats: [
+          {
+            kind: 'dialogue',
+            character: 'Sarah',
+            line: '[scared] My hands are still bruised and trembling.',
+          },
+          {
+            kind: 'action',
+            actionDescription: 'Sarah shows her bruised trembling hands',
+          },
+        ],
+      },
+    ]
+
+    const result = runScriptQA(scenes as any, characters)
+    const redundant = result.issues.filter((i) =>
+      i.message.includes('restate adjacent spoken/action staging')
+    )
+    expect(redundant.length).toBe(1)
+  })
+
   it('autoFixScript hydrates missing beats from scene content', () => {
     const scenes = [
       {

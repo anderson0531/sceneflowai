@@ -109,35 +109,6 @@ function extractDirectedEmotionFromText(text: string): string {
   return inferEmotionFromActionProse(trimmed)
 }
 
-/**
- * Resolve directed facial expression for a character in a beat frame.
- * Priority: beat line (speaker only) → beat action → wardrobe appearanceNotes.
- */
-export function resolveDirectedEmotionForCharacter(
-  options: ResolveDirectedEmotionOptions
-): string {
-  const speaker = options.beatSpeaker?.trim()
-  const isSpeaker =
-    !speaker ||
-    !options.characterName ||
-    speaker.toLowerCase() === options.characterName.trim().toLowerCase()
-
-  const textsInOrder: string[] = []
-  if (isSpeaker && options.beatLine?.trim()) {
-    textsInOrder.push(options.beatLine.trim())
-  }
-  if (options.beatAction?.trim()) {
-    textsInOrder.push(options.beatAction.trim())
-  }
-
-  for (const text of textsInOrder) {
-    const emotion = extractDirectedEmotionFromText(text)
-    if (emotion) return emotion
-  }
-
-  return extractSceneStateFromAppearanceNotes(options.appearanceNotes || '')
-}
-
 const IDENTITY_OWNED_APPEARANCE_PATTERNS: RegExp[] = [
   /\b(?:pale|fair|warm|medium-tan|olive|light|dark|tan|brown|golden|ivory)\s+skin\b/gi,
   /\bskin\s+tone\b/gi,
@@ -167,13 +138,51 @@ export function extractSceneStateFromAppearanceNotes(notes: string): string {
       return false
     }
     return (
-      /\b(bloodshot|bruise|contusion|cut|scar|injury|wound|distress|exhaustion|exhausted|tearful|crying|makeup|mascara|smudged|messy|disheveled|anguish)\b/i.test(
+      /\b(bloodshot|bruises?|bruised|contusion|cut|scar|injury|wound|distress|exhaustion|exhausted|tearful|crying|makeup|mascara|smudged|messy|disheveled|anguish)\b/i.test(
         lower
       ) || /\b(losing|lost)\s+(?:its\s+)?(?:perfect\s+)?volume\b/i.test(lower)
     )
   })
 
   return kept.join(', ')
+}
+
+/**
+ * Scene-state continuity from wardrobe appearanceNotes (injuries, makeup wear).
+ * Independent of beat emotion — always preserved across frames when present.
+ */
+export function resolveSceneAppearanceContinuity(appearanceNotes?: string | null): string {
+  return extractSceneStateFromAppearanceNotes(appearanceNotes || '')
+}
+
+/**
+ * Resolve directed facial expression for a character in a beat frame.
+ * Priority: beat line (speaker only) → beat action.
+ * AppearanceNotes are NOT used for emotion (they feed sceneAppearanceContinuity instead).
+ */
+export function resolveDirectedEmotionForCharacter(
+  options: ResolveDirectedEmotionOptions
+): string {
+  const speaker = options.beatSpeaker?.trim()
+  const isSpeaker =
+    !speaker ||
+    !options.characterName ||
+    speaker.toLowerCase() === options.characterName.trim().toLowerCase()
+
+  const textsInOrder: string[] = []
+  if (isSpeaker && options.beatLine?.trim()) {
+    textsInOrder.push(options.beatLine.trim())
+  }
+  if (options.beatAction?.trim()) {
+    textsInOrder.push(options.beatAction.trim())
+  }
+
+  for (const text of textsInOrder) {
+    const emotion = extractDirectedEmotionFromText(text)
+    if (emotion) return emotion
+  }
+
+  return ''
 }
 
 /** Beat-level emotion from line + action (for AI intelligence). */
@@ -208,6 +217,17 @@ export function buildBeatDirectedEmotionPromptSection(
     .map((entry) => `${entry.name}: ${entry.emotion.trim()}`)
   if (!parts.length) return ''
   return `Directed emotion: ${parts.join('; ')}.`
+}
+
+/** Per-character scene-state continuity (injuries/makeup) for beat frame prompts. */
+export function buildSceneAppearanceContinuityPromptSection(
+  entries: Array<{ name: string; continuity: string }>
+): string {
+  const parts = entries
+    .filter((entry) => entry.continuity.trim())
+    .map((entry) => `${entry.name}: ${entry.continuity.trim()}`)
+  if (!parts.length) return ''
+  return `Scene appearance continuity (preserve from wardrobe): ${parts.join('; ')}.`
 }
 
 function parseAddressee(tagParts: string[]): { addressee: string | null; delivery: string; visual: string } {
