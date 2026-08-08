@@ -239,7 +239,8 @@ import { ScriptImportOnboardingBanner } from '@/components/vision/ScriptImportOn
 import { findSceneCharacters } from '../../../../../lib/character/matching'
 import { isStoryboardNoCharacterScene } from '../../../../../lib/script/sceneClassification'
 import { resolveQuickFrameActionPrompt } from '@/lib/vision/framePromptBaseline'
-import { toCanonicalName, generateAliases, resolveCharacterForDialogueTts } from '@/lib/character/canonical'
+import { toCanonicalName } from '@/lib/character/canonical'
+import { resolveDialogueTtsVoice } from '@/lib/character/dialogueTtsVoice'
 import { getEdgeVoiceConfigForResolution } from '@/lib/tts/edgeTtsVoices'
 import { backoffMsFor429Attempt, sleep } from '@/lib/tts/googleTtsRetry'
 import { v4 as uuidv4 } from 'uuid'
@@ -5500,6 +5501,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Audio generation state
   const [narrationVoice, setNarrationVoice] = useState<VoiceConfig | null>(null)
   const [descriptionVoice, setDescriptionVoice] = useState<VoiceConfig | null>(null)
+  /** Focus ScriptPanel speaker assign control after a failed TTS toast CTA. */
+  const [pendingSpeakerAssign, setPendingSpeakerAssign] = useState<{
+    sceneIdx: number
+    dialogueIndex: number
+  } | null>(null)
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false)
   const [audioProgress, setAudioProgress] = useState<{
     current: number
@@ -11449,58 +11455,70 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         return
       }
 
-            // Primary: ID when it matches the line/request speaker; else name match
+      // Primary: ID when it matches the line/request speaker; else name match
       // (mistrusts stale characterId left by Restructure remapping).
-      let character = audioType === 'dialogue'
-        ? resolveCharacterForDialogueTts(characters, {
-            characterId: dialogueLine?.characterId,
-            characterName: characterName || dialogueLine?.character,
-            logContext: `scene ${sceneIndex + 1} dialogue`,
-          }) ?? null
-        : null
-      
-      // Enhanced fallback matching if ID/name lookup fails
-      if (!character && audioType === 'dialogue' && characterName) {
-        const canonicalSearchName = toCanonicalName(characterName)
-        
-        // Try exact canonical match first
-        const exactMatch = characters.find(c => 
-          toCanonicalName(c.name) === canonicalSearchName
-        )
-        
-        if (exactMatch) {
-          character = exactMatch
-        } else {
-          // Try alias matching
-          character = characters.find(c => {
-            const aliases = generateAliases(toCanonicalName(c.name))
-            return aliases.some(alias => 
-              toCanonicalName(alias) === canonicalSearchName
-            )
-          })
-        }
+      // Narrator lines fall back to project narrationVoice (parity with generateAudio.ts).
+      let character: Character | null = null
+      let voiceConfig: VoiceConfig | null | undefined =
+        audioType === 'description'
+          ? descriptionVoice
+          : audioType === 'narration'
+            ? narrationVoice
+            : null
+      let usedNarrationVoiceFallback = false
 
-        if (!character) {
-          console.error('[Generate Scene Audio] Character not found after normalization:', {
+      if (audioType === 'dialogue') {
+        const resolved = resolveDialogueTtsVoice({
+          characters,
+          characterId: dialogueLine?.characterId,
+          characterName: characterName || dialogueLine?.character,
+          kind: dialogueLine?.kind,
+          narrationVoice,
+          logContext: `scene ${sceneIdx + 1} dialogue`,
+        })
+        character = (resolved.character as Character | null) ?? null
+        voiceConfig = (resolved.voiceConfig as VoiceConfig | null) ?? null
+        usedNarrationVoiceFallback = resolved.usedNarrationVoiceFallback
+
+        if (!voiceConfig) {
+          const displayName =
+            toCanonicalName(characterName || dialogueLine?.character || '') || 'Unknown'
+          console.error('[Generate Scene Audio] Speaker not linked to a voice:', {
             original: characterName,
-            normalized: canonicalSearchName,
-            availableCharacters: characters.map(c => ({ name: c.name, hasVoice: !!c.voiceConfig }))
+            normalized: displayName,
+            availableCharacters: characters.map((c) => ({
+              name: c.name,
+              hasVoice: !!c.voiceConfig,
+              type: c.type,
+            })),
+            hasNarrationVoice: !!narrationVoice,
           })
-          try { 
+          try {
             const { toast } = require('sonner')
-            toast.error(`Character "${canonicalSearchName}" not found. Please check character names match in Character Library.`, {
-              duration: 8000
-            })
+            const dialogueIndexForAssign =
+              typeof dialogueIndex === 'number' ? dialogueIndex : undefined
+            toast.error(
+              `Speaker "${displayName}" isn’t linked to a cast member with a voice. Assign a speaker on this line, or give that character a voice in Character Library.`,
+              {
+                duration: 10000,
+                action: {
+                  label: dialogueIndexForAssign !== undefined ? 'Assign speaker' : 'Open cast',
+                  onClick: () => {
+                    if (dialogueIndexForAssign !== undefined) {
+                      setPendingSpeakerAssign({
+                        sceneIdx,
+                        dialogueIndex: dialogueIndexForAssign,
+                      })
+                    }
+                    openReferenceLibrary('cast')
+                  },
+                },
+              }
+            )
           } catch {}
           return
         }
       }
-      
-      const voiceConfig = audioType === 'dialogue'
-        ? character?.voiceConfig
-        : audioType === 'description'
-          ? descriptionVoice
-          : narrationVoice
 
       const edgeVoiceConfig =
         audioType === 'dialogue' && character
@@ -11520,6 +11538,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         promptPreview: voiceConfig?.prompt?.slice(0, 80) ?? '(none)',
         characterName: character?.name,
         characterHasVoice: !!character?.voiceConfig,
+        usedNarrationVoiceFallback,
         edgeVoiceId: edgeVoiceConfig?.voiceId,
         edgeVoiceName: edgeVoiceConfig?.voiceName,
         characterGender,
@@ -11534,22 +11553,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           console.error('[Generate Scene Audio] No narration voice configured')
           try { 
             const { toast } = require('sonner')
-            toast.error('Please select a narration voice in the sidebar before generating audio')
+            toast.error('Please select a narration voice in the sidebar before generating audio', {
+              duration: 8000,
+              action: {
+                label: 'Open cast',
+                onClick: () => openReferenceLibrary('cast'),
+              },
+            })
           } catch {}
         } else if (audioType === 'description') {
           console.error('[Generate Scene Audio] No description voice configured')
           try {
             const { toast } = require('sonner')
             toast.error('Please select a scene description voice before generating audio')
-          } catch {}
-        } else {
-          const normalizedName = normalizeCharacterName(characterName || '')
-          console.error('[Generate Scene Audio] No voice configured for character:', normalizedName)
-          try { 
-            const { toast } = require('sonner')
-            toast.error(`No voice assigned to ${normalizedName}. Please assign a voice in the Character Library.`, {
-              duration: 8000
-            })
           } catch {}
         }
         return
@@ -14417,6 +14433,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 validationInfo={validationInfo}
                 onDismissValidationWarning={handleDismissValidationWarning}
                 onGenerateSceneAudio={handleGenerateSceneAudio}
+                pendingSpeakerAssign={pendingSpeakerAssign}
+                onPendingSpeakerAssignHandled={() => setPendingSpeakerAssign(null)}
+                narrationVoice={narrationVoice}
                 onGenerateAllAudio={handleGenerateAllAudio}
                 isGeneratingAudio={isGeneratingAudio}
                 productionReadiness={productionReadiness}
@@ -14467,7 +14486,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 isGeneratingReviews={isGeneratingReviews}
                 onCancelReviews={() => void scriptAnalysisJob.cancel()}
                 onShowReviews={handleAudienceHeaderClick}
-                onOpenReferences={() => openReferenceLibrary()}
+                onOpenReferences={() => openReferenceLibrary('cast')}
                 onOpenPublishing={() => openPublishing()}
                 publishingBlockerCount={publishingReadiness.blockers.length}
                 directionReadiness={directionReadiness}

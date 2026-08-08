@@ -10,13 +10,9 @@
  */
 
 import { optimizeTextForTTS } from '../../lib/tts/textOptimizer'
-import { toCanonicalName, generateAliases, resolveCharacterForDialogueTts } from '../../lib/character/canonical'
+import { resolveDialogueTtsVoice, isNarratorDialogueSpeaker } from '../../lib/character/dialogueTtsVoice'
 import { getEdgeVoiceConfigForResolution } from '../../lib/tts/edgeTtsVoices'
 import { resolveSfxDuration } from '../../lib/elevenlabs/sfxDuration'
-import {
-  NARRATOR_CHARACTER,
-  NARRATOR_CHARACTER_ID,
-} from '../../lib/script/segmentTypes'
 import { getBatchNarrationTtsText, sceneHasNarratorInDialogue } from '../../lib/script/narration'
 import { processWithConcurrency } from '../utils/concurrent-processor'
 import { isRetryableError } from '../utils/retry'
@@ -298,40 +294,28 @@ export async function generateSceneAudio(
       execute: async () => {
         const lineKind: 'narration' | 'dialogue' =
           dialogueLine?.kind === 'narration' ? 'narration' : 'dialogue'
-        const isNarratorLine =
-          lineKind === 'narration' ||
-          dialogueLine?.characterId === NARRATOR_CHARACTER_ID ||
-          (typeof dialogueLine?.character === 'string' &&
-            toCanonicalName(dialogueLine.character) ===
-              toCanonicalName(NARRATOR_CHARACTER))
-
-        let character = resolveCharacterForDialogueTts(characters, {
+        const resolved = resolveDialogueTtsVoice({
+          characters,
           characterId: dialogueLine?.characterId,
           characterName: dialogueLine?.character,
+          kind: lineKind,
+          narrationVoice,
           logContext: `generateSceneAudio scene ${sceneIndex + 1} line ${dialogueIndex}`,
-        }) ?? null
+        })
 
-        if (!character && dialogueLine.character) {
-          const canonicalSearchName = toCanonicalName(dialogueLine.character)
-          character = characters.find(
-            (c: any) =>
-              toCanonicalName(c.name) === canonicalSearchName ||
-              generateAliases(c.name).includes(canonicalSearchName)
-          )
-        }
-
-        let resolvedVoice = character?.voiceConfig
-        let resolvedName = character?.name
-        let resolvedCharacterId = character?.id
-
-        if (!resolvedVoice && isNarratorLine && narrationVoice) {
-          resolvedVoice = narrationVoice
-          resolvedName = NARRATOR_CHARACTER
-          resolvedCharacterId = NARRATOR_CHARACTER_ID
-        }
+        const character = resolved.character
+        const resolvedVoice = resolved.voiceConfig
+        const resolvedName = resolved.resolvedName
+        const resolvedCharacterId = resolved.resolvedCharacterId
 
         if (!resolvedVoice) {
-          if (isNarratorLine) {
+          if (
+            isNarratorDialogueSpeaker({
+              kind: lineKind,
+              characterId: dialogueLine?.characterId,
+              characterName: dialogueLine?.character,
+            })
+          ) {
             console.warn(
               `[generateSceneAudio] Narrator line skipped for scene ${
                 sceneIndex + 1

@@ -4,7 +4,7 @@ import { sequelize } from '../../../../config/database'
 import { optimizeTextForTTS } from '../../../../lib/tts/textOptimizer'
 import { getBatchNarrationTtsText, sceneHasNarratorInDialogue } from '../../../../lib/script/narration'
 import { put } from '@vercel/blob'
-import { toCanonicalName, generateAliases, resolveCharacterForDialogueTts } from '../../../../lib/character/canonical'
+import { resolveDialogueTtsVoice } from '../../../../lib/character/dialogueTtsVoice'
 import { mergeSceneTrustingIncomingAudio } from '../../../../lib/audio/cleanupAudio'
 
 export const maxDuration = 300 // 5 minutes for batch generation
@@ -530,21 +530,18 @@ export async function POST(req: NextRequest) {
               // Generate dialogue
               if (scene.dialogue && scene.dialogue.length > 0) {
                 const dialogueTasks = scene.dialogue.map(async (dialogueLine: any, dialogueIndex: number) => {
-                  let character = resolveCharacterForDialogueTts(characters, {
+                  const resolved = resolveDialogueTtsVoice({
+                    characters,
                     characterId: dialogueLine?.characterId,
                     characterName: dialogueLine?.character,
+                    kind: dialogueLine?.kind,
+                    narrationVoice,
                     logContext: `batch-audio scene ${sceneIndex + 1} line ${dialogueIndex}`,
-                  }) ?? null;
-                    
-                  if (!character && dialogueLine.character) {
-                    const canonicalSearchName = toCanonicalName(dialogueLine.character);
-                    character = characters.find((c: any) => 
-                      toCanonicalName(c.name) === canonicalSearchName ||
-                      generateAliases(c.name).includes(canonicalSearchName)
-                    );
-                  }
+                  })
+                  const character = resolved.character
+                  const voiceConfig = resolved.voiceConfig
                   
-                  if (!character || !character.voiceConfig) {
+                  if (!voiceConfig) {
                     skippedDialogue.push({ scene: sceneIndex + 1, character: dialogueLine.character, reason: character ? 'No voice assigned' : 'Character not found' });
                     return null;
                   }
@@ -561,8 +558,8 @@ export async function POST(req: NextRequest) {
                       sceneIndex: sceneIndex,
                       audioType: 'dialogue',
                       text: dialogueText,
-                      voiceConfig: character.voiceConfig,
-                      characterName: character.name,
+                      voiceConfig,
+                      characterName: resolved.resolvedName || character?.name || dialogueLine.character,
                       dialogueIndex,
                       language,
                       skipTranslation: !!storedDialogueLine,

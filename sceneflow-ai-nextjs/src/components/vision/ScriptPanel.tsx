@@ -107,6 +107,15 @@ import { flattenSceneToStoryboardFrames } from '@/lib/storyboard/types'
 import { StoryboardReviewPanel } from './StoryboardReviewPanel'
 import { getSceneBeats, isBeatFirstPipelineEnabled } from '@/lib/script/beatMigration'
 import {
+  assignDialogueSpeakerToScene,
+  type AssignableSpeaker,
+} from '@/lib/script/assignDialogueSpeaker'
+import {
+  dialogueSpeakerNeedsAssignment,
+  isNarratorDialogueSpeaker,
+} from '@/lib/character/dialogueTtsVoice'
+import { toCanonicalName } from '@/lib/character/canonical'
+import {
   countStoryboardFrameStats,
   enumerateStoryboardFrameSlots,
 } from '@/lib/storyboard/types'
@@ -481,6 +490,9 @@ interface ScriptPanelProps {
   onExpressGateBlocked?: () => void
   isExpressRunning?: boolean
   narrationVoice?: unknown
+  /** Focus a spoken-line speaker control after a failed TTS toast CTA. */
+  pendingSpeakerAssign?: { sceneIdx: number; dialogueIndex: number } | null
+  onPendingSpeakerAssignHandled?: () => void
   /** Language streams configured in Production → Streams. */
   projectStreams?: ProjectStream[]
 }
@@ -748,7 +760,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
-export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, directionReadiness, onUpdateAllDirections, isUpdatingAllDirections = false, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, projectStreams = [] }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, directionReadiness, onUpdateAllDirections, isUpdatingAllDirections = false, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled, projectStreams = [] }: ScriptPanelProps) {
 
 
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
@@ -3437,6 +3449,8 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       onExpressGateBlocked={onExpressGateBlocked}
                       isExpressRunning={isExpressRunning}
                       narrationVoice={narrationVoice}
+                      pendingSpeakerAssign={pendingSpeakerAssign}
+                      onPendingSpeakerAssignHandled={onPendingSpeakerAssignHandled}
                       storedTranslations={storedTranslations}
                       onSaveTranslations={onSaveTranslations}
                       projectStreams={projectStreams}
@@ -4082,6 +4096,8 @@ interface SceneCardProps {
   onExpressGateBlocked?: () => void
   isExpressRunning?: boolean
   narrationVoice?: unknown
+  pendingSpeakerAssign?: { sceneIdx: number; dialogueIndex: number } | null
+  onPendingSpeakerAssignHandled?: () => void
   storedTranslations?: ProjectTranslations
   onSaveTranslations?: (langCode: string, translations: { [sceneIndex: number]: SceneTranslation }) => Promise<void>
   projectStreams?: ProjectStream[]
@@ -4264,6 +4280,8 @@ function SceneCard({
   onExpressGateBlocked,
   isExpressRunning = false,
   narrationVoice,
+  pendingSpeakerAssign = null,
+  onPendingSpeakerAssignHandled,
   storedTranslations,
   onSaveTranslations,
   projectStreams = [],
@@ -4288,6 +4306,23 @@ function SceneCard({
   
   // Add Beat dialog state
   const [addSegmentDialogOpen, setAddSegmentDialogOpen] = useState(false)
+
+  useEffect(() => {
+    if (!pendingSpeakerAssign || pendingSpeakerAssign.sceneIdx !== sceneIdx) return
+    const key = `${pendingSpeakerAssign.sceneIdx}:${pendingSpeakerAssign.dialogueIndex}`
+    const el = cardRef.current?.querySelector(
+      `select[data-speaker-assign="${key}"]`
+    ) as HTMLSelectElement | null
+    if (el) {
+      el.focus()
+      try {
+        el.showPicker?.()
+      } catch {
+        // showPicker may be unavailable; focus is enough
+      }
+    }
+    onPendingSpeakerAssignHandled?.()
+  }, [pendingSpeakerAssign, sceneIdx, onPendingSpeakerAssignHandled])
 
   type SceneScriptTab = 'direction' | 'narration' | 'previs' | 'beats' | 'music'
   const [activeSceneTab, setActiveSceneTab] = useState<SceneScriptTab>('direction')
@@ -6702,6 +6737,36 @@ function SceneCard({
                         
                         const isNarrationBeat = beat.kind === 'narration'
                         const hasBeatSfx = (sfxByBeatId.get(beat.beatId)?.length ?? 0) > 0
+                        const speakerNeedsAssign = dialogueSpeakerNeedsAssignment({
+                          characters: characters as any[],
+                          characterId: d.characterId ?? beat.characterId,
+                          characterName: d.character ?? beat.character,
+                          kind: d.kind ?? beat.kind,
+                          narrationVoice,
+                        })
+                        const speakerSelectValue = (() => {
+                          if (
+                            isNarratorDialogueSpeaker({
+                              kind: d.kind ?? beat.kind,
+                              characterId: d.characterId ?? beat.characterId,
+                              characterName: d.character ?? beat.character,
+                            })
+                          ) {
+                            return '__narrator__'
+                          }
+                          const id = d.characterId || beat.characterId
+                          if (id && (characters as any[]).some((c) => c.id === id)) return String(id)
+                          const name = d.character || beat.character
+                          const byName = (characters as any[]).find(
+                            (c) =>
+                              typeof c?.name === 'string' &&
+                              toCanonicalName(c.name) === toCanonicalName(String(name || ''))
+                          )
+                          return byName?.id ? String(byName.id) : ''
+                        })()
+                        const focusSpeakerSelect =
+                          pendingSpeakerAssign?.sceneIdx === sceneIdx &&
+                          pendingSpeakerAssign?.dialogueIndex === i
                         
                         return (
                           <div
@@ -6710,7 +6775,9 @@ function SceneCard({
                               isNarrationBeat
                                 ? 'bg-indigo-900/20 border-indigo-700/30 hover:border-indigo-600/40'
                                 : 'bg-blue-900/20 border-blue-700/30 hover:border-blue-600/40'
-                            } ${beat.excluded ? 'opacity-50' : ''}`}
+                            } ${beat.excluded ? 'opacity-50' : ''} ${
+                              focusSpeakerSelect ? 'ring-2 ring-amber-400/70' : ''
+                            }`}
                           >
                             <div className="flex items-start gap-3">
                               <div className="flex-1">
@@ -6719,9 +6786,84 @@ function SceneCard({
                                   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-700/50 text-slate-300 border border-slate-600/40 font-medium tabular-nums shrink-0">
                                     Beat {beatNumber}
                                   </span>
-                                  <div className={`text-sm font-semibold ${isNarrationBeat ? 'text-indigo-200' : 'text-blue-200'}`}>
-                                    {isNarrationBeat ? 'Narration' : d.character}
-                                  </div>
+                                  <label className="sr-only" htmlFor={`speaker-assign-${sceneIdx}-${beat.beatId}`}>
+                                    Assign speaker
+                                  </label>
+                                  <select
+                                    id={`speaker-assign-${sceneIdx}-${beat.beatId}`}
+                                    data-speaker-assign={`${sceneIdx}:${i}`}
+                                    value={speakerSelectValue}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onChange={(e) => {
+                                      e.stopPropagation()
+                                      if (!onScriptChange || !script || !Array.isArray(scenes)) return
+                                      const raw = e.target.value
+                                      if (!raw) return
+                                      let speaker: AssignableSpeaker
+                                      if (raw === '__narrator__') {
+                                        speaker = { kind: 'narrator' }
+                                      } else {
+                                        const match = (characters as any[]).find((c) => c.id === raw)
+                                        if (!match?.id || !match?.name) {
+                                          toast.error('Could not find that character in the cast')
+                                          return
+                                        }
+                                        speaker = {
+                                          kind: 'character',
+                                          id: String(match.id),
+                                          name: String(match.name),
+                                        }
+                                      }
+                                      const updatedScenes = scenes.map((s: any, idx: number) => {
+                                        if (idx !== sceneIdx) return s
+                                        return assignDialogueSpeakerToScene(s, {
+                                          beatId: beat.beatId,
+                                          dialogueIndex: i,
+                                          lineId: d.lineId || beat.lineId,
+                                          speaker,
+                                        })
+                                      })
+                                      onScriptChange({
+                                        ...script,
+                                        script: { ...script.script, scenes: updatedScenes },
+                                      })
+                                      toast.success(
+                                        speaker.kind === 'narrator'
+                                          ? 'Line assigned to Narrator'
+                                          : `Line assigned to ${speaker.name}`
+                                      )
+                                    }}
+                                    className={`max-w-[14rem] truncate text-sm font-semibold rounded-md border bg-slate-900/60 px-2 py-0.5 ${
+                                      isNarrationBeat ? 'text-indigo-200 border-indigo-600/40' : 'text-blue-200 border-blue-600/40'
+                                    } ${
+                                      speakerNeedsAssign
+                                        ? 'border-amber-500/70 text-amber-200'
+                                        : ''
+                                    }`}
+                                    title={
+                                      speakerNeedsAssign
+                                        ? 'Speaker isn’t linked to a cast voice — pick a character'
+                                        : 'Assign character to this line'
+                                    }
+                                  >
+                                    {speakerNeedsAssign && !speakerSelectValue && (
+                                      <option value="">Assign speaker…</option>
+                                    )}
+                                    <option value="__narrator__">Narration (Narrator)</option>
+                                    {(characters as any[])
+                                      .filter((c) => c?.type !== 'narrator')
+                                      .map((c) => (
+                                        <option key={c.id || c.name} value={c.id || ''}>
+                                          {c.name}
+                                          {c.voiceConfig ? '' : ' (no voice)'}
+                                        </option>
+                                      ))}
+                                  </select>
+                                  {speakerNeedsAssign && (
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 shrink-0">
+                                      Needs speaker
+                                    </span>
+                                  )}
                                   {beat.excluded && (
                                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-500/20 text-gray-300 border border-gray-500/30">
                                       Excluded
