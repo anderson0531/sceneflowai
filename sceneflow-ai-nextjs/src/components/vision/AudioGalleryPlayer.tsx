@@ -31,6 +31,10 @@ import {
   sceneHasPlayablePreVisAudio,
   SCENE_FADE_TO_BLACK_SEC,
 } from '@/lib/storyboard/types'
+import {
+  computeSceneStartFadeBlack,
+  shouldSkipPosterToPrimaryCrossfade,
+} from '@/lib/storyboard/animaticSceneFade'
 import { useStoryboardPlayback } from '@/hooks/useStoryboardPlayback'
 import {
   clampMusicIntroFadeConfig,
@@ -394,6 +398,11 @@ export function AudioGalleryPlayer({
   const displayImageUrl =
     currentVisualFrame?.imageUrl ?? getEstablishingFrameUrl(currentScene)
 
+  const screeningPosterMatchesPrimary =
+    !!screeningPosterUrl &&
+    !!displayImageUrl &&
+    screeningPosterUrl === (currentVisualFrame?.imageUrl ?? displayImageUrl)
+
   const inBeatVisual = useMemo(() => {
     const frame = currentVisualFrame
     if (!frame?.imageUrl) {
@@ -404,10 +413,16 @@ export function AudioGalleryPlayer({
     const t = Math.max(0, currentTime - frameStart)
     const primaryUrl = frame.imageUrl
 
-    let fadeBlack = 0
-    if (frame.isSceneStart && t < SCENE_FADE_TO_BLACK_SEC) {
-      fadeBlack = Math.max(fadeBlack, 1 - t / SCENE_FADE_TO_BLACK_SEC)
-    }
+    // Skip fade-from-black when the idle poster already shows this start frame
+    // (press-play would otherwise flash poster → black → same image).
+    const skipFadeFromBlack =
+      !!screeningPosterUrl &&
+      (screeningPosterUrl === primaryUrl || screeningPosterMatchesPrimary)
+
+    let fadeBlack = computeSceneStartFadeBlack(t, SCENE_FADE_TO_BLACK_SEC, {
+      isSceneStart: !!frame.isSceneStart,
+      skipFadeFromBlack,
+    })
     if (frame.isSceneEnd) {
       const fadeStart = Math.max(0, frameDuration - SCENE_FADE_TO_BLACK_SEC)
       if (t >= fadeStart) {
@@ -419,7 +434,13 @@ export function AudioGalleryPlayer({
     }
 
     return { primaryUrl, overlayUrl: null as string | null, blend: 0, fadeBlack }
-  }, [currentVisualFrame, currentTime, displayImageUrl])
+  }, [
+    currentVisualFrame,
+    currentTime,
+    displayImageUrl,
+    screeningPosterUrl,
+    screeningPosterMatchesPrimary,
+  ])
 
   const useActiveVideoPlayback = useMasterVideo || useVideoForCurrentScene
 
@@ -517,7 +538,8 @@ export function AudioGalleryPlayer({
       prev &&
       prev !== url &&
       imageEffectPrefs.mode === 'crossfade' &&
-      !inBeatVisual.overlayUrl
+      !inBeatVisual.overlayUrl &&
+      !shouldSkipPosterToPrimaryCrossfade(prev, url, screeningPosterUrl)
     ) {
       setCrossfadeFromUrl(prev)
       const timer = setTimeout(() => setCrossfadeFromUrl(null), CROSSFADE_DURATION_MS)
@@ -525,7 +547,7 @@ export function AudioGalleryPlayer({
       return () => clearTimeout(timer)
     }
     lastImageUrlRef.current = url
-  }, [inBeatVisual.primaryUrl, inBeatVisual.overlayUrl, imageEffectPrefs.mode])
+  }, [inBeatVisual.primaryUrl, inBeatVisual.overlayUrl, imageEffectPrefs.mode, screeningPosterUrl])
 
   const goToPrevScene = useCallback(() => {
     if (playbackMode === 'video') {
