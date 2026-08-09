@@ -250,21 +250,29 @@ export function estimateVideoClipCredits(
 }
 
 export function buildCreditsBudgetParams(
-  video: NormalizedVideoParameters
+  video: NormalizedVideoParameters,
+  extras?: { byokExcludeMedia?: boolean }
 ): {
   engine: VideoEngineId
   qualityTier?: SceneFlowQualityTierId
   segmentDuration: number
+  byokExcludeMedia?: boolean
 } {
+  const byok =
+    extras?.byokExcludeMedia !== undefined
+      ? { byokExcludeMedia: Boolean(extras.byokExcludeMedia) }
+      : {}
   if (video.engine === SCENEFLOW_ENGINE_ID) {
     return {
       engine: video.engine,
       qualityTier: video.qualityTier,
       segmentDuration: video.segmentDuration,
+      ...byok,
     }
   }
   return {
     engine: video.engine,
     segmentDuration: video.segmentDuration,
+    ...byok,
   }
 }

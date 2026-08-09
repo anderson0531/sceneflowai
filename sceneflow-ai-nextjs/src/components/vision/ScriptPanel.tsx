@@ -829,9 +829,16 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
     setIsSettingBudget(true)
     try {
       const params = budgetCalculatorInitialParams
-      const breakdown = calculateDetailedProjectCost(params)
+      const byokExcludeMedia = Boolean(
+        hasBYOK ||
+          (script?.metadata?.creditsBudgetParams as { byokExcludeMedia?: boolean } | undefined)
+            ?.byokExcludeMedia
+      )
+      const breakdown = calculateDetailedProjectCost(params, { byokExcludeMedia })
       const budget = breakdown.total.credits
-      const budgetParams = buildCreditsBudgetParams(normalizeVideoParameters(params.video))
+      const budgetParams = buildCreditsBudgetParams(normalizeVideoParameters(params.video), {
+        byokExcludeMedia,
+      })
 
       await saveProjectBudget(budget, budgetParams)
 
@@ -847,7 +854,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
     } finally {
       setIsSettingBudget(false)
     }
-  }, [projectId, creditsBudget, budgetCalculatorInitialParams, saveProjectBudget])
+  }, [projectId, creditsBudget, budgetCalculatorInitialParams, saveProjectBudget, hasBYOK, script?.metadata?.creditsBudgetParams])
   
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -3005,7 +3012,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
               </Button>
             )}
 
-            {/* Budget Calculator Button */}
+            {/* Production Budget Management Button */}
             <Button
               variant="outline"
               size="sm"
@@ -3766,16 +3773,16 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
         className="hidden"
       />
 
-      {/* Budget Calculator Modal */}
+      {/* Production Budget Management Modal */}
       <Dialog open={costCalculatorOpen} onOpenChange={setCostCalculatorOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-900 border-gray-700">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
               <Calculator className="w-5 h-5 text-sf-primary" />
-              Project Cost Calculator - {script?.title || 'Untitled Project'}
+              Production Budget Management - {script?.title || 'Untitled Project'}
             </DialogTitle>
             <DialogDescription className="text-gray-400 text-sm">
-              Estimate credits needed for your project and set a budget.
+              Set a credit budget, track production charges, and plan animatic-first before video.
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4">
@@ -3785,6 +3792,11 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
               compact={false}
               projectId={projectId}
               initialParams={budgetCalculatorInitialParams}
+              initialByokExcludeMedia={Boolean(
+                hasBYOK ||
+                  (script?.metadata?.creditsBudgetParams as { byokExcludeMedia?: boolean } | undefined)
+                    ?.byokExcludeMedia
+              )}
               onSetBudget={async (budget, budgetParams) => {
                 if (!projectId) return
                 try {

@@ -740,7 +740,7 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
               title="Open cost calculator to set budget"
             >
               <Calculator className="w-3.5 h-3.5" />
-              Budget Calculator
+              Production Budget
             </button>
           </div>
           
@@ -836,10 +836,10 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
               <Calculator className="w-5 h-5 text-sf-primary" />
-              Project Cost Calculator - {project.title}
+              Production Budget Management - {project.title}
             </DialogTitle>
             <DialogDescription className="text-gray-400 text-sm">
-              Estimate credits needed for your project and set a budget.
+              Set a credit budget, track production charges, and plan animatic-first before video.
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4">
@@ -850,12 +850,16 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
               projectId={project.id}
               currentCreditsUsed={costs.creditsUsed}
               initialParams={projectCosts || undefined}
-              onSetBudget={async (budget) => {
+              initialByokExcludeMedia={hasValidBYOK}
+              onSetBudget={async (budget, budgetParams) => {
                 try {
                   await fetch(`/api/projects/${project.id}/budget`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ creditsBudget: budget }),
+                    body: JSON.stringify({
+                      creditsBudget: budget,
+                      ...(budgetParams ? { creditsBudgetParams: budgetParams } : {}),
+                    }),
                   })
                   setCostCalculatorOpen(false)
                   window.dispatchEvent(new CustomEvent('project-updated'))
