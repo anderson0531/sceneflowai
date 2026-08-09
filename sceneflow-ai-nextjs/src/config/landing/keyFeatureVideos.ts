@@ -56,9 +56,9 @@ export function keyFeatureVideoBlobPath(icon: string, locale: VideoLocaleId): st
 const PRODUCED_VIDEOS: Partial<
   Record<string, Partial<Record<VideoLocaleId, { src: string; poster?: string }>>>
 > = {
-  // Uploaded at blob root as "BYOK (English).mp4" (not features/byok/…).
+  // Uploaded at blob root as "BYOK (English).mov" (not features/byok/…).
   byok: {
-    en: { src: videoUrl('BYOK (English).mp4') },
+    en: { src: videoUrl('BYOK (English).mov') },
   },
 }
 
