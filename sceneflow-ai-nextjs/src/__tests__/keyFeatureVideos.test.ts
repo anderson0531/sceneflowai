@@ -38,7 +38,7 @@ describe('keyFeatureVideos', () => {
     const byokLocales = getKeyFeatureVideoLocales('byok')
     expect(byokLocales.find((locale) => locale.id === 'en')?.available).toBe(true)
     expect(byokLocales.find((locale) => locale.id === 'en')?.src).toContain(
-      'BYOK%20(English).mov'
+      'BYOK%20(English).mp4'
     )
     expect(byokLocales.filter((locale) => locale.id !== 'en').every((locale) => !locale.available)).toBe(
       true
