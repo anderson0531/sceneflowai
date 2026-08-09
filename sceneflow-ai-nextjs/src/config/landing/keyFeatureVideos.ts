@@ -56,10 +56,10 @@ export function keyFeatureVideoBlobPath(icon: string, locale: VideoLocaleId): st
 const PRODUCED_VIDEOS: Partial<
   Record<string, Partial<Record<VideoLocaleId, { src: string; poster?: string }>>>
 > = {
-  // Example when English BYOK demo ships:
-  // byok: {
-  //   en: { src: videoUrl(keyFeatureVideoBlobPath('byok', 'en')) },
-  // },
+  // Uploaded at blob root as "BYOK (English).mp4" (not features/byok/…).
+  byok: {
+    en: { src: videoUrl('BYOK (English).mp4') },
+  },
 }
 
 export function getKeyFeatureVideoLocales(icon: string): VideoLocale[] {
