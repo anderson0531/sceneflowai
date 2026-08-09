@@ -28,7 +28,9 @@ import {
   Globe,
   MonitorPlay,
   ShoppingCart,
-  Plus
+  Plus,
+  Key,
+  Brain
 } from 'lucide-react'
 import {
   CREDIT_EXCHANGE_RATE,
@@ -36,6 +38,7 @@ import {
   TOPUP_PACKS,
   ANIMATIC_CREDITS,
   STORAGE_ADDONS,
+  IMAGE_CREDITS,
   type ProductionType,
 } from '@/lib/credits/creditCosts'
 import {
@@ -77,6 +80,8 @@ interface ProjectCostCalculatorProps {
   onSetBudget?: (credits: number, budgetParams?: Record<string, unknown>) => void | Promise<void>
   onSetCreditsUsed?: (credits: number) => void | Promise<void>
   initialParams?: Partial<FullProjectParameters>
+  /** Prefill BYOK exclude-media from project keys / saved budget params */
+  initialByokExcludeMedia?: boolean
 }
 
 // =============================================================================
@@ -131,6 +136,7 @@ export function ProjectCostCalculator({
   onSetBudget,
   onSetCreditsUsed,
   initialParams,
+  initialByokExcludeMedia = false,
 }: ProjectCostCalculatorProps) {
   const [params, setParams] = useState<FullProjectParameters>(() => {
     if (!initialParams) return DEFAULT_PROJECT_PARAMS;
@@ -150,6 +156,10 @@ export function ProjectCostCalculator({
         ...DEFAULT_PROJECT_PARAMS.images, 
         ...(initialParams.images || {}) 
       },
+      intelligence: {
+        ...DEFAULT_PROJECT_PARAMS.intelligence,
+        ...(initialParams.intelligence || {}),
+      },
       audio: { 
         ...DEFAULT_PROJECT_PARAMS.audio, 
         ...(initialParams.audio || {}) 
@@ -168,6 +178,7 @@ export function ProjectCostCalculator({
       },
     };
   })
+  const [byokExcludeMedia, setByokExcludeMedia] = useState(Boolean(initialByokExcludeMedia))
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [showAlternativeEngines, setShowAlternativeEngines] = useState(false)
   const [activePreset, setActivePreset] = useState<string | null>(null)
@@ -310,17 +321,18 @@ export function ProjectCostCalculator({
         }
       : params;
     
-    const baseComparison = compareStrategies(adjustedParams);
+    const baseComparison = compareStrategies(adjustedParams, { byokExcludeMedia });
     
     // If animatic mode, zero out video and add MP4 render costs
     if (productionType === 'animatic') {
-      const videoCost = baseComparison.projectCost.video.credits;
       const mp4RenderCredits = Math.ceil(params.video.totalMinutes) * ANIMATIC_CREDITS.MP4_RENDER_PER_MINUTE;
       
       // Adjust breakdown
       baseComparison.projectCost.video = {
-        credits: mp4RenderCredits,
-        usdCost: mp4RenderCredits / CREDIT_EXCHANGE_RATE,
+        credits: byokExcludeMedia ? 0 : mp4RenderCredits,
+        usdCost: (byokExcludeMedia ? 0 : mp4RenderCredits) / CREDIT_EXCHANGE_RATE,
+        excluded: byokExcludeMedia,
+        preExclusionCredits: mp4RenderCredits,
         items: [{
           name: 'MP4 Render (Animatic)',
           quantity: Math.ceil(params.video.totalMinutes),
@@ -331,10 +343,12 @@ export function ProjectCostCalculator({
       
       // Recalculate total
       const newTotal = 
+        (baseComparison.projectCost.intelligence?.credits || 0) +
         baseComparison.projectCost.video.credits +
         baseComparison.projectCost.images.credits +
         baseComparison.projectCost.audio.credits +
         baseComparison.projectCost.voiceClones.credits +
+        baseComparison.projectCost.storage.credits +
         baseComparison.projectCost.upscale.credits;
       
       baseComparison.projectCost.total.credits = newTotal;
@@ -357,7 +371,7 @@ export function ProjectCostCalculator({
     }
     
     return baseComparison;
-  }, [params, productionType, languageVersions])
+  }, [params, productionType, languageVersions, byokExcludeMedia])
   const breakdown = comparison.projectCost
 
   // Calculate additional language credits separately for display
@@ -443,9 +457,9 @@ export function ProjectCostCalculator({
             <Calculator className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">Project Cost Calculator</h2>
+            <h2 className="text-xl font-bold text-white">Production Budget Management</h2>
             <p className="text-sm text-gray-400">
-              Plan your next masterpiece. Configure your project and see the best pricing strategy.
+              Set a credit budget, track production charges, and plan animatic-first before video.
             </p>
           </div>
         </div>
@@ -484,6 +498,32 @@ export function ProjectCostCalculator({
       <div className="grid lg:grid-cols-2 gap-6 p-6">
         {/* Left Column - Inputs */}
         <div className="space-y-6">
+          {/* BYOK */}
+          <div className={`p-4 rounded-xl border transition-all ${
+            byokExcludeMedia
+              ? 'bg-amber-500/10 border-amber-500/40'
+              : 'bg-slate-800/50 border-slate-700/50'
+          }`}>
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={byokExcludeMedia}
+                onChange={(e) => setByokExcludeMedia(e.target.checked)}
+                className="mt-1 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-cyan-500"
+              />
+              <div>
+                <div className="flex items-center gap-2 text-sm font-medium text-white">
+                  <Key className="w-4 h-4 text-amber-400" />
+                  Bring Your Own Key (BYOK)
+                </div>
+                <p className="text-xs text-gray-400 mt-1">
+                  Excludes image and video from this budget; you pay those providers directly.
+                  Intelligence, audio, and studio fees still count.
+                </p>
+              </div>
+            </label>
+          </div>
+
           {/* Production Type Toggle */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-gray-400 flex items-center gap-2">
@@ -767,12 +807,19 @@ export function ProjectCostCalculator({
           {/* Images */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-gray-400 flex items-center gap-2">
-              <ImageIcon className="w-4 h-4" /> Key Frames & Images
+              <ImageIcon className="w-4 h-4" /> Images by quality
+              {byokExcludeMedia && (
+                <span className="text-[10px] uppercase tracking-wide text-amber-300 bg-amber-900/30 border border-amber-700/40 px-1.5 py-0.5 rounded">
+                  Excluded (BYOK)
+                </span>
+              )}
             </h3>
             
             <div>
               <div className="flex justify-between mb-2">
-                <label className="text-sm text-gray-300">Key Frames to Generate</label>
+                <label className="text-sm text-gray-300">
+                  Draft / Beat frames ({IMAGE_CREDITS.FRAME_GENERATION} cr)
+                </label>
                 <span className="text-sm font-medium text-white">{params.images.keyFrames}</span>
               </div>
               <input
@@ -787,7 +834,7 @@ export function ProjectCostCalculator({
 
             <div>
               <div className="flex justify-between mb-2">
-                <label className="text-sm text-gray-300">Retakes per Frame</label>
+                <label className="text-sm text-gray-300">Retakes per draft frame</label>
                 <span className="text-sm font-medium text-white">{params.images.retakesPerFrame}</span>
               </div>
               <input
@@ -796,6 +843,40 @@ export function ProjectCostCalculator({
                 max="5"
                 value={params.images.retakesPerFrame}
                 onChange={(e) => updateParam('images', 'retakesPerFrame', Number(e.target.value))}
+                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+              />
+            </div>
+
+            <div>
+              <div className="flex justify-between mb-2">
+                <label className="text-sm text-gray-300">
+                  Final storyboard images ({IMAGE_CREDITS.FAL_KLING_IMAGE} cr)
+                </label>
+                <span className="text-sm font-medium text-white">{params.images.finalImages ?? 0}</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={params.images.finalImages ?? 0}
+                onChange={(e) => updateParam('images', 'finalImages', Number(e.target.value))}
+                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+              />
+            </div>
+
+            <div>
+              <div className="flex justify-between mb-2">
+                <label className="text-sm text-gray-300">
+                  Character headshots ({IMAGE_CREDITS.SCENE_CHARACTER_HEADSHOT} cr)
+                </label>
+                <span className="text-sm font-medium text-white">{params.images.characterHeadshots ?? 0}</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="40"
+                value={params.images.characterHeadshots ?? 0}
+                onChange={(e) => updateParam('images', 'characterHeadshots', Number(e.target.value))}
                 className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
               />
             </div>
@@ -1034,7 +1115,7 @@ export function ProjectCostCalculator({
                 onClick={() =>
                   onSetBudget(
                     breakdown.total.credits,
-                    buildCreditsBudgetParams(normalizedVideo)
+                    buildCreditsBudgetParams(normalizedVideo, { byokExcludeMedia })
                   )
                 }
                 className="mt-4 w-full px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 rounded-lg text-white text-sm font-medium transition-all flex items-center justify-center gap-2"
@@ -1090,6 +1171,7 @@ export function ProjectCostCalculator({
             </summary>
             <div className="mt-3 space-y-2">
             {[
+              { key: 'intelligence', label: 'Intelligence', icon: Brain, cost: breakdown.intelligence },
               { key: 'video', label: productionType === 'animatic' ? 'MP4 Rendering' : 'Video Generation', icon: productionType === 'animatic' ? MonitorPlay : Video, cost: breakdown.video },
               { key: 'images', label: 'Image Generation', icon: ImageIcon, cost: breakdown.images },
               { key: 'audio', label: 'Audio & Music', icon: Music, cost: breakdown.audio },
@@ -1099,30 +1181,48 @@ export function ProjectCostCalculator({
                 key: 'languages',
                 label: `Translation (${languageVersions - 1} extra)`,
                 icon: Globe,
-                cost: { credits: Math.round(languageCreditsCost), usdCost: languageCreditsCost / CREDIT_EXCHANGE_RATE, items: [] }
+                cost: { credits: Math.round(languageCreditsCost), usdCost: languageCreditsCost / CREDIT_EXCHANGE_RATE, items: [] as any[] }
               }] : []),
-            ].filter(item => item.cost.credits > 0).map(item => {
+            ].filter(item => item.cost && (item.cost.credits > 0 || Boolean((item.cost as any).excluded && (item.cost as any).preExclusionCredits))).map(item => {
               const Icon = item.icon
-              const percentage = breakdown.total.credits > 0 
+              const excluded = Boolean((item.cost as any).excluded)
+              const displayCredits = excluded
+                ? Number((item.cost as any).preExclusionCredits || 0)
+                : item.cost.credits
+              const percentage = breakdown.total.credits > 0 && !excluded
                 ? (item.cost.credits / breakdown.total.credits) * 100 
                 : 0
               return (
                 <div
                   key={item.key}
-                  className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg"
+                  className={`p-3 rounded-lg ${excluded ? 'bg-amber-950/20 border border-amber-700/30' : 'bg-slate-800/50'}`}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="p-1.5 bg-slate-700/50 rounded">
-                      <Icon className="w-4 h-4 text-cyan-400" />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-1.5 bg-slate-700/50 rounded">
+                        <Icon className={`w-4 h-4 ${excluded ? 'text-amber-400' : 'text-cyan-400'}`} />
+                      </div>
+                      <div>
+                        <span className={`text-sm ${excluded ? 'text-gray-400 line-through' : 'text-white'}`}>
+                          {item.label}
+                        </span>
+                        {excluded && (
+                          <div className="text-[10px] text-amber-300">Excluded (BYOK)</div>
+                        )}
+                        {!excluded && item.cost.items?.length > 0 && (
+                          <div className="text-[10px] text-gray-500 mt-0.5 max-w-[220px] truncate">
+                            {item.cost.items.map((line: any) => line.name).join(' · ')}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <span className="text-sm text-white">{item.label}</span>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-medium text-white">
-                      {formatCredits(item.cost.credits)}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {percentage.toFixed(0)}%
+                    <div className="text-right">
+                      <div className={`text-sm font-medium ${excluded ? 'text-gray-500 line-through' : 'text-white'}`}>
+                        {formatCredits(displayCredits)}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {excluded ? '0 billed' : `${percentage.toFixed(0)}%`}
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -76,8 +76,8 @@ export const PRICING_LANDING_COPY = {
   calculator: {
     sectionTitle: 'Estimate Your Project',
     sectionSubtitle: 'Know exactly what you\'ll pay before you commit',
-    title: 'Project Budget Calculator',
-    subtitle: 'Estimate credits before you start',
+    title: 'Production Budget Management',
+    subtitle: 'Set a credit budget, track production charges, and plan animatic-first before video.',
     customize: 'Customize parameters',
     imagesLabel: 'Images to generate',
     videoClipsLabel: 'Video clips',

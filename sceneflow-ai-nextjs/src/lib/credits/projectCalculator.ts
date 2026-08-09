@@ -13,6 +13,8 @@ import {
   IMAGE_CREDITS,
   AUDIO_CREDITS,
   UPSCALE_CREDITS,
+  TEXT_CREDITS,
+  BLUEPRINT_CREDITS,
   SUBSCRIPTION_TIERS,
   TOPUP_PACKS,
   calculateProjectCost as baseCostCalculation,
@@ -64,12 +66,25 @@ export interface VideoParameters {
 }
 
 export interface ImageParameters {
-  /** Number of key frames to generate */
+  /** Draft / Beat frames billed at FRAME_GENERATION */
   keyFrames: number;
-  /** Retakes/edits per frame */
+  /** Retakes/edits per draft frame */
   retakesPerFrame: number;
-  /** Image model */
-  model: 'imagen4' | 'imagen4_ultra';
+  /** Final storyboard / scene images billed at FAL_KLING_IMAGE */
+  finalImages?: number;
+  /** Character reference headshots billed at SCENE_CHARACTER_HEADSHOT */
+  characterHeadshots?: number;
+  /** @deprecated Kept for merge compat; pricing uses role rates above */
+  model?: 'imagen4' | 'imagen4_ultra';
+}
+
+export interface IntelligenceParameters {
+  /** Audience Resonance analyses (default 1) */
+  audienceResonanceAnalyses?: number;
+  /** Blueprint optimize passes (default 1) */
+  blueprintOptimizations?: number;
+  /** Blueprint refine passes (default 1) */
+  blueprintRefines?: number;
 }
 
 export interface AudioParameters {
@@ -112,6 +127,12 @@ export interface FullProjectParameters {
   voice: VoiceParameters;
   storage: StorageParameters;
   upscale: UpscaleParameters;
+  intelligence?: IntelligenceParameters;
+}
+
+export interface ProjectCostOptions {
+  /** When true, image + video credits are excluded from the budget total (BYOK). */
+  byokExcludeMedia?: boolean;
 }
 
 // =============================================================================
@@ -121,6 +142,10 @@ export interface FullProjectParameters {
 export interface CategoryCost {
   credits: number;
   usdCost: number;
+  /** True when category was zeroed for BYOK budgeting */
+  excluded?: boolean;
+  /** Credits before BYOK exclusion (for UI strikethrough) */
+  preExclusionCredits?: number;
   items: {
     name: string;
     quantity: number;
@@ -130,6 +155,7 @@ export interface CategoryCost {
 }
 
 export interface DetailedCostBreakdown {
+  intelligence: CategoryCost;
   video: CategoryCost;
   images: CategoryCost;
   audio: CategoryCost;
@@ -141,6 +167,7 @@ export interface DetailedCostBreakdown {
     usdCost: number;
   };
   estimatedStorageBytes: number;
+  byokExcludeMedia?: boolean;
   
   /**
    * Platform overhead costs (not charged to users, tracked for margin analysis)
@@ -242,7 +269,12 @@ export interface StrategyComparison {
 /**
  * Calculate detailed cost breakdown for a project
  */
-export function calculateDetailedProjectCost(params: FullProjectParameters): DetailedCostBreakdown {
+export function calculateDetailedProjectCost(
+  params: FullProjectParameters,
+  options: ProjectCostOptions = {}
+): DetailedCostBreakdown {
+  const byokExcludeMedia = Boolean(options.byokExcludeMedia)
+
   // Ensure all params have valid numeric values to prevent NaN
   const safeParams = {
     scenes: {
@@ -252,8 +284,19 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
     },
     video: normalizeVideoParameters(params.video),
     images: {
-      keyFrames: Math.max(1, Number(params.images?.keyFrames) || 30),
-      retakesPerFrame: Number(params.images?.retakesPerFrame) || 1,
+      keyFrames: Math.max(0, Number(params.images?.keyFrames) || 30),
+      retakesPerFrame: Math.max(0, Number(params.images?.retakesPerFrame) || 1),
+      finalImages: Math.max(
+        0,
+        Number(
+          params.images?.finalImages ??
+            Math.max(1, Math.ceil((Number(params.images?.keyFrames) || 30) / 3))
+        )
+      ),
+      characterHeadshots: Math.max(
+        0,
+        Number(params.images?.characterHeadshots ?? Math.min(8, Number(params.scenes?.count) || 10))
+      ),
       model: params.images?.model || 'imagen4',
     },
     audio: {
@@ -274,47 +317,120 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
       upscaleMinutes: Math.max(0, Number(params.upscale?.upscaleMinutes) || 0),
       useInstant: Boolean(params.upscale?.useInstant),
     },
+    intelligence: {
+      audienceResonanceAnalyses: Math.max(
+        0,
+        Number(params.intelligence?.audienceResonanceAnalyses ?? 1)
+      ),
+      blueprintOptimizations: Math.max(
+        0,
+        Number(params.intelligence?.blueprintOptimizations ?? 1)
+      ),
+      blueprintRefines: Math.max(0, Number(params.intelligence?.blueprintRefines ?? 1)),
+    },
+  };
+
+  // Intelligence (Blueprint / script / resonance) — always on SceneFlow credits
+  const resonanceQty = safeParams.intelligence.audienceResonanceAnalyses;
+  const resonanceCredits =
+    resonanceQty * BLUEPRINT_CREDITS.AUDIENCE_RESONANCE_ANALYSIS;
+  const scriptQty = safeParams.scenes.count;
+  const scriptCredits = scriptQty * TEXT_CREDITS.SCRIPT_PER_SCENE;
+  const optimizeQty = safeParams.intelligence.blueprintOptimizations;
+  const optimizeCredits = optimizeQty * BLUEPRINT_CREDITS.BLUEPRINT_OPTIMIZE;
+  const refineQty = safeParams.intelligence.blueprintRefines;
+  const refineCredits = refineQty * BLUEPRINT_CREDITS.BLUEPRINT_REFINE;
+  const intelligenceCredits =
+    resonanceCredits + scriptCredits + optimizeCredits + refineCredits;
+
+  const intelligence: CategoryCost = {
+    credits: intelligenceCredits,
+    usdCost: intelligenceCredits / CREDIT_EXCHANGE_RATE,
+    items: [
+      {
+        name: 'Audience Resonance analysis',
+        quantity: resonanceQty,
+        creditsEach: BLUEPRINT_CREDITS.AUDIENCE_RESONANCE_ANALYSIS,
+        totalCredits: resonanceCredits,
+      },
+      {
+        name: 'Script generation (per scene)',
+        quantity: scriptQty,
+        creditsEach: TEXT_CREDITS.SCRIPT_PER_SCENE,
+        totalCredits: scriptCredits,
+      },
+      {
+        name: 'Blueprint optimize',
+        quantity: optimizeQty,
+        creditsEach: BLUEPRINT_CREDITS.BLUEPRINT_OPTIMIZE,
+        totalCredits: optimizeCredits,
+      },
+      {
+        name: 'Blueprint refine',
+        quantity: refineQty,
+        creditsEach: BLUEPRINT_CREDITS.BLUEPRINT_REFINE,
+        totalCredits: refineCredits,
+      },
+    ].filter((item) => item.quantity > 0),
   };
 
   // Video costs — engine-aware (Kling per-second, Veo per-clip, aggregator per-model)
   const clipEstimate = estimateVideoClipCredits(safeParams.video);
   const totalSegments = safeParams.scenes.count * safeParams.scenes.segmentsPerScene;
   const totalTakes = totalSegments * safeParams.scenes.takesPerSegment;
-  const videoCredits = totalTakes * clipEstimate.creditsEach;
+  const videoCreditsRaw = totalTakes * clipEstimate.creditsEach;
 
   const video: CategoryCost = {
-    credits: videoCredits,
-    usdCost: videoCredits / CREDIT_EXCHANGE_RATE,
+    credits: byokExcludeMedia ? 0 : videoCreditsRaw,
+    usdCost: (byokExcludeMedia ? 0 : videoCreditsRaw) / CREDIT_EXCHANGE_RATE,
+    excluded: byokExcludeMedia,
+    preExclusionCredits: videoCreditsRaw,
     items: [
       {
         name: clipEstimate.label,
         quantity: totalTakes,
         creditsEach: clipEstimate.creditsEach,
-        totalCredits: videoCredits,
+        totalCredits: videoCreditsRaw,
       },
     ],
   };
 
-  // Image costs
-  // Note: Using IMAGEN_4 for both models as IMAGEN_4_ULTRA pricing not yet defined
-  const imageCreditsPerFrame = safeParams.images.model === 'imagen4' 
-    ? IMAGE_CREDITS.IMAGEN_4 
-    : IMAGE_CREDITS.IMAGEN_4;
-  
-  const totalImages = safeParams.images.keyFrames * (1 + safeParams.images.retakesPerFrame);
-  const imageCredits = totalImages * imageCreditsPerFrame;
-  
+  // Image costs — production role rates
+  const draftFrameQty =
+    safeParams.images.keyFrames * (1 + safeParams.images.retakesPerFrame);
+  const draftCredits = draftFrameQty * IMAGE_CREDITS.FRAME_GENERATION;
+  const finalQty = safeParams.images.finalImages;
+  const finalCredits = finalQty * IMAGE_CREDITS.FAL_KLING_IMAGE;
+  const headshotQty = safeParams.images.characterHeadshots;
+  const headshotCredits = headshotQty * IMAGE_CREDITS.SCENE_CHARACTER_HEADSHOT;
+  const imageCreditsRaw = draftCredits + finalCredits + headshotCredits;
+  const totalImages = draftFrameQty + finalQty + headshotQty;
+
   const images: CategoryCost = {
-    credits: imageCredits,
-    usdCost: imageCredits / CREDIT_EXCHANGE_RATE,
+    credits: byokExcludeMedia ? 0 : imageCreditsRaw,
+    usdCost: (byokExcludeMedia ? 0 : imageCreditsRaw) / CREDIT_EXCHANGE_RATE,
+    excluded: byokExcludeMedia,
+    preExclusionCredits: imageCreditsRaw,
     items: [
       {
-        name: `${safeParams.images.model === 'imagen4' ? 'Imagen 4' : 'Imagen 4 Ultra'} frames`,
-        quantity: totalImages,
-        creditsEach: imageCreditsPerFrame,
-        totalCredits: imageCredits,
+        name: 'Draft / Beat frames',
+        quantity: draftFrameQty,
+        creditsEach: IMAGE_CREDITS.FRAME_GENERATION,
+        totalCredits: draftCredits,
       },
-    ],
+      {
+        name: 'Final storyboard / scene images',
+        quantity: finalQty,
+        creditsEach: IMAGE_CREDITS.FAL_KLING_IMAGE,
+        totalCredits: finalCredits,
+      },
+      {
+        name: 'Character reference headshots',
+        quantity: headshotQty,
+        creditsEach: IMAGE_CREDITS.SCENE_CHARACTER_HEADSHOT,
+        totalCredits: headshotCredits,
+      },
+    ].filter((item) => item.quantity > 0),
   };
 
   // Audio costs
@@ -417,8 +533,17 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
     ],
   };
 
-  // Total
-  const totalCredits = videoCredits + imageCredits + audioCredits + voiceTotalCredits + storageEquivalentCredits + upscaleCredits;
+  // Total — media may be excluded under BYOK
+  const billedVideo = video.credits;
+  const billedImages = images.credits;
+  const totalCredits =
+    intelligenceCredits +
+    billedVideo +
+    billedImages +
+    audioCredits +
+    voiceTotalCredits +
+    storageEquivalentCredits +
+    upscaleCredits;
   const totalUsdCost = totalCredits / CREDIT_EXCHANGE_RATE;
 
   // Estimated storage (actual bytes)
@@ -433,7 +558,9 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
     scenes: safeParams.scenes.count,
     segmentsPerScene: safeParams.scenes.segmentsPerScene,
     takesPerSegment: safeParams.scenes.takesPerSegment,
-    framesPerScene: Math.ceil(safeParams.images.keyFrames / safeParams.scenes.count),
+    framesPerScene: Math.ceil(
+      Math.max(1, safeParams.images.keyFrames) / safeParams.scenes.count
+    ),
     voiceoverMinutes: safeParams.voice.voiceMinutes,
     uploadedImages: 0, // Estimate; actual uploads tracked separately
     exportMinutes: safeParams.video.totalMinutes,
@@ -457,8 +584,8 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
   // Calculate margin analysis
   // Provider costs are approximated based on our known rates
   const providerCosts = 
-    (totalTakes * 0.75) + // Veo Fast at ~$0.75/8s (approximate)
-    (totalImages * 0.04) + // Imagen 4 at $0.04/image
+    (byokExcludeMedia ? 0 : totalTakes * 0.75) + // Veo Fast at ~$0.75/8s (approximate)
+    (byokExcludeMedia ? 0 : draftFrameQty * 0.04 + finalQty * 0.05 + headshotQty * 0.06) +
     (Math.ceil(safeParams.audio.totalMinutes + safeParams.voice.voiceMinutes) * 0.35) + // ElevenLabs ~$0.35/min
     (safeParams.upscale.upscaleMinutes * 0.20); // Topaz ~$0.20/min
 
@@ -474,6 +601,7 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
   };
 
   return {
+    intelligence,
     video,
     images,
     audio,
@@ -485,6 +613,7 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
       usdCost: totalUsdCost,
     },
     estimatedStorageBytes,
+    byokExcludeMedia,
     platformCosts,
     marginAnalysis,
   };
@@ -568,8 +697,11 @@ function calculateOptimalTopUps(creditsNeeded: number): { name: string; quantity
 /**
  * Compare different payment strategies for a project
  */
-export function compareStrategies(params: FullProjectParameters): StrategyComparison {
-  const projectCost = calculateDetailedProjectCost(params);
+export function compareStrategies(
+  params: FullProjectParameters,
+  options: ProjectCostOptions = {}
+): StrategyComparison {
+  const projectCost = calculateDetailedProjectCost(params, options);
   const totalCreditsNeeded = projectCost.total.credits;
   
   // Pay-as-you-go strategy
@@ -860,7 +992,14 @@ export const DEFAULT_PROJECT_PARAMS: FullProjectParameters = {
   images: {
     keyFrames: 30,
     retakesPerFrame: 1,
+    finalImages: 10,
+    characterHeadshots: 4,
     model: 'imagen4',
+  },
+  intelligence: {
+    audienceResonanceAnalyses: 1,
+    blueprintOptimizations: 1,
+    blueprintRefines: 1,
   },
   audio: {
     totalMinutes: 4,
@@ -898,6 +1037,10 @@ export function mergeProjectParameters(
     images: {
       ...DEFAULT_PROJECT_PARAMS.images,
       ...(initial?.images || {}),
+    },
+    intelligence: {
+      ...DEFAULT_PROJECT_PARAMS.intelligence,
+      ...(initial?.intelligence || {}),
     },
     audio: {
       ...DEFAULT_PROJECT_PARAMS.audio,
