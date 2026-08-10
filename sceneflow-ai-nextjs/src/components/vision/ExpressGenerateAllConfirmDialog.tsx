@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Dialog,
   DialogContent,
@@ -24,14 +25,13 @@ import {
   type ExpressSceneConfirmOptions,
   type ExpressSceneScope,
 } from '@/components/vision/ExpressSceneConfirmDialog'
-import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
+import { IMAGE_CREDITS, VIDEO_CREDITS } from '@/lib/credits/creditCosts'
 import {
   enumerateStoryboardFrameSlots,
   filterStoryboardSlotsForExpressChecklist,
   type StoryboardFrameSlot,
 } from '@/lib/storyboard/types'
 import { estimateExpressVeoSfxCredits } from '@/lib/sfx/clientExpressVeoSfx'
-import { VEO_SFX_CREDIT_HINT } from '@/lib/sfx/clientGenerateVeoSfx'
 import {
   resolveAutoVeoSfxDuration,
   veoSfxCoversFullBeat,
@@ -78,6 +78,8 @@ export function ExpressGenerateAllConfirmDialog({
   isRunning = false,
   onConfirm,
 }: ExpressGenerateAllConfirmDialogProps) {
+  const t = useTranslations('production.expressGenerateAll')
+  const tCommon = useTranslations('common')
   const [audioScope, setAudioScope] = useState<ExpressAudioScope>('missing')
   const [frameScope, setFrameScope] = useState<ExpressSceneScope>('missing')
   const [selectedAudioIds, setSelectedAudioIds] = useState<string[]>([])
@@ -125,15 +127,16 @@ export function ExpressGenerateAllConfirmDialog({
   const showPartialVeoHint = !veoSfxCoversFullBeat(segmentDurationSeconds, durationPreset)
   const sfxCreditTotal = estimateExpressVeoSfxCredits(selectedSfxCount)
   const frameCreditTotal = selectedFrameKeys.length * IMAGE_CREDITS.FAL_KLING_IMAGE
+  const autoSecondsLabel = Number.isInteger(autoSeconds) ? autoSeconds : autoSeconds.toFixed(1)
 
   const chips: Array<{ id: SfxDurationOverride; label: string }> = [
     {
       id: 'auto',
-      label: `Auto (${Number.isInteger(autoSeconds) ? autoSeconds : autoSeconds.toFixed(1)}s · Veo ${veoAutoSeconds}s)`,
+      label: t('durationAuto', { seconds: autoSecondsLabel, veoSeconds: veoAutoSeconds }),
     },
-    { id: 'short', label: 'Short 3s / Veo 4s' },
-    { id: 'medium', label: 'Medium 8s' },
-    { id: 'long', label: 'Long 15s / Veo 8s max' },
+    { id: 'short', label: t('durationShort') },
+    { id: 'medium', label: t('durationMedium') },
+    { id: 'long', label: t('durationLong') },
   ]
 
   const toggleAudioItem = (id: string, checked: boolean) => {
@@ -158,11 +161,10 @@ export function ExpressGenerateAllConfirmDialog({
         <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center gap-2 text-sky-200">
             <Zap className="w-5 h-5" />
-            Generate All
+            {t('title')}
           </DialogTitle>
           <DialogDescription className="text-gray-400">
-            Run Express Audio and Express Scene frames in parallel. Defaults match each pipeline’s
-            “missing only” selection — adjust scope if you need to regenerate.
+            {t('description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -170,11 +172,11 @@ export function ExpressGenerateAllConfirmDialog({
           <section className="space-y-3">
             <div className="flex items-center gap-2 text-violet-200">
               <Sparkles className="w-4 h-4" />
-              <p className="text-sm font-semibold">Audio</p>
+              <p className="text-sm font-semibold">{t('audioSection')}</p>
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-                Scope
+                {t('scope')}
               </p>
               <div className="inline-flex max-w-full rounded-md border border-violet-600/40 overflow-hidden">
                 {(['missing', 'all'] as ExpressAudioScope[]).map((value) => (
@@ -189,17 +191,17 @@ export function ExpressGenerateAllConfirmDialog({
                         : 'bg-transparent text-violet-200/80 hover:bg-violet-900/30'
                     }`}
                   >
-                    {value === 'missing' ? 'Missing only' : 'All (regenerate)'}
+                    {value === 'missing' ? t('scopeMissing') : t('scopeAll')}
                   </button>
                 ))}
               </div>
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-                Audio to generate
+                {t('audioToGenerate')}
               </p>
               {audioItems.length === 0 ? (
-                <p className="text-sm text-gray-500 py-2 text-center">No audio items for this scene.</p>
+                <p className="text-sm text-gray-500 py-2 text-center">{t('noAudioItems')}</p>
               ) : (
                 <div className="max-h-36 overflow-y-auto space-y-2 pr-1">
                   {audioItems.map((item) => (
@@ -227,7 +229,7 @@ export function ExpressGenerateAllConfirmDialog({
                         <span
                           className={`text-[10px] ${item.hasAudio ? 'text-green-400' : 'text-amber-400'}`}
                         >
-                          {item.hasAudio ? 'Ready' : 'Missing'}
+                          {item.hasAudio ? t('statusReady') : t('statusMissing')}
                         </span>
                       </span>
                     </label>
@@ -238,7 +240,7 @@ export function ExpressGenerateAllConfirmDialog({
             {selectedSfxCount > 0 && (
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-                  SFX duration preset
+                  {t('sfxDurationPreset')}
                 </p>
                 <div className="flex min-w-0 flex-wrap gap-1.5">
                   {chips.map((chip) => (
@@ -258,10 +260,12 @@ export function ExpressGenerateAllConfirmDialog({
                   ))}
                 </div>
                 {showPartialVeoHint && (
-                  <p className="text-[11px] text-amber-200/70 mt-2">{VEO_SFX_CREDIT_HINT}</p>
+                  <p className="text-[11px] text-amber-200/70 mt-2">
+                    {t('creditHint', { credits: VIDEO_CREDITS.VEO_LITE })}
+                  </p>
                 )}
                 <p className="text-[11px] text-violet-300/60 mt-2">
-                  Veo SFX credits (est.): {sfxCreditTotal}
+                  {t('veoSfxCredits', { credits: sfxCreditTotal })}
                 </p>
               </div>
             )}
@@ -270,11 +274,11 @@ export function ExpressGenerateAllConfirmDialog({
           <section className="space-y-3 border-t border-gray-700/60 pt-4">
             <div className="flex items-center gap-2 text-amber-200">
               <ImageIcon className="w-4 h-4" />
-              <p className="text-sm font-semibold">Frames</p>
+              <p className="text-sm font-semibold">{t('framesSection')}</p>
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-                Scope
+                {t('scope')}
               </p>
               <div className="inline-flex rounded-md border border-amber-600/40 overflow-hidden">
                 {(['missing', 'selected'] as ExpressSceneScope[]).map((value) => (
@@ -289,17 +293,17 @@ export function ExpressGenerateAllConfirmDialog({
                         : 'bg-transparent text-amber-200/80 hover:bg-amber-900/30'
                     }`}
                   >
-                    {value === 'missing' ? 'Missing only' : 'Regenerate selected'}
+                    {value === 'missing' ? t('scopeMissing') : t('scopeRegenerate')}
                   </button>
                 ))}
               </div>
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-                Frames
+                {t('frames')}
               </p>
               {checklistSlots.length === 0 ? (
-                <p className="text-sm text-gray-500 py-2 text-center">No frames available.</p>
+                <p className="text-sm text-gray-500 py-2 text-center">{t('noFrames')}</p>
               ) : (
                 <div className="max-h-36 overflow-y-auto space-y-2 pr-1">
                   {checklistSlots.map((slot) => (
@@ -323,7 +327,7 @@ export function ExpressGenerateAllConfirmDialog({
                             slot.ownImageUrl ? 'text-green-400' : 'text-amber-400'
                           }`}
                         >
-                          {slot.ownImageUrl ? 'Has image' : 'Missing'}
+                          {slot.ownImageUrl ? t('hasImage') : t('missing')}
                         </span>
                       </span>
                     </label>
@@ -332,8 +336,11 @@ export function ExpressGenerateAllConfirmDialog({
               )}
               {selectedFrameKeys.length > 0 && (
                 <p className="text-[11px] text-amber-300/60 mt-2">
-                  Image credits (est.): {frameCreditTotal} ({selectedFrameKeys.length} frame
-                  {selectedFrameKeys.length === 1 ? '' : 's'} × {IMAGE_CREDITS.FAL_KLING_IMAGE})
+                  {t('imageCredits', {
+                    credits: frameCreditTotal,
+                    count: selectedFrameKeys.length,
+                    perFrame: IMAGE_CREDITS.FAL_KLING_IMAGE,
+                  })}
                 </p>
               )}
             </div>
@@ -347,7 +354,7 @@ export function ExpressGenerateAllConfirmDialog({
             onClick={() => onOpenChange(false)}
             disabled={isRunning}
           >
-            Cancel
+            {tCommon('actions.cancel')}
           </Button>
           <Button
             type="button"
@@ -371,12 +378,12 @@ export function ExpressGenerateAllConfirmDialog({
             {isRunning ? (
               <>
                 <Loader className="w-4 h-4 mr-2 animate-spin" />
-                Running...
+                {t('running')}
               </>
             ) : (
               <>
                 <Zap className="w-4 h-4 mr-2" />
-                Generate All
+                {t('generateAll')}
               </>
             )}
           </Button>
