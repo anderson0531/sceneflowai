@@ -56,11 +56,12 @@ export function keyFeatureVideoBlobPath(icon: string, locale: VideoLocaleId): st
 const PRODUCED_VIDEOS: Partial<
   Record<string, Partial<Record<VideoLocaleId, { src: string; poster?: string }>>>
 > = {
-  // Web H.264/AAC encode of the ProRes master. Prefer Blob root path once
-  // `node scripts/upload-byok-english-mp4.mjs` has overwritten BYOK (English).mp4;
-  // until then ship from public/ so browsers get a decodable video track.
+  // Web H.264/AAC encode (1280x720) of the Blob master
+  // `BYOK (ENGLISH).mp4`. Prefer Blob once
+  // `node scripts/upload-byok-english-mp4.mjs` overwrites that path with the
+  // web encode; until then ship from public/ for a lean, decodable track.
   byok: {
-    en: { src: '/landing/key-features/BYOK-English.mp4#t=0.1' },
+    en: { src: '/landing/key-features/BYOK-English.mp4?v=20260810#t=0.1' },
   },
 }
 

@@ -6,7 +6,10 @@
  *   BLOB_READ_WRITE_TOKEN=... node scripts/upload-byok-english-mp4.mjs [path/to/BYOK-English.mp4]
  *
  * Default local path: public/landing/key-features/BYOK-English.mp4
- * Blob pathname: BYOK (English).mp4 (blob root, contentType video/mp4, allowOverwrite)
+ * Blob pathname: BYOK (ENGLISH).mp4 (blob root, contentType video/mp4, allowOverwrite)
+ *
+ * Source master (full bitrate): the same Blob pathname. Upload the web encode
+ * from public/ so landing visitors are not served the ~100MB master.
  */
 
 import { readFileSync, existsSync } from 'fs'
@@ -21,7 +24,7 @@ const PROJECT_ROOT = join(__dirname, '..')
 config({ path: join(PROJECT_ROOT, '.env.vercel.local') })
 config({ path: join(PROJECT_ROOT, '.env.local') })
 
-const BLOB_PATH = 'BYOK (English).mp4'
+const BLOB_PATH = 'BYOK (ENGLISH).mp4'
 const DEFAULT_LOCAL = join(PROJECT_ROOT, 'public/landing/key-features/BYOK-English.mp4')
 
 async function main() {
