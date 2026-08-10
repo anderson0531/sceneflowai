@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useTranslations } from 'next-intl'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
@@ -34,6 +35,9 @@ export function OptimizeSceneDialog({
   onOptimize,
   isOptimizing = false
 }: OptimizeSceneDialogProps) {
+  const t = useTranslations('production.foundation.optimizeScene')
+  const tc = useTranslations('common.actions')
+
   // Selected optimization templates
   const [selectedTemplates, setSelectedTemplates] = useState<Set<string>>(new Set())
   
@@ -170,13 +174,13 @@ export function OptimizeSceneDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-purple-500" />
-            Optimize Scene {sceneNumber}
+            {t('title', { number: sceneNumber })}
           </DialogTitle>
           <DialogDescription className="flex items-center justify-between">
             <span className="truncate max-w-[400px]">{sceneHeading}</span>
             {sceneAnalysis && (
               <div className={`flex items-center gap-2 px-2 py-1 rounded ${getScoreBgColor(sceneAnalysis.score)}`}>
-                <span className="text-xs text-gray-500 dark:text-gray-400">Score:</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">{t('score')}</span>
                 <span className={`font-bold ${getScoreColor(sceneAnalysis.score)}`}>
                   {sceneAnalysis.score}
                 </span>
@@ -191,16 +195,16 @@ export function OptimizeSceneDialog({
             <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2">
               <div className="flex gap-2 flex-wrap">
                 <Badge variant="outline" className="text-xs">
-                  Pacing: {sceneAnalysis.pacing}
+                  {t('pacing', { value: sceneAnalysis.pacing })}
                 </Badge>
                 <Badge variant="outline" className="text-xs">
-                  Tension: {sceneAnalysis.tension}
+                  {t('tension', { value: sceneAnalysis.tension })}
                 </Badge>
                 <Badge variant="outline" className="text-xs">
-                  Character: {sceneAnalysis.characterDevelopment}
+                  {t('character', { value: sceneAnalysis.characterDevelopment })}
                 </Badge>
                 <Badge variant="outline" className="text-xs">
-                  Visual: {sceneAnalysis.visualPotential}
+                  {t('visual', { value: sceneAnalysis.visualPotential })}
                 </Badge>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -218,7 +222,7 @@ export function OptimizeSceneDialog({
               >
                 <span className="flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 text-amber-500" />
-                  AI Recommendations ({sceneAnalysis.recommendations.length})
+                  {t('aiRecommendations', { count: sceneAnalysis.recommendations.length })}
                 </span>
                 {showRecommendations ? (
                   <ChevronUp className="w-4 h-4" />
@@ -328,7 +332,7 @@ export function OptimizeSceneDialog({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                ✏️ Custom Instructions
+                ✏️ {t('customInstructions')}
               </label>
               {sttSupported && sttSecure && (
                 <Button
@@ -340,12 +344,12 @@ export function OptimizeSceneDialog({
                   {isMicRecording ? (
                     <>
                       <MicOff className="w-3.5 h-3.5 mr-1" />
-                      Stop
+                      {t('stop')}
                     </>
                   ) : (
                     <>
                       <Mic className="w-3.5 h-3.5 mr-1" />
-                      Voice
+                      {t('voice')}
                     </>
                   )}
                 </Button>
@@ -354,7 +358,7 @@ export function OptimizeSceneDialog({
             <Textarea
               value={customInstruction}
               onChange={(e) => setCustomInstruction(e.target.value)}
-              placeholder="Add any specific instructions for improving this scene..."
+              placeholder={t('placeholder')}
               className="min-h-[80px] text-sm"
             />
           </div>
@@ -364,9 +368,9 @@ export function OptimizeSceneDialog({
           <div className="flex items-center justify-between w-full">
             <div className="text-sm text-gray-500 dark:text-gray-400">
               {hasSelections ? (
-                <span>{totalSelections} optimization{totalSelections !== 1 ? 's' : ''} selected</span>
+                <span>{t('selectedCount', { count: totalSelections })}</span>
               ) : (
-                <span>Select optimizations or add instructions</span>
+                <span>{t('selectHint')}</span>
               )}
             </div>
             <div className="flex items-center gap-2">
@@ -375,7 +379,7 @@ export function OptimizeSceneDialog({
                 onClick={onClose}
                 disabled={isOptimizing}
               >
-                Cancel
+                {tc('cancel')}
               </Button>
               <Button
                 variant="default"
@@ -386,12 +390,12 @@ export function OptimizeSceneDialog({
                 {isOptimizing ? (
                   <>
                     <Loader className="w-4 h-4 mr-2 animate-spin" />
-                    Applying...
+                    {t('applying')}
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4 mr-2" />
-                    Apply Recommendations
+                    {t('applyRecommendations')}
                   </>
                 )}
               </Button>

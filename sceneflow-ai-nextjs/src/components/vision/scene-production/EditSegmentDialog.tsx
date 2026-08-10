@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
@@ -54,43 +55,73 @@ export interface EditSegmentDialogProps {
 // Shot Types & Lens Presets (mirrored from AddSegmentDialog)
 // ============================================================================
 
-const SHOT_TYPES = [
-  { value: 'extreme-wide', label: 'Extreme Wide', description: 'Full environment, tiny subjects' },
-  { value: 'wide', label: 'Wide Shot', description: 'Full body, environmental context' },
-  { value: 'medium-wide', label: 'Medium Wide', description: 'Knee to head, some environment' },
-  { value: 'medium', label: 'Medium Shot', description: 'Waist up, conversational' },
-  { value: 'medium-close', label: 'Medium Close-up', description: 'Chest up, emotional focus' },
-  { value: 'close-up', label: 'Close-up', description: 'Face only, intense emotion' },
-  { value: 'extreme-close', label: 'Extreme Close-up', description: 'Eyes, mouth, or detail' },
-  { value: 'two-shot', label: 'Two Shot', description: 'Two characters framed together' },
-  { value: 'over-shoulder', label: 'Over the Shoulder', description: 'Perspective from behind one character' },
-  { value: 'pov', label: 'POV', description: 'Point of view shot' },
+const SHOT_TYPE_VALUES = [
+  'extreme-wide',
+  'wide',
+  'medium-wide',
+  'medium',
+  'medium-close',
+  'close-up',
+  'extreme-close',
+  'two-shot',
+  'over-shoulder',
+  'pov',
 ] as const
 
-const CAMERA_MOVEMENTS = [
-  { value: 'static', label: 'Static', description: 'Locked-off, no movement' },
-  { value: 'push-in', label: 'Push In', description: 'Slow dolly toward subject' },
-  { value: 'pull-out', label: 'Pull Out', description: 'Slow dolly away from subject' },
-  { value: 'pan-left', label: 'Pan Left', description: 'Camera pivots left' },
-  { value: 'pan-right', label: 'Pan Right', description: 'Camera pivots right' },
-  { value: 'tilt-up', label: 'Tilt Up', description: 'Camera angles upward' },
-  { value: 'tilt-down', label: 'Tilt Down', description: 'Camera angles downward' },
-  { value: 'tracking', label: 'Tracking', description: 'Following subject movement' },
-  { value: 'handheld', label: 'Handheld', description: 'Slight shake, documentary feel' },
-  { value: 'crane', label: 'Crane/Jib', description: 'Vertical movement, sweeping' },
+const CAMERA_MOVEMENT_VALUES = [
+  'static',
+  'push-in',
+  'pull-out',
+  'pan-left',
+  'pan-right',
+  'tilt-up',
+  'tilt-down',
+  'tracking',
+  'handheld',
+  'crane',
 ] as const
+
+const SHOT_TYPE_LABELS: Record<(typeof SHOT_TYPE_VALUES)[number], string> = {
+  'extreme-wide': 'Extreme Wide',
+  wide: 'Wide Shot',
+  'medium-wide': 'Medium Wide',
+  medium: 'Medium Shot',
+  'medium-close': 'Medium Close-up',
+  'close-up': 'Close-up',
+  'extreme-close': 'Extreme Close-up',
+  'two-shot': 'Two Shot',
+  'over-shoulder': 'Over the Shoulder',
+  pov: 'POV',
+}
+
+const CAMERA_MOVEMENT_LABELS: Record<(typeof CAMERA_MOVEMENT_VALUES)[number], string> = {
+  static: 'Static',
+  'push-in': 'Push In',
+  'pull-out': 'Pull Out',
+  'pan-left': 'Pan Left',
+  'pan-right': 'Pan Right',
+  'tilt-up': 'Tilt Up',
+  'tilt-down': 'Tilt Down',
+  tracking: 'Tracking',
+  handheld: 'Handheld',
+  crane: 'Crane/Jib',
+}
 
 // Helper to get value from label
 function getShotTypeValue(label: string | undefined): string {
   if (!label) return 'medium'
-  const found = SHOT_TYPES.find(s => s.label === label)
-  return found?.value || 'medium'
+  const found = (Object.entries(SHOT_TYPE_LABELS) as Array<[string, string]>).find(
+    ([, l]) => l === label
+  )
+  return found?.[0] || 'medium'
 }
 
 function getCameraMovementValue(label: string | undefined): string {
   if (!label) return 'static'
-  const found = CAMERA_MOVEMENTS.find(m => m.label === label)
-  return found?.value || 'static'
+  const found = (Object.entries(CAMERA_MOVEMENT_LABELS) as Array<[string, string]>).find(
+    ([, l]) => l === label
+  )
+  return found?.[0] || 'static'
 }
 
 // ============================================================================
@@ -107,6 +138,9 @@ export function EditSegmentDialog({
   onPromptChange,
   onSegmentResize,
 }: EditSegmentDialogProps) {
+  const t = useTranslations('production.segments')
+  const tc = useTranslations('common')
+
   // -------------------------------------------------------------------------
   // State - initialized from segment when dialog opens
   // -------------------------------------------------------------------------
@@ -166,13 +200,16 @@ export function EditSegmentDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Pencil className="w-5 h-5 text-amber-400" />
-            Edit Segment
+            {t('edit.title')}
             <Badge variant="outline" className="ml-2 text-xs">
-              Scene {sceneNumber} • Beat {segment.sequenceIndex + 1}
+              {t('edit.badge', {
+                sceneNumber,
+                beatNumber: segment.sequenceIndex + 1,
+              })}
             </Badge>
           </DialogTitle>
           <DialogDescription>
-            Modify the segment's prompt, duration, and generation settings.
+            {t('edit.description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -182,22 +219,22 @@ export function EditSegmentDialog({
             <div className="space-y-3">
               <h3 className="text-sm font-medium flex items-center gap-2">
                 <Camera className="w-4 h-4 text-blue-400" />
-                Shot Configuration
+                {t('common.shotConfiguration')}
               </h3>
               
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Shot Type</Label>
+                  <Label className="text-xs text-muted-foreground">{t('common.shotType')}</Label>
                   <Select value={shotType} onValueChange={setShotType}>
                     <SelectTrigger className="h-9">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {SHOT_TYPES.map(type => (
-                        <SelectItem key={type.value} value={type.value}>
-                          <span className="font-medium">{type.label}</span>
+                      {SHOT_TYPE_VALUES.map(value => (
+                        <SelectItem key={value} value={value}>
+                          <span className="font-medium">{t(`shotTypes.${value}.label`)}</span>
                           <span className="text-xs text-muted-foreground ml-2">
-                            {type.description}
+                            {t(`shotTypes.${value}.description`)}
                           </span>
                         </SelectItem>
                       ))}
@@ -206,17 +243,17 @@ export function EditSegmentDialog({
                 </div>
                 
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Camera Movement</Label>
+                  <Label className="text-xs text-muted-foreground">{t('common.cameraMovement')}</Label>
                   <Select value={cameraMovement} onValueChange={setCameraMovement}>
                     <SelectTrigger className="h-9">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {CAMERA_MOVEMENTS.map(mov => (
-                        <SelectItem key={mov.value} value={mov.value}>
-                          <span className="font-medium">{mov.label}</span>
+                      {CAMERA_MOVEMENT_VALUES.map(value => (
+                        <SelectItem key={value} value={value}>
+                          <span className="font-medium">{t(`cameraMovements.${value}.label`)}</span>
                           <span className="text-xs text-muted-foreground ml-2">
-                            {mov.description}
+                            {t(`cameraMovements.${value}.description`)}
                           </span>
                         </SelectItem>
                       ))}
@@ -230,16 +267,16 @@ export function EditSegmentDialog({
             <div className="space-y-3">
               <h3 className="text-sm font-medium flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-cyan-400" />
-                Generation Prompt
+                {t('edit.generationPrompt')}
               </h3>
               <Textarea
                 value={editedPrompt}
                 onChange={(e) => setEditedPrompt(e.target.value)}
-                placeholder="Enter the video generation prompt..."
+                placeholder={t('edit.promptPlaceholder')}
                 className="min-h-[150px] font-mono text-sm"
               />
               <p className="text-xs text-muted-foreground">
-                Edit the prompt that will be sent to Veo 3.1 for video generation.
+                {t('edit.promptHint')}
               </p>
             </div>
 
@@ -247,7 +284,7 @@ export function EditSegmentDialog({
             <div className="space-y-3">
               <h3 className="text-sm font-medium flex items-center gap-2">
                 <Clock className="w-4 h-4 text-emerald-400" />
-                Duration
+                {t('common.duration')}
               </h3>
               <div className="flex items-center gap-4">
                 <Slider
@@ -263,7 +300,7 @@ export function EditSegmentDialog({
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground">
-                Omni Flash supports 4-10 second clips
+                {t('edit.durationHint')}
               </p>
             </div>
 
@@ -271,7 +308,7 @@ export function EditSegmentDialog({
             <div className="space-y-3">
               <h3 className="text-sm font-medium flex items-center gap-2">
                 <Film className="w-4 h-4 text-purple-400" />
-                Generation Method
+                {t('edit.generationMethod')}
               </h3>
               <div className="flex gap-2">
                 <button
@@ -283,7 +320,7 @@ export function EditSegmentDialog({
                       : "border-border hover:border-muted-foreground/50 text-muted-foreground"
                   )}
                 >
-                  Text-to-Video
+                  {t('edit.t2v')}
                 </button>
                 <button
                   onClick={() => setGenerationMethod('I2V')}
@@ -296,12 +333,12 @@ export function EditSegmentDialog({
                     !sceneFrameUrl && "opacity-50 cursor-not-allowed"
                   )}
                 >
-                  Image-to-Video
+                  {t('edit.i2v')}
                 </button>
               </div>
               {generationMethod === 'I2V' && sceneFrameUrl && (
                 <p className="text-xs text-muted-foreground">
-                  Will use scene frame as the starting image
+                  {t('edit.i2vHint')}
                 </p>
               )}
             </div>
@@ -313,14 +350,14 @@ export function EditSegmentDialog({
             variant="outline"
             onClick={() => onOpenChange(false)}
           >
-            Cancel
+            {tc('actions.cancel')}
           </Button>
           <Button
             onClick={handleSave}
             className="gap-2"
           >
             <Save className="w-4 h-4" />
-            Save Changes
+            {tc('actions.saveChanges')}
           </Button>
         </DialogFooter>
       </DialogContent>

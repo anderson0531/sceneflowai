@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Bell, Clock, Loader2, PencilLine, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
@@ -14,12 +15,6 @@ export function hasAcknowledgedAnalysisHandoff(): boolean {
 function acknowledgeAnalysisHandoff(): void {
   if (typeof window === 'undefined') return
   window.localStorage.setItem(SUPPRESS_KEY, '1')
-}
-
-function formatDuration(seconds?: number): string {
-  if (!seconds || seconds <= 0) return 'a few minutes'
-  if (seconds < 90) return 'about a minute'
-  return `about ${Math.round(seconds / 60)} minutes`
 }
 
 /**
@@ -45,9 +40,17 @@ export function BackgroundAnalysisHandoffDialog({
   onConfirm: () => void
   onCancel: () => void
 }) {
+  const t = useTranslations('production.foundation.analysisHandoff')
+  const tc = useTranslations('common.actions')
   const [dontRemind, setDontRemind] = useState(false)
 
   if (!open) return null
+
+  const formatDuration = (seconds?: number): string => {
+    if (!seconds || seconds <= 0) return t('durationFewMinutes')
+    if (seconds < 90) return t('durationAboutMinute')
+    return t('durationAboutMinutes', { count: Math.round(seconds / 60) })
+  }
 
   const confirm = () => {
     if (dontRemind) acknowledgeAnalysisHandoff()
@@ -63,8 +66,8 @@ export function BackgroundAnalysisHandoffDialog({
               <Sparkles className="h-5 w-5 text-cyan-400" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white">Analyze all {sceneCount} scenes</h2>
-              <p className="text-sm text-slate-400">Audience Resonance runs in the background</p>
+              <h2 className="text-lg font-bold text-white">{t('title', { count: sceneCount })}</h2>
+              <p className="text-sm text-slate-400">{t('subtitle')}</p>
             </div>
           </div>
         </div>
@@ -73,23 +76,20 @@ export function BackgroundAnalysisHandoffDialog({
           <div className="flex items-start gap-3">
             <Clock className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
             <p className="text-sm text-slate-300">
-              This takes {formatDuration(estimatedSeconds)} because every scene is scored
-              individually.
+              {t('takesTime', { duration: formatDuration(estimatedSeconds) })}
             </p>
           </div>
           <div className="flex items-start gap-3">
             <PencilLine className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
             <p className="text-sm text-slate-300">
-              You can keep editing while it runs. Analysis only writes its results — it never
-              overwrites your script.
+              {t('keepEditing')}
             </p>
           </div>
           <div className="flex items-start gap-3">
             <Bell className="mt-0.5 h-4 w-4 shrink-0 text-cyan-400" />
             <p className="text-sm text-slate-300">
-              <span className="font-medium text-white">We&apos;ll notify you when it&apos;s ready.</span>{' '}
-              Progress shows at the bottom of the screen, and the result lands in your
-              notifications even if you navigate away.
+              <span className="font-medium text-white">{t('notifyReady')}</span>{' '}
+              {t('notifyDetail')}
             </p>
           </div>
 
@@ -100,13 +100,13 @@ export function BackgroundAnalysisHandoffDialog({
               onChange={(e) => setDontRemind(e.target.checked)}
               className="h-3.5 w-3.5 rounded border-slate-600 bg-slate-800"
             />
-            Don&apos;t remind me again
+            {t('dontRemind')}
           </label>
         </div>
 
         <div className="flex justify-end gap-2 border-t border-slate-800 p-4">
           <Button variant="ghost" onClick={onCancel} disabled={starting}>
-            Cancel
+            {tc('cancel')}
           </Button>
           <Button
             onClick={confirm}
@@ -116,10 +116,10 @@ export function BackgroundAnalysisHandoffDialog({
             {starting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Starting…
+                {t('starting')}
               </>
             ) : (
-              'Start analysis'
+              t('startAnalysis')
             )}
           </Button>
         </div>

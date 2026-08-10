@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Dialog,
   DialogContent,
@@ -90,6 +91,8 @@ export function FilmTreatmentReviewModal({
   script,
   characters = [],
 }: FilmTreatmentReviewModalProps) {
+  const t = useTranslations('production.foundation.filmTreatment')
+  const tc = useTranslations('common.actions')
   const [showFullTreatment, setShowFullTreatment] = useState(false)
 
   if (!filmTreatmentVariant) {
@@ -99,19 +102,19 @@ export function FilmTreatmentReviewModal({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Film className="w-5 h-5 text-sf-primary" />
-              Film Treatment Review
+              {t('title')}
             </DialogTitle>
             <DialogDescription>
-              No film treatment found for this project
+              {t('noTreatment')}
             </DialogDescription>
           </DialogHeader>
           <div className="py-8 text-center text-gray-500">
             <AlertCircle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-            <p>Generate a film treatment in the Blueprint phase first.</p>
+            <p>{t('generateFirst')}</p>
           </div>
           <div className="flex justify-end">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Close
+              {tc('close')}
             </Button>
           </div>
         </DialogContent>
@@ -138,10 +141,10 @@ export function FilmTreatmentReviewModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Film className="w-5 h-5 text-sf-primary" />
-            Film Treatment Review
+            {t('title')}
           </DialogTitle>
           <DialogDescription>
-            Verify your script aligns with the approved treatment
+            {t('description')}
           </DialogDescription>
         </DialogHeader>
 

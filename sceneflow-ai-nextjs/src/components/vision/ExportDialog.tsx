@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,8 @@ export function ExportDialog({
   onExportStoryboard,
   onExportSceneDirection,
 }: ExportDialogProps) {
+  const t = useTranslations('production.export.document')
+
   const handleExportScript = () => {
     onExportScript()
     onOpenChange(false)
@@ -45,9 +48,9 @@ export function ExportDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Export Document</DialogTitle>
+          <DialogTitle>{t('title')}</DialogTitle>
           <DialogDescription>
-            Choose which document to export:
+            {t('description')}
           </DialogDescription>
         </DialogHeader>
         
@@ -61,9 +64,9 @@ export function ExportDialog({
             <div className="flex items-start gap-3 w-full">
               <FileText className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
               <div className="text-left flex-1">
-                <div className="font-medium text-white">Script</div>
+                <div className="font-medium text-white">{t('script')}</div>
                 <div className="text-sm text-gray-400 mt-0.5">
-                  Professional Script format
+                  {t('scriptHint')}
                 </div>
               </div>
             </div>
@@ -78,9 +81,9 @@ export function ExportDialog({
             <div className="flex items-start gap-3 w-full">
               <Image className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
               <div className="text-left flex-1">
-                <div className="font-medium text-white">Storyboard</div>
+                <div className="font-medium text-white">{t('storyboard')}</div>
                 <div className="text-sm text-gray-400 mt-0.5">
-                  Visual storyboard with images
+                  {t('storyboardHint')}
                 </div>
               </div>
             </div>
@@ -95,9 +98,9 @@ export function ExportDialog({
             <div className="flex items-start gap-3 w-full">
               <Film className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" />
               <div className="text-left flex-1">
-                <div className="font-medium text-white">Scene Direction</div>
+                <div className="font-medium text-white">{t('sceneDirection')}</div>
                 <div className="text-sm text-gray-400 mt-0.5">
-                  Technical scene directions
+                  {t('sceneDirectionHint')}
                 </div>
               </div>
             </div>

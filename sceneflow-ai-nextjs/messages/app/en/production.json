@@ -284,6 +284,296 @@
     "publishVersion": "Publish v{version}"
   },
   "segments": {
+    "addBeat": {
+      "title": "Add Beat",
+      "description": "Build a video generation prompt by selecting shot type, scene elements, and dialogue. Veo 3.1 will generate voiceover and SFX directly from the prompt.",
+      "sceneBadge": "Scene {sceneNumber}",
+      "includeSceneDirection": "Include Scene Direction",
+      "includeSceneDirectionHint": "Select which director's notes to include. Click to enable, then add custom notes if needed.",
+      "clickToAddCustom": "Click to add custom",
+      "editOrAddCustomNotes": "Edit or add custom notes...",
+      "addCustomPlaceholder": "Add {label}...",
+      "directionCamera": "Camera Notes",
+      "directionLighting": "Lighting",
+      "directionScene": "Scene/Environment",
+      "directionTalent": "Talent/Blocking",
+      "directionAudio": "Audio/SFX",
+      "dialogueLines": "Dialogue Lines",
+      "veoSpeechBadge": "Veo 3.1 Speech",
+      "dialogueHint": "Select dialogue for this segment. Click to select, then edit the text to use only portions. Veo 3.1 will generate the character's voice.",
+      "editDialoguePlaceholder": "Edit dialogue text to use in this segment...",
+      "editDialogueHint": "Edit to use only the portion needed for this segment (<12s)",
+      "noDialogue": "No dialogue in this scene",
+      "includeNarration": "Include Narration Voiceover",
+      "narrationText": "Narration Text (editable)",
+      "narrationPlaceholder": "Edit narration text for this segment...",
+      "narrationEditHint": "Edit to use only the portion of narration for this segment",
+      "narratorVoice": "Narrator Voice",
+      "selectedVoice": "Selected: {name}",
+      "autoEstimate": "Auto-estimate",
+      "omniFlashMax": "Omni Flash max: {seconds} seconds per segment",
+      "additionalNotes": "Additional Notes",
+      "additionalNotesPlaceholder": "Any extra direction, visual details, or style notes...",
+      "generationMethod": "Generation Method",
+      "t2v": "Text-to-Video",
+      "i2v": "Image-to-Video",
+      "noSceneImage": "(No scene image)",
+      "promptPreview": "Prompt Preview",
+      "startTime": "Start Time",
+      "endTime": "End Time",
+      "method": "Method",
+      "addAction": "Add Beat"
+    },
+    "edit": {
+      "title": "Edit Segment",
+      "badge": "Scene {sceneNumber} • Beat {beatNumber}",
+      "description": "Modify the segment's prompt, duration, and generation settings.",
+      "generationPrompt": "Generation Prompt",
+      "promptPlaceholder": "Enter the video generation prompt...",
+      "promptHint": "Edit the prompt that will be sent to Veo 3.1 for video generation.",
+      "durationHint": "Omni Flash supports 4-10 second clips",
+      "generationMethod": "Generation Method",
+      "t2v": "Text-to-Video",
+      "i2v": "Image-to-Video",
+      "i2vHint": "Will use scene frame as the starting image"
+    },
+    "delete": {
+      "title": "Delete Beat {number}?",
+      "description": "This action cannot be undone.",
+      "segmentLabel": "Segment",
+      "segmentOf": "#{index} of {total}",
+      "duration": "Duration",
+      "hasFramesWarning": "This segment has generated frames that will be lost.",
+      "lastBeatWarning": "Warning: This is the only segment in the scene. Deleting it will leave the scene without any keyframes.",
+      "shiftWarning": "Deleting this segment will shift all subsequent segments. Timing and sequence indices will be automatically recalculated.",
+      "deleting": "Deleting...",
+      "deleteBeat": "Delete Beat"
+    },
+    "addType": {
+      "title": "Add Beat to Scene {sceneNumber}",
+      "description": "Add a keyframe-based segment for AI video generation. For cinematic elements (titles, transitions, B-roll), use the Cinematic Elements button.",
+      "tabType": "Type",
+      "tabPosition": "Position",
+      "tabPrompt": "Prompt",
+      "defaultDuration": "{seconds}s default",
+      "orDivider": "or",
+      "regenerateAll": "Regenerate All Beats",
+      "regenerateAllCount": "{count} segments",
+      "regenerateAllHint": "Re-analyze the scene and generate new segments with AI. This will replace existing segments.",
+      "insertPosition": "Insert Position",
+      "referenceBeat": "Reference Beat",
+      "selectSegment": "Select segment",
+      "beatOption": "Beat {number} ({duration}s)",
+      "duration": "Duration",
+      "recommendedDuration": "Recommended: {seconds}s for {name}",
+      "preview": "Preview",
+      "newBadge": "NEW",
+      "generatingPrompt": "Generating intelligent prompt with Gemini 2.5...",
+      "aiUnavailable": "AI Unavailable",
+      "usingTemplate": "Using template prompt. {error}",
+      "contextAware": "Context-Aware Prompt",
+      "contextAwareHint": "This prompt was generated based on adjacent scene analysis. Edit as needed.",
+      "generationPrompt": "Generation Prompt",
+      "aiGenerate": "AI Generate",
+      "generating": "Generating...",
+      "reset": "Reset",
+      "promptPlaceholder": "Describe the visual content...",
+      "charCount": "{count} characters • This prompt will be used for frame generation",
+      "presetSettings": "Preset Settings",
+      "addNamed": "Add {name}",
+      "types": {
+        "standard": {
+          "name": "Standard Beat",
+          "description": "Scene segment with start/end keyframes for AI video generation. Full control over shot composition."
+        },
+        "extend": {
+          "name": "Continue Shot",
+          "description": "Continue from previous segment's end frame. Maintains visual continuity across cuts."
+        }
+      },
+      "positions": {
+        "start": {
+          "label": "At Start",
+          "description": "Insert as first segment"
+        },
+        "before": {
+          "label": "Before Selected",
+          "description": "Insert before selected segment"
+        },
+        "after": {
+          "label": "After Selected",
+          "description": "Insert after selected segment"
+        },
+        "end": {
+          "label": "At End",
+          "description": "Append as last segment"
+        }
+      }
+    },
+    "addSpecial": {
+      "title": "Add Cinematic Element",
+      "description": "Add a special video segment. AI will generate an optimized prompt for video generation.",
+      "elementType": "Element Type",
+      "duration": "Duration",
+      "recommendedDuration": "Recommended: {seconds}s for {name}",
+      "videoPrompt": "Video Generation Prompt",
+      "generating": "Generating...",
+      "regenerate": "Regenerate",
+      "reset": "Reset",
+      "generatingCinematic": "Generating cinematic prompt...",
+      "usingTemplate": "Using Template Prompt",
+      "aiUnavailable": "AI unavailable: {error}",
+      "promptPlaceholder": "AI-generated prompt will appear here...",
+      "charCount": "{count} characters • Edit to customize or click Regenerate for a new prompt",
+      "insertAt": "Insert at position {position}",
+      "noKeyframes": "No keyframes",
+      "addNamed": "Add {name}",
+      "types": {
+        "title": {
+          "name": "Title Sequence",
+          "description": "Cinematic title card with bold text overlay. Sets the tone and brands your video."
+        },
+        "match-cut": {
+          "name": "Match Cut Bridge",
+          "description": "Creative transition mimicking a shape or movement between scenes. E.g., spinning wheel → spinning clock."
+        },
+        "establishing": {
+          "name": "Establishing Shot",
+          "description": "Wide drone or crane shot establishing geography, time of day, and mood for a new location."
+        },
+        "broll": {
+          "name": "B-Roll (The Lull)",
+          "description": "Atmospheric visual breather. Close-ups of environmental details that add texture and pacing."
+        },
+        "outro": {
+          "name": "Outro / Credits",
+          "description": "Professional closing sequence. Elegant fade or scroll with production credits aesthetic."
+        }
+      }
+    },
+    "common": {
+      "shotConfiguration": "Shot Configuration",
+      "shotType": "Shot Type",
+      "cameraMovement": "Camera Movement",
+      "lens": "Lens",
+      "duration": "Duration"
+    },
+    "shotTypes": {
+      "extreme-wide": {
+        "label": "Extreme Wide",
+        "description": "Full environment, tiny subjects"
+      },
+      "wide": {
+        "label": "Wide Shot",
+        "description": "Full body, environmental context"
+      },
+      "medium-wide": {
+        "label": "Medium Wide",
+        "description": "Knee to head, some environment"
+      },
+      "medium": {
+        "label": "Medium Shot",
+        "description": "Waist up, conversational"
+      },
+      "medium-close": {
+        "label": "Medium Close-up",
+        "description": "Chest up, emotional focus"
+      },
+      "close-up": {
+        "label": "Close-up",
+        "description": "Face only, intense emotion"
+      },
+      "extreme-close": {
+        "label": "Extreme Close-up",
+        "description": "Eyes, mouth, or detail"
+      },
+      "two-shot": {
+        "label": "Two Shot",
+        "description": "Two characters framed together"
+      },
+      "over-shoulder": {
+        "label": "Over the Shoulder",
+        "description": "Perspective from behind one character"
+      },
+      "pov": {
+        "label": "POV",
+        "description": "Point of view shot"
+      }
+    },
+    "cameraMovements": {
+      "static": {
+        "label": "Static",
+        "description": "Locked-off, no movement"
+      },
+      "push-in": {
+        "label": "Push In",
+        "description": "Slow dolly toward subject"
+      },
+      "pull-out": {
+        "label": "Pull Out",
+        "description": "Slow dolly away from subject"
+      },
+      "pan-left": {
+        "label": "Pan Left",
+        "description": "Camera pivots left"
+      },
+      "pan-right": {
+        "label": "Pan Right",
+        "description": "Camera pivots right"
+      },
+      "tilt-up": {
+        "label": "Tilt Up",
+        "description": "Camera angles upward"
+      },
+      "tilt-down": {
+        "label": "Tilt Down",
+        "description": "Camera angles downward"
+      },
+      "tracking": {
+        "label": "Tracking",
+        "description": "Following subject movement"
+      },
+      "handheld": {
+        "label": "Handheld",
+        "description": "Slight shake, documentary feel"
+      },
+      "crane": {
+        "label": "Crane/Jib",
+        "description": "Vertical movement, sweeping"
+      }
+    },
+    "lenses": {
+      "24mm": {
+        "label": "24mm Wide",
+        "description": "Environmental, expansive"
+      },
+      "35mm": {
+        "label": "35mm Anamorphic",
+        "description": "Cinematic, slight distortion"
+      },
+      "50mm": {
+        "label": "50mm Standard",
+        "description": "Natural perspective"
+      },
+      "85mm": {
+        "label": "85mm Portrait",
+        "description": "Shallow DOF, intimate"
+      },
+      "135mm": {
+        "label": "135mm Telephoto",
+        "description": "Compressed, isolated"
+      }
+    },
+    "generateTitle": "Generate Scene Beats",
+    "regenerateSceneTitle": "Regenerate Scene Beats",
+    "generateDescription": "Configure how segments are created for this scene.",
+    "beatsPreview": "beats",
+    "tabTiming": "Timing",
+    "tabReferences": "References",
+    "tabStyle": "Style",
+    "narrationDriven": "Narration-Driven Segmentation",
+    "narrationDrivenHint": "Create segments that align with and illustrate the narration. Each segment becomes a cinematic backdrop for the voiceover.",
+    "targetBeatDuration": "Target Beat Duration",
     "addTitle": "Add Beat",
     "addNewTitle": "Add New Segment",
     "addDescription": "Create a new visual segment to extend the scene timeline.",
@@ -317,20 +607,149 @@
     "regenerateNextHint": "The Beat Builder will open with controls for total duration, segment count, focus mode, and custom direction.",
     "deleteAndRegenerate": "Delete & Regenerate",
     "regenerate": "Regenerate",
-    "generateTitle": "Generate Scene Beats",
-    "regenerateSceneTitle": "Regenerate Scene Beats",
-    "generateDescription": "Configure how segments are created for this scene.",
-    "beatsPreview": "beats",
-    "tabTiming": "Timing",
-    "tabReferences": "References",
-    "tabStyle": "Style",
-    "narrationDriven": "Narration-Driven Segmentation",
-    "narrationDrivenHint": "Create segments that align with and illustrate the narration. Each segment becomes a cinematic backdrop for the voiceover.",
-    "targetBeatDuration": "Target Beat Duration",
     "addTypeTitle": "Add Special Segment",
     "addTypeDescription": "Choose a segment purpose to insert into the timeline."
   },
   "audio": {
+    "generateAssets": {
+      "title": "Generate Assets",
+      "description": "Select asset types to generate for all scenes",
+      "targetLanguage": "Target Language",
+      "translateBeforeAudio": "Text will be translated from English to {language} before generating audio",
+      "audioTypes": "Audio Types",
+      "selectAll": "Select All",
+      "deselectAll": "Deselect All",
+      "narration": "Narration",
+      "dialogue": "Dialogue",
+      "backgroundMusic": "Background Music",
+      "soundEffects": "Sound Effects (ElevenLabs, ~15 credits each)",
+      "statusComplete": "Complete",
+      "statusPartial": "Partial ({current}/{total})",
+      "statusNotGenerated": "Not generated",
+      "statusGeneratedCount": "{count} generated",
+      "statusNoneGenerated": "None generated",
+      "scenesCount": "{count} scenes",
+      "linesCount": "{count} lines",
+      "sfxCues": "{count, plural, one {# cue} other {# cues}}",
+      "noSfxCues": "No SFX cues in script yet",
+      "generationSummary": "Generation Summary",
+      "summaryNarration": "{count, plural, one {# narration file} other {# narration files}}",
+      "summaryDialogue": "{count, plural, one {# dialogue file} other {# dialogue files}}",
+      "summaryMusic": "{count, plural, one {# music file} other {# music files}}",
+      "summarySfx": "{count, plural, one {# sound effect} other {# sound effects}}",
+      "summaryCharacters": "{count, plural, one {# character asset} other {# character assets}}",
+      "summaryAlreadyGenerated": "({count} already generated)",
+      "summarySceneImages": "{count, plural, one {# scene image} other {# scene images}}",
+      "overwriteWarning": "This will overwrite existing audio files for the selected types",
+      "additionalAssets": "Additional Assets",
+      "characterRefs": "Character Reference Images",
+      "charactersReady": "{count} characters • {ready} ready",
+      "noCharacters": "No characters available",
+      "sceneImages": "Scene Images (concurrent)",
+      "sceneImagesReady": "{count} scenes • {ready} ready • 3 concurrent",
+      "regenerateAllImages": "Regenerate All Images",
+      "regenerateAllImagesHint": "Overwrite existing images (default: only missing)",
+      "stayOpenHint": "Keep this dialog open until narration and dialogue generation finishes. You can switch to background mode at any time.",
+      "narrationProgress": "Narration progress",
+      "dialogueProgress": "Dialogue progress",
+      "musicProgress": "Music progress",
+      "sfxProgress": "Sound effects progress",
+      "characterProgress": "Character progress",
+      "imageProgress": "Scene image progress",
+      "sceneProgress": "Scene {current} / {total}",
+      "secondaryDialogue": "Dialogue {current}/{total}",
+      "secondaryMusic": "Music {current}/{total}",
+      "secondarySfx": "SFX {current}/{total}",
+      "secondaryCharacter": "Character {current}/{total}",
+      "secondaryImage": "Scene Image {current}/{total}",
+      "runInBackground": "Run in background",
+      "generationComplete": "Generation complete",
+      "generating": "Generating...",
+      "generate": "Generate",
+      "generateAgain": "Generate Again"
+    },
+    "assets": {
+      "title": "Audio Assets - Scene {number}",
+      "description": "Manage audio tracks for this scene. Add, remove, or re-sync audio clips from the script.",
+      "totalClips": "{count} total audio clips",
+      "syncFromScript": "Sync from Script",
+      "uploading": "Uploading audio...",
+      "close": "Close",
+      "clipLabel": "{track} Clip",
+      "start": "Start: {time}",
+      "clipDuration": "Duration: {time}",
+      "noClips": "No {track} clips",
+      "uploadAudio": "Upload Audio",
+      "clearAll": "Clear All",
+      "clipCount": "{count, plural, one {# clip} other {# clips}}",
+      "pause": "Pause",
+      "play": "Play",
+      "removeClip": "Remove clip",
+      "tracks": {
+        "voiceover": {
+          "label": "Voiceover / Narration",
+          "description": "Scene narration and voiceover audio"
+        },
+        "dialogue": {
+          "label": "Dialogue",
+          "description": "Character dialogue lines"
+        },
+        "music": {
+          "label": "Music",
+          "description": "Background music and score"
+        },
+        "sfx": {
+          "label": "Sound Effects",
+          "description": "Sound effects and ambience"
+        }
+      }
+    },
+    "alignment": {
+      "title": "Beat {number} Audio Alignment",
+      "description": "Align this segment with dialogue and audio tracks for precise timing.",
+      "beatTiming": "Beat Timing",
+      "aligned": "Aligned",
+      "nearlyAligned": "Nearly Aligned",
+      "misaligned": "Misaligned",
+      "noDialogue": "No Dialogue",
+      "startTime": "Start Time",
+      "endTime": "End Time",
+      "duration": "Duration",
+      "fitToDialogue": "Fit to Dialogue Duration ({duration}s)",
+      "dialogueCoverage": "Dialogue Coverage",
+      "dialogueCoverageHint": "Select which dialogue lines this segment should cover. This helps with timing and character focus.",
+      "noDialogueLines": "No dialogue lines in this scene",
+      "audioAnchor": "Audio Anchor",
+      "anchored": "Anchored",
+      "manual": "Manual",
+      "audioAnchorHint": "Anchor this keyframe to an audio clip for automatic timing alignment in Screening Room.",
+      "anchorTo": "Anchor To",
+      "noneManual": "None (manual)",
+      "narration": "Narration",
+      "descriptionOption": "Description",
+      "dialogueOption": "Dialogue: {label}",
+      "position": "Position",
+      "startOfAudio": "Start of audio",
+      "endOfAudio": "End of audio",
+      "durationMode": "Duration Mode",
+      "modeManual": "Manual",
+      "modeMatchAudio": "Match audio length",
+      "modeFillToNext": "Fill to next anchor",
+      "modeSplitEven": "Split evenly",
+      "offset": "Offset",
+      "modeManualHint": "Duration set manually via imageDuration setting",
+      "modeMatchAudioHint": "Duration matches the anchored audio clip length",
+      "modeFillToNextHint": "Duration extends to the next anchor point or scene end",
+      "modeSplitEvenHint": "Duration split evenly with other keyframes on same audio",
+      "narrationAudio": "Narration Audio",
+      "sceneNarration": "Scene narration: {duration}s",
+      "startsAt": "Starts at {time}s",
+      "alignmentTips": "Alignment Tips:",
+      "tip1": "Assign dialogue lines that should be visible during this segment",
+      "tip2": "Use \"Fit to Dialogue\" to match segment duration to audio",
+      "tip3": "Enable \"Snap\" in timeline to align segment edges to audio boundaries",
+      "saveAlignment": "Save Alignment"
+    },
     "assetsTitle": "Audio Assets - Scene {number}",
     "assetsDescription": "Manage audio tracks for this scene. Add, remove, or re-sync audio clips from the script.",
     "totalClips": "{count} total audio clips",
@@ -373,20 +792,53 @@
     "generationComplete": "Generation complete"
   },
   "export": {
-    "title": "Export Document",
-    "description": "Choose which document to export:",
-    "script": "Script",
-    "scriptHint": "Professional Script format",
-    "storyboard": "Storyboard",
-    "storyboardHint": "Visual storyboard with images",
-    "sceneDirection": "Scene Direction",
-    "sceneDirectionHint": "Technical scene directions",
-    "streamTitle": "Export Stream",
-    "streamDescription": "Scene {number} — Fast (WebM) for drafts, Broadcast (MP4) for delivery, or Cloud for long scenes.",
-    "videoSequence": "Video Sequence ({count} Beats)",
-    "unmuteAll": "Unmute All",
-    "muteAll": "Mute All",
-    "beatLabel": "Beat {number}"
+    "document": {
+      "title": "Export Document",
+      "description": "Choose which document to export:",
+      "script": "Script",
+      "scriptHint": "Professional Script format",
+      "storyboard": "Storyboard",
+      "storyboardHint": "Visual storyboard with images",
+      "sceneDirection": "Scene Direction",
+      "sceneDirectionHint": "Technical scene directions"
+    },
+    "stream": {
+      "title": "Export Stream",
+      "description": "Scene {number} — Fast (WebM) for drafts, Broadcast (MP4) for delivery, or Cloud for long scenes.",
+      "videoSequence": "Video Sequence ({count} Beats)",
+      "unmuteAll": "Unmute All",
+      "muteAll": "Mute All",
+      "beatLabel": "Beat {number}",
+      "noRenderedSegments": "No rendered segments available",
+      "beatsNotRendered": "{count, plural, one {# beat} other {# beats}} not yet rendered",
+      "audioTracksTiming": "Audio Tracks & Timing",
+      "narration": "Narration",
+      "dialogue": "Dialogue",
+      "backgroundMusic": "Background Music",
+      "soundEffects": "Sound Effects",
+      "outputResolution": "Output Resolution",
+      "statusPreparing": "Preparing render job...",
+      "statusUploading": "Uploading job specification...",
+      "statusRendering": "Rendering video...",
+      "statusComplete": "Render complete!",
+      "statusError": "Render failed",
+      "videoReady": "Video ready for download",
+      "downloadMp4": "Download MP4",
+      "rendering": "Rendering...",
+      "renderScene": "Render Scene"
+    },
+    "videoEditor": {
+      "title": "Video Editor",
+      "tabSmartPrompt": "Smart Prompt",
+      "tabEditVideo": "Edit Video",
+      "tabExtendVideo": "Extend Video",
+      "duration": "Duration",
+      "resolution": "Resolution",
+      "aspect": "Aspect",
+      "footerHint": "Configure camera, performance, and style for optimal results",
+      "generating": "Generating...",
+      "generateVideo": "Generate Video"
+    }
   },
   "direction": {
     "promptDirection": {
@@ -472,28 +924,336 @@
       }
     },
     "director": {
-      "title": "Director Console",
-      "description": "Configure generation settings before rendering video segments."
+      "title": "Generate Video: Beat {number}",
+      "description": "Review and customize generation parameters before rendering.",
+      "tabTextToVideo": "Text-to-Video",
+      "tabTextToVideoShort": "T2V",
+      "tabImageToVideo": "Image-to-Video",
+      "tabImageToVideoShort": "I2V",
+      "tabReference": "Reference",
+      "tabReferenceShort": "REF",
+      "tabExtend": "Extend",
+      "tabExtendShort": "EXT",
+      "generateVideo": "Generate Video",
+      "resetToSegmentDialogue": "Reset to segment dialogue",
+      "frameFirstTitle": "Frame-First Workflow:",
+      "frameFirstBody": "Generate keyframes in the Frame step for better character consistency. Text-to-Video is available but may result in character drift.",
+      "disabledNeedStartFrame": "Generate a Start Frame first (Frame step)",
+      "disabledNeedPrevious": "Generate the previous part first or render a source video"
     },
     "framePrompt": {
-      "title": "Frame Prompt",
-      "description": "Review and edit the prompt used to generate this frame."
+      "title": "Generate Frame",
+      "titlePlural": "Generate Frames",
+      "beatBadge": "Beat {number}",
+      "startEnd": "Start + End",
+      "startFrame": "start Frame",
+      "endFrame": "end Frame",
+      "endDescription": "End keyframes use a directed edit of the segment's start frame image so cast, wardrobe, and geography stay aligned — avoiding unrelated full renders that confuse video models.",
+      "tabVisualSetup": "Visual Setup",
+      "tabCustomPrompt": "Custom Prompt",
+      "characterRefsActive": "Character References Active",
+      "characterRefsHint": "For best results with character references, use Close-Up or Medium Shot framing. Wide shots make characters too small for facial recognition.",
+      "contentAwareEnd": "Content-aware end (edit from start)",
+      "contentAwareEndHint": "The end image is generated by editing the segment's start frame after this dialogue/action plays — expressions and blocking evolve while scene continuity stays locked.",
+      "generating": "Generating...",
+      "generateFrame": "Generate Frame",
+      "generateFrames": "Generate Frames"
+    },
+    "preVis": {
+      "title": "Direct — {label}",
+      "description": "Scene {number} · Guided prompt builder with character and wardrobe references.",
+      "matchingNotes": "Reference matching notes",
+      "tabVisualSetup": "Visual Setup",
+      "tabCustomPrompt": "Custom Prompt",
+      "wardrobePlaceholder": "Full wardrobe description from reference library…",
+      "promptPlaceholder": "Full image generation prompt…",
+      "negativePlaceholder": "Negative prompt…",
+      "generating": "Generating…",
+      "generateWithDirect": "Generate with Direct"
     }
   },
   "foundation": {
-    "changeArtStyleTitle": "Change Art Style",
-    "changeArtStyleDescription": "Changing your art style requires a Blueprint reimagine. SceneFlow will optimize your script for the new aesthetic.",
-    "changeAspectRatioTitle": "Change Aspect Ratio",
-    "changeAspectRatioDescription": "Changing aspect ratio requires a Blueprint reimagine. Scene directions and framing will be rebuilt for the new format.",
-    "loseEditsTitle": "You will lose manual Production edits:",
-    "loseScriptTweaks": "Script line tweaks not yet locked",
-    "loseStoryboard": "Storyboard frames and generated assets",
-    "loseBeatAdjustments": "Beat-level production adjustments",
-    "artStyle": "Art style",
-    "aspectRatio": "Aspect ratio",
-    "reimagineInBlueprint": "Reimagine in Blueprint"
+    "reimagine": {
+      "changeArtStyleTitle": "Change Art Style",
+      "changeArtStyleDescription": "Changing your art style requires a Blueprint reimagine. SceneFlow will optimize your script for the new aesthetic.",
+      "changeAspectRatioTitle": "Change Aspect Ratio",
+      "changeAspectRatioDescription": "Changing aspect ratio requires a Blueprint reimagine. Scene directions and framing will be rebuilt for the new format.",
+      "loseEditsTitle": "You will lose manual Production edits:",
+      "loseScriptTweaks": "Script line tweaks not yet locked",
+      "loseStoryboard": "Storyboard frames and generated assets",
+      "loseBeatAdjustments": "Beat-level production adjustments",
+      "artStyle": "Art style",
+      "aspectRatio": "Aspect ratio",
+      "reimagineInBlueprint": "Reimagine in Blueprint"
+    },
+    "optimizeScene": {
+      "title": "Optimize Scene {number}",
+      "score": "Score:",
+      "pacing": "Pacing: {value}",
+      "tension": "Tension: {value}",
+      "character": "Character: {value}",
+      "visual": "Visual: {value}",
+      "aiRecommendations": "AI Recommendations ({count})",
+      "customInstructions": "Custom Instructions",
+      "stop": "Stop",
+      "voice": "Voice",
+      "placeholder": "Add any specific instructions for improving this scene...",
+      "selectedCount": "{count, plural, one {# optimization} other {# optimizations}} selected",
+      "selectHint": "Select optimizations or add instructions",
+      "applying": "Applying...",
+      "applyRecommendations": "Apply Recommendations"
+    },
+    "referenceLibrary": {
+      "title": "Reference Library"
+    },
+    "beatReferences": {
+      "title": "Review references — Scene {number}",
+      "description": "SceneFlow auto-selected references for this beat. Confirm or adjust before generating.",
+      "beatKindAction": "Action",
+      "beatKindNarration": "Narration",
+      "beatKindDialogue": "Dialogue",
+      "beatLabel": "Beat: {kind}",
+      "autoSelected": "Auto-selected: {summary}",
+      "locationMatchedAssignment": "Location matched from scene assignment",
+      "locationMatchedHeading": "Location matched from scene heading",
+      "locationReference": "Location reference",
+      "selectedCount": "{count} selected",
+      "saveSelection": "Save selection",
+      "generating": "Generating…",
+      "generateFrame": "Generate frame"
+    },
+    "analysisHandoff": {
+      "title": "Analyze all {count} scenes",
+      "subtitle": "Audience Resonance runs in the background",
+      "durationFewMinutes": "a few minutes",
+      "durationAboutMinute": "about a minute",
+      "durationAboutMinutes": "about {count} minutes",
+      "takesTime": "This takes {duration} because every scene is scored individually.",
+      "keepEditing": "You can keep editing while it runs. Analysis only writes its results — it never overwrites your script.",
+      "notifyReady": "We'll notify you when it's ready.",
+      "notifyDetail": "Progress shows at the bottom of the screen, and the result lands in your notifications even if you navigate away.",
+      "dontRemind": "Don't remind me again",
+      "starting": "Starting…",
+      "startAnalysis": "Start analysis"
+    },
+    "filmTreatment": {
+      "title": "Film Treatment Review",
+      "noTreatment": "No film treatment found for this project",
+      "generateFirst": "Generate a film treatment in the Blueprint phase first.",
+      "description": "Verify your script aligns with the approved treatment"
+    }
   },
   "retakeExtra": {
+    "intelligentRetake": {
+      "title": "Intelligent Retake",
+      "description": "Describe the correction. We will route a frame edit, prompt rewrite, or both.",
+      "whatToFix": "What should we fix?",
+      "fixPlaceholder": "Describe what to fix, e.g. 'remove the coffee cup on the table'",
+      "analyzing": "Analyzing…",
+      "analyze": "Analyze",
+      "viewFullPrompt": "View full prompt",
+      "fixStartingFrame": "Fix the starting frame",
+      "fixStartingFrameHint": "Edit the frame-locked start image before regenerating.",
+      "frameEditPlaceholder": "Frame edit instruction",
+      "applyPromptChanges": "Apply prompt changes",
+      "applyPromptChangesHint": "Use the revised prompt and negative additions.",
+      "noPromptChanges": "No prompt changes suggested.",
+      "retaking": "Retaking…",
+      "approveAndRetake": "Approve & Retake",
+      "clipReferenceAlt": "Clip reference",
+      "anomalyFrame": "In the starting frame",
+      "anomalyMotion": "Introduced in motion",
+      "anomalyBoth": "Frame and motion",
+      "anomalyUnknown": "Origin unclear"
+    },
+    "regenerateBeats": {
+      "title": "Regenerate Beats",
+      "description": "Clear all segments and return to the Beat Builder to start fresh.",
+      "beats": "Beats",
+      "totalDuration": "Total Duration",
+      "anchoredFrames": "Anchored Frames",
+      "anchoredCount": "{anchored} / {total}",
+      "assetsWarning": "Warning: This will delete all segments including generated keyframes and video assets. This action cannot be undone.",
+      "emptyWarning": "All current segments will be removed. You'll be taken to the Beat Builder to configure and regenerate with new settings.",
+      "nextHint": "The Beat Builder will open with controls for total duration, segment count, focus mode, and custom direction.",
+      "deleteAndRegenerate": "Delete & Regenerate",
+      "regenerate": "Regenerate"
+    },
+    "keyframeGeneration": {
+      "title": "Keyframe Generation Settings",
+      "description": "Configure how segments are created and aligned with your script and audio.",
+      "noDescription": "No description available",
+      "audioBadge": "{duration}s audio",
+      "existingWarning": "{count, plural, one {# existing segment} other {# existing segments}} will be replaced",
+      "manualEditsSuffix": " ({count} with manual edits)",
+      "tabAlignment": "Alignment & Pacing",
+      "tabDirection": "Scene Direction",
+      "audioAlignment": "Audio Alignment",
+      "narrationDriven": "Narration-Driven",
+      "narrationDrivenHint": "Align cuts to narration beats",
+      "dialogueDriven": "Dialogue-Driven",
+      "dialogueDrivenHint": "Align cuts to dialogue",
+      "pacingStyle": "Pacing Style",
+      "beatCount": "Beat Count",
+      "auto": "Auto",
+      "manual": "Manual",
+      "basedOnPacing": "Based on {pacing} pacing & {basis}",
+      "audioBasis": "{duration}s audio",
+      "durationBasis": "{duration}s duration",
+      "segmentsCount": "{count} segments",
+      "advancedOptions": "Advanced Options",
+      "shotVariety": "Shot Variety",
+      "varietyMinimal": "Minimal - Consistent framing",
+      "varietyBalanced": "Balanced - Mix of shots",
+      "varietyHigh": "High - Dynamic variety",
+      "preserveManualEdits": "Preserve Manual Edits",
+      "editedPromptsFound": "{count} edited prompt(s) found",
+      "targetDuration": "Target Duration (seconds)",
+      "directionOverrides": "Scene Direction Overrides",
+      "directionOverridesHint": "These settings influence how AI generates prompts for each segment. Choose \"Varied\" to let AI decide per-segment.",
+      "primaryShotType": "Primary Shot Type",
+      "cameraMovement": "Camera Movement",
+      "lightingMood": "Lighting Mood",
+      "atmosphere": "Atmosphere",
+      "footerSummary": "{count} segments • {duration}s",
+      "generating": "Generating...",
+      "regenerateKeyframes": "Regenerate Keyframes",
+      "generateKeyframes": "Generate Keyframes",
+      "pacing": {
+        "slow": {
+          "label": "Slow & Contemplative",
+          "description": "Longer segments (6-8s), minimal cuts"
+        },
+        "moderate": {
+          "label": "Moderate",
+          "description": "Balanced pacing (4-6s segments)"
+        },
+        "fast": {
+          "label": "Fast & Dynamic",
+          "description": "Quick cuts (3-4s segments)"
+        },
+        "dynamic": {
+          "label": "Dynamic (Audio-Matched)",
+          "description": "Varies based on narration/dialogue beats"
+        }
+      },
+      "shotTypes": {
+        "wide": {
+          "label": "Wide Shot",
+          "description": "Establish space & context"
+        },
+        "medium": {
+          "label": "Medium Shot",
+          "description": "Balance subject & environment"
+        },
+        "close-up": {
+          "label": "Close-Up",
+          "description": "Focus on emotion & detail"
+        },
+        "extreme-close-up": {
+          "label": "Extreme Close-Up",
+          "description": "Dramatic emphasis"
+        },
+        "two-shot": {
+          "label": "Two-Shot",
+          "description": "Characters in conversation"
+        },
+        "over-the-shoulder": {
+          "label": "Over the Shoulder",
+          "description": "POV in dialogue"
+        },
+        "varied": {
+          "label": "Varied (AI Decides)",
+          "description": "Let AI pick per segment"
+        }
+      },
+      "cameraMovements": {
+        "static": {
+          "label": "Static",
+          "description": "No movement, stable frame"
+        },
+        "pan": {
+          "label": "Pan",
+          "description": "Horizontal sweep"
+        },
+        "tilt": {
+          "label": "Tilt",
+          "description": "Vertical movement"
+        },
+        "dolly": {
+          "label": "Dolly",
+          "description": "Move toward/away from subject"
+        },
+        "tracking": {
+          "label": "Tracking",
+          "description": "Follow subject movement"
+        },
+        "handheld": {
+          "label": "Handheld",
+          "description": "Naturalistic motion"
+        },
+        "varied": {
+          "label": "Varied (AI Decides)",
+          "description": "Mix of movements"
+        }
+      },
+      "lighting": {
+        "natural": {
+          "label": "Natural",
+          "description": "Realistic, soft lighting"
+        },
+        "dramatic": {
+          "label": "Dramatic",
+          "description": "High contrast, shadows"
+        },
+        "soft": {
+          "label": "Soft/Diffused",
+          "description": "Gentle, flattering light"
+        },
+        "noir": {
+          "label": "Noir",
+          "description": "Dark, mysterious, low-key"
+        },
+        "golden": {
+          "label": "Golden Hour",
+          "description": "Warm, sunset/sunrise tones"
+        },
+        "cold": {
+          "label": "Cold/Blue",
+          "description": "Cool, stark, clinical"
+        }
+      },
+      "atmospheres": {
+        "neutral": {
+          "label": "Neutral",
+          "description": "Standard mood"
+        },
+        "tense": {
+          "label": "Tense",
+          "description": "Suspenseful, on-edge"
+        },
+        "serene": {
+          "label": "Serene",
+          "description": "Peaceful, calm"
+        },
+        "energetic": {
+          "label": "Energetic",
+          "description": "Dynamic, exciting"
+        },
+        "melancholic": {
+          "label": "Melancholic",
+          "description": "Sad, reflective"
+        },
+        "mysterious": {
+          "label": "Mysterious",
+          "description": "Intriguing, secretive"
+        },
+        "hopeful": {
+          "label": "Hopeful",
+          "description": "Optimistic, uplifting"
+        }
+      }
+    },
     "intelligentTitle": "Intelligent Retake",
     "intelligentDescription": "Describe the correction. We will route a frame edit, prompt rewrite, or both.",
     "whatToFix": "What should we fix?",

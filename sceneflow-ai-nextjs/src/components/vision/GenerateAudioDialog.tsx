@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useMemo, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Dialog,
   DialogContent,
@@ -68,6 +69,8 @@ export function GenerateAudioDialog({
   mode = 'foreground',
   onRunInBackground,
 }: GenerateAudioDialogProps) {
+  const t = useTranslations('production.audio.generateAssets')
+  const tc = useTranslations('common')
   // Language selection for multi-language TTS support
   const [selectedLanguage, setSelectedLanguage] = useState('en')
   const [audioTypes, setAudioTypes] = useState({
@@ -197,23 +200,38 @@ export function GenerateAudioDialog({
     switch (generationProgress.phase) {
       case 'dialogue':
         return generationProgress.totalDialogue > 0
-          ? `Dialogue ${generationProgress.currentDialogue}/${generationProgress.totalDialogue}`
+          ? t('secondaryDialogue', {
+              current: generationProgress.currentDialogue,
+              total: generationProgress.totalDialogue,
+            })
           : null
       case 'music':
         return generationProgress.totalMusic > 0
-          ? `Music ${generationProgress.currentMusic}/${generationProgress.totalMusic}`
+          ? t('secondaryMusic', {
+              current: generationProgress.currentMusic,
+              total: generationProgress.totalMusic,
+            })
           : null
       case 'sfx':
         return generationProgress.totalSfx > 0
-          ? `SFX ${generationProgress.currentSfx}/${generationProgress.totalSfx}`
+          ? t('secondarySfx', {
+              current: generationProgress.currentSfx,
+              total: generationProgress.totalSfx,
+            })
           : null
       case 'characters':
         return generationProgress.totalCharacters > 0
-          ? `Character ${generationProgress.currentCharacter}/${generationProgress.totalCharacters}`
+          ? t('secondaryCharacter', {
+              current: generationProgress.currentCharacter,
+              total: generationProgress.totalCharacters,
+            })
           : null
       case 'images':
         return generationProgress.totalImages > 0
-          ? `Scene Image ${generationProgress.currentImage}/${generationProgress.totalImages}`
+          ? t('secondaryImage', {
+              current: generationProgress.currentImage,
+              total: generationProgress.totalImages,
+            })
           : null
       default:
         return null
@@ -226,10 +244,10 @@ export function GenerateAudioDialog({
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-blue-400" />
-            Generate Assets
+            {t('title')}
           </DialogTitle>
           <DialogDescription className="text-gray-300">
-            Select asset types to generate for all scenes
+            {t('description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -238,12 +256,12 @@ export function GenerateAudioDialog({
             <div className="space-y-3 rounded-lg border border-blue-800 bg-blue-900/20 p-4">
               <div className="flex items-center justify-between text-sm text-blue-200">
                 <span>
-                  {generationProgress.phase === 'narration' && 'Narration progress'}
-                  {generationProgress.phase === 'dialogue' && 'Dialogue progress'}
-                  {generationProgress.phase === 'music' && 'Music progress'}
-                  {generationProgress.phase === 'sfx' && 'Sound effects progress'}
-                  {generationProgress.phase === 'characters' && 'Character progress'}
-                  {generationProgress.phase === 'images' && 'Scene image progress'}
+                  {generationProgress.phase === 'narration' && t('narrationProgress')}
+                  {generationProgress.phase === 'dialogue' && t('dialogueProgress')}
+                  {generationProgress.phase === 'music' && t('musicProgress')}
+                  {generationProgress.phase === 'sfx' && t('sfxProgress')}
+                  {generationProgress.phase === 'characters' && t('characterProgress')}
+                  {generationProgress.phase === 'images' && t('imageProgress')}
                 </span>
                 <span>{progressPercent}%</span>
               </div>
@@ -258,7 +276,10 @@ export function GenerateAudioDialog({
                 <div className="flex flex-wrap gap-3 text-gray-400">
                   {(generationProgress.totalScenes > 0 && (generationProgress.phase === 'narration' || generationProgress.phase === 'dialogue' || generationProgress.phase === 'music' || generationProgress.phase === 'sfx' || generationProgress.phase === 'images')) && (
                     <span>
-                      Scene {Math.max(1, generationProgress.currentScene)} / {generationProgress.totalScenes}
+                      {t('sceneProgress', {
+                        current: Math.max(1, generationProgress.currentScene),
+                        total: generationProgress.totalScenes,
+                      })}
                     </span>
                   )}
                   {secondaryProgressText && <span>{secondaryProgressText}</span>}
@@ -272,12 +293,12 @@ export function GenerateAudioDialog({
                     onClick={onRunInBackground}
                     className="border-blue-500 text-blue-300 hover:bg-blue-900/40"
                   >
-                    Run in background
+                    {t('runInBackground')}
                   </Button>
                 </div>
               )}
               {isCompleted && (
-                <div className="text-sm font-medium text-green-400">Generation complete</div>
+                <div className="text-sm font-medium text-green-400">{t('generationComplete')}</div>
               )}
             </div>
           )}
@@ -286,7 +307,7 @@ export function GenerateAudioDialog({
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Globe className="w-4 h-4 text-blue-400" />
-              <label className="text-sm font-medium text-gray-200">Target Language</label>
+              <label className="text-sm font-medium text-gray-200">{t('targetLanguage')}</label>
             </div>
             <GroupedLanguageSelector
               value={selectedLanguage}
@@ -296,7 +317,9 @@ export function GenerateAudioDialog({
             />
             {selectedLanguage !== 'en' && (
               <p className="text-xs text-amber-400">
-                ⚡ Text will be translated from English to {SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name} before generating audio
+                ⚡ {t('translateBeforeAudio', {
+                  language: SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name ?? selectedLanguage,
+                })}
               </p>
             )}
           </div>
@@ -304,7 +327,7 @@ export function GenerateAudioDialog({
           {/* Audio Types Selection */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-200">Audio Types</label>
+              <label className="text-sm font-medium text-gray-200">{t('audioTypes')}</label>
               <Button
                 variant="ghost"
                 size="sm"
@@ -312,7 +335,7 @@ export function GenerateAudioDialog({
                 className="text-xs h-7 text-blue-400 hover:text-blue-300"
                 disabled={isRunning}
               >
-                {allSelected ? 'Deselect All' : 'Select All'}
+                {allSelected ? t('deselectAll') : t('selectAll')}
               </Button>
             </div>
             
@@ -330,13 +353,13 @@ export function GenerateAudioDialog({
                   htmlFor="narration"
                   className="flex-1 text-sm text-gray-200 cursor-pointer"
                 >
-                  <div className="font-medium">Narration</div>
+                  <div className="font-medium">{t('narration')}</div>
                   <div className="text-xs text-gray-400">
-                    {totalScenes} scenes • {audioStatus.narrationCount === totalScenes 
-                      ? '✅ Complete' 
+                    {t('scenesCount', { count: totalScenes })} • {audioStatus.narrationCount === totalScenes 
+                      ? `✅ ${t('statusComplete')}` 
                       : audioStatus.narrationCount > 0 
-                      ? `⚠️ Partial (${audioStatus.narrationCount}/${totalScenes})` 
-                      : '❌ Not generated'}
+                      ? `⚠️ ${t('statusPartial', { current: audioStatus.narrationCount, total: totalScenes })}` 
+                      : `❌ ${t('statusNotGenerated')}`}
                   </div>
                 </label>
               </div>
@@ -354,13 +377,13 @@ export function GenerateAudioDialog({
                   htmlFor="dialogue"
                   className="flex-1 text-sm text-gray-200 cursor-pointer"
                 >
-                  <div className="font-medium">Dialogue</div>
+                  <div className="font-medium">{t('dialogue')}</div>
                   <div className="text-xs text-gray-400">
-                    {totalDialogueLines} lines • {audioStatus.dialogueCount === totalDialogueLines 
-                      ? '✅ Complete' 
+                    {t('linesCount', { count: totalDialogueLines })} • {audioStatus.dialogueCount === totalDialogueLines 
+                      ? `✅ ${t('statusComplete')}` 
                       : audioStatus.dialogueCount > 0 
-                      ? `⚠️ Partial (${audioStatus.dialogueCount}/${totalDialogueLines})` 
-                      : '❌ Not generated'}
+                      ? `⚠️ ${t('statusPartial', { current: audioStatus.dialogueCount, total: totalDialogueLines })}` 
+                      : `❌ ${t('statusNotGenerated')}`}
                   </div>
                 </label>
               </div>
@@ -378,11 +401,11 @@ export function GenerateAudioDialog({
                   htmlFor="music"
                   className="flex-1 text-sm text-gray-200 cursor-pointer"
                 >
-                  <div className="font-medium">Background Music</div>
+                  <div className="font-medium">{t('backgroundMusic')}</div>
                   <div className="text-xs text-gray-400">
-                    {totalScenes} scenes • {audioStatus.musicCount > 0 
-                      ? `✅ ${audioStatus.musicCount} generated` 
-                      : '❌ Not generated'}
+                    {t('scenesCount', { count: totalScenes })} • {audioStatus.musicCount > 0 
+                      ? `✅ ${t('statusGeneratedCount', { count: audioStatus.musicCount })}` 
+                      : `❌ ${t('statusNotGenerated')}`}
                   </div>
                 </label>
               </div>
@@ -400,17 +423,17 @@ export function GenerateAudioDialog({
                   htmlFor="sfx"
                   className={`flex-1 text-sm cursor-pointer ${totalSFXCount === 0 ? 'text-gray-500' : 'text-gray-200'}`}
                 >
-                  <div className="font-medium">Sound Effects (ElevenLabs, ~15 credits each)</div>
+                  <div className="font-medium">{t('soundEffects')}</div>
                   <div className="text-xs text-gray-400">
                     {totalSFXCount > 0
-                      ? `${totalSFXCount} cue${totalSFXCount === 1 ? '' : 's'} • ${
+                      ? `${t('sfxCues', { count: totalSFXCount })} • ${
                           audioStatus.sfxCount === 0
-                            ? 'None generated'
+                            ? t('statusNoneGenerated')
                             : audioStatus.sfxCount === totalSFXCount
-                            ? 'Complete'
-                            : `Partial (${audioStatus.sfxCount}/${totalSFXCount})`
+                            ? t('statusComplete')
+                            : t('statusPartial', { current: audioStatus.sfxCount, total: totalSFXCount })
                         }`
-                      : 'No SFX cues in script yet'}
+                      : t('noSfxCues')}
                   </div>
                 </label>
               </div>
@@ -419,33 +442,33 @@ export function GenerateAudioDialog({
 
           {/* Generation Summary */}
           <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-4 space-y-2">
-            <div className="text-sm font-medium text-blue-300">Generation Summary</div>
+            <div className="text-sm font-medium text-blue-300">{t('generationSummary')}</div>
             <div className="text-xs text-gray-300 space-y-1">
               {willGenerateNarration && (
-                <div>• {narrationCount} narration file{narrationCount !== 1 ? 's' : ''}</div>
+                <div>• {t('summaryNarration', { count: narrationCount })}</div>
               )}
               {willGenerateDialogue && (
-                <div>• {dialogueCount} dialogue file{dialogueCount !== 1 ? 's' : ''}</div>
+                <div>• {t('summaryDialogue', { count: dialogueCount })}</div>
               )}
               {willGenerateMusic && (
-                <div>• {musicCount} music file{musicCount !== 1 ? 's' : ''}</div>
+                <div>• {t('summaryMusic', { count: musicCount })}</div>
               )}
               {willGenerateSFX && sfxRenderCount > 0 && (
-                <div>• {sfxRenderCount} sound effect{sfxRenderCount !== 1 ? 's' : ''}</div>
+                <div>• {t('summarySfx', { count: sfxRenderCount })}</div>
               )}
               {includeCharacters && (
                 <div>
-                  • {characterCount} character asset{characterCount !== 1 ? 's' : ''}
+                  • {t('summaryCharacters', { count: characterCount })}
                   {characterCount > 0 && charactersWithAssets > 0 && (
-                    <span className="text-gray-500"> ({charactersWithAssets} already generated)</span>
+                    <span className="text-gray-500"> {t('summaryAlreadyGenerated', { count: charactersWithAssets })}</span>
                   )}
                 </div>
               )}
               {includeSceneImages && (
                 <div>
-                  • {totalScenes} scene image{totalScenes !== 1 ? 's' : ''}
+                  • {t('summarySceneImages', { count: totalScenes })}
                   {totalScenes > 0 && scenesWithImages > 0 && (
-                    <span className="text-gray-500"> ({scenesWithImages} already generated)</span>
+                    <span className="text-gray-500"> {t('summaryAlreadyGenerated', { count: scenesWithImages })}</span>
                   )}
                 </div>
               )}
@@ -453,14 +476,14 @@ export function GenerateAudioDialog({
             {willOverwrite && (
               <div className="text-xs text-yellow-400 flex items-center gap-1 mt-2">
                 <AlertCircle className="w-3 h-3" />
-                <span>This will overwrite existing audio files for the selected types</span>
+                <span>{t('overwriteWarning')}</span>
               </div>
             )}
           </div>
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-200">Additional Assets</label>
+              <label className="text-sm font-medium text-gray-200">{t('additionalAssets')}</label>
             </div>
             <div className="space-y-2">
               <div className="flex items-center space-x-3 p-3 bg-gray-800 rounded-lg hover:bg-gray-750">
@@ -474,11 +497,11 @@ export function GenerateAudioDialog({
                   htmlFor="characters"
                   className={`flex-1 text-sm ${characterCount === 0 ? 'text-gray-500' : 'text-gray-200'} cursor-pointer`}
                 >
-                  <div className="font-medium">Character Reference Images</div>
+                  <div className="font-medium">{t('characterRefs')}</div>
                   <div className="text-xs text-gray-400">
                     {characterCount > 0
-                      ? `${characterCount} characters • ${charactersWithAssets} ready`
-                      : 'No characters available'}
+                      ? t('charactersReady', { count: characterCount, ready: charactersWithAssets })
+                      : t('noCharacters')}
                   </div>
                 </label>
               </div>
@@ -497,9 +520,9 @@ export function GenerateAudioDialog({
                   htmlFor="scene-images"
                   className={`flex-1 text-sm ${totalScenes === 0 ? 'text-gray-500' : 'text-gray-200'} cursor-pointer`}
                 >
-                  <div className="font-medium">Scene Images (concurrent)</div>
+                  <div className="font-medium">{t('sceneImages')}</div>
                   <div className="text-xs text-gray-400">
-                    {totalScenes} scenes • {scenesWithImages} ready • 3 concurrent
+                    {t('sceneImagesReady', { count: totalScenes, ready: scenesWithImages })}
                   </div>
                 </label>
               </div>
@@ -519,10 +542,10 @@ export function GenerateAudioDialog({
                   >
                     <div className="font-medium flex items-center gap-1">
                       <AlertCircle className="w-3 h-3" />
-                      Regenerate All Images
+                      {t('regenerateAllImages')}
                     </div>
                     <div className="text-xs text-amber-300/70">
-                      Overwrite existing images (default: only missing)
+                      {t('regenerateAllImagesHint')}
                     </div>
                   </label>
                 </div>
@@ -538,7 +561,7 @@ export function GenerateAudioDialog({
               disabled={isRunning}
             />
             <label htmlFor="stay-open" className="text-xs leading-5 text-gray-300">
-              Keep this dialog open until narration and dialogue generation finishes. You can switch to background mode at any time.
+              {t('stayOpenHint')}
             </label>
           </div>
         </div>
@@ -550,7 +573,7 @@ export function GenerateAudioDialog({
             disabled={Boolean(isRunning)}
             className="border-gray-700 hover:bg-gray-800"
           >
-            {isCompleted ? 'Close' : 'Cancel'}
+            {isCompleted ? tc('actions.close') : tc('actions.cancel')}
           </Button>
           {!isCompleted ? (
             <Button
@@ -561,12 +584,12 @@ export function GenerateAudioDialog({
               {effectiveIsGenerating ? (
                 <>
                   <Loader className="w-4 h-4 mr-2 animate-spin" />
-                  Generating...
+                  {t('generating')}
                 </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 mr-2" />
-                  Generate
+                  {t('generate')}
                 </>
               )}
             </Button>
@@ -577,7 +600,7 @@ export function GenerateAudioDialog({
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               <Sparkles className="w-4 h-4 mr-2" />
-              Generate Again
+              {t('generateAgain')}
             </Button>
           )}
         </DialogFooter>

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import { useTranslations } from 'next-intl'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/Button'
@@ -1271,6 +1272,9 @@ export function VideoEditingDialog({
   onGenerate,
   isGenerating = false
 }: VideoEditingDialogProps) {
+  const t = useTranslations('production.export.videoEditor')
+  const tc = useTranslations('common.actions')
+
   // Tab state - which mode is active
   const [activeTab, setActiveTab] = useState<VideoEditingTab>(initialTab)
   
@@ -1564,7 +1568,7 @@ export function VideoEditingDialog({
         <DialogHeader className="px-5 pt-5 pb-3 border-b border-gray-200 dark:border-gray-700">
           <DialogTitle className="flex items-center gap-2 text-base">
             <Film className="w-4 h-4 text-sf-primary" />
-            Video Editor
+            {t('title')}
           </DialogTitle>
         </DialogHeader>
 
@@ -1577,15 +1581,15 @@ export function VideoEditingDialog({
               <TabsList className="mx-4 mt-4 mb-2 grid grid-cols-3 w-auto">
                 <TabsTrigger value="smart-prompt" className="gap-1.5">
                   <Wand2 className="w-3.5 h-3.5" />
-                  Smart Prompt
+                  {t('tabSmartPrompt')}
                 </TabsTrigger>
                 <TabsTrigger value="edit" className="gap-1.5">
                   <SlidersHorizontal className="w-3.5 h-3.5" />
-                  Edit Video
+                  {t('tabEditVideo')}
                 </TabsTrigger>
                 <TabsTrigger value="extend" className="gap-1.5">
                   <Film className="w-3.5 h-3.5" />
-                  Extend Video
+                  {t('tabExtendVideo')}
                 </TabsTrigger>
               </TabsList>
               
@@ -1682,7 +1686,7 @@ export function VideoEditingDialog({
             <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <label className="text-xs text-gray-500">Duration</label>
+                  <label className="text-xs text-gray-500">{t('duration')}</label>
                   <Select value={String(duration)} onValueChange={(v) => setDuration(Number(v))}>
                     <SelectTrigger className="w-20 h-7 text-xs">
                       <SelectValue />
@@ -1696,7 +1700,7 @@ export function VideoEditingDialog({
                   </Select>
                 </div>
                 <div className="flex items-center gap-2">
-                  <label className="text-xs text-gray-500">Resolution</label>
+                  <label className="text-xs text-gray-500">{t('resolution')}</label>
                   <Select value={resolution} onValueChange={(v) => setResolution(v as '720p' | '1080p')}>
                     <SelectTrigger className="w-20 h-7 text-xs">
                       <SelectValue />
@@ -1708,7 +1712,7 @@ export function VideoEditingDialog({
                   </Select>
                 </div>
                 <div className="flex items-center gap-2">
-                  <label className="text-xs text-gray-500">Aspect</label>
+                  <label className="text-xs text-gray-500">{t('aspect')}</label>
                   <Select value={aspectRatio} onValueChange={(v) => setAspectRatio(v as '16:9' | '9:16')}>
                     <SelectTrigger className="w-20 h-7 text-xs">
                       <SelectValue />
@@ -1728,12 +1732,12 @@ export function VideoEditingDialog({
         <div className="flex items-center justify-between px-5 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <div className="flex items-center gap-2 text-xs text-gray-400">
             <Info className="w-3 h-3" />
-            <span>Configure camera, performance, and style for optimal results</span>
+            <span>{t('footerHint')}</span>
           </div>
           
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={onClose} disabled={isGenerating}>
-              Cancel
+              {tc('cancel')}
             </Button>
             <Button
               size="sm"
@@ -1744,12 +1748,12 @@ export function VideoEditingDialog({
               {isGenerating ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  Generating...
+                  {t('generating')}
                 </>
               ) : (
                 <>
                   <Play className="w-3.5 h-3.5" />
-                  Generate Video
+                  {t('generateVideo')}
                 </>
               )}
             </Button>
