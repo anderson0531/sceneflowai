@@ -186,7 +186,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
       }
     })
     setSegmentAudioSettings(newSettings)
-  }, [segments]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [segments])
 
   // Format duration as mm:ss
   const formatDuration = (seconds: number) => {
@@ -588,11 +588,11 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
           )}
           {clipCount !== undefined && clipCount > 0 && (
             <Badge variant="outline" className="text-xs bg-slate-700/50 text-slate-400 border-slate-600">
-              {clipCount} clips
+              {t('clips', { count: clipCount })}
             </Badge>
           )}
           {disabled && (
-            <span className="text-xs text-slate-600">Not available</span>
+            <span className="text-xs text-slate-600">{t('notAvailable')}</span>
           )}
         </div>
         <Switch
@@ -607,7 +607,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
         <div className="grid grid-cols-2 gap-4">
           {/* Start Time Input */}
           <div className="space-y-1">
-            <label className="text-xs text-slate-500">Start at</label>
+            <label className="text-xs text-slate-500">{t('startAt')}</label>
             <div className="flex items-center gap-1">
               <Input
                 type="number"
@@ -624,7 +624,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
           
           {/* Volume Slider */}
           <div className="space-y-1">
-            <label className="text-xs text-slate-500">Volume</label>
+            <label className="text-xs text-slate-500">{t('volume')}</label>
             <div className="flex items-center gap-2">
               <Slider
                 value={[config.volume * 100]}
@@ -824,9 +824,9 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="720p">720p (1280×720)</SelectItem>
-                <SelectItem value="1080p">1080p (1920×1080)</SelectItem>
-                <SelectItem value="4K">4K (3840×2160)</SelectItem>
+                <SelectItem value="720p">{t('resolution720p')}</SelectItem>
+                <SelectItem value="1080p">{t('resolution1080p')}</SelectItem>
+                <SelectItem value="4K">{t('resolution4k')}</SelectItem>
               </SelectContent>
             </Select>
           </div>

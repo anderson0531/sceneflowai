@@ -233,7 +233,6 @@ export function IntelligentRetakeDialog({
                 preload="metadata"
               />
             ) : (
-              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={previewUrl}
                 alt={t('clipReferenceAlt')}

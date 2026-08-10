@@ -253,7 +253,7 @@ export function PreVisFramePromptDialog({
               {selectedCharacterNames.length > 0 && (
                 <div className="rounded-lg border border-slate-700 bg-slate-800/40 p-3 space-y-2">
                   <p className="text-xs font-medium text-slate-300">
-                    Wardrobe text override (optional — diptych ref image is sent when available)
+                    {t('wardrobeOverride')}
                   </p>
                   {selectedCharacterNames.map((name) => (
                     <div key={name}>
@@ -281,10 +281,10 @@ export function PreVisFramePromptDialog({
                     className="flex items-center gap-2 w-full text-left"
                   >
                     <MapPin className="w-4 h-4 text-cyan-400" />
-                    <h4 className="text-sm font-medium text-slate-200 flex-1">Location reference</h4>
+                    <h4 className="text-sm font-medium text-slate-200 flex-1">{t('locationReference')}</h4>
                     {locationRefId && (
                       <Badge variant="secondary" className="text-[10px] bg-cyan-500/20 text-cyan-300 border-0">
-                        1 selected
+                        {t('oneSelected')}
                       </Badge>
                     )}
                     {locationSectionCollapsed ? (

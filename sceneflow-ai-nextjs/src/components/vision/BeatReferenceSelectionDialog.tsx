@@ -265,7 +265,7 @@ export function BeatReferenceSelectionDialog({
                 {!locationSectionCollapsed && (
                   <>
                     <p className="text-xs text-slate-400">
-                      Pick one environment reference for this beat (used for visual consistency).
+                      {t('pickLocation')}
                     </p>
                     <div className="grid grid-cols-4 gap-2">
                       {locationsWithImages.map((loc) => {
@@ -301,7 +301,7 @@ export function BeatReferenceSelectionDialog({
                                   variant="secondary"
                                   className="text-[8px] bg-cyan-500/80 text-white border-0 px-1 py-0"
                                 >
-                                  Match
+                                  {t('match')}
                                 </Badge>
                               </div>
                             )}

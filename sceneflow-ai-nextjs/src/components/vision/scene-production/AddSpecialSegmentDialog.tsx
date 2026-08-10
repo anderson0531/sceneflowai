@@ -317,7 +317,7 @@ export function AddSpecialSegmentDialog({
     
     // Always generate AI prompt for special segments
     generateAIPrompt()
-  }, [selectedType, open]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedType, open])
   
   // Reset state when dialog closes
   useEffect(() => {

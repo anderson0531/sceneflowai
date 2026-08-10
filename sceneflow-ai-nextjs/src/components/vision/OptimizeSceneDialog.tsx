@@ -289,7 +289,7 @@ export function OptimizeSceneDialog({
             >
               <span className="flex items-center gap-2">
                 <Wand2 className="w-4 h-4 text-blue-500" />
-                Common Optimizations
+                {t('commonOptimizations')}
               </span>
               {showTemplates ? (
                 <ChevronUp className="w-4 h-4" />
