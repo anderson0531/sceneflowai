@@ -27,7 +27,7 @@ describe('keyFeatureVideos', () => {
     }
   })
 
-  it('returns seven locale slots per feature; BYOK English is produced', () => {
+  it('returns seven locale slots per feature; BYOK English and Spanish are produced', () => {
     for (const icon of KEY_FEATURE_ICON_KEYS) {
       const locales = getKeyFeatureVideoLocales(icon)
       expect(locales.map((locale) => locale.id)).toEqual(VIDEO_LOCALE_ORDER)
@@ -40,9 +40,15 @@ describe('keyFeatureVideos', () => {
     expect(byokLocales.find((locale) => locale.id === 'en')?.src).toContain(
       'BYOK-English.mp4'
     )
-    expect(byokLocales.filter((locale) => locale.id !== 'en').every((locale) => !locale.available)).toBe(
-      true
+    expect(byokLocales.find((locale) => locale.id === 'es')?.available).toBe(true)
+    expect(byokLocales.find((locale) => locale.id === 'es')?.src).toContain(
+      'BYOK-Spanish.mp4'
     )
+    expect(
+      byokLocales
+        .filter((locale) => locale.id !== 'en' && locale.id !== 'es')
+        .every((locale) => !locale.available)
+    ).toBe(true)
 
     for (const icon of KEY_FEATURE_ICON_KEYS.filter((key) => key !== 'byok')) {
       expect(hasKeyFeatureVideo(icon)).toBe(false)
