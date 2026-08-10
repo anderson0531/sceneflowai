@@ -7,7 +7,72 @@
     "references": "संदर्भ",
     "timeline": "टाइमलाइन",
     "mixer": "Production Mixer",
-    "directorConsole": "डायरेक्टर कंसोल"
+    "directorConsole": "डायरेक्टर कंसोल",
+    "initializing": "शुरू हो रहा है",
+    "opening": "Production Studio खोलना",
+    "openingShort": "ओपनिंग प्रोडक्शन",
+    "backToBlueprint": "Blueprint पर वापस जाएँ",
+    "blueprintShort": "Blueprint",
+    "productionLabel": "उत्पादन ",
+    "viewsAriaLabel": "Production Studio व्यू",
+    "viewStudio": "स्टूडियो",
+    "viewScreening": "Screening Room",
+    "viewStreams": "धाराएँ। ",
+    "loadingImages": "छवियां लोड की जा रही हैं...",
+    "untitledProject": "अनाम प्रोजेक्ट",
+    "settingUpWorkspace": "अपनी कार्यस्थल सेट अप करना",
+    "loadingMessages": {
+      "message1": "आपका प्रोडक्शन लोड हो रहा है...",
+      "message2": "सीन और स्टोरीबोर्ड को बहाल किया जा रहा है...",
+      "message3": "प्री - विज़ वर्कस्पेस तैयार किया जा रहा है...",
+      "message4": "संदर्भ लाइब्रेरी लोड हो रही है...",
+      "message5": "लगभग तैयार..."
+    },
+    "generating": "जनरेट हो रहा है",
+    "shareScreeningTitle": "Screening Room साझा करें",
+    "shareScreeningDescription": "इस लिंक वाला कोई भी व्यक्ति आपकी Screening Room प्रस्तुति देख सकता है। उन्हें Sceneflow अकाउंट की ज़रूरत नहीं होगी।",
+    "shareBulletView": "दर्शक पूरे ऑडियो और अनुवाद के साथ देख सकते हैं",
+    "shareBulletNoEdit": "वे आपके प्रोजेक्ट को एडिट या डाउनलोड नहीं कर सकते",
+    "shareBulletDisable": "आप इस लिंक को कभी भी बंद कर सकते हैं",
+    "copied": "कॉपी किया गया!",
+    "deleteCharacterTitle": "संवाद के साथ वर्ण हटाएं",
+    "deleteCharacterDescription": "चरित्र \"{name}\" में स्क्रिप्ट में {count, plural, one {# dialogue line} other {# dialogue lines}} है। आप इन संवाद लाइनों के साथ क्या करना चाहेंगे?",
+    "clearCharacterIds": "कैरेक्टर आईडी साफ़ करें",
+    "clearCharacterIdsHint": "डायलॉग लाइनों से कैरेक्टर आईडी हटाएँ। बेहतर फ़ॉलबैक मिलान का उपयोग करके संवाद नाम के अनुसार वर्णों से मेल खाएगा।",
+    "reassignToAnother": "दूसरे कैरेक्टर को फिर से असाइन करें",
+    "reassignToAnotherHint": "सभी डायलॉग लाइनों को एक अलग कैरेक्टर में असाइन करें।",
+    "selectCharacterReassign": "फिर से असाइन करने के लिए कैरेक्टर चुनें",
+    "reassignAndDelete": "फिर से असाइन करें और मिटाएँ",
+    "clearIdsAndDelete": "आईडी साफ़ करें और मिटाएँ",
+    "mergeDuplicatesTitle": "डुप्लिकेट कैरेक्टर मर्ज करें",
+    "mergeDuplicatesDescription": "चुनें कि कौन सा कैरेक्टर रखना है और कौन सा डुप्लिकेट इसमें मर्ज करना है।",
+    "keepThisCharacter": "इस कैरेक्टर को बनाए रखें:",
+    "willBeMerged": "विलय कर दिया जाएगा (डुप्लिकेट):",
+    "noDuplicatesToMerge": "मर्ज करने के लिए कोई डुप्लिकेट नहीं",
+    "mergeDialogueNote": "डुप्लिकेट कैरेक्टर की सभी डायलॉग लाइनें प्राथमिक कैरेक्टर को असाइन की जाएँगी।",
+    "mergeCharacters": "वर्ण मर्ज करें",
+    "hasVoice": "के पास आवाज है",
+    "budgetTitle": "उत्पादन बजट प्रबंधन - {title}",
+    "setBudget": "बजट सेट करें",
+    "budgetAmount": "बजट: {amount}",
+    "importTranslation": "अनुवाद इम्पोर्ट करें",
+    "importTranslationTitle": "{language} अनुवाद इम्पोर्ट करें",
+    "importTranslationDescription": "अपनी अनुवादित स्क्रिप्ट नीचे पेस्ट करें। प्रारूप निर्यात किए गए प्रारूप से मेल खाना चाहिए:",
+    "importTranslationFormat": "[1] TRANSLATED_LABEL: TRANSL",
+    "importTranslationPlaceholder": "अनुवादित स्क्रिप्ट यहाँ पेस्ट करें...",
+    "deleteBeat": "बीट मिटाएँ",
+    "deleteBeatDescription": "क्या आप वाकई इस सेगमेंट को हटाना चाहते हैं? इस कार्रवाई को पूर्ववत नहीं किया जा सकता।",
+    "deleteScene": "सीन हटाएं {number}",
+    "deleteSceneDescription": "यह इस दृश्य और सभी संबंधित संपत्तियों को स्थायी रूप से हटा देगा।",
+    "deleteSceneAction": "सीन मिटाएँ",
+    "assetsRemoved": "ऐसी संपत्तियाँ जिन्हें हटा दिया जाएगा",
+    "assetSceneImage": "सीन इमेज",
+    "assetNarrationAudio": "कथन ऑडियो",
+    "assetDescriptionAudio": "विवरण ऑडियो",
+    "assetDialogueAudio": "संवाद ऑडियो",
+    "assetSceneDirection": "सीन की दिशा",
+    "assetBeats": "{count, plural, one {# beat} other {# beats}}",
+    "assetMusic": "संगीत"
   },
   "script": {
     "generateScript": "स्क्रिप्ट जनरेट करें",
@@ -53,5 +118,1171 @@
     "segmentsGenerated": "सेगमेंट जनरेट किए गए",
     "audioGenerated": "ऑडियो जनरेट किया गया",
     "saveFailed": "आपके बदलाव सेव नहीं किए जा सके"
+  },
+  "express": {
+    "title": "सभी दृश्यों को व्यक्त करें (उन्नत)",
+    "description": "समानांतर में हर दृश्य → के लिए दिशा → ऑडियो प्री - विज़ फ्रेम चलाता है (एक बार में 3 तक)। यह एक लंबी, क्रेडिट - हेवी रन है — चेकपॉइंट के लिए प्रत्येक दृश्य कार्ड पर प्रति - दृश्य एक्सप्रेस की सिफारिश की जाती है।",
+    "audioLanguage": "ऑडियो भाषा",
+    "translateBadge": "अनुवाद",
+    "audioLanguageHint": "{lang} में संवाद और वर्णन उत्पन्न किया जाएगा। अन्य भाषाओं में मौजूदा ऑडियो को अछूता छोड़ दिया गया है।",
+    "pipelineTitle": "पाइपलाइन (प्रति दृश्य)",
+    "stepDirection": "1. दिशा",
+    "stepAudio": "2. ऑडियो",
+    "stepImage": "3. छवि",
+    "pipelineSceneCount": "{done}/{total} दृश्य",
+    "pipelineDialogueLines": "{count} डायलॉग लाइनें",
+    "pipelineImageCount": "{establishing} स्थापना + {frames} प्री - विज़ फ़्रेम",
+    "backgroundMusic": "बैकग्राउंड म्यूज़िक",
+    "musicScenesHaveDescriptions": "{count} दृश्यों में संगीत विवरण हैं",
+    "musicNoDescriptions": "किसी भी दृश्य में संगीत का विवरण नहीं है",
+    "storyboardQualityDraft": "स्टोरीबोर्ड की क्वालिटी: ड्राफ़्ट",
+    "storyboardQualityDraftHint": "समीक्षा के लिए तेज़ लेआउट फ़्रेम तैयार करता है। हाई - रिज़ॉल्यूशन फ़ोटोरियलिस्टिक एनिमेटिक और वीडियो जनरेशन के लिए बाद में फ़ाइनल फ़्रेम का उपयोग करें।",
+    "soundEffects": "ध्वनि प्रभाव",
+    "soundEffectsHint": "उत्पादन के दौरान वीईओ वीडियो सेगमेंट में ध्वनि प्रभाव शामिल किए जाते हैं। Animatic पूर्वावलोकन केवल कथन, संवाद और वैकल्पिक संगीत का उपयोग करता है।",
+    "onlyMissingFrames": "सिर्फ़ फ़्रेम मौजूद नहीं हैं",
+    "onlyMissingFramesHint": "उन फ़्रेमों को छोड़ दें जिनमें पहले से ही इमेज हैं।",
+    "regenerateExisting": "मौजूदा को फिर से जनरेट करें",
+    "regenerateExistingHint": "हर चरण की फिर से गणना करें, भले ही दिशा, ऑडियो या छवि पहले से मौजूद हो।",
+    "artStyle": "कला शैली",
+    "artStyleLockedHint": "Blueprint में बंद - फिर से कल्पना करने के लिए वहां नींव बदलें।",
+    "artStyleUnlockedHint": "वीडियो जनरेशन के माध्यम से सभी पूर्व - विज़ फ्रेम और प्रवाह पर लागू।",
+    "estimatedCost": "अनुमानित लागत",
+    "costImages": "चित्र: {credits} क्रेडिट ({frames} फ्रेम × {perFrame})",
+    "costAudio": "ऑडियो: ~{credits} क्रेडिट",
+    "costMusic": "संगीत: {credits} क्रेडिट",
+    "costTotal": "कुल: ~{credits} क्रेडिट",
+    "costEstimateDisclaimer": "केवल अनुमान। वास्तविक उपयोग संवाद की लंबाई और उन चरणों की संख्या पर निर्भर करता है जिन्हें वास्तव में चलाने की आवश्यकता है।",
+    "running": "चल रहा है",
+    "generate": "उत्पन्न करें"
+  },
+  "expressAudio": {
+    "title": "एक्सप्रेस ऑडियो",
+    "description": "इस दृश्य के लिए एक साथ संवाद, ध्वनि प्रभाव और संगीत उत्पन्न करें। डायलॉग टीटीएस का उपयोग करता है, एक्शन बीट्स वीईओ नेटिव ऑडियो का उपयोग करता है, और संगीत लिरिया का उपयोग करता है।",
+    "scope": "दायरा ",
+    "scopeMissing": "सिर्फ़ मौजूद नहीं है",
+    "scopeAll": "सभी (फिर से जनरेट करें)",
+    "scopeAllWarning": "चयनित आइटम के लिए मौजूदा ऑडियो को हटा दिया जाएगा और फिर से बनाया जाएगा।",
+    "audioToGenerate": "जनरेट करने के लिए ऑडियो",
+    "noAudioItems": "इस दृश्य के लिए कोई ऑडियो आइटम उपलब्ध नहीं है।",
+    "statusReady": "तैयार",
+    "statusMissing": "गुमा Generic prefix label for error messages when creating documentation index, first arg is the document' s identifier, second is the document' s name",
+    "sfxDurationPreset": "SFX अवधि प्रीसेट",
+    "durationAuto": "ऑटो ({seconds}s · VEO {veoSeconds}s)",
+    "durationShort": "छोटा 3s / VEO 4s",
+    "durationMedium": "मध्यम 8s",
+    "durationLong": "लॉन्ग 15s / VEO 8s अधिकतम",
+    "veoPartialHint": "VEO 8s (Auto target {seconds}s) तक कवर करता है।",
+    "sfxCredits": "SFX क्रेडिट: {credits}. {hint}",
+    "creditHint": "~{credits} क्रेडिट · लगातार 8 सेकंड तक",
+    "running": "UI कानफिगर करें",
+    "generateAudio": "ऑडियो जनरेट करें ({count})"
+  },
+  "expressSfx": {
+    "title": "Express VEO SFX",
+    "description": "एक्शन - बीट साउंड इफेक्ट्स को एक साथ (एक बार में 2 तक) जनरेट करें। प्रत्येक बीट वीईओ नेटिव ऑडियो का उपयोग करता है, फिर एनिमेटिक के लिए एमपी 3 निकालता है।",
+    "selectedBeats": "चुनी हुई धड़कनें",
+    "estimatedCredits": "अनुमानित क्रेडिट",
+    "creditHint": "~{credits} क्रेडिट · लगातार 8 सेकंड तक",
+    "actionBeats": "एक्शन बीट्स",
+    "audioReady": "ऑडियो तैयार है",
+    "durationPreset": "अवधि पूर्व निर्धारित",
+    "durationAuto": "ऑटो ({seconds}s · VEO {veoSeconds}s)",
+    "durationShort": "छोटा 3s / VEO 4s",
+    "durationMedium": "मध्यम 8s",
+    "durationLong": "लॉन्ग 15s / VEO 8s अधिकतम",
+    "veoPartialHint": "VEO 8s (Auto target {seconds}s) तक कवर करता है।",
+    "regenerateWithAudio": "उन बीट्स को फिर से जनरेट करें जिनके पास पहले से ही ऑडियो है",
+    "running": "UI कानफिगर करें",
+    "generateSfx": "SFX ({count}) जेनरेट करें"
+  },
+  "expressScene": {
+    "title": "एक्सप्रेस सीन",
+    "description": "यह चुनें कि कौन - से फ़्रेम जनरेट करने या फिर से जनरेट करने हैं। मौजूदा फ़्रेम को फिर से बनाना केवल छवियों को अपडेट करता है — दिशा और ऑडियो को अपरिवर्तित छोड़ दिया जाता है।",
+    "scope": "दायरा ",
+    "scopeMissing": "सिर्फ़ मौजूद नहीं है",
+    "scopeRegenerate": "चुने गए लोगों को फिर से जनरेट करें",
+    "scopeRegenerateHint": "मौजूदा छवियों के साथ चेक किए गए फ़्रेम नए सिरे से बनाए जाएँगे। दिशा और ऑडियो फिर से नहीं चल रहे हैं।",
+    "frames": "ढांचा",
+    "noFrames": "इस दायरे के लिए कोई फ़्रेम उपलब्ध नहीं है।",
+    "hasImage": "इमेज है",
+    "missing": "गुमा Generic prefix label for error messages when creating documentation index, first arg is the document' s identifier, second is the document' s name",
+    "imageCredits": "इमेज क्रेडिट (अनुमानित): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
+    "running": "UI कानफिगर करें",
+    "generateScene": "सीन जनरेट करें"
+  },
+  "expressGenerateAll": {
+    "title": "सभी जनरेट करें",
+    "description": "एक्सप्रेस ऑडियो और एक्सप्रेस दृश्य फ्रेम को समानांतर में चलाएं। डिफ़ॉल्ट प्रत्येक पाइपलाइन के \"केवल अनुपस्थित\" चयन से मेल खाते हैं — यदि आपको पुन: उत्पन्न करने की आवश्यकता है तो गुंजाइश समायोजित करें।",
+    "audioSection": " inf",
+    "framesSection": "ढांचा",
+    "scope": "दायरा ",
+    "scopeMissing": "सिर्फ़ मौजूद नहीं है",
+    "scopeAll": "सभी (फिर से जनरेट करें)",
+    "scopeRegenerate": "चुने गए लोगों को फिर से जनरेट करें",
+    "audioToGenerate": "जनरेट करने के लिए ऑडियो",
+    "noAudioItems": "इस सीन के लिए कोई ऑडियो आइटम नहीं है।",
+    "statusReady": "तैयार",
+    "statusMissing": "गुमा Generic prefix label for error messages when creating documentation index, first arg is the document' s identifier, second is the document' s name",
+    "sfxDurationPreset": "SFX अवधि प्रीसेट",
+    "durationAuto": "ऑटो ({seconds}s · VEO {veoSeconds}s)",
+    "durationShort": "छोटा 3s / VEO 4s",
+    "durationMedium": "मध्यम 8s",
+    "durationLong": "लॉन्ग 15s / VEO 8s अधिकतम",
+    "creditHint": "~{credits} क्रेडिट · लगातार 8 सेकंड तक",
+    "veoSfxCredits": "VEO SFX क्रेडिट (अनुमानित): {credits}",
+    "frames": "ढांचा",
+    "noFrames": "कोई फ़्रेम उपलब्ध नहीं है।",
+    "hasImage": "इमेज है",
+    "missing": "गुमा Generic prefix label for error messages when creating documentation index, first arg is the document' s identifier, second is the document' s name",
+    "imageCredits": "इमेज क्रेडिट (अनुमानित): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
+    "running": "UI कानफिगर करें",
+    "generateAll": "सभी जनरेट करें"
+  },
+  "retake": {
+    "title": "मौजूदा टेक को बदलें?",
+    "description": "इस बीट में पहले से ही एक जनरेट किया गया वीडियो है। जनरेटर खोलना या अपलोड करना एक नया टेक जोड़ देगा और क्रेडिट का उपभोग कर सकता है।",
+    "continue": "जारी रखें"
+  },
+  "reset": {
+    "title": "सीन प्रोडक्शन रीसेट करें?",
+    "sceneLabel": "सीन {number}",
+    "sceneHeading": "दृश्य {number} · {heading}",
+    "warning": "यह इस दृश्य के लिए आपकी पूरी <bold>बीट टाइमलाइन को</bold> हटा देता है और इसे पूर्ववत नहीं किया जा सकता है। आपको खरोंच से फिर से सेगमेंट सेटअप चलाने की आवश्यकता होगी।",
+    "whatYouWillLose": "आप क्या खोएँगे",
+    "segmentCount": "{count, plural, one {# segment} other {# segments}}",
+    "segmentDetail": "समय, दिशा - निर्देश नोट, वीईओ (VEO) संकेत और संवाद - से - सेगमेंट मैपिंग",
+    "keyframeImage": "{count, plural, one {# keyframe image} other {# keyframe images}}",
+    "keyframeDetailAcross": "{count, plural, one {# segment} other {# segments}} के पार (स्टार्ट/एंड फ़्रेम)",
+    "keyframeDetailDefault": "वीडियो जनरेशन के लिए इस्तेमाल किए जाने वाले स्टार्ट और एंड फ़्रेम स्टिल",
+    "videoClip": "{count, plural, one {# generated video clip} other {# generated video clips}}",
+    "videoDetail": "बीट - लेवल वीईओ/आई2वी आउटपुट और एक्टिव टाइमलाइन",
+    "imageClip": "{count, plural, one {# image clip} other {# image clips}}",
+    "imageClipDetail": "सेगमेंट से जुड़ी अपलोड या जनरेट की गई स्थिर परिसंपत्तियाँ",
+    "alternateTake": "{count, plural, one {# alternate take} other {# alternate takes}}",
+    "alternateTakeDetail": "प्रति सेगमेंट संग्रहीत अतिरिक्त पीढ़ियाँ",
+    "sceneRender": "सीन रेंडर / प्रोडक्शन स्ट्रीम",
+    "sceneRenderStreams": "{count, plural, one {# language or output stream} other {# language or output streams}} इस दृश्य से जुड़ा हुआ है",
+    "sceneRenderDefault": "उत्पादन मिक्सर से अंतिम मिश्रित दृश्य आउटपुट",
+    "beatStructureOnly": "सिर्फ ढांचा",
+    "beatStructureDetail": "अभी तक किसी कीफ़्रेम या क्लिप का पता नहीं चला है, लेकिन सेगमेंटेशन की प्रगति अभी भी साफ़ हो जाएगी",
+    "notDeleted": "<bold>डिलीट नहीं किया गया:</bold> स्क्रिप्ट टेक्स्ट, सीन डायलॉग, नैरेशन, म्यूज़िक/SFX ऑडियो, सीन स्टिल इमेज और कैरेक्टर रेफ़रेंस।",
+    "resetting": "रीसेट किया जा रहा है...",
+    "resetProduction": "प्रोडक्शन रीसेट करें"
+  },
+  "screening": {
+    "generateStreamTitle": "{language} स्ट्रीम जनरेट करें",
+    "generateStreamTitleFallback": "भाषा स्ट्रीम जनरेट करें",
+    "generateStreamDescription": "दृश्य टेक्स्ट का अनुवाद करें और इस भाषा के लिए संवाद/वर्णन ऑडियो उत्पन्न करें। मौजूदा म्यूज़िक और साउंड इफ़ेक्ट का फिर से इस्तेमाल किया जाएगा।",
+    "generateDialogue": "संवाद जनरेट करें",
+    "generating": "जनरेट हो रहा है",
+    "publishRevisionTitle": "स्टोरीबोर्ड संशोधन प्रकाशित करें",
+    "publishRevisionDescription": "संस्करण को बढ़ाता है (जैसे v{current} → v{next})। आपका शेयर लिंक नहीं बदलता है। रीफ़्रेश करने वाले समीक्षकों को नया वर्तमान संस्करण दिखाई देगा; उनके अगले सबमिशन पर तदनुसार मुहर लगाई जाती है।",
+    "labelOptional": "लेबल (ज़रूरी नहीं)",
+    "labelPlaceholder": "जैसे क्लाइंट नोट्स राउंड 2",
+    "changeNotesOptional": "नोट बदलें (ज़रूरी नहीं)",
+    "changeNotesPlaceholder": "पिछले संस्करण के बाद से क्या बदला है?",
+    "publishVersion": "V{version} प्रकाशित करें"
+  },
+  "segments": {
+    "addBeat": {
+      "title": "बीट जोड़ें",
+      "description": "शॉट का प्रकार, सीन एलिमेंट और डायलॉग चुनकर वीडियो जनरेशन प्रॉम्प्ट बनाएँ। VEO 3.1 सीधे प्रॉम्प्ट से वॉयसओवर और SFX जनरेट करेगा।",
+      "sceneBadge": "सीन {sceneNumber}",
+      "includeSceneDirection": "सीन डायरेक्शन शामिल करें",
+      "includeSceneDirectionHint": "चुनें कि किस निर्देशक के नोट्स को शामिल करना है। चालू करने के लिए क्लिक करें, फिर ज़रूरत पड़ने पर कस्टम नोट जोड़ें।",
+      "clickToAddCustom": "कस्टम जोड़ने के लिए क्लिक करें",
+      "editOrAddCustomNotes": "कस्टम नोट्स में बदलाव करें या जोड़ें...",
+      "addCustomPlaceholder": "{label} जोड़ें...",
+      "directionCamera": "कैमरा नोट्स",
+      "directionLighting": "बिजली- गिरना",
+      "directionScene": "दृश्य/पर्यावरण",
+      "directionTalent": "टैलेंट/ब्लॉकिंग",
+      "directionAudio": "ऑडियो/SFX",
+      "dialogueLines": "संवाद लाइनें",
+      "veoSpeechBadge": "वीईओ 3.1 स्पीच",
+      "dialogueHint": "इस सेगमेंट के लिए संवाद चुनें। चुनने के लिए क्लिक करें, फिर केवल भागों का उपयोग करने के लिए टेक्स्ट को संपादित करें। VEO 3.1 से कैरेक्टर की आवाज़ आएगी।",
+      "editDialoguePlaceholder": "इस सेगमेंट में इस्तेमाल करने के लिए डायलॉग टेक्स्ट में बदलाव करें...",
+      "editDialogueHint": "इस सेगमेंट (<12s) के लिए आवश्यक केवल हिस्से का उपयोग करने के लिए संपादित करें",
+      "noDialogue": "इस दृश्य में कोई संवाद नहीं है",
+      "includeNarration": "नैरेशन वॉयसओवर शामिल करें",
+      "narrationText": "कथन टेक्स्ट (संपादन योग्य)",
+      "narrationPlaceholder": "इस सेगमेंट के लिए कथन टेक्स्ट में बदलाव करें...",
+      "narrationEditHint": "इस सेगमेंट के लिए केवल कथन के हिस्से का उपयोग करने के लिए संपादित करें",
+      "narratorVoice": "नैरेटर वॉयस",
+      "selectedVoice": "चयनित: {name}",
+      "autoEstimate": "ऑटो - एस्टीमेट",
+      "omniFlashMax": "ओमनी फ्लैश अधिकतम: {seconds} सेकंड प्रति सेगमेंट",
+      "additionalNotes": "अतिरिक्त नोट्स",
+      "additionalNotesPlaceholder": "कोई भी अतिरिक्त दिशा, विज़ुअल विवरण या स्टाइल नोट्स...",
+      "generationMethod": "जनरेशन विधि",
+      "t2v": "टेक्स्ट - टू - वीडियो",
+      "i2v": "इमेज - टू - वीडियो",
+      "noSceneImage": "(कोई सीन इमेज नहीं)",
+      "promptPreview": "प्रॉम्प्ट प्रीव्यू",
+      "startTime": "प्रारंभ",
+      "endTime": "समाप्ति समय",
+      "method": "विधि",
+      "addAction": "बीट जोड़ें"
+    },
+    "edit": {
+      "title": "सेगमेंट में बदलाव करें",
+      "badge": "सीन {sceneNumber} • बीट {beatNumber}",
+      "description": "सेगमेंट की प्रॉम्प्ट, अवधि और जनरेशन सेटिंग में बदलाव करें।",
+      "generationPrompt": "जनरेशन प्रॉम्प्ट",
+      "promptPlaceholder": "वीडियो जनरेशन प्रॉम्प्ट दर्ज करें...",
+      "promptHint": "वीडियो जनरेशन के लिए VEO 3.1 पर भेजे जाने वाले प्रॉम्प्ट में बदलाव करें।",
+      "durationHint": "ओमनी फ्लैश 4 -10 सेकंड क्लिप को सपोर्ट करता है",
+      "generationMethod": "जनरेशन विधि",
+      "t2v": "टेक्स्ट - टू - वीडियो",
+      "i2v": "इमेज - टू - वीडियो",
+      "i2vHint": "शुरुआती इमेज के रूप में सीन फ़्रेम का इस्तेमाल करेंगे"
+    },
+    "delete": {
+      "title": "बीट {number} डिलीट करें?",
+      "description": "इस क्रिया को पूर्ववत नहीं किया जा सकता है।",
+      "segmentLabel": "खण्ड",
+      "segmentOf": "{total}का # {index}",
+      "duration": "अवधी",
+      "hasFramesWarning": "इस सेगमेंट ने ऐसे फ़्रेम जनरेट किए हैं जो खो जाएँगे।",
+      "lastBeatWarning": "चेतावनी: यह दृश्य का एकमात्र खंड है। इसे हटाने से बिना किसी कीफ़्रेम के सीन निकल जाएगा।",
+      "shiftWarning": "इस सेगमेंट को हटाने से बाद के सभी सेगमेंट बदल जाएंगे। समय और अनुक्रम सूचकांक स्वचालित रूप से फिर से गणना किए जाएंगे।",
+      "deleting": "हटाया जा रहा है...",
+      "deleteBeat": "बीट मिटाएँ"
+    },
+    "addType": {
+      "title": "बीट को सीन {sceneNumber} में जोड़ें",
+      "description": "AI वीडियो जनरेशन के लिए एक कीफ़्रेम - आधारित सेगमेंट जोड़ें। सिनेमाई तत्वों (टाइटल, ट्रांज़िशन, बी - रोल) के लिए, सिनेमाई तत्व बटन का उपयोग करें।",
+      "tabType": "प्रकार",
+      "tabPosition": "पद ",
+      "tabPrompt": "संकेत",
+      "defaultDuration": "{seconds}s डिफ़ॉल्ट",
+      "orDivider": "या ",
+      "regenerateAll": "सभी बीट्स को फिर से जनरेट करें",
+      "regenerateAllCount": "{count} सेगमेंट",
+      "regenerateAllHint": "सीन का फिर से विश्लेषण करें और AI के साथ नए सेगमेंट जनरेट करें। यह मौजूदा सेगमेंट की जगह लेगा।",
+      "insertPosition": "पोजिशन डालें",
+      "referenceBeat": "संदर्भ बीट",
+      "selectSegment": "इस खण्ड को चुनें",
+      "beatOption": "{number} ({duration}s) को हराएं",
+      "duration": "अवधी",
+      "recommendedDuration": "अनुशंसित: {seconds}s {name} के लिए",
+      "preview": "पूर्वावलोकन",
+      "newBadge": "नया",
+      "generatingPrompt": "मिथुन 2.5 के साथ इंटेलिजेंट प्रॉम्प्ट जनरेट किया जा रहा है...",
+      "aiUnavailable": "AI उपलब्ध नहीं है",
+      "usingTemplate": "टेम्पलेट प्रॉम्प्ट का उपयोग करना। {error}",
+      "contextAware": "कॉन्टेक्स्ट - अवेयर प्रॉम्प्ट",
+      "contextAwareHint": "यह संकेत आसन्न दृश्य विश्लेषण के आधार पर उत्पन्न किया गया था। ज़रूरत के मुताबिक बदलाव करें।",
+      "generationPrompt": "जनरेशन प्रॉम्प्ट",
+      "aiGenerate": "AI जनरेट करें",
+      "generating": "जनरेट हो रहा है",
+      "reset": "रीसेट करें",
+      "promptPlaceholder": "दृश्य सामग्री का वर्णन करें...",
+      "charCount": "{count} वर्ण • इस प्रॉम्प्ट का इस्तेमाल फ़्रेम जनरेशन के लिए किया जाएगा",
+      "presetSettings": "प्रीसेट सेटिंग",
+      "addNamed": "{name} जोड़ें",
+      "types": {
+        "standard": {
+          "name": "स्टैंडर्ड बीट",
+          "description": "AI वीडियो जनरेशन के लिए स्टार्ट/एंड कीफ्रेम के साथ सीन सेगमेंट। शॉट कंपोजिशन पर पूर्ण नियंत्रण।"
+        },
+        "extend": {
+          "name": "शॉट जारी रखें",
+          "description": "पिछले सेगमेंट के एंड फ़्रेम से जारी रखें। कटौती के दौरान दृश्य निरंतरता बनाए रखता है।"
+        }
+      },
+      "positions": {
+        "start": {
+          "label": "शुरू होने पर",
+          "description": "पहले सेगमेंट के रूप में डालें"
+        },
+        "before": {
+          "label": "चुने जाने से पहले",
+          "description": "चयनित सेगमेंट से पहले डालें"
+        },
+        "after": {
+          "label": "चुने जाने के बाद",
+          "description": "चुने गए सेगमेंट के बाद डालें"
+        },
+        "end": {
+          "label": "अंत में",
+          "description": "पिछले सेगमेंट के रूप में जोड़ें"
+        }
+      }
+    },
+    "addSpecial": {
+      "title": "सिनेमाई तत्व जोड़ें",
+      "description": "एक खास वीडियो सेगमेंट जोड़ें। AI वीडियो जनरेशन के लिए एक ऑप्टिमाइज़्ड प्रॉम्प्ट जनरेट करेगा।",
+      "elementType": "तत्वों के नाम",
+      "duration": "अवधी",
+      "recommendedDuration": "अनुशंसित: {seconds}s {name} के लिए",
+      "videoPrompt": "वीडियो जनरेशन प्रॉम्प्ट",
+      "generating": "जनरेट हो रहा है",
+      "regenerate": "फिर से जनरेट करें",
+      "reset": "रीसेट करें",
+      "generatingCinematic": "सिनेमाई प्रॉम्प्ट जनरेट किया जा रहा है...",
+      "usingTemplate": "टेम्प्लेट प्रॉम्प्ट का उपयोग करना",
+      "aiUnavailable": "AI अनुपलब्ध: {error}",
+      "promptPlaceholder": "AI - जनरेट किया गया प्रॉम्प्ट यहाँ दिखाई देगा...",
+      "charCount": "{count} वर्ण • एक नए प्रॉम्प्ट के लिए कस्टमाइज़ या रीजनरेट पर क्लिक करने के लिए संपादित करें",
+      "insertAt": "{position} पोजीशन पर डालें",
+      "noKeyframes": "कोई कीफ़्रेम नहीं",
+      "addNamed": "{name} जोड़ें",
+      "types": {
+        "title": {
+          "name": "शीर्षक अनुक्रम",
+          "description": "बोल्ड टेक्स्ट ओवरले के साथ सिनेमाई टाइटल कार्ड। टोन सेट करता है और अपने वीडियो को ब्रांड करता है।"
+        },
+        "match-cut": {
+          "name": "मैच कट ब्रिज",
+          "description": "क्रिएटिव ट्रांज़िशन सीन के बीच किसी शेप या मूवमेंट की नकल करता है। जैसे, कताई पहिया → कताई घड़ी।"
+        },
+        "establishing": {
+          "name": "शॉट लगाना",
+          "description": "वाइड ड्रोन या क्रेन शॉट भूगोल, दिन का समय और एक नई जगह के लिए मूड स्थापित करते हैं।"
+        },
+        "broll": {
+          "name": "बी - रोल (द लल)",
+          "description": "वायुमंडलीय दृश्य श्वास। पर्यावरणीय विवरणों के क्लोज - अप जो बनावट और पेसिंग जोड़ते हैं।"
+        },
+        "outro": {
+          "name": "आउट्रो / क्रेडिट",
+          "description": "पेशेवर समापन अनुक्रम। सुरुचिपूर्ण फीका या उत्पादन क्रेडिट सौंदर्य के साथ स्क्रॉल करें।"
+        }
+      }
+    },
+    "common": {
+      "shotConfiguration": "शॉट कॉन्फ़िगरेशन",
+      "shotType": "शॉट का प्रकार",
+      "cameraMovement": "कैमरा मूवमेंट",
+      "lens": "लेन्स",
+      "duration": "अवधी"
+    },
+    "shotTypes": {
+      "extreme-wide": {
+        "label": "बेहद चौड़ा",
+        "description": "पूरा माहौल, छोटे विषय"
+      },
+      "wide": {
+        "label": "वाइड शॉट",
+        "description": "पूरा शरीर, पर्यावरणीय संदर्भ"
+      },
+      "medium-wide": {
+        "label": "मध्यम चौड़ा",
+        "description": "घुटने से सिर, कुछ वातावरण"
+      },
+      "medium": {
+        "label": "मध्यम शॉट",
+        "description": "कमर ऊपर करें, बातचीत"
+      },
+      "medium-close": {
+        "label": "मध्यम क्लोज़ - अप",
+        "description": "चेस्ट अप, इमोशनल फ़ोकस"
+      },
+      "close-up": {
+        "label": "बंद!",
+        "description": "केवल चेहरा, तीव्र भावना"
+      },
+      "extreme-close": {
+        "label": "बेहद क्लोज़ - अप",
+        "description": "आँखें, मुँह या विवरण"
+      },
+      "two-shot": {
+        "label": "दो शॉट",
+        "description": "दो किरदारों को एक साथ फ़्रेम किया गया"
+      },
+      "over-shoulder": {
+        "label": "कंधे के ऊपर",
+        "description": "एक चरित्र के पीछे से परिप्रेक्ष्य"
+      },
+      "pov": {
+        "label": "पीओवी",
+        "description": "पॉइंट ऑफ़ व्यू शॉट"
+      }
+    },
+    "cameraMovements": {
+      "static": {
+        "label": "रेखा की रंग",
+        "description": "लॉक - ऑफ़, कोई हलचल नहीं"
+      },
+      "push-in": {
+        "label": "आगे लाएं",
+        "description": "विषय की ओर धीमी गति से चलना"
+      },
+      "pull-out": {
+        "label": "बाहर खींचो.",
+        "description": "धीरे - धीरे डॉली को विषय से दूर करें"
+      },
+      "pan-left": {
+        "label": "पैन लेफ्ट",
+        "description": "कैमरा पिवट बाएँ"
+      },
+      "pan-right": {
+        "label": "पैन राइट",
+        "description": "कैमरा पिवट दाएँ"
+      },
+      "tilt-up": {
+        "label": "ऊपर झुकाएँ",
+        "description": "कैमरा एंगल ऊपर की ओर"
+      },
+      "tilt-down": {
+        "label": "नीचे झुकाएं",
+        "description": "कैमरा एंगल नीचे की ओर"
+      },
+      "tracking": {
+        "label": "ट्रैकिंग",
+        "description": "फ़ॉलोइंग सब्जेक्ट"
+      },
+      "handheld": {
+        "label": "हैंडहेल्ड",
+        "description": "हल्का शेक, डॉक्यूमेंट्री फील"
+      },
+      "crane": {
+        "label": "क्रेन/जिब",
+        "description": "वर्टिकल मूवमेंट, स्वीपिंग"
+      }
+    },
+    "lenses": {
+      "24mm": {
+        "label": "24 मिमी चौड़ा",
+        "description": "पर्यावरणीय, विस्तृत"
+      },
+      "35mm": {
+        "label": "35 मिमी एनामॉर्फिक",
+        "description": "सिनेमाई, मामूली विकृति"
+      },
+      "50mm": {
+        "label": "50 मिमी मानक",
+        "description": "कुदरती नज़रिया"
+      },
+      "85mm": {
+        "label": "85 मिमी पोर्ट्रेट",
+        "description": "उथला DOF, अंतरंग"
+      },
+      "135mm": {
+        "label": "135 मिमी टेलीफ़ोटो",
+        "description": "संपीड़ित, अलग - थलग"
+      }
+    },
+    "generateTitle": "सीन बीट्स जेनरेट करें",
+    "regenerateSceneTitle": "सीन बीट्स को फिर से जनरेट करें",
+    "generateDescription": "कॉन्फ़िगर करें कि इस दृश्य के लिए सेगमेंट कैसे बनाए जाते हैं।",
+    "beatsPreview": "धड़कन",
+    "tabTiming": "टाइमिंग",
+    "tabReferences": "संदर्भ",
+    "tabStyle": "शैली",
+    "narrationDriven": "कथन - चालित विभाजन",
+    "narrationDrivenHint": "ऐसे सेगमेंट बनाएं जो कथन के साथ संरेखित और चित्रित करते हैं। प्रत्येक खंड वॉयसओवर के लिए एक सिनेमाई पृष्ठभूमि बन जाता है।",
+    "targetBeatDuration": "टारगेट बीट की अवधि",
+    "addTitle": "बीट जोड़ें",
+    "addNewTitle": "नया सेगमेंट जोड़ें",
+    "addDescription": "सीन की समय - सीमा बढ़ाने के लिए एक नया विज़ुअल सेगमेंट बनाएँ।",
+    "addDuration": "अवधि (सेकंड)",
+    "addDurationHint": "सुझाया गया: सुचारू पेसिंग के लिए 3 -5 सेकंड",
+    "addAction": "बीट जोड़ें",
+    "editTitle": "सेगमेंट में बदलाव करें",
+    "editBadge": "सीन {sceneNumber} • बीट {beatNumber}",
+    "editDescription": "सेगमेंट की प्रॉम्प्ट, अवधि और जनरेशन सेटिंग में बदलाव करें।",
+    "shotConfiguration": "शॉट कॉन्फ़िगरेशन",
+    "shotType": "शॉट का प्रकार",
+    "cameraMovement": "कैमरा मूवमेंट",
+    "deleteTitle": "बीट {number} डिलीट करें?",
+    "deleteDescription": "इस क्रिया को पूर्ववत नहीं किया जा सकता है।",
+    "segmentLabel": "खण्ड",
+    "segmentOf": "{total}का # {index}",
+    "duration": "अवधी",
+    "hasFramesWarning": "इस सेगमेंट ने ऐसे फ़्रेम जनरेट किए हैं जो खो जाएँगे।",
+    "lastBeatWarning": "चेतावनी: यह दृश्य का एकमात्र खंड है। इसे हटाने से बिना किसी कीफ़्रेम के सीन निकल जाएगा।",
+    "shiftWarning": "इस सेगमेंट को हटाने से बाद के सभी सेगमेंट बदल जाएंगे। समय और अनुक्रम सूचकांक स्वचालित रूप से फिर से गणना किए जाएंगे।",
+    "deleting": "हटाया जा रहा है...",
+    "deleteBeat": "बीट मिटाएँ",
+    "regenerateTitle": "बीट्स को फिर से जनरेट करें",
+    "regenerateDescription": "सभी सेगमेंट साफ़ करें और नए सिरे से शुरू करने के लिए बीट बिल्डर पर लौटें।",
+    "beats": "बीट्स",
+    "totalDuration": "कुल अवधि",
+    "anchoredFrames": "एंकर फ़्रेम",
+    "anchoredCount": "{anchored} / {total}",
+    "regenerateAssetsWarning": "चेतावनी: यह जेनरेट किए गए कीफ़्रेम और वीडियो एसेट सहित सभी सेगमेंट को मिटा देगा। इस कार्रवाई को पूर्ववत नहीं किया जा सकता।",
+    "regenerateEmptyWarning": "सभी मौजूदा सेगमेंट हटा दिए जाएँगे। आपको नई सेटिंग के साथ कॉन्फ़िगर करने और फिर से बनाने के लिए बीट बिल्डर पर ले जाया जाएगा।",
+    "regenerateNextHint": "बीट बिल्डर कुल अवधि, सेगमेंट गिनती, फ़ोकस मोड और कस्टम दिशा के लिए नियंत्रण के साथ खुलेगा।",
+    "deleteAndRegenerate": "मिटाएँ और पुनर्जीवित करें",
+    "regenerate": "फिर से जनरेट करें",
+    "addTypeTitle": "विशेष सेगमेंट जोड़ें",
+    "addTypeDescription": "टाइमलाइन में डालने के लिए सेगमेंट का उद्देश्य चुनें।"
+  },
+  "audio": {
+    "generateAssets": {
+      "title": "संपत्ति जनरेट करें",
+      "description": "सभी दृश्यों के लिए उत्पन्न करने के लिए संपत्ति के प्रकार चुनें",
+      "targetLanguage": "Target Language",
+      "translateBeforeAudio": "ऑडियो जनरेट करने से पहले टेक्स्ट का अंग्रेजी से {language} में अनुवाद किया जाएगा",
+      "audioTypes": "ऑडियो प्रकार",
+      "selectAll": "सभी चुनें",
+      "deselectAll": "सभी अचयनित करें",
+      "narration": "कथन",
+      "dialogue": "संवाद",
+      "backgroundMusic": "बैकग्राउंड म्यूज़िक",
+      "soundEffects": "ध्वनि प्रभाव (ElevenLabs, ~15 क्रेडिट प्रत्येक)",
+      "statusComplete": "पूरा हुआ",
+      "statusPartial": "आंशिक ({current}/{total})",
+      "statusNotGenerated": "नहीं बना",
+      "statusGeneratedCount": "{count} जनरेट किया गया",
+      "statusNoneGenerated": "कोई जनरेट नहीं किया गया",
+      "scenesCount": "{count} दृश्य",
+      "linesCount": "{count} लाइनें",
+      "sfxCues": "{count, plural, one {# cue} other {# cues}}",
+      "noSfxCues": "अभी तक स्क्रिप्ट में कोई SFX संकेत नहीं है",
+      "generationSummary": "जनरेशन सारांश",
+      "summaryNarration": "{count, plural, one {# narration file} other {# narration files}}",
+      "summaryDialogue": "{count, plural, one {# dialogue file} other {# dialogue files}}",
+      "summaryMusic": "{count, plural, one {# music file} other {# music files}}",
+      "summarySfx": "{count, plural, one {# sound effect} other {# sound effects}}",
+      "summaryCharacters": "{count, plural, one {# character asset} other {# character assets}}",
+      "summaryAlreadyGenerated": "({count} पहले ही जनरेट हो चुका है)",
+      "summarySceneImages": "{count, plural, one {# scene image} other {# scene images}}",
+      "overwriteWarning": "यह चयनित प्रकारों के लिए मौजूदा ऑडियो फ़ाइलों को ओवरराइट करेगा",
+      "additionalAssets": "अतिरिक्त संपत्ति",
+      "characterRefs": "कैरेक्टर रेफ़रेंस इमेज",
+      "charactersReady": "{count} वर्ण • {ready} तैयार",
+      "noCharacters": "कोई कैरेक्टर उपलब्ध नहीं है",
+      "sceneImages": "सीन इमेज (समवर्ती)",
+      "sceneImagesReady": "{count} दृश्य • {ready} तैयार • 3 समवर्ती",
+      "regenerateAllImages": "सभी इमेज को फिर से जनरेट करें",
+      "regenerateAllImagesHint": "मौजूदा छवियों को ओवरराइट करें (डिफ़ॉल्ट: केवल अनुपस्थित)",
+      "stayOpenHint": "इस डायलॉग को तब तक खुला रखें जब तक कि वर्णन और डायलॉग जनरेशन पूरा न हो जाए। आप किसी भी समय बैकग्राउंड मोड पर स्विच कर सकते हैं।",
+      "narrationProgress": "कथन की प्रगति",
+      "dialogueProgress": "संवाद प्रगति",
+      "musicProgress": "संगीत की प्रगति",
+      "sfxProgress": "ध्वनि प्रभाव प्रगति",
+      "characterProgress": "चरित्र की प्रगति",
+      "imageProgress": "सीन इमेज की प्रगति",
+      "sceneProgress": "सीन {current} / {total}",
+      "secondaryDialogue": "Dialogue {current}/{total}",
+      "secondaryMusic": "संगीत {current}/{total}",
+      "secondarySfx": "SFX {current}/{total}",
+      "secondaryCharacter": "कैरेक्टर {current}/{total}",
+      "secondaryImage": "सीन इमेज {current}/{total}",
+      "runInBackground": "पृष्ठ भूमि में चलाएँ",
+      "generationComplete": "जनरेशन पूरा हुआ",
+      "generating": "जनरेट हो रहा है",
+      "generate": "उत्पन्न करें",
+      "generateAgain": "फिर से जनरेट करें"
+    },
+    "assets": {
+      "title": "ऑडियो एसेट्स - सीन {number}",
+      "description": "इस सीन के लिए ऑडियो ट्रैक्स मैनेज करें। स्क्रिप्ट से ऑडियो क्लिप जोड़ें, हटाएँ या फिर से सिंक करें।",
+      "totalClips": "{count} कुल ऑडियो क्लिप",
+      "syncFromScript": "स्क्रिप्ट से सिंक करें",
+      "uploading": "ऑडियो अपलोड हो रहा है...",
+      "close": "बंद करें",
+      "clipLabel": "{track} क्लिप",
+      "start": "प्रारंभ: {time}",
+      "clipDuration": "अवधि: {time}",
+      "noClips": "कोई {track} क्लिप नहीं",
+      "uploadAudio": "ऑडियो फ़ाइल अपलोड करें",
+      "clearAll": "सभी साफ करें",
+      "clipCount": "{count, plural, one {# clip} other {# clips}}",
+      "pause": "रोकें",
+      "play": "चलाएं",
+      "removeClip": "क्लिप हटाएँ",
+      "tracks": {
+        "voiceover": {
+          "label": "वॉयसओवर / कथन",
+          "description": "दृश्य वर्णन और वॉयसओवर ऑडियो"
+        },
+        "dialogue": {
+          "label": "संवाद",
+          "description": "कैरेक्टर डायलॉग लाइनें"
+        },
+        "music": {
+          "label": "संगीत",
+          "description": "बैकग्राउंड म्यूज़िक और स्कोर"
+        },
+        "sfx": {
+          "label": "ध्वनि प्रभाव",
+          "description": "ध्वनि प्रभाव और परिवेश"
+        }
+      }
+    },
+    "alignment": {
+      "title": "{number} ऑडियो संरेखण को हराएं",
+      "description": "सटीक समय के लिए इस सेगमेंट को संवाद और ऑडियो ट्रैक के साथ संरेखित करें।",
+      "beatTiming": "बीट टाइमिंग",
+      "aligned": "लकीर",
+      "nearlyAligned": "लगभग संरेखित",
+      "misaligned": "गुमराह किया गया",
+      "noDialogue": "कोई संवाद नहीं।",
+      "startTime": "प्रारंभ",
+      "endTime": "समाप्ति समय",
+      "duration": "अवधी",
+      "fitToDialogue": "फ़िट टू डायलॉग अवधि ({duration}s)",
+      "dialogueCoverage": "संवाद कवरेज",
+      "dialogueCoverageHint": "चुनें कि इस सेगमेंट में कौन - सी डायलॉग लाइनें शामिल होनी चाहिए। यह समय और चरित्र पर ध्यान केंद्रित करने में मदद करता है।",
+      "noDialogueLines": "इस सीन में कोई डायलॉग लाइन नहीं है",
+      "audioAnchor": "ऑडियो एंकर",
+      "anchored": "एंकर किया गया",
+      "manual": "मैन्युअल",
+      "audioAnchorHint": "Screening Room में ऑटोमैटिक टाइमिंग अलाइनमेंट के लिए इस कीफ़्रेम को ऑडियो क्लिप में एंकर करें।",
+      "anchorTo": "एंकर टू",
+      "noneManual": "कोई नहीं (मैन्युअल)",
+      "narration": "कथन",
+      "descriptionOption": "विवरण",
+      "dialogueOption": "संवाद: {label}",
+      "position": "पद ",
+      "startOfAudio": "ऑडियो की शुरुआत",
+      "endOfAudio": "ऑडियो का अंत",
+      "durationMode": "अवधि मोड",
+      "modeManual": "मैन्युअल",
+      "modeMatchAudio": "ऑडियो की लंबाई का मिलान करें",
+      "modeFillToNext": "अगले एंकर में भरें",
+      "modeSplitEven": "समान रूप से विभाजित करें",
+      "offset": "ऑफसेट",
+      "modeManualHint": "ImageDuration सेटिंग के माध्यम से मैन्युअल रूप से सेट की गई अवधि",
+      "modeMatchAudioHint": "अवधि एंकर की गई ऑडियो क्लिप की लंबाई से मेल खाती है",
+      "modeFillToNextHint": "अवधि अगले एंकर बिंदु या दृश्य के अंत तक फैली हुई है",
+      "modeSplitEvenHint": "अवधि एक ही ऑडियो पर अन्य कीफ्रेम के साथ समान रूप से विभाजित होती है",
+      "narrationAudio": "कथन ऑडियो",
+      "sceneNarration": "दृश्य वर्णन: {duration}s",
+      "startsAt": "{time}s से शुरू होता है",
+      "alignmentTips": "संरेखण युक्तियाँ:",
+      "tip1": "संवाद लाइनें असाइन करें जो इस सेगमेंट के दौरान दिखाई देनी चाहिए",
+      "tip2": "सेगमेंट की अवधि को ऑडियो से मैच करने के लिए \"फ़िट टू डायलॉग\" का इस्तेमाल करें",
+      "tip3": "सेगमेंट किनारों को ऑडियो सीमाओं से संरेखित करने के लिए समयरेखा में \"स्नैप\" सक्षम करें",
+      "saveAlignment": "संरेखण सहेजें"
+    },
+    "assetsTitle": "ऑडियो एसेट्स - सीन {number}",
+    "assetsDescription": "इस सीन के लिए ऑडियो ट्रैक्स मैनेज करें। स्क्रिप्ट से ऑडियो क्लिप जोड़ें, हटाएँ या फिर से सिंक करें।",
+    "totalClips": "{count} कुल ऑडियो क्लिप",
+    "syncFromScript": "स्क्रिप्ट से सिंक करें",
+    "uploading": "ऑडियो अपलोड हो रहा है...",
+    "close": "बंद करें",
+    "trackVoiceover": "वॉयसओवर / कथन",
+    "trackVoiceoverHint": "दृश्य वर्णन और वॉयसओवर ऑडियो",
+    "trackDialogue": "संवाद",
+    "trackDialogueHint": "कैरेक्टर डायलॉग लाइनें",
+    "trackMusic": "संगीत",
+    "trackMusicHint": "बैकग्राउंड म्यूज़िक और स्कोर",
+    "trackSfx": "ध्वनि प्रभाव",
+    "trackSfxHint": "ध्वनि प्रभाव और परिवेश",
+    "clipLabel": "{track} क्लिप",
+    "start": "प्रारंभ: {time}",
+    "clipDuration": "अवधि: {time}",
+    "alignmentTitle": "{number} ऑडियो संरेखण को हराएं",
+    "alignmentDescription": "सटीक समय के लिए इस सेगमेंट को संवाद और ऑडियो ट्रैक के साथ संरेखित करें।",
+    "beatTiming": "बीट टाइमिंग",
+    "aligned": "लकीर",
+    "nearlyAligned": "लगभग संरेखित",
+    "misaligned": "गुमराह किया गया",
+    "noDialogue": "कोई संवाद नहीं।",
+    "startTime": "प्रारंभ",
+    "endTime": "समाप्ति समय",
+    "duration": "अवधी",
+    "generateTitle": "संपत्ति जनरेट करें",
+    "generateDescription": "सभी दृश्यों के लिए उत्पन्न करने के लिए संपत्ति के प्रकार चुनें",
+    "targetLanguage": "Target Language",
+    "translateBeforeAudio": "ऑडियो जनरेट करने से पहले टेक्स्ट का अंग्रेजी से {language} में अनुवाद किया जाएगा",
+    "narrationProgress": "कथन की प्रगति",
+    "dialogueProgress": "संवाद प्रगति",
+    "musicProgress": "संगीत की प्रगति",
+    "sfxProgress": "ध्वनि प्रभाव प्रगति",
+    "characterProgress": "चरित्र की प्रगति",
+    "imageProgress": "सीन इमेज की प्रगति",
+    "sceneProgress": "सीन {current} / {total}",
+    "runInBackground": "पृष्ठ भूमि में चलाएँ",
+    "generationComplete": "जनरेशन पूरा हुआ"
+  },
+  "export": {
+    "document": {
+      "title": "दस्तावेज़ निर्यात ऐसे करें",
+      "description": "निर्यात करने के लिए कौन सा दस्तावेज़ चुनें:",
+      "script": "आलेख",
+      "scriptHint": "पेशेवर स्क्रिप्ट फ़ॉर्मेट",
+      "storyboard": "स्टोरीबोर्ड",
+      "storyboardHint": "इमेज के साथ विज़ुअल स्टोरीबोर्ड",
+      "sceneDirection": "सीन डायरेक्शन",
+      "sceneDirectionHint": "तकनीकी दृश्य दिशा - निर्देश"
+    },
+    "stream": {
+      "title": "स्ट्रीम एक्सपोर्ट करें",
+      "description": "सीन {number} — ड्राफ़्ट के लिए तेज़ (WebM), डिलीवरी के लिए ब्रॉडकास्ट (MP4) या लंबे सीन के लिए क्लाउड।",
+      "videoSequence": "वीडियो अनुक्रम ({count} बीट्स)",
+      "unmuteAll": "सभी को अनम्यूट करें",
+      "muteAll": "सभी को म्यूट करें",
+      "beatLabel": "{number} को हराएं",
+      "noRenderedSegments": "प्रदान किए गए सेगमेंट उपलब्ध नहीं हैं",
+      "beatsNotRendered": "{count, plural, one {# beat} other {# beats}} अभी तक प्रदान नहीं किया गया है",
+      "audioTracksTiming": "ऑडियो ट्रैक और समय",
+      "narration": "कथन",
+      "dialogue": "संवाद",
+      "backgroundMusic": "बैकग्राउंड म्यूज़िक",
+      "soundEffects": "ध्वनि प्रभाव",
+      "clips": "{count, plural, one {# clip} other {# clips}}",
+      "notAvailable": "उपलब्ध नहीं है",
+      "startAt": "यहाँ से प्रारंभ करें:",
+      "volume": "आवाज़ निर्धारक",
+      "resolution720p": "720p (1280×720)",
+      "resolution1080p": "1080p (1920×1080)",
+      "resolution4k": "4K (3840×2160)",
+      "outputResolution": "आउटपुट रिसॉल्यूशन",
+      "statusPreparing": "रेंडर जॉब तैयार किया जा रहा है...",
+      "statusUploading": "जॉब स्पेसिफिकेशन अपलोड किया जा रहा है...",
+      "statusRendering": "वीडियो रेंडर किया जा रहा है...",
+      "statusComplete": "रेंडर पूरा हुआ!",
+      "statusError": "रेंडर नहीं हो सका",
+      "videoReady": "वीडियो डाउनलोड के लिए तैयार है",
+      "downloadMp4": "MP4 डाउनलोड करें",
+      "rendering": "रेंडरिंग",
+      "renderScene": "दृश्य प्रस्तुत करें"
+    },
+    "videoEditor": {
+      "title": "वीडियो एडिटर",
+      "tabSmartPrompt": "स्मार्ट प्रॉम्प्ट",
+      "tabEditVideo": "वीडियो में बदलाव करें",
+      "tabExtendVideo": "वीडियो बढ़ाएँ",
+      "duration": "अवधी",
+      "resolution": "डेस्कटॉप रेज़ोल्यूशनः (r)",
+      "aspect": "पहलू",
+      "footerHint": "इष्टतम परिणामों के लिए कैमरा, प्रदर्शन और शैली कॉन्फ़िगर करें",
+      "generating": "जनरेट हो रहा है",
+      "generateVideo": "वीडियो जनरेट करें"
+    }
+  },
+  "direction": {
+    "promptDirection": {
+      "title": "संकेत दिशा",
+      "description": "वीडियो जनरेशन का मार्गदर्शन करने वाले प्रॉम्प्ट की समीक्षा करें और उसे परिष्कृत करें।",
+      "modeSuffix": "{mode} मोड",
+      "optimizedForMethod": "इस जनरेशन विधि के लिए ऑप्टिमाइज़ किया गया",
+      "currentDirection": "वर्तमान दिशा",
+      "undo": "पहले जैसा करें ({count})",
+      "noPrompt": "कोई संकेत दिशा सेट नहीं है",
+      "characters": "{count} वर्ण",
+      "modified": "मट ",
+      "tipsFor": "{mode} के लिए सुझाव",
+      "refineDirection": "दिशा परिष्कृत करें",
+      "refineHint": "बताएँ कि आप प्रॉम्प्ट को स्वाभाविक भाषा में कैसे बदलना चाहते हैं।",
+      "refinePlaceholder": "जैसे, इसे और अधिक नाटकीय बनाएं, गति को धीमा करें...",
+      "applyDirection": "दिशा लागू करें",
+      "modes": {
+        "TEXT_TO_VIDEO": "टेक्स्ट - टू - वीडियो",
+        "IMAGE_TO_VIDEO": "इमेज - टू - वीडियो",
+        "FRAME_TO_VIDEO": "फ़्रेम - टू - वीडियो",
+        "EXTEND": "बढ़ायें",
+        "REFERENCE_IMAGES": "मुझे फुटबॉल और क्रिकेट खेलना पसंद है"
+      },
+      "tips": {
+        "FRAME_TO_VIDEO": {
+          "tip1": "फ्रेम के बीच गति और संक्रमण पर ध्यान केंद्रित करें",
+          "tip2": "कैमरा आंदोलनों से बचें जो अंतिम फ्रेम से विचलित होते हैं",
+          "tip3": "बताएँ कि शुरू से आखिर तक एलिमेंट कैसे बदलते हैं"
+        },
+        "IMAGE_TO_VIDEO": {
+          "tip1": "वर्णन करें कि स्थिर छवि को जीवन में कैसे आना चाहिए",
+          "tip2": "सांस लेने, पलक झपकने जैसी सूक्ष्म गतिविधियों को शामिल करें",
+          "tip3": "शुरुआती इमेज के साथ स्थिरता बनाए रखें"
+        },
+        "TEXT_TO_VIDEO": {
+          "tip1": "दृश्य विवरण और रचना के बारे में विशिष्ट रहें",
+          "tip2": "प्रकाश, पर्यावरण और वातावरण का वर्णन करें",
+          "tip3": "कैरेक्टर की स्थिति और कार्रवाइयाँ शामिल करें"
+        },
+        "EXTEND": {
+          "tip1": "मौजूदा गति को जारी रखने पर ध्यान दें",
+          "tip2": "सोर्स वीडियो के साथ दृश्य निरंतरता बनाए रखें",
+          "tip3": "सीन में आगे क्या होगा, इसके बारे में बताएँ"
+        },
+        "REFERENCE_IMAGES": {
+          "tip1": "वर्ण स्थिरता के लिए संदर्भ छवियों का उपयोग करें",
+          "tip2": "चरित्र शैलियों का संदर्भ देते समय दृश्य का वर्णन करें",
+          "tip3": "दृश्य विवरण के साथ दृश्य संदर्भों को मिलाएं"
+        }
+      },
+      "examples": {
+        "FRAME_TO_VIDEO": {
+          "example1": "ट्रांज़िशन को आसान बनाएँ",
+          "example2": "सूक्ष्म कैमरा बहाव जोड़ें",
+          "example3": "गति को धीमा करें",
+          "example4": "उसे नाटकीय बनाएँ"
+        },
+        "IMAGE_TO_VIDEO": {
+          "example1": "बालों और कपड़ों पर पवन प्रभाव डालें",
+          "example2": "कोमल श्वास गति शामिल करें",
+          "example3": "प्रकाश व्यवस्था को और अधिक गतिशील बनाएं",
+          "example4": "पर्यावरणीय गति जोड़ें"
+        },
+        "TEXT_TO_VIDEO": {
+          "example1": "सीन को और ज़्यादा सिनेमाई बनाएँ",
+          "example2": "गोल्डन आवर लाइटिंग जोड़ें",
+          "example3": "पर्यावरण से जुड़ी और जानकारी शामिल करें",
+          "example4": "कार्रवाई को और अधिक गतिशील बनाएं"
+        },
+        "EXTEND": {
+          "example1": "गति को सुचारू रूप से जारी रखें",
+          "example2": "एक सूक्ष्म कैमरा पैन जोड़ें",
+          "example3": "दृश्य की ऊर्जा बढ़ाएँ",
+          "example4": "एक नए एंगल में ट्रांज़िशन"
+        },
+        "REFERENCE_IMAGES": {
+          "example1": "कैरेक्टर के एक्सप्रेशन का मिलान करें",
+          "example2": "एक ही कला शैली बनाए रखें",
+          "example3": "लगातार रोशनी बनाए रखें",
+          "example4": "एक ही रंग पैलेट का उपयोग करें"
+        }
+      }
+    },
+    "director": {
+      "title": "वीडियो जेनरेट करें: {number} को हराएं",
+      "description": "रेंडर करने से पहले जेनरेशन पैरामीटर की समीक्षा करें और उन्हें कस्टमाइज़ करें",
+      "tabTextToVideo": "टेक्स्ट - टू - वीडियो",
+      "tabTextToVideoShort": "T2V",
+      "tabImageToVideo": "इमेज - टू - वीडियो",
+      "tabImageToVideoShort": "I2V",
+      "tabReference": "मुझे फुटबॉल और क्रिकेट खेलना पसंद है",
+      "tabReferenceShort": "आरईएफ।",
+      "tabExtend": "बढ़ायें",
+      "tabExtendShort": "Ext. task done",
+      "generateVideo": "वीडियो जनरेट करें",
+      "resetToSegmentDialogue": "सेगमेंट संवाद पर रीसेट करें",
+      "frameFirstTitle": "फ़्रेम - फ़र्स्ट वर्कफ़्लो:",
+      "frameFirstBody": "बेहतर चरित्र स्थिरता के लिए फ़्रेम चरण में कीफ़्रेम जनरेट करें। टेक्स्ट - टू - वीडियो उपलब्ध है, लेकिन इसके परिणामस्वरूप चरित्र का बहाव हो सकता है।",
+      "disabledNeedStartFrame": "पहले एक स्टार्ट फ़्रेम जनरेट करें (फ़्रेम चरण)",
+      "disabledNeedPrevious": "पिछले हिस्से को पहले जनरेट करें या सोर्स वीडियो रेंडर करें"
+    },
+    "framePrompt": {
+      "title": "फ़्रेम जनरेट करें",
+      "titlePlural": "फ़्रेम जनरेट करें",
+      "beatBadge": "{number} को हराएं",
+      "startEnd": "शुरू करें + खत्म करें",
+      "startFrame": "फ़्रेम शुरू करें",
+      "endFrame": "एंड फ़्रेम",
+      "endDescription": "एंड कीफ़्रेम सेगमेंट की स्टार्ट फ़्रेम इमेज के निर्देशित संपादन का उपयोग करते हैं ताकि कास्ट, अलमारी और भूगोल संरेखित रहें — वीडियो मॉडल को भ्रमित करने वाले असंबंधित पूर्ण रेंडर से बचें।",
+      "tabVisualSetup": "विज़ुअल सेटअप",
+      "tabCustomPrompt": "कस्टम प्रॉम्प्ट",
+      "characterRefsActive": "कैरेक्टर रेफ़रेंस सक्रिय",
+      "characterRefsHint": "चरित्र संदर्भों के साथ सर्वोत्तम परिणामों के लिए, क्लोज - अप या मीडियम शॉट फ्रेमिंग का उपयोग करें। वाइड शॉट्स चेहरे की पहचान के लिए पात्रों को बहुत छोटा बनाते हैं।",
+      "contentAwareEnd": "कंटेंट - अवेयर एंड (शुरू से एडिट करें)",
+      "contentAwareEndHint": "इस डायलॉग/एक्शन प्ले — एक्सप्रेशन और ब्लॉक करने के बाद सेगमेंट के स्टार्ट फ़्रेम को एडिट करके एंड इमेज बनाई जाती है, जबकि सीन की निरंतरता लॉक रहती है।",
+      "generating": "जनरेट हो रहा है",
+      "generateFrame": "फ़्रेम जनरेट करें",
+      "generateFrames": "फ़्रेम जनरेट करें"
+    },
+    "preVis": {
+      "title": "डायरेक्ट — {label}",
+      "description": "दृश्य {number} · चरित्र और अलमारी संदर्भों के साथ निर्देशित प्रॉम्प्ट बिल्डर।",
+      "matchingNotes": "संदर्भ मिलान नोट्स",
+      "tabVisualSetup": "विज़ुअल सेटअप",
+      "tabCustomPrompt": "कस्टम प्रॉम्प्ट",
+      "wardrobeOverride": "अलमारी टेक्स्ट ओवरराइड (वैकल्पिक — डिप्टीच रेफ़री इमेज उपलब्ध होने पर भेजी जाती है)",
+      "locationReference": "लोकेशन का संदर्भ",
+      "oneSelected": "% 1 चयनित@ info: status",
+      "wardrobePlaceholder": "संदर्भ लाइब्रेरी से पूरा अलमारी विवरण...",
+      "promptPlaceholder": "फ़ुल इमेज जनरेशन प्रॉम्प्ट...",
+      "negativePlaceholder": "नेगेटिव प्रॉम्प्ट...",
+      "generating": "जनरेट हो रहा है",
+      "generateWithDirect": "डायरेक्ट के साथ जनरेट करें"
+    }
+  },
+  "foundation": {
+    "reimagine": {
+      "changeArtStyleTitle": "कला शैली बदलें",
+      "changeArtStyleDescription": "अपनी कला शैली को बदलने के लिए एक Blueprint reimagine की आवश्यकता होती है। SceneFlow नए सौंदर्यशास्त्र के लिए आपकी स्क्रिप्ट को अनुकूलित करेगा।",
+      "changeAspectRatioTitle": "पहलू अनुपात बदलें",
+      "changeAspectRatioDescription": "आस्पेक्ट रेश्यो बदलने के लिए Blueprint की फिर से कल्पना करने की आवश्यकता होती है। नए फ़ॉर्मेट के लिए सीन डायरेक्शन और फ़्रेमिंग को फिर से बनाया जाएगा।",
+      "loseEditsTitle": "आप मैन्युअल उत्पादन संपादन खो देंगे:",
+      "loseScriptTweaks": "स्क्रिप्ट लाइन ट्वीक्स अभी तक लॉक नहीं हुए हैं",
+      "loseStoryboard": "स्टोरीबोर्ड फ़्रेम और जेनरेट की गई संपत्तियाँ",
+      "loseBeatAdjustments": "बीट - स्तरीय उत्पादन समायोजन",
+      "artStyle": "कला शैली",
+      "aspectRatio": "आस्पेक्ट रेशो:",
+      "reimagineInBlueprint": "Blueprint में फिर से कल्पना करें"
+    },
+    "optimizeScene": {
+      "title": "सीन को ऑप्टिमाइज़ करें {number}",
+      "score": "अंकः",
+      "pacing": "पेसिंग: {value}",
+      "tension": "तनाव: {value}",
+      "character": "चरित्र: {value}",
+      "visual": "विज़ुअल: {value}",
+      "aiRecommendations": "AI सिफारिशें ({count})",
+      "commonOptimizations": "सामान्य अनुकूलन",
+      "customInstructions": "कस्टम निर्देश",
+      "stop": "रोकें",
+      "voice": "वॉयस",
+      "placeholder": "इस दृश्य को बेहतर बनाने के लिए कोई विशिष्ट निर्देश जोड़ें...",
+      "selectedCount": "{count, plural, one {# optimization} other {# optimizations}} चयनित",
+      "selectHint": "ऑप्टिमाइज़ेशन चुनें या निर्देश जोड़ें",
+      "applying": "अनुप्रयोग",
+      "applyRecommendations": "सुझाव लागू करें"
+    },
+    "referenceLibrary": {
+      "title": "Reference Library"
+    },
+    "beatReferences": {
+      "title": "संदर्भों की समीक्षा करें — दृश्य {number}",
+      "description": "SceneFlow ने इस बीट के लिए स्वत: चयनित संदर्भ दिए। जनरेट करने से पहले कन्फ़र्म करें या एडजस्ट करें।",
+      "beatKindAction": "एक्शन",
+      "beatKindNarration": "कथन",
+      "beatKindDialogue": "संवाद",
+      "beatLabel": "बीट: {kind}",
+      "autoSelected": "स्वत: चयनित: {summary}",
+      "locationMatchedAssignment": "दृश्य असाइनमेंट से मिलान की गई लोकेशन",
+      "locationMatchedHeading": "लोकेशन का मिलान सीन हेडिंग से हुआ",
+      "locationReference": "लोकेशन का संदर्भ",
+      "pickLocation": "इस बीट के लिए एक पर्यावरण संदर्भ चुनें (दृश्य स्थिरता के लिए उपयोग किया जाता है)।",
+      "match": "मिलाएँ",
+      "selectedCount": "{count} चयनित",
+      "saveSelection": "चयन सहेजें",
+      "generating": "जनरेट हो रहा है",
+      "generateFrame": "फ़्रेम जनरेट करें"
+    },
+    "analysisHandoff": {
+      "title": "{count} के सभी दृश्यों का विश्लेषण करें",
+      "subtitle": "Audience Resonance बैकग्राउंड में चलता है",
+      "durationFewMinutes": "बस कुछ मिनट के लिए।",
+      "durationAboutMinute": "लगभग एक मिनट पहले",
+      "durationAboutMinutes": "{count} मिनट के बारे में",
+      "takesTime": "यह {duration} लेता है क्योंकि प्रत्येक दृश्य व्यक्तिगत रूप से स्कोर किया जाता है।",
+      "keepEditing": "जब तक यह चल रहा है, तब तक आप संपादन जारी रख सकते हैं। विश्लेषण केवल इसके परिणाम लिखता है — यह आपकी स्क्रिप्ट को कभी ओवरराइट नहीं करता है।",
+      "notifyReady": "जब यह तैयार हो जाएगा, तो हम आपको सूचित करेंगे।",
+      "notifyDetail": "प्रगति स्क्रीन के निचले भाग में दिखाई देती है, और परिणाम आपके नोटिफ़िकेशन में आ जाता है, भले ही आप दूर नेविगेट करें।",
+      "dontRemind": "मुझे फिर से याद मत करो",
+      "starting": "%s शुरू हो रहा है",
+      "startAnalysis": "विश्लेषण शुरू करें"
+    },
+    "filmTreatment": {
+      "title": "फ़िल्म ट्रीटमेंट रिव्यू",
+      "noTreatment": "इस प्रोजेक्ट के लिए कोई फ़िल्म ट्रीटमेंट नहीं मिला",
+      "generateFirst": "पहले Blueprint चरण में एक फिल्म उपचार उत्पन्न करें।",
+      "description": "सत्यापित करें कि आपकी स्क्रिप्ट स्वीकृत उपचार के साथ संरेखित है"
+    }
+  },
+  "retakeExtra": {
+    "intelligentRetake": {
+      "title": "इंटेलिजेंट रीटेक",
+      "description": "सुधार का वर्णन करें। हम एक फ्रेम एडिट, प्रॉम्प्ट रीराइट या दोनों को रूट करेंगे।",
+      "whatToFix": "हमें क्या ठीक करना चाहिए?",
+      "fixPlaceholder": "वर्णन करें कि क्या ठीक करना है, उदाहरण के लिए 'टेबल पर मौजूद कॉफी कप को हटा दें'",
+      "analyzing": "विश्लेषण।",
+      "analyze": "विश्लेषण (Analyze)",
+      "viewFullPrompt": "पूरा प्रॉम्प्ट देखें",
+      "fixStartingFrame": "शुरुआती फ़्रेम को ठीक करें",
+      "fixStartingFrameHint": "फ़्रेम - लॉक की गई स्टार्ट इमेज को फिर से बनाने से पहले उसमें बदलाव करें।",
+      "frameEditPlaceholder": "फ़्रेम संपादन निर्देश",
+      "applyPromptChanges": "झटपट बदलाव लागू करें",
+      "applyPromptChangesHint": "संशोधित प्रॉम्प्ट और नेगेटिव एडिशन का इस्तेमाल करें।",
+      "noPromptChanges": "कोई संकेत परिवर्तन का सुझाव नहीं दिया गया।",
+      "retaking": "फिर से लिया जा रहा है...",
+      "approveAndRetake": "मंज़ूरी दें और फिर से लें",
+      "clipReferenceAlt": "संदर्भ क्लिप करें",
+      "anomalyFrame": "शुरुआती फ़्रेम में",
+      "anomalyMotion": "गति में पेश किया गया",
+      "anomalyBoth": "फ़्रेम और गति",
+      "anomalyUnknown": "मूल अस्पष्ट है"
+    },
+    "regenerateBeats": {
+      "title": "बीट्स को फिर से जनरेट करें",
+      "description": "सभी सेगमेंट साफ़ करें और नए सिरे से शुरू करने के लिए बीट बिल्डर पर लौटें।",
+      "beats": "बीट्स",
+      "totalDuration": "कुल अवधि",
+      "anchoredFrames": "एंकर फ़्रेम",
+      "anchoredCount": "{anchored} / {total}",
+      "assetsWarning": "चेतावनी: यह जेनरेट किए गए कीफ़्रेम और वीडियो एसेट सहित सभी सेगमेंट को मिटा देगा। इस कार्रवाई को पूर्ववत नहीं किया जा सकता।",
+      "emptyWarning": "सभी मौजूदा सेगमेंट हटा दिए जाएँगे। आपको नई सेटिंग के साथ कॉन्फ़िगर करने और फिर से बनाने के लिए बीट बिल्डर पर ले जाया जाएगा।",
+      "nextHint": "बीट बिल्डर कुल अवधि, सेगमेंट गिनती, फ़ोकस मोड और कस्टम दिशा के लिए नियंत्रण के साथ खुलेगा।",
+      "deleteAndRegenerate": "मिटाएँ और पुनर्जीवित करें",
+      "regenerate": "फिर से जनरेट करें"
+    },
+    "keyframeGeneration": {
+      "title": "कीफ़्रेम जनरेशन सेटिंग",
+      "description": "कॉन्फ़िगर करें कि सेगमेंट कैसे बनाए जाते हैं और अपनी स्क्रिप्ट और ऑडियो के साथ संरेखित होते हैं।",
+      "noDescription": "कोई वर्णन उपलब्ध नहीं",
+      "audioBadge": "{duration}s ऑडियो",
+      "existingWarning": "{count, plural, one {# existing segment} other {# existing segments}} को बदल दिया जाएगा",
+      "manualEditsSuffix": "(मैन्युअल संपादन के साथ {count})",
+      "tabAlignment": "संरेखण और पेसिंग",
+      "tabDirection": "सीन डायरेक्शन",
+      "audioAlignment": "ऑडियो संरेखण",
+      "narrationDriven": "कथन - चालित",
+      "narrationDrivenHint": "कथन बीट्स के लिए कट को संरेखित करें",
+      "dialogueDriven": "संवाद - संचालित",
+      "dialogueDrivenHint": "कटौती को संवाद में संरेखित करें",
+      "pacingStyle": "पेसिंग स्टाइल",
+      "beatCount": "बीट काउंट",
+      "auto": "अपने-आप",
+      "manual": "मैन्युअल",
+      "basedOnPacing": "{pacing} पेसिंग और {basis} पर आधारित",
+      "audioBasis": "{duration}s ऑडियो",
+      "durationBasis": "{duration} की अवधि",
+      "segmentsCount": "{count} सेगमेंट",
+      "advancedOptions": "विस्तृत विकल्प",
+      "shotVariety": "शॉट वैराइटी",
+      "varietyMinimal": "न्यूनतम - लगातार फ़्रेमिंग",
+      "varietyBalanced": "संतुलित - शॉट्स का मिश्रण",
+      "varietyHigh": "उच्च - गतिशील किस्म",
+      "preserveManualEdits": "मैन्युअल संपादन संरक्षित करें",
+      "editedPromptsFound": "{count} संपादित प्रॉम्प्ट(प्रॉम्प्ट) मिले",
+      "targetDuration": "लक्ष्य अवधि (सेकंड)",
+      "directionOverrides": "सीन डायरेक्शन ओवरराइड करता है",
+      "directionOverridesHint": "ये सेटिंग इस बात को प्रभावित करती हैं कि AI प्रत्येक सेगमेंट के लिए संकेत कैसे उत्पन्न करता है। AI को प्रति - सेगमेंट निर्णय लेने देने के लिए \"विविध\" चुनें।",
+      "primaryShotType": "प्राथमिक शॉट का प्रकार",
+      "cameraMovement": "कैमरा मूवमेंट",
+      "lightingMood": "प्रकाश मनोदशा",
+      "atmosphere": "वायुमण्डल",
+      "footerSummary": "{count} सेगमेंट • {duration}s",
+      "generating": "जनरेट हो रहा है",
+      "regenerateKeyframes": "कीफ़्रेम फिर से जनरेट करें",
+      "generateKeyframes": "कीफ़्रेम जनरेट करें",
+      "pacing": {
+        "slow": {
+          "label": "धीमा और विचारशील",
+          "description": "लंबे सेगमेंट (6 -8s), न्यूनतम कटौती"
+        },
+        "moderate": {
+          "label": "मध्यम",
+          "description": "संतुलित पेसिंग (4 -6 सेगमेंट)"
+        },
+        "fast": {
+          "label": "तेज़ और गतिशील",
+          "description": "त्वरित कटौती (3 -4 सेगमेंट)"
+        },
+        "dynamic": {
+          "label": "गतिशील (ऑडियो - मिलान)",
+          "description": "कथन/संवाद की धड़कन के आधार पर भिन्न होता है"
+        }
+      },
+      "shotTypes": {
+        "wide": {
+          "label": "वाइड शॉट",
+          "description": "जगह और संदर्भ स्थापित करें"
+        },
+        "medium": {
+          "label": "मध्यम शॉट",
+          "description": "बैलेंस विषय और पर्यावरण"
+        },
+        "close-up": {
+          "label": "बंद!",
+          "description": "भावना और विस्तार पर ध्यान दें"
+        },
+        "extreme-close-up": {
+          "label": "बेहद करीबी",
+          "description": "नाटकीय जोर"
+        },
+        "two-shot": {
+          "label": "दो - शॉट",
+          "description": "बातचीत में किरदार"
+        },
+        "over-the-shoulder": {
+          "label": "कंधे के ऊपर",
+          "description": "पीओवी इन डायलॉग"
+        },
+        "varied": {
+          "label": "अलग - अलग (AI फ़ैसला करता है)",
+          "description": "AI को हर सेगमेंट के हिसाब से चुनने दें"
+        }
+      },
+      "cameraMovements": {
+        "static": {
+          "label": "रेखा की रंग",
+          "description": "कोई हलचल नहीं, स्थिर फ़्रेम"
+        },
+        "pan": {
+          "label": "कड़ाही",
+          "description": "आड़ा झाडू"
+        },
+        "tilt": {
+          "label": "पुछल्ले",
+          "description": "वर्टिकल मूवमेंट"
+        },
+        "dolly": {
+          "label": "Dolly",
+          "description": "विषय की ओर/उससे दूर जाएँ"
+        },
+        "tracking": {
+          "label": "ट्रैकिंग",
+          "description": "सब्जेक्ट मूवमेंट फ़ॉ"
+        },
+        "handheld": {
+          "label": "हैंडहेल्ड",
+          "description": "प्राकृतिक गति"
+        },
+        "varied": {
+          "label": "अलग - अलग (AI फ़ैसला करता है)",
+          "description": "आंदोलनों का मिश्रण"
+        }
+      },
+      "lighting": {
+        "natural": {
+          "label": "प्राकृतिक",
+          "description": "यथार्थवादी, मुलायम प्रकाश व्यवस्था"
+        },
+        "dramatic": {
+          "label": "नाटकीय",
+          "description": "ज़्यादा कंट्रास्ट, छाया"
+        },
+        "soft": {
+          "label": "सॉफ्ट/डिफ्यूज्ड",
+          "description": "कोमल, चापलूसी वाली रोशनी"
+        },
+        "noir": {
+          "label": "नॉयर",
+          "description": "अंधेरा, रहस्यमय, लो - की"
+        },
+        "golden": {
+          "label": "गोल्डन आवर",
+          "description": "गर्म, सूर्यास्त/सूर्योदय टोन"
+        },
+        "cold": {
+          "label": "ठंडा/नीला",
+          "description": "कूल, स्टार्क, क्लिनिकल"
+        }
+      },
+      "atmospheres": {
+        "neutral": {
+          "label": "तटस्थ",
+          "description": "सामान्य मूड"
+        },
+        "tense": {
+          "label": "काल",
+          "description": "सस्पेंसिबल, ऑन - एज"
+        },
+        "serene": {
+          "label": "चुपचाप",
+          "description": "शांतिपूर्ण, शांत"
+        },
+        "energetic": {
+          "label": "ऊर्जावान",
+          "description": "गतिशील, रोमांचक"
+        },
+        "melancholic": {
+          "label": "उदास",
+          "description": "उदास, परावर्तक"
+        },
+        "mysterious": {
+          "label": "हर छिपे हुए चेहरे में अंधेरी कहानियाँ होती हैं",
+          "description": "पेचीदा, गुप्त"
+        },
+        "hopeful": {
+          "label": "आशावान",
+          "description": "आशावादी, उत्थान"
+        }
+      }
+    },
+    "intelligentTitle": "इंटेलिजेंट रीटेक",
+    "intelligentDescription": "सुधार का वर्णन करें। हम एक फ्रेम एडिट, प्रॉम्प्ट रीराइट या दोनों को रूट करेंगे।",
+    "whatToFix": "हमें क्या ठीक करना चाहिए?",
+    "fixPlaceholder": "वर्णन करें कि क्या ठीक करना है, उदाहरण के लिए 'टेबल पर मौजूद कॉफी कप को हटा दें'",
+    "analyzing": "विश्लेषण।",
+    "analyze": "विश्लेषण (Analyze)",
+    "viewFullPrompt": "पूरा प्रॉम्प्ट देखें",
+    "fixStartingFrame": "शुरुआती फ़्रेम को ठीक करें",
+    "fixStartingFrameHint": "फ़्रेम - लॉक की गई स्टार्ट इमेज को फिर से बनाने से पहले उसमें बदलाव करें।",
+    "frameEditPlaceholder": "फ़्रेम संपादन निर्देश",
+    "applyPromptChanges": "झटपट बदलाव लागू करें",
+    "applyPromptChangesHint": "संशोधित प्रॉम्प्ट और नेगेटिव एडिशन का इस्तेमाल करें।",
+    "noPromptChanges": "कोई संकेत परिवर्तन का सुझाव नहीं दिया गया।",
+    "retaking": "फिर से लिया जा रहा है...",
+    "approveAndRetake": "मंज़ूरी दें और फिर से लें",
+    "keyframeRegenTitle": "कीफ़्रेम फिर से जनरेट करें",
+    "keyframeRegenDescription": "अपडेट की गई दिशा के साथ इस बीट के लिए स्टार्ट और एंड फ़्रेम फिर से बनाएँ।"
   }
 }

@@ -7,7 +7,72 @@
     "references": "รายการอ้างอิง",
     "timeline": "ไทม์ไลน์",
     "mixer": "Production Mixer",
-    "directorConsole": "คอนโซลผู้อำนวยการ"
+    "directorConsole": "คอนโซลผู้อำนวยการ",
+    "initializing": "กำลังเตรียมใช้งาน",
+    "opening": "การเปิดตัว Production Studio",
+    "openingShort": "การเปิดการผลิต",
+    "backToBlueprint": "กลับไปที่ Blueprint",
+    "blueprintShort": "Blueprint",
+    "productionLabel": "Production",
+    "viewsAriaLabel": "Production Studio VIEWS",
+    "viewStudio": "สตูดิโอ",
+    "viewScreening": "Screening Room",
+    "viewStreams": "สตรีม",
+    "loadingImages": "กำลังโหลดภาพ...",
+    "untitledProject": "โปรเจกต์ที่ไม่มีชื่อ",
+    "settingUpWorkspace": "การตั้งค่าพื้นที่ทำงานของคุณ",
+    "loadingMessages": {
+      "message1": "กำลังโหลดการผลิตของคุณ...",
+      "message2": "กำลังกู้คืนฉากและสตอรี่บอร์ด...",
+      "message3": "กำลังเตรียมพื้นที่ทำงาน Pre-Vis...",
+      "message4": "กำลังโหลดไลบรารีอ้างอิง...",
+      "message5": "เกือบพร้อม!"
+    },
+    "generating": "กำลังสร้าง...",
+    "shareScreeningTitle": "แบ่งปัน Screening Room",
+    "shareScreeningDescription": "ทุกคนที่มีลิงก์นี้สามารถดูการนำเสนอ Screening Room ของคุณได้พวกเขาไม่จำเป็นต้องมีบัญชี Sceneflow",
+    "shareBulletView": "ผู้ชมสามารถรับชมด้วยเสียงและคำแปลเต็มรูปแบบ",
+    "shareBulletNoEdit": "พวกเขาไม่สามารถแก้ไขหรือดาวน์โหลดโปรเจกต์ของ",
+    "shareBulletDisable": "คุณสามารถปิดใช้งานลิงก์นี้ได้ตลอดเวลา",
+    "copied": "คัดลอก!",
+    "deleteCharacterTitle": "ลบอักขระด้วยกล่องโต้ตอบ",
+    "deleteCharacterDescription": "ตัวละคร \"{name}\" มี {count, plural, one {# dialogue line} other {# dialogue lines}} ในสคริปต์คุณต้องการทำอะไรกับบทสนทนาเหล่านี้?",
+    "clearCharacterIds": "ล้าง ID อักขระ",
+    "clearCharacterIdsHint": "ลบ ID อักขระออกจากบรรทัดบทสนทนาบทสนทนาจะจับคู่อักขระตามชื่อโดยใช้การจับคู่แบบถอยกลับที่ปรับปรุงแล้ว",
+    "reassignToAnother": "กำหนดตัวละครอื่นอีกครั้ง",
+    "reassignToAnotherHint": "กำหนดบรรทัดบทสนทนาทั้งหมดให้กับอักขระอื่น",
+    "selectCharacterReassign": "เลือกอักขระที่จะกำหนดใหม่",
+    "reassignAndDelete": "มอบหมายและลบใหม่",
+    "clearIdsAndDelete": "ล้างบัตรประจำตัวและลบ",
+    "mergeDuplicatesTitle": "ผสานอักขระที่ซ้ำกัน",
+    "mergeDuplicatesDescription": "เลือกตัวละครที่จะเก็บไว้และตัวละครที่ซ้ำกันเพื่อรวมเข้าด้วยกัน",
+    "keepThisCharacter": "เก็บอักขระนี้ไว้:",
+    "willBeMerged": "จะถูกรวมเข้าด้วยกัน (ซ้ำ):",
+    "noDuplicatesToMerge": "ไม่มีรายการซ้ำที่จะผสาน",
+    "mergeDialogueNote": "บรรทัดบทสนทนาทั้งหมดจากอักขระที่ซ้ำกันจะถูกกำหนดให้กับอักขระหลัก",
+    "mergeCharacters": "ผสานอักขระ",
+    "hasVoice": "(มีเสียง)",
+    "budgetTitle": "การจัดการงบประมาณการผลิต - {title}",
+    "setBudget": "ตั้งงบประมาณ",
+    "budgetAmount": "งบประมาณ: {amount}",
+    "importTranslation": "นำเข้าคำแปล",
+    "importTranslationTitle": "นำเข้าคำแปล {language}",
+    "importTranslationDescription": "วางสคริปต์ที่แปลแล้วของคุณด้านล่างรูปแบบควรตรงกับรูปแบบที่ส่งออก:",
+    "importTranslationFormat": "[1] TRANSLATED_LABEL: ข้อความที่แปลแล้ว",
+    "importTranslationPlaceholder": "วางสคริปต์ที่แปลแล้วที่นี่...",
+    "deleteBeat": "ลบจังหวะ",
+    "deleteBeatDescription": "คุณแน่ใจว่าต้องการลบโซนนี้หรือไม่ การดำเนินการนี้จะไม่สามารถย้อนกลับได้",
+    "deleteScene": "ลบฉาก {number}",
+    "deleteSceneDescription": "การดำเนินการนี้จะลบฉากนี้และเนื้อหาที่เกี่ยวข้องทั้งหมดออกอย่างถาวร",
+    "deleteSceneAction": "ลบฉาก",
+    "assetsRemoved": "เนื้อหาที่จะถูกลบออก",
+    "assetSceneImage": "ภาพฉาก",
+    "assetNarrationAudio": "เสียงบรรยาย",
+    "assetDescriptionAudio": "เสียงคำอธิบาย",
+    "assetDialogueAudio": "เสียงบทสนทนา",
+    "assetSceneDirection": "ทิศทางของฉาก",
+    "assetBeats": "{count, plural, one {# beat} other {# beats}}",
+    "assetMusic": "เพลง"
   },
   "script": {
     "generateScript": "สร้างสคริปต์",
@@ -53,5 +118,1171 @@
     "segmentsGenerated": "กลุ่มที่สร้างขึ้น",
     "audioGenerated": "สร้างเสียงแล้ว",
     "saveFailed": "ไม่สามารถบันทึกการเปลี่ยนแปลง"
+  },
+  "express": {
+    "title": "แสดงฉากทั้งหมด (ขั้นสูง)",
+    "description": "เรียกใช้เฟรม Direction → → Audio pre-vis สำหรับทุกฉากแบบคู่ขนาน (สูงสุด 3 เฟรมต่อครั้ง) นี่เป็นการดำเนินการที่ยาวนานและมีเครดิตสูง — แนะนำให้ใช้ต่อฉากด่วนในแต่ละฉากสำหรับจุดตรวจ",
+    "audioLanguage": "ภาษาเสียง",
+    "translateBadge": "การแปล",
+    "audioLanguageHint": "การสนทนาและการบรรยายจะถูกสร้างขึ้นใน {lang} เสียงที่มีอยู่ในภาษาอื่นจะไม่ถูกแตะต้อง",
+    "pipelineTitle": "ไปป์ไลน์ (ต่อฉาก)",
+    "stepDirection": "1. ทิศทาง",
+    "stepAudio": "2. เสียง",
+    "stepImage": "3. รูปภาพ",
+    "pipelineSceneCount": "ฉาก {done}/{total}",
+    "pipelineDialogueLines": "บรรทัดบทสนทนา {count}",
+    "pipelineImageCount": "{establishing} การสร้าง + {frames} เฟรมก่อนการมองเห็น",
+    "backgroundMusic": "เพลงประกอบ",
+    "musicScenesHaveDescriptions": "ฉาก {count} มีคำอธิบายเพลง",
+    "musicNoDescriptions": "ไม่มีฉากใดที่มีคำอธิบายเพลง",
+    "storyboardQualityDraft": "คุณภาพสตอรี่บอร์ด: ฉบับร่าง",
+    "storyboardQualityDraftHint": "สร้างโครงร่างที่รวดเร็วสำหรับการตรวจสอบใช้สรุปเฟรมหลังจากนั้นสำหรับการสร้างภาพเคลื่อนไหวและวิดีโอแบบ hi-res photorealistic",
+    "soundEffects": "ซาวด์เอฟเฟกต์",
+    "soundEffectsHint": "เอฟเฟ็กต์เสียงจะรวมอยู่ในกลุ่มวิดีโอ VEO ในระหว่างการผลิตตัวอย่าง Animatic ใช้คำบรรยายบทสนทนาและเพลงเสริมเท่านั้น",
+    "onlyMissingFrames": "เฟรมหายไปเท่านั้น",
+    "onlyMissingFramesHint": "ข้ามกรอบที่มีรูปอยู่แล้วนะคะ",
+    "regenerateExisting": "สร้างใหม่ที่มีอยู่",
+    "regenerateExistingHint": "คำนวณใหม่ทุกเฟสแม้ว่าจะมีทิศทางเสียงหรือภาพอยู่แล้วก็ตาม",
+    "artStyle": "สไตล์ศิลปะ",
+    "artStyleLockedHint": "ล็อคไว้ใน Blueprint — เปลี่ยนรากฐานที่นั่นเพื่อจินตนาการใหม่",
+    "artStyleUnlockedHint": "นำไปใช้กับเฟรมก่อนการดูทั้งหมดและการไหลผ่านการสร้างวิดีโอ",
+    "estimatedCost": "ค่าใช้จ่ายโดยประมาณ",
+    "costImages": "ภาพ: เครดิต {credits} (เฟรม {frames} × {perFrame})",
+    "costAudio": "เสียง: ~ เครดิต {credits}",
+    "costMusic": "เพลง: เครดิต {credits}",
+    "costTotal": "รวม: ~ เครดิต {credits}",
+    "costEstimateDisclaimer": "ประมาณการเท่านั้นการใช้งานจริงขึ้นอยู่กับความยาวของบทสนทนาและจำนวนเฟสที่ต้องใช้งานจริง",
+    "running": "กำลังดำเนินการ...",
+    "generate": "สร้าง"
+  },
+  "expressAudio": {
+    "title": "Express Audio",
+    "description": "สร้างบทสนทนาเอฟเฟกต์เสียงและเพลงสำหรับฉากนี้พร้อมกันบทสนทนาใช้ TTS จังหวะการกระทำใช้เสียงพื้นเมืองของ Veo และดนตรีใช้ Lyria",
+    "scope": "ขอบเขต",
+    "scopeMissing": "ไม่ครบเท่านั้น",
+    "scopeAll": "ทั้งหมด (สร้างใหม่)",
+    "scopeAllWarning": "เสียงที่มีอยู่สำหรับรายการที่เลือกจะถูกลบและสร้างใหม่",
+    "audioToGenerate": "เสียงที่จะสร้าง",
+    "noAudioItems": "ไม่มีรายการเสียงสำหรับฉากนี้",
+    "statusReady": "พร้อม",
+    "statusMissing": "สูญหาย",
+    "sfxDurationPreset": "ระยะเวลา SFX ที่ตั้งไว้ล่วงหน้า",
+    "durationAuto": "AUTO ({seconds}s · VEO {veoSeconds}s)",
+    "durationShort": "Short 3s/Veo 4s",
+    "durationMedium": "8s ปานกลาง",
+    "durationLong": "ลอง 15 วินาที/วีโอ 8 วินาทีสูงสุด",
+    "veoPartialHint": "VEO ครอบคลุมถึง 8 วินาที (Auto target {seconds}s)",
+    "sfxCredits": "เครดิต SFX: {credits} {hint}",
+    "creditHint": "~ {credits} เครดิต · ต่อเนื่องสูงสุด 8 วินาที",
+    "running": "กำลังรัน...",
+    "generateAudio": "สร้างเสียง ({count})"
+  },
+  "expressSfx": {
+    "title": "Express VEO SFX",
+    "description": "สร้างเอฟเฟ็กต์เสียงจังหวะการกระทำพร้อมกัน (สูงสุด 2 ครั้งต่อครั้ง) แต่ละจังหวะใช้เสียงพื้นเมืองของ VEO จากนั้นแยก MP3 สำหรับภาพเคลื่อนไหว",
+    "selectedBeats": "จังหวะที่เลือก",
+    "estimatedCredits": "เครดิตโดยประมาณ",
+    "creditHint": "~ {credits} เครดิต · ต่อเนื่องสูงสุด 8 วินาที",
+    "actionBeats": "จังหวะการดำเนินการ",
+    "audioReady": "เสียงพร้อมแล้ว",
+    "durationPreset": "ระยะเวลาที่ตั้งไว้ล่วงหน้า",
+    "durationAuto": "AUTO ({seconds}s · VEO {veoSeconds}s)",
+    "durationShort": "Short 3s/Veo 4s",
+    "durationMedium": "8s ปานกลาง",
+    "durationLong": "ลอง 15 วินาที/วีโอ 8 วินาทีสูงสุด",
+    "veoPartialHint": "VEO ครอบคลุมถึง 8 วินาที (Auto target {seconds}s)",
+    "regenerateWithAudio": "สร้างจังหวะใหม่ที่มีเสียงอยู่แล้ว",
+    "running": "กำลังรัน...",
+    "generateSfx": "สร้าง SFX ({count})"
+  },
+  "expressScene": {
+    "title": "ฉากด่วน",
+    "description": "เลือกกรอบก่อนการมองเห็นที่จะสร้างหรือสร้างใหม่การสร้างเฟรมที่มีอยู่ใหม่จะอัปเดตเฉพาะภาพเท่านั้น — ทิศทางและเสียงจะไม่เปลี่ยนแปลง",
+    "scope": "ขอบเขต",
+    "scopeMissing": "ไม่ครบเท่านั้น",
+    "scopeRegenerate": "สร้างใหม่ที่เลือกไว้",
+    "scopeRegenerateHint": "เฟรมที่ตรวจสอบด้วยภาพที่มีอยู่จะถูกสร้างใหม่ทิศทางและเสียงจะไม่ถูกเรียกใช้ซ้ำ",
+    "frames": "กรอบ",
+    "noFrames": "ไม่มีกรอบสำหรับขอบเขตนี้",
+    "hasImage": "มีภาพ",
+    "missing": "สูญหาย",
+    "imageCredits": "เครดิตภาพ (โดยประมาณ): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
+    "running": "กำลังรัน...",
+    "generateScene": "สร้างฉาก"
+  },
+  "expressGenerateAll": {
+    "title": "สร้างทั้งหมด",
+    "description": "เรียกใช้เฟรม Express Audio และ Express Scene ในแบบคู่ขนานค่าเริ่มต้นตรงกับการเลือก \"ขาดเท่านั้น\" ของแต่ละท่อ — ปรับขอบเขตหากคุณต้องการสร้างใหม่",
+    "audioSection": "เสียง",
+    "framesSection": "กรอบ",
+    "scope": "ขอบเขต",
+    "scopeMissing": "ไม่ครบเท่านั้น",
+    "scopeAll": "ทั้งหมด (สร้างใหม่)",
+    "scopeRegenerate": "สร้างใหม่ที่เลือกไว้",
+    "audioToGenerate": "เสียงที่จะสร้าง",
+    "noAudioItems": "ไม่มีรายการเสียงสำหรับฉากนี้",
+    "statusReady": "พร้อม",
+    "statusMissing": "สูญหาย",
+    "sfxDurationPreset": "ระยะเวลา SFX ที่ตั้งไว้ล่วงหน้า",
+    "durationAuto": "AUTO ({seconds}s · VEO {veoSeconds}s)",
+    "durationShort": "Short 3s/Veo 4s",
+    "durationMedium": "8s ปานกลาง",
+    "durationLong": "ลอง 15 วินาที/วีโอ 8 วินาทีสูงสุด",
+    "creditHint": "~ {credits} เครดิต · ต่อเนื่องสูงสุด 8 วินาที",
+    "veoSfxCredits": "เครดิต VEO SFX (โดยประมาณ): {credits}",
+    "frames": "กรอบ",
+    "noFrames": "ไม่มีเฟรม",
+    "hasImage": "มีภาพ",
+    "missing": "สูญหาย",
+    "imageCredits": "เครดิตภาพ (โดยประมาณ): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
+    "running": "กำลังรัน...",
+    "generateAll": "สร้างทั้งหมด"
+  },
+  "retake": {
+    "title": "ต้องการเปลี่ยนเทคที่มีอยู่ใช่ไหม",
+    "description": "จังหวะนี้มีวิดีโอที่สร้างขึ้นแล้วการเปิดเครื่องกำเนิดไฟฟ้าหรือการอัปโหลดจะเป็นการเพิ่มเทคใหม่และอาจใช้เครดิต",
+    "continue": "ดำเนินการต่อ"
+  },
+  "reset": {
+    "title": "รีเซ็ตการผลิตฉาก?",
+    "sceneLabel": "ฉาก {number}",
+    "sceneHeading": "ฉาก {number} · {heading}",
+    "warning": "การดำเนินการนี้<bold>จะลบไทม์ไลน์จังหวะ</bold>ทั้งหมดของคุณสำหรับฉากนี้และไม่สามารถยกเลิกได้คุณจะต้องเรียกใช้การตั้งค่าเซกเมนต์อีกครั้งตั้งแต่เริ่มต้น",
+    "whatYouWillLose": "สิ่งที่คุณจะสูญเสีย",
+    "segmentCount": "{count, plural, one {# segment} other {# segments}}",
+    "segmentDetail": "การกำหนดเวลาบันทึกทิศทางการแจ้งเตือน VEO และการทำแผนที่การสนทนาต่อส่วน",
+    "keyframeImage": "{count, plural, one {# keyframe image} other {# keyframe images}}",
+    "keyframeDetailAcross": "ข้าม {count, plural, one {# segment} other {# segments}} (เฟรมเริ่มต้น/สิ้นสุด)",
+    "keyframeDetailDefault": "ภาพนิ่งเริ่มต้นและสิ้นสุดเฟรมที่ใช้สำหรับการสร้างวิดีโอ",
+    "videoClip": "{count, plural, one {# generated video clip} other {# generated video clips}}",
+    "videoDetail": "เอาต์พุต Veo/I2V ระดับ Beat และใช้งานอยู่บนไทม์ไลน์",
+    "imageClip": "{count, plural, one {# image clip} other {# image clips}}",
+    "imageClipDetail": "สินทรัพย์ภาพนิ่งที่อัปโหลดหรือสร้างขึ้นที่แนบมากับเซกเมนต์",
+    "alternateTake": "{count, plural, one {# alternate take} other {# alternate takes}}",
+    "alternateTakeDetail": "รุ่นพิเศษที่จัดเก็บต่อเซกเมนต์",
+    "sceneRender": "การแสดงฉาก/สตรีมการผลิต",
+    "sceneRenderStreams": "{count, plural, one {# language or output stream} other {# language or output streams}} เชื่อมโยงกับฉากนี้",
+    "sceneRenderDefault": "ผลผลิตฉากผสมสุดท้ายจากโปรดักชั่นมิกเซอร์",
+    "beatStructureOnly": "โครงสร้างจังหวะเท่านั้น",
+    "beatStructureDetail": "ยังไม่พบคีย์เฟรมหรือคลิปแต่ความคืบหน้าในการแบ่งส่วนจะยังคงถูกล้าง",
+    "notDeleted": "<bold>ไม่ถูกลบ:</bold> ข้อความสคริปต์บทสนทนาฉากคำบรรยายเพลง/เสียง SFX ภาพนิ่งของฉากและการอ้างอิงตัวละคร",
+    "resetting": "กำลังรีเซ็ต...",
+    "resetProduction": "รีเซ็ตการผลิต"
+  },
+  "screening": {
+    "generateStreamTitle": "สร้างสตรีม {language}",
+    "generateStreamTitleFallback": "สร้างสตรีมภาษา",
+    "generateStreamDescription": "แปลข้อความฉากและสร้างบทสนทนา/เสียงบรรยายสำหรับภาษานี้เพลงและเอฟเฟกต์เสียงที่มีอยู่จะถูกนำกลับมาใช้ใหม่",
+    "generateDialogue": "สร้างบทสนทนา",
+    "generating": "กำลังสร้าง...",
+    "publishRevisionTitle": "เผยแพร่การแก้ไขสตอรี่บอร์ด",
+    "publishRevisionDescription": "เวอร์ชันที่เพิ่มขึ้น (เช่น → v{current} v{next}) ลิงก์แชร์ของคุณจะไม่เปลี่ยนแปลงผู้รีวิวที่รีเฟรชจะเห็นเวอร์ชันปัจจุบันใหม่การส่งครั้งต่อไปจะได้รับการประทับตราตามนั้น",
+    "labelOptional": "ป้ายกำกับ (ไม่บังคับ)",
+    "labelPlaceholder": "เช่นหมายเหตุของลูกค้ารอบที่ 2",
+    "changeNotesOptional": "หมายเหตุการเปลี่ยนแปลง (ไม่บังคับ)",
+    "changeNotesPlaceholder": "มีอะไรเปลี่ยนแปลงไปบ้างจากเวอร์ชันล่าสุด?",
+    "publishVersion": "เผยแพร่ v{version}"
+  },
+  "segments": {
+    "addBeat": {
+      "title": "เพิ่มจังหวะ",
+      "description": "สร้างพรอมต์การสร้างวิดีโอโดยเลือกประเภทช็อตองค์ประกอบฉากและบทสนทนา Veo 3.1 จะสร้างเสียงพากย์และ SFX โดยตรงจากข้อความแจ้ง",
+      "sceneBadge": "ฉาก {sceneNumber}",
+      "includeSceneDirection": "รวมทิศทางของฉาก",
+      "includeSceneDirectionHint": "เลือกบันทึกของผู้กำกับที่จะรวมคลิกเพื่อเปิดใช้งานจากนั้นเพิ่มบันทึกที่กำหนดเองหากจำเป็น",
+      "clickToAddCustom": "คลิกเพื่อเพิ่มแบบกำหนดเอง",
+      "editOrAddCustomNotes": "แก้ไขหรือเพิ่มบันทึกที่กำหนดเอง...",
+      "addCustomPlaceholder": "เพิ่ม {label}...",
+      "directionCamera": "บันทึกจากกล้อง",
+      "directionLighting": "ไฟ",
+      "directionScene": "ฉาก/สภาพแวดล้อม",
+      "directionTalent": "ความสามารถ/การบล็อค",
+      "directionAudio": "เสียง/SFX",
+      "dialogueLines": "ไดอะล็อกไลน์",
+      "veoSpeechBadge": "Veo 3.1 การพูด",
+      "dialogueHint": "เลือกกล่องโต้ตอบสำหรับเซกเมนต์นี้คลิกเพื่อเลือกจากนั้นแก้ไขข้อความเพื่อใช้เฉพาะส่วน Veo 3.1 จะสร้างเสียงของตัวละคร",
+      "editDialoguePlaceholder": "แก้ไขข้อความบทสนทนาที่จะใช้ในส่วนนี้...",
+      "editDialogueHint": "แก้ไขเพื่อใช้เฉพาะส่วนที่จำเป็นสำหรับกลุ่มนี้ (< 12s)",
+      "noDialogue": "ไม่มีบทสนทนาในฉากนี้",
+      "includeNarration": "รวมเสียงบรรยาย",
+      "narrationText": "ข้อความบรรยาย (แก้ไขได้)",
+      "narrationPlaceholder": "แก้ไขข้อความบรรยายสำหรับส่วนนี้...",
+      "narrationEditHint": "แก้ไขเพื่อใช้เฉพาะส่วนของคำบรรยายสำหรับกลุ่มนี้",
+      "narratorVoice": "เสียงบรรยาย",
+      "selectedVoice": "เลือกแล้ว: {name}",
+      "autoEstimate": "ประเมินอัตโนมัติ",
+      "omniFlashMax": "OMNI FLASH MAX: {seconds} วินาทีต่อเซกเมนต์",
+      "additionalNotes": "หมายเหตุเพิ่มเติม",
+      "additionalNotesPlaceholder": "ทิศทางพิเศษรายละเอียดภาพหรือบันทึกสไตล์...",
+      "generationMethod": "วิธีการสร้าง",
+      "t2v": "ข้อความต่อวิดีโอ",
+      "i2v": "จากภาพสู่วิดีโอ",
+      "noSceneImage": "(ไม่มีภาพฉาก)",
+      "promptPreview": "ดูตัวอย่างพร้อมท์",
+      "startTime": "เวลาเริ่ม",
+      "endTime": "เวลาสิ้นสุด",
+      "method": "วิธีการ",
+      "addAction": "เพิ่มจังหวะ"
+    },
+    "edit": {
+      "title": "แก้ไขเซกเมนต์",
+      "badge": "ฉาก {sceneNumber} • เอาชนะ {beatNumber}",
+      "description": "ปรับเปลี่ยนการตั้งค่าพรอมต์ระยะเวลาและการสร้างของเซกเมนต์",
+      "generationPrompt": "Generation Prompt",
+      "promptPlaceholder": "ป้อนข้อความแจ้งการสร้างวิดีโอ...",
+      "promptHint": "แก้ไขข้อความแจ้งเตือนที่จะถูกส่งไปยัง Veo 3.1 สำหรับการสร้างวิดีโอ",
+      "durationHint": "Omni Flash รองรับคลิป 4 -10 วินาที",
+      "generationMethod": "วิธีการสร้าง",
+      "t2v": "ข้อความต่อวิดีโอ",
+      "i2v": "จากภาพสู่วิดีโอ",
+      "i2vHint": "จะใช้กรอบฉากเป็นภาพเริ่มต้น"
+    },
+    "delete": {
+      "title": "ลบ Beat {number} หรือไม่?",
+      "description": "การดำเนินการนี้ไม่สามารถยกเลิก ",
+      "segmentLabel": "เซกเมนต์",
+      "segmentOf": "# {index} ของ {total}",
+      "duration": "ระยะเวลา",
+      "hasFramesWarning": "เซกเมนต์นี้ได้สร้างเฟรมที่จะหายไป",
+      "lastBeatWarning": "คำเตือน: นี่เป็นส่วนเดียวในฉากการลบจะออกจากฉากโดยไม่มีคีย์เฟรมใดๆ",
+      "shiftWarning": "การลบเซกเมนต์นี้จะเปลี่ยนเซกเมนต์ที่ตามมาทั้งหมดเวลาและลำดับดัชนีจะถูกคำนวณใหม่โดยอัตโนมัติ",
+      "deleting": "การลบ ...",
+      "deleteBeat": "ลบจังหวะ"
+    },
+    "addType": {
+      "title": "เพิ่มจังหวะให้กับฉาก {sceneNumber}",
+      "description": "เพิ่มส่วนที่ใช้คีย์เฟรมสำหรับการสร้างวิดีโอ AI สำหรับองค์ประกอบทางภาพยนตร์ (ชื่อเรื่องการเปลี่ยนผ่าน B-roll) ให้ใช้ปุ่มองค์ประกอบทางภาพยนตร์",
+      "tabType": "ประเภท",
+      "tabPosition": "ตำแหน่ง ",
+      "tabPrompt": "ถาม",
+      "defaultDuration": "{seconds}s ค่าเริ่มต้น",
+      "orDivider": "หรือ",
+      "regenerateAll": "สร้างจังหวะทั้งหมดใหม่",
+      "regenerateAllCount": "กลุ่ม {count}",
+      "regenerateAllHint": "วิเคราะห์ฉากอีกครั้งและสร้างกลุ่มใหม่ด้วย AI การดำเนินการนี้จะแทนที่เซกเมนต์ที่มีอยู่",
+      "insertPosition": "แทรกตำแหน่ง",
+      "referenceBeat": "จังหวะอ้างอิง",
+      "selectSegment": "เลือกเซกเมนต์",
+      "beatOption": "เอาชนะ {number} ({duration}s)",
+      "duration": "ระยะเวลา",
+      "recommendedDuration": "แนะนำ: {seconds}s สำหรับ {name}",
+      "preview": "ตัวอย่าง",
+      "newBadge": "จุดแข็ง",
+      "generatingPrompt": "กำลังสร้างพรอมต์อัจฉริยะด้วย Gemini 2.5...",
+      "aiUnavailable": "AI ไม่พร้อมใช้งาน",
+      "usingTemplate": "การใช้พรอมต์เทมเพลต {error}",
+      "contextAware": "พร้อมท์เนื้อหา - Aware",
+      "contextAwareHint": "ข้อความแจ้งนี้ถูกสร้างขึ้นบนพื้นฐานของการวิเคราะห์ฉากที่อยู่ติดกันแก้ไขได้ตามต้องการ",
+      "generationPrompt": "Generation Prompt",
+      "aiGenerate": "AI Generate",
+      "generating": "กำลังสร้าง...",
+      "reset": "รีเซ็ต",
+      "promptPlaceholder": "อธิบายเนื้อหาภาพ...",
+      "charCount": "อักขระ {count} • ข้อความแจ้งนี้จะใช้สำหรับการสร้างเฟรม",
+      "presetSettings": "การตั้งค่าที่ตั้งไว้ล่วงหน้า",
+      "addNamed": "เพิ่ม {name}",
+      "types": {
+        "standard": {
+          "name": "จังหวะมาตรฐาน",
+          "description": "ส่วนฉากที่มีคีย์เฟรมเริ่มต้น/สิ้นสุดสำหรับการสร้างวิดีโอ AI ควบคุมองค์ประกอบช็อตได้อย่างเต็มที่"
+        },
+        "extend": {
+          "name": "ยิงต่อ",
+          "description": "ดำเนินการต่อจากกรอบท้ายของเซกเมนต์ก่อนหน้ารักษาความต่อเนื่องของภาพในการตัด"
+        }
+      },
+      "positions": {
+        "start": {
+          "label": "ที่จุดเริ่มต้น",
+          "description": "แทรกเป็นเซกเมนต์แรก"
+        },
+        "before": {
+          "label": "ก่อนเลือก",
+          "description": "แทรกก่อนเซกเมนต์ที่เลือก"
+        },
+        "after": {
+          "label": "หลังจากเลือกแล้ว",
+          "description": "แทรกหลังจากเซกเมนต์ที่เลือก"
+        },
+        "end": {
+          "label": "ในตอนท้าย",
+          "description": "ผนวกเป็นเซกเมนต์สุดท้าย"
+        }
+      }
+    },
+    "addSpecial": {
+      "title": "เพิ่มองค์ประกอบภาพยนตร์",
+      "description": "เพิ่มเซกเมนต์วิดีโอพิเศษ AI จะสร้างพรอมต์ที่ปรับให้เหมาะสมสำหรับการสร้างวิดีโอ",
+      "elementType": "ชื่อธาตุ",
+      "duration": "ระยะเวลา",
+      "recommendedDuration": "แนะนำ: {seconds}s สำหรับ {name}",
+      "videoPrompt": "พรอมต์การสร้างวิดีโอ",
+      "generating": "กำลังสร้าง...",
+      "regenerate": "สร้างอีกครั้ง",
+      "reset": "รีเซ็ต",
+      "generatingCinematic": "กำลังสร้างพรอมต์ภาพยนตร์...",
+      "usingTemplate": "การใช้พรอมต์เทมเพลต",
+      "aiUnavailable": "AI ไม่พร้อมใช้งาน: {error}",
+      "promptPlaceholder": "ข้อความแจ้งเตือนที่ AI สร้างขึ้นจะปรากฏที่นี่...",
+      "charCount": "อักขระ {count} • แก้ไขเพื่อปรับแต่งหรือคลิกสร้างใหม่สำหรับข้อความแจ้งเตือนใหม่",
+      "insertAt": "ใส่ที่ตำแหน่ง {position}",
+      "noKeyframes": "ไม่มีคีย์เฟรม",
+      "addNamed": "เพิ่ม {name}",
+      "types": {
+        "title": {
+          "name": "(ไตเติล)",
+          "description": "บัตรชื่อภาพยนตร์ที่มีการซ้อนทับข้อความตัวหนาตั้งค่าโทนเสียงและสร้างแบรนด์วิดีโอของคุณ"
+        },
+        "match-cut": {
+          "name": "Match Cut Bridge",
+          "description": "การเปลี่ยนผ่านอย่างสร้างสรรค์เลียนแบบรูปร่างหรือการเคลื่อนไหวระหว่างฉากเช่นนาฬิกา→หมุนวงล้อ"
+        },
+        "establishing": {
+          "name": "การสร้างช็อต",
+          "description": "โดรนกว้างหรือเครนยิงสร้างภูมิศาสตร์ช่วงเวลาของวันและอารมณ์สำหรับสถานที่ใหม่"
+        },
+        "broll": {
+          "name": "B-Roll (The Lull)",
+          "description": "ภาพบรรยากาศที่น่าตื่นตาตื่นใจภาพระยะใกล้ของรายละเอียดด้านสิ่งแวดล้อมที่เพิ่มพื้นผิวและการก้าวเดิน"
+        },
+        "outro": {
+          "name": "Outro/Credits",
+          "description": "ลำดับการปิดการขายอย่างมืออาชีพความสวยงามจางหายไปหรือเลื่อนด้วยเครดิตการผลิตที่สวยงาม"
+        }
+      }
+    },
+    "common": {
+      "shotConfiguration": "การกำหนดค่าช็อต",
+      "shotType": "ประเภทช็อต",
+      "cameraMovement": "การเคลื่อนไหวของกล้อง",
+      "lens": "Lens",
+      "duration": "ระยะเวลา"
+    },
+    "shotTypes": {
+      "extreme-wide": {
+        "label": "กว้างสุดขีด",
+        "description": "สภาพแวดล้อมเต็มรูปแบบวิชาเล็กๆ"
+      },
+      "wide": {
+        "label": "ภาพถ่ายแบบกว้าง",
+        "description": "ร่างกายเต็มรูปแบบบริบทด้านสิ่งแวดล้อม"
+      },
+      "medium-wide": {
+        "label": "กว้างปานกลาง",
+        "description": "เข่าไปที่ศีรษะสภาพแวดล้อมบางอย่าง"
+      },
+      "medium": {
+        "label": "ภาพระยะปานกลาง",
+        "description": "ยกเอวสนทนา"
+      },
+      "medium-close": {
+        "label": "ระยะใกล้ปานกลาง",
+        "description": "หน้าอกขึ้นการมุ่งเน้นทางอารมณ์"
+      },
+      "close-up": {
+        "label": "โคลสอัพ",
+        "description": "ใบหน้าเท่านั้นอารมณ์รุนแรง"
+      },
+      "extreme-close": {
+        "label": "เข้าใกล้ที่สุด",
+        "description": "ตาปากหรือรายละเอียด"
+      },
+      "two-shot": {
+        "label": "Two Shot",
+        "description": "มีตัวละครสองตัวอยู่ในกรอบด้วยกัน"
+      },
+      "over-shoulder": {
+        "label": "เหนือไหล่",
+        "description": "มุมมองจากด้านหลังตัวละครหนึ่งตัว"
+      },
+      "pov": {
+        "label": "มุมมอง",
+        "description": "ภาพมุมมอง"
+      }
+    },
+    "cameraMovements": {
+      "static": {
+        "label": "คงที่",
+        "description": "ล็อกไว้ไม่มีการเคลื่อนไหว"
+      },
+      "push-in": {
+        "label": "พุชอิน",
+        "description": "ดอลลี่ช้าไปทางผู้เข้าร่วมการศึกษาวิจัย"
+      },
+      "pull-out": {
+        "label": "ดึงออก",
+        "description": "ทำให้ดอลลี่ช้าลงจากเรื่อง"
+      },
+      "pan-left": {
+        "label": "แพนไปทางซ้าย",
+        "description": "หมุนกล้องไปทางซ้าย"
+      },
+      "pan-right": {
+        "label": "แพนไปทางขวา",
+        "description": "หมุนกล้องไปทางขวา"
+      },
+      "tilt-up": {
+        "label": "เอียงขึ้น",
+        "description": "มุมกล้องขึ้นด้านบน"
+      },
+      "tilt-down": {
+        "label": "เอียงลง",
+        "description": "มุมกล้องลดลง"
+      },
+      "tracking": {
+        "label": "การติดตาม",
+        "description": "ติดตามการเคลื่อนไหวของผู้รับการประเมิน"
+      },
+      "handheld": {
+        "label": "อุปกรณ์มือถือ",
+        "description": "เขย่าเล็กน้อยให้ความรู้สึกเป็นสารคดี"
+      },
+      "crane": {
+        "label": "เครน/Jib",
+        "description": "การเคลื่อนที่ในแนวตั้งการกวาด"
+      }
+    },
+    "lenses": {
+      "24mm": {
+        "label": "กว้าง 24 มม.",
+        "description": "สิ่งแวดล้อมกว้างขวาง"
+      },
+      "35mm": {
+        "label": "Anamorphic 35 มม.",
+        "description": "ภาพยนตร์บิดเบี้ยวเล็กน้อย"
+      },
+      "50mm": {
+        "label": "มาตรฐาน 50 มม.",
+        "description": "มุมมองธรรมชาติ"
+      },
+      "85mm": {
+        "label": "แนวตั้ง 85 มม.",
+        "description": "DOF ตื้นใกล้ชิด"
+      },
+      "135mm": {
+        "label": "เทเลโฟโต้ 135 มม.",
+        "description": "บีบอัด, แยก"
+      }
+    },
+    "generateTitle": "สร้างจังหวะฉาก",
+    "regenerateSceneTitle": "สร้างจังหวะฉากใหม่",
+    "generateDescription": "กำหนดค่าวิธีสร้างเซกเมนต์สำหรับฉากนี้",
+    "beatsPreview": "จังหวะ",
+    "tabTiming": "Timing",
+    "tabReferences": "รายการอ้างอิง",
+    "tabStyle": "สไตล์",
+    "narrationDriven": "การแบ่งกลุ่มตามการบรรยาย",
+    "narrationDrivenHint": "สร้างกลุ่มที่สอดคล้องกับและแสดงให้เห็นถึงคำบรรยายแต่ละเซกเมนต์กลายเป็นฉากหลังทางภาพยนตร์สำหรับการพากย์เสียง",
+    "targetBeatDuration": "ระยะเวลาการโจมตีเป้าหมาย",
+    "addTitle": "เพิ่มจังหวะ",
+    "addNewTitle": "เพิ่มเซกเมนต์ใหม่",
+    "addDescription": "สร้างกลุ่มภาพใหม่เพื่อขยายไทม์ไลน์ฉาก",
+    "addDuration": "ระยะเวลา (วินาที)",
+    "addDurationHint": "แนะนำ: 3 -5 วินาทีเพื่อการเดินที่ราบรื่น",
+    "addAction": "เพิ่มจังหวะ",
+    "editTitle": "แก้ไขเซกเมนต์",
+    "editBadge": "ฉาก {sceneNumber} • เอาชนะ {beatNumber}",
+    "editDescription": "ปรับเปลี่ยนการตั้งค่าพรอมต์ระยะเวลาและการสร้างของเซกเมนต์",
+    "shotConfiguration": "การกำหนดค่าช็อต",
+    "shotType": "ประเภทช็อต",
+    "cameraMovement": "การเคลื่อนไหวของกล้อง",
+    "deleteTitle": "ลบ Beat {number} หรือไม่?",
+    "deleteDescription": "การดำเนินการนี้ไม่สามารถยกเลิก ",
+    "segmentLabel": "เซกเมนต์",
+    "segmentOf": "# {index} ของ {total}",
+    "duration": "ระยะเวลา",
+    "hasFramesWarning": "เซกเมนต์นี้ได้สร้างเฟรมที่จะหายไป",
+    "lastBeatWarning": "คำเตือน: นี่เป็นส่วนเดียวในฉากการลบจะออกจากฉากโดยไม่มีคีย์เฟรมใดๆ",
+    "shiftWarning": "การลบเซกเมนต์นี้จะเปลี่ยนเซกเมนต์ที่ตามมาทั้งหมดเวลาและลำดับดัชนีจะถูกคำนวณใหม่โดยอัตโนมัติ",
+    "deleting": "การลบ ...",
+    "deleteBeat": "ลบจังหวะ",
+    "regenerateTitle": "สร้างจังหวะใหม่",
+    "regenerateDescription": "ล้างเซกเมนต์ทั้งหมดและกลับไปที่ Beat Builder เพื่อเริ่มต้นใหม่",
+    "beats": "จังหวะ",
+    "totalDuration": "ระยะเวลารวม",
+    "anchoredFrames": "กรอบยึด",
+    "anchoredCount": "{anchored}/{total}",
+    "regenerateAssetsWarning": "คำเตือน: การดำเนินการนี้จะลบเซกเมนต์ทั้งหมดรวมถึงคีย์เฟรมและเนื้อหาวิดีโอที่สร้างขึ้นการดำเนินการนี้ไม่สามารถยกเลิกได้",
+    "regenerateEmptyWarning": "เซกเมนต์ปัจจุบันทั้งหมดจะถูกลบออกระบบจะนำคุณไปยัง Beat Builder เพื่อกำหนดค่าและสร้างใหม่ด้วยการตั้งค่าใหม่",
+    "regenerateNextHint": "Beat Builder จะเปิดขึ้นพร้อมตัวควบคุมสำหรับระยะเวลาทั้งหมดจำนวนเซกเมนต์โหมดโฟกัสและทิศทางที่กำหนดเอง",
+    "deleteAndRegenerate": "ลบและสร้างใหม่",
+    "regenerate": "สร้างอีกครั้ง",
+    "addTypeTitle": "เพิ่มเซกเมนต์พิเศษ",
+    "addTypeDescription": "เลือกวัตถุประสงค์ของกลุ่มเพื่อแทรกลงในไทม์ไลน์"
+  },
+  "audio": {
+    "generateAssets": {
+      "title": "สร้างสินทรัพย์",
+      "description": "เลือกประเภทเนื้อหาที่จะสร้างสำหรับฉากทั้งหมด",
+      "targetLanguage": "ภาษาเป้าหมาย",
+      "translateBeforeAudio": "ข้อความจะถูกแปลจากภาษาอังกฤษเป็น {language} ก่อนที่จะสร้างเสียง",
+      "audioTypes": "ประเภทเสียง",
+      "selectAll": "เลือกทั้งหมด",
+      "deselectAll": "ยกเลิกการเลือกทั้งหมด",
+      "narration": "คำบรรยาย",
+      "dialogue": "บทสนทนา",
+      "backgroundMusic": "เพลงประกอบ",
+      "soundEffects": "เอฟเฟกต์เสียง (ElevenLabs, ~ 15 หน่วยกิตต่อหน่วย)",
+      "statusComplete": "เสร็จสมบูรณ์",
+      "statusPartial": "บางส่วน ({current}/{total})",
+      "statusNotGenerated": "ไม่ได้สร้างขึ้น",
+      "statusGeneratedCount": "สร้าง {count} แล้ว",
+      "statusNoneGenerated": "ไม่มีการสร้าง",
+      "scenesCount": "ฉาก {count}",
+      "linesCount": "เส้น {count}",
+      "sfxCues": "{count, plural, one {# cue} other {# cues}}",
+      "noSfxCues": "ยังไม่มีตัวชี้นำ SFX ในสคริปต์",
+      "generationSummary": "สรุปการสร้าง",
+      "summaryNarration": "{count, plural, one {# narration file} other {# narration files}}",
+      "summaryDialogue": "{count, plural, one {# dialogue file} other {# dialogue files}}",
+      "summaryMusic": "{count, plural, one {# music file} other {# music files}}",
+      "summarySfx": "{count, plural, one {# sound effect} other {# sound effects}}",
+      "summaryCharacters": "{count, plural, one {# character asset} other {# character assets}}",
+      "summaryAlreadyGenerated": "(สร้าง {count} แล้ว)",
+      "summarySceneImages": "{count, plural, one {# scene image} other {# scene images}}",
+      "overwriteWarning": "การดำเนินการนี้จะเขียนทับไฟล์เสียงที่มีอยู่สำหรับประเภทที่เลือก",
+      "additionalAssets": "เนื้อหาเพิ่มเติม",
+      "characterRefs": "รูปภาพอ้างอิงตัวละคร",
+      "charactersReady": "ตัวอักษร {count} • {ready} พร้อมแล้ว",
+      "noCharacters": "ไม่มีตัวอักษร",
+      "sceneImages": "ภาพฉาก (พร้อมกัน)",
+      "sceneImagesReady": "ฉาก {count} • {ready} พร้อมแล้ว • พร้อมกัน 3 ฉาก",
+      "regenerateAllImages": "สร้างภาพทั้งหมดอีกครั้ง",
+      "regenerateAllImagesHint": "เขียนทับภาพที่มีอยู่ (ค่าเริ่มต้น: หายไปเท่านั้น)",
+      "stayOpenHint": "เปิดกล่องโต้ตอบนี้ไว้จนกว่าคำบรรยายและการสร้างบทสนทนาจะเสร็จสิ้นคุณสามารถเปลี่ยนเป็นโหมดพื้นหลังได้ตลอดเวลา",
+      "narrationProgress": "ความคืบหน้าในการบรรยาย",
+      "dialogueProgress": "ความคืบหน้าการสนทนา",
+      "musicProgress": "ความคืบหน้าของเพลง",
+      "sfxProgress": "ความคืบหน้าของซาวด์เอฟเฟ",
+      "characterProgress": "ความคืบหน้าของตัวละคร",
+      "imageProgress": "ความคืบหน้าของภาพฉาก",
+      "sceneProgress": "ฉาก {current}/{total}",
+      "secondaryDialogue": "บทสนทนา {current}/{total}",
+      "secondaryMusic": "ดนตรี {current}/{total}",
+      "secondarySfx": "SFX {current}/{total}",
+      "secondaryCharacter": "ตัวอักษร {current}/{total}",
+      "secondaryImage": "ภาพฉาก {current}/{total}",
+      "runInBackground": "ทำงานในพื้นหลัง",
+      "generationComplete": "การสร้างเสร็จสมบูรณ์",
+      "generating": "กำลังสร้าง...",
+      "generate": "สร้าง",
+      "generateAgain": "สร้างอีกครั้ง"
+    },
+    "assets": {
+      "title": "เนื้อหาเสียง - ฉาก {number}",
+      "description": "จัดการแทร็กเสียงสำหรับฉากนี้เพิ่มลบหรือซิงค์คลิปเสียงอีกครั้งจากสคริปต์",
+      "totalClips": "{count} รวมคลิปเสียง",
+      "syncFromScript": "ซิงค์จากสคริปต์",
+      "uploading": "กำลังอัปโหลดเสียง...",
+      "close": "ปิด",
+      "clipLabel": "คลิป {track}",
+      "start": "เริ่มต้น: {time}",
+      "clipDuration": "ระยะเวลา: {time}",
+      "noClips": "ไม่มีคลิป {track}",
+      "uploadAudio": "อัปโหลดเสียง",
+      "clearAll": "ล้างทั้งหมด",
+      "clipCount": "{count, plural, one {# clip} other {# clips}}",
+      "pause": "หยุด",
+      "play": "เล่น",
+      "removeClip": "ลบคลิป",
+      "tracks": {
+        "voiceover": {
+          "label": "พากย์เสียง/บรรยาย",
+          "description": "คำบรรยายฉากและเสียงพากย์"
+        },
+        "dialogue": {
+          "label": "บทสนทนา",
+          "description": "บรรทัดบทสนทนาของอักขระ"
+        },
+        "music": {
+          "label": "เพลง",
+          "description": "เพลงพื้นหลังและคะแนน"
+        },
+        "sfx": {
+          "label": "เอฟเฟ็กต์เสียง",
+          "description": "เอฟเฟกต์เสียงและบรรยากาศ"
+        }
+      }
+    },
+    "alignment": {
+      "title": "การจัดตำแหน่งเสียง BEAT {number}",
+      "description": "จัดแนวส่วนนี้ด้วยบทสนทนาและแทร็กเสียงเพื่อการกำหนดเวลาที่แม่นยำ",
+      "beatTiming": "จังหวะการเต้น",
+      "aligned": "จัดแนวแล้ว",
+      "nearlyAligned": "เกือบชิดกันแล้ว",
+      "misaligned": "ไม่สอดคล้องกัน",
+      "noDialogue": "ไม่มีบทสนทนา",
+      "startTime": "เวลาเริ่ม",
+      "endTime": "เวลาสิ้นสุด",
+      "duration": "ระยะเวลา",
+      "fitToDialogue": "ระยะเวลาที่เหมาะสมกับการสนทนา ({duration}s)",
+      "dialogueCoverage": "ความครอบคลุมของบทสนทนา",
+      "dialogueCoverageHint": "เลือกเส้นบทสนทนาที่กลุ่มนี้ควรครอบคลุมซึ่งจะช่วยในเรื่องของเวลาและการโฟกัสของตัวละคร",
+      "noDialogueLines": "ไม่มีบทสนทนาในฉากนี้",
+      "audioAnchor": "จุดยึดเสียง",
+      "anchored": "ยึดเหนี่ยว",
+      "manual": "ปรับเอง",
+      "audioAnchorHint": "ยึดคีย์เฟรมนี้กับคลิปเสียงเพื่อการจัดตำแหน่งเวลาอัตโนมัติใน Screening Room",
+      "anchorTo": "จุดยึดกับ",
+      "noneManual": "ไม่มี (ด้วยตนเอง)",
+      "narration": "คำบรรยาย",
+      "descriptionOption": "รายละเอียด",
+      "dialogueOption": "บทสนทนา: {label}",
+      "position": "ตำแหน่ง ",
+      "startOfAudio": "เริ่มต้นเสียง",
+      "endOfAudio": "สิ้นสุดเสียง",
+      "durationMode": "โหมดระยะเวลา",
+      "modeManual": "ปรับเอง",
+      "modeMatchAudio": "จับคู่ความยาวเสียง",
+      "modeFillToNext": "เติมไปยังจุดยึดถัดไป",
+      "modeSplitEven": "แบ่งให้เท่าๆกัน",
+      "offset": "ออฟเซ็ต",
+      "modeManualHint": "ตั้งค่าระยะเวลาด้วยตนเองผ่านภาพการตั้งค่าระยะเวลา",
+      "modeMatchAudioHint": "ระยะเวลาตรงกับความยาวของคลิปเสียงที่ยึดไว้",
+      "modeFillToNextHint": "ระยะเวลาขยายไปยังจุดยึดหรือฉากจบถัดไป",
+      "modeSplitEvenHint": "ระยะเวลาที่แบ่งเท่าๆกันกับคีย์เฟรมอื่นๆในเสียงเดียวกัน",
+      "narrationAudio": "เสียงบรรยาย",
+      "sceneNarration": "คำบรรยายฉาก: {duration}s",
+      "startsAt": "เริ่มต้นที่ {time}s",
+      "alignmentTips": "เคล็ดลับการจัดตำแหน่ง:",
+      "tip1": "กำหนดเส้นบทสนทนาที่ควรมองเห็นได้ในระหว่างเซกเมนต์นี้",
+      "tip2": "ใช้ \"Fit to Dialogue\" เพื่อจับคู่ระยะเวลาของเซกเมนต์กับเสียง",
+      "tip3": "เปิดใช้งาน \"Snap\" ในไทม์ไลน์เพื่อจัดแนวขอบของเซกเมนต์ให้สอดคล้องกับขอบเขตเสียง",
+      "saveAlignment": "บันทึกการจัดตำแหน่ง"
+    },
+    "assetsTitle": "เนื้อหาเสียง - ฉาก {number}",
+    "assetsDescription": "จัดการแทร็กเสียงสำหรับฉากนี้เพิ่มลบหรือซิงค์คลิปเสียงอีกครั้งจากสคริปต์",
+    "totalClips": "{count} รวมคลิปเสียง",
+    "syncFromScript": "ซิงค์จากสคริปต์",
+    "uploading": "กำลังอัปโหลดเสียง...",
+    "close": "ปิด",
+    "trackVoiceover": "พากย์เสียง/บรรยาย",
+    "trackVoiceoverHint": "คำบรรยายฉากและเสียงพากย์",
+    "trackDialogue": "บทสนทนา",
+    "trackDialogueHint": "บรรทัดบทสนทนาของอักขระ",
+    "trackMusic": "เพลง",
+    "trackMusicHint": "เพลงพื้นหลังและคะแนน",
+    "trackSfx": "เอฟเฟ็กต์เสียง",
+    "trackSfxHint": "เอฟเฟกต์เสียงและบรรยากาศ",
+    "clipLabel": "คลิป {track}",
+    "start": "เริ่มต้น: {time}",
+    "clipDuration": "ระยะเวลา: {time}",
+    "alignmentTitle": "การจัดตำแหน่งเสียง BEAT {number}",
+    "alignmentDescription": "จัดแนวส่วนนี้ด้วยบทสนทนาและแทร็กเสียงเพื่อการกำหนดเวลาที่แม่นยำ",
+    "beatTiming": "จังหวะการเต้น",
+    "aligned": "จัดแนวแล้ว",
+    "nearlyAligned": "เกือบชิดกันแล้ว",
+    "misaligned": "ไม่สอดคล้องกัน",
+    "noDialogue": "ไม่มีบทสนทนา",
+    "startTime": "เวลาเริ่ม",
+    "endTime": "เวลาสิ้นสุด",
+    "duration": "ระยะเวลา",
+    "generateTitle": "สร้างสินทรัพย์",
+    "generateDescription": "เลือกประเภทเนื้อหาที่จะสร้างสำหรับฉากทั้งหมด",
+    "targetLanguage": "ภาษาเป้าหมาย",
+    "translateBeforeAudio": "ข้อความจะถูกแปลจากภาษาอังกฤษเป็น {language} ก่อนที่จะสร้างเสียง",
+    "narrationProgress": "ความคืบหน้าในการบรรยาย",
+    "dialogueProgress": "ความคืบหน้าการสนทนา",
+    "musicProgress": "ความคืบหน้าของเพลง",
+    "sfxProgress": "ความคืบหน้าของซาวด์เอฟเฟ",
+    "characterProgress": "ความคืบหน้าของตัวละคร",
+    "imageProgress": "ความคืบหน้าของภาพฉาก",
+    "sceneProgress": "ฉาก {current}/{total}",
+    "runInBackground": "ทำงานในพื้นหลัง",
+    "generationComplete": "การสร้างเสร็จสมบูรณ์"
+  },
+  "export": {
+    "document": {
+      "title": "ส่งออกเอกสารเป็น",
+      "description": "เลือกเอกสารที่จะส่งออก:",
+      "script": "สคริปต์",
+      "scriptHint": "รูปแบบสคริปต์มืออาชีพ",
+      "storyboard": "กระดานเรื่องราว",
+      "storyboardHint": "กระดานนิทานภาพพร้อมภาพ",
+      "sceneDirection": "ทิศทางของฉาก",
+      "sceneDirectionHint": "เส้นทางฉากทางเทคนิค"
+    },
+    "stream": {
+      "title": "ส่งออกสตรีม",
+      "description": "ฉาก {number} — รวดเร็ว (WebM) สำหรับร่างออกอากาศ (MP4) สำหรับการจัดส่งหรือคลาวด์สำหรับฉากยาว",
+      "videoSequence": "ลำดับวิดีโอ (จังหวะ {count})",
+      "unmuteAll": "เปิดเสียงทั้งหมด",
+      "muteAll": "ปิดเสียงทั้งหมด",
+      "beatLabel": "เอาชนะ {number}",
+      "noRenderedSegments": "ไม่มีกลุ่มที่แสดงผลพร้อมใช้งาน",
+      "beatsNotRendered": "{count, plural, one {# beat} other {# beats}} ยังไม่ได้แสดงผล",
+      "audioTracksTiming": "แทร็กเสียงและเวลา",
+      "narration": "คำบรรยาย",
+      "dialogue": "บทสนทนา",
+      "backgroundMusic": "เพลงประกอบ",
+      "soundEffects": "เอฟเฟ็กต์เสียง",
+      "clips": "{count, plural, one {# clip} other {# clips}}",
+      "notAvailable": "ไม่พร้อมใช้งาน",
+      "startAt": "เริ่มต้นเมื่อ:",
+      "volume": "ปริมาตร",
+      "resolution720p": "720p (1280 × 720)",
+      "resolution1080p": "1080p (1920 × 1080)",
+      "resolution4k": "4K (3840 × 2160)",
+      "outputResolution": "ความละเอียดพิมพ์ออก",
+      "statusPreparing": "กำลังเตรียมงานเรนเดอร์...",
+      "statusUploading": "กำลังอัปโหลดข้อมูลจำเพาะของงาน...",
+      "statusRendering": "กำลังเรนเดอร์วิดีโอ...",
+      "statusComplete": "เรนเดอร์เสร็จสมบูรณ์!",
+      "statusError": "การแสดงผลล้มเหลว",
+      "videoReady": "วิดีโอพร้อมให้ดาวน์โหลดแล้ว",
+      "downloadMp4": "ดาวน์โหลด MP4",
+      "rendering": "การแสดงผล",
+      "renderScene": "ฉากเรนเดอร์"
+    },
+    "videoEditor": {
+      "title": "โปรแกรมตัดต่อวิดีโอ",
+      "tabSmartPrompt": "พร้อมท์อัจฉริยะ",
+      "tabEditVideo": "แก้ไขวิดีโอ",
+      "tabExtendVideo": "ขยายวิดีโอ",
+      "duration": "ระยะเวลา",
+      "resolution": "ความละเอียด",
+      "aspect": "ด้าน",
+      "footerHint": "กำหนดค่ากล้องประสิทธิภาพและสไตล์เพื่อผลลัพธ์ที่ดีที่สุด",
+      "generating": "กำลังสร้าง...",
+      "generateVideo": "สร้างวิดีโอ"
+    }
+  },
+  "direction": {
+    "promptDirection": {
+      "title": "ทิศทางพร้อมท์",
+      "description": "ตรวจสอบและปรับแต่งการแจ้งเตือนที่จะเป็นแนวทางในการสร้างวิดีโอ",
+      "modeSuffix": "โหมด {mode}",
+      "optimizedForMethod": "เพิ่มประสิทธิภาพสำหรับวิธีการรุ่นนี้",
+      "currentDirection": "ทิศทางปัจจุบัน",
+      "undo": "เลิกทำ ({count})",
+      "noPrompt": "ไม่มีการตั้งค่าทิศทางที่รวดเร็ว",
+      "characters": "ตัวอักษร {count}",
+      "modified": "แก้ไขแล้ว",
+      "tipsFor": "เคล็ดลับสำหรับ {mode}",
+      "refineDirection": "ปรับแต่งทิศทาง",
+      "refineHint": "อธิบายว่าคุณต้องการแก้ไขข้อความแจ้งเป็นภาษาธรรมชาติอย่างไร",
+      "refinePlaceholder": "เช่นทำให้มันดราม่ามากขึ้นทำให้การเคลื่อนไหวช้าลง...",
+      "applyDirection": "ใช้เส้นทาง",
+      "modes": {
+        "TEXT_TO_VIDEO": "ข้อความต่อวิดีโอ",
+        "IMAGE_TO_VIDEO": "จากภาพสู่วิดีโอ",
+        "FRAME_TO_VIDEO": "เฟรมต่อวิดีโอ",
+        "EXTEND": "ยาวขึ้น",
+        "REFERENCE_IMAGES": "การอ้างอิง"
+      },
+      "tips": {
+        "FRAME_TO_VIDEO": {
+          "tip1": "มุ่งเน้นไปที่การเคลื่อนไหวและการเปลี่ยนระหว่างเฟรม",
+          "tip2": "หลีกเลี่ยงการเคลื่อนไหวของกล้องที่เบี่ยงเบนจากเฟรมสุดท้าย",
+          "tip3": "อธิบายว่าองค์ประกอบเปลี่ยนไปอย่างไรตั้งแต่ต้นจนจบ"
+        },
+        "IMAGE_TO_VIDEO": {
+          "tip1": "อธิบายว่าภาพนิ่งควรมีชีวิตขึ้นมาได้อย่างไร",
+          "tip2": "รวมถึงการเคลื่อนไหวที่ละเอียดอ่อนเช่นการหายใจการกระพริบตา",
+          "tip3": "รักษาความสอดคล้องกับภาพเริ่มต้น"
+        },
+        "TEXT_TO_VIDEO": {
+          "tip1": "มีความเฉพาะเจาะจงเกี่ยวกับรายละเอียดและองค์ประกอบภาพ",
+          "tip2": "อธิบายแสงสภาพแวดล้อมและบรรยากาศ",
+          "tip3": "รวมถึงตำแหน่งและการกระทำของตัวละคร"
+        },
+        "EXTEND": {
+          "tip1": "มุ่งเน้นไปที่ความต่อเนื่องของการเคลื่อนไหวที่มีอยู่",
+          "tip2": "รักษาความต่อเนื่องของภาพด้วยวิดีโอต้นฉบับ",
+          "tip3": "อธิบายสิ่งที่จะเกิดขึ้นต่อไปในที่เกิดเหตุ"
+        },
+        "REFERENCE_IMAGES": {
+          "tip1": "ใช้ภาพอ้างอิงเพื่อความสอดคล้องของตัวอักษร",
+          "tip2": "อธิบายฉากในขณะที่อ้างอิงรูปแบบตัวละคร",
+          "tip3": "รวมการอ้างอิงด้วยภาพกับคำอธิบายฉาก"
+        }
+      },
+      "examples": {
+        "FRAME_TO_VIDEO": {
+          "example1": "ทำให้การเปลี่ยนผ่านราบรื่นยิ่งขึ้น",
+          "example2": "เพิ่มการล่องลอยของกล้องที่ละเอียดอ่อน",
+          "example3": "ทำให้การเคลื่อนไหวช้าลง",
+          "example4": "ทำให้ดราม่ามากขึ้น"
+        },
+        "IMAGE_TO_VIDEO": {
+          "example1": "เพิ่มเอฟเฟกต์ลมให้กับเส้นผมและเสื้อผ้า",
+          "example2": "รวมถึงการเคลื่อนไหวของการหายใจเบาๆ",
+          "example3": "ปรับแสงให้ดูมีชีวิตชีวามากขึ้น",
+          "example4": "เพิ่มการเคลื่อนไหวด้านสิ่งแวดล้อม"
+        },
+        "TEXT_TO_VIDEO": {
+          "example1": "ทำให้ฉากมีความเป็นภาพยนตร์มากขึ้น",
+          "example2": "เพิ่มแสงชั่วโมงทอง",
+          "example3": "ระบุรายละเอียดด้านสิ่งแวดล้อมเพิ่มเติม",
+          "example4": "ทำให้การดำเนินการมีความคล่องตัวมากขึ้น"
+        },
+        "EXTEND": {
+          "example1": "เคลื่อนไหวต่อได้อย่างราบรื่น",
+          "example2": "เพิ่มกระทะกล้องที่ละเอียดอ่อน",
+          "example3": "เพิ่มพลังของฉาก",
+          "example4": "การเปลี่ยนไปสู่มุมมองใหม่"
+        },
+        "REFERENCE_IMAGES": {
+          "example1": "จับคู่การแสดงออกของตัวละคร",
+          "example2": "คงสไตล์ศิลปะแบบเดิมไว้",
+          "example3": "รักษาแสงสว่างให้สม่ำเสมอ",
+          "example4": "ใช้ชุดสีเดียวกัน"
+        }
+      }
+    },
+    "director": {
+      "title": "สร้างวิดีโอ: BEAT {number}",
+      "description": "ตรวจสอบและปรับแต่งพารามิเตอร์การสร้างก่อนแสดงผล",
+      "tabTextToVideo": "ข้อความต่อวิดีโอ",
+      "tabTextToVideoShort": "T2V",
+      "tabImageToVideo": "จากภาพสู่วิดีโอ",
+      "tabImageToVideoShort": "I2V",
+      "tabReference": "การอ้างอิง",
+      "tabReferenceShort": "Ref. ",
+      "tabExtend": "ยาวขึ้น",
+      "tabExtendShort": "EXT",
+      "generateVideo": "สร้างวิดีโอ",
+      "resetToSegmentDialogue": "รีเซ็ตเป็นบทสนทนาเซกเมนต์",
+      "frameFirstTitle": "ขั้นตอนการทำงานของ Frame-First:",
+      "frameFirstBody": "สร้างคีย์เฟรมในขั้นตอนเฟรมเพื่อความสอดคล้องของตัวละครที่ดีขึ้นข้อความต่อวิดีโอสามารถใช้ได้แต่อาจส่งผลให้เกิดการเลื่อนตัวอักษร",
+      "disabledNeedStartFrame": "สร้างกรอบเริ่มต้นก่อน (ขั้นตอนของกรอบ)",
+      "disabledNeedPrevious": "สร้างส่วนก่อนหน้าก่อนหรือแสดงวิดีโอต้นฉบับ"
+    },
+    "framePrompt": {
+      "title": "สร้างเฟรม",
+      "titlePlural": "สร้างเฟรม",
+      "beatBadge": "เอาชนะ {number}",
+      "startEnd": "เริ่มต้น - สิ้นสุด",
+      "startFrame": "เริ่มเฟรม",
+      "endFrame": "เฟรมสุดท้าย:",
+      "endDescription": "คีย์เฟรมสิ้นสุดใช้การแก้ไขภาพเฟรมเริ่มต้นของกลุ่มโดยตรงเพื่อให้ภาพหล่อตู้เสื้อผ้าและภูมิศาสตร์อยู่ในแนวเดียวกัน — หลีกเลี่ยงการแสดงผลเต็มรูปแบบที่ไม่เกี่ยวข้องซึ่งทำให้โมเดลวิดีโอสับสน",
+      "tabVisualSetup": "การตั้งค่าภาพ",
+      "tabCustomPrompt": "พร้อมท์แบบกำหนดเอง",
+      "characterRefsActive": "การชมเชยตัวอักษรใช้งานอยู่",
+      "characterRefsHint": "เพื่อให้ได้ผลลัพธ์ที่ดีที่สุดกับการอ้างอิงตัวละครให้ใช้การจัดเฟรมแบบ Close-Up หรือ Medium Shot ภาพกว้างทำให้ตัวอักษรเล็กเกินไปสำหรับการจดจำใบหน้า",
+      "contentAwareEnd": "สิ้นสุดการรับรู้เนื้อหา (แก้ไขตั้งแต่เริ่มต้น)",
+      "contentAwareEndHint": "ภาพสุดท้ายถูกสร้างขึ้นโดยการแก้ไขเฟรมเริ่มต้นของเซกเมนต์หลังจากบทสนทนา/การกระทำนี้ — การแสดงออกและการบล็อกจะพัฒนาขึ้นในขณะที่ความต่อเนื่องของฉากยังคงถูกล็อค",
+      "generating": "กำลังสร้าง...",
+      "generateFrame": "สร้างเฟรม",
+      "generateFrames": "สร้างเฟรม"
+    },
+    "preVis": {
+      "title": "Direct — {label}",
+      "description": "ฉาก {number} · ตัวสร้างพรอมต์ที่มีคำแนะนำพร้อมการอ้างอิงตัวละครและตู้เสื้อผ้า",
+      "matchingNotes": "หมายเหตุการจับคู่อ้างอิง",
+      "tabVisualSetup": "การตั้งค่าภาพ",
+      "tabCustomPrompt": "พร้อมท์แบบกำหนดเอง",
+      "wardrobeOverride": "การแทนที่ข้อความในตู้เสื้อผ้า (ไม่บังคับ — ภาพอ้างอิง DIPTYCH จะถูกส่งเมื่อมี)",
+      "locationReference": "การอ้างอิงตำแหน่งที่ตั้ง",
+      "oneSelected": "เลือก% 1 ไว้@ info: status",
+      "wardrobePlaceholder": "รายละเอียดตู้เสื้อผ้าเต็มรูปแบบจากไลบรารีอ้างอิง…",
+      "promptPlaceholder": "พร้อมท์การสร้างภาพเต็มรูปแบบ...",
+      "negativePlaceholder": "พรอมต์เชิงลบ…",
+      "generating": "กำลังสร้าง...",
+      "generateWithDirect": "สร้างด้วย Direct"
+    }
+  },
+  "foundation": {
+    "reimagine": {
+      "changeArtStyleTitle": "เปลี่ยนสไตล์ศิลปะ",
+      "changeArtStyleDescription": "การเปลี่ยนสไตล์ศิลปะของคุณต้องใช้จินตนาการใหม่ของ Blueprint SceneFlow จะเพิ่มประสิทธิภาพสคริปต์ของคุณเพื่อความสวยงามใหม่",
+      "changeAspectRatioTitle": "เปลี่ยนอัตราส่วนภาพ",
+      "changeAspectRatioDescription": "การเปลี่ยนอัตราส่วนภาพต้องใช้ Blueprint reimagine ทิศทางและกรอบของฉากจะถูกสร้างขึ้นใหม่สำหรับรูปแบบใหม่",
+      "loseEditsTitle": "คุณจะสูญเสียการแก้ไขการผลิตด้วยตนเอง:",
+      "loseScriptTweaks": "ยังไม่ได้ล็อกการปรับแต่งเส้นสคริปต์",
+      "loseStoryboard": "กรอบสตอรี่บอร์ดและเนื้อหาที่สร้างขึ้น",
+      "loseBeatAdjustments": "การปรับเปลี่ยนการผลิตในระดับที่ชนะ",
+      "artStyle": "สไตล์ศิลปะ",
+      "aspectRatio": "อัตรากว้างยาว",
+      "reimagineInBlueprint": "จินตนาการใหม่ใน Blueprint"
+    },
+    "optimizeScene": {
+      "title": "เพิ่มประสิทธิภาพฉาก {number}",
+      "score": "คะแนน:",
+      "pacing": "จังหวะ: {value}",
+      "tension": "ความตึงเครียด: {value}",
+      "character": "ตัวอักษร: {value}",
+      "visual": "ภาพ: {value}",
+      "aiRecommendations": "คำแนะนำ AI ({count})",
+      "commonOptimizations": "การเพิ่มประสิทธิภาพทั่วไป",
+      "customInstructions": "คำแนะนำที่กำหนดเอง",
+      "stop": "หยุด",
+      "voice": "วอยซ์",
+      "placeholder": "เพิ่มคำแนะนำเฉพาะสำหรับการปรับปรุงฉากนี้...",
+      "selectedCount": "เลือก {count, plural, one {# optimization} other {# optimizations}} แล้ว",
+      "selectHint": "เลือกการเพิ่มประสิทธิภาพหรือเพิ่มคำแนะนำ",
+      "applying": "กำลังใช้",
+      "applyRecommendations": "ใช้คำแนะนำ"
+    },
+    "referenceLibrary": {
+      "title": "Reference Library"
+    },
+    "beatReferences": {
+      "title": "รีวิวอ้างอิง — ฉาก {number}",
+      "description": "SceneFlow การอ้างอิงที่เลือกโดยอัตโนมัติสำหรับจังหวะนี้ยืนยันหรือปรับเปลี่ยนก่อนสร้าง",
+      "beatKindAction": "การกระทำ",
+      "beatKindNarration": "คำบรรยาย",
+      "beatKindDialogue": "บทสนทนา",
+      "beatLabel": "จังหวะ: {kind}",
+      "autoSelected": "เลือกอัตโนมัติ: {summary}",
+      "locationMatchedAssignment": "ตำแหน่งที่ตรงกันจากการกำหนดฉาก",
+      "locationMatchedHeading": "ตำแหน่งที่ตรงกันจากหัวเรื่องฉาก",
+      "locationReference": "การอ้างอิงตำแหน่งที่ตั้ง",
+      "pickLocation": "เลือกการอ้างอิงสภาพแวดล้อมหนึ่งรายการสำหรับจังหวะนี้ (ใช้สำหรับความสอดคล้องของภาพ)",
+      "match": "แมตช์",
+      "selectedCount": "เลือก {count} แล้ว",
+      "saveSelection": "บันทึกการเลือก",
+      "generating": "กำลังสร้าง...",
+      "generateFrame": "สร้างเฟรม"
+    },
+    "analysisHandoff": {
+      "title": "วิเคราะห์ฉาก {count} ทั้งหมด",
+      "subtitle": "Audience Resonance ทำงานในพื้นหลัง",
+      "durationFewMinutes": "ไม่กี่นาที",
+      "durationAboutMinute": "ในอีกประมาณหนึ่งนาที",
+      "durationAboutMinutes": "ประมาณ {count} นาที",
+      "takesTime": "สิ่งนี้ต้องใช้ {duration} เพราะทุกฉากจะได้คะแนนเป็นรายบุคคล",
+      "keepEditing": "คุณสามารถแก้ไขต่อไปได้ในขณะที่มันทำงานการวิเคราะห์จะเขียนเฉพาะผลลัพธ์เท่านั้นโดยจะไม่เขียนทับสคริปต์ของคุณ",
+      "notifyReady": "เราจะแจ้งให้ทราบเมื่อพร้อม",
+      "notifyDetail": "ความคืบหน้าจะปรากฏที่ด้านล่างของหน้าจอและผลลัพธ์จะปรากฏในการแจ้งเตือนของคุณแม้ว่าคุณจะออกไปแล้วก็ตาม",
+      "dontRemind": "ไม่ต้องเตือนอีก",
+      "starting": "การเริ่มต้น&#x0D;",
+      "startAnalysis": "เริ่มการวิเคราะห์"
+    },
+    "filmTreatment": {
+      "title": "รีวิวการรักษาภาพยนตร์",
+      "noTreatment": "ไม่พบการรักษาฟิล์มสำหรับโครงการนี้",
+      "generateFirst": "สร้างฟิล์มทรีทเมนต์ในเฟส Blueprint ก่อน",
+      "description": "ตรวจสอบว่าสคริปต์ของคุณสอดคล้องกับการรักษาที่ได้รับอนุมัติ"
+    }
+  },
+  "retakeExtra": {
+    "intelligentRetake": {
+      "title": "ถ่ายใหม่อย่างชาญฉลาด",
+      "description": "อธิบายการแก้ไขเราจะกำหนดเส้นทางการแก้ไขเฟรมการเขียนใหม่หรือทั้งสองอย่าง",
+      "whatToFix": "เราควรแก้ไขอะไรบ้าง?",
+      "fixPlaceholder": "อธิบายสิ่งที่ต้องแก้ไขเช่น 'นำถ้วยกาแฟออกจากโต๊ะ'",
+      "analyzing": "กำลังวิเคราะห์...",
+      "analyze": "วิเคราะห์ ",
+      "viewFullPrompt": "ดูข้อความแจ้งเตือนแบบเต็ม",
+      "fixStartingFrame": "แก้ไขกรอบเริ่มต้น",
+      "fixStartingFrameHint": "แก้ไขภาพเริ่มต้นที่ล็อคเฟรมก่อนที่จะสร้างใหม่",
+      "frameEditPlaceholder": "คำแนะนำในการแก้ไขกรอบ",
+      "applyPromptChanges": "ใช้การเปลี่ยนแปลงพร้อมท์",
+      "applyPromptChangesHint": "ใช้การเพิ่มพรอมต์และการเพิ่มเชิงลบที่แก้ไขแล้ว",
+      "noPromptChanges": "ไม่มีการเปลี่ยนแปลงที่แนะนำอย่างรวดเร็ว",
+      "retaking": "กำลังดำเนินการอีกครั้ง...",
+      "approveAndRetake": "อนุมัติและถ่ายใหม่",
+      "clipReferenceAlt": "การอ้างอิงคลิป",
+      "anomalyFrame": "ในกรอบเริ่มต้น",
+      "anomalyMotion": "แนะนำให้รู้จักในการเคลื่อนไหว",
+      "anomalyBoth": "เฟรมและการเคลื่อนไหว",
+      "anomalyUnknown": "ต้นทางไม่ชัดเจน"
+    },
+    "regenerateBeats": {
+      "title": "สร้างจังหวะใหม่",
+      "description": "ล้างเซกเมนต์ทั้งหมดและกลับไปที่ Beat Builder เพื่อเริ่มต้นใหม่",
+      "beats": "จังหวะ",
+      "totalDuration": "ระยะเวลารวม",
+      "anchoredFrames": "กรอบยึด",
+      "anchoredCount": "{anchored}/{total}",
+      "assetsWarning": "คำเตือน: การดำเนินการนี้จะลบเซกเมนต์ทั้งหมดรวมถึงคีย์เฟรมและเนื้อหาวิดีโอที่สร้างขึ้นการดำเนินการนี้ไม่สามารถยกเลิกได้",
+      "emptyWarning": "เซกเมนต์ปัจจุบันทั้งหมดจะถูกลบออกระบบจะนำคุณไปยัง Beat Builder เพื่อกำหนดค่าและสร้างใหม่ด้วยการตั้งค่าใหม่",
+      "nextHint": "Beat Builder จะเปิดขึ้นพร้อมตัวควบคุมสำหรับระยะเวลาทั้งหมดจำนวนเซกเมนต์โหมดโฟกัสและทิศทางที่กำหนดเอง",
+      "deleteAndRegenerate": "ลบและสร้างใหม่",
+      "regenerate": "สร้างอีกครั้ง"
+    },
+    "keyframeGeneration": {
+      "title": "การตั้งค่าการสร้างคีย์เฟรม",
+      "description": "กำหนดค่าวิธีสร้างกลุ่มและปรับให้สอดคล้องกับสคริปต์และเสียงของคุณ",
+      "noDescription": "ไม่มีรายละเอียด",
+      "audioBadge": "เสียง {duration}s",
+      "existingWarning": "{count, plural, one {# existing segment} other {# existing segments}} จะถูกแทนที่",
+      "manualEditsSuffix": "({count} พร้อมการแก้ไขด้วยตนเอง)",
+      "tabAlignment": "การจัดตำแหน่งและการก้าวเดิน",
+      "tabDirection": "ทิศทางของฉาก",
+      "audioAlignment": "การจัดตำแหน่งเสียง",
+      "narrationDriven": "Narration-Driven",
+      "narrationDrivenHint": "จัดแนวการตัดตามจังหวะคำบรรยาย",
+      "dialogueDriven": "ขับเคลื่อนด้วยบทสนทนา",
+      "dialogueDrivenHint": "จัดแนวการตัดไปยังกล่องโต้ตอบ",
+      "pacingStyle": "สไตล์การเดิน",
+      "beatCount": "จำนวนครั้งที่เต้น",
+      "auto": "อัตโนมัติ",
+      "manual": "ปรับเอง",
+      "basedOnPacing": "อ้างอิงจาก {pacing} PACING & {basis}",
+      "audioBasis": "เสียง {duration}s",
+      "durationBasis": "ระยะเวลา {duration}s",
+      "segmentsCount": "กลุ่ม {count}",
+      "advancedOptions": "ตัวเลือกขั้นสูง",
+      "shotVariety": "ช็อตวาไรตี้",
+      "varietyMinimal": "น้อยที่สุด - การกำหนดกรอบที่สอดคล้องกัน",
+      "varietyBalanced": "บาลานซ์ - มิกซ์ออฟช็อต",
+      "varietyHigh": "สูง - หลากหลายแบบไดนามิก",
+      "preserveManualEdits": "เก็บรักษาการแก้ไขด้วยตนเอง",
+      "editedPromptsFound": "พบข้อความแจ้งที่แก้ไข {count}",
+      "targetDuration": "ระยะเวลาเป้าหมาย (วินาที)",
+      "directionOverrides": "การแทนที่ทิศทางของฉาก",
+      "directionOverridesHint": "การตั้งค่าเหล่านี้มีอิทธิพลต่อวิธีที่ AI สร้างการแจ้งเตือนสำหรับแต่ละเซกเมนต์เลือก \"แตกต่างกัน\" เพื่อให้ AI ตัดสินใจต่อเซ็กเมนต์",
+      "primaryShotType": "ประเภทช็อตหลัก",
+      "cameraMovement": "การเคลื่อนไหวของกล้อง",
+      "lightingMood": "อารมณ์แสงสว่าง",
+      "atmosphere": "บรรยากาศ",
+      "footerSummary": "กลุ่ม {count} • {duration}s",
+      "generating": "กำลังสร้าง...",
+      "regenerateKeyframes": "สร้างคีย์เฟรมใหม่",
+      "generateKeyframes": "สร้างคีย์เฟรม",
+      "pacing": {
+        "slow": {
+          "label": "ช้าและครุ่นคิด",
+          "description": "ส่วนที่ยาวกว่า (6 -8 วินาที) ตัดน้อยที่สุด"
+        },
+        "moderate": {
+          "label": "ปานกลาง",
+          "description": "จังหวะที่สมดุล (4 -6s เซ็กเมนต์)"
+        },
+        "fast": {
+          "label": "รวดเร็วและมีไดนามิก",
+          "description": "ตัดด่วน (3 -4 ส่วน)"
+        },
+        "dynamic": {
+          "label": "ไดนามิก (จับคู่เสียง)",
+          "description": "แตกต่างกันไปตามจังหวะการบรรยาย/บทสนทนา"
+        }
+      },
+      "shotTypes": {
+        "wide": {
+          "label": "ภาพถ่ายแบบกว้าง",
+          "description": "สร้างที่พักและบริบท"
+        },
+        "medium": {
+          "label": "ภาพระยะปานกลาง",
+          "description": "ปรับสมดุลหัวเรื่องและสภาพแวดล้อม"
+        },
+        "close-up": {
+          "label": "เข้าใกล้",
+          "description": "มุ่งเน้นไปที่อารมณ์และรายละเอียด"
+        },
+        "extreme-close-up": {
+          "label": "เข้าใกล้ที่สุด",
+          "description": "เน้นดราม่า"
+        },
+        "two-shot": {
+          "label": "Two-Shot",
+          "description": "ตัวละครในบทสนทนา"
+        },
+        "over-the-shoulder": {
+          "label": "เหนือไหล่",
+          "description": "POV ในบทสนทนา"
+        },
+        "varied": {
+          "label": "หลากหลาย (AI ตัดสินใจ)",
+          "description": "ให้ AI เลือกต่อเซกเมนต์"
+        }
+      },
+      "cameraMovements": {
+        "static": {
+          "label": "คงที่",
+          "description": "ไม่มีการเคลื่อนไหวกรอบที่มั่นคง"
+        },
+        "pan": {
+          "label": "PanName",
+          "description": "การกวาดแนวนอน"
+        },
+        "tilt": {
+          "label": "เอียง",
+          "description": "การเคลื่อนที่ในแนวตั้ง"
+        },
+        "dolly": {
+          "label": "ที่รองค้อนเคาะ",
+          "description": "ย้ายไปยัง/ออกจากหัวข้อ"
+        },
+        "tracking": {
+          "label": "การติดตาม",
+          "description": "ติดตามความเคลื่อนไหวของผู้รับการประเมิน"
+        },
+        "handheld": {
+          "label": "อุปกรณ์มือถือ",
+          "description": "การเคลื่อนไหวตามธรรมชาติ"
+        },
+        "varied": {
+          "label": "หลากหลาย (AI ตัดสินใจ)",
+          "description": "การเคลื่อนไหวแบบผสมผสาน"
+        }
+      },
+      "lighting": {
+        "natural": {
+          "label": "ธรรมชาติ",
+          "description": "แสงนุ่มนวลสมจริง"
+        },
+        "dramatic": {
+          "label": "น่าทึ่ง",
+          "description": "คอนทราสต์สูงเงา"
+        },
+        "soft": {
+          "label": "นุ่ม/กระจาย",
+          "description": "แสงที่อ่อนโยนและประจบสอพลอ"
+        },
+        "noir": {
+          "label": "นัวร์",
+          "description": "มืด, ลึกลับ, คีย์ต่ำ"
+        },
+        "golden": {
+          "label": "Golden Hour",
+          "description": "โทนสีอบอุ่นพระอาทิตย์ตก/พระอาทิตย์ขึ้น"
+        },
+        "cold": {
+          "label": "เย็น/น้ำเงิน",
+          "description": "เท่ห์สตาร์คคลินิก"
+        }
+      },
+      "atmospheres": {
+        "neutral": {
+          "label": "เฉยๆ",
+          "description": "อารมณ์มาตรฐาน"
+        },
+        "tense": {
+          "label": "กาล",
+          "description": "น่ากังวลและตรงไปตรงมา"
+        },
+        "serene": {
+          "label": "สงบเงียบ",
+          "description": "สงบเยือกเย็น"
+        },
+        "energetic": {
+          "label": "กระฉับกระเฉง",
+          "description": "ไดนามิกน่าตื่นเต้น"
+        },
+        "melancholic": {
+          "label": "เศร้าโศก",
+          "description": "เศร้าสะท้อนแสง"
+        },
+        "mysterious": {
+          "label": "ลึกลับ",
+          "description": "น่าสนใจมีความลับ"
+        },
+        "hopeful": {
+          "label": "มีความหวัง",
+          "description": "มองโลกในแง่ดียกระดับ"
+        }
+      }
+    },
+    "intelligentTitle": "ถ่ายใหม่อย่างชาญฉลาด",
+    "intelligentDescription": "อธิบายการแก้ไขเราจะกำหนดเส้นทางการแก้ไขเฟรมการเขียนใหม่หรือทั้งสองอย่าง",
+    "whatToFix": "เราควรแก้ไขอะไรบ้าง?",
+    "fixPlaceholder": "อธิบายสิ่งที่ต้องแก้ไขเช่น 'นำถ้วยกาแฟออกจากโต๊ะ'",
+    "analyzing": "กำลังวิเคราะห์...",
+    "analyze": "วิเคราะห์ ",
+    "viewFullPrompt": "ดูข้อความแจ้งเตือนแบบเต็ม",
+    "fixStartingFrame": "แก้ไขกรอบเริ่มต้น",
+    "fixStartingFrameHint": "แก้ไขภาพเริ่มต้นที่ล็อคเฟรมก่อนที่จะสร้างใหม่",
+    "frameEditPlaceholder": "คำแนะนำในการแก้ไขกรอบ",
+    "applyPromptChanges": "ใช้การเปลี่ยนแปลงพร้อมท์",
+    "applyPromptChangesHint": "ใช้การเพิ่มพรอมต์และการเพิ่มเชิงลบที่แก้ไขแล้ว",
+    "noPromptChanges": "ไม่มีการเปลี่ยนแปลงที่แนะนำอย่างรวดเร็ว",
+    "retaking": "กำลังดำเนินการอีกครั้ง...",
+    "approveAndRetake": "อนุมัติและถ่ายใหม่",
+    "keyframeRegenTitle": "สร้างคีย์เฟรมใหม่",
+    "keyframeRegenDescription": "สร้างเฟรมเริ่มต้นและสิ้นสุดใหม่สำหรับจังหวะนี้ด้วยทิศทางที่อัปเดต"
   }
 }
