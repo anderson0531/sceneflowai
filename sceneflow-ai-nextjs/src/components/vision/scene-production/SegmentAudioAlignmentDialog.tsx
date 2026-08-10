@@ -14,6 +14,7 @@
  */
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Dialog,
   DialogContent,
@@ -112,6 +113,8 @@ export function SegmentAudioAlignmentDialog({
   onSave,
   onFitToDialogue,
 }: SegmentAudioAlignmentDialogProps) {
+  const t = useTranslations('production.audio.alignment')
+  const tc = useTranslations('common')
   // Local state for edits
   const [startTime, setStartTime] = useState(segment.startTime)
   const [endTime, setEndTime] = useState(segment.endTime)
@@ -240,10 +243,10 @@ export function SegmentAudioAlignmentDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Link2 className="w-5 h-5 text-cyan-500" />
-            Beat {segmentIndex + 1} Audio Alignment
+            {t('title', { number: segmentIndex + 1 })}
           </DialogTitle>
           <DialogDescription>
-            Align this segment with dialogue and audio tracks for precise timing.
+            {t('description')}
           </DialogDescription>
         </DialogHeader>
         
@@ -254,19 +257,19 @@ export function SegmentAudioAlignmentDialog({
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-semibold flex items-center gap-2">
                   <Clock className="w-4 h-4 text-cyan-500" />
-                  Beat Timing
+                  {t('beatTiming')}
                 </h4>
                 <Badge variant="outline" className={getAlignmentColor()}>
-                  {alignmentStatus === 'aligned' && 'Aligned'}
-                  {alignmentStatus === 'close' && 'Nearly Aligned'}
-                  {alignmentStatus === 'misaligned' && 'Misaligned'}
-                  {alignmentStatus === 'no-dialogue' && 'No Dialogue'}
+                  {alignmentStatus === 'aligned' && t('aligned')}
+                  {alignmentStatus === 'close' && t('nearlyAligned')}
+                  {alignmentStatus === 'misaligned' && t('misaligned')}
+                  {alignmentStatus === 'no-dialogue' && t('noDialogue')}
                 </Badge>
               </div>
               
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label className="text-xs text-gray-500">Start Time</Label>
+                  <Label className="text-xs text-gray-500">{t('startTime')}</Label>
                   <div className="flex items-center gap-1">
                     <Input
                       type="number"
@@ -281,7 +284,7 @@ export function SegmentAudioAlignmentDialog({
                 </div>
                 
                 <div>
-                  <Label className="text-xs text-gray-500">End Time</Label>
+                  <Label className="text-xs text-gray-500">{t('endTime')}</Label>
                   <div className="flex items-center gap-1">
                     <Input
                       type="number"
@@ -296,7 +299,7 @@ export function SegmentAudioAlignmentDialog({
                 </div>
                 
                 <div>
-                  <Label className="text-xs text-gray-500">Duration</Label>
+                  <Label className="text-xs text-gray-500">{t('duration')}</Label>
                   <div className="flex items-center gap-1">
                     <Input
                       type="number"
@@ -321,7 +324,7 @@ export function SegmentAudioAlignmentDialog({
                   }}
                 >
                   <Mic className="w-3.5 h-3.5 mr-2" />
-                  Fit to Dialogue Duration ({selectedDialogueDuration.toFixed(1)}s)
+                  {t('fitToDialogue', { duration: selectedDialogueDuration.toFixed(1) })}
                 </Button>
               )}
             </div>
@@ -330,16 +333,16 @@ export function SegmentAudioAlignmentDialog({
             <div className="space-y-3">
               <h4 className="text-sm font-semibold flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-purple-500" />
-                Dialogue Coverage
+                {t('dialogueCoverage')}
               </h4>
               <p className="text-xs text-gray-500">
-                Select which dialogue lines this segment should cover. This helps with timing and character focus.
+                {t('dialogueCoverageHint')}
               </p>
               
               {dialogueLines.length === 0 ? (
                 <div className="text-center py-6 text-gray-400">
                   <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No dialogue lines in this scene</p>
+                  <p className="text-sm">{t('noDialogueLines')}</p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -402,20 +405,20 @@ export function SegmentAudioAlignmentDialog({
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-semibold flex items-center gap-2">
                   <Anchor className="w-4 h-4 text-purple-500" />
-                  Audio Anchor
+                  {t('audioAnchor')}
                 </h4>
                 <Badge variant="outline" className={anchorType !== 'none' ? 'text-purple-500 border-purple-500' : 'text-gray-400'}>
-                  {anchorType !== 'none' ? 'Anchored' : 'Manual'}
+                  {anchorType !== 'none' ? t('anchored') : t('manual')}
                 </Badge>
               </div>
               
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Anchor this keyframe to an audio clip for automatic timing alignment in Screening Room.
+                {t('audioAnchorHint')}
               </p>
               
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs text-gray-500">Anchor To</Label>
+                  <Label className="text-xs text-gray-500">{t('anchorTo')}</Label>
                   <Select 
                     value={anchorType === 'none' ? 'none' : (anchorType === 'dialogue' && anchorTrackIndex !== undefined ? `dialogue-${anchorTrackIndex}` : anchorType)}
                     onValueChange={(val) => {
@@ -436,15 +439,15 @@ export function SegmentAudioAlignmentDialog({
                     }}
                   >
                     <SelectTrigger className="h-8">
-                      <SelectValue placeholder="None (manual)" />
+                      <SelectValue placeholder={t('noneManual')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">None (manual)</SelectItem>
-                      {narrationClip && <SelectItem value="narration">Narration</SelectItem>}
-                      <SelectItem value="description">Description</SelectItem>
+                      <SelectItem value="none">{t('noneManual')}</SelectItem>
+                      {narrationClip && <SelectItem value="narration">{t('narration')}</SelectItem>}
+                      <SelectItem value="description">{t('descriptionOption')}</SelectItem>
                       {dialogueClips.map((clip, idx) => (
                         <SelectItem key={clip.id} value={`dialogue-${idx}`}>
-                          Dialogue: {clip.label || `#${idx + 1}`}
+                          {t('dialogueOption', { label: clip.label || `#${idx + 1}` })}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -452,14 +455,14 @@ export function SegmentAudioAlignmentDialog({
                 </div>
                 
                 <div>
-                  <Label className="text-xs text-gray-500">Position</Label>
+                  <Label className="text-xs text-gray-500">{t('position')}</Label>
                   <Select value={anchorPosition} onValueChange={(val) => setAnchorPosition(val as AudioAnchorPosition)}>
                     <SelectTrigger className="h-8">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="start">Start of audio</SelectItem>
-                      <SelectItem value="end">End of audio</SelectItem>
+                      <SelectItem value="start">{t('startOfAudio')}</SelectItem>
+                      <SelectItem value="end">{t('endOfAudio')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -468,22 +471,22 @@ export function SegmentAudioAlignmentDialog({
               {anchorType !== 'none' && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-xs text-gray-500">Duration Mode</Label>
+                    <Label className="text-xs text-gray-500">{t('durationMode')}</Label>
                     <Select value={durationMode} onValueChange={(val) => setDurationMode(val as DurationMode)}>
                       <SelectTrigger className="h-8">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="manual">Manual</SelectItem>
-                        <SelectItem value="match-audio">Match audio length</SelectItem>
-                        <SelectItem value="fill-to-next">Fill to next anchor</SelectItem>
-                        <SelectItem value="split-even">Split evenly</SelectItem>
+                        <SelectItem value="manual">{t('modeManual')}</SelectItem>
+                        <SelectItem value="match-audio">{t('modeMatchAudio')}</SelectItem>
+                        <SelectItem value="fill-to-next">{t('modeFillToNext')}</SelectItem>
+                        <SelectItem value="split-even">{t('modeSplitEven')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   
                   <div>
-                    <Label className="text-xs text-gray-500">Offset</Label>
+                    <Label className="text-xs text-gray-500">{t('offset')}</Label>
                     <div className="flex items-center gap-1">
                       <Input
                         type="number"
@@ -501,10 +504,10 @@ export function SegmentAudioAlignmentDialog({
               {/* Duration mode explanation */}
               {anchorType !== 'none' && (
                 <div className="text-xs text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 p-2 rounded">
-                  {durationMode === 'manual' && 'Duration set manually via imageDuration setting'}
-                  {durationMode === 'match-audio' && 'Duration matches the anchored audio clip length'}
-                  {durationMode === 'fill-to-next' && 'Duration extends to the next anchor point or scene end'}
-                  {durationMode === 'split-even' && 'Duration split evenly with other keyframes on same audio'}
+                  {durationMode === 'manual' && t('modeManualHint')}
+                  {durationMode === 'match-audio' && t('modeMatchAudioHint')}
+                  {durationMode === 'fill-to-next' && t('modeFillToNextHint')}
+                  {durationMode === 'split-even' && t('modeSplitEvenHint')}
                 </div>
               )}
             </div>
@@ -514,15 +517,15 @@ export function SegmentAudioAlignmentDialog({
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold flex items-center gap-2">
                   <Volume2 className="w-4 h-4 text-green-500" />
-                  Narration Audio
+                  {t('narrationAudio')}
                 </h4>
                 <div className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
                   <div className="flex-1">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Scene narration: {narrationClip.duration?.toFixed(1) || '?'}s
+                      {t('sceneNarration', { duration: narrationClip.duration?.toFixed(1) || '?' })}
                     </p>
                     <p className="text-xs text-gray-400 mt-0.5">
-                      Starts at {narrationClip.startTime.toFixed(1)}s
+                      {t('startsAt', { time: narrationClip.startTime.toFixed(1) })}
                     </p>
                   </div>
                   {narrationClip.url && (
@@ -548,11 +551,11 @@ export function SegmentAudioAlignmentDialog({
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-cyan-600 dark:text-cyan-400 mt-0.5 shrink-0" />
                 <div className="text-xs text-cyan-700 dark:text-cyan-300">
-                  <p className="font-medium">Alignment Tips:</p>
+                  <p className="font-medium">{t('alignmentTips')}</p>
                   <ul className="mt-1 space-y-0.5 list-disc list-inside text-cyan-600 dark:text-cyan-400">
-                    <li>Assign dialogue lines that should be visible during this segment</li>
-                    <li>Use "Fit to Dialogue" to match segment duration to audio</li>
-                    <li>Enable "Snap" in timeline to align segment edges to audio boundaries</li>
+                    <li>{t('tip1')}</li>
+                    <li>{t('tip2')}</li>
+                    <li>{t('tip3')}</li>
                   </ul>
                 </div>
               </div>
@@ -562,11 +565,11 @@ export function SegmentAudioAlignmentDialog({
         
         <DialogFooter className="pt-4 border-t">
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            {tc('actions.cancel')}
           </Button>
           <Button onClick={handleSave} className="bg-cyan-600 hover:bg-cyan-700 text-white">
             <Check className="w-4 h-4 mr-2" />
-            Save Alignment
+            {t('saveAlignment')}
           </Button>
         </DialogFooter>
         

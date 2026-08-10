@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from 'react'
+import { useTranslations } from 'next-intl'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/Button'
@@ -190,6 +191,8 @@ export function KeyframeRegenerationDialog({
   onGenerate,
   isGenerating = false,
 }: KeyframeRegenerationDialogProps) {
+  const t = useTranslations('production.retakeExtra.keyframeGeneration')
+  const tc = useTranslations('common')
   // Tab state
   const [activeTab, setActiveTab] = useState<'alignment' | 'direction'>('alignment')
   
@@ -301,10 +304,10 @@ export function KeyframeRegenerationDialog({
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-white flex items-center gap-2">
             <Layers className="w-5 h-5 text-cyan-400" />
-            Keyframe Generation Settings
+            {t('title')}
           </DialogTitle>
           <DialogDescription className="text-gray-400">
-            Configure how segments are created and aligned with your script and audio.
+            {t('description')}
           </DialogDescription>
         </DialogHeader>
         
@@ -318,7 +321,7 @@ export function KeyframeRegenerationDialog({
                     {scene.heading || 'Scene'}
                   </h4>
                   <p className="text-xs text-gray-400 mt-1 line-clamp-2">
-                    {scene.action || scene.narration || 'No description available'}
+                    {scene.action || scene.narration || t('noDescription')}
                   </p>
                 </div>
                 <div className="flex flex-col items-end gap-1">
@@ -329,7 +332,7 @@ export function KeyframeRegenerationDialog({
                   {audioDuration > 0 && (
                     <Badge variant="secondary" className="bg-purple-500/20 text-purple-300 border-purple-500/30">
                       <Volume2 className="w-3 h-3 mr-1" />
-                      {audioDuration.toFixed(1)}s audio
+                      {t('audioBadge', { duration: audioDuration.toFixed(1) })}
                     </Badge>
                   )}
                 </div>
@@ -341,8 +344,8 @@ export function KeyframeRegenerationDialog({
                   <div className="flex items-center gap-2 text-amber-400 text-xs">
                     <AlertCircle className="w-3.5 h-3.5" />
                     <span>
-                      {existingSegments.length} existing segment{existingSegments.length > 1 ? 's' : ''} will be replaced
-                      {manuallyEditedCount > 0 && ` (${manuallyEditedCount} with manual edits)`}
+                      {t('existingWarning', { count: existingSegments.length })}
+                      {manuallyEditedCount > 0 && t('manualEditsSuffix', { count: manuallyEditedCount })}
                     </span>
                   </div>
                 </div>
@@ -354,11 +357,11 @@ export function KeyframeRegenerationDialog({
               <TabsList className="w-full bg-gray-800/50">
                 <TabsTrigger value="alignment" className="flex-1 data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-300">
                   <Scissors className="w-4 h-4 mr-2" />
-                  Alignment & Pacing
+                  {t('tabAlignment')}
                 </TabsTrigger>
                 <TabsTrigger value="direction" className="flex-1 data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-300">
                   <Camera className="w-4 h-4 mr-2" />
-                  Scene Direction
+                  {t('tabDirection')}
                 </TabsTrigger>
               </TabsList>
               
@@ -368,7 +371,7 @@ export function KeyframeRegenerationDialog({
                 <div className="space-y-3 p-3 rounded-lg border border-gray-700 bg-gray-800/30">
                   <h3 className="text-sm font-semibold text-gray-200 flex items-center gap-2">
                     <Music className="w-4 h-4 text-purple-400" />
-                    Audio Alignment
+                    {t('audioAlignment')}
                   </h3>
                   
                   <div className="grid grid-cols-2 gap-4">
@@ -376,8 +379,8 @@ export function KeyframeRegenerationDialog({
                       <div className="flex items-center gap-2">
                         <Volume2 className="w-4 h-4 text-blue-400" />
                         <div>
-                          <Label className="text-sm">Narration-Driven</Label>
-                          <p className="text-xs text-gray-500">Align cuts to narration beats</p>
+                          <Label className="text-sm">{t('narrationDriven')}</Label>
+                          <p className="text-xs text-gray-500">{t('narrationDrivenHint')}</p>
                         </div>
                       </div>
                       <Switch
@@ -391,8 +394,8 @@ export function KeyframeRegenerationDialog({
                       <div className="flex items-center gap-2">
                         <Users className="w-4 h-4 text-green-400" />
                         <div>
-                          <Label className="text-sm">Dialogue-Driven</Label>
-                          <p className="text-xs text-gray-500">Align cuts to dialogue</p>
+                          <Label className="text-sm">{t('dialogueDriven')}</Label>
+                          <p className="text-xs text-gray-500">{t('dialogueDrivenHint')}</p>
                         </div>
                       </div>
                       <Switch
@@ -408,7 +411,7 @@ export function KeyframeRegenerationDialog({
                 <div className="space-y-3 p-3 rounded-lg border border-gray-700 bg-gray-800/30">
                   <h3 className="text-sm font-semibold text-gray-200 flex items-center gap-2">
                     <Zap className="w-4 h-4 text-amber-400" />
-                    Pacing Style
+                    {t('pacingStyle')}
                   </h3>
                   
                   <div className="grid grid-cols-2 gap-2">
@@ -426,8 +429,8 @@ export function KeyframeRegenerationDialog({
                         <div className="flex items-center gap-2">
                           <span className="text-lg">{preset.icon}</span>
                           <div>
-                            <p className="text-sm font-medium">{preset.label}</p>
-                            <p className="text-xs text-gray-500">{preset.description}</p>
+                            <p className="text-sm font-medium">{t(`pacing.${preset.id}.label`)}</p>
+                            <p className="text-xs text-gray-500">{t(`pacing.${preset.id}.description`)}</p>
                           </div>
                         </div>
                       </button>
@@ -440,7 +443,7 @@ export function KeyframeRegenerationDialog({
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-semibold text-gray-200 flex items-center gap-2">
                       <Layers className="w-4 h-4 text-cyan-400" />
-                      Beat Count
+                      {t('beatCount')}
                     </h3>
                     <div className="flex items-center gap-2">
                       <button
@@ -452,7 +455,7 @@ export function KeyframeRegenerationDialog({
                             : 'bg-gray-800 text-gray-400 border border-gray-700 hover:border-gray-600'
                         )}
                       >
-                        Auto
+                        {t('auto')}
                       </button>
                       <button
                         onClick={() => setSegmentCountMode('manual')}
@@ -463,7 +466,7 @@ export function KeyframeRegenerationDialog({
                             : 'bg-gray-800 text-gray-400 border border-gray-700 hover:border-gray-600'
                         )}
                       >
-                        Manual
+                        {t('manual')}
                       </button>
                     </div>
                   </div>
@@ -481,7 +484,12 @@ export function KeyframeRegenerationDialog({
                         />
                       ) : (
                         <div className="h-9 flex items-center text-sm text-gray-400">
-                          Based on {pacingStyle} pacing & {audioDuration > 0 ? `${audioDuration.toFixed(1)}s audio` : `${targetDuration.toFixed(1)}s duration`}
+                          {t('basedOnPacing', {
+                            pacing: pacingStyle,
+                            basis: audioDuration > 0
+                              ? t('audioBasis', { duration: audioDuration.toFixed(1) })
+                              : t('durationBasis', { duration: targetDuration.toFixed(1) }),
+                          })}
                         </div>
                       )}
                     </div>
@@ -489,7 +497,7 @@ export function KeyframeRegenerationDialog({
                       variant="secondary" 
                       className="bg-cyan-500/20 text-cyan-300 border-cyan-500/30 min-w-[80px] justify-center"
                     >
-                      {calculatedSegmentCount} segments
+                      {t('segmentsCount', { count: calculatedSegmentCount })}
                     </Badge>
                   </div>
                 </div>
@@ -501,7 +509,7 @@ export function KeyframeRegenerationDialog({
                 >
                   <span className="text-sm font-medium text-gray-300 flex items-center gap-2">
                     <Settings2 className="w-4 h-4" />
-                    Advanced Options
+                    {t('advancedOptions')}
                   </span>
                   {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </button>
@@ -510,15 +518,15 @@ export function KeyframeRegenerationDialog({
                   <div className="space-y-3 p-3 rounded-lg border border-gray-700/50 bg-gray-800/20">
                     {/* Shot Variety */}
                     <div className="space-y-2">
-                      <Label className="text-sm text-gray-300">Shot Variety</Label>
+                      <Label className="text-sm text-gray-300">{t('shotVariety')}</Label>
                       <Select value={shotVariety} onValueChange={(v) => setShotVariety(v as any)}>
                         <SelectTrigger className="bg-gray-800 border-gray-700">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="minimal">Minimal - Consistent framing</SelectItem>
-                          <SelectItem value="balanced">Balanced - Mix of shots</SelectItem>
-                          <SelectItem value="high">High - Dynamic variety</SelectItem>
+                          <SelectItem value="minimal">{t('varietyMinimal')}</SelectItem>
+                          <SelectItem value="balanced">{t('varietyBalanced')}</SelectItem>
+                          <SelectItem value="high">{t('varietyHigh')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -529,8 +537,8 @@ export function KeyframeRegenerationDialog({
                         <div className="flex items-center gap-2">
                           <AlertCircle className="w-4 h-4 text-amber-400" />
                           <div>
-                            <Label className="text-sm text-amber-300">Preserve Manual Edits</Label>
-                            <p className="text-xs text-amber-400/70">{manuallyEditedCount} edited prompt(s) found</p>
+                            <Label className="text-sm text-amber-300">{t('preserveManualEdits')}</Label>
+                            <p className="text-xs text-amber-400/70">{t('editedPromptsFound', { count: manuallyEditedCount })}</p>
                           </div>
                         </div>
                         <Switch
@@ -543,7 +551,7 @@ export function KeyframeRegenerationDialog({
                     
                     {/* Target Duration Override */}
                     <div className="space-y-2">
-                      <Label className="text-sm text-gray-300">Target Duration (seconds)</Label>
+                      <Label className="text-sm text-gray-300">{t('targetDuration')}</Label>
                       <Slider
                         value={[targetDuration]}
                         onValueChange={([v]) => setTargetDuration(v)}
@@ -568,10 +576,9 @@ export function KeyframeRegenerationDialog({
                   <div className="flex items-start gap-2">
                     <Info className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
                     <div className="text-xs text-purple-300">
-                      <p className="font-medium mb-1">Scene Direction Overrides</p>
+                      <p className="font-medium mb-1">{t('directionOverrides')}</p>
                       <p className="text-purple-400/80">
-                        These settings influence how AI generates prompts for each segment.
-                        Choose "Varied" to let AI decide per-segment.
+                        {t('directionOverridesHint')}
                       </p>
                     </div>
                   </div>
@@ -581,7 +588,7 @@ export function KeyframeRegenerationDialog({
                 <div className="space-y-2">
                   <Label className="text-sm text-gray-300 flex items-center gap-2">
                     <Camera className="w-4 h-4 text-blue-400" />
-                    Primary Shot Type
+                    {t('primaryShotType')}
                   </Label>
                   <div className="grid grid-cols-2 gap-2">
                     {SHOT_TYPE_OPTIONS.map((opt) => (
@@ -595,8 +602,8 @@ export function KeyframeRegenerationDialog({
                             : 'border-gray-700 bg-gray-800/50 text-gray-300 hover:border-gray-600'
                         )}
                       >
-                        <p className="text-sm font-medium">{opt.label}</p>
-                        <p className="text-xs text-gray-500">{opt.description}</p>
+                        <p className="text-sm font-medium">{t(`shotTypes.${opt.value}.label`)}</p>
+                        <p className="text-xs text-gray-500">{t(`shotTypes.${opt.value}.description`)}</p>
                       </button>
                     ))}
                   </div>
@@ -606,7 +613,7 @@ export function KeyframeRegenerationDialog({
                 <div className="space-y-2">
                   <Label className="text-sm text-gray-300 flex items-center gap-2">
                     <Film className="w-4 h-4 text-green-400" />
-                    Camera Movement
+                    {t('cameraMovement')}
                   </Label>
                   <Select value={cameraMovement} onValueChange={setCameraMovement}>
                     <SelectTrigger className="bg-gray-800 border-gray-700">
@@ -616,8 +623,8 @@ export function KeyframeRegenerationDialog({
                       {CAMERA_MOVEMENT_OPTIONS.map((opt) => (
                         <SelectItem key={opt.value} value={opt.value}>
                           <div className="flex items-center gap-2">
-                            <span>{opt.label}</span>
-                            <span className="text-xs text-gray-500">- {opt.description}</span>
+                            <span>{t(`cameraMovements.${opt.value}.label`)}</span>
+                            <span className="text-xs text-gray-500">- {t(`cameraMovements.${opt.value}.description`)}</span>
                           </div>
                         </SelectItem>
                       ))}
@@ -629,7 +636,7 @@ export function KeyframeRegenerationDialog({
                 <div className="space-y-2">
                   <Label className="text-sm text-gray-300 flex items-center gap-2">
                     <Sun className="w-4 h-4 text-amber-400" />
-                    Lighting Mood
+                    {t('lightingMood')}
                   </Label>
                   <Select value={lightingMood} onValueChange={setLightingMood}>
                     <SelectTrigger className="bg-gray-800 border-gray-700">
@@ -639,8 +646,8 @@ export function KeyframeRegenerationDialog({
                       {LIGHTING_MOOD_OPTIONS.map((opt) => (
                         <SelectItem key={opt.value} value={opt.value}>
                           <div className="flex items-center gap-2">
-                            <span>{opt.label}</span>
-                            <span className="text-xs text-gray-500">- {opt.description}</span>
+                            <span>{t(`lighting.${opt.value}.label`)}</span>
+                            <span className="text-xs text-gray-500">- {t(`lighting.${opt.value}.description`)}</span>
                           </div>
                         </SelectItem>
                       ))}
@@ -652,7 +659,7 @@ export function KeyframeRegenerationDialog({
                 <div className="space-y-2">
                   <Label className="text-sm text-gray-300 flex items-center gap-2">
                     <Palette className="w-4 h-4 text-purple-400" />
-                    Atmosphere
+                    {t('atmosphere')}
                   </Label>
                   <Select value={atmosphere} onValueChange={setAtmosphere}>
                     <SelectTrigger className="bg-gray-800 border-gray-700">
@@ -662,8 +669,8 @@ export function KeyframeRegenerationDialog({
                       {ATMOSPHERE_OPTIONS.map((opt) => (
                         <SelectItem key={opt.value} value={opt.value}>
                           <div className="flex items-center gap-2">
-                            <span>{opt.label}</span>
-                            <span className="text-xs text-gray-500">- {opt.description}</span>
+                            <span>{t(`atmospheres.${opt.value}.label`)}</span>
+                            <span className="text-xs text-gray-500">- {t(`atmospheres.${opt.value}.description`)}</span>
                           </div>
                         </SelectItem>
                       ))}
@@ -678,11 +685,14 @@ export function KeyframeRegenerationDialog({
         {/* Footer */}
         <div className="flex-shrink-0 border-t border-gray-700 p-4 flex justify-between items-center">
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={isGenerating}>
-            Cancel
+            {tc('actions.cancel')}
           </Button>
           <div className="flex items-center gap-3">
             <div className="text-xs text-gray-500">
-              {calculatedSegmentCount} segments • {targetDuration.toFixed(1)}s
+              {t('footerSummary', {
+                count: calculatedSegmentCount,
+                duration: targetDuration.toFixed(1),
+              })}
             </div>
             <Button
               onClick={handleGenerate}
@@ -692,17 +702,17 @@ export function KeyframeRegenerationDialog({
               {isGenerating ? (
                 <>
                   <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Generating...
+                  {t('generating')}
                 </>
               ) : existingSegments.length > 0 ? (
                 <>
                   <RefreshCw className="w-4 h-4 mr-2" />
-                  Regenerate Keyframes
+                  {t('regenerateKeyframes')}
                 </>
               ) : (
                 <>
                   <Wand2 className="w-4 h-4 mr-2" />
-                  Generate Keyframes
+                  {t('generateKeyframes')}
                 </>
               )}
             </Button>
