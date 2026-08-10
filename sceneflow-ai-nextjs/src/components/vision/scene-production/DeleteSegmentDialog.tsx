@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useTranslations } from 'next-intl'
 import { AlertTriangle, Trash2, Clock, Film } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import {
@@ -42,6 +43,8 @@ export function DeleteSegmentDialog({
   onConfirm,
   isDeleting = false
 }: DeleteSegmentDialogProps) {
+  const t = useTranslations('production.segments')
+  const tc = useTranslations('common')
   const isLastBeat = totalBeats === 1
   
   return (
@@ -50,10 +53,10 @@ export function DeleteSegmentDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-red-400">
             <AlertTriangle className="w-5 h-5" />
-            Delete Beat {segmentIndex + 1}?
+            {t('delete.title', { number: segmentIndex + 1 })}
           </DialogTitle>
           <DialogDescription className="text-slate-400">
-            This action cannot be undone.
+            {t('delete.description')}
           </DialogDescription>
         </DialogHeader>
         
@@ -63,21 +66,23 @@ export function DeleteSegmentDialog({
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-400 flex items-center gap-2">
                 <Film className="w-4 h-4" />
-                Segment
+                {t('delete.segmentLabel')}
               </span>
-              <span className="text-white font-medium">#{segmentIndex + 1} of {totalSegments}</span>
+              <span className="text-white font-medium">
+                {t('delete.segmentOf', { index: segmentIndex + 1, total: totalBeats })}
+              </span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-400 flex items-center gap-2">
                 <Clock className="w-4 h-4" />
-                Duration
+                {t('delete.duration')}
               </span>
               <span className="text-white font-medium">{segmentDuration.toFixed(1)}s</span>
             </div>
             {hasFrames && (
               <div className="text-amber-400 text-xs flex items-center gap-2 pt-2 border-t border-slate-700">
                 <AlertTriangle className="w-3.5 h-3.5" />
-                This segment has generated frames that will be lost.
+                {t('delete.hasFramesWarning')}
               </div>
             )}
           </div>
@@ -90,15 +95,9 @@ export function DeleteSegmentDialog({
               : "bg-amber-500/10 border border-amber-500/30 text-amber-300"
           )}>
             {isLastBeat ? (
-              <p>
-                <strong>Warning:</strong> This is the only segment in the scene. 
-                Deleting it will leave the scene without any keyframes.
-              </p>
+              <p>{t('delete.lastBeatWarning')}</p>
             ) : (
-              <p>
-                Deleting this segment will shift all subsequent segments. 
-                Timing and sequence indices will be automatically recalculated.
-              </p>
+              <p>{t('delete.shiftWarning')}</p>
             )}
           </div>
         </div>
@@ -110,7 +109,7 @@ export function DeleteSegmentDialog({
             disabled={isDeleting}
             className="border-slate-600 text-slate-300 hover:bg-slate-800"
           >
-            Cancel
+            {tc('actions.cancel')}
           </Button>
           <Button
             variant="destructive"
@@ -121,12 +120,12 @@ export function DeleteSegmentDialog({
             {isDeleting ? (
               <>
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                Deleting...
+                {t('delete.deleting')}
               </>
             ) : (
               <>
                 <Trash2 className="w-4 h-4 mr-2" />
-                Delete Beat
+                {t('delete.deleteBeat')}
               </>
             )}
           </Button>

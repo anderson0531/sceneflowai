@@ -15,6 +15,7 @@
 'use client'
 
 import React, { useState, useCallback } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Dialog,
   DialogContent,
@@ -47,15 +48,6 @@ interface DirectionDialogProps {
   hasEndFrame: boolean
 }
 
-// Map internal mode names to display names
-const modeDisplayNames: Record<string, string> = {
-  'TEXT_TO_VIDEO': 'Text-to-Video',
-  'IMAGE_TO_VIDEO': 'Image-to-Video',
-  'FRAME_TO_VIDEO': 'Frame-to-Video',
-  'EXTEND': 'Extend',
-  'REFERENCE_IMAGES': 'Reference',
-}
-
 // Map internal mode names to VideoGenerationMethod
 const modeToMethod: Record<string, VideoGenerationMethod> = {
   'TEXT_TO_VIDEO': 'T2V',
@@ -65,67 +57,18 @@ const modeToMethod: Record<string, VideoGenerationMethod> = {
   'REFERENCE_IMAGES': 'REF',
 }
 
-// Mode-specific tips for prompt direction
-const modeTips: Record<string, string[]> = {
-  'FRAME_TO_VIDEO': [
-    'Focus on motion and transitions between frames',
-    'Avoid camera movements that deviate from the end frame',
-    'Describe how elements transform from start to end',
-  ],
-  'IMAGE_TO_VIDEO': [
-    'Describe how the static image should come to life',
-    'Include subtle movements like breathing, blinking',
-    'Maintain consistency with the starting image',
-  ],
-  'TEXT_TO_VIDEO': [
-    'Be specific about visual details and composition',
-    'Describe lighting, environment, and atmosphere',
-    'Include character positions and actions',
-  ],
-  'EXTEND': [
-    'Focus on continuation of existing motion',
-    'Maintain visual continuity with source video',
-    'Describe what happens next in the scene',
-  ],
-  'REFERENCE_IMAGES': [
-    'Use reference images for character consistency',
-    'Describe scene while referencing character styles',
-    'Combine visual references with scene description',
-  ],
-}
+const MODE_KEYS = [
+  'TEXT_TO_VIDEO',
+  'IMAGE_TO_VIDEO',
+  'FRAME_TO_VIDEO',
+  'EXTEND',
+  'REFERENCE_IMAGES',
+] as const
 
-// Example instruction suggestions per mode
-const exampleInstructions: Record<string, string[]> = {
-  'FRAME_TO_VIDEO': [
-    'Make the transition smoother',
-    'Add subtle camera drift',
-    'Slow down the motion',
-    'Make it more dramatic',
-  ],
-  'IMAGE_TO_VIDEO': [
-    'Add wind effects to hair and clothes',
-    'Include gentle breathing motion',
-    'Make the lighting more dynamic',
-    'Add environmental motion',
-  ],
-  'TEXT_TO_VIDEO': [
-    'Make the scene more cinematic',
-    'Add golden hour lighting',
-    'Include more environmental details',
-    'Make the action more dynamic',
-  ],
-  'EXTEND': [
-    'Continue the motion smoothly',
-    'Add a subtle camera pan',
-    'Increase the energy of the scene',
-    'Transition to a new angle',
-  ],
-  'REFERENCE_IMAGES': [
-    'Match the character\'s expression',
-    'Keep the same art style',
-    'Maintain consistent lighting',
-    'Use the same color palette',
-  ],
+type ModeKey = (typeof MODE_KEYS)[number]
+
+function isModeKey(mode: string): mode is ModeKey {
+  return (MODE_KEYS as readonly string[]).includes(mode)
 }
 
 export const DirectionDialog: React.FC<DirectionDialogProps> = ({
@@ -137,10 +80,19 @@ export const DirectionDialog: React.FC<DirectionDialogProps> = ({
   hasStartFrame,
   hasEndFrame,
 }) => {
+  const t = useTranslations('production.direction.promptDirection')
+  const tc = useTranslations('common.actions')
   const [instruction, setInstruction] = useState('')
   const [isModifying, setIsModifying] = useState(false)
   const [promptHistory, setPromptHistory] = useState<string[]>([])
   const [localPrompt, setLocalPrompt] = useState(currentPrompt)
+
+  const modeKey: ModeKey = isModeKey(mode) ? mode : 'TEXT_TO_VIDEO'
+  const modeDisplayName = t(`modes.${modeKey}`)
+  const tips = (['tip1', 'tip2', 'tip3'] as const).map((key) => t(`tips.${modeKey}.${key}`))
+  const examples = (['example1', 'example2', 'example3', 'example4'] as const).map((key) =>
+    t(`examples.${modeKey}.${key}`)
+  )
 
   // Sync local prompt when dialog opens with new prompt
   React.useEffect(() => {
@@ -210,13 +162,10 @@ export const DirectionDialog: React.FC<DirectionDialogProps> = ({
     onClose()
   }, [localPrompt, onPromptChange, onClose])
 
-  // Use an example instruction
+  // Use example instruction
   const handleUseExample = useCallback((example: string) => {
     setInstruction(example)
   }, [])
-
-  const tips = modeTips[mode] || modeTips['TEXT_TO_VIDEO']
-  const examples = exampleInstructions[mode] || exampleInstructions['TEXT_TO_VIDEO']
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -226,10 +175,10 @@ export const DirectionDialog: React.FC<DirectionDialogProps> = ({
         <DialogHeader>
           <DialogTitle className="text-lg font-medium text-white flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-indigo-400" />
-            Prompt Direction
+            {t('title')}
           </DialogTitle>
           <DialogDescription className="text-sm text-slate-400">
-            Review and refine the prompt that will guide video generation.
+            {t('description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -247,17 +196,17 @@ export const DirectionDialog: React.FC<DirectionDialogProps> = ({
                 ${mode === 'REFERENCE_IMAGES' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50' : ''}
               `}
             >
-              {modeDisplayNames[mode]} Mode
+              {t('modeSuffix', { mode: modeDisplayName })}
             </Badge>
             <span className="text-xs text-slate-500">
-              Optimized for this generation method
+              {t('optimizedForMethod')}
             </span>
           </div>
 
           {/* Current Prompt Display */}
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <Label className="text-slate-300 font-medium">Current Direction</Label>
+              <Label className="text-slate-300 font-medium">{t('currentDirection')}</Label>
               {promptHistory.length > 0 && (
                 <Button
                   variant="ghost"
@@ -266,21 +215,21 @@ export const DirectionDialog: React.FC<DirectionDialogProps> = ({
                   className="h-7 px-2 text-xs text-slate-400 hover:text-white"
                 >
                   <Undo2 className="w-3 h-3 mr-1" />
-                  Undo ({promptHistory.length})
+                  {t('undo', { count: promptHistory.length })}
                 </Button>
               )}
             </div>
             <div className="bg-slate-800/60 border border-slate-700 rounded-lg p-4 max-h-[200px] overflow-y-auto">
               <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-wrap">
-                {localPrompt || <span className="text-slate-500 italic">No prompt direction set</span>}
+                {localPrompt || <span className="text-slate-500 italic">{t('noPrompt')}</span>}
               </p>
             </div>
             <div className="flex items-center justify-between text-xs text-slate-500">
-              <span>{localPrompt.length} characters</span>
+              <span>{t('characters', { count: localPrompt.length })}</span>
               {promptHistory.length > 0 && (
                 <span className="text-indigo-400 flex items-center gap-1">
                   <CheckCircle className="w-3 h-3" />
-                  Modified
+                  {t('modified')}
                 </span>
               )}
             </div>
@@ -290,7 +239,7 @@ export const DirectionDialog: React.FC<DirectionDialogProps> = ({
           <div className="bg-slate-800/40 border border-slate-700/50 rounded-lg p-3">
             <div className="flex items-center gap-2 mb-2">
               <Lightbulb className="w-4 h-4 text-amber-400" />
-              <span className="text-xs text-slate-400 font-medium">Tips for {modeDisplayNames[mode]}</span>
+              <span className="text-xs text-slate-400 font-medium">{t('tipsFor', { mode: modeDisplayName })}</span>
             </div>
             <ul className="space-y-1">
               {tips.map((tip, index) => (
@@ -304,9 +253,9 @@ export const DirectionDialog: React.FC<DirectionDialogProps> = ({
 
           {/* Instruction Input */}
           <div className="flex flex-col gap-2">
-            <Label className="text-slate-300">Refine Direction</Label>
+            <Label className="text-slate-300">{t('refineDirection')}</Label>
             <p className="text-xs text-slate-500">
-              Describe how you&apos;d like to modify the prompt in natural language.
+              {t('refineHint')}
             </p>
             <div className="flex gap-2">
               <Input
@@ -318,7 +267,7 @@ export const DirectionDialog: React.FC<DirectionDialogProps> = ({
                     handleModifyPrompt()
                   }
                 }}
-                placeholder="e.g., Make it more dramatic, slow down the motion..."
+                placeholder={t('refinePlaceholder')}
                 className="flex-1 bg-slate-800 border-slate-700 text-white placeholder-slate-500 text-sm"
                 disabled={isModifying}
               />
@@ -358,14 +307,14 @@ export const DirectionDialog: React.FC<DirectionDialogProps> = ({
               onClick={onClose}
               className="bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700"
             >
-              Cancel
+              {tc('cancel')}
             </Button>
             <Button 
               className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
               onClick={handleApply}
             >
               <CheckCircle className="w-4 h-4 mr-2" />
-              Apply Direction
+              {t('applyDirection')}
             </Button>
           </div>
         </div>

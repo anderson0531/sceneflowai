@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useMemo } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Dialog,
   DialogContent,
@@ -122,6 +123,8 @@ export function ResetSegmentsConfirmDialog({
   isResetting = false,
   onConfirm,
 }: ResetSegmentsConfirmDialogProps) {
+  const t = useTranslations('production.reset')
+  const tCommon = useTranslations('common')
   const impact = useMemo(() => computeSegmentResetImpact(production), [production])
 
   const hasGeneratedWork =
@@ -142,17 +145,12 @@ export function ResetSegmentsConfirmDialog({
             </div>
             <div className="space-y-1 text-left">
               <DialogTitle className="text-lg text-white">
-                Reset scene production?
+                {t('title')}
               </DialogTitle>
               <DialogDescription className="text-sm text-gray-400">
-                Scene {sceneNumber}
-                {sceneHeading ? (
-                  <>
-                    {' '}
-                    <span className="text-gray-500">·</span>{' '}
-                    <span className="text-gray-300">{sceneHeading}</span>
-                  </>
-                ) : null}
+                {sceneHeading
+                  ? t('sceneHeading', { number: sceneNumber, heading: sceneHeading })
+                  : t('sceneLabel', { number: sceneNumber })}
               </DialogDescription>
             </div>
           </div>
@@ -160,92 +158,78 @@ export function ResetSegmentsConfirmDialog({
 
         <div className="space-y-4">
           <div className="rounded-lg border border-red-500/30 bg-red-950/40 px-4 py-3 text-sm leading-relaxed text-red-100/90">
-            This removes your entire <strong className="font-semibold text-red-50">beat timeline</strong>{' '}
-            for this scene and cannot be undone. You will need to run segment setup again from scratch.
+            {t.rich('warning', {
+              bold: (chunks) => <strong className="font-semibold text-red-50">{chunks}</strong>,
+            })}
           </div>
 
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
-              What you will lose
+              {t('whatYouWillLose')}
             </p>
             <ul className="space-y-2.5">
               <ImpactRow
                 icon={Layers}
-                label={`${impact.segmentCount} segment${impact.segmentCount === 1 ? '' : 's'}`}
-                detail="Timing, direction notes, Veo prompts, and dialogue-to-segment mapping"
+                label={t('segmentCount', { count: impact.segmentCount })}
+                detail={t('segmentDetail')}
               />
               {impact.keyframeImageCount > 0 ? (
                 <ImpactRow
                   icon={ImageIcon}
-                  label={
-                    impact.keyframeImageCount === 1
-                      ? '1 keyframe image'
-                      : `${impact.keyframeImageCount} keyframe images`
-                  }
+                  label={t('keyframeImage', { count: impact.keyframeImageCount })}
                   detail={
                     impact.segmentsWithKeyframes > 0
-                      ? `Across ${impact.segmentsWithKeyframes} segment${impact.segmentsWithKeyframes === 1 ? '' : 's'} (start/end frames)`
-                      : 'Start and end frame stills used for video generation'
+                      ? t('keyframeDetailAcross', { count: impact.segmentsWithKeyframes })
+                      : t('keyframeDetailDefault')
                   }
                 />
               ) : null}
               {impact.videoCount > 0 ? (
                 <ImpactRow
                   icon={Video}
-                  label={
-                    impact.videoCount === 1
-                      ? '1 generated video clip'
-                      : `${impact.videoCount} generated video clips`
-                  }
-                  detail="Beat-level Veo / I2V outputs and active takes on the timeline"
+                  label={t('videoClip', { count: impact.videoCount })}
+                  detail={t('videoDetail')}
                 />
               ) : null}
               {impact.imageClipCount > 0 ? (
                 <ImpactRow
                   icon={ImageIcon}
-                  label={
-                    impact.imageClipCount === 1
-                      ? '1 image clip'
-                      : `${impact.imageClipCount} image clips`
-                  }
-                  detail="Uploaded or generated still assets attached to segments"
+                  label={t('imageClip', { count: impact.imageClipCount })}
+                  detail={t('imageClipDetail')}
                 />
               ) : null}
               {impact.alternateTakeCount > 0 ? (
                 <ImpactRow
                   icon={Film}
-                  label={
-                    impact.alternateTakeCount === 1
-                      ? '1 alternate take'
-                      : `${impact.alternateTakeCount} alternate takes`
-                  }
-                  detail="Extra generations stored per segment"
+                  label={t('alternateTake', { count: impact.alternateTakeCount })}
+                  detail={t('alternateTakeDetail')}
                 />
               ) : null}
               {impact.hasRenderedScene ? (
                 <ImpactRow
                   icon={Clapperboard}
-                  label="Scene render / production stream"
+                  label={t('sceneRender')}
                   detail={
                     impact.productionStreamCount > 0
-                      ? `${impact.productionStreamCount} language or output stream${impact.productionStreamCount === 1 ? '' : 's'} linked to this scene`
-                      : 'Final mixed scene output from the production mixer'
+                      ? t('sceneRenderStreams', { count: impact.productionStreamCount })
+                      : t('sceneRenderDefault')
                   }
                 />
               ) : null}
               {!hasGeneratedWork && impact.segmentCount > 0 ? (
                 <ImpactRow
                   icon={Layers}
-                  label="Beat structure only"
-                  detail="No keyframes or clips detected yet, but segmentation progress will still be cleared"
+                  label={t('beatStructureOnly')}
+                  detail={t('beatStructureDetail')}
                 />
               ) : null}
             </ul>
           </div>
 
           <p className="rounded-md border border-gray-800 bg-gray-900/60 px-3 py-2 text-xs text-gray-400">
-            <strong className="font-medium text-gray-300">Not deleted:</strong> script text, scene
-            dialogue, narration, music/SFX audio, scene still image, and character references.
+            {t.rich('notDeleted', {
+              bold: (chunks) => <strong className="font-medium text-gray-300">{chunks}</strong>,
+            })}
           </p>
         </div>
 
@@ -256,7 +240,7 @@ export function ResetSegmentsConfirmDialog({
             disabled={isResetting}
             className="border-gray-700 text-gray-200 hover:bg-gray-800"
           >
-            Cancel
+            {tCommon('actions.cancel')}
           </Button>
           <Button
             variant="destructive"
@@ -267,12 +251,12 @@ export function ResetSegmentsConfirmDialog({
             {isResetting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Resetting…
+                {t('resetting')}
               </>
             ) : (
               <>
                 <Trash2 className="mr-2 h-4 w-4" />
-                Reset production
+                {t('resetProduction')}
               </>
             )}
           </Button>

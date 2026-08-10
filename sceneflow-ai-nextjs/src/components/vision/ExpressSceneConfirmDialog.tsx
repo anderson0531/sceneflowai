@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Dialog,
   DialogContent,
@@ -47,6 +48,8 @@ export function ExpressSceneConfirmDialog({
   isRunning = false,
   onConfirm,
 }: ExpressSceneConfirmDialogProps) {
+  const t = useTranslations('production.expressScene')
+  const tCommon = useTranslations('common')
   const [scope, setScope] = useState<ExpressSceneScope>('missing')
   const [selectedFrameKeys, setSelectedFrameKeys] = useState<string[]>([])
 
@@ -91,18 +94,17 @@ export function ExpressSceneConfirmDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-amber-200">
             <Zap className="w-5 h-5" />
-            Express Scene
+            {t('title')}
           </DialogTitle>
           <DialogDescription className="text-gray-400">
-            Choose which pre-vis frames to generate or regenerate. Regenerating existing frames
-            updates images only — direction and audio are left unchanged.
+            {t('description')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-              Scope
+              {t('scope')}
             </p>
             <div className="inline-flex rounded-md border border-amber-600/40 overflow-hidden">
               {(['missing', 'selected'] as ExpressSceneScope[]).map((value) => (
@@ -117,25 +119,24 @@ export function ExpressSceneConfirmDialog({
                       : 'bg-transparent text-amber-200/80 hover:bg-amber-900/30'
                   }`}
                 >
-                  {value === 'missing' ? 'Missing only' : 'Regenerate selected'}
+                  {value === 'missing' ? t('scopeMissing') : t('scopeRegenerate')}
                 </button>
               ))}
             </div>
             {scope === 'selected' && (
               <p className="text-[11px] text-amber-200/70 mt-2">
-                Checked frames with existing images will be regenerated. Direction and audio are not
-                rerun.
+                {t('scopeRegenerateHint')}
               </p>
             )}
           </div>
 
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-              Frames
+              {t('frames')}
             </p>
             {checklistSlots.length === 0 ? (
               <p className="text-sm text-gray-500 py-4 text-center">
-                No frames available for this scope.
+                {t('noFrames')}
               </p>
             ) : (
               <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
@@ -160,7 +161,7 @@ export function ExpressSceneConfirmDialog({
                           slot.ownImageUrl ? 'text-green-400' : 'text-amber-400'
                         }`}
                       >
-                        {slot.ownImageUrl ? 'Has image' : 'Missing'}
+                        {slot.ownImageUrl ? t('hasImage') : t('missing')}
                       </span>
                     </span>
                   </label>
@@ -169,8 +170,11 @@ export function ExpressSceneConfirmDialog({
             )}
             {selectedFrameKeys.length > 0 && (
               <p className="text-[11px] text-amber-300/60 mt-2">
-                Image credits (est.): {creditTotal} ({selectedFrameKeys.length} frame
-                {selectedFrameKeys.length === 1 ? '' : 's'} × {IMAGE_CREDITS.FAL_KLING_IMAGE})
+                {t('imageCredits', {
+                  credits: creditTotal,
+                  count: selectedFrameKeys.length,
+                  perFrame: IMAGE_CREDITS.FAL_KLING_IMAGE,
+                })}
               </p>
             )}
           </div>
@@ -183,7 +187,7 @@ export function ExpressSceneConfirmDialog({
             onClick={() => onOpenChange(false)}
             disabled={isRunning}
           >
-            Cancel
+            {tCommon('actions.cancel')}
           </Button>
           <Button
             type="button"
@@ -200,12 +204,12 @@ export function ExpressSceneConfirmDialog({
             {isRunning ? (
               <>
                 <Loader className="w-4 h-4 mr-2 animate-spin" />
-                Running...
+                {t('running')}
               </>
             ) : (
               <>
                 <Zap className="w-4 h-4 mr-2" />
-                Generate Scene
+                {t('generateScene')}
               </>
             )}
           </Button>

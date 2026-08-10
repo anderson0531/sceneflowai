@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Dialog,
   DialogContent,
@@ -44,26 +45,18 @@ interface IntelligentRetakeDialogProps {
   onSubmitRetake: (plan: RetakePlan, opts: IntelligentRetakeSubmitOptions) => Promise<void>
 }
 
-const anomalyBadgeConfig: Record<
-  RetakeAnomalyOrigin,
-  { label: string; className: string }
-> = {
-  frame: {
-    label: 'In the starting frame',
-    className: 'bg-amber-500/20 text-amber-200 border-amber-500/40',
-  },
-  motion: {
-    label: 'Introduced in motion',
-    className: 'bg-blue-500/20 text-blue-200 border-blue-500/40',
-  },
-  both: {
-    label: 'Frame and motion',
-    className: 'bg-purple-500/20 text-purple-200 border-purple-500/40',
-  },
-  unknown: {
-    label: 'Origin unclear',
-    className: 'bg-slate-500/20 text-slate-300 border-slate-500/40',
-  },
+const anomalyBadgeClassName: Record<RetakeAnomalyOrigin, string> = {
+  frame: 'bg-amber-500/20 text-amber-200 border-amber-500/40',
+  motion: 'bg-blue-500/20 text-blue-200 border-blue-500/40',
+  both: 'bg-purple-500/20 text-purple-200 border-purple-500/40',
+  unknown: 'bg-slate-500/20 text-slate-300 border-slate-500/40',
+}
+
+const anomalyLabelKeys: Record<RetakeAnomalyOrigin, string> = {
+  frame: 'anomalyFrame',
+  motion: 'anomalyMotion',
+  both: 'anomalyBoth',
+  unknown: 'anomalyUnknown',
 }
 
 export function IntelligentRetakeDialog({
@@ -74,6 +67,8 @@ export function IntelligentRetakeDialog({
   sceneDescription,
   onSubmitRetake,
 }: IntelligentRetakeDialogProps) {
+  const t = useTranslations('production.retakeExtra.intelligentRetake')
+  const tc = useTranslations('common')
   const [instruction, setInstruction] = useState('')
   const [plan, setPlan] = useState<RetakePlan | null>(null)
   const [originalPrompt, setOriginalPrompt] = useState('')
@@ -208,7 +203,7 @@ export function IntelligentRetakeDialog({
   const promptChanged =
     !!plan && plan.revisedPrompt.trim() !== (originalPrompt || currentPrompt).trim()
 
-  const anomalyConfig = plan ? anomalyBadgeConfig[plan.anomalyOrigin] : null
+  const anomalyOrigin = plan?.anomalyOrigin
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -219,9 +214,9 @@ export function IntelligentRetakeDialog({
               <Wand2 className="h-5 w-5 text-indigo-300" />
             </div>
             <div className="space-y-1 text-left">
-              <DialogTitle className="text-lg text-white">Intelligent Retake</DialogTitle>
+              <DialogTitle className="text-lg text-white">{t('title')}</DialogTitle>
               <DialogDescription className="text-sm text-slate-400">
-                Describe the correction. We will route a frame edit, prompt rewrite, or both.
+                {t('description')}
               </DialogDescription>
             </div>
           </div>
@@ -238,10 +233,9 @@ export function IntelligentRetakeDialog({
                 preload="metadata"
               />
             ) : (
-              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={previewUrl}
-                alt="Clip reference"
+                alt={t('clipReferenceAlt')}
                 className="w-full max-h-40 object-cover bg-black"
               />
             )}
@@ -249,11 +243,11 @@ export function IntelligentRetakeDialog({
         )}
 
         <div className="space-y-2">
-          <label className="text-xs font-medium text-slate-300">What should we fix?</label>
+          <label className="text-xs font-medium text-slate-300">{t('whatToFix')}</label>
           <DictationTextarea
             value={instruction}
             onChange={setInstruction}
-            placeholder="Describe what to fix, e.g. 'remove the coffee cup on the table'"
+            placeholder={t('fixPlaceholder')}
             rows={3}
             className="bg-slate-900 border-slate-700 text-slate-100 placeholder:text-slate-500"
           />
@@ -269,12 +263,12 @@ export function IntelligentRetakeDialog({
           {isAnalyzing ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Analyzing…
+              {t('analyzing')}
             </>
           ) : (
             <>
               <Sparkles className="mr-2 h-4 w-4" />
-              Analyze
+              {t('analyze')}
             </>
           )}
         </Button>
@@ -282,9 +276,12 @@ export function IntelligentRetakeDialog({
         {plan && (
           <div className="space-y-3 rounded-lg border border-slate-700/80 bg-slate-900/50 p-3">
             <div className="flex flex-wrap items-center gap-2">
-              {anomalyConfig && (
-                <Badge variant="outline" className={`text-[10px] ${anomalyConfig.className}`}>
-                  {anomalyConfig.label}
+              {anomalyOrigin && (
+                <Badge
+                  variant="outline"
+                  className={`text-[10px] ${anomalyBadgeClassName[anomalyOrigin]}`}
+                >
+                  {t(anomalyLabelKeys[anomalyOrigin] as 'anomalyFrame')}
                 </Badge>
               )}
               <span className="text-sm font-medium text-slate-100">{plan.retakeSummary}</span>
@@ -326,7 +323,7 @@ export function IntelligentRetakeDialog({
               ) : (
                 <ChevronDown className="h-3.5 w-3.5" />
               )}
-              View full prompt
+              {t('viewFullPrompt')}
             </button>
             {showFullPrompt && (
               <pre className="max-h-36 overflow-y-auto rounded-md border border-slate-700 bg-slate-950 p-2 text-[11px] text-slate-300 whitespace-pre-wrap">
@@ -343,9 +340,9 @@ export function IntelligentRetakeDialog({
                     className="mt-0.5"
                   />
                   <div className="space-y-1">
-                    <span className="text-sm text-slate-200">Fix the starting frame</span>
+                    <span className="text-sm text-slate-200">{t('fixStartingFrame')}</span>
                     <p className="text-[11px] text-slate-500">
-                      Edit the frame-locked start image before regenerating.
+                      {t('fixStartingFrameHint')}
                     </p>
                   </div>
                 </label>
@@ -355,7 +352,7 @@ export function IntelligentRetakeDialog({
                 <Input
                   value={frameEditInstruction}
                   onChange={(e) => setFrameEditInstruction(e.target.value)}
-                  placeholder="Frame edit instruction"
+                  placeholder={t('frameEditPlaceholder')}
                   className="bg-slate-950 border-slate-700 text-slate-100 text-sm"
                 />
               )}
@@ -368,11 +365,11 @@ export function IntelligentRetakeDialog({
                   className="mt-0.5"
                 />
                 <div className="space-y-1">
-                  <span className="text-sm text-slate-200">Apply prompt changes</span>
+                  <span className="text-sm text-slate-200">{t('applyPromptChanges')}</span>
                   <p className="text-[11px] text-slate-500">
                     {promptChanged || plan.negativePromptAdditions.trim()
-                      ? 'Use the revised prompt and negative additions.'
-                      : 'No prompt changes suggested.'}
+                      ? t('applyPromptChangesHint')
+                      : t('noPromptChanges')}
                   </p>
                 </div>
               </label>
@@ -387,7 +384,7 @@ export function IntelligentRetakeDialog({
             disabled={isSubmitting}
             className="border-slate-700 text-slate-200 hover:bg-slate-800"
           >
-            Cancel
+            {tc('actions.cancel')}
           </Button>
           <Button
             onClick={handleApprove}
@@ -397,12 +394,12 @@ export function IntelligentRetakeDialog({
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Retaking…
+                {t('retaking')}
               </>
             ) : (
               <>
                 <Film className="mr-2 h-4 w-4" />
-                Approve & Retake
+                {t('approveAndRetake')}
               </>
             )}
           </Button>

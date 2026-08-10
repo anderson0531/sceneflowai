@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Dialog,
   DialogContent,
@@ -20,7 +21,7 @@ import {
   type ExpressAudioScope,
 } from '@/lib/audio/buildExpressAudioItems'
 import { estimateExpressVeoSfxCredits } from '@/lib/sfx/clientExpressVeoSfx'
-import { VEO_SFX_CREDIT_HINT } from '@/lib/sfx/clientGenerateVeoSfx'
+import { VIDEO_CREDITS } from '@/lib/credits/creditCosts'
 import {
   resolveAutoVeoSfxDuration,
   resolveVeoSfxTargetSeconds,
@@ -64,6 +65,8 @@ export function ExpressAudioConfirmDialog({
   isRunning = false,
   onConfirm,
 }: ExpressAudioConfirmDialogProps) {
+  const t = useTranslations('production.expressAudio')
+  const tCommon = useTranslations('common')
   const [scope, setScope] = useState<ExpressAudioScope>('missing')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [durationPreset, setDurationPreset] = useState<SfxDurationOverride>('auto')
@@ -88,15 +91,16 @@ export function ExpressAudioConfirmDialog({
   const veoAutoSeconds = resolveAutoVeoSfxDuration(segmentDurationSeconds)
   const showPartialVeoHint = !veoSfxCoversFullBeat(segmentDurationSeconds, durationPreset)
   const creditTotal = estimateExpressVeoSfxCredits(selectedSfxCount)
+  const autoSecondsLabel = Number.isInteger(autoSeconds) ? autoSeconds : autoSeconds.toFixed(1)
 
   const chips: Array<{ id: SfxDurationOverride; label: string }> = [
     {
       id: 'auto',
-      label: `Auto (${Number.isInteger(autoSeconds) ? autoSeconds : autoSeconds.toFixed(1)}s · Veo ${veoAutoSeconds}s)`,
+      label: t('durationAuto', { seconds: autoSecondsLabel, veoSeconds: veoAutoSeconds }),
     },
-    { id: 'short', label: 'Short 3s / Veo 4s' },
-    { id: 'medium', label: 'Medium 8s' },
-    { id: 'long', label: 'Long 15s / Veo 8s max' },
+    { id: 'short', label: t('durationShort') },
+    { id: 'medium', label: t('durationMedium') },
+    { id: 'long', label: t('durationLong') },
   ]
 
   const toggleItem = (id: string, checked: boolean) => {
@@ -114,18 +118,17 @@ export function ExpressAudioConfirmDialog({
         <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center gap-2 text-violet-200">
             <Sparkles className="w-5 h-5" />
-            Express Audio
+            {t('title')}
           </DialogTitle>
           <DialogDescription className="text-gray-400">
-            Generate dialogue, sound effects, and music for this scene concurrently. Dialogue
-            uses TTS, action beats use Veo native audio, and music uses Lyria.
+            {t('description')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 min-h-0 overflow-y-auto space-y-4 py-2">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-              Scope
+              {t('scope')}
             </p>
             <div className="inline-flex max-w-full rounded-md border border-violet-600/40 overflow-hidden">
               {(['missing', 'all'] as ExpressAudioScope[]).map((value) => (
@@ -140,24 +143,24 @@ export function ExpressAudioConfirmDialog({
                       : 'bg-transparent text-violet-200/80 hover:bg-violet-900/30'
                   }`}
                 >
-                  {value === 'missing' ? 'Missing only' : 'All (regenerate)'}
+                  {value === 'missing' ? t('scopeMissing') : t('scopeAll')}
                 </button>
               ))}
             </div>
             {scope === 'all' && (
               <p className="text-[11px] text-amber-200/70 mt-2">
-                Existing audio for the selected items will be deleted and regenerated.
+                {t('scopeAllWarning')}
               </p>
             )}
           </div>
 
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-              Audio to generate
+              {t('audioToGenerate')}
             </p>
             {items.length === 0 ? (
               <p className="text-sm text-gray-500 py-4 text-center">
-                No audio items available for this scene.
+                {t('noAudioItems')}
               </p>
             ) : (
               <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
@@ -188,7 +191,7 @@ export function ExpressAudioConfirmDialog({
                           item.hasAudio ? 'text-green-400' : 'text-amber-400'
                         }`}
                       >
-                        {item.hasAudio ? 'Ready' : 'Missing'}
+                        {item.hasAudio ? t('statusReady') : t('statusMissing')}
                       </span>
                     </span>
                   </label>
@@ -200,7 +203,7 @@ export function ExpressAudioConfirmDialog({
           {selectedSfxCount > 0 && (
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-                SFX duration preset
+                {t('sfxDurationPreset')}
               </p>
               <div className="flex min-w-0 flex-wrap gap-1.5">
                 {chips.map((chip) => (
@@ -221,16 +224,19 @@ export function ExpressAudioConfirmDialog({
               </div>
               {showPartialVeoHint && (
                 <p className="text-[10px] text-amber-200/60 mt-2">
-                  Veo covers up to 8s (Auto target{' '}
-                  {resolveVeoSfxTargetSeconds({
-                    segmentDurationSeconds,
-                    override: durationPreset,
+                  {t('veoPartialHint', {
+                    seconds: resolveVeoSfxTargetSeconds({
+                      segmentDurationSeconds,
+                      override: durationPreset,
+                    }),
                   })}
-                  s).
                 </p>
               )}
               <p className="text-[11px] text-violet-300/60 mt-2">
-                SFX credits: {creditTotal}. {VEO_SFX_CREDIT_HINT}
+                {t('sfxCredits', {
+                  credits: creditTotal,
+                  hint: t('creditHint', { credits: VIDEO_CREDITS.VEO_LITE }),
+                })}
               </p>
             </div>
           )}
@@ -243,7 +249,7 @@ export function ExpressAudioConfirmDialog({
             onClick={() => onOpenChange(false)}
             disabled={isRunning}
           >
-            Cancel
+            {tCommon('actions.cancel')}
           </Button>
           <Button
             type="button"
@@ -260,12 +266,12 @@ export function ExpressAudioConfirmDialog({
             {isRunning ? (
               <>
                 <Loader className="w-4 h-4 mr-2 animate-spin" />
-                Running...
+                {t('running')}
               </>
             ) : (
               <>
                 <Sparkles className="w-4 h-4 mr-2" />
-                Generate Audio ({selectedIds.length})
+                {t('generateAudio', { count: selectedIds.length })}
               </>
             )}
           </Button>

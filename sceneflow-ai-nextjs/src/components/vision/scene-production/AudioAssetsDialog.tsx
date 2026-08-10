@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { useTranslations } from 'next-intl'
 import { 
   Mic, Music, Zap, Volume2, Trash2, Plus, Upload, X, Clock, Play, Pause, RefreshCw
 } from 'lucide-react'
@@ -109,8 +110,10 @@ function AudioClipRow({
   isPlaying: boolean
   onTogglePlay: () => void
 }) {
+  const t = useTranslations('production.audio.assets')
   const config = TRACK_CONFIG[trackType]
   const Icon = config.icon
+  const trackLabel = t(`tracks.${trackType}.label`)
   
   return (
     <div className={cn(
@@ -124,13 +127,13 @@ function AudioClipRow({
       
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-          {clip.label || `${config.label} Clip`}
+          {clip.label || t('clipLabel', { track: trackLabel })}
         </p>
         <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
           <Clock className="w-3 h-3" />
-          <span>Start: {formatDuration(clip.startTime)}</span>
+          <span>{t('start', { time: formatDuration(clip.startTime) })}</span>
           <span>•</span>
-          <span>Duration: {formatDuration(clip.duration)}</span>
+          <span>{t('clipDuration', { time: formatDuration(clip.duration) })}</span>
         </div>
         {clip.url && (
           <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-1">
@@ -146,7 +149,7 @@ function AudioClipRow({
             size="sm"
             onClick={onTogglePlay}
             className="h-8 w-8 p-0"
-            title={isPlaying ? 'Pause' : 'Play'}
+            title={isPlaying ? t('pause') : t('play')}
           >
             {isPlaying ? (
               <Pause className="w-4 h-4" />
@@ -160,7 +163,7 @@ function AudioClipRow({
           size="sm"
           onClick={onRemove}
           className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-500/10"
-          title="Remove clip"
+          title={t('removeClip')}
         >
           <Trash2 className="w-4 h-4" />
         </Button>
@@ -171,8 +174,10 @@ function AudioClipRow({
 
 // Empty state for a track
 function EmptyTrackState({ trackType, onUpload }: { trackType: TrackType; onUpload: () => void }) {
+  const t = useTranslations('production.audio.assets')
   const config = TRACK_CONFIG[trackType]
   const Icon = config.icon
+  const trackLabel = t(`tracks.${trackType}.label`)
   
   return (
     <div className={cn(
@@ -181,7 +186,7 @@ function EmptyTrackState({ trackType, onUpload }: { trackType: TrackType; onUplo
       config.borderColor
     )}>
       <Icon className={cn('w-8 h-8 mb-2', config.color, 'opacity-50')} />
-      <p className="text-sm mb-3">No {config.label.toLowerCase()} clips</p>
+      <p className="text-sm mb-3">{t('noClips', { track: trackLabel.toLowerCase() })}</p>
       <Button
         variant="outline"
         size="sm"
@@ -189,7 +194,7 @@ function EmptyTrackState({ trackType, onUpload }: { trackType: TrackType; onUplo
         className="gap-2"
       >
         <Upload className="w-4 h-4" />
-        Upload Audio
+        {t('uploadAudio')}
       </Button>
     </div>
   )
@@ -213,6 +218,8 @@ function TrackSection({
   playingClipId: string | null
   onTogglePlay: (clipId: string, url?: string) => void
 }) {
+  const t = useTranslations('production.audio.assets')
+  const tc = useTranslations('common')
   const config = TRACK_CONFIG[trackType]
   const Icon = config.icon
   const hasClips = clips.length > 0
@@ -223,10 +230,10 @@ function TrackSection({
         <div className="flex items-center gap-2">
           <Icon className={cn('w-5 h-5', config.color)} />
           <h3 className="font-medium text-gray-900 dark:text-gray-100">
-            {config.label}
+            {t(`tracks.${trackType}.label`)}
           </h3>
           <span className="text-xs text-gray-500 dark:text-gray-400">
-            ({clips.length} {clips.length === 1 ? 'clip' : 'clips'})
+            ({t('clipCount', { count: clips.length })})
           </span>
         </div>
         
@@ -239,7 +246,7 @@ function TrackSection({
               className="gap-1 h-7 text-xs"
             >
               <Plus className="w-3 h-3" />
-              Add
+              {tc('actions.add')}
             </Button>
           )}
           {hasClips && (
@@ -250,14 +257,14 @@ function TrackSection({
               className="gap-1 h-7 text-xs text-red-500 hover:text-red-600 hover:bg-red-500/10"
             >
               <Trash2 className="w-3 h-3" />
-              Clear All
+              {t('clearAll')}
             </Button>
           )}
         </div>
       </div>
       
       <p className="text-xs text-gray-500 dark:text-gray-400">
-        {config.description}
+        {t(`tracks.${trackType}.description`)}
       </p>
       
       {hasClips ? (
@@ -292,6 +299,8 @@ export function AudioAssetsDialog({
   onSyncFromScript,
   projectId,
 }: AudioAssetsDialogProps) {
+  const t = useTranslations('production.audio.assets')
+  const tc = useTranslations('common')
   const [playingClipId, setPlayingClipId] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadTrackType, setUploadTrackType] = useState<TrackType | null>(null)
@@ -408,7 +417,7 @@ export function AudioAssetsDialog({
       }
       
       onAddAudioClip(uploadTrackType, newClip)
-      toast.success(`Added ${TRACK_CONFIG[uploadTrackType].label.toLowerCase()} clip`)
+      toast.success(`Added ${t(`tracks.${uploadTrackType}.label`).toLowerCase()} clip`)
     } catch (error) {
       console.error('[AudioAssetsDialog] Upload error:', error)
       toast.error('Failed to upload audio file')
@@ -435,17 +444,17 @@ export function AudioAssetsDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Volume2 className="w-5 h-5 text-purple-500" />
-            Audio Assets - Scene {sceneNumber}
+            {t('title', { number: sceneNumber })}
           </DialogTitle>
           <DialogDescription>
-            Manage audio tracks for this scene. Add, remove, or re-sync audio clips from the script.
+            {t('description')}
           </DialogDescription>
         </DialogHeader>
         
         {/* Summary Bar */}
         <div className="flex items-center justify-between py-2 px-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
           <span className="text-sm text-gray-600 dark:text-gray-400">
-            <strong className="text-gray-900 dark:text-gray-100">{totalClips}</strong> total audio clips
+            {t('totalClips', { count: totalClips })}
           </span>
           <Button
             variant="outline"
@@ -454,7 +463,7 @@ export function AudioAssetsDialog({
             className="gap-2"
           >
             <RefreshCw className="w-4 h-4" />
-            Sync from Script
+            {t('syncFromScript')}
           </Button>
         </div>
         
@@ -488,14 +497,14 @@ export function AudioAssetsDialog({
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
             <div className="bg-white dark:bg-gray-800 rounded-lg p-4 flex items-center gap-3">
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-500" />
-              <span className="text-sm">Uploading audio...</span>
+              <span className="text-sm">{t('uploading')}</span>
             </div>
           </div>
         )}
         
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
+            {tc('actions.close')}
           </Button>
         </DialogFooter>
       </DialogContent>

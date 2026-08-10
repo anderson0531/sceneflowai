@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Dialog,
   DialogContent,
@@ -66,6 +67,9 @@ export function BeatReferenceSelectionDialog({
   isGenerating = false,
   onConfirm,
 }: BeatReferenceSelectionDialogProps) {
+  const t = useTranslations('production.foundation.beatReferences')
+  const tc = useTranslations('common.actions')
+
   const autoResolved = useMemo(
     () =>
       resolveBeatFrameGenerationContext({
@@ -180,9 +184,9 @@ export function BeatReferenceSelectionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Review references — Scene {sceneIndex + 1}</DialogTitle>
+          <DialogTitle>{t('title', { number: sceneIndex + 1 })}</DialogTitle>
           <DialogDescription>
-            SceneFlow auto-selected references for this beat. Confirm or adjust before generating.
+            {t('description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -190,12 +194,20 @@ export function BeatReferenceSelectionDialog({
           <div className="space-y-4 py-2">
             <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-3 space-y-2">
               <p className="text-xs text-slate-400">
-                Beat: {beat.kind === 'action' ? 'Action' : beat.kind === 'narration' ? 'Narration' : 'Dialogue'}
+                {t('beatLabel', {
+                  kind:
+                    beat.kind === 'action'
+                      ? t('beatKindAction')
+                      : beat.kind === 'narration'
+                        ? t('beatKindNarration')
+                        : t('beatKindDialogue'),
+                })}
                 {beat.beatRole ? ` · ${beat.beatRole.replace(/_/g, ' ')}` : ''}
               </p>
               <p className="text-sm text-slate-200">
-                Auto-selected:{' '}
-                {selectionSummaryParts(selectedCharacterNames, summaryLocationName, summaryObjectNames)}
+                {t('autoSelected', {
+                  summary: selectionSummaryParts(selectedCharacterNames, summaryLocationName, summaryObjectNames),
+                })}
               </p>
               {warnings.map((warning) => (
                 <p key={warning} className="text-xs text-amber-400 flex items-start gap-1.5">
@@ -205,12 +217,12 @@ export function BeatReferenceSelectionDialog({
               ))}
               {matchConfidence === 'assigned' && selectedLocationRefId && (
                 <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-0">
-                  Location matched from scene assignment
+                  {t('locationMatchedAssignment')}
                 </Badge>
               )}
               {matchConfidence === 'heading' && selectedLocationRefId && (
                 <Badge variant="secondary" className="text-[10px] bg-cyan-500/20 text-cyan-300 border-0">
-                  Location matched from scene heading
+                  {t('locationMatchedHeading')}
                 </Badge>
               )}
             </div>
@@ -237,10 +249,10 @@ export function BeatReferenceSelectionDialog({
                   className="flex items-center gap-2 w-full text-left"
                 >
                   <MapPin className="w-4 h-4 text-cyan-400" />
-                  <h4 className="text-sm font-medium text-slate-200 flex-1">Location reference</h4>
+                  <h4 className="text-sm font-medium text-slate-200 flex-1">{t('locationReference')}</h4>
                   {selectedLocationRefId && (
                     <Badge variant="secondary" className="text-[10px] bg-cyan-500/20 text-cyan-300 border-0">
-                      1 selected
+                      {t('selectedCount', { count: 1 })}
                     </Badge>
                   )}
                   {locationSectionCollapsed ? (
@@ -253,7 +265,7 @@ export function BeatReferenceSelectionDialog({
                 {!locationSectionCollapsed && (
                   <>
                     <p className="text-xs text-slate-400">
-                      Pick one environment reference for this beat (used for visual consistency).
+                      {t('pickLocation')}
                     </p>
                     <div className="grid grid-cols-4 gap-2">
                       {locationsWithImages.map((loc) => {
@@ -289,7 +301,7 @@ export function BeatReferenceSelectionDialog({
                                   variant="secondary"
                                   className="text-[8px] bg-cyan-500/80 text-white border-0 px-1 py-0"
                                 >
-                                  Match
+                                  {t('match')}
                                 </Badge>
                               </div>
                             )}
@@ -318,20 +330,20 @@ export function BeatReferenceSelectionDialog({
 
         <DialogFooter className="gap-2 sm:gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isGenerating}>
-            Cancel
+            {tc('cancel')}
           </Button>
           <Button
             variant="secondary"
             onClick={() => onConfirm(buildSelection(), 'save')}
             disabled={isGenerating}
           >
-            Save selection
+            {t('saveSelection')}
           </Button>
           <Button
             onClick={() => onConfirm(buildSelection(), 'generate')}
             disabled={isGenerating}
           >
-            {isGenerating ? 'Generating…' : 'Generate frame'}
+            {isGenerating ? t('generating') : t('generateFrame')}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,9 @@ export function RetakeConfirmDialog({
   onOpenChange,
   onConfirm,
 }: RetakeConfirmDialogProps) {
+  const t = useTranslations('production.retake')
+  const tCommon = useTranslations('common')
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md border-amber-900/40 bg-gray-950 text-gray-100">
@@ -35,10 +39,9 @@ export function RetakeConfirmDialog({
               <AlertTriangle className="h-5 w-5 text-amber-400" />
             </div>
             <div className="space-y-1 text-left">
-              <DialogTitle className="text-lg text-white">Replace existing take?</DialogTitle>
+              <DialogTitle className="text-lg text-white">{t('title')}</DialogTitle>
               <DialogDescription className="text-sm text-gray-400">
-                This beat already has a generated video. Opening the generator or uploading will add
-                a new take and may consume credits.
+                {t('description')}
               </DialogDescription>
             </div>
           </div>
@@ -49,7 +52,7 @@ export function RetakeConfirmDialog({
             onClick={() => onOpenChange(false)}
             className="border-gray-700 text-gray-200 hover:bg-gray-800"
           >
-            Cancel
+            {tCommon('actions.cancel')}
           </Button>
           <Button
             onClick={() => {
@@ -58,7 +61,7 @@ export function RetakeConfirmDialog({
             }}
             className="bg-amber-600 hover:bg-amber-700 text-white"
           >
-            Continue
+            {t('continue')}
           </Button>
         </DialogFooter>
       </DialogContent>

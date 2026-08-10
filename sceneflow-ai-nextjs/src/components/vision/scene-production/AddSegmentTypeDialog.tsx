@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
@@ -206,6 +207,8 @@ export function AddSegmentTypeDialog({
   initialInsertPosition,
   initialSegmentIndex,
 }: AddSegmentTypeDialogProps) {
+  const t = useTranslations('production.segments')
+  const tc = useTranslations('common')
   // State
   const [selectedType, setSelectedType] = useState<SegmentPurpose>(initialSelectedType || 'standard')
   const [insertPosition, setInsertPosition] = useState<InsertPosition>(initialInsertPosition || 'end')
@@ -396,10 +399,10 @@ export function AddSegmentTypeDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plus className="w-5 h-5 text-cyan-400" />
-            Add Beat to Scene {sceneNumber}
+            {t('addType.title', { sceneNumber })}
           </DialogTitle>
           <DialogDescription className="text-slate-400">
-            Add a keyframe-based segment for AI video generation. For cinematic elements (titles, transitions, B-roll), use the Cinematic Elements button.
+            {t('addType.description')}
           </DialogDescription>
         </DialogHeader>
         
@@ -407,15 +410,15 @@ export function AddSegmentTypeDialog({
           <TabsList className="grid w-full grid-cols-3 bg-slate-800">
             <TabsTrigger value="type" className="data-[state=active]:bg-cyan-600/20 data-[state=active]:text-cyan-300">
               <Film className="w-4 h-4 mr-2" />
-              Type
+              {t('addType.tabType')}
             </TabsTrigger>
             <TabsTrigger value="position" className="data-[state=active]:bg-cyan-600/20 data-[state=active]:text-cyan-300">
               <MapPin className="w-4 h-4 mr-2" />
-              Position
+              {t('addType.tabPosition')}
             </TabsTrigger>
             <TabsTrigger value="prompt" className="data-[state=active]:bg-cyan-600/20 data-[state=active]:text-cyan-300">
               <Sparkles className="w-4 h-4 mr-2" />
-              Prompt
+              {t('addType.tabPrompt')}
             </TabsTrigger>
           </TabsList>
           
@@ -451,14 +454,14 @@ export function AddSegmentTypeDialog({
                               "font-medium",
                               isSelected ? "text-cyan-300" : "text-white"
                             )}>
-                              {type.name}
+                              {t(`addType.types.${type.id}.name`)}
                             </h4>
                             <Badge variant="outline" className="text-[10px] py-0 h-5 text-slate-400 border-slate-600">
-                              {type.defaultDuration}s default
+                              {t('addType.defaultDuration', { seconds: type.defaultDuration })}
                             </Badge>
                           </div>
                           <p className="text-sm text-slate-400 mt-1">
-                            {type.description}
+                            {t(`addType.types.${type.id}.description`)}
                           </p>
                         </div>
                         {isSelected && (
@@ -474,7 +477,7 @@ export function AddSegmentTypeDialog({
                   <>
                     <div className="flex items-center gap-2 pt-4 pb-2">
                       <div className="flex-1 h-px bg-slate-700" />
-                      <span className="text-[10px] uppercase tracking-wider text-slate-500 font-medium">or</span>
+                      <span className="text-[10px] uppercase tracking-wider text-slate-500 font-medium">{t('addType.orDivider')}</span>
                       <div className="flex-1 h-px bg-slate-700" />
                     </div>
                     <button
@@ -490,13 +493,13 @@ export function AddSegmentTypeDialog({
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-amber-300">Regenerate All Beats</h4>
+                            <h4 className="font-medium text-amber-300">{t('addType.regenerateAll')}</h4>
                             <Badge variant="outline" className="text-[10px] py-0 h-5 text-amber-400 border-amber-500/30">
-                              {existingSegments.length} segments
+                              {t('addType.regenerateAllCount', { count: existingSegments.length })}
                             </Badge>
                           </div>
                           <p className="text-sm text-amber-300/70 mt-1">
-                            Re-analyze the scene and generate new segments with AI. This will replace existing segments.
+                            {t('addType.regenerateAllHint')}
                           </p>
                         </div>
                       </div>
@@ -512,7 +515,7 @@ export function AddSegmentTypeDialog({
             <div className="space-y-6">
               {/* Insert Position */}
               <div className="space-y-3">
-                <Label className="text-sm font-medium text-slate-300">Insert Position</Label>
+                <Label className="text-sm font-medium text-slate-300">{t('addType.insertPosition')}</Label>
                 <RadioGroup 
                   value={insertPosition} 
                   onValueChange={(v) => setInsertPosition(v as InsertPosition)}
@@ -530,8 +533,8 @@ export function AddSegmentTypeDialog({
                     >
                       <RadioGroupItem value={option.value} className="border-slate-500" />
                       <div>
-                        <p className="text-sm font-medium text-white">{option.label}</p>
-                        <p className="text-xs text-slate-400">{option.description}</p>
+                        <p className="text-sm font-medium text-white">{t(`addType.positions.${option.value}.label`)}</p>
+                        <p className="text-xs text-slate-400">{t(`addType.positions.${option.value}.description`)}</p>
                       </div>
                     </label>
                   ))}
@@ -541,18 +544,21 @@ export function AddSegmentTypeDialog({
               {/* Beat Selector (for before/after) */}
               {(insertPosition === 'before' || insertPosition === 'after') && existingSegments.length > 0 && (
                 <div className="space-y-3">
-                  <Label className="text-sm font-medium text-slate-300">Reference Beat</Label>
+                  <Label className="text-sm font-medium text-slate-300">{t('addType.referenceBeat')}</Label>
                   <Select 
                     value={selectedSegmentIndex.toString()} 
                     onValueChange={(v) => setSelectedSegmentIndex(parseInt(v))}
                   >
                     <SelectTrigger className="bg-slate-800 border-slate-600">
-                      <SelectValue placeholder="Select segment" />
+                      <SelectValue placeholder={t('addType.selectSegment')} />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-800 border-slate-600">
                       {existingSegments.map((seg, idx) => (
                         <SelectItem key={seg.segmentId} value={idx.toString()}>
-                          Beat {idx + 1} ({(seg.endTime - seg.startTime).toFixed(1)}s)
+                          {t('addType.beatOption', {
+                            number: idx + 1,
+                            duration: (seg.endTime - seg.startTime).toFixed(1),
+                          })}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -563,7 +569,7 @@ export function AddSegmentTypeDialog({
               {/* Duration Slider */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium text-slate-300">Duration</Label>
+                  <Label className="text-sm font-medium text-slate-300">{t('addType.duration')}</Label>
                   <span className="text-sm font-mono text-cyan-400">{duration}s</span>
                 </div>
                 <Slider
@@ -575,13 +581,16 @@ export function AddSegmentTypeDialog({
                   className="[&_[role=slider]]:bg-cyan-500"
                 />
                 <p className="text-xs text-slate-500">
-                  Recommended: {typeConfig.defaultDuration}s for {typeConfig.name}
+                  {t('addType.recommendedDuration', {
+                    seconds: typeConfig.defaultDuration,
+                    name: t(`addType.types.${typeConfig.id}.name`),
+                  })}
                 </p>
               </div>
               
               {/* Visual Preview */}
               <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
-                <Label className="text-xs text-slate-500 uppercase tracking-wider">Preview</Label>
+                <Label className="text-xs text-slate-500 uppercase tracking-wider">{t('addType.preview')}</Label>
                 <div className="flex items-center gap-2 mt-3">
                   {existingSegments.slice(0, calculateInsertIndex()).map((_, idx) => (
                     <div key={idx} className="h-8 flex-1 rounded bg-slate-700 flex items-center justify-center">
@@ -589,7 +598,7 @@ export function AddSegmentTypeDialog({
                     </div>
                   ))}
                   <div className="h-8 flex-1 rounded bg-cyan-500/30 border-2 border-cyan-500 border-dashed flex items-center justify-center">
-                    <span className="text-[10px] text-cyan-400 font-medium">NEW</span>
+                    <span className="text-[10px] text-cyan-400 font-medium">{t('addType.newBadge')}</span>
                   </div>
                   {existingSegments.slice(calculateInsertIndex()).map((_, idx) => (
                     <div key={idx} className="h-8 flex-1 rounded bg-slate-700 flex items-center justify-center">
@@ -609,7 +618,7 @@ export function AddSegmentTypeDialog({
                 <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3">
                   <div className="flex items-center gap-2 text-purple-400 text-sm font-medium">
                     <Wand2 className="w-4 h-4 animate-pulse" />
-                    Generating intelligent prompt with Gemini 2.5...
+                    {t('addType.generatingPrompt')}
                   </div>
                 </div>
               )}
@@ -619,10 +628,10 @@ export function AddSegmentTypeDialog({
                 <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
                   <div className="flex items-center gap-2 text-amber-400 text-sm font-medium mb-1">
                     <AlertCircle className="w-4 h-4" />
-                    AI Unavailable
+                    {t('addType.aiUnavailable')}
                   </div>
                   <p className="text-xs text-amber-300/70">
-                    Using template prompt. {aiError}
+                    {t('addType.usingTemplate', { error: aiError })}
                   </p>
                 </div>
               )}
@@ -632,10 +641,10 @@ export function AddSegmentTypeDialog({
                 <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3">
                   <div className="flex items-center gap-2 text-emerald-400 text-sm font-medium mb-1">
                     <Lightbulb className="w-4 h-4" />
-                    Context-Aware Prompt
+                    {t('addType.contextAware')}
                   </div>
                   <p className="text-xs text-emerald-300/70">
-                    This prompt was generated based on adjacent scene analysis. Edit as needed.
+                    {t('addType.contextAwareHint')}
                   </p>
                 </div>
               )}
@@ -643,7 +652,7 @@ export function AddSegmentTypeDialog({
               {/* Prompt Editor */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium text-slate-300">Generation Prompt</Label>
+                  <Label className="text-sm font-medium text-slate-300">{t('addType.generationPrompt')}</Label>
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
@@ -653,7 +662,7 @@ export function AddSegmentTypeDialog({
                       className="h-7 px-2 text-xs text-purple-400 hover:text-purple-300 hover:bg-purple-500/10"
                     >
                       <Wand2 className="w-3 h-3 mr-1" />
-                      {isGeneratingPrompt ? 'Generating...' : 'AI Generate'}
+                      {isGeneratingPrompt ? t('addType.generating') : t('addType.aiGenerate')}
                     </Button>
                     <Button
                       size="sm"
@@ -662,25 +671,25 @@ export function AddSegmentTypeDialog({
                       className="h-7 px-2 text-xs text-slate-400 hover:text-cyan-400"
                     >
                       <RotateCcw className="w-3 h-3 mr-1" />
-                      Reset
+                      {t('addType.reset')}
                     </Button>
                   </div>
                 </div>
                 <Textarea
                   value={customPrompt}
                   onChange={(e) => setCustomPrompt(e.target.value)}
-                  placeholder="Describe the visual content..."
+                  placeholder={t('addType.promptPlaceholder')}
                   className="h-[200px] bg-slate-800 border-slate-600 text-white resize-none"
                   disabled={isGeneratingPrompt}
                 />
                 <p className="text-xs text-slate-500">
-                  {customPrompt.length} characters • This prompt will be used for frame generation
+                  {t('addType.charCount', { count: customPrompt.length })}
                 </p>
               </div>
               
               {/* Preset Settings Preview */}
               <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
-                <Label className="text-xs text-slate-500 uppercase tracking-wider">Preset Settings</Label>
+                <Label className="text-xs text-slate-500 uppercase tracking-wider">{t('addType.presetSettings')}</Label>
                 <div className="flex flex-wrap gap-2 mt-3">
                   {typeConfig.presetSettings.shotType && (
                     <Badge variant="outline" className="text-xs border-slate-600 text-slate-300">
@@ -712,14 +721,14 @@ export function AddSegmentTypeDialog({
             onClick={() => onOpenChange(false)}
             className="border-slate-600 text-slate-300 hover:bg-slate-800"
           >
-            Cancel
+            {tc('actions.cancel')}
           </Button>
           <Button
             onClick={handleSubmit}
             className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Add {typeConfig.name}
+            {t('addType.addNamed', { name: t(`addType.types.${typeConfig.id}.name`) })}
           </Button>
         </DialogFooter>
       </DialogContent>

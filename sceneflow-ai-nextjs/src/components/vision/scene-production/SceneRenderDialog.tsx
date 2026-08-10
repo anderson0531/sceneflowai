@@ -9,6 +9,7 @@
 'use client'
 
 import React, { useState, useMemo, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Dialog,
   DialogContent,
@@ -108,6 +109,9 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
   initialLanguage,
   animaticRenderSettings,
 }) => {
+  const t = useTranslations('production.export.stream')
+  const tc = useTranslations('common.actions')
+
   // Per-segment audio settings: { [segmentId]: { includeAudio: boolean, volume: number } }
   const [segmentAudioSettings, setSegmentAudioSettings] = useState<Record<string, { includeAudio: boolean; volume: number }>>({})
   
@@ -182,7 +186,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
       }
     })
     setSegmentAudioSettings(newSettings)
-  }, [segments]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [segments])
 
   // Format duration as mm:ss
   const formatDuration = (seconds: number) => {
@@ -584,11 +588,11 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
           )}
           {clipCount !== undefined && clipCount > 0 && (
             <Badge variant="outline" className="text-xs bg-slate-700/50 text-slate-400 border-slate-600">
-              {clipCount} clips
+              {t('clips', { count: clipCount })}
             </Badge>
           )}
           {disabled && (
-            <span className="text-xs text-slate-600">Not available</span>
+            <span className="text-xs text-slate-600">{t('notAvailable')}</span>
           )}
         </div>
         <Switch
@@ -603,7 +607,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
         <div className="grid grid-cols-2 gap-4">
           {/* Start Time Input */}
           <div className="space-y-1">
-            <label className="text-xs text-slate-500">Start at</label>
+            <label className="text-xs text-slate-500">{t('startAt')}</label>
             <div className="flex items-center gap-1">
               <Input
                 type="number"
@@ -620,7 +624,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
           
           {/* Volume Slider */}
           <div className="space-y-1">
-            <label className="text-xs text-slate-500">Volume</label>
+            <label className="text-xs text-slate-500">{t('volume')}</label>
             <div className="flex items-center gap-2">
               <Slider
                 value={[config.volume * 100]}
@@ -644,10 +648,10 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-white">
             <Film className="w-5 h-5 text-purple-400" />
-            Export Stream
+            {t('title')}
           </DialogTitle>
           <DialogDescription className="text-gray-400">
-            Scene {sceneNumber} — Fast (WebM) for drafts, Broadcast (MP4) for delivery, or Cloud for long scenes.
+            {t('description', { number: sceneNumber })}
           </DialogDescription>
         </DialogHeader>
 
@@ -660,7 +664,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium text-slate-300 flex items-center gap-2">
                 <Video className="w-4 h-4 text-cyan-400" />
-                Video Sequence ({renderedSegments.length} Beats)
+                {t('videoSequence', { count: renderedSegments.length })}
               </Label>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-500">
@@ -677,12 +681,12 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
                   {allBeatsMuted ? (
                     <>
                       <Volume2 className="w-3 h-3 mr-1" />
-                      Unmute All
+                      {t('unmuteAll')}
                     </>
                   ) : (
                     <>
                       <VolumeX className="w-3 h-3 mr-1" />
-                      Mute All
+                      {t('muteAll')}
                     </>
                   )}
                 </Button>
@@ -702,7 +706,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-xs font-mono text-slate-500 w-6">#{idx + 1}</span>
-                      <span className="text-sm text-slate-300">Beat {idx + 1}</span>
+                      <span className="text-sm text-slate-300">{t('beatLabel', { number: idx + 1 })}</span>
                       <span className="text-xs text-slate-500">{formatDuration(duration)}</span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -727,14 +731,14 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
               })}
               {renderedSegments.length === 0 && (
                 <div className="px-3 py-4 text-center text-sm text-slate-500">
-                  No rendered segments available
+                  {t('noRenderedSegments')}
                 </div>
               )}
             </div>
             
             {renderedSegments.length < segments.length && (
               <p className="text-xs text-amber-400">
-                ⚠️ {segments.length - renderedSegments.length} beat(s) not yet rendered
+                ⚠️ {t('beatsNotRendered', { count: segments.length - renderedSegments.length })}
               </p>
             )}
           </div>
@@ -746,7 +750,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium text-slate-300 flex items-center gap-2">
                 <Music className="w-4 h-4 text-purple-400" />
-                Audio Tracks & Timing
+                {t('audioTracksTiming')}
               </Label>
               {/* Language Selector */}
               <GroupedLanguageSelector
@@ -761,7 +765,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
               {/* Narration Track */}
               <AudioTrackCard
                 icon={<Mic2 className="w-4 h-4" />}
-                name="Narration"
+                name={t('narration')}
                 duration={audioData?.narrationDuration}
                 config={narrationConfig}
                 setConfig={setNarrationConfig}
@@ -773,7 +777,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
               {/* Dialogue Track */}
               <AudioTrackCard
                 icon={<MessageSquare className="w-4 h-4" />}
-                name="Dialogue"
+                name={t('dialogue')}
                 clipCount={audioData?.dialogueEntries?.filter(d => d?.audioUrl).length}
                 config={dialogueConfig}
                 setConfig={setDialogueConfig}
@@ -785,7 +789,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
               {/* Background Music Track */}
               <AudioTrackCard
                 icon={<Music className="w-4 h-4" />}
-                name="Background Music"
+                name={t('backgroundMusic')}
                 duration={audioData?.musicDuration}
                 config={musicConfig}
                 setConfig={setMusicConfig}
@@ -797,7 +801,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
               {/* Sound Effects Track */}
               <AudioTrackCard
                 icon={<Volume2 className="w-4 h-4" />}
-                name="Sound Effects"
+                name={t('soundEffects')}
                 duration={audioData?.sfxDuration}
                 config={sfxConfig}
                 setConfig={setSfxConfig}
@@ -810,7 +814,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
 
           {/* Resolution */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-slate-300">Output Resolution</Label>
+            <Label className="text-sm font-medium text-slate-300">{t('outputResolution')}</Label>
             <Select
               value={resolution}
               onValueChange={(value: '720p' | '1080p' | '4K') => setResolution(value)}
@@ -820,9 +824,9 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="720p">720p (1280×720)</SelectItem>
-                <SelectItem value="1080p">1080p (1920×1080)</SelectItem>
-                <SelectItem value="4K">4K (3840×2160)</SelectItem>
+                <SelectItem value="720p">{t('resolution720p')}</SelectItem>
+                <SelectItem value="1080p">{t('resolution1080p')}</SelectItem>
+                <SelectItem value="4K">{t('resolution4k')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -832,11 +836,11 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-slate-400">
-                  {status === 'preparing' && 'Preparing render job...'}
-                  {status === 'uploading' && 'Uploading job specification...'}
-                  {status === 'rendering' && 'Rendering video...'}
-                  {status === 'complete' && 'Render complete!'}
-                  {status === 'error' && 'Render failed'}
+                  {status === 'preparing' && t('statusPreparing')}
+                  {status === 'uploading' && t('statusUploading')}
+                  {status === 'rendering' && t('statusRendering')}
+                  {status === 'complete' && t('statusComplete')}
+                  {status === 'error' && t('statusError')}
                 </span>
                 <span className="text-slate-500">{Math.round(progress)}%</span>
               </div>
@@ -853,7 +857,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
               {status === 'complete' && downloadUrl && (
                 <div className="flex items-center gap-2 text-sm text-emerald-400 bg-emerald-500/10 rounded-lg p-3">
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Video ready for download</span>
+                  <span>{t('videoReady')}</span>
                 </div>
               )}
             </div>
@@ -868,14 +872,14 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
                 onClick={() => handleOpenChange(false)}
                 className="border-slate-600 text-slate-300"
               >
-                Close
+                {tc('close')}
               </Button>
               <Button
                 onClick={handleDownload}
                 className="bg-emerald-600 hover:bg-emerald-700"
               >
                 <Download className="w-4 h-4 mr-2" />
-                Download MP4
+                {t('downloadMp4')}
               </Button>
             </>
           ) : (
@@ -886,7 +890,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
                 disabled={isRendering}
                 className="border-slate-600 text-slate-300"
               >
-                Cancel
+                {tc('cancel')}
               </Button>
               <Button
                 onClick={handleRender}
@@ -896,12 +900,12 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
                 {isRendering ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Rendering...
+                    {t('rendering')}
                   </>
                 ) : (
                   <>
                     <Film className="w-4 h-4 mr-2" />
-                    Render Scene
+                    {t('renderScene')}
                   </>
                 )}
               </Button>

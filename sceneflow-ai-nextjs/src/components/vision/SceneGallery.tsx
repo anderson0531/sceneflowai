@@ -7,6 +7,7 @@
 'use client'
 
 import React, { useState, useCallback, useMemo } from 'react'
+import { useTranslations } from 'next-intl'
 import { Loader, Printer, Clapperboard, Sparkles, X, Play, Zap, Tag } from 'lucide-react'
 import { toast } from 'sonner'
 import { AudioGalleryPlayer } from './AudioGalleryPlayer'
@@ -152,6 +153,8 @@ export function SceneGallery({
   onScreeningPlaybackHintConsumed,
   promoTrailerUrl,
 }: SceneGalleryProps) {
+  const tScreening = useTranslations('production.screening')
+  const tc = useTranslations('common.actions')
   const preVisBannerRef = React.useRef<HTMLDivElement>(null)
 
   const scrollToPreVisBanner = useCallback(() => {
@@ -790,10 +793,13 @@ export function SceneGallery({
       <Dialog open={languageGenDialogOpen} onOpenChange={setLanguageGenDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Generate {pendingLanguage ? getLanguageName(pendingLanguage) : 'language'} stream</DialogTitle>
+            <DialogTitle>
+              {pendingLanguage
+                ? tScreening('generateStreamTitle', { language: getLanguageName(pendingLanguage) })
+                : tScreening('generateStreamTitleFallback')}
+            </DialogTitle>
             <DialogDescription>
-              Translate scene text and generate dialogue/narration audio for this language. Existing music and sound
-              effects will be reused.
+              {tScreening('generateStreamDescription')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
@@ -806,7 +812,7 @@ export function SceneGallery({
               }}
               disabled={languageGenLoading || isExpressRunning}
             >
-              Cancel
+              {tc('cancel')}
             </Button>
             <Button
               type="button"
@@ -816,10 +822,10 @@ export function SceneGallery({
               {languageGenLoading || isExpressRunning ? (
                 <>
                   <Loader className="w-4 h-4 animate-spin mr-2" />
-                  Generating…
+                  {tScreening('generating')}
                 </>
               ) : (
-                'Generate dialogue'
+                tScreening('generateDialogue')
               )}
             </Button>
           </DialogFooter>
@@ -829,45 +835,46 @@ export function SceneGallery({
       <Dialog open={publishDialogOpen} onOpenChange={setPublishDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Publish storyboard revision</DialogTitle>
+            <DialogTitle>{tScreening('publishRevisionTitle')}</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Increments the version (e.g. v{storyboardVersion} → v{storyboardVersion + 1}). Your share link does not
-            change. Reviewers who refresh will see the new current version; their next submissions are stamped
-            accordingly.
+            {tScreening('publishRevisionDescription', {
+              current: storyboardVersion,
+              next: storyboardVersion + 1,
+            })}
           </p>
           <div className="space-y-3 pt-2">
             <div className="space-y-1.5">
               <label htmlFor="sb-rev-label" className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                Label (optional)
+                {tScreening('labelOptional')}
               </label>
               <Input
                 id="sb-rev-label"
                 value={publishLabel}
                 onChange={e => setPublishLabel(e.target.value)}
-                placeholder="e.g. Client notes round 2"
+                placeholder={tScreening('labelPlaceholder')}
                 className="h-9 text-sm"
               />
             </div>
             <div className="space-y-1.5">
               <label htmlFor="sb-rev-notes" className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                Change notes (optional)
+                {tScreening('changeNotesOptional')}
               </label>
               <textarea
                 id="sb-rev-notes"
                 value={publishNotes}
                 onChange={e => setPublishNotes(e.target.value)}
-                placeholder="What changed since the last version?"
+                placeholder={tScreening('changeNotesPlaceholder')}
                 className="w-full min-h-[72px] rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
               />
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button type="button" variant="outline" onClick={() => setPublishDialogOpen(false)} disabled={publishLoading}>
-              Cancel
+              {tc('cancel')}
             </Button>
             <Button type="button" onClick={handlePublishStoryboardRevision} disabled={publishLoading}>
-              {publishLoading ? <Loader className="w-4 h-4 animate-spin" /> : `Publish v${storyboardVersion + 1}`}
+              {publishLoading ? <Loader className="w-4 h-4 animate-spin" /> : tScreening('publishVersion', { version: storyboardVersion + 1 })}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,14 +1,7 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-
-const DEFAULT_MESSAGES = [
-  'Loading your production...',
-  'Restoring scenes and storyboard...',
-  'Preparing the Pre-Vis workspace...',
-  'Loading reference library...',
-  'Almost ready...',
-]
+import React, { useEffect, useMemo, useState } from 'react'
+import { useTranslations } from 'next-intl'
 
 type VisionLoadingOverlayProps = {
   visible?: boolean
@@ -18,9 +11,23 @@ type VisionLoadingOverlayProps = {
 
 export function VisionLoadingOverlay({
   visible = true,
-  title = 'Opening Production',
-  messages = DEFAULT_MESSAGES,
+  title,
+  messages,
 }: VisionLoadingOverlayProps) {
+  const t = useTranslations('production.studio')
+  const defaultMessages = useMemo(
+    () => [
+      t('loadingMessages.message1'),
+      t('loadingMessages.message2'),
+      t('loadingMessages.message3'),
+      t('loadingMessages.message4'),
+      t('loadingMessages.message5'),
+    ],
+    [t]
+  )
+  const resolvedTitle = title ?? t('openingShort')
+  const resolvedMessages = messages ?? defaultMessages
+
   const [messageIndex, setMessageIndex] = useState(0)
   const [progress, setProgress] = useState(8)
 
@@ -28,7 +35,7 @@ export function VisionLoadingOverlay({
     if (!visible) return
 
     const messageTimer = window.setInterval(() => {
-      setMessageIndex((prev) => (prev + 1) % messages.length)
+      setMessageIndex((prev) => (prev + 1) % resolvedMessages.length)
     }, 2500)
 
     const progressTimer = window.setInterval(() => {
@@ -43,11 +50,11 @@ export function VisionLoadingOverlay({
       window.clearInterval(messageTimer)
       window.clearInterval(progressTimer)
     }
-  }, [visible, messages.length])
+  }, [visible, resolvedMessages.length])
 
   if (!visible) return null
 
-  const subtext = messages[messageIndex] ?? messages[0]
+  const subtext = resolvedMessages[messageIndex] ?? resolvedMessages[0]
 
   return (
     <div className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-[2px] flex items-center justify-center">
@@ -63,7 +70,7 @@ export function VisionLoadingOverlay({
               strokeLinecap="round"
             />
           </svg>
-          <div className="text-base font-semibold text-gray-100">{title}</div>
+          <div className="text-base font-semibold text-gray-100">{resolvedTitle}</div>
         </div>
         <div className="text-sm text-gray-400 mb-4 min-h-[1.25rem]" aria-live="polite">
           {subtext}
@@ -74,7 +81,7 @@ export function VisionLoadingOverlay({
             style={{ width: `${progress}%` }}
           />
         </div>
-        <div className="mt-2 text-right text-xs text-gray-500">Setting up your workspace</div>
+        <div className="mt-2 text-right text-xs text-gray-500">{t('settingUpWorkspace')}</div>
       </div>
     </div>
   )

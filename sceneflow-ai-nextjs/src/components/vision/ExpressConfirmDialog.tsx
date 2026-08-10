@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useMemo, useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Dialog,
   DialogContent,
@@ -68,6 +69,8 @@ export function ExpressConfirmDialog({
   lockedArtStyle,
   onConfirm,
 }: ExpressConfirmDialogProps) {
+  const t = useTranslations('production.express')
+  const tCommon = useTranslations('common')
   const [includeMusic, setIncludeMusic] = useState(false)
   const [missingFramesOnly, setMissingFramesOnly] = useState(false)
   const [regenerate, setRegenerate] = useState(false)
@@ -199,11 +202,10 @@ export function ExpressConfirmDialog({
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
             <Zap className="w-5 h-5 text-indigo-400" />
-            Express All Scenes (advanced)
+            {t('title')}
           </DialogTitle>
           <DialogDescription className="text-gray-300">
-            Runs Direction → Audio → pre-vis frames for every scene in parallel (up to 3 at a time).
-            This is a long, credit-heavy run — per-scene Express on each scene card is recommended for checkpoints.
+            {t('description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -212,20 +214,19 @@ export function ExpressConfirmDialog({
           <div className="rounded-lg border border-gray-800 bg-gray-900/40 p-3">
             <div className="text-xs text-gray-400 flex items-center gap-2">
               <Languages className="w-3.5 h-3.5 text-indigo-300" />
-              <span>Audio language</span>
+              <span>{t('audioLanguage')}</span>
             </div>
             <div className="mt-1 text-sm font-medium text-white flex items-center gap-2">
               <span>{FLAG_EMOJIS[language] ?? ''}</span>
               <span>{getLanguageName(language)}</span>
               {language !== 'en' && (
                 <span className="ml-1 text-[10px] uppercase tracking-wider text-indigo-300 bg-indigo-900/40 px-1.5 py-0.5 rounded">
-                  translate
+                  {t('translateBadge')}
                 </span>
               )}
             </div>
             <div className="text-[11px] text-gray-500 mt-1">
-              Dialogue and narration will be generated in {getLanguageName(language)}.
-              Existing audio in other languages is left untouched.
+              {t('audioLanguageHint', { lang: getLanguageName(language) })}
             </div>
           </div>
 
@@ -233,29 +234,35 @@ export function ExpressConfirmDialog({
           <div className="rounded-lg border border-gray-800 bg-gray-900/40 p-3 space-y-2">
             <div className="text-sm font-medium text-gray-200 flex items-center gap-2">
               <Zap className="w-4 h-4 text-indigo-400" />
-              Pipeline (per scene)
+              {t('pipelineTitle')}
             </div>
             <ul className="text-xs text-gray-300 space-y-1.5">
               <li className="flex items-center gap-2">
                 <FileText className="w-3.5 h-3.5 text-amber-400" />
-                <span className="font-medium">1. Direction</span>
+                <span className="font-medium">{t('stepDirection')}</span>
                 <span className="text-gray-500">
-                  · {effectiveDirectionScenes}/{stats.total} scenes
+                  · {t('pipelineSceneCount', { done: effectiveDirectionScenes, total: stats.total })}
                 </span>
               </li>
               <li className="flex items-center gap-2">
                 <Volume2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="font-medium">2. Audio</span>
+                <span className="font-medium">{t('stepAudio')}</span>
                 <span className="text-gray-500">
-                  · {effectiveAudioScenes}/{stats.total} scenes
-                  {stats.totalDialogue > 0 ? ` · ${stats.totalDialogue} dialogue lines` : ''}
+                  · {t('pipelineSceneCount', { done: effectiveAudioScenes, total: stats.total })}
+                  {stats.totalDialogue > 0
+                    ? ` · ${t('pipelineDialogueLines', { count: stats.totalDialogue })}`
+                    : ''}
                 </span>
               </li>
               <li className="flex items-center gap-2">
                 <ImageIcon className="w-3.5 h-3.5 text-indigo-400" />
-                <span className="font-medium">3. Image</span>
+                <span className="font-medium">{t('stepImage')}</span>
                 <span className="text-gray-500">
-                  · {effectiveEstablishingCount} establishing + {effectiveDialogueFrameCount} pre-vis frames
+                  ·{' '}
+                  {t('pipelineImageCount', {
+                    establishing: effectiveEstablishingCount,
+                    frames: effectiveDialogueFrameCount,
+                  })}
                 </span>
               </li>
             </ul>
@@ -276,11 +283,11 @@ export function ExpressConfirmDialog({
                   stats.scenesWithMusic === 0 ? 'text-gray-500' : 'text-gray-200'
                 }`}
               >
-                <div className="font-medium">Background Music</div>
+                <div className="font-medium">{t('backgroundMusic')}</div>
                 <div className="text-xs text-gray-400">
                   {stats.scenesWithMusic > 0
-                    ? `${stats.scenesWithMusic} scenes have music descriptions`
-                    : 'No scenes have music descriptions'}
+                    ? t('musicScenesHaveDescriptions', { count: stats.scenesWithMusic })
+                    : t('musicNoDescriptions')}
                 </div>
               </label>
             </div>
@@ -288,10 +295,9 @@ export function ExpressConfirmDialog({
             <div className="flex items-start space-x-3 p-3 bg-gray-800/60 rounded-lg border border-gray-700/60">
               <Brush className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
               <div className="flex-1 text-sm text-gray-400">
-                <div className="font-medium text-gray-300">Storyboard quality: Draft</div>
+                <div className="font-medium text-gray-300">{t('storyboardQualityDraft')}</div>
                 <div className="text-xs text-gray-500 mt-1">
-                  Generates fast layout frames for review. Use Finalize frames afterward for
-                  hi-res photorealistic animatic and video generation.
+                  {t('storyboardQualityDraftHint')}
                 </div>
               </div>
             </div>
@@ -299,10 +305,9 @@ export function ExpressConfirmDialog({
             <div className="flex items-start space-x-3 p-3 bg-gray-800/60 rounded-lg border border-gray-700/60">
               <Volume2 className="w-4 h-4 text-gray-500 mt-0.5 shrink-0" />
               <div className="flex-1 text-sm text-gray-400">
-                <div className="font-medium text-gray-300">Sound effects</div>
+                <div className="font-medium text-gray-300">{t('soundEffects')}</div>
                 <div className="text-xs text-gray-500 mt-1">
-                  Sound effects are included in Veo video segments during production.
-                  Animatic preview uses narration, dialogue, and optional music only.
+                  {t('soundEffectsHint')}
                 </div>
               </div>
             </div>
@@ -322,9 +327,9 @@ export function ExpressConfirmDialog({
                 htmlFor="express-missing-frames"
                 className="flex-1 text-sm text-gray-200 cursor-pointer"
               >
-                <div className="font-medium">Only missing frames</div>
+                <div className="font-medium">{t('onlyMissingFrames')}</div>
                 <div className="text-xs text-gray-400">
-                  Skip frames that already have images.
+                  {t('onlyMissingFramesHint')}
                 </div>
               </label>
             </div>
@@ -346,22 +351,21 @@ export function ExpressConfirmDialog({
               >
                 <div className="font-medium flex items-center gap-1">
                   <AlertCircle className="w-3 h-3" />
-                  Regenerate Existing
+                  {t('regenerateExisting')}
                 </div>
                 <div className="text-xs text-amber-300/70">
-                  Recompute every phase even if direction, audio, or image is already
-                  present.
+                  {t('regenerateExistingHint')}
                 </div>
               </label>
             </div>
           </div>
 
           <div className="space-y-2">
-            <div className="text-sm font-medium text-gray-200">Art style</div>
+            <div className="text-sm font-medium text-gray-200">{t('artStyle')}</div>
             <p className="text-xs text-gray-400">
               {lockedArtStyle
-                ? 'Locked in Blueprint — change foundation there to reimagine.'
-                : 'Applied to all pre-vis frames and flows through video generation.'}
+                ? t('artStyleLockedHint')
+                : t('artStyleUnlockedHint')}
             </p>
             {lockedArtStyle ? (
               <div className="rounded-lg border border-cyan-700/40 bg-cyan-900/20 px-3 py-2 text-sm text-cyan-100">
@@ -385,20 +389,26 @@ export function ExpressConfirmDialog({
           {/* Cost summary */}
           <div className="rounded-lg border border-indigo-700/40 bg-indigo-900/20 p-3 space-y-1">
             <div className="text-sm font-medium text-indigo-200">
-              Estimated cost
+              {t('estimatedCost')}
             </div>
             <div className="text-xs text-gray-300 space-y-1">
-              <div>· Images: {estimatedCredits.image} credits ({effectiveDialogueFrameCount} frames × {IMAGE_CREDITS.IMAGEN_4})</div>
-              <div>· Audio: ~{estimatedCredits.audio} credits</div>
+              <div>
+                ·{' '}
+                {t('costImages', {
+                  credits: estimatedCredits.image,
+                  frames: effectiveDialogueFrameCount,
+                  perFrame: IMAGE_CREDITS.IMAGEN_4,
+                })}
+              </div>
+              <div>· {t('costAudio', { credits: estimatedCredits.audio })}</div>
               {includeMusic && stats.scenesWithMusic > 0 && (
-                <div>· Music: {estimatedCredits.music} credits</div>
+                <div>· {t('costMusic', { credits: estimatedCredits.music })}</div>
               )}
               <div className="text-sm font-semibold text-indigo-200 pt-1">
-                Total: ~{estimatedCredits.total} credits
+                {t('costTotal', { credits: estimatedCredits.total })}
               </div>
               <div className="text-[10px] text-gray-500 leading-snug">
-                Estimates only. Actual usage depends on dialogue length and the number of
-                phases that actually need to run.
+                {t('costEstimateDisclaimer')}
               </div>
             </div>
           </div>
@@ -411,7 +421,7 @@ export function ExpressConfirmDialog({
             disabled={isRunning}
             className="border-gray-700 hover:bg-gray-800"
           >
-            Cancel
+            {tCommon('actions.cancel')}
           </Button>
           <Button
             onClick={() =>
@@ -432,12 +442,12 @@ export function ExpressConfirmDialog({
             {isRunning ? (
               <>
                 <Loader className="w-4 h-4 mr-2 animate-spin" />
-                Running…
+                {t('running')}
               </>
             ) : (
               <>
                 <Zap className="w-4 h-4 mr-2" />
-                Generate
+                {t('generate')}
               </>
             )}
           </Button>

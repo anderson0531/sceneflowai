@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Dialog,
   DialogContent,
@@ -82,6 +83,8 @@ export function PreVisFramePromptDialog({
   isGenerating = false,
   onGenerate,
 }: PreVisFramePromptDialogProps) {
+  const t = useTranslations('production.direction.preVis')
+  const tc = useTranslations('common.actions')
   const [mode, setMode] = useState<'guided' | 'advanced'>('guided')
   const [modelTier, setModelTier] = useState<ModelTier>('eco')
   const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>('low')
@@ -204,9 +207,9 @@ export function PreVisFramePromptDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle>Direct — {slot.label}</DialogTitle>
+          <DialogTitle>{t('title', { label: slot.label })}</DialogTitle>
           <DialogDescription>
-            Scene {sceneIndex + 1} · Guided prompt builder with character and wardrobe references.
+            {t('description', { number: sceneIndex + 1 })}
           </DialogDescription>
         </DialogHeader>
 
@@ -214,7 +217,7 @@ export function PreVisFramePromptDialog({
           <div className="flex-shrink-0 rounded-lg border border-amber-700/40 bg-amber-900/15 px-3 py-2 space-y-1">
             <div className="flex items-center gap-2 text-amber-200 text-xs font-medium">
               <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-              Reference matching notes
+              {t('matchingNotes')}
             </div>
             <ul className="text-[11px] text-amber-100/80 list-disc list-inside space-y-0.5">
               {initialContext.warnings.map((warning) => (
@@ -226,8 +229,8 @@ export function PreVisFramePromptDialog({
 
         <Tabs value={mode} onValueChange={(v) => setMode(v as 'guided' | 'advanced')} className="flex-1 flex flex-col min-h-0">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="guided">Visual Setup</TabsTrigger>
-            <TabsTrigger value="advanced">Custom Prompt</TabsTrigger>
+            <TabsTrigger value="guided">{t('tabVisualSetup')}</TabsTrigger>
+            <TabsTrigger value="advanced">{t('tabCustomPrompt')}</TabsTrigger>
           </TabsList>
 
           <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pr-3 mt-3">
@@ -250,7 +253,7 @@ export function PreVisFramePromptDialog({
               {selectedCharacterNames.length > 0 && (
                 <div className="rounded-lg border border-slate-700 bg-slate-800/40 p-3 space-y-2">
                   <p className="text-xs font-medium text-slate-300">
-                    Wardrobe text override (optional — diptych ref image is sent when available)
+                    {t('wardrobeOverride')}
                   </p>
                   {selectedCharacterNames.map((name) => (
                     <div key={name}>
@@ -263,7 +266,7 @@ export function PreVisFramePromptDialog({
                         }
                         rows={2}
                         className="mt-1 text-xs"
-                        placeholder="Full wardrobe description from reference library…"
+                        placeholder={t('wardrobePlaceholder')}
                       />
                     </div>
                   ))}
@@ -278,10 +281,10 @@ export function PreVisFramePromptDialog({
                     className="flex items-center gap-2 w-full text-left"
                   >
                     <MapPin className="w-4 h-4 text-cyan-400" />
-                    <h4 className="text-sm font-medium text-slate-200 flex-1">Location reference</h4>
+                    <h4 className="text-sm font-medium text-slate-200 flex-1">{t('locationReference')}</h4>
                     {locationRefId && (
                       <Badge variant="secondary" className="text-[10px] bg-cyan-500/20 text-cyan-300 border-0">
-                        1 selected
+                        {t('oneSelected')}
                       </Badge>
                     )}
                     {locationSectionCollapsed ? (
@@ -359,7 +362,7 @@ export function PreVisFramePromptDialog({
                 value={advancedPrompt}
                 onChange={(e) => setAdvancedPrompt(e.target.value)}
                 rows={10}
-                placeholder="Full image generation prompt…"
+                placeholder={t('promptPlaceholder')}
                 className="font-mono text-sm"
               />
               <Textarea
@@ -367,7 +370,7 @@ export function PreVisFramePromptDialog({
                 value={negativePrompt}
                 onChange={(e) => setNegativePrompt(e.target.value)}
                 rows={2}
-                placeholder="Negative prompt…"
+                placeholder={t('negativePlaceholder')}
                 className="text-xs"
               />
               <QualityModeSection
@@ -382,16 +385,16 @@ export function PreVisFramePromptDialog({
 
         <DialogFooter className="gap-2 flex-shrink-0">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isGenerating}>
-            Cancel
+            {tc('cancel')}
           </Button>
           <Button onClick={handleGenerateClick} disabled={isGenerating}>
             {isGenerating ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin mr-1" />
-                Generating…
+                {t('generating')}
               </>
             ) : (
-              'Generate with Direct'
+              t('generateWithDirect')
             )}
           </Button>
         </DialogFooter>

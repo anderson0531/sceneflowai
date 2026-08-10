@@ -17,6 +17,7 @@
 'use client'
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Dialog,
   DialogContent,
@@ -258,6 +259,9 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   savedConfig,
   projectId,
 }) => {
+  const t = useTranslations('production.direction.director')
+  const tc = useTranslations('common.actions')
+
   const segmentGuideContext = useMemo<SegmentGuideContext | undefined>(() => {
     if (!scene) return undefined
     return {
@@ -812,7 +816,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     preset: isSceneFlowEngine ? selectedPreset : undefined,
   })
 
-  const generateButtonLabel = 'Generate Video'
+  const generateButtonLabel = t('generateVideo')
 
   const durationOptions =
     videoProvider === 'kling' || videoProvider === 'aggregator'
@@ -1039,8 +1043,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   }
   
   const tabDisabledReasons: Record<string, string> = {
-    IMAGE_TO_VIDEO: !tabStates.IMAGE_TO_VIDEO ? 'Generate a Start Frame first (Frame step)' : '',
-    EXTEND: !tabStates.EXTEND ? 'Generate the previous part first or render a source video' : '',
+    IMAGE_TO_VIDEO: !tabStates.IMAGE_TO_VIDEO ? t('disabledNeedStartFrame') : '',
+    EXTEND: !tabStates.EXTEND ? t('disabledNeedPrevious') : '',
   }
 
   return (
@@ -1052,10 +1056,10 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
         <DialogHeader>
           <DialogTitle className="text-lg font-medium text-white flex items-center gap-2">
             <Wand2 className="w-4 h-4 text-indigo-400" />
-            Generate Video: Beat {segment.sequenceIndex + 1}
+            {t('title', { number: segment.sequenceIndex + 1 })}
           </DialogTitle>
           <DialogDescription className="text-sm text-slate-400">
-            Review and customize generation parameters before rendering.
+            {t('description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -1096,7 +1100,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 }}
                 disabled={!batchGuideSeed}
               >
-                Reset to segment dialogue
+                {t('resetToSegmentDialogue')}
               </Button>
             </div>
             <GuidePromptEditor
@@ -1121,8 +1125,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
               <div className="mb-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>
-                  <strong>Frame-First Workflow:</strong> Generate keyframes in the Frame step for better character consistency. 
-                  Text-to-Video is available but may result in character drift.
+                  <strong>{t('frameFirstTitle')}</strong> {t('frameFirstBody')}
                 </span>
               </div>
             )}
@@ -1135,8 +1138,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                   disabled={!tabStates.TEXT_TO_VIDEO}
                 >
                   <Type className="w-4 h-4" />
-                  <span className="hidden sm:inline">Text-to-Video</span>
-                  <span className="sm:hidden">T2V</span>
+                  <span className="hidden sm:inline">{t('tabTextToVideo')}</span>
+                  <span className="sm:hidden">{t('tabTextToVideoShort')}</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="IMAGE_TO_VIDEO" 
@@ -1145,8 +1148,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                   title={tabDisabledReasons.IMAGE_TO_VIDEO}
                 >
                   <ImageIcon className="w-4 h-4" />
-                  <span className="hidden sm:inline">Image-to-Video</span>
-                  <span className="sm:hidden">I2V</span>
+                  <span className="hidden sm:inline">{t('tabImageToVideo')}</span>
+                  <span className="sm:hidden">{t('tabImageToVideoShort')}</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="REFERENCE_IMAGES" 
@@ -1154,8 +1157,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                   disabled={!tabStates.REFERENCE_IMAGES}
                 >
                   <Users className="w-4 h-4" />
-                  <span className="hidden sm:inline">Reference</span>
-                  <span className="sm:hidden">REF</span>
+                  <span className="hidden sm:inline">{t('tabReference')}</span>
+                  <span className="sm:hidden">{t('tabReferenceShort')}</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="EXTEND" 
@@ -1164,7 +1167,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                   title={tabDisabledReasons.EXTEND}
                 >
                   <FastForward className="w-4 h-4" />
-                  <span>Extend</span>
+                  <span className="hidden sm:inline">{t('tabExtend')}</span>
+                  <span className="sm:hidden">{t('tabExtendShort')}</span>
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -1888,7 +1892,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 onClick={onClose}
                 className="bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700"
               >
-                Cancel
+                {tc('cancel')}
               </Button>
               <Button 
                 className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"

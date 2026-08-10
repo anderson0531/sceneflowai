@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
@@ -207,6 +208,8 @@ export function AddSpecialSegmentDialog({
   onAddSegment,
   filmContext,
 }: AddSpecialSegmentDialogProps) {
+  const t = useTranslations('production.segments')
+  const tc = useTranslations('common')
   // State
   const [selectedType, setSelectedType] = useState<SpecialSegmentType>('title')
   const [duration, setDuration] = useState<number>(4)
@@ -314,7 +317,7 @@ export function AddSpecialSegmentDialog({
     
     // Always generate AI prompt for special segments
     generateAIPrompt()
-  }, [selectedType, open]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedType, open])
   
   // Reset state when dialog closes
   useEffect(() => {
@@ -384,17 +387,17 @@ export function AddSpecialSegmentDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Clapperboard className="w-5 h-5 text-purple-400" />
-            Add Cinematic Element
+            {t('addSpecial.title')}
           </DialogTitle>
           <DialogDescription className="text-slate-400">
-            Add a special video segment. AI will generate an optimized prompt for video generation.
+            {t('addSpecial.description')}
           </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-6 py-4">
           {/* Beat Type Selection */}
           <div className="space-y-3">
-            <Label className="text-sm font-medium text-slate-300">Element Type</Label>
+            <Label className="text-sm font-medium text-slate-300">{t('addSpecial.elementType')}</Label>
             <ScrollArea className="h-[280px] pr-2">
               <div className="grid gap-2">
                 {SPECIAL_SEGMENT_TYPES.map((type) => {
@@ -425,14 +428,14 @@ export function AddSpecialSegmentDialog({
                               "font-medium text-sm",
                               isSelected ? "text-purple-300" : "text-white"
                             )}>
-                              {type.name}
+                              {t(`addSpecial.types.${type.id}.name`)}
                             </h4>
                             <Badge variant="outline" className="text-[10px] py-0 h-5 text-slate-400 border-slate-600">
                               {type.defaultDuration}s
                             </Badge>
                           </div>
                           <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">
-                            {type.description}
+                            {t(`addSpecial.types.${type.id}.description`)}
                           </p>
                         </div>
                       </div>
@@ -446,7 +449,7 @@ export function AddSpecialSegmentDialog({
           {/* Duration Slider */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium text-slate-300">Duration</Label>
+              <Label className="text-sm font-medium text-slate-300">{t('addSpecial.duration')}</Label>
               <span className="text-sm font-mono text-purple-400">{duration}s</span>
             </div>
             <Slider
@@ -458,7 +461,10 @@ export function AddSpecialSegmentDialog({
               className="[&_[role=slider]]:bg-purple-500"
             />
             <p className="text-xs text-slate-500">
-              Recommended: {typeConfig.defaultDuration}s for {typeConfig.name}
+              {t('addSpecial.recommendedDuration', {
+                seconds: typeConfig.defaultDuration,
+                name: t(`addSpecial.types.${typeConfig.id}.name`),
+              })}
             </p>
           </div>
           
@@ -467,7 +473,7 @@ export function AddSpecialSegmentDialog({
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium text-slate-300 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-purple-400" />
-                Video Generation Prompt
+                {t('addSpecial.videoPrompt')}
               </Label>
               <div className="flex items-center gap-2">
                 <Button
@@ -478,7 +484,7 @@ export function AddSpecialSegmentDialog({
                   className="h-7 px-2 text-xs text-purple-400 hover:text-purple-300 hover:bg-purple-500/10"
                 >
                   <Wand2 className="w-3 h-3 mr-1" />
-                  {isGeneratingPrompt ? 'Generating...' : 'Regenerate'}
+                  {isGeneratingPrompt ? t('addSpecial.generating') : t('addSpecial.regenerate')}
                 </Button>
                 {hasUserEdited && (
                   <Button
@@ -488,7 +494,7 @@ export function AddSpecialSegmentDialog({
                     className="h-7 px-2 text-xs text-slate-400 hover:text-slate-300"
                   >
                     <RotateCcw className="w-3 h-3 mr-1" />
-                    Reset
+                    {t('addSpecial.reset')}
                   </Button>
                 )}
               </div>
@@ -499,7 +505,7 @@ export function AddSpecialSegmentDialog({
               <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3">
                 <div className="flex items-center gap-2 text-purple-400 text-sm font-medium">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Generating cinematic prompt...
+                  {t('addSpecial.generatingCinematic')}
                 </div>
               </div>
             )}
@@ -509,10 +515,10 @@ export function AddSpecialSegmentDialog({
               <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
                 <div className="flex items-center gap-2 text-amber-400 text-sm font-medium mb-1">
                   <AlertCircle className="w-4 h-4" />
-                  Using Template Prompt
+                  {t('addSpecial.usingTemplate')}
                 </div>
                 <p className="text-xs text-amber-300/70">
-                  AI unavailable: {aiError}
+                  {t('addSpecial.aiUnavailable', { error: aiError })}
                 </p>
               </div>
             )}
@@ -520,12 +526,12 @@ export function AddSpecialSegmentDialog({
             <Textarea
               value={generatedPrompt}
               onChange={(e) => handlePromptChange(e.target.value)}
-              placeholder="AI-generated prompt will appear here..."
+              placeholder={t('addSpecial.promptPlaceholder')}
               className="h-[120px] bg-slate-800 border-slate-600 text-white text-sm resize-none"
               disabled={isGeneratingPrompt}
             />
             <p className="text-xs text-slate-500">
-              {generatedPrompt.length} characters • Edit to customize or click Regenerate for a new prompt
+              {t('addSpecial.charCount', { count: generatedPrompt.length })}
             </p>
           </div>
           
@@ -534,14 +540,14 @@ export function AddSpecialSegmentDialog({
             <div className="flex items-center gap-4 text-xs">
               <div className="flex items-center gap-1.5 text-slate-400">
                 <Eye className="w-3.5 h-3.5" />
-                <span>Insert at position {insertIndex + 1}</span>
+                <span>{t('addSpecial.insertAt', { position: insertIndex + 1 })}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <Badge variant="outline" className="text-[10px] py-0 h-5 text-purple-400 border-purple-500/30">
                   {typeConfig.presetSettings.transitionType || 'CUT'}
                 </Badge>
                 <Badge variant="outline" className="text-[10px] py-0 h-5 text-slate-400 border-slate-600">
-                  No keyframes
+                  {t('addSpecial.noKeyframes')}
                 </Badge>
               </div>
             </div>
@@ -554,7 +560,7 @@ export function AddSpecialSegmentDialog({
             onClick={() => onOpenChange(false)}
             className="border-slate-600 text-slate-300 hover:bg-slate-800"
           >
-            Cancel
+            {tc('actions.cancel')}
           </Button>
           <Button
             onClick={handleSubmit}
@@ -562,7 +568,7 @@ export function AddSpecialSegmentDialog({
             className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Add {typeConfig.name}
+            {t('addSpecial.addNamed', { name: t(`addSpecial.types.${typeConfig.id}.name`) })}
           </Button>
         </DialogFooter>
       </DialogContent>

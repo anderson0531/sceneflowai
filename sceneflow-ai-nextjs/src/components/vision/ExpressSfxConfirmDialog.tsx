@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Dialog,
   DialogContent,
@@ -15,7 +16,7 @@ import { Loader, Waves, Zap } from 'lucide-react'
 import type { SfxDurationOverride } from '@/lib/elevenlabs/sfxDuration'
 import { resolveAutoSfxDuration } from '@/lib/elevenlabs/sfxDuration'
 import { estimateExpressVeoSfxCredits } from '@/lib/sfx/clientExpressVeoSfx'
-import { VEO_SFX_CREDIT_HINT } from '@/lib/sfx/clientGenerateVeoSfx'
+import { VIDEO_CREDITS } from '@/lib/credits/creditCosts'
 import {
   resolveAutoVeoSfxDuration,
   resolveVeoSfxTargetSeconds,
@@ -53,6 +54,8 @@ export function ExpressSfxConfirmDialog({
   isRunning = false,
   onConfirm,
 }: ExpressSfxConfirmDialogProps) {
+  const t = useTranslations('production.expressSfx')
+  const tCommon = useTranslations('common')
   const [selectedBeatIds, setSelectedBeatIds] = useState<string[]>([])
   const [durationPreset, setDurationPreset] = useState<SfxDurationOverride>('auto')
   const [regenerate, setRegenerate] = useState(false)
@@ -73,15 +76,16 @@ export function ExpressSfxConfirmDialog({
   const veoAutoSeconds = resolveAutoVeoSfxDuration(segmentDurationSeconds)
   const showPartialVeoHint = !veoSfxCoversFullBeat(segmentDurationSeconds, durationPreset)
   const creditTotal = estimateExpressVeoSfxCredits(selectedBeatIds.length)
+  const autoSecondsLabel = Number.isInteger(autoSeconds) ? autoSeconds : autoSeconds.toFixed(1)
 
   const chips: Array<{ id: SfxDurationOverride; label: string }> = [
     {
       id: 'auto',
-      label: `Auto (${Number.isInteger(autoSeconds) ? autoSeconds : autoSeconds.toFixed(1)}s · Veo ${veoAutoSeconds}s)`,
+      label: t('durationAuto', { seconds: autoSecondsLabel, veoSeconds: veoAutoSeconds }),
     },
-    { id: 'short', label: 'Short 3s / Veo 4s' },
-    { id: 'medium', label: 'Medium 8s' },
-    { id: 'long', label: 'Long 15s / Veo 8s max' },
+    { id: 'short', label: t('durationShort') },
+    { id: 'medium', label: t('durationMedium') },
+    { id: 'long', label: t('durationLong') },
   ]
 
   const toggleBeat = (beatId: string, checked: boolean) => {
@@ -97,30 +101,31 @@ export function ExpressSfxConfirmDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-violet-200">
             <Zap className="w-5 h-5" />
-            Express Veo SFX
+            {t('title')}
           </DialogTitle>
           <DialogDescription className="text-gray-400">
-            Generate action-beat sound effects concurrently (up to 2 at a time). Each beat uses Veo
-            native audio, then extracts MP3 for the animatic.
+            {t('description')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           <div className="rounded-lg border border-violet-500/30 bg-violet-950/20 p-3 text-sm">
             <div className="flex justify-between gap-4">
-              <span className="text-gray-300">Selected beats</span>
+              <span className="text-gray-300">{t('selectedBeats')}</span>
               <span className="font-medium text-violet-200">{selectedBeatIds.length}</span>
             </div>
             <div className="flex justify-between gap-4 mt-1">
-              <span className="text-gray-300">Estimated credits</span>
+              <span className="text-gray-300">{t('estimatedCredits')}</span>
               <span className="font-medium text-violet-200">{creditTotal}</span>
             </div>
-            <p className="text-[11px] text-violet-300/60 mt-2">{VEO_SFX_CREDIT_HINT}</p>
+            <p className="text-[11px] text-violet-300/60 mt-2">
+              {t('creditHint', { credits: VIDEO_CREDITS.VEO_LITE })}
+            </p>
           </div>
 
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-              Action beats
+              {t('actionBeats')}
             </p>
             <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
               {beats.map((beat) => (
@@ -137,7 +142,7 @@ export function ExpressSfxConfirmDialog({
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm text-gray-100 truncate">{beat.label}</span>
                     {beat.hasAudio && (
-                      <span className="text-[10px] text-green-400">Audio ready</span>
+                      <span className="text-[10px] text-green-400">{t('audioReady')}</span>
                     )}
                   </span>
                 </label>
@@ -147,7 +152,7 @@ export function ExpressSfxConfirmDialog({
 
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-              Duration preset
+              {t('durationPreset')}
             </p>
             <div className="flex flex-wrap gap-1.5">
               {chips.map((chip) => (
@@ -168,9 +173,12 @@ export function ExpressSfxConfirmDialog({
             </div>
             {showPartialVeoHint && (
               <p className="text-[10px] text-amber-200/60 mt-2">
-                Veo covers up to 8s (Auto target{' '}
-                {resolveVeoSfxTargetSeconds({ segmentDurationSeconds, override: durationPreset })}s
-                ).
+                {t('veoPartialHint', {
+                  seconds: resolveVeoSfxTargetSeconds({
+                    segmentDurationSeconds,
+                    override: durationPreset,
+                  }),
+                })}
               </p>
             )}
           </div>
@@ -181,7 +189,7 @@ export function ExpressSfxConfirmDialog({
               onCheckedChange={(checked) => setRegenerate(checked === true)}
               disabled={isRunning}
             />
-            Regenerate beats that already have audio
+            {t('regenerateWithAudio')}
           </label>
         </div>
 
@@ -192,7 +200,7 @@ export function ExpressSfxConfirmDialog({
             onClick={() => onOpenChange(false)}
             disabled={isRunning}
           >
-            Cancel
+            {tCommon('actions.cancel')}
           </Button>
           <Button
             type="button"
@@ -209,12 +217,12 @@ export function ExpressSfxConfirmDialog({
             {isRunning ? (
               <>
                 <Loader className="w-4 h-4 mr-2 animate-spin" />
-                Running...
+                {t('running')}
               </>
             ) : (
               <>
                 <Waves className="w-4 h-4 mr-2" />
-                Generate SFX ({selectedBeatIds.length})
+                {t('generateSfx', { count: selectedBeatIds.length })}
               </>
             )}
           </Button>
