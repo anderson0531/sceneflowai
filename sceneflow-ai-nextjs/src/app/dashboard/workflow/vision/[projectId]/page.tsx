@@ -16,6 +16,7 @@ Implement the fix * Do NOT create separate `scenes` state - this causes sync bug
 
 import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import dynamic from 'next/dynamic'
 import { upload } from '@vercel/blob/client'
 import debounce from 'lodash/debounce'
@@ -599,6 +600,8 @@ function scrollVisionPanel(
 
 export default function VisionPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = use(params)
+  const tStudio = useTranslations('production.studio')
+  const tCommon = useTranslations('common')
   
   // Reference Library dialog
   const [referenceLibraryOpen, setReferenceLibraryOpen] = useState(false)
@@ -14299,14 +14302,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     return (
       <VisionLoadingOverlay
         visible
-        title={!mounted ? 'Initializing' : 'Opening Production Studio'}
+        title={!mounted ? tStudio('initializing') : tStudio('opening')}
       />
     )
   }
 
   // Extract Blueprint data for header display
   const filmTreatment = project?.metadata?.filmTreatmentVariant
-  const projectTitle = filmTreatment?.title || project?.title || 'Untitled Project'
+  const projectTitle = filmTreatment?.title || project?.title || tStudio('untitledProject')
   const projectLogline = filmTreatment?.logline || project?.description
   const projectDuration = filmTreatment?.total_duration_seconds 
     ? `${Math.floor(filmTreatment.total_duration_seconds / 60)}:${String(filmTreatment.total_duration_seconds % 60).padStart(2, '0')}`
@@ -14321,7 +14324,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           aria-live="polite"
         >
           <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400" />
-          Loading images...
+          {tStudio('loadingImages')}
         </div>
       )}
       
@@ -14331,8 +14334,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           <Link href={`/dashboard/studio/${projectId}`} className="shrink-0">
             <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
               <ArrowLeft className="w-4 h-4 mr-1.5" />
-              <span className="hidden sm:inline">Back to Blueprint</span>
-              <span className="sm:hidden">Blueprint</span>
+              <span className="hidden sm:inline">{tStudio('backToBlueprint')}</span>
+              <span className="sm:hidden">{tStudio('blueprintShort')}</span>
             </Button>
           </Link>
           
@@ -14342,13 +14345,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             <div className="hidden sm:flex items-center gap-1.5 shrink-0" aria-hidden="true">
               <Video className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
               <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                Production
+                {tStudio('productionLabel')}
               </span>
             </div>
 
             <div
               role="tablist"
-              aria-label="Production Studio views"
+              aria-label={tStudio('viewsAriaLabel')}
               className="inline-flex max-w-full gap-1 rounded-xl p-1 border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800/80 overflow-x-auto"
             >
               <button
@@ -14363,7 +14366,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 }`}
               >
                 <Clapperboard className="w-4 h-4" />
-                <span>Studio</span>
+                <span>{tStudio('viewStudio')}</span>
               </button>
               <button
                 type="button"
@@ -14377,7 +14380,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 }`}
               >
                 <Play className="w-4 h-4" />
-                <span>Screening Room</span>
+                <span>{tStudio('viewScreening')}</span>
               </button>
               <button
                 type="button"
@@ -14391,7 +14394,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 }`}
               >
                 <Layers className="w-4 h-4" />
-                <span>Streams</span>
+                <span>{tStudio('viewStreams')}</span>
               </button>
             </div>
           </div>
@@ -15331,7 +15334,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                Share Screening Room
+                {tStudio('shareScreeningTitle')}
               </h3>
               <button
                 onClick={() => setShareUrl(null)}
@@ -15342,8 +15345,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             </div>
             
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Anyone with this link can view your Screening Room presentation. 
-              They won't need a Sceneflow account.
+              {tStudio('shareScreeningDescription')}
             </p>
             
             <div className="flex items-center gap-2 mb-4">
@@ -15358,21 +15360,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-2"
               >
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                {copied ? 'Copied!' : 'Copy'}
+                {copied ? tStudio('copied') : tCommon('actions.copy')}
               </button>
             </div>
             
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              <p>• Viewers can watch with full audio and translations</p>
-              <p>• They cannot edit or download your project</p>
-              <p>• You can disable this link anytime</p>
+              <p>• {tStudio('shareBulletView')}</p>
+              <p>• {tStudio('shareBulletNoEdit')}</p>
+              <p>• {tStudio('shareBulletDisable')}</p>
             </div>
             
             <button
               onClick={() => setShareUrl(null)}
               className="w-full mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
             >
-              Close
+              {tCommon('actions.close')}
             </button>
           </div>
         </div>
@@ -15415,10 +15417,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       <Dialog open={deletionDialogOpen} onOpenChange={setDeletionDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Delete Character with Dialogue</DialogTitle>
+            <DialogTitle>{tStudio('deleteCharacterTitle')}</DialogTitle>
             <DialogDescription>
-              The character "{deletionCharacter?.name}" has {affectedDialogueCount} dialogue line{affectedDialogueCount !== 1 ? 's' : ''} in the script. 
-              What would you like to do with these dialogue lines?
+              {tStudio('deleteCharacterDescription', {
+                name: deletionCharacter?.name ?? '',
+                count: affectedDialogueCount,
+              })}
             </DialogDescription>
           </DialogHeader>
           
@@ -15437,10 +15441,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 }`}
               >
                 <div className="font-semibold text-gray-900 dark:text-gray-100">
-                  Clear Character IDs
+                  {tStudio('clearCharacterIds')}
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Remove character IDs from dialogue lines. The dialogue will match characters by name using the improved fallback matching.
+                  {tStudio('clearCharacterIdsHint')}
                 </div>
               </button>
               
@@ -15453,10 +15457,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 }`}
               >
                 <div className="font-semibold text-gray-900 dark:text-gray-100">
-                  Reassign to Another Character
+                  {tStudio('reassignToAnother')}
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Assign all dialogue lines to a different character.
+                  {tStudio('reassignToAnotherHint')}
                 </div>
               </button>
               
@@ -15467,7 +15471,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     onValueChange={setReassignmentCharacterId}
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select character to reassign to" />
+                      <SelectValue placeholder={tStudio('selectCharacterReassign')} />
                     </SelectTrigger>
                     <SelectContent>
                       {characters
@@ -15495,7 +15499,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 setReassignmentCharacterId('')
               }}
             >
-              Cancel
+              {tCommon('actions.cancel')}
             </Button>
             <Button
               onClick={handleDeletionDialogAction}
@@ -15506,7 +15510,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   : 'bg-blue-600 hover:bg-blue-700 text-white'
               }
             >
-              {deletionAction === 'reassign' ? 'Reassign & Delete' : deletionAction === 'clear' ? 'Clear IDs & Delete' : 'Delete'}
+              {deletionAction === 'reassign'
+                ? tStudio('reassignAndDelete')
+                : deletionAction === 'clear'
+                  ? tStudio('clearIdsAndDelete')
+                  : tCommon('actions.delete')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -15516,9 +15524,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       <Dialog open={mergeDialogOpen} onOpenChange={setMergeDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Merge Duplicate Characters</DialogTitle>
+            <DialogTitle>{tStudio('mergeDuplicatesTitle')}</DialogTitle>
             <DialogDescription>
-              Select which character to keep and which duplicates to merge into it.
+              {tStudio('mergeDuplicatesDescription')}
             </DialogDescription>
           </DialogHeader>
           
@@ -15535,7 +15543,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 <>
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                      Keep this character:
+                      {tStudio('keepThisCharacter')}
                     </label>
                     <Select
                       value={mergePrimaryCharId}
@@ -15555,7 +15563,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                           <SelectItem key={char.id} value={char.id}>
                             {char.name}
                             {char.voiceConfig && (
-                              <span className="ml-2 text-xs text-gray-500">(has voice)</span>
+                              <span className="ml-2 text-xs text-gray-500">{tStudio('hasVoice')}</span>
                             )}
                           </SelectItem>
                         ))}
@@ -15565,11 +15573,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                      Will be merged (duplicates):
+                      {tStudio('willBeMerged')}
                     </label>
                     <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                       {mergeDuplicateCharIds.length === 0 ? (
-                        <p className="text-sm text-gray-500">No duplicates to merge</p>
+                        <p className="text-sm text-gray-500">{tStudio('noDuplicatesToMerge')}</p>
                       ) : (
                         <ul className="space-y-1">
                           {currentGroup
@@ -15583,7 +15591,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       )}
                     </div>
                     <p className="text-xs text-gray-500">
-                      All dialogue lines from duplicate characters will be assigned to the primary character.
+                      {tStudio('mergeDialogueNote')}
                     </p>
                   </div>
                 </>
@@ -15600,7 +15608,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 setMergeDuplicateCharIds([])
               }}
             >
-              Cancel
+              {tCommon('actions.cancel')}
             </Button>
             <Button
               onClick={() => {
@@ -15611,7 +15619,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               disabled={!mergePrimaryCharId || mergeDuplicateCharIds.length === 0}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
-              Merge Characters
+              {tStudio('mergeCharacters')}
             </Button>
           </DialogFooter>
         </DialogContent>

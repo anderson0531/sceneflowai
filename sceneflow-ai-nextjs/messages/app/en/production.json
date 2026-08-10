@@ -53,6 +53,8 @@
     "mergeCharacters": "Merge Characters",
     "hasVoice": "(has voice)",
     "budgetTitle": "Production Budget Management - {title}",
+    "setBudget": "Set Budget",
+    "budgetAmount": "Budget: {amount}",
     "importTranslation": "Import Translation",
     "importTranslationTitle": "Import {language} Translation",
     "importTranslationDescription": "Paste your translated script below. The format should match the exported format:",

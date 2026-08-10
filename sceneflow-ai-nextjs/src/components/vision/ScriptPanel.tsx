@@ -14,6 +14,7 @@
 import type { AudioSlotSavedPayload } from '@/lib/audio/cleanupAudio'
 import { orderDialogueAudioForPlayback } from '@/lib/audio/orderDialogueAudioForPlayback'
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useTranslations } from 'next-intl'
 import { ASSISTANT } from '@/lib/constants/assistant'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -757,8 +758,10 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
-export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, directionReadiness, onUpdateAllDirections, isUpdatingAllDirections = false, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled, projectStreams = [] }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, directionReadiness, onUpdateAllDirections, isUpdatingAllDirections = false, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled,   projectStreams = [] }: ScriptPanelProps) {
 
+  const tStudio = useTranslations('production.studio')
+  const tCommon = useTranslations('common')
 
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
@@ -2856,11 +2859,11 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
         {/* Title and Action Buttons - Same Line */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <h3 className="text-xl font-bold text-white">Production Studio</h3>
+            <h3 className="text-xl font-bold text-white">{tStudio('title')}</h3>
             {isGenerating && (
               <span className="text-xs text-cyan-300 flex items-center gap-1.5">
                 <Loader className="w-3.5 h-3.5 animate-spin" />
-                Generating...
+                {tStudio('generating')}
               </span>
             )}
           </div>
@@ -2886,8 +2889,8 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
               )}
               <span className="text-sm hidden sm:inline">
                 {creditsBudget > 0
-                  ? `Budget: ${creditsBudget.toLocaleString()}`
-                  : 'Set Budget'}
+                  ? tStudio('budgetAmount', { amount: creditsBudget.toLocaleString() })
+                  : tStudio('setBudget')}
               </span>
             </Button>
 
@@ -3110,7 +3113,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                   className="text-gray-200 hover:bg-gray-800 cursor-pointer"
                 >
                   <Upload className="w-4 h-4 mr-2" />
-                  Import Translation
+                  {tStudio('importTranslation')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-gray-700" />
                 <DropdownMenuLabel className="text-gray-400">Script</DropdownMenuLabel>
@@ -3656,19 +3659,21 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Languages className="w-5 h-5 text-blue-400" />
-              Import {SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name} Translation
+              {tStudio('importTranslationTitle', {
+                language: SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name ?? selectedLanguage,
+              })}
             </DialogTitle>
             <DialogDescription>
-              Paste your translated script below. The format should match the exported format:
+              {tStudio('importTranslationDescription')}
               <code className="block mt-2 p-2 bg-slate-800 rounded text-xs">
-                [1] TRANSLATED_LABEL: translated text
+                {tStudio('importTranslationFormat')}
               </code>
             </DialogDescription>
           </DialogHeader>
           <div className="flex-1 min-h-0 my-4">
             <textarea
               className="w-full h-64 p-3 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder={`Paste translated script here...\n\nExample:\n=== ฉากที่ 1 ===\n[1] คำบรรยาย: ข้อความภาษาไทย...\n[2] ตัวละคร: บทสนทนาภาษาไทย...`}
+              placeholder={tStudio('importTranslationPlaceholder')}
               value={importText}
               onChange={(e) => setImportText(e.target.value)}
             />
@@ -3681,7 +3686,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                 setImportText('')
               }}
             >
-              Cancel
+              {tCommon('actions.cancel')}
             </Button>
             <Button
               onClick={handleImportDialogue}
@@ -3689,7 +3694,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
               className="bg-blue-600 hover:bg-blue-700"
             >
               <Upload className="w-4 h-4 mr-2" />
-              Import Translation
+              {tStudio('importTranslation')}
             </Button>
           </div>
         </DialogContent>
@@ -3779,7 +3784,9 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
               <Calculator className="w-5 h-5 text-sf-primary" />
-              Production Budget Management - {script?.title || 'Untitled Project'}
+              {tStudio('budgetTitle', {
+                title: script?.title || tStudio('untitledProject'),
+              })}
             </DialogTitle>
             <DialogDescription className="text-gray-400 text-sm">
               Set a credit budget, track production charges, and plan animatic-first before video.
@@ -4262,6 +4269,8 @@ function SceneCard({
   onSaveTranslations,
   projectStreams = [],
 }: SceneCardProps) {
+  const tStudio = useTranslations('production.studio')
+  const tCommon = useTranslations('common')
   const isOutline = !scene.isExpanded && scene.summary
   const cardRef = useRef<HTMLDivElement>(null)
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(
@@ -7646,10 +7655,10 @@ function SceneCard({
               <DialogHeader>
                 <DialogTitle className="text-red-400 flex items-center gap-2">
                   <Trash2 className="w-5 h-5" />
-                  Delete Beat
+                  {tStudio('deleteBeat')}
                 </DialogTitle>
                 <DialogDescription className="text-gray-400">
-                  Are you sure you want to delete this segment? This action cannot be undone.
+                  {tStudio('deleteBeatDescription')}
                 </DialogDescription>
               </DialogHeader>
               <div className="flex justify-end gap-3 mt-4">
@@ -7657,7 +7666,7 @@ function SceneCard({
                   onClick={() => setDeleteConfirmOpen(false)}
                   className="px-4 py-2 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg text-white text-sm font-medium transition-colors"
                 >
-                  Cancel
+                  {tCommon('actions.cancel')}
                 </button>
                 <button
                   onClick={() => {
@@ -7670,7 +7679,7 @@ function SceneCard({
                   }}
                   className="px-4 py-2 bg-red-600 hover:bg-red-500 border border-red-500 rounded-lg text-white text-sm font-medium transition-colors"
                 >
-                  Delete Beat
+                  {tStudio('deleteBeat')}
                 </button>
               </div>
             </DialogContent>
@@ -7702,10 +7711,10 @@ function SceneCard({
               <DialogHeader>
                 <DialogTitle className="text-red-400 flex items-center gap-2">
                   <AlertTriangle className="w-5 h-5" />
-                  Delete Scene {sceneNumber}
+                  {tStudio('deleteScene', { number: sceneNumber })}
                 </DialogTitle>
                 <DialogDescription className="text-gray-400">
-                  This will permanently remove this scene and all associated assets.
+                  {tStudio('deleteSceneDescription')}
                 </DialogDescription>
               </DialogHeader>
               
@@ -7734,17 +7743,17 @@ function SceneCard({
                 {/* Assets that will be deleted */}
                 {(() => {
                   const assets: string[] = []
-                  if (scene.imageUrl) assets.push('Scene image')
-                  if (scene.narrationAudioUrl || scene.narrationAudio) assets.push('Narration audio')
-                  if (scene.descriptionAudioUrl || scene.descriptionAudio) assets.push('Description audio')
-                  if (scene.dialogue?.some((d: any) => d?.audioUrl || d?.audio)) assets.push('Dialogue audio')
-                  if (scene.sceneDirection) assets.push('Scene direction')
-                  if (sceneProductionData?.segments?.length) assets.push(`${sceneProductionData.segments.length} beat${sceneProductionData.segments.length > 1 ? 's' : ''}`)
-                  if (scene.musicUrl || scene.musicAudio) assets.push('Music')
+                  if (scene.imageUrl) assets.push(tStudio('assetSceneImage'))
+                  if (scene.narrationAudioUrl || scene.narrationAudio) assets.push(tStudio('assetNarrationAudio'))
+                  if (scene.descriptionAudioUrl || scene.descriptionAudio) assets.push(tStudio('assetDescriptionAudio'))
+                  if (scene.dialogue?.some((d: any) => d?.audioUrl || d?.audio)) assets.push(tStudio('assetDialogueAudio'))
+                  if (scene.sceneDirection) assets.push(tStudio('assetSceneDirection'))
+                  if (sceneProductionData?.segments?.length) assets.push(tStudio('assetBeats', { count: sceneProductionData.segments.length }))
+                  if (scene.musicUrl || scene.musicAudio) assets.push(tStudio('assetMusic'))
                   
                   return assets.length > 0 ? (
                     <div className="border-t border-slate-700/50 pt-2">
-                      <p className="text-[11px] text-gray-500 uppercase tracking-wider mb-1.5">Assets that will be removed</p>
+                      <p className="text-[11px] text-gray-500 uppercase tracking-wider mb-1.5">{tStudio('assetsRemoved')}</p>
                       <div className="flex flex-wrap gap-1.5">
                         {assets.map((asset, i) => (
                           <span key={i} className="px-2 py-0.5 text-[11px] bg-red-500/10 text-red-300 border border-red-500/20 rounded-full">
@@ -7762,7 +7771,7 @@ function SceneCard({
                   onClick={() => setDeleteSceneConfirmOpen(false)}
                   className="px-4 py-2 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg text-white text-sm font-medium transition-colors"
                 >
-                  Cancel
+                  {tCommon('actions.cancel')}
                 </button>
                 <button
                   onClick={() => {
@@ -7772,7 +7781,7 @@ function SceneCard({
                   className="px-4 py-2 bg-red-600 hover:bg-red-500 border border-red-500 rounded-lg text-white text-sm font-medium transition-colors flex items-center gap-2"
                 >
                   <Trash2 className="w-4 h-4" />
-                  Delete Scene
+                  {tStudio('deleteSceneAction')}
                 </button>
               </div>
             </DialogContent>
