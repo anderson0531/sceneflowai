@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Calculator, 
@@ -121,6 +122,14 @@ const PROJECT_PRESETS = [
   { name: 'Feature Film', icon: Layers, scenes: 100, minutes: 45 },
 ]
 
+const PRESET_NAME_TO_KEY: Record<string, 'presets.quickDemo' | 'presets.shortFilm' | 'presets.commercial' | 'presets.musicVideo' | 'presets.featureFilm'> = {
+  'Quick Demo': 'presets.quickDemo',
+  'Short Film': 'presets.shortFilm',
+  'Commercial': 'presets.commercial',
+  'Music Video': 'presets.musicVideo',
+  'Feature Film': 'presets.featureFilm',
+}
+
 // =============================================================================
 // COMPONENT
 // =============================================================================
@@ -138,6 +147,13 @@ export function ProjectCostCalculator({
   initialParams,
   initialByokExcludeMedia = false,
 }: ProjectCostCalculatorProps) {
+  const t = useTranslations('production.budget')
+
+  const presetLabel = useCallback((name: string) => {
+    const key = PRESET_NAME_TO_KEY[name]
+    return key ? t(key) : name
+  }, [t])
+
   const [params, setParams] = useState<FullProjectParameters>(() => {
     if (!initialParams) return DEFAULT_PROJECT_PARAMS;
     
@@ -334,7 +350,7 @@ export function ProjectCostCalculator({
         excluded: byokExcludeMedia,
         preExclusionCredits: mp4RenderCredits,
         items: [{
-          name: 'MP4 Render (Animatic)',
+          name: t('mp4RenderAnimatic'),
           quantity: Math.ceil(params.video.totalMinutes),
           creditsEach: ANIMATIC_CREDITS.MP4_RENDER_PER_MINUTE,
           totalCredits: mp4RenderCredits,
@@ -371,7 +387,7 @@ export function ProjectCostCalculator({
     }
     
     return baseComparison;
-  }, [params, productionType, languageVersions, byokExcludeMedia])
+  }, [params, productionType, languageVersions, byokExcludeMedia, t])
   const breakdown = comparison.projectCost
 
   // Calculate additional language credits separately for display
@@ -403,7 +419,7 @@ export function ProjectCostCalculator({
           <div className="p-2 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-lg">
             <Calculator className="w-5 h-5 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-white">Quick Estimate</h3>
+          <h3 className="text-lg font-semibold text-white">{t('quickEstimate')}</h3>
         </div>
         
         {/* Quick presets */}
@@ -418,7 +434,7 @@ export function ProjectCostCalculator({
                   : 'bg-slate-800 text-gray-300 hover:bg-slate-700'
               }`}
             >
-              {preset.name}
+              {presetLabel(preset.name)}
             </button>
           ))}
         </div>
@@ -427,16 +443,16 @@ export function ProjectCostCalculator({
         <div className="flex items-center justify-between">
           <div>
             <div className="text-2xl font-bold text-white">
-              {formatCredits(breakdown.total.credits)} credits
+              {t('creditsCount', { count: formatCredits(breakdown.total.credits) })}
             </div>
             <div className="text-sm text-gray-400">
-              ≈ {formatCurrency(breakdown.total.usdCost)}
+              {t('approxValue', { value: formatCurrency(breakdown.total.usdCost) })}
             </div>
           </div>
           {recommended && (
             <div className="text-right">
               <div className="text-sm text-cyan-400 font-medium">{recommended.tierName}</div>
-              <div className="text-xs text-gray-500">{formatCurrency(recommended.totalMonthlyCost)}/mo</div>
+              <div className="text-xs text-gray-500">{formatCurrency(recommended.totalMonthlyCost)}{t('perMonth')}</div>
             </div>
           )}
         </div>
@@ -457,16 +473,16 @@ export function ProjectCostCalculator({
             <Calculator className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">Production Budget Management</h2>
+            <h2 className="text-xl font-bold text-white">{t('title')}</h2>
             <p className="text-sm text-gray-400">
-              Set a credit budget, track production charges, and plan animatic-first before video.
+              {t('subtitle')}
             </p>
           </div>
         </div>
         {currentBalance > 0 && (
           <div className="text-right">
-            <div className="text-sm text-gray-400">Current Balance</div>
-            <div className="text-lg font-bold text-cyan-400">{formatCredits(currentBalance)} credits</div>
+            <div className="text-sm text-gray-400">{t('currentBalance')}</div>
+            <div className="text-lg font-bold text-cyan-400">{t('creditsCount', { count: formatCredits(currentBalance) })}</div>
           </div>
         )}
       </div>
@@ -474,7 +490,7 @@ export function ProjectCostCalculator({
       {/* Preset Quick Select */}
       <div className="px-6 py-4 border-b border-slate-700/30 bg-slate-800/30">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm text-gray-400 mr-2">Quick Start:</span>
+          <span className="text-sm text-gray-400 mr-2">{t('quickStart')}</span>
           {PROJECT_PRESETS.map(preset => {
             const Icon = preset.icon
             return (
@@ -488,7 +504,7 @@ export function ProjectCostCalculator({
                 }`}
               >
                 <Icon className="w-4 h-4" />
-                {preset.name}
+                {presetLabel(preset.name)}
               </button>
             )
           })}
@@ -514,11 +530,10 @@ export function ProjectCostCalculator({
               <div>
                 <div className="flex items-center gap-2 text-sm font-medium text-white">
                   <Key className="w-4 h-4 text-amber-400" />
-                  Bring Your Own Key (BYOK)
+                  {t('byokTitle')}
                 </div>
                 <p className="text-xs text-gray-400 mt-1">
-                  Excludes image and video from this budget; you pay those providers directly.
-                  Intelligence, audio, and studio fees still count.
+                  {t('byokDescription')}
                 </p>
               </div>
             </label>
@@ -527,7 +542,7 @@ export function ProjectCostCalculator({
           {/* Production Type Toggle */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-gray-400 flex items-center gap-2">
-              <MonitorPlay className="w-4 h-4" /> Production Type
+              <MonitorPlay className="w-4 h-4" /> {t('productionType')}
             </h3>
             
             <div className="grid grid-cols-2 gap-3">
@@ -541,9 +556,9 @@ export function ProjectCostCalculator({
               >
                 <div className="flex items-center gap-2 mb-1">
                   <Video className="w-4 h-4" />
-                  <span className="font-medium">Full Video</span>
+                  <span className="font-medium">{t('fullVideo')}</span>
                 </div>
-                <div className="text-xs text-gray-400">AI video generation</div>
+                <div className="text-xs text-gray-400">{t('fullVideoHint')}</div>
               </button>
               
               <button
@@ -556,15 +571,15 @@ export function ProjectCostCalculator({
               >
                 <div className="flex items-center gap-2 mb-1">
                   <Layers className="w-4 h-4" />
-                  <span className="font-medium">Animatic</span>
+                  <span className="font-medium">{t('animatic')}</span>
                 </div>
-                <div className="text-xs text-gray-400">Frames + audio (preview)</div>
+                <div className="text-xs text-gray-400">{t('animaticHint')}</div>
               </button>
             </div>
             
             {productionType === 'animatic' && (
               <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-sm text-emerald-300">
-                <strong>Animatic Mode:</strong> Uses still frames with audio. Perfect for pre-vis, client previews, or podcast videos. Significantly lower credit cost.
+                <strong>{t('animaticModeTitle')}</strong> {t('animaticModeBody')}
               </div>
             )}
           </div>
@@ -572,12 +587,12 @@ export function ProjectCostCalculator({
           {/* Language Versions */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-gray-400 flex items-center gap-2">
-              <Globe className="w-4 h-4" /> Language Versions
+              <Globe className="w-4 h-4" /> {t('languageVersions')}
             </h3>
             
             <div>
               <div className="flex justify-between mb-2">
-                <label className="text-sm text-gray-300">Number of Languages</label>
+                <label className="text-sm text-gray-300">{t('numberOfLanguages')}</label>
                 <span className="text-sm font-medium text-white">{languageVersions}</span>
               </div>
               <input
@@ -589,15 +604,18 @@ export function ProjectCostCalculator({
                 className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
               />
               <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>1 (Original)</span>
-                <span>10 Languages</span>
+                <span>{t('oneOriginal')}</span>
+                <span>{t('tenLanguages')}</span>
               </div>
             </div>
             
             {languageVersions > 1 && (
               <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg text-sm text-blue-300">
-                <strong>{languageVersions} languages:</strong> Original + {languageVersions - 1} translated version{languageVersions > 2 ? 's' : ''}. 
-                Adds ~{formatCredits(Math.round(languageCreditsCost))} credits for translation & re-voicing.
+                {t('languagesBanner', {
+                  count: languageVersions,
+                  extra: languageVersions - 1,
+                  credits: formatCredits(Math.round(languageCreditsCost)),
+                })}
               </div>
             )}
           </div>
@@ -605,12 +623,12 @@ export function ProjectCostCalculator({
           {/* Scene Configuration */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-gray-400 flex items-center gap-2">
-              <Film className="w-4 h-4" /> Scene Configuration
+              <Film className="w-4 h-4" /> {t('sceneConfiguration')}
             </h3>
             
             <div>
               <div className="flex justify-between mb-2">
-                <label className="text-sm text-gray-300">Number of Scenes</label>
+                <label className="text-sm text-gray-300">{t('numberOfScenes')}</label>
                 <span className="text-sm font-medium text-white">{params.scenes.count}</span>
               </div>
               <input
@@ -625,7 +643,7 @@ export function ProjectCostCalculator({
 
             <div>
               <div className="flex justify-between mb-2">
-                <label className="text-sm text-gray-300">Beats per Scene</label>
+                <label className="text-sm text-gray-300">{t('beatsPerScene')}</label>
                 <span className="text-sm font-medium text-white">{params.scenes.segmentsPerScene}</span>
               </div>
               <input
@@ -640,7 +658,7 @@ export function ProjectCostCalculator({
 
             <div>
               <div className="flex justify-between mb-2">
-                <label className="text-sm text-gray-300">Takes per Beat (regenerations)</label>
+                <label className="text-sm text-gray-300">{t('takesPerBeat')}</label>
                 <span className="text-sm font-medium text-white">{params.scenes.takesPerSegment}</span>
               </div>
               <input
@@ -657,11 +675,11 @@ export function ProjectCostCalculator({
           {/* Engine & Quality */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-gray-400 flex items-center gap-2">
-              <Video className="w-4 h-4" /> Engine & Quality
+              <Video className="w-4 h-4" /> {t('engineAndQuality')}
             </h3>
 
             <div className="space-y-2">
-              <p className="text-xs text-gray-500">SceneFlow (Kling) — default production engine</p>
+              <p className="text-xs text-gray-500">{t('sceneflowDefaultEngine')}</p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {SCENEFLOW_QUALITY_TIERS.map((tier) => {
                   const tierEstimate = estimateVideoClipCredits(
@@ -698,13 +716,14 @@ export function ProjectCostCalculator({
                         <span className="font-medium">{tier.label}</span>
                         {tier.id === 'cinematic' && (
                           <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300">
-                            Recommended
+                            {t('recommended')}
                           </span>
                         )}
                       </div>
                       <div className="text-xs text-gray-400">{tier.description}</div>
                       <div className="text-xs text-cyan-400/80 mt-2">
-                        {formatCredits(tierEstimate.creditsEach)} credits / {normalizedVideo.segmentDuration}s clip
+                        {formatCredits(tierEstimate.creditsEach)}{' '}
+                        {t('creditsPerClip', { seconds: normalizedVideo.segmentDuration })}
                       </div>
                     </button>
                   )
@@ -723,7 +742,7 @@ export function ProjectCostCalculator({
                 ) : (
                   <ChevronDown className="w-4 h-4" />
                 )}
-                Alternative engines
+                {t('alternativeEngines')}
               </button>
 
               <AnimatePresence>
@@ -744,7 +763,7 @@ export function ProjectCostCalculator({
                       )
                       const isSelected = params.video.engine === engine.id
                       const providerLabel =
-                        engine.provider === 'vertex' ? 'Vertex / Veo' : 'Aggregator'
+                        engine.provider === 'vertex' ? t('vertexVeo') : t('aggregator')
 
                       return (
                         <button
@@ -761,7 +780,8 @@ export function ProjectCostCalculator({
                           <div className="text-xs text-gray-400">{engine.description}</div>
                           <div className="text-[10px] text-gray-500 mt-1">{providerLabel}</div>
                           <div className="text-xs text-cyan-400/80 mt-2">
-                            {formatCredits(engineEstimate.creditsEach)} credits / {normalizedVideo.segmentDuration}s clip
+                            {formatCredits(engineEstimate.creditsEach)}{' '}
+                            {t('creditsPerClip', { seconds: normalizedVideo.segmentDuration })}
                           </div>
                         </button>
                       )
@@ -773,7 +793,7 @@ export function ProjectCostCalculator({
 
             <div>
               <div className="flex justify-between mb-2">
-                <label className="text-sm text-gray-300">Clip duration (seconds)</label>
+                <label className="text-sm text-gray-300">{t('clipDuration')}</label>
                 <span className="text-sm font-medium text-white">{normalizedVideo.segmentDuration}s</span>
               </div>
               <input
@@ -786,7 +806,7 @@ export function ProjectCostCalculator({
                 className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Snaps to valid durations for the selected engine
+                {t('clipDurationHint')}
               </p>
             </div>
 
@@ -795,11 +815,11 @@ export function ProjectCostCalculator({
                 <span className="text-cyan-400 font-medium">
                   {formatCredits(clipEstimate.creditsEach)}
                 </span>{' '}
-                credits/clip × {formatCredits(totalClipCount)} clips ={' '}
+                {t('videoCreditsMath', { clips: formatCredits(totalClipCount) })}{' '}
                 <span className="text-white font-medium">
-                  {formatCredits(clipEstimate.creditsEach * totalClipCount)} credits
+                  {t('creditsCount', { count: formatCredits(clipEstimate.creditsEach * totalClipCount) })}
                 </span>{' '}
-                for video
+                {t('forVideo')}
               </div>
             )}
           </div>
@@ -807,10 +827,10 @@ export function ProjectCostCalculator({
           {/* Images */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-gray-400 flex items-center gap-2">
-              <ImageIcon className="w-4 h-4" /> Images by quality
+              <ImageIcon className="w-4 h-4" /> {t('imagesByQuality')}
               {byokExcludeMedia && (
                 <span className="text-[10px] uppercase tracking-wide text-amber-300 bg-amber-900/30 border border-amber-700/40 px-1.5 py-0.5 rounded">
-                  Excluded (BYOK)
+                  {t('excludedByok')}
                 </span>
               )}
             </h3>
@@ -818,7 +838,7 @@ export function ProjectCostCalculator({
             <div>
               <div className="flex justify-between mb-2">
                 <label className="text-sm text-gray-300">
-                  Draft / Beat frames ({IMAGE_CREDITS.FRAME_GENERATION} cr)
+                  {t('draftBeatFrames', { credits: IMAGE_CREDITS.FRAME_GENERATION })}
                 </label>
                 <span className="text-sm font-medium text-white">{params.images.keyFrames}</span>
               </div>
@@ -834,7 +854,7 @@ export function ProjectCostCalculator({
 
             <div>
               <div className="flex justify-between mb-2">
-                <label className="text-sm text-gray-300">Retakes per draft frame</label>
+                <label className="text-sm text-gray-300">{t('retakesPerDraft')}</label>
                 <span className="text-sm font-medium text-white">{params.images.retakesPerFrame}</span>
               </div>
               <input
@@ -850,7 +870,7 @@ export function ProjectCostCalculator({
             <div>
               <div className="flex justify-between mb-2">
                 <label className="text-sm text-gray-300">
-                  Final storyboard images ({IMAGE_CREDITS.FAL_KLING_IMAGE} cr)
+                  {t('finalStoryboardImages', { credits: IMAGE_CREDITS.FAL_KLING_IMAGE })}
                 </label>
                 <span className="text-sm font-medium text-white">{params.images.finalImages ?? 0}</span>
               </div>
@@ -867,7 +887,7 @@ export function ProjectCostCalculator({
             <div>
               <div className="flex justify-between mb-2">
                 <label className="text-sm text-gray-300">
-                  Character headshots ({IMAGE_CREDITS.SCENE_CHARACTER_HEADSHOT} cr)
+                  {t('characterHeadshots', { credits: IMAGE_CREDITS.SCENE_CHARACTER_HEADSHOT })}
                 </label>
                 <span className="text-sm font-medium text-white">{params.images.characterHeadshots ?? 0}</span>
               </div>
@@ -888,7 +908,7 @@ export function ProjectCostCalculator({
             className="flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
           >
             {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            {showAdvanced ? 'Hide' : 'Show'} Advanced Options
+            {showAdvanced ? t('hideAdvanced') : t('showAdvanced')}
           </button>
 
           {/* Advanced Options */}
@@ -903,12 +923,12 @@ export function ProjectCostCalculator({
                 {/* Audio */}
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-gray-400 flex items-center gap-2">
-                    <Mic className="w-4 h-4" /> Audio & Voice
+                    <Mic className="w-4 h-4" /> {t('audioAndVoice')}
                   </h3>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-xs text-gray-400">Dialogue Lines</label>
+                      <label className="text-xs text-gray-400">{t('dialogueLines')}</label>
                       <input
                         type="number"
                         min="0"
@@ -918,7 +938,7 @@ export function ProjectCostCalculator({
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-gray-400">Sound Effects</label>
+                      <label className="text-xs text-gray-400">{t('soundEffects')}</label>
                       <input
                         type="number"
                         min="0"
@@ -931,7 +951,7 @@ export function ProjectCostCalculator({
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-xs text-gray-400">Music Tracks</label>
+                      <label className="text-xs text-gray-400">{t('musicTracks')}</label>
                       <input
                         type="number"
                         min="0"
@@ -941,7 +961,7 @@ export function ProjectCostCalculator({
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-gray-400">Voice Clones</label>
+                      <label className="text-xs text-gray-400">{t('voiceClones')}</label>
                       <input
                         type="number"
                         min="0"
@@ -956,12 +976,12 @@ export function ProjectCostCalculator({
                 {/* Storage */}
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-gray-400 flex items-center gap-2">
-                    <HardDrive className="w-4 h-4" /> Storage
+                    <HardDrive className="w-4 h-4" /> {t('storage')}
                   </h3>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-xs text-gray-400">Expected Storage (GB)</label>
+                      <label className="text-xs text-gray-400">{t('expectedStorageGb')}</label>
                       <input
                         type="number"
                         min="1"
@@ -971,7 +991,7 @@ export function ProjectCostCalculator({
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-gray-400">Active Months</label>
+                      <label className="text-xs text-gray-400">{t('activeMonths')}</label>
                       <input
                         type="number"
                         min="1"
@@ -986,12 +1006,12 @@ export function ProjectCostCalculator({
                 {/* Upscale */}
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-gray-400 flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4" /> Upscaling
+                    <TrendingUp className="w-4 h-4" /> {t('upscaling')}
                   </h3>
                   
                   <div className="flex items-center gap-4">
                     <div className="flex-1">
-                      <label className="text-xs text-gray-400">Minutes to Upscale</label>
+                      <label className="text-xs text-gray-400">{t('minutesToUpscale')}</label>
                       <input
                         type="number"
                         min="0"
@@ -1007,7 +1027,7 @@ export function ProjectCostCalculator({
                         onChange={(e) => updateParam('upscale', 'useInstant', e.target.checked)}
                         className="w-4 h-4 rounded border-slate-600 text-cyan-500 focus:ring-cyan-500"
                       />
-                      <span className="text-sm text-gray-300">Instant (1.5x)</span>
+                      <span className="text-sm text-gray-300">{t('instantUpscale')}</span>
                     </label>
                   </div>
                 </div>
@@ -1036,13 +1056,13 @@ export function ProjectCostCalculator({
               }`}>
                 {hasDeficit 
                   ? creditsNeeded > breakdown.total.credits * 0.5 
-                    ? '🔴 Credits Needed' 
-                    : '🟡 Low Balance'
-                  : '🟢 Budget Covered'}
+                    ? `🔴 ${t('creditsNeededStatus')}` 
+                    : `🟡 ${t('lowBalance')}`
+                  : `🟢 ${t('budgetCovered')}`}
               </span>
               <span className="text-xs text-gray-400">
-                {productionType === 'animatic' && '📊 Animatic'}
-                {languageVersions > 1 && ` • 🌐 ${languageVersions} langs`}
+                {productionType === 'animatic' && `📊 ${t('animatic')}`}
+                {languageVersions > 1 && ` • 🌐 ${t('langsShort', { count: languageVersions })}`}
               </span>
             </div>
             
@@ -1064,15 +1084,15 @@ export function ProjectCostCalculator({
             
             <div className="grid grid-cols-3 gap-2 text-center text-xs">
               <div>
-                <div className="text-gray-400">Required</div>
+                <div className="text-gray-400">{t('required')}</div>
                 <div className="font-medium text-white">{formatCredits(breakdown.total.credits)}</div>
               </div>
               <div>
-                <div className="text-gray-400">Available</div>
+                <div className="text-gray-400">{t('available')}</div>
                 <div className="font-medium text-cyan-400">{formatCredits(currentBalance)}</div>
               </div>
               <div>
-                <div className="text-gray-400">To Purchase</div>
+                <div className="text-gray-400">{t('toPurchase')}</div>
                 <div className={`font-medium ${hasDeficit ? 'text-amber-400' : 'text-emerald-400'}`}>
                   {hasDeficit ? formatCredits(creditsNeeded) : '0'}
                 </div>
@@ -1084,27 +1104,27 @@ export function ProjectCostCalculator({
           <div className="p-6 bg-gradient-to-br from-slate-800 to-slate-800/50 rounded-xl border border-slate-700/50">
             <div className="flex items-center justify-between mb-4">
               <span className="text-gray-400">
-                {productionType === 'animatic' ? 'Animatic' : 'Video'} Production
+                {productionType === 'animatic' ? t('animaticProduction') : t('videoProduction')}
               </span>
               <div className="flex items-center gap-2 text-gray-400 text-sm">
                 <Clock className="w-4 h-4" />
-                <span>~{params.video.totalMinutes} min</span>
+                <span>{t('minutesApprox', { minutes: params.video.totalMinutes })}</span>
               </div>
             </div>
             
             <div className="text-4xl font-bold text-white mb-2">
-              {formatCredits(breakdown.total.credits)} <span className="text-2xl text-gray-400">credits</span>
+              {formatCredits(breakdown.total.credits)} <span className="text-2xl text-gray-400">{t('credits')}</span>
             </div>
             
             <div className="flex items-center gap-4 text-sm text-gray-400">
               <div className="flex items-center gap-2">
                 <HardDrive className="w-4 h-4" />
-                <span>~{formatBytes(breakdown.estimatedStorageBytes)}</span>
+                <span>{t('approxSize', { size: formatBytes(breakdown.estimatedStorageBytes) })}</span>
               </div>
               {languageVersions > 1 && (
                 <div className="flex items-center gap-2 text-blue-400">
                   <Globe className="w-4 h-4" />
-                  <span>{languageVersions} languages</span>
+                  <span>{t('languagesCount', { count: languageVersions })}</span>
                 </div>
               )}
             </div>
@@ -1121,14 +1141,14 @@ export function ProjectCostCalculator({
                 className="mt-4 w-full px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 rounded-lg text-white text-sm font-medium transition-all flex items-center justify-center gap-2"
               >
                 <Check className="w-4 h-4" />
-                Set as Project Budget ({formatCredits(breakdown.total.credits)} credits)
+                {t('setAsProjectBudget', { credits: formatCredits(breakdown.total.credits) })}
               </button>
             )}
 
             {projectId && onSetCreditsUsed && (
               <div className="mt-4 pt-4 border-t border-slate-700/50">
                 <div className="flex items-center justify-between text-sm mb-2">
-                  <span className="text-gray-400">Current credits used</span>
+                  <span className="text-gray-400">{t('currentCreditsUsed')}</span>
                   <span className="text-white font-medium">{formatCredits(currentCreditsUsed)}</span>
                 </div>
                 <div className="flex gap-2">
@@ -1139,7 +1159,7 @@ export function ProjectCostCalculator({
                     value={manualCreditsUsedInput}
                     onChange={(e) => setManualCreditsUsedInput(e.target.value)}
                     className="flex-1 rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white"
-                    placeholder="Credits used"
+                    placeholder={t('creditsUsedPlaceholder')}
                   />
                   <button
                     type="button"
@@ -1156,7 +1176,7 @@ export function ProjectCostCalculator({
                     }}
                     className="px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium disabled:opacity-50"
                   >
-                    {isSavingCreditsUsed ? 'Saving...' : 'Set used'}
+                    {isSavingCreditsUsed ? t('saving') : t('setUsed')}
                   </button>
                 </div>
               </div>
@@ -1167,19 +1187,19 @@ export function ProjectCostCalculator({
           <details className="group">
             <summary className="text-sm font-medium text-gray-400 cursor-pointer flex items-center gap-2 hover:text-gray-300 transition-colors">
               <ChevronDown className="w-4 h-4 group-open:rotate-180 transition-transform" />
-              Cost Breakdown
+              {t('costBreakdown')}
             </summary>
             <div className="mt-3 space-y-2">
             {[
-              { key: 'intelligence', label: 'Intelligence', icon: Brain, cost: breakdown.intelligence },
-              { key: 'video', label: productionType === 'animatic' ? 'MP4 Rendering' : 'Video Generation', icon: productionType === 'animatic' ? MonitorPlay : Video, cost: breakdown.video },
-              { key: 'images', label: 'Image Generation', icon: ImageIcon, cost: breakdown.images },
-              { key: 'audio', label: 'Audio & Music', icon: Music, cost: breakdown.audio },
-              { key: 'voiceClones', label: 'Voice Clones', icon: Mic, cost: breakdown.voiceClones },
-              { key: 'upscale', label: 'Upscaling', icon: TrendingUp, cost: breakdown.upscale },
+              { key: 'intelligence', label: t('intelligence'), icon: Brain, cost: breakdown.intelligence },
+              { key: 'video', label: productionType === 'animatic' ? t('mp4Rendering') : t('videoGeneration'), icon: productionType === 'animatic' ? MonitorPlay : Video, cost: breakdown.video },
+              { key: 'images', label: t('imageGeneration'), icon: ImageIcon, cost: breakdown.images },
+              { key: 'audio', label: t('audioAndMusic'), icon: Music, cost: breakdown.audio },
+              { key: 'voiceClones', label: t('voiceClones'), icon: Mic, cost: breakdown.voiceClones },
+              { key: 'upscale', label: t('upscaling'), icon: TrendingUp, cost: breakdown.upscale },
               ...(languageVersions > 1 ? [{
                 key: 'languages',
-                label: `Translation (${languageVersions - 1} extra)`,
+                label: t('translationExtra', { count: languageVersions - 1 }),
                 icon: Globe,
                 cost: { credits: Math.round(languageCreditsCost), usdCost: languageCreditsCost / CREDIT_EXCHANGE_RATE, items: [] as any[] }
               }] : []),
@@ -1207,7 +1227,7 @@ export function ProjectCostCalculator({
                           {item.label}
                         </span>
                         {excluded && (
-                          <div className="text-[10px] text-amber-300">Excluded (BYOK)</div>
+                          <div className="text-[10px] text-amber-300">{t('excludedByok')}</div>
                         )}
                         {!excluded && item.cost.items?.length > 0 && (
                           <div className="text-[10px] text-gray-500 mt-0.5 max-w-[220px] truncate">
@@ -1221,7 +1241,7 @@ export function ProjectCostCalculator({
                         {formatCredits(displayCredits)}
                       </div>
                       <div className="text-xs text-gray-500">
-                        {excluded ? '0 billed' : `${percentage.toFixed(0)}%`}
+                        {excluded ? t('zeroBilled') : `${percentage.toFixed(0)}%`}
                       </div>
                     </div>
                   </div>
@@ -1236,8 +1256,8 @@ export function ProjectCostCalculator({
             <details className="group">
               <summary className="text-sm font-medium text-gray-400 cursor-pointer flex items-center gap-2 hover:text-gray-300 transition-colors">
                 <ChevronDown className="w-4 h-4 group-open:rotate-180 transition-transform" />
-                <ShoppingCart className="w-4 h-4" /> Quick Top-Up Packs
-                <span className="text-xs text-emerald-400">{formatCredits(creditsNeeded)} credits needed</span>
+                <ShoppingCart className="w-4 h-4" /> {t('quickTopUpPacks')}
+                <span className="text-xs text-emerald-400">{t('creditsNeeded', { credits: formatCredits(creditsNeeded) })}</span>
               </summary>
               
               <div className="grid gap-2">
@@ -1263,7 +1283,7 @@ export function ProjectCostCalculator({
                             </span>
                             {coversDeficit && (
                               <span className="px-2 py-0.5 bg-emerald-500 text-white text-xs font-medium rounded">
-                                COVERS PROJECT
+                                {t('coversProject')}
                               </span>
                             )}
                           </div>
@@ -1272,21 +1292,23 @@ export function ProjectCostCalculator({
                           </div>
                           <div className="flex items-center gap-3 text-sm">
                             <span className="text-white font-medium">
-                              {formatCredits(pack.credits)} credits
+                              {t('creditsCount', { count: formatCredits(pack.credits) })}
                             </span>
                             <span className="text-gray-400">•</span>
                             <span className="text-white font-medium">
-                              ${pack.price}
+                              {formatCurrency(pack.price)}
                             </span>
                             <span className="text-gray-500 text-xs">
-                              (${(pack.price / pack.credits * 100).toFixed(2)}¢/credit)
+                              {t('centsPerCredit', {
+                                cents: (pack.price / pack.credits * 100).toFixed(2),
+                              })}
                             </span>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           {!coversDeficit && (
                             <span className="text-xs text-gray-500">
-                              Need {packsNeeded}x
+                              {t('needPacks', { count: packsNeeded })}
                             </span>
                           )}
                           <Plus className="w-5 h-5 text-cyan-400" />
@@ -1304,35 +1326,42 @@ export function ProjectCostCalculator({
             <summary className="text-sm font-medium text-gray-400 cursor-pointer flex items-center gap-2 hover:text-gray-300 transition-colors">
               <ChevronDown className="w-4 h-4 group-open:rotate-180 transition-transform" />
               <HardDrive className="w-4 h-4" /> 
-              Storage Estimate
-              <span className="text-xs text-gray-500">~{formatBytes(breakdown.estimatedStorageBytes)}</span>
+              {t('storageEstimate')}
+              <span className="text-xs text-gray-500">
+                {t('approxSize', { size: formatBytes(breakdown.estimatedStorageBytes) })}
+              </span>
             </summary>
             
             <div className="mt-3 p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-white font-medium">
-                  ~{formatBytes(breakdown.estimatedStorageBytes)}
+                  {t('approxSize', { size: formatBytes(breakdown.estimatedStorageBytes) })}
                 </span>
                 <span className="text-sm text-gray-400">
-                  {params.storage.activeMonths} month{params.storage.activeMonths > 1 ? 's' : ''} retention
+                  {t('monthsRetention', { count: params.storage.activeMonths })}
                 </span>
               </div>
               
               <div className="text-xs text-gray-400 mb-3">
-                Based on {params.scenes.count} scenes × {params.scenes.segmentsPerScene} segments
+                {t('basedOnScenes', { scenes: params.scenes.count, segments: params.scenes.segmentsPerScene })}
               </div>
               
               {breakdown.estimatedStorageBytes > 5 * 1024 * 1024 * 1024 && (
                 <div className="border-t border-slate-700 pt-3 mt-3">
-                  <div className="text-xs text-gray-400 mb-2">Need more storage?</div>
+                  <div className="text-xs text-gray-400 mb-2">{t('needMoreStorage')}</div>
                   <div className="grid grid-cols-3 gap-2">
                     {Object.entries(STORAGE_ADDONS).map(([key, addon]) => (
                       <div 
                         key={key}
                         className="p-2 bg-slate-700/50 rounded-lg text-center"
                       >
-                        <div className="text-sm font-medium text-white">{addon.gb}GB</div>
-                        <div className="text-xs text-gray-400">${addon.priceMonthly}/mo</div>
+                        <div className="text-sm font-medium text-white">
+                          {t('storageGbAmount', { gb: addon.gb })}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {formatCurrency(addon.priceMonthly)}
+                          {t('perMonth')}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -1346,8 +1375,7 @@ export function ProjectCostCalculator({
             <summary className="text-sm font-medium text-gray-400 cursor-pointer flex items-center gap-2 hover:text-gray-300 transition-colors">
               <ChevronDown className="w-4 h-4 group-open:rotate-180 transition-transform" />
               <ShoppingCart className="w-4 h-4" />
-              Recommended Top-Up Packs
-              <span className="text-xs text-gray-500">(one-time purchases)</span>
+              {t('recommendedTopUp')}
             </summary>
             <div className="mt-3 space-y-2">
               {Object.entries(TOPUP_PACKS).map(([key, pack]) => {
@@ -1373,7 +1401,7 @@ export function ProjectCostCalculator({
                           </span>
                           {coversProject && (
                             <span className="px-2 py-0.5 bg-emerald-500 text-white text-xs font-medium rounded">
-                              COVERS PROJECT
+                              {t('coversProject')}
                             </span>
                           )}
                         </div>
@@ -1382,21 +1410,23 @@ export function ProjectCostCalculator({
                         </div>
                         <div className="flex items-center gap-3 text-sm">
                           <span className="text-white font-medium">
-                            {formatCredits(pack.credits)} credits
+                            {t('creditsCount', { count: formatCredits(pack.credits) })}
                           </span>
                           <span className="text-gray-400">•</span>
                           <span className="text-white font-medium">
-                            ${pack.price}
+                            {formatCurrency(pack.price)}
                           </span>
                           <span className="text-gray-500 text-xs">
-                            (${(pack.price / pack.credits * 100).toFixed(2)}¢/credit)
+                            {t('centsPerCredit', {
+                              cents: (pack.price / pack.credits * 100).toFixed(2),
+                            })}
                           </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {!coversProject && (
                           <span className="text-xs text-gray-500">
-                            Need {packsNeeded}x
+                            {t('needPacks', { count: packsNeeded })}
                           </span>
                         )}
                         <Plus className="w-5 h-5 text-cyan-400" />

@@ -35,6 +35,7 @@ const eslintConfig = [
       'src/components/treatment/TreatmentHeroImage.tsx',
       // Production Studio shell + dialogs (page/ScriptPanel/SceneGallery remain
       // partial — chrome/dialogs only — so they stay off this guard for now).
+      'src/components/credits/ProjectCostCalculator.tsx',
       'src/components/vision/VisionLoadingOverlay.tsx',
       'src/components/vision/ExpressConfirmDialog.tsx',
       'src/components/vision/ExpressAudioConfirmDialog.tsx',

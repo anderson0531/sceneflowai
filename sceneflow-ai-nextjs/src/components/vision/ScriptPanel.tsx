@@ -2878,8 +2878,8 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
               className="flex items-center gap-2 border-cyan-500/30 hover:border-cyan-500/50 hover:bg-cyan-500/10"
               title={
                 creditsBudget > 0
-                  ? 'View or adjust project credit budget'
-                  : 'Estimate and set a default credit budget from your script'
+                  ? tStudio('budgetTooltipView')
+                  : tStudio('budgetTooltipSet')
               }
             >
               {isSettingBudget ? (
@@ -2903,10 +2903,10 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       size="sm"
                       onClick={onOpenReferences}
                       className="flex items-center gap-2 border-cyan-500/30 hover:border-cyan-500/50 hover:bg-cyan-500/10 relative"
-                      title="Open Reference Library — cast, locations, and props"
+                      title={tStudio('referenceTooltip')}
                     >
                       <BookOpen className="w-4 h-4 text-cyan-400" />
-                      <span className="text-sm hidden sm:inline">Reference</span>
+                      <span className="text-sm hidden sm:inline">{tStudio('reference')}</span>
                       {directionReadiness && directionReadiness.needsUpdate > 0 && (
                         <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-white">
                           {directionReadiness.needsUpdate}
@@ -2916,8 +2916,10 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                   </TooltipTrigger>
                   <TooltipContent>
                     {directionReadiness && directionReadiness.needsUpdate > 0
-                      ? `${directionReadiness.needsUpdate} scene${directionReadiness.needsUpdate !== 1 ? 's' : ''} need updated direction before references`
-                      : 'Open Reference Library — cast, locations, and props'}
+                      ? tStudio('referenceNeedsDirection', {
+                          count: directionReadiness.needsUpdate,
+                        })
+                      : tStudio('referenceTooltip')}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -2932,10 +2934,10 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       size="sm"
                       onClick={onOpenPublishing}
                       className="flex items-center gap-2 border-emerald-500/30 hover:border-emerald-500/50 hover:bg-emerald-500/10 relative"
-                      title="Open Publishing Library — streams, screening, promo, YouTube"
+                      title={tStudio('publishTooltip')}
                     >
                       <Share2 className="w-4 h-4 text-emerald-400" />
-                      <span className="text-sm hidden sm:inline">Publish</span>
+                      <span className="text-sm hidden sm:inline">{tStudio('publish')}</span>
                       {typeof publishingBlockerCount === 'number' && publishingBlockerCount > 0 && (
                         <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-white">
                           {publishingBlockerCount}
@@ -2945,8 +2947,8 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                   </TooltipTrigger>
                   <TooltipContent>
                     {typeof publishingBlockerCount === 'number' && publishingBlockerCount > 0
-                      ? `${publishingBlockerCount} blocker${publishingBlockerCount !== 1 ? 's' : ''} before publishing`
-                      : 'Open Publishing Library — render, share, and publish'}
+                      ? tStudio('publishBlockers', { count: publishingBlockerCount })
+                      : tStudio('publishTooltipAlt')}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -2968,8 +2970,8 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                   className="flex items-center gap-2 border-purple-500/30 hover:border-purple-500/50 hover:bg-purple-500/10"
                   title={
                     audienceScore == null
-                      ? 'Run Audience Resonance Analysis on your script'
-                      : 'Audience Resonance Analysis and script insights'
+                      ? tStudio('audienceResonanceRunTooltip')
+                      : tStudio('audienceResonanceViewTooltip')
                   }
                 >
                   {isGeneratingReviews ? (
@@ -2977,7 +2979,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                   ) : (
                     <Target className="w-4 h-4 text-purple-400" />
                   )}
-                  <span className="text-sm hidden sm:inline">Audience Resonance</span>
+                  <span className="text-sm hidden sm:inline">{tStudio('audienceResonance')}</span>
                   {audienceScore != null && !isGeneratingReviews && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-semibold tabular-nums">
                       {audienceScore}
@@ -2990,9 +2992,9 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                     size="sm"
                     onClick={() => onCancelReviews()}
                     className="h-8 px-2 text-[11px] font-semibold"
-                    title="Cancel Audience Resonance analysis"
+                    title={tStudio('audienceResonanceCancel')}
                   >
-                    Cancel
+                    {tCommon('actions.cancel')}
                   </Button>
                 ) : null}
               </div>
@@ -3789,7 +3791,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
               })}
             </DialogTitle>
             <DialogDescription className="text-gray-400 text-sm">
-              Set a credit budget, track production charges, and plan animatic-first before video.
+              {tStudio('budgetDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4">
