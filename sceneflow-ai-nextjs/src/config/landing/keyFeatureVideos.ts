@@ -57,11 +57,12 @@ const PRODUCED_VIDEOS: Partial<
   Record<string, Partial<Record<VideoLocaleId, { src: string; poster?: string }>>>
 > = {
   // English: web H.264/AAC encode shipped from public/ (lean landing asset).
-  // Spanish: Blob master is already browser-decodable H.264/AAC — serve from
-  // Blob directly (same pattern as production showcase / persona videos).
+  // Spanish / Portuguese: Blob masters are already browser-decodable H.264/AAC —
+  // serve from Blob directly (same pattern as production showcase / persona videos).
   byok: {
     en: { src: '/landing/key-features/BYOK-English.mp4?v=20260810#t=0.1' },
     es: { src: videoUrl('BYOK (Spanish).mp4', '20260810') },
+    pt: { src: videoUrl('BYOK (Portuguese).mp4', '20260810') },
   },
 }
 

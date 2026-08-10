@@ -27,7 +27,7 @@ describe('keyFeatureVideos', () => {
     }
   })
 
-  it('returns seven locale slots per feature; BYOK English and Spanish are produced', () => {
+  it('returns seven locale slots per feature; BYOK English, Spanish, and Portuguese are produced', () => {
     for (const icon of KEY_FEATURE_ICON_KEYS) {
       const locales = getKeyFeatureVideoLocales(icon)
       expect(locales.map((locale) => locale.id)).toEqual(VIDEO_LOCALE_ORDER)
@@ -44,9 +44,13 @@ describe('keyFeatureVideos', () => {
     expect(byokLocales.find((locale) => locale.id === 'es')?.src).toContain(
       'BYOK%20(Spanish).mp4'
     )
+    expect(byokLocales.find((locale) => locale.id === 'pt')?.available).toBe(true)
+    expect(byokLocales.find((locale) => locale.id === 'pt')?.src).toContain(
+      'BYOK%20(Portuguese).mp4'
+    )
     expect(
       byokLocales
-        .filter((locale) => locale.id !== 'en' && locale.id !== 'es')
+        .filter((locale) => !['en', 'es', 'pt'].includes(locale.id))
         .every((locale) => !locale.available)
     ).toBe(true)
 
@@ -59,6 +63,7 @@ describe('keyFeatureVideos', () => {
   it('uses predictable blob paths for BYOK and other features', () => {
     expect(keyFeatureVideoBlobPath('byok', 'en')).toBe('features/byok/BYOK (English).mp4')
     expect(keyFeatureVideoBlobPath('byok', 'es')).toBe('features/byok/BYOK (Spanish).mp4')
+    expect(keyFeatureVideoBlobPath('byok', 'pt')).toBe('features/byok/BYOK (Portuguese).mp4')
     expect(keyFeatureVideoBlobPath('writersRoom', 'th')).toBe(
       "features/writersRoom/Writer's Room (Thai).mp4"
     )
