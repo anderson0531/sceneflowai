@@ -7,7 +7,72 @@
     "references": "参考文献",
     "timeline": "假期时间表",
     "mixer": "Production Mixer",
-    "directorConsole": "导演控制台"
+    "directorConsole": "导演控制台",
+    "initializing": "正在初始化",
+    "opening": "开放 SFAIProduction_STUDIOTERM",
+    "openingShort": "开放制作",
+    "backToBlueprint": "返回 Blueprint",
+    "blueprintShort": "SFAI蓝图条款",
+    "productionLabel": "生产",
+    "viewsAriaLabel": "Production Studio 视图",
+    "viewStudio": "工作室",
+    "viewScreening": "SFAISCRENING_ROOMTERM",
+    "viewStreams": "流",
+    "loadingImages": "正在加载图像...",
+    "untitledProject": "无标题项目",
+    "settingUpWorkspace": "设置您的工作空间",
+    "loadingMessages": {
+      "message1": "正在加载您的作品...",
+      "message2": "正在恢复场景和故事板...",
+      "message3": "准备预视工作区...",
+      "message4": "正在加载参考库...",
+      "message5": "快准备好了..."
+    },
+    "generating": "生成...",
+    "shareScreeningTitle": "分享 Screening Room",
+    "shareScreeningDescription": "知道此链接的任何人都可以查看您的 Screening Room 演示文稿。他们不需要 Sceneflow 帐户。",
+    "shareBulletView": "观众可以观看完整的音频和翻译",
+    "shareBulletNoEdit": "他们无法编辑或下载您的项目",
+    "shareBulletDisable": "您可以随时禁用此链接",
+    "copied": "复制了！",
+    "deleteCharacterTitle": "通过对话删除角色",
+    "deleteCharacterDescription": "角色“{name}”在脚本中有{count, plural, one {# dialogue line} other {# dialogue lines}}。你想用这些对话来做什么？",
+    "clearCharacterIds": "清除角色 ID",
+    "clearCharacterIdsHint": "从对话行中删除角色 ID。对话将使用改进的后备匹配按名称匹配字符。",
+    "reassignToAnother": "重新分配给另一个角色",
+    "reassignToAnotherHint": "将所有对话线分配给不同的角色。",
+    "selectCharacterReassign": "选择要重新分配的角色",
+    "reassignAndDelete": "重新分配和删除",
+    "clearIdsAndDelete": "清除 ID 并删除",
+    "mergeDuplicatesTitle": "合并重复字符",
+    "mergeDuplicatesDescription": "选择要保留的字符以及要合并到其中的重复字符。",
+    "keepThisCharacter": "保留这个字符：",
+    "willBeMerged": "将被合并（重复）：",
+    "noDuplicatesToMerge": "没有要合并的重复项",
+    "mergeDialogueNote": "重复角色的所有对话台词都将分配给主要角色。",
+    "mergeCharacters": "合并字符",
+    "hasVoice": "（有声音）",
+    "budgetTitle": "生产预算管理 - {title}",
+    "setBudget": "设定预算",
+    "budgetAmount": "预算：{amount}",
+    "importTranslation": "导入翻译",
+    "importTranslationTitle": "导入 {language} 翻译",
+    "importTranslationDescription": "将翻译后的脚本粘贴到下面。格式应与导出的格式匹配：",
+    "importTranslationFormat": "[1] TRANSLATED_LABEL：翻译文本",
+    "importTranslationPlaceholder": "将翻译后的脚本粘贴到此处...",
+    "deleteBeat": "删除节拍",
+    "deleteBeatDescription": "您确定要删除该片段吗？此操作无法撤消。",
+    "deleteScene": "删除场景 {number}",
+    "deleteSceneDescription": "这将永久删除该场景和所有相关资产。",
+    "deleteSceneAction": "删除场景",
+    "assetsRemoved": "将被移除的资产",
+    "assetSceneImage": "场景图像",
+    "assetNarrationAudio": "旁白音频",
+    "assetDescriptionAudio": "描述音频",
+    "assetDialogueAudio": "对话音频",
+    "assetSceneDirection": "场景方向",
+    "assetBeats": "{count, plural, one {# beat} other {# beats}}",
+    "assetMusic": "音乐"
   },
   "script": {
     "generateScript": "生成脚本",
@@ -53,5 +118,1171 @@
     "segmentsGenerated": "已生成段",
     "audioGenerated": "已生成音频",
     "saveFailed": "无法保存更改"
+  },
+  "express": {
+    "title": "表达所有场景（高级）",
+    "description": "并行运行每个场景的方向 → 音频 → 视觉预览帧（一次最多 3 个）。这是一个漫长的、需要大量信用的运行——建议在检查点使用每个场景卡上的每个场景 Express。",
+    "audioLanguage": "音频语言",
+    "translateBadge": "翻译",
+    "audioLanguageHint": "对话和旁白将在 {lang} 中生成。其他语言的现有音频保持不变。",
+    "pipelineTitle": "管道（每个场景）",
+    "stepDirection": "1. 方向",
+    "stepAudio": "2. 音频",
+    "stepImage": "3. 图片",
+    "pipelineSceneCount": "{done}/{total} 场景",
+    "pipelineDialogueLines": "{count} 对话台词",
+    "pipelineImageCount": "{establishing} 建立 + {frames} 预视框架",
+    "backgroundMusic": "背景音乐",
+    "musicScenesHaveDescriptions": "{count} 场景有音乐描述",
+    "musicNoDescriptions": "没有场景有音乐描述",
+    "storyboardQualityDraft": "故事板质量：草稿",
+    "storyboardQualityDraftHint": "生成快速布局框架以供审阅。随后使用“最终确定帧”来生成高分辨率、逼真的动画和视频。",
+    "soundEffects": "音效",
+    "soundEffectsHint": "在制作过程中，声音效果包含在 Veo 视频片段中。 Animatic 预览仅使用旁白、对话和可选音乐。",
+    "onlyMissingFrames": "仅缺帧",
+    "onlyMissingFramesHint": "跳过已经有图像的帧。",
+    "regenerateExisting": "再生现有",
+    "regenerateExistingHint": "即使方向、音频或图像已经存在，也要重新计算每个阶段。",
+    "artStyle": "艺术风格",
+    "artStyleLockedHint": "锁定在 Blueprint — 改变基础以重新构想。",
+    "artStyleUnlockedHint": "应用于所有视觉预览帧并贯穿视频生成流程。",
+    "estimatedCost": "预计费用",
+    "costImages": "图片：{credits} 制作人员（{frames} 框架 × {perFrame}）",
+    "costAudio": "音频：~{credits} 制作人员",
+    "costMusic": "音乐：{credits} 作品",
+    "costTotal": "总计：~{credits} 学分",
+    "costEstimateDisclaimer": "仅估计。实际使用取决于对话长度和实际需要运行的阶段数。",
+    "running": "跑步…",
+    "generate": "产生"
+  },
+  "expressAudio": {
+    "title": "快速音频",
+    "description": "同时为此场景生成对话、音效和音乐。对话使用 TTS，动作节拍使用 Veo 原生音频，音乐使用 Lyria。",
+    "scope": "范围",
+    "scopeMissing": "仅缺少",
+    "scopeAll": "全部（再生）",
+    "scopeAllWarning": "所选项目的现有音频将被删除并重新生成。",
+    "audioToGenerate": "要生成的音频",
+    "noAudioItems": "此场景没有可用的音频项目。",
+    "statusReady": "准备好",
+    "statusMissing": "丢失的",
+    "sfxDurationPreset": "SFX 持续时间预设",
+    "durationAuto": "汽车（{seconds}s·Veo {veoSeconds}s）",
+    "durationShort": "短 3 秒/Veo 4 秒",
+    "durationMedium": "中8号",
+    "durationLong": "长 15 秒/Veo 最长 8 秒",
+    "veoPartialHint": "Veo 覆盖长达 8 秒（自动瞄准 {seconds}）。",
+    "sfxCredits": "SFX 积分：{credits}。 {hint}",
+    "creditHint": "~{credits} 学分 · 连续长达 8 秒",
+    "running": "跑步...",
+    "generateAudio": "生成音频 ({count})"
+  },
+  "expressSfx": {
+    "title": "Express Veo SFX",
+    "description": "同时生成动作节拍音效（一次最多 2 个）。每个节拍都使用 Veo 原生音频，然后提取 MP3 作为动画。",
+    "selectedBeats": "选定的节拍",
+    "estimatedCredits": "预计学分",
+    "creditHint": "~{credits} 学分 · 连续长达 8 秒",
+    "actionBeats": "动作节拍",
+    "audioReady": "音频就绪",
+    "durationPreset": "持续时间预设",
+    "durationAuto": "汽车（{seconds}s·Veo {veoSeconds}s）",
+    "durationShort": "短 3 秒/Veo 4 秒",
+    "durationMedium": "中8号",
+    "durationLong": "长 15 秒/Veo 最长 8 秒",
+    "veoPartialHint": "Veo 覆盖长达 8 秒（自动瞄准 {seconds}）。",
+    "regenerateWithAudio": "重新生成已有音频的节拍",
+    "running": "跑步...",
+    "generateSfx": "生成 SFX ({count})"
+  },
+  "expressScene": {
+    "title": "表达场景",
+    "description": "选择要生成或重新生成的预览帧。重新生成现有帧仅更新图像 - 方向和音频保持不变。",
+    "scope": "范围",
+    "scopeMissing": "仅缺少",
+    "scopeRegenerate": "重新生成选定的",
+    "scopeRegenerateHint": "将重新生成带有现有图像的检查帧。方向和音频不会重新播放。",
+    "frames": "镜框",
+    "noFrames": "没有适用于此范围的框架。",
+    "hasImage": "有图像",
+    "missing": "丢失的",
+    "imageCredits": "图片来源（预计）：{credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
+    "running": "跑步...",
+    "generateScene": "生成场景"
+  },
+  "expressGenerateAll": {
+    "title": "生成全部",
+    "description": "并行运行 Express Audio 和 Express Scene 帧。默认值与每个管道的“仅缺少”选择相匹配 - 如果需要重新生成，请调整范围。",
+    "audioSection": "声音的",
+    "framesSection": "镜框",
+    "scope": "范围",
+    "scopeMissing": "仅缺少",
+    "scopeAll": "全部（再生）",
+    "scopeRegenerate": "重新生成选定的",
+    "audioToGenerate": "要生成的音频",
+    "noAudioItems": "此场景没有音频项目。",
+    "statusReady": "准备好",
+    "statusMissing": "丢失的",
+    "sfxDurationPreset": "SFX 持续时间预设",
+    "durationAuto": "汽车（{seconds}s·Veo {veoSeconds}s）",
+    "durationShort": "短 3 秒/Veo 4 秒",
+    "durationMedium": "中8号",
+    "durationLong": "长 15 秒/Veo 最长 8 秒",
+    "creditHint": "~{credits} 学分 · 连续长达 8 秒",
+    "veoSfxCredits": "Veo SFX 制作人员（预计）：{credits}",
+    "frames": "镜框",
+    "noFrames": "没有可用的框架。",
+    "hasImage": "有图像",
+    "missing": "丢失的",
+    "imageCredits": "图片来源（预计）：{credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
+    "running": "跑步...",
+    "generateAll": "生成全部"
+  },
+  "retake": {
+    "title": "替换现有的镜头？",
+    "description": "该节拍已生成视频。打开生成器或上传将添加新镜头并可能消耗积分。",
+    "continue": "继续"
+  },
+  "reset": {
+    "title": "重置场景制作？",
+    "sceneLabel": "场景{number}",
+    "sceneHeading": "场景 {number} · {heading}",
+    "warning": "这将删除该场景的整个<bold>节拍时间线</bold>并且无法撤消。您将需要从头开始再次运行分段设置。",
+    "whatYouWillLose": "你会失去什么",
+    "segmentCount": "{count, plural, one {# segment} other {# segments}}",
+    "segmentDetail": "计时、方向注释、Veo 提示和对话到片段映射",
+    "keyframeImage": "{count, plural, one {# keyframe image} other {# keyframe images}}",
+    "keyframeDetailAcross": "跨越 {count, plural, one {# segment} other {# segments}}（开始/结束帧）",
+    "keyframeDetailDefault": "用于视频生成的开始和结束帧静止图像",
+    "videoClip": "{count, plural, one {# generated video clip} other {# generated video clips}}",
+    "videoDetail": "节拍级 Veo / I2V 输出和时间轴上的活动片段",
+    "imageClip": "{count, plural, one {# image clip} other {# image clips}}",
+    "imageClipDetail": "上传或生成的静态资产附加到分段",
+    "alternateTake": "{count, plural, one {# alternate take} other {# alternate takes}}",
+    "alternateTakeDetail": "每个段存储额外的世代",
+    "sceneRender": "场景渲染/制作流",
+    "sceneRenderStreams": "{count, plural, one {# language or output stream} other {# language or output streams}} 链接到此场景",
+    "sceneRenderDefault": "制作混音器的最终混合场景输出",
+    "beatStructureOnly": "仅节拍结构",
+    "beatStructureDetail": "尚未检测到关键帧或剪辑，但分割进度仍将被清除",
+    "notDeleted": "<bold>未删除：</bold>脚本文本、场景对话、旁白、音乐/SFX 音频、场景静态图像和角色参考。",
+    "resetting": "正在重置...",
+    "resetProduction": "重置生产"
+  },
+  "screening": {
+    "generateStreamTitle": "生成 {language} 流",
+    "generateStreamTitleFallback": "生成语言流",
+    "generateStreamDescription": "翻译场景文本并生成该语言的对话/旁白音频。现有的音乐和音效将被重复使用。",
+    "generateDialogue": "生成对话",
+    "generating": "生成…",
+    "publishRevisionTitle": "发布故事板修订版",
+    "publishRevisionDescription": "增加版本（例如 v{current} → v{next}）。您的分享链接不会改变。刷新的审阅者将看到新的当前版本；他们的下一次提交的内容将被相应地盖上印章。",
+    "labelOptional": "标签（可选）",
+    "labelPlaceholder": "例如第二轮客户笔记",
+    "changeNotesOptional": "更改备注（可选）",
+    "changeNotesPlaceholder": "自上一个版本以来发生了什么变化？",
+    "publishVersion": "发布 v{version}"
+  },
+  "segments": {
+    "addBeat": {
+      "title": "添加节拍",
+      "description": "通过选择镜头类型、场景元素和对话来构建视频生成提示。 Veo 3.1 将直接根据提示生成画外音和 SFX。",
+      "sceneBadge": "场景{sceneNumber}",
+      "includeSceneDirection": "包括场景方向",
+      "includeSceneDirectionHint": "选择要包含的导演笔记。单击以启用，然后根据需要添加自定义注释。",
+      "clickToAddCustom": "点击添加自定义",
+      "editOrAddCustomNotes": "编辑或添加自定义注释...",
+      "addCustomPlaceholder": "添加 {label}...",
+      "directionCamera": "相机注意事项",
+      "directionLighting": "灯光",
+      "directionScene": "场景/环境",
+      "directionTalent": "天赋/格挡",
+      "directionAudio": "音频/音效",
+      "dialogueLines": "对话台词",
+      "veoSpeechBadge": "Veo 3.1 语音",
+      "dialogueHint": "为此片段选择对话。单击进行选择，然后编辑文本以仅使用部分内容。 Veo 3.1 将生成角色的声音。",
+      "editDialoguePlaceholder": "编辑对话文本以在该片段中使用...",
+      "editDialogueHint": "编辑以仅使用该段所需的部分（<12s）",
+      "noDialogue": "此场景中没有对话",
+      "includeNarration": "包括旁白画外音",
+      "narrationText": "旁白文本（可编辑）",
+      "narrationPlaceholder": "编辑该片段的旁白文本...",
+      "narrationEditHint": "编辑以仅使用该片段的旁白部分",
+      "narratorVoice": "旁白声音",
+      "selectedVoice": "已选择: {name}",
+      "autoEstimate": "自动估算",
+      "omniFlashMax": "全向闪光最大值：每段 {seconds} 秒",
+      "additionalNotes": "附加说明",
+      "additionalNotesPlaceholder": "任何额外的方向、视觉细节或风格注释......",
+      "generationMethod": "生成方法",
+      "t2v": "文本转视频",
+      "i2v": "图像转视频",
+      "noSceneImage": "（无场景图）",
+      "promptPreview": "即时预览",
+      "startTime": "开始时间",
+      "endTime": "结束时间",
+      "method": "方法",
+      "addAction": "添加节拍"
+    },
+    "edit": {
+      "title": "编辑段",
+      "badge": "场景 {sceneNumber} • 击败 {beatNumber}",
+      "description": "修改片段的提示、持续时间和生成设置。",
+      "generationPrompt": "生成提示",
+      "promptPlaceholder": "输入视频生成提示...",
+      "promptHint": "编辑将发送到 Veo 3.1 以进行视频生成的提示。",
+      "durationHint": "Omni Flash 支持 4-10 秒剪辑",
+      "generationMethod": "生成方法",
+      "t2v": "文本转视频",
+      "i2v": "图像转视频",
+      "i2vHint": "将使用场景帧作为起始图像"
+    },
+    "delete": {
+      "title": "删除 Beat {number}？",
+      "description": "此操作无法撤消。",
+      "segmentLabel": "部分",
+      "segmentOf": "{total} 的#{index}",
+      "duration": "期间",
+      "hasFramesWarning": "该段已生成将丢失的帧。",
+      "lastBeatWarning": "警告：这是场景中唯一的片段。删除它将使场景中没有任何关键帧。",
+      "shiftWarning": "删除该段将移动所有后续段。时序和序列索引将自动重新计算。",
+      "deleting": "正在删除...",
+      "deleteBeat": "删除节拍"
+    },
+    "addType": {
+      "title": "将节拍添加到场景 {sceneNumber}",
+      "description": "添加基于关键帧的片段以用于 AI 视频生成。对于电影元素（标题、转场、B-roll），请使用“电影元素”按钮。",
+      "tabType": "类型",
+      "tabPosition": "位置",
+      "tabPrompt": "迅速的",
+      "defaultDuration": "{seconds} 默认",
+      "orDivider": "或者",
+      "regenerateAll": "重新生成所有节拍",
+      "regenerateAllCount": "{count} 段",
+      "regenerateAllHint": "使用 AI 重新分析场景并生成新的片段。这将取代现有的部分。",
+      "insertPosition": "插入位置",
+      "referenceBeat": "参考节拍",
+      "selectSegment": "选择段",
+      "beatOption": "击败 {number} ({duration}s)",
+      "duration": "期间",
+      "recommendedDuration": "推荐：用于 {name} 的 {seconds}",
+      "preview": "预览",
+      "newBadge": "新的",
+      "generatingPrompt": "使用 Gemini 2.5 生成智能提示...",
+      "aiUnavailable": "人工智能不可用",
+      "usingTemplate": "使用模板提示。 {error}",
+      "contextAware": "上下文感知提示",
+      "contextAwareHint": "这个提示是根据邻近场景分析生成的。根据需要进行编辑。",
+      "generationPrompt": "生成提示",
+      "aiGenerate": "人工智能生成",
+      "generating": "生成...",
+      "reset": "重置",
+      "promptPlaceholder": "描述视觉内容...",
+      "charCount": "{count} 字符 • 该提示将用于帧生成",
+      "presetSettings": "预设设置",
+      "addNamed": "添加 {name}",
+      "types": {
+        "standard": {
+          "name": "标准节拍",
+          "description": "具有用于 AI 视频生成的开始/结束关键帧的场景片段。完全控制镜头构图。"
+        },
+        "extend": {
+          "name": "继续拍摄",
+          "description": "从上一个片段的结束帧继续。保持各个剪辑的视觉连续性。"
+        }
+      },
+      "positions": {
+        "start": {
+          "label": "开始时",
+          "description": "作为第一段插入"
+        },
+        "before": {
+          "label": "选定前",
+          "description": "在所选段之前插入"
+        },
+        "after": {
+          "label": "选定后",
+          "description": "在选定的段之后插入"
+        },
+        "end": {
+          "label": "结束时",
+          "description": "附加为最后一段"
+        }
+      }
+    },
+    "addSpecial": {
+      "title": "添加电影元素",
+      "description": "添加特殊视频片段。人工智能将为视频生成生成优化的提示。",
+      "elementType": "元素类型",
+      "duration": "期间",
+      "recommendedDuration": "推荐：用于 {name} 的 {seconds}",
+      "videoPrompt": "视频生成提示",
+      "generating": "生成...",
+      "regenerate": "再生",
+      "reset": "重置",
+      "generatingCinematic": "正在生成电影提示...",
+      "usingTemplate": "使用模板提示",
+      "aiUnavailable": "AI 不可用：{error}",
+      "promptPlaceholder": "AI生成的提示将出现在这里...",
+      "charCount": "{count} 字符 • 编辑以自定义或单击“重新生成”以获取新提示",
+      "insertAt": "插入位置 {position}",
+      "noKeyframes": "无关键帧",
+      "addNamed": "添加 {name}",
+      "types": {
+        "title": {
+          "name": "标题序列",
+          "description": "带有粗体文字叠加的电影标题卡。为您的视频定下基调并打造品牌。"
+        },
+        "match-cut": {
+          "name": "匹配切桥",
+          "description": "模仿场景之间的形状或运动的创意过渡。例如，纺车→旋转时钟。"
+        },
+        "establishing": {
+          "name": "建立镜头",
+          "description": "无人机或起重机拍摄的广角镜头可确定新地点的地理位置、一天中的时间和心情。"
+        },
+        "broll": {
+          "name": "幕后花絮（平静）",
+          "description": "大气视觉呼吸。环境细节的特写镜头增加了质感和节奏。"
+        },
+        "outro": {
+          "name": "片尾/制作人员名单",
+          "description": "专业的结束顺序。优雅的淡入淡出或滚动，具有制作学分的美感。"
+        }
+      }
+    },
+    "common": {
+      "shotConfiguration": "镜头配置",
+      "shotType": "射击类型",
+      "cameraMovement": "相机运动",
+      "lens": "镜片",
+      "duration": "期间"
+    },
+    "shotTypes": {
+      "extreme-wide": {
+        "label": "极宽",
+        "description": "完整的环境，微小的主体"
+      },
+      "wide": {
+        "label": "广角镜头",
+        "description": "全身、环境背景"
+      },
+      "medium-wide": {
+        "label": "中宽",
+        "description": "膝盖对头，一些环境"
+      },
+      "medium": {
+        "label": "中景",
+        "description": "腰部向上，对话"
+      },
+      "medium-close": {
+        "label": "中景特写",
+        "description": "挺胸抬头，情绪集中"
+      },
+      "close-up": {
+        "label": "特写",
+        "description": "只看脸，情感强烈"
+      },
+      "extreme-close": {
+        "label": "极端特写",
+        "description": "眼睛、嘴巴或细节"
+      },
+      "two-shot": {
+        "label": "两枪",
+        "description": "两个角色被框在一起"
+      },
+      "over-shoulder": {
+        "label": "过肩而过",
+        "description": "从一个角色背后的视角"
+      },
+      "pov": {
+        "label": "观点",
+        "description": "视角拍摄"
+      }
+    },
+    "cameraMovements": {
+      "static": {
+        "label": "静止的",
+        "description": "被锁住，没有动静"
+      },
+      "push-in": {
+        "label": "推入",
+        "description": "缓慢地将移动车移向拍摄对象"
+      },
+      "pull-out": {
+        "label": "拔出",
+        "description": "移动车缓慢远离拍摄对象"
+      },
+      "pan-left": {
+        "label": "向左平移",
+        "description": "相机向左旋转"
+      },
+      "pan-right": {
+        "label": "向右平移",
+        "description": "相机向右旋转"
+      },
+      "tilt-up": {
+        "label": "向上倾斜",
+        "description": "相机角度向上"
+      },
+      "tilt-down": {
+        "label": "向下倾斜",
+        "description": "相机角度向下"
+      },
+      "tracking": {
+        "label": "追踪",
+        "description": "跟随主体运动"
+      },
+      "handheld": {
+        "label": "手持式",
+        "description": "轻微晃动，纪录片的感觉"
+      },
+      "crane": {
+        "label": "起重机/起重臂",
+        "description": "垂直运动、扫掠"
+      }
+    },
+    "lenses": {
+      "24mm": {
+        "label": "24毫米宽",
+        "description": "环保、广阔"
+      },
+      "35mm": {
+        "label": "35毫米变形镜头",
+        "description": "电影般，轻微失真"
+      },
+      "50mm": {
+        "label": "50毫米标准",
+        "description": "自然视角"
+      },
+      "85mm": {
+        "label": "85毫米肖像",
+        "description": "浅景深，亲密"
+      },
+      "135mm": {
+        "label": "135毫米长焦",
+        "description": "压缩、隔离"
+      }
+    },
+    "generateTitle": "生成场景节拍",
+    "regenerateSceneTitle": "重新生成场景节拍",
+    "generateDescription": "配置如何为此场景创建片段。",
+    "beatsPreview": "节拍",
+    "tabTiming": "定时",
+    "tabReferences": "参考",
+    "tabStyle": "风格",
+    "narrationDriven": "叙述驱动的分割",
+    "narrationDrivenHint": "创建与叙述相一致并说明叙述的片段。每个片段都成为画外音的电影背景。",
+    "targetBeatDuration": "目标节拍持续时间",
+    "addTitle": "添加节拍",
+    "addNewTitle": "添加新段",
+    "addDescription": "创建新的视觉片段以延长场景时间轴。",
+    "addDuration": "持续时间（秒）",
+    "addDurationHint": "建议：3-5 秒以实现平稳节奏",
+    "addAction": "添加节拍",
+    "editTitle": "编辑段",
+    "editBadge": "场景 {sceneNumber} • 击败 {beatNumber}",
+    "editDescription": "修改片段的提示、持续时间和生成设置。",
+    "shotConfiguration": "镜头配置",
+    "shotType": "射击类型",
+    "cameraMovement": "相机运动",
+    "deleteTitle": "删除 Beat {number}？",
+    "deleteDescription": "此操作无法撤消。",
+    "segmentLabel": "部分",
+    "segmentOf": "{total} 的#{index}",
+    "duration": "期间",
+    "hasFramesWarning": "该段已生成将丢失的帧。",
+    "lastBeatWarning": "警告：这是场景中唯一的片段。删除它将使场景中没有任何关键帧。",
+    "shiftWarning": "删除该段将移动所有后续段。时序和序列索引将自动重新计算。",
+    "deleting": "正在删除...",
+    "deleteBeat": "删除节拍",
+    "regenerateTitle": "再生节拍",
+    "regenerateDescription": "清除所有片段并返回节拍生成器重新开始。",
+    "beats": "节拍",
+    "totalDuration": "总持续时间",
+    "anchoredFrames": "锚定框架",
+    "anchoredCount": "{anchored} / {total}",
+    "regenerateAssetsWarning": "警告：这将删除所有片段，包括生成的关键帧和视频资源。此操作无法撤消。",
+    "regenerateEmptyWarning": "所有当前段都将被删除。您将被带到 Beat Builder 以使用新设置进行配置和重新生成。",
+    "regenerateNextHint": "Beat Builder 将打开，其中包含总持续时间、分段计数、焦点模式和自定义方向的控件。",
+    "deleteAndRegenerate": "删除并重新生成",
+    "regenerate": "再生",
+    "addTypeTitle": "添加特殊段",
+    "addTypeDescription": "选择要插入到时间线中的片段目的。"
+  },
+  "audio": {
+    "generateAssets": {
+      "title": "生成资产",
+      "description": "选择要为所有场景生成的资产类型",
+      "targetLanguage": "目标语言",
+      "translateBeforeAudio": "在生成音频之前，文本将从英语翻译为 {language}",
+      "audioTypes": "音频类型",
+      "selectAll": "选择全部",
+      "deselectAll": "取消全选",
+      "narration": "旁白",
+      "dialogue": "对话",
+      "backgroundMusic": "背景音乐",
+      "soundEffects": "音效（ElevenLabs，每个约 15 学分）",
+      "statusComplete": "完全的",
+      "statusPartial": "部分（{current}/{total}）",
+      "statusNotGenerated": "未生成",
+      "statusGeneratedCount": "生成 {count}",
+      "statusNoneGenerated": "没有生成",
+      "scenesCount": "{count} 场景",
+      "linesCount": "{count} 线",
+      "sfxCues": "{count, plural, one {# cue} other {# cues}}",
+      "noSfxCues": "脚本中还没有 SFX 提示",
+      "generationSummary": "世代总结",
+      "summaryNarration": "{count, plural, one {# narration file} other {# narration files}}",
+      "summaryDialogue": "{count, plural, one {# dialogue file} other {# dialogue files}}",
+      "summaryMusic": "{count, plural, one {# music file} other {# music files}}",
+      "summarySfx": "{count, plural, one {# sound effect} other {# sound effects}}",
+      "summaryCharacters": "{count, plural, one {# character asset} other {# character assets}}",
+      "summaryAlreadyGenerated": "（{count} 已生成）",
+      "summarySceneImages": "{count, plural, one {# scene image} other {# scene images}}",
+      "overwriteWarning": "这将覆盖所选类型的现有音频文件",
+      "additionalAssets": "额外资产",
+      "characterRefs": "角色参考图像",
+      "charactersReady": "{count} 字符 • {ready} 就绪",
+      "noCharacters": "没有可用的字符",
+      "sceneImages": "场景图像（并发）",
+      "sceneImagesReady": "{count} 场景 • {ready} 就绪 • 3 个并发",
+      "regenerateAllImages": "重新生成所有图像",
+      "regenerateAllImagesHint": "覆盖现有图像（默认：仅缺失）",
+      "stayOpenHint": "保持此对话框打开，直到旁白和对话生成完成。您可以随时切换到后台模式。",
+      "narrationProgress": "旁白进度",
+      "dialogueProgress": "对话进展",
+      "musicProgress": "音乐进步",
+      "sfxProgress": "音效进度",
+      "characterProgress": "角色进步",
+      "imageProgress": "场景图像进度",
+      "sceneProgress": "场景 {current} / {total}",
+      "secondaryDialogue": "对话 {current}/{total}",
+      "secondaryMusic": "音乐 {current}/{total}",
+      "secondarySfx": "SFX {current}/{total}",
+      "secondaryCharacter": "角色 {current}/{total}",
+      "secondaryImage": "场景图像 {current}/{total}",
+      "runInBackground": "在后台运行",
+      "generationComplete": "生成完成",
+      "generating": "生成...",
+      "generate": "产生",
+      "generateAgain": "再次生成"
+    },
+    "assets": {
+      "title": "音频资产 - 场景 {number}",
+      "description": "管理该场景的音轨。从脚本中添加、删除或重新同步音频剪辑。",
+      "totalClips": "{count} 音频剪辑总数",
+      "syncFromScript": "从脚本同步",
+      "uploading": "正在上传音频...",
+      "close": "关闭",
+      "clipLabel": "{track} 夹子",
+      "start": "开始于： {time}",
+      "clipDuration": "持续时间：{time}",
+      "noClips": "没有 {track} 剪辑",
+      "uploadAudio": "上传音频",
+      "clearAll": "全部清除",
+      "clipCount": "{count, plural, one {# clip} other {# clips}}",
+      "pause": "暂停",
+      "play": "玩",
+      "removeClip": "移除夹子",
+      "tracks": {
+        "voiceover": {
+          "label": "画外音/旁白",
+          "description": "场景旁白和画外音音频"
+        },
+        "dialogue": {
+          "label": "对话",
+          "description": "人物对话台词"
+        },
+        "music": {
+          "label": "音乐",
+          "description": "背景音乐和乐谱"
+        },
+        "sfx": {
+          "label": "音效",
+          "description": "音效和氛围"
+        }
+      }
+    },
+    "alignment": {
+      "title": "Beat {number} 音频对齐",
+      "description": "将此片段与对话和音轨对齐，以实现精确的计时。",
+      "beatTiming": "节拍时间",
+      "aligned": "对齐",
+      "nearlyAligned": "几乎对齐",
+      "misaligned": "未对准",
+      "noDialogue": "无对话",
+      "startTime": "开始时间",
+      "endTime": "结束时间",
+      "duration": "期间",
+      "fitToDialogue": "适合对话持续时间 ({duration}s)",
+      "dialogueCoverage": "对话报道",
+      "dialogueCoverageHint": "选择该片段应涵盖哪些对话台词。这有助于把握时机和人物焦点。",
+      "noDialogueLines": "此场景中没有对话台词",
+      "audioAnchor": "音频主播",
+      "anchored": "锚定",
+      "manual": "手动的",
+      "audioAnchorHint": "将此关键帧锚定到音频剪辑，以便在 Screening Room 中自动进行时序对齐。",
+      "anchorTo": "锚定至",
+      "noneManual": "无（手动）",
+      "narration": "旁白",
+      "descriptionOption": "描述",
+      "dialogueOption": "对话：{label}",
+      "position": "位置",
+      "startOfAudio": "音频开始",
+      "endOfAudio": "音频结束",
+      "durationMode": "持续时间模式",
+      "modeManual": "手动的",
+      "modeMatchAudio": "匹配音频长度",
+      "modeFillToNext": "填充到下一个锚点",
+      "modeSplitEven": "均匀分割",
+      "offset": "抵消",
+      "modeManualHint": "通过 imageDuration 设置手动设置持续时间",
+      "modeMatchAudioHint": "持续时间与锚定音频剪辑的长度匹配",
+      "modeFillToNextHint": "持续时间延伸到下一个锚点或场景结束",
+      "modeSplitEvenHint": "持续时间与同一音频上的其他关键帧平均分配",
+      "narrationAudio": "旁白音频",
+      "sceneNarration": "场景旁白：{duration}s",
+      "startsAt": "从 {time}s 开始",
+      "alignmentTips": "对齐提示：",
+      "tip1": "指定在此片段中应可见的对话台词",
+      "tip2": "使用“适合对话”将片段持续时间与音频相匹配",
+      "tip3": "在时间轴中启用“对齐”以将片段边缘与音频边界对齐",
+      "saveAlignment": "保存对齐方式"
+    },
+    "assetsTitle": "音频资产 - 场景 {number}",
+    "assetsDescription": "管理该场景的音轨。从脚本中添加、删除或重新同步音频剪辑。",
+    "totalClips": "{count} 音频剪辑总数",
+    "syncFromScript": "从脚本同步",
+    "uploading": "正在上传音频...",
+    "close": "关闭",
+    "trackVoiceover": "画外音/旁白",
+    "trackVoiceoverHint": "场景旁白和画外音音频",
+    "trackDialogue": "对话",
+    "trackDialogueHint": "人物对话台词",
+    "trackMusic": "音乐",
+    "trackMusicHint": "背景音乐和乐谱",
+    "trackSfx": "音效",
+    "trackSfxHint": "音效和氛围",
+    "clipLabel": "{track} 夹子",
+    "start": "开始于： {time}",
+    "clipDuration": "持续时间：{time}",
+    "alignmentTitle": "Beat {number} 音频对齐",
+    "alignmentDescription": "将此片段与对话和音轨对齐，以实现精确的计时。",
+    "beatTiming": "节拍时间",
+    "aligned": "对齐",
+    "nearlyAligned": "几乎对齐",
+    "misaligned": "未对准",
+    "noDialogue": "无对话",
+    "startTime": "开始时间",
+    "endTime": "结束时间",
+    "duration": "期间",
+    "generateTitle": "生成资产",
+    "generateDescription": "选择要为所有场景生成的资产类型",
+    "targetLanguage": "目标语言",
+    "translateBeforeAudio": "在生成音频之前，文本将从英语翻译为 {language}",
+    "narrationProgress": "旁白进度",
+    "dialogueProgress": "对话进展",
+    "musicProgress": "音乐进步",
+    "sfxProgress": "音效进度",
+    "characterProgress": "角色进步",
+    "imageProgress": "场景图像进度",
+    "sceneProgress": "场景 {current} / {total}",
+    "runInBackground": "在后台运行",
+    "generationComplete": "生成完成"
+  },
+  "export": {
+    "document": {
+      "title": "出口文件",
+      "description": "选择要导出的文档：",
+      "script": "脚本",
+      "scriptHint": "专业脚本格式",
+      "storyboard": "故事板",
+      "storyboardHint": "带有图像的视觉故事板",
+      "sceneDirection": "场景方向",
+      "sceneDirectionHint": "技术场景指导"
+    },
+    "stream": {
+      "title": "导出流",
+      "description": "场景 {number} — 用于草稿的快速 (WebM)、用于交付的广播 (MP4) 或用于长场景的云。",
+      "videoSequence": "视频序列（{count} 节拍）",
+      "unmuteAll": "全部取消静音",
+      "muteAll": "全部静音",
+      "beatLabel": "击败{number}",
+      "noRenderedSegments": "没有可用的渲染片段",
+      "beatsNotRendered": "{count, plural, one {# beat} other {# beats}} 尚未渲染",
+      "audioTracksTiming": "音轨和定时",
+      "narration": "旁白",
+      "dialogue": "对话",
+      "backgroundMusic": "背景音乐",
+      "soundEffects": "音效",
+      "clips": "{count, plural, one {# clip} other {# clips}}",
+      "notAvailable": "无法使用",
+      "startAt": "开始于",
+      "volume": "体积",
+      "resolution720p": "720p（1280×720）",
+      "resolution1080p": "1080p（1920×1080）",
+      "resolution4k": "4K（3840×2160）",
+      "outputResolution": "输出分辨率",
+      "statusPreparing": "正在准备渲染作业...",
+      "statusUploading": "正在上传工作规范...",
+      "statusRendering": "渲染视频...",
+      "statusComplete": "渲染完成！",
+      "statusError": "渲染失败",
+      "videoReady": "视频可供下载",
+      "downloadMp4": "下载MP4",
+      "rendering": "渲染...",
+      "renderScene": "渲染场景"
+    },
+    "videoEditor": {
+      "title": "视频编辑器",
+      "tabSmartPrompt": "智能提示",
+      "tabEditVideo": "编辑视频",
+      "tabExtendVideo": "延长视频",
+      "duration": "期间",
+      "resolution": "解决",
+      "aspect": "方面",
+      "footerHint": "配置相机、性能和风格以获得最佳效果",
+      "generating": "生成...",
+      "generateVideo": "生成视频"
+    }
+  },
+  "direction": {
+    "promptDirection": {
+      "title": "提示方向",
+      "description": "检查并完善指导视频生成的提示。",
+      "modeSuffix": "{mode} 模式",
+      "optimizedForMethod": "针对这种生成方法进行了优化",
+      "currentDirection": "当前方向",
+      "undo": "撤消 ({count})",
+      "noPrompt": "未设置提示方向",
+      "characters": "{count} 角色",
+      "modified": "修改的",
+      "tipsFor": "{mode} 的提示",
+      "refineDirection": "细化方向",
+      "refineHint": "描述您希望如何修改自然语言的提示。",
+      "refinePlaceholder": "例如，让它更戏剧化，放慢动作......",
+      "applyDirection": "申请方向",
+      "modes": {
+        "TEXT_TO_VIDEO": "文本转视频",
+        "IMAGE_TO_VIDEO": "图像转视频",
+        "FRAME_TO_VIDEO": "帧到视频",
+        "EXTEND": "延长",
+        "REFERENCE_IMAGES": "参考"
+      },
+      "tips": {
+        "FRAME_TO_VIDEO": {
+          "tip1": "专注于帧之间的运动和过渡",
+          "tip2": "避免相机移动偏离最终帧",
+          "tip3": "描述元素如何从开始到结束转变"
+        },
+        "IMAGE_TO_VIDEO": {
+          "tip1": "描述静态图像如何变得栩栩如生",
+          "tip2": "包括呼吸、眨眼等细微动作",
+          "tip3": "保持与起始图像的一致性"
+        },
+        "TEXT_TO_VIDEO": {
+          "tip1": "具体的视觉细节和构图",
+          "tip2": "描述灯光、环境和氛围",
+          "tip3": "包括角色位置和动作"
+        },
+        "EXTEND": {
+          "tip1": "重点关注现有动议的延续",
+          "tip2": "保持与源视频的视觉连续性",
+          "tip3": "描述场景中接下来发生的事情"
+        },
+        "REFERENCE_IMAGES": {
+          "tip1": "使用参考图像以保持字符一致性",
+          "tip2": "描述场景并参考人物风格",
+          "tip3": "将视觉参考与场景描述相结合"
+        }
+      },
+      "examples": {
+        "FRAME_TO_VIDEO": {
+          "example1": "让过渡更顺畅",
+          "example2": "添加微妙的相机漂移",
+          "example3": "放慢动作",
+          "example4": "让事情变得更有戏剧性"
+        },
+        "IMAGE_TO_VIDEO": {
+          "example1": "为头发和衣服添加风效果",
+          "example2": "包括轻柔的呼吸动作",
+          "example3": "让灯光更有动感",
+          "example4": "添加环境运动"
+        },
+        "TEXT_TO_VIDEO": {
+          "example1": "让场景更有电影感",
+          "example2": "添加黄金时段照明",
+          "example3": "包括更多环境细节",
+          "example4": "让动作更加动感"
+        },
+        "EXTEND": {
+          "example1": "平稳地继续动作",
+          "example2": "添加微妙的相机摇摄",
+          "example3": "增加场景能量",
+          "example4": "过渡到新角度"
+        },
+        "REFERENCE_IMAGES": {
+          "example1": "配合角色的表情",
+          "example2": "保持相同的艺术风格",
+          "example3": "保持一致的照明",
+          "example4": "使用相同的调色板"
+        }
+      }
+    },
+    "director": {
+      "title": "生成视频：击败 {number}",
+      "description": "在渲染之前检查并自定义生成参数。",
+      "tabTextToVideo": "文本转视频",
+      "tabTextToVideoShort": "T2V",
+      "tabImageToVideo": "图像转视频",
+      "tabImageToVideoShort": "I2V",
+      "tabReference": "参考",
+      "tabReferenceShort": "参考文献",
+      "tabExtend": "延长",
+      "tabExtendShort": "外部",
+      "generateVideo": "生成视频",
+      "resetToSegmentDialogue": "重置为分段对话",
+      "frameFirstTitle": "框架优先工作流程：",
+      "frameFirstBody": "在“帧”步骤中生成关键帧以获得更好的字符一致性。文本转视频可用，但可能会导致字符漂移。",
+      "disabledNeedStartFrame": "首先生成起始帧（帧步骤）",
+      "disabledNeedPrevious": "先生成上一部分或者渲染源视频"
+    },
+    "framePrompt": {
+      "title": "生成帧",
+      "titlePlural": "生成帧",
+      "beatBadge": "击败{number}",
+      "startEnd": "开始+结束",
+      "startFrame": "起始帧",
+      "endFrame": "结束帧",
+      "endDescription": "结束关键帧使用片段开始帧图像的定向编辑，使演员、服装和地理位置保持一致，避免出现混淆视频模型的不相关的完整渲染。",
+      "tabVisualSetup": "视觉设置",
+      "tabCustomPrompt": "自定义提示",
+      "characterRefsActive": "角色参考活跃",
+      "characterRefsHint": "为了获得人物参考的最佳效果，请使用特写或中景取景。广角镜头使人物太小而无法进行面部识别。",
+      "contentAwareEnd": "内容感知结束（从头开始编辑）",
+      "contentAwareEndHint": "最终图像是通过在对话/动作播放后编辑片段的开始帧来生成的——表情和块不断演变，同时场景连续性保持锁定。",
+      "generating": "生成...",
+      "generateFrame": "生成帧",
+      "generateFrames": "生成帧"
+    },
+    "preVis": {
+      "title": "直接 — {label}",
+      "description": "场景 {number} · 带有角色和服装参考的引导提示构建器。",
+      "matchingNotes": "参考搭配笔记",
+      "tabVisualSetup": "视觉设置",
+      "tabCustomPrompt": "自定义提示",
+      "wardrobeOverride": "衣柜文本覆盖（可选 - 双连画参考图像可用时发送）",
+      "locationReference": "位置参考",
+      "oneSelected": "已选择 1 项",
+      "wardrobePlaceholder": "来自参考图书馆的完整衣柜描述……",
+      "promptPlaceholder": "完整图像生成提示...",
+      "negativePlaceholder": "负面提示...",
+      "generating": "生成…",
+      "generateWithDirect": "直接生成"
+    }
+  },
+  "foundation": {
+    "reimagine": {
+      "changeArtStyleTitle": "改变艺术风格",
+      "changeArtStyleDescription": "改变你的艺术风格需要重新构想 Blueprint。 SceneFlow 将优化您的脚本以适应新的审美。",
+      "changeAspectRatioTitle": "更改纵横比",
+      "changeAspectRatioDescription": "更改纵横比需要重新构想 Blueprint。场景方向和取景将针对新格式进行重建。",
+      "loseEditsTitle": "您将丢失手动制作编辑：",
+      "loseScriptTweaks": "脚本行调整尚未锁定",
+      "loseStoryboard": "故事板框架和生成的资产",
+      "loseBeatAdjustments": "节拍级别制作调整",
+      "artStyle": "艺术风格",
+      "aspectRatio": "纵横比",
+      "reimagineInBlueprint": "在 Blueprint 中重新构想"
+    },
+    "optimizeScene": {
+      "title": "优化场景 {number}",
+      "score": "分数：",
+      "pacing": "起搏：{value}",
+      "tension": "张力：{value}",
+      "character": "角色：{value}",
+      "visual": "视觉：{value}",
+      "aiRecommendations": "人工智能建议 ({count})",
+      "commonOptimizations": "常见优化",
+      "customInstructions": "定制说明",
+      "stop": "停止",
+      "voice": "嗓音",
+      "placeholder": "添加任何具体说明以改进此场景...",
+      "selectedCount": "已选择 {count, plural, one {# optimization} other {# optimizations}}",
+      "selectHint": "选择优化或添加说明",
+      "applying": "正在申请...",
+      "applyRecommendations": "应用建议"
+    },
+    "referenceLibrary": {
+      "title": "Reference Library"
+    },
+    "beatReferences": {
+      "title": "回顾参考 — 场景 {number}",
+      "description": "SceneFlow 自动选择此节拍的参考。生成前确认或调整。",
+      "beatKindAction": "行动",
+      "beatKindNarration": "旁白",
+      "beatKindDialogue": "对话",
+      "beatLabel": "节拍：{kind}",
+      "autoSelected": "自动选择：{summary}",
+      "locationMatchedAssignment": "位置与场景分配相匹配",
+      "locationMatchedHeading": "位置与场景标题匹配",
+      "locationReference": "位置参考",
+      "pickLocation": "为此节拍选择一个环境参考（用于视觉一致性）。",
+      "match": "匹配",
+      "selectedCount": "已选择 {count}",
+      "saveSelection": "保存选择",
+      "generating": "生成…",
+      "generateFrame": "生成帧"
+    },
+    "analysisHandoff": {
+      "title": "分析所有 {count} 场景",
+      "subtitle": "Audience Resonance 在后台运行",
+      "durationFewMinutes": "几分钟",
+      "durationAboutMinute": "大约一分钟",
+      "durationAboutMinutes": "约 {count} 分钟",
+      "takesTime": "这需要 {duration}，因为每个场景都是单独评分的。",
+      "keepEditing": "您可以在运行时继续编辑。分析仅写入其结果 - 它永远不会覆盖您的脚本。",
+      "notifyReady": "准备好后我们会通知您。",
+      "notifyDetail": "进度显示在屏幕底部，即使您离开，结果也会显示在您的通知中。",
+      "dontRemind": "不要再提醒我",
+      "starting": "开始…",
+      "startAnalysis": "开始分析"
+    },
+    "filmTreatment": {
+      "title": "胶片处理回顾",
+      "noTreatment": "没有找到适合该项目的胶片处理方法",
+      "generateFirst": "首先在 Blueprint 阶段生成薄膜处理。",
+      "description": "验证您的脚本与批准的治疗一致"
+    }
+  },
+  "retakeExtra": {
+    "intelligentRetake": {
+      "title": "智能重考",
+      "description": "描述更正情况。我们将路由框架编辑、提示重写或两者兼而有之。",
+      "whatToFix": "我们应该解决什么问题？",
+      "fixPlaceholder": "描述要修复的内容，例如“把桌子上的咖啡杯拿开”",
+      "analyzing": "正在分析……",
+      "analyze": "分析",
+      "viewFullPrompt": "查看完整提示",
+      "fixStartingFrame": "修复起始帧",
+      "fixStartingFrameHint": "在重新生成之前编辑帧锁定的起始图像。",
+      "frameEditPlaceholder": "帧编辑指令",
+      "applyPromptChanges": "应用提示更改",
+      "applyPromptChangesHint": "使用修改后的提示和否定补充。",
+      "noPromptChanges": "没有建议立即进行更改。",
+      "retaking": "重考…",
+      "approveAndRetake": "批准并重新参加",
+      "clipReferenceAlt": "剪辑参考",
+      "anomalyFrame": "在起始帧中",
+      "anomalyMotion": "运动中引入",
+      "anomalyBoth": "框架和运动",
+      "anomalyUnknown": "来源不明"
+    },
+    "regenerateBeats": {
+      "title": "再生节拍",
+      "description": "清除所有片段并返回节拍生成器重新开始。",
+      "beats": "节拍",
+      "totalDuration": "总持续时间",
+      "anchoredFrames": "锚定框架",
+      "anchoredCount": "{anchored} / {total}",
+      "assetsWarning": "警告：这将删除所有片段，包括生成的关键帧和视频资源。此操作无法撤消。",
+      "emptyWarning": "所有当前段都将被删除。您将被带到 Beat Builder 以使用新设置进行配置和重新生成。",
+      "nextHint": "Beat Builder 将打开，其中包含总持续时间、分段计数、焦点模式和自定义方向的控件。",
+      "deleteAndRegenerate": "删除并重新生成",
+      "regenerate": "再生"
+    },
+    "keyframeGeneration": {
+      "title": "关键帧生成设置",
+      "description": "配置片段的创建方式以及如何与脚本和音频对齐。",
+      "noDescription": "无可用描述",
+      "audioBadge": "{duration}s 音频",
+      "existingWarning": "{count, plural, one {# existing segment} other {# existing segments}} 将被替换",
+      "manualEditsSuffix": "（{count} 手动编辑）",
+      "tabAlignment": "对齐和节奏",
+      "tabDirection": "场景方向",
+      "audioAlignment": "音频对齐",
+      "narrationDriven": "叙事驱动",
+      "narrationDrivenHint": "将剪辑与旁白节拍对齐",
+      "dialogueDriven": "对话驱动",
+      "dialogueDrivenHint": "使剪辑与对话保持一致",
+      "pacingStyle": "节奏风格",
+      "beatCount": "节拍计数",
+      "auto": "汽车",
+      "manual": "手动的",
+      "basedOnPacing": "基于 {pacing} 起搏和 {basis}",
+      "audioBasis": "{duration}s 音频",
+      "durationBasis": "{duration} 持续时间",
+      "segmentsCount": "{count} 段",
+      "advancedOptions": "高级选项",
+      "shotVariety": "射击种类",
+      "varietyMinimal": "最小 - 一致的框架",
+      "varietyBalanced": "平衡 - 镜头混合",
+      "varietyHigh": "高动态品种",
+      "preserveManualEdits": "保留手动编辑",
+      "editedPromptsFound": "{count} 找到已编辑的提示",
+      "targetDuration": "目标持续时间（秒）",
+      "directionOverrides": "场景方向覆盖",
+      "directionOverridesHint": "这些设置会影响 AI 如何为每个片段生成提示。选择“多样化”让 AI 决定每个片段。",
+      "primaryShotType": "主要镜头类型",
+      "cameraMovement": "相机运动",
+      "lightingMood": "照明心情",
+      "atmosphere": "气氛",
+      "footerSummary": "{count} 段 • {duration}",
+      "generating": "生成...",
+      "regenerateKeyframes": "重新生成关键帧",
+      "generateKeyframes": "生成关键帧",
+      "pacing": {
+        "slow": {
+          "label": "缓慢而沉思",
+          "description": "更长的段（6-8s），最小的切割"
+        },
+        "moderate": {
+          "label": "缓和",
+          "description": "平衡节奏（4-6 秒段）"
+        },
+        "fast": {
+          "label": "快速且动态",
+          "description": "快速剪辑（3-4s 片段）"
+        },
+        "dynamic": {
+          "label": "动态（音频匹配）",
+          "description": "根据旁白/对话节拍而变化"
+        }
+      },
+      "shotTypes": {
+        "wide": {
+          "label": "广角镜头",
+          "description": "建立空间和背景"
+        },
+        "medium": {
+          "label": "中景",
+          "description": "平衡主体与环境"
+        },
+        "close-up": {
+          "label": "特写",
+          "description": "注重情感和细节"
+        },
+        "extreme-close-up": {
+          "label": "极端特写",
+          "description": "戏剧性的强调"
+        },
+        "two-shot": {
+          "label": "两次射击",
+          "description": "对话中的人物"
+        },
+        "over-the-shoulder": {
+          "label": "过肩而过",
+          "description": "对话中的 POV"
+        },
+        "varied": {
+          "label": "多种多样（人工智能决定）",
+          "description": "让 AI 按段挑选"
+        }
+      },
+      "cameraMovements": {
+        "static": {
+          "label": "静止的",
+          "description": "无移动，框架稳定"
+        },
+        "pan": {
+          "label": "平底锅",
+          "description": "水平扫掠"
+        },
+        "tilt": {
+          "label": "倾斜",
+          "description": "垂直运动"
+        },
+        "dolly": {
+          "label": "多莉",
+          "description": "靠近/远离拍摄对象"
+        },
+        "tracking": {
+          "label": "追踪",
+          "description": "跟随拍摄对象的移动"
+        },
+        "handheld": {
+          "label": "手持式",
+          "description": "自然运动"
+        },
+        "varied": {
+          "label": "多种多样（人工智能决定）",
+          "description": "混合动作"
+        }
+      },
+      "lighting": {
+        "natural": {
+          "label": "自然的",
+          "description": "真实、柔和的灯光"
+        },
+        "dramatic": {
+          "label": "戏剧性",
+          "description": "高对比度、阴影"
+        },
+        "soft": {
+          "label": "柔和/扩散",
+          "description": "柔和、迷人的光线"
+        },
+        "noir": {
+          "label": "黑色",
+          "description": "黑暗、神秘、低调"
+        },
+        "golden": {
+          "label": "黄金时段",
+          "description": "温暖的日落/日出色调"
+        },
+        "cold": {
+          "label": "冷色/蓝色",
+          "description": "冷静、严肃、临床"
+        }
+      },
+      "atmospheres": {
+        "neutral": {
+          "label": "中性的",
+          "description": "标准心情"
+        },
+        "tense": {
+          "label": "紧张",
+          "description": "悬疑、悬疑"
+        },
+        "serene": {
+          "label": "安详",
+          "description": "平和、平静"
+        },
+        "energetic": {
+          "label": "精力充沛",
+          "description": "充满活力、令人兴奋"
+        },
+        "melancholic": {
+          "label": "忧郁的",
+          "description": "悲伤、反思"
+        },
+        "mysterious": {
+          "label": "神秘",
+          "description": "有趣、神秘"
+        },
+        "hopeful": {
+          "label": "满怀希望",
+          "description": "乐观、振奋"
+        }
+      }
+    },
+    "intelligentTitle": "智能重考",
+    "intelligentDescription": "描述更正情况。我们将路由框架编辑、提示重写或两者兼而有之。",
+    "whatToFix": "我们应该解决什么问题？",
+    "fixPlaceholder": "描述要修复的内容，例如“把桌子上的咖啡杯拿开”",
+    "analyzing": "正在分析……",
+    "analyze": "分析",
+    "viewFullPrompt": "查看完整提示",
+    "fixStartingFrame": "修复起始帧",
+    "fixStartingFrameHint": "在重新生成之前编辑帧锁定的起始图像。",
+    "frameEditPlaceholder": "帧编辑指令",
+    "applyPromptChanges": "应用提示更改",
+    "applyPromptChangesHint": "使用修改后的提示和否定补充。",
+    "noPromptChanges": "没有建议立即进行更改。",
+    "retaking": "重考…",
+    "approveAndRetake": "批准并重新参加",
+    "keyframeRegenTitle": "重新生成关键帧",
+    "keyframeRegenDescription": "使用更新的方向重建此节拍的开始和结束帧。"
   }
 }

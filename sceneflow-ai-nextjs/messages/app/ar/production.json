@@ -7,7 +7,72 @@
     "references": "المراجع:",
     "timeline": "الجدول الزمني",
     "mixer": "Production Mixer",
-    "directorConsole": "وحدة تحكم المدير"
+    "directorConsole": "وحدة تحكم المدير",
+    "initializing": "التهيئة",
+    "opening": "جارٍ فتح Production Studio",
+    "openingShort": "افتتاح الإنتاج",
+    "backToBlueprint": "العودة إلى Blueprint",
+    "blueprintShort": "SFIBLUEPRINTTERM",
+    "productionLabel": "إنتاج",
+    "viewsAriaLabel": "Production Studio مرات المشاهدة",
+    "viewStudio": "استوديو",
+    "viewScreening": "Screening Room",
+    "viewStreams": "تيارات",
+    "loadingImages": "جارٍ تحميل الصور...",
+    "untitledProject": "مشروع بلا عنوان",
+    "settingUpWorkspace": "إعداد مساحة العمل الخاصة بك",
+    "loadingMessages": {
+      "message1": "جارٍ تحميل إنتاجك...",
+      "message2": "استعادة المشاهد والقصة المصورة...",
+      "message3": "تحضير مساحة عمل Pre-Vis...",
+      "message4": "جارٍ تحميل المكتبة المرجعية...",
+      "message5": "شبه جاهز..."
+    },
+    "generating": "جارٍ الإنشاء...",
+    "shareScreeningTitle": "مشاركة Screening Room",
+    "shareScreeningDescription": "يمكن لأي شخص لديه هذا الرابط مشاهدة العرض التقديمي الخاص بك في Screening Room. لن يحتاجوا إلى حساب Sceneflow.",
+    "shareBulletView": "يمكن للمشاهدين المشاهدة بالصوت الكامل والترجمات",
+    "shareBulletNoEdit": "لا يمكنهم تعديل مشروعك أو تنزيله",
+    "shareBulletDisable": "يمكنك تعطيل هذا الارتباط في أي وقت",
+    "copied": "منسوخ!",
+    "deleteCharacterTitle": "حذف الحرف مع الحوار",
+    "deleteCharacterDescription": "يحتوي الحرف \"{name}\" على {count, plural, one {# dialogue line} other {# dialogue lines}} في البرنامج النصي. ماذا تريد أن تفعل مع خطوط الحوار هذه؟",
+    "clearCharacterIds": "مسح معرفات الأحرف",
+    "clearCharacterIdsHint": "إزالة معرفات الأحرف من خطوط الحوار. سيطابق الحوار الأحرف بالاسم باستخدام المطابقة الاحتياطية المحسنة.",
+    "reassignToAnother": "إعادة التعيين إلى شخصية أخرى",
+    "reassignToAnotherHint": "قم بتعيين جميع خطوط الحوار لشخصية مختلفة.",
+    "selectCharacterReassign": "حدد الشخصية لإعادة التعيين إليها",
+    "reassignAndDelete": "إعادة التعيين والحذف",
+    "clearIdsAndDelete": "مسح المعرفات وحذفها",
+    "mergeDuplicatesTitle": "دمج الأحرف المكررة",
+    "mergeDuplicatesDescription": "حدد الحرف الذي تريد الاحتفاظ به والنسخ المكررة التي تريد دمجها فيه.",
+    "keepThisCharacter": "احتفظ بهذه الشخصية:",
+    "willBeMerged": "سيتم دمجها (النسخ المكررة):",
+    "noDuplicatesToMerge": "لا توجد نسخ مكررة للدمج",
+    "mergeDialogueNote": "سيتم تعيين جميع أسطر الحوار من الأحرف المكررة إلى الشخصية الأساسية.",
+    "mergeCharacters": "دمج الشخصيات",
+    "hasVoice": "(لديه صوت)",
+    "budgetTitle": "إدارة ميزانية الإنتاج - {title}",
+    "setBudget": "ضبط الميزانية",
+    "budgetAmount": "الميزانية: {amount}",
+    "importTranslation": "استيراد الترجمة",
+    "importTranslationTitle": "استيراد ترجمة {language}",
+    "importTranslationDescription": "الصق النص المترجم الخاص بك أدناه. يجب أن يتطابق التنسيق مع التنسيق المُصدَّر:",
+    "importTranslationFormat": "[1] TRANSLATED_LABEL: نص مترجم",
+    "importTranslationPlaceholder": "الصق النص المترجم هنا...",
+    "deleteBeat": "حذف فوز",
+    "deleteBeatDescription": "هل أنت متأكد أنك تريد حذف هذا الجزء؟ لا يمكن التراجع عن هذا الإجراء.",
+    "deleteScene": "حذف المشهد {number}",
+    "deleteSceneDescription": "سيؤدي هذا إلى إزالة هذا المشهد وجميع الأصول المرتبطة به نهائيًا.",
+    "deleteSceneAction": "حذف المشهد",
+    "assetsRemoved": "الأصول التي سيتم إزالتها",
+    "assetSceneImage": "صورة المشهد",
+    "assetNarrationAudio": "السرد الصوتي",
+    "assetDescriptionAudio": "وصف الصوت",
+    "assetDialogueAudio": "الحوار الصوتي",
+    "assetSceneDirection": "اتجاه المشهد",
+    "assetBeats": "{count, plural, one {# beat} other {# beats}}",
+    "assetMusic": "موسيقى"
   },
   "script": {
     "generateScript": "إنشاء برنامج نصي",
@@ -53,5 +118,1171 @@
     "segmentsGenerated": "الشرائح التي تم إنشاؤها",
     "audioGenerated": "تم إنشاء الصوت",
     "saveFailed": "تعذر حفظ التغييرات"
+  },
+  "express": {
+    "title": "التعبير عن كافة المشاهد (متقدم)",
+    "description": "تشغيل الاتجاه ← الصوت ← إطارات ما قبل الرؤية لكل مشهد بالتوازي (حتى 3 في المرة الواحدة). يعد هذا مسارًا طويلًا ومثقلًا بالائتمان - يوصى باستخدام Express لكل مشهد على كل بطاقة مشهد عند نقاط التفتيش.",
+    "audioLanguage": "لغة صوتية",
+    "translateBadge": "يترجم",
+    "audioLanguageHint": "سيتم إنشاء الحوار والسرد في {lang}. يتم ترك الصوت الموجود باللغات الأخرى دون تغيير.",
+    "pipelineTitle": "خط الأنابيب (لكل مشهد)",
+    "stepDirection": "1. الاتجاه",
+    "stepAudio": "2. الصوت",
+    "stepImage": "3. الصورة",
+    "pipelineSceneCount": "مشاهد {done}/{total}",
+    "pipelineDialogueLines": "خطوط الحوار {count}",
+    "pipelineImageCount": "إنشاء {establishing} + إطارات {frames} المسبقة",
+    "backgroundMusic": "موسيقى خلفية",
+    "musicScenesHaveDescriptions": "تحتوي مشاهد {count} على أوصاف موسيقية",
+    "musicNoDescriptions": "لا توجد مشاهد تحتوي على أوصاف موسيقية",
+    "storyboardQualityDraft": "جودة القصة المصورة: مسودة",
+    "storyboardQualityDraftHint": "يولد إطارات تخطيط سريعة للمراجعة. استخدم وضع اللمسات النهائية على الإطارات بعد ذلك لإنشاء صور متحركة وفيديو عالية الدقة.",
+    "soundEffects": "المؤثرات الصوتية",
+    "soundEffectsHint": "يتم تضمين المؤثرات الصوتية في مقاطع فيديو Veo أثناء الإنتاج. تستخدم معاينة Animatic السرد والحوار والموسيقى الاختيارية فقط.",
+    "onlyMissingFrames": "الإطارات المفقودة فقط",
+    "onlyMissingFramesHint": "تخطي الإطارات التي تحتوي على صور بالفعل.",
+    "regenerateExisting": "تجديد الموجود",
+    "regenerateExistingHint": "أعد حساب كل مرحلة حتى لو كان الاتجاه أو الصوت أو الصورة موجودًا بالفعل.",
+    "artStyle": "أسلوب الفن",
+    "artStyleLockedHint": "مقفل في Blueprint - قم بتغيير الأساس هناك لإعادة تصوره.",
+    "artStyleUnlockedHint": "يتم تطبيقه على جميع الإطارات المسبقة والتدفقات من خلال إنشاء الفيديو.",
+    "estimatedCost": "التكلفة المقدرة",
+    "costImages": "الصور: أرصدة {credits} (إطارات {frames} × {perFrame})",
+    "costAudio": "الصوت: ~{credits} الاعتمادات",
+    "costMusic": "الموسيقى: اعتمادات {credits}",
+    "costTotal": "الإجمالي: ~{credits} الاعتمادات",
+    "costEstimateDisclaimer": "تقديرات فقط. يعتمد الاستخدام الفعلي على طول الحوار وعدد المراحل التي تحتاج إلى التشغيل فعليًا.",
+    "running": "جري…",
+    "generate": "يولد"
+  },
+  "expressAudio": {
+    "title": "اكسبريس الصوت",
+    "description": "قم بإنشاء حوار ومؤثرات صوتية وموسيقى لهذا المشهد في نفس الوقت. يستخدم الحوار TTS، وتستخدم إيقاعات الحركة صوت Veo الأصلي، وتستخدم الموسيقى Lyria.",
+    "scope": "نِطَاق",
+    "scopeMissing": "مفقودة فقط",
+    "scopeAll": "الكل (تجديد)",
+    "scopeAllWarning": "سيتم حذف الصوت الموجود للعناصر المحددة وإعادة إنشائه.",
+    "audioToGenerate": "الصوت لتوليد",
+    "noAudioItems": "لا توجد عناصر صوتية متاحة لهذا المشهد.",
+    "statusReady": "مستعد",
+    "statusMissing": "مفتقد",
+    "sfxDurationPreset": "مدة SFX محددة مسبقًا",
+    "durationAuto": "تلقائي ({seconds}s · Veo {veoSeconds}s)",
+    "durationShort": "قصير 3ث/فيو 4ث",
+    "durationMedium": "متوسطة 8S",
+    "durationLong": "طويلة 15 ثانية / Veo 8 ثانية كحد أقصى",
+    "veoPartialHint": "يغطي Veo ما يصل إلى 8 ثوانٍ (الهدف التلقائي {seconds}s).",
+    "sfxCredits": "اعتمادات SFX: {credits}. {hint}",
+    "creditHint": "~ أرصدة {credits} · ما يصل إلى 8 ثوانٍ متواصلة",
+    "running": "جري...",
+    "generateAudio": "توليد الصوت ({count})"
+  },
+  "expressSfx": {
+    "title": "اكسبريس فيو SFX",
+    "description": "قم بإنشاء مؤثرات صوتية نابضة بالحياة بشكل متزامن (ما يصل إلى 2 في المرة الواحدة). تستخدم كل إيقاع صوت Veo الأصلي، ثم تستخرج MP3 للرسوم المتحركة.",
+    "selectedBeats": "إيقاعات مختارة",
+    "estimatedCredits": "الاعتمادات المقدرة",
+    "creditHint": "~ أرصدة {credits} · ما يصل إلى 8 ثوانٍ متواصلة",
+    "actionBeats": "يدق العمل",
+    "audioReady": "الصوت جاهز",
+    "durationPreset": "المدة محددة مسبقا",
+    "durationAuto": "تلقائي ({seconds}s · Veo {veoSeconds}s)",
+    "durationShort": "قصير 3ث/فيو 4ث",
+    "durationMedium": "متوسطة 8S",
+    "durationLong": "طويلة 15 ثانية / Veo 8 ثانية كحد أقصى",
+    "veoPartialHint": "يغطي Veo ما يصل إلى 8 ثوانٍ (الهدف التلقائي {seconds}s).",
+    "regenerateWithAudio": "قم بتجديد الإيقاعات التي تحتوي على صوت بالفعل",
+    "running": "جري...",
+    "generateSfx": "إنشاء SFX ({count})"
+  },
+  "expressScene": {
+    "title": "المشهد السريع",
+    "description": "اختر الإطارات المسبقة المراد إنشاؤها أو تجديدها. يؤدي تجديد الإطارات الموجودة إلى تحديث الصور فقط - ويتم ترك الاتجاه والصوت دون تغيير.",
+    "scope": "نِطَاق",
+    "scopeMissing": "مفقودة فقط",
+    "scopeRegenerate": "إعادة إنشاء المحدد",
+    "scopeRegenerateHint": "سيتم إعادة إنشاء الإطارات المحددة مع الصور الموجودة. لا يتم إعادة تشغيل الاتجاه والصوت.",
+    "frames": "إطارات",
+    "noFrames": "لا توجد إطارات متاحة لهذا النطاق.",
+    "hasImage": "لديه صورة",
+    "missing": "مفتقد",
+    "imageCredits": "اعتمادات الصورة (تقديريًا): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
+    "running": "جري...",
+    "generateScene": "توليد المشهد"
+  },
+  "expressGenerateAll": {
+    "title": "توليد الكل",
+    "description": "قم بتشغيل إطارات Express Audio وExpress Scene بالتوازي. تتطابق الإعدادات الافتراضية مع التحديد \"المفقود فقط\" لكل خط أنابيب - اضبط النطاق إذا كنت بحاجة إلى التجديد.",
+    "audioSection": "صوتي",
+    "framesSection": "إطارات",
+    "scope": "نِطَاق",
+    "scopeMissing": "مفقودة فقط",
+    "scopeAll": "الكل (تجديد)",
+    "scopeRegenerate": "إعادة إنشاء المحدد",
+    "audioToGenerate": "الصوت لتوليد",
+    "noAudioItems": "لا توجد عناصر صوتية لهذا المشهد.",
+    "statusReady": "مستعد",
+    "statusMissing": "مفتقد",
+    "sfxDurationPreset": "مدة SFX محددة مسبقًا",
+    "durationAuto": "تلقائي ({seconds}s · Veo {veoSeconds}s)",
+    "durationShort": "قصير 3ث/فيو 4ث",
+    "durationMedium": "متوسطة 8S",
+    "durationLong": "طويلة 15 ثانية / Veo 8 ثانية كحد أقصى",
+    "creditHint": "~ أرصدة {credits} · ما يصل إلى 8 ثوانٍ متواصلة",
+    "veoSfxCredits": "أرصدة Veo SFX (تقديرات): {credits}",
+    "frames": "إطارات",
+    "noFrames": "لا توجد إطارات متاحة.",
+    "hasImage": "لديه صورة",
+    "missing": "مفتقد",
+    "imageCredits": "اعتمادات الصورة (تقديريًا): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
+    "running": "جري...",
+    "generateAll": "توليد الكل"
+  },
+  "retake": {
+    "title": "هل تريد استبدال اللقطة الحالية؟",
+    "description": "يحتوي هذا الإيقاع بالفعل على فيديو تم إنشاؤه. سيؤدي فتح المولد أو التحميل إلى إضافة مقطع جديد وقد يستهلك الاعتمادات.",
+    "continue": "يكمل"
+  },
+  "reset": {
+    "title": "إعادة ضبط إنتاج المشهد؟",
+    "sceneLabel": "المشهد {number}",
+    "sceneHeading": "المشهد {number} · {heading}",
+    "warning": "يؤدي هذا إلى إزالة <bold>المخطط الزمني للإيقاع</bold> بالكامل لهذا المشهد ولا يمكن التراجع عن ذلك. سوف تحتاج إلى تشغيل إعداد المقطع مرة أخرى من البداية.",
+    "whatYouWillLose": "ما سوف تخسره",
+    "segmentCount": "{count, plural, one {# segment} other {# segments}}",
+    "segmentDetail": "التوقيت، وملاحظات الاتجاه، ومطالبات Veo، ورسم خرائط الحوار إلى المقطع",
+    "keyframeImage": "{count, plural, one {# keyframe image} other {# keyframe images}}",
+    "keyframeDetailAcross": "عبر {count, plural, one {# segment} other {# segments}} (إطارات البداية/النهاية)",
+    "keyframeDetailDefault": "لقطات إطار البداية والنهاية المستخدمة لإنشاء الفيديو",
+    "videoClip": "{count, plural, one {# generated video clip} other {# generated video clips}}",
+    "videoDetail": "مخرجات Veo / I2V على مستوى الإيقاع والمؤثرات النشطة على المخطط الزمني",
+    "imageClip": "{count, plural, one {# image clip} other {# image clips}}",
+    "imageClipDetail": "الأصول الثابتة التي تم تحميلها أو إنشاؤها والمرتبطة بالقطاعات",
+    "alternateTake": "{count, plural, one {# alternate take} other {# alternate takes}}",
+    "alternateTakeDetail": "أجيال إضافية مخزنة لكل قطعة",
+    "sceneRender": "تقديم المشهد / تيار الإنتاج",
+    "sceneRenderStreams": "{count, plural, one {# language or output stream} other {# language or output streams}} مرتبط بهذا المشهد",
+    "sceneRenderDefault": "إخراج المشهد المختلط النهائي من خلاط الإنتاج",
+    "beatStructureOnly": "هيكل الفوز فقط",
+    "beatStructureDetail": "لم يتم اكتشاف أي إطارات رئيسية أو مقاطع حتى الآن، ولكن سيتم مسح تقدم التجزئة",
+    "notDeleted": "<bold>لم يتم حذفه:</bold> نص البرنامج النصي، وحوار المشهد، والسرد، والموسيقى/صوت SFX، وصورة المشهد الثابتة، ومراجع الشخصيات.",
+    "resetting": "إعادة الضبط…",
+    "resetProduction": "إعادة ضبط الإنتاج"
+  },
+  "screening": {
+    "generateStreamTitle": "إنشاء تيار {language}",
+    "generateStreamTitleFallback": "توليد دفق اللغة",
+    "generateStreamDescription": "ترجمة نص المشهد وإنشاء صوت حوار/سرد لهذه اللغة. سيتم إعادة استخدام الموسيقى والمؤثرات الصوتية الموجودة.",
+    "generateDialogue": "توليد الحوار",
+    "generating": "جارٍ الإنشاء…",
+    "publishRevisionTitle": "نشر مراجعة القصة المصورة",
+    "publishRevisionDescription": "زيادة الإصدار (على سبيل المثال، v{current} → v{next}). رابط المشاركة الخاص بك لا يتغير. سيرى المراجعون الذين يقومون بالتحديث الإصدار الحالي الجديد؛ ويتم ختم طلباتهم التالية وفقًا لذلك.",
+    "labelOptional": "التسمية (اختياري)",
+    "labelPlaceholder": "على سبيل المثال ملاحظات العميل الجولة 2",
+    "changeNotesOptional": "تغيير الملاحظات (اختياري)",
+    "changeNotesPlaceholder": "ما الذي تغير منذ الإصدار الأخير؟",
+    "publishVersion": "نشر v{version}"
+  },
+  "segments": {
+    "addBeat": {
+      "title": "أضف فوز",
+      "description": "أنشئ موجهًا لإنشاء الفيديو عن طريق تحديد نوع اللقطة وعناصر المشهد والحوار. سيقوم Veo 3.1 بإنشاء تعليق صوتي ومؤثرات صوتية مباشرة من الموجه.",
+      "sceneBadge": "المشهد {sceneNumber}",
+      "includeSceneDirection": "تضمين اتجاه المشهد",
+      "includeSceneDirectionHint": "حدد ملاحظات المخرج المراد تضمينها. انقر للتمكين، ثم أضف ملاحظات مخصصة إذا لزم الأمر.",
+      "clickToAddCustom": "انقر لإضافة مخصص",
+      "editOrAddCustomNotes": "تحرير أو إضافة ملاحظات مخصصة...",
+      "addCustomPlaceholder": "إضافة {label}...",
+      "directionCamera": "ملاحظات الكاميرا",
+      "directionLighting": "إضاءة",
+      "directionScene": "المشهد/البيئة",
+      "directionTalent": "الموهبة/المنع",
+      "directionAudio": "الصوت/مؤثرات صوتية",
+      "dialogueLines": "خطوط الحوار",
+      "veoSpeechBadge": "فيو 3.1 الكلام",
+      "dialogueHint": "حدد الحوار لهذا الجزء. انقر للتحديد، ثم قم بتحرير النص لاستخدام أجزاء فقط. سيقوم Veo 3.1 بإنشاء صوت الشخصية.",
+      "editDialoguePlaceholder": "تحرير نص الحوار لاستخدامه في هذا الجزء...",
+      "editDialogueHint": "قم بالتحرير لاستخدام الجزء المطلوب فقط لهذه الشريحة (أقل من 12 ثانية)",
+      "noDialogue": "لا يوجد حوار في هذا المشهد",
+      "includeNarration": "تضمين التعليق الصوتي للسرد",
+      "narrationText": "نص السرد (قابل للتعديل)",
+      "narrationPlaceholder": "تحرير نص السرد لهذا المقطع...",
+      "narrationEditHint": "قم بالتحرير لاستخدام جزء السرد لهذا المقطع فقط",
+      "narratorVoice": "صوت الراوي",
+      "selectedVoice": "المحدد: {name}",
+      "autoEstimate": "تقدير تلقائي",
+      "omniFlashMax": "Omni Flash بحد أقصى: {seconds} ثانية لكل مقطع",
+      "additionalNotes": "ملاحظات إضافية",
+      "additionalNotesPlaceholder": "أي اتجاه إضافي أو تفاصيل مرئية أو ملاحظات نمطية...",
+      "generationMethod": "طريقة التوليد",
+      "t2v": "تحويل النص إلى فيديو",
+      "i2v": "صورة إلى فيديو",
+      "noSceneImage": "(لا توجد صورة للمشهد)",
+      "promptPreview": "معاينة سريعة",
+      "startTime": "وقت البدء",
+      "endTime": "وقت النهاية",
+      "method": "طريقة",
+      "addAction": "أضف فوز"
+    },
+    "edit": {
+      "title": "تحرير المقطع",
+      "badge": "المشهد {sceneNumber} • فاز على {beatNumber}",
+      "description": "قم بتعديل إعدادات المطالبة والمدة والإنشاء الخاصة بالمقطع.",
+      "generationPrompt": "موجه الجيل",
+      "promptPlaceholder": "أدخل مطالبة إنشاء الفيديو...",
+      "promptHint": "قم بتحرير المطالبة التي سيتم إرسالها إلى Veo 3.1 لإنشاء الفيديو.",
+      "durationHint": "يدعم Omni Flash مقاطع مدتها من 4 إلى 10 ثوانٍ",
+      "generationMethod": "طريقة التوليد",
+      "t2v": "تحويل النص إلى فيديو",
+      "i2v": "صورة إلى فيديو",
+      "i2vHint": "سيتم استخدام إطار المشهد كصورة البداية"
+    },
+    "delete": {
+      "title": "هل تريد حذف Beat {number}؟",
+      "description": "لا يمكن التراجع عن هذا الإجراء.",
+      "segmentLabel": "شريحة",
+      "segmentOf": "#{index} من {total}",
+      "duration": "مدة",
+      "hasFramesWarning": "قام هذا الجزء بإنشاء إطارات سيتم فقدها.",
+      "lastBeatWarning": "تحذير: هذا هو المقطع الوحيد في المشهد. سيؤدي حذفه إلى ترك المشهد بدون أي إطارات رئيسية.",
+      "shiftWarning": "سيؤدي حذف هذا المقطع إلى تحويل جميع المقاطع اللاحقة. سيتم إعادة حساب مؤشرات التوقيت والتسلسل تلقائيًا.",
+      "deleting": "جارٍ الحذف...",
+      "deleteBeat": "حذف فوز"
+    },
+    "addType": {
+      "title": "أضف إيقاعًا إلى المشهد {sceneNumber}",
+      "description": "أضف مقطعًا يعتمد على الإطار الرئيسي لإنشاء فيديو بتقنية الذكاء الاصطناعي. بالنسبة للعناصر السينمائية (العناوين، والانتقالات، وB-roll)، استخدم زر العناصر السينمائية.",
+      "tabType": "يكتب",
+      "tabPosition": "موضع",
+      "tabPrompt": "اِسْتَدْعَى",
+      "defaultDuration": "{seconds}s الافتراضي",
+      "orDivider": "أو",
+      "regenerateAll": "تجديد جميع يدق",
+      "regenerateAllCount": "شرائح {count}",
+      "regenerateAllHint": "أعد تحليل المشهد وأنشئ مقاطع جديدة باستخدام الذكاء الاصطناعي. سيحل هذا محل القطاعات الموجودة.",
+      "insertPosition": "إدراج الموقف",
+      "referenceBeat": "فوز المرجعية",
+      "selectSegment": "حدد المقطع",
+      "beatOption": "فاز {number} ({duration}s)",
+      "duration": "مدة",
+      "recommendedDuration": "موصى به: {seconds}s لـ {name}",
+      "preview": "معاينة",
+      "newBadge": "جديد",
+      "generatingPrompt": "إنشاء موجه ذكي باستخدام Gemini 2.5...",
+      "aiUnavailable": "الذكاء الاصطناعي غير متاح",
+      "usingTemplate": "باستخدام موجه القالب. {error}",
+      "contextAware": "موجه علم السياق",
+      "contextAwareHint": "تم إنشاء هذه المطالبة بناءً على تحليل المشهد المجاور. تحرير حسب الحاجة.",
+      "generationPrompt": "موجه الجيل",
+      "aiGenerate": "إنشاء الذكاء الاصطناعي",
+      "generating": "جارٍ الإنشاء...",
+      "reset": "إعادة ضبط",
+      "promptPlaceholder": "وصف المحتوى المرئي...",
+      "charCount": "أحرف {count} • سيتم استخدام هذه المطالبة لإنشاء الإطار",
+      "presetSettings": "إعدادات محددة مسبقا",
+      "addNamed": "إضافة {name}",
+      "types": {
+        "standard": {
+          "name": "فوز قياسي",
+          "description": "مقطع المشهد مع الإطارات الرئيسية للبداية/النهاية لإنشاء فيديو بتقنية الذكاء الاصطناعي. السيطرة الكاملة على تكوين اللقطة."
+        },
+        "extend": {
+          "name": "مواصلة اللقطة",
+          "description": "تابع من الإطار النهائي للجزء السابق. يحافظ على الاستمرارية البصرية عبر القطع."
+        }
+      },
+      "positions": {
+        "start": {
+          "label": "في البداية",
+          "description": "إدراج كقطعة أولى"
+        },
+        "before": {
+          "label": "قبل التحديد",
+          "description": "أدخل قبل المقطع المحدد"
+        },
+        "after": {
+          "label": "بعد التحديد",
+          "description": "أدخل بعد المقطع المحدد"
+        },
+        "end": {
+          "label": "في النهاية",
+          "description": "إلحاق كقطعة أخيرة"
+        }
+      }
+    },
+    "addSpecial": {
+      "title": "إضافة عنصر سينمائي",
+      "description": "إضافة مقطع فيديو خاص. سيعمل الذكاء الاصطناعي على إنشاء موجه محسّن لإنشاء الفيديو.",
+      "elementType": "نوع العنصر",
+      "duration": "مدة",
+      "recommendedDuration": "موصى به: {seconds}s لـ {name}",
+      "videoPrompt": "موجه إنشاء الفيديو",
+      "generating": "جارٍ الإنشاء...",
+      "regenerate": "تجديد",
+      "reset": "إعادة ضبط",
+      "generatingCinematic": "جارٍ إنشاء مطالبة سينمائية...",
+      "usingTemplate": "استخدام موجه القالب",
+      "aiUnavailable": "الذكاء الاصطناعي غير متاح: {error}",
+      "promptPlaceholder": "ستظهر هنا المطالبة التي تم إنشاؤها بواسطة الذكاء الاصطناعي...",
+      "charCount": "أحرف {count} • قم بالتحرير للتخصيص أو انقر فوق \"إعادة إنشاء\" للحصول على مطالبة جديدة",
+      "insertAt": "أدخل في الموضع {position}",
+      "noKeyframes": "لا توجد إطارات رئيسية",
+      "addNamed": "إضافة {name}",
+      "types": {
+        "title": {
+          "name": "تسلسل العنوان",
+          "description": "بطاقة عنوان سينمائية مع تراكب نص غامق. يحدد النغمة ويميز الفيديو الخاص بك."
+        },
+        "match-cut": {
+          "name": "مطابقة قطع الجسر",
+          "description": "انتقال إبداعي يحاكي الشكل أو الحركة بين المشاهد. على سبيل المثال، عجلة الغزل → ساعة الغزل."
+        },
+        "establishing": {
+          "name": "إنشاء النار",
+          "description": "لقطة واسعة من طائرة بدون طيار أو رافعة تحدد الجغرافيا والوقت من اليوم والمزاج لموقع جديد."
+        },
+        "broll": {
+          "name": "بي رول (الهدوء)",
+          "description": "متنفس بصري جوي. لقطات مقربة للتفاصيل البيئية التي تضيف نسيجًا وإيقاعًا."
+        },
+        "outro": {
+          "name": "الخاتمة / الاعتمادات",
+          "description": "تسلسل إغلاق احترافي. تتلاشى أنيقة أو التمرير مع اعتمادات الإنتاج الجمالية."
+        }
+      }
+    },
+    "common": {
+      "shotConfiguration": "تكوين النار",
+      "shotType": "نوع اللقطة",
+      "cameraMovement": "حركة الكاميرا",
+      "lens": "عدسة",
+      "duration": "مدة"
+    },
+    "shotTypes": {
+      "extreme-wide": {
+        "label": "واسعة للغاية",
+        "description": "بيئة كاملة، مواضيع صغيرة"
+      },
+      "wide": {
+        "label": "لقطة واسعة",
+        "description": "كامل الجسم، السياق البيئي"
+      },
+      "medium-wide": {
+        "label": "متوسطة واسعة",
+        "description": "الركبة إلى الرأس، بعض البيئة"
+      },
+      "medium": {
+        "label": "لقطة متوسطة",
+        "description": "الخصر يصل، محادثة"
+      },
+      "medium-close": {
+        "label": "متوسطة عن قرب",
+        "description": "رفع الصدر والتركيز العاطفي"
+      },
+      "close-up": {
+        "label": "عن قرب",
+        "description": "الوجه فقط، والعاطفة الشديدة"
+      },
+      "extreme-close": {
+        "label": "المتطرفة عن قرب",
+        "description": "العيون أو الفم أو التفاصيل"
+      },
+      "two-shot": {
+        "label": "طلقتين",
+        "description": "شخصيتان مؤطرتان معًا"
+      },
+      "over-shoulder": {
+        "label": "فوق الكتف",
+        "description": "منظور من خلف شخصية واحدة"
+      },
+      "pov": {
+        "label": "بوف",
+        "description": "لقطة من وجهة نظر"
+      }
+    },
+    "cameraMovements": {
+      "static": {
+        "label": "ثابت",
+        "description": "مغلق، لا يوجد حركة"
+      },
+      "push-in": {
+        "label": "ادفع للداخل",
+        "description": "دوللي بطيئة نحو الموضوع"
+      },
+      "pull-out": {
+        "label": "انسحب",
+        "description": "دوللي بطيئة بعيدا عن الموضوع"
+      },
+      "pan-left": {
+        "label": "عموم اليسار",
+        "description": "تدور الكاميرا إلى اليسار"
+      },
+      "pan-right": {
+        "label": "عموم الحق",
+        "description": "تدور الكاميرا نحو اليمين"
+      },
+      "tilt-up": {
+        "label": "إمالة لأعلى",
+        "description": "زوايا الكاميرا للأعلى"
+      },
+      "tilt-down": {
+        "label": "إمالة لأسفل",
+        "description": "زوايا الكاميرا للأسفل"
+      },
+      "tracking": {
+        "label": "تتبع",
+        "description": "بعد حركة الموضوع"
+      },
+      "handheld": {
+        "label": "محمول",
+        "description": "هزة طفيفة، ويشعر وثائقي"
+      },
+      "crane": {
+        "label": "رافعة / الجيب",
+        "description": "حركة عمودية، كاسحة"
+      }
+    },
+    "lenses": {
+      "24mm": {
+        "label": "عرض 24 ملم",
+        "description": "بيئية وواسعة"
+      },
+      "35mm": {
+        "label": "35 ملم صورة بصرية مشوهة",
+        "description": "سينمائية، تشويه طفيف"
+      },
+      "50mm": {
+        "label": "50 ملم قياسي",
+        "description": "المنظور الطبيعي"
+      },
+      "85mm": {
+        "label": "صورة شخصية مقاس 85 ملم",
+        "description": "DOF الضحلة، الحميمة"
+      },
+      "135mm": {
+        "label": "135 ملم تليفوتوغرافي",
+        "description": "مضغوطة ومعزولة"
+      }
+    },
+    "generateTitle": "توليد إيقاعات المشهد",
+    "regenerateSceneTitle": "تجديد إيقاعات المشهد",
+    "generateDescription": "قم بتكوين كيفية إنشاء المقاطع لهذا المشهد.",
+    "beatsPreview": "يدق",
+    "tabTiming": "توقيت",
+    "tabReferences": "مراجع",
+    "tabStyle": "أسلوب",
+    "narrationDriven": "التقسيم القائم على السرد",
+    "narrationDrivenHint": "قم بإنشاء مقاطع تتوافق مع السرد وتوضحه. يصبح كل مقطع خلفية سينمائية للتعليق الصوتي.",
+    "targetBeatDuration": "مدة الضربة المستهدفة",
+    "addTitle": "أضف فوز",
+    "addNewTitle": "إضافة شريحة جديدة",
+    "addDescription": "قم بإنشاء مقطع مرئي جديد لتوسيع المخطط الزمني للمشهد.",
+    "addDuration": "المدة (ثواني)",
+    "addDurationHint": "الموصى بها: 3-5 ثواني لإيقاع سلس",
+    "addAction": "أضف فوز",
+    "editTitle": "تحرير المقطع",
+    "editBadge": "المشهد {sceneNumber} • فاز على {beatNumber}",
+    "editDescription": "قم بتعديل إعدادات المطالبة والمدة والإنشاء الخاصة بالمقطع.",
+    "shotConfiguration": "تكوين النار",
+    "shotType": "نوع اللقطة",
+    "cameraMovement": "حركة الكاميرا",
+    "deleteTitle": "هل تريد حذف Beat {number}؟",
+    "deleteDescription": "لا يمكن التراجع عن هذا الإجراء.",
+    "segmentLabel": "شريحة",
+    "segmentOf": "#{index} من {total}",
+    "duration": "مدة",
+    "hasFramesWarning": "قام هذا الجزء بإنشاء إطارات سيتم فقدها.",
+    "lastBeatWarning": "تحذير: هذا هو المقطع الوحيد في المشهد. سيؤدي حذفه إلى ترك المشهد بدون أي إطارات رئيسية.",
+    "shiftWarning": "سيؤدي حذف هذا المقطع إلى تحويل جميع المقاطع اللاحقة. سيتم إعادة حساب مؤشرات التوقيت والتسلسل تلقائيًا.",
+    "deleting": "جارٍ الحذف...",
+    "deleteBeat": "حذف فوز",
+    "regenerateTitle": "تجديد يدق",
+    "regenerateDescription": "امسح جميع المقاطع وارجع إلى Beat Builder للبدء من جديد.",
+    "beats": "يدق",
+    "totalDuration": "المدة الإجمالية",
+    "anchoredFrames": "إطارات مثبتة",
+    "anchoredCount": "{anchored} / {total}",
+    "regenerateAssetsWarning": "تحذير: سيؤدي هذا إلى حذف جميع الشرائح بما في ذلك الإطارات الرئيسية وأصول الفيديو التي تم إنشاؤها. لا يمكن التراجع عن هذا الإجراء.",
+    "regenerateEmptyWarning": "ستتم إزالة كافة الشرائح الحالية. سيتم نقلك إلى Beat Builder لتكوين الإعدادات الجديدة وإعادة إنشائها.",
+    "regenerateNextHint": "سيتم فتح Beat Builder مع عناصر التحكم في المدة الإجمالية وعدد المقاطع ووضع التركيز والاتجاه المخصص.",
+    "deleteAndRegenerate": "حذف وتجديد",
+    "regenerate": "تجديد",
+    "addTypeTitle": "إضافة شريحة خاصة",
+    "addTypeDescription": "اختر غرض المقطع لإدراجه في المخطط الزمني."
+  },
+  "audio": {
+    "generateAssets": {
+      "title": "توليد الأصول",
+      "description": "حدد أنواع الأصول المراد إنشاؤها لجميع المشاهد",
+      "targetLanguage": "اللغة المستهدفة",
+      "translateBeforeAudio": "ستتم ترجمة النص من الإنجليزية إلى {language} قبل إنشاء الصوت",
+      "audioTypes": "أنواع الصوت",
+      "selectAll": "حدد الكل",
+      "deselectAll": "قم بإلغاء تحديد الكل",
+      "narration": "السرد",
+      "dialogue": "حوار",
+      "backgroundMusic": "موسيقى خلفية",
+      "soundEffects": "المؤثرات الصوتية (ElevenLabs، ~ 15 ساعة معتمدة لكل منهما)",
+      "statusComplete": "مكتمل",
+      "statusPartial": "جزئي ({current}/{total})",
+      "statusNotGenerated": "لم يتم إنشاؤها",
+      "statusGeneratedCount": "تم إنشاء {count}",
+      "statusNoneGenerated": "لم يتم إنشاء أي شيء",
+      "scenesCount": "مشاهد {count}",
+      "linesCount": "خطوط {count}",
+      "sfxCues": "{count, plural, one {# cue} other {# cues}}",
+      "noSfxCues": "لا توجد إشارات SFX في النص حتى الآن",
+      "generationSummary": "ملخص الجيل",
+      "summaryNarration": "{count, plural, one {# narration file} other {# narration files}}",
+      "summaryDialogue": "{count, plural, one {# dialogue file} other {# dialogue files}}",
+      "summaryMusic": "{count, plural, one {# music file} other {# music files}}",
+      "summarySfx": "{count, plural, one {# sound effect} other {# sound effects}}",
+      "summaryCharacters": "{count, plural, one {# character asset} other {# character assets}}",
+      "summaryAlreadyGenerated": "(تم إنشاء {count} بالفعل)",
+      "summarySceneImages": "{count, plural, one {# scene image} other {# scene images}}",
+      "overwriteWarning": "سيؤدي هذا إلى استبدال الملفات الصوتية الموجودة للأنواع المحددة",
+      "additionalAssets": "الأصول الإضافية",
+      "characterRefs": "الصور المرجعية للشخصية",
+      "charactersReady": "أحرف {count} • {ready} جاهزة",
+      "noCharacters": "لا توجد أحرف متاحة",
+      "sceneImages": "صور المشهد (متزامنة)",
+      "sceneImagesReady": "مشاهد {count} • {ready} جاهزة • 3 متزامنة",
+      "regenerateAllImages": "إعادة إنشاء كافة الصور",
+      "regenerateAllImagesHint": "الكتابة فوق الصور الموجودة (الافتراضي: مفقود فقط)",
+      "stayOpenHint": "أبقِ مربع الحوار هذا مفتوحًا حتى ينتهي إنشاء السرد والحوار. يمكنك التبديل إلى وضع الخلفية في أي وقت.",
+      "narrationProgress": "تقدم السرد",
+      "dialogueProgress": "تقدم الحوار",
+      "musicProgress": "تقدم الموسيقى",
+      "sfxProgress": "تقدم المؤثرات الصوتية",
+      "characterProgress": "تقدم الشخصية",
+      "imageProgress": "تقدم صورة المشهد",
+      "sceneProgress": "المشهد {current} / {total}",
+      "secondaryDialogue": "الحوار {current}/{total}",
+      "secondaryMusic": "الموسيقى {current}/{total}",
+      "secondarySfx": "مؤثرات صوتية {current}/{total}",
+      "secondaryCharacter": "الحرف {current}/{total}",
+      "secondaryImage": "صورة المشهد {current}/{total}",
+      "runInBackground": "تشغيل في الخلفية",
+      "generationComplete": "اكتمل الجيل",
+      "generating": "جارٍ الإنشاء...",
+      "generate": "يولد",
+      "generateAgain": "توليد مرة أخرى"
+    },
+    "assets": {
+      "title": "الأصول الصوتية - المشهد {number}",
+      "description": "إدارة المسارات الصوتية لهذا المشهد. إضافة مقاطع صوتية أو إزالتها أو إعادة مزامنتها من البرنامج النصي.",
+      "totalClips": "{count} إجمالي المقاطع الصوتية",
+      "syncFromScript": "المزامنة من البرنامج النصي",
+      "uploading": "جارٍ تحميل الصوت...",
+      "close": "يغلق",
+      "clipLabel": "مقطع {track}",
+      "start": "البداية: {time}",
+      "clipDuration": "المدة: {time}",
+      "noClips": "لا توجد مقاطع {track}",
+      "uploadAudio": "تحميل الصوت",
+      "clearAll": "مسح الكل",
+      "clipCount": "{count, plural, one {# clip} other {# clips}}",
+      "pause": "يوقف",
+      "play": "يلعب",
+      "removeClip": "إزالة المقطع",
+      "tracks": {
+        "voiceover": {
+          "label": "التعليق الصوتي / السرد",
+          "description": "رواية المشهد والتعليق الصوتي"
+        },
+        "dialogue": {
+          "label": "حوار",
+          "description": "خطوط حوار الشخصيات"
+        },
+        "music": {
+          "label": "موسيقى",
+          "description": "الموسيقى الخلفية والنتيجة"
+        },
+        "sfx": {
+          "label": "المؤثرات الصوتية",
+          "description": "المؤثرات الصوتية والأجواء"
+        }
+      }
+    },
+    "alignment": {
+      "title": "فاز على محاذاة الصوت {number}",
+      "description": "قم بمحاذاة هذا المقطع مع الحوار والمسارات الصوتية للحصول على توقيت دقيق.",
+      "beatTiming": "توقيت الفوز",
+      "aligned": "محاذاة",
+      "nearlyAligned": "محاذاة تقريبًا",
+      "misaligned": "منحرفة",
+      "noDialogue": "لا حوار",
+      "startTime": "وقت البدء",
+      "endTime": "وقت النهاية",
+      "duration": "مدة",
+      "fitToDialogue": "الملاءمة لمدة الحوار ({duration}s)",
+      "dialogueCoverage": "تغطية الحوار",
+      "dialogueCoverageHint": "حدد خطوط الحوار التي يجب أن يغطيها هذا المقطع. وهذا يساعد في التوقيت وتركيز الشخصية.",
+      "noDialogueLines": "لا توجد خطوط حوار في هذا المشهد",
+      "audioAnchor": "مرساة الصوت",
+      "anchored": "راسية",
+      "manual": "يدوي",
+      "audioAnchorHint": "قم بربط هذا الإطار الرئيسي بمقطع صوتي لمحاذاة التوقيت التلقائي في Screening Room.",
+      "anchorTo": "مرساة ل",
+      "noneManual": "لا شيء (يدوي)",
+      "narration": "السرد",
+      "descriptionOption": "وصف",
+      "dialogueOption": "الحوار: {label}",
+      "position": "موضع",
+      "startOfAudio": "بداية الصوت",
+      "endOfAudio": "نهاية الصوت",
+      "durationMode": "وضع المدة",
+      "modeManual": "يدوي",
+      "modeMatchAudio": "مطابقة طول الصوت",
+      "modeFillToNext": "املأ المرساة التالية",
+      "modeSplitEven": "تقسيم بالتساوي",
+      "offset": "إزاحة",
+      "modeManualHint": "يتم ضبط المدة يدويًا عبر إعداد imageDuration",
+      "modeMatchAudioHint": "تتطابق المدة مع طول مقطع الصوت المرتبط",
+      "modeFillToNextHint": "تمتد المدة إلى نقطة الربط التالية أو نهاية المشهد",
+      "modeSplitEvenHint": "يتم تقسيم المدة بالتساوي مع الإطارات الرئيسية الأخرى على نفس الصوت",
+      "narrationAudio": "السرد الصوتي",
+      "sceneNarration": "رواية المشهد: {duration}s",
+      "startsAt": "يبدأ عند {time}s",
+      "alignmentTips": "نصائح المحاذاة:",
+      "tip1": "قم بتعيين خطوط الحوار التي يجب أن تكون مرئية خلال هذا المقطع",
+      "tip2": "استخدم \"Fit to Dialogue\" لمطابقة مدة المقطع بالصوت",
+      "tip3": "قم بتمكين \"Snap\" في المخطط الزمني لمحاذاة حواف المقطع مع حدود الصوت",
+      "saveAlignment": "حفظ المحاذاة"
+    },
+    "assetsTitle": "الأصول الصوتية - المشهد {number}",
+    "assetsDescription": "إدارة المسارات الصوتية لهذا المشهد. إضافة مقاطع صوتية أو إزالتها أو إعادة مزامنتها من البرنامج النصي.",
+    "totalClips": "{count} إجمالي المقاطع الصوتية",
+    "syncFromScript": "المزامنة من البرنامج النصي",
+    "uploading": "جارٍ تحميل الصوت...",
+    "close": "يغلق",
+    "trackVoiceover": "التعليق الصوتي / السرد",
+    "trackVoiceoverHint": "رواية المشهد والتعليق الصوتي",
+    "trackDialogue": "حوار",
+    "trackDialogueHint": "خطوط حوار الشخصيات",
+    "trackMusic": "موسيقى",
+    "trackMusicHint": "الموسيقى الخلفية والنتيجة",
+    "trackSfx": "المؤثرات الصوتية",
+    "trackSfxHint": "المؤثرات الصوتية والأجواء",
+    "clipLabel": "مقطع {track}",
+    "start": "البداية: {time}",
+    "clipDuration": "المدة: {time}",
+    "alignmentTitle": "فاز على محاذاة الصوت {number}",
+    "alignmentDescription": "قم بمحاذاة هذا المقطع مع الحوار والمسارات الصوتية للحصول على توقيت دقيق.",
+    "beatTiming": "توقيت الفوز",
+    "aligned": "محاذاة",
+    "nearlyAligned": "محاذاة تقريبًا",
+    "misaligned": "منحرفة",
+    "noDialogue": "لا حوار",
+    "startTime": "وقت البدء",
+    "endTime": "وقت النهاية",
+    "duration": "مدة",
+    "generateTitle": "توليد الأصول",
+    "generateDescription": "حدد أنواع الأصول المراد إنشاؤها لجميع المشاهد",
+    "targetLanguage": "اللغة المستهدفة",
+    "translateBeforeAudio": "ستتم ترجمة النص من الإنجليزية إلى {language} قبل إنشاء الصوت",
+    "narrationProgress": "تقدم السرد",
+    "dialogueProgress": "تقدم الحوار",
+    "musicProgress": "تقدم الموسيقى",
+    "sfxProgress": "تقدم المؤثرات الصوتية",
+    "characterProgress": "تقدم الشخصية",
+    "imageProgress": "تقدم صورة المشهد",
+    "sceneProgress": "المشهد {current} / {total}",
+    "runInBackground": "تشغيل في الخلفية",
+    "generationComplete": "اكتمل الجيل"
+  },
+  "export": {
+    "document": {
+      "title": "تصدير المستند",
+      "description": "اختر المستند الذي تريد تصديره:",
+      "script": "البرنامج النصي",
+      "scriptHint": "تنسيق سكريبت احترافي",
+      "storyboard": "القصة المصورة",
+      "storyboardHint": "القصة المصورة المرئية مع الصور",
+      "sceneDirection": "اتجاه المشهد",
+      "sceneDirectionHint": "اتجاهات المشهد الفني"
+    },
+    "stream": {
+      "title": "تيار التصدير",
+      "description": "المشهد {number} - سريع (WebM) للمسودات، أو البث (MP4) للتسليم، أو السحابي للمشاهد الطويلة.",
+      "videoSequence": "تسلسل الفيديو (نبضات {count})",
+      "unmuteAll": "إلغاء كتم صوت الكل",
+      "muteAll": "كتم صوت الكل",
+      "beatLabel": "فاز {number}",
+      "noRenderedSegments": "لا توجد شرائح المقدمة المتاحة",
+      "beatsNotRendered": "{count, plural, one {# beat} other {# beats}} لم يتم عرضه بعد",
+      "audioTracksTiming": "المسارات الصوتية والتوقيت",
+      "narration": "السرد",
+      "dialogue": "حوار",
+      "backgroundMusic": "موسيقى خلفية",
+      "soundEffects": "المؤثرات الصوتية",
+      "clips": "{count, plural, one {# clip} other {# clips}}",
+      "notAvailable": "غير متوفر",
+      "startAt": "ابدأ في",
+      "volume": "مقدار",
+      "resolution720p": "720 بكسل (1280×720)",
+      "resolution1080p": "1080 بكسل (1920×1080)",
+      "resolution4k": "4K (3840×2160)",
+      "outputResolution": "دقة الإخراج",
+      "statusPreparing": "جارٍ تحضير مهمة العرض...",
+      "statusUploading": "جارٍ تحميل مواصفات الوظيفة...",
+      "statusRendering": "جاري عرض الفيديو...",
+      "statusComplete": "اكتمل العرض!",
+      "statusError": "فشل العرض",
+      "videoReady": "الفيديو جاهز للتحميل",
+      "downloadMp4": "تحميل MP4",
+      "rendering": "تقديم...",
+      "renderScene": "تقديم المشهد"
+    },
+    "videoEditor": {
+      "title": "محرر الفيديو",
+      "tabSmartPrompt": "موجه الذكية",
+      "tabEditVideo": "تحرير الفيديو",
+      "tabExtendVideo": "تمديد الفيديو",
+      "duration": "مدة",
+      "resolution": "دقة",
+      "aspect": "وجه",
+      "footerHint": "قم بتكوين الكاميرا والأداء والأسلوب للحصول على أفضل النتائج",
+      "generating": "جارٍ الإنشاء...",
+      "generateVideo": "توليد الفيديو"
+    }
+  },
+  "direction": {
+    "promptDirection": {
+      "title": "الاتجاه الفوري",
+      "description": "قم بمراجعة وتحسين المطالبة التي ستوجه عملية إنشاء الفيديو.",
+      "modeSuffix": "وضع {mode}",
+      "optimizedForMethod": "الأمثل لهذا الأسلوب الجيل",
+      "currentDirection": "الاتجاه الحالي",
+      "undo": "تراجع ({count})",
+      "noPrompt": "لم يتم تحديد الاتجاه الفوري",
+      "characters": "أحرف {count}",
+      "modified": "معدل",
+      "tipsFor": "نصائح ل{mode}",
+      "refineDirection": "تحسين الاتجاه",
+      "refineHint": "صف كيف تريد تعديل المطالبة باللغة الطبيعية.",
+      "refinePlaceholder": "على سبيل المثال، اجعل الأمر أكثر دراماتيكية، أو قم بإبطاء الحركة...",
+      "applyDirection": "تطبيق الاتجاه",
+      "modes": {
+        "TEXT_TO_VIDEO": "تحويل النص إلى فيديو",
+        "IMAGE_TO_VIDEO": "صورة إلى فيديو",
+        "FRAME_TO_VIDEO": "من الإطار إلى الفيديو",
+        "EXTEND": "يمتد",
+        "REFERENCE_IMAGES": "مرجع"
+      },
+      "tips": {
+        "FRAME_TO_VIDEO": {
+          "tip1": "التركيز على الحركة والانتقالات بين الإطارات",
+          "tip2": "تجنب حركات الكاميرا التي تنحرف عن الإطار النهائي",
+          "tip3": "وصف كيفية تحول العناصر من البداية إلى النهاية"
+        },
+        "IMAGE_TO_VIDEO": {
+          "tip1": "صف كيف يجب أن تنبض الصورة الثابتة بالحياة",
+          "tip2": "قم بتضمين حركات خفية مثل التنفس والوميض",
+          "tip3": "الحفاظ على الاتساق مع الصورة البداية"
+        },
+        "TEXT_TO_VIDEO": {
+          "tip1": "كن محددًا بشأن التفاصيل المرئية والتكوين",
+          "tip2": "وصف الإضاءة والبيئة والجو",
+          "tip3": "قم بتضمين مواقف الشخصيات وأفعالها"
+        },
+        "EXTEND": {
+          "tip1": "التركيز على استمرار الحركة الحالية",
+          "tip2": "حافظ على الاستمرارية البصرية مع الفيديو المصدر",
+          "tip3": "وصف ما يحدث بعد ذلك في المشهد"
+        },
+        "REFERENCE_IMAGES": {
+          "tip1": "استخدم الصور المرجعية لتناسق الأحرف",
+          "tip2": "وصف المشهد أثناء الإشارة إلى أنماط الشخصيات",
+          "tip3": "اجمع بين المراجع المرئية ووصف المشهد"
+        }
+      },
+      "examples": {
+        "FRAME_TO_VIDEO": {
+          "example1": "اجعل الانتقال أكثر سلاسة",
+          "example2": "أضف انجرافًا دقيقًا للكاميرا",
+          "example3": "إبطاء الحركة",
+          "example4": "اجعلها أكثر دراماتيكية"
+        },
+        "IMAGE_TO_VIDEO": {
+          "example1": "إضافة تأثيرات الرياح على الشعر والملابس",
+          "example2": "تشمل حركة التنفس اللطيفة",
+          "example3": "اجعل الإضاءة أكثر ديناميكية",
+          "example4": "أضف الحركة البيئية"
+        },
+        "TEXT_TO_VIDEO": {
+          "example1": "جعل المشهد أكثر سينمائية",
+          "example2": "أضف إضاءة الساعة الذهبية",
+          "example3": "قم بتضمين المزيد من التفاصيل البيئية",
+          "example4": "اجعل العمل أكثر ديناميكية"
+        },
+        "EXTEND": {
+          "example1": "استمر في الحركة بسلاسة",
+          "example2": "أضف مقلاة كاميرا خفية",
+          "example3": "زيادة طاقة المشهد",
+          "example4": "الانتقال إلى زاوية جديدة"
+        },
+        "REFERENCE_IMAGES": {
+          "example1": "تطابق تعبير الشخصية",
+          "example2": "حافظ على نفس أسلوب الفن",
+          "example3": "الحفاظ على الإضاءة المستمرة",
+          "example4": "استخدم نفس لوحة الألوان"
+        }
+      }
+    },
+    "director": {
+      "title": "إنشاء فيديو: فاز على {number}",
+      "description": "قم بمراجعة معلمات الإنشاء وتخصيصها قبل العرض.",
+      "tabTextToVideo": "تحويل النص إلى فيديو",
+      "tabTextToVideoShort": "T2V",
+      "tabImageToVideo": "صورة إلى فيديو",
+      "tabImageToVideoShort": "I2V",
+      "tabReference": "مرجع",
+      "tabReferenceShort": "المرجع",
+      "tabExtend": "يمتد",
+      "tabExtendShort": "تحويلة",
+      "generateVideo": "توليد الفيديو",
+      "resetToSegmentDialogue": "إعادة تعيين لتقسيم الحوار",
+      "frameFirstTitle": "سير عمل الإطار الأول:",
+      "frameFirstBody": "قم بإنشاء إطارات رئيسية في خطوة الإطار للحصول على تناسق أفضل للأحرف. يتوفر تحويل النص إلى فيديو ولكنه قد يؤدي إلى انحراف الأحرف.",
+      "disabledNeedStartFrame": "إنشاء إطار البداية أولاً (خطوة الإطار)",
+      "disabledNeedPrevious": "قم بإنشاء الجزء السابق أولاً أو قم بعرض مقطع فيديو مصدر"
+    },
+    "framePrompt": {
+      "title": "إنشاء الإطار",
+      "titlePlural": "توليد الإطارات",
+      "beatBadge": "فاز {number}",
+      "startEnd": "البداية + النهاية",
+      "startFrame": "بدء الإطار",
+      "endFrame": "إطار النهاية",
+      "endDescription": "تستخدم الإطارات الرئيسية النهائية تحريرًا مباشرًا لصورة إطار البداية للمقطع بحيث يظل طاقم الممثلين وخزانة الملابس والجغرافيا متسقين — مع تجنب العروض الكاملة غير ذات الصلة التي تربك نماذج الفيديو.",
+      "tabVisualSetup": "الإعداد المرئي",
+      "tabCustomPrompt": "موجه مخصص",
+      "characterRefsActive": "مراجع الأحرف نشطة",
+      "characterRefsHint": "للحصول على أفضل النتائج مع مراجع الشخصيات، استخدم إطار اللقطة القريبة أو المتوسطة. اللقطات الواسعة تجعل الشخصيات أصغر من أن تتمكن من التعرف على الوجه.",
+      "contentAwareEnd": "النهاية المدركة للمحتوى (التحرير من البداية)",
+      "contentAwareEndHint": "يتم إنشاء الصورة النهائية عن طريق تحرير إطار بداية المقطع بعد تشغيل هذا الحوار/الإجراء - تتطور التعبيرات والحظر بينما تظل استمرارية المشهد مغلقة.",
+      "generating": "جارٍ الإنشاء...",
+      "generateFrame": "إنشاء الإطار",
+      "generateFrames": "توليد الإطارات"
+    },
+    "preVis": {
+      "title": "مباشر - {label}",
+      "description": "المشهد {number} · منشئ موجه موجه بمراجع الشخصية وخزانة الملابس.",
+      "matchingNotes": "ملاحظات المطابقة المرجعية",
+      "tabVisualSetup": "الإعداد المرئي",
+      "tabCustomPrompt": "موجه مخصص",
+      "wardrobeOverride": "تجاوز نص خزانة الملابس (اختياري - يتم إرسال صورة المرجع المزدوج عندما تكون متاحة)",
+      "locationReference": "مرجع الموقع",
+      "oneSelected": "تم تحديد 1",
+      "wardrobePlaceholder": "وصف كامل لخزانة الملابس من المكتبة المرجعية...",
+      "promptPlaceholder": "موجه توليد الصورة الكاملة ...",
+      "negativePlaceholder": "دعوة سلبية…",
+      "generating": "جارٍ الإنشاء…",
+      "generateWithDirect": "توليد مع المباشر"
+    }
+  },
+  "foundation": {
+    "reimagine": {
+      "changeArtStyleTitle": "تغيير نمط الفن",
+      "changeArtStyleDescription": "يتطلب تغيير أسلوبك الفني إعادة تصور Blueprint. سوف يقوم SceneFlow بتحسين النص الخاص بك من أجل الجمالية الجديدة.",
+      "changeAspectRatioTitle": "تغيير نسبة الارتفاع",
+      "changeAspectRatioDescription": "يتطلب تغيير نسبة العرض إلى الارتفاع إعادة تصور Blueprint. سيتم إعادة بناء اتجاهات المشهد والتأطير للتنسيق الجديد.",
+      "loseEditsTitle": "ستفقد تعديلات الإنتاج اليدوية:",
+      "loseScriptTweaks": "تعديلات سطر البرنامج النصي لم يتم قفلها بعد",
+      "loseStoryboard": "إطارات القصة المصورة والأصول المولدة",
+      "loseBeatAdjustments": "تعديلات الإنتاج على مستوى الفوز",
+      "artStyle": "أسلوب الفن",
+      "aspectRatio": "نسبة الارتفاع",
+      "reimagineInBlueprint": "إعادة تصور في Blueprint"
+    },
+    "optimizeScene": {
+      "title": "تحسين المشهد {number}",
+      "score": "نتيجة:",
+      "pacing": "السرعة: {value}",
+      "tension": "التوتر: {value}",
+      "character": "الشخصية: {value}",
+      "visual": "البصرية: {value}",
+      "aiRecommendations": "توصيات الذكاء الاصطناعي ({count})",
+      "commonOptimizations": "التحسينات المشتركة",
+      "customInstructions": "تعليمات مخصصة",
+      "stop": "قف",
+      "voice": "صوت",
+      "placeholder": "أضف أي تعليمات محددة لتحسين هذا المشهد...",
+      "selectedCount": "تم تحديد {count, plural, one {# optimization} other {# optimizations}}",
+      "selectHint": "حدد التحسينات أو أضف التعليمات",
+      "applying": "جارٍ التقديم...",
+      "applyRecommendations": "تطبيق التوصيات"
+    },
+    "referenceLibrary": {
+      "title": "Reference Library"
+    },
+    "beatReferences": {
+      "title": "مراجعة المراجع — المشهد {number}",
+      "description": "SceneFlow المراجع المحددة تلقائيًا لهذه الإيقاع. قم بالتأكيد أو التعديل قبل الإنشاء.",
+      "beatKindAction": "فعل",
+      "beatKindNarration": "السرد",
+      "beatKindDialogue": "حوار",
+      "beatLabel": "فوز: {kind}",
+      "autoSelected": "تم التحديد تلقائيًا: {summary}",
+      "locationMatchedAssignment": "الموقع المطابق من مهمة المشهد",
+      "locationMatchedHeading": "الموقع مطابق من عنوان المشهد",
+      "locationReference": "مرجع الموقع",
+      "pickLocation": "اختر مرجعًا بيئيًا واحدًا لهذه الإيقاع (يستخدم للاتساق البصري).",
+      "match": "مباراة",
+      "selectedCount": "تم تحديد {count}",
+      "saveSelection": "حفظ التحديد",
+      "generating": "جارٍ الإنشاء…",
+      "generateFrame": "توليد الإطار"
+    },
+    "analysisHandoff": {
+      "title": "تحليل جميع مشاهد {count}",
+      "subtitle": "يعمل Audience Resonance في الخلفية",
+      "durationFewMinutes": "بضع دقائق",
+      "durationAboutMinute": "حوالي دقيقة",
+      "durationAboutMinutes": "حوالي {count} دقيقة",
+      "takesTime": "يستغرق هذا {duration} لأنه يتم تسجيل كل مشهد على حدة.",
+      "keepEditing": "يمكنك الاستمرار في التحرير أثناء تشغيله. التحليل يكتب نتائجه فقط، ولا يقوم أبدًا بالكتابة فوق البرنامج النصي الخاص بك.",
+      "notifyReady": "سنقوم بإعلامك عندما يكون جاهزا.",
+      "notifyDetail": "يظهر التقدم في الجزء السفلي من الشاشة، وتصل النتيجة إلى إشعاراتك حتى إذا ابتعدت عنها.",
+      "dontRemind": "لا تذكرني مرة أخرى",
+      "starting": "جارٍ البدء…",
+      "startAnalysis": "ابدأ التحليل"
+    },
+    "filmTreatment": {
+      "title": "مراجعة معالجة الفيلم",
+      "noTreatment": "لم يتم العثور على معالجة الفيلم لهذا المشروع",
+      "generateFirst": "قم بإنشاء معالجة فيلم في مرحلة Blueprint أولاً.",
+      "description": "تحقق من أن البرنامج النصي الخاص بك يتوافق مع العلاج المعتمد"
+    }
+  },
+  "retakeExtra": {
+    "intelligentRetake": {
+      "title": "الاستعادة الذكية",
+      "description": "وصف التصحيح. سنقوم بتوجيه تحرير الإطار أو إعادة الكتابة السريعة أو كليهما.",
+      "whatToFix": "ما الذي يجب علينا إصلاحه؟",
+      "fixPlaceholder": "قم بوصف ما يجب إصلاحه، على سبيل المثال. \"إزالة فنجان القهوة من على الطاولة\"",
+      "analyzing": "جارٍ التحليل…",
+      "analyze": "تحليل",
+      "viewFullPrompt": "عرض المطالبة الكاملة",
+      "fixStartingFrame": "إصلاح إطار البداية",
+      "fixStartingFrameHint": "قم بتحرير صورة البداية المقفلة بالإطار قبل إعادة الإنشاء.",
+      "frameEditPlaceholder": "تعليمات تحرير الإطار",
+      "applyPromptChanges": "تطبيق التغييرات السريعة",
+      "applyPromptChangesHint": "استخدم المطالبة المنقحة والإضافات السلبية.",
+      "noPromptChanges": "لم يقترح أي تغييرات سريعة.",
+      "retaking": "استعادة…",
+      "approveAndRetake": "الموافقة وإعادة الالتقاط",
+      "clipReferenceAlt": "مرجع المقطع",
+      "anomalyFrame": "في إطار البداية",
+      "anomalyMotion": "قدم في الحركة",
+      "anomalyBoth": "الإطار والحركة",
+      "anomalyUnknown": "الأصل غير واضح"
+    },
+    "regenerateBeats": {
+      "title": "تجديد يدق",
+      "description": "امسح جميع المقاطع وارجع إلى Beat Builder للبدء من جديد.",
+      "beats": "يدق",
+      "totalDuration": "المدة الإجمالية",
+      "anchoredFrames": "إطارات مثبتة",
+      "anchoredCount": "{anchored} / {total}",
+      "assetsWarning": "تحذير: سيؤدي هذا إلى حذف جميع الشرائح بما في ذلك الإطارات الرئيسية وأصول الفيديو التي تم إنشاؤها. لا يمكن التراجع عن هذا الإجراء.",
+      "emptyWarning": "ستتم إزالة كافة الشرائح الحالية. سيتم نقلك إلى Beat Builder لتكوين الإعدادات الجديدة وإعادة إنشائها.",
+      "nextHint": "سيتم فتح Beat Builder مع عناصر التحكم في المدة الإجمالية وعدد المقاطع ووضع التركيز والاتجاه المخصص.",
+      "deleteAndRegenerate": "حذف وتجديد",
+      "regenerate": "تجديد"
+    },
+    "keyframeGeneration": {
+      "title": "إعدادات إنشاء الإطار الرئيسي",
+      "description": "قم بتكوين كيفية إنشاء المقاطع ومواءمتها مع البرنامج النصي والصوت.",
+      "noDescription": "لا يوجد وصف متاح",
+      "audioBadge": "{duration}s الصوت",
+      "existingWarning": "سيتم استبدال {count, plural, one {# existing segment} other {# existing segments}}",
+      "manualEditsSuffix": "({count} مع التعديلات اليدوية)",
+      "tabAlignment": "المحاذاة والسرعة",
+      "tabDirection": "اتجاه المشهد",
+      "audioAlignment": "محاذاة الصوت",
+      "narrationDriven": "يحركها السرد",
+      "narrationDrivenHint": "محاذاة القطع مع دقات السرد",
+      "dialogueDriven": "يحركها الحوار",
+      "dialogueDrivenHint": "محاذاة القطع للحوار",
+      "pacingStyle": "نمط السرعة",
+      "beatCount": "عدد الضربات",
+      "auto": "آلي",
+      "manual": "يدوي",
+      "basedOnPacing": "استنادًا إلى سرعة {pacing} و{basis}",
+      "audioBasis": "{duration}s الصوت",
+      "durationBasis": "مدة {duration}",
+      "segmentsCount": "شرائح {count}",
+      "advancedOptions": "خيارات متقدمة",
+      "shotVariety": "مجموعة متنوعة من اللقطات",
+      "varietyMinimal": "الحد الأدنى – تأطير متسق",
+      "varietyBalanced": "متوازن - مزيج من اللقطات",
+      "varietyHigh": "عالية - تنوع ديناميكي",
+      "preserveManualEdits": "الحفاظ على التعديلات اليدوية",
+      "editedPromptsFound": "تم العثور على المطالبة (المطالبات) المعدلة بواسطة {count}",
+      "targetDuration": "المدة المستهدفة (بالثواني)",
+      "directionOverrides": "تجاوزات اتجاه المشهد",
+      "directionOverridesHint": "تؤثر هذه الإعدادات على كيفية إنشاء الذكاء الاصطناعي للمطالبات لكل مقطع. اختر \"متنوع\" للسماح للذكاء الاصطناعي بتحديد كل مقطع.",
+      "primaryShotType": "نوع اللقطة الأساسية",
+      "cameraMovement": "حركة الكاميرا",
+      "lightingMood": "مزاج الإضاءة",
+      "atmosphere": "أَجواء",
+      "footerSummary": "شرائح {count} • {duration}s",
+      "generating": "جارٍ الإنشاء...",
+      "regenerateKeyframes": "إعادة إنشاء الإطارات الرئيسية",
+      "generateKeyframes": "إنشاء إطارات مفتاحية",
+      "pacing": {
+        "slow": {
+          "label": "بطيئة والتأمل",
+          "description": "شرائح أطول (6-8 ثواني)، الحد الأدنى من التخفيضات"
+        },
+        "moderate": {
+          "label": "معتدل",
+          "description": "سرعة متوازنة (شرائح 4-6 ثواني)"
+        },
+        "fast": {
+          "label": "سريع وديناميكي",
+          "description": "التخفيضات السريعة (شرائح 3-4s)"
+        },
+        "dynamic": {
+          "label": "ديناميكي (مطابق للصوت)",
+          "description": "يختلف بناءً على إيقاعات السرد/الحوار"
+        }
+      },
+      "shotTypes": {
+        "wide": {
+          "label": "لقطة واسعة",
+          "description": "إنشاء الفضاء والسياق"
+        },
+        "medium": {
+          "label": "لقطة متوسطة",
+          "description": "التوازن بين الموضوع والبيئة"
+        },
+        "close-up": {
+          "label": "عن قرب",
+          "description": "التركيز على العاطفة والتفاصيل"
+        },
+        "extreme-close-up": {
+          "label": "المتطرفة عن قرب",
+          "description": "التركيز الدرامي"
+        },
+        "two-shot": {
+          "label": "طلقتين",
+          "description": "الشخصيات في المحادثة"
+        },
+        "over-the-shoulder": {
+          "label": "فوق الكتف",
+          "description": "بوف في الحوار"
+        },
+        "varied": {
+          "label": "متنوع (منظمة العفو الدولية تقرر)",
+          "description": "اسمح للذكاء الاصطناعي بالاختيار لكل مقطع"
+        }
+      },
+      "cameraMovements": {
+        "static": {
+          "label": "ثابت",
+          "description": "لا حركة، إطار مستقر"
+        },
+        "pan": {
+          "label": "مِقلاة",
+          "description": "الاجتياح الأفقي"
+        },
+        "tilt": {
+          "label": "إمالة",
+          "description": "الحركة العمودية"
+        },
+        "dolly": {
+          "label": "دوللي",
+          "description": "التحرك نحو/بعيدًا عن الموضوع"
+        },
+        "tracking": {
+          "label": "تتبع",
+          "description": "متابعة حركة الموضوع"
+        },
+        "handheld": {
+          "label": "محمول",
+          "description": "حركة طبيعية"
+        },
+        "varied": {
+          "label": "متنوع (منظمة العفو الدولية تقرر)",
+          "description": "مزيج من الحركات"
+        }
+      },
+      "lighting": {
+        "natural": {
+          "label": "طبيعي",
+          "description": "إضاءة واقعية وناعمة"
+        },
+        "dramatic": {
+          "label": "دراماتيكي",
+          "description": "التباين العالي، الظلال"
+        },
+        "soft": {
+          "label": "ناعم/منتشر",
+          "description": "ضوء لطيف وممتع"
+        },
+        "noir": {
+          "label": "نوير",
+          "description": "مظلمة، غامضة، منخفضة المستوى"
+        },
+        "golden": {
+          "label": "الساعة الذهبية",
+          "description": "نغمات دافئة وغروب الشمس/شروق الشمس"
+        },
+        "cold": {
+          "label": "بارد/أزرق",
+          "description": "رائع، صارخ، سريري"
+        }
+      },
+      "atmospheres": {
+        "neutral": {
+          "label": "حيادي",
+          "description": "مزاج قياسي"
+        },
+        "tense": {
+          "label": "متوتر",
+          "description": "مثير للترقب، على الحافة"
+        },
+        "serene": {
+          "label": "هادئ",
+          "description": "سلمي وهادئ"
+        },
+        "energetic": {
+          "label": "نشيط",
+          "description": "ديناميكية ومثيرة"
+        },
+        "melancholic": {
+          "label": "حزين",
+          "description": "حزين، عاكس"
+        },
+        "mysterious": {
+          "label": "غامض",
+          "description": "مثيرة للاهتمام وسرية"
+        },
+        "hopeful": {
+          "label": "متفائل",
+          "description": "متفائل، يبعث على التفاؤل"
+        }
+      }
+    },
+    "intelligentTitle": "الاستعادة الذكية",
+    "intelligentDescription": "وصف التصحيح. سنقوم بتوجيه تحرير الإطار أو إعادة الكتابة السريعة أو كليهما.",
+    "whatToFix": "ما الذي يجب علينا إصلاحه؟",
+    "fixPlaceholder": "قم بوصف ما يجب إصلاحه، على سبيل المثال. \"إزالة فنجان القهوة من على الطاولة\"",
+    "analyzing": "جارٍ التحليل…",
+    "analyze": "تحليل",
+    "viewFullPrompt": "عرض المطالبة الكاملة",
+    "fixStartingFrame": "إصلاح إطار البداية",
+    "fixStartingFrameHint": "قم بتحرير صورة البداية المقفلة بالإطار قبل إعادة الإنشاء.",
+    "frameEditPlaceholder": "تعليمات تحرير الإطار",
+    "applyPromptChanges": "تطبيق التغييرات السريعة",
+    "applyPromptChangesHint": "استخدم المطالبة المنقحة والإضافات السلبية.",
+    "noPromptChanges": "لم يقترح أي تغييرات سريعة.",
+    "retaking": "استعادة…",
+    "approveAndRetake": "الموافقة وإعادة الالتقاط",
+    "keyframeRegenTitle": "إعادة إنشاء الإطارات الرئيسية",
+    "keyframeRegenDescription": "أعد بناء إطارات البداية والنهاية لهذه الإيقاع بالاتجاه المحدث."
   }
 }

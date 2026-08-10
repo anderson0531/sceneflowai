@@ -7,7 +7,72 @@
     "references": "Referencias",
     "timeline": "Línea temporal",
     "mixer": "Production Mixer",
-    "directorConsole": "Consola del director"
+    "directorConsole": "Consola del director",
+    "initializing": "Inicializando",
+    "opening": "Apertura Production Studio",
+    "openingShort": "Producción de apertura",
+    "backToBlueprint": "Volver a Blueprint",
+    "blueprintShort": "Blueprint",
+    "productionLabel": "Producción",
+    "viewsAriaLabel": "Vistas de Production Studio",
+    "viewStudio": "Estudio",
+    "viewScreening": "Screening Room",
+    "viewStreams": "Corrientes",
+    "loadingImages": "Cargando imágenes...",
+    "untitledProject": "Proyecto sin título",
+    "settingUpWorkspace": "Configurando tu espacio de trabajo",
+    "loadingMessages": {
+      "message1": "Cargando tu producción...",
+      "message2": "Restaurando escenas y storyboard...",
+      "message3": "Preparando el espacio de trabajo de Pre-Vis...",
+      "message4": "Cargando biblioteca de referencia...",
+      "message5": "Casi listo..."
+    },
+    "generating": "Generando...",
+    "shareScreeningTitle": "Compartir Screening Room",
+    "shareScreeningDescription": "Cualquiera que tenga este enlace puede ver su presentación Screening Room. No necesitarán una cuenta de Sceneflow.",
+    "shareBulletView": "Los espectadores pueden mirar con audio completo y traducciones.",
+    "shareBulletNoEdit": "No pueden editar ni descargar su proyecto.",
+    "shareBulletDisable": "Puedes desactivar este enlace en cualquier momento.",
+    "copied": "¡Copiado!",
+    "deleteCharacterTitle": "Eliminar personaje con diálogo",
+    "deleteCharacterDescription": "El carácter \"{name}\" tiene {count, plural, one {# dialogue line} other {# dialogue lines}} en el script. ¿Qué te gustaría hacer con estas líneas de diálogo?",
+    "clearCharacterIds": "Borrar ID de personajes",
+    "clearCharacterIdsHint": "Elimina las identificaciones de personajes de las líneas de diálogo. El diálogo unirá los personajes por nombre utilizando la coincidencia alternativa mejorada.",
+    "reassignToAnother": "Reasignar a otro personaje",
+    "reassignToAnotherHint": "Asigna todas las líneas de diálogo a un personaje diferente.",
+    "selectCharacterReassign": "Selecciona el personaje al que reasignar",
+    "reassignAndDelete": "Reasignar y eliminar",
+    "clearIdsAndDelete": "Borrar ID y eliminar",
+    "mergeDuplicatesTitle": "Fusionar caracteres duplicados",
+    "mergeDuplicatesDescription": "Selecciona qué personaje conservar y qué duplicados fusionar en él.",
+    "keepThisCharacter": "Mantén este carácter:",
+    "willBeMerged": "Se fusionará (duplicados):",
+    "noDuplicatesToMerge": "No hay duplicados para fusionar",
+    "mergeDialogueNote": "Todas las líneas de diálogo de personajes duplicados se asignarán al personaje principal.",
+    "mergeCharacters": "Fusionar personajes",
+    "hasVoice": "(tiene voz)",
+    "budgetTitle": "Gestión del presupuesto de producción - {title}",
+    "setBudget": "Establecer presupuesto",
+    "budgetAmount": "Presupuesto: {amount}",
+    "importTranslation": "Importar traducción",
+    "importTranslationTitle": "Importar traducción {language}",
+    "importTranslationDescription": "Pega tu guión traducido a continuación. El formato debe coincidir con el formato exportado:",
+    "importTranslationFormat": "[1] TRANSLATED_LABEL: texto traducido",
+    "importTranslationPlaceholder": "Pegue el guión traducido aquí...",
+    "deleteBeat": "Eliminar ritmo",
+    "deleteBeatDescription": "¿Está seguro de que desea eliminar este segmento? Esta acción no se puede deshacer.",
+    "deleteScene": "Eliminar escena {number}",
+    "deleteSceneDescription": "Esto eliminará permanentemente esta escena y todos los recursos asociados.",
+    "deleteSceneAction": "Eliminar escena",
+    "assetsRemoved": "Activos que serán eliminados",
+    "assetSceneImage": "Imagen de escena",
+    "assetNarrationAudio": "audio de la narración",
+    "assetDescriptionAudio": "audio de descripción",
+    "assetDialogueAudio": "audio del diálogo",
+    "assetSceneDirection": "Dirección de escena",
+    "assetBeats": "{count, plural, one {# beat} other {# beats}}",
+    "assetMusic": "Música"
   },
   "script": {
     "generateScript": "Generar secuencia de comandos",
@@ -53,5 +118,1158 @@
     "segmentsGenerated": "Segmentos generados",
     "audioGenerated": "Audio generado",
     "saveFailed": "No se pudieron guardar los cambios."
+  },
+  "express": {
+    "title": "Expresar todas las escenas (avanzado)",
+    "description": "Ejecuta Dirección → Audio → cuadros previos para cada escena en paralelo (hasta 3 a la vez). Esta es una carrera larga y con mucho crédito: se recomienda Express por escena en cada tarjeta de escena para los puntos de control.",
+    "audioLanguage": "Idioma de audio",
+    "translateBadge": "traducir",
+    "audioLanguageHint": "El diálogo y la narración se generarán en {lang}. El audio existente en otros idiomas no se modifica.",
+    "pipelineTitle": "Tubería (por escena)",
+    "stepDirection": "1. Dirección",
+    "stepAudio": "2. Audio",
+    "stepImage": "3. Imagen",
+    "pipelineSceneCount": "Escenas {done}/{total}",
+    "pipelineDialogueLines": "Líneas de diálogo {count}",
+    "pipelineImageCount": "{establishing} estableciendo + {frames} marcos previos a la visualización",
+    "backgroundMusic": "Música de fondo",
+    "musicScenesHaveDescriptions": "Las escenas de {count} tienen descripciones musicales.",
+    "musicNoDescriptions": "Ninguna escena tiene descripción musical.",
+    "storyboardQualityDraft": "Calidad del guión gráfico: borrador",
+    "storyboardQualityDraftHint": "Genera marcos de diseño rápidos para revisión. Utilice Finalizar fotogramas después para generar animaciones y vídeos fotorrealistas de alta resolución.",
+    "soundEffects": "Efectos sonoros",
+    "soundEffectsHint": "Los efectos de sonido se incluyen en los segmentos de video de Veo durante la producción. La vista previa de Animatic utiliza narración, diálogo y música opcional únicamente.",
+    "onlyMissingFrames": "Sólo faltan cuadros",
+    "onlyMissingFramesHint": "Saltar cuadros que ya tengan imágenes.",
+    "regenerateExisting": "Regenerar Existente",
+    "regenerateExistingHint": "Vuelva a calcular cada fase incluso si la dirección, el audio o la imagen ya están presentes.",
+    "artStyle": "estilo de arte",
+    "artStyleLockedHint": "Bloqueado en Blueprint: cambie la base allí para reinventar.",
+    "artStyleUnlockedHint": "Se aplica a todos los cuadros previos a la visualización y fluye a través de la generación de video.",
+    "estimatedCost": "Costo estimado",
+    "costImages": "Imágenes: Créditos de {credits} (cuadros {frames} × {perFrame})",
+    "costAudio": "Audio: ~{credits} créditos",
+    "costMusic": "Música: créditos {credits}",
+    "costTotal": "Total: ~{credits} créditos",
+    "costEstimateDisclaimer": "Sólo estimaciones. El uso real depende de la duración del diálogo y del número de fases que realmente deben ejecutarse.",
+    "running": "Correr…",
+    "generate": "Generar"
+  },
+  "expressAudio": {
+    "title": "Audio exprés",
+    "description": "Genere diálogos, efectos de sonido y música para esta escena al mismo tiempo. Los diálogos usan TTS, los ritmos de acción usan audio nativo de Veo y la música usa Lyria.",
+    "scope": "Alcance",
+    "scopeMissing": "Sólo falta",
+    "scopeAll": "Todos (regenerar)",
+    "scopeAllWarning": "El audio existente para los elementos seleccionados se eliminará y se regenerará.",
+    "audioToGenerate": "Audio para generar",
+    "noAudioItems": "No hay elementos de audio disponibles para esta escena.",
+    "statusReady": "Listo",
+    "statusMissing": "Desaparecido",
+    "sfxDurationPreset": "Preajuste de duración de SFX",
+    "durationAuto": "Auto ({seconds}s · Veo {veoSeconds}s)",
+    "durationShort": "3 cortos / Veo 4",
+    "durationMedium": "8 medianos",
+    "durationLong": "Largo 15s / Veo 8s máx.",
+    "veoPartialHint": "Veo cubre hasta 8 segundos (objetivo automático {seconds}).",
+    "sfxCredits": "Créditos SFX: {credits}. {hint}",
+    "creditHint": "~{credits} créditos · hasta 8s continuos",
+    "running": "Correr...",
+    "generateAudio": "Generar audio ({count})"
+  },
+  "expressSfx": {
+    "title": "Efectos exprés Veo",
+    "description": "Genere efectos de sonido de acción al mismo tiempo (hasta 2 a la vez). Cada ritmo utiliza audio nativo de Veo y luego extrae MP3 para la animación.",
+    "selectedBeats": "ritmos seleccionados",
+    "estimatedCredits": "Créditos estimados",
+    "creditHint": "~{credits} créditos · hasta 8s continuos",
+    "actionBeats": "Latidos de acción",
+    "audioReady": "Audio listo",
+    "durationPreset": "Duración preestablecida",
+    "durationAuto": "Auto ({seconds}s · Veo {veoSeconds}s)",
+    "durationShort": "3 cortos / Veo 4",
+    "durationMedium": "8 medianos",
+    "durationLong": "Largo 15s / Veo 8s máx.",
+    "veoPartialHint": "Veo cubre hasta 8 segundos (objetivo automático {seconds}).",
+    "regenerateWithAudio": "Regenerar ritmos que ya tienen audio",
+    "running": "Correr...",
+    "generateSfx": "Generar SFX ({count})"
+  },
+  "expressScene": {
+    "title": "Escena exprés",
+    "description": "Elija qué fotogramas previos generar o regenerar. La regeneración de fotogramas existentes actualiza solo las imágenes: la dirección y el audio no se modifican.",
+    "scope": "Alcance",
+    "scopeMissing": "Sólo falta",
+    "scopeRegenerate": "Regenerar seleccionado",
+    "scopeRegenerateHint": "Se regenerarán los fotogramas marcados con imágenes existentes. La dirección y el audio no se repiten.",
+    "frames": "Marcos",
+    "noFrames": "No hay marcos disponibles para este alcance.",
+    "hasImage": "Tiene imagen",
+    "missing": "Desaparecido",
+    "imageCredits": "Créditos de imagen (est.): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
+    "running": "Correr...",
+    "generateScene": "Generar escena"
+  },
+  "expressGenerateAll": {
+    "title": "Generar todo",
+    "description": "Ejecute fotogramas de Express Audio y Express Scene en paralelo. Los valores predeterminados coinciden con la selección \"solo faltante\" de cada canalización; ajuste el alcance si necesita regenerar.",
+    "audioSection": "Audio",
+    "framesSection": "Marcos",
+    "scope": "Alcance",
+    "scopeMissing": "Sólo falta",
+    "scopeAll": "Todos (regenerar)",
+    "scopeRegenerate": "Regenerar seleccionado",
+    "audioToGenerate": "Audio para generar",
+    "noAudioItems": "No hay elementos de audio para esta escena.",
+    "statusReady": "Listo",
+    "statusMissing": "Desaparecido",
+    "sfxDurationPreset": "Preajuste de duración de SFX",
+    "durationAuto": "Auto ({seconds}s · Veo {veoSeconds}s)",
+    "durationShort": "3 cortos / Veo 4",
+    "durationMedium": "8 medianos",
+    "durationLong": "Largo 15s / Veo 8s máx.",
+    "creditHint": "~{credits} créditos · hasta 8s continuos",
+    "veoSfxCredits": "Créditos de Veo SFX (est.): {credits}",
+    "frames": "Marcos",
+    "noFrames": "No hay marcos disponibles.",
+    "hasImage": "Tiene imagen",
+    "missing": "Desaparecido",
+    "imageCredits": "Créditos de imagen (est.): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
+    "running": "Correr...",
+    "generateAll": "Generar todo"
+  },
+  "retake": {
+    "title": "¿Reemplazar la toma existente?",
+    "description": "Este beat ya tiene un vídeo generado. Abrir el generador o cargarla agregará una nueva toma y puede consumir créditos.",
+    "continue": "Continuar"
+  },
+  "reset": {
+    "title": "¿Reiniciar la producción de la escena?",
+    "sceneLabel": "Escena {number}",
+    "sceneHeading": "Escena {number} · {heading}",
+    "warning": "Esto elimina toda la <bold>línea de tiempo de ritmo</bold> para esta escena y no se puede deshacer. Deberá ejecutar la configuración del segmento nuevamente desde cero.",
+    "whatYouWillLose": "lo que perderás",
+    "segmentCount": "{count, plural, one {# segment} other {# segments}}",
+    "segmentDetail": "Temporización, notas de dirección, indicaciones de Veo y mapeo de diálogo a segmento",
+    "keyframeImage": "{count, plural, one {# keyframe image} other {# keyframe images}}",
+    "keyframeDetailAcross": "A través de {count, plural, one {# segment} other {# segments}} (cuadros de inicio/final)",
+    "keyframeDetailDefault": "Imágenes fijas de inicio y final utilizadas para la generación de video",
+    "videoClip": "{count, plural, one {# generated video clip} other {# generated video clips}}",
+    "videoDetail": "Salidas Veo/I2V a nivel de ritmo y tomas activas en la línea de tiempo.",
+    "imageClip": "{count, plural, one {# image clip} other {# image clips}}",
+    "imageClipDetail": "Activos fijos cargados o generados adjuntos a segmentos",
+    "alternateTake": "{count, plural, one {# alternate take} other {# alternate takes}}",
+    "alternateTakeDetail": "Generaciones adicionales almacenadas por segmento",
+    "sceneRender": "Renderizado de escena/flujo de producción",
+    "sceneRenderStreams": "{count, plural, one {# language or output stream} other {# language or output streams}} vinculado a esta escena",
+    "sceneRenderDefault": "Salida final de la escena mezclada desde el mezclador de producción.",
+    "beatStructureOnly": "Batir solo la estructura",
+    "beatStructureDetail": "Aún no se han detectado fotogramas clave ni clips, pero el progreso de la segmentación aún se borrará",
+    "notDeleted": "<bold>No eliminado:</bold> texto del guión, diálogo de la escena, narración, música/audio SFX, imagen fija de la escena y referencias de personajes.",
+    "resetting": "Restableciendo…",
+    "resetProduction": "Reiniciar producción"
+  },
+  "screening": {
+    "generateStreamTitle": "Generar flujo {language}",
+    "generateStreamTitleFallback": "Generar flujo de idioma",
+    "generateStreamDescription": "Traduce el texto de la escena y genera audio de diálogo/narración para este idioma. Se reutilizarán la música y los efectos de sonido existentes.",
+    "generateDialogue": "Generar dialogo",
+    "generating": "Generando…",
+    "publishRevisionTitle": "Publicar revisión del storyboard",
+    "publishRevisionDescription": "Incrementa la versión (por ejemplo, v{current} → v{next}). Su enlace para compartir no cambia. Los revisores que actualicen verán la nueva versión actual; sus próximas presentaciones están selladas en consecuencia.",
+    "labelOptional": "Etiqueta (opcional)",
+    "labelPlaceholder": "p.ej. Notas del cliente ronda 2",
+    "changeNotesOptional": "Notas de cambio (opcional)",
+    "changeNotesPlaceholder": "¿Qué cambió desde la última versión?",
+    "publishVersion": "Publicar v{version}"
+  },
+  "segments": {
+    "addBeat": {
+      "title": "Agregar ritmo",
+      "description": "Cree un mensaje de generación de video seleccionando el tipo de toma, los elementos de la escena y el diálogo. Veo 3.1 generará voz en off y SFX directamente desde el mensaje.",
+      "sceneBadge": "Escena {sceneNumber}",
+      "includeSceneDirection": "Incluir dirección de escena",
+      "includeSceneDirectionHint": "Seleccione qué notas del director incluir. Haga clic para habilitar y luego agregue notas personalizadas si es necesario.",
+      "clickToAddCustom": "Haga clic para agregar personalizado",
+      "editOrAddCustomNotes": "Editar o agregar notas personalizadas...",
+      "addCustomPlaceholder": "Añadir {label}...",
+      "directionCamera": "Notas de la cámara",
+      "directionLighting": "Iluminación",
+      "directionScene": "Escena/Entorno",
+      "directionTalent": "Talento/Bloqueo",
+      "directionAudio": "Audio/EFX",
+      "dialogueLines": "Líneas de diálogo",
+      "veoSpeechBadge": "Veo 3.1 Discurso",
+      "dialogueHint": "Seleccione el diálogo para este segmento. Haga clic para seleccionar y luego edite el texto para usar solo partes. Veo 3.1 generará la voz del personaje.",
+      "editDialoguePlaceholder": "Edite el texto del diálogo para usarlo en este segmento...",
+      "editDialogueHint": "Edite para usar solo la parte necesaria para este segmento (<12 s)",
+      "noDialogue": "No hay diálogo en esta escena.",
+      "includeNarration": "Incluir narración en off",
+      "narrationText": "Texto de narración (editable)",
+      "narrationPlaceholder": "Editar el texto de la narración para este segmento...",
+      "narrationEditHint": "Edite para usar solo la parte de la narración para este segmento.",
+      "narratorVoice": "Voz del Narrador",
+      "selectedVoice": "Seleccionado: {name}",
+      "autoEstimate": "Autoestimación",
+      "omniFlashMax": "Omni Flash max: {seconds} segundos por segmento",
+      "additionalNotes": "Notas adicionales",
+      "additionalNotesPlaceholder": "Cualquier dirección adicional, detalles visuales o notas de estilo...",
+      "generationMethod": "Método de generación",
+      "t2v": "Texto a vídeo",
+      "i2v": "Imagen a vídeo",
+      "noSceneImage": "(Sin imagen de escena)",
+      "promptPreview": "Vista previa rápida",
+      "startTime": "Hora de inicio",
+      "endTime": "Hora de finalización",
+      "method": "Método",
+      "addAction": "Agregar ritmo"
+    },
+    "edit": {
+      "title": "Editar segmento",
+      "badge": "Escena {sceneNumber} • Beat {beatNumber}",
+      "description": "Modifique la configuración de aviso, duración y generación del segmento.",
+      "generationPrompt": "Aviso de generación",
+      "promptPlaceholder": "Ingrese al mensaje de generación de video...",
+      "promptHint": "Edite el mensaje que se enviará a Veo 3.1 para la generación de video.",
+      "durationHint": "Omni Flash admite clips de 4 a 10 segundos",
+      "generationMethod": "Método de generación",
+      "t2v": "Texto a vídeo",
+      "i2v": "Imagen a vídeo",
+      "i2vHint": "Utilizará el marco de la escena como imagen inicial."
+    },
+    "delete": {
+      "title": "¿Eliminar Beat {number}?",
+      "description": "Esta acción no se puede deshacer.",
+      "segmentLabel": "Segmento",
+      "segmentOf": "#{index} de {total}",
+      "duration": "Duración",
+      "hasFramesWarning": "Este segmento ha generado fotogramas que se perderán.",
+      "lastBeatWarning": "Advertencia: este es el único segmento de la escena. Al eliminarlo, la escena quedará sin fotogramas clave.",
+      "shiftWarning": "Al eliminar este segmento se desplazarán todos los segmentos posteriores. Los índices de tiempo y secuencia se recalcularán automáticamente.",
+      "deleting": "Eliminando...",
+      "deleteBeat": "Eliminar ritmo"
+    },
+    "addType": {
+      "title": "Agregar ritmo a la escena {sceneNumber}",
+      "description": "Agregue un segmento basado en fotogramas clave para la generación de videos con IA. Para elementos cinematográficos (títulos, transiciones, B-roll), utilice el botón Elementos cinematográficos.",
+      "tabType": "Tipo",
+      "tabPosition": "Posición",
+      "tabPrompt": "Inmediato",
+      "defaultDuration": "{seconds} predeterminado",
+      "orDivider": "o",
+      "regenerateAll": "Regenerar todos los ritmos",
+      "regenerateAllCount": "Segmentos {count}",
+      "regenerateAllHint": "Vuelve a analizar la escena y genera nuevos segmentos con IA. Esto reemplazará los segmentos existentes.",
+      "insertPosition": "Insertar posición",
+      "referenceBeat": "Ritmo de referencia",
+      "selectSegment": "Seleccionar segmento",
+      "beatOption": "Derrota a {number} ({duration}s)",
+      "duration": "Duración",
+      "recommendedDuration": "Recomendado: {seconds} para {name}",
+      "preview": "Avance",
+      "newBadge": "NUEVO",
+      "generatingPrompt": "Generando aviso inteligente con Gemini 2.5...",
+      "aiUnavailable": "IA no disponible",
+      "usingTemplate": "Usando el mensaje de plantilla. {error}",
+      "contextAware": "Aviso contextual",
+      "contextAwareHint": "Este mensaje se generó en base al análisis de la escena adyacente. Edite según sea necesario.",
+      "generationPrompt": "Aviso de generación",
+      "aiGenerate": "Generar IA",
+      "generating": "Generando...",
+      "reset": "Reiniciar",
+      "promptPlaceholder": "Describe el contenido visual...",
+      "charCount": "Caracteres {count} • Este mensaje se utilizará para la generación de fotogramas.",
+      "presetSettings": "Configuraciones preestablecidas",
+      "addNamed": "Añadir {name}",
+      "types": {
+        "standard": {
+          "name": "Ritmo estándar",
+          "description": "Segmento de escena con fotogramas clave de inicio/final para la generación de vídeo con IA. Control total sobre la composición de la toma."
+        },
+        "extend": {
+          "name": "Continuar disparo",
+          "description": "Continúe desde el cuadro final del segmento anterior. Mantiene la continuidad visual en todos los cortes."
+        }
+      },
+      "positions": {
+        "start": {
+          "label": "Al inicio",
+          "description": "Insertar como primer segmento"
+        },
+        "before": {
+          "label": "Antes de ser seleccionado",
+          "description": "Insertar antes del segmento seleccionado"
+        },
+        "after": {
+          "label": "Después de seleccionado",
+          "description": "Insertar después del segmento seleccionado"
+        },
+        "end": {
+          "label": "Al final",
+          "description": "Agregar como último segmento"
+        }
+      }
+    },
+    "addSpecial": {
+      "title": "Agregar elemento cinematográfico",
+      "description": "Agregue un segmento de video especial. La IA generará un mensaje optimizado para la generación de videos.",
+      "elementType": "Tipo de elemento",
+      "duration": "Duración",
+      "recommendedDuration": "Recomendado: {seconds} para {name}",
+      "videoPrompt": "Aviso de generación de video",
+      "generating": "Generando...",
+      "regenerate": "Regenerado",
+      "reset": "Reiniciar",
+      "generatingCinematic": "Generando mensaje cinematográfico...",
+      "usingTemplate": "Uso del mensaje de plantilla",
+      "aiUnavailable": "IA no disponible: {error}",
+      "promptPlaceholder": "El mensaje generado por IA aparecerá aquí...",
+      "charCount": "Caracteres {count} • Edite para personalizar o haga clic en Regenerar para un nuevo mensaje",
+      "insertAt": "Insertar en la posición {position}",
+      "noKeyframes": "Sin fotogramas clave",
+      "addNamed": "Añadir {name}",
+      "types": {
+        "title": {
+          "name": "Secuencia de títulos",
+          "description": "Tarjeta de título cinematográfica con texto superpuesto en negrita. Establece el tono y marca tu vídeo."
+        },
+        "match-cut": {
+          "name": "Puente de corte partido",
+          "description": "Transición creativa imitando una forma o movimiento entre escenas. Por ejemplo, rueca → reloj que gira."
+        },
+        "establishing": {
+          "name": "Estableciendo tiro",
+          "description": "Toma amplia con dron o grúa que establece la geografía, la hora del día y el estado de ánimo de una nueva ubicación."
+        },
+        "broll": {
+          "name": "B-Roll (La calma)",
+          "description": "Respirador visual atmosférico. Primeros planos de detalles ambientales que añaden textura y ritmo."
+        },
+        "outro": {
+          "name": "Salida / Créditos",
+          "description": "Secuencia de cierre profesional. Desvanecimiento o desplazamiento elegante con estética de créditos de producción."
+        }
+      }
+    },
+    "common": {
+      "shotConfiguration": "Configuración de disparo",
+      "shotType": "Tipo de disparo",
+      "cameraMovement": "Movimiento de la cámara",
+      "lens": "Lente",
+      "duration": "Duración"
+    },
+    "shotTypes": {
+      "extreme-wide": {
+        "label": "Extremo ancho",
+        "description": "Entorno completo, sujetos diminutos."
+      },
+      "wide": {
+        "label": "Toma amplia",
+        "description": "Cuerpo completo, contexto ambiental."
+      },
+      "medium-wide": {
+        "label": "Medio ancho",
+        "description": "Rodilla a cabeza, algo de ambiente."
+      },
+      "medium": {
+        "label": "Plano Medio",
+        "description": "Cintura para arriba, conversacional"
+      },
+      "medium-close": {
+        "label": "Primer plano medio",
+        "description": "Pecho arriba, enfoque emocional"
+      },
+      "close-up": {
+        "label": "De cerca",
+        "description": "Sólo rostro, emoción intensa."
+      },
+      "extreme-close": {
+        "label": "Primer plano extremo",
+        "description": "Ojos, boca o detalle"
+      },
+      "two-shot": {
+        "label": "Dos tiros",
+        "description": "Dos personajes enmarcados juntos"
+      },
+      "over-shoulder": {
+        "label": "Sobre el hombro",
+        "description": "Perspectiva desde detrás de un personaje."
+      },
+      "pov": {
+        "label": "punto de vista",
+        "description": "Toma de punto de vista"
+      }
+    },
+    "cameraMovements": {
+      "static": {
+        "label": "Estático",
+        "description": "Bloqueado, sin movimiento"
+      },
+      "push-in": {
+        "label": "Empujar",
+        "description": "Dolly lento hacia el sujeto"
+      },
+      "pull-out": {
+        "label": "Extraer",
+        "description": "Dolly lento lejos del sujeto"
+      },
+      "pan-left": {
+        "label": "Panorámica hacia la izquierda",
+        "description": "La cámara gira hacia la izquierda"
+      },
+      "pan-right": {
+        "label": "Panorámica hacia la derecha",
+        "description": "La cámara gira hacia la derecha"
+      },
+      "tilt-up": {
+        "label": "inclinar hacia arriba",
+        "description": "La cámara se inclina hacia arriba"
+      },
+      "tilt-down": {
+        "label": "Inclinar hacia abajo",
+        "description": "La cámara se inclina hacia abajo"
+      },
+      "tracking": {
+        "label": "Seguimiento",
+        "description": "Seguir el movimiento del sujeto"
+      },
+      "handheld": {
+        "label": "Portátil",
+        "description": "Ligera sacudida, sensación de documental."
+      },
+      "crane": {
+        "label": "Grúa/pluma",
+        "description": "Movimiento vertical, barrido."
+      }
+    },
+    "lenses": {
+      "24mm": {
+        "label": "24 mm de ancho",
+        "description": "Ambiental, expansivo"
+      },
+      "35mm": {
+        "label": "Anamórfico de 35 mm.",
+        "description": "Cinemática, ligera distorsión."
+      },
+      "50mm": {
+        "label": "Estándar de 50 mm",
+        "description": "perspectiva natural"
+      },
+      "85mm": {
+        "label": "Retrato de 85 mm",
+        "description": "DOF superficial, íntimo."
+      },
+      "135mm": {
+        "label": "Teleobjetivo de 135 mm",
+        "description": "Comprimido, aislado"
+      }
+    },
+    "generateTitle": "Generar ritmos de escena",
+    "regenerateSceneTitle": "Regenerar ritmos de escena",
+    "generateDescription": "Configure cómo se crean los segmentos para esta escena.",
+    "beatsPreview": "late",
+    "tabTiming": "Momento",
+    "tabReferences": "Referencias",
+    "tabStyle": "Estilo",
+    "narrationDriven": "Segmentación basada en la narración",
+    "narrationDrivenHint": "Cree segmentos que se alineen con la narración e ilustren. Cada segmento se convierte en un telón de fondo cinematográfico para la voz en off.",
+    "targetBeatDuration": "Duración del ritmo objetivo",
+    "addTitle": "Agregar ritmo",
+    "addNewTitle": "Agregar nuevo segmento",
+    "addDescription": "Cree un nuevo segmento visual para ampliar la línea de tiempo de la escena.",
+    "addDuration": "Duración (segundos)",
+    "addDurationHint": "Recomendado: 3-5 segundos para un ritmo suave",
+    "addAction": "Agregar ritmo",
+    "editTitle": "Editar segmento",
+    "editBadge": "Escena {sceneNumber} • Beat {beatNumber}",
+    "editDescription": "Modifique la configuración de aviso, duración y generación del segmento.",
+    "shotConfiguration": "Configuración de disparo",
+    "shotType": "Tipo de disparo",
+    "cameraMovement": "Movimiento de la cámara",
+    "deleteTitle": "¿Eliminar Beat {number}?",
+    "deleteDescription": "Esta acción no se puede deshacer.",
+    "segmentLabel": "Segmento",
+    "segmentOf": "#{index} de {total}",
+    "duration": "Duración",
+    "hasFramesWarning": "Este segmento ha generado fotogramas que se perderán.",
+    "lastBeatWarning": "Advertencia: este es el único segmento de la escena. Al eliminarlo, la escena quedará sin fotogramas clave.",
+    "shiftWarning": "Al eliminar este segmento se desplazarán todos los segmentos posteriores. Los índices de tiempo y secuencia se recalcularán automáticamente.",
+    "deleting": "Eliminando...",
+    "deleteBeat": "Eliminar ritmo",
+    "regenerateTitle": "Regenerar ritmos",
+    "regenerateDescription": "Borre todos los segmentos y regrese al Beat Builder para comenzar de nuevo.",
+    "beats": "Latidos",
+    "totalDuration": "Duración total",
+    "anchoredFrames": "Marcos anclados",
+    "anchoredCount": "{anchored} / {total}",
+    "regenerateAssetsWarning": "Advertencia: esto eliminará todos los segmentos, incluidos los fotogramas clave generados y los recursos de video. Esta acción no se puede deshacer.",
+    "regenerateEmptyWarning": "Se eliminarán todos los segmentos actuales. Serás llevado al Beat Builder para configurarlo y regenerarlo con nuevas configuraciones.",
+    "regenerateNextHint": "Beat Builder se abrirá con controles para la duración total, el recuento de segmentos, el modo de enfoque y la dirección personalizada.",
+    "deleteAndRegenerate": "Eliminar y regenerar",
+    "regenerate": "Regenerado",
+    "addTypeTitle": "Agregar segmento especial",
+    "addTypeDescription": "Elija un propósito de segmento para insertarlo en la línea de tiempo."
+  },
+  "audio": {
+    "generateAssets": {
+      "title": "Generar activos",
+      "description": "Seleccione los tipos de activos para generar para todas las escenas",
+      "targetLanguage": "Lengua de llegada",
+      "translateBeforeAudio": "El texto se traducirá del inglés al {language} antes de generar el audio.",
+      "audioTypes": "Tipos de audio",
+      "selectAll": "Seleccionar todo",
+      "deselectAll": "Deseleccionar todo",
+      "narration": "Narración",
+      "dialogue": "Diálogo",
+      "backgroundMusic": "Música de fondo",
+      "soundEffects": "Efectos de sonido (ElevenLabs, ~15 créditos cada uno)",
+      "statusComplete": "Completo",
+      "statusPartial": "Parcial ({current}/{total})",
+      "statusNotGenerated": "No generado",
+      "statusGeneratedCount": "{count} generado",
+      "statusNoneGenerated": "Ninguno generado",
+      "scenesCount": "{count} escenas",
+      "linesCount": "Líneas {count}",
+      "sfxCues": "{count, plural, one {# cue} other {# cues}}",
+      "noSfxCues": "Aún no hay señales SFX en el guión",
+      "generationSummary": "Resumen de generación",
+      "summaryNarration": "{count, plural, one {# narration file} other {# narration files}}",
+      "summaryDialogue": "{count, plural, one {# dialogue file} other {# dialogue files}}",
+      "summaryMusic": "{count, plural, one {# music file} other {# music files}}",
+      "summarySfx": "{count, plural, one {# sound effect} other {# sound effects}}",
+      "summaryCharacters": "{count, plural, one {# character asset} other {# character assets}}",
+      "summaryAlreadyGenerated": "({count} ya generado)",
+      "summarySceneImages": "{count, plural, one {# scene image} other {# scene images}}",
+      "overwriteWarning": "Esto sobrescribirá los archivos de audio existentes para los tipos seleccionados.",
+      "additionalAssets": "Activos adicionales",
+      "characterRefs": "Imágenes de referencia de personajes",
+      "charactersReady": "Caracteres {count} • {ready} listo",
+      "noCharacters": "No hay personajes disponibles",
+      "sceneImages": "Imágenes de escena (concurrentes)",
+      "sceneImagesReady": "Escenas {count} • {ready} listo • 3 concurrentes",
+      "regenerateAllImages": "Regenerar todas las imágenes",
+      "regenerateAllImagesHint": "Sobrescribir imágenes existentes (predeterminado: solo faltan)",
+      "stayOpenHint": "Mantenga este diálogo abierto hasta que finalice la generación de narración y diálogo. Puede cambiar al modo de fondo en cualquier momento.",
+      "narrationProgress": "Progreso de la narración",
+      "dialogueProgress": "Progreso del diálogo",
+      "musicProgress": "Progreso musical",
+      "sfxProgress": "Progreso de los efectos de sonido.",
+      "characterProgress": "Progreso del personaje",
+      "imageProgress": "Progreso de la imagen de la escena",
+      "sceneProgress": "Escena {current} / {total}",
+      "secondaryDialogue": "Diálogo {current}/{total}",
+      "secondaryMusic": "Música {current}/{total}",
+      "secondarySfx": "SFX {current}/{total}",
+      "secondaryCharacter": "Carácter {current}/{total}",
+      "secondaryImage": "Imagen de escena {current}/{total}",
+      "runInBackground": "Ejecutar en segundo plano",
+      "generationComplete": "Generación completa",
+      "generating": "Generando...",
+      "generate": "Generar",
+      "generateAgain": "Generar de nuevo"
+    },
+    "assets": {
+      "title": "Recursos de audio: escena {number}",
+      "description": "Administra las pistas de audio para esta escena. Agregue, elimine o vuelva a sincronizar clips de audio del guión.",
+      "totalClips": "{count} total de clips de audio",
+      "syncFromScript": "Sincronización desde secuencia de comandos",
+      "uploading": "Subiendo audio...",
+      "close": "Cerca",
+      "clipLabel": "{track} Clip",
+      "start": "Empieza: {time}",
+      "clipDuration": "Duración: {time}",
+      "noClips": "No hay clips de {track}",
+      "uploadAudio": "Subir Audio",
+      "clearAll": "Borrar todo",
+      "clipCount": "{count, plural, one {# clip} other {# clips}}",
+      "pause": "Pausa",
+      "play": "Jugar",
+      "removeClip": "Quitar clip",
+      "tracks": {
+        "voiceover": {
+          "label": "Voz en off / Narración",
+          "description": "Narración de escena y audio de voz en off."
+        },
+        "dialogue": {
+          "label": "Diálogo",
+          "description": "Líneas de diálogo de personajes."
+        },
+        "music": {
+          "label": "Música",
+          "description": "Música de fondo y partitura."
+        },
+        "sfx": {
+          "label": "Efectos sonoros",
+          "description": "Efectos de sonido y ambiente."
+        }
+      }
+    },
+    "alignment": {
+      "title": "Supere la alineación de audio {number}",
+      "description": "Alinee este segmento con diálogos y pistas de audio para una sincronización precisa.",
+      "beatTiming": "Tiempo de ritmo",
+      "aligned": "Alineado",
+      "nearlyAligned": "Casi alineado",
+      "misaligned": "Desalineado",
+      "noDialogue": "Sin diálogo",
+      "startTime": "Hora de inicio",
+      "endTime": "Hora de finalización",
+      "duration": "Duración",
+      "fitToDialogue": "Ajustar a la duración del diálogo ({duration}s)",
+      "dialogueCoverage": "Cobertura del diálogo",
+      "dialogueCoverageHint": "Seleccione qué líneas de diálogo debe cubrir este segmento. Esto ayuda con el tiempo y la concentración del personaje.",
+      "noDialogueLines": "No hay líneas de diálogo en esta escena.",
+      "audioAnchor": "Ancla de audio",
+      "anchored": "Anclado",
+      "manual": "Manual",
+      "audioAnchorHint": "Ancle este fotograma clave a un clip de audio para la alineación automática de la sincronización en Screening Room.",
+      "anchorTo": "Anclar a",
+      "noneManual": "Ninguno (manual)",
+      "narration": "Narración",
+      "descriptionOption": "Descripción",
+      "dialogueOption": "Diálogo: {label}",
+      "position": "Posición",
+      "startOfAudio": "inicio de audio",
+      "endOfAudio": "Fin del audio",
+      "durationMode": "Modo de duración",
+      "modeManual": "Manual",
+      "modeMatchAudio": "Hacer coincidir la duración del audio",
+      "modeFillToNext": "Llenar hasta el siguiente ancla",
+      "modeSplitEven": "Dividir uniformemente",
+      "offset": "Compensar",
+      "modeManualHint": "Duración configurada manualmente a través de la configuración imageDuration",
+      "modeMatchAudioHint": "La duración coincide con la duración del clip de audio anclado",
+      "modeFillToNextHint": "La duración se extiende hasta el siguiente punto de anclaje o final de la escena.",
+      "modeSplitEvenHint": "La duración se divide uniformemente con otros fotogramas clave en el mismo audio",
+      "narrationAudio": "Audio de narración",
+      "sceneNarration": "Narración de la escena: {duration}s",
+      "startsAt": "Comienza en {time}s",
+      "alignmentTips": "Consejos de alineación:",
+      "tip1": "Asigne líneas de diálogo que deberían ser visibles durante este segmento",
+      "tip2": "Utilice \"Ajustar al diálogo\" para hacer coincidir la duración del segmento con el audio",
+      "tip3": "Habilite \"Ajustar\" en la línea de tiempo para alinear los bordes del segmento con los límites del audio.",
+      "saveAlignment": "Guardar alineación"
+    },
+    "assetsTitle": "Recursos de audio: escena {number}",
+    "assetsDescription": "Administra las pistas de audio para esta escena. Agregue, elimine o vuelva a sincronizar clips de audio del guión.",
+    "totalClips": "{count} total de clips de audio",
+    "syncFromScript": "Sincronización desde secuencia de comandos",
+    "uploading": "Subiendo audio...",
+    "close": "Cerca",
+    "trackVoiceover": "Voz en off / Narración",
+    "trackVoiceoverHint": "Narración de escena y audio de voz en off.",
+    "trackDialogue": "Diálogo",
+    "trackDialogueHint": "Líneas de diálogo de personajes.",
+    "trackMusic": "Música",
+    "trackMusicHint": "Música de fondo y partitura.",
+    "trackSfx": "Efectos sonoros",
+    "trackSfxHint": "Efectos de sonido y ambiente.",
+    "clipLabel": "{track} Clip",
+    "start": "Empieza: {time}",
+    "clipDuration": "Duración: {time}",
+    "alignmentTitle": "Supere la alineación de audio {number}",
+    "alignmentDescription": "Alinee este segmento con diálogos y pistas de audio para una sincronización precisa.",
+    "beatTiming": "Tiempo de ritmo",
+    "aligned": "Alineado",
+    "nearlyAligned": "Casi alineado",
+    "misaligned": "Desalineado",
+    "noDialogue": "Sin diálogo",
+    "startTime": "Hora de inicio",
+    "endTime": "Hora de finalización",
+    "duration": "Duración",
+    "generateTitle": "Generar activos",
+    "generateDescription": "Seleccione los tipos de activos para generar para todas las escenas",
+    "targetLanguage": "Lengua de llegada",
+    "translateBeforeAudio": "El texto se traducirá del inglés al {language} antes de generar el audio.",
+    "narrationProgress": "Progreso de la narración",
+    "dialogueProgress": "Progreso del diálogo",
+    "musicProgress": "Progreso musical",
+    "sfxProgress": "Progreso de los efectos de sonido.",
+    "characterProgress": "Progreso del personaje",
+    "imageProgress": "Progreso de la imagen de la escena",
+    "sceneProgress": "Escena {current} / {total}",
+    "runInBackground": "Ejecutar en segundo plano",
+    "generationComplete": "Generación completa"
+  },
+  "export": {
+    "document": {
+      "title": "Exportar documento",
+      "description": "Elija qué documento exportar:",
+      "script": "Guion",
+      "scriptHint": "Formato de guión profesional",
+      "storyboard": "Guión gráfico",
+      "storyboardHint": "Guión gráfico visual con imágenes.",
+      "sceneDirection": "Dirección de escena",
+      "sceneDirectionHint": "Direcciones técnicas de la escena."
+    },
+    "stream": {
+      "title": "Flujo de exportación",
+      "description": "Escena {number}: Rápido (WebM) para borradores, Transmisión (MP4) para entrega o Nube para escenas largas.",
+      "videoSequence": "Secuencia de vídeo ({count} Beats)",
+      "unmuteAll": "Dejar de silenciar a todos",
+      "muteAll": "Silenciar todo",
+      "beatLabel": "Vence a {number}",
+      "noRenderedSegments": "No hay segmentos renderizados disponibles",
+      "beatsNotRendered": "{count, plural, one {# beat} other {# beats}} aún no renderizado",
+      "audioTracksTiming": "Pistas de audio y sincronización",
+      "narration": "Narración",
+      "dialogue": "Diálogo",
+      "backgroundMusic": "Música de fondo",
+      "soundEffects": "Efectos sonoros",
+      "outputResolution": "Resolución de salida",
+      "statusPreparing": "Preparando trabajo de renderizado...",
+      "statusUploading": "Subiendo especificación del trabajo...",
+      "statusRendering": "Renderizando vídeo...",
+      "statusComplete": "¡Renderizado completo!",
+      "statusError": "Error de renderizado",
+      "videoReady": "Vídeo listo para descargar",
+      "downloadMp4": "Descargar MP4",
+      "rendering": "Representación...",
+      "renderScene": "Renderizar escena"
+    },
+    "videoEditor": {
+      "title": "Editor de vídeo",
+      "tabSmartPrompt": "Aviso inteligente",
+      "tabEditVideo": "Editar vídeo",
+      "tabExtendVideo": "Ampliar vídeo",
+      "duration": "Duración",
+      "resolution": "Resolución",
+      "aspect": "Aspecto",
+      "footerHint": "Configure la cámara, el rendimiento y el estilo para obtener resultados óptimos",
+      "generating": "Generando...",
+      "generateVideo": "Generar vídeo"
+    }
+  },
+  "direction": {
+    "promptDirection": {
+      "title": "Dirección inmediata",
+      "description": "Revise y refine el mensaje que guiará la generación del video.",
+      "modeSuffix": "Modo {mode}",
+      "optimizedForMethod": "Optimizado para este método de generación.",
+      "currentDirection": "Dirección actual",
+      "undo": "Deshacer ({count})",
+      "noPrompt": "No se ha establecido ninguna dirección rápida",
+      "characters": "Caracteres {count}",
+      "modified": "Modificado",
+      "tipsFor": "Consejos para {mode}",
+      "refineDirection": "Refinar dirección",
+      "refineHint": "Describe cómo te gustaría modificar el mensaje en lenguaje natural.",
+      "refinePlaceholder": "por ejemplo, hazlo más dramático, ralentiza el movimiento...",
+      "applyDirection": "Aplicar dirección",
+      "modes": {
+        "TEXT_TO_VIDEO": "Texto a vídeo",
+        "IMAGE_TO_VIDEO": "Imagen a vídeo",
+        "FRAME_TO_VIDEO": "Cuadro a vídeo",
+        "EXTEND": "Extender",
+        "REFERENCE_IMAGES": "Referencia"
+      },
+      "tips": {
+        "FRAME_TO_VIDEO": {
+          "tip1": "Centrarse en el movimiento y las transiciones entre fotogramas.",
+          "tip2": "Evite movimientos de la cámara que se desvíen del cuadro final.",
+          "tip3": "Describir cómo los elementos se transforman de principio a fin."
+        },
+        "IMAGE_TO_VIDEO": {
+          "tip1": "Describe cómo la imagen estática debería cobrar vida.",
+          "tip2": "Incluya movimientos sutiles como respirar, parpadear.",
+          "tip3": "Mantener la coherencia con la imagen inicial."
+        },
+        "TEXT_TO_VIDEO": {
+          "tip1": "Sea específico sobre los detalles visuales y la composición.",
+          "tip2": "Describir la iluminación, el entorno y la atmósfera.",
+          "tip3": "Incluir posiciones y acciones de los personajes."
+        },
+        "EXTEND": {
+          "tip1": "Centrarse en la continuación del movimiento existente.",
+          "tip2": "Mantener la continuidad visual con el vídeo fuente.",
+          "tip3": "Describe lo que sucede a continuación en la escena."
+        },
+        "REFERENCE_IMAGES": {
+          "tip1": "Utilice imágenes de referencia para mantener la coherencia de los personajes.",
+          "tip2": "Describir la escena haciendo referencia a los estilos de los personajes.",
+          "tip3": "Combina referencias visuales con descripción de la escena."
+        }
+      },
+      "examples": {
+        "FRAME_TO_VIDEO": {
+          "example1": "Haz la transición más suave",
+          "example2": "Añade una sutil deriva de la cámara",
+          "example3": "Ralentizar el movimiento",
+          "example4": "Hazlo más dramático"
+        },
+        "IMAGE_TO_VIDEO": {
+          "example1": "Añade efectos de viento al cabello y la ropa.",
+          "example2": "Incluir movimientos de respiración suaves.",
+          "example3": "Haz que la iluminación sea más dinámica.",
+          "example4": "Añadir movimiento ambiental"
+        },
+        "TEXT_TO_VIDEO": {
+          "example1": "Haz la escena más cinematográfica.",
+          "example2": "Añadir iluminación de hora dorada",
+          "example3": "Incluir más detalles medioambientales.",
+          "example4": "Haz la acción más dinámica"
+        },
+        "EXTEND": {
+          "example1": "Continúe el movimiento suavemente",
+          "example2": "Añade una sutil panorámica de la cámara",
+          "example3": "Aumenta la energía de la escena.",
+          "example4": "Transición a un nuevo ángulo"
+        },
+        "REFERENCE_IMAGES": {
+          "example1": "Coincide con la expresión del personaje.",
+          "example2": "Mantén el mismo estilo artístico.",
+          "example3": "Mantenga una iluminación constante",
+          "example4": "Usa la misma paleta de colores."
+        }
+      }
+    },
+    "director": {
+      "title": "Generar vídeo: Beat {number}",
+      "description": "Revise y personalice los parámetros de generación antes de renderizar.",
+      "tabTextToVideo": "Texto a vídeo",
+      "tabTextToVideoShort": "T2V",
+      "tabImageToVideo": "Imagen a vídeo",
+      "tabImageToVideoShort": "I2V",
+      "tabReference": "Referencia",
+      "tabReferenceShort": "ÁRBITRO",
+      "tabExtend": "Extender",
+      "tabExtendShort": "EXT",
+      "generateVideo": "Generar vídeo",
+      "resetToSegmentDialogue": "Restablecer el diálogo del segmento",
+      "frameFirstTitle": "Flujo de trabajo de primer marco:",
+      "frameFirstBody": "Genere fotogramas clave en el paso Fotograma para mejorar la coherencia de los caracteres. La conversión de texto a vídeo está disponible, pero puede provocar una desviación de caracteres.",
+      "disabledNeedStartFrame": "Generar un cuadro de inicio primero (paso de cuadro)",
+      "disabledNeedPrevious": "Genera primero la parte anterior o renderiza un vídeo fuente."
+    },
+    "framePrompt": {
+      "title": "Generar marco",
+      "titlePlural": "Generar marcos",
+      "beatBadge": "Vence a {number}",
+      "startEnd": "Inicio + Fin",
+      "startFrame": "marco de inicio",
+      "endFrame": "marco final",
+      "endDescription": "Los fotogramas clave finales utilizan una edición dirigida de la imagen del fotograma inicial del segmento para que el reparto, el vestuario y la geografía permanezcan alineados, evitando renderizaciones completas no relacionadas que confundan a los modelos de vídeo.",
+      "tabVisualSetup": "Configuración visual",
+      "tabCustomPrompt": "Mensaje personalizado",
+      "characterRefsActive": "Referencias de personajes activas",
+      "characterRefsHint": "Para obtener mejores resultados con referencias de personajes, utilice el encuadre Primer plano o Plano medio. Las tomas amplias hacen que los personajes sean demasiado pequeños para el reconocimiento facial.",
+      "contentAwareEnd": "Final según el contenido (editar desde el principio)",
+      "contentAwareEndHint": "La imagen final se genera editando el fotograma inicial del segmento después de que se reproduce este diálogo/acción: las expresiones y el bloqueo evolucionan mientras la continuidad de la escena permanece bloqueada.",
+      "generating": "Generando...",
+      "generateFrame": "Generar marco",
+      "generateFrames": "Generar marcos"
+    },
+    "preVis": {
+      "title": "Directo — {label}",
+      "description": "Escena {number} · Generador de indicaciones guiadas con referencias de personajes y vestuario.",
+      "matchingNotes": "Notas de coincidencia de referencia",
+      "tabVisualSetup": "Configuración visual",
+      "tabCustomPrompt": "Mensaje personalizado",
+      "wardrobePlaceholder": "Descripción completa del guardarropa de la biblioteca de referencia...",
+      "promptPlaceholder": "Mensaje de generación de imagen completa...",
+      "negativePlaceholder": "Mensaje negativo...",
+      "generating": "Generando…",
+      "generateWithDirect": "Generar con Directo"
+    }
+  },
+  "foundation": {
+    "reimagine": {
+      "changeArtStyleTitle": "Cambiar estilo artístico",
+      "changeArtStyleDescription": "Cambiar su estilo artístico requiere reinventar Blueprint. SceneFlow optimizará su guión para la nueva estética.",
+      "changeAspectRatioTitle": "Cambiar relación de aspecto",
+      "changeAspectRatioDescription": "Cambiar la relación de aspecto requiere reinventar Blueprint. Las direcciones de escena y el encuadre se reconstruirán para el nuevo formato.",
+      "loseEditsTitle": "Perderá las ediciones manuales de producción:",
+      "loseScriptTweaks": "Los ajustes de la línea de script aún no están bloqueados",
+      "loseStoryboard": "Marcos de guiones gráficos y recursos generados.",
+      "loseBeatAdjustments": "Ajustes de producción a nivel de ritmo",
+      "artStyle": "estilo de arte",
+      "aspectRatio": "relación de aspecto",
+      "reimagineInBlueprint": "Reimaginar en Blueprint"
+    },
+    "optimizeScene": {
+      "title": "Optimizar escena {number}",
+      "score": "Puntaje:",
+      "pacing": "Ritmo: {value}",
+      "tension": "Tensión: {value}",
+      "character": "Personaje: {value}",
+      "visual": "Visual: {value}",
+      "aiRecommendations": "Recomendaciones de IA ({count})",
+      "customInstructions": "Instrucciones personalizadas",
+      "stop": "Detener",
+      "voice": "Voz",
+      "placeholder": "Agregue instrucciones específicas para mejorar esta escena...",
+      "selectedCount": "{count, plural, one {# optimization} other {# optimizations}} seleccionado",
+      "selectHint": "Seleccione optimizaciones o agregue instrucciones",
+      "applying": "Aplicando...",
+      "applyRecommendations": "Aplicar recomendaciones"
+    },
+    "referenceLibrary": {
+      "title": "Reference Library"
+    },
+    "beatReferences": {
+      "title": "Referencias de reseñas — Escena {number}",
+      "description": "Referencias seleccionadas automáticamente por SceneFlow para este ritmo. Confirme o ajuste antes de generar.",
+      "beatKindAction": "Acción",
+      "beatKindNarration": "Narración",
+      "beatKindDialogue": "Diálogo",
+      "beatLabel": "Beat: {kind}",
+      "autoSelected": "Seleccionado automáticamente: {summary}",
+      "locationMatchedAssignment": "Ubicación coincidente con la asignación de escena",
+      "locationMatchedHeading": "Ubicación coincidente con el encabezado de la escena",
+      "locationReference": "Referencia de ubicación",
+      "selectedCount": "{count} seleccionado",
+      "saveSelection": "Guardar selección",
+      "generating": "Generando…",
+      "generateFrame": "Generar marco"
+    },
+    "analysisHandoff": {
+      "title": "Analiza todas las escenas {count}",
+      "subtitle": "Audience Resonance se ejecuta en segundo plano",
+      "durationFewMinutes": "unos minutos",
+      "durationAboutMinute": "alrededor de un minuto",
+      "durationAboutMinutes": "sobre {count} minutos",
+      "takesTime": "Esto requiere {duration} porque cada escena está puntuada individualmente.",
+      "keepEditing": "Puedes seguir editando mientras se ejecuta. El análisis solo escribe sus resultados; nunca sobrescribe su secuencia de comandos.",
+      "notifyReady": "Te avisaremos cuando esté listo.",
+      "notifyDetail": "El progreso se muestra en la parte inferior de la pantalla y el resultado aparece en sus notificaciones incluso si se aleja.",
+      "dontRemind": "No me lo vuelvas a recordar",
+      "starting": "A partir de…",
+      "startAnalysis": "Iniciar análisis"
+    },
+    "filmTreatment": {
+      "title": "Revisión del tratamiento cinematográfico",
+      "noTreatment": "No se encontró ningún tratamiento cinematográfico para este proyecto.",
+      "generateFirst": "Primero genere un tratamiento de película en la fase Blueprint.",
+      "description": "Verifique que su guión se alinee con el tratamiento aprobado"
+    }
+  },
+  "retakeExtra": {
+    "intelligentRetake": {
+      "title": "Retoma inteligente",
+      "description": "Describe la corrección. Enrutaremos una edición de fotograma, una reescritura rápida o ambas.",
+      "whatToFix": "¿Qué deberíamos arreglar?",
+      "fixPlaceholder": "Describe qué arreglar, p.e. 'quitar la taza de café sobre la mesa'",
+      "analyzing": "Analizando…",
+      "analyze": "Analizar",
+      "viewFullPrompt": "Ver aviso completo",
+      "fixStartingFrame": "Arreglar el marco inicial.",
+      "fixStartingFrameHint": "Edite la imagen inicial con marco bloqueado antes de regenerarla.",
+      "frameEditPlaceholder": "Instrucción de edición de fotogramas",
+      "applyPromptChanges": "Aplicar cambios rápidos",
+      "applyPromptChangesHint": "Utilice el mensaje revisado y las adiciones negativas.",
+      "noPromptChanges": "No se sugieren cambios rápidos.",
+      "retaking": "Retomando…",
+      "approveAndRetake": "Aprobar y retomar",
+      "clipReferenceAlt": "Referencia del clip",
+      "anomalyFrame": "En el marco inicial",
+      "anomalyMotion": "Introducido en movimiento",
+      "anomalyBoth": "Marco y movimiento",
+      "anomalyUnknown": "Origen poco claro"
+    },
+    "regenerateBeats": {
+      "title": "Regenerar ritmos",
+      "description": "Borre todos los segmentos y regrese al Beat Builder para comenzar de nuevo.",
+      "beats": "Latidos",
+      "totalDuration": "Duración total",
+      "anchoredFrames": "Marcos anclados",
+      "anchoredCount": "{anchored} / {total}",
+      "assetsWarning": "Advertencia: esto eliminará todos los segmentos, incluidos los fotogramas clave generados y los recursos de video. Esta acción no se puede deshacer.",
+      "emptyWarning": "Se eliminarán todos los segmentos actuales. Serás llevado al Beat Builder para configurarlo y regenerarlo con nuevas configuraciones.",
+      "nextHint": "Beat Builder se abrirá con controles para la duración total, el recuento de segmentos, el modo de enfoque y la dirección personalizada.",
+      "deleteAndRegenerate": "Eliminar y regenerar",
+      "regenerate": "Regenerado"
+    },
+    "keyframeGeneration": {
+      "title": "Configuración de generación de fotogramas clave",
+      "description": "Configure cómo se crean y alinean los segmentos con su guión y audio.",
+      "noDescription": "No hay descripción disponible",
+      "audioBadge": "Audio de {duration}",
+      "existingWarning": "{count, plural, one {# existing segment} other {# existing segments}} será reemplazado",
+      "manualEditsSuffix": "({count} con ediciones manuales)",
+      "tabAlignment": "Alineación y ritmo",
+      "tabDirection": "Dirección de escena",
+      "audioAlignment": "Alineación de audio",
+      "narrationDriven": "Impulsado por la narración",
+      "narrationDrivenHint": "Alinear cortes con los ritmos de la narración.",
+      "dialogueDriven": "Impulsado por el diálogo",
+      "dialogueDrivenHint": "Alinear los recortes al diálogo",
+      "pacingStyle": "Estilo de ritmo",
+      "beatCount": "Conteo de tiempos",
+      "auto": "Auto",
+      "manual": "Manual",
+      "basedOnPacing": "Basado en estimulación {pacing} y {basis}",
+      "audioBasis": "Audio de {duration}",
+      "durationBasis": "Duración de {duration}",
+      "segmentsCount": "Segmentos {count}",
+      "advancedOptions": "Opciones avanzadas",
+      "shotVariety": "Variedad de tiros",
+      "varietyMinimal": "Mínimo: encuadre consistente",
+      "varietyBalanced": "Equilibrado - Mezcla de tiros",
+      "varietyHigh": "Alto - Variedad dinámica",
+      "preserveManualEdits": "Conservar ediciones manuales",
+      "editedPromptsFound": "Se encontraron mensajes editados de {count}",
+      "targetDuration": "Duración objetivo (segundos)",
+      "directionOverrides": "Anulaciones de dirección de escena",
+      "directionOverridesHint": "Estas configuraciones influyen en cómo la IA genera indicaciones para cada segmento. Elija \"Variado\" para permitir que la IA decida por segmento.",
+      "primaryShotType": "Tipo de disparo primario",
+      "cameraMovement": "Movimiento de la cámara",
+      "lightingMood": "Estado de ánimo de iluminación",
+      "atmosphere": "Atmósfera",
+      "footerSummary": "Segmentos {count} • {duration}",
+      "generating": "Generando...",
+      "regenerateKeyframes": "Regenerar fotogramas clave",
+      "generateKeyframes": "Generar fotogramas clave",
+      "pacing": {
+        "slow": {
+          "label": "Lento y contemplativo",
+          "description": "Segmentos más largos (6-8), cortes mínimos"
+        },
+        "moderate": {
+          "label": "Moderado",
+          "description": "Estimulación equilibrada (segmentos de 4 a 6 s)"
+        },
+        "fast": {
+          "label": "Rápido y dinámico",
+          "description": "Cortes rápidos (3-4 segmentos)"
+        },
+        "dynamic": {
+          "label": "Dinámico (audio coincidente)",
+          "description": "Varía según los ritmos de la narración/diálogo."
+        }
+      },
+      "shotTypes": {
+        "wide": {
+          "label": "Toma amplia",
+          "description": "Establecer espacio y contexto"
+        },
+        "medium": {
+          "label": "Plano Medio",
+          "description": "Equilibrar sujeto y entorno"
+        },
+        "close-up": {
+          "label": "De cerca",
+          "description": "Centrarse en la emoción y el detalle"
+        },
+        "extreme-close-up": {
+          "label": "Primer plano extremo",
+          "description": "Énfasis dramático"
+        },
+        "two-shot": {
+          "label": "Dos disparos",
+          "description": "Personajes en conversación"
+        },
+        "over-the-shoulder": {
+          "label": "Sobre el hombro",
+          "description": "POV en diálogo"
+        },
+        "varied": {
+          "label": "Variado (La IA decide)",
+          "description": "Deje que la IA elija por segmento"
+        }
+      },
+      "cameraMovements": {
+        "static": {
+          "label": "Estático",
+          "description": "Sin movimiento, estructura estable"
+        },
+        "pan": {
+          "label": "Cacerola",
+          "description": "barrido horizontal"
+        },
+        "tilt": {
+          "label": "Inclinación",
+          "description": "movimiento vertical"
+        },
+        "dolly": {
+          "label": "Muñequita",
+          "description": "Acercarse o alejarse del sujeto"
+        },
+        "tracking": {
+          "label": "Seguimiento",
+          "description": "Seguir el movimiento del sujeto"
+        },
+        "handheld": {
+          "label": "Portátil",
+          "description": "movimiento naturalista"
+        },
+        "varied": {
+          "label": "Variado (La IA decide)",
+          "description": "Mezcla de movimientos"
+        }
+      },
+      "lighting": {
+        "natural": {
+          "label": "Natural",
+          "description": "Iluminación suave y realista"
+        },
+        "dramatic": {
+          "label": "Dramático",
+          "description": "Alto contraste, sombras."
+        },
+        "soft": {
+          "label": "Suave/Difuso",
+          "description": "Luz suave y favorecedora"
+        },
+        "noir": {
+          "label": "negro",
+          "description": "Oscuro, misterioso, discreto"
+        },
+        "golden": {
+          "label": "Hora Dorada",
+          "description": "Tonos cálidos del atardecer/amanecer"
+        },
+        "cold": {
+          "label": "Frío/Azul",
+          "description": "Fresco, austero, clínico"
+        }
+      },
+      "atmospheres": {
+        "neutral": {
+          "label": "Neutral",
+          "description": "Estado de ánimo estándar"
+        },
+        "tense": {
+          "label": "Tenso",
+          "description": "Suspenso, al límite"
+        },
+        "serene": {
+          "label": "Sereno",
+          "description": "Pacífico, calma"
+        },
+        "energetic": {
+          "label": "Energético",
+          "description": "Dinámico, emocionante"
+        },
+        "melancholic": {
+          "label": "Melancólico",
+          "description": "Triste, reflexivo"
+        },
+        "mysterious": {
+          "label": "Misterioso",
+          "description": "Intrigante, reservado"
+        },
+        "hopeful": {
+          "label": "Esperanzado",
+          "description": "Optimista, edificante"
+        }
+      }
+    },
+    "intelligentTitle": "Retoma inteligente",
+    "intelligentDescription": "Describe la corrección. Enrutaremos una edición de fotograma, una reescritura rápida o ambas.",
+    "whatToFix": "¿Qué deberíamos arreglar?",
+    "fixPlaceholder": "Describe qué arreglar, p.e. 'quitar la taza de café sobre la mesa'",
+    "analyzing": "Analizando…",
+    "analyze": "Analizar",
+    "viewFullPrompt": "Ver aviso completo",
+    "fixStartingFrame": "Arreglar el marco inicial.",
+    "fixStartingFrameHint": "Edite la imagen inicial con marco bloqueado antes de regenerarla.",
+    "frameEditPlaceholder": "Instrucción de edición de fotogramas",
+    "applyPromptChanges": "Aplicar cambios rápidos",
+    "applyPromptChangesHint": "Utilice el mensaje revisado y las adiciones negativas.",
+    "noPromptChanges": "No se sugieren cambios rápidos.",
+    "retaking": "Retomando…",
+    "approveAndRetake": "Aprobar y retomar",
+    "keyframeRegenTitle": "Regenerar fotogramas clave",
+    "keyframeRegenDescription": "Reconstruya los fotogramas inicial y final de este ritmo con la dirección actualizada."
   }
 }
