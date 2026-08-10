@@ -65,6 +65,7 @@ const PRODUCED_VIDEOS: Partial<
     pt: { src: videoUrl('BYOK (Portuguese).mp4', '20260810') },
     hi: { src: videoUrl('BYOK (Hindi).mp4', '20260810') },
     zh: { src: videoUrl('BYOK (Chinese).mp4', '20260810') },
+    ar: { src: videoUrl('BYOK (Arabic).mp4', '20260810') },
   },
 }
 
