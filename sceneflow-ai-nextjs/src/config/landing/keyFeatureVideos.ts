@@ -56,13 +56,12 @@ export function keyFeatureVideoBlobPath(icon: string, locale: VideoLocaleId): st
 const PRODUCED_VIDEOS: Partial<
   Record<string, Partial<Record<VideoLocaleId, { src: string; poster?: string }>>>
 > = {
-  // Web H.264/AAC encodes (1280x720) of the Blob masters
-  // `BYOK (ENGLISH).mp4` / `BYOK (Spanish).mp4`. Prefer Blob once the upload
-  // helper overwrites those paths with the web encode; until then ship from
-  // public/ for lean, decodable tracks.
+  // English: web H.264/AAC encode shipped from public/ (lean landing asset).
+  // Spanish: Blob master is already browser-decodable H.264/AAC — serve from
+  // Blob directly (same pattern as production showcase / persona videos).
   byok: {
     en: { src: '/landing/key-features/BYOK-English.mp4?v=20260810#t=0.1' },
-    es: { src: '/landing/key-features/BYOK-Spanish.mp4?v=20260810#t=0.1' },
+    es: { src: videoUrl('BYOK (Spanish).mp4', '20260810') },
   },
 }
 

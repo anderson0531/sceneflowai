@@ -42,7 +42,7 @@ describe('keyFeatureVideos', () => {
     )
     expect(byokLocales.find((locale) => locale.id === 'es')?.available).toBe(true)
     expect(byokLocales.find((locale) => locale.id === 'es')?.src).toContain(
-      'BYOK-Spanish.mp4'
+      'BYOK%20(Spanish).mp4'
     )
     expect(
       byokLocales
