@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-11T05:02:51.265Z",
+  "generatedAt": "2026-08-11T05:37:33.236Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -742,8 +742,11 @@
       "budgetManager.intelligenceDescription": "3bd1fe8924450c2e",
       "budgetManager.required": "4850b174b713d88c",
       "budgetManager.used": "ae7d8dfac9ff5e0f",
+      "budgetManager.charged": "4d640df4f7ceace2",
       "budgetManager.costToComplete": "259ed00c398de842",
       "budgetManager.forecast": "75205de8b342f506",
+      "budgetManager.progressFrames": "5f0265702753f086",
+      "budgetManager.progressVideos": "5b9da1d2888f60dc",
       "budgetManager.overBudget": "184916906ca81433",
       "budgetManager.underBudget": "df0e3df70fad48e6",
       "budgetManager.needCredits": "1e59ca5e2ddbf1e4",

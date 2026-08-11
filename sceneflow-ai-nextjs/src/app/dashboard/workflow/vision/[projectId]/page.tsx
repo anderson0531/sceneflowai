@@ -14430,6 +14430,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onGenerateSceneImage={handleGenerateSceneImage}
                 characters={characters}
                 projectId={projectId}
+                projectMetadata={(project?.metadata ?? null) as Record<string, unknown> | null}
                 visualStyle={project?.tone || project?.metadata?.filmTreatmentVariant?.tone}
                 projectAspectRatio={lockedAspectRatio}                                                                        
                 validationWarnings={validationWarnings}
