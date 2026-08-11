@@ -52,7 +52,7 @@
     "mergeDialogueNote": "Alle Dialogzeilen doppelter Charaktere werden dem primären Charakter zugewiesen.",
     "mergeCharacters": "Charaktere zusammenführen",
     "hasVoice": "(hat Stimme)",
-    "budgetTitle": "Produktionsbudgetverwaltung - {title}",
+    "budgetTitle": "Produktionsbudget-Manager - {title}",
     "setBudget": "Budget festlegen",
     "budgetAmount": "Budget: {amount}",
     "importTranslation": "Übersetzung importieren",
@@ -1402,5 +1402,85 @@
     "approxSize": "~{size}",
     "storageGbAmount": "{gb} GB",
     "centsPerCredit": "({cents}¢/Kredit)"
+  },
+  "budgetManager": {
+    "title": "Produktionsbudgetmanager",
+    "subtitle": "Planen Sie aus festen Szenen und Beats. Kosten für Draft vs. Final Drives – die Auswahl des Anbieters bleibt kreativ.",
+    "subtitleWithTitle": "Budgetplan für {title}",
+    "currentBalance": "Aktueller Kontostand",
+    "creditsCount": "{count}-Credits",
+    "byokTitle": "Bringen Sie Ihren eigenen Schlüssel mit (BYOK)",
+    "byokDescription": "Ausgenommen von diesem Budgetplan sind Rahmen, Videos und Topaz. Intelligenz zählt immer noch.",
+    "scenes": "Szenen",
+    "beats": "Schläge",
+    "clipDuration": "Cliplänge",
+    "seconds": "{count}s",
+    "progress": "Erledigt",
+    "progressValues": "{frames}/{beats}-Frames · {videos}/{beats}-Videos",
+    "scopeFixedHint": "Die Anzahl der Szenen und Beats stammt von Production Studio und kann hier nicht angepasst werden.",
+    "methodsTitle": "Produktionsmethode",
+    "recommended": "Empfohlen",
+    "methods": {
+      "animatic_first": {
+        "name": "Animatic Zuerst",
+        "hint": "Nur Pre-vis-Frames. Validieren Sie in Screening Room, bevor Sie Video-Credits ausgeben."
+      },
+      "draft_production": {
+        "name": "Entwurfsproduktion",
+        "hint": "Entwurfsbilder und Videos mit kontrollierter Szenenbesprechung."
+      },
+      "final_delivery": {
+        "name": "Endgültige Lieferung",
+        "hint": "Einzelbilder und Videos in endgültiger Auflösung, wobei Topaz für die Politur geplant ist."
+      },
+      "express_sprint": {
+        "name": "Express-Sprint",
+        "hint": "Gleichzeitiger Batch-Pfad. Höhere Iterationskontingenz – Skriptänderungen nach dem Batch sind kostspielig."
+      }
+    },
+    "frameResolution": "Bildauflösung",
+    "videoResolution": "Videoauflösung",
+    "quality": {
+      "draft": "Entwurf",
+      "final": "Finale",
+      "none": "Keiner"
+    },
+    "creditsPerFrame": "{credits} cr/frame",
+    "creditsPerClip": "{credits} cr/{seconds}s",
+    "creditsZero": "0 Cr",
+    "providerNote": "Kling vs. Google wird pro Schlag in Studio ausgewählt und ändert nichts an dieser Prognose.",
+    "frameIterations": "Frame-Iterationen/Beat",
+    "videoIterations": "Video-Iterationen / Beat",
+    "frameIterationsHint": "Der Standardwert ist {rate} beim ersten Versuch (~1,25×).",
+    "videoIterationsHint": "Der Standardwert ist {rate} beim ersten Versuch (~1,11×).",
+    "topazTitle": "Topas der gehobenen Klasse",
+    "topazDescription": "50 Credits pro Minute geplanter Videolaufzeit.",
+    "intelligenceTitle": "Intelligenz (Google hoch)",
+    "intelligenceDescription": "Audience Resonance, Skriptanalyse und Blueprint-Optimierungs-/Verfeinerungspaket.",
+    "required": "Erforderlich",
+    "used": "Gebraucht",
+    "costToComplete": "Zum Abschluss",
+    "forecast": "Vorhersage",
+    "overBudget": "Die Prognose beträgt {credits} Credits über dem eingesparten Budget",
+    "underBudget": "Die Prognose beträgt {credits} Credits unter dem eingesparten Budget",
+    "needCredits": "Fehlbetrag im Vergleich zum Plan: {credits} Credits",
+    "breakdown": "Kostenaufschlüsselung",
+    "lineFrames": "Rahmen ({quality}) · {rate} cr jeweils",
+    "lineVideos": "Videos ({quality}) · {rate} cr/{seconds}s",
+    "lineTopaz": "Topas der gehobenen Klasse",
+    "lineIntelligence": "Intelligenz",
+    "excludedByok": "Ausgeschlossen (BYOK)",
+    "suggestionsTitle": "Möglichkeiten zur Kostensenkung",
+    "suggestions": {
+      "useAnimaticFirst": "Wechseln Sie zuerst zu Animatic und bestätigen Sie die Geschichte in Screening Room, bevor Sie ein Video erstellen.",
+      "stayOnDraft": "Bleiben Sie beim Lösungsentwurf bis zur Freigabe durch Screening Room und führen Sie dann ein Upgrade auf „Final“ durch.",
+      "lowerFrameIterations": "Verringern Sie die Frame-Iterationen in Richtung des First-Take-Standardwerts von 80 % (1,25 ×).",
+      "lowerVideoIterations": "Reduzieren Sie die Videoiterationen in Richtung des First-Take-Standardwerts von 90 % (~1,11 ×).",
+      "disableTopaz": "Schalten Sie Topaz bis zur endgültigen Lieferung aus – hochskalieren Sie, nachdem Sie das Bild gesperrt haben.",
+      "enableByok": "Aktivieren Sie den BYOK-Planungsausschluss, wenn Sie Bild-/Videoanbieter direkt bezahlen."
+    },
+    "setAsProjectBudget": "Als Projektbudget festlegen ({credits} Credits)",
+    "saving": "Sparen...",
+    "noBeatsYet": "Fügen Sie Szenen und Beats in Production Studio hinzu, um ein Budget zu erstellen."
   }
 }

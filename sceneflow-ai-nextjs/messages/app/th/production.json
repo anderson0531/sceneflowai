@@ -1402,5 +1402,85 @@
     "approxSize": "~{size}",
     "storageGbAmount": "{gb} GB",
     "centsPerCredit": "({cents}¢/เครดิต)"
+  },
+  "budgetManager": {
+    "title": "ผู้จัดการงบประมาณการผลิต",
+    "subtitle": "วางแผนจากฉากและจังหวะที่ตายตัว ต้นทุนแบบร่างเทียบกับขั้นสุดท้าย — ตัวเลือกของผู้ให้บริการยังคงความคิดสร้างสรรค์",
+    "subtitleWithTitle": "แผนงบประมาณสำหรับ {title}",
+    "currentBalance": "ยอดคงเหลือปัจจุบัน",
+    "creditsCount": "เครดิต {count}",
+    "byokTitle": "นำกุญแจมาเอง (BYOK)",
+    "byokDescription": "ไม่รวมเฟรม วิดีโอ และโทแพซจากแผนงบประมาณนี้ ความฉลาดยังคงนับ",
+    "scenes": "ฉาก",
+    "beats": "เต้น",
+    "clipDuration": "ความยาวคลิป",
+    "seconds": "{count}",
+    "progress": "เสร็จแล้ว",
+    "progressValues": "เฟรม {frames}/{beats} · วิดีโอ {videos}/{beats}",
+    "scopeFixedHint": "จำนวนฉากและจังหวะมาจาก Production Studio และไม่สามารถปรับได้ที่นี่",
+    "methodsTitle": "วิธีการผลิต",
+    "recommended": "ที่แนะนำ",
+    "methods": {
+      "animatic_first": {
+        "name": "SFAANIMATICTERM ก่อน",
+        "hint": "Pre-vis เฟรมเท่านั้น ตรวจสอบใน Screening Room ก่อนใช้เครดิตวิดีโอ"
+      },
+      "draft_production": {
+        "name": "การผลิตแบบร่าง",
+        "hint": "ร่างเฟรมและวิดีโอพร้อมตรวจสอบฉากด่าน"
+      },
+      "final_delivery": {
+        "name": "การส่งมอบขั้นสุดท้าย",
+        "hint": "ความละเอียดเฟรมและวิดีโอขั้นสุดท้าย โดยมี Topaz วางแผนไว้สำหรับการขัดเงา"
+      },
+      "express_sprint": {
+        "name": "วิ่งด่วน",
+        "hint": "เส้นทางแบทช์ที่เกิดขึ้นพร้อมกัน เหตุฉุกเฉินในการทำซ้ำที่สูงขึ้น — การเปลี่ยนแปลงสคริปต์หลังแบทช์มีค่าใช้จ่ายสูง"
+      }
+    },
+    "frameResolution": "ความละเอียดของเฟรม",
+    "videoResolution": "ความละเอียดวิดีโอ",
+    "quality": {
+      "draft": "ร่าง",
+      "final": "สุดท้าย",
+      "none": "ไม่มี"
+    },
+    "creditsPerFrame": "{credits} cr/เฟรม",
+    "creditsPerClip": "{credits} cr/{seconds}s",
+    "creditsZero": "0 ล้าน",
+    "providerNote": "Kling vs Google ถูกเลือกต่อจังหวะใน Studio และไม่เปลี่ยนแปลงการคาดการณ์นี้",
+    "frameIterations": "การวนซ้ำเฟรม / จังหวะ",
+    "videoIterations": "การวนซ้ำวิดีโอ / จังหวะ",
+    "frameIterationsHint": "ค่าเริ่มต้นคือ {rate} สำเร็จครั้งแรก (~1.25×)",
+    "videoIterationsHint": "ค่าเริ่มต้นคือ {rate} สำเร็จครั้งแรก (~1.11×)",
+    "topazTitle": "บุษราคัมสุดหรู",
+    "topazDescription": "50 เครดิตต่อนาทีของรันไทม์วิดีโอที่วางแผนไว้",
+    "intelligenceTitle": "ความฉลาด (Google สูง)",
+    "intelligenceDescription": "Audience Resonance การวิเคราะห์สคริปต์ และการเพิ่มประสิทธิภาพ/ปรับแต่งพิมพ์เขียวแพ็คเกจ",
+    "required": "ที่จำเป็น",
+    "used": "ใช้แล้ว",
+    "costToComplete": "ให้เสร็จสมบูรณ์",
+    "forecast": "พยากรณ์",
+    "overBudget": "การคาดการณ์คือเครดิต {credits} เหนืองบประมาณที่บันทึกไว้",
+    "underBudget": "การคาดการณ์คือเครดิต {credits} ภายใต้งบประมาณที่บันทึกไว้",
+    "needCredits": "ยอดคงเหลือขาดเทียบกับแผน: เครดิต {credits}",
+    "breakdown": "การแจกแจงต้นทุน",
+    "lineFrames": "เฟรม ({quality}) · {rate} cr อันละ",
+    "lineVideos": "วิดีโอ ({quality}) · {rate} cr/{seconds}s",
+    "lineTopaz": "บุษราคัมสุดหรู",
+    "lineIntelligence": "ปัญญา",
+    "excludedByok": "ไม่รวม (BYOK)",
+    "suggestionsTitle": "วิธีลดต้นทุน",
+    "suggestions": {
+      "useAnimaticFirst": "สลับไปที่ Animatic ก่อนและยืนยันเรื่องราวใน Animatic ก่อนสร้างวิดีโอ",
+      "stayOnDraft": "ทำตามมติฉบับร่างจนกว่าจะลงชื่อออก Screening Room จากนั้นอัปเกรดเป็นเวอร์ชันสุดท้าย",
+      "lowerFrameIterations": "ลดการวนซ้ำของเฟรมไปสู่ค่าเริ่มต้นเทคแรก 80% (1.25×)",
+      "lowerVideoIterations": "ลดการวนซ้ำของวิดีโอไปสู่ค่าเริ่มต้นของการเข้าใช้ครั้งแรก 90% (~1.11×)",
+      "disableTopaz": "ปิด Topaz จนถึง Final Delivery — เพิ่มระดับหลังจากที่คุณล็อครูปภาพ",
+      "enableByok": "เปิดใช้งานการยกเว้นการวางแผน BYOK หากคุณจะชำระเงินให้กับผู้ให้บริการรูปภาพ/วิดีโอโดยตรง"
+    },
+    "setAsProjectBudget": "ตั้งเป็นงบประมาณโครงการ (เครดิต {credits})",
+    "saving": "ประหยัด...",
+    "noBeatsYet": "เพิ่มฉากและจังหวะใน Production Studio เพื่อสร้างงบประมาณ"
   }
 }

@@ -52,7 +52,7 @@
     "mergeDialogueNote": "Todas as linhas de diálogo de caracteres duplicados serão atribuídas ao personagem principal.",
     "mergeCharacters": "Mesclar personagens",
     "hasVoice": "(tem voz)",
-    "budgetTitle": "Gestão Orçamentária de Produção - {title}",
+    "budgetTitle": "Gestor de Orçamento de Produção - {title}",
     "setBudget": "Definir orçamento",
     "budgetAmount": "Orçamento: {amount}",
     "importTranslation": "Importar Tradução",
@@ -1402,5 +1402,85 @@
     "approxSize": "~{size}",
     "storageGbAmount": "{gb} GB",
     "centsPerCredit": "({cents}¢/crédito)"
+  },
+  "budgetManager": {
+    "title": "Gestor de Orçamento de Produção",
+    "subtitle": "Planeje a partir de cenas e batidas fixas. Custo de rascunho versus final – a escolha do fornecedor permanece criativa.",
+    "subtitleWithTitle": "Plano orçamentário para {title}",
+    "currentBalance": "Saldo Atual",
+    "creditsCount": "Créditos {count}",
+    "byokTitle": "Traga sua própria chave (BYOK)",
+    "byokDescription": "Exclui frames, vídeo e Topaz deste plano de orçamento. A inteligência ainda conta.",
+    "scenes": "Cenas",
+    "beats": "Batidas",
+    "clipDuration": "Comprimento do clipe",
+    "seconds": "{count}s",
+    "progress": "Feito",
+    "progressValues": "Quadros {frames}/{beats} · Vídeos {videos}/{beats}",
+    "scopeFixedHint": "As contagens de cenas e batidas vêm de Production Studio e não são ajustáveis ​​aqui.",
+    "methodsTitle": "Método de produção",
+    "recommended": "Recomendado",
+    "methods": {
+      "animatic_first": {
+        "name": "Animatic Primeiro",
+        "hint": "Apenas quadros Pre-vis. Valide em Screening Room antes de gastar créditos de vídeo."
+      },
+      "draft_production": {
+        "name": "Rascunho de produção",
+        "hint": "Rascunho de quadros e vídeo com revisão de cena verificada."
+      },
+      "final_delivery": {
+        "name": "Entrega Final",
+        "hint": "Quadros de resolução final e vídeo, com Topázio planejado para polimento."
+      },
+      "express_sprint": {
+        "name": "Sprint Expresso",
+        "hint": "Caminho de lote simultâneo. Maior contingência de iteração – alterações de script após lote são caras."
+      }
+    },
+    "frameResolution": "Resolução de quadros",
+    "videoResolution": "Resolução de vídeo",
+    "quality": {
+      "draft": "Rascunho",
+      "final": "Final",
+      "none": "Nenhum"
+    },
+    "creditsPerFrame": "{credits} cr/quadro",
+    "creditsPerClip": "{credits} cr/{seconds}s",
+    "creditsZero": "0 cr",
+    "providerNote": "Kling vs Google é escolhido por batida no Studio e não altera essa previsão.",
+    "frameIterations": "Iterações de quadro / batida",
+    "videoIterations": "Iterações/beat de vídeo",
+    "frameIterationsHint": "O padrão é {rate} com sucesso na primeira tomada (~1,25×).",
+    "videoIterationsHint": "O padrão é {rate} com sucesso na primeira tomada (~1,11×).",
+    "topazTitle": "Topázio sofisticado",
+    "topazDescription": "50 créditos por minuto de duração de vídeo planejada.",
+    "intelligenceTitle": "Inteligência (Google alta)",
+    "intelligenceDescription": "Audience Resonance, análise de script e pacote de otimização/refinamento de blueprint.",
+    "required": "Obrigatório",
+    "used": "Usado",
+    "costToComplete": "Para completar",
+    "forecast": "Previsão",
+    "overBudget": "A previsão é de créditos {credits} acima do orçamento economizado",
+    "underBudget": "A previsão é de créditos {credits} dentro do orçamento economizado",
+    "needCredits": "Déficit de saldo vs plano: créditos {credits}",
+    "breakdown": "Detalhamento de custos",
+    "lineFrames": "Quadros ({quality}) · {rate} cr cada",
+    "lineVideos": "Vídeos ({quality}) · {rate} cr/{seconds}s",
+    "lineTopaz": "Topázio sofisticado",
+    "lineIntelligence": "Inteligência",
+    "excludedByok": "Excluído (BYOK)",
+    "suggestionsTitle": "Maneiras de reduzir custos",
+    "suggestions": {
+      "useAnimaticFirst": "Mude para Animatic primeiro e confirme a história em Screening Room antes de gerar o vídeo.",
+      "stayOnDraft": "Permaneça na resolução de rascunho até a aprovação do Screening Room e, em seguida, atualize para a final.",
+      "lowerFrameIterations": "Reduza as iterações de quadro em direção ao padrão de primeira tomada de 80% (1,25×).",
+      "lowerVideoIterations": "Reduza as iterações de vídeo em direção ao padrão de primeira tomada de 90% (~1,11×).",
+      "disableTopaz": "Desligue o Topaz até a entrega final - aprimore depois de bloquear a imagem.",
+      "enableByok": "Ative a exclusão de planejamento BYOK se você pagar diretamente aos provedores de imagem/vídeo."
+    },
+    "setAsProjectBudget": "Definido como Orçamento do Projeto (créditos {credits})",
+    "saving": "Salvando...",
+    "noBeatsYet": "Adicione cenas e batidas em Production Studio para criar um orçamento."
   }
 }

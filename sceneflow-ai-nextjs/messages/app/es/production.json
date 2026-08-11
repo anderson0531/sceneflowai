@@ -52,7 +52,7 @@
     "mergeDialogueNote": "Todas las líneas de diálogo de personajes duplicados se asignarán al personaje principal.",
     "mergeCharacters": "Fusionar personajes",
     "hasVoice": "(tiene voz)",
-    "budgetTitle": "Gestión del presupuesto de producción - {title}",
+    "budgetTitle": "Gestor de presupuesto de producción - {title}",
     "setBudget": "Establecer presupuesto",
     "budgetAmount": "Presupuesto: {amount}",
     "importTranslation": "Importar traducción",
@@ -86,7 +86,7 @@
     "audienceResonanceCancel": "Cancelar el análisis Audience Resonance",
     "budgetTooltipView": "Ver o ajustar el presupuesto de crédito del proyecto",
     "budgetTooltipSet": "Calcule y establezca un presupuesto de crédito predeterminado a partir de su guión",
-    "budgetDescription": "Establezca un presupuesto de crédito, realice un seguimiento de los costos de producción y planifique la animación primero antes que el video."
+    "budgetDescription": "Planifica el gasto de créditos a partir de tus escenas y beats, rastrea lo real y pronostica el costo para completar."
   },
   "script": {
     "generateScript": "Generar secuencia de comandos",
@@ -1402,5 +1402,85 @@
     "approxSize": "~{size}",
     "storageGbAmount": "{gb} ES",
     "centsPerCredit": "({cents}¢/crédito)"
+  },
+  "budgetManager": {
+    "title": "Gestor de presupuesto de producción",
+    "subtitle": "Planifica a partir de escenas y ritmos fijos. Costo de las transmisiones preliminares versus finales: la elección del proveedor sigue siendo creativa.",
+    "subtitleWithTitle": "Plan presupuestario para {title}",
+    "currentBalance": "Saldo actual",
+    "creditsCount": "Créditos {count}",
+    "byokTitle": "Traiga su propia llave (BYOK)",
+    "byokDescription": "Se excluyen fotogramas, vídeos y Topaz de este plan presupuestario. La inteligencia todavía cuenta.",
+    "scenes": "Escenas",
+    "beats": "Latidos",
+    "clipDuration": "Longitud del clip",
+    "seconds": "{count}s",
+    "progress": "Hecho",
+    "progressValues": "Marcos {frames}/{beats} · Vídeos {videos}/{beats}",
+    "scopeFixedHint": "Los recuentos de escenas y tiempos provienen de Production Studio y no se pueden ajustar aquí.",
+    "methodsTitle": "Método de producción",
+    "recommended": "Recomendado",
+    "methods": {
+      "animatic_first": {
+        "name": "Animatic Primero",
+        "hint": "Solo marcos Pre-vis. Valide en Screening Room antes de gastar créditos de video."
+      },
+      "draft_production": {
+        "name": "Proyecto de producción",
+        "hint": "Borradores de fotogramas y vídeo con revisión de escena con puntos de control."
+      },
+      "final_delivery": {
+        "name": "Entrega Final",
+        "hint": "Fotogramas y vídeo en resolución final, con Topaz previsto para pulirlo."
+      },
+      "express_sprint": {
+        "name": "Carrera exprés",
+        "hint": "Ruta de lotes concurrente. Mayor contingencia de iteración: los cambios de script después del lote son costosos."
+      }
+    },
+    "frameResolution": "Resolución de fotograma",
+    "videoResolution": "Resolución de vídeo",
+    "quality": {
+      "draft": "Borrador",
+      "final": "Final",
+      "none": "Ninguno"
+    },
+    "creditsPerFrame": "{credits} cr/marco",
+    "creditsPerClip": "{credits} cr/{seconds}s",
+    "creditsZero": "0 cr",
+    "providerNote": "Kling vs Google se elige por latido en Studio y no cambia este pronóstico.",
+    "frameIterations": "Iteraciones de cuadros/tiempo",
+    "videoIterations": "Iteraciones de vídeo/tiempo",
+    "frameIterationsHint": "El valor predeterminado es {rate} éxito en la primera toma (~1,25×).",
+    "videoIterationsHint": "El valor predeterminado es {rate} éxito en la primera toma (~1,11×).",
+    "topazTitle": "Topacio de lujo",
+    "topazDescription": "50 créditos por minuto de duración del vídeo planificado.",
+    "intelligenceTitle": "Inteligencia (alta Google)",
+    "intelligenceDescription": "Audience Resonance, análisis de scripts y paquete de optimización/refinamiento de planos.",
+    "required": "Requerido",
+    "used": "Usado",
+    "costToComplete": "Para completar",
+    "forecast": "Pronóstico",
+    "overBudget": "La previsión es {credits} créditos por encima del presupuesto guardado",
+    "underBudget": "El pronóstico es créditos {credits} bajo el presupuesto guardado",
+    "needCredits": "Déficit de saldo vs plan: créditos {credits}",
+    "breakdown": "Desglose de costos",
+    "lineFrames": "Marcos ({quality}) · {rate} cr cada uno",
+    "lineVideos": "Vídeos ({quality}) · {rate} cr/{seconds}s",
+    "lineTopaz": "Topacio de lujo",
+    "lineIntelligence": "Inteligencia",
+    "excludedByok": "Excluido (BYOK)",
+    "suggestionsTitle": "Formas de reducir costos",
+    "suggestions": {
+      "useAnimaticFirst": "Cambie a Animatic primero y confirme la historia en Screening Room antes de generar el video.",
+      "stayOnDraft": "Continúe en el borrador de resolución hasta que Screening Room lo apruebe y luego actualice a Final.",
+      "lowerFrameIterations": "Iteraciones de fotogramas más bajas hacia el valor predeterminado de primera toma del 80% (1,25×).",
+      "lowerVideoIterations": "Reduzca las iteraciones de vídeo hasta alcanzar el 90 % de la primera toma predeterminada (~1,11×).",
+      "disableTopaz": "Apague Topaz hasta la entrega final: mejore después de bloquear la imagen.",
+      "enableByok": "Habilite la exclusión de planificación BYOK si pagará directamente a los proveedores de imágenes/vídeo."
+    },
+    "setAsProjectBudget": "Establecer como presupuesto del proyecto (créditos {credits})",
+    "saving": "Ahorro...",
+    "noBeatsYet": "Agregue escenas y ritmos en Production Studio para crear un presupuesto."
   }
 }
