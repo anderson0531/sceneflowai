@@ -770,11 +770,15 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
   // Credits context for budget calculator
   const { credits: userCredits } = useCredits()
 
-  const budgetMetadata = useMemo(
-    () =>
-      (projectMetadata ?? script?.metadata ?? null) as Record<string, unknown> | null,
-    [projectMetadata, script?.metadata]
-  )
+  const budgetMetadata = useMemo(() => {
+    const fromProject = (projectMetadata ?? {}) as Record<string, unknown>
+    const fromScript = (script?.metadata ?? {}) as Record<string, unknown>
+    // Prefer script overlay for freshly saved budget params; keep project for
+    // creditsUsed / visionPhase.production when script metadata is sparse.
+    return Object.keys(fromProject).length || Object.keys(fromScript).length
+      ? ({ ...fromProject, ...fromScript } as Record<string, unknown>)
+      : null
+  }, [projectMetadata, script?.metadata])
 
   const creditsBudget = useMemo(
     () => getProjectCreditsBudget(budgetMetadata),
