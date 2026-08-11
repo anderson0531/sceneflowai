@@ -1402,5 +1402,85 @@
     "approxSize": "~{size}",
     "storageGbAmount": "{gb} जीबी",
     "centsPerCredit": "({cents}¢/क्रेडिट)"
+  },
+  "budgetManager": {
+    "title": "उत्पादन बजट प्रबंधक",
+    "subtitle": "निश्चित दृश्यों और बीट्स से योजना बनाएं। ड्राफ्ट बनाम अंतिम ड्राइव लागत - प्रदाता की पसंद रचनात्मक रहती है।",
+    "subtitleWithTitle": "{title} के लिए बजट योजना",
+    "currentBalance": "वर्तमान शेष",
+    "creditsCount": "{count} क्रेडिट",
+    "byokTitle": "अपनी खुद की चाबी लाओ (BYOK)",
+    "byokDescription": "इस बजट योजना से फ़्रेम, वीडियो और पुखराज शामिल नहीं हैं। बुद्धिमत्ता अभी भी मायने रखती है.",
+    "scenes": "पर्दे",
+    "beats": "धड़कता है",
+    "clipDuration": "क्लिप की लंबाई",
+    "seconds": "{count}s",
+    "progress": "हो गया",
+    "progressValues": "{frames}/{beats} फ़्रेम · {videos}/{beats} वीडियो",
+    "scopeFixedHint": "दृश्य और बीट गणना Production Studio से आती हैं और यहां समायोज्य नहीं हैं।",
+    "methodsTitle": "उत्पाद विधि",
+    "recommended": "अनुशंसित",
+    "methods": {
+      "animatic_first": {
+        "name": "SFAIANImaticTERM प्रथम",
+        "hint": "केवल Pre-vis फ़्रेम। वीडियो क्रेडिट खर्च करने से पहले Screening Room में सत्यापन करें।"
+      },
+      "draft_production": {
+        "name": "ड्राफ्ट उत्पादन",
+        "hint": "चेकपॉइंटेड दृश्य समीक्षा के साथ ड्राफ्ट फ़्रेम और वीडियो।"
+      },
+      "final_delivery": {
+        "name": "अंतिम डिलीवरी",
+        "hint": "अंतिम रिज़ॉल्यूशन फ़्रेम और वीडियो, पुखराज के साथ पॉलिश की योजना बनाई गई।"
+      },
+      "express_sprint": {
+        "name": "एक्सप्रेस स्प्रिंट",
+        "hint": "समवर्ती बैच पथ. उच्च पुनरावृत्ति आकस्मिकता - बैच के बाद स्क्रिप्ट परिवर्तन महंगा है।"
+      }
+    },
+    "frameResolution": "फ़्रेम रिज़ॉल्यूशन",
+    "videoResolution": "वीडियो संकल्प",
+    "quality": {
+      "draft": "मसौदा",
+      "final": "अंतिम",
+      "none": "कोई नहीं"
+    },
+    "creditsPerFrame": "{credits} करोड़/फ्रेम",
+    "creditsPerClip": "{credits} cr/{seconds}s",
+    "creditsZero": "0 करोड़",
+    "providerNote": "क्लिंग बनाम गूगल को स्टूडियो में प्रति बीट चुना जाता है और यह पूर्वानुमान नहीं बदलता है।",
+    "frameIterations": "फ़्रेम पुनरावृत्तियाँ / बीट",
+    "videoIterations": "वीडियो पुनरावृत्ति/बीट",
+    "frameIterationsHint": "डिफ़ॉल्ट रूप से {rate} प्रथम-टेक सफलता (~1.25×)।",
+    "videoIterationsHint": "डिफ़ॉल्ट रूप से {rate} प्रथम-टेक सफलता (~1.11×)।",
+    "topazTitle": "पुखराज उच्च श्रेणी का",
+    "topazDescription": "नियोजित वीडियो रनटाइम के प्रति मिनट 50 क्रेडिट।",
+    "intelligenceTitle": "इंटेलिजेंस (गूगल हाई)",
+    "intelligenceDescription": "Audience Resonance, स्क्रिप्ट विश्लेषण, और ब्लूप्रिंट ऑप्टिमाइज़/परिष्कृत पैकेज।",
+    "required": "आवश्यक",
+    "used": "इस्तेमाल किया गया",
+    "costToComplete": "को पूरा करने के",
+    "forecast": "पूर्वानुमान",
+    "overBudget": "सहेजे गए बजट से अधिक {credits} क्रेडिट का पूर्वानुमान है",
+    "underBudget": "सहेजे गए बजट के अंतर्गत {credits} क्रेडिट का पूर्वानुमान है",
+    "needCredits": "शेष राशि की कमी बनाम योजना: {credits} क्रेडिट",
+    "breakdown": "लागत विकार",
+    "lineFrames": "फ़्रेम ({quality}) · {rate} करोड़ प्रत्येक",
+    "lineVideos": "वीडियो ({quality}) · {rate} cr/{seconds}s",
+    "lineTopaz": "पुखराज उच्च श्रेणी का",
+    "lineIntelligence": "बुद्धिमत्ता",
+    "excludedByok": "बहिष्कृत (BYOK)",
+    "suggestionsTitle": "लागत कम करने के उपाय",
+    "suggestions": {
+      "useAnimaticFirst": "सबसे पहले Animatic पर स्विच करें और वीडियो बनाने से पहले Screening Room में कहानी की पुष्टि करें।",
+      "stayOnDraft": "Screening Room साइन-ऑफ़ होने तक ड्राफ्ट रिज़ॉल्यूशन पर बने रहें, फिर फ़ाइनल में अपग्रेड करें।",
+      "lowerFrameIterations": "80% फर्स्ट-टेक डिफॉल्ट (1.25×) की ओर फ्रेम पुनरावृत्तियों को कम करें।",
+      "lowerVideoIterations": "90% फर्स्ट-टेक डिफॉल्ट (~1.11×) की ओर वीडियो पुनरावृत्तियों को कम करें।",
+      "disableTopaz": "अंतिम डिलीवरी तक पुखराज को बंद कर दें - चित्र लॉक करने के बाद अपस्केल।",
+      "enableByok": "यदि आप छवि/वीडियो प्रदाताओं को सीधे भुगतान करेंगे तो BYOK योजना बहिष्करण सक्षम करें।"
+    },
+    "setAsProjectBudget": "प्रोजेक्ट बजट के रूप में सेट करें ({credits} क्रेडिट)",
+    "saving": "सहेजा जा रहा है...",
+    "noBeatsYet": "बजट बनाने के लिए Production Studio में दृश्य और बीट्स जोड़ें।"
   }
 }

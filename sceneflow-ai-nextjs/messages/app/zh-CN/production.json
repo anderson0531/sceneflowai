@@ -52,7 +52,7 @@
     "mergeDialogueNote": "重复角色的所有对话台词都将分配给主要角色。",
     "mergeCharacters": "合并字符",
     "hasVoice": "（有声音）",
-    "budgetTitle": "生产预算管理 - {title}",
+    "budgetTitle": "生产预算管理器 - {title}",
     "setBudget": "设定预算",
     "budgetAmount": "预算：{amount}",
     "importTranslation": "导入翻译",
@@ -1402,5 +1402,85 @@
     "approxSize": "~{size}",
     "storageGbAmount": "{gb} 国标",
     "centsPerCredit": "（{cents} 美分/学分）"
+  },
+  "budgetManager": {
+    "title": "生产预算经理",
+    "subtitle": "根据固定的场景和节拍进行计划。草稿与最终版本驱动成本——提供商的选择保持创造性。",
+    "subtitleWithTitle": "{title} 预算计划",
+    "currentBalance": "当前余额",
+    "creditsCount": "{count} 积分",
+    "byokTitle": "带上您自己的钥匙 (BYOK)",
+    "byokDescription": "此预算计划不包括帧、视频和 Topaz。智力仍然很重要。",
+    "scenes": "场景",
+    "beats": "节拍",
+    "clipDuration": "夹子长度",
+    "seconds": "{count}s",
+    "progress": "完毕",
+    "progressValues": "{frames}/{beats} 帧 · {videos}/{beats} 视频",
+    "scopeFixedHint": "场景和节拍计数来自 SFAIProduction_STUDIOTERM，并且在此处不可调整。",
+    "methodsTitle": "制作方法",
+    "recommended": "受到推崇的",
+    "methods": {
+      "animatic_first": {
+        "name": "SFAIA动画术语第一",
+        "hint": "仅限 Pre-vis 帧。在使用视频积分之前，请先在 Screening Room 中进行验证。"
+      },
+      "draft_production": {
+        "name": "草稿制作",
+        "hint": "草稿帧和视频以及检查点场景审查。"
+      },
+      "final_delivery": {
+        "name": "最终交付",
+        "hint": "最终分辨率的帧和视频，计划使用黄玉进行抛光。"
+      },
+      "express_sprint": {
+        "name": "快速冲刺",
+        "hint": "并发批处理路径。更高的迭代偶然性——批次后的脚本更改成本高昂。"
+      }
+    },
+    "frameResolution": "帧分辨率",
+    "videoResolution": "视频分辨率",
+    "quality": {
+      "draft": "草稿",
+      "final": "最终的",
+      "none": "没有任何"
+    },
+    "creditsPerFrame": "{credits} cr/车架",
+    "creditsPerClip": "{credits} cr/{seconds}s",
+    "creditsZero": "0铬",
+    "providerNote": "Kling vs Google 是在 Studio 中按节拍选择的，不会改变此预测。",
+    "frameIterations": "帧迭代/节拍",
+    "videoIterations": "视频迭代/节拍",
+    "frameIterationsHint": "默认为 {rate} 首次成功 (~1.25×)。",
+    "videoIterationsHint": "默认为 {rate} 首次成功 (~1.11×)。",
+    "topazTitle": "黄玉高档",
+    "topazDescription": "计划视频运行时间每分钟 50 个积分。",
+    "intelligenceTitle": "智力（谷歌高）",
+    "intelligenceDescription": "Audience Resonance、脚本分析和蓝图优化/优化包。",
+    "required": "必需的",
+    "used": "用过的",
+    "costToComplete": "完成",
+    "forecast": "预报",
+    "overBudget": "预测 {credits} 学分超过节省的预算",
+    "underBudget": "预测是节省预算下的 {credits} 学分",
+    "needCredits": "余额缺口与计划：{credits} 积分",
+    "breakdown": "成本明细",
+    "lineFrames": "框架 ({quality}) · {rate} cr 每个",
+    "lineVideos": "视频 ({quality}) · {rate} cr/{seconds}s",
+    "lineTopaz": "黄玉高档",
+    "lineIntelligence": "智力",
+    "excludedByok": "排除 (BYOK)",
+    "suggestionsTitle": "降低成本的方法",
+    "suggestions": {
+      "useAnimaticFirst": "在生成视频之前，首先切换到 Animatic 并确认 Screening Room 中的故事。",
+      "stayOnDraft": "保留草稿决议，直至 Screening Room 签署，然后升级至最终决议。",
+      "lowerFrameIterations": "将帧迭代降低到 80% 的首次默认值 (1.25×)。",
+      "lowerVideoIterations": "将视频迭代降低到 90% 的首次默认值 (~1.11×)。",
+      "disableTopaz": "关闭 Topaz 直到最终交付 - 锁定图片后高档。",
+      "enableByok": "如果您直接向图像/视频提供商付款，请启用 BYOK 计划排除。"
+    },
+    "setAsProjectBudget": "设置为项目预算（{credits} 学分）",
+    "saving": "保存...",
+    "noBeatsYet": "在 SFAIProduction_STUDIOTERM 中添加场景和节拍以制定预算。"
   }
 }

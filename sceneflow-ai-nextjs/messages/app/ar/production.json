@@ -1402,5 +1402,85 @@
     "approxSize": "~{size}",
     "storageGbAmount": "{gb} غيغابايت",
     "centsPerCredit": "({cents} ™ / الائتمان)"
+  },
+  "budgetManager": {
+    "title": "مدير ميزانية الإنتاج",
+    "subtitle": "التخطيط من المشاهد والإيقاعات الثابتة. تكلفة المسودة مقابل محركات الأقراص النهائية - يظل اختيار الموفر مبدعًا.",
+    "subtitleWithTitle": "خطة الميزانية لـ {title}",
+    "currentBalance": "الرصيد الحالي",
+    "creditsCount": "اعتمادات {count}",
+    "byokTitle": "أحضر مفتاحك الخاص (BYOK)",
+    "byokDescription": "لا يشمل الإطارات والفيديو والتوباز من خطة الميزانية هذه. الذكاء لا يزال يهم.",
+    "scenes": "مشاهد",
+    "beats": "يدق",
+    "clipDuration": "طول المقطع",
+    "seconds": "{count}s",
+    "progress": "منتهي",
+    "progressValues": "إطارات {frames}/{beats} · مقاطع فيديو {videos}/{beats}",
+    "scopeFixedHint": "يأتي عدد المشاهد والإيقاعات من Production Studio ولا يمكن تعديله هنا.",
+    "methodsTitle": "طريقة الإنتاج",
+    "recommended": "مُستَحسَن",
+    "methods": {
+      "animatic_first": {
+        "name": "Animatic أولاً",
+        "hint": "إطارات Pre-vis فقط. قم بالتحقق في Screening Room قبل إنفاق أرصدة الفيديو."
+      },
+      "draft_production": {
+        "name": "مشروع الإنتاج",
+        "hint": "قم بصياغة الإطارات والفيديو مع مراجعة المشهد المحدد بنقاط التفتيش."
+      },
+      "final_delivery": {
+        "name": "التسليم النهائي",
+        "hint": "إطارات الدقة النهائية والفيديو، مع التخطيط لتلميع التوباز."
+      },
+      "express_sprint": {
+        "name": "اكسبريس سبرينت",
+        "hint": "مسار الدفعة المتزامنة. احتمالية تكرار أعلى - تكون تغييرات البرنامج النصي بعد الدفعة مكلفة."
+      }
+    },
+    "frameResolution": "دقة الإطار",
+    "videoResolution": "دقة الفيديو",
+    "quality": {
+      "draft": "مسودة",
+      "final": "أخير",
+      "none": "لا أحد"
+    },
+    "creditsPerFrame": "{credits} كر/إطار",
+    "creditsPerClip": "{credits} cr/{seconds}s",
+    "creditsZero": "0كر",
+    "providerNote": "يتم اختيار Kling vs Google لكل إيقاع في الاستوديو ولا يغير هذه التوقعات.",
+    "frameIterations": "تكرارات الإطار / فوز",
+    "videoIterations": "تكرارات الفيديو / فوز",
+    "frameIterationsHint": "الإعدادات الافتراضية هي نجاح {rate} (~1.25×).",
+    "videoIterationsHint": "الإعدادات الافتراضية هي نجاح {rate} (~1.11×).",
+    "topazTitle": "التوباز الراقي",
+    "topazDescription": "50 ساعة معتمدة في الدقيقة من وقت تشغيل الفيديو المخطط له.",
+    "intelligenceTitle": "الذكاء (جوجل عالية)",
+    "intelligenceDescription": "Audience Resonance، وتحليل البرنامج النصي، ومخطط تحسين/تحسين الحزمة.",
+    "required": "مطلوب",
+    "used": "مستخدم",
+    "costToComplete": "لإكمال",
+    "forecast": "تنبؤ بالمناخ",
+    "overBudget": "التوقعات هي اعتمادات {credits} على الميزانية المحفوظة",
+    "underBudget": "التوقعات هي اعتمادات {credits} ضمن الميزانية المحفوظة",
+    "needCredits": "عجز الرصيد مقابل الخطة: أرصدة {credits}",
+    "breakdown": "انهيار التكلفة",
+    "lineFrames": "الإطارات ({quality}) · {rate} cr لكل منها",
+    "lineVideos": "مقاطع الفيديو ({quality}) · {rate} cr/{seconds}s",
+    "lineTopaz": "التوباز الراقي",
+    "lineIntelligence": "ذكاء",
+    "excludedByok": "مستبعد (BYOK)",
+    "suggestionsTitle": "طرق خفض التكلفة",
+    "suggestions": {
+      "useAnimaticFirst": "قم بالتبديل إلى Animatic أولاً وقم بتأكيد القصة في Screening Room قبل إنشاء الفيديو.",
+      "stayOnDraft": "ابق على مسودة القرار حتى تسجيل الخروج في Screening Room، ثم قم بالترقية إلى النهائي.",
+      "lowerFrameIterations": "تكرارات الإطار السفلي نحو 80% من القيمة الافتراضية لأول مرة (1.25×).",
+      "lowerVideoIterations": "قم بتقليل تكرارات الفيديو نحو 90% من الإعداد الافتراضي للالتقاط الأول (~1.11×).",
+      "disableTopaz": "قم بإيقاف تشغيل التوباز حتى التسليم النهائي - قم بالترقية بعد قفل الصورة.",
+      "enableByok": "قم بتمكين استبعاد التخطيط BYOK إذا كنت ستدفع لموفري الصور/الفيديو مباشرةً."
+    },
+    "setAsProjectBudget": "تعيين كميزانية المشروع (اعتمادات {credits})",
+    "saving": "توفير...",
+    "noBeatsYet": "أضف المشاهد والإيقاعات في Production Studio لإنشاء الميزانية."
   }
 }

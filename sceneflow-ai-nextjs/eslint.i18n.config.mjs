@@ -36,6 +36,7 @@ const eslintConfig = [
       // Production Studio shell + dialogs (page/ScriptPanel/SceneGallery remain
       // partial — chrome/dialogs only — so they stay off this guard for now).
       'src/components/credits/ProjectCostCalculator.tsx',
+      'src/components/credits/ProductionBudgetManager.tsx',
       'src/components/vision/VisionLoadingOverlay.tsx',
       'src/components/vision/ExpressConfirmDialog.tsx',
       'src/components/vision/ExpressAudioConfirmDialog.tsx',
@@ -109,6 +110,7 @@ const eslintConfig = [
             '60s',
             'T2V',
             'I2V',
+            '×',
             '⚡',
             '⚠️',
             '✏️',

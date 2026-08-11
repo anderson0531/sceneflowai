@@ -94,7 +94,7 @@ describe('Production Budget Management calculator', () => {
     )
   })
 
-  it('UI strings use Production Budget Management', () => {
+  it('UI strings use Production Budget Management on calculator; Studio uses Manager', () => {
     const calc = readFileSync(
       join(process.cwd(), 'src/components/credits/ProjectCostCalculator.tsx'),
       'utf8'
@@ -103,8 +103,13 @@ describe('Production Budget Management calculator', () => {
       join(process.cwd(), 'src/components/vision/ScriptPanel.tsx'),
       'utf8'
     )
-    expect(calc).toContain('Production Budget Management')
-    expect(calc).toContain('Bring Your Own Key (BYOK)')
-    expect(panel).toContain('Production Budget Management')
+    const manager = readFileSync(
+      join(process.cwd(), 'src/components/credits/ProductionBudgetManager.tsx'),
+      'utf8'
+    )
+    expect(calc).toContain("useTranslations('production.budget')")
+    expect(calc).toContain("t('byokTitle')")
+    expect(panel).toContain('ProductionBudgetManager')
+    expect(manager).toContain("useTranslations('production.budgetManager')")
   })
 })

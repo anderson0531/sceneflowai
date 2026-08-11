@@ -52,7 +52,7 @@
     "mergeDialogueNote": "All dialogue lines from duplicate characters will be assigned to the primary character.",
     "mergeCharacters": "Merge Characters",
     "hasVoice": "(has voice)",
-    "budgetTitle": "Production Budget Management - {title}",
+    "budgetTitle": "Production Budget Manager - {title}",
     "setBudget": "Set Budget",
     "budgetAmount": "Budget: {amount}",
     "importTranslation": "Import Translation",
@@ -86,7 +86,87 @@
     "audienceResonanceCancel": "Cancel Audience Resonance analysis",
     "budgetTooltipView": "View or adjust project credit budget",
     "budgetTooltipSet": "Estimate and set a default credit budget from your script",
-    "budgetDescription": "Set a credit budget, track production charges, and plan animatic-first before video."
+    "budgetDescription": "Plan credit spend from your scenes and beats, track actuals, and forecast cost to complete."
+  },
+  "budgetManager": {
+    "title": "Production Budget Manager",
+    "subtitle": "Plan from fixed scenes and beats. Draft vs Final drives cost — provider choice stays creative.",
+    "subtitleWithTitle": "Budget plan for {title}",
+    "currentBalance": "Current Balance",
+    "creditsCount": "{count} credits",
+    "byokTitle": "Bring Your Own Key (BYOK)",
+    "byokDescription": "Excludes frames, video, and Topaz from this budget plan. Intelligence still counts.",
+    "scenes": "Scenes",
+    "beats": "Beats",
+    "clipDuration": "Clip length",
+    "seconds": "{count}s",
+    "progress": "Done",
+    "progressValues": "{frames}/{beats} frames · {videos}/{beats} videos",
+    "scopeFixedHint": "Scene and beat counts come from Production Studio and are not adjustable here.",
+    "methodsTitle": "Production method",
+    "recommended": "Recommended",
+    "methods": {
+      "animatic_first": {
+        "name": "Animatic First",
+        "hint": "Pre-vis frames only. Validate in Screening Room before spending video credits."
+      },
+      "draft_production": {
+        "name": "Draft Production",
+        "hint": "Draft frames and video with checkpointed scene review."
+      },
+      "final_delivery": {
+        "name": "Final Delivery",
+        "hint": "Final resolution frames and video, with Topaz planned for polish."
+      },
+      "express_sprint": {
+        "name": "Express Sprint",
+        "hint": "Concurrent batch path. Higher iteration contingency — script changes after batch are costly."
+      }
+    },
+    "frameResolution": "Frame resolution",
+    "videoResolution": "Video resolution",
+    "quality": {
+      "draft": "Draft",
+      "final": "Final",
+      "none": "None"
+    },
+    "creditsPerFrame": "{credits} cr/frame",
+    "creditsPerClip": "{credits} cr/{seconds}s",
+    "creditsZero": "0 cr",
+    "providerNote": "Kling vs Google is chosen per beat in Studio and does not change this forecast.",
+    "frameIterations": "Frame iterations / beat",
+    "videoIterations": "Video iterations / beat",
+    "frameIterationsHint": "Defaults to {rate} first-take success (~1.25×).",
+    "videoIterationsHint": "Defaults to {rate} first-take success (~1.11×).",
+    "topazTitle": "Topaz upscale",
+    "topazDescription": "50 credits per minute of planned video runtime.",
+    "intelligenceTitle": "Intelligence (Google high)",
+    "intelligenceDescription": "Audience Resonance, script analysis, and blueprint optimize/refine package.",
+    "required": "Required",
+    "used": "Used",
+    "costToComplete": "To complete",
+    "forecast": "Forecast",
+    "overBudget": "Forecast is {credits} credits over the saved budget",
+    "underBudget": "Forecast is {credits} credits under the saved budget",
+    "needCredits": "Balance shortfall vs plan: {credits} credits",
+    "breakdown": "Cost breakdown",
+    "lineFrames": "Frames ({quality}) · {rate} cr each",
+    "lineVideos": "Videos ({quality}) · {rate} cr/{seconds}s",
+    "lineTopaz": "Topaz upscale",
+    "lineIntelligence": "Intelligence",
+    "excludedByok": "Excluded (BYOK)",
+    "suggestionsTitle": "Ways to lower cost",
+    "suggestions": {
+      "useAnimaticFirst": "Switch to Animatic First and confirm the story in Screening Room before generating video.",
+      "stayOnDraft": "Stay on Draft resolution until Screening Room sign-off, then upgrade to Final.",
+      "lowerFrameIterations": "Lower frame iterations toward the 80% first-take default (1.25×).",
+      "lowerVideoIterations": "Lower video iterations toward the 90% first-take default (~1.11×).",
+      "disableTopaz": "Turn off Topaz until Final Delivery — upscale after you lock picture.",
+      "enableByok": "Enable BYOK planning exclusion if you will pay image/video providers directly."
+    },
+    "setAsProjectBudget": "Set as Project Budget ({credits} credits)",
+    "saving": "Saving...",
+    "noBeatsYet": "Add scenes and beats in Production Studio to build a budget."
   },
   "script": {
     "generateScript": "Generate Script",

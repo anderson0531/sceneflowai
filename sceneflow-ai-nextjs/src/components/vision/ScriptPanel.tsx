@@ -145,17 +145,16 @@ import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
 import { uploadAssetViaAPI } from '@/lib/vision/uploads'
 import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
 import { useCredits } from '@/contexts/CreditsContext'
-import { ProjectCostCalculator } from '@/components/credits/ProjectCostCalculator'
-import { useProjectCosts } from '@/hooks/useProjectCosts'
-import {
-  calculateDetailedProjectCost,
-  mergeProjectParameters,
-} from '@/lib/credits/projectCalculator'
+import { ProductionBudgetManager } from '@/components/credits/ProductionBudgetManager'
 import { getProjectCreditsBudget } from '@/lib/credits/projectBudgetShared'
 import {
-  buildCreditsBudgetParams,
-  normalizeVideoParameters,
-} from '@/lib/credits/videoEnginePricing'
+  applyMethodDefaults,
+  buildProductionBudgetParams,
+  DEFAULT_PRODUCTION_METHOD,
+  estimateProductionBudget,
+  parseCreditsBudgetParamsV2,
+  readProjectBudgetScope,
+} from '@/lib/credits/productionBudgetManager'
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogHeader, DialogDescription } from '@/components/ui/dialog'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
@@ -769,25 +768,10 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
   // Credits context for budget calculator
   const { credits: userCredits } = useCredits()
 
-  const visionPhaseForCosts = script?.metadata?.visionPhase ?? script
-  const projectCosts = useProjectCosts(visionPhaseForCosts)
   const creditsBudget = useMemo(
     () => getProjectCreditsBudget(script?.metadata),
     [script?.metadata?.creditsBudget, script?.metadata]
   )
-
-  const budgetCalculatorInitialParams = useMemo(() => {
-    const savedVideoParams = script?.metadata?.creditsBudgetParams as
-      | Partial<import('@/lib/credits/projectCalculator').VideoParameters>
-      | undefined
-    return mergeProjectParameters({
-      ...projectCosts,
-      video: {
-        ...(projectCosts?.video || {}),
-        ...(savedVideoParams || {}),
-      },
-    })
-  }, [projectCosts, script?.metadata?.creditsBudgetParams])
 
   const saveProjectBudget = useCallback(
     async (budget: number, budgetParams?: Record<string, unknown>) => {
@@ -831,16 +815,49 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
 
     setIsSettingBudget(true)
     try {
-      const params = budgetCalculatorInitialParams
+      const metadata = (script?.metadata || {}) as Record<string, unknown>
+      const scope = readProjectBudgetScope({
+        script,
+        metadata,
+      })
+      const saved = parseCreditsBudgetParamsV2(metadata.creditsBudgetParams)
+      const method = saved?.method ?? DEFAULT_PRODUCTION_METHOD
+      const defaults = applyMethodDefaults(method)
       const byokExcludeMedia = Boolean(
         hasBYOK ||
-          (script?.metadata?.creditsBudgetParams as { byokExcludeMedia?: boolean } | undefined)
+          saved?.byokExcludeMedia ||
+          (metadata.creditsBudgetParams as { byokExcludeMedia?: boolean } | undefined)
             ?.byokExcludeMedia
       )
-      const breakdown = calculateDetailedProjectCost(params, { byokExcludeMedia })
-      const budget = breakdown.total.credits
-      const budgetParams = buildCreditsBudgetParams(normalizeVideoParameters(params.video), {
+      const estimate = estimateProductionBudget({
+        scenes: scope.scenes,
+        beats: scope.beats,
+        segmentDurationSec: scope.segmentDurationSec,
+        method,
+        frameQuality: saved?.frameQuality ?? defaults.frameQuality,
+        videoQuality: saved?.videoQuality ?? defaults.videoQuality,
+        frameIterations: saved?.frameIterations ?? defaults.frameIterations,
+        videoIterations: saved?.videoIterations ?? defaults.videoIterations,
+        topazEnabled: saved?.topazEnabled ?? defaults.topazEnabled,
+        intelligenceEnabled: saved?.intelligenceEnabled ?? defaults.intelligenceEnabled,
         byokExcludeMedia,
+        creditsUsed: scope.creditsUsed,
+        framesDone: scope.framesDone,
+        videosDone: scope.videosDone,
+        observedVideoTakesAvg: scope.observedVideoTakesAvg ?? undefined,
+        hasByokKeys: hasBYOK,
+      })
+      const budget = estimate.plannedTotal
+      const budgetParams = buildProductionBudgetParams({
+        method,
+        frameQuality: saved?.frameQuality ?? defaults.frameQuality,
+        videoQuality: saved?.videoQuality ?? defaults.videoQuality,
+        frameIterations: saved?.frameIterations ?? defaults.frameIterations,
+        videoIterations: saved?.videoIterations ?? defaults.videoIterations,
+        topazEnabled: saved?.topazEnabled ?? defaults.topazEnabled,
+        intelligenceEnabled: saved?.intelligenceEnabled ?? defaults.intelligenceEnabled,
+        byokExcludeMedia,
+        segmentDurationSec: scope.segmentDurationSec,
       })
 
       await saveProjectBudget(budget, budgetParams)
@@ -857,7 +874,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
     } finally {
       setIsSettingBudget(false)
     }
-  }, [projectId, creditsBudget, budgetCalculatorInitialParams, saveProjectBudget, hasBYOK, script?.metadata?.creditsBudgetParams])
+  }, [projectId, creditsBudget, saveProjectBudget, hasBYOK, script])
   
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -3780,7 +3797,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
         className="hidden"
       />
 
-      {/* Production Budget Management Modal */}
+      {/* Production Budget Manager Modal */}
       <Dialog open={costCalculatorOpen} onOpenChange={setCostCalculatorOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-900 border-gray-700">
           <DialogHeader>
@@ -3795,17 +3812,18 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4">
-            <ProjectCostCalculator 
-              currentTier="starter"
-              currentBalance={userCredits?.total_credits ?? 0}
-              compact={false}
+            <ProductionBudgetManager
               projectId={projectId}
-              initialParams={budgetCalculatorInitialParams}
+              projectTitle={script?.title}
+              script={script}
+              metadata={(script?.metadata || null) as Record<string, unknown> | null}
+              currentBalance={userCredits?.total_credits ?? 0}
               initialByokExcludeMedia={Boolean(
                 hasBYOK ||
                   (script?.metadata?.creditsBudgetParams as { byokExcludeMedia?: boolean } | undefined)
                     ?.byokExcludeMedia
               )}
+              hasByokKeys={hasBYOK}
               onSetBudget={async (budget, budgetParams) => {
                 if (!projectId) return
                 try {
