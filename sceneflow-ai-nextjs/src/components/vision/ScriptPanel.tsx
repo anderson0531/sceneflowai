@@ -270,6 +270,8 @@ interface ScriptPanelProps {
     subject?: string
   }>
   projectId?: string
+  /** Full project.metadata (creditsUsed, visionPhase.production, creditsBudgetParams). */
+  projectMetadata?: Record<string, unknown> | null
   visualStyle?: string
   /** Locked project aspect ratio from Blueprint */
   projectAspectRatio?: BlueprintAspectRatio
@@ -757,7 +759,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
-export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, directionReadiness, onUpdateAllDirections, isUpdatingAllDirections = false, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled,   projectStreams = [] }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, projectMetadata = null, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, directionReadiness, onUpdateAllDirections, isUpdatingAllDirections = false, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled,   projectStreams = [] }: ScriptPanelProps) {
 
   const tStudio = useTranslations('production.studio')
   const tCommon = useTranslations('common')
@@ -768,9 +770,15 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
   // Credits context for budget calculator
   const { credits: userCredits } = useCredits()
 
+  const budgetMetadata = useMemo(
+    () =>
+      (projectMetadata ?? script?.metadata ?? null) as Record<string, unknown> | null,
+    [projectMetadata, script?.metadata]
+  )
+
   const creditsBudget = useMemo(
-    () => getProjectCreditsBudget(script?.metadata),
-    [script?.metadata?.creditsBudget, script?.metadata]
+    () => getProjectCreditsBudget(budgetMetadata),
+    [budgetMetadata]
   )
 
   const saveProjectBudget = useCallback(
@@ -815,10 +823,11 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
 
     setIsSettingBudget(true)
     try {
-      const metadata = (script?.metadata || {}) as Record<string, unknown>
+      const metadata = (budgetMetadata || {}) as Record<string, unknown>
       const scope = readProjectBudgetScope({
         script,
         metadata,
+        productionScenes: sceneProductionData as Record<string, unknown>,
       })
       const saved = parseCreditsBudgetParamsV2(metadata.creditsBudgetParams)
       const method = saved?.method ?? DEFAULT_PRODUCTION_METHOD
@@ -874,7 +883,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
     } finally {
       setIsSettingBudget(false)
     }
-  }, [projectId, creditsBudget, saveProjectBudget, hasBYOK, script])
+  }, [projectId, creditsBudget, saveProjectBudget, hasBYOK, script, budgetMetadata, sceneProductionData])
   
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -3816,11 +3825,12 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
               projectId={projectId}
               projectTitle={script?.title}
               script={script}
-              metadata={(script?.metadata || null) as Record<string, unknown> | null}
+              metadata={budgetMetadata}
+              sceneProductionData={sceneProductionData as Record<string, unknown>}
               currentBalance={userCredits?.total_credits ?? 0}
               initialByokExcludeMedia={Boolean(
                 hasBYOK ||
-                  (script?.metadata?.creditsBudgetParams as { byokExcludeMedia?: boolean } | undefined)
+                  (budgetMetadata?.creditsBudgetParams as { byokExcludeMedia?: boolean } | undefined)
                     ?.byokExcludeMedia
               )}
               hasByokKeys={hasBYOK}

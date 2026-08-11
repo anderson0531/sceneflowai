@@ -40,6 +40,8 @@ export interface ProductionBudgetManagerProps {
   projectTitle?: string
   script?: unknown
   metadata?: Record<string, unknown> | null
+  /** Live Production Studio scene map (preferred for frames/videos actuals). */
+  sceneProductionData?: Record<string, unknown> | null
   currentBalance?: number
   initialByokExcludeMedia?: boolean
   hasByokKeys?: boolean
@@ -80,6 +82,7 @@ export function ProductionBudgetManager({
   projectTitle,
   script,
   metadata,
+  sceneProductionData,
   currentBalance = 0,
   initialByokExcludeMedia = false,
   hasByokKeys = false,
@@ -92,8 +95,9 @@ export function ProductionBudgetManager({
       readProjectBudgetScope({
         script,
         metadata: metadata ?? null,
+        productionScenes: sceneProductionData ?? null,
       }),
-    [script, metadata]
+    [script, metadata, sceneProductionData]
   )
 
   const saved = useMemo(
@@ -253,6 +257,87 @@ export function ProductionBudgetManager({
       </div>
 
       <div className="p-6 space-y-6">
+        {/* Hero summary: Charged / To complete / Forecast dominate first scan */}
+        <div
+          className={`p-5 rounded-2xl border ${
+            estimate.creditsUsed > 0 && estimate.variance > 0
+              ? 'bg-gradient-to-br from-slate-800/90 to-amber-950/30 border-amber-500/25'
+              : 'bg-gradient-to-br from-slate-800/90 to-cyan-950/40 border-cyan-500/20'
+          }`}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-4 text-center">
+            <div>
+              <div className="text-xs uppercase tracking-wide text-cyan-400/80 mb-1">
+                {t('charged')}
+              </div>
+              <div className="text-3xl font-semibold tabular-nums text-cyan-300">
+                {formatCredits(estimate.creditsUsed)}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-amber-300/80 mb-1">
+                {t('costToComplete')}
+              </div>
+              <div className="text-3xl font-semibold tabular-nums text-white">
+                {formatCredits(estimate.costToComplete)}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-white/70 mb-1">
+                {t('forecast')}
+              </div>
+              <div className="text-4xl font-bold tabular-nums text-white tracking-tight">
+                {formatCredits(estimate.forecastTotal)}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-gray-300">
+            <span>
+              {t('progressFrames', {
+                done: scope.framesDone,
+                total: scope.beats,
+              })}
+            </span>
+            <span className="text-slate-600 hidden sm:inline" aria-hidden>
+              ·
+            </span>
+            <span>
+              {t('progressVideos', {
+                done: scope.videosDone,
+                total: scope.beats,
+              })}
+            </span>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-gray-500">
+            <span>
+              {t('required')}: {formatCredits(estimate.plannedTotal)}
+            </span>
+            {currentBalance > 0 && (
+              <span>
+                {t('currentBalance')}: {formatCredits(currentBalance)}
+              </span>
+            )}
+          </div>
+
+          {creditsBudget > 0 && (
+            <div className="mt-3 text-xs text-gray-400 text-center">
+              {estimate.variance > 0
+                ? t('overBudget', { credits: formatCredits(estimate.variance) })
+                : t('underBudget', {
+                    credits: formatCredits(Math.abs(estimate.variance)),
+                  })}
+            </div>
+          )}
+          {remainingToBudget > 0 && (
+            <div className="mt-2 flex items-center justify-center gap-1.5 text-xs text-amber-300">
+              <AlertTriangle className="w-3.5 h-3.5" />
+              {t('needCredits', { credits: formatCredits(remainingToBudget) })}
+            </div>
+          )}
+        </div>
+
         <label
           className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer ${
             byokExcludeMedia
@@ -275,33 +360,21 @@ export function ProductionBudgetManager({
           </div>
         </label>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
-            <div className="text-xs text-gray-400">{t('scenes')}</div>
-            <div className="text-lg font-semibold text-white">{scope.scenes}</div>
-          </div>
-          <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
-            <div className="text-xs text-gray-400">{t('beats')}</div>
-            <div className="text-lg font-semibold text-white">{scope.beats}</div>
-          </div>
-          <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
-            <div className="text-xs text-gray-400">{t('clipDuration')}</div>
-            <div className="text-lg font-semibold text-white">
+        <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-500">
+          <span>
+            {t('scenes')}: <span className="text-gray-300">{scope.scenes}</span>
+          </span>
+          <span>
+            {t('beats')}: <span className="text-gray-300">{scope.beats}</span>
+          </span>
+          <span>
+            {t('clipDuration')}:{' '}
+            <span className="text-gray-300">
               {t('seconds', { count: scope.segmentDurationSec })}
-            </div>
-          </div>
-          <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
-            <div className="text-xs text-gray-400">{t('progress')}</div>
-            <div className="text-sm font-medium text-white">
-              {t('progressValues', {
-                frames: scope.framesDone,
-                videos: scope.videosDone,
-                beats: scope.beats,
-              })}
-            </div>
-          </div>
+            </span>
+          </span>
         </div>
-        <p className="text-xs text-gray-500 -mt-3">{t('scopeFixedHint')}</p>
+        <p className="text-xs text-gray-500 -mt-4">{t('scopeFixedHint')}</p>
 
         <div className="space-y-3">
           <h3 className="text-sm font-medium text-gray-300">{t('methodsTitle')}</h3>
@@ -483,56 +556,6 @@ export function ProductionBudgetManager({
               <p className="text-xs text-gray-400 mt-0.5">{t('intelligenceDescription')}</p>
             </div>
           </label>
-        </div>
-
-        <div
-          className={`p-4 rounded-xl border ${
-            estimate.creditsUsed > 0 && estimate.variance > 0
-              ? 'bg-amber-500/10 border-amber-500/30'
-              : 'bg-emerald-500/10 border-emerald-500/30'
-          }`}
-        >
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs">
-            <div>
-              <div className="text-gray-400">{t('required')}</div>
-              <div className="font-medium text-white text-sm">
-                {formatCredits(estimate.plannedTotal)}
-              </div>
-            </div>
-            <div>
-              <div className="text-gray-400">{t('used')}</div>
-              <div className="font-medium text-cyan-400 text-sm">
-                {formatCredits(estimate.creditsUsed)}
-              </div>
-            </div>
-            <div>
-              <div className="text-gray-400">{t('costToComplete')}</div>
-              <div className="font-medium text-white text-sm">
-                {formatCredits(estimate.costToComplete)}
-              </div>
-            </div>
-            <div>
-              <div className="text-gray-400">{t('forecast')}</div>
-              <div className="font-medium text-white text-sm">
-                {formatCredits(estimate.forecastTotal)}
-              </div>
-            </div>
-          </div>
-          {creditsBudget > 0 && (
-            <div className="mt-3 text-xs text-gray-400 text-center">
-              {estimate.variance > 0
-                ? t('overBudget', { credits: formatCredits(estimate.variance) })
-                : t('underBudget', {
-                    credits: formatCredits(Math.abs(estimate.variance)),
-                  })}
-            </div>
-          )}
-          {remainingToBudget > 0 && (
-            <div className="mt-2 flex items-center justify-center gap-1.5 text-xs text-amber-300">
-              <AlertTriangle className="w-3.5 h-3.5" />
-              {t('needCredits', { credits: formatCredits(remainingToBudget) })}
-            </div>
-          )}
         </div>
 
         <div className="space-y-2">

@@ -153,7 +153,7 @@ describe('Production Budget Manager engine', () => {
     expect(VIDEO_CREDITS.TOPAZ_UPSCALE_PER_MIN).toBe(50)
   })
 
-  it('reads fixed scene/beat counts from script beats', () => {
+  it('reads fixed scene/beat counts from script beats and plans at 10s by default', () => {
     const scope = readProjectBudgetScope({
       script: {
         scenes: [
@@ -198,6 +198,86 @@ describe('Production Budget Manager engine', () => {
     expect(scope.videosDone).toBe(1)
     expect(scope.observedVideoTakesAvg).toBe(2)
     expect(scope.creditsUsed).toBe(120)
-    expect(scope.segmentDurationSec).toBe(7)
+    // Planning ignores production targetSegmentDuration (7) → default 10s
+    expect(scope.segmentDurationSec).toBe(10)
+  })
+
+  it('counts legacy production actuals (imageUrl, startFrameUrl, videoUrl, project credits)', () => {
+    const scope = readProjectBudgetScope({
+      script: {
+        scenes: [
+          {
+            id: 'archive-1',
+            imageUrl: 'https://cdn.example/scene-establishing.jpg',
+            beats: [
+              { beatId: 'beat-a', sequenceIndex: 0, kind: 'action' },
+              { beatId: 'beat-b', sequenceIndex: 1, kind: 'dialogue', lineId: 'd1' },
+              { beatId: 'beat-c', sequenceIndex: 2, kind: 'action' },
+            ],
+            dialogue: [{ lineId: 'd1', storyboardImageUrl: 'https://cdn.example/dialogue-frame.jpg' }],
+          },
+        ],
+      },
+      metadata: {
+        creditsUsed: 2450,
+        visionPhase: {
+          production: {
+            scenes: {
+              'archive-1': {
+                targetSegmentDuration: 5,
+                segments: [
+                  {
+                    beatId: 'beat-a',
+                    startFrameUrl: 'https://cdn.example/start-a.jpg',
+                    takes: [{ videoUrl: 'https://cdn.example/take-a.mp4' }],
+                    activeAssetUrl: 'https://cdn.example/take-a.mp4',
+                    assetType: 'video',
+                  },
+                  {
+                    beatId: 'beat-b',
+                    references: { endFrameUrl: 'https://cdn.example/end-b.jpg' },
+                  },
+                  {
+                    beatId: 'beat-c',
+                    // orphan: no frame yet
+                    takes: [{ videoUrl: 'https://cdn.example/take-c.mp4' }],
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      productionScenes: {
+        'archive-1': {
+          segments: [
+            {
+              beatId: 'beat-a',
+              startFrameUrl: 'https://cdn.example/start-a.jpg',
+              takes: [{ videoUrl: 'https://cdn.example/take-a.mp4' }],
+              activeAssetUrl: 'https://cdn.example/take-a.mp4',
+              assetType: 'video',
+            },
+            {
+              beatId: 'beat-b',
+              references: { endFrameUrl: 'https://cdn.example/end-b.jpg' },
+            },
+            {
+              beatId: 'beat-c',
+              takes: [{ videoUrl: 'https://cdn.example/take-c.mp4' }],
+            },
+          ],
+        },
+      },
+    })
+
+    expect(scope.scenes).toBe(1)
+    expect(scope.beats).toBe(3)
+    // beat-a: startFrameUrl; beat-b: dialogue storyboard + endFrameUrl; beat-c: none
+    // imageUrl would only credit first beat if empty — first already has frame
+    expect(scope.framesDone).toBe(2)
+    expect(scope.videosDone).toBe(2)
+    expect(scope.creditsUsed).toBe(2450)
+    expect(scope.segmentDurationSec).toBe(10)
   })
 })
