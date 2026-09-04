@@ -77,11 +77,13 @@ export function buildEnMessages() {
     },
     nav: {
       workflow: 'The Workflow',
+      pipeline: 'The Pipeline',
       platformWalkthrough: 'Platform Walkthrough',
       plansPricing: 'Plans & Pricing',
       more: 'More',
       useCases: 'Use Cases',
       productionExamples: 'Examples',
+      keyFeatures: 'Features',
       audienceResonance: 'Audience Resonance',
       trustSafety: 'Trust & Safety',
       platformTrust: 'Platform & Trust',
