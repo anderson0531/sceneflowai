@@ -69,6 +69,9 @@ echo "✅ Tests passed"
 echo "🚀 Deploying to Vercel via Git..."
 echo "📝 Committing changes..."
 
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
 git add -A
 
 # Get commit message from user or use default
@@ -86,7 +89,7 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "📤 Pushing to GitHub (triggers Vercel deployment)..."
-git push
+git push -u origin main
 
 if [ $? -ne 0 ]; then
     echo "❌ Git push failed."

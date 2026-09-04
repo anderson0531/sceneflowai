@@ -1,6 +1,6 @@
 {
   "version": 2,
   "framework": "nextjs",
-  "installCommand": "cd sceneflow-ai-nextjs && npm install",
-  "buildCommand": "cd sceneflow-ai-nextjs && npm run build"
+  "installCommand": "npm install --prefix sceneflow-ai-nextjs",
+  "buildCommand": "npm run build --prefix sceneflow-ai-nextjs"
 }

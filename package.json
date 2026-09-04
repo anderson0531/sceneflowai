@@ -8,15 +8,15 @@
     "build": "npm --prefix sceneflow-ai-nextjs run build",
     "start": "npm --prefix sceneflow-ai-nextjs run start",
     "lint": "npm --prefix sceneflow-ai-nextjs run lint",
-    "deploy": "cd sceneflow-ai-nextjs && npx vercel --prod",
-    "deploy:prod": "node scripts/deploy-verify.js",
-    "deploy:dol": "bash scripts/deploy-dol-production.sh"
+    "deploy": "bash scripts/deploy-production.sh",
+    "deploy:prod": "bash scripts/deploy-production.sh",
+    "deploy:dol": "bash sceneflow-ai-nextjs/deploy-dol-production.sh"
   },
   "dependencies": {
     "acorn": "^8.16.0",
     "acorn-jsx": "^5.3.2",
     "acorn-walk": "^8.3.5",
-    "next": "^15.0.0"
+    "next": "^16.2.2"
   },
   "keywords": [
     "ai",
@@ -30,7 +30,7 @@
   "author": "SceneFlow AI Team",
   "license": "MIT",
   "engines": {
-    "node": ">=20 <21"
+    "node": "22.x"
   },
   "repository": {
     "type": "git",
