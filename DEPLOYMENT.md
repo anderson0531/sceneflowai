@@ -2,6 +2,8 @@
 
 Production at **https://sceneflowai.studio** deploys through **Vercel’s GitHub integration**: push to `main` on `anderson0531/sceneflowai` and Vercel builds automatically.
 
+**Git is the single source of truth.** Do not boot the Next.js app locally to verify UI or run e2e — the app is too large and has crashed machines. Verify against the Vercel deployment after a GitHub push. Unit tests that do not start a Next server are fine.
+
 ## Vercel project settings (required)
 
 In **Vercel → Project → Settings → General → Root Directory**, set:

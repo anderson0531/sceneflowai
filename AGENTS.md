@@ -22,3 +22,12 @@ These defaults are optimized for AI coding agents (and humans) working on apps t
   needed. Always curl https://ai-gateway.vercel.sh/v1/models first; never trust model IDs from memory
 - For durable agent loops or untrusted code: use Workflow (pause/resume/state) + Sandbox; use Vercel MCP for secure infra access
 <!-- VERCEL BEST PRACTICES END -->
+
+## Do not boot the app locally
+
+SceneFlow is too large to run on a local machine or agent VM. Full-app local testing (`next dev`, `next start`, Playwright/Puppeteer against localhost, computer-use browser sessions against a local server) has crashed machines. **Do not start the Next.js app locally. Do not use browser tools against localhost.**
+
+- **Git is the single source of truth.** `origin/main` on `anderson0531/sceneflowai` is what Vercel deploys. Humans verify the live app at https://sceneflowai.studio after GitHub pushes.
+- Agents may run unit tests (`npm run test`, `npm run test:i18n`) and other scripts that do **not** start a Next.js server.
+- Do not run `npm run build` or `npm run dev` on an agent/dev laptop for visual or e2e verification. CI and Vercel already build from git.
+- Walkthrough/browser verification of UI changes belongs on the Vercel deployment, not a local server. If the user has already tested production from git, do not re-test locally.
