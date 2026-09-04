@@ -33,28 +33,29 @@
     "platform": "Platform",
     "pricing": "Pricing",
     "productionExamples": "Examples",
-    "twoModes": "Go vs Director",
-    "keyFeatures": "Key Features"
+    "twoModes": "Director vs Go",
+    "keyFeatures": "Key Features",
+    "audienceResonance": "Audience Resonance"
   },
   "hero": {
-    "headline": "Envision the Story. Let SceneFlow Run the Production.",
-    "subheadline": "Quickly Turn simple concepts or full film treatments into complete multi-scene videos automatically — or step in at any stage to direct scenes using natural language.",
+    "headline": "Build Worlds. Not Just Clips.",
+    "subheadline": "Don’t settle for isolated generations. SceneFlow maintains character continuity, persistent environments, and complex narratives from your first scene to your hundredth — then ships it as a multi-language master.",
     "ctaPrimaryLaunch": "Start Your Production",
     "ctaSupportingLine": "",
     "ctaSecondary": "Explore How It Works",
     "ctaToolStack": "See how it replaces your tool stack",
     "chips": [
       {
-        "label": "Flexible Inputs",
-        "detail": "Simple concepts or detailed film treatments."
+        "label": "Persistent Continuity",
+        "detail": "The Reference Library locks faces, wardrobe, voices, and locations through scene 100."
       },
       {
-        "label": "Automated Production",
-        "detail": "Hands-free generation of scripts, animatics, and master video."
+        "label": "Direct Before You Render",
+        "detail": "Lock a feature-length animatic on low-cost beat frames, then pay for high-res."
       },
       {
-        "label": "Natural Control",
-        "detail": "Refine shots, dialogue, and props without prompt engineering."
+        "label": "Built for Every Audience",
+        "detail": "Produce, dub, and tune for each culture and region in 70+ languages."
       }
     ],
     "pipelineSteps": [
@@ -98,7 +99,9 @@
       }
     },
     "soon": "Soon",
-    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}",
+    "eyebrow": "The first AI pipeline for long-form video and series",
+    "availabilityBadge": "Full access opens November 2026"
   },
   "valueProp": {
     "pills": [
@@ -629,8 +632,8 @@
     "proofLine": "በመኖሪያ ቤት ዝርዝር ጉብኝት ላይ ተረጋግጧል፡ ሙሉ በሙሉ በእጅ የሚከናወን ሂደት ከ4 ሰዓታት በላይ ይወስድ የነበረ ሲሆን፣ በSceneFlow አማካኝነት ግን ተመሳሳይ ውጤት ከአንድ ሰዓት ባነሰ ጊዜ ውስጥ ተገኝቷል።"
   },
   "comparison": {
-    "title": "ተጨማሪ ወጪና ሸክም የሌለበት የምርት ፍጥነት",
-    "subtitle": "ከተበታተኑ የ'ፕሮምፕት' (prompt) መሣሪያዎች እና በእጅ ከሚከናወን ዝግጅት ይልቅ፣ ከመጀመሪያው ሐሳብ አንስቶ ለሕትመት ዝግጁ እስከሆነው የመጨረሻ ውጤት ድረስ የሚያደርስ አንድ አውቶማቲክ ስቱዲዮን ይጠቀሙ።",
+    "title": "Stop pulling the lever. Start running a production.",
+    "subtitle": "Clip generators re-roll the dice on every prompt — new face, new room, new voice. SceneFlow reads every shot from the same locked references, so scene 100 still matches scene 1.",
     "caption": "አንድ የተቀናጀ ስቱዲዮ፤ የተበታተኑ የ'ፕሮምፕት' (prompt) መሳሪያዎችን፣ በእጅ የሚደረጉ ማስተካከያዎችን እና በበርካታ መድረኮች መካከል የሚደረጉ የስራ ሽግግሮችን ይተካል።",
     "imageAlt": "ባህላዊ የምርት ወጪዎች እና SceneFlow አውቶማቲክ ስቱዲዮ — ከሃሳብ እስከ ለህትመት ዝግጁ የሆነ ቪዲዮ ድረስ ያለውን ሂደት ማፋጠን"
   },
@@ -1447,50 +1450,50 @@
   },
   "coreCapabilities": {
     "audienceResonance": {
-      "badge": "የአዋቂነት ንብርብር",
-      "title": "Audience Resonance ትንተና",
-      "description": "ሙሉ በሙሉ ወደ ማቀናበር (rendering) ከመግባትዎ በፊት ውጤትዎን ይወቁ። ለተግባራዊ ማሻሻያዎች ትኩረት በመስጠት Audience Resonance ውጤቶችን እና ጽሑፉን (script) ያሻሽሉ፤ እንዲሁም 'Express' እና ቪዲዮን ከማመንጨትዎ በፊት እያንዳንዱን ክፍል (beat) ያመቻቹ።",
+      "badge": "Intelligence Layer",
+      "title": "Audience Resonance: build for a culture, not a language code",
+      "description": "Subtitles stretch one video’s reach. SceneFlow lets you name the culture, region, and demographic you are making for, score the story against that audience before you render, and then ship either a dubbed master or a separate high-resonance version per audience.",
       "bullets": [
-        "ልዩ የታለመ ታዳሚዎን ይለዩ",
-        "የቅጽበት ውጤት፣ ትንተና እና ምክሮችን ያግኙ",
-        "የትረካ ድክመቶችን በአንድ ጠቅታ ለማስተካከል።",
-        "ክፍሎችን፣ Blueprintን እና ስክሪፕትን ለማሻሻል የሚደረግ የታገዘ የአርትዖት ሂደት"
+        "Define the audience: eight target regions, plus age, gender, education, and community",
+        "Describe culture, faith, and values in your own words — SceneFlow reads the signals",
+        "Get a resonance score with section-level fixes before you spend on renders",
+        "Dub the master, or produce a distinct version tuned to each audience"
       ],
-      "cta": "ስክሪፕትዎን ይተንትኑ",
+      "cta": "Analyze Your Script",
       "howWeScore": {
-        "toggle": "ውጤት የምንሰጥበት መንገድ",
-        "title": "Audience Resonance እንዴት እንደሚሰራ",
-        "description": "Audience Resonance፤ የታሪክ አወቃቀር ትንተናን (እንደ ግልጽነት፣ የትረካ ፍጥነት እና የስሜት መዋቅር ያሉ) እና በBlueprint ውስጥ ከገለጽካቸው ታዳሚዎች ጋር ያለውን ተገቢነት (target-persona fit) ያጣምራል፤ ይህም እንደ ላይ ላዩን የሚታዩ መለኪያዎች (vanity metrics) ወይም ቪዲዮው ከታተመ በኋላ የሚሰበሰብ የተመልካች ቆይታ መረጃ ላይ ብቻ የተመሰረተ አይደለም። የሚሰጡት ምክሮች ከስክሪፕቱ የተወሰኑ ክፍሎች ጋር የተሳሰሩ በመሆናቸው፣ ቪዲዮውን ወደ 'Express' ቅርጸት ከመቀየርህ ወይም ከማመንጨትህ በፊት ችግሮቹን ማስተካከል ትችላለህ።",
+        "toggle": "How we score",
+        "title": "How Audience Resonance works",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
         "bullets": [
-          "ለይተው ካስቀመጡት የታለመ ታዳሚ አንጻር የBlueprint ውጤቶችን እና ስክሪፕቱን ይገምግሙ።",
-          "በክፍል ደረጃ የሚሰጡ ምክሮች — እንጂ ዝም ብሎ \"እመኑን\" የሚባል፣ አሰራሩ ግልጽ ያልሆነ ቁጥር አይደለም።",
-          "በአንድ ጠቅታ የሚተገበሩ ማስተካከያዎች እና መመሪያ የታከለበት የአርትዖት ሂደት — ውጤት ብቻ አይደለም",
-          "ከፍተኛ ወጪ የሚጠይቅ የሬንደር (render) ሂደት ከመጀመርዎ በፊት ይሞክሩት፤ ካሳተሙት በኋላ አይደለም።"
+          "Scores Blueprint and script against your stated target audience",
+          "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
+          "Section-level recommendations — not a black-box “trust us” number",
+          "Run before heavy render spend, not after publish"
         ]
       }
     },
     "express": {
-      "badge": "እጅግ ፈጣን ምርት",
-      "title": "ስሴንፍሎው ኤክስፕረስ",
-      "description": "ቅድመ-እይታ (pre-vis)፣ አኒማቲክስ (animatics) እና የቪዲዮ ዋና ዋና ክፍሎችን (video beats) በአንድ ጊዜ በራስ-ሰር ያመንጩ። ከስክሪፕት ወደ መጋራት የሚቻል ቅድመ-እይታ ለመሸጋገር በጥቂት ደቂቃዎች ብቻ ይጠቀሙ፤ ከዚያም የመጨረሻውን የቪዲዮ ምርት ወጪ (F2V spend) ከማውጣትዎ በፊት Beat Framesን ያጽድቁ።",
+      "badge": "Hyper-Speed Production",
+      "title": "Sceneflow Express",
+      "description": "Auto-generate pre-vis, animatics, and video beats concurrently. Move from script to shareable preview in minutes — then approve Beat Frames before final F2V spend. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
           "title": "Express Pre-vis",
-          "desc": "የኦዲዮ እና የቪዲዮ ቅድመ-እይታዎችን (pre-vis) በሰዓታት ፋንታ በደቂቃዎች ውስጥ ይገምግሙና ያጋሩ።",
-          "time": "ደቂቃዎች ከሰዓታት ጋር ሲነጻጸሩ"
+          "desc": "Review and share audio and video pre-vis in minutes vs hours.",
+          "time": "Minutes vs Hours"
         },
         {
-          "title": "Animaticን ይግለጹ",
-          "desc": "ከፍተኛ ጥራት ካላቸው የድምፅ ትረካዎች ጋር የተሟሉ የ\"Ken Burns\" አይነት አኒሜቲክ ትዕይንቶችን ወዲያውኑ ያዘጋጁ።",
-          "time": "ደቂቃዎች ከሰዓታት ጋር ሲነጻጸሩ"
+          "title": "Express Animatics",
+          "desc": "Render full Ken Burns animatic scenes with high-end voiceovers instantly.",
+          "time": "Minutes vs Hours"
         },
         {
-          "title": "ኤክስፕረስ ቪዲዮ",
-          "desc": "ለረጅም የውይይት ክፍሎች የሚሆኑ የVeo ተፈጥሯዊ የማስፋፊያ ሰንሰለቶችን (native Veo extension chains) ጨምሮ፣ ምስል እና ቪዲዮን በአንድ ጊዜ የማመንጨት ሂደቶችን ያስተባብሩ።",
-          "time": "ደቂቃዎች ከቀናት ጋር ሲነጻጸሩ"
+          "title": "Express Video",
+          "desc": "Orchestrate concurrent image and video generation—including native Veo extension chains for long dialogue beats.",
+          "time": "Minutes vs Days"
         }
       ],
-      "cta": "ፈጣን ሬንደሪንግ (Express Rendering) ይጀምሩ"
+      "cta": "Start Express Rendering"
     }
   },
   "preVisEngine": {
@@ -1525,28 +1528,28 @@
     "ctaSubtext": "በባህላዊ የፊልም ስራ እና በጄኔሬቲቭ AI (Generative AI) መካከል ያለውን ክፍተት ማገናኘት"
   },
   "exitIntent": {
-    "title": "ቆይ! ባዶ እጅህን አትሂድ።",
-    "subtitle": "በአርቴፊሻል ኢንተለጀንስ (AI) ለሚከናወን የፊልም ስራ ልዩ የሆነ ቀድሞ የማግኘት እድል እና ጠቃሚ ምክሮችን ያግኙ።",
+    "title": "Before you go — want the launch date?",
+    "subtitle": "Full access opens November 2026. We'll email you the day it does.",
     "benefits": [
-      "በየሳምንቱ የሚቀርቡ የAI ፊልም ስራ ትምህርቶች",
-      "ለአዳዲስ ባህሪያት ቀደም ብሎ የማግኘት ዕድል",
-      "ለፈጣሪዎች ብቻ የተዘጋጁ ቅናሾች"
+      "Launch notification the day access opens",
+      "Weekly AI filmmaking tutorials",
+      "Exclusive creator discounts"
     ],
-    "emailPlaceholder": "የኢሜይል አድራሻዎን ያስገቡ",
-    "subscribe": "ቀድመው የማግኘት እድል ያግኙ",
-    "subscribing": "ደንበኝነት በመመዝገብ ላይ...",
-    "or": "ወይም",
-    "startNow": "Start creating now for just $9 — September cohort forming →",
-    "privacy": "አላስፈላጊ መልዕክቶች (ስፓም) በፍጹም አይላኩም። በማንኛውም ጊዜ ምዝገባዎን መሰረዝ ይችላሉ።",
-    "successTitle": "በዝርዝሩ ውስጥ ተካተሃል!",
-    "successSubtitle": "ልዩ የፊልም ስራ ምክሮችን እና ቀድሞ የማግኘት እድል የሚሰጡ መረጃዎችን ለማግኘት የኢሜይል መልእክት ሳጥንዎን ይመልከቱ።",
-    "ctaText": "ማሰስ ይጀምሩ — $9",
-    "closePopup": "ብቅ-ባይ መስኮቱን ይዝጉ"
+    "emailPlaceholder": "Enter your email",
+    "subscribe": "Notify me",
+    "subscribing": "Subscribing...",
+    "or": "or",
+    "startNow": "Start directing now for just $9 →",
+    "privacy": "No spam, ever. Unsubscribe anytime.",
+    "successTitle": "You're on the list!",
+    "successSubtitle": "We'll email you when November access opens — plus the occasional filmmaking tip.",
+    "ctaText": "Start Exploring — $9",
+    "closePopup": "Close popup"
   },
   "pricing": {
     "badge": "Simple Pricing",
     "title": "Start with Explorer — $9",
-    "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
+    "subtitle": "Full access opens November 2026. Test the complete pipeline now with a frictionless $9 entry.",
     "valueAnchor": {
       "traditionalCost": "$2,000+",
       "traditionalLabel": "Traditional pre-vis",
@@ -1753,11 +1756,11 @@
     "collapseSection": "ክፍሉን ደብቅ"
   },
   "finalCta": {
-    "title": "Ready to create in Go or Director Mode?",
-    "subtitle": "Pick Go for speed or Director for control — start from the $9 Explorer plan or apply for Founding Creator access.",
-    "cta": "Start with Go Mode",
-    "ctaSecondary": "Apply for Founding Creator Access",
-    "ctaSecondaryHref": "/early-access"
+    "title": "Built for the stories that have to hold.",
+    "subtitle": "Full access opens November 2026. Leave your email and we’ll tell you the day it does — or start directing now from the $9 Explorer plan.",
+    "cta": "Explore plans",
+    "ctaSecondary": "See how it works",
+    "ctaSecondaryHref": "#key-features"
   },
   "footer": {
     "description": "ከሃሳብ ጀምሮ ለህትመት ዝግጁ እስከሆነ የመጨረሻ ውጤት ድረስ፣ ሙሉ በሙሉ በራስ-ሰር የሚከናወን የቪዲዮ ምርት። አንድ የተቀናጀ የስቱዲዮ ሂደት፡ Blueprint → ምርት → Screening Room።",
@@ -2053,30 +2056,33 @@
     ]
   },
   "keyFeatures": {
-    "landingUiLanguagesLabel": "UI እና ምርቶች በ39 ቋንቋዎች ይገኛሉ"
+    "landingUiLanguagesLabel": "Produce and dub in 70+ languages. This site is available in these 39:"
   },
   "twoModes": {
-    "title": "One Platform. Two Experiences.",
+    "title": "Two modes at every step. One long-form pipeline.",
+    "subtitle": "Hundreds of tools will hand you a five-second clip and hope you like it. SceneFlow gives you a choice at every step of the pipeline: direct it yourself, or let the studio run it. Both read from the same locked references, so continuity holds either way.",
     "go": {
       "name": "SceneFlow Go",
-      "tagline": "Concept to animatic in minutes.",
+      "badge": "Fastest way to test an idea",
+      "tagline": "Prototype the episode before you commit to it.",
       "points": [
-        "Full intelligence and automation.",
-        "Enter a concept or script, click Go, and take a break.",
-        "Automatically handles Blueprint, structure, references, frames, audio, and animatic assembly.",
-        "Complete animatic ready in under 10 minutes.",
-        "Light natural-language revisions available on demand."
+        "Generate the structural backbone of an entire episode in under 10 minutes.",
+        "Enter a concept or script, click Go, and come back to a finished animatic.",
+        "Automatically handles Blueprint, structure, references, frames, audio, and assembly.",
+        "Hand the result to Director Mode the moment you want the wheel."
       ],
       "cta": "Try Go Mode"
     },
     "director": {
       "name": "SceneFlow Studio",
       "subtitle": "Director Mode",
-      "tagline": "Every visual, emotion, line, and note under your direction.",
+      "badge": "Built for long-form",
+      "tagline": "Where features and series actually get made.",
       "points": [
-        "Same powerful underlying AI pipeline with complete manual authorship.",
-        "Granular step-by-step control across every scene and beat.",
-        "Fine-tune visuals, character emotion, dialogue timing, and music choices.",
+        "Hold pacing, emotion, and continuity across a 120-minute feature or a full season.",
+        "Direct in plain language against locked references — no prompt engineering, no copy-pasting between tool stacks.",
+        "Step in at any point in the pipeline: Blueprint, Production, or Screening Room.",
+        "Fine-tune visuals, character emotion, dialogue timing, and music beat by beat.",
         "Complete pre-visualization and master production workflow."
       ],
       "cta": "Launch Studio ($9)"
@@ -2089,5 +2095,18 @@
       "googleCloud": "Google Cloud",
       "vertexAi": "Vertex AI"
     }
+  },
+  "notify": {
+    "heading": "Get notified when access opens",
+    "description": "Studio access opens in November 2026. Leave your email and we’ll tell you the day it does.",
+    "placeholder": "you@studio.com",
+    "submit": "Notify me",
+    "submitting": "Sending…",
+    "successTitle": "You’re on the list.",
+    "successBody": "We’ll email you as soon as November access opens. Nothing else.",
+    "errorEmpty": "Enter your email so we can reach you.",
+    "errorInvalid": "That email doesn’t look right. Check it and try again.",
+    "errorGeneric": "Something went wrong. Try again in a moment.",
+    "privacy": "One email at launch. No spam, unsubscribe anytime."
   }
 }

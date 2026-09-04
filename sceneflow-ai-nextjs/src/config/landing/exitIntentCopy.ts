@@ -1,21 +1,21 @@
 /** Exit intent popup — display strings for landing i18n. */
 
 export const EXIT_INTENT_COPY = {
-  title: 'Wait! Don\'t leave empty-handed',
-  subtitle: 'Get exclusive early access and tips for AI-powered filmmaking',
+  title: 'Before you go — want the launch date?',
+  subtitle: 'Full access opens November 2026. We\'ll email you the day it does.',
   benefits: [
+    'Launch notification the day access opens',
     'Weekly AI filmmaking tutorials',
-    'Early access to new features',
     'Exclusive creator discounts',
   ],
   emailPlaceholder: 'Enter your email',
-  subscribe: 'Get Early Access',
+  subscribe: 'Notify me',
   subscribing: 'Subscribing...',
   or: 'or',
-  startNow: 'Start creating now for just $9 — September cohort forming →',
+  startNow: 'Start directing now for just $9 →',
   privacy: 'No spam, ever. Unsubscribe anytime.',
   successTitle: 'You\'re on the list!',
-  successSubtitle: 'Check your inbox for exclusive filmmaking tips and early access updates.',
+  successSubtitle: 'We\'ll email you when November access opens — plus the occasional filmmaking tip.',
   ctaText: 'Start Exploring — $9',
   closePopup: 'Close popup',
 } as const

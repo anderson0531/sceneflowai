@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 import { LoginForm } from './LoginForm'
 import { useAuthSuccessHandler } from '@/components/auth/useAuthSuccessHandler'
-import { getEarlyAccessUrl } from '@/lib/auth/postLoginRedirect'
 
 interface AuthModalProps {
   isOpen: boolean
@@ -14,13 +13,6 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) {
-  useEffect(() => {
-    if (!isOpen) return
-    if (initialMode !== 'signup') return
-    onClose()
-    window.location.href = getEarlyAccessUrl()
-  }, [isOpen, initialMode, onClose])
-
   // Close modal on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {

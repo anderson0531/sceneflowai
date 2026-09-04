@@ -4,7 +4,7 @@ export const PRICING_LANDING_COPY = {
   badge: 'Simple Pricing',
   title: 'Start with Explorer — $9',
   subtitle:
-    'September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.',
+    'Full access opens November 2026. Test the complete pipeline now with a frictionless $9 entry.',
   explorerHighlight:
     'The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.',
   trustBadges: [

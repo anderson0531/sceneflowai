@@ -36,27 +36,28 @@
     "pipeline": "ไปป์ไลน์",
     "keyFeatures": "คุณสมบัติที่โดดเด่น",
     "productionExamples": "ตัวอย่าง",
-    "twoModes": "Go กับ Director"
+    "twoModes": "Director vs Go",
+    "audienceResonance": "Audience Resonance"
   },
   "hero": {
-    "headline": "จินตนาการเรื่องราว แล้วให้ SceneFlow ดูแลการผลิต",
-    "subheadline": "เปลี่ยนแนวคิดง่ายๆ หรือทรีทเมนต์ภาพยนตร์เต็มรูปแบบเป็นวิดีโอหลายซีนที่สมบูรณ์โดยอัตโนมัติ — หรือเข้มข้นควบคุมทุกขั้นตอนด้วยภาษาธรรมชาติ",
+    "headline": "Build Worlds. Not Just Clips.",
+    "subheadline": "Don’t settle for isolated generations. SceneFlow maintains character continuity, persistent environments, and complex narratives from your first scene to your hundredth — then ships it as a multi-language master.",
     "ctaPrimaryLaunch": "เริ่มการผลิตของคุณ",
     "ctaSupportingLine": "",
     "ctaSecondary": "สำรวจวิธีการทำงาน",
     "ctaToolStack": "ดูว่ามันแทนที่สแตกเครื่องมือของคุณอย่างไร",
     "chips": [
       {
-        "label": "อินพุตที่ยืดหยุ่น",
-        "detail": "แนวคิดง่ายๆ หรือทรีทเมนต์ภาพยนตร์อย่างละเอียด"
+        "label": "Persistent Continuity",
+        "detail": "The Reference Library locks faces, wardrobe, voices, and locations through scene 100."
       },
       {
-        "label": "การผลิตอัตโนมัติ",
-        "detail": "สร้างสคริปต์ Animatic และมาสเตอร์วิดีโอแบบอัตโนมัติ"
+        "label": "Direct Before You Render",
+        "detail": "Lock a feature-length animatic on low-cost beat frames, then pay for high-res."
       },
       {
-        "label": "ควบคุมด้วยภาษาธรรมชาติ",
-        "detail": "ปรับแต่งช็อต บทสนทนา และอุปกรณ์ประกอบฉากโดยไม่ต้องเขียน prompt ที่ซับซ้อน"
+        "label": "Built for Every Audience",
+        "detail": "Produce, dub, and tune for each culture and region in 70+ languages."
       }
     ],
     "pipelineSteps": [
@@ -100,7 +101,9 @@
       }
     },
     "soon": "เร็วๆ นี้",
-    "videoLanguageCount": "{count, plural, =1 {# ภาษา} other {# ภาษา}}"
+    "videoLanguageCount": "{count, plural, =1 {# ภาษา} other {# ภาษา}}",
+    "eyebrow": "The first AI pipeline for long-form video and series",
+    "availabilityBadge": "Full access opens November 2026"
   },
   "valueProp": {
     "pills": [
@@ -631,8 +634,8 @@
     "proofLine": "ผ่านการทดสอบจริงกับงานนำเสนอที่พักอาศัย: จากเดิมที่ต้องใช้เวลาทำแบบ Manual เต็มรูปแบบนานกว่า 4 ชั่วโมง → ได้ผลลัพธ์เดียวกันด้วย SceneFlow โดยใช้เวลาไม่ถึงหนึ่งชั่วโมง"
   },
   "comparison": {
-    "title": "ความรวดเร็วในการผลิตโดยไม่มีภาระต้นทุนแฝง",
-    "subtitle": "เปลี่ยนจากการใช้เครื่องมือสร้าง Prompt ที่กระจัดกระจายและการประกอบชิ้นงานด้วยมือ มาเป็นสตูดิโออัตโนมัติแบบครบวงจร — ตั้งแต่แนวคิดเริ่มต้นไปจนถึงชิ้นงานสมบูรณ์พร้อมเผยแพร่",
+    "title": "Stop pulling the lever. Start running a production.",
+    "subtitle": "Clip generators re-roll the dice on every prompt — new face, new room, new voice. SceneFlow reads every shot from the same locked references, so scene 100 still matches scene 1.",
     "caption": "สตูดิโอเดียวที่เข้ามาแทนที่เครื่องมือสร้าง Prompt ที่กระจัดกระจาย การแก้ไขด้วยมือ และขั้นตอนการส่งต่องานข้ามแพลตฟอร์ม",
     "imageAlt": "ต้นทุนการผลิตแบบดั้งเดิมเทียบกับสตูดิโออัตโนมัติ SceneFlow — เปลี่ยนจากแนวคิดเป็นวิดีโอพร้อมเผยแพร่ได้รวดเร็วยิ่งขึ้น"
   },
@@ -1450,50 +1453,50 @@
   },
   "coreCapabilities": {
     "audienceResonance": {
-      "badge": "ชั้นอัจฉริยะ",
-      "title": "Audience Resonance การวิเคราะห์",
-      "description": "ตรวจสอบคะแนนของคุณก่อนที่จะเริ่มกระบวนการเรนเดอร์งานฉบับสมบูรณ์ โดยมุ่งเน้นไปที่คะแนน Audience Resonance และ Blueprint พร้อมปรับแก้บทตามคำแนะนำที่นำไปปฏิบัติได้จริง เพื่อเพิ่มประสิทธิภาพในทุกจังหวะของงานก่อนเข้าสู่ขั้นตอน Express และการสร้างวิดีโอ",
+      "badge": "Intelligence Layer",
+      "title": "Audience Resonance: build for a culture, not a language code",
+      "description": "Subtitles stretch one video’s reach. SceneFlow lets you name the culture, region, and demographic you are making for, score the story against that audience before you render, and then ship either a dubbed master or a separate high-resonance version per audience.",
       "bullets": [
-        "กำหนดกลุ่มเป้าหมายเฉพาะของคุณ",
-        "รับคะแนน บทวิเคราะห์ และคำแนะนำแบบเรียลไทม์",
-        "แก้ไขจุดอ่อนของเรื่องราวได้ด้วยการคลิกเพียงครั้งเดียว",
-        "การแก้ไขแบบมีคำแนะนำเพื่อปรับปรุง Episodes, Blueprint และ Script ให้เหมาะสมที่สุด"
+        "Define the audience: eight target regions, plus age, gender, education, and community",
+        "Describe culture, faith, and values in your own words — SceneFlow reads the signals",
+        "Get a resonance score with section-level fixes before you spend on renders",
+        "Dub the master, or produce a distinct version tuned to each audience"
       ],
-      "cta": "วิเคราะห์บทของคุณ",
+      "cta": "Analyze Your Script",
       "howWeScore": {
-        "toggle": "วิธีการให้คะแนนของเรา",
-        "title": "การทำงานของ Audience Resonance",
-        "description": "Audience Resonance ผสานการวิเคราะห์โครงสร้างการเล่าเรื่อง (ทั้งในด้านความชัดเจน จังหวะการดำเนินเรื่อง และการไล่ระดับอารมณ์) เข้ากับความเหมาะสมต่อกลุ่มเป้าหมายที่คุณกำหนดไว้ใน Blueprint โดยไม่พึ่งพาเพียงแค่ตัวเลขสถิติผิวเผิน (vanity metrics) หรือข้อมูลอัตราการคงอยู่ของผู้ชมหลังเผยแพร่วิดีโอ คำแนะนำต่างๆ จะระบุเจาะจงถึงส่วนของบทที่เกี่ยวข้อง เพื่อให้คุณสามารถแก้ไขปัญหาได้ก่อนที่จะเข้าสู่ขั้นตอน Express หรือการสร้างวิดีโอจริง",
+        "toggle": "How we score",
+        "title": "How Audience Resonance works",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
         "bullets": [
-          "ให้คะแนน Blueprint และบทพูดโดยเทียบกับกลุ่มเป้าหมายที่คุณระบุไว้",
-          "คำแนะนำในระดับส่วนงาน ไม่ใช่แค่ตัวเลขจากระบบปิด (Black Box) ที่บอกให้เชื่อใจกันเฉยๆ",
-          "เครื่องมือแก้ไขที่ใช้งานได้จริงเพียงคลิกเดียวและระบบช่วยแนะนำการแก้ไข — ไม่ใช่แค่การปรับโทนสีเท่านั้น",
-          "ควรดำเนินการก่อนที่จะเสียค่าใช้จ่ายสูงในการเรนเดอร์ ไม่ใช่หลังจากเผยแพร่ไปแล้ว"
+          "Scores Blueprint and script against your stated target audience",
+          "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
+          "Section-level recommendations — not a black-box “trust us” number",
+          "Run before heavy render spend, not after publish"
         ]
       }
     },
     "express": {
-      "badge": "การผลิตด้วยความเร็วสูงพิเศษ",
+      "badge": "Hyper-Speed Production",
       "title": "Sceneflow Express",
-      "description": "สร้าง Pre-vis, Animatics และ Video beats ขึ้นมาพร้อมกันโดยอัตโนมัติ เปลี่ยนจากบทภาพยนตร์เป็นตัวอย่างวิดีโอที่พร้อมแชร์ได้ภายในเวลาไม่กี่นาที จากนั้นจึงอนุมัติ Beat Frames ก่อนเริ่มใช้จ่ายงบประมาณจริงสำหรับการผลิตวิดีโอ (F2V)",
+      "description": "Auto-generate pre-vis, animatics, and video beats concurrently. Move from script to shareable preview in minutes — then approve Beat Frames before final F2V spend. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
           "title": "Express Pre-vis",
-          "desc": "ตรวจสอบและแชร์งาน Pre-vis ทั้งในรูปแบบเสียงและวิดีโอได้ภายในเวลาไม่กี่นาที แทนที่จะต้องใช้เวลาหลายชั่วโมง",
-          "time": "นาทีเทียบกับชั่วโมง"
+          "desc": "Review and share audio and video pre-vis in minutes vs hours.",
+          "time": "Minutes vs Hours"
         },
         {
           "title": "Express Animatics",
-          "desc": "สร้างฉากแอนิเมติกสไตล์ Ken Burns แบบสมบูรณ์พร้อมเสียงพากย์คุณภาพสูงได้ทันที",
-          "time": "นาทีเทียบกับชั่วโมง"
+          "desc": "Render full Ken Burns animatic scenes with high-end voiceovers instantly.",
+          "time": "Minutes vs Hours"
         },
         {
-          "title": "วิดีโอแบบเร่งด่วน",
-          "desc": "จัดการกระบวนการสร้างภาพและวิดีโอไปพร้อมกัน ซึ่งรวมถึงการใช้สายโซ่ส่วนขยาย Veo แบบเนทีฟสำหรับช่วงบทสนทนาที่ยาวต่อเนื่อง",
-          "time": "นาทีเทียบกับวัน"
+          "title": "Express Video",
+          "desc": "Orchestrate concurrent image and video generation—including native Veo extension chains for long dialogue beats.",
+          "time": "Minutes vs Days"
         }
       ],
-      "cta": "เริ่มการเรนเดอร์แบบด่วน"
+      "cta": "Start Express Rendering"
     }
   },
   "preVisEngine": {
@@ -1528,28 +1531,28 @@
     "ctaSubtext": "Bridge การสร้างภาพยนตร์แบบดั้งเดิมและ AI รุ่นใหม่"
   },
   "exitIntent": {
-    "title": "เดี๋ยวก่อน! อย่าปล่อยให้มือเปล่า",
-    "subtitle": "รับสิทธิพิเศษในการเข้าถึงก่อนใครและเคล็ดลับในการสร้างภาพยนตร์ด้วย AI",
+    "title": "Before you go — want the launch date?",
+    "subtitle": "Full access opens November 2026. We'll email you the day it does.",
     "benefits": [
-      "บทแนะนำการสร้างภาพยนตร์ AI รายสัปดาห์",
-      "เข้าถึงฟีเจอร์ใหม่ก่อนใคร",
-      "ส่วนลดสุดพิเศษสำหรับครีเอเตอร์"
+      "Launch notification the day access opens",
+      "Weekly AI filmmaking tutorials",
+      "Exclusive creator discounts"
     ],
-    "emailPlaceholder": "ป้อนอีเมลของคุณ",
-    "subscribe": "เข้าถึงก่อนใคร",
-    "subscribing": "เป็นสมาชิก",
-    "or": "หรือ",
-    "startNow": "เริ่มสร้างตอนนี้เพียง $ 9 — การสร้างกลุ่มร่วมรุ่นเดือนกันยายน →",
-    "privacy": "ไม่มีสแปมยกเลิกรับข่าวสารได้ทุกเมื่อ",
-    "successTitle": "คุณอยู่ในรายชื่อแล้ว!",
-    "successSubtitle": "ดูเคล็ดลับการสร้างภาพยนตร์สุดพิเศษและอัพเดทสิทธิเข้าถึงก่อนใครได้ที่กล่องข้อความ",
-    "ctaText": "เริ่มสำรวจ — $ 9",
-    "closePopup": "ปิดป๊อปอัป"
+    "emailPlaceholder": "Enter your email",
+    "subscribe": "Notify me",
+    "subscribing": "Subscribing...",
+    "or": "or",
+    "startNow": "Start directing now for just $9 →",
+    "privacy": "No spam, ever. Unsubscribe anytime.",
+    "successTitle": "You're on the list!",
+    "successSubtitle": "We'll email you when November access opens — plus the occasional filmmaking tip.",
+    "ctaText": "Start Exploring — $9",
+    "closePopup": "Close popup"
   },
   "pricing": {
     "badge": "การตั้งราคาแบบง่าย",
     "title": "เริ่มต้นด้วย Explorer — $9",
-    "subtitle": "กลุ่ม Early Access เดือนกันยายนกำลังเปิดรับ ทดสอบไปป์ไลน์เต็มรูปแบบด้วย Explorer $9",
+    "subtitle": "Full access opens November 2026. Test the complete pipeline now with a frictionless $9 entry.",
     "valueAnchor": {
       "traditionalCost": "$ 2,000 ขึ้นไป",
       "traditionalLabel": "ก่อนการเข้าชมแบบดั้งเดิม",
@@ -1756,11 +1759,11 @@
     "collapseSection": "ซ่อนส่วนนี้"
   },
   "finalCta": {
-    "title": "พร้อมสร้างใน Go หรือ Director Mode แล้วหรือยัง?",
-    "subtitle": "เลือก Go เพื่อความเร็ว หรือ Director เพื่อการควบคุม — เริ่มจากแผน Explorer $9 หรือสมัคร Founding Creator",
-    "cta": "เริ่มต้นด้วย Go Mode",
-    "ctaSecondary": "สมัครรับสิทธิ์ครีเอเตอร์ผู้ก่อตั้ง",
-    "ctaSecondaryHref": "/early-access"
+    "title": "Built for the stories that have to hold.",
+    "subtitle": "Full access opens November 2026. Leave your email and we’ll tell you the day it does — or start directing now from the $9 Explorer plan.",
+    "cta": "Explore plans",
+    "ctaSecondary": "See how it works",
+    "ctaSecondaryHref": "#key-features"
   },
   "footer": {
     "description": "กระบวนการผลิตวิดีโออัตโนมัติแบบครบวงจร ตั้งแต่แนวคิดไปจนถึงไฟล์ต้นฉบับที่พร้อมเผยแพร่ ผ่านสตูดิโอที่มีระบบช่วยแนะนำขั้นตอนการทำงาน: Blueprint → การผลิต → Screening Room",
@@ -2331,7 +2334,7 @@
         ]
       }
     ],
-    "landingUiLanguagesLabel": "UI และโปรดักชั่นมีให้บริการใน 39 ภาษา",
+    "landingUiLanguagesLabel": "Produce and dub in 70+ languages. This site is available in these 39:",
     "learnMoreLabel": "ศึกษาเพิ่มเติม",
     "showLessLabel": "แสดงน้อยลง",
     "problemLabel": "ปัญหามีอยู่ว่า",
@@ -2590,30 +2593,33 @@
     ]
   },
   "twoModes": {
-    "title": "แพลตฟอร์มเดียว สองรูปแบบ",
+    "title": "Two modes at every step. One long-form pipeline.",
+    "subtitle": "Hundreds of tools will hand you a five-second clip and hope you like it. SceneFlow gives you a choice at every step of the pipeline: direct it yourself, or let the studio run it. Both read from the same locked references, so continuity holds either way.",
     "go": {
       "name": "SceneFlow Go",
-      "tagline": "ไอเดียสู่ภาพเคลื่อนไหวในไม่กี่นาที",
+      "badge": "Fastest way to test an idea",
+      "tagline": "Prototype the episode before you commit to it.",
       "points": [
-        "ระบบอัจฉริยะและระบบอัตโนมัติเต็มรูปแบบ",
-        "ป้อนแนวคิดหรือสคริปต์คลิกไปและหยุดพัก",
-        "จัดการ Blueprint โครงสร้างการอ้างอิงเฟรมเสียงและการประกอบภาพเคลื่อนไหวโดยอัตโนมัติ",
-        "ทำแอนิเมชันให้เสร็จพร้อมใช้งานในเวลาไม่ถึง 10 นาที",
-        "มีการแก้ไขภาษาธรรมชาติเบาๆตามความต้องการ"
+        "Generate the structural backbone of an entire episode in under 10 minutes.",
+        "Enter a concept or script, click Go, and come back to a finished animatic.",
+        "Automatically handles Blueprint, structure, references, frames, audio, and assembly.",
+        "Hand the result to Director Mode the moment you want the wheel."
       ],
-      "cta": "ลองใช้โหมด Go"
+      "cta": "Try Go Mode"
     },
     "director": {
-      "name": "SceneFlow STUDIO",
-      "subtitle": "โหมดผู้อำนวยการ",
-      "tagline": "ทุกภาพอารมณ์ลายเส้นและโน้ตภายใต้การกำกับของคุณ",
+      "name": "SceneFlow Studio",
+      "subtitle": "Director Mode",
+      "badge": "Built for long-form",
+      "tagline": "Where features and series actually get made.",
       "points": [
-        "ท่อ AI พื้นฐานที่มีประสิทธิภาพเดียวกันกับการเขียนด้วยตนเองอย่างสมบูรณ์",
-        "การควบคุมทีละขั้นตอนอย่างละเอียดในทุกฉากและจังหวะ",
-        "ปรับแต่งภาพอารมณ์ของตัวละครจังหวะการสนทนาและตัวเลือกเพลง",
-        "ทำการสร้างภาพก่อนและขั้นตอนการผลิตหลักให้เสร็จสมบูรณ์"
+        "Hold pacing, emotion, and continuity across a 120-minute feature or a full season.",
+        "Direct in plain language against locked references — no prompt engineering, no copy-pasting between tool stacks.",
+        "Step in at any point in the pipeline: Blueprint, Production, or Screening Room.",
+        "Fine-tune visuals, character emotion, dialogue timing, and music beat by beat.",
+        "Complete pre-visualization and master production workflow."
       ],
-      "cta": "เปิดสตูดิโอ ($ 9)"
+      "cta": "Launch Studio ($9)"
     }
   },
   "infrastructure": {
@@ -2623,5 +2629,18 @@
       "googleCloud": "Google Cloud",
       "vertexAi": "Vertex AI"
     }
+  },
+  "notify": {
+    "heading": "Get notified when access opens",
+    "description": "Studio access opens in November 2026. Leave your email and we’ll tell you the day it does.",
+    "placeholder": "you@studio.com",
+    "submit": "Notify me",
+    "submitting": "Sending…",
+    "successTitle": "You’re on the list.",
+    "successBody": "We’ll email you as soon as November access opens. Nothing else.",
+    "errorEmpty": "Enter your email so we can reach you.",
+    "errorInvalid": "That email doesn’t look right. Check it and try again.",
+    "errorGeneric": "Something went wrong. Try again in a moment.",
+    "privacy": "One email at launch. No spam, unsubscribe anytime."
   }
 }

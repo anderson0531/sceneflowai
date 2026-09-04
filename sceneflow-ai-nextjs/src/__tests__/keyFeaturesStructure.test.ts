@@ -93,7 +93,11 @@ describe('keyFeatures structure', () => {
       'utf8'
     )
     const en = JSON.parse(readFileSync(path.join(ROOT, 'messages/en.json'), 'utf8'))
-    expect(en.keyFeatures.landingUiLanguagesLabel).toBe(
+    // Production/dubbing (70+) and site interface (39) are different counts and
+    // must not be conflated into a single claim.
+    expect(en.keyFeatures.landingUiLanguagesLabel).toContain('70+ languages')
+    expect(en.keyFeatures.landingUiLanguagesLabel).toContain('39')
+    expect(en.keyFeatures.landingUiLanguagesLabel).not.toContain(
       'UI and Productions Available in 39 Languages'
     )
     expect(section).toContain('LANDING_TRANSLATE_LANGUAGES')

@@ -15,6 +15,7 @@ import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
 import {
   COLLAPSIBLE_LANDING_SECTION_IDS,
+  DEFAULT_EXPANDED_LANDING_SECTION_IDS,
   LANDING_HASH_TO_SECTION,
   type CollapsibleLandingSectionId,
 } from '@/config/landing/landingSectionCollapseCopy'
@@ -63,7 +64,12 @@ function resolveSectionFromHash(hash: string): CollapsibleLandingSectionId | und
 }
 
 function buildDefaultExpandedMap(): ExpandedMap {
-  return Object.fromEntries(COLLAPSIBLE_LANDING_SECTION_IDS.map((id) => [id, false]))
+  return Object.fromEntries(
+    COLLAPSIBLE_LANDING_SECTION_IDS.map((id) => [
+      id,
+      DEFAULT_EXPANDED_LANDING_SECTION_IDS.includes(id),
+    ])
+  )
 }
 
 export function LandingSectionCollapseProvider({ children }: { children: ReactNode }) {

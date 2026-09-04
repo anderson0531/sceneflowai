@@ -7,8 +7,6 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
-import { getEarlyAccessUrl } from '@/lib/auth/postLoginRedirect'
-
 interface LoginFormProps {
   onSuccess: () => void
 }
@@ -123,10 +121,10 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           <p className="text-gray-400">
             Don&apos;t have an account?{' '}
             <Link
-              href={getEarlyAccessUrl()}
+              href="/#pricing"
               className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
             >
-              Apply for closed beta
+              See plans and get started
             </Link>
           </p>
         </div>

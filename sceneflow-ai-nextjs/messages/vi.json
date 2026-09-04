@@ -36,28 +36,29 @@
     "platform": "Platform",
     "pricing": "Pricing",
     "productionExamples": "Examples",
-    "twoModes": "Go vs Director",
-    "keyFeatures": "Key Features"
+    "twoModes": "Director vs Go",
+    "keyFeatures": "Key Features",
+    "audienceResonance": "Audience Resonance"
   },
   "hero": {
-    "headline": "Envision the Story. Let SceneFlow Run the Production.",
-    "subheadline": "Quickly Turn simple concepts or full film treatments into complete multi-scene videos automatically — or step in at any stage to direct scenes using natural language.",
+    "headline": "Build Worlds. Not Just Clips.",
+    "subheadline": "Don’t settle for isolated generations. SceneFlow maintains character continuity, persistent environments, and complex narratives from your first scene to your hundredth — then ships it as a multi-language master.",
     "ctaPrimaryLaunch": "Start Your Production",
     "ctaSupportingLine": "",
     "ctaSecondary": "Explore How It Works",
     "ctaToolStack": "See how it replaces your tool stack",
     "chips": [
       {
-        "label": "Flexible Inputs",
-        "detail": "Simple concepts or detailed film treatments."
+        "label": "Persistent Continuity",
+        "detail": "The Reference Library locks faces, wardrobe, voices, and locations through scene 100."
       },
       {
-        "label": "Automated Production",
-        "detail": "Hands-free generation of scripts, animatics, and master video."
+        "label": "Direct Before You Render",
+        "detail": "Lock a feature-length animatic on low-cost beat frames, then pay for high-res."
       },
       {
-        "label": "Natural Control",
-        "detail": "Refine shots, dialogue, and props without prompt engineering."
+        "label": "Built for Every Audience",
+        "detail": "Produce, dub, and tune for each culture and region in 70+ languages."
       }
     ],
     "pipelineSteps": [
@@ -101,7 +102,9 @@
       }
     },
     "soon": "Soon",
-    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}",
+    "eyebrow": "The first AI pipeline for long-form video and series",
+    "availabilityBadge": "Full access opens November 2026"
   },
   "valueProp": {
     "pills": [
@@ -632,8 +635,8 @@
     "proofLine": "Đã được kiểm chứng qua quy trình thực hiện cho một bất động sản nhà ở: quy trình thủ công toàn diện mất hơn 4 giờ → kết quả tương đương được hoàn thành trong SceneFlow với thời gian chưa đầy một giờ."
   },
   "comparison": {
-    "title": "Tốc độ sản xuất nhanh mà không tốn chi phí vận hành",
-    "subtitle": "Thay thế các công cụ tạo prompt rời rạc và quy trình lắp ghép thủ công bằng một studio tự động hóa duy nhất — từ ý tưởng ban đầu đến thành phẩm hoàn chỉnh sẵn sàng để xuất bản.",
+    "title": "Stop pulling the lever. Start running a production.",
+    "subtitle": "Clip generators re-roll the dice on every prompt — new face, new room, new voice. SceneFlow reads every shot from the same locked references, so scene 100 still matches scene 1.",
     "caption": "Một studio duy nhất thay thế cho các công cụ tạo prompt rời rạc, quy trình chỉnh sửa thủ công và việc chuyển giao giữa nhiều nền tảng.",
     "imageAlt": "Chi phí vận hành sản xuất truyền thống so với studio tự động hóa SceneFlow — rút ngắn thời gian từ khâu lên ý tưởng đến khi có video hoàn chỉnh sẵn sàng phát hành."
   },
@@ -1450,50 +1453,50 @@
   },
   "coreCapabilities": {
     "audienceResonance": {
-      "badge": "Lớp trí tuệ",
-      "title": "Audience Resonance Phân tích",
-      "description": "Hãy nắm rõ điểm số trước khi đầu tư vào quá trình kết xuất (render) hoàn chỉnh. Hãy hướng tới các mức điểm Audience Resonance và Blueprint, đồng thời điều chỉnh kịch bản dựa trên những giải pháp cụ thể — tối ưu hóa từng nhịp nội dung trước khi tiến hành tạo video bằng Express.",
+      "badge": "Intelligence Layer",
+      "title": "Audience Resonance: build for a culture, not a language code",
+      "description": "Subtitles stretch one video’s reach. SceneFlow lets you name the culture, region, and demographic you are making for, score the story against that audience before you render, and then ship either a dubbed master or a separate high-resonance version per audience.",
       "bullets": [
-        "Xác định đối tượng mục tiêu cụ thể của bạn",
-        "Nhận điểm số, phân tích và các đề xuất theo thời gian thực",
-        "Khắc phục các điểm yếu trong cốt truyện chỉ với một cú nhấp chuột",
-        "Chỉnh sửa có hướng dẫn để tối ưu hóa các Tập, Blueprint và Kịch bản"
+        "Define the audience: eight target regions, plus age, gender, education, and community",
+        "Describe culture, faith, and values in your own words — SceneFlow reads the signals",
+        "Get a resonance score with section-level fixes before you spend on renders",
+        "Dub the master, or produce a distinct version tuned to each audience"
       ],
-      "cta": "Phân tích kịch bản của bạn",
+      "cta": "Analyze Your Script",
       "howWeScore": {
-        "toggle": "Cách chúng tôi chấm điểm",
-        "title": "Cách thức hoạt động của Audience Resonance",
-        "description": "Audience Resonance kết hợp việc phân tích cấu trúc kể chuyện (độ rõ ràng, nhịp độ, diễn biến cảm xúc) với mức độ phù hợp với chân dung khán giả mục tiêu mà bạn đã xác định tại Blueprint — thay vì dựa vào các chỉ số bề nổi hay dữ liệu duy trì người xem sau khi đã xuất bản. Các đề xuất được gắn với từng phần cụ thể của kịch bản, giúp bạn khắc phục vấn đề trước khi thực hiện bước Express hoặc tạo video.",
+        "toggle": "How we score",
+        "title": "How Audience Resonance works",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
         "bullets": [
-          "Chấm điểm Blueprint và kịch bản dựa trên đối tượng mục tiêu đã xác định của bạn.",
-          "Các khuyến nghị ở cấp độ từng phần — chứ không phải một con số kiểu \"hộp đen\" chỉ yêu cầu người dùng tin tưởng.",
-          "Các tính năng sửa lỗi nhanh chỉ với một cú nhấp chuột và chỉnh sửa có hướng dẫn — không chỉ đơn thuần là chấm điểm",
-          "Hãy thực hiện trước khi tốn chi phí cho việc render nặng, chứ không phải sau khi đã xuất bản."
+          "Scores Blueprint and script against your stated target audience",
+          "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
+          "Section-level recommendations — not a black-box “trust us” number",
+          "Run before heavy render spend, not after publish"
         ]
       }
     },
     "express": {
-      "badge": "Sản xuất siêu tốc",
+      "badge": "Hyper-Speed Production",
       "title": "Sceneflow Express",
-      "description": "Tự động tạo đồng thời các bản pre-vis, animatic và video beat. Chuyển từ kịch bản sang bản xem thử có thể chia sẻ chỉ trong vài phút — sau đó phê duyệt Beat Frames trước khi thực hiện chi phí F2V cuối cùng.",
+      "description": "Auto-generate pre-vis, animatics, and video beats concurrently. Move from script to shareable preview in minutes — then approve Beat Frames before final F2V spend. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
           "title": "Express Pre-vis",
-          "desc": "Xem xét và chia sẻ các bản tiền hình ảnh hóa (pre-vis) dạng âm thanh và video chỉ trong vài phút thay vì hàng giờ.",
-          "time": "Phút và Giờ"
+          "desc": "Review and share audio and video pre-vis in minutes vs hours.",
+          "time": "Minutes vs Hours"
         },
         {
-          "title": "Biểu diễn các Animatic",
-          "desc": "Kết xuất ngay lập tức các cảnh hoạt họa theo phong cách Ken Burns hoàn chỉnh, đi kèm giọng đọc thuyết minh chất lượng cao.",
-          "time": "Phút và Giờ"
+          "title": "Express Animatics",
+          "desc": "Render full Ken Burns animatic scenes with high-end voiceovers instantly.",
+          "time": "Minutes vs Hours"
         },
         {
-          "title": "Video Nhanh",
-          "desc": "Điều phối quá trình tạo hình ảnh và video đồng thời—bao gồm cả các chuỗi mở rộng Veo tích hợp sẵn dành cho các phân đoạn hội thoại dài.",
-          "time": "Phút so với Ngày"
+          "title": "Express Video",
+          "desc": "Orchestrate concurrent image and video generation—including native Veo extension chains for long dialogue beats.",
+          "time": "Minutes vs Days"
         }
       ],
-      "cta": "Bắt đầu kết xuất nhanh"
+      "cta": "Start Express Rendering"
     }
   },
   "preVisEngine": {
@@ -1528,28 +1531,28 @@
     "ctaSubtext": "Kết nối giữa làm phim truyền thống và AI tạo sinh"
   },
   "exitIntent": {
-    "title": "Chờ đã! Đừng để tay không",
-    "subtitle": "Nhận quyền truy cập sớm độc quyền và các mẹo để làm phim dựa trên AI",
+    "title": "Before you go — want the launch date?",
+    "subtitle": "Full access opens November 2026. We'll email you the day it does.",
     "benefits": [
-      "Hướng dẫn làm phim AI hàng tuần",
-      "Tiếp cận sớm các tính năng mới",
-      "Giảm giá dành riêng cho người sáng tạo"
+      "Launch notification the day access opens",
+      "Weekly AI filmmaking tutorials",
+      "Exclusive creator discounts"
     ],
-    "emailPlaceholder": "Nhập email của bạn",
-    "subscribe": "Quyền truy cập sớm",
-    "subscribing": "Đăng ký",
-    "or": "hoặc",
-    "startNow": "Bắt đầu tạo ngay bây giờ chỉ với $ 9 — hình thành đoàn hệ tháng 9 →",
-    "privacy": "Không spam, không bao giờ. Hủy đăng ký bất cứ lúc nào.",
-    "successTitle": "- Chấp nhận.",
-    "successSubtitle": "Kiểm tra hộp thư đến của bạn để biết các mẹo làm phim độc quyền và thông tin cập nhật về quyền truy cập sớm.",
-    "ctaText": "Bắt đầu khám phá — $ 9",
-    "closePopup": "Đóng cửa sổ bật lên"
+    "emailPlaceholder": "Enter your email",
+    "subscribe": "Notify me",
+    "subscribing": "Subscribing...",
+    "or": "or",
+    "startNow": "Start directing now for just $9 →",
+    "privacy": "No spam, ever. Unsubscribe anytime.",
+    "successTitle": "You're on the list!",
+    "successSubtitle": "We'll email you when November access opens — plus the occasional filmmaking tip.",
+    "ctaText": "Start Exploring — $9",
+    "closePopup": "Close popup"
   },
   "pricing": {
     "badge": "Simple Pricing",
     "title": "Start with Explorer — $9",
-    "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
+    "subtitle": "Full access opens November 2026. Test the complete pipeline now with a frictionless $9 entry.",
     "valueAnchor": {
       "traditionalCost": "$2,000+",
       "traditionalLabel": "Traditional pre-vis",
@@ -1756,11 +1759,11 @@
     "collapseSection": "Ẩn phần này"
   },
   "finalCta": {
-    "title": "Ready to create in Go or Director Mode?",
-    "subtitle": "Pick Go for speed or Director for control — start from the $9 Explorer plan or apply for Founding Creator access.",
-    "cta": "Start with Go Mode",
-    "ctaSecondary": "Apply for Founding Creator Access",
-    "ctaSecondaryHref": "/early-access"
+    "title": "Built for the stories that have to hold.",
+    "subtitle": "Full access opens November 2026. Leave your email and we’ll tell you the day it does — or start directing now from the $9 Explorer plan.",
+    "cta": "Explore plans",
+    "ctaSecondary": "See how it works",
+    "ctaSecondaryHref": "#key-features"
   },
   "footer": {
     "description": "Sản xuất video tự động từ đầu đến cuối — từ ý tưởng đến tổng thể sẵn sàng xuất bản. Một studio được hướng dẫn: SFAISERIES_→STUDIOTERM SFAIBLUEPRINT_→STUDIOTERM Production Studio → Screening Room.",
@@ -2166,30 +2169,33 @@
     ]
   },
   "keyFeatures": {
-    "landingUiLanguagesLabel": "Giao diện người dùng và sản phẩm có sẵn bằng 39 ngôn ngữ"
+    "landingUiLanguagesLabel": "Produce and dub in 70+ languages. This site is available in these 39:"
   },
   "twoModes": {
-    "title": "One Platform. Two Experiences.",
+    "title": "Two modes at every step. One long-form pipeline.",
+    "subtitle": "Hundreds of tools will hand you a five-second clip and hope you like it. SceneFlow gives you a choice at every step of the pipeline: direct it yourself, or let the studio run it. Both read from the same locked references, so continuity holds either way.",
     "go": {
       "name": "SceneFlow Go",
-      "tagline": "Concept to animatic in minutes.",
+      "badge": "Fastest way to test an idea",
+      "tagline": "Prototype the episode before you commit to it.",
       "points": [
-        "Full intelligence and automation.",
-        "Enter a concept or script, click Go, and take a break.",
-        "Automatically handles Blueprint, structure, references, frames, audio, and animatic assembly.",
-        "Complete animatic ready in under 10 minutes.",
-        "Light natural-language revisions available on demand."
+        "Generate the structural backbone of an entire episode in under 10 minutes.",
+        "Enter a concept or script, click Go, and come back to a finished animatic.",
+        "Automatically handles Blueprint, structure, references, frames, audio, and assembly.",
+        "Hand the result to Director Mode the moment you want the wheel."
       ],
       "cta": "Try Go Mode"
     },
     "director": {
       "name": "SceneFlow Studio",
       "subtitle": "Director Mode",
-      "tagline": "Every visual, emotion, line, and note under your direction.",
+      "badge": "Built for long-form",
+      "tagline": "Where features and series actually get made.",
       "points": [
-        "Same powerful underlying AI pipeline with complete manual authorship.",
-        "Granular step-by-step control across every scene and beat.",
-        "Fine-tune visuals, character emotion, dialogue timing, and music choices.",
+        "Hold pacing, emotion, and continuity across a 120-minute feature or a full season.",
+        "Direct in plain language against locked references — no prompt engineering, no copy-pasting between tool stacks.",
+        "Step in at any point in the pipeline: Blueprint, Production, or Screening Room.",
+        "Fine-tune visuals, character emotion, dialogue timing, and music beat by beat.",
         "Complete pre-visualization and master production workflow."
       ],
       "cta": "Launch Studio ($9)"
@@ -2202,5 +2208,18 @@
       "googleCloud": "Google Cloud",
       "vertexAi": "Vertex AI"
     }
+  },
+  "notify": {
+    "heading": "Get notified when access opens",
+    "description": "Studio access opens in November 2026. Leave your email and we’ll tell you the day it does.",
+    "placeholder": "you@studio.com",
+    "submit": "Notify me",
+    "submitting": "Sending…",
+    "successTitle": "You’re on the list.",
+    "successBody": "We’ll email you as soon as November access opens. Nothing else.",
+    "errorEmpty": "Enter your email so we can reach you.",
+    "errorInvalid": "That email doesn’t look right. Check it and try again.",
+    "errorGeneric": "Something went wrong. Try again in a moment.",
+    "privacy": "One email at launch. No spam, unsubscribe anytime."
   }
 }

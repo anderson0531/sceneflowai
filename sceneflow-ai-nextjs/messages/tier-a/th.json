@@ -15,42 +15,17 @@
     "platformWalkthrough": "ทัวร์แพลตฟอร์ม",
     "platform": "แพลตฟอร์ม",
     "pipeline": "ไปป์ไลน์",
-    "twoModes": "Go กับ Director"
+    "twoModes": "Director กับ Go"
   },
   "hero": {
-    "headline": "จินตนาการเรื่องราว แล้วให้ SceneFlow ดูแลการผลิต",
-    "subheadline": "เปลี่ยนแนวคิดง่ายๆ หรือทรีทเมนต์ภาพยนตร์เต็มรูปแบบเป็นวิดีโอหลายซีนที่สมบูรณ์โดยอัตโนมัติ — หรือเข้มข้นควบคุมทุกขั้นตอนด้วยภาษาธรรมชาติ",
     "ctaPrimaryLaunch": "เริ่มการผลิตของคุณ",
     "ctaSupportingLine": "",
     "ctaSecondary": "สำรวจวิธีการทำงาน",
-    "chips": [
-      {
-        "label": "อินพุตที่ยืดหยุ่น",
-        "detail": "แนวคิดง่ายๆ หรือทรีทเมนต์ภาพยนตร์อย่างละเอียด"
-      },
-      {
-        "label": "การผลิตอัตโนมัติ",
-        "detail": "สร้างสคริปต์ Animatic และมาสเตอร์วิดีโอแบบอัตโนมัติ"
-      },
-      {
-        "label": "ควบคุมด้วยภาษาธรรมชาติ",
-        "detail": "ปรับแต่งช็อต บทสนทนา และอุปกรณ์ประกอบฉากโดยไม่ต้องเขียน prompt ที่ซับซ้อน"
-      }
-    ],
     "languagePrompt": "ฟัง Hero ในภาษาของคุณ — ไปป์ไลน์เดียวกัน ตลาดใหม่",
     "multilangHint": "Hero พากย์ 7 ภาษา — ไปป์ไลน์เต็มรูปแบบรองรับ 70+ ภาษาใน Production Studio",
     "videoLanguageCount": "{count, plural, =1 {# ภาษา} other {# ภาษา}}"
   },
-  "twoModes": {
-    "title": "แพลตฟอร์มเดียว สองรูปแบบ"
-  },
-  "finalCta": {
-    "title": "พร้อมสร้างใน Go หรือ Director Mode แล้วหรือยัง?",
-    "subtitle": "เลือก Go เพื่อความเร็ว หรือ Director เพื่อการควบคุม — เริ่มจากแผน Explorer $9 หรือสมัคร Founding Creator",
-    "cta": "เริ่มต้นด้วย Go Mode"
-  },
   "pricing": {
-    "title": "เริ่มต้นด้วย Explorer — $9",
-    "subtitle": "กลุ่ม Early Access เดือนกันยายนกำลังเปิดรับ ทดสอบไปป์ไลน์เต็มรูปแบบด้วย Explorer $9"
+    "title": "เริ่มต้นด้วย Explorer — $9"
   }
 }

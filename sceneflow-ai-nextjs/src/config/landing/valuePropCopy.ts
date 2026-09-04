@@ -3,9 +3,11 @@
  */
 
 export const HERO_COPY = {
-  headline: 'Envision the Story. Let SceneFlow Run the Production.',
+  eyebrow: 'The first AI pipeline for long-form video and series',
+  availabilityBadge: 'Full access opens November 2026',
+  headline: 'Build Worlds. Not Just Clips.',
   subheadline:
-    'Quickly Turn simple concepts or full film treatments into complete multi-scene videos automatically — or step in at any stage to direct scenes using natural language.',
+    'Don\u2019t settle for isolated generations. SceneFlow maintains character continuity, persistent environments, and complex narratives from your first scene to your hundredth \u2014 then ships it as a multi-language master.',
   ctaPrimaryLaunch: 'Start Your Production',
   ctaSupportingLine: '',
   ctaSecondary: 'Explore How It Works',
@@ -14,18 +16,34 @@ export const HERO_COPY = {
 
 export const HERO_VALUE_CHIPS = [
   {
-    label: 'Flexible Inputs',
-    detail: 'Simple concepts or detailed film treatments.',
+    label: 'Persistent Continuity',
+    detail: 'The Reference Library locks faces, wardrobe, voices, and locations through scene 100.',
   },
   {
-    label: 'Automated Production',
-    detail: 'Hands-free generation of scripts, animatics, and master video.',
+    label: 'Direct Before You Render',
+    detail: 'Lock a feature-length animatic on low-cost beat frames, then pay for high-res.',
   },
   {
-    label: 'Natural Control',
-    detail: 'Refine shots, dialogue, and props without prompt engineering.',
+    label: 'Built for Every Audience',
+    detail: 'Produce, dub, and tune for each culture and region in 70+ languages.',
   },
 ] as const
+
+/** Launch-notification capture — shared by the hero and the final CTA. */
+export const NOTIFY_COPY = {
+  heading: 'Get notified when access opens',
+  description:
+    'Studio access opens in November 2026. Leave your email and we\u2019ll tell you the day it does.',
+  placeholder: 'you@studio.com',
+  submit: 'Notify me',
+  submitting: 'Sending\u2026',
+  successTitle: 'You\u2019re on the list.',
+  successBody: 'We\u2019ll email you as soon as November access opens. Nothing else.',
+  errorEmpty: 'Enter your email so we can reach you.',
+  errorInvalid: 'That email doesn\u2019t look right. Check it and try again.',
+  errorGeneric: 'Something went wrong. Try again in a moment.',
+  privacy: 'One email at launch. No spam, unsubscribe anytime.',
+} as const
 
 export const HERO_PIPELINE_STEPS = ['Blueprint', 'Production', 'Screening Room'] as const
 
@@ -197,18 +215,18 @@ export const HOW_IT_WORKS_HEADER = {
 } as const
 
 export const SLOT_MACHINE_HEADER = {
-  title: 'Production speed without the overhead',
+  title: 'Stop pulling the lever. Start running a production.',
   subtitle:
-    'Replace fragmented prompt tools and manual assembly with one automated studio — from first concept to publish-ready master.',
+    'Clip generators re-roll the dice on every prompt — new face, new room, new voice. SceneFlow reads every shot from the same locked references, so scene 100 still matches scene 1.',
 } as const
 
 export const FINAL_CTA_COPY = {
-  title: 'Ready to create in Go or Director Mode?',
+  title: 'Built for the stories that have to hold.',
   subtitle:
-    'Pick Go for speed or Director for control — start from the $9 Explorer plan or apply for Founding Creator access.',
-  cta: 'Start with Go Mode',
-  ctaSecondary: 'Apply for Founding Creator Access',
-  ctaSecondaryHref: '/early-access',
+    'Full access opens November 2026. Leave your email and we\u2019ll tell you the day it does — or start directing now from the $9 Explorer plan.',
+  cta: 'Explore plans',
+  ctaSecondary: 'See how it works',
+  ctaSecondaryHref: '#key-features',
 } as const
 
 /** Payment processor — name consistently for MoR compliance */

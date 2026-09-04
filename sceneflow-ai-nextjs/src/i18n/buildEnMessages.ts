@@ -16,6 +16,7 @@ import {
   HERO_VALUE_CHIPS,
   HOW_IT_WORKS_HEADER,
   MOR_FOOTER_LINE,
+  NOTIFY_COPY,
   ONE_TAKE_PIPELINE,
   SLOT_MACHINE_HEADER,
   VP_STRIP_PILLS,
@@ -100,8 +101,9 @@ export function buildEnMessages() {
       howItWorks: 'How It Works',
       useCases: 'Use Cases',
       productionExamples: 'Examples',
-      twoModes: 'Go vs Director',
+      twoModes: 'Director vs Go',
       keyFeatures: 'Key Features',
+      audienceResonance: 'Audience Resonance',
       preVisEngine: 'Pre-Vis Engine',
       platformWalkthrough: 'Platform Walkthrough',
       trustSafety: 'Trust & Safety',
@@ -125,8 +127,10 @@ export function buildEnMessages() {
     },
     twoModes: {
       title: TWO_MODES_COPY.title,
+      subtitle: TWO_MODES_COPY.subtitle,
       go: {
         name: TWO_MODES_COPY.go.name,
+        badge: TWO_MODES_COPY.go.badge,
         tagline: TWO_MODES_COPY.go.tagline,
         points: [...TWO_MODES_COPY.go.points],
         cta: TWO_MODES_COPY.go.cta,
@@ -134,6 +138,7 @@ export function buildEnMessages() {
       director: {
         name: TWO_MODES_COPY.director.name,
         subtitle: TWO_MODES_COPY.director.subtitle,
+        badge: TWO_MODES_COPY.director.badge,
         tagline: TWO_MODES_COPY.director.tagline,
         points: [...TWO_MODES_COPY.director.points],
         cta: TWO_MODES_COPY.director.cta,
@@ -327,6 +332,7 @@ export function buildEnMessages() {
       },
     },
     landingSections: LANDING_SECTION_COLLAPSE_COPY,
+    notify: NOTIFY_COPY,
     finalCta: FINAL_CTA_COPY,
     footer: {
       description:

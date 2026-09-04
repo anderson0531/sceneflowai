@@ -2,7 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { SceneFlowStudioBrand } from '@/components/layout/SceneFlowStudioBrand'
@@ -12,7 +12,6 @@ import { setPendingCheckoutTier } from '@/lib/billing/checkoutIntent'
 import {
   clearDashboardRedirectAttempts,
   getDashboardUrl,
-  getEarlyAccessUrl,
   hasExceededDashboardRedirectAttempts,
   navigateAfterAuth,
   persistReturnUrl,
@@ -20,7 +19,6 @@ import {
 } from '@/lib/auth/postLoginRedirect'
 
 function LoginPageContent() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const { status } = useSession()
   const [redirectBlocked, setRedirectBlocked] = useState(false)
@@ -29,17 +27,6 @@ function LoginPageContent() {
   useEffect(() => {
     const returnUrl = searchParams.get('returnUrl')
     const checkoutTier = searchParams.get('checkoutTier')
-    const modeParam = searchParams.get('mode')
-
-    if (modeParam === 'signup') {
-      router.replace(
-        getEarlyAccessUrl({
-          returnUrl: returnUrl?.startsWith('/') ? returnUrl : undefined,
-          checkoutTier: checkoutTier || undefined,
-        })
-      )
-      return
-    }
 
     persistReturnUrl(
       returnUrl?.startsWith('/') ? returnUrl : getDashboardUrl()
@@ -50,7 +37,7 @@ function LoginPageContent() {
     }
 
     setRedirectBlocked(hasExceededDashboardRedirectAttempts())
-  }, [searchParams, router])
+  }, [searchParams])
 
   const attemptAuthenticatedRedirect = useCallback(() => {
     if (hasExceededDashboardRedirectAttempts()) {

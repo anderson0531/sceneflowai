@@ -3,25 +3,25 @@
 export const CORE_CAPABILITIES_COPY = {
   audienceResonance: {
     badge: 'Intelligence Layer',
-    title: 'Audience Resonance Analysis',
+    title: 'Audience Resonance: build for a culture, not a language code',
     description:
-      'Know your score before you invest in full renders. Target Audience Resonance scores Blueprint Studio and script with actionable fixes — optimize every beat before Express and video generation.',
+      'Subtitles stretch one video\u2019s reach. SceneFlow lets you name the culture, region, and demographic you are making for, score the story against that audience before you render, and then ship either a dubbed master or a separate high-resonance version per audience.',
     bullets: [
-      'Determine your specific target audience',
-      'Get real-time score, analysis, and recommendations',
-      'One-click fixes to resolve narrative weaknesses',
-      'Guided Edit to optimize Episodes, Blueprint Studio, and Script',
+      'Define the audience: eight target regions, plus age, gender, education, and community',
+      'Describe culture, faith, and values in your own words — SceneFlow reads the signals',
+      'Get a resonance score with section-level fixes before you spend on renders',
+      'Dub the master, or produce a distinct version tuned to each audience',
     ],
     cta: 'Analyze Your Script',
     howWeScore: {
       toggle: 'How we score',
       title: 'How Audience Resonance works',
       description:
-        'Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.',
+        'Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.',
       bullets: [
         'Scores Blueprint and script against your stated target audience',
-        'Section-level recommendations — not a black-box “trust us” number',
-        'Actionable one-click fixes and guided edit — not just a grade',
+        'Cultural authenticity checks on names, dialect, customs, faith, and sensitivities',
+        'Section-level recommendations — not a black-box \u201Ctrust us\u201D number',
         'Run before heavy render spend, not after publish',
       ],
     },
@@ -30,7 +30,7 @@ export const CORE_CAPABILITIES_COPY = {
     badge: 'Hyper-Speed Production',
     title: 'Sceneflow Express',
     description:
-      'Auto-generate pre-vis, animatics, and video beats concurrently. Move from script to shareable preview in minutes — then approve Beat Frames before final F2V spend.',
+      'Auto-generate pre-vis, animatics, and video beats concurrently. Move from script to shareable preview in minutes — then approve Beat Frames before final F2V spend. Throughput is what makes a version per audience affordable instead of theoretical.',
     items: [
       {
         title: 'Express Pre-vis',

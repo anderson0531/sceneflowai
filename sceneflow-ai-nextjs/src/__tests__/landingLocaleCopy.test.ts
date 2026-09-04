@@ -23,6 +23,9 @@ const REQUIRED_LANDING_KEYS = [
   'finalCta.cta',
   'finalCta.subtitle',
   'finalCta.ctaSecondary',
+  'hero.availabilityBadge',
+  'notify.heading',
+  'notify.submit',
 ] as const
 
 const EXPLORER_PRICE_KEYS = [
@@ -40,6 +43,10 @@ const OUTDATED_PATTERNS = [
   'July 22',
   'August 1',
   'Application Window Closes',
+  'September cohort',
+  'Early Access cohort',
+  'Founding Creator',
+  '/early-access',
 ]
 
 function hasExplorerPrice(text: string): boolean {
@@ -63,7 +70,7 @@ describe('landing locale copy', () => {
     }
   })
 
-  it('mirrors September-critical landing keys in English messages', () => {
+  it('mirrors launch-critical landing keys in English messages', () => {
     for (const path of REQUIRED_LANDING_KEYS) {
       const value = getAtPath(enMessages, path)
       expect(typeof value).toBe('string')
@@ -73,8 +80,9 @@ describe('landing locale copy', () => {
     }
     expect(String(enMessages.hero.ctaPrimaryLaunch)).toBe('Start Your Production')
     expect(String(enMessages.useCasesShowcase.cta)).toBe('Start Your Production')
-    expect(String(enMessages.finalCta.cta)).toBe('Start with Go Mode')
+    expect(String(enMessages.finalCta.cta)).toBe('Explore plans')
     expect(String(enMessages.finalCta.subtitle)).toContain('$9')
+    expect(String(enMessages.hero.availabilityBadge)).toContain('November 2026')
   })
 
   it('names the footer trust section Trust & Safety in English', () => {

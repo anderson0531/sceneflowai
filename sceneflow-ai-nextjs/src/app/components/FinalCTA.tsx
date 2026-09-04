@@ -4,8 +4,9 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
 import { ArrowRight } from 'lucide-react'
 import Link from 'next/link'
-import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
 import { useTranslations } from 'next-intl'
+import { NotifyCapture } from '@/components/landing/NotifyCapture'
+import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 
 export function FinalCTA() {
   const t = useTranslations('finalCta')
@@ -26,8 +27,13 @@ export function FinalCTA() {
         >
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6">{t('title')}</h2>
           <p className="text-lg text-gray-300 max-w-2xl mx-auto mb-8">{t('subtitle')}</p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href={getLoginUrl({ mode: 'signup' })} className="w-full sm:w-auto">
+
+          <div className="flex justify-center">
+            <NotifyCapture source="final-cta" />
+          </div>
+
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link href={getSignupUrlForTier('explorer')} className="w-full sm:w-auto">
               <Button size="lg" className="w-full sm:w-auto">
                 {t('cta')}
                 <ArrowRight className="ml-2 w-5 h-5" />

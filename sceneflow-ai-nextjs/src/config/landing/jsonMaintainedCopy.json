@@ -367,7 +367,7 @@
     "outcomeLabel": "The Payoff",
     "videoComingSoon": "Feature demo coming soon",
     "videoSoon": "Soon",
-    "landingUiLanguagesLabel": "UI and Productions Available in 39 Languages",
+    "landingUiLanguagesLabel": "Produce and dub in 70+ languages. This site is available in these 39:",
     "categories": [
       {
         "id": "create",
@@ -462,10 +462,10 @@
           {
             "icon": "multilanguage",
             "title": "Multilanguage Streams",
-            "description": "Express-generate audio in 70+ languages, auto-aligned to beat frames and video. Ship dubbed or lip-synced language streams from one approved master cut.",
+            "description": "Write natively in your story's language, then dub or lip-sync into 70+ more — auto-aligned to beat frames and published as multi-language audio tracks on a single YouTube video.",
             "learnMore": {
               "problem": "Reaching a global audience usually means re-recording voice talent, re-timing every scene, and rebuilding the project once per language — a cost and coordination nightmare that keeps most creators single-market.",
-              "solution": "Express-generate audio in 70+ languages in minutes, auto-aligned to your animatic beat frames and video. Produce dubbed or lip-synced streams from the same approved cut, no re-shoots required.",
+              "solution": "Author dialogue and treatment natively in your story's language rather than translating English after the fact, then express-generate audio in 70+ languages, auto-aligned to your beat frames. Dialogue is rewritten to fit each dub's timing budget, and you can ship dubbed or lip-synced streams from the same approved cut.",
               "outcome": "Ship every story natively to 70+ markets from one production — multiply your reach and revenue without multiplying your workload."
             }
           },

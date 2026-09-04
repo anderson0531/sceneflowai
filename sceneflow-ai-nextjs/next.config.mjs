@@ -77,7 +77,17 @@ const nextConfig = {
       },
       {
         source: "/signup",
-        destination: "/early-access",
+        destination: "/login?mode=signup",
+        permanent: false,
+      },
+      {
+        source: "/early-access",
+        destination: "/#pricing",
+        permanent: false,
+      },
+      {
+        source: "/early-access/:path*",
+        destination: "/#pricing",
         permanent: false,
       },
       {

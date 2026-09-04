@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 import { list, put } from '@vercel/blob'
-import { fetchPrivateBlobJson, getPrivateBlobToken } from '@/lib/early-access/privateBlob'
+import { fetchPrivateBlobJson, getPrivateBlobToken } from '@/lib/storage/privateBlob'
 import { sendEmail } from '@/lib/email/resendClient'
 
 const OTP_EXPIRES_MS = 10 * 60 * 1000

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import {
+  CalendarClock,
   Play,
   Pause,
   Volume2,
@@ -11,8 +12,9 @@ import {
   Maximize2,
   ArrowRight,
   FileText,
-  Zap,
-  MessageSquare,
+  Film,
+  Globe,
+  Link2,
   ChevronRight,
   Loader2,
 } from 'lucide-react'
@@ -28,6 +30,7 @@ import {
 import { landingLocaleToVideoLocale } from '@/config/landing/videoLocales'
 import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
 import { HeroTheaterModal } from '@/components/landing/HeroTheaterModal'
+import { NotifyCapture } from '@/components/landing/NotifyCapture'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { getVideoPreloadStrategy, type VideoPreloadValue } from '@/lib/landing/videoPreload'
 import { useAdaptiveVideoSource } from '@/lib/landing/useAdaptiveVideoSource'
@@ -41,7 +44,7 @@ export function HeroSection() {
   const t = useTranslations('hero')
   const chips = t.raw('chips') as Array<{ label: string; detail: string }>
   const pipelineSteps = t.raw('pipelineSteps') as string[]
-  const chipIcons = [FileText, Zap, MessageSquare]
+  const chipIcons = [Link2, Film, Globe]
   const landingLocale = useLocale()
   const syncedVideoLocale = landingLocaleToVideoLocale(landingLocale) as HeroVideoLocaleId
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -393,8 +396,23 @@ export function HeroSection() {
           )}
 
           <div className="max-w-4xl mx-auto text-center mt-12 lg:mt-14">
+            <motion.div
+              className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.1 }}
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-300/90">
+                {t('eyebrow')}
+              </p>
+              <span className="inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs font-semibold text-amber-200">
+                <CalendarClock className="h-3.5 w-3.5" aria-hidden />
+                {t('availabilityBadge')}
+              </span>
+            </motion.div>
+
             <motion.h1
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter leading-tight bg-gradient-to-r from-white via-gray-300 to-gray-400 text-transparent bg-clip-text"
+              className="mt-5 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter leading-tight bg-gradient-to-r from-white via-gray-300 to-gray-400 text-transparent bg-clip-text"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.15 }}
@@ -461,6 +479,15 @@ export function HeroSection() {
               {t('ctaSupportingLine') && (
                 <p className="max-w-md text-sm text-gray-400">{t('ctaSupportingLine')}</p>
               )}
+            </motion.div>
+
+            <motion.div
+              className="mt-10 flex justify-center border-t border-white/10 pt-8"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.36 }}
+            >
+              <NotifyCapture source="hero" />
             </motion.div>
           </div>
         </div>

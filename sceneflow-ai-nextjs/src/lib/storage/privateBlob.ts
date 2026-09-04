@@ -8,6 +8,10 @@ export function getPrivateBlobToken(): string {
   return token
 }
 
+export function hasPrivateBlobToken(): boolean {
+  return Boolean(process.env.BLOB_PRIVATE_READ_WRITE_TOKEN?.trim())
+}
+
 export async function fetchPrivateBlobJson<T>(url: string): Promise<T | null> {
   const response = await fetch(url, {
     cache: 'no-store',

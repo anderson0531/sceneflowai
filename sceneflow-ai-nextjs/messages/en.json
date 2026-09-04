@@ -1,108 +1,4 @@
 {
-  "metadata": {
-    "title": "SceneFlow AI - AI-Powered Video Creation",
-    "description": "Transform your ideas into professional videos with AI-powered workflow automation"
-  },
-  "nav": {
-    "workflow": "How It Works",
-    "pipeline": "The Pipeline",
-    "platformWalkthrough": "Platform Walkthrough",
-    "plansPricing": "Plans & Pricing",
-    "more": "More",
-    "useCases": "Use Cases",
-    "productionExamples": "Examples",
-    "keyFeatures": "Features",
-    "audienceResonance": "Audience Resonance",
-    "trustSafety": "Trust & Safety",
-    "platformTrust": "Platform & Trust",
-    "signIn": "Sign In",
-    "startProject": "Start a Project",
-    "dashboard": "Dashboard",
-    "adminPanel": "Admin Panel",
-    "signOut": "Sign Out",
-    "goToDashboard": "Go to Dashboard",
-    "userFallback": "User",
-    "searchLanguages": "Search languages...",
-    "noLanguagesFound": "No languages found"
-  },
-  "floatingNav": {
-    "compare": "Compare",
-    "looksAndFormats": "Looks & Formats",
-    "howItWorks": "How It Works",
-    "useCases": "Use Cases",
-    "productionExamples": "Examples",
-    "twoModes": "Go vs Director",
-    "keyFeatures": "Key Features",
-    "preVisEngine": "Pre-Vis Engine",
-    "platformWalkthrough": "Platform Walkthrough",
-    "trustSafety": "Trust & Safety",
-    "platform": "Platform",
-    "pricing": "Pricing"
-  },
-  "hero": {
-    "headline": "Envision the Story. Let SceneFlow Run the Production.",
-    "subheadline": "Quickly Turn simple concepts or full film treatments into complete multi-scene videos automatically — or step in at any stage to direct scenes using natural language.",
-    "ctaPrimaryLaunch": "Start Your Production",
-    "ctaSupportingLine": "",
-    "ctaSecondary": "Explore How It Works",
-    "ctaToolStack": "See how it replaces your tool stack",
-    "chips": [
-      {
-        "label": "Flexible Inputs",
-        "detail": "Simple concepts or detailed film treatments."
-      },
-      {
-        "label": "Automated Production",
-        "detail": "Hands-free generation of scripts, animatics, and master video."
-      },
-      {
-        "label": "Natural Control",
-        "detail": "Refine shots, dialogue, and props without prompt engineering."
-      }
-    ],
-    "pipelineSteps": [
-      "Blueprint",
-      "Production",
-      "Screening Room"
-    ],
-    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
-    "playWithNarration": "Play with narration",
-    "tapToHear": "Tap to hear",
-    "fullscreen": "Fullscreen",
-    "heroVideoLanguages": {
-      "en": {
-        "label": "English",
-        "nativeLabel": "English"
-      },
-      "es": {
-        "label": "Spanish",
-        "nativeLabel": "Español"
-      },
-      "pt": {
-        "label": "Portuguese",
-        "nativeLabel": "Português"
-      },
-      "hi": {
-        "label": "Hindi",
-        "nativeLabel": "हिन्दी"
-      },
-      "zh": {
-        "label": "Chinese",
-        "nativeLabel": "中文"
-      },
-      "ar": {
-        "label": "Arabic",
-        "nativeLabel": "العربية"
-      },
-      "th": {
-        "label": "Thai",
-        "nativeLabel": "ไทย"
-      }
-    },
-    "soon": "Soon",
-    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
-  },
   "pipeline": {
     "badge": "What is SceneFlow?",
     "title": "The 3-Pillar Pipeline Architecture",
@@ -205,7 +101,7 @@
             "number": "4",
             "title": "Start production when ready",
             "description": "Once the story sings, start production — and the entire pipeline inherits your approved creative DNA with no drift.",
-            "imagePlaceholder": "Go to Production Studio — readiness gate from an approved blueprint"
+            "imagePlaceholder": "Open Production Studio — readiness gate from an approved blueprint"
           }
         ]
       },
@@ -471,7 +367,7 @@
     "outcomeLabel": "The Payoff",
     "videoComingSoon": "Feature demo coming soon",
     "videoSoon": "Soon",
-    "landingUiLanguagesLabel": "UI and Productions Available in 39 Languages",
+    "landingUiLanguagesLabel": "Produce and dub in 70+ languages. This site is available in these 39:",
     "categories": [
       {
         "id": "create",
@@ -566,10 +462,10 @@
           {
             "icon": "multilanguage",
             "title": "Multilanguage Streams",
-            "description": "Express-generate audio in 70+ languages, auto-aligned to beat frames and video. Ship dubbed or lip-synced language streams from one approved master cut.",
+            "description": "Write natively in your story's language, then dub or lip-sync into 70+ more — auto-aligned to beat frames and published as multi-language audio tracks on a single YouTube video.",
             "learnMore": {
               "problem": "Reaching a global audience usually means re-recording voice talent, re-timing every scene, and rebuilding the project once per language — a cost and coordination nightmare that keeps most creators single-market.",
-              "solution": "Express-generate audio in 70+ languages in minutes, auto-aligned to your animatic beat frames and video. Produce dubbed or lip-synced streams from the same approved cut, no re-shoots required.",
+              "solution": "Author dialogue and treatment natively in your story's language rather than translating English after the fact, then express-generate audio in 70+ languages, auto-aligned to your beat frames. Dialogue is rewritten to fit each dub's timing budget, and you can ship dubbed or lip-synced streams from the same approved cut.",
               "outcome": "Ship every story natively to 70+ markets from one production — multiply your reach and revenue without multiplying your workload."
             }
           },
@@ -642,6 +538,149 @@
         ]
       }
     ]
+  },
+  "metadata": {
+    "title": "SceneFlow AI - AI-Powered Video Creation",
+    "description": "Transform your ideas into professional videos with AI-powered workflow automation"
+  },
+  "nav": {
+    "workflow": "The Workflow",
+    "platformWalkthrough": "Platform Walkthrough",
+    "plansPricing": "Plans & Pricing",
+    "more": "More",
+    "useCases": "Use Cases",
+    "productionExamples": "Examples",
+    "audienceResonance": "Audience Resonance",
+    "trustSafety": "Trust & Safety",
+    "platformTrust": "Platform & Trust",
+    "signIn": "Sign In",
+    "startProject": "Start a Project",
+    "dashboard": "Dashboard",
+    "adminPanel": "Admin Panel",
+    "signOut": "Sign Out",
+    "goToDashboard": "Go to Dashboard",
+    "userFallback": "User",
+    "searchLanguages": "Search languages...",
+    "noLanguagesFound": "No languages found"
+  },
+  "floatingNav": {
+    "compare": "Compare",
+    "looksAndFormats": "Looks & Formats",
+    "howItWorks": "How It Works",
+    "useCases": "Use Cases",
+    "productionExamples": "Examples",
+    "twoModes": "Director vs Go",
+    "keyFeatures": "Key Features",
+    "audienceResonance": "Audience Resonance",
+    "preVisEngine": "Pre-Vis Engine",
+    "platformWalkthrough": "Platform Walkthrough",
+    "trustSafety": "Trust & Safety",
+    "platform": "Platform",
+    "pricing": "Pricing"
+  },
+  "hero": {
+    "eyebrow": "The first AI pipeline for long-form video and series",
+    "availabilityBadge": "Full access opens November 2026",
+    "headline": "Build Worlds. Not Just Clips.",
+    "subheadline": "Don’t settle for isolated generations. SceneFlow maintains character continuity, persistent environments, and complex narratives from your first scene to your hundredth — then ships it as a multi-language master.",
+    "ctaPrimaryLaunch": "Start Your Production",
+    "ctaSupportingLine": "",
+    "ctaSecondary": "Explore How It Works",
+    "ctaToolStack": "See how it replaces your tool stack",
+    "chips": [
+      {
+        "label": "Persistent Continuity",
+        "detail": "The Reference Library locks faces, wardrobe, voices, and locations through scene 100."
+      },
+      {
+        "label": "Direct Before You Render",
+        "detail": "Lock a feature-length animatic on low-cost beat frames, then pay for high-res."
+      },
+      {
+        "label": "Built for Every Audience",
+        "detail": "Produce, dub, and tune for each culture and region in 70+ languages."
+      }
+    ],
+    "pipelineSteps": [
+      "Blueprint",
+      "Production",
+      "Screening Room"
+    ],
+    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
+    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.",
+    "playWithNarration": "Play with narration",
+    "tapToHear": "Tap to hear",
+    "fullscreen": "Fullscreen",
+    "heroVideoLanguages": {
+      "en": {
+        "label": "English",
+        "nativeLabel": "English"
+      },
+      "es": {
+        "label": "Spanish",
+        "nativeLabel": "Español"
+      },
+      "pt": {
+        "label": "Portuguese",
+        "nativeLabel": "Português"
+      },
+      "hi": {
+        "label": "Hindi",
+        "nativeLabel": "हिन्दी"
+      },
+      "zh": {
+        "label": "Chinese",
+        "nativeLabel": "中文"
+      },
+      "ar": {
+        "label": "Arabic",
+        "nativeLabel": "العربية"
+      },
+      "th": {
+        "label": "Thai",
+        "nativeLabel": "ไทย"
+      }
+    },
+    "soon": "Soon",
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
+  },
+  "twoModes": {
+    "title": "Two modes at every step. One long-form pipeline.",
+    "subtitle": "Hundreds of tools will hand you a five-second clip and hope you like it. SceneFlow gives you a choice at every step of the pipeline: direct it yourself, or let the studio run it. Both read from the same locked references, so continuity holds either way.",
+    "go": {
+      "name": "SceneFlow Go",
+      "badge": "Fastest way to test an idea",
+      "tagline": "Prototype the episode before you commit to it.",
+      "points": [
+        "Generate the structural backbone of an entire episode in under 10 minutes.",
+        "Enter a concept or script, click Go, and come back to a finished animatic.",
+        "Automatically handles Blueprint, structure, references, frames, audio, and assembly.",
+        "Hand the result to Director Mode the moment you want the wheel."
+      ],
+      "cta": "Try Go Mode"
+    },
+    "director": {
+      "name": "SceneFlow Studio",
+      "subtitle": "Director Mode",
+      "badge": "Built for long-form",
+      "tagline": "Where features and series actually get made.",
+      "points": [
+        "Hold pacing, emotion, and continuity across a 120-minute feature or a full season.",
+        "Direct in plain language against locked references — no prompt engineering, no copy-pasting between tool stacks.",
+        "Step in at any point in the pipeline: Blueprint, Production, or Screening Room.",
+        "Fine-tune visuals, character emotion, dialogue timing, and music beat by beat.",
+        "Complete pre-visualization and master production workflow."
+      ],
+      "cta": "Launch Studio ($9)"
+    }
+  },
+  "infrastructure": {
+    "title": "Enterprise-Grade Infrastructure & Security",
+    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   },
   "valueProp": {
     "pills": [
@@ -975,48 +1014,47 @@
       "items": [
         {
           "id": "photorealistic",
-          "name": "Photorealistic",
+          "name": "Cinematic Live-Action",
           "displayTitle": "Photorealism",
-          "description": "Professional photography style",
+          "description": "Photorealistic, filmic lighting",
           "tagline": "Prestige longform realism",
           "marketingBody": "Photorealism delivers the mainstream appeal prestige TV and documentary audiences expect. Lock realistic characters and lighting across chained beats so episodic drama and docuseries maintain emotional continuity from opener to finale.",
           "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_w5y03bw5y03bw5y0.jpeg"
         },
         {
-          "id": "anime-90s",
-          "name": "Anime (90s)",
-          "displayTitle": "Anime",
-          "description": "Classic 90s anime style",
-          "tagline": "Serialized narrative arcs",
-          "marketingBody": "Anime-style cel shading carries deep fan engagement across multi-episode web series and longform narrative arcs. Generative engines trained on this medium yield crisp line art and predictable framing — ideal for serialized production at scale.",
-          "featured": true,
-          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_5qoasf5qoasf5qoa.jpeg"
+          "id": "cinematic-3d",
+          "name": "Cinematic 3D / CGI",
+          "displayTitle": "Cinematic 3D / CGI",
+          "description": "Rendered 3D feature-film look",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_zi32rnzi32rnzi32.jpeg"
         },
         {
           "id": "pixar",
-          "name": "Pixar Animation",
+          "name": "3D Animation (Pixar-style)",
           "displayTitle": "3D Cinematic / Pixar-Inspired",
-          "description": "3D animated Pixar style",
+          "description": "Stylized 3D animated feature",
           "tagline": "Emotional continuity across episodes",
           "marketingBody": "Soft, rounded geometry and expressive character design create emotional warmth that sustains viewers across a full season. Perfect for animated series, family longform, and branded storytelling where character consistency matters beat to beat.",
           "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_zi32rnzi32rnzi32.jpeg"
         },
         {
-          "id": "concept-art",
-          "name": "Concept Art",
-          "displayTitle": "Concept Art",
-          "description": "Game/film concept art",
-          "tagline": "Film and series pre-vis keyframes with moody, production-ready lighting.",
-          "featured": false,
-          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_qlf261qlf261qlf2.jpeg"
+          "id": "anime-90s",
+          "name": "Anime",
+          "displayTitle": "Anime",
+          "description": "Cel-shaded anime style",
+          "tagline": "Serialized narrative arcs",
+          "marketingBody": "Anime-style cel shading carries deep fan engagement across multi-episode web series and longform narrative arcs. Generative engines trained on this medium yield crisp line art and predictable framing — ideal for serialized production at scale.",
+          "featured": true,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_5qoasf5qoasf5qoa.jpeg"
         },
         {
           "id": "ghibli",
           "name": "Ghibli-esque",
           "displayTitle": "Hand-Drawn / Ghibli-Style",
-          "description": "Studio Ghibli inspired",
+          "description": "Hand-drawn, painterly animation",
           "tagline": "Craft as luxury",
           "marketingBody": "This style taps directly into a major creative movement prioritizing \"Craft as Luxury.\" Watercolor textures and painterly backgrounds build handcrafted episodic worlds where organic imperfection reads as deliberate artistry across a longform series.",
           "featured": true,
@@ -1026,19 +1064,35 @@
           "id": "comic-book",
           "name": "Comic Book",
           "displayTitle": "Comic Book",
-          "description": "Comic book ink style",
+          "description": "Bold ink, graphic-novel look",
           "tagline": "Bold ink, halftone texture, and pop-art color for multi-episode serial storytelling.",
           "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_ezhp8cezhp8cezhp.jpeg"
         },
         {
-          "id": "oil-painting",
-          "name": "Oil Painting",
-          "displayTitle": "Oil Painting",
-          "description": "Classical oil painting",
-          "tagline": "Classical brushwork and rich pigment for documentary and historical longform.",
+          "id": "concept-art",
+          "name": "Concept Art",
+          "displayTitle": "Concept Art",
+          "description": "Cinematic game/film concept art",
+          "tagline": "Film and series pre-vis keyframes with moody, production-ready lighting.",
           "featured": false,
-          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_qlf261qlf261qlf2.jpeg"
+        },
+        {
+          "id": "flat-vector",
+          "name": "Flat Vector / Motion Graphics",
+          "displayTitle": "Flat Vector / Motion Graphics",
+          "description": "Clean vector look for explainers",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_omdmt6omdmt6omdm.jpeg"
+        },
+        {
+          "id": "storyboard",
+          "name": "Storyboard / Animatic",
+          "displayTitle": "Storyboard / Animatic",
+          "description": "Rough greyscale storyboard frames",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
         },
         {
           "id": "digital-art",
@@ -1060,12 +1114,21 @@
         },
         {
           "id": "sketch",
-          "name": "Sketch/Line Art",
-          "displayTitle": "Sketch/Line Art",
+          "name": "Sketch / Line Art",
+          "displayTitle": "Sketch / Line Art",
           "description": "Pencil sketch style",
           "tagline": "Detailed linework and pencil texture for pre-vis-to-production longform beats.",
           "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
+        },
+        {
+          "id": "oil-painting",
+          "name": "Oil Painting",
+          "displayTitle": "Oil Painting",
+          "description": "Classical oil painting",
+          "tagline": "Classical brushwork and rich pigment for documentary and historical longform.",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         }
       ]
     },
@@ -1182,8 +1245,8 @@
     "proofLine": "Validated on a residential listing tour: full manual stack 4+ hours → same deliverable in SceneFlow under an hour."
   },
   "comparison": {
-    "title": "Production speed without the overhead",
-    "subtitle": "Replace fragmented prompt tools and manual assembly with one automated studio — from first concept to publish-ready master.",
+    "title": "Stop pulling the lever. Start running a production.",
+    "subtitle": "Clip generators re-roll the dice on every prompt — new face, new room, new voice. SceneFlow reads every shot from the same locked references, so scene 100 still matches scene 1.",
     "caption": "One studio replaces fragmented prompt tools, manual edits, and multi-platform handoffs",
     "imageAlt": "Traditional production overhead vs SceneFlow automated studio — faster concept to publish-ready video"
   },
@@ -1380,7 +1443,6 @@
     "ui": {
       "useCases": "Use Cases",
       "sectors": "{count} SECTORS",
-      "demoComingSoon": "Demo Coming Soon",
       "selectExample": "SELECT A USE CASE TO LEARN MORE",
       "hearStory": "Hear the Story",
       "pauseStory": "Pause story",
@@ -1397,6 +1459,7 @@
       "theWin": "The \"Win\"",
       "frameAnchoredTitle": "Frame-Anchored Continuity",
       "frameAnchoredDescription": "SceneFlow is the only tool that allows Frame-Anchored continuity, ensuring your client's product or character remains identical across every scene segment.",
+      "demoComingSoon": "Demo Coming Soon",
       "closePreview": "Close Preview",
       "expandVideo": "Expand Video",
       "expandImage": "Expand Image",
@@ -1589,7 +1652,7 @@
           {
             "id": "episodic-youtube-series",
             "label": "Episodic YouTube Series",
-            "description": "Imagine auto-generated season arcs in Series Studio—episode outlines sync into Blueprint Studio and Production Studio so every face, voice, and beat stays aligned across a growing channel."
+            "description": "Imagine auto-generated season arcs in Series Studio—episode outlines sync into Blueprint and Production so every face, voice, and beat stays aligned across a growing channel."
           },
           {
             "id": "creator-reality-competition",
@@ -2260,23 +2323,23 @@
   "coreCapabilities": {
     "audienceResonance": {
       "badge": "Intelligence Layer",
-      "title": "Audience Resonance Analysis",
-      "description": "Know your score before you invest in full renders. Target Audience Resonance scores Blueprint Studio and script with actionable fixes — optimize every beat before Express and video generation.",
+      "title": "Audience Resonance: build for a culture, not a language code",
+      "description": "Subtitles stretch one video’s reach. SceneFlow lets you name the culture, region, and demographic you are making for, score the story against that audience before you render, and then ship either a dubbed master or a separate high-resonance version per audience.",
       "bullets": [
-        "Determine your specific target audience",
-        "Get real-time score, analysis, and recommendations",
-        "One-click fixes to resolve narrative weaknesses",
-        "Guided Edit to optimize Episodes, Blueprint Studio, and Script"
+        "Define the audience: eight target regions, plus age, gender, education, and community",
+        "Describe culture, faith, and values in your own words — SceneFlow reads the signals",
+        "Get a resonance score with section-level fixes before you spend on renders",
+        "Dub the master, or produce a distinct version tuned to each audience"
       ],
       "cta": "Analyze Your Script",
       "howWeScore": {
         "toggle": "How we score",
         "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
         "bullets": [
           "Scores Blueprint and script against your stated target audience",
+          "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
           "Section-level recommendations — not a black-box “trust us” number",
-          "Actionable one-click fixes and guided edit — not just a grade",
           "Run before heavy render spend, not after publish"
         ]
       }
@@ -2284,7 +2347,7 @@
     "express": {
       "badge": "Hyper-Speed Production",
       "title": "Sceneflow Express",
-      "description": "Auto-generate pre-vis, animatics, and video beats concurrently. Move from script to shareable preview in minutes — then approve Beat Frames before final F2V spend.",
+      "description": "Auto-generate pre-vis, animatics, and video beats concurrently. Move from script to shareable preview in minutes — then approve Beat Frames before final F2V spend. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
           "title": "Express Pre-vis",
@@ -2337,28 +2400,28 @@
     "ctaSubtext": "Bridge traditional filmmaking and generative AI"
   },
   "exitIntent": {
-    "title": "Wait! Don't leave empty-handed",
-    "subtitle": "Get exclusive early access and tips for AI-powered filmmaking",
+    "title": "Before you go — want the launch date?",
+    "subtitle": "Full access opens November 2026. We'll email you the day it does.",
     "benefits": [
+      "Launch notification the day access opens",
       "Weekly AI filmmaking tutorials",
-      "Early access to new features",
       "Exclusive creator discounts"
     ],
     "emailPlaceholder": "Enter your email",
-    "subscribe": "Get Early Access",
+    "subscribe": "Notify me",
     "subscribing": "Subscribing...",
     "or": "or",
-    "startNow": "Start creating now for just $9 — September cohort forming →",
+    "startNow": "Start directing now for just $9 →",
     "privacy": "No spam, ever. Unsubscribe anytime.",
     "successTitle": "You're on the list!",
-    "successSubtitle": "Check your inbox for exclusive filmmaking tips and early access updates.",
+    "successSubtitle": "We'll email you when November access opens — plus the occasional filmmaking tip.",
     "ctaText": "Start Exploring — $9",
     "closePopup": "Close popup"
   },
   "pricing": {
     "badge": "Simple Pricing",
     "title": "Start with Explorer — $9",
-    "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
+    "subtitle": "Full access opens November 2026. Test the complete pipeline now with a frictionless $9 entry.",
     "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
     "trustBadges": [
       "Secure payments via Whop",
@@ -2439,8 +2502,8 @@
     "calculator": {
       "sectionTitle": "Estimate Your Project",
       "sectionSubtitle": "Know exactly what you'll pay before you commit",
-      "title": "Project Budget Calculator",
-      "subtitle": "Estimate credits before you start",
+      "title": "Production Budget Management",
+      "subtitle": "Set a credit budget, track production charges, and plan animatic-first before video.",
       "customize": "Customize parameters",
       "imagesLabel": "Images to generate",
       "videoClipsLabel": "Video clips",
@@ -2564,12 +2627,25 @@
     "expandSection": "Show section",
     "collapseSection": "Hide section"
   },
+  "notify": {
+    "heading": "Get notified when access opens",
+    "description": "Studio access opens in November 2026. Leave your email and we’ll tell you the day it does.",
+    "placeholder": "you@studio.com",
+    "submit": "Notify me",
+    "submitting": "Sending…",
+    "successTitle": "You’re on the list.",
+    "successBody": "We’ll email you as soon as November access opens. Nothing else.",
+    "errorEmpty": "Enter your email so we can reach you.",
+    "errorInvalid": "That email doesn’t look right. Check it and try again.",
+    "errorGeneric": "Something went wrong. Try again in a moment.",
+    "privacy": "One email at launch. No spam, unsubscribe anytime."
+  },
   "finalCta": {
-    "title": "Ready to create in Go or Director Mode?",
-    "subtitle": "Pick Go for speed or Director for control — start from the $9 Explorer plan or apply for Founding Creator access.",
-    "cta": "Start with Go Mode",
-    "ctaSecondary": "Apply for Founding Creator Access",
-    "ctaSecondaryHref": "/early-access"
+    "title": "Built for the stories that have to hold.",
+    "subtitle": "Full access opens November 2026. Leave your email and we’ll tell you the day it does — or start directing now from the $9 Explorer plan.",
+    "cta": "Explore plans",
+    "ctaSecondary": "See how it works",
+    "ctaSecondaryHref": "#key-features"
   },
   "footer": {
     "description": "End-to-end automated video production — from concept to publish-ready master. One guided studio: Series Studio → Blueprint Studio → Production Studio → Screening Room.",
@@ -2608,40 +2684,5 @@
     "mute": "Mute",
     "unmute": "Unmute",
     "expandVideo": "Expand Video"
-  },
-  "twoModes": {
-    "title": "One Platform. Two Experiences.",
-    "go": {
-      "name": "SceneFlow Go",
-      "tagline": "Concept to animatic in minutes.",
-      "points": [
-        "Full intelligence and automation.",
-        "Enter a concept or script, click Go, and take a break.",
-        "Automatically handles Blueprint, structure, references, frames, audio, and animatic assembly.",
-        "Complete animatic ready in under 10 minutes.",
-        "Light natural-language revisions available on demand."
-      ],
-      "cta": "Try Go Mode"
-    },
-    "director": {
-      "name": "SceneFlow Studio",
-      "subtitle": "Director Mode",
-      "tagline": "Every visual, emotion, line, and note under your direction.",
-      "points": [
-        "Same powerful underlying AI pipeline with complete manual authorship.",
-        "Granular step-by-step control across every scene and beat.",
-        "Fine-tune visuals, character emotion, dialogue timing, and music choices.",
-        "Complete pre-visualization and master production workflow."
-      ],
-      "cta": "Launch Studio ($9)"
-    }
-  },
-  "infrastructure": {
-    "title": "Enterprise-Grade Infrastructure & Security",
-    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
-    "badges": {
-      "googleCloud": "Google Cloud",
-      "vertexAi": "Vertex AI"
-    }
   }
 }

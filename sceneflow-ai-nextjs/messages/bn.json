@@ -36,28 +36,29 @@
     "platform": "Platform",
     "pricing": "Pricing",
     "productionExamples": "Examples",
-    "twoModes": "Go vs Director",
-    "keyFeatures": "Key Features"
+    "twoModes": "Director vs Go",
+    "keyFeatures": "Key Features",
+    "audienceResonance": "Audience Resonance"
   },
   "hero": {
-    "headline": "Envision the Story. Let SceneFlow Run the Production.",
-    "subheadline": "Quickly Turn simple concepts or full film treatments into complete multi-scene videos automatically — or step in at any stage to direct scenes using natural language.",
+    "headline": "Build Worlds. Not Just Clips.",
+    "subheadline": "Don’t settle for isolated generations. SceneFlow maintains character continuity, persistent environments, and complex narratives from your first scene to your hundredth — then ships it as a multi-language master.",
     "ctaPrimaryLaunch": "Start Your Production",
     "ctaSupportingLine": "",
     "ctaSecondary": "Explore How It Works",
     "ctaToolStack": "See how it replaces your tool stack",
     "chips": [
       {
-        "label": "Flexible Inputs",
-        "detail": "Simple concepts or detailed film treatments."
+        "label": "Persistent Continuity",
+        "detail": "The Reference Library locks faces, wardrobe, voices, and locations through scene 100."
       },
       {
-        "label": "Automated Production",
-        "detail": "Hands-free generation of scripts, animatics, and master video."
+        "label": "Direct Before You Render",
+        "detail": "Lock a feature-length animatic on low-cost beat frames, then pay for high-res."
       },
       {
-        "label": "Natural Control",
-        "detail": "Refine shots, dialogue, and props without prompt engineering."
+        "label": "Built for Every Audience",
+        "detail": "Produce, dub, and tune for each culture and region in 70+ languages."
       }
     ],
     "pipelineSteps": [
@@ -101,7 +102,9 @@
       }
     },
     "soon": "Soon",
-    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}",
+    "eyebrow": "The first AI pipeline for long-form video and series",
+    "availabilityBadge": "Full access opens November 2026"
   },
   "valueProp": {
     "pills": [
@@ -632,8 +635,8 @@
     "proofLine": "একটি আবাসিক প্রপার্টি ট্যুরের মাধ্যমে যাচাই করা হয়েছে: সম্পূর্ণ ম্যানুয়াল প্রক্রিয়ায় ৪ ঘণ্টারও বেশি সময় লাগত → SceneFlow-এর মাধ্যমে এক ঘণ্টারও কম সময়ে একই ফলাফল পাওয়া যাচ্ছে।"
   },
   "comparison": {
-    "title": "অতিরিক্ত খরচ বা ঝামেলা ছাড়াই দ্রুত উৎপাদন",
-    "subtitle": "বিচ্ছিন্ন সব প্রম্পট টুল ও ম্যানুয়াল সংযোজন প্রক্রিয়ার পরিবর্তে ব্যবহার করুন একটি স্বয়ংক্রিয় স্টুডিও — যা প্রাথমিক ধারণা থেকে শুরু করে প্রকাশের জন্য প্রস্তুত চূড়ান্ত সংস্করণ পর্যন্ত সবকিছুর সমাধান দেয়।",
+    "title": "Stop pulling the lever. Start running a production.",
+    "subtitle": "Clip generators re-roll the dice on every prompt — new face, new room, new voice. SceneFlow reads every shot from the same locked references, so scene 100 still matches scene 1.",
     "caption": "একটিমাত্র স্টুডিও বিচ্ছিন্ন প্রম্পট টুল, ম্যানুয়াল এডিট এবং একাধিক প্ল্যাটফর্মের মধ্যে কাজের আদান-প্রদানের প্রক্রিয়াকে প্রতিস্থাপন করে।",
     "imageAlt": "প্রথাগত প্রোডাকশন খরচ বনাম SceneFlow অটোমেটেড স্টুডিও — ধারণা থেকে প্রকাশের উপযোগী ভিডিও তৈরির দ্রুততর প্রক্রিয়া"
   },
@@ -1450,50 +1453,50 @@
   },
   "coreCapabilities": {
     "audienceResonance": {
-      "badge": "বুদ্ধিমত্তা স্তর",
-      "title": "Audience Resonance বিশ্লেষণ",
-      "description": "সম্পূর্ণ রেন্ডারিং-এর পেছনে বিনিয়োগ করার আগেই আপনার স্কোর জেনে নিন। কার্যকর সংশোধনের মাধ্যমে Audience Resonance স্কোর ও Blueprint-এর লক্ষ্য পূরণ করুন—এক্সপ্রেস (Express) ও ভিডিও তৈরির আগেই প্রতিটি বিট অপ্টিমাইজ করে নিন।",
+      "badge": "Intelligence Layer",
+      "title": "Audience Resonance: build for a culture, not a language code",
+      "description": "Subtitles stretch one video’s reach. SceneFlow lets you name the culture, region, and demographic you are making for, score the story against that audience before you render, and then ship either a dubbed master or a separate high-resonance version per audience.",
       "bullets": [
-        "আপনার সুনির্দিষ্ট লক্ষ্য-দর্শক নির্ধারণ করুন।",
-        "রিয়েল-টাইম স্কোর, বিশ্লেষণ এবং সুপারিশ পান",
-        "বর্ণনার দুর্বলতা দূর করার জন্য এক-ক্লিকে সমাধান",
-        "পর্ব, Blueprint এবং স্ক্রিপ্ট অপ্টিমাইজ করার জন্য নির্দেশিত সম্পাদনা"
+        "Define the audience: eight target regions, plus age, gender, education, and community",
+        "Describe culture, faith, and values in your own words — SceneFlow reads the signals",
+        "Get a resonance score with section-level fixes before you spend on renders",
+        "Dub the master, or produce a distinct version tuned to each audience"
       ],
-      "cta": "আপনার স্ক্রিপ্ট বিশ্লেষণ করুন",
+      "cta": "Analyze Your Script",
       "howWeScore": {
-        "toggle": "আমরা যেভাবে স্কোর করি",
-        "title": "Audience Resonance যেভাবে কাজ করে",
-        "description": "Audience Resonance আখ্যানের গঠন বিশ্লেষণ (যেমন—স্পষ্টতা, গতি বা পেসিং এবং আবেগের প্রবাহ) এবং Blueprint-এ আপনার নির্ধারিত দর্শকদের সাথে বিষয়বস্তুর সামঞ্জস্য—উভয়কেই বিবেচনায় নেয়; এটি কেবল বাহ্যিক জনপ্রিয়তা বা প্রকাশের পরবর্তী দর্শক ধরে রাখার হারের (retention data) মতো অগভীর তথ্যের ওপর নির্ভর করে না। এর পরামর্শগুলো স্ক্রিপ্টের নির্দিষ্ট অংশের সাথে যুক্ত থাকে, ফলে 'এক্সপ্রেস' (Express) বা ভিডিও তৈরির আগেই আপনি প্রয়োজনীয় সংশোধন করে নিতে পারেন।",
+        "toggle": "How we score",
+        "title": "How Audience Resonance works",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
         "bullets": [
-          "আপনার নির্ধারিত লক্ষ্য-শ্রোতাদের সাপেক্ষে Blueprint এবং স্ক্রিপ্ট-এর স্কোর যাচাই করুন।",
-          "বিভাগ-ভিত্তিক সুপারিশ — কোনো অস্পষ্ট 'আমাদের ওপর ভরসা রাখুন' গোছের সংখ্যা নয়।",
-          "এক-ক্লিকে কার্যকর সমাধান ও নির্দেশিত সম্পাদনা — কেবল কোনো গ্রেড নয়",
-          "ভারী রেন্ডারিংয়ের পেছনে অর্থ ব্যয়ের আগেই এটি চালান, প্রকাশের পরে নয়।"
+          "Scores Blueprint and script against your stated target audience",
+          "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
+          "Section-level recommendations — not a black-box “trust us” number",
+          "Run before heavy render spend, not after publish"
         ]
       }
     },
     "express": {
-      "badge": "অতি-দ্রুত উৎপাদন",
-      "title": "সিনফ্লো এক্সপ্রেস",
-      "description": "একই সাথে প্রি-ভিজ (pre-vis), অ্যানিমেটিক্স এবং ভিডিও বিটগুলো স্বয়ংক্রিয়ভাবে তৈরি করুন। স্ক্রিপ্ট থেকে শেয়ারযোগ্য প্রিভিউ পর্যায়ে পৌঁছান মাত্র কয়েক মিনিটের মধ্যে—এরপর চূড়ান্ত F2V ব্যয়ের আগে Beat Frames অনুমোদন করুন।",
+      "badge": "Hyper-Speed Production",
+      "title": "Sceneflow Express",
+      "description": "Auto-generate pre-vis, animatics, and video beats concurrently. Move from script to shareable preview in minutes — then approve Beat Frames before final F2V spend. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
           "title": "Express Pre-vis",
-          "desc": "ঘণ্টার পরিবর্তে মাত্র কয়েক মিনিটেই অডিও ও ভিডিও প্রি-ভিজ্যুয়ালাইজেশন (pre-vis) পর্যালোচনা ও শেয়ার করুন।",
-          "time": "মিনিট বনাম ঘণ্টা"
+          "desc": "Review and share audio and video pre-vis in minutes vs hours.",
+          "time": "Minutes vs Hours"
         },
         {
-          "title": "Animatic-গুলিকে প্রকাশ করুন",
-          "desc": "উচ্চমানের ভয়েসওভারসহ সম্পূর্ণ 'কেন বার্নস' (Ken Burns) অ্যানিমেটিক দৃশ্য তাৎক্ষণিকভাবে রেন্ডার করুন।",
-          "time": "মিনিট বনাম ঘণ্টা"
+          "title": "Express Animatics",
+          "desc": "Render full Ken Burns animatic scenes with high-end voiceovers instantly.",
+          "time": "Minutes vs Hours"
         },
         {
-          "title": "এক্সপ্রেস ভিডিও",
-          "desc": "একই সাথে ছবি ও ভিডিও তৈরির প্রক্রিয়াটি পরিচালনা করুন—যার মধ্যে দীর্ঘ সংলাপের অংশগুলোর জন্য নেটিভ 'Veo' এক্সটেনশন চেইনও অন্তর্ভুক্ত থাকবে।",
-          "time": "মিনিট বনাম দিন"
+          "title": "Express Video",
+          "desc": "Orchestrate concurrent image and video generation—including native Veo extension chains for long dialogue beats.",
+          "time": "Minutes vs Days"
         }
       ],
-      "cta": "এক্সপ্রেস রেন্ডারিং শুরু করুন"
+      "cta": "Start Express Rendering"
     }
   },
   "preVisEngine": {
@@ -1528,28 +1531,28 @@
     "ctaSubtext": "প্রথাগত চলচ্চিত্র নির্মাণ ও জেনারেটিভ এআই-এর মধ্যে সেতুবন্ধন তৈরি করা"
   },
   "exitIntent": {
-    "title": "অপেক্ষা করুন! খালি হাতে ছাড়বেন না",
-    "subtitle": "AI-চালিত চলচ্চিত্র নির্মাণের জন্য একচেটিয়া প্রাথমিক অ্যাক্সেস এবং পরামর্শ পান",
+    "title": "Before you go — want the launch date?",
+    "subtitle": "Full access opens November 2026. We'll email you the day it does.",
     "benefits": [
-      "সাপ্তাহিক AI ফিল্মমেকিং টিউটোরিয়াল",
-      "নতুন ফিচারগুলিতে দ্রুত অ্যাক্সেস",
-      "এক্সক্লুসিভ ক্রিয়েটর ডিসকাউন্ট"
+      "Launch notification the day access opens",
+      "Weekly AI filmmaking tutorials",
+      "Exclusive creator discounts"
     ],
-    "emailPlaceholder": "আপনার ইমেল ঠিকানা লিখুন",
-    "subscribe": "তাড়াতাড়ি অ্যাক্সেস পান",
-    "subscribing": "সদস্যতাকরণ",
-    "or": "অথবা",
-    "startNow": "মাত্র $ 9 — সেপ্টেম্বরের দল গঠনের জন্য এখনই তৈরি করা শুরু করুন →",
-    "privacy": "কোনও স্প্যাম নেই, কখনও নয় । যে কোনও সময় আনসাবস্ক্রাইব করুন ।",
-    "successTitle": "আপনি তালিকায় আছেন!",
-    "successSubtitle": "এক্সক্লুসিভ ফিল্মমেকিং টিপস এবং প্রারম্ভিক অ্যাক্সেস আপডেটের জন্য আপনার ইনবক্সটি দেখুন ।",
-    "ctaText": "অন্বেষণ শুরু করুন — $ 9",
-    "closePopup": "পপআপ বন্ধ করুন"
+    "emailPlaceholder": "Enter your email",
+    "subscribe": "Notify me",
+    "subscribing": "Subscribing...",
+    "or": "or",
+    "startNow": "Start directing now for just $9 →",
+    "privacy": "No spam, ever. Unsubscribe anytime.",
+    "successTitle": "You're on the list!",
+    "successSubtitle": "We'll email you when November access opens — plus the occasional filmmaking tip.",
+    "ctaText": "Start Exploring — $9",
+    "closePopup": "Close popup"
   },
   "pricing": {
     "badge": "Simple Pricing",
     "title": "Start with Explorer — $9",
-    "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
+    "subtitle": "Full access opens November 2026. Test the complete pipeline now with a frictionless $9 entry.",
     "valueAnchor": {
       "traditionalCost": "$2,000+",
       "traditionalLabel": "Traditional pre-vis",
@@ -1756,11 +1759,11 @@
     "collapseSection": "বিভাগটি আড়াল করুন"
   },
   "finalCta": {
-    "title": "Ready to create in Go or Director Mode?",
-    "subtitle": "Pick Go for speed or Director for control — start from the $9 Explorer plan or apply for Founding Creator access.",
-    "cta": "Start with Go Mode",
-    "ctaSecondary": "Apply for Founding Creator Access",
-    "ctaSecondaryHref": "/early-access"
+    "title": "Built for the stories that have to hold.",
+    "subtitle": "Full access opens November 2026. Leave your email and we’ll tell you the day it does — or start directing now from the $9 Explorer plan.",
+    "cta": "Explore plans",
+    "ctaSecondary": "See how it works",
+    "ctaSecondaryHref": "#key-features"
   },
   "footer": {
     "description": "এন্ড-টু-এন্ড অটোমেটেড ভিডিও প্রোডাকশন — ধারণা থেকে প্রকাশ-প্রস্তুত মাস্টার পর্যন্ত । একটি নির্দেশিত স্টুডিও: Series Studio → Blueprint Studio → Production Studio → Screening Room ।",
@@ -2166,30 +2169,33 @@
     ]
   },
   "keyFeatures": {
-    "landingUiLanguagesLabel": "UI এবং প্রোডাকশন 39টি ভাষায় পাওয়া যায়"
+    "landingUiLanguagesLabel": "Produce and dub in 70+ languages. This site is available in these 39:"
   },
   "twoModes": {
-    "title": "One Platform. Two Experiences.",
+    "title": "Two modes at every step. One long-form pipeline.",
+    "subtitle": "Hundreds of tools will hand you a five-second clip and hope you like it. SceneFlow gives you a choice at every step of the pipeline: direct it yourself, or let the studio run it. Both read from the same locked references, so continuity holds either way.",
     "go": {
       "name": "SceneFlow Go",
-      "tagline": "Concept to animatic in minutes.",
+      "badge": "Fastest way to test an idea",
+      "tagline": "Prototype the episode before you commit to it.",
       "points": [
-        "Full intelligence and automation.",
-        "Enter a concept or script, click Go, and take a break.",
-        "Automatically handles Blueprint, structure, references, frames, audio, and animatic assembly.",
-        "Complete animatic ready in under 10 minutes.",
-        "Light natural-language revisions available on demand."
+        "Generate the structural backbone of an entire episode in under 10 minutes.",
+        "Enter a concept or script, click Go, and come back to a finished animatic.",
+        "Automatically handles Blueprint, structure, references, frames, audio, and assembly.",
+        "Hand the result to Director Mode the moment you want the wheel."
       ],
       "cta": "Try Go Mode"
     },
     "director": {
       "name": "SceneFlow Studio",
       "subtitle": "Director Mode",
-      "tagline": "Every visual, emotion, line, and note under your direction.",
+      "badge": "Built for long-form",
+      "tagline": "Where features and series actually get made.",
       "points": [
-        "Same powerful underlying AI pipeline with complete manual authorship.",
-        "Granular step-by-step control across every scene and beat.",
-        "Fine-tune visuals, character emotion, dialogue timing, and music choices.",
+        "Hold pacing, emotion, and continuity across a 120-minute feature or a full season.",
+        "Direct in plain language against locked references — no prompt engineering, no copy-pasting between tool stacks.",
+        "Step in at any point in the pipeline: Blueprint, Production, or Screening Room.",
+        "Fine-tune visuals, character emotion, dialogue timing, and music beat by beat.",
         "Complete pre-visualization and master production workflow."
       ],
       "cta": "Launch Studio ($9)"
@@ -2202,5 +2208,18 @@
       "googleCloud": "Google Cloud",
       "vertexAi": "Vertex AI"
     }
+  },
+  "notify": {
+    "heading": "Get notified when access opens",
+    "description": "Studio access opens in November 2026. Leave your email and we’ll tell you the day it does.",
+    "placeholder": "you@studio.com",
+    "submit": "Notify me",
+    "submitting": "Sending…",
+    "successTitle": "You’re on the list.",
+    "successBody": "We’ll email you as soon as November access opens. Nothing else.",
+    "errorEmpty": "Enter your email so we can reach you.",
+    "errorInvalid": "That email doesn’t look right. Check it and try again.",
+    "errorGeneric": "Something went wrong. Try again in a moment.",
+    "privacy": "One email at launch. No spam, unsubscribe anytime."
   }
 }

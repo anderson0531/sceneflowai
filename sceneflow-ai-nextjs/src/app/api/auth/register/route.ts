@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     if (!isDemoMode()) {
       return NextResponse.json(
-        { error: 'Registration is closed during beta. Apply at /early-access.' },
+        { error: 'Registration opens with full access in November 2026. Join the launch list at sceneflowai.studio.' },
         { status: 403 }
       )
     }

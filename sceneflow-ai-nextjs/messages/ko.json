@@ -36,28 +36,29 @@
     "platform": "Platform",
     "pricing": "Pricing",
     "productionExamples": "Examples",
-    "twoModes": "Go vs Director",
-    "keyFeatures": "Key Features"
+    "twoModes": "Director vs Go",
+    "keyFeatures": "Key Features",
+    "audienceResonance": "Audience Resonance"
   },
   "hero": {
-    "headline": "Envision the Story. Let SceneFlow Run the Production.",
-    "subheadline": "Quickly Turn simple concepts or full film treatments into complete multi-scene videos automatically — or step in at any stage to direct scenes using natural language.",
+    "headline": "Build Worlds. Not Just Clips.",
+    "subheadline": "Don’t settle for isolated generations. SceneFlow maintains character continuity, persistent environments, and complex narratives from your first scene to your hundredth — then ships it as a multi-language master.",
     "ctaPrimaryLaunch": "Start Your Production",
     "ctaSupportingLine": "",
     "ctaSecondary": "Explore How It Works",
     "ctaToolStack": "See how it replaces your tool stack",
     "chips": [
       {
-        "label": "Flexible Inputs",
-        "detail": "Simple concepts or detailed film treatments."
+        "label": "Persistent Continuity",
+        "detail": "The Reference Library locks faces, wardrobe, voices, and locations through scene 100."
       },
       {
-        "label": "Automated Production",
-        "detail": "Hands-free generation of scripts, animatics, and master video."
+        "label": "Direct Before You Render",
+        "detail": "Lock a feature-length animatic on low-cost beat frames, then pay for high-res."
       },
       {
-        "label": "Natural Control",
-        "detail": "Refine shots, dialogue, and props without prompt engineering."
+        "label": "Built for Every Audience",
+        "detail": "Produce, dub, and tune for each culture and region in 70+ languages."
       }
     ],
     "pipelineSteps": [
@@ -101,7 +102,9 @@
       }
     },
     "soon": "Soon",
-    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}",
+    "eyebrow": "The first AI pipeline for long-form video and series",
+    "availabilityBadge": "Full access opens November 2026"
   },
   "valueProp": {
     "pills": [
@@ -632,8 +635,8 @@
     "proofLine": "주거용 매물 투어 사례로 검증 완료: 전체 수동 작업 시 4시간 이상 소요 → SceneFlow 활용 시 1시간 이내에 동일한 결과물 산출."
   },
   "comparison": {
-    "title": "오버헤드 없는 생산 속도",
-    "subtitle": "단편적인 프롬프트 도구와 수작업 조립 과정을 하나의 자동화된 스튜디오로 대체하세요. 초기 컨셉부터 즉시 게시 가능한 최종 결과물까지 모두 아우릅니다.",
+    "title": "Stop pulling the lever. Start running a production.",
+    "subtitle": "Clip generators re-roll the dice on every prompt — new face, new room, new voice. SceneFlow reads every shot from the same locked references, so scene 100 still matches scene 1.",
     "caption": "단일 스튜디오가 파편화된 프롬프트 도구, 수동 편집, 그리고 여러 플랫폼 간의 작업 이관 과정을 대체합니다.",
     "imageAlt": "기존 제작의 간접 비용 대비 SceneFlow 자동화 스튜디오 — 기획부터 게시 가능한 영상 완성까지 더 빠른 과정"
   },
@@ -1450,50 +1453,50 @@
   },
   "coreCapabilities": {
     "audienceResonance": {
-      "badge": "인텔리전스 계층",
-      "title": "Audience Resonance 분석",
-      "description": "본격적인 렌더링에 투자하기 전에 먼저 점수를 확인하세요. 실행 가능한 수정 사항을 바탕으로 Audience Resonance 점수 Blueprint 및 스크립트를 최적화하여, Express 및 영상 생성 단계에 들어가기 전 모든 비트를 다듬으세요.",
+      "badge": "Intelligence Layer",
+      "title": "Audience Resonance: build for a culture, not a language code",
+      "description": "Subtitles stretch one video’s reach. SceneFlow lets you name the culture, region, and demographic you are making for, score the story against that audience before you render, and then ship either a dubbed master or a separate high-resonance version per audience.",
       "bullets": [
-        "구체적인 타겟 고객을 파악하십시오.",
-        "실시간 점수, 분석 및 추천을 확인하세요.",
-        "서사적 약점을 해결하는 원클릭 수정 기능",
-        "에피소드, Blueprint 및 스크립트를 최적화하기 위한 가이드 편집"
+        "Define the audience: eight target regions, plus age, gender, education, and community",
+        "Describe culture, faith, and values in your own words — SceneFlow reads the signals",
+        "Get a resonance score with section-level fixes before you spend on renders",
+        "Dub the master, or produce a distinct version tuned to each audience"
       ],
-      "cta": "대본을 분석하세요.",
+      "cta": "Analyze Your Script",
       "howWeScore": {
-        "toggle": "평가 방식",
-        "title": "Audience Resonance의 작동 방식",
-        "description": "Audience Resonance는 단순한 허수 지표(vanity metrics)나 게시 후의 유지율 데이터가 아니라, 서사 구조 분석(명확성, 속도감, 감정의 흐름)과 Blueprint에서 정의한 타겟 페르소나에 대한 적합성을 결합하여 분석합니다. 개선 제안 사항은 구체적인 스크립트 구간과 연동되므로, Express 기능이나 영상 생성 단계로 넘어가기 전에 문제를 수정할 수 있습니다.",
+        "toggle": "How we score",
+        "title": "How Audience Resonance works",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
         "bullets": [
-          "설정하신 타겟 오디언스를 기준으로 Blueprint 및 스크립트를 평가합니다.",
-          "섹션 단위의 권장 사항 — 단순히 ‘우리를 믿으라’는 식의 블랙박스형 수치가 아닙니다.",
-          "단순한 등급 평가를 넘어, 즉시 실행 가능한 원클릭 수정 및 가이드 편집 기능 제공",
-          "게시 후가 아니라, 렌더링에 많은 비용이 발생하기 전에 실행하세요."
+          "Scores Blueprint and script against your stated target audience",
+          "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
+          "Section-level recommendations — not a black-box “trust us” number",
+          "Run before heavy render spend, not after publish"
         ]
       }
     },
     "express": {
-      "badge": "초고속 생산",
-      "title": "씬플로우 익스프레스",
-      "description": "프리비즈(pre-vis), 애니매틱스, 비디오 비트를 동시에 자동 생성하세요. 대본에서 공유 가능한 프리뷰 단계로 전환하는 데 걸리는 시간은 단 몇 분에 불과합니다. 이후 최종 F2V 비용을 집행하기 전에 Beat Frames를 승인하면 됩니다.",
+      "badge": "Hyper-Speed Production",
+      "title": "Sceneflow Express",
+      "description": "Auto-generate pre-vis, animatics, and video beats concurrently. Move from script to shareable preview in minutes — then approve Beat Frames before final F2V spend. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
           "title": "Express Pre-vis",
-          "desc": "오디오 및 비디오 프리비즈(pre-vis)를 검토하고 공유하는 데 걸리는 시간을 몇 시간에서 몇 분으로 단축하세요.",
-          "time": "분 대 시간"
+          "desc": "Review and share audio and video pre-vis in minutes vs hours.",
+          "time": "Minutes vs Hours"
         },
         {
-          "title": "Animatic을(를) 나타내십시오.",
-          "desc": "고품질 보이스오버를 곁들인 켄 번스(Ken Burns) 스타일의 애니매틱 장면을 즉시 렌더링하세요.",
-          "time": "분 대 시간"
+          "title": "Express Animatics",
+          "desc": "Render full Ken Burns animatic scenes with high-end voiceovers instantly.",
+          "time": "Minutes vs Hours"
         },
         {
-          "title": "익스프레스 비디오",
-          "desc": "긴 대화 구간을 위한 네이티브 Veo 확장 체인을 포함하여, 이미지와 비디오의 동시 생성을 통합적으로 관리하세요.",
-          "time": "분 대 일"
+          "title": "Express Video",
+          "desc": "Orchestrate concurrent image and video generation—including native Veo extension chains for long dialogue beats.",
+          "time": "Minutes vs Days"
         }
       ],
-      "cta": "Express 렌더링 시작"
+      "cta": "Start Express Rendering"
     }
   },
   "preVisEngine": {
@@ -1528,28 +1531,28 @@
     "ctaSubtext": "전통적인 영화 제작과 생성형 AI를 연결하다"
   },
   "exitIntent": {
-    "title": "잠깐만요! 빈손으로 두지 마세요",
-    "subtitle": "AI 기반 영화 제작을 위한 독점 선공개 및 팁을 얻으세요",
+    "title": "Before you go — want the launch date?",
+    "subtitle": "Full access opens November 2026. We'll email you the day it does.",
     "benefits": [
-      "주간 AI 영화 제작 튜토리얼",
-      "새로운 기능 선공개",
-      "크리에이터 전용 할인"
+      "Launch notification the day access opens",
+      "Weekly AI filmmaking tutorials",
+      "Exclusive creator discounts"
     ],
-    "emailPlaceholder": "이메일 주소를 입력하세요.",
-    "subscribe": "얼리 액세스",
-    "subscribing": "구독 중...",
-    "or": "또는",
-    "startNow": "단돈 $ 9 — 9월 코호트 구성으로 지금 만들기 시작 →",
-    "privacy": "스팸이 없습니다. 언제든지 구독을 취소하세요.",
-    "successTitle": "목록에 있습니다!",
-    "successSubtitle": "받은 편지함에서 독점 영화 제작 팁과 선공개 업데이트를 확인하세요.",
-    "ctaText": "둘러보기 — $ 9",
-    "closePopup": "팝업 닫기"
+    "emailPlaceholder": "Enter your email",
+    "subscribe": "Notify me",
+    "subscribing": "Subscribing...",
+    "or": "or",
+    "startNow": "Start directing now for just $9 →",
+    "privacy": "No spam, ever. Unsubscribe anytime.",
+    "successTitle": "You're on the list!",
+    "successSubtitle": "We'll email you when November access opens — plus the occasional filmmaking tip.",
+    "ctaText": "Start Exploring — $9",
+    "closePopup": "Close popup"
   },
   "pricing": {
     "badge": "Simple Pricing",
     "title": "Start with Explorer — $9",
-    "subtitle": "September Early Access cohort forming. Test the full pipeline with a frictionless $9 entry.",
+    "subtitle": "Full access opens November 2026. Test the complete pipeline now with a frictionless $9 entry.",
     "valueAnchor": {
       "traditionalCost": "$2,000+",
       "traditionalLabel": "Traditional pre-vis",
@@ -1756,11 +1759,11 @@
     "collapseSection": "섹션 숨기기"
   },
   "finalCta": {
-    "title": "Ready to create in Go or Director Mode?",
-    "subtitle": "Pick Go for speed or Director for control — start from the $9 Explorer plan or apply for Founding Creator access.",
-    "cta": "Start with Go Mode",
-    "ctaSecondary": "Apply for Founding Creator Access",
-    "ctaSecondaryHref": "/early-access"
+    "title": "Built for the stories that have to hold.",
+    "subtitle": "Full access opens November 2026. Leave your email and we’ll tell you the day it does — or start directing now from the $9 Explorer plan.",
+    "cta": "Explore plans",
+    "ctaSecondary": "See how it works",
+    "ctaSecondaryHref": "#key-features"
   },
   "footer": {
     "description": "개념부터 게시 준비 마스터에 이르기까지 엔드 투 엔드 자동 동영상 제작. 원 가이드 스튜디오: Series Studio → Blueprint Studio → Production Studio → Screening Room.",
@@ -2166,30 +2169,33 @@
     ]
   },
   "keyFeatures": {
-    "landingUiLanguagesLabel": "39개 언어로 제공되는 UI 및 프로덕션"
+    "landingUiLanguagesLabel": "Produce and dub in 70+ languages. This site is available in these 39:"
   },
   "twoModes": {
-    "title": "One Platform. Two Experiences.",
+    "title": "Two modes at every step. One long-form pipeline.",
+    "subtitle": "Hundreds of tools will hand you a five-second clip and hope you like it. SceneFlow gives you a choice at every step of the pipeline: direct it yourself, or let the studio run it. Both read from the same locked references, so continuity holds either way.",
     "go": {
       "name": "SceneFlow Go",
-      "tagline": "Concept to animatic in minutes.",
+      "badge": "Fastest way to test an idea",
+      "tagline": "Prototype the episode before you commit to it.",
       "points": [
-        "Full intelligence and automation.",
-        "Enter a concept or script, click Go, and take a break.",
-        "Automatically handles Blueprint, structure, references, frames, audio, and animatic assembly.",
-        "Complete animatic ready in under 10 minutes.",
-        "Light natural-language revisions available on demand."
+        "Generate the structural backbone of an entire episode in under 10 minutes.",
+        "Enter a concept or script, click Go, and come back to a finished animatic.",
+        "Automatically handles Blueprint, structure, references, frames, audio, and assembly.",
+        "Hand the result to Director Mode the moment you want the wheel."
       ],
       "cta": "Try Go Mode"
     },
     "director": {
       "name": "SceneFlow Studio",
       "subtitle": "Director Mode",
-      "tagline": "Every visual, emotion, line, and note under your direction.",
+      "badge": "Built for long-form",
+      "tagline": "Where features and series actually get made.",
       "points": [
-        "Same powerful underlying AI pipeline with complete manual authorship.",
-        "Granular step-by-step control across every scene and beat.",
-        "Fine-tune visuals, character emotion, dialogue timing, and music choices.",
+        "Hold pacing, emotion, and continuity across a 120-minute feature or a full season.",
+        "Direct in plain language against locked references — no prompt engineering, no copy-pasting between tool stacks.",
+        "Step in at any point in the pipeline: Blueprint, Production, or Screening Room.",
+        "Fine-tune visuals, character emotion, dialogue timing, and music beat by beat.",
         "Complete pre-visualization and master production workflow."
       ],
       "cta": "Launch Studio ($9)"
@@ -2202,5 +2208,18 @@
       "googleCloud": "Google Cloud",
       "vertexAi": "Vertex AI"
     }
+  },
+  "notify": {
+    "heading": "Get notified when access opens",
+    "description": "Studio access opens in November 2026. Leave your email and we’ll tell you the day it does.",
+    "placeholder": "you@studio.com",
+    "submit": "Notify me",
+    "submitting": "Sending…",
+    "successTitle": "You’re on the list.",
+    "successBody": "We’ll email you as soon as November access opens. Nothing else.",
+    "errorEmpty": "Enter your email so we can reach you.",
+    "errorInvalid": "That email doesn’t look right. Check it and try again.",
+    "errorGeneric": "Something went wrong. Try again in a moment.",
+    "privacy": "One email at launch. No spam, unsubscribe anytime."
   }
 }

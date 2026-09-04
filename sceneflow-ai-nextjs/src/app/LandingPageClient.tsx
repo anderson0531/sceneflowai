@@ -12,6 +12,20 @@ const ProductionExamplesSection = dynamic(
   { ssr: false }
 )
 const KeyFeaturesSection = dynamic(() => import('@/components/landing/KeyFeaturesSection'), { ssr: false })
+const CoreCapabilitiesSection = dynamic(
+  () =>
+    import('@/components/landing/CoreCapabilitiesSection').then((m) => ({
+      default: m.CoreCapabilitiesSection,
+    })),
+  { ssr: false }
+)
+const PreVisEngineSection = dynamic(
+  () =>
+    import('@/components/landing/PreVisEngineSection').then((m) => ({
+      default: m.PreVisEngineSection,
+    })),
+  { ssr: false }
+)
 const PricingCredits = dynamic(() => import('@/components/landing/PricingCredits'), { ssr: false })
 const InfrastructureSection = dynamic(
   () => import('@/components/landing/InfrastructureSection'),
@@ -40,6 +54,8 @@ export default function LandingPageClient() {
       <LandingSectionCollapseProvider>
         <FloatingNav />
 
+        <CoreCapabilitiesSection />
+        <PreVisEngineSection />
         <UseCasesSection />
         <ProductionExamplesSection />
         <KeyFeaturesSection />
