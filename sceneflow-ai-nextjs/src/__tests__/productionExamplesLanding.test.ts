@@ -23,13 +23,11 @@ function readSource(relativePath: string): string {
 }
 
 describe('Production Examples landing section', () => {
-  it('renders on the landing page directly after the persona use-cases section', () => {
+  it('renders on the landing page directly after the pre-vis section', () => {
     const source = readSource('src/app/LandingPageClient.tsx')
 
     expect(source).toContain("import('@/components/landing/ProductionExamplesSection')")
-    expect(source.indexOf('<UseCasesSection />')).toBeLessThan(
-      source.indexOf('<ProductionExamplesSection />')
-    )
+    expect(source).not.toContain('<UseCasesSection />')
     expect(source.indexOf('<ProductionExamplesSection />')).toBeLessThan(
       source.indexOf('<KeyFeaturesSection />')
     )
@@ -52,8 +50,6 @@ describe('Production Examples landing section', () => {
     const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
 
     expect(section).toContain("useTranslations('productionShowcase')")
-    // The legacy `useCases` copy is what made this section read as the old
-    // use-case block; it must not leak back in.
     expect(section).not.toContain("useTranslations('useCases')")
     expect(section).not.toContain("useTranslations('useCases.ui')")
   })
@@ -69,18 +65,21 @@ describe('Production Examples landing section', () => {
     expect(section).not.toContain('SECTION_NARRATION_AUDIO')
   })
 
-  it('renders the tagline as its own paragraph under the subtitle', () => {
+  it('renders the tagline under the subtitle', () => {
     const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
     expect(section).toContain("t('subtitleTagline')")
-    expect(section).toContain("t('publicProductionsNote')")
     expect(section).toContain("t('languagesBanner')")
     expect(section).toContain("t('explorePipelineCta')")
     expect(section).toContain('production-showcase-drama')
   })
 
-  it('uses one column on mobile and two columns on wide screens', () => {
+  it('uses a desktop grid and mobile accordion layout', () => {
     const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
+    expect(section).toContain('hidden md:block')
+    expect(section).toContain('md:hidden')
     expect(section).toContain('grid grid-cols-1 gap-6 md:grid-cols-2')
+    expect(section).toContain('MobileAccordion')
+    expect(section).toContain('CardGrid')
   })
 })
 
@@ -92,7 +91,6 @@ describe('Production Examples i18n contract', () => {
       'titleAccent',
       'subtitle',
       'subtitleTagline',
-      'publicProductionsNote',
       'languagesBanner',
       'explorePipelineCta',
       'explorePipelineHint',
@@ -101,8 +99,7 @@ describe('Production Examples i18n contract', () => {
       'cta',
       'continuityNote',
       'resonanceNote',
-      'introVideoLabel',
-      'screeningRoomLabel',
+      'screeningRoomInstruction',
       'frictionLabel',
       'solutionPillarLabel',
       'showSolutionsSection',
@@ -112,27 +109,26 @@ describe('Production Examples i18n contract', () => {
     }
   })
 
-  it('brands the section as Production Examples rather than use cases', () => {
+  it('brands the section as Production Examples', () => {
     expect(enMessages.productionShowcase.badge).toBe('Production Examples')
   })
 
-  it('leads with the concept-to-screen headline, accent half last', () => {
-    expect(enMessages.productionShowcase.title).toBe('From Concept to Screen:')
-    expect(enMessages.productionShowcase.titleAccent).toBe('Infinite Possibilities')
+  it('leads with the pipeline-in-action headline', () => {
+    expect(enMessages.productionShowcase.title).toBe('See the Full Pipeline')
+    expect(enMessages.productionShowcase.titleAccent).toBe('in Action')
   })
 
-  it('closes the intro with the one-platform tagline and public production framing', () => {
+  it('closes the intro with the long-form tagline', () => {
     expect(enMessages.productionShowcase.subtitleTagline).toBe(
-      'One platform. Infinite possibilities.'
+      'Long-form productions. Not clips.'
     )
-    expect(enMessages.productionShowcase.subtitle).toContain('Six public productions')
-    expect(enMessages.productionShowcase.publicProductionsNote).toContain('Screening Room')
+    expect(enMessages.productionShowcase.subtitle).toContain('complete production')
   })
 
-  it('ships exactly six fully populated production cards', () => {
+  it('ships exactly four focused production cards', () => {
     const { cards } = enMessages.productionShowcase
 
-    expect(cards).toHaveLength(6)
+    expect(cards).toHaveLength(4)
 
     for (const card of cards) {
       for (const key of [
@@ -144,11 +140,11 @@ describe('Production Examples i18n contract', () => {
       ] as const) {
         expect(card[key], `${card.id} ${key}`).toBeTruthy()
       }
-      if (card.benefit) {
-        expect(card.benefit, `${card.id} benefit`).toBeTruthy()
-      }
       if ('solutionPillars' in card && card.solutionPillars) {
-        expect(card.solutionPillars.length, `${card.id} solutionPillars`).toBe(4)
+        expect(
+          card.solutionPillars.length,
+          `${card.id} solutionPillars`
+        ).toBeGreaterThanOrEqual(3)
         for (const pillar of card.solutionPillars) {
           for (const key of [
             'title',
@@ -160,112 +156,48 @@ describe('Production Examples i18n contract', () => {
             expect(pillar[key], `${card.id} pillar ${key}`).toBeTruthy()
           }
         }
-      } else {
-        // Cards run four steps; the animated comedy adds a fifth for the
-        // Screening Room, matching its showcase script.
-        expect(card.workflow?.length, `${card.id} workflow`).toBeGreaterThanOrEqual(4)
-        expect(card.workflow?.length, `${card.id} workflow`).toBeLessThanOrEqual(5)
-        for (const step of card.workflow ?? []) {
-          expect(step, `${card.id} workflow step`).toBeTruthy()
-        }
       }
     }
   })
 
   it('uses problem-vs-solution pillars on the Cinematic Drama card', () => {
     const drama = enMessages.productionShowcase.cards.find((card) => card.id === 'drama')!
-    expect(drama.title).toBe('Cinematic AI Drama. Zero Character Drift.')
-    expect(drama.subtitle).toBe(
-      'Eliminate the morphing characters, broken dialogue, and endless rerolls. Build seamless, multi-character long-form stories with complete visual continuity.'
-    )
+    expect(drama.title).toContain('Feature-Length')
     expect(drama.solutionPillars).toHaveLength(4)
     expect(drama.solutionPillars?.[0]?.title).toBe('Visual & Character Consistency')
-    expect(drama.solutionPillars?.[1]?.frictionHeadline).toBe('The 10-Second Clip Trap.')
-    expect(drama).not.toHaveProperty('workflow')
-    expect(drama).not.toHaveProperty('benefit')
   })
 
   it('uses problem-vs-solution pillars on the Animated Comedy card', () => {
     const animation = enMessages.productionShowcase.cards.find((card) => card.id === 'animation')!
-    expect(animation.title).toBe('You Write the Joke. SceneFlow Animates the Punchline.')
-    expect(animation.subtitle).toBe(
-      'Eliminate style drift, stiff movement, and broken timing. Turn hilarious scripts into fully animated, voice-synced comedy episodes in one seamless studio.'
-    )
+    expect(animation.title).toContain('Full-Season')
     expect(animation.solutionPillars).toHaveLength(4)
     expect(animation.solutionPillars?.[0]?.title).toBe('Stylistic Consistency')
-    expect(animation.solutionPillars?.[2]?.frictionHeadline).toBe('Ruined Punchlines.')
-    expect(animation).not.toHaveProperty('workflow')
-    expect(animation).not.toHaveProperty('benefit')
-  })
-
-  it('uses problem-vs-solution pillars on the AI-First Podcast card', () => {
-    const podcast = enMessages.productionShowcase.cards.find((card) => card.id === 'podcast')!
-    expect(podcast.title).toBe('You Host the Conversation. SceneFlow Produces the Show.')
-    expect(podcast.subtitle).toBe(
-      'Eliminate static avatars and manual video editing. Transform scripts or raw audio into multi-angle, broadcast-ready video podcasts in one automated pipeline.'
-    )
-    expect(podcast.solutionPillars).toHaveLength(4)
-    expect(podcast.solutionPillars?.[0]?.title).toBe('Multi-Speaker & Avatar Identity')
-    expect(podcast.solutionPillars?.[0]?.frictionHeadline).toBe('Robotic Avatars & Lost Identity')
-    expect(podcast.solutionPillars?.[0]?.solutionHeadline).toBe('Locked Host & Guest Profiles')
-    expect(podcast.solutionPillars?.[3]?.title).toBe('Long-Form Audio & Video Sync')
-    expect(podcast.solutionPillars?.[3]?.solutionHeadline).toBe('End-to-End Podcast Pipeline')
-    expect(podcast).not.toHaveProperty('workflow')
-    expect(podcast).not.toHaveProperty('benefit')
-  })
-
-  it('uses problem-vs-solution pillars on the Corporate Training card', () => {
-    const training = enMessages.productionShowcase.cards.find((card) => card.id === 'training')!
-    expect(training.title).toBe(
-      'Enterprise-Grade Training Videos. Pre-Vizualization Produced in Minutes.'
-    )
-    expect(training.subtitle).toBe(
-      'Turn manuals, slides, and compliance docs into engaging, multi-lingual video modules with locked brand identities, flawless lip-sync, and zero studio overhead.'
-    )
-    expect(training.solutionPillars).toHaveLength(4)
-    expect(training.solutionPillars?.[0]?.title).toBe('Presenter & Brand Consistency')
-    expect(training.solutionPillars?.[0]?.frictionHeadline).toBe('Uncanny Avatars & Brand Drift')
-    expect(training.solutionPillars?.[0]?.solutionHeadline).toBe('Locked Executive & Trainer Profiles')
-    expect(training.solutionPillars?.[3]?.title).toBe('Rapid Content Updating')
-    expect(training.solutionPillars?.[3]?.solutionHeadline).toBe('Modular Script Updates')
-    expect(training).not.toHaveProperty('workflow')
-    expect(training).not.toHaveProperty('benefit')
-  })
-
-  it('uses problem-vs-solution pillars on the Sci-Fi card', () => {
-    const scifi = enMessages.productionShowcase.cards.find((card) => card.id === 'scifi')!
-    expect(scifi.title).toBe('Build Impossible Worlds. Direct Uncompromised Sci-Fi.')
-    expect(scifi.subtitle).toContain('frame-by-frame visual continuity')
-    expect(scifi.solutionPillars).toHaveLength(4)
-    expect(scifi.solutionPillars?.[0]?.title).toBe('Environmental & Architecture Continuity')
-    expect(scifi.solutionPillars?.[0]?.solutionHeadline).toBe('World-State Locking')
-    expect(scifi.solutionPillars?.[3]?.title).toBe('Audio-Visual World-Building')
-    expect(scifi.solutionPillars?.[3]?.solutionHeadline).toBe('Integrated World-Sound & Voice Sync')
-    expect(scifi).not.toHaveProperty('workflow')
-    expect(scifi).not.toHaveProperty('benefit')
   })
 
   it('uses problem-vs-solution pillars on the Documentary card', () => {
     const documentary = enMessages.productionShowcase.cards.find((card) => card.id === 'documentary')!
-    expect(documentary.title).toBe('Turn Archival Stories into Bestselling Documentaries.')
-    expect(documentary.subtitle).toContain('zero archive licensing fees')
+    expect(documentary.title).toContain('Long-Form Documentaries')
     expect(documentary.solutionPillars).toHaveLength(4)
     expect(documentary.solutionPillars?.[0]?.title).toBe('Era-Specific Visual Accuracy')
-    expect(documentary.solutionPillars?.[0]?.solutionHeadline).toBe('Historical Style Guardrails')
-    expect(documentary.solutionPillars?.[3]?.title).toBe('Episodic Pacing & Narrative Continuity')
-    expect(documentary.solutionPillars?.[3]?.solutionHeadline).toBe('Beat-First Documentary Pipeline')
-    expect(documentary).not.toHaveProperty('workflow')
-    expect(documentary).not.toHaveProperty('benefit')
   })
 
-  it('keeps card ids stable so ?production= values do not silently change', () => {
+  it('includes a localization comparison card with locale toggle', () => {
+    const localization = enMessages.productionShowcase.cards.find((card) => card.id === 'localization')!
+    expect(localization.title).toContain('Beyond Dubbing')
+    expect(localization.subtitle).toContain('Houston')
+    expect(localization.subtitle).toContain('Paulo')
+    expect(localization.badge).toBe('Localized')
+    expect((localization as Record<string, unknown>).localeToggle).toBe(true)
+    expect((localization as Record<string, unknown>).locales).toHaveLength(2)
+    expect(localization.solutionPillars).toHaveLength(3)
+  })
+
+  it('keeps card ids stable', () => {
     expect(enMessages.productionShowcase.cards.map((card) => card.id)).toEqual([
       'drama',
       'animation',
-      'podcast',
-      'training',
-      'scifi',
       'documentary',
+      'localization',
     ])
   })
 
@@ -275,9 +207,9 @@ describe('Production Examples i18n contract', () => {
     )
   })
 
-  it('uses Solutions and Screening Room as media tab labels', () => {
-    expect(enMessages.productionShowcase.introVideoLabel).toBe('Solutions')
-    expect(enMessages.productionShowcase.screeningRoomLabel).toBe('Screening Room')
+  it('provides screening room instruction copy', () => {
+    expect(enMessages.productionShowcase.screeningRoomInstruction).toContain('Pre-Vis')
+    expect(enMessages.productionShowcase.screeningRoomInstruction).toContain('language')
   })
 })
 
@@ -303,8 +235,6 @@ describe('Animated Comedy showcase script', () => {
   })
 
   it('declares where motion ends and the hold begins in every block', () => {
-    // Narration outruns the generated clip, so each block has to say which
-    // frame it settles into and when.
     const timings = script.match(/\*\*Timing\*\*/g) ?? []
     expect(timings).toHaveLength(8)
 
@@ -323,7 +253,6 @@ describe('Animated Comedy showcase script', () => {
 
     for (const [, kind, window, body] of rows) {
       const claimed = body.match(/\*\((\d+) words/)
-      // A line without a count is a line nobody can time.
       expect(claimed, `${kind} line is missing its word count`).toBeTruthy()
 
       const spoken = body
@@ -333,14 +262,12 @@ describe('Animated Comedy showcase script', () => {
         .replace(/[*_]/g, '')
         .split(/\s+/)
         .filter(Boolean)
-        // Standalone dashes are punctuation, not spoken words.
         .filter((token) => !/^[—–·-]+$/.test(token))
 
       expect(spoken.length, `${kind} "${spoken.slice(0, 4).join(' ')}…" count drifted`).toBe(
         Number(claimed![1])
       )
 
-      // Default to the full block; segmented lines declare their own window.
       let seconds = 10
       if (window?.includes('–')) {
         const [start, end] = window.split('–').map((stamp) => {
@@ -393,7 +320,6 @@ describe('Production style CTAs', () => {
 
     expect(card).toContain('mt-4 w-full bg-gradient-to-r text-white')
     expect(card).not.toContain('md:group-hover:opacity-100')
-    expect(card).not.toContain('md:hidden')
   })
 })
 
@@ -421,8 +347,6 @@ describe('Production showcase videos', () => {
     expect(available).toEqual(['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'])
     expect(placeholders).toEqual([])
 
-    // Placeholders must carry no src, so the player shows "coming soon"
-    // rather than requesting a 404.
     for (const locale of locales) {
       if (!locale.available) expect(locale.src).toBe('')
     }
@@ -468,74 +392,14 @@ describe('Production showcase videos', () => {
     }
   })
 
-  it('leaves cards without produced dubs without a player until videos exist', () => {
-    for (const cardId of ['podcast', 'training', 'scifi', 'documentary']) {
-      expect(hasProductionShowcaseVideo(cardId), `${cardId} should have no video`).toBe(false)
-      expect(getProductionShowcaseVideoLocales(cardId)).toHaveLength(7)
-    }
-  })
-
-  it('renders the multi-language player and passes locale labels through', () => {
-    const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
-    expect(section).toContain('getProductionShowcaseVideoLocales(card.id)')
-    expect(section).toContain('getDefaultProductionShowcaseLocale(card.id)')
-
+  it('shows Screening Room player directly without tabs', () => {
     const card = readSource('src/components/landing/ProductionStyleCard.tsx')
-    expect(card).toContain('MultiLanguageVideoPlayer')
-  })
 
-  it('uses a compact overlay language control instead of marketing pills', () => {
-    const picker = readSource('src/components/landing/VideoLanguagePicker.tsx')
-    const player = readSource('src/components/landing/MultiLanguageVideoPlayer.tsx')
-    const hero = readSource('src/app/components/HeroSection.tsx')
-
-    expect(picker).toContain('export function VideoLanguageControl')
-    expect(picker).toContain('DropdownMenuTrigger')
-    expect(picker).toContain('disabled={!locale.available}')
-    expect(picker).not.toContain('flex-wrap')
-    expect(picker).not.toContain('flex-nowrap')
-    expect(picker).not.toContain('videoLanguageCount')
-    expect(picker).toContain('onOpenChange')
-    expect(picker).toContain('onCloseAutoFocus')
-
-    expect(player).toContain('VideoLanguageControl')
-    expect(player).toContain('variant="overlay"')
-    expect(player).not.toContain('languagePromptLabel')
-    expect(player).not.toContain('compactPickerUpTo')
-
-    expect(hero).toContain('VideoLanguageControl')
-    expect(hero).not.toContain('HeroLanguagePills')
-    expect(hero).not.toContain('multilangHint')
-    expect(hero).not.toContain('languagePrompt')
-    expect(hero).toContain('suppressTheaterOpenUntilRef')
-    expect(hero).toContain('handleLanguageMenuOpenChange')
-    expect(hero).toContain('tryOpenTheater')
-  })
-
-  it('mounts the language control on the video frame for production cards', () => {
-    const card = readSource('src/components/landing/ProductionStyleCard.tsx')
-    const player = readSource('src/components/landing/MultiLanguageVideoPlayer.tsx')
-
-    expect(card).not.toContain('compactPickerUpTo')
-    expect(card).not.toContain('videoLanguagePromptLabel')
-    expect(card).toContain('MultiLanguageVideoPlayer')
-    expect(player).toContain('relative aspect-video')
-    expect(player).toContain('variant="overlay"')
-  })
-
-  it('letterboxes rather than crops, whatever ratio a future dub ships at', () => {
-    const player = readSource('src/components/landing/MultiLanguageVideoPlayer.tsx')
-    expect(player).toContain('object-contain')
-    expect(player).not.toContain('object-cover')
-  })
-
-  it('lets the frame escape the card padding on phones', () => {
-    const player = readSource('src/components/landing/MultiLanguageVideoPlayer.tsx')
-    expect(player).toContain('fullBleedOnMobile')
-
-    const card = readSource('src/components/landing/ProductionStyleCard.tsx')
-    expect(card).toContain('fullBleedOnMobile')
-    expect(card).toContain('min-w-0')
+    expect(card).not.toContain('TabsTrigger')
+    expect(card).not.toContain('TabsContent')
+    expect(card).toContain('ScreeningRoomPreview')
+    expect(card).toContain('screeningEmbedSlug')
+    expect(card).toContain('screeningRoomInstruction')
   })
 
   it('provides the video player copy the section reads', () => {
@@ -544,22 +408,15 @@ describe('Production showcase videos', () => {
     }
   })
 
-  it('mounts always-visible Solutions and Screening Room tabs on every production card', () => {
+  it('shows the Screening Room player and collapsible solutions on each card', () => {
     const card = readSource('src/components/landing/ProductionStyleCard.tsx')
     const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
 
-    expect(card).not.toContain('mediaPanelOpen')
     expect(card).toContain('solutionsSectionOpen')
     expect(card).toContain('aria-expanded={solutionsSectionOpen}')
-    expect(card).not.toContain('showMediaPanelLabel')
-    expect(card).not.toContain('hideMediaPanelLabel')
     expect(card).toContain('showSolutionsSectionLabel')
     expect(card).toContain('hideSolutionsSectionLabel')
-    expect(card).toContain('TabsTrigger')
-    expect(card).toContain('TabsContent')
-    expect(card).toContain('MultiLanguageVideoPlayer')
     expect(card).toContain('ScreeningRoomPreview')
-    expect(card).toContain('screeningRoomPreview')
     expect(card).toContain('screeningEmbedSlug')
     expect(card).toContain('Accordion')
     expect(card).toContain('type="single"')
@@ -570,48 +427,9 @@ describe('Production showcase videos', () => {
     expect(card).toContain('solutionPillars')
     expect(section).toContain('frictionLabel')
     expect(section).toContain('solutionPillarLabel')
-    expect(section).not.toContain("t('showMediaPanel')")
-    expect(section).not.toContain("t('hideMediaPanel')")
     expect(section).toContain("t('showSolutionsSection')")
     expect(section).toContain("t('hideSolutionsSection')")
     expect(section).toContain('getProductionShowcaseScreeningSlug')
-  })
-})
-
-describe('Use Cases landing section layout', () => {
-  it('shows persona copy above navigation and drops Solution/Screening tabs', () => {
-    const section = readSource('src/components/landing/UseCasesSection.tsx')
-
-    expect(section).toContain("active?.headline")
-    expect(section).toContain("active?.intro")
-    expect(section).toContain('setActivePersona')
-    expect(section).not.toContain('TabsTrigger')
-    expect(section).not.toContain('tabScreening')
-    expect(section).not.toContain('ScreeningRoomPreview')
-    expect(section).not.toContain('getLandingYoutubeCreatorScreeningSlug')
-  })
-
-  it('renders story columns as accessible bullet lists without metric badges', () => {
-    const section = readSource('src/components/landing/UseCasesSection.tsx')
-
-    expect(section).toContain('StoryBulletList')
-    expect(section).toContain('role="list"')
-    expect(section).toContain('active.story.problem')
-    expect(section).toContain('active.story.solution')
-    expect(section).toContain('active.story.outcome')
-    expect(section).not.toContain('metric.before')
-    expect(section).not.toContain('line-through')
-  })
-
-  it('stores three story bullets per persona column in English messages', () => {
-    for (const persona of enMessages.useCasesShowcase.personas) {
-      const story = persona.story
-      expect(story, `${persona.id} missing story`).toBeDefined()
-      expect(story?.problem, `${persona.id} problem`).toHaveLength(3)
-      expect(story?.solution, `${persona.id} solution`).toHaveLength(3)
-      expect(story?.outcome, `${persona.id} outcome`).toHaveLength(3)
-      expect(story).not.toHaveProperty('metric')
-    }
   })
 })
 

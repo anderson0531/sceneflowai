@@ -58,7 +58,6 @@ function resolveSectionFromHash(hash: string): CollapsibleLandingSectionId | und
   if ((COLLAPSIBLE_LANDING_SECTION_IDS as readonly string[]).includes(id)) {
     return id as CollapsibleLandingSectionId
   }
-  if (id.startsWith('use-cases-')) return 'use-cases'
   if (id.startsWith('walkthrough-chapter-')) return 'feature-pre-vis'
   return undefined
 }

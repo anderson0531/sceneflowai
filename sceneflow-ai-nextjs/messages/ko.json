@@ -1920,251 +1920,181 @@
     ]
   },
   "productionShowcase": {
-    "badge": "생산 예제",
-    "title": "개념에서 스크린에:",
-    "titleAccent": "무한한 가능성",
-    "subtitle": "6개의 공중 생산은 가득 차있는 파이프라인을 증명합니다 — 전 시계, 장면 영상, 및 Screening Room 검토. 당신의 개념을 정의하고 SceneFlow 핸들 scriptwriting, 문자 디자인, 다 언어 오디오, 시각화, 비디오 제작 및 출판.",
-    "subtitleTagline": "1개의 플랫폼. 무한한 가능성.",
-    "publicProductionsNote": "아래 각 카드는 전체 공공 생산입니다 - 스위치 솔루션 및 Screening Room 탭은 파이프를 걸어.",
-    "languagesBanner": "7 개 언어의 공개 예 : 영어, 스페인어, 포르투갈어, 힌디어, 중국어, 아랍어, 태국어.",
-    "explorePipelineCta": "전체 생산 살펴보기",
-    "explorePipelineHint": "아래 영화 드라마로 시작하세요 — 데모 릴 솔루션, Screening Room 전체 리뷰 워크플로우.",
-    "workflowLabel": "제품정보",
-    "startProduction": "당신의 생산 시작",
-    "cta": "당신의 생산 시작",
-    "continuityNote": "Series Studio은 연속성을 관리합니다",
-    "resonanceNote": "Audience ResonanceTM는 스크립트를 최적화",
-    "videoLanguagePrompt": "당신의 언어에 이 생산보기",
-    "videoComingSoon": "곧 Dub",
-    "videoSoon": "지원하다",
-    "introVideoLabel": "제품정보",
-    "screeningRoomLabel": "Screening Room은",
-    "frictionLabel": "관련 기사",
-    "solutionPillarLabel": "SceneFlow 솔루션",
-    "showSolutionsSection": "연락처",
-    "hideSolutionsSection": "연락처",
+    "badge": "Production Examples",
+    "title": "See the Full Pipeline",
+    "titleAccent": "in Action",
+    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to final high-resolution video. Walk the Screening Room to compare animatics, individual scenes, and the finished master in multiple languages.",
+    "subtitleTagline": "Long-form productions. Not clips.",
+    "screeningRoomInstruction": "Select Pre-Vis, Scenes, or Final to experience the pipeline. Select a language to hear the dub.",
+    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
+    "explorePipelineCta": "Explore a full production",
+    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
+    "workflowLabel": "Solutions",
+    "startProduction": "Start Your Production",
+    "cta": "Start Your Production",
+    "continuityNote": "Series Studio manages continuity",
+    "resonanceNote": "Audience Resonance™ optimizes scripts",
+    "videoLanguagePrompt": "Watch this production in your language",
+    "videoComingSoon": "Dub coming soon",
+    "videoSoon": "Soon",
+    "frictionLabel": "The Friction",
+    "solutionPillarLabel": "The SceneFlow Solution",
+    "showSolutionsSection": "Show Solutions",
+    "hideSolutionsSection": "Hide Solutions",
     "cards": [
       {
         "id": "drama",
-        "title": "영화 AI 드라마 영 문자 드리프트.",
-        "subtitle": "Morphing 문자, 끊긴 대화 및 endless rerolls를 삭제합니다. 완벽한 시각적 연속성으로 완벽한 멀티-character Long-form 스토리를 구축하십시오.",
-        "badge": "시리즈-Ready",
+        "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
+        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the pre-vis animatic, individual scenes, and the final high-resolution master — then switch languages to hear the full dub.",
+        "badge": "Series-Ready",
         "solutionPillars": [
           {
-            "title": "비주얼 & 문자 일관성",
-            "frictionHeadline": "문자 드리프트 & Wobbly 세트.",
-            "friction": "모든 샷과 함께 생성 된 모델은 문자 얼굴, 의상 및 조명을 사용하여 장면 절단을 통해 지속적으로 변형합니다.",
-            "solutionHeadline": "고정 자산 Blueprints.",
-            "solution": "Blueprint Studio에서 마스터 캐릭터 프로파일, 환경 및 시각 스타일을 정의합니다. SceneFlow은 narrative immersion을 보존하기 위해 모든 렌더링에서 시각적 정체성을 적용합니다."
+            "title": "Visual & Character Consistency",
+            "frictionHeadline": "Character Drift & Wobbly Sets.",
+            "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
+            "solutionHeadline": "Locked Asset Blueprints.",
+            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Studio. SceneFlow enforces visual identity across every render to preserve narrative immersion."
           },
           {
-            "title": "Narrative 패싱 & 장면 제어",
-            "frictionHeadline": "10초 클립 트랩.",
-            "friction": "분리된 micro-prompts의 필름을 구축하여 choppy pacing, 평평한 감정, 그리고 끝없는 수동 타임라인 편집을 만듭니다.",
-            "solutionHeadline": "Beat-First 스토리 보드.",
-            "solution": "장면 수준에서 직접, 신속한 수준이 아닙니다. 구조 극한 비트, 카메라 운동, 그리고 이야기 아크는 영상의 단일 프레임을 생성하기 전에 시각적으로."
+            "title": "Narrative Pacing & Scene Control",
+            "frictionHeadline": "The 10-Second Clip Trap.",
+            "friction": "Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.",
+            "solutionHeadline": "Beat-First Storyboarding.",
+            "solution": "Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video."
           },
           {
-            "title": "Dialogue & 오디오 정렬",
-            "frictionHeadline": "Dialogue를 비난.",
-            "friction": "일치 lip-sync, 부동 입 운동, 및 분리 된 목소리는 즉시 드라마에서 볼 수 있습니다.",
-            "solutionHeadline": "통합 음성 및 동기화 엔진.",
-            "solution": "동적 음성 성능과 정확한 lip-sync는 외부 포스트 생산 패스없이 비디오 파이프라인에 직접 구워."
+            "title": "Dialogue & Audio Alignment",
+            "frictionHeadline": "Unconvincing Dialogue.",
+            "friction": "Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.",
+            "solutionHeadline": "Integrated Voice & Sync Engine.",
+            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline — delivering believable dialogue without external post-production passes."
           },
           {
-            "title": "Workflow 마찰 & Reroll 피로",
-            "frictionHeadline": "자산 Chaos & Endless Rerolls.",
-            "friction": "단편 영화를 제작하는 것은 보통 200 + 원시 비디오 파일, 수동 확장 및 수십 세대를 의미한다.",
-            "solutionHeadline": "자동화된 스튜디오 파이프라인.",
-            "solution": "개념에서 하나의 통합 플랫폼에서 최종 마스터 MP4로. Blueprint Studio은 스토리 설정, Production Studio 오토메이트 렌더링, Screening Room을 처리합니다. 당신의 마지막 수출을 전달하십시오."
+            "title": "Workflow Friction & Reroll Fatigue",
+            "frictionHeadline": "Asset Chaos & Endless Rerolls.",
+            "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
+            "solutionHeadline": "Automated Studio Pipeline.",
+            "solution": "From concept to final master MP4 in one unified platform. Blueprint Studio handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export."
           }
         ],
-        "screeningRoomPreview": "영화 드라마 - Screening Room 다운로드"
+        "screeningRoomPreview": "The Cinematic Drama — Screening Room"
       },
       {
         "id": "animation",
-        "title": "Joke를 썼습니다. 네트워크 펀치 라인에 대해.",
-        "subtitle": "스타일 편류, 뻣뻣한 움직임 및 깨진 타이밍을 제거하십시오. 한 개의 이음새가 없는 스튜디오에서 완전히 애니메이션, 음성 동기화된 코미디 에피소드로 hilarious 스크립트를 켭니다.",
-        "badge": "멀티 스타일",
+        "title": "Full-Season Animated Series. One Consistent Art Style.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "badge": "Multi-Style",
         "solutionPillars": [
           {
-            "title": "Stylistic 일관성",
-            "frictionHeadline": "작풍 Meltdown.",
-            "friction": "만화와 애니메이션 스타일은 끊임없이 촬영 사이를 날려, 이동 라인 예술, 색상 팔레트를 깨고, photorealistic uncanny slop로 문자를 변형.",
-            "solutionHeadline": "Locked 예술 작풍 엔진.",
-            "solution": "첫 번째 프레임에서 당신의 미학을 동결. SceneFlow는 캐릭터 디자인, 라인 무게, 그리고 전체 에피소드를 통해 모델의 쉐이딩을 잠금하여 캐릭터가 독특하게 유지됩니다."
+            "title": "Stylistic Consistency",
+            "frictionHeadline": "Style Meltdown.",
+            "friction": "Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.",
+            "solutionHeadline": "Locked Art Style Engine.",
+            "solution": "Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours."
           },
           {
-            "title": "Exaggerated 애니메이션 & 물리학",
-            "frictionHeadline": "Stiff & Glitchy 운동.",
-            "friction": "유전 모델은 빠른 판금, 더블 테이크, 스쿼시 만화 물리학, 높은 에너지 가발을 녹는 artifacts로 전환.",
-            "solutionHeadline": "액션 & 포즈 앵커링.",
-            "solution": "동적 문자 움직임을 구동하고 기하학을 파괴하지 않고 표현한 포즈. 직접 펀치 물리적 코미디, 갑상선, 전체 모션 컨트롤과 야생 표현."
+            "title": "Exaggerated Animation & Physics",
+            "frictionHeadline": "Stiff & Glitchy Motion.",
+            "friction": "Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.",
+            "solutionHeadline": "Action & Pose Anchoring.",
+            "solution": "Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control."
           },
           {
-            "title": "코디 타이밍 & 리듬",
-            "frictionHeadline": "Ruined 펀치.",
-            "friction": "Humor는 일시 중지와 비트 컷에 살고있다. 표준 5 초 유전 루프는 농담 배달을 파괴하는 awkward pacing을 강제합니다.",
-            "solutionHeadline": "Beat-Precision 편집.",
-            "solution": "제어 장면 pacing 아래로 에 the frame. 극적 인 패즈를 조정, 설정-to-punchline 타이밍, 그리고 빠른 반응은 최종 렌더링 전에 비트 - 첫 번째 타임 라인 내부에 직접 샷."
+            "title": "Comedic Timing & Rhythm",
+            "frictionHeadline": "Ruined Punchlines.",
+            "friction": "Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.",
+            "solutionHeadline": "Beat-Precision Editing.",
+            "solution": "Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render."
           },
           {
-            "title": "높은 에너지 Dialogue & Vocal 동기화",
-            "frictionHeadline": "Lifeless 인형 입.",
-            "friction": "일반 AI 대화는 평평하고 기계적, snappy sitcom banter에 필요한 에너지를 파괴.",
-            "solutionHeadline": "동적 음성 및 표현 동기화.",
-            "solution": "Energetic 얼굴 성과에 지도 보컬 납품 직접. Dialogue, 표현식 입 모양 및 comedic 음성 궤도는 최대 comesdic 충격을 위해 이음새가 없 일치합니다."
+            "title": "High-Energy Dialogue & Vocal Sync",
+            "frictionHeadline": "Lifeless Puppet Mouths.",
+            "friction": "Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.",
+            "solutionHeadline": "Dynamic Voice & Expression Sync.",
+            "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
           }
         ],
-        "screeningRoomPreview": "애니메이션 코미디 — Screening Room 다운로드"
-      },
-      {
-        "id": "podcast",
-        "title": "대화를 호스팅합니다. 네트워크 쇼 생성.",
-        "subtitle": "Static avatars 및 수동 비디오 편집을 삭제합니다. 다중 각도로 스크립트 또는 원시 오디오를 변환, 하나의 자동화 된 파이프라인에서 방송 읽은 비디오 팟 캐스트.",
-        "badge": "방송-Ready",
-        "solutionPillars": [
-          {
-            "title": "멀티 스피커 & 아바타 ID",
-            "frictionHeadline": "Robotic Avatars 및 분실 식별",
-            "friction": "생성된 호스트 시프트는 카메라에서 중간-episode, stare blankly 또는 청취하는 동안 자연의 마이크로 압축을 전시하지 못합니다.",
-            "solutionHeadline": "Locked Host & 게스트 프로필",
-            "solution": "당신의 공동 호스트 및 재커링 게스트를 위한 지속적 시각 식별. SceneFlow은 스피커 일관성, 자연적인 눈 접촉 및 장거리 토론을 통해 현실적인 대화의 몸 언어를 유지합니다."
-          },
-          {
-            "title": "멀티 카메라 방향 및 패싱",
-            "frictionHeadline": "단일 통로",
-            "friction": "정적 토크 헤드 샷은 관객 유지를 신속하게 잃고, 30 분의 타임 라인에 걸쳐 수동 카메라 스위칭은 tedious frame-by-frame cuts가 필요합니다.",
-            "solutionHeadline": "자동화된 Multi-Cam 전환",
-            "solution": "SceneFlow은 호스트가 닫히는, 게스트 반응, 넓은 각도 스튜디오 샷 사이에 자동으로 토글을 분석하여 수동 타임라인 편집없이 전문적인 방송을 제공합니다."
-          },
-          {
-            "title": "Context-Aware B-Roll 및 비주얼",
-            "frictionHeadline": "시각적인 Monotony & B 목록 Bottlenecks",
-            "friction": "모든 언급 된 주제에 대한 관심, 생성 및 타이밍 관련 시각적 원조 또는 B 롤 클립은 포스트 프로덕션의 시간을 먹는다.",
-            "solutionHeadline": "자동 접착 B-Roll Cutaways",
-            "solution": "호스트가 주제에 대해 논의함에 따라 SceneFlow은 자동으로 컨텍스트 시네마틱 시각적, 그래픽 및 장면 cutaways가 정확하게 오디오 트랜지터에 생성합니다."
-          },
-          {
-            "title": "Long-Form 오디오 및 비디오 동기화",
-            "frictionHeadline": "오디오 드리프트 & Long-Form 렌더링 피로",
-            "friction": "Syncing generative video to 20+ minutes of raw audio lead to lip-sync drift, 렌더링 오류 및 조각 파일 관리.",
-            "solutionHeadline": "End-to-End Podcast 파이프 라인",
-            "solution": "원시 오디오 트랙 또는 스크립트에서 드롭, SceneFlow은 아바타 정렬, 카메라 절단, B-roll 통합 및 최종 마스터 MP4 수출을 하나의 매끄럽고 자동화 된 스튜디오 패스 처리합니다."
-          }
-        ],
-        "screeningRoomPreview": "AI-First 팟캐스트 — Screening Room 다운로드"
-      },
-      {
-        "id": "training",
-        "title": "Enterprise-Grade 교육 동영상. 몇 분 안에 생산된 전 기능화.",
-        "subtitle": "수동, 슬라이드 및 준수 docs를 잠금 브랜드 아이덴티티, 흠없는 lip-sync 및 0 스튜디오 오버헤드와 함께 참여하고 다국어 비디오 모듈로 전환하십시오.",
-        "badge": "글로벌 배포",
-        "solutionPillars": [
-          {
-            "title": "현재 및 브랜드 일관성",
-            "frictionHeadline": "Uncanny avatars & 브랜드 드리프트",
-            "friction": "저렴 한 AI 선물은 로봇 및 unapproachable 느낌, 브랜드 로고, 색상, 그리고 현재 외관은 다른 교육 모듈을 통해 의도적으로 변화.",
-            "solutionHeadline": "Locked Executive & 트레이너 프로필",
-            "solution": "지속적이고 자연적 기업가를 구축하고 브랜드 가이드 라인을 잠그십시오. SceneFlow은 전체 코스 라이브러리를 통해 시각적 정체성, 기업 스타일링 및 전문 납품을 유지합니다."
-          },
-          {
-            "title": "원활한 글로벌 현지화",
-            "frictionHeadline": "Broken 번역 및 나쁜 입술 동기화",
-            "friction": "10+ 언어로 현지화 교육 내용은 보통 awkward mouth-syncing, robotic voice track, 대규모 재 편집 병목을 만듭니다.",
-            "solutionHeadline": "Native Multilingual 동기화 엔진",
-            "solution": "자연적인 음성 음색 음색 음색 음색, 현지화 된 텍스트 외침, 그리고 단일 클릭으로 전체 교육 시리즈를 번역."
-          },
-          {
-            "title": "통합 Visual Aids 및 다이어그램",
-            "frictionHeadline": "텍스트 - 허비 보어",
-            "friction": "누군가가 신속하게 직원 관심을 잃고 있다고 이야기하는 비디오는 수동으로 프로세스 다이어그램, 스크린 캡처 및 총알 콜 아웃은 편집기에서 시간이 걸립니다.",
-            "solutionHeadline": "Contextual Visual & 그래픽 오버레이",
-            "solution": "현재는 복잡한 워크플로 또는 준수 단계에 대해 설명합니다. SceneFlow은 타임 다이어그램, 키 테이크아웃 및 화면에 직접 시각적 보조를 생성합니다."
-          },
-          {
-            "title": "급속한 내용 Updating",
-            "frictionHeadline": "비싼 Re-Shoots & Render Traps",
-            "friction": "회사 정책 또는 제품 사양 변경 시 비디오의 2 분 섹션을 업데이트하는 것은 일반적으로 전체 파일을 재구성하고 렌더링해야합니다.",
-            "solutionHeadline": "Modular Script 업데이트",
-            "solution": "직접 텍스트를 편집하여 정책 또는 절차를 즉시 업데이트하십시오. SceneFlow은 주변 타이밍과 비디오 스타일을 보존하면서 변경된 섹션만 있습니다."
-          }
-        ],
-        "screeningRoomPreview": "기업 교육 - Screening Room 다운로드"
-      },
-      {
-        "id": "scifi",
-        "title": "Impossible 세계를 구축하십시오. 직접 Uncompromised Sci-Fi.",
-        "subtitle": "복잡한 시각 효과, futuristic 환경, 그리고 단일 자동화한 파이프라인 안에 구조에 의하여 시각적인 continuity를 가진 외계인 특성 디자인.",
-        "badge": "VFX-리더",
-        "solutionPillars": [
-          {
-            "title": "환경 & 건축 Continuity",
-            "frictionHeadline": "기하학 & 가늠자 Glitches",
-            "friction": "Futuristic 도시, 네온 풍경, 그리고 외계인 전함은 지속적으로 전사, 이동 질감, 또는 카메라 컷 사이 임의의 시각 소음으로 녹입니다.",
-            "solutionHeadline": "World-State 잠금",
-            "solution": "Blueprint Studio의 주요 아키텍처, 조명 계획 및 환경 매개 변수 정의. SceneFlow는 공간 기판을 잠급니다 그래서 당신의 조정은 넓은 설치 탄에서 단단한 복도 싸움에 일관된 체재합니다."
-          },
-          {
-            "title": "외국인 & 생물 디자인 Integrity",
-            "frictionHeadline": "캐릭터 디자인 Morphing",
-            "friction": "Non-humanoid 종, cyborgs 및 무거운 prosthetic 문자는 매번 새로운 각도 또는 샷이 생성됩니다.",
-            "solutionHeadline": "Locked 외국인 자산 프로필",
-            "solution": "닻 비 인간 anatomy, 기갑 세부사항 및 기계적인 악센트. 사용자 정의 3D 모델링 파이프없이 모든 고위 장면에서 문자 인식 유지."
-          },
-          {
-            "title": "VFX 액션 & 고속 물리학",
-            "frictionHeadline": "Action Sequences의 용융 모션",
-            "friction": "고속 공간 개 전투, 에너지 무기 화재 및 폭발은 종종 구조 또는 메시 시각적 인 artifacts를 생산하는 유전자 모델을 발생합니다.",
-            "solutionHeadline": "액션 & FX 모션 고정",
-            "solution": "동적인 choreography, 빠른 사진기 운동 및 입자 무거운 활동은 청결한 가장자리 및 현실적인 trajectory 물리를 보존하는 동안 이길 것입니다."
-          },
-          {
-            "title": "Audio-Visual 세계관",
-            "frictionHeadline": "High-Concept Worlds의 플랫 오디오",
-            "friction": "Futuristic 무기, 주위 전염병, 외계인 연설 패턴은 수동으로 침묵 생성 된 클립을 장착 할 때 차단됩니다.",
-            "solutionHeadline": "통합 세계소리 및 음성 동기화",
-            "solution": "Align 사용자 정의 합성 대화, 외계인 보컬화 및 영화 사운드는 immersive, release-ready 마스터 오디오 믹스에 대한 타임 라인 내에서 직접 cues."
-          }
-        ],
-        "screeningRoomPreview": "Screening Room 다운로드"
+        "screeningRoomPreview": "The Animated Comedy — Screening Room"
       },
       {
         "id": "documentary",
-        "title": "최고의 문서로 Archival Stories를 켭니다.",
-        "subtitle": "과거의 사건, 재검토, 그리고 정통 기간 세부사항, 이음새가 없는 목소리로 전문가 인터뷰 체제 및 영 아카이브 라이센스 수수료.",
-        "badge": "영업시간",
+        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
+        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
+        "badge": "Period-Accurate",
         "solutionPillars": [
           {
-            "title": "Era-Specific 시각 정확도",
-            "frictionHeadline": "Anachronistic 예술",
-            "friction": "표준 생성 모델은 일상적으로 현대 개체, 스마트 폰 화면, 또는 잘못된 기간 의류를 역사적 사실로 표백했습니다.",
-            "solutionHeadline": "역사 작풍 난간",
-            "solution": "정확한 임시 매개 변수를 설정 1920 년대 영화 곡물에서 18 세기 옷장 질감-그래서 모든 생성 된 장면은 역사적으로 정통."
+            "title": "Era-Specific Visual Accuracy",
+            "frictionHeadline": "Anachronistic Artifacts",
+            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
+            "solutionHeadline": "Historical Style Guardrails",
+            "solution": "Set exact temporal parameters — from 1920s film grain to 18th-century wardrobe textures — so every generated scene stays historically authentic."
           },
           {
-            "title": "건축 Cutaways & B 목록 엔진",
-            "frictionHeadline": "긴 Voiceovers의 Visual Monotony",
-            "friction": "정적 인 재고 이미지와 긴 유형 항해자 오디오는 깊은 다이빙 동안 급속한 구경꾼 하락에 지도합니다.",
-            "solutionHeadline": "Transcript-Driven B-Roll 엔진",
-            "solution": "내레이터가 역사적 사실에 대해 논의함에 따라 SceneFlow은 자동으로 타임 시네마틱 재검토, 문서 오버레이 및 아카이브 스타일 컷웨이가 오디오 트랜지를 직접 묶었습니다."
+            "title": "Archival Cutaways & B-Roll Engine",
+            "frictionHeadline": "Visual Monotony in Long Voiceovers",
+            "friction": "Pairing long-form narrator audio with static stock images leads to rapid viewer drop-off during deep dives.",
+            "solutionHeadline": "Transcript-Driven B-Roll Engine",
+            "solution": "As your narrator discusses historical facts, SceneFlow automatically generates timed cinematic re-enactments, document overlays, and archival-style cutaways tied directly to the audio transcript."
           },
           {
-            "title": "인터뷰 & Talking-Head Realism",
-            "frictionHeadline": "Uncanny 전문가",
-            "friction": "연구원, 조사자 또는 증인은 종종 부동 턱 운동과 자연적인 눈 접촉과 인공을보고.",
-            "solutionHeadline": "Locked 전문가 프로필 및 Vocal 동기화",
-            "solution": "자연적인 Micro-expressions, 정확한 lip-sync 및 multi-part 시리즈를 통하여 일관된 전문가 identities를 가진 현실적이고 믿을 수 있는 인터뷰 체제를 유지하십시오."
+            "title": "Interview & Talking-Head Realism",
+            "frictionHeadline": "Uncanny Expert Witnesses",
+            "friction": "Generated historians, investigators, or witnesses often look artificial, with floating jaw movements and unnatural eye contact.",
+            "solutionHeadline": "Locked Expert Profiles & Vocal Sync",
+            "solution": "Maintain realistic, trustworthy interview setups with natural micro-expressions, accurate lip-sync, and consistent expert identities across multi-part series."
           },
           {
-            "title": "Episodic Pacing & Narrative 연속성",
-            "frictionHeadline": "Fragmented 타임라인 편집",
-            "friction": "밸런싱 네레이터 오디오, 재활성화, 증거는 40 분의 에피소드를 가로지르며, 일반적으로 전통적인 NLE에서 주 걸립니다.",
-            "solutionHeadline": "Beat-First 문서 파이프라인",
-            "solution": "구조 극한 긴장, suspenseful pauses, 및 증거는 Blueprint Studio 안쪽에 시각적으로, 1개의 이음새가 없는 통행에 있는 완전히 조립된 주 파일을 전달합니다."
+            "title": "Episodic Pacing & Narrative Continuity",
+            "frictionHeadline": "Fragmented Timeline Editing",
+            "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
+            "solutionHeadline": "Beat-First Documentary Pipeline",
+            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Studio, delivering a fully assembled master file in one seamless pass."
           }
         ],
-        "screeningRoomPreview": "다큐멘터리 제작 — Screening Room 다운로드"
+        "screeningRoomPreview": "Documentary Production — Screening Room"
+      },
+      {
+        "id": "localization",
+        "title": "Beyond Dubbing. Fully Localized Productions.",
+        "subtitle": "Same storyline, two cities: Houston, Texas and São Paulo, Brazil. SceneFlow doesn't just dub the audio — it localizes settings, cultural references, and on-screen text so each audience sees a production made for them.",
+        "badge": "Localized",
+        "localeToggle": true,
+        "locales": [
+          {
+            "id": "houston",
+            "label": "Houston, TX",
+            "lang": "en"
+          },
+          {
+            "id": "saopaulo",
+            "label": "São Paulo, BR",
+            "lang": "pt"
+          }
+        ],
+        "solutionPillars": [
+          {
+            "title": "Cultural Adaptation, Not Translation",
+            "frictionHeadline": "Dubbing Is Not Localization.",
+            "friction": "Swapping the audio track leaves every cultural reference, location shot, and on-screen graphic targeting the wrong audience.",
+            "solutionHeadline": "Blueprint-Level Localization.",
+            "solution": "Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Studio before a single frame is rendered."
+          },
+          {
+            "title": "Parallel Production Pipelines",
+            "frictionHeadline": "One Region at a Time.",
+            "friction": "Traditional localization is sequential — finish the original, then manually rebuild for each market. Months of delay per region.",
+            "solutionHeadline": "Concurrent Regional Pipelines.",
+            "solution": "Run multiple localized Blueprints in parallel. Each region gets its own production pipeline sharing the same narrative structure but with fully adapted visuals and dialogue."
+          },
+          {
+            "title": "Region-Specific Audience Resonance",
+            "frictionHeadline": "One Script for Every Culture.",
+            "friction": "Humor, pacing, and emotional beats that land in Houston may fall flat in São Paulo. A single script cannot carry both.",
+            "solutionHeadline": "Per-Region Resonance Tuning.",
+            "solution": "Audience Resonance analyzes each localized script against regional demographic profiles, flagging cultural mismatches before production begins."
+          }
+        ],
+        "screeningRoomPreview": "Localized Production Comparison — Screening Room"
       }
     ]
   },

@@ -1920,251 +1920,181 @@
     ]
   },
   "productionShowcase": {
-    "badge": "Ejemplos de producción",
-    "title": "Del concepto a la pantalla:",
-    "titleAccent": "Posibilidades infinitas",
-    "subtitle": "Seis producciones públicas prueban el proceso completo: previsualización, vídeo de la escena y evaluación de Screening Room. Define tu concepto y deja que SceneFlow se encargue de la escritura de guiones, el diseño de personajes, el audio en varios idiomas, la visualización, la producción de vídeos y la publicación.",
-    "subtitleTagline": "Una plataforma. Posibilidades infinitas.",
-    "publicProductionsNote": "Cada una de las siguientes tarjetas es una producción pública completa: cambia de soluciones y Screening Room pestañas para recorrer el proceso.",
-    "languagesBanner": "Los ejemplares públicos se envían en 7 idiomas: inglés, español, portugués, hindi, chino, árabe y tailandés.",
-    "explorePipelineCta": "Explora una producción completa",
-    "explorePipelineHint": "Comience con el drama cinematográfico a continuación: soluciones para el carrete de demostración, Screening Room para el flujo de trabajo de revisión completo.",
-    "workflowLabel": "Soluciones",
-    "startProduction": "Inicie su producción",
-    "cta": "Inicie su producción",
-    "continuityNote": "Series Studio gestiona la continuidad",
-    "resonanceNote": "Audience Resonance™ optimiza los scripts",
-    "videoLanguagePrompt": "Mira esta producción en tu idioma",
-    "videoComingSoon": "Próximamente",
-    "videoSoon": "Pronto",
-    "introVideoLabel": "Soluciones",
-    "screeningRoomLabel": "Screening Room",
-    "frictionLabel": "La fricción",
-    "solutionPillarLabel": "La solución SceneFlow",
-    "showSolutionsSection": "Mostrar soluciones",
-    "hideSolutionsSection": "Ocultar soluciones",
+    "badge": "Production Examples",
+    "title": "See the Full Pipeline",
+    "titleAccent": "in Action",
+    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to final high-resolution video. Walk the Screening Room to compare animatics, individual scenes, and the finished master in multiple languages.",
+    "subtitleTagline": "Long-form productions. Not clips.",
+    "screeningRoomInstruction": "Select Pre-Vis, Scenes, or Final to experience the pipeline. Select a language to hear the dub.",
+    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
+    "explorePipelineCta": "Explore a full production",
+    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
+    "workflowLabel": "Solutions",
+    "startProduction": "Start Your Production",
+    "cta": "Start Your Production",
+    "continuityNote": "Series Studio manages continuity",
+    "resonanceNote": "Audience Resonance™ optimizes scripts",
+    "videoLanguagePrompt": "Watch this production in your language",
+    "videoComingSoon": "Dub coming soon",
+    "videoSoon": "Soon",
+    "frictionLabel": "The Friction",
+    "solutionPillarLabel": "The SceneFlow Solution",
+    "showSolutionsSection": "Show Solutions",
+    "hideSolutionsSection": "Hide Solutions",
     "cards": [
       {
         "id": "drama",
-        "title": "Drama de IA cinematográfica. Deriva de personaje cero.",
-        "subtitle": "Elimina los personajes que se transforman, los diálogos rotos y las repeticiones interminables. Crea historias de formato largo sin interrupciones y de varios personajes con una continuidad visual completa.",
-        "badge": "Listo para la serie",
+        "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
+        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the pre-vis animatic, individual scenes, and the final high-resolution master — then switch languages to hear the full dub.",
+        "badge": "Series-Ready",
         "solutionPillars": [
           {
-            "title": "Consistencia visual y de caracteres",
-            "frictionHeadline": "Conjuntos de deriva y tambaleo de personajes.",
-            "friction": "Los modelos generativos se restablecen con cada toma, causando que las caras de los personajes, los atuendos y la iluminación se transformen continuamente a través de los cortes de escena.",
-            "solutionHeadline": "Activo bloqueado Blueprints.",
-            "solution": "Define los perfiles de los personajes principales, los entornos y los estilos visuales por adelantado en Blueprint Studio. SceneFlow aplica la identidad visual en todos los renders para preservar la inmersión narrativa."
+            "title": "Visual & Character Consistency",
+            "frictionHeadline": "Character Drift & Wobbly Sets.",
+            "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
+            "solutionHeadline": "Locked Asset Blueprints.",
+            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Studio. SceneFlow enforces visual identity across every render to preserve narrative immersion."
           },
           {
-            "title": "Estimulación narrativa y control de escenas",
-            "frictionHeadline": "La trampa de clip de 10 segundos.",
-            "friction": "Construir una película a partir de micro-prompts desconectados crea un ritmo entrecortado, una emoción plana y una edición manual interminable de la línea de tiempo.",
+            "title": "Narrative Pacing & Scene Control",
+            "frictionHeadline": "The 10-Second Clip Trap.",
+            "friction": "Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.",
             "solutionHeadline": "Beat-First Storyboarding.",
-            "solution": "Directo al nivel de la escena, no al nivel de la indicación. Estructura los ritmos dramáticos, los movimientos de la cámara y los arcos de la historia visualmente antes de generar un solo fotograma de vídeo."
+            "solution": "Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video."
           },
           {
-            "title": "Alineación de diálogo y audio",
-            "frictionHeadline": "Diálogo poco convincente.",
-            "friction": "La sincronización de labios no coincidente, los movimientos de la boca flotante y las pistas de voz separadas inmediatamente sacan a los espectadores del drama.",
-            "solutionHeadline": "Motor de voz y sincronización integrado.",
-            "solution": "El rendimiento dinámico de la voz y la sincronización precisa de los labios se incorporan directamente a la canalización de vídeo, lo que proporciona un diálogo creíble sin pases externos de postproducción."
+            "title": "Dialogue & Audio Alignment",
+            "frictionHeadline": "Unconvincing Dialogue.",
+            "friction": "Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.",
+            "solutionHeadline": "Integrated Voice & Sync Engine.",
+            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline — delivering believable dialogue without external post-production passes."
           },
           {
-            "title": "Flujo de trabajo de fricción y fatiga por re-rollo",
+            "title": "Workflow Friction & Reroll Fatigue",
             "frictionHeadline": "Asset Chaos & Endless Rerolls.",
-            "friction": "Generar un cortometraje generalmente significa hacer malabares con más de 200 archivos de video RAW, escalado manual y docenas de generaciones desperdiciadas.",
+            "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
             "solutionHeadline": "Automated Studio Pipeline.",
-            "solution": "Desde el concepto hasta el MP4 maestro final en una plataforma unificada. Blueprint Studio se encarga de configurar la historia, Production Studio automatiza el procesamiento y Screening Room realiza la exportación final."
+            "solution": "From concept to final master MP4 in one unified platform. Blueprint Studio handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export."
           }
         ],
-        "screeningRoomPreview": "El drama cinematográfico — Screening Room Vista previa"
+        "screeningRoomPreview": "The Cinematic Drama — Screening Room"
       },
       {
         "id": "animation",
-        "title": "Tú escribes el chiste. SceneFlow anima la línea de perforación.",
-        "subtitle": "Elimine la deriva del estilo, el movimiento rígido y la sincronización rota. Convierte guiones divertidos en episodios de comedia totalmente animados y sincronizados por voz en un estudio perfecto.",
-        "badge": "MULTI ESTILO.",
+        "title": "Full-Season Animated Series. One Consistent Art Style.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "badge": "Multi-Style",
         "solutionPillars": [
           {
-            "title": "Consistencia estilística",
-            "frictionHeadline": "Estilo Meltdown.",
-            "friction": "Los estilos de dibujos animados y anime se deforman constantemente entre tomas, cambiando el arte de las líneas, rompiendo las paletas de colores y transformando a los personajes en un efecto extraño fotorrealista.",
-            "solutionHeadline": "Motor de estilo de arte bloqueado.",
-            "solution": "Congela tu estética desde el primer cuadro. SceneFlow bloquea los diseños de personajes, los grosores de línea y los modelos de sombreado en todo el episodio para que tus personajes sigan siendo exclusivamente tuyos."
+            "title": "Stylistic Consistency",
+            "frictionHeadline": "Style Meltdown.",
+            "friction": "Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.",
+            "solutionHeadline": "Locked Art Style Engine.",
+            "solution": "Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours."
           },
           {
-            "title": "Animación y física exageradas",
+            "title": "Exaggerated Animation & Physics",
             "frictionHeadline": "Stiff & Glitchy Motion.",
-            "friction": "Los modelos generativos luchan con slapstick rápidos, tomas dobles y física de dibujos animados blandos, convirtiendo los gags de alta energía en artefactos de fusión.",
-            "solutionHeadline": "Anclaje de acción y postura.",
-            "solution": "Impulsa el movimiento dinámico de los personajes y las poses expresivas sin romper la geometría. Comedia física directa y contundente, cortes repentinos y expresiones salvajes con control total del movimiento."
+            "friction": "Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.",
+            "solutionHeadline": "Action & Pose Anchoring.",
+            "solution": "Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control."
           },
           {
-            "title": "Cronometraje y ritmo cómico",
-            "frictionHeadline": "Líneas de golpe arruinadas.",
-            "friction": "El humor vive en las pausas y los beat-cuts. Los bucles generativos estándar de 5 segundos fuerzan un ritmo incómodo que destruye la entrega de bromas.",
-            "solutionHeadline": "Edición de precisión de ritmo.",
-            "solution": "Controlar el ritmo de la escena hasta el fotograma. Ajusta las pausas dramáticas, el tiempo de configuración de la línea de golpeo y las tomas de reacción rápida directamente dentro de la línea de tiempo de beat-first antes del renderizado final."
+            "title": "Comedic Timing & Rhythm",
+            "frictionHeadline": "Ruined Punchlines.",
+            "friction": "Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.",
+            "solutionHeadline": "Beat-Precision Editing.",
+            "solution": "Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render."
           },
           {
-            "title": "Diálogo de alta energía y sincronización vocal",
-            "frictionHeadline": "Bocas de marioneta sin vida.",
-            "friction": "El diálogo genérico de IA se siente plano y mecánico, destruyendo la energía necesaria para las bromas rápidas de las comedias de situación.",
-            "solutionHeadline": "Sincronización dinámica de voz y expresiones.",
-            "solution": "Asigne la entrega vocal directamente al rendimiento facial enérgico. Los diálogos, las formas expresivas de la boca y las pistas de voz cómicas combinan a la perfección para lograr el máximo impacto cómico."
+            "title": "High-Energy Dialogue & Vocal Sync",
+            "frictionHeadline": "Lifeless Puppet Mouths.",
+            "friction": "Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.",
+            "solutionHeadline": "Dynamic Voice & Expression Sync.",
+            "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
           }
         ],
-        "screeningRoomPreview": "La comedia animada — Screening Room Vista previa"
-      },
-      {
-        "id": "podcast",
-        "title": "Eres el anfitrión de la conversación. SceneFlow Produce el espectáculo.",
-        "subtitle": "Elimina los avatares estáticos y la edición manual de vídeo. Transforma scripts o audio RAW en podcasts de vídeo multiángulo listos para transmitir en un canal automatizado.",
-        "badge": "Broadcast-Ready",
-        "solutionPillars": [
-          {
-            "title": "Identidad de múltiples altavoces y avatares",
-            "frictionHeadline": "Avatares robóticos e identidad perdida",
-            "friction": "Los anfitriones generados cambian de apariencia a mitad del episodio, miran fijamente a la cámara o no exhiben microexpresiones humanas naturales mientras escuchan.",
-            "solutionHeadline": "Perfiles de anfitriones y huéspedes bloqueados",
-            "solution": "Establece identidades visuales permanentes para tus coanfitriones y huéspedes habituales. SceneFlow mantiene la consistencia del hablante, el contacto visual natural y un lenguaje corporal conversacional realista a lo largo de las discusiones largas."
-          },
-          {
-            "title": "Dirección y estimulación multicámara",
-            "frictionHeadline": "Monótonos de un solo ángulo",
-            "friction": "Las tomas estáticas de cabeza parlante pierden la retención de la audiencia rápidamente, mientras que el cambio manual de cámara a través de una línea de tiempo de 30 minutos requiere tediosos cortes fotograma a fotograma.",
-            "solutionHeadline": "Conmutación automática multicámara",
-            "solution": "SceneFlow analiza el flujo de la conversación para alternar automáticamente entre los primeros planos de los anfitriones, las reacciones de los huéspedes y las tomas de estudio de gran angular, ofreciendo un ritmo de transmisión profesional sin editar el cronograma manualmente."
-          },
-          {
-            "title": "Context-Aware B-Roll & Visuals",
-            "frictionHeadline": "Monotonía visual y cuellos de botella B-Roll",
-            "friction": "Encontrar, generar y cronometrar ayudas visuales relevantes o clips de B-roll para cada tema mencionado consume horas de postproducción.",
-            "solutionHeadline": "Recortes B-Roll autogenerados",
-            "solution": "A medida que tus anfitriones discuten los temas, SceneFlow genera automáticamente imágenes cinematográficas contextuales, gráficos y cortes de escena programados con precisión en la transcripción de audio."
-          },
-          {
-            "title": "Sincronización de audio y vídeo de formato largo",
-            "frictionHeadline": "Deriva de audio y fatiga de renderización de formato largo",
-            "friction": "La sincronización del vídeo generativo con más de 20 minutos de audio sin procesar conduce a una deriva de sincronización de labios, errores de renderización y gestión fragmentada de archivos.",
-            "solutionHeadline": "Pipeline de podcasts de extremo a extremo",
-            "solution": "Introduzca su pista de audio o guión sin formato, y SceneFlow se encargará de la alineación de avatares, los cortes de cámara, la integración de B-roll y la exportación final de MP4 maestro en un solo pase de estudio automatizado y sin problemas."
-          }
-        ],
-        "screeningRoomPreview": "El podcast AI-First — Screening Room Vista previa"
-      },
-      {
-        "id": "training",
-        "title": "Videos de capacitación de nivel empresarial. Previsualización producida en minutos.",
-        "subtitle": "Convierte manuales, diapositivas y documentos de cumplimiento en módulos de video atractivos y multilingües con identidades de marca bloqueadas, sincronización de labios impecable y cero gastos generales de estudio.",
-        "badge": "Implementación global",
-        "solutionPillars": [
-          {
-            "title": "Coherencia entre el presentador y la marca",
-            "frictionHeadline": "Avatares inquietantes y deriva de marca",
-            "friction": "Los presentadores de IA baratos se sienten robóticos e inaccesibles, mientras que los logotipos de las marcas, los colores y las apariencias de los presentadores cambian de manera inconsistente en los diferentes módulos de capacitación.",
-            "solutionHeadline": "Perfiles de ejecutivos y formadores bloqueados",
-            "solution": "Establezca presentadores corporativos persistentes y de aspecto natural y bloquee las pautas de su marca. SceneFlow mantiene la identidad visual, el estilo corporativo y la entrega profesional en toda su biblioteca de cursos."
-          },
-          {
-            "title": "Localización global perfecta",
-            "frictionHeadline": "Traducciones rotas y mala sincronización de labios",
-            "friction": "Localizar el contenido de la capacitación en más de 10idiomas generalmente crea una sincronización de boca incómoda, pistas de voz robóticas y cuellos de botella de reedición masiva.",
-            "solutionHeadline": "Motor de sincronización multilingüe nativo",
-            "solution": "Traduzca toda su serie de capacitación a docenas de idiomas con un tono de voz natural, llamadas de texto localizadas y sincronización de labios con precisión de fotogramas, todo con un solo clic."
-          },
-          {
-            "title": "Ayudas visuales y diagramas integrados",
-            "frictionHeadline": "Text-Heavy Bore",
-            "friction": "Los videos que son solo cabezas parlantes pierden rápidamente la atención de los empleados, mientras que la animación manual de diagramas de procesos, capturas de pantalla y llamadas de viñetas lleva horas en un editor.",
-            "solutionHeadline": "Superposición contextual visual y gráfica",
-            "solution": "A medida que tu presentador explica flujos de trabajo complejos o pasos de cumplimiento, SceneFlow genera automáticamente diagramas cronometrados, conclusiones clave y ayudas visuales directamente en la pantalla."
-          },
-          {
-            "title": "Actualización rápida de contenido",
-            "frictionHeadline": "Re-shoots caros y trampas de renderizado",
-            "friction": "Cuando la política de la empresa o las especificaciones del producto cambian, actualizar una sección de 2 minutos de un video generalmente requiere reconstruir y volver a renderizar todo el archivo.",
-            "solutionHeadline": "Actualizaciones de scripts modulares",
-            "solution": "Edite el texto directamente en el plano del script para actualizar las políticas o procedimientos al instante. SceneFlow vuelve a representar solo la sección modificada, conservando el tiempo y el estilo de vídeo circundantes."
-          }
-        ],
-        "screeningRoomPreview": "La formación corporativa — Screening Room Vista previa"
-      },
-      {
-        "id": "scifi",
-        "title": "Construye mundos imposibles. Dirige ciencia ficción sin concesiones.",
-        "subtitle": "Realice efectos visuales complejos, entornos futuristas y diseños de personajes alienígenas con continuidad visual cuadro por cuadro, todo dentro de una única canalización automatizada.",
-        "badge": "VFX-Ready",
-        "solutionPillars": [
-          {
-            "title": "Continuidad ambiental y arquitectónica",
-            "frictionHeadline": "Errores de geometría y escala",
-            "friction": "Las ciudades futuristas, los paisajes de neón y las naves espaciales alienígenas se deforman, cambian de textura o se disuelven constantemente en ruido visual aleatorio entre los cortes de cámara.",
-            "solutionHeadline": "Bloqueo de estado mundial",
-            "solution": "Define la arquitectura clave, los esquemas de iluminación y los parámetros ambientales en Blueprint Studio. SceneFlow bloquea la geometría espacial para que tu configuración se mantenga constante, desde tomas amplias hasta peleas en pasillos estrechos."
-          },
-          {
-            "title": "Integridad del diseño de alienígenas y criaturas",
-            "frictionHeadline": "Diseños de personajes de Morphing",
-            "friction": "Las especies no humanoides, los cyborgs y los personajes protésicos pesados se desplazan violentamente en apariencia cada vez que se genera un nuevo ángulo o disparo.",
-            "solutionHeadline": "Perfiles de activos alienígenas bloqueados",
-            "solution": "Ancla la anatomía no humana, los detalles de la armadura y los acentos mecánicos. Mantiene el reconocimiento de personajes en todas las escenas de alto concepto sin canalizaciones de modelado 3D personalizadas."
-          },
-          {
-            "title": "Acción VFX y física de alta velocidad",
-            "frictionHeadline": "Secuencias de movimiento de fusión en acción",
-            "friction": "Los combates espaciales de alta velocidad, los incendios de armas de energía y las explosiones a menudo hacen que los modelos generativos manchen los marcos o produzcan artefactos visuales desordenados.",
-            "solutionHeadline": "Anclaje de acción y movimiento FX",
-            "solution": "Dirige la coreografía dinámica, los movimientos rápidos de la cámara y los ritmos de acción de partículas pesadas, al tiempo que preserva los bordes limpios y la física realista de la trayectoria."
-          },
-          {
-            "title": "Edificio Audiovisual Mundial",
-            "frictionHeadline": "Audio plano en mundos de alto concepto",
-            "friction": "Las armas futuristas, los zumbidos ambientales de la nave espacial y los patrones de habla alienígena se sienten desconectados cuando se colocan manualmente sobre clips generados silenciosamente.",
-            "solutionHeadline": "Sincronización de voz y sonido mundial integrada",
-            "solution": "Alinea diálogos sintéticos personalizados, vocalizaciones alienígenas y señales de sonido cinematográficas directamente dentro de la línea de tiempo para obtener una mezcla de audio maestra envolvente y lista para el lanzamiento."
-          }
-        ],
-        "screeningRoomPreview": "Producción de VFX de ciencia ficción — Screening Room Vista previa"
+        "screeningRoomPreview": "The Animated Comedy — Screening Room"
       },
       {
         "id": "documentary",
-        "title": "Convierte las historias de archivo en documentales más vendidos.",
-        "subtitle": "Recrea eventos históricos, recreaciones y configuraciones de entrevistas de expertos con detalles de períodos auténticos, voces en off sin problemas y cero tarifas de licencia de archivo.",
-        "badge": "Periodo - Exacto",
+        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
+        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
+        "badge": "Period-Accurate",
         "solutionPillars": [
           {
-            "title": "Precisión visual específica de la época",
-            "frictionHeadline": "Artefactos anacrónicos",
-            "friction": "Los modelos generativos estándar sangran rutinariamente objetos modernos, pantallas de teléfonos inteligentes o ropa de época incorrecta en recreaciones históricas.",
-            "solutionHeadline": "Barandillas de estilo histórico",
-            "solution": "Establece parámetros temporales exactos, desde grano de película de la década de 1920 hasta texturas de vestuario del siglo XVIII, para que cada escena generada se mantenga históricamente auténtica."
+            "title": "Era-Specific Visual Accuracy",
+            "frictionHeadline": "Anachronistic Artifacts",
+            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
+            "solutionHeadline": "Historical Style Guardrails",
+            "solution": "Set exact temporal parameters — from 1920s film grain to 18th-century wardrobe textures — so every generated scene stays historically authentic."
           },
           {
-            "title": "Recortes de archivo y motor B-Roll",
-            "frictionHeadline": "Monotonía visual en locuciones largas",
-            "friction": "El emparejamiento del audio del narrador de formato largo con imágenes de stock estáticas conduce a una rápida caída del espectador durante las inmersiones profundas.",
-            "solutionHeadline": "Motor B-Roll impulsado por la transcripción",
-            "solution": "A medida que tu narrador analiza hechos históricos, SceneFlow genera automáticamente recreaciones cinematográficas cronometradas, superposiciones de documentos y cortes de estilo de archivo vinculados directamente a la transcripción de audio."
+            "title": "Archival Cutaways & B-Roll Engine",
+            "frictionHeadline": "Visual Monotony in Long Voiceovers",
+            "friction": "Pairing long-form narrator audio with static stock images leads to rapid viewer drop-off during deep dives.",
+            "solutionHeadline": "Transcript-Driven B-Roll Engine",
+            "solution": "As your narrator discusses historical facts, SceneFlow automatically generates timed cinematic re-enactments, document overlays, and archival-style cutaways tied directly to the audio transcript."
           },
           {
-            "title": "Entrevista y realismo de Talking-Head",
-            "frictionHeadline": "Testigos expertos extraños",
-            "friction": "Los historiadores, investigadores o testigos generados a menudo parecen artificiales, con movimientos de mandíbula flotantes y contacto visual antinatural.",
-            "solutionHeadline": "Perfiles expertos bloqueados y sincronización vocal",
-            "solution": "Mantenga configuraciones de entrevista realistas y confiables con microexpresiones naturales, sincronización de labios precisa e identidades de expertos consistentes en series de varias partes."
+            "title": "Interview & Talking-Head Realism",
+            "frictionHeadline": "Uncanny Expert Witnesses",
+            "friction": "Generated historians, investigators, or witnesses often look artificial, with floating jaw movements and unnatural eye contact.",
+            "solutionHeadline": "Locked Expert Profiles & Vocal Sync",
+            "solution": "Maintain realistic, trustworthy interview setups with natural micro-expressions, accurate lip-sync, and consistent expert identities across multi-part series."
           },
           {
-            "title": "Estimulación episódica y continuidad narrativa",
-            "frictionHeadline": "Edición fragmentada de la línea de tiempo",
-            "friction": "Equilibrar el audio del narrador, las recreaciones, las revelaciones de evidencia y las pausas para generar tensión en un episodio de 40 minutos generalmente lleva semanas en los NLE tradicionales.",
+            "title": "Episodic Pacing & Narrative Continuity",
+            "frictionHeadline": "Fragmented Timeline Editing",
+            "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
             "solutionHeadline": "Beat-First Documentary Pipeline",
-            "solution": "Estructura la tensión dramática, las pausas de suspenso y las pruebas que se revelan visualmente dentro de Blueprint Studio, entregando un archivo maestro completamente ensamblado en una sola pasada."
+            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Studio, delivering a fully assembled master file in one seamless pass."
           }
         ],
-        "screeningRoomPreview": "Producción documental — Screening Room Vista previa"
+        "screeningRoomPreview": "Documentary Production — Screening Room"
+      },
+      {
+        "id": "localization",
+        "title": "Beyond Dubbing. Fully Localized Productions.",
+        "subtitle": "Same storyline, two cities: Houston, Texas and São Paulo, Brazil. SceneFlow doesn't just dub the audio — it localizes settings, cultural references, and on-screen text so each audience sees a production made for them.",
+        "badge": "Localized",
+        "localeToggle": true,
+        "locales": [
+          {
+            "id": "houston",
+            "label": "Houston, TX",
+            "lang": "en"
+          },
+          {
+            "id": "saopaulo",
+            "label": "São Paulo, BR",
+            "lang": "pt"
+          }
+        ],
+        "solutionPillars": [
+          {
+            "title": "Cultural Adaptation, Not Translation",
+            "frictionHeadline": "Dubbing Is Not Localization.",
+            "friction": "Swapping the audio track leaves every cultural reference, location shot, and on-screen graphic targeting the wrong audience.",
+            "solutionHeadline": "Blueprint-Level Localization.",
+            "solution": "Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Studio before a single frame is rendered."
+          },
+          {
+            "title": "Parallel Production Pipelines",
+            "frictionHeadline": "One Region at a Time.",
+            "friction": "Traditional localization is sequential — finish the original, then manually rebuild for each market. Months of delay per region.",
+            "solutionHeadline": "Concurrent Regional Pipelines.",
+            "solution": "Run multiple localized Blueprints in parallel. Each region gets its own production pipeline sharing the same narrative structure but with fully adapted visuals and dialogue."
+          },
+          {
+            "title": "Region-Specific Audience Resonance",
+            "frictionHeadline": "One Script for Every Culture.",
+            "friction": "Humor, pacing, and emotional beats that land in Houston may fall flat in São Paulo. A single script cannot carry both.",
+            "solutionHeadline": "Per-Region Resonance Tuning.",
+            "solution": "Audience Resonance analyzes each localized script against regional demographic profiles, flagging cultural mismatches before production begins."
+          }
+        ],
+        "screeningRoomPreview": "Localized Production Comparison — Screening Room"
       }
     ]
   },

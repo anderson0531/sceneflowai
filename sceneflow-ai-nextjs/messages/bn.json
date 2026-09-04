@@ -1920,251 +1920,181 @@
     ]
   },
   "productionShowcase": {
-    "badge": "উৎপাদনশীল উদাহরণ",
-    "title": "প্রতিবেদন থেকে স্ক্রীনে দাও:",
-    "titleAccent": "পেমব্রো",
-    "subtitle": "৬ জন টুইটে পূর্ণ পাইপ - প্রাক-ভিশন, ভিডিও, এবং সিএফএফএআরসিআরসি ROREER ভোটার পর্যালোচনা করছে। আপনার ধারণাকে ব্যাখ্যা করুন এবং এফএফ 802.1ICTE ভিত্তিক স্ক্রিপ্টকে অনুবাদ, অক্ষরের নকশা, মাল্টি-ভাষা, কল্পনা, ভিডিও নির্মাণ এবং প্রকাশ করুন।.",
-    "subtitleTagline": "একটা প্ল্যাটফর্ম। সম্ভাবনা.",
-    "publicProductionsNote": "নিচের প্রতিটি কার্ড একটি সম্পূর্ণ গণ উৎপাদন কেন্দ্র - সমাধান পরিবর্তন এবং সিএফএআরসিআরএস আরইএস ট্যাবসিং এর মাধ্যমে লাইন ধরে হাঁটা।.",
-    "languagesBanner": "ইংরেজি, স্প্যানিশ, হিন্দি, চাইনিজ, আরবি এবং থাই ভাষায় পাবলিক উদাহরণগুলোর জাহাজ।.",
-    "explorePipelineCta": "সম্পূর্ণ গবেষণা করুন",
-    "explorePipelineHint": "চলচ্চিত্রের নাটক শুরু করা — গণতন্ত্রের জন্য সমাধান, SFAREERM ORAREERM এর সম্পূর্ণ পর্যালোচনা ফিলিস্তিনের জন্য।.",
-    "workflowLabel": "সমাধান দেখাও",
-    "startProduction": "আরম্ভ",
-    "cta": "আরম্ভ",
-    "continuityNote": "শেয়ারিং ( S)",
-    "resonanceNote": "অস্ট্রেলিয়া",
-    "videoLanguagePrompt": "আপনার ভাষায় এই উৎপাদনটা দেখুন",
-    "videoComingSoon": "শীঘ্রই আসছে",
-    "videoSoon": "♪ তাড়াতাড়ি ♪",
-    "introVideoLabel": "সমাধান দেখাও",
-    "screeningRoomLabel": "শীতকালীন খাবার",
-    "frictionLabel": "একতা",
-    "solutionPillarLabel": "অস্ট্রেলিয়ার নেপোমুক সমাধান",
-    "showSolutionsSection": "সমাধান দেখাও",
-    "hideSolutionsSection": "সমাধান অপসারণ করো",
+    "badge": "Production Examples",
+    "title": "See the Full Pipeline",
+    "titleAccent": "in Action",
+    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to final high-resolution video. Walk the Screening Room to compare animatics, individual scenes, and the finished master in multiple languages.",
+    "subtitleTagline": "Long-form productions. Not clips.",
+    "screeningRoomInstruction": "Select Pre-Vis, Scenes, or Final to experience the pipeline. Select a language to hear the dub.",
+    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
+    "explorePipelineCta": "Explore a full production",
+    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
+    "workflowLabel": "Solutions",
+    "startProduction": "Start Your Production",
+    "cta": "Start Your Production",
+    "continuityNote": "Series Studio manages continuity",
+    "resonanceNote": "Audience Resonance™ optimizes scripts",
+    "videoLanguagePrompt": "Watch this production in your language",
+    "videoComingSoon": "Dub coming soon",
+    "videoSoon": "Soon",
+    "frictionLabel": "The Friction",
+    "solutionPillarLabel": "The SceneFlow Solution",
+    "showSolutionsSection": "Show Solutions",
+    "hideSolutionsSection": "Hide Solutions",
     "cards": [
       {
         "id": "drama",
-        "title": "চলচ্চিত্র্‌ক AI নাটক। জিরো অক্ষর ড্র্ট।.",
-        "subtitle": "রূপান্তরিত অক্ষর, ভাঙ্গা সংলাপ এবং সীমাহীন পুনর্বিবাহ। সমুদ্রসীমাহীন, একাধিক অক্ষর বিশিষ্ট দীর্ঘ-প্রশ্নশীল গল্প তৈরি করুন।.",
-        "badge": "অবস্থান",
+        "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
+        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the pre-vis animatic, individual scenes, and the final high-resolution master — then switch languages to hear the full dub.",
+        "badge": "Series-Ready",
         "solutionPillars": [
           {
-            "title": "Colum ব্যবহার করে দৃশ্যমান",
-            "frictionHeadline": "অক্ষর টাইপ্ট এন্ড বাজে সেট।.",
-            "friction": "প্রতিটি গুলি, পোশাক, পোশাকের পোশাক এবং দৃশ্যের আলো দিয়ে তৈরি মডেল তৈরি করা হয়েছে।.",
-            "solutionHeadline": "লকড হিসেবে SFDLUREMপরিচয়।.",
-            "solution": "মাস্টার অক্ষরের প্রোফাইল, পরিবেশ, এবং দৃশ্যমান স্টাইল SFULURUNESURESESESUM এর সামনে নির্ধারণ করুন। এই ঘটনার pellet বর্ণনা রক্ষা করার জন্য সব ধরনের দৃশ্যমান পরিচয়কে কার্যকর করে।."
+            "title": "Visual & Character Consistency",
+            "frictionHeadline": "Character Drift & Wobbly Sets.",
+            "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
+            "solutionHeadline": "Locked Asset Blueprints.",
+            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Studio. SceneFlow enforces visual identity across every render to preserve narrative immersion."
           },
           {
-            "title": "Nratersing ও Scenter নিয়ন্ত্রণ ব্যবস্থা",
-            "frictionHeadline": "10-SAct শাসিত ফাঁদ.",
-            "friction": "মাইক্রো-চুম্বনের সাথে যুক্ত একটি চলচ্চিত্র নির্মাণ করা হয়েছে।.",
-            "solutionHeadline": "বীট প্রাথমিক গল্প।.",
-            "solution": "লেভেল লেভেলের সরাসরি। নাটকীয় ভাবে রূপান্তরিত হয়েছে, ক্যামেরা আন্দোলন, এবং একটি ভিডিও নির্মাণের আগে আর্কসার্ট দৃশ্যমান হয়েছে।."
+            "title": "Narrative Pacing & Scene Control",
+            "frictionHeadline": "The 10-Second Clip Trap.",
+            "friction": "Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.",
+            "solutionHeadline": "Beat-First Storyboarding.",
+            "solution": "Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video."
           },
           {
-            "title": "ডায়লগ ও অডিও দিশা",
-            "frictionHeadline": "অসাধারণ ডায়লগ।.",
-            "friction": "ভুল করে ঠোঁটের ঠোঁট, মুখ ঢাকা, আর গলার স্বর বের করে দ্রুত দর্শকদের নাটক থেকে বের করে দেয়।.",
-            "solutionHeadline": "একত্রিত ভয়েস এবং সিঙ্ক ইঞ্জিন।.",
-            "solution": "পরিবর্তনশীল কণ্ঠের দক্ষতা এবং সুনির্দিষ্ট লিপ-এর প্রয়োগ সরাসরি ভিডিও পাইপলাইনে তৈরি করা হয়েছে- যা বাইরের পোস্ট পোস্ট-প্রউশন না দিয়ে কার্যকর হবে।."
+            "title": "Dialogue & Audio Alignment",
+            "frictionHeadline": "Unconvincing Dialogue.",
+            "friction": "Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.",
+            "solutionHeadline": "Integrated Voice & Sync Engine.",
+            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline — delivering believable dialogue without external post-production passes."
           },
           {
-            "title": "কাজের মেয়র ফ্রিডেল এবং রিলাক্স",
-            "frictionHeadline": "কুসংস্কার এবং অসফলতা।.",
-            "friction": "একটি স্বল্প দৈর্ঘ্য চলচ্চিত্র তৈরি করার মানে হচ্ছে ২০০+ ভিডিও ফাইল তৈরি করা, সেগুলোকে রূপান্তরিত করা, manipulat রূপান্তরিত করা এবং কয়েক ডজন প্রজন্ম নষ্ট করা।.",
-            "solutionHeadline": "অটোগ্রাফ স্টুডিও পাইপলাইন।.",
-            "solution": "একটা প্লাটফর্মে শেষ করার চিন্তা থেকে। SADUBUNEST SDRARADERSELSEDREBRESEBRESABRESEBRESABRESABRES/ADERSADRESADERMEEDRARABEEEEESABRABEEEEEEEMEMENESEEDEEEDRABRABRABRABRENEDRABREMEEDREEEMEMEE Durango তোমার শেষ রপ্তানি পৌঁছে দিয়েছে."
+            "title": "Workflow Friction & Reroll Fatigue",
+            "frictionHeadline": "Asset Chaos & Endless Rerolls.",
+            "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
+            "solutionHeadline": "Automated Studio Pipeline.",
+            "solution": "From concept to final master MP4 in one unified platform. Blueprint Studio handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export."
           }
         ],
-        "screeningRoomPreview": "চলচ্চিত্রের নাটক — অস্ট্রেলিয়ার সচেতন থাক! প্রাকদর্শন"
+        "screeningRoomPreview": "The Cinematic Drama — Screening Room"
       },
       {
         "id": "animation",
-        "title": "তুমি Jeke-তে লিখেছ। অস্ট্রেলিয়া পাঞ্চলাইন অ্যানিমেট করো।.",
-        "subtitle": "তাই, এতে অবাক হওয়ার কিছু নেই! একটি সমুদ্রবিহীন স্টুডিওতে ভয়েস-ডিজেডি পর্বগুলো সম্পূর্ণ অ্যানিমেশনে পরিণত হয়েছে।.",
-        "badge": "মাল্টি-স্টিং",
+        "title": "Full-Season Animated Series. One Consistent Art Style.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "badge": "Multi-Style",
         "solutionPillars": [
           {
-            "title": "সাইক্লোজি সংগতি",
-            "frictionHeadline": "স্টাইল মেটডাউন.",
-            "friction": "কার্টুন এবং এনিমিস্ট স্টাইলটি সব সময় ছবির মধ্যে দিয়ে চলতে থাকে।.",
-            "solutionHeadline": "আর্ট স্টাইল ইঞ্জিন লক করা হয়েছে.",
-            "solution": "প্রথম ফ্রেম থেকে তোমার সৌন্দর্য ঠান্ডা করো. FFASITRTE SITE's... ডিজাইন, লাইন, এবং পুরো পর্বের মডেলগুলো..."
+            "title": "Stylistic Consistency",
+            "frictionHeadline": "Style Meltdown.",
+            "friction": "Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.",
+            "solutionHeadline": "Locked Art Style Engine.",
+            "solution": "Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours."
           },
           {
-            "title": "অনুমানকৃত অ্যানিমেশন এবং পদার্থবিদ্যা",
-            "frictionHeadline": "স্টীপ আর গ্লুচি মট।.",
-            "friction": "দ্রুত চপেটাঘাত, ডাবল-টেক, এবং স্কুইশি কার্টুন ফিজিক্সের সাথে লড়াই করা মডেলগুলো উচ্চ-নৈকনীয় শিল্পকর্মগুলো গলে যাচ্ছে।.",
-            "solutionHeadline": "কর্ম ও পোজ slanting.",
-            "solution": "স্বকীয় চরিত্র আন্দোলন এবং প্রকাশশীল ভাবগুলি কোন জ্যামিতি ছাড়াই চালানো হয়েছে। হঠাৎ কেটে যাওয়া রাস্তা, বন্যপেক্ষায়স এবং সম্পূর্ণ নিয়ন্ত্রণ নিয়ে।."
+            "title": "Exaggerated Animation & Physics",
+            "frictionHeadline": "Stiff & Glitchy Motion.",
+            "friction": "Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.",
+            "solutionHeadline": "Action & Pose Anchoring.",
+            "solution": "Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control."
           },
           {
-            "title": "বার্তা তালিকা - নতুন বার্তা",
-            "frictionHeadline": "ধ্বংস হয়ে যাওয়া পাঞ্চলাইন।.",
-            "friction": "হুমর জগাখিচুড়িতে থাকে। স্বাভাবিক ৫ সেকেন্ডের একটি লুপে চাপ প্রয়োগ করা হয় যা কৌতুক বিতরণকে ধ্বংস করে দেয়।.",
-            "solutionHeadline": "বি-প্রবাদ সম্পাদনা।.",
-            "solution": "কনফিউশন ফ্রেমের উপরে শুয়ে আছে। নাটকীয় বিরতি, প্রস্তুতি-আপলাইন সিঙ্গাপুরের সময়ের পরিবর্তন, এবং চূড়ান্ত ফলাফলের আগে সরাসরি মার-প্রথম টাইমের মাধ্যমে দ্রুত প্রতিক্রিয়া প্রদর্শন করা হয়।."
+            "title": "Comedic Timing & Rhythm",
+            "frictionHeadline": "Ruined Punchlines.",
+            "friction": "Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.",
+            "solutionHeadline": "Beat-Precision Editing.",
+            "solution": "Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render."
           },
           {
-            "title": "উচ্চ-Energy ডায়ালগ এবং স্পষ্ট সিঙ্ক",
-            "frictionHeadline": "জীবনহীন পুটকি মৌথস।.",
-            "friction": "সাধারণ AI সংলাপ মনে হচ্ছে ফ্ল্যাট আর যান্ত্রিকভাবে বসে বসে বসে জ্বালানী শক্তি ধ্বংস করা।.",
-            "solutionHeadline": "ডাইনামিক ভয়েস এবং অভিব্যক্তি সুসংগত।.",
-            "solution": "মানচিত্রের আওয়াজ ধীরে ধীরে মুখরিত ফেস্টিভালে। ডায়লগ, স্পষ্ট মুখের আকার, এবং অমার্জ Smyrnaglices ট্র্যাকগুলোকে সর্বোচ্চ এনার্জেন্সি প্রভাবের সাথে তুলনা করে।."
+            "title": "High-Energy Dialogue & Vocal Sync",
+            "frictionHeadline": "Lifeless Puppet Mouths.",
+            "friction": "Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.",
+            "solutionHeadline": "Dynamic Voice & Expression Sync.",
+            "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
           }
         ],
-        "screeningRoomPreview": "ড. প্রাকদর্শন"
-      },
-      {
-        "id": "podcast",
-        "title": "তুমি কথোপকথনের হোস্ট। অস্ট্রেলিয়া প্রদর্শনী শুরু করে।.",
-        "subtitle": "অনুমোদনকৃত অ্যাভাটার এবং ম্যানুয়াল ভিডিও সম্পাদন। মাল্টি-প্ল্যাটিক পাইপে ট্রান্সফর্ম স্ক্রিপ্ট অথবা raw অডিও, ব্রডকাস্টিং ভিডিও পডকাস্ট।.",
-        "badge": "ব্রডকাস্টের সময়",
-        "solutionPillars": [
-          {
-            "title": "মাল্টি-প্রেমী এবং অবতারের পরিচিতি",
-            "frictionHeadline": "রোবোটিক অবতার এবং হারিয়ে যাওয়া পরিচিতি",
-            "friction": "হোস্টদের দেখা যায় মাঝামাঝি সময়ে দেখা যায়, ক্যামেরার দিকে স্থিরভাবে তাকিয়ে থাকে, অথবা শোনার সময় প্রাকৃতিক মানব মাইক্রোগ্রাফিক প্রকাশ করতে ব্যর্থ হয়।.",
-            "solutionHeadline": "হোস্ট & এনক্রিপশন প্রোফাইল লক করা হয়েছে",
-            "solution": "আপনার সহ-হোস্টদের জন্য স্থায়ীভাবে দৃশ্যমান পরিচয় অর্জন করুন এবং অতিথিরা। এফএআইইউসি নেপোরিতম বক্তার সম্পর্ক, প্রাকৃতিক চোখের সাথে যোগাযোগ বজায় রাখে এবং দীর্ঘ সময় ধরে আলোচনা করার ক্ষেত্রে বাস্তবসম্মতভাবে কথা বলা যায়।."
-          },
-          {
-            "title": "বহুভাষীতা ও দায়িত্ব",
-            "frictionHeadline": "একক জলরাশি",
-            "friction": "কথা বলার সময় প্রায় ৩০ মিনিট সময় ধরে ক্যামেরা পরিবর্তিত হয়ে গেছে।.",
-            "solutionHeadline": "স্বয়ংক্রিয়ভাবে মাল্টি-সেকেন্ড পরিবর্তক",
-            "solution": "এসএএফআইএ নেপোরেলএম বন্ধ করে দেওয়ার পর সরাসরি আলোচনা, অতিথি প্রতিক্রিয়া, এবং বিস্তৃত স্টুডিওর ছবি বিশ্লেষণ করে পেশাদারী সম্প্রচারকে কোন ধরনের ওয়েব সাইট সম্পাদনা ছাড়াই প্রকাশ করে।."
-          },
-          {
-            "title": "কনটেক্সট B-রেল ও ভিসুয়াল",
-            "frictionHeadline": "Monotony এবং B-rol বট্টানক কল্পনা করুন",
-            "friction": "অনুসন্ধান, তৈরী করা, এবং সময় মত দৃশ্যমান সাহায্য বা বি-রোলের বিভিন্ন ক্লিপ পাওয়া যাবে।.",
-            "solutionHeadline": "স্বয়ংক্রিয়রূপে B-rolling",
-            "solution": "আপনার হোস্টরা যখন আলোচনা করছে যে, সিএফআইএ নেপোরেন্টাল ওয়ার্লম স্বয়ংক্রিয় ভাবে সিনেমা, গ্রাফিক্স GVfs্‌স, এবং দৃশ্যাযোগাযোগের সময় নির্ধারিত হয়েছে।."
-          },
-          {
-            "title": "দীর্ঘ অডিও ও ভিডিও সিঙ্ক",
-            "frictionHeadline": "অডিও Haft এবং দীর্ঘ-অনুবাদ",
-            "friction": "২০ থেকে ২০ মিনিটের মধ্যে যোক্রীত ভিডিও তৈরী করা লিপ-কোহলের গতি, ত্রুটি এবং ফাইল ব্যবস্থাপনায় রূপান্তরিত হয়।.",
-            "solutionHeadline": "সমাপ্ত-টু-রেখা পাইপ-লাইন",
-            "solution": "আপনার শুকনো অডিও ট্র্যাক অথবা স্ক্রিপ্টে ড্রপ করুন, এবং সিএফএআইএইউসিএএফএ-এর অ্যাভাটারম্যাল্যাল এক্সপেরিমেন্ট, ক্যামেরা কর্তন, বি-লেভেনড, এবং শেষ প্রধান এমপি৪ রপ্তানি এক মসৃণ, স্বয়ংক্রিয় স্টুডিও পাস করে।."
-          }
-        ],
-        "screeningRoomPreview": "AI-প্রথম পডকাস্ট — অস্ট্রেলিয়া প্রাকদর্শন"
-      },
-      {
-        "id": "training",
-        "title": "এন্টারপ্রাইজ-গ্রিড ট্রেনিং ভিডিও। মিনিট খানেকের মধ্যে প্রি-জুয়ালাইজেশন তৈরি করা হয়েছে।.",
-        "subtitle": "ম্যানুয়াল, স্লাইড, স্লাইড এবং দয়া করে পরস্পরের সাথে যুক্ত, বহুভাষী ভিডিও মডিউলের সাথে খাপ খাইয়ে নিন, যেখানে ব্র্যান্ডের পরিচয়, নিখুঁত লিপ-কোড এবং জিরো স্টুডিও উপরে।.",
-        "badge": "গ্লোবালName",
-        "solutionPillars": [
-          {
-            "title": "উপস্থাপনকারী এবং ব্র্যান্ড Carchou",
-            "frictionHeadline": "অকেনিয়া অবতার এবং ব্র্যান্ড ড্রিফ্ট",
-            "friction": "চেপ AI উপস্থাপকেরা মনে করেন রোবট আর টর্চারযোগ্য, যেখানে ব্র্যান্ড লোগো, রং আর উপস্থাপকরা বিভিন্ন প্রশিক্ষণ মডিউলের পরিবর্তন করেছেন।.",
-            "solutionHeadline": "নির্বাহী & ট্রেনার প্রোফাইল লক করা হয়েছে",
-            "solution": "নিয়মিত স্থির কর, স্বাভাবিক চেহারার কর্পোরেট উপস্থাপক এবং আপনার ব্র্যান্ডের নীতিমালা রক্ষা করুন। FFASI দূষণকারী সব ধরনের পরিচিতি, কর্পোরেট স্টাইল আর পেশাজীবি লাইব্রেরীতে।."
-          },
-          {
-            "title": "সমুদ্রসৈকত",
-            "frictionHeadline": "ত্রুটিপূর্ণ অনুবাদ এবং ভুল pop- Sync",
-            "friction": "১০+ ভাষায় স্থানীয় ভাবে প্রশিক্ষণ প্রদান করা, সাধারণত মুখ ঢাকা, রোবটিক ভয়েস ট্র্যাক, এবং বিশাল আকারের ধারাবাহিক ভাবে উচ্চারণ করে।.",
-            "solutionHeadline": "নেটিভ বহুভাষী সিঙ্ক ইঞ্জিন",
-            "solution": "আপনার সম্পূর্ণ প্রশিক্ষণ সিরিজকে কয়েক ডজন ভাষায় অনুবাদ করুন, যার মধ্যে রয়েছে প্রাকৃতিক স্বর, স্থানীয় লেখা কলআউট, এবং ফ্রেম লিপ-এর ভুল বিশ্লেষণ।."
-          },
-          {
-            "title": "সমন্বিত ভিসুয়াল সাহায্য এবং রেখাচিত্র",
-            "frictionHeadline": "টেক্সট-হভি বোর",
-            "friction": "ভিডিওগুলো সম্পাদকীয়তে মাত্র কয়েক ঘন্টা সময় লাগে।.",
-            "solutionHeadline": "কনটেক্সটুয়ালি ভিজুয়াল এবং গ্রাফিক ওভারল",
-            "solution": "আপনার উপহার হিসেবে জটিল কর্মশক্তিকে ব্যাখ্যা করা হয়েছে, বিশেষ করে উচ্চাভিলাষী ধাপ, সিএফএআইএ নেপোরিত্রাম স্বয়ংক্রিয়ভাবে নির্দিষ্ট সময় বাড়িয়ে দেয়, কি কি কি কি জিনিস সরাসরি স্ক্রীনে দেখা যায়।."
-          },
-          {
-            "title": "রেপিড বিষয়বস্তু আপডেট করা হচ্ছে",
-            "frictionHeadline": "সস্তা রে-শেওট এবং নোঙর ফাঁদ",
-            "friction": "কোম্পানির নীতি Doproments পরিবর্তন হলে, একটি ভিডিওর ২ মিনিটের একটি অংশ আপডেট করা হয়। সাধারণত পুরো ফাইল পুন:নির্মান করা প্রয়োজন।.",
-            "solutionHeadline": "মডুলার স্ক্রিপ্ট আপডেট",
-            "solution": "সিস্টেম ট্রে- তে টেক্সট সম্পাদনা করো আশেপাশের সময় এবং ভিডিও স্টাইল সংরক্ষণের অজস্র বিভাগ পরিবর্তন হয়েছে।."
-          }
-        ],
-        "screeningRoomPreview": "করপোরেশন প্রশিক্ষণ — অস্ট্রেলিয়ার সচেতন থাক! প্রাকদর্শন"
-      },
-      {
-        "id": "scifi",
-        "title": "অসম্ভব জগত তৈরি করো। সরাসরি তৈরি করা Sci-Fi।.",
-        "subtitle": "কমপ্লেক্স ভিজুয়াল ইফেক্ট, গুজববাদী পরিবেশ, এবং এলিয়েন চরিত্রের ডিজাইন, যার মধ্যে রয়েছে ফ্রেম-ব-ফ্রেমের দৃশ্যমান দৃশ্য।.",
-        "badge": "VFX-R",
-        "solutionPillars": [
-          {
-            "title": "পরিবেশ ও পরিবেশComment",
-            "frictionHeadline": "জ্যামিতি ও মাত্রা নির্ণয় করুন Pozna",
-            "friction": "এটা এমন এক বিষয়, যা আমাদের জীবনকে পরিবর্তন করতে পারে ।.",
-            "solutionHeadline": "বিশ্ব-স্টেট লক",
-            "solution": "কি ধরনের স্থাপত্য, হালকা নকশা এবং পরিবেশ সংক্রান্ত পরামিতি নির্ধারণ করুন। SFOFIQusterm Sulterm Sudorm Sulatent Sut Realterm Sathert shounder shonge তাই আপনার সেট outhush outh shem outhush akr aka stal akrakraka shonger shounder shounder shonger shodhush তাই আপনার সেট outh akr outh akhem s s akr aka aka akrakrakrakpul stakr stakr sthakon rakor staka stakkরতিপন stakor stakon shon staker stakor  dhon stakr শহরগুলোর মাধ্যমে নির্মিত হয়৷."
-          },
-          {
-            "title": "কাজাখকাল এবং ক্রিয়েটিভ কমন্স",
-            "frictionHeadline": "Tapa অক্ষরের বিন্যাস",
-            "friction": "অমানুষিক প্রজাতি, সাইবর্গ, এবং ভারী প্রাচীন চরিত্রগুলো প্রতি বার নতুন কোণ বা গুলি বা গুলির জন্ম দেয়।.",
-            "solutionHeadline": "লককৃত এলিয়েন আসর প্রোফাইল",
-            "solution": "নোঙ্গরহীন অমানুষ, বর্ম, এবং যান্ত্রিক উচ্চারণ। প্রতিটি উচ্চ পর্যায়ের দৃশ্যের মাধ্যমে নিজেদের পরিচয় করিয়ে দেওয়া হবে।."
-          },
-          {
-            "title": "VFX অ্যাকশন এবং উচ্চ পর্যায়ের পদার্থবিদ্যা",
-            "frictionHeadline": "ক্রিয়া ক্রমহ্রাসমান ক্রমসমূহ",
-            "friction": "উচ্চ গতির স্পেস স্পেস স্পেস ফাইট, শক্তি যুদ্ধ, অস্ত্রের অগ্নিকান্ড এবং বিস্ফোরণ প্রায়শঃই ফ্রেম তৈরী করে, অথবা সহজে দৃশ্যমান উপাদান তৈরি করে।.",
-            "solutionHeadline": "প্রক্রিয়া কর্মকর্তাদের জন্য & কাজ",
-            "solution": "সরাসরি গতিশীল চেরনোবিল, দ্রুত ক্যামেরা আন্দোলন এবং পদার্থবিদ্যা সংরক্ষণ এবং বাস্তবসম্মত পদার্থ সংরক্ষণ করার সময় পরস্পরকে প্রহার করা হয়েছে।."
-          },
-          {
-            "title": "অডিও- ভিজুয়াল ওয়ার্ল্ড-ব্রেল্ডিং",
-            "frictionHeadline": "উচ্চ-অনুবাদে অডিও",
-            "friction": "কিন্তু, এই ধরনের কথাবার্তার সঙ্গে আরও বেশি জড়িত ।.",
-            "solutionHeadline": "সমন্বিত সমন্বিত ওয়ার্ল্ড- names device যুক্ত",
-            "solution": "সিনথেটিক সংলাপ, এলিয়েন ভয়েসাইজেশন, এবং সিনেমায় উচ্চারিত শব্দ সরাসরি দূর্ভাগ্যজনক, মুক্তি মাস্টার অডিও মিশ্রণ।."
-          }
-        ],
-        "screeningRoomPreview": "SI-Fi VFX উৎপাদন — SARAREERERM প্রাকদর্শন"
+        "screeningRoomPreview": "The Animated Comedy — Screening Room"
       },
       {
         "id": "documentary",
-        "title": "আর্কভাল গল্প সর্বোত্তম ডকুমেন্টসগুলোর দিকে নিয়ে যান।.",
-        "subtitle": "ঐতিহাসিক ঘটনা, পুন:জাগর, ভূতপূর্ব আর বিশেষজ্ঞ সাক্ষাৎকার ঠিক করেছেন আসল সময়, সামুদ্রিকলেস ভয়েসভার আর শূণ্য আর্কাইভ ফি।.",
-        "badge": "ফাঁকা",
+        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
+        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
+        "badge": "Period-Accurate",
         "solutionPillars": [
           {
-            "title": "সি. ইউ. আর. এল. - এর যথার্থতা",
-            "frictionHeadline": "অ্যাঙ্গর্তিক আর্টিফমেন্ট",
-            "friction": "ঐতিহ্যবাহী মডেলগুলো নিয়মিতভাবে আধুনিক বস্তু, ফোনের স্ক্রিন বা সঠিক সময়ের পোশাক পরে ঐতিহাসিক ভাবে পুনরায় সাজানোর জন্য।.",
-            "solutionHeadline": "ঐতিহাসিক বিন্যাস গার্ডরেল",
-            "solution": "স্ক্রিন থেকে শুরু করে ১৮ থেকে ১৮ শতকের আলমারি ওয়ারড্রাস্ট্রার-এর শস্য সেট করুন।."
+            "title": "Era-Specific Visual Accuracy",
+            "frictionHeadline": "Anachronistic Artifacts",
+            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
+            "solutionHeadline": "Historical Style Guardrails",
+            "solution": "Set exact temporal parameters — from 1920s film grain to 18th-century wardrobe textures — so every generated scene stays historically authentic."
           },
           {
-            "title": "আর্কিভাল কাটাস গাজার এবং বি-রেল ইঞ্জিন",
-            "frictionHeadline": "লং ভয়েসভারসে মনোপলিটান দৃশ্যমান",
-            "friction": "স্থায়ীভাবে স্টকের ছবি তোলার সময় দীর্ঘ মাপের নাকগাদি অডিওকে খুব দ্রুত প্রদর্শন করা হয়।.",
-            "solutionHeadline": "ট্রান্স-স্ক্রিপ্টরেল ইঞ্জিন",
-            "solution": "যেহেতু আপনার আপরেটর ঐতিহাসিক তথ্য নিয়ে আলোচনা করছে, সে সময় এসেছে সিনেমা-প্রজেক্ট, নথিবদ্ধ করা anপেক্ষায়SIBRT, এবং সংরক্ষণকৃত সম্পদগুলো সরাসরি অডিওর সাথে যুক্ত।."
+            "title": "Archival Cutaways & B-Roll Engine",
+            "frictionHeadline": "Visual Monotony in Long Voiceovers",
+            "friction": "Pairing long-form narrator audio with static stock images leads to rapid viewer drop-off during deep dives.",
+            "solutionHeadline": "Transcript-Driven B-Roll Engine",
+            "solution": "As your narrator discusses historical facts, SceneFlow automatically generates timed cinematic re-enactments, document overlays, and archival-style cutaways tied directly to the audio transcript."
           },
           {
-            "title": "সাক্ষাৎকার",
-            "frictionHeadline": "নৃতাত্ত্বিক বিশেষজ্ঞ",
-            "friction": "ইতিহাসবেত্তা, তদন্তকারী অথবা প্রত্যক্ষদর্শীদের প্রায়ই কৃত্রিম বলে মনে হয়, যার মধ্যে রয়েছে চোয়াল ও অস্বাভাবিক চোখ ।.",
-            "solutionHeadline": "অভিজ্ঞ প্রোফাইল এবং ভ্রামক লক করা হয়েছে",
-            "solution": "২০১৫ সালের এপ্রিল মাসের সচেতন থাক."
+            "title": "Interview & Talking-Head Realism",
+            "frictionHeadline": "Uncanny Expert Witnesses",
+            "friction": "Generated historians, investigators, or witnesses often look artificial, with floating jaw movements and unnatural eye contact.",
+            "solutionHeadline": "Locked Expert Profiles & Vocal Sync",
+            "solution": "Maintain realistic, trustworthy interview setups with natural micro-expressions, accurate lip-sync, and consistent expert identities across multi-part series."
           },
           {
-            "title": "পর্ব",
-            "frictionHeadline": "মুছে ফেলা সময়",
-            "friction": "বাচারিং নর্তকী, পুনরায়keleন, প্রমাণ, এবং উত্তেজনা তৈরি করা ৪০ মিনিটের পর্বগুলো সাধারণত ঐতিহ্যবাহী এনএলে সপ্তাহ ধরে চলতে থাকে।.",
-            "solutionHeadline": "প্রাথমিক স্তরের লাইন",
-            "solution": "সাংবাদিকদের মধ্যে উত্তেজনা সৃষ্টি, মানসিক চাপ, উদ্বেগ এবং প্রমাণ প্রদর্শন করছে যে, সে সবের মধ্যে দৃশ্যমান দৃশ্য দেখা যাচ্ছে।."
+            "title": "Episodic Pacing & Narrative Continuity",
+            "frictionHeadline": "Fragmented Timeline Editing",
+            "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
+            "solutionHeadline": "Beat-First Documentary Pipeline",
+            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Studio, delivering a fully assembled master file in one seamless pass."
           }
         ],
-        "screeningRoomPreview": "নথি উৎপাদন — রোমীয় সম্রাট প্রাকদর্শন"
+        "screeningRoomPreview": "Documentary Production — Screening Room"
+      },
+      {
+        "id": "localization",
+        "title": "Beyond Dubbing. Fully Localized Productions.",
+        "subtitle": "Same storyline, two cities: Houston, Texas and São Paulo, Brazil. SceneFlow doesn't just dub the audio — it localizes settings, cultural references, and on-screen text so each audience sees a production made for them.",
+        "badge": "Localized",
+        "localeToggle": true,
+        "locales": [
+          {
+            "id": "houston",
+            "label": "Houston, TX",
+            "lang": "en"
+          },
+          {
+            "id": "saopaulo",
+            "label": "São Paulo, BR",
+            "lang": "pt"
+          }
+        ],
+        "solutionPillars": [
+          {
+            "title": "Cultural Adaptation, Not Translation",
+            "frictionHeadline": "Dubbing Is Not Localization.",
+            "friction": "Swapping the audio track leaves every cultural reference, location shot, and on-screen graphic targeting the wrong audience.",
+            "solutionHeadline": "Blueprint-Level Localization.",
+            "solution": "Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Studio before a single frame is rendered."
+          },
+          {
+            "title": "Parallel Production Pipelines",
+            "frictionHeadline": "One Region at a Time.",
+            "friction": "Traditional localization is sequential — finish the original, then manually rebuild for each market. Months of delay per region.",
+            "solutionHeadline": "Concurrent Regional Pipelines.",
+            "solution": "Run multiple localized Blueprints in parallel. Each region gets its own production pipeline sharing the same narrative structure but with fully adapted visuals and dialogue."
+          },
+          {
+            "title": "Region-Specific Audience Resonance",
+            "frictionHeadline": "One Script for Every Culture.",
+            "friction": "Humor, pacing, and emotional beats that land in Houston may fall flat in São Paulo. A single script cannot carry both.",
+            "solutionHeadline": "Per-Region Resonance Tuning.",
+            "solution": "Audience Resonance analyzes each localized script against regional demographic profiles, flagging cultural mismatches before production begins."
+          }
+        ],
+        "screeningRoomPreview": "Localized Production Comparison — Screening Room"
       }
     ]
   },

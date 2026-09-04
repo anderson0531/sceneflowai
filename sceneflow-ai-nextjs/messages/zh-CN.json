@@ -1920,251 +1920,181 @@
     ]
   },
   "productionShowcase": {
-    "badge": "生产实例",
-    "title": "从概念到屏幕有关方面 :",
-    "titleAccent": "无限可能性",
-    "subtitle": "六部公开制作的作品证明了了整个管道——预告,场景视频,以及Screening Room评论. 定义您的概念, 并让有关SceneFlow 处理脚本编写, 人物设计, 多语种音频, 视觉化,真不错, 视频制作未被出版.",
-    "subtitleTagline": "一个平台. 无限的可能性.",
-    "publicProductionsNote": "下面的每张卡都是完整的公共生产——切换解决方案和Screening Room标签,以走过管道.",
-    "languagesBanner": "公共实例以7种语言提供:英语、西班牙语、葡萄牙语、印地语、中文、阿拉伯语和泰语.",
-    "explorePipelineCta": "探索全面生产",
-    "explorePipelineHint": "从下面的电影戏剧开始——演示带的解决方案,SFAISC未被修改 ROOMTERM用于完整的审查工作流程.",
-    "workflowLabel": "解决方案",
-    "startProduction": "开始您的制作",
-    "cta": "开始您的制作",
-    "continuityNote": "Series Studio 管理连续性",
-    "resonanceNote": "优化脚本",
-    "videoLanguagePrompt": "用你的语言看这个作品",
-    "videoComingSoon": "杜布快来了",
-    "videoSoon": "快点",
-    "introVideoLabel": "解决方案",
-    "screeningRoomLabel": "沙发",
-    "frictionLabel": "摩擦声",
-    "solutionPillarLabel": "SceneFlow解决方案",
-    "showSolutionsSection": "办公室",
-    "hideSolutionsSection": "隐藏解决方案",
+    "badge": "Production Examples",
+    "title": "See the Full Pipeline",
+    "titleAccent": "in Action",
+    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to final high-resolution video. Walk the Screening Room to compare animatics, individual scenes, and the finished master in multiple languages.",
+    "subtitleTagline": "Long-form productions. Not clips.",
+    "screeningRoomInstruction": "Select Pre-Vis, Scenes, or Final to experience the pipeline. Select a language to hear the dub.",
+    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
+    "explorePipelineCta": "Explore a full production",
+    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
+    "workflowLabel": "Solutions",
+    "startProduction": "Start Your Production",
+    "cta": "Start Your Production",
+    "continuityNote": "Series Studio manages continuity",
+    "resonanceNote": "Audience Resonance™ optimizes scripts",
+    "videoLanguagePrompt": "Watch this production in your language",
+    "videoComingSoon": "Dub coming soon",
+    "videoSoon": "Soon",
+    "frictionLabel": "The Friction",
+    "solutionPillarLabel": "The SceneFlow Solution",
+    "showSolutionsSection": "Show Solutions",
+    "hideSolutionsSection": "Hide Solutions",
     "cards": [
       {
         "id": "drama",
-        "title": "电影AI戏剧. 零字符漂流.",
-        "subtitle": "消除变形字符,断绝对话框,无休止的翻转. 构建有完整视觉连续性的无缝,多特征的长式故事.",
-        "badge": "系列准备",
+        "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
+        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the pre-vis animatic, individual scenes, and the final high-resolution master — then switch languages to hear the full dub.",
+        "badge": "Series-Ready",
         "solutionPillars": [
           {
-            "title": "视觉特性( 我想)",
-            "frictionHeadline": "字符漂移 & Wob加大力度集 .",
-            "friction": "基因模型与每个镜头重置—— 引起人物面孔、服装和照明.",
-            "solutionHeadline": "(原始内容存档于20积极地使用). Locked Asset SFAIBLU 见鬼.",
-            "solution": "在 Blueprint Studio 中定义主角色描述,环境,和视觉风格. SceneFlow在每一个渲染处执行视觉特性,以保持叙事浸润."
+            "title": "Visual & Character Consistency",
+            "frictionHeadline": "Character Drift & Wobbly Sets.",
+            "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
+            "solutionHeadline": "Locked Asset Blueprints.",
+            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Studio. SceneFlow enforces visual identity across every render to preserve narrative immersion."
           },
           {
-            "title": "描述性 Pacing & 场景控制",
-            "frictionHeadline": "10秒的剪辑陷阱.",
-            "friction": "利用断开的微瞬间制作一部电影,创造了弯曲的节奏,平淡的情感,以及无尽的手工时间线编辑.",
-            "solutionHeadline": "击败第一故事板.",
-            "solution": "Nào,直接在现场,而不是迅速的关卡。 结构戏剧拍,相作了规定,故事弧在产生单一的视频框之前可以视化."
+            "title": "Narrative Pacing & Scene Control",
+            "frictionHeadline": "The 10-Second Clip Trap.",
+            "friction": "Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.",
+            "solutionHeadline": "Beat-First Storyboarding.",
+            "solution": "Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video."
           },
           {
-            "title": "对话框和音频对齐",
-            "frictionHeadline": "无法说服的对话.",
-            "friction": "相容的唇音同步,浮嘴运动,脱声轨立即将观众拉出剧场.",
-            "solutionHeadline": "集成语音同步引擎.",
-            "solution": "动态语音性能和精确的唇音同步直接 48. 被烤入视频管道 —— 交付的可信对话 没有外部制作后通行证."
+            "title": "Dialogue & Audio Alignment",
+            "frictionHeadline": "Unconvincing Dialogue.",
+            "friction": "Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.",
+            "solutionHeadline": "Integrated Voice & Sync Engine.",
+            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline — delivering believable dialogue without external post-production passes."
           },
           {
-            "title": "工作流 Friction 和 翻转 Fatigue",
-            "frictionHeadline": "资产混沌和无尽回滚.",
-            "friction": "生成短片通常意味着拼凑200+原始视频文件,手工提升,以及数十代浪费.",
-            "solutionHeadline": "自动工作室管道.",
-            "solution": "从概念到一个统一平台瑶语MP4的最终主机. Blueprint Studio 处理故事设置, Production Studio 自动渲染, 和 Screening Room 运出您的最终导瑶."
+            "title": "Workflow Friction & Reroll Fatigue",
+            "frictionHeadline": "Asset Chaos & Endless Rerolls.",
+            "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
+            "solutionHeadline": "Automated Studio Pipeline.",
+            "solution": "From concept to final master MP4 in one unified platform. Blueprint Studio handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export."
           }
         ],
-        "screeningRoomPreview": "电影戏剧——电影电影 预览"
+        "screeningRoomPreview": "The Cinematic Drama — Screening Room"
       },
       {
         "id": "animation",
-        "title": "你写笑话。 萨菲斯 动画P.",
-        "subtitle": "消除风格漂移 僵硬的移动 和破碎的时机 将 84. 滑稽的剧本变成完全动画, 声优的喜剧剧集 在一个无缝的工作室.",
-        "badge": "多层",
+        "title": "Full-Season Animated Series. One Consistent Art Style.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "badge": "Multi-Style",
         "solutionPillars": [
           {
-            "title": "结构一致性",
-            "frictionHeadline": "风格融化.",
-            "friction": "动画和动画风格在镜头间不断曲折,线条艺术转变,调色板断裂,人物化为光现实主义的无神论slop.",
-            "solutionHeadline": "锁定艺术样式的设想引擎 .",
-            "solution": "将你的美学从第一个框。 SceneFlow 锁定字符设计, 线性重量, 并阴影模型在整个剧集,所提及的角色 保持独特的你."
+            "title": "Stylistic Consistency",
+            "frictionHeadline": "Style Meltdown.",
+            "friction": "Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.",
+            "solutionHeadline": "Locked Art Style Engine.",
+            "solution": "Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours."
           },
           {
-            "title": "夸张的动画和物理",
-            "frictionHeadline": "Stiff & Glichy 动作 .",
-            "friction": "基因模型与快速的巴掌棒,双摄,以及粗糙的卡通物理进行斗争,将高能的格言转化为熔化的文物.",
-            "solutionHeadline": "动作 & Pose 安打.",
-            "solution": "驱动动态字符运动和表现姿势而不打破几何. 直接拳打脚踢的物理喜剧, 突然切除, 和野生的表达 与全运动控制."
+            "title": "Exaggerated Animation & Physics",
+            "frictionHeadline": "Stiff & Glitchy Motion.",
+            "friction": "Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.",
+            "solutionHeadline": "Action & Pose Anchoring.",
+            "solution": "Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control."
           },
           {
-            "title": "喜剧计时和节奏",
-            "frictionHeadline": "破碎的冲绳.",
-            "friction": "幽默生活于 下面的暂停和被击伤。 标准5秒基因循环 迫使尴尬的间隔 破坏笑话的交付.",
-            "solutionHeadline": "Beat-Precise 当我在编剧时.",
-            "solution": "控制场景向下到帧. 调整戏剧性的暂停,设置到弹簧线的时间,以及快速反应镜头在最后渲染前直接在拍第一时间段内进行."
+            "title": "Comedic Timing & Rhythm",
+            "frictionHeadline": "Ruined Punchlines.",
+            "friction": "Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.",
+            "solutionHeadline": "Beat-Precision Editing.",
+            "solution": "Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render."
           },
           {
-            "title": "高能对话和声波同步",
-            "frictionHeadline": "无生布偶口能得到.",
-            "friction": "一般AI对话感觉平坦而机械化,摧毁了Snappy喜剧节奏所需的能量.",
-            "solutionHeadline": "动态语音 / 表达同步 .",
-            "solution": "直接将声波传送到充满活力的面部表演 对话,表达口形,和喜剧声轨无缝匹配,以达到最大喜剧效果."
+            "title": "High-Energy Dialogue & Vocal Sync",
+            "frictionHeadline": "Lifeless Puppet Mouths.",
+            "friction": "Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.",
+            "solutionHeadline": "Dynamic Voice & Expression Sync.",
+            "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
           }
         ],
-        "screeningRoomPreview": "动画喜剧——Screening Room 预览"
-      },
-      {
-        "id": "podcast",
-        "title": "你主持并为此而论 萨并为此而奋斗 制作并为此展出.",
-        "subtitle": "消除静态异形和人工视频编辑. 将脚本或原始音频转换成多角,可广播的视频播焰在一条自动管道中.",
-        "badge": "广播 - 准备",
-        "solutionPillars": [
-          {
-            "title": "多语种和阿凡达身份",
-            "frictionHeadline": "机器人神通和丢失的身份",
-            "friction": "生成主机 至于变换外观,中集,空白地盯着相机,或者在监听时未能显示自然的人类微表情.",
-            "solutionHeadline": "锁定主机和客人配置",
-            "solution": "为你的共同主播和经常性嘉宾建立持续的视觉身份. SFAISCENEFLOW可行的语言在长式讨论中保持了演讲者的一致性、自然的眼神接触和现实的谈话身体语言."
-          },
-          {
-            "title": "多卡米拉方向和安插",
-            "frictionHeadline": "单角闪烁",
-            "friction": "静态的说话头镜头会很快失去观众保留,而斧头手动相机跨30分钟的时段切换则需要逐帧的乏味剪切.以便确保观众的注意力.",
-            "solutionHeadline": "多连线自动切换",
-            "solution": "SceneFlow分析对话流,在主机特写,宾客反应,和广角工作室镜头之间自动切换,在没有人工时间表编辑的情况下提供专业广播节奏."
-          },
-          {
-            "title": "上下文软件B- Roll & Visuals",
-            "frictionHeadline": "视觉 Monotony & B- Roll 瓶装",
-            "friction": "为每个提到的主题寻找、生成和计时相关的视觉辅助工具或B卷片段,会消耗制作后的几个小时.",
-            "solutionHeadline": "自动驱动的 B- Roll 剪切器",
-            "solution": "当您的主持人讨论话题时, SceneFlow 自动生成背景影视、图形和场景剪切 HIVato view to the scene culture to 的一个基本信息."
-          },
-          {
-            "title": "长格式音频和视频同步",
-            "frictionHeadline": "音频漂流和长格式 Render Fatigue",
-            "friction": "将基因视频同步到20+分钟的原始音频会导致唇语同步漂移,渲染错误,以及文件管理不成体系.",
-            "solutionHeadline": "终端至终端播客管道",
-            "solution": "在您的原始音频音轨或脚本中投放, SceneFlow 处理avatar对齐, 相机剪切, B- roll 集成, 以及最后的主机 MP4 导出一个平滑的,自动化的工作室通过 ."
-          }
-        ],
-        "screeningRoomPreview": "AI-First 播音员——Screening Room 预览"
-      },
-      {
-        "id": "training",
-        "title": "企业-高级培训录像。 制作时间:分钟.",
-        "subtitle": "将手册、幻灯片和合规文件转换成多语言视频模块,其品牌身份被锁定,无瑕疵的唇音同步,以及零工作室的管理费用.",
-        "badge": "全球部署",
-        "solutionPillars": [
-          {
-            "title": "显示和品牌一致性",
-            "frictionHeadline": "不可思议的神通和品牌漂流",
-            "friction": "廉价AI的介绍者感到机器人化且无法接受,而品牌标志,颜色,介绍者的外观在不同的培训模块之间变化不一致.",
-            "solutionHeadline": "已锁定的执行者和训练者配置文件",
-            "solution": "建立坚持不懈,自然长相的企业介绍人,锁定你的品牌准则. SFAISCENEF 不管怎样,SceneFlow保持了视觉特征,公司结构,以及整个课程库的专业展示."
-          },
-          {
-            "title": "无缝全球本地化",
-            "frictionHeadline": "断开的翻译 & 坏唇同步",
-            "friction": "将培训内容本着10+语言本地化,通常会产生尴尬的口腔同步,机器人语音轨迹,以及大规模的重编瓶颈.",
-            "solutionHeadline": "本地多语言同步引擎",
-            "solution": "将整个训练系列翻译成数十种语言."
-          },
-          {
-            "title": "综合视觉辅助和图表",
-            "frictionHeadline": "文本堆积",
-            "friction": "只是说话头的视频会很快失去员工的注意力,同时手动动动画过程图,屏幕捕捉,弹出需要数小时的编辑时间.",
-            "solutionHeadline": "背景视觉和图形重叠",
-            "solution": "您的介绍者解释了复杂的工作流程或合规步骤, SFAISCENEFLOW 那么, SceneFlow的理解是, 自动生成定时图表、 关键外卖和."
-          },
-          {
-            "title": "快速内容更新",
-            "frictionHeadline": "昂贵的重击陷阱( R)",
-            "friction": "当公司政策或产品规格发生变化时,更新一段2分钟的视频通常需要重建并重新交出整个文件.",
-            "solutionHeadline": "模块脚本更新",
-            "solution": "在脚本蓝图中直接编辑文本,以立即更新政策或程序. SceneFlow只重置已更改的部分,同时保留周围的时间和视频风格."
-          }
-        ],
-        "screeningRoomPreview": "公司培训——南非 预览"
-      },
-      {
-        "id": "scifi",
-        "title": "缔娇不可能的世界。 直接娇嫩的Sci-Fi.",
-        "subtitle": "复杂视觉效果 未来环境  在这里 外星人物设计.",
-        "badge": "VFX 准备",
-        "solutionPillars": [
-          {
-            "title": "环境与建筑连续性",
-            "frictionHeadline": "几何缩放度( S)",
-            "friction": "未来的城市,霓虹风景区,和外星飞船不断曲折,变换纹理,或者溶解成相机截断之间随机的视觉噪声.",
-            "solutionHeadline": "世界国家锁定",
-            "solution": "在SFAIBLUE 64. 定义关键架构、照明计划和环境参数。 SceneFlow 锁定空间几何,所以你的设定 保持一致,从宽的建立镜头 和紧张的走廊战斗."
-          },
-          {
-            "title": "异形和生物设计能否完整",
-            "frictionHeadline": "解析字符设计",
-            "friction": "非人种,机械人和重假体人物在每次产生新角度或镜头时,在外观上疯狂漂移.",
-            "solutionHeadline": "锁定的异形资产简介",
-            "solution": "非人类解剖学 装甲细节 机械口音 保持每个高概念场景的人物识别,没有定制的3D模型管道."
-          },
-          {
-            "title": "VFX 动作和高规格物理",
-            "frictionHeadline": "在动作序列中熔化动作",
-            "friction": "高速 我只是在太空打狗 炖火和爆炸 往往会导致基因模型 涂抹框或产生混乱的视觉文物.",
-            "solutionHeadline": "动作 & FX 动作",
-            "solution": "直接的动态编舞,快速的相机运动,以及粒子重力动作在保持干净的边缘和现实的轨迹物理学的同时会拍下."
-          },
-          {
-            "title": "视听世界建设",
-            "frictionHeadline": "高视野世界中的平声",
-            "friction": "未来武器 环境星舰的鸣叫声 和外星语音模式 当手动安装在静音产生的片淑时 感觉断开.",
-            "solutionHeadline": "综合世界声音同步",
-            "solution": "对齐定制的合成对话框,异形声调,和影音提示 直接在时间范围内进行浸润,释放准备的主音组合."
-          }
-        ],
-        "screeningRoomPreview": "Sci-Fi VFX 生产——SFISCREING ROOMTERM 不管你在说什么,我都会说 预览"
+        "screeningRoomPreview": "The Animated Comedy — Screening Room"
       },
       {
         "id": "documentary",
-        "title": "将档案故事改编为畅销纪录片.",
-        "subtitle": "重现历史事件,重现,以及专家访谈设置,真实时期细节,无缝语音,零存档许可费.",
-        "badge": "准确",
+        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
+        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
+        "badge": "Period-Accurate",
         "solutionPillars": [
           {
-            "title": "大纪元视觉精确度",
-            "frictionHeadline": "过时的艺术",
-            "friction": "标准的基因模型通常会将现代物体乃是悼词,智能手机屏幕,或者错误的时期服饰放入历史的重现.",
-            "solutionHeadline": "历史样式护栏",
-            "solution": "从1920年代到18世纪的衣橱纹理."
+            "title": "Era-Specific Visual Accuracy",
+            "frictionHeadline": "Anachronistic Artifacts",
+            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
+            "solutionHeadline": "Historical Style Guardrails",
+            "solution": "Set exact temporal parameters — from 1920s film grain to 18th-century wardrobe textures — so every generated scene stays historically authentic."
           },
           {
-            "title": "存档剪切器 & B- Roll 引擎",
-            "frictionHeadline": "长语音的视觉摩诺尼",
-            "friction": "用静态库存图像对准长形旁白的音频 会导致在深度潜水中快速降落.",
-            "solutionHeadline": "转写- Driven B- Roll 引擎",
-            "solution": "在 讨论历史事实时, SceneFlow  自动生成 时间电影重现,文件叠加, 和档案式的剪切 直接与录音记录."
+            "title": "Archival Cutaways & B-Roll Engine",
+            "frictionHeadline": "Visual Monotony in Long Voiceovers",
+            "friction": "Pairing long-form narrator audio with static stock images leads to rapid viewer drop-off during deep dives.",
+            "solutionHeadline": "Transcript-Driven B-Roll Engine",
+            "solution": "As your narrator discusses historical facts, SceneFlow automatically generates timed cinematic re-enactments, document overlays, and archival-style cutaways tied directly to the audio transcript."
           },
           {
-            "title": "访谈和谈话- 标题现实主义",
-            "frictionHeadline": "不可思议的专家证人",
-            "friction": "产生的历史学家,调查人员,或目击者往往看起来是人为的,有浮动的下巴运动和非自然的眼接触.",
-            "solutionHeadline": "已锁定的专家配置文件( V)",
-            "solution": "保持现实,可信赖的采访设置,用自然的微表情,准确的唇音合成,以及贯穿多个部分系列的一致的专家身份."
+            "title": "Interview & Talking-Head Realism",
+            "frictionHeadline": "Uncanny Expert Witnesses",
+            "friction": "Generated historians, investigators, or witnesses often look artificial, with floating jaw movements and unnatural eye contact.",
+            "solutionHeadline": "Locked Expert Profiles & Vocal Sync",
+            "solution": "Maintain realistic, trustworthy interview setups with natural micro-expressions, accurate lip-sync, and consistent expert identities across multi-part series."
           },
           {
-            "title": "平和和叙述连续性",
-            "frictionHeadline": "断裂的时线编辑",
-            "friction": "平衡旁白的音频, 重现, 证据揭示, 和紧张的构建暂停 跨越一个40分钟的插曲 通常需要几周 在传统的 NLEs.",
-            "solutionHeadline": "Beat- First 纪录片管道",
-            "solution": "结构剧烈的张力,悬浮的暂停,证据在Blueprint Studio内部显露出视觉,以一个无缝的通道传送一个完整组装的主文件."
+            "title": "Episodic Pacing & Narrative Continuity",
+            "frictionHeadline": "Fragmented Timeline Editing",
+            "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
+            "solutionHeadline": "Beat-First Documentary Pipeline",
+            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Studio, delivering a fully assembled master file in one seamless pass."
           }
         ],
-        "screeningRoomPreview": "纪录片制作——Screening Room 预览"
+        "screeningRoomPreview": "Documentary Production — Screening Room"
+      },
+      {
+        "id": "localization",
+        "title": "Beyond Dubbing. Fully Localized Productions.",
+        "subtitle": "Same storyline, two cities: Houston, Texas and São Paulo, Brazil. SceneFlow doesn't just dub the audio — it localizes settings, cultural references, and on-screen text so each audience sees a production made for them.",
+        "badge": "Localized",
+        "localeToggle": true,
+        "locales": [
+          {
+            "id": "houston",
+            "label": "Houston, TX",
+            "lang": "en"
+          },
+          {
+            "id": "saopaulo",
+            "label": "São Paulo, BR",
+            "lang": "pt"
+          }
+        ],
+        "solutionPillars": [
+          {
+            "title": "Cultural Adaptation, Not Translation",
+            "frictionHeadline": "Dubbing Is Not Localization.",
+            "friction": "Swapping the audio track leaves every cultural reference, location shot, and on-screen graphic targeting the wrong audience.",
+            "solutionHeadline": "Blueprint-Level Localization.",
+            "solution": "Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Studio before a single frame is rendered."
+          },
+          {
+            "title": "Parallel Production Pipelines",
+            "frictionHeadline": "One Region at a Time.",
+            "friction": "Traditional localization is sequential — finish the original, then manually rebuild for each market. Months of delay per region.",
+            "solutionHeadline": "Concurrent Regional Pipelines.",
+            "solution": "Run multiple localized Blueprints in parallel. Each region gets its own production pipeline sharing the same narrative structure but with fully adapted visuals and dialogue."
+          },
+          {
+            "title": "Region-Specific Audience Resonance",
+            "frictionHeadline": "One Script for Every Culture.",
+            "friction": "Humor, pacing, and emotional beats that land in Houston may fall flat in São Paulo. A single script cannot carry both.",
+            "solutionHeadline": "Per-Region Resonance Tuning.",
+            "solution": "Audience Resonance analyzes each localized script against regional demographic profiles, flagging cultural mismatches before production begins."
+          }
+        ],
+        "screeningRoomPreview": "Localized Production Comparison — Screening Room"
       }
     ]
   },

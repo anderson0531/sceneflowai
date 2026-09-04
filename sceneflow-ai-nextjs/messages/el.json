@@ -1920,251 +1920,181 @@
     ]
   },
   "productionShowcase": {
-    "badge": "Παραδείγματα Παραγωγής",
-    "title": "Από την ιδέα στην οθόνη:",
-    "titleAccent": "Άπειρες δυνατότητες",
-    "subtitle": "Έξι δημόσιες παραγωγές αποδεικνύουν την πλήρη εξέλιξη — pre-vis, βίντεο σκηνής και κριτική Screening Room. Καθορίστε την ιδέα σας και αφήστε το SceneFlow να χειριστεί το σενάριο, το σχεδιασμό χαρακτήρων, τον πολυγλωσσικό ήχο, την οπτικοποίηση, την παραγωγή βίντεο και τη δημοσίευση.",
-    "subtitleTagline": "Μία πλατφόρμα. Άπειρες δυνατότητες.",
-    "publicProductionsNote": "Κάθε κάρτα παρακάτω είναι μια πλήρης δημόσια παραγωγή — αλλάξτε τις καρτέλες Solutions και Screening Room για να περπατήσετε στον αγωγό.",
-    "languagesBanner": "Τα δημόσια παραδείγματα αποστέλλονται σε 7 γλώσσες: Αγγλικά, Ισπανικά, Πορτογαλικά, Χίντι, Κινέζικα, Αραβικά και Ταϊλανδικά.",
-    "explorePipelineCta": "Εξερευνήστε μια πλήρη παραγωγή",
-    "explorePipelineHint": "Ξεκινήστε με το Cinematic Drama παρακάτω — Λύσεις για τον κύλινδρο επίδειξης, Screening Room για την πλήρη ροή εργασιών κριτικής.",
-    "workflowLabel": "Λύσεις",
-    "startProduction": "Ξεκινήστε την παραγωγή σας",
-    "cta": "Ξεκινήστε την παραγωγή σας",
-    "continuityNote": "Το Series Studio διαχειρίζεται τη συνέχεια",
-    "resonanceNote": "Το Audience Resonance™ βελτιστοποιεί τα σενάρια",
-    "videoLanguagePrompt": "Παρακολουθήστε αυτήν την παραγωγή στη γλώσσα σας",
-    "videoComingSoon": "Σύντομα η μεταγλώττιση",
-    "videoSoon": "Σύντομα",
-    "introVideoLabel": "Λύσεις",
-    "screeningRoomLabel": "Screening Room",
-    "frictionLabel": "Η τριβή",
-    "solutionPillarLabel": "Η λύση SceneFlow",
-    "showSolutionsSection": "Εμφάνιση λύσεων",
-    "hideSolutionsSection": "Απόκρυψη λύσεων",
+    "badge": "Production Examples",
+    "title": "See the Full Pipeline",
+    "titleAccent": "in Action",
+    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to final high-resolution video. Walk the Screening Room to compare animatics, individual scenes, and the finished master in multiple languages.",
+    "subtitleTagline": "Long-form productions. Not clips.",
+    "screeningRoomInstruction": "Select Pre-Vis, Scenes, or Final to experience the pipeline. Select a language to hear the dub.",
+    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
+    "explorePipelineCta": "Explore a full production",
+    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
+    "workflowLabel": "Solutions",
+    "startProduction": "Start Your Production",
+    "cta": "Start Your Production",
+    "continuityNote": "Series Studio manages continuity",
+    "resonanceNote": "Audience Resonance™ optimizes scripts",
+    "videoLanguagePrompt": "Watch this production in your language",
+    "videoComingSoon": "Dub coming soon",
+    "videoSoon": "Soon",
+    "frictionLabel": "The Friction",
+    "solutionPillarLabel": "The SceneFlow Solution",
+    "showSolutionsSection": "Show Solutions",
+    "hideSolutionsSection": "Hide Solutions",
     "cards": [
       {
         "id": "drama",
-        "title": "Κινηματογραφική ΑΙ Δράμα. Μηδενική ολίσθηση χαρακτήρων.",
-        "subtitle": "Εξαλείψτε τους μεταμορφωμένους χαρακτήρες, τους σπασμένους διαλόγους και τις ατελείωτες επαναλήψεις. Δημιουργήστε απρόσκοπτες ιστορίες μεγάλης μορφής πολλών χαρακτήρων με πλήρη οπτική συνέχεια.",
-        "badge": "Σειρά-Έτοιμη",
+        "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
+        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the pre-vis animatic, individual scenes, and the final high-resolution master — then switch languages to hear the full dub.",
+        "badge": "Series-Ready",
         "solutionPillars": [
           {
-            "title": "Οπτική και συνέπεια χαρακτήρων",
-            "frictionHeadline": "Σετ χαρακτήρων Drift & Wobbly.",
-            "friction": "Τα νέα μοντέλα επαναφέρονται με κάθε λήψη—με αποτέλεσμα τα πρόσωπα των χαρακτήρων, τα ρούχα και ο φωτισμός να μεταμορφώνονται συνεχώς σε όλες τις περικοπές σκηνών.",
-            "solutionHeadline": "Κλειδωμένα περιουσιακά στοιχεία Blueprint.",
-            "solution": "Καθορίστε τα προφίλ κύριων χαρακτήρων, τα περιβάλλοντα και τα οπτικά στυλ εκ των προτέρων στο Blueprint Studio. Το SceneFlow ενισχύει την οπτική ταυτότητα σε κάθε απόδοση για να διατηρήσει την αφηγηματική εμβάπτιση."
+            "title": "Visual & Character Consistency",
+            "frictionHeadline": "Character Drift & Wobbly Sets.",
+            "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
+            "solutionHeadline": "Locked Asset Blueprints.",
+            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Studio. SceneFlow enforces visual identity across every render to preserve narrative immersion."
           },
           {
-            "title": "Αφηγηματικός Βηματισμός & Έλεγχος Σκηνής",
-            "frictionHeadline": "Η παγίδα κλιπ 10 δευτερολέπτων.",
-            "friction": "Η δημιουργία μιας ταινίας από αποσυνδεδεμένες μικροπροτροπές δημιουργεί ασταθή βηματισμό, επίπεδη συγκίνηση και ατελείωτη χειροκίνητη επεξεργασία χρονοδιαγράμματος.",
+            "title": "Narrative Pacing & Scene Control",
+            "frictionHeadline": "The 10-Second Clip Trap.",
+            "friction": "Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.",
             "solutionHeadline": "Beat-First Storyboarding.",
-            "solution": "Απευθείας στο επίπεδο σκηνής, όχι στο επίπεδο προτροπής. Δομήστε οπτικά τα δραματικά beat, τις κινήσεις της κάμερας και τα τόξα ιστορίας πριν δημιουργήσετε ένα μόνο καρέ βίντεο."
+            "solution": "Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video."
           },
           {
-            "title": "Διάλογος & Ευθυγράμμιση ήχου",
-            "frictionHeadline": "Μη πειστικός Διάλογος.",
-            "friction": "Ο αταίριαστος συγχρονισμός των χειλιών, οι κινήσεις του στόματος που αιωρούνται και τα αποκομμένα φωνητικά κομμάτια τραβούν αμέσως τους θεατές έξω από το δράμα.",
-            "solutionHeadline": "Ενσωματωμένη μηχανή φωνής και συγχρονισμού.",
-            "solution": "Η δυναμική φωνητική απόδοση και ο ακριβής συγχρονισμός των χειλιών ενσωματώνονται απευθείας στη ροή του βίντεο, προσφέροντας αξιόπιστο διάλογο χωρίς εξωτερικά περάσματα μετά την παραγωγή."
+            "title": "Dialogue & Audio Alignment",
+            "frictionHeadline": "Unconvincing Dialogue.",
+            "friction": "Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.",
+            "solutionHeadline": "Integrated Voice & Sync Engine.",
+            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline — delivering believable dialogue without external post-production passes."
           },
           {
-            "title": "Τριβή ροής εργασίας και κόπωση επανακύλισης",
+            "title": "Workflow Friction & Reroll Fatigue",
             "frictionHeadline": "Asset Chaos & Endless Rerolls.",
-            "friction": "Η δημιουργία μιας ταινίας μικρού μήκους συνήθως σημαίνει ταχυδακτυλουργία 200+ ακατέργαστων αρχείων βίντεο, μη αυτόματη αναβάθμιση και δεκάδες χαμένες γενιές.",
-            "solutionHeadline": "Αυτοματοποιημένος αγωγός στούντιο.",
-            "solution": "Από το concept έως το τελικό master MP4 σε μια ενοποιημένη πλατφόρμα. Το Blueprint Studio χειρίζεται τη ρύθμιση ιστορίας, το Production Studio αυτοματοποιεί την απόδοση και το Screening Room παρέχει την τελική εξαγωγή σας."
+            "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
+            "solutionHeadline": "Automated Studio Pipeline.",
+            "solution": "From concept to final master MP4 in one unified platform. Blueprint Studio handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export."
           }
         ],
-        "screeningRoomPreview": "The Cinematic Drama — Screening Room Προεπισκόπηση"
+        "screeningRoomPreview": "The Cinematic Drama — Screening Room"
       },
       {
         "id": "animation",
-        "title": "Εσύ γράφεις το αστείο. SceneFlow Ζωντανεύει τη γραμμή διάτρησης.",
-        "subtitle": "Εξαλείψτε τη μετατόπιση του στυλ, την δύσκαμπτη κίνηση και τον σπασμένο χρονισμό. Μετατρέψτε τα ξεκαρδιστικά σενάρια σε κωμικά επεισόδια πλήρως κινούμενα, συγχρονισμένα με φωνή σε ένα απρόσκοπτο στούντιο.",
-        "badge": "Πολυστυλ",
+        "title": "Full-Season Animated Series. One Consistent Art Style.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "badge": "Multi-Style",
         "solutionPillars": [
           {
-            "title": "Στυλιστική συνέπεια",
+            "title": "Stylistic Consistency",
             "frictionHeadline": "Style Meltdown.",
-            "friction": "Τα στυλ κινουμένων σχεδίων και anime παραμορφώνονται συνεχώς μεταξύ των λήψεων, αλλάζουν τη γραμμή τέχνης, σπάνε τις χρωματικές παλέτες και μεταμορφώνουν τους χαρακτήρες σε φωτορεαλιστικά παράξενα ίχνη.",
-            "solutionHeadline": "Κλειδωμένη μηχανή στυλ τέχνης.",
-            "solution": "Παγώστε την αισθητική σας από το πρώτο καρέ. Το SceneFlow κλειδώνει σχέδια χαρακτήρων, βάρη γραμμών και μοντέλα σκίασης σε όλο το επεισόδιο, ώστε οι χαρακτήρες σας να παραμένουν μοναδικοί δικοί σας."
+            "friction": "Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.",
+            "solutionHeadline": "Locked Art Style Engine.",
+            "solution": "Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours."
           },
           {
-            "title": "Υπερβολικό Animation & Φυσική",
+            "title": "Exaggerated Animation & Physics",
             "frictionHeadline": "Stiff & Glitchy Motion.",
-            "friction": "Τα μοντέλα παραγωγής παλεύουν με το γρήγορο slapstick, το double-takes και τη σκληρή φυσική κινουμένων σχεδίων, μετατρέποντας τα gags υψηλής ενέργειας σε τεχνουργήματα που λιώνουν.",
-            "solutionHeadline": "Action & Pose Anching.",
-            "solution": "Οδηγήστε τη δυναμική κίνηση των χαρακτήρων και τις εκφραστικές πόζες χωρίς να σπάσετε τη γεωμετρία. Άμεση έντονη φυσική κωμωδία, ξαφνικές αποκοπές και άγριες εκφράσεις με πλήρη έλεγχο της κίνησης."
+            "friction": "Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.",
+            "solutionHeadline": "Action & Pose Anchoring.",
+            "solution": "Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control."
           },
           {
-            "title": "Κωμικός Χρονισμός & Ρυθμός",
-            "frictionHeadline": "Κατεστραμμένα Punchlines.",
-            "friction": "Το χιούμορ ζει στις παύσεις και στα beat-cuts. Οι τυπικοί γεννητικοί βρόχοι 5 δευτερολέπτων εξαναγκάζουν τον άβολο βηματισμό που καταστρέφει την απόδοση του αστείου.",
+            "title": "Comedic Timing & Rhythm",
+            "frictionHeadline": "Ruined Punchlines.",
+            "friction": "Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.",
             "solutionHeadline": "Beat-Precision Editing.",
-            "solution": "Ελέγξτε τη σκηνή που βηματίζει μέχρι το κάδρο. Προσαρμόστε τις δραματικές παύσεις, το χρονισμό ρύθμισης σε διάτρηση και τις λήψεις γρήγορων αντιδράσεων απευθείας μέσα στη γραμμή χρόνου πριν από την τελική απόδοση."
+            "solution": "Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render."
           },
           {
             "title": "High-Energy Dialogue & Vocal Sync",
-            "frictionHeadline": "Άψυχα Στόματα Μαριονέτας.",
-            "friction": "Ο γενικός διάλογος τεχνητής νοημοσύνης είναι επίπεδος και μηχανικός, καταστρέφοντας την ενέργεια που απαιτείται για εύστοχες κωμωδίες κωμωδίας.",
-            "solutionHeadline": "Δυναμικός συγχρονισμός φωνής και έκφρασης.",
-            "solution": "Αντιστοιχίστε τη φωνητική απόδοση απευθείας στην ενεργητική απόδοση του προσώπου. Ο διάλογος, τα εκφραστικά σχήματα στόματος και τα κωμικά κομμάτια φωνής ταιριάζουν άψογα για μέγιστο κωμικό αντίκτυπο."
+            "frictionHeadline": "Lifeless Puppet Mouths.",
+            "friction": "Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.",
+            "solutionHeadline": "Dynamic Voice & Expression Sync.",
+            "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
           }
         ],
-        "screeningRoomPreview": "The Animated Comedy — Screening Room Προεπισκόπηση"
-      },
-      {
-        "id": "podcast",
-        "title": "Εσείς φιλοξενείτε τη συνομιλία. Η SceneFlow παράγει την εκπομπή.",
-        "subtitle": "Καταργήστε τα στατικά avatar και τη μη αυτόματη επεξεργασία βίντεο. Μετατρέψτε σενάρια ή ακατέργαστο ήχο σε podcast βίντεο πολλαπλών γωνιών, έτοιμα για μετάδοση σε μία αυτοματοποιημένη γραμμή.",
-        "badge": "Μετάδοση-Έτοιμη",
-        "solutionPillars": [
-          {
-            "title": "Ταυτότητα πολλαπλών ηχείων & Avatar",
-            "frictionHeadline": "Robotic Avatars & Lost Identity",
-            "friction": "Οι παρουσιασθέντες οικοδεσπότες αλλάζουν τις εμφανίσεις στο μέσο του επεισοδίου, κοιτάζουν ανέκφραστα την κάμερα ή αποτυγχάνουν να επιδείξουν φυσικές ανθρώπινες μικροεκφράσεις ενώ ακούνε.",
-            "solutionHeadline": "Κλειδωμένα προφίλ οικοδεσπότη & επισκέπτη",
-            "solution": "Δημιουργήστε επίμονες οπτικές ταυτότητες για τους συνοικοδεσπότες και τους επαναλαμβανόμενους επισκέπτες σας. Το SceneFlow διατηρεί τη συνέπεια του ομιλητή, τη φυσική οπτική επαφή και τη ρεαλιστική συνομιλητική γλώσσα του σώματος κατά τη διάρκεια μακροχρόνιων συζητήσεων."
-          },
-          {
-            "title": "Κατεύθυνση & Βηματοδότηση πολλαπλών Κάμερας",
-            "frictionHeadline": "Μονότονες Μονές Γωνίες",
-            "friction": "Οι στατικές λήψεις με κεφαλή ομιλίας χάνουν γρήγορα τη διατήρηση του κοινού, ενώ η χειροκίνητη εναλλαγή κάμερας σε ένα χρονικό πλαίσιο 30 λεπτών απαιτεί κουραστικές περικοπές καρέ-καρέ.",
-            "solutionHeadline": "Αυτόματη εναλλαγή πολλαπλών κάμερων",
-            "solution": "Το SceneFlow αναλύει τη ροή συνομιλίας για αυτόματη εναλλαγή μεταξύ κοντινών πλαισίων του οικοδεσπότη, αντιδράσεων επισκεπτών και ευρυγώνιων λήψεων στούντιο, παρέχοντας επαγγελματικό ρυθμό μετάδοσης χωρίς χειροκίνητη επεξεργασία γραμμής χρόνου."
-          },
-          {
-            "title": "Context-Aware B-Roll & Visuals",
-            "frictionHeadline": "Visual Monotony & B-Roll Bottlenecks",
-            "friction": "Η εύρεση, η δημιουργία και ο συγχρονισμός σχετικών οπτικών βοηθημάτων ή κλιπ B-roll για κάθε αναφερόμενο θέμα καταναλώνει ώρες μετά την παραγωγή.",
-            "solutionHeadline": "Αυτόματα δημιουργούμενα B-Roll Cutaways",
-            "solution": "Καθώς οι οικοδεσπότες σας συζητούν θέματα, το SceneFlow δημιουργεί αυτόματα κινηματογραφικά γραφικά με βάση τα συμφραζόμενα, γραφικά και περικοπές σκηνών, χρονομετρημένα με ακρίβεια στην ηχητική μεταγραφή."
-          },
-          {
-            "title": "Συγχρονισμός ήχου και βίντεο μεγάλης μορφής",
-            "frictionHeadline": "Audio Drift & Long-Form Render Fatigue",
-            "friction": "Ο συγχρονισμός του δημιουργικού βίντεο με 20+ λεπτά ακατέργαστου ήχου οδηγεί σε μετατόπιση συγχρονισμού χειλιών, σφάλματα απόδοσης και κατακερματισμένη διαχείριση αρχείων.",
-            "solutionHeadline": "Από άκρο σε άκρο Podcast Pipeline",
-            "solution": "Αποθέστε το ακατέργαστο κομμάτι ήχου ή το σενάριο και το SceneFlow χειρίζεται την ευθυγράμμιση avatar, τις περικοπές κάμερας, την ενσωμάτωση B-roll και την τελική εξαγωγή κύριου MP4 με ένα ομαλό, αυτοματοποιημένο πάσο στούντιο."
-          }
-        ],
-        "screeningRoomPreview": "Το AI-First Podcast — Προεπισκόπηση Screening Room"
-      },
-      {
-        "id": "training",
-        "title": "Βίντεο εκπαίδευσης για επιχειρήσεις. Προ-οπτικοποίηση Παράγεται σε λίγα λεπτά.",
-        "subtitle": "Μετατρέψτε τα εγχειρίδια, τις διαφάνειες και τα έγγραφα συμμόρφωσης σε συναρπαστικές, πολύγλωσσες ενότητες βίντεο με κλειδωμένες ταυτότητες επωνυμίας, άψογο lip-sync και μηδενικό κόστος στούντιο.",
-        "badge": "Παγκόσμια ανάπτυξη",
-        "solutionPillars": [
-          {
-            "title": "Παρουσιαστής & Συνέπεια Μάρκας",
-            "frictionHeadline": "Uncanny Avatars & Brand Drift",
-            "friction": "Οι φτηνοί παρουσιαστές τεχνητής νοημοσύνης αισθάνονται ρομποτικοί και απροσπέλαστοι, ενώ τα λογότυπα, τα χρώματα και οι εμφανίσεις των παρουσιαστών αλλάζουν ασυνεπώς σε διαφορετικές εκπαιδευτικές ενότητες.",
-            "solutionHeadline": "Κλειδωμένα προφίλ στελεχών και εκπαιδευτών",
-            "solution": "Δημιουργήστε επίμονους εταιρικούς παρουσιαστές με φυσική εμφάνιση και κλειδώστε τις οδηγίες της επωνυμίας σας. Το SceneFlow διατηρεί την οπτική ταυτότητα, το εταιρικό στυλ και την επαγγελματική παράδοση σε ολόκληρη τη βιβλιοθήκη μαθημάτων σας."
-          },
-          {
-            "title": "Απρόσκοπτη παγκόσμια τοπική προσαρμογή",
-            "frictionHeadline": "Broken Translations & Bad Lip-Sync",
-            "friction": "Ο εντοπισμός του εκπαιδευτικού περιεχομένου σε 10+ γλώσσες δημιουργεί συνήθως άβολο συγχρονισμό στο στόμα, ρομποτικά φωνητικά κομμάτια και τεράστια προβλήματα στην επανεπεξεργασία.",
-            "solutionHeadline": "Native Multilingual Sync Engine",
-            "solution": "Μεταφράστε ολόκληρη τη σειρά εκπαιδεύσεών σας σε δεκάδες γλώσσες με φυσικό τόνο φωνής, τοπικά μηνύματα κειμένου και συγχρονισμό χειλιών με ακρίβεια καρέ—όλα με ένα μόνο κλικ."
-          },
-          {
-            "title": "Ενσωματωμένα Οπτικά Βοηθήματα & Διαγράμματα",
-            "frictionHeadline": "Text-Heavy Bore",
-            "friction": "Τα βίντεο που μιλούν απλώς χάνουν γρήγορα την προσοχή των εργαζομένων, ενώ η μη αυτόματη κινούμενη κίνηση διαγραμμάτων διεργασιών, λήψεων οθόνης και μηνυμάτων κουκκίδων διαρκεί ώρες σε ένα πρόγραμμα επεξεργασίας.",
-            "solutionHeadline": "Συμφραζόμενη οπτική και γραφική επικάλυψη",
-            "solution": "Καθώς ο παρουσιαστής σας εξηγεί περίπλοκες ροές εργασιών ή βήματα συμμόρφωσης, το SceneFlow δημιουργεί αυτόματα χρονομετρημένα διαγράμματα, βασικά σεμινάρια και οπτικά βοηθήματα απευθείας στην οθόνη."
-          },
-          {
-            "title": "Ταχεία ενημέρωση περιεχομένου",
-            "frictionHeadline": "Ακριβά Re-shoots & Render Traps",
-            "friction": "Όταν η πολιτική της εταιρείας ή οι προδιαγραφές προϊόντος αλλάζουν, η ενημέρωση μιας ενότητας 2 λεπτών ενός βίντεο απαιτεί συνήθως την εκ νέου κατασκευή και την εκ νέου απόδοση ολόκληρου του αρχείου.",
-            "solutionHeadline": "Ενημερώσεις αρθρωτών σεναρίων",
-            "solution": "Επεξεργαστείτε κείμενο απευθείας στο σχεδιάγραμμα του σεναρίου για να ενημερώσετε άμεσα τις πολιτικές ή τις διαδικασίες. Το SceneFlow αποδίδει εκ νέου μόνο την αλλαγμένη ενότητα, διατηρώντας παράλληλα το χρονισμό και το στυλ του βίντεο."
-          }
-        ],
-        "screeningRoomPreview": "Η εταιρική εκπαίδευση — Προεπισκόπηση Screening Room"
-      },
-      {
-        "id": "scifi",
-        "title": "Φτιάξτε Αδύνατους Κόσμους. Άμεση επιστημονική φαντασία χωρίς συμβιβασμούς.",
-        "subtitle": "Αποδώστε σύνθετα οπτικά εφέ, φουτουριστικά περιβάλλοντα και σχέδια εξωγήινων χαρακτήρων με οπτική συνέχεια καρέ-καρέ—όλα μέσα σε μια ενιαία αυτοματοποιημένη διοχέτευση.",
-        "badge": "VFX-Ready",
-        "solutionPillars": [
-          {
-            "title": "Περιβαλλοντική & Αρχιτεκτονική Συνέχεια",
-            "frictionHeadline": "Γεωμετρία και δυσλειτουργίες κλίμακας",
-            "friction": "Φουτουριστικές πόλεις, τοπία νέον και εξωγήινα διαστημόπλοια συνεχώς παραμορφώνονται, αλλάζουν υφές ή διαλύονται σε τυχαίο οπτικό θόρυβο μεταξύ των περικοπών της κάμερας.",
-            "solutionHeadline": "Κλείδωμα παγκόσμιου κράτους",
-            "solution": "Ορίστε βασική αρχιτεκτονική, σχήματα φωτισμού και περιβαλλοντικές παραμέτρους στο Blueprint Studio. Το SceneFlow κλειδώνει τη χωρική γεωμετρία, έτσι ώστε η ρύθμισή σας να παραμένει συνεπής, από φαρδιές λήψεις μέχρι σφιχτές μάχες στο διάδρομο."
-          },
-          {
-            "title": "Ακεραιότητα σχεδίασης εξωγήινων και πλασμάτων",
-            "frictionHeadline": "Μορφοποίηση σχεδίων χαρακτήρων",
-            "friction": "Τα μη ανθρωποειδή είδη, οι cyborgs και οι βαρύ προσθετικοί χαρακτήρες παρουσιάζουν άγρια ​​εμφάνιση κάθε φορά που δημιουργείται μια νέα γωνία ή λήψη.",
-            "solutionHeadline": "Κλειδωμένα προφίλ περιουσιακών στοιχείων αλλοδαπών",
-            "solution": "Αγκυρώστε την μη ανθρώπινη ανατομία, τις λεπτομέρειες της πανοπλίας και τις μηχανικές προφορές. Διατηρήστε την αναγνώριση χαρακτήρων σε κάθε σκηνή υψηλής ιδέας χωρίς προσαρμοσμένες αγωγές μοντελοποίησης 3D."
-          },
-          {
-            "title": "VFX Action & High-Speed ​​Physics",
-            "frictionHeadline": "Melting Motion in Action Sequences",
-            "friction": "Οι διαστημικές αερομαχίες υψηλής ταχύτητας, οι πυρκαγιές από ενεργειακά όπλα και οι εκρήξεις συχνά προκαλούν τα μοντέλα παραγωγής να κηλιδώνουν τα πλαίσια ή να παράγουν ακατάστατα οπτικά αντικείμενα.",
-            "solutionHeadline": "Action & FX Motion Anchoring",
-            "solution": "Άμεση δυναμική χορογραφία, γρήγορες κινήσεις της κάμερας και ρυθμοί δράσης με σωματίδια, διατηρώντας παράλληλα καθαρές άκρες και ρεαλιστική φυσική τροχιάς."
-          },
-          {
-            "title": "Audio-Visual World-Building",
-            "frictionHeadline": "Επίπεδος ήχος σε κόσμους υψηλής ιδέας",
-            "friction": "Τα φουτουριστικά όπλα, οι ατμοσφαιρικοί βόμβοι των αστροπλοίων και τα μοτίβα ομιλίας εξωγήινων αισθάνονται αποσυνδεδεμένα όταν τοποθετούνται χειροκίνητα σε αθόρυβα κλιπ που δημιουργούνται.",
-            "solutionHeadline": "Ενσωματωμένο World-Sound & Voice Sync",
-            "solution": "Ευθυγραμμίστε τους προσαρμοσμένους συνθετικούς διαλόγους, τις φωνητικές φωνές από εξωγήινους και τις κινηματογραφικές ηχητικές ενδείξεις απευθείας μέσα στο χρονοδιάγραμμα για μια καθηλωτική, έτοιμη για κυκλοφορία κύρια μίξη ήχου."
-          }
-        ],
-        "screeningRoomPreview": "Παραγωγή Sci-Fi VFX — Προεπισκόπηση Screening Room"
+        "screeningRoomPreview": "The Animated Comedy — Screening Room"
       },
       {
         "id": "documentary",
-        "title": "Μετατρέψτε τις Αρχειακές Ιστορίες σε Ντοκιμαντέρ με τις καλύτερες πωλήσεις.",
-        "subtitle": "Αναδημιουργήστε ιστορικά γεγονότα, αναπαραστάσεις και ρυθμίσεις συνεντεύξεων ειδικών με αυθεντικές λεπτομέρειες περιόδου, απρόσκοπτες εκφωνήσεις και μηδενικά τέλη αδειοδότησης αρχείων.",
-        "badge": "Περίοδος-Ακριβής",
+        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
+        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
+        "badge": "Period-Accurate",
         "solutionPillars": [
           {
-            "title": "Οπτική ακρίβεια ειδικής εποχής",
-            "frictionHeadline": "Αναχρονιστικά τεχνουργήματα",
-            "friction": "Τα τυπικά μοντέλα παραγωγής συνήθως αφαίρεσαν μοντέρνα αντικείμενα, οθόνες smartphone ή λανθασμένα ρούχα εποχής σε ιστορικές αναπαραστάσεις.",
-            "solutionHeadline": "Προστατευτικά κιγκλιδώματα ιστορικού στυλ",
-            "solution": "Ορίστε ακριβείς χρονικές παραμέτρους—από κόκκους φιλμ της δεκαετίας του 1920 έως υφές γκαρνταρόμπας του 18ου αιώνα—ώστε κάθε σκηνή που δημιουργείται να παραμένει ιστορικά αυθεντική."
+            "title": "Era-Specific Visual Accuracy",
+            "frictionHeadline": "Anachronistic Artifacts",
+            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
+            "solutionHeadline": "Historical Style Guardrails",
+            "solution": "Set exact temporal parameters — from 1920s film grain to 18th-century wardrobe textures — so every generated scene stays historically authentic."
           },
           {
             "title": "Archival Cutaways & B-Roll Engine",
-            "frictionHeadline": "Οπτική μονοτονία σε μακριές φωνές",
-            "friction": "Ο συνδυασμός ήχου αφηγητή μεγάλης μορφής με στατικές στοκ εικόνες οδηγεί σε γρήγορη απομάκρυνση του θεατή κατά τη διάρκεια των βαθιών καταδύσεων.",
-            "solutionHeadline": "Κινητήρας B-Roll με μεταγραφή",
-            "solution": "Καθώς ο αφηγητής σας συζητά ιστορικά γεγονότα, το SceneFlow δημιουργεί αυτόματα χρονομετρημένες κινηματογραφικές αναπαραστάσεις, επικαλύψεις εγγράφων και αποκοπές σε αρχειακό στυλ που συνδέονται απευθείας με την ηχητική μεταγραφή."
+            "frictionHeadline": "Visual Monotony in Long Voiceovers",
+            "friction": "Pairing long-form narrator audio with static stock images leads to rapid viewer drop-off during deep dives.",
+            "solutionHeadline": "Transcript-Driven B-Roll Engine",
+            "solution": "As your narrator discusses historical facts, SceneFlow automatically generates timed cinematic re-enactments, document overlays, and archival-style cutaways tied directly to the audio transcript."
           },
           {
             "title": "Interview & Talking-Head Realism",
-            "frictionHeadline": "Ασυνήθιστοι ειδικοί μάρτυρες",
-            "friction": "Οι δημιουργημένοι ιστορικοί, ερευνητές ή μάρτυρες συχνά φαίνονται τεχνητοί, με αιωρούμενες κινήσεις γνάθων και αφύσικη οπτική επαφή.",
-            "solutionHeadline": "Κλειδωμένα προφίλ ειδικών και φωνητικός συγχρονισμός",
-            "solution": "Διατηρήστε ρεαλιστικές, αξιόπιστες ρυθμίσεις συνεντεύξεων με φυσικές μικροεκφράσεις, ακριβή συγχρονισμό των χειλιών και συνεπείς ταυτότητες ειδικών σε πολλές σειρές."
+            "frictionHeadline": "Uncanny Expert Witnesses",
+            "friction": "Generated historians, investigators, or witnesses often look artificial, with floating jaw movements and unnatural eye contact.",
+            "solutionHeadline": "Locked Expert Profiles & Vocal Sync",
+            "solution": "Maintain realistic, trustworthy interview setups with natural micro-expressions, accurate lip-sync, and consistent expert identities across multi-part series."
           },
           {
-            "title": "Επεισοδιακός Βηματισμός & Αφηγηματική Συνέχεια",
-            "frictionHeadline": "Κατακερματισμένη Επεξεργασία Χρονολογίου",
-            "friction": "Η εξισορρόπηση του ήχου του αφηγητή, των αναπαραστάσεων, των αποκαλύψεων στοιχείων και των παύσεων δημιουργίας έντασης σε ένα επεισόδιο διάρκειας 40 λεπτών συνήθως διαρκεί εβδομάδες στα παραδοσιακά NLE.",
+            "title": "Episodic Pacing & Narrative Continuity",
+            "frictionHeadline": "Fragmented Timeline Editing",
+            "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
             "solutionHeadline": "Beat-First Documentary Pipeline",
-            "solution": "Δομήστε τη δραματική ένταση, τις σασπένς παύσεις και τα στοιχεία αποκαλύπτονται οπτικά μέσα στο Blueprint Studio, παρέχοντας ένα πλήρως συναρμολογημένο κύριο αρχείο με ένα απρόσκοπτο πέρασμα."
+            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Studio, delivering a fully assembled master file in one seamless pass."
           }
         ],
-        "screeningRoomPreview": "Παραγωγή ντοκιμαντέρ — Προεπισκόπηση Screening Room"
+        "screeningRoomPreview": "Documentary Production — Screening Room"
+      },
+      {
+        "id": "localization",
+        "title": "Beyond Dubbing. Fully Localized Productions.",
+        "subtitle": "Same storyline, two cities: Houston, Texas and São Paulo, Brazil. SceneFlow doesn't just dub the audio — it localizes settings, cultural references, and on-screen text so each audience sees a production made for them.",
+        "badge": "Localized",
+        "localeToggle": true,
+        "locales": [
+          {
+            "id": "houston",
+            "label": "Houston, TX",
+            "lang": "en"
+          },
+          {
+            "id": "saopaulo",
+            "label": "São Paulo, BR",
+            "lang": "pt"
+          }
+        ],
+        "solutionPillars": [
+          {
+            "title": "Cultural Adaptation, Not Translation",
+            "frictionHeadline": "Dubbing Is Not Localization.",
+            "friction": "Swapping the audio track leaves every cultural reference, location shot, and on-screen graphic targeting the wrong audience.",
+            "solutionHeadline": "Blueprint-Level Localization.",
+            "solution": "Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Studio before a single frame is rendered."
+          },
+          {
+            "title": "Parallel Production Pipelines",
+            "frictionHeadline": "One Region at a Time.",
+            "friction": "Traditional localization is sequential — finish the original, then manually rebuild for each market. Months of delay per region.",
+            "solutionHeadline": "Concurrent Regional Pipelines.",
+            "solution": "Run multiple localized Blueprints in parallel. Each region gets its own production pipeline sharing the same narrative structure but with fully adapted visuals and dialogue."
+          },
+          {
+            "title": "Region-Specific Audience Resonance",
+            "frictionHeadline": "One Script for Every Culture.",
+            "friction": "Humor, pacing, and emotional beats that land in Houston may fall flat in São Paulo. A single script cannot carry both.",
+            "solutionHeadline": "Per-Region Resonance Tuning.",
+            "solution": "Audience Resonance analyzes each localized script against regional demographic profiles, flagging cultural mismatches before production begins."
+          }
+        ],
+        "screeningRoomPreview": "Localized Production Comparison — Screening Room"
       }
     ]
   },

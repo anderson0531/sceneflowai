@@ -6,7 +6,6 @@ import { HeroSection } from './components/HeroSection'
 import { TwoModesSection } from '@/components/landing/TwoModesSection'
 import { LandingSectionCollapseProvider } from '@/components/landing/LandingSectionCollapse'
 
-const UseCasesSection = dynamic(() => import('@/components/landing/UseCasesSection'), { ssr: false })
 const ProductionExamplesSection = dynamic(
   () => import('@/components/landing/ProductionExamplesSection'),
   { ssr: false }
@@ -56,7 +55,6 @@ export default function LandingPageClient() {
 
         <CoreCapabilitiesSection />
         <PreVisEngineSection />
-        <UseCasesSection />
         <ProductionExamplesSection />
         <KeyFeaturesSection />
         <PricingCredits />

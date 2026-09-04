@@ -1920,251 +1920,181 @@
     ]
   },
   "productionShowcase": {
-    "badge": "Mga Halimbawa sa Paggawa",
-    "title": "Mula sa Pagiging Concept Tungo sa Paglitaw:",
-    "titleAccent": "Di - makatuwirang mga Kakayahan",
-    "subtitle": "Anim na pampublikong produksiyon ang nagpapatunay sa buong pipeline — pre-vis, scene video, at Screening Room review. Bigyang - kahulugan ang iyong ideya at hayaang pangasiwaan ng SceneFlow ang scriptwriting, disenyo ng karakter, multi-wika audio, visualization, produksiyon ng pasisimulang video, at paglalathala.",
-    "subtitleTagline": "Isang plataporma. Hindi sapat na mga posibilidad.",
-    "publicProductionsNote": "Ang bawat kard sa ibaba ay isang kumpletong produksiyon ng publiko — mga switch Solution at Screening Room tabs upang lumakad sa tubo.",
-    "languagesBanner": "Linyang pampubliko Halimbawa dolmen sa 7 wika: Ingles, Kastila, Portuges, Hindi, Tsino, Arabe, at Thai.",
-    "explorePipelineCta": "Suriin ang buong produksiyon",
-    "explorePipelineHint": "Magsimula sa Cinematic Drama sa ibaba — Mga solusyon para sa demo reflick, Screening Room para sa buong daloy ng gawaing pagrerepaso.",
-    "workflowLabel": "Mga Lunas",
-    "startProduction": "Magsimula sa Iyong Produksiyon",
-    "cta": "Magsimula sa Iyong Produksiyon",
-    "continuityNote": "Ang mga Series Studio ay patuloy na gumagawa",
-    "resonanceNote": "Audience ResonanceTM ang mga iskrip",
-    "videoLanguagePrompt": "Bantayan ang produksiyong ito sa inyong wika",
-    "videoComingSoon": "Malapit nang dumating ang mga empty",
-    "videoSoon": "Malapit na itong mawala",
-    "introVideoLabel": "Mga Lunas",
-    "screeningRoomLabel": "PAGSUBOS SA PAGSUBOK",
-    "frictionLabel": "Ang Friction",
-    "solutionPillarLabel": "Ang Solusyon ng SceneFlow",
-    "showSolutionsSection": "Ipakita ang mga Lunas",
-    "hideSolutionsSection": "Magbasa ng mga Solusyon",
+    "badge": "Production Examples",
+    "title": "See the Full Pipeline",
+    "titleAccent": "in Action",
+    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to final high-resolution video. Walk the Screening Room to compare animatics, individual scenes, and the finished master in multiple languages.",
+    "subtitleTagline": "Long-form productions. Not clips.",
+    "screeningRoomInstruction": "Select Pre-Vis, Scenes, or Final to experience the pipeline. Select a language to hear the dub.",
+    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
+    "explorePipelineCta": "Explore a full production",
+    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
+    "workflowLabel": "Solutions",
+    "startProduction": "Start Your Production",
+    "cta": "Start Your Production",
+    "continuityNote": "Series Studio manages continuity",
+    "resonanceNote": "Audience Resonance™ optimizes scripts",
+    "videoLanguagePrompt": "Watch this production in your language",
+    "videoComingSoon": "Dub coming soon",
+    "videoSoon": "Soon",
+    "frictionLabel": "The Friction",
+    "solutionPillarLabel": "The SceneFlow Solution",
+    "showSolutionsSection": "Show Solutions",
+    "hideSolutionsSection": "Hide Solutions",
     "cards": [
       {
         "id": "drama",
-        "title": "Cinematic AI Drama. Ang Zero Character ay humihina.",
-        "subtitle": "Alisin ang mga karakter sa morphining itakuwil, sirang usapan, at walang katapusang mga rerol. Magtayo ng mga kuwentong universe, multi-character long-form na may kumpletong visual reversal.",
-        "badge": "Serye-Ready",
+        "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
+        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the pre-vis animatic, individual scenes, and the final high-resolution master — then switch languages to hear the full dub.",
+        "badge": "Series-Ready",
         "solutionPillars": [
           {
-            "title": "Nakikita at Madaling Katangian",
-            "frictionHeadline": "Charact Defection & Wobbly Sets.",
-            "friction": "Ang mga remained na modelo ay nag - aayos ng mga mukha, damit, at ilaw na patuloy na umiikot sa tanawin.",
-            "solutionHeadline": "Mga Locked Asset Blueprint.",
-            "solution": "Define master character profiles, kapaligiran, at mga visual na estilo sa harap sa Blueprint Studio. ANG SceneFlow ay nagpapatupad ng nakikitang pagkakakilanlan sa lahat ng bahagi upang maingatan ang paglulubog sa salaysay."
+            "title": "Visual & Character Consistency",
+            "frictionHeadline": "Character Drift & Wobbly Sets.",
+            "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
+            "solutionHeadline": "Locked Asset Blueprints.",
+            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Studio. SceneFlow enforces visual identity across every render to preserve narrative immersion."
           },
           {
-            "title": "Narrative Paching & Scene Control",
-            "frictionHeadline": "Ang 10-Second landed Clip Trap.",
-            "friction": "Ang paggawa ng isang pelikula mula sa mga di-gaanong micro-prompts ay lumilikha ng chopy pacing, flat na emosyon, at walang katapusang manufactural na pag-aayos ng timeline.",
+            "title": "Narrative Pacing & Scene Control",
+            "frictionHeadline": "The 10-Second Clip Trap.",
+            "friction": "Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.",
             "solutionHeadline": "Beat-First Storyboarding.",
-            "solution": "Ituro sa antas ng eksena, hindi sa antas ng kagyat. Ang malalaking kumpas, mga galaw ng kamera, at mga guhit ng istorya ay kitang - kita bago lumikha ng isang balangkas ng video."
+            "solution": "Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video."
           },
           {
             "title": "Dialogue & Audio Alignment",
-            "frictionHeadline": "Hindi kapani - paniwalang Pag - aalinlangan.",
-            "friction": "Di-umano'y labi-sync, lumulutang na galaw ng bibig, at nag-iiba-ibang voice track ang agad na humihila sa mga manonood palabas ng drama.",
+            "frictionHeadline": "Unconvincing Dialogue.",
+            "friction": "Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.",
             "solutionHeadline": "Integrated Voice & Sync Engine.",
-            "solution": "Ang Dynamic voice performance at eksaktong labi-sync ay direktang niluluto sa video pipelineific regulatory dialogue na walang mga panlabas na post-prosyncation passes."
+            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline — delivering believable dialogue without external post-production passes."
           },
           {
-            "title": "Pagtrabaho Why Flowd Friction & Reroly Fatigue",
-            "frictionHeadline": "Asset Chaos & Endless Rerols.",
-            "friction": "Ang pag - aayos ng isang maikling pelikula ay karaniwang nangangahulugan ng pagpupuslit ng 200+ di pa nagagalugad na mga file ng video, manu - manong pag - upgrade, at dose - dosenang nasayang na salinlahi.",
+            "title": "Workflow Friction & Reroll Fatigue",
+            "frictionHeadline": "Asset Chaos & Endless Rerolls.",
+            "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
             "solutionHeadline": "Automated Studio Pipeline.",
-            "solution": "Mula konsepto hanggang final master MP4 sa isang nagkakaisang plataporma. Blueprint Studio humahawak ng mga setup ng istorya, SFAIPRODUCTION STUD TemptationM automates na salin, at Screening Room ang huling iniluluwas mo."
+            "solution": "From concept to final master MP4 in one unified platform. Blueprint Studio handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export."
           }
         ],
-        "screeningRoomPreview": "Ang Cinematic Drama — Screening Room Patiunang Pag - isipan"
+        "screeningRoomPreview": "The Cinematic Drama — Screening Room"
       },
       {
         "id": "animation",
-        "title": "Isinusulat Mo ang Joke. SceneFlow Animates ang Punchline.",
-        "subtitle": "Alisin ang istilo ng pagtangay, matigas na pagkilos, at sirang panahon. Gawing ganap na masigla at voice-synced na mga episode ng komedya ang mga sulat - kamay sa isang walang - tigil na istudyo.",
+        "title": "Full-Season Animated Series. One Consistent Art Style.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {
-            "title": "Ang Konstansiya ng Stylistiko",
+            "title": "Stylistic Consistency",
             "frictionHeadline": "Style Meltdown.",
-            "friction": "Ang mga istilo ng cartoon at anime ay palaging paayon sa pagitan ng mga iniksiyon, pabagu - bagong sining ng linya, pagbasag sa mga paleta ng magparaya, at morpong mga tauhan tungo sa mahiwagang paglalarawan.",
-            "solutionHeadline": "Nakakandadong Akda ng Sining.",
-            "solution": "Panatilihin ang iyong kagandahan mula sa unang balangkas. SceneFlow locks character disenyo, line weights, at shading models sa buong episode kaya ang iyong mga character ay nananatiling natatangi sa iyo."
+            "friction": "Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.",
+            "solutionHeadline": "Locked Art Style Engine.",
+            "solution": "Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours."
           },
           {
-            "title": "Pinalabis na Anisyon & Physics",
+            "title": "Exaggerated Animation & Physics",
             "frictionHeadline": "Stiff & Glitchy Motion.",
-            "friction": "Ang mga Generative model ay nakikipagpunyagi sa mabilis na sampalstick, double-takes, at squishy cartoon physics, na ginagawang natutunaw na artifact ang Alhambra-enerhiyang mga gag.",
-            "solutionHeadline": "Aksiyon & Pose Anchoring.",
-            "solution": "Drive dynamic character movement at expression role ay hindi nasisira ang heometriya. Tuwirang suntok na pisikal na komedya, biglaang pag-iingles, at magulong mga ekspresyon na may buong kontrol ng mosyon."
+            "friction": "Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.",
+            "solutionHeadline": "Action & Pose Anchoring.",
+            "solution": "Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control."
           },
           {
-            "title": "Komedya Timing & Rhythm",
-            "frictionHeadline": "Nawasak na mga Punchline.",
-            "friction": "Ang katatawanan ay nabubuhay sa mga pagtigil at beat-cuts. Pamantayang 5-second generative loops pwersang passing na sumisira sa birus na paghahatid.",
-            "solutionHeadline": "Panday-Precision Edithing.",
-            "solution": "Supilin ang eksena na nakaungos sa balangkas. Ibagay ang mga dramatikong paghinto, setup-to-punchline na tiyempo, at mabilis na reaksyon shots direkta sa loob ng beat-first timeline bago ang final punction."
+            "title": "Comedic Timing & Rhythm",
+            "frictionHeadline": "Ruined Punchlines.",
+            "friction": "Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.",
+            "solutionHeadline": "Beat-Precision Editing.",
+            "solution": "Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render."
           },
           {
             "title": "High-Energy Dialogue & Vocal Sync",
-            "frictionHeadline": "Walang - Buhay na mga Labik.",
-            "friction": "Ang usapang makalabas ng Generic AI ay parang patag at mekanikal, sinisira ang enerhiyang kailangan para sa snapppy sitcom banter.",
+            "frictionHeadline": "Lifeless Puppet Mouths.",
+            "friction": "Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.",
             "solutionHeadline": "Dynamic Voice & Expression Sync.",
-            "solution": "Ang pagsasalita ng mapa ay tuwiran sa masiglang pagtatanghal ng mukha. Ang di - maintindihan, nagpapahayag na mga hugis ng bibig, at mga bakas ng tinig ng komedya ay walang - pagbabagong tumutugma sa sukdulang epekto ng komedya."
+            "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
           }
         ],
-        "screeningRoomPreview": "The Aniated Comedy — Screening Room Patiunang Pag - isipan"
-      },
-      {
-        "id": "podcast",
-        "title": "Iniingatan Mo ang Pakikipag - usap. SceneFlow Naglalabas ng Pagtatanghal.",
-        "subtitle": "Alisin ang static avatars at manu - manong pag - aayos ng video. Transform scripts o hilaw audio sa multi-angle, broadcast-handa video podcasts sa isang automated pipeline.",
-        "badge": "Broadcast-Ready",
-        "solutionPillars": [
-          {
-            "title": "Multi-Sor Ibinuhos & Avatar Identification",
-            "frictionHeadline": "Robotic Avatars & Lost Identification",
-            "friction": "Ang mga host na Generated ay nagreresulta sa mga hitsurang mid-episode, blankong titi sa kamera, o nabigong magpakita ng mga natural na mikro-express epileptic habang nakikinig.",
-            "solutionHeadline": "Mga Larawan",
-            "solution": "Itatag ang patuloy na visual identification para sa iyong mga co-host at paulit-ulit na mga bisita. Ang SceneFlow ay nagpapanatili ng speaker configuration, natural na pakikipag-ugnayan sa mata, at makatotohanang usapang body language sa buong mahabang-anyong talakayan."
-          },
-          {
-            "title": "Multi-Camera Direction & Paching",
-            "frictionHeadline": "Mahiwagang Single-Angles",
-            "friction": "Ang mga smatic talk-head shot ay mabilis na nawawalan ng mga manonood na nag-eebolb, habang ang manu-manong kamera na umiikot sa isang 30-minutong timeline ay nangangailangan ng nakapapagod na frame-by-frame cities.",
-            "solutionHeadline": "Automated Multi-Cam Switching",
-            "solution": "Sinusuri ng SceneFlow ang daloy ng pag-uusap sa awtomatikong toggle sa pagitan ng mga host close-ups, mga reaksyon ng bisita, at malawak na-angle studio shots, paghahatid ng propesyonal na broadcast pacing nang walang manu-manong pag-aayos ng timeline."
-          },
-          {
-            "title": "Context-Aware B-Rowl & Visuals",
-            "frictionHeadline": "Nakikitang Monotony & B-Republic Botenecks",
-            "friction": "Ang paghahanap, paglikha, at pag-aayos ng mga kaugnay na mga visual aid o B-rol clips para sa bawat nabanggit na paksa sumakaniya ang mga oras ng post-production.",
-            "solutionHeadline": "Auto-Generated B-Reiled Cutaways",
-            "solution": "Habang pinag - uusapan ng mga nag - anyaya sa inyo ang mga paksa, ang SceneFlow ay awtomatikong lumilikha ng mga varietual cinematic visual, graphics, at mga eksenang nai - adjust nang eksakto sa audio transcription."
-          },
-          {
-            "title": "Long-Form Audio & Video Sync",
-            "frictionHeadline": "Ang Audio Deflict & Long-Form ay Nagbibigay ng Pagod",
-            "friction": "Ang pagkokodigo ng generative video sa 20+ minuto ng hilaw na audio ay humahantong sa labi-sync drift, pagbibigay ng mga pagkakamali, at split file management.",
-            "solutionHeadline": "End-to-End Podcast Pipeline",
-            "solution": "Bumababa sa iyong hilaw na audio track o script, at ang SceneFlow ay humahawak ng avatar na pagkakahanay, paggupit ng kamera, pagsasama-sama ng B-roll, at panghuling master MP4 na iniluluwas sa isang makinis, automated studio passes."
-          }
-        ],
-        "screeningRoomPreview": "Ang AI-Unang Podcast — Screening Room Patiunang Pag - isipan"
-      },
-      {
-        "id": "training",
-        "title": "Enterprise-Grade Training Videos. Pre-Vizualization na ginawa noong Minutes.",
-        "subtitle": "Gilingin ang mga manwal, slide, at sundin ang docs, multi-lingwal na mga video module na may naka enduresd na brand, walang depektong labi-sync, at sero studio sa itaas.",
-        "badge": "Pangglobong Pagbagsak",
-        "solutionPillars": [
-          {
-            "title": "Kasalukuyan & Brand Consistance",
-            "frictionHeadline": "Di - namamalayang Avatars & Brand driving",
-            "friction": "Ang mga undead AI kasalukuyan ay nakadarama na sila'y robot at di - malalapitan, samantalang ang mga logo ng tatak, mga kulay, at mga hitsura sa kasalukuyan ay pabagu - bago ng takbo sa iba't ibang training module.",
-            "solutionHeadline": "Nakakandadong Executive & Trender Profile",
-            "solution": "Magtatag ng walang lubay, natural-looking corporate laurenders at i-lock ang iyong brand guides. ANG SceneFlow ay nagpapanatili ng visual identity, corporate styling, at propesyonal na paghahatid sa buong aklatan ng iyong kurso."
-          },
-          {
-            "title": "Walang - Dagat na Pangglobong Lokalisasyon",
-            "frictionHeadline": "Broken Translations & Bad Lip-sync",
-            "friction": "Ang pagpapalawak ng nilalamang pagsasanay sa 10+ wika ay karaniwang lumilikha ng asiwang bibig-syncing, robotikong voice tracks, at malaking re-editing botttleneck.",
-            "solutionHeadline": "Katutubong Kasangkapang Multilingwal",
-            "solution": "Isalin ang buong serye ng pagsasanay sa maraming mga wika sa pamamagitan ng natural na voice tone, localized text callouts, at frame-syncing labi-syncingiall sa isang solong klik."
-          },
-          {
-            "title": "Hindi Nakikitang mga Aids at mga Dayagram",
-            "frictionHeadline": "Text-Heavy Bore",
-            "friction": "Ang mga video na nag - uusap lamang ay agad na nawawalan ng pansin ng empleado, samantalang ang manu - manong pag - aanimating process diagram, mga screen catch, at mga bullet callout ay gumugugol ng maraming oras sa isang editor.",
-            "solutionHeadline": "Kontektuwal na Pagsusuri & Graphic Overlay",
-            "solution": "Habang ipinaliliwanag ng iyong tagaharap ang masalimuot na mga daloy ng trabaho o pagsunod sa mga hakbang, ang SceneFlow ay awtomatikong lumilikha ng mga timed diagram, key takeways, at mga visual aid mismo sa screen."
-          },
-          {
-            "title": "Mabilis na Pagkakontento",
-            "frictionHeadline": "Magastos na mga Re-Shoot & Magbigay ng mga Silo",
-            "friction": "Kapag nagbago ang patakaran ng kompanya o produktong specs, ang pag-apruba ng isang 2-minutong bahagi ng isang video ay karaniwang nangangailangan ng muling pagtatayo at muling pag-aaproba ng buong file.",
-            "solutionHeadline": "Mga Update ng Modular Script",
-            "solution": "Edit teksto direkta sa script plan upang i-update agad ang mga patakaran o pamamaraan. Ang SceneFlow ay nagreresulta lamang sa binagong seksyon habang iniingatan ang paligid na estilo-orasan at video."
-          }
-        ],
-        "screeningRoomPreview": "Ang Pagsasanay sa Corporate — Screening Room Patiunang Pag - isipan"
-      },
-      {
-        "id": "scifi",
-        "title": "Magtayo ng Imposibleng mga Sanlibutan. Patnugot Uncom Promited Sci-Fi.",
-        "subtitle": "Magbigay ng masalimuot na mga visual effects, futuristic environments, at alien character disenyo na may frame-by-frame visual refixall sa loob ng isang automated pipeline.",
-        "badge": "VFX-Ready",
-        "solutionPillars": [
-          {
-            "title": "Patuloy na Pag - unlad sa Kapaligiran & Arkitektura",
-            "frictionHeadline": "Geometry & Smart Glitches",
-            "friction": "Ang malalaking lunsod, mga neon landscape, at mga barko ng mga dayuhan ay patuloy na paliku - liko, nag - iiba - iba ng direksiyon, o natutunaw sa walang - saysay na ingay sa pagitan ng mga paggupit ng kamera.",
-            "solutionHeadline": "Pandaigdig-State Locking",
-            "solution": "Bigyang - kahulugan ang pangunahing arkitektura, mga panukala sa ilaw, at mga parameter na pangkapaligiran sa Blueprint Studio. SceneFlow locks sprayal heometriya kaya ang iyong paglubog ay nananatiling hindi nagbabago mula sa malawak na pagtatatag ng mga putok hanggang sa mahigpit na mga labanan sa pasilyo."
-          },
-          {
-            "title": "Alien & Creation Design Integridad",
-            "frictionHeadline": "Mga Disenyo ng mga Katangian",
-            "friction": "Ang mga hindi-humanoid species, cyborgs, at heavy-prosthetic characters ay mabilis na inaanod sa hitsura tuwing nagkakaroon ng bagong anggulo o shot.",
-            "solutionHeadline": "Nakakandadong mga magpunta sa Aset Profile",
-            "solution": "Anchor non-human anatomy, armor na detalye, at mekanikal na tuldik. Panatilihin ang pagkilala sa karakter sa bawat high-concept na eksena nang walang kaugalian 3D pagmomodelo ng mga tubo."
-          },
-          {
-            "title": "VFX Aksiyon & High-Speed Physics",
-            "frictionHeadline": "Tunawin ang Pag - aalinlangan sa Pagkilos",
-            "friction": "Ang mataas na-speed space dogfights, mga energy weapon fire, at mga pagsabog ay madalas na sanhi ng mga generative models upang pahiran ang mga frame o lumikha ng magulong visual artifact.",
-            "solutionHeadline": "Aksiyon & FX Motion Anchoring",
-            "solution": "Tuwirang dynamic choreography, mabilisang paggalaw ng kamera, at particle-heaction beats habang pinananatili ang malinis na mga gilid at makatotohanang trajectory physics."
-          },
-          {
-            "title": "Audio-Visual World-Mikiming",
-            "frictionHeadline": "Flat Audio sa mga Daigdig na Mataas-Koncept",
-            "friction": "Ang mga sandatang futuristiko, mga tunog na nanggagaling sa mga bituin, at mga paraan ng pagsasalita ng mga dayuhan ay nakadarama na sila'y di - tinatablan kapag manu - manong inilagay sa ibabaw ng tahimik na mga clip.",
-            "solutionHeadline": "Napilitang Pandaigdig-Sound & Voice Sync",
-            "solution": "Align na nakaugaliang sintetikong dialogo, alien vocalizations, at cinematic sound cues direkta respeto sa loob ng timeline para sa isang imersive, release-bready master audio mix."
-          }
-        ],
-        "screeningRoomPreview": "Produksyon ng Sici-Fi VFX — SF suggestsISCREENING ROOMTERM Patiunang Pag - isipan"
+        "screeningRoomPreview": "The Animated Comedy — Screening Room"
       },
       {
         "id": "documentary",
-        "title": "Gawing Bestselling Documentaries ang mga Kuwentong Arkival.",
-        "subtitle": "Muling binuo ang mga pangyayaring pangkasaysayan, re-enactments, at ekspertong interview settups na may mga tunay na detalye ng period, mga di-umano'y voiceovers, at sero archive lisensing bayad.",
-        "badge": "Oras-Accurate",
+        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
+        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
+        "badge": "Period-Accurate",
         "solutionPillars": [
           {
-            "title": "Era-Specific Visual CRE",
-            "frictionHeadline": "Mga Sining sa Pag - aanak",
-            "friction": "Ang mga pamantayang modelong generative ay palaging nagdurugo ng mga modernong bagay, smartphone screens, o hindi wastong period na damit sa mga historikal na re-enactment.",
-            "solutionHeadline": "Mga Bantayong Pangkasaysayan",
-            "solution": "Magtakda ng eksaktong temporal parametersity mula 1920s film grain hanggang 18th-century na damit stripsisenso ang bawat likhang eksena ay nananatiling historikal na kapani-paniwala."
+            "title": "Era-Specific Visual Accuracy",
+            "frictionHeadline": "Anachronistic Artifacts",
+            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
+            "solutionHeadline": "Historical Style Guardrails",
+            "solution": "Set exact temporal parameters — from 1920s film grain to 18th-century wardrobe textures — so every generated scene stays historically authentic."
           },
           {
-            "title": "Archival Cutaways & B-Rewner",
-            "frictionHeadline": "Nakikitang Monotonya sa Mahabang Tinig",
-            "friction": "Ang pagpasa ng long-form regulator audio na may static stock imahe ay humahantong sa mabilis na viewer drop-off sa panahon ng malalim na pagsisid.",
-            "solutionHeadline": "Transcript-Driven B-Rowl Makina",
-            "solution": "Habang tinatalakay ng iyong tagapagsalaysay ang mga pangyayaring pangkasaysayan, ang SceneFlow ay awtomatikong lumilikha ng mga timed cinematic re-enactments, dokumentong selyado, at mga archival-style cutway na direktang nakatali sa audio transcription."
+            "title": "Archival Cutaways & B-Roll Engine",
+            "frictionHeadline": "Visual Monotony in Long Voiceovers",
+            "friction": "Pairing long-form narrator audio with static stock images leads to rapid viewer drop-off during deep dives.",
+            "solutionHeadline": "Transcript-Driven B-Roll Engine",
+            "solution": "As your narrator discusses historical facts, SceneFlow automatically generates timed cinematic re-enactments, document overlays, and archival-style cutaways tied directly to the audio transcript."
           },
           {
-            "title": "Interbyu & Talking-Head Realism",
-            "frictionHeadline": "Di - tapat na mga Saksi",
-            "friction": "Ang mga istoryador, imbestigador, o mga saksing nagdududa ay kadalasang mukhang artipisyal, na may lumulutang na panga at di - likas na pagtingin sa mata.",
+            "title": "Interview & Talking-Head Realism",
+            "frictionHeadline": "Uncanny Expert Witnesses",
+            "friction": "Generated historians, investigators, or witnesses often look artificial, with floating jaw movements and unnatural eye contact.",
             "solutionHeadline": "Locked Expert Profiles & Vocal Sync",
-            "solution": "Panatilihin ang makatotohanan at mapagkakatiwalaang mga interview settups na may natural na micro-expressions, tumpak na labi-sync, at hindi pabagu-bagong preperimento sa ibayo ng multi-part series."
+            "solution": "Maintain realistic, trustworthy interview setups with natural micro-expressions, accurate lip-sync, and consistent expert identities across multi-part series."
           },
           {
-            "title": "Kabihasnan ng Episodic Paching & Narrative Continuity",
-            "frictionHeadline": "Pag - aayos ng Oras",
-            "friction": "Ang pagbalanse ng pagsasalaysay audio, re-enactments, katibayan ay naghahayag, at ang stress producer-building ay humihinto sa ibayo ng isang 40-minutong episode ay karaniwang kumukuha ng mga linggo sa mga tradisyonal na NLE masunod.",
-            "solutionHeadline": "Beat-Unang Dokumentaryong Pipeline",
-            "solution": "Isinisiwalat ng mga katibayan ang madulang tensiyon, balisang paghinto, at ang nakikitang katibayan sa loob ng Blueprint Studio, na naghahatid ng isang ganap na natipong master file sa isang daanan."
+            "title": "Episodic Pacing & Narrative Continuity",
+            "frictionHeadline": "Fragmented Timeline Editing",
+            "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
+            "solutionHeadline": "Beat-First Documentary Pipeline",
+            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Studio, delivering a fully assembled master file in one seamless pass."
           }
         ],
-        "screeningRoomPreview": "Dokumentaryong Produksiyon — PAGSUSULONG ROOMTERM Patiunang Pag - isipan"
+        "screeningRoomPreview": "Documentary Production — Screening Room"
+      },
+      {
+        "id": "localization",
+        "title": "Beyond Dubbing. Fully Localized Productions.",
+        "subtitle": "Same storyline, two cities: Houston, Texas and São Paulo, Brazil. SceneFlow doesn't just dub the audio — it localizes settings, cultural references, and on-screen text so each audience sees a production made for them.",
+        "badge": "Localized",
+        "localeToggle": true,
+        "locales": [
+          {
+            "id": "houston",
+            "label": "Houston, TX",
+            "lang": "en"
+          },
+          {
+            "id": "saopaulo",
+            "label": "São Paulo, BR",
+            "lang": "pt"
+          }
+        ],
+        "solutionPillars": [
+          {
+            "title": "Cultural Adaptation, Not Translation",
+            "frictionHeadline": "Dubbing Is Not Localization.",
+            "friction": "Swapping the audio track leaves every cultural reference, location shot, and on-screen graphic targeting the wrong audience.",
+            "solutionHeadline": "Blueprint-Level Localization.",
+            "solution": "Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Studio before a single frame is rendered."
+          },
+          {
+            "title": "Parallel Production Pipelines",
+            "frictionHeadline": "One Region at a Time.",
+            "friction": "Traditional localization is sequential — finish the original, then manually rebuild for each market. Months of delay per region.",
+            "solutionHeadline": "Concurrent Regional Pipelines.",
+            "solution": "Run multiple localized Blueprints in parallel. Each region gets its own production pipeline sharing the same narrative structure but with fully adapted visuals and dialogue."
+          },
+          {
+            "title": "Region-Specific Audience Resonance",
+            "frictionHeadline": "One Script for Every Culture.",
+            "friction": "Humor, pacing, and emotional beats that land in Houston may fall flat in São Paulo. A single script cannot carry both.",
+            "solutionHeadline": "Per-Region Resonance Tuning.",
+            "solution": "Audience Resonance analyzes each localized script against regional demographic profiles, flagging cultural mismatches before production begins."
+          }
+        ],
+        "screeningRoomPreview": "Localized Production Comparison — Screening Room"
       }
     ]
   },

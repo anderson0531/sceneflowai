@@ -9,8 +9,7 @@ import {
   ChevronUp,
   Clapperboard,
   Film,
-  GraduationCap,
-  Mic,
+  Globe,
   Palette,
   Rocket,
   Sparkles,
@@ -23,11 +22,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { MultiLanguageVideoPlayer } from '@/components/landing/MultiLanguageVideoPlayer'
 import { ScreeningRoomPreview } from '@/components/landing/ScreeningRoomPreview'
 import type { VideoLocale, VideoLocaleId } from '@/config/landing/videoLocales'
 import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
+import { getProductionShowcaseScreeningSlug } from '@/config/landing/productionShowcaseScreening'
 
 export type SolutionPillar = {
   title: string
@@ -35,6 +33,12 @@ export type SolutionPillar = {
   friction: string
   solutionHeadline: string
   solution: string
+}
+
+export type LocaleOption = {
+  id: string
+  label: string
+  lang: string
 }
 
 export type ProductionStyleCardData = {
@@ -46,6 +50,8 @@ export type ProductionStyleCardData = {
   solutionPillars?: SolutionPillar[]
   benefit?: string
   screeningRoomPreview: string
+  localeToggle?: boolean
+  locales?: LocaleOption[]
 }
 
 type CardStyle = {
@@ -74,30 +80,6 @@ const CARD_STYLES: Record<string, CardStyle> = {
     badge: 'bg-amber-500/20 text-amber-400',
     ctaGradient: 'from-amber-500 to-orange-500',
   },
-  podcast: {
-    icon: Mic,
-    surface: 'from-cyan-500/10 to-blue-500/5',
-    border: 'border-cyan-500/30',
-    accent: 'text-cyan-400',
-    badge: 'bg-cyan-500/20 text-cyan-400',
-    ctaGradient: 'from-cyan-500 to-blue-500',
-  },
-  training: {
-    icon: GraduationCap,
-    surface: 'from-emerald-500/10 to-teal-500/5',
-    border: 'border-emerald-500/30',
-    accent: 'text-emerald-400',
-    badge: 'bg-emerald-500/20 text-emerald-400',
-    ctaGradient: 'from-emerald-500 to-teal-500',
-  },
-  scifi: {
-    icon: Rocket,
-    surface: 'from-violet-500/10 to-indigo-500/5',
-    border: 'border-violet-500/30',
-    accent: 'text-violet-400',
-    badge: 'bg-violet-500/20 text-violet-400',
-    ctaGradient: 'from-violet-500 to-indigo-500',
-  },
   documentary: {
     icon: Film,
     surface: 'from-rose-500/10 to-amber-500/5',
@@ -105,6 +87,14 @@ const CARD_STYLES: Record<string, CardStyle> = {
     accent: 'text-rose-400',
     badge: 'bg-rose-500/20 text-rose-400',
     ctaGradient: 'from-rose-500 to-amber-500',
+  },
+  localization: {
+    icon: Globe,
+    surface: 'from-emerald-500/10 to-teal-500/5',
+    border: 'border-emerald-500/30',
+    accent: 'text-emerald-400',
+    badge: 'bg-emerald-500/20 text-emerald-400',
+    ctaGradient: 'from-emerald-500 to-teal-500',
   },
 }
 
@@ -158,12 +148,7 @@ export function ProductionStyleCard({
   index,
   workflowLabel,
   ctaLabel,
-  videoLocales,
-  defaultVideoLocaleId,
-  videoComingSoonLabel,
-  videoSoonLabel,
-  introVideoLabel,
-  screeningRoomLabel,
+  screeningRoomInstruction,
   frictionLabel,
   solutionPillarLabel,
   showSolutionsSectionLabel,
@@ -174,12 +159,7 @@ export function ProductionStyleCard({
   index: number
   workflowLabel: string
   ctaLabel: string
-  videoLocales?: VideoLocale[]
-  defaultVideoLocaleId?: VideoLocaleId
-  videoComingSoonLabel?: string
-  videoSoonLabel?: string
-  introVideoLabel?: string
-  screeningRoomLabel?: string
+  screeningRoomInstruction?: string
   frictionLabel?: string
   solutionPillarLabel?: string
   showSolutionsSectionLabel?: string
@@ -188,8 +168,12 @@ export function ProductionStyleCard({
 }) {
   const style = CARD_STYLES[card.id] ?? FALLBACK_STYLE
   const Icon = style.icon
-  const [activeMediaTab, setActiveMediaTab] = useState<'workflow' | 'screening'>('workflow')
   const [solutionsSectionOpen, setSolutionsSectionOpen] = useState(false)
+  const [activeLocale, setActiveLocale] = useState(card.locales?.[0]?.id ?? '')
+
+  const resolvedSlug = card.localeToggle && card.locales
+    ? getProductionShowcaseScreeningSlug(`${card.id}-${activeLocale}`)
+    : screeningEmbedSlug
 
   const startProduction = () => {
     window.location.href = getLoginUrl({
@@ -215,7 +199,6 @@ export function ProductionStyleCard({
         {card.badge}
       </div>
 
-      {/* Narrow cards drop below the badge; wider ones reserve room beside it. */}
       <div className="mb-4 flex items-start gap-4 pt-6 sm:pt-0 sm:pr-28">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gray-900/50">
           <Icon className={`h-6 w-6 ${style.accent}`} />
@@ -226,48 +209,39 @@ export function ProductionStyleCard({
         </div>
       </div>
 
-      <div className="mb-4 min-w-0">
-        <Tabs
-          value={activeMediaTab}
-          onValueChange={(value) => setActiveMediaTab(value as 'workflow' | 'screening')}
-          className="w-full"
-        >
-          <TabsList className="mb-3 flex h-auto w-full gap-1 border border-gray-700/50 bg-gray-900/60 p-1">
-            <TabsTrigger
-              value="workflow"
-              className="min-w-0 flex-1 truncate px-2 py-2 text-xs data-[state=active]:bg-indigo-600 data-[state=active]:text-white sm:text-sm"
+      {/* Locale toggle for localization comparison card */}
+      {card.localeToggle && card.locales && card.locales.length > 1 && (
+        <div className="mb-3 flex gap-1 rounded-lg border border-gray-700/50 bg-gray-900/60 p-1">
+          {card.locales.map((locale) => (
+            <button
+              key={locale.id}
+              type="button"
+              onClick={() => setActiveLocale(locale.id)}
+              className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all sm:text-sm ${
+                activeLocale === locale.id
+                  ? `bg-gradient-to-r ${style.ctaGradient} text-white shadow`
+                  : 'text-gray-400 hover:text-white hover:bg-slate-700/50'
+              }`}
             >
-              {introVideoLabel ?? 'Solutions'}
-            </TabsTrigger>
-            <TabsTrigger
-              value="screening"
-              className="min-w-0 flex-1 truncate px-2 py-2 text-xs data-[state=active]:bg-indigo-600 data-[state=active]:text-white sm:text-sm"
-            >
-              {screeningRoomLabel ?? 'Screening Room'}
-            </TabsTrigger>
-          </TabsList>
+              {locale.label}
+            </button>
+          ))}
+        </div>
+      )}
 
-          <TabsContent value="workflow" className="mt-0 focus-visible:outline-none">
-            <MultiLanguageVideoPlayer
-              locales={videoLocales ?? []}
-              defaultLocaleId={defaultVideoLocaleId ?? 'en'}
-              comingSoonLabel={videoComingSoonLabel ?? ''}
-              soonLabel={videoSoonLabel ?? ''}
-              title={card.title}
-              accentGradient={style.ctaGradient}
-              fullBleedOnMobile
-            />
-          </TabsContent>
-
-          <TabsContent value="screening" className="mt-0 focus-visible:outline-none">
-            <ScreeningRoomPreview
-              previewTitle={card.screeningRoomPreview}
-              embedSlug={screeningEmbedSlug}
-            />
-          </TabsContent>
-        </Tabs>
+      {/* Screening Room player */}
+      <div className="mb-2 min-w-0">
+        <ScreeningRoomPreview
+          previewTitle={card.screeningRoomPreview}
+          embedSlug={resolvedSlug}
+        />
       </div>
 
+      {screeningRoomInstruction && (
+        <p className="mb-4 text-xs text-gray-500 italic">{screeningRoomInstruction}</p>
+      )}
+
+      {/* Collapsible solutions */}
       <div className="mb-4 min-w-0">
         <button
           type="button"

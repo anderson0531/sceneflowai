@@ -1920,251 +1920,181 @@
     ]
   },
   "productionShowcase": {
-    "badge": "پروڈکشن مثالیں",
-    "title": "Concept سے اسکرین تک:",
-    "titleAccent": "غیرمعمولی ترقی",
-    "subtitle": "چھ عوامی پروڈکشنز مکمل پائپ لائنوں یعنی پری ویو، منظر کی ویڈیو اور ایس ایف آئی ایس سیریز کی جانچ پڑتال کو ثابت کرتی ہیں۔ اپنے نظریے کو بہتر بنائیں اور اس کی اشاعت کے لیے SFAISCENEFFORMEM تحریریں، حروف تہجی ڈیزائن، کثرت زبان کی آڈیو، منظر کشی، ویڈیو سازی اور اشاعت کی اجازت دیں۔.",
-    "subtitleTagline": "ایک پلیٹ فارم. غیر معمولی امکانات ۔.",
-    "publicProductionsNote": "ہر کارڈ کے نیچے ایک مکمل عوامی پیداوار ہے — پائپ لائن پر چلنے کے لئے حلس اور ایس‌آئی‌سی‌سی‌سی‌سی‌سی‌سی‌سی‌ایم‌ایم‌اے استعمال کرنے کے لئے استعمال کئے جاتے ہیں ۔.",
-    "languagesBanner": "7 زبانوں میں عوامی گائیک جہاز: انگریزی، ہسپانوی، پرتگیزی، ہندی، چینی، عربی اور تیلگو زبانوں میں۔.",
-    "explorePipelineCta": "مکمل پروڈکشن کريں",
-    "explorePipelineHint": "اِس ڈرامے کا آغاز نیچے دُنیا کے حالات سے ہوتا ہے ۔.",
-    "workflowLabel": "حل",
-    "startProduction": "اپنی پیداوار کا آغاز کریں",
-    "cta": "اپنی پیداوار کا آغاز کریں",
-    "continuityNote": "سفوف STUDIRYM مسلسل انتظام کرتا ہے۔",
-    "resonanceNote": "ضلالAUDINCE RATIONTMATMATEMATEMATEMATEMATEMATEMATEMATEMATEMATEMATEMATETETECTE -",
-    "videoLanguagePrompt": "اپنی زبان میں اس صنعت کو دیکھیں",
-    "videoComingSoon": "جلد آنے والی",
-    "videoSoon": "جلد ہی",
-    "introVideoLabel": "حل",
-    "screeningRoomLabel": "س . ع ",
-    "frictionLabel": "تبدیلی",
-    "solutionPillarLabel": "س . ع ",
-    "showSolutionsSection": "حل",
-    "hideSolutionsSection": "حل",
+    "badge": "Production Examples",
+    "title": "See the Full Pipeline",
+    "titleAccent": "in Action",
+    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to final high-resolution video. Walk the Screening Room to compare animatics, individual scenes, and the finished master in multiple languages.",
+    "subtitleTagline": "Long-form productions. Not clips.",
+    "screeningRoomInstruction": "Select Pre-Vis, Scenes, or Final to experience the pipeline. Select a language to hear the dub.",
+    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
+    "explorePipelineCta": "Explore a full production",
+    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
+    "workflowLabel": "Solutions",
+    "startProduction": "Start Your Production",
+    "cta": "Start Your Production",
+    "continuityNote": "Series Studio manages continuity",
+    "resonanceNote": "Audience Resonance™ optimizes scripts",
+    "videoLanguagePrompt": "Watch this production in your language",
+    "videoComingSoon": "Dub coming soon",
+    "videoSoon": "Soon",
+    "frictionLabel": "The Friction",
+    "solutionPillarLabel": "The SceneFlow Solution",
+    "showSolutionsSection": "Show Solutions",
+    "hideSolutionsSection": "Hide Solutions",
     "cards": [
       {
         "id": "drama",
-        "title": "Cinematic AI ڈراما۔ Zarographic Drift.",
-        "subtitle": "مریخ کے حروف، ٹوٹے ہوئے مکالمے اور بے انتہا رد و بدل. مکمل نظریاتی مستقلیت کے ساتھ، کثرت سے چلنے والی طویل کہانیاں تعمیر کرنا۔.",
-        "badge": "سریسی - ریڈار-",
+        "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
+        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the pre-vis animatic, individual scenes, and the final high-resolution master — then switch languages to hear the full dub.",
+        "badge": "Series-Ready",
         "solutionPillars": [
           {
-            "title": "ویژیول اینڈ کرکٹر ضمنی انتخابات",
-            "frictionHeadline": "حروف ڈرافٹ اینڈ ڈبلیوبی سیٹ۔.",
-            "friction": "جینیاتی نمونے ہر گولی کے ساتھ دوبارہ تیار کرتے ہیں—جس میں حروف تہجی، خارجی حروف تہجی، اور روشنی جاری کرتے ہیں.",
-            "solutionHeadline": "کولڈ اسٹ ایس ایف آئی بی اشارہ.",
-            "solution": "قابلِ‌تعریف ماسٹر شخصیت ، ماحول اور نظریاتی سٹائلز کے سامنے SFAIB AppRIN STUDIORM. مثال کے طور پر ، ایک کتاب بیان کرتی ہے : ” جب مَیں نے دیکھا کہ مَیں ایک شخص کے ساتھ بائبل کا مطالعہ کر رہا ہوں تو مَیں اُس کی بات مانتا ہوں ۔."
+            "title": "Visual & Character Consistency",
+            "frictionHeadline": "Character Drift & Wobbly Sets.",
+            "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
+            "solutionHeadline": "Locked Asset Blueprints.",
+            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Studio. SceneFlow enforces visual identity across every render to preserve narrative immersion."
           },
           {
-            "title": "واضح طور پر پُرتشدد اور غیرمعمولی کنٹرول",
-            "frictionHeadline": "10-Seconk Clip serve.",
-            "friction": "غیر متصل مائیکرو پرومپس سے نکلنے والی فلم شکپی پیکنگ، پلے جذبے اور بے انتہا دستی ٹائم لائن ایڈیٹنگ تخلیق کرتی ہے۔.",
-            "solutionHeadline": "بیٹ اول کہانی بورڈنگ۔.",
-            "solution": "براہ راست سطح پر، فوری سطح پر. ویڈیو کے ایک فریم کو ترتیب دینے سے پہلے ڈرامائی طور پر ڈرامائی شکست ، کیمرے حرکتیں اور کہانی آرکس منظرِعام پر آتی ہیں ۔."
+            "title": "Narrative Pacing & Scene Control",
+            "frictionHeadline": "The 10-Second Clip Trap.",
+            "friction": "Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.",
+            "solutionHeadline": "Beat-First Storyboarding.",
+            "solution": "Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video."
           },
           {
-            "title": "روزنامہ & آڈیو النجوم",
-            "frictionHeadline": "بے روزگاری (Unconvincing Dialoge)۔.",
-            "friction": "مس لیس سینک، منہ کی حرکتیں اور آوازوں کے راستے فوراً دیکھنے والوں کو ڈرامے سے باہر کھینچتے ہیں۔.",
-            "solutionHeadline": "Integrated way & Sync Engine.",
-            "solution": "Dynamic آواز کی کارکردگی اور مکمل طور پر لیپ کے سینس کو براہ راست ویڈیو پائپ لائن میں پکایا جاتا ہے—."
+            "title": "Dialogue & Audio Alignment",
+            "frictionHeadline": "Unconvincing Dialogue.",
+            "friction": "Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.",
+            "solutionHeadline": "Integrated Voice & Sync Engine.",
+            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline — delivering believable dialogue without external post-production passes."
           },
           {
-            "title": "ملازمت کی جگہ",
-            "frictionHeadline": "Asset Cons SCREAMING & Endon Rerolls.",
-            "friction": "ایک مختصر فلم کا مطلب عام طور پر یہ ہے کہ جونگلنگ 200+ بُری ویڈیو فائلوں ، دستی طور پر اپشلنگ اور کئی گم‌شُدہ نسلیں ۔.",
-            "solutionHeadline": "خود کار اسٹوڈیو پائپ لائن.",
-            "solution": "ایک متحد پلیٹ فارم میں مالک ایم پی 4 کے نظریے سے ۔ SFAIB AuthPRINT STUDIORM آرکائیو شدہ. اخذ شدہ بتاریخ Septemp, SFAIPRODUCTION STUDIORM خود کارگوکرشن، اور SFAISCREE  decryM اپنی آخری برآمد کو محفوظ رکھیں."
+            "title": "Workflow Friction & Reroll Fatigue",
+            "frictionHeadline": "Asset Chaos & Endless Rerolls.",
+            "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
+            "solutionHeadline": "Automated Studio Pipeline.",
+            "solution": "From concept to final master MP4 in one unified platform. Blueprint Studio handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export."
           }
         ],
-        "screeningRoomPreview": "The Cinematic ڈراما — SFAISOROM — تفصیل"
+        "screeningRoomPreview": "The Cinematic Drama — Screening Room"
       },
       {
         "id": "animation",
-        "title": "کیلنڈر آپ نے جوک لکھا۔ س . ع . اِس کا مطلب ہے کہ اِن میں سے زیادہ‌ترython ہیں ۔.",
-        "subtitle": "اِس لئے اُس نے کہا : ” تُم . . . خلیل مختلف اسکرپٹ کو مکمل طور پر فعال گانا، آواز کی صنف کامیڈی کی ایکشن میں تبدیل.",
-        "badge": "مُتَّرْسَلٍ",
+        "title": "Full-Season Animated Series. One Consistent Art Style.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "badge": "Multi-Style",
         "solutionPillars": [
           {
-            "title": "بُری عادت",
-            "frictionHeadline": "سٹائل میلٹ ڈاؤن.",
-            "friction": "کارتون اور اینمی سٹائل کے درمیان مسلسل شرمندگی ، نقل‌مکانی کرنے والی لائن ، رنگ‌برنگی پٹیوں اور حریفوں کے درمیان فوٹو گرافی کے عمل میں اضافہ ہوتا ہے ۔.",
-            "solutionHeadline": "کولڈ آرٹ اسٹائل انجن.",
-            "solution": "پہلے فریم سے آپ کے انکار کریں. تمام قسطوں میں آپ کی شخصیت خاص طور پر منفرد رہی ہے."
+            "title": "Stylistic Consistency",
+            "frictionHeadline": "Style Meltdown.",
+            "friction": "Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.",
+            "solutionHeadline": "Locked Art Style Engine.",
+            "solution": "Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours."
           },
           {
-            "title": "خارج شدہ Animation & Physics",
-            "frictionHeadline": "اسٹیف اینڈ کشش موشن۔.",
-            "friction": "جینیاتی ماڈلوں کے مقابلے میں تیز رفتاری کی وجہ سے چلنے والی تیز رفتاری، ڈبل بینکاری اور سکیورٹی کارٹون فزکس کے ساتھ.",
-            "solutionHeadline": "Action & Pose Consting.",
-            "solution": "فعال حروف حرکت اور ایکسپریس کے بغیر حرکت کریں براہِ‌راست جسمانی کامیڈی ، اچانک کٹے ہوئے اور جنگلی اظہارات کو مکمل طور پر قابو میں رکھتے ہیں ۔."
+            "title": "Exaggerated Animation & Physics",
+            "frictionHeadline": "Stiff & Glitchy Motion.",
+            "friction": "Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.",
+            "solutionHeadline": "Action & Pose Anchoring.",
+            "solution": "Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control."
           },
           {
-            "title": "کامک ٹیملنگ مفروضہ (comic Teming) اور ریاضی (Rhythm)۔",
-            "frictionHeadline": "تباہ کن پنجابی۔.",
-            "friction": "ہومور وقفے وقفے اور شکست خوردہ میں رہتا ہے۔ معیار 5 سیکنڈ کی دوسری قسم کی ہنگامی قوت ہے جو مزاحیہ ادائیگی کو تباہ کر دیتی ہے۔.",
-            "solutionHeadline": "بیٹ پرساد ایڈیٹرنگ.",
-            "solution": "اِس کے ساتھ‌ساتھ اُس نے اِس بات پر بھی زور دیا کہ آپ اُس کے ساتھ دوستی کریں ۔ ڈرامائی وقفہ، مقررہ وقت، اور فوری رد عمل حتمی ادائیگی سے پہلے براہ راست توڑ وقت کے اندر گولی مار دیتا ہے۔."
+            "title": "Comedic Timing & Rhythm",
+            "frictionHeadline": "Ruined Punchlines.",
+            "friction": "Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.",
+            "solutionHeadline": "Beat-Precision Editing.",
+            "solution": "Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render."
           },
           {
-            "title": "بلند توانائی Dialoge & Vocal Sync",
-            "frictionHeadline": "زندگی کے بغیر.",
-            "friction": "اِس لئے اُس کی توانائی کو ختم کرنے کی کوشش کریں ۔.",
-            "solutionHeadline": "حرکی آواز اور ایکسپریس سینک۔.",
-            "solution": "براہِ‌راست چہرے کی کارکردگی کو بہتر بنانے کیلئے نقشہ‌جات پیش کریں ۔ اسکے علاوہ اُس نے کہا : ” اَے میرے بیٹے ."
+            "title": "High-Energy Dialogue & Vocal Sync",
+            "frictionHeadline": "Lifeless Puppet Mouths.",
+            "friction": "Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.",
+            "solutionHeadline": "Dynamic Voice & Expression Sync.",
+            "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
           }
         ],
-        "screeningRoomPreview": "انیمیڈ کامیڈی — SATIS jolt Romorm - تفصیل"
-      },
-      {
-        "id": "podcast",
-        "title": "تم لوگوں سے ملاقات. س . ع . ظہور پزیر ہوتا ہے۔.",
-        "subtitle": "اِس ویڈیو کی تدوین ایک پائپ لائن میں اسکرپٹ یا صوتی آڈیو.",
-        "badge": "نشریہ پتہ:",
-        "solutionPillars": [
-          {
-            "title": "Multi-Conder & Avatar Idate= (معاونت)",
-            "frictionHeadline": "Robotic Avatars & نقصان دہ آئی ایم ڈی بی -",
-            "friction": "جنید میزبانوں نے درمیانے درجے کے مناظر دیکھے، کیمرے میں بے چینی نظر آتی ہے یا سننے کے دوران قدرتی انسانی مائیکرو پریس دکھانے میں ناکام رہے۔.",
-            "solutionHeadline": "کولڈ میزبان اینڈ میزبان پروڈیوس",
-            "solution": "مستقل طور پر نظری شناخت قائم کریں آپ کی ہم جنس پرستوں کے لیے اور غیر مستحکم مہمانوں کے لیے سَفَصَنَّفَلَّcleanlinessُم qiblaُوَم لمبے پیمانے پر گفتگو کے دوران مقررین کے رابطے، قدرتی آنکھ کے رابطے اور حقیقتی گفتگو کی زبان کو برقرار رکھتا نااتفاقیاں ہے۔."
-          },
-          {
-            "title": "Multi-Camera deration & Pacing",
-            "frictionHeadline": "تنہا اینٹی‌ Offices",
-            "friction": "Statis Olgad-head گولیوں کو تیز رفتار سے نقصان پہنچتا ہے، جبکہ دستی کیمرے کو 30 منٹ کیndors لائن میں تبدیل کرنے کے لئے فوری فریم کی ضرورت ہوتی ہے۔.",
-            "solutionHeadline": "خود کار ملتان-کم سویتچینگ -",
-            "solution": "ایس آئی سی اے ایف یو آر ایم کی گفتگو خودبخود میزبانی، مہمانوں کے رد عمل اور وسیع و عریض اسٹوڈیو شوٹز کے درمیان میں حصہ لینے کے لیے، پروفیشنل براڈکاسٹنگ بغیر دستی وقتی ترمیم کے جاری کرتی ہے۔."
-          },
-          {
-            "title": "Contpt-known B-Roll & ویژیولیشن-",
-            "frictionHeadline": "ویژیول مونوونی اور بی-رول ریکنیکس",
-            "friction": "تلاش کرنا، کسی بھی قابل ذکر موضوع کے لیے ضروری نظریاتی امداد یا B-roll کلپس کے لیے وقت نکالنا۔.",
-            "solutionHeadline": "آٹوجنڈ بی راول کٹ کٹے ہوئے ہیں۔",
-            "solution": "جب آپ کے میزبان موضوع پر بات‌چیت کرتے ہیں تو اسکے بارے میں معلومات حاصل کرنے سے آپ خودبخود حساس نظریات ، فوٹو گرافی اور منظرِعام پر آ جاتے ہیں ۔."
-          },
-          {
-            "title": "لمبی فورم آڈیو اور ویڈیو سائن",
-            "frictionHeadline": "آڈیو ڈرافٹ اینڈ لانگ فارم ڈرافٹ",
-            "friction": "Syncing spective Vide to 20+ منٹ صوتی آڈیو کی وجہ سے لیپ-سنک بُلّے، غلطیاں اور ٹکڑے فائل انتظامیہ تک پہنچتا ہے۔.",
-            "solutionHeadline": "ختم-اینے پاڈسٹ پائپ لائن",
-            "solution": "آپ کے صوتی آڈیو پلیٹ یا اسکرپٹ میں گر کر، اور SFATISEFF انتخابی عملے میں Avatar Consport، کیمرے کٹے، B-roll Information، اور آخری ماسٹر MP4 برآمد ایک ہموار میں."
-          }
-        ],
-        "screeningRoomPreview": "AI-First Podcast — SFATISETE ROMM — تفصیل"
-      },
-      {
-        "id": "training",
-        "title": "انٹرپرائز-گراڈ ٹریننگ ویڈیوز. پری-Vizualizization in Mis مشیر میں پیدا ہوا۔.",
-        "subtitle": "دستی، بصری، اور مطابقت پذیری کے عمل، کثرت سے استعمال کی جانے والی ویڈیو میچوں کے ساتھ ساتھ بند برانڈ شناخت، غیر محفوظ لیپ-سینک اور صفر سٹوڈیو کی تیاری.",
-        "badge": "عالمی ڈیم",
-        "solutionPillars": [
-          {
-            "title": "پیش کنندہ & برانڈ ضمنی انتخابات",
-            "frictionHeadline": "Unechny Avatars & Brand Drift",
-            "friction": "مشاہدہ کرنے والے AI پیش کشوں کے جذبے اور غیر قابلِ قبول محسوس ہوتے ہیں جبکہ برانڈ لاگس، رنگ اور پیش کرنے والے مناظر مختلف تربیتی اجسام میں تبدیل ہوتے ہیں۔.",
-            "solutionHeadline": "کولڈ ایگزیکٹو اینڈ ٹریننگ پروڈیوس",
-            "solution": "مستقل طور پر قائم، قدرتی منظر کارپوریشن پیش کنندہ اور اپنے برانڈ گائیڈز کو بند کرو. اپنے تمام کورس لیبارٹری کے دوران منظرِعام پر آنے والی شناخت ، کارپوریشن اور پروفیشنل ادائیگی کا کام سنبھالتا ہے ۔."
-          },
-          {
-            "title": "پوری دُنیا میں رہنے والے لوگ",
-            "frictionHeadline": "اردو ترجمے &احتی لیپ-سینک",
-            "friction": "مقامی طور پر تربیتی مواد کو 10+ زبانوں میں منتقل کرنا عام طور پر زبانوں میں بے چینی سے منہ کی سوزش پیدا کرتا ہے،خاصی آواز کے راستے اور بڑے پیمانے پر بوتلوں کی بوتلوں کی مرمت کرتا ہے۔.",
-            "solutionHeadline": "اِس کے علاوہ اِنسوزیوں کو بھی استعمال کرنا چاہئے ۔",
-            "solution": "اپنے تمام ٹریننگ سی سنگین زبانوں میں استعمال کریں قدرتی آواز کے ساتھ، مقامی طور پر ایبٹ آباد متن کالوٹس، اور فریم لائن کے ذریعے."
-          },
-          {
-            "title": "ویژیول ایدھی اینڈ ڈائیگرام",
-            "frictionHeadline": "متن-Hev Bore",
-            "friction": "ایسے ویڈیو جو صرف سر کہ بول رہے ہیں فوری طور پر نوکری کی توجہ کھو دیتے ہیں، جبکہ دستی طور پر انیمنگ عمل کی عکس بندی، اسکرین گرفتار اور گول کال ایک ایڈیٹر میں گھنٹوں لگتے ہیں۔.",
-            "solutionHeadline": "Condio نااہلیتی ویژیول اور گرافک اوورلائی",
-            "solution": "جب آپ کے پیش‌کردہ کارکن پیچیدہ کام‌کاج یا اس کی مطابقت میں اقدام کی میرکٹ کولھو کی وضاحت کرتا ہے تو اسکے باوجود ، اسکو براہِ‌راست استعمال کرنے والے آلات خودبخود پیدا ہو جاتے ہیں ۔."
-          },
-          {
-            "title": "خوشی حاصل کرنا",
-            "frictionHeadline": "Excencive re-Shoots & International settlections",
-            "friction": "جب کمپنی پالیسی یا پروڈکشن سپیس تبدیل کرتی ہے، تو کسی ویڈیو کے 2 منٹ حصے کو دوبارہ شروع کرنے کے لیے عام طور پر پورے فائل کو دوبارہ ترتیب دینا اور پھر سے دوبارہ جاری کرنا پڑتا ہے۔.",
-            "solutionHeadline": "مدارس اسکرپٹ اپلوڈ کرتا ہے۔",
-            "solution": "تحریری متن براہ راست نیلپریپٹ میں ترمیم کریں تاکہ فوری حکمران یا طریقہ Shirley SFATISENEFLWORM دوبارہ تبدیل شدہ حصے کو صرف ارد گرد کے وقت اور ویڈیو سٹائل کو محفوظ رکھتے ہوئے."
-          }
-        ],
-        "screeningRoomPreview": "کارپوریشن ٹریننگ — SFATIS کام جاری تفصیل"
-      },
-      {
-        "id": "scifi",
-        "title": "اِس کی ایک مثال دیں ۔ ٹھیک ہے.",
-        "subtitle": "انتہائی پیچیدہ نظریاتی اثرات، ماحولیاتی اور غیر ملکی شخصیتوں کے ساتھ فریم-بی-بی-ویل پائیداری کے ساتھ --.",
-        "badge": "VFX- ریڈے",
-        "solutionPillars": [
-          {
-            "title": "ماحولیاتی اور آرکیٹیکچر کونٹینویٹی",
-            "frictionHeadline": "پلگ انس & اسکیل گلٹز",
-            "friction": "اِس کے نتیجے میں بہت سے لوگ اِس بات پر یقین رکھ سکتے ہیں کہ اُن کا ایمان کمزور پڑ گیا ہے ۔.",
-            "solutionHeadline": "عالمی شان",
-            "solution": "SFAIB AppRINT STUDIORM میں بہترین کلیدی آرکیٹیکچر، لائٹنگ اسکیم اور ماحولیاتی پیرامیٹرز۔ اِس طرح آپ کے قائم‌شُدہ سیٹ پر تیروں کو مضبوط کرنے سے ثابت ہوتا ہے کہ آپ سخت لڑائی لڑ رہے ہیں ۔."
-          },
-          {
-            "title": "الی‌این اور تخلیقی ڈیزائن",
-            "frictionHeadline": "حروف تہجی ڈیزائن",
-            "friction": "غیر انسانی انواع، cyborg اور بھاری پرتگیزی حروف جنگلی طور پر نظر آتے ہیں جب ہر بار کوئی نیا زاویہ یا گولی پیدا ہوتی ہے۔.",
-            "solutionHeadline": "کولڈ ایلین اسٹ پروڈیوس",
-            "solution": "غیر انسانی تفاعل، ہتھیاروں کی تفصیلات اور مکینیکل رسم الخط۔ حروف شناسی ہر ہائی کنسپ منظر میں دستور 3D ماڈلنگ پائپ لائنوں کے بغیر برقرار رکھیں۔."
-          },
-          {
-            "title": "VFX ایکشن اینڈ ہائی وے طبیعیات -",
-            "frictionHeadline": "عمل میں تبدیلی",
-            "friction": "اونچی فضاء کے کتے، توانائی کے ہتھیار فائرنگ اور دھماکے کی وجہ سے اکثر انفنٹری ماڈلوں کو انفنٹری فریموں یا گندی نظریاتی سرگرمیاں بنا دیتے ہیں۔.",
-            "solutionHeadline": "Action & FX Motion متحرک",
-            "solution": "براہ راست فعال سرگرمی، تیز کیمرے کی حرکتیں اور ذرات سے متعلقہ عمل کو شکست دیتا ہے جب کہ صاف کناروں اور حقیقت پسندی کے طبیعیات کو محفوظ رکھتا ہے۔."
-          },
-          {
-            "title": "Audio-Visional World-setting",
-            "frictionHeadline": "ہائی کنسپ ورلڈ میں فلیٹ آڈیو",
-            "friction": "اِس کے علاوہ جب لوگ Seens کی آواز سنتے ہیں تو اُن کے دل میں یہ خواہش پیدا ہو جاتی ہے کہ وہ اُن کی مدد کریں ۔.",
-            "solutionHeadline": "Integrated World-Sound & آواز Sync",
-            "solution": "الیگن رسم الخط گفتگو، غیر جانبدار آوازیں، اور سینمائی آوازوں کے استعمال کے لیے براہ راست لائن کے اندر."
-          }
-        ],
-        "screeningRoomPreview": "Sci-FivFX production — SFATISET ROM — تفصیل"
+        "screeningRoomPreview": "The Animated Comedy — Screening Room"
       },
       {
         "id": "documentary",
-        "title": "آرچیول کہانیوں کو بہترین فروخت شدہ دستاویزات میں تبدیل کریں۔.",
-        "subtitle": "تاریخی واقعات، رد عمل اور ماہر اقتصادیات نے تصدیقی مدت کی تفصیل، غیر واضح آوازوں کو نمایاں کرنے اور صفر archive Lensing جزیہ ادا کرنے کے ساتھ متعین کیا۔.",
-        "badge": "دوبارہ شروع",
+        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
+        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
+        "badge": "Period-Accurate",
         "solutionPillars": [
           {
-            "title": "°،1",
-            "frictionHeadline": "اناطولیہ تصانیف",
-            "friction": "معیارِ تعمیری نمونے جدید چیزوں، اسمارٹ فون اسکرینوں یا غلط مدتی لباس کو تاریخی رد عمل میں تبدیل کرتے ہیں۔.",
-            "solutionHeadline": "تاریخی طرزِتعمیر کی دیواریں",
-            "solution": "سیٹ صحیح طور پر تیار پیرامیٹراں— 1920ء کی دہائی سے 18 ویں صدی تک فلم غلہ — اس طرح ہر پیداواری مقام تاریخی اعتبار سے قائم رہتا ہے۔."
+            "title": "Era-Specific Visual Accuracy",
+            "frictionHeadline": "Anachronistic Artifacts",
+            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
+            "solutionHeadline": "Historical Style Guardrails",
+            "solution": "Set exact temporal parameters — from 1920s film grain to 18th-century wardrobe textures — so every generated scene stays historically authentic."
           },
           {
-            "title": "آرکائیو کٹ اور بی-رول انجن",
-            "frictionHeadline": "لمبی آوازوں میں ویژیول موٹونی",
-            "friction": "اِس کی وجہ یہ ہے کہ اِس کے بعد اُس نے اِس بات پر غور کِیا کہ اِس میں کیا کچھ شامل ہے ۔.",
-            "solutionHeadline": "Transcript-Rounden B-Roll Engine",
-            "solution": "جیسا کہ آپ کے ناول نگار تاریخی حقائق پر بحث کرتے ہیں، SFAISCENEFORM خودکار طور پر Central reenactments، دستاویز بالائی اور آرکائیو شدہ-style قطعوں سے براہ راست منسلک کرتے ہیں۔."
+            "title": "Archival Cutaways & B-Roll Engine",
+            "frictionHeadline": "Visual Monotony in Long Voiceovers",
+            "friction": "Pairing long-form narrator audio with static stock images leads to rapid viewer drop-off during deep dives.",
+            "solutionHeadline": "Transcript-Driven B-Roll Engine",
+            "solution": "As your narrator discusses historical facts, SceneFlow automatically generates timed cinematic re-enactments, document overlays, and archival-style cutaways tied directly to the audio transcript."
           },
           {
-            "title": "انٹرویو اور بات چیت - حقیقت",
-            "frictionHeadline": "غیرمتوقع گواہ",
-            "friction": "تاریخ‌دانوں ، جاسوسوں یا گواہوں کی نظر میں اکثر ایسا ہی ہوتا ہے ۔.",
-            "solutionHeadline": "کولڈ ماہر پروڈیوس & ویکل سینک",
-            "solution": "حقیقت پسندی Jeanine، قابل اعتماد انٹرویو کو قدرتی مائیکرو پریسز، درست لیپ-سنک اور ضمنی ماہر شناختی طور پر کثرت گروپ سیریز میں شامل کرتے رہے۔."
+            "title": "Interview & Talking-Head Realism",
+            "frictionHeadline": "Uncanny Expert Witnesses",
+            "friction": "Generated historians, investigators, or witnesses often look artificial, with floating jaw movements and unnatural eye contact.",
+            "solutionHeadline": "Locked Expert Profiles & Vocal Sync",
+            "solution": "Maintain realistic, trustworthy interview setups with natural micro-expressions, accurate lip-sync, and consistent expert identities across multi-part series."
           },
           {
-            "title": "Episod Pacing & Rughive Continuity",
-            "frictionHeadline": "وقت کی تدوین",
-            "friction": "بلڈنگ انورٹر آڈیو، ری ایکٹر، ثبوت ظاہر کرتے ہیں، اور 40 منٹ کے ایک حادثے میں تناؤ پیدا کرنے والی روک تھام عام طور پر روایتی سیریز میں ہفتے لگتے ہیں۔.",
-            "solutionHeadline": "Beat-پہلی دستاویزات پائپ لائن",
-            "solution": "ڈرامائی تناؤ ، ٹھوس وقفہ اور شہادتوں سے ظاہر ہوتا ہے کہ ایس‌آئی‌بی ای‌ایم‌ایم‌ایس‌ایم‌ایس‌ایس‌ایس‌ایس‌اے ٹی‌وی‌ڈی‌آرم کے اندر موجود ہے ۔."
+            "title": "Episodic Pacing & Narrative Continuity",
+            "frictionHeadline": "Fragmented Timeline Editing",
+            "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
+            "solutionHeadline": "Beat-First Documentary Pipeline",
+            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Studio, delivering a fully assembled master file in one seamless pass."
           }
         ],
-        "screeningRoomPreview": "دستاویزی پروڈکشن — SAISETED ROMM گالی بک بک کار : تفصیل"
+        "screeningRoomPreview": "Documentary Production — Screening Room"
+      },
+      {
+        "id": "localization",
+        "title": "Beyond Dubbing. Fully Localized Productions.",
+        "subtitle": "Same storyline, two cities: Houston, Texas and São Paulo, Brazil. SceneFlow doesn't just dub the audio — it localizes settings, cultural references, and on-screen text so each audience sees a production made for them.",
+        "badge": "Localized",
+        "localeToggle": true,
+        "locales": [
+          {
+            "id": "houston",
+            "label": "Houston, TX",
+            "lang": "en"
+          },
+          {
+            "id": "saopaulo",
+            "label": "São Paulo, BR",
+            "lang": "pt"
+          }
+        ],
+        "solutionPillars": [
+          {
+            "title": "Cultural Adaptation, Not Translation",
+            "frictionHeadline": "Dubbing Is Not Localization.",
+            "friction": "Swapping the audio track leaves every cultural reference, location shot, and on-screen graphic targeting the wrong audience.",
+            "solutionHeadline": "Blueprint-Level Localization.",
+            "solution": "Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Studio before a single frame is rendered."
+          },
+          {
+            "title": "Parallel Production Pipelines",
+            "frictionHeadline": "One Region at a Time.",
+            "friction": "Traditional localization is sequential — finish the original, then manually rebuild for each market. Months of delay per region.",
+            "solutionHeadline": "Concurrent Regional Pipelines.",
+            "solution": "Run multiple localized Blueprints in parallel. Each region gets its own production pipeline sharing the same narrative structure but with fully adapted visuals and dialogue."
+          },
+          {
+            "title": "Region-Specific Audience Resonance",
+            "frictionHeadline": "One Script for Every Culture.",
+            "friction": "Humor, pacing, and emotional beats that land in Houston may fall flat in São Paulo. A single script cannot carry both.",
+            "solutionHeadline": "Per-Region Resonance Tuning.",
+            "solution": "Audience Resonance analyzes each localized script against regional demographic profiles, flagging cultural mismatches before production begins."
+          }
+        ],
+        "screeningRoomPreview": "Localized Production Comparison — Screening Room"
       }
     ]
   },

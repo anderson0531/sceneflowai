@@ -5,7 +5,6 @@ export const LANDING_SECTION_COLLAPSE_COPY = {
 
 /** Collapsible landing section ids (anchor targets). */
 export const COLLAPSIBLE_LANDING_SECTION_IDS = [
-  'use-cases',
   'pricing',
   'core-capabilities',
   'pre-vis-engine',
@@ -24,7 +23,6 @@ export const DEFAULT_EXPANDED_LANDING_SECTION_IDS: readonly CollapsibleLandingSe
 
 /** Hash fragments that should expand a parent collapsible section. */
 export const LANDING_HASH_TO_SECTION: Record<string, CollapsibleLandingSectionId> = {
-  'use-cases': 'use-cases',
   pricing: 'pricing',
   'core-capabilities': 'core-capabilities',
   'audience-resonance': 'core-capabilities',

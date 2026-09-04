@@ -1,12 +1,11 @@
 /** Public storyboard share slugs for Production Examples Screening Room embeds. Empty = placeholder UI. */
 
-export const PRODUCTION_SHOWCASE_SCREENING_SLUGS = {
-  drama: '',
+export const PRODUCTION_SHOWCASE_SCREENING_SLUGS: Record<string, string> = {
+  drama: 'TheWhiteHouseWaltzAControlledThaw',
   animation: '',
-  podcast: '',
-  training: '',
-  scifi: '',
   documentary: '',
+  'localization-houston': '',
+  'localization-saopaulo': '',
 } as const
 
 export type ProductionShowcaseScreeningCardId =
@@ -14,8 +13,6 @@ export type ProductionShowcaseScreeningCardId =
 
 export function getProductionShowcaseScreeningSlug(cardId: string): string | null {
   const slug =
-    PRODUCTION_SHOWCASE_SCREENING_SLUGS[
-      cardId as ProductionShowcaseScreeningCardId
-    ]?.trim() ?? ''
+    (PRODUCTION_SHOWCASE_SCREENING_SLUGS[cardId] ?? '').trim()
   return slug || null
 }

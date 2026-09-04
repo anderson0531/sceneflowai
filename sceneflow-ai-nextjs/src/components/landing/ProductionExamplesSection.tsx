@@ -6,17 +6,91 @@ import { useTranslations } from 'next-intl'
 import { Clapperboard, Target } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
+import {
   ProductionStyleCard,
   type ProductionStyleCardData,
 } from '@/components/landing/ProductionStyleCard'
-import {
-  getDefaultProductionShowcaseLocale,
-  getProductionShowcaseVideoLocales,
-} from '@/config/landing/productionShowcaseVideos'
 import { getProductionShowcaseScreeningSlug } from '@/config/landing/productionShowcaseScreening'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 
 export const PRODUCTION_EXAMPLES_SECTION_ID = 'production-examples'
+
+function CardGrid({
+  cards,
+  t,
+}: {
+  cards: ProductionStyleCardData[]
+  t: ReturnType<typeof useTranslations<'productionShowcase'>>
+}) {
+  return (
+    <div className="mb-12 grid grid-cols-1 gap-6 md:grid-cols-2">
+      {cards.map((card, index) => (
+        <ProductionStyleCard
+          key={card.id}
+          card={card}
+          index={index}
+          workflowLabel={t('workflowLabel')}
+          ctaLabel={t('startProduction')}
+          screeningRoomInstruction={t('screeningRoomInstruction')}
+          frictionLabel={t('frictionLabel')}
+          solutionPillarLabel={t('solutionPillarLabel')}
+          showSolutionsSectionLabel={t('showSolutionsSection')}
+          hideSolutionsSectionLabel={t('hideSolutionsSection')}
+          screeningEmbedSlug={getProductionShowcaseScreeningSlug(card.id)}
+        />
+      ))}
+    </div>
+  )
+}
+
+function MobileAccordion({
+  cards,
+  t,
+}: {
+  cards: ProductionStyleCardData[]
+  t: ReturnType<typeof useTranslations<'productionShowcase'>>
+}) {
+  return (
+    <Accordion type="single" collapsible className="mb-12 space-y-3" defaultValue={cards[0]?.id}>
+      {cards.map((card, index) => (
+        <AccordionItem
+          key={card.id}
+          value={card.id}
+          className="overflow-hidden rounded-2xl border border-gray-700/40 bg-slate-900/50"
+        >
+          <AccordionTrigger className="px-4 py-4 text-left hover:no-underline [&[data-state=open]>svg]:rotate-180">
+            <div className="flex items-center gap-3 pr-4">
+              <Clapperboard className="h-5 w-5 shrink-0 text-cyan-400" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold text-white">{card.title}</p>
+                <p className="mt-0.5 truncate text-xs text-gray-400">{card.badge}</p>
+              </div>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-2 pb-2">
+            <ProductionStyleCard
+              card={card}
+              index={index}
+              workflowLabel={t('workflowLabel')}
+              ctaLabel={t('startProduction')}
+              screeningRoomInstruction={t('screeningRoomInstruction')}
+              frictionLabel={t('frictionLabel')}
+              solutionPillarLabel={t('solutionPillarLabel')}
+              showSolutionsSectionLabel={t('showSolutionsSection')}
+              hideSolutionsSectionLabel={t('hideSolutionsSection')}
+              screeningEmbedSlug={getProductionShowcaseScreeningSlug(card.id)}
+            />
+          </AccordionContent>
+        </AccordionItem>
+      ))}
+    </Accordion>
+  )
+}
 
 export default function ProductionExamplesSection() {
   const t = useTranslations('productionShowcase')
@@ -51,7 +125,6 @@ export default function ProductionExamplesSection() {
           <p className="mx-auto mt-4 max-w-3xl text-lg font-semibold text-white">
             {t('subtitleTagline')}
           </p>
-          <p className="mx-auto mt-4 max-w-3xl text-base text-cyan-200/90">{t('publicProductionsNote')}</p>
           <p className="mx-auto mt-3 max-w-3xl text-sm text-gray-400">{t('languagesBanner')}</p>
           <div className="mx-auto mt-6 flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
             <Button
@@ -69,27 +142,14 @@ export default function ProductionExamplesSection() {
           </div>
         </motion.div>
 
-        <div className="mb-12 grid grid-cols-1 gap-6 md:grid-cols-2">
-          {cards.map((card, index) => (
-            <ProductionStyleCard
-              key={card.id}
-              card={card}
-              index={index}
-              workflowLabel={t('workflowLabel')}
-              ctaLabel={t('startProduction')}
-              videoLocales={getProductionShowcaseVideoLocales(card.id)}
-              defaultVideoLocaleId={getDefaultProductionShowcaseLocale(card.id)}
-              videoComingSoonLabel={t('videoComingSoon')}
-              videoSoonLabel={t('videoSoon')}
-              introVideoLabel={t('introVideoLabel')}
-              screeningRoomLabel={t('screeningRoomLabel')}
-              frictionLabel={t('frictionLabel')}
-              solutionPillarLabel={t('solutionPillarLabel')}
-              showSolutionsSectionLabel={t('showSolutionsSection')}
-              hideSolutionsSectionLabel={t('hideSolutionsSection')}
-              screeningEmbedSlug={getProductionShowcaseScreeningSlug(card.id)}
-            />
-          ))}
+        {/* Desktop: 2-column grid */}
+        <div className="hidden md:block">
+          <CardGrid cards={cards} t={t} />
+        </div>
+
+        {/* Mobile: accordion — one card visible at a time */}
+        <div className="md:hidden">
+          <MobileAccordion cards={cards} t={t} />
         </div>
 
         <motion.div

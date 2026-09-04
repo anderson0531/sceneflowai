@@ -1807,251 +1807,181 @@
     "cta": "Qala Ukukhiqiza Kwakho"
   },
   "productionShowcase": {
-    "badge": "Izibonelo Zokukhiqiza",
-    "title": "Ukusuka kumqondo kuya esikrinini:",
-    "titleAccent": "Amathuba Angapheli",
-    "subtitle": "Imikhiqizo eyisithupha esesidlangalaleni ifakazela ipayipi eligcwele - ukubuka kuqala, ividiyo yesigcawu, nokubuyekezwa kwe-Screening Room. Chaza umqondo wakho futhi uvumele i-SceneFlow isingathe ukubhala isikripthi, idizayini yezinhlamvu, umsindo wezilimi eziningi, ukubona ngeso, ukukhiqizwa kwevidiyo, nokushicilela.",
-    "subtitleTagline": "Inkundla eyodwa. Amathuba angenamkhawulo.",
-    "publicProductionsNote": "Ikhadi ngalinye elingezansi liwumkhiqizo ophelele wasesidlangalaleni — shintsha Izisombululo namathebhu Screening Room ukuze uhambe phambili.",
-    "languagesBanner": "Izibonelo ezisesidlangalaleni zithunyelwa ngezilimi ezingu-7: isiNgisi, iSpanishi, isiPutukezi, isiHindi, isiShayina, isi-Arabhu, nesiThai.",
-    "explorePipelineCta": "Hlola ukukhiqizwa okuphelele",
-    "explorePipelineHint": "Qala ngeDrama Yesinema ngezansi — Izixazululo zereli yedemo, Screening Room ukuze uthole ukubuyekezwa okuphelele komsebenzi.",
-    "workflowLabel": "Izixazululo",
-    "startProduction": "Qala Ukukhiqiza Kwakho",
-    "cta": "Qala Ukukhiqiza Kwakho",
-    "continuityNote": "I-Series Studio iphethe ukuqhubeka",
-    "resonanceNote": "I-Audience Resonance™ ithuthukisa izikripthi",
-    "videoLanguagePrompt": "Buka lo mkhiqizo ngolimi lwakho",
-    "videoComingSoon": "Dub uyeza maduze",
-    "videoSoon": "Ngokushesha",
-    "introVideoLabel": "Izixazululo",
-    "screeningRoomLabel": "Screening Room",
-    "frictionLabel": "I-Friction",
-    "solutionPillarLabel": "Isixazululo se-SceneFlow",
-    "showSolutionsSection": "Bonisa Izixazululo",
-    "hideSolutionsSection": "Fihla Izixazululo",
+    "badge": "Production Examples",
+    "title": "See the Full Pipeline",
+    "titleAccent": "in Action",
+    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to final high-resolution video. Walk the Screening Room to compare animatics, individual scenes, and the finished master in multiple languages.",
+    "subtitleTagline": "Long-form productions. Not clips.",
+    "screeningRoomInstruction": "Select Pre-Vis, Scenes, or Final to experience the pipeline. Select a language to hear the dub.",
+    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
+    "explorePipelineCta": "Explore a full production",
+    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
+    "workflowLabel": "Solutions",
+    "startProduction": "Start Your Production",
+    "cta": "Start Your Production",
+    "continuityNote": "Series Studio manages continuity",
+    "resonanceNote": "Audience Resonance™ optimizes scripts",
+    "videoLanguagePrompt": "Watch this production in your language",
+    "videoComingSoon": "Dub coming soon",
+    "videoSoon": "Soon",
+    "frictionLabel": "The Friction",
+    "solutionPillarLabel": "The SceneFlow Solution",
+    "showSolutionsSection": "Show Solutions",
+    "hideSolutionsSection": "Hide Solutions",
     "cards": [
       {
         "id": "drama",
-        "title": "Idrama ye-AI yesinema. I-Zero Character Drift.",
-        "subtitle": "Susa izinhlamvu ze-morphing, inkhulumomphendvulwano ephukile, nokuphindaphinda okungapheli. Yakha izindaba ezinde ezingenamthungo, ezinezinhlamvu eziningi eziqhubekayo ezibonwayo.",
-        "badge": "Uchungechunge-Lulungile",
+        "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
+        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the pre-vis animatic, individual scenes, and the final high-resolution master — then switch languages to hear the full dub.",
+        "badge": "Series-Ready",
         "solutionPillars": [
           {
-            "title": "Ukungaguquguquki Kokubonakala Nezinhlamvu",
-            "frictionHeadline": "I-Character Drift & Wobbly Sets.",
-            "friction": "Amamodeli akhiqizayo asethwa kabusha ngawo wonke amashothi—okubangela ubuso bomlingisi, izingubo, nokukhanya kushintshe ngokuqhubekayo kuwo wonke ukusikeka kwesigcawu.",
-            "solutionHeadline": "Impahla Ekhiyiwe Blueprints.",
-            "solution": "Chaza amaphrofayili omlingiswa oyinhloko, izindawo, nezitayela ezibonakalayo ngaphambili kokuthi Blueprint Studio. I-SceneFlow isebenzisa ubunikazi obubonakalayo kukho konke ukuhumusha ukuze kulondolozwe ukucwiliswa okulandisayo."
+            "title": "Visual & Character Consistency",
+            "frictionHeadline": "Character Drift & Wobbly Sets.",
+            "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
+            "solutionHeadline": "Locked Asset Blueprints.",
+            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Studio. SceneFlow enforces visual identity across every render to preserve narrative immersion."
           },
           {
-            "title": "Ukuhamba Kwezindaba & Ukulawula Isigcawu",
-            "frictionHeadline": "I-10-Second Clip Trap.",
-            "friction": "Ukwakha ifilimu ngemiyalelo emincane enqanyuliwe kudala ukuhamba kancane, umuzwa ophansi, kanye nokuhlelwa komugqa wesikhathi ongapheli.",
-            "solutionHeadline": "I-Beat-First Storyboarding.",
-            "solution": "Ngqo kuleveli yesigcawu, hhayi ileveli yokwaziswa. Yakha amabhithi amangalisayo, ukunyakaza kwekhamera, nama-arcs wendaba ngokubonakalayo ngaphambi kokukhiqiza uhlaka olulodwa lwevidiyo."
+            "title": "Narrative Pacing & Scene Control",
+            "frictionHeadline": "The 10-Second Clip Trap.",
+            "friction": "Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.",
+            "solutionHeadline": "Beat-First Storyboarding.",
+            "solution": "Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video."
           },
           {
-            "title": "Ingxoxo Nokuqondanisa Komsindo",
-            "frictionHeadline": "Ingxoxo Engagculisi.",
-            "friction": "Ukuvumelanisa izindebe ngokungafani, ukunyakaza komlomo ontantayo, namathrekhi ezwi ahlukanisiwe ngokushesha akhipha ababukeli emdlalweni.",
-            "solutionHeadline": "Injini Yezwi Edidiyelwe Nokuvumelanisa.",
-            "solution": "Ukusebenza kwezwi okunamandla nokuvumelanisa izindebe zomlomo okunembile kubhakwa ngokuqondile kumzila wevidiyo—ukwethula inkhulumomphendvulwano ekholekayo ngaphandle kokudlula kwangaphandle kokukhiqizwa kwangemuva."
+            "title": "Dialogue & Audio Alignment",
+            "frictionHeadline": "Unconvincing Dialogue.",
+            "friction": "Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.",
+            "solutionHeadline": "Integrated Voice & Sync Engine.",
+            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline — delivering believable dialogue without external post-production passes."
           },
           {
-            "title": "I-Friction Yokugeleza Kwemisebenzi & Nokubuyisela kabusha Ukukhathala",
-            "frictionHeadline": "Isiphithiphithi Sefa & Ukugoqa kabusha Okungapheli.",
-            "friction": "Ukukhiqiza ifilimu emfishane ngokuvamile kusho ukuhlanganisa amafayela evidiyo aluhlaza angu-200+, ukukhushulwa okwenziwa ngesandla, kanye nezizukulwane eziningi ezimoshiwe.",
-            "solutionHeadline": "Ipayipi leSitudiyo esizenzakalelayo.",
-            "solution": "Kusukela kumqondo kuya ku-MP4 eyinhloko yokugcina endaweni eyodwa ehlanganisiwe. I-Blueprint Studio iphethe ukusethwa kwendaba, i-Production Studio izenzela ngokuzenzakalelayo ukunikezwa, futhi i-Screening Room iletha ukuthunyelwa kwakho kokugcina."
+            "title": "Workflow Friction & Reroll Fatigue",
+            "frictionHeadline": "Asset Chaos & Endless Rerolls.",
+            "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
+            "solutionHeadline": "Automated Studio Pipeline.",
+            "solution": "From concept to final master MP4 in one unified platform. Blueprint Studio handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export."
           }
         ],
-        "screeningRoomPreview": "IDrama Yesinema — Screening Room Ukubuka kuqala"
+        "screeningRoomPreview": "The Cinematic Drama — Screening Room"
       },
       {
         "id": "animation",
-        "title": "Ubhala Ihlaya. I-SceneFlow Inyakazisa Umugqa Wokukhuluma.",
-        "subtitle": "Susa ukunyakaza kwesitayela, ukunyakaza okuqinile, kanye nesikhathi esiphukile. Guqula imibhalo ehlekisayo ibe iziqephu zamahlaya ezigqwayizayo, ezivumelaniswe ngezwi kusitudiyo esisodwa esingenamthungo.",
-        "badge": "Izitayela Eziningi",
+        "title": "Full-Season Animated Series. One Consistent Art Style.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "badge": "Multi-Style",
         "solutionPillars": [
           {
-            "title": "Ukuvumelana Kwesitayela",
-            "frictionHeadline": "Isitayela Meltdown.",
-            "friction": "Izitayela zopopayi ne-anime zihlala zingqubuzana phakathi kwamashothi, ubuciko bomugqa obushintshayo, amaphalethi agqagqene, kanye nokushintsha izinhlamvu zibe ukuhleleka okungaqondakali kwesithombe.",
-            "solutionHeadline": "Injini Yesitayela Sobuciko Ekhiyiwe.",
-            "solution": "Friza ubuhle bakho kusukela kuhlaka lokuqala. I-SceneFlow ikhiya imiklamo yabalingiswa, izisindo zomugqa, namamodeli wokufiphaza kuso sonke isiqephu ukuze abalingisi bakho bahlale bengabakho."
+            "title": "Stylistic Consistency",
+            "frictionHeadline": "Style Meltdown.",
+            "friction": "Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.",
+            "solutionHeadline": "Locked Art Style Engine.",
+            "solution": "Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours."
           },
           {
-            "title": "I-Animation Eyehaba ne-Physics",
-            "frictionHeadline": "I-Stiff & Glitchy Motion.",
-            "friction": "Amamodeli akhiqizayo alwa ne-slapstick esheshayo, ukuthatha kabili, kanye ne-squishy cartoon physics, ephendula ama-gags anamandla aphezulu abe ama-artifact ancibilikayo.",
-            "solutionHeadline": "Isenzo & I-Pose Anchoring.",
-            "solution": "Shayela ukunyakaza kwezinhlamvu eziguqukayo kanye nokuma okuvezayo ngaphandle kokwephula ijometri. Amahlaya aqondile we-punchy, ukusika okungazelelwe, nezinkulumo zasendle ezinokulawula okugcwele kokunyakaza."
+            "title": "Exaggerated Animation & Physics",
+            "frictionHeadline": "Stiff & Glitchy Motion.",
+            "friction": "Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.",
+            "solutionHeadline": "Action & Pose Anchoring.",
+            "solution": "Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control."
           },
           {
-            "title": "Isikhathi se-Comedic & Rhythm",
-            "frictionHeadline": "Ama-Punchlines Onakele.",
-            "friction": "Amahlaya ahlala ekuphumuzeni nasekusikelweni kwezigqi. Izihibe ezijwayelekile ezikhiqiza imizuzwana emi-5 ziphoqa ukuhamba ngendlela elimaza ukulethwa kwamahlaya.",
-            "solutionHeadline": "Ukuhlelwa kwe-Beat-Precision.",
-            "solution": "Lawula isigcawu sehla siye kuhlaka. Lungisa ukuphumula okumangalisayo, isikhathi sokumisa ukuya ku-punchline, kanye nezithombe zokusabela okusheshayo ngaphakathi komugqa wesikhathi webhithi yokuqala ngaphambi kokunikeza kokugcina."
+            "title": "Comedic Timing & Rhythm",
+            "frictionHeadline": "Ruined Punchlines.",
+            "friction": "Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.",
+            "solutionHeadline": "Beat-Precision Editing.",
+            "solution": "Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render."
           },
           {
-            "title": "Ingxoxo Yamandla Aphezulu Nokuvumelanisa Kwezwi",
-            "frictionHeadline": "Imilomo Yopopayi Engenakuphila.",
-            "friction": "I-Generic AI dialogue izwakala iyisicaba futhi inomshini, iqeda amandla adingekayo ku-snappy sitcom banter.",
-            "solutionHeadline": "I-Dynamic Voice & Expression Sync.",
-            "solution": "Imephu yokulethwa kwezwi ngqo ekusebenzeni kobuso okunomdlandla. Ingxoxo, izimo zomlomo ezichazayo, namathrekhi ezwi ahlekisayo kufanelana kalula ukuze kube nomthelela omkhulu wamahlaya."
+            "title": "High-Energy Dialogue & Vocal Sync",
+            "frictionHeadline": "Lifeless Puppet Mouths.",
+            "friction": "Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.",
+            "solutionHeadline": "Dynamic Voice & Expression Sync.",
+            "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
           }
         ],
-        "screeningRoomPreview": "I-Animated Comedy — Ukubuka kuqala kwe-Screening Room"
-      },
-      {
-        "id": "podcast",
-        "title": "Nguwe osingatha Ingxoxo. I-SceneFlow Ikhiqiza umbukiso.",
-        "subtitle": "Susa ama-avatar amile kanye nokuhlelwa kwevidiyo okwenziwa ngesandla. Guqula imibhalo noma umsindo ongahluziwe ube ama-engeli amaningi, amaphodikasti evidiyo alungele ukusakaza emgqeni owodwa ozenzakalelayo.",
-        "badge": "Ukusakaza-Kulungile",
-        "solutionPillars": [
-          {
-            "title": "I-Multi-Speaker & Avatar Identity",
-            "frictionHeadline": "Ama-avatar eRobhothi kanye Nobunikazi Obulahlekile",
-            "friction": "Abasingathi abakhiqiziwe bashintsha ukubonakala maphakathi nesiqephu, bagqolozele ikhamera bathule, noma bahluleke ukuveza izinkulumo ezincane zomuntu ngenkathi belalele.",
-            "solutionHeadline": "Amaphrofayili Omethuleli Nezihambeli Akhiyiwe",
-            "solution": "Misa ubunikazi obubonakalayo obuqhubekayo bababungazi bakho kanye nezihambeli ezivela njalo. I-SceneFlow igcina ukungaguquguquki kwesikhulumi, ukubheka ngeso lemvelo, kanye nolimi lomzimba lwengxoxo olungokoqobo kuzo zonke izingxoxo zefomu elide."
-          },
-          {
-            "title": "Ukuqondiswa Kwekhamera Eningi & Ukuhamba kancane",
-            "frictionHeadline": "I-Monotonous Single-Angles",
-            "friction": "Amashothi akhulumayo anganyakazi alahlekelwa ukugcinwa kwezithameli ngokushesha, kuyilapho ukushintsha kwekhamera mathupha kumugqa wesikhathi wemizuzu engama-30 kudinga ukusikwa okuyisicefe kozimele ngozimele.",
-            "solutionHeadline": "Ukushintshwa Okuzenzakalelayo kwe-Multi-Cam",
-            "solution": "I-SceneFlow ihlaziya ukugeleza kwengxoxo ukuze iguqule ngokuzenzekelayo phakathi kokusondelana kosokhaya, ukusabela kwezivakashi, namashothi e-studio e-angle ebanzi, iletha ukuhambahamba kokusakaza okuphrofeshinali ngaphandle kokuhlela umugqa wesikhathi okwenziwa ngesandla."
-          },
-          {
-            "title": "I-Context-Aware B-Roll & Visuals",
-            "frictionHeadline": "I-Visual Monotony & B-Roll Bottlenecks",
-            "friction": "Ukuthola, ukukhiqiza, kanye nokubeka isikhathi izinsiza ezibukwayo ezifanele noma iziqeshana ze-B-roll zaso sonke isihloko esishiwo kudla amahora amaningi okukhiqizwa kwangemuva.",
-            "solutionHeadline": "I-B-Roll Cutaways Ekhiqizwa Ngokuzenzakalelayo",
-            "solution": "Njengoba ababungazi bakho bexoxa ngezihloko, i-SceneFlow ikhiqiza ngokuzenzakalelayo okubonwayo kwesinema, ihluzo, nokunqanyulwa kwesigcawu okunesikhathi esinembile embhalweni womsindo."
-          },
-          {
-            "title": "Ukuvumelanisa Okude Komsindo Nevidiyo",
-            "frictionHeadline": "I-Audio Drift & Nefomu Elide Inikeza Ukukhathala",
-            "friction": "Ukuvumelanisa ividiyo ekhiqizayo emizuzwini engu-20+ yomsindo ongahluziwe kuholela ekunyakazeni kokuvumelanisa izindebe, amaphutha okunikeza, nokuphathwa kwefayela okuyizicucu.",
-            "solutionHeadline": "Iphayiphi le-Podcast yokuphela ukuya ekupheleni",
-            "solution": "Beka ithrekhi yakho yomsindo engahluziwe noma iskripthi, futhi i-SceneFlow iphatha ukuqondana kwe-avatar, ukusikeka kwekhamera, ukuhlanganiswa kwe-B-roll, kanye nokuthunyelwa kokugcina kwe-MP4 okuyinhloko endaweni eyodwa eshelelayo, ezenzakalelayo yesitudiyo."
-          }
-        ],
-        "screeningRoomPreview": "I-AI-First Podcast — Ukubuka kuqala kwe-Screening Room"
-      },
-      {
-        "id": "training",
-        "title": "Amavidiyo Okuqeqesha Ebanga Lebhizinisi. I-Pre-Vizualization Ikhiqizwa Ngamaminithi.",
-        "subtitle": "Guqula amamanuwali, amaslayidi, namadokhumenti athobelane abe amamojuli evidiyo ahehayo, anezilimi eziningi anobunikazi bomkhiqizo obukhiyiwe, ukuvumelanisa izindebe okungenasici, kanye nesitudiyo esiyiziro.",
-        "badge": "I-Global Deploy",
-        "solutionPillars": [
-          {
-            "title": "Umethuli & Ukungaguquguquki Komkhiqizo",
-            "frictionHeadline": "I-Uncanny Avatars ne-Brand Drift",
-            "friction": "Abethuli be-AI abashibhile bazizwa berobhothi futhi bengangeneki, kuyilapho amalogo omkhiqizo, imibala, nokubukeka kwabethuli kushintsha ngokungahambisani kumamojula okuqeqesha ahlukene.",
-            "solutionHeadline": "Amaphrofayli Esikhulu Nomqeqeshi Akhiyiwe",
-            "solution": "Sungula abethuli bezinkampani abaphikelelayo, ababukeka bemvelo futhi ukhiye imihlahlandlela yomkhiqizo wakho. I-SceneFlow igcina ubunikazi obubonakalayo, isitayela sebhizinisi, nokulethwa okuphrofeshinali kuyo yonke ilabhulali yakho yesifundo."
-          },
-          {
-            "title": "I-Seamless Global Localization",
-            "frictionHeadline": "Ukuhumusha Okuphukile Nokuvumelanisa Izindebe Okubi",
-            "friction": "Ukwenza okuqukethwe kokuqeqeshwa kube okwasendaweni ngezilimi ezingu-10+ kuvame ukudala ukuvumelanisa komlomo okungekuhle, amathrekhi ezwi erobhothi, kanye nezingqinamba ezinkulu zokuhlela kabusha.",
-            "solutionHeadline": "Injini Yokuvumelanisa Yezilimi Eziningi Yomdabu",
-            "solution": "Humusha lonke uchungechunge lwakho lokuqeqeshwa lube inqwaba yezilimi ngethoni yezwi yemvelo, ama-callouts ombhalo enziwe owasendaweni, nokuvumelanisa izindebe ngozimele—konke ngokuchofoza okukodwa."
-          },
-          {
-            "title": "Izinsiza Ezibonakalayo Ezididiyelwe Nemidwebo",
-            "frictionHeadline": "I-Text-Heavy Bore",
-            "friction": "Amavidiyo akhuluma nje asheshe alahlekelwe ukunaka kwabasebenzi, kuyilapho imidwebo yenqubo yokwenza opopayo mathupha, ukuthwebula kwesikrini, namachashazi callouts kuthatha amahora kumhleli.",
-            "solutionHeadline": "Imbondela Yokubonwa Kokuqukethwe Nomfanekiso",
-            "solution": "Njengoba umethuli wakho echaza ukugeleza komsebenzi okuyinkimbinkimbi noma izinyathelo zokuthobela, i-SceneFlow ikhiqiza ngokuzenzakalelayo imidwebo enesikhathi, izinto ezibalulekile ezithathwayo, nezinsiza ezibukwayo ngokuqondile esikrinini."
-          },
-          {
-            "title": "Ukubuyekeza Okuqukethwe Okusheshayo",
-            "frictionHeadline": "Ukuthwebula Kabusha Okubizayo & Nikeza Izicupho",
-            "friction": "Uma inqubomgomo yenkampani noma izicaciso zomkhiqizo zishintsha, ukubuyekeza ingxenye yevidiyo eyimizuzu emi-2 ngokuvamile kudinga ukwakhiwa kabusha kanye nokunikezwa kabusha kwefayela lonke.",
-            "solutionHeadline": "I-Modular Script Updates",
-            "solution": "Hlela umbhalo ngokuqondile kupulani yombhalo ukuze ubuyekeze izinqubomgomo noma izinqubo ngokushesha. I-SceneFlow iphinda inikeze kuphela isigaba esishintshiwe kuyilapho ilondoloza isikhathi esizungezile nesitayela sevidiyo."
-          }
-        ],
-        "screeningRoomPreview": "Ukuqeqeshwa Kwebhizinisi — Screening Room Ukuhlola kuqala"
-      },
-      {
-        "id": "scifi",
-        "title": "Yakha Imihlaba Engenakwenzeka. I-Direct Uncompromised Sci-Fi.",
-        "subtitle": "Nikeza imiphumela eyinkimbinkimbi yokubuka, izindawo zekusasa, nemiklamo yezinhlamvu ezingaziwa ngokuqhubeka kohlaka ngohlaka—konke kungaphakathi kwepayipi elilodwa elizenzakalelayo.",
-        "badge": "I-VFX-Ilungile",
-        "solutionPillars": [
-          {
-            "title": "Ukuqhubeka Kwezemvelo Nezokwakha",
-            "frictionHeadline": "I-geometry & Scale Glitches",
-            "friction": "Amadolobha esikhathi esizayo, i-neon landscape, nezinkanyezi ezingaziwa ezihlala zisonteka, zishintsha ukuthungwa, noma zincibilika kube umsindo obonakalayo ongahleliwe phakathi kokusikwa kwekhamera.",
-            "solutionHeadline": "I-World-State Locking",
-            "solution": "Chaza izakhiwo eziyinhloko, izikimu zokukhanyisa, nemingcele yemvelo ku-Blueprint Studio. I-SceneFlow ikhiya ijiyomethri yendawo ukuze ukulungiselelwa kwakho kuhlale kufana kusukela ekuthwebuleni okubanzi kuya ezimpini eziqinile."
-          },
-          {
-            "title": "I-Alien & Creature Design Ubuqotho",
-            "frictionHeadline": "I-Morphing Character Designs",
-            "friction": "Izinhlobo ze-non-humanoid, ama-cyborgs, nezinhlamvu ezisindayo zokufakelwa zikhukhuleka ngokubukeka njalo uma kukhiqizwa i-engeli entsha noma isibhamu.",
-            "solutionHeadline": "Amaphrofayili Efa Alien Akhiyiwe",
-            "solution": "Gcoba i-anatomy okungeyona eyomuntu, imininingwane yezikhali, nokuphimisa komshini. Gcina ukuqashelwa komlingiswa kuzo zonke izigcawu zomqondo ophezulu ngaphandle kwamapayipi okumodeli we-3D ngokwezifiso."
-          },
-          {
-            "title": "Isenzo se-VFX & I-High-Speed ​​Physics",
-            "frictionHeadline": "Ukunyakaza Okuncibilika Kulandelana Kwesenzo",
-            "friction": "Izimpi zasemkhathini ezinesivinini esikhulu, imililo yezikhali zamandla, nokuqhuma kuvame ukudala amamodeli akhiqizayo ukuthi agcobe amafreyimu noma akhiqize ama-artifact abonakalayo angcolile.",
-            "solutionHeadline": "I-Action & FX Motion Anchoring",
-            "solution": "I-choreography eguqukayo eqondile, ukunyakaza kwekhamera okusheshayo, namabhithi esenzo esindayo kuyilapho kugcinwa imiphetho ehlanzekile kanye ne-trajectory physics engokoqobo."
-          },
-          {
-            "title": "I-Audio-Visual World-Building",
-            "frictionHeadline": "Umsindo Oyisicaba Emihlabeni Yomqondo Ophakeme",
-            "friction": "Izikhali zekusasa, ama-ambient starship hums, namaphethini enkulumo angajwayelekile azizwa enqanyuliwe lapho efakwe ngesandla phezu kweziqeshana ezikhiqiziwe.",
-            "solutionHeadline": "I-Integrated World-Sound & Voice Sync",
-            "solution": "Qondanisa inkhulumomphendvulwano yokwenziwa yangokwezifiso, amagama angajwayelekile, nezimpawu zomsindo wesinema ngokuqondile ngaphakathi komugqa wesikhathi wemiksi yomsindo egxilile, elungele ukukhululwa."
-          }
-        ],
-        "screeningRoomPreview": "Ukukhiqizwa kwe-Sci-Fi VFX — Ukuhlola kuqala kwe-Screening Room"
+        "screeningRoomPreview": "The Animated Comedy — Screening Room"
       },
       {
         "id": "documentary",
-        "title": "Guqula Izindaba Ezigciniwe zibe Amadokhumentari Athengiswa Kakhulu.",
-        "subtitle": "Dala kabusha imicimbi yomlando, ukulingisa kabusha, nokusetha inhlolokhono yochwepheshe enemininingwane yesikhathi sangempela, amazwibela angenamthungo, kanye nezinkokhelo zelayisensi zengobo yomlando eziyiziro.",
-        "badge": "Isikhathi-Sinembe",
+        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
+        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
+        "badge": "Period-Accurate",
         "solutionPillars": [
           {
-            "title": "I-Era-Specific Visual Nemba",
-            "frictionHeadline": "I-Anachronistic Artifacts",
-            "friction": "Amamodeli akhiqizayo ajwayelekile opha izinto zesimanjemanje, izikrini ze-smartphone, noma izingubo zesikhathi ezingalungile zibe izigameko zomlando.",
-            "solutionHeadline": "I-Guardrails Yesitayela Somlando",
-            "solution": "Setha amapharamitha aqondile wesikhashana—kusuka kuzinhlamvu zefilimu zango-1920s kuya kukwakheka kwekhabethe lekhulu le-18—ukuze zonke izigcawu ezikhiqiziwe zihlale ziyiqiniso ngokomlando."
+            "title": "Era-Specific Visual Accuracy",
+            "frictionHeadline": "Anachronistic Artifacts",
+            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
+            "solutionHeadline": "Historical Style Guardrails",
+            "solution": "Set exact temporal parameters — from 1920s film grain to 18th-century wardrobe textures — so every generated scene stays historically authentic."
           },
           {
-            "title": "I-Archival Cutaways & B-Roll Engine",
-            "frictionHeadline": "I-Visual Monotony ku-Long Voiceovers",
-            "friction": "Ukumatanisa umsindo womlandi wefomu ende nezithombe zesitoko ezimile kuholela ekwehleni kwezibukeli ngokushesha phakathi nokutshuza okujulile.",
-            "solutionHeadline": "Injini ye-B-Roll Eqhutshwa ngokubhaliwe",
-            "solution": "Njengoba umxoxi wakho exoxa ngamaqiniso omlando, i-SceneFlow ikhiqiza ngokuzenzakalelayo ukulingisa kabusha kwesinema okunesikhathi, izimbondela zamadokhumenti, nokusikwa kwesitayela sengobo yomlando okuboshelwe ngokuqondile ekulobeni komsindo."
+            "title": "Archival Cutaways & B-Roll Engine",
+            "frictionHeadline": "Visual Monotony in Long Voiceovers",
+            "friction": "Pairing long-form narrator audio with static stock images leads to rapid viewer drop-off during deep dives.",
+            "solutionHeadline": "Transcript-Driven B-Roll Engine",
+            "solution": "As your narrator discusses historical facts, SceneFlow automatically generates timed cinematic re-enactments, document overlays, and archival-style cutaways tied directly to the audio transcript."
           },
           {
-            "title": "Ingxoxo & Ukukhuluma-Ikhanda Nangempela",
-            "frictionHeadline": "OFakazi Abangochwepheshe Abangaziwa",
-            "friction": "Osomlando abakhiqiziwe, abaphenyi, noma ofakazi bavame ukubukeka bengezokwenziwa, benyakaza imihlathi entantayo kanye nokubukana kwamehlo okungekhona okwemvelo.",
-            "solutionHeadline": "Amaphrofayili Ochwepheshe Akhiyiwe Nokuvumelanisa Kwezwi",
-            "solution": "Gcina ukuhlelwa kwenhlolokhono okungokoqobo, okuthembekile ngezinkulumo ezincane zemvelo, ukuvumelanisa izindebe ezinembile, nobunikazi obungaguquki bochwepheshe kulo lonke uchungechunge olunezingxenye eziningi."
+            "title": "Interview & Talking-Head Realism",
+            "frictionHeadline": "Uncanny Expert Witnesses",
+            "friction": "Generated historians, investigators, or witnesses often look artificial, with floating jaw movements and unnatural eye contact.",
+            "solutionHeadline": "Locked Expert Profiles & Vocal Sync",
+            "solution": "Maintain realistic, trustworthy interview setups with natural micro-expressions, accurate lip-sync, and consistent expert identities across multi-part series."
           },
           {
-            "title": "I-Episodic Pacing & Narrative Continuity",
-            "frictionHeadline": "Ukuhlela Umugqa Wesikhathi Ohlukene",
-            "friction": "Ukulinganisa umsindo womlandi, ukulingisa kabusha, ukuvezwa kobufakazi, nokuphumuza okwakha ukungezwani esiqeshini esiyimizuzu engama-40 ngokuvamile kuthatha amaviki kuma-NLE endabuko.",
-            "solutionHeadline": "Ipayipi Ledokhumentari Ye-Beat-First",
-            "solution": "Ukushuba okukhulu kwesakhiwo, ukumisa isikhashana okusolisayo, nobufakazi buveza ngokubonakalayo ngaphakathi kwe-Blueprint Studio, kuletha ifayela eliyinhloko elihlanganiswe ngokugcwele ngephasi eyodwa engenamthungo."
+            "title": "Episodic Pacing & Narrative Continuity",
+            "frictionHeadline": "Fragmented Timeline Editing",
+            "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
+            "solutionHeadline": "Beat-First Documentary Pipeline",
+            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Studio, delivering a fully assembled master file in one seamless pass."
           }
         ],
-        "screeningRoomPreview": "Ukukhiqizwa Kwedokhumentari — Ukubuka kuqala kwe-Screening Room"
+        "screeningRoomPreview": "Documentary Production — Screening Room"
+      },
+      {
+        "id": "localization",
+        "title": "Beyond Dubbing. Fully Localized Productions.",
+        "subtitle": "Same storyline, two cities: Houston, Texas and São Paulo, Brazil. SceneFlow doesn't just dub the audio — it localizes settings, cultural references, and on-screen text so each audience sees a production made for them.",
+        "badge": "Localized",
+        "localeToggle": true,
+        "locales": [
+          {
+            "id": "houston",
+            "label": "Houston, TX",
+            "lang": "en"
+          },
+          {
+            "id": "saopaulo",
+            "label": "São Paulo, BR",
+            "lang": "pt"
+          }
+        ],
+        "solutionPillars": [
+          {
+            "title": "Cultural Adaptation, Not Translation",
+            "frictionHeadline": "Dubbing Is Not Localization.",
+            "friction": "Swapping the audio track leaves every cultural reference, location shot, and on-screen graphic targeting the wrong audience.",
+            "solutionHeadline": "Blueprint-Level Localization.",
+            "solution": "Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Studio before a single frame is rendered."
+          },
+          {
+            "title": "Parallel Production Pipelines",
+            "frictionHeadline": "One Region at a Time.",
+            "friction": "Traditional localization is sequential — finish the original, then manually rebuild for each market. Months of delay per region.",
+            "solutionHeadline": "Concurrent Regional Pipelines.",
+            "solution": "Run multiple localized Blueprints in parallel. Each region gets its own production pipeline sharing the same narrative structure but with fully adapted visuals and dialogue."
+          },
+          {
+            "title": "Region-Specific Audience Resonance",
+            "frictionHeadline": "One Script for Every Culture.",
+            "friction": "Humor, pacing, and emotional beats that land in Houston may fall flat in São Paulo. A single script cannot carry both.",
+            "solutionHeadline": "Per-Region Resonance Tuning.",
+            "solution": "Audience Resonance analyzes each localized script against regional demographic profiles, flagging cultural mismatches before production begins."
+          }
+        ],
+        "screeningRoomPreview": "Localized Production Comparison — Screening Room"
       }
     ]
   },

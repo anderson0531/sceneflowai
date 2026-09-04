@@ -1807,251 +1807,181 @@
     "cta": "ምርትዎን ይጀምሩ"
   },
   "productionShowcase": {
-    "badge": "የምርት ምሳሌዎች",
-    "title": "ከፅንሰ-ሀሳብ ወደ ማያ:",
-    "titleAccent": "ማለቂያ የሌላቸው ዕድሎች",
-    "subtitle": "ስድስት የህዝብ ምርቶች ሙሉውን የቧንቧ መስመር ያረጋግጣሉ - ቅድመ-እይታ፣ የትዕይንት ቪዲዮ እና የ Screening Room ግምገማ። ፅንሰ-ሀሳብዎን ይግለጹ እና SceneFlow የስክሪፕት ጽሁፍን፣ የቁምፊ ንድፍን፣ ባለብዙ ቋንቋ ኦዲዮን፣ ምስላዊነትን፣ የቪዲዮ ፕሮዳክሽን እና ህትመትን እንዲቆጣጠር ይፍቀዱለት።",
-    "subtitleTagline": "አንድ መድረክ። ማለቂያ የሌላቸው ዕድሎች።",
-    "publicProductionsNote": "ከታች ያለው እያንዳንዱ ካርድ የተሟላ የህዝብ ምርት ነው - የቧንቧ መስመርን ለመራመድ መፍትሄዎችን እና Screening Room ትሮችን ይቀይሩ።",
-    "languagesBanner": "የህዝብ ምሳሌዎች በ7 ቋንቋዎች ይላካሉ፡ እንግሊዝኛ፣ ስፓኒሽ፣ ፖርቱጋልኛ፣ ሂንዲ፣ ቻይንኛ፣ አረብኛ እና ታይ።",
-    "explorePipelineCta": "ሙሉ ምርትን ያስሱ",
-    "explorePipelineHint": "ከታች በሲኒማ ድራማ ይጀምሩ - መፍትሄዎች ለዲሞሪ ሪል፣ Screening Room ለሙሉ ግምገማ የስራ ሂደት።",
-    "workflowLabel": "መፍትሄዎች",
-    "startProduction": "ምርትዎን ይጀምሩ",
-    "cta": "ምርትዎን ይጀምሩ",
-    "continuityNote": "Series Studio ቀጣይነትን ይቆጣጠራል",
-    "resonanceNote": "Audience Resonance™ ስክሪፕቶችን ያዘጋጃል።",
-    "videoLanguagePrompt": "ይህንን ምርት በቋንቋዎ ይመልከቱ",
-    "videoComingSoon": "ዱብ በቅርቡ ይመጣል",
-    "videoSoon": "በቅርቡ",
-    "introVideoLabel": "መፍትሄዎች",
-    "screeningRoomLabel": "Screening Room",
-    "frictionLabel": "ፍሪክሽን",
-    "solutionPillarLabel": "የ SceneFlow መፍትሔ",
-    "showSolutionsSection": "መፍትሄዎችን አሳይ",
-    "hideSolutionsSection": "መፍትሄዎችን ደብቅ",
+    "badge": "Production Examples",
+    "title": "See the Full Pipeline",
+    "titleAccent": "in Action",
+    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to final high-resolution video. Walk the Screening Room to compare animatics, individual scenes, and the finished master in multiple languages.",
+    "subtitleTagline": "Long-form productions. Not clips.",
+    "screeningRoomInstruction": "Select Pre-Vis, Scenes, or Final to experience the pipeline. Select a language to hear the dub.",
+    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
+    "explorePipelineCta": "Explore a full production",
+    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
+    "workflowLabel": "Solutions",
+    "startProduction": "Start Your Production",
+    "cta": "Start Your Production",
+    "continuityNote": "Series Studio manages continuity",
+    "resonanceNote": "Audience Resonance™ optimizes scripts",
+    "videoLanguagePrompt": "Watch this production in your language",
+    "videoComingSoon": "Dub coming soon",
+    "videoSoon": "Soon",
+    "frictionLabel": "The Friction",
+    "solutionPillarLabel": "The SceneFlow Solution",
+    "showSolutionsSection": "Show Solutions",
+    "hideSolutionsSection": "Hide Solutions",
     "cards": [
       {
         "id": "drama",
-        "title": "ሲኒማቲክ AI ድራማ. ዜሮ ቁምፊ ተንሸራታች.",
-        "subtitle": "ሞርፊንግ ገጸ-ባህሪያትን፣ የተሰበረ ንግግርን እና ማለቂያ የሌላቸውን ሪሮሎች አስወግድ። እንከን የለሽ፣ ባለብዙ ገጸ-ባህሪያት ረጅም ቅርጽ ያላቸው ታሪኮችን በተሟላ የእይታ ቀጣይነት ይገንቡ።",
-        "badge": "ተከታታይ-ዝግጁ",
+        "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
+        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the pre-vis animatic, individual scenes, and the final high-resolution master — then switch languages to hear the full dub.",
+        "badge": "Series-Ready",
         "solutionPillars": [
           {
-            "title": "የእይታ እና የቁምፊ ወጥነት",
-            "frictionHeadline": "የባህርይ ተንሸራታች እና ተወላጅ ስብስቦች።",
-            "friction": "አመንጪ ሞዴሎች በእያንዳንዱ ምት ዳግም ይጀመራሉ—የገጸ ባህሪ ፊቶች፣ አልባሳት እና መብራቶች ያለማቋረጥ በትዕይንት መቆራረጦች ላይ እንዲፈጠሩ ያደርጋል።",
-            "solutionHeadline": "የተቆለፈ ንብረት Blueprints።",
-            "solution": "በ Blueprint Studio ውስጥ የዋና ገፀ ባህሪ መገለጫዎችን፣ አከባቢዎችን እና የእይታ ቅጦችን ይግለጹ። SceneFlow የትረካ ጥምቀትን ለመጠበቅ ምስላዊ ማንነትን በሁሉም ስራዎች ላይ ያስፈጽማል።"
+            "title": "Visual & Character Consistency",
+            "frictionHeadline": "Character Drift & Wobbly Sets.",
+            "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
+            "solutionHeadline": "Locked Asset Blueprints.",
+            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Studio. SceneFlow enforces visual identity across every render to preserve narrative immersion."
           },
           {
-            "title": "ትረካ ፓሲንግ እና ትዕይንት ቁጥጥር",
-            "frictionHeadline": "የ10 ሰከንድ ክሊፕ ወጥመድ።",
-            "friction": "ፊልም ከተቋረጠ የጥቃቅን ፕሮምፕትስ መገንባት መራመድን፣ ጠፍጣፋ ስሜትን እና ማለቂያ የሌለው በእጅ የጊዜ መስመር አርትኦትን ይፈጥራል።",
-            "solutionHeadline": "ቢት-የመጀመሪያ ታሪክ ሰሌዳ.",
-            "solution": "በቀጥታ በትእይንት ደረጃ እንጂ በአፋጣኝ ደረጃ አይደለም። አንድ ነጠላ የቪዲዮ ፍሬም ከማፍለቅዎ በፊት ድራማዊ ድብደባዎችን፣ የካሜራ እንቅስቃሴዎችን እና የታሪክ ቅስቶችን በእይታ ያዋቅሩ።"
+            "title": "Narrative Pacing & Scene Control",
+            "frictionHeadline": "The 10-Second Clip Trap.",
+            "friction": "Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.",
+            "solutionHeadline": "Beat-First Storyboarding.",
+            "solution": "Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video."
           },
           {
-            "title": "ንግግር እና የድምጽ አሰላለፍ",
-            "frictionHeadline": "አሳማኝ ያልሆነ ውይይት።",
-            "friction": "ያልተዛመደ የከንፈር ማመሳሰል፣ ተንሳፋፊ የአፍ እንቅስቃሴዎች እና የተነጠሉ የድምጽ ትራኮች ወዲያውኑ ተመልካቾችን ከድራማው አውጥተዋል።",
-            "solutionHeadline": "የተቀናጀ የድምጽ እና የማመሳሰል ሞተር።",
-            "solution": "ተለዋዋጭ የድምፅ አፈጻጸም እና ትክክለኛ የከንፈር ማመሳሰል በቀጥታ በቪዲዮ ቧንቧው ውስጥ ይጋገራሉ - ያለ ውጫዊ የድህረ-ምርት ማለፊያዎች እምነት የሚጣልበት ውይይት ያቀርባል።"
+            "title": "Dialogue & Audio Alignment",
+            "frictionHeadline": "Unconvincing Dialogue.",
+            "friction": "Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.",
+            "solutionHeadline": "Integrated Voice & Sync Engine.",
+            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline — delivering believable dialogue without external post-production passes."
           },
           {
-            "title": "የስራ ፍሰት ግጭት እና ድጋሚ መድከም",
-            "frictionHeadline": "የንብረት ትርምስ እና ማለቂያ የሌላቸው ሪሮሎች።",
-            "friction": "አጭር ፊልም መፍጠር ብዙውን ጊዜ 200+ ጥሬ የቪዲዮ ፋይሎችን ማሸግ፣ በእጅ ከፍ ማድረግ እና በደርዘን የሚቆጠሩ የባከኑ ትውልዶች ማለት ነው።",
-            "solutionHeadline": "አውቶሜትድ ስቱዲዮ ቧንቧ.",
-            "solution": "ከፅንሰ-ሀሳብ እስከ የመጨረሻ ዋና ኤምፒ4 በአንድ የተዋሃደ መድረክ። Blueprint Studio ታሪክ ማዋቀርን ያስተናግዳል፣ Production Studio ቀረጻን በራስ ሰር ይሰራል፣ እና Screening Room የመጨረሻውን ወደ ውጭ መላኪያዎ ያቀርባል።"
+            "title": "Workflow Friction & Reroll Fatigue",
+            "frictionHeadline": "Asset Chaos & Endless Rerolls.",
+            "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
+            "solutionHeadline": "Automated Studio Pipeline.",
+            "solution": "From concept to final master MP4 in one unified platform. Blueprint Studio handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export."
           }
         ],
-        "screeningRoomPreview": "የሲኒማ ድራማው — Screening Room ቅድመ እይታ"
+        "screeningRoomPreview": "The Cinematic Drama — Screening Room"
       },
       {
         "id": "animation",
-        "title": "ቀልዱን ትጽፋለህ። SceneFlow ፐንችሊንን ያሳየዋል።",
-        "subtitle": "የቅጥ መንሸራተትን፣ ጠንከር ያለ እንቅስቃሴን እና የተሰበረ ጊዜን ያስወግዱ። በአንድ እንከን የለሽ ስቱዲዮ ውስጥ አስቂኝ ስክሪፕቶችን ወደ ሙሉ አኒሜሽን፣ በድምፅ የተመሳሰሉ አስቂኝ ትዕይንቶች ይለውጡ።",
-        "badge": "ባለብዙ-ስታይል",
+        "title": "Full-Season Animated Series. One Consistent Art Style.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "badge": "Multi-Style",
         "solutionPillars": [
           {
-            "title": "የቅጥ ወጥነት",
-            "frictionHeadline": "ቅጥ መቅለጥ።",
-            "friction": "የካርቱን እና የአኒም ስታይል በጥይት ፣በመቀያየር የመስመር ጥበብ ፣የቀለም ቤተ-ስዕላትን በመስበር እና ገፀ-ባህሪያትን ወደ ፎቶግራፊያዊ የማይታወቅ ስሎፕ በመቀየር መካከል ያለማቋረጥ ይጋጫሉ።",
-            "solutionHeadline": "የተቆለፈ የጥበብ ዘይቤ ሞተር።",
-            "solution": "ውበትዎን ከመጀመሪያው ፍሬም ያቀዘቅዙ። SceneFlow የቁምፊ ንድፎችን፣ የመስመሮች ክብደቶችን እና የመከለያ ሞዴሎችን በጠቅላላው የትዕይንት ክፍል ይቆልፋል፣ በዚህም ቁምፊዎችዎ የአንተ ብቻ እንደሆኑ እንዲቆዩ።"
+            "title": "Stylistic Consistency",
+            "frictionHeadline": "Style Meltdown.",
+            "friction": "Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.",
+            "solutionHeadline": "Locked Art Style Engine.",
+            "solution": "Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours."
           },
           {
-            "title": "የተጋነነ አኒሜሽን እና ፊዚክስ",
-            "frictionHeadline": "ግትር እና ብልጭልጭ እንቅስቃሴ።",
-            "friction": "የጄነሬቲቭ ሞዴሎች ከፈጣን በጥፊ፣ በድርብ ታክስ እና በስኩዊስ ካርቱን ፊዚክስ ይታገላሉ፣ ይህም ከፍተኛ ኃይል ያላቸውን ጋግስ ወደ መቅለጥ ቅርሶች ይለውጣሉ።",
-            "solutionHeadline": "ድርጊት እና አቀማመጥ መልህቅ።",
-            "solution": "ተለዋዋጭ የቁምፊ እንቅስቃሴን እና ገላጭ አቀማመጦችን ጂኦሜትሪ ሳይሰበር ይንዱ። ቀጥተኛ ፓንቺ አካላዊ ኮሜዲ፣ ድንገተኛ የቆዳ መቆራረጥ እና የዱር መግለጫዎች ከሙሉ እንቅስቃሴ ቁጥጥር ጋር።"
+            "title": "Exaggerated Animation & Physics",
+            "frictionHeadline": "Stiff & Glitchy Motion.",
+            "friction": "Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.",
+            "solutionHeadline": "Action & Pose Anchoring.",
+            "solution": "Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control."
           },
           {
-            "title": "አስቂኝ ጊዜ እና ሪትም።",
-            "frictionHeadline": "የተበላሹ Punchlines.",
-            "friction": "ቀልድ በቆመበት እና በድብደባ ውስጥ ይኖራል። መደበኛ ባለ 5 ሰከንድ አመንጪ loops የቀልድ አቅርቦትን የሚያበላሽ የማይመች ፍጥነትን ያስገድዳል።",
-            "solutionHeadline": "ምት-ትክክለኛ አርትዖት.",
-            "solution": "ወደ ክፈፉ መውረድን ይቆጣጠሩ። ከመጨረሻው ስራ በፊት ድራማዊ ባለበት ማቆምን፣ ማዋቀር-ወደ-ቡጢ መስመር እና ፈጣን ምላሽ ምላሾችን በቀጥታ ምት-መጀመሪያ የጊዜ መስመር ውስጥ ያስተካክሉ።"
+            "title": "Comedic Timing & Rhythm",
+            "frictionHeadline": "Ruined Punchlines.",
+            "friction": "Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.",
+            "solutionHeadline": "Beat-Precision Editing.",
+            "solution": "Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render."
           },
           {
-            "title": "ከፍተኛ-ኃይል ውይይት እና የድምጽ ማመሳሰል",
-            "frictionHeadline": "ሕይወት አልባ የአሻንጉሊት አፍ።",
-            "friction": "አጠቃላይ AI ምልልስ ጠፍጣፋ እና ሜካኒካል ይሰማዋል፣ ለ snappy sitcom banter የሚያስፈልገውን ሃይል ያጠፋል።",
-            "solutionHeadline": "ተለዋዋጭ የድምጽ እና የቃላት ማመሳሰል።",
-            "solution": "የካርታ የድምጽ አቅርቦት በቀጥታ ወደ ጉልበት የፊት አፈጻጸም። ንግግር፣ ገላጭ የአፍ ቅርጾች እና የአስቂኝ የድምፅ ትራኮች ለከፍተኛው የአስቂኝ ተፅእኖ ያለችግር ይጣጣማሉ።"
+            "title": "High-Energy Dialogue & Vocal Sync",
+            "frictionHeadline": "Lifeless Puppet Mouths.",
+            "friction": "Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.",
+            "solutionHeadline": "Dynamic Voice & Expression Sync.",
+            "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
           }
         ],
-        "screeningRoomPreview": "የታነመው አስቂኝ — Screening Room ቅድመ እይታ"
-      },
-      {
-        "id": "podcast",
-        "title": "እርስዎ ውይይቱን ያስተናግዳሉ። SceneFlow ትርኢቱን ያዘጋጃል።",
-        "subtitle": "የማይንቀሳቀሱ አምሳያዎችን እና በእጅ ቪዲዮ አርትዖትን ያስወግዱ። ስክሪፕቶችን ወይም ጥሬ ድምጽን በአንድ አውቶሜትድ የቧንቧ መስመር ወደ ባለ ብዙ ማእዘን፣ ለስርጭት ዝግጁ የሆኑ የቪዲዮ ፖድካስቶች ቀይር።",
-        "badge": "ስርጭት-ዝግጁ",
-        "solutionPillars": [
-          {
-            "title": "ባለብዙ ተናጋሪ እና አምሳያ ማንነት",
-            "frictionHeadline": "የሮቦቲክ አምሳያዎች እና የጠፋ ማንነት",
-            "friction": "የመነጩ አስተናጋጆች ትዕይንት አጋማሽ ላይ እይታዎችን ይቀያይራሉ፣ ካሜራውን ባዶ አድርገው ይመለከቱታል፣ ወይም በማዳመጥ ጊዜ የተፈጥሮ የሰው ልጅ ጥቃቅን አገላለጾችን ማሳየት ተስኗቸዋል።",
-            "solutionHeadline": "የተቆለፈ የአስተናጋጅ እና የእንግዳ መገለጫዎች",
-            "solution": "ለአብሮ አስተናጋጆችዎ እና ለተደጋጋሚ እንግዶችዎ የማያቋርጥ ምስላዊ ማንነቶችን ያዘጋጁ። SceneFlow በረጅም ጊዜ ውይይቶች ውስጥ የተናጋሪ ወጥነትን፣ የተፈጥሮ የአይን ግንኙነትን እና ተጨባጭ የንግግር አካል ቋንቋን ይጠብቃል።"
-          },
-          {
-            "title": "ባለብዙ ካሜራ አቅጣጫ እና ፓሲንግ",
-            "frictionHeadline": "ነጠላ-አንግሎች",
-            "friction": "የማይለዋወጡ የንግግር ጭንቅላት ቀረጻዎች የተመልካቾችን ማቆየት በፍጥነት ያጣሉ፣ በእጅ ካሜራ ደግሞ በ30 ደቂቃ የጊዜ መስመር ላይ ለመቀያየር አሰልቺ የሆነ ፍሬም-በፍሬም መቁረጥን ይጠይቃል።",
-            "solutionHeadline": "አውቶሜትድ ባለብዙ ካሜራ መቀየር",
-            "solution": "SceneFlow የውይይት ፍሰትን ይተነትናል በአስተናጋጅ ቅርብ-ባዮች፣ የእንግዳ ምላሾች እና በሰፊ አንግል ስቱዲዮ ቀረጻዎች መካከል በራስ-ሰር እንዲቀያየር፣ ያለ በእጅ የጊዜ መስመር አርትዖት የባለሙያ ስርጭት ፍጥነትን ያቀርባል።"
-          },
-          {
-            "title": "አውድ-አዋቂ ቢ-ሮል እና እይታዎች",
-            "frictionHeadline": "ቪዥዋል ሞኖቶኒ እና ቢ-ሮል ጠርሙሶች",
-            "friction": "ለእያንዳንዱ የተጠቀሰው ርዕስ ተዛማጅ የሆኑ የእይታ መርጃዎችን ወይም የ B-roll ክሊፖችን መፈለግ፣ ማመንጨት እና ጊዜ መመደብ የድህረ ምርት ሰዓታትን ይበላል።",
-            "solutionHeadline": "በራስ-የመነጨ B-Roll Cutaways",
-            "solution": "አስተናጋጆችዎ በርዕሶች ላይ ሲወያዩ፣ SceneFlow በቀጥታ ወደ ኦዲዮ ግልባጭ የተያዙ የአውድ ሲኒማ ምስሎችን፣ ግራፊክስን እና የትዕይንት መቆራረጥን ያመነጫል።"
-          },
-          {
-            "title": "ረጅም ቅጽ ኦዲዮ እና ቪዲዮ ማመሳሰል",
-            "frictionHeadline": "ኦዲዮ ተንሸራታች እና የረዥም ቅጽ መድከም",
-            "friction": "አመንጪ ቪዲዮን ከ20+ ደቂቃ ጥሬ ድምጽ ጋር ማመሳሰል ወደ የከንፈር-ማመሳሰል ተንሸራታች፣ የምስል ስራ ስህተቶች እና የተበታተነ የፋይል አስተዳደር ይመራል።",
-            "solutionHeadline": "ከጫፍ እስከ ጫፍ ፖድካስት ቧንቧ መስመር",
-            "solution": "ጥሬ የድምጽ ትራክህን ወይም ስክሪፕትህን አስገባ እና SceneFlow የአቫታር አሰላለፍን፣ የካሜራ መቆራረጥን፣ የ B-roll ውህደትን እና የመጨረሻውን ዋና MP4 ኤክስፖርት በአንድ ለስላሳ እና አውቶማቲክ የስቱዲዮ ማለፊያ ያስተናግዳል።"
-          }
-        ],
-        "screeningRoomPreview": "የ AI-የመጀመሪያው ፖድካስት — Screening Room ቅድመ እይታ"
-      },
-      {
-        "id": "training",
-        "title": "የድርጅት-ደረጃ ስልጠና ቪዲዮዎች. ቅድመ-Vizualization በደቂቃዎች ውስጥ የተሰራ።",
-        "subtitle": "ማኑዋሎችን፣ ስላይዶችን እና ተገዢ ሰነዶችን ወደ አሳታፊ፣ ባለብዙ ቋንቋ የቪዲዮ ሞጁሎች የተቆለፉ የምርት መለያዎች፣ እንከን የለሽ የከንፈር ማመሳሰል እና ዜሮ ስቱዲዮ ከላይ።",
-        "badge": "ዓለም አቀፍ ማሰማራት",
-        "solutionPillars": [
-          {
-            "title": "አቅራቢ እና የምርት ስም ወጥነት",
-            "frictionHeadline": "የማይታወቁ አምሳያዎች እና የምርት ስም ተንሸራታች",
-            "friction": "ርካሽ AI አቅራቢዎች ሮቦታዊ እና ሊቀርቡ የማይችሉ እንደሆኑ ይሰማቸዋል፣ የምርት አርማዎች፣ ቀለሞች እና የአቅራቢዎች ገጽታ በተለያዩ የስልጠና ሞጁሎች ላይ ወጥነት ባለው መልኩ ይቀየራል።",
-            "solutionHeadline": "የተቆለፉ የስራ አስፈፃሚ እና የአሰልጣኝ መገለጫዎች",
-            "solution": "ቀጣይነት ያለው፣ ተፈጥሯዊ የሚመስሉ የኮርፖሬት አቅራቢዎችን ያቋቁሙ እና የምርት ስም መመሪያዎችን ይቆልፉ። SceneFlow በሁሉም የኮርስ ቤተ-መጽሐፍትዎ ላይ ምስላዊ ማንነትን፣ የድርጅት ዘይቤን እና ሙያዊ አቅርቦትን ይጠብቃል።"
-          },
-          {
-            "title": "እንከን የለሽ ግሎባል አካባቢያዊነት",
-            "frictionHeadline": "የተበላሹ ትርጉሞች እና መጥፎ የከንፈር-ማመሳሰል",
-            "friction": "የሥልጠና ይዘትን ከ10+ ቋንቋዎች ጋር ማገናኘት ብዙውን ጊዜ የማይመች አፍን ማመሳሰልን፣ የሮቦቲክ የድምጽ ትራኮችን እና ትልቅ የአርትዖት ማነቆዎችን ይፈጥራል።",
-            "solutionHeadline": "ቤተኛ ባለብዙ ቋንቋ ማመሳሰል ሞተር",
-            "solution": "የስልጠና ተከታታዮቻችሁን በሙሉ በተፈጥሮ የድምጽ ቃና፣ አካባቢያዊ በሆነ የፅሁፍ ጥሪዎች እና በፍሬም ትክክለኛ የከንፈር ማመሳሰል ወደ በደርዘን የሚቆጠሩ ቋንቋዎች ይተርጉሙ - ሁሉም በአንድ ጠቅታ።"
-          },
-          {
-            "title": "የተዋሃዱ ቪዥዋል ኤይድስ እና ንድፎች",
-            "frictionHeadline": "ጽሑፍ-ከባድ ቦረቦረ",
-            "friction": "ጭንቅላትን ብቻ የሚያወሩ ቪዲዮዎች የሰራተኞችን ትኩረት በፍጥነት ያጣሉ ፣ የሂደቱን ንድፎችን ፣ ስክሪን ቀረጻዎችን እና የጥይት ጥሪዎችን በእጅ ማንሳት በአርታኢ ውስጥ ሰዓታትን ይወስዳል።",
-            "solutionHeadline": "አውዳዊ ቪዥዋል እና ግራፊክ ተደራቢ",
-            "solution": "አቅራቢዎ የተወሳሰቡ የስራ ሂደቶችን ወይም ተገዢነት ደረጃዎችን ሲያብራራ፣ SceneFlow በጊዜ የተያዙ ንድፎችን፣ ቁልፍ መውሰጃዎችን እና የእይታ መርጃዎችን በቀጥታ በስክሪኑ ላይ ያመነጫል።"
-          },
-          {
-            "title": "ፈጣን ይዘት ማዘመን",
-            "frictionHeadline": "ውድ ድጋሚ ተኩስ እና ወጥመዶች አሳይ",
-            "friction": "የኩባንያው ፖሊሲ ወይም የምርት ዝርዝሮች ሲቀየሩ፣ የ2 ደቂቃ ቪዲዮን ክፍል ማዘመን አብዛኛውን ጊዜ ሙሉውን ፋይል እንደገና መገንባት እና እንደገና መስራትን ይጠይቃል።",
-            "solutionHeadline": "ሞዱላር ስክሪፕት ማሻሻያ",
-            "solution": "መመሪያዎችን ወይም ሂደቶችን በፍጥነት ለማዘመን በስክሪፕት ብሉፕሪንት ውስጥ ጽሁፍን በቀጥታ ያርትዑ። SceneFlow የጊዜ እና የቪዲዮ ዘይቤን በመጠበቅ የተቀየረውን ክፍል ብቻ በድጋሚ ያቀርባል።"
-          }
-        ],
-        "screeningRoomPreview": "የኮርፖሬት ስልጠናው — Screening Room ቅድመ እይታ"
-      },
-      {
-        "id": "scifi",
-        "title": "የማይቻሉ ዓለሞችን ይገንቡ። ቀጥተኛ ያልተመጣጠነ Sci-Fi.",
-        "subtitle": "ውስብስብ የእይታ ውጤቶችን፣ የወደፊት አካባቢዎችን እና የባዕድ ገጸ ​​ባህሪ ንድፎችን በፍሬም-ፍሬም ምስላዊ ቀጣይነት - ሁሉም በአንድ አውቶሜትድ የቧንቧ መስመር ውስጥ ይስሩ።",
-        "badge": "VFX-ዝግጁ",
-        "solutionPillars": [
-          {
-            "title": "የአካባቢ እና አርክቴክቸር ቀጣይነት",
-            "frictionHeadline": "ጂኦሜትሪ እና ስኬል ግላቶች",
-            "friction": "የወደፊቱ ከተሞች፣ የኒዮን መልክዓ ምድሮች እና የባዕድ ኮከቦች መርከቦች ያለማቋረጥ ይጣላሉ፣ ሸካራማነቶችን ይቀይራሉ ወይም በካሜራ መቁረጫዎች መካከል በዘፈቀደ የእይታ ጫጫታ ይሟሟሉ።",
-            "solutionHeadline": "የዓለም-ግዛት መቆለፍ",
-            "solution": "በ Blueprint Studio ውስጥ የቁልፍ አርክቴክቸርን፣ የብርሃን እቅዶችን እና የአካባቢ መለኪያዎችን ይግለጹ። SceneFlow የቦታ ጂኦሜትሪ ይቆልፋል ስለዚህ ቅንብርዎ ከሰፊ የማቋቋም ጥይቶች እስከ ጥብቅ የአገናኝ መንገዱ ውጊያዎች ወጥነት ያለው ሆኖ እንዲቆይ ያድርጉ።"
-          },
-          {
-            "title": "የውጭ ዜጋ እና የፍጥረት ንድፍ ታማኝነት",
-            "frictionHeadline": "የሞርፒንግ ባህሪ ንድፎች",
-            "friction": "ሰዋዊ ያልሆኑ ዝርያዎች፣ ሳይቦርጎች እና የከባድ ሰው ሰራሽ ገጸ-ባህሪያት አዲስ ማዕዘን ወይም ጥይት በተፈጠረ ቁጥር በመልክ ይንሸራተታሉ።",
-            "solutionHeadline": "የተቆለፈ የውጭ ዜጋ ንብረት መገለጫዎች",
-            "solution": "መልህቅ ሰዋዊ ያልሆነ የሰውነት አካል፣ የጦር ትጥቅ ዝርዝሮች እና የሜካኒካል ዘዬዎች። ብጁ 3D ሞዴሊንግ የቧንቧ መስመሮች ሳይኖር በሁሉም የከፍተኛ ፅንሰ-ሀሳብ ትእይንቶች ላይ የባህሪ ማወቂያን ያቆዩ።"
-          },
-          {
-            "title": "VFX ድርጊት እና ባለከፍተኛ ፍጥነት ፊዚክስ",
-            "frictionHeadline": "የማቅለጥ እንቅስቃሴ በድርጊት ቅደም ተከተሎች",
-            "friction": "ከፍተኛ ፍጥነት ያለው የጠፈር የውሻ ውጊያ፣ የሃይል መሳሪያ እሳቶች እና ፍንዳታዎች ብዙ ጊዜ አመንጪ ሞዴሎች ፍሬሞችን እንዲስሉ ወይም የተዘበራረቁ የእይታ ቅርሶችን እንዲፈጥሩ ያደርጉታል።",
-            "solutionHeadline": "የድርጊት እና የኤፍኤክስ እንቅስቃሴ መልህቅ",
-            "solution": "ቀጥተኛ ተለዋዋጭ ኮሪዮግራፊ፣ ፈጣን የካሜራ እንቅስቃሴዎች እና ንፁህ ጠርዞችን እና ተጨባጭ የእይታ ፊዚክስን በመጠበቅ ላይ ያሉ ጥቃቅን-ከባድ የድርጊት ምቶች።"
-          },
-          {
-            "title": "ኦዲዮ-ቪዥዋል ዓለም-ግንባታ",
-            "frictionHeadline": "ጠፍጣፋ ኦዲዮ በከፍተኛ ፅንሰ-ሀሳብ ዓለማት",
-            "friction": "የወደፊት የጦር መሳሪያዎች፣ የከባቢ አየር ኮከቦች እና የውጭ ንግግር ዘይቤዎች በጸጥታ በተፈጠሩ ክሊፖች ላይ በእጅ ሲገጠሙ ግንኙነታቸው የተቋረጠ እንደሆነ ይሰማቸዋል።",
-            "solutionHeadline": "የተዋሃደ የአለም-ድምጽ እና ድምጽ ማመሳሰል",
-            "solution": "ብጁ ሰው ሰራሽ ንግግርን፣ እንግዳ ድምጾችን እና የሲኒማ ድምጽ ምልክቶችን በጊዜ መስመር ውስጥ አስማጭ፣ ለመልቀቅ ዝግጁ የሆነ ዋና የድምጽ ድብልቅን አሰልፍ።"
-          }
-        ],
-        "screeningRoomPreview": "Sci-Fi VFX ፕሮዳክሽን — Screening Room ቅድመ እይታ"
+        "screeningRoomPreview": "The Animated Comedy — Screening Room"
       },
       {
         "id": "documentary",
-        "title": "የማህደር ታሪኮችን ወደ ምርጥ ሽያጭ ዶክመንተሪዎች ቀይር።",
-        "subtitle": "ታሪካዊ ክስተቶችን፣ ድጋሚ ድርጊቶችን እና የባለሙያ ቃለ መጠይቅ ቅንጅቶችን ከትክክለኛ የጊዜ ዝርዝር፣ እንከን የለሽ የድምፅ ማሳያዎች እና ዜሮ የማህደር ፍቃድ ክፍያዎች ጋር ፍጠር።",
-        "badge": "ጊዜ-ትክክለኛ",
+        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
+        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
+        "badge": "Period-Accurate",
         "solutionPillars": [
           {
-            "title": "ዘመን-ተኮር የእይታ ትክክለኛነት",
-            "frictionHeadline": "አናክሮናዊ ቅርሶች",
-            "friction": "መደበኛ አመንጪ ሞዴሎች በየጊዜው ዘመናዊ ነገሮችን፣ የስማርትፎን ስክሪኖች ወይም የተሳሳቱ የወር አበባ ልብሶችን ወደ ታሪካዊ ድጋሚዎች ያፈሳሉ።",
-            "solutionHeadline": "ታሪካዊ ቅጥ Guardrails",
-            "solution": "ትክክለኛ ጊዜያዊ መመዘኛዎችን ያቀናብሩ - ከ1920ዎቹ የፊልም እህል እስከ 18ኛው ክፍለ ዘመን የ wardrobe ሸካራነት - ስለዚህ እያንዳንዱ የመነጨ ትዕይንት በታሪካዊ ትክክለኛ ሆኖ ይቆያል።"
+            "title": "Era-Specific Visual Accuracy",
+            "frictionHeadline": "Anachronistic Artifacts",
+            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
+            "solutionHeadline": "Historical Style Guardrails",
+            "solution": "Set exact temporal parameters — from 1920s film grain to 18th-century wardrobe textures — so every generated scene stays historically authentic."
           },
           {
-            "title": "አርኪቫል Cutaways & B-Roll Engine",
-            "frictionHeadline": "ቪዥዋል ሞኖቶኒ በሎንግ ቮይስ ኦቨርስ",
-            "friction": "ረጅም ቅርጽ ያለው ተራኪ ኦዲዮን ከስታቲስቲክ አክሲዮን ምስሎች ጋር ማጣመር በጥልቅ ጠልቆ ውስጥ ወደ ፈጣን ተመልካች መጥፋት ይመራል።",
-            "solutionHeadline": "ግልባጭ-የሚነዳ B-Roll ሞተር",
-            "solution": "ተራኪዎ ታሪካዊ እውነታዎችን በሚናገርበት ጊዜ SceneFlow በጊዜ የተያዙ የሲኒማ ስራዎችን፣ የሰነድ ተደራቢዎችን እና ከድምጽ ግልባጭ ጋር በቀጥታ የተሳሰሩ የአርኪቫል-ቅጥ ቁርጥራቶችን በራስ-ሰር ያመነጫል።"
+            "title": "Archival Cutaways & B-Roll Engine",
+            "frictionHeadline": "Visual Monotony in Long Voiceovers",
+            "friction": "Pairing long-form narrator audio with static stock images leads to rapid viewer drop-off during deep dives.",
+            "solutionHeadline": "Transcript-Driven B-Roll Engine",
+            "solution": "As your narrator discusses historical facts, SceneFlow automatically generates timed cinematic re-enactments, document overlays, and archival-style cutaways tied directly to the audio transcript."
           },
           {
-            "title": "ቃለ መጠይቅ እና መናገር-ዋና እውነታነት",
-            "frictionHeadline": "የማይታወቁ የባለሙያዎች ምስክሮች",
-            "friction": "የተፈጠሩት የታሪክ ተመራማሪዎች፣ መርማሪዎች ወይም ምስክሮች ብዙ ጊዜ ሰው ሰራሽ፣ መንጋጋ መንጋጋ መንሳፈፍ እና ከተፈጥሮ ውጪ የሆነ የአይን ግንኙነት አላቸው።",
-            "solutionHeadline": "የተቆለፉ የባለሙያዎች መገለጫዎች እና የድምጽ ማመሳሰል",
-            "solution": "ከተፈጥሯዊ ማይክሮ አገላለጾች፣ ትክክለኛ የከንፈር-አመሳስል እና ተከታታይነት ያለው የባለብዙ ክፍል ተከታታይ የባለሙያዎች መታወቂያዎች እውነተኛ፣ እምነት የሚጣልባቸው የቃለ መጠይቅ ቅንጅቶችን ያቆዩ።"
+            "title": "Interview & Talking-Head Realism",
+            "frictionHeadline": "Uncanny Expert Witnesses",
+            "friction": "Generated historians, investigators, or witnesses often look artificial, with floating jaw movements and unnatural eye contact.",
+            "solutionHeadline": "Locked Expert Profiles & Vocal Sync",
+            "solution": "Maintain realistic, trustworthy interview setups with natural micro-expressions, accurate lip-sync, and consistent expert identities across multi-part series."
           },
           {
-            "title": "ኢፒሶዲክ ፓሲንግ እና ትረካ ቀጣይነት",
-            "frictionHeadline": "የተቆራረጠ የጊዜ መስመር ማስተካከያ",
-            "friction": "የተራኪን ድምጽ ማመጣጠን፣ ድጋሚ ስራዎችን፣ ማስረጃዎችን ያሳያል፣ እና ውጥረትን መገንባት ባለበት በ40 ደቂቃ ክፍል ውስጥ ይቆማል በባህላዊ NLEs ውስጥ ሳምንታት ይወስዳል።",
-            "solutionHeadline": "ቢት-መጀመሪያ ዶክመንተሪ የቧንቧ መስመር",
-            "solution": "ድራማዊ ውጥረትን አዋቅር፣ አጠራጣሪ ባለበት ማቆም እና ማስረጃ በ Blueprint Studio ውስጥ በእይታ ያሳያል፣ ሙሉ በሙሉ የተገጣጠመ ዋና ፋይል በአንድ እንከን የለሽ ማለፊያ።"
+            "title": "Episodic Pacing & Narrative Continuity",
+            "frictionHeadline": "Fragmented Timeline Editing",
+            "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
+            "solutionHeadline": "Beat-First Documentary Pipeline",
+            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Studio, delivering a fully assembled master file in one seamless pass."
           }
         ],
-        "screeningRoomPreview": "ዘጋቢ ፊልም - Screening Room ቅድመ እይታ"
+        "screeningRoomPreview": "Documentary Production — Screening Room"
+      },
+      {
+        "id": "localization",
+        "title": "Beyond Dubbing. Fully Localized Productions.",
+        "subtitle": "Same storyline, two cities: Houston, Texas and São Paulo, Brazil. SceneFlow doesn't just dub the audio — it localizes settings, cultural references, and on-screen text so each audience sees a production made for them.",
+        "badge": "Localized",
+        "localeToggle": true,
+        "locales": [
+          {
+            "id": "houston",
+            "label": "Houston, TX",
+            "lang": "en"
+          },
+          {
+            "id": "saopaulo",
+            "label": "São Paulo, BR",
+            "lang": "pt"
+          }
+        ],
+        "solutionPillars": [
+          {
+            "title": "Cultural Adaptation, Not Translation",
+            "frictionHeadline": "Dubbing Is Not Localization.",
+            "friction": "Swapping the audio track leaves every cultural reference, location shot, and on-screen graphic targeting the wrong audience.",
+            "solutionHeadline": "Blueprint-Level Localization.",
+            "solution": "Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Studio before a single frame is rendered."
+          },
+          {
+            "title": "Parallel Production Pipelines",
+            "frictionHeadline": "One Region at a Time.",
+            "friction": "Traditional localization is sequential — finish the original, then manually rebuild for each market. Months of delay per region.",
+            "solutionHeadline": "Concurrent Regional Pipelines.",
+            "solution": "Run multiple localized Blueprints in parallel. Each region gets its own production pipeline sharing the same narrative structure but with fully adapted visuals and dialogue."
+          },
+          {
+            "title": "Region-Specific Audience Resonance",
+            "frictionHeadline": "One Script for Every Culture.",
+            "friction": "Humor, pacing, and emotional beats that land in Houston may fall flat in São Paulo. A single script cannot carry both.",
+            "solutionHeadline": "Per-Region Resonance Tuning.",
+            "solution": "Audience Resonance analyzes each localized script against regional demographic profiles, flagging cultural mismatches before production begins."
+          }
+        ],
+        "screeningRoomPreview": "Localized Production Comparison — Screening Room"
       }
     ]
   },

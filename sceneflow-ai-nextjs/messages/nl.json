@@ -1920,251 +1920,181 @@
     ]
   },
   "productionShowcase": {
-    "badge": "Productie Voorbeelden",
-    "title": "Van concept naar scherm:",
-    "titleAccent": "Oneindige mogelijkheden",
-    "subtitle": "Zes openbare producties bewijzen de volledige pijplijn, pre-vis, scène video en SCAISCREENING ROOMTERM beoordeling. Definieer uw concept en laat SPAISCENELLOWTERM omgaan met scriptschrijven, karaktersdocumenten, meertalige audio, visualisatie, videoproductie en publicatie.",
-    "subtitleTagline": "Eén platform. Oneindige mogelijkheden.",
-    "publicProductionsNote": "Elke kaart hieronder is een volledige openbare productie .",
-    "languagesBanner": "Openbare voorbeelden in 7 talen: Engels, Spaans, Tegelijk, Portugees, Hindi, Chinees, Arabisch en Thai.",
-    "explorePipelineCta": "Verken een volledige productie",
-    "explorePipelineHint": "Start met Cinematic Drama hieronder .",
-    "workflowLabel": "Oplossingen",
-    "startProduction": "Start uw productie",
-    "cta": "Start uw productie",
-    "continuityNote": "Series Studio beheert continuïteit",
-    "resonanceNote": "Audience ResonanceTM optimaliseert scripts",
-    "videoLanguagePrompt": "Bekijk deze productie in uw taal",
-    "videoComingSoon": "Dub komt eraan",
-    "videoSoon": "Binnenkort",
-    "introVideoLabel": "Oplossingen",
-    "screeningRoomLabel": "Screening Room",
-    "frictionLabel": "De wrijving",
-    "solutionPillarLabel": "De SAFASCENEFLOWTERM-oplossing",
-    "showSolutionsSection": "Oplossingen tonen",
-    "hideSolutionsSection": "Oplossingen verbergen",
+    "badge": "Production Examples",
+    "title": "See the Full Pipeline",
+    "titleAccent": "in Action",
+    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to final high-resolution video. Walk the Screening Room to compare animatics, individual scenes, and the finished master in multiple languages.",
+    "subtitleTagline": "Long-form productions. Not clips.",
+    "screeningRoomInstruction": "Select Pre-Vis, Scenes, or Final to experience the pipeline. Select a language to hear the dub.",
+    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
+    "explorePipelineCta": "Explore a full production",
+    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
+    "workflowLabel": "Solutions",
+    "startProduction": "Start Your Production",
+    "cta": "Start Your Production",
+    "continuityNote": "Series Studio manages continuity",
+    "resonanceNote": "Audience Resonance™ optimizes scripts",
+    "videoLanguagePrompt": "Watch this production in your language",
+    "videoComingSoon": "Dub coming soon",
+    "videoSoon": "Soon",
+    "frictionLabel": "The Friction",
+    "solutionPillarLabel": "The SceneFlow Solution",
+    "showSolutionsSection": "Show Solutions",
+    "hideSolutionsSection": "Hide Solutions",
     "cards": [
       {
         "id": "drama",
-        "title": "Cinematic Al Drama. Zero Character Drift.",
-        "subtitle": "Verwijder de personages, gebroken dialoog en eindeloze herrollen. Bouw naadloze, multi-karakter lange-vorm verhalen met volledige visuele continuïteit.",
-        "badge": "Series-klaar",
+        "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
+        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the pre-vis animatic, individual scenes, and the final high-resolution master — then switch languages to hear the full dub.",
+        "badge": "Series-Ready",
         "solutionPillars": [
           {
-            "title": "Visuele & karaktersamenhang",
-            "frictionHeadline": "Karakter Drift & Wobbly Sets.",
-            "friction": "Generatieve modellen reset met elke shot... waardoor personage gezichten, outfits en verlichting continu veranderen over scène snijwonden.",
-            "solutionHeadline": "Op grond van de duur van de aan de hand van de aan de hand van de.",
-            "solution": "Definieer master karakterprofielen, omgevingen en visuele stijlen vooraf in STUDIOTTERM. SceneFlow dwingt visuele identiteit over elke render te behouden narratieve onderdompeling."
+            "title": "Visual & Character Consistency",
+            "frictionHeadline": "Character Drift & Wobbly Sets.",
+            "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
+            "solutionHeadline": "Locked Asset Blueprints.",
+            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Studio. SceneFlow enforces visual identity across every render to preserve narrative immersion."
           },
           {
-            "title": "VerhalendeSize & Scene Control",
-            "frictionHeadline": "De 10-seconde Clip Trap.",
-            "friction": "Het bouwen van een film uit losgekoppelde micro-prompts creëert choppy pacing, platte emotie en eindeloze handmatige tijdlijnbewerking.",
-            "solutionHeadline": "Beat- Goederen.",
-            "solution": "Direct op scène niveau, niet het prompt niveau. Structuur dramatische beats, camera bewegingen, en verhaal boog visueel voor het genereren van een enkel frame van video."
+            "title": "Narrative Pacing & Scene Control",
+            "frictionHeadline": "The 10-Second Clip Trap.",
+            "friction": "Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.",
+            "solutionHeadline": "Beat-First Storyboarding.",
+            "solution": "Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video."
           },
           {
-            "title": "Dialoog & audio-afstemming",
-            "frictionHeadline": "Onovertuigende dialoog.",
-            "friction": "Mismatchte dus lip-sync, zwevende mondbewegingen, en losse voice tracks trekken onmiddellijk kijkers uit het drama.",
-            "solutionHeadline": "Geïntegreerde stem- & sync-engine.",
-            "solution": "Dynamische stemprestaties en precieze lip-sync worden rechtstreeks in de videopijplijn gebakken en leveren geloofwaardige dialoog zonder externe post-productiepassen."
+            "title": "Dialogue & Audio Alignment",
+            "frictionHeadline": "Unconvincing Dialogue.",
+            "friction": "Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.",
+            "solutionHeadline": "Integrated Voice & Sync Engine.",
+            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline — delivering believable dialogue without external post-production passes."
           },
           {
-            "title": "Wrijving van de workflow en herrollen vermoeidheid",
+            "title": "Workflow Friction & Reroll Fatigue",
             "frictionHeadline": "Asset Chaos & Endless Rerolls.",
-            "friction": "Het genereren van eensbepalingsfilm betekent meestal het jongleren van 200 AANGENOMEN videobestanden, handmatig Milieuzaken en tientallen verspilde generaties.",
+            "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
             "solutionHeadline": "Automated Studio Pipeline.",
-            "solution": "Van concept tot uiteindelijke master MP4 in één verenigd platform. SFABLUEPRINT STUDIOTERM behandelt story setup, STUDIOTERM automatiseert rendering, en Screening Room levert uw laatste export."
+            "solution": "From concept to final master MP4 in one unified platform. Blueprint Studio handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export."
           }
         ],
-        "screeningRoomPreview": "The Cinematic Drama SJESCREENING ROOMTERM Voorbeeld"
+        "screeningRoomPreview": "The Cinematic Drama — Screening Room"
       },
       {
         "id": "animation",
-        "title": "Jij schrijft de grap. SceneFlow Animeert de Punchline.",
-        "subtitle": "Elimineer stijldrift, stijve beweging, en gebroken timing. Verander hilarische scriptParameters in volledig geanimeerde, stemgesynchroniseerde komedie afleveringen in één naadloze studio.",
-        "badge": "Multi-gewijzigd",
+        "title": "Full-Season Animated Series. One Consistent Art Style.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "badge": "Multi-Style",
         "solutionPillars": [
           {
-            "title": "Stylistische consistentie",
+            "title": "Stylistic Consistency",
             "frictionHeadline": "Style Meltdown.",
-            "friction": "Cartoon en anime stijlen voortdurend warp tussen shots, verschuiven lijn kunst, breken kleuren paletten, en het veranderen van personages in fotorealistische onheilspellende slomp.",
-            "solutionHeadline": "Vergrendelde Art Style EngVIR.",
-            "solution": "Bevries je esthetiek vanaf de eerste lijst. SceneFlow vergrendelt karakterontwerpen, lijngewichten en schaduwmodellen over de hele aflevering zodat uw personages uniek blijven."
+            "friction": "Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.",
+            "solutionHeadline": "Locked Art Style Engine.",
+            "solution": "Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours."
           },
           {
-            "title": "Exaggerated Animatie & Natuurkunde",
+            "title": "Exaggerated Animation & Physics",
             "frictionHeadline": "Stiff & Glitchy Motion.",
-            "friction": "Genererende modellen worstelen met snelle slapstick, dubbel-takes, en squishy cartoon fysica, waardoor high-energy gags in smeltende artefacten.",
-            "solutionHeadline": "Tekenen en te zetten voor het werk.",
-            "solution": "Drive dynamische karakter beweging en expressieve poses zonder te breken geometrie. Meeslepende komedie,srapporten en jokers."
+            "friction": "Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.",
+            "solutionHeadline": "Action & Pose Anchoring.",
+            "solution": "Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control."
           },
           {
-            "title": "Comedic Timing & Ribegrenzer",
-            "frictionHeadline": "Geruïneerde Punchlines.",
-            "friction": "Humor leeft in de pauzes en beat-cuts. Standaard 5-seconde generatieve loops dwingen lastige pacing die grap levering vernietigt.",
-            "solutionHeadline": "Beat Precision Editing.",
-            "solution": "Controle scène pacing naar beneden naar het frame. Pas dramatische pauzes, instelling-tot-punchline timing, en snelle reactie schoten direct binnen de beat-eerste tijdlijn voordat de laatste render."
+            "title": "Comedic Timing & Rhythm",
+            "frictionHeadline": "Ruined Punchlines.",
+            "friction": "Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.",
+            "solutionHeadline": "Beat-Precision Editing.",
+            "solution": "Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render."
           },
           {
-            "title": "Hoog-energiedialoog en vocale synchronisatie",
+            "title": "High-Energy Dialogue & Vocal Sync",
             "frictionHeadline": "Lifeless Puppet Mouths.",
-            "friction": "Generieke AI dialoog voelt plat en mechanisch, het vernietigen van de energie die nodig is voor pittige sitcom scherts.",
+            "friction": "Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.",
             "solutionHeadline": "Dynamic Voice & Expression Sync.",
-            "solution": "Kaart vocal levering direct aan energieke gezichtsprestaties. Dialoog, expressieve mondvormen en komische stemnummers passen naadloos bij maximale komische impact."
+            "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
           }
         ],
-        "screeningRoomPreview": "De geanimeerde komedie SFASCREENING ROOMTERM Voorbeeld"
-      },
-      {
-        "id": "podcast",
-        "title": "Jij bent gastheer van het gesprek. SceneFlow Produceert de show.",
-        "subtitle": "Verwijder statische avatars en handmatige videobewerking. Transformeer scripts of ruwe audio in multi-angle, broadcast-ready video podcasts in één geautomatiseerde pijplijn.",
-        "badge": "Uitzending-klaar",
-        "solutionPillars": [
-          {
-            "title": "Multi speaker & Avatar Identity",
-            "frictionHeadline": "Robot Avatars & verloren identiteit",
-            "friction": "Generated hosts shift uiterlijke mid-episode, staren blanco naar de camera, of niet te vertonen natuurlijke menselijke micro-expressies tijdens het luisteren.",
-            "solutionHeadline": "Vergrendelde gast- en gastprofielen",
-            "solution": "Stel permanente visuele identiteiten vast voor uw co-hosts en terugkerende gasten. SFAISCENEFLOsdelegatie houdt spreker consistentie, natuurlijk oogcontact, en realistische conversationele lichaamstaal tijdens lange-vorm discussies."
-          },
-          {
-            "title": "Multi-camerarichting & Pacing",
-            "frictionHeadline": "Monotone éénhoeken",
-            "friction": "Statische talking-head shots verliezen het vasthouden van het publiek snel, terwijl handmatige camera schakelen over een 30 minuten tijdlijn vereist vervelende frame-voor-frame bezuinigingen.",
-            "solutionHeadline": "Geautomatiseerde multicam-schakeling",
-            "solution": "SceneFlow analyseert de gespreksstroom om automatisch te schakelen tussen host close-ups, gastreacties en breedhoekstudio shots, het leveren van professionele uitzending pacing zonder handmatige tijdlijn bewerken."
-          },
-          {
-            "title": "Context-Aware B-Roll & Visuals",
-            "frictionHeadline": "Visuele monotone & B-rol Knelhalzen",
-            "friction": "Het vinden, genereren en timing relevante visuele hulpmiddelen of B-roll clips voor elk genoemd onderwerp eet uren van post-productie.",
-            "solutionHeadline": "Auto-generated B-roll Cutaways",
-            "solution": "Zoals uw hosts bespreken onderwerpen, SPAISCENELLOWTERM automatisch genereert contextuele filmische beelden, graphics, en scene cutaways precies getimed naar het audio-transcript."
-          },
-          {
-            "title": "Long-Form Audio & Video Synch Krachten",
-            "frictionHeadline": "Audio Drift & Long-Form Render Moe):",
-            "friction": "Het synchroniseren van generatieve video naar 20+ minuten ruwe audio leidt tot lip-sync drift, weergavefouten en gefragmenteerd bestandsbeheer.",
-            "solutionHeadline": "Eind-tot-eind Podcast Pipeline",
-            "solution": "Drop in uw ruwe audio track of script, en SceneFlow behandelt avatar alignment, camera cuts, B-roll integratie, en laatste master MP4-export in een soepele, geautomatiseerde studiopas."
-          }
-        ],
-        "screeningRoomPreview": "De AI-eerste podcast  Voorbeeld"
-      },
-      {
-        "id": "training",
-        "title": "Enterprise-Grade Training Videos. Pre-Vizualisatie geproduceerd in notulen.",
-        "subtitle": "Pit handleidingen, dia's en compliance docs in boeiende, meertalige videomodules met vergrendelde merkidentiteit, vlekkeloze lip-sync, en nul studio overhead.",
-        "badge": "Wereldwijde inzet",
-        "solutionPillars": [
-          {
-            "title": "Samenhang van huidige & merk",
-            "frictionHeadline": "Avatars en Brand Drift",
-            "friction": "Goedkope AI-presentatoren voelen zich robotachtig en onbereikbaar, terwijl merklogo's, kleuren en presentaties inconsistent verschuiven over verschillende trainingsmodules.",
-            "solutionHeadline": "Vergrendelde Executive & Trainer profielen",
-            "solution": "Stel hardnekkige, natuurlijk ogende presentatoren in en vergrendel uw merkrichtlijnen. SceneFlow behoudt visuele identiteit, corporate styling en professionele levering in uw hele cursusbibliotheek."
-          },
-          {
-            "title": "Naadloze wereldwijde lokalisatie",
-            "frictionHeadline": "Gebroken vertalingen en slechte lippensync",
-            "friction": "Het lokaliseren van trainingsinhoud in 10+ talen zorgt meestal voor lastige mondsyncing beraadslaging, robotstemsporen en enorme herbewerkingsknelpunten.",
-            "solutionHeadline": "Native Meertalige Sync Engine",
-            "solution": "Vertaal uw hele trainingsserie in tientallen talen met natuurlijke stemtoon, gelokaliseerde tekstoproepen, en frame-accurate lip-syncing alles in een enkele klik."
-          },
-          {
-            "title": "Geïntegreerde visuele hulpmiddelen en schema's",
-            "frictionHeadline": "Tekst-zware Bore",
-            "friction": "Video's die gewoon praten hoofden snel verliezen de aandacht van de werknemer, terwijl het handmatig animeren van procesdiagrammen, schermopnames, en bullet callouts duurt uren in een editor.",
-            "solutionHeadline": "Contextuele visuele en grafische overlay",
-            "solution": "Zoals uw presentator uitlegt complexe workflows of compliance stappen, SPAISCENEFLOWTERM genereert automatisch getimede diagrammen, belangrijke takeaways, en visuele hulpmiddelen direct op het scherm."
-          },
-          {
-            "title": "Ophalen van snelle inhoud",
-            "frictionHeadline": "Dure Re-shoots & Render-traps",
-            "friction": "Wanneer bedrijfsbeleid of productspecs veranderen, het bijwerken van een 2-minuten sectie van een video vereist meestal het herbouwen en opnieuw uitvoeren van het hele bestand.",
-            "solutionHeadline": "Modular Script-updates",
-            "solution": "Bewerk tekst direct in de script blauwdruk om beleid of procedures direct bij te werken. SceneFlow re-rendert alleen de gewijzigde sectie met behoud van de omliggende timing en videostijl."
-          }
-        ],
-        "screeningRoomPreview": "De ondernemingsopleidingen Voorbeeld"
-      },
-      {
-        "id": "scifi",
-        "title": "Onmogelijke werelden bouwen. Direct ongecompromitteerde Sci-Fi.",
-        "subtitle": "Render complexe visuele effecten, futuristische omgevingen, en alien karakter ontwerpen met frame-voor-frame visuele continuïteit alle binnen een enkele geautomatiseerde pijpleiding.",
-        "badge": "VFX-klaar",
-        "solutionPillars": [
-          {
-            "title": "Continuïteit vanindool",
-            "frictionHeadline": "Geometrie & schaal Glitches",
-            "friction": "Futuristische steden, neon landschappen, en buitenaardse sterrenschepen voortdurend warp, verschuiven texturen, of oplossen in willekeurige visuele ruis tussen camerasneden.",
-            "solutionHeadline": "Vergrendeling van de wereldstaat",
-            "solution": "Definieer de belangrijkste architectuur, verlichtingsschema's en milieuparameters in STUDIOTERM. SceneFlow vergrendelt ruimtelijke geometrie zodat uw instelling consistent blijft van brede opnamen tot strakke ganggevechten."
-          },
-          {
-            "title": "Alien & Creature Design Integriteit",
-            "frictionHeadline": "Morphing Character ontwerpen",
-            "friction": "Niet-humanoïde soorten, cyborgs, en zwaar-prothese personages drijven wild in uiterlijk elke keer dat een nieuwe hoek of schot wordt gegenereerd.",
-            "solutionHeadline": "Vergrendelde Alien Asset profielen",
-            "solution": "Anker niet-menselijke anatomie, pantser details, en mechanische accenten. Handhaaf karakterherkenning in elke high-concept scène zonderolische 3D modeling pijpleidingen."
-          },
-          {
-            "title": "VFX-actie & hoge snelheidsfysica",
-            "frictionHeadline": "Smeltbeweging in actie Gevolgen",
-            "friction": "High-spe2-2pace hondengevechten, energiewapen branden en explosies veroorzaken vaak generatieve modellenhogingen of produceren rommelige visuele artefacten.",
-            "solutionHeadline": "Actie & FX-bewegingsankering",
-            "solution": "Directe dynamische choreografie, snelle camerabewegingen en deeltjeszware actie slagen met behoud van schone randen en realistische baanfysica."
-          },
-          {
-            "title": "Audiovisuele wereldbouw",
-            "frictionHeadline": "Plat audio in hoog-concept werelden",
-            "friction": "Futuristische wapens, ambient starship hums, en buitenaardse spraakpatronen voelen losgekoppeld wanneer handmatig gemonteerd over stille gegenereerde clips.",
-            "solutionHeadline": "Geïntegreerde World-Sound & Voice Sync",
-            "solution": "Uitlijnen aangepaste synthetische dialoog, alien vocalizations, en filmische geluid signalen direct binnen de tijdlijn voor een meeslepende, release-ready master audio mix."
-          }
-        ],
-        "screeningRoomPreview": "Sci-Fi VFX-productie Voorbeeld"
+        "screeningRoomPreview": "The Animated Comedy — Screening Room"
       },
       {
         "id": "documentary",
-        "title": "Maak van Archival Stories Bestselling Documentaires.",
-        "subtitle": "Herschep historische gebeurtenissen, re gemeendheden en expert interview opstellingen met authentieke periode detail, naadloze voiceovers, en nul archief licentiekosten.",
-        "badge": "Periode",
+        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
+        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
+        "badge": "Period-Accurate",
         "solutionPillars": [
           {
-            "title": "Era-specifieke visuele nauwkeurigheid",
-            "frictionHeadline": "Anachronische artefacten",
-            "friction": "Standaard generatieve modellen regelmatig bloeden moderne objecten, smartphone schermen, of onjuiste periode kleding in historische re-enactments.",
-            "solutionHeadline": "Historische Style Vangrails",
-            "solution": "Stel exacte temporele parameters in vanaf 1920 filmkorrel tot 18e-eeuwse garderobe texturen dus elke gegenereerde scene blijft historisch authentiek volksverhaal."
+            "title": "Era-Specific Visual Accuracy",
+            "frictionHeadline": "Anachronistic Artifacts",
+            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
+            "solutionHeadline": "Historical Style Guardrails",
+            "solution": "Set exact temporal parameters — from 1920s film grain to 18th-century wardrobe textures — so every generated scene stays historically authentic."
           },
           {
-            "title": "Archival Cutaways & B-roll-engine",
+            "title": "Archival Cutaways & B-Roll Engine",
             "frictionHeadline": "Visual Monotony in Long Voiceovers",
-            "friction": "Het koppelen van lange-vorm verteller audio met statische voorraad beelden leidt tot snelle kijker drop-off tijdens diepe duiken.",
+            "friction": "Pairing long-form narrator audio with static stock images leads to rapid viewer drop-off during deep dives.",
             "solutionHeadline": "Transcript-Driven B-Roll Engine",
-            "solution": "Zoals uw vertellergesteld historische feiten... genereert STAISCENEFLOWTERM automatisch... getimede filmische re-enactments, documentoverlays... en archival-stijl cutaways... direct verbonden met het audio transcript."
+            "solution": "As your narrator discusses historical facts, SceneFlow automatically generates timed cinematic re-enactments, document overlays, and archival-style cutaways tied directly to the audio transcript."
           },
           {
-            "title": "Interview & Talking-head realisme",
-            "frictionHeadline": "Ongelooflijke deskundigen",
-            "friction": "Gegenereerde historici, onderzoekers, of getuigen zien er vaak kunstmatig, met drijvende kaakbewegingen en onnatuurlijk oogcontact.",
-            "solutionHeadline": "Vergrendelde Expert-profielen &fenoxysynchronisatie",
-            "solution": "Blijf realistische, betrouwbare interviewelozen met natuurlijke micro-expressies, nauwkeurige lipsync en consistente expertidities in meerdere delen."
+            "title": "Interview & Talking-Head Realism",
+            "frictionHeadline": "Uncanny Expert Witnesses",
+            "friction": "Generated historians, investigators, or witnesses often look artificial, with floating jaw movements and unnatural eye contact.",
+            "solutionHeadline": "Locked Expert Profiles & Vocal Sync",
+            "solution": "Maintain realistic, trustworthy interview setups with natural micro-expressions, accurate lip-sync, and consistent expert identities across multi-part series."
           },
           {
             "title": "Episodic Pacing & Narrative Continuity",
-            "frictionHeadline": "Gefragmenteerde tijdlijn bewerken",
-            "friction": "Balancing verteller audio, re-enactments, bewijs onthult, en spanning-opbouw pauzes in een 40-minuten durende aflevering meestal weken in traditionele NLE OPGELEGD.",
-            "solutionHeadline": "Beat-Eerste Gezamenlijke Documentaire Pipeline",
-            "solution": "Structuur dramatische spanning, spannende pauzes, en bewijs onthult visueel binnen SFABLUEPRINT STUDIOTERM, het leveren van een volledig samengesteld masterbestand in een naadloze pas."
+            "frictionHeadline": "Fragmented Timeline Editing",
+            "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
+            "solutionHeadline": "Beat-First Documentary Pipeline",
+            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Studio, delivering a fully assembled master file in one seamless pass."
           }
         ],
-        "screeningRoomPreview": "Documentaire productie  Voorbeeld"
+        "screeningRoomPreview": "Documentary Production — Screening Room"
+      },
+      {
+        "id": "localization",
+        "title": "Beyond Dubbing. Fully Localized Productions.",
+        "subtitle": "Same storyline, two cities: Houston, Texas and São Paulo, Brazil. SceneFlow doesn't just dub the audio — it localizes settings, cultural references, and on-screen text so each audience sees a production made for them.",
+        "badge": "Localized",
+        "localeToggle": true,
+        "locales": [
+          {
+            "id": "houston",
+            "label": "Houston, TX",
+            "lang": "en"
+          },
+          {
+            "id": "saopaulo",
+            "label": "São Paulo, BR",
+            "lang": "pt"
+          }
+        ],
+        "solutionPillars": [
+          {
+            "title": "Cultural Adaptation, Not Translation",
+            "frictionHeadline": "Dubbing Is Not Localization.",
+            "friction": "Swapping the audio track leaves every cultural reference, location shot, and on-screen graphic targeting the wrong audience.",
+            "solutionHeadline": "Blueprint-Level Localization.",
+            "solution": "Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Studio before a single frame is rendered."
+          },
+          {
+            "title": "Parallel Production Pipelines",
+            "frictionHeadline": "One Region at a Time.",
+            "friction": "Traditional localization is sequential — finish the original, then manually rebuild for each market. Months of delay per region.",
+            "solutionHeadline": "Concurrent Regional Pipelines.",
+            "solution": "Run multiple localized Blueprints in parallel. Each region gets its own production pipeline sharing the same narrative structure but with fully adapted visuals and dialogue."
+          },
+          {
+            "title": "Region-Specific Audience Resonance",
+            "frictionHeadline": "One Script for Every Culture.",
+            "friction": "Humor, pacing, and emotional beats that land in Houston may fall flat in São Paulo. A single script cannot carry both.",
+            "solutionHeadline": "Per-Region Resonance Tuning.",
+            "solution": "Audience Resonance analyzes each localized script against regional demographic profiles, flagging cultural mismatches before production begins."
+          }
+        ],
+        "screeningRoomPreview": "Localized Production Comparison — Screening Room"
       }
     ]
   },

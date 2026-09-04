@@ -1920,251 +1920,181 @@
     ]
   },
   "productionShowcase": {
-    "badge": "Gương sản xuất",
-    "title": "Từ khái niệm cho đến màn hình:",
-    "titleAccent": "Khả năng vô hạn",
-    "subtitle": "Sáu sản phẩm công cộng chứng minh được toàn bộ đường ống dẫn tiền giám sát, video hiện trường, và SFAISCENEING SOM. Xác định khái niệm của bạn và để cho SFAISCEEFETERTERM viết kịch bản, thiết seeketh woof, đa ngôn ngữ, hình ảnh hóa, video và xuất bản.",
-    "subtitleTagline": "Một nền tảng. Những khả năng vô hạn.",
-    "publicProductionsNote": "Mỗi lá bài bên dưới là một sản phẩm công khai hoàn chỉnh — chuyển đổi giải pháp và Screening Room tab để đi bộ trong đường ống.",
-    "languagesBanner": "Các thí dụ công cộng trong 7 thứ tiếng: Anh, Tây Ban Nha, Bồ Đào Nha, Ấn Độ, Trung Quốc, Ả Rập và Thái Lan.",
-    "explorePipelineCta": "Khám phá một sản phẩm đầy đủ",
-    "explorePipelineHint": "Bắt đầu với Kịch Điện tử bên dưới — Giải pháp cho cuộn phim mẫu thử, SceneFlow AI cho dòng phỏng vấn đầy đủ.",
-    "workflowLabel": "Giải pháp",
-    "startProduction": "Bắt đầu sản xuất",
-    "cta": "Bắt đầu sản xuất",
-    "continuityNote": "SFAISERESTER quản lý liên tục",
-    "resonanceNote": "SFRIULLLCE RESONTERMTMTM scripts tối ưu",
-    "videoLanguagePrompt": "Xem sản phẩm này trong ngôn ngữ của bạn",
-    "videoComingSoon": "Tôi sẽ đến ngay",
-    "videoSoon": "Sớm thôi",
-    "introVideoLabel": "Giải pháp",
-    "screeningRoomLabel": "DỊCH BỞI VŨ HẠNH, MAI LINH, NGA, HUY TÔ, YUKI, ANN, PHƯƠNG",
-    "frictionLabel": "Ma sát",
-    "solutionPillarLabel": "Giải pháp của nhà báo",
-    "showSolutionsSection": "Giải pháp",
-    "hideSolutionsSection": "Giấu giải pháp",
+    "badge": "Production Examples",
+    "title": "See the Full Pipeline",
+    "titleAccent": "in Action",
+    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to final high-resolution video. Walk the Screening Room to compare animatics, individual scenes, and the finished master in multiple languages.",
+    "subtitleTagline": "Long-form productions. Not clips.",
+    "screeningRoomInstruction": "Select Pre-Vis, Scenes, or Final to experience the pipeline. Select a language to hear the dub.",
+    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
+    "explorePipelineCta": "Explore a full production",
+    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
+    "workflowLabel": "Solutions",
+    "startProduction": "Start Your Production",
+    "cta": "Start Your Production",
+    "continuityNote": "Series Studio manages continuity",
+    "resonanceNote": "Audience Resonance™ optimizes scripts",
+    "videoLanguagePrompt": "Watch this production in your language",
+    "videoComingSoon": "Dub coming soon",
+    "videoSoon": "Soon",
+    "frictionLabel": "The Friction",
+    "solutionPillarLabel": "The SceneFlow Solution",
+    "showSolutionsSection": "Show Solutions",
+    "hideSolutionsSection": "Hide Solutions",
     "cards": [
       {
         "id": "drama",
-        "title": "Kịch truyền hình. Không có ký tự.",
-        "subtitle": "Loại bỏ các ký tự biến dạng, đối thoại bị hỏng, và reroll không ngừng.  AlwaysY: Xây dựng Turin, những câu chuyện đa ngôn ngữ với hình ảnh hoàn toàn liên tục.",
-        "badge": "Name",
+        "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
+        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the pre-vis animatic, individual scenes, and the final high-resolution master — then switch languages to hear the full dub.",
+        "badge": "Series-Ready",
         "solutionPillars": [
           {
-            "title": "Điều kiện & ký tự",
-            "frictionHeadline": "Ký tự Dling & Wobbly Sets.",
-            "friction": "Mô hình sáng tạo tái khởi động với mỗi cảnh quay khuôn mặt nhân vật, trang phục, và ánh sáng để biến dạng liên tục xuyên qua các vết cắt cảnh.",
-            "solutionHeadline": "Đã khóa mục tiêu.",
-            "solution": "Định nghĩa hồ sơ nhân vật bậc thầy, môi trường, và hình ảnh phía trước ở SFAIB LEPINT STOTM. SceneFlow thực thi nhận dạng hình ảnh qua mỗi cách để bảo tồn việc trầm mình."
+            "title": "Visual & Character Consistency",
+            "frictionHeadline": "Character Drift & Wobbly Sets.",
+            "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
+            "solutionHeadline": "Locked Asset Blueprints.",
+            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Studio. SceneFlow enforces visual identity across every render to preserve narrative immersion."
           },
           {
-            "title": "Điều khiển & cảnh tiêu đề",
-            "frictionHeadline": "Cái bẫy 10 giây.",
-            "friction": "Xây dựng một bộ phim từ những bộ phim được tách rời tạo ra những nhịp độ nhanh, cảm xúc phẳng, và sự chỉnh sửa dòng thời gian không ngừng.",
-            "solutionHeadline": "Đánh bại bài đầu tiên.",
-            "solution": "Trực tiếp ở cấp độ hiện trường, không phải cấp độ dấu nhắc. Những nhịp đập đầy ấn tượng, chuyển động của máy quay và câu chuyện được hình dung rõ ràng trước khi tạo ra một khung phim."
+            "title": "Narrative Pacing & Scene Control",
+            "frictionHeadline": "The 10-Second Clip Trap.",
+            "friction": "Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.",
+            "solutionHeadline": "Beat-First Storyboarding.",
+            "solution": "Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video."
           },
           {
-            "title": "Comment",
-            "frictionHeadline": "Không thuyết phục được.",
-            "friction": "Môi không phù hợp, cử động môi trôi nổi, và tách giọng nói ra ngay lập tức kéo người xem ra khỏi vở kịch.",
-            "solutionHeadline": "Động cơ đồng bộ giọng Elster và đồng bộ hoá.",
-            "solution": "Hiệu suất giọng nói động và đặc điểm môi chính xác được hấp thụ trực tiếp vào trong đường ống video - trình bày cuộc đối thoại đáng tin cậy mà không cần thông qua hậu sản."
+            "title": "Dialogue & Audio Alignment",
+            "frictionHeadline": "Unconvincing Dialogue.",
+            "friction": "Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.",
+            "solutionHeadline": "Integrated Voice & Sync Engine.",
+            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline — delivering believable dialogue without external post-production passes."
           },
           {
-            "title": "Comment",
-            "frictionHeadline": "Bộ sản xuất hỗn độn & Vô hạn.",
-            "friction": "Tạo Poetry phim ngắn thường có nghĩa là tung ra 200 tập tin video thô, hướng dẫn nâng cấp, và hàng chục thế hệ bị lãng phí.",
-            "solutionHeadline": "Ống dẫn tự động.",
-            "solution": "Từ khái niệm đến tổng thống MP4 trong một nền tảng thống nhất. SFAIB GỢI Ý Dịch phụ đề: xuất khẩu lần cuối."
+            "title": "Workflow Friction & Reroll Fatigue",
+            "frictionHeadline": "Asset Chaos & Endless Rerolls.",
+            "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
+            "solutionHeadline": "Automated Studio Pipeline.",
+            "solution": "From concept to final master MP4 in one unified platform. Blueprint Studio handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export."
           }
         ],
-        "screeningRoomPreview": "Kịch ảnh điện tử — SceneFlow AI Xem thử"
+        "screeningRoomPreview": "The Cinematic Drama — Screening Room"
       },
       {
         "id": "animation",
-        "title": "Bạn viết đoạn Joke. SceneFlow Hoạt họa của Cú Đấm.",
-        "subtitle": "Loại bỏ sự trôi dạt phong cách, di chuyển cứng nhắc và thời gian bị hỏng. Biến những kịch bản hài hước thành những đoạn hài kịch đầy đủ, giọng nói trong một studio liên tục.",
-        "badge": "Đa chiều",
+        "title": "Full-Season Animated Series. One Consistent Art Style.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "badge": "Multi-Style",
         "solutionPillars": [
           {
-            "title": "Hợp nhất về động lực",
-            "frictionHeadline": "Phong cách Meltdown.",
-            "friction": "Cartoon và các kiểu hình giải trí liên tục thay đổi giữa các bức ảnh, nghệ thuật chuyển giới, phá vỡ bảng màu, và biến các kí tự thành những hình ảnh kỳ lạ.",
-            "solutionHeadline": "Động cơ Art Style.",
-            "solution": "Dừng thẩm mỹ từ khung hình đầu tiên. SceneFlow AI thiết kế khóa, khối lượng đường dây, và làm mờ các mô hình trong toàn bộ tập phim để các nhân vật của bạn luôn đặc biệt là của bạn."
+            "title": "Stylistic Consistency",
+            "frictionHeadline": "Style Meltdown.",
+            "friction": "Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.",
+            "solutionHeadline": "Locked Art Style Engine.",
+            "solution": "Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours."
           },
           {
-            "title": "Hoạt hình và Vật lý",
-            "frictionHeadline": "Name.",
-            "friction": "Các mô hình sinh học phải vật lộn với một cái tát nhanh, một cú móc kép, và vật lý hoạt hình mềm mại, biến những cái bịt miệng năng lượng cao thành đồ cổ tan chảy.",
-            "solutionHeadline": "Đóng.",
-            "solution": "Điều khiển chuyển động ký tự động và tư thế biểu cảm mà không phá vỡ hình học. Trực tiếp là hài kịch vật lý, tự nhiên bị cắt đứt, và những biểu hiện hoang dã với toàn bộ điều khiển chuyển động."
+            "title": "Exaggerated Animation & Physics",
+            "frictionHeadline": "Stiff & Glitchy Motion.",
+            "friction": "Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.",
+            "solutionHeadline": "Action & Pose Anchoring.",
+            "solution": "Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control."
           },
           {
-            "title": "Thời & biểu Quay số",
-            "frictionHeadline": "Những cú đấm hỏng.",
-            "friction": "Hài hước sống trong tạm dừng và nhịp đập. Thông thường 5 giây vòng tạo ra lực đẩy khó xử phá hoại giao hàng.",
-            "solutionHeadline": "Sửa đổi nhịp đập.",
-            "solution": "Cảnh điều khiển đi xuống khung hình. Điều chỉnh tạm dừng kịch tính, thời gian thiết lập để tua lại, và các bức ảnh phản ứng nhanh trực tiếp bên trong dòng thời gian nhịp đầu tiên trước khi làm xong lần cuối."
+            "title": "Comedic Timing & Rhythm",
+            "frictionHeadline": "Ruined Punchlines.",
+            "friction": "Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.",
+            "solutionHeadline": "Beat-Precision Editing.",
+            "solution": "Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render."
           },
           {
-            "title": "Đồng bộ thoại cao và từ vựng",
-            "frictionHeadline": "Miệng chó vô sinh.",
-            "friction": "Hộp thoại AI chung cảm Bury và máy móc, phá hủy năng lượng cần thiết cho việc giải trí nhanh chóng.",
-            "solutionHeadline": "Đồng bộ hoá giọng nói và biểu thức động. Kohathites.",
-            "solution": "Bản đồ gửi trực tiếp đến hiệu suất khuôn mặt năng động. Đế hint: Hộp thoại, hình dạng miệng biểu cảm, và giọng nói chuyển động khớp với nhau một cách rõ ràng để tác động tối đa."
+            "title": "High-Energy Dialogue & Vocal Sync",
+            "frictionHeadline": "Lifeless Puppet Mouths.",
+            "friction": "Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.",
+            "solutionHeadline": "Dynamic Voice & Expression Sync.",
+            "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
           }
         ],
-        "screeningRoomPreview": "Hài kịch hoạt hình — SFAISCENENING ROOM Xem thử"
-      },
-      {
-        "id": "podcast",
-        "title": "Ông chủ động nói chuyện. SceneFlow Tạo ra chương trình.",
-        "subtitle": "Loại bỏ các nhân vật tĩnh và biên tập phim thủ công. Biến các kịch bản hoặc âm thanh thô thành nhiều hình chữ nhật, đã được phát sóng termcast trong một đường ống tự động.",
-        "badge": "Phát thanh- sẵn sàng",
-        "solutionPillars": [
-          {
-            "title": "Nhận diện & Avatar đa ngôn ngữ",
-            "frictionHeadline": "Các Avatar rô bốt và bị mất nhận dạng",
-            "friction": "Các chủ thể chuyển dịch xuất hiện giữa trạng thái ngủ đông, nhìn chằm chằm vào máy quay, hoặc không thể hiện các biểu hiện tự nhiên của con người trong khi lắng nghe.",
-            "solutionHeadline": "Name",
-            "solution": "Thiết lập danh tính hình ảnh liên tục cho đồng nghiệp và lặp lại khách hàng. SceneFlow duy trì sự nhất quán, giao tiếp bằng mắt tự nhiên, và ngôn ngữ cơ thể thực tế trong suốt các cuộc thảo luận dài."
-          },
-          {
-            "title": "Công cụ & xoá",
-            "frictionHeadline": "Một chiều",
-            "friction": "Những bức ảnh nói chuyện thẳng đứng mất tập trung nhanh chóng, trong khi máy quay thủ công chuyển sang thời gian 30 phút yêu cầu cắt từng khung hình tẻ nhạt.",
-            "solutionHeadline": "Chuyển đổi đa chiều tự động",
-            "solution": "SceneFlow AI phân tích dòng hội thoại để tự động bật atrocities giữa các chủ thể cận cảnh, phản ứng khách mời, và các cảnh phòng thu rộng, cung cấp các bước phát sóng chuyên nghiệp mà không cần chỉnh sửa dòng thời gian bằng tay."
-          },
-          {
-            "title": "& Hình ảnh hoá phần mềm B",
-            "frictionHeadline": "Comment",
-            "friction": "Tìm kiếm, tạo ra, và thời gian cho các công cụ thị giác hay phim B-roll cho mỗi chủ đề được đề cập ăn mòn hàng giờ sau sản xuất.",
-            "solutionHeadline": "Tự động cắt giảm B-Roll",
-            "solution": "Khi chủ lying của bạn thảo luận chủ đề, SFAISCEEFETERM tự động tạo ra hình ảnh theo ngữ cảnh, đồ họa và cảnh được cắt thời gian chính xác theo bản ghi âm."
-          },
-          {
-            "title": "Đồng bộ hoá Âm thanh và Ảnh động dài",
-            "frictionHeadline": "Name",
-            "friction": "Đồng bộ hóa video tạo ra 20 phút âm thanh thô dẫn đến sự trôi dạt của môi, tạo ra lỗi, và quản lý tập tin bị phân mảnh.",
-            "solutionHeadline": "Công cụ & xoá",
-            "solution": "Bỏ đoạn âm thanh hay kịch bản thô của bạn, và SFAISCEFETETERM xử lý thẳng hàng, cắt máy ảnh, tích hợp B-roll, và cuối cùng xuất khẩu MP4 trong một studio mịn, tự động."
-          }
-        ],
-        "screeningRoomPreview": "Phiên bản đầu tiên của Podcast — SFAISCENENING ROOM Xem thử"
-      },
-      {
-        "id": "training",
-        "title": "Tàu Enterprise-Grade Trainings. Chuẩn hóa sản xuất trong phút.",
-        "subtitle": "Chuyển hướng dẫn sử dụng, slides, và tuân thủ các bác sĩ thành các mô-đun video đa ngôn ngữ với danh tính thương hiệu bị khóa, môi hoàn hảo, và không phòng thu.",
-        "badge": "Triển khai toàn cục",
-        "solutionPillars": [
-          {
-            "title": "Hợp nhất hiện tại và thương hiệu",
-            "frictionHeadline": "Các Avatar chưa được chọn và bị trượt",
-            "friction": "Những người trình bày AI rẻ tiền cảm thấy máy móc và không thể đến gần, trong khi logo thương hiệu, màu sắc và người trình bày xuất hiện không nhất quán qua các mô-đun đào tạo khác nhau.",
-            "solutionHeadline": "Name",
-            "solution": "Thiết lập các công ty có vẻ kiên trì, tự nhiên và khóa các hướng dẫn của bạn. SceneFlow duy trì danh tính hình ảnh, tập đoàn, và giao hàng chuyên nghiệp cho toàn bộ Most."
-          },
-          {
-            "title": "Địa phương hóa toàn cầu vô hạn",
-            "frictionHeadline": "Comment",
-            "friction": "Việc tìm kiếm nội dung bản địa thành 10+ ngôn ngữ thường tạo ra các tính năng khó xử trong miệng, dấu vết giọng nói robot, và nút thắt cổ chai.",
-            "solutionHeadline": "Name adultery",
-            "solution": "Dịch toàn bộ loạt bài huấn luyện của bạn thành hàng chục ngôn ngữ với giọng nói tự nhiên, tiếng kêu gọi văn bản được địa phương hóa, và chỉnh sửa môi-chính xác - tất cả trong một cú nhấp chuột."
-          },
-          {
-            "title": "Chương trình hỗ trợ trực quan và biểu đồ tích hợp",
-            "frictionHeadline": "Name",
-            "friction": "Những người sống ở đây.",
-            "solutionHeadline": "Phủ trên hiển thị văn bản & đồ họa",
-            "solution": "Như người dẫn chương trình giải thích về dòng chảy công việc phức tạp hoặc những bước tuân theo, SFAISCEFETETERM tự động tạo ra sơ đồ thời gian, chìa khóa, và các công cụ thị giác trực tiếp trên màn hình."
-          },
-          {
-            "title": "Cập nhật nội dung nhanh",
-            "frictionHeadline": "Chèn",
-            "friction": "Khi chính sách công ty hay sản phẩm thay đổi, cập nhật một phần 2 phút của một đoạn phim thường đòi hỏi phải tái xây dựng và chỉnh sửa lại toàn bộ file.",
-            "solutionHeadline": "Comment",
-            "solution": "Sửa đổi văn bản trực tiếp trong bản thiết kế văn lệnh để cập nhật chính sách hoặc thủ tục ngay lập tức. SceneFlow chỉ thay đổi phần trong khi bảo tồn thời gian và cách quay phim."
-          }
-        ],
-        "screeningRoomPreview": "Huấn luyện tập đoàn — SceneFlow AI Xem thử"
-      },
-      {
-        "id": "scifi",
-        "title": "Xây dựng thế giới bất khả thi. Trực tiếp chưa thỏa hiệp Sci-Fi.",
-        "subtitle": "Vẽ các hiệu ứng thị giác phức tạp, môi trường tương lai, và thiết kế nhân vật ngoài hành tinh với khung hình liên tục hình ảnh - tất cả trong một đường ống tự động.",
-        "badge": "VFX sẵn sàng",
-        "solutionPillars": [
-          {
-            "title": "Sự liên tục về môi trường và kiến trúc",
-            "frictionHeadline": "Hình học và Hình học",
-            "friction": "Các thành phố quang hợp, phong cảnh neon, và phi thuyền ngoài hành tinh liên tục làm dịch chuyển, thay đổi kết cấu, hoặc hòa tan thành những tiếng ồn ngẫu nhiên giữa các Ahitub.",
-            "solutionHeadline": "Khoá khoá thế giới",
-            "solution": "Định nghĩa kiến trúc quan trọng, kế hoạch ánh sáng, và các tham số môi trường trong SFAIB LEPINT blotM. SceneFlow khóa không gian hình học vì vậy thiết lập của bạn là phù hợp từ rộng thiết lập các cảnh quay đến các cuộc chiến hành lang chặt chẽ."
-          },
-          {
-            "title": "Người ngoài hành tinh thiết kế sự toàn vẹn",
-            "frictionHeadline": "Thiết kế ký tự Morphing",
-            "friction": "Các loài không phải là con người, các rô bô, và các nhân vật có khả năng phát triển nặng trôi dạt một cách điên cuồng mỗi khi một góc quay mới được tạo ra.",
-            "solutionHeadline": "Name",
-            "solution": "Bộ phận giải phẫu không phải con người, chi tiết về áo giáp, và giọng điệu cơ khí. Duy trì sự nhận diện nhân vật trên tất cả các cảnh quan cao mà không có các đường ống 3D tùy chỉnh."
-          },
-          {
-            "title": "Hành động VFX & Vật lý cao",
-            "frictionHeadline": "Name",
-            "friction": "Những trận đấu không gian tốc độ cao, những vụ nổ vũ khí, và những vụ nổ thường gây ra những mô hình tạo hóa để bôi nhọ khung hình hoặc tạo ra những hiện vật hình ảnh lộn xộn.",
-            "solutionHeadline": "Chuyển động & FX",
-            "solution": "Trực tiếp biên đạo múa, chuyển động nhanh camera, và hoạt động của hạt nặng nhịp đập trong khi bảo tồn các cạnh sạch và vật lý quỹ đạo thực tế."
-          },
-          {
-            "title": "Xây dựng thế giới bằng âm thanh",
-            "frictionHeadline": "Âm thanh phẳng trong các thế giới đối xứng cao",
-            "friction": "Vũ khí hủy diệt, tiếng kêu của phi thuyền xung quanh, và cách nói của người ngoài hành tinh có vẻ như bị ngắt kết nối khi tay được gắn vào các đoạn băng im lặng.",
-            "solutionHeadline": "Đồng bộ hoá Giọng nói và Âm thanh Thế giới tích hợp",
-            "solution": "Sắp xếp các cuộc đối thoại tổng hợp tùy chỉnh, phát thanh từ xa, và các tín hiệu âm thanh điện ảnh trực tiếp trong dòng thời gian cho một hỗn hợp âm thanh phát ra sẵn sàng."
-          }
-        ],
-        "screeningRoomPreview": "Sci-Fi VFX sản xuất — SFAISCENING ROOM Xem thử"
+        "screeningRoomPreview": "The Animated Comedy — Screening Room"
       },
       {
         "id": "documentary",
-        "title": "Biến toàn bộ các câu chuyện thành tài liệu bán chạy nhất.",
-        "subtitle": "Tạo lại các sự kiện lịch sử, diễn lại, và các thiết lập phỏng vấn chuyên gia với chi tiết thời gian xác thực, giọng nói liên tục, và số không chi phí lưu trữ.",
-        "badge": "Thời gian",
+        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
+        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
+        "badge": "Period-Accurate",
         "solutionPillars": [
           {
-            "title": "Độ chính xác hiển thị kỷ nguyên",
-            "frictionHeadline": "Tác phẩm nghệ thuật",
-            "friction": "Các mô hình sáng tạo thường xuyên chảy máu các đối tượng hiện đại, màn hình điện thoại thông minh, hoặc quần áo không đúng thời gian vào các hoạt động lại lịch sử.",
-            "solutionHeadline": "Các hàng rào lịch sử",
-            "solution": "Thiết lập các tham số thời gian chính xác từ năm 1920 đến thế kỷ 18."
+            "title": "Era-Specific Visual Accuracy",
+            "frictionHeadline": "Anachronistic Artifacts",
+            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
+            "solutionHeadline": "Historical Style Guardrails",
+            "solution": "Set exact temporal parameters — from 1920s film grain to 18th-century wardrobe textures — so every generated scene stays historically authentic."
           },
           {
-            "title": "Máy cắt cổ Archival",
-            "frictionHeadline": "Giọng nói dài",
-            "friction": "Kết hợp âm thanh truyền hình dài với hình ảnh cổ phiếu tĩnh dẫn đến sự giảm nhanh của người xem khi lặn sâu.",
-            "solutionHeadline": "Name",
-            "solution": "Khi người kểturalis của bạn thảo luận về các sự kiện lịch sử, SFAISCEFETETERM tự động tạo ra các bản chỉnh sửa thời gian điện ảnh, tài liệu bao gồm, và các loại cắt cổ được gắn trực tiếp vào bản ghi âm."
+            "title": "Archival Cutaways & B-Roll Engine",
+            "frictionHeadline": "Visual Monotony in Long Voiceovers",
+            "friction": "Pairing long-form narrator audio with static stock images leads to rapid viewer drop-off during deep dives.",
+            "solutionHeadline": "Transcript-Driven B-Roll Engine",
+            "solution": "As your narrator discusses historical facts, SceneFlow automatically generates timed cinematic re-enactments, document overlays, and archival-style cutaways tied directly to the audio transcript."
           },
           {
-            "title": "Thực tế phỏng vấn & nói chuyện",
-            "frictionHeadline": "Các Nhân - chứng chuyên gia không khéo léo",
-            "friction": "Các sử gia, điều tra viên hoặc nhân chứng thường trông giống nhân tạo, cử động quai hàm nổi và giao tiếp bằng mắt không tự nhiên.",
-            "solutionHeadline": "Bộ hồ sơ & từ khoá bị khóa",
-            "solution": "Duy trì các thiết lập phỏng vấn thực tế, đáng tin cậy với các biểu hiện tự nhiên, chính xác môi đặc trưng, và xác định danh tính chuyên gia trên các chuỗi đa phần."
+            "title": "Interview & Talking-Head Realism",
+            "frictionHeadline": "Uncanny Expert Witnesses",
+            "friction": "Generated historians, investigators, or witnesses often look artificial, with floating jaw movements and unnatural eye contact.",
+            "solutionHeadline": "Locked Expert Profiles & Vocal Sync",
+            "solution": "Maintain realistic, trustworthy interview setups with natural micro-expressions, accurate lip-sync, and consistent expert identities across multi-part series."
           },
           {
-            "title": "Comment",
-            "frictionHeadline": "Sửa đổi dòng thời gian mảnh",
-            "friction": "Làm cân bằng âm thanh kể chuyện, diễn lại, bằng chứng tiết lộ, và xây dựng căng thẳng dừng lại trong một tập 40 phút thường mất vài tuần bằng ngôn ngữ NLE.",
-            "solutionHeadline": "Comment",
-            "solution": "Sự căng thẳng đầy kịch tính, tạm dừng hồi hộp, và bằng chứng hiển thị trực quan bên trong SFAIB LEPINT SUDIOTM, cung cấp một tập tin tổng hợp đầy đủ trong một lần chuyền."
+            "title": "Episodic Pacing & Narrative Continuity",
+            "frictionHeadline": "Fragmented Timeline Editing",
+            "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
+            "solutionHeadline": "Beat-First Documentary Pipeline",
+            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Studio, delivering a fully assembled master file in one seamless pass."
           }
         ],
-        "screeningRoomPreview": "Sản xuất tài liệu — SceneFlow AI Xem thử"
+        "screeningRoomPreview": "Documentary Production — Screening Room"
+      },
+      {
+        "id": "localization",
+        "title": "Beyond Dubbing. Fully Localized Productions.",
+        "subtitle": "Same storyline, two cities: Houston, Texas and São Paulo, Brazil. SceneFlow doesn't just dub the audio — it localizes settings, cultural references, and on-screen text so each audience sees a production made for them.",
+        "badge": "Localized",
+        "localeToggle": true,
+        "locales": [
+          {
+            "id": "houston",
+            "label": "Houston, TX",
+            "lang": "en"
+          },
+          {
+            "id": "saopaulo",
+            "label": "São Paulo, BR",
+            "lang": "pt"
+          }
+        ],
+        "solutionPillars": [
+          {
+            "title": "Cultural Adaptation, Not Translation",
+            "frictionHeadline": "Dubbing Is Not Localization.",
+            "friction": "Swapping the audio track leaves every cultural reference, location shot, and on-screen graphic targeting the wrong audience.",
+            "solutionHeadline": "Blueprint-Level Localization.",
+            "solution": "Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Studio before a single frame is rendered."
+          },
+          {
+            "title": "Parallel Production Pipelines",
+            "frictionHeadline": "One Region at a Time.",
+            "friction": "Traditional localization is sequential — finish the original, then manually rebuild for each market. Months of delay per region.",
+            "solutionHeadline": "Concurrent Regional Pipelines.",
+            "solution": "Run multiple localized Blueprints in parallel. Each region gets its own production pipeline sharing the same narrative structure but with fully adapted visuals and dialogue."
+          },
+          {
+            "title": "Region-Specific Audience Resonance",
+            "frictionHeadline": "One Script for Every Culture.",
+            "friction": "Humor, pacing, and emotional beats that land in Houston may fall flat in São Paulo. A single script cannot carry both.",
+            "solutionHeadline": "Per-Region Resonance Tuning.",
+            "solution": "Audience Resonance analyzes each localized script against regional demographic profiles, flagging cultural mismatches before production begins."
+          }
+        ],
+        "screeningRoomPreview": "Localized Production Comparison — Screening Room"
       }
     ]
   },

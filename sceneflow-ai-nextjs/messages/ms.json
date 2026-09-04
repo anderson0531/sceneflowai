@@ -1920,251 +1920,181 @@
     ]
   },
   "productionShowcase": {
-    "badge": "Contoh Produksi Fon",
-    "title": "Dari Konsep ke Layar:",
-    "titleAccent": "Kemungkinan Tak Tercela",
-    "subtitle": "Enam produksi publik membuktikan jalur pipa penuh — pra-vis, video adegan, dan BAHASASREENING ROOMTERM review. Diagnosiskan konsep Anda dan biarkan SceneFlow menangani penulisan skrip, desain karakter, audio multi-bahasa, visualisasi, produksi video, dan penerbitan.",
-    "subtitleTagline": "Satu platform. Kemungkinan tak terbatas.",
-    "publicProductionsNote": "Setiap kartu di bawah ini adalah produksi publik lengkap — switch Solutions and SISKRENING ROOMTERM tabs untuk berjalan pipa.",
-    "languagesBanner": "615 Contoh umum kapal dalam 7 bahasa: Inggris, Spanyol, Portugis, Hindi, Tionghoa, Arab, dan Thailand.",
-    "explorePipelineCta": "Uap - Jelajah produksi penuh",
-    "explorePipelineHint": "Dimulai dengan Drama Sinematik di bawah ini — Solusi untuk reel demo, SISREENING ROOMTERM untuk alur kerja review penuh.",
-    "workflowLabel": "Solusi",
-    "startProduction": "Mula Produksi Anda",
-    "cta": "Mula Produksi Anda",
-    "continuityNote": "BAHASATERIES STADIOTERM mengelola kontinuitas",
-    "resonanceNote": "AWAS SFAI HADIRIN RESONSONCETERMTM mengoptimalkan skrip",
-    "videoLanguagePrompt": "Tonton produksi ini dalam bahasa Anda",
-    "videoComingSoon": "Aku akan segera datang",
-    "videoSoon": "Tak lama",
-    "introVideoLabel": "Solusi",
-    "screeningRoomLabel": "Screening Room",
-    "frictionLabel": "Gesekan yang Saleh",
-    "solutionPillarLabel": "Solusi SceneFlow",
-    "showSolutionsSection": "Solusi untuk Memperlihatkan Solusi",
-    "hideSolutionsSection": "Solusi untuk Menyembunyikan",
+    "badge": "Production Examples",
+    "title": "See the Full Pipeline",
+    "titleAccent": "in Action",
+    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to final high-resolution video. Walk the Screening Room to compare animatics, individual scenes, and the finished master in multiple languages.",
+    "subtitleTagline": "Long-form productions. Not clips.",
+    "screeningRoomInstruction": "Select Pre-Vis, Scenes, or Final to experience the pipeline. Select a language to hear the dub.",
+    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
+    "explorePipelineCta": "Explore a full production",
+    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
+    "workflowLabel": "Solutions",
+    "startProduction": "Start Your Production",
+    "cta": "Start Your Production",
+    "continuityNote": "Series Studio manages continuity",
+    "resonanceNote": "Audience Resonance™ optimizes scripts",
+    "videoLanguagePrompt": "Watch this production in your language",
+    "videoComingSoon": "Dub coming soon",
+    "videoSoon": "Soon",
+    "frictionLabel": "The Friction",
+    "solutionPillarLabel": "The SceneFlow Solution",
+    "showSolutionsSection": "Show Solutions",
+    "hideSolutionsSection": "Hide Solutions",
     "cards": [
       {
         "id": "drama",
-        "title": "Cinematic AI Drama. \\\"Artific Aksara Nol\\\".",
-        "subtitle": "Memusnahkan karakter yang berubah-ubah, dialog yang rusak, dan gulungan ulang yang tak berujung. Bina cerita yang tak terlihat, multi-karakter dengan kesinambungan visual yang lengkap.",
-        "badge": "Serie-Siap",
+        "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
+        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the pre-vis animatic, individual scenes, and the final high-resolution master — then switch languages to hear the full dub.",
+        "badge": "Series-Ready",
         "solutionPillars": [
           {
-            "title": "Konsistensi Aksara & Visual Bernama",
-            "frictionHeadline": "Setelan Drift & Beraneka Aksara.",
-            "friction": "Model generatif yang generatif direset ulang dengan setiap shot—causing wajah karakter, pakaian, dan pencahayaan untuk berubah secara terus menerus melintasi pemotongan adegan.",
-            "solutionHeadline": "\\\"Oxile Locked Asset Blueprints\\\".",
-            "solution": "Diafine master karakter profil, lingkungan, dan gaya visual di depan di Blueprint Studio. FFAISCENEFLOWTERM memberlakukan identitas visual di setiap render untuk melestarikan pembenaman naratif."
+            "title": "Visual & Character Consistency",
+            "frictionHeadline": "Character Drift & Wobbly Sets.",
+            "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
+            "solutionHeadline": "Locked Asset Blueprints.",
+            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Studio. SceneFlow enforces visual identity across every render to preserve narrative immersion."
           },
           {
-            "title": "Pengontrol Gambaran & Adegan",
-            "frictionHeadline": "Klip Trap 10 detik.",
-            "friction": "Membina sebuah film dari mikro-prompt yang terputus menciptakan pacing berombak, emosi datar, dan penyuntingan garis waktu manual tak berujung.",
+            "title": "Narrative Pacing & Scene Control",
+            "frictionHeadline": "The 10-Second Clip Trap.",
+            "friction": "Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.",
             "solutionHeadline": "Beat-First Storyboarding.",
-            "solution": "Langsung di tingkat TKP, bukan tingkat prompt. Retak dramatis struktur discurtik, gerakan kamera, dan busur cerita secara visual sebelum menghasilkan satu bingkai video."
+            "solution": "Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video."
           },
           {
-            "title": "Perataan Audio Dialog Glade &",
-            "frictionHeadline": "Dialog tak meyakinkan.",
-            "friction": "Salah lip-sync, gerakan mulut mengambang, dan trek suara terpisah segera menarik pemirsa keluar dari drama.",
+            "title": "Dialogue & Audio Alignment",
+            "frictionHeadline": "Unconvincing Dialogue.",
+            "friction": "Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.",
             "solutionHeadline": "Integrated Voice & Sync Engine.",
-            "solution": "Kinerja suara yang dinamis dan lip-sync yang tepat dipanggang langsung ke jalur pipa video—mengirim dialog yang dapat dipercaya tanpa pas pasca-produksi eksternal."
+            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline — delivering believable dialogue without external post-production passes."
           },
           {
-            "title": "Kesedihan Aliran Hikmah Hikmah Hikmah Kelelahan Pengolahan Kembali",
-            "frictionHeadline": "Aset Aset Chaos & Endless Rerolls.",
-            "friction": "Diagenerasi sebuah film pendek biasanya berarti menyulap 200+ berkas video mentah, upscaling manual, dan puluhan generasi terbuang.",
-            "solutionHeadline": "Studio Pipeline Terautomated.",
-            "solution": "Dari konsep ke akhir master MP4 dalam satu platform terpadu. Blueprint Studio menangani penyiapan cerita, Blueprint Studio rendering otomatis, dan Screening Room Dan memberikan ekspor terakhirmu."
+            "title": "Workflow Friction & Reroll Fatigue",
+            "frictionHeadline": "Asset Chaos & Endless Rerolls.",
+            "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
+            "solutionHeadline": "Automated Studio Pipeline.",
+            "solution": "From concept to final master MP4 in one unified platform. Blueprint Studio handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export."
           }
         ],
-        "screeningRoomPreview": "Film The Cinematic Drama — Screening Room Pratonton"
+        "screeningRoomPreview": "The Cinematic Drama — Screening Room"
       },
       {
         "id": "animation",
-        "title": "Kau menulis lelucon. ♪ SceneFlow ♪ Animasi Punchline.",
-        "subtitle": "Gaya eliminasi hanyut, gerakan kaku, dan waktu yang rusak. Dia mengubah skrip lucu menjadi animasi penuh, episode komedi voice-synced dalam satu studio tanpa jahitan.",
-        "badge": "Vidania Multi-Style",
+        "title": "Full-Season Animated Series. One Consistent Art Style.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "badge": "Multi-Style",
         "solutionPillars": [
           {
-            "title": "Kekonsistenan Stistikis",
-            "frictionHeadline": "(Rakan nyata) nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata nyata.",
-            "friction": "Kartun dan gaya anime terus-menerus melengkung antara tembakan, pergeseran seni garis, memecah palet warna, dan mengubah karakter menjadi fotorealistik uncanny slop.",
-            "solutionHeadline": "Mesin Gaya Seni Terkunci.",
-            "solution": "Bebaskan estetikamu dari bingkai pertama. SISCECENEFLOWTERM mengunci desain karakter, berat garis, dan model shading di seluruh episode sehingga karakter Anda tetap unik Anda."
+            "title": "Stylistic Consistency",
+            "frictionHeadline": "Style Meltdown.",
+            "friction": "Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.",
+            "solutionHeadline": "Locked Art Style Engine.",
+            "solution": "Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours."
           },
           {
-            "title": "Fisika Animasi & Animasi yang Dibesar-besarkan",
+            "title": "Exaggerated Animation & Physics",
             "frictionHeadline": "Stiff & Glitchy Motion.",
-            "friction": "Model-model generatif yang diperjuangkan dengan slapstick cepat, dua dada, dan fisika kartun yang licin, mengubah gaung berenergi tinggi menjadi artefak yang mencair.",
-            "solutionHeadline": "Penambat Aksi & Pose.",
-            "solution": "Gerakan karakter dinamis dan pose ekspresif tanpa memecahkan geometri. komedi fisik yang meninju langsung, pemotongan tiba-tiba, dan ekspresi liar dengan kontrol gerak penuh."
+            "friction": "Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.",
+            "solutionHeadline": "Action & Pose Anchoring.",
+            "solution": "Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control."
           },
           {
-            "title": "Irama Permainan Komedik &",
-            "frictionHeadline": "Infined Punchlines (dalam bahasa Inggris).",
-            "friction": "Humor tinggal di jeda dan beat-cuts. Gelung generatif standar 5 detik memaksa pacing canggung yang menghancurkan pengiriman lelucon.",
-            "solutionHeadline": "Penyuntingan Beat-Precision.",
-            "solution": "Adegan kontrol coaping mondar-mandir ke bingkai. Laraskan jeda dramatis, setup-to-punchline timing, dan tembakan reaksi cepat langsung di dalam beat-first timeline sebelum final render."
+            "title": "Comedic Timing & Rhythm",
+            "frictionHeadline": "Ruined Punchlines.",
+            "friction": "Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.",
+            "solutionHeadline": "Beat-Precision Editing.",
+            "solution": "Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render."
           },
           {
-            "title": "Vocal Sync",
-            "frictionHeadline": "Mulut Boneka tak bernyawa.",
-            "friction": "Dialog AI generik terasa datar dan mekanis, menghancurkan energi yang dibutuhkan untuk snappy sitcom banter.",
-            "solutionHeadline": "Sync Ekspresi Suara & Ekspresi Dinamis.",
-            "solution": "Pemeran vokal Petakan langsung ke kinerja wajah yang energik. Dialog, bentuk mulut ekspresif, dan jejak suara komedi cocok tanpa hasil untuk dampak komet maksimum."
+            "title": "High-Energy Dialogue & Vocal Sync",
+            "frictionHeadline": "Lifeless Puppet Mouths.",
+            "friction": "Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.",
+            "solutionHeadline": "Dynamic Voice & Expression Sync.",
+            "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
           }
         ],
-        "screeningRoomPreview": "Komedi Animasi Animasi — Screening Room &Prapapartextattr"
-      },
-      {
-        "id": "podcast",
-        "title": "Kau Tuan Rumah Percakapan. ♪ ♪ SceneFlow ♪ - Menghasilkan Pertunjukan.",
-        "subtitle": "Eliminasikan avatar statis dan penyuntingan video manual. Jelmakan skrip atau audio mentah menjadi multi-sudut, podcast video siap siaran dalam satu pipa otomatis.",
-        "badge": "Siaran-Siap",
-        "solutionPillars": [
-          {
-            "title": "Identitas Avatar Multi-Pembicara &",
-            "frictionHeadline": "Robotika Avatars & Hilang Identitas",
-            "friction": "Dia menghasilkan tampilan pergeseran host mid-episode, tatapan kosong di kamera, atau gagal untuk menunjukkan ekspresi mikro manusia alami saat mendengarkan.",
-            "solutionHeadline": "Profil Tamu & Host & Hos Terkunci",
-            "solution": "Membentuk identitas visual yang gigih untuk rekan-host dan tamu yang berulang. Bahasa tubuh percakapan yang realistis sepanjang diskusi panjang."
-          },
-          {
-            "title": "Arah Multi Kamera & Pacing",
-            "frictionHeadline": "Single-Angles Monotonous",
-            "friction": "Tembakan bicara-kepala Statik statistik kehilangan retensi penonton dengan cepat, sementara kamera manual beralih melintasi garis waktu 30 menit membutuhkan frame-by-frame yang membosankan dipotong.",
-            "solutionHeadline": "Switching Multi-Jam Terautomatik",
-            "solution": "FFAISCENEFLOWTERM menganalisis aliran percakapan untuk secara otomatis togol antara host close-ups, reaksi tamu, dan tembakan studio bersudut lebar, menyampaikan pacing siaran profesional tanpa penyuntingan garis waktu manual."
-          },
-          {
-            "title": "Visual B-Roll &",
-            "frictionHeadline": "Visual Monotony & B-Roll Bottlenecks",
-            "friction": "Pencarian, penjanaan, dan perhitungan alat bantu visual yang relevan atau klip B-roll untuk setiap topik yang disebutkan memakan jam pasca-produksi.",
-            "solutionHeadline": "Auto-Generated B-Roll Cutaways",
-            "solution": "Saat host Anda membahas topik, SceneFlow secara otomatis menghasilkan visual sinematik kontekstual, grafis, dan adegan yang dipotong tepat waktu untuk transkrip audio."
-          },
-          {
-            "title": "Sync Audio & Video Form Lama",
-            "frictionHeadline": "Drift Audio Android & Kelelahan Jangka Panjang",
-            "friction": "Video generatif sinkronisasi funding ke 20+ menit audio mentah mengarah ke drift lip-sync, kesalahan rendering, dan manajemen file fragmented.",
-            "solutionHeadline": "Barispaip Podcast Berakhir-ke-End",
-            "solution": "Anda atau skrip, dan SFAISCENE dapat menangani jajaran avatar, pemotongan kamera, integrasi B-roll, dan ekspor MP4 master akhir dalam satu pass studio yang halus dan otomatis."
-          }
-        ],
-        "screeningRoomPreview": "The AI-First Podcast — Screening Room Pratonton"
-      },
-      {
-        "id": "training",
-        "title": "Video Pelatihan Enterprise-Grade. \\\"Pra-Vizualisasi\\\" diproduksi di Minutes.",
-        "subtitle": "Buat manual, slide, dan compliance doc untuk terlibat, modul video multi-bahasa dengan identitas merek terkunci, lip-sync tanpa cacat, dan overhead studio nol.",
-        "badge": "Proploia Global Deploy",
-        "solutionPillars": [
-          {
-            "title": "Kekonsisakian & Brand Presenter",
-            "frictionHeadline": "Zodiak Uncanny Avatars & Brand Drift",
-            "friction": "Para presenter AI murahan merasa robotik dan tidak dapat didekati, sementara logo merek, warna, dan penampilan presenter bergeser secara tidak konsisten melintasi modul pelatihan yang berbeda.",
-            "solutionHeadline": "Profil Pelanggan & Pelatih Terkunci Terkunci",
-            "solution": "Mendirikan kegigihan, presenter perusahaan alami dan mengunci panduan merek Anda. FFAISCENEFLOWTERM mempertahankan identitas visual, styling perusahaan, dan pengiriman profesional di seluruh perpustakaan kursus Anda."
-          },
-          {
-            "title": "Lokalisasi Global Tak Lenyap",
-            "frictionHeadline": "Terjemahan-Lip-Sync yang Buruk &",
-            "friction": "Konten pelatihan lokalisasi ke dalam 10+ bahasa biasanya menciptakan mouth-syncing canggung, trek suara robotik, dan edit ulang besar-besaran bottneck.",
-            "solutionHeadline": "Mesin Penyelaras Multibahasa Berbahasa Asli",
-            "solution": "Terjemahkan seluruh seri pelatihan Anda ke dalam puluhan bahasa dengan nada suara alami, panggilan teks lokal, dan frame-akurat lip-syncing—semua dalam satu klik tunggal."
-          },
-          {
-            "title": "Diagram Aid & Visual Terintegrasi Terintegrasi Diagram",
-            "frictionHeadline": "Teks-Heavy Bore",
-            "friction": "Video-video yang hanya berbicara kepala dengan cepat kehilangan perhatian karyawan, sementara secara manual animasi diagram proses, tangkapan layar, dan callout peluru membutuhkan waktu berjam-jam dalam sebuah penyunting.",
-            "solutionHeadline": "Lapisan Grafis Visual & Konteks Konteksal",
-            "solution": "Sebagaimana presenter Anda menjelaskan penjelasan arus kerja yang rumit atau langkah - langkah kepaadaan, FAFAISCENEFLOWTERTERM secara otomatis menghasilkan diagram waktu, kunci kunci, dan bantuan visual secara langsung di layar."
-          },
-          {
-            "title": "Mengemaskinikan Konten Konten yang Mengharukan",
-            "frictionHeadline": "Perangkap Re-Shoots Mahal & Render Traps",
-            "friction": "Ketika kebijakan perusahaan atau spesifikasi produk berubah, memperbarui bagian 2 menit dari sebuah video biasanya membutuhkan pembangunan kembali dan rendering seluruh berkas.",
-            "solutionHeadline": "Pemutakhiran Skrip Modular",
-            "solution": "Teks edit langsung dalam cetak biru skrip untuk memperbarui kebijakan atau prosedur seketika. FFAISCENEFLOWTERM re-renders hanya bagian yang diubah sambil melestarikan waktu dan gaya video di sekitarnya."
-          }
-        ],
-        "screeningRoomPreview": "Pelatihan Corporat — Screening Room * * **"
-      },
-      {
-        "id": "scifi",
-        "title": "Bina Dunia Mustahil. Dia tidak dikompromikan Sci-Fi.",
-        "subtitle": "Terapkan efek visual kompleks, lingkungan futuristik, dan desain karakter alien dengan frame-by-frame visual continuence—semua dalam pipa tunggal otomatis.",
-        "badge": "VFX-Ready",
-        "solutionPillars": [
-          {
-            "title": "Kesinambungan Arsitektur Lingkungan &",
-            "frictionHeadline": "Geometri & Skala Glitches",
-            "friction": "Kota-kota Futuristik, lanskap neon, dan kapal luar angkasa asing terus-menerus melengkung, menggeser tekstur, atau larut menjadi kebisingan visual acak antara pemotongan kamera.",
-            "solutionHeadline": "Penguncian Negara-Dunia",
-            "solution": "Takrifkan arsitektur kunci, skema pencahayaan, dan parameter lingkungan dalam Blueprint Studio. BAHASA SceneFlow mengunci geometri spasial sehingga pengaturan Anda tetap konsistenKemudian dari jarak lebar menetapkan tembakan ke perkelahian koridor ketat."
-          },
-          {
-            "title": "Integritas Reka Cipta &",
-            "frictionHeadline": "Desain Karakter Morphing",
-            "friction": "Spesies non-manusiaoid, cyborg, dan karakter prostetik berat hanyut liar dalam penampilan setiap kali sudut atau tembakan baru dihasilkan.",
-            "solutionHeadline": "Profil Aset Alien Terkunci",
-            "solution": "Anchor anatomi non-manusia, detail armor, dan aksen mekanik. Tetap mempertahankan pengenalan karakter di setiap adegan kontras tinggi tanpa model pipa 3D."
-          },
-          {
-            "title": "AfX Aksi VFX & Fisika BerSpeed Tinggi",
-            "frictionHeadline": "Pergerakan Meleleh dalam Urutan Aksi",
-            "friction": "Perkelahian anjing luar angkasa kecepatan tinggi, kebakaran senjata energi, dan ledakan sering menyebabkan model generatif untuk memar bingkai atau menghasilkan artefak visual yang berantakan.",
-            "solutionHeadline": "Penambaran Pergerakan Aksi & FX FX",
-            "solution": "Koreografi dinamis yang terarah, gerakan kamera cepat, dan aksi-aksi partikel-berat berdetak sambil mengawetkan sisi bersih dan fisika lintasan realistis."
-          },
-          {
-            "title": "Pembangun Dunia Audio-visual",
-            "frictionHeadline": "Audio Rata Rata Rata di Dunia Kontrasep Tinggi",
-            "friction": "Senjata futuristik, hums kapal angkasa ambien, dan pola bicara asing merasa terputus ketika dipasang secara manual atas klip diam yang dihasilkan.",
-            "solutionHeadline": "Penyelarasan Suara World-Sound &",
-            "solution": "Dialog synthetic biasa, vokalisasi alien, dan isyarat suara sinematik langsung dalam garis waktu untuk campuran audio master yang immersif, siap rilis."
-          }
-        ],
-        "screeningRoomPreview": "Produksi VFX Sci-Fi — Screening Room Pratonton"
+        "screeningRoomPreview": "The Animated Comedy — Screening Room"
       },
       {
         "id": "documentary",
-        "title": "Alih Cerita Archival menjadi Dokumenter Terlaris.",
-        "subtitle": "Ia menciptakan ulang peristiwa sejarahupan, re-enactments Scroll, dan penyiapan wawancara ahli dengan detil period yang sahih, pengisi suara tanpa jahitan, dan biaya lisensi arsip nol.",
-        "badge": "Periode-Accurate",
+        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
+        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
+        "badge": "Period-Accurate",
         "solutionPillars": [
           {
-            "title": "Ketepatan Visual Khusus Era-Sersial",
-            "frictionHeadline": "Artefak Anakronistik",
-            "friction": "Model generatif standarf model generatif rutin berdarah benda modern, layar smartphone, atau pakaian periode yang tidak benar ke dalam re-aktifmen historis.",
-            "solutionHeadline": "Balai Pengawal Gaya Historis",
-            "solution": "Diaset parameter temporal tepat—dari 1920-an film biji-bijian ke tekstur lemari pakaian abad ke-18—sehingga setiap adegan yang dihasilkan tetap otentik secara historis."
+            "title": "Era-Specific Visual Accuracy",
+            "frictionHeadline": "Anachronistic Artifacts",
+            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
+            "solutionHeadline": "Historical Style Guardrails",
+            "solution": "Set exact temporal parameters — from 1920s film grain to 18th-century wardrobe textures — so every generated scene stays historically authentic."
           },
           {
-            "title": "Main-Laki-Laki-Lari",
-            "frictionHeadline": "Monoton Visual Visual dalam Suara Lama",
-            "friction": "Pasangan audio narator bentuk panjang dengan gambar stok statis mengarah ke penampil cepat drop-off selama menyelam lepas.",
-            "solutionHeadline": "Mesin B-Roll Penggerak Transkrip",
-            "solution": "Sebagai narator Anda membahas fakta sejarah, SceneFlow secara otomatis menghasilkan waktu sinematik re-enactments, overlay dokumen, dan archival-style cutaways terikat langsung ke transkrip audio."
+            "title": "Archival Cutaways & B-Roll Engine",
+            "frictionHeadline": "Visual Monotony in Long Voiceovers",
+            "friction": "Pairing long-form narrator audio with static stock images leads to rapid viewer drop-off during deep dives.",
+            "solutionHeadline": "Transcript-Driven B-Roll Engine",
+            "solution": "As your narrator discusses historical facts, SceneFlow automatically generates timed cinematic re-enactments, document overlays, and archival-style cutaways tied directly to the audio transcript."
           },
           {
-            "title": "Wawancara & Realisme Kepala Berbicara",
-            "frictionHeadline": "Saksi - Saksi Pakar yang Unik",
-            "friction": "Ahli sejarah, penyelidik, atau saksi sering kali terlihat buatan, dengan gerakan rahang mengambang dan kontak mata yang tidak wajar.",
-            "solutionHeadline": "Profil Ahli Terkunci & Vocal Sync",
-            "solution": "Wawasan realistis, wawancara yang dapat dipercaya setup dengan ekspresi mikro alami, lip-sync akurat, dan identitas ahli konsisten di seluruh multi-bagian seri."
+            "title": "Interview & Talking-Head Realism",
+            "frictionHeadline": "Uncanny Expert Witnesses",
+            "friction": "Generated historians, investigators, or witnesses often look artificial, with floating jaw movements and unnatural eye contact.",
+            "solutionHeadline": "Locked Expert Profiles & Vocal Sync",
+            "solution": "Maintain realistic, trustworthy interview setups with natural micro-expressions, accurate lip-sync, and consistent expert identities across multi-part series."
           },
           {
-            "title": "Kontinuitas Naratif & Pacting Episodik",
-            "frictionHeadline": "Pengeditan Garis Waktu Terfragmentasi",
-            "friction": "Menyeimbangkan suara narator, re-enactments, bukti mengungkapkan, dan ketegangan membangun jeda di episode 40 menit biasanya memakan waktu berminggu-minggu di NLEs tradisional.",
-            "solutionHeadline": "Garis Pipa Dokumen Dokumenter Pertama",
-            "solution": "Tegangan dramatis struktur, jeda yang renggang, dan bukti mengungkapkan secara visual di dalam Blueprint Studio, menyampaikan sebuah berkas induk yang dirakit penuh dalam satu pass tak terbatas."
+            "title": "Episodic Pacing & Narrative Continuity",
+            "frictionHeadline": "Fragmented Timeline Editing",
+            "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
+            "solutionHeadline": "Beat-First Documentary Pipeline",
+            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Studio, delivering a fully assembled master file in one seamless pass."
           }
         ],
-        "screeningRoomPreview": "Produksi Dokumenter Dokumenter — Screening Room Pratonton"
+        "screeningRoomPreview": "Documentary Production — Screening Room"
+      },
+      {
+        "id": "localization",
+        "title": "Beyond Dubbing. Fully Localized Productions.",
+        "subtitle": "Same storyline, two cities: Houston, Texas and São Paulo, Brazil. SceneFlow doesn't just dub the audio — it localizes settings, cultural references, and on-screen text so each audience sees a production made for them.",
+        "badge": "Localized",
+        "localeToggle": true,
+        "locales": [
+          {
+            "id": "houston",
+            "label": "Houston, TX",
+            "lang": "en"
+          },
+          {
+            "id": "saopaulo",
+            "label": "São Paulo, BR",
+            "lang": "pt"
+          }
+        ],
+        "solutionPillars": [
+          {
+            "title": "Cultural Adaptation, Not Translation",
+            "frictionHeadline": "Dubbing Is Not Localization.",
+            "friction": "Swapping the audio track leaves every cultural reference, location shot, and on-screen graphic targeting the wrong audience.",
+            "solutionHeadline": "Blueprint-Level Localization.",
+            "solution": "Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Studio before a single frame is rendered."
+          },
+          {
+            "title": "Parallel Production Pipelines",
+            "frictionHeadline": "One Region at a Time.",
+            "friction": "Traditional localization is sequential — finish the original, then manually rebuild for each market. Months of delay per region.",
+            "solutionHeadline": "Concurrent Regional Pipelines.",
+            "solution": "Run multiple localized Blueprints in parallel. Each region gets its own production pipeline sharing the same narrative structure but with fully adapted visuals and dialogue."
+          },
+          {
+            "title": "Region-Specific Audience Resonance",
+            "frictionHeadline": "One Script for Every Culture.",
+            "friction": "Humor, pacing, and emotional beats that land in Houston may fall flat in São Paulo. A single script cannot carry both.",
+            "solutionHeadline": "Per-Region Resonance Tuning.",
+            "solution": "Audience Resonance analyzes each localized script against regional demographic profiles, flagging cultural mismatches before production begins."
+          }
+        ],
+        "screeningRoomPreview": "Localized Production Comparison — Screening Room"
       }
     ]
   },

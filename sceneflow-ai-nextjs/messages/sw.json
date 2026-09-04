@@ -1920,251 +1920,181 @@
     ]
   },
   "productionShowcase": {
-    "badge": "Mifano ya uzalishaji",
-    "title": "Kutoka kwa mtazamo wa skrini:",
-    "titleAccent": "Uwezekano wa mwisho",
-    "subtitle": "Uzalishaji sita wa umma unathibitisha bomba kamili - kabla ya kuangalia, video ya eneo, na ukaguzi wa Screening Room. Eleza dhana yako na kuruhusu SceneFlow kushughulikia scriptwriting, kubuni tabia, sauti ya lugha nyingi, taswira, uzalishaji wa video, na kuchapisha.",
-    "subtitleTagline": "Jukwaa moja. uwezekano usio wa kawaida.",
-    "publicProductionsNote": "Kila kadi hapa chini ni uzalishaji kamili wa umma - kubadili Solutions na tabo za Screening Room kutembea bomba.",
-    "languagesBanner": "Mifano ya umma meli katika lugha 7: Kiingereza, Kihispania, Kireno, Kihindi, Kichina, Kiarabu, na Thai.",
-    "explorePipelineCta": "Kuchunguza uzalishaji kamili",
-    "explorePipelineHint": "Anza na Drama ya Cinematic hapa chini - Suluhisho la reel ya demo, Screening Room kwa kazi kamili ya ukaguzi.",
-    "workflowLabel": "Suluhisho la Solutions Solutions",
-    "startProduction": "Kuanza uzalishaji wako",
-    "cta": "Kuanza uzalishaji wako",
-    "continuityNote": "Series Studio yaendelea na shughuli zake",
-    "resonanceNote": "Audience ResonanceTM inaboresha maandiko",
-    "videoLanguagePrompt": "Angalia hii katika lugha yako",
-    "videoComingSoon": "DPP awasili haraka",
-    "videoSoon": "Haraka haraka haraka",
-    "introVideoLabel": "Suluhisho la Solutions Solutions",
-    "screeningRoomLabel": "N N N N",
-    "frictionLabel": "Ya Friction",
-    "solutionPillarLabel": "Suluhisho la chini",
-    "showSolutionsSection": "Kuonyesha Solutions",
-    "hideSolutionsSection": "Ufumbuzi wa ufumbuzi",
+    "badge": "Production Examples",
+    "title": "See the Full Pipeline",
+    "titleAccent": "in Action",
+    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to final high-resolution video. Walk the Screening Room to compare animatics, individual scenes, and the finished master in multiple languages.",
+    "subtitleTagline": "Long-form productions. Not clips.",
+    "screeningRoomInstruction": "Select Pre-Vis, Scenes, or Final to experience the pipeline. Select a language to hear the dub.",
+    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
+    "explorePipelineCta": "Explore a full production",
+    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
+    "workflowLabel": "Solutions",
+    "startProduction": "Start Your Production",
+    "cta": "Start Your Production",
+    "continuityNote": "Series Studio manages continuity",
+    "resonanceNote": "Audience Resonance™ optimizes scripts",
+    "videoLanguagePrompt": "Watch this production in your language",
+    "videoComingSoon": "Dub coming soon",
+    "videoSoon": "Soon",
+    "frictionLabel": "The Friction",
+    "solutionPillarLabel": "The SceneFlow Solution",
+    "showSolutionsSection": "Show Solutions",
+    "hideSolutionsSection": "Hide Solutions",
     "cards": [
       {
         "id": "drama",
-        "title": "Michezo ya kuigiza. Maelezo ya jumla ya Drift.",
-        "subtitle": "Kuondoa wahusika wa morphing, mazungumzo yaliyovunjika, na rerolls zisizo na mwisho. Kujenga hadithi za fomu ya muda mrefu na mwendelezo kamili wa kuona.",
-        "badge": "Mfululizo wa Kusoma",
+        "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
+        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the pre-vis animatic, individual scenes, and the final high-resolution master — then switch languages to hear the full dub.",
+        "badge": "Series-Ready",
         "solutionPillars": [
           {
-            "title": "Uwezo wa Visual & Character",
-            "frictionHeadline": "Muundo wa Drift & Wobbly Sets.",
-            "friction": "Mifano ya kweli ya makazi na kila risasi-kutumia nyuso za tabia, outfits, na taa kwa morph kuendelea katika kupunguzwa kwa eneo.",
-            "solutionHeadline": "Akaunti za benki zilizosajiliwa.",
-            "solution": "Eleza maelezo ya tabia ya bwana, mazingira, na mitindo ya kuona mbele katika Blueprint Studio. SceneFlow inatekeleza utambulisho wa kuona katika kila mtoaji kuhifadhi kuzamishwa kwa hadithi."
+            "title": "Visual & Character Consistency",
+            "frictionHeadline": "Character Drift & Wobbly Sets.",
+            "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
+            "solutionHeadline": "Locked Asset Blueprints.",
+            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Studio. SceneFlow enforces visual identity across every render to preserve narrative immersion."
           },
           {
-            "title": "Udhibiti wa Kiufundi na Usimamizi wa Matukio",
-            "frictionHeadline": "Vipande vya 10 vya pilipili.",
-            "friction": "Kujenga filamu nje ya zisizokatwa micro-prompts inajenga choppy pacing, hisia gorofa, na uhariri wa muda wa mwongozo usio na mwisho.",
-            "solutionHeadline": "Hadithi ya kwanza.",
-            "solution": "Moja kwa moja katika ngazi ya eneo, si ngazi ya haraka. Muundo mkubwa beats, kamera harakati, na hadithi arcs Visually kabla ya kuzalisha sura moja ya video."
+            "title": "Narrative Pacing & Scene Control",
+            "frictionHeadline": "The 10-Second Clip Trap.",
+            "friction": "Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.",
+            "solutionHeadline": "Beat-First Storyboarding.",
+            "solution": "Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video."
           },
           {
-            "title": "Majadiliano na Utambuzi wa Sauti",
-            "frictionHeadline": "Majadiliano yasiyo ya uhakika.",
-            "friction": "Mismatched mdomo-sync, floating mouth harakati, na detached sauti nyimbo mara moja kuvuta watazamaji nje ya mchezo.",
-            "solutionHeadline": "Sauti ya sauti na injini ya Sync.",
-            "solution": "Utendaji wa sauti ya nguvu na mdomo sahihi unachomwa moja kwa moja kwenye bomba la video-kutoa mazungumzo ya kuaminika bila kupita baada ya uzalishaji wa nje."
+            "title": "Dialogue & Audio Alignment",
+            "frictionHeadline": "Unconvincing Dialogue.",
+            "friction": "Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.",
+            "solutionHeadline": "Integrated Voice & Sync Engine.",
+            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline — delivering believable dialogue without external post-production passes."
           },
           {
-            "title": "Kazi ya Friction & Reroll Fatigue",
-            "frictionHeadline": "Mali Chaos & Rerolls zisizo na mwisho.",
-            "friction": "Kuzalisha filamu fupi kwa kawaida inamaanisha kukusanya faili za video za 200 +, kuongeza mwongozo, na vizazi vingi vilivyopotea.",
-            "solutionHeadline": "Mradi wa Bomba la Studio.",
-            "solution": "Kutoka dhana hadi bwana wa mwisho MP4 katika jukwaa moja la umoja. Blueprint Studio inashughulikia kuanzisha hadithi, Production Studio kutoa, na Screening Room Kutoa bidhaa yako ya mwisho."
+            "title": "Workflow Friction & Reroll Fatigue",
+            "frictionHeadline": "Asset Chaos & Endless Rerolls.",
+            "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
+            "solutionHeadline": "Automated Studio Pipeline.",
+            "solution": "From concept to final master MP4 in one unified platform. Blueprint Studio handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export."
           }
         ],
-        "screeningRoomPreview": "Maonyesho ya Televisheni ya Screening Room Preview Preview Preview Preview"
+        "screeningRoomPreview": "The Cinematic Drama — Screening Room"
       },
       {
         "id": "animation",
-        "title": "Unaandika kwa furaha. Viwango vya chini Bonyeza kitufe cha Punchline.",
-        "subtitle": "Kuondoa mtindo drift, harakati ngumu, na muda kuvunjwa. Turn script hilarious katika animated kikamilifu, sauti-synced comedy matukio katika studio moja seamless.",
+        "title": "Full-Season Animated Series. One Consistent Art Style.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {
-            "title": "Ushirikiano wa Stylistic",
-            "frictionHeadline": "Aina ya Meltdown.",
-            "friction": "Cartoon na anime mitindo mara kwa mara warp kati ya shots, shifting line sanaa, kuvunja palettes rangi, na morphing wahusika katika photorealistic uncanny slop.",
-            "solutionHeadline": "Mashine ya mtindo wa sanaa.",
-            "solution": "Unda aesthetics yako kutoka kwa sura ya kwanza. SceneFlow inafunga miundo ya tabia, uzito wa mstari, na mifano ya shading katika sehemu nzima ili wahusika wako wakae kipekee yako."
+            "title": "Stylistic Consistency",
+            "frictionHeadline": "Style Meltdown.",
+            "friction": "Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.",
+            "solutionHeadline": "Locked Art Style Engine.",
+            "solution": "Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours."
           },
           {
-            "title": "Uhuishaji na Fizikia",
-            "frictionHeadline": "Hatua ya Stiff & Glitchy.",
-            "friction": "Mifano halisi mapambano na kofi haraka, kuchukua mara mbili, na squishy cartoon fizikia, kugeuka gags high-energy katika kuyeyuka artifacts.",
-            "solutionHeadline": "Hatua & Pose Anchoring.",
-            "solution": "Kuendesha harakati ya tabia ya nguvu na maonyesho bila kuvunja geometry. Moja kwa moja punchy kimwili comedy, cutaways ghafla, na maneno pori na udhibiti kamili mwendo."
+            "title": "Exaggerated Animation & Physics",
+            "frictionHeadline": "Stiff & Glitchy Motion.",
+            "friction": "Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.",
+            "solutionHeadline": "Action & Pose Anchoring.",
+            "solution": "Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control."
           },
           {
-            "title": "Mchezo wa Timing & Rhythm",
-            "frictionHeadline": "Kuharibiwa Punchlines.",
-            "friction": "Humor anaishi katika pauses na beats. Standard 5-second generative loops nguvu awkward pacing kwamba uharibifu joke utoaji.",
-            "solutionHeadline": "Mapitio ya Beat-Precision.",
-            "solution": "Udhibiti wa eneo la kutua chini ya sura. Kurekebisha pause kubwa, wakati wa kuanzisha-kwa-punchline, na majibu ya haraka shots moja kwa moja ndani ya mstari wa kwanza wa kuwapiga kabla ya kutoa mwisho."
+            "title": "Comedic Timing & Rhythm",
+            "frictionHeadline": "Ruined Punchlines.",
+            "friction": "Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.",
+            "solutionHeadline": "Beat-Precision Editing.",
+            "solution": "Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render."
           },
           {
-            "title": "Mazungumzo ya Nishati ya Juu na Sync ya Vocal",
-            "frictionHeadline": "Nywele zisizo na harufu.",
-            "friction": "Generic AI mazungumzo anahisi gorofa na mitambo, kuharibu nishati zinazohitajika kwa ajili ya snappy sitcom banter.",
-            "solutionHeadline": "Sauti ya nguvu na maneno ya Sync.",
-            "solution": "Ramani utoaji sauti moja kwa moja kwa utendaji nguvu usoni. Mazungumzo, maumbo ya mdomo wazi, na nyimbo za sauti za comedic zinalingana kwa athari ya juu ya comedic."
+            "title": "High-Energy Dialogue & Vocal Sync",
+            "frictionHeadline": "Lifeless Puppet Mouths.",
+            "friction": "Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.",
+            "solutionHeadline": "Dynamic Voice & Expression Sync.",
+            "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
           }
         ],
-        "screeningRoomPreview": "Michezo ya Kubahatisha - Screening Room Preview Preview Preview Preview"
-      },
-      {
-        "id": "podcast",
-        "title": "Wewe tu haja ya mazungumzo. Viwango vya chini Inaonyesha show.",
-        "subtitle": "Ondoa avatars tuli na uhariri wa video ya mwongozo. Badilisha scripts au sauti ghafi katika podcasts mbalimbali, matangazo-tayari video katika bomba moja ya automatiska.",
-        "badge": "Matangazo ya Kusoma",
-        "solutionPillars": [
-          {
-            "title": "Multi-Speaker & Avatar Identity",
-            "frictionHeadline": "Robotic Avatars & Lost Identity",
-            "friction": "Majeshi yaliyozalishwa hubadilishana kuonekana katikati ya epiisode, kwa wazi kwenye kamera, au kushindwa kuonyesha maelezo ya asili ya kibinadamu wakati wa kusikiliza.",
-            "solutionHeadline": "Wasifu wa Host & Guest",
-            "solution": "Weka vitambulisho vya kuona vinavyoendelea kwa majeshi yako ya ushirikiano na wageni wa mara kwa mara. SceneFlow inashikilia msimamo wa msemaji, mawasiliano ya jicho la asili, na lugha ya mwili wa mazungumzo katika majadiliano ya muda mrefu."
-          },
-          {
-            "title": "Multi-Camera Mwelekeo & Pacing",
-            "frictionHeadline": "Single-Angles ya kipekee",
-            "friction": "Shots za kichwa cha kuzungumza hupoteza uhifadhi wa watazamaji haraka, wakati kamera ya mwongozo inachukua muda wa dakika ya 30 inahitaji kupunguzwa kwa sura-kwa-frame.",
-            "solutionHeadline": "Multi-Cam Kubadilisha",
-            "solution": "SceneFlow inachambua mtiririko wa mazungumzo ili kuingiza moja kwa moja kati ya mwenyeji wa karibu, athari za wageni, na shots za studio pana, kutoa pacing ya matangazo ya kitaaluma bila uhariri wa ratiba ya mwongozo."
-          },
-          {
-            "title": "Mazingira ya Aware B-Roll & Visuals",
-            "frictionHeadline": "Maonyesho ya Visual Monotony & B-Roll Bottlenecks",
-            "friction": "Kutafuta, kuzalisha, na wakati unaofaa misaada ya kuona au sehemu za B-roll kwa kila mada iliyotajwa hula masaa ya baada ya uzalishaji.",
-            "solutionHeadline": "Magari ya B-Roll Cutaways",
-            "solution": "Kama majeshi yako yanajadili mada, SceneFlow moja kwa moja inazalisha picha za sinema za mazingira, graphics, na cutaways za eneo zilizowekwa kwa usahihi kwa nakala ya sauti."
-          },
-          {
-            "title": "Sauti ya muda mrefu na video ya Sync",
-            "frictionHeadline": "Sauti ya Drift & Long-Form Render Fatigue",
-            "friction": "Kuunganisha video ya jeni kwa dakika 20 + ya sauti mbichi husababisha drift ya mdomo-sync, kutoa makosa, na usimamizi wa faili iliyogawanyika.",
-            "solutionHeadline": "Mwisho wa Podcast Pipeline",
-            "solution": "Weka katika wimbo wako wa sauti ghafi au script, na SceneFlow inashughulikia usawa wa avatar, kupunguzwa kwa kamera, ushirikiano wa B-roll, na usafirishaji wa mwisho wa MP4 katika njia moja ya studio ya laini, ya automatiska."
-          }
-        ],
-        "screeningRoomPreview": "Podcast ya kwanza ya AI - Screening Room Preview Preview Preview Preview"
-      },
-      {
-        "id": "training",
-        "title": "Video za mafunzo ya biashara. Upandikizaji wa awali unafanywa kwa dakika.",
-        "subtitle": "Badilisha miongozo, slides, na docs kufuata katika modules ya kushiriki, multi-lingual video na utambulisho wa brand imefungwa, lip-sync, na zero studio overhead.",
-        "badge": "Kazi ya Global",
-        "solutionPillars": [
-          {
-            "title": "Uwezo wa Brand & Brand",
-            "frictionHeadline": "Michezo ya Avatars & Brand Drift",
-            "friction": "Watangazaji wa bei nafuu wa AI wanahisi roboti na isiyoweza kufikiwa, wakati nembo za chapa, rangi, na maonyesho ya watangazaji yanabadilika kwa njia tofauti katika moduli tofauti za mafunzo.",
-            "solutionHeadline": "Wasifu wa Mtendaji na Mkufunzi",
-            "solution": "Weka watangazaji wa kampuni wanaoendelea, wa asili na kufunga miongozo yako ya brand. SceneFlow inashikilia utambulisho wa kuona, mtindo wa kampuni, na utoaji wa kitaaluma katika maktaba yako yote ya kozi."
-          },
-          {
-            "title": "Makazi ya Kimataifa ya Seamless",
-            "frictionHeadline": "Tafsiri mbaya na mbaya ya Lip-Sync",
-            "friction": "Kuingiza maudhui ya mafunzo katika lugha za 10 + kwa kawaida huunda vichocheo vya mdomo, nyimbo za sauti za roboti, na vikwazo vikubwa vya kuhariri tena.",
-            "solutionHeadline": "Injini ya Multilingual Sync",
-            "solution": "Tafsiri mfululizo wako mzima wa mafunzo katika lugha kadhaa na sauti ya sauti ya asili, wito wa maandishi ya ndani, na syncing mdomo-wote kwa click moja."
-          },
-          {
-            "title": "Kuunganishwa Visual Aids & michoro",
-            "frictionHeadline": "Mwandishi wa kitabu cha ‘Heavy Bore’",
-            "friction": "Video ambazo zinazungumza tu vichwa hupoteza tahadhari ya wafanyakazi, wakati michoro ya mchakato wa kuimarisha, kukamata skrini, na kupiga risasi inachukua masaa katika mhariri.",
-            "solutionHeadline": "Mtazamo wa Visual & Graphic Overlay",
-            "solution": "Kama mtangazaji wako anaelezea kazi ngumu au hatua za kufuata, SceneFlow moja kwa moja inazalisha michoro ya muda, takeaways muhimu, na misaada ya kuona moja kwa moja kwenye skrini."
-          },
-          {
-            "title": "Maudhui ya haraka",
-            "frictionHeadline": "Gharama ya Re-Shoots & Render Traps",
-            "friction": "Wakati sera ya kampuni au bidhaa zinabadilika, section sehemu ya dakika ya 2 ya video kwa kawaida inahitaji kujenga upya na kurekebisha faili nzima.",
-            "solutionHeadline": "Mabadiliko ya script",
-            "solution": "Badilisha maandishi moja kwa moja katika mpango wa maandishi ili kusasisha sera au taratibu mara moja. SceneFlow inabadilisha sehemu tu iliyobadilishwa wakati wa kuhifadhi muda na mtindo wa video."
-          }
-        ],
-        "screeningRoomPreview": "Mafunzo ya Kampuni - Screening Room Preview Preview Preview Preview"
-      },
-      {
-        "id": "scifi",
-        "title": "Kujenga ulimwengu usiowezekana. Moja kwa moja uncompromised Sci-Fi.",
-        "subtitle": "Chini ya athari ngumu za kuona, mazingira ya baadaye, na miundo ya tabia ya wageni na mwendelezo wa sura-kwa-frame-yote ndani ya bomba moja la automatiska.",
-        "badge": "Mapitio ya VFX",
-        "solutionPillars": [
-          {
-            "title": "Ufuatiliaji wa Mazingira na Usanifu",
-            "frictionHeadline": "Geometry na kiwango cha Glitches",
-            "friction": "Miji ya Futuristic, mandhari ya neon, na nyota za kigeni mara kwa mara warp, mabadiliko ya textures, au kufuta katika kelele random Visual kati ya kupunguzwa kamera.",
-            "solutionHeadline": "Dunia ya Locking",
-            "solution": "Eleza usanifu muhimu, miradi ya taa, na vigezo vya mazingira katika Blueprint Studio. SceneFlow lock anga geometry hivyo kuweka yako anakaa thabiti kutoka shots kubwa kuanzisha kwa mapambano tight ukanda."
-          },
-          {
-            "title": "Ubunifu wa ubunifu na ubunifu wa ubunifu",
-            "frictionHeadline": "Rangi ya Rangi Designs",
-            "friction": "Aina zisizo za kibinadamu, cyborgs, na wahusika nzito-pro sisthetic drift wildly katika kuonekana kila wakati angle mpya au risasi ni yanayotokana.",
-            "solutionHeadline": "Maelezo ya mali ya kigeni",
-            "solution": "Anchor nonhuman anatomy, maelezo ya silaha, na accents mitambo. Weka utambuzi wa tabia katika kila eneo la hali ya juu bila mabomba ya mfano wa 3D."
-          },
-          {
-            "title": "VFX Action & Fizikia ya Juu",
-            "frictionHeadline": "Kupunguza mwendo katika hatua za hatua",
-            "friction": "High-speed nafasi mbwafights, moto wa silaha ya nishati, na milipuko mara nyingi kusababisha mifano ya generative kwa sura smear au kuzalisha mabaki ya Visual messy.",
-            "solutionHeadline": "Hatua ya FX Motion Anchoring",
-            "solution": "Choreography ya moja kwa moja, harakati za kamera za haraka, na hatua ya kuunganisha sehemu wakati wa kuhifadhi makali safi na fizikia ya kweli ya trajectory."
-          },
-          {
-            "title": "Audio-Visual Kujenga Dunia",
-            "frictionHeadline": "Sauti ya sauti katika ulimwengu wa juu",
-            "friction": "Silaha za Futuristic, nyota ya kawaida hums, na mifumo ya hotuba ya kigeni kujisikia kukatwa wakati manually zimefungwa juu ya clips kimya yanayotokana.",
-            "solutionHeadline": "Kuunganisha Sauti ya Dunia na Sauti ya Sync",
-            "solution": "Align mazungumzo ya desturi ya synthetic, sauti za nje, na cues za sauti za sinema moja kwa moja ndani ya muda wa mchanganyiko wa sauti ya immersive, tayari bwana."
-          }
-        ],
-        "screeningRoomPreview": "Uzalishaji wa Sci-Fi VFX - Screening Room Preview Preview Preview Preview"
+        "screeningRoomPreview": "The Animated Comedy — Screening Room"
       },
       {
         "id": "documentary",
-        "title": "Badilisha Hadithi za Archival katika Nyaraka za Bestselling.",
-        "subtitle": "Recreate matukio ya kihistoria, re-enactments, na mipangilio ya mahojiano ya mtaalam na maelezo ya kipindi halisi, voiceovers iliyofumwa, na ada ya leseni ya hati ya sifuri.",
-        "badge": "Mkutano wa dharura",
+        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
+        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
+        "badge": "Period-Accurate",
         "solutionPillars": [
           {
-            "title": "Usahihi wa Visual",
-            "frictionHeadline": "Sanaa ya Anachronistic",
-            "friction": "Mifano ya kawaida ya jeni huvuja vitu vya kisasa, skrini za smartphone, au mavazi ya kipindi kisicho sahihi katika kumbukumbu za kihistoria.",
-            "solutionHeadline": "Mavazi ya kihistoria ya walinzi",
-            "solution": "Weka vigezo halisi vya muda-kutoka kwa nafaka ya filamu ya 1920 hadi maandiko ya WARDROBE ya karne ya 18-hivyo kila eneo linalozalishwa linabaki kuwa halisi kihistoria."
+            "title": "Era-Specific Visual Accuracy",
+            "frictionHeadline": "Anachronistic Artifacts",
+            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
+            "solutionHeadline": "Historical Style Guardrails",
+            "solution": "Set exact temporal parameters — from 1920s film grain to 18th-century wardrobe textures — so every generated scene stays historically authentic."
           },
           {
             "title": "Archival Cutaways & B-Roll Engine",
-            "frictionHeadline": "Monotony ya Visual katika Sauti za Long",
-            "friction": "Kuchanganya sauti ya msimuliaji wa muda mrefu na picha za hisa za tuli husababisha kushuka kwa haraka kwa mtazamaji wakati wa dives za kina.",
-            "solutionHeadline": "Engine B-Roll Engine",
-            "solution": "Kama msimuliaji wako anajadili ukweli wa kihistoria, SceneFlow moja kwa moja inazalisha upyaji wa sinema, rekodi ya overlays, na mipangilio ya mtindo wa archival imefungwa moja kwa moja kwa nakala ya sauti."
+            "frictionHeadline": "Visual Monotony in Long Voiceovers",
+            "friction": "Pairing long-form narrator audio with static stock images leads to rapid viewer drop-off during deep dives.",
+            "solutionHeadline": "Transcript-Driven B-Roll Engine",
+            "solution": "As your narrator discusses historical facts, SceneFlow automatically generates timed cinematic re-enactments, document overlays, and archival-style cutaways tied directly to the audio transcript."
           },
           {
-            "title": "Mahojiano na Majadiliano ya Head Realism",
-            "frictionHeadline": "Mashahidi wasio na hatia",
-            "friction": "Wanahistoria, wachunguzi, au mashahidi mara nyingi huonekana bandia, na harakati za taya zinazozunguka na mawasiliano ya jicho isiyo ya kawaida.",
-            "solutionHeadline": "Wasifu wa Mtaalam na Sync ya Vocal",
-            "solution": "Weka mipangilio ya mahojiano ya kweli, ya kuaminika na maelezo ya asili ya micro, mdomo sahihi, na utambulisho wa wataalamu thabiti katika mfululizo wa sehemu nyingi."
+            "title": "Interview & Talking-Head Realism",
+            "frictionHeadline": "Uncanny Expert Witnesses",
+            "friction": "Generated historians, investigators, or witnesses often look artificial, with floating jaw movements and unnatural eye contact.",
+            "solutionHeadline": "Locked Expert Profiles & Vocal Sync",
+            "solution": "Maintain realistic, trustworthy interview setups with natural micro-expressions, accurate lip-sync, and consistent expert identities across multi-part series."
           },
           {
-            "title": "Mkataba wa Episodic & Narrative",
-            "frictionHeadline": "Uhariri wa Timeline",
-            "friction": "Kusawazisha sauti ya msimuliaji, kurudia tena, ushahidi unaonyesha, na pause za kujenga mvutano katika kipindi cha dakika ya 40 kawaida huchukua wiki katika NLEs za jadi.",
-            "solutionHeadline": "Video ya kwanza ya Bomba",
-            "solution": "Muundo wa mvutano mkubwa, pause suspenseful, na ushahidi inaonyesha visually ndani ya Blueprint Studio, kutoa kamili wamekusanyika faili bwana katika kupita moja seamlessly."
+            "title": "Episodic Pacing & Narrative Continuity",
+            "frictionHeadline": "Fragmented Timeline Editing",
+            "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
+            "solutionHeadline": "Beat-First Documentary Pipeline",
+            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Studio, delivering a fully assembled master file in one seamless pass."
           }
         ],
-        "screeningRoomPreview": "Uzalishaji wa filamu: Screening Room Preview Preview Preview Preview"
+        "screeningRoomPreview": "Documentary Production — Screening Room"
+      },
+      {
+        "id": "localization",
+        "title": "Beyond Dubbing. Fully Localized Productions.",
+        "subtitle": "Same storyline, two cities: Houston, Texas and São Paulo, Brazil. SceneFlow doesn't just dub the audio — it localizes settings, cultural references, and on-screen text so each audience sees a production made for them.",
+        "badge": "Localized",
+        "localeToggle": true,
+        "locales": [
+          {
+            "id": "houston",
+            "label": "Houston, TX",
+            "lang": "en"
+          },
+          {
+            "id": "saopaulo",
+            "label": "São Paulo, BR",
+            "lang": "pt"
+          }
+        ],
+        "solutionPillars": [
+          {
+            "title": "Cultural Adaptation, Not Translation",
+            "frictionHeadline": "Dubbing Is Not Localization.",
+            "friction": "Swapping the audio track leaves every cultural reference, location shot, and on-screen graphic targeting the wrong audience.",
+            "solutionHeadline": "Blueprint-Level Localization.",
+            "solution": "Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Studio before a single frame is rendered."
+          },
+          {
+            "title": "Parallel Production Pipelines",
+            "frictionHeadline": "One Region at a Time.",
+            "friction": "Traditional localization is sequential — finish the original, then manually rebuild for each market. Months of delay per region.",
+            "solutionHeadline": "Concurrent Regional Pipelines.",
+            "solution": "Run multiple localized Blueprints in parallel. Each region gets its own production pipeline sharing the same narrative structure but with fully adapted visuals and dialogue."
+          },
+          {
+            "title": "Region-Specific Audience Resonance",
+            "frictionHeadline": "One Script for Every Culture.",
+            "friction": "Humor, pacing, and emotional beats that land in Houston may fall flat in São Paulo. A single script cannot carry both.",
+            "solutionHeadline": "Per-Region Resonance Tuning.",
+            "solution": "Audience Resonance analyzes each localized script against regional demographic profiles, flagging cultural mismatches before production begins."
+          }
+        ],
+        "screeningRoomPreview": "Localized Production Comparison — Screening Room"
       }
     ]
   },

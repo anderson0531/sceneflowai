@@ -1920,251 +1920,181 @@
     ]
   },
   "productionShowcase": {
-    "badge": "Produktionsexempel",
-    "title": "Från koncept till skärm:",
-    "titleAccent": "Oändliga möjligheter",
-    "subtitle": "Sex offentliga produktioner bevisar hela pipeline - pre-vis, scenvideo och Screening Room översyn. Definiera ditt koncept och låt SceneFlow hantera skriptskrivning, karaktärsdesign, multispråkig ljud, visualisering, videoproduktion och publicering.",
-    "subtitleTagline": "En plattform. oändliga möjligheter.",
-    "publicProductionsNote": "Varje kort nedan är en komplett offentlig produktion - växla Solutions och Screening Room-flikar för att gå pipeline.",
-    "languagesBanner": "Offentliga exempel fartyg på 7 språk: engelska, spanska, portugisiska, hindi, kinesiska, arabiska och thailändska.",
-    "explorePipelineCta": "Utforska en komplett produktion",
-    "explorePipelineHint": "Börja med Cinematic Drama nedan - Lösningar för demoreel, Screening Room för det fullständiga granskningsarbetet.",
-    "workflowLabel": "Lösningar",
-    "startProduction": "Starta din produktion",
-    "cta": "Starta din produktion",
-    "continuityNote": "Series Studio hanterar kontinuitet",
-    "resonanceNote": "Audience ResonanceTM optimerar skript",
-    "videoLanguagePrompt": "Se denna produktion på ditt språk",
-    "videoComingSoon": "Dub kommer snart",
-    "videoSoon": "Och",
-    "introVideoLabel": "Lösningar",
-    "screeningRoomLabel": "Screening Room",
-    "frictionLabel": "Friktion",
-    "solutionPillarLabel": "SceneFlow-lösningen",
-    "showSolutionsSection": "Visa lösningar",
+    "badge": "Production Examples",
+    "title": "See the Full Pipeline",
+    "titleAccent": "in Action",
+    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to final high-resolution video. Walk the Screening Room to compare animatics, individual scenes, and the finished master in multiple languages.",
+    "subtitleTagline": "Long-form productions. Not clips.",
+    "screeningRoomInstruction": "Select Pre-Vis, Scenes, or Final to experience the pipeline. Select a language to hear the dub.",
+    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
+    "explorePipelineCta": "Explore a full production",
+    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
+    "workflowLabel": "Solutions",
+    "startProduction": "Start Your Production",
+    "cta": "Start Your Production",
+    "continuityNote": "Series Studio manages continuity",
+    "resonanceNote": "Audience Resonance™ optimizes scripts",
+    "videoLanguagePrompt": "Watch this production in your language",
+    "videoComingSoon": "Dub coming soon",
+    "videoSoon": "Soon",
+    "frictionLabel": "The Friction",
+    "solutionPillarLabel": "The SceneFlow Solution",
+    "showSolutionsSection": "Show Solutions",
     "hideSolutionsSection": "Hide Solutions",
     "cards": [
       {
         "id": "drama",
-        "title": "Cinematic AI Drama. Zero Character Drift.",
-        "subtitle": "Eliminera morphing tecken, bruten dialog och oändliga rullar. Bygg sömlösa, multi-karaktär långformiga historier med komplett visuell kontinuitet.",
-        "badge": "Serie-Ready",
+        "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
+        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the pre-vis animatic, individual scenes, and the final high-resolution master — then switch languages to hear the full dub.",
+        "badge": "Series-Ready",
         "solutionPillars": [
           {
             "title": "Visual & Character Consistency",
-            "frictionHeadline": "Karaktär Drift & Wobbly Sets.",
-            "friction": "Generativa modeller återställs med varje skott - orsakar tecken ansikten, outfits och belysning för att morph kontinuerligt över scen skärningar.",
-            "solutionHeadline": "Låsta tillgången Blueprints.",
-            "solution": "Definiera huvudkaraktärprofiler, miljöer och visuella stilar fram i Blueprint Studio. SceneFlow verkställer visuell identitet över varje render för att bevara berättande nedsänkning."
+            "frictionHeadline": "Character Drift & Wobbly Sets.",
+            "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
+            "solutionHeadline": "Locked Asset Blueprints.",
+            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Studio. SceneFlow enforces visual identity across every render to preserve narrative immersion."
           },
           {
             "title": "Narrative Pacing & Scene Control",
-            "frictionHeadline": "10 sekunders Clip Trap.",
-            "friction": "Att bygga en film ur kopplade mikroprompter skapar choppy pacing, platt känsla och oändlig manuell tidslinjeredigering.",
+            "frictionHeadline": "The 10-Second Clip Trap.",
+            "friction": "Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.",
             "solutionHeadline": "Beat-First Storyboarding.",
-            "solution": "Direkt på scenen nivå, inte snabb nivå. Struktur dramatiska slag, kamerarörelser och berättelse bågar visuellt innan man genererar en enda bildruta."
+            "solution": "Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video."
           },
           {
-            "title": "Dialog & Audio inriktning",
-            "frictionHeadline": "Oövertygande dialog.",
-            "friction": "Mismatched läppsynkronisering, flytande munrörelser och fristående röstspår drar omedelbart tittarna ur dramat.",
-            "solutionHeadline": "Integrerad Voice & Sync Engine.",
-            "solution": "Dynamisk röstprestanda och exakt läppsynkronisering bakas direkt i videorörledningen - levererar trovärdig dialog utan externa efterproduktionspass."
+            "title": "Dialogue & Audio Alignment",
+            "frictionHeadline": "Unconvincing Dialogue.",
+            "friction": "Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.",
+            "solutionHeadline": "Integrated Voice & Sync Engine.",
+            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline — delivering believable dialogue without external post-production passes."
           },
           {
             "title": "Workflow Friction & Reroll Fatigue",
             "frictionHeadline": "Asset Chaos & Endless Rerolls.",
-            "friction": "Generera en kortfilm betyder vanligtvis att jonglera 200 + råa videofiler, manuell uppskalning och dussintals bortkastad generationer.",
-            "solutionHeadline": "Automatiserad Studio Pipeline.",
-            "solution": "Från koncept till final master MP4 i en enhetlig plattform. Blueprint Studio hanterar story setup, Production Studio automatiserar rendering och Screening Room levererar din slutliga export."
+            "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
+            "solutionHeadline": "Automated Studio Pipeline.",
+            "solution": "From concept to final master MP4 in one unified platform. Blueprint Studio handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export."
           }
         ],
-        "screeningRoomPreview": "Den filmiska dramatiken - Screening Room Förhandsgranskning"
+        "screeningRoomPreview": "The Cinematic Drama — Screening Room"
       },
       {
         "id": "animation",
-        "title": "Du skriver skämtet. SceneFlow Animerar punchline.",
-        "subtitle": "Eliminera stil drift, styv rörelse och bruten timing. Förvandla hilariska skript till fullt animerade, röstsynkroniserade komediepisoder i en sömlös studio.",
+        "title": "Full-Season Animated Series. One Consistent Art Style.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {
-            "title": "Stylistisk konsistens",
-            "frictionHeadline": "Stil Meltdown.",
-            "friction": "Karikatyr och anime stilar ständigt varp mellan skott, skiftande linje konst, bryta färgpaletter och morphing tecken i photorealistic uncanny slop.",
+            "title": "Stylistic Consistency",
+            "frictionHeadline": "Style Meltdown.",
+            "friction": "Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.",
             "solutionHeadline": "Locked Art Style Engine.",
-            "solution": "Frys din estetik från den första ramen. SceneFlow låser karaktärsdesigner, linjevikter och skuggningsmodeller över hela avsnittet så att dina karaktärer stannar unikt din."
+            "solution": "Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours."
           },
           {
-            "title": "Överdriven animation och fysik",
+            "title": "Exaggerated Animation & Physics",
             "frictionHeadline": "Stiff & Glitchy Motion.",
-            "friction": "Generativa modeller kämpar med snabb slapstick, dubbel-tag och squishy tecknad fysik, förvandlar hög energi gags till smältning artefakter.",
+            "friction": "Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.",
             "solutionHeadline": "Action & Pose Anchoring.",
-            "solution": "Kör dynamisk karaktärsrörelse och uttrycksfulla positioner utan att bryta geometri. Direkt stansig fysisk komedi, plötsliga cutaways och vilda uttryck med full rörelsekontroll."
+            "solution": "Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control."
           },
           {
-            "title": "Komiker Timing & Rhythm",
+            "title": "Comedic Timing & Rhythm",
             "frictionHeadline": "Ruined Punchlines.",
-            "friction": "Humor bor i pauserna och slår skär. Standard 5-sekunders generativa slingor tvingar obekväma pacing som förstör skämt leverans.",
+            "friction": "Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.",
             "solutionHeadline": "Beat-Precision Editing.",
-            "solution": "Kontroll scen pacing ner till ramen. Justera dramatiska pauser, setup-to-punchline timing och snabba reaktioner skott direkt inuti beat-first tidslinjen innan slutlig rendering."
+            "solution": "Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render."
           },
           {
             "title": "High-Energy Dialogue & Vocal Sync",
-            "frictionHeadline": "Livlösa marionettmuner.",
-            "friction": "Generisk AI dialog känns platt och mekanisk, förstöra den energi som behövs för snappy sitcom banter.",
+            "frictionHeadline": "Lifeless Puppet Mouths.",
+            "friction": "Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.",
             "solutionHeadline": "Dynamic Voice & Expression Sync.",
-            "solution": "Karta vokal leverans direkt till energiska ansiktsprestanda. Dialog, uttrycksfulla munformer och komiska röstspår matchar sömlöst för maximal komisk effekt."
+            "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
           }
         ],
-        "screeningRoomPreview": "Den animerade komedin - Screening Room Förhandsgranskning"
-      },
-      {
-        "id": "podcast",
-        "title": "Du är värd konversationen. SceneFlow producerar showen.",
-        "subtitle": "Eliminera statiska avatarer och manuell videoredigering. Transformera skript eller rå ljud i multi-vinkel, sändningsklara video podcasts i en automatiserad pipeline.",
-        "badge": "Broadcast-Ready",
-        "solutionPillars": [
-          {
-            "title": "Multi-Speaker & Avatar Identitet",
-            "frictionHeadline": "Robotic Avatars och förlorad identitet",
-            "friction": "Genererade värdar skift framträdanden mitten av episoden, stirra blankt på kameran, eller misslyckas med att uppvisa naturliga mänskliga mikrouttryck medan du lyssnar.",
-            "solutionHeadline": "Locked Host & Guest Profiles",
-            "solution": "Etablera ihållande visuella identiteter för dina medvärdar och återkommande gäster. SceneFlow upprätthåller högtalarkonsistens, naturlig ögonkontakt och realistiskt konversationskroppsspråk genom långformade diskussioner."
-          },
-          {
-            "title": "Multi-Camera Direction & Pacing",
-            "frictionHeadline": "Monotona singel-änglar",
-            "friction": "Statiska talk-head skottsättning förlorar publiken retention snabbt, medan manuell kamera växlar över en 30-minuters tidslinje kräver tråkiga ram-by-frame skärningar.",
-            "solutionHeadline": "Automatiserad Multi-Cam Switching",
-            "solution": "SceneFlow analyserar konversationsflödet för att automatiskt växla mellan värd närbilder, gästreaktioner och vidvinkelstudioskott, leverera professionell sändning pacing utan manuell tidslinjeredigering."
-          },
-          {
-            "title": "Context-Aware B-Roll & Visuals",
-            "frictionHeadline": "Visual Monotony & B-Roll Bottlenecks",
-            "friction": "Att hitta, generera och timing relevanta visuella hjälpmedel eller B-roll klipp för varje ämne äter upp timmar efter produktionen.",
-            "solutionHeadline": "Autogenererade B-Roll Cutaways",
-            "solution": "När dina värdar diskuterar ämnen genererar SceneFlow automatiskt kontextuella biografer, grafik och scen cutaways som är preciserade för ljudutskriften."
-          },
-          {
-            "title": "Long-Form Audio & Video Sync",
-            "frictionHeadline": "Audio Drift & Long Form Render Fatigue",
-            "friction": "Synkronisera generativ video till 20 + minuter av rå ljud leder till läppsynkronisering, rendering fel och fragmenterad filhantering.",
-            "solutionHeadline": "End-to-End Podcast Pipeline",
-            "solution": "Släpp i ditt raw ljudspår eller skript, och SceneFlow hanterar avatarjustering, kameranedskärningar, B-roll integration och slutlig MP4-export i ett smidigt, automatiserat studiopass."
-          }
-        ],
-        "screeningRoomPreview": "AI-First Podcast - Screening Room Förhandsgranskning"
-      },
-      {
-        "id": "training",
-        "title": "Enterprise-Grade Training Videos. Pre-Vizualization Produced i minuter.",
-        "subtitle": "Vänd manualer, bilder och compliance docs till engagerande, flerspråkiga videomoduler med låsta varumärkesidentiteter, felfri lip-sync och noll studio overhead.",
-        "badge": "Global distribution",
-        "solutionPillars": [
-          {
-            "title": "Presenter & Brand Consistency",
-            "frictionHeadline": "Uncanny Avatars och Brand Drift",
-            "friction": "Billiga AI-presentatörer känner sig robotiska och olämpliga, medan varumärkeslogotyper, färger och presentatörer skiftar inkonsekvent över olika träningsmoduler.",
-            "solutionHeadline": "Locked Executive & Trainer Profiles",
-            "solution": "Etablera ihållande, naturligt utseende företagspresentatörer och låsa dina varumärkesriktlinjer. SceneFlow upprätthåller visuell identitet, företagsstyling och professionell leverans över hela ditt kursbibliotek."
-          },
-          {
-            "title": "Seamless Global Localization",
-            "frictionHeadline": "Broken översättningar & Bad Lip-Sync",
-            "friction": "Att lokalisera träningsinnehåll i 10+ språk skapar vanligtvis besvärliga munsynkronisering, robotröstspår och massiva redigering av flaskhalsar.",
-            "solutionHeadline": "Native Multilingual Sync Engine",
-            "solution": "Översätt hela din träningsserie till dussintals språk med naturlig röstton, lokaliserade textsamtal och ram-accurate lip-syncing - allt i ett enda klick."
-          },
-          {
-            "title": "Integrerade visuella hjälpmedel och diagram",
-            "frictionHeadline": "Text-Heavy Bore",
-            "friction": "Videor som bara talar huvuden förlorar snabbt medarbetarnas uppmärksamhet, medan manuellt animerar processdiagram, skärmfångster och kulan callouts tar timmar i en redaktör.",
-            "solutionHeadline": "Kontextuell visuell och grafisk överlägg",
-            "solution": "När din presentatör förklarar komplexa arbetsflöden eller efterlevnadssteg genererar SceneFlow automatiskt tidsdiagram, viktiga takeaways och visuella hjälpmedel direkt på skärmen."
-          },
-          {
-            "title": "Snabbt innehåll uppdateras",
-            "frictionHeadline": "Dyrbara Re-Shoots & Render Traps",
-            "friction": "När företagspolicy eller produktspecifikationer ändras, kräver uppdatering av en 2-minuters del av en video vanligtvis ombyggnad och återgivning av hela filen.",
-            "solutionHeadline": "Modulära skriptuppdateringar",
-            "solution": "Redigera text direkt i skriptritningen för att uppdatera policyer eller förfaranden direkt. SceneFlow återlämnar endast den ändrade sektionen samtidigt som man bevarar omgivande timing och videostil."
-          }
-        ],
-        "screeningRoomPreview": "Företagsutbildning - Screening Room Förhandsgranskning"
-      },
-      {
-        "id": "scifi",
-        "title": "Bygg omöjliga världar. Direkt kompromisslös Sci-Fi.",
-        "subtitle": "Gör komplexa visuella effekter, futuristiska miljöer och främmande karaktärsdesigner med ram-för-ram visuell kontinuitet - allt inom en enda automatiserad pipeline.",
-        "badge": "VFX-Ready",
-        "solutionPillars": [
-          {
-            "title": "Miljö- och arkitekturkontinuitet",
-            "frictionHeadline": "Geometri & Scale Glitches",
-            "friction": "Futuristiska städer, neonlandskap och främmande stjärnskepp ständigt varp, skift texturer eller löses upp i slumpmässigt visuellt ljud mellan kamerans skärningar.",
-            "solutionHeadline": "World-State Locking",
-            "solution": "Definiera nyckelarkitektur, belysningssystem och miljöparametrar i Blueprint Studio. SceneFlow låser rumslig geometri så att din inställning förblir konsekvent från breda skott till snäva korridorstrider."
-          },
-          {
-            "title": "Alien & Creature Design Integrity",
-            "frictionHeadline": "Morphing karaktärsdesigner",
-            "friction": "Icke-humanoida arter, cyborger och tunga proteser driver vilt i utseende varje gång en ny vinkel eller skott genereras.",
-            "solutionHeadline": "Locked Alien Asset Profiles",
-            "solution": "Ankar icke-mänsklig anatomi, rustningsdetaljer och mekaniska accenter. Upprätthåll karaktärsigenkänning över varje högkonceptscen utan anpassade 3D-modelleringspipelines."
-          },
-          {
-            "title": "VFX Action och höghastighetsfysik",
-            "frictionHeadline": "Smält rörelse i handlingssekvenser",
-            "friction": "Höghastighets rymdhundar, energivapenbränder och explosioner orsakar ofta generativa modeller för att smutsa ramar eller producera röriga visuella artefakter.",
-            "solutionHeadline": "Åtgärder och FX Motion Anchoring",
-            "solution": "Direkt dynamisk koreografi, snabba kamerarörelser och partikeltunga action slår samtidigt som man bevarar rena kanter och realistiska bantningsfysik."
-          },
-          {
-            "title": "Audio visuell världsbyggnad",
-            "frictionHeadline": "Flat Audio i High-Concept Worlds",
-            "friction": "Futuristiska vapen, omgivande stjärnskepp hums, och främmande talmönster känner sig kopplade när manuellt monterade över tysta genererade klipp.",
-            "solutionHeadline": "Integrerad World-Sound & Voice Sync",
-            "solution": "Align anpassad syntetisk dialog, främmande vokaliseringar och filmiska ljudsignaler direkt inom tidslinjen för en uppslukande, release-ready master audio mix."
-          }
-        ],
-        "screeningRoomPreview": "Sci-Fi VFX Production – Screening Room Förhandsgranskning"
+        "screeningRoomPreview": "The Animated Comedy — Screening Room"
       },
       {
         "id": "documentary",
-        "title": "Vänd Archival Stories till bästsäljande dokumentärer.",
-        "subtitle": "Återskapa historiska händelser, re-enactments och expertintervjuinställningar med autentisk period detalj, sömlösa voiceovers och noll arkiv licensavgifter.",
+        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
+        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
         "badge": "Period-Accurate",
         "solutionPillars": [
           {
-            "title": "Era-Specific Visuell noggrannhet",
-            "frictionHeadline": "Anakronistiska artefakter",
-            "friction": "Standardgenerativa modeller blöder rutinmässigt moderna objekt, smartphone-skärmar eller felaktiga periodkläder i historiska re-enactments.",
-            "solutionHeadline": "Historiska stilguardrails",
-            "solution": "Ange exakta temporala parametrar - från 1920-talets filmkorn till 1800-talets garderobstexturer - så varje genererad scen förblir historiskt autentisk."
+            "title": "Era-Specific Visual Accuracy",
+            "frictionHeadline": "Anachronistic Artifacts",
+            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
+            "solutionHeadline": "Historical Style Guardrails",
+            "solution": "Set exact temporal parameters — from 1920s film grain to 18th-century wardrobe textures — so every generated scene stays historically authentic."
           },
           {
             "title": "Archival Cutaways & B-Roll Engine",
-            "frictionHeadline": "Visuell monotoni i långa voiceovers",
-            "friction": "Pairing long-form narrator ljud med statiska stock bilder leder till snabb tittare drop-off under djupa dyk.",
-            "solutionHeadline": "Transcript-Driven B-Roll motor",
-            "solution": "När din berättare diskuterar historiska fakta genererar SceneFlow automatiskt tidsbestämda filmiska re-enactments, dokumentöverlägg och arkiv-stil cutaways bundna direkt till ljudutskriften."
+            "frictionHeadline": "Visual Monotony in Long Voiceovers",
+            "friction": "Pairing long-form narrator audio with static stock images leads to rapid viewer drop-off during deep dives.",
+            "solutionHeadline": "Transcript-Driven B-Roll Engine",
+            "solution": "As your narrator discusses historical facts, SceneFlow automatically generates timed cinematic re-enactments, document overlays, and archival-style cutaways tied directly to the audio transcript."
           },
           {
-            "title": "Intervju & Talking-Head Realism",
+            "title": "Interview & Talking-Head Realism",
             "frictionHeadline": "Uncanny Expert Witnesses",
-            "friction": "Genererade historiker, utredare eller vittnen ser ofta konstgjorda, med flytande käftrörelser och onaturlig ögonkontakt.",
+            "friction": "Generated historians, investigators, or witnesses often look artificial, with floating jaw movements and unnatural eye contact.",
             "solutionHeadline": "Locked Expert Profiles & Vocal Sync",
-            "solution": "Upprätthåll realistiska, pålitliga intervjuinställningar med naturliga mikrouttryck, korrekt läppsynkronisering och konsekventa expertidentiteter i flera delar serier."
+            "solution": "Maintain realistic, trustworthy interview setups with natural micro-expressions, accurate lip-sync, and consistent expert identities across multi-part series."
           },
           {
             "title": "Episodic Pacing & Narrative Continuity",
-            "frictionHeadline": "Fragmenterad tidslinjeredigering",
-            "friction": "Balansera berättarljud, re-enactments, bevis avslöjar och spänningsbyggande pauser över en 40-minuters episod tar vanligtvis veckor i traditionella NLEs.",
+            "frictionHeadline": "Fragmented Timeline Editing",
+            "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
             "solutionHeadline": "Beat-First Documentary Pipeline",
-            "solution": "Struktur dramatisk spänning, spänningsfulla pauser och bevis avslöjar visuellt inuti Blueprint Studio, levererar en fullt monterad masterfil i ett sömlöst pass."
+            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Studio, delivering a fully assembled master file in one seamless pass."
           }
         ],
-        "screeningRoomPreview": "Dokumentärproduktion - Screening Room Förhandsgranskning"
+        "screeningRoomPreview": "Documentary Production — Screening Room"
+      },
+      {
+        "id": "localization",
+        "title": "Beyond Dubbing. Fully Localized Productions.",
+        "subtitle": "Same storyline, two cities: Houston, Texas and São Paulo, Brazil. SceneFlow doesn't just dub the audio — it localizes settings, cultural references, and on-screen text so each audience sees a production made for them.",
+        "badge": "Localized",
+        "localeToggle": true,
+        "locales": [
+          {
+            "id": "houston",
+            "label": "Houston, TX",
+            "lang": "en"
+          },
+          {
+            "id": "saopaulo",
+            "label": "São Paulo, BR",
+            "lang": "pt"
+          }
+        ],
+        "solutionPillars": [
+          {
+            "title": "Cultural Adaptation, Not Translation",
+            "frictionHeadline": "Dubbing Is Not Localization.",
+            "friction": "Swapping the audio track leaves every cultural reference, location shot, and on-screen graphic targeting the wrong audience.",
+            "solutionHeadline": "Blueprint-Level Localization.",
+            "solution": "Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Studio before a single frame is rendered."
+          },
+          {
+            "title": "Parallel Production Pipelines",
+            "frictionHeadline": "One Region at a Time.",
+            "friction": "Traditional localization is sequential — finish the original, then manually rebuild for each market. Months of delay per region.",
+            "solutionHeadline": "Concurrent Regional Pipelines.",
+            "solution": "Run multiple localized Blueprints in parallel. Each region gets its own production pipeline sharing the same narrative structure but with fully adapted visuals and dialogue."
+          },
+          {
+            "title": "Region-Specific Audience Resonance",
+            "frictionHeadline": "One Script for Every Culture.",
+            "friction": "Humor, pacing, and emotional beats that land in Houston may fall flat in São Paulo. A single script cannot carry both.",
+            "solutionHeadline": "Per-Region Resonance Tuning.",
+            "solution": "Audience Resonance analyzes each localized script against regional demographic profiles, flagging cultural mismatches before production begins."
+          }
+        ],
+        "screeningRoomPreview": "Localized Production Comparison — Screening Room"
       }
     ]
   },

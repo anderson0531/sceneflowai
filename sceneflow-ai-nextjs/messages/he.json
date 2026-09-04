@@ -1920,251 +1920,181 @@
     ]
   },
   "productionShowcase": {
-    "badge": "דוגמאות הפקה",
-    "title": "מהרעיון למסך:",
-    "titleAccent": "אפשרויות אינסופיות",
-    "subtitle": "שישה הפקות פומביות מוכיחות את הצינור המלא - pre-vis, וידאו סצנה, ו- Screening Room. Define את הרעיון שלך ולתת SceneFlow להתמודד עם תסריט, עיצוב אופי, אודיו רב-לשוני, הדמיה, ייצור וידאו ופרסום.",
-    "subtitleTagline": "פלטפורמה אחת. אפשרויות אינסופיות.",
-    "publicProductionsNote": "כל כרטיס למטה הוא הפקה ציבורית מלאה - להחליף פתרונות ו- Screening Room כרטיסיות ללכת על הצינור.",
-    "languagesBanner": "דוגמאות ציבוריות ב-7 שפות: אנגלית, ספרדית, פורטוגזית, הינדי, סינית, ערבית ותאילנדית.",
-    "explorePipelineCta": "לחקור הפקה מלאה",
-    "explorePipelineHint": "התחל עם דרמה קולנועית למטה - פתרונות עבור הדלה ההדגמה, Screening Room עבור זרימת העבודה המלאה בסקירה.",
-    "workflowLabel": "פתרונות Solutions",
-    "startProduction": "התחל את הייצור שלך",
-    "cta": "התחל את הייצור שלך",
-    "continuityNote": "Series Studio מנהלת המשכיות",
-    "resonanceNote": "SFAITORIENCE RESONTERMTM מייעל תסריטים",
-    "videoLanguagePrompt": "צפו בהפקה זו בשפה שלכם",
-    "videoComingSoon": "דוב בקרוב",
-    "videoSoon": "בקרוב",
-    "introVideoLabel": "פתרונות Solutions",
-    "screeningRoomLabel": "Screening Room",
-    "frictionLabel": "הפיצול",
-    "solutionPillarLabel": "פתרון SceneFlow",
-    "showSolutionsSection": "פתרונות Show Solutions",
-    "hideSolutionsSection": "פתרונות Hide Solutions",
+    "badge": "Production Examples",
+    "title": "See the Full Pipeline",
+    "titleAccent": "in Action",
+    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to final high-resolution video. Walk the Screening Room to compare animatics, individual scenes, and the finished master in multiple languages.",
+    "subtitleTagline": "Long-form productions. Not clips.",
+    "screeningRoomInstruction": "Select Pre-Vis, Scenes, or Final to experience the pipeline. Select a language to hear the dub.",
+    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
+    "explorePipelineCta": "Explore a full production",
+    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
+    "workflowLabel": "Solutions",
+    "startProduction": "Start Your Production",
+    "cta": "Start Your Production",
+    "continuityNote": "Series Studio manages continuity",
+    "resonanceNote": "Audience Resonance™ optimizes scripts",
+    "videoLanguagePrompt": "Watch this production in your language",
+    "videoComingSoon": "Dub coming soon",
+    "videoSoon": "Soon",
+    "frictionLabel": "The Friction",
+    "solutionPillarLabel": "The SceneFlow Solution",
+    "showSolutionsSection": "Show Solutions",
+    "hideSolutionsSection": "Hide Solutions",
     "cards": [
       {
         "id": "drama",
-        "title": "דרמה מלאכותית קולנועית Zero Character Drift.",
-        "subtitle": "לחסל את דמויות מורפיום, דיאלוג שבור וגלגלים אינסופיים. בנה סיפורים קצרים וארוכים עם רצף חזותי מלא.",
-        "badge": "סדרה-Ready",
+        "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
+        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the pre-vis animatic, individual scenes, and the final high-resolution master — then switch languages to hear the full dub.",
+        "badge": "Series-Ready",
         "solutionPillars": [
           {
-            "title": "ויזואלית & Character Consistency",
-            "frictionHeadline": "דמויות Drift ו-Wbbly Sets.",
-            "friction": "מודלים יצרניים מתאפסים עם כל זריקה - תוך שימוש פנים אופי, תלבושות, תאורה למורפים ברציפות על פני חתכים.",
-            "solutionHeadline": "נכסים נעולים Blueprints.",
-            "solution": "Define Character profiles, סביבות וסגנונות חזותיים בחזית Blueprint Studio. Google Flow לאכוף זהות חזותית על פני כל גורם כדי לשמור על קידוד נרטיבי."
+            "title": "Visual & Character Consistency",
+            "frictionHeadline": "Character Drift & Wobbly Sets.",
+            "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
+            "solutionHeadline": "Locked Asset Blueprints.",
+            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Studio. SceneFlow enforces visual identity across every render to preserve narrative immersion."
           },
           {
-            "title": "שליטה וסצנות",
-            "frictionHeadline": "מלכודת 10 השני קליפ.",
-            "friction": "בניית סרט מתוך micro-prompts ניתוק יוצר חיתוך, רגש שטוח ועריכה לוח זמנים ידני אינסופית.",
+            "title": "Narrative Pacing & Scene Control",
+            "frictionHeadline": "The 10-Second Clip Trap.",
+            "friction": "Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.",
             "solutionHeadline": "Beat-First Storyboarding.",
-            "solution": "ישר ברמת הסצינה, לא הרמה המהירה. פעימות מבנה דרמטיות, תנועות מצלמה, וסיפור מצלצל באופן ויזואלי לפני יצירת מסגרת אחת של וידאו."
+            "solution": "Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video."
           },
           {
-            "title": "דיאלוג ופרסום",
-            "frictionHeadline": "לשכנע את הדיאלוג.",
-            "friction": "עיוות שפתון, תנועות הפה הצף, והמסלולים הקוליים הנותקו מיד להוציא את הצופים מהדרמה.",
+            "title": "Dialogue & Audio Alignment",
+            "frictionHeadline": "Unconvincing Dialogue.",
+            "friction": "Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.",
             "solutionHeadline": "Integrated Voice & Sync Engine.",
-            "solution": "ביצועים קוליים דינמיים וסנמק שפתיים מדויקים מאופים ישירות לתוך צינור וידאו - מתן דיאלוג אמין ללא מעברים פוסט-ייצור חיצוני."
+            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline — delivering believable dialogue without external post-production passes."
           },
           {
-            "title": "זרימת עבודה פריצה & Reroll Fatigue",
-            "frictionHeadline": "מותג: Chaos & Endless Rerolls.",
-            "friction": "יצירת סרט קצר בדרך כלל פירושה ג'וגלינג 200+ קבצי וידאו גולמיים, עלייה ידנית ועשרות דורות מבוזבזים.",
-            "solutionHeadline": "אוטומטית Studio Pipeline.",
-            "solution": "מהרעיון ל-DMP4 הסופי בפלטפורמה מאוחדת אחת. Blueprint Studio מטפל בהקמת סיפור, Production Studio automates להפוך, ו Screening RoomTERM מספק את היצוא הסופי שלך."
+            "title": "Workflow Friction & Reroll Fatigue",
+            "frictionHeadline": "Asset Chaos & Endless Rerolls.",
+            "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
+            "solutionHeadline": "Automated Studio Pipeline.",
+            "solution": "From concept to final master MP4 in one unified platform. Blueprint Studio handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export."
           }
         ],
-        "screeningRoomPreview": "הדרמה הקולנועית - SFAISCREENING ביקורת"
+        "screeningRoomPreview": "The Cinematic Drama — Screening Room"
       },
       {
         "id": "animation",
-        "title": "אתה כותב את Joke. Google Flow Animates the Punchline.",
-        "subtitle": "הסרת סגנון סחף, תנועה נוקשה ותזמון שבור. להפוך את התסריטים המצחיקים לאנימציה מלאה, קטעי קומדיה ממושמעת בקול באולפן אחד חלק.",
+        "title": "Full-Season Animated Series. One Consistent Art Style.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {
-            "title": "יציבות סטליסטית",
-            "frictionHeadline": "סגנון Meltdown.",
-            "friction": "קריקטורה וסגנונות האנימה מתנפצים כל הזמן בין יריות, העברת אמנות קו, שוברים צבעי צבעים, ודמויות מורפיות לתוך פלטה פוטו-ריאליסטית uncanny.",
-            "solutionHeadline": "מנוע בסגנון אמנות נעול.",
-            "solution": "להקפיא את האסתטיקה שלך מהמסגרת הראשונה. Google Flow מנע עיצובים אופי, משקולות קו, ומודלים גילוח לאורך כל הפרק כך הדמויות שלך להישאר ייחודי שלך."
+            "title": "Stylistic Consistency",
+            "frictionHeadline": "Style Meltdown.",
+            "friction": "Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.",
+            "solutionHeadline": "Locked Art Style Engine.",
+            "solution": "Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours."
           },
           {
-            "title": "אנימציה & פיזיקה",
+            "title": "Exaggerated Animation & Physics",
             "frictionHeadline": "Stiff & Glitchy Motion.",
-            "friction": "מודלים יצרניים נאבקים עם סטרוסטיק מהיר, ספיגות כפולות, ופיסיקה קריקטורת מוצפנת, שהופכת גאגות באנרגיה גבוהה להיתוך חפצים.",
-            "solutionHeadline": "פעולה & Pose Anchoring.",
-            "solution": "לנהוג בתנועות אופי דינמיות ותנוחות אקספרסיביות מבלי לשבור גיאומטריה. קומדיה פיזית ישירה, חתך פתאומית וביטויים פרועים עם שליטה בתנועה מלאה."
+            "friction": "Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.",
+            "solutionHeadline": "Action & Pose Anchoring.",
+            "solution": "Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control."
           },
           {
             "title": "Comedic Timing & Rhythm",
-            "frictionHeadline": "הריסות Punchlines.",
-            "friction": "הומור חי בהפסקות ובכוכים. לולאות ניווניות סטנדרטיות של 5 שניות מכריחות זעזועים מביכים המשמידים את משלוח הבדיחות.",
+            "frictionHeadline": "Ruined Punchlines.",
+            "friction": "Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.",
             "solutionHeadline": "Beat-Precision Editing.",
-            "solution": "סצנת הבקרה נופלת אל המסגרת. מכוונן הפסקות דרמטיות, תזמון ההתקנה-to-punchline, וצילומי תגובה מהירים ישירות בתוך קו הזמן הפעום הראשון לפני ביצוע הסופי."
+            "solution": "Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render."
           },
           {
-            "title": "High-Energy הדיאלוג & Voice Sync",
-            "frictionHeadline": "בובות ללא חיים.",
-            "friction": "דיאלוג בינה מלאכותית ג'נרי מרגיש שטוח ומכני, הורס את האנרגיה הדרושה לסרחת השבבים.",
-            "solutionHeadline": "דינאמי Voice & Expression Sync.",
-            "solution": "Map Express משלוח ישירות לביצועים פנים אנרגטיים. דיאלוג, צורות שפה אקספרסיביות, ושפת קול קומית תואמות בצורה חלקה להשפעה קומית מקסימלית."
+            "title": "High-Energy Dialogue & Vocal Sync",
+            "frictionHeadline": "Lifeless Puppet Mouths.",
+            "friction": "Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.",
+            "solutionHeadline": "Dynamic Voice & Expression Sync.",
+            "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
           }
         ],
-        "screeningRoomPreview": "האנימציה - SFAISCREENING ביקורת"
-      },
-      {
-        "id": "podcast",
-        "title": "אתה מארח את השיחה. Google Flow מפיק את המופע.",
-        "subtitle": "לחסל avatars סטטי ועריכה וידאו ידני. Transform Scripts או אודיו גולמי לתוך multi-angle, פודקאסטים וידאו משודרים בצינור אוטומטי אחד.",
-        "badge": "רדיו-Ready",
-        "solutionPillars": [
-          {
-            "title": "Multi-Talker & Avatar Identity",
-            "frictionHeadline": "Avatars & Lost Identity",
-            "friction": "המארחים שינו את המראה באמצע-פסודיה, בוהים במצלמה, או לא מצליחים להציג ביטויים טבעיים של המיקרו-ביטויים אנושיים בזמן האזנה.",
-            "solutionHeadline": "פרופילים מארחים ואורחים",
-            "solution": "ליצור זהות חזותית מתמשכת עבור המארחים שלך ואורחים חוזרים. Google Flow שומרת על עקביות הדוברת, מגע עין טבעי, ושפת גוף מציאותית של שיחה לאורך שיחות ארוכות."
-          },
-          {
-            "title": "Multi-Camera Direction & Pacing",
-            "frictionHeadline": "סינגלים מ-Angles",
-            "friction": "יריות מדבריות סטטיות מאבדות את שמירת הקהל במהירות, בעוד שמצלמה ידנית מעבר לקו זמן של 30 דקות דורשות חתכים של מסגרת המסגרת.",
-            "solutionHeadline": "Multi-Cam Switching",
-            "solution": "Google Flow מנתחת את זרימת השיחה באופן אוטומטי למגע בין חברות קרובות מארחות, תגובות אורח, וצילומי אולפן רחבים, המספקים שידור מקצועי ללא עריכת ציר ידני."
-          },
-          {
-            "title": "תגית: B-Roll & Visuals",
-            "frictionHeadline": "מונוטוני & B-Roll Bottlenecks",
-            "friction": "מציאת, ייצור, ותזמון עזרים חזותיים רלוונטיים או קליפים B עבור כל נושא שהוזכר אוכל שעות של לאחר הפקה.",
-            "solutionHeadline": "B-Roll Cutaways",
-            "solution": "כאשר המארחים שלך דנים בנושאים, SceneFlow באופן אוטומטי יוצר ויזואליות קולנועיות קונטקסטואליות, גרפיקה וסצנות חתוך זמן קצר בדיוק לתעתיק אודיו."
-          },
-          {
-            "title": "Long-Form Audio & Video Sync",
-            "frictionHeadline": "אודיו Drift & Long-Form Render Fatigue",
-            "friction": "Syncing וידאו ניווני עד 20 + דקות של אודיו גולמי מוביל לסחף שפתוני, להפוך שגיאות, וניהול קבצים מפוצל.",
-            "solutionHeadline": "End Podcast Pipeline",
-            "solution": "זרוק את מסלול השמע הגולמי שלך או תסריט, ו SceneFlow מטפל היערכות, חתומי מצלמה, אינטגרציה B-roll ו- MP4 אחרון לייצא במעבר סטודיו חלק ואוטומטי אחד."
-          }
-        ],
-        "screeningRoomPreview": "AI-First Podcast - SFAISCREENING ביקורת"
-      },
-      {
-        "id": "training",
-        "title": "אנטרפרייז-Grade Training קטעי וידאו Pre-Vizualization המיוצר בתוך דקות.",
-        "subtitle": "הפעל ידניים, שקופיות, וציות docs לתוך מודולים וידאו רב לשוני עם זהויות מותג נעול, מסן שפתיים פגום, אפס סטודיו overhead.",
-        "badge": "Global Deploy",
-        "solutionPillars": [
-          {
-            "title": "המונחים & Brand Consistency",
-            "frictionHeadline": "Uncanny Avatars & Brand Drift",
-            "friction": "מציגי AI זולים מרגישים רובוטיים ולא נוחים, בעוד לוגו מותג, צבעים, והופעות נוכחיות משמרות באופן עקבי על פני מודולים שונים.",
-            "solutionHeadline": "פרופילים של Executive & Trainer",
-            "solution": "הקמת מציגים ארגוניים מתמשכים וטבעיים ומנעול את הנחיות המותג שלך. Google Flow שומרת על זהות חזותית, עיצוב תאגידי, ומשלוח מקצועי בכל ספריית הקורס שלך."
-          },
-          {
-            "title": "בסביבה הקרובה של Seamless Globalization",
-            "frictionHeadline": "תרגום שבור & Bad Lip-Sync",
-            "friction": "העברת תוכן ל 10+ שפות בדרך כלל יוצרת מסלולים קוליים, רובוטיים, וצווארי בקבוק רבים.",
-            "solutionHeadline": "Native Multilingual Sync Engine",
-            "solution": "תרגם את כל סדרות האימונים שלך לעשרות שפות עם צליל קולי טבעי, שיחות טקסט מקומיות, ומסגרת מסמנת שפתון - הכל בלחיצה אחת."
-          },
-          {
-            "title": "עקבו אחרי Visual Aids & Diagrams",
-            "frictionHeadline": "שם הסרטון: Heavy Bore",
-            "friction": "קטעי וידאו שרק מדברים ראשים מאבדים במהירות את תשומת הלב של העובד, בעוד שהם מאמתים באופן ידני דיאגרמות תהליכים, לכידת מסך, ושיחות כדורים לוקחות שעות בעורך.",
-            "solutionHeadline": "המונחים: Visual & Graphic Overlay",
-            "solution": "כפי שההווה שלך מסביר זרימות עבודה מורכבות או ציות מדרגות, SceneFlow באופן אוטומטי יוצר דיאגרמות זמן, נקודות מפתח וסיוע חזותי ישירות על המסך."
-          },
-          {
-            "title": "תוכן מהיר",
-            "frictionHeadline": "Re-Shoots & Render Traps",
-            "friction": "כאשר מדיניות החברה או מוצר משתנה, עדכון קטע של וידאו בדרך כלל דורש בנייה מחדש ותיקון הקובץ.",
-            "solutionHeadline": "עדכונים מודולריים",
-            "solution": "ערוך טקסט ישירות בכתב העת Blueprint כדי לעדכן מדיניות או נהלים באופן מיידי. Google Flow re-renders רק את הקטע השתנה תוך שמירה על תזמון סביב וסגנון וידאו."
-          }
-        ],
-        "screeningRoomPreview": "הכשרה עסקית - Screening Room ביקורת"
-      },
-      {
-        "id": "scifi",
-        "title": "לבנות עולמות בלתי אפשריים Direct Uncompromised Sci-Fi.",
-        "subtitle": "אפקטים חזותיים מורכבים של Render, סביבות עתידניות, ועיצובי אופי חייזריים עם רצף חזותי מסגרת - כולם בתוך צינור אוטומטי אחד.",
-        "badge": "VFX-Ready",
-        "solutionPillars": [
-          {
-            "title": "איכות הסביבה והאדריכלות",
-            "frictionHeadline": "Geometry & Glitches",
-            "friction": "ערים עתידניות, נופי ניאון וכוכבים זרים כל הזמן מתפתלים, מרקמים משמרים, או מתמוססים לרעש חזותי אקראי בין חתכים מצלמה.",
-            "solutionHeadline": "מדינת העולם נעולה",
-            "solution": "Define מפתח אדריכלות, תוכניות תאורה ופרמטרים סביבתיים ב Blueprint Studio. Google Flow מנעה גיאומטריה מרחבית, כך שההגדרה שלך תישאר עקבית ממגוון רחב של יריות למאבקי מסדרונות הדוקים."
-          },
-          {
-            "title": "Alien & Creature Design Integrity",
-            "frictionHeadline": "עיצוב דמויות מורפיות",
-            "friction": "מינים לא-אנושיים, סיבורגים ודמויות אסתטיות כבדות נסחפו בטבע בכל פעם שזווית חדשה או צילום נוצרים.",
-            "solutionHeadline": "פרופילים של חייזרים",
-            "solution": "אנטומיה לא אנושית, פרטי שריון ומבטא מכני. שמור על זיהוי אופי בכל סצינה גבוהה תפיסה ללא צינורות מודל 3D מותאם אישית."
-          },
-          {
-            "title": "VFX Action & High-Speed Physics",
-            "frictionHeadline": "מינוף תנועה בפעולה",
-            "friction": "קרבות חלל במהירות גבוהה, שריפות נשק אנרגיה, ופיצוצים לעתים קרובות לגרום מודלים ניוניים למסגרות סלע או לייצר חפצים חזותיים מבולגנים.",
-            "solutionHeadline": "פעולה ו- FX Motion Anchoring",
-            "solution": "כוריאוגרפיה דינמית ישירה, תנועות מצלמה מהירות, ופעולה חד-כבדת חלקיקים מנצחת תוך שמירה על קצוות נקיים ופיסיקה ריאלית."
-          },
-          {
-            "title": "אודיו-Visual World-Building",
-            "frictionHeadline": "Flat Audio in High-Concept Worlds",
-            "friction": "כלי נשק פוטריים, לחות של ספינת כוכבים, ודפוסי דיבור זרים מרגישים מנותקים כאשר הם מותקפים באופן ידני על קליפים שנוצרו על ידי שתיקה.",
-            "solutionHeadline": "עקבו אחרי World-Sound & Voice Sync",
-            "solution": "דיאלוג סינטטי מותאם אישית, שירה זרה, וצלילים קולנועיים ישירות בתוך ציר הזמן עבור תערובת אודיו immersive, מוכן לשחרר."
-          }
-        ],
-        "screeningRoomPreview": "Sci-Fi VFX הפקה - SFAISCREENING ביקורת"
+        "screeningRoomPreview": "The Animated Comedy — Screening Room"
       },
       {
         "id": "documentary",
-        "title": "להפוך את סיפורי ארצ'יב למסמכים הנמכרים ביותר.",
-        "subtitle": "ליצור מחדש אירועים היסטוריים, חידושים, וראיונות מומחים ההתקנה עם פרטים תקופתיים אותנטיים, קולברות חלקה, ועלויות רישוי לאפס.",
-        "badge": "המונחים: accurate",
+        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
+        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
+        "badge": "Period-Accurate",
         "solutionPillars": [
           {
-            "title": "המונחים: Era-Specific Visual Accuracy",
-            "frictionHeadline": "אמנות ארונניסטית",
-            "friction": "מודלים ניוניים סטנדרטיים מדממים באופן שגרתי חפצים מודרניים, מסך טלפונים חכמים, או בגדים בזמן לא נכון לתוך חידושים היסטוריים.",
-            "solutionHeadline": "משמרות בסגנון היסטורי",
-            "solution": "הגדר פרמטרים זמניים מדויקים - החל מ-1920 סרט דגנים ועד מרקמים מהמאה ה -18 - כך שכל סצנה שנוצרת נשארת אותנטית מבחינה היסטורית."
+            "title": "Era-Specific Visual Accuracy",
+            "frictionHeadline": "Anachronistic Artifacts",
+            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
+            "solutionHeadline": "Historical Style Guardrails",
+            "solution": "Set exact temporal parameters — from 1920s film grain to 18th-century wardrobe textures — so every generated scene stays historically authentic."
           },
           {
-            "title": "ארכיון תגיות: B-Roll Engine",
-            "frictionHeadline": "מונוטוני ב Long Voiceovers",
-            "friction": "אודיו קריין לטווח ארוך עם תמונות מניות סטטיות מוביל לירידה מהירה של הצופה במהלך צלילה עמוקה.",
-            "solutionHeadline": "מנוע B-Roll Engine",
-            "solution": "כאשר המספר שלך מדבר על עובדות היסטוריות, SceneFlow באופן אוטומטי יוצר מחדש קולנועי מוקרן, מסמך overlays, ו חתך בסגנון ארכיוני הקשור ישירות לתעתיק אודיו."
+            "title": "Archival Cutaways & B-Roll Engine",
+            "frictionHeadline": "Visual Monotony in Long Voiceovers",
+            "friction": "Pairing long-form narrator audio with static stock images leads to rapid viewer drop-off during deep dives.",
+            "solutionHeadline": "Transcript-Driven B-Roll Engine",
+            "solution": "As your narrator discusses historical facts, SceneFlow automatically generates timed cinematic re-enactments, document overlays, and archival-style cutaways tied directly to the audio transcript."
           },
           {
-            "title": "ראיון ודיבור-האד ריאליזם",
-            "frictionHeadline": "עדים מומחים",
-            "friction": "היסטוריונים, חוקרים, או עדים לעתים קרובות נראים מלאכותיים, עם תנועות הלסת הצף ומגע עין לא טבעי.",
-            "solutionHeadline": "פרופילים מומחים נעולים וסנכרון קול",
-            "solution": "לשמור על הגדרות ראיון מציאותיות, אמינות עם ביטויים טבעיים, די שפתון מדויק וזהויות מומחים עקביות על פני סדרה רב-חלקית."
+            "title": "Interview & Talking-Head Realism",
+            "frictionHeadline": "Uncanny Expert Witnesses",
+            "friction": "Generated historians, investigators, or witnesses often look artificial, with floating jaw movements and unnatural eye contact.",
+            "solutionHeadline": "Locked Expert Profiles & Vocal Sync",
+            "solution": "Maintain realistic, trustworthy interview setups with natural micro-expressions, accurate lip-sync, and consistent expert identities across multi-part series."
           },
           {
-            "title": "רצף אפיזודי והמשך נרטיב",
-            "frictionHeadline": "המונחים: timeline Editing",
-            "friction": "אודיו Balancing narrator, חידושים, ראיות מגלה, ואת הפסקות בניית מתח לאורך פרק 40 דקות בדרך כלל לוקח שבועות ב NLE המסורתית.",
-            "solutionHeadline": "Beat-First Documentary פילין",
-            "solution": "מתח דרמטי מבנה, הפסקות תסכול, וראיות מגלה ויזואלי בתוך Blueprint Studio, ומספקות קובץ מאסטר מגובש במלואו במעבר אחד חלקה."
+            "title": "Episodic Pacing & Narrative Continuity",
+            "frictionHeadline": "Fragmented Timeline Editing",
+            "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
+            "solutionHeadline": "Beat-First Documentary Pipeline",
+            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Studio, delivering a fully assembled master file in one seamless pass."
           }
         ],
-        "screeningRoomPreview": "הפקה: SFAISCREENING ROOMTER ביקורת"
+        "screeningRoomPreview": "Documentary Production — Screening Room"
+      },
+      {
+        "id": "localization",
+        "title": "Beyond Dubbing. Fully Localized Productions.",
+        "subtitle": "Same storyline, two cities: Houston, Texas and São Paulo, Brazil. SceneFlow doesn't just dub the audio — it localizes settings, cultural references, and on-screen text so each audience sees a production made for them.",
+        "badge": "Localized",
+        "localeToggle": true,
+        "locales": [
+          {
+            "id": "houston",
+            "label": "Houston, TX",
+            "lang": "en"
+          },
+          {
+            "id": "saopaulo",
+            "label": "São Paulo, BR",
+            "lang": "pt"
+          }
+        ],
+        "solutionPillars": [
+          {
+            "title": "Cultural Adaptation, Not Translation",
+            "frictionHeadline": "Dubbing Is Not Localization.",
+            "friction": "Swapping the audio track leaves every cultural reference, location shot, and on-screen graphic targeting the wrong audience.",
+            "solutionHeadline": "Blueprint-Level Localization.",
+            "solution": "Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Studio before a single frame is rendered."
+          },
+          {
+            "title": "Parallel Production Pipelines",
+            "frictionHeadline": "One Region at a Time.",
+            "friction": "Traditional localization is sequential — finish the original, then manually rebuild for each market. Months of delay per region.",
+            "solutionHeadline": "Concurrent Regional Pipelines.",
+            "solution": "Run multiple localized Blueprints in parallel. Each region gets its own production pipeline sharing the same narrative structure but with fully adapted visuals and dialogue."
+          },
+          {
+            "title": "Region-Specific Audience Resonance",
+            "frictionHeadline": "One Script for Every Culture.",
+            "friction": "Humor, pacing, and emotional beats that land in Houston may fall flat in São Paulo. A single script cannot carry both.",
+            "solutionHeadline": "Per-Region Resonance Tuning.",
+            "solution": "Audience Resonance analyzes each localized script against regional demographic profiles, flagging cultural mismatches before production begins."
+          }
+        ],
+        "screeningRoomPreview": "Localized Production Comparison — Screening Room"
       }
     ]
   },

@@ -1920,251 +1920,181 @@
     ]
   },
   "productionShowcase": {
-    "badge": "Příklady výroby",
-    "title": "Od Koncepce po Screen:",
-    "titleAccent": "Nekonečné možnosti",
-    "subtitle": "Šest veřejných produkcí dokazuje, že je celý ropovod - pre-vis, scéna video, a Screening Room recenzi. Definujte svůj koncept a nechte SceneFlow zvládnout scriptwriting, design znaků, multijazyčné audio, vizualizace, produkce videa a publikování.",
-    "subtitleTagline": "Jedna plošina. Nekonečné možnosti.",
-    "publicProductionsNote": "Každá níže uvedená karta je kompletní veřejná výroba - spínací řešení a Screening Room karty pro procházení potrubí.",
-    "languagesBanner": "Veřejné příklady lodí v 7 jazycích: anglicky, španělsky, portugalsky, hindsky, čínsky, arabsky a thajsky.",
-    "explorePipelineCta": "Prozkoumejte plnou výrobu",
-    "explorePipelineHint": "Začněte s kinematografickým dramatem níže - Řešení pro demo kotouč, Screening Room pro kompletní přezkoumání workflow.",
-    "workflowLabel": "Řešení",
-    "startProduction": "Spustit výrobu",
-    "cta": "Spustit výrobu",
-    "continuityNote": "Series Studio řídí kontinuitu",
-    "resonanceNote": "Audience Resonance ™ optimalizuje skripty",
-    "videoLanguagePrompt": "Sledujte tuto produkci ve svém jazyce",
-    "videoComingSoon": "Dub brzy přijde",
-    "videoSoon": "Brzy",
-    "introVideoLabel": "Řešení",
-    "screeningRoomLabel": "Screening Room",
+    "badge": "Production Examples",
+    "title": "See the Full Pipeline",
+    "titleAccent": "in Action",
+    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to final high-resolution video. Walk the Screening Room to compare animatics, individual scenes, and the finished master in multiple languages.",
+    "subtitleTagline": "Long-form productions. Not clips.",
+    "screeningRoomInstruction": "Select Pre-Vis, Scenes, or Final to experience the pipeline. Select a language to hear the dub.",
+    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
+    "explorePipelineCta": "Explore a full production",
+    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
+    "workflowLabel": "Solutions",
+    "startProduction": "Start Your Production",
+    "cta": "Start Your Production",
+    "continuityNote": "Series Studio manages continuity",
+    "resonanceNote": "Audience Resonance™ optimizes scripts",
+    "videoLanguagePrompt": "Watch this production in your language",
+    "videoComingSoon": "Dub coming soon",
+    "videoSoon": "Soon",
     "frictionLabel": "The Friction",
-    "solutionPillarLabel": "Řešení Google Flow",
-    "showSolutionsSection": "Zobrazit řešení",
-    "hideSolutionsSection": "Skrýt řešení",
+    "solutionPillarLabel": "The SceneFlow Solution",
+    "showSolutionsSection": "Show Solutions",
+    "hideSolutionsSection": "Hide Solutions",
     "cards": [
       {
         "id": "drama",
-        "title": "Filmové Al Drama. Zero Character Drift.",
-        "subtitle": "Eliminovat morfVýsledné postavy, přerušený dialog a nekonečné opakování. Budovat bezešvé, multi- charakter dlouhotrvající-formy příběhy s kompletní vizuální kontinuitou.",
-        "badge": "Series- připraven",
+        "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
+        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the pre-vis animatic, individual scenes, and the final high-resolution master — then switch languages to hear the full dub.",
+        "badge": "Series-Ready",
         "solutionPillars": [
           {
-            "title": "Konzistence vizuálního & znaku",
-            "frictionHeadline": "Nastavit drift znaků.",
-            "friction": "Generativní modely se restartují s každým výstřelem - způsobuje povahové tváře, oblečení a osvětlení, které se neustále mění napříč střihy scény.",
-            "solutionHeadline": "Zamčený agent BlueprintES.",
-            "solution": "Definujte hlavní profily znaků, prostředí a vizuální styly vpředu ve Blueprint Studio. SceneFlow zajišťuje vizuální identitu napříč každým vykreslením, aby se zachoval příběh ponoření."
+            "title": "Visual & Character Consistency",
+            "frictionHeadline": "Character Drift & Wobbly Sets.",
+            "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
+            "solutionHeadline": "Locked Asset Blueprints.",
+            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Studio. SceneFlow enforces visual identity across every render to preserve narrative immersion."
           },
           {
-            "title": "Narativní pacing a kontrola scén",
-            "frictionHeadline": "10-Second Clip Trap.",
-            "friction": "Stavba filmu z odpojených mikropodnětů vytváří ochablý pohyb, ploché emoce a nekonečnou ruční úpravu časové osy.",
-            "solutionHeadline": "Beat- První Storyboarding.",
-            "solution": "Přímo na úrovni místa činu, ne na úrovni rychlosti. Struktura dramatické beaty, pohyby kamery, a příběh oblouky vizuálně před generováním jednoho rámu videa."
+            "title": "Narrative Pacing & Scene Control",
+            "frictionHeadline": "The 10-Second Clip Trap.",
+            "friction": "Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.",
+            "solutionHeadline": "Beat-First Storyboarding.",
+            "solution": "Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video."
           },
           {
-            "title": "Dialog & Audio Nespa",
-            "frictionHeadline": "Nepřesvědčivý dialog.",
-            "friction": "Misparent lip- sync, plovoucí pohyby úst, a oddělené hlasové stopy okamžitě vytáhnout diváky z dramatu.",
-            "solutionHeadline": "Integrovaný hlasový a synchronizační motor.",
-            "solution": "Dynamický hlasový výkon a precizní lip- synchronizace jsou zapékány přímo do video potrubí - přináší věrohodný dialog bez externích post- produkčních průkazů."
+            "title": "Dialogue & Audio Alignment",
+            "frictionHeadline": "Unconvincing Dialogue.",
+            "friction": "Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.",
+            "solutionHeadline": "Integrated Voice & Sync Engine.",
+            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline — delivering believable dialogue without external post-production passes."
           },
           {
-            "title": "Workflow Friction & Reroll Únava",
+            "title": "Workflow Friction & Reroll Fatigue",
             "frictionHeadline": "Asset Chaos & Endless Rerolls.",
-            "friction": "Vytváření krátkZvonečkového filmu obvykle znamená žonglování 200 + hrubých video souborů, ruční zvedání a desítky promarněných generací.",
-            "solutionHeadline": "Automatizované studio Pipeline.",
-            "solution": "Od konceptu po finálního mistra MP4 v jedné jednotné platformě. pouze v případě, že jsou splněny tyto podmínky: doručí váš konečný export."
+            "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
+            "solutionHeadline": "Automated Studio Pipeline.",
+            "solution": "From concept to final master MP4 in one unified platform. Blueprint Studio handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export."
           }
         ],
-        "screeningRoomPreview": "Filmové drama - Screening Room Náhled"
+        "screeningRoomPreview": "The Cinematic Drama — Screening Room"
       },
       {
         "id": "animation",
-        "title": "Napiš vtip. Google Flow Animuje pointu.",
-        "subtitle": "Eliminovat styl drift, tuhý pohyb, a rozbité načasování. Přeměnit legrační skripty na plně animované, hlasově-synchronizované komedie epizody v jednom bezešvém studiu.",
-        "badge": "Multi- Style",
+        "title": "Full-Season Animated Series. One Consistent Art Style.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "badge": "Multi-Style",
         "solutionPillars": [
           {
-            "title": "Stylistická konzistence",
+            "title": "Stylistic Consistency",
             "frictionHeadline": "Style Meltdown.",
-            "friction": "Cartoon a Anime styly neustále warp mezi výstřely, posuStará linie umění, lámání barevné palety, a morfování postavy do fotorealistické podivné lenošení.",
-            "solutionHeadline": "Uzamčený umělecký styl.",
-            "solution": "Zmrazit estetiku od prvního rámu. SceneFlow zamyká vzory znaků, závaží řádků a stínování modelů v celé epizodě, takže vaše postavy zůstávají jedinečně vaše."
+            "friction": "Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.",
+            "solutionHeadline": "Locked Art Style Engine.",
+            "solution": "Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours."
           },
           {
-            "title": "Přehnaná animace a fyziZačátek",
-            "frictionHeadline": "Stiff & Glitching Motion.",
-            "friction": "Generativní modely se potýkají s rychlým štípáním, dvojitým-bere, a squishy karikatura fyzika, mění high-energie gags na tání artefaktů.",
-            "solutionHeadline": "Akce & Kolébka.",
-            "solution": "Řídit dynamický pohyb znaků a expresivní pózy bez narušení geometrie. Přímý punchy fyzická komedie, náhlé cutaways, a divoké výrazy s plnou kontrolou pohybu."
+            "title": "Exaggerated Animation & Physics",
+            "frictionHeadline": "Stiff & Glitchy Motion.",
+            "friction": "Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.",
+            "solutionHeadline": "Action & Pose Anchoring.",
+            "solution": "Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control."
           },
           {
-            "title": "Komedicinální načasování a rytmus",
-            "frictionHeadline": "Zničené Punchlines.",
-            "friction": "Humor žije v pauzách a řezy. Standardní 5sekundové generativní smyčky nutí trapnou chůzi, která ničí dodávání vtipů.",
-            "solutionHeadline": "Beat- Precision Editing.",
-            "solution": "Kontrolní scéna jde dolů k rámu. Upravte dramatické pauzy, setup- to- punchline načasování, a rychlé reakce snímky přímo uvnitř beat- první časová Poslechnutí před finální vykreslování."
+            "title": "Comedic Timing & Rhythm",
+            "frictionHeadline": "Ruined Punchlines.",
+            "friction": "Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.",
+            "solutionHeadline": "Beat-Precision Editing.",
+            "solution": "Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render."
           },
           {
-            "title": "High- Energy Dialogue & Vocal Sync",
-            "frictionHeadline": "Celoživotní Puppet Mouths.",
-            "friction": "Generický dialog AI se cítí plochý a mechanický, ničí energii potřebnou pro snappy sitcom škádlení.",
-            "solutionHeadline": "Name.",
-            "solution": "Mapujte hlasové doručení přímo na energický výkon obličeje. Dialog, expresivní tvary úst a komediální hlasové stopy se hladce shodují shamem komický dopad."
+            "title": "High-Energy Dialogue & Vocal Sync",
+            "frictionHeadline": "Lifeless Puppet Mouths.",
+            "friction": "Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.",
+            "solutionHeadline": "Dynamic Voice & Expression Sync.",
+            "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
           }
         ],
-        "screeningRoomPreview": "Animovaná komedie - Screening Room Náhled"
-      },
-      {
-        "id": "podcast",
-        "title": "Hostíte rozhovor. Google Flow Produkuje show.",
-        "subtitle": "Odstranit statické avatary a manuální editaci videa. Transformace skriptů nebo syrového zvuku do multiúhlového, širokoúhlého video podcastu připraveného v jednom automatizovaném potrubí.",
-        "badge": "Vysílání- připraven",
-        "solutionPillars": [
-          {
-            "title": "Multi- Speaker & Avatar Identity",
-            "frictionHeadline": "Robotické Avatary a ztracená identita",
-            "friction": "Generované hostitelé posun vzhled mid- episode, zírat přímočaře do kamery, nebo nevykazuje přirozené lidské mikrovýrazy při poslechu.",
-            "solutionHeadline": "Uzamčené profily hostitele a hosta",
-            "solution": "Vytvořte trvalé vizuální identity džípů a opakujících se hostů. - SceneFlow udržuje konzistenci reproduktorů, přirozený oční kontakt a realistickou konverzační řeč těla během dlouhých diskusí."
-          },
-          {
-            "title": "Multi- Camera Direction & Pacing",
-            "frictionHeadline": "Monotónní jednoúhly",
-            "friction": "Statické talking- head záběry ztrácejí publikum retence rychle, zatímco manuální přepínání kamery přes 30minutovou časovou osu vyžaduje zdlouhavé frame--by-frame střihy.",
-            "solutionHeadline": "Automatické přepínání multi- Cam",
-            "solution": "SceneFlow analyzuje konverzační tok automaticky přepínat mezi hostitelem close- ups, host reakce, a wide- úhel studio snímků, dodávání profesionální vysílání chůze bez ruční časové úpravy."
-          },
-          {
-            "title": "Kontext- Aware B-Roll practices",
-            "frictionHeadline": "Vizuální monotónnost & B-Roll Bottlenecks",
-            "friction": "Hledání, generování a načasování příslušných vizuálních pomůcek nebo B- rollových klipů pro každé uvedené téma pozře hodiny postprodukce.",
-            "solutionHeadline": "Automatické generátory B- Roll Cutaways",
-            "solution": "Jak vaši hostitelé diskutují o tématech, SceneFlow automaticky generuje kontextové filmové vizuály, grafiky a scénické cutaways načasované přesně na audio přepis."
-          },
-          {
-            "title": "Name",
-            "frictionHeadline": "Audio Drift & Long- Form Render Únava",
-            "friction": "Synchronizace generativní videa na 20 + minut syrového zvuku vede k lip- sync drift, vykreslování chyb, a fragmentované správy souborů.",
-            "solutionHeadline": "Konečná Podcast Pipeline",
-            "solution": "Přidejte svou syrovou zvukovou stopu nebo skript a SFAISCENEFNámitky ovládají avatarové zarovnání, střihy fotoaparátů, integraci B-rollu a finální master MP4 export v jednom hladkém, automatickém studiovém průsmyku."
-          }
-        ],
-        "screeningRoomPreview": "AI- First Podcast - Screening Room Náhled"
-      },
-      {
-        "id": "training",
-        "title": "Výcvikové videoklipy. Pre- Vizualizace Vyrobeno v minutách.",
-        "subtitle": "Přeměnit manuály, diapozitivy a dokumenty o shodě na aktivní, vícejazyčné video moduly s uzamčenou značkou identity, bezchybný lipsync, a nula studio režie.",
-        "badge": "Globální nasazení",
-        "solutionPillars": [
-          {
-            "title": "Konzistence značky Presenter",
-            "frictionHeadline": "UncanMohlo Avatars & Brand Drift",
-            "friction": "Laciné AI moderátoři cítí robotické a nepřístupné, zatímco loga značky, barvy, a prezentace moderátorů se nedůsledně přesouvají přes různé tréninkové moduly.",
-            "solutionHeadline": "Locked ExeAbyste & Trainer profily",
-            "solution": "Zřídit trvalé, Nejspíš-vypadající firemní moderátoři a zamknout své pokyny značky. SceneFlow udržuje vizuální identitu, firemní styling a profesionální dodání po celé knihovně kurzu."
-          },
-          {
-            "title": "Bezešvé globální lokalizace",
-            "frictionHeadline": "Name",
-            "friction": "Lokalizace obsahu školení do 10 + jazyků obvykle vytváří trapné souznění úst, robotické hlasOna a masivní reeditace úzkých míst.",
-            "solutionHeadline": "Name",
-            "solution": "Přeložte celou sérii školení do desítek jazyků s přirozeným hlasovým tónem, lokalizované textové call out, a frame- přesné lip- syncing - vše v jednom kliknutí."
-          },
-          {
-            "title": "Integrované vizuální pomůcky a diagramy",
-            "frictionHeadline": "Text- Heavy Bore",
-            "friction": "Videa, která jsou jen mluvící hlavy rychle ztratí pozornost zaměstnanců, zatímco manuální animace procesních diagramů, zachycení obrazovky, a výstřely kulky trvá hodiny v editoru.",
-            "solutionHeadline": "Kontextové vizuální a grafické překrytí",
-            "solution": "SceneFlow automaticky generuje načasovaná schémata, klíčová zařízení a vizuální pomůcky přímo na obrazovce."
-          },
-          {
-            "title": "Rychlé aktualizace obsahu",
-            "frictionHeadline": "Drahé odporné výstřely a pasti na nájemce",
-            "friction": "Pokud se změní pravidla společnosti nebo specifikace produktu, aktualizace 2minutové části videa obvykle vyžaduje přestavbu a přestavení celého souboru.",
-            "solutionHeadline": "Modulární aktualizace skriptu",
-            "solution": "Upravit text přímo v plánu skriptu pro okamžitou aktualizaci zásad nebo postupů. SceneFlow re- dává pouze změněné části při zachování okolního načasování a video stylu."
-          }
-        ],
-        "screeningRoomPreview": "Korporátní trénink - SFAISCRENáhled"
-      },
-      {
-        "id": "scifi",
-        "title": "Vybudovat Nemožné světy. Přímý Lidi bez kompromisu.",
-        "subtitle": "Render komplexní vizuální efekty, futuristické prostředí, a cizí charakter design s frame- by- rám vizuální kontinuita - vše v rámci jednoho automatického potrubí..",
-        "badge": "VFX- připraven",
-        "solutionPillars": [
-          {
-            "title": "Kontinuita životního prostředí a architektury",
-            "frictionHeadline": "Geometrie a stupnice závad",
-            "friction": "Futuristická města, neonové krajiny, a mimozemské hvězdné lodě neustále warp, posun textury, nebo rozpustit do náhodného vizuální hluk mezi střihy kamery.",
-            "solutionHeadline": "World- State Locking",
-            "solution": "Definovat klíčové architektury, osvětlovací schémata a environmentální parametry ve Blueprint Studio. companied ISCENEFLOWTERM uzamkne prostorovou geometrii, takže vaše nastavení zůstane konzistentní od širokého nastavení snímků až po úzké koridorové boje."
-          },
-          {
-            "title": "Integrita designu cizinců a tvorů",
-            "frictionHeadline": "Mrophing Character Designs",
-            "friction": "Non- humanoidní druhy, kyborgové, a těžké-protézy postavy drift divoce ve vzhledu pokaždé, když je vytvořen nový úhel nebo výstřel.",
-            "solutionHeadline": "Zablokované profily mimozemských aktiv",
-            "solution": "Anchor nelidská anatomie, detaily pancíře a mechanické akcenty. Udržujte rozpoznání charakteru v každé high- koncepční scéně bez vlastní 3D modelování potrubí."
-          },
-          {
-            "title": "VFX Action & high- Speed Fyzics",
-            "frictionHeadline": "Tavení pohybu v akčních sekvencích",
-            "friction": "Vysokorychlostní vesmírné souboje, energetické zbraně požáry, a exploze často způsobují generativní modely šmouhy rámů nebo vyrábět chaotické vizuální artefakty.",
-            "solutionHeadline": "Action & FX Motion Ukotvení",
-            "solution": "Přímá dynamická choreografie, rychlé pohyby kamer, a particle- těžké akce bije při zachování čistých hran a realistické trajektorie fyziky."
-          },
-          {
-            "title": "Audio-Visual World-Building",
-            "frictionHeadline": "Plochý zvuk v high- Concept světy",
-            "friction": "Futuristické zbraně, brouky z vesmírné lodi a cizí obrazce řeči se cítí odpojeny, když jsou ručně namontovány nad tichými generovDovozní svorky.",
-            "solutionHeadline": "Integrovaný World- Sound & Voice Sync",
-            "solution": "Uspořádat vlastní syntetický dialog, cizí vokalizace, a filmové zvukové signály přímo v časové ose pro ponoření, release- ready master audio mix."
-          }
-        ],
-        "screeningRoomPreview": "Sci-Fi VFX Production - Screening Room Náhled"
+        "screeningRoomPreview": "The Animated Comedy — Screening Room"
       },
       {
         "id": "documentary",
-        "title": "Přeměnit archivní příběhy na bestsellery.",
-        "subtitle": "Rekonstruovat historické události Nesmíš rekonstruovat a odborný rozhovor s autentickými detaily, bezproblémové hlasové přenosy a nulové licenční poplatky.",
-        "badge": "Period- PřeMnoho",
+        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
+        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
+        "badge": "Period-Accurate",
         "solutionPillars": [
           {
-            "title": "Era- specifická vizuální přesnost",
-            "frictionHeadline": "Anachronistické artefakty",
-            "friction": "Standardní generativní modely běžně krvácejí moderní objekty, smartphone obrazovky, nebo nesprávné dobové oblečení do historických rekonstrukci.",
-            "solutionHeadline": "Ochránce historického stylu",
-            "solution": "Nastavte přesné časové parametry - od roku 1920 filmové zrno do 18th-století šatní textury - takže každá generovaná scéna zůstává historicky autentická."
+            "title": "Era-Specific Visual Accuracy",
+            "frictionHeadline": "Anachronistic Artifacts",
+            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
+            "solutionHeadline": "Historical Style Guardrails",
+            "solution": "Set exact temporal parameters — from 1920s film grain to 18th-century wardrobe textures — so every generated scene stays historically authentic."
           },
           {
-            "title": "Archivální pouzdro & B-Roll Motor",
-            "frictionHeadline": "Vizuální monotónnost v dlouhém Jedem",
-            "friction": "Pairing long-form vypravěč audio se statickými zásobními obrázky vede k rychlému vypnutí prohlížeče během hlubokých ponorů.",
-            "solutionHeadline": "Transcript- Driven B- Roll Engine",
-            "solution": "Jak váš vypravěč diskutuje o historických faktech, SceneFlow automaticky generuje načasované filmové rekonstrukci, překryvy dokumentů a archiválie-styl cutaways vázané přímo na audio přepis."
+            "title": "Archival Cutaways & B-Roll Engine",
+            "frictionHeadline": "Visual Monotony in Long Voiceovers",
+            "friction": "Pairing long-form narrator audio with static stock images leads to rapid viewer drop-off during deep dives.",
+            "solutionHeadline": "Transcript-Driven B-Roll Engine",
+            "solution": "As your narrator discusses historical facts, SceneFlow automatically generates timed cinematic re-enactments, document overlays, and archival-style cutaways tied directly to the audio transcript."
           },
           {
-            "title": "Rozhovor Mohlo by to vést realismus",
-            "frictionHeadline": "Divní expertní svědci",
-            "friction": "Generativní historici Uvidíš, že svědci vypadají uměle, s pohyblivými pohyby čelistí a nepřirozeným očním stykem.",
-            "solutionHeadline": "Name",
-            "solution": "Udržujte realistické, důvěryhodné interview setupy s přírodními mikrovýrazy, přesným lip- sync a konzistentní expertní identity napříč sérií vícedílných."
+            "title": "Interview & Talking-Head Realism",
+            "frictionHeadline": "Uncanny Expert Witnesses",
+            "friction": "Generated historians, investigators, or witnesses often look artificial, with floating jaw movements and unnatural eye contact.",
+            "solutionHeadline": "Locked Expert Profiles & Vocal Sync",
+            "solution": "Maintain realistic, trustworthy interview setups with natural micro-expressions, accurate lip-sync, and consistent expert identities across multi-part series."
           },
           {
-            "title": "Epizodické pacing a narcistní kontinuita",
-            "frictionHeadline": "Fragmentovaná časová úprava",
-            "friction": "VyNařízení vypravěče zvuku, rekonstrukci, důkazy odhalují, a tension- building paus v průběhu 40minutové epizody obvykle trvá týdny v tradičních NLEs.",
-            "solutionHeadline": "Beat- První dokument Pipeline",
-            "solution": "Struktura dramatické napětí, napjaté pauzy, a důkazy odhalí vizuálně uvnitř Blueprint Studio, dodávající plně sestavený hlavní soubor v jednom bezešvém průsmyku."
+            "title": "Episodic Pacing & Narrative Continuity",
+            "frictionHeadline": "Fragmented Timeline Editing",
+            "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
+            "solutionHeadline": "Beat-First Documentary Pipeline",
+            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Studio, delivering a fully assembled master file in one seamless pass."
           }
         ],
-        "screeningRoomPreview": "Výroba dokumentů - Screening Room Náhled"
+        "screeningRoomPreview": "Documentary Production — Screening Room"
+      },
+      {
+        "id": "localization",
+        "title": "Beyond Dubbing. Fully Localized Productions.",
+        "subtitle": "Same storyline, two cities: Houston, Texas and São Paulo, Brazil. SceneFlow doesn't just dub the audio — it localizes settings, cultural references, and on-screen text so each audience sees a production made for them.",
+        "badge": "Localized",
+        "localeToggle": true,
+        "locales": [
+          {
+            "id": "houston",
+            "label": "Houston, TX",
+            "lang": "en"
+          },
+          {
+            "id": "saopaulo",
+            "label": "São Paulo, BR",
+            "lang": "pt"
+          }
+        ],
+        "solutionPillars": [
+          {
+            "title": "Cultural Adaptation, Not Translation",
+            "frictionHeadline": "Dubbing Is Not Localization.",
+            "friction": "Swapping the audio track leaves every cultural reference, location shot, and on-screen graphic targeting the wrong audience.",
+            "solutionHeadline": "Blueprint-Level Localization.",
+            "solution": "Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Studio before a single frame is rendered."
+          },
+          {
+            "title": "Parallel Production Pipelines",
+            "frictionHeadline": "One Region at a Time.",
+            "friction": "Traditional localization is sequential — finish the original, then manually rebuild for each market. Months of delay per region.",
+            "solutionHeadline": "Concurrent Regional Pipelines.",
+            "solution": "Run multiple localized Blueprints in parallel. Each region gets its own production pipeline sharing the same narrative structure but with fully adapted visuals and dialogue."
+          },
+          {
+            "title": "Region-Specific Audience Resonance",
+            "frictionHeadline": "One Script for Every Culture.",
+            "friction": "Humor, pacing, and emotional beats that land in Houston may fall flat in São Paulo. A single script cannot carry both.",
+            "solutionHeadline": "Per-Region Resonance Tuning.",
+            "solution": "Audience Resonance analyzes each localized script against regional demographic profiles, flagging cultural mismatches before production begins."
+          }
+        ],
+        "screeningRoomPreview": "Localized Production Comparison — Screening Room"
       }
     ]
   },

@@ -1823,14 +1823,14 @@
   },
   "productionShowcase": {
     "badge": "Production Examples",
-    "title": "From Concept to Screen:",
-    "titleAccent": "Infinite Possibilities",
-    "subtitle": "Six public productions prove the full pipeline — pre-vis, scene video, and Screening Room review. Define your concept and let SceneFlow handle scriptwriting, character design, multi-language audio, visualization, video production, and publishing.",
-    "subtitleTagline": "One platform. Infinite possibilities.",
-    "publicProductionsNote": "Each card below is a complete public production — switch Solutions and Screening Room tabs to walk the pipeline.",
+    "title": "See the Full Pipeline",
+    "titleAccent": "in Action",
+    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to final high-resolution video. Walk the Screening Room to compare animatics, individual scenes, and the finished master in multiple languages.",
+    "subtitleTagline": "Long-form productions. Not clips.",
+    "screeningRoomInstruction": "Select Pre-Vis, Scenes, or Final to experience the pipeline. Select a language to hear the dub.",
     "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
     "explorePipelineCta": "Explore a full production",
-    "explorePipelineHint": "Start with Cinematic Drama below — Solutions for the demo reel, Screening Room for the full review workflow.",
+    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
     "workflowLabel": "Solutions",
     "startProduction": "Start Your Production",
     "cta": "Start Your Production",
@@ -1839,8 +1839,6 @@
     "videoLanguagePrompt": "Watch this production in your language",
     "videoComingSoon": "Dub coming soon",
     "videoSoon": "Soon",
-    "introVideoLabel": "Solutions",
-    "screeningRoomLabel": "Screening Room",
     "frictionLabel": "The Friction",
     "solutionPillarLabel": "The SceneFlow Solution",
     "showSolutionsSection": "Show Solutions",
@@ -1848,14 +1846,14 @@
     "cards": [
       {
         "id": "drama",
-        "title": "Cinematic AI Drama. Zero Character Drift.",
-        "subtitle": "Eliminate the morphing characters, broken dialogue, and endless rerolls. Build seamless, multi-character long-form stories with complete visual continuity.",
+        "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
+        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the pre-vis animatic, individual scenes, and the final high-resolution master — then switch languages to hear the full dub.",
         "badge": "Series-Ready",
         "solutionPillars": [
           {
             "title": "Visual & Character Consistency",
             "frictionHeadline": "Character Drift & Wobbly Sets.",
-            "friction": "Generative models reset with every shot—causing character faces, outfits, and lighting to morph continuously across scene cuts.",
+            "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
             "solutionHeadline": "Locked Asset Blueprints.",
             "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Studio. SceneFlow enforces visual identity across every render to preserve narrative immersion."
           },
@@ -1871,22 +1869,22 @@
             "frictionHeadline": "Unconvincing Dialogue.",
             "friction": "Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.",
             "solutionHeadline": "Integrated Voice & Sync Engine.",
-            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline—delivering believable dialogue without external post-production passes."
+            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline — delivering believable dialogue without external post-production passes."
           },
           {
             "title": "Workflow Friction & Reroll Fatigue",
             "frictionHeadline": "Asset Chaos & Endless Rerolls.",
             "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
             "solutionHeadline": "Automated Studio Pipeline.",
-            "solution": "From concept to final master MP4 in one unified platform. Blueprint Studio handles story setup, Production Studio automates rendering, and Screening Room delivers your final export."
+            "solution": "From concept to final master MP4 in one unified platform. Blueprint Studio handles story setup, the Writer's Room and Motion sections automate rendering, and Screening Room delivers your final export."
           }
         ],
-        "screeningRoomPreview": "The Cinematic Drama — Screening Room Preview"
+        "screeningRoomPreview": "The Cinematic Drama — Screening Room"
       },
       {
         "id": "animation",
-        "title": "You Write the Joke. SceneFlow Animates the Punchline.",
-        "subtitle": "Eliminate style drift, stiff movement, and broken timing. Turn hilarious scripts into fully animated, voice-synced comedy episodes in one seamless studio.",
+        "title": "Full-Season Animated Series. One Consistent Art Style.",
+        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {
@@ -1918,123 +1916,12 @@
             "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
           }
         ],
-        "screeningRoomPreview": "The Animated Comedy — Screening Room Preview"
-      },
-      {
-        "id": "podcast",
-        "title": "You Host the Conversation. SceneFlow Produces the Show.",
-        "subtitle": "Eliminate static avatars and manual video editing. Transform scripts or raw audio into multi-angle, broadcast-ready video podcasts in one automated pipeline.",
-        "badge": "Broadcast-Ready",
-        "solutionPillars": [
-          {
-            "title": "Multi-Speaker & Avatar Identity",
-            "frictionHeadline": "Robotic Avatars & Lost Identity",
-            "friction": "Generated hosts shift appearances mid-episode, stare blankly at the camera, or fail to exhibit natural human micro-expressions while listening.",
-            "solutionHeadline": "Locked Host & Guest Profiles",
-            "solution": "Establish persistent visual identities for your co-hosts and recurring guests. SceneFlow maintains speaker consistency, natural eye contact, and realistic conversational body language throughout long-form discussions."
-          },
-          {
-            "title": "Multi-Camera Direction & Pacing",
-            "frictionHeadline": "Monotonous Single-Angles",
-            "friction": "Static talking-head shots lose audience retention quickly, while manual camera switching across a 30-minute timeline requires tedious frame-by-frame cuts.",
-            "solutionHeadline": "Automated Multi-Cam Switching",
-            "solution": "SceneFlow analyzes conversation flow to automatically toggle between host close-ups, guest reactions, and wide-angle studio shots, delivering professional broadcast pacing without manual timeline editing."
-          },
-          {
-            "title": "Context-Aware B-Roll & Visuals",
-            "frictionHeadline": "Visual Monotony & B-Roll Bottlenecks",
-            "friction": "Finding, generating, and timing relevant visual aids or B-roll clips for every mentioned topic eats up hours of post-production.",
-            "solutionHeadline": "Auto-Generated B-Roll Cutaways",
-            "solution": "As your hosts discuss topics, SceneFlow automatically generates contextual cinematic visuals, graphics, and scene cutaways timed precisely to the audio transcript."
-          },
-          {
-            "title": "Long-Form Audio & Video Sync",
-            "frictionHeadline": "Audio Drift & Long-Form Render Fatigue",
-            "friction": "Syncing generative video to 20+ minutes of raw audio leads to lip-sync drift, rendering errors, and fragmented file management.",
-            "solutionHeadline": "End-to-End Podcast Pipeline",
-            "solution": "Drop in your raw audio track or script, and SceneFlow handles avatar alignment, camera cuts, B-roll integration, and final master MP4 export in one smooth, automated studio pass."
-          }
-        ],
-        "screeningRoomPreview": "The AI-First Podcast — Screening Room Preview"
-      },
-      {
-        "id": "training",
-        "title": "Enterprise-Grade Training Videos. Pre-Vizualization Produced in Minutes.",
-        "subtitle": "Turn manuals, slides, and compliance docs into engaging, multi-lingual video modules with locked brand identities, flawless lip-sync, and zero studio overhead.",
-        "badge": "Global Deploy",
-        "solutionPillars": [
-          {
-            "title": "Presenter & Brand Consistency",
-            "frictionHeadline": "Uncanny Avatars & Brand Drift",
-            "friction": "Cheap AI presenters feel robotic and unapproachable, while brand logos, colors, and presenter appearances shift inconsistently across different training modules.",
-            "solutionHeadline": "Locked Executive & Trainer Profiles",
-            "solution": "Establish persistent, natural-looking corporate presenters and lock your brand guidelines. SceneFlow maintains visual identity, corporate styling, and professional delivery across your entire course library."
-          },
-          {
-            "title": "Seamless Global Localization",
-            "frictionHeadline": "Broken Translations & Bad Lip-Sync",
-            "friction": "Localizing training content into 10+ languages usually creates awkward mouth-syncing, robotic voice tracks, and massive re-editing bottlenecks.",
-            "solutionHeadline": "Native Multilingual Sync Engine",
-            "solution": "Translate your entire training series into dozens of languages with natural voice tone, localized text callouts, and frame-accurate lip-syncing—all in a single click."
-          },
-          {
-            "title": "Integrated Visual Aids & Diagrams",
-            "frictionHeadline": "Text-Heavy Bore",
-            "friction": "Videos that are just talking heads quickly lose employee attention, while manually animating process diagrams, screen captures, and bullet callouts takes hours in an editor.",
-            "solutionHeadline": "Contextual Visual & Graphic Overlay",
-            "solution": "As your presenter explains complex workflows or compliance steps, SceneFlow automatically generates timed diagrams, key takeaways, and visual aids directly on screen."
-          },
-          {
-            "title": "Rapid Content Updating",
-            "frictionHeadline": "Expensive Re-Shoots & Render Traps",
-            "friction": "When company policy or product specs change, updating a 2-minute section of a video usually requires rebuilding and re-rendering the entire file.",
-            "solutionHeadline": "Modular Script Updates",
-            "solution": "Edit text directly in the script blueprint to update policies or procedures instantly. SceneFlow re-renders only the changed section while preserving surrounding timing and video style."
-          }
-        ],
-        "screeningRoomPreview": "The Corporate Training — Screening Room Preview"
-      },
-      {
-        "id": "scifi",
-        "title": "Build Impossible Worlds. Direct Uncompromised Sci-Fi.",
-        "subtitle": "Render complex visual effects, futuristic environments, and alien character designs with frame-by-frame visual continuity—all within a single automated pipeline.",
-        "badge": "VFX-Ready",
-        "solutionPillars": [
-          {
-            "title": "Environmental & Architecture Continuity",
-            "frictionHeadline": "Geometry & Scale Glitches",
-            "friction": "Futuristic cities, neon landscapes, and alien starships constantly warp, shift textures, or dissolve into random visual noise between camera cuts.",
-            "solutionHeadline": "World-State Locking",
-            "solution": "Define key architecture, lighting schemes, and environmental parameters in Blueprint Studio. SceneFlow locks spatial geometry so your setting stays consistent from wide establishing shots to tight corridor fights."
-          },
-          {
-            "title": "Alien & Creature Design Integrity",
-            "frictionHeadline": "Morphing Character Designs",
-            "friction": "Non-humanoid species, cyborgs, and heavy-prosthetic characters drift wildly in appearance every time a new angle or shot is generated.",
-            "solutionHeadline": "Locked Alien Asset Profiles",
-            "solution": "Anchor non-human anatomy, armor details, and mechanical accents. Maintain character recognition across every high-concept scene without custom 3D modeling pipelines."
-          },
-          {
-            "title": "VFX Action & High-Speed Physics",
-            "frictionHeadline": "Melting Motion in Action Sequences",
-            "friction": "High-speed space dogfights, energy weapon fires, and explosions often cause generative models to smear frames or produce messy visual artifacts.",
-            "solutionHeadline": "Action & FX Motion Anchoring",
-            "solution": "Direct dynamic choreography, fast camera movements, and particle-heavy action beats while preserving clean edges and realistic trajectory physics."
-          },
-          {
-            "title": "Audio-Visual World-Building",
-            "frictionHeadline": "Flat Audio in High-Concept Worlds",
-            "friction": "Futuristic weapons, ambient starship hums, and alien speech patterns feel disconnected when manually fitted over silent generated clips.",
-            "solutionHeadline": "Integrated World-Sound & Voice Sync",
-            "solution": "Align custom synthetic dialogue, alien vocalizations, and cinematic sound cues directly within the timeline for an immersive, release-ready master audio mix."
-          }
-        ],
-        "screeningRoomPreview": "Sci-Fi VFX Production — Screening Room Preview"
+        "screeningRoomPreview": "The Animated Comedy — Screening Room"
       },
       {
         "id": "documentary",
-        "title": "Turn Archival Stories into Bestselling Documentaries.",
-        "subtitle": "Recreate historical events, re-enactments, and expert interview setups with authentic period detail, seamless voiceovers, and zero archive licensing fees.",
+        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
+        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
         "badge": "Period-Accurate",
         "solutionPillars": [
           {
@@ -2042,7 +1929,7 @@
             "frictionHeadline": "Anachronistic Artifacts",
             "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
             "solutionHeadline": "Historical Style Guardrails",
-            "solution": "Set exact temporal parameters—from 1920s film grain to 18th-century wardrobe textures—so every generated scene stays historically authentic."
+            "solution": "Set exact temporal parameters — from 1920s film grain to 18th-century wardrobe textures — so every generated scene stays historically authentic."
           },
           {
             "title": "Archival Cutaways & B-Roll Engine",
@@ -2066,7 +1953,50 @@
             "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Studio, delivering a fully assembled master file in one seamless pass."
           }
         ],
-        "screeningRoomPreview": "Documentary Production — Screening Room Preview"
+        "screeningRoomPreview": "Documentary Production — Screening Room"
+      },
+      {
+        "id": "localization",
+        "title": "Beyond Dubbing. Fully Localized Productions.",
+        "subtitle": "Same storyline, two cities: Houston, Texas and São Paulo, Brazil. SceneFlow doesn't just dub the audio — it localizes settings, cultural references, and on-screen text so each audience sees a production made for them.",
+        "badge": "Localized",
+        "localeToggle": true,
+        "locales": [
+          {
+            "id": "houston",
+            "label": "Houston, TX",
+            "lang": "en"
+          },
+          {
+            "id": "saopaulo",
+            "label": "São Paulo, BR",
+            "lang": "pt"
+          }
+        ],
+        "solutionPillars": [
+          {
+            "title": "Cultural Adaptation, Not Translation",
+            "frictionHeadline": "Dubbing Is Not Localization.",
+            "friction": "Swapping the audio track leaves every cultural reference, location shot, and on-screen graphic targeting the wrong audience.",
+            "solutionHeadline": "Blueprint-Level Localization.",
+            "solution": "Start a new Blueprint from the original Film Treatment. Adapt settings, character wardrobes, signage, and cultural context in the Blueprint Studio before a single frame is rendered."
+          },
+          {
+            "title": "Parallel Production Pipelines",
+            "frictionHeadline": "One Region at a Time.",
+            "friction": "Traditional localization is sequential — finish the original, then manually rebuild for each market. Months of delay per region.",
+            "solutionHeadline": "Concurrent Regional Pipelines.",
+            "solution": "Run multiple localized Blueprints in parallel. Each region gets its own production pipeline sharing the same narrative structure but with fully adapted visuals and dialogue."
+          },
+          {
+            "title": "Region-Specific Audience Resonance",
+            "frictionHeadline": "One Script for Every Culture.",
+            "friction": "Humor, pacing, and emotional beats that land in Houston may fall flat in São Paulo. A single script cannot carry both.",
+            "solutionHeadline": "Per-Region Resonance Tuning.",
+            "solution": "Audience Resonance analyzes each localized script against regional demographic profiles, flagging cultural mismatches before production begins."
+          }
+        ],
+        "screeningRoomPreview": "Localized Production Comparison — Screening Room"
       }
     ]
   },
