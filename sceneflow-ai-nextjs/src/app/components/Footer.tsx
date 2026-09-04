@@ -13,7 +13,7 @@ export function Footer() {
 
   const footerLinks = {
     product: [
-      { name: t('links.features'), href: '#features' },
+      { name: t('links.features'), href: '#key-features' },
       { name: t('links.pricing'), href: '#pricing' },
       { name: t('links.howItWorks'), href: '#key-features' },
     ],

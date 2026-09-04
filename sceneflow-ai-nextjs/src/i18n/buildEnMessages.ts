@@ -28,7 +28,6 @@ import {
   SCREENING_ROOM_COPY,
   WORKFLOW_PHASES,
 } from '@/config/landing/workflowPhaseCopy'
-import { VIDEO_CATEGORIES, USE_CASES_QUALIFYING_STATEMENT } from '@/config/landing/useCaseExamples'
 import {
   HERO_VIDEO_LANGUAGE_PROMPT,
   HERO_VIDEO_LOCALES,
@@ -36,8 +35,6 @@ import {
 } from '@/config/landing/heroVideoLocales'
 import {
   USE_CASE_PERSONAS,
-  USE_CASE_PERSONA_UI,
-  USE_CASE_SEGMENT_CTAS,
 } from '@/config/landing/useCasePersonasCopy'
 import { INFRASTRUCTURE_COPY } from '@/config/landing/infrastructureCopy'
 import { ENGINEERING_TRUST_COPY } from '@/config/landing/engineeringTrustCopy'
@@ -46,7 +43,6 @@ import { TRUST_SAFEGUARD_COPY } from '@/config/landing/trustSafeguardCopy'
 import { EXTENDED_SCENES_COPY } from '@/config/landing/extendedScenesCopy'
 import { CORE_CAPABILITIES_COPY } from '@/config/landing/coreCapabilitiesCopy'
 import { CREATIVE_RANGE_COPY } from '@/config/landing/creativeRangeCopy'
-import { ENTERTAINMENT_STATS_COPY } from '@/config/landing/entertainmentStatsCopy'
 import { PRODUCTION_SHOWCASE_COPY } from '@/config/landing/productionShowcaseCopy'
 import { EXIT_INTENT_COPY } from '@/config/landing/exitIntentCopy'
 import {
@@ -76,17 +72,10 @@ export function buildEnMessages() {
         'Transform your ideas into professional videos with AI-powered workflow automation',
     },
     nav: {
-      workflow: 'The Workflow',
-      pipeline: 'The Pipeline',
-      platformWalkthrough: 'Platform Walkthrough',
       plansPricing: 'Plans & Pricing',
-      more: 'More',
-      useCases: 'Use Cases',
       productionExamples: 'Examples',
       keyFeatures: 'Features',
-      audienceResonance: 'Audience Resonance',
       trustSafety: 'Trust & Safety',
-      platformTrust: 'Platform & Trust',
       signIn: 'Sign In',
       startProject: 'Start a Project',
       dashboard: 'Dashboard',
@@ -98,18 +87,12 @@ export function buildEnMessages() {
       noLanguagesFound: 'No languages found',
     },
     floatingNav: {
-      compare: 'Compare',
-      looksAndFormats: 'Looks & Formats',
-      howItWorks: 'How It Works',
-      useCases: 'Use Cases',
       productionExamples: 'Examples',
       twoModes: 'Director vs Go',
       keyFeatures: 'Key Features',
       audienceResonance: 'Audience Resonance',
       preVisEngine: 'Pre-Vis Engine',
-      platformWalkthrough: 'Platform Walkthrough',
       trustSafety: 'Trust & Safety',
-      platform: 'Platform',
       pricing: 'Pricing',
     },
     hero: {
@@ -238,41 +221,6 @@ export function buildEnMessages() {
         ...(step.screenshotSlot ? { screenshotSlot: step.screenshotSlot } : {}),
       })),
       ui: SIMPLE_WALKTHROUGH_UI,
-    },
-    useCases: {
-      badge: 'Use Case Examples',
-      title: 'Whatever Video You Can Imagine,',
-      titleAccent: 'Build It in SceneFlow',
-      subtitle:
-        'Entertainment and creator series, real-estate showcases, education, podcasts, news formats, and branded campaigns — one automated studio from concept to publish-ready master.',
-      qualifyingStatement: USE_CASES_QUALIFYING_STATEMENT,
-      entertainmentStats: ENTERTAINMENT_STATS_COPY,
-      ui: {
-        useCases: 'Use Cases',
-        sectors: '{count} SECTORS',
-        // demoComingSoon intentionally omitted: USE_CASE_PERSONA_UI spreads its
-        // own value below, which always won.
-        selectExample: 'SELECT A USE CASE TO LEARN MORE',
-        hearStory: 'Hear the Story',
-        pauseStory: 'Pause story',
-        storyComingSoon: 'Story coming soon',
-        playNarration: 'Play narration',
-        pauseNarration: 'Pause narration',
-        narrationComingSoon: 'Narration coming soon',
-        ...USE_CASE_PERSONA_UI,
-      },
-      personas: USE_CASE_PERSONAS,
-      segmentCtas: USE_CASE_SEGMENT_CTAS,
-      categories: VIDEO_CATEGORIES.map((cat) => ({
-        id: cat.id,
-        title: cat.title,
-        ...(cat.qualifyingStatement ? { qualifyingStatement: cat.qualifyingStatement } : {}),
-        examples: cat.examples.map((ex) => ({
-          id: ex.id,
-          label: ex.label,
-          description: ex.description,
-        })),
-      })),
     },
     productionShowcase: PRODUCTION_SHOWCASE_COPY,
     platformWalkthrough: {

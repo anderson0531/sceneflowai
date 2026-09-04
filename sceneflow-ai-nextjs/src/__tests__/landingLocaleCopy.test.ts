@@ -15,7 +15,6 @@ const REQUIRED_LANDING_KEYS = [
   'twoModes.title',
   'twoModes.go.cta',
   'twoModes.director.cta',
-  'useCasesShowcase.cta',
   'pricing.title',
   'pricing.subtitle',
   'pricing.explorerHighlight',
@@ -79,7 +78,6 @@ describe('landing locale copy', () => {
       expect(hasExplorerPrice(String(getAtPath(enMessages, path)))).toBe(true)
     }
     expect(String(enMessages.hero.ctaPrimaryLaunch)).toBe('Start Your Production')
-    expect(String(enMessages.useCasesShowcase.cta)).toBe('Start Your Production')
     expect(String(enMessages.finalCta.cta)).toBe('Explore plans')
     expect(String(enMessages.finalCta.subtitle)).toContain('$9')
     expect(String(enMessages.hero.availabilityBadge)).toContain('November 2026')
