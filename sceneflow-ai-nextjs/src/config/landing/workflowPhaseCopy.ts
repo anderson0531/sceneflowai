@@ -18,7 +18,7 @@ export const WORKFLOW_PHASES: WorkflowPhaseCopy[] = [
     id: 'series',
     stepLabel: 'Series Studio',
     optional: true,
-    subtitle: 'Showrunner Engine',
+    subtitle: 'Multi-episode continuity',
     description:
       'Define your universe once and generate cohesive multi-episode arcs. Shared Reference Library keeps characters and tone aligned across the season.',
     keySteps: [
