@@ -32,7 +32,7 @@ config({ path: join(ROOT, '.env.vercel.local') })
 
 /** Must match HERO_VIDEO_BLOB_PATHS in heroVideoLocales.ts */
 const HERO_MASTERS = {
-  en: 'Hero Video (English).mp4',
+  en: 'SceneFlow Hero Video.mp4',
   es: 'Hero Video (Spanish) .mp4',
   pt: 'Hero Video (Portuguese).mp4',
   hi: 'Hero Video (Hindi).mp4',

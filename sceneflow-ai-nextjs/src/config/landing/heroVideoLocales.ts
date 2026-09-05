@@ -35,6 +35,10 @@ const BLOB_HOST = HERO_VIDEO_BLOB_HOST
 
 /** Blob CDN poster (~110 KB) — loads immediately on mobile while video buffers. */
 export function getHeroVideoPosterUrl(locale: HeroVideoLocaleId): string {
+  if (locale === 'en') {
+    // Regenerated from SceneFlow Hero Video.mp4 — site-served for instant deploy parity
+    return getHeroVideoPosterPath('en')
+  }
   return `${BLOB_HOST}/landing/hero/sceneflow-hero-${locale}-poster.jpg`
 }
 
@@ -51,7 +55,7 @@ export function getHeroVideoHlsUrl(locale: HeroVideoLocaleId): string | undefine
 
 /** Blob master filename for each locale once produced. */
 export const HERO_VIDEO_BLOB_PATHS: Record<HeroVideoLocaleId, string> = {
-  en: 'Hero Video (English).mp4',
+  en: 'SceneFlow Hero Video.mp4',
   es: 'Hero Video (Spanish) .mp4',
   pt: 'Hero Video (Portuguese).mp4',
   hi: 'Hero Video (Hindi).mp4',

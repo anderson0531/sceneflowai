@@ -50,7 +50,7 @@ export async function GET() {
     },
     heroVideo: {
       availableLocales: ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'],
-      englishBlob: 'Hero Video (English).mp4',
+      englishBlob: 'SceneFlow Hero Video.mp4',
       spanishBlob: 'Hero Video (Spanish) .mp4',
       portugueseBlob: 'Hero Video (Portuguese).mp4',
       hindiBlob: 'Hero Video (Hindi).mp4',
