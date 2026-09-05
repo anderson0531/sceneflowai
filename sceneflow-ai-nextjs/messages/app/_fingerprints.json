@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-11T05:37:33.236Z",
+  "generatedAt": "2026-09-05T06:02:55.888Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -199,7 +199,7 @@
       "studio.empty": "1212f6a9a924da4b",
       "studio.emptyHint": "709827cd87ef0be8",
       "detail.episodes": "83f9722d9bb2e52d",
-      "detail.productionBible": "b39928313a16fb59",
+      "detail.productionBible": "27f1429173c32b2a",
       "detail.referenceLibrary": "aaa102f9163dcd36",
       "detail.resonance": "b4d06998d89fcd24",
       "detail.generateEpisodes": "e1deb394e6ebad1a",
