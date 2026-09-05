@@ -254,6 +254,23 @@ export default function SeriesStudioPage() {
     }
   }, [series, hasAutoOpened, searchParams, router])
 
+  // Must stay above loading/not-found returns — React error #310 if hook count changes after load.
+  useEffect(() => {
+    const tab = searchParams?.get('tab')
+    const section = searchParams?.get('section')
+    if (tab) setActiveTab(tab)
+    if (section === 'cast' || section === 'locations' || section === 'props' || section === 'settings') {
+      setRefLibrarySection(section)
+    } else if (
+      section === 'aesthetics' ||
+      section === 'key-events' ||
+      section === 'story-threads' ||
+      section === 'review-updates'
+    ) {
+      setContinuitySection(section)
+    }
+  }, [searchParams])
+
   const handleAutoGenerate = async (meta: any) => {
     try {
       const result = await executeWithOverlay(async () => {
@@ -652,22 +669,6 @@ export default function SeriesStudioPage() {
     setActiveTab(tab)
     router.replace(`/dashboard/series/${series.id}?tab=${tab}`, { scroll: false })
   }
-
-  useEffect(() => {
-    const tab = searchParams?.get('tab')
-    const section = searchParams?.get('section')
-    if (tab) setActiveTab(tab)
-    if (section === 'cast' || section === 'locations' || section === 'props' || section === 'settings') {
-      setRefLibrarySection(section)
-    } else if (
-      section === 'aesthetics' ||
-      section === 'key-events' ||
-      section === 'story-threads' ||
-      section === 'review-updates'
-    ) {
-      setContinuitySection(section)
-    }
-  }, [searchParams])
 
   return (
     <div className="min-h-full bg-gray-950 text-white">
