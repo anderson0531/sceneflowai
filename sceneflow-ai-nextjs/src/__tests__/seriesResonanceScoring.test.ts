@@ -7,6 +7,8 @@ import {
   fingerprintsMatch,
   insightFingerprint,
   mergeSeriesInsights,
+  normalizeSeriesResonanceAnalysis,
+  pickRichestSeriesAnalysis,
   prioritizeSeriesInsights,
   stableSeriesInsightId,
 } from '@/lib/series/resonanceScoring'
@@ -289,5 +291,72 @@ describe('applyOptimisticScoreDelta', () => {
     expect(next.greenlightScore.score).toBe(85)
     expect(next.appliedFixes).toContain('insight_x')
     expect(next.isProductionReady).toBe(true)
+  })
+})
+
+describe('normalizeSeriesResonanceAnalysis', () => {
+  it('fills missing summary arrays so the panel can read .length', () => {
+    const normalized = normalizeSeriesResonanceAnalysis({
+      greenlightScore: getSeriesGreenlightTier(74),
+      summary: { overallAssessment: 'Partial persist after apply-fix' },
+    })
+    expect(normalized.summary.keyStrengths).toEqual([])
+    expect(normalized.summary.criticalWeaknesses).toEqual([])
+    expect(normalized.summary.comparableSeries).toEqual([])
+    expect(normalized.axes).toEqual([])
+    expect(normalized.episodeEngagement).toEqual([])
+    expect(normalized.insights).toEqual([])
+    expect(normalized.summary.comparableSeries.length).toBe(0)
+  })
+
+  it('keeps fallback arrays when the persisted blob is a score-only stub', () => {
+    const fallback: SeriesResonanceAnalysis = {
+      seriesId: 's1',
+      greenlightScore: getSeriesGreenlightTier(70),
+      axes: axes(),
+      episodeEngagement: [],
+      characterAnalysis: [],
+      locationAnalysis: [],
+      insights: [
+        weakness({
+          title: 'Weak cliffhanger',
+          category: 'episodes',
+          targetId: '5',
+        }),
+      ],
+      summary: {
+        overallAssessment: 'Full analysis',
+        bingeWorthiness: 'Medium',
+        targetAudience: 'General',
+        comparableSeries: ['Dark'],
+        keyStrengths: ['Hook'],
+        criticalWeaknesses: ['Midseason'],
+      },
+      analysisVersion: '1.2',
+      generatedAt: '2026-09-05T00:00:00.000Z',
+      creditsUsed: 1,
+    }
+    const normalized = normalizeSeriesResonanceAnalysis(
+      { greenlightScore: getSeriesGreenlightTier(73), appliedFixes: ['insight_x'] },
+      fallback
+    )
+    expect(normalized.summary.comparableSeries).toEqual(['Dark'])
+    expect(normalized.insights).toHaveLength(1)
+    expect(normalized.appliedFixes).toEqual(['insight_x'])
+  })
+})
+
+describe('pickRichestSeriesAnalysis', () => {
+  it('prefers the candidate that still has insights and summary', () => {
+    const stub = { greenlightScore: { score: 80 }, appliedFixes: ['a'] }
+    const full = {
+      greenlightScore: { score: 77 },
+      insights: [{ id: '1' }],
+      axes: [{ id: 'character-depth' }],
+      summary: { keyStrengths: ['x'] },
+    }
+    const picked = pickRichestSeriesAnalysis(stub, full)
+    expect(picked.insights).toEqual([{ id: '1' }])
+    expect((picked.summary as { keyStrengths: string[] }).keyStrengths).toEqual(['x'])
   })
 })

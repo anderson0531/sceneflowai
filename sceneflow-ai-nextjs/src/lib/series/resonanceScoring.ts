@@ -333,6 +333,84 @@ export function mergeSeriesInsights(input: {
   })
 }
 
+function analysisRichness(raw: unknown): number {
+  if (!raw || typeof raw !== 'object') return -1
+  const a = raw as Record<string, unknown>
+  const summary = a.summary && typeof a.summary === 'object' ? (a.summary as Record<string, unknown>) : null
+  let n = 0
+  if (Array.isArray(a.insights)) n += a.insights.length + 10
+  if (Array.isArray(a.axes) && a.axes.length) n += 10
+  if (Array.isArray(a.episodeEngagement)) n += 5
+  if (summary) n += 10
+  if (Array.isArray(summary?.keyStrengths)) n += 2
+  if (a.greenlightScore) n += 1
+  return n
+}
+
+/** Prefer the stored analysis that still has axes/insights/summary (column vs metadata can diverge). */
+export function pickRichestSeriesAnalysis(
+  ...candidates: unknown[]
+): Record<string, unknown> {
+  let best: Record<string, unknown> = {}
+  let bestScore = -1
+  for (const candidate of candidates) {
+    const score = analysisRichness(candidate)
+    if (score > bestScore && candidate && typeof candidate === 'object') {
+      bestScore = score
+      best = { ...(candidate as Record<string, unknown>) }
+    }
+  }
+  return best
+}
+
+export function normalizeSeriesResonanceAnalysis(
+  raw: unknown,
+  fallback?: SeriesResonanceAnalysis | null
+): SeriesResonanceAnalysis {
+  const src = (raw && typeof raw === 'object' ? raw : {}) as Partial<SeriesResonanceAnalysis>
+  const score = src.greenlightScore?.score ?? fallback?.greenlightScore.score ?? 0
+  const drivers =
+    src.summary?.audienceEngagementDrivers ?? fallback?.summary.audienceEngagementDrivers ?? []
+
+  return {
+    seriesId: src.seriesId || fallback?.seriesId || '',
+    greenlightScore: src.greenlightScore ?? fallback?.greenlightScore ?? getSeriesGreenlightTier(score),
+    axes: src.axes ?? fallback?.axes ?? [],
+    episodeEngagement: (src.episodeEngagement ?? fallback?.episodeEngagement ?? []).map((ep) => ({
+      ...ep,
+      improvements: ep.improvements ?? [],
+    })),
+    characterAnalysis: src.characterAnalysis ?? fallback?.characterAnalysis ?? [],
+    locationAnalysis: src.locationAnalysis ?? fallback?.locationAnalysis ?? [],
+    insights: src.insights ?? fallback?.insights ?? [],
+    summary: {
+      overallAssessment: src.summary?.overallAssessment ?? fallback?.summary.overallAssessment ?? '',
+      bingeWorthiness: src.summary?.bingeWorthiness ?? fallback?.summary.bingeWorthiness ?? '',
+      targetAudience: src.summary?.targetAudience ?? fallback?.summary.targetAudience ?? '',
+      comparableSeries: src.summary?.comparableSeries ?? fallback?.summary.comparableSeries ?? [],
+      keyStrengths: src.summary?.keyStrengths ?? fallback?.summary.keyStrengths ?? [],
+      criticalWeaknesses: src.summary?.criticalWeaknesses ?? fallback?.summary.criticalWeaknesses ?? [],
+      audienceEngagementDrivers: drivers.map((d) => ({
+        ...d,
+        episodeExamples: d.episodeExamples ?? [],
+      })),
+      marketPositioning: src.summary?.marketPositioning ?? fallback?.summary.marketPositioning,
+      renewalPotential: src.summary?.renewalPotential ?? fallback?.summary.renewalPotential,
+      marketAnalysis: src.summary?.marketAnalysis ?? fallback?.summary.marketAnalysis,
+    },
+    analysisVersion: src.analysisVersion ?? fallback?.analysisVersion ?? '1.2',
+    generatedAt: src.generatedAt ?? fallback?.generatedAt ?? new Date().toISOString(),
+    creditsUsed: src.creditsUsed ?? fallback?.creditsUsed ?? 0,
+    appliedFixes: src.appliedFixes ?? fallback?.appliedFixes ?? [],
+    appliedFixDetails: src.appliedFixDetails ?? fallback?.appliedFixDetails ?? [],
+    iterationCount: src.iterationCount ?? fallback?.iterationCount,
+    previousScore: src.previousScore ?? fallback?.previousScore,
+    isProductionReady: src.isProductionReady ?? fallback?.isProductionReady,
+    suggestedAction: src.suggestedAction ?? fallback?.suggestedAction,
+    scoreTrend: src.scoreTrend ?? fallback?.scoreTrend,
+  }
+}
+
 export function applyOptimisticScoreDelta(
   analysis: SeriesResonanceAnalysis,
   delta: number,
@@ -343,7 +421,7 @@ export function applyOptimisticScoreDelta(
     ? Array.from(new Set([...(analysis.appliedFixes || []), insightId]))
     : analysis.appliedFixes
 
-  return {
+  return normalizeSeriesResonanceAnalysis({
     ...analysis,
     greenlightScore: getSeriesGreenlightTier(nextScore),
     appliedFixes,
@@ -360,7 +438,7 @@ export function applyOptimisticScoreDelta(
           )
           ? 'apply-fixes'
           : analysis.suggestedAction,
-  }
+  })
 }
 
 export function formatClosedIssuesForPrompt(

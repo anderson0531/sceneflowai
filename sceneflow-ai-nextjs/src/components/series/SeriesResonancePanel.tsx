@@ -48,6 +48,7 @@ import {
 import {
   axisDisplayLabel,
   buildSeriesAnalysisNarration,
+  normalizeSeriesResonanceAnalysis,
 } from '@/lib/series/resonanceScoring'
 
 interface SeriesResonancePanelProps {
@@ -82,7 +83,9 @@ export function SeriesResonancePanel({
   savedAnalysis,
   onSeriesUpdated
 }: SeriesResonancePanelProps) {
-  const [analysis, setAnalysis] = useState<SeriesResonanceAnalysis | null>(savedAnalysis || null)
+  const [analysis, setAnalysis] = useState<SeriesResonanceAnalysis | null>(
+    savedAnalysis ? normalizeSeriesResonanceAnalysis(savedAnalysis) : null
+  )
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [expandedInsights, setExpandedInsights] = useState<string[]>([])
@@ -116,10 +119,11 @@ export function SeriesResonancePanel({
   // Update local state if the savedAnalysis prop changes
   React.useEffect(() => {
     if (savedAnalysis) {
-      setAnalysis(savedAnalysis)
+      const normalized = normalizeSeriesResonanceAnalysis(savedAnalysis)
+      setAnalysis(normalized)
       setShowConfig(false)
-      if (savedAnalysis.appliedFixes) {
-        setAppliedFixes(savedAnalysis.appliedFixes)
+      if (normalized.appliedFixes) {
+        setAppliedFixes(normalized.appliedFixes)
       }
     }
   }, [savedAnalysis])
@@ -162,11 +166,11 @@ export function SeriesResonancePanel({
         targetMarkets,
         audienceDefinition: audienceDef.description?.trim() ? audienceDef : undefined,
       })
-      setAnalysis(result)
+      const normalized = normalizeSeriesResonanceAnalysis(result)
+      setAnalysis(normalized)
       setShowConfig(false)
-      // Preserve appliedFixes from the new analysis result
-      if (result.appliedFixes) {
-        setAppliedFixes(result.appliedFixes)
+      if (normalized.appliedFixes) {
+        setAppliedFixes(normalized.appliedFixes)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Analysis failed')
@@ -439,7 +443,7 @@ export function SeriesResonancePanel({
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6 lg:col-span-2">
               <h4 className="text-sm font-medium text-gray-400 mb-4">Score Breakdown</h4>
               <div className="space-y-3">
-                {analysis.axes.map(axis => (
+                {(analysis.axes || []).map(axis => (
                   <div key={axis.id} className="flex items-center gap-3 group">
                     <div 
                       className="w-40 text-sm text-gray-400 truncate cursor-help" 
@@ -489,7 +493,7 @@ export function SeriesResonancePanel({
             
             {/* Episode Score Bars */}
             <div className="flex items-end gap-1 h-32 mb-4">
-              {analysis.episodeEngagement.map(ep => (
+              {(analysis.episodeEngagement || []).map(ep => (
                 <div
                   key={ep.episodeNumber}
                   className="flex-1 flex flex-col items-center cursor-pointer group"
@@ -535,7 +539,7 @@ export function SeriesResonancePanel({
                 >
                   <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700/50 mb-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                      {analysis.episodeEngagement.map(ep => (
+                      {(analysis.episodeEngagement || []).map(ep => (
                         <div 
                           key={ep.episodeNumber}
                           className={`p-3 rounded-lg border cursor-pointer transition-all ${
@@ -626,7 +630,7 @@ export function SeriesResonancePanel({
                           <p className="text-sm text-gray-400 mb-2">{ep.notes}</p>
                         )}
                         
-                        {ep.improvements.length > 0 && (
+                        {(ep.improvements || []).length > 0 && (
                           <div className="mt-2">
                             <p className="text-xs text-amber-400 mb-1">Improvements:</p>
                             <ul className="text-xs text-gray-400 space-y-1">
@@ -666,7 +670,7 @@ export function SeriesResonancePanel({
           {/* Summary */}
           <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6">
             <h4 className="text-sm font-medium text-white mb-3">Analysis Summary</h4>
-            <p className="text-gray-300 text-sm mb-4">{analysis.summary.overallAssessment}</p>
+            <p className="text-gray-300 text-sm mb-4">{analysis.summary?.overallAssessment}</p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Key Strengths */}
@@ -676,7 +680,7 @@ export function SeriesResonancePanel({
                   Key Strengths
                 </h5>
                 <ul className="space-y-1">
-                  {analysis.summary.keyStrengths.map((s, i) => (
+                  {(analysis.summary?.keyStrengths || []).map((s, i) => (
                     <li key={i} className="text-sm text-gray-400 flex items-start gap-2">
                       <span className="text-emerald-400 mt-1">•</span>
                       {s}
@@ -692,7 +696,7 @@ export function SeriesResonancePanel({
                   Areas for Improvement
                 </h5>
                 <ul className="space-y-1">
-                  {analysis.summary.criticalWeaknesses.map((w, i) => (
+                  {(analysis.summary?.criticalWeaknesses || []).map((w, i) => (
                     <li key={i} className="text-sm text-gray-400 flex items-start gap-2">
                       <span className="text-amber-400 mt-1">•</span>
                       {w}
@@ -703,10 +707,10 @@ export function SeriesResonancePanel({
             </div>
             
             {/* Comparable Series */}
-            {analysis.summary.comparableSeries.length > 0 && (
+            {(analysis.summary?.comparableSeries || []).length > 0 && (
               <div className="mt-4 pt-4 border-t border-slate-700/50">
                 <p className="text-xs text-gray-500">
-                  Comparable Series: {analysis.summary.comparableSeries.join(', ')}
+                  Comparable Series: {(analysis.summary?.comparableSeries || []).join(', ')}
                 </p>
               </div>
             )}
@@ -735,7 +739,7 @@ export function SeriesResonancePanel({
                         </span>
                       </div>
                       <p className="text-xs text-gray-400 mb-2">{driver.description}</p>
-                      {driver.episodeExamples.length > 0 && (
+                      {(driver.episodeExamples || []).length > 0 && (
                         <p className="text-[10px] text-gray-500">
                           Episodes: {driver.episodeExamples.join(', ')}
                         </p>
@@ -786,7 +790,7 @@ export function SeriesResonancePanel({
                   <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700/50">
                     <h6 className="text-xs font-medium text-gray-500 mb-1">Primary Markets</h6>
                     <div className="flex flex-wrap gap-1 mt-1">
-                      {analysis.summary.marketAnalysis.primaryMarkets.map((m, i) => (
+                      {(analysis.summary.marketAnalysis.primaryMarkets || []).map((m, i) => (
                         <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-gray-300 border border-slate-600">
                           {m}
                         </span>

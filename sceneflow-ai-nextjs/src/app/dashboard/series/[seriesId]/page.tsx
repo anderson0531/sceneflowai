@@ -65,7 +65,7 @@ import { ReferenceTransferDialog } from '@/components/series/ReferenceTransferDi
 import { SeriesHeroHealthStrip } from '@/components/series/SeriesHeroHealthStrip'
 import { SeriesContinuityPanel } from '@/components/series/SeriesContinuityPanel'
 import { getEpisodeDriftWarnings } from '@/lib/series/seriesHealth'
-import { applyOptimisticScoreDelta } from '@/lib/series/resonanceScoring'
+import { applyOptimisticScoreDelta, normalizeSeriesResonanceAnalysis } from '@/lib/series/resonanceScoring'
 import { ensureSeasons, groupEpisodesBySeason } from '@/lib/series/seasons'
 import type {
   EpisodeBlueprintResponse,
@@ -162,7 +162,9 @@ export default function SeriesStudioPage() {
   // Initialize analysis from series prop when it loads/changes
   useEffect(() => {
     if (series?.metadata?.resonance_analysis) {
-      setResonanceAnalysis(series.metadata.resonance_analysis as SeriesResonanceAnalysis)
+      setResonanceAnalysis((prev) =>
+        normalizeSeriesResonanceAnalysis(series.metadata?.resonance_analysis, prev)
+      )
     }
   }, [series?.metadata?.resonance_analysis])
   
@@ -426,11 +428,13 @@ export default function SeriesStudioPage() {
       operationType: 'series-analysis'
     })
     
+    const normalized = normalizeSeriesResonanceAnalysis(result)
+
     // Also update the series data locally so the score persists without a full refresh immediately
     if (series) {
       series.metadata = {
         ...(series.metadata || {}),
-        resonance_analysis: result,
+        resonance_analysis: normalized,
         ...(config?.audienceDefinition
           ? { audienceDefinition: config.audienceDefinition }
           : {})
@@ -439,9 +443,9 @@ export default function SeriesStudioPage() {
         series.targetAudience = config.targetAudience
       }
     }
-    
-    setResonanceAnalysis(result)
-    return result
+
+    setResonanceAnalysis(normalized)
+    return normalized
   }, [series, executeWithOverlay])
 
   const handleApplyResonanceFix = useCallback(async (
@@ -504,7 +508,7 @@ export default function SeriesStudioPage() {
       setResonanceAnalysis(updated)
       series.metadata = {
         ...(series.metadata || {}),
-        resonance_analysis: updated,
+        resonance_analysis: normalizeSeriesResonanceAnalysis(updated),
       }
     }
 
