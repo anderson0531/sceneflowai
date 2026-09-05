@@ -41,7 +41,7 @@
       },
       {
         "label": "Direct Before You Render",
-        "detail": "Lock a feature-length animatic on low-cost beat frames, then pay for high-res."
+        "detail": "Iterate direction cheaply on Pre-Vis beat frames. Approve, then generate motion video and the ProRes 4K master."
       },
       {
         "label": "Built for Every Audience",
@@ -1061,22 +1061,22 @@
     "express": {
       "badge": "Hyper-Speed Production",
       "title": "Sceneflow Express",
-      "description": "Auto-generate pre-vis, animatics, and video beats concurrently. Move from script to shareable preview in minutes — then approve Beat Frames before final F2V spend. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
-          "title": "Express Pre-vis",
-          "desc": "Review and share audio and video pre-vis in minutes vs hours.",
+          "title": "Express Pre-Vis",
+          "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
-          "title": "Express Animatics",
-          "desc": "Render full Ken Burns animatic scenes with high-end voiceovers instantly.",
-          "time": "Minutes vs Hours"
-        },
-        {
-          "title": "Express Video",
-          "desc": "Orchestrate concurrent image and video generation—including native Veo extension chains for long dialogue beats.",
+          "title": "Express Motion Video",
+          "desc": "Per-scene motion video generated after Pre-Vis approval, with multilanguage dubs and scene-level edits.",
           "time": "Minutes vs Days"
+        },
+        {
+          "title": "Express Delivery",
+          "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
+          "time": "Minutes vs Weeks"
         }
       ],
       "cta": "Start Express Rendering"
@@ -1085,7 +1085,7 @@
   "preVisEngine": {
     "badge": "Creative Decision Engine",
     "title": "Pre-Visualization Engine",
-    "subtitle": "Создание полноценного 40-минутного аудиовизуального аниматика с озвучкой и музыкальным сопровождением всего за 15 минут — это не просто этап рабочего процесса, а готовый продукт. В Голливуде превизуализация занимает недели и обходится в сотни тысяч долларов. SceneFlow сокращает этот процесс до минут, а затраты — до сущих пустяков.",
+    "subtitle": "Generating a fully voiced, scored, 40-minute Pre-Vis (the industry term: animatic) in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
     "narrative": "В киноиндустрии раскадровку передают съемочной группе. Pre-vis — это то, что показывают руководству студии, инвесторам и продюсерам для получения одобрения проекта. SceneFlow переводит процесс производства с уровня любительского инструмента для создателей контента на уровень профессионального актива корпоративного масштаба.",
     "pillars": [
       {
@@ -1102,12 +1102,12 @@
       }
     ],
     "workflow": {
-      "title": "Загрузка сценария → превизуализация, готовая к утверждению",
+      "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
       "steps": [
-        "Загружайте сценарии в стандартных для индустрии форматах (.fountain, .fdx, .txt)",
-        "Выполните скоринг по модели Audience Resonance для вашей целевой аудитории.",
-        "Создавайте Express Pre-vis — озвученные аниматики с музыкальным сопровождением — за считанные минуты.",
-        "Направить на согласование заинтересованным сторонам перед окончательным расходованием средств на видео."
+        "Build the Reference Library — characters, locations, and props locked to your production art style.",
+        "Generate Pre-Vis beat frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
+        "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
+        "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
       ]
     },
     "cta": "Начните с загрузки скрипта",
@@ -1210,7 +1210,7 @@
       "sectionTitle": "Estimate Your Project",
       "sectionSubtitle": "Know exactly what you'll pay before you commit",
       "title": "Project Budget Calculator",
-      "subtitle": "Estimate credits before you start",
+      "subtitle": "Set a credit budget, track production charges, and plan Pre-Vis first before motion video.",
       "customize": "Customize parameters",
       "imagesLabel": "Images to generate",
       "videoClipsLabel": "Video clips",
@@ -1390,7 +1390,7 @@
     "badge": "Production Examples",
     "title": "See the Full Pipeline",
     "titleAccent": "in Action",
-    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to final high-resolution video. Walk the Screening Room to compare animatics, individual scenes, and the finished master in multiple languages.",
+    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to the final ProRes 4K master. Walk the Screening Room to compare the Pre-Vis, per-scene motion video, and the finished master in multiple languages.",
     "subtitleTagline": "Long-form productions. Not clips.",
     "screeningRoomInstruction": "Select Pre-Vis, Scenes, or Final to experience the pipeline. Select a language to hear the dub.",
     "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
@@ -1412,7 +1412,7 @@
       {
         "id": "drama",
         "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
-        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the pre-vis animatic, individual scenes, and the final high-resolution master — then switch languages to hear the full dub.",
+        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the Pre-Vis, per-scene motion video, and the final ProRes 4K master — then switch languages to hear the full dub.",
         "badge": "Series-Ready",
         "solutionPillars": [
           {
@@ -1577,7 +1577,7 @@
       "tagline": "Prototype the episode before you commit to it.",
       "points": [
         "Generate the structural backbone of an entire episode in under 10 minutes.",
-        "Enter a concept or script, click Go, and come back to a finished animatic.",
+        "Enter a concept or script, click Go, and come back to a fully voiced Pre-Vis you can screen and share.",
         "Automatically handles Blueprint, structure, references, frames, audio, and assembly.",
         "Hand the result to Director Mode the moment you want the wheel."
       ],
@@ -1593,7 +1593,7 @@
         "Direct in plain language against locked references — no prompt engineering, no copy-pasting between tool stacks.",
         "Step in at any point in the pipeline: Blueprint, Production, or Screening Room.",
         "Fine-tune visuals, character emotion, dialogue timing, and music beat by beat.",
-        "Complete pre-visualization and master production workflow."
+        "One pipeline — Reference Library, Pre-Vis, Motion Video, ProRes 4K master — reviewed in the Screening Room at every step."
       ],
       "cta": "Launch Studio ($9)"
     }

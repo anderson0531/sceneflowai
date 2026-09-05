@@ -5,7 +5,7 @@ export const PRODUCTION_SHOWCASE_COPY = {
   title: 'See the Full Pipeline',
   titleAccent: 'in Action',
   subtitle:
-    'Each example below is a complete production — from Blueprint through Pre-Vis to final high-resolution video. Walk the Screening Room to compare animatics, individual scenes, and the finished master in multiple languages.',
+    'Each example below is a complete production — from Blueprint through Pre-Vis to the final ProRes 4K master. Walk the Screening Room to compare the Pre-Vis, per-scene motion video, and the finished master in multiple languages.',
   subtitleTagline: 'Long-form productions. Not clips.',
   screeningRoomInstruction:
     'Select Pre-Vis, Scenes, or Final to experience the pipeline. Select a language to hear the dub.',
@@ -31,7 +31,7 @@ export const PRODUCTION_SHOWCASE_COPY = {
       id: 'drama',
       title: 'Feature-Length Cinematic Drama. Zero Character Drift.',
       subtitle:
-        'Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the pre-vis animatic, individual scenes, and the final high-resolution master — then switch languages to hear the full dub.',
+        'Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the Pre-Vis, per-scene motion video, and the final ProRes 4K master — then switch languages to hear the full dub.',
       badge: 'Series-Ready',
       solutionPillars: [
         {

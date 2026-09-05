@@ -39,7 +39,7 @@
       },
       {
         "label": "Direct Before You Render",
-        "detail": "Lock a feature-length animatic on low-cost beat frames, then pay for high-res."
+        "detail": "Iterate direction cheaply on Pre-Vis beat frames. Approve, then generate motion video and the ProRes 4K master."
       },
       {
         "label": "Built for Every Audience",
@@ -1060,22 +1060,22 @@
     "express": {
       "badge": "Hyper-Speed Production",
       "title": "Sceneflow Express",
-      "description": "Auto-generate pre-vis, animatics, and video beats concurrently. Move from script to shareable preview in minutes — then approve Beat Frames before final F2V spend. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
       "items": [
         {
-          "title": "Express Pre-vis",
-          "desc": "Review and share audio and video pre-vis in minutes vs hours.",
+          "title": "Express Pre-Vis",
+          "desc": "Fully voiced, scored beat frames per scene, ready to share in the Screening Room.",
           "time": "Minutes vs Hours"
         },
         {
-          "title": "Express Animatics",
-          "desc": "Render full Ken Burns animatic scenes with high-end voiceovers instantly.",
-          "time": "Minutes vs Hours"
-        },
-        {
-          "title": "Express Video",
-          "desc": "Orchestrate concurrent image and video generation—including native Veo extension chains for long dialogue beats.",
+          "title": "Express Motion Video",
+          "desc": "Per-scene motion video generated after Pre-Vis approval, with multilanguage dubs and scene-level edits.",
           "time": "Minutes vs Days"
+        },
+        {
+          "title": "Express Delivery",
+          "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
+          "time": "Minutes vs Weeks"
         }
       ],
       "cta": "Start Express Rendering"
@@ -1084,7 +1084,7 @@
   "preVisEngine": {
     "badge": "Creative Decision Engine",
     "title": "Pre-Visualization Engine",
-    "subtitle": "การสร้างภาพเคลื่อนไหวที่เปล่งเสียงและได้คะแนนอย่างเต็มที่ 40 นาทีใน 15 นาทีไม่ใช่ขั้นตอนเวิร์กโฟลว์ — นั่นคือผลิตภัณฑ์ในฮอลลีวู้ดการเข้าชมล่วงหน้าใช้เวลาหลายสัปดาห์และมีค่าใช้จ่ายหลายแสนดอลลาร์ SceneFlow ปรับขนาดเป็นนาทีและเปลี่ยนกระเป๋า",
+    "subtitle": "Generating a fully voiced, scored, 40-minute Pre-Vis (the industry term: animatic) in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
     "narrative": "ในอุตสาหกรรมภาพยนตร์สตอรี่บอร์ดเป็นสิ่งที่คุณมอบให้กับทีมงาน Pre-vis คือสิ่งที่คุณแสดงให้ผู้บริหารสตูดิโอนักลงทุนและโปรดิวเซอร์เห็นเพื่อให้ได้โปรเจกต์ GREENLIT SceneFlow ยกระดับการผลิตจากเครื่องมือครีเอเตอร์ผู้บริโภคไปสู่สินทรัพย์ไปป์ไลน์ระดับองค์กร",
     "pillars": [
       {
@@ -1101,12 +1101,12 @@
       }
     ],
     "workflow": {
-      "title": "การดูล่วงหน้าพร้อมกรีน→ไลท์อัปโหลดสคริปต์",
+      "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
       "steps": [
-        "อัปโหลดสคริปต์มาตรฐานอุตสาหกรรม (.fountain, .fdx, .txt)",
-        "เรียกใช้การให้คะแนน Audience Resonance บนข้อมูลประชากรเป้าหมายของคุณ",
-        "สร้าง Express Pre-vis — เปล่งเสียงและให้คะแนนภาพเคลื่อนไหวในไม่กี่นาที",
-        "แบ่งปันเพื่อการตรวจสอบผู้มีส่วนได้ส่วนเสียก่อนการใช้จ่ายวิดีโอขั้นสุดท้าย"
+        "Build the Reference Library — characters, locations, and props locked to your production art style.",
+        "Generate Pre-Vis beat frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
+        "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
+        "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
       ]
     },
     "cta": "เริ่มต้นด้วยการอัปโหลดสคริปต์",
@@ -1209,7 +1209,7 @@
       "sectionTitle": "ประมาณโปรเจกต์ของคุณ",
       "sectionSubtitle": "รู้ให้แน่ชัดว่าคุณจะจ่ายเท่าไหร่ก่อนที่คุณจะให้คำมั่นสัญญา",
       "title": "เครื่องคำนวณงบประมาณโครงการ",
-      "subtitle": "ประเมินเครดิตก่อนเริ่ม",
+      "subtitle": "Set a credit budget, track production charges, and plan Pre-Vis first before motion video.",
       "customize": "ปรับแต่งพารามิเตอร์",
       "imagesLabel": "รูปภาพที่จะสร้าง",
       "videoClipsLabel": "คลิปวิดีโอ",
@@ -1704,7 +1704,7 @@
           {
             "icon": "referenceLibrary",
             "title": "INTELLIGENT Reference Library",
-            "description": "ล็อคตัวละครเสียงตู้เสื้อผ้าสถานที่และอุปกรณ์ประกอบฉากหนึ่งครั้งทุกยุคทุกสมัยดึงมาจากการอ้างอิงเดียวกัน — ไม่มีการเลื่อนลอยข้ามฉากตอนและซีรีส์",
+            "description": "Lock characters, locations, and props once — matched to your production art style. Every generation pulls from the same references — zero drift across scenes, episodes, and series.",
             "learnMore": {
               "problem": "ความลับที่สกปรกของวิดีโอ AI คือการดริฟท์: ใบหน้าของฮีโร่ตู้เสื้อผ้าและการตั้งค่าการกลายพันธุ์ของคุณที่ถ่ายทำและตอนต่อตอนทำลายภาพลวงตาและบังคับให้ม้วนใหม่ไม่มีที่สิ้นสุดเพื่อให้อยู่ในรูปแบบ",
               "solution": "สร้างตัวละครตู้เสื้อผ้าเสียงสถานที่และอุปกรณ์ประกอบฉากที่ AI ช่วยหรือกำหนดเองทั้งหมดเพียงครั้งเดียวจากนั้นนำกลับมาใช้ใหม่ได้ทุกที่ทุกรุ่นดึงมาจากการอ้างอิงที่ล็อกไว้เหมือนกัน — ด้วยการสร้างเสียงอัตโนมัติที่ตรงกับภาพและบทบาทของตัวละครแต่ละตัว",
@@ -1744,10 +1744,10 @@
           {
             "icon": "screeningRoom",
             "title": "Screening Room",
-            "description": "ดูตัวอย่างภาพเคลื่อนไหววิดีโอฉากและสตรีมภาษาแชร์ลิงก์การคัดกรองสำหรับการเล่นและข้อเสนอแนะของผู้รีวิวอย่างเป็นระบบก่อนลงประกาศ",
+            "description": "Preview and share the Pre-Vis, per-scene motion video, and the finished multilanguage master — one link, structured feedback, no premature exports.",
             "learnMore": {
               "problem": "การลงชื่อออกมักหมายถึงการส่งออกไฟล์ที่หยาบกร้านส่งอีเมลไปทั่วและเย็บข้อเสนอแนะที่กระจัดกระจายเข้าด้วยกันจากเธรดนับสิบ — ช้ายุ่งเหยิงและง่ายต่อการสูญเสียการติดตาม",
-              "solution": "Screening Room ช่วยให้คุณสามารถดูตัวอย่างและแบ่งปัน Animatics, วิดีโอเสียงเต็มรูปแบบและสตรีมต่อภาษาได้จากลิงก์เดียวผู้ชมจะได้รับการควบคุมการเล่นจริงผู้รีวิวให้ข้อเสนอแนะที่มีโครงสร้างในการตัด",
+              "solution": "The Screening Room lets you preview and share Pre-Vis, per-scene motion video, and multilanguage streams from one link. Viewers get real playback controls; reviewers leave structured feedback right on the cut.",
               "outcome": "ล็อคการอนุมัติได้เร็วขึ้นด้วยข้อเสนอแนะจากผู้มีส่วนได้ส่วนเสียในที่เดียว — ไม่มีการส่งออกก่อนกำหนดไม่มีโน้ตที่หายไปไม่มีความสับสนในเวอร์ชัน"
             }
           }
@@ -1813,7 +1813,7 @@
     "badge": "Production Examples",
     "title": "See the Full Pipeline",
     "titleAccent": "in Action",
-    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to final high-resolution video. Walk the Screening Room to compare animatics, individual scenes, and the finished master in multiple languages.",
+    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to the final ProRes 4K master. Walk the Screening Room to compare the Pre-Vis, per-scene motion video, and the finished master in multiple languages.",
     "subtitleTagline": "Long-form productions. Not clips.",
     "screeningRoomInstruction": "Select Pre-Vis, Scenes, or Final to experience the pipeline. Select a language to hear the dub.",
     "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
@@ -1835,7 +1835,7 @@
       {
         "id": "drama",
         "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
-        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the pre-vis animatic, individual scenes, and the final high-resolution master — then switch languages to hear the full dub.",
+        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the Pre-Vis, per-scene motion video, and the final ProRes 4K master — then switch languages to hear the full dub.",
         "badge": "Series-Ready",
         "solutionPillars": [
           {
@@ -1997,7 +1997,7 @@
       "tagline": "Prototype the episode before you commit to it.",
       "points": [
         "Generate the structural backbone of an entire episode in under 10 minutes.",
-        "Enter a concept or script, click Go, and come back to a finished animatic.",
+        "Enter a concept or script, click Go, and come back to a fully voiced Pre-Vis you can screen and share.",
         "Automatically handles Blueprint, structure, references, frames, audio, and assembly.",
         "Hand the result to Director Mode the moment you want the wheel."
       ],
@@ -2013,7 +2013,7 @@
         "Direct in plain language against locked references — no prompt engineering, no copy-pasting between tool stacks.",
         "Step in at any point in the pipeline: Blueprint, Production, or Screening Room.",
         "Fine-tune visuals, character emotion, dialogue timing, and music beat by beat.",
-        "Complete pre-visualization and master production workflow."
+        "One pipeline — Reference Library, Pre-Vis, Motion Video, ProRes 4K master — reviewed in the Screening Room at every step."
       ],
       "cta": "Launch Studio ($9)"
     }

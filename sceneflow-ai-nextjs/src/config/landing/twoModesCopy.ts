@@ -14,7 +14,7 @@ export const TWO_MODES_COPY = {
       'Direct in plain language against locked references — no prompt engineering, no copy-pasting between tool stacks.',
       'Step in at any point in the pipeline: Blueprint, Production, or Screening Room.',
       'Fine-tune visuals, character emotion, dialogue timing, and music beat by beat.',
-      'Complete pre-visualization and master production workflow.',
+      'One pipeline — Reference Library, Pre-Vis, Motion Video, ProRes 4K master — reviewed in the Screening Room at every step.',
     ],
     cta: 'Launch Studio ($9)',
   },
@@ -24,7 +24,7 @@ export const TWO_MODES_COPY = {
     tagline: 'Prototype the episode before you commit to it.',
     points: [
       'Generate the structural backbone of an entire episode in under 10 minutes.',
-      'Enter a concept or script, click Go, and come back to a finished animatic.',
+      'Enter a concept or script, click Go, and come back to a fully voiced Pre-Vis you can screen and share.',
       'Automatically handles Blueprint, structure, references, frames, audio, and assembly.',
       'Hand the result to Director Mode the moment you want the wheel.',
     ],

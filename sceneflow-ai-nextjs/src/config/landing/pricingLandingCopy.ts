@@ -77,7 +77,7 @@ export const PRICING_LANDING_COPY = {
     sectionTitle: 'Estimate Your Project',
     sectionSubtitle: 'Know exactly what you\'ll pay before you commit',
     title: 'Production Budget Management',
-    subtitle: 'Set a credit budget, track production charges, and plan animatic-first before video.',
+    subtitle: 'Set a credit budget, track production charges, and plan Pre-Vis first before motion video.',
     customize: 'Customize parameters',
     imagesLabel: 'Images to generate',
     videoClipsLabel: 'Video clips',

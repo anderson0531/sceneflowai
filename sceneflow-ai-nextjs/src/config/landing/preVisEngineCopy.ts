@@ -4,7 +4,7 @@ export const PRE_VIS_ENGINE_COPY = {
   badge: 'Creative Decision Engine',
   title: 'Pre-Visualization Engine',
   subtitle:
-    'Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.',
+    'Generating a fully voiced, scored, 40-minute Pre-Vis (the industry term: animatic) in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.',
   narrative:
     'In the film industry, a storyboard is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.',
   pillars: [
@@ -25,12 +25,12 @@ export const PRE_VIS_ENGINE_COPY = {
     },
   ],
   workflow: {
-    title: 'Script upload → greenlight-ready pre-vis',
+    title: 'Reference Library → Pre-Vis → Motion Video → ProRes 4K master',
     steps: [
-      'Upload industry-standard scripts (.fountain, .fdx, .txt)',
-      'Run Audience Resonance scoring on your target demographic',
-      'Generate Express Pre-vis — voiced, scored animatics in minutes',
-      'Share for stakeholder review before final video spend',
+      'Build the Reference Library — characters, locations, and props locked to your production art style.',
+      'Generate Pre-Vis beat frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.',
+      'Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.',
+      'Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle.',
     ],
   },
   cta: 'Start with Script Upload',

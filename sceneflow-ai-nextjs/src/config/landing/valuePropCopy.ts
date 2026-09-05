@@ -21,7 +21,8 @@ export const HERO_VALUE_CHIPS = [
   },
   {
     label: 'Direct Before You Render',
-    detail: 'Lock a feature-length animatic on low-cost beat frames, then pay for high-res.',
+    detail:
+      'Iterate direction cheaply on Pre-Vis beat frames. Approve, then generate motion video and the ProRes 4K master.',
   },
   {
     label: 'Built for Every Audience',

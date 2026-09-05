@@ -326,7 +326,7 @@
           {
             "icon": "referenceLibrary",
             "title": "Intelligent Reference Library",
-            "description": "Lock characters, voices, wardrobes, locations, and props once. Every generation pulls from the same references — zero drift across scenes, episodes, and series.",
+            "description": "Lock characters, locations, and props once — matched to your production art style. Every generation pulls from the same references — zero drift across scenes, episodes, and series.",
             "learnMore": {
               "problem": "AI video's dirty secret is drift: your hero's face, wardrobe, and settings mutate shot to shot and episode to episode, shattering the illusion and forcing endless re-rolls to stay on-model.",
               "solution": "Build AI-assisted or fully custom characters, wardrobes, voices, locations, and props once, then reuse them everywhere. Every generation pulls from the same locked references — with auto voice generation matched to each character's image and role.",
@@ -366,10 +366,10 @@
           {
             "icon": "screeningRoom",
             "title": "Screening Room",
-            "description": "Preview animatics, scene video, and language streams. Share a screening link for playback and structured reviewer feedback before you publish.",
+            "description": "Preview and share the Pre-Vis, per-scene motion video, and the finished multilanguage master — one link, structured feedback, no premature exports.",
             "learnMore": {
               "problem": "Getting sign-off usually means exporting rough files, emailing them around, and stitching together scattered feedback from a dozen threads — slow, messy, and easy to lose track of.",
-              "solution": "The Screening Room lets you preview and share Animatics, full-audio Video, and per-language Streams from one link. Viewers get real playback controls; reviewers leave structured feedback right on the cut.",
+              "solution": "The Screening Room lets you preview and share Pre-Vis, per-scene motion video, and multilanguage streams from one link. Viewers get real playback controls; reviewers leave structured feedback right on the cut.",
               "outcome": "Lock approvals faster with stakeholder feedback in one place — no premature exports, no lost notes, no version confusion."
             }
           }

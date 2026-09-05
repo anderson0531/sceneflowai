@@ -30,22 +30,22 @@ export const CORE_CAPABILITIES_COPY = {
     badge: 'Hyper-Speed Production',
     title: 'Sceneflow Express',
     description:
-      'Auto-generate pre-vis, animatics, and video beats concurrently. Move from script to shareable preview in minutes — then approve Beat Frames before final F2V spend. Throughput is what makes a version per audience affordable instead of theoretical.',
+      'Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the beat frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.',
     items: [
       {
-        title: 'Express Pre-vis',
-        desc: 'Review and share audio and video pre-vis in minutes vs hours.',
+        title: 'Express Pre-Vis',
+        desc: 'Fully voiced, scored beat frames per scene, ready to share in the Screening Room.',
         time: 'Minutes vs Hours',
       },
       {
-        title: 'Express Animatics',
-        desc: 'Render full Ken Burns animatic scenes with high-end voiceovers instantly.',
-        time: 'Minutes vs Hours',
-      },
-      {
-        title: 'Express Video',
-        desc: 'Orchestrate concurrent image and video generation—including native Veo extension chains for long dialogue beats.',
+        title: 'Express Motion Video',
+        desc: 'Per-scene motion video generated after Pre-Vis approval, with multilanguage dubs and scene-level edits.',
         time: 'Minutes vs Days',
+      },
+      {
+        title: 'Express Delivery',
+        desc: 'Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.',
+        time: 'Minutes vs Weeks',
       },
     ],
     cta: 'Start Express Rendering',
