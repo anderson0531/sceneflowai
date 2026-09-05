@@ -58,7 +58,7 @@ const LOCALE_BLOB_PATHS = {
 
 /** Root Blob source MP4s — must match HERO_VIDEO_BLOB_PATHS in heroVideoLocales.ts */
 const LOCALE_SOURCE_PATHS = {
-  en: 'Hero Video (English).mp4',
+  en: 'SceneFlow Hero Video.mp4',
   es: 'Hero Video (Spanish) .mp4',
   pt: 'Hero Video (Portuguese).mp4',
   hi: 'Hero Video (Hindi).mp4',

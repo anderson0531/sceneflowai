@@ -14,6 +14,7 @@ import { appendSceneFlowCta } from '@/lib/premiere/distributionMetadata'
 import {
   HERO_VIDEO_BLOB_PATHS,
   HERO_VIDEO_LOCALES,
+  getHeroVideoPosterUrl,
   type HeroVideoLocaleId,
 } from '@/config/landing/heroVideoLocales'
 
@@ -153,7 +154,11 @@ export type HeroYouTubePublishBundle = {
 }
 
 function heroPosterUrl(locale: HeroVideoLocaleId): string {
-  return `${HERO_YOUTUBE_BLOB_HOST}/landing/hero/sceneflow-hero-${locale}-poster.jpg`
+  const poster = getHeroVideoPosterUrl(locale)
+  if (poster.startsWith('/')) {
+    return `${HERO_YOUTUBE_SITE_URL}${poster}`
+  }
+  return poster
 }
 
 export function getHeroYouTubeThumbnailPublicPath(locale: HeroVideoLocaleId): string {
