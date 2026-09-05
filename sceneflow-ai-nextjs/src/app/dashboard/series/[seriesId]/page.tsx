@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   BookOpen,
   Sparkles,
-  Save,
   ChevronRight,
   Play,
   Users,
@@ -16,15 +15,10 @@ import {
   Check,
   X,
   Loader2,
-  Settings,
-  Palette,
-  MessageSquare,
   ArrowLeft,
   Plus,
   GripVertical,
   LayoutGrid,
-  Download,
-  Share2,
   Clapperboard,
   Trophy,
   TrendingUp,
@@ -66,8 +60,6 @@ import { SeriesResonancePanel } from '@/components/series/SeriesResonancePanel'
 import { SeriesReferenceLibraryPanel } from '@/components/series/SeriesReferenceLibraryPanel'
 import { ReferenceTransferDialog } from '@/components/series/ReferenceTransferDialog'
 import type {
-  SeriesCharacterResponse,
-  SeriesLocationResponse,
   EpisodeBlueprintResponse
 } from '@/types/series'
 
@@ -135,7 +127,6 @@ export default function SeriesStudioPage() {
   const [format, setFormat] = useState('narrative')
   const [isIdeateDialogOpen, setIsIdeateDialogOpen] = useState(false)
   const [isResonancePanelOpen, setIsResonancePanelOpen] = useState(false)
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   
   // Get initial analysis from series if available
   const [resonanceAnalysis, setResonanceAnalysis] = useState<SeriesResonanceAnalysis | null>(() => {
@@ -622,32 +613,6 @@ export default function SeriesStudioPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-gray-400 hover:text-white hover:bg-white/10"
-                  title="Export Bible"
-                >
-                  <Download className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-gray-400 hover:text-white hover:bg-white/10"
-                  title="Share"
-                >
-                  <Share2 className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-gray-400 hover:text-white hover:bg-white/10"
-                  title="Settings"
-                >
-                  <Settings className="w-4 h-4" />
-                </Button>
-              </div>
             </div>
           </div>
         </div>
@@ -694,12 +659,6 @@ export default function SeriesStudioPage() {
 
             {/* Right: CTA buttons */}
             <div className="flex items-center gap-3 flex-shrink-0">
-              {hasUnsavedChanges && (
-                <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                  <Save className="w-4 h-4 mr-2" />
-                  Save
-                </Button>
-              )}
               {bible?.synopsis && (
               <Button
                 variant="outline"
@@ -1935,259 +1894,5 @@ function EpisodeStatusBadge({ status }: { status: string }) {
     <span className={`text-xs px-2 py-0.5 rounded-full ${style.bg} ${style.text}`}>
       {status.replace('_', ' ')}
     </span>
-  )
-}
-
-interface CharactersPanelProps {
-  characters: SeriesCharacterResponse[]
-  onRegenerate: () => void
-  isGenerating: boolean
-}
-
-function CharactersPanel({ characters, onRegenerate, isGenerating }: CharactersPanelProps) {
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/25">
-            <Users className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold">Series Characters</h3>
-            <p className="text-sm text-gray-500">Characters shared across all episodes in the Reference Library</p>
-          </div>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onRegenerate}
-          disabled={isGenerating}
-          className="border-purple-600/50 text-purple-400 hover:bg-purple-600/20"
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-spin' : ''}`} />
-          Regenerate
-        </Button>
-      </div>
-
-      {characters.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {characters.map((char) => (
-            <div
-              key={char.id}
-              className="bg-gray-800 rounded-xl border border-gray-700 p-5 hover:border-gray-600 transition-colors flex flex-col h-full"
-            >
-              <div className="flex items-start gap-4 mb-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500/30 to-purple-600/30 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Users className="w-6 h-6 text-blue-400" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <h4 className="font-semibold text-white break-words w-full text-lg leading-tight">{char.name}</h4>
-                    <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${
-                      char.role === 'protagonist' ? 'bg-green-500/20 text-green-400' :
-                      char.role === 'antagonist' ? 'bg-red-500/20 text-red-400' :
-                      'bg-gray-600/50 text-gray-400'
-                    }`}>
-                      {char.role}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex flex-col flex-grow gap-3 pl-[4.5rem]">
-                <p className="text-sm text-gray-300 break-words">{char.description}</p>
-                {char.appearance && (
-                  <div className="mt-auto pt-3 border-t border-gray-700/50">
-                    <h5 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Appearance</h5>
-                    <p className="text-sm text-gray-400 break-words">
-                      {char.appearance}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="bg-gray-800 rounded-xl border border-gray-700 p-12 text-center">
-          <Users className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-400 mb-2">No Characters Yet</h3>
-          <p className="text-gray-500 text-sm">Generate a storyline to create series characters.</p>
-        </div>
-      )}
-    </div>
-  )
-}
-
-interface LocationsPanelProps {
-  locations: SeriesLocationResponse[]
-  onRegenerate: () => void
-  isGenerating: boolean
-}
-
-function LocationsPanel({ locations, onRegenerate, isGenerating }: LocationsPanelProps) {
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/25">
-            <MapPin className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold">Series Locations</h3>
-            <p className="text-sm text-gray-500">Recurring locations in the Reference Library</p>
-          </div>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onRegenerate}
-          disabled={isGenerating}
-          className="border-green-600/50 text-green-400 hover:bg-green-600/20"
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-spin' : ''}`} />
-          Regenerate
-        </Button>
-      </div>
-
-      {locations.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {locations.map((loc) => (
-            <div
-              key={loc.id}
-              className="bg-gray-800 rounded-xl border border-gray-700 p-5 hover:border-gray-600 transition-colors"
-            >
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-500/30 to-teal-600/30 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <MapPin className="w-6 h-6 text-green-400" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h4 className="font-semibold text-white mb-1">{loc.name}</h4>
-                  <p className="text-sm text-gray-400">{loc.description}</p>
-                  {loc.visualDescription && (
-                    <p className="text-xs text-gray-500 mt-2 line-clamp-2">
-                      <span className="text-gray-600">Visual:</span> {loc.visualDescription}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="bg-gray-800 rounded-xl border border-gray-700 p-12 text-center">
-          <MapPin className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-400 mb-2">No Locations Yet</h3>
-          <p className="text-gray-500 text-sm">Generate a storyline to create series locations.</p>
-        </div>
-      )}
-    </div>
-  )
-}
-
-interface StylePanelProps {
-  aesthetic?: any
-  toneGuidelines?: string
-  visualGuidelines?: string
-}
-
-function StylePanel({ aesthetic, toneGuidelines, visualGuidelines }: StylePanelProps) {
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Visual Style */}
-      <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <Palette className="w-5 h-5 text-purple-400" />
-          <h3 className="font-semibold">Visual Style</h3>
-        </div>
-        {aesthetic?.visualStyle || visualGuidelines ? (
-          <div className="space-y-4">
-            {aesthetic?.visualStyle && (
-              <div>
-                <label className="text-xs text-gray-500 block mb-1">Style</label>
-                <p className="text-gray-300 text-sm">{aesthetic.visualStyle}</p>
-              </div>
-            )}
-            {aesthetic?.cinematography && (
-              <div>
-                <label className="text-xs text-gray-500 block mb-1">Cinematography</label>
-                <p className="text-gray-300 text-sm">{aesthetic.cinematography}</p>
-              </div>
-            )}
-            {aesthetic?.lightingStyle && (
-              <div>
-                <label className="text-xs text-gray-500 block mb-1">Lighting</label>
-                <p className="text-gray-300 text-sm">{aesthetic.lightingStyle}</p>
-              </div>
-            )}
-            {visualGuidelines && (
-              <div>
-                <label className="text-xs text-gray-500 block mb-1">Guidelines</label>
-                <p className="text-gray-300 text-sm">{visualGuidelines}</p>
-              </div>
-            )}
-          </div>
-        ) : (
-          <p className="text-gray-500 text-sm">No visual style defined yet.</p>
-        )}
-      </div>
-
-      {/* Tone Guidelines */}
-      <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <MessageSquare className="w-5 h-5 text-amber-400" />
-          <h3 className="font-semibold">Tone & Style</h3>
-        </div>
-        {toneGuidelines ? (
-          <p className="text-gray-300 text-sm whitespace-pre-wrap">{toneGuidelines}</p>
-        ) : (
-          <p className="text-gray-500 text-sm">No tone guidelines defined yet.</p>
-        )}
-      </div>
-
-      {/* Color Palette */}
-      {aesthetic?.colorPalette && Object.keys(aesthetic.colorPalette).length > 0 && (
-        <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 lg:col-span-2">
-          <h3 className="font-semibold mb-4">Color Palette</h3>
-          <div className="space-y-4">
-            {Object.entries(aesthetic.colorPalette).map(([category, colors]: [string, any]) => (
-              <div key={category}>
-                <label className="text-xs text-gray-500 block mb-2 capitalize">{category}</label>
-                <div className="flex gap-2 flex-wrap">
-                  {(colors as string[]).map((color: string, i: number) => (
-                    <div
-                      key={i}
-                      className="w-10 h-10 rounded-lg border border-gray-700"
-                      style={{ backgroundColor: color }}
-                      title={color}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Locked Prompt Tokens */}
-      {aesthetic?.lockedPromptTokens?.global?.length > 0 && (
-        <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 lg:col-span-2">
-          <h3 className="font-semibold mb-4">Locked Prompt Tokens</h3>
-          <p className="text-xs text-gray-500 mb-3">
-            These tokens are automatically injected into all image generation prompts for consistency.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {aesthetic.lockedPromptTokens.global.map((token: string, i: number) => (
-              <span
-                key={i}
-                className="text-xs px-3 py-1.5 bg-purple-500/20 text-purple-300 rounded-full"
-              >
-                {token}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
   )
 }
