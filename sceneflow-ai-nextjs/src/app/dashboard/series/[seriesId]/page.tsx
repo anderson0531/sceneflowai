@@ -58,13 +58,14 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import { DEFAULT_MAX_EPISODES, ABSOLUTE_MAX_EPISODES, SeriesResonanceAnalysis } from '@/types/series'
+import { DEFAULT_MAX_EPISODES, ABSOLUTE_MAX_EPISODES, SeriesResonanceAnalysis, getSeriesGreenlightTier } from '@/types/series'
 import { SeriesResonancePanel } from '@/components/series/SeriesResonancePanel'
 import { SeriesReferenceLibraryPanel } from '@/components/series/SeriesReferenceLibraryPanel'
 import { ReferenceTransferDialog } from '@/components/series/ReferenceTransferDialog'
 import { SeriesHeroHealthStrip } from '@/components/series/SeriesHeroHealthStrip'
 import { SeriesContinuityPanel } from '@/components/series/SeriesContinuityPanel'
 import { getEpisodeDriftWarnings } from '@/lib/series/seriesHealth'
+import { applyOptimisticScoreDelta, normalizeSeriesResonanceAnalysis } from '@/lib/series/resonanceScoring'
 import { ensureSeasons, groupEpisodesBySeason } from '@/lib/series/seasons'
 import type {
   EpisodeBlueprintResponse,
@@ -161,7 +162,9 @@ export default function SeriesStudioPage() {
   // Initialize analysis from series prop when it loads/changes
   useEffect(() => {
     if (series?.metadata?.resonance_analysis) {
-      setResonanceAnalysis(series.metadata.resonance_analysis as SeriesResonanceAnalysis)
+      setResonanceAnalysis((prev) =>
+        normalizeSeriesResonanceAnalysis(series.metadata?.resonance_analysis, prev)
+      )
     }
   }, [series?.metadata?.resonance_analysis])
   
@@ -250,6 +253,23 @@ export default function SeriesStudioPage() {
       setHasAutoOpened(true)
     }
   }, [series, hasAutoOpened, searchParams, router])
+
+  // Must stay above loading/not-found returns — React error #310 if hook count changes after load.
+  useEffect(() => {
+    const tab = searchParams?.get('tab')
+    const section = searchParams?.get('section')
+    if (tab) setActiveTab(tab)
+    if (section === 'cast' || section === 'locations' || section === 'props' || section === 'settings') {
+      setRefLibrarySection(section)
+    } else if (
+      section === 'aesthetics' ||
+      section === 'key-events' ||
+      section === 'story-threads' ||
+      section === 'review-updates'
+    ) {
+      setContinuitySection(section)
+    }
+  }, [searchParams])
 
   const handleAutoGenerate = async (meta: any) => {
     try {
@@ -425,11 +445,13 @@ export default function SeriesStudioPage() {
       operationType: 'series-analysis'
     })
     
+    const normalized = normalizeSeriesResonanceAnalysis(result)
+
     // Also update the series data locally so the score persists without a full refresh immediately
     if (series) {
       series.metadata = {
         ...(series.metadata || {}),
-        resonance_analysis: result,
+        resonance_analysis: normalized,
         ...(config?.audienceDefinition
           ? { audienceDefinition: config.audienceDefinition }
           : {})
@@ -438,28 +460,44 @@ export default function SeriesStudioPage() {
         series.targetAudience = config.targetAudience
       }
     }
-    
-    setResonanceAnalysis(result)
-    return result
+
+    setResonanceAnalysis(normalized)
+    return normalized
   }, [series, executeWithOverlay])
 
   const handleApplyResonanceFix = useCallback(async (
     insightId: string,
     fixSuggestion: string,
     targetSection: string,
-    targetId?: string
+    targetId?: string,
+    extras?: {
+      title?: string
+      category?: string
+      axisId?: string
+      estimatedImpact?: number
+    }
   ) => {
     if (!series) throw new Error('No series loaded')
     
     const targetLabel = targetId 
       ? `${targetSection} (${targetId})` 
       : targetSection
+    const delta = Math.max(0, Math.round(Number(extras?.estimatedImpact) || 0))
     
-    await executeWithOverlay(async () => {
+    const result = await executeWithOverlay(async () => {
       const response = await fetch(`/api/series/${series.id}/apply-fix`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ insightId, fixSuggestion, targetSection, targetId })
+        body: JSON.stringify({
+          insightId,
+          fixSuggestion,
+          targetSection,
+          targetId,
+          title: extras?.title,
+          category: extras?.category,
+          axisId: extras?.axisId,
+          estimatedImpact: extras?.estimatedImpact,
+        })
       })
       
       if (!response.ok) {
@@ -473,21 +511,31 @@ export default function SeriesStudioPage() {
       estimatedDuration: 20,
       operationType: 'series-fix'
     })
-    
-    // Refresh series data after fix
-    await refreshSeries()
-    toast.success('Fix applied! Re-analyzing to update score...')
-    
-    // Re-run analysis to get updated score
-    try {
-      const newAnalysis = await handleAnalyzeResonance()
-      setResonanceAnalysis(newAnalysis)
-      toast.success(`Analysis complete! New score: ${newAnalysis.greenlightScore.score}`)
-    } catch (err) {
-      console.error('Re-analysis failed:', err)
-      // Don't show error - fix was still applied successfully
+
+    const nextScore =
+      typeof result?.estimatedScore === 'number'
+        ? result.estimatedScore
+        : Math.min(100, (resonanceAnalysis?.greenlightScore.score ?? 0) + delta)
+
+    if (resonanceAnalysis) {
+      const updated = applyOptimisticScoreDelta(resonanceAnalysis, delta, insightId)
+      if (updated.greenlightScore.score !== nextScore) {
+        updated.greenlightScore = getSeriesGreenlightTier(nextScore)
+      }
+      setResonanceAnalysis(updated)
+      series.metadata = {
+        ...(series.metadata || {}),
+        resonance_analysis: normalizeSeriesResonanceAnalysis(updated),
+      }
     }
-  }, [series, refreshSeries, executeWithOverlay, handleAnalyzeResonance])
+
+    await refreshSeries()
+    toast.success(
+      delta > 0
+        ? `Fix applied. Score +${delta} (re-analyze when you want a full rescore).`
+        : 'Fix applied. Re-analyze when you want a full rescore.'
+    )
+  }, [series, refreshSeries, executeWithOverlay, resonanceAnalysis])
 
   // Edit Storyline handler - for directed changes without full regeneration
   const handleEditStoryline = useCallback(async (opts?: { targetEpisodes?: number[]; instruction?: string }) => {
@@ -621,22 +669,6 @@ export default function SeriesStudioPage() {
     setActiveTab(tab)
     router.replace(`/dashboard/series/${series.id}?tab=${tab}`, { scroll: false })
   }
-
-  useEffect(() => {
-    const tab = searchParams?.get('tab')
-    const section = searchParams?.get('section')
-    if (tab) setActiveTab(tab)
-    if (section === 'cast' || section === 'locations' || section === 'props' || section === 'settings') {
-      setRefLibrarySection(section)
-    } else if (
-      section === 'aesthetics' ||
-      section === 'key-events' ||
-      section === 'story-threads' ||
-      section === 'review-updates'
-    ) {
-      setContinuitySection(section)
-    }
-  }, [searchParams])
 
   return (
     <div className="min-h-full bg-gray-950 text-white">
@@ -1408,7 +1440,7 @@ function OverviewPanel({ series, onRegenerate, isGenerating, onOpenBibleSync }: 
                     </>
                   ) : (
                     <>
-                      <Play className="w-3.5 h-3.5 mr-1.5 fill-current" /> Read
+                      <Play className="w-3.5 h-3.5 mr-1.5 fill-current" /> Listen
                     </>
                   )}
                 </Button>
@@ -1986,7 +2018,7 @@ function EpisodesPanel({
                         </>
                       ) : (
                         <>
-                          <Play className="w-3.5 h-3.5 mr-1.5 fill-current" /> Read
+                          <Play className="w-3.5 h-3.5 mr-1.5 fill-current" /> Listen
                         </>
                       )}
                     </Button>

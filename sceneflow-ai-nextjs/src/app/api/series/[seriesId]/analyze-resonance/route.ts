@@ -26,11 +26,18 @@ import {
   SeriesResonanceAxis,
   EpisodeEngagementScore,
   SeriesResonanceInsight,
+  SeriesAppliedFixDetail,
   CharacterAnalysis,
   LocationAnalysis,
   getSeriesGreenlightTier,
   SERIES_RESONANCE_WEIGHTS
 } from '@/types/series'
+import {
+  SERIES_READY_SCORE,
+  formatClosedIssuesForPrompt,
+  mergeSeriesInsights,
+  stableSeriesInsightId,
+} from '@/lib/series/resonanceScoring'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 180 // 3 minutes for comprehensive analysis
@@ -104,7 +111,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       analyzedAt: cachedAnalysis.analyzedAt,
       currentEpisodeCount,
       analyzedEpisodeCount,
-      isReadyForProduction: cachedAnalysis.greenlightScore?.score >= 90
+      isReadyForProduction: cachedAnalysis.greenlightScore?.score >= SERIES_READY_SCORE
     })
     
   } catch (error) {
@@ -190,6 +197,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const existingAnalysis = series.resonance_analysis || {}
     const previousScore = existingAnalysis.greenlightScore?.score || null
     const existingAppliedFixes = existingAnalysis.appliedFixes || []
+    const existingAppliedDetails: SeriesAppliedFixDetail[] =
+      existingAnalysis.appliedFixDetails || []
+    const previousInsights: SeriesResonanceInsight[] = existingAnalysis.insights || []
     const previousIterationCount = existingAnalysis.iterationCount || 0
     const currentIteration = previousIterationCount + 1
     
@@ -200,7 +210,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const analysisPrompt = buildAnalysisPrompt(
       series, bible, episodes, characters, locations,
-      { previousScore, iterationCount: currentIteration, appliedFixes: existingAppliedFixes },
+      {
+        previousScore,
+        iterationCount: currentIteration,
+        appliedFixes: existingAppliedFixes,
+        appliedFixDetails: existingAppliedDetails,
+        previousInsights,
+      },
       localeDirective(storyLocale, {
         properNouns,
         note: 'Every JSON key stays exactly as specified, as do the "impactLevel" and "demandOutlook" enum values.',
@@ -221,7 +237,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     
     // Build final analysis with normalized scores
     const analysis = buildAnalysisResult(seriesId, rawAnalysis, episodes, characters, locations, previousScore, currentIteration)
-    
+
     // Determine score trend
     let scoreTrend: 'improving' | 'stable' | 'declining' = 'stable'
     if (previousScore !== null) {
@@ -229,66 +245,59 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       if (scoreDiff > 2) scoreTrend = 'improving'
       else if (scoreDiff < -2) scoreTrend = 'declining'
     }
-    
-    // Determine if production ready (score >= 85 AND at least 2 iterations)
-    const isProductionReady = analysis.greenlightScore.score >= 85 && currentIteration >= 2
-    
+
+    analysis.insights = mergeSeriesInsights({
+      incoming: analysis.insights,
+      previous: previousInsights,
+      appliedIds: existingAppliedFixes,
+      appliedDetails: existingAppliedDetails,
+      axes: analysis.axes,
+      iteration: currentIteration,
+      scoreTrend,
+    })
+
+    // Production-ready at 85 on a strong first pass (no iteration gate)
+    const isProductionReady = analysis.greenlightScore.score >= SERIES_READY_SCORE
+
     // Determine suggested action
     let suggestedAction: 'proceed-to-production' | 'apply-fixes' | 'major-rework' | 'continue-iterating'
     if (isProductionReady) {
       suggestedAction = 'proceed-to-production'
     } else if (analysis.greenlightScore.score < 60) {
       suggestedAction = 'major-rework'
-    } else if (analysis.insights.filter(i => i.actionable && !existingAppliedFixes.includes(i.id)).length > 0) {
+    } else if (analysis.insights.filter(i => i.actionable && i.status === 'weakness' && !existingAppliedFixes.includes(i.id)).length > 0) {
       suggestedAction = 'apply-fixes'
     } else {
       suggestedAction = 'continue-iterating'
     }
     
     // Persist analysis to database for future reference
+    const persistedAnalysis = {
+      ...analysis,
+      appliedFixes: existingAppliedFixes,
+      appliedFixDetails: existingAppliedDetails,
+      iterationCount: currentIteration,
+      previousScore,
+      isProductionReady,
+      suggestedAction,
+      scoreTrend,
+      analyzedAt: timestamp,
+      episodeCount: episodes.length,
+      version: '1.2'
+    }
+
     await series.update({
-      resonance_analysis: {
-        ...analysis,
-        appliedFixes: existingAppliedFixes,
-        iterationCount: currentIteration,
-        previousScore,
-        isProductionReady,
-        suggestedAction,
-        scoreTrend,
-        analyzedAt: timestamp,
-        episodeCount: episodes.length,
-        version: '1.1'
-      },
+      resonance_analysis: persistedAnalysis,
       metadata: {
         ...(series.metadata || {}),
         resonance_analyzed_at: timestamp,
         resonance_credits_used:
           Number((series.metadata as Record<string, unknown> | undefined)?.resonance_credits_used ?? 0) + 1,
-        resonance_analysis: {
-          ...analysis,
-          appliedFixes: existingAppliedFixes,
-          iterationCount: currentIteration,
-          previousScore,
-          isProductionReady,
-          suggestedAction,
-          scoreTrend,
-          analyzedAt: timestamp,
-          episodeCount: episodes.length,
-          version: '1.1'
-        }
+        resonance_analysis: persistedAnalysis,
       }
     })
-    
-    // Include all metadata in the returned analysis
-    const analysisWithMetadata = {
-      ...analysis,
-      appliedFixes: existingAppliedFixes,
-      iterationCount: currentIteration,
-      previousScore,
-      isProductionReady,
-      suggestedAction,
-      scoreTrend
-    }
+
+    const analysisWithMetadata = persistedAnalysis
     
     console.log(`[${timestamp}] [POST /api/series/${seriesId}/analyze-resonance] Analysis complete. Score: ${analysis.greenlightScore.score} (iteration ${currentIteration}, trend: ${scoreTrend})`)
     
@@ -320,7 +329,13 @@ function buildAnalysisPrompt(
   episodes: any[],
   characters: any[],
   locations: any[],
-  context?: { previousScore: number | null; iterationCount: number; appliedFixes: string[] },
+  context?: {
+    previousScore: number | null
+    iterationCount: number
+    appliedFixes: string[]
+    appliedFixDetails?: SeriesAppliedFixDetail[]
+    previousInsights?: SeriesResonanceInsight[]
+  },
   languageBlock: string = ''
 ): string {
   const meta = series.metadata as Record<string, unknown> | null;
@@ -355,17 +370,21 @@ function buildAnalysisPrompt(
   // Build context section for iterative analysis
   let contextSection = ''
   if (context && context.previousScore !== null) {
+    const closedBlock = formatClosedIssuesForPrompt(
+      context.previousInsights,
+      context.appliedFixDetails || []
+    )
     contextSection = `
 ANALYSIS CONTEXT:
 - This is iteration #${context.iterationCount} of the analysis
 - Previous overall score: ${context.previousScore}
 - ${context.appliedFixes.length} fixes have been applied since the last analysis
-
+${closedBlock ? `\n${closedBlock}\n` : ''}
 IMPORTANT SCORING GUIDELINES:
 1. Be consistent with previous scores unless the content has materially changed
-2. If fixes were applied, acknowledge improvements but don't inflate scores
-3. Score fluctuations should be minimal (±3 points) unless there are significant changes
-4. Don't re-flag issues that have already been addressed by applied fixes
+2. If High/Medium fixes were applied, the overall score must rise by approximately the sum of those calibrated deltas, ±1. Do not keep the score flat out of caution.
+3. Do not re-open resolved issues or paraphrase them as new weaknesses
+4. At most 2 NEW High-impact issues. After iteration 2, do not invent Low-impact nits if the series is improving
 5. Episode-level scores (hookStrength, cliffhangerScore, etc. on 1-10 scale) should align with the overall Episode Engagement axis score
 
 `
@@ -436,6 +455,7 @@ EPISODES/INSTALLMENTS (${episodes.length}):
 ${episodeSummaries}
 
 Analyze this production comprehensively. Score each dimension 0-100.
+For each weakness, set "severity" to high, medium, or low based on audience impact (not a guessed score delta). estimatedImpact is optional — the server will overwrite it.
 ${mappingInstruction}
 
 Return ONLY valid JSON:
@@ -516,7 +536,8 @@ Return ONLY valid JSON:
       "actionable": true,
       "fixSuggestion": "End episode 5 with the revelation that...",
       "axisId": "episode-engagement",
-      "estimatedImpact": 5
+      "severity": "high",
+      "estimatedImpact": 3
     }
   ],
   "summary": {
@@ -711,26 +732,26 @@ function buildAnalysisResult(
   
   // Build insights with deterministic IDs based on content
   // This ensures IDs stay the same across re-analysis so appliedFixes tracking works
-  const insights: SeriesResonanceInsight[] = (raw.insights || []).map((ins: any, i: number) => {
+  const insights: SeriesResonanceInsight[] = (raw.insights || []).map((ins: any) => {
     const category = ins.category || 'concept'
     const title = ins.title || 'Insight'
     const targetSection = ins.targetSection || ''
     const targetId = ins.targetId || ''
-    // Create a deterministic hash from the insight's identifying characteristics
-    const stableIdBase = `${category}-${title}-${targetSection}-${targetId}`.toLowerCase().replace(/[^a-z0-9-]/g, '_')
-    return {
-      id: `insight_${stableIdBase}`,
+    const draft: SeriesResonanceInsight = {
+      id: '',
       category,
       status: ins.status || 'neutral',
       title,
       insight: ins.insight || '',
       targetSection,
       targetId,
-      actionable: ins.actionable || false,
+      actionable: Boolean(ins.actionable),
       fixSuggestion: ins.fixSuggestion,
       axisId: ins.axisId,
-      estimatedImpact: ins.estimatedImpact
+      severity: ins.severity,
     }
+    draft.id = stableSeriesInsightId(draft)
+    return draft
   })
   
   return {
