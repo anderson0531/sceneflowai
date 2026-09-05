@@ -50,6 +50,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { DEFAULT_MAX_EPISODES, ABSOLUTE_MAX_EPISODES } from '@/types/series'
+import { SERIES_TEMPLATES, type SeriesTemplateId } from '@/config/series/seriesTemplates'
 
 export default function SeriesPage() {
   const { data: session } = useSession()
@@ -83,6 +84,18 @@ export default function SeriesPage() {
     createAudienceDefinition({ description: '', source: 'series' })
   )
   const [isCreating, setIsCreating] = useState(false)
+  const [selectedTemplateId, setSelectedTemplateId] = useState<SeriesTemplateId | 'custom'>('custom')
+
+  const applyTemplate = (templateId: SeriesTemplateId) => {
+    const t = SERIES_TEMPLATES.find((x) => x.id === templateId)
+    if (!t) return
+    setSelectedTemplateId(templateId)
+    setFormat(t.format)
+    setGenre(t.genre === 'any' ? 'any' : t.genre)
+    setTone(t.tone === 'any' ? 'any' : t.tone)
+    setEpisodeCount(t.episodeCount)
+    if (!ideaTopic.trim()) setIdeaTopic(t.sampleConcept)
+  }
   
   // Filter series by search and status
   const filteredSeries = series.filter(s => {
@@ -181,9 +194,9 @@ export default function SeriesPage() {
     <ProductPageShell>
         <ProductPageHeader
           icon={<Clapperboard className="h-6 w-6" />}
-          eyebrow="PRODUCTION HUB"
-          title="Production Series Dashboard"
-          subtitle="Create multi-episode video series with consistent characters and storylines"
+          eyebrow="SERIES STUDIO"
+          title="Series Studio"
+          subtitle="Plan a multi-episode arc once, then produce each episode against it. Continuity holds across the whole series."
           accent="product"
           primaryAction={
             <Button variant="primary" onClick={() => setIsCreateDialogOpen(true)}>
@@ -390,10 +403,36 @@ export default function SeriesPage() {
           <div className="space-y-4 pt-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
+                Start from template <span className="text-gray-500 text-xs">(optional)</span>
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {SERIES_TEMPLATES.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => applyTemplate(t.id)}
+                    className={`text-left rounded-lg border p-3 transition-colors ${
+                      selectedTemplateId === t.id
+                        ? 'border-cyan-500/50 bg-cyan-500/10'
+                        : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
+                    }`}
+                  >
+                    <p className="text-sm font-medium text-white">{t.label}</p>
+                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{t.description}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Topic / Concept <span className="text-cyan-400">*</span>
               </label>
               <Textarea
-                placeholder="e.g., A comedy about a group of friends who start a haunted house business but discover their house is actually haunted..."
+                placeholder={
+                  SERIES_TEMPLATES.find((t) => t.id === selectedTemplateId)?.conceptPlaceholder ||
+                  'e.g., A comedy about a group of friends who start a haunted house business but discover their house is actually haunted...'
+                }
                 value={ideaTopic}
                 onChange={(e) => setIdeaTopic(e.target.value)}
                 className="bg-gray-800 border-gray-700 text-white min-h-24 focus:border-cyan-500/50 focus:ring-cyan-500/20"

@@ -8,13 +8,13 @@ import { sequelize } from '../config/database'
  * characters, locations, and visual consistency settings.
  * 
  * Design Decisions:
- * - Episode limit: Soft cap at 20 (DEFAULT_MAX_EPISODES), allows up to 30 with user confirmation
+ * - Episode limit: Soft cap at 40 (DEFAULT_MAX_EPISODES), hard cap at 40 (ABSOLUTE_MAX_EPISODES)
  * - Bible sync: Explicit "Save to Series Bible" action with diff preview (not auto-sync)
  * - Migration: Supports both "Create Series" and "Convert Project to Series" flows
  */
 
-export const DEFAULT_MAX_EPISODES = 20
-export const ABSOLUTE_MAX_EPISODES = 30
+export const DEFAULT_MAX_EPISODES = 40
+export const ABSOLUTE_MAX_EPISODES = 40
 
 export type SeriesStatus = 'draft' | 'active' | 'completed' | 'archived'
 

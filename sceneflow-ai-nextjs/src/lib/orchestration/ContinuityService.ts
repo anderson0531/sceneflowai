@@ -1,30 +1,27 @@
-import type { Series } from '@/types/continuity'
+import type { EpisodeBlueprintResponse, SeriesProductionBible } from '@/types/series'
+import { analyzeContinuity } from '@/lib/series/analyzeContinuity'
 
 export class ContinuityService {
-  async getSeries(seriesId: string): Promise<Series> {
-    // TODO: load from DB
-    return {
-      id: seriesId,
-      title: 'Untitled',
-      characters: [],
-      locations: [],
-      lore: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
+  analyze(
+    bible: SeriesProductionBible | null | undefined,
+    episodes: EpisodeBlueprintResponse[]
+  ) {
+    return analyzeContinuity(bible, episodes)
   }
 
-  enhanceVDP(series: Series, shots: Array<{ id: string; text: string; characters?: string[]; locations?: string[] }>) {
-    const tokens = series.aesthetic?.lockedPromptTokens ?? {}
-    return shots.map(s => {
+  enhanceVDP(
+    aesthetic: SeriesProductionBible['aesthetic'] | undefined,
+    shots: Array<{ id: string; text: string; characters?: string[]; locations?: string[] }>
+  ) {
+    const tokens = aesthetic?.lockedPromptTokens ?? {}
+    return shots.map((s) => {
       const merged = [tokens.global ?? []].flat().filter(Boolean).join(', ')
-      const vdp = `${s.text}\n\n[LOCKED TOKENS]: ${merged}`
+      const vdp = merged ? `${s.text}\n\n[LOCKED TOKENS]: ${merged}` : s.text
       return { ...s, vdp }
     })
   }
 }
 
-// Lazy singleton pattern to prevent TDZ during module initialization
 let _continuityServiceInstance: ContinuityService | null = null
 
 export function getContinuityService(): ContinuityService {
@@ -34,5 +31,4 @@ export function getContinuityService(): ContinuityService {
   return _continuityServiceInstance
 }
 
-// @deprecated Use getContinuityService() instead - kept for backward compatibility
 export const continuityService = { get: getContinuityService }

@@ -29,6 +29,7 @@ import {
   TrendingUp,
   Coins,
   ChevronRight,
+  Clapperboard,
 } from 'lucide-react'
 import { useCredits } from '@/contexts/CreditsContext'
 import { useEnhancedStore } from '@/store/enhancedStore'
@@ -158,9 +159,10 @@ interface ProjectCardProps {
   onDuplicate?: (projectId: string) => void
   onArchive?: (projectId: string) => void
   onDelete?: (projectId: string, projectTitle: string) => void
+  onPromoteToSeries?: (projectId: string) => void
 }
 
-export function ProjectCard({ project, className = '', isSelected = false, onSelectAsCurrent, onStatusChange, onDuplicate, onArchive, onDelete }: ProjectCardProps) {
+export function ProjectCard({ project, className = '', isSelected = false, onSelectAsCurrent, onStatusChange, onDuplicate, onArchive, onDelete, onPromoteToSeries }: ProjectCardProps) {
   const user = useEnhancedStore((s: any) => s.user)
   const byokSettings = useEnhancedStore((s: any) => s.byokSettings)
   const { invokeCue } = useCueStore()
@@ -522,6 +524,18 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
                     Duplicate
                   </DropdownMenuItem>
                 )}
+                {onPromoteToSeries && !project.series_id ? (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      e.preventDefault()
+                      onPromoteToSeries(project.id)
+                    }}
+                  >
+                    <Clapperboard className="w-4 h-4 mr-2" />
+                    Promote to Series
+                  </DropdownMenuItem>
+                ) : null}
                 <DropdownMenuItem 
                   onClick={(e) => { 
                     e.stopPropagation()
