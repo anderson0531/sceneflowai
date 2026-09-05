@@ -170,13 +170,25 @@ function safeParseJSON(text: string): any {
 async function refactorProductionBible(
   instruction: string,
   series: any,
-  languageBlock: string = ''
+  languageBlock: string = '',
+  targetAspect: EditTargetAspect = 'all'
 ): Promise<any> {
   const currentBible = series.production_bible || {}
+
+  if (targetAspect === 'episodes') {
+    return {
+      logline: series.logline,
+      synopsis: currentBible.synopsis,
+      protagonist: currentBible.protagonist,
+      characters: currentBible.characters,
+      changesApplied: ['Skipped bible — episodes-only edit'],
+    }
+  }
   
   const prompt = `You are a TV series showrunner refactoring a storyline based on user instruction.
 
 INSTRUCTION: "${instruction}"
+TARGET ASPECT: ${targetAspect}
 
 CURRENT SERIES:
 Title: ${series.title}
@@ -185,7 +197,12 @@ Synopsis: ${currentBible.synopsis || 'Not set'}
 Protagonist: ${JSON.stringify(currentBible.protagonist || {})}
 Characters: ${JSON.stringify((currentBible.characters || []).slice(0, 6))}
 
-TASK: Apply the instruction COMPREHENSIVELY. Update ALL relevant fields to reflect this change consistently.
+TASK: Apply the instruction to the TARGET ASPECT and related fields only.
+- plot/all: logline + synopsis
+- characters/all: protagonist + characters array
+- tone/all: toneGuidelines + visualGuidelines (return as toneGuidelines, visualGuidelines keys)
+- setting/all: setting field
+- all: update everything consistently
 
 ${SERIES_CHARACTER_NAMING_BLOCK}
 
@@ -193,6 +210,9 @@ Return ONLY valid JSON (no markdown, no explanation):
 {
   "logline": "Updated logline that reflects the change",
   "synopsis": "Updated 2-3 paragraph synopsis reflecting the change throughout",
+  "setting": "Updated setting if applicable",
+  "toneGuidelines": "Updated tone if applicable",
+  "visualGuidelines": "Updated visual guidelines if applicable",
   "protagonist": {
     "characterId": "char_1",
     "name": "Character Name",
@@ -233,9 +253,13 @@ async function refactorEpisodes(
   instruction: string,
   series: any,
   updatedBible: any,
-  languageBlock: string = ''
+  languageBlock: string = '',
+  targetEpisodes?: number[]
 ): Promise<any[]> {
-  const episodes = series.episode_blueprints || []
+  let episodes = series.episode_blueprints || []
+  if (targetEpisodes?.length) {
+    episodes = episodes.filter((ep: any) => targetEpisodes.includes(ep.episodeNumber))
+  }
   if (episodes.length === 0) {
     console.log('[Edit Storyline] No episodes to refactor')
     return []
@@ -327,7 +351,8 @@ ${languageBlock}`
   }
   
   // Add any episodes that weren't in batches (shouldn't happen but safety check)
-  for (const ep of episodes) {
+  const allEpisodes = series.episode_blueprints || []
+  for (const ep of allEpisodes) {
     if (!updatedEpisodes.find(u => u.episodeNumber === ep.episodeNumber)) {
       updatedEpisodes.push(ep)
     }
@@ -360,7 +385,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
     
     const body: EditStorylineRequest = await request.json()
-    const { instruction, previewOnly = false } = body
+    const { instruction, previewOnly = false, targetAspect = 'all', targetEpisodes } = body
     
     if (!instruction?.trim()) {
       return NextResponse.json({ success: false, error: 'instruction is required' }, { status: 400 })
@@ -376,7 +401,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // ========== PHASE 1: Refactor Reference Library ==========
     console.log(`[${timestamp}] Phase 1: Refactoring reference library...`)
-    const bibleUpdates = await refactorProductionBible(instruction, series, languageBlock)
+    const bibleUpdates = await refactorProductionBible(instruction, series, languageBlock, targetAspect)
     
     if (!bibleUpdates) {
       return NextResponse.json({ 
@@ -388,9 +413,24 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     console.log(`[${timestamp}] Phase 1 complete. Changes: ${bibleUpdates.changesApplied?.join(', ') || 'none listed'}`)
     
     // ========== PHASE 2: Refactor All Episodes ==========
-    console.log(`[${timestamp}] Phase 2: Refactoring ${series.episode_blueprints?.length || 0} episodes...`)
-    const updatedEpisodes = await refactorEpisodes(instruction, series, bibleUpdates, languageBlock)
-    console.log(`[${timestamp}] Phase 2 complete. Updated ${updatedEpisodes.length} episodes`)
+    const shouldUpdateEpisodes =
+      ['all', 'episodes', 'plot'].includes(targetAspect) &&
+      (series.episode_blueprints?.length || 0) > 0
+
+    let updatedEpisodes = series.episode_blueprints || []
+    if (shouldUpdateEpisodes) {
+      console.log(`[${timestamp}] Phase 2: Refactoring ${series.episode_blueprints?.length || 0} episodes...`)
+      updatedEpisodes = await refactorEpisodes(
+        instruction,
+        series,
+        bibleUpdates,
+        languageBlock,
+        targetEpisodes
+      )
+      console.log(`[${timestamp}] Phase 2 complete. Updated ${updatedEpisodes.length} episodes`)
+    } else {
+      console.log(`[${timestamp}] Phase 2 skipped (targetAspect=${targetAspect})`)
+    }
     
     // Preview mode - return proposed changes without saving
     if (previewOnly) {
@@ -412,15 +452,35 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const currentBible = series.production_bible || {}
     const updatedBible = {
       ...currentBible,
-      synopsis: bibleUpdates.synopsis || currentBible.synopsis,
-      protagonist: bibleUpdates.protagonist || currentBible.protagonist,
-      characters: bibleUpdates.characters || currentBible.characters,
+      ...(bibleUpdates.synopsis && ['all', 'plot', 'episodes'].includes(targetAspect)
+        ? { synopsis: bibleUpdates.synopsis }
+        : {}),
+      ...(bibleUpdates.protagonist && ['all', 'characters'].includes(targetAspect)
+        ? { protagonist: bibleUpdates.protagonist }
+        : {}),
+      ...(bibleUpdates.characters && ['all', 'characters'].includes(targetAspect)
+        ? { characters: bibleUpdates.characters }
+        : {}),
+      ...(bibleUpdates.setting && ['all', 'setting'].includes(targetAspect)
+        ? { setting: bibleUpdates.setting }
+        : {}),
+      ...(bibleUpdates.toneGuidelines && ['all', 'tone'].includes(targetAspect)
+        ? { toneGuidelines: bibleUpdates.toneGuidelines }
+        : {}),
+      ...(bibleUpdates.visualGuidelines && ['all', 'tone'].includes(targetAspect)
+        ? { visualGuidelines: bibleUpdates.visualGuidelines }
+        : {}),
       version: incrementVersion(currentBible.version || '1.0.0'),
       lastUpdated: new Date().toISOString()
     }
     
+    const loglineUpdate =
+      bibleUpdates.logline && ['all', 'plot', 'episodes'].includes(targetAspect)
+        ? bibleUpdates.logline
+        : series.logline
+
     await series.update({
-      logline: bibleUpdates.logline || series.logline,
+      logline: loglineUpdate,
       production_bible: updatedBible,
       episode_blueprints: updatedEpisodes.length > 0 ? updatedEpisodes : series.episode_blueprints,
       metadata: {

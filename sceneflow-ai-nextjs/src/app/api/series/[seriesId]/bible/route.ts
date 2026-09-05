@@ -6,7 +6,7 @@ import { sequelize } from '@/config/database'
 import { generateText } from '@/lib/vertexai/gemini'
 import { safeParseJsonFromText } from '@/lib/safeJson'
 import { visionPhaseToScriptData } from '@/lib/script/scriptExporter'
-import type { KeyEvent, StoryThread, EpisodeSummary, SeriesProductionBible } from '@/types/series'
+import type { KeyEvent, StoryThread, EpisodeSummary, SeriesProductionBible, SeriesBibleEvent } from '@/types/series'
 
 export const dynamic = 'force-dynamic'
 
@@ -183,7 +183,19 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     updatedBible.lastUpdated = new Date().toISOString()
     updatedBible.lastUpdatedBy = `project:${projectId}`
     
-    await series.update({ production_bible: updatedBible })
+    await series.update({
+      production_bible: updatedBible,
+      metadata: appendBibleEvent(series.metadata, {
+        id: `evt_${Date.now()}`,
+        direction: 'push_to_series',
+        projectId,
+        episodeNumber: project.episode_number || projectMetadata.episodeNumber,
+        syncFields,
+        bibleVersion: updatedBible.version,
+        status: 'applied',
+        createdAt: new Date().toISOString(),
+      }),
+    })
     
     // Update project's bible reference
     await project.update({
@@ -773,4 +785,14 @@ function incrementVersion(version: string): string {
   const parts = version.split('.')
   const patch = parseInt(parts[2] || '0', 10) + 1
   return `${parts[0] || '1'}.${parts[1] || '0'}.${patch}`
+}
+
+function appendBibleEvent(
+  metadata: Record<string, unknown> | null | undefined,
+  event: SeriesBibleEvent
+): Record<string, unknown> {
+  const base = { ...(metadata || {}) }
+  const existing = (base.series_bible_events as SeriesBibleEvent[] | undefined) || []
+  base.series_bible_events = [event, ...existing].slice(0, 50)
+  return base
 }

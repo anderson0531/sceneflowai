@@ -10,7 +10,9 @@ import {
   Share2,
   RefreshCw,
   Upload,
+  ExternalLink,
 } from 'lucide-react'
+import Link from 'next/link'
 import { ProductTabList, ProductEmptyState } from '@/components/product'
 import { Button } from '@/components/ui/Button'
 import {
@@ -25,20 +27,29 @@ import type {
   SeriesCharacterResponse,
   SeriesLocationResponse,
   SeriesProp,
+  EpisodeBlueprintResponse,
 } from '@/types/series'
 import type { SeriesProductionBible } from '@/types/series'
-import { useSession } from 'next-auth/react'
+import {
+  getCharacterUsageEpisodes,
+  getLocationUsageEpisodes,
+  resolveAssetAuthorProjectId,
+} from '@/lib/series/seriesHealth'
 
 interface EpisodeProjectOption {
   projectId: string
   label: string
 }
 
+import { useSession } from 'next-auth/react'
+
 interface SeriesReferenceLibraryPanelProps {
   seriesId: string
   seriesTitle: string
   bible: SeriesProductionBible | null | undefined
+  episodeBlueprints?: EpisodeBlueprintResponse[]
   episodeProjects: EpisodeProjectOption[]
+  initialSection?: RefSubTab
   onRegenerateCharacters: () => void
   onRegenerateLocations: () => void
   isGenerating: boolean
@@ -51,7 +62,9 @@ export function SeriesReferenceLibraryPanel({
   seriesId,
   seriesTitle,
   bible,
+  episodeBlueprints = [],
   episodeProjects,
+  initialSection = 'cast',
   onRegenerateCharacters,
   onRegenerateLocations,
   isGenerating,
@@ -60,7 +73,7 @@ export function SeriesReferenceLibraryPanel({
   const { data: session } = useSession()
   const userId = session?.user?.id
 
-  const [subTab, setSubTab] = useState<RefSubTab>('cast')
+  const [subTab, setSubTab] = useState<RefSubTab>(initialSection)
   const [selectedEpisodeProjectId, setSelectedEpisodeProjectId] = useState<string>('')
   const [importOpen, setImportOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
@@ -89,6 +102,10 @@ export function SeriesReferenceLibraryPanel({
       cancelled = true
     }
   }, [userId])
+
+  useEffect(() => {
+    if (initialSection) setSubTab(initialSection)
+  }, [initialSection])
 
   const importProjectOptions = useMemo(() => {
     const byId = new Map<string, string>()
@@ -145,8 +162,8 @@ export function SeriesReferenceLibraryPanel({
                 {lastUpdated ? ` · Updated ${lastUpdated}` : ''}
               </p>
               <p className="text-xs text-gray-500 mt-2 max-w-xl">
-                Import cast (image, wardrobe, voice), locations, props, and visual settings from any of
-                your projects. Assets are stored on this series and flow into new episodes.
+                Shared cast, locations, and props for this series. Assets are authored in Production
+                Studio and synced here — use Edit in Production to iterate, not this panel.
               </p>
             </div>
           </div>
@@ -207,6 +224,7 @@ export function SeriesReferenceLibraryPanel({
       {subTab === 'cast' && (
         <SeriesCastSection
           characters={bible?.characters || []}
+          episodeBlueprints={episodeBlueprints}
           onRegenerate={onRegenerateCharacters}
           isGenerating={isGenerating}
         />
@@ -214,11 +232,14 @@ export function SeriesReferenceLibraryPanel({
       {subTab === 'locations' && (
         <SeriesLocationsSection
           locations={bible?.locations || []}
+          episodeBlueprints={episodeBlueprints}
           onRegenerate={onRegenerateLocations}
           isGenerating={isGenerating}
         />
       )}
-      {subTab === 'props' && <SeriesPropsSection props={bible?.props || []} />}
+      {subTab === 'props' && (
+        <SeriesPropsSection props={bible?.props || []} episodeBlueprints={episodeBlueprints} />
+      )}
       {subTab === 'settings' && (
         <SeriesSettingsSection
           aesthetic={bible?.aesthetic}
@@ -258,10 +279,12 @@ export function SeriesReferenceLibraryPanel({
 
 function SeriesCastSection({
   characters,
+  episodeBlueprints,
   onRegenerate,
   isGenerating,
 }: {
   characters: SeriesCharacterResponse[]
+  episodeBlueprints: EpisodeBlueprintResponse[]
   onRegenerate: () => void
   isGenerating: boolean
 }) {
@@ -306,6 +329,12 @@ function SeriesCastSection({
               <div className="min-w-0 flex-1">
                 <h4 className="font-semibold text-white">{char.name}</h4>
                 <p className="text-xs text-gray-500">{char.role}</p>
+                <AssetUsageMeta
+                  usageEpisodes={getCharacterUsageEpisodes(char.id, episodeBlueprints)}
+                  authorProjectId={resolveAssetAuthorProjectId(char.id, episodeBlueprints, (ep) =>
+                    (ep.characters ?? []).some((c) => c.characterId === char.id)
+                  )}
+                />
                 {char.voiceId ? (
                   <p className="text-xs text-cyan-400 mt-1">Voice assigned</p>
                 ) : null}
@@ -330,10 +359,12 @@ function SeriesCastSection({
 
 function SeriesLocationsSection({
   locations,
+  episodeBlueprints,
   onRegenerate,
   isGenerating,
 }: {
   locations: SeriesLocationResponse[]
+  episodeBlueprints: EpisodeBlueprintResponse[]
   onRegenerate: () => void
   isGenerating: boolean
 }) {
@@ -361,6 +392,13 @@ function SeriesLocationsSection({
             <div key={loc.id} className="bg-gray-800 rounded-xl border border-gray-700 p-5">
               <h4 className="font-semibold text-white mb-1">{loc.name}</h4>
               <p className="text-sm text-gray-400">{loc.description}</p>
+              <AssetUsageMeta
+                usageEpisodes={getLocationUsageEpisodes(loc.name, episodeBlueprints)}
+                authorProjectId={resolveAssetAuthorProjectId(loc.id, episodeBlueprints, (ep) => {
+                  const text = `${ep.synopsis ?? ''} ${ep.logline ?? ''}`.toLowerCase()
+                  return text.includes(loc.name.toLowerCase())
+                })}
+              />
             </div>
           ))}
         </div>
@@ -371,7 +409,13 @@ function SeriesLocationsSection({
   )
 }
 
-function SeriesPropsSection({ props }: { props: SeriesProp[] }) {
+function SeriesPropsSection({
+  props,
+  episodeBlueprints,
+}: {
+  props: SeriesProp[]
+  episodeBlueprints: EpisodeBlueprintResponse[]
+}) {
   return (
     <div>
       <div className="mb-6">
@@ -389,9 +433,17 @@ function SeriesPropsSection({ props }: { props: SeriesProp[] }) {
                   <Package className="w-5 h-5 text-gray-500" />
                 </div>
               )}
-              <div>
+              <div className="min-w-0 flex-1">
                 <h4 className="font-semibold text-white">{prop.name}</h4>
                 <p className="text-sm text-gray-400 line-clamp-2">{prop.description}</p>
+                <AssetUsageMeta
+                  usageEpisodes={
+                    prop.ownerCharacterId
+                      ? getCharacterUsageEpisodes(prop.ownerCharacterId, episodeBlueprints)
+                      : []
+                  }
+                  authorProjectId={resolveAssetAuthorProjectId(prop.id, episodeBlueprints, () => false)}
+                />
               </div>
             </div>
           ))}
@@ -445,6 +497,36 @@ function SeriesSettingsSection({
           <p className="text-gray-500 text-sm">No tone guidelines defined.</p>
         )}
       </div>
+    </div>
+  )
+}
+
+function AssetUsageMeta({
+  usageEpisodes,
+  authorProjectId,
+}: {
+  usageEpisodes: number[]
+  authorProjectId: string | null
+}) {
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-2">
+      {usageEpisodes.length > 0 ? (
+        <span className="text-xs text-gray-500">
+          Used in EP {usageEpisodes.slice(0, 5).join(', ')}
+          {usageEpisodes.length > 5 ? ` +${usageEpisodes.length - 5}` : ''}
+        </span>
+      ) : (
+        <span className="text-xs text-gray-600">Not referenced in episode blueprints yet</span>
+      )}
+      {authorProjectId ? (
+        <Link
+          href={`/dashboard/studio/${authorProjectId}`}
+          className="text-xs text-cyan-400 hover:text-cyan-300 inline-flex items-center gap-1"
+        >
+          Edit in Production
+          <ExternalLink className="w-3 h-3" />
+        </Link>
+      ) : null}
     </div>
   )
 }

@@ -26,7 +26,10 @@ import {
   Star,
   Target,
   Square,
-  Volume2
+  Volume2,
+  Mic,
+  AlertTriangle,
+  GitBranch
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -59,8 +62,13 @@ import { DEFAULT_MAX_EPISODES, ABSOLUTE_MAX_EPISODES, SeriesResonanceAnalysis } 
 import { SeriesResonancePanel } from '@/components/series/SeriesResonancePanel'
 import { SeriesReferenceLibraryPanel } from '@/components/series/SeriesReferenceLibraryPanel'
 import { ReferenceTransferDialog } from '@/components/series/ReferenceTransferDialog'
+import { SeriesHeroHealthStrip } from '@/components/series/SeriesHeroHealthStrip'
+import { SeriesContinuityPanel } from '@/components/series/SeriesContinuityPanel'
+import { getEpisodeDriftWarnings } from '@/lib/series/seriesHealth'
+import { ensureSeasons, groupEpisodesBySeason } from '@/lib/series/seasons'
 import type {
-  EpisodeBlueprintResponse
+  EpisodeBlueprintResponse,
+  SeriesProductionBible,
 } from '@/types/series'
 
 // Common optimization templates for Edit Storyline
@@ -118,7 +126,23 @@ export default function SeriesStudioPage() {
     setEditMode
   } = useSeriesStudio(seriesId, userId)
 
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState(() => searchParams?.get('tab') || 'overview')
+  const [continuitySection, setContinuitySection] = useState<
+    'aesthetics' | 'key-events' | 'story-threads' | 'review-updates'
+  >(() => {
+    const s = searchParams?.get('section')
+    if (s === 'key-events' || s === 'story-threads' || s === 'review-updates' || s === 'aesthetics') {
+      return s
+    }
+    return 'aesthetics'
+  })
+  const [refLibrarySection, setRefLibrarySection] = useState<
+    'cast' | 'locations' | 'props' | 'settings'
+  >(() => {
+    const s = searchParams?.get('section')
+    if (s === 'cast' || s === 'locations' || s === 'props' || s === 'settings') return s
+    return 'cast'
+  })
   const [isAddingEpisodes, setIsAddingEpisodes] = useState(false)
   const [ideaTopic, setIdeaTopic] = useState('')
   const [episodeCount, setEpisodeCount] = useState(DEFAULT_MAX_EPISODES)
@@ -145,6 +169,7 @@ export default function SeriesStudioPage() {
   const [isEditStorylineOpen, setIsEditStorylineOpen] = useState(false)
   const [editInstruction, setEditInstruction] = useState('')
   const [editTargetAspect, setEditTargetAspect] = useState<'all' | 'plot' | 'characters' | 'episodes' | 'tone' | 'setting'>('all')
+  const [editTargetEpisodes, setEditTargetEpisodes] = useState<number[] | undefined>(undefined)
   const [isEditingStoryline, setIsEditingStoryline] = useState(false)
   
   // Edit Title dialog state
@@ -465,8 +490,10 @@ export default function SeriesStudioPage() {
   }, [series, refreshSeries, executeWithOverlay, handleAnalyzeResonance])
 
   // Edit Storyline handler - for directed changes without full regeneration
-  const handleEditStoryline = useCallback(async () => {
-    if (!series || !editInstruction.trim()) {
+  const handleEditStoryline = useCallback(async (opts?: { targetEpisodes?: number[]; instruction?: string }) => {
+    const instruction = (opts?.instruction ?? editInstruction).trim()
+    const targetEpisodes = opts?.targetEpisodes ?? editTargetEpisodes
+    if (!series || !instruction) {
       toast.error('Please enter an instruction')
       return
     }
@@ -479,8 +506,9 @@ export default function SeriesStudioPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            instruction: editInstruction,
-            targetAspect: editTargetAspect
+            instruction,
+            targetAspect: editTargetAspect,
+            targetEpisodes,
           })
         })
         
@@ -498,6 +526,7 @@ export default function SeriesStudioPage() {
       
       setIsEditStorylineOpen(false)
       setEditInstruction('')
+      setEditTargetEpisodes(undefined)
       await refreshSeries()
       
       toast.success(`Applied ${result.changesApplied?.length || 0} changes to storyline`)
@@ -506,7 +535,12 @@ export default function SeriesStudioPage() {
     } finally {
       setIsEditingStoryline(false)
     }
-  }, [series, editInstruction, editTargetAspect, executeWithOverlay, refreshSeries])
+  }, [series, editInstruction, editTargetAspect, editTargetEpisodes, executeWithOverlay, refreshSeries])
+
+  const openReshapeDialog = useCallback((episodeNumber?: number) => {
+    setEditTargetEpisodes(episodeNumber ? [episodeNumber] : undefined)
+    setIsEditStorylineOpen(true)
+  }, [])
 
   // Title edit handlers
   const handleOpenEditTitle = () => {
@@ -577,13 +611,32 @@ export default function SeriesStudioPage() {
   }
 
   const bible = series.productionBible
-  
-  // Calculate progress percentage
-  const blueprintCount = (series.episodeBlueprints || []).filter((ep: any) => ep.status === 'blueprint').length
-  const inProgressCount = series.startedCount || 0
-  const completedCount = series.completedCount || 0
-  const totalEpisodes = series.episodeCount || 0
-  const progressPercent = totalEpisodes > 0 ? Math.round((completedCount / totalEpisodes) * 100) : 0
+  const episodes = series.episodeBlueprints || []
+  const resonanceAnalyzedAt =
+    (series.metadata as Record<string, unknown> | undefined)?.resonance_analyzed_at as
+      | string
+      | undefined
+
+  const navigateTab = (tab: string) => {
+    setActiveTab(tab)
+    router.replace(`/dashboard/series/${series.id}?tab=${tab}`, { scroll: false })
+  }
+
+  useEffect(() => {
+    const tab = searchParams?.get('tab')
+    const section = searchParams?.get('section')
+    if (tab) setActiveTab(tab)
+    if (section === 'cast' || section === 'locations' || section === 'props' || section === 'settings') {
+      setRefLibrarySection(section)
+    } else if (
+      section === 'aesthetics' ||
+      section === 'key-events' ||
+      section === 'story-threads' ||
+      section === 'review-updates'
+    ) {
+      setContinuitySection(section)
+    }
+  }, [searchParams])
 
   return (
     <div className="min-h-full bg-gray-950 text-white">
@@ -658,26 +711,28 @@ export default function SeriesStudioPage() {
             </div>
 
             {/* Right: CTA buttons */}
-            <div className="flex items-center gap-3 flex-shrink-0">
-              {bible?.synopsis && (
+            <div className="flex flex-wrap items-center gap-3 flex-shrink-0">
+              {bible?.synopsis ? (
+                <Button
+                  variant="outline"
+                  onClick={() => openReshapeDialog()}
+                  className="border-amber-500/50 text-amber-400 hover:bg-amber-500/10"
+                >
+                  <Mic className="w-4 h-4 mr-2" />
+                  Reshape with Direction
+                </Button>
+              ) : null}
               <Button
                 variant="outline"
-                onClick={() => setIsEditStorylineOpen(true)}
-                className="border-amber-500/50 text-amber-400 hover:bg-amber-500/10"
+                onClick={() => setIsResonancePanelOpen(true)}
+                className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 shadow-sm"
               >
-                <Edit2 className="w-4 h-4 mr-2" />
-                Edit Storyline
+                <Target className="w-4 h-4 mr-2" />
+                {resonanceAnalysis?.greenlightScore?.score
+                  ? `Score: ${resonanceAnalysis.greenlightScore.score}`
+                  : 'Analyze Series'}
               </Button>
-            )}
-            <Button
-              variant="outline"
-              onClick={() => setIsResonancePanelOpen(true)}
-              className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 shadow-sm"
-            >
-              <Target className="w-4 h-4 mr-2" />
-              {resonanceAnalysis?.greenlightScore?.score ? `Score: ${resonanceAnalysis.greenlightScore.score}` : 'Analyze Series'}
-            </Button>
-            <Button
+              <Button
                 onClick={() => setIsIdeateDialogOpen(true)}
                 className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg shadow-amber-500/25"
               >
@@ -687,93 +742,14 @@ export default function SeriesStudioPage() {
             </div>
           </div>
 
-          {/* Stats row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center">
-                  <Film className="w-5 h-5 text-cyan-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">{series.episodeCount}</p>
-                  <p className="text-xs text-gray-500">Episodes</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                  <Users className="w-5 h-5 text-purple-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">{bible?.characters?.length || 0}</p>
-                  <p className="text-xs text-gray-500">Characters</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
-                  <MapPin className="w-5 h-5 text-green-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">{bible?.locations?.length || 0}</p>
-                  <p className="text-xs text-gray-500">Locations</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center">
-                  <Trophy className="w-5 h-5 text-amber-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">{progressPercent}%</p>
-                  <p className="text-xs text-gray-500">Complete</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Progress bar */}
-          {totalEpisodes > 0 && (
-            <div className="mt-6">
-              <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
-                <span>Series Progress</span>
-                <span>{completedCount} of {totalEpisodes} episodes completed</span>
-              </div>
-              <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-                <div className="h-full flex">
-                  <div 
-                    className="bg-green-500 transition-all duration-500"
-                    style={{ width: `${(completedCount / totalEpisodes) * 100}%` }}
-                  />
-                  <div 
-                    className="bg-blue-500 transition-all duration-500"
-                    style={{ width: `${(inProgressCount / totalEpisodes) * 100}%` }}
-                  />
-                  <div 
-                    className="bg-amber-500/50 transition-all duration-500"
-                    style={{ width: `${(blueprintCount / totalEpisodes) * 100}%` }}
-                  />
-                </div>
-              </div>
-              <div className="flex items-center gap-4 mt-2 text-xs">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-green-500" />
-                  <span className="text-gray-500">Completed ({completedCount})</span>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-blue-500" />
-                  <span className="text-gray-500">In Progress ({inProgressCount})</span>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-amber-500/50" />
-                  <span className="text-gray-500">Blueprint ({blueprintCount})</span>
-                </span>
-              </div>
-            </div>
-          )}
+          <SeriesHeroHealthStrip
+            bible={bible}
+            episodes={episodes}
+            resonanceAnalysis={resonanceAnalysis}
+            resonanceAnalyzedAt={resonanceAnalyzedAt}
+            onNavigate={(tab) => navigateTab(tab)}
+            onAnalyzeResonance={() => setIsResonancePanelOpen(true)}
+          />
         </div>
       </div>
 
@@ -797,6 +773,13 @@ export default function SeriesStudioPage() {
               <span className="text-xs bg-gray-700 px-1.5 py-0.5 rounded-full">{series.episodeCount}</span>
             </TabsTrigger>
             <TabsTrigger
+              value="continuity"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500/20 data-[state=active]:to-pink-500/20 data-[state=active]:text-purple-300 data-[state=active]:border-purple-500/30 gap-2"
+            >
+              <GitBranch className="w-4 h-4" />
+              Continuity
+            </TabsTrigger>
+            <TabsTrigger
               value="reference-library"
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500/20 data-[state=active]:to-orange-500/20 data-[state=active]:text-amber-400 data-[state=active]:border-amber-500/30 gap-2"
             >
@@ -811,14 +794,19 @@ export default function SeriesStudioPage() {
               series={series}
               onRegenerate={handleRegenerateField}
               isGenerating={isGenerating}
+              onOpenBibleSync={() => {
+                setContinuitySection('review-updates')
+                navigateTab('continuity')
+              }}
             />
           </TabsContent>
 
           {/* Episodes Tab */}
           <TabsContent value="episodes">
             <EpisodesPanel
-              episodes={series.episodeBlueprints || []}
+              episodes={episodes}
               seriesId={series.id}
+              bible={bible}
               onStartEpisode={handleStartEpisode}
               onSelectEpisode={setSelectedEpisodeId}
               onEditEpisode={handleEditSpecificEpisode}
@@ -827,6 +815,25 @@ export default function SeriesStudioPage() {
               maxEpisodes={series.maxEpisodes}
               onAddMoreEpisodes={handleAddMoreEpisodes}
               isAddingEpisodes={isAddingEpisodes}
+              onReshapeEpisode={(episodeNumber, instruction) => {
+                void handleEditStoryline({ targetEpisodes: [episodeNumber], instruction })
+              }}
+            />
+          </TabsContent>
+
+          <TabsContent value="continuity">
+            <SeriesContinuityPanel
+              seriesId={series.id}
+              seriesTitle={series.title}
+              bible={bible}
+              episodes={episodes}
+              bibleEvents={
+                (series.metadata as Record<string, unknown> | undefined)?.series_bible_events as
+                  | import('@/types/series').SeriesBibleEvent[]
+                  | undefined
+              }
+              initialSection={continuitySection}
+              onRefresh={refreshSeries}
             />
           </TabsContent>
 
@@ -835,7 +842,9 @@ export default function SeriesStudioPage() {
               seriesId={series.id}
               seriesTitle={series.title}
               bible={bible}
+              episodeBlueprints={episodes}
               episodeProjects={episodeProjects}
+              initialSection={refLibrarySection}
               onRegenerateCharacters={() => handleRegenerateField('characters')}
               onRegenerateLocations={() => handleRegenerateField('locations')}
               isGenerating={isGenerating}
@@ -992,11 +1001,11 @@ export default function SeriesStudioPage() {
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-600/20 flex items-center justify-center border border-amber-500/30">
                 <Edit2 className="w-4 h-4 text-amber-400" />
               </div>
-              <span>Edit</span>
-              <span className="text-gray-500 font-normal">· Storyline</span>
+              <span>Reshape</span>
+              <span className="text-gray-500 font-normal">· with Direction</span>
             </DialogTitle>
             <DialogDescription className="text-gray-400 text-sm mt-2">
-              Describe specific changes to make to your storyline. This makes targeted edits without regenerating everything.
+              Speak or type direction to reshape the series{editTargetEpisodes?.length ? ` (episode ${editTargetEpisodes.join(', ')})` : ''}. Targeted edits without regenerating everything.
             </DialogDescription>
           </DialogHeader>
 
@@ -1063,7 +1072,7 @@ export default function SeriesStudioPage() {
                 Cancel
               </Button>
               <Button
-                onClick={handleEditStoryline}
+                onClick={() => handleEditStoryline()}
                 disabled={!editInstruction.trim() || isEditingStoryline}
                 className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg shadow-amber-500/25"
               >
@@ -1224,10 +1233,47 @@ interface OverviewPanelProps {
   series: any
   onRegenerate: (field: string) => void
   isGenerating: boolean
+  onOpenBibleSync?: () => void
 }
 
-function OverviewPanel({ series, onRegenerate, isGenerating }: OverviewPanelProps) {
+function OverviewPanel({ series, onRegenerate, isGenerating, onOpenBibleSync }: OverviewPanelProps) {
   const bible = series.productionBible
+  const [budgetSummary, setBudgetSummary] = useState<{ used: number; budget: number } | null>(null)
+  const [shareUrl, setShareUrl] = useState<string | null>(null)
+  const [isSharing, setIsSharing] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch(`/api/series/${series.id}/budget`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled || !data.success) return
+        setBudgetSummary({
+          used: data.totalCreditsUsed ?? 0,
+          budget: data.totalCreditsBudget ?? 0,
+        })
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [series.id])
+
+  const handleShareBible = async () => {
+    setIsSharing(true)
+    try {
+      const res = await fetch(`/api/series/${series.id}/share`, { method: 'POST' })
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error)
+      setShareUrl(data.url)
+      await navigator.clipboard.writeText(data.url)
+      toast.success('Share link copied to clipboard')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to create share link')
+    } finally {
+      setIsSharing(false)
+    }
+  }
 
   // --- TTS State & Logic ---
   const [isPlaying, setIsPlaying] = useState(false)
@@ -1447,6 +1493,62 @@ function OverviewPanel({ series, onRegenerate, isGenerating }: OverviewPanelProp
 
       {/* Sidebar */}
       <div className="space-y-6">
+        {onOpenBibleSync ? (
+          <div className="bg-gradient-to-br from-teal-900/20 to-cyan-900/10 rounded-xl p-6 border border-teal-700/30">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 bg-teal-500/20 rounded-lg flex items-center justify-center">
+                <GitBranch className="w-4 h-4 text-teal-400" />
+              </div>
+              <h3 className="font-semibold">Series Bible Sync</h3>
+            </div>
+            <p className="text-sm text-gray-400 mb-4">
+              Production-authored assets and storylines push up to the Series Bible through Review
+              Updates. Approve diffs before they merge into the shared library.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onOpenBibleSync}
+              className="border-teal-500/40 text-teal-300 hover:bg-teal-500/10 w-full"
+            >
+              Open Review Updates
+            </Button>
+          </div>
+        ) : null}
+
+        {budgetSummary ? (
+          <div className="bg-gradient-to-br from-gray-800 to-gray-800/50 rounded-xl p-6 border border-gray-700/50">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                <Trophy className="w-4 h-4 text-blue-400" />
+              </div>
+              <h3 className="font-semibold">Series Budget</h3>
+            </div>
+            <p className="text-2xl font-bold text-white">{budgetSummary.used} credits</p>
+            <p className="text-xs text-gray-500 mt-1">
+              {budgetSummary.budget > 0
+                ? `${budgetSummary.budget} credits budgeted across episode projects`
+                : 'Aggregated from episode production projects + resonance analysis'}
+            </p>
+          </div>
+        ) : null}
+
+        <div className="bg-gradient-to-br from-gray-800 to-gray-800/50 rounded-xl p-6 border border-gray-700/50">
+          <h3 className="font-semibold mb-2">Share Series Bible</h3>
+          <p className="text-sm text-gray-400 mb-4">
+            Create a read-only link for collaborators or stakeholders.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isSharing}
+            onClick={handleShareBible}
+            className="w-full border-gray-600"
+          >
+            {isSharing ? 'Creating…' : shareUrl ? 'Copy link again' : 'Create share link'}
+          </Button>
+        </div>
+
         {/* Protagonist */}
         <div className="bg-gradient-to-br from-gray-800 to-gray-800/50 rounded-xl p-6 border border-gray-700/50">
           <div className="flex items-center justify-between mb-4">
@@ -1550,6 +1652,7 @@ interface EpisodesPanelProps {
   episodes: EpisodeBlueprintResponse[]
   seriesId: string
   maxEpisodes: number
+  bible?: SeriesProductionBible | null
   onStartEpisode: (episodeId: string) => void
   onSelectEpisode: (episodeId: string | null) => void
   onAddMoreEpisodes: () => void
@@ -1557,20 +1660,55 @@ interface EpisodesPanelProps {
   isStarting: boolean
   isAddingEpisodes: boolean
   onEditEpisode?: (episodeNumber: number) => void
+  onReshapeEpisode?: (episodeNumber: number, instruction: string) => void
 }
+
+type EpisodeStatusFilter = 'all' | 'blueprint' | 'in_progress' | 'completed'
+type EpisodeSort = 'episode' | 'status'
 
 function EpisodesPanel({
   episodes,
   seriesId,
   maxEpisodes,
+  bible,
   onStartEpisode,
   onSelectEpisode,
   onAddMoreEpisodes,
   selectedEpisodeId,
   isStarting,
   isAddingEpisodes,
-  onEditEpisode
+  onEditEpisode,
+  onReshapeEpisode
 }: EpisodesPanelProps) {
+  const [statusFilter, setStatusFilter] = useState<EpisodeStatusFilter>('all')
+  const [sortBy, setSortBy] = useState<EpisodeSort>('episode')
+  const [episodeDirection, setEpisodeDirection] = useState('')
+
+  const continueEpisode = useMemo(
+    () => episodes.find((ep) => ep.status === 'in_progress' && ep.projectId),
+    [episodes]
+  )
+
+  const filteredEpisodes = useMemo(() => {
+    let list = [...episodes]
+    if (statusFilter !== 'all') {
+      list = list.filter((ep) => ep.status === statusFilter)
+    }
+    if (sortBy === 'episode') {
+      list.sort((a, b) => a.episodeNumber - b.episodeNumber)
+    } else {
+      const order = { in_progress: 0, blueprint: 1, completed: 2 }
+      list.sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9))
+    }
+    return list
+  }, [episodes, statusFilter, sortBy])
+
+  const seasonGroups = useMemo(() => {
+    const seasons = ensureSeasons(bible ?? null, episodes)
+    const grouped = groupEpisodesBySeason(filteredEpisodes, seasons)
+    return grouped.filter((g) => g.episodes.length > 0)
+  }, [bible, episodes, filteredEpisodes])
+
   const selectedEpisode = episodes.find(ep => ep.id === selectedEpisodeId)
   const canAddMore = episodes.length < maxEpisodes
 
@@ -1675,13 +1813,37 @@ function EpisodesPanel({
             <h3 className="font-semibold">Episode Blueprints</h3>
             <span className="text-xs text-gray-500">{episodes.length}/{maxEpisodes}</span>
           </div>
-          <p className="text-xs text-gray-500">Click an episode to view details</p>
+          <div className="flex flex-wrap gap-1.5 mt-3 mb-2">
+            {(['all', 'blueprint', 'in_progress', 'completed'] as EpisodeStatusFilter[]).map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setStatusFilter(f)}
+                className={`text-xs px-2 py-1 rounded-full capitalize ${
+                  statusFilter === f
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                    : 'bg-gray-900 text-gray-500 border border-gray-700'
+                }`}
+              >
+                {f.replace('_', ' ')}
+              </button>
+            ))}
+          </div>
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as EpisodeSort)}>
+            <SelectTrigger className="h-8 bg-gray-900 border-gray-700 text-xs mb-2">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-900 border-gray-700">
+              <SelectItem value="episode">Sort: Episode #</SelectItem>
+              <SelectItem value="status">Sort: Status</SelectItem>
+            </SelectContent>
+          </Select>
           {canAddMore && (
             <Button
               onClick={onAddMoreEpisodes}
               disabled={isAddingEpisodes}
               size="sm"
-              className="w-full mt-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700"
+              className="w-full mt-1 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700"
             >
               {isAddingEpisodes ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</>
@@ -1692,23 +1854,53 @@ function EpisodesPanel({
           )}
         </div>
         <div className="max-h-[600px] overflow-y-auto">
-          {episodes.map((ep) => (
+          {continueEpisode && continueEpisode.id !== selectedEpisodeId ? (
             <button
-              key={ep.id}
-              onClick={() => onSelectEpisode(ep.id)}
-              className={`w-full p-4 text-left border-b border-gray-700 hover:bg-gray-750 transition-colors ${
-                selectedEpisodeId === ep.id ? 'bg-gray-750 border-l-2 border-l-amber-500' : ''
-              }`}
+              type="button"
+              onClick={() => onSelectEpisode(continueEpisode.id)}
+              className="w-full p-3 text-left border-b border-blue-900/50 bg-blue-950/20 hover:bg-blue-950/40"
             >
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-medium text-gray-500 w-8">EP {ep.episodeNumber}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate">{ep.title}</p>
-                  <p className="text-xs text-gray-500 truncate">{ep.logline}</p>
-                </div>
-                <EpisodeStatusBadge status={ep.status} />
-              </div>
+              <p className="text-xs text-blue-400 font-medium">Continue where you left off</p>
+              <p className="text-sm text-white truncate">
+                EP {continueEpisode.episodeNumber}: {continueEpisode.title}
+              </p>
             </button>
+          ) : null}
+          {seasonGroups.map(({ season, episodes: seasonEps }) => (
+            <div key={season.id}>
+              {seasonGroups.length > 1 ? (
+                <div className="px-4 py-2 bg-gray-900/80 border-b border-gray-700">
+                  <p className="text-xs font-medium text-purple-300">{season.title}</p>
+                </div>
+              ) : null}
+              {seasonEps.map((ep) => {
+                const drift = getEpisodeDriftWarnings(ep, bible ?? null)
+                return (
+                  <button
+                    key={ep.id}
+                    onClick={() => onSelectEpisode(ep.id)}
+                    className={`w-full p-4 text-left border-b border-gray-700 hover:bg-gray-750 transition-colors ${
+                      selectedEpisodeId === ep.id ? 'bg-gray-750 border-l-2 border-l-amber-500' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-medium text-gray-500 w-8">EP {ep.episodeNumber}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white truncate">{ep.title}</p>
+                        <p className="text-xs text-gray-500 truncate">{ep.logline}</p>
+                      </div>
+                      {drift.length > 0 ? (
+                        <AlertTriangle
+                          className="w-4 h-4 text-orange-400 shrink-0"
+                          title={drift.join('; ')}
+                        />
+                      ) : null}
+                      <EpisodeStatusBadge status={ep.status} />
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
           ))}
         </div>
       </div>
@@ -1808,6 +2000,33 @@ function EpisodesPanel({
               <h4 className="text-sm font-medium text-gray-400 mb-2">Synopsis</h4>
               <p className="text-gray-300 text-sm">{selectedEpisode.synopsis}</p>
             </div>
+
+            {onReshapeEpisode ? (
+              <div className="mb-6 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+                <h4 className="text-sm font-medium text-amber-300 mb-2 flex items-center gap-2">
+                  <Mic className="w-4 h-4" />
+                  Direct this episode
+                </h4>
+                <div className="flex gap-2">
+                  <Textarea
+                    value={episodeDirection}
+                    onChange={(e) => setEpisodeDirection(e.target.value)}
+                    placeholder="e.g., Raise the stakes in the climax and deepen the B-story…"
+                    className="bg-gray-900 border-gray-700 text-sm min-h-[72px]"
+                  />
+                  <Button
+                    disabled={!episodeDirection.trim()}
+                    onClick={() => {
+                      onReshapeEpisode?.(selectedEpisode.episodeNumber, episodeDirection.trim())
+                      setEpisodeDirection('')
+                    }}
+                    className="shrink-0 self-end bg-amber-600 hover:bg-amber-700"
+                  >
+                    Apply
+                  </Button>
+                </div>
+              </div>
+            ) : null}
 
             {/* Story Beats */}
             {selectedEpisode.beats?.length > 0 && (

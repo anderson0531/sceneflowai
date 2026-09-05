@@ -216,6 +216,16 @@ export interface SeriesAesthetic {
 }
 
 /**
+ * Season grouping within a series slate (stored in production_bible.seasons JSONB).
+ */
+export interface SeriesSeason {
+  id: string
+  number: number
+  title: string
+  episodeNumbers: number[]
+}
+
+/**
  * Series Reference Library
  */
 export interface SeriesProductionBible {
@@ -257,6 +267,20 @@ export interface SeriesProductionBible {
   episodeSummaries?: EpisodeSummary[]
   /** Open questions or cliffhangers that need resolution */
   unresolvedHooks?: string[]
+  /** Season groupings for multi-season slates */
+  seasons?: SeriesSeason[]
+}
+
+/** Audit log entry when Production pushes/pulls bible sync (stored in series.metadata.series_bible_events). */
+export interface SeriesBibleEvent {
+  id: string
+  direction: 'push_to_series' | 'pull_from_series'
+  projectId: string
+  episodeNumber?: number
+  syncFields: string[]
+  bibleVersion: string
+  status: 'pending_review' | 'applied'
+  createdAt: string
 }
 
 /**

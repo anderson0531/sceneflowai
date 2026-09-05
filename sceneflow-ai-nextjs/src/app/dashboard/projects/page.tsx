@@ -337,6 +337,30 @@ export default function ProjectsPage() {
     setDeleteDialogOpen(true)
   }
 
+  const handlePromoteToSeries = async (projectId: string) => {
+    if (authStatus !== 'authenticated' || !session?.user?.id) {
+      const { toast } = await import('sonner')
+      toast.error('Sign in to promote a project')
+      return
+    }
+    try {
+      const { toast } = await import('sonner')
+      toast.info('Creating series from project…')
+      const res = await fetch(`/api/projects/${projectId}/promote-to-series`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: session.user.id }),
+      })
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error || 'Promote failed')
+      toast.success('Series created from project')
+      router.push(`/dashboard/series/${data.seriesId}`)
+    } catch (error) {
+      const { toast } = await import('sonner')
+      toast.error(error instanceof Error ? error.message : 'Failed to promote project')
+    }
+  }
+
   const confirmDelete = async () => {
     if (!projectToDelete) return
     
@@ -539,6 +563,7 @@ export default function ProjectsPage() {
                 onDuplicate={handleDuplicate}
                 onArchive={handleArchive}
                 onDelete={handleDelete}
+                onPromoteToSeries={handlePromoteToSeries}
               />
             ))}
           </div>

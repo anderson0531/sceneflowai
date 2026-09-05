@@ -261,6 +261,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       },
       metadata: {
         ...(series.metadata || {}),
+        resonance_analyzed_at: timestamp,
+        resonance_credits_used:
+          Number((series.metadata as Record<string, unknown> | undefined)?.resonance_credits_used ?? 0) + 1,
         resonance_analysis: {
           ...analysis,
           appliedFixes: existingAppliedFixes,
