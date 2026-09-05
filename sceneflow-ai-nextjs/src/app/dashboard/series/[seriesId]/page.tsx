@@ -1439,7 +1439,7 @@ function OverviewPanel({ series, onRegenerate, isGenerating, onOpenBibleSync }: 
                     </>
                   ) : (
                     <>
-                      <Play className="w-3.5 h-3.5 mr-1.5 fill-current" /> Read
+                      <Play className="w-3.5 h-3.5 mr-1.5 fill-current" /> Listen
                     </>
                   )}
                 </Button>
@@ -2017,7 +2017,7 @@ function EpisodesPanel({
                         </>
                       ) : (
                         <>
-                          <Play className="w-3.5 h-3.5 mr-1.5 fill-current" /> Read
+                          <Play className="w-3.5 h-3.5 mr-1.5 fill-current" /> Listen
                         </>
                       )}
                     </Button>
