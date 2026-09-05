@@ -58,13 +58,14 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import { DEFAULT_MAX_EPISODES, ABSOLUTE_MAX_EPISODES, SeriesResonanceAnalysis } from '@/types/series'
+import { DEFAULT_MAX_EPISODES, ABSOLUTE_MAX_EPISODES, SeriesResonanceAnalysis, getSeriesGreenlightTier } from '@/types/series'
 import { SeriesResonancePanel } from '@/components/series/SeriesResonancePanel'
 import { SeriesReferenceLibraryPanel } from '@/components/series/SeriesReferenceLibraryPanel'
 import { ReferenceTransferDialog } from '@/components/series/ReferenceTransferDialog'
 import { SeriesHeroHealthStrip } from '@/components/series/SeriesHeroHealthStrip'
 import { SeriesContinuityPanel } from '@/components/series/SeriesContinuityPanel'
 import { getEpisodeDriftWarnings } from '@/lib/series/seriesHealth'
+import { applyOptimisticScoreDelta } from '@/lib/series/resonanceScoring'
 import { ensureSeasons, groupEpisodesBySeason } from '@/lib/series/seasons'
 import type {
   EpisodeBlueprintResponse,
@@ -447,19 +448,35 @@ export default function SeriesStudioPage() {
     insightId: string,
     fixSuggestion: string,
     targetSection: string,
-    targetId?: string
+    targetId?: string,
+    extras?: {
+      title?: string
+      category?: string
+      axisId?: string
+      estimatedImpact?: number
+    }
   ) => {
     if (!series) throw new Error('No series loaded')
     
     const targetLabel = targetId 
       ? `${targetSection} (${targetId})` 
       : targetSection
+    const delta = Math.max(0, Math.round(Number(extras?.estimatedImpact) || 0))
     
-    await executeWithOverlay(async () => {
+    const result = await executeWithOverlay(async () => {
       const response = await fetch(`/api/series/${series.id}/apply-fix`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ insightId, fixSuggestion, targetSection, targetId })
+        body: JSON.stringify({
+          insightId,
+          fixSuggestion,
+          targetSection,
+          targetId,
+          title: extras?.title,
+          category: extras?.category,
+          axisId: extras?.axisId,
+          estimatedImpact: extras?.estimatedImpact,
+        })
       })
       
       if (!response.ok) {
@@ -473,21 +490,31 @@ export default function SeriesStudioPage() {
       estimatedDuration: 20,
       operationType: 'series-fix'
     })
-    
-    // Refresh series data after fix
-    await refreshSeries()
-    toast.success('Fix applied! Re-analyzing to update score...')
-    
-    // Re-run analysis to get updated score
-    try {
-      const newAnalysis = await handleAnalyzeResonance()
-      setResonanceAnalysis(newAnalysis)
-      toast.success(`Analysis complete! New score: ${newAnalysis.greenlightScore.score}`)
-    } catch (err) {
-      console.error('Re-analysis failed:', err)
-      // Don't show error - fix was still applied successfully
+
+    const nextScore =
+      typeof result?.estimatedScore === 'number'
+        ? result.estimatedScore
+        : Math.min(100, (resonanceAnalysis?.greenlightScore.score ?? 0) + delta)
+
+    if (resonanceAnalysis) {
+      const updated = applyOptimisticScoreDelta(resonanceAnalysis, delta, insightId)
+      if (updated.greenlightScore.score !== nextScore) {
+        updated.greenlightScore = getSeriesGreenlightTier(nextScore)
+      }
+      setResonanceAnalysis(updated)
+      series.metadata = {
+        ...(series.metadata || {}),
+        resonance_analysis: updated,
+      }
     }
-  }, [series, refreshSeries, executeWithOverlay, handleAnalyzeResonance])
+
+    await refreshSeries()
+    toast.success(
+      delta > 0
+        ? `Fix applied. Score +${delta} (re-analyze when you want a full rescore).`
+        : 'Fix applied. Re-analyze when you want a full rescore.'
+    )
+  }, [series, refreshSeries, executeWithOverlay, resonanceAnalysis])
 
   // Edit Storyline handler - for directed changes without full regeneration
   const handleEditStoryline = useCallback(async (opts?: { targetEpisodes?: number[]; instruction?: string }) => {

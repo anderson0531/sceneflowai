@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Target,
@@ -26,9 +26,13 @@ import {
   Loader2,
   Check,
   X,
-  Globe
+  Globe,
+  Volume2,
+  Square
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { VoiceSelectionDialog } from '@/components/tts/VoiceSelectionDialog'
+import { GEMINI_VOICES } from '@/components/tts/GeminiVoicePicker'
 import { AudienceDescriptionField } from '@/components/audience/AudienceDescriptionField'
 import {
   createAudienceDefinition,
@@ -41,11 +45,26 @@ import {
   SeriesResponse,
   getSeriesGreenlightTier
 } from '@/types/series'
+import {
+  axisDisplayLabel,
+  buildSeriesAnalysisNarration,
+} from '@/lib/series/resonanceScoring'
 
 interface SeriesResonancePanelProps {
   series: SeriesResponse
   onAnalyze: (config?: { targetAudience?: string, targetMarkets?: string[], audienceDefinition?: AudienceDefinition }) => Promise<SeriesResonanceAnalysis>
-  onApplyFix: (insightId: string, fixSuggestion: string, targetSection: string, targetId?: string) => Promise<void>
+  onApplyFix: (
+    insightId: string,
+    fixSuggestion: string,
+    targetSection: string,
+    targetId?: string,
+    extras?: {
+      title?: string
+      category?: string
+      axisId?: string
+      estimatedImpact?: number
+    }
+  ) => Promise<void>
   savedAnalysis?: SeriesResonanceAnalysis | null
   onSeriesUpdated?: () => void
 }
@@ -72,6 +91,14 @@ export function SeriesResonancePanel({
   const [appliedFixes, setAppliedFixes] = useState<string[]>(savedAnalysis?.appliedFixes || [])
   const [showEpisodeDetails, setShowEpisodeDetails] = useState(false)
   const [selectedEpisode, setSelectedEpisode] = useState<number | null>(null)
+  const [showLowImpact, setShowLowImpact] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [isGeneratingTTS, setIsGeneratingTTS] = useState(false)
+  const [voiceSelectorOpen, setVoiceSelectorOpen] = useState(false)
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>('en-US-Journey-F')
+  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('Elena (Storyteller)')
+  const [audioProfilePrompt, setAudioProfilePrompt] = useState<string>('')
+  const audioRef = useRef<HTMLAudioElement | null>(null)
   
   // Market config state
   const [showConfig, setShowConfig] = useState(!savedAnalysis)
@@ -96,6 +123,33 @@ export function SeriesResonancePanel({
       }
     }
   }, [savedAnalysis])
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('directorNoteFavorites')
+      if (stored) {
+        const favs = JSON.parse(stored)
+        if (Array.isArray(favs) && favs.length > 0) {
+          const voice = GEMINI_VOICES.find((v) => v.id === favs[0])
+          if (voice) {
+            setSelectedVoiceId(voice.id)
+            setSelectedVoiceName(voice.name)
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+    }
+  }, [])
   
   // Handle analyze
   const handleAnalyze = useCallback(async () => {
@@ -132,7 +186,13 @@ export function SeriesResonancePanel({
         insight.id,
         insight.fixSuggestion,
         insight.targetSection,
-        insight.targetId
+        insight.targetId,
+        {
+          title: insight.title,
+          category: insight.category,
+          axisId: insight.axisId,
+          estimatedImpact: insight.estimatedImpact,
+        }
       )
       setAppliedFixes(prev => [...prev, insight.id])
       onSeriesUpdated?.()
@@ -151,12 +211,14 @@ export function SeriesResonancePanel({
   }, [])
   
   // Categorize insights
-  const { strengths, weaknesses, neutral } = useMemo(() => {
+  const { strengths, weaknesses, priorityWeaknesses, lowWeaknesses } = useMemo(() => {
     const insights = analysis?.insights || []
+    const allWeak = insights.filter(i => i.status === 'weakness')
     return {
       strengths: insights.filter(i => i.status === 'strength'),
-      weaknesses: insights.filter(i => i.status === 'weakness'),
-      neutral: insights.filter(i => i.status === 'neutral')
+      weaknesses: allWeak,
+      priorityWeaknesses: allWeak.filter(w => w.impactLabel !== 'Low'),
+      lowWeaknesses: allWeak.filter(w => w.impactLabel === 'Low'),
     }
   }, [analysis])
   
@@ -170,6 +232,50 @@ export function SeriesResonancePanel({
   const getEpisodeDetails = useCallback((epNum: number) => {
     return analysis?.episodeEngagement.find(e => e.episodeNumber === epNum)
   }, [analysis])
+
+  const handlePlayAnalysis = useCallback(async () => {
+    if (isPlaying) {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+      setIsPlaying(false)
+      return
+    }
+    if (!analysis) return
+
+    const textToSpeak = buildSeriesAnalysisNarration(analysis)
+    if (!textToSpeak.trim()) return
+
+    setIsGeneratingTTS(true)
+    try {
+      const response = await fetch('/api/tts/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: textToSpeak,
+          voiceId: selectedVoiceId,
+          ...(selectedVoiceId.startsWith('gemini-') && audioProfilePrompt
+            ? { prompt: audioProfilePrompt }
+            : {}),
+        }),
+      })
+      if (!response.ok) throw new Error('TTS failed')
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      audioRef.current = new Audio(url)
+      audioRef.current.onended = () => setIsPlaying(false)
+      audioRef.current.onerror = () => setIsPlaying(false)
+      await audioRef.current.play()
+      setIsPlaying(true)
+    } catch (err) {
+      console.error('Series analysis TTS error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to play analysis')
+      setIsPlaying(false)
+    } finally {
+      setIsGeneratingTTS(false)
+    }
+  }, [analysis, isPlaying, selectedVoiceId, audioProfilePrompt])
   
   return (
     <div className="space-y-6">
@@ -185,6 +291,44 @@ export function SeriesResonancePanel({
           </p>
         </div>
         
+        <div className="flex items-center gap-2">
+          {analysis ? (
+            <div className="flex items-center bg-slate-800/70 rounded-lg border border-slate-700/60 p-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setVoiceSelectorOpen(true)}
+                className="h-8 text-xs px-2 text-gray-400 hover:text-white"
+              >
+                <Volume2 className="w-3.5 h-3.5 mr-1.5" />
+                <span className="truncate max-w-[80px]">{selectedVoiceName}</span>
+              </Button>
+              <div className="w-px h-4 bg-slate-700 mx-1" />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handlePlayAnalysis}
+                disabled={isGeneratingTTS}
+                className={`h-8 px-3 text-xs font-medium ${
+                  isPlaying
+                    ? 'bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30'
+                    : 'text-gray-300 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                {isGeneratingTTS ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : isPlaying ? (
+                  <>
+                    <Square className="w-3.5 h-3.5 mr-1.5 fill-current" /> Stop
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-3.5 h-3.5 mr-1.5 fill-current" /> Listen
+                  </>
+                )}
+              </Button>
+            </div>
+          ) : null}
         <Button
           onClick={handleAnalyze}
           disabled={isAnalyzing}
@@ -207,6 +351,7 @@ export function SeriesResonancePanel({
             </>
           )}
         </Button>
+        </div>
       </div>
       
       {/* Error Display */}
@@ -688,10 +833,9 @@ export function SeriesResonancePanel({
               </h4>
             </div>
             
-            {/* Weaknesses (with fixes) */}
-            {weaknesses.length > 0 && (
+            {priorityWeaknesses.length > 0 && (
               <div className="space-y-2">
-                {weaknesses.map(insight => (
+                {priorityWeaknesses.map(insight => (
                   <InsightCard
                     key={insight.id}
                     insight={insight}
@@ -702,6 +846,32 @@ export function SeriesResonancePanel({
                     isApplied={appliedFixes.includes(insight.id)}
                   />
                 ))}
+              </div>
+            )}
+
+            {lowWeaknesses.length > 0 && (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setShowLowImpact((prev) => !prev)}
+                  className="text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1"
+                >
+                  <ChevronDown className={`w-3 h-3 transition-transform ${showLowImpact ? 'rotate-180' : ''}`} />
+                  Lower-impact notes ({lowWeaknesses.length})
+                </button>
+                {showLowImpact
+                  ? lowWeaknesses.map((insight) => (
+                      <InsightCard
+                        key={insight.id}
+                        insight={insight}
+                        expanded={expandedInsights.includes(insight.id)}
+                        onToggle={() => toggleInsight(insight.id)}
+                        onApplyFix={() => handleApplyFix(insight)}
+                        isApplying={applyingFix === insight.id}
+                        isApplied={appliedFixes.includes(insight.id)}
+                      />
+                    ))
+                  : null}
               </div>
             )}
             
@@ -726,12 +896,13 @@ export function SeriesResonancePanel({
             <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4">
               <p className="text-emerald-400 text-sm flex items-center gap-2">
                 <Check className="w-4 h-4" />
-                {appliedFixes.length} fix{appliedFixes.length > 1 ? 'es' : ''} applied. 
+                {appliedFixes.length} fix{appliedFixes.length > 1 ? 'es' : ''} applied.
+                Score already includes calibrated deltas.
                 <button
                   onClick={handleAnalyze}
                   className="underline hover:text-emerald-300"
                 >
-                  Re-analyze to see updated score
+                  Re-analyze for a full rescore
                 </button>
               </p>
             </div>
@@ -802,6 +973,26 @@ export function SeriesResonancePanel({
           </Button>
         </div>
       )}
+
+      <VoiceSelectionDialog
+        open={voiceSelectorOpen}
+        onOpenChange={setVoiceSelectorOpen}
+        provider="elevenlabs"
+        mode="narrator"
+        selectedVoiceId={selectedVoiceId}
+        onSelectVoice={(id, name, prompt) => {
+          setSelectedVoiceId(id)
+          setSelectedVoiceName(name)
+          if (prompt !== undefined) {
+            setAudioProfilePrompt(prompt)
+          }
+        }}
+        characterContext={{
+          name: 'Series Analyst',
+          role: 'narrator',
+          voiceDescription: audioProfilePrompt
+        }}
+      />
     </div>
   )
 }
@@ -944,9 +1135,21 @@ function InsightCard({
         <Icon className={`w-4 h-4 text-${config.color}-400 flex-shrink-0`} />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-white truncate">{insight.title}</p>
-          <p className="text-xs text-gray-500 capitalize">{insight.category}</p>
+          <p className="text-xs text-gray-500 capitalize">
+            {insight.category}
+            {insight.axisId ? ` · ${axisDisplayLabel(insight.axisId)}` : ''}
+          </p>
         </div>
-        {insight.estimatedImpact && (
+        {insight.impactLabel && insight.status === 'weakness' && (
+          <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+            insight.impactLabel === 'High' ? 'bg-red-500/20 text-red-300' :
+            insight.impactLabel === 'Medium' ? 'bg-amber-500/20 text-amber-300' :
+            'bg-slate-600/40 text-gray-400'
+          }`}>
+            {insight.impactLabel}
+          </span>
+        )}
+        {insight.estimatedImpact && insight.status === 'weakness' && (
           <span className="text-xs text-emerald-400 flex items-center gap-1">
             <ArrowUp className="w-3 h-3" />
             +{insight.estimatedImpact}

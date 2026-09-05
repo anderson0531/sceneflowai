@@ -13,7 +13,13 @@ import { Series } from '@/models/Series'
 import { sequelize } from '@/config/database'
 import { callLLM } from '@/services/llmGateway'
 import { v4 as uuidv4 } from 'uuid'
-import { ApplySeriesFixRequest, ApplySeriesFixResponse } from '@/types/series'
+import {
+  ApplySeriesFixRequest,
+  ApplySeriesFixResponse,
+  SeriesAppliedFixDetail,
+  getSeriesGreenlightTier,
+} from '@/types/series'
+import { SERIES_READY_SCORE } from '@/lib/series/resonanceScoring'
 import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { localeDirective } from '@/lib/prompts/localeDirective'
 import { getGeminiProductModel } from '@/lib/config/modelConfig'
@@ -128,7 +134,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
     
     const body: ApplySeriesFixRequest = await request.json()
-    const { insightId, fixSuggestion, targetSection, targetId } = body
+    const { insightId, fixSuggestion, targetSection, targetId, title, category, axisId, estimatedImpact } = body
     
     if (!fixSuggestion) {
       return NextResponse.json({
@@ -208,20 +214,55 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         }, { status: 400 })
     }
     
-    // Update resonance_analysis with the applied fix
+    // Update resonance_analysis + metadata so GET/POST stay in sync
     const existingAnalysis = series.resonance_analysis || {}
-    const existingAppliedFixes = existingAnalysis.appliedFixes || []
-    
-    // Add this insight ID to appliedFixes if not already present
-    if (!existingAppliedFixes.includes(insightId)) {
-      await series.update({
-        resonance_analysis: {
-          ...existingAnalysis,
-          appliedFixes: [...existingAppliedFixes, insightId],
-          lastFixAppliedAt: timestamp
-        }
-      })
+    const existingAppliedFixes: string[] = existingAnalysis.appliedFixes || []
+    const existingDetails: SeriesAppliedFixDetail[] = existingAnalysis.appliedFixDetails || []
+    const alreadyApplied = existingAppliedFixes.includes(insightId)
+
+    const nextAppliedFixes = alreadyApplied
+      ? existingAppliedFixes
+      : [...existingAppliedFixes, insightId]
+    const nextDetails = alreadyApplied
+      ? existingDetails
+      : [
+          ...existingDetails,
+          {
+            insightId,
+            fixSuggestion,
+            targetSection: normalizedSection,
+            targetId,
+            appliedAt: timestamp,
+            category,
+            title,
+            axisId,
+            estimatedImpact,
+          } satisfies SeriesAppliedFixDetail,
+        ]
+
+    const delta = alreadyApplied ? 0 : Math.max(0, Math.round(Number(estimatedImpact) || 0))
+    const currentScore = existingAnalysis.greenlightScore?.score ?? 0
+    const nextScore = Math.min(100, currentScore + delta)
+    const nextGreenlight = getSeriesGreenlightTier(nextScore)
+
+    const nextAnalysis = {
+      ...existingAnalysis,
+      greenlightScore: existingAnalysis.greenlightScore
+        ? { ...existingAnalysis.greenlightScore, ...nextGreenlight, score: nextScore }
+        : nextGreenlight,
+      appliedFixes: nextAppliedFixes,
+      appliedFixDetails: nextDetails,
+      isProductionReady: nextScore >= SERIES_READY_SCORE,
+      lastFixAppliedAt: timestamp,
     }
+
+    await series.update({
+      resonance_analysis: nextAnalysis,
+      metadata: {
+        ...(series.metadata || {}),
+        resonance_analysis: nextAnalysis,
+      },
+    })
     
     await series.reload()
     
@@ -233,7 +274,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         targetSection,
         targetId,
         changesSummary
-      }
+      },
+      estimatedScore: nextScore,
     }
     
     console.log(`[${timestamp}] [POST /api/series/${seriesId}/apply-fix] Fix applied: ${changesSummary}`)

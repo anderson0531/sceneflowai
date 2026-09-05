@@ -571,6 +571,21 @@ export type SeriesInsightCategory =
   | 'engagement' 
   | 'commercial'
 
+export type SeriesInsightSeverity = 'high' | 'medium' | 'low'
+export type SeriesInsightImpactLabel = 'High' | 'Medium' | 'Low'
+
+export interface SeriesAppliedFixDetail {
+  insightId: string
+  fixSuggestion: string
+  targetSection: string
+  targetId?: string
+  appliedAt: string
+  category?: SeriesInsightCategory
+  title?: string
+  axisId?: SeriesResonanceAxis['id']
+  estimatedImpact?: number
+}
+
 /**
  * Individual insight with fix suggestion
  */
@@ -590,8 +605,14 @@ export interface SeriesResonanceInsight {
   fixSuggestion?: string
   /** Which axis this affects */
   axisId?: SeriesResonanceAxis['id']
-  /** Estimated score improvement if fixed */
+  /** Calibrated overall-score points if this fix is applied */
   estimatedImpact?: number
+  /** LLM or inferred severity */
+  severity?: SeriesInsightSeverity
+  /** High / Medium / Low for ranking UI */
+  impactLabel?: SeriesInsightImpactLabel
+  /** Ranking score (axis weight × severity × axis gap) */
+  impactScore?: number
 }
 
 /**
@@ -686,6 +707,8 @@ export interface SeriesResonanceAnalysis {
   creditsUsed: number
   /** IDs of insights that have had fixes applied */
   appliedFixes?: string[]
+  /** Closed-issue ledger for re-analyze merge */
+  appliedFixDetails?: SeriesAppliedFixDetail[]
   /** Number of analysis iterations performed */
   iterationCount?: number
   /** Previous score before this analysis */
@@ -706,13 +729,7 @@ export interface PersistedSeriesResonance {
   analysis: SeriesResonanceAnalysis | null
   iterationCount: number
   appliedFixes: string[]
-  appliedFixDetails: Array<{
-    insightId: string
-    fixSuggestion: string
-    targetSection: string
-    targetId?: string
-    appliedAt: string
-  }>
+  appliedFixDetails: SeriesAppliedFixDetail[]
   isReadyForProduction: boolean
   lastAnalyzedAt: string | null
   lastSavedAt: string
@@ -726,6 +743,10 @@ export interface ApplySeriesFixRequest {
   fixSuggestion: string
   targetSection: 'bible' | 'episode' | 'character' | 'location' | 'visual-style'
   targetId?: string
+  title?: string
+  category?: SeriesInsightCategory
+  axisId?: SeriesResonanceAxis['id']
+  estimatedImpact?: number
 }
 
 /**
