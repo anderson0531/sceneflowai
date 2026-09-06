@@ -111,20 +111,10 @@ export function buildEnMessages() {
       videoLanguageCount: '{count, plural, =1 {# language} other {# languages}}',
     },
     twoModes: {
+      eyebrow: TWO_MODES_COPY.eyebrow,
       title: TWO_MODES_COPY.title,
       subtitle: TWO_MODES_COPY.subtitle,
-      intelligence: {
-        name: TWO_MODES_COPY.intelligence.name,
-        badge: TWO_MODES_COPY.intelligence.badge,
-        tagline: TWO_MODES_COPY.intelligence.tagline,
-        points: [...TWO_MODES_COPY.intelligence.points],
-      },
-      speed: {
-        name: TWO_MODES_COPY.speed.name,
-        badge: TWO_MODES_COPY.speed.badge,
-        tagline: TWO_MODES_COPY.speed.tagline,
-        points: [...TWO_MODES_COPY.speed.points],
-      },
+      steps: TWO_MODES_COPY.steps.map((step) => ({ title: step.title, body: step.body })),
       cta: TWO_MODES_COPY.cta,
     },
     infrastructure: {

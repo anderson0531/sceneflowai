@@ -1,17 +1,23 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { ArrowRight, CheckCircle2, Clapperboard, Zap } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/Button'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 
 export const TWO_MODES_SECTION_ID = 'two-modes'
 
+/** Legacy hashes that now land on the consolidated pipeline section. */
+export const TWO_MODES_HASH_ALIASES = [
+  'core-capabilities',
+  'audience-resonance',
+  'pre-vis-engine',
+] as const
+
 export function TwoModesSection() {
   const t = useTranslations('twoModes')
-  const intelligencePoints = t.raw('intelligence.points') as string[]
-  const speedPoints = t.raw('speed.points') as string[]
+  const steps = t.raw('steps') as Array<{ title: string; body: string }>
 
   const scrollToCheckout = () => {
     window.location.href = getSignupUrlForTier('explorer')
@@ -20,8 +26,16 @@ export function TwoModesSection() {
   return (
     <section
       id={TWO_MODES_SECTION_ID}
-      className="scroll-mt-20 bg-gradient-to-b from-gray-950 via-slate-950 to-slate-950 py-20 md:py-24"
+      className="relative scroll-mt-20 bg-gradient-to-b from-gray-950 via-slate-950 to-slate-950 py-20 md:py-24"
     >
+      {TWO_MODES_HASH_ALIASES.map((aliasId) => (
+        <span
+          key={aliasId}
+          id={aliasId}
+          className="absolute top-0 left-0 h-0 w-0 scroll-mt-20"
+          aria-hidden="true"
+        />
+      ))}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
           className="mb-12 text-center"
@@ -30,6 +44,9 @@ export function TwoModesSection() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
+          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-300">
+            {t('eyebrow')}
+          </p>
           <h2 className="mx-auto max-w-4xl text-balance text-3xl font-bold text-white md:text-4xl lg:text-5xl">
             {t('title')}
           </h2>
@@ -38,65 +55,26 @@ export function TwoModesSection() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <motion.article
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="flex h-full flex-col rounded-2xl border border-indigo-500/40 bg-gradient-to-br from-indigo-950/60 to-slate-900/80 p-6 shadow-lg shadow-indigo-900/20 sm:p-8"
-          >
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1.5">
-                <Clapperboard className="h-4 w-4 text-indigo-400" />
-                <span className="text-sm font-medium text-indigo-300">{t('intelligence.name')}</span>
+        <ol className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
+          {steps.map((step, index) => (
+            <motion.li
+              key={step.title}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.45, delay: index * 0.04 }}
+              className="flex gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-lg shadow-slate-950/40 sm:p-6"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-indigo-400/30 bg-indigo-500/15 text-sm font-semibold text-indigo-200">
+                {index + 1}
               </span>
-              <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-amber-200">
-                {t('intelligence.badge')}
-              </span>
-            </div>
-            <p className="mb-6 text-xl font-semibold text-indigo-100 sm:text-2xl">
-              {t('intelligence.tagline')}
-            </p>
-            <ul className="flex-1 space-y-3">
-              {intelligencePoints.map((point) => (
-                <li key={point} className="flex items-start gap-3 text-sm text-gray-200">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-indigo-400" />
-                  <span>{point}</span>
-                </li>
-              ))}
-            </ul>
-          </motion.article>
-
-          <motion.article
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="flex h-full flex-col rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950/40 to-slate-900/80 p-6 shadow-lg shadow-emerald-900/10 sm:p-8"
-          >
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5">
-                <Zap className="h-4 w-4 text-emerald-400" />
-                <span className="text-sm font-medium text-emerald-300">{t('speed.name')}</span>
-              </span>
-              <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-gray-300">
-                {t('speed.badge')}
-              </span>
-            </div>
-            <p className="mb-6 text-xl font-semibold text-emerald-100 sm:text-2xl">
-              {t('speed.tagline')}
-            </p>
-            <ul className="flex-1 space-y-3">
-              {speedPoints.map((point) => (
-                <li key={point} className="flex items-start gap-3 text-sm text-gray-200">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
-                  <span>{point}</span>
-                </li>
-              ))}
-            </ul>
-          </motion.article>
-        </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white">{step.title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-gray-400">{step.body}</p>
+              </div>
+            </motion.li>
+          ))}
+        </ol>
 
         <motion.div
           className="mt-10 flex justify-center"
