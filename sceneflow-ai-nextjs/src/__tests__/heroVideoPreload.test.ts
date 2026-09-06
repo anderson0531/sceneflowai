@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import {
   getVideoPreloadStrategy,
   getModalVideoPreload,
@@ -6,6 +6,7 @@ import {
 import {
   getHeroVideoPosterUrl,
   getHeroVideoHlsUrl,
+  getHeroVideoMp4Url,
   getHeroVideoPlaybackSources,
   HERO_VIDEO_BLOB_HOST,
 } from '@/config/landing/heroVideoLocales'
@@ -29,10 +30,10 @@ describe('videoPreload', () => {
     ).toBe('metadata')
   })
 
-  it('uses auto on desktop fast connections', () => {
+  it('uses metadata on desktop fast connections', () => {
     expect(
       getVideoPreloadStrategy({ isMobile: false, saveData: false, effectiveType: '4g' })
-    ).toBe('auto')
+    ).toBe('metadata')
   })
 
   it('defers modal preload until open', () => {
@@ -42,12 +43,19 @@ describe('videoPreload', () => {
 })
 
 describe('hero video CDN config', () => {
-  it('serves posters from Blob CDN (en uses site-served poster from new master)', () => {
-    expect(getHeroVideoPosterUrl('en')).toBe('/landing/hero/sceneflow-hero-en-poster.jpg')
-    expect(getHeroVideoPosterUrl('th')).toContain('sceneflow-hero-th-poster.jpg')
+  afterEach(() => {
+    delete process.env.NEXT_PUBLIC_LANDING_VIDEO_CDN
+    delete process.env.NEXT_PUBLIC_LANDING_VIDEO_HLS
   })
 
-  it('omits HLS URL until NEXT_PUBLIC_LANDING_VIDEO_CDN is set', () => {
+  it('serves all posters from the site public folder', () => {
+    expect(getHeroVideoPosterUrl('en')).toBe('/landing/hero/sceneflow-hero-en-poster.jpg')
+    expect(getHeroVideoPosterUrl('th')).toBe('/landing/hero/sceneflow-hero-th-poster.jpg')
+  })
+
+  it('omits HLS URL until CDN and HLS flag are both set', () => {
+    expect(getHeroVideoHlsUrl('en')).toBeUndefined()
+    process.env.NEXT_PUBLIC_LANDING_VIDEO_CDN = 'https://storage.googleapis.com/sceneflow-assets'
     expect(getHeroVideoHlsUrl('en')).toBeUndefined()
   })
 
@@ -55,11 +63,9 @@ describe('hero video CDN config', () => {
     for (const locale of ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'] as const) {
       const sources = getHeroVideoPlaybackSources(locale)
       expect(sources?.mp4Src).toContain('.mp4')
-      if (locale === 'en') {
-        expect(sources?.poster).toBe('/landing/hero/sceneflow-hero-en-poster.jpg')
-      } else {
-        expect(sources?.poster).toContain('blob.vercel-storage.com')
-      }
+      expect(sources?.mp4Src).toContain(HERO_VIDEO_BLOB_HOST)
+      expect(sources?.poster).toBe(`/landing/hero/sceneflow-hero-${locale}-poster.jpg`)
+      expect(getHeroVideoMp4Url(locale)).toContain('#t=0.1')
     }
   })
 })
