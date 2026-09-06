@@ -20,7 +20,7 @@ describe('Hero video locales', () => {
 
     expect(available).toEqual(VIDEO_LOCALE_ORDER)
     expect(getDefaultHeroVideoSrc()).toContain('SceneFlow%20Hero%20Video.mp4')
-    expect(getHeroVideoLocale('es')?.src).toContain('Hero%20Video%20(Spanish)%20.mp4')
+    expect(getHeroVideoLocale('es')?.src).toContain('Hero%20Video%20(Spanish).mp4')
     expect(getHeroVideoLocale('pt')?.src).toContain('Hero%20Video%20(Portuguese).mp4')
     expect(getHeroVideoLocale('hi')?.src).toContain('Hero%20Video%20(Hindi).mp4')
     expect(getHeroVideoLocale('zh')?.src).toContain('Hero%20Video%20(Chinese).mp4')
@@ -31,8 +31,8 @@ describe('Hero video locales', () => {
     for (const locale of HERO_VIDEO_LOCALES) {
       expect(locale.available).toBe(true)
       expect(locale.src).toBeTruthy()
-      if (locale.id === 'en') {
-        expect(locale.poster).toBe('/landing/hero/sceneflow-hero-en-poster.jpg')
+      if (locale.id === 'en' || locale.id === 'es') {
+        expect(locale.poster).toBe(`/landing/hero/sceneflow-hero-${locale.id}-poster.jpg`)
       } else {
         expect(locale.poster).toBe(
           `https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/hero/sceneflow-hero-${locale.id}-poster.jpg`
@@ -43,7 +43,7 @@ describe('Hero video locales', () => {
 
   it('reserves predictable Blob paths for hero dubs', () => {
     expect(HERO_VIDEO_BLOB_PATHS.en).toBe('SceneFlow Hero Video.mp4')
-    expect(HERO_VIDEO_BLOB_PATHS.es).toBe('Hero Video (Spanish) .mp4')
+    expect(HERO_VIDEO_BLOB_PATHS.es).toBe('Hero Video (Spanish).mp4')
     expect(HERO_VIDEO_BLOB_PATHS.th).toBe('Hero Video (Thai) .mp4')
   })
 

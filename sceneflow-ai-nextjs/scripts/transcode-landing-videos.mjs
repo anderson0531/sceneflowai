@@ -36,7 +36,7 @@ const HERO_LOCALES = ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th']
 const BLOB_HOST = 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com'
 const BLOB_PATHS = {
   en: 'Hero%20Video%20(English).mp4',
-  es: 'Hero%20Video%20(Spanish)%20.mp4',
+  es: 'Hero%20Video%20(Spanish).mp4',
   pt: 'Hero%20Video%20(Portuguese).mp4',
   hi: 'Hero%20Video%20(Hindi).mp4',
   zh: 'Hero%20Video%20(Chinese).mp4',
