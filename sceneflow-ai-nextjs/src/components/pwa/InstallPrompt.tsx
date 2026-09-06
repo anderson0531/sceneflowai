@@ -1,73 +1,84 @@
 "use client"
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
+import { canShowInstallPrompt } from '@/lib/pwa/installPromptVisibility'
 
 export default function InstallPrompt() {
   const { status } = useSession()
+  const pathname = usePathname()
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
   const [showBanner, setShowBanner] = useState(false)
   const [isStandalone, setIsStandalone] = useState(false)
   const [isIOS, setIsIOS] = useState(false)
+  const allowed = canShowInstallPrompt(status, pathname)
 
   useEffect(() => {
-    // Detect installed / display-mode
-    const isStandaloneDisplay = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
+    const isStandaloneDisplay =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone
     setIsStandalone(!!isStandaloneDisplay)
 
-    // iOS heuristic
     const ua = window.navigator.userAgent.toLowerCase()
     setIsIOS(/iphone|ipad|ipod/.test(ua))
 
-    // Check if user permanently dismissed
     try {
-      const permanentDismissal = localStorage.getItem('pwa-install-never-show')
-      if (permanentDismissal === 'true') {
+      if (localStorage.getItem('pwa-install-never-show') === 'true') {
         return
       }
-    } catch (e) {
+    } catch {
       // Ignore localStorage errors
     }
 
-    const handler = (e: any) => {
-      // Prevent the mini-infobar from appearing on mobile
+    const handler = (e: Event) => {
       e.preventDefault()
       setDeferredPrompt(e)
-      setShowBanner(true)
     }
-    window.addEventListener('beforeinstallprompt', handler as any)
+    window.addEventListener('beforeinstallprompt', handler)
 
-    return () => window.removeEventListener('beforeinstallprompt', handler as any)
+    return () => window.removeEventListener('beforeinstallprompt', handler)
   }, [])
 
-  // Only prompt logged-in users (subscribers), never anonymous landing-page viewers
-  if (status !== 'authenticated') return null
+  useEffect(() => {
+    if (!allowed || isStandalone) {
+      setShowBanner(false)
+      return
+    }
 
-  // Don't show if app is already installed
+    try {
+      if (localStorage.getItem('pwa-install-never-show') === 'true') {
+        setShowBanner(false)
+        return
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+
+    if (isIOS || deferredPrompt) {
+      setShowBanner(true)
+    }
+  }, [allowed, isStandalone, isIOS, deferredPrompt])
+
+  if (!allowed) return null
   if (isStandalone) return null
-  
-  // Don't show if user dismissed or no prompt available
   if (!showBanner) return null
-  
-  // Don't show on non-iOS if no deferred prompt
   if (!isIOS && !deferredPrompt) return null
 
   const handleDismiss = () => {
     setShowBanner(false)
-    // Store dismissal in localStorage to prevent showing again this session
     try {
       localStorage.setItem('pwa-install-dismissed', Date.now().toString())
-    } catch (e) {
+    } catch {
       // Ignore localStorage errors
     }
   }
 
   const handleDontAskAgain = () => {
     setShowBanner(false)
-    // Permanently store dismissal preference
     try {
       localStorage.setItem('pwa-install-never-show', 'true')
-    } catch (e) {
+    } catch {
       // Ignore localStorage errors
     }
   }
@@ -76,11 +87,9 @@ export default function InstallPrompt() {
     try {
       if (deferredPrompt) {
         deferredPrompt.prompt()
-        const choice = await deferredPrompt.userChoice
-        // Hide regardless of outcome; we can re-show later if dismissed
+        await deferredPrompt.userChoice
         setShowBanner(false)
         setDeferredPrompt(null)
-        // optionally: log choice.outcome
       }
     } catch {
       setShowBanner(false)
@@ -98,16 +107,25 @@ export default function InstallPrompt() {
                 <div className="text-sf-text-secondary">Get a faster, app-like experience.</div>
               </div>
               <div className="flex gap-2">
-                <button onClick={handleDismiss} className="px-3 py-1.5 rounded-md border border-sf-border text-sm hover:bg-gray-800/50 transition-colors">
+                <button
+                  onClick={handleDismiss}
+                  className="px-3 py-1.5 rounded-md border border-sf-border text-sm hover:bg-gray-800/50 transition-colors"
+                >
                   Not now
                 </button>
-                <button onClick={install} className="px-3 py-1.5 rounded-md bg-sf-gradient text-sf-background text-sm hover:opacity-90 transition-opacity">
+                <button
+                  onClick={install}
+                  className="px-3 py-1.5 rounded-md bg-sf-gradient text-sf-background text-sm hover:opacity-90 transition-opacity"
+                >
                   Install
                 </button>
               </div>
             </div>
             <div className="mt-2 pt-2 border-t border-sf-border/50">
-              <button onClick={handleDontAskAgain} className="text-xs text-sf-text-secondary hover:text-sf-text-primary transition-colors">
+              <button
+                onClick={handleDontAskAgain}
+                className="text-xs text-sf-text-secondary hover:text-sf-text-primary transition-colors"
+              >
                 Don't ask again
               </button>
             </div>
@@ -117,14 +135,19 @@ export default function InstallPrompt() {
           <div>
             <div className="text-sm">
               <div className="font-semibold mb-1">Add SceneFlow AI to Home Screen</div>
-              <div className="text-sf-text-secondary">Open the Share menu and tap "Add to Home Screen".</div>
+              <div className="text-sf-text-secondary">
+                Open the Share menu and tap "Add to Home Screen".
+              </div>
             </div>
             <div className="flex items-center justify-between mt-3">
-              <button onClick={handleDontAskAgain} className="text-xs text-sf-text-secondary hover:text-sf-text-primary transition-colors">
+              <button
+                onClick={handleDontAskAgain}
+                className="text-xs text-sf-text-secondary hover:text-sf-text-primary transition-colors"
+              >
                 Don't ask again
               </button>
-              <button 
-                onClick={handleDismiss} 
+              <button
+                onClick={handleDismiss}
                 className="px-3 py-1.5 rounded-md border border-sf-border text-sm hover:bg-gray-800/50 transition-colors"
               >
                 Not now
