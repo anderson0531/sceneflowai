@@ -42,9 +42,10 @@ describe('videoPreload', () => {
 })
 
 describe('hero video CDN config', () => {
-  it('serves posters from Blob CDN (en/es use site-served posters from current masters)', () => {
+  it('serves posters from Blob CDN (en/es/pt use site-served posters from current masters)', () => {
     expect(getHeroVideoPosterUrl('en')).toBe('/landing/hero/sceneflow-hero-en-poster.jpg')
     expect(getHeroVideoPosterUrl('es')).toBe('/landing/hero/sceneflow-hero-es-poster.jpg')
+    expect(getHeroVideoPosterUrl('pt')).toBe('/landing/hero/sceneflow-hero-pt-poster.jpg')
     expect(getHeroVideoPosterUrl('th')).toContain('sceneflow-hero-th-poster.jpg')
   })
 
@@ -56,7 +57,7 @@ describe('hero video CDN config', () => {
     for (const locale of ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'] as const) {
       const sources = getHeroVideoPlaybackSources(locale)
       expect(sources?.mp4Src).toContain('.mp4')
-      if (locale === 'en' || locale === 'es') {
+      if (locale === 'en' || locale === 'es' || locale === 'pt') {
         expect(sources?.poster).toBe(`/landing/hero/sceneflow-hero-${locale}-poster.jpg`)
       } else {
         expect(sources?.poster).toContain('blob.vercel-storage.com')

@@ -35,7 +35,7 @@ const BLOB_HOST = HERO_VIDEO_BLOB_HOST
 
 /** Blob CDN poster (~110 KB) — loads immediately on mobile while video buffers. */
 export function getHeroVideoPosterUrl(locale: HeroVideoLocaleId): string {
-  if (locale === 'en' || locale === 'es') {
+  if (locale === 'en' || locale === 'es' || locale === 'pt') {
     // Regenerated from the current Blob master — site-served for instant deploy parity
     return getHeroVideoPosterPath(locale)
   }
