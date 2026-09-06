@@ -518,30 +518,39 @@
     "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "twoModes": {
-    "title": "One pipeline. Director intelligence. 5× scene generation.",
-    "subtitle": "SceneFlow is one long-form pipeline — not two modes. Director tools lock the story before you spend. Parallel generation then builds dialogue, frames, and native-language streams at about 5× sequential speed.",
-    "intelligence": {
-      "name": "Director intelligence",
-      "badge": "Lock the story first",
-      "tagline": "Score, edit, and screen before you spend on final video.",
-      "points": [
-        "Audience Resonance scores the script for the culture and demographic you named.",
-        "Intelligent script editing with section-level fixes — not a black-box grade.",
-        "Pre-vis animatics you can iterate in the Screening Room before motion video.",
-        "Approve beats, then generate — spend credits on a look you already locked."
-      ]
-    },
-    "speed": {
-      "name": "Parallel generation",
-      "badge": "About 5× sequential",
-      "tagline": "Generate the beats together, not one after another.",
-      "points": [
-        "A 5-minute scene is about 30 ten-second beats; a one-hour production is about 360.",
-        "Generate those beats in parallel — about 5× faster than sequential generation.",
-        "The same parallelism covers dialogue, pre-vis frames, and video streams.",
-        "Ship high-quality native-language streams — not just a dub. Dubbing stays available when you want the lower-cost path."
-      ]
-    },
+    "eyebrow": "One automated pipeline",
+    "title": "From first idea to a world that ships.",
+    "subtitle": "Start with a concept or a finished script. SceneFlow writes the baseline, scores it for the culture you named, then generates hundreds of beats in parallel — so you review, collaborate, and ship multilingual masters instead of waiting on one clip at a time.",
+    "steps": [
+      {
+        "title": "Bring the spark",
+        "body": "A one-line concept or a detailed brief. One film or a full series."
+      },
+      {
+        "title": "Auto-build the baseline",
+        "body": "High-quality series bible, Blueprint, and script generated for you — ready to direct, not start from a blank page."
+      },
+      {
+        "title": "Score it. Fix it.",
+        "body": "Audience Resonance tells you what lands for the culture you named, not a language code. Intelligent Assistant editing applies section-level fixes before you spend on pictures."
+      },
+      {
+        "title": "Pre-vis at 5×",
+        "body": "Beat audio and frames generate together. A 5-minute scene is ~30 beats; an hour is ~360. Sequential generation cannot keep up. Parallel generation can."
+      },
+      {
+        "title": "Iterate at the speed of a note",
+        "body": "Change the script with the Intelligent Assistant. Regen the beats. Screen again. Collaboration stays cheap until the story is locked."
+      },
+      {
+        "title": "Generate the picture",
+        "body": "Motion video from approved beats. Ship high-quality native-language streams, or dub when you want the lower-cost path."
+      },
+      {
+        "title": "Screen. Package. Ship.",
+        "body": "Review in the Screening Room, then auto-package to YouTube or download the master."
+      }
+    ],
     "cta": "Launch Studio ($9)"
   },
   "infrastructure": {
