@@ -39,7 +39,7 @@ export const CORE_CAPABILITIES_COPY = {
       },
       {
         title: 'Express Motion Video',
-        desc: 'Per-scene motion video generated after Pre-Vis approval, with multilanguage dubs and scene-level edits.',
+        desc: 'Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.',
         time: 'Minutes vs Days',
       },
       {

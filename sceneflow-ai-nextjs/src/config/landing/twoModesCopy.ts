@@ -1,33 +1,30 @@
-/** Two-mode comparison section — Director and Go on the landing page. */
+/** One-pipeline landing section — director intelligence + parallel generation. */
 
 export const TWO_MODES_COPY = {
-  title: 'Two modes at every step. One long-form pipeline.',
+  title: 'One pipeline. Director intelligence. 5× scene generation.',
   subtitle:
-    'Hundreds of tools will hand you a five-second clip and hope you like it. SceneFlow gives you a choice at every step of the pipeline: direct it yourself, or let the studio run it. Both read from the same locked references, so continuity holds either way.',
-  director: {
-    name: 'SceneFlow Studio',
-    subtitle: 'Director Mode',
-    badge: 'Built for long-form',
-    tagline: 'Where features and series actually get made.',
+    'SceneFlow is one long-form pipeline — not two modes. Director tools lock the story before you spend. Parallel generation then builds dialogue, frames, and native-language streams at about 5× sequential speed.',
+  intelligence: {
+    name: 'Director intelligence',
+    badge: 'Lock the story first',
+    tagline: 'Score, edit, and screen before you spend on final video.',
     points: [
-      'Hold pacing, emotion, and continuity across a 120-minute feature or a full season.',
-      'Direct in plain language against locked references — no prompt engineering, no copy-pasting between tool stacks.',
-      'Step in at any point in the pipeline: Blueprint, Production, or Screening Room.',
-      'Fine-tune visuals, character emotion, dialogue timing, and music beat by beat.',
-      'One pipeline — Reference Library, Pre-Vis, Motion Video, ProRes 4K master — reviewed in the Screening Room at every step.',
+      'Audience Resonance scores the script for the culture and demographic you named.',
+      'Intelligent script editing with section-level fixes — not a black-box grade.',
+      'Pre-vis animatics you can iterate in the Screening Room before motion video.',
+      'Approve beats, then generate — spend credits on a look you already locked.',
     ],
-    cta: 'Launch Studio ($9)',
   },
-  go: {
-    name: 'SceneFlow Go',
-    badge: 'Fastest way to test an idea',
-    tagline: 'Prototype the episode before you commit to it.',
+  speed: {
+    name: 'Parallel generation',
+    badge: 'About 5× sequential',
+    tagline: 'Generate the beats together, not one after another.',
     points: [
-      'Generate the structural backbone of an entire episode in under 10 minutes.',
-      'Enter a concept or script, click Go, and come back to a fully voiced Pre-Vis you can screen and share.',
-      'Automatically handles Blueprint, structure, references, frames, audio, and assembly.',
-      'Hand the result to Director Mode the moment you want the wheel.',
+      'A 5-minute scene is about 30 ten-second beats; a one-hour production is about 360.',
+      'Generate those beats in parallel — about 5× faster than sequential generation.',
+      'The same parallelism covers dialogue, pre-vis frames, and video streams.',
+      'Ship high-quality native-language streams — not just a dub. Dubbing stays available when you want the lower-cost path.',
     ],
-    cta: 'Try Go Mode',
   },
+  cta: 'Launch Studio ($9)',
 } as const
