@@ -13,8 +13,7 @@ const REQUIRED_LANDING_KEYS = [
   'hero.chips.0.label',
   'hero.chips.0.detail',
   'twoModes.title',
-  'twoModes.go.cta',
-  'twoModes.director.cta',
+  'twoModes.cta',
   'pricing.title',
   'pricing.subtitle',
   'pricing.explorerHighlight',
@@ -28,7 +27,7 @@ const REQUIRED_LANDING_KEYS = [
 ] as const
 
 const EXPLORER_PRICE_KEYS = [
-  'twoModes.director.cta',
+  'twoModes.cta',
   'pricing.title',
   'pricing.subtitle',
   'exitIntent.startNow',

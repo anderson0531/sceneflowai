@@ -10,8 +10,8 @@ export const TWO_MODES_SECTION_ID = 'two-modes'
 
 export function TwoModesSection() {
   const t = useTranslations('twoModes')
-  const goPoints = t.raw('go.points') as string[]
-  const directorPoints = t.raw('director.points') as string[]
+  const intelligencePoints = t.raw('intelligence.points') as string[]
+  const speedPoints = t.raw('speed.points') as string[]
 
   const scrollToCheckout = () => {
     window.location.href = getSignupUrlForTier('explorer')
@@ -38,44 +38,34 @@ export function TwoModesSection() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <motion.article
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="flex h-full flex-col rounded-2xl border border-indigo-500/40 bg-gradient-to-br from-indigo-950/60 to-slate-900/80 p-6 shadow-lg shadow-indigo-900/20 sm:p-8 lg:col-span-3"
+            className="flex h-full flex-col rounded-2xl border border-indigo-500/40 bg-gradient-to-br from-indigo-950/60 to-slate-900/80 p-6 shadow-lg shadow-indigo-900/20 sm:p-8"
           >
             <div className="mb-4 flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1.5">
                 <Clapperboard className="h-4 w-4 text-indigo-400" />
-                <span className="text-sm font-medium text-indigo-300">
-                  {t('director.name')} · {t('director.subtitle')}
-                </span>
+                <span className="text-sm font-medium text-indigo-300">{t('intelligence.name')}</span>
               </span>
               <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-amber-200">
-                {t('director.badge')}
+                {t('intelligence.badge')}
               </span>
             </div>
             <p className="mb-6 text-xl font-semibold text-indigo-100 sm:text-2xl">
-              {t('director.tagline')}
+              {t('intelligence.tagline')}
             </p>
-            <ul className="mb-8 flex-1 space-y-3">
-              {directorPoints.map((point) => (
+            <ul className="flex-1 space-y-3">
+              {intelligencePoints.map((point) => (
                 <li key={point} className="flex items-start gap-3 text-sm text-gray-200">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-indigo-400" />
                   <span>{point}</span>
                 </li>
               ))}
             </ul>
-            <Button
-              size="lg"
-              className="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:opacity-90"
-              onClick={scrollToCheckout}
-            >
-              {t('director.cta')}
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
           </motion.article>
 
           <motion.article
@@ -83,37 +73,47 @@ export function TwoModesSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="flex h-full flex-col rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-950/30 to-slate-900/80 p-6 sm:p-8 lg:col-span-2"
+            className="flex h-full flex-col rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950/40 to-slate-900/80 p-6 shadow-lg shadow-emerald-900/10 sm:p-8"
           >
             <div className="mb-4 flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5">
                 <Zap className="h-4 w-4 text-emerald-400" />
-                <span className="text-sm font-medium text-emerald-300">{t('go.name')}</span>
+                <span className="text-sm font-medium text-emerald-300">{t('speed.name')}</span>
               </span>
               <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-gray-300">
-                {t('go.badge')}
+                {t('speed.badge')}
               </span>
             </div>
-            <p className="mb-6 text-lg font-semibold text-emerald-100">{t('go.tagline')}</p>
-            <ul className="mb-8 flex-1 space-y-3">
-              {goPoints.map((point) => (
-                <li key={point} className="flex items-start gap-3 text-sm text-gray-300">
+            <p className="mb-6 text-xl font-semibold text-emerald-100 sm:text-2xl">
+              {t('speed.tagline')}
+            </p>
+            <ul className="flex-1 space-y-3">
+              {speedPoints.map((point) => (
+                <li key={point} className="flex items-start gap-3 text-sm text-gray-200">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
                   <span>{point}</span>
                 </li>
               ))}
             </ul>
-            <Button
-              size="lg"
-              variant="outline"
-              className="w-full border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10"
-              onClick={scrollToCheckout}
-            >
-              {t('go.cta')}
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
           </motion.article>
         </div>
+
+        <motion.div
+          className="mt-10 flex justify-center"
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.45 }}
+        >
+          <Button
+            size="lg"
+            className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:opacity-90"
+            onClick={scrollToCheckout}
+          >
+            {t('cta')}
+            <ArrowRight className="ml-2 h-5 w-5" />
+          </Button>
+        </motion.div>
       </div>
     </section>
   )

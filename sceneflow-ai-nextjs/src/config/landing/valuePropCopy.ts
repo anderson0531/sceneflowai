@@ -26,7 +26,7 @@ export const HERO_VALUE_CHIPS = [
   },
   {
     label: 'Built for Every Audience',
-    detail: 'Produce, dub, and tune for each culture and region in 70+ languages.',
+    detail: 'Ship native-language streams for each culture and region in 70+ languages — or dub when you want the lower-cost path.',
   },
 ] as const
 

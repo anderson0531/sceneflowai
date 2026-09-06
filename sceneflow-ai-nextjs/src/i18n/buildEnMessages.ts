@@ -88,7 +88,7 @@ export function buildEnMessages() {
     },
     floatingNav: {
       productionExamples: 'Examples',
-      twoModes: 'Director vs Go',
+      twoModes: 'One Pipeline',
       keyFeatures: 'Key Features',
       audienceResonance: 'Audience Resonance',
       preVisEngine: 'Pre-Vis Engine',
@@ -113,21 +113,19 @@ export function buildEnMessages() {
     twoModes: {
       title: TWO_MODES_COPY.title,
       subtitle: TWO_MODES_COPY.subtitle,
-      go: {
-        name: TWO_MODES_COPY.go.name,
-        badge: TWO_MODES_COPY.go.badge,
-        tagline: TWO_MODES_COPY.go.tagline,
-        points: [...TWO_MODES_COPY.go.points],
-        cta: TWO_MODES_COPY.go.cta,
+      intelligence: {
+        name: TWO_MODES_COPY.intelligence.name,
+        badge: TWO_MODES_COPY.intelligence.badge,
+        tagline: TWO_MODES_COPY.intelligence.tagline,
+        points: [...TWO_MODES_COPY.intelligence.points],
       },
-      director: {
-        name: TWO_MODES_COPY.director.name,
-        subtitle: TWO_MODES_COPY.director.subtitle,
-        badge: TWO_MODES_COPY.director.badge,
-        tagline: TWO_MODES_COPY.director.tagline,
-        points: [...TWO_MODES_COPY.director.points],
-        cta: TWO_MODES_COPY.director.cta,
+      speed: {
+        name: TWO_MODES_COPY.speed.name,
+        badge: TWO_MODES_COPY.speed.badge,
+        tagline: TWO_MODES_COPY.speed.tagline,
+        points: [...TWO_MODES_COPY.speed.points],
       },
+      cta: TWO_MODES_COPY.cta,
     },
     infrastructure: {
       title: INFRASTRUCTURE_COPY.title,

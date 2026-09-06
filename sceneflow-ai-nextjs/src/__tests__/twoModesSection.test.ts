@@ -7,27 +7,30 @@ import { TWO_MODES_COPY } from '@/config/landing/twoModesCopy'
 
 const ROOT = join(process.cwd())
 
-describe('two modes landing section', () => {
-  it('defines Director and Go card copy in config', () => {
-    expect(TWO_MODES_COPY.title).toBe('Two modes at every step. One long-form pipeline.')
-    expect(TWO_MODES_COPY.director.points).toHaveLength(5)
-    expect(TWO_MODES_COPY.go.points).toHaveLength(4)
-    expect(TWO_MODES_COPY.go.cta).toBe('Try Go Mode')
-    expect(TWO_MODES_COPY.director.cta).toBe('Launch Studio ($9)')
+describe('one-pipeline landing section', () => {
+  it('defines intelligence and speed copy in config', () => {
+    expect(TWO_MODES_COPY.title).toBe('One pipeline. Director intelligence. 5× scene generation.')
+    expect(TWO_MODES_COPY.intelligence.points).toHaveLength(4)
+    expect(TWO_MODES_COPY.speed.points).toHaveLength(4)
+    expect(TWO_MODES_COPY.cta).toBe('Launch Studio ($9)')
   })
 
-  it('frames Director Mode for long-form and contrasts clip generators', () => {
-    expect(TWO_MODES_COPY.director.badge).toBe('Built for long-form')
-    expect(TWO_MODES_COPY.director.points.join(' ')).toContain('120-minute')
-    expect(TWO_MODES_COPY.director.points.join(' ')).toContain('tool stacks')
-    expect(TWO_MODES_COPY.subtitle).toContain('five-second clip')
+  it('frames one pipeline with director tools and 5× parallel generation', () => {
+    expect(TWO_MODES_COPY.subtitle).toContain('not two modes')
+    expect(TWO_MODES_COPY.subtitle).toContain('5× sequential')
+    expect(TWO_MODES_COPY.intelligence.points.join(' ')).toContain('Audience Resonance')
+    expect(TWO_MODES_COPY.intelligence.points.join(' ')).toContain('Screening Room')
+    expect(TWO_MODES_COPY.speed.points.join(' ')).toContain('30 ten-second beats')
+    expect(TWO_MODES_COPY.speed.points.join(' ')).toContain('360')
+    expect(TWO_MODES_COPY.speed.points.join(' ')).toContain('native-language streams')
+    expect(TWO_MODES_COPY.speed.points.join(' ')).toContain('Dubbing stays available')
   })
 
   it('mirrors twoModes namespace in English messages', () => {
     expect(enMessages.twoModes.title).toBe(TWO_MODES_COPY.title)
     expect(enMessages.twoModes.subtitle).toBe(TWO_MODES_COPY.subtitle)
-    expect(enMessages.twoModes.go.cta).toBe('Try Go Mode')
-    expect(enMessages.twoModes.director.cta).toBe('Launch Studio ($9)')
+    expect(enMessages.twoModes.cta).toBe('Launch Studio ($9)')
+    expect(enMessages.floatingNav.twoModes).toBe('One Pipeline')
   })
 
   it('keeps GCP and pipeline jargon out of hero namespace', () => {
@@ -40,7 +43,7 @@ describe('two modes landing section', () => {
     expect(enMessages.hero.ctaSecondary).toBe('Explore How It Works')
   })
 
-  it('renders section with anchor id and dual hero CTAs', () => {
+  it('renders section with anchor id and a single Explorer CTA', () => {
     const landing = readFileSync(join(ROOT, 'src/app/LandingPageClient.tsx'), 'utf8')
     const twoModes = readFileSync(join(ROOT, 'src/components/landing/TwoModesSection.tsx'), 'utf8')
     const hero = readFileSync(join(ROOT, 'src/app/components/HeroSection.tsx'), 'utf8')
@@ -52,8 +55,11 @@ describe('two modes landing section', () => {
     expect(landing).toContain('PreVisEngineSection')
     expect(twoModes).toContain("id={TWO_MODES_SECTION_ID}")
     expect(twoModes).toContain("'two-modes'")
-    expect(twoModes).toContain("t('go.cta')")
-    expect(twoModes).toContain("t('director.cta')")
+    expect(twoModes).toContain("t('cta')")
+    expect(twoModes).toContain("t('intelligence.name')")
+    expect(twoModes).toContain("t('speed.name')")
+    expect(twoModes).not.toContain("t('go.cta')")
+    expect(twoModes).not.toContain("t('director.cta')")
     expect(hero).toContain("t('ctaSecondary')")
     expect(hero).toContain('scrollToHowItWorks')
   })
