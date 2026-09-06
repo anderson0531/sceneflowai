@@ -22,7 +22,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Textarea } from '@/components/ui/textarea'
+import { DictationTextarea } from '@/components/ui/DictationTextarea'
 import {
   Select,
   SelectContent,
@@ -428,15 +428,14 @@ export default function SeriesPage() {
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Topic / Concept <span className="text-cyan-400">*</span>
               </label>
-              <Textarea
+              <DictationTextarea
                 placeholder={
                   SERIES_TEMPLATES.find((t) => t.id === selectedTemplateId)?.conceptPlaceholder ||
                   'e.g., A comedy about a group of friends who start a haunted house business but discover their house is actually haunted...'
                 }
                 value={ideaTopic}
-                onChange={(e) => setIdeaTopic(e.target.value)}
+                onChange={setIdeaTopic}
                 className="bg-gray-800 border-gray-700 text-white min-h-24 focus:border-cyan-500/50 focus:ring-cyan-500/20"
-                autoFocus
               />
             </div>
 

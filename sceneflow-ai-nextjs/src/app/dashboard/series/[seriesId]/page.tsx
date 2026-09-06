@@ -33,7 +33,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Textarea } from '@/components/ui/textarea'
+import { DictationTextarea } from '@/components/ui/DictationTextarea'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
@@ -875,12 +875,11 @@ export default function SeriesStudioPage() {
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Topic / Concept <span className="text-cyan-400">*</span>
               </label>
-              <Textarea
+              <DictationTextarea
                 placeholder="e.g., A comedy about a group of friends who start a haunted house business but discover their house is actually haunted..."
                 value={ideaTopic}
-                onChange={(e) => setIdeaTopic(e.target.value)}
+                onChange={setIdeaTopic}
                 className="bg-gray-800 border-gray-700 text-white min-h-24 focus:border-cyan-500/50 focus:ring-cyan-500/20"
-                autoFocus
               />
             </div>
 
@@ -1014,12 +1013,11 @@ export default function SeriesStudioPage() {
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 What would you like to change? <span className="text-amber-400">*</span>
               </label>
-              <Textarea
+              <DictationTextarea
                 placeholder="e.g., Make the antagonist more sympathetic, Add a romantic subplot between Maya and Daniel, Change episode 5 to focus on the team's first major failure..."
                 value={editInstruction}
-                onChange={(e) => setEditInstruction(e.target.value)}
+                onChange={setEditInstruction}
                 className="bg-gray-800 border-gray-700 text-white min-h-24 focus:border-amber-500/50 focus:ring-amber-500/20"
-                autoFocus
               />
             </div>
             
@@ -2008,12 +2006,15 @@ function EpisodesPanel({
                   Direct this episode
                 </h4>
                 <div className="flex gap-2">
-                  <Textarea
-                    value={episodeDirection}
-                    onChange={(e) => setEpisodeDirection(e.target.value)}
-                    placeholder="e.g., Raise the stakes in the climax and deepen the B-story…"
-                    className="bg-gray-900 border-gray-700 text-sm min-h-[72px]"
-                  />
+                  <div className="min-w-0 flex-1">
+                    <DictationTextarea
+                      value={episodeDirection}
+                      onChange={setEpisodeDirection}
+                      placeholder="e.g., Raise the stakes in the climax and deepen the B-story…"
+                      rows={3}
+                      className="bg-gray-900 border-gray-700 text-sm min-h-[72px]"
+                    />
+                  </div>
                   <Button
                     disabled={!episodeDirection.trim()}
                     onClick={() => {
