@@ -1,5 +1,7 @@
 # Deployment Instructions
 
+**Merge to `main` is the production release.** Do not use Vercel Promote Preview → Production. See the repo-root `DEPLOYMENT.md` and `AGENTS.md`.
+
 ## Standard Deployment Process
 
 **ALWAYS use this command for deployments:**

@@ -1,8 +1,19 @@
 # Deployment — sceneflowai monorepo
 
-Production at **https://sceneflowai.studio** deploys through **Vercel’s GitHub integration**: push to `main` on `anderson0531/sceneflowai` and Vercel builds automatically.
+Production at **https://sceneflowai.studio** deploys through **Vercel’s GitHub integration**: merge or push to `main` on `anderson0531/sceneflowai` and Vercel builds Production automatically.
+
+**Merge to `main` is the production release.** Do **not** use Vercel **Promote Preview → Production**. Promote does not update git and the next preview replace will drop unmerged work.
 
 **Git is the single source of truth.** Do not boot the Next.js app locally to verify UI or run e2e — the app is too large and has crashed machines. Verify against the Vercel deployment after a GitHub push. Unit tests that do not start a Next server are fine.
+
+## Vercel Production (required)
+
+In **Vercel → sceneflow-ai-nextjs → Settings → Environments → Production**:
+
+1. **Branch Tracking** = `main`
+2. **Auto-assign Custom Production Domains** = on
+
+Ignore the legacy **Vercel – sceneflowai** project and its failed GitHub checks. If a push to `main` does not update the live site, those two Production settings are wrong — fix them, do not Promote a preview.
 
 ## Vercel project settings (required)
 

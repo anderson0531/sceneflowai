@@ -27,10 +27,10 @@ These defaults are optimized for AI coding agents (and humans) working on apps t
 
 SceneFlow is too large to run on a local machine or agent VM. Full-app local testing (`next dev`, `next start`, Playwright/Puppeteer against localhost, computer-use browser sessions against a local server) has crashed machines. **Do not start the Next.js app locally. Do not use browser tools against localhost.**
 
-- **Git `main` and Vercel Production are not the same thing in this workflow.** Agents open PRs; Vercel builds **Preview**. Humans often **Promote Preview → Production** in the **Vercel – sceneflow-ai-nextjs** project (ignore legacy **Vercel – sceneflowai**). Promotion aliases the production URL to that preview **commit**. It does **not** merge the PR into `origin/main`.
-- Agents always branch from `origin/main`. A new preview is therefore `main` + only that PR. Promoting it **replaces** production and **drops** any earlier promoted-but-unmerged work (this is why Series Studio React #310 kept coming back).
-- After a preview is promoted, **merge that PR to `main`** so git catches up. Until it is merged, the next agent task must include every still-open production-blocking fix (or stack on the last promoted branch), not a clean `main` that is behind Production.
-- Humans verify the live app at https://sceneflowai.studio (or the promoted Production deployment). Preview URLs are for the current PR only.
+- **Production deploys from git `main`.** The live site is **Vercel – sceneflow-ai-nextjs** (ignore legacy **Vercel – sceneflowai**). Merging a PR into `origin/main` is the production release. Vercel then builds Production automatically.
+- **Do not use Vercel Promote Preview → Production.** Promote aliases the production URL to a preview commit and does **not** update `main`. The next agent branches from stale `main`; promoting another preview **replaces** Production and **drops** unmerged work (this is why Series Studio React #310 kept coming back).
+- Humans verify Previews on the PR, then **merge**. Verify the live app at https://sceneflowai.studio after `main` updates. Preview URLs are for the current PR only.
+- Until a production-blocking PR is merged, new agent work must include those commits (or stack on that branch), not a clean `main` that is behind the intended release.
 - Agents may run unit tests (`npm run test`, `npm run test:i18n`) and other scripts that do **not** start a Next.js server.
 - Do not run `npm run build` or `npm run dev` on an agent/dev laptop for visual or e2e verification. CI and Vercel already build from git.
 - Walkthrough/browser verification of UI changes belongs on the Vercel deployment, not a local server. If the user has already tested production from git, do not re-test locally.
