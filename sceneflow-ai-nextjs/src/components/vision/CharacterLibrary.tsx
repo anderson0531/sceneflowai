@@ -54,8 +54,6 @@ import { CSS } from "@dnd-kit/utilities";
 import { upload } from "@vercel/blob/client";
 import { VoiceSelectionDialog } from "@/components/tts/VoiceSelectionDialog";
 import { VoiceDirectionEditor } from "@/components/tts/VoiceDirectionEditor";
-import { GeminiVoicePicker } from "@/components/tts/GeminiVoicePicker";
-import { NarratorVoicePicker } from "@/components/tts/NarratorVoicePicker";
 import { CharacterPromptBuilder } from "@/components/vision/CharacterPromptBuilder";
 import { buildCharacterIdentityReferencePromptFromCharacter } from "@/lib/character/characterReferencePrompts";
 import {
@@ -68,9 +66,7 @@ import type {
   ScreenplayContext,
 } from "@/lib/voiceRecommendation";
 import {
-  getCharacterVoiceRecommendations,
   resolveCharacterGender,
-  type ElevenLabsVoice,
 } from "@/lib/voiceRecommendation";
 import {
   resolveVisualGender,
@@ -78,7 +74,7 @@ import {
   formatGenderLabel,
   type CharacterGender,
 } from "@/lib/character/visualGender";
-import { enrichGeminiVoicesForScoring } from "@/lib/tts/geminiVoiceCatalog";
+import { buildGoogleVoiceAssignment } from "@/lib/tts/pickGeminiBaseVoice";
 import {
   type WardrobeVoiceAnalysisResult,
 } from "@/lib/character/wardrobeVoiceAnalysis";
@@ -1068,7 +1064,6 @@ export function CharacterLibrary({
       <VoiceSelectionDialog
         open={createVoiceDialogOpen}
         onOpenChange={setCreateVoiceDialogOpen}
-        provider={effectiveVoiceProvider}
         mode="character"
         onSelectVoice={(voiceId, voiceName) => {
           toast.success(
@@ -1180,8 +1175,8 @@ const CharacterCard = ({
   onRemove,
   onEditImage,
   onApplyEnhancedReference,
-  ttsProvider,
-  voiceAssignmentProvider,
+  ttsProvider: _ttsProvider,
+  voiceAssignmentProvider: _voiceAssignmentProvider,
   voiceSectionExpanded,
   onToggleVoiceSection,
   enableDrag = false,
@@ -1316,8 +1311,6 @@ const CharacterCard = ({
   const [isPlayingVoice, setIsPlayingVoice] = useState(false);
   const voicePreviewAudioRef = React.useRef<HTMLAudioElement | null>(null);
 
-  const useGeminiVoicePicker = voiceAssignmentProvider === "google";
-
   useEffect(() => {
     return () => {
       if (voicePreviewAudioRef.current) {
@@ -1402,17 +1395,19 @@ const CharacterCard = ({
     Boolean(character.role?.trim()) ||
     Boolean(character.keyFeature?.trim());
 
-  const supportsGeminiVoiceProfileEditor =
-    Boolean(character.voiceConfig?.voiceId) &&
-    (useGeminiVoicePicker ||
-      ttsProvider === "google" ||
-      character.voiceConfig?.provider === "google" ||
-      character.voiceConfig?.voiceId?.startsWith("gemini-"));
+  const isNarratorCharacter =
+    character.type === "narrator" ||
+    String(character.role || "").toLowerCase() === "narrator" ||
+    String(character.name || "").toLowerCase() === "narrator";
+
+  const supportsGeminiVoiceProfileEditor = Boolean(
+    character.voiceConfig?.voiceId,
+  );
 
   // Build character context for voice recommendations
   const characterContext: CharacterContext = {
     name: character.name || "Unknown",
-    role: character.role,
+    role: isNarratorCharacter ? "narrator" : character.role,
     gender: character.gender,
     age: character.age,
     ethnicity: character.ethnicity,
@@ -1608,15 +1603,7 @@ const CharacterCard = ({
       return;
     }
 
-    const useGoogleTts =
-      ttsProvider === "google" || voiceAssignmentProvider === "google";
-    const hasNarrativeForVoice =
-      Boolean(character.description?.trim()) ||
-      Boolean(character.appearanceDescription?.trim()) ||
-      Boolean(character.role?.trim()) ||
-      Boolean(character.keyFeature?.trim());
-
-    if (useGoogleTts && !hasCharacterReferenceForVoice && !hasNarrativeForVoice) {
+    if (!hasCharacterReferenceForVoice && !hasNarrativeForVoice) {
       toast.error(
         "Add a character description or reference image before Auto Voice.",
       );
@@ -1646,31 +1633,17 @@ const CharacterCard = ({
     }
 
     setIsAutoSelectingVoice(true);
-    let selectedVoice: ElevenLabsVoice | null = null;
     let generatedPrompt = "";
     let testAudioPlayed = false;
-
-    const useGoogleTts =
-      ttsProvider === "google" || voiceAssignmentProvider === "google";
+    let assignment: ReturnType<typeof buildGoogleVoiceAssignment> | null = null;
 
     try {
-      if (useGoogleTts) {
-        let visionAnalysis: WardrobeVoiceAnalysisResult | null = null;
-        try {
-          visionAnalysis = await fetchWardrobeVoiceAnalysis();
-        } catch (analysisErr) {
-          console.warn("[Auto Voice] Wardrobe voice analysis failed:", analysisErr);
-          if (!genderOverride && character.genderSource !== "user") {
-            const { confidence } = resolveCharacterGender(characterContext);
-            if (confidence === "ambiguous") {
-              setGenderConfirmOpen(true);
-              setIsAutoSelectingVoice(false);
-              return;
-            }
-          }
-        }
-
-        if (!visionAnalysis && !genderOverride && character.genderSource !== "user") {
+      let visionAnalysis: WardrobeVoiceAnalysisResult | null = null;
+      try {
+        visionAnalysis = await fetchWardrobeVoiceAnalysis();
+      } catch (analysisErr) {
+        console.warn("[Auto Voice] Wardrobe voice analysis failed:", analysisErr);
+        if (!genderOverride && character.genderSource !== "user") {
           const { confidence } = resolveCharacterGender(characterContext);
           if (confidence === "ambiguous") {
             setGenderConfirmOpen(true);
@@ -1678,226 +1651,97 @@ const CharacterCard = ({
             return;
           }
         }
+      }
 
-        if (visionAnalysis && onUpdateCharacterAttributes) {
-          const attrs: Record<string, unknown> = {
-            age: visionAnalysis.apparentAge,
-            ethnicity: visionAnalysis.ethnicity,
-            voiceDescription: visionAnalysis.voiceDescription,
-          };
-          if (character.genderSource !== "user") {
-            attrs.gender = visionAnalysis.gender;
-            attrs.genderSource = "ai";
-          }
-          onUpdateCharacterAttributes(characterId, attrs);
-          toast.success(
-            visionAnalysis.confidence === "narrative"
-              ? "Matched voice profile from character narrative."
-              : "Matched voice profile from character reference.",
-          );
+      if (!visionAnalysis && !genderOverride && character.genderSource !== "user") {
+        const { confidence } = resolveCharacterGender(characterContext);
+        if (confidence === "ambiguous") {
+          setGenderConfirmOpen(true);
+          setIsAutoSelectingVoice(false);
+          return;
         }
+      }
 
-        const voicesRes = await fetch("/api/tts/google/voices", {
-          cache: "no-store",
-        });
-        const voicesData = await voicesRes.json().catch(() => ({}));
-        const allVoices: ElevenLabsVoice[] = Array.isArray(voicesData?.voices)
-          ? voicesData.voices
-          : [];
-        const geminiVoices = allVoices.filter(
-          (v) => typeof v.id === "string" && v.id.startsWith("gemini-"),
-        );
-
-        if (geminiVoices.length === 0) {
-          throw new Error("No Gemini voices are available right now.");
-        }
-
-        const enrichedVoices = enrichGeminiVoicesForScoring(geminiVoices);
-        const scoringContext: CharacterContext = {
-          ...characterContext,
-          role: character.role ?? characterContext.role,
-          personality: character.keyFeature ?? characterContext.personality,
-          description:
-            character.description ||
-            character.appearanceDescription ||
-            characterContext.description,
-          ...(genderOverride ? { gender: genderOverride } : {}),
-          ...(visionAnalysis
-            ? {
-                gender: visionAnalysis.gender,
-                age: visionAnalysis.apparentAge,
-                ethnicity: visionAnalysis.ethnicity,
-                voiceDescription: visionAnalysis.voiceDescription,
-              }
-            : {}),
+      if (visionAnalysis && onUpdateCharacterAttributes) {
+        const attrs: Record<string, unknown> = {
+          age: visionAnalysis.apparentAge,
+          ethnicity: visionAnalysis.ethnicity,
+          voiceDescription: visionAnalysis.voiceDescription,
         };
-
-        const recs = getCharacterVoiceRecommendations(
-          enrichedVoices,
-          scoringContext,
-          screenplayContext as ScreenplayContext,
-          1,
-        );
-        const recommendedVoiceId = recs[0]?.voiceId;
-        selectedVoice =
-          enrichedVoices.find((v) => v.id === recommendedVoiceId) ||
-          enrichedVoices[0];
-
+        if (character.genderSource !== "user") {
+          attrs.gender = visionAnalysis.gender;
+          attrs.genderSource = "ai";
+        }
+        onUpdateCharacterAttributes(characterId, attrs);
         toast.success(
-          `Auto selected: ${selectedVoice.name.replace(/ \((Gemini|Studio)\)/i, "")}`,
+          visionAnalysis.confidence === "narrative"
+            ? "Matched voice profile from character narrative."
+            : "Matched voice profile from character reference.",
         );
+      }
 
-        const directorContext: CharacterContext = {
-          ...scoringContext,
-          referenceImage: character.referenceImage,
-        };
-
-        generatedPrompt = await resolveDirectorNote(directorContext, {
-          audioProfile: visionAnalysis?.audioProfile,
-          existingPrompt: character.voiceConfig?.prompt,
-        });
-
-        if (generatedPrompt) {
-          toast.success("Matched voice profile ready.");
-        }
-
-        onUpdateCharacterVoice(characterId, {
-          provider: "google",
-          voiceId: selectedVoice.id,
-          voiceName: selectedVoice.name,
-          prompt: generatedPrompt,
-        });
-      } else if (!voiceAssignmentProvider) {
-        const voicesRes = await fetch("/api/tts/elevenlabs/voices", {
-          cache: "no-store",
-        });
-        const voicesData = await voicesRes.json().catch(() => ({}));
-        if (!voicesRes.ok || voicesData.enabled === false) {
-          throw new Error(
-            voicesData?.error ||
-              "Could not load ElevenLabs voices. Check ELEVENLABS_API_KEY.",
-          );
-        }
-        const allVoices: ElevenLabsVoice[] = Array.isArray(voicesData?.voices)
-          ? voicesData.voices
-          : [];
-        const elevenVoices = allVoices.filter(
-          (v) =>
-            typeof v.id === "string" &&
-            v.id.length > 0 &&
-            !v.id.startsWith("gemini-"),
-        );
-
-        if (elevenVoices.length === 0) {
-          throw new Error("No ElevenLabs voices are available right now.");
-        }
-
-        let recContext: CharacterContext = characterContext;
-        const thinVoiceProfile =
-          !character.voiceDescription?.trim() ||
-          character.voiceDescription.trim().length < 40;
-        if (
-          thinVoiceProfile &&
-          Boolean(character.referenceImage?.trim()) &&
-          onUpdateCharacterAttributes
-        ) {
-          try {
-            const vpRes = await fetch("/api/tts/voice-profile/generate", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                characterName: characterContext.name,
-                characterContext: {
-                  role: characterContext.role,
-                  gender: characterContext.gender,
-                  age: characterContext.age,
-                  ethnicity: characterContext.ethnicity,
-                  personality: characterContext.personality,
-                  description: characterContext.description,
-                },
-                referenceImageUrl: character.referenceImage,
-                screenplayContext,
-              }),
-            });
-            const vpData = await vpRes.json().catch(() => ({}));
-            if (vpRes.ok && typeof vpData?.voiceDescription === "string") {
-              const vd = vpData.voiceDescription.trim();
-              if (vd) {
-                onUpdateCharacterAttributes(characterId, {
-                  voiceDescription: vd,
-                });
-                recContext = { ...characterContext, voiceDescription: vd };
-                toast.success(
-                  "Built an AI voice profile from your reference for smarter Auto pick.",
-                );
-              }
+      const scoringContext: CharacterContext = {
+        ...characterContext,
+        role: character.role ?? characterContext.role,
+        personality: character.keyFeature ?? characterContext.personality,
+        description:
+          character.description ||
+          character.appearanceDescription ||
+          characterContext.description,
+        ...(genderOverride ? { gender: genderOverride } : {}),
+        ...(visionAnalysis
+          ? {
+              gender: visionAnalysis.gender,
+              age: visionAnalysis.apparentAge,
+              ethnicity: visionAnalysis.ethnicity,
+              voiceDescription: visionAnalysis.voiceDescription,
             }
-          } catch (profileErr) {
-            console.warn("[Auto Voice] Voice profile prefetch failed:", profileErr);
-          }
-        }
+          : {}),
+      };
 
-        const recs = getCharacterVoiceRecommendations(
-          elevenVoices,
-          recContext,
-          screenplayContext as ScreenplayContext,
-          1,
-        );
-        const recommendedVoiceId = recs[0]?.voiceId;
-        selectedVoice =
-          elevenVoices.find((v) => v.id === recommendedVoiceId) ||
-          elevenVoices[0];
+      const directorContext: CharacterContext = {
+        ...scoringContext,
+        referenceImage: character.referenceImage,
+      };
 
-        toast.success(`Auto selected (ElevenLabs): ${selectedVoice.name}`);
+      generatedPrompt = await resolveDirectorNote(directorContext, {
+        audioProfile: visionAnalysis?.audioProfile,
+        existingPrompt: character.voiceConfig?.prompt,
+      });
 
-        onUpdateCharacterVoice(characterId, {
-          provider: "elevenlabs",
-          voiceId: selectedVoice.id,
-          voiceName: selectedVoice.name,
-          prompt: character.voiceConfig?.prompt,
+      const profile =
+        generatedPrompt ||
+        visionAnalysis?.voiceDescription ||
+        character.voiceDescription ||
+        "";
+
+      assignment = buildGoogleVoiceAssignment(profile, {
+        gender: scoringContext.gender,
+        name: character.name,
+        age: scoringContext.age,
+        role: scoringContext.role,
+        screenplayContext: screenplayContext as ScreenplayContext,
+      });
+
+      if (generatedPrompt && onUpdateCharacterAttributes) {
+        onUpdateCharacterAttributes(characterId, {
+          voiceDescription: generatedPrompt,
         });
-      } else {
-        throw new Error("Gemini TTS is required for character voice assignment.");
       }
 
-      if (!selectedVoice) {
-        throw new Error("No voice could be selected.");
-      }
+      onUpdateCharacterVoice(characterId, assignment);
+      toast.success("Voice profile ready.");
 
       try {
         const sampleText = characterContext?.name
           ? `${characterContext.name}: This is my automatically recommended voice profile test.`
           : "This is my automatically recommended voice profile test.";
 
-        if (useGoogleTts) {
-          testAudioPlayed = await playGeminiVoicePreview(
-            selectedVoice.id,
-            generatedPrompt || character.voiceConfig?.prompt,
-            sampleText,
-          );
-        } else {
-          const testRes = await fetch("/api/tts/elevenlabs", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              text: sampleText,
-              voiceId: selectedVoice.id,
-            }),
-          });
-          if (!testRes.ok) throw new Error("Failed to generate test dialogue.");
-          const testBlob = await testRes.blob();
-          const testUrl = URL.createObjectURL(testBlob);
-          const audio = new Audio(testUrl);
-          voicePreviewAudioRef.current = audio;
-          audio.onended = () => {
-            URL.revokeObjectURL(testUrl);
-            if (voicePreviewAudioRef.current === audio) {
-              voicePreviewAudioRef.current = null;
-            }
-          };
-          await audio.play();
-          testAudioPlayed = true;
-        }
+        testAudioPlayed = await playGeminiVoicePreview(
+          assignment.voiceId,
+          assignment.prompt || character.voiceConfig?.prompt,
+          sampleText,
+        );
       } catch (testErr) {
         console.warn("[Auto Voice] Test playback failed:", testErr);
       }
@@ -3400,12 +3244,8 @@ const CharacterCard = ({
               className="mt-3 focus-visible:ring-0 space-y-3"
             >
               {character.voiceConfig?.voiceId ? (
-                <p
-                  className="text-[10px] text-gray-500 dark:text-gray-400 font-mono truncate"
-                  title="Scene dialogue uses Gemini 3.1 TTS with this voice id"
-                >
-                  Gemini TTS ·{" "}
-                  <span className="select-all">{character.voiceConfig.voiceId}</span>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                  SceneFlow voice
                   {character.voiceConfig.prompt ? (
                     <span className="text-emerald-600 dark:text-emerald-400 ml-1">
                       · Director&apos;s Note
@@ -3414,12 +3254,10 @@ const CharacterCard = ({
                 </p>
               ) : (
                 <p className="text-[10px] text-amber-600 dark:text-amber-400">
-                  Assign a Gemini voice so dialogue generation uses the correct engine and voice id.
+                  Create a voice profile so dialogue uses a SceneFlow voice.
                 </p>
               )}
-              {useGeminiVoicePicker &&
-              !hasCharacterReferenceForVoice &&
-              !hasNarrativeForVoice ? (
+              {!hasCharacterReferenceForVoice && !hasNarrativeForVoice ? (
                 <p className="text-[10px] text-amber-600 dark:text-amber-400">
                   Add a character description or reference image for Auto Voice profiling.
                 </p>
@@ -3523,17 +3361,13 @@ const CharacterCard = ({
                   }}
                   disabled={
                     isAutoSelectingVoice ||
-                    ((useGeminiVoicePicker || ttsProvider === "google") &&
-                      !hasCharacterReferenceForVoice &&
-                      !hasNarrativeForVoice)
+                    (!hasCharacterReferenceForVoice && !hasNarrativeForVoice)
                   }
                   className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 disabled:opacity-60"
                   title={
-                    useGeminiVoicePicker || ttsProvider === "google"
-                      ? hasCharacterReferenceForVoice || hasNarrativeForVoice
-                        ? "Profile voice from character narrative and reference, then auto-select Gemini voice"
-                        : "Add character description or reference image first"
-                      : "Auto pick an ElevenLabs voice from character profile"
+                    hasCharacterReferenceForVoice || hasNarrativeForVoice
+                      ? "Build a voice profile from character narrative and reference"
+                      : "Add character description or reference image first"
                   }
                 >
                   {isAutoSelectingVoice ? (
@@ -4511,93 +4345,33 @@ const CharacterCard = ({
             ) : null}
           </DialogContent>
         </Dialog>
-        {useGeminiVoicePicker ? (
-          <GeminiVoicePicker
-            open={voiceDialogOpen}
-            onOpenChange={setVoiceDialogOpen}
-            mode="character"
-            geminiOnly
-            selectedVoiceId={character.voiceConfig?.voiceId || ""}
-            directorPrompt={character.voiceConfig?.prompt}
-            onSelectVoice={async (voiceId, voiceName) => {
-              let prompt = character.voiceConfig?.prompt?.trim() || "";
-              let visionAnalysis: WardrobeVoiceAnalysisResult | null = null;
-
-              if (!prompt && hasCharacterReferenceForVoice) {
-                try {
-                  visionAnalysis = await fetchWardrobeVoiceAnalysis();
-                  if (visionAnalysis) {
-                    onUpdateCharacterAttributes?.(characterId, {
-                      gender: visionAnalysis.gender,
-                      age: visionAnalysis.apparentAge,
-                      ethnicity: visionAnalysis.ethnicity,
-                      voiceDescription: visionAnalysis.voiceDescription,
-                    });
-                  }
-                } catch (err) {
-                  console.warn("[Select Voice] Wardrobe voice analysis failed:", err);
-                }
-              }
-
-              if (!prompt) {
-                const directorContext: CharacterContext = {
-                  ...characterContext,
-                  voiceDescription:
-                    visionAnalysis?.voiceDescription ?? character.voiceDescription,
-                  ...(visionAnalysis
-                    ? {
-                        gender: visionAnalysis.gender,
-                        age: visionAnalysis.apparentAge,
-                        ethnicity: visionAnalysis.ethnicity,
-                      }
-                    : {}),
-                  referenceImage: character.referenceImage,
-                };
-                prompt = await resolveDirectorNote(directorContext, {
-                  audioProfile: visionAnalysis?.audioProfile,
-                  existingPrompt: character.voiceConfig?.prompt,
-                });
-              }
-
-              onUpdateCharacterVoice?.(characterId, {
-                provider: "google",
-                voiceId,
-                voiceName,
-                prompt,
-              });
-              toast.success(`Voice set to ${voiceName.replace(/ \(Premium\)/i, "")}`);
-            }}
-          />
-        ) : (
-          <VoiceSelectionDialog
-            open={voiceDialogOpen}
-            onOpenChange={setVoiceDialogOpen}
-            provider={ttsProvider}
-            mode="character"
-            selectedVoiceId={character.voiceConfig?.voiceId || ""}
-            onSelectVoice={(voiceId, voiceName, prompt) => {
-              onUpdateCharacterVoice?.(characterId, {
-                provider: ttsProvider,
-                voiceId,
-                voiceName,
-                prompt: prompt || character.voiceConfig?.prompt,
-              });
-            }}
-            characterContext={characterContext}
-            screenplayContext={screenplayContext as ScreenplayContext}
-            characterAudioSampleUrl={character.voiceTrainingAudioUrl}
-            onVoiceDescriptionGenerated={(description) => {
-              onUpdateCharacterAttributes?.(characterId, {
-                voiceDescription: description,
-              });
-            }}
-            onVoiceTrainingAudioSaved={(audioUrl) => {
-              onUpdateCharacterAttributes?.(characterId, {
-                voiceTrainingAudioUrl: audioUrl,
-              });
-            }}
-          />
-        )}
+        <VoiceSelectionDialog
+          open={voiceDialogOpen}
+          onOpenChange={setVoiceDialogOpen}
+          mode={isNarratorCharacter ? "narrator" : "character"}
+          selectedVoiceId={character.voiceConfig?.voiceId || ""}
+          onSelectVoice={(voiceId, voiceName, prompt) => {
+            onUpdateCharacterVoice?.(characterId, {
+              provider: "google",
+              voiceId,
+              voiceName,
+              prompt: prompt || character.voiceConfig?.prompt,
+            });
+          }}
+          characterContext={characterContext}
+          screenplayContext={screenplayContext as ScreenplayContext}
+          characterAudioSampleUrl={character.voiceTrainingAudioUrl}
+          onVoiceDescriptionGenerated={(description) => {
+            onUpdateCharacterAttributes?.(characterId, {
+              voiceDescription: description,
+            });
+          }}
+          onVoiceTrainingAudioSaved={(audioUrl) => {
+            onUpdateCharacterAttributes?.(characterId, {
+              voiceTrainingAudioUrl: audioUrl,
+            });
+          }}
+        />
 
         {/* Approve Button - Show only if image exists and not approved */}
         {hasImage && !isApproved && (

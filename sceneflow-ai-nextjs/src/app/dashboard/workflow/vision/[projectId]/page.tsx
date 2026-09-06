@@ -244,6 +244,7 @@ import { toCanonicalName } from '@/lib/character/canonical'
 import { resolveDialogueTtsVoice } from '@/lib/character/dialogueTtsVoice'
 import { getEdgeVoiceConfigForResolution } from '@/lib/tts/edgeTtsVoices'
 import { backoffMsFor429Attempt, sleep } from '@/lib/tts/googleTtsRetry'
+import { DEFAULT_CINEMATIC_NARRATOR } from '@/lib/tts/cinematicNarratorPresets'
 import { v4 as uuidv4 } from 'uuid'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { useOverlayStore } from '@/store/useOverlayStore'
@@ -423,9 +424,10 @@ const ensureNarratorCharacter = (characters: Character[], narrationVoice?: Voice
     description: 'Storytelling voice for scene narration',
     type: 'narrator',
     voiceConfig: narrationVoice || {
-      provider: 'elevenlabs',
-      voiceName: 'Adam',
-      voiceId: 'pNInz6obpgDQGcFmaJgB'
+      provider: 'google',
+      voiceName: DEFAULT_CINEMATIC_NARRATOR.displayName,
+      voiceId: DEFAULT_CINEMATIC_NARRATOR.voiceId,
+      prompt: DEFAULT_CINEMATIC_NARRATOR.profile,
     }
   }
 }

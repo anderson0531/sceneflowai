@@ -51,7 +51,10 @@ import {
   DialogDescription
 } from '@/components/ui/dialog'
 import { VoiceSelectionDialog } from '@/components/tts/VoiceSelectionDialog'
-import { GEMINI_VOICES } from '@/components/tts/GeminiVoicePicker'
+import {
+  DEFAULT_CINEMATIC_NARRATOR,
+  getCinematicNarratorPreset,
+} from '@/lib/tts/cinematicNarratorPresets'
 import { useSeriesStudio } from '@/hooks/useSeries'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { useSession } from 'next-auth/react'
@@ -1278,23 +1281,23 @@ function OverviewPanel({ series, onRegenerate, isGenerating, onOpenBibleSync }: 
   const [isPlaying, setIsPlaying] = useState(false)
   const [isGeneratingTTS, setIsGeneratingTTS] = useState(false)
   const [voiceSelectorOpen, setVoiceSelectorOpen] = useState(false)
-  const [selectedVoiceId, setSelectedVoiceId] = useState<string>('en-US-Journey-F') // Google Cloud TTS Voice fallback
-  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('Elena (Storyteller)')
-  const [audioProfilePrompt, setAudioProfilePrompt] = useState<string>('')
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>(DEFAULT_CINEMATIC_NARRATOR.voiceId)
+  const [selectedVoiceName, setSelectedVoiceName] = useState<string>(DEFAULT_CINEMATIC_NARRATOR.displayName)
+  const [audioProfilePrompt, setAudioProfilePrompt] = useState<string>(DEFAULT_CINEMATIC_NARRATOR.profile)
   const audioRef = React.useRef<HTMLAudioElement | null>(null)
 
-  // Initialize with favorite voice if available
+  // Initialize with a saved cinematic narrator preset if available
   useEffect(() => {
     try {
       const stored = localStorage.getItem('directorNoteFavorites')
       if (stored) {
         const favs = JSON.parse(stored)
         if (Array.isArray(favs) && favs.length > 0) {
-          const favVoiceId = favs[0]
-          const voice = GEMINI_VOICES.find(v => v.id === favVoiceId)
-          if (voice) {
-            setSelectedVoiceId(voice.id)
-            setSelectedVoiceName(voice.name)
+          const preset = getCinematicNarratorPreset(favs[0])
+          if (preset) {
+            setSelectedVoiceId(preset.voiceId)
+            setSelectedVoiceName(preset.displayName)
+            setAudioProfilePrompt(preset.profile)
           }
         }
       }
@@ -1442,7 +1445,7 @@ function OverviewPanel({ series, onRegenerate, isGenerating, onOpenBibleSync }: 
         <VoiceSelectionDialog
           open={voiceSelectorOpen}
           onOpenChange={setVoiceSelectorOpen}
-          provider="elevenlabs"
+          provider="google"
           mode="narrator"
           selectedVoiceId={selectedVoiceId}
           onSelectVoice={(id, name, prompt) => {
@@ -1715,23 +1718,23 @@ function EpisodesPanel({
   const [isPlaying, setIsPlaying] = useState(false)
   const [isGeneratingTTS, setIsGeneratingTTS] = useState(false)
   const [voiceSelectorOpen, setVoiceSelectorOpen] = useState(false)
-  const [selectedVoiceId, setSelectedVoiceId] = useState<string>('en-US-Journey-F')
-  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('Elena (Storyteller)')
-  const [audioProfilePrompt, setAudioProfilePrompt] = useState<string>('')
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>(DEFAULT_CINEMATIC_NARRATOR.voiceId)
+  const [selectedVoiceName, setSelectedVoiceName] = useState<string>(DEFAULT_CINEMATIC_NARRATOR.displayName)
+  const [audioProfilePrompt, setAudioProfilePrompt] = useState<string>(DEFAULT_CINEMATIC_NARRATOR.profile)
   const audioRef = React.useRef<HTMLAudioElement | null>(null)
 
-  // Initialize with favorite voice if available
+  // Initialize with a saved cinematic narrator preset if available
   useEffect(() => {
     try {
       const stored = localStorage.getItem('directorNoteFavorites')
       if (stored) {
         const favs = JSON.parse(stored)
         if (Array.isArray(favs) && favs.length > 0) {
-          const favVoiceId = favs[0]
-          const voice = GEMINI_VOICES.find(v => v.id === favVoiceId)
-          if (voice) {
-            setSelectedVoiceId(voice.id)
-            setSelectedVoiceName(voice.name)
+          const preset = getCinematicNarratorPreset(favs[0])
+          if (preset) {
+            setSelectedVoiceId(preset.voiceId)
+            setSelectedVoiceName(preset.displayName)
+            setAudioProfilePrompt(preset.profile)
           }
         }
       }
@@ -2082,7 +2085,7 @@ function EpisodesPanel({
         <VoiceSelectionDialog
           open={voiceSelectorOpen}
           onOpenChange={setVoiceSelectorOpen}
-          provider="elevenlabs"
+          provider="google"
           mode="narrator"
           selectedVoiceId={selectedVoiceId}
           onSelectVoice={(id, name, prompt) => {
