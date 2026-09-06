@@ -13,9 +13,9 @@ export type HeroVideoLocale = {
   label: string
   /** Native language name for pills */
   nativeLabel: string
-  /** Progressive MP4 URL (Blob today; CDN fallback when HLS unavailable) */
+  /** Progressive MP4 URL (GCS/CDN when configured; Blob fallback) */
   src: string
-  /** Adaptive HLS manifest when NEXT_PUBLIC_LANDING_VIDEO_CDN is configured */
+  /** Adaptive HLS manifest when CDN + NEXT_PUBLIC_LANDING_VIDEO_HLS are set */
   hlsSrc?: string
   /** Explicit MP4 fallback (same as src when unset) */
   mp4Src?: string
@@ -26,20 +26,31 @@ export type HeroVideoLocale = {
 
 export const HERO_VIDEO_BLOB_HOST = 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com'
 
-/** Optional GCP Cloud CDN base — set when Transcoder HLS output is live. */
-export const LANDING_VIDEO_CDN_HOST = (
-  typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_LANDING_VIDEO_CDN : undefined
-)?.replace(/\/$/, '')
+function readPublicEnv(name: string): string | undefined {
+  if (typeof process === 'undefined') return undefined
+  const value = process.env[name]?.trim()
+  return value ? value : undefined
+}
+
+/** Optional GCS / Cloud CDN base — e.g. https://storage.googleapis.com/sceneflow-assets */
+export function getLandingVideoCdnHost(): string | undefined {
+  return readPublicEnv('NEXT_PUBLIC_LANDING_VIDEO_CDN')?.replace(/\/$/, '')
+}
+
+/** HLS is opt-in; CDN env alone must not attach a missing manifest. */
+export function isLandingVideoHlsEnabled(): boolean {
+  const flag = readPublicEnv('NEXT_PUBLIC_LANDING_VIDEO_HLS')
+  return flag === '1' || flag === 'true'
+}
+
+/** Snapshot for layout preconnect (Next inlines NEXT_PUBLIC_* at build). */
+export const LANDING_VIDEO_CDN_HOST = getLandingVideoCdnHost()
 
 const BLOB_HOST = HERO_VIDEO_BLOB_HOST
 
-/** Blob CDN poster (~110 KB) — loads immediately on mobile while video buffers. */
+/** Site-served poster (~80–120 KB) — first paint while the MP4 buffers. */
 export function getHeroVideoPosterUrl(locale: HeroVideoLocaleId): string {
-  if (locale === 'en') {
-    // Regenerated from SceneFlow Hero Video.mp4 — site-served for instant deploy parity
-    return getHeroVideoPosterPath('en')
-  }
-  return `${BLOB_HOST}/landing/hero/sceneflow-hero-${locale}-poster.jpg`
+  return getHeroVideoPosterPath(locale)
 }
 
 /** Site-served poster path (regenerated via regenerate-hero-posters.mjs). */
@@ -47,10 +58,11 @@ export function getHeroVideoPosterPath(locale: HeroVideoLocaleId): string {
   return `/landing/hero/sceneflow-hero-${locale}-poster.jpg`
 }
 
-/** HLS manifest on landing video CDN (Phase 2 — enabled via env). */
+/** HLS manifest — requires CDN host and NEXT_PUBLIC_LANDING_VIDEO_HLS=1. */
 export function getHeroVideoHlsUrl(locale: HeroVideoLocaleId): string | undefined {
-  if (!LANDING_VIDEO_CDN_HOST) return undefined
-  return `${LANDING_VIDEO_CDN_HOST}/hero/${locale}/hls/manifest.m3u8`
+  const cdn = getLandingVideoCdnHost()
+  if (!cdn || !isLandingVideoHlsEnabled()) return undefined
+  return `${cdn}/hero/${locale}/hls/manifest.m3u8`
 }
 
 /** Blob master filename for each locale once produced. */
@@ -68,6 +80,15 @@ function heroSrc(path: string): string {
   return `${BLOB_HOST}/${encodeURI(path)}#t=0.1`
 }
 
+/** Progressive MP4: GCS/CDN master when configured, otherwise Blob fallback. */
+export function getHeroVideoMp4Url(locale: HeroVideoLocaleId): string {
+  const cdn = getLandingVideoCdnHost()
+  if (cdn) {
+    return `${cdn}/hero/${locale}/master.mp4#t=0.1`
+  }
+  return heroSrc(HERO_VIDEO_BLOB_PATHS[locale])
+}
+
 export const DEFAULT_HERO_VIDEO_LOCALE: HeroVideoLocaleId = 'en'
 
 const HERO_VIDEO_LABELS: Record<HeroVideoLocaleId, { label: string; nativeLabel: string }> = {
@@ -80,66 +101,37 @@ const HERO_VIDEO_LABELS: Record<HeroVideoLocaleId, { label: string; nativeLabel:
   th: { label: 'Thai', nativeLabel: 'ไทย' },
 }
 
-/** Locales with a produced Blob master. Others render as disabled "Soon" pills. */
-const PRODUCED_HERO_VIDEOS: Partial<
-  Record<HeroVideoLocaleId, { src: string; poster: string; hlsSrc?: string }>
-> = {
-  en: {
-    src: heroSrc(HERO_VIDEO_BLOB_PATHS.en),
-    poster: getHeroVideoPosterUrl('en'),
-    hlsSrc: getHeroVideoHlsUrl('en'),
-  },
-  es: {
-    src: heroSrc(HERO_VIDEO_BLOB_PATHS.es),
-    poster: getHeroVideoPosterUrl('es'),
-    hlsSrc: getHeroVideoHlsUrl('es'),
-  },
-  pt: {
-    src: heroSrc(HERO_VIDEO_BLOB_PATHS.pt),
-    poster: getHeroVideoPosterUrl('pt'),
-    hlsSrc: getHeroVideoHlsUrl('pt'),
-  },
-  hi: {
-    src: heroSrc(HERO_VIDEO_BLOB_PATHS.hi),
-    poster: getHeroVideoPosterUrl('hi'),
-    hlsSrc: getHeroVideoHlsUrl('hi'),
-  },
-  zh: {
-    src: heroSrc(HERO_VIDEO_BLOB_PATHS.zh),
-    poster: getHeroVideoPosterUrl('zh'),
-    hlsSrc: getHeroVideoHlsUrl('zh'),
-  },
-  ar: {
-    src: heroSrc(HERO_VIDEO_BLOB_PATHS.ar),
-    poster: getHeroVideoPosterUrl('ar'),
-    hlsSrc: getHeroVideoHlsUrl('ar'),
-  },
-  th: {
-    src: heroSrc(HERO_VIDEO_BLOB_PATHS.th),
-    poster: getHeroVideoPosterUrl('th'),
-    hlsSrc: getHeroVideoHlsUrl('th'),
-  },
-}
+/** Locales with a produced master. Others render as disabled "Soon" pills. */
+const PRODUCED_HERO_VIDEO_IDS = new Set<HeroVideoLocaleId>([
+  'en',
+  'es',
+  'pt',
+  'hi',
+  'zh',
+  'ar',
+  'th',
+])
 
-export const HERO_VIDEO_LOCALES: HeroVideoLocale[] = (
-  Object.keys(HERO_VIDEO_LABELS) as HeroVideoLocaleId[]
-).map((id) => {
-  const produced = PRODUCED_HERO_VIDEOS[id]
+function buildHeroVideoLocale(id: HeroVideoLocaleId): HeroVideoLocale {
   const { label, nativeLabel } = HERO_VIDEO_LABELS[id]
-
-  const mp4Src = produced?.src ?? ''
+  const available = PRODUCED_HERO_VIDEO_IDS.has(id)
+  const mp4Src = available ? getHeroVideoMp4Url(id) : ''
 
   return {
     id,
     label,
     nativeLabel,
     src: mp4Src,
-    hlsSrc: produced?.hlsSrc,
+    hlsSrc: available ? getHeroVideoHlsUrl(id) : undefined,
     mp4Src: mp4Src || undefined,
-    poster: produced?.poster ?? (mp4Src ? getHeroVideoPosterUrl(id) : ''),
-    available: Boolean(mp4Src),
+    poster: available ? getHeroVideoPosterUrl(id) : '',
+    available,
   }
-})
+}
+
+export const HERO_VIDEO_LOCALES: HeroVideoLocale[] = (
+  Object.keys(HERO_VIDEO_LABELS) as HeroVideoLocaleId[]
+).map(buildHeroVideoLocale)
 
 export const HERO_VIDEO_MULTILANG_HINT =
   'Hero dubs in 7 languages — full pipeline supports 70+ in Production Studio.'
@@ -153,17 +145,21 @@ export const HERO_VIDEO_LOCALE_STORAGE_KEY = 'sf-hero-video-locale'
 export const HERO_VIDEO_UNMUTE_DISMISSED_KEY = 'sf-hero-unmute-dismissed'
 
 export function getHeroVideoLocale(id: HeroVideoLocaleId): HeroVideoLocale | undefined {
-  return HERO_VIDEO_LOCALES.find((l) => l.id === id)
+  if (!(id in HERO_VIDEO_LABELS)) return undefined
+  return buildHeroVideoLocale(id)
 }
 
 /** Map hero locale config into the shared video player model. */
 export function getHeroVideoLocalesAsVideoLocales(): VideoLocale[] {
-  return HERO_VIDEO_LOCALES.map(({ id, src, hlsSrc, poster, available }) => ({
-    id,
-    src: hlsSrc ?? src,
-    poster: poster || undefined,
-    available,
-  }))
+  return (Object.keys(HERO_VIDEO_LABELS) as HeroVideoLocaleId[]).map((id) => {
+    const locale = buildHeroVideoLocale(id)
+    return {
+      id,
+      src: locale.hlsSrc ?? locale.src,
+      poster: locale.poster || undefined,
+      available: locale.available,
+    }
+  })
 }
 
 /** Resolve playback sources for the adaptive landing player. */
@@ -182,18 +178,18 @@ export function getHeroVideoPlaybackSources(id: HeroVideoLocaleId): {
 }
 
 export function getDefaultHeroVideoSrc(): string {
-  const locale = getHeroVideoLocale(DEFAULT_HERO_VIDEO_LOCALE)
-  return locale?.src ?? HERO_VIDEO_LOCALES[0].src
+  return getHeroVideoMp4Url(DEFAULT_HERO_VIDEO_LOCALE)
 }
 
 export function getDefaultHeroVideoPoster(): string {
-  const locale = getHeroVideoLocale(DEFAULT_HERO_VIDEO_LOCALE)
-  return locale?.poster ?? HERO_VIDEO_LOCALES[0].poster
+  return getHeroVideoPosterUrl(DEFAULT_HERO_VIDEO_LOCALE)
 }
 
 /** Locales that can be selected in the hero player */
 export function getAvailableHeroVideoLocales(): HeroVideoLocale[] {
-  return HERO_VIDEO_LOCALES.filter((l) => l.available && l.src.trim())
+  return (Object.keys(HERO_VIDEO_LABELS) as HeroVideoLocaleId[])
+    .map(buildHeroVideoLocale)
+    .filter((locale) => locale.available && locale.src.trim())
 }
 
 /** Map browser language to a hero locale for first-visit pill hint */

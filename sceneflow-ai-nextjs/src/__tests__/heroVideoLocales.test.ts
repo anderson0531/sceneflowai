@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import {
   DEFAULT_HERO_VIDEO_LOCALE,
   HERO_VIDEO_BLOB_PATHS,
@@ -7,15 +7,27 @@ import {
   getDefaultHeroVideoSrc,
   getHeroVideoLocale,
   getHeroVideoLocalesAsVideoLocales,
+  getHeroVideoMp4Url,
+  getHeroVideoHlsUrl,
+  getHeroVideoPosterUrl,
+  getHeroVideoPlaybackSources,
 } from '@/config/landing/heroVideoLocales'
 import { VIDEO_LOCALE_ORDER } from '@/config/landing/videoLocales'
 
+const BLOB_HOST = 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com'
+const CDN_HOST = 'https://storage.googleapis.com/sceneflow-assets'
+
 describe('Hero video locales', () => {
+  afterEach(() => {
+    delete process.env.NEXT_PUBLIC_LANDING_VIDEO_CDN
+    delete process.env.NEXT_PUBLIC_LANDING_VIDEO_HLS
+  })
+
   it('lists all seven locale pills in display order', () => {
     expect(HERO_VIDEO_LOCALES.map((locale) => locale.id)).toEqual(VIDEO_LOCALE_ORDER)
   })
 
-  it('plays all seven hero Blob masters', () => {
+  it('plays all seven hero masters from Blob when CDN env is unset', () => {
     const available = getAvailableHeroVideoLocales().map((locale) => locale.id)
 
     expect(available).toEqual(VIDEO_LOCALE_ORDER)
@@ -30,14 +42,10 @@ describe('Hero video locales', () => {
 
     for (const locale of HERO_VIDEO_LOCALES) {
       expect(locale.available).toBe(true)
-      expect(locale.src).toBeTruthy()
-      if (locale.id === 'en') {
-        expect(locale.poster).toBe('/landing/hero/sceneflow-hero-en-poster.jpg')
-      } else {
-        expect(locale.poster).toBe(
-          `https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/hero/sceneflow-hero-${locale.id}-poster.jpg`
-        )
-      }
+      expect(getHeroVideoMp4Url(locale.id)).toContain(BLOB_HOST)
+      expect(getHeroVideoPosterUrl(locale.id)).toBe(
+        `/landing/hero/sceneflow-hero-${locale.id}-poster.jpg`
+      )
     }
   })
 
@@ -53,5 +61,24 @@ describe('Hero video locales', () => {
     for (const id of VIDEO_LOCALE_ORDER) {
       expect(locales.find((locale) => locale.id === id)?.available).toBe(true)
     }
+  })
+
+  it('prefers GCS master.mp4 when NEXT_PUBLIC_LANDING_VIDEO_CDN is set', () => {
+    process.env.NEXT_PUBLIC_LANDING_VIDEO_CDN = CDN_HOST
+
+    expect(getHeroVideoMp4Url('en')).toBe(`${CDN_HOST}/hero/en/master.mp4#t=0.1`)
+    expect(getHeroVideoPlaybackSources('es')?.mp4Src).toBe(`${CDN_HOST}/hero/es/master.mp4#t=0.1`)
+    expect(getHeroVideoHlsUrl('en')).toBeUndefined()
+  })
+
+  it('exposes HLS only when CDN and NEXT_PUBLIC_LANDING_VIDEO_HLS are set', () => {
+    process.env.NEXT_PUBLIC_LANDING_VIDEO_CDN = CDN_HOST
+    expect(getHeroVideoHlsUrl('en')).toBeUndefined()
+
+    process.env.NEXT_PUBLIC_LANDING_VIDEO_HLS = '1'
+    expect(getHeroVideoHlsUrl('en')).toBe(`${CDN_HOST}/hero/en/hls/manifest.m3u8`)
+    expect(getHeroVideoPlaybackSources('en')?.hlsSrc).toBe(
+      `${CDN_HOST}/hero/en/hls/manifest.m3u8`
+    )
   })
 })

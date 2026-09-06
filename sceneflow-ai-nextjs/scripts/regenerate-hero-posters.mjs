@@ -73,8 +73,10 @@ function extractPoster(videoUrl, outputPath) {
       '1',
       '-update',
       '1',
+      '-vf',
+      'scale=1920:-2',
       '-q:v',
-      '2',
+      '5',
       outputPath,
     ],
     { stdio: 'inherit' }

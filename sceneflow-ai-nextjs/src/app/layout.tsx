@@ -24,7 +24,12 @@ import {
   LEGAL_WEBSITE,
 } from '@/config/legal/legalCopy'
 import { LEGAL_HUB_PAGE, LEGAL_PAGES } from '@/config/legal/legalPages'
-import { HERO_VIDEO_BLOB_HOST, LANDING_VIDEO_CDN_HOST } from '@/config/landing/heroVideoLocales'
+import {
+  HERO_VIDEO_BLOB_HOST,
+  LANDING_VIDEO_CDN_HOST,
+  getHeroVideoPosterPath,
+  DEFAULT_HERO_VIDEO_LOCALE,
+} from '@/config/landing/heroVideoLocales'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -234,6 +239,11 @@ export default function RootLayout({
         {LANDING_VIDEO_CDN_HOST ? (
           <link rel="preconnect" href={LANDING_VIDEO_CDN_HOST} crossOrigin="anonymous" />
         ) : null}
+        <link
+          rel="preload"
+          as="image"
+          href={getHeroVideoPosterPath(DEFAULT_HERO_VIDEO_LOCALE)}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}

@@ -1,27 +1,28 @@
 #!/usr/bin/env node
 /**
- * Transcode landing hero videos to adaptive HLS on Google Cloud Storage.
+ * Upload landing hero masters to GCS (public progressive MP4 + optional HLS later).
  *
- * Prerequisites (GCP account live):
+ * Prerequisites:
  *   - GOOGLE_APPLICATION_CREDENTIALS_JSON in .env.local
- *   - GCS_LANDING_VIDEO_BUCKET (default: sceneflow-landing-videos)
- *   - Transcoder API enabled on the project
+ *   - GCS_LANDING_VIDEO_BUCKET (default: sceneflow-assets)
  *
  * Usage:
  *   node scripts/transcode-landing-videos.mjs --locale en
  *   node scripts/transcode-landing-videos.mjs --batch
- *   node scripts/transcode-landing-videos.mjs --locale en --input ./Hero\ Video\ \(English\).mp4
+ *   node scripts/transcode-landing-videos.mjs --locale en --input ./SceneFlow\ Hero\ Video.mp4
  *
  * Output layout:
  *   gs://{bucket}/hero/{locale}/master.mp4
- *   gs://{bucket}/hero/{locale}/hls/manifest.m3u8
+ *   gs://{bucket}/hero/{locale}/hls/manifest.m3u8  (Transcoder stub — later)
  *   gs://{bucket}/hero/{locale}/poster.jpg
  *
- * After upload, set NEXT_PUBLIC_LANDING_VIDEO_CDN to your Cloud CDN URL.
+ * After upload, set:
+ *   NEXT_PUBLIC_LANDING_VIDEO_CDN=https://storage.googleapis.com/sceneflow-assets
  */
 
-import { readFileSync, existsSync } from 'fs'
+import { existsSync, mkdirSync, writeFileSync } from 'fs'
 import { dirname, join } from 'path'
+import { spawnSync } from 'child_process'
 import { fileURLToPath } from 'url'
 import { config } from 'dotenv'
 import { Storage } from '@google-cloud/storage'
@@ -34,14 +35,15 @@ config({ path: join(ROOT, '.env.vercel.local') })
 
 const HERO_LOCALES = ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th']
 const BLOB_HOST = 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com'
+/** Must match HERO_VIDEO_BLOB_PATHS in heroVideoLocales.ts */
 const BLOB_PATHS = {
-  en: 'Hero%20Video%20(English).mp4',
-  es: 'Hero%20Video%20(Spanish)%20.mp4',
-  pt: 'Hero%20Video%20(Portuguese).mp4',
-  hi: 'Hero%20Video%20(Hindi).mp4',
-  zh: 'Hero%20Video%20(Chinese).mp4',
-  ar: 'Hero%20Video%20(Arabic)%20.mp4',
-  th: 'Hero%20Video%20(Thai)%20.mp4',
+  en: 'SceneFlow Hero Video.mp4',
+  es: 'Hero Video (Spanish) .mp4',
+  pt: 'Hero Video (Portuguese).mp4',
+  hi: 'Hero Video (Hindi).mp4',
+  zh: 'Hero Video (Chinese).mp4',
+  ar: 'Hero Video (Arabic) .mp4',
+  th: 'Hero Video (Thai) .mp4',
 }
 
 function getStorage() {
@@ -62,9 +64,25 @@ function parseArgs() {
   return { locale, input, batch }
 }
 
+function remuxFaststart(inputPath) {
+  const outPath = inputPath.replace(/\.mp4$/i, '.faststart.mp4')
+  const result = spawnSync(
+    'ffmpeg',
+    ['-y', '-i', inputPath, '-c', 'copy', '-movflags', '+faststart', outPath],
+    { stdio: 'inherit' }
+  )
+  if (result.status !== 0 || !existsSync(outPath)) {
+    console.warn('  ffmpeg faststart remux failed — uploading original')
+    return inputPath
+  }
+  console.log('  Remuxed with +faststart')
+  return outPath
+}
+
 async function uploadMaster(bucket, locale, localPath) {
   const dest = `hero/${locale}/master.mp4`
-  await bucket.upload(localPath, {
+  const uploadPath = remuxFaststart(localPath)
+  await bucket.upload(uploadPath, {
     destination: dest,
     metadata: { contentType: 'video/mp4', cacheControl: 'public, max-age=31536000' },
   })
@@ -72,11 +90,18 @@ async function uploadMaster(bucket, locale, localPath) {
   return `gs://${bucket.name}/${dest}`
 }
 
-async function uploadPosterFromBlob(bucket, locale) {
-  const posterUrl = `${BLOB_HOST}/landing/hero/sceneflow-hero-${locale}-poster.jpg`
-  const res = await fetch(posterUrl)
-  if (!res.ok) throw new Error(`Poster fetch failed ${locale}: ${res.status}`)
-  const buf = Buffer.from(await res.arrayBuffer())
+async function uploadPoster(bucket, locale) {
+  const publicPoster = join(ROOT, 'public/landing/hero', `sceneflow-hero-${locale}-poster.jpg`)
+  let buf
+  if (existsSync(publicPoster)) {
+    const { readFileSync } = await import('fs')
+    buf = readFileSync(publicPoster)
+  } else {
+    const posterUrl = `${BLOB_HOST}/landing/hero/sceneflow-hero-${locale}-poster.jpg`
+    const res = await fetch(posterUrl)
+    if (!res.ok) throw new Error(`Poster fetch failed ${locale}: ${res.status}`)
+    buf = Buffer.from(await res.arrayBuffer())
+  }
   const dest = `hero/${locale}/poster.jpg`
   await bucket.file(dest).save(buf, {
     contentType: 'image/jpeg',
@@ -87,17 +112,13 @@ async function uploadPosterFromBlob(bucket, locale) {
 
 /**
  * Submit a Transcoder API job for HLS adaptive ladder.
- * Requires @google-cloud/video-transcoder (install when GCP is live).
+ * Requires @google-cloud/video-transcoder (install when HLS is enabled).
  */
 async function submitTranscoderJob(projectId, location, inputUri, outputUri) {
-  console.log('  Transcoder API job (configure when GCP account is live):')
+  console.log('  Transcoder API job (optional — HLS gated by NEXT_PUBLIC_LANDING_VIDEO_HLS):')
   console.log(`    input:  ${inputUri}`)
   console.log(`    output: ${outputUri}`)
   console.log('    renditions: 360p / 720p / 1080p H.264 + AAC → HLS manifest.m3u8')
-  console.log('')
-  console.log('  Enable: gcloud services enable transcoder.googleapis.com')
-  console.log('  Then wire @google-cloud/video-transcoder TranscoderServiceClient.createJob()')
-  console.log('  with elementaryStreams + muxStreams per Google Transcoder HLS template.')
 }
 
 async function processLocale(storage, bucketName, locale, inputPath) {
@@ -109,10 +130,9 @@ async function processLocale(storage, bucketName, locale, inputPath) {
     const blobPath = BLOB_PATHS[locale]
     if (!blobPath) throw new Error(`Unknown locale: ${locale}`)
     console.log(`  Downloading master from Blob: ${locale}`)
-    const res = await fetch(`${BLOB_HOST}/${blobPath}`)
+    const res = await fetch(`${BLOB_HOST}/${encodeURI(blobPath)}`)
     if (!res.ok) throw new Error(`Blob download failed: ${res.status}`)
     const tmp = join(ROOT, 'tmp', `hero-${locale}-master.mp4`)
-    const { mkdirSync, writeFileSync } = await import('fs')
     mkdirSync(dirname(tmp), { recursive: true })
     writeFileSync(tmp, Buffer.from(await res.arrayBuffer()))
     masterPath = tmp
@@ -123,7 +143,7 @@ async function processLocale(storage, bucketName, locale, inputPath) {
   }
 
   const inputUri = await uploadMaster(bucket, locale, masterPath)
-  await uploadPosterFromBlob(bucket, locale)
+  await uploadPoster(bucket, locale)
 
   const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
   const projectId = credentials.project_id
@@ -132,16 +152,18 @@ async function processLocale(storage, bucketName, locale, inputPath) {
 
   await submitTranscoderJob(projectId, location, inputUri, outputUri)
 
-  console.log(`  CDN manifest (after transcode): hero/${locale}/hls/manifest.m3u8`)
+  console.log(`  Public MP4: https://storage.googleapis.com/${bucketName}/hero/${locale}/master.mp4`)
 }
 
 async function main() {
   const { locale, input, batch } = parseArgs()
-  const bucketName = process.env.GCS_LANDING_VIDEO_BUCKET || 'sceneflow-landing-videos'
+  const bucketName = process.env.GCS_LANDING_VIDEO_BUCKET || 'sceneflow-assets'
   const storage = getStorage()
 
   console.log(`Landing video bucket: gs://${bucketName}`)
-  console.log(`Set NEXT_PUBLIC_LANDING_VIDEO_CDN to your Cloud CDN base URL after deploy.`)
+  console.log(
+    `Set NEXT_PUBLIC_LANDING_VIDEO_CDN=https://storage.googleapis.com/${bucketName}`
+  )
 
   if (batch) {
     for (const code of HERO_LOCALES) {
