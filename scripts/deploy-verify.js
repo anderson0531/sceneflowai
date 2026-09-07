@@ -123,7 +123,7 @@ async function main() {
         heroVideo.portugueseBlob === 'Hero Video (Portuguese).mp4' &&
         heroVideo.hindiBlob === 'Hero Video (Hindi).mp4' &&
         heroVideo.chineseBlob === 'Hero Video (Chinese).mp4' &&
-        heroVideo.arabicBlob === 'Hero Video (Arabic) .mp4' &&
+        heroVideo.arabicBlob === 'Hero Video (Arabic).mp4' &&
         heroVideo.thaiBlob === 'Hero Video (Thai) .mp4'
 
       if (
