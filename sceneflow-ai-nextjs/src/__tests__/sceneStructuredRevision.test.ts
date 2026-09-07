@@ -344,22 +344,53 @@ describe('beat identity re-alignment when AI omits beatIds', () => {
     { kind: 'action', actionDescription: 'New action beat.' },
   ]
 
-  it('mapStructuredRevisionBeats reuses original beatIds and lineIds for aligned beats', () => {
+  it('mapStructuredRevisionBeats mints new ids when the model omits beatId — no kind-slot remap', () => {
     const mapped = mapStructuredRevisionBeats(rawSixBeatsNoIds, fourBeatScene)
     expect(mapped).toHaveLength(6)
 
     const reusedIds = ['b1', 'b2', 'b3', 'b4']
     for (const id of reusedIds) {
-      expect(mapped.some((b) => b.beatId === id)).toBe(true)
+      expect(mapped.some((b) => b.beatId === id)).toBe(false)
     }
-    expect(mapped.find((b) => b.beatId === 'b2')?.lineId).toBe('l2')
-    expect(mapped.find((b) => b.beatId === 'b4')?.lineId).toBe('l4')
 
-    const newIds = mapped.filter((b) => !reusedIds.includes(b.beatId))
-    expect(newIds).toHaveLength(2)
+    const extraDialogue = mapped.filter((b) => b.kind === 'dialogue')
+    expect(extraDialogue).toHaveLength(2)
+    expect(extraDialogue.every((b) => b.lineId !== 'l2' && b.lineId !== 'l4')).toBe(true)
   })
 
-  it('diff reports changed beats instead of spurious add+remove when ids were omitted', () => {
+  it('extra dialogue without beatId becomes a new beat, not a remap of an existing one', () => {
+    const mapped = mapStructuredRevisionBeats(
+      [
+        { beatId: 'b2', kind: 'dialogue', character: 'ALEX', line: '[happy] Hi revised.' },
+        { kind: 'dialogue', character: 'ALEX', line: '[soft] I never said this before.' },
+      ],
+      fourBeatScene
+    )
+
+    expect(mapped.find((b) => b.beatId === 'b2')?.line).toContain('Hi revised')
+    const added = mapped.find((b) => b.beatId !== 'b2')
+    expect(added?.kind).toBe('dialogue')
+    expect(added?.line).toContain('I never said this before')
+    expect(added?.beatId).not.toBe('b4')
+    expect(added?.lineId).not.toBe('l4')
+  })
+
+  it('reuses original beatIds and lineIds only when the model returns them', () => {
+    const mapped = mapStructuredRevisionBeats(
+      [
+        { beatId: 'b1', kind: 'action', actionDescription: 'Enter revised.' },
+        { beatId: 'b2', kind: 'dialogue', character: 'ALEX', line: '[happy] Hi revised.' },
+        { beatId: 'b3', kind: 'action', actionDescription: 'Pause revised.' },
+        { beatId: 'b4', kind: 'dialogue', character: 'JORDAN', line: '[cold] Hey revised.' },
+      ],
+      fourBeatScene
+    )
+    expect(mapped.map((b) => b.beatId)).toEqual(['b1', 'b2', 'b3', 'b4'])
+    expect(mapped.find((b) => b.beatId === 'b2')?.lineId).toBe('l2')
+    expect(mapped.find((b) => b.beatId === 'b4')?.lineId).toBe('l4')
+  })
+
+  it('diff reports add+remove when ids were omitted rather than remapping onto originals', () => {
     const candidate = finalizeStructuredRevisedScene(
       { beats: rawSixBeatsNoIds },
       fourBeatScene,
@@ -374,13 +405,13 @@ describe('beat identity re-alignment when AI omits beatIds', () => {
       (k) => k.startsWith('beat:') && !k.startsWith('beat-added:') && !k.startsWith('beat-removed:')
     )
 
-    expect(added.length).toBeLessThanOrEqual(2)
-    expect(removed.length).toBe(0)
-    expect(changed.length).toBe(4)
+    expect(added.length).toBe(6)
+    expect(removed.length).toBe(4)
+    expect(changed.length).toBe(0)
     expect(getSceneBeats(candidate)).toHaveLength(6)
   })
 
-  it('preview union shows 6 beat rows not 10 when ids are realigned', () => {
+  it('preview union shows original plus new beats when ids were omitted', () => {
     const candidate = finalizeStructuredRevisedScene(
       { beats: rawSixBeatsNoIds },
       fourBeatScene,
@@ -398,8 +429,8 @@ describe('beat identity re-alignment when AI omits beatIds', () => {
       return summary.status !== 'unchanged'
     })
 
-    expect(allBeatIds.size).toBe(6)
-    expect(visibleRows.length).toBe(6)
+    expect(allBeatIds.size).toBe(10)
+    expect(visibleRows.length).toBe(10)
     expect(candidateBeats.length).toBe(6)
   })
 

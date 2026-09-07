@@ -138,6 +138,17 @@
     "tone": "Tone",
     "artStyle": "Art style",
     "aspectRatio": "Aspect ratio",
+    "scriptCraft": "Script craft",
+    "scriptCraftHint": "Emphasis for longform script generation — not duration limits. Multi-select.",
+    "scriptCraftNotes": "Craft notes",
+    "scriptCraftNotesPlaceholder": "Optional notes (character, action, subtext…)",
+    "scriptCraftPriorities": {
+      "characterDepth": "Character depth",
+      "actionClarity": "Action clarity",
+      "subtext": "Subtext",
+      "dialogueRichness": "Dialogue richness",
+      "visualFirst": "Visual first"
+    },
     "themesPlain": "Themes",
     "moodReferences": "Mood / References",
     "treatmentFallback": "Treatment",

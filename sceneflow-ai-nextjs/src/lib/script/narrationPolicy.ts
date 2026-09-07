@@ -161,7 +161,7 @@ NARRATION REQUIREMENTS (NARRATIVE-DRIVEN):
 • Narration is a core storytelling device for this format
 • Include "narration" beats and/or scene.narration where they add context visuals cannot convey
 • Use character "NARRATOR" for narration beats
-• Balance narration with action beats — never more than 2 consecutive spoken beats without an action beat`
+• Balance narration with action beats — intervening action only when it adds NEW visual information, never to pad runtime`
   }
 
   if (policy.mode === 'moderate') {

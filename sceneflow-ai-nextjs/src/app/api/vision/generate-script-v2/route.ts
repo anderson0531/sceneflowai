@@ -46,6 +46,10 @@ import {
   resolveVariantArtStyle,
   resolveVariantAspectRatio,
 } from '@/lib/treatment/blueprintFoundation'
+import {
+  buildLongformScriptLengthBlock,
+  buildScriptCraftPromptBlock,
+} from '@/lib/script/scriptCraftPrompt'
 export const runtime = 'nodejs'
 export const maxDuration = 600  // 10 minutes for large script generation (requires Vercel Pro)
 
@@ -840,7 +844,7 @@ SCENE PLANNING (CRITICAL - READ CAREFULLY):
 - Total runtime: ${targetDuration}s (~${Math.floor(targetDuration / 60)} minutes)
 - Target scene count: ${suggested} scenes (this is OPTIMAL based on your story beats)
 - Generate first ${end} scenes now
-- Average scene duration: ~${Math.ceil(targetDuration / suggested)}s (60-120s is ideal)
+- Average scene duration: estimate from content density (story determines length)
 
 IMPORTANT SCENE STRUCTURE GUIDANCE:
 - Each scene should cover a COMPLETE dramatic beat - don't fragment action into multiple tiny scenes
@@ -856,10 +860,8 @@ WHAT MAKES A GOOD SCENE:
 
 DURATION ESTIMATION:
 - Estimate based on content density: dialogue, action, emotional beats
-- A scene with 4-6 dialogue exchanges + narration typically runs 60-90s
-- A scene with 8+ dialogue exchanges can run 90-120s
-- Brief transitional scenes can be 30-45s
-- Round to nearest 8s for video clip alignment
+- Report realistic durations after writing — do not compress or pad to a clock
+- Transitional scenes may be brief when the story calls for it
 
 AVOID THESE COMMON MISTAKES:
 ❌ Creating separate scenes for each line of dialogue
@@ -942,7 +944,6 @@ Generate first ${end} scenes with realistic durations.`
 function buildBatch2Prompt(treatment: any, start: number, end: number, total: number, targetDuration: number, prevScenes: any[], totalPrevScenes: number, prevDuration: number, characters: any[]) {
   const batchSize = end - start + 1
   const remainingDuration = targetDuration - prevDuration
-  const avgNeeded = Math.floor(remainingDuration / (total - totalPrevScenes))
   
   const characterList = characters.length > 0
     ? `\n\nDEFINED CHARACTERS (USE ONLY THESE):\n${characters.map((c: any) => `${c.name} (${c.role || 'character'}): ${c.description || ''}`).join('\n')}`
@@ -993,7 +994,7 @@ ${prevScenes.slice(-3).map((s: any) => `Scene ${s.sceneNumber}. ${s.heading} (${
 CONTINUATION GUIDANCE:
 - Remaining scenes: ${total - totalPrevScenes} more scenes needed (scenes ${start}-${total})
 - Remaining duration: ~${remainingDuration}s
-- Average per remaining scene: ~${avgNeeded}s (60-120s is ideal)
+- Average per remaining scene: estimate from remaining story, not a clock target
 - Total target: ${targetDuration}s
 
 IMPORTANT - SCENE STRUCTURE:
@@ -1005,10 +1006,8 @@ IMPORTANT - SCENE STRUCTURE:
 
 DURATION ESTIMATION:
 - Based on content density: dialogue exchanges, action, emotional beats
-- 4-6 dialogue exchanges + narration → typically 60-90s
-- 8+ dialogue exchanges → 90-120s  
-- Brief transitional scenes → 30-45s
-- Round to nearest 8s for video alignment
+- Report realistic durations after writing — do not compress or pad to a clock
+- Transitional scenes may be brief when the story calls for it
 
 AVOID FRAGMENTATION:
 ❌ Don't split one conversation into multiple scenes
@@ -1168,6 +1167,7 @@ ${storyBeatsText}
 ${seriesContinuityBlock ? `\n${seriesContinuityBlock}` : ''}
 
 ${buildFoundationPromptBlock(resolveVariantArtStyle(treatment), resolveVariantAspectRatio(treatment))}
+${buildScriptCraftPromptBlock(treatment)}
 
 === VISUAL FOUNDATION (MANDATORY) ===
 Art Style: ${getArtStylePresetName(resolveVariantArtStyle(treatment))}
@@ -1181,6 +1181,7 @@ ${philosophyIntro}
 Do NOT fragment the content into tiny segments. Each segment should be a COMPLETE unit.
 
 ${buildPacingPhilosophyBlock(intent as any)}
+${buildLongformScriptLengthBlock()}
 ${constraintBlock}
 
 STRUCTURE PRINCIPLES:
@@ -1188,7 +1189,6 @@ STRUCTURE PRINCIPLES:
 • Natural breaks occur at: location changes, time jumps, act turns, POV shifts
 • Dialogue-driven segments: 4–8+ exchanges when speech carries the scene
 • Visual/action-driven segments: may be mostly action beats with little or no dialogue
-• Target 60–120 seconds per segment (based on content density)
 • Do NOT create duplicate segments for the same dialogue line.
 
 VISUAL STORYTELLING (CRITICAL):
@@ -1290,7 +1290,7 @@ OUTPUT FORMAT (JSON):
 CINEMATIC BOOKENDS (MANDATORY):
 • Scene 1 MUST be the title sequence (cinematicType: "title", heading: "INT. TITLE SEQUENCE - DAY")
 • Final scene MUST be closing credits (cinematicType: "outro", heading: "INT. CREDITS - DAY")
-• Bookend scenes: characters: [], no dialogue beats, duration 15–30s (EXEMPT from 45s minimum)
+• Bookend scenes: characters: [], no dialogue beats
 • Title/credits beats[]: 2–4 action beats each — opening motif, title/credits reveal, end card
 • Optional single narration beat in title sequence only — never dialogue in bookends
 • Bookend scenes do NOT count toward the ${sceneLimit} main content segment limit
@@ -1300,12 +1300,11 @@ ${beatTimelineNarrationRules}
 • Action beats are MANDATORY for visuals without spoken lines: reactions, inserts, B-roll, camera moves, environment changes, blocking without speech
 • Use action beats to carry story when dialogue would be redundant or expositional
 • NEVER put stage directions in "line" — they belong in actionDescription
-• Rhythm rule: no more than 2 consecutive spoken beats (dialogue or narration) without an intervening action beat — BUT only when that action adds NEW visual information
+• Rhythm rule: intervening action only when that action adds NEW visual information — never to pad runtime or to break up speech on a clock
 • Intervening action beats MUST be a new shot: insert, cutaway, geography/establishing, camera move, consequence, or a silent reaction on a NON-SPEAKER
 • Do NOT insert an action beat that restates the speaker's blocking, gesture, or posture already implied by an adjacent dialogue beat — merge that physical business into the dialogue beat's staging instead of cloning it as a separate action frame
 • actionDescription format: shot type + subject + motion/mood (e.g., "Close-up: hands trembling on keyboard, shallow DOF, cool blue light")
 • One beat = one storyboard frame = one video segment — each action beat must be visually distinct from adjacent spoken beats (different subject, framing, or story information)
-• Target ~8–10 seconds per beat for video clip alignment
 • "action" beats use actionDescription only — NO spoken line, NO character field
 • "dialogue" beats must contain SPOKEN words with [emotion] tags — NO stage directions in line
 • beats[] order is the storyboard frame order (one frame per beat)
@@ -1314,8 +1313,7 @@ ${beatTimelineNarrationRules}
 IMPORTANT CONSTRAINTS:
 • Scene count is a guide, not a hard ceiling — serve the story first
 • Up to ${sceneLimit} main content segments (bookends excluded; do not over-consolidate distinct dramatic turns)
-• Most main content segments should run ~45 seconds or longer, but a deliberate short beat is fine when the moment calls for it (title/credits bookends exempt)
-• Write the COMPLETE script from beginning to end
+• Write the COMPLETE longform script from beginning to end; story quality determines length
 • Do NOT duplicate dialogue or segments
 • Ensure "action" is specific to the events of the segment, NOT repeated across segments
 • Return ONLY valid JSON - no markdown, no explanations

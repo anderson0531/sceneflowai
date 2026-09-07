@@ -5,6 +5,10 @@ import {
   DEFAULT_ASPECT_RATIO,
   mapLegacyVisualStyle,
 } from '@/lib/treatment/blueprintFoundation'
+import {
+  parseScriptCraftNotes,
+  parseScriptCraftPriorities,
+} from '@/lib/script/scriptCraftPrompt'
 
 /**
  * Film-treatment JSON sometimes uses strings for protagonist/antagonist; Gemini sometimes returns
@@ -69,6 +73,20 @@ const TreatmentSchema = z.object({
   style: z.string().optional(),
   tone_description: z.string().optional(),
   tone: z.string().optional(),
+  scriptCraft: z
+    .unknown()
+    .optional()
+    .transform((v) => {
+      const parsed = parseScriptCraftPriorities(v)
+      return parsed.length ? parsed : undefined
+    }),
+  scriptCraftNotes: z
+    .unknown()
+    .optional()
+    .transform((v) => {
+      const notes = parseScriptCraftNotes(v)
+      return notes || undefined
+    }),
   mood_references: z.array(z.string()).optional(),
   character_descriptions: z
     .array(

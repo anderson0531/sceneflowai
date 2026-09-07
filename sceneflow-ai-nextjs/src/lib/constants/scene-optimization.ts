@@ -190,7 +190,7 @@ export function getScoreBgColor(score: number): string {
 /**
  * Maximum instructions limit
  */
-export const MAX_INSTRUCTIONS = 5
+export const MAX_INSTRUCTIONS = 12
 
 /**
  * Count numbered instructions in text

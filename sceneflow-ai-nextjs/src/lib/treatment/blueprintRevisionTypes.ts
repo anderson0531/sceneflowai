@@ -74,6 +74,8 @@ export const BLUEPRINT_FIELD_LABELS: Record<string, string> = {
   character_descriptions: 'Characters',
   total_duration_seconds: 'Duration',
   estimatedDurationMinutes: 'Est. Runtime',
+  scriptCraft: 'Script Craft',
+  scriptCraftNotes: 'Script Craft Notes',
 }
 
 /**
@@ -86,7 +88,7 @@ export const MAX_BEATS = 24
 export const SECTION_FIELDS: Record<BlueprintFixSection, string[]> = {
   core: ['title', 'logline', 'genre', 'format_length', 'target_audience'],
   story: ['synopsis', 'setting', 'protagonist', 'antagonist', 'act_breakdown'],
-  tone: ['tone', 'tone_description', 'style', 'artStyle', 'aspectRatio', 'visual_style', 'themes', 'mood_references'],
+  tone: ['tone', 'tone_description', 'style', 'artStyle', 'aspectRatio', 'visual_style', 'themes', 'mood_references', 'scriptCraft', 'scriptCraftNotes'],
   beats: ['beats', 'total_duration_seconds', 'estimatedDurationMinutes'],
   characters: ['character_descriptions'],
 }
@@ -98,7 +100,7 @@ export const SECTION_FIELDS: Record<BlueprintFixSection, string[]> = {
 export const SECTION_INTENT_PATTERNS: Record<BlueprintFixSection, RegExp> = {
   characters: /character|protagonist|antagonist|arc\b|role\b|cast\b/,
   beats: /beat|pacing|act\b|structure|duration|runtime/,
-  tone: /tone|mood|theme|visual|style|art\s*style/,
+  tone: /tone|mood|theme|visual|style|art\s*style|script\s*craft|subtext/,
   core: /logline|genre|title|format|audience|length/,
   story: /synopsis|story|setting|plot|conflict|narrative/,
 }

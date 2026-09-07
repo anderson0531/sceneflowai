@@ -28,6 +28,7 @@ const MAX_PATCH_FIELD_LEN: Record<string, number> = {
   protagonist: 2000,
   antagonist: 2000,
   tone_description: 2000,
+  scriptCraftNotes: 2000,
 }
 
 /** Cap LLM patch field sizes before merge/response. */
