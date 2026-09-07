@@ -397,7 +397,7 @@ export function HeroSection() {
 
           <div className="max-w-4xl mx-auto text-center mt-12 lg:mt-14">
             <motion.div
-              className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center"
+              className="flex flex-col items-center gap-3"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.1 }}

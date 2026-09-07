@@ -59,4 +59,12 @@ describe('hero section copy and UI', () => {
     expect(hero).toContain('NotifyCapture')
     expect(hero).toContain("t('availabilityBadge')")
   })
+
+  it('stacks the availability badge under the eyebrow at every breakpoint', () => {
+    const hero = readFileSync(join(ROOT, 'src/app/components/HeroSection.tsx'), 'utf8')
+    expect(hero).toContain("t('eyebrow')")
+    expect(hero).toContain("t('availabilityBadge')")
+    expect(hero).toContain('className="flex flex-col items-center gap-3"')
+    expect(hero).not.toContain('flex flex-col items-center gap-3 sm:flex-row')
+  })
 })
