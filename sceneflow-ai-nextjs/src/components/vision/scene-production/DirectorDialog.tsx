@@ -2086,8 +2086,6 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   )
 }
 
-}
-
 export function StandardTakeDialog(props: Omit<DirectorDialogProps, 'variant'>) {
   return <DirectorDialog {...props} variant="standard" />
 }
