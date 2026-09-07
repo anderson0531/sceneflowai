@@ -33,6 +33,15 @@ import {
   isWithinResendCooldown,
   verifyConfirmToken,
 } from '@/lib/email/waitlistConfirm'
+import {
+  WAITLIST_CAMPAIGN_PATH,
+  WAITLIST_LAUNCH_SUBJECT,
+  filterWaitlistRecords,
+  getDefaultLaunchCampaign,
+  isWaitlistRecordPath,
+  listWaitlistRecords,
+  selectLaunchBatch,
+} from '@/lib/email/waitlistAdmin'
 import { LEGAL_SUPPORT_EMAIL } from '@/config/legal/legalCopy'
 import { getResendFromEmail } from '@/lib/email/resendClient'
 import { NOTIFY_COPY } from '@/config/landing/valuePropCopy'
@@ -222,5 +231,117 @@ describe('notify copy and public confirm route', () => {
       'utf8'
     )
     expect(page).toContain('confirmWaitlistEmail')
+  })
+})
+
+describe('waitlist admin helpers', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    hasBlobMock.mockReturnValue(true)
+    listMock.mockResolvedValue({ blobs: [], hasMore: false } as never)
+    fetchJsonMock.mockResolvedValue(null)
+  })
+
+  it('skips the campaign blob when listing waitlist records', async () => {
+    expect(isWaitlistRecordPath(WAITLIST_CAMPAIGN_PATH)).toBe(false)
+    listMock.mockResolvedValue({
+      blobs: [
+        { pathname: WAITLIST_CAMPAIGN_PATH, url: 'https://blob.test/campaign' },
+        { pathname: 'waitlist/launch-november-2026/aaa.json', url: 'https://blob.test/a' },
+      ],
+      hasMore: false,
+    } as never)
+    fetchJsonMock.mockImplementation(async (url: string) => {
+      if (url.endsWith('/campaign')) return { subject: 'ignore' }
+      return {
+        email: 'alex@studio.com',
+        source: 'hero',
+        createdAt: '2026-09-01T00:00:00.000Z',
+        status: 'pending',
+      }
+    })
+
+    const records = await listWaitlistRecords()
+    expect(records).toHaveLength(1)
+    expect(records[0].email).toBe('alex@studio.com')
+    expect(fetchJsonMock).not.toHaveBeenCalledWith('https://blob.test/campaign')
+  })
+
+  it('filters pending, confirmed, and notified rows', () => {
+    const records = [
+      {
+        email: 'pending@studio.com',
+        source: 'hero',
+        createdAt: '2026-09-01T00:00:00.000Z',
+        status: 'pending' as const,
+      },
+      {
+        email: 'ready@studio.com',
+        source: 'hero',
+        createdAt: '2026-09-02T00:00:00.000Z',
+        status: 'confirmed' as const,
+        confirmedAt: '2026-09-02T01:00:00.000Z',
+      },
+      {
+        email: 'sent@studio.com',
+        source: 'hero',
+        createdAt: '2026-09-03T00:00:00.000Z',
+        status: 'confirmed' as const,
+        confirmedAt: '2026-09-03T01:00:00.000Z',
+        launchNotifiedAt: '2026-09-04T00:00:00.000Z',
+      },
+    ]
+
+    expect(filterWaitlistRecords(records, 'pending').map((row) => row.email)).toEqual([
+      'pending@studio.com',
+    ])
+    expect(filterWaitlistRecords(records, 'confirmed').map((row) => row.email)).toEqual([
+      'ready@studio.com',
+      'sent@studio.com',
+    ])
+    expect(filterWaitlistRecords(records, 'notified').map((row) => row.email)).toEqual([
+      'sent@studio.com',
+    ])
+  })
+
+  it('selects only confirmed addresses that have not been notified', () => {
+    const records = [
+      {
+        email: 'pending@studio.com',
+        source: 'hero',
+        createdAt: '2026-09-01T00:00:00.000Z',
+        status: 'pending' as const,
+      },
+      {
+        email: 'already@studio.com',
+        source: 'hero',
+        createdAt: '2026-09-02T00:00:00.000Z',
+        status: 'confirmed' as const,
+        launchNotifiedAt: '2026-09-04T00:00:00.000Z',
+      },
+      {
+        email: 'ready@studio.com',
+        source: 'hero',
+        createdAt: '2026-09-03T00:00:00.000Z',
+        status: 'confirmed' as const,
+      },
+    ]
+
+    const all = selectLaunchBatch(records)
+    expect(all.recipients.map((row) => row.email)).toEqual(['ready@studio.com'])
+    expect(all.skipped).toBe(2)
+
+    const pendingOnly = selectLaunchBatch(records, { email: 'pending@studio.com' })
+    expect(pendingOnly.recipients).toEqual([])
+
+    const notifiedOnly = selectLaunchBatch(records, { email: 'already@studio.com' })
+    expect(notifiedOnly.recipients).toEqual([])
+  })
+
+  it('defaults the launch campaign subject and uses the support From', () => {
+    const campaign = getDefaultLaunchCampaign()
+    expect(campaign.subject).toBe(WAITLIST_LAUNCH_SUBJECT)
+    expect(campaign.text).toContain('November 2026')
+    expect(getResendFromEmail()).toContain('support@sceneflowai.studio')
   })
 })

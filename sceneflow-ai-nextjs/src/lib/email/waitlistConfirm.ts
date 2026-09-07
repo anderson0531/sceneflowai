@@ -20,6 +20,7 @@ export interface WaitlistRecord {
   status: WaitlistStatus
   lastSentAt?: string
   confirmedAt?: string
+  launchNotifiedAt?: string
 }
 
 export function normalizeWaitlistEmail(email: string): string {
@@ -155,6 +156,7 @@ export async function confirmWaitlistEmail(
     status: 'confirmed',
     lastSentAt: existing?.lastSentAt,
     confirmedAt: new Date(now).toISOString(),
+    launchNotifiedAt: existing?.launchNotifiedAt,
   }
   await writeWaitlistRecord(record)
   return 'confirmed'
