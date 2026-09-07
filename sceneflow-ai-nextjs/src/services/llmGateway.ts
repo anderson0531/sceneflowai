@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { generateText } from '@/lib/vertexai/gemini'
 import { SCENEFLOW_CREATIVE_SYSTEM_INSTRUCTION } from '@/lib/vertexai/safety'
 import { safeParseJsonFromText } from '@/lib/safeJson'
+import type { GeminiThinkingLevel } from '@/lib/config/modelConfig'
 
 export type Provider = 'openai' | 'gemini'
 
@@ -18,12 +19,24 @@ export interface LLMConfig {
   timeoutMs?: number
   /** Custom system instruction (default: SceneFlow creative context) */
   systemInstruction?: string
+  /**
+   * Gemini 3 thinking depth. Defaults to `low` so Flash 3.8's built-in
+   * medium thinking does not inflate latency on bulk JSON calls.
+   */
+  thinkingLevel?: GeminiThinkingLevel
 }
 
 export const JsonResponseSchema = z.string().min(2)
 
 export async function callLLM(config: LLMConfig, prompt: string): Promise<string> {
-  const { provider, model, maxOutputTokens = 8192, temperature = 0.2, timeoutMs } = config
+  const {
+    provider,
+    model,
+    maxOutputTokens = 8192,
+    temperature = 0.2,
+    timeoutMs,
+    thinkingLevel = 'low',
+  } = config
 
   if (provider === 'openai') {
     const apiKey = config.apiKey || process.env.OPENAI_API_KEY
@@ -59,6 +72,7 @@ export async function callLLM(config: LLMConfig, prompt: string): Promise<string
     topP: 0.9,
     maxOutputTokens,
     timeoutMs,
+    thinkingLevel,
     responseMimeType: 'application/json',
     systemInstruction: config.systemInstruction || 
       `${SCENEFLOW_CREATIVE_SYSTEM_INSTRUCTION}\n\nOutput Format: Return ONLY valid JSON that matches the requested schema. No prose.`

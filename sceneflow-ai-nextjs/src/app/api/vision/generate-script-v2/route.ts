@@ -1566,7 +1566,8 @@ async function callGemini(prompt: string): Promise<string> {
     model: getScriptGenerationModel(),
     temperature: 0.7,
     maxOutputTokens: 16384,  // Reduced from 32768 to lower memory footprint
-    timeoutMs: 180000        // 180s timeout for large script generation (increased from default 90s)
+    timeoutMs: 180000,       // 180s timeout for large script generation (increased from default 90s)
+    thinkingLevel: 'high',
   })
   
   const text = result.text || ''

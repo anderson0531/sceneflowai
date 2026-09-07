@@ -73,6 +73,7 @@ Example Output:
       { 
         provider: 'gemini', 
         model: getGeminiProductModel('series'),
+        thinkingLevel: 'low',
         maxOutputTokens: 1024,
         temperature: 0.8
       },

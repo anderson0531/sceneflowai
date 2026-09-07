@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { strictJsonPromptSuffix, safeParseJsonFromText } from '../../../../lib/safeJson'
 import { generateText } from '@/lib/vertexai/gemini'
+import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { localeDirective } from '@/lib/prompts/localeDirective'
 
@@ -29,8 +30,13 @@ ${localeDirective(storyLocale, { properNouns })}
 Respond with valid JSON using the same keys as the variant object (only include fields that changed).` + strictJsonPromptSuffix
 
     console.log('[Refine Treatment] Calling Vertex AI Gemini...')
-    const generatedText = await generateText(prompt, { })
-    const parsed = safeParseJsonFromText(generatedText || '{}')
+    const result = await generateText(prompt, {
+      model: getGeminiTextModel('flash'),
+      thinkingLevel: 'low',
+      temperature: 0.3,
+      responseMimeType: 'application/json',
+    })
+    const parsed = safeParseJsonFromText(result.text || '{}')
 
     return NextResponse.json({ success: true, draft: parsed })
   } catch (e) {

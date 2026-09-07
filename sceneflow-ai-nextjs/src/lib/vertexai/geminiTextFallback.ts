@@ -5,13 +5,14 @@ import {
 import { isRetryableError } from '@/lib/utils/retry'
 
 /**
- * Ordered quota / 404 fallback: workhorse → prior GA → lite → 2.5.
+ * Ordered quota / 404 fallback: Pro → workhorse → prior GA → 3.5 Flash → lite → 2.5.
  * Pro leads so heavy revise calls can step down to the GA ladder.
  */
 export const GEMINI_QUOTA_FALLBACK_CHAIN = [
   GEMINI_PRODUCT_MODELS.pro,
   GEMINI_PRODUCT_MODELS.workhorse,
   GEMINI_PRODUCT_MODELS.prior,
+  GEMINI_TEXT_MODELS_PREVIOUS['3.5-flash'],
   GEMINI_PRODUCT_MODELS.lite,
   GEMINI_TEXT_MODELS_PREVIOUS['2.5-flash'],
 ] as const

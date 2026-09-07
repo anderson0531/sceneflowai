@@ -238,6 +238,7 @@ ${languageBlock}`
   const response = await callLLM({
     provider: 'gemini',
     model: getGeminiProductModel('series'),
+    thinkingLevel: 'medium',
     maxOutputTokens: 8192, // Increased to prevent truncation on large character lists
     timeoutMs: 90000
   }, prompt)
@@ -309,6 +310,7 @@ ${languageBlock}`
       const response = await callLLM({
         provider: 'gemini',
         model: getGeminiProductModel('series'),
+        thinkingLevel: 'medium',
         maxOutputTokens: 8192, // Increased to prevent truncation
         timeoutMs: 90000
       }, prompt)

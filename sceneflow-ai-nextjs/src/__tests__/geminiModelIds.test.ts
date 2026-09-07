@@ -50,20 +50,22 @@ describe('normalizeGeminiTextModel', () => {
 
   it('leaves verified ids unchanged', () => {
     expect(normalizeGeminiTextModel('gemini-3.5-flash')).toBe('gemini-3.5-flash')
+    expect(normalizeGeminiTextModel('gemini-3.6-flash')).toBe('gemini-3.6-flash')
     expect(normalizeGeminiTextModel('gemini-2.5-flash')).toBe('gemini-2.5-flash')
   })
 })
 
 describe('Gateway-verified Gemini text defaults', () => {
-  it('uses gemini-3.6-flash as the GA workhorse', () => {
-    expect(GEMINI_PRODUCT_MODELS.workhorse).toBe('gemini-3.6-flash')
-    expect(getGeminiProductModel('series')).toBe('gemini-3.6-flash')
-    expect(getGeminiTextModel('flash')).toBe('gemini-3.6-flash')
-    expect(GEMINI_TEXT_MODELS['3-flash']).toBe('gemini-3.6-flash')
+  it('uses gemini-3.8-flash as the GA workhorse', () => {
+    expect(GEMINI_PRODUCT_MODELS.workhorse).toBe('gemini-3.8-flash')
+    expect(GEMINI_PRODUCT_MODELS.prior).toBe('gemini-3.6-flash')
+    expect(getGeminiProductModel('series')).toBe('gemini-3.8-flash')
+    expect(getGeminiTextModel('flash')).toBe('gemini-3.8-flash')
+    expect(GEMINI_TEXT_MODELS['3-flash']).toBe('gemini-3.8-flash')
     expect(GEMINI_TEXT_MODELS['3-flash-lite']).toBe('gemini-3.5-flash-lite')
     expect(getGeminiTextModel('pro')).toBe('gemini-3.1-pro-preview')
-    expect(getAudienceResonanceModel()).toBe('gemini-3.6-flash')
-    expect(getScriptGenerationModel()).toBe('gemini-3.6-flash')
+    expect(getAudienceResonanceModel()).toBe('gemini-3.8-flash')
+    expect(getScriptGenerationModel()).toBe('gemini-3.8-flash')
   })
 
   it('keeps defaults and candidates inside the Gateway snapshot', () => {
@@ -80,14 +82,17 @@ describe('Gateway-verified Gemini text defaults', () => {
 
   it('ranks candidates newest-first without invented ids', () => {
     expect(GEMINI_TEXT_MODEL_CANDIDATES[0]).toBe(GEMINI_PRODUCT_MODELS.workhorse)
+    expect(GEMINI_TEXT_MODEL_CANDIDATES).toContain('gemini-3.7-flash')
+    expect(GEMINI_TEXT_MODEL_CANDIDATES).toContain('gemini-3.6-flash')
     expect(GEMINI_TEXT_MODEL_CANDIDATES).toContain('gemini-3.5-flash')
     expect(GEMINI_TEXT_MODEL_CANDIDATES).not.toContain('gemini-3.0-flash')
     expect(GEMINI_TEXT_MODEL_CANDIDATES).not.toContain('gemini-3.1-flash-lite-preview')
   })
 
-  it('chains pro → workhorse → prior → lite → 2.5-flash', () => {
+  it('chains pro → workhorse → prior → 3.5-flash → lite → 2.5-flash', () => {
     expect([...GEMINI_QUOTA_FALLBACK_CHAIN]).toEqual([
       'gemini-3.1-pro-preview',
+      'gemini-3.8-flash',
       'gemini-3.6-flash',
       'gemini-3.5-flash',
       'gemini-3.5-flash-lite',
@@ -121,6 +126,9 @@ describe('product surface model source guard', () => {
     'src/app/api/treatment/analyze-resonance/route.ts',
     'src/lib/script/audienceResonance/scenePass.ts',
     'src/lib/script/audienceResonance/synthesisPass.ts',
+    // dialog / refine
+    'src/app/api/treatment/refine/route.ts',
+    'src/app/api/ideation/refine-treatment/route.ts',
   ]
 
   it('forbids hardcoded model: gemini-* literals on product surfaces', () => {
@@ -144,6 +152,72 @@ describe('product surface model source guard', () => {
     for (const surface of ['series', 'blueprint', 'script', 'audience_resonance'] as const) {
       expect(getGeminiProductModel(surface)).toBe(GEMINI_PRODUCT_MODELS.workhorse)
     }
+  })
+
+  it('honors GEMINI_SCRIPT_MODEL unless GEMINI_MODEL rollback is set', () => {
+    const prevScript = process.env.GEMINI_SCRIPT_MODEL
+    const prevGlobal = process.env.GEMINI_MODEL
+    try {
+      delete process.env.GEMINI_MODEL
+      process.env.GEMINI_SCRIPT_MODEL = 'gemini-3.1-pro-preview'
+      expect(getScriptGenerationModel()).toBe('gemini-3.1-pro-preview')
+      process.env.GEMINI_MODEL = 'gemini-3.5-flash'
+      expect(getScriptGenerationModel()).toBe('gemini-3.5-flash')
+    } finally {
+      if (prevScript === undefined) delete process.env.GEMINI_SCRIPT_MODEL
+      else process.env.GEMINI_SCRIPT_MODEL = prevScript
+      if (prevGlobal === undefined) delete process.env.GEMINI_MODEL
+      else process.env.GEMINI_MODEL = prevGlobal
+    }
+  })
+
+  it('uses high thinking on live script authorship and medium on the legacy 60s path', () => {
+    const v2 = readFileSync(
+      path.join(process.cwd(), 'src/app/api/vision/generate-script-v2/route.ts'),
+      'utf8'
+    )
+    const gaps = readFileSync(
+      path.join(process.cwd(), 'src/app/api/script/complete-gaps/route.ts'),
+      'utf8'
+    )
+    const v1 = readFileSync(
+      path.join(process.cwd(), 'src/app/api/vision/generate-script/route.ts'),
+      'utf8'
+    )
+    const optimize = readFileSync(
+      path.join(process.cwd(), 'src/app/api/vision/optimize-script/route.ts'),
+      'utf8'
+    )
+    expect(v2).toContain("thinkingLevel: 'high'")
+    expect(gaps).toContain("thinkingLevel: 'high'")
+    expect(v1).toContain("thinkingLevel: 'medium'")
+    expect(optimize).toContain('thinkingBudget: 0')
+    expect(optimize).not.toContain("thinkingLevel: 'high'")
+  })
+
+  it('raises dialog-edit thinking without moving Series/Blueprint refine onto Pro', () => {
+    const applyFix = readFileSync(
+      path.join(process.cwd(), 'src/app/api/series/[seriesId]/apply-fix/route.ts'),
+      'utf8'
+    )
+    const storyline = readFileSync(
+      path.join(process.cwd(), 'src/app/api/series/[seriesId]/edit-storyline/route.ts'),
+      'utf8'
+    )
+    const refine = readFileSync(
+      path.join(process.cwd(), 'src/app/api/treatment/refine/route.ts'),
+      'utf8'
+    )
+    const expertRefine = readFileSync(
+      path.join(process.cwd(), 'src/app/api/ideation/refine-treatment/route.ts'),
+      'utf8'
+    )
+    expect(applyFix).toContain("thinkingLevel: 'medium'")
+    expect(storyline).toContain("thinkingLevel: 'medium'")
+    expect(refine).toContain("thinkingLevel: 'low'")
+    expect(expertRefine).toContain("getGeminiTextModel('flash')")
+    expect(expertRefine).toContain("thinkingLevel: 'low'")
+    expect(expertRefine).not.toContain('generateText(prompt, { })')
   })
 })
 
