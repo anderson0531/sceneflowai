@@ -114,6 +114,7 @@ describe('admin waitlist routes', () => {
     expect(page).toContain('LaunchEmailCard')
     expect(card).toContain('for (let batch = 0; batch < 50; batch++)')
     expect(card).toContain('data.cursor')
+    expect(card).toContain('Preview sent')
   })
 
   it('returns the noreply From on the campaign preview', async () => {
@@ -122,8 +123,66 @@ describe('admin waitlist routes', () => {
     const data = await res.json()
     expect(res.status).toBe(200)
     expect(data.from).toContain('noreply@sceneflowai.studio')
+    expect(data.fallbackFrom).toBeTruthy()
     expect(data.confirmation.subject).toContain('Confirm')
     expect(data.confirmation.html).toContain('Life Focus, LLC')
     expect(data.campaign.subject).toContain('November 2026')
+  })
+
+  it('dry-run send-launch-all previews to the admin and does not mark waitlist notified', async () => {
+    requireAdminMock.mockResolvedValue({ authorized: true, email: 'anderson0531@gmail.com' })
+    sendLaunchMock.mockResolvedValue({
+      from: 'Brian <brian@sfai.studio>',
+      usedFallback: true,
+    })
+    listMock.mockResolvedValue([
+      {
+        email: 'pending@studio.com',
+        source: 'hero',
+        createdAt: '2026-09-01T00:00:00.000Z',
+        status: 'pending',
+      },
+      {
+        email: 'ready@studio.com',
+        source: 'hero',
+        createdAt: '2026-09-02T00:00:00.000Z',
+        status: 'confirmed',
+      },
+    ])
+
+    const res = await postAction(actionRequest({ action: 'send-launch-all', dryRun: true }))
+    const data = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(data).toMatchObject({
+      dryRun: true,
+      sent: 0,
+      previewSent: 1,
+      to: 'anderson0531@gmail.com',
+      usedFallback: true,
+      recipients: ['ready@studio.com'],
+    })
+    expect(sendLaunchMock).toHaveBeenCalledTimes(1)
+    expect(sendLaunchMock).toHaveBeenCalledWith(
+      'anderson0531@gmail.com',
+      expect.anything(),
+      { allowFallbackFrom: true }
+    )
+    expect(markNotifiedMock).not.toHaveBeenCalled()
+  })
+
+  it('returns the Resend domain error instead of a generic 502', async () => {
+    requireAdminMock.mockResolvedValue({ authorized: true, email: 'anderson0531@gmail.com' })
+    sendLaunchMock.mockRejectedValue(
+      new Error(
+        'Failed to send email (403): {"statusCode":403,"message":"The sceneflowai.studio domain is not verified. Please, add and verify your domain on https://resend.com/domains","name":"validation_error"}'
+      )
+    )
+
+    const res = await postAction(actionRequest({ action: 'test-launch' }))
+    const data = await res.json()
+
+    expect(res.status).toBe(502)
+    expect(data.error).toContain('domain is not verified')
   })
 })

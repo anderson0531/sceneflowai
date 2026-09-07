@@ -65,6 +65,7 @@ function formatDate(value?: string): string {
 export function LaunchEmailCard() {
   const [pane, setPane] = useState<Pane>('email')
   const [from, setFrom] = useState('SceneFlow AI Studio <noreply@sceneflowai.studio>')
+  const [fallbackFrom, setFallbackFrom] = useState('SceneFlow AI Studio <onboarding@resend.dev>')
   const [confirmation, setConfirmation] = useState({ subject: '', html: '', text: '' })
   const [campaign, setCampaign] = useState<LaunchCampaign>({
     subject: '',
@@ -98,11 +99,18 @@ export function LaunchEmailCard() {
     setLoadingCampaign(true)
     try {
       const response = await fetch('/api/admin/waitlist/campaign')
-      const data = await response.json()
+      const data = (await response.json()) as {
+        error?: string
+        from?: string
+        fallbackFrom?: string
+        confirmation?: { subject: string; html: string; text: string }
+        campaign?: LaunchCampaign
+      }
       if (!response.ok) throw new Error(data.error || 'Could not load campaign')
-      setFrom(data.from)
-      setConfirmation(data.confirmation)
-      setCampaign(data.campaign)
+      if (data.from) setFrom(data.from)
+      if (data.fallbackFrom?.trim()) setFallbackFrom(data.fallbackFrom)
+      if (data.confirmation) setConfirmation(data.confirmation)
+      if (data.campaign) setCampaign(data.campaign)
     } catch (error) {
       setResult({
         success: false,
@@ -186,6 +194,11 @@ export function LaunchEmailCard() {
       cursor?: string | null
       recipients?: string[]
       failed?: { email: string; error: string }[]
+      from?: string
+      usedFallback?: boolean
+      previewSent?: number
+      previewError?: string
+      to?: string
     }
     if (!response.ok) throw new Error(data.error || 'Action failed')
     return data
@@ -202,9 +215,17 @@ export function LaunchEmailCard() {
         const data = await postAction(action, extras)
         const count = Array.isArray(data.recipients) ? data.recipients.length : 0
         setDryRunCount(count + (data.remaining || 0))
+        const preview =
+          data.previewSent === 1
+            ? ` Preview sent to ${data.to || 'you'}${
+                data.usedFallback && data.from ? ` from ${data.from}` : ''
+              }.`
+            : data.previewError
+              ? ` Preview to you failed: ${data.previewError}`
+              : ''
         setResult({
-          success: true,
-          message: `Dry run: ${count + (data.remaining || 0)} confirmed recipient(s) would be emailed. Type SEND to send.`,
+          success: !data.previewError,
+          message: `Dry run: ${count + (data.remaining || 0)} confirmed recipient(s) would be emailed.${preview} Type SEND to send.`,
         })
         return
       }
@@ -214,20 +235,27 @@ export function LaunchEmailCard() {
         let sent = 0
         let skipped = 0
         let failed = 0
+        let failDetail = ''
+        let usedFallback = false
+        let fromUsed = ''
         for (let batch = 0; batch < 50; batch++) {
           const data = await postAction(action, cursor ? { cursor } : {})
           sent += data.sent || 0
           skipped = data.skipped ?? skipped
           failed += data.failed?.length || 0
+          if (!failDetail && data.failed?.[0]?.error) failDetail = data.failed[0].error
+          if (data.usedFallback) usedFallback = true
+          if (data.from) fromUsed = data.from
           const next = data.remaining && data.cursor ? data.cursor : undefined
           if (!next) break
           cursor = next
         }
+        const fallbackNote = usedFallback && fromUsed ? ` Sent from ${fromUsed} because the official domain is not verified in Resend.` : ''
         setResult({
           success: failed === 0,
           message: `Done. Sent ${sent}${skipped ? `, skipped ${skipped}` : ''}${
             failed ? `, failed ${failed}` : ''
-          }.`,
+          }.${failDetail ? ` ${failDetail}` : ''}${fallbackNote}`,
         })
         if (pane === 'waitlist') await loadWaitlist(filter)
         return
@@ -236,6 +264,10 @@ export function LaunchEmailCard() {
       const data = await postAction(action, extras)
       const sent = typeof data.sent === 'number' ? data.sent : 0
       const skipped = typeof data.skipped === 'number' ? data.skipped : 0
+      const fallbackNote =
+        data.usedFallback && data.from
+          ? ` Sent from ${data.from} because the official domain is not verified in Resend.`
+          : ''
       setResult({
         success: Boolean(data.ok),
         message:
@@ -249,7 +281,7 @@ export function LaunchEmailCard() {
                   ? 'Waitlist record not found.'
                   : data.reason === 'unsubscribed'
                     ? `${extras.email || 'This address'} has unsubscribed.`
-                    : `Done. Sent ${sent}${skipped ? `, skipped ${skipped}` : ''}.`,
+                    : `Done. Sent ${sent}${skipped ? `, skipped ${skipped}` : ''}.${fallbackNote}`,
       })
       if (pane === 'waitlist') await loadWaitlist(filter)
     } catch (error) {
@@ -346,7 +378,9 @@ export function LaunchEmailCard() {
 
       {pane === 'email' ? (
         <div className="space-y-5">
-          <p className="text-xs text-gray-500">From {from}</p>
+          <p className="text-xs text-gray-500">
+            From {from}. If Resend rejects that domain, admin previews retry from {fallbackFrom}.
+          </p>
 
           <div className="flex gap-2">
             {(['launch', 'confirm'] as const).map((kind) => (

@@ -258,11 +258,12 @@ export function buildConfirmationPreview(now = Date.now()): {
 
 export async function sendLaunchNotification(
   email: string,
-  campaign: LaunchCampaign
-): Promise<void> {
+  campaign: LaunchCampaign,
+  options: { allowFallbackFrom?: boolean } = {}
+): Promise<{ from: string; usedFallback: boolean }> {
   const { pageUrl, apiUrl } = buildUnsubscribeUrls(email)
   const rendered = renderLaunchCampaign(campaign, pageUrl)
-  await sendEmail({
+  return sendEmail({
     to: normalizeWaitlistEmail(email),
     subject: campaign.subject,
     html: rendered.html,
@@ -270,6 +271,7 @@ export async function sendLaunchNotification(
     from: getResendFromEmail(),
     replyTo: LEGAL_SUPPORT_EMAIL,
     headers: listUnsubscribeHeaders(apiUrl),
+    allowFallbackFrom: options.allowFallbackFrom,
   })
 }
 

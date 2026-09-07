@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server'
 import { requireAdminSession } from '@/lib/admin/requireAdmin'
-import { getResendFromEmail } from '@/lib/email/resendClient'
+import {
+  formatResendError,
+  getResendFallbackFromEmail,
+  getResendFromEmail,
+} from '@/lib/email/resendClient'
 import { normalizeWaitlistEmail, readWaitlistRecord } from '@/lib/email/waitlistConfirm'
 import {
   listWaitlistRecords,
@@ -55,15 +59,29 @@ export async function POST(request: Request) {
   try {
     if (body.action === 'test-launch') {
       const campaign = await readLaunchCampaign()
-      if (!dryRun) {
-        await sendLaunchNotification(adminEmail, campaign)
+      if (dryRun) {
+        return NextResponse.json({
+          ok: true,
+          action: body.action,
+          dryRun: true,
+          from: getResendFromEmail(),
+          fallbackFrom: getResendFallbackFromEmail(),
+          sent: 0,
+          to: adminEmail,
+        })
       }
+      const delivery = await sendLaunchNotification(adminEmail, campaign, {
+        allowFallbackFrom: true,
+      })
       return NextResponse.json({
         ok: true,
         action: body.action,
-        dryRun,
-        from: getResendFromEmail(),
-        sent: dryRun ? 0 : 1,
+        dryRun: false,
+        from: delivery.from,
+        officialFrom: getResendFromEmail(),
+        fallbackFrom: getResendFallbackFromEmail(),
+        usedFallback: delivery.usedFallback,
+        sent: 1,
         to: adminEmail,
       })
     }
@@ -133,13 +151,35 @@ export async function POST(request: Request) {
       })
     }
 
+    const campaign = await readLaunchCampaign()
+
     if (dryRun) {
+      let previewFrom = getResendFromEmail()
+      let usedFallback = false
+      let previewSent = 0
+      let previewError: string | undefined
+      try {
+        const preview = await sendLaunchNotification(adminEmail, campaign, {
+          allowFallbackFrom: true,
+        })
+        previewFrom = preview.from
+        usedFallback = preview.usedFallback
+        previewSent = 1
+      } catch (error) {
+        previewError = formatResendError(error)
+      }
       return NextResponse.json({
-        ok: true,
+        ok: !previewError,
         action: body.action,
         dryRun: true,
-        from: getResendFromEmail(),
+        from: previewFrom,
+        officialFrom: getResendFromEmail(),
+        fallbackFrom: getResendFallbackFromEmail(),
+        usedFallback,
         sent: 0,
+        previewSent,
+        previewError,
+        to: adminEmail,
         skipped: batch.skipped,
         remaining: batch.remaining,
         cursor: batch.nextCursor,
@@ -147,19 +187,24 @@ export async function POST(request: Request) {
       })
     }
 
-    const campaign = await readLaunchCampaign()
     const sent: string[] = []
     const failed: { email: string; error: string }[] = []
+    let usedFallback = false
+    let fromUsed = getResendFromEmail()
 
     for (const record of batch.recipients) {
       try {
-        await sendLaunchNotification(record.email, campaign)
+        const delivery = await sendLaunchNotification(record.email, campaign, {
+          allowFallbackFrom: true,
+        })
         await markLaunchNotified(record)
         sent.push(record.email)
+        fromUsed = delivery.from
+        usedFallback = usedFallback || delivery.usedFallback
       } catch (error) {
         failed.push({
           email: record.email,
-          error: error instanceof Error ? error.message : 'Send failed',
+          error: formatResendError(error),
         })
       }
     }
@@ -168,7 +213,10 @@ export async function POST(request: Request) {
       ok: failed.length === 0,
       action: body.action,
       dryRun: false,
-      from: getResendFromEmail(),
+      from: fromUsed,
+      officialFrom: getResendFromEmail(),
+      fallbackFrom: getResendFallbackFromEmail(),
+      usedFallback,
       sent: sent.length,
       skipped: batch.skipped,
       remaining: batch.remaining,
@@ -179,7 +227,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('[admin/waitlist/actions] failed', error)
     return NextResponse.json(
-      { error: 'Could not complete the waitlist action.' },
+      { error: formatResendError(error) },
       { status: 502 }
     )
   }

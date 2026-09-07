@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireAdminSession } from '@/lib/admin/requireAdmin'
-import { getResendFromEmail } from '@/lib/email/resendClient'
+import { getResendFallbackFromEmail, getResendFromEmail } from '@/lib/email/resendClient'
 import {
   buildConfirmationPreview,
   readLaunchCampaign,
@@ -22,6 +22,7 @@ export async function GET() {
     return NextResponse.json({
       ok: true,
       from: getResendFromEmail(),
+      fallbackFrom: getResendFallbackFromEmail(),
       confirmation: buildConfirmationPreview(),
       campaign,
     })
