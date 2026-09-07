@@ -1,4 +1,5 @@
 import { BRAND } from '@/config/brand'
+import { LEGAL_SUPPORT_EMAIL } from '@/config/legal/legalCopy'
 
 export interface SendEmailOptions {
   to: string | string[]
@@ -7,6 +8,14 @@ export interface SendEmailOptions {
   text?: string
   replyTo?: string | string[]
   from?: string
+  headers?: Record<string, string>
+  /** Retry with a verified Resend sender when the official domain is rejected. */
+  allowFallbackFrom?: boolean
+}
+
+export interface SendEmailResult {
+  from: string
+  usedFallback: boolean
 }
 
 export function getAppBaseUrl(): string {
@@ -21,49 +30,122 @@ export function getBrandBadgeUrl(): string {
   return `${getAppBaseUrl()}${BRAND.badge.src}`
 }
 
-const DEFAULT_RESEND_FROM = 'SceneFlow AI Studio <noreply@sceneflowai.studio>'
+export const DEFAULT_RESEND_FROM = `SceneFlow AI Studio <${LEGAL_SUPPORT_EMAIL}>`
+export const RESEND_ONBOARDING_FROM = 'SceneFlow AI Studio <onboarding@resend.dev>'
 
-/** Resend From header; prefers env when it uses noreply@sceneflowai.studio, else canonical default. */
+function fromAddressKey(from: string): string {
+  const match = from.match(/<([^>]+)>/)
+  return (match?.[1] ?? from).trim().toLowerCase()
+}
+
+/** Resend From header. Locked to support@sceneflowai.studio; ignores other env senders. */
 export function getResendFromEmail(): string {
   const configured = process.env.RESEND_FROM_EMAIL?.trim()
-  if (configured?.includes('noreply@sceneflowai.studio')) return configured
+  if (configured && fromAddressKey(configured) === LEGAL_SUPPORT_EMAIL) {
+    return configured
+  }
   return DEFAULT_RESEND_FROM
 }
 
-export async function sendEmail(options: SendEmailOptions): Promise<void> {
+/**
+ * Verified-domain sender used only when the official From is rejected.
+ * Prefers RESEND_FALLBACK_FROM, then a non-support RESEND_FROM_EMAIL, then Resend's onboarding address.
+ */
+export function getResendFallbackFromEmail(): string {
+  const official = fromAddressKey(getResendFromEmail())
+  const candidates = [
+    process.env.RESEND_FALLBACK_FROM?.trim(),
+    process.env.RESEND_FROM_EMAIL?.trim(),
+    RESEND_ONBOARDING_FROM,
+  ]
+  for (const candidate of candidates) {
+    if (candidate && fromAddressKey(candidate) !== official) {
+      return candidate
+    }
+  }
+  return RESEND_ONBOARDING_FROM
+}
+
+export function isUnverifiedDomainError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error)
+  return /domain is not verified/i.test(message)
+}
+
+export function formatResendError(error: unknown): string {
+  const raw = error instanceof Error ? error.message : String(error)
+  const start = raw.indexOf('{')
+  if (start >= 0) {
+    try {
+      const parsed = JSON.parse(raw.slice(start)) as { message?: string }
+      if (typeof parsed.message === 'string' && parsed.message.trim()) {
+        return parsed.message
+      }
+    } catch {
+      // keep the raw send error
+    }
+  }
+  return raw
+}
+
+async function postResendEmail(
+  apiKey: string,
+  payload: Record<string, unknown>
+): Promise<void> {
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text()
+    throw new Error(`Failed to send email (${response.status}): ${errorBody}`)
+  }
+}
+
+export async function sendEmail(options: SendEmailOptions): Promise<SendEmailResult> {
   const resendApiKey = process.env.RESEND_API_KEY
-  const resendFrom = options.from?.trim() || getResendFromEmail()
+  const officialFrom = options.from?.trim() || getResendFromEmail()
 
   if (!resendApiKey) {
     throw new Error('Email delivery is not configured. Set RESEND_API_KEY.')
   }
 
   const to = Array.isArray(options.to) ? options.to : [options.to]
+  const payload = {
+    from: officialFrom,
+    to,
+    subject: options.subject,
+    html: options.html,
+    text: options.text,
+    ...(options.replyTo
+      ? {
+          reply_to: Array.isArray(options.replyTo) && options.replyTo.length === 1
+            ? options.replyTo[0]
+            : options.replyTo,
+        }
+      : {}),
+    ...(options.headers && Object.keys(options.headers).length > 0
+      ? { headers: options.headers }
+      : {}),
+  }
 
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${resendApiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: resendFrom,
-      to,
-      subject: options.subject,
-      html: options.html,
-      text: options.text,
-      ...(options.replyTo
-        ? {
-            reply_to: Array.isArray(options.replyTo) && options.replyTo.length === 1
-              ? options.replyTo[0]
-              : options.replyTo,
-          }
-        : {}),
-    }),
-  })
-
-  if (!response.ok) {
-    const errorBody = await response.text()
-    throw new Error(`Failed to send email (${response.status}): ${errorBody}`)
+  try {
+    await postResendEmail(resendApiKey, payload)
+    return { from: officialFrom, usedFallback: false }
+  } catch (error) {
+    const fallbackFrom = getResendFallbackFromEmail()
+    if (
+      !options.allowFallbackFrom ||
+      !isUnverifiedDomainError(error) ||
+      fromAddressKey(fallbackFrom) === fromAddressKey(officialFrom)
+    ) {
+      throw error
+    }
+    await postResendEmail(resendApiKey, { ...payload, from: fallbackFrom })
+    return { from: fallbackFrom, usedFallback: true }
   }
 }

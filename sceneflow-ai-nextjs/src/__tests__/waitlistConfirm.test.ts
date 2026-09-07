@@ -30,9 +30,22 @@ import {
   buildConfirmUrl,
   confirmWaitlistEmail,
   createConfirmToken,
+  createUnsubscribeToken,
   isWithinResendCooldown,
+  unsubscribeWaitlistEmail,
   verifyConfirmToken,
+  verifyUnsubscribeToken,
 } from '@/lib/email/waitlistConfirm'
+import {
+  WAITLIST_CAMPAIGN_PATH,
+  WAITLIST_LAUNCH_SUBJECT,
+  filterWaitlistRecords,
+  getDefaultLaunchCampaign,
+  isWaitlistRecordPath,
+  listWaitlistRecords,
+  nextLaunchAllCursor,
+  selectLaunchBatch,
+} from '@/lib/email/waitlistAdmin'
 import { LEGAL_SUPPORT_EMAIL } from '@/config/legal/legalCopy'
 import { getResendFromEmail } from '@/lib/email/resendClient'
 import { NOTIFY_COPY } from '@/config/landing/valuePropCopy'
@@ -112,6 +125,7 @@ describe('POST /api/waitlist', () => {
 
     expect(res.status).toBe(200)
     expect(data.ok).toBe(true)
+    expect(data.emailed).toBe(true)
     expect(sendEmailMock).toHaveBeenCalledTimes(1)
 
     const payload = sendEmailMock.mock.calls[0][0]
@@ -120,7 +134,13 @@ describe('POST /api/waitlist', () => {
     expect(payload.replyTo).toBe(LEGAL_SUPPORT_EMAIL)
     expect(String(payload.html)).toContain(WAITLIST_CONFIRM_PATH)
     expect(String(payload.text)).toContain(WAITLIST_CONFIRM_PATH)
-    expect(getResendFromEmail()).toContain('noreply@sceneflowai.studio')
+    expect(payload.from).toContain('support@sceneflowai.studio')
+    expect(payload.headers?.['List-Unsubscribe']).toContain('/api/waitlist/unsubscribe')
+    expect(payload.headers?.['List-Unsubscribe-Post']).toBe('List-Unsubscribe=One-Click')
+    expect(String(payload.html)).toContain('Life Focus, LLC')
+    expect(String(payload.html)).toContain('/brand/sf-badge.png')
+    expect(String(payload.text)).toContain('2900 W Anderson Ln')
+    expect(getResendFromEmail()).toContain('support@sceneflowai.studio')
   })
 
   it('skips a second send during cooldown', async () => {
@@ -157,31 +177,16 @@ describe('POST /api/waitlist', () => {
     expect(sendEmailMock).not.toHaveBeenCalled()
   })
 
-  it('retries preview sends from Resend onboarding when the studio domain is unverified', async () => {
-    vi.stubEnv('VERCEL_ENV', 'preview')
-    sendEmailMock
-      .mockRejectedValueOnce(
-        new Error(
-          'Failed to send email (403): {"message":"The sceneflowai.studio domain is not verified."}'
-        )
-      )
-      .mockResolvedValueOnce(undefined)
-
-    const res = await POST(
-      jsonRequest({ email: 'support@sceneflowai.studio', source: 'confirm-test' })
+  it('returns 200 emailed:false after persist when Resend rejects the support From', async () => {
+    sendEmailMock.mockRejectedValue(
+      new Error('Failed to send email (403): {"message":"The sceneflowai.studio domain is not verified."}')
     )
-    expect(res.status).toBe(200)
-    expect(sendEmailMock).toHaveBeenCalledTimes(2)
-    expect(sendEmailMock.mock.calls[1][0].from).toContain('onboarding@resend.dev')
-    vi.unstubAllEnvs()
-  })
-
-  it('returns 502 when Resend fails', async () => {
-    sendEmailMock.mockRejectedValueOnce(new Error('Failed to send email'))
     const res = await POST(jsonRequest({ email: 'support@sceneflowai.studio' }))
     const data = await res.json()
-    expect(res.status).toBe(502)
-    expect(data.code).toBe('email_send_failed')
+    expect(res.status).toBe(200)
+    expect(data.ok).toBe(true)
+    expect(data.emailed).toBe(false)
+    expect(putMock).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -235,5 +240,196 @@ describe('notify copy and public confirm route', () => {
       'utf8'
     )
     expect(page).toContain('confirmWaitlistEmail')
+  })
+
+  it('keeps /notify/unsubscribe off the app chrome', () => {
+    expect(isPublicRoute('/notify/unsubscribe')).toBe(true)
+    const page = readFileSync(join(process.cwd(), 'src/app/notify/unsubscribe/page.tsx'), 'utf8')
+    expect(page).toContain('unsubscribeWaitlistEmail')
+  })
+})
+
+describe('waitlist unsubscribe', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    hasBlobMock.mockReturnValue(true)
+    listMock.mockResolvedValue({ blobs: [] } as never)
+    putMock.mockResolvedValue({} as never)
+    fetchJsonMock.mockResolvedValue(null)
+  })
+
+  it('accepts a valid HMAC token and rejects a tampered one', () => {
+    const email = 'alex@studio.com'
+    const token = createUnsubscribeToken(email)
+    expect(verifyUnsubscribeToken(email, token)).toBe(true)
+    expect(verifyUnsubscribeToken(email, 'deadbeef')).toBe(false)
+    expect(verifyUnsubscribeToken('other@studio.com', token)).toBe(false)
+  })
+
+  it('marks a valid token as unsubscribed', async () => {
+    const email = 'alex@studio.com'
+    const token = createUnsubscribeToken(email)
+    await expect(unsubscribeWaitlistEmail(email, token)).resolves.toBe('unsubscribed')
+    const body = JSON.parse(String(putMock.mock.calls[0][1]))
+    expect(body.unsubscribedAt).toBeTruthy()
+  })
+})
+
+describe('waitlist admin helpers', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    hasBlobMock.mockReturnValue(true)
+    listMock.mockResolvedValue({ blobs: [], hasMore: false } as never)
+    fetchJsonMock.mockResolvedValue(null)
+  })
+
+  it('skips the campaign blob when listing waitlist records', async () => {
+    expect(isWaitlistRecordPath(WAITLIST_CAMPAIGN_PATH)).toBe(false)
+    listMock.mockResolvedValue({
+      blobs: [
+        { pathname: WAITLIST_CAMPAIGN_PATH, url: 'https://blob.test/campaign' },
+        { pathname: 'waitlist/launch-november-2026/aaa.json', url: 'https://blob.test/a' },
+      ],
+      hasMore: false,
+    } as never)
+    fetchJsonMock.mockImplementation(async (url: string) => {
+      if (url.endsWith('/campaign')) return { subject: 'ignore' }
+      return {
+        email: 'alex@studio.com',
+        source: 'hero',
+        createdAt: '2026-09-01T00:00:00.000Z',
+        status: 'pending',
+      }
+    })
+
+    const records = await listWaitlistRecords()
+    expect(records).toHaveLength(1)
+    expect(records[0].email).toBe('alex@studio.com')
+    expect(fetchJsonMock).not.toHaveBeenCalledWith('https://blob.test/campaign')
+  })
+
+  it('filters pending, confirmed, and notified rows', () => {
+    const records = [
+      {
+        email: 'pending@studio.com',
+        source: 'hero',
+        createdAt: '2026-09-01T00:00:00.000Z',
+        status: 'pending' as const,
+      },
+      {
+        email: 'ready@studio.com',
+        source: 'hero',
+        createdAt: '2026-09-02T00:00:00.000Z',
+        status: 'confirmed' as const,
+        confirmedAt: '2026-09-02T01:00:00.000Z',
+      },
+      {
+        email: 'sent@studio.com',
+        source: 'hero',
+        createdAt: '2026-09-03T00:00:00.000Z',
+        status: 'confirmed' as const,
+        confirmedAt: '2026-09-03T01:00:00.000Z',
+        launchNotifiedAt: '2026-09-04T00:00:00.000Z',
+      },
+    ]
+
+    expect(filterWaitlistRecords(records, 'pending').map((row) => row.email)).toEqual([
+      'pending@studio.com',
+    ])
+    expect(filterWaitlistRecords(records, 'confirmed').map((row) => row.email)).toEqual([
+      'ready@studio.com',
+      'sent@studio.com',
+    ])
+    expect(filterWaitlistRecords(records, 'notified').map((row) => row.email)).toEqual([
+      'sent@studio.com',
+    ])
+  })
+
+  it('selects only confirmed addresses that have not been notified', () => {
+    const records = [
+      {
+        email: 'pending@studio.com',
+        source: 'hero',
+        createdAt: '2026-09-01T00:00:00.000Z',
+        status: 'pending' as const,
+      },
+      {
+        email: 'already@studio.com',
+        source: 'hero',
+        createdAt: '2026-09-02T00:00:00.000Z',
+        status: 'confirmed' as const,
+        launchNotifiedAt: '2026-09-04T00:00:00.000Z',
+      },
+      {
+        email: 'ready@studio.com',
+        source: 'hero',
+        createdAt: '2026-09-03T00:00:00.000Z',
+        status: 'confirmed' as const,
+      },
+    ]
+
+    const all = selectLaunchBatch(records)
+    expect(all.recipients.map((row) => row.email)).toEqual(['ready@studio.com'])
+    expect(all.skipped).toBe(2)
+
+    const pendingOnly = selectLaunchBatch(records, { email: 'pending@studio.com' })
+    expect(pendingOnly.recipients).toEqual([])
+
+    const notifiedOnly = selectLaunchBatch(records, { email: 'already@studio.com' })
+    expect(notifiedOnly.recipients).toEqual([])
+  })
+
+  it('pages launch send-all so later batches are not dropped', () => {
+    const records = ['a@studio.com', 'b@studio.com', 'c@studio.com'].map((email) => ({
+      email,
+      source: 'hero',
+      createdAt: '2026-09-01T00:00:00.000Z',
+      status: 'confirmed' as const,
+    }))
+    const first = selectLaunchBatch(records, { limit: 1 })
+    expect(first.recipients.map((row) => row.email)).toEqual(['a@studio.com'])
+    expect(first.remaining).toBe(2)
+    expect(nextLaunchAllCursor(first.remaining, first.nextCursor)).toBe('a@studio.com')
+
+    const second = selectLaunchBatch(records, { cursor: first.nextCursor!, limit: 1 })
+    expect(second.recipients.map((row) => row.email)).toEqual(['b@studio.com'])
+    expect(nextLaunchAllCursor(second.remaining, second.nextCursor)).toBe('b@studio.com')
+
+    const third = selectLaunchBatch(records, { cursor: second.nextCursor!, limit: 1 })
+    expect(third.recipients.map((row) => row.email)).toEqual(['c@studio.com'])
+    expect(third.remaining).toBe(0)
+    expect(nextLaunchAllCursor(third.remaining, third.nextCursor)).toBeUndefined()
+  })
+
+  it('defaults the launch campaign subject and uses the support From', () => {
+    const campaign = getDefaultLaunchCampaign()
+    expect(campaign.subject).toBe(WAITLIST_LAUNCH_SUBJECT)
+    expect(campaign.text).toContain('November 2026')
+    expect(campaign.html).toContain('<html')
+    expect(campaign.html).toContain('Life Focus, LLC')
+    expect(getResendFromEmail()).toContain('support@sceneflowai.studio')
+  })
+
+  it('skips unsubscribed addresses on launch send', () => {
+    const records = [
+      {
+        email: 'ready@studio.com',
+        source: 'hero',
+        createdAt: '2026-09-01T00:00:00.000Z',
+        status: 'confirmed' as const,
+      },
+      {
+        email: 'opted-out@studio.com',
+        source: 'hero',
+        createdAt: '2026-09-02T00:00:00.000Z',
+        status: 'confirmed' as const,
+        unsubscribedAt: '2026-09-03T00:00:00.000Z',
+      },
+    ]
+    const batch = selectLaunchBatch(records)
+    expect(batch.recipients.map((row) => row.email)).toEqual(['ready@studio.com'])
+    expect(filterWaitlistRecords(records, 'unsubscribed').map((row) => row.email)).toEqual([
+      'opted-out@studio.com',
+    ])
   })
 })

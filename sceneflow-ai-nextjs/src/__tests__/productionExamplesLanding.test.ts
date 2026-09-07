@@ -15,6 +15,8 @@ import {
   hasProductionShowcaseVideo,
 } from '@/config/landing/productionShowcaseVideos'
 import { VIDEO_LOCALE_ORDER } from '@/config/landing/videoLocales'
+import { PRODUCTION_SHOWCASE_SCREENING_SLUGS } from '@/config/landing/productionShowcaseScreening'
+import { LANDING_SAMPLE } from '@/config/landingSamples'
 
 const ROOT = path.resolve(__dirname, '../..')
 
@@ -445,6 +447,19 @@ describe('Video player watermark', () => {
         'StudioVideoWatermark'
       )
     }
+  })
+})
+
+describe('Production showcase screening embeds', () => {
+  it('does not fetch the expired White House Waltz share', () => {
+    expect(PRODUCTION_SHOWCASE_SCREENING_SLUGS.drama).toBe('')
+    expect(LANDING_SAMPLE.storyboardShareSlug).toBe('')
+  })
+
+  it('falls back to the placeholder when a configured share is gone', () => {
+    const preview = readSource('src/components/landing/ScreeningRoomPreview.tsx')
+    expect(preview).toContain('onNotFound')
+    expect(preview).toContain('shareMissing')
   })
 })
 

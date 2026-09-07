@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { ExternalLink, Play } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { StoryboardEmbedPlayer } from '@/components/vision/StoryboardEmbedPlayer'
@@ -11,18 +12,26 @@ interface ScreeningRoomPreviewProps {
 
 export function ScreeningRoomPreview({ previewTitle, embedSlug }: ScreeningRoomPreviewProps) {
   const t = useTranslations('screeningRoom')
-  const screeningHref = embedSlug ? `/${encodeURIComponent(embedSlug.trim())}` : null
+  const [shareMissing, setShareMissing] = useState(false)
+
+  useEffect(() => {
+    setShareMissing(false)
+  }, [embedSlug])
+
+  const activeSlug = shareMissing ? '' : embedSlug?.trim() || ''
+  const screeningHref = activeSlug ? `/${encodeURIComponent(activeSlug)}` : null
 
   return (
     <div className="w-full">
-      {embedSlug ? (
+      {activeSlug ? (
         <div className="space-y-2 w-full">
           <div className="w-full rounded-xl border border-slate-700/50 overflow-hidden">
             <StoryboardEmbedPlayer
-              slug={embedSlug}
+              slug={activeSlug}
               fullWidthEmbed
               showExpandLink={false}
               minHeight="min-h-[360px] sm:min-h-[420px]"
+              onNotFound={() => setShareMissing(true)}
             />
           </div>
           {screeningHref && (
