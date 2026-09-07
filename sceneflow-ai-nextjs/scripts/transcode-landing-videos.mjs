@@ -41,7 +41,7 @@ const BLOB_PATHS = {
   hi: 'Hero%20Video%20(Hindi).mp4',
   zh: 'Hero%20Video%20(Chinese).mp4',
   ar: 'Hero%20Video%20(Arabic).mp4',
-  th: 'Hero%20Video%20(Thai)%20.mp4',
+  th: 'Hero%20Video%20(Thai).mp4',
 }
 
 function getStorage() {

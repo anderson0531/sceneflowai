@@ -38,7 +38,7 @@ const HERO_MASTERS = {
   hi: 'Hero Video (Hindi).mp4',
   zh: 'Hero Video (Chinese).mp4',
   ar: 'Hero Video (Arabic).mp4',
-  th: 'Hero Video (Thai) .mp4',
+  th: 'Hero Video (Thai).mp4',
 }
 
 const ALL_LOCALES = Object.keys(HERO_MASTERS)

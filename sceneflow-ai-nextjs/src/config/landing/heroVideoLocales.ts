@@ -33,20 +33,9 @@ export const LANDING_VIDEO_CDN_HOST = (
 
 const BLOB_HOST = HERO_VIDEO_BLOB_HOST
 
-/** Blob CDN poster (~110 KB) — loads immediately on mobile while video buffers. */
+/** Site-served poster regenerated from the current Blob master. */
 export function getHeroVideoPosterUrl(locale: HeroVideoLocaleId): string {
-  if (
-    locale === 'en' ||
-    locale === 'es' ||
-    locale === 'pt' ||
-    locale === 'hi' ||
-    locale === 'zh' ||
-    locale === 'ar'
-  ) {
-    // Regenerated from the current Blob master — site-served for instant deploy parity
-    return getHeroVideoPosterPath(locale)
-  }
-  return `${BLOB_HOST}/landing/hero/sceneflow-hero-${locale}-poster.jpg`
+  return getHeroVideoPosterPath(locale)
 }
 
 /** Site-served poster path (regenerated via regenerate-hero-posters.mjs). */
@@ -68,7 +57,7 @@ export const HERO_VIDEO_BLOB_PATHS: Record<HeroVideoLocaleId, string> = {
   hi: 'Hero Video (Hindi).mp4',
   zh: 'Hero Video (Chinese).mp4',
   ar: 'Hero Video (Arabic).mp4',
-  th: 'Hero Video (Thai) .mp4',
+  th: 'Hero Video (Thai).mp4',
 }
 
 function heroSrc(path: string): string {

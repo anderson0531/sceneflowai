@@ -56,7 +56,7 @@ export async function GET() {
       hindiBlob: 'Hero Video (Hindi).mp4',
       chineseBlob: 'Hero Video (Chinese).mp4',
       arabicBlob: 'Hero Video (Arabic).mp4',
-      thaiBlob: 'Hero Video (Thai) .mp4',
+      thaiBlob: 'Hero Video (Thai).mp4',
     },
   }
 
