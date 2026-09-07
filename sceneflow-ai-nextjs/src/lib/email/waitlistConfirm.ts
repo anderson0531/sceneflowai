@@ -122,13 +122,28 @@ export function buildWaitlistConfirmationContent(confirmUrl: string): { html: st
 
 export async function sendWaitlistConfirmation(email: string, confirmUrl: string): Promise<void> {
   const { html, text } = buildWaitlistConfirmationContent(confirmUrl)
-  await sendEmail({
+  const payload = {
     to: normalizeWaitlistEmail(email),
     subject: WAITLIST_CONFIRM_SUBJECT,
     html,
     text,
     replyTo: LEGAL_SUPPORT_EMAIL,
-  })
+  }
+  try {
+    await sendEmail(payload)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    // Preview keys cannot send from an unverified custom domain. Resend's
+    // onboarding sender still delivers so we can validate the confirmation flow.
+    if (process.env.VERCEL_ENV === 'preview' && message.includes('domain is not verified')) {
+      await sendEmail({
+        ...payload,
+        from: 'SceneFlow AI Studio <beth.t@example.com>',
+      })
+      return
+    }
+    throw error
+  }
 }
 
 export type ConfirmWaitlistResult = 'confirmed' | 'already' | 'expired' | 'invalid'

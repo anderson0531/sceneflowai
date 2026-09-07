@@ -90,6 +90,7 @@ describe('waitlist confirmation tokens', () => {
 describe('POST /api/waitlist', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.unstubAllEnvs()
     hasBlobMock.mockReturnValue(true)
     listMock.mockResolvedValue({ blobs: [] } as never)
     putMock.mockResolvedValue({} as never)
@@ -154,6 +155,25 @@ describe('POST /api/waitlist', () => {
     const res = await POST(jsonRequest({ email: 'support@sceneflowai.studio' }))
     expect(res.status).toBe(200)
     expect(sendEmailMock).not.toHaveBeenCalled()
+  })
+
+  it('retries preview sends from Resend onboarding when the studio domain is unverified', async () => {
+    vi.stubEnv('VERCEL_ENV', 'preview')
+    sendEmailMock
+      .mockRejectedValueOnce(
+        new Error(
+          'Failed to send email (403): {"message":"The sceneflowai.studio domain is not verified."}'
+        )
+      )
+      .mockResolvedValueOnce(undefined)
+
+    const res = await POST(
+      jsonRequest({ email: 'support@sceneflowai.studio', source: 'confirm-test' })
+    )
+    expect(res.status).toBe(200)
+    expect(sendEmailMock).toHaveBeenCalledTimes(2)
+    expect(sendEmailMock.mock.calls[1][0].from).toContain('beth.t@example.com')
+    vi.unstubAllEnvs()
   })
 
   it('returns 502 when Resend fails', async () => {
