@@ -545,7 +545,7 @@ function ProductionTargetSelector({
               : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/60',
             !videoGenerationAvailable && 'opacity-50 cursor-not-allowed'
           )}
-          title={!videoGenerationAvailable ? 'Generate segment videos to enable Video output.' : undefined}
+          title={!videoGenerationAvailable ? 'Generate beat videos to enable Video output.' : undefined}
         >
           <Video className="w-3.5 h-3.5" />
           Video
@@ -2224,7 +2224,7 @@ function DialogueLineControls({
         <span className="text-[10px] text-gray-500">{dialogueClips.length} clips</span>
       </div>
       <p className="text-[10px] text-gray-500 leading-snug -mt-1 mb-2">
-        Speed fits each line to the cut. English from Veo is already time-fit per segment; use this mainly for translated dubs.
+        Speed fits each line to the cut. English from Veo is already time-fit per beat; use this mainly for translated dubs.
       </p>
       
       {dialogueClips.map((clip, index) => {
@@ -5350,7 +5350,7 @@ export function SceneProductionMixer({
           <div>
             <h3 className="!text-lg !leading-normal !mb-0 font-semibold text-white">Mixer</h3>
             <p className="text-xs text-gray-400">
-              Mix segment video or animatic keyframes with dialogue, music, and SFX — then export from the footer.
+              Mix beat video or animatic keyframes with dialogue, music, and SFX — then export from the footer.
             </p>
           </div>
         </div>
@@ -6521,7 +6521,7 @@ export function SceneProductionMixer({
                 <h4 className="text-lg font-medium text-gray-300 mb-2">Nothing to preview yet</h4>
                 <p className="text-sm text-gray-500 max-w-md mx-auto">
                   {animaticPreviewSegments.length > 0
-                    ? 'Use Preview output → Animatic above to preview keyframes, or generate segment videos in the Director’s Console for full video output and stitching.'
+                    ? 'Use Preview output → Animatic above to preview keyframes, or generate beat videos in the Director’s Console for full video output and stitching.'
                     : 'Generate keyframes or video segments in the Director’s Console above, then mix and render from this panel.'}
                 </p>
               </>
@@ -6707,7 +6707,7 @@ export function SceneProductionMixer({
                 <p className="text-amber-300/90 leading-snug">
                   {allBeatsExcluded
                     ? 'All beats are excluded — include at least one beat to preview or render.'
-                    : 'Mixer quick/server stitch needs generated segment videos. For animatic (keyframes), use Render in the mixer footer.'}
+                    : 'Mixer quick/server stitch needs generated beat videos. For animatic (keyframes), use Render in the mixer footer.'}
                 </p>
               )}
             </div>

@@ -1126,7 +1126,7 @@ export function SceneTimeline({
   if (segments.length === 0) {
     return (
       <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-sm text-gray-500 dark:text-gray-400 text-center">
-        No segments yet. Initialize scene production to create segments.
+        No beats yet. Initialize scene production to create beats.
       </div>
     )
   }
@@ -1491,9 +1491,9 @@ export function SceneTimeline({
         <Dialog open={showAddSegmentDialog} onOpenChange={setShowAddSegmentDialog}>
           <DialogContent className="sm:max-w-[400px]">
             <DialogHeader>
-              <DialogTitle>Add New Segment</DialogTitle>
+              <DialogTitle>Add Beat</DialogTitle>
               <DialogDescription>
-                Create a new visual segment to extend the scene timeline.
+                Create a new visual beat to extend the scene timeline.
               </DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">

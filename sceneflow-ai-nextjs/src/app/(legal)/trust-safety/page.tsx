@@ -29,7 +29,7 @@ export default function TrustSafetyPage() {
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">Our Commitment to Responsible AI</h2>
             <p className="text-gray-300 leading-relaxed">
-              {LEGAL_COMPANY_NAME} operates {LEGAL_SERVICE_NAME} using industry-leading cloud providers for generation, and applies its own layered guardrails on top—not as a pass-through service. Our approach combines Google-native safety on every generation path, Extended Creative Services with Guardrails when policy limits apply, optional Studio content validation, and forensic provenance for segment video.
+              {LEGAL_COMPANY_NAME} operates {LEGAL_SERVICE_NAME} using industry-leading cloud providers for generation, and applies its own layered guardrails on top—not as a pass-through service. Our approach combines Google-native safety on every generation path, Extended Creative Services with Guardrails when policy limits apply, optional Studio content validation, and forensic provenance for beat video.
             </p>
             <p className="text-gray-300 leading-relaxed mt-4">
               This tiered model protects creators, reduces platform risk for {WHOP_MOR_NAME}, our Merchant of Record, and maintains audit trails that support abuse investigations when required.
@@ -90,7 +90,7 @@ export default function TrustSafetyPage() {
 
                 <div>
                   <h4 className="text-sm font-semibold text-cyan-300 uppercase tracking-wide mb-2">Tier 3 — Additional moderation and risk mitigation (Studio)</h4>
-                  <p>Creators may run content validation across Blueprint, script, pre-vis, and segment video using the same credit model as other Studio tools. Validation surfaces policy and risk signals as informational warnings—it does not replace your editorial judgment or export review.</p>
+                  <p>Creators may run content validation across Blueprint, script, pre-vis, and beat video using the same credit model as other Studio tools. Validation surfaces policy and risk signals as informational warnings—it does not replace your editorial judgment or export review.</p>
                   <ul className="list-disc pl-6 mt-2 space-y-1">
                     <li>Automated text screening for harmful or high-risk language</li>
                     <li>Visual content review for generated images and video</li>
@@ -153,7 +153,7 @@ export default function TrustSafetyPage() {
               <div className="space-y-4 text-gray-300">
                 <div>
                   <h4 className="text-sm font-semibold text-pink-300 uppercase tracking-wide mb-1">Mechanism</h4>
-                  <p>Successful segment video generations receive SceneFlow provenance records: a SHA-256 content hash, signed metadata (model source, user, project, timestamp), and optional in-file credentials embedding when enabled. Provider-native watermarks may also be present in generated media depending on the upstream model.</p>
+                  <p>Successful beat video generations receive SceneFlow provenance records: a SHA-256 content hash, signed metadata (model source, user, project, timestamp), and optional in-file credentials embedding when enabled. Provider-native watermarks may also be present in generated media depending on the upstream model.</p>
                 </div>
                 
                 <div>
@@ -244,7 +244,7 @@ export default function TrustSafetyPage() {
             <ul className="list-disc pl-6 text-gray-300 space-y-2 mb-4">
               <li><strong>User ID:</strong> Account identifier linked to the generation</li>
               <li><strong>Prompt/Script:</strong> Input text used for generation</li>
-              <li><strong>Content hash:</strong> Cryptographic fingerprint of segment video where provenance is recorded</li>
+              <li><strong>Content hash:</strong> Cryptographic fingerprint of beat video where provenance is recorded</li>
               <li><strong>Timestamp:</strong> Exact date and time of generation</li>
               <li><strong>Voice used:</strong> Whether stock or custom, with voice identifier</li>
             </ul>
