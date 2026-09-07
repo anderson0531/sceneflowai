@@ -7,12 +7,17 @@ export const CHARACTER_IDENTITY_REFERENCE_ANCHOR =
 
 /** Shared photographic realism block for identity headshots and enhance-reference. */
 export const IDENTITY_PHOTO_REALISM_DIRECTIVES = [
-  'Framing: tight head-and-shoulders portrait, face centered, eye-level camera.',
+  'Framing: vertical 9:16 portrait, face dominant in frame, eyes in the upper third, head-and-shoulders only — no wide establishing crop.',
   'Expression: neutral relaxed expression, mouth closed, direct eye contact.',
   'Lighting: soft professional key light with natural catchlights in both eyes; even skin tone, no harsh shadows.',
   'Lens: 85mm portrait lens look, shallow depth of field, natural skin texture and pores, no plastic smoothing.',
   'Background: plain neutral gray studio backdrop, no props or distractions.',
   'Style: photorealistic human photography only — no illustration, cartoon, CGI, or stylization.',
+].join('\n')
+
+export const IDENTITY_ANTI_LIKENESS_DIRECTIVES = [
+  'Subject is an original fictional adult — not a celebrity, politician, or public figure.',
+  'Do not depict or resemble any known actor or recognizable likeness.',
 ].join('\n')
 
 export const ENHANCE_IDENTITY_REFERENCE_PREFIX =
@@ -114,7 +119,7 @@ export function buildAppearanceDescriptionFromAttributes(character: {
   if (character.expression) parts.push(character.expression)
 
   if (parts.length > 0) return parts.join(', ')
-  return character.name?.trim() || 'Character'
+  return 'an original adult with a unique, unrecognizable face'
 }
 
 export function buildCharacterIdentityReferencePrompt(
@@ -125,6 +130,8 @@ export function buildCharacterIdentityReferencePrompt(
     CHARACTER_IDENTITY_REFERENCE_ANCHOR,
     '',
     appearance,
+    '',
+    IDENTITY_ANTI_LIKENESS_DIRECTIVES,
     '',
     IDENTITY_PHOTO_REALISM_DIRECTIVES,
   ]
@@ -158,7 +165,7 @@ export function buildEnhanceIdentityReferencePrompt(input: {
   const appearance = input.appearanceDescription.trim()
   const subjectLine = input.subjectDescription?.trim()
     ? `Subject: ${input.subjectDescription}.`
-    : `Subject: ${input.characterName}, the exact person shown in the reference photo.`
+    : 'Subject: the exact person shown in the reference photo.'
 
   const lines = [
     ENHANCE_IDENTITY_REFERENCE_PREFIX,
@@ -166,6 +173,8 @@ export function buildEnhanceIdentityReferencePrompt(input: {
     subjectLine,
     '',
     appearance,
+    '',
+    IDENTITY_ANTI_LIKENESS_DIRECTIVES,
     '',
     IDENTITY_PHOTO_REALISM_DIRECTIVES,
     '',

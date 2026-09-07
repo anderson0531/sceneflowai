@@ -34,19 +34,19 @@ export const SCENEFLOW_QUALITY_TIERS: Array<{
 }> = [
   {
     id: 'standard',
-    label: 'Standard',
+    label: '720p',
     description: '720p — fast turnaround',
     klingQuality: 'std',
   },
   {
     id: 'cinematic',
-    label: 'Cinematic',
+    label: '1080p',
     description: '1080p — high-fidelity (recommended)',
     klingQuality: 'pro',
   },
   {
     id: 'ultra-4k',
-    label: 'Ultra 4K',
+    label: '4K',
     description: 'Native 4K — maximum detail',
     klingQuality: '4k',
   },

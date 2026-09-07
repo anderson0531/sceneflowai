@@ -25,7 +25,7 @@ import type {
   VideoGenerationMethod,
 } from '@/components/vision/scene-production/types'
 import type { SegmentGuideContext, SegmentConfigResult } from '@/lib/vision/segmentConfigBuilder'
-import { resolveEffectiveStartFrameUrl } from '@/lib/vision/segmentConfigBuilder'
+import { resolveEffectiveStartFrameUrl, shouldAttachBeatStartFrame } from '@/lib/vision/segmentConfigBuilder'
 import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
 import {
   isVeoChainContinuation,
@@ -122,6 +122,7 @@ export function useVideoQueue(
       preset?: string
       allowVeoFallback?: boolean
       expressMode?: boolean
+      useBeatFrameAsStart?: boolean
     }
   ) => Promise<void>,
   segmentGuideContext?: SegmentGuideContext,
@@ -195,7 +196,12 @@ export function useVideoQueue(
           sceneImageUrl
         )
         const existing = next.get(seg.segmentId)
-        if (existing && liveStart && existing.startFrameUrl !== liveStart) {
+        if (
+          existing &&
+          liveStart &&
+          shouldAttachBeatStartFrame(existing) &&
+          existing.startFrameUrl !== liveStart
+        ) {
           next.set(seg.segmentId, { ...existing, startFrameUrl: liveStart })
           changed = true
         }
@@ -292,7 +298,7 @@ export function useVideoQueue(
         segmentGuideContext?.fullScene,
         sceneImageUrl
       )
-      if (liveStartFrameUrl) {
+      if (liveStartFrameUrl && shouldAttachBeatStartFrame(config)) {
         config = { ...config, startFrameUrl: liveStartFrameUrl }
       }
       
@@ -487,9 +493,10 @@ export function useVideoQueue(
                 sceneImageUrl
               )
             : undefined
-          let startUrl =
-            liveStart ??
-            (config.startFrameUrl?.trim() ? config.startFrameUrl : undefined)
+          let startUrl = shouldAttachBeatStartFrame(config)
+            ? liveStart ??
+              (config.startFrameUrl?.trim() ? config.startFrameUrl : undefined)
+            : undefined
           if (
             liveSegment &&
             isKlingProvider &&
@@ -556,6 +563,7 @@ export function useVideoQueue(
               preset: config.preset,
               allowVeoFallback: config.allowVeoFallback,
               expressMode: config.expressMode,
+              useBeatFrameAsStart: config.useBeatFrameAsStart === true,
             }
           )
           

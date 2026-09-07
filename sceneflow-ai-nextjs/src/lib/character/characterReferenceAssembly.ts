@@ -2,6 +2,8 @@
  * Resolve identity vs wardrobe reference URLs and build role-specific consumption instructions.
  */
 
+import { toCharacterPromptAlias } from '@/lib/character/characterPromptAlias'
+
 export const CHARACTER_IDENTITY_REFERENCE_INSTRUCTION =
   'IDENTITY REFERENCE (PRIMARY): Match face, hair, skin tone, age, ethnicity, body proportions, and photorealistic rendering style from this image exactly at all shot distances. ' +
   'This image owns identity and realism — ignore clothing in this image if it differs from the scene wardrobe; outfit comes from the wardrobe reference or text.'
@@ -379,7 +381,7 @@ export function buildIdentityReferenceLabel(
   referenceIndex?: number
 ): string {
   const idx = referenceIndex != null ? ` ${referenceIndex}` : ''
-  return `Identity reference${idx}: ${characterName}`
+  return `Identity reference${idx}: ${toCharacterPromptAlias(characterName)}`
 }
 
 export function buildWardrobeReferenceLabel(
@@ -387,11 +389,11 @@ export function buildWardrobeReferenceLabel(
   referenceIndex?: number
 ): string {
   const idx = referenceIndex != null ? ` ${referenceIndex}` : ''
-  return `Wardrobe reference${idx}: ${characterName} (full-body outfit)`
+  return `Wardrobe reference${idx}: ${toCharacterPromptAlias(characterName)} (full-body outfit)`
 }
 
 export function buildWardrobeDiptychReferenceLabel(characterName: string): string {
-  return `Diptych ref: ${characterName} — LEFT=identity face, RIGHT=wardrobe outfit`
+  return `Diptych ref: ${toCharacterPromptAlias(characterName)} — LEFT=identity face, RIGHT=wardrobe outfit`
 }
 
 export function buildDualReferenceLabels(

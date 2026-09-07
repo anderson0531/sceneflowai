@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest'
 import type { SceneSegment } from '@/components/vision/scene-production/types'
 import {
   applyStartFrameUrlToProductionSegments,
+  buildDraftVideoGenerationConfig,
+  detectRecommendedMethod,
   resolveEffectiveStartFrameUrl,
   resolveSegmentFrameUrls,
+  shouldAttachBeatStartFrame,
 } from '@/lib/vision/segmentConfigBuilder'
 
 const STALE_SEGMENT_URL = 'https://example.com/stale-segment-1779527367000.jpeg'
@@ -122,5 +125,90 @@ describe('applyStartFrameUrlToProductionSegments', () => {
     expect(updated[1].startFrameUrl).toBe(LIVE_BEAT_URL)
     expect(updated[2].startFrameUrl).toBe(STALE_SEGMENT_URL)
     expect(updated[0].endFrameUrl).toBe(segments[0].endFrameUrl)
+  })
+})
+
+describe('detectRecommendedMethod', () => {
+  it('does not pick I2V just because a storyboard start frame exists', () => {
+    const segment = makeSegment()
+    expect(detectRecommendedMethod(segment, undefined, [segment], {
+      scene: { beats: [] } as never,
+      fullScene: sceneWithLiveBeat,
+      projectCharacters: [],
+    })).toBe('T2V')
+  })
+
+  it('picks REF when library character images resolve', () => {
+    const segment = makeSegment({
+      references: {
+        startFrameUrl: STALE_SEGMENT_URL,
+        characterIds: ['c1'],
+        sceneRefIds: [],
+        objectRefIds: [],
+      },
+    })
+    const beat = {
+      beatId: BEAT_ID,
+      kind: 'dialogue',
+      character: 'Elara Vance',
+      line: 'Hello.',
+      referenceSelection: { characterIds: ['c1'] },
+    }
+    const method = detectRecommendedMethod(segment, undefined, [segment], {
+      scene: { beats: [beat] } as never,
+      fullScene: { beats: [beat] },
+      projectCharacters: [
+        {
+          id: 'c1',
+          name: 'Elara Vance',
+          referenceImage: 'https://example.com/elara.jpg',
+        },
+      ],
+    })
+    expect(method).toBe('REF')
+  })
+})
+
+describe('shouldAttachBeatStartFrame', () => {
+  it('is false for REF unless the user opts in', () => {
+    expect(shouldAttachBeatStartFrame({ mode: 'REF' })).toBe(false)
+    expect(shouldAttachBeatStartFrame({ mode: 'T2V' })).toBe(false)
+    expect(shouldAttachBeatStartFrame({ mode: 'REF', useBeatFrameAsStart: true })).toBe(true)
+    expect(shouldAttachBeatStartFrame({ mode: 'I2V' })).toBe(true)
+  })
+})
+
+describe('buildDraftVideoGenerationConfig', () => {
+  it('defaults unsaved takes to Omni Standard without a start frame', () => {
+    const segment = makeSegment()
+    const beat = {
+      beatId: BEAT_ID,
+      kind: 'dialogue',
+      character: 'Elara Vance',
+      line: 'Hello.',
+      referenceSelection: { characterIds: ['c1'] },
+    }
+    const { config, method } = buildDraftVideoGenerationConfig(
+      segment,
+      undefined,
+      [segment],
+      {
+        scene: { beats: [beat] } as never,
+        fullScene: { beats: [beat] },
+        projectCharacters: [
+          {
+            id: 'c1',
+            name: 'Elara Vance',
+            referenceImage: 'https://example.com/elara.jpg',
+          },
+        ],
+      }
+    )
+    expect(method).toBe('REF')
+    expect(config.videoProvider).toBe('vertex')
+    expect(config.duration).toBe(10)
+    expect(config.startFrameUrl).toBeNull()
+    expect(config.useBeatFrameAsStart).toBe(false)
+    expect(config.mode).toBe('REF')
   })
 })

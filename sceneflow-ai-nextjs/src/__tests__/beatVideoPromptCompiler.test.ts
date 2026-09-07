@@ -133,3 +133,12 @@ describe('compileBeatVideoPromptFromDirection', () => {
     expect(result.prompt.match(/Sarah turns sharply toward the exit/g)?.length).toBe(1)
   })
 })
+
+describe('compileBeatVideoPrompt speaker alias', () => {
+  it('uses Char_ aliases on speaker lines and keeps spoken text', () => {
+    const result = compileBeatVideoPrompt(dialogueBeat)
+    expect(result.prompt).toContain('Char_SARAH speaks naturally:')
+    expect(result.prompt).toContain('We need to leave now.')
+    expect(result.prompt).not.toMatch(/^SARAH speaks naturally/)
+  })
+})

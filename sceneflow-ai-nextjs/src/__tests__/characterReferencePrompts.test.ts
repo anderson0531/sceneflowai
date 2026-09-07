@@ -2,8 +2,11 @@ import { describe, it, expect } from 'vitest'
 import {
   buildCharacterIdentityReferencePrompt,
   buildCharacterIdentityReferencePromptFromCharacter,
+  buildAppearanceDescriptionFromAttributes,
+  buildEnhanceIdentityReferencePrompt,
   buildFullBodyWardrobePrompt,
   CHARACTER_IDENTITY_REFERENCE_ANCHOR,
+  IDENTITY_ANTI_LIKENESS_DIRECTIVES,
   IDENTITY_PHOTO_REALISM_DIRECTIVES,
   resolveDefaultWardrobeDescription,
 } from '@/lib/character/characterReferencePrompts'
@@ -18,7 +21,9 @@ describe('buildCharacterIdentityReferencePrompt', () => {
     expect(prompt.startsWith(CHARACTER_IDENTITY_REFERENCE_ANCHOR)).toBe(true)
     expect(prompt).toContain('Caucasian female in her late 20s')
     expect(prompt).toContain(IDENTITY_PHOTO_REALISM_DIRECTIVES)
+    expect(prompt).toContain(IDENTITY_ANTI_LIKENESS_DIRECTIVES)
     expect(prompt.toLowerCase()).not.toContain('full body')
+    expect(prompt).toContain('vertical 9:16 portrait')
   })
 
   it('appends default wardrobe line when provided', () => {
@@ -97,5 +102,29 @@ describe('buildCharacterIdentityReferencePromptFromCharacter', () => {
     expect(prompt).toContain('Oval face')
     expect(prompt).toContain('Wearing Dark tailored suit.')
     expect(prompt).toContain(IDENTITY_PHOTO_REALISM_DIRECTIVES)
+    expect(prompt).toContain(IDENTITY_ANTI_LIKENESS_DIRECTIVES)
+  })
+
+  it('does not put the display name into AUTO appearance fallback', () => {
+    const prompt = buildCharacterIdentityReferencePromptFromCharacter({
+      name: 'Winston Churchill',
+    })
+    expect(prompt).not.toContain('Winston Churchill')
+    expect(prompt).toContain(IDENTITY_ANTI_LIKENESS_DIRECTIVES)
+    expect(buildAppearanceDescriptionFromAttributes({ name: 'Winston Churchill' })).toBe(
+      'an original adult with a unique, unrecognizable face'
+    )
+  })
+})
+
+describe('buildEnhanceIdentityReferencePrompt', () => {
+  it('keeps anti-likeness and does not default Subject to the display name', () => {
+    const prompt = buildEnhanceIdentityReferencePrompt({
+      characterName: 'Winston',
+      appearanceDescription: 'Oval face, prominent cheekbones.',
+    })
+    expect(prompt).toContain(IDENTITY_ANTI_LIKENESS_DIRECTIVES)
+    expect(prompt).toContain('the exact person shown in the reference photo')
+    expect(prompt).not.toMatch(/Subject:\s*Winston/)
   })
 })

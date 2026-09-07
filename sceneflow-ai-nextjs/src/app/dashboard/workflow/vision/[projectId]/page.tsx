@@ -64,6 +64,7 @@ import {
 import {
   applyStartFrameUrlToProductionSegments,
   resolveEffectiveStartFrameUrl,
+  shouldAttachBeatStartFrame,
 } from '@/lib/vision/segmentConfigBuilder'
 import { DEFAULT_VEO_CLIP_DURATION, MAX_VEO_VIDEO_CLIP_SECONDS } from '@/lib/config/modelConfig'
 import {
@@ -3472,6 +3473,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         preset?: string
         allowVeoFallback?: boolean
         expressMode?: boolean
+        useBeatFrameAsStart?: boolean
       }
     ) => {
       if (!project?.id) {
@@ -3549,11 +3551,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const effectiveGenerationMethod =
           rawGenerationMethod === 'FTV' ? 'I2V' : rawGenerationMethod
 
-        const resolvedStartFrameUrl =
-          options?.startFrameUrl?.trim() ||
-          segment.startFrameUrl ||
-          segment.references?.startFrameUrl ||
-          (segment.sequenceIndex === 0 && sceneImageUrlForApi ? sceneImageUrlForApi : undefined)
+        const attachStart = shouldAttachBeatStartFrame({
+          mode: effectiveGenerationMethod,
+          useBeatFrameAsStart: options?.useBeatFrameAsStart,
+        })
+        const resolvedStartFrameUrl = attachStart
+          ? options?.startFrameUrl?.trim() ||
+            segment.startFrameUrl ||
+            segment.references?.startFrameUrl ||
+            (segment.sequenceIndex === 0 && sceneImageUrlForApi ? sceneImageUrlForApi : undefined)
+          : options?.startFrameUrl?.trim() || undefined
 
         const resolvedEndFrameUrl =
           options?.endFrameUrl?.trim() ||
@@ -3695,6 +3702,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             preset: options?.preset,
             allowVeoFallback: options?.allowVeoFallback,
             expressMode: options?.expressMode,
+            useBeatFrameAsStart: options?.useBeatFrameAsStart === true,
           }),
         })
 

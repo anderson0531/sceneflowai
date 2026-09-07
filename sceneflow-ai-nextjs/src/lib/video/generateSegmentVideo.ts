@@ -129,6 +129,8 @@ export interface GenerateSegmentVideoInput {
   preset?: KlingCreativePreset
   allowVeoFallback?: boolean
   expressMode?: boolean
+  /** Attach beat/animatic frame as start image. Default false for REF ingredients. */
+  useBeatFrameAsStart?: boolean
 }
 
 export class SegmentVideoKlingNotConfiguredError extends Error {
@@ -261,6 +263,7 @@ export async function generateSegmentVideoCore(
     preset,
     allowVeoFallback,
     expressMode,
+    useBeatFrameAsStart = false,
   } = input
 
   const methodContext = buildMethodSelectionContext(
@@ -369,7 +372,9 @@ export async function generateSegmentVideoCore(
     console.log(
       '[Segment Video] Kling chain continuation: downgraded EXT -> I2V with prior last frame'
     )
-  } else if ((method === 'I2V' || method === 'FTV' || method === 'REF') && startFrameUrl) {
+  } else if ((method === 'I2V' || method === 'FTV') && startFrameUrl) {
+    videoOptions.startFrame = startFrameUrl
+  } else if (method === 'REF' && startFrameUrl && useBeatFrameAsStart) {
     videoOptions.startFrame = startFrameUrl
   }
 

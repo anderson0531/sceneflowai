@@ -46,7 +46,7 @@ describe('sanitizeOmniRefGuide', () => {
 describe('sanitizeOmniRefLabel', () => {
   it('strips emotional wardrobe suffix', () => {
     expect(sanitizeOmniRefLabel('Elara Vance — Tech-Savvy Casual — tensioned')).toBe(
-      'Elara Vance — Tech-Savvy Casual'
+      'Char_Elara_Vance — Tech-Savvy Casual'
     )
   })
 
@@ -58,9 +58,9 @@ describe('sanitizeOmniRefLabel', () => {
     ).toBe('Location reference 5: POLICE STATION - INTERROGATION ROOM')
   })
 
-  it('leaves identity labels unchanged', () => {
+  it('aliases identity labels to Char_ tokens', () => {
     expect(sanitizeOmniRefLabel('Identity reference 1: Elara Vance')).toBe(
-      'Identity reference 1: Elara Vance'
+      'Identity reference 1: Char_Elara_Vance'
     )
   })
 })

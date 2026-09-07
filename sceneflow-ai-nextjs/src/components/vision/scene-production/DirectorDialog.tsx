@@ -203,6 +203,8 @@ interface DirectorDialogProps {
   /** Saved queue config (preserves videoProvider across dialog re-opens). */
   savedConfig?: VideoGenerationConfig
   projectId?: string
+  /** Initial Take surface. Saved Kling/aggregator configs still open Creative. */
+  variant?: 'standard' | 'creative'
 }
 
 // Map internal mode names to VideoGenerationMethod
@@ -258,6 +260,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   filmTitle,
   savedConfig,
   projectId,
+  variant = 'standard',
 }) => {
   const t = useTranslations('production.direction.director')
   const tc = useTranslations('common.actions')
@@ -321,6 +324,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     Array<{ index: number; prompt: string; duration: string }>
   >([])
   const [selectedPreset, setSelectedPreset] = useState<string | undefined>()
+  const [takeMode, setTakeMode] = useState<'standard' | 'creative'>(variant)
+  const [useBeatFrameAsStart, setUseBeatFrameAsStart] = useState(false)
   const [aggregatorEnabled, setAggregatorEnabled] = useState(false)
   const [aggregatorDiagnostics, setAggregatorDiagnostics] =
     useState<AggregatorDiagnosticsState | null>(null)
@@ -445,7 +450,10 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
         { url: ref.imageUrl, name: ref.name, type: ref.type },
       ]
     })
-  }, [])
+    if (takeMode === 'standard') {
+      setMode((current) => (current === 'EXTEND' ? current : 'REFERENCE_IMAGES'))
+    }
+  }, [takeMode])
   
   // Direction Dialog state
   const [isDirectionDialogOpen, setIsDirectionDialogOpen] = useState(false)
@@ -703,13 +711,30 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     setAspectRatio(lockedVideoAspect)
     setResolution(autoConfig.resolution)
     const inferred = inferEngineSelectionFromConfig(savedConfig ?? autoConfig)
-    setSelectedEngine(inferred.engineId)
-    setQualityTierId(inferred.qualityTierId)
+    const nextTakeMode: 'standard' | 'creative' = savedConfig?.videoProvider
+      ? savedConfig.videoProvider === 'vertex'
+        ? 'standard'
+        : 'creative'
+      : autoConfig.videoProvider === 'kling' || autoConfig.videoProvider === 'aggregator'
+        ? 'creative'
+        : variant
+    setTakeMode(nextTakeMode)
+    if (nextTakeMode === 'standard') {
+      setSelectedEngine('natural-dialogue')
+      setQualityTierId('cinematic')
+    } else {
+      setSelectedEngine(
+        inferred.engineId === 'natural-dialogue' ? SCENEFLOW_ENGINE_ID : inferred.engineId
+      )
+      setQualityTierId(inferred.qualityTierId)
+    }
     const rawDuration = isContinuation ? 10 : autoConfig.duration
     const selection =
-      inferred.engineId === SCENEFLOW_ENGINE_ID
-        ? { engineId: SCENEFLOW_ENGINE_ID, qualityTierId: inferred.qualityTierId }
-        : { engineId: inferred.engineId }
+      nextTakeMode === 'standard'
+        ? ({ engineId: 'natural-dialogue' } as const)
+        : inferred.engineId === 'natural-dialogue' || inferred.engineId === SCENEFLOW_ENGINE_ID
+          ? { engineId: SCENEFLOW_ENGINE_ID, qualityTierId: inferred.qualityTierId }
+          : { engineId: inferred.engineId }
     setDuration(snapDurationForEngine(rawDuration, selection))
     setGuidePrompt(batchGuideSeed || autoConfig.guidePrompt || '')
     setReferenceImages(autoResolvedRefs.entries)
@@ -729,12 +754,17 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       }))
     )
     setSelectedPreset(savedConfig?.preset ?? autoConfig.preset)
+    setUseBeatFrameAsStart(
+      savedConfig?.useBeatFrameAsStart ?? autoConfig.useBeatFrameAsStart ?? false
+    )
     setApiPromptPreview('')
-  }, [autoConfig, savedConfig, lockedVideoAspect, batchGuideSeed, segment, autoResolvedRefs.entries])
+  }, [autoConfig, savedConfig, lockedVideoAspect, batchGuideSeed, segment, autoResolvedRefs.entries, variant])
 
   const fetchApiPromptPreview = useCallback(async () => {
     const method = modeToMethod[mode]
-    const startFrameUrl = effectiveStartFrameUrl || undefined
+    const attachStart =
+      useBeatFrameAsStart || method === 'I2V' || method === 'FTV' || method === 'EXT'
+    const startFrameUrl = attachStart ? effectiveStartFrameUrl || undefined : undefined
     const endFrameUrl = segment.endFrameUrl || segment.references?.endFrameUrl || undefined
     const refPayload =
       method === 'REF'
@@ -778,7 +808,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     } finally {
       setApiPromptPreviewLoading(false)
     }
-  }, [mode, visualPrompt, guidePrompt, referenceImages, segment, effectiveStartFrameUrl])
+  }, [mode, visualPrompt, guidePrompt, referenceImages, segment, effectiveStartFrameUrl, useBeatFrameAsStart])
 
   useEffect(() => {
     if (!isOpen) return
@@ -814,6 +844,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
           }))
         : undefined,
     preset: isSceneFlowEngine ? selectedPreset : undefined,
+    useBeatFrameAsStart:
+      useBeatFrameAsStart || mode === 'IMAGE_TO_VIDEO' || mode === 'EXTEND',
   })
 
   const generateButtonLabel = t('generateVideo')
@@ -838,6 +870,23 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       }
     },
     [aggregatorEnabled, qualityTierId]
+  )
+
+  const handleTakeModeChange = useCallback(
+    (next: 'standard' | 'creative') => {
+      setTakeMode(next)
+      if (next === 'standard') {
+        handleEngineChange('natural-dialogue')
+        setMode((current) => {
+          if (current === 'EXTEND') return current
+          if (useBeatFrameAsStart) return current
+          return referenceImages.length > 0 ? 'REFERENCE_IMAGES' : 'TEXT_TO_VIDEO'
+        })
+      } else {
+        handleEngineChange(SCENEFLOW_ENGINE_ID)
+      }
+    },
+    [handleEngineChange, referenceImages.length, useBeatFrameAsStart]
   )
 
   const aggregatorStatusBanner = aggregatorStatusMessage(aggregatorDiagnostics)
@@ -951,7 +1000,9 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const handleSave = () => {
     const method = modeToMethod[mode]
     const effectiveMethod = method === 'FTV' ? 'I2V' : method
-    const resolvedStartFrameUrl = effectiveStartFrameUrl
+    const attachStart =
+      useBeatFrameAsStart || effectiveMethod === 'I2V' || effectiveMethod === 'EXT'
+    const resolvedStartFrameUrl = attachStart ? effectiveStartFrameUrl : null
     
     const savedConfig = appendAdvancedConfig({
       mode: effectiveMethod,
@@ -969,7 +1020,10 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       approvalStatus: 'auto-ready',
       confidence: autoConfig.confidence,
       qualityTier: qualityTier,
-      referenceImages: method === 'REF' ? refsToConfig(referenceImages) : undefined,
+      referenceImages:
+        method === 'REF' || (takeMode === 'standard' && referenceImages.length > 0)
+          ? refsToConfig(referenceImages)
+          : undefined,
     })
     onSaveConfig(savedConfig)
   }
@@ -978,7 +1032,9 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const handleGenerate = () => {
     const method = modeToMethod[mode]
     const effectiveMethod = method === 'FTV' ? 'I2V' : method
-    const resolvedStartFrameUrl = effectiveStartFrameUrl
+    const attachStart =
+      useBeatFrameAsStart || effectiveMethod === 'I2V' || effectiveMethod === 'EXT'
+    const resolvedStartFrameUrl = attachStart ? effectiveStartFrameUrl : null
     
     const savedConfig = appendAdvancedConfig({
       mode: effectiveMethod,
@@ -996,7 +1052,10 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       approvalStatus: 'auto-ready',
       confidence: autoConfig.confidence,
       qualityTier: qualityTier,
-      referenceImages: method === 'REF' ? refsToConfig(referenceImages) : undefined,
+      referenceImages:
+        method === 'REF' || (takeMode === 'standard' && referenceImages.length > 0)
+          ? refsToConfig(referenceImages)
+          : undefined,
     })
     
     onSaveConfig(savedConfig)
@@ -1047,6 +1106,10 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     EXTEND: !tabStates.EXTEND ? t('disabledNeedPrevious') : '',
   }
 
+  const isStandardTake = takeMode === 'standard'
+  const showIngredientsPanel =
+    isStandardTake ? mode !== 'EXTEND' : mode === 'REFERENCE_IMAGES'
+
   return (
     <>
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -1061,6 +1124,35 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
           <DialogDescription className="text-sm text-slate-400">
             {t('description')}
           </DialogDescription>
+          <div className="flex flex-col gap-2 pt-2">
+            <div className="flex rounded-lg border border-slate-700 p-1 w-fit">
+              <button
+                type="button"
+                onClick={() => handleTakeModeChange('standard')}
+                className={cn(
+                  'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
+                  takeMode === 'standard'
+                    ? 'bg-indigo-600 text-white'
+                    : 'text-slate-400 hover:text-white'
+                )}
+              >
+                {t('takeStandard')}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleTakeModeChange('creative')}
+                className={cn(
+                  'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
+                  takeMode === 'creative'
+                    ? 'bg-indigo-600 text-white'
+                    : 'text-slate-400 hover:text-white'
+                )}
+              >
+                {t('takeCreative')}
+              </button>
+            </div>
+            <p className="text-[11px] text-slate-500">{t('takeModeHint')}</p>
+          </div>
         </DialogHeader>
 
         {klingLongTakePlan && (
@@ -1121,7 +1213,13 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
           
           {/* Mode Selection Tabs */}
           <div className="col-span-12">
-            {!tabStates.IMAGE_TO_VIDEO && (
+            {isStandardTake && referenceImages.length === 0 && mode !== 'EXTEND' && (
+              <div className="mb-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{t('noIngredientsHint')}</span>
+              </div>
+            )}
+            {!isStandardTake && !tabStates.IMAGE_TO_VIDEO && (
               <div className="mb-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>
@@ -1130,6 +1228,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
               </div>
             )}
             
+            {!isStandardTake && (
             <Tabs value={mode} onValueChange={handleModeChange}>
               <TabsList className="bg-slate-800/80 w-full grid grid-cols-2 md:grid-cols-4 gap-1 p-1">
                 <TabsTrigger 
@@ -1172,11 +1271,12 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 </TabsTrigger>
               </TabsList>
             </Tabs>
+            )}
           </div>
 
           {/* Preview Area */}
           <div className="col-span-7 bg-black rounded-lg flex items-center justify-center relative overflow-hidden">
-            {mode === 'REFERENCE_IMAGES' ? (
+            {showIngredientsPanel ? (
               /* Reference Images Preview - Shows uploaded character/style references */
               <div className="p-4 w-full max-h-full overflow-y-auto">
                 <div className="flex flex-col items-center justify-center min-h-[200px]">
@@ -1530,6 +1630,33 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
               )}
             </div>
 
+                {isStandardTake && mode !== 'EXTEND' && (
+                  <div className="flex flex-col gap-1">
+                    <label className="flex items-start gap-2 text-xs text-slate-300 cursor-pointer">
+                      <Checkbox
+                        checked={useBeatFrameAsStart}
+                        onCheckedChange={(c) => {
+                          const checked = c === true
+                          setUseBeatFrameAsStart(checked)
+                          if (checked) {
+                            if (referenceImages.length === 0) setMode('IMAGE_TO_VIDEO')
+                          } else {
+                            setMode(
+                              referenceImages.length > 0 ? 'REFERENCE_IMAGES' : 'TEXT_TO_VIDEO'
+                            )
+                          }
+                        }}
+                      />
+                      <span>
+                        {t('useBeatFrameAsStart')}
+                        <span className="block text-[11px] text-slate-500 mt-0.5">
+                          {t('useBeatFrameAsStartHint')}
+                        </span>
+                      </span>
+                    </label>
+                  </div>
+                )}
+
                 {/* Duration Selector */}
                 <div className="flex flex-col gap-2">
                   <Label className="text-slate-300">Duration</Label>
@@ -1560,6 +1687,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-4 pt-2">
+                    {!isStandardTake && (
                     <div className="flex flex-col gap-3">
                       <Label className="text-slate-400 text-xs">Video Engine</Label>
 
@@ -1645,6 +1773,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                         </p>
                       )}
                     </div>
+                    )}
 
                     {isSceneFlowEngine && (
                       <>
@@ -1955,6 +2084,16 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     )}
     </>
   )
+}
+
+}
+
+export function StandardTakeDialog(props: Omit<DirectorDialogProps, 'variant'>) {
+  return <DirectorDialog {...props} variant="standard" />
+}
+
+export function CreativeTakeDialog(props: Omit<DirectorDialogProps, 'variant'>) {
+  return <DirectorDialog {...props} variant="creative" />
 }
 
 export default DirectorDialog

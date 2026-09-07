@@ -251,8 +251,10 @@ describe('characterReferenceAssembly', () => {
   it('buildDualReferenceLabels distinguishes identity and wardrobe slots', () => {
     const labels = buildDualReferenceLabels('Marcus', 1, 2)
     expect(labels.identityLabel).toContain('Identity reference 1')
-    expect(labels.identityLabel).toContain('Marcus')
+    expect(labels.identityLabel).toContain('Char_Marcus')
+    expect(labels.identityLabel).not.toMatch(/: Marcus$/)
     expect(labels.wardrobeLabel).toContain('Wardrobe reference 2')
+    expect(labels.wardrobeLabel).toContain('Char_Marcus')
   })
 
   it('prompt lines use split identity vs wardrobe instructions', () => {

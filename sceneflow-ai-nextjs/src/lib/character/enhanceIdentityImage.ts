@@ -11,7 +11,7 @@ import {
   resolveDefaultWardrobeDescription,
 } from '@/lib/character/characterReferencePrompts'
 
-export const ENHANCE_IDENTITY_ASPECT_RATIO = '1:1' as const
+export const ENHANCE_IDENTITY_ASPECT_RATIO = '9:16' as const
 export const ENHANCE_IDENTITY_IMAGE_SIZE = '2K' as const
 export const ENHANCE_IDENTITY_MODEL_TIER = 'designer' as const
 export const ENHANCE_IDENTITY_MODEL = 'gemini-3-pro-image'
