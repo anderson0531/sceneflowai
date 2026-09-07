@@ -31,7 +31,7 @@ describe('Hero video locales', () => {
     for (const locale of HERO_VIDEO_LOCALES) {
       expect(locale.available).toBe(true)
       expect(locale.src).toBeTruthy()
-      if (locale.id === 'en' || locale.id === 'es' || locale.id === 'pt' || locale.id === 'hi') {
+      if (locale.id === 'en' || locale.id === 'es' || locale.id === 'pt' || locale.id === 'hi' || locale.id === 'zh') {
         expect(locale.poster).toBe(`/landing/hero/sceneflow-hero-${locale.id}-poster.jpg`)
       } else {
         expect(locale.poster).toBe(
@@ -46,6 +46,7 @@ describe('Hero video locales', () => {
     expect(HERO_VIDEO_BLOB_PATHS.es).toBe('Hero Video (Spanish).mp4')
     expect(HERO_VIDEO_BLOB_PATHS.pt).toBe('Hero Video (Portuguese).mp4')
     expect(HERO_VIDEO_BLOB_PATHS.hi).toBe('Hero Video (Hindi).mp4')
+    expect(HERO_VIDEO_BLOB_PATHS.zh).toBe('Hero Video (Chinese).mp4')
     expect(HERO_VIDEO_BLOB_PATHS.th).toBe('Hero Video (Thai) .mp4')
   })
 
