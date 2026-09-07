@@ -11,7 +11,13 @@ import {
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const FILTERS = new Set<WaitlistListFilter>(['all', 'pending', 'confirmed', 'notified'])
+const FILTERS = new Set<WaitlistListFilter>([
+  'all',
+  'pending',
+  'confirmed',
+  'notified',
+  'unsubscribed',
+])
 
 export async function GET(request: NextRequest) {
   const { authorized } = await requireAdminSession()

@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     )
   }
 
-  if (existing?.status === 'confirmed') {
+  if (existing?.status === 'confirmed' && !existing.unsubscribedAt) {
     return NextResponse.json({ ok: true, stored: hasPrivateBlobToken() })
   }
 

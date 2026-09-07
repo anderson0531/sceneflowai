@@ -76,6 +76,14 @@ export async function POST(request: Request) {
       if (!record) {
         return NextResponse.json({ error: 'Waitlist record not found.' }, { status: 404 })
       }
+      if (record.unsubscribedAt) {
+        return NextResponse.json({
+          ok: true,
+          action: body.action,
+          skipped: 1,
+          reason: 'unsubscribed',
+        })
+      }
       if (record.status === 'confirmed') {
         return NextResponse.json({
           ok: true,
@@ -117,9 +125,11 @@ export async function POST(request: Request) {
         remaining: 0,
         reason: !existing
           ? 'not_found'
-          : existing.status !== 'confirmed'
-            ? 'pending'
-            : 'already_notified',
+          : existing.unsubscribedAt
+            ? 'unsubscribed'
+            : existing.status !== 'confirmed'
+              ? 'pending'
+              : 'already_notified',
       })
     }
 

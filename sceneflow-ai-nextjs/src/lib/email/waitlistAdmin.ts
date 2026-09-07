@@ -2,9 +2,11 @@ import { list, put } from '@vercel/blob'
 import { LEGAL_SUPPORT_EMAIL } from '@/config/legal/legalCopy'
 import { fetchPrivateBlobJson, getPrivateBlobToken, hasPrivateBlobToken } from '@/lib/storage/privateBlob'
 import { getAppBaseUrl, getResendFromEmail, sendEmail } from '@/lib/email/resendClient'
+import { ensureOfficialHtml, listUnsubscribeHeaders } from '@/lib/email/officialEmail'
 import {
   WAITLIST_CONFIRM_SUBJECT,
   buildConfirmUrl,
+  buildUnsubscribeUrls,
   buildWaitlistConfirmationContent,
   normalizeWaitlistEmail,
   sendWaitlistConfirmation,
@@ -17,7 +19,7 @@ export const WAITLIST_CAMPAIGN_PATH = `${WAITLIST_BLOB_PREFIX}_campaign.json`
 export const WAITLIST_LAUNCH_SUBJECT = 'SceneFlow access opens November 2026'
 export const LAUNCH_SEND_BATCH_SIZE = 40
 
-export type WaitlistListFilter = 'all' | 'pending' | 'confirmed' | 'notified'
+export type WaitlistListFilter = 'all' | 'pending' | 'confirmed' | 'notified' | 'unsubscribed'
 
 export interface LaunchCampaign {
   subject: string
@@ -32,6 +34,7 @@ export interface WaitlistCounts {
   pending: number
   confirmed: number
   notified: number
+  unsubscribed: number
 }
 
 export interface LaunchBatchResult {
@@ -50,7 +53,7 @@ export function isWaitlistRecordPath(pathname: string): boolean {
 }
 
 export function isLaunchEligible(record: WaitlistRecord): boolean {
-  return record.status === 'confirmed' && !record.launchNotifiedAt
+  return record.status === 'confirmed' && !record.launchNotifiedAt && !record.unsubscribedAt
 }
 
 export function getLaunchSignInUrl(): string {
@@ -59,26 +62,32 @@ export function getLaunchSignInUrl(): string {
 
 export function getDefaultLaunchCampaign(): LaunchCampaign {
   const signInUrl = getLaunchSignInUrl()
-  const text = [
-    'SceneFlow studio access is opening in November 2026.',
-    '',
-    `Sign in to start your production: ${signInUrl}`,
-    '',
-    `Questions? Reply to this message or write ${LEGAL_SUPPORT_EMAIL}.`,
-  ].join('\n')
-
-  const html = `
-    <p>SceneFlow studio access is opening in November 2026.</p>
-    <p><a href="${signInUrl}" style="display:inline-block;padding:12px 20px;background:#4f46e5;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600">Start your production</a></p>
-    <p>Or paste this link into your browser:<br /><a href="${signInUrl}">${signInUrl}</a></p>
-    <p>Questions? Reply to this message or write <a href="mailto:${LEGAL_SUPPORT_EMAIL}">${LEGAL_SUPPORT_EMAIL}</a>.</p>
-  `.trim()
-
+  const { pageUrl } = buildUnsubscribeUrls('preview@sceneflowai.studio')
+  const rendered = renderLaunchCampaign(
+    {
+      subject: WAITLIST_LAUNCH_SUBJECT,
+      html: '<p style="margin:0 0 16px;font-size:16px;line-height:24px;color:#e2e8f0">SceneFlow studio access is opening in November 2026.</p>',
+      text: `SceneFlow studio access is opening in November 2026.\n\nSign in to start your production: ${signInUrl}`,
+    },
+    pageUrl
+  )
   return {
     subject: WAITLIST_LAUNCH_SUBJECT,
-    html,
-    text,
+    html: rendered.html,
+    text: rendered.text,
   }
+}
+
+export function renderLaunchCampaign(campaign: LaunchCampaign, unsubscribeUrl: string) {
+  return ensureOfficialHtml(campaign.html, {
+    preheader: 'SceneFlow studio access is opening in November 2026.',
+    heading: campaign.subject || WAITLIST_LAUNCH_SUBJECT,
+    ctaLabel: 'Start your production',
+    ctaUrl: getLaunchSignInUrl(),
+    whyReceived: 'You received this because you confirmed a SceneFlow November 2026 launch notification.',
+    unsubscribeUrl,
+    bodyText: campaign.text,
+  })
 }
 
 export function sanitizeLaunchCampaign(
@@ -161,9 +170,10 @@ export function countWaitlistRecords(records: WaitlistRecord[]): WaitlistCounts 
       if (record.status === 'pending') counts.pending += 1
       if (record.status === 'confirmed') counts.confirmed += 1
       if (record.launchNotifiedAt) counts.notified += 1
+      if (record.unsubscribedAt) counts.unsubscribed += 1
       return counts
     },
-    { total: 0, pending: 0, confirmed: 0, notified: 0 }
+    { total: 0, pending: 0, confirmed: 0, notified: 0, unsubscribed: 0 }
   )
 }
 
@@ -174,6 +184,7 @@ export function filterWaitlistRecords(
   if (status === 'pending') return records.filter((record) => record.status === 'pending')
   if (status === 'confirmed') return records.filter((record) => record.status === 'confirmed')
   if (status === 'notified') return records.filter((record) => Boolean(record.launchNotifiedAt))
+  if (status === 'unsubscribed') return records.filter((record) => Boolean(record.unsubscribedAt))
   return records
 }
 
@@ -238,9 +249,10 @@ export function buildConfirmationPreview(now = Date.now()): {
   text: string
 } {
   const { url } = buildConfirmUrl('preview@sceneflowai.studio', now)
+  const { pageUrl } = buildUnsubscribeUrls('preview@sceneflowai.studio')
   return {
     subject: WAITLIST_CONFIRM_SUBJECT,
-    ...buildWaitlistConfirmationContent(url),
+    ...buildWaitlistConfirmationContent(url, pageUrl),
   }
 }
 
@@ -248,13 +260,16 @@ export async function sendLaunchNotification(
   email: string,
   campaign: LaunchCampaign
 ): Promise<void> {
+  const { pageUrl, apiUrl } = buildUnsubscribeUrls(email)
+  const rendered = renderLaunchCampaign(campaign, pageUrl)
   await sendEmail({
     to: normalizeWaitlistEmail(email),
     subject: campaign.subject,
-    html: campaign.html,
-    text: campaign.text,
+    html: rendered.html,
+    text: rendered.text || campaign.text,
     from: getResendFromEmail(),
     replyTo: LEGAL_SUPPORT_EMAIL,
+    headers: listUnsubscribeHeaders(apiUrl),
   })
 }
 
@@ -274,6 +289,9 @@ export async function resendWaitlistConfirmation(
   record: WaitlistRecord,
   now = Date.now()
 ): Promise<WaitlistRecord> {
+  if (record.unsubscribedAt) {
+    throw new Error('This address has unsubscribed.')
+  }
   const { url } = buildConfirmUrl(record.email, now)
   await sendWaitlistConfirmation(record.email, url)
   const updated: WaitlistRecord = {

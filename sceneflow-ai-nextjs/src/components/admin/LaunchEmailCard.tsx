@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/Button'
 
 type Pane = 'email' | 'waitlist'
-type WaitlistFilter = 'all' | 'pending' | 'confirmed' | 'notified'
+type WaitlistFilter = 'all' | 'pending' | 'confirmed' | 'notified' | 'unsubscribed'
 
 interface LaunchCampaign {
   subject: string
@@ -39,6 +39,7 @@ interface WaitlistCounts {
   pending: number
   confirmed: number
   notified: number
+  unsubscribed: number
 }
 
 interface ActionResult {
@@ -51,6 +52,7 @@ const FILTERS: { id: WaitlistFilter; label: string }[] = [
   { id: 'pending', label: 'Pending' },
   { id: 'confirmed', label: 'Confirmed' },
   { id: 'notified', label: 'Notified' },
+  { id: 'unsubscribed', label: 'Unsubscribed' },
 ]
 
 function formatDate(value?: string): string {
@@ -62,7 +64,7 @@ function formatDate(value?: string): string {
 
 export function LaunchEmailCard() {
   const [pane, setPane] = useState<Pane>('email')
-  const [from, setFrom] = useState('SceneFlow AI Studio <support@sceneflowai.studio>')
+  const [from, setFrom] = useState('SceneFlow AI Studio <noreply@sceneflowai.studio>')
   const [confirmation, setConfirmation] = useState({ subject: '', html: '', text: '' })
   const [campaign, setCampaign] = useState<LaunchCampaign>({
     subject: '',
@@ -81,6 +83,7 @@ export function LaunchEmailCard() {
     pending: 0,
     confirmed: 0,
     notified: 0,
+    unsubscribed: 0,
   })
   const [records, setRecords] = useState<WaitlistRecord[]>([])
   const [listTotal, setListTotal] = useState(0)
@@ -244,7 +247,9 @@ export function LaunchEmailCard() {
                 ? `${extras.email || 'This address'} is still pending confirmation.`
                 : data.reason === 'not_found'
                   ? 'Waitlist record not found.'
-                  : `Done. Sent ${sent}${skipped ? `, skipped ${skipped}` : ''}.`,
+                  : data.reason === 'unsubscribed'
+                    ? `${extras.email || 'This address'} has unsubscribed.`
+                    : `Done. Sent ${sent}${skipped ? `, skipped ${skipped}` : ''}.`,
       })
       if (pane === 'waitlist') await loadWaitlist(filter)
     } catch (error) {
@@ -437,12 +442,13 @@ export function LaunchEmailCard() {
         </div>
       ) : (
         <div className="space-y-5">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {[
               ['Total', counts.total],
               ['Pending', counts.pending],
               ['Confirmed', counts.confirmed],
               ['Notified', counts.notified],
+              ['Unsubscribed', counts.unsubscribed],
             ].map(([label, value]) => (
               <div key={String(label)} className="rounded-lg border border-dark-border bg-dark-bg px-3 py-2">
                 <p className="text-xs text-gray-500">{label}</p>

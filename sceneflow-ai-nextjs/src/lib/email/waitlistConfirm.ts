@@ -4,10 +4,13 @@ import { LEGAL_SUPPORT_EMAIL } from '@/config/legal/legalCopy'
 import { getAuthSecret } from '@/lib/auth/secret'
 import { fetchPrivateBlobJson, getPrivateBlobToken, hasPrivateBlobToken } from '@/lib/storage/privateBlob'
 import { getAppBaseUrl, getResendFromEmail, sendEmail } from '@/lib/email/resendClient'
+import { buildOfficialEmail, listUnsubscribeHeaders } from '@/lib/email/officialEmail'
 
 export const WAITLIST_CONFIRM_TTL_MS = 48 * 60 * 60 * 1000
 export const WAITLIST_RESEND_COOLDOWN_MS = 60 * 1000
 export const WAITLIST_CONFIRM_PATH = '/notify/confirm'
+export const WAITLIST_UNSUBSCRIBE_PATH = '/notify/unsubscribe'
+export const WAITLIST_UNSUBSCRIBE_API_PATH = '/api/waitlist/unsubscribe'
 
 export const WAITLIST_CONFIRM_SUBJECT = 'Confirm your SceneFlow launch notification'
 
@@ -21,6 +24,7 @@ export interface WaitlistRecord {
   lastSentAt?: string
   confirmedAt?: string
   launchNotifiedAt?: string
+  unsubscribedAt?: string
 }
 
 export function normalizeWaitlistEmail(email: string): string {
@@ -80,6 +84,31 @@ export function buildConfirmUrl(email: string, now = Date.now()): { url: string;
   return { url: url.toString(), exp, token }
 }
 
+export function createUnsubscribeToken(email: string): string {
+  return crypto
+    .createHmac('sha256', getAuthSecret())
+    .update(`unsubscribe|${normalizeWaitlistEmail(email)}`)
+    .digest('hex')
+}
+
+export function verifyUnsubscribeToken(email: string, token: string): boolean {
+  const expected = createUnsubscribeToken(email)
+  if (!token || !tokensEqual(expected, token)) return false
+  return true
+}
+
+export function buildUnsubscribeUrls(email: string): { pageUrl: string; apiUrl: string } {
+  const normalized = normalizeWaitlistEmail(email)
+  const token = createUnsubscribeToken(normalized)
+  const page = new URL(WAITLIST_UNSUBSCRIBE_PATH, `${getAppBaseUrl()}/`)
+  const api = new URL(WAITLIST_UNSUBSCRIBE_API_PATH, `${getAppBaseUrl()}/`)
+  page.searchParams.set('email', normalized)
+  page.searchParams.set('token', token)
+  api.searchParams.set('email', normalized)
+  api.searchParams.set('token', token)
+  return { pageUrl: page.toString(), apiUrl: api.toString() }
+}
+
 export async function readWaitlistRecord(email: string): Promise<WaitlistRecord | null> {
   if (!hasPrivateBlobToken()) return null
   const path = waitlistBlobPath(email)
@@ -100,29 +129,27 @@ export async function writeWaitlistRecord(record: WaitlistRecord): Promise<void>
   })
 }
 
-export function buildWaitlistConfirmationContent(confirmUrl: string): { html: string; text: string } {
-  const text = [
-    'Confirm your email to join the SceneFlow November 2026 launch list.',
-    '',
-    `Confirm email: ${confirmUrl}`,
-    '',
-    'This link expires in 48 hours. If you did not request this, you can ignore this email.',
-    `Questions? Reply to this message or write ${LEGAL_SUPPORT_EMAIL}.`,
-  ].join('\n')
-
-  const html = `
-    <p>Confirm your email to join the SceneFlow November 2026 launch list.</p>
-    <p><a href="${confirmUrl}" style="display:inline-block;padding:12px 20px;background:#4f46e5;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600">Confirm email</a></p>
-    <p>Or paste this link into your browser:<br /><a href="${confirmUrl}">${confirmUrl}</a></p>
-    <p>This link expires in 48 hours. If you did not request this, you can ignore this email.</p>
-    <p>Questions? Reply to this message or write <a href="mailto:${LEGAL_SUPPORT_EMAIL}">${LEGAL_SUPPORT_EMAIL}</a>.</p>
-  `.trim()
-
-  return { html, text }
+export function buildWaitlistConfirmationContent(
+  confirmUrl: string,
+  unsubscribeUrl: string
+): { html: string; text: string } {
+  return buildOfficialEmail({
+    preheader: 'Confirm your email to join the SceneFlow November 2026 launch list.',
+    heading: 'Confirm your SceneFlow notification',
+    paragraphs: [
+      'Confirm your email to join the SceneFlow November 2026 launch list.',
+      'This link expires in 48 hours. If you did not request this, you can ignore this email.',
+    ],
+    ctaLabel: 'Confirm email',
+    ctaUrl: confirmUrl,
+    whyReceived: 'You received this because you asked to be notified when SceneFlow studio access opens.',
+    unsubscribeUrl,
+  })
 }
 
 export async function sendWaitlistConfirmation(email: string, confirmUrl: string): Promise<void> {
-  const { html, text } = buildWaitlistConfirmationContent(confirmUrl)
+  const { pageUrl, apiUrl } = buildUnsubscribeUrls(email)
+  const { html, text } = buildWaitlistConfirmationContent(confirmUrl, pageUrl)
   await sendEmail({
     to: normalizeWaitlistEmail(email),
     subject: WAITLIST_CONFIRM_SUBJECT,
@@ -130,7 +157,35 @@ export async function sendWaitlistConfirmation(email: string, confirmUrl: string
     text,
     from: getResendFromEmail(),
     replyTo: LEGAL_SUPPORT_EMAIL,
+    headers: listUnsubscribeHeaders(apiUrl),
   })
+}
+
+export type UnsubscribeWaitlistResult = 'unsubscribed' | 'already' | 'invalid'
+
+export async function unsubscribeWaitlistEmail(
+  rawEmail: string,
+  token: string,
+  now = Date.now()
+): Promise<UnsubscribeWaitlistResult> {
+  const email = normalizeWaitlistEmail(rawEmail)
+  if (!email || !verifyUnsubscribeToken(email, token)) return 'invalid'
+
+  const existing = await readWaitlistRecord(email)
+  if (existing?.unsubscribedAt) return 'already'
+
+  const record: WaitlistRecord = {
+    email,
+    source: existing?.source ?? 'unsubscribe',
+    createdAt: existing?.createdAt ?? new Date(now).toISOString(),
+    status: existing?.status ?? 'pending',
+    lastSentAt: existing?.lastSentAt,
+    confirmedAt: existing?.confirmedAt,
+    launchNotifiedAt: existing?.launchNotifiedAt,
+    unsubscribedAt: new Date(now).toISOString(),
+  }
+  await writeWaitlistRecord(record)
+  return 'unsubscribed'
 }
 
 export type ConfirmWaitlistResult = 'confirmed' | 'already' | 'expired' | 'invalid'
@@ -157,6 +212,7 @@ export async function confirmWaitlistEmail(
     lastSentAt: existing?.lastSentAt,
     confirmedAt: new Date(now).toISOString(),
     launchNotifiedAt: existing?.launchNotifiedAt,
+    unsubscribedAt: existing?.unsubscribedAt,
   }
   await writeWaitlistRecord(record)
   return 'confirmed'

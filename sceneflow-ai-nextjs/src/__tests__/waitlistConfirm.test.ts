@@ -30,8 +30,11 @@ import {
   buildConfirmUrl,
   confirmWaitlistEmail,
   createConfirmToken,
+  createUnsubscribeToken,
   isWithinResendCooldown,
+  unsubscribeWaitlistEmail,
   verifyConfirmToken,
+  verifyUnsubscribeToken,
 } from '@/lib/email/waitlistConfirm'
 import {
   WAITLIST_CAMPAIGN_PATH,
@@ -131,8 +134,13 @@ describe('POST /api/waitlist', () => {
     expect(payload.replyTo).toBe(LEGAL_SUPPORT_EMAIL)
     expect(String(payload.html)).toContain(WAITLIST_CONFIRM_PATH)
     expect(String(payload.text)).toContain(WAITLIST_CONFIRM_PATH)
-    expect(payload.from).toContain('support@sceneflowai.studio')
-    expect(getResendFromEmail()).toContain('support@sceneflowai.studio')
+    expect(payload.from).toContain('noreply@sceneflowai.studio')
+    expect(payload.headers?.['List-Unsubscribe']).toContain('/api/waitlist/unsubscribe')
+    expect(payload.headers?.['List-Unsubscribe-Post']).toBe('List-Unsubscribe=One-Click')
+    expect(String(payload.html)).toContain('Life Focus, LLC')
+    expect(String(payload.html)).toContain('/brand/sf-badge.png')
+    expect(String(payload.text)).toContain('2900 W Anderson Ln')
+    expect(getResendFromEmail()).toContain('noreply@sceneflowai.studio')
   })
 
   it('skips a second send during cooldown', async () => {
@@ -232,6 +240,38 @@ describe('notify copy and public confirm route', () => {
       'utf8'
     )
     expect(page).toContain('confirmWaitlistEmail')
+  })
+
+  it('keeps /notify/unsubscribe off the app chrome', () => {
+    expect(isPublicRoute('/notify/unsubscribe')).toBe(true)
+    const page = readFileSync(join(process.cwd(), 'src/app/notify/unsubscribe/page.tsx'), 'utf8')
+    expect(page).toContain('unsubscribeWaitlistEmail')
+  })
+})
+
+describe('waitlist unsubscribe', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    hasBlobMock.mockReturnValue(true)
+    listMock.mockResolvedValue({ blobs: [] } as never)
+    putMock.mockResolvedValue({} as never)
+    fetchJsonMock.mockResolvedValue(null)
+  })
+
+  it('accepts a valid HMAC token and rejects a tampered one', () => {
+    const email = 'alex@studio.com'
+    const token = createUnsubscribeToken(email)
+    expect(verifyUnsubscribeToken(email, token)).toBe(true)
+    expect(verifyUnsubscribeToken(email, 'deadbeef')).toBe(false)
+    expect(verifyUnsubscribeToken('other@studio.com', token)).toBe(false)
+  })
+
+  it('marks a valid token as unsubscribed', async () => {
+    const email = 'alex@studio.com'
+    const token = createUnsubscribeToken(email)
+    await expect(unsubscribeWaitlistEmail(email, token)).resolves.toBe('unsubscribed')
+    const body = JSON.parse(String(putMock.mock.calls[0][1]))
+    expect(body.unsubscribedAt).toBeTruthy()
   })
 })
 
@@ -361,10 +401,35 @@ describe('waitlist admin helpers', () => {
     expect(nextLaunchAllCursor(third.remaining, third.nextCursor)).toBeUndefined()
   })
 
-  it('defaults the launch campaign subject and uses the support From', () => {
+  it('defaults the launch campaign subject and uses the noreply From', () => {
     const campaign = getDefaultLaunchCampaign()
     expect(campaign.subject).toBe(WAITLIST_LAUNCH_SUBJECT)
     expect(campaign.text).toContain('November 2026')
-    expect(getResendFromEmail()).toContain('support@sceneflowai.studio')
+    expect(campaign.html).toContain('<html')
+    expect(campaign.html).toContain('Life Focus, LLC')
+    expect(getResendFromEmail()).toContain('noreply@sceneflowai.studio')
+  })
+
+  it('skips unsubscribed addresses on launch send', () => {
+    const records = [
+      {
+        email: 'ready@studio.com',
+        source: 'hero',
+        createdAt: '2026-09-01T00:00:00.000Z',
+        status: 'confirmed' as const,
+      },
+      {
+        email: 'opted-out@studio.com',
+        source: 'hero',
+        createdAt: '2026-09-02T00:00:00.000Z',
+        status: 'confirmed' as const,
+        unsubscribedAt: '2026-09-03T00:00:00.000Z',
+      },
+    ]
+    const batch = selectLaunchBatch(records)
+    expect(batch.recipients.map((row) => row.email)).toEqual(['ready@studio.com'])
+    expect(filterWaitlistRecords(records, 'unsubscribed').map((row) => row.email)).toEqual([
+      'opted-out@studio.com',
+    ])
   })
 })

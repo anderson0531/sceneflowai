@@ -1,5 +1,5 @@
 import { BRAND } from '@/config/brand'
-import { LEGAL_SUPPORT_EMAIL } from '@/config/legal/legalCopy'
+import { LEGAL_NOREPLY_EMAIL } from '@/config/legal/legalCopy'
 
 export interface SendEmailOptions {
   to: string | string[]
@@ -8,6 +8,7 @@ export interface SendEmailOptions {
   text?: string
   replyTo?: string | string[]
   from?: string
+  headers?: Record<string, string>
 }
 
 export function getAppBaseUrl(): string {
@@ -22,17 +23,17 @@ export function getBrandBadgeUrl(): string {
   return `${getAppBaseUrl()}${BRAND.badge.src}`
 }
 
-export const DEFAULT_RESEND_FROM = `SceneFlow AI Studio <${LEGAL_SUPPORT_EMAIL}>`
+export const DEFAULT_RESEND_FROM = `SceneFlow AI Studio <${LEGAL_NOREPLY_EMAIL}>`
 
 function fromAddressKey(from: string): string {
   const match = from.match(/<([^>]+)>/)
   return (match?.[1] ?? from).trim().toLowerCase()
 }
 
-/** Resend From header. Locked to support@sceneflowai.studio; ignores other env senders. */
+/** Resend From header. Locked to noreply@sceneflowai.studio; ignores other env senders. */
 export function getResendFromEmail(): string {
   const configured = process.env.RESEND_FROM_EMAIL?.trim()
-  if (configured && fromAddressKey(configured) === LEGAL_SUPPORT_EMAIL) {
+  if (configured && fromAddressKey(configured) === LEGAL_NOREPLY_EMAIL) {
     return configured
   }
   return DEFAULT_RESEND_FROM
@@ -66,6 +67,9 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
               ? options.replyTo[0]
               : options.replyTo,
           }
+        : {}),
+      ...(options.headers && Object.keys(options.headers).length > 0
+        ? { headers: options.headers }
         : {}),
     }),
   })
