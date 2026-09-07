@@ -5,6 +5,7 @@ export interface SendEmailOptions {
   subject: string
   html: string
   text?: string
+  replyTo?: string | string[]
 }
 
 export function getAppBaseUrl(): string {
@@ -50,6 +51,9 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
       subject: options.subject,
       html: options.html,
       text: options.text,
+      ...(options.replyTo
+        ? { reply_to: Array.isArray(options.replyTo) ? options.replyTo : [options.replyTo] }
+        : {}),
     }),
   })
 

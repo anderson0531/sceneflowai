@@ -1,27 +1,19 @@
 import { NextResponse } from 'next/server'
-import crypto from 'crypto'
-import { put } from '@vercel/blob'
-import { getPrivateBlobToken, hasPrivateBlobToken } from '@/lib/storage/privateBlob'
+import {
+  buildConfirmUrl,
+  isWithinResendCooldown,
+  normalizeWaitlistEmail,
+  readWaitlistRecord,
+  sendWaitlistConfirmation,
+  writeWaitlistRecord,
+  type WaitlistRecord,
+} from '@/lib/email/waitlistConfirm'
+import { hasPrivateBlobToken } from '@/lib/storage/privateBlob'
 
 export const runtime = 'nodejs'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MAX_SOURCE_LENGTH = 64
-
-interface WaitlistRecord {
-  email: string
-  source: string
-  createdAt: string
-}
-
-function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase()
-}
-
-function blobPath(email: string): string {
-  const hash = crypto.createHash('sha256').update(email).digest('hex')
-  return `waitlist/launch-november-2026/${hash}.json`
-}
 
 export async function POST(request: Request) {
   let body: { email?: unknown; source?: unknown }
@@ -32,7 +24,7 @@ export async function POST(request: Request) {
   }
 
   const rawEmail = typeof body.email === 'string' ? body.email : ''
-  const email = normalizeEmail(rawEmail)
+  const email = normalizeWaitlistEmail(rawEmail)
 
   if (!email) {
     return NextResponse.json({ error: 'Email is required.' }, { status: 400 })
@@ -43,29 +35,37 @@ export async function POST(request: Request) {
 
   const source =
     typeof body.source === 'string' ? body.source.slice(0, MAX_SOURCE_LENGTH) : 'landing'
+  const now = Date.now()
 
-  const record: WaitlistRecord = {
-    email,
-    source,
-    createdAt: new Date().toISOString(),
+  let existing: WaitlistRecord | null = null
+  try {
+    existing = await readWaitlistRecord(email)
+  } catch (error) {
+    console.error('[waitlist] failed to read signup', error)
+    return NextResponse.json(
+      { error: 'Could not save your email right now. Try again shortly.' },
+      { status: 502 }
+    )
   }
 
-  // Blob storage is optional so local and preview environments can exercise the
-  // full form without a private store configured.
-  if (!hasPrivateBlobToken()) {
-    console.info('[waitlist] captured without blob storage', { email, source })
-    return NextResponse.json({ ok: true, stored: false })
+  if (existing?.status === 'confirmed') {
+    return NextResponse.json({ ok: true, stored: hasPrivateBlobToken() })
+  }
+
+  if (isWithinResendCooldown(existing?.lastSentAt, now)) {
+    return NextResponse.json({ ok: true, stored: hasPrivateBlobToken() })
+  }
+
+  const pending: WaitlistRecord = {
+    email,
+    source: existing?.source ?? source,
+    createdAt: existing?.createdAt ?? new Date(now).toISOString(),
+    status: 'pending',
+    lastSentAt: existing?.lastSentAt,
   }
 
   try {
-    await put(blobPath(email), JSON.stringify(record, null, 2), {
-      access: 'private',
-      addRandomSuffix: false,
-      allowOverwrite: true,
-      contentType: 'application/json; charset=utf-8',
-      token: getPrivateBlobToken(),
-    })
-    return NextResponse.json({ ok: true, stored: true })
+    await writeWaitlistRecord(pending)
   } catch (error) {
     console.error('[waitlist] failed to persist signup', error)
     return NextResponse.json(
@@ -73,4 +73,27 @@ export async function POST(request: Request) {
       { status: 502 }
     )
   }
+
+  const { url } = buildConfirmUrl(email, now)
+
+  try {
+    await sendWaitlistConfirmation(email, url)
+  } catch (error) {
+    console.error('[waitlist] failed to send confirmation', error)
+    return NextResponse.json(
+      { error: 'Could not send the confirmation email right now. Try again shortly.' },
+      { status: 502 }
+    )
+  }
+
+  try {
+    await writeWaitlistRecord({
+      ...pending,
+      lastSentAt: new Date(now).toISOString(),
+    })
+  } catch (error) {
+    console.error('[waitlist] confirmation sent but persist of lastSentAt failed', error)
+  }
+
+  return NextResponse.json({ ok: true, stored: hasPrivateBlobToken() })
 }

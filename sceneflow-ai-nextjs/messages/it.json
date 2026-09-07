@@ -2039,11 +2039,18 @@
     "placeholder": "you@studio.com",
     "submit": "Notify me",
     "submitting": "Sending…",
-    "successTitle": "You’re on the list.",
-    "successBody": "We’ll email you as soon as November access opens. Nothing else.",
+    "successTitle": "Check your inbox.",
+    "successBody": "We sent a confirmation link. Click it to join the November launch list. Nothing else.",
     "errorEmpty": "Enter your email so we can reach you.",
     "errorInvalid": "That email doesn’t look right. Check it and try again.",
     "errorGeneric": "Something went wrong. Try again in a moment.",
-    "privacy": "One email at launch. No spam, unsubscribe anytime."
+    "privacy": "We email a confirmation link first. One launch note after you confirm. No spam.",
+    "confirmTitle": "You’re on the list.",
+    "confirmBody": "We’ll email you as soon as November access opens. Nothing else.",
+    "confirmExpiredTitle": "That link expired.",
+    "confirmExpiredBody": "Submit your email on the landing page again and we’ll send a new confirmation link.",
+    "confirmInvalidTitle": "That link isn’t valid.",
+    "confirmInvalidBody": "Request a new confirmation from the landing page.",
+    "confirmHome": "Back to SceneFlow"
   }
 }

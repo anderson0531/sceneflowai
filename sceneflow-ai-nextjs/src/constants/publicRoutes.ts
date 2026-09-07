@@ -11,7 +11,7 @@ export const LANDING_LOCALE_ROUTE_PATTERN =
   /^\/(es|pt|fr|de|it|nl|pl|ru|uk|cs|sv|da|no|fi|el|tr|ro|hu|zh-CN|zh-TW|ja|ko|hi|bn|th|vi|id|ms|tl|ur|ar|he|fa|sw|am|yo|zu|af)$/;
 
 // Prefix match routes (no navigation for any path starting with these)
-export const PUBLIC_ROUTE_PREFIXES = ['/c/', '/collaborate/', '/share/', '/s/', '/blueprint/share/', '/embed/'] as const;
+export const PUBLIC_ROUTE_PREFIXES = ['/c/', '/collaborate/', '/share/', '/s/', '/blueprint/share/', '/embed/', '/notify/'] as const;
 
 // Known private app route prefixes (for identifying root-level branded links)
 const APP_ROUTES = [
