@@ -172,7 +172,7 @@ describe('POST /api/waitlist', () => {
     )
     expect(res.status).toBe(200)
     expect(sendEmailMock).toHaveBeenCalledTimes(2)
-    expect(sendEmailMock.mock.calls[1][0].from).toContain('beth.t@example.com')
+    expect(sendEmailMock.mock.calls[1][0].from).toContain('onboarding@resend.dev')
     vi.unstubAllEnvs()
   })
 
