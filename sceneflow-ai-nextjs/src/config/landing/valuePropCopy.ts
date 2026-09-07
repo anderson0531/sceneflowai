@@ -38,12 +38,21 @@ export const NOTIFY_COPY = {
   placeholder: 'you@studio.com',
   submit: 'Notify me',
   submitting: 'Sending\u2026',
-  successTitle: 'You\u2019re on the list.',
-  successBody: 'We\u2019ll email you as soon as November access opens. Nothing else.',
+  successTitle: 'Check your inbox.',
+  successBody:
+    'We sent a confirmation link. Click it to join the November launch list. Nothing else.',
   errorEmpty: 'Enter your email so we can reach you.',
   errorInvalid: 'That email doesn\u2019t look right. Check it and try again.',
   errorGeneric: 'Something went wrong. Try again in a moment.',
-  privacy: 'One email at launch. No spam, unsubscribe anytime.',
+  privacy: 'We email a confirmation link first. One launch note after you confirm. No spam.',
+  confirmTitle: 'You\u2019re on the list.',
+  confirmBody: 'We\u2019ll email you as soon as November access opens. Nothing else.',
+  confirmExpiredTitle: 'That link expired.',
+  confirmExpiredBody:
+    'Submit your email on the landing page again and we\u2019ll send a new confirmation link.',
+  confirmInvalidTitle: 'That link isn\u2019t valid.',
+  confirmInvalidBody: 'Request a new confirmation from the landing page.',
+  confirmHome: 'Back to SceneFlow',
 } as const
 
 export const HERO_PIPELINE_STEPS = ['Blueprint', 'Production', 'Screening Room'] as const

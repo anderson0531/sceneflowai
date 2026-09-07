@@ -5,6 +5,8 @@ export interface SendEmailOptions {
   subject: string
   html: string
   text?: string
+  replyTo?: string | string[]
+  from?: string
 }
 
 export function getAppBaseUrl(): string {
@@ -30,7 +32,7 @@ export function getResendFromEmail(): string {
 
 export async function sendEmail(options: SendEmailOptions): Promise<void> {
   const resendApiKey = process.env.RESEND_API_KEY
-  const resendFrom = getResendFromEmail()
+  const resendFrom = options.from?.trim() || getResendFromEmail()
 
   if (!resendApiKey) {
     throw new Error('Email delivery is not configured. Set RESEND_API_KEY.')
@@ -50,11 +52,18 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
       subject: options.subject,
       html: options.html,
       text: options.text,
+      ...(options.replyTo
+        ? {
+            reply_to: Array.isArray(options.replyTo) && options.replyTo.length === 1
+              ? options.replyTo[0]
+              : options.replyTo,
+          }
+        : {}),
     }),
   })
 
   if (!response.ok) {
     const errorBody = await response.text()
-    throw new Error(`Failed to send email: ${errorBody}`)
+    throw new Error(`Failed to send email (${response.status}): ${errorBody}`)
   }
 }
