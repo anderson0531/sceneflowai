@@ -66,7 +66,7 @@ export default function PrivacyPolicyPage() {
             <ul className="list-disc pl-6 text-gray-300 space-y-2">
               <li><strong>User ID:</strong> Account identifier associated with each generation</li>
               <li><strong>Prompts/Scripts:</strong> Text input submitted for audio/video generation</li>
-              <li><strong>Content hashes:</strong> Cryptographic fingerprints for segment video provenance records</li>
+              <li><strong>Content hashes:</strong> Cryptographic fingerprints for beat video provenance records</li>
               <li><strong>Timestamps:</strong> Exact date and time of each generation</li>
               <li><strong>Voice Identifiers:</strong> Record of which voice (stock or custom) was used</li>
               <li><strong>Moderation events:</strong> Validation runs and policy actions where applicable</li>

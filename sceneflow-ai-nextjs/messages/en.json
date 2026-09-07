@@ -794,10 +794,10 @@
       {
         "id": "validation-provenance",
         "title": "Validation & Provenance",
-        "description": "Additional moderation and risk mitigation is available across Blueprint, script, pre-vis, and segment video—using the same credit model as other Studio tools. Successful clips receive signed content provenance records.",
+        "description": "Additional moderation and risk mitigation is available across Blueprint, script, pre-vis, and beat video—using the same credit model as other Studio tools. Successful clips receive signed content provenance records.",
         "highlights": [
           "Content validation signals before heavy render spend",
-          "Signed content hash and provenance metadata on segment video",
+          "Signed content hash and provenance metadata on beat video",
           "Audit logs, violation tracking, and abuse reporting for platform protection"
         ],
         "badge": "Content validation"
@@ -846,7 +846,7 @@
       },
       {
         "title": "Production Mixer finish",
-        "description": "Chain segments stitch into scene playback; elastic audio holds cover narration that runs longer than video."
+        "description": "Chained beats stitch into scene playback; elastic audio holds cover narration that runs longer than video."
       }
     ],
     "stats": [
@@ -1625,7 +1625,7 @@
       {
         "id": "16",
         "title": "Trust & Safety",
-        "description": "Layered guardrails on every generation path: Google Vertex AI safety, Extended Creative Services with Guardrails, optional Studio content validation, and signed provenance on segment video.",
+        "description": "Layered guardrails on every generation path: Google Vertex AI safety, Extended Creative Services with Guardrails, optional Studio content validation, and signed provenance on beat video.",
         "keyFeatures": [
           "Google-native safety — Vertex Responsible AI on all generation",
           "Guarded fallback — pre-storage review on alternate paths",
