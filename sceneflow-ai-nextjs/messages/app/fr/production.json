@@ -985,13 +985,10 @@
       "description": "Scène {number} · Générateur d'invites guidé avec des références de personnages et de garde-robe.",
       "matchingNotes": "Notes de correspondance de référence",
       "tabVisualSetup": "Configuration visuelle",
-      "tabCustomPrompt": "Invite personnalisée",
       "wardrobeOverride": "Remplacement du texte de la garde-robe (facultatif : l'image de référence du diptyque est envoyée lorsqu'elle est disponible)",
       "locationReference": "Référence de localisation",
       "oneSelected": "1 sélectionné",
       "wardrobePlaceholder": "Description complète de la garde-robe de la bibliothèque de référence…",
-      "promptPlaceholder": "Invite de génération d’image complète…",
-      "negativePlaceholder": "Invite négative…",
       "generating": "Générateur…",
       "generateWithDirect": "Générer avec Direct"
     }

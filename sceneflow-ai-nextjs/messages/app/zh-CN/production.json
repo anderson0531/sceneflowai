@@ -985,13 +985,10 @@
       "description": "场景 {number} · 带有角色和服装参考的引导提示构建器。",
       "matchingNotes": "参考搭配笔记",
       "tabVisualSetup": "视觉设置",
-      "tabCustomPrompt": "自定义提示",
       "wardrobeOverride": "衣柜文本覆盖（可选 - 双连画参考图像可用时发送）",
       "locationReference": "位置参考",
       "oneSelected": "已选择 1 项",
       "wardrobePlaceholder": "来自参考图书馆的完整衣柜描述……",
-      "promptPlaceholder": "完整图像生成提示...",
-      "negativePlaceholder": "负面提示...",
       "generating": "生成…",
       "generateWithDirect": "直接生成"
     }

@@ -985,13 +985,10 @@
       "description": "दृश्य {number} · चरित्र और अलमारी संदर्भों के साथ निर्देशित प्रॉम्प्ट बिल्डर।",
       "matchingNotes": "संदर्भ मिलान नोट्स",
       "tabVisualSetup": "विज़ुअल सेटअप",
-      "tabCustomPrompt": "कस्टम प्रॉम्प्ट",
       "wardrobeOverride": "अलमारी टेक्स्ट ओवरराइड (वैकल्पिक — डिप्टीच रेफ़री इमेज उपलब्ध होने पर भेजी जाती है)",
       "locationReference": "लोकेशन का संदर्भ",
       "oneSelected": "% 1 चयनित@ info: status",
       "wardrobePlaceholder": "संदर्भ लाइब्रेरी से पूरा अलमारी विवरण...",
-      "promptPlaceholder": "फ़ुल इमेज जनरेशन प्रॉम्प्ट...",
-      "negativePlaceholder": "नेगेटिव प्रॉम्प्ट...",
       "generating": "जनरेट हो रहा है",
       "generateWithDirect": "डायरेक्ट के साथ जनरेट करें"
     }

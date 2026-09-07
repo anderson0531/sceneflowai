@@ -985,13 +985,10 @@
       "description": "ฉาก {number} · ตัวสร้างพรอมต์ที่มีคำแนะนำพร้อมการอ้างอิงตัวละครและตู้เสื้อผ้า",
       "matchingNotes": "หมายเหตุการจับคู่อ้างอิง",
       "tabVisualSetup": "การตั้งค่าภาพ",
-      "tabCustomPrompt": "พร้อมท์แบบกำหนดเอง",
       "wardrobeOverride": "การแทนที่ข้อความในตู้เสื้อผ้า (ไม่บังคับ — ภาพอ้างอิง DIPTYCH จะถูกส่งเมื่อมี)",
       "locationReference": "การอ้างอิงตำแหน่งที่ตั้ง",
       "oneSelected": "เลือก% 1 ไว้@ info: status",
       "wardrobePlaceholder": "รายละเอียดตู้เสื้อผ้าเต็มรูปแบบจากไลบรารีอ้างอิง…",
-      "promptPlaceholder": "พร้อมท์การสร้างภาพเต็มรูปแบบ...",
-      "negativePlaceholder": "พรอมต์เชิงลบ…",
       "generating": "กำลังสร้าง...",
       "generateWithDirect": "สร้างด้วย Direct"
     }

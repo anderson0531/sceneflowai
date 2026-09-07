@@ -19,12 +19,15 @@ import {
   detectSceneType,
   extractDirectionMetadata,
   assignPropAndLocationReferenceIndices,
+  parseVisualSetupOverlay,
+  parseTalentDirectionOverlay,
   type CharacterContext,
   type PropContext,
   type LocationContext,
   type SceneImageIntelligenceRequest,
   type SceneImageIntelligenceResult,
 } from '@/lib/intelligence/scene-image-intelligence'
+import { shouldUseCustomPromptOverride } from '@/lib/vision/preVisDirectGenerate'
 import { applySceneImageAiResultToPrompt } from '@/lib/scene/sceneImageAiPromptApply'
 import {
   resolveFeaturedCharactersForValidation,
@@ -458,6 +461,7 @@ export async function POST(req: NextRequest) {
       thinkingLevel,
       visualSetup,
       talentDirection,
+      userDirection: enteredUserDirection,
       wardrobeTextOverrides,
       frameRole = 'start',
       startFrameUrl,
@@ -475,8 +479,8 @@ export async function POST(req: NextRequest) {
     // Prompt-builder text is typed by the creator in their own language, and
     // everything here becomes an image prompt, so normalize once at the entry.
     const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, { projectId })
-    const [customPrompt, scenePrompt] = await englishForModelBatch(
-      [enteredCustomPrompt, enteredScenePrompt],
+    const [customPrompt, scenePrompt, userDirection] = await englishForModelBatch(
+      [enteredCustomPrompt, enteredScenePrompt, enteredUserDirection],
       storyLocale,
       properNouns
     )
@@ -1001,7 +1005,7 @@ export async function POST(req: NextRequest) {
         // PRIORITY 2: Original script components (action + visualDescription)
         const sceneDirectionText = scene.sceneDirectionText || ''
         
-        if (customPrompt && customPrompt.trim()) {
+        if (shouldUseCustomPromptOverride(generationMode, customPrompt)) {
           fullSceneContext = customPrompt
           console.log('[Scene Image] Using custom prompt from ScenePromptBuilder')
         } else if (isBeatFrame && scene) {
@@ -1081,7 +1085,7 @@ export async function POST(req: NextRequest) {
           console.log('[Scene Image] Using original script components (action/visualDescription)')
         }
         
-        if (dialogueFrameContext && !(customPrompt && customPrompt.trim())) {
+        if (dialogueFrameContext && !shouldUseCustomPromptOverride(generationMode, customPrompt)) {
           fullSceneContext = `${dialogueFrameContext}${fullSceneContext}`
         }
 
@@ -1476,7 +1480,7 @@ export async function POST(req: NextRequest) {
     let sceneImageAiResult: SceneImageIntelligenceResult | null = null
     let aiSceneType: string | undefined
     
-    if (customPrompt && customPrompt.trim()) {
+    if (shouldUseCustomPromptOverride(generationMode, customPrompt)) {
       let promptBody = stripPromptMetaInstructions(customPrompt.trim())
       if (allowTypography) {
         promptBody =
@@ -1679,6 +1683,9 @@ export async function POST(req: NextRequest) {
         referenceImageCount: totalAvailableRefImages,
         projectId,
         bustPromptCache,
+        visualSetup: parseVisualSetupOverlay(visualSetup),
+        talentDirection: parseTalentDirectionOverlay(talentDirection),
+        userDirection: userDirection?.trim() || undefined,
       }
 
       const aiResult = await generateSceneImagePromptWithDeadline(sceneImageIntelligenceRequest)

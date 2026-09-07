@@ -29,6 +29,7 @@ const USER_TEXT_FIELDS = [
   'locationPrompt',
   'scenePrompt',
   'userIntent',
+  'userDirection',
 ]
 
 /** Clients that mean the text ends up in a generation prompt. */

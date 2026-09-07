@@ -985,13 +985,10 @@
       "description": "Cena {number} · Construtor de prompt guiado com referências de personagens e guarda-roupas.",
       "matchingNotes": "Notas correspondentes de referência",
       "tabVisualSetup": "Configuração visual",
-      "tabCustomPrompt": "Prompt personalizado",
       "wardrobeOverride": "Substituição de texto do guarda-roupa (opcional – a imagem de referência do díptico é enviada quando disponível)",
       "locationReference": "Referência de localização",
       "oneSelected": "1 selecionado",
       "wardrobePlaceholder": "Descrição completa do guarda-roupa da biblioteca de referência…",
-      "promptPlaceholder": "Prompt de geração de imagem completa…",
-      "negativePlaceholder": "Alerta negativo…",
       "generating": "Gerando…",
       "generateWithDirect": "Gerar com Direct"
     }

@@ -985,13 +985,10 @@
       "description": "Szene {number} · Geführter Prompt Builder mit Charakter- und Garderobenreferenzen.",
       "matchingNotes": "Verweisen Sie auf passende Notizen",
       "tabVisualSetup": "Visuelle Einrichtung",
-      "tabCustomPrompt": "Benutzerdefinierte Eingabeaufforderung",
       "wardrobeOverride": "Garderobentext überschreiben (optional – Diptychon-Referenzbild wird gesendet, wenn verfügbar)",
       "locationReference": "Standortreferenz",
       "oneSelected": "1 ausgewählt",
       "wardrobePlaceholder": "Vollständige Garderobenbeschreibung aus der Referenzbibliothek…",
-      "promptPlaceholder": "Vollständige Bildgenerierungsaufforderung…",
-      "negativePlaceholder": "Negative Aufforderung…",
       "generating": "Generieren…",
       "generateWithDirect": "Mit Direct generieren"
     }
