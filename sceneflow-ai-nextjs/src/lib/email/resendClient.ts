@@ -1,4 +1,5 @@
 import { BRAND } from '@/config/brand'
+import { LEGAL_SUPPORT_EMAIL } from '@/config/legal/legalCopy'
 
 export interface SendEmailOptions {
   to: string | string[]
@@ -21,42 +22,20 @@ export function getBrandBadgeUrl(): string {
   return `${getAppBaseUrl()}${BRAND.badge.src}`
 }
 
-export const DEFAULT_RESEND_FROM = 'SceneFlow AI Studio <noreply@sceneflowai.studio>'
-/** Account domain used when sceneflowai.studio is not verified in Resend. */
-export const FALLBACK_RESEND_FROM = 'SceneFlow AI Studio <noreply@sfai.studio>'
-export const PREVIEW_RESEND_FROM = 'SceneFlow AI Studio <onboarding@resend.dev>'
+export const DEFAULT_RESEND_FROM = `SceneFlow AI Studio <${LEGAL_SUPPORT_EMAIL}>`
 
 function fromAddressKey(from: string): string {
   const match = from.match(/<([^>]+)>/)
   return (match?.[1] ?? from).trim().toLowerCase()
 }
 
-/** Resend From header. Honors RESEND_FROM_EMAIL when it looks like an address. */
+/** Resend From header. Locked to support@sceneflowai.studio; ignores other env senders. */
 export function getResendFromEmail(): string {
   const configured = process.env.RESEND_FROM_EMAIL?.trim()
-  if (configured?.includes('@')) return configured
+  if (configured && fromAddressKey(configured) === LEGAL_SUPPORT_EMAIL) {
+    return configured
+  }
   return DEFAULT_RESEND_FROM
-}
-
-export function getWaitlistFromCandidates(): string[] {
-  const candidates = [getResendFromEmail(), FALLBACK_RESEND_FROM]
-  if (process.env.VERCEL_ENV === 'preview') {
-    candidates.push(PREVIEW_RESEND_FROM)
-  }
-  const unique: string[] = []
-  const seen = new Set<string>()
-  for (const from of candidates) {
-    const key = fromAddressKey(from)
-    if (!key || seen.has(key)) continue
-    seen.add(key)
-    unique.push(from)
-  }
-  return unique
-}
-
-export function isResendUnverifiedDomainError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error)
-  return /domain is not verified/i.test(message) || /\(403\)/.test(message)
 }
 
 export async function sendEmail(options: SendEmailOptions): Promise<void> {

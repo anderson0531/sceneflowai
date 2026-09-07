@@ -3,12 +3,7 @@ import { list, put } from '@vercel/blob'
 import { LEGAL_SUPPORT_EMAIL } from '@/config/legal/legalCopy'
 import { getAuthSecret } from '@/lib/auth/secret'
 import { fetchPrivateBlobJson, getPrivateBlobToken, hasPrivateBlobToken } from '@/lib/storage/privateBlob'
-import {
-  getAppBaseUrl,
-  getWaitlistFromCandidates,
-  isResendUnverifiedDomainError,
-  sendEmail,
-} from '@/lib/email/resendClient'
+import { getAppBaseUrl, getResendFromEmail, sendEmail } from '@/lib/email/resendClient'
 
 export const WAITLIST_CONFIRM_TTL_MS = 48 * 60 * 60 * 1000
 export const WAITLIST_RESEND_COOLDOWN_MS = 60 * 1000
@@ -127,28 +122,14 @@ export function buildWaitlistConfirmationContent(confirmUrl: string): { html: st
 
 export async function sendWaitlistConfirmation(email: string, confirmUrl: string): Promise<void> {
   const { html, text } = buildWaitlistConfirmationContent(confirmUrl)
-  const payload = {
+  await sendEmail({
     to: normalizeWaitlistEmail(email),
     subject: WAITLIST_CONFIRM_SUBJECT,
     html,
     text,
+    from: getResendFromEmail(),
     replyTo: LEGAL_SUPPORT_EMAIL,
-  }
-  const candidates = getWaitlistFromCandidates()
-  let lastError: unknown
-  for (let index = 0; index < candidates.length; index++) {
-    try {
-      await sendEmail({ ...payload, from: candidates[index] })
-      return
-    } catch (error) {
-      lastError = error
-      const hasNext = index < candidates.length - 1
-      if (!hasNext || !isResendUnverifiedDomainError(error)) {
-        throw error
-      }
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error(String(lastError))
+  })
 }
 
 export type ConfirmWaitlistResult = 'confirmed' | 'already' | 'expired' | 'invalid'

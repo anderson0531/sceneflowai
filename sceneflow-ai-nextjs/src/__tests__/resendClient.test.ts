@@ -1,11 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import {
-  FALLBACK_RESEND_FROM,
-  PREVIEW_RESEND_FROM,
-  getResendFromEmail,
-  getWaitlistFromCandidates,
-  sendEmail,
-} from '@/lib/email/resendClient'
+import { getResendFromEmail, sendEmail } from '@/lib/email/resendClient'
 
 describe('resendClient', () => {
   afterEach(() => {
@@ -13,26 +7,19 @@ describe('resendClient', () => {
     vi.unstubAllEnvs()
   })
 
-  it('defaults From to noreply@sceneflowai.studio', () => {
-    expect(getResendFromEmail()).toContain('noreply@sceneflowai.studio')
+  it('defaults From to support@sceneflowai.studio', () => {
+    expect(getResendFromEmail()).toContain('support@sceneflowai.studio')
   })
 
-  it('honors RESEND_FROM_EMAIL when it looks like an address', () => {
-    vi.stubEnv('RESEND_FROM_EMAIL', 'SceneFlow <noreply@sfai.studio>')
-    expect(getResendFromEmail()).toContain('noreply@sfai.studio')
+  it('ignores RESEND_FROM_EMAIL when it is not support@sceneflowai.studio', () => {
+    vi.stubEnv('RESEND_FROM_EMAIL', 'Brian <brian@sfai.studio>')
+    expect(getResendFromEmail()).toContain('support@sceneflowai.studio')
+    expect(getResendFromEmail()).not.toContain('brian@sfai.studio')
   })
 
-  it('retries waitlist From on the account domain, plus Resend onboarding in preview', () => {
-    expect(getWaitlistFromCandidates()).toEqual([
-      getResendFromEmail(),
-      FALLBACK_RESEND_FROM,
-    ])
-    vi.stubEnv('VERCEL_ENV', 'preview')
-    expect(getWaitlistFromCandidates()).toEqual([
-      getResendFromEmail(),
-      FALLBACK_RESEND_FROM,
-      PREVIEW_RESEND_FROM,
-    ])
+  it('honors RESEND_FROM_EMAIL only for support@sceneflowai.studio', () => {
+    vi.stubEnv('RESEND_FROM_EMAIL', 'SceneFlow Support <support@sceneflowai.studio>')
+    expect(getResendFromEmail()).toBe('SceneFlow Support <support@sceneflowai.studio>')
   })
 
   it('sends reply_to to Resend when replyTo is set', async () => {
@@ -50,7 +37,7 @@ describe('resendClient', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
     const body = JSON.parse(String(fetchMock.mock.calls[0][1].body)) as Record<string, unknown>
-    expect(body.from).toContain('noreply@sceneflowai.studio')
+    expect(body.from).toContain('support@sceneflowai.studio')
     expect(body.reply_to).toBe('support@sceneflowai.studio')
     expect(body.to).toEqual(['support@sceneflowai.studio'])
   })
