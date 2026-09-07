@@ -7,7 +7,6 @@ import {
   getHeroVideoPosterUrl,
   getHeroVideoHlsUrl,
   getHeroVideoPlaybackSources,
-  HERO_VIDEO_BLOB_HOST,
 } from '@/config/landing/heroVideoLocales'
 
 describe('videoPreload', () => {
@@ -42,14 +41,10 @@ describe('videoPreload', () => {
 })
 
 describe('hero video CDN config', () => {
-  it('serves posters from Blob CDN (en/es/pt/hi/zh/ar use site-served posters from current masters)', () => {
-    expect(getHeroVideoPosterUrl('en')).toBe('/landing/hero/sceneflow-hero-en-poster.jpg')
-    expect(getHeroVideoPosterUrl('es')).toBe('/landing/hero/sceneflow-hero-es-poster.jpg')
-    expect(getHeroVideoPosterUrl('pt')).toBe('/landing/hero/sceneflow-hero-pt-poster.jpg')
-    expect(getHeroVideoPosterUrl('hi')).toBe('/landing/hero/sceneflow-hero-hi-poster.jpg')
-    expect(getHeroVideoPosterUrl('zh')).toBe('/landing/hero/sceneflow-hero-zh-poster.jpg')
-    expect(getHeroVideoPosterUrl('ar')).toBe('/landing/hero/sceneflow-hero-ar-poster.jpg')
-    expect(getHeroVideoPosterUrl('th')).toContain('sceneflow-hero-th-poster.jpg')
+  it('serves posters from the site for every locale (regenerated from current Blob masters)', () => {
+    for (const locale of ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'] as const) {
+      expect(getHeroVideoPosterUrl(locale)).toBe(`/landing/hero/sceneflow-hero-${locale}-poster.jpg`)
+    }
   })
 
   it('omits HLS URL until NEXT_PUBLIC_LANDING_VIDEO_CDN is set', () => {
@@ -60,18 +55,7 @@ describe('hero video CDN config', () => {
     for (const locale of ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'] as const) {
       const sources = getHeroVideoPlaybackSources(locale)
       expect(sources?.mp4Src).toContain('.mp4')
-      if (
-        locale === 'en' ||
-        locale === 'es' ||
-        locale === 'pt' ||
-        locale === 'hi' ||
-        locale === 'zh' ||
-        locale === 'ar'
-      ) {
-        expect(sources?.poster).toBe(`/landing/hero/sceneflow-hero-${locale}-poster.jpg`)
-      } else {
-        expect(sources?.poster).toContain('blob.vercel-storage.com')
-      }
+      expect(sources?.poster).toBe(`/landing/hero/sceneflow-hero-${locale}-poster.jpg`)
     }
   })
 })
