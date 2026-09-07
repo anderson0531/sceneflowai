@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-07T10:14:31.528Z",
+  "generatedAt": "2026-09-07T11:11:11.019Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -1468,6 +1468,12 @@
       "direction.director.frameFirstBody": "fd7525cc8a7bd9ec",
       "direction.director.disabledNeedStartFrame": "878d6b81b31d336c",
       "direction.director.disabledNeedPrevious": "65623fbe72dbfc4c",
+      "direction.director.takeStandard": "ef6691545d2c5523",
+      "direction.director.takeCreative": "2c7e63313045bbdf",
+      "direction.director.takeModeHint": "e08ef36c6f2b08ee",
+      "direction.director.useBeatFrameAsStart": "2a0c3fefc4b6b2fa",
+      "direction.director.useBeatFrameAsStartHint": "5f89289545a21723",
+      "direction.director.noIngredientsHint": "d2b768e603a2dbf6",
       "direction.framePrompt.title": "5b89e4b3f3ac8f81",
       "direction.framePrompt.titlePlural": "9d7eb38db5f97cdf",
       "direction.framePrompt.beatBadge": "a9370cf983eb2821",
