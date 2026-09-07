@@ -18,7 +18,7 @@ import { useTranslations } from 'next-intl'
 import { ASSISTANT } from '@/lib/constants/assistant'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target, Share2 } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target, Share2 } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { PRODUCTION_SECTION_DESCRIPTIONS, PRODUCTION_SECTION_LABELS } from '@/constants/productionSections'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
@@ -123,7 +123,11 @@ import {
 import { buildBeatFirstPlaybackTimeline } from '@/lib/storyboard/types'
 import { buildStoryboardMusicClips } from '@/lib/storyboard/musicPlayback'
 import { isBeatSfxMuted } from '@/lib/storyboard/sfxPlayback'
-import { readBeatSfxAudio, resolveBeatSfxSlot } from '@/lib/script/deriveSfxFromSceneContent'
+import {
+  readBeatSfxAudio,
+  resolveBeatSfxSlot,
+  stripInlineSfxLinesFromActionText,
+} from '@/lib/script/deriveSfxFromSceneContent'
 import { BeatMusicToggle } from '@/components/vision/BeatMusicToggle'
 import { BeatSfxToggle } from '@/components/vision/BeatSfxToggle'
 import { BeatExcludeToggle } from '@/components/vision/BeatExcludeToggle'
@@ -6616,16 +6620,16 @@ function SceneCard({
                           return (
                             <div
                               key={beat.beatId}
-                              className={`p-3 bg-slate-800/35 rounded-lg border border-slate-600/40 ${
+                              className={`p-3 bg-amber-950/35 rounded-lg border border-amber-500/45 hover:border-amber-400/55 transition-colors ${
                                 beat.excluded ? 'opacity-50' : ''
                               }`}
                             >
                               <div className="flex items-center gap-2 mb-1.5">
                                 <div className="flex items-center gap-2 min-w-0">
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-700/50 text-slate-300 border border-slate-600/40 font-medium tabular-nums shrink-0">
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-900/50 text-amber-100 border border-amber-700/40 font-medium tabular-nums shrink-0">
                                   Beat {beatNumber}
                                 </span>
-                                <span className="text-xs font-semibold uppercase tracking-wide text-blue-300">
+                                <span className="text-xs font-semibold uppercase tracking-wide text-amber-300">
                                   Action
                                 </span>
                                 {beat.excluded && (
@@ -6666,30 +6670,9 @@ function SceneCard({
                                 )}
                               </div>
                               <p className="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap">
-                                {beat.actionDescription?.trim() || 'No action description'}
+                                {stripInlineSfxLinesFromActionText(beat.actionDescription) ||
+                                  'No action description'}
                               </p>
-                              {sfxLabels.length > 0 && (
-                                <div
-                                  className={`mt-2 flex flex-wrap gap-1.5 ${
-                                    beat.sfxMuted ? 'opacity-50' : ''
-                                  }`}
-                                >
-                                  {beat.sfxMuted && (
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-600/30 text-slate-400 border border-slate-600/40">
-                                      SFX muted
-                                    </span>
-                                  )}
-                                  {sfxLabels.map((label, sfxIdx) => (
-                                    <span
-                                      key={`${beat.beatId}-sfx-${sfxIdx}`}
-                                      className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-200 border border-blue-500/25"
-                                    >
-                                      <VolumeIcon className="w-3 h-3 shrink-0" />
-                                      SFX: {label.length > 56 ? `${label.slice(0, 56)}…` : label}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
                               <ActionBeatSfxControls
                                 beat={beat}
                                 scene={scene}
@@ -6792,7 +6775,7 @@ function SceneCard({
                             className={`p-3 rounded-lg border transition-colors ${
                               isNarrationBeat
                                 ? 'bg-indigo-900/20 border-indigo-700/30 hover:border-indigo-600/40'
-                                : 'bg-blue-900/20 border-blue-700/30 hover:border-blue-600/40'
+                                : 'bg-blue-900/30 border-blue-500/45 hover:border-blue-400/55'
                             } ${beat.excluded ? 'opacity-50' : ''} ${
                               focusSpeakerSelect ? 'ring-2 ring-amber-400/70' : ''
                             }`}

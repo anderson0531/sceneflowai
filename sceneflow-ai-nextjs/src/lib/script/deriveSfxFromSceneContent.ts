@@ -108,6 +108,15 @@ export function extractInlineSfxFromActionText(action: string): string[] {
   return dedupeDescriptions(cues)
 }
 
+/** Display-only: drop `SFX:` cue lines from action prose. Does not mutate stored beats. */
+export function stripInlineSfxLinesFromActionText(action?: string): string {
+  if (!action?.trim()) return ''
+  const kept = action
+    .split('\n')
+    .filter((line) => !/^SFX:\s*/i.test(line.trim()))
+  return kept.join('\n').replace(/\n{3,}/g, '\n\n').trim()
+}
+
 function extractSfxFromKeyActions(keyActions: string[]): string[] {
   const cues: string[] = []
   for (const action of keyActions) {

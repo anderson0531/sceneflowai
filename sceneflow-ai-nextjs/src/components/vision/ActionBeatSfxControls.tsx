@@ -1,9 +1,8 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Download, Loader2, Pause, Play, Volume2, Waves } from 'lucide-react'
+import { Download, Loader2, Pause, Play, RefreshCw, Volume2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/checkbox'
 import type { SfxDurationOverride } from '@/lib/elevenlabs/sfxDuration'
 import { resolveAutoSfxDuration } from '@/lib/elevenlabs/sfxDuration'
@@ -131,7 +130,7 @@ export function ActionBeatSfxControls({
   const isBusy = isGenerating || isExpressRunning || expressStatus === 'running'
 
   return (
-    <div className="mt-3 pt-3 border-t border-slate-600/40">
+    <div className="mt-3 pt-3 border-t border-amber-700/40">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
         <div className="flex items-center gap-2 flex-wrap">
           {expressSelectable && (
@@ -142,11 +141,11 @@ export function ActionBeatSfxControls({
               }
               disabled={isBusy || !actionText}
               onClick={(e) => e.stopPropagation()}
-              className="border-violet-400/60 data-[state=checked]:bg-violet-600"
+              className="border-amber-400/60 data-[state=checked]:bg-amber-600"
             />
           )}
-          <Volume2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-blue-300/90">
+          <Volume2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-amber-300/90">
             Action SFX
           </span>
           {sfxAudio && (
@@ -156,12 +155,12 @@ export function ActionBeatSfxControls({
             </span>
           )}
           {isVeoAction && (
-            <span className="text-[10px] px-2 py-0.5 bg-violet-500/15 text-violet-300 rounded">
+            <span className="text-[10px] px-2 py-0.5 bg-amber-500/15 text-amber-200 rounded">
               Veo action
             </span>
           )}
           {expressStatus === 'running' && (
-            <span className="text-[10px] px-2 py-0.5 bg-violet-500/20 text-violet-200 rounded flex items-center gap-1">
+            <span className="text-[10px] px-2 py-0.5 bg-amber-500/20 text-amber-200 rounded flex items-center gap-1">
               <Loader2 className="w-3 h-3 animate-spin" />
               Express
             </span>
@@ -178,7 +177,7 @@ export function ActionBeatSfxControls({
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {sfxAudio && (
+          {sfxAudio ? (
             <>
               <button
                 type="button"
@@ -186,13 +185,29 @@ export function ActionBeatSfxControls({
                   e.stopPropagation()
                   onPlayAudio?.(sfxAudio, `action-sfx-${beat.beatId}`)
                 }}
-                className="p-1.5 hover:bg-slate-700/40 rounded text-blue-200"
+                className="p-1 hover:bg-amber-900/40 rounded text-amber-100"
                 title="Play SFX"
               >
                 {playingAudio === sfxAudio ? (
-                  <Pause className="w-3.5 h-3.5" />
+                  <Pause className="w-4 h-4" />
                 ) : (
-                  <Play className="w-3.5 h-3.5" />
+                  <Play className="w-4 h-4" />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  void handleGenerate()
+                }}
+                disabled={isBusy || !actionText}
+                className="p-1 hover:bg-amber-900/40 rounded text-amber-100 disabled:opacity-50"
+                title="Regenerate SFX"
+              >
+                {isGenerating ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4" />
                 )}
               </button>
               <button
@@ -206,41 +221,37 @@ export function ActionBeatSfxControls({
                     index: slot.sfxIndex,
                   }).catch(() => toast.error('Failed to save audio file'))
                 }}
-                className="p-1.5 hover:bg-slate-700/40 rounded text-blue-200"
+                className="p-1 hover:bg-amber-900/40 rounded text-amber-100"
                 title="Download SFX"
               >
-                <Download className="w-3.5 h-3.5" />
+                <Download className="w-4 h-4" />
               </button>
             </>
+          ) : (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                void handleGenerate()
+              }}
+              disabled={isBusy || !actionText}
+              title={VEO_SFX_CREDIT_HINT}
+              className="text-xs px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded disabled:opacity-50"
+            >
+              {isGenerating ? (
+                <span className="flex items-center gap-1">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Generating...
+                </span>
+              ) : (
+                'Generate'
+              )}
+            </button>
           )}
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-7 text-xs border-violet-400/60 text-violet-200 hover:bg-violet-900/30"
-            onClick={(e) => {
-              e.stopPropagation()
-              void handleGenerate()
-            }}
-            disabled={isBusy || !actionText}
-            title={VEO_SFX_CREDIT_HINT}
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                Veo...
-              </>
-            ) : (
-              <>
-                <Waves className="w-3 h-3 mr-1" />
-                {sfxAudio ? 'Re-generate SFX' : 'Generate SFX'}
-              </>
-            )}
-          </Button>
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-1.5 mb-2">
-        <span className="text-[10px] uppercase tracking-wide text-blue-300/60 mr-1">Duration</span>
+        <span className="text-[10px] uppercase tracking-wide text-amber-300/60 mr-1">Duration</span>
         {chips.map((chip) => {
           const active = durationPreset === chip.id
           return (
@@ -254,8 +265,8 @@ export function ActionBeatSfxControls({
               }}
               className={`text-[10px] leading-none px-2 py-0.5 rounded border transition-colors ${
                 active
-                  ? 'bg-blue-600 border-blue-600 text-white'
-                  : 'bg-transparent border-blue-600/40 text-blue-200/80 hover:bg-slate-700/40'
+                  ? 'bg-amber-600 border-amber-600 text-white'
+                  : 'bg-transparent border-amber-600/40 text-amber-100/80 hover:bg-amber-900/40'
               } disabled:opacity-50`}
             >
               {chip.label}
@@ -264,13 +275,13 @@ export function ActionBeatSfxControls({
         })}
       </div>
       {showPartialVeoHint && (
-        <p className="text-[10px] text-blue-200/60 mb-1">
+        <p className="text-[10px] text-amber-200/60 mb-1">
           Veo covers up to 8s (Auto target{' '}
           {resolveVeoSfxTargetSeconds({ segmentDurationSeconds, override: durationPreset })}s →{' '}
           {veoAutoSeconds}s clip).
         </p>
       )}
-      <p className="text-[10px] text-violet-300/50">{VEO_SFX_CREDIT_HINT}</p>
+      <p className="text-[10px] text-amber-300/50">{VEO_SFX_CREDIT_HINT}</p>
     </div>
   )
 }
