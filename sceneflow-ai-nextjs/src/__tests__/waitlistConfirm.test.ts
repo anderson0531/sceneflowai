@@ -40,6 +40,7 @@ import {
   getDefaultLaunchCampaign,
   isWaitlistRecordPath,
   listWaitlistRecords,
+  nextLaunchAllCursor,
   selectLaunchBatch,
 } from '@/lib/email/waitlistAdmin'
 import { LEGAL_SUPPORT_EMAIL } from '@/config/legal/legalCopy'
@@ -336,6 +337,28 @@ describe('waitlist admin helpers', () => {
 
     const notifiedOnly = selectLaunchBatch(records, { email: 'already@studio.com' })
     expect(notifiedOnly.recipients).toEqual([])
+  })
+
+  it('pages launch send-all so later batches are not dropped', () => {
+    const records = ['a@studio.com', 'b@studio.com', 'c@studio.com'].map((email) => ({
+      email,
+      source: 'hero',
+      createdAt: '2026-09-01T00:00:00.000Z',
+      status: 'confirmed' as const,
+    }))
+    const first = selectLaunchBatch(records, { limit: 1 })
+    expect(first.recipients.map((row) => row.email)).toEqual(['a@studio.com'])
+    expect(first.remaining).toBe(2)
+    expect(nextLaunchAllCursor(first.remaining, first.nextCursor)).toBe('a@studio.com')
+
+    const second = selectLaunchBatch(records, { cursor: first.nextCursor!, limit: 1 })
+    expect(second.recipients.map((row) => row.email)).toEqual(['b@studio.com'])
+    expect(nextLaunchAllCursor(second.remaining, second.nextCursor)).toBe('b@studio.com')
+
+    const third = selectLaunchBatch(records, { cursor: second.nextCursor!, limit: 1 })
+    expect(third.recipients.map((row) => row.email)).toEqual(['c@studio.com'])
+    expect(third.remaining).toBe(0)
+    expect(nextLaunchAllCursor(third.remaining, third.nextCursor)).toBeUndefined()
   })
 
   it('defaults the launch campaign subject and uses the support From', () => {

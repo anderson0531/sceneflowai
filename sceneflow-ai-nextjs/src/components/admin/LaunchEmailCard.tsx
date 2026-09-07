@@ -164,6 +164,30 @@ export function LaunchEmailCard() {
     }
   }
 
+  async function postAction(
+    action: 'test-launch' | 'resend-confirm' | 'send-launch' | 'send-launch-all',
+    extras: { email?: string; dryRun?: boolean; cursor?: string } = {}
+  ) {
+    const response = await fetch('/api/admin/waitlist/actions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, ...extras }),
+    })
+    const data = (await response.json()) as {
+      error?: string
+      ok?: boolean
+      reason?: string
+      sent?: number
+      skipped?: number
+      remaining?: number
+      cursor?: string | null
+      recipients?: string[]
+      failed?: { email: string; error: string }[]
+    }
+    if (!response.ok) throw new Error(data.error || 'Action failed')
+    return data
+  }
+
   async function runAction(
     action: 'test-launch' | 'resend-confirm' | 'send-launch' | 'send-launch-all',
     extras: { email?: string; dryRun?: boolean } = {}
@@ -171,15 +195,8 @@ export function LaunchEmailCard() {
     setActing(true)
     setResult(null)
     try {
-      const response = await fetch('/api/admin/waitlist/actions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, ...extras }),
-      })
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.error || 'Action failed')
-
       if (action === 'send-launch-all' && extras.dryRun) {
+        const data = await postAction(action, extras)
         const count = Array.isArray(data.recipients) ? data.recipients.length : 0
         setDryRunCount(count + (data.remaining || 0))
         setResult({
@@ -189,6 +206,31 @@ export function LaunchEmailCard() {
         return
       }
 
+      if (action === 'send-launch-all') {
+        let cursor: string | undefined
+        let sent = 0
+        let skipped = 0
+        let failed = 0
+        for (let batch = 0; batch < 50; batch++) {
+          const data = await postAction(action, cursor ? { cursor } : {})
+          sent += data.sent || 0
+          skipped = data.skipped ?? skipped
+          failed += data.failed?.length || 0
+          const next = data.remaining && data.cursor ? data.cursor : undefined
+          if (!next) break
+          cursor = next
+        }
+        setResult({
+          success: failed === 0,
+          message: `Done. Sent ${sent}${skipped ? `, skipped ${skipped}` : ''}${
+            failed ? `, failed ${failed}` : ''
+          }.`,
+        })
+        if (pane === 'waitlist') await loadWaitlist(filter)
+        return
+      }
+
+      const data = await postAction(action, extras)
       const sent = typeof data.sent === 'number' ? data.sent : 0
       const skipped = typeof data.skipped === 'number' ? data.skipped : 0
       setResult({

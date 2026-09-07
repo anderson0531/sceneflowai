@@ -224,6 +224,14 @@ export function selectLaunchBatch(
   return { recipients, skipped, remaining, nextCursor }
 }
 
+export function nextLaunchAllCursor(
+  remaining: number,
+  cursor: string | null | undefined
+): string | undefined {
+  if (remaining <= 0 || !cursor) return undefined
+  return cursor
+}
+
 export function buildConfirmationPreview(now = Date.now()): {
   subject: string
   html: string

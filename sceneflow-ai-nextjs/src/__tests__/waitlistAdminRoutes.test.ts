@@ -110,7 +110,10 @@ describe('admin waitlist routes', () => {
 
   it('mounts the launch email card on Settings Admin', () => {
     const page = readFileSync(join(process.cwd(), 'src/app/dashboard/settings/admin/page.tsx'), 'utf8')
+    const card = readFileSync(join(process.cwd(), 'src/components/admin/LaunchEmailCard.tsx'), 'utf8')
     expect(page).toContain('LaunchEmailCard')
+    expect(card).toContain('for (let batch = 0; batch < 50; batch++)')
+    expect(card).toContain('data.cursor')
   })
 
   it('returns the support From on the campaign preview', async () => {
