@@ -86,7 +86,7 @@
         "中文"
       ],
       "videoUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Hero%20Video%20(Chinese).mp4",
-      "thumbnailUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/hero/sceneflow-hero-zh-poster.jpg",
+      "thumbnailUrl": "https://sceneflowai.studio/landing/hero/sceneflow-hero-zh-poster.jpg",
       "language": "zh",
       "categoryId": "28"
     },
@@ -103,8 +103,8 @@
         "Arabic",
         "العربية"
       ],
-      "videoUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Hero%20Video%20(Arabic)%20.mp4",
-      "thumbnailUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/hero/sceneflow-hero-ar-poster.jpg",
+      "videoUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Hero%20Video%20(Arabic).mp4",
+      "thumbnailUrl": "https://sceneflowai.studio/landing/hero/sceneflow-hero-ar-poster.jpg",
       "language": "ar",
       "categoryId": "28"
     },

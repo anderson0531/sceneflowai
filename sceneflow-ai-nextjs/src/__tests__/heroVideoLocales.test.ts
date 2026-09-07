@@ -24,14 +24,22 @@ describe('Hero video locales', () => {
     expect(getHeroVideoLocale('pt')?.src).toContain('Hero%20Video%20(Portuguese).mp4')
     expect(getHeroVideoLocale('hi')?.src).toContain('Hero%20Video%20(Hindi).mp4')
     expect(getHeroVideoLocale('zh')?.src).toContain('Hero%20Video%20(Chinese).mp4')
-    expect(getHeroVideoLocale('ar')?.src).toContain('Hero%20Video%20(Arabic)%20.mp4')
+    expect(getHeroVideoLocale('ar')?.src).toContain('Hero%20Video%20(Arabic).mp4')
+    expect(getHeroVideoLocale('ar')?.src).not.toContain('Arabic)%20.mp4')
     expect(getHeroVideoLocale('th')?.src).toContain('Hero%20Video%20(Thai)%20.mp4')
     expect(getHeroVideoLocale(DEFAULT_HERO_VIDEO_LOCALE)?.available).toBe(true)
 
     for (const locale of HERO_VIDEO_LOCALES) {
       expect(locale.available).toBe(true)
       expect(locale.src).toBeTruthy()
-      if (locale.id === 'en' || locale.id === 'es' || locale.id === 'pt' || locale.id === 'hi') {
+      if (
+        locale.id === 'en' ||
+        locale.id === 'es' ||
+        locale.id === 'pt' ||
+        locale.id === 'hi' ||
+        locale.id === 'zh' ||
+        locale.id === 'ar'
+      ) {
         expect(locale.poster).toBe(`/landing/hero/sceneflow-hero-${locale.id}-poster.jpg`)
       } else {
         expect(locale.poster).toBe(
@@ -46,6 +54,8 @@ describe('Hero video locales', () => {
     expect(HERO_VIDEO_BLOB_PATHS.es).toBe('Hero Video (Spanish).mp4')
     expect(HERO_VIDEO_BLOB_PATHS.pt).toBe('Hero Video (Portuguese).mp4')
     expect(HERO_VIDEO_BLOB_PATHS.hi).toBe('Hero Video (Hindi).mp4')
+    expect(HERO_VIDEO_BLOB_PATHS.zh).toBe('Hero Video (Chinese).mp4')
+    expect(HERO_VIDEO_BLOB_PATHS.ar).toBe('Hero Video (Arabic).mp4')
     expect(HERO_VIDEO_BLOB_PATHS.th).toBe('Hero Video (Thai) .mp4')
   })
 
