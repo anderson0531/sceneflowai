@@ -1,5 +1,5 @@
 import { BRAND } from '@/config/brand'
-import { LEGAL_NOREPLY_EMAIL } from '@/config/legal/legalCopy'
+import { LEGAL_SUPPORT_EMAIL } from '@/config/legal/legalCopy'
 
 export interface SendEmailOptions {
   to: string | string[]
@@ -30,7 +30,7 @@ export function getBrandBadgeUrl(): string {
   return `${getAppBaseUrl()}${BRAND.badge.src}`
 }
 
-export const DEFAULT_RESEND_FROM = `SceneFlow AI Studio <${LEGAL_NOREPLY_EMAIL}>`
+export const DEFAULT_RESEND_FROM = `SceneFlow AI Studio <${LEGAL_SUPPORT_EMAIL}>`
 export const RESEND_ONBOARDING_FROM = 'SceneFlow AI Studio <onboarding@resend.dev>'
 
 function fromAddressKey(from: string): string {
@@ -38,10 +38,10 @@ function fromAddressKey(from: string): string {
   return (match?.[1] ?? from).trim().toLowerCase()
 }
 
-/** Resend From header. Locked to noreply@sceneflowai.studio; ignores other env senders. */
+/** Resend From header. Locked to support@sceneflowai.studio; ignores other env senders. */
 export function getResendFromEmail(): string {
   const configured = process.env.RESEND_FROM_EMAIL?.trim()
-  if (configured && fromAddressKey(configured) === LEGAL_NOREPLY_EMAIL) {
+  if (configured && fromAddressKey(configured) === LEGAL_SUPPORT_EMAIL) {
     return configured
   }
   return DEFAULT_RESEND_FROM
@@ -49,7 +49,7 @@ export function getResendFromEmail(): string {
 
 /**
  * Verified-domain sender used only when the official From is rejected.
- * Prefers RESEND_FALLBACK_FROM, then a non-noreply RESEND_FROM_EMAIL, then Resend's onboarding address.
+ * Prefers RESEND_FALLBACK_FROM, then a non-support RESEND_FROM_EMAIL, then Resend's onboarding address.
  */
 export function getResendFallbackFromEmail(): string {
   const official = fromAddressKey(getResendFromEmail())

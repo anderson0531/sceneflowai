@@ -13,27 +13,27 @@ describe('resendClient', () => {
     vi.unstubAllEnvs()
   })
 
-  it('defaults From to noreply@sceneflowai.studio', () => {
-    expect(getResendFromEmail()).toContain('noreply@sceneflowai.studio')
+  it('defaults From to support@sceneflowai.studio', () => {
+    expect(getResendFromEmail()).toContain('support@sceneflowai.studio')
   })
 
-  it('ignores RESEND_FROM_EMAIL when it is not noreply@sceneflowai.studio', () => {
+  it('ignores RESEND_FROM_EMAIL when it is not support@sceneflowai.studio', () => {
     vi.stubEnv('RESEND_FROM_EMAIL', 'Brian <brian@sfai.studio>')
-    expect(getResendFromEmail()).toContain('noreply@sceneflowai.studio')
+    expect(getResendFromEmail()).toContain('support@sceneflowai.studio')
     expect(getResendFromEmail()).not.toContain('brian@sfai.studio')
-    vi.stubEnv('RESEND_FROM_EMAIL', 'SceneFlow Support <support@sceneflowai.studio>')
-    expect(getResendFromEmail()).toContain('noreply@sceneflowai.studio')
-  })
-
-  it('honors RESEND_FROM_EMAIL only for noreply@sceneflowai.studio', () => {
     vi.stubEnv('RESEND_FROM_EMAIL', 'SceneFlow <noreply@sceneflowai.studio>')
-    expect(getResendFromEmail()).toBe('SceneFlow <noreply@sceneflowai.studio>')
+    expect(getResendFromEmail()).toContain('support@sceneflowai.studio')
   })
 
-  it('uses a non-noreply RESEND_FROM_EMAIL as the unverified-domain fallback', () => {
+  it('honors RESEND_FROM_EMAIL only for support@sceneflowai.studio', () => {
+    vi.stubEnv('RESEND_FROM_EMAIL', 'SceneFlow Support <support@sceneflowai.studio>')
+    expect(getResendFromEmail()).toBe('SceneFlow Support <support@sceneflowai.studio>')
+  })
+
+  it('uses a non-support RESEND_FROM_EMAIL as the unverified-domain fallback', () => {
     vi.stubEnv('RESEND_FROM_EMAIL', 'Brian <brian@sfai.studio>')
     expect(getResendFallbackFromEmail()).toBe('Brian <brian@sfai.studio>')
-    expect(getResendFromEmail()).toContain('noreply@sceneflowai.studio')
+    expect(getResendFromEmail()).toContain('support@sceneflowai.studio')
   })
 
   it('prefers RESEND_FALLBACK_FROM over other fallbacks', () => {
@@ -65,7 +65,7 @@ describe('resendClient', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
     const body = JSON.parse(String(fetchMock.mock.calls[0][1].body)) as Record<string, unknown>
-    expect(body.from).toContain('noreply@sceneflowai.studio')
+    expect(body.from).toContain('support@sceneflowai.studio')
     expect(body.reply_to).toBe('support@sceneflowai.studio')
     expect(body.to).toEqual(['support@sceneflowai.studio'])
   })
@@ -119,7 +119,7 @@ describe('resendClient', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2)
     const first = JSON.parse(String(fetchMock.mock.calls[0][1].body)) as { from: string }
     const second = JSON.parse(String(fetchMock.mock.calls[1][1].body)) as { from: string }
-    expect(first.from).toContain('noreply@sceneflowai.studio')
+    expect(first.from).toContain('support@sceneflowai.studio')
     expect(second.from).toBe('Brian <brian@sfai.studio>')
   })
 

@@ -64,7 +64,7 @@ function formatDate(value?: string): string {
 
 export function LaunchEmailCard() {
   const [pane, setPane] = useState<Pane>('email')
-  const [from, setFrom] = useState('SceneFlow AI Studio <noreply@sceneflowai.studio>')
+  const [from, setFrom] = useState('SceneFlow AI Studio <support@sceneflowai.studio>')
   const [fallbackFrom, setFallbackFrom] = useState('SceneFlow AI Studio <onboarding@resend.dev>')
   const [confirmation, setConfirmation] = useState({ subject: '', html: '', text: '' })
   const [campaign, setCampaign] = useState<LaunchCampaign>({

@@ -134,13 +134,13 @@ describe('POST /api/waitlist', () => {
     expect(payload.replyTo).toBe(LEGAL_SUPPORT_EMAIL)
     expect(String(payload.html)).toContain(WAITLIST_CONFIRM_PATH)
     expect(String(payload.text)).toContain(WAITLIST_CONFIRM_PATH)
-    expect(payload.from).toContain('noreply@sceneflowai.studio')
+    expect(payload.from).toContain('support@sceneflowai.studio')
     expect(payload.headers?.['List-Unsubscribe']).toContain('/api/waitlist/unsubscribe')
     expect(payload.headers?.['List-Unsubscribe-Post']).toBe('List-Unsubscribe=One-Click')
     expect(String(payload.html)).toContain('Life Focus, LLC')
     expect(String(payload.html)).toContain('/brand/sf-badge.png')
     expect(String(payload.text)).toContain('2900 W Anderson Ln')
-    expect(getResendFromEmail()).toContain('noreply@sceneflowai.studio')
+    expect(getResendFromEmail()).toContain('support@sceneflowai.studio')
   })
 
   it('skips a second send during cooldown', async () => {
@@ -401,13 +401,13 @@ describe('waitlist admin helpers', () => {
     expect(nextLaunchAllCursor(third.remaining, third.nextCursor)).toBeUndefined()
   })
 
-  it('defaults the launch campaign subject and uses the noreply From', () => {
+  it('defaults the launch campaign subject and uses the support From', () => {
     const campaign = getDefaultLaunchCampaign()
     expect(campaign.subject).toBe(WAITLIST_LAUNCH_SUBJECT)
     expect(campaign.text).toContain('November 2026')
     expect(campaign.html).toContain('<html')
     expect(campaign.html).toContain('Life Focus, LLC')
-    expect(getResendFromEmail()).toContain('noreply@sceneflowai.studio')
+    expect(getResendFromEmail()).toContain('support@sceneflowai.studio')
   })
 
   it('skips unsubscribed addresses on launch send', () => {

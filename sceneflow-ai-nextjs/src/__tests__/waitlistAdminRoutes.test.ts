@@ -117,12 +117,12 @@ describe('admin waitlist routes', () => {
     expect(card).toContain('Preview sent')
   })
 
-  it('returns the noreply From on the campaign preview', async () => {
+  it('returns the support From on the campaign preview', async () => {
     requireAdminMock.mockResolvedValue({ authorized: true, email: 'anderson0531@gmail.com' })
     const res = await getCampaign()
     const data = await res.json()
     expect(res.status).toBe(200)
-    expect(data.from).toContain('noreply@sceneflowai.studio')
+    expect(data.from).toContain('support@sceneflowai.studio')
     expect(data.fallbackFrom).toBeTruthy()
     expect(data.confirmation.subject).toContain('Confirm')
     expect(data.confirmation.html).toContain('Life Focus, LLC')
