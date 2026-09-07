@@ -39,7 +39,7 @@ describe('collectKlingElementSources bind elements', () => {
 
     expect(sources).toHaveLength(1)
     expect(sources[0]).toMatchObject({
-      name: 'Sarah',
+      name: 'Char_Sarah',
       frontalImageUrl: 'https://cdn.example.com/sarah-identity.jpg',
       referImageUrls: [
         'https://cdn.example.com/sarah-casual-head.jpg',

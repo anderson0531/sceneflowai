@@ -8,6 +8,7 @@ import {
   correctPronounsToGender,
   type CharacterGender,
 } from '@/lib/character/visualGender'
+import { toCharacterPromptAlias } from '@/lib/character/characterPromptAlias'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type {
   DetailedSceneDirection,
@@ -154,6 +155,7 @@ export function compileBeatVideoPrompt(
     prompt = `Atmospheric visual scene supporting voiceover mood. Subtle environmental motion. No on-screen text. ${styleSuffix}`
   } else {
     const character = beat.character ?? 'Character'
+    const speakerAlias = toCharacterPromptAlias(character)
     const parsed = parsePerformanceCue(line)
     let cleanLine = parsed.spokenText.replace(/"/g, "'")
     if (options?.characterGender) {
@@ -164,7 +166,7 @@ export function compileBeatVideoPrompt(
     const deliverySuffix = parsed.deliveryProse
       ? ` Delivery: ${parsed.deliveryProse}.`
       : ''
-    prompt = `${character} speaks naturally: "${cleanLine}".${deliverySuffix} Subtle facial expression and body language. ${styleSuffix}`
+    prompt = `${speakerAlias} speaks naturally: "${cleanLine}".${deliverySuffix} Subtle facial expression and body language. ${styleSuffix}`
   }
 
   const negativePrompt = `${BASE_NEGATIVES}, ${styleNegative}`

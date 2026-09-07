@@ -108,6 +108,8 @@ interface GenerateAssetRequest {
   preset?: string
   allowVeoFallback?: boolean
   expressMode?: boolean
+  /** Attach beat/animatic frame as start image. Default false for REF ingredients. */
+  useBeatFrameAsStart?: boolean
   /** When true, verify aggregator routing without generating video or charging credits. */
   routeProbe?: boolean
 }
@@ -177,6 +179,7 @@ export async function POST(
       preset,
       allowVeoFallback,
       expressMode,
+      useBeatFrameAsStart,
       routeProbe,
     } = body
 
@@ -508,6 +511,7 @@ export async function POST(
         preset: preset as GenerateAssetRequest['preset'],
         allowVeoFallback: allowVeoFallback === true,
         expressMode: expressMode === true,
+        useBeatFrameAsStart: useBeatFrameAsStart === true,
       })
 
       assetUrl = videoResult.assetUrl

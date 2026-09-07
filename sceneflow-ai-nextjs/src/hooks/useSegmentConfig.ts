@@ -5,26 +5,15 @@
 
 import { useMemo } from 'react'
 import type { SceneSegment } from '@/components/vision/scene-production/types'
-import type { VideoGenerationMethod } from '@/components/vision/scene-production/types'
-import { resolveVeoRefForExtension } from '@/lib/video/veoChainQueue'
 import { getSceneBeats } from '@/lib/script/beatMigration'
-import type { VideoGenerationConfig, ApprovalStatus } from '@/components/vision/scene-production/types'
 import {
   collectDraftStoryboardFrameWarnings,
   resolveEffectiveStoryboardTier,
 } from '@/lib/storyboard/storyboardQuality'
-import { buildDefaultBatchGuidePrompt } from '@/lib/scene/segmentGuidePrompt'
 import {
   buildSegmentConfigsMap,
-  detectRecommendedMethod,
-  calculateConfidence,
-  determineApprovalStatus,
-  generateMotionPrompt,
-  generateVisualPrompt,
+  buildDraftVideoGenerationConfig,
   resolveSegmentFrameUrls,
-  segmentHasBatchGuideDialogue,
-  toConfigReferenceImages,
-  resolveConfigReferences,
   type SegmentGuideContext,
   type SegmentConfigResult,
 } from '@/lib/vision/segmentConfigBuilder'
@@ -39,84 +28,20 @@ export function useSegmentConfig(
   defaultAspectRatio: '16:9' | '9:16' | '1:1' | '4:3' = '16:9'
 ): SegmentConfigResult {
   return useMemo(() => {
-    const method = detectRecommendedMethod(segment, sceneImageUrl, [segment], guideContext)
-    const confidence = calculateConfidence(segment, method)
-    const approvalStatus = determineApprovalStatus(segment)
-    
-    // Generate appropriate prompt based on method
-    const motionPrompt = generateMotionPrompt(segment, sceneImageUrl)
-    const visualPrompt = generateVisualPrompt(segment, sceneImageUrl)
-    
-    const prompt = visualPrompt
+    const drafted = buildDraftVideoGenerationConfig(
+      segment,
+      sceneImageUrl,
+      [segment],
+      guideContext,
+      defaultAspectRatio
+    )
+    const { config, methodLabel, methodReason } = drafted
 
     const { startFrameUrl: resolvedStart } = resolveSegmentFrameUrls(
       segment,
       sceneImageUrl,
       guideContext?.fullScene
     )
-
-    const guidePrompt =
-      guideContext?.scene && segmentHasBatchGuideDialogue(segment)
-        ? buildDefaultBatchGuidePrompt(
-            segment,
-            guideContext.scene,
-            guideContext.characters ?? [],
-          )
-        : ''
-    
-    const extVeoRef =
-      method === 'EXT' ? resolveVeoRefForExtension([segment], segment) : undefined
-
-    const referenceImages = toConfigReferenceImages(
-      resolveConfigReferences(segment, guideContext)
-    )
-
-    const config: VideoGenerationConfig = {
-      mode: resolvedStart ? 'I2V' : method,
-      prompt,
-      motionPrompt,
-      visualPrompt,
-      aspectRatio: defaultAspectRatio === '1:1' || defaultAspectRatio === '4:3'
-        ? '16:9'
-        : defaultAspectRatio,
-      resolution: '1080p',
-      duration: 10,
-      negativePrompt: '',
-      approvalStatus,
-      confidence,
-      guidePrompt: guidePrompt || undefined,
-      referenceImages: referenceImages?.length ? referenceImages : undefined,
-      startFrameUrl: resolvedStart,
-      endFrameUrl: null,
-      sourceVideoUrl:
-        extVeoRef ??
-        (segment.activeAssetUrl && segment.assetType === 'video'
-          ? segment.activeAssetUrl
-          : null),
-      videoProvider: 'kling',
-      klingModel: 'kling-v3-omni',
-      klingQuality: 'pro',
-      sound: true,
-      allowVeoFallback: false,
-    }
-    
-    // Method labels for UI
-    const methodLabels: Record<VideoGenerationMethod, string> = {
-      FTV: 'Frame Interpolation',
-      I2V: 'Image to Video',
-      T2V: 'Text to Video',
-      EXT: 'Video Extension',
-      REF: 'Reference-Based',
-    }
-    
-    // FRAME-FIRST: Enhanced method reasons with guidance
-    const methodReasons: Record<VideoGenerationMethod, string> = {
-      FTV: 'Legacy interpolation mode (not used on production path)',
-      I2V: 'Start frame anchors character appearance',
-      T2V: '⚠️ Lower quality: Generate frames first for better consistency',
-      EXT: 'Extends existing video seamlessly',
-      REF: 'Character references guide generation',
-    }
 
     let qualityWarning: string | undefined
     if (guideContext?.scene && segment.beatId && resolvedStart) {
@@ -128,13 +53,13 @@ export function useSegmentConfig(
         qualityWarning = collectDraftStoryboardFrameWarnings(guideContext.scene)[0]
       }
     }
-    
+
     return {
       config,
-      isReady: confidence >= 50 && approvalStatus !== 'error',
-      isApproved: approvalStatus === 'user-approved',
-      methodLabel: methodLabels[method],
-      methodReason: methodReasons[method],
+      isReady: config.confidence >= 50 && config.approvalStatus !== 'error',
+      isApproved: config.approvalStatus === 'user-approved',
+      methodLabel,
+      methodReason,
       qualityWarning,
     }
   }, [segment, sceneImageUrl, guideContext, defaultAspectRatio])

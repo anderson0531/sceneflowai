@@ -2602,7 +2602,7 @@ const CharacterCard = ({
   const identityImageSection = (
     <div
       className={`relative bg-gray-100 dark:bg-gray-800 group rounded-md overflow-hidden ${
-        splitLayout ? "h-full w-full" : "aspect-square"
+        splitLayout ? "h-full w-full" : "aspect-[9/16]"
       }`}
     >
       {isDeferredImage ? (
@@ -4439,7 +4439,7 @@ const CharacterCard = ({
             <div className="grid grid-cols-2 gap-4 py-4">
               <div className="space-y-2">
                 <p className="text-xs font-medium text-gray-500">Original</p>
-                <div className="aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border-2 border-transparent">
+                <div className="aspect-[9/16] bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border-2 border-transparent">
                   {character.referenceImage && (
                     <img
                       src={character.referenceImage}
@@ -4454,7 +4454,7 @@ const CharacterCard = ({
                   <Sparkles className="w-3 h-3" />
                   Professional Headshot
                 </p>
-                <div className="aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border-2 border-purple-500/50">
+                <div className="aspect-[9/16] bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border-2 border-purple-500/50">
                   {enhancedPreviewUrl && (
                     <img
                       src={enhancedPreviewUrl}

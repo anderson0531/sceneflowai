@@ -4,6 +4,7 @@
  */
 
 import { neutralizeReferenceConflictPrompt } from '@/lib/gemini/neutralizeReferenceConflictPrompt'
+import { aliasCharacterVideoLabel } from '@/lib/character/characterPromptAlias'
 
 const STYLE_TOKEN_PATTERNS = [
   /\bphotorealistic\b/gi,
@@ -140,6 +141,7 @@ export function sanitizeOmniRefLabel(label?: string | null): string {
 
   if (/location reference/i.test(text)) {
     text = text.replace(/\s*\([^)]*(?:establishing|wide|shot|angle)[^)]*\)/gi, '')
+    return neutralizeReferenceConflictPrompt(text).trim()
   }
 
   if (!/^identity reference/i.test(text) && !/^prop reference/i.test(text)) {
@@ -147,6 +149,10 @@ export function sanitizeOmniRefLabel(label?: string | null): string {
     if (parts.length >= 3) {
       text = parts.slice(0, -1).join(' — ')
     }
+  }
+
+  if (!/^prop reference/i.test(text)) {
+    text = aliasCharacterVideoLabel(text)
   }
 
   return neutralizeReferenceConflictPrompt(text).trim()

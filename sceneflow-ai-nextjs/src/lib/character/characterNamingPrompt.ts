@@ -28,6 +28,7 @@ CHARACTER NAMING — MANDATORY:
 - Names must be unique within the cast and pronounceable for text-to-speech
 - Prefer grounded, distinctive names over fantasy-catalog or celebrity-adjacent names
 - If the user's input already names characters, preserve those EXACT names
+- When inventing names, avoid well-known public-figure given names (e.g. Winston, Alexander)
 - NEVER reuse these overused LLM defaults: ${BANNED_AI_CHARACTER_NAMES.join(', ')}
 - Avoid single-name-only protagonists unless culturally appropriate (e.g., mononyms in documentary subjects)`
 
@@ -43,6 +44,7 @@ CHARACTER IDENTITY — MANDATORY:
 - The ethnicity field must EXACTLY match what's implied in the input
 - Invent original, specific, memorable FULL names — not stock fantasy or AI-catalog names
 - If the user's input already names characters, preserve those EXACT names; otherwise invent fresh ones
+- When inventing names, avoid well-known public-figure given names (e.g. Winston, Alexander)
 - NEVER reuse these overused LLM defaults: ${BANNED_AI_CHARACTER_NAMES.join(', ')}
 - Each character needs a distinct voice, want/need/flaw, and clear relationship to the protagonist — not interchangeable archetypes`
 
@@ -56,6 +58,7 @@ CHARACTER NAMING REQUIREMENTS (CRITICAL):
 - Avoid ALL CAPS or lowercase
 - Character names must be unique and clearly identify each person
 - Invent original names — NEVER reuse: ${BANNED_AI_CHARACTER_NAMES.join(', ')}
+- When inventing names, avoid well-known public-figure given names (e.g. Winston, Alexander)
 - If user input names characters, preserve those exact names`
 
 /**

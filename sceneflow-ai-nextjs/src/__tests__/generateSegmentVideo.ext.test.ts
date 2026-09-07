@@ -152,3 +152,77 @@ describe('generateSegmentVideoCore Kling EXT downgrade', () => {
     expect(generateVideoWithVeoKlingFallback).not.toHaveBeenCalled()
   })
 })
+
+describe('generateSegmentVideoCore REF start frame', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    process.env.STEM_SEPARATION_ENABLED = 'false'
+    vi.mocked(generateVideoWithVeoKlingFallback).mockResolvedValue({
+      status: 'COMPLETED',
+      videoBuffer: Buffer.from('omni-video'),
+      generationProvider: 'vertex',
+      wasPolicyFallback: false,
+      vertexAttempts: 1,
+    })
+  })
+
+  it('does not attach an animatic start frame on REF unless the user opted in', async () => {
+    await generateSegmentVideoCore({
+      segmentId: 'seg-ref',
+      projectId: 'proj-1',
+      sceneId: 'scene-1',
+      userId: 'user-1',
+      prompt: 'Character speaks in the kitchen',
+      generationMethod: 'REF',
+      startFrameUrl: 'https://cdn.example.com/animatic.png',
+      referenceImages: [
+        {
+          url: 'https://cdn.example.com/char.jpg',
+          type: 'character',
+          name: 'Identity reference 1: Winston',
+        },
+      ],
+      videoProvider: 'vertex',
+      duration: 10,
+    })
+
+    expect(generateVideoWithVeoKlingFallback).toHaveBeenCalledWith(
+      expect.objectContaining({
+        method: 'REF',
+        videoOptions: expect.not.objectContaining({
+          startFrame: 'https://cdn.example.com/animatic.png',
+        }),
+      })
+    )
+  })
+
+  it('attaches the beat frame on REF when useBeatFrameAsStart is true', async () => {
+    await generateSegmentVideoCore({
+      segmentId: 'seg-ref-opt-in',
+      projectId: 'proj-1',
+      sceneId: 'scene-1',
+      userId: 'user-1',
+      prompt: 'Character speaks in the kitchen',
+      generationMethod: 'REF',
+      startFrameUrl: 'https://cdn.example.com/animatic.png',
+      useBeatFrameAsStart: true,
+      referenceImages: [
+        {
+          url: 'https://cdn.example.com/char.jpg',
+          type: 'character',
+          name: 'Identity reference 1: Winston',
+        },
+      ],
+      videoProvider: 'vertex',
+      duration: 10,
+    })
+
+    expect(generateVideoWithVeoKlingFallback).toHaveBeenCalledWith(
+      expect.objectContaining({
+        videoOptions: expect.objectContaining({
+          startFrame: 'https://cdn.example.com/animatic.png',
+        }),
+      })
+    )
+  })
+})

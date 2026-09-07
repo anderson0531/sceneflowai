@@ -6,6 +6,7 @@ import Project from '@/models/Project'
 import { registerKlingElement, registerKlingElementMulti } from './klingDirectClient'
 import { getKlingCapabilities } from './config'
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
+import { toCharacterPromptAlias } from '@/lib/character/characterPromptAlias'
 
 export type KlingElementSource = {
   id: string
@@ -177,11 +178,13 @@ export function collectKlingElementSources(args: {
 
     sources.push({
       id: char.id || char.name,
-      name: char.name,
+      name: toCharacterPromptAlias(char.name),
       imageUrl,
       frontalImageUrl,
       referImageUrls: referImageUrls.length ? referImageUrls : undefined,
-      description: wardrobe ? `${char.name} in ${wardrobe.name}` : char.name,
+      description: wardrobe
+        ? `${toCharacterPromptAlias(char.name)} in ${wardrobe.name}`
+        : toCharacterPromptAlias(char.name),
       tagId: 'o_102',
       klingElementId: wardrobe?.klingElementId || char.klingElementId,
       type: 'character',

@@ -1043,7 +1043,13 @@
       "frameFirstTitle": "Frame-First Workflow:",
       "frameFirstBody": "Generate keyframes in the Frame step for better character consistency. Text-to-Video is available but may result in character drift.",
       "disabledNeedStartFrame": "Generate a Start Frame first (Frame step)",
-      "disabledNeedPrevious": "Generate the previous part first or render a source video"
+      "disabledNeedPrevious": "Generate the previous part first or render a source video",
+      "takeStandard": "Standard",
+      "takeCreative": "Creative",
+      "takeModeHint": "Standard uses Omni Flash with library ingredients. Creative uses Kling for multi-shot and long-take.",
+      "useBeatFrameAsStart": "Use beat frame as start",
+      "useBeatFrameAsStartHint": "Off by default. Animatic frames stay in Pre-Vis; video uses character, location, and prop ingredients.",
+      "noIngredientsHint": "No library ingredients yet. Generate characters or locations for consistent faces — video will use text-to-video until then."
     },
     "framePrompt": {
       "title": "Generate Frame",

@@ -374,6 +374,8 @@ export interface VideoGenerationConfig {
   preset?: string
   allowVeoFallback?: boolean
   expressMode?: boolean
+  /** When true, attach the beat/animatic frame as the video start image. Off by default. */
+  useBeatFrameAsStart?: boolean
 }
 
 /**
