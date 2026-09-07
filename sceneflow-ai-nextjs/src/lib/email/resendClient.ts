@@ -63,6 +63,6 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
 
   if (!response.ok) {
     const errorBody = await response.text()
-    throw new Error(`Failed to send email: ${errorBody}`)
+    throw new Error(`Failed to send email (${response.status}): ${errorBody}`)
   }
 }
