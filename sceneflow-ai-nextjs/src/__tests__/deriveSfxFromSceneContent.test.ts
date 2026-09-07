@@ -8,6 +8,7 @@ import {
   extractSfxDescriptionsFromAudioText,
   readBeatSfxAudio,
   resolveBeatSfxSlot,
+  stripInlineSfxLinesFromActionText,
 } from '@/lib/script/deriveSfxFromSceneContent'
 
 const marcusDirection = {
@@ -57,6 +58,31 @@ describe('extractInlineSfxFromActionText', () => {
       'SOUND of footsteps approaching.\n\nSFX: Footsteps on hardwood\n\nMusic: Suspenseful strings'
     )
     expect(cues).toEqual(['Footsteps on hardwood'])
+  })
+})
+
+describe('stripInlineSfxLinesFromActionText', () => {
+  it('keeps action prose and music lines while dropping SFX cue lines', () => {
+    const display = stripInlineSfxLinesFromActionText(
+      'SOUND of footsteps approaching.\n\nSFX: Footsteps on hardwood\n\nMusic: Suspenseful strings'
+    )
+    expect(display).toBe('SOUND of footsteps approaching.\n\nMusic: Suspenseful strings')
+    expect(display).not.toMatch(/^SFX:/m)
+    expect(display).not.toContain('Footsteps on hardwood')
+  })
+
+  it('returns empty when the action is only SFX tags', () => {
+    expect(
+      stripInlineSfxLinesFromActionText(
+        'SFX: hum of analog machinery\nSFX: Add low-frequency hum for the energy core'
+      )
+    ).toBe('')
+  })
+
+  it('does not mutate the original string', () => {
+    const original = 'WIDE SHOT: Elara sits.\nSFX: ceramic mug clattering'
+    stripInlineSfxLinesFromActionText(original)
+    expect(original).toContain('SFX: ceramic mug clattering')
   })
 })
 
