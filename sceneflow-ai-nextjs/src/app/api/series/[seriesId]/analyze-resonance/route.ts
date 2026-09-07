@@ -211,6 +211,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       { 
         provider: 'gemini', 
         model: getGeminiProductModel('series'),
+        thinkingLevel: 'medium',
         maxOutputTokens: 16384,
         timeoutMs: 120000
       },

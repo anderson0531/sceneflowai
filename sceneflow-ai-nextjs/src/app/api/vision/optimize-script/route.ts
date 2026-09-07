@@ -1133,14 +1133,15 @@ RULES:
   const hasFlaggedScenes = batchScenes.some((s: any) => s._merged || s._rewrite)
   const temperature = hasFlaggedScenes ? 0.7 : 0.6
   
-  // First attempt - using Gemini 2.5 Flash for optimization
+  // First attempt — GA Flash workhorse with thinking disabled (structural pass)
   let result = await generateText(prompt, {
     model: getGeminiProductModel('script'),
     temperature,
     maxOutputTokens: estimatedTokens,
     responseMimeType: 'application/json',
     timeoutMs,
-    maxRetries: 1
+    maxRetries: 1,
+    thinkingBudget: 0,
   })
   
   let analysisText = result.text
@@ -1163,7 +1164,8 @@ RULES:
         maxOutputTokens: retryTokens,
         responseMimeType: 'application/json',
         timeoutMs: Math.min(retryTimeout, remainingMs - 10_000),
-        maxRetries: 1
+        maxRetries: 1,
+        thinkingBudget: 0,
       })
       
       analysisText = result.text

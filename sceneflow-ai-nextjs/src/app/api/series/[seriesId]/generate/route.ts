@@ -330,7 +330,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
 /**
  * Generate full series storyline from topic
- * Uses Gemini 2.5 Pro for highest intelligence in narrative coherence.
+ * Uses the Series Flash workhorse with low thinking for narrative coherence at Vercel-safe latency.
  * Generates episodes in batches for reliable JSON parsing and continuity.
  */
 async function generateFullSeriesStoryline(
@@ -338,7 +338,7 @@ async function generateFullSeriesStoryline(
   episodeCount: number,
   options: { genre?: string; tone?: string; format?: string; storyLocale?: string }
 ): Promise<any> {
-  console.log(`[generateFullSeriesStoryline] Generating ${episodeCount} episodes with Pro model`)
+  console.log(`[generateFullSeriesStoryline] Generating ${episodeCount} episodes with Flash workhorse`)
   
   const format = options.format || 'narrative'
 
@@ -479,7 +479,8 @@ Return ONLY valid JSON:
   const bibleResponse = await callLLM(
     { 
       provider: 'gemini', 
-      model: getGeminiProductModel('series'),  // Use Flash for speed, Pro too slow for Vercel
+      model: getGeminiProductModel('series'),  // Flash workhorse — Pro is too slow for Vercel batch gen
+      thinkingLevel: 'low',
       maxOutputTokens: MAX_OUTPUT_TOKENS,
       timeoutMs: GENERATION_TIMEOUT_MS
     },
@@ -618,7 +619,8 @@ Return ONLY valid JSON array:
     const batchResponse = await callLLM(
       { 
         provider: 'gemini', 
-        model: getGeminiProductModel('series'),  // Use Flash for speed
+        model: getGeminiProductModel('series'),  // Flash workhorse for batch speed
+        thinkingLevel: 'low',
         maxOutputTokens: MAX_OUTPUT_TOKENS,
         timeoutMs: GENERATION_TIMEOUT_MS
       },
@@ -697,7 +699,7 @@ ${field === 'characters' || field === 'protagonist' ? SERIES_CHARACTER_NAMING_BL
 Return ONLY valid JSON.`
 
   const response = await callLLM(
-    { provider: 'gemini', model: getGeminiProductModel('series') },
+    { provider: 'gemini', model: getGeminiProductModel('series'), thinkingLevel: 'low' },
     fullPrompt
   )
   

@@ -112,6 +112,7 @@ export async function POST(req: NextRequest) {
       maxOutputTokens: 16000,
       responseMimeType: 'application/json',
       timeoutMs: 90000,
+      thinkingLevel: 'high',
     })
 
     if (!result.text) {

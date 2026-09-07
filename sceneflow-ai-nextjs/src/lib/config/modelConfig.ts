@@ -324,9 +324,9 @@ export type GeminiThinkingLevel = 'minimal' | 'low' | 'medium' | 'high'
  */
 export const GEMINI_PRODUCT_MODELS = {
   /** Highest GA Flash — Series / Blueprint / Script / AR all resolve here. */
-  workhorse: 'gemini-3.6-flash',
+  workhorse: 'gemini-3.8-flash',
   /** Previous GA Flash used in the 404/quota fallback ladder. */
-  prior: 'gemini-3.5-flash',
+  prior: 'gemini-3.6-flash',
   lite: 'gemini-3.5-flash-lite',
   /** Preview quality tier (guided revise full-balance, revise-scene). Not the GA workhorse. */
   pro: 'gemini-3.1-pro-preview',
@@ -337,6 +337,18 @@ export type GeminiProductSurface =
   | 'blueprint'
   | 'script'
   | 'audience_resonance'
+
+/**
+ * Per-surface pins. All Flash surfaces track the GA workhorse today so a
+ * one-line workhorse bump upgrades Series / Blueprint / Script / AR together.
+ * Script can diverge later (or via GEMINI_SCRIPT_MODEL) without another refactor.
+ */
+export const GEMINI_PRODUCT_SURFACE_MODELS: Record<GeminiProductSurface, string> = {
+  series: GEMINI_PRODUCT_MODELS.workhorse,
+  blueprint: GEMINI_PRODUCT_MODELS.workhorse,
+  script: GEMINI_PRODUCT_MODELS.workhorse,
+  audience_resonance: GEMINI_PRODUCT_MODELS.workhorse,
+}
 
 /**
  * Compatibility map — keep existing `GEMINI_TEXT_MODELS['3-flash']` call sites working.
@@ -350,12 +362,14 @@ export const GEMINI_TEXT_MODELS = {
 
 /** Previous models, kept for fallback reference */
 export const GEMINI_TEXT_MODELS_PREVIOUS = {
+  '3.5-flash': 'gemini-3.5-flash',
   '2.5-flash': 'gemini-2.5-flash',
 } as const
 
 /**
  * Stale / invented ids that still appear in env overrides and older call sites.
  * Mapped before any Vertex request so they never 404.
+ * Do not alias `gemini-3.6-flash` — it is the prior fallback step.
  */
 const GEMINI_TEXT_MODEL_ALIASES: Record<string, string> = {
   'gemini-3.0-flash': GEMINI_PRODUCT_MODELS.workhorse,
@@ -370,12 +384,12 @@ export function normalizeGeminiTextModel(model: string): string {
 }
 
 /**
- * Resolves the GA workhorse (or env override) for a product surface.
- * Series, Blueprint, Script, and Audience Resonance all share this pin.
+ * Resolves the pin for a product surface.
+ * `GEMINI_MODEL` is the emergency rollback for every Flash surface.
  */
-export function getGeminiProductModel(_surface: GeminiProductSurface): string {
+export function getGeminiProductModel(surface: GeminiProductSurface): string {
   const fromEnv = process.env.GEMINI_MODEL?.trim()
-  return normalizeGeminiTextModel(fromEnv || GEMINI_PRODUCT_MODELS.workhorse)
+  return normalizeGeminiTextModel(fromEnv || GEMINI_PRODUCT_SURFACE_MODELS[surface])
 }
 
 /**
@@ -393,8 +407,15 @@ export function getAudienceResonanceModel(): string {
   return getGeminiProductModel('audience_resonance')
 }
 
-/** Script generation (v1/v2 + gaps + optimize) → GA workhorse. */
+/**
+ * Script generation (v1/v2 + gaps). `GEMINI_MODEL` still wins as global rollback.
+ * `GEMINI_SCRIPT_MODEL` can pin script authorship independently (e.g. Pro preview).
+ */
 export function getScriptGenerationModel(): string {
+  const global = process.env.GEMINI_MODEL?.trim()
+  if (global) return normalizeGeminiTextModel(global)
+  const scriptEnv = process.env.GEMINI_SCRIPT_MODEL?.trim()
+  if (scriptEnv) return normalizeGeminiTextModel(scriptEnv)
   return getGeminiProductModel('script')
 }
 
@@ -404,7 +425,9 @@ export function getScriptGenerationModel(): string {
  */
 export const GEMINI_TEXT_MODEL_CANDIDATES = [
   GEMINI_PRODUCT_MODELS.workhorse,
+  'gemini-3.7-flash',
   GEMINI_PRODUCT_MODELS.prior,
+  GEMINI_TEXT_MODELS_PREVIOUS['3.5-flash'],
   'gemini-3-flash',
   GEMINI_PRODUCT_MODELS.lite,
   GEMINI_PRODUCT_MODELS.pro,

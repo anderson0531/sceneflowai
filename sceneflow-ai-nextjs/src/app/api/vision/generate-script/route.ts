@@ -839,6 +839,7 @@ async function callGemini(apiKey: string, prompt: string, maxTokens: number): Pr
     maxOutputTokens: maxTokens,
     responseMimeType: 'application/json',
     timeoutMs: 180000, // 180s timeout for script generation (increased from 90s default)
+    thinkingLevel: 'medium',
   })
   
   if (!result.text) {

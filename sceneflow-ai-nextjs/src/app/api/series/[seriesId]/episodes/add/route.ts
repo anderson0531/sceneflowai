@@ -160,7 +160,8 @@ async function generateEpisodeBatch(
   const response = await callLLM(
     { 
       provider: 'gemini', 
-      model: getGeminiProductModel('series'),  // Use Flash for speed
+      model: getGeminiProductModel('series'),  // Flash workhorse for speed
+      thinkingLevel: 'low',
       maxOutputTokens: 16384,
       timeoutMs: 90000
     },

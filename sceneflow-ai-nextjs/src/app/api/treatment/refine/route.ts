@@ -275,7 +275,7 @@ ${strictJsonPromptSuffix}`
       model: getGeminiTextModel('flash'),
       temperature: 0.3,
       maxOutputTokens: maxTokens,
-      thinkingLevel: 'minimal',
+      thinkingLevel: 'low',
       responseMimeType: 'application/json',
     })
 

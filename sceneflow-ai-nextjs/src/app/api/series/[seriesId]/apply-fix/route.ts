@@ -325,7 +325,7 @@ Return ONLY valid JSON:
 ${languageBlock}`
 
     const response = await callLLM(
-      { provider: 'gemini', model: getGeminiProductModel('series'), maxOutputTokens: 8192 },
+      { provider: 'gemini', model: getGeminiProductModel('series'), thinkingLevel: 'medium', maxOutputTokens: 8192 },
       prompt
     )
     
@@ -403,7 +403,7 @@ IMPORTANT: Return exactly ${targetIndices.length} entries, one for each episode.
 ${languageBlock}`
 
   const response = await callLLM(
-    { provider: 'gemini', model: getGeminiProductModel('series'), maxOutputTokens: 16384 },
+    { provider: 'gemini', model: getGeminiProductModel('series'), thinkingLevel: 'medium', maxOutputTokens: 16384 },
     prompt
   )
   
@@ -475,7 +475,7 @@ Return ONLY valid JSON:
 ${languageBlock}`
 
   const response = await callLLM(
-    { provider: 'gemini', model: getGeminiProductModel('series'), maxOutputTokens: 4096 },
+    { provider: 'gemini', model: getGeminiProductModel('series'), thinkingLevel: 'medium', maxOutputTokens: 4096 },
     prompt
   )
   
@@ -536,7 +536,7 @@ Return ONLY valid JSON:
 ${languageBlock}`
 
   const response = await callLLM(
-    { provider: 'gemini', model: getGeminiProductModel('series'), maxOutputTokens: 4096 },
+    { provider: 'gemini', model: getGeminiProductModel('series'), thinkingLevel: 'medium', maxOutputTokens: 4096 },
     prompt
   )
   
@@ -603,7 +603,7 @@ Return ONLY valid JSON:
 ${languageBlock}`
 
   const response = await callLLM(
-    { provider: 'gemini', model: getGeminiProductModel('series'), maxOutputTokens: 8192 },
+    { provider: 'gemini', model: getGeminiProductModel('series'), thinkingLevel: 'medium', maxOutputTokens: 8192 },
     prompt
   )
   
@@ -669,7 +669,7 @@ Return ONLY valid JSON:
 ${languageBlock}`
 
   const response = await callLLM(
-    { provider: 'gemini', model: getGeminiProductModel('series'), maxOutputTokens: 4096 },
+    { provider: 'gemini', model: getGeminiProductModel('series'), thinkingLevel: 'medium', maxOutputTokens: 4096 },
     prompt
   )
   
