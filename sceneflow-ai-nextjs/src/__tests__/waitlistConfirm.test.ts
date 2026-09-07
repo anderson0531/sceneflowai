@@ -159,7 +159,9 @@ describe('POST /api/waitlist', () => {
   it('returns 502 when Resend fails', async () => {
     sendEmailMock.mockRejectedValueOnce(new Error('Failed to send email'))
     const res = await POST(jsonRequest({ email: 'support@sceneflowai.studio' }))
+    const data = await res.json()
     expect(res.status).toBe(502)
+    expect(data.code).toBe('email_send_failed')
   })
 })
 

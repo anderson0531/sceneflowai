@@ -52,7 +52,11 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
       html: options.html,
       text: options.text,
       ...(options.replyTo
-        ? { reply_to: Array.isArray(options.replyTo) ? options.replyTo : [options.replyTo] }
+        ? {
+            reply_to: Array.isArray(options.replyTo) && options.replyTo.length === 1
+              ? options.replyTo[0]
+              : options.replyTo,
+          }
         : {}),
     }),
   })

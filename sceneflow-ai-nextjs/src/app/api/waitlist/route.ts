@@ -80,8 +80,13 @@ export async function POST(request: Request) {
     await sendWaitlistConfirmation(email, url)
   } catch (error) {
     console.error('[waitlist] failed to send confirmation', error)
+    const message = error instanceof Error ? error.message : ''
+    const unconfigured = message.includes('RESEND_API_KEY')
     return NextResponse.json(
-      { error: 'Could not send the confirmation email right now. Try again shortly.' },
+      {
+        error: 'Could not send the confirmation email right now. Try again shortly.',
+        code: unconfigured ? 'email_unconfigured' : 'email_send_failed',
+      },
       { status: 502 }
     )
   }

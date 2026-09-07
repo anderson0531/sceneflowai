@@ -27,7 +27,7 @@ describe('resendClient', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
     const body = JSON.parse(String(fetchMock.mock.calls[0][1].body)) as Record<string, unknown>
     expect(body.from).toContain('noreply@sceneflowai.studio')
-    expect(body.reply_to).toEqual(['support@sceneflowai.studio'])
+    expect(body.reply_to).toBe('support@sceneflowai.studio')
     expect(body.to).toEqual(['support@sceneflowai.studio'])
   })
 })
