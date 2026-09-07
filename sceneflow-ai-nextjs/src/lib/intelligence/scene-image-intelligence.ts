@@ -149,6 +149,73 @@ export interface SceneImageIntelligenceRequest {
   projectId?: string
   /** Skip reading the short-lived prompt cache (regeneration / likeness auto-retry) */
   bustPromptCache?: boolean
+  /** Prompt Builder visual overrides (shot, lighting, atmosphere) */
+  visualSetup?: SceneImageVisualSetupOverlay
+  /** Prompt Builder talent blocking / emotion / key props */
+  talentDirection?: SceneImageTalentDirectionOverlay
+  /** Natural-language director notes applied on top of the beat-aligned baseline */
+  userDirection?: string
+}
+
+export interface SceneImageVisualSetupOverlay {
+  location?: string
+  timeOfDay?: string
+  weather?: string
+  atmosphere?: string
+  shotType?: string
+  cameraAngle?: string
+  lighting?: string
+  lensChoice?: string
+  lightingMood?: string
+}
+
+export interface SceneImageTalentDirectionOverlay {
+  talentBlocking?: string
+  emotionalBeat?: string
+  keyProps?: string
+}
+
+function pickOverlayString(record: Record<string, unknown>, key: string): string | undefined {
+  const value = record[key]
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined
+}
+
+export function parseVisualSetupOverlay(value: unknown): SceneImageVisualSetupOverlay | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
+  const vs = value as Record<string, unknown>
+  const overlay: SceneImageVisualSetupOverlay = {}
+  const location = pickOverlayString(vs, 'location')
+  const timeOfDay = pickOverlayString(vs, 'timeOfDay')
+  const weather = pickOverlayString(vs, 'weather')
+  const atmosphere = pickOverlayString(vs, 'atmosphere')
+  const shotType = pickOverlayString(vs, 'shotType')
+  const cameraAngle = pickOverlayString(vs, 'cameraAngle')
+  const lighting = pickOverlayString(vs, 'lighting')
+  const lensChoice = pickOverlayString(vs, 'lensChoice')
+  const lightingMood = pickOverlayString(vs, 'lightingMood')
+  if (location) overlay.location = location
+  if (timeOfDay) overlay.timeOfDay = timeOfDay
+  if (weather) overlay.weather = weather
+  if (atmosphere) overlay.atmosphere = atmosphere
+  if (shotType) overlay.shotType = shotType
+  if (cameraAngle) overlay.cameraAngle = cameraAngle
+  if (lighting) overlay.lighting = lighting
+  if (lensChoice) overlay.lensChoice = lensChoice
+  if (lightingMood) overlay.lightingMood = lightingMood
+  return Object.keys(overlay).length > 0 ? overlay : undefined
+}
+
+export function parseTalentDirectionOverlay(value: unknown): SceneImageTalentDirectionOverlay | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
+  const talent = value as Record<string, unknown>
+  const overlay: SceneImageTalentDirectionOverlay = {}
+  const talentBlocking = pickOverlayString(talent, 'talentBlocking')
+  const emotionalBeat = pickOverlayString(talent, 'emotionalBeat')
+  const keyProps = pickOverlayString(talent, 'keyProps')
+  if (talentBlocking) overlay.talentBlocking = talentBlocking
+  if (emotionalBeat) overlay.emotionalBeat = emotionalBeat
+  if (keyProps) overlay.keyProps = keyProps
+  return Object.keys(overlay).length > 0 ? overlay : undefined
 }
 
 export interface SceneImageIntelligenceResult {
@@ -179,7 +246,7 @@ interface CacheEntry {
 
 const promptCache = new Map<string, CacheEntry>()
 const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
-const SCENE_IMAGE_CACHE_KEY_VERSION = 'v2'
+const SCENE_IMAGE_CACHE_KEY_VERSION = 'v3'
 
 function unescapeJsonString(value: string): string {
   return value
@@ -284,6 +351,15 @@ function normalizeCachedSceneImageResult(
   return { ...result, prompt: unwrapped }
 }
 
+function compactOverlayKey(value: object | undefined): string {
+  if (!value) return 'na'
+  const entries = Object.entries(value)
+    .filter(([, v]) => typeof v === 'string' && v.trim())
+    .map(([k, v]) => `${k}:${String(v).trim()}`)
+    .sort()
+  return entries.length ? entries.join(',') : 'na'
+}
+
 export function buildSceneImageCacheKey(request: SceneImageIntelligenceRequest): string {
   const parts = [
     SCENE_IMAGE_CACHE_KEY_VERSION,
@@ -298,6 +374,9 @@ export function buildSceneImageCacheKey(request: SceneImageIntelligenceRequest):
     request.beatRole ?? 'na',
     request.beatKind ?? 'na',
     request.beatDirectedEmotion ?? 'na',
+    (request.userDirection ?? '').substring(0, 120),
+    compactOverlayKey(request.visualSetup),
+    compactOverlayKey(request.talentDirection),
     ...request.characters.map(c => `${c.name}:${c.wardrobeDescription || 'default'}:${c.directedEmotion || 'na'}`),
     request.referenceImageCount,
   ]
@@ -438,9 +517,58 @@ function buildSystemPrompt(): string {
   return buildSceneImageSystemPrompt()
 }
 
+function overlayCue(label: string, value?: string): string | null {
+  const trimmed = value?.trim()
+  return trimmed ? `${label}: ${trimmed}` : null
+}
+
+function appendDirectOverlayBlocks(request: SceneImageIntelligenceRequest): string {
+  let block = ''
+  const vs = request.visualSetup
+  if (vs) {
+    const cues = [
+      overlayCue('Shot', vs.shotType),
+      overlayCue('Camera angle', vs.cameraAngle),
+      overlayCue('Lighting', vs.lighting),
+      overlayCue('Lighting mood', vs.lightingMood),
+      overlayCue('Time of day', vs.timeOfDay),
+      overlayCue('Weather', vs.weather),
+      overlayCue('Atmosphere', vs.atmosphere),
+      overlayCue('Location', vs.location),
+      overlayCue('Lens', vs.lensChoice),
+    ].filter((line): line is string => Boolean(line))
+    if (cues.length > 0) {
+      block += `VISUAL SETUP (apply on top of the beat; do not replace the beat action):\n${cues.join('\n')}\n\n`
+    }
+  }
+
+  const talent = request.talentDirection
+  if (talent) {
+    const cues = [
+      overlayCue('Blocking', talent.talentBlocking),
+      overlayCue('Emotional beat', talent.emotionalBeat),
+      overlayCue('Key props', talent.keyProps),
+    ].filter((line): line is string => Boolean(line))
+    if (cues.length > 0) {
+      block += `TALENT DIRECTION (apply on top of the beat):\n${cues.join('\n')}\n\n`
+    }
+  }
+
+  const notes = request.userDirection?.trim()
+  if (notes) {
+    block += `DIRECTOR NOTES (apply on top of the beat; do not replace the beat action):\n${notes}\n\n`
+  }
+
+  return block
+}
+
 /**
  * Build the user prompt with all scene context for Gemini.
  */
+export function buildSceneImageIntelligenceUserPrompt(request: SceneImageIntelligenceRequest): string {
+  return buildUserPrompt(request)
+}
+
 function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
   let prompt = ''
   
@@ -470,6 +598,8 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
     }
     prompt += '\n'
   }
+
+  prompt += appendDirectOverlayBlocks(request)
   
   // Scene action (context — beat action takes priority when present)
   prompt += `SCENE CONTEXT:\n${request.sceneAction}\n\n`

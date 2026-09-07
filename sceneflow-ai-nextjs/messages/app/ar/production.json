@@ -985,13 +985,10 @@
       "description": "المشهد {number} · منشئ موجه موجه بمراجع الشخصية وخزانة الملابس.",
       "matchingNotes": "ملاحظات المطابقة المرجعية",
       "tabVisualSetup": "الإعداد المرئي",
-      "tabCustomPrompt": "موجه مخصص",
       "wardrobeOverride": "تجاوز نص خزانة الملابس (اختياري - يتم إرسال صورة المرجع المزدوج عندما تكون متاحة)",
       "locationReference": "مرجع الموقع",
       "oneSelected": "تم تحديد 1",
       "wardrobePlaceholder": "وصف كامل لخزانة الملابس من المكتبة المرجعية...",
-      "promptPlaceholder": "موجه توليد الصورة الكاملة ...",
-      "negativePlaceholder": "دعوة سلبية…",
       "generating": "جارٍ الإنشاء…",
       "generateWithDirect": "توليد مع المباشر"
     }

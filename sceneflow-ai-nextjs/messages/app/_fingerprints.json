@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-07T11:39:14.281Z",
+  "generatedAt": "2026-09-07T12:10:54.826Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -1491,16 +1491,16 @@
       "direction.framePrompt.generateFrame": "5b89e4b3f3ac8f81",
       "direction.framePrompt.generateFrames": "9d7eb38db5f97cdf",
       "direction.preVis.title": "886c3794ee6803dc",
-      "direction.preVis.description": "ad183278a71ba44b",
+      "direction.preVis.description": "0fe411c5565f9886",
       "direction.preVis.matchingNotes": "435c34a4ea199df4",
       "direction.preVis.tabVisualSetup": "31f41eed0446bee5",
-      "direction.preVis.tabCustomPrompt": "e0b61a2373b9417d",
+      "direction.preVis.directionTitle": "9c8a9579abe55bdc",
+      "direction.preVis.directionHint": "9400e34e164da6be",
+      "direction.preVis.directionPlaceholder": "2dcc12eeb438a036",
       "direction.preVis.wardrobeOverride": "fff18d876b7824bc",
       "direction.preVis.locationReference": "de99a89269f5c6ff",
       "direction.preVis.oneSelected": "0e222355f5230d3a",
       "direction.preVis.wardrobePlaceholder": "6ff529be27ae2a50",
-      "direction.preVis.promptPlaceholder": "5314b08170e9c52c",
-      "direction.preVis.negativePlaceholder": "6f1ea47f52fb2c3a",
       "direction.preVis.generating": "d20a4476a0a85978",
       "direction.preVis.generateWithDirect": "b5a65791cf551b29",
       "foundation.reimagine.changeArtStyleTitle": "db623b9cb4ad6e63",

@@ -1071,16 +1071,16 @@
     },
     "preVis": {
       "title": "Direct — {label}",
-      "description": "Scene {number} · Guided prompt builder with character and wardrobe references.",
+      "description": "Scene {number} · Auto beat prompt plus visual options and direction.",
       "matchingNotes": "Reference matching notes",
       "tabVisualSetup": "Visual Setup",
-      "tabCustomPrompt": "Custom Prompt",
+      "directionTitle": "Direction",
+      "directionHint": "Applied on top of the auto beat prompt. The compiled prompt stays hidden.",
+      "directionPlaceholder": "Closer on Maya, colder light, keep the coffee cup",
       "wardrobeOverride": "Wardrobe text override (optional — diptych ref image is sent when available)",
       "locationReference": "Location reference",
       "oneSelected": "1 selected",
       "wardrobePlaceholder": "Full wardrobe description from reference library…",
-      "promptPlaceholder": "Full image generation prompt…",
-      "negativePlaceholder": "Negative prompt…",
       "generating": "Generating…",
       "generateWithDirect": "Generate with Direct"
     }

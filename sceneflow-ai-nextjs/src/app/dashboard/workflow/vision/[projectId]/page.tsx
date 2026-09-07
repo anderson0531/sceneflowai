@@ -81,9 +81,9 @@ import {
 } from '@/lib/scene/dialogueSegmentSplit'
 import { shouldUseKlingLongTake } from '@/lib/kling/longTakePlanner'
 import {
-  GALLERY_DIRECT_GENERATE_OPTS,
   GALLERY_MANUAL_GENERATE_OPTS,
 } from '@/lib/vision/galleryImageGeneration'
+import { buildPreVisDirectApiFields } from '@/lib/vision/preVisDirectGenerate'
 import {
   PreVisFramePromptDialog,
   type PreVisDirectGenerationOptions,
@@ -10255,18 +10255,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         projectId,
         sceneIndex,
         quality: imageQuality,
-        ...GALLERY_DIRECT_GENERATE_OPTS,
+        ...buildPreVisDirectApiFields({
+          visualSetup: options.visualSetup,
+          talentDirection: options.talentDirection,
+          userDirection: options.userDirection,
+          artStyle: options.artStyle,
+          modelTier: options.modelTier,
+          thinkingLevel: options.thinkingLevel,
+          negativePrompt: options.negativePrompt,
+        }),
         regenerate: !!slot.ownImageUrl?.trim(),
-        customPrompt: options.customPrompt,
-        artStyle: options.artStyle,
-        shotType: options.visualSetup.shotType,
-        cameraAngle: options.visualSetup.cameraAngle,
-        lighting: options.visualSetup.lighting,
-        visualSetup: options.visualSetup,
-        talentDirection: options.talentDirection,
-        negativePrompt: options.negativePrompt,
-        modelTier: options.modelTier,
-        thinkingLevel: options.thinkingLevel,
         wardrobeTextOverrides: options.wardrobeTextOverrides,
         characterWardrobes: options.characterWardrobes,
         characterSelectionExplicit: true,
