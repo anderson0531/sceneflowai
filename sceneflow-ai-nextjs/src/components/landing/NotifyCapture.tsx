@@ -24,6 +24,7 @@ export function NotifyCapture({
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState('')
+  const [emailed, setEmailed] = useState(true)
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
@@ -49,10 +50,14 @@ export function NotifyCapture({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: trimmed, source }),
       })
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string
+        emailed?: boolean
+      }
       if (!response.ok) {
-        const payload = (await response.json().catch(() => ({}))) as { error?: string }
         throw new Error(payload.error || t('errorGeneric'))
       }
+      setEmailed(payload.emailed !== false)
       setStatus('success')
     } catch (err) {
       setStatus('error')
@@ -74,9 +79,11 @@ export function NotifyCapture({
       >
         <p className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-200">
           <CheckCircle2 className="h-4 w-4" aria-hidden />
-          {t('successTitle')}
+          {emailed ? t('successTitle') : t('confirmTitle')}
         </p>
-        <p className="text-sm text-emerald-100/80">{t('successBody')}</p>
+        <p className="text-sm text-emerald-100/80">
+          {emailed ? t('successBody') : t('confirmBody')}
+        </p>
       </div>
     )
   }

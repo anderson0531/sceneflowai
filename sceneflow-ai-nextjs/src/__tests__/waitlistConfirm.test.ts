@@ -112,6 +112,7 @@ describe('POST /api/waitlist', () => {
 
     expect(res.status).toBe(200)
     expect(data.ok).toBe(true)
+    expect(data.emailed).toBe(true)
     expect(sendEmailMock).toHaveBeenCalledTimes(1)
 
     const payload = sendEmailMock.mock.calls[0][0]
@@ -157,8 +158,7 @@ describe('POST /api/waitlist', () => {
     expect(sendEmailMock).not.toHaveBeenCalled()
   })
 
-  it('retries preview sends from Resend onboarding when the studio domain is unverified', async () => {
-    vi.stubEnv('VERCEL_ENV', 'preview')
+  it('retries production sends from the account domain when the studio domain is unverified', async () => {
     sendEmailMock
       .mockRejectedValueOnce(
         new Error(
@@ -170,18 +170,47 @@ describe('POST /api/waitlist', () => {
     const res = await POST(
       jsonRequest({ email: 'support@sceneflowai.studio', source: 'confirm-test' })
     )
+    const data = await res.json()
     expect(res.status).toBe(200)
+    expect(data.emailed).toBe(true)
     expect(sendEmailMock).toHaveBeenCalledTimes(2)
-    expect(sendEmailMock.mock.calls[1][0].from).toContain('onboarding@resend.dev')
+    expect(sendEmailMock.mock.calls[1][0].from).toContain('noreply@sfai.studio')
+  })
+
+  it('retries preview sends from Resend onboarding when custom domains are unverified', async () => {
+    vi.stubEnv('VERCEL_ENV', 'preview')
+    sendEmailMock
+      .mockRejectedValueOnce(
+        new Error(
+          'Failed to send email (403): {"message":"The sceneflowai.studio domain is not verified."}'
+        )
+      )
+      .mockRejectedValueOnce(
+        new Error(
+          'Failed to send email (403): {"message":"The sfai.studio domain is not verified."}'
+        )
+      )
+      .mockResolvedValueOnce(undefined)
+
+    const res = await POST(
+      jsonRequest({ email: 'support@sceneflowai.studio', source: 'confirm-test' })
+    )
+    expect(res.status).toBe(200)
+    expect(sendEmailMock).toHaveBeenCalledTimes(3)
+    expect(sendEmailMock.mock.calls[2][0].from).toContain('onboarding@resend.dev')
     vi.unstubAllEnvs()
   })
 
-  it('returns 502 when Resend fails', async () => {
-    sendEmailMock.mockRejectedValueOnce(new Error('Failed to send email'))
+  it('returns 200 emailed:false after persist when every From candidate fails', async () => {
+    sendEmailMock.mockRejectedValue(
+      new Error('Failed to send email (403): {"message":"The sceneflowai.studio domain is not verified."}')
+    )
     const res = await POST(jsonRequest({ email: 'support@sceneflowai.studio' }))
     const data = await res.json()
-    expect(res.status).toBe(502)
-    expect(data.code).toBe('email_send_failed')
+    expect(res.status).toBe(200)
+    expect(data.ok).toBe(true)
+    expect(data.emailed).toBe(false)
+    expect(putMock).toHaveBeenCalledTimes(1)
   })
 })
 

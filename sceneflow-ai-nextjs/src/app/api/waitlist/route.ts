@@ -80,20 +80,12 @@ export async function POST(request: Request) {
     await sendWaitlistConfirmation(email, url)
   } catch (error) {
     console.error('[waitlist] failed to send confirmation', error)
-    const message = error instanceof Error ? error.message : ''
-    const unconfigured = message.includes('RESEND_API_KEY')
-    const previewDetail =
-      process.env.VERCEL_ENV === 'preview' && message
-        ? message.slice(0, 300)
-        : undefined
-    return NextResponse.json(
-      {
-        error: 'Could not send the confirmation email right now. Try again shortly.',
-        code: unconfigured ? 'email_unconfigured' : 'email_send_failed',
-        ...(previewDetail ? { detail: previewDetail } : {}),
-      },
-      { status: 502 }
-    )
+    // Signup is already persisted. Do not 502 the visitor — they are on the list.
+    return NextResponse.json({
+      ok: true,
+      stored: hasPrivateBlobToken(),
+      emailed: false,
+    })
   }
 
   try {
@@ -105,5 +97,5 @@ export async function POST(request: Request) {
     console.error('[waitlist] confirmation sent but persist of lastSentAt failed', error)
   }
 
-  return NextResponse.json({ ok: true, stored: hasPrivateBlobToken() })
+  return NextResponse.json({ ok: true, stored: hasPrivateBlobToken(), emailed: true })
 }

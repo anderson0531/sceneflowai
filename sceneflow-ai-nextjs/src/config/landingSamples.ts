@@ -12,7 +12,7 @@
 export const LANDING_SAMPLE = {
   projectTitle: 'The White House Waltz: A Controlled Thaw',
   /** Public storyboard share slug, e.g. 'TheDawnOfSyntheticMinds'. Empty = placeholder UI. */
-  storyboardShareSlug: 'TheWhiteHouseWaltzAControlledThaw',
+  storyboardShareSlug: '',
   /** Blueprint collab share token from /blueprint/share/{token}. Empty = placeholder UI. */
   blueprintShareToken: '50IuESZwELvHkNd4bTaULp1pli56zXWg',
   /** Legacy Vision screening-room slug (/share/screening-room/...). Not used on landing tab. */

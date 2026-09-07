@@ -1,10 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { LANDING_SAMPLE } from '@/config/landingSamples'
 import { StoryboardEmbedPlayer, StoryboardPlayerSkeleton } from '@/components/vision/StoryboardEmbedPlayer'
 
 export function LandingStoryboardEmbed() {
-  const slug = LANDING_SAMPLE.storyboardShareSlug.trim()
+  const configuredSlug = LANDING_SAMPLE.storyboardShareSlug.trim()
+  const [shareMissing, setShareMissing] = useState(false)
+  const slug = shareMissing ? '' : configuredSlug
 
   if (!slug) {
     return (
@@ -23,6 +26,7 @@ export function LandingStoryboardEmbed() {
         slug={slug}
         fullWidthEmbed
         minHeight="min-h-[360px] sm:min-h-[420px] lg:min-h-[520px]"
+        onNotFound={() => setShareMissing(true)}
       />
     </div>
   )

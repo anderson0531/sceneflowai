@@ -3,7 +3,12 @@ import { list, put } from '@vercel/blob'
 import { LEGAL_SUPPORT_EMAIL } from '@/config/legal/legalCopy'
 import { getAuthSecret } from '@/lib/auth/secret'
 import { fetchPrivateBlobJson, getPrivateBlobToken, hasPrivateBlobToken } from '@/lib/storage/privateBlob'
-import { getAppBaseUrl, sendEmail } from '@/lib/email/resendClient'
+import {
+  getAppBaseUrl,
+  getWaitlistFromCandidates,
+  isResendUnverifiedDomainError,
+  sendEmail,
+} from '@/lib/email/resendClient'
 
 export const WAITLIST_CONFIRM_TTL_MS = 48 * 60 * 60 * 1000
 export const WAITLIST_RESEND_COOLDOWN_MS = 60 * 1000
@@ -129,21 +134,21 @@ export async function sendWaitlistConfirmation(email: string, confirmUrl: string
     text,
     replyTo: LEGAL_SUPPORT_EMAIL,
   }
-  try {
-    await sendEmail(payload)
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    // Preview cannot send from an unverified custom domain. Resend's
-    // onboarding sender can still deliver to the account owner (support@).
-    if (process.env.VERCEL_ENV === 'preview' && message.includes('domain is not verified')) {
-      await sendEmail({
-        ...payload,
-        from: 'SceneFlow AI Studio <onboarding@resend.dev>',
-      })
+  const candidates = getWaitlistFromCandidates()
+  let lastError: unknown
+  for (let index = 0; index < candidates.length; index++) {
+    try {
+      await sendEmail({ ...payload, from: candidates[index] })
       return
+    } catch (error) {
+      lastError = error
+      const hasNext = index < candidates.length - 1
+      if (!hasNext || !isResendUnverifiedDomainError(error)) {
+        throw error
+      }
     }
-    throw error
   }
+  throw lastError instanceof Error ? lastError : new Error(String(lastError))
 }
 
 export type ConfirmWaitlistResult = 'confirmed' | 'already' | 'expired' | 'invalid'

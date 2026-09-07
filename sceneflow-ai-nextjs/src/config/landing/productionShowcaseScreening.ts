@@ -1,7 +1,7 @@
 /** Public storyboard share slugs for Production Examples Screening Room embeds. Empty = placeholder UI. */
 
 export const PRODUCTION_SHOWCASE_SCREENING_SLUGS: Record<string, string> = {
-  drama: 'TheWhiteHouseWaltzAControlledThaw',
+  drama: '',
   animation: '',
   documentary: '',
   'localization-houston': '',
