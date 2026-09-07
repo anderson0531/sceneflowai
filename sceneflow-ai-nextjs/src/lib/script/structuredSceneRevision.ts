@@ -139,9 +139,10 @@ export function mergeBeatIdentityFromOriginal(
 }
 
 /**
- * Re-align AI-returned beats onto original beat ids when the model omits beatId.
- * Exact id matches win; otherwise claim the next unclaimed original of the same kind.
- * Deep Restructure mints fresh ids for kind-remapped beats and never carries media.
+ * Align AI-returned beats onto original beat ids only when the model returns a
+ * valid original beatId. Omitted or unknown ids mint new beats — never remap
+ * onto leftover originals of the same kind (that turned new dialogue into
+ * edits of old dialogue).
  */
 export function mapStructuredRevisionBeats(
   rawBeats: unknown[],
@@ -150,8 +151,7 @@ export function mapStructuredRevisionBeats(
 ): SceneBeat[] {
   const depth = options?.revisionDepth ?? 'moderate'
   const isDeep = depth === 'deep'
-  const originalBeats = getSceneBeats(currentScene)
-  const originalById = new Map(originalBeats.map((beat) => [beat.beatId, beat]))
+  const originalById = new Map(getSceneBeats(currentScene).map((beat) => [beat.beatId, beat]))
   const parsed = parseLlmBeats(rawBeats)
   const claimedOriginalIds = new Set<string>()
   const aligned: SceneBeat[] = []
@@ -190,32 +190,19 @@ export function mapStructuredRevisionBeats(
       continue
     }
 
-    const kindMatch = originalBeats.find(
-      (original) => original.kind === beat.kind && !claimedOriginalIds.has(original.beatId)
-    )
-    if (kindMatch) {
-      claimedOriginalIds.add(kindMatch.beatId)
-      if (isDeep) {
-        // Kind-slot remapping is not identity — mint fresh assets for Restructure.
-        aligned.push(
-          stripBeatPlaybackAssets({
-            ...beat,
-            beatId: mintBeatId(),
-            lineId:
-              beat.kind === 'dialogue' || beat.kind === 'narration'
-                ? mintLineId()
-                : beat.lineId,
-            characterId: undefined,
-          })
-        )
-        continue
-      }
-      const merged = mergeBeatIdentityFromOriginal(beat, kindMatch, { revisionDepth: depth })
-      aligned.push(carryBeatMediaIfUnchanged(merged, kindMatch))
-      continue
+    const collidingWithOriginal = Boolean(beat.beatId) && originalById.has(beat.beatId)
+    const minted: SceneBeat = {
+      ...beat,
+      beatId: collidingWithOriginal || !beat.beatId ? mintBeatId() : beat.beatId,
+      lineId:
+        beat.kind === 'dialogue' || beat.kind === 'narration'
+          ? collidingWithOriginal || !beat.lineId
+            ? mintLineId()
+            : beat.lineId
+          : beat.lineId,
+      characterId: isDeep ? undefined : beat.characterId,
     }
-
-    aligned.push(isDeep ? stripBeatPlaybackAssets(beat) : beat)
+    aligned.push(isDeep ? stripBeatPlaybackAssets(minted) : minted)
   }
 
   return normalizeBeatsForProduction(dedupeRedundantActionBeats(aligned))

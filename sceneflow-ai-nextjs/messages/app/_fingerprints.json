@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-05T06:02:55.888Z",
+  "generatedAt": "2026-09-07T10:14:31.528Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -350,6 +350,15 @@
       "fields.tone": "c2c8b72e302ec730",
       "fields.artStyle": "d02c42dfb7a1efcd",
       "fields.aspectRatio": "d7ad336f35e1e685",
+      "fields.scriptCraft": "3580d8f3068eef74",
+      "fields.scriptCraftHint": "1ab386cb5974d987",
+      "fields.scriptCraftNotes": "69ac3c7699ba77f8",
+      "fields.scriptCraftNotesPlaceholder": "8c688a0f568bffe0",
+      "fields.scriptCraftPriorities.characterDepth": "d25349a9089ff7d4",
+      "fields.scriptCraftPriorities.actionClarity": "49d1b16ecb47bfc8",
+      "fields.scriptCraftPriorities.subtext": "ffb3c9a7fcfb707a",
+      "fields.scriptCraftPriorities.dialogueRichness": "3cb6774c5fa97c5f",
+      "fields.scriptCraftPriorities.visualFirst": "c0efa3f65e0d6654",
       "fields.themesPlain": "43ae3265b99f2f34",
       "fields.moodReferences": "d9a395ae7d46a8e5",
       "fields.treatmentFallback": "0d331d85875437ba",

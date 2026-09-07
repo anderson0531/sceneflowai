@@ -112,6 +112,14 @@ export interface ProductionGuide {
     mood_references?: string[];
     character_descriptions?: any[];
     heroImage?: string;
+    scriptCraft?: Array<
+      | 'characterDepth'
+      | 'actionClarity'
+      | 'subtext'
+      | 'dialogueRichness'
+      | 'visualFirst'
+    >;
+    scriptCraftNotes?: string;
   }>;
   selectedTreatmentId?: string;
 }

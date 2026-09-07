@@ -41,7 +41,7 @@ interface RefineRequest {
 const SECTION_FIELDS: Record<SectionType, string[]> = {
   core: ['title', 'logline', 'genre', 'format_length', 'target_audience'],
   story: ['synopsis', 'setting', 'protagonist', 'antagonist', 'act_breakdown'],
-  tone: ['tone', 'tone_description', 'style', 'artStyle', 'aspectRatio', 'visual_style', 'themes', 'mood_references'],
+  tone: ['tone', 'tone_description', 'style', 'artStyle', 'aspectRatio', 'visual_style', 'themes', 'mood_references', 'scriptCraft', 'scriptCraftNotes'],
   beats: ['beats', 'total_duration_seconds', 'estimatedDurationMinutes'],
   characters: ['character_descriptions']
 }

@@ -17,6 +17,7 @@ import {
   countSelectedChanges,
   diffSceneChanges,
 } from '@/lib/script/sceneDiffChanges'
+import { MAX_INSTRUCTIONS } from '@/lib/constants/scene-optimization'
 
 type RevisionDepth = 'light' | 'moderate' | 'deep'
 
@@ -50,8 +51,8 @@ interface SceneEditorModalProps {
 
 const REVISION_DEPTHS: Array<{ value: RevisionDepth; label: string; hint: string }> = [
   { value: 'light', label: 'Polish', hint: 'Refine wording, keep structure' },
-  { value: 'moderate', label: 'Rewrite', hint: 'Substantive changes to content and flow' },
-  { value: 'deep', label: 'Restructure', hint: 'Reimagine how the scene unfolds' },
+  { value: 'moderate', label: 'Rewrite', hint: 'Add, remove, or reorder beats as needed' },
+  { value: 'deep', label: 'Restructure', hint: 'Rewrite from scratch' },
 ]
 
 export function SceneEditorModal({
@@ -92,8 +93,6 @@ export function SceneEditorModal({
 
   const [appliedRecommendationIds, setAppliedRecommendationIds] = useState<string[]>([])
   const [revisionDepth, setRevisionDepth] = useState<RevisionDepth>('moderate')
-
-  const MAX_INSTRUCTIONS = 5
 
   const countInstructions = (text: string): number => {
     if (text.trim() === '') return 0

@@ -69,6 +69,9 @@ export const CONTENT_FIELDS: Record<string, FieldKind> = {
   'treatmentVariants[].genre': 'display',
   'treatmentVariants[].themes': 'display',
   'treatmentVariants[].format_length': 'opaque',
+  'treatmentVariants[].scriptCraft': 'opaque',
+  'treatmentVariants[].scriptCraft[]': 'opaque',
+  'treatmentVariants[].scriptCraftNotes': 'display',
   // Feeds the image pipeline, so it stays in English like the other visual
   // prompt fields.
   'treatmentVariants[].visual_style': 'machine',

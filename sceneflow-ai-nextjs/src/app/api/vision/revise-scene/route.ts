@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import Project from '../../../../models/Project'
+import { sequelize } from '../../../../config/database'
 import { generateTextCacheAware } from '@/lib/vertexai/gemini'
 import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import { logCacheEvent } from '@/lib/vertexai/cacheObservability'
@@ -20,6 +22,7 @@ import { attachCoGeneratedSceneDirection } from '@/lib/sceneGeneration/attachRev
 import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { localeDirective } from '@/lib/prompts/localeDirective'
 import { classifyAiError } from '@/lib/errors/aiErrorClassification'
+import { buildScriptCraftPromptBlock } from '@/lib/script/scriptCraftPrompt'
 
 // Pro-tier revision with medium thinking can exceed the previous 120s ceiling.
 export const maxDuration = 300
@@ -58,6 +61,32 @@ function formatNeighbourScene(scene: any, label: string): string {
     .join('\n')
   if (dialogue) parts.push(`  Dialogue:\n${dialogue}`)
   return parts.join('\n')
+}
+
+async function loadScriptCraftPromptBlock(projectId: string): Promise<string> {
+  try {
+    await sequelize.authenticate()
+    const project = await Project.findByPk(projectId)
+    const metadata = ((project as { metadata?: Record<string, unknown> } | null)?.metadata ||
+      {}) as Record<string, unknown>
+    const fromFoundation = metadata.filmTreatmentVariant
+    const variants = metadata.treatmentVariants
+    const selectedId = metadata.selectedTreatmentId
+    const fromVariants = Array.isArray(variants)
+      ? variants.find((item) => item && typeof item === 'object' && (item as { id?: string }).id === selectedId) ||
+        variants[0]
+      : undefined
+    const treatment =
+      fromFoundation && typeof fromFoundation === 'object'
+        ? fromFoundation
+        : fromVariants && typeof fromVariants === 'object'
+          ? fromVariants
+          : undefined
+    return buildScriptCraftPromptBlock(treatment as { scriptCraft?: unknown; scriptCraftNotes?: unknown })
+  } catch (error) {
+    console.warn('[Scene Revision] Could not load Blueprint scriptCraft:', error)
+    return ''
+  }
 }
 
 /** Character voice/role detail, so rewritten dialogue stays in character. */
@@ -189,7 +218,7 @@ async function generateRevisedScene({
   
   const depthGuidance = {
     light: 'Make targeted polish edits. Keep the core structure and flow intact. Focus on wording refinements.',
-    moderate: 'REWRITE the scene to fully address each issue. Make substantive changes to dialogue, action, and flow—not just surface-level rewording. Restructure dialogue order, combine/split lines, and add/remove beats as needed.',
+    moderate: 'REWRITE the scene to fully address each issue. Make substantive changes to dialogue, action, and flow—not just surface-level rewording. Add, remove, and reorder beats as needed.',
     deep: 'COMPLETELY RESTRUCTURE this scene. Rewrite from scratch if necessary to achieve the goals. Transform the dialogue, pacing, and visual storytelling. Do not be constrained by the original structure—reimagine how this scene should unfold.'
   }[revisionDepth]
   
@@ -235,6 +264,7 @@ For each recommendation, make the necessary STRUCTURAL or CONTENT changes. Do NO
   const characterProfiles = formatCharacterProfiles(context.characters)
   const currentBeats = getSceneBeats(currentScene)
   const beatsText = formatBeatsForRevisionPrompt(currentBeats)
+  const scriptCraftBlock = await loadScriptCraftPromptBlock(projectId)
 
     // ── Cache-aware prompt splitting ──
     // Cacheable context: scene data, formatting rules, dialogue tags, constraints
@@ -269,7 +299,7 @@ SURROUNDING SCENES (do not rewrite these — use them to keep continuity, avoid
 repeating beats they already cover, and set up what comes next):
 ${formatNeighbourScene(context.previousScene, 'Previous Scene')}
 ${formatNeighbourScene(context.nextScene, 'Next Scene')}
-
+${scriptCraftBlock}
 CRITICAL: Maintain EXACT character names from the character list (${characterNames}). Do not abbreviate or modify names.
 
 WHAT SUBSTANTIVE REWRITING MEANS:
@@ -287,12 +317,13 @@ WHAT COSMETIC POLISHING IS (AVOID THIS):
 ✗ Rewording narration that explains emotions instead of removing it
 
 SCOPE GUARDRAILS - WHAT YOU CANNOT CHANGE:
-✗ Do NOT introduce new characters or remove existing characters
-✗ Do NOT change the fundamental plot outcome of the scene
-✗ Do NOT alter the scene's role in the overall narrative arc
-✗ Do NOT modify what happens before or after this scene
+✗ Do NOT introduce new named characters (existing characters may be deepened)
+✗ Do NOT rewrite neighboring scenes
+✗ Do NOT change this scene's plot function — keep the same story job this scene performs
 
-If the revision instructions request changes beyond scene-level improvements (e.g., "add a new character", "change the storyline", "make character X do something completely different from their arc"), you must respond with an error JSON instead:
+You MAY add, remove, or reorder beats; expand character moments; clarify action; change line count; and deepen existing characters.
+
+If the revision instructions require a new named character, a different plot outcome, or rewriting another scene, you must respond with an error JSON instead:
 {
   "error": "OUT_OF_SCOPE",
   "message": "The requested changes require script-level edits. Please revise the script itself to: [explain what needs to change at script level]",

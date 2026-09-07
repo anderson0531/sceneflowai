@@ -27,6 +27,8 @@ export function buildTreatmentVariantDisplayFields(
     [`${prefix}.antagonist`]: variant.antagonist,
     [`${prefix}.tone`]: variant.tone,
     [`${prefix}.tone_description`]: variant.tone_description,
+    [`${prefix}.scriptCraftNotes`]:
+      typeof variant.scriptCraftNotes === 'string' ? variant.scriptCraftNotes : undefined,
   }
 
   if (Array.isArray(variant.themes)) {

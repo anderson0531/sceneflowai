@@ -44,6 +44,11 @@ import {
   resolveVariantArtStyle,
   resolveVariantAspectRatio,
 } from '@/lib/treatment/blueprintFoundation'
+import {
+  SCRIPT_CRAFT_PRIORITIES,
+  parseScriptCraftPriorities,
+  type ScriptCraftPriority,
+} from '@/lib/script/scriptCraftPrompt'
 import { EMPTY_ENTITY_I18N, type EntityI18n } from '@/i18n/content/entityI18n'
 import { useContentTranslation } from '@/i18n/content/useContentTranslation'
 import {
@@ -105,6 +110,7 @@ export function TreatmentCard({
   const { guide } = useGuideStore()
   const { selectTreatmentVariant } = useGuideStore() as any
   const { setTreatmentVariants } = useGuideStore() as any
+  const { updateTreatmentVariant } = useGuideStore() as any
   const { lastEdit, justAppliedVariantId, appliedAt } = useGuideStore() as any
   const variants = (guide as any)?.treatmentVariants as Array<{ id: string; label?: string; content: string; visual_style?: string; tone_description?: string; target_audience?: string; title?: string; logline?: string; genre?: string; format_length?: string; author_writer?: string; date?: string; synopsis?: string; setting?: string; protagonist?: string; antagonist?: string; act_breakdown?: any; tone?: string; style?: string; themes?: any; mood_references?: string[]; character_descriptions?: Array<{
     name: string;
@@ -131,7 +137,7 @@ export function TreatmentCard({
     generating?: boolean;
     version?: number;
     lastModified?: string;
-  }>; beats?: Array<{ title: string; intent?: string; minutes: number; synopsis?: string }>; total_duration_seconds?: number; estimatedDurationMinutes?: number; narrative_reasoning?: { character_focus: string; key_decisions: Array<{ decision: string; why: string; impact: string }>; story_strengths: string; user_adjustments: string }; }> | undefined
+  }>; beats?: Array<{ title: string; intent?: string; minutes: number; synopsis?: string }>; total_duration_seconds?: number; estimatedDurationMinutes?: number; scriptCraft?: Array<'characterDepth' | 'actionClarity' | 'subtext' | 'dialogueRichness' | 'visualFirst'>; scriptCraftNotes?: string; narrative_reasoning?: { character_focus: string; key_decisions: Array<{ decision: string; why: string; impact: string }>; story_strengths: string; user_adjustments: string }; }> | undefined
   const selectedId = (guide as any)?.selectedTreatmentId as string | undefined
 
   // Top-level hooks (must not be conditional)
@@ -257,7 +263,7 @@ export function TreatmentCard({
       const after = activeVariant as any
       const keys: string[] = [
         'title','logline','genre','format_length','target_audience','author_writer','date',
-        'setting','protagonist','antagonist','tone','tone_description','style','artStyle','aspectRatio','visual_style','synopsis','content','themes','beats'
+        'setting','protagonist','antagonist','tone','tone_description','style','artStyle','aspectRatio','visual_style','synopsis','content','themes','beats','scriptCraft','scriptCraftNotes'
       ]
       const changed = new Set<string>()
       for (const k of keys) {
@@ -821,6 +827,67 @@ export function TreatmentCard({
                           className="md:col-span-2"
                         />
                       ) : null}
+                      <BlueprintFieldCard
+                        sectionId="tone"
+                        variant="studio"
+                        label={t('fields.scriptCraft')}
+                        hideWhenEmpty={false}
+                        className="md:col-span-2"
+                        valueClassName={
+                          v.id === activeVariant.id
+                            ? flashIf('scriptCraft') || flashIf('scriptCraftNotes')
+                            : undefined
+                        }
+                      >
+                        <p className="text-xs text-gray-400 mb-2">{t('fields.scriptCraftHint')}</p>
+                        <div
+                          className={cn(
+                            'flex flex-wrap gap-2',
+                            v.id === activeVariant.id ? flashIf('scriptCraft') : ''
+                          )}
+                        >
+                          {SCRIPT_CRAFT_PRIORITIES.map((priority) => {
+                            const selected = parseScriptCraftPriorities(v.scriptCraft).includes(
+                              priority
+                            )
+                            return (
+                              <button
+                                key={priority}
+                                type="button"
+                                aria-pressed={selected}
+                                onClick={() => {
+                                  const current = parseScriptCraftPriorities(v.scriptCraft)
+                                  const next: ScriptCraftPriority[] = selected
+                                    ? current.filter((item) => item !== priority)
+                                    : [...current, priority]
+                                  updateTreatmentVariant(v.id, { scriptCraft: next })
+                                }}
+                                className={cn(
+                                  'px-2 py-0.5 rounded-full border text-xs transition-colors',
+                                  selected
+                                    ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300'
+                                    : 'bg-slate-900/40 border-slate-600 text-gray-400 hover:border-indigo-500/60 hover:text-gray-200'
+                                )}
+                              >
+                                {t(`fields.scriptCraftPriorities.${priority}`)}
+                              </button>
+                            )
+                          })}
+                        </div>
+                        <textarea
+                          value={typeof v.scriptCraftNotes === 'string' ? v.scriptCraftNotes : ''}
+                          onChange={(e) =>
+                            updateTreatmentVariant(v.id, { scriptCraftNotes: e.target.value })
+                          }
+                          placeholder={t('fields.scriptCraftNotesPlaceholder')}
+                          rows={2}
+                          className={cn(
+                            'mt-3 w-full rounded-md border border-slate-700 bg-slate-900/60 px-2 py-1.5 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500',
+                            v.id === activeVariant.id ? flashIf('scriptCraftNotes') : ''
+                          )}
+                          aria-label={t('fields.scriptCraftNotes')}
+                        />
+                      </BlueprintFieldCard>
                     </div>
                   </BlueprintSubsectionHeading>
                   </TabsContent>
