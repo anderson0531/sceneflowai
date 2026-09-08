@@ -304,8 +304,19 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const [visualPrompt, setVisualPrompt] = useState(autoConfig.visualPrompt)
   const [negativePrompt, setNegativePrompt] = useState(autoConfig.negativePrompt)
   const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16'>(lockedVideoAspect)
-  const [resolution, setResolution] = useState<'720p' | '1080p'>(autoConfig.resolution)
+  const [resolution, setResolution] = useState<'360p' | '720p' | '1080p' | '4k'>('720p')
   const [duration, setDuration] = useState(autoConfig.duration)
+  const [frameRate, setFrameRate] = useState<24 | 30>(autoConfig.frameRate ?? 24)
+  const [thinkingLevel, setThinkingLevel] = useState<
+    'minimal' | 'low' | 'medium' | 'high'
+  >(autoConfig.thinkingLevel ?? 'low')
+  const [omniMultiShotEnabled, setOmniMultiShotEnabled] = useState(
+    autoConfig.omniMultiShot ?? false
+  )
+  const [optimizedSettingsReason, setOptimizedSettingsReason] = useState(
+    autoConfig.optimizedSettingsReason ?? ''
+  )
+  const [settingsUserEdited, setSettingsUserEdited] = useState(false)
   const [guidePrompt, setGuidePrompt] = useState('')
 
   // Full API prompt preview / override
@@ -701,7 +712,9 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       segment.videoChain?.chainMethod === 'extension'
     const initialMode = isContinuation
       ? 'EXTEND'
-      : uiModeForMethod(autoConfig.mode)
+      : nextTakeMode === 'standard'
+        ? 'REFERENCE_IMAGES'
+        : uiModeForMethod(autoConfig.mode)
 
     setMode(initialMode)
     setPrompt(autoConfig.prompt)
@@ -709,7 +722,20 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     setVisualPrompt(autoConfig.visualPrompt)
     setNegativePrompt(autoConfig.negativePrompt)
     setAspectRatio(lockedVideoAspect)
-    setResolution(autoConfig.resolution)
+    const normalizedResolution = (autoConfig.resolution || '720p').toLowerCase() as
+      | '360p'
+      | '720p'
+      | '1080p'
+      | '4k'
+    setResolution(
+      normalizedResolution === '4k' ? '4k' : (normalizedResolution as '360p' | '720p' | '1080p')
+    )
+    if (!savedConfig && !settingsUserEdited) {
+      setFrameRate(autoConfig.frameRate ?? 24)
+      setThinkingLevel(autoConfig.thinkingLevel ?? 'low')
+      setOmniMultiShotEnabled(autoConfig.omniMultiShot ?? false)
+      setOptimizedSettingsReason(autoConfig.optimizedSettingsReason ?? '')
+    }
     const inferred = inferEngineSelectionFromConfig(savedConfig ?? autoConfig)
     const nextTakeMode: 'standard' | 'creative' = savedConfig?.videoProvider
       ? savedConfig.videoProvider === 'vertex'
@@ -758,7 +784,27 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       savedConfig?.useBeatFrameAsStart ?? autoConfig.useBeatFrameAsStart ?? false
     )
     setApiPromptPreview('')
-  }, [autoConfig, savedConfig, lockedVideoAspect, batchGuideSeed, segment, autoResolvedRefs.entries, variant])
+  }, [autoConfig, savedConfig, lockedVideoAspect, batchGuideSeed, segment, autoResolvedRefs.entries, variant, settingsUserEdited])
+
+  const resolveStandardEffectiveMethod = useCallback(
+    (uiMode: string): VideoGenerationMethod => {
+      const mapped = modeToMethod[uiMode]
+      if (mapped === 'FTV') return 'I2V'
+      if (
+        takeMode === 'standard' &&
+        uiMode === 'REFERENCE_IMAGES' &&
+        referenceImages.length === 0
+      ) {
+        return useBeatFrameAsStart ? 'I2V' : 'T2V'
+      }
+      return mapped
+    },
+    [takeMode, referenceImages.length, useBeatFrameAsStart]
+  )
+
+  const markSettingsEdited = useCallback(() => {
+    setSettingsUserEdited(true)
+  }, [])
 
   const fetchApiPromptPreview = useCallback(async () => {
     const method = modeToMethod[mode]
@@ -844,6 +890,11 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
           }))
         : undefined,
     preset: isSceneFlowEngine ? selectedPreset : undefined,
+    frameRate: takeMode === 'standard' ? frameRate : undefined,
+    thinkingLevel: takeMode === 'standard' ? thinkingLevel : undefined,
+    omniMultiShot: takeMode === 'standard' ? omniMultiShotEnabled : undefined,
+    optimizedSettingsReason:
+      takeMode === 'standard' && optimizedSettingsReason ? optimizedSettingsReason : undefined,
     useBeatFrameAsStart:
       useBeatFrameAsStart || mode === 'IMAGE_TO_VIDEO' || mode === 'EXTEND',
   })
@@ -998,8 +1049,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   }, [isOpen, segment.segmentId, effectiveStartFrameUrl, initializeDialogState])
 
   const handleSave = () => {
-    const method = modeToMethod[mode]
-    const effectiveMethod = method === 'FTV' ? 'I2V' : method
+    const effectiveMethod = resolveStandardEffectiveMethod(mode)
     const attachStart =
       useBeatFrameAsStart || effectiveMethod === 'I2V' || effectiveMethod === 'EXT'
     const resolvedStartFrameUrl = attachStart ? effectiveStartFrameUrl : null
@@ -1021,7 +1071,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       confidence: autoConfig.confidence,
       qualityTier: qualityTier,
       referenceImages:
-        method === 'REF' || (takeMode === 'standard' && referenceImages.length > 0)
+        effectiveMethod === 'REF' || (takeMode === 'standard' && referenceImages.length > 0)
           ? refsToConfig(referenceImages)
           : undefined,
     })
@@ -1030,8 +1080,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
 
   // Handle generate - saves config AND triggers generation
   const handleGenerate = () => {
-    const method = modeToMethod[mode]
-    const effectiveMethod = method === 'FTV' ? 'I2V' : method
+    const effectiveMethod = resolveStandardEffectiveMethod(mode)
     const attachStart =
       useBeatFrameAsStart || effectiveMethod === 'I2V' || effectiveMethod === 'EXT'
     const resolvedStartFrameUrl = attachStart ? effectiveStartFrameUrl : null
@@ -1053,18 +1102,18 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       confidence: autoConfig.confidence,
       qualityTier: qualityTier,
       referenceImages:
-        method === 'REF' || (takeMode === 'standard' && referenceImages.length > 0)
+        effectiveMethod === 'REF' || (takeMode === 'standard' && referenceImages.length > 0)
           ? refsToConfig(referenceImages)
           : undefined,
     })
-    
+
     onSaveConfig(savedConfig)
     if (onGenerate) {
       onGenerate(segment.segmentId, savedConfig)
     }
     onClose()
   }
-  
+
   const startFrameUrl = effectiveStartFrameUrl
   const hasExistingVideo = segment.activeAssetUrl && segment.assetType === 'video'
   const isContinuationSegment =
@@ -1217,6 +1266,51 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
               <div className="mb-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{t('noIngredientsHint')}</span>
+              </div>
+            )}
+            {isStandardTake && mode !== 'EXTEND' && (
+              <div className="mb-3 flex flex-wrap gap-2">
+                {(
+                  [
+                    ['TEXT_TO_VIDEO', t('omniMethodText')],
+                    ['IMAGE_TO_VIDEO', t('omniMethodStartFrame')],
+                    ['REFERENCE_IMAGES', t('omniMethodIngredients')],
+                  ] as const
+                ).map(([value, label]) => (
+                  <Button
+                    key={value}
+                    type="button"
+                    size="sm"
+                    variant={mode === value ? 'default' : 'outline'}
+                    className={cn(
+                      'text-xs',
+                      mode === value ? 'bg-indigo-600' : 'bg-slate-800 border-slate-700 text-slate-300'
+                    )}
+                    disabled={value === 'IMAGE_TO_VIDEO' && !tabStates.IMAGE_TO_VIDEO}
+                    onClick={() => {
+                      markSettingsEdited()
+                      setMode(value)
+                    }}
+                  >
+                    {label}
+                  </Button>
+                ))}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={mode === 'EXTEND' ? 'default' : 'outline'}
+                  className={cn(
+                    'text-xs',
+                    mode === 'EXTEND' ? 'bg-indigo-600' : 'bg-slate-800 border-slate-700 text-slate-300'
+                  )}
+                  disabled={!tabStates.EXTEND}
+                  onClick={() => {
+                    markSettingsEdited()
+                    setMode('EXTEND')
+                  }}
+                >
+                  {t('omniMethodContinue')}
+                </Button>
               </div>
             )}
             {!isStandardTake && !tabStates.IMAGE_TO_VIDEO && (
@@ -1641,9 +1735,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                           if (checked) {
                             if (referenceImages.length === 0) setMode('IMAGE_TO_VIDEO')
                           } else {
-                            setMode(
-                              referenceImages.length > 0 ? 'REFERENCE_IMAGES' : 'TEXT_TO_VIDEO'
-                            )
+                            setMode('REFERENCE_IMAGES')
                           }
                         }}
                       />
@@ -1658,6 +1750,25 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 )}
 
                 {/* Duration Selector */}
+                {isStandardTake && optimizedSettingsReason && !settingsUserEdited && (
+                  <div className="flex items-center justify-between gap-2 rounded-md border border-indigo-500/30 bg-indigo-500/10 px-3 py-2">
+                    <p className="text-[11px] text-indigo-200">
+                      {t('optimizedForShot')}: {optimizedSettingsReason}
+                    </p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-[10px] text-indigo-300"
+                      onClick={() => {
+                        setSettingsUserEdited(false)
+                        initializeDialogState()
+                      }}
+                    >
+                      {t('resetOptimizedSettings')}
+                    </Button>
+                  </div>
+                )}
                 <div className="flex flex-col gap-2">
                   <Label className="text-slate-300">Duration</Label>
                   {mode === 'EXTEND' ? (
@@ -1669,7 +1780,10 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                         key={d}
                         variant={duration === d ? 'default' : 'outline'}
                         size="sm"
-                        onClick={() => setDuration(d)}
+                        onClick={() => {
+                          markSettingsEdited()
+                          setDuration(d)
+                        }}
                         className={`flex-1 ${duration === d ? 'bg-indigo-600' : 'bg-slate-800 border-slate-700 text-slate-300'}`}
                       >
                         {d}s
@@ -1915,12 +2029,89 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                       </>
                     )}
 
+                    {isStandardTake && (
+                      <div className="space-y-4 pb-2 border-b border-slate-700/80">
+                        <p className="text-[11px] text-slate-500">{t('omniStudioControlsHint')}</p>
+                        <div className="flex flex-col gap-2">
+                          <Label className="text-slate-400 text-xs">{t('omniResolution')}</Label>
+                          <Select
+                            value={resolution}
+                            onValueChange={(v) => {
+                              markSettingsEdited()
+                              setResolution(v as '360p' | '720p' | '1080p' | '4k')
+                            }}
+                          >
+                            <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-slate-800 border-slate-700">
+                              <SelectItem value="360p">{t('omniResolution360')}</SelectItem>
+                              <SelectItem value="720p">{t('omniResolution720')}</SelectItem>
+                              <SelectItem value="1080p">{t('omniResolution1080')}</SelectItem>
+                              <SelectItem value="4k">{t('omniResolution4k')}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="text-slate-400 text-xs">{t('omniFrameRate')}</Label>
+                          <Select
+                            value={String(frameRate)}
+                            onValueChange={(v) => {
+                              markSettingsEdited()
+                              setFrameRate(Number(v) as 24 | 30)
+                            }}
+                          >
+                            <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-slate-800 border-slate-700">
+                              <SelectItem value="24">24 fps</SelectItem>
+                              <SelectItem value="30">30 fps</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="text-slate-400 text-xs">{t('omniThinkLevel')}</Label>
+                          <Select
+                            value={thinkingLevel}
+                            onValueChange={(v) => {
+                              markSettingsEdited()
+                              setThinkingLevel(v as 'minimal' | 'low' | 'medium' | 'high')
+                            }}
+                          >
+                            <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-slate-800 border-slate-700">
+                              <SelectItem value="minimal">{t('omniThinkMinimal')}</SelectItem>
+                              <SelectItem value="low">{t('omniThinkLow')}</SelectItem>
+                              <SelectItem value="medium">{t('omniThinkMedium')}</SelectItem>
+                              <SelectItem value="high">{t('omniThinkHigh')}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                          <Checkbox
+                            checked={omniMultiShotEnabled}
+                            onCheckedChange={(c) => {
+                              markSettingsEdited()
+                              setOmniMultiShotEnabled(c === true)
+                            }}
+                          />
+                          {t('omniMultiShot')}
+                        </label>
+                      </div>
+                    )}
+
                     <div className="flex flex-col gap-2">
                       <Label className="text-slate-400 text-xs">Aspect Ratio</Label>
                       <Select
                         value={aspectRatio}
-                        onValueChange={(v) => setAspectRatio(v as '16:9' | '9:16')}
-                        disabled
+                        onValueChange={(v) => {
+                          markSettingsEdited()
+                          setAspectRatio(v as '16:9' | '9:16')
+                        }}
+                        disabled={!isStandardTake}
                       >
                         <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
                           <SelectValue />

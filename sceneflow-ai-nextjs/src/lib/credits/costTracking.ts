@@ -375,7 +375,7 @@ function mapOperationToProvider(operation: string): string {
 
 function mapOperationToModel(operation: string): string {
   if (operation.includes('imagen')) return 'imagen-3.0-generate-001'
-  if (operation.includes('veo_omni') || operation.includes('veo_fast')) return 'gemini-omni-flash-preview'
+  if (operation.includes('veo_omni') || operation.includes('veo_fast')) return 'gemini-omni-1.1-flash-preview'
   if (operation.includes('veo_quality')) return 'veo-3.1-quality'
   if (operation.includes('gemini_flash')) return getGeminiTextModel('flash')
   if (operation.includes('gemini_pro')) return getGeminiTextModel('pro')

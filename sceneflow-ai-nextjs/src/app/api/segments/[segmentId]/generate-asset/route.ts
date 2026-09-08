@@ -60,7 +60,10 @@ interface GenerateAssetRequest {
   negativePrompt?: string
   duration?: number
   aspectRatio?: '16:9' | '9:16'
-  resolution?: '720p' | '1080p'
+  resolution?: '360p' | '720p' | '1080p' | '4k' | '4K'
+  frameRate?: 24 | 30
+  thinkingLevel?: 'minimal' | 'low' | 'medium' | 'high'
+  omniMultiShot?: boolean
   qualityTier?: 'fast' | 'premium'  // Veo quality tier - FTV benefits from premium
   // Context for intelligent method selection
   segmentIndex?: number
@@ -140,6 +143,9 @@ export async function POST(
       duration,
       aspectRatio,
       resolution,
+      frameRate,
+      thinkingLevel,
+      omniMultiShot,
       qualityTier,  // User-selected quality tier (FTV defaults to premium)
       // Context for intelligent method selection
       segmentIndex = 0,
@@ -388,7 +394,7 @@ export async function POST(
           `[Segment Asset Generation] Using direct Kling API (catalog=${catalogModel}, api=${resolveKlingApiModelName(catalogModel)})`
         )
       } else {
-        console.log('[Segment Asset Generation] Using Google Veo for video generation')
+        console.log('[Segment Asset Generation] Using Gemini Omni Flash for video generation')
         console.log(
           '[Segment Asset Generation] Endpoint status:',
           JSON.stringify(getEndpointStatus())
@@ -481,6 +487,9 @@ export async function POST(
         duration,
         aspectRatio,
         resolution,
+        frameRate,
+        thinkingLevel,
+        omniMultiShot,
         qualityTier,
         guidePrompt,
         isEstablishingShot,

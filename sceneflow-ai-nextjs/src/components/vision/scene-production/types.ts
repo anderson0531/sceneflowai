@@ -333,8 +333,14 @@ export interface VideoGenerationConfig {
   
   // Video parameters
   aspectRatio: '16:9' | '9:16'
-  resolution: '720p' | '1080p'
+  resolution: '360p' | '720p' | '1080p' | '4k' | '4K'
   duration: number            // 4, 6, 8, or 10 seconds
+  frameRate?: 24 | 30
+  thinkingLevel?: 'minimal' | 'low' | 'medium' | 'high'
+  /** Omni cinematic multi-shot on Standard take (not Kling storyboard). */
+  omniMultiShot?: boolean
+  /** Human-readable summary from shot intelligence auto-select. */
+  optimizedSettingsReason?: string
   
   // Asset URLs for generation
   startFrameUrl: string | null

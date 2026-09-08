@@ -90,7 +90,11 @@ export interface GenerateSegmentVideoInput {
   totalSegments?: number
   duration?: number
   aspectRatio?: '16:9' | '9:16'
-  resolution?: '720p' | '1080p'
+  resolution?: '360p' | '720p' | '1080p' | '4k' | '4K'
+  frameRate?: 24 | 30
+  thinkingLevel?: import('@/lib/config/modelConfig').GeminiThinkingLevel
+  /** Omni cinematic multi-shot (Standard take; not Kling storyboard). */
+  omniMultiShot?: boolean
   qualityTier?: 'fast' | 'premium'
   guidePrompt?: string
   isEstablishingShot?: boolean
@@ -237,6 +241,9 @@ export async function generateSegmentVideoCore(
     duration,
     aspectRatio,
     resolution,
+    frameRate,
+    thinkingLevel,
+    omniMultiShot,
     qualityTier,
     guidePrompt,
     isEstablishingShot = false,
@@ -325,11 +332,20 @@ export async function generateSegmentVideoCore(
   let effectiveDuration: VeoClipDuration = DEFAULT_VEO_CLIP_DURATION
   let klingDurationSeconds = duration ?? (expressMode ? 10 : 10)
 
+  const isStandardOmni = videoProvider === 'vertex'
+
   if (videoProvider === 'kling') {
     klingDurationSeconds = Math.min(15, Math.max(3, duration ?? (expressMode ? 10 : 10)))
     effectiveDuration = klingDurationSeconds <= 5 ? 4 : klingDurationSeconds <= 7 ? 6 : klingDurationSeconds <= 9 ? 8 : 10
   } else if (method === 'EXT') {
-    effectiveDuration = DEFAULT_VEO_CLIP_DURATION
+    effectiveDuration = isStandardOmni ? 10 : DEFAULT_VEO_CLIP_DURATION
+  } else if (isStandardOmni) {
+    if (duration) {
+      if (duration <= 5) effectiveDuration = 4
+      else if (duration <= 7) effectiveDuration = 6
+      else if (duration <= 9) effectiveDuration = 8
+      else effectiveDuration = 10
+    }
   } else {
     const requiresStabilityDuration =
       method === 'FTV' ||
@@ -357,6 +373,10 @@ export async function generateSegmentVideoCore(
     aspectRatio: aspectRatio || '16:9',
     resolution: effectiveResolution,
     durationSeconds: effectiveDuration,
+    frameRate: frameRate ?? 24,
+    thinkingLevel,
+    omniMultiShot: isStandardOmni ? omniMultiShot : undefined,
+    preferOmni: isStandardOmni,
     negativePrompt,
     personGeneration: isImageBasedMethod ? 'allow_adult' : 'allow_all',
     quality: effectiveQualityTier,

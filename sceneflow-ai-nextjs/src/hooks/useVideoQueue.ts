@@ -97,7 +97,10 @@ export function useVideoQueue(
       negativePrompt?: string
       duration?: number
       aspectRatio?: '16:9' | '9:16'
-      resolution?: '720p' | '1080p'
+      resolution?: '360p' | '720p' | '1080p' | '4k' | '4K'
+      frameRate?: 24 | 30
+      thinkingLevel?: 'minimal' | 'low' | 'medium' | 'high'
+      omniMultiShot?: boolean
       generationMethod?: VideoGenerationMethod
       guidePrompt?: string
       previousSegmentVeoRef?: string
@@ -537,9 +540,17 @@ export function useVideoQueue(
               sourceVideoUrl: previousSegmentVeoRef || config.sourceVideoUrl || undefined,
               prompt: config.prompt,
               negativePrompt: config.negativePrompt || undefined,
-              duration: batchMethod === 'EXT' ? DEFAULT_VEO_CLIP_DURATION : config.duration,
+              duration:
+                batchMethod === 'EXT'
+                  ? config.videoProvider === 'vertex'
+                    ? 10
+                    : DEFAULT_VEO_CLIP_DURATION
+                  : config.duration,
               aspectRatio: config.aspectRatio,
               resolution: batchMethod === 'EXT' ? '720p' : config.resolution,
+              frameRate: config.frameRate,
+              thinkingLevel: config.thinkingLevel,
+              omniMultiShot: config.omniMultiShot,
               generationMethod: batchMethod,
               guidePrompt: config.guidePrompt,
               previousSegmentVeoRef,

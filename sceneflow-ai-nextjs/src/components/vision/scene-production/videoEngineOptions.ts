@@ -137,7 +137,7 @@ export function resolveEngineConfig(selection: EngineSelection): ResolvedEngineC
     return {
       videoProvider: 'vertex',
       qualityTier: 'fast',
-      resolution: '1080p',
+      resolution: '720p',
       allowVeoFallback: false,
       allowPolicyFallback: false,
     }
