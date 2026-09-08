@@ -186,7 +186,7 @@ describe('runExpress', () => {
     expect(scene.imageUrl).toBe('https://example.com/beat-0.png')
   })
 
-  it('sends explicit beat refs and useAIPrompt true for fresh beats', async () => {
+  it('sends explicit beat refs, customPrompt, and skips Gemini intelligence', async () => {
     const project = {
       metadata: {
         title: 'Parity Film',
@@ -258,7 +258,8 @@ describe('runExpress', () => {
     const firstBeat = beatStartCalls[0]
     expect(firstBeat.characterSelectionExplicit).toBe(true)
     expect(firstBeat.skipObjectAutoDetection).toBe(true)
-    expect(firstBeat.useAIPrompt).toBe(true)
+    expect(firstBeat.useAIPrompt).toBe(false)
+    expect(firstBeat.skipLikenessValidation).toBe(true)
     expect(firstBeat.customPrompt).toBe('prompt-0')
     expect(Array.isArray(firstBeat.selectedCharacters)).toBe(true)
     expect((firstBeat.selectedCharacters as string[]).length).toBeGreaterThan(0)

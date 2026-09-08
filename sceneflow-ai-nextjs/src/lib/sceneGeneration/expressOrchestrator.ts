@@ -704,12 +704,13 @@ async function generateSingleBeatImage(
     sceneOverride: scene,
     ...beatRefPayload,
     ...(excludeCharacters ? { excludeCharacters: true } : {}),
-    ...(beatPlan?.prompt ? { customPrompt: beatPlan.prompt, useAIPrompt: true } : {}),
+    useAIPrompt: false,
+    ...(beatPlan?.prompt?.trim() ? { customPrompt: beatPlan.prompt } : {}),
     ...(typeof beatPlan?.allowTypography === 'boolean'
       ? { allowTypography: beatPlan.allowTypography }
       : {}),
     modelTier: imageParams.modelTier,
-    skipLikenessValidation: imageParams.skipLikenessValidation,
+    skipLikenessValidation: true,
     })
   )
   await persistBeatFrame(scene, beatIdx, result, imageParams.storyboardQuality)
@@ -1336,7 +1337,8 @@ async function runImagePhase(
             frameType: 'establishing',
             sceneOverride: scene,
             modelTier: imageParams.modelTier,
-            skipLikenessValidation: imageParams.skipLikenessValidation,
+            skipLikenessValidation: true,
+            useAIPrompt: false,
           })
           scene.imageUrl = result.imageUrl
           lastImageUrl = result.imageUrl
@@ -1381,7 +1383,8 @@ async function runImagePhase(
             dialogueIndex: dialogueIdx,
             sceneOverride: scene,
             modelTier: imageParams.modelTier,
-            skipLikenessValidation: imageParams.skipLikenessValidation,
+            skipLikenessValidation: true,
+            useAIPrompt: false,
           })
           persistDialogueFrame(dialogueIdx, result, imageParams.storyboardQuality)
           lastImageUrl = result.imageUrl

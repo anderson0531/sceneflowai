@@ -24,11 +24,11 @@ describe('ExpressTrafficCop', () => {
     }
   })
 
-  it('defaults image lane concurrency to 1 (sequential identity-ref gens)', () => {
-    expect(DEFAULT_EXPRESS_IMAGE_CONCURRENCY).toBe(1)
-    expect(getExpressImageConcurrency()).toBe(1)
+  it('defaults image lane concurrency to 2', () => {
+    expect(DEFAULT_EXPRESS_IMAGE_CONCURRENCY).toBe(2)
+    expect(getExpressImageConcurrency()).toBe(2)
     const cop = new ExpressTrafficCop()
-    expect(cop.getSnapshot().image.max).toBe(1)
+    expect(cop.getSnapshot().image.max).toBe(2)
   })
 
   it('defaults audio lane concurrency to 8', () => {

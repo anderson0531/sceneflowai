@@ -1,4 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 
 vi.mock('@/lib/intelligence/beat-sequence-planner', () => ({
   planBeatSequence: vi.fn(),
@@ -247,5 +249,17 @@ describe('buildExpressBeatRefPayload', () => {
     expect(payload.selectedCharacters).toBeUndefined()
     expect(payload.skipObjectAutoDetection).toBe(true)
     expect(payload.locationReferences).toHaveLength(1)
+  })
+})
+
+describe('Express beat generate-image flags', () => {
+  it('skips Gemini intelligence and likeness on beat frames', () => {
+    const src = readFileSync(
+      join(process.cwd(), 'src/lib/sceneGeneration/expressOrchestrator.ts'),
+      'utf8'
+    )
+    expect(src).toContain('useAIPrompt: false')
+    expect(src).not.toMatch(/customPrompt: beatPlan\.prompt, useAIPrompt: true/)
+    expect(src).toContain('skipLikenessValidation: true')
   })
 })
