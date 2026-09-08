@@ -61,7 +61,7 @@ export interface GenerateSceneImageParams {
   startFrameUrl?: string
   /** In-memory scene from Express orchestrator (merged over DB scene at sceneIndex). */
   sceneOverride?: Record<string, unknown>
-  /** Vertex image tier — Express uses `eco` for reliability. */
+  /** Vertex image tier — Express beat frames are promoted to designer when generating. */
   modelTier?: 'eco' | 'designer' | 'director'
   /** Skip post-generation likeness validation (Express batch). */
   skipLikenessValidation?: boolean

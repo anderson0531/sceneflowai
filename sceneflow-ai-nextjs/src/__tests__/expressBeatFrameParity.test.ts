@@ -173,4 +173,23 @@ describe('buildExpressBeatRefPayload', () => {
     expect(payload.skipObjectAutoDetection).toBe(true)
     expect(payload.characterSelectionExplicit).toBe(true)
   })
+
+  it('does not lock generate-image to an empty explicit cast on talent beats', () => {
+    const payload = buildExpressBeatRefPayload(
+      {
+        selectedCharacters: [],
+        locationReferences: [locationRef],
+        objectReferences: [],
+        characterWardrobes: [],
+        characterSelectionExplicit: true,
+        skipObjectAutoDetection: true,
+      },
+      false
+    )
+
+    expect(payload.characterSelectionExplicit).toBeUndefined()
+    expect(payload.selectedCharacters).toBeUndefined()
+    expect(payload.skipObjectAutoDetection).toBe(true)
+    expect(payload.locationReferences).toHaveLength(1)
+  })
 })
