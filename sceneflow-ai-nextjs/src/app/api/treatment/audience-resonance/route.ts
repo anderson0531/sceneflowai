@@ -26,7 +26,7 @@ import {
   mapRecommendations,
 } from '@/lib/treatment/blueprintAudienceScorer'
 import { persistBlueprintARToProject } from '@/lib/treatment/persistBlueprintAR'
-import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { resolveExistingContentStoryLocale } from '@/i18n/server/storyLocale'
 import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 import {
   type ContentIntent,
@@ -218,10 +218,10 @@ export async function POST(request: NextRequest) {
     const audienceDefinition = createAudienceDefinition(rawDef)
     const appliedIds = body.appliedRecommendationIds || []
 
-    // The summary, deductions and recommendations are all read by the creator,
-    // and the category names key the radar labels, so the analysis has to come
-    // back in their language rather than always in English.
-    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, {
+    // Analysis prose is stored on the project. Follow the stamped content
+    // language (or English), never the UI cookie — that is how leftover
+    // Español ended up persisted in blueprintAudienceResonance.
+    const { storyLocale, properNouns } = await resolveExistingContentStoryLocale({
       explicit: (body as { storyLocale?: string }).storyLocale,
       projectId: body.projectId,
       userIdOrEmail: userId,

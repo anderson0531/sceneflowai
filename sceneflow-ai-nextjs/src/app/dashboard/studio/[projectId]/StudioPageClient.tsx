@@ -118,8 +118,8 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   // Side panel visibility state
   const [showSidePanel, setShowSidePanel] = useState(true)
 
-  // Language new AI-written content is authored in. Read-only here: it follows
-  // the header switcher unless the project carries an override from Settings.
+  // Language new AI-written content is authored in. Account story language
+  // (Settings), not the header interface switcher.
   const { i18n: storyI18n } = useStoryLocale(
     currentProject as { metadata?: Record<string, any> | null } | null
   )
@@ -243,6 +243,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     BlueprintAudienceRecommendation[] | undefined
   >()
   const [blueprintRefineTab, setBlueprintRefineTab] = useState<string | undefined>()
+  const [blueprintRefineStoryLocale, setBlueprintRefineStoryLocale] = useState<string>('en')
+  const [blueprintRefineIntent, setBlueprintRefineIntent] = useState<string | undefined>()
+  const [blueprintRefineRewrite, setBlueprintRefineRewrite] = useState(false)
   const blueprintRefineApplyExtraRef = useRef<
     ((patch: Record<string, unknown>) => void) | null
   >(null)
@@ -310,15 +313,24 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   }, [projectId, isGen, guide.treatmentVariants, currentProject, searchParams])
 
   const openBlueprintRefine = useCallback((opts?: OpenBlueprintRefineOptions) => {
+    const rewrite = Boolean(opts?.rewriteToEnglish)
+    const locale = rewrite ? 'en' : (opts?.storyLocale ?? contentI18n.sourceLocale)
     setBlueprintRefineRecs(opts?.resonanceRecommendations)
     setBlueprintRefineTab(opts?.initialScope ?? opts?.initialActiveTab)
+    setBlueprintRefineStoryLocale(locale)
+    setBlueprintRefineIntent(opts?.initialIntent)
+    setBlueprintRefineRewrite(rewrite)
     blueprintRefineApplyExtraRef.current = opts?.onApplyExtra ?? null
     setBlueprintRefineOpen(true)
-  }, [])
+  }, [contentI18n.sourceLocale])
 
-  const requestBlueprintReanalyze = useCallback(() => {
+  const requestBlueprintReanalyze = useCallback((storyLocale?: string) => {
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('sf:blueprint-reanalyze-ar'))
+      window.dispatchEvent(
+        new CustomEvent('sf:blueprint-reanalyze-ar', {
+          detail: storyLocale ? { storyLocale } : undefined,
+        })
+      )
     }
   }, [])
 
@@ -341,9 +353,10 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       if (activeTreatmentVariant?.id) {
         updateTreatmentVariant(activeTreatmentVariant.id, patch)
       }
-      // Revised creative text is authored in the current story locale — stamp so
-      // content MT provenance matches what the revise prompts produced.
-      const contentI18nStamp = withContentStampedSourceLocale(storyI18n.sourceLocale)
+      // Stamp the language this job actually wrote, not the leftover project
+      // preference or the UI locale. A Spanish rewrite used to re-stamp es
+      // even when the model had been asked for English.
+      const contentI18nStamp = withContentStampedSourceLocale(blueprintRefineStoryLocale)
       if (currentProject) {
         setCurrentProject({
           ...currentProject,
@@ -361,16 +374,24 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       }
       blueprintRefineApplyExtraRef.current?.(patch)
       blueprintRefineApplyExtraRef.current = null
+      const shouldReanalyze = blueprintRefineRewrite
       setBlueprintRefineOpen(false)
       setBlueprintRefineRecs(undefined)
       setBlueprintRefineTab(undefined)
+      setBlueprintRefineIntent(undefined)
+      setBlueprintRefineRewrite(false)
+      if (shouldReanalyze) {
+        requestBlueprintReanalyze('en')
+      }
     },
     [
       activeTreatmentVariant?.id,
       updateTreatmentVariant,
-      storyI18n.sourceLocale,
+      blueprintRefineStoryLocale,
+      blueprintRefineRewrite,
       currentProject,
       setCurrentProject,
+      requestBlueprintReanalyze,
     ]
   )
   
@@ -1694,6 +1715,8 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             setBlueprintRefineOpen(false)
             setBlueprintRefineRecs(undefined)
             setBlueprintRefineTab(undefined)
+            setBlueprintRefineIntent(undefined)
+            setBlueprintRefineRewrite(false)
             blueprintRefineApplyExtraRef.current = null
           }}
           onApply={handleBlueprintRefineApply}
@@ -1704,6 +1727,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           onRequestReanalyze={requestBlueprintReanalyze}
           contentIntent={currentProject?.metadata?.contentIntent}
           contentI18n={contentI18n}
+          storyLocale={blueprintRefineStoryLocale}
+          initialIntent={blueprintRefineIntent}
+          rewriteToEnglish={blueprintRefineRewrite}
         />
       )}
 

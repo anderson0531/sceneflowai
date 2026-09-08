@@ -63,6 +63,10 @@ import {
   buildAudienceResonanceDisplayFields,
 } from '@/i18n/content/buildBlueprintDisplayFields'
 import { TranslationNotice } from '@/components/i18n/LocalizedField'
+import {
+  blueprintNeedsEnglishRewrite,
+  REWRITE_BLUEPRINT_ENGLISH_INTENT,
+} from '@/lib/blueprint/rewriteBlueprintEnglish'
 
 export interface AudienceResonancePanelV3Props {
   treatment?: Record<string, unknown>
@@ -171,6 +175,7 @@ export function AudienceResonancePanelV3({
   const [analysis, setAnalysis] = useState<BlueprintAudienceResonanceAnalysis | null>(
     savedBlueprintAR?.analysis ?? null
   )
+  const [analyzeStoryLocale, setAnalyzeStoryLocale] = useState<string | undefined>()
   const [appliedIds, setAppliedIds] = useState<string[]>(
     savedBlueprintAR?.appliedRecommendationIds ?? []
   )
@@ -256,7 +261,7 @@ export function AudienceResonancePanelV3({
     }
   }
 
-  const runAnalysis = useCallback(async () => {
+  const runAnalysis = useCallback(async (storyLocaleOverride?: string) => {
     if (!treatment) return
     if (audienceDirty) {
       toast.error('Save your target audience before analyzing')
@@ -300,6 +305,10 @@ export function AudienceResonancePanelV3({
           contentIntent,
           appliedRecommendationIds: appliedIds,
           iteration: (savedBlueprintAR?.iterationCount ?? 0) + 1,
+          storyLocale:
+            storyLocaleOverride ??
+            analyzeStoryLocale ??
+            (contentI18n?.contentStamped ? contentI18n.sourceLocale : 'en'),
           previousAnalysis: analysis
             ? {
                 overallScore: analysis.overallScore,
@@ -348,6 +357,9 @@ export function AudienceResonancePanelV3({
     savedBlueprintAR,
     onAnalysisComplete,
     projectId,
+    analyzeStoryLocale,
+    contentI18n,
+    contentIntentProp,
   ])
 
   const handleResonanceRefineApply = (
@@ -389,12 +401,14 @@ export function AudienceResonancePanelV3({
   }
 
   useEffect(() => {
-    const onReanalyze = () => {
+    const onReanalyze = (event: Event) => {
       if (audienceDirty) {
         toast.error('Save your target audience before re-analyzing')
         return
       }
-      void runAnalysis()
+      const locale = (event as CustomEvent<{ storyLocale?: string }>).detail?.storyLocale
+      if (locale) setAnalyzeStoryLocale(locale)
+      void runAnalysis(locale)
     }
     window.addEventListener('sf:blueprint-reanalyze-ar', onReanalyze)
     return () => window.removeEventListener('sf:blueprint-reanalyze-ar', onReanalyze)
@@ -419,6 +433,31 @@ export function AudienceResonancePanelV3({
 
   const radarAxes = analysis ? categoriesToAxes(analysis) : []
 
+  const needsEnglishRewrite = useMemo(
+    () =>
+      blueprintNeedsEnglishRewrite({
+        sourceLocale: contentI18n?.contentStamped ? contentI18n.sourceLocale : undefined,
+        title: String(treatment?.title || treatment?.label || ''),
+        logline: String(treatment?.logline || ''),
+        synopsis: String(treatment?.synopsis || ''),
+        arSummary: analysis?.summary ?? savedBlueprintAR?.analysis?.summary ?? null,
+      }),
+    [contentI18n, treatment, analysis, savedBlueprintAR]
+  )
+
+  const openEnglishRewrite = () => {
+    if (!onOpenBlueprintRefine) {
+      toast.error('Blueprint editor is unavailable')
+      return
+    }
+    onOpenBlueprintRefine({
+      rewriteToEnglish: true,
+      storyLocale: 'en',
+      initialIntent: REWRITE_BLUEPRINT_ENGLISH_INTENT,
+      initialScope: 'all',
+    })
+  }
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto">
@@ -427,6 +466,15 @@ export function AudienceResonancePanelV3({
             <h2 className="text-sm font-semibold text-white tracking-tight">
               {t('title')}
             </h2>
+            {needsEnglishRewrite && onOpenBlueprintRefine && (
+              <button
+                type="button"
+                onClick={openEnglishRewrite}
+                className="text-[11px] font-medium text-cyan-300 hover:text-cyan-200 shrink-0"
+              >
+                {t('rewriteInEnglish')}
+              </button>
+            )}
             <BlueprintTtsControls
               playId="ar-panel"
               getTextToSpeak={arNarrationText}
@@ -523,7 +571,7 @@ export function AudienceResonancePanelV3({
             </button>
             <button
               type="button"
-              onClick={runAnalysis}
+              onClick={() => void runAnalysis()}
               disabled={isAnalyzing || audienceDirty}
               className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-gradient-to-r from-cyan-600 to-emerald-600 text-white text-xs font-medium rounded-lg disabled:opacity-50"
             >
@@ -628,7 +676,7 @@ export function AudienceResonancePanelV3({
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={runAnalysis}
+                    onClick={() => void runAnalysis()}
                     disabled={isAnalyzing}
                     className="flex-1 px-3 py-2 text-xs bg-cyan-600/80 hover:bg-cyan-600 text-white rounded-lg disabled:opacity-50"
                   >

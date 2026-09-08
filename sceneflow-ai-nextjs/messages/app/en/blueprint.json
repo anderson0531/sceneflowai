@@ -49,7 +49,8 @@
     "charactersWithCount": "Characters ({count})"
   },
   "toolbar": {
-    "documentLabel": "Treatment"
+    "documentLabel": "Treatment",
+    "rewriteInEnglish": "Rewrite in English"
   },
   "sections": {
     "coreInfo": "Core Info",
@@ -297,7 +298,8 @@
     "strengths": "Strengths",
     "categoryScores": "Category scores",
     "jumpToSection": "Jump to matching Blueprint section",
-    "emptyHint": "Save your target audience, then analyze how your blueprint resonates with that audience."
+    "emptyHint": "Save your target audience, then analyze how your blueprint resonates with that audience.",
+    "rewriteInEnglish": "Rewrite in English"
   },
   "heroImage": {
     "uploading": "Uploading...",

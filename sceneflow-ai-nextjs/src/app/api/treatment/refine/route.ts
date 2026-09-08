@@ -5,7 +5,7 @@ import { CreditService } from '@/services/CreditService'
 import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
 import { strictJsonPromptSuffix, safeParseJsonFromText } from '@/lib/safeJson'
 import { generateText } from '@/lib/vertexai/gemini'
-import { resolveStoryLocale } from '@/i18n/server/storyLocale'
+import { resolveExistingContentStoryLocale } from '@/i18n/server/storyLocale'
 import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import { validateRevisionRequest } from '@/lib/treatment/blueprintRequestValidation'
@@ -207,10 +207,10 @@ export async function POST(request: NextRequest) {
     const maxTokens = section === 'beats' ? 4096 :
                       section === 'characters' ? 3072 : 4096
 
-    // A refinement must come back in the same language the creator is reading,
-    // otherwise every edit made from a dialog would quietly revert the project
-    // to English one field at a time.
-    const { storyLocale, properNouns } = await resolveStoryLocale({
+    // Revisions follow the language the stored blueprint was stamped in, not
+    // the interface language. Reading the studio in Spanish used to rewrite
+    // English treatments into Spanish one apply at a time.
+    const { storyLocale, properNouns } = await resolveExistingContentStoryLocale({
       explicit: body.storyLocale,
       projectId: body.projectId,
       userIdOrEmail: userId,

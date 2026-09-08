@@ -10,7 +10,10 @@ import { buildProperNounGlossary } from '@/lib/prompts/localeDirective'
  * mode that makes localization look flaky. Resolution order:
  *
  *   explicit request value -> project override -> series override
- *     -> account default -> English
+ *     -> account story language -> English
+ *
+ * Interface language (`preferred_locale` / `sf-locale`) is not consulted.
+ * A leftover Español chrome setting must not author story text.
  */
 export interface ResolveStoryLocaleOptions {
   /** Value supplied by the caller, if any. */
@@ -93,7 +96,7 @@ export async function resolveStoryLocale(
     try {
       const { resolveUser } = await import('@/lib/userHelper')
       const user = await resolveUser(userIdOrEmail)
-      const accountLocale = user.story_locale ?? user.preferred_locale
+      const accountLocale = user.story_locale
       if (isLocale(accountLocale)) {
         storyLocale = accountLocale
         source = 'account'
@@ -108,4 +111,47 @@ export async function resolveStoryLocale(
     properNouns,
     source: storyLocale ? source : 'default',
   }
+}
+
+/**
+ * Language to author *revisions* of an existing blueprint in.
+ *
+ * Account `story_locale` and the UI cookie are ignored: those are how leftover
+ * Español leaked into stored treatmentVariants and AR analysis. A project
+ * whose content was stamped (generation or a prior revise) keeps that
+ * language; everything else is English until the creator asks otherwise.
+ */
+export async function resolveExistingContentStoryLocale(
+  options: ResolveStoryLocaleOptions
+): Promise<ResolvedStoryLocale> {
+  const { explicit, projectId, includeProperNouns = true } = options
+
+  if (isLocale(explicit)) {
+    const properNouns = includeProperNouns
+      ? (await resolveStoryLocale({ ...options, explicit: undefined })).properNouns
+      : []
+    return { storyLocale: explicit, properNouns, source: 'explicit' }
+  }
+
+  if (projectId && !projectId.startsWith('new-project')) {
+    try {
+      const { default: Project } = await import('@/models/Project')
+      const { readContentEntityI18n } = await import('@/i18n/content/entityI18n')
+      const project = await Project.findByPk(projectId)
+      if (project) {
+        const content = readContentEntityI18n(project)
+        const properNouns = includeProperNouns
+          ? (await resolveStoryLocale({ ...options, explicit: undefined })).properNouns
+          : []
+        if (content.contentStamped && isLocale(content.sourceLocale)) {
+          return { storyLocale: content.sourceLocale, properNouns, source: 'project' }
+        }
+        return { storyLocale: DEFAULT_LOCALE, properNouns, source: 'default' }
+      }
+    } catch (error) {
+      console.warn('[storyLocale] content locale lookup failed:', (error as Error)?.message)
+    }
+  }
+
+  return { storyLocale: DEFAULT_LOCALE, properNouns: [], source: 'default' }
 }

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-08T18:23:24.819Z",
+  "generatedAt": "2026-09-08T23:15:45.872Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -276,6 +276,7 @@
       "tabs.characters": "6fac39e2845bb812",
       "tabs.charactersWithCount": "2a8554c236b0c9a0",
       "toolbar.documentLabel": "0d331d85875437ba",
+      "toolbar.rewriteInEnglish": "50b8c340f3c74571",
       "sections.coreInfo": "2289a14ca711ad21",
       "sections.coreInfoTitle": "b658dfcd26bcde14",
       "sections.coreInfoDescription": "9abf3983ed39fe7d",
@@ -484,6 +485,7 @@
       "audienceResonance.categoryScores": "c14e2bf41386f9e9",
       "audienceResonance.jumpToSection": "719c03b8b7a7ba5c",
       "audienceResonance.emptyHint": "f8c0de783a42f75c",
+      "audienceResonance.rewriteInEnglish": "50b8c340f3c74571",
       "heroImage.uploading": "72cb29c90ccd8361",
       "heroImage.uploadImage": "ff02f4a09c4afaa2",
       "heroImage.uploadingHero": "41c6fd42b9b586c7",

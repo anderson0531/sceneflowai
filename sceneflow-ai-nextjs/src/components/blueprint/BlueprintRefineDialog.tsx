@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import { Button } from '../ui/Button'
 import { DictationTextarea } from '../ui/DictationTextarea'
@@ -75,6 +75,10 @@ type Props = {
   onRequestReanalyze?: () => void
   contentIntent?: ContentIntent | null
   contentI18n?: EntityI18n
+  /** Language the revision must be authored in. */
+  storyLocale?: string
+  initialIntent?: string
+  rewriteToEnglish?: boolean
 }
 
 /** Focus scopes, ordered to match the studio tabs and the share viewer nav. */
@@ -310,6 +314,9 @@ export function BlueprintRefineDialog({
   onRequestReanalyze,
   contentIntent: contentIntentProp,
   contentI18n,
+  storyLocale,
+  initialIntent,
+  rewriteToEnglish = false,
 }: Props) {
   const t = useTranslations('blueprint.assistant')
   const tc = useTranslations('common')
@@ -426,8 +433,8 @@ export function BlueprintRefineDialog({
   useEffect(() => {
     if (!open) return
     setPhase('intent')
-    setUserIntent('')
-    setFocusScope(sectionFromTab(initialActiveTab))
+    setUserIntent(initialIntent ?? '')
+    setFocusScope(rewriteToEnglish ? 'all' : sectionFromTab(initialActiveTab))
     setPreviewVariant(null)
     setChangePlan(null)
     setDiff([])
@@ -439,7 +446,7 @@ export function BlueprintRefineDialog({
     } else {
       setSelectedRecIds(new Set())
     }
-  }, [open, initialActiveTab, resonanceRecommendations])
+  }, [open, initialActiveTab, initialIntent, rewriteToEnglish, resonanceRecommendations])
 
   const templateSections = useMemo(() => {
     const scope = focusScope === 'all' ? null : focusScope
@@ -549,6 +556,8 @@ export function BlueprintRefineDialog({
             section: focusScope,
             instructions: combinedIntent,
             contentIntent,
+            projectId,
+            storyLocale,
           }),
         })
         const data = await readJsonSafe(response)
@@ -594,6 +603,7 @@ export function BlueprintRefineDialog({
           focusScope: undefined,
           projectId,
           contentIntent,
+          storyLocale,
         }),
       })
       const data = await readJsonSafe(response)
@@ -626,6 +636,20 @@ export function BlueprintRefineDialog({
       }
     }
   }
+
+  const rewriteStartedRef = useRef(false)
+  useEffect(() => {
+    if (!open) {
+      rewriteStartedRef.current = false
+      return
+    }
+    if (!rewriteToEnglish || rewriteStartedRef.current) return
+    if (!userIntent.trim()) return
+    rewriteStartedRef.current = true
+    void handleGenerate()
+    // handleGenerate closes over the just-reset intent; starting once per open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, rewriteToEnglish, userIntent])
 
   const handleApplyPreview = useCallback(() => {
     if (!previewVariant) return
