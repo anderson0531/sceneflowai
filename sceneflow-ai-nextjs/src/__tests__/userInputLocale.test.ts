@@ -41,7 +41,7 @@ const RENDER_CLIENTS = [
   'generateSeriesThumbnailImage',
 ]
 
-const LOCALE_SEAM = /resolveRequestStoryLocale|resolveStoryLocale/
+const LOCALE_SEAM = /resolveRequestStoryLocale|resolveStoryLocale|resolveExistingContentStoryLocale/
 const ENGLISH_SEAM = /englishForModel/
 
 /**

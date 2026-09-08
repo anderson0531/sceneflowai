@@ -11,7 +11,7 @@ import { validateRevisionRequest } from '@/lib/treatment/blueprintRequestValidat
 import { createGenerationJob, findActiveJob } from '@/lib/jobs/jobService'
 import { scheduleBlueprintGuidedReviseStep } from '@/lib/jobs/dispatchBlueprintGuidedReviseStep'
 import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
-import { resolveStoryLocale } from '@/i18n/server/storyLocale'
+import { resolveExistingContentStoryLocale } from '@/i18n/server/storyLocale'
 import { englishForModel } from '@/i18n/server/requestLocale'
 
 export const runtime = 'nodejs'
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
 
     // Resolved here rather than in the worker: the job runs without a session,
     // so the creator's language has to be captured while the request context exists.
-    const { storyLocale } = await resolveStoryLocale({
+    const { storyLocale } = await resolveExistingContentStoryLocale({
       explicit: (body as { storyLocale?: string }).storyLocale,
       projectId,
       userIdOrEmail: userId,

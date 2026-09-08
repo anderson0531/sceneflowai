@@ -122,15 +122,16 @@ describe('the header is the only language control in the studio', () => {
     expect(settings).toContain('storyLocale')
   })
 
-  it('lets the story language follow the interface language', () => {
-    // Nothing to keep in sync if the account default already falls through.
+  it('does not let leftover interface language author story text', () => {
     const resolver = readSource('src/i18n/server/storyLocale.ts')
-    expect(resolver).toContain('user.story_locale ?? user.preferred_locale')
+    expect(resolver).not.toContain('user.story_locale ?? user.preferred_locale')
+    expect(resolver).toContain('const accountLocale = user.story_locale')
   })
 
-  it('header switch writes both uiLocale and storyLocale', () => {
-    expect(hook).toContain("JSON.stringify({ uiLocale: nextLocale, storyLocale: nextLocale })")
-    expect(hook).toContain('setCachedAccountStoryLocale(nextLocale)')
+  it('header switch writes uiLocale only', () => {
+    expect(hook).toContain("JSON.stringify({ uiLocale: nextLocale })")
+    expect(hook).not.toContain('storyLocale: nextLocale')
+    expect(hook).not.toContain('setCachedAccountStoryLocale(nextLocale)')
   })
 })
 

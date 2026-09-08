@@ -55,6 +55,10 @@ import {
   treatmentVariantPathPrefix,
 } from '@/i18n/content/buildBlueprintDisplayFields'
 import { TranslationNotice } from '@/components/i18n/LocalizedField'
+import {
+  blueprintNeedsEnglishRewrite,
+  REWRITE_BLUEPRINT_ENGLISH_INTENT,
+} from '@/lib/blueprint/rewriteBlueprintEnglish'
 
 /**
  * Blueprint body sections, in tab order. Labels resolve through the catalog.
@@ -302,6 +306,31 @@ export function TreatmentCard({
                           size="toolbar"
                           scopeLabel={t('sections.wholeBlueprint')}
                         />
+                        {blueprintNeedsEnglishRewrite({
+                          sourceLocale: contentI18n?.contentStamped
+                            ? contentI18n.sourceLocale
+                            : undefined,
+                          title: String(activeVariant.title || ''),
+                          logline: String(activeVariant.logline || ''),
+                          synopsis: String(activeVariant.synopsis || ''),
+                        }) && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-8 px-2.5 text-xs border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/10"
+                            onClick={() =>
+                              openRefine({
+                                rewriteToEnglish: true,
+                                storyLocale: 'en',
+                                initialIntent: REWRITE_BLUEPRINT_ENGLISH_INTENT,
+                                initialScope: 'all',
+                              })
+                            }
+                          >
+                            {t('toolbar.rewriteInEnglish')}
+                          </Button>
+                        )}
 
                         {/* Separates the labelled primary action from the icon-only
                             secondary group, which otherwise read as one undifferentiated
