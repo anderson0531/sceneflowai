@@ -11,7 +11,6 @@ import { DownloadIcon, Edit, Settings, BarChart3, ChevronRight, Check, HelpCircl
 import { useGuideStore } from "@/store/useGuideStore";
 import { useStore } from '@/store/useStore'
 import { useCue } from "@/store/useCueStore";
-import ProjectIdeaTab from "@/components/studio/ProjectIdeaTab";
 import dynamic from 'next/dynamic';
 import { cn } from "@/lib/utils";
 import { resolveCreatorName } from '@/lib/user/displayName';
@@ -1013,7 +1012,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       }
     } catch (error: any) {
       console.error('[StudioPage] Blueprint generation failed:', error)
-      throw error // Re-throw so BlueprintComposer can show error
+      throw error // Re-throw so the calling dialog can surface it
     } finally {
       setIsGen(false)
       stopProgress()
@@ -1374,8 +1373,6 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       }
     }
   }, [projectId, lastInput, variantsLastModified, guide.title, guide.filmTreatment, treatmentVariants, beatsView, estimatedRuntime, audienceDefinition, savedBlueprintAR, currentProject?.metadata])
-
-  useEffect(() => { console.debug('[StudioPage] outline autogen disabled; relying on OutlineV2') }, [guide?.filmTreatment, currentProject?.id])
 
   const startProgress = () => {
     setGenProgress(5)
