@@ -1583,14 +1583,24 @@ export default function ScriptReviewModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="script-review-dialog-title"
+        className="dialog-text-reset bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col"
+      >
         {/* Header */}
         <div className="flex flex-col gap-4 p-6 pb-4 border-b border-gray-200 dark:border-gray-700">
           {/* Top Line: Title & Close Button */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Target className="w-5 h-5 text-purple-500" />
-              <h2 className="text-xl font-semibold">Insights & Direction</h2>
+              <h2
+                id="script-review-dialog-title"
+                className="dashboard-widget-title text-lg font-semibold leading-tight m-0"
+              >
+                Insights & Direction
+              </h2>
               <span className="text-[11px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded ml-2">Analysis & Planning</span>
               {reviewIsStale && (
                 <span className="ml-1 inline-flex items-center gap-1 rounded bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400">
@@ -2208,43 +2218,47 @@ export default function ScriptReviewModal({
                               <div
                                 key={index}
                                 className={cn(
-                                  'border rounded-lg p-4 bg-gray-50 dark:bg-gray-800/50',
+                                  'rounded-lg border p-3.5 bg-gray-50 dark:bg-gray-800/40',
                                   sceneHasHighImpactIssue(scene)
                                     ? 'border-rose-400/70 dark:border-rose-500/50'
                                     : 'border-gray-200 dark:border-gray-700'
                                 )}
                               >
-                                <div className="flex items-start justify-between mb-3">
-                                  <div>
-                                    <h3 className="font-semibold text-base text-gray-900 dark:text-gray-100 flex items-center gap-2 flex-wrap">
-                                      <span className="bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded text-sm">
+                                <div className="flex items-start justify-between gap-3 mb-2.5 flex-wrap">
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="inline-flex h-5 shrink-0 items-center rounded px-1.5 text-[11px] font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300">
                                         Scene {scene.sceneNumber}
                                       </span>
-                                      {scene.sceneHeading}
                                       {sceneHasHighImpactIssue(scene) && (
                                         <Badge variant="destructive" className="text-[10px] uppercase tracking-wider">
                                           High impact
                                         </Badge>
                                       )}
-                                    </h3>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 italic">
-                                      {scene.notes}
+                                    </div>
+                                    <p className="ar-scene-heading mt-1.5 mb-0 text-sm font-medium leading-snug tracking-wide text-gray-800 dark:text-gray-100">
+                                      {scene.sceneHeading}
                                     </p>
+                                    {scene.notes ? (
+                                      <p className="mt-1 mb-0 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                                        {scene.notes}
+                                      </p>
+                                    ) : null}
                                   </div>
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-3 shrink-0">
                                     {scene.storyWeight && (
-                                      <div className="flex flex-col items-end mr-4">
-                                        <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">
+                                      <div className="flex flex-col items-end">
+                                        <span className="text-sm font-semibold tabular-nums text-gray-700 dark:text-gray-200">
                                           {scene.storyWeight}%
                                         </span>
-                                        <span className="text-[10px] text-gray-400 uppercase">Weight</span>
+                                        <span className="text-[10px] uppercase tracking-wider text-gray-400">Weight</span>
                                       </div>
                                     )}
                                     <div className="flex flex-col items-end">
-                                      <span className={`text-lg font-bold ${scene.score >= 80 ? 'text-green-600' : 'text-amber-600'}`}>
+                                      <span className={`text-sm font-semibold tabular-nums ${scene.score >= 80 ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'}`}>
                                         {scene.score}
                                       </span>
-                                      <span className="text-[10px] text-gray-500 uppercase">Score</span>
+                                      <span className="text-[10px] uppercase tracking-wider text-gray-400">Score</span>
                                     </div>
                                     <Button
                                       variant="outline"
@@ -2277,14 +2291,16 @@ export default function ScriptReviewModal({
                                 {/* Specific Recommendations */}
                                 {scene.recommendations && scene.recommendations.length > 0 && (
                                   <div className="bg-white dark:bg-gray-900 rounded-md p-3 border border-purple-100 dark:border-purple-900/30">
-                                    <h4 className="text-xs font-semibold text-purple-700 dark:text-purple-400 mb-2 uppercase tracking-wider">Recommendations</h4>
-                                    <ul className="space-y-1">
+                                    <div className="text-[10px] font-semibold text-purple-700 dark:text-purple-400 mb-2 uppercase tracking-wider">
+                                      Recommendations
+                                    </div>
+                                    <ul className="space-y-1.5 mb-0">
                                       {scene.recommendations.map((rec, rIdx) => {
                                         const recText = typeof rec === 'string' ? rec : rec?.text || String(rec)
                                         const recPriority = typeof rec === 'object' && rec?.priority ? rec.priority : null
                                         const recPointsDeducted = typeof rec === 'object' && rec?.pointsDeducted ? rec.pointsDeducted : null
                                         return (
-                                          <li key={rIdx} className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2">
+                                          <li key={rIdx} className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2 mb-0">
                                             <span className="text-purple-500 mt-0.5">•</span>
                                             <span className="flex-1">
                                               {recText}
