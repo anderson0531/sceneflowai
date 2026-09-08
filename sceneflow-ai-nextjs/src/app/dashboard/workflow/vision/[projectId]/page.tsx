@@ -702,6 +702,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const scriptRef = useRef<any>(null)
   const projectRef = useRef<any>(null)
   const charactersRef = useRef<any[]>([])
+  /** Serializes wardrobe persist updates per character to avoid concurrent read-modify-write races. */
+  const wardrobePersistQueuesRef = useRef<Map<string, Promise<void>>>(new Map())
   /** Blocks stale handleScriptChange saves from reverting audio during bulk regen. */
   const audioRegenInProgressRef = useRef(false)
   
@@ -5995,156 +5997,134 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     needsImageRegen?: boolean;
     action?: 'add' | 'update' | 'delete' | 'setDefault';
   }) => {
-    try {
-      const updatedCharacters = characters.map(char => {
-        const charId = char.id || characters.indexOf(char).toString()
-        if (charId !== characterId) return char
-        
-        // Get or initialize wardrobes collection
-        let wardrobes: CharacterWardrobe[] = char.wardrobes || []
-        
-        // Migrate legacy wardrobe to collection if exists and collection is empty
-        // SKIP migration when adding a new wardrobe (action === 'add') to prevent
-        // creating a duplicate "Default Outfit" alongside the wardrobe being added
-        if (wardrobes.length === 0 && wardrobe.action !== 'add' && (char.defaultWardrobe || wardrobe.defaultWardrobe)) {
-          const legacyDescription = char.defaultWardrobe || wardrobe.defaultWardrobe || ''
-          const legacyAccessories = char.wardrobeAccessories || wardrobe.wardrobeAccessories || ''
-          if (legacyDescription) {
-            wardrobes = [{
+    const runUpdate = async () => {
+      try {
+        const sourceCharacters = charactersRef.current
+        const updatedCharacters = sourceCharacters.map((char, index) => {
+          const charId = char.id || index.toString()
+          if (charId !== characterId) return char
+          
+          // Get or initialize wardrobes collection
+          let wardrobes: CharacterWardrobe[] = char.wardrobes || []
+          
+          // Migrate legacy wardrobe to collection if exists and collection is empty
+          // SKIP migration when adding a new wardrobe (action === 'add') to prevent
+          // creating a duplicate "Default Outfit" alongside the wardrobe being added
+          if (wardrobes.length === 0 && wardrobe.action !== 'add' && (char.defaultWardrobe || wardrobe.defaultWardrobe)) {
+            const legacyDescription = char.defaultWardrobe || wardrobe.defaultWardrobe || ''
+            const legacyAccessories = char.wardrobeAccessories || wardrobe.wardrobeAccessories || ''
+            if (legacyDescription) {
+              wardrobes = [{
+                id: `wardrobe-${Date.now()}`,
+                name: 'Default Outfit',
+                description: legacyDescription,
+                accessories: legacyAccessories,
+                isDefault: true,
+                createdAt: new Date().toISOString()
+              }]
+            }
+          }
+          
+          // Handle collection operations
+          if (wardrobe.action === 'add' && wardrobe.wardrobeName && wardrobe.defaultWardrobe) {
+            const newWardrobe: CharacterWardrobe = {
               id: `wardrobe-${Date.now()}`,
-              name: 'Default Outfit',
-              description: legacyDescription,
-              accessories: legacyAccessories,
-              isDefault: true,
-              createdAt: new Date().toISOString()
-            }]
-          }
-        }
-        
-        // Handle collection operations
-        if (wardrobe.action === 'add' && wardrobe.wardrobeName && wardrobe.defaultWardrobe) {
-          // Add new wardrobe to collection
-          const newWardrobe: CharacterWardrobe = {
-            id: `wardrobe-${Date.now()}`,
-            name: wardrobe.wardrobeName,
-            description: wardrobe.defaultWardrobe,
-            accessories: wardrobe.wardrobeAccessories,
-            sceneNumbers: wardrobe.sceneNumbers,
-            appearanceNotes: wardrobe.appearanceNotes,
-            reason: wardrobe.reason,
-            isDefault: wardrobes.length === 0, // First wardrobe is default
-            createdAt: new Date().toISOString()
-          }
-          wardrobes = [...wardrobes, newWardrobe]
-        } else if (wardrobe.action === 'update' && wardrobe.wardrobeId) {
-          // Update existing wardrobe
-          wardrobes = wardrobes.map(w => 
-            w.id === wardrobe.wardrobeId 
-              ? { 
-                  ...w, 
-                  description: wardrobe.defaultWardrobe || w.description, 
-                  accessories: wardrobe.wardrobeAccessories || w.accessories,
-                  ...(wardrobe.previewImageUrl ? { previewImageUrl: wardrobe.previewImageUrl } : {}),
-                  ...(wardrobe.headshotUrl ? { headshotUrl: wardrobe.headshotUrl } : {}),
-                  ...(wardrobe.fullBodyUrl ? { fullBodyUrl: wardrobe.fullBodyUrl, needsImageRegen: false } : {}),
-                  ...(wardrobe.sceneNumbers ? { sceneNumbers: wardrobe.sceneNumbers } : {}),
-                  ...(wardrobe.appearanceNotes !== undefined ? { appearanceNotes: wardrobe.appearanceNotes } : {}),
-                  ...(wardrobe.reason ? { reason: wardrobe.reason } : {}),
-                  ...(wardrobe.needsImageRegen !== undefined
-                    ? { needsImageRegen: wardrobe.needsImageRegen }
-                    : {}),
-                }
-              : w
-          )
-        } else if (wardrobe.action === 'delete' && wardrobe.wardrobeId) {
-          // Delete wardrobe
-          const wasDefault = wardrobes.find(w => w.id === wardrobe.wardrobeId)?.isDefault
-          wardrobes = wardrobes.filter(w => w.id !== wardrobe.wardrobeId)
-          // If deleted wardrobe was default, make first remaining wardrobe default
-          if (wasDefault && wardrobes.length > 0) {
-            wardrobes[0].isDefault = true
-          }
-        } else if (wardrobe.action === 'setDefault' && wardrobe.wardrobeId) {
-          // Set wardrobe as default
-          wardrobes = wardrobes.map(w => ({
-            ...w,
-            isDefault: w.id === wardrobe.wardrobeId
-          }))
-        } else if (!wardrobe.action) {
-          // Legacy behavior: update/add single wardrobe
-          const defaultWardrobeObj = wardrobes.find(w => w.isDefault)
-          if (defaultWardrobeObj) {
-            wardrobes = wardrobes.map(w => 
-              w.isDefault 
-                ? { ...w, description: wardrobe.defaultWardrobe || w.description, accessories: wardrobe.wardrobeAccessories || w.accessories }
-                : w
-            )
-          } else if (wardrobe.defaultWardrobe) {
-            wardrobes = [{
-              id: `wardrobe-${Date.now()}`,
-              name: 'Default Outfit',
+              name: wardrobe.wardrobeName,
               description: wardrobe.defaultWardrobe,
               accessories: wardrobe.wardrobeAccessories,
-              isDefault: true,
+              sceneNumbers: wardrobe.sceneNumbers,
+              appearanceNotes: wardrobe.appearanceNotes,
+              reason: wardrobe.reason,
+              isDefault: wardrobes.length === 0,
               createdAt: new Date().toISOString()
-            }]
+            }
+            wardrobes = [...wardrobes, newWardrobe]
+          } else if (wardrobe.action === 'update' && wardrobe.wardrobeId) {
+            wardrobes = wardrobes.map(w => 
+              w.id === wardrobe.wardrobeId 
+                ? { 
+                    ...w, 
+                    description: wardrobe.defaultWardrobe || w.description, 
+                    accessories: wardrobe.wardrobeAccessories || w.accessories,
+                    ...(wardrobe.previewImageUrl ? { previewImageUrl: wardrobe.previewImageUrl } : {}),
+                    ...(wardrobe.headshotUrl ? { headshotUrl: wardrobe.headshotUrl } : {}),
+                    ...(wardrobe.fullBodyUrl ? { fullBodyUrl: wardrobe.fullBodyUrl, needsImageRegen: false } : {}),
+                    ...(wardrobe.sceneNumbers ? { sceneNumbers: wardrobe.sceneNumbers } : {}),
+                    ...(wardrobe.appearanceNotes !== undefined ? { appearanceNotes: wardrobe.appearanceNotes } : {}),
+                    ...(wardrobe.reason ? { reason: wardrobe.reason } : {}),
+                    ...(wardrobe.needsImageRegen !== undefined
+                      ? { needsImageRegen: wardrobe.needsImageRegen }
+                      : {}),
+                  }
+                : w
+            )
+          } else if (wardrobe.action === 'delete' && wardrobe.wardrobeId) {
+            const wasDefault = wardrobes.find(w => w.id === wardrobe.wardrobeId)?.isDefault
+            wardrobes = wardrobes.filter(w => w.id !== wardrobe.wardrobeId)
+            if (wasDefault && wardrobes.length > 0) {
+              wardrobes[0].isDefault = true
+            }
+          } else if (wardrobe.action === 'setDefault' && wardrobe.wardrobeId) {
+            wardrobes = wardrobes.map(w => ({
+              ...w,
+              isDefault: w.id === wardrobe.wardrobeId
+            }))
+          } else if (!wardrobe.action) {
+            const defaultWardrobeObj = wardrobes.find(w => w.isDefault)
+            if (defaultWardrobeObj) {
+              wardrobes = wardrobes.map(w => 
+                w.isDefault 
+                  ? { ...w, description: wardrobe.defaultWardrobe || w.description, accessories: wardrobe.wardrobeAccessories || w.accessories }
+                  : w
+              )
+            } else if (wardrobe.defaultWardrobe) {
+              wardrobes = [{
+                id: `wardrobe-${Date.now()}`,
+                name: 'Default Outfit',
+                description: wardrobe.defaultWardrobe,
+                accessories: wardrobe.wardrobeAccessories,
+                isDefault: true,
+                createdAt: new Date().toISOString()
+              }]
+            }
           }
-        }
-        
-        // Get default wardrobe for legacy fields
-        const defaultWdrb = wardrobes.find(w => w.isDefault)
-        
-        return { 
-          ...char, 
-          wardrobes,
-          // Keep legacy fields in sync with default wardrobe for backwards compatibility
-          defaultWardrobe: defaultWdrb?.description,
-          wardrobeAccessories: defaultWdrb?.accessories
-        }
-      })
-      
-      setCharacters(updatedCharacters)
-      
-      // Save to database using existing projects API
-      if (project) {
-        // Build updated metadata with new character wardrobe
-        const updatedVisionPhase = {
-          ...(projectRef.current || project)?.metadata?.visionPhase,
-          characters: updatedCharacters,
-          script: scriptRef.current || script,
-          scenes: scenes,
-          narrationVoice: narrationVoice,
-          descriptionVoice: descriptionVoice
-        }
-        
-        const updatedMetadata = {
-          ...(projectRef.current || project).metadata,
-          visionPhase: updatedVisionPhase
-        }
-        
-        console.log('[REVERSION-DEBUG][Wardrobe] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
-        const response = await serializedProjectSave({
-            metadata: updatedMetadata
-          }, 'handleUpdateWardrobe')
-        
-        if (!response.ok) throw new Error('Failed to update wardrobe')
-        
-        // CRITICAL: Also update the project state so subsequent operations 
-        // (like scene generation) use the updated wardrobe, not stale metadata
-        setProject({
-          ...project,
-          metadata: updatedMetadata
+          
+          const defaultWdrb = wardrobes.find(w => w.isDefault)
+          
+          return { 
+            ...char, 
+            wardrobes,
+            defaultWardrobe: defaultWdrb?.description,
+            wardrobeAccessories: defaultWdrb?.accessories
+          }
         })
         
-        console.log('[Vision] Character wardrobe saved:', characterId, wardrobe)
+        if (project) {
+          const response = await persistVisionCharacters(
+            updatedCharacters,
+            'handleUpdateCharacterWardrobe'
+          )
+          if (!response.ok) throw new Error('Failed to update wardrobe')
+          console.log('[Vision] Character wardrobe saved:', characterId, wardrobe)
+        } else {
+          charactersRef.current = updatedCharacters
+          setCharacters(updatedCharacters)
+        }
+      } catch (error) {
+        console.error('[Update Wardrobe] Error:', error)
+        try { 
+          const { toast } = require('sonner')
+          toast.error('Failed to update character wardrobe')
+        } catch {}
+        throw error
       }
-    } catch (error) {
-      console.error('[Update Wardrobe] Error:', error)
-      try { 
-        const { toast } = require('sonner')
-        toast.error('Failed to update character wardrobe')
-      } catch {}
     }
+
+    const queues = wardrobePersistQueuesRef.current
+    const prev = queues.get(characterId) || Promise.resolve()
+    const next = prev.then(runUpdate).catch(() => {})
+    queues.set(characterId, next)
+    return next
   }
   
   // Handle batch wardrobe updates from script analysis - replaces character wardrobes with AI suggestions
@@ -6254,7 +6234,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const staleWardrobeIdsByCharacter: Record<string, string[]> = {}
 
     try {
-      let updatedCharacters = [...characters]
+      let updatedCharacters = [...charactersRef.current]
       for (const diff of diffs) {
         updatedCharacters = updatedCharacters.map((char, index) => {
           const charId = char.id || index.toString()
@@ -6267,7 +6247,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             ...staleWardrobeIds,
             ...diff.creates.map((_, i) => `pending-create-${i}`),
           ]
-          // Remap create ids from merge result (new looks have needsImageRegen)
           const staleFromMerge = wardrobes
             .filter((w) => w.needsImageRegen)
             .map((w) => w.id)
@@ -6283,27 +6262,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
       }
 
-      setCharacters(updatedCharacters)
-
       if (project) {
-        const updatedVisionPhase = {
-          ...(projectRef.current || project)?.metadata?.visionPhase,
-          characters: updatedCharacters,
-          script: scriptRef.current || script,
-          scenes: scenes,
-          narrationVoice: narrationVoice,
-          descriptionVoice: descriptionVoice,
-        }
-        const updatedMetadata = {
-          ...(projectRef.current || project).metadata,
-          visionPhase: updatedVisionPhase,
-        }
-        const response = await serializedProjectSave(
-          { metadata: updatedMetadata },
+        const response = await persistVisionCharacters(
+          updatedCharacters,
           'handleApplyWardrobeSyncDiffs'
         )
         if (!response.ok) throw new Error('Failed to apply wardrobe sync')
-        setProject({ ...project, metadata: updatedMetadata })
+      } else {
+        charactersRef.current = updatedCharacters
+        setCharacters(updatedCharacters)
       }
 
       const totalUpdates = diffs.reduce((n, d) => n + d.updates.length, 0)
