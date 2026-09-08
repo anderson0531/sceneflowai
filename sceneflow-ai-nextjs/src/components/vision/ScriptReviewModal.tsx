@@ -23,7 +23,7 @@ import {
   resolveAssistant,
   resolveAssistantGeminiVoiceId,
 } from '@/lib/tts/productionAssistants'
-import { firstHighImpactSceneIndex, sceneHasHighImpactIssue } from '@/lib/script/audienceResonance/highImpact'
+import { collectTopImpactIssues, firstHighImpactSceneIndex, sceneHasHighImpactIssue } from '@/lib/script/audienceResonance/highImpact'
 import { useStore } from '@/store/useStore'
 import { AnimatedScore, AnimatedProgressBar } from '@/components/ui/AnimatedScore'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
@@ -1931,24 +1931,11 @@ export default function ScriptReviewModal({
 
                     {/* Top Impact Issues (from scene recommendations) */}
                     {(() => {
-                      // Collect all recommendations that have pointsDeducted
-                      const allRecs: { rec: SceneRecommendation, sceneNum: number, heading: string }[] = [];
-                      if (sceneAnalysis && sceneAnalysis.length > 0) {
-                        sceneAnalysis.forEach(scene => {
-                          if (scene.recommendations) {
-                            scene.recommendations.forEach(rec => {
-                              if (typeof rec === 'object' && typeof rec.pointsDeducted === 'number' && rec.pointsDeducted > 0) {
-                                allRecs.push({ rec, sceneNum: scene.sceneNumber, heading: scene.sceneHeading });
-                              }
-                            });
-                          }
-                        });
-                      }
-                      
-                      // Sort by pointsDeducted descending and take top 5
-                      const topIssues = allRecs.sort((a, b) => (b.rec.pointsDeducted || 0) - (a.rec.pointsDeducted || 0)).slice(0, 5);
-                      
-                      if (topIssues.length === 0) return null;
+                      const topIssues = collectTopImpactIssues(sceneAnalysis, {
+                        excludeApplied: false,
+                        limit: 5,
+                      })
+                      if (topIssues.length === 0) return null
 
                       return (
                         <div className="mt-4 border-t pt-4">
@@ -1969,9 +1956,9 @@ export default function ScriptReviewModal({
                           
                           {showDeductions && (
                             <div className="mt-3 max-h-60 overflow-y-auto space-y-3 pl-2 pr-2">
-                              {topIssues.map((issue, i) => (
+                              {topIssues.map((issue) => (
                                 <button
-                                  key={i}
+                                  key={`${issue.sceneIndex}-${issue.recId}`}
                                   type="button"
                                   onClick={() => {
                                     if (typeof issue.sceneNum === 'number' && issue.sceneNum > 0) {
