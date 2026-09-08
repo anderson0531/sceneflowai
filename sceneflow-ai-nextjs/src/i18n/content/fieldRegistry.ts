@@ -232,6 +232,23 @@ export const CONTENT_FIELDS: Record<string, FieldKind> = {
   // delivery language via textOverlayTranslations rather than the UI language.
   'scenes[].beats[].overlayText': 'spoken',
 
+  // Structured beat direction feeds image/video prompt builders, so every
+  // field stays English like other machine-facing prompt slots.
+  'scenes[].beats[].beatDirection.shotType': 'machine',
+  'scenes[].beats[].beatDirection.cameraAngle': 'machine',
+  'scenes[].beats[].beatDirection.cameraMovement': 'machine',
+  'scenes[].beats[].beatDirection.blocking': 'machine',
+  'scenes[].beats[].beatDirection.emotion': 'machine',
+  'scenes[].beats[].beatDirection.gaze': 'machine',
+  'scenes[].beats[].beatDirection.keyProps[]': 'machine',
+  'scenes[].beats[].beatDirection.propInteraction': 'machine',
+  'scenes[].beats[].beatDirection.lightingAccent': 'machine',
+  'scenes[].beats[].beatDirection.frozenMoment': 'machine',
+  'scenes[].beats[].beatDirection.audioCue': 'machine',
+  'scenes[].beats[].beatDirection.transition': 'opaque',
+  'scenes[].beats[].beatDirection.generatedBy': 'opaque',
+  'scenes[].beats[].beatDirection.updatedAt': 'opaque',
+
   // ── Production: characters (VisionCharacter) ────────────────────────────
   'visionPhase.characters[].id': 'opaque',
   'visionPhase.characters[].name': 'opaque',

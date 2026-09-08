@@ -59,12 +59,25 @@ export function buildEndFramePrompt(beat: SceneBeat): string {
   return `Character completes speaking gesture; subtle expression and body motion`
 }
 
+function beatDirectionSummary(beat: SceneBeat): string {
+  const d = beat.beatDirection
+  if (!d) return ''
+  const parts: string[] = []
+  if (d.shotType) parts.push(d.shotType)
+  if (d.cameraMovement) parts.push(d.cameraMovement)
+  if (d.blocking) parts.push(d.blocking)
+  if (d.emotion) parts.push(d.emotion)
+  return parts.filter(Boolean).join('; ')
+}
+
 function buildVideoPrompt(beat: SceneBeat, spokenText?: string): string {
+  const summary = beatDirectionSummary(beat)
+  const summarySuffix = summary ? ` ${summary}.` : ''
   if (beat.kind === 'action') {
-    return beat.actionDescription ?? 'Scene action unfolds with natural motion'
+    return `${beat.actionDescription ?? 'Scene action unfolds with natural motion'}${summarySuffix}`
   }
   if (beat.kind === 'narration') {
-    return `Visual backdrop for narration; atmospheric motion, no on-screen dialogue text`
+    return `Visual backdrop for narration; atmospheric motion, no on-screen dialogue text.${summarySuffix}`
   }
   const character = beat.character ?? 'Character'
   const rawLine = spokenText ?? beat.line ?? ''
@@ -73,7 +86,7 @@ function buildVideoPrompt(beat: SceneBeat, spokenText?: string): string {
   const deliverySuffix = parsed.deliveryProse
     ? ` Delivery: ${parsed.deliveryProse}.`
     : ''
-  return `${character} speaks with natural lip sync: "${line}".${deliverySuffix}`
+  return `${character} speaks with natural lip sync: "${line}".${deliverySuffix}${summarySuffix}`
 }
 
 function beatToSegment(
@@ -103,6 +116,10 @@ function beatToSegment(
   const preVisEndUrl = beat.storyboardEndImageUrl?.trim() || undefined
   const fullyAnchored = !!(preVisStartUrl && preVisEndUrl)
 
+  const beatTransition = beat.beatDirection?.transition
+  const segmentTransition =
+    beatTransition === 'CONTINUE' ? 'CONTINUE' : 'CUT'
+
   const segment: SceneSegment = {
     segmentId: mintSegmentId(),
     sequenceIndex,
@@ -112,7 +129,7 @@ function beatToSegment(
     assetType: null,
     takes: [],
     segmentDirection: null,
-    transitionType: 'CUT',
+    transitionType: segmentTransition,
     ...(preVisStartUrl
       ? {
           startFrameUrl: preVisStartUrl,

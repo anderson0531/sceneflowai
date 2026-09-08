@@ -10,7 +10,7 @@ import {
 } from '@/lib/intelligence/scene-direction-metadata'
 import { adaptPromptForLyria } from '@/lib/audio/lyriaPromptAdapter'
 import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
-import type { SceneBeat } from '@/lib/script/segmentTypes'
+import type { BeatDirection, SceneBeat } from '@/lib/script/segmentTypes'
 
 function getSceneDirection(scene: Record<string, unknown>): Record<string, any> | undefined {
   const d = scene.sceneDirection
@@ -347,6 +347,33 @@ export function buildFallbackBeatPlans(request: BeatSequencePlanRequest): BeatKe
   })
 }
 
+/**
+ * Merge planner-derived direction into a beat's `beatDirection` WITHOUT
+ * overwriting fields already authored by the LLM (or the user). Only fills
+ * gaps. Marks the record `generatedBy: 'planner'` when the beat had no prior
+ * direction so downstream consumers know provenance.
+ */
+function mergePlannerDirectionIntoBeat(
+  beat: SceneBeat,
+  plan: BeatKeyframePlan
+): BeatDirection | undefined {
+  const existing = beat.beatDirection
+  const authored = existing?.generatedBy === 'llm' || existing?.generatedBy === 'user'
+
+  const planShotType = plan.shotType?.trim() || undefined
+  const planFrozenMoment = plan.frozenMoment?.trim() || undefined
+
+  if (!planShotType && !planFrozenMoment && !existing) return undefined
+
+  const merged: BeatDirection = { ...(existing ?? {}) }
+  if (!merged.shotType && planShotType) merged.shotType = planShotType
+  if (!merged.frozenMoment && planFrozenMoment) merged.frozenMoment = planFrozenMoment
+
+  merged.generatedBy = authored ? existing?.generatedBy : merged.generatedBy || 'planner'
+  merged.updatedAt = new Date().toISOString()
+  return merged
+}
+
 export function applyBeatKeyframePlansToScene(
   scene: Record<string, unknown>,
   plans: BeatKeyframePlan[]
@@ -355,11 +382,13 @@ export function applyBeatKeyframePlansToScene(
   for (const plan of plans) {
     const beat = beats[plan.beatIndex]
     if (!beat) continue
+    const mergedDirection = mergePlannerDirectionIntoBeat(beat, plan)
     beats[plan.beatIndex] = {
       ...beat,
       beatRole: plan.beatRole,
       storyboardImagePrompt: plan.prompt,
       ...(plan.durationSeconds ? { durationSeconds: plan.durationSeconds } : {}),
+      ...(mergedDirection ? { beatDirection: mergedDirection } : {}),
     }
   }
   return { ...scene, beats }

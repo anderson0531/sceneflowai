@@ -7,6 +7,9 @@ import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
 import {
   NARRATOR_CHARACTER,
   NARRATOR_CHARACTER_ID,
+  type BeatDirection,
+  type BeatDirectionSource,
+  type BeatDirectionTransition,
   type BeatKind,
   type BeatReferenceSelection,
   type SceneBeat,
@@ -15,9 +18,11 @@ import {
 import { mintLineId } from '@/lib/script/segmentScript'
 import { applyDerivedSfxToScene } from '@/lib/script/deriveSfxFromSceneContent'
 import { dedupeRedundantActionBeats } from '@/lib/script/actionBeatDedupe'
+import { backfillBeatDirectionsOnScene } from '@/lib/script/beatDirectionDerive'
 
 const BEAT_MIGRATION_FLAG = 'beatsMigratedAt'
 const START_FRAME_ONLY_MIGRATION_FLAG = 'startFrameOnlyMigrationAt'
+const BEAT_DIRECTION_MIGRATION_FLAG = 'beatDirectionMigratedAt'
 const BEAT_DURATION_SEC = 8
 const MAX_DERIVED_BEATS = 12
 
@@ -45,6 +50,125 @@ export function mintBeatId(): string {
     return `bt_${crypto.randomUUID().slice(0, 12)}`
   }
   return `bt_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
+}
+
+const BEAT_DIRECTION_TRANSITIONS: readonly BeatDirectionTransition[] = [
+  'CUT',
+  'CONTINUE',
+  'DISSOLVE',
+  'FADE',
+  'MATCH_CUT',
+]
+const BEAT_DIRECTION_SOURCES: readonly BeatDirectionSource[] = [
+  'llm',
+  'planner',
+  'derived',
+  'user',
+]
+
+function trimmedString(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const trimmed = value.trim()
+  return trimmed ? trimmed : undefined
+}
+
+function normalizeTransition(value: unknown): BeatDirectionTransition | undefined {
+  const s = trimmedString(value)
+  if (!s) return undefined
+  const upper = s.toUpperCase().replace(/[\s-]+/g, '_')
+  return (BEAT_DIRECTION_TRANSITIONS as readonly string[]).includes(upper)
+    ? (upper as BeatDirectionTransition)
+    : undefined
+}
+
+function normalizeSource(value: unknown): BeatDirectionSource | undefined {
+  const s = trimmedString(value)
+  if (!s) return undefined
+  const lower = s.toLowerCase()
+  return (BEAT_DIRECTION_SOURCES as readonly string[]).includes(lower)
+    ? (lower as BeatDirectionSource)
+    : undefined
+}
+
+function normalizeStringArray(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const item of value) {
+    const s = trimmedString(item)
+    if (!s) continue
+    const key = s.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(s)
+  }
+  return out.length > 0 ? out : undefined
+}
+
+/**
+ * Normalize a raw beatDirection payload from the LLM (or persisted JSON).
+ *
+ * - Trims strings, drops empties.
+ * - Coerces `transition` to the enum (accepts "match cut" → "MATCH_CUT").
+ * - Dedupes `keyProps`.
+ * - Returns `undefined` when no usable fields remain.
+ */
+export function normalizeBeatDirection(raw: unknown): BeatDirection | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const b = raw as Record<string, unknown>
+  const direction: BeatDirection = {}
+
+  const shotType = trimmedString(b.shotType ?? b.shot ?? b.shot_type)
+  if (shotType) direction.shotType = shotType
+
+  const cameraAngle = trimmedString(b.cameraAngle ?? b.camera_angle ?? b.angle)
+  if (cameraAngle) direction.cameraAngle = cameraAngle
+
+  const cameraMovement = trimmedString(
+    b.cameraMovement ?? b.camera_movement ?? b.movement
+  )
+  if (cameraMovement) direction.cameraMovement = cameraMovement
+
+  const blocking = trimmedString(b.blocking)
+  if (blocking) direction.blocking = blocking
+
+  const emotion = trimmedString(b.emotion)
+  if (emotion) direction.emotion = emotion
+
+  const gaze = trimmedString(b.gaze)
+  if (gaze) direction.gaze = gaze
+
+  const keyProps = normalizeStringArray(b.keyProps ?? b.key_props ?? b.props)
+  if (keyProps) direction.keyProps = keyProps
+
+  const propInteraction = trimmedString(
+    b.propInteraction ?? b.prop_interaction ?? b.propHandling
+  )
+  if (propInteraction) direction.propInteraction = propInteraction
+
+  const lightingAccent = trimmedString(
+    b.lightingAccent ?? b.lighting_accent ?? b.lighting
+  )
+  if (lightingAccent) direction.lightingAccent = lightingAccent
+
+  const frozenMoment = trimmedString(
+    b.frozenMoment ?? b.frozen_moment ?? b.moment
+  )
+  if (frozenMoment) direction.frozenMoment = frozenMoment
+
+  const audioCue = trimmedString(b.audioCue ?? b.audio_cue ?? b.sfx)
+  if (audioCue) direction.audioCue = audioCue
+
+  const transition = normalizeTransition(b.transition)
+  if (transition) direction.transition = transition
+
+  const generatedBy = normalizeSource(b.generatedBy ?? b.source)
+  if (generatedBy) direction.generatedBy = generatedBy
+
+  const updatedAt = trimmedString(b.updatedAt ?? b.updated_at)
+  if (updatedAt) direction.updatedAt = updatedAt
+
+  return Object.keys(direction).length > 0 ? direction : undefined
 }
 
 function isSpokenBeatKind(kind: BeatKind): boolean {
@@ -1079,14 +1203,51 @@ export function applyExpressStoryboardImageErrorToScene(
   return applyBeatsToScene(scene, beats)
 }
 
+/** Stable fingerprint of beat direction fields for pre-vis invalidation. */
+function beatDirectionFingerprint(direction: SceneBeat['beatDirection']): string {
+  if (!direction) return ''
+  const keys: Array<keyof NonNullable<SceneBeat['beatDirection']>> = [
+    'shotType',
+    'cameraAngle',
+    'cameraMovement',
+    'blocking',
+    'emotion',
+    'gaze',
+    'propInteraction',
+    'lightingAccent',
+    'frozenMoment',
+    'audioCue',
+    'transition',
+  ]
+  const parts: string[] = []
+  for (const key of keys) {
+    const value = direction[key]
+    if (typeof value === 'string' && value.trim()) {
+      parts.push(`${key}=${value.trim()}`)
+    }
+  }
+  const props = Array.isArray(direction.keyProps)
+    ? direction.keyProps
+        .map((prop) => (typeof prop === 'string' ? prop.trim() : ''))
+        .filter(Boolean)
+        .sort()
+    : []
+  if (props.length > 0) {
+    parts.push(`keyProps=${props.join(',')}`)
+  }
+  return parts.join('|')
+}
+
 /** Stable fingerprint of beat script text for pre-vis invalidation. */
 export function beatContentFingerprint(beat: SceneBeat): string {
+  const directionFingerprint = beatDirectionFingerprint(beat.beatDirection)
+  const directionSuffix = directionFingerprint ? `||direction:${directionFingerprint}` : ''
   if (beat.kind === 'action') {
-    return (beat.actionDescription ?? '').trim()
+    return `${(beat.actionDescription ?? '').trim()}${directionSuffix}`
   }
   const character = (beat.character ?? '').trim().toUpperCase()
   const line = (beat.line ?? '').trim()
-  return `${beat.kind}|${character}|${line}`
+  return `${beat.kind}|${character}|${line}${directionSuffix}`
 }
 
 function beatMatchKey(beat: SceneBeat, index: number): string {
@@ -1381,6 +1542,62 @@ export function migrateSceneBeatsToStartFrameOnly(
   return applyBeatsToScene(scene, nextBeats)
 }
 
+export function isProjectBeatDirectionMigrated(metadata: unknown): boolean {
+  if (!metadata || typeof metadata !== 'object') return false
+  const visionPhase = (metadata as Record<string, unknown>).visionPhase
+  if (!visionPhase || typeof visionPhase !== 'object') return false
+  const flag = (visionPhase as Record<string, unknown>)[BEAT_DIRECTION_MIGRATION_FLAG]
+  return typeof flag === 'string' && flag.length > 0
+}
+
+/**
+ * Idempotent: fill in `beatDirection` on every beat across all script scenes.
+ *
+ * Non-destructive — LLM- and user-authored beat directions are preserved; only
+ * gaps are filled from scene direction, performance cues, and beat text.
+ */
+export function migrateProjectBeatDirection(metadata: unknown): MigrateBeatsResult {
+  const empty: MigrateBeatsResult = {
+    metadata: (metadata && typeof metadata === 'object'
+      ? JSON.parse(JSON.stringify(metadata))
+      : {}) as Record<string, unknown>,
+    migratedSceneCount: 0,
+    changed: false,
+  }
+  if (!metadata || typeof metadata !== 'object') return empty
+
+  const cloned = JSON.parse(JSON.stringify(metadata)) as Record<string, unknown>
+  const visionPhase = cloned.visionPhase as Record<string, unknown> | undefined
+  if (!visionPhase) return empty
+
+  const scriptRoot = visionPhase.script as Record<string, unknown> | undefined
+  const nested = scriptRoot?.script as Record<string, unknown> | undefined
+  const scenes = (nested?.scenes ?? scriptRoot?.scenes) as unknown[]
+  if (!Array.isArray(scenes) || scenes.length === 0) return empty
+
+  let migratedSceneCount = 0
+  let changed = false
+
+  for (let i = 0; i < scenes.length; i++) {
+    const scene = scenes[i] as Record<string, unknown>
+    const backfilled = backfillBeatDirectionsOnScene(scene)
+    if (backfilled.length === 0) continue
+    const priorBeats = Array.isArray(scene.beats) ? (scene.beats as SceneBeat[]) : []
+    const priorJson = JSON.stringify(priorBeats.map((b) => b.beatDirection ?? null))
+    const nextJson = JSON.stringify(backfilled.map((b) => b.beatDirection ?? null))
+    if (priorJson === nextJson) continue
+    scenes[i] = applyBeatsToScene(scene, backfilled)
+    changed = true
+    migratedSceneCount++
+  }
+
+  if (changed) {
+    visionPhase[BEAT_DIRECTION_MIGRATION_FLAG] = new Date().toISOString()
+  }
+
+  return { metadata: cloned, migratedSceneCount, changed }
+}
+
 /** Idempotent: one start frame per beat across all script scenes. */
 export function migrateProjectBeatsToStartFrameOnly(metadata: unknown): MigrateBeatsResult {
   const empty: MigrateBeatsResult = {
@@ -1494,6 +1711,12 @@ export function parseLlmBeats(raw: unknown[]): SceneBeat[] {
         typeof b.lineId === 'string' && b.lineId.trim() ? b.lineId.trim() : mintLineId()
     }
 
+    const beatDirection = normalizeBeatDirection(b.beatDirection ?? b.direction)
+    if (beatDirection) {
+      if (!beatDirection.generatedBy) beatDirection.generatedBy = 'llm'
+      beat.beatDirection = beatDirection
+    }
+
     beats.push(beat)
   }
   return normalizeBeatsForProduction(beats)
@@ -1505,5 +1728,7 @@ export function ensureSceneBeats(scene: Record<string, unknown>): Record<string,
   const rawBeats = parsed.length > 0 ? parsed : deriveBeatsFromSceneContent(scene)
   const beats = dedupeRedundantActionBeats(rawBeats)
   const withBeats = applyBeatsToScene(scene, beats)
-  return applyDerivedSfxToScene(withBeats, beats)
+  const withSfx = applyDerivedSfxToScene(withBeats, beats)
+  const beatsWithDirection = backfillBeatDirectionsOnScene(withSfx)
+  return applyBeatsToScene(withSfx, beatsWithDirection)
 }

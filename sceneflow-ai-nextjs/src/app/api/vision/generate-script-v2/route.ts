@@ -16,6 +16,7 @@ import {
   ensureSceneBeats,
   embedCharacterIdsInSceneBeats,
   migrateProjectToBeats,
+  migrateProjectBeatDirection,
   migrateProjectBeatsToStartFrameOnly,
 } from '@/lib/script/beatMigration'
 import {
@@ -28,6 +29,8 @@ import {
   writeScenesIntoVisionMetadata,
 } from '@/lib/sceneGeneration/attachSceneDirectionsToScript'
 import {
+  buildBeatDirectionPromptBlock,
+  buildBeatDirectionSchemaExample,
   buildBeatTimelineNarrationRules,
   buildNarrationLegacyFieldHint,
   buildNarrationPromptSection,
@@ -732,6 +735,18 @@ export async function POST(request: NextRequest) {
           console.warn('[Script Gen V2] Direction attach failed (non-blocking):', dirErr)
         }
 
+        try {
+          const beatDirectionResult = migrateProjectBeatDirection(metadataToPersist)
+          metadataToPersist = beatDirectionResult.metadata
+          if (beatDirectionResult.changed) {
+            console.log('[Script Gen V2] Beat-direction backfill:', {
+              migratedSceneCount: beatDirectionResult.migratedSceneCount,
+            })
+          }
+        } catch (bdErr) {
+          console.warn('[Script Gen V2] Beat-direction backfill failed (non-blocking):', bdErr)
+        }
+
         // Duration is now DERIVED from the script the model actually wrote,
         // rather than a target the content was forced to hit. Persist it so the
         // downstream video/cost/Veo budgeting reflects the real content length.
@@ -1088,6 +1103,8 @@ function buildSinglePassPrompt(
   const narrationSchemaLine = buildNarrationSchemaExample(policy)
   const narrationLegacyHint = buildNarrationLegacyFieldHint(policy)
   const beatTimelineNarrationRules = buildBeatTimelineNarrationRules(policy)
+  const beatDirectionRules = buildBeatDirectionPromptBlock()
+  const beatDirectionSchema = buildBeatDirectionSchemaExample()
 
   // Dynamically set persona based on format/intent
   let persona = 'You are a master screenwriter. Write a complete, production-ready script'
@@ -1237,9 +1254,21 @@ OUTPUT FORMAT (JSON):
       "characters": [],
       "action": "Title sequence summary (legacy — reflected in action beats)",
       "beats": [
-        {"kind": "action", "actionDescription": "Wide cinematic opening: atmospheric motif, slow drift, dramatic lighting..."},
-        {"kind": "action", "actionDescription": "Title card reveal: bold centered typography for '${treatment.title || 'FILM TITLE'}'..."},
-        {"kind": "action", "actionDescription": "Title holds then dissolves into opening atmosphere..."}
+        {
+          "kind": "action",
+          "actionDescription": "Wide cinematic opening: atmospheric motif, slow drift, dramatic lighting...",
+          ${beatDirectionSchema}
+        },
+        {
+          "kind": "action",
+          "actionDescription": "Title card reveal: bold centered typography for '${treatment.title || 'FILM TITLE'}'...",
+          "beatDirection": {"shotType": "Center Composition", "cameraMovement": "static", "blocking": "typography center-frame", "frozenMoment": "Title '${treatment.title || 'FILM TITLE'}' holds dead center.", "transition": "DISSOLVE"}
+        },
+        {
+          "kind": "action",
+          "actionDescription": "Title holds then dissolves into opening atmosphere...",
+          "beatDirection": {"shotType": "Wide", "cameraMovement": "slow push-in", "frozenMoment": "Atmospheric wide of the story world materializes as title fades.", "transition": "CUT"}
+        }
       ],
       "dialogue": [],
       "creditLines": [{"name": "${treatment.title || 'Film Title'}", "role": "", "isPrimary": true}],
@@ -1253,12 +1282,34 @@ OUTPUT FORMAT (JSON):
       "action": "Summary scene action (legacy field — also reflected in action beats)",
       ${narrationLegacyHint}
       "beats": [
-        {"kind": "action", "actionDescription": "Wide establishing shot of the location, golden hour light..."},
+        {
+          "kind": "action",
+          "actionDescription": "Wide establishing shot of the location, golden hour light...",
+          "beatDirection": {"shotType": "Wide Shot", "cameraMovement": "slow push-in", "blocking": "characters small in frame at threshold", "gaze": "toward the interior", "frozenMoment": "Two figures backlit at the doorway, golden light spilling past them.", "transition": "CUT"}
+        },
         ${narrationSchemaLine}
-        {"kind": "action", "actionDescription": "Close-up: character's hands on the desk, shallow depth of field..."},
-        {"kind": "dialogue", "character": "Character Name", "line": "[emotion] Dialogue..."},
-        {"kind": "action", "actionDescription": "Reaction shot: character turns toward window, concern on face..."},
-        {"kind": "dialogue", "character": "Character Name", "line": "[emotion] Response..."}
+        {
+          "kind": "action",
+          "actionDescription": "Close-up: character's hands on the desk, shallow depth of field...",
+          "beatDirection": {"shotType": "Close-Up", "cameraAngle": "eye-level", "cameraMovement": "static", "blocking": "hands rest on the desk, fingers splayed", "keyProps": ["desk"], "propInteraction": "fingers tap once on the wood grain", "frozenMoment": "Fingertips pressed against the desk edge, wood grain in tack-sharp focus.", "transition": "CUT"}
+        },
+        {
+          "kind": "dialogue",
+          "character": "Character Name",
+          "line": "[emotion] Dialogue...",
+          "beatDirection": {"shotType": "Medium Close-Up", "blocking": "speaker faces the listener across the desk", "emotion": "guarded honesty", "gaze": "into the listener's eyes", "frozenMoment": "Speaker mid-word, eyes locked on the listener.", "transition": "CUT"}
+        },
+        {
+          "kind": "action",
+          "actionDescription": "Reaction shot: character turns toward window, concern on face...",
+          "beatDirection": {"shotType": "Medium Close-Up", "cameraMovement": "handheld drift", "blocking": "listener pivots head to window", "emotion": "quiet worry", "gaze": "off-frame right toward the window", "frozenMoment": "Listener's profile against the window light, brow furrowed.", "transition": "CUT"}
+        },
+        {
+          "kind": "dialogue",
+          "character": "Character Name",
+          "line": "[emotion] Response...",
+          "beatDirection": {"shotType": "Over-the-Shoulder", "blocking": "listener foregrounded, speaker behind, both faces catching key light", "emotion": "reluctant resolve", "gaze": "back to the speaker", "frozenMoment": "OTS on the listener, speaker just visible past her shoulder.", "transition": "CUT"}
+        }
       ],
       "dialogue": [
         {"character": "Character Name", "line": "[emotion] Dialogue text..."}
@@ -1275,9 +1326,21 @@ OUTPUT FORMAT (JSON):
       "characters": [],
       "action": "Closing credits summary (legacy — reflected in action beats)",
       "beats": [
-        {"kind": "action", "actionDescription": "Closing visual: lingering atmosphere from final story beat..."},
-        {"kind": "action", "actionDescription": "Credits roll: elegant scrolling typography over cinematic background..."},
-        {"kind": "action", "actionDescription": "End card: title logo holds, fade to black..."}
+        {
+          "kind": "action",
+          "actionDescription": "Closing visual: lingering atmosphere from final story beat...",
+          "beatDirection": {"shotType": "Wide", "cameraMovement": "slow pull-out", "frozenMoment": "Final tableau of the story world, subject centered.", "transition": "DISSOLVE"}
+        },
+        {
+          "kind": "action",
+          "actionDescription": "Credits roll: elegant scrolling typography over cinematic background...",
+          "beatDirection": {"shotType": "Center Composition", "cameraMovement": "static", "frozenMoment": "Elegant scrolling credits against a soft cinematic background.", "transition": "FADE"}
+        },
+        {
+          "kind": "action",
+          "actionDescription": "End card: title logo holds, fade to black...",
+          "beatDirection": {"shotType": "Center Composition", "cameraMovement": "static", "frozenMoment": "Title logo holds dead center as the frame fades.", "transition": "FADE"}
+        }
       ],
       "dialogue": [],
       "creditLines": ${creditLinesJsonForPrompt(treatment.author_writer)},
@@ -1309,6 +1372,8 @@ ${beatTimelineNarrationRules}
 • "dialogue" beats must contain SPOKEN words with [emotion] tags — NO stage directions in line
 • beats[] order is the storyboard frame order (one frame per beat)
 • Keep legacy "dialogue" and "action" fields in sync with beats content
+
+${beatDirectionRules}
 
 IMPORTANT CONSTRAINTS:
 • Scene count is a guide, not a hard ceiling — serve the story first
