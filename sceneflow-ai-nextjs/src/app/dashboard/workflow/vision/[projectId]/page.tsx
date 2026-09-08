@@ -3448,7 +3448,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         negativePrompt?: string
         duration?: number
         aspectRatio?: '16:9' | '9:16'
-        resolution?: '720p' | '1080p'
+        resolution?: '360p' | '720p' | '1080p' | '4k' | '4K'
+        frameRate?: 24 | 30
+        thinkingLevel?: 'minimal' | 'low' | 'medium' | 'high'
+        omniMultiShot?: boolean
         generationMethod?: 'T2V' | 'I2V' | 'FTV' | 'EXT' | 'REF'
         endFrameUrl?: string
         referenceImages?: Array<{ url: string; type?: 'style' | 'character'; name?: string; role?: string }> | string[]
@@ -3494,7 +3497,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           options?.videoProvider === 'aggregator'
             ? `Multiplatform${options.videoModel ? ` (${options.videoModel})` : ''}`
             : options?.videoProvider === 'vertex'
-              ? 'Google Veo'
+              ? 'Gemini Omni Flash'
               : `Kling${options.klingModel ? ` (${options.klingModel})` : ''}`
         toast.info(`Generating via ${providerLabel} · ${mode} · beat ${segmentId.slice(0, 6)}…`)
       } catch {}

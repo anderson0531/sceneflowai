@@ -28,6 +28,8 @@ import {
 } from '@/lib/vision/resolveBeatVideoReferences'
 import type { LocationReference } from '@/types/visionReferences'
 import type { VisualReference } from '@/types/visionReferences'
+import { optimizeStandardOmniSettings } from '@/lib/intelligence/standard-shot-settings'
+import { isOmniInteractionContinuationRef } from '@/lib/config/modelConfig'
 
 /** Omni Flash Standard clips are 10s (`resolveVideoModel` routes duration 10 to Omni). */
 export const STANDARD_TAKE_DURATION_SECONDS = 10 as const
@@ -702,24 +704,50 @@ export function buildDraftVideoGenerationConfig(
         )
       : ''
 
-  const extVeoRef =
-    method === 'EXT' ? resolveVeoRefForExtension(allSegments, segment) : undefined
-
   const referenceImages = toConfigReferenceImages(
     resolveConfigReferences(segment, guideContext)
   )
 
-  const attachStart = shouldAttachBeatStartFrame({ mode: method, useBeatFrameAsStart: false })
+  const isContinuation =
+    segment.veoTimelineContinuation ||
+    segment.generationMethod === 'EXT' ||
+    segment.videoChain?.chainMethod === 'extension'
+
+  const extVeoRef =
+    isContinuation ? resolveVeoRefForExtension(allSegments, segment) : undefined
+
+  const dialogueText = segment.dialogueLines?.map((d) => d.line).join(' ') || ''
+  const spokenEstimate = dialogueText.trim()
+    ? Math.ceil(dialogueText.split(/\s+/).length / 2.5)
+    : undefined
+
+  const optimized = optimizeStandardOmniSettings({
+    segment,
+    sceneHeading: guideContext?.scene?.heading,
+    sceneAction: guideContext?.scene?.action,
+    sceneNumber: guideContext?.sceneIndex,
+    ingredientCount: referenceImages?.length ?? 0,
+    spokenDurationSeconds: spokenEstimate,
+    isContinuation,
+    hasOmniInteractionRef: isOmniInteractionContinuationRef(extVeoRef),
+  })
+
+  const effectiveMethod = optimized.method
+  const attachStart = shouldAttachBeatStartFrame({ mode: effectiveMethod, useBeatFrameAsStart: false })
 
   const config: VideoGenerationConfig = {
-    mode: method,
+    mode: effectiveMethod,
     prompt: visualPrompt,
     motionPrompt,
     visualPrompt,
     aspectRatio:
       defaultAspectRatio === '1:1' || defaultAspectRatio === '4:3' ? '16:9' : defaultAspectRatio,
-    resolution: '1080p',
-    duration: STANDARD_TAKE_DURATION_SECONDS,
+    resolution: optimized.resolution,
+    duration: optimized.duration,
+    frameRate: optimized.frameRate,
+    thinkingLevel: optimized.thinkingLevel,
+    omniMultiShot: optimized.omniMultiShot,
+    optimizedSettingsReason: optimized.reason,
     negativePrompt: '',
     approvalStatus,
     confidence,
@@ -758,9 +786,9 @@ export function buildDraftVideoGenerationConfig(
 
   return {
     config,
-    method,
-    methodLabel: methodLabels[method],
-    methodReason: methodReasons[method],
+    method: effectiveMethod,
+    methodLabel: methodLabels[effectiveMethod],
+    methodReason: methodReasons[effectiveMethod],
   }
 }
 

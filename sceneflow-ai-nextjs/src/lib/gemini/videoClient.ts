@@ -25,6 +25,7 @@ import {
   mapOmniInteractionStatus,
   normalizeOmniInteractionBuildOptions,
   normalizeOmniInteractionId,
+  normalizeOmniResolution,
   resolveOmniPreviousInteractionId,
 } from '@/lib/gemini/omniVideoInteractions'
 
@@ -174,8 +175,13 @@ interface ReferenceImage {
 
 interface VideoGenerationOptions {
   aspectRatio?: '16:9' | '9:16'
-  resolution?: '720p' | '1080p'
+  resolution?: '360p' | '720p' | '1080p' | '4k' | '4K'
   durationSeconds?: VeoClipDuration
+  frameRate?: 24 | 30
+  thinkingLevel?: import('@/lib/config/modelConfig').GeminiThinkingLevel
+  omniMultiShot?: boolean
+  /** Standard take: always use Gemini Omni Flash Interactions API. */
+  preferOmni?: boolean
   negativePrompt?: string
   personGeneration?: 'allow_adult' | 'allow_all' | 'dont_allow'
   safetySetting?: 'block_most' | 'block_some' | 'block_few' | 'block_only_high' | 'block_none' // Vertex safetySetting
@@ -231,11 +237,6 @@ async function generateVideoWithOmniInteractions(
 
   const isFTV = !!options.startFrame && !!options.lastFrame
   const isEXT = !!options.sourceVideo && !options.startFrame
-  let effectiveDuration: VeoClipDuration = options.durationSeconds ?? DEFAULT_VEO_CLIP_DURATION
-  if (isFTV || isEXT) {
-    effectiveDuration = stabilityDuration
-  }
-
   const previousInteractionId = resolveOmniPreviousInteractionId(options.sourceVideo)
   const hasValidPreviousInteraction = !!previousInteractionId
 
@@ -250,10 +251,21 @@ async function generateVideoWithOmniInteractions(
     )
   }
 
+  let effectiveDuration: VeoClipDuration = options.durationSeconds ?? DEFAULT_VEO_CLIP_DURATION
+  if (isFTV) {
+    effectiveDuration = stabilityDuration
+  } else if (isEXT && hasValidPreviousInteraction) {
+    effectiveDuration = 10
+  }
+
   const omniBuildOptions = normalizeOmniInteractionBuildOptions(
     {
       aspectRatio: options.aspectRatio,
       durationSeconds: effectiveDuration,
+      resolution: options.resolution?.toLowerCase() === '4k' ? '4k' : (options.resolution as '360p' | '720p' | '1080p' | undefined),
+      frameRate: options.frameRate,
+      thinkingLevel: options.thinkingLevel,
+      omniMultiShot: options.omniMultiShot,
       negativePrompt: options.negativePrompt,
       personGeneration: options.personGeneration,
       startFrame: options.startFrame,
@@ -287,6 +299,10 @@ async function generateVideoWithOmniInteractions(
   console.log('[Omni Video] Request summary:', JSON.stringify({
     aspectRatio: options.aspectRatio || '16:9',
     duration: formatOmniDuration(effectiveDuration),
+    resolution: omniBuildOptions.resolution ?? normalizeOmniResolution(options.resolution),
+    frameRate: omniBuildOptions.frameRate,
+    thinkingLevel: omniBuildOptions.thinkingLevel,
+    omniMultiShot: omniBuildOptions.omniMultiShot,
     task: (requestBody.generation_config as Record<string, unknown>)?.video_config,
     hasStartFrame: !!omniBuildOptions.startFrame,
     hasLastFrame: !!omniBuildOptions.lastFrame,
@@ -487,6 +503,7 @@ export async function generateVideoWithVeo(
     durationSeconds: options.durationSeconds,
     sourceVideo: options.sourceVideo,
     hasReferenceImages,
+    preferOmni: options.preferOmni,
   })
   const usingOmni = isOmniVideoModel(model)
   const stabilityDuration: VeoClipDuration = usingOmni ? 10 : 8

@@ -86,25 +86,28 @@ describe('omniVideoInteractions helpers', () => {
     expect(normalized.startFrame).toBe('https://example.com/start.png')
   })
 
-  it('builds Interactions API body without undocumented duration field', async () => {
+  it('builds Interactions API body with duration and resolution', async () => {
     const body = await buildOmniInteractionRequestBody(
-      'gemini-omni-flash-preview',
+      'gemini-omni-1.1-flash-preview',
       'A cinematic sunset over the ocean.',
-      { aspectRatio: '16:9', durationSeconds: 10 }
+      { aspectRatio: '16:9', durationSeconds: 10, resolution: '1080p', frameRate: 24, thinkingLevel: 'low' }
     )
 
-    expect(body.model).toBe('gemini-omni-flash-preview')
+    expect(body.model).toBe('gemini-omni-1.1-flash-preview')
     expect(body.background).toBe(true)
     expect(body.input).toBe('A cinematic sunset over the ocean.')
     expect(body.generation_config).toEqual({
       video_config: { task: 'text_to_video' },
+      thinking_level: 'low',
     })
     expect(body.response_format).toEqual({
       type: 'video',
       aspect_ratio: '16:9',
       delivery: 'inline',
+      duration: '10s',
+      resolution: '1080p',
+      frame_rate: 24,
     })
-    expect((body.response_format as Record<string, unknown>).duration).toBeUndefined()
   })
 
   it('includes labeled reference text parts in multimodal input', async () => {

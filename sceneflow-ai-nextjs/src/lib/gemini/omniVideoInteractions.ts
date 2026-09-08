@@ -4,6 +4,7 @@
  */
 
 import {
+  type GeminiThinkingLevel,
   type VeoClipDuration,
 } from '@/lib/config/modelConfig'
 import { MAX_VERTEX_GEMINI_REFERENCE_IMAGES } from '@/lib/vision/referenceLimits'
@@ -23,13 +24,24 @@ export interface OmniReferenceImage {
   label?: string
 }
 
+export type OmniVideoResolution = '360p' | '720p' | '1080p' | '4k'
+
 export interface OmniInteractionBuildOptions {
   aspectRatio?: '16:9' | '9:16'
   durationSeconds?: VeoClipDuration
+  resolution?: OmniVideoResolution
+  frameRate?: 24 | 30
+  thinkingLevel?: GeminiThinkingLevel
+  /** Omni cinematic multi-shot (not Kling storyboard rows). */
+  omniMultiShot?: boolean
   negativePrompt?: string
   personGeneration?: ImagenPersonGeneration
   /** When true, omit safety_settings (retry after 400 from preview endpoint). */
   omitSafetySettings?: boolean
+  /** When true, omit thinking_level (retry after 400 from preview endpoint). */
+  omitThinkingLevel?: boolean
+  /** When true, omit frame_rate (retry after 400 from preview endpoint). */
+  omitFrameRate?: boolean
   startFrame?: string
   lastFrame?: string
   referenceImages?: OmniReferenceImage[]
@@ -43,9 +55,20 @@ export type OmniInteractionInput =
   | string
   | Array<{ type: string; text?: string; data?: string; mime_type?: string; uri?: string }>
 
-/** Format clip duration for request summaries (Omni max is fixed at 10s; not sent in response_format) */
+/** Format clip duration for Omni response_format.duration */
 export function formatOmniDuration(seconds: VeoClipDuration): string {
   return `${seconds}s`
+}
+
+/** Normalize resolution for Interactions response_format (API uses lowercase 4k). */
+export function normalizeOmniResolution(
+  resolution?: string | null
+): OmniVideoResolution {
+  const r = (resolution || '720p').toLowerCase()
+  if (r === '360p') return '360p'
+  if (r === '1080p') return '1080p'
+  if (r === '4k' || r === '4K') return '4k'
+  return '720p'
 }
 
 /** Minimum length before base64/uri blobs are redacted in logs */
@@ -249,6 +272,9 @@ export async function buildOmniInteractionInput(
   const textPrompt = hasReferenceImages
     ? prompt.trim()
     : appendNegativePrompt(prompt, options.negativePrompt)
+  const cinematicPrompt = options.omniMultiShot
+    ? `${textPrompt.trim()}\n\nCinematic multi-shot sequence: vary coverage with smooth transitions between distinct shots in one continuous clip.`
+    : textPrompt
   const parts: Array<{ type: string; text?: string; data?: string; mime_type?: string }> = []
 
   if (options.referencePromptPreamble?.trim()) {
@@ -277,7 +303,7 @@ export async function buildOmniInteractionInput(
     }
   }
 
-  parts.push({ type: 'text', text: textPrompt })
+  parts.push({ type: 'text', text: cinematicPrompt })
 
   if (
     hasReferenceImages &&
@@ -291,7 +317,7 @@ export async function buildOmniInteractionInput(
   }
 
   if (parts.length === 1 && parts[0].type === 'text') {
-    return textPrompt
+    return cinematicPrompt
   }
   return parts
 }
@@ -306,20 +332,35 @@ export async function buildOmniInteractionRequestBody(
   const task = inferOmniVideoTask(options)
   const input = await buildOmniInteractionInput(prompt, options)
 
-  // Interactions video_config supports only `task`; person generation uses Omni model defaults.
+  const responseFormat: Record<string, unknown> = {
+    type: 'video',
+    aspect_ratio: options.aspectRatio || '16:9',
+    delivery: 'inline',
+  }
+
+  if (options.durationSeconds != null) {
+    responseFormat.duration = formatOmniDuration(options.durationSeconds)
+  }
+  responseFormat.resolution = normalizeOmniResolution(options.resolution)
+  if (options.frameRate != null && !options.omitFrameRate) {
+    responseFormat.frame_rate = options.frameRate
+  }
+
+  const generationConfig: Record<string, unknown> = {
+    video_config: {
+      task,
+      ...(options.omniMultiShot ? { multi_shot: true } : {}),
+    },
+  }
+  if (options.thinkingLevel && !options.omitThinkingLevel) {
+    generationConfig.thinking_level = options.thinkingLevel
+  }
+
   const body: Record<string, unknown> = {
     model,
     input,
-    generation_config: {
-      video_config: {
-        task,
-      },
-    },
-    response_format: {
-      type: 'video',
-      aspect_ratio: options.aspectRatio || '16:9',
-      delivery: 'inline',
-    },
+    generation_config: generationConfig,
+    response_format: responseFormat,
     background,
   }
 

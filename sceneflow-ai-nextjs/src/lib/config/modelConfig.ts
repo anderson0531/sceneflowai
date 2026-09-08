@@ -35,8 +35,8 @@ export const VEO_MODELS = {
   /** Veo 3.1 Lite - ~$0.05/sec, 720p, native audio; best for SFX / high-volume T2V */
   lite: 'veo-3.1-lite-generate-001',
 
-  /** Gemini Omni Flash - ~$0.10/sec, primary fast/premium tier, up to 10s clips */
-  omni: 'gemini-omni-flash-preview',
+  /** Gemini Omni 1.1 Flash - ~$0.10/sec, Studio controls (360p–4K, 3–10s, multi-shot) */
+  omni: 'gemini-omni-1.1-flash-preview',
 
   /** Veo 3.1 Fast - ~$0.10/sec, 1080p, legacy fallback */
   fast: 'veo-3.1-fast-generate-001',
@@ -137,16 +137,20 @@ export interface ResolveVideoModelOptions {
   sourceVideo?: string
   /** When true, prefer premium Veo (reference images on instance). */
   hasReferenceImages?: boolean
+  /** Standard take: always route to Gemini Omni Flash (Interactions API). */
+  preferOmni?: boolean
 }
 
 /**
- * Pick Vertex video model: Omni preview only for explicit 10s or Omni EXT refs;
+ * Pick Vertex video model: Omni for Standard (`preferOmni`), explicit 10s, or Omni EXT refs;
  * otherwise Veo 3.1 production via predictLongRunning.
  */
 export function resolveVideoModel(
   quality: VeoQualityTier | ModelQuality = DEFAULT_VEO_QUALITY,
   options: ResolveVideoModelOptions = {}
 ): string {
+  if (options.preferOmni) return VEO_MODELS.omni
+
   const duration = options.durationSeconds
   if (duration === 10) return VEO_MODELS.omni
   if (isOmniInteractionContinuationRef(options.sourceVideo)) return VEO_MODELS.omni
