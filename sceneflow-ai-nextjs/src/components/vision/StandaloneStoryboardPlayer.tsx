@@ -168,6 +168,7 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
               availableLanguages={availableLanguages}
               onSceneChange={setCurrentSceneIndex}
               isSharedView
+              sceneProductionState={projectData.sceneProductionState}
             />
           </div>
         </div>

@@ -48,6 +48,8 @@ interface ScreeningRoomV2Props {
   onPlaybackModeChange?: (mode: 'animatic' | 'video' | 'auto') => void
   /** Screening Room / Assemble version pins (metadata.finalCut) */
   finalCutSelection?: FinalCutSelection | null
+  /** Persist per-scene mixer volumes from the fullscreen player (in-app). */
+  onProductionDataChange?: (sceneId: string, data: SceneProductionData) => void
 }
 
 // Helper function to normalize scenes from various data paths
@@ -96,6 +98,7 @@ export function ScreeningRoomV2({
   playbackMode = 'auto',
   onPlaybackModeChange,
   finalCutSelection,
+  onProductionDataChange,
 }: ScreeningRoomV2Props) {
   // ============================================================================
   // Scene State
@@ -316,6 +319,12 @@ export function ScreeningRoomV2({
       sessionId={sessionId}
       onAudienceFeedback={onAudienceFeedback}
       backButtonLabel={backButtonLabel}
+      sceneProductionData={currentProductionData}
+      onProductionDataChange={
+        onProductionDataChange
+          ? (data) => onProductionDataChange(currentSceneId, data)
+          : undefined
+      }
     />
   )
 }

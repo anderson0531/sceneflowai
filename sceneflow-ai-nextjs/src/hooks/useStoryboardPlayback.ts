@@ -24,14 +24,20 @@ import {
   type AudioClip as TimelineAudioClip,
   type VisualClip,
 } from '@/hooks/useTimelinePlayback'
-
-const DIALOGUE_VOLUME_BOOST = 1.5
+import { DEFAULT_MIXER_AUDIO_TRACKS } from '@/lib/scene/mixerSettings'
+import { effectiveScreeningTrackVolume } from '@/lib/scene/screeningTrackVolume'
 
 export interface UseStoryboardPlaybackOptions {
   scene: Record<string, unknown> | null | undefined
   language: string
+  /** Viewer master overlay (0–1). Multiplies every scene track. */
   volume?: number
+  /** Per-scene dialogue/narration track volume from mixer settings (0–1). */
+  dialogueVolume?: number
+  /** Per-scene music track volume from mixer settings (0–1). */
   musicVolume?: number
+  /** Per-scene SFX track volume from mixer settings (0–1). */
+  sfxVolume?: number
   isMuted?: boolean
   musicIntroFade?: MusicIntroFadeConfig
   onPlaybackEnd?: () => void
@@ -112,7 +118,9 @@ export function useStoryboardPlayback({
   scene,
   language,
   volume = 0.8,
-  musicVolume = 0.15,
+  dialogueVolume = DEFAULT_MIXER_AUDIO_TRACKS.dialogue.volume,
+  musicVolume = DEFAULT_MIXER_AUDIO_TRACKS.music.volume,
+  sfxVolume = DEFAULT_MIXER_AUDIO_TRACKS.sfx.volume,
   isMuted = false,
   musicIntroFade,
   onPlaybackEnd,
@@ -268,9 +276,21 @@ export function useStoryboardPlayback({
     [visualFrames]
   )
 
-  const dialogueVolume = isMuted ? 0 : Math.min(1, volume * DIALOGUE_VOLUME_BOOST)
-  const effectiveMusicVolume = isMuted ? 0 : volume * musicVolume
-  const sfxVolume = isMuted ? 0 : volume
+  const effectiveDialogueVolume = effectiveScreeningTrackVolume({
+    muted: isMuted,
+    master: volume,
+    trackVolume: dialogueVolume,
+  })
+  const effectiveMusicVolume = effectiveScreeningTrackVolume({
+    muted: isMuted,
+    master: volume,
+    trackVolume: musicVolume,
+  })
+  const effectiveSfxVolume = effectiveScreeningTrackVolume({
+    muted: isMuted,
+    master: volume,
+    trackVolume: sfxVolume,
+  })
 
   const {
     isPlaying,
@@ -287,10 +307,10 @@ export function useStoryboardPlayback({
     audioClips: timelineAudioClips,
     visualClips,
     initialVolumes: {
-      voiceover: dialogueVolume,
-      dialogue: dialogueVolume,
+      voiceover: effectiveDialogueVolume,
+      dialogue: effectiveDialogueVolume,
       music: effectiveMusicVolume,
-      sfx: sfxVolume,
+      sfx: effectiveSfxVolume,
     },
     initialEnabled: {
       voiceover: true,
@@ -333,11 +353,18 @@ export function useStoryboardPlayback({
         duck = 1 - Math.min(1, (t - fadeStart) / SCENE_FADE_TO_BLACK_SEC) * 0.75
       }
     }
-    setTrackVolume('voiceover', dialogueVolume)
-    setTrackVolume('dialogue', dialogueVolume)
+    setTrackVolume('voiceover', effectiveDialogueVolume)
+    setTrackVolume('dialogue', effectiveDialogueVolume)
     setTrackVolume('music', effectiveMusicVolume * duck)
-    setTrackVolume('sfx', sfxVolume * duck)
-  }, [dialogueVolume, effectiveMusicVolume, sfxVolume, setTrackVolume, visualFrames, currentTime])
+    setTrackVolume('sfx', effectiveSfxVolume * duck)
+  }, [
+    effectiveDialogueVolume,
+    effectiveMusicVolume,
+    effectiveSfxVolume,
+    setTrackVolume,
+    visualFrames,
+    currentTime,
+  ])
 
   useEffect(() => {
     setTrackEnabled('music', !!scene?.musicAudio || !!(scene?.music as { url?: string } | undefined)?.url)

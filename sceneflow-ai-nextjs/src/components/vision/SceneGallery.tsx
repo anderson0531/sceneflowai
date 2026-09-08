@@ -109,6 +109,12 @@ interface SceneGalleryProps {
   onGenerateLanguage?: (language: string) => Promise<void> | void
   /** Per-scene production data for all-scene video playback. */
   sceneProductionState?: Record<string, SceneProductionData>
+  /** Persist Screening Room per-scene mix into production mixer settings. */
+  onSceneMixChange?: (
+    sceneId: string,
+    language: string,
+    volumes: { dialogue: number; music: number; sfx: number }
+  ) => void
   /** Per-language beat caption visibility in Screening Room. */
   beatCaptionSettings?: BeatCaptionSettings
   onBeatCaptionSettingsChange?: (settings: BeatCaptionSettings) => void | Promise<void>
@@ -145,6 +151,7 @@ export function SceneGallery({
   playerLabelsByLanguage,
   onGenerateLanguage,
   sceneProductionState,
+  onSceneMixChange,
   beatCaptionSettings,
   onBeatCaptionSettingsChange,
   projectStreams,
@@ -733,6 +740,7 @@ export function SceneGallery({
             isGenVideoRunning={isGenVideoRunning}
             exportedAnimaticUrl={exportedAnimaticUrl}
             sceneProductionState={sceneProductionState}
+            onSceneMixChange={onSceneMixChange}
             finalCutSelection={finalCutSelection}
             screeningLayout={mode === 'screening'}
             beatCaptionsEnabled={beatCaptionsEnabled}

@@ -5,7 +5,7 @@
  * @see /CONTRIBUTING.md for development guidelines
  * 
  * CRITICAL: Scene data source of truth is `script.script.scenes`
-Implement the fix * Do NOT create separate `scenes` state - this causes sync bugs.
+ * Do NOT create separate `scenes` state - this causes sync bugs.
  * 
  * Key handlers:
  * - handleGenerateSceneImage: Generates scene images with character auto-detection, wardrobe resolution, and DB persistence
@@ -278,6 +278,7 @@ import {
 import type { PublishingLibraryTab } from '@/types/publishingAssets'
 import { VisualReference, VisualReferenceType, VisionReferencesPayload, LocationReference } from '@/types/visionReferences'
 import type { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from '@/components/vision/scene-production/types'
+import { patchMixerTrackVolumes } from '@/lib/scene/screeningTrackVolume'
 import { applyIntelligentDefaults } from '@/lib/audio/anchoredTiming'
 // audioTrackBuilder functions are imported dynamically inside callbacks to break TDZ scope-hoisting chain
 import { buildSceneReferencePrompt } from '@/lib/vision/sceneReferencePromptBuilder'
@@ -3411,6 +3412,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     (sceneId: string, data: SceneProductionData) => {
       console.log('[handleProductionDataChange] Persisting production data:', { sceneId, hasStreams: !!data.productionStreams, streamCount: data.productionStreams?.length })
       applySceneProductionUpdate(sceneId, () => data)
+    },
+    [applySceneProductionUpdate]
+  )
+
+  const handleScreeningSceneMixChange = useCallback(
+    (
+      sceneId: string,
+      language: string,
+      volumes: { dialogue: number; music: number; sfx: number }
+    ) => {
+      applySceneProductionUpdate(sceneId, (current) =>
+        patchMixerTrackVolumes(current, language, volumes)
+      )
     },
     [applySceneProductionUpdate]
   )
@@ -14774,6 +14788,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     playerLabelsByLanguage={playerLabelsByLanguage}
                     onGenerateLanguage={handleGenerateLanguageStream}
                     sceneProductionState={sceneProductionState}
+                    onSceneMixChange={handleScreeningSceneMixChange}
                     beatCaptionSettings={beatCaptionSettings}
                     onBeatCaptionSettingsChange={handleBeatCaptionSettingsChange}
                     projectStreams={projectStreams}
