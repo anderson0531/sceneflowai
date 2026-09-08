@@ -193,7 +193,12 @@ NARRATION REQUIREMENTS (VISUAL / MINIMAL — CRITICAL):
 
 export function buildNarrationSchemaExample(policy: NarrationPolicy): string {
   if (policy.allowPerSceneNarration) {
-    return `        {"kind": "narration", "character": "NARRATOR", "line": "[calm, measured] Voiceover when appropriate..."},`
+    return `        {
+          "kind": "narration",
+          "character": "NARRATOR",
+          "line": "[calm, measured] Voiceover when appropriate...",
+          "beatDirection": {"shotType": "Wide", "cameraMovement": "slow drift", "blocking": "on-screen subject continues silent action; NARRATOR off-screen", "frozenMoment": "Landscape hold under narration; no speaker on-screen.", "transition": "CUT"}
+        },`
   }
   return `        /* NO narration beats in main content scenes — action and dialogue only */`
 }
@@ -212,19 +217,78 @@ export function buildBeatTimelineNarrationRules(policy: NarrationPolicy): string
   if (policy.mode === 'narrative-driven') {
     return `• Each scene MUST include an ordered "beats" array mixing kind: "dialogue", "action", "narration"
 • "narration" beats use character "NARRATOR" with spoken line
+• Every beat MUST also include a "beatDirection" object (see BEAT DIRECTION rules below) — narration beats supply shotType + blocking + emotion + gaze at minimum
 ${antiClone}`
   }
 
   if (policy.allowPerSceneNarration) {
     return `• Each scene MUST include an ordered "beats" array mixing kind: "dialogue", "action", and optional "narration"
 • Use "narration" beats sparingly (max one per scene)
+• Every beat MUST also include a "beatDirection" object (see BEAT DIRECTION rules below)
 ${antiClone}`
   }
 
   return `• Each scene MUST include an ordered "beats" array with kind: "dialogue" and "action" ONLY
 • Do NOT include kind: "narration" beats in main content scenes
 • Optional single narration beat in title sequence (cinematicType: "title") only
+• Every beat MUST also include a "beatDirection" object (see BEAT DIRECTION rules below)
 ${antiClone}`
+}
+
+/**
+ * Rules the LLM must follow when populating `beatDirection` on every beat.
+ *
+ * The block is worded to give downstream prompt builders structured fields
+ * they can consume verbatim, avoiding prose reinterpretation of
+ * actionDescription/line. Fields are optional but the model is REQUIRED to
+ * emit the object with as many fields as apply to the beat.
+ */
+export function buildBeatDirectionPromptBlock(): string {
+  return `BEAT DIRECTION (STRUCTURED, PER BEAT — MANDATORY OBJECT ON EVERY BEAT):
+Every beat MUST include a "beatDirection" object. This is the authoritative, per-beat cinematographer/director block downstream prompt builders read. Do not encode it in prose — put each aspect in the correct field. Absent fields fall back to scene-level direction, so only populate fields you would actually direct.
+
+Field definitions:
+• "shotType": named shot for this beat (e.g., "Wide Shot", "Medium Wide", "Medium Close-Up", "Close-Up", "Extreme Close-Up", "Insert Shot", "Over-the-Shoulder", "Two-Shot"). Choose from the scene's camera shot list when one applies.
+• "cameraAngle": angle for this beat (e.g., "eye-level", "low angle", "high angle", "Dutch angle", "worm's eye"). Only include when it deviates from the scene default.
+• "cameraMovement": motion for this beat (e.g., "static", "handheld push-in", "slow Steadicam creep", "whip pan", "rack focus"). Use "static" for a locked-off still.
+• "blocking": one clause describing where each named subject stands / body posture / physical action in THIS beat (e.g., "Piper braces her forearm against Gideon's chest, journal raised in her free hand; Gideon leans toward the core"). No paraphrasing of dialogue.
+• "emotion": single phrase naming the directed emotion / expression on the primary subject (e.g., "hypnotic awe", "panicked determination", "wry resignation"). Match the scene's talent arc but be beat-specific.
+• "gaze": who or what the subject looks at (e.g., "toward the glowing core", "into Gideon's eyes", "off-frame left toward the door"). Include when it matters for framing.
+• "keyProps": array of prop labels — SUBSET of the scene's Key Props — that are visible and relevant in THIS beat. Omit props not in this beat. Use the exact prop labels from the scene's Key Props list.
+• "propInteraction": how a character physically handles a listed prop this beat (e.g., "Piper grips the journal with both hands and holds it against Gideon's sternum"). Names must match keyProps entries.
+• "lightingAccent": per-beat lighting deviation from the scene's overall lighting (e.g., "teal accent from the core underlighting Gideon's face"). Omit when scene lighting is unchanged.
+• "frozenMoment": ONE SENTENCE naming the single frozen still this beat represents (e.g., "Piper stops Gideon mid-lean, journal pressed to his sternum, both faces edged in teal."). Prefer noun-first, concrete, one composition.
+• "audioCue": per-beat diegetic sound (e.g., "glitching proximity timer chirps twice", "rhythmic thrum of the core swells"). Only include for beats with a distinct in-scene sound; leave out generic ambience.
+• "transition": how this beat cuts into the NEXT beat. One of: "CUT", "CONTINUE", "DISSOLVE", "FADE", "MATCH_CUT". Default is "CUT".
+
+Beat-kind requirements:
+• action beats: populate shotType, cameraAngle (if not default), cameraMovement, blocking, gaze, keyProps, propInteraction, lightingAccent (if applicable), frozenMoment, audioCue (if applicable), transition.
+• dialogue beats: populate at least shotType, blocking, emotion, gaze, transition. keyProps + propInteraction when the speaker handles a prop. frozenMoment is the still of the speaker mid-line.
+• narration beats: populate shotType, cameraMovement, blocking (of on-screen subject, if any), gaze, lightingAccent, frozenMoment, audioCue, transition. NARRATOR is off-screen — do not name NARRATOR in blocking.
+
+Rules:
+• Do NOT invent prop names. keyProps MUST be a subset of scene "Key Props" — never a character name and never a possessive.
+• Do NOT restate the scene direction verbatim — refine it for THIS beat.
+• Do NOT put dialogue content in beatDirection fields.
+• frozenMoment is a photograph, not a video: no temporal verbs ("pulses", "walks toward"). Describe the instant.
+• Keep values short: shotType is 1–4 words; blocking, gaze, propInteraction, audioCue, lightingAccent are one clause each; frozenMoment is one sentence.`
+}
+
+export function buildBeatDirectionSchemaExample(): string {
+  return `"beatDirection": {
+          "shotType": "Medium Close-Up",
+          "cameraAngle": "eye-level",
+          "cameraMovement": "static",
+          "blocking": "Piper braces forearm across Gideon's chest, journal raised in her free hand",
+          "emotion": "desperate grounding",
+          "gaze": "into Gideon's eyes",
+          "keyProps": ["Water-damaged leather journal"],
+          "propInteraction": "Piper grips the journal one-handed at Gideon's sternum",
+          "lightingAccent": "teal accent from the core underlighting Gideon's cheek",
+          "frozenMoment": "Piper halts Gideon mid-lean, journal pressed to his sternum, both faces edged in teal.",
+          "audioCue": "glitching proximity timer chirps twice",
+          "transition": "CUT"
+        }`
 }
 
 /** Count narration words across legacy fields, dialogue, and beats (for Script AR). */

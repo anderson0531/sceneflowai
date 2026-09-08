@@ -363,6 +363,40 @@ export function beatDisplayText(beat: SceneBeat): string {
   return beat.line ?? ''
 }
 
+/** Compact human-readable list of beat direction facets, for diff display. */
+export function beatDirectionFacetSummary(beat: SceneBeat | undefined): string[] {
+  const direction = beat?.beatDirection
+  if (!direction) return []
+  const facets: string[] = []
+  if (direction.shotType) facets.push(`Shot: ${direction.shotType}`)
+  if (direction.cameraAngle) facets.push(`Angle: ${direction.cameraAngle}`)
+  if (direction.cameraMovement) facets.push(`Movement: ${direction.cameraMovement}`)
+  if (direction.blocking) facets.push(`Blocking: ${direction.blocking}`)
+  if (direction.emotion) facets.push(`Emotion: ${direction.emotion}`)
+  if (direction.gaze) facets.push(`Gaze: ${direction.gaze}`)
+  if (Array.isArray(direction.keyProps) && direction.keyProps.length > 0) {
+    facets.push(`Key props: ${direction.keyProps.join(', ')}`)
+  }
+  if (direction.propInteraction) facets.push(`Prop interaction: ${direction.propInteraction}`)
+  if (direction.lightingAccent) facets.push(`Lighting accent: ${direction.lightingAccent}`)
+  if (direction.frozenMoment) facets.push(`Frozen moment: ${direction.frozenMoment}`)
+  if (direction.audioCue) facets.push(`Audio cue: ${direction.audioCue}`)
+  if (direction.transition) facets.push(`Transition: ${direction.transition}`)
+  return facets
+}
+
+function beatDirectionComparable(beat: SceneBeat | undefined): string {
+  return beatDirectionFacetSummary(beat).join('|')
+}
+
+/** Whether the beat direction differs between two beats. */
+export function beatDirectionChanged(
+  original: SceneBeat | undefined,
+  candidate: SceneBeat | undefined
+): boolean {
+  return beatDirectionComparable(original) !== beatDirectionComparable(candidate)
+}
+
 export function directionDescriptionText(scene: any): string {
   const dir = scene?.sceneDirection
   if (!dir) return ''

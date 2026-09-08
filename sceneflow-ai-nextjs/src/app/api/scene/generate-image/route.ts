@@ -137,6 +137,31 @@ const ROUTE_TIME_BUDGET_MS = 100_000
 /** Reserve time for one likeness auto-retry (AI prompt + image gen + validation). */
 const LIKENESS_RETRY_RESERVE_MS = 45_000
 
+/**
+ * Flatten a persisted `BeatDirection` into a compact single-line summary the
+ * rules-based prompt path can embed into `fullSceneContext`. Fields left
+ * undefined by the LLM are simply omitted.
+ */
+function formatBeatDirectionForContext(
+  direction: SceneBeat['beatDirection'] | undefined
+): string {
+  if (!direction) return ''
+  const segments: string[] = []
+  if (direction.shotType) segments.push(`shot ${direction.shotType}`)
+  if (direction.cameraAngle) segments.push(`angle ${direction.cameraAngle}`)
+  if (direction.cameraMovement) segments.push(direction.cameraMovement)
+  if (direction.blocking) segments.push(direction.blocking)
+  if (direction.emotion) segments.push(`emotion ${direction.emotion}`)
+  if (direction.gaze) segments.push(`gaze ${direction.gaze}`)
+  if (direction.keyProps && direction.keyProps.length > 0) {
+    segments.push(`props ${direction.keyProps.join(', ')}`)
+  }
+  if (direction.propInteraction) segments.push(direction.propInteraction)
+  if (direction.lightingAccent) segments.push(direction.lightingAccent)
+  if (direction.frozenMoment) segments.push(direction.frozenMoment)
+  return segments.filter(Boolean).join('; ')
+}
+
 function appendSceneImagePromptModifiers(
   basePrompt: string,
   ctx: {
@@ -1133,7 +1158,11 @@ export async function POST(req: NextRequest) {
           const beatAction = beat?.actionDescription?.trim() || beat?.line?.trim() || ''
           const staging = buildSceneStagingText(scene)
           const base = beatAction || scene.action || scene.visualDescription || scene.heading || ''
-          fullSceneContext = staging ? `${base}\n\nScene staging: ${staging}` : base
+          const beatDirectionText = formatBeatDirectionForContext(beat?.beatDirection)
+          const contextParts = [base]
+          if (beatDirectionText) contextParts.push(`Beat direction: ${beatDirectionText}`)
+          if (staging) contextParts.push(`Scene staging: ${staging}`)
+          fullSceneContext = contextParts.filter(Boolean).join('\n\n')
           console.log('[Scene Image] Using beat-primary context for beat frame')
         } else if (isDialogueFrame && scene && typeof dialogueIndex === 'number') {
           const resolved = resolveDialogueBeat(scene as Record<string, unknown>, dialogueIndex)
@@ -1293,6 +1322,7 @@ export async function POST(req: NextRequest) {
       ? resolveBeatDirectedEmotion({
           beatLine: beatForEmotion.line,
           beatAction: beatForEmotion.actionDescription,
+          beatDirectionEmotion: beatForEmotion.beatDirection?.emotion,
         })
       : ''
 
@@ -1800,6 +1830,22 @@ export async function POST(req: NextRequest) {
         ),
         beatDirectedEmotion: beatDirectedEmotion || undefined,
         beatRole: beatForIntelligence?.beatRole,
+        beatDirection: beatForIntelligence?.beatDirection
+          ? {
+              shotType: beatForIntelligence.beatDirection.shotType,
+              cameraAngle: beatForIntelligence.beatDirection.cameraAngle,
+              cameraMovement: beatForIntelligence.beatDirection.cameraMovement,
+              blocking: beatForIntelligence.beatDirection.blocking,
+              emotion: beatForIntelligence.beatDirection.emotion,
+              gaze: beatForIntelligence.beatDirection.gaze,
+              keyProps: beatForIntelligence.beatDirection.keyProps,
+              propInteraction: beatForIntelligence.beatDirection.propInteraction,
+              lightingAccent: beatForIntelligence.beatDirection.lightingAccent,
+              frozenMoment: beatForIntelligence.beatDirection.frozenMoment,
+              audioCue: beatForIntelligence.beatDirection.audioCue,
+              transition: beatForIntelligence.beatDirection.transition,
+            }
+          : undefined,
         directionMetadata,
         characters: characterContexts,
         props: propsWithTokens,

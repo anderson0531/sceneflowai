@@ -16,6 +16,8 @@ import { getSceneBeats } from '@/lib/script/beatMigration'
 import { beatsWithChangedFingerprints } from '@/lib/script/structuredSceneRevision'
 import {
   beatChangeSummary,
+  beatDirectionChanged,
+  beatDirectionFacetSummary,
   beatDisplayText,
   countSelectedChanges,
   diffSceneChanges,
@@ -158,24 +160,61 @@ function StructuredBeatPreview({
                   <p className="text-gray-600 dark:text-gray-400 line-through break-words">
                     {beatDisplayText(summary.original) || '(empty)'}
                   </p>
+                  {beatDirectionFacetSummary(summary.original).length > 0 && (
+                    <ul className="mt-1 text-[11px] text-gray-500 list-disc pl-4 line-through">
+                      {beatDirectionFacetSummary(summary.original).map((facet) => (
+                        <li key={`before-${facet}`}>{facet}</li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 mb-0.5">After</p>
                   <p className="text-gray-800 dark:text-gray-200 break-words">
                     {beatDisplayText(summary.candidate) || '(empty)'}
                   </p>
+                  {beatDirectionFacetSummary(summary.candidate).length > 0 && (
+                    <ul className="mt-1 text-[11px] text-gray-600 dark:text-gray-400 list-disc pl-4">
+                      {beatDirectionFacetSummary(summary.candidate).map((facet) => (
+                        <li key={`after-${facet}`}>{facet}</li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
+                {beatDirectionChanged(summary.original, summary.candidate) && (
+                  <p className="text-[11px] text-blue-600 dark:text-blue-300">
+                    Beat direction updated
+                  </p>
+                )}
               </div>
             )}
             {summary.status === 'added' && summary.candidate && (
-              <p className="text-sm text-gray-800 dark:text-gray-200 break-words">
-                {beatDisplayText(summary.candidate)}
-              </p>
+              <div className="space-y-1">
+                <p className="text-sm text-gray-800 dark:text-gray-200 break-words">
+                  {beatDisplayText(summary.candidate)}
+                </p>
+                {beatDirectionFacetSummary(summary.candidate).length > 0 && (
+                  <ul className="text-[11px] text-gray-600 dark:text-gray-400 list-disc pl-4">
+                    {beatDirectionFacetSummary(summary.candidate).map((facet) => (
+                      <li key={`added-${facet}`}>{facet}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             )}
             {summary.status === 'removed' && summary.original && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 line-through break-words">
-                {beatDisplayText(summary.original)}
-              </p>
+              <div className="space-y-1">
+                <p className="text-sm text-gray-600 dark:text-gray-400 line-through break-words">
+                  {beatDisplayText(summary.original)}
+                </p>
+                {beatDirectionFacetSummary(summary.original).length > 0 && (
+                  <ul className="text-[11px] text-gray-500 list-disc pl-4 line-through">
+                    {beatDirectionFacetSummary(summary.original).map((facet) => (
+                      <li key={`removed-${facet}`}>{facet}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             )}
           </div>
         )

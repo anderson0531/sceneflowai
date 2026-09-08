@@ -83,6 +83,7 @@ export function SceneEditorModal({
   const [preserveActionBeats, setPreserveActionBeats] = useState(false)
   const [preserveMusic, setPreserveMusic] = useState(false)
   const [preserveSceneDirection, setPreserveSceneDirection] = useState(false)
+  const [preserveBeatDirection, setPreserveBeatDirection] = useState(false)
   const [preserveBeatFrames, setPreserveBeatFrames] = useState(false)
 
   const [deselectedChanges, setDeselectedChanges] = useState<Set<string>>(() => new Set())
@@ -109,6 +110,7 @@ export function SceneEditorModal({
     if (preserveActionBeats) preserveElements.push('actionBeats')
     if (preserveMusic) preserveElements.push('music')
     if (preserveSceneDirection) preserveElements.push('sceneDirection')
+    if (preserveBeatDirection) preserveElements.push('beatDirection')
     if (preserveBeatFrames) preserveElements.push('beatFrames')
     return preserveElements
   }, [
@@ -116,6 +118,7 @@ export function SceneEditorModal({
     preserveActionBeats,
     preserveMusic,
     preserveSceneDirection,
+    preserveBeatDirection,
     preserveBeatFrames,
   ])
 
@@ -147,6 +150,7 @@ export function SceneEditorModal({
       setPreserveActionBeats(false)
       setPreserveMusic(false)
       setPreserveSceneDirection(false)
+      setPreserveBeatDirection(false)
       setPreserveBeatFrames(false)
       setDeselectedChanges(new Set())
       setRevisionDepth('moderate')
@@ -419,6 +423,15 @@ export function SceneEditorModal({
                         className="rounded"
                       />
                       Scene direction
+                    </label>
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={preserveBeatDirection}
+                        onChange={(e) => setPreserveBeatDirection(e.target.checked)}
+                        className="rounded"
+                      />
+                      Beat direction (shot, blocking, emotion…)
                     </label>
                     <label className="flex items-center gap-2 text-sm cursor-pointer sm:col-span-2">
                       <input

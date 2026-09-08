@@ -137,6 +137,13 @@ export interface SceneImageIntelligenceRequest {
   beatRole?: string
   /** Beat-level directed emotion (parsed from line/action before cue stripping) */
   beatDirectedEmotion?: string
+  /**
+   * Structured, per-beat direction (shot, angle, blocking, gaze, key props, prop
+   * interaction, lighting accent, frozen moment, audio cue, transition).
+   * When present these values are AUTHORITATIVE for THIS beat and override any
+   * scene-level cues that conflict.
+   */
+  beatDirection?: SceneImageBeatDirectionOverlay
   /** Structured scene direction metadata (preserved cues) */
   directionMetadata?: SceneDirectionMetadata
   /** Characters in this scene with wardrobe resolved */
@@ -177,6 +184,21 @@ export interface SceneImageTalentDirectionOverlay {
   talentBlocking?: string
   emotionalBeat?: string
   keyProps?: string
+}
+
+export interface SceneImageBeatDirectionOverlay {
+  shotType?: string
+  cameraAngle?: string
+  cameraMovement?: string
+  blocking?: string
+  emotion?: string
+  gaze?: string
+  keyProps?: string[]
+  propInteraction?: string
+  lightingAccent?: string
+  frozenMoment?: string
+  audioCue?: string
+  transition?: string
 }
 
 function pickOverlayString(record: Record<string, unknown>, key: string): string | undefined {
@@ -358,8 +380,17 @@ function normalizeCachedSceneImageResult(
 function compactOverlayKey(value: object | undefined): string {
   if (!value) return 'na'
   const entries = Object.entries(value)
-    .filter(([, v]) => typeof v === 'string' && v.trim())
-    .map(([k, v]) => `${k}:${String(v).trim()}`)
+    .filter(([, v]) => {
+      if (typeof v === 'string') return v.trim().length > 0
+      if (Array.isArray(v)) return v.length > 0
+      return false
+    })
+    .map(([k, v]) => {
+      const rendered = Array.isArray(v)
+        ? v.map((entry) => String(entry).trim()).filter(Boolean).join('|')
+        : String(v).trim()
+      return `${k}:${rendered}`
+    })
     .sort()
   return entries.length ? entries.join(',') : 'na'
 }
@@ -381,6 +412,7 @@ export function buildSceneImageCacheKey(request: SceneImageIntelligenceRequest):
     (request.userDirection ?? '').substring(0, 120),
     compactOverlayKey(request.visualSetup),
     compactOverlayKey(request.talentDirection),
+    compactOverlayKey(request.beatDirection),
     ...request.characters.map(c => `${c.name}:${c.wardrobeDescription || 'default'}:${c.directedEmotion || 'na'}`),
     request.referenceImageCount,
   ]
@@ -478,13 +510,14 @@ CRITICAL RULES:
    - When a prop reference exists, NEVER describe the prop's visual appearance in text — use the provided prop [N] token in Action/Framing; code binds library names to tokens
    - ${DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK}
 
-4. REFERENCE SELECTION — SCENE DIRECTION IS AUTHORITATIVE for who and what is on camera:
-   - Include a person [N] token ONLY if that character is visible in THIS beat AND supported by beat action + SCENE DIRECTION (scene description, talent blocking, key props)
+4. REFERENCE SELECTION — BEAT DIRECTION IS AUTHORITATIVE for THIS beat (scene direction is authoritative when no beat direction is provided):
+   - When a BEAT DIRECTION block is provided in the user prompt, its shot type, camera angle, blocking, gaze, key props, prop interaction, lighting accent, and frozen moment define THIS frame — use them verbatim. Only fall back to SCENE DIRECTION for fields the beat direction does not cover.
+   - Include a person [N] token ONLY if that character is visible in THIS beat AND supported by beat action + BEAT DIRECTION blocking/gaze (or SCENE DIRECTION when beat direction is silent)
    - A character name inside a prop label or possessive prop title is NOT on-screen presence — omit that person token
    - selectedCharacterNames must list ONLY characters who appear in the frame
    - Select the location that matches the scene heading and beat action
-   - Include props that appear in the beat, scene direction key props, or are marked critical/important
-   - Do NOT include every person token from CHARACTERS input if scene direction shows fewer people on camera
+   - selectedPropNames MUST be the intersection of BEAT DIRECTION key props (when present) with the PROPS list. When beat direction lists no key props, fall back to scene direction key props and props flagged critical/important
+   - Do NOT include every person token from CHARACTERS input if beat/scene direction shows fewer people on camera
 
 5. STATIC IMAGE OPTIMIZATION:
    - Describe a FROZEN MOMENT — no dolly, pan, track, zoom
@@ -527,6 +560,29 @@ function buildSystemPrompt(): string {
 function overlayCue(label: string, value?: string): string | null {
   const trimmed = value?.trim()
   return trimmed ? `${label}: ${trimmed}` : null
+}
+
+function appendBeatDirectionAuthorityBlock(request: SceneImageIntelligenceRequest): string {
+  const bd = request.beatDirection
+  if (!bd) return ''
+  const lines: string[] = []
+  if (bd.shotType) lines.push(`Shot type: ${bd.shotType}`)
+  if (bd.cameraAngle) lines.push(`Camera angle: ${bd.cameraAngle}`)
+  if (bd.cameraMovement) lines.push(`Camera movement: ${bd.cameraMovement}`)
+  if (bd.blocking) lines.push(`Blocking: ${bd.blocking}`)
+  if (bd.emotion) lines.push(`Emotion (render on primary subject): ${bd.emotion}`)
+  if (bd.gaze) lines.push(`Gaze: ${bd.gaze}`)
+  if (bd.keyProps && bd.keyProps.length > 0) {
+    lines.push(`Beat key props (subset of scene props — only show these): ${bd.keyProps.join(', ')}`)
+  }
+  if (bd.propInteraction) lines.push(`Prop interaction: ${bd.propInteraction}`)
+  if (bd.lightingAccent) lines.push(`Lighting accent: ${bd.lightingAccent}`)
+  if (bd.frozenMoment) lines.push(`Frozen moment: ${bd.frozenMoment}`)
+  if (lines.length === 0) return ''
+  return (
+    `BEAT DIRECTION (AUTHORITATIVE FOR THIS BEAT — overrides any conflicting scene-level cue):\n` +
+    `${lines.join('\n')}\n\n`
+  )
 }
 
 function appendSceneDirectionAuthorityBlock(request: SceneImageIntelligenceRequest): string {
@@ -626,6 +682,7 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
     prompt += '\n'
   }
 
+  prompt += appendBeatDirectionAuthorityBlock(request)
   prompt += appendDirectOverlayBlocks(request)
   prompt += appendSceneDirectionAuthorityBlock(request)
   

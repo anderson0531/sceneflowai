@@ -252,6 +252,8 @@ For each recommendation, make the necessary STRUCTURAL or CONTENT changes. Do NO
         return 'Keep the existing music specification unchanged'
       case 'sceneDirection':
         return 'Keep the existing scene direction unchanged (do not rewrite blocking or camera notes)'
+      case 'beatDirection':
+        return 'Preserve each kept beat\'s existing beatDirection fields verbatim (shotType, cameraAngle, cameraMovement, blocking, emotion, gaze, keyProps, propInteraction, lightingAccent, frozenMoment, audioCue, transition); only add beatDirection for NEW beats'
       case 'beatFrames':
         return 'Do not alter storyboard frame references (handled separately after revision)'
       default:
@@ -375,9 +377,26 @@ REWRITE REQUIREMENTS:
 Output the REWRITTEN scene as JSON with this exact structure:
 {
   "beats": [
-    { "beatId": "existing-id", "kind": "action", "actionDescription": "Visual beat description" },
-    { "beatId": "existing-id", "kind": "dialogue", "character": "CHARACTER NAME", "line": "[emotion] One sentence of dialogue", "voiceDirection": "[emotion]" },
-    { "kind": "narration", "character": "NARRATOR", "line": "[calm] Narration line" }
+    {
+      "beatId": "existing-id",
+      "kind": "action",
+      "actionDescription": "Visual beat description",
+      "beatDirection": {"shotType": "Medium Wide", "cameraMovement": "handheld drift", "blocking": "one-clause blocking", "gaze": "toward the door", "keyProps": ["Water-damaged leather journal"], "propInteraction": "grip in left hand", "frozenMoment": "One-sentence still.", "audioCue": "core thrum swells", "transition": "CUT"}
+    },
+    {
+      "beatId": "existing-id",
+      "kind": "dialogue",
+      "character": "CHARACTER NAME",
+      "line": "[emotion] One sentence of dialogue",
+      "voiceDirection": "[emotion]",
+      "beatDirection": {"shotType": "Medium Close-Up", "blocking": "speaker turns to face listener", "emotion": "guarded honesty", "gaze": "into listener's eyes", "frozenMoment": "Speaker mid-word.", "transition": "CUT"}
+    },
+    {
+      "kind": "narration",
+      "character": "NARRATOR",
+      "line": "[calm] Narration line",
+      "beatDirection": {"shotType": "Wide", "cameraMovement": "slow drift", "blocking": "on-screen subject continues silent action", "frozenMoment": "Landscape hold under narration.", "transition": "CUT"}
+    }
   ],
   "music": "Music specification or empty string",
   "sfx": ["Sound effect 1", "Sound effect 2"]
@@ -386,6 +405,8 @@ Output the REWRITTEN scene as JSON with this exact structure:
 STRUCTURED BEATS RULES:
 - Return the FULL ordered beats[] array for the revised scene.
 - Keep beatId for beats you keep or edit; omit beatId for new beats; remove beats that should be deleted.
+- Every beat MUST include a "beatDirection" object with as many of the following fields as apply: shotType, cameraAngle, cameraMovement, blocking, emotion, gaze, keyProps (subset of scene Key Props), propInteraction, lightingAccent, frozenMoment, audioCue, transition (one of CUT|CONTINUE|DISSOLVE|FADE|MATCH_CUT).
+- When you keep a beat verbatim, you MAY reuse its prior beatDirection unchanged. When you rewrite a beat, refresh its beatDirection to match the new content.
 - One sentence per spoken line (dialogue/narration).
 - Do NOT emit sceneDirection, storyboard images, or frame URLs.
 - Action beats use kind "action" with actionDescription only.

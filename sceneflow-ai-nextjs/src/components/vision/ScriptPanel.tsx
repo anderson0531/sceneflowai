@@ -137,6 +137,7 @@ import {
 import { BeatMusicToggle } from '@/components/vision/BeatMusicToggle'
 import { BeatSfxToggle } from '@/components/vision/BeatSfxToggle'
 import { BeatExcludeToggle } from '@/components/vision/BeatExcludeToggle'
+import { BeatDirectionEditor } from '@/components/vision/BeatDirectionEditor'
 import { BeatCaptionControl } from '@/components/vision/BeatCaptionControl'
 import { ExportDialog } from './ExportDialog'
 import { isDirectionStale, isImageStale } from '@/lib/utils/contentHash'
@@ -6791,6 +6792,14 @@ function SceneCard({
                                 onPlayAudio={onPlayAudio}
                                 onSaveSfxAudio={onSaveSfxAudio}
                               />
+                              <BeatDirectionEditor
+                                beat={beat}
+                                sceneIdx={sceneIdx}
+                                scenes={scenes}
+                                script={script}
+                                onScriptChange={onScriptChange}
+                                className="mt-3"
+                              />
                               <BeatCaptionControl
                                 beat={beat}
                                 sceneIdx={sceneIdx}
@@ -7166,6 +7175,14 @@ function SceneCard({
                             </div>
                             )}
                             </div>
+                            <BeatDirectionEditor
+                              beat={beat}
+                              sceneIdx={sceneIdx}
+                              scenes={scenes}
+                              script={script}
+                              onScriptChange={onScriptChange}
+                              className="mt-3"
+                            />
                             <BeatCaptionControl
                               beat={beat}
                               sceneIdx={sceneIdx}

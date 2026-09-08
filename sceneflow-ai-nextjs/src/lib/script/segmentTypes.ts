@@ -37,6 +37,48 @@ export interface BeatReferenceSelection {
   source?: 'auto' | 'user'
 }
 
+export type BeatDirectionTransition = 'CUT' | 'CONTINUE' | 'DISSOLVE' | 'FADE' | 'MATCH_CUT'
+export type BeatDirectionSource = 'llm' | 'planner' | 'derived' | 'user'
+
+/**
+ * Structured, per-beat direction produced during script generation.
+ *
+ * Persisted on `SceneBeat` so downstream prompt builders (still, video, pre-vis,
+ * segment) can read structured fields directly instead of reinterpreting prose
+ * from `actionDescription`/`line`. Fields are OPTIONAL: absent fields fall
+ * back to the pre-existing prose/heuristic logic in each consumer.
+ */
+export interface BeatDirection {
+  /** Named shot (e.g., "Medium Wide Shot", "Extreme Close-Up"). */
+  shotType?: string
+  /** Camera angle (e.g., "eye-level", "low", "high", "Dutch"). */
+  cameraAngle?: string
+  /** Camera movement (e.g., "static", "handheld push-in", "Steadicam creep"). */
+  cameraMovement?: string
+  /** Per-beat blocking: where subjects are and what their bodies do. */
+  blocking?: string
+  /** Directed emotion / expression for this beat. */
+  emotion?: string
+  /** Who or what the subject looks at (target of gaze). */
+  gaze?: string
+  /** Subset of scene `Key Props` that are visible/relevant in this beat. */
+  keyProps?: string[]
+  /** How characters interact with props (which hand, what motion). */
+  propInteraction?: string
+  /** Per-beat lighting deviation from scene lighting (e.g., "teal accent on core"). */
+  lightingAccent?: string
+  /** One-sentence description of the frozen still moment. */
+  frozenMoment?: string
+  /** Per-beat diegetic audio cue (e.g., "glitching proximity timer"). */
+  audioCue?: string
+  /** Transition INTO the next beat. */
+  transition?: BeatDirectionTransition
+  /** Provenance of this direction record. */
+  generatedBy?: BeatDirectionSource
+  /** ISO timestamp of last write. */
+  updatedAt?: string
+}
+
 /**
  * Atomic visual moment in a scene — source of truth for storyboard → segments.
  * Spoken beats (dialogue | narration) carry TTS; action beats are silent visuals.
@@ -91,6 +133,12 @@ export interface SceneBeat {
   overlayType?: BeatOverlayType
   /** Per-beat Ken Burns pan-from / pan-to for Pre-Vis frames and animatic export. */
   kenBurns?: import('@/lib/storyboard/kenBurnsFrame').BeatKenBurnsSettings
+  /**
+   * Structured cinematographer/director direction for this specific beat.
+   * Populated by the script LLM (or derived/planner backfill) and used as the
+   * authoritative source by downstream prompt builders.
+   */
+  beatDirection?: BeatDirection
 }
 
 /**
