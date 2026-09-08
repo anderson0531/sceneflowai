@@ -1435,23 +1435,29 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                         <span>{t('episodeBadge', { number: seriesContext.episodeNumber })}</span>
                       </a>
                     )}
-                    {!isSaved && !saveError && (
-                      <span className="text-xs text-gray-500 flex items-center gap-1">
-                        <RefreshCw className="w-3 h-3 animate-spin" />
-                        {t('saving')}
-                      </span>
-                    )}
-                    {saveError && (
-                      <span className="text-xs text-red-400 flex items-center gap-1">
-                        {t('saveFailed')}
-                      </span>
-                    )}
-                    {isSaved && !saveError && projectId && !projectId.startsWith('new-project') && (
-                      <span className="text-xs text-emerald-400 flex items-center gap-1">
-                        <Check className="w-3 h-3" />
-                        {t('saved')}
-                      </span>
-                    )}
+                    {/* Fixed-width slot: the three states have different label
+                        widths, so rendering them inline shifted the whole header
+                        every time the save status changed. */}
+                    <span
+                      className="text-xs min-w-[5.5rem] flex items-center gap-1"
+                      aria-live="polite"
+                    >
+                      {saveError ? (
+                        <span className="text-red-400 flex items-center gap-1">
+                          {t('saveFailed')}
+                        </span>
+                      ) : !isSaved ? (
+                        <span className="text-gray-500 flex items-center gap-1">
+                          <RefreshCw className="w-3 h-3 animate-spin" />
+                          {t('saving')}
+                        </span>
+                      ) : projectId && !projectId.startsWith('new-project') ? (
+                        <span className="text-emerald-400 flex items-center gap-1">
+                          <Check className="w-3 h-3" />
+                          {t('saved')}
+                        </span>
+                      ) : null}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap justify-end">
                     {hasBlueprint && (
@@ -1485,12 +1491,13 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                           : t('goShort')}
                       </Button>
                     )}
-                    <Button 
-                      onClick={() => (showSidePanel ? closeSidePanel() : setShowSidePanel(true))} 
-                      variant="outline" 
+                    <Button
+                      onClick={() => (showSidePanel ? closeSidePanel() : setShowSidePanel(true))}
+                      variant="outline"
+                      aria-pressed={showSidePanel}
                       className={cn(
-                        "text-gray-300 hover:text-white border-gray-700 p-2",
-                        showSidePanel && "bg-blue-500/10 border-blue-500/30 text-blue-300"
+                        'h-9 w-9 p-0 text-gray-300 hover:text-white border-slate-700',
+                        showSidePanel && 'bg-cyan-500/10 border-cyan-500/30 text-cyan-300'
                       )}
                       title={showSidePanel ? t('hideSidePanel') : t('showSidePanel')}
                     >

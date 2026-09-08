@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
 import { useGuideStore } from '@/store/useGuideStore'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Play, Square, Volume2, MoreHorizontal, ChevronDown, MessageSquare, Loader2, Wand2, X, Users, Lightbulb, SparklesIcon, Award, RefreshCw, FileText, Printer, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -275,12 +274,16 @@ export function TreatmentCard({
       return changed
     })()
     const flashIf = (key: string) => (wasJustAppliedActive && changedKeys.has(key) ? 'flash-highlight' : '')
+    // The studio shell already supplies the bordered, padded surface, so this
+    // renders bare rather than nesting another card inside it.
     return (
-      <Card className="mt-4 border-slate-700/60 bg-slate-900/40">
-        <CardContent className="pt-6">
-          <div className="w-full">
-            <div className="sticky top-0 z-10 bg-gray-900/80 backdrop-blur supports-[backdrop-filter]:bg-gray-900/60 rounded-md">
-              <div className="flex items-center justify-end gap-3 py-2">
+      <>
+        <div className="w-full">
+            <div className="border-b border-white/10 pb-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                  {t('toolbar.documentLabel')}
+                </span>
                 {/* Variant Actions Toolbar */}
                 {(() => {
                   return (
@@ -293,6 +296,11 @@ export function TreatmentCard({
                           size="toolbar"
                           scopeLabel={t('sections.wholeBlueprint')}
                         />
+
+                        {/* Separates the labelled primary action from the icon-only
+                            secondary group, which otherwise read as one undifferentiated
+                            strip of six buttons. */}
+                        <span aria-hidden className="mx-1 h-5 w-px bg-white/10" />
 
                         {/* Reimagine - major story changes */}
                         <Tooltip>
@@ -584,7 +592,10 @@ export function TreatmentCard({
                     onValueChange={(next) => setActiveSection(next as BlueprintFixSection)}
                     className="w-full"
                   >
-                    <TabsList className="flex w-full flex-wrap h-auto justify-start">
+                    {/* One scrolling row, like the Vision toolbar. Full-width
+                        wrapping split five tabs across two ragged rows at medium
+                        widths. */}
+                    <TabsList className="h-auto max-w-full justify-start overflow-x-auto">
                       {SECTION_TABS.map((tab) => (
                         <TabsTrigger key={tab.id} value={tab.id}>
                           {tab.id === 'beats' && beatCount > 0
@@ -1109,8 +1120,7 @@ export function TreatmentCard({
                   )
                 })()}
             </div>
-          </div>
-        </CardContent>
+        </div>
         {/* Blueprint Reimagine Dialog - Major story changes */}
         <BlueprintReimaginDialog
           open={reimaginOpen}
@@ -1169,7 +1179,7 @@ export function TreatmentCard({
           initialPrompt={tts.directorNotes}
           onSave={tts.saveDirectorNotes}
         />
-      </Card>
+      </>
     )
   }
 

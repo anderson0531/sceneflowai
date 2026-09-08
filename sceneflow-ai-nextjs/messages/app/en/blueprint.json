@@ -48,6 +48,9 @@
     "characters": "Characters",
     "charactersWithCount": "Characters ({count})"
   },
+  "toolbar": {
+    "documentLabel": "Treatment"
+  },
   "sections": {
     "coreInfo": "Core Info",
     "coreInfoTitle": "Core Identifying Information",
