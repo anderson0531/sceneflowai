@@ -134,6 +134,10 @@ export function formatEta(seconds: number | null): string {
   return `~${mins} min remaining`
 }
 
+export function failedExpressFrameKeys(items: ExpressBeatFrameItem[]): string[] {
+  return items.filter((item) => item.status === 'error').map((item) => item.key)
+}
+
 export function updateBeatFrameItemStatus(
   items: ExpressBeatFrameItem[],
   key: string,

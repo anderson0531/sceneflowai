@@ -13,8 +13,18 @@ function parsePositiveInt(value: string | undefined, fallback: number): number {
   return Number.isFinite(n) && n >= 1 ? Math.floor(n) : fallback
 }
 
-/** Runtime beat concurrency for Scene Express (aligned with image lane, default 6). */
-export const DEFAULT_SCENE_EXPRESS_BEAT_CONCURRENCY = 6
+/** Runtime beat concurrency for Scene Express (aligned with image lane, default 1). */
+export const DEFAULT_SCENE_EXPRESS_BEAT_CONCURRENCY = 1
+
+/** Fail-fast: one Vertex attempt per beat unless env overrides. */
+export const DEFAULT_SCENE_EXPRESS_BEAT_MAX_ATTEMPTS = 1
+
+export function getSceneExpressBeatMaxAttempts(): number {
+  return parsePositiveInt(
+    process.env.SCENE_EXPRESS_BEAT_MAX_ATTEMPTS,
+    DEFAULT_SCENE_EXPRESS_BEAT_MAX_ATTEMPTS
+  )
+}
 
 export function getSceneExpressBeatConcurrency(): number {
   return parsePositiveInt(
@@ -72,8 +82,7 @@ export async function runAdaptiveBeatPool(
     1
   )
   const maxAttempts =
-    options.maxAttempts ??
-    parsePositiveInt(process.env.SCENE_EXPRESS_BEAT_MAX_ATTEMPTS, 2)
+    options.maxAttempts ?? getSceneExpressBeatMaxAttempts()
   const baseBackoffMs =
     options.baseBackoffMs ??
     parseNonNegativeInt(process.env.SCENE_EXPRESS_BEAT_BACKOFF_MS, 2000)

@@ -221,6 +221,11 @@
     "noFrames": "ไม่มีกรอบสำหรับขอบเขตนี้",
     "hasImage": "มีภาพ",
     "missing": "สูญหาย",
+    "failed": "ล้มเหลว",
+    "retryFailed": "ลองเฟรมที่ล้มเหลวอีกครั้ง",
+    "direct": "กำหนดพรอมต์",
+    "auto": "อัตโนมัติ",
+    "close": "ปิด",
     "imageCredits": "เครดิตภาพ (โดยประมาณ): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "กำลังรัน...",
     "generateScene": "สร้างฉาก"

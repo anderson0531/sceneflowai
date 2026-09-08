@@ -193,6 +193,8 @@ export interface StoryboardFrameSlot {
   allowTypography?: boolean
   isPlaceholder: boolean
   isMissing: boolean
+  /** Last generation error when this slot has no image. */
+  imageError?: string
 }
 
 function getRawBeatStoryboardUrl(
@@ -281,6 +283,10 @@ function buildBeatFrameSlot(
       : undefined,
     isPlaceholder: !ownImageUrl && !!displayImageUrl,
     isMissing: !ownImageUrl && !displayImageUrl,
+    imageError:
+      frameRole === 'end'
+        ? beat.storyboardEndImageError
+        : beat.storyboardImageError,
     beatRole: beat.beatRole,
     storyboardImagePrompt:
       frameRole === 'end' ? beat.storyboardEndImagePrompt : beat.storyboardImagePrompt,

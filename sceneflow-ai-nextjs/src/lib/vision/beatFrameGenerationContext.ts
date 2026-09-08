@@ -12,7 +12,7 @@ export function toBeatReferenceSelection(
   ctx: Pick<
     BeatReferenceSelection,
     'characterIds' | 'locationRefId' | 'objectRefIds' | 'characterWardrobes'
-  >
+  > & { source?: BeatReferenceSelection['source'] }
 ): BeatReferenceSelection {
   return {
     characterIds: ctx.characterIds,
@@ -20,6 +20,7 @@ export function toBeatReferenceSelection(
     objectRefIds: ctx.objectRefIds,
     characterWardrobes: ctx.characterWardrobes ?? [],
     resolvedAt: new Date().toISOString(),
+    source: ctx.source ?? 'auto',
   }
 }
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
@@ -357,6 +358,42 @@ export function shouldUseExplicitBeatReferences(
   return !!(
     beat?.referenceSelection &&
     Array.isArray(beat.referenceSelection.characterIds) &&
-    beat.referenceSelection.resolvedAt
+    beat.referenceSelection.resolvedAt &&
+    beat.referenceSelection.source === 'user'
   )
+}
+
+/** Add characters named in prompt text to an existing beat selection. */
+export function unionBeatSelectionWithPromptText(
+  selection: BeatReferenceSelection,
+  promptText: string | undefined,
+  projectCharacters: ResolveBeatFrameGenerationContextArgs['projectCharacters'],
+  scene: Record<string, unknown>,
+  sceneIndex?: number,
+  filmTitle?: string
+): BeatReferenceSelection {
+  if (!promptText?.trim() || projectCharacters.length === 0) return selection
+  const extra = detectCharactersInText(promptText, projectCharacters, {
+    excludeTexts: filmTitle ? [filmTitle] : [],
+  })
+  const characterIds = [...selection.characterIds]
+  const seen = new Set(characterIds.map((id) => id.toLowerCase()))
+  for (const char of extra) {
+    const id = char.id || char.name
+    if (!id) continue
+    if (seen.has(id.toLowerCase()) || seen.has((char.name || '').toLowerCase())) continue
+    seen.add(id.toLowerCase())
+    characterIds.push(id)
+  }
+  if (characterIds.length === selection.characterIds.length) return selection
+  return {
+    ...selection,
+    characterIds,
+    characterWardrobes: buildCharacterWardrobes(
+      scene,
+      characterIds,
+      projectCharacters,
+      sceneIndex
+    ),
+  }
 }

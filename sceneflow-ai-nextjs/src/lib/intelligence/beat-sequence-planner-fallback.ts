@@ -171,7 +171,10 @@ export function buildFallbackBeatPlans(request: BeatSequencePlanRequest): BeatKe
     const shotType = shots[beatIndex] ?? shots[shots.length - 1] ?? 'Medium shot'
     const moment =
       beat.actionDescription?.trim() ||
-      moments[beatIndex] ||
+      (beat.kind === 'dialogue'
+        ? [beat.character, beat.line].filter(Boolean).join(' — ')
+        : '') ||
+      (beat.kind !== 'dialogue' ? moments[beatIndex] : '') ||
       `Beat ${beatIndex + 1} visual moment`
     const setContext = buildSetContext(scene, beatIndex === 0 || beatIndex === beats.length - 1)
 

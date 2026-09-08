@@ -129,6 +129,7 @@ describe('resolveExpressBeatReferences', () => {
           objectRefIds: [],
           characterWardrobes: [{ characterId: 'char-alice', wardrobeId: 'wardrobe-alley' }],
           resolvedAt: '2026-07-13T00:00:00.000Z',
+          source: 'user',
         },
       },
     })
@@ -147,6 +148,61 @@ describe('resolveExpressBeatReferences', () => {
     expect(refs!.api.objectReferences).toHaveLength(0)
     expect(refs!.api.selectedCharacters).toEqual(['char-alice'])
     expect(refs!.fromSavedSelection).toBe(true)
+  })
+
+  it('does not lock Express auto-resolved selection as user-explicit', () => {
+    const project = buildProject({
+      beat: {
+        referenceSelection: {
+          characterIds: ['char-alice'],
+          locationRefId: 'loc-alley',
+          objectRefIds: [],
+          resolvedAt: '2026-07-13T00:00:00.000Z',
+          source: 'auto',
+        },
+      },
+    })
+    const scene = project.metadata.visionPhase.script.script.scenes[0]
+    const beat = scene.beats[0] as SceneBeat
+
+    const refs = resolveExpressBeatReferences({
+      beat,
+      scene,
+      sceneIndex: 0,
+      beatIdx: 0,
+      sceneNumber: 1,
+      project,
+    })
+
+    expect(refs!.fromSavedSelection).toBe(false)
+    expect(refs!.selection.source).toBe('auto')
+    expect(refs!.api.objectReferences.some((o) => o.id === 'prop-lantern')).toBe(true)
+  })
+
+  it('unions prompt-named cast into auto-resolved refs', () => {
+    const bob = {
+      id: 'char-bob',
+      name: 'BOB',
+      referenceImage: 'https://example.com/bob.png',
+    }
+    const project = buildProject()
+    project.metadata.visionPhase.characters = [alice, bob]
+    const scene = project.metadata.visionPhase.script.script.scenes[0]
+    const beat = scene.beats[0] as SceneBeat
+
+    const refs = resolveExpressBeatReferences({
+      beat,
+      scene,
+      sceneIndex: 0,
+      beatIdx: 0,
+      sceneNumber: 1,
+      project,
+      promptText: 'Dutch Angle: BOB reclaims the lantern.',
+    })
+
+    expect(refs!.selection.characterIds).toEqual(
+      expect.arrayContaining(['char-alice', 'char-bob'])
+    )
   })
 })
 

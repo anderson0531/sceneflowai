@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Check, Loader2, X } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import type { ExpressPhaseStatus } from '@/components/vision/SceneGallery'
 import {
   countCompletedFrames,
   estimateRemainingSec,
+  failedExpressFrameKeys,
   formatEta,
   hasFrameErrors,
   type ExpressBeatFrameItem,
@@ -25,6 +27,9 @@ export interface ExpressBeatFrameProgressOverlayProps {
   finished?: boolean
   preflightError?: string
   onClose: () => void
+  onRetryFailed?: (failedKeys: string[]) => void
+  onDirectFailed?: (failedKeys: string[]) => void
+  onAutoFailed?: (failedKeys: string[]) => void
 }
 
 const PHASE_LABELS: Record<ExpressOverlayPhase, string> = {
@@ -121,7 +126,11 @@ export function ExpressBeatFrameProgressOverlay({
   finished = false,
   preflightError,
   onClose,
+  onRetryFailed,
+  onDirectFailed,
+  onAutoFailed,
 }: ExpressBeatFrameProgressOverlayProps) {
+  const t = useTranslations('production.expressScene')
   const [elapsedSec, setElapsedSec] = useState(0)
 
   useEffect(() => {
@@ -245,9 +254,35 @@ export function ExpressBeatFrameProgressOverlay({
         </div>
 
         {showClose && (
-          <div className="border-t border-gray-800 px-5 py-3 flex justify-end">
+          <div className="border-t border-gray-800 px-5 py-3 flex flex-wrap justify-end gap-2">
+            {frameErrors && onRetryFailed && (
+              <Button
+                size="sm"
+                onClick={() => onRetryFailed(failedExpressFrameKeys(items))}
+              >
+                {t('retryFailed')}
+              </Button>
+            )}
+            {frameErrors && onDirectFailed && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onDirectFailed(failedExpressFrameKeys(items))}
+              >
+                {t('direct')}
+              </Button>
+            )}
+            {frameErrors && onAutoFailed && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onAutoFailed(failedExpressFrameKeys(items))}
+              >
+                {t('auto')}
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={onClose}>
-              Close
+              {t('close')}
             </Button>
           </div>
         )}

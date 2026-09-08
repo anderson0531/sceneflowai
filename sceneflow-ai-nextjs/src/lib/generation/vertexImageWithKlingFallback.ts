@@ -43,7 +43,11 @@ const PRODUCTION_STILL_FRAMING =
  * Escalate a prompt after policy / IMAGE_SAFETY failure.
  * @param failedAttempt 1-based attempt that just failed
  */
-export function escalateImagePromptForRetry(prompt: string, failedAttempt: number): string {
+export function escalateImagePromptForRetry(
+  prompt: string,
+  failedAttempt: number,
+  options?: { skipProductionStillFraming?: boolean }
+): string {
   let next = prompt
   const sp = autoSanitizePrompt(next, { logChanges: true })
   if (sp.wasModified) next = sp.sanitizedPrompt
@@ -62,7 +66,11 @@ export function escalateImagePromptForRetry(prompt: string, failedAttempt: numbe
     }
   }
 
-  if (failedAttempt >= 2 && !next.includes('wardrobe reference still')) {
+  if (
+    failedAttempt >= 2 &&
+    !options?.skipProductionStillFraming &&
+    !next.includes('wardrobe reference still')
+  ) {
     next = `${next.trim()}\n\n${PRODUCTION_STILL_FRAMING}`
     console.log('[VertexImagePolicy] Appended production-still framing for IMAGE_SAFETY retry')
   }
@@ -73,7 +81,7 @@ export function escalateImagePromptForRetry(prompt: string, failedAttempt: numbe
 export async function generateImageWithVertexKlingFallback(
   options: GenerateVertexImageOptions
 ): Promise<VertexKlingImageResult> {
-  const maxAttempts = getVeoPolicyMaxAttempts()
+  const maxAttempts = options.policyMaxAttempts ?? getVeoPolicyMaxAttempts()
   let prompt = options.prompt
   let lastError = ''
 
@@ -93,7 +101,9 @@ export async function generateImageWithVertexKlingFallback(
         `[VertexImagePolicy] Attempt ${attempt}/${maxAttempts} blocked: ${lastError.slice(0, 180)}`
       )
       if (attempt < maxAttempts) {
-        prompt = escalateImagePromptForRetry(prompt, attempt)
+        prompt = escalateImagePromptForRetry(prompt, attempt, {
+          skipProductionStillFraming: options.skipProductionStillFraming,
+        })
       }
     }
   }

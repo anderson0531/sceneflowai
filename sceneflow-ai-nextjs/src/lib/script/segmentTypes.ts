@@ -33,6 +33,8 @@ export interface BeatReferenceSelection {
   objectRefIds: string[]
   characterWardrobes?: Array<{ characterId: string; wardrobeId: string }>
   resolvedAt?: string
+  /** `user` = Direct/prompt dialog; `auto` = Express auto-resolve (do not lock). */
+  source?: 'auto' | 'user'
 }
 
 /**
@@ -74,6 +76,10 @@ export interface SceneBeat {
   sfxMuted?: boolean
   /** Saved character/location/prop references for storyboard generation. */
   referenceSelection?: BeatReferenceSelection
+  /** Last Express/manual generation error for the start frame (cleared on success). */
+  storyboardImageError?: string
+  /** Last generation error for the optional end frame (cleared on success). */
+  storyboardEndImageError?: string
   /**
    * When true, skip storyboard image, video/segment, and final render for this beat.
    * Dialogue/narration audio is preserved. Default: included.

@@ -27,4 +27,35 @@ describe('buildFallbackBeatPlans photorealistic prompts', () => {
     expect(plans[0].prompt.toLowerCase()).toContain('live-action film still')
     expect(plans[0].prompt.toLowerCase()).not.toContain('storyboard still')
   })
+
+  it('does not inherit another character’s scene-description sentence on dialogue beats', () => {
+    const beats: SceneBeat[] = [
+      {
+        beatId: 'bt_dlg',
+        sequenceIndex: 0,
+        kind: 'dialogue',
+        character: 'Gideon',
+        line: 'I reclaimed this room.',
+      },
+    ]
+
+    const plans = buildFallbackBeatPlans({
+      scene: {
+        heading: 'INT. BRIEFING ROOM - DAY',
+        action: 'The briefing continues.',
+        sceneDirection: {
+          sceneDescription:
+            'Piper Hayes storms the briefing room and slams a folder on the table. Gideon reclaims his academic authority.',
+        },
+      },
+      beats,
+      sceneNumber: 2,
+      artStyle: 'photorealistic',
+    })
+
+    expect(plans).toHaveLength(1)
+    expect(plans[0].frozenMoment).toContain('Gideon')
+    expect(plans[0].frozenMoment).toContain('I reclaimed this room')
+    expect(plans[0].prompt).not.toMatch(/Piper Hayes/)
+  })
 })

@@ -876,6 +876,41 @@ export async function POST(req: NextRequest) {
               }
             }
             console.log(`[Scene Image] Beat frame ${effectiveBeatIndex}: kind=${beat.kind}`)
+            const promptUnionText = [
+              typeof customPrompt === 'string' ? customPrompt : '',
+              beat.actionDescription,
+              beat.line,
+              beat.character,
+            ]
+              .filter(Boolean)
+              .join(' ')
+            if (
+              promptUnionText &&
+              !effectiveExcludeCharacters &&
+              !(storyboardNoCharacterScene && !honorExplicitChars) &&
+              allCharacters.length > 0
+            ) {
+              const extra = detectCharactersInText(promptUnionText, allCharacters, {
+                excludeTexts: filmTitleForDetection ? [filmTitleForDetection] : [],
+              })
+              const seen = new Set(
+                characterObjects.map((c: any) => String(c?.id || c?.name || '').toLowerCase())
+              )
+              let added = 0
+              for (const extraChar of extra) {
+                const key = String(extraChar.id || extraChar.name || '').toLowerCase()
+                if (!key || seen.has(key)) continue
+                seen.add(key)
+                characterObjects.push(extraChar)
+                added++
+              }
+              if (added > 0) {
+                console.log(
+                  `[Scene Image] Beat prompt named extra character(s); union refs:`,
+                  characterObjects.map((c: any) => c.name)
+                )
+              }
+            }
           }
         } else if (characterSelectionExplicit) {
           console.log('[Scene Image] Character selection was explicit (from dialog or no-talent detection) — skipping auto-detect')
@@ -2016,8 +2051,8 @@ export async function POST(req: NextRequest) {
       imageReferences.length > 0 ||
       objectImageReferences.length > 0 ||
       (matchedLocationReference && matchedLocationReference.imageUrl)
-    // Express (skipLikenessValidation) lets Vertex own 429 retries — no outer burst.
-    const maxGenerationAttempts = skipLikenessValidation ? 1 : useVertexGeminiImage ? 2 : 4
+    // Express fail-fast and identity-ref jobs: one Vertex pass. Manual text-only keeps more attempts.
+    const maxGenerationAttempts = skipLikenessValidation || useVertexGeminiImage ? 1 : 4
     const rateLimitBackoffMs = [5000, 15000, 30000]
 
     promptForResponse = stripReferenceImageMappingBlock(optimizedPrompt)
@@ -2416,6 +2451,10 @@ export async function POST(req: NextRequest) {
             referenceImages: allReferenceImages,
             negativePrompt: finalNegativePrompt,
             ...(effectiveImageTier ? { modelTier: effectiveImageTier } : {}),
+            failFastIdentityRefs: !!skipLikenessValidation,
+            requireAllReferenceImages: allReferenceImages.length > 0,
+            policyMaxAttempts: skipLikenessValidation ? 1 : undefined,
+            skipProductionStillFraming: isBeatFrame,
           })
 
           base64Image = vertexResult.imageBase64

@@ -31,6 +31,13 @@ describe('escalateImagePromptForRetry', () => {
     expect(next).toContain('wardrobe reference still')
     expect(next).toContain('stage props')
   })
+
+  it('skips production-still framing for beat frames', () => {
+    const next = escalateImagePromptForRetry('Clean leather jacket, no marks', 2, {
+      skipProductionStillFraming: true,
+    })
+    expect(next).not.toContain('wardrobe reference still')
+  })
 })
 
 describe('identity-ref jobs stay on pro under rate limit', () => {
@@ -42,12 +49,17 @@ describe('identity-ref jobs stay on pro under rate limit', () => {
     expect(src).toContain('IDENTITY_REF_RATE_LIMIT_EXHAUSTED')
     expect(src).toContain('sleepIdentityRefBackoff')
     expect(src).toContain('IDENTITY_REF_RETRY_DELAYS_MS')
+    expect(src).toContain('failFastIdentityRefs')
+    expect(src).toContain('failing fast without eco fallback')
+    expect(src).toContain('requireAllReferenceImages')
   })
 
   it('policy ladder escalates instead of only word-replacing once', () => {
     const src = readSource('src/lib/generation/vertexImageWithKlingFallback.ts')
     expect(src).toContain('escalateImagePromptForRetry')
     expect(src).toContain('IMAGE_SAFETY')
+    expect(src).toContain('skipProductionStillFraming')
+    expect(src).toContain('policyMaxAttempts')
   })
 
   it('still treats IMAGE_SAFETY empty-image errors as policy', () => {
@@ -64,6 +76,8 @@ describe('nested 429 retry de-amplification', () => {
     const src = readSource('src/app/api/scene/generate-image/route.ts')
     expect(src).toContain('isIdentityRefRateLimitExhausted')
     expect(src).toContain('skipping outer retry burst')
-    expect(src).toContain('useVertexGeminiImage ? 2 : 4')
+    expect(src).toContain('skipLikenessValidation || useVertexGeminiImage ? 1 : 4')
+    expect(src).toContain('failFastIdentityRefs: !!skipLikenessValidation')
+    expect(src).toContain('skipProductionStillFraming: isBeatFrame')
   })
 })

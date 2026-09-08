@@ -208,6 +208,7 @@ function buildStoryboardSlotFrameProps(
     beatRole: slot.beatRole,
     beatNumber: slot.beatId ? slot.beatNumber : undefined,
     imagePrompt: slot.storyboardImagePrompt,
+    imageError: slot.ownImageUrl ? undefined : slot.imageError,
     onGenerate: () => {
       if (routeGenerateToExpress) {
         routeGenerateToExpress()

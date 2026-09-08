@@ -60,6 +60,8 @@ export interface SceneImageFrameProps {
   generateLabel?: string
   /** Use Zap icon instead of Sparkles on the empty-state generate button. */
   useExpressGenerateIcon?: boolean
+  /** Persisted generation error when this frame failed Express/manual gen. */
+  imageError?: string
 }
 
 function CompactIconButton({
@@ -287,6 +289,7 @@ export function SceneImageFrame({
   expandable = false,
   generateLabel,
   useExpressGenerateIcon = false,
+  imageError,
 }: SceneImageFrameProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isHovering, setIsHovering] = useState(false)
@@ -536,7 +539,16 @@ export function SceneImageFrame({
           </>
         ) : compact ? (
           <div className="w-full h-full flex flex-col items-center justify-center">
-            <ImageIcon className="w-8 h-8 text-indigo-400/40 mb-1" />
+            {imageError ? (
+              <span
+                className="mb-1 rounded border border-rose-500/50 bg-rose-950/70 px-1.5 py-0.5 text-[9px] font-medium text-rose-200"
+                title={imageError}
+              >
+                Failed
+              </span>
+            ) : (
+              <ImageIcon className="w-8 h-8 text-indigo-400/40 mb-1" />
+            )}
             {showControls && (
               <CompactActionBar
                 hasImage={false}
@@ -557,7 +569,14 @@ export function SceneImageFrame({
               <div className="absolute -inset-2 border-2 border-dashed border-indigo-500/30 rounded-lg" />
               <ImageIcon className="w-12 h-12 text-indigo-400/50" />
             </div>
-            <p className="text-sm text-gray-400 text-center mb-2">No scene reference yet</p>
+            <p className="text-sm text-gray-400 text-center mb-2">
+              {imageError ? 'Generation failed' : 'No scene reference yet'}
+            </p>
+            {imageError && (
+              <p className="text-xs text-rose-300 text-center mb-3 max-w-xs" title={imageError}>
+                {imageError}
+              </p>
+            )}
             <p className="text-xs text-gray-500 text-center mb-3 max-w-xs">
               Create a reference image for scene consistency across production
             </p>

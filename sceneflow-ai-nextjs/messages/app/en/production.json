@@ -304,6 +304,11 @@
     "noFrames": "No frames available for this scope.",
     "hasImage": "Has image",
     "missing": "Missing",
+    "failed": "Failed",
+    "retryFailed": "Retry failed",
+    "direct": "Direct",
+    "auto": "Auto",
+    "close": "Close",
     "imageCredits": "Image credits (est.): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "Running...",
     "generateScene": "Generate Scene"

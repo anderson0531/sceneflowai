@@ -934,6 +934,7 @@ export function applyBeatStoryboardImageToScene(
     beats[beatIndex] = {
       ...beats[beatIndex],
       storyboardEndImageUrl: imageUrl,
+      storyboardEndImageError: undefined,
       ...(extras?.imageTier ? { storyboardEndImageTier: extras.imageTier } : {}),
       ...(extras?.imageGcsPath
         ? { storyboardEndImageGcsPath: extras.imageGcsPath }
@@ -948,6 +949,7 @@ export function applyBeatStoryboardImageToScene(
   beats[beatIndex] = {
     ...beats[beatIndex],
     storyboardImageUrl: imageUrl,
+    storyboardImageError: undefined,
     ...(extras?.imageTier ? { storyboardImageTier: extras.imageTier } : {}),
     ...(extras?.imageGcsPath
       ? { storyboardImageGcsPath: extras.imageGcsPath }
@@ -999,6 +1001,7 @@ export function applyBeatReferenceSelectionToScene(
     referenceSelection: {
       ...selection,
       resolvedAt: selection.resolvedAt || new Date().toISOString(),
+      source: selection.source ?? 'user',
     },
   }
 
@@ -1054,6 +1057,26 @@ export function applyExpressStoryboardImageToScene(
     ...(imagePrompt ? { imagePrompt } : {}),
     ...(imageGcsPath ? { imageGcsPath } : {}),
   }
+}
+
+/** Persist a beat-frame generation error from Express SSE (cleared on later success). */
+export function applyExpressStoryboardImageErrorToScene(
+  scene: Record<string, unknown>,
+  params: {
+    error: string
+    beatIndex?: number
+    frameRole?: 'start' | 'end'
+  }
+): Record<string, unknown> {
+  const { error, beatIndex, frameRole = 'start' } = params
+  if (typeof beatIndex !== 'number') return scene
+  const beats = getSceneBeats(scene)
+  if (!beats[beatIndex]) return scene
+  beats[beatIndex] =
+    frameRole === 'end'
+      ? { ...beats[beatIndex], storyboardEndImageError: error }
+      : { ...beats[beatIndex], storyboardImageError: error }
+  return applyBeatsToScene(scene, beats)
 }
 
 /** Stable fingerprint of beat script text for pre-vis invalidation. */

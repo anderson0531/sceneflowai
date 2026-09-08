@@ -221,6 +221,11 @@
     "noFrames": "Aucun cadre disponible pour cette portée.",
     "hasImage": "A une image",
     "missing": "Manquant",
+    "failed": "Échec",
+    "retryFailed": "Réessayer les échecs",
+    "direct": "Direct",
+    "auto": "Auto",
+    "close": "Fermer",
     "imageCredits": "Crédits image (est.) : {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "En cours d'exécution...",
     "generateScene": "Générer une scène"

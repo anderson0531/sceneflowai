@@ -6,8 +6,8 @@
  * When significant 429s occur, enters a regulated state with tighter global caps.
  *
  * Capacity ladder (EXPRESS_IMAGE_CONCURRENCY):
- * - Default 6 after identity-ref retries were collapsed to a single owner
- * - Dedicated GCP / higher quota: set env to 8–12
+ * - Startup / shared Vertex identity-ref: default 1 (sequential) to avoid 429 storms
+ * - Dedicated GCP / higher quota: set env to 6–12
  */
 
 import { isRetryableError } from '../utils/retry'
@@ -36,8 +36,8 @@ export interface ExpressTrafficCopOptions {
 
 const EXPRESS_LANES: ExpressLane[] = ['text', 'image', 'audio']
 
-/** Default image in-flight cap (Vertex identity-ref jobs share this lane). */
-export const DEFAULT_EXPRESS_IMAGE_CONCURRENCY = 6
+/** Default image in-flight cap — sequential identity-ref jobs on shared Vertex quota. */
+export const DEFAULT_EXPRESS_IMAGE_CONCURRENCY = 1
 
 /** Default TTS in-flight cap for Express Audio / Storyboard Express audio lane. */
 export const DEFAULT_EXPRESS_AUDIO_CONCURRENCY = 8
