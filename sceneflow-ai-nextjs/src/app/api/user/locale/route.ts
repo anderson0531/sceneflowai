@@ -3,12 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { resolveUser } from '@/lib/userHelper'
 import { ensureUserLocaleColumns } from '@/lib/database/migrateI18n'
-import {
-  DEFAULT_LOCALE,
-  isLocale,
-  matchAcceptLanguage,
-  UI_LOCALE_COOKIE,
-} from '@/i18n/locale'
+import { DEFAULT_LOCALE, isLocale, UI_LOCALE_COOKIE } from '@/i18n/locale'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -29,9 +24,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const uiLocale = isLocale(user.preferred_locale)
-      ? user.preferred_locale
-      : matchAcceptLanguage(request.headers.get('accept-language')) ?? DEFAULT_LOCALE
+    // English until the user chooses otherwise in-app, matching
+    // `resolveUiLocale`. Inferring from `Accept-Language` here reported a locale
+    // the server never rendered, so the client and server disagreed.
+    const uiLocale = isLocale(user.preferred_locale) ? user.preferred_locale : DEFAULT_LOCALE
 
     return NextResponse.json({
       uiLocale,

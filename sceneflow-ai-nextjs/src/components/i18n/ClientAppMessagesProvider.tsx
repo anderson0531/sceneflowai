@@ -4,17 +4,20 @@ import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { NextIntlClientProvider } from 'next-intl'
 import enCommon from '../../../messages/app/en/common.json'
-import { DEFAULT_LOCALE, isLocale } from '@/i18n/locale'
+import { DEFAULT_LOCALE, isAppSurfacePath, isLocale } from '@/i18n/locale'
 import { getAppMessages } from '@/i18n/appMessages'
 import { surfacesForPath } from '@/i18n/appSurfaces'
+import { readUiLocaleCookie } from '@/i18n/useUiLocale'
 
 /**
  * Provider for chrome that renders in the root layout, above every route group.
  *
  * The root layout deliberately does not read cookies — that would opt the static
  * marketing and legal pages into dynamic rendering — so it cannot resolve the
- * locale server-side. This reads the locale from `<html lang>`, which
- * `DocumentLocaleScript` sets before first paint, and loads catalogs after mount.
+ * locale server-side. Marketing routes read `<html lang>`, which
+ * `DocumentLocaleScript` sets before first paint; app surfaces read the
+ * `sf-locale` cookie so they match {@link resolveUiLocale}. Catalogs load after
+ * mount either way.
  *
  * Path-scoped surfaces matter because the unified sidebar (Guide, etc.) lives
  * *outside* the studio/settings route-group providers. Without merging
@@ -36,7 +39,14 @@ export function ClientAppMessagesProvider({ children }: { children: React.ReactN
 
   useEffect(() => {
     const documentLocale = document.documentElement.lang
-    const resolved = isLocale(documentLocale) ? documentLocale : DEFAULT_LOCALE
+    // App surfaces take the locale from the cookie only. `<html lang>` can still
+    // hold a marketing locale after a client-side navigation out of the landing
+    // page, and following it there would disagree with the server render.
+    const resolved = isAppSurfacePath(pathname)
+      ? (readUiLocaleCookie() ?? DEFAULT_LOCALE)
+      : isLocale(documentLocale)
+        ? documentLocale
+        : DEFAULT_LOCALE
     const surfaces = surfacesForPath(pathname)
 
     let cancelled = false
