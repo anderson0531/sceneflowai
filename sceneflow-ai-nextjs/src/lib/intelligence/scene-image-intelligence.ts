@@ -459,7 +459,7 @@ export function buildSceneImageSystemPrompt(): string {
 
 CRITICAL RULES:
 
-1. IN-SCENE FILM STILL: Generate a prompt for ONE decisive dramatic instant — a candid in-scene film still capturing the character mid-action, as if photographed by an on-set cinematographer. NOT a sequence, NOT camera movement, NOT a posed reference portrait.
+1. IN-SCENE FILM STILL: Generate a prompt for ONE decisive dramatic instant — a candid in-scene film still capturing the character mid-action, as if photographed by an on-set cinematographer. NOT a sequence, NOT camera movement, NOT a posed reference portrait, NOT a Veo/F2V start frame, NOT video motion direction.
 
 2. TITLE SEQUENCES: For title/credit beats, compose a CENTERED title card. The film title is the primary subject with genre-appropriate background. No people unless explicitly required.
 
@@ -471,7 +471,7 @@ CRITICAL RULES:
    - When hairDescription is provided in input for a character with an identity ref, DO include a concise Hair lock in [SCENE COMPOSITION & BEAT] or Subject section — e.g. "person [1], hair: swept-back dark auburn ponytail (match identity reference exactly)"
    - When a wardrobe reference exists (Ref Image [M]), NEVER describe outfit colors, garments, or accessories in text — the wardrobe reference owns clothing AND any visible scene-state marks present on that image
    - When a location reference exists, NEVER describe architectural layout, furniture placement, or room geometry in text — the location reference owns the set
-   - When a prop reference exists, NEVER describe the prop's visual appearance in text — only name it and its narrative role/action
+   - When a prop reference exists, NEVER describe the prop's visual appearance in text — use the exact library name only; code binds it to a prop [N] token
    - ${DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK}
 
 4. REFERENCE SELECTION: Intelligently select which characters, props, and location match the beat action and scene direction:
@@ -503,12 +503,12 @@ Master Style: [art style + photorealistic/cinematic quality from input]
 Lighting & Camera: [lighting mood, color temperature, time of day, lens/framing from direction cues]
 
 [SCENE COMPOSITION & BEAT]
-Action/Framing: [shot type + frozen action for THIS beat; use ONLY the exact person [N] tokens provided in CHARACTERS input — never invent, renumber, or skip ordinals; never restate character names in parentheses after a person token; name props by label only; describe body blocking, gesture, what each character is physically doing, hand/prop interaction, and gaze target (where they look); include directed facial expression/emotion for each visible character — do NOT copy neutral expression from identity reference; characters are engaged in the action and NOT looking at the camera unless the beat is direct-to-camera address]
+Action/Framing: [shot type + frozen action for THIS beat; use ONLY the exact person [N] tokens provided in CHARACTERS input — never invent, renumber, or skip ordinals; never restate character names in parentheses after a person token; use exact library prop names; describe body blocking, gesture, what each character is physically doing, hand/prop interaction, and gaze target (where they look); include directed facial expression/emotion for each visible character — do NOT copy neutral expression from identity reference; characters are engaged in the action and NOT looking at the camera unless the beat is direct-to-camera address]
 
 [EXCLUSIONS & BOUNDARIES]
 Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, canvas textures, turnaround sheet layout, 2x2 grid output, 4-panel layout, split-screen output, multi-panel layout, diptych, reference sheet collage, faceless figures, or artistic blending of reference mediums. Maintain 100% photographic realism when art style is photorealistic. No dialogue captions, subtitles, or watermarks (except centered title typography on title beats).
 
-REFERENCE IMAGE BINDING: Do NOT emit a [REFERENCE IMAGE MAPPING] section. Reference images are bound in code — use only the person [N] tokens from CHARACTERS input in your composition text.
+REFERENCE IMAGE BINDING: Do NOT emit a [REFERENCE IMAGE MAPPING] or [REFERENCES] section. Reference images are bound in code — use only the person [N] tokens from CHARACTERS input and exact library prop/location names in your composition text.
 
 9. FOREHEAD/TEMPLE INJURIES: When the beat describes a bruise, cut, or injury on the forehead or temple, preserve the character's reference hairstyle exactly — do NOT pull hair back or restyle to expose the injury. The injury must be visible without changing hair placement.`
 }

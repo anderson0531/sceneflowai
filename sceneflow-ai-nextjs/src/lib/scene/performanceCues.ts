@@ -124,13 +124,16 @@ export function extractSceneStateFromAppearanceNotes(notes: string): string {
   const trimmed = (notes || '').trim()
   if (!trimmed) return ''
 
-  const parts = trimmed
+  const stagingSplit = trimmed.split(/\bas\b/i)[0]?.trim() || trimmed
+
+  const parts = stagingSplit
     .split(/[,;]+/)
     .map((part) => part.trim())
     .filter(Boolean)
 
   const kept = parts.filter((part) => {
     const lower = part.toLowerCase()
+    if (looksLikeActionStaging(part)) return false
     if (IDENTITY_OWNED_APPEARANCE_PATTERNS.some((pattern) => {
       pattern.lastIndex = 0
       return pattern.test(part)
@@ -145,6 +148,17 @@ export function extractSceneStateFromAppearanceNotes(notes: string): string {
   })
 
   return kept.join(', ')
+}
+
+function looksLikeActionStaging(text: string): boolean {
+  const trimmed = text.trim()
+  if (!trimmed) return false
+  if (trimmed.split(/\s+/).length > 14) return true
+  if (/\b(pulls?|toward|towards|walks?|runs?|storms?|drags?)\b/i.test(trimmed) &&
+      /\b(gate|door|room|hallway|street|alley)\b/i.test(trimmed)) {
+    return true
+  }
+  return false
 }
 
 /**
@@ -225,9 +239,23 @@ export function buildSceneAppearanceContinuityPromptSection(
 ): string {
   const parts = entries
     .filter((entry) => entry.continuity.trim())
-    .map((entry) => `${entry.name}: ${entry.continuity.trim()}`)
+    .map((entry) => ({
+      name: entry.name,
+      continuity: entry.continuity.trim(),
+    }))
   if (!parts.length) return ''
-  return `Scene appearance continuity (preserve from wardrobe): ${parts.join('; ')}.`
+
+  const unique = new Set(parts.map((part) => part.continuity.toLowerCase()))
+  if (unique.size === 1 && parts.length > 1) {
+    const only = parts[0].continuity
+    if (looksLikeActionStaging(only) || only.split(/\s+/).length > 12) {
+      return ''
+    }
+  }
+
+  return `Scene appearance continuity (preserve from wardrobe): ${parts
+    .map((part) => `${part.name}: ${part.continuity}`)
+    .join('; ')}.`
 }
 
 function parseAddressee(tagParts: string[]): { addressee: string | null; delivery: string; visual: string } {

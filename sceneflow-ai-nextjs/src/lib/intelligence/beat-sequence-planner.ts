@@ -1,6 +1,6 @@
 /**
- * Beat Sequence Planner — one Gemini pass per scene to plan distinct F2V start-frame
- * prompts for every beat before parallel image generation.
+ * Beat Sequence Planner — one Gemini pass per scene to plan distinct animatic
+ * film stills (frozen beat illustrations) before parallel image generation.
  */
 
 import 'server-only'
@@ -8,17 +8,20 @@ import 'server-only'
 import { generateText, type TextGenerationOptions } from '@/lib/vertexai/gemini'
 import {
   detectSceneType,
-  extractDirectionMetadata,
   type FilmContext,
 } from '@/lib/intelligence/scene-direction-metadata'
 import {
   applyBeatKeyframePlansToScene,
   buildFallbackBeatPlans,
   ensureSceneMusicFromDirection,
+  formatBeatPlannerReferenceCatalog,
+  buildPlannerSystemPrompt,
+  buildPlannerUserPrompt,
   inferBeatRole,
   type BeatKeyframePlan,
   type BeatRole,
   type BeatSequencePlanRequest,
+  type BeatSequenceReferenceCatalog,
 } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import { generateDirectionHash } from '@/lib/utils/contentHash'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
@@ -27,6 +30,7 @@ export type {
   BeatRole,
   BeatKeyframePlan,
   BeatSequencePlanRequest,
+  BeatSequenceReferenceCatalog,
   FilmContext,
 }
 export {
@@ -34,11 +38,9 @@ export {
   buildFallbackBeatPlans,
   applyBeatKeyframePlansToScene,
   ensureSceneMusicFromDirection,
-}
-
-function getSceneDirection(scene: Record<string, unknown>): Record<string, any> | undefined {
-  const d = scene.sceneDirection
-  return d && typeof d === 'object' ? (d as Record<string, any>) : undefined
+  formatBeatPlannerReferenceCatalog,
+  buildPlannerSystemPrompt,
+  buildPlannerUserPrompt,
 }
 
 export interface BeatSequencePlanResult {
@@ -58,12 +60,18 @@ const PLAN_CACHE_TTL_MS = 5 * 60 * 1000
 export function getBeatPlanCacheKey(
   scene: Record<string, unknown>,
   beatCount: number,
-  projectId?: string
+  projectId?: string,
+  catalog?: BeatSequenceReferenceCatalog
 ): string {
   const directionHash = generateDirectionHash(scene)
   const heading = String(scene.heading ?? '').slice(0, 80)
   const actionHash = String(scene.action ?? scene.visualDescription ?? '').slice(0, 120)
-  return [projectId ?? 'default', directionHash, beatCount, heading, actionHash].join('|')
+  const catalogKey = [
+    ...(catalog?.characterNames ?? []),
+    ...(catalog?.propNames ?? []),
+    ...(catalog?.locationNames ?? []),
+  ].join(',')
+  return [projectId ?? 'default', directionHash, beatCount, heading, actionHash, catalogKey].join('|')
 }
 
 function getCachedPlan(key: string): BeatSequencePlanResult | null {
@@ -88,13 +96,6 @@ function roleAllowsTypography(role: BeatRole): boolean {
   return role === 'title_reveal' || role === 'credit'
 }
 
-function getDirectionShots(scene: Record<string, unknown>): string[] {
-  const direction = getSceneDirection(scene)
-  const shots = direction?.camera?.shots
-  if (!Array.isArray(shots)) return []
-  return shots.map((s) => String(s).trim()).filter(Boolean)
-}
-
 function validatePlans(plans: BeatKeyframePlan[], beatCount: number): BeatKeyframePlan[] | null {
   if (plans.length !== beatCount) return null
   const moments = plans.map((p) => p.frozenMoment.trim().toLowerCase())
@@ -105,100 +106,6 @@ function validatePlans(plans: BeatKeyframePlan[], beatCount: number): BeatKeyfra
     if (!plan.frozenMoment || plan.frozenMoment.trim().length < 8) return null
   }
   return plans
-}
-
-function buildPlannerSystemPrompt(): string {
-  return `You are a cinematic keyframe sequence planner. Plan DISTINCT live-action film still / photograph keyframes for each beat in a scene — these are F2V (frame-to-video) START frames for Veo motion generation.
-
-CRITICAL RULES:
-1. Each beat gets ONE unique frozen moment — different subject, scale, composition, or story beat. Never repeat the same visual across beats.
-2. NO camera movement in prompts — describe a single frozen photograph or film frame, not motion.
-3. Title typography ONLY on beats with beatRole "title_reveal" or "credit". All other beats: NO on-screen text.
-4. Map direction.camera.shots to beats when provided (beat 0 → shot 0, etc.).
-5. Follow the narrative arc: opening → progression → climax → title_reveal (if title scene) → dissolve.
-6. Include atmosphere, lighting, and key props from direction cues where relevant.
-7. Prompts must be Imagen-ready: 80-200 words, photorealistic/cinematic, art style applied. When art style is photorealistic, use live-action cinematography language — NOT illustration, NOT storyboard sketch, NOT cartoon or anime. Populate negativeAdditions with anti-illustration terms (e.g. cartoon, anime, illustration, 3D render).
-
-Output JSON:
-{
-  "reasoning": "brief arc explanation",
-  "beats": [
-    {
-      "beatIndex": 0,
-      "beatRole": "opening|progression|climax|title_reveal|credit|dissolve|dialogue|narration_backdrop",
-      "shotType": "Wide Shot",
-      "frozenMoment": "one-sentence frozen moment description",
-      "prompt": "full image generation prompt",
-      "allowTypography": false,
-      "durationSeconds": 4,
-      "negativeAdditions": []
-    }
-  ]
-}`
-}
-
-function buildPlannerUserPrompt(request: BeatSequencePlanRequest): string {
-  const { scene, beats, sceneNumber, totalScenes, filmContext, artStyle } = request
-  const heading = String(scene.heading ?? '')
-  const action = String(scene.action ?? '')
-  const visualDescription = String(scene.visualDescription ?? '')
-  const direction = getSceneDirection(scene)
-  const sceneType = detectSceneType(heading, action || visualDescription, sceneNumber, totalScenes)
-  const directionMeta = extractDirectionMetadata(direction)
-  const shots = getDirectionShots(scene)
-
-  const parts: string[] = []
-  parts.push(`Plan ${beats.length} DISTINCT keyframe prompts for this scene.`)
-  parts.push('')
-  parts.push(`SCENE ${sceneNumber}${totalScenes ? ` of ${totalScenes}` : ''}: ${heading}`)
-  parts.push(`Scene Type: ${sceneType.toUpperCase()}`)
-  if (filmContext?.title) parts.push(`Film Title: "${filmContext.title}"`)
-  if (filmContext?.genre?.length) parts.push(`Genre: ${filmContext.genre.join(', ')}`)
-  if (filmContext?.tone) parts.push(`Tone: ${filmContext.tone}`)
-  parts.push(`Art Style: ${artStyle || 'photorealistic'}`)
-  parts.push('')
-  parts.push('SCENE ACTION:')
-  parts.push(action || visualDescription || '(none)')
-  parts.push('')
-
-  if (shots.length > 0) {
-    parts.push('CAMERA SHOTS (map to beats in order):')
-    shots.forEach((shot, i) => parts.push(`  ${i + 1}. ${shot}`))
-    parts.push('')
-  }
-
-  const cues: string[] = []
-  if (directionMeta.atmosphere) cues.push(`Atmosphere: ${directionMeta.atmosphere}`)
-  if (directionMeta.lightingMood) cues.push(`Lighting: ${directionMeta.lightingMood}`)
-  if (directionMeta.colorTemperature) cues.push(`Color: ${directionMeta.colorTemperature}`)
-  if (directionMeta.keyProps?.length) cues.push(`Props: ${directionMeta.keyProps.join(', ')}`)
-  if (directionMeta.locationDescription) cues.push(`Location: ${directionMeta.locationDescription}`)
-  if (direction?.audio?.priorities) cues.push(`Audio mood: ${direction.audio.priorities}`)
-  if (cues.length > 0) {
-    parts.push('DIRECTION CUES:')
-    parts.push(cues.join('\n'))
-    parts.push('')
-  }
-
-  parts.push('BEATS TO PLAN:')
-  beats.forEach((beat, i) => {
-    const label =
-      beat.kind === 'action'
-        ? beat.actionDescription ?? 'action beat'
-        : beat.kind === 'narration'
-          ? `narration: ${beat.line ?? ''}`
-          : `dialogue: ${beat.character ?? ''} — ${beat.line ?? ''}`
-    parts.push(`  Beat ${i} (${beat.kind}): ${label}`)
-  })
-
-  if (sceneType === 'title' && filmContext?.title) {
-    parts.push('')
-    parts.push(
-      `TITLE SEQUENCE: Exactly ONE beat should use beatRole "title_reveal" with allowTypography true and centered "${filmContext.title}" typography. Other beats are atmospheric progression with NO text.`
-    )
-  }
-
-  return parts.join('\n')
 }
 
 async function planWithGemini(
@@ -281,7 +188,8 @@ export async function planBeatSequence(
   const cacheKey = getBeatPlanCacheKey(
     request.scene,
     request.beats.length,
-    request.projectId
+    request.projectId,
+    request.referenceCatalog
   )
   const cached = getCachedPlan(cacheKey)
   if (cached) {

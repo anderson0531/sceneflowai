@@ -30,6 +30,13 @@ import {
 import { shouldUseCustomPromptOverride } from '@/lib/vision/preVisDirectGenerate'
 import { applySceneImageAiResultToPrompt } from '@/lib/scene/sceneImageAiPromptApply'
 import {
+  assembleStructuredStillPrompt,
+  buildLocationPromptToken,
+  buildPropPromptToken,
+  joinPromptBlocks,
+  stillRefsFromAttachedImages,
+} from '@/lib/imagen/structuredStillPrompt'
+import {
   resolveFeaturedCharactersForValidation,
   isGenuineLikenessFailure,
 } from '@/lib/scene/sceneImageFeaturedValidation'
@@ -135,14 +142,16 @@ function appendSceneImagePromptModifiers(
     beatForEmotion?: { line?: string } | null
   }
 ): string {
-  let optimizedPrompt = basePrompt
+  let optimizedPrompt = basePrompt.trim()
 
   const photorealisticAnchor = getPhotorealisticPromptAnchor(
     ctx.storyboardQuality,
     ctx.artStyle
   )
-  if (photorealisticAnchor) {
-    optimizedPrompt = `${optimizedPrompt.trim()}. ${photorealisticAnchor}`
+  const alreadyHasPhotoreal =
+    /photorealistic|live-action|live action|photographed on real camera/i.test(optimizedPrompt)
+  if (photorealisticAnchor && !alreadyHasPhotoreal) {
+    optimizedPrompt = joinPromptBlocks(optimizedPrompt, photorealisticAnchor)
   }
 
   const personTokens = ctx.characterReferences
@@ -150,7 +159,7 @@ function appendSceneImagePromptModifiers(
     .filter((token): token is string => !!token)
   const hairCompositionLock = buildHairCompositionLock(ctx.fullSceneContext, personTokens)
   if (hairCompositionLock && !optimizedPrompt.includes('do not pull hair back')) {
-    optimizedPrompt = `${optimizedPrompt.trim()} ${hairCompositionLock}`.trim()
+    optimizedPrompt = joinPromptBlocks(optimizedPrompt, hairCompositionLock)
   }
 
   const diptychCharacters = ctx.characterReferences.filter(
@@ -160,7 +169,10 @@ function appendSceneImagePromptModifiers(
     const perCharacterDiptychLines = diptychCharacters
       .map((cr: { name: string }) => buildWardrobeDiptychCharacterConsumptionLine(cr.name))
       .join('\n')
-    optimizedPrompt = `${optimizedPrompt.trim()}\n\n${WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION}\n${perCharacterDiptychLines}`
+    optimizedPrompt = joinPromptBlocks(
+      optimizedPrompt,
+      `${WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION}\n${perCharacterDiptychLines}`
+    )
     console.log(
       `[Scene Image] Appended wardrobe diptych consumption for: ${diptychCharacters.map((cr: { name: string }) => cr.name).join(', ')}`
     )
@@ -174,13 +186,16 @@ function appendSceneImagePromptModifiers(
       }))
     )
     if (directedEmotionSection && !optimizedPrompt.includes('Directed emotion:')) {
-      optimizedPrompt = `${optimizedPrompt.trim()} ${directedEmotionSection}`
+      optimizedPrompt = joinPromptBlocks(optimizedPrompt, directedEmotionSection)
     } else if (
       ctx.beatDirectedEmotion &&
       !optimizedPrompt.includes('Facial expression:') &&
       !optimizedPrompt.includes('Directed emotion:')
     ) {
-      optimizedPrompt = `${optimizedPrompt.trim()} ${formatDirectedEmotionLine(ctx.beatDirectedEmotion)}`
+      optimizedPrompt = joinPromptBlocks(
+        optimizedPrompt,
+        formatDirectedEmotionLine(ctx.beatDirectedEmotion)
+      )
     }
 
     const continuitySection = buildSceneAppearanceContinuityPromptSection(
@@ -195,12 +210,12 @@ function appendSceneImagePromptModifiers(
       continuitySection &&
       !optimizedPrompt.includes('Scene appearance continuity')
     ) {
-      optimizedPrompt = `${optimizedPrompt.trim()} ${continuitySection}`
+      optimizedPrompt = joinPromptBlocks(optimizedPrompt, continuitySection)
     }
   } else if (ctx.beatForEmotion?.line) {
     const expressionCue = formatVisualExpressionCue(ctx.beatForEmotion.line)
     if (expressionCue && !optimizedPrompt.includes('Facial expression:')) {
-      optimizedPrompt = `${optimizedPrompt.trim()} ${expressionCue}`
+      optimizedPrompt = joinPromptBlocks(optimizedPrompt, expressionCue)
     }
   }
 
@@ -2141,10 +2156,26 @@ export async function POST(req: NextRequest) {
               .join(', ')}`
           )
 
-          const allReferenceImages = selectedReferenceImages.map((ref) => ({
-            imageUrl: ref.imageUrl,
-            name: ref.name,
-          }))
+          const allReferenceImages = selectedReferenceImages.map((ref) => {
+            if (ref.propName && ref.sendIndex != null) {
+              return {
+                imageUrl: ref.imageUrl,
+                name: `${buildPropPromptToken(ref.sendIndex)}: ${ref.propName}`,
+              }
+            }
+            if ((ref.locationName || ref.role === 'location') && ref.sendIndex != null) {
+              return {
+                imageUrl: ref.imageUrl,
+                name: `${buildLocationPromptToken(ref.sendIndex)}: ${
+                  ref.locationName || 'Location'
+                }`,
+              }
+            }
+            return {
+              imageUrl: ref.imageUrl,
+              name: ref.name,
+            }
+          })
           const selectedReferenceUrls = new Set(selectedReferenceImages.map((ref) => ref.imageUrl))
           const cappedObjectImageReferences = objectImageReferences.filter((obj) =>
             selectedReferenceUrls.has(obj.imageUrl)
@@ -2308,12 +2339,27 @@ export async function POST(req: NextRequest) {
               cappedLocationReference.location ||
               cappedLocationReference.name ||
               'Location'
-            geminiPrompt += `${buildLocationReferencePromptLine(locationName, cappedLocationEntry.sendIndex)} Environment: "${locationName}". Match lighting to the scene prompt Global Style Anchor.\n\n`
+            geminiPrompt += `${buildLocationReferencePromptLine(locationName, cappedLocationEntry.sendIndex)} Use token ${buildLocationPromptToken(cappedLocationEntry.sendIndex)} in the scene prompt. Environment: "${locationName}". Match lighting to the scene prompt Style section.\n\n`
           }
 
           const scenePromptBody = stripReferenceImageMappingBlock(optimizedPrompt)
           const remappedOptimizedPrompt = remapReferenceNumbersInPrompt(scenePromptBody, indexMap)
-          promptForResponse = remappedOptimizedPrompt
+          const stillRefs = stillRefsFromAttachedImages({
+            selected: selectedReferenceImages,
+            characterReferences,
+          })
+          const structuredStill = isBeatFrame
+            ? assembleStructuredStillPrompt({
+                actionOrStructured: remappedOptimizedPrompt,
+                refs: stillRefs,
+                photorealisticAnchor: getPhotorealisticPromptAnchor(
+                  resolvedGen.storyboardQuality,
+                  artStyle
+                ),
+                includeCandid: !isExplicitDirectToCameraBeat(beatForEmotion),
+              })
+            : remappedOptimizedPrompt
+          promptForResponse = structuredStill
           const distinctCharacterNamesForBinding = [
             ...new Set(cappedImageReferences.map((ref) => ref.characterName)),
           ]
@@ -2375,7 +2421,7 @@ export async function POST(req: NextRequest) {
           if (subjectBindingSummary) {
             geminiPrompt += `${subjectBindingSummary}\n\n`
           }
-          geminiPrompt += `SCENE PROMPT:\n${remappedOptimizedPrompt}\n\n`
+          geminiPrompt += `SCENE PROMPT:\n${structuredStill}\n\n`
           
           geminiPrompt += `CRITICAL REQUIREMENTS:\n`
           geminiPrompt += `- ${BEAT_FRAME_CANDID_ACTION_CONSTRAINT}\n`
@@ -2462,11 +2508,29 @@ export async function POST(req: NextRequest) {
           generationProvider = vertexResult.generationProvider
         } else {
           console.log('[Scene Image] Using Vertex Imagen text-to-image (no reference images)')
-          // When excludeCharacters is true, force personGeneration to 'dont_allow' for scene reference images
+          const imagenStill = isBeatFrame
+            ? assembleStructuredStillPrompt({
+                actionOrStructured: optimizedPrompt,
+                refs: characterReferencesForImages
+                  .filter((ref: { promptToken?: string; name?: string }) => ref.promptToken && ref.name)
+                  .map((ref: { promptToken: string; name: string }) => ({
+                    kind: 'person' as const,
+                    token: ref.promptToken,
+                    name: ref.name,
+                    roleLabel: 'identity',
+                  })),
+                photorealisticAnchor: getPhotorealisticPromptAnchor(
+                  resolvedGen.storyboardQuality,
+                  artStyle
+                ),
+                includeCandid: !isExplicitDirectToCameraBeat(beatForEmotion),
+              })
+            : optimizedPrompt
+          promptForResponse = imagenStill
           const effectivePersonGeneration = effectiveExcludeCharacters
             ? 'dont_allow'
             : personGeneration || 'allow_adult'
-          base64Image = await generateImageWithGemini(optimizedPrompt, {
+          base64Image = await generateImageWithGemini(imagenStill, {
             aspectRatio: '16:9',
             numberOfImages: 1,
             imageSize: effectiveImageSize,

@@ -38,6 +38,13 @@ export interface BeatKeyframePlan {
   negativeAdditions?: string[]
 }
 
+/** Exact library labels the planner must use — appearance comes from reference images. */
+export interface BeatSequenceReferenceCatalog {
+  characterNames?: string[]
+  propNames?: string[]
+  locationNames?: string[]
+}
+
 export interface BeatSequencePlanRequest {
   scene: Record<string, unknown>
   beats: SceneBeat[]
@@ -47,6 +54,127 @@ export interface BeatSequencePlanRequest {
   artStyle?: string
   projectId?: string
   forceFallback?: boolean
+  referenceCatalog?: BeatSequenceReferenceCatalog
+}
+
+export function formatBeatPlannerReferenceCatalog(
+  catalog?: BeatSequenceReferenceCatalog
+): string {
+  const characters = (catalog?.characterNames ?? []).map((n) => n.trim()).filter(Boolean)
+  const props = (catalog?.propNames ?? []).map((n) => n.trim()).filter(Boolean)
+  const locations = (catalog?.locationNames ?? []).map((n) => n.trim()).filter(Boolean)
+  if (characters.length === 0 && props.length === 0 && locations.length === 0) {
+    return ''
+  }
+
+  const lines = [
+    'REFERENCE LIBRARY (use these exact labels; do not invent appearance — they have reference images):',
+  ]
+  if (characters.length) lines.push(`Characters: ${characters.join(', ')}`)
+  if (props.length) lines.push(`Props: ${props.join(', ')}`)
+  if (locations.length) lines.push(`Locations: ${locations.join(', ')}`)
+  return lines.join('\n')
+}
+
+export function buildPlannerSystemPrompt(): string {
+  return `You are a cinematic still-frame planner for an animatic. Plan DISTINCT live-action photoreal film stills — one frozen instant per beat. These stills illustrate the beat for the animatic. They are NOT Veo/F2V start frames, NOT video clips, and NOT motion direction.
+
+CRITICAL RULES:
+1. Each beat gets ONE unique frozen moment — different subject, scale, composition, or story beat. Never repeat the same visual across beats.
+2. NO camera movement and NO temporal/motion verbs (pulses, glitching, flickering, walking through). Describe a single photograph.
+3. Title typography ONLY on beats with beatRole "title_reveal" or "credit". All other beats: NO on-screen text.
+4. Map direction.camera.shots to beats when provided (beat 0 → shot 0, etc.).
+5. Follow the narrative arc: opening → progression → climax → title_reveal (if title scene) → dissolve.
+6. The "prompt" field is Action/Framing ONLY: shot type, body blocking, who holds which named library prop, gaze. Do NOT write style dumps, lighting essays, exclusions, F2V, or start-frame language — code owns those.
+7. Use EXACT character / prop / location labels from the REFERENCE LIBRARY. Do not invent objects that are not listed. Do not describe the visual appearance of library props or locations (reference images own appearance).
+8. When art style is photorealistic, keep action language photographic (no illustration, cartoon, or anime). Populate negativeAdditions with anti-illustration terms.
+
+Output JSON:
+{
+  "reasoning": "brief arc explanation",
+  "beats": [
+    {
+      "beatIndex": 0,
+      "beatRole": "opening|progression|climax|title_reveal|credit|dissolve|dialogue|narration_backdrop",
+      "shotType": "Wide Shot",
+      "frozenMoment": "one-sentence frozen moment description",
+      "prompt": "Action/Framing only for this beat",
+      "allowTypography": false,
+      "durationSeconds": 4,
+      "negativeAdditions": []
+    }
+  ]
+}`
+}
+
+export function buildPlannerUserPrompt(request: BeatSequencePlanRequest): string {
+  const { scene, beats, sceneNumber, totalScenes, filmContext, artStyle } = request
+  const heading = String(scene.heading ?? '')
+  const action = String(scene.action ?? '')
+  const visualDescription = String(scene.visualDescription ?? '')
+  const direction = getSceneDirection(scene)
+  const sceneType = detectSceneType(heading, action || visualDescription, sceneNumber, totalScenes)
+  const directionMeta = extractDirectionMetadata(direction)
+  const shots = getDirectionShots(scene)
+
+  const parts: string[] = []
+  parts.push(`Plan ${beats.length} DISTINCT frozen animatic stills for this scene (Action/Framing only — not video motion).`)
+  parts.push('')
+  parts.push(`SCENE ${sceneNumber}${totalScenes ? ` of ${totalScenes}` : ''}: ${heading}`)
+  parts.push(`Scene Type: ${sceneType.toUpperCase()}`)
+  if (filmContext?.title) parts.push(`Film Title: "${filmContext.title}"`)
+  if (filmContext?.genre?.length) parts.push(`Genre: ${filmContext.genre.join(', ')}`)
+  if (filmContext?.tone) parts.push(`Tone: ${filmContext.tone}`)
+  parts.push(`Art Style: ${artStyle || 'photorealistic'}`)
+  parts.push('')
+  parts.push('SCENE ACTION:')
+  parts.push(action || visualDescription || '(none)')
+  parts.push('')
+
+  if (shots.length > 0) {
+    parts.push('CAMERA SHOTS (map to beats in order):')
+    shots.forEach((shot, i) => parts.push(`  ${i + 1}. ${shot}`))
+    parts.push('')
+  }
+
+  const cues: string[] = []
+  if (directionMeta.atmosphere) cues.push(`Atmosphere: ${directionMeta.atmosphere}`)
+  if (directionMeta.lightingMood) cues.push(`Lighting: ${directionMeta.lightingMood}`)
+  if (directionMeta.colorTemperature) cues.push(`Color: ${directionMeta.colorTemperature}`)
+  if (directionMeta.keyProps?.length) cues.push(`Props: ${directionMeta.keyProps.join(', ')}`)
+  if (directionMeta.locationDescription) cues.push(`Location: ${directionMeta.locationDescription}`)
+  if (direction?.audio?.priorities) cues.push(`Audio mood: ${direction.audio.priorities}`)
+  if (cues.length > 0) {
+    parts.push('DIRECTION CUES:')
+    parts.push(cues.join('\n'))
+    parts.push('')
+  }
+
+  const catalogBlock = formatBeatPlannerReferenceCatalog(request.referenceCatalog)
+  if (catalogBlock) {
+    parts.push(catalogBlock)
+    parts.push('')
+  }
+
+  parts.push('BEATS TO PLAN:')
+  beats.forEach((beat, i) => {
+    const label =
+      beat.kind === 'action'
+        ? beat.actionDescription ?? 'action beat'
+        : beat.kind === 'narration'
+          ? `narration: ${beat.line ?? ''}`
+          : `dialogue: ${beat.character ?? ''} — ${beat.line ?? ''}`
+    parts.push(`  Beat ${i} (${beat.kind}): ${label}`)
+  })
+
+  if (sceneType === 'title' && filmContext?.title) {
+    parts.push('')
+    parts.push(
+      `TITLE SEQUENCE: Exactly ONE beat should use beatRole "title_reveal" with allowTypography true and centered "${filmContext.title}" typography. Other beats are atmospheric progression with NO text.`
+    )
+  }
+
+  return parts.join('\n')
 }
 
 function roleAllowsTypography(role: BeatRole): boolean {
@@ -156,7 +284,7 @@ function buildTitleDirectionContext(
 }
 
 export function buildFallbackBeatPlans(request: BeatSequencePlanRequest): BeatKeyframePlan[] {
-  const { scene, beats, sceneNumber, totalScenes, filmContext, artStyle } = request
+  const { scene, beats, sceneNumber, totalScenes, filmContext } = request
   const heading = String(scene.heading ?? '')
   const action = String(scene.action ?? scene.visualDescription ?? '')
   const sceneType = detectSceneType(heading, action, sceneNumber, totalScenes)
@@ -164,7 +292,6 @@ export function buildFallbackBeatPlans(request: BeatSequencePlanRequest): BeatKe
   const moments = getProgressiveMoments(scene, beats.length)
   const directionMeta = extractDirectionMetadata(getSceneDirection(scene))
   const filmTitle = filmContext?.title
-  const style = artStyle || 'photorealistic'
 
   return beats.map((beat, beatIndex) => {
     const beatRole = inferBeatRole(beat, beatIndex, beats.length, sceneType, filmTitle)
@@ -189,21 +316,21 @@ export function buildFallbackBeatPlans(request: BeatSequencePlanRequest): BeatKe
     const titleDirectionContext =
       sceneType === 'title' ? buildTitleDirectionContext(scene, directionMeta, shotType) : ''
 
-    let prompt = `${style} live-action film still, single frozen frame, cinematic photography. ${frozenMoment}.`
+    let prompt = `${shotType}: ${frozenMoment}`
     if (titleDirectionContext) {
-      prompt += ` ${titleDirectionContext}. Abstract digital composition, no people, no character portraits.`
+      prompt += `. ${titleDirectionContext}. Abstract digital composition, no people, no character portraits`
     }
     if (allowTypography && filmTitle) {
-      prompt += ` Centered bold typography displaying "${filmTitle}" as the main visual element. Deep blues, electric purples, stark whites, with gold and amber accents.`
-    } else if (beatRole === 'opening' || beatRole === 'progression' || beatRole === 'climax') {
-      prompt += ' No on-screen text, no dialogue, no lip-sync. Single frozen F2V start frame.'
-    } else if (beatRole === 'dissolve') {
-      prompt += ' Soft transitional atmosphere, no on-screen text. Single frozen F2V start frame.'
+      prompt += `. Centered bold typography displaying "${filmTitle}" as the main visual element`
     } else if (beat.kind === 'narration') {
-      prompt += ' Voiceover backdrop — environment and mood only, no narrator on screen.'
+      prompt += '. Voiceover backdrop — environment and mood only, no narrator on screen'
     } else if (beat.kind === 'dialogue' && beat.character) {
-      prompt += ` Focus on ${beat.character}${beat.line ? `: "${beat.line}"` : ''}.`
+      prompt += `. Focus on ${beat.character}${beat.line ? `: "${beat.line}"` : ''}`
     }
+    if (!allowTypography) {
+      prompt += '. No on-screen text, no dialogue captions'
+    }
+    prompt += '.'
 
     const durationSeconds =
       beatRole === 'climax' ? 6 : beatRole === 'title_reveal' ? 5 : beatRole === 'dissolve' ? 3 : 4

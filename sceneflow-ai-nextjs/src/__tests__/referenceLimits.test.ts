@@ -99,12 +99,11 @@ describe('referenceLimits', () => {
       { propName: 'Coffee mug', sendIndex: 5 },
     ])
     expect(mapping).toContain('PROP REFERENCES (2):')
-    expect(mapping).toContain(
-      '- PROP REFERENCE (Ref Image [4]): Tiny lapel camera — Extract shape, material, color, and design of the named prop only.'
-    )
-    expect(mapping).toContain(
-      '- PROP REFERENCE (Ref Image [5]): Coffee mug — Extract shape, material, color, and design of the named prop only.'
-    )
+    expect(mapping).toContain('Ref Image [4] = prop [4]')
+    expect(mapping).toContain('Tiny lapel camera')
+    expect(mapping).toContain('Use token prop [4]')
+    expect(mapping).toContain('Ref Image [5] = prop [5]')
+    expect(mapping).toContain('Coffee mug')
   })
 
   it('buildPropReferenceMappingLines returns empty string when no valid props', () => {
@@ -367,6 +366,22 @@ describe('referenceLimits', () => {
     expect(output).toContain('Ref Image [2]')
     expect(output).not.toContain('Ref Image [16]')
     expect(output).not.toContain('LOCATION REFERENCE')
+  })
+
+  it('remapReferenceNumbersInPrompt preserves section headers and newlines', () => {
+    const indexMap = new Map<number, number | null>([
+      [1, 1],
+      [2, 2],
+    ])
+    const input = `[GLOBAL STYLE ANCHOR]
+Master Style: photorealistic
+
+[SCENE COMPOSITION & BEAT]
+Action/Framing: person [1] holds the file.`
+    const output = remapReferenceNumbersInPrompt(input, indexMap)
+    expect(output).toContain('[GLOBAL STYLE ANCHOR]')
+    expect(output).toContain('\n[SCENE COMPOSITION & BEAT]')
+    expect(output).not.toMatch(/\[GLOBAL STYLE ANCHOR\]Master Style/)
   })
 
   it('remapReferenceNumbersInPrompt updates person and Refs tokens', () => {

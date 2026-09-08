@@ -261,5 +261,6 @@ describe('Express beat generate-image flags', () => {
     expect(src).toContain('useAIPrompt: false')
     expect(src).not.toMatch(/customPrompt: beatPlan\.prompt, useAIPrompt: true/)
     expect(src).toContain('skipLikenessValidation: true')
+    expect(src).toContain('referenceCatalog: buildExpressReferenceCatalog(project)')
   })
 })
