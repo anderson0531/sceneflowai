@@ -217,6 +217,12 @@ import {
   formatAudienceDefinitionForPrompt,
   type AudienceDefinition,
 } from '@/lib/types/audienceResonance'
+import {
+  mergeAppliedRecommendationIds,
+  preserveAppliedRecommendationIds,
+  recommendationId,
+  recommendationText,
+} from '@/lib/script/audienceResonance/highImpact'
 import type { CinematicScenePlan } from '@/components/vision/ScriptReviewModal'
 const ScriptReviewModal = dynamic(
   () => import('@/components/vision/ScriptReviewModal').then((m) => ({ default: m.default })),
@@ -5455,6 +5461,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const recentlyUpdatedSceneClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [focusedSceneIndex, setFocusedSceneIndex] = useState<number | null>(null)
   const focusedSceneClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingAppliedRecIdsRef = useRef<{ sceneIndex: number; recIds: string[] } | null>(null)
   const setSidebarVoiceSelection = useStore((s) => s.setSidebarVoiceSelection)
 
   useEffect(() => {
@@ -5482,6 +5489,42 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       focusedSceneClearTimerRef.current = null
     }, 4000)
   }, [])
+
+  const recIdsMatchingTexts = (scene: any, texts: string[]): string[] => {
+    const wanted = new Set(texts.map((text) => text.trim().toLowerCase()).filter(Boolean))
+    const recs = scene?.audienceAnalysis?.recommendations || []
+    return recs
+      .map((rec: unknown, i: number) => ({
+        id: recommendationId(rec, i),
+        text: recommendationText(rec).trim().toLowerCase(),
+      }))
+      .filter((rec: { id: string; text: string }) => rec.text && wanted.has(rec.text))
+      .map((rec: { id: string }) => rec.id)
+  }
+
+  const handleToggleAudienceRecommendation = (sceneIndex: number, recId: string, applied: boolean) => {
+    const currentScript = scriptRef.current
+    if (!currentScript?.script?.scenes?.[sceneIndex]?.audienceAnalysis) return
+    const scenes = [...currentScript.script.scenes]
+    const scene = scenes[sceneIndex]
+    const current = new Set(scene.audienceAnalysis.appliedRecommendationIds || [])
+    if (applied) current.add(recId)
+    else current.delete(recId)
+    scenes[sceneIndex] = {
+      ...scene,
+      audienceAnalysis: {
+        ...scene.audienceAnalysis,
+        appliedRecommendationIds: Array.from(current),
+      },
+    }
+    const updatedScript = {
+      ...currentScript,
+      script: { ...currentScript.script, scenes },
+    }
+    setScript(updatedScript)
+    scriptRef.current = updatedScript
+    void saveScenesToDatabase(scenes)
+  }
 
   const editorAudienceAnalysis = useMemo(() => {
     if (editingSceneIndex === null || !script?.script?.scenes?.[editingSceneIndex]) {
@@ -6730,13 +6773,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         // Check if this is a score improvement (for delta display)
         const existingAnalysis = updatedScenes[sceneIndex].audienceAnalysis
         const previousScore = existingAnalysis?.score
-        
+        const preservedApplied = preserveAppliedRecommendationIds(
+          existingAnalysis,
+          analysis.recommendations || []
+        )
+
         updatedScenes[sceneIndex] = {
           ...updatedScenes[sceneIndex],
           audienceAnalysis: {
             ...analysis,
-            previousScore: previousScore !== undefined && previousScore !== analysis.score 
-              ? previousScore 
+            appliedRecommendationIds: preservedApplied,
+            previousScore: previousScore !== undefined && previousScore !== analysis.score
+              ? previousScore
               : undefined
           }
         }
@@ -6802,10 +6850,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       if (data.script?.scenes) {
         // Update script with optimized scene and set optimizedAt timestamp
+        const previousAnalysis = script.script.scenes[sceneIndex]?.audienceAnalysis
+        const appliedFromOptimize = recIdsMatchingTexts(
+          { audienceAnalysis: previousAnalysis },
+          selectedRecommendations
+        )
         const optimizedScene = {
           ...data.script.scenes[0],
           audienceAnalysis: {
-            ...script.script.scenes[sceneIndex]?.audienceAnalysis,
+            ...previousAnalysis,
+            appliedRecommendationIds: mergeAppliedRecommendationIds(
+              previousAnalysis?.appliedRecommendationIds,
+              appliedFromOptimize
+            ),
             optimizedAt: new Date().toISOString()  // Track optimization time for sync CTA
           }
         }
@@ -12272,7 +12329,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   // Handler for Apply Recommendations - opens Edit dialog with pre-populated instructions
   const handleEditSceneWithRecommendations = (sceneIndex: number, recommendations: string[]) => {
-    // Format recommendations as numbered instructions for the edit dialog
+    const scene = scriptRef.current?.script?.scenes?.[sceneIndex]
+    pendingAppliedRecIdsRef.current = {
+      sceneIndex,
+      recIds: recIdsMatchingTexts(scene, recommendations),
+    }
     const formattedInstructions = recommendations
       .map((rec, idx) => `${idx + 1}. ${rec}`)
       .join('\n')
@@ -12366,8 +12427,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     // Preserve audienceAnalysis from original scene and mark as optimized
     // so progressive analysis knows the scene was edited since last analysis
     if (originalScene?.audienceAnalysis) {
+      const pending = pendingAppliedRecIdsRef.current
+      const pendingIds =
+        pending && pending.sceneIndex === sceneIndex ? pending.recIds : []
+      if (pending && pending.sceneIndex === sceneIndex) {
+        pendingAppliedRecIdsRef.current = null
+      }
       cleanedScene.audienceAnalysis = {
         ...originalScene.audienceAnalysis,
+        appliedRecommendationIds: mergeAppliedRecommendationIds(
+          originalScene.audienceAnalysis.appliedRecommendationIds,
+          pendingIds
+        ),
         optimizedAt: new Date().toISOString()
       }
     }
@@ -14499,6 +14570,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onEditSceneWithRecommendations={handleEditSceneWithRecommendations}
                 recentlyUpdatedSceneIndex={recentlyUpdatedSceneIndex}
                 focusedSceneIndex={focusedSceneIndex}
+                onJumpToImpactScene={handleJumpToSceneFromReview}
+                onToggleAudienceRecommendation={handleToggleAudienceRecommendation}
                 onUpdateSceneAudio={handleUpdateSceneAudio}
                 onDeleteSceneAudio={handleDeleteSceneAudio}
                 onEnhanceSceneContext={handleEnhanceSceneContext}

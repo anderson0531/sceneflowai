@@ -18,7 +18,7 @@ import { useTranslations } from 'next-intl'
 import { ASSISTANT } from '@/lib/constants/assistant'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target, Share2 } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, Square, CheckSquare, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target, Share2 } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { PRODUCTION_SECTION_DESCRIPTIONS, PRODUCTION_SECTION_LABELS } from '@/constants/productionSections'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
@@ -152,7 +152,8 @@ import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { getAudioUrl } from '@/lib/audio/languageDetection'
 import { cleanupScriptAudio } from '@/lib/audio/cleanupAudio'
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
-import { sceneHasHighImpactIssue } from '@/lib/script/audienceResonance/highImpact'
+import { recommendationId, sceneHasHighImpactIssue } from '@/lib/script/audienceResonance/highImpact'
+import { WritersRoomTopImpactPanel } from './WritersRoomTopImpactPanel'
 import { uploadAssetViaAPI } from '@/lib/vision/uploads'
 import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
 import { useCredits } from '@/contexts/CreditsContext'
@@ -461,6 +462,8 @@ interface ScriptPanelProps {
   recentlyUpdatedSceneIndex?: number | null
   /** Scene jumped to from Audience Resonance; scroll and expand recommendations. */
   focusedSceneIndex?: number | null
+  onJumpToImpactScene?: (sceneIndex: number) => void
+  onToggleAudienceRecommendation?: (sceneIndex: number, recId: string, applied: boolean) => void
   /** Aggregate scene-direction readiness for reference generation guidance */
   directionReadiness?: import('@/lib/utils/contentHash').ScriptDirectionReadiness
   onUpdateAllDirections?: () => void
@@ -772,7 +775,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
-export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, projectMetadata = null, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, focusedSceneIndex = null, directionReadiness, onUpdateAllDirections, isUpdatingAllDirections = false, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled,   projectStreams = [] }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, projectMetadata = null, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, focusedSceneIndex = null, onJumpToImpactScene, onToggleAudienceRecommendation, directionReadiness, onUpdateAllDirections, isUpdatingAllDirections = false, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled,   projectStreams = [] }: ScriptPanelProps) {
 
   const tStudio = useTranslations('production.studio')
   const tCommon = useTranslations('common')
@@ -3293,6 +3296,15 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                 )}
               </div>
             ) : (
+              <div className="space-y-4">
+              <WritersRoomTopImpactPanel
+                scenes={scenes}
+                onJumpToScene={(sceneIndex) => {
+                  if (onJumpToImpactScene) onJumpToImpactScene(sceneIndex)
+                  else onSelectSceneIndex?.(sceneIndex)
+                }}
+                onToggleApplied={onToggleAudienceRecommendation}
+              />
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -3390,6 +3402,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       domId={domId}
                       isRecentlyUpdated={recentlyUpdatedSceneIndex === idx}
                       isFocused={focusedSceneIndex === idx}
+                      onToggleAudienceRecommendation={onToggleAudienceRecommendation}
                       isBookmarked={bookmarkedSceneIndex === idx}
                       onBookmarkToggle={() => handleBookmarkToggle(idx)}
                       bookmarkSaving={bookmarkSavingSceneIdx === idx}
@@ -3492,6 +3505,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                   })}
                 </SortableContext>
               </DndContext>
+              </div>
             )}
           </div>
         )}
@@ -4045,6 +4059,7 @@ interface SceneCardProps {
   domId?: string
   isRecentlyUpdated?: boolean
   isFocused?: boolean
+  onToggleAudienceRecommendation?: (sceneIndex: number, recId: string, applied: boolean) => void
   isBookmarked?: boolean
   onBookmarkToggle?: () => void
   bookmarkSaving?: boolean
@@ -4243,6 +4258,7 @@ function SceneCard({
   domId,
   isRecentlyUpdated = false,
   isFocused = false,
+  onToggleAudienceRecommendation,
   isBookmarked = false,
   onBookmarkToggle,
   bookmarkSaving = false,
@@ -5627,13 +5643,32 @@ function SceneCard({
                         const recImpact = typeof rec === 'object' && rec?.impact ? rec.impact : null
                         const recPriority = typeof rec === 'object' && rec?.priority ? rec.priority : null
                         const recPointsDeducted = typeof rec === 'object' && rec?.pointsDeducted ? rec.pointsDeducted : null
+                        const recId = recommendationId(rec, rIdx)
+                        const isApplied = (scene.audienceAnalysis.appliedRecommendationIds || []).includes(recId)
                         return (
-                          <li key={rIdx} className="text-xs text-gray-300 flex gap-3 p-2.5 bg-gray-800/40 rounded-lg border border-gray-700/30 hover:bg-gray-800/60 transition-colors">
-                            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-violet-500/20 text-violet-400 text-[10px] font-bold flex-shrink-0 mt-0.5">
-                              {rIdx + 1}
-                            </span>
+                          <li key={recId} className={`text-xs text-gray-300 flex gap-3 p-2.5 rounded-lg border transition-colors ${
+                            isApplied
+                              ? 'bg-emerald-950/30 border-emerald-500/20'
+                              : 'bg-gray-800/40 border-gray-700/30 hover:bg-gray-800/60'
+                          }`}>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onToggleAudienceRecommendation?.(sceneIdx, recId, !isApplied)
+                              }}
+                              className="flex-shrink-0 mt-0.5 text-gray-400 hover:text-white"
+                              aria-label={isApplied ? 'Reopen fix' : 'Mark fix applied'}
+                              aria-pressed={isApplied}
+                            >
+                              {isApplied ? (
+                                <CheckSquare className="w-4 h-4 text-emerald-400" />
+                              ) : (
+                                <Square className="w-4 h-4" />
+                              )}
+                            </button>
                             <div className="flex-1 min-w-0">
-                              <span className="leading-relaxed">{recText}</span>
+                              <span className={`leading-relaxed ${isApplied ? 'line-through opacity-60' : ''}`}>{recText}</span>
                               {(recCategory || recImpact || recPriority || recPointsDeducted) && (
                                 <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                                   {recPriority && (
@@ -5682,10 +5717,18 @@ function SceneCard({
                       onClick={(e) => {
                         e.stopPropagation()
                         // Extract recommendation texts
-                        const recommendations = (scene.audienceAnalysis.recommendations || []).map((rec: string | { text: string }) => 
-                          typeof rec === 'string' ? rec : rec?.text || String(rec)
+                        const recommendations = (scene.audienceAnalysis.recommendations || [])
+                          .map((rec: string | { text: string }, i: number) => ({
+                            text: typeof rec === 'string' ? rec : rec?.text || String(rec),
+                            id: recommendationId(rec, i),
+                          }))
+                          .filter((rec: { id: string }) =>
+                            !(scene.audienceAnalysis.appliedRecommendationIds || []).includes(rec.id)
+                          )
+                        onEditSceneWithRecommendations(
+                          sceneIdx,
+                          recommendations.map((rec: { text: string }) => rec.text)
                         )
-                        onEditSceneWithRecommendations(sceneIdx, recommendations)
                       }}
                       className="h-8 text-xs bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white rounded-lg shadow-md"
                     >
