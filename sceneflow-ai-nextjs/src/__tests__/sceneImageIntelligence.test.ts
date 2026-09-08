@@ -15,6 +15,7 @@ import {
   SCENE_IMAGE_INTELLIGENCE_DEADLINE_MS,
   generateSceneImagePromptWithDeadline,
   buildSceneImageIntelligenceUserPrompt,
+  buildSceneImageSystemPrompt,
   buildSceneImageCacheKey,
   parseVisualSetupOverlay,
   parseTalentDirectionOverlay,
@@ -117,5 +118,32 @@ describe('scene image intelligence Direct overlays', () => {
       talentBlocking: 'stay wide',
     })
     expect(parseVisualSetupOverlay(null)).toBeUndefined()
+  })
+})
+
+describe('scene image intelligence direction authority', () => {
+  it('system prompt allows omitting off-screen person tokens and forbids prop-name confusion', () => {
+    const system = buildSceneImageSystemPrompt()
+    expect(system).toContain('SCENE DIRECTION IS AUTHORITATIVE')
+    expect(system).toContain('you MAY omit person [N] tokens')
+    expect(system).not.toContain('never invent, renumber, or skip ordinals')
+    expect(system).toContain('prop [N]')
+  })
+
+  it('user prompt surfaces scene description, talent, and key props as authoritative', () => {
+    const prompt = buildSceneImageIntelligenceUserPrompt({
+      ...baseRequest,
+      directionMetadata: {
+        sceneDescription:
+          'Piper Hayes and Professor Gideon Croft race against a tactical breach. Piper grounds Gideon with a weathered journal.',
+        talentBlocking: 'Piper forcefully grounds Gideon with the journal',
+        talentEmotionalBeat: 'Panic transitioning to determined authority',
+        keyProps: ['Water-damaged leather journal', 'Brass-and-obsidian energy core'],
+      },
+    })
+    expect(prompt).toContain('SCENE DIRECTION (AUTHORITATIVE')
+    expect(prompt).toContain('Piper Hayes and Professor Gideon Croft')
+    expect(prompt).toContain('Key props: Water-damaged leather journal')
+    expect(prompt).toContain('omit off-screen tokens')
   })
 })

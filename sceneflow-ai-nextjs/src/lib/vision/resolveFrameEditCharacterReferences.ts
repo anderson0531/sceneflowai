@@ -324,7 +324,13 @@ export function resolveFrameEditCharacterReferences(args: {
     const sceneText = buildSceneWideDetectionText(scene)
     const detected = findSceneCharacters(
       sceneText,
-      characters as Parameters<typeof findSceneCharacters>[1]
+      characters as Parameters<typeof findSceneCharacters>[1],
+      {
+        maskPhrases: [
+          ...objectReferences.map((obj) => obj.name).filter(Boolean),
+          ...locationReferences.map((loc) => loc.location || loc.locationDisplay || '').filter(Boolean),
+        ],
+      }
     )
     characterNames = detected.map((c) => c.name).filter(Boolean) as string[]
     const selectedWardrobes = fillSelectedWardrobesForCharacters(

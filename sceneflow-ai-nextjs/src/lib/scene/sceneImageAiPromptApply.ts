@@ -4,6 +4,7 @@ import {
   sanitizePromptForIdentityRefs,
   stripReferenceImageMappingBlock,
 } from '@/lib/imagen/promptOptimizer'
+import { matchObjectsBySelectedNames, libraryNamesFuzzyMatch } from '@/lib/character/matching'
 import type { SceneImageIntelligenceResult } from '@/lib/intelligence/scene-image-intelligence'
 
 export interface SceneImageAiPromptApplyInput {
@@ -18,6 +19,7 @@ export interface SceneImageAiPromptApplyInput {
   detectedObjectReferences: any[]
   matchedLocationReference: any
   sceneType?: string
+  protectPhrases?: string[]
 }
 
 export interface SceneImageAiPromptApplyResult {
@@ -44,6 +46,7 @@ export function applySceneImageAiResultToPrompt(
     detectedObjectReferences: initialDetectedObjects,
     matchedLocationReference: initialMatchedLocation,
     sceneType,
+    protectPhrases,
   } = input
 
   let detectedObjectReferences = initialDetectedObjects
@@ -53,9 +56,10 @@ export function applySceneImageAiResultToPrompt(
 
   if (aiResult.usedAI) {
     if (autoDetectObjects && aiResult.selectedPropNames && aiResult.selectedPropNames.length > 0) {
-      detectedObjectReferences = projectObjectRefs
-        .filter((obj: any) => aiResult.selectedPropNames!.includes(obj.name))
-        .slice(0, 4)
+      const matched = matchObjectsBySelectedNames(aiResult.selectedPropNames, projectObjectRefs)
+      if (matched.length > 0) {
+        detectedObjectReferences = matched.slice(0, 4)
+      }
       console.log(
         `[Scene Image] AI selected props:`,
         detectedObjectReferences.map((o: any) => o.name).join(', ')
@@ -63,11 +67,11 @@ export function applySceneImageAiResultToPrompt(
     }
 
     if (autoDetectLocations && aiResult.selectedLocationName) {
-      const matched = projectLocationRefs.find(
-        (loc: any) =>
-          loc.location === aiResult.selectedLocationName ||
-          loc.name === aiResult.selectedLocationName
-      )
+      const selected = aiResult.selectedLocationName
+      const matched = projectLocationRefs.find((loc: any) => {
+        const libraryName = loc.location || loc.name || ''
+        return libraryNamesFuzzyMatch(selected, libraryName)
+      })
       if (matched) {
         matchedLocationReference = matched
         console.log(`[Scene Image] AI selected location:`, matched.location || matched.name)
@@ -83,7 +87,9 @@ export function applySceneImageAiResultToPrompt(
     let aiPromptBody = stripReferenceImageMappingBlock(aiResult.prompt)
     let optimizedPrompt: string
     if (charactersWithRefs.length > 0) {
-      aiPromptBody = sanitizePromptForIdentityRefs(aiPromptBody, charactersWithRefs)
+      aiPromptBody = sanitizePromptForIdentityRefs(aiPromptBody, charactersWithRefs, {
+        protectPhrases,
+      })
       const filteredForPrompt = filterCharactersForPromptRefs(
         charactersWithRefs,
         aiPromptBody,

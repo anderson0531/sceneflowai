@@ -262,7 +262,11 @@ export function ScenePromptBuilder({
     const isNoTalentScene = talentText.toLowerCase().match(/\b(n\/a|no\s+(live\s+)?actors?|no\s+talent|no\s+performers?)\b/)
     
     if (!isNoTalentScene && availableCharacters && availableCharacters.length > 0) {
-      const detectedChars = findSceneCharacters(fullDetectionText, availableCharacters)
+      const detectedChars = findSceneCharacters(fullDetectionText, availableCharacters, {
+        maskPhrases: [
+          ...(objectReferences || []).map((ref: any) => ref.name).filter(Boolean),
+        ],
+      })
       
       if (detectedChars.length > 0) {
         updates.characters = detectedChars.map((c: any) => c.name)

@@ -75,6 +75,37 @@ describe('detectCharactersInText', () => {
       'Elara Vance',
     ])
   })
+
+  it('does not match Dr. Arthur Pendelton when only his journal prop is mentioned', () => {
+    const cast = [
+      { id: 'piper', name: 'Piper Hayes' },
+      { id: 'gideon', name: 'Professor Gideon Croft' },
+      { id: 'arthur', name: 'Dr. Arthur Pendelton' },
+    ]
+    const journal = "Arthur Pendelton's 1893 Journal"
+    const text =
+      'Piper Hayes forcefully grounds Professor Gideon Croft using Arthur Pendelton\'s 1893 Journal.'
+    const detected = detectCharactersInText(text, cast, {
+      maskPhrases: [journal],
+    })
+    expect(detected.map((c) => c.name)).toEqual(
+      expect.arrayContaining(['Piper Hayes', 'Professor Gideon Croft'])
+    )
+    expect(detected.map((c) => c.name)).not.toContain('Dr. Arthur Pendelton')
+  })
+
+  it('still matches Arthur when independently present alongside the masked journal name', () => {
+    const cast = [
+      { id: 'piper', name: 'Piper Hayes' },
+      { id: 'arthur', name: 'Dr. Arthur Pendelton' },
+    ]
+    const journal = "Arthur Pendelton's 1893 Journal"
+    const text = 'Dr. Arthur Pendelton enters clutching Arthur Pendelton\'s 1893 Journal.'
+    const detected = detectCharactersInText(text, cast, {
+      maskPhrases: [journal],
+    })
+    expect(detected.map((c) => c.name)).toContain('Dr. Arthur Pendelton')
+  })
 })
 
 describe('resolveBeatSpeaker', () => {

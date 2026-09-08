@@ -1,7 +1,14 @@
+import { maskPhrasesInText } from '@/lib/scene/characterDetection'
+
 interface Character {
   name: string
   role?: string
   [key: string]: any
+}
+
+export interface FindSceneCharactersOptions {
+  /** Library prop/location names blanked before character matching. */
+  maskPhrases?: string[]
 }
 
 /**
@@ -112,9 +119,11 @@ const NICKNAME_MAPPINGS: Record<string, string[]> = {
  */
 export function findSceneCharacters(
   sceneText: string,
-  availableCharacters: Character[]
+  availableCharacters: Character[],
+  options?: FindSceneCharactersOptions
 ): Character[] {
   if (!sceneText || availableCharacters.length === 0) return []
+  sceneText = maskPhrasesInText(sceneText, options?.maskPhrases)
 
   // Exclude narrator/voiceover-only characters — they have no visual representation
   const visualCharacters = availableCharacters.filter(c => {
@@ -342,6 +351,57 @@ export function findSceneObjects(
     const bOrder = importanceOrder[b.importance || 'background'] ?? 3
     return aOrder - bOrder
   })
+}
+
+const NAME_STOP_WORDS = new Set([
+  'the', 'a', 'an', 'of', 'and', 'or', 'with', 'from', 'into', 'onto', 'for',
+  'this', 'that', 'his', 'her', 'their', 'its',
+])
+
+function significantNameWords(value: string): string[] {
+  return value
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((word) => word.length >= 4 && !NAME_STOP_WORDS.has(word) && !EXCLUDED_WORDS.has(word))
+}
+
+/** True when a direction/AI label refers to the same library object as `libraryName`. */
+export function libraryNamesFuzzyMatch(selectedName: string, libraryName: string): boolean {
+  const selected = selectedName.toLowerCase().trim()
+  const library = libraryName.toLowerCase().trim()
+  if (!selected || !library) return false
+  if (selected === library || selected.includes(library) || library.includes(selected)) return true
+
+  const selectedWords = significantNameWords(selected)
+  const libraryWords = significantNameWords(library)
+  if (selectedWords.length === 0 || libraryWords.length === 0) return false
+  const overlap = selectedWords.filter((word) => libraryWords.includes(word))
+  return overlap.some((word) => word.length >= 6) || overlap.length >= 2
+}
+
+/**
+ * Match AI/direction prop labels onto library object rows (exact, contains, or distinctive-word overlap).
+ */
+export function matchObjectsBySelectedNames<T extends { name?: string; id?: string }>(
+  selectedNames: string[],
+  availableObjects: T[]
+): T[] {
+  if (!selectedNames.length || availableObjects.length === 0) return []
+  const matched: T[] = []
+  const seen = new Set<string>()
+  for (const selected of selectedNames) {
+    if (!selected?.trim()) continue
+    for (const obj of availableObjects) {
+      const name = obj.name || ''
+      const key = String(obj.id || name).toLowerCase()
+      if (!name || seen.has(key)) continue
+      if (libraryNamesFuzzyMatch(selected, name)) {
+        seen.add(key)
+        matched.push(obj)
+      }
+    }
+  }
+  return matched
 }
 
 /**

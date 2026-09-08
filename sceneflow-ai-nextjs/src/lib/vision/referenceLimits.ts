@@ -74,6 +74,8 @@ export interface PrioritizedReferenceImage {
   propName?: string
   locationName?: string
   originalOrder?: number
+  /** Stable composition token (prop [N] / location [N]) independent of send index. */
+  promptToken?: string
 }
 
 export type ReferenceIndexMap = Map<number, number | null>
@@ -345,7 +347,12 @@ export function buildPropReferenceMappingLines(
 }
 
 export function buildPropReferenceEntries(
-  objectImageReferences: Array<{ imageUrl: string; name: string; importance?: string }>,
+  objectImageReferences: Array<{
+    imageUrl: string
+    name: string
+    importance?: string
+    promptToken?: string
+  }>,
   startIndex: number
 ): PrioritizedReferenceImage[] {
   const entries: PrioritizedReferenceImage[] = []
@@ -360,6 +367,7 @@ export function buildPropReferenceEntries(
       importance: obj.importance,
       provisionalIndex: refImageIndex,
       propName: obj.name,
+      promptToken: obj.promptToken,
     })
   }
 
@@ -367,7 +375,12 @@ export function buildPropReferenceEntries(
 }
 
 export function buildLocationReferenceEntry(
-  location: { imageUrl: string; location?: string; name?: string } | null | undefined,
+  location: {
+    imageUrl: string
+    location?: string
+    name?: string
+    promptToken?: string
+  } | null | undefined,
   startIndex: number
 ): PrioritizedReferenceImage | null {
   if (!location?.imageUrl) return null
@@ -379,5 +392,6 @@ export function buildLocationReferenceEntry(
     role: 'location',
     provisionalIndex: refImageIndex,
     locationName,
+    promptToken: location.promptToken,
   }
 }

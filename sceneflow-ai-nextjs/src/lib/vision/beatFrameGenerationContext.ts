@@ -2,8 +2,14 @@
  * Resolve auto-selected references for Pre-Vis beat storyboard frames.
  */
 
-import { findSceneObjects } from '@/lib/character/matching'
-import { detectCharactersInText, resolveBeatSpeaker } from '@/lib/scene/characterDetection'
+import { findSceneObjects, matchObjectsBySelectedNames } from '@/lib/character/matching'
+import {
+  collectEntityMaskPhrases,
+  detectCharactersInText,
+  intersectDetectedCharactersWithDirectionText,
+  resolveBeatSpeaker,
+  type DetectCharactersOptions,
+} from '@/lib/scene/characterDetection'
 import { getSceneBeats, isNarratorBeat } from '@/lib/script/beatMigration'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
 import type { BeatReferenceSelection, SceneBeat } from '@/lib/script/segmentTypes'
@@ -25,6 +31,7 @@ export function toBeatReferenceSelection(
 }
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
 import {
+  buildSceneStagingText,
   findLocationReferencesAssignedToScene,
   findMatchingLocationReferences,
   isNoTalentSceneForFrames,
@@ -152,6 +159,41 @@ function uniqueProjectCharacters<
   return out
 }
 
+function characterDetectionOptions(
+  filmTitle: string | undefined,
+  objectReferences: VisualReference[] | undefined,
+  locationReferences: LocationReference[] | undefined
+): DetectCharactersOptions {
+  return {
+    excludeTexts: filmTitle ? [filmTitle] : [],
+    maskPhrases: collectEntityMaskPhrases({
+      objectNames: (objectReferences || []).map((obj) => obj.name),
+      locationNames: (locationReferences || []).map((loc) => loc.location || loc.locationDisplay),
+    }),
+  }
+}
+
+function sceneDirectionKeyProps(scene: Record<string, unknown>): string[] {
+  const dir = (scene.sceneDirection ?? scene.detailedDirection) as
+    | { scene?: { keyProps?: unknown } }
+    | undefined
+  const props = dir?.scene?.keyProps
+  if (!Array.isArray(props)) return []
+  return props.filter((prop): prop is string => typeof prop === 'string' && prop.trim().length > 0)
+}
+
+function uniqueObjects<T extends { id?: string; name?: string }>(objects: T[]): T[] {
+  const seen = new Set<string>()
+  const out: T[] = []
+  for (const obj of objects) {
+    const key = String(obj.id || obj.name || '').toLowerCase()
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    out.push(obj)
+  }
+  return out
+}
+
 /**
  * When beat-scoped name detect misses (pronouns, "the man"), pull talent from
  * other beats, scene dialogue, and remaining scene text rather than generating
@@ -160,9 +202,11 @@ function uniqueProjectCharacters<
 function resolveSceneCastFallback(
   scene: Record<string, unknown>,
   projectCharacters: ResolveBeatFrameGenerationContextArgs['projectCharacters'],
-  filmTitle?: string
+  filmTitle: string | undefined,
+  objectReferences: VisualReference[],
+  locationReferences: LocationReference[]
 ): ResolveBeatFrameGenerationContextArgs['projectCharacters'] {
-  const excludeTexts = filmTitle ? [filmTitle] : []
+  const detectOptions = characterDetectionOptions(filmTitle, objectReferences, locationReferences)
   const beats = getSceneBeats(scene)
   const found: ResolveBeatFrameGenerationContextArgs['projectCharacters'] = []
 
@@ -174,7 +218,7 @@ function resolveSceneCastFallback(
       ...detectCharactersInText(
         [other.actionDescription || '', other.line || '', other.character || ''].join(' '),
         projectCharacters,
-        { excludeTexts }
+        detectOptions
       )
     )
   }
@@ -196,7 +240,7 @@ function resolveSceneCastFallback(
     String(scene.action || ''),
     ...beats.map((b) => `${b.actionDescription || ''} ${b.line || ''} ${b.character || ''}`),
   ].join(' ')
-  found.push(...detectCharactersInText(sceneText, projectCharacters, { excludeTexts }))
+  found.push(...detectCharactersInText(sceneText, projectCharacters, detectOptions))
 
   return uniqueProjectCharacters(found)
 }
@@ -205,7 +249,9 @@ function resolveBeatCharacters(
   scene: Record<string, unknown>,
   beat: SceneBeat,
   projectCharacters: ResolveBeatFrameGenerationContextArgs['projectCharacters'],
-  filmTitle?: string
+  filmTitle: string | undefined,
+  objectReferences: VisualReference[],
+  locationReferences: LocationReference[]
 ): Array<{ id?: string; name?: string; referenceImage?: string }> {
   if (isNoTalentSceneForFrames(scene)) return []
 
@@ -213,28 +259,50 @@ function resolveBeatCharacters(
     return []
   }
 
+  const detectOptions = characterDetectionOptions(filmTitle, objectReferences, locationReferences)
+  let matched: ResolveBeatFrameGenerationContextArgs['projectCharacters'] = []
+
   if (beat.kind === 'action') {
     const actionContext = [
       sceneHeadingText(scene),
       beat.actionDescription || '',
     ].join(' ')
-    const matched = detectCharactersInText(actionContext, projectCharacters, {
-      excludeTexts: filmTitle ? [filmTitle] : [],
-    })
-    if (matched.length > 0) return matched
-
-    const nonNarrators = projectCharacters.filter(
-      (c) => c.type !== 'narrator' && (c.referenceImage || c.id || c.name)
-    )
-    if (nonNarrators.length === 1) {
-      return [nonNarrators[0]]
+    matched = detectCharactersInText(actionContext, projectCharacters, detectOptions)
+    if (matched.length === 0) {
+      const nonNarrators = projectCharacters.filter(
+        (c) => c.type !== 'narrator' && (c.referenceImage || c.id || c.name)
+      )
+      if (nonNarrators.length === 1) {
+        matched = [nonNarrators[0]]
+      } else {
+        matched = resolveSceneCastFallback(
+          scene,
+          projectCharacters,
+          filmTitle,
+          objectReferences,
+          locationReferences
+        )
+      }
     }
-    return resolveSceneCastFallback(scene, projectCharacters, filmTitle)
+  } else {
+    const speaker = resolveBeatSpeaker(beat, projectCharacters)
+    matched = speaker
+      ? [speaker]
+      : resolveSceneCastFallback(
+          scene,
+          projectCharacters,
+          filmTitle,
+          objectReferences,
+          locationReferences
+        )
   }
 
-  const speaker = resolveBeatSpeaker(beat, projectCharacters)
-  if (speaker) return [speaker]
-  return resolveSceneCastFallback(scene, projectCharacters, filmTitle)
+  return intersectDetectedCharactersWithDirectionText(
+    matched,
+    buildSceneStagingText(scene),
+    projectCharacters,
+    detectOptions
+  )
 }
 
 function buildCharacterWardrobes(
@@ -265,7 +333,14 @@ export function resolveBeatFrameGenerationContext(
   const { scene, beat, sceneIndex, projectCharacters, locationReferences, objectReferences, filmTitle } = args
   const warnings: string[] = []
 
-  const matchedChars = resolveBeatCharacters(scene, beat, projectCharacters, filmTitle)
+  const matchedChars = resolveBeatCharacters(
+    scene,
+    beat,
+    projectCharacters,
+    filmTitle,
+    objectReferences,
+    locationReferences
+  )
   const characterIds = matchedChars
     .map((c) => c.id || c.name)
     .filter((id): id is string => !!id)
@@ -292,7 +367,10 @@ export function resolveBeatFrameGenerationContext(
   }
 
   const matchText = buildBeatPropMatchText(scene, beat)
-  const detectedObjects = findSceneObjects(matchText, objectReferences as any[])
+  const detectedObjects = uniqueObjects([
+    ...findSceneObjects(matchText, objectReferences as any[]),
+    ...matchObjectsBySelectedNames(sceneDirectionKeyProps(scene), objectReferences as any[]),
+  ])
   const objectRefIds = detectedObjects.map((o) => o.id).filter(Boolean) as string[]
 
   const characterWardrobes = buildCharacterWardrobes(scene, characterIds, projectCharacters, sceneIndex)
@@ -370,12 +448,16 @@ export function unionBeatSelectionWithPromptText(
   projectCharacters: ResolveBeatFrameGenerationContextArgs['projectCharacters'],
   scene: Record<string, unknown>,
   sceneIndex?: number,
-  filmTitle?: string
+  filmTitle?: string,
+  objectReferences: VisualReference[] = [],
+  locationReferences: LocationReference[] = []
 ): BeatReferenceSelection {
   if (!promptText?.trim() || projectCharacters.length === 0) return selection
-  const extra = detectCharactersInText(promptText, projectCharacters, {
-    excludeTexts: filmTitle ? [filmTitle] : [],
-  })
+  const extra = detectCharactersInText(
+    promptText,
+    projectCharacters,
+    characterDetectionOptions(filmTitle, objectReferences, locationReferences)
+  )
   const characterIds = [...selection.characterIds]
   const seen = new Set(characterIds.map((id) => id.toLowerCase()))
   for (const char of extra) {

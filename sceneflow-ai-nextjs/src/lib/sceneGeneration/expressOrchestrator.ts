@@ -191,7 +191,9 @@ export function resolveExpressBeatReferences(args: {
       projectCharacters,
       scene,
       sceneIndex,
-      filmTitle
+      filmTitle,
+      objectReferences,
+      locationReferences
     )
     return {
       api: mapBeatReferenceSelectionForApi(

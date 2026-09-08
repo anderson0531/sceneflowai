@@ -90,7 +90,7 @@ Identify 3-8 significant objects that:
 5. Track EXACTLY which scene numbers each object appears in
 
 For each object, provide:
-- name: Short, specific name (e.g., "Marcus's Vintage Pocket Watch", "The Genesis Device")
+- name: Short, specific VISUAL name that does NOT include character names, location names, or possessives (e.g. "1893 Water-Damaged Leather Journal", "Brass Faraday Energy Core", "Rugged Military Laptop"). NEVER use forms like "Marcus's Vintage Pocket Watch" or "Arthur Pendelton's 1893 Journal" — ownership is stored separately, not in the prompt-facing name.
 - description: Detailed visual description for image generation (materials, colors, style, era, condition)
 - category: One of: prop, vehicle, set-piece, costume, technology, other
 - importance: One of: critical (plot device that drives the story), important (recurring in 2+ scenes), background (atmosphere only - AVOID these unless essential)

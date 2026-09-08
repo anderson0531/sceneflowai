@@ -330,10 +330,14 @@ export function resolveFrameGenerationContext(args: ResolveFrameGenerationContex
     .trim()
 
   const sceneNumber = typeof scene?.sceneNumber === 'number' ? scene.sceneNumber : undefined
+  const maskPhrases = [
+    ...objectReferences.map((obj) => obj.name).filter(Boolean),
+    ...locationReferences.map((loc) => loc.location || loc.locationDisplay || '').filter(Boolean),
+  ]
 
   let matchedChars = isNoTalentSceneForFrames(scene)
     ? []
-    : findSceneCharacters(sceneMatchText, projectCharacters as any[])
+    : findSceneCharacters(sceneMatchText, projectCharacters as any[], { maskPhrases })
 
   if (!isNoTalentSceneForFrames(scene) && matchedChars.length === 0) {
     matchedChars = dialogueSpeakerFallback(segment, projectCharacters)

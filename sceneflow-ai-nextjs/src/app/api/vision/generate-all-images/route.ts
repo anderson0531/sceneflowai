@@ -106,7 +106,12 @@ export async function POST(request: NextRequest) {
             ...(scene.dialogue || []).map((d: any) => d.character || '')
           ].join(' ')
           
-          let detectedChars = findSceneCharacters(sceneText, characters)
+          let detectedChars = findSceneCharacters(sceneText, characters, {
+            maskPhrases: [
+              ...projectObjectRefs.map((o: any) => o.name).filter(Boolean),
+              ...projectLocationRefs.map((l: any) => l.location || l.name).filter(Boolean),
+            ],
+          })
           
           // Filter out narrator/voiceover-only characters — they have no visual representation
           detectedChars = detectedChars.filter((c: any) => 

@@ -20,6 +20,11 @@ export interface SceneDirectionMetadata {
   atmosphere?: string
   keyProps?: string[]
   locationDescription?: string
+  /** Authoritative scene-level prose for who/what is on camera */
+  sceneDescription?: string
+  talentBlocking?: string
+  talentKeyActions?: string[]
+  talentEmotionalBeat?: string
 }
 
 export function detectSceneType(
@@ -72,6 +77,25 @@ export function extractDirectionMetadata(sceneDirection: any): SceneDirectionMet
   if (!sceneDirection) return {}
 
   const metadata: SceneDirectionMetadata = {}
+
+  if (typeof sceneDirection.sceneDescription === 'string' && sceneDirection.sceneDescription.trim()) {
+    metadata.sceneDescription = sceneDirection.sceneDescription.trim()
+  }
+
+  if (sceneDirection.talent && typeof sceneDirection.talent === 'object') {
+    const talent = sceneDirection.talent
+    if (typeof talent.blocking === 'string' && talent.blocking.trim()) {
+      metadata.talentBlocking = talent.blocking.trim()
+    }
+    if (Array.isArray(talent.keyActions)) {
+      metadata.talentKeyActions = talent.keyActions.filter(
+        (action: unknown): action is string => typeof action === 'string' && action.trim().length > 0
+      )
+    }
+    if (typeof talent.emotionalBeat === 'string' && talent.emotionalBeat.trim()) {
+      metadata.talentEmotionalBeat = talent.emotionalBeat.trim()
+    }
+  }
 
   if (sceneDirection.lighting) {
     const lighting = sceneDirection.lighting
