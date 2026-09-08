@@ -56,13 +56,19 @@ import {
 } from '@/i18n/content/buildBlueprintDisplayFields'
 import { TranslationNotice } from '@/components/i18n/LocalizedField'
 
-/** Blueprint body sections, in tab order. Labels resolve through the catalog. */
+/**
+ * Blueprint body sections, in tab order. Labels resolve through the catalog.
+ *
+ * The order matches BLUEPRINT_REVIEW_SECTION_THEME and the share viewer's nav,
+ * so a reviewer reading the shared link and the author editing in the studio
+ * move through the treatment in the same sequence.
+ */
 const SECTION_TABS: Array<{ id: BlueprintFixSection; labelKey: string }> = [
   { id: 'core', labelKey: 'tabs.core' },
   { id: 'story', labelKey: 'tabs.story' },
-  { id: 'tone', labelKey: 'tabs.tone' },
-  { id: 'beats', labelKey: 'tabs.beats' },
   { id: 'characters', labelKey: 'tabs.characters' },
+  { id: 'beats', labelKey: 'tabs.beats' },
+  { id: 'tone', labelKey: 'tabs.tone' },
 ]
 
 const SECTION_TAB_IDS: BlueprintFixSection[] = SECTION_TABS.map((t) => t.id)

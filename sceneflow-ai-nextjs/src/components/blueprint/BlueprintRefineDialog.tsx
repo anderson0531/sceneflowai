@@ -77,13 +77,14 @@ type Props = {
   contentI18n?: EntityI18n
 }
 
-const SCOPE_OPTIONS: { id: BlueprintFixSection | 'all'; label: string }[] = [
-  { id: 'all', label: 'Full blueprint balance' },
-  { id: 'core', label: 'Core info' },
-  { id: 'story', label: 'Story' },
-  { id: 'tone', label: 'Tone & style' },
-  { id: 'beats', label: 'Beats' },
-  { id: 'characters', label: 'Characters' },
+/** Focus scopes, ordered to match the studio tabs and the share viewer nav. */
+const SCOPE_OPTIONS: { id: BlueprintFixSection | 'all'; labelKey: string }[] = [
+  { id: 'all', labelKey: 'scopes.all' },
+  { id: 'core', labelKey: 'scopes.core' },
+  { id: 'story', labelKey: 'scopes.story' },
+  { id: 'characters', labelKey: 'scopes.characters' },
+  { id: 'beats', labelKey: 'scopes.beats' },
+  { id: 'tone', labelKey: 'scopes.tone' },
 ]
 
 function sectionFromTab(tab?: string): BlueprintFixSection | 'all' {
@@ -779,7 +780,7 @@ export function BlueprintRefineDialog({
                           : 'border-slate-700 text-gray-400 hover:border-slate-500'
                       )}
                     >
-                      {opt.label}
+                      {t(opt.labelKey)}
                     </button>
                   ))}
                 </div>
