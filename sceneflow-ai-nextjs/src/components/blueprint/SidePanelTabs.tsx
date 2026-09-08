@@ -17,8 +17,6 @@ import type {
   PersistedBlueprintAudienceResonance,
   AudienceIntent,
 } from '@/lib/types/audienceResonance'
-import { isBlueprintARV3Enabled } from '@/lib/types/audienceResonance'
-import { AudienceResonancePanel } from './AudienceResonancePanel'
 import type { OpenBlueprintRefineOptions } from '@/lib/blueprint/openBlueprintRefine'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { triggerBlueprintShareSectionAudio } from '@/lib/blueprint/createBlueprintShare'
@@ -177,31 +175,21 @@ export function SidePanelTabs({
       {/* Content */}
       <div className="flex-1 overflow-hidden">
         {activeTab === 'resonance' ? (
-          isBlueprintARV3Enabled() ? (
-            <AudienceResonancePanelV3
-              treatment={currentTreatment}
-              projectId={projectId}
-              audienceDefinition={audienceDefinition}
-              savedBlueprintAR={savedBlueprintAR}
-              legacyIntent={legacyIntent}
-              contentIntent={contentIntent}
-              onTreatmentUpdate={handleTreatmentUpdate}
-              onProceedToScripting={onProceedToScripting}
-              onAudienceDefinitionSave={onAudienceDefinitionSave}
-              onAnalysisComplete={onAnalysisComplete}
-              onOpenBlueprintRefine={onOpenBlueprintRefine}
-              onScrollToSection={onScrollToSection}
-              contentI18n={contentI18n}
-            />
-          ) : (
-            <AudienceResonancePanel
-              treatment={currentTreatment}
-              projectId={projectId}
-              onTreatmentUpdate={handleTreatmentUpdate}
-              onProceedToScripting={onProceedToScripting}
-              onAnalysisComplete={onAnalysisComplete}
-            />
-          )
+          <AudienceResonancePanelV3
+            treatment={currentTreatment}
+            projectId={projectId}
+            audienceDefinition={audienceDefinition}
+            savedBlueprintAR={savedBlueprintAR}
+            legacyIntent={legacyIntent}
+            contentIntent={contentIntent}
+            onTreatmentUpdate={handleTreatmentUpdate}
+            onProceedToScripting={onProceedToScripting}
+            onAudienceDefinitionSave={onAudienceDefinitionSave}
+            onAnalysisComplete={onAnalysisComplete}
+            onOpenBlueprintRefine={onOpenBlueprintRefine}
+            onScrollToSection={onScrollToSection}
+            contentI18n={contentI18n}
+          />
         ) : activeTab === 'reasoning' ? (
           <div className="h-full overflow-y-auto">
             <NarrativeReasoningPanel

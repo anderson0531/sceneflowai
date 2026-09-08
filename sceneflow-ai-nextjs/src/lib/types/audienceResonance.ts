@@ -1090,14 +1090,6 @@ export function createPersistedBlueprintAR(
 }
 
 /** Load v3 state from project metadata with legacy v2 fallback */
-/** Staged rollout: set NEXT_PUBLIC_BLUEPRINT_AR_V3=0 to use legacy Blueprint AR panel */
-export function isBlueprintARV3Enabled(): boolean {
-  if (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_BLUEPRINT_AR_V3 === '0') {
-    return false
-  }
-  return true
-}
-
 export function loadBlueprintARFromMetadata(metadata: Record<string, unknown> | null | undefined): {
   audienceDefinition: AudienceDefinition | null
   persisted: PersistedBlueprintAudienceResonance | null
