@@ -85,6 +85,7 @@ import {
   isDisplayableImageUrl,
 } from "@/components/vision/DeferredImageSkeleton";
 import { getSceneBeats } from "@/lib/script/beatMigration";
+import { runWithConcurrencyLimit } from "@/lib/utils/concurrency";
 
 /** Parse API response body without throwing on Vercel HTML/plain-text error pages (504, etc.). */
 async function readJsonSafe(res: Response): Promise<Record<string, unknown>> {
@@ -230,6 +231,140 @@ interface CharacterWardrobe {
   needsImageRegen?: boolean;
 }
 
+function generateCharacterFallbackDescription(character: any): string {
+  const parts: string[] = [];
+  if (character.ethnicity) parts.push(character.ethnicity);
+  if (character.keyFeature) parts.push(character.keyFeature);
+  if (character.build) parts.push(character.build);
+  if (character.hairColor && character.hairStyle) {
+    parts.push(`${character.hairColor} ${character.hairStyle} hair`);
+  } else if (character.hairStyle) {
+    parts.push(`${character.hairStyle} hair`);
+  } else if (character.hairColor) {
+    parts.push(`${character.hairColor} hair`);
+  }
+  if (character.eyeColor) parts.push(`${character.eyeColor} eyes`);
+  if (character.expression) parts.push(character.expression);
+  return parts.length > 0
+    ? parts.join(", ")
+    : "Click to add appearance description for scene generation";
+}
+
+interface WardrobeRegenTarget {
+  characterId: string;
+  character: any;
+  wardrobe: CharacterWardrobe;
+}
+
+async function regenerateWardrobeImage(
+  target: WardrobeRegenTarget,
+  projectId: string | undefined,
+  onUpdateWardrobe?: CharacterLibraryProps["onUpdateCharacterWardrobe"],
+): Promise<void> {
+  const { characterId, character, wardrobe } = target;
+  if (!character.referenceImage?.trim()?.startsWith("http")) {
+    throw new Error(`${character.name || "Character"} needs an identity reference image first`);
+  }
+  if (!wardrobe.description?.trim()) {
+    throw new Error(`Wardrobe "${wardrobe.name}" needs an outfit description`);
+  }
+
+  const sceneAction = [wardrobe.description, wardrobe.accessories]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  const uploadPath = `characters/${projectId || "default"}/${characterId}/wardrobes/${wardrobe.id}/full-body-${Date.now()}.png`;
+
+  const response = await fetch("/api/character/generate-scene-headshot", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      projectId,
+      characterId,
+      characterName: character.name,
+      identityReferenceUrl: character.referenceImage,
+      wardrobeDescription: wardrobe.description,
+      wardrobeAccessories: wardrobe.accessories,
+      appearanceNotes: wardrobe.appearanceNotes,
+      appearanceDescription:
+        character.appearanceDescription ||
+        generateCharacterFallbackDescription(character),
+      hairStyle: character.hairStyle,
+      hairColor: character.hairColor,
+      sceneAction,
+      referenceMode: "fullBody",
+      existingFullBodyUrl: wardrobe.fullBodyUrl,
+      forceRegenerate: !!wardrobe.fullBodyUrl,
+      uploadPath,
+    }),
+  });
+
+  const body = await readJsonSafe(response);
+  if (!response.ok) {
+    if (response.status === 504 || response.status === 408) {
+      throw new Error("Generation timed out — please try again");
+    }
+    if (body.code === "INSUFFICIENT_CREDITS") {
+      throw new Error(`Insufficient credits. Need ${body.required as number} credits.`);
+    }
+    throw new Error((body.error as string) || "Failed to generate wardrobe image");
+  }
+
+  const { imageUrl, fullBodyUrl } = body as {
+    imageUrl?: string;
+    fullBodyUrl?: string;
+  };
+  const resolvedUrl = fullBodyUrl || imageUrl;
+  if (!resolvedUrl) {
+    throw new Error("No image URL returned");
+  }
+
+  await onUpdateWardrobe?.(characterId, {
+    wardrobeId: wardrobe.id,
+    fullBodyUrl: resolvedUrl,
+    needsImageRegen: false,
+    action: "update",
+  });
+}
+
+/** Regenerate stale wardrobes with up to `limit` characters in parallel; sequential per character. */
+async function regenerateStaleWardrobesBatch(
+  targets: WardrobeRegenTarget[],
+  projectId: string | undefined,
+  onUpdateWardrobe: CharacterLibraryProps["onUpdateCharacterWardrobe"] | undefined,
+  limit = 3,
+): Promise<{ succeeded: number; failed: number }> {
+  if (targets.length === 0) return { succeeded: 0, failed: 0 };
+
+  const byCharacter = new Map<string, WardrobeRegenTarget[]>();
+  for (const target of targets) {
+    const list = byCharacter.get(target.characterId) || [];
+    list.push(target);
+    byCharacter.set(target.characterId, list);
+  }
+
+  let succeeded = 0;
+  let failed = 0;
+
+  await runWithConcurrencyLimit(
+    Array.from(byCharacter.entries()),
+    limit,
+    async ([, charTargets]) => {
+      for (const target of charTargets) {
+        try {
+          await regenerateWardrobeImage(target, projectId, onUpdateWardrobe);
+          succeeded++;
+        } catch (error) {
+          failed++;
+          console.error("[Wardrobe Regen] Error:", error);
+        }
+      }
+    },
+  );
+
+  return { succeeded, failed };
+}
+
 interface CharacterCardProps {
   character: any;
   characterId: string;
@@ -366,6 +501,19 @@ export function CharacterLibrary({
   const getCharacterId = (char: (typeof castCharacters)[number], idx: number) =>
     char.id || idx.toString();
 
+  const allStaleWardrobeTargets = useMemo((): WardrobeRegenTarget[] => {
+    const targets: WardrobeRegenTarget[] = [];
+    castCharacters.forEach((char, idx) => {
+      const charId = getCharacterId(char, idx);
+      for (const wardrobe of (char.wardrobes || []) as CharacterWardrobe[]) {
+        if (wardrobe.needsImageRegen) {
+          targets.push({ characterId: charId, character: char, wardrobe });
+        }
+      }
+    });
+    return targets;
+  }, [castCharacters]);
+
   const [activeCharacterId, setActiveCharacterId] = useState<string | null>(
     null,
   );
@@ -396,6 +544,7 @@ export function CharacterLibrary({
     WardrobeSyncDiffPreview[] | null
   >(null);
   const [isApplyingAllSync, setIsApplyingAllSync] = useState(false);
+  const [isRegeneratingAllStale, setIsRegeneratingAllStale] = useState(false);
 
   useEffect(() => {
     if (layout !== "dialog") return;
@@ -740,6 +889,34 @@ export function CharacterLibrary({
     }
   };
 
+  const handleRegenerateAllStaleWardrobeImages = async () => {
+    if (allStaleWardrobeTargets.length === 0) {
+      toast.info("No wardrobe images marked for regeneration");
+      return;
+    }
+    if (!onUpdateCharacterWardrobe) {
+      toast.error("Wardrobe update handler unavailable");
+      return;
+    }
+    setIsRegeneratingAllStale(true);
+    try {
+      const { succeeded, failed } = await regenerateStaleWardrobesBatch(
+        allStaleWardrobeTargets,
+        projectId,
+        onUpdateCharacterWardrobe,
+        3,
+      );
+      if (succeeded > 0) {
+        toast.success(`Regenerated ${succeeded} wardrobe image(s)`);
+      }
+      if (failed > 0) {
+        toast.error(`${failed} wardrobe image(s) failed to regenerate`);
+      }
+    } finally {
+      setIsRegeneratingAllStale(false);
+    }
+  };
+
   return (
     <div
       className={`bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 ${compact ? "p-4" : "p-6"} h-full overflow-y-auto`}
@@ -765,19 +942,37 @@ export function CharacterLibrary({
             </button>
           </div>
           {scenes && scenes.length > 0 && castCharacters.length > 0 && (
-            <button
-              onClick={() => void handleUpdateAllWardrobesFromScript()}
-              disabled={isSyncingAllWardrobes}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-amber-600 dark:text-amber-400 border border-amber-500/40 rounded-lg hover:bg-amber-500/10 disabled:opacity-50"
-              title="Rescan the script and update every character's scene looks"
-            >
-              {isSyncingAllWardrobes ? (
-                <Loader className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <RefreshCw className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => void handleUpdateAllWardrobesFromScript()}
+                disabled={isSyncingAllWardrobes}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-amber-600 dark:text-amber-400 border border-amber-500/40 rounded-lg hover:bg-amber-500/10 disabled:opacity-50"
+                title="Rescan the script and update every character's scene looks"
+              >
+                {isSyncingAllWardrobes ? (
+                  <Loader className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-3.5 h-3.5" />
+                )}
+                Update All Wardrobes from Script
+              </button>
+              {allStaleWardrobeTargets.length > 0 && onUpdateCharacterWardrobe && (
+                <button
+                  onClick={() => void handleRegenerateAllStaleWardrobeImages()}
+                  disabled={isRegeneratingAllStale}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-purple-600 dark:text-purple-300 border border-purple-500/40 rounded-lg hover:bg-purple-500/10 disabled:opacity-50"
+                  title="Regenerate wardrobe images marked as changed across all characters"
+                >
+                  {isRegeneratingAllStale ? (
+                    <Loader className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-3.5 h-3.5" />
+                  )}
+                  Regenerate {allStaleWardrobeTargets.length} changed wardrobe
+                  {allStaleWardrobeTargets.length === 1 ? "" : "s"}
+                </button>
               )}
-              Update All Wardrobes from Script
-            </button>
+            </div>
           )}
         </div>
       )}
@@ -2389,17 +2584,31 @@ const CharacterCard = ({
   };
 
   const handleRegenerateStaleWardrobeImages = async () => {
-    const targets = wardrobes.filter((w) => w.needsImageRegen);
+    const targets = wardrobes
+      .filter((w) => w.needsImageRegen)
+      .map((w) => ({ characterId, character, wardrobe: w }));
     if (targets.length === 0) {
       toast.info("No wardrobe images marked for regeneration");
       return;
     }
+    if (!onUpdateWardrobe) {
+      toast.error("Wardrobe update handler unavailable");
+      return;
+    }
     setIsRegeneratingStale(true);
     try {
-      for (const wardrobe of targets) {
-        await handleGenerateWardrobeImage(wardrobe, { allowSoftenRetry: true });
+      const { succeeded, failed } = await regenerateStaleWardrobesBatch(
+        targets,
+        projectId,
+        onUpdateWardrobe,
+        3,
+      );
+      if (succeeded > 0) {
+        toast.success(`Regenerated ${succeeded} wardrobe image(s)`);
       }
-      toast.success(`Regenerated ${targets.length} wardrobe image(s)`);
+      if (failed > 0) {
+        toast.error(`${failed} wardrobe image(s) failed to regenerate`);
+      }
     } catch (error) {
       console.error("[Wardrobe Sync] Regen error:", error);
     } finally {

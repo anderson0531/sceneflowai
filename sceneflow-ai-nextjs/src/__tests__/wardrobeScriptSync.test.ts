@@ -2,8 +2,10 @@ import { describe, it, expect } from 'vitest'
 import {
   buildWardrobeSyncDiff,
   enrichSuggestionsWithBeatAppearanceNotes,
+  isWardrobeOutfitChanged,
   matchSuggestionToExisting,
   mergeWardrobeSyncDiff,
+  notesCoverBeat,
   wardrobeContentFingerprint,
 } from '@/lib/character/wardrobeScriptSync'
 
@@ -114,7 +116,29 @@ describe('wardrobeScriptSync', () => {
     expect(staleWardrobeIds).toEqual([])
   })
 
-  it('clears wardrobe images when merging a stale content update', () => {
+  it('does not mark image stale when AI paraphrases the same outfit', () => {
+    const diff = buildWardrobeSyncDiff('char-1', 'Piper', existing, [
+      {
+        name: 'Office Attire',
+        description: 'Navy blazer with charcoal trousers',
+        accessories: 'Silver watch',
+        appearanceNotes: '',
+        sceneNumbers: [1, 2],
+        reason: 'Same look, reworded',
+      },
+      {
+        name: 'Evening Formal',
+        description: 'Black cocktail dress',
+        sceneNumbers: [5],
+        reason: 'Unchanged',
+      },
+    ])
+
+    expect(diff.updates.find((u) => u.wardrobeId === 'w-office')).toBeUndefined()
+    expect(diff.updates.filter((u) => u.imageStale)).toHaveLength(0)
+  })
+
+  it('preserves wardrobe images when merging a stale content update', () => {
     const diff = buildWardrobeSyncDiff('char-1', 'Piper', existing, [
       {
         name: 'Office Attire',
@@ -135,7 +159,7 @@ describe('wardrobeScriptSync', () => {
     const { wardrobes, staleWardrobeIds } = mergeWardrobeSyncDiff(existing, diff)
     const office = wardrobes.find((w) => w.id === 'w-office')
     expect(staleWardrobeIds).toContain('w-office')
-    expect(office?.fullBodyUrl).toBeUndefined()
+    expect(office?.fullBodyUrl).toBe('https://blob.example/office.png')
     expect(office?.needsImageRegen).toBe(true)
     expect(office?.description).toMatch(/Torn navy/i)
   })
@@ -167,6 +191,52 @@ describe('wardrobeScriptSync', () => {
     )
 
     expect(suggestions[0].appearanceNotes).toMatch(/bruise|bloodshot/i)
+  })
+
+  it('skips beat-note enrich when existing look has same outfit and empty notes', () => {
+    const suggestions = enrichSuggestionsWithBeatAppearanceNotes(
+      [
+        {
+          name: 'Office Attire',
+          description: 'Navy blazer and charcoal trousers',
+          accessories: 'Silver watch',
+          sceneNumbers: [1],
+          reason: 'Main look',
+        },
+      ],
+      [
+        {
+          sceneNumber: 1,
+          heading: 'INT. OFFICE - DAY',
+          beats: [
+            {
+              kind: 'action',
+              actionDescription: 'Piper adjusts silver watch, tired eyes',
+            },
+          ],
+        },
+      ],
+      'Piper',
+      existing
+    )
+
+    expect(suggestions[0].appearanceNotes).toBeUndefined()
+  })
+
+  it('isWardrobeOutfitChanged tolerates paraphrase', () => {
+    expect(
+      isWardrobeOutfitChanged(
+        { description: 'Navy blazer and charcoal trousers', accessories: 'Silver watch' },
+        { description: 'Navy blazer with charcoal trousers', accessories: 'Silver watch' }
+      )
+    ).toBe(false)
+  })
+
+  it('notesCoverBeat detects overlapping injury notes', () => {
+    expect(
+      notesCoverBeat('bruised hands, bloodshot eyes', 'bruised hands and bloodshot eyes')
+    ).toBe(true)
+    expect(notesCoverBeat('', 'bruised hands')).toBe(false)
   })
 
   it('wardrobeContentFingerprint changes when notes change', () => {

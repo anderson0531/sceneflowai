@@ -144,7 +144,8 @@ Respond with valid JSON only:
   suggestions = enrichSuggestionsWithBeatAppearanceNotes(
     suggestions,
     characterScenes,
-    character.name
+    character.name,
+    existing
   )
 
   suggestions.sort((a, b) => {

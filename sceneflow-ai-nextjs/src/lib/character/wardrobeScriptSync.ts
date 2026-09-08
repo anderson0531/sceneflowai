@@ -128,6 +128,59 @@ export function wardrobeContentFingerprint(w: {
   ].join('|')
 }
 
+const OUTFIT_SIMILARITY_THRESHOLD = 0.85
+const NOTES_SIMILARITY_THRESHOLD = 0.85
+const NOTES_COVERAGE_THRESHOLD = 0.7
+
+function wardrobeOutfitTokens(w: {
+  description?: string
+  accessories?: string
+}): Set<string> {
+  return significantTokens(`${w.description || ''} ${w.accessories || ''}`)
+}
+
+function wardrobeNotesTokens(notes?: string): Set<string> {
+  return significantTokens(notes || '')
+}
+
+/** True when description/accessories differ beyond paraphrase tolerance. */
+export function isWardrobeOutfitChanged(
+  before: { description?: string; accessories?: string },
+  after: { description?: string; accessories?: string }
+): boolean {
+  const score = tokenJaccard(wardrobeOutfitTokens(before), wardrobeOutfitTokens(after))
+  return score < OUTFIT_SIMILARITY_THRESHOLD
+}
+
+/** True when appearance notes differ beyond paraphrase tolerance. */
+export function isAppearanceNotesChanged(before?: string, after?: string): boolean {
+  const b = (before || '').trim()
+  const a = (after || '').trim()
+  if (!b && !a) return false
+  if (!b || !a) return true
+  const score = tokenJaccard(
+    wardrobeNotesTokens(b),
+    wardrobeNotesTokens(a)
+  )
+  return score < NOTES_SIMILARITY_THRESHOLD
+}
+
+/** Beat notes are already represented in stored appearance notes. */
+export function notesCoverBeat(existingNotes: string, beatNotes: string): boolean {
+  const beat = (beatNotes || '').trim()
+  if (!beat) return true
+  const existing = (existingNotes || '').trim()
+  if (!existing) return false
+  const beatTokens = wardrobeNotesTokens(beat)
+  if (beatTokens.size === 0) return true
+  let covered = 0
+  const existingSet = wardrobeNotesTokens(existing)
+  for (const token of beatTokens) {
+    if (existingSet.has(token)) covered++
+  }
+  return covered / beatTokens.size >= NOTES_COVERAGE_THRESHOLD
+}
+
 function sceneOverlapScore(a?: number[], b?: number[]): number {
   if (!a?.length || !b?.length) return 0
   const setB = new Set(b)
@@ -238,13 +291,12 @@ export function buildWardrobeSyncDiff(
         ? suggestion.appearanceNotes
         : match.appearanceNotes
 
-    const beforeFp = wardrobeContentFingerprint(match)
-    const afterFp = wardrobeContentFingerprint({
+    const outfitChanged = isWardrobeOutfitChanged(match, {
       description: nextDescription,
       accessories: nextAccessories,
-      appearanceNotes: nextNotes,
     })
-    const imageStale = beforeFp !== afterFp
+    const notesChanged = isAppearanceNotesChanged(match.appearanceNotes, nextNotes)
+    const imageStale = outfitChanged || notesChanged
     const nextScenes = sceneNumbers.length > 0 ? sceneNumbers : normalizeSceneNumbers(match.sceneNumbers)
     const scenesChanged = !arraysEqual(
       nextScenes,
@@ -319,9 +371,6 @@ export function mergeWardrobeSyncDiff(
     const next = { ...current, ...update.patch }
     if (update.imageStale) {
       next.needsImageRegen = true
-      next.fullBodyUrl = undefined
-      next.headshotUrl = undefined
-      next.previewImageUrl = undefined
       staleWardrobeIds.push(current.id)
     }
     byId.set(update.wardrobeId, next)
@@ -389,7 +438,8 @@ export function mergeWardrobeSyncDiff(
 export function enrichSuggestionsWithBeatAppearanceNotes(
   suggestions: WardrobeSuggestionLike[],
   characterScenes: WardrobeAnalysisSceneInput[],
-  characterName: string
+  characterName: string,
+  existing?: ExistingWardrobeLike[]
 ): WardrobeSuggestionLike[] {
   if (characterScenes.length === 0) return suggestions
 
@@ -416,6 +466,18 @@ export function enrichSuggestionsWithBeatAppearanceNotes(
 
     if (matching.length > 0) {
       const target = matching[0]
+      const existingMatch = existing?.length
+        ? matchSuggestionToExisting(target, existing, new Set())
+        : null
+      if (existingMatch) {
+        const outfitUnchanged = !isWardrobeOutfitChanged(existingMatch, target)
+        if (
+          notesCoverBeat(existingMatch.appearanceNotes || '', notes) ||
+          (outfitUnchanged && !(existingMatch.appearanceNotes || '').trim())
+        ) {
+          continue
+        }
+      }
       target.appearanceNotes = notes
       if (
         !target.reason.toLowerCase().includes('bruise') &&
