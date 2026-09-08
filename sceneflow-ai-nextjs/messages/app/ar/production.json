@@ -180,6 +180,7 @@
     "noAudioItems": "لا توجد عناصر صوتية متاحة لهذا المشهد.",
     "statusReady": "مستعد",
     "statusMissing": "مفتقد",
+    "statusPromptChanged": "تغيّر النص",
     "sfxDurationPreset": "مدة SFX محددة مسبقًا",
     "durationAuto": "تلقائي ({seconds}s · Veo {veoSeconds}s)",
     "durationShort": "قصير 3ث/فيو 4ث",

@@ -180,6 +180,7 @@
     "noAudioItems": "No hay elementos de audio disponibles para esta escena.",
     "statusReady": "Listo",
     "statusMissing": "Desaparecido",
+    "statusPromptChanged": "Texto cambiado",
     "sfxDurationPreset": "Preajuste de duración de SFX",
     "durationAuto": "Auto ({seconds}s · Veo {veoSeconds}s)",
     "durationShort": "3 cortos / Veo 4",

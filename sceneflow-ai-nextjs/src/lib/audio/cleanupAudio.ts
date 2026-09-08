@@ -18,6 +18,7 @@ import {
 import { upsertBeatSfxCueOnScene } from '@/lib/script/deriveSfxFromSceneContent'
 import { stripGhostStandaloneNarration } from '@/lib/script/narration'
 import { coerceSceneSfxFlatArray } from '@/lib/script/segmentScript'
+import { stampStaleBeatAudioOnScene } from '@/lib/audio/beatAudioStale'
 
 export type PreserveElement =
   | 'dialogueBeats'
@@ -992,16 +993,26 @@ export function mergeScenesForScriptSave(
       const canonSfxSlots = countNonEmptySfxSlots(canonical)
       const incomingSfxSlots = countNonEmptySfxSlots(incoming)
       if (incomingSfxSlots > canonSfxSlots) {
-        merged.push(mergeScenePreservingMedia(canonical, incoming))
+        merged.push(
+          stampStaleBeatAudioOnScene(
+            canonical,
+            mergeScenePreservingMedia(canonical, incoming)
+          )
+        )
       } else {
         merged.push(
-          mergeScenePreservingMedia(canonical, mergeScenePreservingAudio(canonical, incoming))
+          stampStaleBeatAudioOnScene(
+            canonical,
+            mergeScenePreservingMedia(canonical, mergeScenePreservingAudio(canonical, incoming))
+          )
         )
       }
       continue
     }
 
-    merged.push(mergeScenePreservingMedia(canonical, incoming))
+    merged.push(
+      stampStaleBeatAudioOnScene(canonical, mergeScenePreservingMedia(canonical, incoming))
+    )
   }
 
   return merged

@@ -31,6 +31,7 @@ import { resolveCharacterVoicePrompt } from '../../../../lib/tts/resolveCharacte
 import { buildGeminiTtsAdvancedVoiceOptions } from '../../../../lib/tts/geminiTtsSafety'
 import { resolveGeminiTtsLanguageCode, resolveGoogleTtsLanguageCode } from '../../../../lib/tts/googleTtsLocale'
 import { persistSceneAudioAtomic } from '../../../../lib/audio/persistSceneAudioAtomic'
+import { audioSourceFingerprintForSpoken } from '../../../../lib/audio/beatAudioStale'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -375,6 +376,15 @@ export async function POST(req: NextRequest) {
 
     console.log(`[Scene Audio] Uploaded to Vercel Blob:`, blob.url)
 
+    const sourceFingerprint =
+      audioType === 'narration' || audioType === 'dialogue'
+        ? audioSourceFingerprintForSpoken({
+            kind: lineKind || (audioType === 'narration' ? 'narration' : 'dialogue'),
+            character: characterName,
+            line: text,
+          })
+        : undefined
+
     // Step 7: Update scene in project metadata with language-specific storage
     if (!skipDbUpdate) {
       await updateSceneAudio(
@@ -389,7 +399,8 @@ export async function POST(req: NextRequest) {
         dialogueIndex,
         adaptationDiagnostics,
         { lineId, lineKind, characterId },
-        usedProvider
+        usedProvider,
+        sourceFingerprint
       )
     }
 
@@ -894,7 +905,8 @@ async function updateSceneAudio(
     lineKind?: 'narration' | 'dialogue'
     characterId?: string
   },
-  provider?: string
+  provider?: string,
+  sourceFingerprint?: string
 ) {
   console.log('[Update Scene Audio] Persisting via locked atomic writer:', {
     projectId,
@@ -918,6 +930,7 @@ async function updateSceneAudio(
     adaptation,
     lineMeta,
     provider,
+    sourceFingerprint,
     updateScriptUpdatedAt: true,
   })
 

@@ -180,6 +180,7 @@
     "noAudioItems": "इस दृश्य के लिए कोई ऑडियो आइटम उपलब्ध नहीं है।",
     "statusReady": "तैयार",
     "statusMissing": "गुमा Generic prefix label for error messages when creating documentation index, first arg is the document' s identifier, second is the document' s name",
+    "statusPromptChanged": "प्रॉम्प्ट बदला",
     "sfxDurationPreset": "SFX अवधि प्रीसेट",
     "durationAuto": "ऑटो ({seconds}s · VEO {veoSeconds}s)",
     "durationShort": "छोटा 3s / VEO 4s",

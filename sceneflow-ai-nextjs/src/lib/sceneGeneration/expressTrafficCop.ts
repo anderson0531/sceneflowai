@@ -39,6 +39,9 @@ const EXPRESS_LANES: ExpressLane[] = ['text', 'image', 'audio']
 /** Default image in-flight cap under Startup / shared Vertex quota. */
 export const DEFAULT_EXPRESS_IMAGE_CONCURRENCY = 3
 
+/** Default TTS in-flight cap for Express Audio / Storyboard Express audio lane. */
+export const DEFAULT_EXPRESS_AUDIO_CONCURRENCY = 8
+
 function parsePositiveInt(value: string | undefined, fallback: number): number {
   const n = Number(value ?? fallback)
   return Number.isFinite(n) && n >= 1 ? Math.floor(n) : fallback
@@ -56,6 +59,13 @@ export function getExpressImageConcurrency(): number {
   )
 }
 
+export function getExpressAudioConcurrency(): number {
+  return parsePositiveInt(
+    process.env.EXPRESS_AUDIO_CONCURRENCY,
+    DEFAULT_EXPRESS_AUDIO_CONCURRENCY
+  )
+}
+
 function defaultLaneMax(lane: ExpressLane, overrides?: Partial<Record<ExpressLane, number>>): number {
   if (overrides?.[lane] !== undefined) return overrides[lane]!
   switch (lane) {
@@ -64,7 +74,7 @@ function defaultLaneMax(lane: ExpressLane, overrides?: Partial<Record<ExpressLan
     case 'image':
       return getExpressImageConcurrency()
     case 'audio':
-      return parsePositiveInt(process.env.EXPRESS_AUDIO_CONCURRENCY, 3)
+      return getExpressAudioConcurrency()
   }
 }
 

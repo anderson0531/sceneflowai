@@ -213,6 +213,10 @@ export interface DialogueAudioEntry {
   voiceId?: string
   voiceProvider?: string
   generatedAt?: string
+  /** beatContentFingerprint of the line at generation time. */
+  sourceFingerprint?: string
+  /** True when the script prompt changed after this clip was generated. */
+  audioStale?: boolean
   /** Set when entry is no longer referenced by any segment. */
   orphan?: boolean
 }
@@ -225,4 +229,6 @@ export interface SfxAudioEntry {
   audioUrl: string
   duration?: number
   generatedAt?: string
+  sourceFingerprint?: string
+  audioStale?: boolean
 }

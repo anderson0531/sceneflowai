@@ -62,6 +62,12 @@ import {
   buildExpressAudioItems,
   parseExpressAudioSelectedIds,
 } from '@/lib/audio/buildExpressAudioItems'
+import {
+  actionBeatSfxIsStale,
+  audioSourceFingerprintForSpoken,
+  isBeatAudioStale,
+} from '@/lib/audio/beatAudioStale'
+import { getExpressAudioConcurrency } from '@/lib/sceneGeneration/expressTrafficCop'
 import { runExpressGenerateAll } from '@/lib/sceneGeneration/runExpressGenerateAll'
 
 // Dynamic imports with ssr: false to prevent TDZ circular dependency issues
@@ -4485,18 +4491,31 @@ function SceneCard({
 
   const expressSfxBeatOptions = useMemo(() => {
     const sceneRecord = scene as Record<string, unknown>
-    return listSelectableActionBeats(sceneRecord).map((beat) => ({
-      beatId: beat.beatId,
-      label:
-        beat.actionDescription.length > 72
-          ? `${beat.actionDescription.slice(0, 72)}…`
-          : beat.actionDescription,
-      hasAudio: beatHasSfxAudio(sceneRecord, {
+    return listSelectableActionBeats(sceneRecord).map((beat) => {
+      const hasUrl = beatHasSfxAudio(sceneRecord, {
         beatId: beat.beatId,
         actionDescription: beat.actionDescription,
         kind: 'action',
-      }),
-    }))
+      })
+      return {
+        beatId: beat.beatId,
+        label:
+          beat.actionDescription.length > 72
+            ? `${beat.actionDescription.slice(0, 72)}…`
+            : beat.actionDescription,
+        hasAudio:
+          hasUrl &&
+          !actionBeatSfxIsStale(
+            sceneRecord,
+            {
+              beatId: beat.beatId,
+              actionDescription: beat.actionDescription,
+              kind: 'action',
+            },
+            hasUrl
+          ),
+      }
+    })
   }, [scene])
 
   const selectedExpressCount = selectedExpressBeatIds.size
@@ -4644,8 +4663,21 @@ function SceneCard({
                 lineId: d.lineId,
                 dialogueIndex: i,
                 character: d.character,
+              }) as
+                | { audioUrl?: string; url?: string; sourceFingerprint?: string; audioStale?: boolean }
+                | null
+              const url = entry?.audioUrl || entry?.url
+              const stale = isBeatAudioStale({
+                hasAudio: !!(url && String(url).trim()),
+                sourceFingerprint: entry?.sourceFingerprint,
+                audioStale: entry?.audioStale,
+                currentFingerprint: audioSourceFingerprintForSpoken({
+                  kind: d.kind === 'narration' ? 'narration' : 'dialogue',
+                  character: d.character,
+                  line: d.line,
+                }),
               })
-              if (entry?.audioUrl || entry?.url) return // already has audio
+              if ((entry?.audioUrl || entry?.url) && !stale) return
             }
             tasks.push({
               id: `dialogue-${i}`,
@@ -4656,7 +4688,7 @@ function SceneCard({
           })
 
           if (tasks.length === 0) return
-          await processWithConcurrency(tasks, 3, undefined, false)
+          await processWithConcurrency(tasks, getExpressAudioConcurrency(), undefined, false)
         }
 
         // ---- Music lane ----
@@ -6876,12 +6908,30 @@ function SceneCard({
                                       {parenthetical || d.voiceDirection || d.emotion}
                                     </span>
                                   )}
-                                  {dialogueAudioUrl && (
+                                  {dialogueAudioUrl &&
+                                    isBeatAudioStale({
+                                      hasAudio: true,
+                                      sourceFingerprint: audioEntry?.sourceFingerprint,
+                                      audioStale: audioEntry?.audioStale,
+                                      currentFingerprint: audioSourceFingerprintForSpoken({
+                                        kind: isNarrationBeat ? 'narration' : 'dialogue',
+                                        character: d.character ?? beat.character,
+                                        line: d.line ?? beat.line,
+                                      }),
+                                    }) ? (
+                                    <span
+                                      className="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded flex items-center gap-1"
+                                      title="Beat prompt changed after this audio was generated"
+                                    >
+                                      <AlertTriangle className="w-3 h-3" />
+                                      Prompt changed
+                                    </span>
+                                  ) : dialogueAudioUrl ? (
                                     <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
                                       <Volume2 className="w-3 h-3" />
                                       Ready
                                     </span>
-                                  )}
+                                  ) : null}
                                   </div>
                                   <BeatExcludeToggle
                                     beat={beat}

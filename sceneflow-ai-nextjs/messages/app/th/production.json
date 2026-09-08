@@ -180,6 +180,7 @@
     "noAudioItems": "ไม่มีรายการเสียงสำหรับฉากนี้",
     "statusReady": "พร้อม",
     "statusMissing": "สูญหาย",
+    "statusPromptChanged": "พรอมต์เปลี่ยนแล้ว",
     "sfxDurationPreset": "ระยะเวลา SFX ที่ตั้งไว้ล่วงหน้า",
     "durationAuto": "AUTO ({seconds}s · VEO {veoSeconds}s)",
     "durationShort": "Short 3s/Veo 4s",

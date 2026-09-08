@@ -36,6 +36,7 @@ import {
   type AudioSlotSavedPayload,
   type PreserveElement,
 } from '@/lib/audio/cleanupAudio'
+import { audioSourceFingerprintForSpoken } from '@/lib/audio/beatAudioStale'
 import { resolveStoryboardScenes, totalStoryboardMediaScore } from '@/lib/storyboard/resolveStoryboardScenes'
 import { stampPreVisContentHash, syncPreVisToScript } from '@/lib/storyboard/preVisSync'
 import { getBatchNarrationTtsText } from '@/lib/script/narration'
@@ -11707,7 +11708,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               url: data.audioUrl,
               duration: data.duration || undefined,
               generatedAt: new Date().toISOString(),
-              voiceId: voiceConfig.voiceId
+              voiceId: voiceConfig.voiceId,
+              sourceFingerprint: audioSourceFingerprintForSpoken({
+                kind: 'narration',
+                character: characterName,
+                line: text,
+              }),
+              audioStale: false,
             }
             
             // Maintain backward compatibility: set narrationAudioUrl only for English
@@ -11782,7 +11789,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               ...((dialogueLine as any)?.characterId ? { characterId: (dialogueLine as any).characterId } : {}),
               audioUrl: data.audioUrl,
               duration: data.duration || undefined,
-              voiceId: voiceConfig.voiceId
+              voiceId: voiceConfig.voiceId,
+              sourceFingerprint: audioSourceFingerprintForSpoken({
+                kind: (dialogueLine as any)?.kind === 'narration' ? 'narration' : 'dialogue',
+                character: characterName,
+                line: text,
+              }),
+              audioStale: false,
             }
             
             if (existingIndex >= 0) {

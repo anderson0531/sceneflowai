@@ -16,10 +16,9 @@ import { resolveSfxDuration } from '../../lib/elevenlabs/sfxDuration'
 import { getBatchNarrationTtsText, sceneHasNarratorInDialogue } from '../../lib/script/narration'
 import { processWithConcurrency } from '../utils/concurrent-processor'
 import { isRetryableError } from '../utils/retry'
-import type { ExpressTrafficCop } from './expressTrafficCop'
+import { getExpressAudioConcurrency, type ExpressTrafficCop } from './expressTrafficCop'
+import { audioSourceFingerprintForSpoken } from '../audio/beatAudioStale'
 import type { SceneAudioAsset, SceneAudioCounts, SceneAudioFailure, SceneAudioResult } from './types'
-
-const DIALOGUE_AUDIO_CONCURRENCY = 3
 
 function isRateLimitFailure(error: unknown, status?: number): boolean {
   if (status === 429) return true
@@ -404,7 +403,7 @@ export async function generateSceneAudio(
 
     const dialogueResults = await processWithConcurrency(
       dialogueTasks,
-      DIALOGUE_AUDIO_CONCURRENCY,
+      getExpressAudioConcurrency(),
       undefined,
       false
     )
@@ -500,6 +499,11 @@ export function applyAudioAssetsToScene(
         duration: asset.durationSeconds || 0,
         generatedAt: new Date().toISOString(),
         voiceId: asset.voiceId,
+        sourceFingerprint: audioSourceFingerprintForSpoken({
+          kind: 'narration',
+          line: getBatchNarrationTtsText(scene, undefined) || scene.narration,
+        }),
+        audioStale: false,
       }
     } else if (asset.audioType === 'dialogue') {
       scene.dialogueAudio = scene.dialogueAudio || {}
@@ -519,6 +523,12 @@ export function applyAudioAssetsToScene(
         ...(asset.kind ? { kind: asset.kind } : {}),
         ...(asset.characterId ? { characterId: asset.characterId } : {}),
         dialogueIndex: idx,
+        sourceFingerprint: audioSourceFingerprintForSpoken({
+          kind: asset.kind === 'narration' ? 'narration' : 'dialogue',
+          character: asset.character,
+          line: Array.isArray(scene.dialogue) ? scene.dialogue[idx]?.line : undefined,
+        }),
+        audioStale: false,
       }
     } else if (asset.audioType === 'music') {
       scene.musicAudio = asset.audioUrl
