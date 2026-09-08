@@ -126,14 +126,17 @@ describe('Reasoning panel', () => {
     expect(narrationSection).toContain('buildNarrativeReasoningNarrationText')
   })
 
-  it('defaults to the Reasoning tab', () => {
+  // The panel opens on Resonance, its leftmost tab. Reasoning is still reached
+  // on demand through foundationTabSignal, asserted below.
+  it('is not what the panel opens on', () => {
     expect(panel).toMatch(
-      /useState<'resonance' \| 'collaboration' \| 'reasoning'>\(\s*'reasoning'\s*\)/
+      /useState<'resonance' \| 'collaboration' \| 'reasoning'>\(\s*'resonance'\s*\)/
     )
   })
 
   it('can be focused by signal, like the other tabs', () => {
     expect(panel).toContain('foundationTabSignal')
+    expect(panel).toContain("setActiveTab('reasoning')")
   })
 
   it('REGRESSION: the card no longer renders reasoning or logs while rendering', () => {
