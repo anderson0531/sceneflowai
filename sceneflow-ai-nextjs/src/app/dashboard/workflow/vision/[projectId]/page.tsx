@@ -46,6 +46,7 @@ import {
   applyBeatStoryboardImageToScene,
   applyDialogueStoryboardImageToScene,
   applyEstablishingImageToScene,
+  applyExpressStoryboardImageErrorToScene,
   applyExpressStoryboardImageToScene,
   ensureSceneBeats,
   getSceneBeats,
@@ -287,7 +288,7 @@ import { sanitizeScriptScenes } from '@/lib/script/segmentScript'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
 import { hydrateVisionStateFromFullProject } from '@/lib/vision/hydrateVisionProjectImages'
 import { uploadAssetViaAPI } from '@/lib/vision/uploads'
-import { appendStoryboardFrame, removeStoryboardFrame, findStoryboardFrame, getOrderedStoryboardFrames } from '@/lib/storyboard/types'
+import { appendStoryboardFrame, removeStoryboardFrame, findStoryboardFrame, getOrderedStoryboardFrames, enumerateStoryboardFrameSlots } from '@/lib/storyboard/types'
 
 // Scene Analysis interface for score generation
 interface SceneAnalysis {
@@ -5628,7 +5629,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [expressStatus, setExpressStatus] = useState<ExpressSceneStatusMap>({})
   const [expressBeatFrameOverlay, setExpressBeatFrameOverlay] = useState<{
     visible: boolean
+    sceneIndex: number
     sceneNumber: number
+    language: string
     items: ExpressBeatFrameItem[]
     phases: Record<ExpressOverlayPhase, ExpressPhaseStatus>
     startedAt: number | null
@@ -12803,6 +12806,27 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     []
   )
 
+  const applyExpressSceneImageError = useCallback(
+    (
+      sceneIndex: number,
+      error: string,
+      params?: { beatIndex?: number; frameRole?: 'start' | 'end' }
+    ) => {
+      if (typeof params?.beatIndex !== 'number') return
+      setScript((prev: any) => {
+        if (!prev?.script?.scenes?.[sceneIndex]) return prev
+        const scenes = [...prev.script.scenes]
+        scenes[sceneIndex] = applyExpressStoryboardImageErrorToScene(scenes[sceneIndex], {
+          error,
+          beatIndex: params.beatIndex,
+          frameRole: params.frameRole,
+        })
+        return { ...prev, script: { ...prev.script, scenes } }
+      })
+    },
+    []
+  )
+
   /**
    * Run the Storyboard Express pipeline (Direction, then Audio ∥ Image per scene;
    * multiple scenes in parallel per EXPRESS_SCENE_CONCURRENCY). A traffic cop
@@ -12888,6 +12912,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             includeSFX: !!options.includeSFX,
             includeEndFrames: !!options.includeEndFrames,
             missingFramesOnly: !!options.missingFramesOnly,
+            framesOnly: !!options.framesOnly,
             regenerate: !!options.regenerate,
             storyboardQuality: options.storyboardQuality ?? 'draft',
             finalizeOnly: !!options.finalizeOnly,
@@ -12960,6 +12985,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         ? { rateLimited: true, rateLimitedPhases: { [event.phase]: true } }
                         : {}),
                     })
+                    if (event.phase === 'image' && event.beatIndex != null) {
+                      applyExpressSceneImageError(event.sceneIndex, phaseError, {
+                        beatIndex: event.beatIndex,
+                        frameRole: event.frameRole ?? 'start',
+                      })
+                    }
                     const errLower = String(phaseError).toLowerCase()
                     if (
                       !rateLimitToastShown &&
@@ -13037,9 +13068,26 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           toast.warning(
             `Express finished — ${successScenes} ok, ${failedScenes} with errors${
               rateLimitedFailureCount > 0
-                ? ` (${rateLimitedFailureCount} rate limited — re-run with Only missing frames)`
+                ? ` (${rateLimitedFailureCount} rate limited)`
                 : ''
-            }`
+            }`,
+            {
+              action: {
+                label: 'Retry failed',
+                onClick: () => {
+                  void handleExpressGenerate({
+                    includeMusic: false,
+                    includeSFX: false,
+                    regenerate: false,
+                    missingFramesOnly: true,
+                    framesOnly: true,
+                    language: options.language || 'en',
+                    artStyle: options.artStyle,
+                    storyboardQuality: options.storyboardQuality ?? 'draft',
+                  })
+                },
+              },
+            }
           )
         } else if (failedScenes > 0) {
           toast.error(
@@ -13047,11 +13095,45 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               rateLimitedFailureCount > 0
                 ? ` — ${rateLimitedFailureCount} item${rateLimitedFailureCount === 1 ? '' : 's'} hit rate limits`
                 : ''
-            }`
+            }`,
+            {
+              action: {
+                label: 'Retry failed',
+                onClick: () => {
+                  void handleExpressGenerate({
+                    includeMusic: false,
+                    includeSFX: false,
+                    regenerate: false,
+                    missingFramesOnly: true,
+                    framesOnly: true,
+                    language: options.language || 'en',
+                    artStyle: options.artStyle,
+                    storyboardQuality: options.storyboardQuality ?? 'draft',
+                  })
+                },
+              },
+            }
           )
         } else if (rateLimitedFailureCount > 0) {
           toast.warning(
-            `Express complete with ${rateLimitedFailureCount} rate-limited item${rateLimitedFailureCount === 1 ? '' : 's'}. Re-run with Only missing frames to fill gaps.`
+            `Express complete with ${rateLimitedFailureCount} rate-limited item${rateLimitedFailureCount === 1 ? '' : 's'}.`,
+            {
+              action: {
+                label: 'Retry failed',
+                onClick: () => {
+                  void handleExpressGenerate({
+                    includeMusic: false,
+                    includeSFX: false,
+                    regenerate: false,
+                    missingFramesOnly: true,
+                    framesOnly: true,
+                    language: options.language || 'en',
+                    artStyle: options.artStyle,
+                    storyboardQuality: options.storyboardQuality ?? 'draft',
+                  })
+                },
+              },
+            }
           )
         }
 
@@ -13259,7 +13341,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       setIsExpressRunning(true)
       setExpressBeatFrameOverlay({
         visible: true,
+        sceneIndex,
         sceneNumber,
+        language: language || 'en',
         items: buildExpressBeatFrameItems(sceneRecord, {
           selectedFrameKeys: options?.selectedFrameKeys,
           includeEndFrames: options?.includeEndFrames,
@@ -13456,6 +13540,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         'error',
                         phaseError
                       )
+                      applyExpressSceneImageError(event.sceneIndex, phaseError, {
+                        beatIndex: event.beatIndex,
+                        frameRole: event.frameRole ?? 'start',
+                      })
                     }
                     const errLower = String(phaseError).toLowerCase()
                     if (
@@ -15766,6 +15854,39 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           finished={expressBeatFrameOverlay.finished}
           preflightError={expressBeatFrameOverlay.preflightError}
           onClose={() => setExpressBeatFrameOverlay(null)}
+          onRetryFailed={(failedKeys) => {
+            const overlay = expressBeatFrameOverlay
+            setExpressBeatFrameOverlay(null)
+            void handleExpressSceneGenerate(overlay.sceneIndex, overlay.language, {
+              scope: 'missing',
+              includeEndFrames: false,
+              selectedFrameKeys: failedKeys,
+            })
+          }}
+          onDirectFailed={(failedKeys) => {
+            const overlay = expressBeatFrameOverlay
+            const scene = script?.script?.scenes?.[overlay.sceneIndex]
+            setExpressBeatFrameOverlay(null)
+            if (!scene) return
+            const slots = enumerateStoryboardFrameSlots(scene as Record<string, unknown>)
+            const slot = slots.find((s) => failedKeys.includes(s.key))
+            if (slot) handleOpenDirectFrame(overlay.sceneIndex, slot)
+          }}
+          onAutoFailed={(failedKeys) => {
+            const overlay = expressBeatFrameOverlay
+            const scene = script?.script?.scenes?.[overlay.sceneIndex]
+            setExpressBeatFrameOverlay(null)
+            if (!scene) return
+            const slots = enumerateStoryboardFrameSlots(scene as Record<string, unknown>)
+            void (async () => {
+              for (const key of failedKeys) {
+                const slot = slots.find((s) => s.key === key)
+                if (slot?.beatId) {
+                  await handleGenerateBeatFrameImage(overlay.sceneIndex, slot.beatId)
+                }
+              }
+            })()
+          }}
         />
       )}
 

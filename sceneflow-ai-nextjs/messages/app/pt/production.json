@@ -221,6 +221,11 @@
     "noFrames": "Não há quadros disponíveis para este escopo.",
     "hasImage": "Tem imagem",
     "missing": "Ausente",
+    "failed": "Falhou",
+    "retryFailed": "Tentar novamente os que falharam",
+    "direct": "Direct",
+    "auto": "Auto",
+    "close": "Fechar",
     "imageCredits": "Créditos da imagem (est.): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "Correndo...",
     "generateScene": "Gerar cena"

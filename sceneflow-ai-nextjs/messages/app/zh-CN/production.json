@@ -221,6 +221,11 @@
     "noFrames": "没有适用于此范围的框架。",
     "hasImage": "有图像",
     "missing": "丢失的",
+    "failed": "失败",
+    "retryFailed": "重试失败帧",
+    "direct": "手动提示",
+    "auto": "自动",
+    "close": "关闭",
     "imageCredits": "图片来源（预计）：{credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "跑步...",
     "generateScene": "生成场景"

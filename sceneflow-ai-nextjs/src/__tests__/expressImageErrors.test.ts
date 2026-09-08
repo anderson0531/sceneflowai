@@ -5,6 +5,7 @@ import {
   isExpressImageRateLimitError,
   isIdentityRefRateLimitExhausted,
   isTransientExpressImageError,
+  formatExpressImageErrorForUser,
   resolveExpressImageErrorStatus,
 } from '@/lib/sceneGeneration/expressImageErrors'
 
@@ -130,5 +131,24 @@ describe('isExpressBeatPoolRetryable', () => {
         )
       )
     ).toBe(false)
+  })
+})
+
+describe('formatExpressImageErrorForUser', () => {
+  it('maps rate limits to a short retry hint', () => {
+    expect(formatExpressImageErrorForUser(err('HTTP 429: RESOURCE_EXHAUSTED', 429))).toBe(
+      'Rate limited — retry this frame'
+    )
+    expect(
+      formatExpressImageErrorForUser(
+        err('Vertex Gemini Image error 429: identity-ref rate limit exhausted after 1 attempt(s)')
+      )
+    ).toBe('Rate limited — retry this frame')
+  })
+
+  it('maps missing reference downloads', () => {
+    expect(
+      formatExpressImageErrorForUser(err('Failed to download reference image: Piper Hayes'))
+    ).toBe('Reference image could not be loaded — retry this frame')
   })
 })

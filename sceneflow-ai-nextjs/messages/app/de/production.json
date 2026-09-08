@@ -221,6 +221,11 @@
     "noFrames": "Für dieses Zielfernrohr sind keine Rahmen verfügbar.",
     "hasImage": "Hat Bild",
     "missing": "Fehlen",
+    "failed": "Fehlgeschlagen",
+    "retryFailed": "Fehlgeschlagene wiederholen",
+    "direct": "Direct",
+    "auto": "Auto",
+    "close": "Schließen",
     "imageCredits": "Bildnachweis (geschätzt): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "Läuft...",
     "generateScene": "Szene generieren"

@@ -163,6 +163,7 @@ export function PreVisFramePromptDialog({
       objectRefIds,
       characterWardrobes,
       resolvedAt: new Date().toISOString(),
+      source: 'user',
     }
   }, [slot?.beatId, selectedCharacterNames, selectedWardrobes, locationRefId, objectRefIds, characters])
 

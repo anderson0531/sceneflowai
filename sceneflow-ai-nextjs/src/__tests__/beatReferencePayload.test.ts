@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 import {
   mapBeatReferenceSelectionForApi,
   shouldUseExplicitBeatReferences,
+  unionBeatSelectionWithPromptText,
+  toBeatReferenceSelection,
 } from '@/lib/vision/beatFrameGenerationContext'
 import type { BeatReferenceSelection, SceneBeat } from '@/lib/script/segmentTypes'
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
@@ -73,7 +75,7 @@ describe('mapBeatReferenceSelectionForApi', () => {
 })
 
 describe('shouldUseExplicitBeatReferences', () => {
-  it('requires resolvedAt on saved beat selection', () => {
+  it('requires a user-saved selection, not Express auto-resolve', () => {
     const beat: SceneBeat = {
       beatId: 'b1',
       sequenceIndex: 0,
@@ -87,6 +89,29 @@ describe('shouldUseExplicitBeatReferences', () => {
     expect(shouldUseExplicitBeatReferences(beat)).toBe(false)
 
     beat.referenceSelection!.resolvedAt = '2026-06-09T12:00:00.000Z'
+    expect(shouldUseExplicitBeatReferences(beat)).toBe(false)
+
+    beat.referenceSelection!.source = 'auto'
+    expect(shouldUseExplicitBeatReferences(beat)).toBe(false)
+
+    beat.referenceSelection!.source = 'user'
     expect(shouldUseExplicitBeatReferences(beat)).toBe(true)
+  })
+})
+
+describe('unionBeatSelectionWithPromptText', () => {
+  it('adds prompt-named cast members to the saved selection', () => {
+    const selection = toBeatReferenceSelection({
+      characterIds: ['c1'],
+      objectRefIds: [],
+      source: 'auto',
+    })
+    const unioned = unionBeatSelectionWithPromptText(
+      selection,
+      'Dutch Angle: Gideon reclaims his academic authority.',
+      characters.concat([{ id: 'c3', name: 'Gideon', referenceImage: 'https://blob.example/gideon.jpg' }]),
+      { heading: 'INT. OFFICE - DAY' }
+    )
+    expect(unioned.characterIds).toEqual(expect.arrayContaining(['c1', 'c3']))
   })
 })

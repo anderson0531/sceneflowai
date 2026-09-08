@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import {
   getSceneExpressBeatConcurrency,
+  getSceneExpressBeatMaxAttempts,
   runAdaptiveBeatPool,
 } from '@/lib/sceneGeneration/adaptiveBeatScheduler'
 import {
@@ -29,6 +30,7 @@ describe('getSceneExpressBeatConcurrency', () => {
   const prevBeat = process.env.SCENE_EXPRESS_BEAT_CONCURRENCY
   const prevFlash = process.env.VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY
   const prevImage = process.env.EXPRESS_IMAGE_CONCURRENCY
+  const prevAttempts = process.env.SCENE_EXPRESS_BEAT_MAX_ATTEMPTS
 
   afterEach(() => {
     if (prevBeat === undefined) delete process.env.SCENE_EXPRESS_BEAT_CONCURRENCY
@@ -37,13 +39,20 @@ describe('getSceneExpressBeatConcurrency', () => {
     else process.env.VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY = prevFlash
     if (prevImage === undefined) delete process.env.EXPRESS_IMAGE_CONCURRENCY
     else process.env.EXPRESS_IMAGE_CONCURRENCY = prevImage
+    if (prevAttempts === undefined) delete process.env.SCENE_EXPRESS_BEAT_MAX_ATTEMPTS
+    else process.env.SCENE_EXPRESS_BEAT_MAX_ATTEMPTS = prevAttempts
   })
 
-  it('defaults to 6', () => {
+  it('defaults to 1 so identity-ref frames serialize', () => {
     delete process.env.SCENE_EXPRESS_BEAT_CONCURRENCY
     delete process.env.VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY
     delete process.env.EXPRESS_IMAGE_CONCURRENCY
-    expect(getSceneExpressBeatConcurrency()).toBe(6)
+    expect(getSceneExpressBeatConcurrency()).toBe(1)
+  })
+
+  it('defaults maxAttempts to 1', () => {
+    delete process.env.SCENE_EXPRESS_BEAT_MAX_ATTEMPTS
+    expect(getSceneExpressBeatMaxAttempts()).toBe(1)
   })
 
   it('reads SCENE_EXPRESS_BEAT_CONCURRENCY env', () => {
@@ -288,6 +297,33 @@ describe('runAdaptiveBeatPool', () => {
     expect(result.failed.has(3)).toBe(true)
     expect(result.failed.has(4)).toBe(true)
     expect(ran).toContain(1)
+  })
+
+  it('fail-fast maxAttempts=1 records a 429 and continues sibling beats', async () => {
+    const ran: number[] = []
+
+    const promise = runAdaptiveBeatPool(
+      [0, 1, 2],
+      async (beatIndex) => {
+        ran.push(beatIndex)
+        if (beatIndex === 0) throw rateLimitError()
+      },
+      {
+        initialConcurrency: 1,
+        maxAttempts: 1,
+        isRetryable: isExpressBeatPoolRetryable,
+        isCanaryAbort: isExpressImageCanaryAbortError,
+      }
+    )
+
+    await vi.runAllTimersAsync()
+    const result = await promise
+
+    expect(result.aborted).toBeUndefined()
+    expect(result.failed.has(0)).toBe(true)
+    expect(result.succeeded.has(1)).toBe(true)
+    expect(result.succeeded.has(2)).toBe(true)
+    expect(ran).toEqual([0, 1, 2])
   })
 
   it('does not retry identity-ref rate limit exhausted errors', async () => {

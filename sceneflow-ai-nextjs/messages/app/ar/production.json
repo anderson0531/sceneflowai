@@ -221,6 +221,11 @@
     "noFrames": "لا توجد إطارات متاحة لهذا النطاق.",
     "hasImage": "لديه صورة",
     "missing": "مفتقد",
+    "failed": "فشل",
+    "retryFailed": "إعادة المحاولة للإطارات الفاشلة",
+    "direct": "مباشر",
+    "auto": "تلقائي",
+    "close": "إغلاق",
     "imageCredits": "اعتمادات الصورة (تقديريًا): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "جري...",
     "generateScene": "توليد المشهد"

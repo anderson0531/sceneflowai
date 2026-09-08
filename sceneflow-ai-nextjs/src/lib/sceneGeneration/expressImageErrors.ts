@@ -119,3 +119,19 @@ export function isExpressBeatPoolRetryable(err: unknown): boolean {
   if (isIdentityRefRateLimitExhausted(err)) return false
   return isTransientExpressImageError(err)
 }
+
+/** Short overlay/tile copy — never dump Vertex payload text to the user. */
+export function formatExpressImageErrorForUser(err: unknown): string {
+  if (isIdentityRefRateLimitExhausted(err) || isExpressImageRateLimitError(err)) {
+    return 'Rate limited — retry this frame'
+  }
+  const msg = String((err as { message?: unknown })?.message || err || '').trim()
+  if (/failed to download reference image|failed to attach all reference/i.test(msg)) {
+    return 'Reference image could not be loaded — retry this frame'
+  }
+  if (msg.toLowerCase().includes('content policy') || msg.toLowerCase().includes('safety')) {
+    return 'Blocked by content policy — edit prompt or retry'
+  }
+  if (!msg) return 'Generation failed'
+  return msg.length > 120 ? `${msg.slice(0, 117)}…` : msg
+}

@@ -221,6 +221,11 @@
     "noFrames": "इस दायरे के लिए कोई फ़्रेम उपलब्ध नहीं है।",
     "hasImage": "इमेज है",
     "missing": "गुमा Generic prefix label for error messages when creating documentation index, first arg is the document' s identifier, second is the document' s name",
+    "failed": "विफल",
+    "retryFailed": "विफल फ़्रेम फिर से आज़माएँ",
+    "direct": "Direct",
+    "auto": "Auto",
+    "close": "बंद करें",
     "imageCredits": "इमेज क्रेडिट (अनुमानित): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "UI कानफिगर करें",
     "generateScene": "सीन जनरेट करें"

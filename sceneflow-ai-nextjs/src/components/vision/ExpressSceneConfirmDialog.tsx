@@ -158,10 +158,14 @@ export function ExpressSceneConfirmDialog({
                       </span>
                       <span
                         className={`text-[10px] ${
-                          slot.ownImageUrl ? 'text-green-400' : 'text-amber-400'
+                          slot.ownImageUrl
+                            ? 'text-green-400'
+                            : slot.imageError
+                              ? 'text-rose-400'
+                              : 'text-amber-400'
                         }`}
                       >
-                        {slot.ownImageUrl ? t('hasImage') : t('missing')}
+                        {slot.ownImageUrl ? t('hasImage') : slot.imageError ? t('failed') : t('missing')}
                       </span>
                     </span>
                   </label>

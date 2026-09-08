@@ -221,6 +221,11 @@
     "noFrames": "No hay marcos disponibles para este alcance.",
     "hasImage": "Tiene imagen",
     "missing": "Desaparecido",
+    "failed": "Falló",
+    "retryFailed": "Reintentar fallidos",
+    "direct": "Directo",
+    "auto": "Auto",
+    "close": "Cerrar",
     "imageCredits": "Créditos de imagen (est.): {credits} ({count, plural, one {# frame} other {# frames}} × {perFrame})",
     "running": "Correr...",
     "generateScene": "Generar escena"

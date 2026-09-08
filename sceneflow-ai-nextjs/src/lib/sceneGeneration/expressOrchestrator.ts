@@ -18,6 +18,7 @@
 import { processWithConcurrency } from '../utils/concurrent-processor'
 import {
   getSceneExpressBeatConcurrency,
+  getSceneExpressBeatMaxAttempts,
   runAdaptiveBeatPool,
   type AdaptiveBeatPoolOptions,
   type AdaptiveBeatPoolResult,
@@ -26,6 +27,7 @@ import {
   isExpressBeatPoolRetryable,
   isExpressImageCanaryAbortError,
   isExpressImageRateLimitError,
+  formatExpressImageErrorForUser,
 } from './expressImageErrors'
 import {
   ExpressTrafficCop,
@@ -52,6 +54,7 @@ import {
   resolveBeatFrameGenerationContext,
   shouldUseExplicitBeatReferences,
   toBeatReferenceSelection,
+  unionBeatSelectionWithPromptText,
 } from '../vision/beatFrameGenerationContext'
 import {
   applyBeatReferenceSelectionToScene,
@@ -130,7 +133,7 @@ export type ExpressBeatRefsResolved = {
   fromSavedSelection: boolean
 }
 
-/** Resolve beat references for Express — saved dialog selection wins, else dialog-parity auto-resolve. */
+/** Resolve beat references for Express — user Direct selection wins, else dialog-parity auto-resolve. */
 export function resolveExpressBeatReferences(args: {
   beat: SceneBeat
   scene: Record<string, unknown>
@@ -138,8 +141,9 @@ export function resolveExpressBeatReferences(args: {
   beatIdx: number
   sceneNumber: number
   project: any
+  promptText?: string
 }): ExpressBeatRefsResolved | null {
-  const { beat, scene, sceneIndex, beatIdx, sceneNumber, project } = args
+  const { beat, scene, sceneIndex, beatIdx, sceneNumber, project, promptText } = args
   const visionPhase = project?.metadata?.visionPhase || {}
   const references = visionPhase.references || {}
   const projectCharacters = visionPhase.characters || []
@@ -147,20 +151,35 @@ export function resolveExpressBeatReferences(args: {
   const objectReferences = references.objectReferences || []
   const filmTitle = project?.metadata?.title || project?.title
 
-  if (shouldUseExplicitBeatReferences(beat)) {
-    console.log(
-      `[expressOrchestrator] Beat ${beatIdx + 1} scene ${sceneNumber} — using saved reference selection`
+  const finish = (
+    selection: BeatReferenceSelection,
+    fromSavedSelection: boolean
+  ): ExpressBeatRefsResolved => {
+    const unioned = unionBeatSelectionWithPromptText(
+      selection,
+      promptText,
+      projectCharacters,
+      scene,
+      sceneIndex,
+      filmTitle
     )
     return {
       api: mapBeatReferenceSelectionForApi(
-        beat.referenceSelection,
+        unioned,
         projectCharacters,
         locationReferences,
         objectReferences
       ),
-      selection: beat.referenceSelection,
-      fromSavedSelection: true,
+      selection: unioned,
+      fromSavedSelection,
     }
+  }
+
+  if (shouldUseExplicitBeatReferences(beat)) {
+    console.log(
+      `[expressOrchestrator] Beat ${beatIdx + 1} scene ${sceneNumber} — using saved user reference selection`
+    )
+    return finish(beat.referenceSelection, true)
   }
 
   const autoCtx = resolveBeatFrameGenerationContext({
@@ -183,18 +202,7 @@ export function resolveExpressBeatReferences(args: {
     )
   }
 
-  const selection = toBeatReferenceSelection(autoCtx)
-
-  return {
-    api: mapBeatReferenceSelectionForApi(
-      autoCtx,
-      projectCharacters,
-      locationReferences,
-      objectReferences
-    ),
-    selection,
-    fromSavedSelection: false,
-  }
+  return finish(toBeatReferenceSelection({ ...autoCtx, source: 'auto' }), false)
 }
 
 export function buildExpressBeatRefPayload(
@@ -354,9 +362,12 @@ function recordRateLimitedFailure(
 }
 
 function buildAdaptiveBeatPoolOptions(emit: ExpressEmit): AdaptiveBeatPoolOptions {
+  const concurrency = getSceneExpressBeatConcurrency()
   return {
-    initialConcurrency: getSceneExpressBeatConcurrency(),
-    maxAttempts: 2,
+    initialConcurrency: concurrency,
+    maxConcurrency: concurrency,
+    minConcurrency: 1,
+    maxAttempts: getSceneExpressBeatMaxAttempts(),
     isRetryable: isExpressBeatPoolRetryable,
     isCanaryAbort: isExpressImageCanaryAbortError,
     onConcurrencyChange: (max, reason) => {
@@ -407,9 +418,12 @@ function emitImageFailure(
   beatIndex?: number,
   frameRole: 'start' | 'end' = 'start'
 ): string {
-  const { sceneIndex, sceneNumber } = ctx
-  const error = (err as any)?.message || String(err)
+  const { sceneIndex, sceneNumber, scene } = ctx
+  const error = formatExpressImageErrorForUser(err)
   const rateLimited = isExpressImageRateLimitError(err)
+  if (typeof beatIndex === 'number') {
+    writeBeatFrameErrorToScene(scene, beatIndex, error, frameRole)
+  }
   safeEmit(emit, {
     type: 'phase-done',
     sceneIndex,
@@ -667,6 +681,7 @@ async function generateSingleBeatImage(
         beatIdx,
         sceneNumber,
         project,
+        promptText: beatPlan?.prompt,
       })
     : null
   if (beat && verifiedBeatRefs?.selection && !verifiedBeatRefs.fromSavedSelection) {
@@ -736,6 +751,7 @@ async function generateSingleBeatEndImage(
   const beat = beats[beatIdx]
   if (!beat) return { imageUrl: startFrameUrl }
 
+  const endPrompt = buildEndFramePrompt(beat)
   const verifiedBeatRefs = resolveExpressBeatReferences({
     beat,
     scene,
@@ -743,6 +759,7 @@ async function generateSingleBeatEndImage(
     beatIdx,
     sceneNumber,
     project,
+    promptText: endPrompt,
   })
   if (verifiedBeatRefs?.selection && !verifiedBeatRefs.fromSavedSelection) {
     persistBeatReferenceSelection(scene, beatIdx, verifiedBeatRefs.selection)
@@ -756,8 +773,6 @@ async function generateSingleBeatEndImage(
     beatIndex: beatIdx,
     frameRole: 'end',
   })
-
-  const endPrompt = buildEndFramePrompt(beat)
 
   const result = await trafficCop.runInLane('image', () =>
     generateSceneImage({
@@ -1024,8 +1039,10 @@ function writeBeatFrameToScene(
 ): void {
   const beats = getSceneBeats(scene)
   if (!beats[beatIndex]) return
+  const previous = beats[beatIndex]
+  const { storyboardImageError: _cleared, ...rest } = previous
   beats[beatIndex] = {
-    ...beats[beatIndex],
+    ...rest,
     storyboardImageUrl: result.imageUrl,
     storyboardImageTier: tier,
     ...(result.gcsPath ? { storyboardImageGcsPath: result.gcsPath } : {}),
@@ -1037,6 +1054,22 @@ function writeBeatFrameToScene(
     scene.imageUrl = result.imageUrl
     if (result.imagePrompt) scene.imagePrompt = result.imagePrompt
   }
+}
+
+function writeBeatFrameErrorToScene(
+  scene: any,
+  beatIndex: number,
+  error: string,
+  frameRole: 'start' | 'end' = 'start'
+): void {
+  const beats = getSceneBeats(scene)
+  if (!beats[beatIndex]) return
+  beats[beatIndex] =
+    frameRole === 'end'
+      ? { ...beats[beatIndex], storyboardEndImageError: error }
+      : { ...beats[beatIndex], storyboardImageError: error }
+  const updated = applyBeatsToScene(scene, beats)
+  Object.assign(scene, updated)
 }
 
 function writeBeatEndFrameToScene(
@@ -1051,6 +1084,7 @@ function writeBeatEndFrameToScene(
     ...beats[beatIndex],
     storyboardEndImageUrl: result.imageUrl,
     storyboardEndImageTier: tier,
+    storyboardEndImageError: undefined,
     ...(result.gcsPath ? { storyboardEndImageGcsPath: result.gcsPath } : {}),
     ...(result.imagePrompt ? { storyboardEndImagePrompt: result.imagePrompt } : {}),
   }

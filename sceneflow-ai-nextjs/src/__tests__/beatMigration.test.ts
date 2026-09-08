@@ -14,6 +14,7 @@ import {
   migrateSceneBeatsToStartFrameOnly,
   applyBeatStoryboardImageToScene,
   applyExpressStoryboardImageToScene,
+  applyExpressStoryboardImageErrorToScene,
 } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
@@ -481,5 +482,37 @@ describe('applyBeatStoryboardImageToScene', () => {
     const storedBeats = updated.beats as SceneBeat[]
     expect(storedBeats[1].storyboardImageUrl).toBe('https://example.com/tracking.jpg')
     expect(updated.storyboardStatus).toBe('pending_review')
+  })
+
+  it('persists beat frame errors and clears them on later success', () => {
+    const scene = {
+      heading: 'INT. OFFICE - DAY',
+      beats: [
+        {
+          beatId: 'bt_0',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Wide',
+        },
+      ],
+    }
+
+    const failed = applyExpressStoryboardImageErrorToScene(scene, {
+      error: 'Rate limited — retry this frame',
+      beatIndex: 0,
+    })
+    expect((failed.beats as SceneBeat[])[0].storyboardImageError).toBe(
+      'Rate limited — retry this frame'
+    )
+
+    const recovered = applyExpressStoryboardImageToScene(failed, {
+      imageUrl: 'https://example.com/ok.jpg',
+      beatIndex: 0,
+      imageTier: 'draft',
+    })
+    expect((recovered.beats as SceneBeat[])[0].storyboardImageError).toBeUndefined()
+    expect((recovered.beats as SceneBeat[])[0].storyboardImageUrl).toBe(
+      'https://example.com/ok.jpg'
+    )
   })
 })

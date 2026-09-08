@@ -216,4 +216,28 @@ Strictly Avoid: cartoon style.`
     expect(output).not.toMatch(/combo references/i)
     expect(output).not.toMatch(/use your expertise/i)
   })
+
+  it('does not leave a dangling Focus on person [N]: after quote stripping', () => {
+    const prompt = optimizePromptForImagen({
+      sceneAction: 'Dutch Angle: Gideon reclaims his academic authority. Focus on person [1]: "Stand down."',
+      visualDescription:
+        'Dutch Angle: Gideon reclaims his academic authority. Focus on person [1]: "Stand down."',
+      artStyle: 'photorealistic',
+      characterReferences: [
+        {
+          referenceId: 1,
+          name: 'Gideon',
+          description: 'Man in his 40s',
+          identityReferenceId: 1,
+          promptToken: 'person [1]',
+          linkingDescription: 'person [1]',
+        },
+      ],
+    })
+
+    expect(prompt).not.toMatch(/Focus on person \[1\]:\s*$/m)
+    expect(prompt).not.toMatch(/Focus on person \[1\]:\s*\./)
+    expect(prompt).toContain('Focus on person [1]')
+    expect(prompt).toContain('person [1]')
+  })
 })

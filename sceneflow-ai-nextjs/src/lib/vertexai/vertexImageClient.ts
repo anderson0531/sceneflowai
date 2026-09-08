@@ -130,6 +130,14 @@ export interface GenerateVertexImageOptions {
   modelTier?: VertexImageTier
   thinkingLevel?: VertexThinkingLevel
   negativePrompt?: string
+  /** Express: throw on the first identity-ref 429 instead of the 5s/15s/30s ladder. */
+  failFastIdentityRefs?: boolean
+  /** Throw if any requested reference image fails to download instead of silently dropping it. */
+  requireAllReferenceImages?: boolean
+  /** Policy ladder attempts (used by vertexImageWithKlingFallback). */
+  policyMaxAttempts?: number
+  /** Skip wardrobe “production still” framing on policy retries (scene/beat frames). */
+  skipProductionStillFraming?: boolean
 }
 
 export interface VertexImageResult {
@@ -142,7 +150,8 @@ export interface VertexImageResult {
 
 async function buildMultimodalParts(
   fullPrompt: string,
-  referenceImages?: VertexReferenceImage[]
+  referenceImages?: VertexReferenceImage[],
+  requireAllReferenceImages?: boolean
 ): Promise<Array<{ text: string } | { inlineData: { mimeType: string; data: string } }>> {
   const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
     { text: fullPrompt },
@@ -160,12 +169,29 @@ async function buildMultimodalParts(
       mimeType = downloaded.mimeType
     }
 
-    if (!base64Data) continue
+    if (!base64Data) {
+      const label = ref.name || ref.imageUrl || 'unnamed reference'
+      if (requireAllReferenceImages) {
+        throw new Error(`Failed to download reference image: ${label}`)
+      }
+      console.warn(`[Vertex Gemini Image] Skipping reference that failed to download: ${label}`)
+      continue
+    }
     if (base64Data.includes(',')) base64Data = base64Data.split(',')[1] || base64Data
 
     const label = ref.name ? `[Reference: ${ref.name}]\n` : ''
     parts.push({ text: label })
     parts.push({ inlineData: { mimeType, data: base64Data } })
+  }
+
+  const inlineCount = parts.filter((p) => 'inlineData' in p).length
+  console.log(
+    `[Vertex Gemini Image] Attached ${inlineCount}/${referenceImages.length} reference image(s)`
+  )
+  if (requireAllReferenceImages && inlineCount < referenceImages.length) {
+    throw new Error(
+      `Failed to attach all reference images (${inlineCount}/${referenceImages.length})`
+    )
   }
 
   return parts
@@ -211,7 +237,11 @@ export async function generateVertexGeminiImage(
     fullPrompt += `\n\nAVOID the following in the generated image: ${options.negativePrompt}`
   }
 
-  const parts = await buildMultimodalParts(fullPrompt, options.referenceImages)
+  const parts = await buildMultimodalParts(
+    fullPrompt,
+    options.referenceImages,
+    options.requireAllReferenceImages
+  )
   const effectiveImageSize = model.includes('flash-image') ? undefined : options.imageSize
 
   const requestBody = {
@@ -273,15 +303,19 @@ export async function generateVertexGeminiImage(
     const errorText = await response.text()
     if (response.status === 429 && model.includes('pro-image')) {
       if (hasIdentityReferenceImages(options)) {
-        if (retryCount < MAX_RETRIES) {
+        const allowIdentityRefRetry = !options.failFastIdentityRefs && retryCount < MAX_RETRIES
+        if (allowIdentityRefRetry) {
           console.warn(
             `[Vertex Gemini Image] Rate limit on ${model} with reference images (attempt ${retryCount + 1}/${MAX_RETRIES}) — backing off without eco fallback`
           )
           await sleepIdentityRefBackoff(retryCount, response)
           return generateVertexGeminiImage(options, retryCount + 1)
         }
+        console.warn(
+          `[Vertex Gemini Image] Rate limit on ${model} with reference images — failing fast without eco fallback`
+        )
         throw new Error(
-          `Vertex Gemini Image error ${response.status}: ${IDENTITY_REF_RATE_LIMIT_EXHAUSTED} after ${MAX_RETRIES} retries: ${errorText}`
+          `Vertex Gemini Image error ${response.status}: ${IDENTITY_REF_RATE_LIMIT_EXHAUSTED} after ${retryCount + 1} attempt(s): ${errorText}`
         )
       }
       if (!useFlashFallback) {

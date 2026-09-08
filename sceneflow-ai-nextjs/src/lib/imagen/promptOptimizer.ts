@@ -910,6 +910,9 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
     promptScene = promptScene.replace(/\b(says?|said|exclaims?|asks?|replies?|responds?|whispers?|shouts?)\b/gi, '')
     // Clean up double spaces
     promptScene = promptScene.replace(/\s+/g, ' ').trim()
+    // Quote stripping can leave "Focus on person [1]:" with nothing after the colon
+    promptScene = promptScene.replace(/\bFocus on (person \[\d+\]):\s*/gi, 'Focus on $1. ')
+    promptScene = promptScene.replace(/\bFocus on ([^.]{1,80}):\s*(?=\.|$)/gi, 'Focus on $1.')
 
     const compositionLock = buildHairCompositionLock(
       cleanedAction,

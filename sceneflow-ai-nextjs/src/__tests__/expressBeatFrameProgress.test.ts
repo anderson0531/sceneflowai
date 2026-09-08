@@ -6,6 +6,8 @@ import {
   formatEta,
   slotKeyFromBeat,
   updateBeatFrameItemStatus,
+  failedExpressFrameKeys,
+  hasFrameErrors,
 } from '@/lib/storyboard/expressBeatFrameProgress'
 
 describe('expressBeatFrameProgress', () => {
@@ -94,5 +96,13 @@ describe('expressBeatFrameProgress', () => {
     expect(formatEta(0)).toBe('Almost done')
     expect(formatEta(45)).toBe('~45s remaining')
     expect(formatEta(120)).toBe('~2 min remaining')
+  })
+
+  it('failedExpressFrameKeys returns only error rows for Retry failed', () => {
+    const items = buildExpressBeatFrameItems(scene, { selectedFrameKeys: ['b1', 'b2'] })
+    const withError = updateBeatFrameItemStatus(items, 'b1', 'error', 'Rate limited — retry this frame')
+    const withDone = updateBeatFrameItemStatus(withError, 'b2', 'done')
+    expect(hasFrameErrors(withDone)).toBe(true)
+    expect(failedExpressFrameKeys(withDone)).toEqual(['b1'])
   })
 })
