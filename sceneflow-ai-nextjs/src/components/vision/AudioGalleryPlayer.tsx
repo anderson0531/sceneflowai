@@ -66,6 +66,11 @@ import {
 import { StoryboardImageEffectControl } from '@/components/vision/StoryboardImageEffectControl'
 import type { SceneProductionData } from '@/components/vision/scene-production/types'
 import type { FinalCutSelection } from '@/lib/types/finalCut'
+import {
+  clampUnitVolume,
+  sceneMixerTrackVolumes,
+  type ScreeningTrackVolumes,
+} from '@/lib/scene/screeningTrackVolume'
 import { resolveScreeningVideoStreamUrl } from '@/lib/final-cut/resolveScreeningVideoStreamUrl'
 import {
   findStreamMaster,
@@ -179,6 +184,12 @@ interface AudioGalleryPlayerProps {
   onScreeningPlaybackHintConsumed?: () => void
   /** Rendered 9:16 promo trailer MP4 (Publishing → Promo). */
   promoTrailerUrl?: string | null
+  /** Persist per-scene Dialogue / Music / SFX into mixer settings. */
+  onSceneMixChange?: (
+    sceneId: string,
+    language: string,
+    volumes: Pick<ScreeningTrackVolumes, 'dialogue' | 'music' | 'sfx'>
+  ) => void
 }
 
 function formatTime(seconds: number) {
@@ -187,9 +198,8 @@ function formatTime(seconds: number) {
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
-const GALLERY_MUSIC_VOLUME_STORAGE_KEY = 'sceneflow-gallery-music-volume'
 const GALLERY_MUSIC_INTRO_FADE_STORAGE_KEY = 'sceneflow-gallery-music-intro-fade'
-const DEFAULT_GALLERY_MUSIC_VOLUME = 0.15
+const SCENE_MIX_PERSIST_MS = 300
 
 function loadGalleryMusicIntroFade(): MusicIntroFadeConfig {
   if (typeof window === 'undefined') return DEFAULT_MUSIC_INTRO_FADE
@@ -207,11 +217,8 @@ function saveGalleryMusicIntroFade(config: MusicIntroFadeConfig): void {
   sessionStorage.setItem(GALLERY_MUSIC_INTRO_FADE_STORAGE_KEY, JSON.stringify(config))
 }
 
-function loadGalleryMusicVolume(): number {
-  if (typeof window === 'undefined') return DEFAULT_GALLERY_MUSIC_VOLUME
-  const raw = sessionStorage.getItem(GALLERY_MUSIC_VOLUME_STORAGE_KEY)
-  const parsed = raw != null ? Number(raw) : NaN
-  return Number.isFinite(parsed) && parsed >= 0 && parsed <= 1 ? parsed : DEFAULT_GALLERY_MUSIC_VOLUME
+function resolveGallerySceneId(scene: any, index: number): string {
+  return scene?.id || scene?.sceneId || `scene-${index}`
 }
 
 export function AudioGalleryPlayer({
@@ -242,11 +249,18 @@ export function AudioGalleryPlayer({
   screeningPlaybackHint,
   onScreeningPlaybackHintConsumed,
   promoTrailerUrl,
+  onSceneMixChange,
 }: AudioGalleryPlayerProps) {
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0)
   const [playbackMode, setPlaybackMode] = useState<PreVisPlaybackMode>('animatic')
   const [volume, setVolume] = useState(0.8)
-  const [musicVolume, setMusicVolume] = useState(loadGalleryMusicVolume)
+  const initialSceneMix = sceneMixerTrackVolumes(
+    sceneProductionState?.[resolveGallerySceneId(scenes[0], 0)],
+    selectedLanguage
+  )
+  const [dialogueVolume, setDialogueVolume] = useState(initialSceneMix.dialogue)
+  const [musicVolume, setMusicVolume] = useState(initialSceneMix.music)
+  const [sfxVolume, setSfxVolume] = useState(initialSceneMix.sfx)
   const [musicIntroFade, setMusicIntroFade] = useState<MusicIntroFadeConfig>(loadGalleryMusicIntroFade)
   const [isMuted, setIsMuted] = useState(false)
   const [autoAdvance, setAutoAdvance] = useState(true)
@@ -273,6 +287,94 @@ export function AudioGalleryPlayer({
   }, [])
 
   const currentScene = scenes[currentSceneIndex]
+  const currentSceneId = resolveGallerySceneId(currentScene, currentSceneIndex)
+  const currentProductionData = sceneProductionState?.[currentSceneId]
+  const savedSceneMix = useMemo(
+    () => sceneMixerTrackVolumes(currentProductionData, selectedLanguage),
+    [currentProductionData, selectedLanguage]
+  )
+  const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingMixRef = useRef<{
+    sceneId: string
+    language: string
+    volumes: Pick<ScreeningTrackVolumes, 'dialogue' | 'music' | 'sfx'>
+    dirty: boolean
+  } | null>(null)
+  const lastHydratedMixKeyRef = useRef('')
+  const onSceneMixChangeRef = useRef(onSceneMixChange)
+  onSceneMixChangeRef.current = onSceneMixChange
+
+  const flushPendingSceneMix = useCallback(() => {
+    if (persistTimerRef.current) {
+      clearTimeout(persistTimerRef.current)
+      persistTimerRef.current = null
+    }
+    const pending = pendingMixRef.current
+    if (!pending?.dirty) return
+    pending.dirty = false
+    onSceneMixChangeRef.current?.(pending.sceneId, pending.language, pending.volumes)
+  }, [])
+
+  const scheduleSceneMixPersist = useCallback(
+    (volumes: Pick<ScreeningTrackVolumes, 'dialogue' | 'music' | 'sfx'>) => {
+      pendingMixRef.current = {
+        sceneId: currentSceneId,
+        language: selectedLanguage,
+        volumes,
+        dirty: true,
+      }
+      if (!onSceneMixChangeRef.current) return
+      if (persistTimerRef.current) clearTimeout(persistTimerRef.current)
+      persistTimerRef.current = setTimeout(() => {
+        persistTimerRef.current = null
+        flushPendingSceneMix()
+      }, SCENE_MIX_PERSIST_MS)
+    },
+    [currentSceneId, selectedLanguage, flushPendingSceneMix]
+  )
+
+  const applyTrackVolume = useCallback(
+    (track: 'dialogue' | 'music' | 'sfx', next: number) => {
+      const clamped = clampUnitVolume(next)
+      const nextVolumes = {
+        dialogue: track === 'dialogue' ? clamped : dialogueVolume,
+        music: track === 'music' ? clamped : musicVolume,
+        sfx: track === 'sfx' ? clamped : sfxVolume,
+      }
+      if (track === 'dialogue') setDialogueVolume(clamped)
+      if (track === 'music') setMusicVolume(clamped)
+      if (track === 'sfx') setSfxVolume(clamped)
+      scheduleSceneMixPersist(nextVolumes)
+    },
+    [dialogueVolume, musicVolume, sfxVolume, scheduleSceneMixPersist]
+  )
+
+  useEffect(() => {
+    const key = `${currentSceneId}:${selectedLanguage}`
+    const sceneChanged = lastHydratedMixKeyRef.current !== key
+    if (sceneChanged) {
+      flushPendingSceneMix()
+      lastHydratedMixKeyRef.current = key
+      setDialogueVolume(savedSceneMix.dialogue)
+      setMusicVolume(savedSceneMix.music)
+      setSfxVolume(savedSceneMix.sfx)
+      return
+    }
+    if (pendingMixRef.current?.dirty) return
+    setDialogueVolume(savedSceneMix.dialogue)
+    setMusicVolume(savedSceneMix.music)
+    setSfxVolume(savedSceneMix.sfx)
+  }, [
+    currentSceneId,
+    selectedLanguage,
+    savedSceneMix.dialogue,
+    savedSceneMix.music,
+    savedSceneMix.sfx,
+    flushPendingSceneMix,
+  ])
+
+  useEffect(() => () => flushPendingSceneMix(), [flushPendingSceneMix])
+
   const screeningPosterUrl = getScreeningPosterUrl(currentScene)
 
   const currentSceneVideoUrl = useMemo(
@@ -372,7 +474,9 @@ export function AudioGalleryPlayer({
     scene: currentScene,
     language: selectedLanguage,
     volume,
+    dialogueVolume,
     musicVolume,
+    sfxVolume,
     isMuted,
     musicIntroFade,
     onPlaybackEnd: handlePlaybackEnd,
@@ -503,10 +607,6 @@ export function AudioGalleryPlayer({
     document.addEventListener('fullscreenchange', handleFullscreenChange)
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
   }, [])
-
-  useEffect(() => {
-    sessionStorage.setItem(GALLERY_MUSIC_VOLUME_STORAGE_KEY, String(musicVolume))
-  }, [musicVolume])
 
   useEffect(() => {
     saveGalleryMusicIntroFade(musicIntroFade)
@@ -674,6 +774,12 @@ export function AudioGalleryPlayer({
     : useStreamMaster
       ? streamMasterUrl
       : currentSceneVideoUrl
+
+  useEffect(() => {
+    const el = videoRef.current
+    if (!el) return
+    el.volume = isMuted ? 0 : clampUnitVolume(volume, 0.8)
+  }, [isMuted, volume, useMasterVideo, useVideoForCurrentScene, activeVideoUrl])
 
   const toggleVideoPlayback = useCallback(() => {
     const el = videoRef.current
@@ -1342,17 +1448,39 @@ export function AudioGalleryPlayer({
               onValueChange={([val]) => setVolume(val / 100)}
               max={100}
               step={1}
-              className="w-20"
+              className="w-16"
+              title={`Master volume: ${Math.round(volume * 100)}%`}
+            />
+            <span className="text-[10px] text-gray-500 shrink-0">Dialogue</span>
+            <Slider
+              value={[dialogueVolume * 100]}
+              onValueChange={([val]) => applyTrackVolume('dialogue', val / 100)}
+              max={100}
+              step={1}
+              className="w-16"
+              title={`Dialogue volume: ${Math.round(dialogueVolume * 100)}%`}
             />
             <span className="text-[10px] text-gray-500 shrink-0">Music</span>
             <Slider
               value={[musicVolume * 100]}
-              onValueChange={([val]) => setMusicVolume(val / 100)}
+              onValueChange={([val]) => applyTrackVolume('music', val / 100)}
               max={100}
               step={1}
               className="w-16"
               title={`Music volume: ${Math.round(musicVolume * 100)}%`}
             />
+            <span className="text-[10px] text-gray-500 shrink-0">SFX</span>
+            <Slider
+              value={[sfxVolume * 100]}
+              onValueChange={([val]) => applyTrackVolume('sfx', val / 100)}
+              max={100}
+              step={1}
+              className="w-16"
+              title={`SFX volume: ${Math.round(sfxVolume * 100)}%`}
+            />
+            <span className="text-[10px] text-gray-500 shrink-0 whitespace-nowrap">
+              Scene {currentSceneIndex + 1} mix
+            </span>
             <div className="flex items-center gap-1.5 shrink-0 border-l border-gray-600 pl-2 ml-1">
               <Switch
                 checked={musicIntroFade.enabled}

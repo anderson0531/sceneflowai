@@ -1736,6 +1736,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
           language={selectedLanguage}
           initialTime={0}
           onClose={() => setShowFullscreenPlayer(false)}
+          sceneProductionData={currentProductionData}
           onPlayheadChange={(time, segmentId) => {
             // Optionally sync back to ScriptPlayer state
           }}

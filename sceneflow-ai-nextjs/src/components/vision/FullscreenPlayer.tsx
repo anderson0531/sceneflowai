@@ -21,6 +21,14 @@ import { useEmotionTracker, type EmotionData } from '@/hooks/useEmotionTracker'
 import { useMicroBehaviorTracking, type MicroBehaviorEvent } from '@/hooks/useMicroBehaviorTracking'
 import type { TimelineReactionType, SessionDemographics, DetectedEmotion } from '@/lib/types/behavioralAnalytics'
 import { PAN_SETTINGS, type PanIntensity } from '@/lib/storyboard/storyboardImageEffects'
+import type { SceneProductionData } from '@/components/vision/scene-production/types'
+import { DEFAULT_MIXER_AUDIO_TRACKS } from '@/lib/scene/mixerSettings'
+import {
+  clampUnitVolume,
+  effectiveScreeningTrackVolume,
+  patchMixerTrackVolumes,
+  sceneMixerTrackVolumes,
+} from '@/lib/scene/screeningTrackVolume'
 
 // ============================================================================
 // Volume Settings Types & Persistence
@@ -168,6 +176,10 @@ interface FullscreenPlayerProps {
   onAudienceFeedback?: (event: AudienceFeedbackEvent) => void
   /** When set, show a top-left back control (same handler as close) */
   backButtonLabel?: string
+  /** Per-scene production mixer settings (shared Screening Room payload). */
+  sceneProductionData?: SceneProductionData
+  /** Persist mixer track volumes from this player (in-app only). */
+  onProductionDataChange?: (data: SceneProductionData) => void
 }
 
 // Audience Feedback Event type
@@ -218,6 +230,8 @@ export function FullscreenPlayer({
   sessionId,
   onAudienceFeedback,
   backButtonLabel,
+  sceneProductionData,
+  onProductionDataChange,
 }: FullscreenPlayerProps) {
   // ============================================================================
   // State
@@ -227,7 +241,17 @@ export function FullscreenPlayer({
   const [isMuted, setIsMuted] = useState(false)
   const [showControls, setShowControls] = useState(true)
   const [showVolumeMixer, setShowVolumeMixer] = useState(false)
-  const [trackVolumes, setTrackVolumes] = useState<TrackVolumes>(DEFAULT_VOLUMES)
+  const [trackVolumes, setTrackVolumes] = useState<TrackVolumes>(() => {
+    if (!sceneProductionData) return DEFAULT_VOLUMES
+    const mix = sceneMixerTrackVolumes(sceneProductionData, language)
+    return {
+      master: DEFAULT_VOLUMES.master,
+      voiceover: mix.narration,
+      dialogue: mix.dialogue,
+      music: mix.music,
+      sfx: mix.sfx,
+    }
+  })
   
   // Language state
   const [selectedLanguage, setSelectedLanguage] = useState<string>(language)
@@ -371,15 +395,80 @@ export function FullscreenPlayer({
   useEffect(() => {
     isMutedRef.current = isMuted
   }, [isMuted])
-  
-  // Load persisted settings on mount
+
+  const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingMixerRef = useRef<TrackVolumes | null>(null)
+  const sceneMixDirtyRef = useRef(false)
+  const lastHydratedSceneMixRef = useRef('')
+  const onProductionDataChangeRef = useRef(onProductionDataChange)
+  onProductionDataChangeRef.current = onProductionDataChange
+  const sceneProductionDataRef = useRef(sceneProductionData)
+  sceneProductionDataRef.current = sceneProductionData
+
+  const flushMixerPersist = useCallback(() => {
+    if (persistTimerRef.current) {
+      clearTimeout(persistTimerRef.current)
+      persistTimerRef.current = null
+    }
+    const persist = onProductionDataChangeRef.current
+    const pending = pendingMixerRef.current
+    if (!pending || !sceneMixDirtyRef.current) return
+    sceneMixDirtyRef.current = false
+    if (!persist) return
+    persist(
+      patchMixerTrackVolumes(sceneProductionDataRef.current, selectedLanguage, {
+        narration: pending.voiceover,
+        dialogue: pending.dialogue,
+        music: pending.music,
+        sfx: pending.sfx,
+      })
+    )
+  }, [selectedLanguage])
+
+  useEffect(() => () => flushMixerPersist(), [flushMixerPersist])
+
+  // Master (and legacy tracks) from localStorage; scene mix hydrates from mixer settings.
   useEffect(() => {
     const savedVolumes = loadVolumeSettings()
-    setTrackVolumes(savedVolumes)
-    trackVolumesRef.current = savedVolumes
     const savedPan = loadPanSettings()
     setPanIntensity(savedPan)
+    if (sceneProductionData) {
+      setTrackVolumes((prev) => {
+        const next = { ...prev, master: savedVolumes.master }
+        trackVolumesRef.current = next
+        return next
+      })
+    } else {
+      setTrackVolumes(savedVolumes)
+      trackVolumesRef.current = savedVolumes
+    }
+    // Hydrate mixer on first mount only for localStorage; scene effect follows.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    const data = sceneProductionDataRef.current
+    if (!data) return
+    const key = `${sceneId}:${selectedLanguage}`
+    const mix = sceneMixerTrackVolumes(data, selectedLanguage)
+    if (lastHydratedSceneMixRef.current !== key) {
+      flushMixerPersist()
+      lastHydratedSceneMixRef.current = key
+    } else if (sceneMixDirtyRef.current) {
+      return
+    }
+    setTrackVolumes((prev) => {
+      const next = {
+        ...prev,
+        voiceover: mix.narration,
+        dialogue: mix.dialogue,
+        music: mix.music,
+        sfx: mix.sfx,
+      }
+      trackVolumesRef.current = next
+      return next
+    })
+  }, [sceneId, selectedLanguage, flushMixerPersist])
   
   // ============================================================================
   // Refs (critical for avoiding re-render loops)
@@ -495,33 +584,44 @@ export function FullscreenPlayer({
   // Get Volume for Track Type (uses refs to avoid stale closures in animation loop)
   // ============================================================================
   const getVolumeForTrack = useCallback((trackType: string): number => {
-    if (isMutedRef.current) return 0
-    const master = trackVolumesRef.current.master
-    switch (trackType) {
-      case 'voiceover':
-      case 'description':
-        return trackVolumesRef.current.voiceover * master
-      case 'dialogue':
-        return trackVolumesRef.current.dialogue * master
-      case 'music':
-        return trackVolumesRef.current.music * master
-      case 'sfx':
-        return trackVolumesRef.current.sfx * master
-      default:
-        return master
-    }
+    const vols = trackVolumesRef.current
+    const trackVolume =
+      trackType === 'voiceover' || trackType === 'description'
+        ? vols.voiceover
+        : trackType === 'dialogue'
+          ? vols.dialogue
+          : trackType === 'music'
+            ? vols.music
+            : trackType === 'sfx'
+              ? vols.sfx
+              : 1
+    return effectiveScreeningTrackVolume({
+      muted: isMutedRef.current,
+      master: vols.master,
+      trackVolume,
+    })
   }, []) // No dependencies - always reads from refs
-  
-  // ============================================================================
-  // Update Volume and Persist
-  // ============================================================================
+
   const updateTrackVolume = useCallback((track: keyof TrackVolumes, value: number) => {
-    setTrackVolumes(prev => {
-      const updated = { ...prev, [track]: value }
-      saveVolumeSettings(updated)
+    const clamped = clampUnitVolume(value)
+    setTrackVolumes((prev) => {
+      const updated = { ...prev, [track]: clamped }
+      trackVolumesRef.current = updated
+      if (track === 'master' || !sceneProductionDataRef.current) {
+        saveVolumeSettings(track === 'master' ? { ...loadVolumeSettings(), master: clamped } : updated)
+      }
+      if (track !== 'master' && onProductionDataChangeRef.current) {
+        pendingMixerRef.current = updated
+        sceneMixDirtyRef.current = true
+        if (persistTimerRef.current) clearTimeout(persistTimerRef.current)
+        persistTimerRef.current = setTimeout(() => {
+          persistTimerRef.current = null
+          flushMixerPersist()
+        }, 300)
+      }
       return updated
     })
-  }, [])
+  }, [flushMixerPersist])
   
   // ============================================================================
   // Calculate Scene Duration
@@ -1226,9 +1326,12 @@ export function FullscreenPlayer({
             className="absolute bottom-32 right-4 bg-gray-900/95 backdrop-blur-sm rounded-lg p-4 w-72 shadow-xl border border-gray-700"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="text-white text-sm font-semibold mb-4 flex items-center gap-2">
+            <div className="text-white text-sm font-semibold mb-1 flex items-center gap-2">
               <SlidersHorizontal className="h-4 w-4" />
               Volume Mixer
+            </div>
+            <div className="text-gray-500 text-[10px] mb-4">
+              Scene {currentSceneIndex + 1} mix
             </div>
             
             {/* Master Volume */}
@@ -1324,6 +1427,23 @@ export function FullscreenPlayer({
             {/* Reset Button */}
             <button
               onClick={() => {
+                if (sceneProductionData) {
+                  const next: TrackVolumes = {
+                    master: trackVolumes.master,
+                    voiceover: DEFAULT_MIXER_AUDIO_TRACKS.narration.volume,
+                    dialogue: DEFAULT_MIXER_AUDIO_TRACKS.dialogue.volume,
+                    music: DEFAULT_MIXER_AUDIO_TRACKS.music.volume,
+                    sfx: DEFAULT_MIXER_AUDIO_TRACKS.sfx.volume,
+                  }
+                  setTrackVolumes(next)
+                  trackVolumesRef.current = next
+                  if (onProductionDataChange) {
+                    pendingMixerRef.current = next
+                    sceneMixDirtyRef.current = true
+                    flushMixerPersist()
+                  }
+                  return
+                }
                 setTrackVolumes(DEFAULT_VOLUMES)
                 saveVolumeSettings(DEFAULT_VOLUMES)
               }}
