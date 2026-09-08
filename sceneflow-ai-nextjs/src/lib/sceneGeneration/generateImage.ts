@@ -143,7 +143,11 @@ export async function generateSceneImage(
       ...(typeof skipObjectAutoDetection === 'boolean'
         ? { skipObjectAutoDetection }
         : {}),
-      ...(typeof useAIPrompt === 'boolean' ? { useAIPrompt } : {}),
+      ...(typeof useAIPrompt === 'boolean'
+        ? { useAIPrompt }
+        : skipLikenessValidation
+          ? { useAIPrompt: false }
+          : {}),
       ...(typeof allowTypography === 'boolean' ? { allowTypography } : {}),
       ...(excludeCharacters ? { excludeCharacters: true } : {}),
       ...(frameType ? { frameType } : {}),

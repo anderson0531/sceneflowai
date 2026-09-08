@@ -101,12 +101,20 @@ export function hasFrameErrors(items: ExpressBeatFrameItem[]): boolean {
   return items.some((item) => item.status === 'error')
 }
 
+/** Wall-clock seconds per Vertex identity-ref job (prior before any frame completes). */
+export const EXPRESS_IMAGE_ETA_PRIOR_SEC = 55
+
+/** Overlay default; keep in sync with DEFAULT_EXPRESS_IMAGE_CONCURRENCY. */
+export const EXPRESS_IMAGE_ETA_CONCURRENCY_DEFAULT = 2
+
 export function estimateRemainingSec(params: {
+  /** Image-phase elapsed only — not overlay time including direction/audio. */
   elapsedSec: number
   completedFrames: number
   totalFrames: number
   currentPhase: ExpressPhase | null
   imagePhaseStarted?: boolean
+  concurrency?: number
 }): number | null {
   const { elapsedSec, completedFrames, totalFrames, currentPhase, imagePhaseStarted } = params
 
@@ -116,11 +124,13 @@ export function estimateRemainingSec(params: {
   if (remaining <= 0) return 0
 
   if (imagePhaseStarted || currentPhase === 'image') {
-    if (completedFrames >= 1) {
+    const concurrency = Math.max(1, params.concurrency ?? EXPRESS_IMAGE_ETA_CONCURRENCY_DEFAULT)
+    if (completedFrames >= 1 && elapsedSec > 0) {
       const secPerFrame = elapsedSec / completedFrames
       return Math.ceil(secPerFrame * remaining)
     }
-    return Math.ceil(8 * remaining)
+    const priorWallSecPerFrame = EXPRESS_IMAGE_ETA_PRIOR_SEC / concurrency
+    return Math.ceil(priorWallSecPerFrame * remaining)
   }
 
   return null

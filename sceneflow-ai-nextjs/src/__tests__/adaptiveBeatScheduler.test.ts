@@ -43,11 +43,11 @@ describe('getSceneExpressBeatConcurrency', () => {
     else process.env.SCENE_EXPRESS_BEAT_MAX_ATTEMPTS = prevAttempts
   })
 
-  it('defaults to 1 so identity-ref frames serialize', () => {
+  it('defaults to 2 so two identity-ref frames can overlap', () => {
     delete process.env.SCENE_EXPRESS_BEAT_CONCURRENCY
     delete process.env.VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY
     delete process.env.EXPRESS_IMAGE_CONCURRENCY
-    expect(getSceneExpressBeatConcurrency()).toBe(1)
+    expect(getSceneExpressBeatConcurrency()).toBe(2)
   })
 
   it('defaults maxAttempts to 1', () => {

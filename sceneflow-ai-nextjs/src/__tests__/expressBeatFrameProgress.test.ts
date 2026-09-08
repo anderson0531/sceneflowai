@@ -67,7 +67,7 @@ describe('expressBeatFrameProgress', () => {
     expect(countCompletedFrames(updated)).toBe(1)
   })
 
-  it('estimateRemainingSec uses frame rate after first completion', () => {
+  it('estimateRemainingSec uses image-phase rate after first completion', () => {
     expect(
       estimateRemainingSec({
         elapsedSec: 20,
@@ -79,7 +79,7 @@ describe('expressBeatFrameProgress', () => {
     ).toBe(30)
   })
 
-  it('estimateRemainingSec returns conservative default before first frame', () => {
+  it('estimateRemainingSec uses ~55s prior scaled by concurrency before first frame', () => {
     expect(
       estimateRemainingSec({
         elapsedSec: 5,
@@ -87,8 +87,41 @@ describe('expressBeatFrameProgress', () => {
         totalFrames: 3,
         currentPhase: 'image',
         imagePhaseStarted: true,
+        concurrency: 1,
       })
-    ).toBe(24)
+    ).toBe(165)
+    expect(
+      estimateRemainingSec({
+        elapsedSec: 5,
+        completedFrames: 0,
+        totalFrames: 16,
+        currentPhase: 'image',
+        imagePhaseStarted: true,
+        concurrency: 2,
+      })
+    ).toBe(440)
+  })
+
+  it('does not treat overlay setup time as per-frame cost', () => {
+    // Image-phase elapsed 57s (Vertex), not overlay-total ~200s after direction/audio.
+    expect(
+      estimateRemainingSec({
+        elapsedSec: 57,
+        completedFrames: 1,
+        totalFrames: 16,
+        currentPhase: 'image',
+        imagePhaseStarted: true,
+      })
+    ).toBe(855)
+    expect(
+      estimateRemainingSec({
+        elapsedSec: 200,
+        completedFrames: 1,
+        totalFrames: 16,
+        currentPhase: 'image',
+        imagePhaseStarted: true,
+      })
+    ).toBeGreaterThan(855)
   })
 
   it('formatEta renders human-readable strings', () => {

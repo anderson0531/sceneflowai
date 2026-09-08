@@ -13,8 +13,8 @@ function parsePositiveInt(value: string | undefined, fallback: number): number {
   return Number.isFinite(n) && n >= 1 ? Math.floor(n) : fallback
 }
 
-/** Runtime beat concurrency for Scene Express (aligned with image lane, default 1). */
-export const DEFAULT_SCENE_EXPRESS_BEAT_CONCURRENCY = 1
+/** Runtime beat concurrency for Scene Express (aligned with image lane, default 2). */
+export const DEFAULT_SCENE_EXPRESS_BEAT_CONCURRENCY = 2
 
 /** Fail-fast: one Vertex attempt per beat unless env overrides. */
 export const DEFAULT_SCENE_EXPRESS_BEAT_MAX_ATTEMPTS = 1

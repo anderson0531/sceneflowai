@@ -9,6 +9,7 @@ import type { ExpressPhaseStatus } from '@/components/vision/SceneGallery'
 import {
   countCompletedFrames,
   estimateRemainingSec,
+  EXPRESS_IMAGE_ETA_CONCURRENCY_DEFAULT,
   failedExpressFrameKeys,
   formatEta,
   hasFrameErrors,
@@ -132,15 +133,20 @@ export function ExpressBeatFrameProgressOverlay({
 }: ExpressBeatFrameProgressOverlayProps) {
   const t = useTranslations('production.expressScene')
   const [elapsedSec, setElapsedSec] = useState(0)
+  const [nowMs, setNowMs] = useState(() => Date.now())
+  const [imagePhaseStartedAt, setImagePhaseStartedAt] = useState<number | null>(null)
 
   useEffect(() => {
     if (!visible) {
       setElapsedSec(0)
+      setImagePhaseStartedAt(null)
       return
     }
     const tick = () => {
+      const now = Date.now()
+      setNowMs(now)
       if (startedAt) {
-        setElapsedSec(Math.floor((Date.now() - startedAt) / 1000))
+        setElapsedSec(Math.floor((now - startedAt) / 1000))
       }
     }
     tick()
@@ -175,12 +181,25 @@ export function ExpressBeatFrameProgressOverlay({
   const imagePhaseStarted =
     phases.image === 'running' || phases.image === 'done' || phases.image === 'error'
 
+  useEffect(() => {
+    if (!visible) return
+    if (imagePhaseStarted && imagePhaseStartedAt == null) {
+      setImagePhaseStartedAt(Date.now())
+    }
+  }, [visible, imagePhaseStarted, imagePhaseStartedAt])
+
+  const imageElapsedSec =
+    imagePhaseStartedAt != null
+      ? Math.max(0, Math.floor((nowMs - imagePhaseStartedAt) / 1000))
+      : 0
+
   const etaSec = estimateRemainingSec({
-    elapsedSec,
+    elapsedSec: imageElapsedSec,
     completedFrames,
     totalFrames,
     currentPhase: currentPhase === 'image-plan' ? 'image-plan' : currentPhase,
     imagePhaseStarted,
+    concurrency: EXPRESS_IMAGE_ETA_CONCURRENCY_DEFAULT,
   })
 
   const progressPct =
