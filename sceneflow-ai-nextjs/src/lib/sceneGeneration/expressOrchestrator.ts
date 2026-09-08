@@ -85,6 +85,36 @@ import { ensureLanguageStreamTranslations } from '../storyboard/playerTranslatio
 
 const EXPRESS_SKIP_LIKENESS = { skipLikenessValidation: true }
 
+function buildExpressReferenceCatalog(project: any): {
+  characterNames: string[]
+  propNames: string[]
+  locationNames: string[]
+} {
+  const visionPhase = project?.metadata?.visionPhase || {}
+  const references = visionPhase.references || {}
+  const characters = Array.isArray(visionPhase.characters) ? visionPhase.characters : []
+  const objectReferences = Array.isArray(references.objectReferences)
+    ? references.objectReferences
+    : []
+  const locationReferences = Array.isArray(references.locationReferences)
+    ? references.locationReferences
+    : []
+
+  return {
+    characterNames: characters
+      .map((c: { name?: string }) => String(c?.name ?? '').trim())
+      .filter(Boolean),
+    propNames: objectReferences
+      .map((o: { name?: string }) => String(o?.name ?? '').trim())
+      .filter(Boolean),
+    locationNames: locationReferences
+      .map((l: { location?: string; name?: string }) =>
+        String(l?.location || l?.name || '').trim()
+      )
+      .filter(Boolean),
+  }
+}
+
 function getExpressImageParams(options: ExpressOptions) {
   const gen = resolveStoryboardGeneration({
     storyboardQuality: options.storyboardQuality,
@@ -1182,6 +1212,7 @@ async function planSceneBeatKeyframes(
         },
         artStyle,
         projectId: options.projectId,
+        referenceCatalog: buildExpressReferenceCatalog(project),
       })
     )
     const remappedPlans = planResult.plans.map((plan) => ({

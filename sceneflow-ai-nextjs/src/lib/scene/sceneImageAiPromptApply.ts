@@ -1,6 +1,4 @@
-import { BEAT_FRAME_CANDID_ACTION_CONSTRAINT } from '@/lib/character/characterReferenceAssembly'
 import {
-  buildIdentityPromptToken,
   filterCharactersForPromptRefs,
   optimizePromptForImagen,
   sanitizePromptForIdentityRefs,
@@ -99,16 +97,7 @@ export function applySceneImageAiResultToPrompt(
           `[Scene Image] Filtered character refs for prompt/images: ${filteredForPrompt.map((r: any) => r.name).join(', ')} (dropped ${charactersWithRefs.length - filteredForPrompt.length})`
         )
       }
-      const subjectIntroductions = filteredForPrompt
-        .map(
-          (ref: any) =>
-            ref.promptToken ??
-            (ref.identityReferenceId != null
-              ? buildIdentityPromptToken(ref.identityReferenceId)
-              : ref.linkingDescription)
-        )
-        .join(' and ')
-      optimizedPrompt = `${BEAT_FRAME_CANDID_ACTION_CONSTRAINT} Cinematic film still. ${subjectIntroductions} performing the following moment in-scene (candid, not posed): ${aiPromptBody}`
+      optimizedPrompt = aiPromptBody
     } else {
       optimizedPrompt = aiResult.prompt
     }

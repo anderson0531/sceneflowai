@@ -260,7 +260,7 @@ export function remapReferenceNumbersInPrompt(
       `[Scene Image] Dropped reference indices from prompt after tier cap: ${droppedIndices.join(', ')}`
     )
     const droppedPattern = new RegExp(
-      `(?:Ref(?:erence)?\\s*[Ii]mage\\s*\\[?(${droppedIndices.join('|')})\\]?|person\\s*\\[(${droppedIndices.join('|')})\\])`,
+      `(?:Ref(?:erence)?\\s*[Ii]mage\\s*\\[?(${droppedIndices.join('|')})\\]?|(?:person|prop|location)\\s*\\[(${droppedIndices.join('|')})\\])`,
       'i'
     )
     result = result
@@ -270,9 +270,16 @@ export function remapReferenceNumbersInPrompt(
   }
 
   return result
-    .replace(/\s{2,}/g, ' ')
-    .replace(/\s+([,.])/g, '$1')
-    .replace(/,\s*,/g, ',')
+    .split('\n')
+    .map((line) =>
+      line
+        .replace(/[ \t]{2,}/g, ' ')
+        .replace(/\s+([,.])/g, '$1')
+        .replace(/,\s*,/g, ',')
+        .trimEnd()
+    )
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
     .trim()
 }
 
@@ -325,10 +332,14 @@ export function buildPropReferenceMappingLines(
   const valid = props.filter((p) => p.propName && p.sendIndex)
   if (!valid.length) return ''
   const lines = valid
-    .map(
-      (p) =>
-        `- PROP REFERENCE (Ref Image [${p.sendIndex}]): ${p.propName} — Extract shape, material, color, and design of the named prop only. Do not add unrelated objects.`
-    )
+    .map((p) => {
+      const token = `prop [${p.sendIndex}]`
+      return (
+        `- PROP REFERENCE (Ref Image [${p.sendIndex}] = ${token}): ${p.propName} — ` +
+        `Extract shape, material, color, and design of the named prop only. ` +
+        `Use token ${token} in the scene prompt. Do not add unrelated objects.`
+      )
+    })
     .join('\n')
   return `PROP REFERENCES (${valid.length}):\n${lines}\n\n`
 }

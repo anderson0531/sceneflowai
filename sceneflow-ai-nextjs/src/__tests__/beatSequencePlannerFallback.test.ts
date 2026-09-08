@@ -3,7 +3,7 @@ import { buildFallbackBeatPlans } from '@/lib/intelligence/beat-sequence-planner
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
 describe('buildFallbackBeatPlans photorealistic prompts', () => {
-  it('uses live-action film still language instead of storyboard still', () => {
+  it('emits Action/Framing stills without F2V start-frame language', () => {
     const beats: SceneBeat[] = [
       {
         beatId: 'bt_0',
@@ -24,7 +24,9 @@ describe('buildFallbackBeatPlans photorealistic prompts', () => {
     })
 
     expect(plans).toHaveLength(1)
-    expect(plans[0].prompt.toLowerCase()).toContain('live-action film still')
+    expect(plans[0].prompt).toContain('Hero enters the room')
+    expect(plans[0].prompt.toLowerCase()).not.toContain('f2v')
+    expect(plans[0].prompt.toLowerCase()).not.toContain('start frame')
     expect(plans[0].prompt.toLowerCase()).not.toContain('storyboard still')
   })
 
