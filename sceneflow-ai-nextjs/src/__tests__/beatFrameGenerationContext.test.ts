@@ -341,4 +341,43 @@ describe('resolveBeatFrameGenerationContext', () => {
     expect(resolved.objectRefIds).toEqual(['prop-lapel'])
     expect(resolved.objectNames).toEqual(['Tiny lapel camera'])
   })
+
+  it('does not cast Dr. Arthur Pendelton when beat text only references his journal prop', () => {
+    const cast = [
+      { id: 'piper', name: 'Piper Hayes', referenceImage: 'https://blob.example/piper.jpg' },
+      { id: 'gideon', name: 'Professor Gideon Croft', referenceImage: 'https://blob.example/gideon.jpg' },
+      { id: 'arthur', name: 'Dr. Arthur Pendelton', referenceImage: 'https://blob.example/arthur.jpg' },
+    ]
+    const objectReferences = [
+      {
+        id: 'prop-journal',
+        name: "Arthur Pendelton's 1893 Journal",
+        importance: 'critical',
+      },
+    ]
+    const scene = {
+      heading: 'INT. CLANDESTINE STUDIO - NIGHT',
+      sceneDirection: {
+        sceneDescription:
+          'Piper Hayes and Professor Gideon Croft race against a tactical breach. Piper grounds Gideon with a weathered journal.',
+        scene: {
+          keyProps: ['Water-damaged leather journal'],
+        },
+      },
+    }
+    const resolved = resolveBeatFrameGenerationContext({
+      scene,
+      beat: actionBeat({
+        actionDescription:
+          'Piper Hayes grips Arthur Pendelton\'s 1893 Journal tightly, making intense eye contact with Professor Gideon Croft.',
+      }),
+      projectCharacters: cast,
+      locationReferences: [],
+      objectReferences,
+    })
+
+    expect(resolved.characterIds).toEqual(expect.arrayContaining(['piper', 'gideon']))
+    expect(resolved.characterIds).not.toContain('arthur')
+    expect(resolved.objectRefIds).toContain('prop-journal')
+  })
 })

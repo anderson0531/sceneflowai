@@ -103,6 +103,8 @@ export interface PropContext {
   hasReferenceImage: boolean
   /** 1-based index when a prop reference image will be sent inline */
   referenceIndex?: number
+  /** Stable composition token e.g. "prop [1]" */
+  promptToken?: string
 }
 
 export interface LocationContext {
@@ -110,6 +112,8 @@ export interface LocationContext {
   hasReferenceImage: boolean
   /** 1-based index when a location reference image will be sent inline */
   referenceIndex?: number
+  /** Stable composition token e.g. "location [1]" */
+  promptToken?: string
 }
 
 export interface SceneImageIntelligenceRequest {
@@ -471,13 +475,16 @@ CRITICAL RULES:
    - When hairDescription is provided in input for a character with an identity ref, DO include a concise Hair lock in [SCENE COMPOSITION & BEAT] or Subject section — e.g. "person [1], hair: swept-back dark auburn ponytail (match identity reference exactly)"
    - When a wardrobe reference exists (Ref Image [M]), NEVER describe outfit colors, garments, or accessories in text — the wardrobe reference owns clothing AND any visible scene-state marks present on that image
    - When a location reference exists, NEVER describe architectural layout, furniture placement, or room geometry in text — the location reference owns the set
-   - When a prop reference exists, NEVER describe the prop's visual appearance in text — use the exact library name only; code binds it to a prop [N] token
+   - When a prop reference exists, NEVER describe the prop's visual appearance in text — use the provided prop [N] token in Action/Framing; code binds library names to tokens
    - ${DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK}
 
-4. REFERENCE SELECTION: Intelligently select which characters, props, and location match the beat action and scene direction:
-   - Include only characters visible or implied in THIS beat
+4. REFERENCE SELECTION — SCENE DIRECTION IS AUTHORITATIVE for who and what is on camera:
+   - Include a person [N] token ONLY if that character is visible in THIS beat AND supported by beat action + SCENE DIRECTION (scene description, talent blocking, key props)
+   - A character name inside a prop label or possessive prop title is NOT on-screen presence — omit that person token
+   - selectedCharacterNames must list ONLY characters who appear in the frame
    - Select the location that matches the scene heading and beat action
-   - Include props that appear in the beat or are marked critical/important
+   - Include props that appear in the beat, scene direction key props, or are marked critical/important
+   - Do NOT include every person token from CHARACTERS input if scene direction shows fewer people on camera
 
 5. STATIC IMAGE OPTIMIZATION:
    - Describe a FROZEN MOMENT — no dolly, pan, track, zoom
@@ -503,12 +510,12 @@ Master Style: [art style + photorealistic/cinematic quality from input]
 Lighting & Camera: [lighting mood, color temperature, time of day, lens/framing from direction cues]
 
 [SCENE COMPOSITION & BEAT]
-Action/Framing: [shot type + frozen action for THIS beat; use ONLY the exact person [N] tokens provided in CHARACTERS input — never invent, renumber, or skip ordinals; never restate character names in parentheses after a person token; use exact library prop names; describe body blocking, gesture, what each character is physically doing, hand/prop interaction, and gaze target (where they look); include directed facial expression/emotion for each visible character — do NOT copy neutral expression from identity reference; characters are engaged in the action and NOT looking at the camera unless the beat is direct-to-camera address]
+Action/Framing: [shot type + frozen action for THIS beat; use ONLY person [N] tokens for characters VISIBLE in this beat — never invent or renumber tokens; you MAY omit person [N] tokens for characters not on camera; never restate character names in parentheses after a person token; use prop [N] and location [N] tokens (not library names) for referenced props/locations; describe body blocking, gesture, what each character is physically doing, hand/prop interaction, and gaze target (where they look); include directed facial expression/emotion for each visible character — do NOT copy neutral expression from identity reference; characters are engaged in the action and NOT looking at the camera unless the beat is direct-to-camera address]
 
 [EXCLUSIONS & BOUNDARIES]
 Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, canvas textures, turnaround sheet layout, 2x2 grid output, 4-panel layout, split-screen output, multi-panel layout, diptych, reference sheet collage, faceless figures, or artistic blending of reference mediums. Maintain 100% photographic realism when art style is photorealistic. No dialogue captions, subtitles, or watermarks (except centered title typography on title beats).
 
-REFERENCE IMAGE BINDING: Do NOT emit a [REFERENCE IMAGE MAPPING] or [REFERENCES] section. Reference images are bound in code — use only the person [N] tokens from CHARACTERS input and exact library prop/location names in your composition text.
+REFERENCE IMAGE BINDING: Do NOT emit a [REFERENCE IMAGE MAPPING] or [REFERENCES] section. Reference images are bound in code — use person [N], prop [N], and location [N] tokens from input in your composition text; never write library prop names that contain character names.
 
 9. FOREHEAD/TEMPLE INJURIES: When the beat describes a bruise, cut, or injury on the forehead or temple, preserve the character's reference hairstyle exactly — do NOT pull hair back or restyle to expose the injury. The injury must be visible without changing hair placement.`
 }
@@ -520,6 +527,26 @@ function buildSystemPrompt(): string {
 function overlayCue(label: string, value?: string): string | null {
   const trimmed = value?.trim()
   return trimmed ? `${label}: ${trimmed}` : null
+}
+
+function appendSceneDirectionAuthorityBlock(request: SceneImageIntelligenceRequest): string {
+  const dm = request.directionMetadata
+  if (!dm) return ''
+
+  const cues: string[] = []
+  if (dm.sceneDescription) cues.push(`Scene description: ${dm.sceneDescription}`)
+  if (dm.talentBlocking) cues.push(`Talent blocking: ${dm.talentBlocking}`)
+  if (dm.talentKeyActions?.length) cues.push(`Key actions: ${dm.talentKeyActions.join('; ')}`)
+  if (dm.talentEmotionalBeat) cues.push(`Emotional beat: ${dm.talentEmotionalBeat}`)
+  if (dm.keyProps?.length) cues.push(`Key props: ${dm.keyProps.join(', ')}`)
+  if (dm.atmosphere) cues.push(`Atmosphere: ${dm.atmosphere}`)
+  if (dm.locationDescription) cues.push(`Location: ${dm.locationDescription}`)
+
+  if (cues.length === 0) return ''
+  return (
+    `SCENE DIRECTION (AUTHORITATIVE — who/what is on camera; beat action must stay consistent with this):\n` +
+    `${cues.join('\n')}\n\n`
+  )
 }
 
 function appendDirectOverlayBlocks(request: SceneImageIntelligenceRequest): string {
@@ -600,13 +627,14 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
   }
 
   prompt += appendDirectOverlayBlocks(request)
+  prompt += appendSceneDirectionAuthorityBlock(request)
   
   // Scene action (context — beat action takes priority when present)
   prompt += `SCENE CONTEXT:\n${request.sceneAction}\n\n`
   
   // Characters with reference mapping — suppress text that conflicts with reference images
   if (request.characters.length > 0) {
-    prompt += `CHARACTERS (select only those relevant to the beat action):\n`
+    prompt += `CHARACTERS (candidates — include in Action/Framing ONLY if visible per beat + scene direction; omit off-screen tokens):\n`
     request.characters.forEach((char, idx) => {
       const hasIdentityRef = !!char.identityReferenceIndex
       const hasWardrobeRef = !!char.wardrobeReferenceIndex
@@ -676,15 +704,16 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
   
   // Props — include index when known; suppress visual description when ref exists
   if (request.props.length > 0) {
-    prompt += `PROPS (select only those visible or critical in this beat):\n`
+    prompt += `PROPS (select only those visible or critical in this beat; use the prompt token in Action/Framing — never write the library name, which may contain a character name):\n`
     request.props.forEach(prop => {
+      const token = prop.promptToken ? `${prop.promptToken} = ` : ''
       const refIndex = prop.referenceIndex ? `Ref Image [${prop.referenceIndex}]` : 'reference image provided'
       const ref = prop.hasReferenceImage ? ` [${refIndex}]` : ''
       const imp = prop.importance === 'critical' ? ' CRITICAL' : prop.importance === 'important' ? ' (important)' : ''
       if (prop.hasReferenceImage) {
-        prompt += `- ${prop.name}${imp}${ref} — visual appearance from ref only; name in action only\n`
+        prompt += `- ${token}${prop.name}${imp}${ref} — visual appearance from ref only; use ${prop.promptToken || 'the prop token'} in action, not the library name\n`
       } else {
-        prompt += `- ${prop.name}${prop.description ? `: ${prop.description}` : ''}${imp}${ref}\n`
+        prompt += `- ${token}${prop.name}${prop.description ? `: ${prop.description}` : ''}${imp}${ref}\n`
       }
     })
     prompt += '\n'
@@ -692,14 +721,15 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
   
   // Location — include index when known
   if (request.availableLocations && request.availableLocations.length > 0) {
-    prompt += `LOCATIONS (select at most one matching scene heading and beat action):\n`
+    prompt += `LOCATIONS (select at most one matching scene heading and beat action; use the location token, not a character-named label):\n`
     request.availableLocations.forEach(loc => {
+      const token = loc.promptToken ? `${loc.promptToken} = ` : ''
       if (loc.hasReferenceImage && loc.referenceIndex) {
-        prompt += `- ${loc.name} [Location Ref Image [${loc.referenceIndex}] — ${LOCATION_TURNAROUND_USER_PROMPT_HINT}]\n`
+        prompt += `- ${token}${loc.name} [Location Ref Image [${loc.referenceIndex}] — ${LOCATION_TURNAROUND_USER_PROMPT_HINT}]\n`
       } else if (loc.hasReferenceImage) {
-        prompt += `- ${loc.name} [location reference image provided]\n`
+        prompt += `- ${token}${loc.name} [location reference image provided]\n`
       } else {
-        prompt += `- ${loc.name}\n`
+        prompt += `- ${token}${loc.name}\n`
       }
     })
     prompt += '\n'

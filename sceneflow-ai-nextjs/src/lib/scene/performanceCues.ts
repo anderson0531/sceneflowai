@@ -247,10 +247,7 @@ export function buildSceneAppearanceContinuityPromptSection(
 
   const unique = new Set(parts.map((part) => part.continuity.toLowerCase()))
   if (unique.size === 1 && parts.length > 1) {
-    const only = parts[0].continuity
-    if (looksLikeActionStaging(only) || only.split(/\s+/).length > 12) {
-      return ''
-    }
+    return ''
   }
 
   return `Scene appearance continuity (preserve from wardrobe): ${parts

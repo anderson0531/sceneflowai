@@ -101,6 +101,30 @@ Action/Framing: person [1] clutches a file.`
     expect(filtered.map((r) => r.name)).toEqual(['Elara Vance'])
   })
 
+  it('filterCharactersForPromptRefs does not fuzzy-match partial selected names', () => {
+    const refs = [
+      { name: 'Dr. Arthur Pendelton', promptToken: 'person [3]', identityReferenceId: 3 },
+      { name: 'Piper Hayes', promptToken: 'person [1]', identityReferenceId: 1 },
+    ]
+    const filtered = filterCharactersForPromptRefs(
+      refs,
+      'Medium shot of person [1] holding prop [2].',
+      ['Arthur']
+    )
+    expect(filtered.map((r) => r.name)).toEqual(['Piper Hayes'])
+  })
+
+  it('sanitizePromptForIdentityRefs preserves possessive prop names when protected', () => {
+    const journal = "Arthur Pendelton's 1893 Journal"
+    const sanitized = sanitizePromptForIdentityRefs(
+      `person [1] grips ${journal} while person [2] watches.`,
+      [{ name: 'Dr. Arthur Pendelton', promptToken: 'person [3]', identityReferenceId: 3 }],
+      { protectPhrases: [journal] }
+    )
+    expect(sanitized).toContain(journal)
+    expect(sanitized).not.toContain('person [3] grips person [3]')
+  })
+
   it('includes hair lock in Subject & Wardrobe when injury beat and hairAnchor is set', () => {
     const prompt = optimizePromptForImagen({
       sceneAction:

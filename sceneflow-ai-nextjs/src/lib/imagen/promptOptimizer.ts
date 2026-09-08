@@ -139,16 +139,47 @@ export function stripReferenceImageMappingBlock(prompt: string): string {
     .trim()
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function maskProtectedPhrases(
+  text: string,
+  phrases: string[] | undefined
+): { masked: string; restore: (value: string) => string } {
+  const sorted = [...new Set((phrases ?? []).map((p) => p.trim()).filter((p) => p.length >= 3))].sort(
+    (a, b) => b.length - a.length
+  )
+  const replacements: Array<{ token: string; phrase: string }> = []
+  let masked = text
+  sorted.forEach((phrase, index) => {
+    const token = `\u0000PROT${index}\u0000`
+    const pattern = new RegExp(escapeRegExp(phrase), 'gi')
+    if (!pattern.test(masked)) return
+    masked = masked.replace(pattern, token)
+    replacements.push({ token, phrase })
+  })
+  return {
+    masked,
+    restore: (value: string) =>
+      replacements.reduce((current, entry) => current.split(entry.token).join(entry.phrase), value),
+  }
+}
+
 /**
  * Strip appearance prose from AI-generated prompts when identity refs exist.
  * Replaces character names with person [N] tokens and removes redundant demographic phrases.
  */
 export function sanitizePromptForIdentityRefs(
   prompt: string,
-  characterRefs: Array<{ name: string; promptToken?: string; identityReferenceId?: number }>
+  characterRefs: Array<{ name: string; promptToken?: string; identityReferenceId?: number }>,
+  options?: { protectPhrases?: string[] }
 ): string {
-  let sanitized = prompt
-  for (const ref of characterRefs) {
+  const { masked, restore } = maskProtectedPhrases(prompt, options?.protectPhrases)
+  let sanitized = masked
+
+  const sortedRefs = [...characterRefs].sort((a, b) => b.name.length - a.name.length)
+  for (const ref of sortedRefs) {
     const token =
       ref.promptToken ??
       (ref.identityReferenceId != null ? buildIdentityPromptToken(ref.identityReferenceId) : undefined)
@@ -156,8 +187,9 @@ export function sanitizePromptForIdentityRefs(
 
     sanitized = replaceNameOutsideParentheses(sanitized, ref.name, token)
 
-    const firstName = ref.name.split(' ')[0]
-    if (firstName.length > 1) {
+    const nameParts = ref.name.split(/\s+/).filter((part) => part.length >= 4)
+    const firstName = nameParts.find((part) => !/^(dr|mr|mrs|ms|prof|professor|sir)\.?$/i.test(part))
+    if (firstName && firstName.length > 1) {
       sanitized = replaceNameOutsideParentheses(sanitized, firstName, token)
     }
   }
@@ -179,15 +211,17 @@ export function sanitizePromptForIdentityRefs(
     sanitized
   )
   if (isStructuredPrompt) {
-    return sanitized
-      .split('\n')
-      .map((line) => line.replace(/[ \t]+/g, ' ').trimEnd())
-      .join('\n')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim()
+    return restore(
+      sanitized
+        .split('\n')
+        .map((line) => line.replace(/[ \t]+/g, ' ').trimEnd())
+        .join('\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim()
+    )
   }
 
-  return sanitized.replace(/\s+/g, ' ').trim()
+  return restore(sanitized.replace(/\s+/g, ' ').trim())
 }
 
 export interface CharacterRefForPromptFilter {
@@ -226,12 +260,7 @@ export function filterCharactersForPromptRefs<T extends CharacterRefForPromptFil
 
     if (selectedNamesLower.length > 0) {
       const nameLower = ref.name.toLowerCase()
-      return selectedNamesLower.some(
-        (selected) =>
-          nameLower === selected ||
-          nameLower.includes(selected) ||
-          selected.includes(nameLower)
-      )
+      return selectedNamesLower.some((selected) => nameLower === selected)
     }
 
     return false

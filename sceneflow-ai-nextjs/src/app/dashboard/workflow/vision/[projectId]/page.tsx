@@ -9846,7 +9846,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             ...(scene.dialogue || []).map((d: any) => d.character || ''),
           ].join(' ')
 
-          sceneCharacters = findSceneCharacters(sceneText, characters)
+          sceneCharacters = findSceneCharacters(sceneText, characters, {
+            maskPhrases: [
+              ...objectReferences.map((ref) => ref.name).filter(Boolean),
+              ...locationReferences.map((ref) => ref.location || ref.locationDisplay || '').filter(Boolean),
+            ],
+          })
         }
       }
       

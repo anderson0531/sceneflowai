@@ -8,6 +8,7 @@ import {
   STILL_SECTION_STYLE,
   STILL_SECTION_EXCLUSIONS,
   stillRefsFromAttachedImages,
+  bindLibraryNamesToTokens,
 } from '@/lib/imagen/structuredStillPrompt'
 import {
   applySceneImageAiResultToPrompt,
@@ -229,5 +230,25 @@ describe('scene appearance continuity staging filter', () => {
       { name: 'Professor Gideon Croft', continuity: leaked },
     ])
     expect(section).toBe('')
+  })
+
+  it('does not copy identical short injury notes onto multiple characters', () => {
+    const wound = 'clutching a bullet wound in his shoulder'
+    const section = buildSceneAppearanceContinuityPromptSection([
+      { name: 'Piper Hayes', continuity: wound },
+      { name: 'Professor Gideon Croft', continuity: wound },
+    ])
+    expect(section).toBe('')
+  })
+})
+
+describe('bindLibraryNamesToTokens', () => {
+  it('rewrites library prop names to prop tokens before intelligence', () => {
+    const text = bindLibraryNamesToTokens(
+      'Piper grips Arthur Pendelton\'s 1893 Journal between herself and Gideon.',
+      [{ name: "Arthur Pendelton's 1893 Journal", promptToken: 'prop [1]' }]
+    )
+    expect(text).toContain('prop [1]')
+    expect(text).not.toContain("Arthur Pendelton's 1893 Journal")
   })
 })

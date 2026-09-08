@@ -255,7 +255,16 @@ export function resolvePreVisFramePromptContext(args: {
     scene.visualDescription || '',
     ...(Array.isArray(scene.dialogue) ? scene.dialogue.map((d: { character?: string }) => d.character || '') : []),
   ].join(' ')
-  const detected = findSceneCharacters(sceneText, projectCharacters as Parameters<typeof findSceneCharacters>[1])
+  const detected = findSceneCharacters(
+    sceneText,
+    projectCharacters as Parameters<typeof findSceneCharacters>[1],
+    {
+      maskPhrases: [
+        ...objectReferences.map((obj) => obj.name).filter(Boolean),
+        ...locationReferences.map((loc) => loc.location || loc.locationDisplay || '').filter(Boolean),
+      ],
+    }
+  )
   const selectedCharacterNames = detected.map((c) => c.name).filter(Boolean) as string[]
   const selectedWardrobes = fillSelectedWardrobesForCharacters(
     selectedCharacterNames,

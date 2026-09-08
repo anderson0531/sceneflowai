@@ -31,6 +31,8 @@ import { shouldUseCustomPromptOverride } from '@/lib/vision/preVisDirectGenerate
 import { applySceneImageAiResultToPrompt } from '@/lib/scene/sceneImageAiPromptApply'
 import {
   assembleStructuredStillPrompt,
+  assignStableLibraryTokens,
+  bindLibraryNamesToTokens,
   buildLocationPromptToken,
   buildPropPromptToken,
   joinPromptBlocks,
@@ -40,7 +42,12 @@ import {
   resolveFeaturedCharactersForValidation,
   isGenuineLikenessFailure,
 } from '@/lib/scene/sceneImageFeaturedValidation'
-import { detectCharactersInText, resolveBeatSpeaker } from '@/lib/scene/characterDetection'
+import {
+  collectEntityMaskPhrases,
+  detectCharactersInText,
+  intersectDetectedCharactersWithDirectionText,
+  resolveBeatSpeaker,
+} from '@/lib/scene/characterDetection'
 import { isStoryboardNoCharacterScene } from '@/lib/script/sceneClassification'
 import { getSceneBeats, isNarratorBeat, resolveDialogueBeat } from '@/lib/script/beatMigration'
 import { NARRATOR_CHARACTER, type BeatKind, type SceneBeat } from '@/lib/script/segmentTypes'
@@ -610,6 +617,32 @@ export async function POST(req: NextRequest) {
       const scenesForType = project.metadata?.visionPhase?.script?.script?.scenes || []
       const filmTitleForDetection =
         (project.metadata?.title as string | undefined) || project.title || undefined
+      const projectObjectRefsForDetect =
+        project.metadata?.visionPhase?.references?.objectReferences || []
+      const projectLocationRefsForDetect =
+        project.metadata?.visionPhase?.references?.locationReferences || []
+      const entityMaskPhrases = collectEntityMaskPhrases({
+        objectNames: [
+          ...projectObjectRefsForDetect.map((obj: { name?: string }) => obj.name),
+          ...(Array.isArray(objectReferences) ? objectReferences.map((obj: { name?: string }) => obj.name) : []),
+        ],
+        locationNames: [
+          ...projectLocationRefsForDetect.map(
+            (loc: { location?: string; name?: string; locationDisplay?: string }) =>
+              loc.location || loc.locationDisplay || loc.name
+          ),
+          ...(Array.isArray(locationReferences)
+            ? locationReferences.map(
+                (loc: { location?: string; name?: string; locationDisplay?: string }) =>
+                  loc.location || loc.locationDisplay || loc.name
+              )
+            : []),
+        ],
+      })
+      const characterDetectOptions = {
+        excludeTexts: filmTitleForDetection ? [filmTitleForDetection] : [],
+        maskPhrases: entityMaskPhrases,
+      }
       if (typeof sceneIndex === 'number') {
         const scenesForResolution = scenesForType
         const dbScene = scenesForResolution[sceneIndex]
@@ -825,9 +858,7 @@ export async function POST(req: NextRequest) {
                   resolvedScene?.heading || '',
                   actionText,
                 ].join(' ')
-                const detectedChars = detectCharactersInText(actionContext, allCharacters, {
-                  excludeTexts: filmTitleForDetection ? [filmTitleForDetection] : [],
-                })
+                const detectedChars = detectCharactersInText(actionContext, allCharacters, characterDetectOptions)
                 characterObjects = detectedChars
                 if (detectedChars.length > 0) {
                   console.log(
@@ -874,8 +905,8 @@ export async function POST(req: NextRequest) {
                 beat,
                 sceneIndex,
                 projectCharacters: allCharacters,
-                locationReferences: [],
-                objectReferences: [],
+                locationReferences: projectLocationRefsForDetect,
+                objectReferences: projectObjectRefsForDetect,
                 filmTitle: filmTitleForDetection,
               })
               characterObjects = autoCtx.characterIds
@@ -905,9 +936,7 @@ export async function POST(req: NextRequest) {
               !(storyboardNoCharacterScene && !honorExplicitChars) &&
               allCharacters.length > 0
             ) {
-              const extra = detectCharactersInText(promptUnionText, allCharacters, {
-                excludeTexts: filmTitleForDetection ? [filmTitleForDetection] : [],
-              })
+              const extra = detectCharactersInText(promptUnionText, allCharacters, characterDetectOptions)
               const seen = new Set(
                 characterObjects.map((c: any) => String(c?.id || c?.name || '').toLowerCase())
               )
@@ -946,9 +975,7 @@ export async function POST(req: NextRequest) {
                 ...(scene.dialogue || []).map((d: any) => d.character || ''),
               ].join(' ')
 
-              const detectedChars = detectCharactersInText(sceneText, allCharacters, {
-                excludeTexts: filmTitleForDetection ? [filmTitleForDetection] : [],
-              })
+              const detectedChars = detectCharactersInText(sceneText, allCharacters, characterDetectOptions)
 
               if (detectedChars.length > 0) {
                 characterObjects = detectedChars
@@ -966,6 +993,20 @@ export async function POST(req: NextRequest) {
         }
       }
       
+      if (
+        characterObjects.length > 0 &&
+        resolvedScene &&
+        !honorExplicitChars &&
+        !clientVerifiedBeatRefs
+      ) {
+        characterObjects = intersectDetectedCharactersWithDirectionText(
+          characterObjects,
+          buildSceneStagingText(resolvedScene),
+          allCharacters,
+          characterDetectOptions
+        )
+      }
+
       // DEBUG: Log character properties and ensure referenceImage is populated
       if (characterObjects.length > 0) {
         console.log('[Scene Image] DEBUG - First character keys:', Object.keys(characterObjects[0]))
@@ -1707,6 +1748,9 @@ export async function POST(req: NextRequest) {
           propsToPassToAI,
           locationsToPassToAI
         )
+      const propsWithTokens = assignStableLibraryTokens(propsWithIndices, 'prop')
+      const locationsWithTokens = assignStableLibraryTokens(locationsWithIndices, 'location')
+      const libraryTokenItems = [...propsWithTokens, ...locationsWithTokens]
       
       // Count total reference images that MIGHT be sent (will be refined after AI selects)
       // We'll update this count later, but for the prompt, we just let it know how many are available
@@ -1718,8 +1762,8 @@ export async function POST(req: NextRequest) {
             sum + (r.identityReferenceId ? 1 : 0) + (r.wardrobeReferenceId ? 1 : 0),
           0
         ) +
-        propsWithIndices.filter((o) => o.hasReferenceImage).length +
-        locationsWithIndices.filter((l) => l.hasReferenceImage).length
+        propsWithTokens.filter((o) => o.hasReferenceImage).length +
+        locationsWithTokens.filter((l) => l.hasReferenceImage).length
       
       // Call Gemini intelligence
       const beatForIntelligence =
@@ -1740,7 +1784,7 @@ export async function POST(req: NextRequest) {
 
       sceneImageIntelligenceRequest = {
         sceneHeading: sceneData.heading || '',
-        sceneAction: fullSceneContext,
+        sceneAction: bindLibraryNamesToTokens(fullSceneContext, libraryTokenItems),
         sceneNumber: (sceneIndex || 0) + 1,
         totalScenes: scenes.length,
         filmContext,
@@ -1748,15 +1792,18 @@ export async function POST(req: NextRequest) {
         beatKind: beatKindForIntelligence,
         beatIndex: intelligenceBeatIndex,
         totalBeats: intelligenceTotalBeats,
-        beatAction: stripPromptMetaInstructions(
-          stripAllCues(beatForIntelligence?.actionDescription || beatForIntelligence?.line || '')
+        beatAction: bindLibraryNamesToTokens(
+          stripPromptMetaInstructions(
+            stripAllCues(beatForIntelligence?.actionDescription || beatForIntelligence?.line || '')
+          ),
+          libraryTokenItems
         ),
         beatDirectedEmotion: beatDirectedEmotion || undefined,
         beatRole: beatForIntelligence?.beatRole,
         directionMetadata,
         characters: characterContexts,
-        props: propsWithIndices,
-        availableLocations: locationsWithIndices,
+        props: propsWithTokens,
+        availableLocations: locationsWithTokens,
         artStyle: artStyle || 'photorealistic',
         referenceImageCount: totalAvailableRefImages,
         projectId,
@@ -1772,7 +1819,7 @@ export async function POST(req: NextRequest) {
       const appliedAiPrompt = applySceneImageAiResultToPrompt({
         aiResult,
         characterReferences,
-        fullSceneContext,
+        fullSceneContext: bindLibraryNamesToTokens(fullSceneContext, libraryTokenItems),
         artStyle,
         autoDetectObjects,
         autoDetectLocations,
@@ -1781,18 +1828,44 @@ export async function POST(req: NextRequest) {
         detectedObjectReferences,
         matchedLocationReference,
         sceneType: aiSceneType,
+        protectPhrases: libraryTokenItems.map((item) => item.name).filter(Boolean),
       })
       optimizedPrompt = appliedAiPrompt.optimizedPrompt
       usedAIIntelligence = appliedAiPrompt.usedAIIntelligence
       characterReferencesForImages = appliedAiPrompt.characterReferencesForImages
-      detectedObjectReferences = appliedAiPrompt.detectedObjectReferences
+      detectedObjectReferences = appliedAiPrompt.detectedObjectReferences.map((obj: any) => ({
+        ...obj,
+        promptToken:
+          obj.promptToken ||
+          propsWithTokens.find((p) => p.name.toLowerCase() === String(obj.name || '').toLowerCase())
+            ?.promptToken,
+      }))
       matchedLocationReference = appliedAiPrompt.matchedLocationReference
+        ? {
+            ...appliedAiPrompt.matchedLocationReference,
+            promptToken:
+              appliedAiPrompt.matchedLocationReference.promptToken ||
+              locationsWithTokens.find(
+                (loc) =>
+                  loc.name.toLowerCase() ===
+                  String(
+                    appliedAiPrompt.matchedLocationReference.location ||
+                      appliedAiPrompt.matchedLocationReference.name ||
+                      ''
+                  ).toLowerCase()
+              )?.promptToken ||
+              buildLocationPromptToken(1),
+          }
+        : appliedAiPrompt.matchedLocationReference
       aiNegativePromptAdditions = appliedAiPrompt.aiNegativePromptAdditions
     } else {
       // Rules-based optimizer (no AI, no custom prompt)
+      const rulesProps = assignStableLibraryTokens(detectedObjectReferences, 'prop')
+      detectedObjectReferences = rulesProps
+      const rulesScene = bindLibraryNamesToTokens(fullSceneContext, rulesProps)
       optimizedPrompt = optimizePromptForImagen({
-        sceneAction: fullSceneContext,
-        visualDescription: fullSceneContext,
+        sceneAction: rulesScene,
+        visualDescription: rulesScene,
         characterReferences: characterReferences,
         artStyle: artStyle || 'photorealistic',
         objectReferences: detectedObjectReferences
@@ -1908,7 +1981,12 @@ export async function POST(req: NextRequest) {
         const appliedRetry = applySceneImageAiResultToPrompt({
           aiResult: retryAiResult,
           characterReferences,
-          fullSceneContext,
+          fullSceneContext: sceneImageIntelligenceRequest
+            ? bindLibraryNamesToTokens(fullSceneContext, [
+                ...(sceneImageIntelligenceRequest.props ?? []),
+                ...(sceneImageIntelligenceRequest.availableLocations ?? []),
+              ])
+            : fullSceneContext,
           artStyle,
           autoDetectObjects,
           autoDetectLocations,
@@ -1917,6 +1995,10 @@ export async function POST(req: NextRequest) {
           detectedObjectReferences,
           matchedLocationReference,
           sceneType: aiSceneType,
+          protectPhrases: [
+            ...(sceneImageIntelligenceRequest?.props ?? []).map((p) => p.name),
+            ...(sceneImageIntelligenceRequest?.availableLocations ?? []).map((l) => l.name),
+          ].filter(Boolean),
         })
         if (!appliedRetry.usedAIIntelligence) {
           console.log('[Scene Image] Likeness auto-retry skipped — AI prompt unavailable on retry')

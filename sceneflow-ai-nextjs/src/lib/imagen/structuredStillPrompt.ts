@@ -37,6 +37,35 @@ export function buildLocationPromptToken(sendIndex: number): string {
   return `location [${sendIndex}]`
 }
 
+/** Assign stable 1-based prop/location tokens independent of image send index. */
+export function assignStableLibraryTokens<T extends { name?: string }>(
+  items: T[],
+  kind: 'prop' | 'location'
+): Array<T & { promptToken: string }> {
+  return items.map((item, index) => ({
+    ...item,
+    promptToken: kind === 'prop' ? buildPropPromptToken(index + 1) : buildLocationPromptToken(index + 1),
+  }))
+}
+
+export function bindLibraryNamesToTokens(
+  text: string,
+  named: Array<{ name?: string; promptToken?: string }>
+): string {
+  if (!text) return text
+  const refs: StillPromptBoundRef[] = named
+    .filter((item): item is { name: string; promptToken: string } =>
+      Boolean(item.name?.trim() && item.promptToken?.trim())
+    )
+    .map((item) => ({
+      kind: item.promptToken.startsWith('location') ? 'location' : 'prop',
+      token: item.promptToken,
+      name: item.name,
+      roleLabel: item.promptToken.startsWith('location') ? 'library location' : 'library prop',
+    }))
+  return replaceLibraryNamesWithTokens(text, refs)
+}
+
 export function joinPromptBlocks(...blocks: Array<string | false | null | undefined>): string {
   return blocks
     .map((block) => (typeof block === 'string' ? block.trim() : ''))
@@ -139,6 +168,7 @@ export function stillRefsFromAttachedImages(args: {
     characterName?: string
     refRole?: string
     role?: string
+    promptToken?: string
   }>
   characterReferences: Array<{
     name: string
@@ -172,20 +202,20 @@ export function stillRefsFromAttachedImages(args: {
       continue
     }
 
-    if (entry.propName && sendIndex != null) {
+    if (entry.propName && (entry.promptToken || sendIndex != null)) {
       refs.push({
         kind: 'prop',
-        token: buildPropPromptToken(sendIndex),
+        token: entry.promptToken || buildPropPromptToken(sendIndex as number),
         name: entry.propName,
         roleLabel: 'library prop',
       })
       continue
     }
 
-    if ((entry.locationName || entry.role === 'location') && sendIndex != null) {
+    if ((entry.locationName || entry.role === 'location') && (entry.promptToken || sendIndex != null)) {
       refs.push({
         kind: 'location',
-        token: buildLocationPromptToken(sendIndex),
+        token: entry.promptToken || buildLocationPromptToken(sendIndex as number),
         name: entry.locationName || 'Location',
         roleLabel: 'library location',
       })

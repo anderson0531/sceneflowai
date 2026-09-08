@@ -527,7 +527,13 @@ export function FramePromptDialog({
             segment.emotionalBeat,
             segment.endFrameDescription,
           ].filter(Boolean).join(' ')
-          const detected = findSceneCharacters(segmentText, characters.map(c => ({ name: c.name })))
+          const detected = findSceneCharacters(
+            segmentText,
+            characters.map(c => ({ name: c.name })),
+            {
+              maskPhrases: objectReferences.map(o => o.name).filter(Boolean),
+            }
+          )
           setSelectedCharacterNames(detected.map(c => c.name))
           // NO FALLBACK — if nobody detected, nobody selected (matches ScenePromptBuilder behavior)
         }
@@ -541,7 +547,13 @@ export function FramePromptDialog({
           segment.emotionalBeat,
           segment.endFrameDescription,
         ].filter(Boolean).join(' ')
-        const detected = findSceneCharacters(segmentText, characters.map(c => ({ name: c.name })))
+        const detected = findSceneCharacters(
+          segmentText,
+          characters.map(c => ({ name: c.name })),
+          {
+            maskPhrases: objectReferences.map(o => o.name).filter(Boolean),
+          }
+        )
         setSelectedCharacterNames(detected.map(c => c.name))
         // NO FALLBACK — if nobody detected, nobody selected (matches ScenePromptBuilder behavior)
       }
