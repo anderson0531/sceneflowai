@@ -17,6 +17,8 @@ export interface SceneSfxCue {
   sourceLineId?: string
   sfxId?: string
   legacyIndex?: number
+  sourceFingerprint?: string
+  audioStale?: boolean
 }
 
 type SceneDirectionShape = {
@@ -285,6 +287,9 @@ function coerceExistingCue(raw: unknown, legacyIndex: number): SceneSfxCue | nul
       sfxId: typeof o.sfxId === 'string' ? o.sfxId : undefined,
       legacyIndex:
         typeof o.legacyIndex === 'number' ? o.legacyIndex : legacyIndex,
+      sourceFingerprint:
+        typeof o.sourceFingerprint === 'string' ? o.sourceFingerprint : undefined,
+      audioStale: o.audioStale === true ? true : undefined,
     }
   }
   return null

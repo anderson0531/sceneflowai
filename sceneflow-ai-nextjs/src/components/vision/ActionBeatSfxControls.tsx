@@ -8,6 +8,7 @@ import type { SfxDurationOverride } from '@/lib/elevenlabs/sfxDuration'
 import { resolveAutoSfxDuration } from '@/lib/elevenlabs/sfxDuration'
 import { saveAudioFile } from '@/lib/download/saveFile'
 import { resolveBeatSfxSlot, readBeatSfxAudio } from '@/lib/script/deriveSfxFromSceneContent'
+import { actionBeatSfxIsStale } from '@/lib/audio/beatAudioStale'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import {
   dispatchGenerateVeoSfx,
@@ -69,6 +70,7 @@ export function ActionBeatSfxControls({
 
   const sfxSourceMetaList = Array.isArray(scene.sfxSourceMeta) ? scene.sfxSourceMeta : []
   const sfxAudio = readBeatSfxAudio(scene, slot)
+  const sfxStale = actionBeatSfxIsStale(scene, beat, !!sfxAudio)
   const sfxSourceMeta = sfxSourceMetaList[slot.sfxIndex] as Record<string, unknown> | null | undefined
   const isVeoAction =
     sfxSourceMeta?.source === 'veo' && sfxSourceMeta?.promptMode === 'actionBeat'
@@ -148,12 +150,19 @@ export function ActionBeatSfxControls({
           <span className="text-[11px] font-semibold uppercase tracking-wide text-amber-300/90">
             Action SFX
           </span>
-          {sfxAudio && (
+          {sfxAudio && sfxStale ? (
+            <span
+              className="text-[10px] px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded flex items-center gap-1"
+              title="Beat prompt changed after this audio was generated"
+            >
+              Prompt changed
+            </span>
+          ) : sfxAudio ? (
             <span className="text-[10px] px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
               <Volume2 className="w-3 h-3" />
               Audio Ready
             </span>
-          )}
+          ) : null}
           {isVeoAction && (
             <span className="text-[10px] px-2 py-0.5 bg-amber-500/15 text-amber-200 rounded">
               Veo action

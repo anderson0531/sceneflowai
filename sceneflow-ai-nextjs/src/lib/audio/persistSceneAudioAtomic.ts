@@ -28,6 +28,8 @@ export interface PersistSceneAudioAtomicParams {
     lineKind?: 'narration' | 'dialogue'
     characterId?: string
   }
+  /** Fingerprint of the script prompt used to generate this clip. */
+  sourceFingerprint?: string
   /** When true, sets visionPhase.scriptUpdatedAt (dialogue/narration saves). */
   updateScriptUpdatedAt?: boolean
 }
@@ -185,14 +187,20 @@ function applySfxMutation(
   }
 
   const sfxEntry = (scene.sfx as unknown[])[sfxIndex]
+  const sourceFingerprint = String(params.beatDescription ?? '').trim()
   if (sfxEntry) {
     if (typeof sfxEntry === 'string') {
       ;(scene.sfx as unknown[])[sfxIndex] = {
         description: sfxEntry,
         audioUrl: params.audioUrl,
+        ...(sourceFingerprint ? { sourceFingerprint, audioStale: false } : {}),
       }
     } else if (typeof sfxEntry === 'object') {
       ;(sfxEntry as Record<string, unknown>).audioUrl = params.audioUrl
+      if (sourceFingerprint) {
+        ;(sfxEntry as Record<string, unknown>).sourceFingerprint = sourceFingerprint
+        ;(sfxEntry as Record<string, unknown>).audioStale = false
+      }
     }
   }
 
@@ -235,6 +243,8 @@ function applyNarrationMutation(
     voiceId: params.voiceId || undefined,
     provider: params.provider || undefined,
     adaptation: params.adaptation || undefined,
+    ...(params.sourceFingerprint ? { sourceFingerprint: params.sourceFingerprint } : {}),
+    audioStale: false,
   }
   if (language === 'en') {
     scene.narrationAudioUrl = params.audioUrl
@@ -322,6 +332,8 @@ function applyDialogueMutation(
     voiceId: params.voiceId || undefined,
     provider: params.provider || undefined,
     adaptation: params.adaptation || undefined,
+    ...(params.sourceFingerprint ? { sourceFingerprint: params.sourceFingerprint } : {}),
+    audioStale: false,
   }
 
   if (existingIndex >= 0) {

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-08T01:29:55.218Z",
+  "generatedAt": "2026-09-08T03:04:43.524Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -854,6 +854,7 @@
       "expressAudio.noAudioItems": "80259413601f215a",
       "expressAudio.statusReady": "5fa7aac5375c5815",
       "expressAudio.statusMissing": "6be36ca49ee85210",
+      "expressAudio.statusPromptChanged": "0b74527f4461cd01",
       "expressAudio.sfxDurationPreset": "115515c38e553baa",
       "expressAudio.durationAuto": "5d429651e5f6de0f",
       "expressAudio.durationShort": "d2f711e575815898",
@@ -865,7 +866,7 @@
       "expressAudio.running": "4977a7e5bb3675c4",
       "expressAudio.generateAudio": "9695586371709f00",
       "expressSfx.title": "c57dd881e8b1b218",
-      "expressSfx.description": "badbc72cc69e7436",
+      "expressSfx.description": "b3b4dbbdd90e11c7",
       "expressSfx.selectedBeats": "92c772541595ef60",
       "expressSfx.estimatedCredits": "766ff51ffaacf255",
       "expressSfx.creditHint": "41db27b7b43abc22",

@@ -1,4 +1,5 @@
 import { getSceneBeats } from '@/lib/script/beatMigration'
+import { actionBeatSfxIsStale } from '@/lib/audio/beatAudioStale'
 import {
   readBeatSfxAudio,
   resolveBeatSfxSlot,
@@ -75,8 +76,20 @@ export function resolveExpressVeoSfxItems(
     }
 
     if (beatHasSfxAudio(scene, beat) && !regenerate) {
-      skipped.push({ beatId, reason: 'already has audio' })
-      continue
+      if (
+        !actionBeatSfxIsStale(
+          scene,
+          {
+            beatId: beat.beatId,
+            actionDescription: actionText,
+            kind: 'action',
+          },
+          true
+        )
+      ) {
+        skipped.push({ beatId, reason: 'already has audio' })
+        continue
+      }
     }
 
     let slot

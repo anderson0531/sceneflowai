@@ -263,6 +263,7 @@
     "noAudioItems": "No audio items available for this scene.",
     "statusReady": "Ready",
     "statusMissing": "Missing",
+    "statusPromptChanged": "Prompt changed",
     "sfxDurationPreset": "SFX duration preset",
     "durationAuto": "Auto ({seconds}s · Veo {veoSeconds}s)",
     "durationShort": "Short 3s / Veo 4s",
@@ -276,7 +277,7 @@
   },
   "expressSfx": {
     "title": "Express Veo SFX",
-    "description": "Generate action-beat sound effects concurrently (up to 2 at a time). Each beat uses Veo native audio, then extracts MP3 for the animatic.",
+    "description": "Generate action-beat sound effects concurrently (up to 4 at a time). Each beat uses Veo native audio, then extracts MP3 for the animatic.",
     "selectedBeats": "Selected beats",
     "estimatedCredits": "Estimated credits",
     "creditHint": "~{credits} credits · up to 8s continuous",

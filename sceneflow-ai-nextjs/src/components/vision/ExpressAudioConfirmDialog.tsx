@@ -188,10 +188,18 @@ export function ExpressAudioConfirmDialog({
                       </span>
                       <span
                         className={`text-[10px] ${
-                          item.hasAudio ? 'text-green-400' : 'text-amber-400'
+                          item.stale
+                            ? 'text-amber-400'
+                            : item.hasAudio
+                              ? 'text-green-400'
+                              : 'text-amber-400'
                         }`}
                       >
-                        {item.hasAudio ? t('statusReady') : t('statusMissing')}
+                        {item.stale
+                          ? t('statusPromptChanged')
+                          : item.hasAudio
+                            ? t('statusReady')
+                            : t('statusMissing')}
                       </span>
                     </span>
                   </label>

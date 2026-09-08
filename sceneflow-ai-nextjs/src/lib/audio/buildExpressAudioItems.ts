@@ -1,4 +1,9 @@
 import { findDialogueAudioForLine } from '@/components/vision/scene-production/audioTrackBuilder'
+import {
+  actionBeatSfxIsStale,
+  audioSourceFingerprintForSpoken,
+  isBeatAudioStale,
+} from '@/lib/audio/beatAudioStale'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import { coerceDialogueLineText } from '@/lib/script/segmentScript'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
@@ -16,6 +21,7 @@ export interface ExpressAudioItem {
   label: string
   typeLabel: string
   hasAudio: boolean
+  stale?: boolean
   dialogueIndex?: number
   beatId?: string
 }
@@ -50,20 +56,57 @@ function getNarrationAudioUrl(
   return undefined
 }
 
-function dialogueLineHasAudio(
+function dialogueLineAudioStatus(
   scene: Record<string, unknown>,
   lang: string,
   dialogueIndex: number,
-  lineId?: string,
-  character?: string
-): boolean {
+  lineId: string | undefined,
+  character: string | undefined,
+  kind: 'dialogue' | 'narration',
+  line: string | undefined
+): { hasAudio: boolean; stale: boolean } {
   const entry = findDialogueAudioForLine(scene, {
     language: lang,
     lineId,
     dialogueIndex,
     character,
+  }) as
+    | { audioUrl?: string; url?: string; sourceFingerprint?: string; audioStale?: boolean }
+    | null
+  const url = entry?.audioUrl || entry?.url
+  const hasUrl = !!(typeof url === 'string' && url.trim())
+  const stale = isBeatAudioStale({
+    hasAudio: hasUrl,
+    sourceFingerprint: entry?.sourceFingerprint,
+    audioStale: entry?.audioStale,
+    currentFingerprint: audioSourceFingerprintForSpoken({ kind, character, line }),
   })
-  return !!(entry?.audioUrl || entry?.url)
+  return { hasAudio: hasUrl && !stale, stale }
+}
+
+function getNarrationAudioStatus(
+  scene: Record<string, unknown>,
+  lang: string,
+  character: string | undefined,
+  line: string
+): { hasAudio: boolean; stale: boolean } {
+  const url = getNarrationAudioUrl(scene, lang)
+  const hasUrl = !!url
+  const narrationAudio = (scene as Record<string, unknown>).narrationAudio as
+    | Record<string, { sourceFingerprint?: string; audioStale?: boolean }>
+    | undefined
+  const entry = narrationAudio?.[lang]
+  const stale = isBeatAudioStale({
+    hasAudio: hasUrl,
+    sourceFingerprint: entry?.sourceFingerprint,
+    audioStale: entry?.audioStale,
+    currentFingerprint: audioSourceFingerprintForSpoken({
+      kind: 'narration',
+      character,
+      line,
+    }),
+  })
+  return { hasAudio: hasUrl && !stale, stale }
 }
 
 function resolveDialogueIndex(
@@ -126,12 +169,14 @@ export function buildExpressAudioItems(
 
   const narrationText = String(scene.narration ?? '').trim()
   if (narrationText && !sceneNarrationRepresentedInBeats(scene, narrationText)) {
+    const status = getNarrationAudioStatus(scene, lang, undefined, narrationText)
     items.push({
       id: 'narration',
       kind: 'narration',
       label: truncate(narrationText),
       typeLabel: TYPE_LABELS.narration,
-      hasAudio: !!getNarrationAudioUrl(scene, lang),
+      hasAudio: status.hasAudio,
+      stale: status.stale,
     })
   }
 
@@ -149,37 +194,46 @@ export function buildExpressAudioItems(
         coerceDialogueLineText(beat.line).trim() === narrationText
 
       if (isSceneNarration) {
+        const narrationStatus = getNarrationAudioStatus(scene, lang, beat.character, narrationText)
+        const dialogueStatus = dialogueLineAudioStatus(
+          scene,
+          lang,
+          dialogueIndex,
+          beat.lineId,
+          beat.character,
+          'narration',
+          beat.line
+        )
+        const stale = narrationStatus.stale || dialogueStatus.stale
         items.push({
           id: 'narration',
           kind: 'narration',
           label,
           typeLabel: TYPE_LABELS.narration,
           hasAudio:
-            !!getNarrationAudioUrl(scene, lang) ||
-            dialogueLineHasAudio(
-              scene,
-              lang,
-              dialogueIndex,
-              beat.lineId,
-              beat.character
-            ),
+            (narrationStatus.hasAudio || dialogueStatus.hasAudio) && !stale,
+          stale,
         })
         continue
       }
 
+      const status = dialogueLineAudioStatus(
+        scene,
+        lang,
+        dialogueIndex,
+        beat.lineId ?? (dialogueLine?.lineId as string | undefined),
+        beat.character ?? (dialogueLine?.character as string | undefined),
+        beat.kind === 'narration' ? 'narration' : 'dialogue',
+        beat.line ?? (dialogueLine?.line as string | undefined)
+      )
       items.push({
         id: `dialogue-${dialogueIndex}`,
         kind: beat.kind === 'narration' ? 'narration' : 'dialogue',
         label,
         typeLabel:
           beat.kind === 'narration' ? TYPE_LABELS.narration : TYPE_LABELS.dialogue,
-        hasAudio: dialogueLineHasAudio(
-          scene,
-          lang,
-          dialogueIndex,
-          beat.lineId ?? (dialogueLine?.lineId as string | undefined),
-          beat.character ?? (dialogueLine?.character as string | undefined)
-        ),
+        hasAudio: status.hasAudio,
+        stale: status.stale,
         dialogueIndex,
       })
       continue
@@ -187,16 +241,23 @@ export function buildExpressAudioItems(
 
     if (beat.kind === 'action' && selectableActionBeatIds.has(beat.beatId)) {
       const description = beat.actionDescription?.trim() ?? ''
+      const hasUrl = beatHasSfxAudio(scene, {
+        beatId: beat.beatId,
+        actionDescription: description,
+        kind: 'action',
+      })
+      const stale = actionBeatSfxIsStale(
+        scene,
+        { beatId: beat.beatId, actionDescription: description, kind: 'action' },
+        hasUrl
+      )
       items.push({
         id: `sfx-${beat.beatId}`,
         kind: 'sfx',
         label: truncate(description || 'Action beat'),
         typeLabel: TYPE_LABELS.sfx,
-        hasAudio: beatHasSfxAudio(scene, {
-          beatId: beat.beatId,
-          actionDescription: description,
-          kind: 'action',
-        }),
+        hasAudio: hasUrl && !stale,
+        stale,
         beatId: beat.beatId,
       })
     }

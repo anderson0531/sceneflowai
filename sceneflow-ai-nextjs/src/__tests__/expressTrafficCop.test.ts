@@ -2,7 +2,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   ExpressTrafficCop,
   DEFAULT_EXPRESS_IMAGE_CONCURRENCY,
+  DEFAULT_EXPRESS_AUDIO_CONCURRENCY,
   getExpressImageConcurrency,
+  getExpressAudioConcurrency,
 } from '@/lib/sceneGeneration/expressTrafficCop'
 
 describe('ExpressTrafficCop', () => {
@@ -27,6 +29,13 @@ describe('ExpressTrafficCop', () => {
     expect(getExpressImageConcurrency()).toBe(3)
     const cop = new ExpressTrafficCop()
     expect(cop.getSnapshot().image.max).toBe(3)
+  })
+
+  it('defaults audio lane concurrency to 8', () => {
+    expect(DEFAULT_EXPRESS_AUDIO_CONCURRENCY).toBe(8)
+    expect(getExpressAudioConcurrency()).toBe(8)
+    const cop = new ExpressTrafficCop()
+    expect(cop.getSnapshot().audio.max).toBe(8)
   })
 
   it('honors EXPRESS_IMAGE_CONCURRENCY override for dedicated GCP', () => {

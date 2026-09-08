@@ -5,6 +5,10 @@ import { toast } from 'sonner'
 import { saveAudioFile } from '@/lib/download/saveFile'
 import { findDialogueAudioForLine } from '@/components/vision/scene-production/audioTrackBuilder'
 import { coerceDialogueLineText } from '@/lib/script/segmentScript'
+import {
+  audioSourceFingerprintForSpoken,
+  isBeatAudioStale,
+} from '@/lib/audio/beatAudioStale'
 import type { DialogueLine } from '@/lib/script/segmentTypes'
 
 /**
@@ -86,6 +90,20 @@ export function SegmentDialogueCard({
   const audioDuration: number | undefined =
     dialogueEntry?.duration ||
     (isNarrator ? scene.narrationAudio?.[selectedLanguage]?.duration : undefined)
+  const audioStale = isBeatAudioStale({
+    hasAudio: !!audioUrl,
+    sourceFingerprint:
+      dialogueEntry?.sourceFingerprint ||
+      (isNarrator ? scene.narrationAudio?.[selectedLanguage]?.sourceFingerprint : undefined),
+    audioStale:
+      dialogueEntry?.audioStale ||
+      (isNarrator ? scene.narrationAudio?.[selectedLanguage]?.audioStale : undefined),
+    currentFingerprint: audioSourceFingerprintForSpoken({
+      kind: isNarrator ? 'narration' : 'dialogue',
+      character: line.character,
+      line: line.line,
+    }),
+  })
 
   const isGenerating =
     !!generatingDialogue &&
@@ -185,12 +203,19 @@ export function SegmentDialogueCard({
                 {voiceChip}
               </span>
             )}
-            {audioUrl && (
+            {audioUrl && audioStale ? (
+              <span
+                className="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded flex items-center gap-1"
+                title="Beat prompt changed after this audio was generated"
+              >
+                Prompt changed
+              </span>
+            ) : audioUrl ? (
               <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
                 <Volume2 className="w-3 h-3" />
                 {audioDuration ? `${audioDuration.toFixed(1)}s` : 'Ready'}
               </span>
-            )}
+            ) : null}
           </div>
           <div className={bodyClasses}>
             {isNarrator ? lineWithoutParenthetical : `"${lineWithoutParenthetical}"`}

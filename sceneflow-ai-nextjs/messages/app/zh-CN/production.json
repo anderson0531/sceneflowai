@@ -180,6 +180,7 @@
     "noAudioItems": "此场景没有可用的音频项目。",
     "statusReady": "准备好",
     "statusMissing": "丢失的",
+    "statusPromptChanged": "提示已更改",
     "sfxDurationPreset": "SFX 持续时间预设",
     "durationAuto": "汽车（{seconds}s·Veo {veoSeconds}s）",
     "durationShort": "短 3 秒/Veo 4 秒",
