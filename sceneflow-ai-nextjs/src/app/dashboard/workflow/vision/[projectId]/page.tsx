@@ -14436,77 +14436,77 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       {/* Workflow Navigation Header */}
       <header className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 shrink-0">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          <div className="hidden sm:flex items-center gap-1.5 shrink-0" aria-hidden="true">
+            <Video className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+              {tStudio('productionLabel')}
+            </span>
+          </div>
+
+          <div
+            role="tablist"
+            aria-label={tStudio('viewsAriaLabel')}
+            className="inline-flex max-w-full gap-1 rounded-xl p-1 border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800/80 overflow-x-auto"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={productionView === 'studio'}
+              onClick={() => setProductionViewWithUrl('studio')}
+              className={`flex shrink-0 items-center gap-2 h-9 px-3.5 rounded-lg text-sm font-semibold transition-colors ${
+                productionView === 'studio'
+                  ? 'bg-white dark:bg-gray-900 text-sf-primary shadow-sm ring-1 ring-sf-primary/25'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              <Clapperboard className="w-4 h-4" />
+              <span>{tStudio('viewStudio')}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={productionView === 'screening'}
+              onClick={() => setProductionViewWithUrl('screening')}
+              className={`flex shrink-0 items-center gap-2 h-9 px-3.5 rounded-lg text-sm font-semibold transition-colors ${
+                productionView === 'screening'
+                  ? 'bg-white dark:bg-gray-900 text-sf-primary shadow-sm ring-1 ring-sf-primary/25'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              <Play className="w-4 h-4" />
+              <span>{tStudio('viewScreening')}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={productionView === 'streams'}
+              onClick={() => setProductionViewWithUrl('streams')}
+              className={`flex shrink-0 items-center gap-2 h-9 px-3.5 rounded-lg text-sm font-semibold transition-colors ${
+                productionView === 'streams'
+                  ? 'bg-white dark:bg-gray-900 text-sf-primary shadow-sm ring-1 ring-sf-primary/25'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              <Layers className="w-4 h-4" />
+              <span>{tStudio('viewStreams')}</span>
+            </button>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2 shrink-0">
           <Link href={`/dashboard/studio/${projectId}`} className="shrink-0">
-            <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+            <Button
+              variant="outline"
+              size="sm"
+              aria-label={tStudio('backToBlueprint')}
+              className="h-9 rounded-full border-emerald-500/40 bg-emerald-500/5 text-emerald-700 hover:bg-emerald-500/10 hover:border-emerald-500/60 hover:text-emerald-800 dark:border-emerald-500/35 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:text-emerald-200 dark:hover:border-emerald-400/50"
+            >
               <ArrowLeft className="w-4 h-4 mr-1.5" />
               <span className="hidden sm:inline">{tStudio('backToBlueprint')}</span>
               <span className="sm:hidden">{tStudio('blueprintShort')}</span>
             </Button>
           </Link>
-          
-          <div className="h-5 w-px bg-gray-300 dark:bg-gray-700 shrink-0" />
-
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="hidden sm:flex items-center gap-1.5 shrink-0" aria-hidden="true">
-              <Video className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                {tStudio('productionLabel')}
-              </span>
-            </div>
-
-            <div
-              role="tablist"
-              aria-label={tStudio('viewsAriaLabel')}
-              className="inline-flex max-w-full gap-1 rounded-xl p-1 border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800/80 overflow-x-auto"
-            >
-              <button
-                type="button"
-                role="tab"
-                aria-selected={productionView === 'studio'}
-                onClick={() => setProductionViewWithUrl('studio')}
-                className={`flex shrink-0 items-center gap-2 h-9 px-3.5 rounded-lg text-sm font-semibold transition-colors ${
-                  productionView === 'studio'
-                    ? 'bg-white dark:bg-gray-900 text-sf-primary shadow-sm ring-1 ring-sf-primary/25'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                <Clapperboard className="w-4 h-4" />
-                <span>{tStudio('viewStudio')}</span>
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={productionView === 'screening'}
-                onClick={() => setProductionViewWithUrl('screening')}
-                className={`flex shrink-0 items-center gap-2 h-9 px-3.5 rounded-lg text-sm font-semibold transition-colors ${
-                  productionView === 'screening'
-                    ? 'bg-white dark:bg-gray-900 text-sf-primary shadow-sm ring-1 ring-sf-primary/25'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                <Play className="w-4 h-4" />
-                <span>{tStudio('viewScreening')}</span>
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={productionView === 'streams'}
-                onClick={() => setProductionViewWithUrl('streams')}
-                className={`flex shrink-0 items-center gap-2 h-9 px-3.5 rounded-lg text-sm font-semibold transition-colors ${
-                  productionView === 'streams'
-                    ? 'bg-white dark:bg-gray-900 text-sf-primary shadow-sm ring-1 ring-sf-primary/25'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                <Layers className="w-4 h-4" />
-                <span>{tStudio('viewStreams')}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2 shrink-0">
           <NotificationCenter />
         </div>
       </header>
