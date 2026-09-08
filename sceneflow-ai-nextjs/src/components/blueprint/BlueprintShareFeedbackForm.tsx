@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
+import { DictationTextarea } from '@/components/ui/DictationTextarea'
 import type { BlueprintFeedbackSections, BlueprintFixSection } from '@/lib/blueprint/shareTypes'
 
 const SECTIONS: { id: BlueprintFixSection; label: string }[] = [
@@ -128,11 +129,12 @@ export function BlueprintShareFeedbackForm({
         </div>
       ))}
 
-      <Textarea
-        placeholder="Anything else? (optional)"
+      <DictationTextarea
+        placeholder="Anything else? Type or dictate. (optional)"
         value={freeformNotes}
-        onChange={(e) => setFreeformNotes(e.target.value)}
+        onChange={setFreeformNotes}
         rows={3}
+        disabled={submitting}
         className="bg-gray-900 border-gray-700"
       />
 

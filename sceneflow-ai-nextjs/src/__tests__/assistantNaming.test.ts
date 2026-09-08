@@ -23,7 +23,6 @@ function readSource(relativePath: string): string {
  */
 const TRIGGER_SOURCES = [
   'src/components/blueprint/TreatmentCard.tsx',
-  'src/components/blueprint/AudienceResonancePanel.tsx',
   'src/components/blueprint/AudienceResonancePanelV3.tsx',
   'src/components/blueprint/SidePanelTabs.tsx',
   'src/components/blueprint/BlueprintOnboarding.tsx',

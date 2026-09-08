@@ -48,6 +48,9 @@
     "characters": "Characters",
     "charactersWithCount": "Characters ({count})"
   },
+  "toolbar": {
+    "documentLabel": "Treatment"
+  },
   "sections": {
     "coreInfo": "Core Info",
     "coreInfoTitle": "Core Identifying Information",
@@ -257,6 +260,11 @@
       "statusIdleHint": " — tap Generate when ready",
       "emptyHint": "After you create a link, feedback, team chat, and direct messages with reviewers will appear here.",
       "reviewCounts": "{reviews, plural, =1 {# review} other {# reviews}} · {reviewers, plural, =1 {# reviewer} other {# reviewers}}",
+      "subTabs": {
+        "feedback": "Feedback",
+        "team": "Team",
+        "messages": "Messages"
+      },
       "revokeLink": "Revoke link",
       "noFeedback": "No feedback yet. Share the link with reviewers.",
       "scoreOutOfFive": "{score}/5",
@@ -328,6 +336,15 @@
     "resonanceRecommendations": "Resonance recommendations ({count})",
     "minusPoints": "−{points}",
     "whatShouldChange": "What should change and why?",
+    "whatShouldChangePlaceholder": "Type or dictate your direction — e.g. make the mentor secretly the antagonist, and rebalance the second act beats so the betrayal lands for a millennial thriller audience…",
+    "scopes": {
+      "all": "Full blueprint balance",
+      "core": "Core info",
+      "story": "Story",
+      "characters": "Characters",
+      "beats": "Beats",
+      "tone": "Tone & style"
+    },
     "focusOptional": "Focus (optional)",
     "guidedRefinements": "Guided refinements (optional)",
     "revisionPlan": "Revision plan",

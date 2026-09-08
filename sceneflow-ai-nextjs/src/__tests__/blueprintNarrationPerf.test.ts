@@ -222,14 +222,25 @@ describe('the TTS route caches and parallelizes', () => {
   })
 })
 
-describe('the side panel lands on Narrative', () => {
+describe('the side panel lands on its first tab', () => {
   const panel = readSource('src/components/blueprint/SidePanelTabs.tsx')
   const studio = readSource('src/app/dashboard/studio/[projectId]/StudioPageClient.tsx')
 
-  it('defaults to the narrative reasoning tab', () => {
+  // Resonance is the leftmost tab. Defaulting to the third one showed Narrative
+  // while Resonance sat highlighted-but-inactive at the left edge.
+  it('defaults to the resonance tab', () => {
     expect(panel).toMatch(
-      /useState<'resonance' \| 'collaboration' \| 'reasoning'>\(\s*'reasoning'\s*\)/
+      /useState<'resonance' \| 'collaboration' \| 'reasoning'>\(\s*'resonance'\s*\)/
     )
+  })
+
+  it('renders the tab buttons in the order the default assumes', () => {
+    // The label calls appear only in the buttons, unlike setActiveTab, which the
+    // tab-signal effects also call.
+    const order = ["t('tabs.resonance')", "t('tabs.collaborate')", "t('tabs.reasoning')"]
+    const positions = order.map((needle) => panel.indexOf(needle))
+    expect(positions.every((position) => position > 0)).toBe(true)
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions)
   })
 
   it('clears the tab signals on close so a stale one cannot win on reopen', () => {

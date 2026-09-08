@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
 import { useGuideStore } from '@/store/useGuideStore'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Play, Square, Volume2, MoreHorizontal, ChevronDown, MessageSquare, Loader2, Wand2, X, Users, Lightbulb, SparklesIcon, Award, RefreshCw, FileText, Printer, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -57,13 +56,19 @@ import {
 } from '@/i18n/content/buildBlueprintDisplayFields'
 import { TranslationNotice } from '@/components/i18n/LocalizedField'
 
-/** Blueprint body sections, in tab order. Labels resolve through the catalog. */
+/**
+ * Blueprint body sections, in tab order. Labels resolve through the catalog.
+ *
+ * The order matches BLUEPRINT_REVIEW_SECTION_THEME and the share viewer's nav,
+ * so a reviewer reading the shared link and the author editing in the studio
+ * move through the treatment in the same sequence.
+ */
 const SECTION_TABS: Array<{ id: BlueprintFixSection; labelKey: string }> = [
   { id: 'core', labelKey: 'tabs.core' },
   { id: 'story', labelKey: 'tabs.story' },
-  { id: 'tone', labelKey: 'tabs.tone' },
-  { id: 'beats', labelKey: 'tabs.beats' },
   { id: 'characters', labelKey: 'tabs.characters' },
+  { id: 'beats', labelKey: 'tabs.beats' },
+  { id: 'tone', labelKey: 'tabs.tone' },
 ]
 
 const SECTION_TAB_IDS: BlueprintFixSection[] = SECTION_TABS.map((t) => t.id)
@@ -275,12 +280,16 @@ export function TreatmentCard({
       return changed
     })()
     const flashIf = (key: string) => (wasJustAppliedActive && changedKeys.has(key) ? 'flash-highlight' : '')
+    // The studio shell already supplies the bordered, padded surface, so this
+    // renders bare rather than nesting another card inside it.
     return (
-      <Card className="mt-4 border-slate-700/60 bg-slate-900/40">
-        <CardContent className="pt-6">
-          <div className="w-full">
-            <div className="sticky top-0 z-10 bg-gray-900/80 backdrop-blur supports-[backdrop-filter]:bg-gray-900/60 rounded-md">
-              <div className="flex items-center justify-end gap-3 py-2">
+      <>
+        <div className="w-full">
+            <div className="border-b border-white/10 pb-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                  {t('toolbar.documentLabel')}
+                </span>
                 {/* Variant Actions Toolbar */}
                 {(() => {
                   return (
@@ -293,6 +302,11 @@ export function TreatmentCard({
                           size="toolbar"
                           scopeLabel={t('sections.wholeBlueprint')}
                         />
+
+                        {/* Separates the labelled primary action from the icon-only
+                            secondary group, which otherwise read as one undifferentiated
+                            strip of six buttons. */}
+                        <span aria-hidden className="mx-1 h-5 w-px bg-white/10" />
 
                         {/* Reimagine - major story changes */}
                         <Tooltip>
@@ -546,11 +560,11 @@ export function TreatmentCard({
                     )
                     .join(', ')
                 : ''
-              const accent = v.id === 'A' ? 'border-blue-500' : v.id === 'B' ? 'border-purple-500' : 'border-emerald-500'
-              const badge = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs'
-              const badgeGenre = `${badge} border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300`
-              const badgeFormat = `${badge} border-purple-200 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300`
-              const badgeAudience = `${badge} border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300`
+              // Genre, format and audience are peer metadata, so they share one
+              // neutral chip. Three separate hues implied a distinction that does
+              // not exist and pulled three more colours into the header.
+              const badge =
+                'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs border-slate-700 bg-slate-800/60 text-gray-300'
               // The database row wins over session?.user, whose name fields are
               // frozen at sign-in and so miss any profile edit.
               const creatorCredit = resolveCreatorCredit(
@@ -569,8 +583,8 @@ export function TreatmentCard({
               return (
                 <div className="space-y-5 text-sm">
                   {/* Callout */}
-                  <div className={`p-4 rounded-lg border-l-4 ${accent} bg-gray-50 dark:bg-gray-800/50`}> 
-                    <div className={`text-lg font-bold text-gray-900 dark:text-gray-100 ${v.id===activeVariant.id ? flashIf('title') : ''}`}>{titleText || t('fields.treatmentFallback')}</div>
+                  <div className="p-4 rounded-lg border border-slate-700/60 border-l-4 border-l-sf-primary bg-slate-800/50">
+                    <div className={`text-lg font-bold text-gray-100 ${v.id===activeVariant.id ? flashIf('title') : ''}`}>{titleText || t('fields.treatmentFallback')}</div>
                     {/* Logline lives in the hero overlay and the Core field; a third
                         copy here pushed the blueprint body further down the page. */}
                     {!tts.enabled && (
@@ -584,7 +598,10 @@ export function TreatmentCard({
                     onValueChange={(next) => setActiveSection(next as BlueprintFixSection)}
                     className="w-full"
                   >
-                    <TabsList className="flex w-full flex-wrap h-auto justify-start">
+                    {/* One scrolling row, like the Vision toolbar. Full-width
+                        wrapping split five tabs across two ragged rows at medium
+                        widths. */}
+                    <TabsList className="h-auto max-w-full justify-start overflow-x-auto">
                       {SECTION_TABS.map((tab) => (
                         <TabsTrigger key={tab.id} value={tab.id}>
                           {tab.id === 'beats' && beatCount > 0
@@ -625,7 +642,7 @@ export function TreatmentCard({
                         valueClassName={v.id === activeVariant.id ? flashIf('title') : undefined}
                       />
                       <BlueprintFieldCard sectionId="core" variant="studio" label={t('fields.genre')} hideWhenEmpty={!genreText}>
-                        <span className={cn(badgeGenre, v.id === activeVariant.id ? flashIf('genre') : '')}>
+                        <span className={cn(badge, v.id === activeVariant.id ? flashIf('genre') : '')}>
                           {genreText}
                         </span>
                       </BlueprintFieldCard>
@@ -639,7 +656,7 @@ export function TreatmentCard({
                             render format_length, which holds a duration despite its
                             name, so Format showed the runtime. */}
                         <span
-                          className={cn(badgeFormat, v.id === activeVariant.id ? flashIf('format') : '')}
+                          className={cn(badge, v.id === activeVariant.id ? flashIf('format') : '')}
                           title={productionFormatLabel || undefined}
                         >
                           {productionFormatLabel}
@@ -653,7 +670,7 @@ export function TreatmentCard({
                       >
                         <span
                           className={cn(
-                            badgeAudience,
+                            badge,
                             v.id === activeVariant.id ? flashIf('target_audience') : ''
                           )}
                         >
@@ -811,7 +828,7 @@ export function TreatmentCard({
                           {themeTexts.map((themeLabel: string, i: number) => (
                                 <span
                                   key={`${themeLabel}-${i}`}
-                                  className="px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 text-xs"
+                                  className="px-2 py-0.5 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-200 text-xs"
                                 >
                                   {themeLabel}
                                 </span>
@@ -865,8 +882,8 @@ export function TreatmentCard({
                                 className={cn(
                                   'px-2 py-0.5 rounded-full border text-xs transition-colors',
                                   selected
-                                    ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300'
-                                    : 'bg-slate-900/40 border-slate-600 text-gray-400 hover:border-indigo-500/60 hover:text-gray-200'
+                                    ? 'border-violet-500/50 bg-violet-500/15 text-violet-200'
+                                    : 'bg-slate-900/40 border-slate-600 text-gray-400 hover:border-violet-500/60 hover:text-gray-200'
                                 )}
                               >
                                 {t(`fields.scriptCraftPriorities.${priority}`)}
@@ -882,7 +899,7 @@ export function TreatmentCard({
                           placeholder={t('fields.scriptCraftNotesPlaceholder')}
                           rows={2}
                           className={cn(
-                            'mt-3 w-full rounded-md border border-slate-700 bg-slate-900/60 px-2 py-1.5 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500',
+                            'mt-3 w-full rounded-md border border-slate-700 bg-slate-900/60 px-2 py-1.5 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-violet-500',
                             v.id === activeVariant.id ? flashIf('scriptCraftNotes') : ''
                           )}
                           aria-label={t('fields.scriptCraftNotes')}
@@ -906,7 +923,7 @@ export function TreatmentCard({
                         {beatsRuntime.display && (
                           <span
                             className={cn(
-                              badgeFormat,
+                              badge,
                               v.id === activeVariant.id ? flashIf('beats') : ''
                             )}
                             title={t('sections.beatsTotalling', { count: beatsRuntime.count, display: beatsRuntime.display })}
@@ -951,15 +968,15 @@ export function TreatmentCard({
                               b.synopsis || ''
                             )
                             return (
-                            <div key={idx} className={`p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 ${v.id===activeVariant.id ? flashIf('beats') : ''}`}>
+                            <div key={idx} className={`p-3 rounded-lg border border-slate-700/60 bg-slate-800/50 ${v.id===activeVariant.id ? flashIf('beats') : ''}`}>
                               <div className="flex items-start justify-between gap-3">
                                 <div>
-                                  <div className="text-sm text-gray-900 dark:text-gray-100 font-medium">{beatTitle || t('fields.beat', { number: idx + 1 })}</div>
-                                  {beatIntent && <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{beatIntent}</div>}
+                                  <div className="text-sm text-gray-100 font-medium">{beatTitle || t('fields.beat', { number: idx + 1 })}</div>
+                                  {beatIntent && <div className="text-xs text-gray-400 mt-0.5">{beatIntent}</div>}
                                 </div>
-                                <div className="shrink-0 text-xs px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700 font-medium">{t('fields.minutesSuffix', { value: Number(b.minutes||0).toFixed(2) })}</div>
+                                <div className="shrink-0 text-xs px-2 py-0.5 rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 font-medium">{t('fields.minutesSuffix', { value: Number(b.minutes||0).toFixed(2) })}</div>
                               </div>
-                              {beatSynopsis && <div className="text-sm text-gray-700 dark:text-gray-300 mt-2 whitespace-pre-wrap leading-relaxed">{beatSynopsis}</div>}
+                              {beatSynopsis && <div className="text-sm text-gray-300 mt-2 whitespace-pre-wrap leading-relaxed">{beatSynopsis}</div>}
                             </div>
                           )})}
                         </div>
@@ -1007,12 +1024,14 @@ export function TreatmentCard({
                           >
                             <summary className="flex items-center justify-between p-3 cursor-pointer hover:bg-slate-700/40 transition-colors">
                               <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
-                                  <span className="text-purple-300 text-sm font-bold">{c.name?.charAt(0) || '?'}</span>
+                                {/* Amber matches the Characters section accent; the
+                                    avatar was purple, which reads as Core. */}
+                                <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center">
+                                  <span className="text-amber-300 text-sm font-bold">{c.name?.charAt(0) || '?'}</span>
                                 </div>
                                 <div>
                                   <div className="font-medium text-gray-100">{c.name}</div>
-                                  <div className="text-xs text-purple-400">{c.role || 'Character'}</div>
+                                  <div className="text-xs text-amber-400">{c.role || 'Character'}</div>
                                 </div>
                               </div>
                               <ChevronDown className="w-4 h-4 text-gray-400 group-open:rotate-180 transition-transform" />
@@ -1020,35 +1039,37 @@ export function TreatmentCard({
                             <div className="px-4 pb-4 pt-2 border-t border-slate-700/60 space-y-3">
                               {/* Description */}
                               {description && (
-                                <div className="text-sm text-gray-700 dark:text-gray-300">{description}</div>
+                                <div className="text-sm text-gray-300">{description}</div>
                               )}
                               
-                              {/* Goals & Flaws Grid */}
+                              {/* Goals & Flaws Grid. These three keep distinct hues
+                                  because they are genuinely different things a reader
+                                  compares at a glance, unlike the metadata chips. */}
                               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 {externalGoal && (
-                                  <div className="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 border border-blue-100 dark:border-blue-900">
-                                    <div className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-1">{t('character.externalGoal')}</div>
-                                    <div className="text-xs text-blue-800 dark:text-blue-200">{externalGoal}</div>
+                                  <div className="p-2.5 rounded-lg border border-sky-500/25 bg-sky-500/10">
+                                    <div className="text-[10px] font-semibold text-sky-400 uppercase tracking-wide mb-1">{t('character.externalGoal')}</div>
+                                    <div className="text-xs text-sky-100">{externalGoal}</div>
                                   </div>
                                 )}
                                 {internalNeed && (
-                                  <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/50 border border-amber-100 dark:border-amber-900">
-                                    <div className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-1">{t('character.internalNeed')}</div>
-                                    <div className="text-xs text-amber-800 dark:text-amber-200">{internalNeed}</div>
+                                  <div className="p-2.5 rounded-lg border border-amber-500/25 bg-amber-500/10">
+                                    <div className="text-[10px] font-semibold text-amber-400 uppercase tracking-wide mb-1">{t('character.internalNeed')}</div>
+                                    <div className="text-xs text-amber-100">{internalNeed}</div>
                                   </div>
                                 )}
                                 {fatalFlaw && (
-                                  <div className="p-2.5 rounded-lg bg-red-50 dark:bg-red-950/50 border border-red-100 dark:border-red-900">
-                                    <div className="text-[10px] font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide mb-1">{t('character.fatalFlaw')}</div>
-                                    <div className="text-xs text-red-800 dark:text-red-200">{fatalFlaw}</div>
+                                  <div className="p-2.5 rounded-lg border border-red-500/25 bg-red-500/10">
+                                    <div className="text-[10px] font-semibold text-red-400 uppercase tracking-wide mb-1">{t('character.fatalFlaw')}</div>
+                                    <div className="text-xs text-red-100">{fatalFlaw}</div>
                                   </div>
                                 )}
                               </div>
                               
                               {/* Character Arc */}
                               {(arcStarting || arcShift || arcEnding) && (
-                                <div className="p-3 rounded-lg bg-gradient-to-r from-purple-50 via-indigo-50 to-cyan-50 dark:from-purple-950/30 dark:via-indigo-950/30 dark:to-cyan-950/30 border border-purple-100 dark:border-purple-800">
-                                  <div className="text-[10px] font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wide mb-2">{t('character.arc')}</div>
+                                <div className="p-3 rounded-lg border border-amber-500/25 bg-amber-500/5">
+                                  <div className="text-[10px] font-semibold text-amber-400 uppercase tracking-wide mb-2">{t('character.arc')}</div>
                                   <div className="flex items-center gap-2 text-xs">
                                     {arcStarting && (
                                       <div className="flex-1 p-2 rounded bg-slate-900/60">
@@ -1058,7 +1079,7 @@ export function TreatmentCard({
                                     )}
                                     {arcShift && (
                                       <>
-                                        <ArrowRight className="w-3 h-3 text-purple-400 flex-shrink-0" />
+                                        <ArrowRight className="w-3 h-3 text-amber-400 flex-shrink-0" />
                                         <div className="flex-1 p-2 rounded bg-slate-900/60">
                                           <div className="text-[9px] text-gray-400 uppercase">{t('character.arcShift')}</div>
                                           <div className="text-gray-300">{arcShift}</div>
@@ -1081,7 +1102,7 @@ export function TreatmentCard({
                           </details>
                         )})}
                       </div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400 italic mt-2 px-3">
+                      <div className="text-xs text-gray-400 italic mt-2 px-3">
                         {t('character.refineNote')}
                       </div>
                     </>
@@ -1109,8 +1130,7 @@ export function TreatmentCard({
                   )
                 })()}
             </div>
-          </div>
-        </CardContent>
+        </div>
         {/* Blueprint Reimagine Dialog - Major story changes */}
         <BlueprintReimaginDialog
           open={reimaginOpen}
@@ -1169,7 +1189,7 @@ export function TreatmentCard({
           initialPrompt={tts.directorNotes}
           onSave={tts.saveDirectorNotes}
         />
-      </Card>
+      </>
     )
   }
 

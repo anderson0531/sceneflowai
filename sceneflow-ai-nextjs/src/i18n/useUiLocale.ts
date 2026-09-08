@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import {
   DEFAULT_LOCALE,
   getLocaleDirection,
+  isAppSurfacePath,
   isLocale,
   UI_LOCALE_COOKIE,
   UI_LOCALE_STORAGE_KEY,
@@ -46,11 +47,16 @@ export function applyDocumentLocale(locale: string): void {
  * Resolve the client's UI locale without waiting for a useEffect tick.
  * Content MT needs this on the first render so chrome catalogs and body
  * translation agree about the reading language.
+ *
+ * On app surfaces the cookie is the only source. `<html lang>` can still hold a
+ * marketing locale after a client-side navigation out of the landing page, and
+ * honouring it there would disagree with the server render.
  */
 export function resolveClientUiLocale(): string {
   if (typeof document === 'undefined') return DEFAULT_LOCALE
   const fromCookie = readUiLocaleCookie()
   if (fromCookie) return fromCookie
+  if (isAppSurfacePath(window.location?.pathname)) return DEFAULT_LOCALE
   const fromDocument = document.documentElement.lang
   return isLocale(fromDocument) ? fromDocument : DEFAULT_LOCALE
 }

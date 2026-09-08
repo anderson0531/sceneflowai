@@ -17,8 +17,6 @@ import type {
   PersistedBlueprintAudienceResonance,
   AudienceIntent,
 } from '@/lib/types/audienceResonance'
-import { isBlueprintARV3Enabled } from '@/lib/types/audienceResonance'
-import { AudienceResonancePanel } from './AudienceResonancePanel'
 import type { OpenBlueprintRefineOptions } from '@/lib/blueprint/openBlueprintRefine'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { triggerBlueprintShareSectionAudio } from '@/lib/blueprint/createBlueprintShare'
@@ -78,8 +76,11 @@ export function SidePanelTabs({
   contentI18n,
 }: SidePanelTabsProps) {
   const t = useTranslations('blueprint.sidePanel')
+  const tc = useTranslations('common')
+  // Opens on the first tab. Defaulting to the third one left the panel showing
+  // Narrative while Resonance sat highlighted-but-inactive at the left edge.
   const [activeTab, setActiveTab] = useState<'resonance' | 'collaboration' | 'reasoning'>(
-    'reasoning'
+    'resonance'
   )
 
   React.useEffect(() => {
@@ -163,7 +164,8 @@ export function SidePanelTabs({
           <button
             onClick={onClose}
             className="p-1.5 text-gray-500 hover:text-gray-300 hover:bg-gray-800/50 rounded-lg transition-colors"
-            title="Close panel"
+            title={tc('actions.close')}
+            aria-label={tc('actions.close')}
           >
             <X size={16} />
           </button>
@@ -173,31 +175,21 @@ export function SidePanelTabs({
       {/* Content */}
       <div className="flex-1 overflow-hidden">
         {activeTab === 'resonance' ? (
-          isBlueprintARV3Enabled() ? (
-            <AudienceResonancePanelV3
-              treatment={currentTreatment}
-              projectId={projectId}
-              audienceDefinition={audienceDefinition}
-              savedBlueprintAR={savedBlueprintAR}
-              legacyIntent={legacyIntent}
-              contentIntent={contentIntent}
-              onTreatmentUpdate={handleTreatmentUpdate}
-              onProceedToScripting={onProceedToScripting}
-              onAudienceDefinitionSave={onAudienceDefinitionSave}
-              onAnalysisComplete={onAnalysisComplete}
-              onOpenBlueprintRefine={onOpenBlueprintRefine}
-              onScrollToSection={onScrollToSection}
-              contentI18n={contentI18n}
-            />
-          ) : (
-            <AudienceResonancePanel
-              treatment={currentTreatment}
-              projectId={projectId}
-              onTreatmentUpdate={handleTreatmentUpdate}
-              onProceedToScripting={onProceedToScripting}
-              onAnalysisComplete={onAnalysisComplete}
-            />
-          )
+          <AudienceResonancePanelV3
+            treatment={currentTreatment}
+            projectId={projectId}
+            audienceDefinition={audienceDefinition}
+            savedBlueprintAR={savedBlueprintAR}
+            legacyIntent={legacyIntent}
+            contentIntent={contentIntent}
+            onTreatmentUpdate={handleTreatmentUpdate}
+            onProceedToScripting={onProceedToScripting}
+            onAudienceDefinitionSave={onAudienceDefinitionSave}
+            onAnalysisComplete={onAnalysisComplete}
+            onOpenBlueprintRefine={onOpenBlueprintRefine}
+            onScrollToSection={onScrollToSection}
+            contentI18n={contentI18n}
+          />
         ) : activeTab === 'reasoning' ? (
           <div className="h-full overflow-y-auto">
             <NarrativeReasoningPanel
@@ -573,17 +565,19 @@ function CollaborationContent({
       </div>
 
       <div className="flex items-center gap-1 px-3 py-2 border-b border-gray-800/40 flex-wrap">
-        {(['feedback', 'team', 'messages'] as const).map((t) => (
+        {/* The loop variable used to be named `t`, which shadowed the translator
+            and forced these labels to be raw enum ids leaned on CSS capitalize. */}
+        {(['feedback', 'team', 'messages'] as const).map((id) => (
           <button
-            key={t}
+            key={id}
             type="button"
             className={cn(
-              'text-xs px-2 py-1 rounded capitalize',
-              subTab === t ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800/60'
+              'text-xs px-2 py-1 rounded',
+              subTab === id ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800/60'
             )}
-            onClick={() => setSubTab(t)}
+            onClick={() => setSubTab(id)}
           >
-            {t === 'messages' ? 'Messages' : t}
+            {t(`collab.subTabs.${id}`)}
           </button>
         ))}
       </div>

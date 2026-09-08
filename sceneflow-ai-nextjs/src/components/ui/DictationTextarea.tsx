@@ -12,6 +12,7 @@ interface DictationTextareaProps {
   placeholder?: string
   className?: string
   rows?: number
+  disabled?: boolean
 }
 
 export function DictationTextarea({
@@ -20,6 +21,7 @@ export function DictationTextarea({
   placeholder,
   className,
   rows = 5,
+  disabled = false,
 }: DictationTextareaProps) {
   const {
     supported: sttSupported,
@@ -40,8 +42,14 @@ export function DictationTextarea({
     onChange(base ? `${base} ${transcript}` : transcript)
   }, [transcript, onChange])
 
+  // A field that goes read-only mid-utterance would keep appending transcript
+  // it can no longer show, so stop the recogniser with it.
+  useEffect(() => {
+    if (disabled && isRecording) stop()
+  }, [disabled, isRecording, stop])
+
   const handleMicClick = () => {
-    if (!sttSupported || !isSecure) return
+    if (!sttSupported || !isSecure || disabled) return
 
     if (isRecording) {
       stop()
@@ -64,18 +72,21 @@ export function DictationTextarea({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           rows={rows}
+          disabled={disabled}
           className={cn('pr-10 resize-none', className)}
         />
         {showMic && (
           <button
             type="button"
             onClick={handleMicClick}
+            disabled={disabled}
             aria-label={isRecording ? 'Stop dictation' : 'Start dictation'}
             className={cn(
               'absolute right-2 top-2 p-1.5 rounded-md transition-colors',
               isRecording
                 ? 'bg-red-600 text-white animate-pulse'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground',
+              disabled && 'opacity-40 pointer-events-none'
             )}
           >
             {isRecording ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}

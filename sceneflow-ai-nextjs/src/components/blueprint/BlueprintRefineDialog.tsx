@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl'
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import { Button } from '../ui/Button'
-import { Textarea } from '../ui/textarea'
+import { DictationTextarea } from '../ui/DictationTextarea'
 import { toast } from 'sonner'
 import {
   Loader2,
@@ -77,13 +77,14 @@ type Props = {
   contentI18n?: EntityI18n
 }
 
-const SCOPE_OPTIONS: { id: BlueprintFixSection | 'all'; label: string }[] = [
-  { id: 'all', label: 'Full blueprint balance' },
-  { id: 'core', label: 'Core info' },
-  { id: 'story', label: 'Story' },
-  { id: 'tone', label: 'Tone & style' },
-  { id: 'beats', label: 'Beats' },
-  { id: 'characters', label: 'Characters' },
+/** Focus scopes, ordered to match the studio tabs and the share viewer nav. */
+const SCOPE_OPTIONS: { id: BlueprintFixSection | 'all'; labelKey: string }[] = [
+  { id: 'all', labelKey: 'scopes.all' },
+  { id: 'core', labelKey: 'scopes.core' },
+  { id: 'story', labelKey: 'scopes.story' },
+  { id: 'characters', labelKey: 'scopes.characters' },
+  { id: 'beats', labelKey: 'scopes.beats' },
+  { id: 'tone', labelKey: 'scopes.tone' },
 ]
 
 function sectionFromTab(tab?: string): BlueprintFixSection | 'all' {
@@ -754,10 +755,12 @@ export function BlueprintRefineDialog({
                     </span>
                   )}
                 </div>
-                <Textarea
+                <DictationTextarea
                   value={userIntent}
-                  onChange={(e) => setUserIntent(e.target.value)}
-                  placeholder="e.g. Make the mentor secretly the antagonist, and rebalance the second act beats so the betrayal lands for a millennial thriller audience…"
+                  onChange={setUserIntent}
+                  placeholder={t('whatShouldChangePlaceholder')}
+                  rows={3}
+                  disabled={isGenerating}
                   className="min-h-[88px] bg-slate-800/50 border-slate-700 text-sm"
                 />
               </div>
@@ -777,7 +780,7 @@ export function BlueprintRefineDialog({
                           : 'border-slate-700 text-gray-400 hover:border-slate-500'
                       )}
                     >
-                      {opt.label}
+                      {t(opt.labelKey)}
                     </button>
                   ))}
                 </div>

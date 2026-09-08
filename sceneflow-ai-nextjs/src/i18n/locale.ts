@@ -17,6 +17,21 @@ export const LANDING_LOCALE_COOKIE = 'sf-landing-locale'
 
 export const UI_LOCALE_STORAGE_KEY = 'sf-locale'
 
+/** Path prefix for authenticated app surfaces (studios, settings, dashboard). */
+export const APP_SURFACE_PATH_PREFIX = '/dashboard'
+
+/**
+ * True for authenticated app surfaces, which resolve their locale from
+ * `sf-locale` alone.
+ *
+ * App chrome is only partially translated, so a locale inferred from the
+ * marketing cookie or the browser rendered a half-translated studio. Marketing
+ * routes are fully translated and keep inheriting the landing choice.
+ */
+export function isAppSurfacePath(pathname: string | null | undefined): boolean {
+  return Boolean(pathname && pathname.startsWith(APP_SURFACE_PATH_PREFIX))
+}
+
 /** Locales that render right-to-left. */
 export const RTL_LOCALES = new Set(['ar', 'he', 'fa', 'ur'])
 
