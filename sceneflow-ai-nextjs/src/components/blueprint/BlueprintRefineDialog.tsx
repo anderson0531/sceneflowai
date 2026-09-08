@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl'
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import { Button } from '../ui/Button'
-import { Textarea } from '../ui/textarea'
+import { DictationTextarea } from '../ui/DictationTextarea'
 import { toast } from 'sonner'
 import {
   Loader2,
@@ -754,10 +754,12 @@ export function BlueprintRefineDialog({
                     </span>
                   )}
                 </div>
-                <Textarea
+                <DictationTextarea
                   value={userIntent}
-                  onChange={(e) => setUserIntent(e.target.value)}
-                  placeholder="e.g. Make the mentor secretly the antagonist, and rebalance the second act beats so the betrayal lands for a millennial thriller audience…"
+                  onChange={setUserIntent}
+                  placeholder={t('whatShouldChangePlaceholder')}
+                  rows={3}
+                  disabled={isGenerating}
                   className="min-h-[88px] bg-slate-800/50 border-slate-700 text-sm"
                 />
               </div>

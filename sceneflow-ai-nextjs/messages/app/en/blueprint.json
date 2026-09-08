@@ -328,6 +328,7 @@
     "resonanceRecommendations": "Resonance recommendations ({count})",
     "minusPoints": "−{points}",
     "whatShouldChange": "What should change and why?",
+    "whatShouldChangePlaceholder": "Type or dictate your direction — e.g. make the mentor secretly the antagonist, and rebalance the second act beats so the betrayal lands for a millennial thriller audience…",
     "focusOptional": "Focus (optional)",
     "guidedRefinements": "Guided refinements (optional)",
     "revisionPlan": "Revision plan",
