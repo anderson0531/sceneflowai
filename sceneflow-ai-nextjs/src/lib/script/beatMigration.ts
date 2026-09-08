@@ -1203,14 +1203,51 @@ export function applyExpressStoryboardImageErrorToScene(
   return applyBeatsToScene(scene, beats)
 }
 
+/** Stable fingerprint of beat direction fields for pre-vis invalidation. */
+function beatDirectionFingerprint(direction: SceneBeat['beatDirection']): string {
+  if (!direction) return ''
+  const keys: Array<keyof NonNullable<SceneBeat['beatDirection']>> = [
+    'shotType',
+    'cameraAngle',
+    'cameraMovement',
+    'blocking',
+    'emotion',
+    'gaze',
+    'propInteraction',
+    'lightingAccent',
+    'frozenMoment',
+    'audioCue',
+    'transition',
+  ]
+  const parts: string[] = []
+  for (const key of keys) {
+    const value = direction[key]
+    if (typeof value === 'string' && value.trim()) {
+      parts.push(`${key}=${value.trim()}`)
+    }
+  }
+  const props = Array.isArray(direction.keyProps)
+    ? direction.keyProps
+        .map((prop) => (typeof prop === 'string' ? prop.trim() : ''))
+        .filter(Boolean)
+        .sort()
+    : []
+  if (props.length > 0) {
+    parts.push(`keyProps=${props.join(',')}`)
+  }
+  return parts.join('|')
+}
+
 /** Stable fingerprint of beat script text for pre-vis invalidation. */
 export function beatContentFingerprint(beat: SceneBeat): string {
+  const directionFingerprint = beatDirectionFingerprint(beat.beatDirection)
+  const directionSuffix = directionFingerprint ? `||direction:${directionFingerprint}` : ''
   if (beat.kind === 'action') {
-    return (beat.actionDescription ?? '').trim()
+    return `${(beat.actionDescription ?? '').trim()}${directionSuffix}`
   }
   const character = (beat.character ?? '').trim().toUpperCase()
   const line = (beat.line ?? '').trim()
-  return `${beat.kind}|${character}|${line}`
+  return `${beat.kind}|${character}|${line}${directionSuffix}`
 }
 
 function beatMatchKey(beat: SceneBeat, index: number): string {
