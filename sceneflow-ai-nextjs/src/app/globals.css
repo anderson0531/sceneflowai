@@ -296,6 +296,16 @@
     line-height: 1.4;
   }
 
+  /* AR Scene Breakdown sluglines — stay at body scale, not global h1–h3 clamp */
+  [role="dialog"] .ar-scene-heading,
+  .dialog-text-reset .ar-scene-heading {
+    font-size: 0.8125rem !important;
+    font-weight: 500 !important;
+    line-height: 1.4 !important;
+    margin-bottom: 0 !important;
+    letter-spacing: 0.02em;
+  }
+
   /* Strong text with enhanced weight */
   strong, b {
     font-weight: 600;

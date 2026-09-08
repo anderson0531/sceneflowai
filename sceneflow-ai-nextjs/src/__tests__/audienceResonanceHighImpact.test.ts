@@ -44,6 +44,9 @@ describe('High-impact audience resonance issues', () => {
     expect(modal).toContain('onJumpToScene')
     expect(modal).toContain('firstHighImpactSceneIndex')
     expect(modal).toContain('Go to scene')
+    expect(modal).toContain('ar-scene-heading')
+    expect(modal).toContain('dialog-text-reset')
+    expect(modal).not.toMatch(/<h3 className="font-semibold text-base/)
 
     expect(panel).toContain('sceneHasHighImpactIssue')
     expect(panel).toContain('focusedSceneIndex')
