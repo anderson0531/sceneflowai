@@ -4,7 +4,7 @@
 
 import { findSceneObjects } from '@/lib/character/matching'
 import { detectCharactersInText, resolveBeatSpeaker } from '@/lib/scene/characterDetection'
-import { isNarratorBeat } from '@/lib/script/beatMigration'
+import { getSceneBeats, isNarratorBeat } from '@/lib/script/beatMigration'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
 import type { BeatReferenceSelection, SceneBeat } from '@/lib/script/segmentTypes'
 
@@ -137,6 +137,69 @@ function pickBestLocationRef(
   return { id: null, confidence: 'none', warnings }
 }
 
+function uniqueProjectCharacters<
+  T extends { id?: string; name?: string },
+>(chars: T[]): T[] {
+  const seen = new Set<string>()
+  const out: T[] = []
+  for (const char of chars) {
+    const key = (char.id || char.name || '').trim().toLowerCase()
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    out.push(char)
+  }
+  return out
+}
+
+/**
+ * When beat-scoped name detect misses (pronouns, "the man"), pull talent from
+ * other beats, scene dialogue, and remaining scene text rather than generating
+ * a people frame with no identity references.
+ */
+function resolveSceneCastFallback(
+  scene: Record<string, unknown>,
+  projectCharacters: ResolveBeatFrameGenerationContextArgs['projectCharacters'],
+  filmTitle?: string
+): ResolveBeatFrameGenerationContextArgs['projectCharacters'] {
+  const excludeTexts = filmTitle ? [filmTitle] : []
+  const beats = getSceneBeats(scene)
+  const found: ResolveBeatFrameGenerationContextArgs['projectCharacters'] = []
+
+  for (const other of beats) {
+    if (isNarratorBeat(other) || other.kind === 'narration') continue
+    const speaker = resolveBeatSpeaker(other, projectCharacters)
+    if (speaker) found.push(speaker)
+    found.push(
+      ...detectCharactersInText(
+        [other.actionDescription || '', other.line || '', other.character || ''].join(' '),
+        projectCharacters,
+        { excludeTexts }
+      )
+    )
+  }
+
+  const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
+  for (const line of dialogue) {
+    if (!line || typeof line !== 'object') continue
+    const row = line as { character?: string; characterId?: string | null; kind?: string }
+    if (row.kind === 'narration') continue
+    const speaker = resolveBeatSpeaker(
+      { character: row.character, characterId: row.characterId },
+      projectCharacters
+    )
+    if (speaker) found.push(speaker)
+  }
+
+  const sceneText = [
+    sceneHeadingText(scene),
+    String(scene.action || ''),
+    ...beats.map((b) => `${b.actionDescription || ''} ${b.line || ''} ${b.character || ''}`),
+  ].join(' ')
+  found.push(...detectCharactersInText(sceneText, projectCharacters, { excludeTexts }))
+
+  return uniqueProjectCharacters(found)
+}
+
 function resolveBeatCharacters(
   scene: Record<string, unknown>,
   beat: SceneBeat,
@@ -145,8 +208,11 @@ function resolveBeatCharacters(
 ): Array<{ id?: string; name?: string; referenceImage?: string }> {
   if (isNoTalentSceneForFrames(scene)) return []
 
+  if (isNarratorBeat(beat) || beat.kind === 'narration') {
+    return []
+  }
+
   if (beat.kind === 'action') {
-    // Beat-scoped only: do not scan full scene.action (other beats' characters leak in)
     const actionContext = [
       sceneHeadingText(scene),
       beat.actionDescription || '',
@@ -162,15 +228,12 @@ function resolveBeatCharacters(
     if (nonNarrators.length === 1) {
       return [nonNarrators[0]]
     }
-    return []
-  }
-
-  if (isNarratorBeat(beat) || beat.kind === 'narration') {
-    return []
+    return resolveSceneCastFallback(scene, projectCharacters, filmTitle)
   }
 
   const speaker = resolveBeatSpeaker(beat, projectCharacters)
-  return speaker ? [speaker] : []
+  if (speaker) return [speaker]
+  return resolveSceneCastFallback(scene, projectCharacters, filmTitle)
 }
 
 function buildCharacterWardrobes(

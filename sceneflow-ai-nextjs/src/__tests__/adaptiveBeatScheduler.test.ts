@@ -4,6 +4,7 @@ import {
   runAdaptiveBeatPool,
 } from '@/lib/sceneGeneration/adaptiveBeatScheduler'
 import {
+  isExpressBeatPoolRetryable,
   isExpressImageCanaryAbortError,
   isTransientExpressImageError,
 } from '@/lib/sceneGeneration/expressImageErrors'
@@ -25,17 +26,24 @@ function authError() {
 }
 
 describe('getSceneExpressBeatConcurrency', () => {
-  const prev = process.env.SCENE_EXPRESS_BEAT_CONCURRENCY
+  const prevBeat = process.env.SCENE_EXPRESS_BEAT_CONCURRENCY
+  const prevFlash = process.env.VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY
+  const prevImage = process.env.EXPRESS_IMAGE_CONCURRENCY
 
   afterEach(() => {
-    if (prev === undefined) delete process.env.SCENE_EXPRESS_BEAT_CONCURRENCY
-    else process.env.SCENE_EXPRESS_BEAT_CONCURRENCY = prev
+    if (prevBeat === undefined) delete process.env.SCENE_EXPRESS_BEAT_CONCURRENCY
+    else process.env.SCENE_EXPRESS_BEAT_CONCURRENCY = prevBeat
+    if (prevFlash === undefined) delete process.env.VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY
+    else process.env.VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY = prevFlash
+    if (prevImage === undefined) delete process.env.EXPRESS_IMAGE_CONCURRENCY
+    else process.env.EXPRESS_IMAGE_CONCURRENCY = prevImage
   })
 
-  it('defaults to 3', () => {
+  it('defaults to 6', () => {
     delete process.env.SCENE_EXPRESS_BEAT_CONCURRENCY
     delete process.env.VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY
-    expect(getSceneExpressBeatConcurrency()).toBe(3)
+    delete process.env.EXPRESS_IMAGE_CONCURRENCY
+    expect(getSceneExpressBeatConcurrency()).toBe(6)
   })
 
   it('reads SCENE_EXPRESS_BEAT_CONCURRENCY env', () => {
@@ -280,5 +288,33 @@ describe('runAdaptiveBeatPool', () => {
     expect(result.failed.has(3)).toBe(true)
     expect(result.failed.has(4)).toBe(true)
     expect(ran).toContain(1)
+  })
+
+  it('does not retry identity-ref rate limit exhausted errors', async () => {
+    let attempts = 0
+    const exhausted = new Error(
+      'Vertex Gemini Image error 429: identity-ref rate limit exhausted after 3 retries: RESOURCE_EXHAUSTED'
+    )
+
+    const promise = runAdaptiveBeatPool(
+      [0],
+      async () => {
+        attempts += 1
+        throw exhausted
+      },
+      {
+        initialConcurrency: 1,
+        maxAttempts: 3,
+        isRetryable: isExpressBeatPoolRetryable,
+        isCanaryAbort: isExpressImageCanaryAbortError,
+      }
+    )
+
+    await vi.runAllTimersAsync()
+    const result = await promise
+
+    expect(attempts).toBe(1)
+    expect(result.failed.has(0)).toBe(true)
+    expect(result.aborted).toBeUndefined()
   })
 })

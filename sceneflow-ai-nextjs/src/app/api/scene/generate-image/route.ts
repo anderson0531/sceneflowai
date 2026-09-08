@@ -847,6 +847,34 @@ export async function POST(req: NextRequest) {
                 'Frame the speaking character prominently — medium close-up or over-the-shoulder — with scene continuity preserved. '
               effectiveShotType = effectiveShotType || 'medium close-up'
             }
+            const shouldFillCharacters =
+              characterObjects.length === 0 &&
+              !effectiveExcludeCharacters &&
+              !(storyboardNoCharacterScene && !honorExplicitChars) &&
+              !isNarratorBeat(beat) &&
+              beat.kind !== 'narration'
+            if (shouldFillCharacters) {
+              const autoCtx = resolveBeatFrameGenerationContext({
+                scene: resolvedScene as Record<string, unknown>,
+                beat,
+                sceneIndex,
+                projectCharacters: allCharacters,
+                locationReferences: [],
+                objectReferences: [],
+                filmTitle: filmTitleForDetection,
+              })
+              characterObjects = autoCtx.characterIds
+                .map((id) =>
+                  allCharacters.find((c: any) => c.id === id || c.name === id)
+                )
+                .filter((c: any) => c != null)
+              if (characterObjects.length > 0) {
+                console.log(
+                  `[Scene Image] Beat frame filled ${characterObjects.length} character(s) from scene-cast fallback:`,
+                  characterObjects.map((c: any) => c.name)
+                )
+              }
+            }
             console.log(`[Scene Image] Beat frame ${effectiveBeatIndex}: kind=${beat.kind}`)
           }
         } else if (characterSelectionExplicit) {
@@ -1763,6 +1791,27 @@ export async function POST(req: NextRequest) {
         charactersWithoutImages.map((c: any) => c.name))
       console.warn('[Scene Image] These characters should have referenceImage saved to database for optimal image generation')
     }
+
+    const talentBeatMissingIdentityRefs =
+      skipLikenessValidation &&
+      isBeatFrame &&
+      !effectiveExcludeCharacters &&
+      beatKindForIntelligence !== 'narration' &&
+      characterObjects.length > 0 &&
+      charactersWithImages.length === 0
+    if (talentBeatMissingIdentityRefs) {
+      const missingNames =
+        charactersWithoutImages.map((c: any) => c.name).filter(Boolean).join(', ') ||
+        'selected characters'
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Talent beat is missing character reference images: ${missingNames} — add in Reference Library before Express.`,
+          code: 'MISSING_CHARACTER_REFERENCE_IMAGES',
+        },
+        { status: 422 }
+      )
+    }
     
     let imageUrl = ''
     let validation: any = null
@@ -1961,11 +2010,14 @@ export async function POST(req: NextRequest) {
     let generationAttempt = 0
     // Identity-ref jobs already retry inside vertexImageClient (up to 3× with long backoff).
     // Cap outer attempts so we do not multiply into ~12 Vertex calls per frame under 429 storms.
+    const forceDesignerImagePath = isBeatFrame || skipLikenessValidation
     const useVertexGeminiImage =
+      forceDesignerImagePath ||
       imageReferences.length > 0 ||
       objectImageReferences.length > 0 ||
       (matchedLocationReference && matchedLocationReference.imageUrl)
-    const maxGenerationAttempts = useVertexGeminiImage ? 2 : 4
+    // Express (skipLikenessValidation) lets Vertex own 429 retries — no outer burst.
+    const maxGenerationAttempts = skipLikenessValidation ? 1 : useVertexGeminiImage ? 2 : 4
     const rateLimitBackoffMs = [5000, 15000, 30000]
 
     promptForResponse = stripReferenceImageMappingBlock(optimizedPrompt)
@@ -1977,11 +2029,13 @@ export async function POST(req: NextRequest) {
         
         if (useVertexGeminiImage) {
           const baseImageTier: VertexImageTier =
-            resolvedModelTier === 'eco' ||
-            resolvedModelTier === 'designer' ||
-            resolvedModelTier === 'director'
-              ? resolvedModelTier
-              : 'designer'
+            forceDesignerImagePath
+              ? 'designer'
+              : resolvedModelTier === 'eco' ||
+                  resolvedModelTier === 'designer' ||
+                  resolvedModelTier === 'director'
+                ? resolvedModelTier
+                : 'designer'
 
           // Combine character, object, and location reference images (priority-capped)
           const characterRefEntries = buildCharacterReferenceEntries(

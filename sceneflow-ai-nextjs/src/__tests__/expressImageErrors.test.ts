@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  isExpressBeatPoolRetryable,
   isExpressImageCanaryAbortError,
   isExpressImageRateLimitError,
   isIdentityRefRateLimitExhausted,
@@ -73,6 +74,17 @@ describe('isExpressImageCanaryAbortError', () => {
   it('returns true for content policy messages', () => {
     expect(isExpressImageCanaryAbortError(err('blocked by content policy'))).toBe(true)
   })
+
+  it('does not abort the beat pool for missing character reference images', () => {
+    expect(
+      isExpressImageCanaryAbortError(
+        err(
+          'Talent beat is missing character reference images: Elara Vance — add in Reference Library before Express.',
+          422
+        )
+      )
+    ).toBe(false)
+  })
 })
 
 describe('isExpressImageRateLimitError', () => {
@@ -102,5 +114,21 @@ describe('isIdentityRefRateLimitExhausted', () => {
         err('Vertex Gemini Image error 429: identity-ref rate limit exhausted')
       )
     ).toBe(429)
+  })
+})
+
+describe('isExpressBeatPoolRetryable', () => {
+  it('retries gateway timeouts but not identity-ref exhaustion', () => {
+    expect(isExpressBeatPoolRetryable(err('Scene image generation failed (HTTP 504)', 504))).toBe(
+      true
+    )
+    expect(isExpressBeatPoolRetryable(err('HTTP 429: RESOURCE_EXHAUSTED', 429))).toBe(true)
+    expect(
+      isExpressBeatPoolRetryable(
+        err(
+          'Vertex Gemini Image error 429: identity-ref rate limit exhausted after 3 retries: RESOURCE_EXHAUSTED'
+        )
+      )
+    ).toBe(false)
   })
 })

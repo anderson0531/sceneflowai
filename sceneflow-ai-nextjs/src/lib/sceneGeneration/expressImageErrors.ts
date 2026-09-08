@@ -110,3 +110,12 @@ export function isIdentityRefRateLimitExhausted(err: unknown): boolean {
   const msg = String((err as { message?: unknown })?.message || err || '').toLowerCase()
   return msg.includes('identity-ref rate limit exhausted')
 }
+
+/**
+ * Beat-pool retries: transient Vertex/gateway errors only.
+ * Identity-ref 429 exhaustion already ran the inner ladder — do not re-burst.
+ */
+export function isExpressBeatPoolRetryable(err: unknown): boolean {
+  if (isIdentityRefRateLimitExhausted(err)) return false
+  return isTransientExpressImageError(err)
+}

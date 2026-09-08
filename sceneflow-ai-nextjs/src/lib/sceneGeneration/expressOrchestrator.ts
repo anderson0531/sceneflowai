@@ -23,9 +23,9 @@ import {
   type AdaptiveBeatPoolResult,
 } from './adaptiveBeatScheduler'
 import {
+  isExpressBeatPoolRetryable,
   isExpressImageCanaryAbortError,
   isExpressImageRateLimitError,
-  isTransientExpressImageError,
 } from './expressImageErrors'
 import {
   ExpressTrafficCop,
@@ -203,17 +203,24 @@ export function buildExpressBeatRefPayload(
 ): Record<string, unknown> {
   if (!verifiedBeatRefs) return {}
 
+  const hasCharacters =
+    !excludeCharacters && verifiedBeatRefs.selectedCharacters.length > 0
+
   const payload: Record<string, unknown> = {
     locationReferences: verifiedBeatRefs.locationReferences,
     objectReferences: verifiedBeatRefs.objectReferences,
-    characterSelectionExplicit: true,
     skipObjectAutoDetection: true,
   }
 
-  if (!excludeCharacters) {
-    if (verifiedBeatRefs.selectedCharacters.length > 0) {
-      payload.selectedCharacters = verifiedBeatRefs.selectedCharacters
-    }
+  // Only lock generate-image out of auto-detect when we have a real cast
+  // or are intentionally excluding people. An empty explicit selection was
+  // sending talent beats down the flash / no-ref path.
+  if (excludeCharacters || hasCharacters) {
+    payload.characterSelectionExplicit = true
+  }
+
+  if (hasCharacters) {
+    payload.selectedCharacters = verifiedBeatRefs.selectedCharacters
     if (verifiedBeatRefs.characterWardrobes.length > 0) {
       payload.characterWardrobes = verifiedBeatRefs.characterWardrobes
     }
@@ -349,7 +356,8 @@ function recordRateLimitedFailure(
 function buildAdaptiveBeatPoolOptions(emit: ExpressEmit): AdaptiveBeatPoolOptions {
   return {
     initialConcurrency: getSceneExpressBeatConcurrency(),
-    isRetryable: isTransientExpressImageError,
+    maxAttempts: 2,
+    isRetryable: isExpressBeatPoolRetryable,
     isCanaryAbort: isExpressImageCanaryAbortError,
     onConcurrencyChange: (max, reason) => {
       if (reason === 'decrease') {

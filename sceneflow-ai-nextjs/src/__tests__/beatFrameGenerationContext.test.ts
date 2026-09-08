@@ -158,6 +158,39 @@ describe('resolveBeatFrameGenerationContext', () => {
     expect(resolved.characterNames).toEqual(['Elara Vance'])
   })
 
+  it('falls back to scene-cast when an action beat uses pronouns instead of names', () => {
+    const scene = {
+      heading: 'INT. LIVING ROOM - NIGHT',
+      action: 'Someone moves through the dark apartment.',
+      beats: [
+        {
+          beatId: 'beat-action',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'He walks slowly through the living room, scanning every corner.',
+        },
+        {
+          beatId: 'beat-dialogue',
+          sequenceIndex: 1,
+          kind: 'dialogue',
+          character: 'Elara Vance',
+          characterId: 'c1',
+          line: 'I know you are here.',
+        },
+      ],
+    }
+    const resolved = resolveBeatFrameGenerationContext({
+      scene,
+      beat: scene.beats[0] as SceneBeat,
+      projectCharacters: characters,
+      locationReferences: [],
+      objectReferences: [],
+    })
+
+    expect(resolved.characterIds).toContain('c1')
+    expect(resolved.characterNames).toContain('Elara Vance')
+  })
+
   it('detects multiple characters on action beats', () => {
     const scene = { heading: 'INT. LAB - DAY' }
     const resolved = resolveBeatFrameGenerationContext({
