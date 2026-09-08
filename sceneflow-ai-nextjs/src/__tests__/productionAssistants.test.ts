@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   AUDIENCE_RESONANCE_VOICE_KEY,
   DIRECTOR_ASSISTANTS,
@@ -9,11 +9,27 @@ import {
   resolveAssistantGeminiVoiceId,
 } from '@/lib/tts/productionAssistants'
 
+const memory = new Map<string, string>()
+const mockStorage = {
+  getItem: (key: string) => memory.get(key) ?? null,
+  setItem: (key: string, value: string) => {
+    memory.set(key, value)
+  },
+  removeItem: (key: string) => {
+    memory.delete(key)
+  },
+}
+
 describe('Production assistants', () => {
+  beforeEach(() => {
+    memory.clear()
+    Object.assign(globalThis, { window: { localStorage: mockStorage }, localStorage: mockStorage })
+  })
+
   afterEach(() => {
-    try {
-      localStorage.removeItem(AUDIENCE_RESONANCE_VOICE_KEY)
-    } catch {}
+    memory.clear()
+    Reflect.deleteProperty(globalThis, 'window')
+    Reflect.deleteProperty(globalThis, 'localStorage')
   })
 
   it('maps every assistant to a unique Gemini voice id', () => {
