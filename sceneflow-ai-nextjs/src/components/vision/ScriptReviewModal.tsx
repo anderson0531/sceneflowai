@@ -14,7 +14,16 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/utils'
 import { coerceDialogueLineText } from '@/lib/script/segmentScript'
 import { OptimizeSceneDialog } from '@/components/vision/OptimizeSceneDialog'
-import { DIRECTOR_ASSISTANTS, applyAssistantStyle, getAssistantByVoiceId } from '@/lib/tts/productionAssistants'
+import {
+  DIRECTOR_ASSISTANTS,
+  applyAssistantStyle,
+  getAssistantByVoiceId,
+  persistAssistantVoice,
+  loadPersistedAssistantVoice,
+  resolveAssistant,
+  resolveAssistantGeminiVoiceId,
+} from '@/lib/tts/productionAssistants'
+import { firstHighImpactSceneIndex, sceneHasHighImpactIssue } from '@/lib/script/audienceResonance/highImpact'
 import { useStore } from '@/store/useStore'
 import { AnimatedScore, AnimatedProgressBar } from '@/components/ui/AnimatedScore'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
@@ -393,6 +402,8 @@ interface ScriptReviewModalProps {
   audienceDefinition?: AudienceDefinition | null
   /** Current script timestamp, used to detect a review that analysis outran. */
   scriptUpdatedAt?: string | null
+  /** Jump to a 0-based scene in Production Studio and close this dialog. */
+  onJumpToScene?: (sceneIndex: number) => void
 }
 
 // ============================================================================
@@ -456,8 +467,7 @@ function AssistantPickerButton({
         })()
       : 'Director')
 
-  const selectedAssistant =
-    DIRECTOR_ASSISTANTS.find(a => a.voiceId === selectedVoiceId) || DIRECTOR_ASSISTANTS[0]
+  const selectedAssistant = getAssistantByVoiceId(selectedVoiceId) || DIRECTOR_ASSISTANTS[0]
 
   const stopPreview = () => {
     if (previewAudioRef.current) {
@@ -489,7 +499,11 @@ function AssistantPickerButton({
       const response = await fetch('/api/tts/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: styled, voiceId: selectedAssistant.voiceId, language: 'en' }),
+        body: JSON.stringify({
+          text: styled,
+          voiceId: resolveAssistantGeminiVoiceId(selectedAssistant.voiceId),
+          language: 'en',
+        }),
       })
       if (!response.ok) throw new Error('TTS failed')
       const blob = await response.blob()
@@ -647,6 +661,7 @@ export default function ScriptReviewModal({
   onCinematicScenesApply,
   existingCinematicScenes = [],
   audienceDefinition: projectAudienceDefinition,
+  onJumpToScene,
 }: ScriptReviewModalProps) {
   const [voices, setVoices] = useState<Voice[]>([])
   const [activeTab, setActiveTab] = useState<ReviewTab>('overview')
@@ -655,8 +670,9 @@ export default function ScriptReviewModal({
   const [cinematicScenes, setCinematicScenes] = useState<CinematicScenePlan[]>(existingCinematicScenes)
   const [editingCreditId, setEditingCreditId] = useState<string | null>(null)
   
-  const selectedVoiceId = useStore(s => s.sidebarData.selectedVoiceId) || DIRECTOR_ASSISTANTS[0].voiceId
-  const selectedVoiceName = useStore(s => s.sidebarData.selectedVoiceName) || DIRECTOR_ASSISTANTS[0].title
+  const storedVoiceId = useStore(s => s.sidebarData.selectedVoiceId)
+  const selectedAssistant = resolveAssistant(storedVoiceId)
+  const selectedVoiceId = selectedAssistant.voiceId
   const setSidebarVoiceSelection = useStore(s => s.setSidebarVoiceSelection)
   
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en') // Keep for TTS playback
@@ -699,6 +715,14 @@ export default function ScriptReviewModal({
     createAudienceDefinition({ ...(projectAudienceDefinition || {}), source: 'script' })
   )
   const [targetAudienceOpen, setTargetAudienceOpen] = useState(false)
+
+  useEffect(() => {
+    if (!isOpen) return
+    const persisted = loadPersistedAssistantVoice()
+    if (persisted) {
+      setSidebarVoiceSelection(persisted.voiceId, persisted.voiceName)
+    }
+  }, [isOpen, setSidebarVoiceSelection])
 
   useEffect(() => {
     if (!isOpen) return
@@ -781,7 +805,7 @@ export default function ScriptReviewModal({
     const cached = audioCacheRef.current.get(sectionId)
     if (!cached) return null
     const textHash = hashText(text)
-    if (cached.voiceId === selectedVoiceId && cached.textHash === textHash && cached.language === selectedLanguage) {
+    if (cached.voiceId === resolveAssistantGeminiVoiceId(selectedVoiceId) && cached.textHash === textHash && cached.language === selectedLanguage) {
       return cached.url
     }
     return null
@@ -790,7 +814,7 @@ export default function ScriptReviewModal({
   const cacheAudio = (sectionId: string, text: string, url: string) => {
     audioCacheRef.current.set(sectionId, {
       url,
-      voiceId: selectedVoiceId,
+      voiceId: resolveAssistantGeminiVoiceId(selectedVoiceId),
       textHash: hashText(text),
       language: selectedLanguage
     })
@@ -827,9 +851,8 @@ export default function ScriptReviewModal({
 
     setLoadingSection(sectionId)
     try {
-      // Find the assistant definition by voice ID to apply styling
-      const assistant = getAssistantByVoiceId(selectedVoiceId)
-      const voiceToUse = assistant?.voiceId || DIRECTOR_ASSISTANTS[0].voiceId
+      const assistant = resolveAssistant(selectedVoiceId)
+      const voiceToUse = resolveAssistantGeminiVoiceId(assistant.voiceId)
 
       // Translate text if non-English language is selected
       // Uses Vertex AI Translation API (service account auth) to avoid API key rate limits
@@ -894,6 +917,12 @@ export default function ScriptReviewModal({
       audioRef.current = null
     }
     setPlayingSection(null)
+  }
+
+  const jumpToScene = (sceneIndex: number) => {
+    stopPlayback()
+    onJumpToScene?.(sceneIndex)
+    onClose()
   }
 
   const AudioButton = ({ sectionId, text }: { sectionId: string; text: string }) => {
@@ -1540,6 +1569,15 @@ export default function ScriptReviewModal({
   const deductions = review?.deductions || []
   // Use localSceneAnalysis if available (from dedicated API), otherwise fall back to review data
   const sceneAnalysis = localSceneAnalysis || review?.sceneAnalysis || []
+  const jumpToScenes = () => {
+    const highImpactIndex = firstHighImpactSceneIndex(sceneAnalysis)
+    if (highImpactIndex !== null) {
+      jumpToScene(highImpactIndex)
+      return
+    }
+    stopPlayback()
+    onClose()
+  }
   const showVsTellRatio = review?.showVsTellRatio ?? 0
   const totalDeductions = deductions.reduce((sum, d) => sum + d.points, 0)
 
@@ -1615,13 +1653,9 @@ export default function ScriptReviewModal({
               <AssistantPickerButton
                 selectedVoiceId={selectedVoiceId}
                 onSelect={(voiceId, voiceName) => {
-                  setSidebarVoiceSelection(voiceId, voiceName)
-                  try {
-                    localStorage.setItem(
-                      'sceneflow-audience-resonance-voice',
-                      JSON.stringify({ voiceId, voiceName })
-                    )
-                  } catch {}
+                  const assistant = resolveAssistant(voiceId)
+                  setSidebarVoiceSelection(assistant.voiceId, voiceName || assistant.title)
+                  persistAssistantVoice(assistant)
                 }}
               />
               <div className="flex items-center gap-2 border-l border-gray-200 dark:border-gray-700 pl-2 ml-1">
@@ -1712,10 +1746,7 @@ export default function ScriptReviewModal({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => {
-                        stopPlayback()
-                        onClose()
-                      }}
+                      onClick={jumpToScenes}
                       className="flex items-center gap-2 h-8 text-xs border-purple-500/50 text-purple-400 hover:bg-purple-500/10 ml-2"
                     >
                       <Film className="w-3.5 h-3.5" />
@@ -1929,7 +1960,16 @@ export default function ScriptReviewModal({
                           {showDeductions && (
                             <div className="mt-3 max-h-60 overflow-y-auto space-y-3 pl-2 pr-2">
                               {topIssues.map((issue, i) => (
-                                <div key={i} className="flex flex-col gap-1 text-sm bg-gray-50 dark:bg-gray-800/50 p-3 rounded-md border border-gray-100 dark:border-gray-700">
+                                <button
+                                  key={i}
+                                  type="button"
+                                  onClick={() => {
+                                    if (typeof issue.sceneNum === 'number' && issue.sceneNum > 0) {
+                                      jumpToScene(issue.sceneNum - 1)
+                                    }
+                                  }}
+                                  className="flex flex-col gap-1 text-sm text-left w-full bg-gray-50 dark:bg-gray-800/50 p-3 rounded-md border border-gray-100 dark:border-gray-700 hover:border-rose-400/60 hover:bg-rose-50/60 dark:hover:bg-rose-950/20 transition-colors"
+                                >
                                   <div className="flex items-start justify-between">
                                     <span className="font-semibold text-gray-900 dark:text-gray-100">
                                       Scene {issue.sceneNum}: {issue.heading}
@@ -1958,7 +1998,10 @@ export default function ScriptReviewModal({
                                       <span className="text-xs text-gray-400">{issue.rec.category}</span>
                                     </div>
                                   )}
-                                </div>
+                                  <span className="text-xs font-medium text-purple-600 dark:text-purple-400 mt-1">
+                                    Go to scene →
+                                  </span>
+                                </button>
                               ))}
                             </div>
                           )}
@@ -2062,10 +2105,7 @@ export default function ScriptReviewModal({
                             <div className="mt-3">
                               <Button
                                 size="sm"
-                                onClick={() => {
-                                  stopPlayback()
-                                  onClose()
-                                }}
+                                onClick={jumpToScenes}
                                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
                               >
                                 <Film className="w-4 h-4 mr-1.5" />
@@ -2165,14 +2205,27 @@ export default function ScriptReviewModal({
                         ) : (
                           <div className="space-y-4">
                             {sceneAnalysis.map((scene, index) => (
-                              <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-800/50">
+                              <div
+                                key={index}
+                                className={cn(
+                                  'border rounded-lg p-4 bg-gray-50 dark:bg-gray-800/50',
+                                  sceneHasHighImpactIssue(scene)
+                                    ? 'border-rose-400/70 dark:border-rose-500/50'
+                                    : 'border-gray-200 dark:border-gray-700'
+                                )}
+                              >
                                 <div className="flex items-start justify-between mb-3">
                                   <div>
-                                    <h3 className="font-semibold text-base text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                                    <h3 className="font-semibold text-base text-gray-900 dark:text-gray-100 flex items-center gap-2 flex-wrap">
                                       <span className="bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded text-sm">
                                         Scene {scene.sceneNumber}
                                       </span>
                                       {scene.sceneHeading}
+                                      {sceneHasHighImpactIssue(scene) && (
+                                        <Badge variant="destructive" className="text-[10px] uppercase tracking-wider">
+                                          High impact
+                                        </Badge>
+                                      )}
                                     </h3>
                                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 italic">
                                       {scene.notes}
@@ -2193,6 +2246,18 @@ export default function ScriptReviewModal({
                                       </span>
                                       <span className="text-[10px] text-gray-500 uppercase">Score</span>
                                     </div>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        const n = scene.sceneNumber
+                                        jumpToScene(typeof n === 'number' && n > 0 ? n - 1 : index)
+                                      }}
+                                      className="h-7 text-xs"
+                                    >
+                                      <Film className="w-3.5 h-3.5 mr-1" />
+                                      Go to scene
+                                    </Button>
                                   </div>
                                 </div>
                                 
