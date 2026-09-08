@@ -247,6 +247,7 @@ import { resolveDialogueTtsVoice } from '@/lib/character/dialogueTtsVoice'
 import { getEdgeVoiceConfigForResolution } from '@/lib/tts/edgeTtsVoices'
 import { backoffMsFor429Attempt, sleep } from '@/lib/tts/googleTtsRetry'
 import { DEFAULT_CINEMATIC_NARRATOR } from '@/lib/tts/cinematicNarratorPresets'
+import { loadPersistedAssistantVoice } from '@/lib/tts/productionAssistants'
 import { v4 as uuidv4 } from 'uuid'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { useOverlayStore } from '@/store/useOverlayStore'
@@ -5452,6 +5453,35 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [sceneEditorInitialInstructions, setSceneEditorInitialInstructions] = useState<string>('')
   const [recentlyUpdatedSceneIndex, setRecentlyUpdatedSceneIndex] = useState<number | null>(null)
   const recentlyUpdatedSceneClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [focusedSceneIndex, setFocusedSceneIndex] = useState<number | null>(null)
+  const focusedSceneClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const setSidebarVoiceSelection = useStore((s) => s.setSidebarVoiceSelection)
+
+  useEffect(() => {
+    const persisted = loadPersistedAssistantVoice()
+    if (persisted) {
+      setSidebarVoiceSelection(persisted.voiceId, persisted.voiceName)
+    }
+    return () => {
+      if (focusedSceneClearTimerRef.current) {
+        clearTimeout(focusedSceneClearTimerRef.current)
+      }
+    }
+  }, [setSidebarVoiceSelection])
+
+  const handleJumpToSceneFromReview = useCallback((sceneIndex: number) => {
+    if (!Number.isFinite(sceneIndex) || sceneIndex < 0) return
+    setSelectedSceneIndex(sceneIndex)
+    setFocusedSceneIndex(sceneIndex)
+    setShowReviewModal(false)
+    if (focusedSceneClearTimerRef.current) {
+      clearTimeout(focusedSceneClearTimerRef.current)
+    }
+    focusedSceneClearTimerRef.current = setTimeout(() => {
+      setFocusedSceneIndex(null)
+      focusedSceneClearTimerRef.current = null
+    }, 4000)
+  }, [])
 
   const editorAudienceAnalysis = useMemo(() => {
     if (editingSceneIndex === null || !script?.script?.scenes?.[editingSceneIndex]) {
@@ -14468,6 +14498,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onEditScene={handleEditScene}
                 onEditSceneWithRecommendations={handleEditSceneWithRecommendations}
                 recentlyUpdatedSceneIndex={recentlyUpdatedSceneIndex}
+                focusedSceneIndex={focusedSceneIndex}
                 onUpdateSceneAudio={handleUpdateSceneAudio}
                 onDeleteSceneAudio={handleDeleteSceneAudio}
                 onEnhanceSceneContext={handleEnhanceSceneContext}
@@ -14870,6 +14901,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       <ScriptReviewModal
         isOpen={showReviewModal}
         onClose={() => setShowReviewModal(false)}
+        onJumpToScene={handleJumpToSceneFromReview}
         directorReview={directorReview}
         audienceReview={audienceReview}
         onRegenerate={handleGenerateReviews}

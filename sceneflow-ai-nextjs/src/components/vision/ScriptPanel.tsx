@@ -152,6 +152,7 @@ import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { getAudioUrl } from '@/lib/audio/languageDetection'
 import { cleanupScriptAudio } from '@/lib/audio/cleanupAudio'
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
+import { sceneHasHighImpactIssue } from '@/lib/script/audienceResonance/highImpact'
 import { uploadAssetViaAPI } from '@/lib/vision/uploads'
 import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
 import { useCredits } from '@/contexts/CreditsContext'
@@ -458,6 +459,8 @@ interface ScriptPanelProps {
   resyncingAudioSceneIndex?: number | null
   /** Briefly highlight scene card after scene editor apply */
   recentlyUpdatedSceneIndex?: number | null
+  /** Scene jumped to from Audience Resonance; scroll and expand recommendations. */
+  focusedSceneIndex?: number | null
   /** Aggregate scene-direction readiness for reference generation guidance */
   directionReadiness?: import('@/lib/utils/contentHash').ScriptDirectionReadiness
   onUpdateAllDirections?: () => void
@@ -769,7 +772,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
-export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, projectMetadata = null, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, directionReadiness, onUpdateAllDirections, isUpdatingAllDirections = false, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled,   projectStreams = [] }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, projectMetadata = null, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, focusedSceneIndex = null, directionReadiness, onUpdateAllDirections, isUpdatingAllDirections = false, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled,   projectStreams = [] }: ScriptPanelProps) {
 
   const tStudio = useTranslations('production.studio')
   const tCommon = useTranslations('common')
@@ -1005,6 +1008,17 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
   
   // Expanded recommendations state per scene
   const [expandedRecommendations, setExpandedRecommendations] = useState<Set<number>>(new Set())
+
+  useEffect(() => {
+    if (focusedSceneIndex == null || focusedSceneIndex < 0) return
+    onSelectSceneIndex?.(focusedSceneIndex)
+    setExpandedRecommendations((prev) => {
+      if (prev.has(focusedSceneIndex)) return prev
+      const next = new Set(prev)
+      next.add(focusedSceneIndex)
+      return next
+    })
+  }, [focusedSceneIndex, onSelectSceneIndex])
   
   // Voice selection visibility state
   const [showVoiceSelection, setShowVoiceSelection] = useState(false)
@@ -3375,6 +3389,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       sceneAudioTracks={sceneAudioTracks[scene.sceneId || scene.id || `scene-${idx}`]}
                       domId={domId}
                       isRecentlyUpdated={recentlyUpdatedSceneIndex === idx}
+                      isFocused={focusedSceneIndex === idx}
                       isBookmarked={bookmarkedSceneIndex === idx}
                       onBookmarkToggle={() => handleBookmarkToggle(idx)}
                       bookmarkSaving={bookmarkSavingSceneIdx === idx}
@@ -4029,6 +4044,7 @@ interface SceneCardProps {
   }
   domId?: string
   isRecentlyUpdated?: boolean
+  isFocused?: boolean
   isBookmarked?: boolean
   onBookmarkToggle?: () => void
   bookmarkSaving?: boolean
@@ -4226,6 +4242,7 @@ function SceneCard({
   sceneAudioTracks,
   domId,
   isRecentlyUpdated = false,
+  isFocused = false,
   isBookmarked = false,
   onBookmarkToggle,
   bookmarkSaving = false,
@@ -4989,9 +5006,15 @@ function SceneCard({
       ? 'from-sf-primary/35 via-sky-500/10 to-transparent'
       : 'from-fuchsia-400/35 via-amber-400/15 to-transparent'
 
+  const hasHighImpactIssue = sceneHasHighImpactIssue(scene.audienceAnalysis)
+
   const selectionClasses = isSelected
-    ? 'border-sf-primary/70 ring-2 ring-sf-primary/60'
-    : 'border-white/10 hover:border-sf-primary/30'
+    ? hasHighImpactIssue
+      ? 'border-rose-500/70 ring-2 ring-rose-500/70'
+      : 'border-sf-primary/70 ring-2 ring-sf-primary/60'
+    : hasHighImpactIssue
+      ? 'border-rose-500/50 ring-2 ring-rose-500/70 hover:border-rose-400/70'
+      : 'border-white/10 hover:border-sf-primary/30'
 
   const bookmarkClasses = isBookmarked ? 'border-amber-300/80 shadow-[0_0_35px_rgba(251,191,36,0.25)]' : ''
   const recentlyUpdatedClasses = isRecentlyUpdated
@@ -4999,10 +5022,10 @@ function SceneCard({
     : ''
 
   useEffect(() => {
-    if (!isRecentlyUpdated) return
+    if (!isRecentlyUpdated && !isFocused) return
     const el = cardRef.current ?? (domId ? document.getElementById(domId) : null)
     el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  }, [isRecentlyUpdated, domId])
+  }, [isRecentlyUpdated, isFocused, domId])
 
   const headingText =
     typeof scene?.heading === 'string'
@@ -5324,6 +5347,11 @@ function SceneCard({
                                 </span>
                               )
                             })()}
+                            {hasHighImpactIssue && (
+                              <span className="flex items-center justify-center ml-0.5 h-4 px-1.5 text-[9px] font-bold uppercase tracking-wide bg-rose-500/30 text-rose-200 border border-rose-400/50 rounded-full">
+                                High impact
+                              </span>
+                            )}
                             {(scene.audienceAnalysis.recommendations?.length || 0) > 0 && (
                               <span className="flex items-center justify-center ml-0.5 h-4 min-w-4 px-1 text-[10px] font-bold bg-violet-500/40 text-violet-200 rounded-full">
                                 {scene.audienceAnalysis.recommendations.length}
