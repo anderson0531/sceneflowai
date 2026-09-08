@@ -199,11 +199,14 @@ export function resolveDirectedEmotionForCharacter(
   return ''
 }
 
-/** Beat-level emotion from line + action (for AI intelligence). */
+/** Beat-level emotion from beat direction (preferred) or line + action. */
 export function resolveBeatDirectedEmotion(options: {
   beatLine?: string | null
   beatAction?: string | null
+  beatDirectionEmotion?: string | null
 }): string {
+  const authored = options.beatDirectionEmotion?.trim()
+  if (authored) return authored
   for (const text of [options.beatLine, options.beatAction]) {
     if (!text?.trim()) continue
     const emotion = extractDirectedEmotionFromText(text.trim())

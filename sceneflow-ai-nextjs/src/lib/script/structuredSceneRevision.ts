@@ -46,16 +46,36 @@ export function clearBeatStoryboardFrames(beat: SceneBeat): SceneBeat {
   return next
 }
 
+function formatBeatDirectionForPrompt(beat: SceneBeat): string {
+  const d = beat.beatDirection
+  if (!d) return ''
+  const parts: string[] = []
+  if (d.shotType) parts.push(`shot: ${d.shotType}`)
+  if (d.cameraAngle) parts.push(`angle: ${d.cameraAngle}`)
+  if (d.cameraMovement) parts.push(`move: ${d.cameraMovement}`)
+  if (d.blocking) parts.push(`blocking: ${d.blocking}`)
+  if (d.emotion) parts.push(`emotion: ${d.emotion}`)
+  if (d.gaze) parts.push(`gaze: ${d.gaze}`)
+  if (d.keyProps && d.keyProps.length > 0) parts.push(`props: ${d.keyProps.join(', ')}`)
+  if (d.propInteraction) parts.push(`prop-interaction: ${d.propInteraction}`)
+  if (d.lightingAccent) parts.push(`lighting: ${d.lightingAccent}`)
+  if (d.frozenMoment) parts.push(`frozen: ${d.frozenMoment}`)
+  if (d.audioCue) parts.push(`audio: ${d.audioCue}`)
+  if (d.transition) parts.push(`trans: ${d.transition}`)
+  return parts.length > 0 ? `\n     direction — ${parts.join(' • ')}` : ''
+}
+
 export function formatBeatsForRevisionPrompt(beats: SceneBeat[]): string {
   if (!beats.length) {
     return 'No beats yet — derive the full ordered beats timeline from the scene content.'
   }
   return beats
     .map((beat, index) => {
+      const directionSummary = formatBeatDirectionForPrompt(beat)
       if (beat.kind === 'action') {
-        return `${index + 1}. [beatId:${beat.beatId}] action: ${beat.actionDescription ?? ''}`
+        return `${index + 1}. [beatId:${beat.beatId}] action: ${beat.actionDescription ?? ''}${directionSummary}`
       }
-      return `${index + 1}. [beatId:${beat.beatId}] ${beat.kind} ${beat.character ?? ''}: ${beat.line ?? ''}`
+      return `${index + 1}. [beatId:${beat.beatId}] ${beat.kind} ${beat.character ?? ''}: ${beat.line ?? ''}${directionSummary}`
     })
     .join('\n')
 }
@@ -358,6 +378,14 @@ export function finalizeStructuredRevisedScene(
         return match ?? beat
       }
       return beat
+    })
+  }
+  if (normalizedPreserve.includes('beatDirection')) {
+    const original = getSceneBeats(currentScene)
+    beats = beats.map((beat) => {
+      const match = original.find((o) => o.beatId === beat.beatId)
+      if (!match?.beatDirection) return beat
+      return { ...beat, beatDirection: match.beatDirection }
     })
   }
 

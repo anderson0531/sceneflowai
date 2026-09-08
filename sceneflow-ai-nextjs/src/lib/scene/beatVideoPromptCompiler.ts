@@ -134,6 +134,34 @@ function sceneDirectionMotionHints(
   return parts.slice(0, 2).filter(Boolean).join(', ')
 }
 
+/**
+ * Beat-scoped hints derived from `beat.beatDirection` (shot/movement/blocking).
+ * Prefer these over scene-wide motion hints because they are authored for
+ * THIS beat.
+ */
+function beatDirectionMotionHints(
+  beat: SceneBeat,
+  videoPrompt?: string
+): string {
+  const d = beat.beatDirection
+  if (!d) return ''
+  const prompt = videoPrompt ?? ''
+  const parts: string[] = []
+  if (d.cameraMovement && !tokenAlreadyInPrompt(d.cameraMovement, prompt)) {
+    parts.push(d.cameraMovement)
+  }
+  if (d.shotType && !tokenAlreadyInPrompt(d.shotType, prompt)) {
+    parts.push(d.shotType)
+  }
+  if (d.blocking && !tokenAlreadyInPrompt(d.blocking, prompt)) {
+    parts.push(d.blocking)
+  }
+  if (d.emotion && !tokenAlreadyInPrompt(d.emotion, prompt)) {
+    parts.push(d.emotion)
+  }
+  return parts.slice(0, 3).filter(Boolean).join(', ')
+}
+
 export function compileBeatVideoPrompt(
   beat: SceneBeat,
   options?: {
@@ -199,10 +227,10 @@ export function compileBeatVideoPromptFromDirection(
     if (summary && !isRedundantSummary(summary, core)) {
       core = normalizePromptJoin(summary, core)
     }
+    const beatHints = beatDirectionMotionHints(beat, core)
+    if (beatHints) core = normalizePromptJoin(core, beatHints)
     const hints = sceneDirectionMotionHints(sceneDirection, core)
-    if (hints) {
-      core = normalizePromptJoin(core, hints)
-    }
+    if (hints) core = normalizePromptJoin(core, hints)
     return {
       prompt: normalizePromptJoin(core, styleSuffix),
       negativePrompt: `${BASE_NEGATIVES}, ${styleNegative}`,
@@ -211,10 +239,12 @@ export function compileBeatVideoPromptFromDirection(
 
   if (beat.kind === 'action') {
     const action = beat.actionDescription ?? 'Scene action'
-    const hints = sceneDirectionMotionHints(sceneDirection, action)
-    const core = hints
-      ? normalizePromptJoin(action, hints)
-      : normalizePromptJoin(action, 'Natural cinematic motion')
+    const beatHints = beatDirectionMotionHints(beat, action)
+    let core = beatHints ? normalizePromptJoin(action, beatHints) : action
+    const hints = sceneDirectionMotionHints(sceneDirection, core)
+    core = hints
+      ? normalizePromptJoin(core, hints)
+      : normalizePromptJoin(core, 'Natural cinematic motion')
     return {
       prompt: normalizePromptJoin(core, styleSuffix),
       negativePrompt: `${BASE_NEGATIVES}, ${styleNegative}`,
@@ -222,15 +252,16 @@ export function compileBeatVideoPromptFromDirection(
   }
 
   const fallback = compileBeatVideoPrompt(beat, options)
+  const beatHints = beatDirectionMotionHints(beat, fallback.prompt)
   const hints = sceneDirectionMotionHints(sceneDirection, fallback.prompt)
-  if (!hints) return fallback
+  if (!beatHints && !hints) return fallback
 
   const withoutStyle = fallback.prompt.replace(
     new RegExp(`\\. ${escapeRegExp(styleSuffix)}$`),
     ''
   )
   return {
-    prompt: normalizePromptJoin(withoutStyle, hints, styleSuffix),
+    prompt: normalizePromptJoin(withoutStyle, beatHints, hints, styleSuffix),
     negativePrompt: fallback.negativePrompt,
   }
 }

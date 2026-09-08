@@ -75,6 +75,8 @@ function buildBeatPropMatchText(scene: Record<string, unknown>, beat: SceneBeat)
     beat.actionDescription || '',
     beat.line || '',
     beat.character || '',
+    ...(beat.beatDirection?.keyProps ?? []),
+    beat.beatDirection?.propInteraction || '',
   ]
     .filter(Boolean)
     .join(' ')
@@ -367,7 +369,9 @@ export function resolveBeatFrameGenerationContext(
   }
 
   const matchText = buildBeatPropMatchText(scene, beat)
+  const beatDirectionKeyProps = beat.beatDirection?.keyProps ?? []
   const detectedObjects = uniqueObjects([
+    ...matchObjectsBySelectedNames(beatDirectionKeyProps, objectReferences as any[]),
     ...findSceneObjects(matchText, objectReferences as any[]),
     ...matchObjectsBySelectedNames(sceneDirectionKeyProps(scene), objectReferences as any[]),
   ])

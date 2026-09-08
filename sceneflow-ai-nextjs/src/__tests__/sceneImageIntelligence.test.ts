@@ -124,7 +124,8 @@ describe('scene image intelligence Direct overlays', () => {
 describe('scene image intelligence direction authority', () => {
   it('system prompt allows omitting off-screen person tokens and forbids prop-name confusion', () => {
     const system = buildSceneImageSystemPrompt()
-    expect(system).toContain('SCENE DIRECTION IS AUTHORITATIVE')
+    expect(system).toContain('BEAT DIRECTION IS AUTHORITATIVE')
+    expect(system).toContain('scene direction is authoritative when no beat direction is provided')
     expect(system).toContain('you MAY omit person [N] tokens')
     expect(system).not.toContain('never invent, renumber, or skip ordinals')
     expect(system).toContain('prop [N]')

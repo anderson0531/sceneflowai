@@ -42,29 +42,36 @@ function sceneHeadingText(scene: Record<string, unknown>): string {
 
 function defaultVisualSetup(
   scene: Record<string, unknown>,
-  lockedArtStyle?: string
+  lockedArtStyle?: string,
+  beat?: SceneBeat | null
 ): VisualSetup {
   const direction = scene.sceneDirection as DetailedSceneDirection | undefined
   const meta = direction ? extractDirectionMetadata(direction) : null
+  const bd = beat?.beatDirection
   return {
     location: sceneHeadingText(scene) || meta?.location || '',
     timeOfDay: meta?.timeOfDay || 'day',
     weather: meta?.weather || 'clear',
     atmosphere: meta?.atmosphere || 'neutral',
-    shotType: meta?.framing || direction?.camera?.shotType || 'medium-shot',
-    cameraAngle: direction?.camera?.angle || 'eye-level',
+    shotType: bd?.shotType || meta?.framing || direction?.camera?.shotType || 'medium-shot',
+    cameraAngle: bd?.cameraAngle || direction?.camera?.angle || 'eye-level',
     lighting: direction?.lighting?.type || 'natural',
     lensChoice: direction?.camera?.lens || 'standard',
-    lightingMood: direction?.lighting?.mood || 'neutral',
+    lightingMood: bd?.lightingAccent || direction?.lighting?.mood || 'neutral',
   }
 }
 
-function defaultTalentDirection(scene: Record<string, unknown>): TalentDirection {
+function defaultTalentDirection(
+  scene: Record<string, unknown>,
+  beat?: SceneBeat | null
+): TalentDirection {
   const direction = scene.sceneDirection as DetailedSceneDirection | undefined
+  const bd = beat?.beatDirection
+  const beatProps = bd?.keyProps && bd.keyProps.length > 0 ? bd.keyProps.join(', ') : ''
   return {
-    talentBlocking: direction?.talent?.blocking || '',
-    emotionalBeat: direction?.talent?.emotionalBeat || '',
-    keyProps: direction?.keyProps?.join(', ') || '',
+    talentBlocking: bd?.blocking || direction?.talent?.blocking || '',
+    emotionalBeat: bd?.emotion || direction?.talent?.emotionalBeat || '',
+    keyProps: beatProps || direction?.keyProps?.join(', ') || '',
   }
 }
 
@@ -159,6 +166,8 @@ export function resolvePreVisFramePromptContext(args: {
   if (useBeatFrame && beatId) {
     const beat = getSceneBeats(scene).find((b) => b.beatId === beatId)
     if (beat) {
+      const beatVisualSetup = defaultVisualSetup(scene, lockedArtStyle, beat)
+      const beatTalentDirection = defaultTalentDirection(scene, beat)
       const auto = resolveBeatFrameGenerationContext({
         scene,
         beat,
@@ -196,11 +205,12 @@ export function resolvePreVisFramePromptContext(args: {
         seedPrompt:
           slot.storyboardImagePrompt?.trim() ||
           beat.storyboardImagePrompt?.trim() ||
+          beat.beatDirection?.frozenMoment?.trim() ||
           beat.actionDescription ||
           beat.line ||
           '',
-        visualSetup,
-        talentDirection,
+        visualSetup: beatVisualSetup,
+        talentDirection: beatTalentDirection,
         artStyle,
         negativePrompt,
         selectedCharacterNames,

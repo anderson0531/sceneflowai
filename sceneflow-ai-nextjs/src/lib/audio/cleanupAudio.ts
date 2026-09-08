@@ -25,6 +25,7 @@ export type PreserveElement =
   | 'actionBeats'
   | 'music'
   | 'sceneDirection'
+  | 'beatDirection'
   | 'beatFrames'
 
 /** Legacy values accepted by revise-scene / older clients. */
@@ -52,6 +53,9 @@ export function normalizePreserveElements(
         break
       case 'sceneDirection':
         out.add('sceneDirection')
+        break
+      case 'beatDirection':
+        out.add('beatDirection')
         break
       case 'beatFrames':
         out.add('beatFrames')
