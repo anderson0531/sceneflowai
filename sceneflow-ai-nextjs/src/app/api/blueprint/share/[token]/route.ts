@@ -68,6 +68,9 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
         sectionAudioDirectorNotes: payload.sectionAudioDirectorNotes,
         sectionAudioStartedAt: payload.sectionAudioStartedAt,
         sectionAudioGeneratedAt: payload.sectionAudioGeneratedAt,
+        blueprintAudienceResonance: payload.blueprintAudienceResonance ?? null,
+        resonanceAudioByLanguage: payload.resonanceAudioByLanguage || {},
+        resonanceTranslations: payload.resonanceTranslations || {},
       },
     })
   } catch (e: unknown) {
@@ -99,8 +102,33 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
         payload.shareSettings = {
           ...payload.shareSettings,
           expiresAt: (updates.expires_at as Date).toISOString(),
+          neverExpires: false,
         }
         updates.payload = payload
+      }
+    }
+
+    if (typeof body.allowFeedback === 'boolean' || typeof body.neverExpires === 'boolean') {
+      const payload = (updates.payload as ReturnType<typeof getPayload>) || getPayload(session)
+      if (payload) {
+        const allowFeedback =
+          typeof body.allowFeedback === 'boolean'
+            ? body.allowFeedback
+            : payload.shareSettings?.allowFeedback !== false
+        const neverExpires =
+          typeof body.neverExpires === 'boolean'
+            ? body.neverExpires
+            : allowFeedback === false || payload.shareSettings?.neverExpires === true
+        payload.shareSettings = {
+          ...payload.shareSettings,
+          allowFeedback,
+          neverExpires,
+          expiresAt: neverExpires ? undefined : payload.shareSettings?.expiresAt,
+        }
+        updates.payload = payload
+        if (neverExpires) {
+          updates.expires_at = null
+        }
       }
     }
 

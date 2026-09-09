@@ -1295,12 +1295,36 @@
     "badge": "Production Examples",
     "title": "See the Full Pipeline",
     "titleAccent": "in Action",
-    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to the final ProRes 4K master. Walk the Screening Room to compare the Pre-Vis, per-scene motion video, and the finished master in multiple languages.",
+    "subtitle": "Walk one complete production through the three review surfaces producers share: Blueprint Audience Resonance, Script Audience Resonance, then the Screening Room. Read and listen — no account, no feedback.",
     "subtitleTagline": "Long-form productions. Not clips.",
     "screeningRoomInstruction": "Select Pre-Vis, Scenes, or Final to experience the pipeline. Select a language to hear the dub.",
     "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
-    "explorePipelineCta": "Explore a full production",
-    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
+    "explorePipelineCta": "Walk the review pipeline",
+    "explorePipelineHint": "Read and listen only. No account. No feedback. Same surfaces producers share with stakeholders.",
+    "pipelineOpenLabel": "Open",
+    "pipelineComingSoon": "Demo link coming soon",
+    "moreProductionsLabel": "More productions",
+    "moreProductionsHint": "Compare Screening Room masters across drama, animation, documentary, and localized versions.",
+    "pipelineSteps": [
+      {
+        "id": "blueprint",
+        "step": "1",
+        "title": "Blueprint + Audience Resonance",
+        "body": "Read the treatment and hear section narration. See how Audience Resonance scores concept, tone, characters, and beats before anyone spends on renders."
+      },
+      {
+        "id": "script-ar",
+        "step": "2",
+        "title": "Script Audience Resonance",
+        "body": "Listen through the Production Studio script report — overview, analysis, and scene notes — without applying fixes or leaving feedback."
+      },
+      {
+        "id": "screening-room",
+        "step": "3",
+        "title": "Screening Room",
+        "body": "Watch the assembled production. Switch Pre-Vis, scenes, and final, then pick a language to hear the dub. Viewing only — no ratings or emoji."
+      }
+    ],
     "workflowLabel": "Solutions",
     "startProduction": "Start Your Production",
     "cta": "Start Your Production",

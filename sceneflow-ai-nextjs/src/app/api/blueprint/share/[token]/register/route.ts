@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { sequelize } from '@/config/database'
 import CollabParticipant from '@/models/CollabParticipant'
 import { resolveSessionByToken, getPayload } from '@/lib/blueprint/shareSession'
+import { isBlueprintFeedbackAllowed } from '@/lib/blueprint/shareSettings'
 
 export const runtime = 'nodejs'
 
@@ -23,8 +24,15 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     if (!session) {
       return NextResponse.json({ success: false, error: 'Session not found' }, { status: 404 })
     }
-    if (!getPayload(session)) {
+    const payload = getPayload(session)
+    if (!payload) {
       return NextResponse.json({ success: false, error: 'Invalid session' }, { status: 400 })
+    }
+    if (!isBlueprintFeedbackAllowed(payload.shareSettings)) {
+      return NextResponse.json(
+        { success: false, error: 'Feedback is disabled for this share' },
+        { status: 403 }
+      )
     }
 
     const email = body.email?.trim() || null

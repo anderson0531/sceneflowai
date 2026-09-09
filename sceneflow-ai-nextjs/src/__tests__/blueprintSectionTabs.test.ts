@@ -18,6 +18,12 @@ const SECTIONS = ['core', 'story', 'tone', 'beats', 'characters'] as const
 describe('Blueprint section tabs', () => {
   const card = readSource(CARD)
 
+  it('imports Volume2 for the TTS-unavailable callout', () => {
+    expect(card).toContain('Volume2')
+    expect(card).toMatch(/from 'lucide-react'/)
+    expect(card).toContain('t(\'audio.unavailable\')')
+  })
+
   it('renders one tab per blueprint section', () => {
     for (const section of SECTIONS) {
       expect(card).toContain(`<TabsContent value="${section}"`)

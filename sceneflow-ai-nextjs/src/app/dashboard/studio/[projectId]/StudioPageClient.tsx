@@ -452,7 +452,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     }
   }, [projectId, applyShareResult])
 
-  const handleShare = async (opts?: { forceNew?: boolean }) => {
+  const [listenOnlyShare, setListenOnlyShare] = useState(false)
+
+  const handleShare = async (opts?: { forceNew?: boolean; listenOnly?: boolean }) => {
     if (!projectId || projectId.startsWith('new-project')) {
       toast.error(t('toast.saveBeforeSharing'))
       return
@@ -476,14 +478,17 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     try {
       const heroImageUrl = resolveBlueprintHeroImageUrl(variant as Record<string, unknown>)
 
+      const listenOnly = opts?.listenOnly ?? listenOnlyShare
       const result = await createBlueprintShare({
         projectId,
         variantId: variant.id,
         treatment: variant,
         heroImageUrl,
         audienceDefinition: audienceDefinition ?? null,
-        expiresInDays: 14,
+        expiresInDays: listenOnly ? undefined : 14,
         forceNew: opts?.forceNew === true,
+        allowFeedback: !listenOnly,
+        neverExpires: listenOnly,
       })
 
       if (result.success) {
@@ -1640,6 +1645,8 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 shareUrl={shareUrl}
                 onShare={handleShare}
                 isSharing={isSharing}
+                listenOnly={listenOnlyShare}
+                onListenOnlyChange={setListenOnlyShare}
                 collaborationTabSignal={collaborationTabSignal}
                 resonanceTabSignal={resonanceTabSignal}
                 foundationTabSignal={foundationTabSignal}

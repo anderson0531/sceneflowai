@@ -3,6 +3,7 @@ import { sequelize } from '@/config/database'
 import { resolveSessionByToken, getPayload } from '@/lib/blueprint/shareSession'
 import { requireOwnerForSession, validateParticipant, sessionDbId as dbSessionId } from '@/lib/blueprint/shareAuth'
 import { listChatMessages, postChatMessage } from '@/lib/blueprint/shareChat'
+import { isBlueprintFeedbackAllowed } from '@/lib/blueprint/shareSettings'
 
 export const runtime = 'nodejs'
 
@@ -65,6 +66,13 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       const payload = getPayload(session)
       displayAlias = payload?.ownerDisplayName || 'Owner'
     } else {
+      const payload = getPayload(session)
+      if (!isBlueprintFeedbackAllowed(payload?.shareSettings)) {
+        return NextResponse.json(
+          { success: false, error: 'Feedback is disabled for this share' },
+          { status: 403 }
+        )
+      }
       if (!participantId) {
         return NextResponse.json({ success: false, error: 'participantId required' }, { status: 400 })
       }

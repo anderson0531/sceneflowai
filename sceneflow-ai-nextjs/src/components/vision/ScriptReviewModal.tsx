@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { X, Users, Star, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, TrendingUp, Settings2, Check, Square, CheckSquare, BarChart3, MessageSquare, ListChecks, Film, Sparkles, CheckCircle2, Edit, Mic, Eye, FileText, Lightbulb, Info, Clapperboard, Plus, Trash2, GripVertical, Play } from 'lucide-react'
+import { X, Users, Star, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, TrendingUp, Settings2, Check, Square, CheckSquare, BarChart3, MessageSquare, ListChecks, Film, Sparkles, CheckCircle2, Edit, Mic, Eye, FileText, Lightbulb, Info, Clapperboard, Plus, Trash2, GripVertical, Play, Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -29,6 +29,10 @@ import { AnimatedScore, AnimatedProgressBar } from '@/components/ui/AnimatedScor
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { toast } from 'sonner'
+import {
+  createScriptARShare,
+  triggerScriptARShareAudio,
+} from '@/lib/script/audienceResonance/createScriptARShare'
 import Link from 'next/link'
 import {
   createAudienceDefinition,
@@ -677,6 +681,33 @@ export default function ScriptReviewModal({
   
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en') // Keep for TTS playback
   const [playingSection, setPlayingSection] = useState<string | null>(null)
+  const [sharingReport, setSharingReport] = useState(false)
+  const [shareUrl, setShareUrl] = useState<string | null>(null)
+
+  const handleShareListenOnly = async () => {
+    if (!projectId) {
+      toast.error('Save the project before sharing this report')
+      return
+    }
+    setSharingReport(true)
+    try {
+      const result = await createScriptARShare({ projectId })
+      if (!result.success) {
+        toast.error(result.error || 'Failed to create listen-only report')
+        return
+      }
+      setShareUrl(result.url)
+      void triggerScriptARShareAudio(result.token, { language: selectedLanguage })
+      try {
+        await navigator.clipboard.writeText(result.url)
+        toast.success('Listen-only report link copied')
+      } catch {
+        toast.success('Listen-only report link ready')
+      }
+    } finally {
+      setSharingReport(false)
+    }
+  }
   const [loadingSection, setLoadingSection] = useState<string | null>(null)
     const [showDeductions, setShowDeductions] = useState(false)
     const [showSceneAnalysis, setShowSceneAnalysis] = useState(false)
@@ -1609,17 +1640,35 @@ export default function ScriptReviewModal({
                 </span>
               )}
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                stopPlayback()
-                onClose()
-              }}
-              className="h-8 w-8 p-0 rounded-full text-gray-500 hover:text-gray-900 dark:hover:text-gray-100"
-            >
-              <X className="w-4 h-4" />
-            </Button>
+            <div className="flex items-center gap-1">
+              {review && projectId ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void handleShareListenOnly()}
+                  disabled={sharingReport}
+                  className="h-8 gap-1.5 text-xs"
+                >
+                  {sharingReport ? (
+                    <Loader className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Share2 className="h-3.5 w-3.5" />
+                  )}
+                  {shareUrl ? 'Copy listen-only link' : 'Share listen-only report'}
+                </Button>
+              ) : null}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  stopPlayback()
+                  onClose()
+                }}
+                className="h-8 w-8 p-0 rounded-full text-gray-500 hover:text-gray-900 dark:hover:text-gray-100"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
 
           {reviewIsStale && (

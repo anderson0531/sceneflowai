@@ -50,6 +50,8 @@ interface ScreeningRoomV2Props {
   finalCutSelection?: FinalCutSelection | null
   /** Persist per-scene mixer volumes from the fullscreen player (in-app). */
   onProductionDataChange?: (sceneId: string, data: SceneProductionData) => void
+  /** Public share deep-link language */
+  initialLanguage?: string
 }
 
 // Helper function to normalize scenes from various data paths
@@ -99,12 +101,13 @@ export function ScreeningRoomV2({
   onPlaybackModeChange,
   finalCutSelection,
   onProductionDataChange,
+  initialLanguage,
 }: ScreeningRoomV2Props) {
   // ============================================================================
   // Scene State
   // ============================================================================
   const [currentSceneIndex, setCurrentSceneIndex] = useState(initialScene)
-  const [selectedLanguage, setSelectedLanguage] = useState('en')
+  const [selectedLanguage, setSelectedLanguage] = useState(initialLanguage || 'en')
   
   // Extract scenes from script
   const scenes = useMemo(() => normalizeScenes(script), [script])

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sequelize } from '@/config/database'
 import CollabBlueprintFeedback from '@/models/CollabBlueprintFeedback'
 import { resolveSessionByToken, getPayload } from '@/lib/blueprint/shareSession'
+import { isBlueprintFeedbackAllowed } from '@/lib/blueprint/shareSettings'
 import { requireOwnerForSession, validateParticipant, sessionDbId } from '@/lib/blueprint/shareAuth'
 import type { BlueprintStructuredFeedbackInput } from '@/lib/blueprint/shareTypes'
 import { ensureCollabBlueprintFeedbackTable } from '@/lib/blueprint/ensureCollabBlueprintSchema'
@@ -58,8 +59,15 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     if (!session) {
       return NextResponse.json({ success: false, error: 'Session not found' }, { status: 404 })
     }
-    if (!getPayload(session)) {
+    const payload = getPayload(session)
+    if (!payload) {
       return NextResponse.json({ success: false, error: 'Invalid session' }, { status: 400 })
+    }
+    if (!isBlueprintFeedbackAllowed(payload.shareSettings)) {
+      return NextResponse.json(
+        { success: false, error: 'Feedback is disabled for this share' },
+        { status: 403 }
+      )
     }
 
     const body = (await req.json()) as BlueprintStructuredFeedbackInput

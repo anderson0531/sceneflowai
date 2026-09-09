@@ -1,20 +1,46 @@
 'use client'
 
-import React, { use, useEffect, useState } from 'react'
+import React, { Suspense, use, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { ScreeningRoomV2 } from '@/components/vision/ScreeningRoomV2'
 import { readFinalCutSelection } from '@/hooks/final-cut/useFinalCutSelection'
 import { Loader, AlertCircle } from 'lucide-react'
+import { PipelineDemoChrome } from '@/components/landing/PipelineDemoChrome'
+
+function parsePlaybackMode(value: string | null): 'animatic' | 'video' | 'auto' {
+  if (value === 'animatic' || value === 'video' || value === 'auto') return value
+  if (value === 'stream') return 'video'
+  return 'auto'
+}
 
 export default function SharedScreeningRoomPage({ params }: { params: Promise<{ shareToken: string }> }) {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-black flex items-center justify-center text-white">
+          <Loader className="w-12 h-12 animate-spin" />
+        </div>
+      }
+    >
+      <SharedScreeningRoomPageInner params={params} />
+    </Suspense>
+  )
+}
+
+function SharedScreeningRoomPageInner({ params }: { params: Promise<{ shareToken: string }> }) {
   const { shareToken } = use(params)
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [projectData, setProjectData] = useState<any>(null)
+  const [showSharedHint, setShowSharedHint] = useState(false)
+
+  const initialLanguage = searchParams.get('lang') || undefined
+  const playbackMode = parsePlaybackMode(searchParams.get('playback'))
 
   useEffect(() => {
     async function loadSharedProject() {
       try {
-        console.log(`[Shared Screening Room] Loading project with token: ${shareToken}`)
         const response = await fetch(`/api/vision/shared-project/${shareToken}`)
         const data = await response.json()
 
@@ -22,7 +48,6 @@ export default function SharedScreeningRoomPage({ params }: { params: Promise<{ 
           throw new Error(data.error || 'Failed to load shared project')
         }
 
-        console.log(`[Shared Screening Room] Loaded project: ${data.project.title}`)
         setProjectData(data.project)
       } catch (err: any) {
         console.error('[Shared Screening Room] Error:', err)
@@ -34,6 +59,11 @@ export default function SharedScreeningRoomPage({ params }: { params: Promise<{ 
 
     loadSharedProject()
   }, [shareToken])
+
+  const finalCutSelection = useMemo(
+    () => (projectData ? readFinalCutSelection(projectData.metadata) : null),
+    [projectData]
+  )
 
   if (loading) {
     return (
@@ -69,33 +99,35 @@ export default function SharedScreeningRoomPage({ params }: { params: Promise<{ 
     return null
   }
 
-  const finalCutSelection = readFinalCutSelection(projectData.metadata)
-
   return (
     <div className="min-h-screen bg-black">
-      {/* Sceneflow Branding */}
-      <div className="absolute top-4 left-4 z-50">
-        <div className="text-white text-sm opacity-75">
-          Powered by <span className="font-semibold">Sceneflow</span>
-        </div>
+      <div className="relative z-[60]">
+        <PipelineDemoChrome tokenOrSlug={shareToken} />
       </div>
 
-      {/* Shared Project Info */}
-      <div className="absolute top-4 right-4 z-50">
-        <div className="text-white text-sm opacity-75 bg-black/50 px-3 py-1 rounded">
-          {projectData.title}
+      {showSharedHint ? (
+        <div className="absolute top-16 left-1/2 z-[70] w-[min(28rem,calc(100%-2rem))] -translate-x-1/2 rounded-lg border border-white/15 bg-black/80 px-4 py-3 text-sm text-white">
+          <p>This is a shared Screening Room. Close this browser tab to leave.</p>
+          <button
+            type="button"
+            onClick={() => setShowSharedHint(false)}
+            className="mt-2 text-xs text-cyan-300 hover:text-cyan-200"
+          >
+            Dismiss
+          </button>
         </div>
-      </div>
+      ) : null}
 
       <ScreeningRoomV2
         script={projectData.script}
         characters={projectData.characters || []}
         sceneProductionState={projectData.sceneProductionState}
         finalCutSelection={finalCutSelection}
-        onClose={() => {
-          // Show message that this is a shared view
-          alert('This is a shared Screening Room. Close this browser tab to exit.')
-        }}
+        initialLanguage={initialLanguage}
+        playbackMode={playbackMode}
+        enableAudienceFeedback={false}
+        backButtonLabel="Shared view"
+        onClose={() => setShowSharedHint(true)}
       />
     </div>
   )

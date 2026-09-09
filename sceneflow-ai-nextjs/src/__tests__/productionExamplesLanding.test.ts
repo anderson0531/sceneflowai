@@ -17,6 +17,13 @@ import {
 import { VIDEO_LOCALE_ORDER } from '@/config/landing/videoLocales'
 import { PRODUCTION_SHOWCASE_SCREENING_SLUGS } from '@/config/landing/productionShowcaseScreening'
 import { LANDING_SAMPLE } from '@/config/landingSamples'
+import {
+  PRODUCTION_PIPELINE_DEMO,
+  getPipelineDemoBlueprintHref,
+  getPipelineDemoScriptARHref,
+  getPipelineDemoScreeningHref,
+  matchPipelineDemoStage,
+} from '@/config/landing/productionPipelineDemo'
 
 const ROOT = path.resolve(__dirname, '../..')
 
@@ -72,7 +79,8 @@ describe('Production Examples landing section', () => {
     expect(section).toContain("t('subtitleTagline')")
     expect(section).toContain("t('languagesBanner')")
     expect(section).toContain("t('explorePipelineCta')")
-    expect(section).toContain('production-showcase-drama')
+    expect(section).toContain('PipelineReviewWalk')
+    expect(section).toContain("t('moreProductionsLabel')")
   })
 
   it('uses a desktop grid and mobile accordion layout', () => {
@@ -96,6 +104,10 @@ describe('Production Examples i18n contract', () => {
       'languagesBanner',
       'explorePipelineCta',
       'explorePipelineHint',
+      'pipelineOpenLabel',
+      'pipelineComingSoon',
+      'moreProductionsLabel',
+      'moreProductionsHint',
       'workflowLabel',
       'startProduction',
       'cta',
@@ -125,6 +137,14 @@ describe('Production Examples i18n contract', () => {
       'Long-form productions. Not clips.'
     )
     expect(enMessages.productionShowcase.subtitle).toContain('complete production')
+    expect(enMessages.productionShowcase.subtitle).toContain('three review surfaces')
+  })
+
+  it('defines the three-step pipeline walk', () => {
+    const steps = enMessages.productionShowcase.pipelineSteps
+    expect(steps).toHaveLength(3)
+    expect(steps.map((step) => step.id)).toEqual(['blueprint', 'script-ar', 'screening-room'])
+    expect(enMessages.productionShowcase.explorePipelineCta).toBe('Walk the review pipeline')
   })
 
   it('ships exactly four focused production cards', () => {
@@ -454,6 +474,17 @@ describe('Production showcase screening embeds', () => {
   it('does not fetch the expired White House Waltz share', () => {
     expect(PRODUCTION_SHOWCASE_SCREENING_SLUGS.drama).toBe('')
     expect(LANDING_SAMPLE.storyboardShareSlug).toBe('')
+  })
+
+  it('keeps pipeline demo shares empty until listen-only tokens are published', () => {
+    expect(PRODUCTION_PIPELINE_DEMO.blueprintShareToken).toBe('')
+    expect(PRODUCTION_PIPELINE_DEMO.scriptResonanceShareToken).toBe('')
+    expect(PRODUCTION_PIPELINE_DEMO.screeningRoomSlug).toBe('')
+    expect(getPipelineDemoBlueprintHref()).toBeNull()
+    expect(getPipelineDemoScriptARHref()).toBeNull()
+    expect(getPipelineDemoScreeningHref()).toBeNull()
+    expect(matchPipelineDemoStage('')).toBeNull()
+    expect(matchPipelineDemoStage('50IuESZwELvHkNd4bTaULp1pli56zXWg')).toBeNull()
   })
 
   it('falls back to the placeholder when a configured share is gone', () => {
