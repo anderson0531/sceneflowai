@@ -356,7 +356,13 @@ export async function runConsolidatedRewrite(
   return patch ?? {}
 }
 
-/** Sequential per-section rewrite. The fallback when one pass is cut off. */
+/**
+ * Sequential per-section rewrite.
+ *
+ * The fallback when the consolidated pass is cut off: each narrower prompt fits
+ * a smaller response. Callers invoke this at their own phase boundary so every
+ * pass gets a fresh function budget rather than sharing one invocation.
+ */
 export async function runSequentialSectionRewrites(
   payload: GuidedRevisePayload,
   plan: BlueprintChangePlan,
@@ -389,27 +395,6 @@ export async function runSequentialSectionRewrites(
   }
 
   return mergedPatch
-}
-
-export async function runAllSectionRewrites(
-  payload: GuidedRevisePayload,
-  plan: BlueprintChangePlan,
-  logHeap: HeapLogger = noopHeap
-): Promise<Record<string, unknown>> {
-  const sections = [...new Set(plan.sectionsToUpdate)]
-  try {
-    return await runConsolidatedRewrite(payload, plan, logHeap)
-  } catch (err) {
-    // Truncation is the one failure the per-section split still solves: each
-    // narrower prompt fits a smaller response. Anything else is a real error.
-    if (!(err instanceof GuidedReviseTruncatedError) || sections.length <= 1) {
-      throw err
-    }
-    console.warn(
-      `[Guided Revise] Consolidated pass was cut off (${err.finishReason}); falling back to ${sections.length} per-section passes`
-    )
-    return runSequentialSectionRewrites(payload, plan, logHeap)
-  }
 }
 
 export function finalizeGuidedRevise(

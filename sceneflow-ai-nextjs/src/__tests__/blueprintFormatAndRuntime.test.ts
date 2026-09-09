@@ -141,3 +141,83 @@ describe('format_length stays a duration for its existing consumers', () => {
     expect(formatBlueprintRuntime('2400 seconds').display).toBe('40 min')
   })
 })
+
+describe('long-form is the default posture', () => {
+  const route = readSource('src/app/api/ideation/film-treatment/route.ts')
+  const prompts = readSource('src/lib/treatment/prompts.ts')
+  const dialog = readSource('src/components/blueprint/BlueprintReimaginDialog.tsx')
+
+  /** Parse the `case 'x': return N` arms of getFilmTypeMinutes out of the route. */
+  function scopeMinutes(): Record<string, number> {
+    const start = route.indexOf('function getFilmTypeMinutes')
+    const body = route.slice(start, route.indexOf('\n}', start))
+    const found: Record<string, number> = {}
+    for (const [, bucket, minutes] of body.matchAll(/case '(\w+)': return (\d+)/g)) {
+      found[bucket] = Number(minutes)
+    }
+    return found
+  }
+
+  /** Read the `min-max` band out of each SCOPE_OPTIONS label the picker shows. */
+  function scopeBands(): Record<string, [number, number]> {
+    const start = dialog.indexOf('const SCOPE_OPTIONS')
+    const body = dialog.slice(start, dialog.indexOf(']', start))
+    const bands: Record<string, [number, number]> = {}
+    for (const [, value, low, high] of body.matchAll(
+      /value: '(\w+)', label: '[^']*?(\d+)-(\d+) min/g
+    )) {
+      bands[value] = [Number(low), Number(high)]
+    }
+    return bands
+  }
+
+  it('generates a runtime inside the band the scope picker advertises', () => {
+    const minutes = scopeMinutes()
+    const bands = scopeBands()
+    expect(Object.keys(bands).length).toBeGreaterThan(0)
+
+    for (const [bucket, [low, high]] of Object.entries(bands)) {
+      // "Short (5-30 min)" used to generate 10 and "Featurette (30-60 min)" 25,
+      // so every explicit scope produced something shorter than it promised.
+      expect(minutes[bucket]).toBeGreaterThanOrEqual(low)
+      expect(minutes[bucket]).toBeLessThanOrEqual(high)
+    }
+  })
+
+  it('assumes long-form when the scope bucket is unrecognised', () => {
+    const start = route.indexOf('function getFilmTypeMinutes')
+    const fallback = route.slice(start, route.indexOf('\n}', start)).match(/default: return (\d+)/)
+    expect(Number(fallback?.[1])).toBeGreaterThanOrEqual(30)
+  })
+
+  it('does not steer the single-variant style hint toward speed', () => {
+    // Variant A is the hint every Reimagine run uses.
+    const start = route.indexOf("{ id: 'A'")
+    expect(route.slice(start, route.indexOf('\n', start))).not.toContain('crisp pacing')
+  })
+
+  it('tells the model long-form is the norm', () => {
+    expect(prompts).toContain('LONG-FORM STORYTELLING DEPTH')
+    expect(prompts).toContain('${LONGFORM_DEPTH_BLOCK}')
+  })
+
+  it('carries a long-form prior through advisory scope', () => {
+    const start = prompts.indexOf('SCOPE (ADVISORY)')
+    expect(prompts.slice(start, start + 500)).toContain('30 minutes or more')
+    expect(route).toContain('30 to 60 minutes or longer')
+  })
+
+  it('does not show a single short beat as the schema example', () => {
+    const start = prompts.indexOf('"beats": [')
+    const example = prompts.slice(start, prompts.indexOf('],', start))
+    // One 2.5-minute beat against a 3-6 beat structure is where the 15-minute
+    // default came from; no duration constant was involved.
+    expect(example.match(/"minutes":/g)?.length ?? 0).toBeGreaterThan(1)
+    expect(example).not.toContain('"minutes": 2.5')
+  })
+
+  it('does not lead the format_length example with the shortest band', () => {
+    const line = prompts.slice(prompts.indexOf('"format_length":'))
+    expect(line.slice(0, line.indexOf('\n'))).not.toMatch(/"format_length": "Short/)
+  })
+})

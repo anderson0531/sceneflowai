@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs'
+import path from 'path'
 import { describe, expect, it } from 'vitest'
 import {
   MAX_INTENT_CHARS,
@@ -123,6 +125,25 @@ describe('instruction text validation', () => {
     const issue = issues.find((i) => i.code === 'instruction_too_long')
     expect(issue).toBeTruthy()
     expect(issue?.message).toContain('50')
+  })
+
+  it('gives creative direction room to be specific', () => {
+    // 800 characters could not carry the intent behind a long-form revision, so
+    // the warning fired on direction the model could comfortably have used.
+    expect(MAX_INTENT_CHARS).toBe(2000)
+    expect(codes(request({ intentText: 'a'.repeat(1800) }))).not.toContain(
+      'instruction_too_long'
+    )
+  })
+
+  it('shares one ceiling with the prompts that truncate the direction', () => {
+    const prompts = readFileSync(
+      path.join(path.resolve(__dirname, '../..'), 'src/lib/treatment/blueprintRevisionPrompts.ts'),
+      'utf8'
+    )
+    // A literal here silently cut the direction the dialog had accepted.
+    expect(prompts).toContain('truncateStr(userIntent, MAX_INTENT_CHARS)')
+    expect(prompts).not.toMatch(/truncateStr\(userIntent, \d+\)/)
   })
 
   it('warns on a direction too short to act on', () => {
