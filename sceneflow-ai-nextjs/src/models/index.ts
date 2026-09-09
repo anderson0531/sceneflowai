@@ -29,6 +29,8 @@ import PaymentWebhookEvent from './PaymentWebhookEvent'
 import UserIntegration from './UserIntegration'
 import GenerationJob from './GenerationJob'
 import Notification from './Notification'
+import ReferenceAsset from './ReferenceAsset'
+import ReferenceAssetLink from './ReferenceAssetLink'
 
 // Define model associations
 User.hasMany(Project, {
@@ -102,6 +104,33 @@ User.hasMany(VoiceConsent, {
 VoiceConsent.belongsTo(User, {
   foreignKey: 'user_id',
   as: 'user',
+})
+
+User.hasMany(ReferenceAsset, {
+  foreignKey: 'user_id',
+  as: 'referenceAssets',
+  onDelete: 'CASCADE',
+})
+
+ReferenceAsset.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user',
+})
+
+ReferenceAsset.hasMany(ReferenceAssetLink, {
+  foreignKey: 'asset_id',
+  as: 'links',
+  onDelete: 'CASCADE',
+})
+
+ReferenceAssetLink.belongsTo(ReferenceAsset, {
+  foreignKey: 'asset_id',
+  as: 'asset',
+})
+
+ReferenceAsset.belongsTo(ReferenceAsset, {
+  foreignKey: 'parent_asset_id',
+  as: 'parentAsset',
 })
 
 User.hasMany(UserVoiceClone, {
@@ -194,6 +223,8 @@ export {
   UserIntegration,
   GenerationJob,
   Notification,
+  ReferenceAsset,
+  ReferenceAssetLink,
 }
 
 // Export default for convenience
@@ -229,4 +260,6 @@ export default {
   UserIntegration,
   GenerationJob,
   Notification,
+  ReferenceAsset,
+  ReferenceAssetLink,
 }

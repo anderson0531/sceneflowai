@@ -130,6 +130,8 @@ export interface EdgeVoiceConfig {
 
 export interface VisionCharacter {
   id: string
+  /** User-scoped global reference library asset id */
+  libraryAssetId?: string
   name: string
   description: string
   role?: 'protagonist' | 'main' | 'supporting'

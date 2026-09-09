@@ -99,46 +99,8 @@ export interface SeriesAesthetic {
   }
 }
 
-export interface SeriesProductionBible {
-  version: string
-  lastUpdated: string
-  lastUpdatedBy?: string
-  
-  // Story Foundation
-  logline: string
-  synopsis: string
-  setting: string
-  timeframe?: string
-  
-  // Core Characters
-  protagonist: {
-    characterId: string
-    name: string
-    goal: string
-    flaw?: string
-  }
-  antagonistConflict: {
-    type: 'character' | 'nature' | 'society' | 'self' | 'technology'
-    description: string
-    characterId?: string // If type is 'character'
-  }
-  
-  // Visual Consistency
-  aesthetic: SeriesAesthetic
-  
-  // Shared Assets
-  characters: SeriesCharacter[]
-  locations: SeriesLocation[]
-  
-  // Production Guidelines
-  toneGuidelines?: string
-  visualGuidelines?: string
-  audioGuidelines?: string
-  
-  // Continuity Rules
-  consistencyRules?: string[]
-  worldBuildingNotes?: string[]
-}
+/** Canonical shape lives in @/types/series (includes props, continuity fields). */
+export type { SeriesProductionBible } from '@/types/series'
 
 export interface SeriesAttributes {
   id: string

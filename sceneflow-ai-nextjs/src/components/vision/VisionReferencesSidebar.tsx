@@ -33,6 +33,13 @@ import {
   isDisplayableImageUrl,
 } from '@/components/vision/DeferredImageSkeleton'
 import { ReferenceSplitPane } from './ReferenceSplitPane'
+import { ReferenceLibraryScopePanel } from './ReferenceLibraryScopePanel'
+import {
+  libraryAssetToCharacter,
+  libraryAssetToLocation,
+  libraryAssetToProp,
+} from '@/lib/referenceLibrary/projection'
+import type { ReferenceAssetRecord } from '@/types/referenceLibrary'
 
 // Extended scene type for Scene tab that includes sceneDirection
 interface SceneWithDirection {
@@ -1463,6 +1470,63 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     { key: 'object' as const, label: 'Props', icon: <Package className="w-3.5 h-3.5" />, count: objectReferences.length },
   ]
 
+  const linkedAssetIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const c of characters) {
+      if (c.libraryAssetId) ids.add(c.libraryAssetId)
+    }
+    for (const l of locationReferences) {
+      if (l.libraryAssetId) ids.add(l.libraryAssetId)
+    }
+    for (const o of objectReferences) {
+      if (o.libraryAssetId) ids.add(o.libraryAssetId)
+    }
+    return ids
+  }, [characters, locationReferences, objectReferences])
+
+  const linkAssetToProject = async (assetId: string) => {
+    if (!projectId) return
+    await fetch('/api/reference-library/links', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ assetId, projectId, addedBy: 'user' }),
+    })
+  }
+
+  const handleAddCharacterFromLibrary = async (asset: ReferenceAssetRecord) => {
+    if (!onAddCharacter) return
+    await linkAssetToProject(asset.id)
+    const char = libraryAssetToCharacter(asset)
+    onAddCharacter(char as Parameters<NonNullable<typeof onAddCharacter>>[0])
+    toast.success(`Added ${asset.name} to this production`)
+  }
+
+  const handleAddLocationFromLibrary = async (asset: ReferenceAssetRecord) => {
+    if (!onUpdateLocationReferences) return
+    await linkAssetToProject(asset.id)
+    const loc = libraryAssetToLocation(asset)
+    const exists = locationReferences.some(
+      (l) => l.libraryAssetId === asset.id || l.id === loc.id
+    )
+    if (!exists) {
+      onUpdateLocationReferences([...locationReferences, loc])
+      toast.success(`Added ${asset.name} to this production`)
+    }
+  }
+
+  const handleAddPropFromLibrary = async (asset: ReferenceAssetRecord) => {
+    if (!onCreateReference) return
+    await linkAssetToProject(asset.id)
+    const prop = libraryAssetToProp(asset)
+    const exists = objectReferences.some(
+      (o) => o.libraryAssetId === asset.id || o.id === prop.id
+    )
+    if (!exists) {
+      onCreateReference(prop)
+      toast.success(`Added ${asset.name} to this production`)
+    }
+  }
+
   return (
     <DndContext>
       <TooltipProvider delayDuration={300}>
@@ -1606,6 +1670,14 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
         <div data-vision-scroll-panel className="flex-1 overflow-y-auto min-h-0 space-y-3">
           {/* Cast Tab Content */}
           {activeReferenceTab === 'cast' && (
+            <>
+            <ReferenceLibraryScopePanel
+              projectId={projectId}
+              seriesId={seriesId}
+              kind="character"
+              linkedAssetIds={linkedAssetIds}
+              onAddFromLibrary={handleAddCharacterFromLibrary}
+            />
             <CharacterLibrary
               projectId={projectId}
               characters={characters}
@@ -1635,10 +1707,19 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               showProTips={showProTips}
               screenplayContext={screenplayContext}
             />
+            </>
           )}
           
           {/* Locations Tab Content - Intelligent Location Library */}
           {activeReferenceTab === 'locations' && (
+            <>
+            <ReferenceLibraryScopePanel
+              projectId={projectId}
+              seriesId={seriesId}
+              kind="location"
+              linkedAssetIds={linkedAssetIds}
+              onAddFromLibrary={handleAddLocationFromLibrary}
+            />
             <LocationLibrary
               locationReferences={locationReferences}
               scenes={allScenes}
@@ -1652,11 +1733,19 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               screenplayContext={screenplayContext}
               splitLayout={splitLayout}
             />
+            </>
           )}
           
           {/* Object Tab Content */}
           {activeReferenceTab === 'object' && (
             <div className="space-y-3">
+              <ReferenceLibraryScopePanel
+                projectId={projectId}
+                seriesId={seriesId}
+                kind="prop"
+                linkedAssetIds={linkedAssetIds}
+                onAddFromLibrary={handleAddPropFromLibrary}
+              />
               {/* AI Object Suggestions Panel */}
               {scenesForSuggestion.length > 0 && onObjectGenerated && (
                 <ObjectSuggestionPanel

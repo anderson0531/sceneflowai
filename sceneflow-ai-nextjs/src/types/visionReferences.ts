@@ -10,6 +10,8 @@ export type ObjectImportance = 'critical' | 'important' | 'background'
 
 export interface VisualReference {
   id: string
+  /** User-scoped global reference library asset id */
+  libraryAssetId?: string
   type: VisualReferenceType
   name: string
   description?: string
@@ -61,6 +63,8 @@ export interface ObjectSuggestion {
 export interface LocationReference {
   /** Unique identifier */
   id: string
+  /** User-scoped global reference library asset id */
+  libraryAssetId?: string
   /** Normalized location name (e.g., "LIVING ROOM", "BEACH") */
   location: string
   /** Original location display from scene heading (e.g., "INT. LIVING ROOM - DAY") */

@@ -1143,7 +1143,22 @@
       "applyRecommendations": "Apply Recommendations"
     },
     "referenceLibrary": {
-      "title": "Reference Library"
+      "title": "Reference Library",
+      "inThisProduction": "In this production",
+      "library": "Library",
+      "searchPlaceholder": "Search library…",
+      "addToProduction": "Add",
+      "noMatches": "No matching assets in your library.",
+      "searching": "Searching…",
+      "reconcileTitle": "Confirm reference assets",
+      "reconcileDescription": "Review proposed assets before linking or creating library entries. Reuse is checked by default.",
+      "matchingLibrary": "Matching against your library…",
+      "reuseExisting": "Reuse existing ({count})",
+      "createNew": "Create new ({count})",
+      "noAssetsToReconcile": "No assets to reconcile.",
+      "cancel": "Cancel",
+      "applying": "Applying…",
+      "confirm": "Confirm"
     },
     "beatReferences": {
       "title": "Review references — Scene {number}",

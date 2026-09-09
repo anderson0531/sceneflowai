@@ -62,7 +62,8 @@ const eslintConfig = [
       'src/components/vision/PreVisFramePromptDialog.tsx',
       'src/components/vision/OptimizeSceneDialog.tsx',
       'src/components/vision/ReimagineFoundationDialog.tsx',
-      'src/components/vision/BeatReferenceSelectionDialog.tsx',
+      'src/components/vision/ReferenceLibraryScopePanel.tsx',
+      'src/components/vision/ReferenceReconcileDialog.tsx',
       'src/components/vision/BackgroundAnalysisHandoffDialog.tsx',
     ],
     // Development-only tooling whose labels are debug output, not user copy.

@@ -22,6 +22,10 @@ import {
 } from '@/lib/treatment/blueprintFoundation'
 import { generateText } from '@/lib/vertexai/gemini'
 import { resolveStoryLocale, resolveExistingContentStoryLocale } from '@/i18n/server/storyLocale'
+import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
+import { loadProjectReferenceCatalog } from '@/lib/referenceLibrary/catalogLoader'
+import { formatReferenceCatalogForPrompt } from '@/lib/referenceLibrary/projection'
+import Project from '@/models/Project'
 
 // Vercel function configuration - must match vercel.json
 export const maxDuration = 300 // 5 minutes for complex Blueprint generation
@@ -501,6 +505,31 @@ export async function POST(request: NextRequest) {
     const lockedArtStyle = bodyArtStyle ? resolveVariantArtStyle({ artStyle: bodyArtStyle, visual_style: bodyArtStyle }) : DEFAULT_ART_STYLE
     const lockedAspectRatio = isBlueprintAspectRatio(bodyAspectRatio) ? bodyAspectRatio : DEFAULT_ASPECT_RATIO
 
+    let seriesContinuityBlock = ''
+    let referenceCatalogBlock = ''
+    if (isExistingProject && session?.user?.id && body.projectId) {
+      try {
+        const project = await Project.findByPk(body.projectId)
+        if (project?.user_id === session.user.id) {
+          const continuityCtx = await loadContinuityContextForProject(project)
+          if (continuityCtx) {
+            seriesContinuityBlock = continuityCtx.continuityPromptBlock
+          }
+          const catalog = await loadProjectReferenceCatalog(body.projectId, session.user.id)
+          if (
+            catalog.characters.length +
+              catalog.locations.length +
+              catalog.props.length >
+            0
+          ) {
+            referenceCatalogBlock = formatReferenceCatalogForPrompt(catalog)
+          }
+        }
+      } catch (err) {
+        console.warn('[Film Treatment] Failed to load reference catalog:', err)
+      }
+    }
+
     const context = { 
       targetAudience, 
       keyMessage, 
@@ -523,6 +552,8 @@ export async function POST(request: NextRequest) {
       thinkingBudget,
       storyLocale,
       properNouns,
+      seriesContinuityBlock,
+      referenceCatalogBlock,
     }
 
     const variantsStartMs = Date.now()
@@ -616,6 +647,8 @@ async function generateFilmTreatment(
     rigor: context?.rigor || 'thorough',
     storyLocale: context?.storyLocale,
     properNouns: context?.properNouns,
+    seriesContinuityBlock: context?.seriesContinuityBlock,
+    referenceCatalogBlock: context?.referenceCatalogBlock,
   }) + retryHint + strictJsonPromptSuffix
 
   const thinkingBudget = context?.thinkingBudget ?? getThinkingBudgetForRigor(context?.rigor || 'thorough')

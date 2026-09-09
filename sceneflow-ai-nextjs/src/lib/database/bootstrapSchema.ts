@@ -40,6 +40,7 @@ import {
   ensureContentTranslationsTable,
   ensureUserLocaleColumns,
 } from '@/lib/database/migrateI18n'
+import { migrateReferenceLibrary } from '@/lib/database/migrateReferenceLibrary'
 
 /**
  * Creates Sequelize tables on an empty Postgres (e.g. new Neon DB).
@@ -243,6 +244,31 @@ export async function bootstrapDatabaseSchema(): Promise<{
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error)
       logs.push(`⚠️ content_translations note: ${msg}`)
+    }
+
+    logs.push('31b. Running reference library migration...')
+    try {
+      const refLibResult = await migrateReferenceLibrary()
+      if (refLibResult.success) {
+        logs.push(`✅ Reference library migration: ${refLibResult.actions.join('; ')}`)
+      } else {
+        logs.push(`⚠️ Reference library migration: ${refLibResult.errors.join('; ')}`)
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error)
+      logs.push(`⚠️ Reference library migration note: ${msg}`)
+    }
+
+    logs.push('31c. Creating ReferenceAsset tables via Sequelize sync...')
+    try {
+      const { default: ReferenceAsset } = await import('../../models/ReferenceAsset')
+      const { default: ReferenceAssetLink } = await import('../../models/ReferenceAssetLink')
+      await ReferenceAsset.sync({ force: false })
+      await ReferenceAssetLink.sync({ force: false })
+      logs.push('✅ ReferenceAsset tables synced')
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error)
+      logs.push(`⚠️ ReferenceAsset sync note: ${msg}`)
     }
 
     logs.push('32. Enabling pgcrypto extension (for UUID defaults)...')

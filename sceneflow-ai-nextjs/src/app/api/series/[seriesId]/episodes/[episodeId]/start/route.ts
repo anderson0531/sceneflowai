@@ -75,6 +75,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Build the project metadata with series-inherited data
     const treatmentFromEpisode = buildTreatmentFromEpisode(episode, bible, series)
     const visionPhaseCharacters = buildVisionPhaseCharacters(episode, bible)
+    const { locationReferences, objectReferences } = buildVisionPhaseReferences(bible)
     
     // Build Blueprint prime input from series data for auto-generation
     const blueprintPrimeInput = buildBlueprintPrimeInput(episode, bible, series)
@@ -129,6 +130,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         visionPhase: {
           characters: visionPhaseCharacters,
           scenes: [],
+          references: {
+            locationReferences,
+            objectReferences,
+            sceneReferences: [],
+          },
           generationSettings: {
             imageStyle: bible.aesthetic?.visualStyle || 'cinematic',
             aspectRatio: bible.aesthetic?.aspectRatio || '16:9'
@@ -243,6 +249,33 @@ function buildTreatmentFromEpisode(episode: any, bible: any, series: any) {
 /**
  * Build vision phase characters from series bible
  */
+function buildVisionPhaseReferences(bible: any) {
+  const now = new Date().toISOString()
+  const locationReferences = (bible.locations || []).map((loc: any) => ({
+    id: loc.id,
+    location: loc.name,
+    locationDisplay: loc.name,
+    imageUrl: loc.referenceImageUrl || '',
+    sourceSceneIndex: 0,
+    sourceSceneHeading: loc.name,
+    pinnedAt: now,
+    description: loc.description || loc.visualDescription,
+    autoExtracted: false,
+  }))
+
+  const objectReferences = (bible.props || []).map((prop: any) => ({
+    id: prop.id,
+    type: 'object' as const,
+    name: prop.name,
+    description: prop.description,
+    imageUrl: prop.referenceImageUrl,
+    category: 'prop',
+    createdAt: prop.createdAt || now,
+  }))
+
+  return { locationReferences, objectReferences }
+}
+
 function buildVisionPhaseCharacters(episode: any, bible: any) {
   const episodeCharacterIds = (episode.characters || []).map((ec: any) => ec.characterId)
   
@@ -288,17 +321,12 @@ function buildBlueprintPrimeInput(episode: any, bible: any, series: any): string
   }
   lines.push('')
   
-  // Setting from reference library
-  if (bible.setting?.description || bible.setting?.timePeriod) {
+  // Setting from reference library (bible.setting is a string in the canonical type)
+  if (typeof bible.setting === 'string' && bible.setting.trim()) {
     lines.push('Setting:')
-    if (bible.setting.description) {
-      lines.push(bible.setting.description)
-    }
-    if (bible.setting.timePeriod) {
-      lines.push(`Time Period: ${bible.setting.timePeriod}`)
-    }
-    if (bible.setting.location) {
-      lines.push(`Location: ${bible.setting.location}`)
+    lines.push(bible.setting.trim())
+    if (bible.timeframe) {
+      lines.push(`Time Period: ${bible.timeframe}`)
     }
     lines.push('')
   }
