@@ -4,7 +4,8 @@ import { useTranslations } from 'next-intl'
 
 import React, { useState } from 'react'
 import { ASSISTANT } from '@/lib/constants/assistant'
-import { Users, X, Copy, Check, Link2, Radar, Lightbulb } from 'lucide-react'
+import { Users, X, Copy, Check, Link2, Radar, Lightbulb, Download } from 'lucide-react'
+import { BlueprintExportDialog } from '@/components/blueprint/BlueprintExportDialog'
 import { NarrativeReasoningPanel } from './NarrativeReasoningPanel'
 import { AudienceResonancePanelV3 } from './AudienceResonancePanelV3'
 import { cn } from '@/lib/utils'
@@ -205,6 +206,8 @@ export function SidePanelTabs({
             onShare={onShare}
             isSharing={isSharing}
             onOpenBlueprintRefine={onOpenBlueprintRefine}
+            treatmentVariant={currentTreatment}
+            projectName={(guide as any)?.title || 'Blueprint'}
           />
         )}
       </div>
@@ -220,6 +223,8 @@ function CollaborationContent({
   onShare,
   isSharing,
   onOpenBlueprintRefine,
+  treatmentVariant,
+  projectName,
 }: {
   sessionId: string | null
   shareToken: string | null | undefined
@@ -227,6 +232,8 @@ function CollaborationContent({
   onShare: (opts?: { forceNew?: boolean }) => void
   isSharing: boolean
   onOpenBlueprintRefine?: (opts: OpenBlueprintRefineOptions) => void
+  treatmentVariant?: Record<string, unknown> | null
+  projectName?: string
 }) {
   const t = useTranslations('blueprint.sidePanel')
   const tc = useTranslations('common')
@@ -250,6 +257,7 @@ function CollaborationContent({
   const [audioDirectorNotes, setAudioDirectorNotes] = React.useState('')
   const [voicePickerOpen, setVoicePickerOpen] = React.useState(false)
   const [directorNotesOpen, setDirectorNotesOpen] = React.useState(false)
+  const [exportOpen, setExportOpen] = React.useState(false)
 
   const token = shareToken || (shareUrl ? shareUrl.split('/blueprint/share/')[1]?.split('?')[0] : null)
 
@@ -410,6 +418,35 @@ function CollaborationContent({
 
   return (
     <div className="h-full flex flex-col min-h-0">
+      {/* Export blueprint */}
+      {treatmentVariant ? (
+        <div className="shrink-0 px-3 py-3 border-b border-purple-500/20 bg-gradient-to-b from-purple-500/5 to-transparent">
+          <div className="flex items-start gap-2">
+            <div className="w-9 h-9 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center shrink-0">
+              <Download size={18} className="text-purple-300" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-semibold text-white leading-tight">{t('collab.exportTitle')}</h3>
+              <p className="text-[11px] text-gray-400 mt-0.5 leading-snug">{t('collab.exportHint')}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setExportOpen(true)}
+            className="mt-2.5 w-full px-3 py-2 rounded-lg border border-purple-500/30 bg-slate-900/50 hover:bg-purple-500/10 text-purple-100 text-sm font-medium transition-colors flex items-center justify-center gap-2"
+          >
+            <Download size={16} />
+            {t('collab.exportButton')}
+          </button>
+          <BlueprintExportDialog
+            open={exportOpen}
+            onOpenChange={setExportOpen}
+            variant={treatmentVariant}
+            projectName={projectName}
+          />
+        </div>
+      ) : null}
+
       {/* Share CTA / link — always at top of Collaborate tab */}
       <div className="shrink-0 px-3 py-3 border-b border-purple-500/20 bg-gradient-to-b from-purple-500/10 to-transparent">
         <div className="flex items-start gap-2">

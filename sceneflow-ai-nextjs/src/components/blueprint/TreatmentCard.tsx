@@ -6,10 +6,10 @@ import { useSession } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
 import { useGuideStore } from '@/store/useGuideStore'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Play, Square, Volume2, MoreHorizontal, ChevronDown, MessageSquare, Loader2, Wand2, X, Users, Lightbulb, SparklesIcon, Award, RefreshCw, FileText, Printer, ArrowRight } from 'lucide-react'
+import { ChevronDown, MessageSquare, Loader2, Wand2, X, Users, Lightbulb, SparklesIcon, Award, RotateCcw, FileText, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import BlueprintReimaginDialog from './BlueprintReimaginDialog'
 import type { OpenBlueprintRefineOptions } from '@/lib/blueprint/openBlueprintRefine'
@@ -22,9 +22,16 @@ import {
   buildBlueprintNarrationText,
   type BlueprintNarrationMode,
 } from '@/lib/blueprint/buildBlueprintNarrationText'
-import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
-import { ReportType } from '@/lib/types/reports'
 import { BLUEPRINT_COPY, VOICE_DIRECTION_COPY } from '@/lib/blueprint/blueprintGlossary'
+import { BlueprintListenButton } from '@/components/blueprint/BlueprintListenButton'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { ASSISTANT } from '@/lib/constants/assistant'
 import { ASSISTANT_ICON as AssistantIcon } from '@/lib/constants/assistantIcon'
 import { AssistantButton } from '@/components/blueprint/AssistantButton'
@@ -177,7 +184,7 @@ export function TreatmentCard({
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [isSharing, setIsSharing] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
-  const [reportPreviewOpen, setReportPreviewOpen] = useState(false)
+  const [regenerateConfirmOpen, setRegenerateConfirmOpen] = useState(false)
   // Client-side only state for flash highlight (avoids hydration mismatch from Date.now())
   const [isClient, setIsClient] = useState(false)
   useEffect(() => { setIsClient(true) }, [])
@@ -338,113 +345,27 @@ export function TreatmentCard({
                             strip of six buttons. */}
                         <span aria-hidden className="mx-1 h-5 w-px bg-white/10" />
 
-                        {/* Reimagine - major story changes */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              aria-label={BLUEPRINT_COPY.reimagine}
-                              title={BLUEPRINT_COPY.reimagine}
-                              onClick={() => setReimaginOpen(true)}
-                              className="h-8 w-8 border border-gray-700 text-gray-200 hover:bg-gray-800"
-                              variant="outline"
-                              size="icon"
-                            >
-                              <RefreshCw className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>{BLUEPRINT_COPY.reimagine}</TooltipContent>
-                        </Tooltip>
-
-                        {/* Preview/Print */}
-                        {activeVariant && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                aria-label={t('audio.previewPrint')}
-                                title={t('audio.previewPrint')}
-                                onClick={() => setReportPreviewOpen(true)}
-                                className="h-8 w-8 border border-gray-700 text-gray-200 hover:bg-gray-800"
-                                variant="outline"
-                                size="icon"
-                              >
-                                <Printer className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>{t('audio.previewPrint')}</TooltipContent>
-                          </Tooltip>
-                        )}
-
-                        {/* Overflow on small screens only (Edit) */}
-                        <div className="md:hidden">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button aria-label={t('audio.moreActions')} className="h-8 w-8" size="icon" variant="outline">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-52">
-                              <DropdownMenuItem onSelect={(e)=>{e.preventDefault(); openRefine({});}} onClick={(e)=>{e.preventDefault();}}>
-                                <AssistantIcon className="h-4 w-4 mr-2" /> {ASSISTANT.short}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onSelect={(e)=>{e.preventDefault(); setReimaginOpen(true);}} onClick={(e)=>{e.preventDefault();}}>
-                                <RefreshCw className="h-4 w-4 mr-2" /> {t('menu.reimagine')}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                        {/* Audio controls: Play/Stop + settings popover chevron */}
+                        {/* Audio controls: Listen + settings popover chevron */}
                         <div className="flex items-center gap-1">
-                          {tts.enabled && tts.voices.length > 0 ? (
-                            tts.loadingId === active ? (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    aria-label={t('audio.stop')}
-                                    title={t('audio.stop')}
-                                    onClick={tts.stopAny}
-                                    className="h-8 w-8 border border-gray-700 text-gray-300 hover:bg-gray-800"
-                                    variant="outline"
-                                    size="icon"
-                                  >
-                                    <Square className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>{t('audio.stop')}</TooltipContent>
-                              </Tooltip>
-                            ) : (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    aria-label={t('audio.play')}
-                                    title={t('audio.play')}
-                                    onClick={() => { const currentId = ((guide as any)?.selectedTreatmentId as string) || active; if (currentId) playVariant(currentId) }}
-                                    className="h-8 w-8 border border-gray-700 text-gray-300 hover:bg-gray-800"
-                                    variant="outline"
-                                    size="icon"
-                                  >
-                                    <Play className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>{t('audio.play')}</TooltipContent>
-                              </Tooltip>
-                            )
-                          ) : (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  aria-label={t('audio.unavailable')}
-                                  title={t('audio.unavailable')}
-                                  disabled
-                                  className="h-8 w-8 border border-gray-800 text-gray-500"
-                                  variant="outline"
-                                  size="icon"
-                                >
-                                  <Play className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>{t('audio.configureTtsDetailed')}</TooltipContent>
-                            </Tooltip>
-                          )}
+                          <BlueprintListenButton
+                            isPlaying={
+                              tts.loadingId === active &&
+                              (!tts.generationProgress ||
+                                tts.generationProgress.phase === 'playing')
+                            }
+                            isLoading={
+                              tts.loadingId === active &&
+                              tts.generationProgress != null &&
+                              tts.generationProgress.phase !== 'playing'
+                            }
+                            disabled={!tts.enabled || tts.voices.length === 0}
+                            onPlay={() => {
+                              const currentId =
+                                ((guide as any)?.selectedTreatmentId as string) || active
+                              if (currentId) playVariant(currentId)
+                            }}
+                            onStop={tts.stopAny}
+                          />
 
                           {/* Audio settings chevron */}
                           <DropdownMenu open={tts.audioMenuOpen} onOpenChange={tts.setAudioMenuOpen}>
@@ -1159,8 +1080,53 @@ export function TreatmentCard({
                   </div>
                   )
                 })()}
+
+              {/* Regenerate — separated from daily toolbar actions */}
+              {activeVariant && (
+                <div className="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-medium text-gray-300">{t('regenerate.sectionTitle')}</p>
+                    <p className="text-[11px] text-gray-500 mt-0.5 max-w-xl">
+                      {t('regenerate.sectionHint')}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 border-amber-500/40 text-amber-200 hover:bg-amber-500/10 shrink-0"
+                    onClick={() => setRegenerateConfirmOpen(true)}
+                  >
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    {t('menu.reimagine')}
+                  </Button>
+                </div>
+              )}
             </div>
         </div>
+        <Dialog open={regenerateConfirmOpen} onOpenChange={setRegenerateConfirmOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t('regenerate.confirmTitle')}</DialogTitle>
+              <DialogDescription>{t('regenerate.confirmDescription')}</DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="outline" onClick={() => setRegenerateConfirmOpen(false)}>
+                {t('regenerate.cancel')}
+              </Button>
+              <Button
+                className="bg-amber-600 hover:bg-amber-500 text-white"
+                onClick={() => {
+                  setRegenerateConfirmOpen(false)
+                  setReimaginOpen(true)
+                }}
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                {t('regenerate.confirmAction')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         {/* Blueprint Reimagine Dialog - Major story changes */}
         <BlueprintReimaginDialog
           open={reimaginOpen}
@@ -1196,16 +1162,6 @@ export function TreatmentCard({
             }
           }}
         />
-        {/* Report Preview Modal */}
-        {activeVariant && (
-          <ReportPreviewModal
-            type={ReportType.FILM_TREATMENT}
-            data={activeVariant as any}
-            projectName={guide.title || 'Untitled Project'}
-            open={reportPreviewOpen}
-            onOpenChange={setReportPreviewOpen}
-          />
-        )}
         {/* Voice Selection Dialog */}
         <BlueprintGeminiVoicePicker
           open={tts.voiceDialogOpen}

@@ -1,7 +1,8 @@
 'use client'
 
 import React from 'react'
-import { Play, Square, ChevronDown, Sparkles } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { ChevronDown, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import {
@@ -14,6 +15,7 @@ import { DirectorNoteBuilderDialog } from '@/components/tts/DirectorNoteBuilderD
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { useBlueprintTtsContext } from '@/contexts/BlueprintTtsContext'
 import { VOICE_DIRECTION_COPY } from '@/lib/blueprint/blueprintGlossary'
+import { BlueprintListenButton } from '@/components/blueprint/BlueprintListenButton'
 
 export interface BlueprintTtsControlsProps {
   getTextToSpeak: () => string
@@ -26,69 +28,29 @@ export function BlueprintTtsControls({
   playId = 'blueprint-tts',
   className,
 }: BlueprintTtsControlsProps) {
+  const t = useTranslations('blueprint.audio')
   const tts = useBlueprintTtsContext()
+  const isActive = tts.loadingId === playId
+  const isLoading =
+    isActive &&
+    tts.generationProgress != null &&
+    tts.generationProgress.phase !== 'playing'
 
   return (
     <TooltipProvider>
       <div className={className ?? 'flex items-center gap-1'}>
-        {tts.enabled && tts.voices.length > 0 ? (
-          tts.loadingId === playId ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  aria-label="Stop playback"
-                  title="Stop"
-                  onClick={tts.stopAny}
-                  className="h-8 w-8 border border-gray-700 text-gray-300 hover:bg-gray-800"
-                  variant="outline"
-                  size="icon"
-                >
-                  <Square className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Stop</TooltipContent>
-            </Tooltip>
-          ) : (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  aria-label="Play narration"
-                  title="Play"
-                  onClick={() => tts.playText(getTextToSpeak(), playId)}
-                  className="h-8 w-8 border border-gray-700 text-gray-300 hover:bg-gray-800"
-                  variant="outline"
-                  size="icon"
-                >
-                  <Play className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Play</TooltipContent>
-            </Tooltip>
-          )
-        ) : (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                aria-label="Audio preview unavailable"
-                title="Audio preview unavailable"
-                disabled
-                className="h-8 w-8 border border-gray-800 text-gray-500"
-                variant="outline"
-                size="icon"
-              >
-                <Play className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              Configure Google TTS (GOOGLE_API_KEY or Vertex) to enable audio previews
-            </TooltipContent>
-          </Tooltip>
-        )}
+        <BlueprintListenButton
+          isPlaying={isActive && !isLoading}
+          isLoading={isLoading}
+          disabled={!tts.enabled || tts.voices.length === 0}
+          onPlay={() => tts.playText(getTextToSpeak(), playId)}
+          onStop={tts.stopAny}
+        />
 
         <DropdownMenu open={tts.audioMenuOpen} onOpenChange={tts.setAudioMenuOpen}>
           <DropdownMenuTrigger asChild>
             <Button
-              aria-label="Audio settings"
+              aria-label={t('settings')}
               aria-expanded={tts.audioMenuOpen}
               className="h-8 w-8"
               size="icon"
@@ -98,7 +60,7 @@ export function BlueprintTtsControls({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-72">
-            <div className="px-1 py-1.5 text-xs text-gray-400">Voice</div>
+            <div className="px-1 py-1.5 text-xs text-gray-400">{t('voice')}</div>
             {tts.enabled ? (
               <Button
                 variant="outline"
@@ -108,11 +70,11 @@ export function BlueprintTtsControls({
                   tts.setVoiceDialogOpen(true)
                 }}
               >
-                <span className="truncate">{tts.selectedVoiceName || 'Select voice...'}</span>
+                <span className="truncate">{tts.selectedVoiceName || t('selectVoice')}</span>
                 <ChevronDown className="h-4 w-4 ml-2 opacity-50" />
               </Button>
             ) : (
-              <div className="mx-2 my-1 text-xs text-amber-300">Audio not configured</div>
+              <div className="mx-2 my-1 text-xs text-amber-300">{t('notConfigured')}</div>
             )}
             <div className="px-1 pt-2 pb-1 text-xs text-gray-400">{VOICE_DIRECTION_COPY.sectionLabel}</div>
             <Button
@@ -128,7 +90,7 @@ export function BlueprintTtsControls({
                 {tts.directorNotes.trim() ? VOICE_DIRECTION_COPY.set : VOICE_DIRECTION_COPY.add}
               </span>
             </Button>
-            <div className="px-1 pt-2 pb-1 text-xs text-gray-400">Language</div>
+            <div className="px-1 pt-2 pb-1 text-xs text-gray-400">{t('language')}</div>
             <GroupedLanguageSelector
               value={tts.selectedLanguage}
               onValueChange={(code) => tts.setSelectedLanguage(code)}
