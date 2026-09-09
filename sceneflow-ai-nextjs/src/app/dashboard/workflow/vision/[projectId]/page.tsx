@@ -7919,6 +7919,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               } else if (data.type === 'complete') {
                 // Don't use script data from SSE - reload from database instead
                 console.log(`[Vision] Script generation complete: ${data.totalScenes} scenes`)
+
+                if (data.sceneLimitWarning) {
+                  try {
+                    const { toast } = require('sonner')
+                    toast.warning(
+                      `Script has ${data.sceneLimitWarning.generated} scenes but your plan allows ${data.sceneLimitWarning.allowed}. Full script was saved — upgrade or split manually to generate all scenes.`,
+                      { duration: 15000 }
+                    )
+                  } catch {}
+                }
                 
                 // Show warning if partial generation
                 if (data.partial) {

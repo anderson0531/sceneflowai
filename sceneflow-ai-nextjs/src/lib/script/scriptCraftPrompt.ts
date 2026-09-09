@@ -3,6 +3,8 @@
  * scene revision. These are not duration knobs.
  */
 
+import { MAX_BEATS_PER_SCENE } from '@/lib/script/sceneDecomposition'
+
 export const SCRIPT_CRAFT_PRIORITIES = [
   'characterDepth',
   'actionClarity',
@@ -57,8 +59,9 @@ export function parseScriptCraftNotes(raw: unknown): string {
 export function buildLongformScriptLengthBlock(): string {
   return `SCRIPT LENGTH (STORY DETERMINES LENGTH):
 • Write a complete longform script. Give characters, action, and story turns as much room as they need.
-• Do not compress, pad, or split scenes or beats to match a clock.
-• Approximate Blueprint runtime is advisory only — not a scene-count or seconds-per-beat ceiling.
+• Decompose each Blueprint beat into multiple scenes; never collapse an entire Blueprint beat into one scene.
+• Each scene MUST stay at or below ${MAX_BEATS_PER_SCENE} beats — split across consecutive scenes when a beat needs more.
+• Approximate Blueprint runtime guides beat volume (~8s per beat), not a hard seconds-per-scene target.
 • JSON "duration" fields are estimates you report after writing, not targets to hit.
 • Intervening action beats only when they add NEW visual information — never to pad runtime.`
 }

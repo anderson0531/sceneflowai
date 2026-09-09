@@ -11,6 +11,7 @@ import { isCinematicBookendScene } from '@/lib/script/cinematicBookends'
 import { ensureSceneBeats, applyBeatsToScene, getSceneBeats } from '@/lib/script/beatMigration'
 import { dedupeRedundantActionBeats, findRedundantActionBeatIndices } from '@/lib/script/actionBeatDedupe'
 import type { BeatKind, SceneBeat } from '@/lib/script/segmentTypes'
+import { MAX_BEATS_PER_SCENE } from '@/lib/script/sceneDecomposition'
 
 export interface QAIssue {
   type: 'error' | 'warning' | 'info'
@@ -162,6 +163,17 @@ export function runScriptQA(
         message: `Scene ${sceneNum} is missing beats[] — required for storyboard production`,
         suggestion: 'Add an ordered beats array with action, dialogue, and narration beats',
         autoFixable: true,
+      })
+    }
+
+    if (!isBookend && beats.length > MAX_BEATS_PER_SCENE) {
+      issues.push({
+        type: 'error',
+        category: 'formatting',
+        sceneIndex: sceneIdx,
+        message: `Scene ${sceneNum} has ${beats.length} beats (max ${MAX_BEATS_PER_SCENE} per scene for production)`,
+        suggestion: 'Split this scene into multiple scenes at a natural dramatic break',
+        autoFixable: false,
       })
     }
 

@@ -726,13 +726,14 @@ export function buildScriptConstraintPrompt(settings: ScriptSettings): string {
   return `
 === SCRIPT GENERATION CONSTRAINTS ===
 
-## 1. SCENE CONSOLIDATION (Story-First)
-- Merge consecutive story beats ONLY when they form the same continuous dramatic unit in the SAME LOCATION
-- Do NOT collapse distinct emotional turns, revelations, or location changes just to hit a scene quota
-- Each scene MUST have a beginning, middle, and end
-- Target: ~${settings.targetSceneCount || 55} total scenes for the entire script (guide, not hard ceiling)
-- Maximum ${settings.maxScenesPerAct} scenes per act
-- Serve the story first — scene count is a guide, not a hard ceiling
+## 1. SCENE DECOMPOSITION (Blueprint → Scenes)
+- Each Blueprint beat MUST become MULTIPLE scenes — NEVER one scene per Blueprint beat
+- Hard cap: at most 15 beats per scene (required for Express generation, Assistant revision, and Screening Room)
+- Split at natural dramatic breaks: location changes, time jumps, act turns — NOT mid-conversation
+- When a Blueprint beat needs more than 15 beats, continue across consecutive scenes with the same blueprintBeatIndex
+- Each scene MUST have a beginning, middle, and end (~2 minutes / ~15 beats target)
+- Approximate total scenes: follow the per-beat decomposition budget in the prompt
+- Maximum ${settings.maxScenesPerAct} scenes per act (soft guide)
 
 ## 2. NARRATION RULES
 ${narrationGuidelines.conversionInstructions}
