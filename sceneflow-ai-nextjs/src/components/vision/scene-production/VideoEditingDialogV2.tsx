@@ -45,8 +45,6 @@ import { VisualReference } from '@/types/visionReferences'
 import { toast } from 'sonner'
 import { SmartPromptControlDeck } from './SmartPromptModules'
 import { compileVideoPrompt } from './videoPromptCompiler'
-import { moderatePrompt, ModerationResult, buildRegenerationSystemPrompt, buildRegenerationUserPrompt } from '@/utils/promptModerator'
-import { ContentPolicyAlert, PolicyFixedBanner } from './ContentPolicyAlert'
 import { extractVideoFrame } from '@/lib/video/clientVideoUtils'
 
 // ============================================
@@ -124,12 +122,7 @@ function SmartPromptTab({
   setSmartPromptSettings,
   generalInstruction,
   setGeneralInstruction,
-}: SmartPromptTabProps & {
-  moderationResult?: ModerationResult
-  onApplyModerationFix?: (fixedPrompt: string) => void
-  showPolicyFixed?: boolean
-  onDismissPolicyFixed?: () => void
-}) {
+}: SmartPromptTabProps) {
   const [showCompiledPrompt, setShowCompiledPrompt] = useState(false)
 
   // Compile prompt for preview - prepend general instruction if provided
@@ -1301,77 +1294,6 @@ export function VideoEditingDialog({
   const [smartPromptSettings, setSmartPromptSettings] = useState<SmartPromptSettings>(createDefaultSmartPromptSettings())
   const [generalInstruction, setGeneralInstruction] = useState('')
 
-  // Content moderation state
-  const [showPolicyAlert, setShowPolicyAlert] = useState(false)
-  const [showPolicyFixed, setShowPolicyFixed] = useState(false)
-  const [policyAlertDismissed, setPolicyAlertDismissed] = useState(false)
-
-  // Compute moderation result whenever prompt or general instruction changes
-  const moderationResult = useMemo(() => {
-    const fullPrompt = generalInstruction 
-      ? `${generalInstruction}. ${prompt}`.trim()
-      : prompt
-    return moderatePrompt(fullPrompt)
-  }, [prompt, generalInstruction])
-
-  // Reset policy alert dismissed state when prompt changes significantly
-  useEffect(() => {
-    if (!moderationResult.isClean && !policyAlertDismissed) {
-      setShowPolicyAlert(true)
-    }
-  }, [moderationResult.isClean, policyAlertDismissed])
-
-  // Handle applying moderation fix
-  const handleApplyModerationFix = useCallback((fixedPrompt: string) => {
-    // The fixed prompt includes both general instruction and base prompt
-    // We need to split them back if general instruction was set
-    if (generalInstruction) {
-      const instructionPart = generalInstruction + '. '
-      if (fixedPrompt.startsWith(instructionPart)) {
-        setPrompt(fixedPrompt.slice(instructionPart.length))
-      } else {
-        // If the structure changed, put everything in the prompt
-        setPrompt(fixedPrompt)
-        setGeneralInstruction('')
-      }
-    } else {
-      setPrompt(fixedPrompt)
-    }
-    setShowPolicyAlert(false)
-    setShowPolicyFixed(true)
-    // Auto-dismiss the success banner after 3 seconds
-    setTimeout(() => setShowPolicyFixed(false), 3000)
-  }, [generalInstruction])
-
-  // AI regeneration handler using Gemini
-  const handleRegenerateWithAI = useCallback(async (originalPrompt: string): Promise<string> => {
-    try {
-      const response = await fetch('/api/prompt/rephrase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: originalPrompt,
-          flaggedTerms: moderationResult.flaggedTerms.map(ft => ft.term),
-          systemPrompt: buildRegenerationSystemPrompt(),
-          userPrompt: buildRegenerationUserPrompt(
-            originalPrompt, 
-            moderationResult.flaggedTerms.map(ft => ft.term)
-          ),
-        }),
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to regenerate prompt')
-      }
-      
-      const data = await response.json()
-      return data.rephrasedPrompt
-    } catch (error) {
-      console.error('[Video Editor] AI regeneration failed:', error)
-      throw error
-    }
-  }, [moderationResult.flaggedTerms])
-
   // Reset state when dialog opens
   useEffect(() => {
     if (open && segment) {
@@ -1380,10 +1302,6 @@ export function VideoEditingDialog({
       setGeneralInstruction(segment.userInstruction || '')
       // Reset smart prompt settings
       setSmartPromptSettings(createDefaultSmartPromptSettings())
-      // Reset policy alert state
-      setShowPolicyAlert(false)
-      setShowPolicyFixed(false)
-      setPolicyAlertDismissed(false)
     }
   }, [open, segment])
 
@@ -1594,29 +1512,6 @@ export function VideoEditingDialog({
               </TabsList>
               
               <div className="flex-1 overflow-y-auto p-4 pt-2">
-                {/* Content Policy Alert - shown at top of controls */}
-                {showPolicyAlert && !moderationResult.isClean && !policyAlertDismissed && (
-                  <ContentPolicyAlert
-                    moderationResult={moderationResult}
-                    onApplyFix={handleApplyModerationFix}
-                    onDismiss={() => {
-                      setShowPolicyAlert(false)
-                      setPolicyAlertDismissed(true)
-                    }}
-                    enableAIRegeneration={true}
-                    onRegenerateWithAI={handleRegenerateWithAI}
-                    className="mb-4"
-                  />
-                )}
-                
-                {/* Success banner after fix applied */}
-                {showPolicyFixed && (
-                  <PolicyFixedBanner
-                    onDismiss={() => setShowPolicyFixed(false)}
-                    className="mb-4"
-                  />
-                )}
-
                 {/* Smart Prompt Tab Content */}
                 <TabsContent value="smart-prompt" className="mt-0">
                   <SmartPromptTab
