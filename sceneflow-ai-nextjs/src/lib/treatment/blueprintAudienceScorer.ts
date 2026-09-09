@@ -48,9 +48,6 @@ export function pointsForPriority(priority: BlueprintRecommendationPriority): nu
 export const DEDUCTION_SCORE_WEIGHTS = [1, 0.65, 0.4, 0.25, 0.15, 0.1] as const
 export const DEDUCTION_SCORE_WEIGHT_TAIL = 0.05
 
-/** Soft max recommendations shown in the panel (full backlog, not drip-feed). */
-export const BLUEPRINT_AR_MAX_VISIBLE_RECS = 8
-
 /**
  * Weighted deduction total used for the headline score (raw points stay on each item).
  */
@@ -214,16 +211,6 @@ export function mapRecommendations(
         : undefined,
     }
   })
-}
-
-export function mapDeductions(raw: unknown[]): BlueprintAudienceDeduction[] {
-  return (raw || []).map((d: any) => ({
-    reason: String(d.reason || d.text || ''),
-    points: clamp(Number(d.points) || 0, 0, 40),
-    category: String(d.category || 'General'),
-    priority: d.priority ? normalizePriority(d.priority) : undefined,
-    recommendationId: d.recommendationId ? String(d.recommendationId) : undefined,
-  }))
 }
 
 /** The gap text a recommendation stands for, falling back to the fix itself. */

@@ -87,6 +87,24 @@ describe('buildAudienceResonanceDisplayFields', () => {
     expect(classifyField('audienceResonance.summary')).toBe('display')
     expect(classifyField('audienceResonance.recommendations[r1].text')).toBe('display')
   })
+
+  it('translates the gap a recommendation closes', () => {
+    const fields = buildAudienceResonanceDisplayFields({
+      recommendations: [
+        {
+          id: 'r1',
+          title: 'Tighten beats',
+          text: 'Cut two minutes.',
+          reason: 'Pacing dips in act two',
+        },
+      ],
+    })
+
+    expect(fields['audienceResonance.recommendations[r1].reason']).toBe(
+      'Pacing dips in act two'
+    )
+    expect(classifyField('audienceResonance.recommendations[r1].reason')).toBe('display')
+  })
 })
 
 describe('buildNarrativeReasoningDisplayFields', () => {

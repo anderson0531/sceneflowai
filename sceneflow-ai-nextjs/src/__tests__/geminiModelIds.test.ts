@@ -123,7 +123,6 @@ describe('product surface model source guard', () => {
     'src/app/api/vision/optimize-script/route.ts',
     // audience_resonance
     'src/app/api/treatment/audience-resonance/route.ts',
-    'src/app/api/treatment/analyze-resonance/route.ts',
     'src/lib/script/audienceResonance/scenePass.ts',
     'src/lib/script/audienceResonance/synthesisPass.ts',
     // dialog / refine
