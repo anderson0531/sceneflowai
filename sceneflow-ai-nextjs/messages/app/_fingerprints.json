@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-09T07:03:53.378Z",
+  "generatedAt": "2026-09-09T08:06:37.152Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -476,6 +476,17 @@
       "sidePanel.collab.exportButton": "4392addadab67c07",
       "sidePanel.collab.creatingLink": "26756b8c8a6e92f3",
       "sidePanel.collab.shareAndCollaborate": "7070d6eb46afe9df",
+      "sidePanel.collab.listenOnlyTitle": "adb32659593f2f11",
+      "sidePanel.collab.reviewerLinkTitle": "18b203cf5bffbed1",
+      "sidePanel.collab.shareForFeedbackTitle": "3088037e0776527b",
+      "sidePanel.collab.listenOnlyHint": "183dd4941acd7078",
+      "sidePanel.collab.reviewerLinkHint": "d54298cc597b7d1e",
+      "sidePanel.collab.createLinkHint": "f5f78fc27857d23a",
+      "sidePanel.collab.listenOnlyCheckbox": "253ecc6032e6108b",
+      "sidePanel.collab.copyLink": "dbf362d4f210c780",
+      "sidePanel.collab.copied": "ea61bc15688d1e48",
+      "sidePanel.collab.createNewLink": "8203df2d8618a0b7",
+      "sidePanel.collab.creatingNewLink": "41473959e5de5bf8",
       "sidePanel.collab.reviewerAudio": "a95a57e27b9a78ce",
       "sidePanel.collab.voice": "befa48d0318b2789",
       "sidePanel.collab.generatingAudio": "940237934660c572",

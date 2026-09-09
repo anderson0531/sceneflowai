@@ -467,16 +467,16 @@ function CollaborationContent({
             <h3 className="text-sm font-semibold text-white leading-tight">
               {hasShareLink
                 ? listenOnly
-                  ? 'Listen-only preview'
-                  : 'Reviewer link'
-                : 'Share for feedback'}
+                  ? t('collab.listenOnlyTitle')
+                  : t('collab.reviewerLinkTitle')
+                : t('collab.shareForFeedbackTitle')}
             </h3>
             <p className="text-[11px] text-gray-400 mt-0.5 leading-snug">
               {listenOnly
-                ? 'Read and listen only. No ratings, notes, or chat. Does not expire.'
+                ? t('collab.listenOnlyHint')
                 : hasShareLink
-                  ? 'One link for all reviewers. Send it so collaborators can read, listen, and comment.'
-                  : 'Create a link reviewers can open without logging in.'}
+                  ? t('collab.reviewerLinkHint')
+                  : t('collab.createLinkHint')}
             </p>
           </div>
         </div>
@@ -494,7 +494,7 @@ function CollaborationContent({
             }}
             className="mt-0.5 rounded border-gray-600"
           />
-          <span>Listen-only preview (no feedback)</span>
+          <span>{t('collab.listenOnlyCheckbox')}</span>
         </label>
 
         {hasShareLink && shareUrl ? (
@@ -512,7 +512,7 @@ function CollaborationContent({
               type="button"
               onClick={handleCopyLink}
               className="p-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white transition-colors shrink-0"
-              title={copied ? 'Copied!' : 'Copy link'}
+              title={copied ? t('collab.copied') : t('collab.copyLink')}
             >
               {copied ? <Check size={14} /> : <Copy size={14} />}
             </button>
@@ -585,7 +585,7 @@ function CollaborationContent({
               disabled={isSharing}
               className="w-full text-[11px] text-purple-300/90 hover:text-purple-200 disabled:opacity-50 text-left"
             >
-              {isSharing ? 'Creating new link…' : 'Create new link (new URL)'}
+              {isSharing ? t('collab.creatingNewLink') : t('collab.createNewLink')}
             </button>
             <BlueprintGeminiVoicePicker
               open={voicePickerOpen}

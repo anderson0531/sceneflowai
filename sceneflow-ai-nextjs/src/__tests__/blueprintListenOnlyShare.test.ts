@@ -62,6 +62,12 @@ describe('Blueprint listen-only share', () => {
     expect(chat).toContain('isBlueprintFeedbackAllowed')
   })
 
+  it('uses catalog copy for the listen-only studio toggle', () => {
+    const panel = readSource('src/components/blueprint/SidePanelTabs.tsx')
+    expect(panel).toContain("t('collab.listenOnlyCheckbox')")
+    expect(panel).not.toContain('Listen-only preview (no feedback)')
+  })
+
   it('hides review chrome on the public viewer when feedback is off', () => {
     const viewer = readSource('src/components/blueprint/BlueprintShareViewer.tsx')
     expect(viewer).toContain('allowFeedback')
