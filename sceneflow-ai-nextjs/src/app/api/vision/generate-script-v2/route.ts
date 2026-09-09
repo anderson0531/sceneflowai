@@ -1506,7 +1506,11 @@ async function callGemini(
   const result = await generateText(prompt, {
     model: getScriptGenerationModel(),
     temperature: 0.7,
-    maxOutputTokens: 16384,  // Per-chunk budget; chunks are sized to fit inside it
+    // On Gemini 3 the thinking budget shares maxOutputTokens, and thinkingLevel
+    // 'high' on a writing task takes a real slice of it. A chunk emits roughly
+    // 6k tokens, so the headroom costs no memory — the response stays a fraction
+    // of the old single-pass one — but it keeps thinking from truncating scenes.
+    maxOutputTokens: 32768,
     timeoutMs: 180000,       // 180s timeout for large script generation (increased from default 90s)
     thinkingLevel: 'high',
   })
