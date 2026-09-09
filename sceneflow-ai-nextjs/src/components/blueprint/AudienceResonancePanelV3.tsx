@@ -440,6 +440,7 @@ export function AudienceResonancePanelV3({
         title: String(treatment?.title || treatment?.label || ''),
         logline: String(treatment?.logline || ''),
         synopsis: String(treatment?.synopsis || ''),
+        genre: String(treatment?.genre || ''),
         arSummary: analysis?.summary ?? savedBlueprintAR?.analysis?.summary ?? null,
       }),
     [contentI18n, treatment, analysis, savedBlueprintAR]

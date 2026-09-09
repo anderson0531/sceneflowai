@@ -21,7 +21,7 @@ import {
   resolveVariantArtStyle,
 } from '@/lib/treatment/blueprintFoundation'
 import { generateText } from '@/lib/vertexai/gemini'
-import { resolveStoryLocale } from '@/i18n/server/storyLocale'
+import { resolveStoryLocale, resolveExistingContentStoryLocale } from '@/i18n/server/storyLocale'
 
 // Vercel function configuration - must match vercel.json
 export const maxDuration = 300 // 5 minutes for complex Blueprint generation
@@ -468,12 +468,19 @@ export async function POST(request: NextRequest) {
       { id: 'C', label: 'C', styleHint: 'Energetic, bold, high-contrast visuals, rhythmic editing' },
     ].slice(0, variantsCount)
 
-    const { storyLocale, properNouns, source: storyLocaleSource } = await resolveStoryLocale({
-      explicit: body.storyLocale,
-      projectId: body.projectId,
-      seriesId: body.seriesId,
-      userIdOrEmail: session?.user?.id || session?.user?.email,
-    })
+    const isExistingProject = body.projectId && !body.projectId.startsWith('new-project')
+    const { storyLocale, properNouns, source: storyLocaleSource } = isExistingProject
+      ? await resolveExistingContentStoryLocale({
+          explicit: body.storyLocale,
+          projectId: body.projectId,
+          seriesId: body.seriesId,
+        })
+      : await resolveStoryLocale({
+          explicit: body.storyLocale,
+          projectId: body.projectId,
+          seriesId: body.seriesId,
+          userIdOrEmail: session?.user?.id || session?.user?.email,
+        })
     if (storyLocale !== 'en') {
       console.log(
         `[Film Treatment] authoring in ${storyLocale} (source=${storyLocaleSource}, ${properNouns.length} protected names)`

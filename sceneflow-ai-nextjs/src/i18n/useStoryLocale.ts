@@ -7,7 +7,6 @@ import {
   readEntityI18n,
   type EntityI18n,
 } from '@/i18n/content/entityI18n'
-import { readUiLocaleCookie } from '@/i18n/useUiLocale'
 import {
   getCachedAccountStoryLocale,
   setCachedAccountStoryLocale,
@@ -23,7 +22,7 @@ export { setCachedAccountStoryLocale }
  */
 export function useAccountStoryLocale(): string {
   const [locale, setLocale] = useState<string>(
-    () => getCachedAccountStoryLocale() ?? readUiLocaleCookie() ?? DEFAULT_LOCALE
+    () => getCachedAccountStoryLocale() ?? DEFAULT_LOCALE
   )
 
   useEffect(() => {

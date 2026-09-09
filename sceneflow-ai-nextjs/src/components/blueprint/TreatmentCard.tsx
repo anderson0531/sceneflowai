@@ -313,6 +313,7 @@ export function TreatmentCard({
                           title: String(activeVariant.title || ''),
                           logline: String(activeVariant.logline || ''),
                           synopsis: String(activeVariant.synopsis || ''),
+                          genre: String(activeVariant.genre || ''),
                         }) && (
                           <Button
                             type="button"
