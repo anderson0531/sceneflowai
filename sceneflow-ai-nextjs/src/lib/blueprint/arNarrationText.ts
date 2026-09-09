@@ -1,4 +1,8 @@
 import {
+  gapTextForRecommendation,
+  normalizeLegacyAnalysis,
+} from '@/lib/treatment/blueprintAudienceScorer'
+import {
   READY_FOR_PRODUCTION_THRESHOLD_V3,
   type BlueprintAudienceResonanceAnalysis,
 } from '@/lib/types/audienceResonance'
@@ -17,7 +21,7 @@ function treatmentFallbackText(treatment?: Record<string, unknown> | null): stri
 }
 
 /**
- * Spoken script for Audience Resonance TTS: summary, category scores, deduction breakdown, and recommendations.
+ * Spoken script for Audience Resonance TTS: summary, category scores, gap breakdown, and recommendations.
  */
 export function buildBlueprintARNarrationText(opts: {
   analysis: BlueprintAudienceResonanceAnalysis | null | undefined
@@ -56,17 +60,19 @@ export function buildBlueprintARNarrationText(opts: {
     parts.push(`Category scores. ${categoryLines.join('. ')}.`)
   }
 
-  if (analysis.deductions.length > 0) {
-    const deductionLines = analysis.deductions.map((d) => {
-      const cat = d.category ? `${d.category}. ` : ''
-      return `${cat}${d.reason}. Minus ${d.points} points.`
-    })
-    parts.push(`Score breakdown from 100. ${deductionLines.join(' ')}`)
-  }
-
-  const recommendations = (analysis.recommendations ?? [])
+  // Read the gaps off the pending recommendations so TTS stops reading out
+  // deductions the creator has already fixed.
+  const recommendations = (normalizeLegacyAnalysis(analysis)?.recommendations ?? [])
     .filter((r) => !appliedRecommendationIds.includes(r.id))
     .sort((a, b) => b.pointsDeducted - a.pointsDeducted)
+
+  if (recommendations.length > 0) {
+    const gapLines = recommendations.map((rec) => {
+      const cat = rec.category ? `${rec.category}. ` : ''
+      return `${cat}${gapTextForRecommendation(rec)}. Minus ${rec.pointsDeducted} points.`
+    })
+    parts.push(`Score breakdown from 100. ${gapLines.join(' ')}`)
+  }
 
   if (recommendations.length > 0) {
     const recLines = recommendations.map((rec, i) => {

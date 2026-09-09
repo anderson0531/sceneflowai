@@ -21,10 +21,11 @@ import {
   READY_FOR_PRODUCTION_THRESHOLD_V3,
 } from '@/lib/types/audienceResonance'
 import {
+  deductionsFromRecommendations,
   finalizeBlueprintScore,
-  mapDeductions,
   mapRecommendations,
 } from '@/lib/treatment/blueprintAudienceScorer'
+import { MAX_BEATS } from '@/lib/treatment/blueprintRevisionTypes'
 import { persistBlueprintARToProject } from '@/lib/treatment/persistBlueprintAR'
 import { resolveExistingContentStoryLocale } from '@/i18n/server/storyLocale'
 import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
@@ -35,9 +36,13 @@ import {
 } from '@/lib/content/contentIntent'
 
 export const runtime = 'nodejs'
-export const maxDuration = 120
+// A full beat sheet graded at high thinking outlasts the previous 120s.
+export const maxDuration = 300
 
 const CREDIT_COST = BLUEPRINT_CREDITS.AUDIENCE_RESONANCE_ANALYSIS
+
+/** Participants sent to the analyzer. Was 5, which hid most of an ensemble. */
+const MAX_ANALYZED_CHARACTERS = 12
 
 export interface AudienceResonanceRequestBody {
   treatmentId?: string
@@ -111,14 +116,16 @@ function buildPrompt(
       ]
     : rubric.categories
 
+  // The whole beat sheet, not a window. An 8-beat slice hid most of a long-form
+  // story from the analyzer, so it scored an opening it mistook for the film.
   const beatsText =
-    treatment.beats?.slice(0, 8).map((b, i) =>
-      `${i + 1}. ${b.title || 'Beat'}: ${truncate(b.synopsis || b.intent, 120)}`
+    treatment.beats?.slice(0, MAX_BEATS).map((b, i) =>
+      `${i + 1}. ${b.title || 'Beat'}: ${truncate(b.synopsis || b.intent, 240)}`
     ).join('\n') || 'Not provided'
 
   const charsText =
-    treatment.character_descriptions?.slice(0, 5).map((c) =>
-      `${c.name || 'Character'} (${c.role || 'role'}): ${truncate(c.description, 100)}`
+    treatment.character_descriptions?.slice(0, MAX_ANALYZED_CHARACTERS).map((c) =>
+      `${c.name || 'Character'} (${c.role || 'role'}): ${truncate(c.description, 200)}`
     ).join('\n') || 'Not provided'
 
   const appliedBlock =
@@ -138,13 +145,21 @@ Secondary context (genre/tone only): Genre: ${genre || treatment.genre || 'unspe
 
 SCORING RULES (MANDATORY):
 1. Start at baseScore 100.
-2. List a COMPLETE resonance backlog: every genuine audience-resonance gap as a deduction with reason, points, category, priority. Typical solid treatments have up to ~8 gaps. Do NOT withhold issues to protect the headline number, and do NOT drip-feed only the top two.
-3. Report honest per-gap points. The SERVER recomputes overallScore with balanced (diminishing) weighting — your overallScore field is a hint only.
-4. Priority point bands: critical 12–18, high 10–15, medium 5–9, low 1–4, optional 1–3.
-5. Each deduction MUST have a matching recommendation with text, priority, pointsDeducted, fixSection (core|story|tone|beats|characters), and when a fix ripples beyond one section, impactSections (array of sections to reconcile) and optional intentLabel (short chip text).
-6. Be fair: strong treatments with only polish left often land 85–95 AFTER server scoring. Reserve below 65 for major audience misalignment. Do not invent critical gaps just to fill a band.
-7. Evaluate ONLY how well this content resonates with the TARGET AUDIENCE above.
-8. Do NOT penalize non-fiction/commercial content for missing fictional screenplay elements (antagonist arc, three-act drama, character ghost) unless content intent is fiction.
+2. Return ONE list: "recommendations". Every entry is a single audience-resonance gap AND the fix that closes it. There is no separate deductions list — a gap you deduct points for that has no fix is not a valid entry.
+3. Each entry carries:
+   - reason: the gap itself, i.e. exactly what is costing these points
+   - text: the concrete fix that closes that gap
+   - pointsDeducted: the honest cost of this gap
+   - priority, fixSection (core|story|tone|beats|characters), category
+   - impactSections when the fix ripples beyond one section, and optional intentLabel (short chip text)
+4. "reason" and "text" must describe the SAME issue. The creator reads the reason in the score breakdown and applies the text as the fix, so they cannot describe different problems.
+5. List the COMPLETE resonance backlog. Do NOT withhold issues to protect the headline number, do NOT drip-feed only the top two, and do NOT stop at an arbitrary count — report every genuine gap and no filler.
+6. Report honest per-gap points. The SERVER recomputes overallScore with balanced (diminishing) weighting — your overallScore field is a hint only.
+7. Priority point bands: critical 12–18, high 10–15, medium 5–9, low 1–4, optional 1–3. Reserve low and optional for genuine polish; do not label a substantive gap as polish.
+8. Be fair: strong treatments with only polish left often land 85–95 AFTER server scoring. Reserve below 65 for major audience misalignment. Do not invent critical gaps just to fill a band.
+9. Evaluate ONLY how well this content resonates with the TARGET AUDIENCE above.
+10. Do NOT penalize non-fiction/commercial content for missing fictional screenplay elements (antagonist arc, three-act drama, character ghost) unless content intent is fiction.
+11. Judge the ENTIRE beat sheet below, not just the opening beats. Long-form blueprints are normal here.
 
 TREATMENT:
 Title: ${treatment.title || 'Untitled'}
@@ -163,11 +178,10 @@ ${evalCategories.map((c) => `- ${c.name} (weight ${c.weight}): ${c.description}`
 ${languageBlock}
 Return ONLY valid JSON:
 {
-  "overallScore": <hint: 100 minus sum of raw deduction points; server will rebalance>,
+  "overallScore": <hint: 100 minus sum of pointsDeducted; server will rebalance>,
   "baseScore": 100,
-  "deductions": [{"reason": "...", "points": <number>, "category": "...", "priority": "high|medium|low"}],
   "recommendations": [
-    {"text": "...", "title": "...", "priority": "high|medium|low", "pointsDeducted": <number>, "fixSection": "story", "impactSections": ["story","beats"], "intentLabel": "Short chip", "category": "..."}
+    {"reason": "What is costing these points", "text": "The concrete fix that closes that exact gap", "title": "...", "priority": "critical|high|medium|low|optional", "pointsDeducted": <number>, "fixSection": "story", "impactSections": ["story","beats"], "intentLabel": "Short chip", "category": "..."}
   ],
   "categories": [
 ${evalCategories.map((c) => `    {"name": "${c.name}", "score": <1-100>, "weight": ${c.weight}}`).join(',\n')}
@@ -246,12 +260,15 @@ export async function POST(request: NextRequest) {
     // Give the model more room to reason when validating cultural nuance
     const needsCulturalReasoning = hasCulturalSignals(audienceDefinition.culturalSignals)
 
+    // Matches the Script AR passes, which reason at high effort. Grading a full
+    // long-form beat sheet against an audience is the same class of judgement,
+    // and it was running two thinking tiers below that.
     const result = await generateText(prompt, {
       model: getAudienceResonanceModel(),
       temperature: 0.15,
-      maxOutputTokens: needsCulturalReasoning ? 10000 : 8000,
-      thinkingLevel: needsCulturalReasoning ? 'medium' : 'low',
-      timeoutMs: needsCulturalReasoning ? 110000 : 90000,
+      maxOutputTokens: needsCulturalReasoning ? 20000 : 16000,
+      thinkingLevel: 'high',
+      timeoutMs: 180000,
       maxRetries: 1,
     })
 
@@ -260,7 +277,12 @@ export async function POST(request: NextRequest) {
     }
 
     const parsed = safeParseJsonFromText(result.text || '{}') as Record<string, unknown>
-    const deductions = mapDeductions((parsed.deductions as unknown[]) || [])
+    // Gaps and fixes are one list now, so the score breakdown is a projection of
+    // the recommendations rather than a second list that can contradict them.
+    const allRecommendations = mapRecommendations(
+      (parsed.recommendations as unknown[]) || []
+    )
+    const deductions = deductionsFromRecommendations(allRecommendations)
     let categories = ((parsed.categories as BlueprintAudienceCategory[]) || []).map(
       (c) => ({
         name: c.name,
@@ -284,9 +306,9 @@ export async function POST(request: NextRequest) {
       body.previousAnalysis?.categories
     )
 
-    const recommendations = mapRecommendations(
-      (parsed.recommendations as unknown[]) || []
-    ).filter((r) => !appliedIds.includes(r.id))
+    const recommendations = allRecommendations.filter(
+      (r) => !appliedIds.includes(r.id)
+    )
 
     const analysis: BlueprintAudienceResonanceAnalysis = {
       version: 3,

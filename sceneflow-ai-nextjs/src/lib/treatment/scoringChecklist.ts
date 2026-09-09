@@ -89,7 +89,6 @@ export const WEIGHT_FORMULA = 'Score = (Concept × 0.15) + (Character × 0.25) +
 // =============================================================================
 
 export const READY_FOR_PRODUCTION_THRESHOLD = 80
-export const MAX_ITERATIONS = 2
 
 /** Scales gradient checkpoint penalties — reduces over-penalization from minor gaps */
 export const CHECKPOINT_PENALTY_SCALE = 0.55
@@ -748,43 +747,6 @@ export const ENDING_EXPECTATIONS: Record<string, { acceptable: string[]; penaliz
     acceptable: ['bittersweet', 'acceptance', 'wistful', 'reflection'],
     penalized: ['purely happy', 'triumphant', 'energetic']
   }
-}
-
-// =============================================================================
-// HELPER: Build Checklist Prompt Section (Compact Version)
-// =============================================================================
-
-export function buildChecklistPrompt(intent: AudienceIntent, iteration: number): string {
-  const normalized = normalizeAudienceIntent(intent)
-  const genreKeywords = GENRE_KEYWORDS[normalized.primaryGenre] || GENRE_KEYWORDS['drama']
-  const toneKeywords = TONE_KEYWORDS[normalized.toneProfile] || TONE_KEYWORDS['dark-gritty']
-  const demoThemes =
-    DEMOGRAPHIC_THEMES[normalized.targetDemographic] ||
-    DEMOGRAPHIC_THEMES['millennials-25-34']
-  const audienceProfile = formatTargetAudienceForPrompt(normalized)
-  const iterationFocus = getIterationFocus(iteration)
-  
-  // Compact checklist format to reduce prompt size
-  return `
-SCORING: ${WEIGHT_FORMULA}
-Iteration ${iteration}/${MAX_ITERATIONS} | Focus: ${iterationFocus.focusAreas.join(', ')}
-${iteration >= 2 ? `Avoid suggesting: ${iterationFocus.restrictedSuggestions.slice(0, 3).join(', ')}` : ''}
-
-CHECKPOINTS (mark passed IDs in checkpoints_passed):
-Concept (25%): hook-or-twist (-25), cliche-avoidance (-20), unique-setting-or-premise (-15)
-Character (25%): protagonist-goal (-30), protagonist-flaw (-25), antagonist-defined (-20), character-ghost (-10)
-Pacing (20%): three-act-structure (-25), inciting-incident-placement (-20), low-point-mentioned (-15), midpoint-shift (-10)
-Genre (15%): genre-keywords (-20), genre-conventions-met (-25), tone-consistency (-15)
-Commercial (15%): protagonist-demographic-match (-20), demographic-themes (-20), marketable-logline (-15)
-
-GENRE ${normalized.primaryGenre}: Need keywords like ${genreKeywords.required.slice(0, 4).join(', ')}
-TONE ${normalized.toneProfile}: Need keywords like ${toneKeywords.required.slice(0, 4).join(', ')}
-TARGET AUDIENCE PROFILE: ${audienceProfile}
-AUDIENCE COHORT ${normalized.targetDemographic}: Protagonist age ${demoThemes.protagonistAge}, themes: ${demoThemes.themes.slice(0, 3).join(', ')}
-
-READY THRESHOLD: ${READY_FOR_PRODUCTION_THRESHOLD}/100. If score >= ${READY_FOR_PRODUCTION_THRESHOLD}, minimize suggestions.
-${iteration >= MAX_ITERATIONS ? 'FINAL ITERATION: Accept unless FATAL FLAW exists.' : ''}
-`
 }
 
 // =============================================================================

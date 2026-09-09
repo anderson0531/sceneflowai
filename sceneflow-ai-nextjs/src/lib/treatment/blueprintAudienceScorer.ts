@@ -152,6 +152,23 @@ export function finalizeBlueprintScore(
   return { overallScore: clamp(overallScore, 0, 100), categories: smoothed }
 }
 
+/**
+ * Stable id derived from the fix text, mirroring `recommendationId` in the
+ * Production Studio.
+ *
+ * Positional `rec-0` ids collided across runs: applying the first fix in one
+ * analysis silently suppressed whatever landed first in the next one.
+ */
+export function blueprintRecommendationId(text: string, fallbackIndex = 0): string {
+  const slug = text
+    .trim()
+    .slice(0, 60)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  return slug ? `rec-${slug}` : `rec-${fallbackIndex}`
+}
+
 export function mapRecommendations(
   raw: unknown[],
   startIndex = 0
@@ -175,10 +192,18 @@ export function mapRecommendations(
         )
       : undefined
 
+    const rawReason =
+      item.reason || item.deduction || item.deduction_reason || item.deductionReason
+    const reason = rawReason ? String(rawReason) : undefined
+    const text = String(item.text || item.description || item.title || '')
+
     return {
-      id: item.id || `rec-${startIndex + idx}`,
-      text: String(item.text || item.description || item.title || ''),
+      id: item.id
+        ? String(item.id)
+        : blueprintRecommendationId(text, startIndex + idx),
+      text,
       title: item.title ? String(item.title) : undefined,
+      reason,
       priority,
       pointsDeducted,
       fixSection,
@@ -197,5 +222,69 @@ export function mapDeductions(raw: unknown[]): BlueprintAudienceDeduction[] {
     points: clamp(Number(d.points) || 0, 0, 40),
     category: String(d.category || 'General'),
     priority: d.priority ? normalizePriority(d.priority) : undefined,
+    recommendationId: d.recommendationId ? String(d.recommendationId) : undefined,
   }))
+}
+
+/** The gap text a recommendation stands for, falling back to the fix itself. */
+export function gapTextForRecommendation(
+  rec: Pick<BlueprintAudienceRecommendation, 'reason' | 'title' | 'text'>
+): string {
+  return rec.reason?.trim() || rec.title?.trim() || rec.text
+}
+
+/**
+ * Project the merged list into the legacy `deductions` shape.
+ *
+ * The score breakdown is a view of the recommendations rather than a list the
+ * model authors separately, so the two can no longer disagree.
+ */
+export function deductionsFromRecommendations(
+  recommendations: BlueprintAudienceRecommendation[]
+): BlueprintAudienceDeduction[] {
+  return [...recommendations]
+    .sort((a, b) => b.pointsDeducted - a.pointsDeducted)
+    .map((rec) => ({
+      reason: gapTextForRecommendation(rec),
+      points: rec.pointsDeducted,
+      category: rec.category || 'General',
+      priority: rec.priority,
+      recommendationId: rec.id,
+    }))
+}
+
+/**
+ * Back-fill `reason` on analyses stored before gaps and fixes were merged.
+ *
+ * Those payloads carry two independently authored lists. Pairing them on points
+ * (then on leftover order) recovers the link well enough to render, so existing
+ * projects do not have to pay for a re-analysis to see their score breakdown.
+ */
+export function normalizeLegacyAnalysis<
+  T extends {
+    deductions?: BlueprintAudienceDeduction[]
+    recommendations?: BlueprintAudienceRecommendation[]
+  },
+>(analysis: T | null | undefined): T | null | undefined {
+  if (!analysis) return analysis
+  const recommendations = analysis.recommendations ?? []
+  if (recommendations.length === 0) return analysis
+  if (recommendations.every((r) => r.reason)) return analysis
+
+  const unclaimed = [...(analysis.deductions ?? [])]
+  const claim = (rec: BlueprintAudienceRecommendation): string | undefined => {
+    if (rec.reason) return rec.reason
+    const byId = unclaimed.findIndex((d) => d.recommendationId === rec.id)
+    const byPoints =
+      byId >= 0 ? byId : unclaimed.findIndex((d) => d.points === rec.pointsDeducted)
+    const index = byPoints >= 0 ? byPoints : unclaimed.length > 0 ? 0 : -1
+    if (index < 0) return undefined
+    const [matched] = unclaimed.splice(index, 1)
+    return matched?.reason || undefined
+  }
+
+  return {
+    ...analysis,
+    recommendations: recommendations.map((rec) => ({ ...rec, reason: claim(rec) })),
+  }
 }

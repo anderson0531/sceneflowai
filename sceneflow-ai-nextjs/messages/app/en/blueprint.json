@@ -291,6 +291,8 @@
     "scoreBreakdown": "Score breakdown (from 100)",
     "scoreBreakdownBalancedHint": "Impact shown per gap; the headline score uses balanced weighting so a full polish list does not crater a strong blueprint.",
     "minusPoints": "−{points}",
+    "selectGapForFix": "Fix this gap: {gap}",
+    "fixSelectedWith": "Fix {count} selected with {assistant}",
     "recommendations": "Recommendations",
     "optionalPolish": "Optional polish",
     "polishBadge": "Polish",

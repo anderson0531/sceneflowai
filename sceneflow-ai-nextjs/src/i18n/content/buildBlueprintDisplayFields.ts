@@ -81,7 +81,12 @@ export function buildAudienceResonanceDisplayFields(
     summary?: string
     strengths?: string[]
     deductions?: Array<{ reason?: string }>
-    recommendations?: Array<{ id?: string; title?: string; text?: string }>
+    recommendations?: Array<{
+      id?: string
+      title?: string
+      text?: string
+      reason?: string
+    }>
     categories?: Array<{ name?: string }>
   } | null | undefined
 ): Record<string, string | undefined> {
@@ -110,6 +115,9 @@ export function buildAudienceResonanceDisplayFields(
     }
     if (rec?.text) {
       fields[`audienceResonance.recommendations[${key}].text`] = rec.text
+    }
+    if (rec?.reason) {
+      fields[`audienceResonance.recommendations[${key}].reason`] = rec.reason
     }
   })
 

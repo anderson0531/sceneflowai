@@ -45,7 +45,10 @@ import {
   getScoreTextClassName,
   SCORE_READY_THRESHOLD,
 } from '@/lib/product/scoreThresholds'
-import { BLUEPRINT_AR_MAX_VISIBLE_RECS } from '@/lib/treatment/blueprintAudienceScorer'
+import {
+  gapTextForRecommendation,
+  normalizeLegacyAnalysis,
+} from '@/lib/treatment/blueprintAudienceScorer'
 
 const ResonanceRadarChart = dynamic(
   () =>
@@ -196,15 +199,53 @@ export function AudienceResonancePanelV3({
     }
   }, [savedBlueprintAR])
 
+  // Stored analyses predate gaps and fixes being one object, so back-fill the
+  // gap text before anything reads it.
+  const normalizedAnalysis = useMemo(
+    () => normalizeLegacyAnalysis(analysis) ?? null,
+    [analysis]
+  )
+
   const pendingRecs = useMemo(
     () =>
-      (analysis?.recommendations ?? []).filter((r) => !appliedIds.includes(r.id)),
-    [analysis, appliedIds]
+      (normalizedAnalysis?.recommendations ?? []).filter(
+        (r) => !appliedIds.includes(r.id)
+      ),
+    [normalizedAnalysis, appliedIds]
   )
 
   const sortedRecs = useMemo(
     () => [...pendingRecs].sort((a, b) => b.pointsDeducted - a.pointsDeducted),
     [pendingRecs]
+  )
+
+  const [selectedGapIds, setSelectedGapIds] = useState<Set<string>>(new Set())
+
+  // Every gap starts selected, matching the Production Studio optimize dialog.
+  useEffect(() => {
+    setSelectedGapIds(new Set(sortedRecs.map((r) => r.id)))
+  }, [sortedRecs])
+
+  const toggleGap = useCallback((id: string) => {
+    setSelectedGapIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
+  const selectedGaps = useMemo(
+    () => sortedRecs.filter((r) => selectedGapIds.has(r.id)),
+    [sortedRecs, selectedGapIds]
+  )
+
+  /** True polish is a priority, not a side effect of clearing 80. */
+  const allPendingArePolish = useMemo(
+    () =>
+      sortedRecs.length > 0 &&
+      sortedRecs.every((r) => r.priority === 'low' || r.priority === 'optional'),
+    [sortedRecs]
   )
 
   const arContentFields = useMemo(() => {
@@ -651,7 +692,7 @@ export function AudienceResonancePanelV3({
                   {arText('audienceResonance.summary', analysis.summary)}
                 </p>
                 {analysis.isReadyForProduction ? (
-                  analysis.deductions.length > 0 || sortedRecs.length > 0 ? (
+                  sortedRecs.length > 0 ? (
                     <p className="text-[11px] text-emerald-400/90 flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3" />
                       {t('readyOptionalPolish')}
@@ -703,7 +744,7 @@ export function AudienceResonancePanelV3({
                 </div>
               </div>
 
-              {analysis.deductions.length > 0 && (
+              {sortedRecs.length > 0 && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wide">
                     {t('scoreBreakdown')}
@@ -712,24 +753,57 @@ export function AudienceResonancePanelV3({
                     {t('scoreBreakdownBalancedHint')}
                   </p>
                   <ul className="space-y-1">
-                    {analysis.deductions.map((d, i) => (
-                      <li
-                        key={i}
-                        className="flex justify-between text-xs text-gray-300 bg-slate-800/40 rounded px-2 py-1.5 cursor-pointer hover:bg-slate-700/50"
-                        onClick={() => {
-                          const section = blueprintCategoryToSection(d.category || '')
-                          scrollToBlueprintSection(section)
-                          onScrollToSection?.(section)
-                        }}
-                        title={t('jumpToSection')}
-                      >
-                        <span className="flex-1 pr-2">
-                          {arText(`audienceResonance.deductions[${i}].reason`, d.reason)}
-                        </span>
-                        <span className="text-red-400 font-mono shrink-0">{t('minusPoints', { points: d.points })}</span>
-                      </li>
-                    ))}
+                    {sortedRecs.map((rec) => {
+                      const gapText = arText(
+                        `audienceResonance.recommendations[${rec.id}].reason`,
+                        gapTextForRecommendation(rec)
+                      )
+                      const checked = selectedGapIds.has(rec.id)
+                      return (
+                        <li
+                          key={rec.id}
+                          className="flex items-start gap-2 text-xs text-gray-300 bg-slate-800/40 rounded px-2 py-1.5"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleGap(rec.id)}
+                            aria-label={t('selectGapForFix', { gap: gapText })}
+                            className="mt-0.5 shrink-0 accent-cyan-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const section =
+                                rec.fixSection ||
+                                blueprintCategoryToSection(rec.category || '')
+                              scrollToBlueprintSection(section)
+                              onScrollToSection?.(section)
+                            }}
+                            title={t('jumpToSection')}
+                            className="flex-1 pr-2 text-left hover:text-white"
+                          >
+                            {gapText}
+                          </button>
+                          <span className="text-red-400 font-mono shrink-0">
+                            {t('minusPoints', { points: rec.pointsDeducted })}
+                          </span>
+                        </li>
+                      )
+                    })}
                   </ul>
+                  <button
+                    type="button"
+                    onClick={() => openEditor(selectedGaps)}
+                    disabled={selectedGaps.length === 0}
+                    className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs bg-cyan-600/80 hover:bg-cyan-600 text-white rounded-lg disabled:opacity-50"
+                  >
+                    <Pencil className="w-3 h-3" />
+                    {t('fixSelectedWith', {
+                      count: selectedGaps.length,
+                      assistant: ASSISTANT.short,
+                    })}
+                  </button>
                 </div>
               )}
 
@@ -737,7 +811,7 @@ export function AudienceResonancePanelV3({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-medium text-amber-400/90 uppercase tracking-wide">
-                      {analysis.isReadyForProduction
+                      {allPendingArePolish
                         ? t('optionalPolish')
                         : t('recommendations')}
                     </h4>
@@ -750,7 +824,7 @@ export function AudienceResonancePanelV3({
                       {ASSISTANT.short}
                     </button>
                   </div>
-                  {sortedRecs.slice(0, BLUEPRINT_AR_MAX_VISIBLE_RECS).map((rec) => {
+                  {sortedRecs.map((rec) => {
                     const recTitle = arText(
                       `audienceResonance.recommendations[${rec.id}].title`,
                       rec.title || ''
@@ -759,10 +833,9 @@ export function AudienceResonancePanelV3({
                       `audienceResonance.recommendations[${rec.id}].text`,
                       rec.text
                     )
+                    // Crossing 80 does not turn a 15-point gap into polish.
                     const isPolish =
-                      analysis.isReadyForProduction ||
-                      rec.priority === 'low' ||
-                      rec.priority === 'optional'
+                      rec.priority === 'low' || rec.priority === 'optional'
                     return (
                     <div
                       key={rec.id}

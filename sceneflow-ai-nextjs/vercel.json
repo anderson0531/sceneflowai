@@ -21,8 +21,8 @@
     "src/app/api/ideation/film-treatment/route.ts": {
       "maxDuration": 300
     },
-    "src/app/api/treatment/analyze-resonance/route.ts": {
-      "maxDuration": 180
+    "src/app/api/treatment/audience-resonance/route.ts": {
+      "maxDuration": 300
     },
     "src/app/api/treatment/refine/route.ts": {
       "maxDuration": 120
