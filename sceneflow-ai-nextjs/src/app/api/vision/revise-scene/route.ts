@@ -23,6 +23,7 @@ import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { localeDirective } from '@/lib/prompts/localeDirective'
 import { classifyAiError } from '@/lib/errors/aiErrorClassification'
 import { buildScriptCraftPromptBlock } from '@/lib/script/scriptCraftPrompt'
+import { MAX_BEATS_PER_SCENE } from '@/lib/script/sceneDecomposition'
 
 // Pro-tier revision with medium thinking can exceed the previous 120s ceiling.
 export const maxDuration = 300
@@ -403,7 +404,7 @@ Output the REWRITTEN scene as JSON with this exact structure:
 }
 
 STRUCTURED BEATS RULES:
-- Return the FULL ordered beats[] array for the revised scene.
+- Return the FULL ordered beats[] array for the revised scene (MAX ${MAX_BEATS_PER_SCENE} beats — scenes cannot exceed this cap).
 - Keep beatId for beats you keep or edit; omit beatId for new beats; remove beats that should be deleted.
 - Every beat MUST include a "beatDirection" object with as many of the following fields as apply: shotType, cameraAngle, cameraMovement, blocking, emotion, gaze, keyProps (subset of scene Key Props), propInteraction, lightingAccent, frozenMoment, audioCue, transition (one of CUT|CONTINUE|DISSOLVE|FADE|MATCH_CUT).
 - When you keep a beat verbatim, you MAY reuse its prior beatDirection unchanged. When you rewrite a beat, refresh its beatDirection to match the new content.

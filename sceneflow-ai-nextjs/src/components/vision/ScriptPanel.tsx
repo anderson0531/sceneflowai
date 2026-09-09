@@ -69,6 +69,7 @@ import {
 } from '@/lib/audio/beatAudioStale'
 import { getExpressAudioConcurrency } from '@/lib/sceneGeneration/expressTrafficCop'
 import { runExpressGenerateAll } from '@/lib/sceneGeneration/runExpressGenerateAll'
+import { getBlueprintBeatGroup } from '@/lib/script/sceneDecomposition'
 
 // Dynamic imports with ssr: false to prevent TDZ circular dependency issues
 // These components have complex initialization that can cause module load order problems
@@ -717,6 +718,58 @@ const getSceneDomId = (scene: any, index: number) => {
   const rawId = (scene?.id || `scene-${index}`).toString()
   const safeId = rawId.replace(/[^a-zA-Z0-9_-]/g, '-')
   return `scene-card-${safeId}`
+}
+
+function BlueprintBeatGroupHeader({
+  scenes,
+  sceneIdx,
+  onSelectSceneIndex,
+}: {
+  scenes: Array<Record<string, unknown>>
+  sceneIdx: number
+  onSelectSceneIndex?: (index: number) => void
+}) {
+  const group = useMemo(() => getBlueprintBeatGroup(scenes, sceneIdx), [scenes, sceneIdx])
+  if (!group) return null
+
+  const { beatTitle, sceneIndices, positionInGroup } = group
+  const prevIdx = positionInGroup > 1 ? sceneIndices[positionInGroup - 2] : undefined
+  const nextIdx =
+    positionInGroup < sceneIndices.length ? sceneIndices[positionInGroup] : undefined
+
+  return (
+    <div className="rounded-lg border border-purple-500/30 bg-purple-950/40 px-4 py-3 flex items-center justify-between gap-3">
+      <div className="min-w-0">
+        <p className="text-[10px] uppercase tracking-wide text-purple-300/80 font-medium">Blueprint Beat</p>
+        <p className="text-sm font-semibold text-white truncate" title={beatTitle}>
+          {beatTitle}
+        </p>
+        <p className="text-xs text-purple-200/70 mt-0.5">
+          Scene {positionInGroup} of {sceneIndices.length} in this beat
+        </p>
+      </div>
+      {(prevIdx !== undefined || nextIdx !== undefined) && onSelectSceneIndex && (
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            disabled={prevIdx === undefined}
+            onClick={() => prevIdx !== undefined && onSelectSceneIndex(prevIdx)}
+            className="px-2 py-1 text-xs rounded border border-purple-500/40 text-purple-200 hover:bg-purple-900/50 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Prev in beat
+          </button>
+          <button
+            type="button"
+            disabled={nextIdx === undefined}
+            onClick={() => nextIdx !== undefined && onSelectSceneIndex(nextIdx)}
+            className="px-2 py-1 text-xs rounded border border-purple-500/40 text-purple-200 hover:bg-purple-900/50 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Next in beat
+          </button>
+        </div>
+      )}
+    </div>
+  )
 }
 
 // Sortable Scene Card Wrapper for drag-and-drop
@@ -3306,6 +3359,13 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                 }}
                 onToggleApplied={onToggleAudienceRecommendation}
               />
+              {displayedScenes.length > 0 && (
+                <BlueprintBeatGroupHeader
+                  scenes={scenes}
+                  sceneIdx={displayedScenes[0].originalIndex}
+                  onSelectSceneIndex={onSelectSceneIndex}
+                />
+              )}
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}

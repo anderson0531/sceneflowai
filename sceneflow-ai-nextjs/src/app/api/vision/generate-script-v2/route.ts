@@ -9,6 +9,16 @@ import { runScriptQA, autoFixScript } from '@/lib/script/qualityAssurance'
 import { generateText } from '@/lib/vertexai/gemini'
 import { getScriptGenerationModel } from '@/lib/config/modelConfig'
 import { getSettingsForFormat, getScriptProgressStatuses, buildScriptConstraintPrompt, SCRIPT_SETTINGS_BY_FORMAT } from '@/lib/script/scriptGenerationRules'
+import {
+  extractBlueprintBeats,
+  formatBlueprintBeatsForPrompt,
+  formatDecompositionPromptBlock,
+  planSceneDecomposition,
+  renumberScenes,
+  splitOversizedScenes,
+  MAX_BEATS_PER_SCENE,
+  type SceneDecompositionPlan,
+} from '@/lib/script/sceneDecomposition'
 import { resolveContentIntentFromMetadata, buildPacingPhilosophyBlock } from '@/lib/content/contentIntent'
 import { migrateProjectToSegmented } from '@/lib/script/migrateToSegmented'
 import { normalizeDialogueToProductionLineTargets } from '@/lib/script/segmentScript'
@@ -168,26 +178,21 @@ export async function POST(request: NextRequest) {
           })}\n\n`))
         }
         
-        // Extract story beats for context (NOT for scene-count calculation)
-        const storyBeats = treatment.story_beats || treatment.storyBeats || []
+        // Blueprint beats (canonical: treatment.beats)
+        const storyBeats = extractBlueprintBeats(treatment)
         const beatCount = storyBeats.length || 7
-        
-        // Story/format-driven safety ceiling — NOT derived from a target runtime.
-        // Duration no longer dictates how many scenes the story is allowed to have.
-        // We take the format's target scene count and the story's own beats, add
-        // generous headroom, and only clamp with a high absolute cap to prevent
-        // runaway generation. The AI decides the natural scene count within this.
+        const decompositionPlan: SceneDecompositionPlan =
+          storyBeats.length > 0 ? planSceneDecomposition(storyBeats) : planSceneDecomposition([])
+
         const ABSOLUTE_MAX_SCENES = 120
         const formatTargetScenes = getSettingsForFormat(projectFormat).targetSceneCount || 40
-        const storyDrivenCeiling = Math.max(formatTargetScenes, beatCount * 4, 24)
+        const plannedScenes = decompositionPlan.totalTargetScenes || beatCount * 4
+        const storyDrivenCeiling = Math.max(formatTargetScenes, plannedScenes, 24)
         const maxSafetyScenes = Math.min(ABSOLUTE_MAX_SCENES, storyDrivenCeiling + 20)
-        
-        // Validate: beat count should not exceed reasonable scene count to prevent fragmentation
-        if (beatCount > 15) {
-          console.warn(`[Script Gen V2] Warning: ${beatCount} beats may lead to fragmentation. Consider condensing story beats.`)
-        }
-        
-        console.log(`[Script Gen V2] Format: ${projectFormat}, Duration: ${duration}s, Story beats: ${beatCount}`)
+
+        console.log(
+          `[Script Gen V2] Format: ${projectFormat}, Duration: ${duration}s, Blueprint beats: ${beatCount}, planned scenes: ${decompositionPlan.totalTargetScenes || 'n/a'}`
+        )
         console.log(`[Script Gen V2] Single-pass generation with safety cap of ${maxSafetyScenes} scenes`)
         
         // Check scene limits for user's subscription tier
@@ -325,11 +330,13 @@ export async function POST(request: NextRequest) {
               properNouns
             ),
           }),
-          referenceCatalogBlock
+          referenceCatalogBlock,
+          decompositionPlan
         )
         
         let retryCount = 0
         let generationSuccessful = false
+        let sceneLimitWarning: { generated: number; allowed: number } | null = null
         
         while (!generationSuccessful && retryCount < MAX_RETRIES) {
           try {
@@ -405,6 +412,15 @@ export async function POST(request: NextRequest) {
                 ),
               }))
               
+              // Post-process: split oversized scenes (safety net for >15 beats)
+              const splitResult = splitOversizedScenes(allScenes as Record<string, unknown>[])
+              if (splitResult.splitCount > 0) {
+                console.log(
+                  `[Script Gen V2] Split ${splitResult.splitCount} oversized scene(s) to enforce ${MAX_BEATS_PER_SCENE}-beat cap`
+                )
+              }
+              allScenes = renumberScenes(splitResult.scenes)
+
               // Post-process: consolidate any fragmented scenes
               allScenes = consolidateFragmentedScenes(allScenes)
 
@@ -425,10 +441,15 @@ export async function POST(request: NextRequest) {
 
               allScenes = enforceNarrationPolicyOnScenes(allScenes, narrationPolicy)
               
-              // Business limit only: subscription scene cap (paid-tier feature gate).
+              // Business limit: warn but keep full script (do not silently truncate).
               if (subscriptionMaxScenes && allScenes.length > subscriptionMaxScenes) {
-                console.warn(`[Script Gen V2] Generated ${allScenes.length} scenes, but user limit is ${subscriptionMaxScenes}. Truncating.`)
-                allScenes = allScenes.slice(0, subscriptionMaxScenes)
+                console.warn(
+                  `[Script Gen V2] Generated ${allScenes.length} scenes, exceeds subscription limit ${subscriptionMaxScenes}. Keeping full script with warning.`
+                )
+                sceneLimitWarning = {
+                  generated: allScenes.length,
+                  allowed: subscriptionMaxScenes,
+                }
               }
               
               // We no longer force-merge scenes down to a duration-derived count —
@@ -788,6 +809,7 @@ export async function POST(request: NextRequest) {
           projectId: projectId,
           directionsAttached,
           ...(directionFailures.length > 0 ? { directionFailures } : {}),
+          ...(sceneLimitWarning ? { sceneLimitWarning } : {}),
         })}\n\n`))
         
         controller.close()
@@ -1113,7 +1135,8 @@ function buildSinglePassPrompt(
   narrationPolicy?: NarrationPolicy,
   seriesContinuityBlock: string = '',
   languageBlock: string = '',
-  referenceCatalogBlock: string = ''
+  referenceCatalogBlock: string = '',
+  decompositionPlan?: SceneDecompositionPlan
 ): string {
   const intent = contentIntent || resolveContentIntentFromMetadata({ format, genre: treatment.genre })
   const policy = narrationPolicy ?? resolveNarrationPolicy({ format, treatment, contentIntent })
@@ -1174,13 +1197,12 @@ CHARACTER DETAILS:\n${characters.map((c: any) =>
       ).join('\n')}`
     : ''
 
-  // Format story beats if available
-  const beatsLabel = intent === 'fiction' ? 'STORY BEATS TO FOLLOW' : 'CONTENT BEATS TO FOLLOW'
-  const storyBeatsText = storyBeats.length > 0
-    ? `\n\n${beatsLabel}:\n${storyBeats.map((beat: any, idx: number) => 
-        `${idx + 1}. ${typeof beat === 'string' ? beat : beat.description || beat.title || JSON.stringify(beat)}`
-      ).join('\n')}`
-    : ''
+  const storyBeatsText =
+    storyBeats.length > 0 ? `\n\n${formatBlueprintBeatsForPrompt(storyBeats)}` : ''
+  const decompositionBlock =
+    decompositionPlan && decompositionPlan.entries.length > 0
+      ? `\n\n${formatDecompositionPromptBlock(decompositionPlan)}`
+      : ''
 
   const sceneLimit = subscriptionMaxScenes 
     ? Math.min(maxSafetyScenes, subscriptionMaxScenes)
@@ -1201,6 +1223,7 @@ ${treatment.synopsis || treatment.content}
 ${characterList}
 ${characters.length > 0 ? `\n${buildCharacterDialogueExamples(characters)}` : ''}
 ${storyBeatsText}
+${decompositionBlock}
 ${seriesContinuityBlock ? `\n${seriesContinuityBlock}` : ''}
 ${referenceCatalogBlock ? `\n${referenceCatalogBlock}` : ''}
 ${referenceCatalogBlock ? `\nREFERENCE ASSET SELECTION (MANDATORY):
@@ -1221,7 +1244,7 @@ Aspect Ratio: ${resolveVariantAspectRatio(treatment)}
 === SCRIPT GENERATION PHILOSOPHY ===
 
 ${philosophyIntro}
-Do NOT fragment the content into tiny segments. Each segment should be a COMPLETE unit.
+Decompose each Blueprint beat into multiple complete scenes (~${MAX_BEATS_PER_SCENE} beats max per scene).
 
 ${buildPacingPhilosophyBlock(intent as any)}
 ${buildLongformScriptLengthBlock()}
@@ -1303,6 +1326,8 @@ OUTPUT FORMAT (JSON):
     },
     {
       "sceneNumber": 2,
+      "blueprintBeatIndex": 0,
+      "blueprintBeatTitle": "Blueprint beat title from treatment",
       ${sceneHeadingExample},
       "locationAssetId": "catalog-location-id-or-null",
       "characters": ["Character Name 1", "Character Name 2"],
@@ -1407,14 +1432,16 @@ ${beatTimelineNarrationRules}
 ${beatDirectionRules}
 
 IMPORTANT CONSTRAINTS:
-• Scene count is a guide, not a hard ceiling — serve the story first
-• Up to ${sceneLimit} main content segments (bookends excluded; do not over-consolidate distinct dramatic turns)
-• Write the COMPLETE longform script from beginning to end; story quality determines length
+• Each Blueprint beat → MULTIPLE scenes (see decomposition budget above); NEVER one scene per Blueprint beat
+• Hard cap: at most ${MAX_BEATS_PER_SCENE} beats per scene — split across consecutive scenes when needed
+• Up to ${sceneLimit} main content segments (bookends excluded)
+• Every main-content scene MUST include blueprintBeatIndex and blueprintBeatTitle
+• Write the COMPLETE longform script from beginning to end
 • Do NOT duplicate dialogue or segments
 • Ensure "action" is specific to the events of the segment, NOT repeated across segments
 • Return ONLY valid JSON - no markdown, no explanations
 
-Now write the complete script, following the Treatment's beats naturally. Let story structure and dramatic rhythm drive scene breaks — do not compress the arc for brevity.
+Now write the complete script, decomposing each Blueprint beat into manageable scenes with natural dramatic breaks.
 ${languageBlock}`
 }
 

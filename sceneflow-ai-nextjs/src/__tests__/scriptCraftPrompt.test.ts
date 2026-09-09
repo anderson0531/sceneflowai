@@ -39,10 +39,11 @@ describe('scriptCraft parsing', () => {
     expect(buildScriptCraftPromptBlock({})).toBe('')
   })
 
-  it('states that story determines length and does not set clock targets', () => {
+  it('states that story determines length and enforces scene decomposition', () => {
     const block = buildLongformScriptLengthBlock()
     expect(block).toMatch(/story determines length/i)
-    expect(block).toContain('Do not compress, pad, or split')
+    expect(block).toContain('Decompose each Blueprint beat into multiple scenes')
+    expect(block).toContain('15 beats')
     expect(block).not.toMatch(/8–10/)
     expect(block).not.toMatch(/8-10/)
     expect(block).not.toMatch(/45 seconds/)
@@ -80,7 +81,8 @@ describe('generate-script-v2 longform length', () => {
     const source = readSource('src/app/api/vision/generate-script-v2/route.ts')
     expect(source).toContain('buildLongformScriptLengthBlock')
     expect(source).toContain('buildScriptCraftPromptBlock')
-    expect(source).toContain('story quality determines length')
+    expect(source).toContain('blueprintBeatIndex')
+    expect(source).toContain('splitOversizedScenes')
     expect(source).not.toMatch(/8–10 seconds/)
     expect(source).not.toMatch(/8-10 seconds/)
     expect(source).not.toMatch(/45 seconds or longer/)
