@@ -49,6 +49,7 @@ import {
   gapTextForRecommendation,
   normalizeLegacyAnalysis,
 } from '@/lib/treatment/blueprintAudienceScorer'
+import { focusScopeForRecommendations } from '@/lib/treatment/resonanceFixInstructions'
 
 const ResonanceRadarChart = dynamic(
   () =>
@@ -436,7 +437,7 @@ export function AudienceResonancePanelV3({
     }
     onOpenBlueprintRefine({
       resonanceRecommendations: list,
-      initialScope: list[0]?.fixSection || 'story',
+      initialScope: focusScopeForRecommendations(list),
       onApplyExtra: (patch) => handleResonanceRefineApply(patch, list),
     })
   }
