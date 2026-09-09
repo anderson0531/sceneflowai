@@ -38,7 +38,7 @@ import {
   libraryAssetToCharacter,
   libraryAssetToLocation,
   libraryAssetToProp,
-} from '@/lib/referenceLibrary/projection'
+} from '@/lib/referenceLibrary/visionProjection'
 import type { ReferenceAssetRecord } from '@/types/referenceLibrary'
 
 // Extended scene type for Scene tab that includes sceneDirection

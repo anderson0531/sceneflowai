@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Search, Plus, Library, Clapperboard, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
 import type { ReferenceAssetKind, ReferenceAssetRecord } from '@/types/referenceLibrary'
 
 export type ReferenceLibraryScope = 'production' | 'library'

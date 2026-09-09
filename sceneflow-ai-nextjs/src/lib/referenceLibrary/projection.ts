@@ -4,7 +4,6 @@
  */
 
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
-import type { VisionCharacter } from '@/types/vision'
 import type {
   ReferenceAssetKind,
   ReferenceAssetRecord,
@@ -12,75 +11,21 @@ import type {
   ReferenceCatalog,
   ReferenceCatalogEntry,
 } from '@/types/referenceLibrary'
-import {
-  toSeriesCharacter,
-  seriesLocationToReference,
-  seriesPropToObject,
-} from '@/lib/series/referenceTransfer'
+import { toSeriesCharacter } from '@/lib/series/referenceTransfer'
 import type { SeriesCharacter, SeriesLocation, SeriesProp } from '@/types/series'
+import {
+  libraryAssetToCharacter,
+  libraryAssetToLocation,
+  libraryAssetToProp,
+  type ProjectCharacter,
+} from './visionProjection'
 
-/** visionPhase character with optional library back-reference */
-export type ProjectCharacter = VisionCharacter & {
-  libraryAssetId?: string
-  referenceUrl?: string
-  appearance?: string
-  voiceId?: string
-  lockedPromptTokens?: string[]
-}
-
-export function libraryAssetToCharacter(asset: ReferenceAssetRecord): ProjectCharacter {
-  const attrs = asset.attributes || {}
-  return {
-    id: (attrs.legacyId as string) || asset.id,
-    libraryAssetId: asset.id,
-    name: asset.name,
-    description: asset.description || '',
-    role: (attrs.role as ProjectCharacter['role']) || 'supporting',
-    referenceImage: asset.referenceImageUrl || undefined,
-    referenceUrl: asset.referenceImageUrl || undefined,
-    klingElementId: attrs.klingElementId,
-    appearanceDescription: attrs.appearance,
-    appearance: attrs.appearance,
-    voiceConfig: attrs.voiceId ? { voiceId: attrs.voiceId } : undefined,
-    voiceId: attrs.voiceId,
-    lockedPromptTokens: attrs.lockedPromptTokens,
-    wardrobes: Array.isArray(attrs.wardrobes) ? (attrs.wardrobes as ProjectCharacter['wardrobes']) : undefined,
-  }
-}
-
-export function libraryAssetToLocation(asset: ReferenceAssetRecord): LocationReference {
-  const attrs = asset.attributes || {}
-  const now = new Date().toISOString()
-  return {
-    id: (attrs.legacyId as string) || asset.id,
-    location: asset.name,
-    locationDisplay: attrs.locationDisplay || asset.name,
-    imageUrl: asset.referenceImageUrl || '',
-    sourceSceneIndex: 0,
-    sourceSceneHeading: asset.name,
-    pinnedAt: now,
-    description: asset.description || undefined,
-    klingElementId: attrs.klingElementId,
-    generationPrompt: attrs.generationPrompt,
-    libraryAssetId: asset.id,
-  } as LocationReference & { libraryAssetId?: string }
-}
-
-export function libraryAssetToProp(asset: ReferenceAssetRecord): VisualReference {
-  const attrs = asset.attributes || {}
-  return {
-    id: (attrs.legacyId as string) || asset.id,
-    type: 'object',
-    name: asset.name,
-    description: asset.description,
-    imageUrl: asset.referenceImageUrl,
-    category: attrs.category || 'prop',
-    importance: attrs.importance,
-    alwaysInclude: attrs.alwaysInclude,
-    klingElementId: attrs.klingElementId,
-    libraryAssetId: asset.id,
-  } as VisualReference & { libraryAssetId?: string }
-}
+export {
+  libraryAssetToCharacter,
+  libraryAssetToLocation,
+  libraryAssetToProp,
+  type ProjectCharacter,
+} from './visionProjection'
 
 export function characterToLibraryAttributes(char: ProjectCharacter): ReferenceAssetAttributes {
   return {
@@ -320,6 +265,3 @@ export function formatReferenceCatalogForPrompt(
   lines.push('')
   return lines.join('\n')
 }
-
-/** Re-export series converters for round-trip tests */
-export { seriesLocationToReference, seriesPropToObject }
