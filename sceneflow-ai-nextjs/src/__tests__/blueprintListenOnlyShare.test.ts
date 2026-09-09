@@ -74,5 +74,8 @@ describe('Blueprint listen-only share', () => {
     expect(viewer).toContain('BlueprintShareResonancePanel')
     expect(viewer).toContain('canFeedback={canFeedback}')
     expect(viewer).toContain('allowFeedback && participantId')
+    // Nested `allowFeedback ? !participantId ?` has no else branch and fails Turbopack.
+    expect(viewer).toContain('allowFeedback && (!participantId ?')
+    expect(viewer).not.toMatch(/allowFeedback \? !participantId \?/)
   })
 })

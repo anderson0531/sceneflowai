@@ -535,7 +535,7 @@ export function BlueprintShareViewer({ token }: Props) {
           ))}
         </div>
 
-        {allowFeedback ? !participantId ? (
+        {allowFeedback && (!participantId ? (
           <div className="rounded-xl border border-purple-500/30 bg-purple-500/5 p-6 space-y-4">
             <h3 className="text-lg font-semibold text-white">Join to leave feedback</h3>
             <p className="text-sm text-gray-400">
@@ -662,7 +662,7 @@ export function BlueprintShareViewer({ token }: Props) {
               />
             )}
           </>
-        )}
+        ))}
 
       </main>
 
