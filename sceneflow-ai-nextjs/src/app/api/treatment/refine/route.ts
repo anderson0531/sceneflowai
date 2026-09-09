@@ -9,6 +9,8 @@ import { resolveExistingContentStoryLocale } from '@/i18n/server/storyLocale'
 import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import { validateRevisionRequest } from '@/lib/treatment/blueprintRequestValidation'
+import { CREATOR_DIRECTION_IS_INTENT } from '@/lib/treatment/blueprintRevisionPrompts'
+import { MAX_BEATS } from '@/lib/treatment/blueprintRevisionTypes'
 import { deriveRuntimeFieldsFromBeats } from '@/lib/treatment/duration'
 import {
   type ContentIntent,
@@ -68,9 +70,10 @@ Ensure beats flow logically and total duration is realistic.
 Each beat should have clear dramatic purpose.
 
 CRITICAL CONSTRAINTS:
-- Maximum 8 beats total (consolidate if needed)
-- Each beat synopsis should be 1-3 sentences max
-- Keep response compact - no lengthy descriptions
+- Maximum ${MAX_BEATS} beats total
+- Return the COMPLETE ordered beat array, never a subset
+- Do NOT consolidate or drop beats to shorten the response; a long-form beat
+  sheet must survive this edit at full length
 - Preserve existing beat structure where possible`,
 
   characters: `You are refining the CHARACTER DESCRIPTIONS of a film treatment.
@@ -91,7 +94,8 @@ Maintain factual coherence. Do NOT add fictional drama or invented characters.`,
       tone: FICTION_SECTION_CONTEXT.tone,
       beats: `You are refining CONTENT SEGMENTS/BEATS for informational content.
 Focus on: segment titles, learning objectives, durations, and synopses.
-Ensure logical information flow. Maximum 8 beats.`,
+Ensure logical information flow. Maximum ${MAX_BEATS} segments.
+Return the COMPLETE ordered array — do NOT drop segments to shorten the response.`,
       characters: `You are refining SUBJECT/HOST/EXPERT PROFILES.
 Focus on: names, roles, expertise, and visual identity for real participants.
 Do NOT invent fictional characters.`,
@@ -108,7 +112,8 @@ Focus on: synopsis, setting, presenter (protagonist field), pain point (antagoni
 Structure for problem → solution → proof → CTA. Do NOT convert into fictional narrative.`,
       tone: FICTION_SECTION_CONTEXT.tone,
       beats: `You are refining COMMERCIAL BEATS.
-Focus on: problem, solution, proof, CTA segments. Maximum 8 beats.`,
+Focus on: problem, solution, proof, CTA segments. Maximum ${MAX_BEATS} beats.
+Return the COMPLETE ordered array — do NOT drop beats to shorten the response.`,
       characters: `You are refining PRESENTER/CUSTOMER PROFILES for commercial content.`,
     }
     return map[section]
@@ -121,7 +126,8 @@ Focus on: problem, solution, proof, CTA segments. Maximum 8 beats.`,
 Focus on: synopsis, host (protagonist field), tension topic (antagonist field), segment flow.
 Do NOT invent fictional plot.`,
       tone: FICTION_SECTION_CONTEXT.tone,
-      beats: `You are refining CONVERSATION SEGMENTS. Maximum 8 beats with clear takeaways.`,
+      beats: `You are refining CONVERSATION SEGMENTS. Maximum ${MAX_BEATS} segments with clear takeaways.
+Return the COMPLETE ordered array — do NOT drop segments to shorten the response.`,
       characters: `You are refining HOST/GUEST PROFILES for conversational content.`,
     }
     return map[section]
@@ -190,22 +196,24 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // For beats section, limit the data size to prevent OOM
+    // Bound the beats payload without shortening the sheet: a 10-beat window cut
+    // a long-form blueprint down before the model ever saw it, so the "complete
+    // array" it returned was already missing the tail.
     if (section === 'beats' && Array.isArray(sectionData.beats)) {
       const beats = sectionData.beats as Array<Record<string, unknown>>
-      sectionData.beats = beats.slice(0, 10).map((b, i) => ({
+      sectionData.beats = beats.slice(0, MAX_BEATS).map((b, i) => ({
         title: b.title || `Beat ${i + 1}`,
         intent: b.intent || '',
         minutes: b.minutes || 0,
-        synopsis: typeof b.synopsis === 'string' ? b.synopsis.substring(0, 200) : ''
+        synopsis: typeof b.synopsis === 'string' ? b.synopsis.substring(0, 600) : ''
       }))
     }
 
     // Section-specific output budgets. Beats must emit a whole array, so the
     // former 2048 cap truncated the tail and dropped beats; the OOM these caps
     // were guarding against was an unbounded loop in safeParseJsonFromText.
-    const maxTokens = section === 'beats' ? 4096 :
-                      section === 'characters' ? 3072 : 4096
+    const maxTokens = section === 'beats' ? 16384 :
+                      section === 'characters' ? 6144 : 6144
 
     // Revisions follow the language the stored blueprint was stamped in, not
     // the interface language. Reading the studio in Spanish used to rewrite
@@ -225,21 +233,21 @@ export async function POST(request: NextRequest) {
     const prompt = `${getSectionContext(section, contentIntent)}
 
 ${getIntentRevisionGuardrail(contentIntent)}
+${CREATOR_DIRECTION_IS_INTENT}
 ${languageBlock}
 
-You are an expert content blueprint editor. REWRITE the specified fields according to the user's instructions.
+You are an expert content blueprint editor. REWRITE the specified fields to achieve what the creator is after.
 
 CRITICAL: You are REPLACING content, NOT appending to it.
 - Return a COMPLETE replacement for each field you modify
 - Do NOT concatenate new text with existing content
 - Do NOT preserve the original text unless explicitly asked to keep specific parts
-- If a synopsis needs improvement, return a new synopsis of similar length, not a longer one
-- The output should be a refined VERSION, not an extended version
+- The output is a refined VERSION of the field, not the old text with more bolted on
 
 CURRENT SECTION DATA:
 ${JSON.stringify(sectionData, null, 2)}
 
-USER INSTRUCTIONS:
+CREATOR DIRECTION (INTENT):
 ${instructions}
 
 FULL TREATMENT CONTEXT (read-only, for reference):
@@ -275,8 +283,9 @@ ${strictJsonPromptSuffix}`
       model: getGeminiTextModel('flash'),
       temperature: 0.3,
       maxOutputTokens: maxTokens,
-      thinkingLevel: 'low',
+      thinkingLevel: 'medium',
       responseMimeType: 'application/json',
+      timeoutMs: 100_000,
     })
 
     const generatedText = result?.text || '{}'

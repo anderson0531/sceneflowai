@@ -24,8 +24,9 @@ import {
 } from '@/lib/script/audienceResonance/persistReview'
 import {
   finalizeGuidedRevise,
+  GuidedReviseTruncatedError,
   payloadFromJobRecord,
-  runAllSectionRewrites,
+  runConsolidatedRewrite,
   runPlannerStep,
   runSectionRewriteStep,
 } from '@/lib/treatment/runGuidedRevise'
@@ -541,11 +542,26 @@ export const processBlueprintGuidedRevise = inngest.createFunction(
       const sections = [...new Set(plan.sectionsToUpdate)]
       let mergedPatch: Record<string, unknown> = {}
 
-      if (sections.length <= 1) {
-        mergedPatch = await step.run('rewrite-all', async () => {
-          await updateGenerationJob(jobId, { progress: 50 })
-          return runAllSectionRewrites(revisePayload, plan)
-        })
+      // One pass for the whole plan. Truncation comes back as a value rather
+      // than a throw so Inngest does not burn its retries re-running a prompt
+      // that will be cut off again, and so the fallback below stays reachable.
+      const consolidated = await step.run('rewrite-all', async () => {
+        await updateGenerationJob(jobId, { progress: 50 })
+        try {
+          return {
+            truncated: false as const,
+            patch: await runConsolidatedRewrite(revisePayload, plan),
+          }
+        } catch (err) {
+          if (err instanceof GuidedReviseTruncatedError && sections.length > 1) {
+            return { truncated: true as const, patch: {} }
+          }
+          throw err
+        }
+      })
+
+      if (!consolidated.truncated) {
+        mergedPatch = consolidated.patch
       } else {
         for (let i = 0; i < sections.length; i++) {
           const section = sections[i] as BlueprintFixSection

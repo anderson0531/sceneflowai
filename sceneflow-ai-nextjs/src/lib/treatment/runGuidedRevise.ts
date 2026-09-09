@@ -109,19 +109,31 @@ export function shouldRunPlanner(
   return true
 }
 
-/** Pick Gemini model for a rewrite step. Pro for full-balance multi-section jobs. */
+/**
+ * Pick Gemini model for a rewrite step.
+ *
+ * The GA Flash workhorse is seven minor versions ahead of the `pro` preview
+ * tier, so routing full-balance work to `pro` bought an older model — and the
+ * step ran it at minimal thinking, discarding the only thing it had to offer.
+ * Quality now comes from the thinking level below, not from the tier.
+ */
 export function modelForRewriteStep(
-  sectionCount: number,
-  focusScope?: BlueprintFixSection | 'all'
+  _sectionCount: number,
+  _focusScope?: BlueprintFixSection | 'all'
 ): string {
-  const isFullBalance =
-    !focusScope || focusScope === 'all' || sectionCount >= 3
-  return isFullBalance ? getGeminiTextModel('pro') : getGeminiTextModel('flash')
+  return getGeminiTextModel('flash')
 }
 
 export const REWRITE_TOKENS_BASE = 3072
 export const REWRITE_TOKENS_WITH_BEATS = 8192
 export const REWRITE_TOKENS_REASONING = 1024
+
+/**
+ * Output budget for the consolidated pass that revises every planned section at
+ * once. It emits the whole beat sheet plus every other allowed field, so it
+ * needs far more room than one section — still well inside the 65536 ceiling.
+ */
+export const REWRITE_TOKENS_CONSOLIDATED = 24576
 
 /**
  * Sections whose rewrite emits the beats array. Mirrors buildRewriterPrompt,
@@ -143,6 +155,14 @@ export function tokensForRewriteStep(
   return base + (isLast ? REWRITE_TOKENS_REASONING : 0)
 }
 
+/** Output budget for a single pass covering every planned section. */
+export function tokensForConsolidatedRewrite(
+  sections: BlueprintFixSection[]
+): number {
+  if (sections.length <= 1) return tokensForRewriteStep(sections, true)
+  return REWRITE_TOKENS_CONSOLIDATED + REWRITE_TOKENS_REASONING
+}
+
 /** A model response was cut off, so the patch is missing fields the user asked for. */
 export class GuidedReviseTruncatedError extends Error {
   readonly finishReason: string
@@ -161,12 +181,23 @@ export type GeminiJsonStepResult = {
   truncatedBy?: string
 }
 
+export type GuidedReviseThinkingLevel = 'minimal' | 'low' | 'medium' | 'high'
+
+/** Numeric budgets for the pre-Gemini-3 models still reachable via quota fallback. */
+const LEGACY_THINKING_BUDGETS: Record<GuidedReviseThinkingLevel, number> = {
+  minimal: 0,
+  low: 1024,
+  medium: 4096,
+  high: 8192,
+}
+
 export async function runGeminiJsonStep(
   label: string,
   prompt: string,
   maxOutputTokens: number,
   model: string,
-  logHeap: HeapLogger = noopHeap
+  logHeap: HeapLogger = noopHeap,
+  thinkingLevel: GuidedReviseThinkingLevel = 'minimal'
 ): Promise<GeminiJsonStepResult> {
   logHeap(`before ${label}`, { promptChars: prompt.length })
   const isGemini3 = model.includes('gemini-3')
@@ -175,10 +206,12 @@ export async function runGeminiJsonStep(
     temperature: 0.3,
     maxOutputTokens,
     ...(isGemini3
-      ? { thinkingLevel: 'minimal' as const }
-      : { thinkingBudget: 0 }),
+      ? { thinkingLevel }
+      : { thinkingBudget: LEGACY_THINKING_BUDGETS[thinkingLevel] }),
     responseMimeType: 'application/json',
-    timeoutMs: 90_000,
+    // One reasoning pass replaces three shallow ones, so it needs the headroom
+    // the old per-section budget never did.
+    timeoutMs: 180_000,
     maxRetries: 1,
   })
   let text = result?.text || '{}'
@@ -274,7 +307,8 @@ export async function runSectionRewriteStep(
     prompt,
     tokensForRewriteStep([section], isLast),
     model,
-    logHeap
+    logHeap,
+    'medium'
   )
   if (truncatedBy) {
     throw new GuidedReviseTruncatedError(section, truncatedBy)
@@ -282,35 +316,53 @@ export async function runSectionRewriteStep(
   return sectionPatch ?? {}
 }
 
-export async function runAllSectionRewrites(
+/**
+ * Revise every planned section in one pass.
+ *
+ * Splitting the plan one-section-per-call meant the beat sheet was regenerated
+ * once per beat-emitting section (beats, story and characters all emit it), so
+ * a three-section plan rewrote the same beats three times and threw the first
+ * two away. One pass sees the whole plan at once and emits each field once.
+ */
+export async function runConsolidatedRewrite(
+  payload: GuidedRevisePayload,
+  plan: BlueprintChangePlan,
+  logHeap: HeapLogger = noopHeap
+): Promise<Record<string, unknown>> {
+  const sections = [...new Set(plan.sectionsToUpdate)] as BlueprintFixSection[]
+  const model = modelForRewriteStep(sections.length, payload.focusScope)
+  const prompt = buildRewriterPrompt(
+    payload.variant,
+    { ...plan, sectionsToUpdate: sections },
+    payload.intentText,
+    payload.selectedRecs,
+    payload.contentIntent,
+    { storyLocale: payload.storyLocale }
+  )
+  const { data: patch, truncatedBy } = await runGeminiJsonStep(
+    'rewriter:all',
+    prompt,
+    tokensForConsolidatedRewrite(sections),
+    model,
+    logHeap,
+    'high'
+  )
+  if (truncatedBy) {
+    throw new GuidedReviseTruncatedError(
+      sections.length > 1 ? 'balanced revision' : sections[0] ?? 'revision',
+      truncatedBy
+    )
+  }
+  return patch ?? {}
+}
+
+/** Sequential per-section rewrite. The fallback when one pass is cut off. */
+export async function runSequentialSectionRewrites(
   payload: GuidedRevisePayload,
   plan: BlueprintChangePlan,
   logHeap: HeapLogger = noopHeap
 ): Promise<Record<string, unknown>> {
   const sections = [...new Set(plan.sectionsToUpdate)]
-  if (sections.length <= 1) {
-    const model = modelForRewriteStep(1, payload.focusScope)
-    const prompt = buildRewriterPrompt(
-      payload.variant,
-      plan,
-      payload.intentText,
-      payload.selectedRecs,
-      payload.contentIntent,
-      { storyLocale: payload.storyLocale }
-    )
-    const { data: patch, truncatedBy } = await runGeminiJsonStep(
-      'rewriter',
-      prompt,
-      tokensForRewriteStep(sections, true),
-      model,
-      logHeap
-    )
-    if (truncatedBy) {
-      throw new GuidedReviseTruncatedError(sections[0] ?? 'revision', truncatedBy)
-    }
-    return patch ?? {}
-  }
-
   let mergedPatch: Record<string, unknown> = {}
   let narrativeReasoning: Record<string, unknown> | undefined
 
@@ -337,6 +389,27 @@ export async function runAllSectionRewrites(
   }
 
   return mergedPatch
+}
+
+export async function runAllSectionRewrites(
+  payload: GuidedRevisePayload,
+  plan: BlueprintChangePlan,
+  logHeap: HeapLogger = noopHeap
+): Promise<Record<string, unknown>> {
+  const sections = [...new Set(plan.sectionsToUpdate)]
+  try {
+    return await runConsolidatedRewrite(payload, plan, logHeap)
+  } catch (err) {
+    // Truncation is the one failure the per-section split still solves: each
+    // narrower prompt fits a smaller response. Anything else is a real error.
+    if (!(err instanceof GuidedReviseTruncatedError) || sections.length <= 1) {
+      throw err
+    }
+    console.warn(
+      `[Guided Revise] Consolidated pass was cut off (${err.finishReason}); falling back to ${sections.length} per-section passes`
+    )
+    return runSequentialSectionRewrites(payload, plan, logHeap)
+  }
 }
 
 export function finalizeGuidedRevise(
