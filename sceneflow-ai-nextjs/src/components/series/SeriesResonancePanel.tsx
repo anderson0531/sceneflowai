@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Target,
@@ -26,9 +26,13 @@ import {
   Loader2,
   Check,
   X,
-  Globe
+  Globe,
+  Volume2,
+  Square
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { VoiceSelectionDialog } from '@/components/tts/VoiceSelectionDialog'
+import { GEMINI_VOICES } from '@/components/tts/GeminiVoicePicker'
 import { AudienceDescriptionField } from '@/components/audience/AudienceDescriptionField'
 import {
   createAudienceDefinition,
@@ -41,11 +45,27 @@ import {
   SeriesResponse,
   getSeriesGreenlightTier
 } from '@/types/series'
+import {
+  axisDisplayLabel,
+  buildSeriesAnalysisNarration,
+  normalizeSeriesResonanceAnalysis,
+} from '@/lib/series/resonanceScoring'
 
 interface SeriesResonancePanelProps {
   series: SeriesResponse
   onAnalyze: (config?: { targetAudience?: string, targetMarkets?: string[], audienceDefinition?: AudienceDefinition }) => Promise<SeriesResonanceAnalysis>
-  onApplyFix: (insightId: string, fixSuggestion: string, targetSection: string, targetId?: string) => Promise<void>
+  onApplyFix: (
+    insightId: string,
+    fixSuggestion: string,
+    targetSection: string,
+    targetId?: string,
+    extras?: {
+      title?: string
+      category?: string
+      axisId?: string
+      estimatedImpact?: number
+    }
+  ) => Promise<void>
   savedAnalysis?: SeriesResonanceAnalysis | null
   onSeriesUpdated?: () => void
 }
@@ -63,7 +83,9 @@ export function SeriesResonancePanel({
   savedAnalysis,
   onSeriesUpdated
 }: SeriesResonancePanelProps) {
-  const [analysis, setAnalysis] = useState<SeriesResonanceAnalysis | null>(savedAnalysis || null)
+  const [analysis, setAnalysis] = useState<SeriesResonanceAnalysis | null>(
+    savedAnalysis ? normalizeSeriesResonanceAnalysis(savedAnalysis) : null
+  )
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [expandedInsights, setExpandedInsights] = useState<string[]>([])
@@ -72,6 +94,14 @@ export function SeriesResonancePanel({
   const [appliedFixes, setAppliedFixes] = useState<string[]>(savedAnalysis?.appliedFixes || [])
   const [showEpisodeDetails, setShowEpisodeDetails] = useState(false)
   const [selectedEpisode, setSelectedEpisode] = useState<number | null>(null)
+  const [showLowImpact, setShowLowImpact] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [isGeneratingTTS, setIsGeneratingTTS] = useState(false)
+  const [voiceSelectorOpen, setVoiceSelectorOpen] = useState(false)
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>('en-US-Journey-F')
+  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('Elena (Storyteller)')
+  const [audioProfilePrompt, setAudioProfilePrompt] = useState<string>('')
+  const audioRef = useRef<HTMLAudioElement | null>(null)
   
   // Market config state
   const [showConfig, setShowConfig] = useState(!savedAnalysis)
@@ -89,13 +119,41 @@ export function SeriesResonancePanel({
   // Update local state if the savedAnalysis prop changes
   React.useEffect(() => {
     if (savedAnalysis) {
-      setAnalysis(savedAnalysis)
+      const normalized = normalizeSeriesResonanceAnalysis(savedAnalysis)
+      setAnalysis(normalized)
       setShowConfig(false)
-      if (savedAnalysis.appliedFixes) {
-        setAppliedFixes(savedAnalysis.appliedFixes)
+      if (normalized.appliedFixes) {
+        setAppliedFixes(normalized.appliedFixes)
       }
     }
   }, [savedAnalysis])
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('directorNoteFavorites')
+      if (stored) {
+        const favs = JSON.parse(stored)
+        if (Array.isArray(favs) && favs.length > 0) {
+          const voice = GEMINI_VOICES.find((v) => v.id === favs[0])
+          if (voice) {
+            setSelectedVoiceId(voice.id)
+            setSelectedVoiceName(voice.name)
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+    }
+  }, [])
   
   // Handle analyze
   const handleAnalyze = useCallback(async () => {
@@ -108,11 +166,11 @@ export function SeriesResonancePanel({
         targetMarkets,
         audienceDefinition: audienceDef.description?.trim() ? audienceDef : undefined,
       })
-      setAnalysis(result)
+      const normalized = normalizeSeriesResonanceAnalysis(result)
+      setAnalysis(normalized)
       setShowConfig(false)
-      // Preserve appliedFixes from the new analysis result
-      if (result.appliedFixes) {
-        setAppliedFixes(result.appliedFixes)
+      if (normalized.appliedFixes) {
+        setAppliedFixes(normalized.appliedFixes)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Analysis failed')
@@ -132,7 +190,13 @@ export function SeriesResonancePanel({
         insight.id,
         insight.fixSuggestion,
         insight.targetSection,
-        insight.targetId
+        insight.targetId,
+        {
+          title: insight.title,
+          category: insight.category,
+          axisId: insight.axisId,
+          estimatedImpact: insight.estimatedImpact,
+        }
       )
       setAppliedFixes(prev => [...prev, insight.id])
       onSeriesUpdated?.()
@@ -151,12 +215,14 @@ export function SeriesResonancePanel({
   }, [])
   
   // Categorize insights
-  const { strengths, weaknesses, neutral } = useMemo(() => {
+  const { strengths, weaknesses, priorityWeaknesses, lowWeaknesses } = useMemo(() => {
     const insights = analysis?.insights || []
+    const allWeak = insights.filter(i => i.status === 'weakness')
     return {
       strengths: insights.filter(i => i.status === 'strength'),
-      weaknesses: insights.filter(i => i.status === 'weakness'),
-      neutral: insights.filter(i => i.status === 'neutral')
+      weaknesses: allWeak,
+      priorityWeaknesses: allWeak.filter(w => w.impactLabel !== 'Low'),
+      lowWeaknesses: allWeak.filter(w => w.impactLabel === 'Low'),
     }
   }, [analysis])
   
@@ -170,6 +236,50 @@ export function SeriesResonancePanel({
   const getEpisodeDetails = useCallback((epNum: number) => {
     return analysis?.episodeEngagement.find(e => e.episodeNumber === epNum)
   }, [analysis])
+
+  const handlePlayAnalysis = useCallback(async () => {
+    if (isPlaying) {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+      setIsPlaying(false)
+      return
+    }
+    if (!analysis) return
+
+    const textToSpeak = buildSeriesAnalysisNarration(analysis)
+    if (!textToSpeak.trim()) return
+
+    setIsGeneratingTTS(true)
+    try {
+      const response = await fetch('/api/tts/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: textToSpeak,
+          voiceId: selectedVoiceId,
+          ...(selectedVoiceId.startsWith('gemini-') && audioProfilePrompt
+            ? { prompt: audioProfilePrompt }
+            : {}),
+        }),
+      })
+      if (!response.ok) throw new Error('TTS failed')
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      audioRef.current = new Audio(url)
+      audioRef.current.onended = () => setIsPlaying(false)
+      audioRef.current.onerror = () => setIsPlaying(false)
+      await audioRef.current.play()
+      setIsPlaying(true)
+    } catch (err) {
+      console.error('Series analysis TTS error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to play analysis')
+      setIsPlaying(false)
+    } finally {
+      setIsGeneratingTTS(false)
+    }
+  }, [analysis, isPlaying, selectedVoiceId, audioProfilePrompt])
   
   return (
     <div className="space-y-6">
@@ -185,6 +295,44 @@ export function SeriesResonancePanel({
           </p>
         </div>
         
+        <div className="flex items-center gap-2">
+          {analysis ? (
+            <div className="flex items-center bg-slate-800/70 rounded-lg border border-slate-700/60 p-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setVoiceSelectorOpen(true)}
+                className="h-8 text-xs px-2 text-gray-400 hover:text-white"
+              >
+                <Volume2 className="w-3.5 h-3.5 mr-1.5" />
+                <span className="truncate max-w-[80px]">{selectedVoiceName}</span>
+              </Button>
+              <div className="w-px h-4 bg-slate-700 mx-1" />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handlePlayAnalysis}
+                disabled={isGeneratingTTS}
+                className={`h-8 px-3 text-xs font-medium ${
+                  isPlaying
+                    ? 'bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30'
+                    : 'text-gray-300 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                {isGeneratingTTS ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : isPlaying ? (
+                  <>
+                    <Square className="w-3.5 h-3.5 mr-1.5 fill-current" /> Stop
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-3.5 h-3.5 mr-1.5 fill-current" /> Listen
+                  </>
+                )}
+              </Button>
+            </div>
+          ) : null}
         <Button
           onClick={handleAnalyze}
           disabled={isAnalyzing}
@@ -207,6 +355,7 @@ export function SeriesResonancePanel({
             </>
           )}
         </Button>
+        </div>
       </div>
       
       {/* Error Display */}
@@ -294,7 +443,7 @@ export function SeriesResonancePanel({
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6 lg:col-span-2">
               <h4 className="text-sm font-medium text-gray-400 mb-4">Score Breakdown</h4>
               <div className="space-y-3">
-                {analysis.axes.map(axis => (
+                {(analysis.axes || []).map(axis => (
                   <div key={axis.id} className="flex items-center gap-3 group">
                     <div 
                       className="w-40 text-sm text-gray-400 truncate cursor-help" 
@@ -344,7 +493,7 @@ export function SeriesResonancePanel({
             
             {/* Episode Score Bars */}
             <div className="flex items-end gap-1 h-32 mb-4">
-              {analysis.episodeEngagement.map(ep => (
+              {(analysis.episodeEngagement || []).map(ep => (
                 <div
                   key={ep.episodeNumber}
                   className="flex-1 flex flex-col items-center cursor-pointer group"
@@ -390,7 +539,7 @@ export function SeriesResonancePanel({
                 >
                   <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700/50 mb-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                      {analysis.episodeEngagement.map(ep => (
+                      {(analysis.episodeEngagement || []).map(ep => (
                         <div 
                           key={ep.episodeNumber}
                           className={`p-3 rounded-lg border cursor-pointer transition-all ${
@@ -481,7 +630,7 @@ export function SeriesResonancePanel({
                           <p className="text-sm text-gray-400 mb-2">{ep.notes}</p>
                         )}
                         
-                        {ep.improvements.length > 0 && (
+                        {(ep.improvements || []).length > 0 && (
                           <div className="mt-2">
                             <p className="text-xs text-amber-400 mb-1">Improvements:</p>
                             <ul className="text-xs text-gray-400 space-y-1">
@@ -521,7 +670,7 @@ export function SeriesResonancePanel({
           {/* Summary */}
           <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6">
             <h4 className="text-sm font-medium text-white mb-3">Analysis Summary</h4>
-            <p className="text-gray-300 text-sm mb-4">{analysis.summary.overallAssessment}</p>
+            <p className="text-gray-300 text-sm mb-4">{analysis.summary?.overallAssessment}</p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Key Strengths */}
@@ -531,7 +680,7 @@ export function SeriesResonancePanel({
                   Key Strengths
                 </h5>
                 <ul className="space-y-1">
-                  {analysis.summary.keyStrengths.map((s, i) => (
+                  {(analysis.summary?.keyStrengths || []).map((s, i) => (
                     <li key={i} className="text-sm text-gray-400 flex items-start gap-2">
                       <span className="text-emerald-400 mt-1">•</span>
                       {s}
@@ -547,7 +696,7 @@ export function SeriesResonancePanel({
                   Areas for Improvement
                 </h5>
                 <ul className="space-y-1">
-                  {analysis.summary.criticalWeaknesses.map((w, i) => (
+                  {(analysis.summary?.criticalWeaknesses || []).map((w, i) => (
                     <li key={i} className="text-sm text-gray-400 flex items-start gap-2">
                       <span className="text-amber-400 mt-1">•</span>
                       {w}
@@ -558,10 +707,10 @@ export function SeriesResonancePanel({
             </div>
             
             {/* Comparable Series */}
-            {analysis.summary.comparableSeries.length > 0 && (
+            {(analysis.summary?.comparableSeries || []).length > 0 && (
               <div className="mt-4 pt-4 border-t border-slate-700/50">
                 <p className="text-xs text-gray-500">
-                  Comparable Series: {analysis.summary.comparableSeries.join(', ')}
+                  Comparable Series: {(analysis.summary?.comparableSeries || []).join(', ')}
                 </p>
               </div>
             )}
@@ -590,7 +739,7 @@ export function SeriesResonancePanel({
                         </span>
                       </div>
                       <p className="text-xs text-gray-400 mb-2">{driver.description}</p>
-                      {driver.episodeExamples.length > 0 && (
+                      {(driver.episodeExamples || []).length > 0 && (
                         <p className="text-[10px] text-gray-500">
                           Episodes: {driver.episodeExamples.join(', ')}
                         </p>
@@ -641,7 +790,7 @@ export function SeriesResonancePanel({
                   <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700/50">
                     <h6 className="text-xs font-medium text-gray-500 mb-1">Primary Markets</h6>
                     <div className="flex flex-wrap gap-1 mt-1">
-                      {analysis.summary.marketAnalysis.primaryMarkets.map((m, i) => (
+                      {(analysis.summary.marketAnalysis.primaryMarkets || []).map((m, i) => (
                         <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-gray-300 border border-slate-600">
                           {m}
                         </span>
@@ -688,10 +837,9 @@ export function SeriesResonancePanel({
               </h4>
             </div>
             
-            {/* Weaknesses (with fixes) */}
-            {weaknesses.length > 0 && (
+            {priorityWeaknesses.length > 0 && (
               <div className="space-y-2">
-                {weaknesses.map(insight => (
+                {priorityWeaknesses.map(insight => (
                   <InsightCard
                     key={insight.id}
                     insight={insight}
@@ -702,6 +850,32 @@ export function SeriesResonancePanel({
                     isApplied={appliedFixes.includes(insight.id)}
                   />
                 ))}
+              </div>
+            )}
+
+            {lowWeaknesses.length > 0 && (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setShowLowImpact((prev) => !prev)}
+                  className="text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1"
+                >
+                  <ChevronDown className={`w-3 h-3 transition-transform ${showLowImpact ? 'rotate-180' : ''}`} />
+                  Lower-impact notes ({lowWeaknesses.length})
+                </button>
+                {showLowImpact
+                  ? lowWeaknesses.map((insight) => (
+                      <InsightCard
+                        key={insight.id}
+                        insight={insight}
+                        expanded={expandedInsights.includes(insight.id)}
+                        onToggle={() => toggleInsight(insight.id)}
+                        onApplyFix={() => handleApplyFix(insight)}
+                        isApplying={applyingFix === insight.id}
+                        isApplied={appliedFixes.includes(insight.id)}
+                      />
+                    ))
+                  : null}
               </div>
             )}
             
@@ -726,12 +900,13 @@ export function SeriesResonancePanel({
             <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4">
               <p className="text-emerald-400 text-sm flex items-center gap-2">
                 <Check className="w-4 h-4" />
-                {appliedFixes.length} fix{appliedFixes.length > 1 ? 'es' : ''} applied. 
+                {appliedFixes.length} fix{appliedFixes.length > 1 ? 'es' : ''} applied.
+                Score already includes calibrated deltas.
                 <button
                   onClick={handleAnalyze}
                   className="underline hover:text-emerald-300"
                 >
-                  Re-analyze to see updated score
+                  Re-analyze for a full rescore
                 </button>
               </p>
             </div>
@@ -802,6 +977,26 @@ export function SeriesResonancePanel({
           </Button>
         </div>
       )}
+
+      <VoiceSelectionDialog
+        open={voiceSelectorOpen}
+        onOpenChange={setVoiceSelectorOpen}
+        provider="elevenlabs"
+        mode="narrator"
+        selectedVoiceId={selectedVoiceId}
+        onSelectVoice={(id, name, prompt) => {
+          setSelectedVoiceId(id)
+          setSelectedVoiceName(name)
+          if (prompt !== undefined) {
+            setAudioProfilePrompt(prompt)
+          }
+        }}
+        characterContext={{
+          name: 'Series Analyst',
+          role: 'narrator',
+          voiceDescription: audioProfilePrompt
+        }}
+      />
     </div>
   )
 }
@@ -944,9 +1139,21 @@ function InsightCard({
         <Icon className={`w-4 h-4 text-${config.color}-400 flex-shrink-0`} />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-white truncate">{insight.title}</p>
-          <p className="text-xs text-gray-500 capitalize">{insight.category}</p>
+          <p className="text-xs text-gray-500 capitalize">
+            {insight.category}
+            {insight.axisId ? ` · ${axisDisplayLabel(insight.axisId)}` : ''}
+          </p>
         </div>
-        {insight.estimatedImpact && (
+        {insight.impactLabel && insight.status === 'weakness' && (
+          <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+            insight.impactLabel === 'High' ? 'bg-red-500/20 text-red-300' :
+            insight.impactLabel === 'Medium' ? 'bg-amber-500/20 text-amber-300' :
+            'bg-slate-600/40 text-gray-400'
+          }`}>
+            {insight.impactLabel}
+          </span>
+        )}
+        {insight.estimatedImpact && insight.status === 'weakness' && (
           <span className="text-xs text-emerald-400 flex items-center gap-1">
             <ArrowUp className="w-3 h-3" />
             +{insight.estimatedImpact}
