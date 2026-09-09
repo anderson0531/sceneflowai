@@ -167,15 +167,19 @@ function sumBeatDurations(beats: SceneBeat[], fallbackSeconds = AVG_BEAT_SECONDS
   }, 0)
 }
 
-function appendContinuationToHeading(heading: unknown): string {
+/**
+ * Number continuation parts. Unnumbered "(cont.)" headings made every part after
+ * the first identical, which downstream duplicate detection then merged back.
+ */
+function appendContinuationToHeading(heading: unknown, partIndex: number): string {
   const base =
     typeof heading === 'string'
       ? heading
       : heading && typeof heading === 'object' && 'text' in heading
         ? String((heading as { text?: string }).text || 'Untitled Scene')
         : 'Untitled Scene'
-  if (base.toLowerCase().includes('(cont')) return base
-  return `${base} (cont.)`
+  const stripped = base.replace(/\s*\(cont\.?[^)]*\)\s*$/i, '').trim() || 'Untitled Scene'
+  return `${stripped} (cont. ${partIndex + 1})`
 }
 
 function rebuildSceneFromBeats(
@@ -186,12 +190,15 @@ function rebuildSceneFromBeats(
   const stripped: Record<string, unknown> = { ...baseScene }
   delete stripped.segments
 
+  // Marks every part of a split, including the first, so consumers can tell a
+  // deliberate split apart from a duplicated scene.
+  stripped.scenePartIndex = opts.partIndex
+
   if (opts.isContinuation) {
     const newId = uuidv4()
     stripped.id = newId
     stripped.sceneId = newId
-    stripped.heading = appendContinuationToHeading(baseScene.heading)
-    stripped.scenePartIndex = opts.partIndex
+    stripped.heading = appendContinuationToHeading(baseScene.heading, opts.partIndex)
   }
 
   const withBeats = applyBeatsToScene(stripped, beats)

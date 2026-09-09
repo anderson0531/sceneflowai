@@ -60,6 +60,7 @@ interface Scene {
   imageUrl?: string
   cinematicType?: string
   beats?: SceneBeat[]
+  blueprintBeatIndex?: number
 }
 
 function isSpokenBeatKind(kind: BeatKind): boolean {
@@ -81,11 +82,49 @@ function countConsecutiveSpokenBeats(beats: SceneBeat[]): number {
 }
 
 /**
+ * Flag Blueprint beats that produced far fewer scenes than the decomposition
+ * plan asked for. Under-decomposition used to be invisible: the script simply
+ * came out short and the storytelling suffered with no signal anywhere.
+ */
+function checkBlueprintDecomposition(
+  scenes: Scene[],
+  plannedScenesByBeatIndex: Record<number, number>
+): QAIssue[] {
+  const issues: QAIssue[] = []
+  const producedByBeat = new Map<number, number>()
+
+  for (const scene of scenes) {
+    const beatIndex = scene.blueprintBeatIndex
+    if (typeof beatIndex !== 'number') continue
+    producedByBeat.set(beatIndex, (producedByBeat.get(beatIndex) || 0) + 1)
+  }
+
+  for (const [key, planned] of Object.entries(plannedScenesByBeatIndex)) {
+    const beatIndex = Number(key)
+    if (!Number.isFinite(beatIndex) || planned <= 1) continue
+    const produced = producedByBeat.get(beatIndex) || 0
+    if (produced >= Math.ceil(planned * 0.6)) continue
+
+    issues.push({
+      type: 'warning',
+      category: 'continuity',
+      message: `Blueprint beat ${beatIndex + 1} produced ${produced} scene(s) but was planned for ${planned}`,
+      suggestion:
+        'Regenerate the script, or split this beat manually — a Blueprint beat compressed into too few scenes loses story.',
+      autoFixable: false,
+    })
+  }
+
+  return issues
+}
+
+/**
  * Run full quality assurance on a script
  */
 export function runScriptQA(
   scenes: Scene[],
-  approvedCharacters: Character[]
+  approvedCharacters: Character[],
+  options?: { plannedScenesByBeatIndex?: Record<number, number> }
 ): QAResult {
   const issues: QAIssue[] = []
   const charactersFound = new Set<string>()
@@ -316,6 +355,10 @@ export function runScriptQA(
         })
       }
     }
+  }
+
+  if (options?.plannedScenesByBeatIndex) {
+    issues.push(...checkBlueprintDecomposition(scenes, options.plannedScenesByBeatIndex))
   }
 
   // Calculate stats

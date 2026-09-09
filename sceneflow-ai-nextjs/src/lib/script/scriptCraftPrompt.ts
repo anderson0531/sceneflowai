@@ -55,8 +55,21 @@ export function parseScriptCraftNotes(raw: unknown): string {
   return typeof raw === 'string' ? raw.trim() : ''
 }
 
-/** Shared length philosophy: story quality, not clip-clock targets. */
-export function buildLongformScriptLengthBlock(): string {
+/**
+ * Shared length philosophy. In `chunked` mode the scene count is assigned by the
+ * caller, so the wording must not invite the model to decide its own length —
+ * that licence is what let it collapse a Blueprint beat into a single scene.
+ */
+export function buildLongformScriptLengthBlock(opts?: { chunked?: boolean }): string {
+  if (opts?.chunked) {
+    return `SCENE DEPTH (COUNT IS ASSIGNED, DEPTH IS YOURS):
+• The number of scenes in your slice is FIXED by the assignment below. Do not merge, drop, or add scenes to it.
+• Give characters, action, and story turns as much room as they need WITHIN each assigned scene.
+• Each scene MUST stay at or below ${MAX_BEATS_PER_SCENE} beats.
+• Fill each scene to its assigned beat target — a thin scene is a failure, not a stylistic choice.
+• JSON "duration" fields are estimates you report after writing, not targets to hit.
+• Intervening action beats only when they add NEW visual information — never to pad runtime.`
+  }
   return `SCRIPT LENGTH (STORY DETERMINES LENGTH):
 • Write a complete longform script. Give characters, action, and story turns as much room as they need.
 • Decompose each Blueprint beat into multiple scenes; never collapse an entire Blueprint beat into one scene.
