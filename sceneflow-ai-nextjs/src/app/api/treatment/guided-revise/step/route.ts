@@ -4,7 +4,9 @@ import { getJobForUser } from '@/lib/jobs/jobService'
 import { runBlueprintGuidedReviseStep } from '@/lib/jobs/blueprintGuidedReviseWorker'
 
 export const runtime = 'nodejs'
-export const maxDuration = 120
+// One reasoning pass revises the whole plan, so a phase can now outlast the
+// 120s that the old shallow per-section passes fit inside.
+export const maxDuration = 300
 
 /**
  * Advance a full-balance revision by one phase.

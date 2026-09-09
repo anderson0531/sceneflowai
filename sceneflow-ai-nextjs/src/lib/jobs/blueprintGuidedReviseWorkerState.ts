@@ -5,7 +5,7 @@ import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
  * How long a claimed step may run before another invocation may take it over.
  * Must exceed the worker route maxDuration so a live step is never double-run.
  */
-export const STEP_LEASE_MS = 3 * 60 * 1000
+export const STEP_LEASE_MS = 6 * 60 * 1000
 
 /** Intermediate state persisted on generation_jobs.payload._worker between step invocations. */
 export type BlueprintGuidedReviseWorkerState = {

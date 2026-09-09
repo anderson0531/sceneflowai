@@ -16,13 +16,13 @@ import {
 import {
   inferTargetedSections,
   MAX_BEATS,
+  MAX_INTENT_CHARS,
   type BlueprintFixSection,
 } from './blueprintRevisionTypes'
 import { BLUEPRINT_ASPECT_RATIOS } from './blueprintFoundation'
 import { FIX_SECTION_LABELS } from '@/lib/constants/blueprint-optimization'
 
-/** Point at which buildRewriterPrompt truncates the user's direction. */
-export const MAX_INTENT_CHARS = 800
+export { MAX_INTENT_CHARS }
 
 /** capPatchSize ceiling on character_descriptions. */
 export const MAX_CHARACTERS = 8

@@ -58,6 +58,18 @@ vi.mock('@/lib/jobs/jobService', () => ({
   }),
 }))
 
+class FakeTruncatedError extends Error {
+  constructor(
+    readonly section: string,
+    readonly finishReason: string
+  ) {
+    super(`${section} was cut off (${finishReason})`)
+    this.name = 'GuidedReviseTruncatedError'
+  }
+}
+
+const runConsolidatedRewrite = vi.fn(async () => ({ story_field: 'rewritten' }))
+
 vi.mock('@/lib/treatment/runGuidedRevise', () => ({
   payloadFromJobRecord: vi.fn(() => ({
     rawVariant: { title: 'Test' },
@@ -68,11 +80,12 @@ vi.mock('@/lib/treatment/runGuidedRevise', () => ({
     focusScope: 'all',
     contentIntent: 'narrative',
   })),
+  GuidedReviseTruncatedError: FakeTruncatedError,
   runPlannerStep: vi.fn(async () => samplePlan),
   runSectionRewriteStep: vi.fn(async (_p, _plan, section: string) => ({
     [`${section}_field`]: 'rewritten',
   })),
-  runAllSectionRewrites: vi.fn(async () => ({ story_field: 'rewritten' })),
+  runConsolidatedRewrite,
   finalizeGuidedRevise: vi.fn(() => ({
     patch: { story_field: 'rewritten' },
     diff: [],
@@ -84,6 +97,16 @@ vi.mock('@/lib/treatment/runGuidedRevise', () => ({
 
 const { runBlueprintGuidedReviseStep } = await import('@/lib/jobs/blueprintGuidedReviseWorker')
 
+async function drainPhases(limit = 8): Promise<string[]> {
+  const phases: string[] = []
+  for (let i = 0; i < limit; i++) {
+    const outcome = await runBlueprintGuidedReviseStep('job-1')
+    phases.push(outcome.phase ?? outcome.error ?? 'unknown')
+    if (outcome.done) break
+  }
+  return phases
+}
+
 describe('runBlueprintGuidedReviseStep', () => {
   beforeEach(() => {
     row.status = 'queued'
@@ -91,20 +114,44 @@ describe('runBlueprintGuidedReviseStep', () => {
     row.payload = { rawVariant: { title: 'Test' }, userIntent: 'Tighten act two' }
     row.result = null
     row.error = null
+    runConsolidatedRewrite.mockClear()
+    runConsolidatedRewrite.mockImplementation(async () => ({ story_field: 'rewritten' }))
   })
 
-  it('advances plan -> rewrite per section -> finalize without repeating a phase', async () => {
-    const phases: string[] = []
+  it('advances plan -> one consolidated rewrite -> finalize without repeating a phase', async () => {
+    const phases = await drainPhases()
 
-    for (let i = 0; i < 8; i++) {
-      const outcome = await runBlueprintGuidedReviseStep('job-1')
-      phases.push(outcome.phase ?? outcome.error ?? 'unknown')
-      if (outcome.done) break
-    }
-
-    expect(phases).toEqual(['rewrite', 'rewrite', 'finalize', 'completed'])
+    // A two-section plan used to mean two rewrite hops. It is one pass now.
+    expect(phases).toEqual(['rewrite-all', 'finalize', 'completed'])
+    expect(runConsolidatedRewrite).toHaveBeenCalledTimes(1)
     expect(row.status).toBe('completed')
     expect(row.progress).toBe(100)
+  })
+
+  it('falls back to per-section rewrites when the consolidated pass is cut off', async () => {
+    runConsolidatedRewrite.mockImplementation(async () => {
+      throw new FakeTruncatedError('balanced revision', 'MAX_TOKENS')
+    })
+
+    const phases = await drainPhases()
+
+    // Truncation must degrade to the narrower passes, not fail the job.
+    expect(phases).toEqual(['rewrite-all', 'rewrite', 'rewrite', 'finalize', 'completed'])
+    expect(row.status).toBe('completed')
+    expect(row.error).toBeNull()
+  })
+
+  it('surfaces non-truncation rewrite failures instead of retrying per section', async () => {
+    runConsolidatedRewrite.mockImplementation(async () => {
+      throw new Error('Vertex AI quota exhausted')
+    })
+
+    await runBlueprintGuidedReviseStep('job-1')
+    const outcome = await runBlueprintGuidedReviseStep('job-1')
+
+    expect(outcome.phase).toBeUndefined()
+    expect(row.status).toBe('failed')
+    expect(row.error).toContain('quota exhausted')
   })
 
   it('reports inFlight instead of re-running a leased phase', async () => {

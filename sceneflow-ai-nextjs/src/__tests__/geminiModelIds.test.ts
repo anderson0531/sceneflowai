@@ -214,10 +214,26 @@ describe('product surface model source guard', () => {
     )
     expect(applyFix).toContain("thinkingLevel: 'medium'")
     expect(storyline).toContain("thinkingLevel: 'medium'")
-    expect(refine).toContain("thinkingLevel: 'low'")
+    // Blueprint refine reasons at medium on the Flash workhorse. Quality comes
+    // from the thinking level, not from the older `pro` preview tier.
+    expect(refine).toContain("getGeminiTextModel('flash')")
+    expect(refine).toContain("thinkingLevel: 'medium'")
+    expect(refine).not.toContain("getGeminiTextModel('pro')")
     expect(expertRefine).toContain("getGeminiTextModel('flash')")
     expect(expertRefine).toContain("thinkingLevel: 'low'")
     expect(expertRefine).not.toContain('generateText(prompt, { })')
+  })
+
+  it('keeps the guided-revise rewrite on the Flash workhorse at high thinking', () => {
+    const guidedRevise = readFileSync(
+      path.join(process.cwd(), 'src/lib/treatment/runGuidedRevise.ts'),
+      'utf8'
+    )
+    // The rewrite step used to select `pro` (gemini-3.1-pro-preview, seven
+    // minor versions behind Flash) and then run it at minimal thinking.
+    expect(guidedRevise).not.toContain("getGeminiTextModel('pro')")
+    expect(guidedRevise).not.toContain("thinkingLevel: 'minimal' as const")
+    expect(guidedRevise).toContain("'high'")
   })
 })
 

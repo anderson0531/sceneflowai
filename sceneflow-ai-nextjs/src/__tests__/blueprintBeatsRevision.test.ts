@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs'
+import path from 'path'
 import { describe, expect, it } from 'vitest'
 import {
   REWRITE_TOKENS_BASE,
@@ -55,6 +57,36 @@ describe('capPatchSize beats ceiling', () => {
   it('still enforces MAX_BEATS', () => {
     const patch = { beats: Array.from({ length: MAX_BEATS + 5 }, (_, i) => beat(i + 1)) }
     expect((capPatchSize(patch).beats as unknown[]).length).toBe(MAX_BEATS)
+  })
+})
+
+describe('the single-section refine route', () => {
+  const route = readFileSync(
+    path.join(path.resolve(__dirname, '../..'), 'src/app/api/treatment/refine/route.ts'),
+    'utf8'
+  )
+
+  it('does not cap any content intent at 8 beats', () => {
+    // A flat 8 collapsed a 40-minute beat sheet on every beats refine, while
+    // MAX_BEATS was 24 everywhere else in the pipeline.
+    expect(route).not.toMatch(/Maximum 8 beats/)
+    expect(route).not.toMatch(/aximum 8 (beats|segments)/)
+    expect(route).toContain('${MAX_BEATS}')
+  })
+
+  it('does not ask the model to keep the response compact', () => {
+    expect(route).not.toContain('Keep response compact')
+    expect(route).not.toContain('1-3 sentences max')
+  })
+
+  it('sends the whole beat sheet to the model rather than a 10-beat window', () => {
+    expect(route).toContain('beats.slice(0, MAX_BEATS)')
+  })
+
+  it('treats the creator field as intent rather than literal instruction', () => {
+    expect(route).toContain('CREATOR DIRECTION (INTENT):')
+    expect(route).toContain('CREATOR_DIRECTION_IS_INTENT')
+    expect(route).not.toContain('USER INSTRUCTIONS:')
   })
 })
 

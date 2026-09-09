@@ -40,8 +40,8 @@ const TREATMENT_SCHEMA_TEMPLATE = `SCHEMA - GENERATE IN THIS EXACT ORDER:
   "title": "Proposed title",
   "logline": "One- or two-sentence hook",
   "genre": "Genre",
-  "format_length": "Short (5–40m) | Feature (90–120m) | Series episode | …",
-  "synopsis": "≤200 words",
+  "format_length": "Featurette (30–60m) | Feature (60–120m) | Series episode | Short (5–30m) | …",
+  "synopsis": "≤400 words",
   "audience": "string",
   "tone": "string",
   "style": "string",
@@ -89,7 +89,9 @@ const TREATMENT_SCHEMA_TEMPLATE = `SCHEMA - GENERATE IN THIS EXACT ORDER:
   "cta": "__CTA_VALUE__",
   "learning_objectives": __LEARNING_VALUE__,
   "beats": [
-    { "title": "Beat title", "intent": "Narrative/dramatic purpose (fiction) OR clarifying/illustrative purpose (non-fiction)", "synopsis": "≤80 words beat summary", "minutes": 2.5 }
+    { "title": "Beat title", "intent": "Narrative/dramatic purpose (fiction) OR clarifying/illustrative purpose (non-fiction)", "synopsis": "≤150 words beat summary", "minutes": 3.5 },
+    { "title": "Next beat title", "intent": "Its own distinct purpose", "synopsis": "≤150 words beat summary", "minutes": 1.75 },
+    { "title": "…continue until the whole story is covered", "intent": "…", "synopsis": "…", "minutes": 4 }
   ],
   "visual_style": "string",
   "audio_direction": "string",
@@ -123,6 +125,22 @@ OUTPUT RULES - CRITICAL:
 
 8. Assign each beat the number of minutes the story/illustration genuinely needs. Beat "minutes" should reflect real pacing — do not invent uniform values.`
 
+/**
+ * Default length posture.
+ *
+ * Nothing in the pipeline hardcoded a 15-minute target — it fell out of a
+ * single 2.5-minute beat in the schema example multiplied by a 3-to-6 beat
+ * structure. This states the expectation the platform actually has, so the
+ * model stops reaching for short-form structure by default.
+ */
+const LONGFORM_DEPTH_BLOCK = `
+LONG-FORM STORYTELLING DEPTH (DEFAULT POSTURE):
+- This platform produces long-form video. 30 minutes or more is the norm here, not the exception.
+- Give the story room: establish the world, let relationships develop on screen, and earn every reversal.
+- Prefer 12-24 beats that each carry real dramatic or illustrative function over a compressed 5-8 beat sprint.
+- Depth of character and story is the goal. Do NOT default to fast-paced short-form structure.
+- Go short ONLY when the creator's input or the selected scope explicitly calls for it.`
+
 function getFormatSpecificBlocks(format: Format, contentIntent?: ContentIntent) {
   const intent = contentIntent ?? resolveContentIntent(format === 'short_film' ? 'drama' : format.replace('_', '-'))
   return getIntentPromptBlocks(intent, format)
@@ -152,8 +170,11 @@ export function buildTreatmentPrompt(opts: {
   const pacingPhilosophy = buildPacingPhilosophyBlock(intent)
   // In auto scope, runtime is advisory: the story/illustration decides its own
   // length. In fixed scope, honor the user's selected target.
+  // Advisory scope is the default, so a neutral "let the material decide" read
+  // as permission to go short. It carries a long-form prior instead.
   const scopeBlock = autoScope
-    ? `SCOPE (ADVISORY): Let the material decide its length — aim for ${advisoryScopeLabel || 'the length the content genuinely needs'}. Do NOT pad or compress to hit a runtime; there is no fixed target.`
+    ? `SCOPE (ADVISORY): Let the material decide its length — aim for ${advisoryScopeLabel || 'the length the content genuinely needs'}. Do NOT pad or compress to hit a runtime; there is no fixed target.
+Start from a long-form assumption: unless the input clearly describes something brief, expect this to run 30 minutes or more and write a beat sheet that genuinely fills it.`
     : `TARGET RUNTIME: ~${targetMinutes} minutes (±10%). Shape beat "minutes" so they sum to roughly this target.`
   const formatBlock = getFormatBlock(format)
   const formatSpecifics = getFormatSpecificBlocks(format, intent)
@@ -198,6 +219,7 @@ CONTENT INTENT: ${intent.toUpperCase()} — ${formatSpecifics.schemaFieldSemanti
 ${scopeBlock}
 PRIORITIES: ${formatBlock.priorities}
 ${personaBlock}${structureBlock}
+${LONGFORM_DEPTH_BLOCK}
 
 ${pacingPhilosophy}
 

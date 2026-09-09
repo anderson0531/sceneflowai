@@ -85,6 +85,15 @@ export const BLUEPRINT_FIELD_LABELS: Record<string, string> = {
  */
 export const MAX_BEATS = 24
 
+/**
+ * Point at which the planner and rewriter truncate the creator's direction.
+ *
+ * Lives here so the prompts and the pre-submit validation read one number:
+ * when they drifted, the dialog reported the direction as accepted while the
+ * prompt had already cut it off.
+ */
+export const MAX_INTENT_CHARS = 2000
+
 export const SECTION_FIELDS: Record<BlueprintFixSection, string[]> = {
   core: ['title', 'logline', 'genre', 'format_length', 'target_audience'],
   story: ['synopsis', 'setting', 'protagonist', 'antagonist', 'act_breakdown'],

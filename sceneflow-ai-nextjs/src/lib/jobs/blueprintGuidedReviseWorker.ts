@@ -12,8 +12,9 @@ import {
 } from '@/lib/jobs/blueprintGuidedReviseWorkerState'
 import {
   finalizeGuidedRevise,
+  GuidedReviseTruncatedError,
   payloadFromJobRecord,
-  runAllSectionRewrites,
+  runConsolidatedRewrite,
   runPlannerStep,
   runSectionRewriteStep,
 } from '@/lib/treatment/runGuidedRevise'
@@ -52,14 +53,34 @@ async function runProcessingPhase(
 
     if (worker.phase === 'rewrite-all') {
       await updateGenerationJob(jobId, { progress: 50 })
-      const mergedPatch = await runAllSectionRewrites(revisePayload, worker.plan)
-      await saveWorkerState(jobId, {
-        ...worker,
-        phase: 'finalize',
-        mergedPatch,
-        inFlightAt: null,
-      })
-      return { done: false, phase: 'finalize' }
+      try {
+        const mergedPatch = await runConsolidatedRewrite(revisePayload, worker.plan)
+        await saveWorkerState(jobId, {
+          ...worker,
+          phase: 'finalize',
+          mergedPatch,
+          inFlightAt: null,
+        })
+        return { done: false, phase: 'finalize' }
+      } catch (err) {
+        // A cut-off response is recoverable by revising one section per pass.
+        // Each fallback pass gets its own invocation rather than running the
+        // whole chain inside this one, which would blow the function limit.
+        if (!(err instanceof GuidedReviseTruncatedError) || worker.sections.length <= 1) {
+          throw err
+        }
+        console.warn(
+          `[BlueprintGuidedRevise] Job ${jobId} consolidated pass cut off (${err.finishReason}); retrying as ${worker.sections.length} per-section passes`
+        )
+        await saveWorkerState(jobId, {
+          ...worker,
+          phase: 'rewrite',
+          sectionIndex: 0,
+          mergedPatch: {},
+          inFlightAt: null,
+        })
+        return { done: false, phase: 'rewrite' }
+      }
     }
 
     if (worker.phase === 'rewrite') {
@@ -203,8 +224,10 @@ export async function runBlueprintGuidedReviseStep(
     const plan = await runPlannerStep(revisePayload)
     const sections = [...new Set(plan.sectionsToUpdate)] as BlueprintFixSection[]
 
+    // Every plan starts as one consolidated pass; `rewrite-all` degrades to the
+    // per-section `rewrite` phase only if that response is cut off.
     const nextWorker: BlueprintGuidedReviseWorkerState = {
-      phase: sections.length <= 1 ? 'rewrite-all' : 'rewrite',
+      phase: 'rewrite-all',
       plan,
       sections,
       sectionIndex: 0,

@@ -230,15 +230,22 @@ function extractThemesFromGenreTone(genre: string, tone: string): string[] {
   return Array.from(themes).slice(0, 4) // Return up to 4 themes
 }
 
-// Map film type to target minutes estimate
+/**
+ * Map a scope bucket to its target minutes.
+ *
+ * These must stay the midpoints of the bands SCOPE_OPTIONS shows in
+ * BlueprintReimaginDialog. They had drifted below them — "Short (5-30 min)"
+ * generated 10 and "Featurette (30-60 min)" generated 25 — so picking a scope
+ * produced a shorter blueprint than the label promised.
+ */
 function getFilmTypeMinutes(filmType?: string): number {
   switch (filmType) {
-    case 'micro_short': return 3  // 1-5 min average
-    case 'short_film': return 10  // 5-15 min average
-    case 'featurette': return 25  // 15-40 min average
-    case 'feature_length': return 65  // 40-90 min average
-    case 'epic': return 120  // 90+ min average
-    default: return 20  // fallback
+    case 'micro_short': return 3     // Brief: under 5 min
+    case 'short_film': return 17     // Short: 5-30 min
+    case 'featurette': return 45     // Featurette: 30-60 min
+    case 'feature_length': return 90 // Feature: 60-120 min
+    case 'epic': return 150          // Epic: 120-180 min
+    default: return 45               // Unknown bucket: assume long-form
   }
 }
 
@@ -254,14 +261,14 @@ function isAutoScope(filmType?: string, targetMinutes?: number): boolean {
 function getAdvisoryScopeLabel(contentIntent: ContentIntent): string {
   switch (contentIntent) {
     case 'informational':
-      return 'as long as needed to explain and illustrate the material clearly — do not pad or rush'
+      return 'as long as needed to explain and illustrate the material clearly — typically 30 minutes or more; do not pad or rush'
     case 'commercial':
       return 'as concise as the message allows while still proving the value — do not pad'
     case 'conversational':
-      return 'the natural length of a well-paced conversation on this topic'
+      return 'the natural length of a well-paced conversation on this topic — typically 30 minutes or more'
     case 'fiction':
     default:
-      return 'the length the story needs to establish, develop, and pay off its arc — do not compress or pad'
+      return 'the length the story needs to establish, develop, and pay off its arc — for a fiction production that is normally 30 to 60 minutes or longer; do not compress or pad'
   }
 }
 
@@ -463,7 +470,9 @@ export async function POST(request: NextRequest) {
 
     // Prepare diversified variant styles
     const variantConfigs: Array<{ id: string; label: string; styleHint: string }> = [
-      { id: 'A', label: 'A', styleHint: 'Contemporary, minimal, crisp pacing, clean visual language' },
+      // A is the hint used whenever variantsCount is 1, which is every Reimagine
+      // run — "crisp pacing" there was steering the default toward short-form.
+      { id: 'A', label: 'A', styleHint: 'Contemporary, grounded, character-driven, clean visual language with room for scenes to breathe' },
       { id: 'B', label: 'B', styleHint: 'Nostalgic, warm, human-centric tone, cinematic texture' },
       { id: 'C', label: 'C', styleHint: 'Energetic, bold, high-contrast visuals, rhythmic editing' },
     ].slice(0, variantsCount)

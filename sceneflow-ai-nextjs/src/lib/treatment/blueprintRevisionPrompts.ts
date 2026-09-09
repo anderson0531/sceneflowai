@@ -1,6 +1,11 @@
 import type { BlueprintAudienceRecommendation } from '@/lib/types/audienceResonance'
 import type { BlueprintChangePlan, BlueprintFixSection } from './blueprintRevisionTypes'
-import { inferTargetedSections, MAX_BEATS, SECTION_FIELDS } from './blueprintRevisionTypes'
+import {
+  inferTargetedSections,
+  MAX_BEATS,
+  MAX_INTENT_CHARS,
+  SECTION_FIELDS,
+} from './blueprintRevisionTypes'
 import { strictJsonPromptSuffix } from '@/lib/safeJson'
 import {
   type ContentIntent,
@@ -19,6 +24,24 @@ const MAX_BEAT_SYNOPSIS = 600
 const MAX_CHAR_DESC = 200
 const MAX_REC_TEXT = 220
 const MAX_RECS_IN_PROMPT = 12
+
+/**
+ * How to read the creator's typed direction.
+ *
+ * Without this the model treats terse direction as a complete specification and
+ * satisfies it the cheapest way available — trimming beats, thinning characters
+ * and shortening runtime — which reads as the revision degrading the blueprint.
+ */
+export const CREATOR_DIRECTION_IS_INTENT = `
+CREATOR DIRECTION IS INTENT, NOT A SPECIFICATION:
+- The direction describes the outcome the creator wants. You own the craft decisions.
+- Never satisfy direction by shortening, flattening, or simplifying. If the direction is
+  terse, infer the fuller creative goal and execute that at full quality.
+- Never reduce beat count, character depth, or runtime unless the creator explicitly
+  asked for a shorter production.
+- If literal wording would produce a weaker blueprint, honor the intent and solve the
+  craft problem instead.
+`
 
 export const CROSS_SECTION_COUPLING_RULES = `
 MANDATORY CROSS-SECTION BALANCE (you MUST reconcile dependent sections when applying changes):
@@ -260,14 +283,14 @@ export function buildPlannerPrompt(
   return `You are a ${intent === 'fiction' ? 'film development editor' : 'content development editor'} planning a BALANCED blueprint revision.
 
 The user provides DIRECTION only — your job is to plan which blueprint sections must change together so the content stays coherent.
-
+${CREATOR_DIRECTION_IS_INTENT}
 ${intentGuard}
 
 CURRENT BLUEPRINT (summary):
 ${compactJson(trimmed)}
 
-USER DIRECTION:
-${truncateStr(userIntent, 800) || '(See audience resonance recommendations below)'}
+CREATOR DIRECTION (INTENT):
+${truncateStr(userIntent, MAX_INTENT_CHARS) || '(See audience resonance recommendations below)'}
 
 ${recBlock ? `AUDIENCE RESONANCE RECOMMENDATIONS TO ADDRESS:\n${recBlock}\n` : ''}
 ${focusScope && focusScope !== 'all' ? `USER FOCUS SCOPE: ${focusScope} (still apply cross-section coupling where needed)\n` : ''}
@@ -358,13 +381,14 @@ CRITICAL RULES:
 - When returning "beats", return the COMPLETE ordered array, not just changed entries.
 - character_descriptions: preserve participant NAMES unless user explicitly requests rename.
 - Return ONLY fields you modify — do not echo unchanged fields.
+${CREATOR_DIRECTION_IS_INTENT}
 ${intentGuard}
 
 CHANGE PLAN:
 ${compactJson(plan)}
 
-USER DIRECTION:
-${truncateStr(userIntent, 800)}
+CREATOR DIRECTION (INTENT):
+${truncateStr(userIntent, MAX_INTENT_CHARS)}
 ${recBlock ? `\nRECOMMENDATIONS:\n${recBlock}` : ''}
 
 ALLOWED FIELDS TO RETURN (include all you modify): ${allowedFields.join(', ')}

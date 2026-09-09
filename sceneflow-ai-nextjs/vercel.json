@@ -31,10 +31,10 @@
       "maxDuration": 60
     },
     "src/app/api/treatment/guided-revise/step/route.ts": {
-      "maxDuration": 120
+      "maxDuration": 300
     },
     "src/app/api/internal/jobs/blueprint-guided-revise/step/route.ts": {
-      "maxDuration": 120
+      "maxDuration": 300
     },
     "src/app/api/internal/jobs/script-analysis/step/route.ts": {
       "maxDuration": 120

@@ -4,7 +4,9 @@ import { runBlueprintGuidedReviseStep } from '@/lib/jobs/blueprintGuidedReviseWo
 import { postBlueprintGuidedReviseStep } from '@/lib/jobs/dispatchBlueprintGuidedReviseStep'
 
 export const runtime = 'nodejs'
-export const maxDuration = 120
+// The phase runs inside `after()`, which still counts against this limit, and a
+// consolidated reasoning rewrite needs more than the previous 120s.
+export const maxDuration = 300
 
 function authorize(req: NextRequest): boolean {
   const secret = process.env.INTERNAL_JOB_SECRET || 'sceneflow-internal'
