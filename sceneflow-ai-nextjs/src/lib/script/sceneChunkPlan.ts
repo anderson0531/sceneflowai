@@ -18,9 +18,6 @@ import {
 /** Scenes requested per LLM call. Keeps chunk output well inside the token budget. */
 export const MAX_SCENES_PER_CHUNK = 6
 
-/** Smallest chunk worth a dedicated call when splitting an oversized beat. */
-const MIN_SCENES_PER_CHUNK = 2
-
 export interface SceneChunk {
   /** 0-based Blueprint beat this chunk belongs to, or null when the treatment has no beats. */
   blueprintBeatIndex: number | null
@@ -40,7 +37,10 @@ export interface SceneChunkPlan {
   totalScenes: number
 }
 
-/** Split n scenes into chunk sizes of at most MAX_SCENES_PER_CHUNK, avoiding tiny trailing chunks. */
+/**
+ * Split n scenes into chunk sizes of at most `maxPerChunk`, spread evenly so no
+ * call is left with a single scene to write.
+ */
 export function splitSceneCount(
   sceneCount: number,
   maxPerChunk: number = MAX_SCENES_PER_CHUNK
@@ -53,19 +53,7 @@ export function splitSceneCount(
   const base = Math.floor(total / chunkCount)
   const remainder = total % chunkCount
 
-  const sizes = Array.from({ length: chunkCount }, (_, i) => base + (i < remainder ? 1 : 0))
-
-  // A trailing 1-scene chunk wastes a whole call; fold it into the previous chunk
-  // when that stays within the cap.
-  const last = sizes[sizes.length - 1]
-  if (sizes.length > 1 && last < MIN_SCENES_PER_CHUNK) {
-    const prev = sizes[sizes.length - 2]
-    if (prev + last <= cap) {
-      sizes.splice(sizes.length - 2, 2, prev + last)
-    }
-  }
-
-  return sizes
+  return Array.from({ length: chunkCount }, (_, i) => base + (i < remainder ? 1 : 0))
 }
 
 function resolveBeatSynopsis(beat: BlueprintBeatInput | undefined): string | undefined {
