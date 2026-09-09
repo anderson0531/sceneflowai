@@ -26,6 +26,29 @@ describe('looksNonEnglishAuthorship', () => {
     expect(looksNonEnglishAuthorship('El protagonista está en la ciudad.')).toBe(true)
     expect(looksNonEnglishAuthorship('¿Qué debería cambiar?')).toBe(true)
   })
+
+  it('flags ñ as a non-English marker', () => {
+    expect(looksNonEnglishAuthorship('España')).toBe(true)
+    expect(looksNonEnglishAuthorship('niño')).toBe(true)
+  })
+
+  it('flags accented Spanish vowels in multi-word context', () => {
+    expect(looksNonEnglishAuthorship('Conspiración del poder')).toBe(true)
+    expect(looksNonEnglishAuthorship('Histórico narrativa')).toBe(true)
+  })
+
+  it('flags common Spanish function-word phrases', () => {
+    expect(looksNonEnglishAuthorship('una implacable ciber-investigadora')).toBe(true)
+    expect(looksNonEnglishAuthorship('del mundo que conoce los secretos')).toBe(true)
+    expect(looksNonEnglishAuthorship('para descifrar un letal secreto')).toBe(true)
+    expect(looksNonEnglishAuthorship('con dilemas morales')).toBe(true)
+    expect(looksNonEnglishAuthorship('que amenaza con borrar su existencia')).toBe(true)
+  })
+
+  it('flags cuando, entre, sobre, desde', () => {
+    expect(looksNonEnglishAuthorship('Cuando un enigmático artefacto')).toBe(true)
+    expect(looksNonEnglishAuthorship('entre las ruinas del pasado')).toBe(true)
+  })
 })
 
 describe('blueprintNeedsEnglishRewrite', () => {
@@ -53,6 +76,26 @@ describe('blueprintNeedsEnglishRewrite', () => {
         sourceLocale: 'en',
         title: 'The Last Lantern',
         logline: 'A thief returns a debt.',
+      })
+    ).toBe(false)
+  })
+
+  it('detects Spanish genre even when title and logline are English', () => {
+    expect(
+      blueprintNeedsEnglishRewrite({
+        title: 'The Faraday Echo',
+        logline: 'When a reclusive historian unlocks a suppressed artifact...',
+        genre: 'Thriller Histórico / Tecno-Thriller de Conspiración',
+      })
+    ).toBe(true)
+  })
+
+  it('is false when genre is English', () => {
+    expect(
+      blueprintNeedsEnglishRewrite({
+        title: 'The Faraday Echo',
+        logline: 'A historian uncovers the truth.',
+        genre: 'Historical Thriller',
       })
     ).toBe(false)
   })
@@ -86,6 +129,11 @@ describe('the leak is closed at every authorship seam', () => {
     expect(revise).toContain('resolveExistingContentStoryLocale')
   })
 
+  it('film-treatment uses content-stamped helper for existing projects', () => {
+    const filmTreatment = readSource('src/app/api/ideation/film-treatment/route.ts')
+    expect(filmTreatment).toContain('resolveExistingContentStoryLocale')
+  })
+
   it('guided-revise honours an explicit English storyLocale from the client', () => {
     const dialog = readSource('src/components/blueprint/BlueprintRefineDialog.tsx')
     expect(dialog).toContain('storyLocale')
@@ -107,6 +155,29 @@ describe('the leak is closed at every authorship seam', () => {
     expect(card).toContain('rewriteToEnglish: true')
     expect(studio).toContain("requestBlueprintReanalyze('en')")
     expect(dialogSendsEnglish(studio, panel)).toBe(true)
+  })
+
+  it('toolbar forwards explicit options like rewriteToEnglish', () => {
+    const studio = readSource('src/app/dashboard/studio/[projectId]/StudioPageClient.tsx')
+    expect(studio).toContain('openBlueprintRefineFromToolbar = useCallback((opts?: OpenBlueprintRefineOptions)')
+  })
+
+  it('clears stale AR analysis on blueprint regeneration', () => {
+    const studio = readSource('src/app/dashboard/studio/[projectId]/StudioPageClient.tsx')
+    expect(studio).toContain('setSavedBlueprintAR(null)')
+    expect(studio).toContain('blueprintAudienceResonance: null')
+  })
+
+  it('useAccountStoryLocale does not read the UI locale cookie', () => {
+    const storyLocale = readSource('src/i18n/useStoryLocale.ts')
+    expect(storyLocale).not.toContain('readUiLocaleCookie')
+  })
+
+  it('genre is checked by blueprintNeedsEnglishRewrite callers', () => {
+    const panel = readSource('src/components/blueprint/AudienceResonancePanelV3.tsx')
+    const card = readSource('src/components/blueprint/TreatmentCard.tsx')
+    expect(panel).toContain("genre: String(treatment?.genre || '')")
+    expect(card).toContain("genre: String(activeVariant.genre || '')")
   })
 })
 

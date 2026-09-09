@@ -645,8 +645,12 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     }
   }
 
-  /** Toolbar pencil: same editor as AR, with pending resonance recs when available. */
-  const openBlueprintRefineFromToolbar = useCallback(() => {
+  /** Toolbar: default editor with pending recs, or forward explicit opts (e.g. rewrite). */
+  const openBlueprintRefineFromToolbar = useCallback((opts?: OpenBlueprintRefineOptions) => {
+    if (opts && Object.keys(opts).length > 0) {
+      openBlueprintRefine(opts)
+      return
+    }
     const applied = new Set(savedBlueprintAR?.appliedRecommendationIds ?? [])
     const pending =
       savedBlueprintAR?.analysis?.recommendations?.filter((r) => !applied.has(r.id)) ??
@@ -924,6 +928,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         
         console.log('[StudioPage] Film treatment variants received:', variants.length)
         setTreatmentVariants(variants)
+        setSavedBlueprintAR(null)
 
         setCurrentProject({
           ...(currentProject || {}),
@@ -1012,13 +1017,13 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             console.error('[StudioPage] Auto-create project failed (non-blocking):', createErr)
           }
         } else if (projectId && !projectId.startsWith('new-project')) {
-          // Persist authorship stamp immediately so content MT does not wait on auto-save.
           void persistBlueprintMetadata({
             i18n: contentI18nStamp,
             treatmentVariants: variants,
             filmTreatment: variants[0]?.synopsis || variants[0]?.content || '',
             beats: data.beats || beatsView,
             estimatedRuntime: data.estimatedRuntime ?? estimatedRuntime,
+            blueprintAudienceResonance: null,
           })
         }
       } else {
