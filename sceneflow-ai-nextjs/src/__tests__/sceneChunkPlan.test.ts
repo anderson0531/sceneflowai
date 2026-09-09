@@ -20,6 +20,10 @@ import {
   consolidateFragmentedScenes,
   mergeScenes,
 } from '@/lib/script/sceneConsolidation'
+import {
+  buildBeatDirectionPromptBlock,
+  buildBeatDirectionSchemaExample,
+} from '@/lib/script/narrationPolicy'
 
 const ROOT = join(__dirname, '..', '..')
 
@@ -389,6 +393,47 @@ describe('generate-script-v2 chunked generation', () => {
   it('reports real scene progress rather than the Blueprint beat count', () => {
     expect(source).toContain('expectedTotalScenes')
     expect(source).not.toContain('totalScenes: beatCount')
+  })
+})
+
+describe('compact beat direction', () => {
+  it('asks for three fields so the output budget buys scenes', () => {
+    const example = buildBeatDirectionSchemaExample({ compact: true })
+    const parsed = JSON.parse(`{${example}}`)
+
+    expect(Object.keys(parsed.beatDirection).sort()).toEqual([
+      'frozenMoment',
+      'shotType',
+      'transition',
+    ])
+    expect(parsed.beatDirection.transition).toMatch(/CUT|CONTINUE|DISSOLVE|FADE|MATCH_CUT/)
+  })
+
+  it('adds catalog prop linkage only when a reference catalog exists', () => {
+    const without = JSON.parse(`{${buildBeatDirectionSchemaExample({ compact: true })}}`)
+    const withProps = JSON.parse(
+      `{${buildBeatDirectionSchemaExample({ compact: true, includeProps: true })}}`
+    )
+
+    expect(without.beatDirection.propAssetIds).toBeUndefined()
+    expect(withProps.beatDirection.keyProps).toBeInstanceOf(Array)
+    expect(withProps.beatDirection.propAssetIds).toBeInstanceOf(Array)
+  })
+
+  it('forbids the fields the direction pass backfills', () => {
+    const block = buildBeatDirectionPromptBlock({ compact: true })
+    expect(block).toMatch(/Do NOT emit .*blocking.*emotion.*gaze/)
+    expect(block).toContain('keyProps')
+
+    const withProps = buildBeatDirectionPromptBlock({ compact: true, includeProps: true })
+    expect(withProps).toMatch(/Do NOT emit(?!.*keyProps)/)
+    expect(withProps).toContain('propAssetIds')
+  })
+
+  it('leaves the full contract untouched for scene revision', () => {
+    const full = buildBeatDirectionPromptBlock()
+    expect(full).toContain('lightingAccent')
+    expect(full).toContain('propInteraction')
   })
 })
 

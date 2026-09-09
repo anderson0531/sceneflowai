@@ -257,8 +257,11 @@ ${antiClone}`
  * actionDescription/line. Fields are optional but the model is REQUIRED to
  * emit the object with as many fields as apply to the beat.
  */
-export function buildBeatDirectionPromptBlock(opts?: { compact?: boolean }): string {
-  if (opts?.compact) return buildCompactBeatDirectionPromptBlock()
+export function buildBeatDirectionPromptBlock(opts?: {
+  compact?: boolean
+  includeProps?: boolean
+}): string {
+  if (opts?.compact) return buildCompactBeatDirectionPromptBlock(Boolean(opts.includeProps))
   return `BEAT DIRECTION (STRUCTURED, PER BEAT — MANDATORY OBJECT ON EVERY BEAT):
 Every beat MUST include a "beatDirection" object. This is the authoritative, per-beat cinematographer/director block downstream prompt builders read. Do not encode it in prose — put each aspect in the correct field. Absent fields fall back to scene-level direction, so only populate fields you would actually direct.
 
@@ -293,24 +296,42 @@ Rules:
  * Reduced beatDirection contract for longform generation. Each beat here costs
  * output tokens that would otherwise buy scenes, and the omitted fields are
  * backfilled per scene by the direction pass and `migrateProjectBeatDirection`.
+ *
+ * `includeProps` adds catalog prop linkage, which only earns its tokens when the
+ * project actually has a reference library to link against.
  */
-function buildCompactBeatDirectionPromptBlock(): string {
+function buildCompactBeatDirectionPromptBlock(includeProps: boolean): string {
+  const propFields = includeProps
+    ? `
+• "keyProps": array of prop labels — SUBSET of the scene's Key Props — visible in THIS beat. Use the exact labels from the scene's Key Props list, never a character name. Omit when no listed prop appears.
+• "propAssetIds": catalog asset ids for the keyProps entries that match the reference catalog. Omit when there is no match.`
+    : ''
+  const excluded = includeProps
+    ? 'cameraAngle, cameraMovement, blocking, emotion, gaze, propInteraction, lightingAccent, or audioCue'
+    : 'cameraAngle, cameraMovement, blocking, emotion, gaze, keyProps, propInteraction, lightingAccent, or audioCue'
+
   return `BEAT DIRECTION (COMPACT — MANDATORY OBJECT ON EVERY BEAT):
-Every beat MUST include a "beatDirection" object with EXACTLY these three fields. Richer direction is added by a later pass — do NOT emit other fields here, they cost the scene budget.
+Every beat MUST include a "beatDirection" object with the fields below and NO others. Richer direction is added by a later pass — extra fields here cost the scene budget.
 
 • "shotType": named shot for this beat, 1–4 words (e.g., "Wide Shot", "Medium Close-Up", "Insert Shot", "Over-the-Shoulder", "Two-Shot").
 • "frozenMoment": ONE SENTENCE naming the single frozen still this beat represents (e.g., "Piper halts Gideon mid-lean, journal pressed to his sternum."). Noun-first, concrete, one composition. It is a photograph, not a video: no temporal verbs ("pulses", "walks toward").
-• "transition": how this beat cuts into the NEXT beat. One of: "CUT", "CONTINUE", "DISSOLVE", "FADE", "MATCH_CUT". Default is "CUT".
+• "transition": how this beat cuts into the NEXT beat. One of: "CUT", "CONTINUE", "DISSOLVE", "FADE", "MATCH_CUT". Default is "CUT".${propFields}
 
 Rules:
 • Do NOT put dialogue content in beatDirection fields.
-• Do NOT emit cameraAngle, cameraMovement, blocking, emotion, gaze, keyProps, propInteraction, lightingAccent, or audioCue on beats — the direction pass supplies them.
+• Do NOT emit ${excluded} on beats — the direction pass supplies them.
 • frozenMoment must be visually distinct from the adjacent beats' frozenMoment.`
 }
 
-export function buildBeatDirectionSchemaExample(opts?: { compact?: boolean }): string {
+export function buildBeatDirectionSchemaExample(opts?: {
+  compact?: boolean
+  includeProps?: boolean
+}): string {
   if (opts?.compact) {
-    return `"beatDirection": {"shotType": "Medium Close-Up", "frozenMoment": "Piper halts Gideon mid-lean, journal pressed to his sternum.", "transition": "CUT"}`
+    const props = opts.includeProps
+      ? ', "keyProps": ["Water-damaged leather journal"], "propAssetIds": ["catalog-prop-id-if-known"]'
+      : ''
+    return `"beatDirection": {"shotType": "Medium Close-Up", "frozenMoment": "Piper halts Gideon mid-lean, journal pressed to his sternum.", "transition": "CUT"${props}}`
   }
   return `"beatDirection": {
           "shotType": "Medium Close-Up",

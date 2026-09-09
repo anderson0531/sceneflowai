@@ -377,21 +377,25 @@ export async function POST(request: NextRequest) {
             85,
             10 + Math.floor((chunksDone / Math.max(1, chunkPlan.chunks.length)) * 75)
           )
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-            type: 'progress',
-            status,
-            batch: chunksDone + 1,
-            scenesGenerated,
-            totalScenes: expectedTotalScenes,
-            elapsedSeconds: elapsed,
-            estimatedRemainingSeconds: Math.max(
-              5,
-              Math.round(
-                (elapsed / Math.max(1, chunksDone)) * (chunkPlan.chunks.length - chunksDone)
-              ) || 45
-            ),
-            progress,
-          })}\n\n`))
+          try {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              type: 'progress',
+              status,
+              batch: chunksDone + 1,
+              scenesGenerated,
+              totalScenes: expectedTotalScenes,
+              elapsedSeconds: elapsed,
+              estimatedRemainingSeconds: Math.max(
+                5,
+                Math.round(
+                  (elapsed / Math.max(1, chunksDone)) * (chunkPlan.chunks.length - chunksDone)
+                ) || 45
+              ),
+              progress,
+            })}\n\n`))
+          } catch {
+            // A disconnected client must not abort generation from a timer.
+          }
         }
 
         emitGenerationProgress('Writing scenes...')
@@ -405,6 +409,7 @@ export async function POST(request: NextRequest) {
             chunkPlan.chunks,
             CHUNK_CONCURRENCY,
             (chunk) =>
+              // One failed chunk must cost its own scenes, not the whole script.
               generateSceneChunk(sharedContext, chunk, {
                 storyBeats,
                 totalScenes: plannedScenes,
@@ -412,6 +417,10 @@ export async function POST(request: NextRequest) {
                   scenesGenerated += count
                   chunksDone++
                 },
+              }).catch((err) => {
+                chunksDone++
+                console.error(`[Script Gen V2] Chunk failed entirely (${describeChunk(chunk)}):`, err)
+                return [] as any[]
               })
           )
         } finally {
@@ -919,10 +928,18 @@ function buildSharedScriptContext(
   const scriptSettings = getSettingsForFormat(format)
   const constraintBlock = buildScriptConstraintPrompt(scriptSettings)
   const narrationSection = buildNarrationPromptSection(policy)
+  // Catalog prop linkage only earns its output tokens when there is a catalog.
+  const hasReferenceCatalog = Boolean(referenceCatalogBlock)
   const narrationSchemaLine = buildNarrationSchemaExample(policy, { compact: true })
   const beatTimelineNarrationRules = buildBeatTimelineNarrationRules(policy, { compact: true })
-  const beatDirectionRules = buildBeatDirectionPromptBlock({ compact: true })
-  const beatDirectionSchema = buildBeatDirectionSchemaExample({ compact: true })
+  const beatDirectionRules = buildBeatDirectionPromptBlock({
+    compact: true,
+    includeProps: hasReferenceCatalog,
+  })
+  const beatDirectionSchema = buildBeatDirectionSchemaExample({
+    compact: true,
+    includeProps: hasReferenceCatalog,
+  })
 
   // Dynamically set persona based on format/intent
   let persona = 'You are a master screenwriter. Write a complete, production-ready script'
@@ -1084,7 +1101,7 @@ ${beatDirectionRules}`
     sceneHeadingExample,
     narrationSchemaLine,
     beatDirectionSchema,
-    hasReferenceCatalog: Boolean(referenceCatalogBlock),
+    hasReferenceCatalog,
     storyBlock,
     craftBlock,
     languageBlock,
